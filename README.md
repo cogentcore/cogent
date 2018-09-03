@@ -1,5 +1,7 @@
 # gide
 
+![alt tag](logo/gide-logo.png)
+
 **gide** is a flexible IDE (integrated development environment) framework in pure Go, using the GoGi GUI.  When CamelCase is needed, use `Gide`, but the command is `gide` etc.
 
 After all these years, nothing beats a great text editor for coding.  All that drag-n-drop, graphical stuff just gets in the way.

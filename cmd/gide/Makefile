@@ -15,3 +15,8 @@ test:
 	$(GOTEST) -v ./...
 clean: 
 	$(GOCLEAN)
+app-install:
+	/bin/cp -av gide.app /Applications
+mac-sh-install:
+	/bin/cp gide-mac.sh /usr/local/bin/gide
+
