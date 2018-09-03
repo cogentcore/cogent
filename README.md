@@ -1,6 +1,6 @@
 # gide
 
-![alt tag](logo/gide-logo.png)
+![alt tag](logo/gide_logo.png)
 
 **gide** is a flexible IDE (integrated development environment) framework in pure Go, using the GoGi GUI.  When CamelCase is needed, use `Gide`, but the command is `gide` etc.
 
@@ -50,4 +50,5 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * textview not resizing in gide -- wordwrap is past end of this line.
 * bg color of line numbers darker than regular text.
 * need autosave and crash files!
+
 
