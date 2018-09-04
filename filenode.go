@@ -124,3 +124,23 @@ func (fn *FileNode) OpenBuf() error {
 	fn.Buf.InitName(fn.Buf, fn.Nm)
 	return fn.Buf.Open(fn.FPath)
 }
+
+// FindFile finds first node representing given file (false if not found) --
+// looks for full path names that have the given string as their suffix, so
+// you can include as much of the path (including whole thing) as is relevant
+// to disambiguate.  See FilesMatching for a list of files that match a given
+// string.
+func (fn *FileNode) FindFile(fnm string) (*FileNode, bool) {
+	var ffn *FileNode
+	found := false
+	fn.FuncDownMeFirst(0, fn, func(k ki.Ki, level int, d interface{}) bool {
+		sfn := k.(*FileNode)
+		if strings.HasSuffix(string(sfn.FPath), fnm) {
+			ffn = sfn
+			found = true
+			return false
+		}
+		return true
+	})
+	return ffn, found
+}

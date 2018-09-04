@@ -12,9 +12,13 @@ package gide
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
@@ -25,10 +29,13 @@ import (
 // middle, and a tabbed viewer on the right.
 type Gide struct {
 	gi.Frame
-	ProjFilename gi.FileName `desc:"current project filename for saving / loading"`
-	ProjRoot     gi.FileName `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
-	Changed      bool        `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
-	Files        FileNode    `desc:"all the files in the project directory and subdirectories"`
+	ProjFilename      gi.FileName `desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
+	ProjRoot          gi.FileName `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	ActiveFilename    gi.FileName `desc:"filename of the currently-active textview"`
+	Changed           bool        `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+	Files             FileNode    `desc:"all the files in the project directory and subdirectories"`
+	NTextViews        int         `xml:"n-text-views" desc:"number of textviews available for editing files (default 2) -- configurable with n-text-views property"`
+	ActiveTextViewIdx int         `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
@@ -38,13 +45,41 @@ func (ge *Gide) UpdateFiles() {
 	ge.Files.OpenPath(string(ge.ProjRoot))
 }
 
-// NewProj opens a new directory for a project at given directory
-func (ge *Gide) NewProj(projDir gi.FileName) {
-	ge.ProjRoot = projDir
-	ge.UpdateProj()
+// IsEmpty returns true if given Gide project is empty -- has not been set to a valide path
+func (ge *Gide) IsEmpty() bool {
+	return ge.ProjRoot == ""
 }
 
-// SaveProj saves project file, in a standard JSON-formatted file
+// NewProj opens a new pproject at given path, which can either be a specific
+// file or a directory containing multiple files of interest -- opens in
+// current Gide object if it is empty, or otherwise opens a new window.
+func (ge *Gide) NewProj(path gi.FileName) {
+	if !ge.IsEmpty() {
+		NewGideProj(string(path))
+		return
+	}
+	ge.Defaults()
+	root, pnm, fnm, ok := ProjPathParse(string(path))
+	if ok {
+		ge.ProjRoot = gi.FileName(root)
+		ge.SetName(pnm)
+		ge.ProjFilename = gi.FileName(pnm + ".gide") // default filename
+		win := ge.ParentWindow()
+		if win != nil {
+			winm := "gide-" + pnm
+			win.SetName(winm)
+			win.OSWin.SetName(winm)
+			win.OSWin.SetTitle(winm)
+		}
+		ge.UpdateProj()
+		if fnm != "" {
+			ge.ViewFile(fnm)
+		}
+	}
+}
+
+// SaveProj saves project file containing custom project settings, in a
+// standard JSON-formatted file
 func (ge *Gide) SaveProj() {
 	if ge.ProjFilename == "" {
 		return
@@ -53,7 +88,8 @@ func (ge *Gide) SaveProj() {
 	ge.Changed = false
 }
 
-// SaveProjAs saves project to given filename, in a standard JSON-formatted file
+// SaveProjAs saves project custom settings to given filename, in a standard
+// JSON-formatted file
 func (ge *Gide) SaveProjAs(filename gi.FileName) {
 	ge.SaveJSON(string(filename))
 	ge.Changed = false
@@ -61,7 +97,8 @@ func (ge *Gide) SaveProjAs(filename gi.FileName) {
 	ge.UpdateSig() // notify our editor
 }
 
-// OpenProj opens project from given filename, in a standard JSON-formatted file
+// OpenProj opens project and its settings from given filename, in a standard
+// JSON-formatted file
 func (ge *Gide) OpenProj(filename gi.FileName) {
 	ge.OpenJSON(string(filename))
 	ge.ProjFilename = filename // should already be set but..
@@ -70,21 +107,7 @@ func (ge *Gide) OpenProj(filename gi.FileName) {
 	ge.UpdateSig() // notify our editor
 }
 
-// // GetAllUpdates connects to all nodes in the tree to receive notification of changes
-// func (ge *Gide) GetAllUpdates(root ki.Ki) {
-// 	ge.KiRoot.FuncDownMeFirst(0, ge, func(k ki.Ki, level int, d interface{}) bool {
-// 		k.NodeSignal().Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-// 			gee := recv.Embed(KiT_Gide).(*Gide)
-// 			if !gee.Changed {
-// 				fmt.Printf("Gide: Tree changed with signal: %v\n", ki.NodeSignals(sig))
-// 				gee.Changed = true
-// 			}
-// 		})
-// 		return true
-// 	})
-// }
-
-// UpdateProj does full update
+// UpdateProj does full update to current proj
 func (ge *Gide) UpdateProj() {
 	mods, updt := ge.StdConfig()
 	ge.SetTitle(fmt.Sprintf("Gide of: %v", ge.ProjRoot)) // todo: get rid of title
@@ -96,23 +119,115 @@ func (ge *Gide) UpdateProj() {
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Save files
+// ProjPathParse parses given project path into a root directory (which could
+// be the path or just the directory portion of the path, depending in whether
+// the path is a directory or not), and a bool if all is good (otherwise error
+// message has been reported). projnm is always the last directory of the path.
+func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
+	info, err := os.Lstat(path)
+	if err != nil {
+		emsg := fmt.Errorf("gide.ProjPathParse: Cannot open at given path: %q: Error: %v", path, err)
+		log.Println(emsg)
+		return
+	}
+	dir, fn := filepath.Split(path)
+	pathIsDir := info.IsDir()
+	if pathIsDir {
+		root = path
+	} else {
+		root = dir
+		fnm = fn
+	}
+	_, projnm = filepath.Split(root)
+	ok = true
+	return
+}
 
-// Save1 saves file viewed in editor 1..
-func (ge *Gide) Save1() {
-	tv1 := ge.TextView1()
-	if tv1.Buf != nil {
-		tv1.Buf.Save() // todo: errs..
+//////////////////////////////////////////////////////////////////////////////////////
+//   TextViews
+
+// ActiveTextView returns the currently-active TextView
+func (ge *Gide) ActiveTextView() *giv.TextView {
+	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
+}
+
+// SetActiveTextView sets the given view index as the currently-active
+// TextView -- returns that textview
+func (ge *Gide) SetActiveTextView(idx int) *giv.TextView {
+	if idx < 0 || idx >= ge.NTextViews {
+		log.Printf("Gide SetActiveTextView: text view index out of range: %v\n", idx)
+		return nil
+	}
+	ge.ActiveTextViewIdx = idx
+	av := ge.ActiveTextView()
+	if av.Buf != nil {
+		ge.ActiveFilename = av.Buf.Filename
+	}
+	av.GrabFocus()
+	return av
+}
+
+// NextTextView returns the next text view available for viewing a file and
+// its index -- if the active text view is empty, then it is used, otherwise
+// it is the next one
+func (ge *Gide) NextTextView() (*giv.TextView, int) {
+	av := ge.TextViewByIndex(ge.ActiveTextViewIdx)
+	if av.Buf == nil {
+		return av, ge.ActiveTextViewIdx
+	}
+	nxt := (ge.ActiveTextViewIdx + 1) % ge.NTextViews
+	return ge.TextViewByIndex(nxt), nxt
+}
+
+// SaveActiveView saves the contents of the currently-active textview
+func (ge *Gide) SaveActiveView() {
+	tv := ge.ActiveTextView()
+	if tv.Buf != nil {
+		tv.Buf.Save() // todo: errs..
 	}
 }
 
-// SaveAs1 save as file viewed in editor 1..
-func (ge *Gide) SaveAs1(filename gi.FileName) {
-	tv1 := ge.TextView1()
-	if tv1.Buf != nil {
-		tv1.Buf.SaveAs(filename)
+// SaveActiveViewAs save with specified filename the contents of the
+// currently-active textview
+func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
+	tv := ge.ActiveTextView()
+	if tv.Buf != nil {
+		tv.Buf.SaveAs(filename)
 	}
+}
+
+// ViewFileNode sets the next text view to view file in given node (opens
+// buffer if not already opened)
+func (ge *Gide) ViewFileNode(fn *FileNode) {
+	if err := fn.OpenBuf(); err == nil {
+		nv, nidx := ge.NextTextView()
+		if nv.Buf != nil && nv.Buf.Edited { // todo: save current changes?
+			fmt.Printf("Changes not saved in file: %v before switching view there to new file\n", nv.Buf.Filename)
+		}
+		nv.SetBuf(fn.Buf)
+		ge.SetActiveTextView(nidx)
+	}
+}
+
+// ViewFile sets the next text view to view given file name -- include as much
+// of name as possible to disambiguate -- will use the first matching --
+// returns false if not found
+func (ge *Gide) ViewFile(fnm string) bool {
+	fn, ok := ge.Files.FindFile(fnm)
+	if !ok {
+		return false
+	}
+	ge.ViewFileNode(fn)
+	return true
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+//    Defaults, Prefs
+
+// todo: add a prefs obj with everything
+
+func (ge *Gide) Defaults() {
+	ge.NTextViews = 2
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -175,24 +290,21 @@ func (ge *Gide) FileTree() *giv.TreeView {
 	return nil
 }
 
-// todo: generalize all this..
-
-// TextView1 returns the first main TextView1
-func (ge *Gide) TextView1() *giv.TextView {
-	split, _ := ge.SplitView()
-	if split != nil {
-		sv := split.KnownChild(1).KnownChild(0).(*giv.TextView)
-		return sv
+// TextViewByIndex returns the TextView by index, nil if not found
+func (ge *Gide) TextViewByIndex(idx int) *giv.TextView {
+	if idx < 0 || idx >= ge.NTextViews {
+		log.Printf("Gide: text view index out of range: %v\n", idx)
+		return nil
 	}
-	return nil
-}
-
-// TextView2 returns the first main TextView2
-func (ge *Gide) TextView2() *giv.TextView {
 	split, _ := ge.SplitView()
+	stidx := 1 // 0 = file browser -- could be collapsed but always there.
 	if split != nil {
-		sv := split.KnownChild(2).KnownChild(0).(*giv.TextView)
-		return sv
+		svk := split.KnownChild(stidx + idx).KnownChild(0)
+		if !svk.TypeEmbeds(giv.KiT_TextView) {
+			log.Printf("Gide: text view not at index: %v\n", idx)
+			return nil
+		}
+		return svk.(*giv.TextView)
 	}
 	return nil
 }
@@ -216,6 +328,17 @@ func (ge *Gide) ConfigToolbar() {
 	giv.ToolBarView(ge, ge.Viewport, tb)
 }
 
+// SplitViewConfig returns a TypeAndNameList for configuring the SplitView
+func (ge *Gide) SplitViewConfig() kit.TypeAndNameList {
+	config := kit.TypeAndNameList{}
+	config.Add(gi.KiT_Frame, "filetree-fr")
+	for i := 0; i < ge.NTextViews; i++ {
+		config.Add(gi.KiT_Frame, fmt.Sprintf("textview-fr-%v", i))
+	}
+	// todo: tab view
+	return config
+}
+
 // ConfigSplitView configures the SplitView.
 func (ge *Gide) ConfigSplitView() {
 	split, _ := ge.SplitView()
@@ -229,32 +352,24 @@ func (ge *Gide) ConfigSplitView() {
 	split.SetProp("tab-size", 4)
 	split.SetProp("font-family", "Go Mono")
 
-	if len(split.Kids) == 0 {
-		ftfr := split.AddNewChild(gi.KiT_Frame, "filetree-fr").(*gi.Frame)
+	config := ge.SplitViewConfig()
+	mods, updt := split.ConfigChildren(config, true)
+	if mods {
+		ftfr := split.KnownChild(0).(*gi.Frame)
 		ft := ftfr.AddNewChild(giv.KiT_TreeView, "filetree").(*giv.TreeView)
 		ft.SetRootNode(&ge.Files)
 
-		// generally need to put text view within its own frame for scrolling
-		txfr1 := split.AddNewChild(gi.KiT_Frame, "view-frame-1").(*gi.Frame)
-		txfr1.SetStretchMaxWidth()
-		txfr1.SetStretchMaxHeight()
-		txfr1.SetMinPrefWidth(units.NewValue(20, units.Ch))
-		txfr1.SetMinPrefHeight(units.NewValue(10, units.Ch))
+		for i := 0; i < ge.NTextViews; i++ {
+			txfr := split.KnownChild(1 + i).(*gi.Frame)
+			txfr.SetStretchMaxWidth()
+			txfr.SetStretchMaxHeight()
+			txfr.SetMinPrefWidth(units.NewValue(20, units.Ch))
+			txfr.SetMinPrefHeight(units.NewValue(10, units.Ch))
 
-		txed1 := txfr1.AddNewChild(giv.KiT_TextView, "textview-1").(*giv.TextView)
-		txed1.HiStyle = "emacs"
-		txed1.LineNos = true
-
-		// generally need to put text view within its own frame for scrolling
-		txfr2 := split.AddNewChild(gi.KiT_Frame, "view-frame-2").(*gi.Frame)
-		txfr2.SetStretchMaxWidth()
-		txfr2.SetStretchMaxHeight()
-		txfr2.SetMinPrefWidth(units.NewValue(20, units.Ch))
-		txfr2.SetMinPrefHeight(units.NewValue(10, units.Ch))
-
-		txed2 := txfr2.AddNewChild(giv.KiT_TextView, "textview-2").(*giv.TextView)
-		txed2.HiStyle = "emacs"
-		txed2.LineNos = true
+			txed := txfr.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
+			txed.HiStyle = "emacs" // todo prefs
+			txed.LineNos = true    // todo prefs
+		}
 
 		// todo: tab view on right
 
@@ -266,12 +381,11 @@ func (ge *Gide) ConfigSplitView() {
 			gee, _ := recv.Embed(KiT_Gide).(*Gide)
 			if sig == int64(giv.TreeViewSelected) {
 				fn := tvn.SrcNode.Ptr.(*FileNode)
-				if err := fn.OpenBuf(); err == nil {
-					gee.TextView1().SetBuf(fn.Buf)
-				}
+				gee.ViewFileNode(fn)
 			}
 		})
-		split.SetSplits(.1, .45, .45) // todo: save splits
+		split.SetSplits(.1, .45, .45) // todo: save splits -- that goes in .gide proj file
+		split.UpdateEnd(updt)
 	}
 }
 
@@ -308,16 +422,16 @@ var GideProps = ki.Props{
 			"shortcut": "Command+U",
 			"icon":     "update",
 		}},
-		{"Save1", ki.Props{
-			"icon": "file-save",
+		{"SaveActiveView", ki.Props{
+			"label": "Save",
+			"icon":  "file-save",
 		}},
-		{"SaveAs1", ki.Props{
-			"label": "Save 1 As...",
+		{"SaveActiveViewAs", ki.Props{
+			"label": "Save As...",
 			"icon":  "file-save",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
-					// "default-field": "jFilename",
-					// "ext":           ".gide",
+					"default-field": "ActiveFilename",
 				}},
 			},
 		}},
@@ -363,3 +477,92 @@ var GideProps = ki.Props{
 	},
 }
 
+//////////////////////////////////////////////////////////////////////////////////////
+//   Project window
+
+// NewGideProj creates a new Gide window with a new Gide project for given
+// path, returning the window and the path
+func NewGideProj(path string) (*gi.Window, *Gide) {
+
+	_, projnm, _, _ := ProjPathParse(path)
+	winm := "gide-" + projnm
+
+	width := 1280
+	height := 720
+
+	win := gi.NewWindow2D(winm, winm, width, height, true) // true = pixel sizes
+
+	vp := win.WinViewport2D()
+	updt := vp.UpdateStart()
+
+	mfr := win.SetMainFrame()
+
+	ge := mfr.AddNewChild(KiT_Gide, "gide").(*Gide)
+	ge.Viewport = vp
+
+	ge.NewProj(gi.FileName(path))
+
+	mmen := win.MainMenu
+	giv.MainMenuView(ge, win, mmen)
+
+	tb := ge.ToolBar()
+	if asave, ok := tb.FindActionByName("Save"); ok {
+		asave.UpdateFunc = func(act *gi.Action) {
+			act.SetActiveStateUpdt(ge.ActiveFilename != "")
+		}
+	}
+	tb.UpdateActions()
+
+	inClosePrompt := false
+	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+		if !inClosePrompt {
+			inClosePrompt = true
+			if ge.Changed {
+				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
+					Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
+					[]string{"Close Without Saving", "Cancel"},
+					win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+						switch sig {
+						case 0:
+							w.Close()
+						case 1:
+							// default is to do nothing, i.e., cancel
+						}
+					})
+			} else {
+				w.Close()
+			}
+		}
+	})
+
+	inQuitPrompt := false
+	oswin.TheApp.SetQuitReqFunc(func() {
+		if !inQuitPrompt {
+			inQuitPrompt = true
+			gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
+				Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
+				win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+					if sig == int64(gi.DialogAccepted) {
+						oswin.TheApp.Quit()
+					} else {
+						inQuitPrompt = false
+					}
+				})
+		}
+	})
+
+	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
+	// 	fmt.Printf("Doing final Close cleanup here..\n")
+	// })
+
+	win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
+		go oswin.TheApp.Quit() // once main window is closed, quit
+	})
+
+	win.MainMenuUpdated()
+
+	vp.UpdateEndNoSig(updt)
+
+	win.GoStartEventLoop()
+	return win, ge
+}
