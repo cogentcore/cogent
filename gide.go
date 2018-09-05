@@ -333,10 +333,15 @@ func (ge *Gide) SplitViewConfig() kit.TypeAndNameList {
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_Frame, "filetree-fr")
 	for i := 0; i < ge.NTextViews; i++ {
-		config.Add(gi.KiT_Frame, fmt.Sprintf("textview-fr-%v", i))
+		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-lay-%v", i))
 	}
 	// todo: tab view
 	return config
+}
+
+var fnFolderProps = ki.Props{
+	"icon":     "folder-open",
+	"icon-off": "folder",
 }
 
 // ConfigSplitView configures the SplitView.
@@ -358,15 +363,29 @@ func (ge *Gide) ConfigSplitView() {
 		ftfr := split.KnownChild(0).(*gi.Frame)
 		ft := ftfr.AddNewChild(giv.KiT_TreeView, "filetree").(*giv.TreeView)
 		ft.SetRootNode(&ge.Files)
-
+		// set icons -- todo need an update routine for this
+		ft.FuncDownMeFirst(0, ft, func(k ki.Ki, level int, d interface{}) bool {
+			if k.TypeEmbeds(giv.KiT_TreeView) {
+				tvn := k.(*giv.TreeView)
+				fn := tvn.SrcNode.Ptr.(*FileNode)
+				if fn.IsDir() {
+					tvn.SetProp("#branch", fnFolderProps)
+				} else {
+					tvn.Icon = fn.Ic
+				}
+				return true
+			} else {
+				return false
+			}
+		})
 		for i := 0; i < ge.NTextViews; i++ {
-			txfr := split.KnownChild(1 + i).(*gi.Frame)
-			txfr.SetStretchMaxWidth()
-			txfr.SetStretchMaxHeight()
-			txfr.SetMinPrefWidth(units.NewValue(20, units.Ch))
-			txfr.SetMinPrefHeight(units.NewValue(10, units.Ch))
+			txly := split.KnownChild(1 + i).(*gi.Layout)
+			txly.SetStretchMaxWidth()
+			txly.SetStretchMaxHeight()
+			txly.SetMinPrefWidth(units.NewValue(20, units.Ch))
+			txly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 
-			txed := txfr.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
+			txed := txly.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
 			txed.HiStyle = "emacs" // todo prefs
 			txed.LineNos = true    // todo prefs
 		}

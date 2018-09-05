@@ -22,7 +22,7 @@ import (
 // the name of the file.  Folders have children containing further nodes.
 type FileNode struct {
 	ki.Node
-	Ic      gi.IconName  `desc:"icon for file"`
+	Ic      gi.IconName  `desc:"icon for this file"`
 	FPath   gi.FileName  `desc:"full path to this file"`
 	Size    giv.FileSize `desc:"size of the file in bytes"`
 	Kind    string       `width:"20" max-width:"20" desc:"type of file / directory -- including MIME type"`

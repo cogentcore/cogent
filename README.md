@@ -41,15 +41,35 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* FileNode: sort all directories to the end (optional)
+
+* for big projects like gi, super need project file saved memory of collapsed FileNode's -- easy -- just use a set map of collapsed and lookup by name.  actually could store a bool in map and set that when file is checked and use that to delete stale entries in collapsed map.. 
+
+* track user-driven focus to update gide overall active view
+
+* create command key prefixes for C-x, C-c, etc -- desperately need shortcuts
+  for moving around windows
+
+* need tab viewer to view output of build commands, git commands, etc --
+  general VC / git api as well
+
 * search / replace in TextView
-* set inactive on all FileNodes, and have TreeView use props to get alt context menu items -- open in editor1, 2 etc
-* project file would save everything in principle if it is literally the gide object -- not sure though how robust that will be over time.  what actually goes in project file?? probably just some per-project settings of some sort?  have a general prefs and then a project-specific prefs.  things like splitter positions, number of editors, etc.
-* ideally context menu on each filenode has open in.. and then a submenu of editor numbers
-* also each textview should have its own context menu where you can pick which buffer / file to view -- C-x b / f will pull up these same functions.
+
+* gi: Universal ContextMenu type prop with "replace" keyword as first entry to clear out any existing default context menu -- FileNode uses to get alt context menu items.
+
+* add gide prefs obj -- project file should just be some per-project settings  -- have a general prefs and then a project-specific prefs.  things like splitter positions, number of editors, styles, etc.
+
+* also each textview should have its own context menu where you can pick which buffer / file to 
+view -- C-x b / f will pull up these same functions.  Make a gide-specific version of textview or use existing?
+
 * need commands to run after saving (always reload after save) and general commands avail. including git (just use command line for everything of course!)
+
 * textview not resizing in gide -- wordwrap is past end of this line.
+
 * bg color of line numbers darker than regular text.
+
 * need autosave and crash files!
+
 
 
 
