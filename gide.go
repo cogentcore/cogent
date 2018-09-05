@@ -576,9 +576,9 @@ func NewGideProj(path string) (*gi.Window, *Gide) {
 	// 	fmt.Printf("Doing final Close cleanup here..\n")
 	// })
 
-	win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
-		go oswin.TheApp.Quit() // once main window is closed, quit
-	})
+	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
+	// 	// go oswin.TheApp.Quit() // once main window is closed, quit
+	// })
 
 	win.MainMenuUpdated()
 
