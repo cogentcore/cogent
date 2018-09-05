@@ -525,32 +525,34 @@ func NewGideProj(path string) (*gi.Window, *Gide) {
 	giv.MainMenuView(ge, win, mmen)
 
 	tb := ge.ToolBar()
-	if asave, ok := tb.FindActionByName("Save"); ok {
-		asave.UpdateFunc = func(act *gi.Action) {
-			act.SetActiveStateUpdt(ge.ActiveFilename != "")
+	if tb != nil {
+		if asave, ok := tb.FindActionByName("Save"); ok {
+			asave.UpdateFunc = func(act *gi.Action) {
+				act.SetActiveStateUpdt(ge.ActiveFilename != "")
+			}
 		}
+		tb.UpdateActions()
 	}
-	tb.UpdateActions()
 
 	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
 		if !inClosePrompt {
 			inClosePrompt = true
-			if ge.Changed {
-				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
-					Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
-					[]string{"Close Without Saving", "Cancel"},
-					win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-						switch sig {
-						case 0:
-							w.Close()
-						case 1:
-							// default is to do nothing, i.e., cancel
-						}
-					})
-			} else {
-				w.Close()
-			}
+			// if ge.Changed {
+			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
+				Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
+				[]string{"Close Without Saving", "Cancel"},
+				win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+					switch sig {
+					case 0:
+						w.Close()
+					case 1:
+						// default is to do nothing, i.e., cancel
+					}
+				})
+			// } else {
+			// 	w.Close()
+			// }
 		}
 	})
 

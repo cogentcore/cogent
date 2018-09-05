@@ -64,10 +64,6 @@ view -- C-x b / f will pull up these same functions.  Make a gide-specific versi
 
 * need commands to run after saving (always reload after save) and general commands avail. including git (just use command line for everything of course!)
 
-* textview not resizing in gide -- wordwrap is past end of this line.
-
-* bg color of line numbers darker than regular text.
-
 * need autosave and crash files!
 
 
