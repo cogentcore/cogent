@@ -43,7 +43,9 @@ func mainrun() {
 		}
 	}
 
-	path, _ = filepath.Abs(path)
+	if path != "" {
+		path, _ = filepath.Abs(path)
+	}
 	gide.NewGideProj(path)
 	// above NewGideProj calls will have added to WinWait..
 	gi.WinWait.Wait()

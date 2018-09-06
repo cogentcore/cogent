@@ -124,6 +124,9 @@ func (ge *Gide) UpdateProj() {
 // the path is a directory or not), and a bool if all is good (otherwise error
 // message has been reported). projnm is always the last directory of the path.
 func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
+	if path == "" {
+		return "", "blank", "", false
+	}
 	info, err := os.Lstat(path)
 	if err != nil {
 		emsg := fmt.Errorf("gide.ProjPathParse: Cannot open at given path: %q: Error: %v", path, err)
@@ -351,6 +354,7 @@ func (ge *Gide) ConfigSplitView() {
 		return
 	}
 	split.Dim = gi.X
+	//	split.Dim = gi.Y
 
 	// todo: gide prefs for these
 	split.SetProp("word-wrap", true)
@@ -386,8 +390,9 @@ func (ge *Gide) ConfigSplitView() {
 			txly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 
 			txed := txly.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
-			txed.HiStyle = "emacs" // todo prefs
-			txed.LineNos = true    // todo prefs
+			txed.HiStyle = "emacs"   // todo prefs
+			txed.Opts.LineNos = true // todo prefs
+			txed.Opts.AutoIndent = true
 		}
 
 		// todo: tab view on right
@@ -502,7 +507,6 @@ var GideProps = ki.Props{
 // NewGideProj creates a new Gide window with a new Gide project for given
 // path, returning the window and the path
 func NewGideProj(path string) (*gi.Window, *Gide) {
-
 	_, projnm, _, _ := ProjPathParse(path)
 	winm := "gide-" + projnm
 

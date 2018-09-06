@@ -43,6 +43,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * FileNode: sort all directories to the end (optional)
 
+* filenode and fileinfo: detect +x files and mark as executable -- don't edit..
+
 * for big projects like gi, super need project file saved memory of collapsed FileNode's -- easy -- just use a set map of collapsed and lookup by name.  actually could store a bool in map and set that when file is checked and use that to delete stale entries in collapsed map.. 
 
 * track user-driven focus to update gide overall active view
