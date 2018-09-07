@@ -64,13 +64,13 @@ func (ge *Gide) NewProj(path gi.FileName) {
 		ge.ProjRoot = gi.FileName(root)
 		ge.SetName(pnm)
 		ge.ProjFilename = gi.FileName(pnm + ".gide") // default filename
+		ge.UpdateProj()
 		win := ge.ParentWindow()
 		if win != nil {
 			winm := "gide-" + pnm
 			win.SetName(winm)
 			win.SetTitle(winm)
 		}
-		ge.UpdateProj()
 		if fnm != "" {
 			ge.ViewFile(fnm)
 		}
