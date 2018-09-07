@@ -68,8 +68,7 @@ func (ge *Gide) NewProj(path gi.FileName) {
 		if win != nil {
 			winm := "gide-" + pnm
 			win.SetName(winm)
-			win.OSWin.SetName(winm)
-			win.OSWin.SetTitle(winm)
+			win.SetTitle(winm)
 		}
 		ge.UpdateProj()
 		if fnm != "" {
@@ -464,7 +463,8 @@ var GideProps = ki.Props{
 		{"AppMenu", ki.BlankProp{}},
 		{"File", ki.PropSlice{
 			{"NewProj", ki.Props{
-				"shortcut": "Command+N",
+				"shortcut":        "Command+N",
+				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"Proj Dir", ki.Props{
 						"dirs-only": true, // todo: support
@@ -580,9 +580,11 @@ func NewGideProj(path string) (*gi.Window, *Gide) {
 	// 	fmt.Printf("Doing final Close cleanup here..\n")
 	// })
 
-	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
-	// 	// go oswin.TheApp.Quit() // once main window is closed, quit
-	// })
+	win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
+		if len(gi.MainWindows) <= 1 {
+			go oswin.TheApp.Quit() // once main window is closed, quit
+		}
+	})
 
 	win.MainMenuUpdated()
 
