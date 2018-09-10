@@ -33,12 +33,42 @@ type FileNode struct {
 
 var KiT_FileNode = kit.Types.AddType(&FileNode{}, FileNodeProps)
 
-var FileNodeProps = ki.Props{}
+var FileNodeProps = ki.Props{
+	"CtxtMenu": ki.PropSlice{
+		{"DuplicateFile", ki.Props{
+			"label": "Duplicate",
+			"updtfunc": func(fni interface{}, act *gi.Action) {
+				fn := fni.(*FileNode)
+				act.SetInactiveStateUpdt(fn.IsDir())
+			},
+		}},
+		{"DeleteFile", ki.Props{
+			"label":   "Delete",
+			"desc":    "Ok to delete this file?  This is not undoable and is not moving to trash / recycle bin",
+			"confirm": true,
+			"updtfunc": func(fni interface{}, act *gi.Action) {
+				fn := fni.(*FileNode)
+				act.SetInactiveStateUpdt(fn.IsDir())
+			},
+		}},
+		{"RenameFile", ki.Props{
+			"label": "Rename",
+			"desc":  "Rename file to new file name",
+			"Args": ki.PropSlice{
+				{"New Name", ki.Props{
+					"default-field": "Name",
+				}},
+			},
+		}},
+	},
+}
 
 // IsDir returns true if file is a directory (folder)
 func (fn *FileNode) IsDir() bool {
 	return fn.Kind == "Folder"
 }
+
+// todo: depth limit on open path!
 
 // OpenPath reads all the files at given path into this tree -- uses config
 // children to preserve extra info already stored about files. The root node
@@ -54,7 +84,7 @@ func (fn *FileNode) OpenPath(path string) {
 		for _, sfk := range fn.Kids {
 			sf := sfk.(*FileNode)
 			fp := filepath.Join(path, sf.Nm)
-			sf.UpdateNode(fp)
+			sf.SetNodePath(fp)
 		}
 		fn.UpdateEnd(updt)
 	}
@@ -83,15 +113,21 @@ func (fn *FileNode) ConfigOfFiles(path string) kit.TypeAndNameList {
 	return config
 }
 
-// UpdateNode updates information in node based on file
-func (fn *FileNode) UpdateNode(path string) error {
+// SetNodePath sets the path for given node and updates it based on associated file
+func (fn *FileNode) SetNodePath(path string) error {
+	fn.FPath = gi.FileName(path)
+	return fn.UpdateNode()
+}
+
+// UpdateNode updates information in node based on its associated file in FPath
+func (fn *FileNode) UpdateNode() error {
+	path := string(fn.FPath)
 	info, err := os.Lstat(path)
 	if err != nil {
 		emsg := fmt.Errorf("gide.FileNode UpdateNode Path %q: Error: %v", path, err)
 		log.Println(emsg)
 		return emsg
 	}
-	fn.FPath = gi.FileName(path)
 	fn.Size = giv.FileSize(info.Size())
 	fn.Mode = info.Mode()
 	fn.ModTime = giv.FileTime(info.ModTime())
@@ -143,4 +179,55 @@ func (fn *FileNode) FindFile(fnm string) (*FileNode, bool) {
 		return true
 	})
 	return ffn, found
+}
+
+// DuplicateFile creates a copy of given file -- only works for regular files, not directories
+func (fn *FileNode) DuplicateFile() {
+	if fn.IsDir() {
+		log.Printf("giv.Duplicate: cannot copy directories\n")
+		return
+	}
+	path := string(fn.FPath)
+	ext := filepath.Ext(path)
+	noext := strings.TrimSuffix(path, ext)
+	dst := noext + "_Copy" + ext
+	giv.CopyFile(dst, path, fn.Mode)
+	if fn.Par != nil {
+		fnp := fn.Par.(*FileNode)
+		fnp.UpdateNode()
+	}
+}
+
+// DeleteFile deletes this file
+func (fn *FileNode) DeleteFile() {
+	if fn.IsDir() {
+		log.Printf("giv.FileNode Delete -- cannot delete directories!\n")
+		return
+	}
+	path := string(fn.FPath)
+	os.Remove(path)
+	fn.Delete(true) // we're done
+}
+
+// RenameFile renames file to new name
+func (fn *FileNode) RenameFile(newpath string) {
+	if newpath == "" {
+		log.Printf("giv.FileNode Rename: new name is empty!\n")
+		return
+	}
+	path := string(fn.FPath)
+	if newpath == path {
+		return
+	}
+	ndir, nfn := filepath.Split(newpath)
+	if ndir == "" {
+		if nfn == fn.Nm {
+			return
+		}
+		dir, _ := filepath.Split(path)
+		newpath = filepath.Join(dir, newpath)
+	}
+	os.Rename(path, newpath)
+	fn.SetName(nfn)
+	fn.UpdateSig()
 }

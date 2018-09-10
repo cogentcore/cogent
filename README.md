@@ -8,7 +8,7 @@ After all these years, nothing beats a great text editor for coding.  All that d
 
 And nothing beats coding for efficiently doing just about anything you want to do, whether it is data analysis, AI, etc (and obviously for "regular" coding).
 
-Even writing documents in a markup language (markdown, LaTeX, etc) is best accomplished in a great text editor.
+Even writing documents is best done in a markup language (markdown, LaTeX, etc), and needs a great text editor.  In short, virtually your entire workflow as a scientist, researcher, etc depends on the same core functionality.
 
 And yet, the perfect text editor / IDE has yet to be written... *until now!* (or at least *N* years hence.. :)
 
@@ -35,7 +35,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # Design Goals
 
-* Although implemented in Go, and that will obviously have most-favored status for language support, the goal is to make it as general as possible, with REPL support for various interpreted languages, and Go via https://github.com/cosmos72/gomacro (similar to https://github.com/gopherdata/gophernotes for `Jupyter` and `nteract`.
+* Although implemented in Go, and that will obviously have most-favored status for language support, the goal is to make it as general as possible, with REPL support for various interpreted languages, and Go via https://github.com/cosmos72/gomacro (similar to https://github.com/gopherdata/gophernotes for `Jupyter` and `nteract`).
 
 * Initially will be relying on basic syntax highlighting via https://github.com/alecthomas/chroma, but to provide more advanced IDE-level functionality, a flexible dynamic parsing framework is envisioned, based on the GoKi tree (ki) structures.  This will provide multi-pass robust AST (abstract syntax tree) level parsing of supported languages, and the goal is to make the parser fully GUI editable to support "easy" extension to new languages.
 
@@ -44,6 +44,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * FileNode: sort all directories to the end (optional)
 
 * filenode and fileinfo: detect +x files and mark as executable -- don't edit..
+
+* detect large directories (e.g., home) and only go 1 level (no subdirs)
 
 * for big projects like gi, super need project file saved memory of collapsed FileNode's -- easy -- just use a set map of collapsed and lookup by name.  actually could store a bool in map and set that when file is checked and use that to delete stale entries in collapsed map.. 
 
@@ -56,8 +58,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
   general VC / git api as well
 
 * search / replace in TextView
-
-* gi: Universal ContextMenu type prop with "replace" keyword as first entry to clear out any existing default context menu -- FileNode uses to get alt context menu items.
 
 * add gide prefs obj -- project file should just be some per-project settings  -- have a general prefs and then a project-specific prefs.  things like splitter positions, number of editors, styles, etc.
 
