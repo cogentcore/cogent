@@ -29,13 +29,13 @@ import (
 // middle, and a tabbed viewer on the right.
 type Gide struct {
 	gi.Frame
-	ProjFilename      gi.FileName `desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
-	ProjRoot          gi.FileName `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
-	ActiveFilename    gi.FileName `desc:"filename of the currently-active textview"`
-	Changed           bool        `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
-	Files             FileNode    `desc:"all the files in the project directory and subdirectories"`
-	NTextViews        int         `xml:"n-text-views" desc:"number of textviews available for editing files (default 2) -- configurable with n-text-views property"`
-	ActiveTextViewIdx int         `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
+	ProjFilename      gi.FileName  `desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
+	ProjRoot          gi.FileName  `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	ActiveFilename    gi.FileName  `desc:"filename of the currently-active textview"`
+	Changed           bool         `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+	Files             giv.FileTree `desc:"all the files in the project directory and subdirectories"`
+	NTextViews        int          `xml:"n-text-views" desc:"number of textviews available for editing files (default 2) -- configurable with n-text-views property"`
+	ActiveTextViewIdx int          `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
@@ -195,12 +195,13 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		tv.Buf.SaveAs(filename)
+		ge.Files.UpdateNewFile(filename)
 	}
 }
 
 // ViewFileNode sets the next text view to view file in given node (opens
 // buffer if not already opened)
-func (ge *Gide) ViewFileNode(fn *FileNode) {
+func (ge *Gide) ViewFileNode(fn *giv.FileNode) {
 	if err := fn.OpenBuf(); err == nil {
 		nv, nidx := ge.NextTextView()
 		if nv.Buf != nil && nv.Buf.Edited { // todo: save current changes?
@@ -230,6 +231,7 @@ func (ge *Gide) ViewFile(fnm string) bool {
 
 func (ge *Gide) Defaults() {
 	ge.NTextViews = 2
+	ge.Files.DirsOnTop = true
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -337,7 +339,7 @@ func (ge *Gide) SplitViewConfig() kit.TypeAndNameList {
 	for i := 0; i < ge.NTextViews; i++ {
 		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-lay-%v", i))
 	}
-	// todo: tab view
+	config.Add(giv.KiT_TabView, "tabview")
 	return config
 }
 
@@ -364,23 +366,8 @@ func (ge *Gide) ConfigSplitView() {
 	mods, updt := split.ConfigChildren(config, true)
 	if mods {
 		ftfr := split.KnownChild(0).(*gi.Frame)
-		ft := ftfr.AddNewChild(giv.KiT_TreeView, "filetree").(*giv.TreeView)
+		ft := ftfr.AddNewChild(giv.KiT_FileTreeView, "filetree").(*giv.FileTreeView)
 		ft.SetRootNode(&ge.Files)
-		// set icons -- todo need an update routine for this
-		ft.FuncDownMeFirst(0, ft, func(k ki.Ki, level int, d interface{}) bool {
-			if k.TypeEmbeds(giv.KiT_TreeView) {
-				tvn := k.(*giv.TreeView)
-				fn := tvn.SrcNode.Ptr.(*FileNode)
-				if fn.IsDir() {
-					tvn.SetProp("#branch", fnFolderProps)
-				} else {
-					tvn.Icon = fn.Ic
-				}
-				return true
-			} else {
-				return false
-			}
-		})
 		for i := 0; i < ge.NTextViews; i++ {
 			txly := split.KnownChild(1 + i).(*gi.Layout)
 			txly.SetStretchMaxWidth()
@@ -400,25 +387,58 @@ func (ge *Gide) ConfigSplitView() {
 			if data == nil {
 				return
 			}
-			tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+			tvn, _ := data.(ki.Ki).Embed(giv.KiT_FileTreeView).(*giv.FileTreeView)
 			gee, _ := recv.Embed(KiT_Gide).(*Gide)
-			if sig == int64(giv.TreeViewSelected) {
-				fn := tvn.SrcNode.Ptr.(*FileNode)
-				gee.ViewFileNode(fn)
+			fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
+			switch sig {
+			case int64(giv.TreeViewSelected):
+				gee.FileNodeSelected(fn, tvn)
+			case int64(giv.TreeViewOpened):
+				gee.FileNodeOpened(fn, tvn)
+			case int64(giv.TreeViewClosed):
+				gee.FileNodeClosed(fn, tvn)
 			}
 		})
-		split.SetSplits(.1, .45, .45) // todo: save splits -- that goes in .gide proj file
+		tabs := split.KnownChild(len(*split.Children()) - 1).(*giv.TabView)
+
+		lbl1 := tabs.AddNewTab(gi.KiT_Label, "Label1").(*gi.Label)
+		lbl1.SetText("this is the contents of the first tab")
+		lbl1.SetProp("word-wrap", true)
+
+		lbl2 := tabs.AddNewTab(gi.KiT_Label, "Label2").(*gi.Label)
+		lbl2.SetText("this is the contents of the second tab")
+		lbl2.SetProp("word-wrap", true)
+
+		tabs.SelectTabIndex(0)
+
+		split.SetSplits(.1, .3, .3, .3) // todo: save splits -- that goes in .gide proj file
 		split.UpdateEnd(updt)
 	}
 }
 
-// this is not necc and resets root pointer
-// func (ge *Gide) Style2D() {
-// 	if ge.Viewport != nil && ge.Viewport.DoingFullRender {
-// 		ge.UpdateFromRoot()
-// 	}
-// 	ge.Frame.Style2D()
-// }
+func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
+	if fn.IsDir() {
+	} else {
+		ge.ViewFileNode(fn)
+	}
+}
+
+func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
+	if fn.IsDir() {
+		if !fn.IsOpen() {
+			tvn.SetOpen()
+			fn.OpenDir()
+		}
+	}
+}
+
+func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *giv.FileTreeView) {
+	if fn.IsDir() {
+		if fn.IsOpen() {
+			fn.CloseDir()
+		}
+	}
+}
 
 func (ge *Gide) Render2D() {
 	ge.ToolBar().UpdateActions()
