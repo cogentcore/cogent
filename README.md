@@ -41,7 +41,11 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* add gide icon to overall list and plug that into .gide extension -- need to
+  generalize all that api so it is easily extensible.
+
 * filenode and fileinfo: detect +x files and mark as executable -- don't edit..
+* and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
 
 * track user-driven focus to update gide overall active view
 
@@ -52,8 +56,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
   general VC / git api as well
 
 * search / replace in TextView
-
-* add gide prefs obj -- project file should just be some per-project settings  -- have a general prefs and then a project-specific prefs.  things like splitter positions, number of editors, styles, etc.
 
 * also each textview should have its own context menu where you can pick which buffer / file to 
 view -- C-x b / f will pull up these same functions.  Make a gide-specific version of textview or use existing?

@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -29,13 +30,14 @@ import (
 // middle, and a tabbed viewer on the right.
 type Gide struct {
 	gi.Frame
-	ProjFilename      gi.FileName  `desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ProjRoot          gi.FileName  `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	ProjFilename      gi.FileName  `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ActiveFilename    gi.FileName  `desc:"filename of the currently-active textview"`
 	Changed           bool         `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
 	Files             giv.FileTree `desc:"all the files in the project directory and subdirectories"`
 	NTextViews        int          `xml:"n-text-views" desc:"number of textviews available for editing files (default 2) -- configurable with n-text-views property"`
 	ActiveTextViewIdx int          `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
+	Prefs             ProjPrefs    `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
@@ -50,6 +52,16 @@ func (ge *Gide) IsEmpty() bool {
 	return ge.ProjRoot == ""
 }
 
+// OpenRecent opens a recently-used file
+func (ge *Gide) OpenRecent(filename gi.FileName) {
+	ext := strings.ToLower(filepath.Ext(string(filename)))
+	if ext == ".gide" {
+		ge.OpenProj(filename)
+	} else {
+		ge.NewProj(filename)
+	}
+}
+
 // NewProj opens a new pproject at given path, which can either be a specific
 // file or a directory containing multiple files of interest -- opens in
 // current Gide object if it is empty, or otherwise opens a new window.
@@ -61,9 +73,13 @@ func (ge *Gide) NewProj(path gi.FileName) {
 	ge.Defaults()
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
+		SavedPaths.AddPath(root, gi.Prefs.SavedPathsMax)
+		SavePaths()
 		ge.ProjRoot = gi.FileName(root)
 		ge.SetName(pnm)
-		ge.ProjFilename = gi.FileName(pnm + ".gide") // default filename
+		ge.Prefs.ProjFilename = gi.FileName(filepath.Join(root, pnm+".gide"))
+		ge.ProjFilename = ge.Prefs.ProjFilename
+		ge.Prefs.ProjRoot = ge.ProjRoot
 		ge.UpdateProj()
 		win := ge.ParentWindow()
 		if win != nil {
@@ -80,30 +96,50 @@ func (ge *Gide) NewProj(path gi.FileName) {
 // SaveProj saves project file containing custom project settings, in a
 // standard JSON-formatted file
 func (ge *Gide) SaveProj() {
-	if ge.ProjFilename == "" {
+	if ge.Prefs.ProjFilename == "" {
 		return
 	}
-	ge.SaveJSON(string(ge.ProjFilename))
-	ge.Changed = false
+	ge.SaveProjAs(ge.Prefs.ProjFilename)
 }
 
 // SaveProjAs saves project custom settings to given filename, in a standard
 // JSON-formatted file
 func (ge *Gide) SaveProjAs(filename gi.FileName) {
-	ge.SaveJSON(string(filename))
+	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+	SavePaths()
+	ge.Prefs.ProjFilename = filename
+	ge.ProjFilename = ge.Prefs.ProjFilename
+	ge.GrabPrefs()
+	ge.Prefs.SaveJSON(filename)
 	ge.Changed = false
-	ge.ProjFilename = filename
 	ge.UpdateSig() // notify our editor
 }
 
 // OpenProj opens project and its settings from given filename, in a standard
 // JSON-formatted file
 func (ge *Gide) OpenProj(filename gi.FileName) {
-	ge.OpenJSON(string(filename))
-	ge.ProjFilename = filename // should already be set but..
-	ge.UpdateProj()
-	ge.SetFullReRender()
-	ge.UpdateSig() // notify our editor
+	if !ge.IsEmpty() {
+		OpenGideProj(string(filename))
+		return
+	}
+	ge.Prefs.OpenJSON(filename)
+	ge.Prefs.ProjFilename = filename // should already be set but..
+	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
+	if ok {
+		SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+		SavePaths()
+		ge.SetName(pnm)
+		ge.ApplyPrefs()
+		ge.UpdateProj()
+		win := ge.ParentWindow()
+		if win != nil {
+			winm := "gide-" + pnm
+			win.SetName(winm)
+			win.SetTitle(winm)
+		}
+		// ge.SetFullReRender()
+		// ge.UpdateSig() // notify our editor
+	}
 }
 
 // UpdateProj does full update to current proj
@@ -227,11 +263,49 @@ func (ge *Gide) ViewFile(fnm string) bool {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Defaults, Prefs
 
-// todo: add a prefs obj with everything
-
+// Defaults sets new project defaults based on overall preferences
 func (ge *Gide) Defaults() {
-	ge.NTextViews = 2
-	ge.Files.DirsOnTop = true
+	ge.Prefs.Preferences = Prefs // init from prefs
+	ge.NTextViews = ge.Prefs.Editor.NViews
+	ge.Prefs.Splits = []float32{.1, .3, .3, .3}
+	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+}
+
+// GrabPrefs grabs the current project preference settings from various
+// places, e.g., prior to saving or editing.
+func (ge *Gide) GrabPrefs() {
+	sv, _ := ge.SplitView()
+	if sv != nil {
+		ge.Prefs.Splits = sv.Splits
+	}
+	ge.Prefs.OpenDirs = ge.Files.OpenDirs
+}
+
+// ApplyPrefs applies current project preference settings into places where
+// they are used -- only for those done prior to loading
+func (ge *Gide) ApplyPrefs() {
+	ge.ProjFilename = ge.Prefs.ProjFilename
+	ge.ProjRoot = ge.Prefs.ProjRoot
+	ge.Files.OpenDirs = ge.Prefs.OpenDirs
+	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+	ge.NTextViews = ge.Prefs.Editor.NViews
+}
+
+// ApplyPrefsAction applies current preferences to the project, and updates the project
+func (ge *Gide) ApplyPrefsAction() {
+	ge.ApplyPrefs()
+	ge.SetFullReRender()
+	ge.UpdateProj()
+}
+
+// ProjPrefs allows editing of project preferences
+func (ge *Gide) ProjPrefs() {
+	sv, _ := PrefsView(&ge.Prefs.Preferences)
+	// we connect to changes and apply them
+	sv.ViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		gee, _ := recv.Embed(KiT_Gide).(*Gide)
+		gee.ApplyPrefsAction()
+	})
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -357,63 +431,68 @@ func (ge *Gide) ConfigSplitView() {
 	split.Dim = gi.X
 	//	split.Dim = gi.Y
 
-	// todo: gide prefs for these
-	split.SetProp("word-wrap", true)
-	split.SetProp("tab-size", 4)
-	split.SetProp("font-family", "Go Mono")
-
 	config := ge.SplitViewConfig()
 	mods, updt := split.ConfigChildren(config, true)
 	if mods {
 		ftfr := split.KnownChild(0).(*gi.Frame)
-		ft := ftfr.AddNewChild(giv.KiT_FileTreeView, "filetree").(*giv.FileTreeView)
-		ft.SetRootNode(&ge.Files)
+		if !ftfr.HasChildren() {
+			ft := ftfr.AddNewChild(giv.KiT_FileTreeView, "filetree").(*giv.FileTreeView)
+			ft.SetRootNode(&ge.Files)
+			ft.TreeViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+				if data == nil {
+					return
+				}
+				tvn, _ := data.(ki.Ki).Embed(giv.KiT_FileTreeView).(*giv.FileTreeView)
+				gee, _ := recv.Embed(KiT_Gide).(*Gide)
+				fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
+				switch sig {
+				case int64(giv.TreeViewSelected):
+					gee.FileNodeSelected(fn, tvn)
+				case int64(giv.TreeViewOpened):
+					gee.FileNodeOpened(fn, tvn)
+				case int64(giv.TreeViewClosed):
+					gee.FileNodeClosed(fn, tvn)
+				}
+			})
+		}
 		for i := 0; i < ge.NTextViews; i++ {
 			txly := split.KnownChild(1 + i).(*gi.Layout)
 			txly.SetStretchMaxWidth()
 			txly.SetStretchMaxHeight()
 			txly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 			txly.SetMinPrefHeight(units.NewValue(10, units.Ch))
-
-			txed := txly.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
-			txed.HiStyle = "emacs"   // todo prefs
-			txed.Opts.LineNos = true // todo prefs
-			txed.Opts.AutoIndent = true
+			if !txly.HasChildren() {
+				txly.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i))
+			}
 		}
 
-		// todo: tab view on right
-
-		ft.TreeViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-			if data == nil {
-				return
-			}
-			tvn, _ := data.(ki.Ki).Embed(giv.KiT_FileTreeView).(*giv.FileTreeView)
-			gee, _ := recv.Embed(KiT_Gide).(*Gide)
-			fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
-			switch sig {
-			case int64(giv.TreeViewSelected):
-				gee.FileNodeSelected(fn, tvn)
-			case int64(giv.TreeViewOpened):
-				gee.FileNodeOpened(fn, tvn)
-			case int64(giv.TreeViewClosed):
-				gee.FileNodeClosed(fn, tvn)
-			}
-		})
 		tabs := split.KnownChild(len(*split.Children()) - 1).(*giv.TabView)
+		if !tabs.HasChildren() {
+			lbl1 := tabs.AddNewTab(gi.KiT_Label, "Label1").(*gi.Label)
+			lbl1.SetText("this is the contents of the first tab")
+			lbl1.SetProp("word-wrap", true)
 
-		lbl1 := tabs.AddNewTab(gi.KiT_Label, "Label1").(*gi.Label)
-		lbl1.SetText("this is the contents of the first tab")
-		lbl1.SetProp("word-wrap", true)
-
-		lbl2 := tabs.AddNewTab(gi.KiT_Label, "Label2").(*gi.Label)
-		lbl2.SetText("this is the contents of the second tab")
-		lbl2.SetProp("word-wrap", true)
-
-		tabs.SelectTabIndex(0)
-
-		split.SetSplits(.1, .3, .3, .3) // todo: save splits -- that goes in .gide proj file
+			lbl2 := tabs.AddNewTab(gi.KiT_Label, "Label2").(*gi.Label)
+			lbl2.SetText("this is the contents of the second tab")
+			lbl2.SetProp("word-wrap", true)
+			tabs.SelectTabIndex(0)
+		}
+		split.SetSplits(ge.Prefs.Splits...)
 		split.UpdateEnd(updt)
 	}
+	for i := 0; i < ge.NTextViews; i++ {
+		txly := split.KnownChild(1 + i).(*gi.Layout)
+		txed := txly.KnownChild(0).(*giv.TextView)
+		txed.HiStyle = ge.Prefs.Editor.HiStyle
+		txed.Opts.LineNos = ge.Prefs.Editor.LineNos
+		txed.Opts.AutoIndent = true
+		txed.SetProp("word-wrap", ge.Prefs.Editor.WordWrap)
+		txed.SetProp("tab-size", ge.Prefs.Editor.TabSize)
+		txed.SetProp("font-family", ge.Prefs.Editor.FontFamily)
+	}
+
+	// set some properties always, even if no mods
+	split.SetSplits(ge.Prefs.Splits...)
 }
 
 func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
@@ -482,6 +561,12 @@ var GideProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
 		{"File", ki.PropSlice{
+			{"OpenRecent", ki.Props{
+				"submenu": &SavedPaths,
+				"Args": ki.PropSlice{
+					{"File Name", ki.Props{}},
+				},
+			}},
 			{"NewProj", ki.Props{
 				"shortcut":        "Command+N",
 				"no-update-after": true,
@@ -513,6 +598,10 @@ var GideProps = ki.Props{
 					}},
 				},
 			}},
+			{"sep-prefs", ki.BlankProp{}},
+			{"ProjPrefs", ki.Props{
+				// "shortcut": "Command+S",
+			}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
 		}},
@@ -524,10 +613,37 @@ var GideProps = ki.Props{
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project window
 
+func init() {
+	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
+		m.InsertActionAfter("GoGi Preferences", gi.ActOpts{Label: "Gide Preferences"},
+			win, func(recv, send ki.Ki, sig int64, data interface{}) {
+				PrefsView(&Prefs)
+			})
+	}
+}
+
 // NewGideProj creates a new Gide window with a new Gide project for given
 // path, returning the window and the path
 func NewGideProj(path string) (*gi.Window, *Gide) {
 	_, projnm, _, _ := ProjPathParse(path)
+	return NewGideWindow(path, projnm, true)
+}
+
+// OpenGideProj creates a new Gide window opened to given Gide project,
+// returning the window and the path
+func OpenGideProj(projfile string) (*gi.Window, *Gide) {
+	pp := &ProjPrefs{}
+	if err := pp.OpenJSON(gi.FileName(projfile)); err != nil {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Project File Could Not Be Opened", Prompt: fmt.Sprintf("Project file open encountered error: %v", err.Error())}, true, false, nil, nil)
+		return nil, nil
+	}
+	path := string(pp.ProjRoot)
+	_, projnm, _, _ := ProjPathParse(path)
+	return NewGideWindow(projfile, projnm, false)
+}
+
+// NewGideWindow is common code for New / Open GideWindow
+func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
 	winm := "gide-" + projnm
 
 	width := 1280
@@ -539,60 +655,38 @@ func NewGideProj(path string) (*gi.Window, *Gide) {
 	updt := vp.UpdateStart()
 
 	mfr := win.SetMainFrame()
-
 	ge := mfr.AddNewChild(KiT_Gide, "gide").(*Gide)
 	ge.Viewport = vp
 
-	ge.NewProj(gi.FileName(path))
+	if doNew {
+		ge.NewProj(gi.FileName(path))
+	} else {
+		ge.OpenProj(gi.FileName(path))
+	}
 
 	mmen := win.MainMenu
 	giv.MainMenuView(ge, win, mmen)
-
-	tb := ge.ToolBar()
-	if tb != nil {
-		if asave, ok := tb.FindActionByName("Save"); ok {
-			asave.UpdateFunc = func(act *gi.Action) {
-				act.SetActiveStateUpdt(ge.ActiveFilename != "")
-			}
-		}
-		tb.UpdateActions()
-	}
 
 	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
 		if !inClosePrompt {
 			inClosePrompt = true
-			// if ge.Changed {
-			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
-				Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
-				[]string{"Close Without Saving", "Cancel"},
-				win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-					switch sig {
-					case 0:
-						w.Close()
-					case 1:
-						// default is to do nothing, i.e., cancel
-					}
-				})
-			// } else {
-			// 	w.Close()
-			// }
-		}
-	})
-
-	inQuitPrompt := false
-	oswin.TheApp.SetQuitReqFunc(func() {
-		if !inQuitPrompt {
-			inQuitPrompt = true
-			gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
-				Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
-				win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-					if sig == int64(gi.DialogAccepted) {
-						oswin.TheApp.Quit()
-					} else {
-						inQuitPrompt = false
-					}
-				})
+			if ge.Changed {
+				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
+					Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
+					[]string{"Close Without Saving", "Cancel"},
+					win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+						switch sig {
+						case 0:
+							w.Close()
+						case 1:
+							inClosePrompt = false
+							// default is to do nothing, i.e., cancel
+						}
+					})
+			} else {
+				w.Close()
+			}
 		}
 	})
 

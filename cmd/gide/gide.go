@@ -8,11 +8,13 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gide"
+	"github.com/goki/ki"
 )
 
 func main() {
@@ -29,24 +31,57 @@ func mainrun() {
 	// 	fmt.Printf("Doing final Quit cleanup here..\n")
 	// })
 
+	gide.InitPrefs()
+
 	var path string
+	var proj string
 
 	// process command args
 	if len(os.Args) > 1 {
-		flag.StringVar(&path, "path", "./", "path to open -- can be to a directory or a filename within the directory")
+		flag.StringVar(&path, "path", "", "path to open -- can be to a directory or a filename within the directory")
+		flag.StringVar(&proj, "proj", "", "project file to open -- typically has .gide extension")
 		// todo: other args?
 		flag.Parse()
-		if path == "" {
+		if path == "" && proj == "" {
 			if flag.NArg() > 0 {
-				path = flag.Arg(0)
+				ext := strings.ToLower(filepath.Ext(flag.Arg(0)))
+				if ext == ".gide" {
+					proj = flag.Arg(0)
+				} else {
+					path = flag.Arg(0)
+				}
 			}
 		}
 	}
 
-	if path != "" {
-		path, _ = filepath.Abs(path)
+	recv := gi.Node2DBase{}
+	recv.InitName(&recv, "gide_dummy")
+
+	inQuitPrompt := false
+	oswin.TheApp.SetQuitReqFunc(func() {
+		if !inQuitPrompt {
+			inQuitPrompt = true
+			gi.PromptDialog(nil, gi.DlgOpts{Title: "Really Quit?",
+				Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
+				recv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+					if sig == int64(gi.DialogAccepted) {
+						oswin.TheApp.Quit()
+					} else {
+						inQuitPrompt = false
+					}
+				})
+		}
+	})
+
+	if proj != "" {
+		proj, _ = filepath.Abs(proj)
+		gide.OpenGideProj(proj)
+	} else {
+		if path != "" {
+			path, _ = filepath.Abs(path)
+		}
+		gide.NewGideProj(path)
 	}
-	gide.NewGideProj(path)
 	// above NewGideProj calls will have added to WinWait..
 	gi.WinWait.Wait()
 }
