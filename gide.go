@@ -514,7 +514,7 @@ func (ge *Gide) ConfigStatusBar() {
 		return
 	}
 	sb.SetStretchMaxWidth()
-	sb.SetMinPrefHeight(units.NewValue(1, units.Em))
+	sb.SetMinPrefHeight(units.NewValue(1.2, units.Em))
 	sb.SetProp("overflow", "hidden") // no scrollbars!
 	sb.SetProp("margin", 0)
 	sb.SetProp("padding", 0)
