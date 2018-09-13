@@ -79,8 +79,8 @@ func (lt *Langs) OpenJSON(filename gi.FileName) error {
 	*lt = make(Langs, 0, 10) // reset
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, true, false, nil, nil)
-		log.Println(err)
+		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, true, false, nil, nil)
+		// log.Println(err)
 		return err
 	}
 	return json.Unmarshal(b, lt)

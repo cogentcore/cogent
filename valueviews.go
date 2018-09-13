@@ -309,7 +309,7 @@ func CmdsView(pt *Commands) {
 	mfr.Lay = gi.LayoutVert
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
-	title.SetText("Available Commands: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
+	title.SetText("Available Commands: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
 	title.SetProp("word-wrap", true)
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
