@@ -41,16 +41,21 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* need our own specialized FileNode type subclass, with its own menu, including Edit, Run command, etc.  run command could be submenu?  start with chooser.
+
+* double-click on FileNode to edit -- regular select is too frequent.  need to get the double-click which otherwise could be just trapped as open?  I think we get it..
+
+* empty textview at startup still need to be clickable and you can load file using keyboard and panel navs.
+
+* track user-driven focus to update gide overall active view; next panel fun should do that too.
+
+* finish commands -- need var subst and execute using os/exec package.
+
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
 
 * filenode and fileinfo: detect +x files and mark as executable -- don't edit..
 * and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
-
-* track user-driven focus to update gide overall active view
-
-* create command key prefixes for C-x, C-c, etc -- desperately need shortcuts
-  for moving around windows
 
 * need tab viewer to view output of build commands, git commands, etc --
   general VC / git api as well
@@ -59,8 +64,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * also each textview should have its own context menu where you can pick which buffer / file to 
 view -- C-x b / f will pull up these same functions.  Make a gide-specific version of textview or use existing?
-
-* need commands to run after saving (always reload after save) and general commands avail. including git (just use command line for everything of course!)
 
 * need autosave and crash files!
 
