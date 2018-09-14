@@ -5,11 +5,13 @@
 package gide
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/oswin"
 )
 
 // ArgVars are variables that can be used for arguments to commands in CmdAndArgs
@@ -56,12 +58,12 @@ func SetArgVarVals(avp *map[string]string, fpath, projpath string, tv *giv.TextV
 	fpath = filepath.Clean(fpath)
 	projpath = filepath.Clean(projpath)
 
-	fnm, dirpath := filepath.Split(fpath)
+	dirpath, fnm := filepath.Split(fpath)
 	dirpath = filepath.Clean(dirpath)
-	dir, _ := filepath.Split(dirpath)
+	_, dir := filepath.Split(dirpath)
 	dirrel, _ := filepath.Rel(projpath, dirpath)
 
-	projdir, _ := filepath.Split(projpath)
+	_, projdir := filepath.Split(projpath)
 
 	ext := filepath.Ext(fnm)
 	extlc := strings.ToLower(ext)
@@ -98,4 +100,51 @@ func SetArgVarVals(avp *map[string]string, fpath, projpath string, tv *giv.TextV
 		av["{CurLineText}"] = ""
 		av["{CurWord}"] = ""
 	}
+}
+
+// BindArgVars replaces the variables in the given arg string with their values
+func BindArgVars(arg string) string {
+	sz := len(arg)
+	bs := []byte(arg)
+	ci := 0
+	gotquote := false
+	for ci < sz {
+		sb := bytes.Index(bs[ci:], []byte("{"))
+		if sb < 0 {
+			break
+		}
+		ci += sb
+		if ci-1 >= 0 && bs[ci-1] == '\\' { // quoted
+			ci++
+			gotquote = true
+			continue
+		}
+		eb := bytes.Index(bs[ci+1:], []byte("}"))
+		if eb < 0 {
+			break
+		}
+		eb += ci + 1
+		vnm := string(bs[ci : eb+1])
+		// fmt.Printf("%v\n", vnm)
+		if strings.HasPrefix(vnm, "{Prompt") {
+			// todo: do prompts!
+		} else {
+			if val, ok := ArgVarVals[vnm]; ok {
+				end := make([]byte, sz-(eb+1))
+				copy(end, bs[eb+1:])
+				bs = append(bs[:ci], []byte(val)...)
+				ci = len(bs)
+				bs = append(bs, end...)
+			}
+			sz = len(bs)
+		}
+	}
+	if gotquote {
+		bs = bytes.Replace(bs, []byte("\\{"), []byte("{"), -1)
+	}
+	// note: need to quote this out for testing for the time being..
+	if oswin.TheApp.Platform() == oswin.Windows {
+		bs = bytes.Replace(bs, []byte("}/{"), []byte("}\\{"), -1)
+	}
+	return string(bs)
 }

@@ -449,7 +449,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+F"}: KeyFunFileOpen,
 		KeySeq{"Control+X", "b"}:         KeyFunBufSelect,
 		KeySeq{"Control+X", "s"}:         KeyFunBufSave,
-		KeySeq{"Control+c", "Control+c"}: KeyFunExecCmd,
+		KeySeq{"Control+X", "c"}:         KeyFunExecCmd,
 	}},
 	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,
@@ -458,7 +458,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+F"}: KeyFunFileOpen,
 		KeySeq{"Control+X", "b"}:         KeyFunBufSelect,
 		KeySeq{"Control+X", "s"}:         KeyFunBufSave,
-		KeySeq{"Control+c", "Control+c"}: KeyFunExecCmd,
+		KeySeq{"Control+X", "c"}:         KeyFunExecCmd,
 	}},
 	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,
@@ -467,7 +467,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+F"}: KeyFunFileOpen,
 		KeySeq{"Control+X", "b"}:         KeyFunBufSelect,
 		KeySeq{"Control+X", "s"}:         KeyFunBufSave,
-		KeySeq{"Control+c", "Control+c"}: KeyFunExecCmd,
+		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 	}},
 	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,
@@ -476,7 +476,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+F"}: KeyFunFileOpen,
 		KeySeq{"Control+X", "b"}:         KeyFunBufSelect,
 		KeySeq{"Control+X", "s"}:         KeyFunBufSave,
-		KeySeq{"Control+c", "Control+c"}: KeyFunExecCmd,
+		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 	}},
 	{"WindowsStd", "Standard Windows KeySeqMap", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,
@@ -485,7 +485,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+F"}: KeyFunFileOpen,
 		KeySeq{"Control+X", "b"}:         KeyFunBufSelect,
 		KeySeq{"Control+X", "s"}:         KeyFunBufSave,
-		KeySeq{"Control+c", "Control+c"}: KeyFunExecCmd,
+		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 	}},
 	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,
@@ -494,6 +494,6 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+F"}: KeyFunFileOpen,
 		KeySeq{"Control+X", "b"}:         KeyFunBufSelect,
 		KeySeq{"Control+X", "s"}:         KeyFunBufSave,
-		KeySeq{"Control+c", "Control+c"}: KeyFunExecCmd,
+		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 	}},
 }

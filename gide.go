@@ -336,8 +336,18 @@ func (ge *Gide) FocusPrevPanel() {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Commands / Tabs
 
-func (ge *Gide) ExecCmd(cmd CmdName) {
-	// execute given command -- todo could have lighter popup selector
+func (ge *Gide) ExecCmd(cmdNm CmdName) {
+	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
+	if !ok {
+		return
+	}
+	av := ge.ActiveTextView()
+	if av == nil {
+		return
+	}
+	SetArgVarVals(&ArgVarVals, string(av.Buf.Filename), string(ge.ProjRoot), av)
+	cmd.MakeBuf(true) // default is to clear
+	cmd.Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -750,6 +760,11 @@ var GideProps = ki.Props{
 				}},
 			},
 		}},
+		{"ExecCmd", ki.Props{
+			"Args": ki.PropSlice{
+				{"Command", ki.Props{}},
+			},
+		}},
 	},
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -807,11 +822,6 @@ var GideProps = ki.Props{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
 				}},
-			},
-		}},
-		{"ExecCmd", ki.Props{
-			"Args": ki.PropSlice{
-				{"Command", ki.Props{}},
 			},
 		}},
 	},

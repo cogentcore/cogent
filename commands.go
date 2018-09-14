@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/goki/gi"
@@ -25,6 +26,20 @@ type CmdAndArgs struct {
 	Args []string `desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
 }
 
+// BindArgs replaces any variables in the args with their values, and returns resulting args
+func (cm *CmdAndArgs) BindArgs() []string {
+	sz := len(cm.Args)
+	if sz == 0 {
+		return nil
+	}
+	args := make([]string, sz)
+	for i := range cm.Args {
+		av := BindArgVars(cm.Args[i])
+		args[i] = av
+	}
+	return args
+}
+
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
@@ -32,8 +47,53 @@ type Command struct {
 	Desc  string       `desc:"brief description of this command"`
 	Langs LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
 	Cmds  []CmdAndArgs `desc:"sequence of commands to run for this overall command."`
+	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- for quick commands and those where subsequent steps. If multiple commands are present, then subsequent steps always wait for prior steps in the sequence"`
 	Buf   *giv.TextBuf `tableview:"-" view:"-" desc:"text buffer for displaying output of command"`
 }
+
+// MakeBuf creates the buffer object to save output from the command -- if
+// this is not called in advance of Run, then output is ignored.  returns true
+// if a new buffer was created, false if one already existed -- if clear is
+// true, then any existing buffer is cleared.
+func (cm *Command) MakeBuf(clear bool) bool {
+	if cm.Buf != nil {
+		if clear {
+			cm.Buf.New(0)
+		}
+		return false
+	}
+	cm.Buf = &giv.TextBuf{}
+	cm.Buf.InitName(cm.Buf, cm.Name+"-buf")
+	return true
+}
+
+// Run runs the command and saves the output in the Buf if it is non-nil,
+// which can be displayed -- if !wait, then Buf is updated online as output occurs.
+func (cm *Command) Run() {
+	if cm.Wait || len(cm.Cmds) > 1 {
+		for i := range cm.Cmds {
+			cma := &cm.Cmds[i]
+			cmd := exec.Command(cma.Cmd, cma.BindArgs()...)
+			out, err := cmd.CombinedOutput()
+			if err == nil {
+				if cm.Buf != nil {
+					cm.Buf.AppendText(out)
+					fmt.Printf("out:\n%v\n", string(out))
+				}
+			} else if ee, ok := err.(*exec.ExitError); ok {
+				fmt.Printf("Command failed with error: %v\n", ee.Error())
+				break
+			} else {
+				fmt.Printf("Cmd exec error: %v\n", err.Error())
+				break
+			}
+		}
+	} else {
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//  Commands
 
 // Commands is a list of different commands
 type Commands []Command
@@ -228,6 +288,6 @@ var CommandsProps = ki.Props{
 
 // StdCommands is the original compiled-in set of standard commands.
 var StdCommands = Commands{
-	{"Go Fmt File", "run go fmt on file", LangNames{"Go"}, []CmdAndArgs{CmdAndArgs{"go", []string{"fmt", "{FilePath}"}}}, nil},
-	{"Go Imports File", "run goimports on file", LangNames{"Go"}, []CmdAndArgs{CmdAndArgs{"goimports", []string{"{FilePath}"}}}, nil},
+	{"Go Fmt File", "run go fmt on file", LangNames{"Go"}, []CmdAndArgs{CmdAndArgs{"go", []string{"fmt", "{FilePath}"}}}, true, nil},
+	{"Go Imports File", "run goimports on file", LangNames{"Go"}, []CmdAndArgs{CmdAndArgs{"goimports", []string{"{FilePath}"}}}, true, nil},
 }
