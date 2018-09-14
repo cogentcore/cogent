@@ -458,7 +458,9 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+F"}: KeyFunFileOpen,
 		KeySeq{"Control+X", "b"}:         KeyFunBufSelect,
 		KeySeq{"Control+X", "s"}:         KeyFunBufSave,
+		KeySeq{"Control+X", "Control+S"}: KeyFunBufSave,
 		KeySeq{"Control+X", "c"}:         KeyFunExecCmd,
+		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 	}},
 	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,

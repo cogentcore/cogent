@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -55,6 +56,7 @@ type Gide struct {
 	ActiveTextViewIdx int          `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
 	Prefs             ProjPrefs    `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord    `desc:"first key in sequence if needs2 key pressed"`
+	UpdtMu            sync.Mutex   `desc:"mutex for protecting overall updates to Gide"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
@@ -98,6 +100,7 @@ func (ge *Gide) NewProj(path gi.FileName) {
 		ge.Prefs.ProjFilename = gi.FileName(filepath.Join(root, pnm+".gide"))
 		ge.ProjFilename = ge.Prefs.ProjFilename
 		ge.Prefs.ProjRoot = ge.ProjRoot
+		ge.GuessMainLang()
 		ge.UpdateProj()
 		win := ge.ParentWindow()
 		if win != nil {
@@ -200,6 +203,19 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 	return
 }
 
+// GuessMainLang guesses the main language in the project -- returns true if successful
+func (ge *Gide) GuessMainLang() bool {
+	ecs := ge.Files.FileExtCounts()
+	for _, ec := range ecs {
+		ls := LangsForExt(ec.Name)
+		if len(ls) == 1 {
+			ge.Prefs.MainLang = LangName(ls[0].Name)
+			return true
+		}
+	}
+	return false
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //   TextViews
 
@@ -267,6 +283,7 @@ func (ge *Gide) SaveActiveView() {
 	if tv.Buf != nil {
 		if tv.Buf.Filename != "" {
 			tv.Buf.Save()
+			ge.ActiveViewRunPostCmds()
 		} else {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
 		}
@@ -280,7 +297,48 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 	if tv.Buf != nil {
 		tv.Buf.SaveAs(filename)
 		ge.Files.UpdateNewFile(filename)
+		ge.ActiveViewRunPostCmds()
 	}
+}
+
+// ActiveViewRunPostCmds runs any registered post commands on the active view
+// -- returns true if commands were run and file was reverted after that --
+// uses MainLang to disambiguate if multiple languages associated with extension.
+func (ge *Gide) ActiveViewRunPostCmds() bool {
+	tv := ge.ActiveTextView()
+	ran := false
+	if tv.Buf == nil || tv.Buf.Filename == "" {
+		return false
+	}
+
+	ls := LangsForFilename(string(tv.Buf.Filename))
+	if len(ls) == 1 {
+		lr := ls[0]
+		if len(lr.PostSaveCmds) > 0 {
+			ge.ExecCmds(lr.PostSaveCmds)
+			ran = true
+		}
+	} else if len(ls) > 1 {
+		hasPosts := false
+		for _, lr := range ls {
+			if len(lr.PostSaveCmds) > 0 {
+				hasPosts = true
+				if lr.Name == string(ge.Prefs.MainLang) {
+					ge.ExecCmds(lr.PostSaveCmds)
+					ran = true
+					break
+				}
+			}
+		}
+		if hasPosts && !ran {
+			ge.SetStatus("File has multiple associated languages and none match main language of project, cannot run any post commands")
+		}
+	}
+	if ran {
+		tv.Buf.ReOpen()
+		return true
+	}
+	return false
 }
 
 // ViewFileNode sets the next text view to view file in given node (opens
@@ -394,11 +452,12 @@ func (ge *Gide) MainTabByName(label string) (gi.Node2D, int, bool) {
 // name, first by looking for an existing one, and if not found, making a new
 // one with widget of given type.  returns widget and tab index.
 func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type) (gi.Node2D, int) {
+	tv := ge.MainTabs()
 	widg, idx, ok := ge.MainTabByName(label)
 	if ok {
+		tv.SelectTabIndex(idx)
 		return widg, idx
 	}
-	tv := ge.MainTabs()
 	widg, idx = tv.AddNewTab(typ, label)
 	tv.SelectTabIndex(idx)
 	return widg, idx
@@ -410,6 +469,9 @@ func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type) (gi.Node2D, in
 func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
 	tvk, idx := ge.FindOrMakeMainTab(label, giv.KiT_TextView)
 	tv := tvk.Embed(giv.KiT_TextView).(*giv.TextView)
+	tv.SetProp("word-wrap", ge.Prefs.Editor.WordWrap)
+	tv.SetProp("tab-size", 8) // std for output
+	tv.SetProp("font-family", ge.Prefs.Editor.FontFamily)
 	return tv, idx
 }
 
@@ -440,7 +502,14 @@ func (ge *Gide) ExecCmd(cmdNm CmdName) {
 	tv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
 	tv.SetBuf(cmd.Buf)
 	SetArgVarVals(&ArgVarVals, string(av.Buf.Filename), string(ge.ProjRoot), av)
-	cmd.Run()
+	cmd.Run(ge)
+}
+
+// ExecCmds executes a sequence of commands
+func (ge *Gide) ExecCmds(cmdNms CmdNames) {
+	for _, cmdNm := range cmdNms {
+		ge.ExecCmd(cmdNm)
+	}
 }
 
 // ExecCmdFileNode executes given command on given file node
@@ -453,7 +522,7 @@ func (ge *Gide) ExecCmdFileNode(cmdNm CmdName, fn *FileNode) {
 	cmd.MakeBuf(true)
 	tv.SetBuf(cmd.Buf)
 	SetArgVarVals(&ArgVarVals, string(fn.FPath), string(ge.ProjRoot), nil)
-	cmd.Run()
+	cmd.Run(ge)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -465,6 +534,9 @@ func (ge *Gide) SetStatus(msg string) {
 	if sb == nil {
 		return
 	}
+	ge.UpdtMu.Lock()
+	defer ge.UpdtMu.Unlock()
+
 	updt := sb.UpdateStart()
 	lbl := ge.StatusLabel()
 	fnm := ""

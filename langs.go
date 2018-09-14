@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/oswin"
@@ -27,12 +28,14 @@ import (
 type Lang struct {
 	Name         string   `desc:"name of this language / data / file type (must be unique)"`
 	Desc         string   `desc:"<i>brief</i> description of it"`
-	Exts         []string `desc:"associated file extensions -- if the filename itself is more diagnostic (e.g., Makefile), specify that -- if it doesn't start with a . then it will be treated as the start of the filename"`
+	Exts         []string `desc:"associated lower-case file extensions -- if the filename itself is more diagnostic (e.g., Makefile), specify that -- if it doesn't start with a . then it will be treated as the start of the filename"`
 	PostSaveCmds CmdNames `desc:"command(s) to run after a file of this type is saved"`
 }
 
 // Langs is a list of language types
-type Langs []Lang
+type Langs []*Lang
+
+var KiT_Langs = kit.Types.AddType(&Langs{}, LangsProps)
 
 // LangName has an associated ValueView for selecting from the list of
 // available language names, for use in preferences etc.
@@ -46,7 +49,38 @@ type LangNames []LangName
 // .h files), so multiple languages are allowed
 var ExtToLangMap = map[string]Langs{}
 
-var KiT_Langs = kit.Types.AddType(&Langs{}, LangsProps)
+// UpdtExtToLangMap updates the map from current avail langs list
+func UpdtExtToLangMap() {
+	ExtToLangMap = AvailLangs.CompileExtMap()
+}
+
+// LangsForFilename returns the language(s) associated with given filename
+func LangsForFilename(filename string) Langs {
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext != "" {
+		if ls, has := ExtToLangMap[ext]; has {
+			return ls
+		}
+		mf := strings.TrimSuffix(filename, ext) // try the main file part, e.g., Makefile
+		if ls, has := ExtToLangMap[mf]; has {
+			return ls
+		}
+		return nil
+	} else {
+		if ls, has := ExtToLangMap[filename]; has {
+			return ls
+		}
+		return nil
+	}
+}
+
+// LangsForExt returns the language(s) associated with given extension
+func LangsForExt(ext string) Langs {
+	if ls, has := ExtToLangMap[ext]; has {
+		return ls
+	}
+	return nil
+}
 
 // AvailLangs is the current list of available languages defined -- can be
 // loaded / saved / edited with preferences.  This is set to StdLangs at
@@ -60,14 +94,30 @@ func init() {
 // LangByName returns a language and index by name -- returns false and emits a
 // message to stdout if not found
 func (lt *Langs) LangByName(name LangName) (*Lang, int, bool) {
-	for i := range *lt {
-		lr := &((*lt)[i])
+	for i, lr := range *lt {
 		if lr.Name == string(name) {
 			return lr, i, true
 		}
 	}
 	fmt.Printf("gide.LangByName: language named: %v not found\n", name)
 	return nil, -1, false
+}
+
+// CompileExtMap compiles a map between extensions and language(s)
+func (lt *Langs) CompileExtMap() map[string]Langs {
+	em := make(map[string]Langs, len(*lt))
+	for _, lr := range *lt {
+		for _, ex := range lr.Exts {
+			if eml, has := em[ex]; has {
+				eml = append(eml, lr)
+			} else {
+				eml := make(Langs, 1)
+				eml[0] = lr
+				em[ex] = eml
+			}
+		}
+	}
+	return em
 }
 
 // PrefsLangsFileName is the name of the preferences file in App prefs
@@ -83,7 +133,9 @@ func (lt *Langs) OpenJSON(filename gi.FileName) error {
 		// log.Println(err)
 		return err
 	}
-	return json.Unmarshal(b, lt)
+	rval := json.Unmarshal(b, lt)
+	UpdtExtToLangMap()
+	return rval
 }
 
 // SaveJSON saves languages to a JSON-formatted file.
@@ -125,6 +177,7 @@ func (lt *Langs) CopyFrom(cp Langs) {
 		fmt.Printf("json err: %v\n", err.Error())
 	}
 	json.Unmarshal(b, lt)
+	UpdtExtToLangMap()
 }
 
 // RevertToStd reverts this map to using the StdLangs that are compiled into
@@ -230,4 +283,6 @@ var LangsProps = ki.Props{
 // StdLangs is the original compiled-in set of standard languages.
 var StdLangs = Langs{
 	{"Go", "Go code", []string{".go"}, CmdNames{"Go Imports File"}},
+	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX File"}},
+	{"Markdown", "Markdown document", []string{".md"}, nil},
 }

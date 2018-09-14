@@ -5,12 +5,14 @@
 package gide
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -40,13 +42,22 @@ func (cm *CmdAndArgs) BindArgs() []string {
 	return args
 }
 
+// PrepCmd prepares to run command, returning *exec.Cmd and a string of the full command
+func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
+	args := cm.BindArgs()
+	astr := strings.Join(args, " ")
+	cmdstr := cm.Cmd + " " + astr
+	cmd := exec.Command(cm.Cmd, args...)
+	return cmd, cmdstr
+}
+
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
 	Name  string       `desc:"name of this type of project (must be unique in list of such types)"`
 	Desc  string       `desc:"brief description of this command"`
 	Langs LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
-	Cmds  []CmdAndArgs `desc:"sequence of commands to run for this overall command."`
+	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
 	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- for quick commands and those where subsequent steps. If multiple commands are present, then subsequent steps always wait for prior steps in the sequence"`
 	Buf   *giv.TextBuf `tableview:"-" view:"-" desc:"text buffer for displaying output of command"`
 }
@@ -68,27 +79,90 @@ func (cm *Command) MakeBuf(clear bool) bool {
 }
 
 // Run runs the command and saves the output in the Buf if it is non-nil,
-// which can be displayed -- if !wait, then Buf is updated online as output occurs.
-func (cm *Command) Run() {
+// which can be displayed -- if !wait, then Buf is updated online as output
+// occurs.  Status is updated with status of command exec.
+func (cm *Command) Run(ge *Gide) {
 	if cm.Wait || len(cm.Cmds) > 1 {
 		for i := range cm.Cmds {
 			cma := &cm.Cmds[i]
-			cmd := exec.Command(cma.Cmd, cma.BindArgs()...)
-			out, err := cmd.CombinedOutput()
-			if err == nil {
-				if cm.Buf != nil {
-					cm.Buf.AppendText(out)
-					fmt.Printf("out:\n%v\n", string(out))
+			if cm.Buf == nil {
+				if !cm.RunNoBuf(ge, cma) {
+					break
 				}
-			} else if ee, ok := err.(*exec.ExitError); ok {
-				fmt.Printf("Command failed with error: %v\n", ee.Error())
-				break
 			} else {
-				fmt.Printf("Cmd exec error: %v\n", err.Error())
-				break
+				if !cm.RunBufWait(ge, cma) {
+					break
+				}
 			}
 		}
 	} else {
+		cma := &cm.Cmds[0]
+		if cm.Buf == nil {
+			go cm.RunNoBuf(ge, cma)
+		} else {
+			go cm.RunBuf(ge, cma)
+		}
+	}
+}
+
+// RunBufWait runs a command with output to the buffer, using CombinedOutput
+// so it waits for completion -- returns overall command success, and logs one
+// line of the command output to gide statusbar
+func (cm *Command) RunBufWait(ge *Gide, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd()
+	out, err := cmd.CombinedOutput()
+	cm.Buf.AppendText(out)
+	return cm.RunStatus(ge, cmdstr, err, out)
+}
+
+// RunBuf runs a command with output to the buffer, incrementally updating the
+// buffer with new results line-by-line as they come in
+func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd()
+	stdout, err := cmd.StdoutPipe()
+	if err == nil {
+		cmd.Stderr = cmd.Stdout
+		err = cmd.Start()
+		if err == nil {
+			outscan := bufio.NewScanner(stdout) // line at a time
+			for outscan.Scan() {
+				cm.Buf.AppendTextLine(outscan.Bytes())
+			}
+		}
+		err = cmd.Wait()
+	}
+	return cm.RunStatus(ge, cmdstr, err, nil)
+}
+
+// RunNoBuf runs a command without any output to the buffer -- can call using
+// go as a goroutine for no-wait case -- returns overall command success, and
+// logs one line of the command output to gide statusbar
+func (cm *Command) RunNoBuf(ge *Gide, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd()
+	out, err := cmd.CombinedOutput()
+	return cm.RunStatus(ge, cmdstr, err, out)
+}
+
+// CmdOutStatusLen is amount of command output to include in the status update
+var CmdOutStatusLen = 80
+
+// RunStatus reports the status of the command run (given in cmdstr) to
+// ge.StatusBar -- returns true if there are no errors, and false if there
+// were errors
+func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) bool {
+	outstr := ""
+	if out != nil {
+		outstr = string(out[:CmdOutStatusLen])
+	}
+	if err == nil {
+		ge.SetStatus(fmt.Sprintf("Cmd: %v succesful: %v", cmdstr, outstr))
+		return true
+	} else if ee, ok := err.(*exec.ExitError); ok {
+		ge.SetStatus(fmt.Sprintf("Cmd: %v failed with error: %v: %v", cmdstr, ee.Error(), outstr))
+		return false
+	} else {
+		ge.SetStatus(fmt.Sprintf("Cmd: %v exec error: %v", cmdstr, err.Error(), outstr))
+		return false
 	}
 }
 
@@ -293,7 +367,11 @@ var StdCommands = Commands{
 	{"Go Imports File", "run goimports on file", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, true, nil},
 	{"Go Build", "run go build to build in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{FileDirPath}"}}}, true, nil},
-	{"List Dir", "list current dir", nil,
-		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, true, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{FileDirPath}"}}}, false, nil},
+	{"List Dir", "list current dir -- just for testing", nil,
+		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, false, nil},
+	{"Git Status", "git status", nil,
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status", "{FileDirPath}"}}}, true, nil},
+	{"PDFLaTeX File", "run PDFLaTeX on file", LangNames{"LaTeX"},
+		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, false, nil},
 }
