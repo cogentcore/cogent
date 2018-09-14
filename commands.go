@@ -288,6 +288,12 @@ var CommandsProps = ki.Props{
 
 // StdCommands is the original compiled-in set of standard commands.
 var StdCommands = Commands{
-	{"Go Fmt File", "run go fmt on file", LangNames{"Go"}, []CmdAndArgs{CmdAndArgs{"go", []string{"fmt", "{FilePath}"}}}, true, nil},
-	{"Go Imports File", "run goimports on file", LangNames{"Go"}, []CmdAndArgs{CmdAndArgs{"goimports", []string{"{FilePath}"}}}, true, nil},
+	{"Go Fmt File", "run go fmt on file", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, true, nil},
+	{"Go Imports File", "run goimports on file", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, true, nil},
+	{"Go Build", "run go build to build in current dir", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{FileDirPath}"}}}, true, nil},
+	{"List Dir", "list current dir", nil,
+		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, true, nil},
 }

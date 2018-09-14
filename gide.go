@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/goki/gi"
@@ -24,6 +25,21 @@ import (
 	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
+)
+
+// NTextViews is the number of text views to create -- to keep things simple
+// and consistent (e.g., splitter settings always have the same number of
+// values), we fix this degree of freedom, and have flexibility in the
+// splitter settings for what to actually show.
+const NTextViews = 2
+
+// These are then the fixed indices of the different elements in the splitview
+const (
+	FileTreeIdx = iota
+	TextView1Idx
+	TextView2Idx
+	MainTabsIdx
+	VisTabsIdx
 )
 
 // Gide is the core editor and tab viewer framework for the Gide system.  The
@@ -36,7 +52,6 @@ type Gide struct {
 	ActiveFilename    gi.FileName  `desc:"filename of the currently-active textview"`
 	Changed           bool         `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
 	Files             giv.FileTree `desc:"all the files in the project directory and subdirectories"`
-	NTextViews        int          `xml:"n-text-views" desc:"number of textviews available for editing files -- current value (see Prefs for the pref value)"`
 	ActiveTextViewIdx int          `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
 	Prefs             ProjPrefs    `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord    `desc:"first key in sequence if needs2 key pressed"`
@@ -193,11 +208,36 @@ func (ge *Gide) ActiveTextView() *giv.TextView {
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
 }
 
-// SetActiveTextView sets the given view index as the currently-active
+// TextViewIndex finds index of given textview (0 or 1)
+func (ge *Gide) TextViewIndex(av *giv.TextView) int {
+	split := ge.SplitView()
+	for i := 0; i < NTextViews; i++ {
+		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		if tv.This == av.This {
+			return i
+		}
+	}
+	return -1 // shouldn't happen
+}
+
+// SetActiveTextView sets the given textview as the active one, and returns its index
+func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
+	idx := ge.TextViewIndex(av)
+	if idx < 0 {
+		return -1
+	}
+	ge.ActiveTextViewIdx = idx
+	if av.Buf != nil {
+		ge.ActiveFilename = av.Buf.Filename
+	}
+	return idx
+}
+
+// SetActiveTextViewIdx sets the given view index as the currently-active
 // TextView -- returns that textview
-func (ge *Gide) SetActiveTextView(idx int) *giv.TextView {
-	if idx < 0 || idx >= ge.NTextViews {
-		log.Printf("Gide SetActiveTextView: text view index out of range: %v\n", idx)
+func (ge *Gide) SetActiveTextViewIdx(idx int) *giv.TextView {
+	if idx < 0 || idx >= NTextViews {
+		log.Printf("Gide SetActiveTextViewIdx: text view index out of range: %v\n", idx)
 		return nil
 	}
 	ge.ActiveTextViewIdx = idx
@@ -217,7 +257,7 @@ func (ge *Gide) NextTextView() (*giv.TextView, int) {
 	if av.Buf == nil {
 		return av, ge.ActiveTextViewIdx
 	}
-	nxt := (ge.ActiveTextViewIdx + 1) % ge.NTextViews
+	nxt := (ge.ActiveTextViewIdx + 1) % NTextViews
 	return ge.TextViewByIndex(nxt), nxt
 }
 
@@ -245,14 +285,14 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 
 // ViewFileNode sets the next text view to view file in given node (opens
 // buffer if not already opened)
-func (ge *Gide) ViewFileNode(fn *giv.FileNode) {
+func (ge *Gide) ViewFileNode(fn *FileNode) {
 	if err := fn.OpenBuf(); err == nil {
 		nv, nidx := ge.NextTextView()
 		if nv.Buf != nil && nv.Buf.Edited { // todo: save current changes?
 			fmt.Printf("Changes not saved in file: %v before switching view there to new file\n", nv.Buf.Filename)
 		}
 		nv.SetBuf(fn.Buf)
-		ge.SetActiveTextView(nidx)
+		ge.SetActiveTextViewIdx(nidx)
 	}
 }
 
@@ -264,7 +304,7 @@ func (ge *Gide) ViewFile(fnm gi.FileName) bool {
 	if !ok {
 		return false
 	}
-	ge.ViewFileNode(fn)
+	ge.ViewFileNode(fn.This.(*FileNode))
 	return true
 }
 
@@ -275,6 +315,7 @@ func (ge *Gide) SelectBuf() {
 
 // TextViewSig handles all signals from the textviews
 func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
+	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
 	switch sig {
 	case giv.TextViewCursorMoved:
 		ge.SetStatus("")
@@ -311,9 +352,15 @@ func (ge *Gide) FocusNextPanel() {
 	if cp >= np {
 		cp = 0
 	}
-	ski := sv.Kids[cp]
-	win := ge.ParentWindow()
-	win.FocusNext(ski)
+	if cp == TextView1Idx {
+		ge.SetActiveTextViewIdx(0)
+	} else if cp == TextView2Idx {
+		ge.SetActiveTextViewIdx(1)
+	} else {
+		ski := sv.Kids[cp]
+		win := ge.ParentWindow()
+		win.FocusNext(ski)
+	}
 }
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
@@ -334,19 +381,78 @@ func (ge *Gide) FocusPrevPanel() {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
+//    Tabs
+
+// MainTabByName returns a MainTabs (first set of tabs) tab with given name,
+// and its index -- returns false if not found
+func (ge *Gide) MainTabByName(label string) (gi.Node2D, int, bool) {
+	tv := ge.MainTabs()
+	return tv.TabByName(label)
+}
+
+// FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
+// name, first by looking for an existing one, and if not found, making a new
+// one with widget of given type.  returns widget and tab index.
+func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type) (gi.Node2D, int) {
+	widg, idx, ok := ge.MainTabByName(label)
+	if ok {
+		return widg, idx
+	}
+	tv := ge.MainTabs()
+	widg, idx = tv.AddNewTab(typ, label)
+	tv.SelectTabIndex(idx)
+	return widg, idx
+}
+
+// FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
+// name, first by looking for an existing one, and if not found, making a new
+// one with a TextView in it.  returns widget and tab index.
+func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
+	tvk, idx := ge.FindOrMakeMainTab(label, giv.KiT_TextView)
+	tv := tvk.Embed(giv.KiT_TextView).(*giv.TextView)
+	return tv, idx
+}
+
+// VisTabByName returns a VisTabs (second set of tabs for visualizations) tab
+// with given name, and its index -- returns false if not found
+func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
+	tv := ge.VisTabs()
+	if tv == nil {
+		return nil, -1, false
+	}
+	return tv.TabByName(label)
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
 //    Commands / Tabs
 
+// ExecCmd executes given command and shows output in MainTab with name of command
 func (ge *Gide) ExecCmd(cmdNm CmdName) {
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
 	if !ok {
 		return
 	}
 	av := ge.ActiveTextView()
-	if av == nil {
+	if av == nil { // todo: could just issue warning
 		return
 	}
+	cmd.MakeBuf(true)
+	tv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
+	tv.SetBuf(cmd.Buf)
 	SetArgVarVals(&ArgVarVals, string(av.Buf.Filename), string(ge.ProjRoot), av)
-	cmd.MakeBuf(true) // default is to clear
+	cmd.Run()
+}
+
+// ExecCmdFileNode executes given command on given file node
+func (ge *Gide) ExecCmdFileNode(cmdNm CmdName, fn *FileNode) {
+	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
+	if !ok {
+		return
+	}
+	tv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
+	cmd.MakeBuf(true)
+	tv.SetBuf(cmd.Buf)
+	SetArgVarVals(&ArgVarVals, string(fn.FPath), string(ge.ProjRoot), nil)
 	cmd.Run()
 }
 
@@ -386,10 +492,11 @@ func (ge *Gide) SetStatus(msg string) {
 
 // Defaults sets new project defaults based on overall preferences
 func (ge *Gide) Defaults() {
-	ge.Prefs.Preferences = Prefs // init from prefs
-	ge.NTextViews = ge.Prefs.Editor.NViews
-	ge.Prefs.Splits = []float32{.1, .3, .3, .3}
+	ge.Prefs.Files = Prefs.Files
+	ge.Prefs.Editor = Prefs.Editor
+	ge.Prefs.Splits = []float32{.1, .3, .3, .3, 0}
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+	ge.Files.SetChildType(KiT_FileNode)
 }
 
 // GrabPrefs grabs the current project preference settings from various
@@ -409,7 +516,6 @@ func (ge *Gide) ApplyPrefs() {
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	ge.NTextViews = ge.Prefs.Editor.NViews
 }
 
 // ApplyPrefsAction applies current preferences to the project, and updates the project
@@ -419,9 +525,9 @@ func (ge *Gide) ApplyPrefsAction() {
 	ge.UpdateProj()
 }
 
-// ProjPrefs allows editing of project preferences
+// ProjPrefs allows editing of project preferences (settings specific to this project)
 func (ge *Gide) ProjPrefs() {
-	sv, _ := PrefsView(&ge.Prefs.Preferences)
+	sv, _ := ProjPrefsView(&ge.Prefs)
 	// we connect to changes and apply them
 	sv.ViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 		gee, _ := recv.Embed(KiT_Gide).(*Gide)
@@ -465,32 +571,47 @@ func (ge *Gide) SplitView() *gi.SplitView {
 func (ge *Gide) FileTree() *giv.TreeView {
 	split := ge.SplitView()
 	if split != nil {
-		tv := split.KnownChild(0).KnownChild(0).(*giv.TreeView)
+		tv := split.KnownChild(FileTreeIdx).KnownChild(0).(*giv.TreeView)
 		return tv
 	}
 	return nil
 }
 
-// TextViewByIndex returns the TextView by index, nil if not found
+// TextViewByIndex returns the TextView by index (0 or 1), nil if not found
 func (ge *Gide) TextViewByIndex(idx int) *giv.TextView {
-	if idx < 0 || idx >= ge.NTextViews {
+	if idx < 0 || idx >= NTextViews {
 		log.Printf("Gide: text view index out of range: %v\n", idx)
 		return nil
 	}
 	split := ge.SplitView()
-	stidx := 1 // 0 = file browser -- could be collapsed but always there.
 	if split != nil {
-		svk := split.KnownChild(stidx + idx).KnownChild(0)
-		if !svk.TypeEmbeds(giv.KiT_TextView) {
-			log.Printf("Gide: text view not at index: %v\n", idx)
-			return nil
-		}
-		return svk.(*giv.TextView)
+		svk := split.KnownChild(TextView1Idx + idx).KnownChild(0)
+		return svk.Embed(giv.KiT_TextView).(*giv.TextView)
 	}
 	return nil
 }
 
-// ToolBar returns the toolbar widget
+// MainTabs returns the main TabView
+func (ge *Gide) MainTabs() *giv.TabView {
+	split := ge.SplitView()
+	if split != nil {
+		tv := split.KnownChild(MainTabsIdx).Embed(giv.KiT_TabView).(*giv.TabView)
+		return tv
+	}
+	return nil
+}
+
+// VisTabs returns the second, visualization TabView
+func (ge *Gide) VisTabs() *giv.TabView {
+	split := ge.SplitView()
+	if split != nil {
+		tv := split.KnownChild(VisTabsIdx).Embed(giv.KiT_TabView).(*giv.TabView)
+		return tv
+	}
+	return nil
+}
+
+// ToolBar returns the main toolbar
 func (ge *Gide) ToolBar() *gi.ToolBar {
 	tbi, ok := ge.ChildByName("toolbar", 2)
 	if !ok {
@@ -550,11 +671,12 @@ func (ge *Gide) ConfigToolbar() {
 // SplitViewConfig returns a TypeAndNameList for configuring the SplitView
 func (ge *Gide) SplitViewConfig() kit.TypeAndNameList {
 	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_Frame, "filetree-fr")
-	for i := 0; i < ge.NTextViews; i++ {
-		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-lay-%v", i))
+	config.Add(gi.KiT_Frame, "filetree")
+	for i := 0; i < NTextViews; i++ {
+		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-%v", i))
 	}
-	config.Add(giv.KiT_TabView, "tabview")
+	config.Add(giv.KiT_TabView, "main-tabs")
+	config.Add(giv.KiT_TabView, "vis-tabs")
 	return config
 }
 
@@ -585,7 +707,7 @@ func (ge *Gide) ConfigSplitView() {
 				}
 				tvn, _ := data.(ki.Ki).Embed(giv.KiT_FileTreeView).(*giv.FileTreeView)
 				gee, _ := recv.Embed(KiT_Gide).(*Gide)
-				fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
+				fn := tvn.SrcNode.Ptr.Embed(KiT_FileNode).(*FileNode)
 				switch sig {
 				case int64(giv.TreeViewSelected):
 					gee.FileNodeSelected(fn, tvn)
@@ -596,7 +718,7 @@ func (ge *Gide) ConfigSplitView() {
 				}
 			})
 		}
-		for i := 0; i < ge.NTextViews; i++ {
+		for i := 0; i < NTextViews; i++ {
 			txly := split.KnownChild(1 + i).(*gi.Layout)
 			txly.SetStretchMaxWidth()
 			txly.SetStretchMaxHeight()
@@ -612,21 +734,21 @@ func (ge *Gide) ConfigSplitView() {
 			}
 		}
 
-		tabs := split.KnownChild(len(*split.Children()) - 1).(*giv.TabView)
-		if !tabs.HasChildren() {
-			lbl1 := tabs.AddNewTab(gi.KiT_Label, "Label1").(*gi.Label)
-			lbl1.SetText("this is the contents of the first tab")
-			lbl1.SetProp("word-wrap", true)
+		// tabs := split.KnownChild(len(*split.Children()) - 1).(*giv.TabView)
+		// if !tabs.HasChildren() {
+		// 	lbl1 := tabs.AddNewTab(gi.KiT_Label, "Label1").(*gi.Label)
+		// 	lbl1.SetText("this is the contents of the first tab")
+		// 	lbl1.SetProp("word-wrap", true)
 
-			lbl2 := tabs.AddNewTab(gi.KiT_Label, "Label2").(*gi.Label)
-			lbl2.SetText("this is the contents of the second tab")
-			lbl2.SetProp("word-wrap", true)
-			tabs.SelectTabIndex(0)
-		}
+		// 	lbl2 := tabs.AddNewTab(gi.KiT_Label, "Label2").(*gi.Label)
+		// 	lbl2.SetText("this is the contents of the second tab")
+		// 	lbl2.SetProp("word-wrap", true)
+		// 	tabs.SelectTabIndex(0)
+		// }
 		split.SetSplits(ge.Prefs.Splits...)
 		split.UpdateEnd(updt)
 	}
-	for i := 0; i < ge.NTextViews; i++ {
+	for i := 0; i < NTextViews; i++ {
 		txly := split.KnownChild(1 + i).(*gi.Layout)
 		txed := txly.KnownChild(0).(*giv.TextView)
 		txed.HiStyle = ge.Prefs.Editor.HiStyle
@@ -641,23 +763,24 @@ func (ge *Gide) ConfigSplitView() {
 	split.SetSplits(ge.Prefs.Splits...)
 }
 
-func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
-	if fn.IsDir() {
-	} else {
-		ge.ViewFileNode(fn)
-	}
+func (ge *Gide) FileNodeSelected(fn *FileNode, tvn *giv.FileTreeView) {
+	// if fn.IsDir() {
+	// } else {
+	// }
 }
 
-func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeOpened(fn *FileNode, tvn *giv.FileTreeView) {
 	if fn.IsDir() {
 		if !fn.IsOpen() {
 			tvn.SetOpen()
 			fn.OpenDir()
 		}
+	} else {
+		ge.ViewFileNode(fn.This.(*FileNode))
 	}
 }
 
-func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeClosed(fn *FileNode, tvn *giv.FileTreeView) {
 	if fn.IsDir() {
 		if fn.IsOpen() {
 			fn.CloseDir()

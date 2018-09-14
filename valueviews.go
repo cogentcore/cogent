@@ -17,6 +17,107 @@ import (
 )
 
 //////////////////////////////////////////////////////////////////////////////////////
+//  PrefsView
+
+// PrefsView opens a view of user preferences, returns structview and window
+func PrefsView(pf *Preferences) (*giv.StructView, *gi.Window) {
+	winm := "gide-prefs"
+	if w, ok := gi.MainWindows.FindName(winm); ok {
+		w.OSWin.Raise()
+		return nil, nil
+	}
+
+	width := 800
+	height := 800
+	win := gi.NewWindow2D(winm, "Gide Preferences", width, height, true)
+
+	vp := win.WinViewport2D()
+	updt := vp.UpdateStart()
+
+	mfr := win.SetMainFrame()
+	mfr.Lay = gi.LayoutVert
+
+	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
+	sv.Viewport = vp
+	sv.SetStruct(pf, nil)
+	sv.SetStretchMaxWidth()
+	sv.SetStretchMaxHeight()
+
+	mmen := win.MainMenu
+	giv.MainMenuView(pf, win, mmen)
+
+	inClosePrompt := false
+	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+		if pf.Changed {
+			if !inClosePrompt {
+				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Prefs Before Closing?",
+					Prompt: "Do you want to save any changes to preferences before closing?"},
+					[]string{"Save and Close", "Discard and Close", "Cancel"},
+					win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+						switch sig {
+						case 0:
+							pf.Save()
+							fmt.Println("Preferences Saved to prefs.json")
+							w.Close()
+						case 1:
+							pf.Open() // if we don't do this, then it actually remains in edited state
+							w.Close()
+						case 2:
+							inClosePrompt = false
+							// default is to do nothing, i.e., cancel
+						}
+					})
+			}
+		} else {
+			w.Close()
+		}
+	})
+
+	win.MainMenuUpdated()
+
+	vp.UpdateEndNoSig(updt)
+	win.GoStartEventLoop()
+	return sv, win
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+//  ProjPrefsView
+
+// ProjPrefsView opens a view of project preferences (settings), returns structview and window
+func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
+	winm := "gide-proj-prefs"
+
+	width := 800
+	height := 800
+	win := gi.NewWindow2D(winm, "Gide Project Preferences", width, height, true)
+
+	vp := win.WinViewport2D()
+	updt := vp.UpdateStart()
+
+	mfr := win.SetMainFrame()
+	mfr.Lay = gi.LayoutVert
+
+	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title.SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
+	title.SetProp("word-wrap", true)
+
+	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
+	sv.Viewport = vp
+	sv.SetStruct(pf, nil)
+	sv.SetStretchMaxWidth()
+	sv.SetStretchMaxHeight()
+
+	mmen := win.MainMenu
+	giv.MainMenuView(pf, win, mmen)
+
+	win.MainMenuUpdated()
+
+	vp.UpdateEndNoSig(updt)
+	win.GoStartEventLoop()
+	return sv, win
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
 //  KeyMapsView
 
 // KeyMapsView opens a view of a key maps table

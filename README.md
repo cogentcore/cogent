@@ -41,24 +41,25 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* need our own specialized FileNode type subclass, with its own menu, including Edit, Run command, etc.  run command could be submenu?  start with chooser.
-
-* double-click on FileNode to edit -- regular select is too frequent.  need to get the double-click which otherwise could be just trapped as open?  I think we get it..
+* post-save commands
 
 * empty textview at startup still need to be clickable and you can load file using keyboard and panel navs.
 
-* track user-driven focus to update gide overall active view; next panel fun should do that too.
+* named splitter configs and save etc
 
-* finish commands -- need var subst and execute using os/exec package.
+* filter commands by lang, set node lang, etc
+
+* non-wait commands -- build should not be wait
+
+* cd to directory first before executing commands!
+
+* add all the other commands!
 
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
 
 * filenode and fileinfo: detect +x files and mark as executable -- don't edit..
 * and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
-
-* need tab viewer to view output of build commands, git commands, etc --
-  general VC / git api as well
 
 * search / replace in TextView
 
