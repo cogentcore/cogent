@@ -99,7 +99,7 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
 	title.SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
-	title.SetProp("word-wrap", true)
+	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
 
 	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
 	sv.Viewport = vp
@@ -135,7 +135,7 @@ func KeyMapsView(km *KeyMaps) {
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
 	title.SetText("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
-	title.SetProp("word-wrap", true)
+	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -273,7 +273,7 @@ func LangsView(pt *Langs) {
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
 	title.SetText("Available Languages: Duplicate an existing (using Ctxt Menu) as starting point for creating a custom entry")
-	title.SetProp("word-wrap", true)
+	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -411,7 +411,7 @@ func CmdsView(pt *Commands) {
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
 	title.SetText("Available Commands: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
-	title.SetProp("word-wrap", true)
+	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -532,4 +532,5 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 				dlgFunc(dlgRecv, send, sig, data)
 			}
 		})
+
 }

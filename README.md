@@ -41,6 +41,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* need autosave and crash files! and change flags from editors, updates of filetree, etc to update changed flag.  Save of proj save all open buffers?  probably!
+
 * ChangeLog record of all commits in project -- special status of commit -- not just any cmd
 
 * errors in cut / paste in textview.
@@ -50,8 +52,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * empty textview at startup still need to be clickable and you can load file using keyboard and panel navs.
 
 * named splitter configs and save etc
-
-* filter commands by lang, set node lang, etc
 
 * cd to directory first before executing commands!
 
@@ -68,7 +68,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * also each textview should have its own context menu where you can pick which buffer / file to 
 view -- C-x b / f will pull up these same functions.  Make a gide-specific version of textview or use existing?
 
-* need autosave and crash files!
 
 
 

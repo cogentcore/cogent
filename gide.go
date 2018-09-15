@@ -255,6 +255,7 @@ func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
 	if av.Buf != nil {
 		ge.SetActiveFilename(av.Buf.Filename)
 	}
+	ge.SetStatus("")
 	return idx
 }
 
@@ -270,6 +271,7 @@ func (ge *Gide) SetActiveTextViewIdx(idx int) *giv.TextView {
 	if av.Buf != nil {
 		ge.SetActiveFilename(av.Buf.Filename)
 	}
+	ge.SetStatus("")
 	av.GrabFocus()
 	return av
 }
@@ -360,7 +362,6 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
 		tv.SetBuf(fn.Buf)
 		ge.OpenNodes.Add(fn)
 		ge.SetActiveTextViewIdx(vidx)
-		ge.SetStatus("")
 	}
 }
 
@@ -388,6 +389,7 @@ func (ge *Gide) NextViewFile(fnm gi.FileName) bool {
 func (ge *Gide) SelectOpenNode() {
 	if len(ge.OpenNodes) < 2 {
 		ge.SetStatus("No other open nodes to choose from")
+		return
 	}
 	nl := ge.OpenNodes.Strings()
 	tv := ge.ActiveTextView() // nl[0] is always currently viewed
@@ -461,9 +463,15 @@ func (ge *Gide) FocusPrevPanel() {
 	if cp < 0 {
 		cp = np - 1
 	}
-	ski := sv.Kids[cp]
-	win := ge.ParentWindow()
-	win.FocusNext(ski)
+	if cp == TextView1Idx {
+		ge.SetActiveTextViewIdx(0)
+	} else if cp == TextView2Idx {
+		ge.SetActiveTextViewIdx(1)
+	} else {
+		ski := sv.Kids[cp]
+		win := ge.ParentWindow()
+		win.FocusNext(ski)
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -497,7 +505,11 @@ func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type) (gi.Node2D, in
 func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
 	tvk, idx := ge.FindOrMakeMainTab(label, giv.KiT_TextView)
 	tv := tvk.Embed(giv.KiT_TextView).(*giv.TextView)
-	tv.SetProp("word-wrap", ge.Prefs.Editor.WordWrap)
+	if ge.Prefs.Editor.WordWrap {
+		tv.SetProp("white-space", gi.WhiteSpacePreWrap)
+	} else {
+		tv.SetProp("white-space", gi.WhiteSpacePre)
+	}
 	tv.SetProp("tab-size", 8) // std for output
 	tv.SetProp("font-family", ge.Prefs.Editor.FontFamily)
 	return tv, idx
@@ -615,7 +627,7 @@ func (ge *Gide) SetStatus(msg string) {
 		}
 	}
 
-	str := fmt.Sprintf("%v   <b>%v:</b>   (%v,%v)    %v", ge.Nm, fnm, ln, ch, msg)
+	str := fmt.Sprintf("%v\t<b>%v:</b>\t(%v,%v)\t%v", ge.Nm, fnm, ln, ch, msg)
 	lbl.SetText(str)
 	sb.UpdateEnd(updt)
 }
@@ -886,8 +898,12 @@ func (ge *Gide) ConfigSplitView() {
 		txed := txly.KnownChild(0).(*giv.TextView)
 		txed.HiStyle = ge.Prefs.Editor.HiStyle
 		txed.Opts.LineNos = ge.Prefs.Editor.LineNos
-		txed.Opts.AutoIndent = true
-		txed.SetProp("word-wrap", ge.Prefs.Editor.WordWrap)
+		txed.Opts.AutoIndent = false
+		if ge.Prefs.Editor.WordWrap {
+			txed.SetProp("white-space", gi.WhiteSpacePreWrap)
+		} else {
+			txed.SetProp("white-space", gi.WhiteSpacePre)
+		}
 		txed.SetProp("tab-size", ge.Prefs.Editor.TabSize)
 		txed.SetProp("font-family", ge.Prefs.Editor.FontFamily)
 	}
