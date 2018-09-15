@@ -166,11 +166,30 @@ func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) boo
 	}
 }
 
+// LangMatch returns true if the given languages match those of the command,
+// or command has no language restrictions
+func (cm *Command) LangMatch(langs LangNames) bool {
+	if len(cm.Langs) == 0 {
+		return true
+	}
+	if len(langs) == 0 {
+		return false
+	}
+	for _, cln := range cm.Langs {
+		for _, lnm := range langs {
+			if cln == lnm {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //  Commands
 
 // Commands is a list of different commands
-type Commands []Command
+type Commands []*Command
 
 var KiT_Commands = kit.Types.AddType(&Commands{}, CommandsProps)
 
@@ -178,13 +197,43 @@ var KiT_Commands = kit.Types.AddType(&Commands{}, CommandsProps)
 // available command names, for use in preferences etc.
 type CmdName string
 
+// IsValid checks if command name exists on AvailCmds list
+func (cn CmdName) IsValid() bool {
+	_, _, ok := AvailCmds.CmdByName(cn)
+	return ok
+}
+
+// Command returns command associated with command name in AvailCmds, and
+// false if it doesn't exist
+func (cn CmdName) Command() (*Command, bool) {
+	cmd, _, ok := AvailCmds.CmdByName(cn)
+	return cmd, ok
+}
+
 // CmdNames is a slice of command names
 type CmdNames []CmdName
+
+// Add adds a name to the list
+func (cn *CmdNames) Add(cmd CmdName) {
+	*cn = append(*cn, cmd)
+}
 
 // AvailCmds is the current list of available commands for use -- can be
 // loaded / saved / edited with preferences.  This is set to StdCommands at
 // startup.
 var AvailCmds Commands
+
+// LangCmdNames returns a slice of commands that are compatible with given
+// language(s).
+func (cm *Commands) LangCmdNames(langs LangNames) []string {
+	cmds := make([]string, 0, 100)
+	for _, cmd := range *cm {
+		if cmd.LangMatch(langs) {
+			cmds = append(cmds, cmd.Name)
+		}
+	}
+	return cmds
+}
 
 func init() {
 	AvailCmds.CopyFrom(StdCommands)
@@ -193,8 +242,7 @@ func init() {
 // CmdByName returns a command and index by name -- returns false and emits a
 // message to stdout if not found
 func (cm *Commands) CmdByName(name CmdName) (*Command, int, bool) {
-	for i, _ := range *cm {
-		cmd := &((*cm)[i])
+	for i, cmd := range *cm {
 		if cmd.Name == string(name) {
 			return cmd, i, true
 		}
@@ -362,16 +410,20 @@ var CommandsProps = ki.Props{
 
 // StdCommands is the original compiled-in set of standard commands.
 var StdCommands = Commands{
-	{"Go Fmt File", "run go fmt on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, true, nil},
-	{"Go Imports File", "run goimports on file", LangNames{"Go"},
+	{"Imports Go File", "run goimports on file", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, true, nil},
-	{"Go Build", "run go build to build in current dir", LangNames{"Go"},
+	{"Fmt Go File", "run go fmt on file", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, true, nil},
+	{"Build Go", "run go build to build in current dir", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{FileDirPath}"}}}, false, nil},
+	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet", "{FileDirPath}"}}}, false, nil},
 	{"List Dir", "list current dir -- just for testing", nil,
 		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, false, nil},
 	{"Git Status", "git status", nil,
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"status", "{FileDirPath}"}}}, true, nil},
+	{"Git Push", "git push", nil,
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, true, nil},
 	{"PDFLaTeX File", "run PDFLaTeX on file", LangNames{"LaTeX"},
 		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, false, nil},
 }

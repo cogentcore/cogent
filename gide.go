@@ -51,9 +51,12 @@ type Gide struct {
 	ProjRoot          gi.FileName  `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
 	ProjFilename      gi.FileName  `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ActiveFilename    gi.FileName  `desc:"filename of the currently-active textview"`
+	ActiveLangs       LangNames    `desc:"languages for current active filename"`
 	Changed           bool         `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
 	Files             giv.FileTree `desc:"all the files in the project directory and subdirectories"`
 	ActiveTextViewIdx int          `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
+	OpenNodes         OpenNodes    `json:"-" desc:"list of open nodes, most recent first"`
+	CmdHistory        CmdNames     `json:"-" desc:"history of commands executed in this session"`
 	Prefs             ProjPrefs    `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord    `desc:"first key in sequence if needs2 key pressed"`
 	UpdtMu            sync.Mutex   `desc:"mutex for protecting overall updates to Gide"`
@@ -109,7 +112,7 @@ func (ge *Gide) NewProj(path gi.FileName) {
 			win.SetTitle(winm)
 		}
 		if fnm != "" {
-			ge.ViewFile(gi.FileName(fnm))
+			ge.NextViewFile(gi.FileName(fnm))
 		}
 	}
 }
@@ -236,6 +239,12 @@ func (ge *Gide) TextViewIndex(av *giv.TextView) int {
 	return -1 // shouldn't happen
 }
 
+// SetActiveFilename sets the active filename
+func (ge *Gide) SetActiveFilename(fname gi.FileName) {
+	ge.ActiveFilename = fname
+	ge.ActiveLangs = LangNamesForFilename(string(fname))
+}
+
 // SetActiveTextView sets the given textview as the active one, and returns its index
 func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
 	idx := ge.TextViewIndex(av)
@@ -244,7 +253,7 @@ func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
 	}
 	ge.ActiveTextViewIdx = idx
 	if av.Buf != nil {
-		ge.ActiveFilename = av.Buf.Filename
+		ge.SetActiveFilename(av.Buf.Filename)
 	}
 	return idx
 }
@@ -259,7 +268,7 @@ func (ge *Gide) SetActiveTextViewIdx(idx int) *giv.TextView {
 	ge.ActiveTextViewIdx = idx
 	av := ge.ActiveTextView()
 	if av.Buf != nil {
-		ge.ActiveFilename = av.Buf.Filename
+		ge.SetActiveFilename(av.Buf.Filename)
 	}
 	av.GrabFocus()
 	return av
@@ -341,34 +350,53 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 	return false
 }
 
-// ViewFileNode sets the next text view to view file in given node (opens
+// ViewFileNode sets the given text view to view file in given node (opens
 // buffer if not already opened)
-func (ge *Gide) ViewFileNode(fn *FileNode) {
+func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
 	if err := fn.OpenBuf(); err == nil {
-		nv, nidx := ge.NextTextView()
-		if nv.Buf != nil && nv.Buf.Edited { // todo: save current changes?
-			fmt.Printf("Changes not saved in file: %v before switching view there to new file\n", nv.Buf.Filename)
+		if tv.Buf != nil && tv.Buf.Edited {
+			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
 		}
-		nv.SetBuf(fn.Buf)
-		ge.SetActiveTextViewIdx(nidx)
+		tv.SetBuf(fn.Buf)
+		ge.OpenNodes.Add(fn)
+		ge.SetActiveTextViewIdx(vidx)
+		ge.SetStatus("")
 	}
 }
 
-// ViewFile sets the next text view to view given file name -- include as much
+// NextViewFileNode sets the next text view to view file in given node (opens
+// buffer if not already opened)
+func (ge *Gide) NextViewFileNode(fn *FileNode) {
+	nv, nidx := ge.NextTextView()
+	ge.ViewFileNode(nv, nidx, fn)
+}
+
+// NextViewFile sets the next text view to view given file name -- include as much
 // of name as possible to disambiguate -- will use the first matching --
 // returns false if not found
-func (ge *Gide) ViewFile(fnm gi.FileName) bool {
+func (ge *Gide) NextViewFile(fnm gi.FileName) bool {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return false
 	}
-	ge.ViewFileNode(fn.This.(*FileNode))
+	ge.NextViewFileNode(fn.This.(*FileNode))
 	return true
 }
 
-// SelectBuf selects an open buffer to view in current active textview
-func (ge *Gide) SelectBuf() {
-	// todo: simple quick popup menu selector of all open buffers -- need a separate list of those!
+// SelectOpenNode pops up a menu to select an open node (aka buffer) to view
+// in current active textview
+func (ge *Gide) SelectOpenNode() {
+	if len(ge.OpenNodes) < 2 {
+		ge.SetStatus("No other open nodes to choose from")
+	}
+	nl := ge.OpenNodes.Strings()
+	tv := ge.ActiveTextView() // nl[0] is always currently viewed
+	gi.StringsChooserPopup(nl, nl[1], tv, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ac := send.(*gi.Action)
+		idx := ac.Data.(int)
+		nb := ge.OpenNodes[idx]
+		ge.ViewFileNode(tv, ge.ActiveTextViewIdx, nb)
+	})
 }
 
 // TextViewSig handles all signals from the textviews
@@ -488,39 +516,72 @@ func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Commands / Tabs
 
-// ExecCmd executes given command and shows output in MainTab with name of command
-func (ge *Gide) ExecCmd(cmdNm CmdName) {
+// ExecCmd pops up a menu to select a command appropriate for the current
+// active text view, and shows output in MainTab with name of command
+func (ge *Gide) ExecCmd() {
+	tv := ge.ActiveTextView()
+	if tv == nil {
+		return
+	}
+	cmds := AvailCmds.LangCmdNames(ge.ActiveLangs)
+	hsz := len(ge.CmdHistory)
+	lastCmd := ""
+	if hsz > 0 {
+		lastCmd = string(ge.CmdHistory[hsz-1])
+	}
+	gi.StringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ac := send.(*gi.Action)
+		ge.ExecCmdName(CmdName(ac.Text))
+	})
+}
+
+// ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
+// and shows output in MainTab with name of command
+func (ge *Gide) ExecCmdFileNode(fn *FileNode) {
+	langs := LangNamesForFilename(fn.Nm)
+	cmds := AvailCmds.LangCmdNames(langs)
+	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ac := send.(*gi.Action)
+		ge.ExecCmdFileNodeName(CmdName(ac.Text), fn)
+	})
+}
+
+// ExecCmdName executes command of given name
+func (ge *Gide) ExecCmdName(cmdNm CmdName) {
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
 	if !ok {
 		return
 	}
-	av := ge.ActiveTextView()
-	if av == nil { // todo: could just issue warning
+	tv := ge.ActiveTextView()
+	if tv == nil { // todo: could just issue warning
 		return
 	}
+	ge.CmdHistory.Add(cmdNm)
 	cmd.MakeBuf(true)
-	tv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
-	tv.SetBuf(cmd.Buf)
-	SetArgVarVals(&ArgVarVals, string(av.Buf.Filename), string(ge.ProjRoot), av)
+	ctv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
+	ctv.SetInactive()
+	ctv.SetBuf(cmd.Buf)
+	SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), string(ge.ProjRoot), tv)
 	cmd.Run(ge)
 }
 
 // ExecCmds executes a sequence of commands
 func (ge *Gide) ExecCmds(cmdNms CmdNames) {
 	for _, cmdNm := range cmdNms {
-		ge.ExecCmd(cmdNm)
+		ge.ExecCmdName(cmdNm)
 	}
 }
 
-// ExecCmdFileNode executes given command on given file node
-func (ge *Gide) ExecCmdFileNode(cmdNm CmdName, fn *FileNode) {
+// ExecCmdFileNodeName executes command of given name on given node
+func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *FileNode) {
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
 	if !ok {
 		return
 	}
-	tv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
+	ctv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
+	ctv.SetInactive()
 	cmd.MakeBuf(true)
-	tv.SetBuf(cmd.Buf)
+	ctv.SetBuf(cmd.Buf)
 	SetArgVarVals(&ArgVarVals, string(fn.FPath), string(ge.ProjRoot), nil)
 	cmd.Run(ge)
 }
@@ -848,7 +909,7 @@ func (ge *Gide) FileNodeOpened(fn *FileNode, tvn *giv.FileTreeView) {
 			fn.OpenDir()
 		}
 	} else {
-		ge.ViewFileNode(fn.This.(*FileNode))
+		ge.NextViewFileNode(fn.This.(*FileNode))
 	}
 }
 
@@ -888,10 +949,10 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 		ge.FocusPrevPanel()
 	case KeyFunFileOpen:
 		kt.SetProcessed()
-		giv.CallMethod(ge, "ViewFile", ge.Viewport)
+		giv.CallMethod(ge, "NextViewFile", ge.Viewport)
 	case KeyFunBufSelect:
 		kt.SetProcessed()
-		ge.SelectBuf()
+		ge.SelectOpenNode()
 	case KeyFunBufSave:
 		kt.SetProcessed()
 		ge.SaveActiveView()
@@ -955,11 +1016,10 @@ var GideProps = ki.Props{
 				}},
 			},
 		}},
-		{"ExecCmd", ki.Props{
-			"Args": ki.PropSlice{
-				{"Command", ki.Props{}},
-			},
+		{"SelectOpenNode", ki.Props{
+			"label": "View",
 		}},
+		{"ExecCmd", ki.Props{}},
 	},
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -1012,7 +1072,7 @@ var GideProps = ki.Props{
 		{"Window", "Windows"},
 	},
 	"CallMethods": ki.PropSlice{
-		{"ViewFile", ki.Props{
+		{"NextViewFile", ki.Props{
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",

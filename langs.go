@@ -74,6 +74,20 @@ func LangsForFilename(filename string) Langs {
 	}
 }
 
+// LangNamesForFilename returns the language(s) associated with given filename
+func LangNamesForFilename(filename string) LangNames {
+	ls := LangsForFilename(filename)
+	sz := len(ls)
+	if sz == 0 {
+		return nil
+	}
+	lns := make(LangNames, sz)
+	for i := range ls {
+		lns[i] = LangName(ls[i].Name)
+	}
+	return lns
+}
+
 // LangsForExt returns the language(s) associated with given extension
 func LangsForExt(ext string) Langs {
 	if ls, has := ExtToLangMap[ext]; has {
@@ -118,6 +132,21 @@ func (lt *Langs) CompileExtMap() map[string]Langs {
 		}
 	}
 	return em
+}
+
+// Validate checks to make sure post save command names exist, issuing
+// warnings to log for those that don't
+func (lt *Langs) Validate() bool {
+	ok := true
+	for _, lr := range *lt {
+		for _, cmdnm := range lr.PostSaveCmds {
+			if !cmdnm.IsValid() {
+				log.Printf("gide.Langs Validate: post-save command: %v not found on current AvailCmds list\n", cmdnm)
+				ok = false
+			}
+		}
+	}
+	return ok
 }
 
 // PrefsLangsFileName is the name of the preferences file in App prefs
@@ -282,7 +311,7 @@ var LangsProps = ki.Props{
 
 // StdLangs is the original compiled-in set of standard languages.
 var StdLangs = Langs{
-	{"Go", "Go code", []string{".go"}, CmdNames{"Go Imports File"}},
-	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX File"}},
+	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}},
+	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"PDFLaTeX File"}},
 	{"Markdown", "Markdown document", []string{".md"}, nil},
 }

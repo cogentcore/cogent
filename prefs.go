@@ -81,6 +81,7 @@ func (pf *Preferences) Apply() {
 	if pf.KeyMap != "" {
 		SetActiveKeyMapName(pf.KeyMap) // fills in missing pieces
 	}
+	AvailLangs.Validate()
 }
 
 // Open preferences from GoGi standard prefs directory, and applies them

@@ -41,9 +41,9 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* errors in cut / paste in textview.
+* ChangeLog record of all commits in project -- special status of commit -- not just any cmd
 
-* add PopupStringChooser to gi, use for compiling list of commands, splitters, buffers, etc for quick menu actions.
+* errors in cut / paste in textview.
 
 * need general internal link system and ability to parse output results to go to errors..
 

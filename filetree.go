@@ -13,6 +13,7 @@ package gide
 import (
 	"bufio"
 	"bytes"
+	"io"
 	"log"
 	"os"
 	"sort"
@@ -40,91 +41,190 @@ func (fn *FileNode) ViewFile() {
 	gek, ok := fn.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		ge.ViewFileNode(fn)
+		ge.NextViewFileNode(fn)
 	}
 }
 
-// ExecCmdFile executes a command on the file
-func (fn *FileNode) ExecCmdFile(cmdNm CmdName) {
+// ExecCmdFile pops up a menu to select a command appropriate for the given node,
+// and shows output in MainTab with name of command
+func (fn *FileNode) ExecCmdFile() {
 	gek, ok := fn.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		ge.ExecCmdFileNode(cmdNm, fn)
+		ge.ExecCmdFileNode(fn)
 	}
 }
 
-// FileSearch looks for a string (no regexp) within a file, in a
-// case-sensitive way, returning number of occurances. adapted from:
-// https://stackoverflow.com/questions/26709971/could-this-be-more-efficient-in-go
-func FileSearch(filename string, pat []byte) int64 {
-	cnt := int64(0)
-	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
+// OpenNodes is a list of file nodes that have been opened for editing -- it
+// is maintained in recency order -- most recent on top -- call Add every time
+// a node is opened / visited for editing
+type OpenNodes []*FileNode
+
+// Add adds given node to list of open nodes -- if already on the list it is
+// moved to the top
+func (on *OpenNodes) Add(fn *FileNode) {
+	sz := len(*on)
+
+	for i, f := range *on {
+		if f == fn {
+			if i == 0 {
+				return
+			}
+			copy((*on)[1:i+1], (*on)[0:i])
+			(*on)[0] = fn
+			return
+		}
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if bytes.Contains(scanner.Bytes(), pat) {
+
+	*on = append(*on, nil)
+	if sz > 0 {
+		copy((*on)[1:], (*on)[0:sz])
+	}
+	(*on)[0] = fn
+}
+
+// Strings returns a string list of nodes, with paths relative to proj root
+func (on *OpenNodes) Strings() []string {
+	sl := make([]string, len(*on))
+	for i, f := range *on {
+		rp := f.FRoot.RelPath(f.FPath)
+		rp = strings.TrimSuffix(rp, f.Nm)
+		if rp != "" {
+			sl[i] = f.Nm + " - " + rp
+		} else {
+			sl[i] = f.Nm
+		}
+	}
+	return sl
+}
+
+//////////////////////////////////////////////////////////////////////////
+//  Search
+
+// FileSearch looks for a string (no regexp) within a file, in a
+// case-sensitive way, returning number of occurences and specific match
+// position list -- column positions are in bytes, not runes...
+func FileSearch(filename string, find []byte) (int64, []giv.TextPos) {
+	fp, err := os.Open(filename)
+	if err != nil {
+		log.Printf("gide.FileSearch file open error: %v\n", err)
+		return 0, nil
+	}
+	defer fp.Close()
+	return BufSearch(fp, find)
+}
+
+// BufSearch looks for a string (no regexp) within a byte buffer, in a
+// case-sensitive way, returning number of occurences and specific match
+// position list -- column positions are in bytes, not runes...
+func BufSearch(reader io.Reader, find []byte) (int64, []giv.TextPos) {
+	fsz := len(find)
+	if fsz == 0 {
+		return 0, nil
+	}
+	cnt := int64(0)
+	var matches []giv.TextPos
+	scan := bufio.NewScanner(reader)
+	ln := 0
+	for scan.Scan() {
+		b := scan.Bytes()
+		sz := len(b)
+		ci := 0
+		for ci < sz {
+			i := bytes.Index(b[ci:], find)
+			if i < 0 {
+				break
+			}
+			i += ci
+			ci += fsz
+			matches = append(matches, giv.TextPos{ln, i})
 			cnt++
 		}
 	}
-	if err := scanner.Err(); err != nil {
+	if err := scan.Err(); err != nil {
 		log.Printf("gide.FileSearch error: %v\n", err)
 	}
-	return cnt
+	return cnt, matches
 }
 
 // FileSearchCI looks for a string (no regexp) within a file, in a
-// case-INsensitive way, returning number of occurances. adapted from:
-// https://stackoverflow.com/questions/26709971/could-this-be-more-efficient-in-go
-func FileSearchCI(filename string, pat []byte) int64 {
-	pat = bytes.ToLower(pat)
-	cnt := int64(0)
-	f, err := os.Open(filename)
+// case-INsensitive way, returning number of occurences -- column positions
+// are in bytes, not runes...
+func FileSearchCI(filename string, find []byte) (int64, []giv.TextPos) {
+	fp, err := os.Open(filename)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("gide.FileSearch file open error: %v\n", err)
+		return 0, nil
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f) // line at a time
-	for scanner.Scan() {
-		lcb := bytes.ToLower(scanner.Bytes())
-		if bytes.Contains(lcb, pat) {
+	defer fp.Close()
+	return BufSearchCI(fp, find)
+}
+
+// BufSearchCI looks for a string (no regexp) within a file, in a
+// case-INsensitive way, returning number of occurences -- column positions
+// are in bytes, not runes...
+func BufSearchCI(reader io.Reader, find []byte) (int64, []giv.TextPos) {
+	fsz := len(find)
+	if fsz == 0 {
+		return 0, nil
+	}
+	find = bytes.ToLower(find)
+	cnt := int64(0)
+	var matches []giv.TextPos
+	scan := bufio.NewScanner(reader)
+	ln := 0
+	for scan.Scan() {
+		b := bytes.ToLower(scan.Bytes())
+		sz := len(b)
+		ci := 0
+		for ci < sz {
+			i := bytes.Index(b[ci:], find)
+			if i < 0 {
+				break
+			}
+			i += ci
+			ci += fsz
+			matches = append(matches, giv.TextPos{ln, i})
 			cnt++
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		log.Printf("gide.FileSearchCI error: %v\n", err)
+	if err := scan.Err(); err != nil {
+		log.Printf("gide.FileSearch error: %v\n", err)
 	}
-	return cnt
+	return cnt, matches
 }
 
-// FileNodeCount is used to report counts by file node
-type FileNodeCount struct {
-	Node  *giv.FileNode
-	Count int64
+// FileSearchResults is used to report search results
+type FileSearchResults struct {
+	Node    *giv.FileNode
+	Count   int64
+	Matches []giv.TextPos
 }
 
 // FileTreeSearch returns list of all nodes starting at given node of given
 // language(s) that contain the given string (non regexp version), sorted in
 // descending order by number of occurrances -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *giv.FileNode, match string, ignoreCase bool) []FileNodeCount {
-	mls := make([]FileNodeCount, 0)
+func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool) []FileSearchResults {
+	fsz := len(find)
+	if fsz == 0 {
+		return nil
+	}
+	mls := make([]FileSearchResults, 0)
 	if ignoreCase {
-		match = strings.ToLower(match)
+		find = strings.ToLower(find)
 	}
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
 		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
 		if ignoreCase {
-			cnt := FileSearchCI(string(sfn.FPath), []byte(match))
+			cnt, matches := FileSearchCI(string(sfn.FPath), []byte(find))
 			if cnt > 0 {
-				mls = append(mls, FileNodeCount{sfn, cnt})
+				mls = append(mls, FileSearchResults{sfn, cnt, matches})
 			}
 		} else {
-			cnt := FileSearch(string(sfn.FPath), []byte(match))
+			cnt, matches := FileSearch(string(sfn.FPath), []byte(find))
 			if cnt > 0 {
-				mls = append(mls, FileNodeCount{sfn, cnt})
+				mls = append(mls, FileSearchResults{sfn, cnt, matches})
 			}
 		}
 		return true
@@ -146,9 +246,6 @@ var FileNodeProps = ki.Props{
 		}},
 		{"ExecCmdFile", ki.Props{
 			"label": "Exec Cmd",
-			"Args": ki.PropSlice{
-				{"Command", ki.Props{}},
-			},
 		}},
 		{"DuplicateFile", ki.Props{
 			"label": "Duplicate",
