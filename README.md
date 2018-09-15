@@ -41,7 +41,9 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* need autosave and crash files! and change flags from editors, updates of filetree, etc to update changed flag.  Save of proj save all open buffers?  probably!
+* UpdateFiles is losing changes, and EditDone is being called on open
+
+*  and change flags from editors, updates of filetree, etc to update changed flag.  Save of proj save all open buffers?  probably!
 
 * ChangeLog record of all commits in project -- special status of commit -- not just any cmd
 

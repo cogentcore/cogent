@@ -86,13 +86,16 @@ func (on *OpenNodes) Add(fn *FileNode) {
 // Strings returns a string list of nodes, with paths relative to proj root
 func (on *OpenNodes) Strings() []string {
 	sl := make([]string, len(*on))
-	for i, f := range *on {
-		rp := f.FRoot.RelPath(f.FPath)
-		rp = strings.TrimSuffix(rp, f.Nm)
+	for i, fn := range *on {
+		rp := fn.FRoot.RelPath(fn.FPath)
+		rp = strings.TrimSuffix(rp, fn.Nm)
 		if rp != "" {
-			sl[i] = f.Nm + " - " + rp
+			sl[i] = fn.Nm + " - " + rp
 		} else {
-			sl[i] = f.Nm
+			sl[i] = fn.Nm
+		}
+		if fn.IsChanged() {
+			sl[i] += " *"
 		}
 	}
 	return sl

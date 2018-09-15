@@ -312,6 +312,14 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 	}
 }
 
+// RevertActiveView revert active view to saved version
+func (ge *Gide) RevertActiveView() {
+	tv := ge.ActiveTextView()
+	if tv.Buf != nil {
+		tv.Buf.ReOpen()
+	}
+}
+
 // ActiveViewRunPostCmds runs any registered post commands on the active view
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
@@ -356,10 +364,15 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 // buffer if not already opened)
 func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
 	if err := fn.OpenBuf(); err == nil {
-		if tv.Buf != nil && tv.Buf.Edited {
+		if tv.IsChanged() {
 			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
 		}
 		tv.SetBuf(fn.Buf)
+		fn.Buf.Autosave = true
+		if !tv.IsChanged() && fn.Buf.AutoSaveCheck() {
+			// todo: should prompt user to open autosave in other buffer
+			log.Printf("giv.TextBuf: Warning, AutoSave file exists for file: %v\n", fn.Buf.Filename)
+		}
 		ge.OpenNodes.Add(fn)
 		ge.SetActiveTextViewIdx(vidx)
 	}
@@ -621,7 +634,7 @@ func (ge *Gide) SetStatus(msg string) {
 		ch = tv.CursorPos.Ch
 		if tv.Buf != nil {
 			fnm = ge.Files.RelPath(tv.Buf.Filename)
-			if tv.Buf.Edited {
+			if tv.Buf.Changed {
 				fnm += "*"
 			}
 		}
@@ -1076,6 +1089,34 @@ var GideProps = ki.Props{
 						"ext":           ".gide",
 					}},
 				},
+			}},
+			{"sep-af", ki.BlankProp{}},
+			{"NextViewFile", ki.Props{
+				"label": "Open File",
+				// "shortcut": "Command+O",
+				"Args": ki.PropSlice{
+					{"File Name", ki.Props{
+						"default-field": "ProjFilename",
+						"ext":           ".gide",
+					}},
+				},
+			}},
+			{"SaveActiveView", ki.Props{
+				"label": "Save File",
+				// "shortcut": "Command+S", // todo: need gide shortcuts
+			}},
+			{"SaveActiveViewAs", ki.Props{
+				"label": "Save File As...",
+				"Args": ki.PropSlice{
+					{"File Name", ki.Props{
+						"default-field": "ActiveFilename",
+					}},
+				},
+			}},
+			{"RevertActiveView", ki.Props{
+				"desc":    "Revert active file to last saved version: this will lose all active changes -- are you sure?",
+				"confirm": true,
+				"label":   "Revert File",
 			}},
 			{"sep-prefs", ki.BlankProp{}},
 			{"ProjPrefs", ki.Props{
