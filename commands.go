@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -151,20 +152,28 @@ var CmdOutStatusLen = 80
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
 func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) bool {
+	rval := true
 	outstr := ""
 	if out != nil {
 		outstr = string(out[:CmdOutStatusLen])
 	}
+	finstat := ""
+	tstr := time.Now().Format("Mon Jan  2 15:04:05 MST 2006")
 	if err == nil {
-		ge.SetStatus(fmt.Sprintf("Cmd: %v succesful: %v", cmdstr, outstr))
-		return true
+		finstat = fmt.Sprintf("Cmd %v succesful at: %v", cmdstr, tstr)
+		rval = true
 	} else if ee, ok := err.(*exec.ExitError); ok {
-		ge.SetStatus(fmt.Sprintf("Cmd: %v failed with error: %v: %v", cmdstr, ee.Error(), outstr))
-		return false
+		finstat = fmt.Sprintf("Cmd %v failed at: %v with error: %v", cmdstr, tstr, ee.Error())
+		rval = false
 	} else {
-		ge.SetStatus(fmt.Sprintf("Cmd: %v exec error: %v", cmdstr, err.Error(), outstr))
-		return false
+		finstat = fmt.Sprintf("Cmd %v exec error at: %v error: %v", cmdstr, tstr, err.Error())
+		rval = false
 	}
+	cm.Buf.AppendTextLine([]byte("\n"))
+	cm.Buf.AppendTextLine(MarkupCmdOutput([]byte(finstat)))
+	cm.Buf.Refresh()
+	ge.SetStatus(cmdstr + " " + outstr)
+	return rval
 }
 
 // LangMatch returns true if the given languages match those of the command,
@@ -210,7 +219,7 @@ func MarkupCmdOutput(out []byte) []byte {
 		if col != "" {
 			link = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, col, string(ff))
 		} else {
-			link = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, string(ff))
+			link = fmt.Sprintf(`<a href="file:///%v#L%v">%v</a>`, fn, pos, string(ff))
 		}
 		flds[0] = []byte(link)
 	} // todo: other cases, e.g., look for extension

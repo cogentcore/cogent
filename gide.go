@@ -728,7 +728,7 @@ func (ge *Gide) SetStatus(msg string) {
 			}
 		}
 		if tv.ISearchMode {
-			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearchString, len(tv.ISearchMatches), msg)
+			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearchString, len(tv.SearchMatches), msg)
 		}
 	}
 
@@ -1138,9 +1138,12 @@ var GideProps = ki.Props{
 			},
 		}},
 		{"SelectOpenNode", ki.Props{
-			"label": "View",
+			"icon":  "file-text",
+			"label": "Edit",
 		}},
-		{"ExecCmd", ki.Props{}},
+		{"ExecCmd", ki.Props{
+			"icon": "terminal",
+		}},
 	},
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},

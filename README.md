@@ -41,6 +41,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* command is flashing a lot
+
 * ChangeLog record of all commits in project -- special status of commit -- not just any cmd
 
 * need general internal link system and ability to parse output results to go to errors..
