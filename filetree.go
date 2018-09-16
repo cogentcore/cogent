@@ -11,11 +11,7 @@ Derived classes can extend the functionality for specific domains.
 package gide
 
 import (
-	"bufio"
-	"bytes"
-	"io"
 	"log"
-	"os"
 	"sort"
 	"strings"
 
@@ -115,103 +111,10 @@ func (on *OpenNodes) NChanged() int {
 //////////////////////////////////////////////////////////////////////////
 //  Search
 
-// FileSearch looks for a string (no regexp) within a file, in a
-// case-sensitive way, returning number of occurences and specific match
-// position list -- column positions are in bytes, not runes...
-func FileSearch(filename string, find []byte) (int64, []giv.TextPos) {
-	fp, err := os.Open(filename)
-	if err != nil {
-		log.Printf("gide.FileSearch file open error: %v\n", err)
-		return 0, nil
-	}
-	defer fp.Close()
-	return BufSearch(fp, find)
-}
-
-// BufSearch looks for a string (no regexp) within a byte buffer, in a
-// case-sensitive way, returning number of occurences and specific match
-// position list -- column positions are in bytes, not runes...
-func BufSearch(reader io.Reader, find []byte) (int64, []giv.TextPos) {
-	fsz := len(find)
-	if fsz == 0 {
-		return 0, nil
-	}
-	cnt := int64(0)
-	var matches []giv.TextPos
-	scan := bufio.NewScanner(reader)
-	ln := 0
-	for scan.Scan() {
-		b := scan.Bytes()
-		sz := len(b)
-		ci := 0
-		for ci < sz {
-			i := bytes.Index(b[ci:], find)
-			if i < 0 {
-				break
-			}
-			i += ci
-			ci += fsz
-			matches = append(matches, giv.TextPos{ln, i})
-			cnt++
-		}
-	}
-	if err := scan.Err(); err != nil {
-		log.Printf("gide.FileSearch error: %v\n", err)
-	}
-	return cnt, matches
-}
-
-// FileSearchCI looks for a string (no regexp) within a file, in a
-// case-INsensitive way, returning number of occurences -- column positions
-// are in bytes, not runes...
-func FileSearchCI(filename string, find []byte) (int64, []giv.TextPos) {
-	fp, err := os.Open(filename)
-	if err != nil {
-		log.Printf("gide.FileSearch file open error: %v\n", err)
-		return 0, nil
-	}
-	defer fp.Close()
-	return BufSearchCI(fp, find)
-}
-
-// BufSearchCI looks for a string (no regexp) within a file, in a
-// case-INsensitive way, returning number of occurences -- column positions
-// are in bytes, not runes...
-func BufSearchCI(reader io.Reader, find []byte) (int64, []giv.TextPos) {
-	fsz := len(find)
-	if fsz == 0 {
-		return 0, nil
-	}
-	find = bytes.ToLower(find)
-	cnt := int64(0)
-	var matches []giv.TextPos
-	scan := bufio.NewScanner(reader)
-	ln := 0
-	for scan.Scan() {
-		b := bytes.ToLower(scan.Bytes())
-		sz := len(b)
-		ci := 0
-		for ci < sz {
-			i := bytes.Index(b[ci:], find)
-			if i < 0 {
-				break
-			}
-			i += ci
-			ci += fsz
-			matches = append(matches, giv.TextPos{ln, i})
-			cnt++
-		}
-	}
-	if err := scan.Err(); err != nil {
-		log.Printf("gide.FileSearch error: %v\n", err)
-	}
-	return cnt, matches
-}
-
 // FileSearchResults is used to report search results
 type FileSearchResults struct {
 	Node    *giv.FileNode
-	Count   int64
+	Count   int
 	Matches []giv.TextPos
 }
 
@@ -231,12 +134,12 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool) []FileSea
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
 		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
 		if ignoreCase {
-			cnt, matches := FileSearchCI(string(sfn.FPath), []byte(find))
+			cnt, matches := giv.FileSearchCI(string(sfn.FPath), []byte(find))
 			if cnt > 0 {
 				mls = append(mls, FileSearchResults{sfn, cnt, matches})
 			}
 		} else {
-			cnt, matches := FileSearch(string(sfn.FPath), []byte(find))
+			cnt, matches := giv.FileSearch(string(sfn.FPath), []byte(find))
 			if cnt > 0 {
 				mls = append(mls, FileSearchResults{sfn, cnt, matches})
 			}

@@ -41,19 +41,16 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-*  and change flags from editors, updates of filetree, etc to update changed flag.  Save of proj save all open buffers?  probably!
-
 * ChangeLog record of all commits in project -- special status of commit -- not just any cmd
 
 * need general internal link system and ability to parse output results to go to errors..
+* markup links in other output
+* cd to directory first before executing commands!
+* add all the other commands!
 
 * empty textview at startup still need to be clickable and you can load file using keyboard and panel navs.
 
 * named splitter configs and save etc
-
-* cd to directory first before executing commands!
-
-* add all the other commands!
 
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
@@ -61,10 +58,5 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * filenode and fileinfo: detect +x files and mark as executable -- don't edit..
 * and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
 
-* search / replace in TextView
-
-
-
-
-
+* Find / replace in TextView -- isearch already there now..
 

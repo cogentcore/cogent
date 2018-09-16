@@ -452,6 +452,8 @@ func (ge *Gide) SelectOpenNode() {
 func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
 	switch sig {
+	case giv.TextViewISearch:
+		fallthrough
 	case giv.TextViewCursorMoved:
 		ge.SetStatus("")
 	}
@@ -724,6 +726,9 @@ func (ge *Gide) SetStatus(msg string) {
 			if tv.Buf.Changed {
 				fnm += "*"
 			}
+		}
+		if tv.ISearchMode {
+			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearchString, len(tv.ISearchMatches), msg)
 		}
 	}
 
