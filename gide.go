@@ -69,7 +69,6 @@ func (ge *Gide) UpdateFiles() {
 	ge.Files.OpenPath(string(ge.ProjRoot))
 }
 
-// IsEmpty returns true if given Gide project is empty -- has not been set to a valid path
 func (ge *Gide) IsEmpty() bool {
 	return ge.ProjRoot == ""
 }
@@ -124,6 +123,19 @@ func (ge *Gide) SaveProj() {
 		return
 	}
 	ge.SaveProjAs(ge.Prefs.ProjFilename)
+}
+
+// SaveProjIfExists saves project file containing custom project settings, in a
+// standard JSON-formatted file, only if it already exists -- returns true if saved
+func (ge *Gide) SaveProjIfExists() bool {
+	if ge.Prefs.ProjFilename == "" {
+		return false
+	}
+	if _, err := os.Stat(string(ge.Prefs.ProjFilename)); os.IsNotExist(err) {
+		return false // does not exist
+	}
+	ge.SaveProjAs(ge.Prefs.ProjFilename)
+	return true
 }
 
 // SaveProjAs saves project custom settings to given filename, in a standard
@@ -360,6 +372,32 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 	return false
 }
 
+// AutoSaveCheck checks for an autosave file and prompts user about opening it
+// -- returns true if autosave file does exist for a file that currently
+// unchanged (means just opened)
+func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *FileNode) bool {
+	if strings.HasPrefix(fn.Nm, "#") && strings.HasSuffix(fn.Nm, "#") {
+		fn.Buf.Autosave = false
+		return false // we are the autosave file
+	}
+	fn.Buf.Autosave = true
+	if tv.IsChanged() || !fn.Buf.AutoSaveCheck() {
+		return false
+	}
+	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Autosave file Exists",
+		Prompt: fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm)},
+		[]string{"Open", "Ignore and Overwrite"},
+		ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			switch sig {
+			case 0:
+				ge.NextViewFile(gi.FileName(fn.Buf.AutoSaveFilename()))
+			case 1:
+				// do nothing
+			}
+		})
+	return true
+}
+
 // ViewFileNode sets the given text view to view file in given node (opens
 // buffer if not already opened)
 func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
@@ -368,11 +406,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
 			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
 		}
 		tv.SetBuf(fn.Buf)
-		fn.Buf.Autosave = true
-		if !tv.IsChanged() && fn.Buf.AutoSaveCheck() {
-			// todo: should prompt user to open autosave in other buffer
-			log.Printf("giv.TextBuf: Warning, AutoSave file exists for file: %v\n", fn.Buf.Filename)
-		}
+		ge.AutoSaveCheck(tv, vidx, fn)
 		ge.OpenNodes.Add(fn)
 		ge.SetActiveTextViewIdx(vidx)
 	}
@@ -421,6 +455,59 @@ func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	case giv.TextViewCursorMoved:
 		ge.SetStatus("")
 	}
+}
+
+// NChangedFiles returns number of opened files with unsaved changes
+func (ge *Gide) NChangedFiles() int {
+	return ge.OpenNodes.NChanged()
+}
+
+// CloseWindowReq is called when user tries to close window -- we
+// automatically save the project if it already exists (no harm), and prompt
+// to save open files -- if this returns true, then it is OK to close --
+// otherwise not
+func (ge *Gide) CloseWindowReq() bool {
+	ge.SaveProjIfExists()
+	nch := ge.NChangedFiles()
+	if nch == 0 {
+		return true
+	}
+	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Files",
+		Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to cancel closing this project and review  / save those files first?", ge.Nm, nch)},
+		[]string{"Cancel", "Close Without Saving"},
+		ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			switch sig {
+			case 0:
+				// do nothing, will have returned false already
+			case 1:
+				ge.ParentWindow().OSWin.Close() // will not be prompted again!
+			}
+		})
+	return false // not yet
+}
+
+// QuitReq is called when user tries to quit the app -- we go through all open
+// main windows and look for gide windows and call their CloseWindowReq
+// functions!
+func QuitReq() bool {
+	for _, win := range gi.MainWindows {
+		if !strings.HasPrefix(win.Nm, "gide-") {
+			continue
+		}
+		mfr, ok := win.MainWidget()
+		if !ok {
+			continue
+		}
+		gek, ok := mfr.ChildByName("gide", 0)
+		if !ok {
+			continue
+		}
+		ge := gek.Embed(KiT_Gide).(*Gide)
+		if !ge.CloseWindowReq() {
+			return false
+		}
+	}
+	return true
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1200,21 +1287,10 @@ func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
 		if !inClosePrompt {
 			inClosePrompt = true
-			if ge.Changed {
-				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
-					Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
-					[]string{"Close Without Saving", "Cancel"},
-					win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-						switch sig {
-						case 0:
-							w.Close()
-						case 1:
-							inClosePrompt = false
-							// default is to do nothing, i.e., cancel
-						}
-					})
-			} else {
+			if ge.CloseWindowReq() {
 				w.Close()
+			} else {
+				inClosePrompt = false
 			}
 		}
 	})

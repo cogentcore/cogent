@@ -6,6 +6,7 @@ package gide
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -126,7 +127,7 @@ func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
 		if err == nil {
 			outscan := bufio.NewScanner(stdout) // line at a time
 			for outscan.Scan() {
-				cm.Buf.AppendTextLine(outscan.Bytes())
+				cm.Buf.AppendTextLine(MarkupCmdOutput(outscan.Bytes()))
 			}
 		}
 		err = cmd.Wait()
@@ -183,6 +184,38 @@ func (cm *Command) LangMatch(langs LangNames) bool {
 		}
 	}
 	return false
+}
+
+// MarkupCmdOutput applies links to the first element in command output line
+// if it looks like a file name / position
+func MarkupCmdOutput(out []byte) []byte {
+	flds := bytes.Fields(out)
+	if len(flds) == 0 {
+		return out
+	}
+	ff := flds[0]
+	if bytes.Contains(ff, []byte(":")) {
+		fnflds := bytes.Split(ff, []byte(":"))
+		fn := string(fnflds[0])
+		pos := string(fnflds[1])
+		col := ""
+		if len(fnflds) > 2 {
+			col = string(fnflds[2])
+		}
+		cpath := ArgVarVals["{FileDirPath}"]
+		if !strings.HasPrefix(fn, cpath) {
+			fn = filepath.Join(cpath, strings.TrimPrefix(fn, "./"))
+		}
+		link := ""
+		if col != "" {
+			link = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, col, string(ff))
+		} else {
+			link = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, string(ff))
+		}
+		flds[0] = []byte(link)
+	} // todo: other cases, e.g., look for extension
+	jf := bytes.Join(flds, []byte(" "))
+	return jf
 }
 
 ////////////////////////////////////////////////////////////////////////////////

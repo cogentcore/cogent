@@ -101,6 +101,17 @@ func (on *OpenNodes) Strings() []string {
 	return sl
 }
 
+// NChanged returns number of changed open files
+func (on *OpenNodes) NChanged() int {
+	cnt := 0
+	for _, fn := range *on {
+		if fn.IsChanged() {
+			cnt++
+		}
+	}
+	return cnt
+}
+
 //////////////////////////////////////////////////////////////////////////
 //  Search
 

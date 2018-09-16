@@ -41,13 +41,9 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* UpdateFiles is losing changes, and EditDone is being called on open
-
 *  and change flags from editors, updates of filetree, etc to update changed flag.  Save of proj save all open buffers?  probably!
 
 * ChangeLog record of all commits in project -- special status of commit -- not just any cmd
-
-* errors in cut / paste in textview.
 
 * need general internal link system and ability to parse output results to go to errors..
 
@@ -67,8 +63,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * search / replace in TextView
 
-* also each textview should have its own context menu where you can pick which buffer / file to 
-view -- C-x b / f will pull up these same functions.  Make a gide-specific version of textview or use existing?
 
 
 

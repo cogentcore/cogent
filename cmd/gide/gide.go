@@ -14,7 +14,6 @@ import (
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gide"
-	"github.com/goki/ki"
 )
 
 func main() {
@@ -61,15 +60,11 @@ func mainrun() {
 	oswin.TheApp.SetQuitReqFunc(func() {
 		if !inQuitPrompt {
 			inQuitPrompt = true
-			gi.PromptDialog(nil, gi.DlgOpts{Title: "Really Quit?",
-				Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
-				recv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-					if sig == int64(gi.DialogAccepted) {
-						oswin.TheApp.Quit()
-					} else {
-						inQuitPrompt = false
-					}
-				})
+			if gide.QuitReq() {
+				oswin.TheApp.Quit()
+			} else {
+				inQuitPrompt = false
+			}
 		}
 	})
 
