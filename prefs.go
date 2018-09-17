@@ -81,6 +81,7 @@ func (pf *Preferences) Apply() {
 	if pf.KeyMap != "" {
 		SetActiveKeyMapName(pf.KeyMap) // fills in missing pieces
 	}
+	MergeAvailCmds()
 	AvailLangs.Validate()
 }
 
@@ -100,7 +101,7 @@ func (pf *Preferences) Open() error {
 		AvailLangs.OpenPrefs()
 	}
 	if pf.SaveCmds {
-		AvailCmds.OpenPrefs()
+		CustomCmds.OpenPrefs()
 	}
 	pf.Apply()
 	pf.Changed = false
@@ -127,7 +128,7 @@ func (pf *Preferences) Save() error {
 		AvailLangs.SavePrefs()
 	}
 	if pf.SaveCmds {
-		AvailCmds.SavePrefs()
+		CustomCmds.SavePrefs()
 	}
 	pf.Changed = false
 	return err
@@ -154,7 +155,7 @@ func (pf *Preferences) EditLangs() {
 func (pf *Preferences) EditCmds() {
 	pf.SaveCmds = true
 	pf.Changed = true
-	CmdsView(&AvailCmds)
+	CmdsView(&CustomCmds)
 }
 
 // PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
@@ -198,7 +199,7 @@ var PreferencesProps = ki.Props{
 		}},
 		{"EditCmds", ki.Props{
 			"icon": "file-binary",
-			"desc": "opens the CmdsView editor to customize commands you can run.  Current customized settings are saved and loaded with preferences automatically if SaveCmds is clicked (will be turned on automatically if you open this editor).",
+			"desc": "opens the CmdsView editor to add custom commands you can run, in addition to standard commands built into the system.  Current customized settings are saved and loaded with preferences automatically if SaveCmds is clicked (will be turned on automatically if you open this editor).",
 		}},
 	},
 }
@@ -213,6 +214,11 @@ type ProjPrefs struct {
 	MainLang     LangName       `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
 	ProjFilename gi.FileName    `view:"-" ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ProjRoot     gi.FileName    `view:"-" desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	BuildCmds    CmdNames       `desc:"command(s) to run for main Build button"`
+	BuildDir     gi.FileName    `desc:"build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"`
+	BuildTarg    gi.FileName    `desc:"build target for main Build button, if relevant for your  BuildCmds"`
+	RunExec      gi.FileName    `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
+	RunCmds      CmdNames       `desc:"command(s) to run for main Run button (typically Run Proj)"`
 	OpenDirs     giv.OpenDirMap `view:"-" desc:"open directories"`
 	Splits       []float32      `view:"-" desc:"splitter splits"`
 	Changed      bool           `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`

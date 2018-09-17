@@ -64,6 +64,9 @@ type Gide struct {
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
 
+// CurGide is updated to be the most recently used Gide project todo!
+var CurGide *Gide
+
 // UpdateFiles updates the list of files saved in project
 func (ge *Gide) UpdateFiles() {
 	ge.Files.OpenPath(string(ge.ProjRoot))
@@ -92,6 +95,7 @@ func (ge *Gide) NewProj(path gi.FileName) {
 		return
 	}
 	ge.Defaults()
+	CurGide = ge
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
@@ -141,6 +145,7 @@ func (ge *Gide) SaveProjIfExists() bool {
 // SaveProjAs saves project custom settings to given filename, in a standard
 // JSON-formatted file
 func (ge *Gide) SaveProjAs(filename gi.FileName) {
+	CurGide = ge
 	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
 	SavePaths()
 	ge.Files.UpdateNewFile(filename)
@@ -159,6 +164,7 @@ func (ge *Gide) OpenProj(filename gi.FileName) {
 		OpenGideProj(string(filename))
 		return
 	}
+	CurGide = ge
 	ge.Prefs.OpenJSON(filename)
 	ge.Prefs.ProjFilename = filename // should already be set but..
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
@@ -180,6 +186,7 @@ func (ge *Gide) OpenProj(filename gi.FileName) {
 
 // UpdateProj does full update to current proj
 func (ge *Gide) UpdateProj() {
+	CurGide = ge
 	mods, updt := ge.StdConfig()
 	ge.UpdateFiles()
 	ge.ConfigSplitView()
@@ -431,6 +438,18 @@ func (ge *Gide) NextViewFile(fnm gi.FileName) bool {
 	return true
 }
 
+// ViewFile views file in an existing TextView if it is already viewing that
+// file, otherwise opens NextViewFile
+func (ge *Gide) ViewFile(fnm gi.FileName) bool {
+	// todo: look for current
+	fn, ok := ge.Files.FindFile(string(fnm))
+	if !ok {
+		return false
+	}
+	ge.NextViewFileNode(fn.This.(*FileNode))
+	return true
+}
+
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
 // in current active textview
 func (ge *Gide) SelectOpenNode() {
@@ -459,11 +478,54 @@ func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////////////////
+//   Links
+
+// TextLinkHandler is the Gide handler for text links
+func TextLinkHandler(tl gi.TextLink) bool {
+	// todo: not really doing anything with text-link specific info right now..
+	return URLHandler(tl.URL)
+}
+
+// URLHandler is the Gide handler for urls
+func URLHandler(url string) bool {
+	// todo: use net/url package for more systematic parsing
+	switch {
+	case strings.HasPrefix(url, "file:///"):
+		CurGide.OpenFileURL(url)
+	}
+	return true
+}
+
+// OpenFileURL opens given file:/// url
+func (ge *Gide) OpenFileURL(url string) bool {
+	// todo: use net/url package for more systematic parsing
+	fpath := strings.TrimPrefix(url, "file:///")
+	pos := ""
+	if pidx := strings.Index(fpath, "#"); pidx > 0 {
+		pos = fpath[pidx+1:]
+		fpath = fpath[:pidx]
+	}
+	// todo: parse pos, set CursorPos
+	pos = pos + ""
+	ge.ViewFile(gi.FileName(fpath))
+	return true
+}
+
+func init() {
+	gi.URLHandler = URLHandler
+	gi.TextLinkHandler = TextLinkHandler
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+//   Close / Quit Req
+
 // NChangedFiles returns number of opened files with unsaved changes
 func (ge *Gide) NChangedFiles() int {
 	return ge.OpenNodes.NChanged()
 }
 
+// CurPanel returns the splitter panel that currently has keyboard focus
 // CloseWindowReq is called when user tries to close window -- we
 // automatically save the project if it already exists (no harm), and prompt
 // to save open files -- if this returns true, then it is OK to close --
@@ -645,7 +707,9 @@ func (ge *Gide) ExecCmd() {
 	}
 	gi.StringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
-		ge.ExecCmdName(CmdName(ac.Text))
+		cmdNm := CmdName(ac.Text)
+		ge.CmdHistory.Add(cmdNm) // only save commands executed via chooser
+		ge.ExecCmdName(cmdNm)
 	})
 }
 
@@ -662,6 +726,7 @@ func (ge *Gide) ExecCmdFileNode(fn *FileNode) {
 
 // ExecCmdName executes command of given name
 func (ge *Gide) ExecCmdName(cmdNm CmdName) {
+	CurGide = ge
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
 	if !ok {
 		return
@@ -670,12 +735,11 @@ func (ge *Gide) ExecCmdName(cmdNm CmdName) {
 	if tv == nil { // todo: could just issue warning
 		return
 	}
-	ge.CmdHistory.Add(cmdNm)
 	cmd.MakeBuf(true)
 	ctv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
 	ctv.SetInactive()
 	ctv.SetBuf(cmd.Buf)
-	SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), string(ge.ProjRoot), tv)
+	SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), &ge.Prefs, tv)
 	cmd.Run(ge)
 }
 
@@ -696,8 +760,26 @@ func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *FileNode) {
 	ctv.SetInactive()
 	cmd.MakeBuf(true)
 	ctv.SetBuf(cmd.Buf)
-	SetArgVarVals(&ArgVarVals, string(fn.FPath), string(ge.ProjRoot), nil)
+	SetArgVarVals(&ArgVarVals, string(fn.FPath), &ge.Prefs, nil)
 	cmd.Run(ge)
+}
+
+// Build runs the BuildCmds set for this project
+func (ge *Gide) Build() {
+	if len(ge.Prefs.BuildCmds) == 0 {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
+		return
+	}
+	ge.ExecCmds(ge.Prefs.BuildCmds)
+}
+
+// Run runs the RunCmds set for this project
+func (ge *Gide) Run() {
+	if len(ge.Prefs.RunCmds) == 0 {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, true, false, nil, nil)
+		return
+	}
+	ge.ExecCmds(ge.Prefs.RunCmds)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -705,6 +787,7 @@ func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *FileNode) {
 
 // SetStatus updates the statusbar label with given message, along with other status info
 func (ge *Gide) SetStatus(msg string) {
+	CurGide = ge
 	sb := ge.StatusBar()
 	if sb == nil {
 		return
@@ -1070,7 +1153,7 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 		ge.FocusPrevPanel()
 	case KeyFunFileOpen:
 		kt.SetProcessed()
-		giv.CallMethod(ge, "NextViewFile", ge.Viewport)
+		giv.CallMethod(ge, "ViewFile", ge.Viewport)
 	case KeyFunBufSelect:
 		kt.SetProcessed()
 		ge.SelectOpenNode()
@@ -1124,6 +1207,15 @@ var GideProps = ki.Props{
 			"shortcut": "Command+U",
 			"icon":     "update",
 		}},
+		{"ViewFile", ki.Props{
+			"label": "Open",
+			"icon":  "file-open",
+			"Args": ki.PropSlice{
+				{"File Name", ki.Props{
+					"default-field": "ActiveFilename",
+				}},
+			},
+		}},
 		{"SaveActiveView", ki.Props{
 			"label": "Save",
 			"icon":  "file-save",
@@ -1141,6 +1233,12 @@ var GideProps = ki.Props{
 			"icon":            "file-text",
 			"label":           "Edit",
 			"no-update-after": true,
+		}},
+		{"Build", ki.Props{
+			"icon": "terminal",
+		}},
+		{"Run", ki.Props{
+			"icon": "terminal",
 		}},
 		{"ExecCmd", ki.Props{
 			"icon":            "terminal",
@@ -1188,14 +1286,11 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"sep-af", ki.BlankProp{}},
-			{"NextViewFile", ki.Props{
+			{"ViewFile", ki.Props{
 				"label": "Open File",
 				// "shortcut": "Command+O",
 				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"default-field": "ProjFilename",
-						"ext":           ".gide",
-					}},
+					{"File Name", ki.Props{}},
 				},
 			}},
 			{"SaveActiveView", ki.Props{

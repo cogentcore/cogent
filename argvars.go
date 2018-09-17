@@ -12,36 +12,51 @@ import (
 
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
+	"github.com/goki/ki/kit"
 )
 
+// ArgVarInfo has info about argument variables that fill in relevant values
+// for commands, used in ArgVars list of variables
+type ArgVarInfo struct {
+	Desc string      `desc:"description of arg var"`
+	Type ArgVarTypes `desc:"type of variable -- used for checking usage and other special features such as prompting"`
+}
+
 // ArgVars are variables that can be used for arguments to commands in CmdAndArgs
-var ArgVars = []string{
-	"{FilePath}",             // Current file name with full path.
-	"{FileName}",             // Current file name only, without path.
-	"{FileExt}",              // Extension of current file name.
-	"{FileExtLC}",            // Extension of current file name, lowercase.
-	"{FileNameNoExt}",        // Current file name without path and extension.
-	"{FileDir}",              // Name only of current file's directory
-	"{FileDirPath}",          // Full path to current file's directory.
-	"{FileDirProjRel}",       // Path to current file's directory relative to project root
-	"{ProjectDir}",           // Current project directory name, without full path.
-	"{ProjectPath}",          // Full path to current project directory.
-	"{CurLine}",              // Cursor current line number (starts at 1).
-	"{CurCol}",               // Cursor current column number (starts at 0).
-	"{SelStartLine}",         // Selection starting line (same as CurLine if no selection)
-	"{SelStartCol}",          // Selection starting column (same as CurCol if no selection)
-	"{SelEndLine}",           // Selection ending line (same as CurLine if no selection)
-	"{SelEndCol}",            // Selection ending column (same as CurCol if no selection)
-	"{CurSel}",               // Currently selected text.
-	"{CurLineText}",          // Current line text under cursor.
-	"{CurWord}",              // Current word under cursor.
-	"{PromptFilePath}",       // Prompt user for a file, and this is the full path to that file
-	"{PromptFileName}",       // Prompt user for a file, and this is the filename (only) of that file
-	"{PromptFileDir}",        // Prompt user for a file, and this is the directory name (only) of that file
-	"{PromptFileDirPath}",    // Prompt user for a file, and this is the full path to that directory
-	"{PromptFileDirProjRel}", // Prompt user for a file, and this is the path of that directory relative to the project root.
-	"{PromptString1}",        // Prompt user for a string -- this is it
-	"{PromptString2}",        // Prompt user for another string -- this is it
+var ArgVars = map[string]ArgVarInfo{
+	"{FilePath}":             ArgVarInfo{"Current file name with full path.", ArgVarFile},
+	"{FileName}":             ArgVarInfo{"Current file name only, without path.", ArgVarFile},
+	"{FileExt}":              ArgVarInfo{"Extension of current file name.", ArgVarExt},
+	"{FileExtLC}":            ArgVarInfo{"Extension of current file name, lowercase.", ArgVarExt},
+	"{FileNameNoExt}":        ArgVarInfo{"Current file name without path and extension.", ArgVarFile},
+	"{FileDir}":              ArgVarInfo{"Name only of current file's directory.", ArgVarDir},
+	"{FileDirPath}":          ArgVarInfo{"Full path to current file's directory.", ArgVarDir},
+	"{FileDirProjRel}":       ArgVarInfo{"Path to current file's directory relative to project root.", ArgVarDir},
+	"{ProjectDir}":           ArgVarInfo{"Current project directory name, without full path.", ArgVarDir},
+	"{ProjectPath}":          ArgVarInfo{"Full path to current project directory.", ArgVarDir},
+	"{BuildDir}":             ArgVarInfo{"Full path to BuildDir specified in project prefs -- the default Build.", ArgVarDir},
+	"{BuildDirRel}":          ArgVarInfo{"Path to BuildDir relative to project root.", ArgVarDir},
+	"{BuildTarg}":            ArgVarInfo{"Build target specified in filename by itself, without path.", ArgVarFile},
+	"{BuildTargDirPath}":     ArgVarInfo{"Full path to build target directory, without filename.", ArgVarDir},
+	"{RunExec}":              ArgVarInfo{"Full path to the run-time executable file RunExec specified in project prefs.", ArgVarFile},
+	"{RunExecDir}":           ArgVarInfo{"Full path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
+	"{RunExecDirRel}":        ArgVarInfo{"Project-root relative path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
+	"{CurLine}":              ArgVarInfo{"Cursor current line number (starts at 1).", ArgVarPos},
+	"{CurCol}":               ArgVarInfo{"Cursor current column number (starts at 0).", ArgVarPos},
+	"{SelStartLine}":         ArgVarInfo{"Selection starting line (same as CurLine if no selection).", ArgVarPos},
+	"{SelStartCol}":          ArgVarInfo{"Selection starting column (same as CurCol if no selection).", ArgVarPos},
+	"{SelEndLine}":           ArgVarInfo{"Selection ending line (same as CurLine if no selection).", ArgVarPos},
+	"{SelEndCol}":            ArgVarInfo{"Selection ending column (same as CurCol if no selection).", ArgVarPos},
+	"{CurSel}":               ArgVarInfo{"Currently selected text.", ArgVarText},
+	"{CurLineText}":          ArgVarInfo{"Current line text under cursor.", ArgVarText},
+	"{CurWord}":              ArgVarInfo{"Current word under cursor.", ArgVarText},
+	"{PromptFilePath}":       ArgVarInfo{"Prompt user for a file, and this is the full path to that file.", ArgVarPrompt},
+	"{PromptFileName}":       ArgVarInfo{"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
+	"{PromptFileDir}":        ArgVarInfo{"Prompt user for a file, and this is the directory name (only) of that file.", ArgVarPrompt},
+	"{PromptFileDirPath}":    ArgVarInfo{"Prompt user for a file, and this is the full path to that directory.", ArgVarPrompt},
+	"{PromptFileDirProjRel}": ArgVarInfo{"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
+	"{PromptString1}":        ArgVarInfo{"Prompt user for a string -- this is it.", ArgVarPrompt},
+	"{PromptString2}":        ArgVarInfo{"Prompt user for another string -- this is it.", ArgVarPrompt},
 }
 
 // ArgVarVals are current values of arg var vals -- updated on demand when a
@@ -49,7 +64,8 @@ var ArgVars = []string{
 var ArgVarVals map[string]string
 
 // SetArgVarVals sets the current values for arg variables
-func SetArgVarVals(avp *map[string]string, fpath, projpath string, tv *giv.TextView) {
+func SetArgVarVals(avp *map[string]string, fpath string, ppref *ProjPrefs, tv *giv.TextView) {
+	projpath := string(ppref.ProjRoot)
 	if *avp == nil {
 		*avp = make(map[string]string, len(ArgVars))
 	}
@@ -148,3 +164,36 @@ func BindArgVars(arg string) string {
 	}
 	return string(bs)
 }
+
+// ArgVarTypes describe the type of information in the arg var -- used for
+// checking usage and special features.
+type ArgVarTypes int32
+
+const (
+	// ArgVarFile is a file name, not a directory
+	ArgVarFile ArgVarTypes = iota
+
+	// ArgVarDir is a directory name, not a file
+	ArgVarDir
+
+	// ArgVarExt is a file extension
+	ArgVarExt
+
+	// ArgVarPos is a text position
+	ArgVarPos
+
+	// ArgVarText is text from a buffer
+	ArgVarText
+
+	// ArgVarPrompt is a user-prompted variable
+	ArgVarPrompt
+
+	ArgVarTypesN
+)
+
+//go:generate stringer -type=ArgVarTypes
+
+var KiT_ArgVarTypes = kit.Enums.AddEnumAltLower(ArgVarTypesN, false, nil, "ArgVar")
+
+func (kf ArgVarTypes) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(kf) }
+func (kf *ArgVarTypes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(kf, b) }

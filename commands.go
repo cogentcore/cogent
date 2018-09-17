@@ -26,7 +26,7 @@ import (
 // CmdAndArgs contains the name of an external program to execute and args to
 // pass to that program
 type CmdAndArgs struct {
-	Cmd  string   `desc:"external program to execute -- must be on path"`
+	Cmd  string   `desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
 	Args []string `desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
 }
 
@@ -60,6 +60,7 @@ type Command struct {
 	Desc  string       `desc:"brief description of this command"`
 	Langs LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
 	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
+	Dir   string       `desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
 	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- for quick commands and those where subsequent steps. If multiple commands are present, then subsequent steps always wait for prior steps in the sequence"`
 	Buf   *giv.TextBuf `tableview:"-" view:"-" desc:"text buffer for displaying output of command"`
 }
@@ -260,10 +261,14 @@ func (cn *CmdNames) Add(cmd CmdName) {
 	*cn = append(*cn, cmd)
 }
 
-// AvailCmds is the current list of available commands for use -- can be
-// loaded / saved / edited with preferences.  This is set to StdCommands at
-// startup.
+// AvailCmds is the current list of ALL available commands for use -- it
+// combines StdCmds and CustomCmds.  Custom overrides Std items with
+// the same names.
 var AvailCmds Commands
+
+// CustomCmds is user-specific list of commands saved in preferences available
+// for all Gide projects.  These will override StdCmds with the same names.
+var CustomCmds Commands
 
 // LangCmdNames returns a slice of commands that are compatible with given
 // language(s).
@@ -278,7 +283,7 @@ func (cm *Commands) LangCmdNames(langs LangNames) []string {
 }
 
 func init() {
-	AvailCmds.CopyFrom(StdCommands)
+	AvailCmds.CopyFrom(StdCmds)
 }
 
 // CmdByName returns a command and index by name -- returns false and emits a
@@ -293,9 +298,9 @@ func (cm *Commands) CmdByName(name CmdName) (*Command, int, bool) {
 	return nil, -1, false
 }
 
-// PrefsCommandsFileName is the name of the preferences file in App prefs
-// directory for saving / loading the default AvailCmds commands list
-var PrefsCommandsFileName = "command_prefs.json"
+// PrefsCmdsFileName is the name of the preferences file in App prefs
+// directory for saving / loading your CustomCmds commands list
+var PrefsCmdsFileName = "command_prefs.json"
 
 // OpenJSON opens commands from a JSON-formatted file.
 func (cm *Commands) OpenJSON(filename gi.FileName) error {
@@ -324,19 +329,21 @@ func (cm *Commands) SaveJSON(filename gi.FileName) error {
 	return err
 }
 
-// OpenPrefs opens Commands from App standard prefs directory, using PrefsCommandsFileName
+// OpenPrefs opens custom Commands from App standard prefs directory, using
+// PrefsCmdsFileName
 func (cm *Commands) OpenPrefs() error {
 	pdir := oswin.TheApp.AppPrefsDir()
-	pnm := filepath.Join(pdir, PrefsCommandsFileName)
-	AvailCmdsChanged = false
+	pnm := filepath.Join(pdir, PrefsCmdsFileName)
+	CustomCmdsChanged = false
 	return cm.OpenJSON(gi.FileName(pnm))
 }
 
-// SavePrefs saves Commands to App standard prefs directory, using PrefsCommandsFileName
+// SavePrefs saves custom Commands to App standard prefs directory, using
+// PrefsCmdsFileName
 func (cm *Commands) SavePrefs() error {
 	pdir := oswin.TheApp.AppPrefsDir()
-	pnm := filepath.Join(pdir, PrefsCommandsFileName)
-	AvailCmdsChanged = false
+	pnm := filepath.Join(pdir, PrefsCmdsFileName)
+	CustomCmdsChanged = false
 	return cm.SaveJSON(gi.FileName(pnm))
 }
 
@@ -350,23 +357,28 @@ func (cm *Commands) CopyFrom(cp Commands) {
 	json.Unmarshal(b, cm)
 }
 
-// RevertToStd reverts this map to using the StdCommands that are compiled into
-// the program and have all the lastest standards.
-func (cm *Commands) RevertToStd() {
-	cm.CopyFrom(StdCommands)
-	AvailCmdsChanged = true
+// MergeAvailCmds updates the AvailCmds list from CustomCmds and StdCmds
+func MergeAvailCmds() {
+	AvailCmds.CopyFrom(StdCmds)
+	for _, cmd := range CustomCmds {
+		_, idx, has := AvailCmds.CmdByName(CmdName(cmd.Name))
+		if has {
+			AvailCmds[idx] = cmd // replace
+		} else {
+			AvailCmds = append(AvailCmds, cmd)
+		}
+	}
 }
 
 // ViewStd shows the standard types that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
 func (cm *Commands) ViewStd() {
-	CmdsView(&StdCommands)
+	CmdsView(&StdCmds)
 }
 
-// AvailCmdsChanged is used to update giv.CmdsView toolbars via
-// following menu, toolbar props update methods -- not accurate if editing any
-// other map but works for now..
-var AvailCmdsChanged = false
+// CustomCmdsChanged is used to update giv.CmdsView toolbars via following
+// menu, toolbar props update methods.
+var CustomCmdsChanged = false
 
 // CommandsProps define the ToolBar and MenuBar for TableView of Commands, e.g., CmdsView
 var CommandsProps = ki.Props{
@@ -377,7 +389,7 @@ var CommandsProps = ki.Props{
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
 				"updtfunc": func(cmi interface{}, act *gi.Action) {
-					act.SetActiveState(AvailCmdsChanged)
+					act.SetActiveState(CustomCmdsChanged)
 				},
 			}},
 			{"sep-file", ki.BlankProp{}},
@@ -400,10 +412,6 @@ var CommandsProps = ki.Props{
 					}},
 				},
 			}},
-			{"RevertToStd", ki.Props{
-				"desc":    "This reverts the commands to using the StdCommands that are compiled into the program and have all the lastest standards. <b>Your current edits will be lost if you proceed!</b>  Continue?",
-				"confirm": true,
-			}},
 		}},
 		{"Edit", "Copy Cut Paste Dupe"},
 		{"Window", "Windows"},
@@ -413,7 +421,7 @@ var CommandsProps = ki.Props{
 			"desc": "saves Commands to App standard prefs directory, in file proj_types_prefs.json, which will be loaded automatically at startup if prefs SaveCommands is checked (should be if you're using custom commands)",
 			"icon": "file-save",
 			"updtfunc": func(cmi interface{}, act *gi.Action) {
-				act.SetActiveStateUpdt(AvailCmdsChanged)
+				act.SetActiveStateUpdt(CustomCmdsChanged)
 			},
 		}},
 		{"sep-file", ki.BlankProp{}},
@@ -439,33 +447,32 @@ var CommandsProps = ki.Props{
 		}},
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
-			"desc":    "Shows the standard types that are compiled into the program and have all the latest changes.  Useful for comparing against custom types.",
-			"confirm": true,
-		}},
-		{"RevertToStd", ki.Props{
-			"icon":    "update",
-			"desc":    "This reverts the commands to using the StdCommands that are compiled into the program and have all the lastest standards.  <b>Your current edits will be lost if you proceed!</b>  Continue?",
+			"desc":    "Shows the standard commands that are compiled into the program.  Custom commands override standard ones of the same name.",
 			"confirm": true,
 		}},
 	},
 }
 
-// StdCommands is the original compiled-in set of standard commands.
-var StdCommands = Commands{
+// StdCmds is the original compiled-in set of standard commands.
+var StdCmds = Commands{
+	{"Run Proj", "run RunExec executable set in project", nil,
+		[]CmdAndArgs{CmdAndArgs{"{RunExec}", []string{"-w", "{FilePath}"}}}, "", true, nil},
 	{"Imports Go File", "run goimports on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, true, nil},
+		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, nil},
 	{"Fmt Go File", "run go fmt on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, true, nil},
-	{"Build Go", "run go build to build in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{FileDirPath}"}}}, false, nil},
+		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, nil},
+	{"Build Go File", "run go build to build in current dir", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{FileDirPath}"}}}, "{FileDirPath}", false, nil},
+	{"Build Go Proj", "run go build for project BuildDir", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{BuildDir}"}}}, "{BuildDir}", false, nil},
 	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet", "{FileDirPath}"}}}, false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet", "{FileDirPath}"}}}, "{FileDirPath}", false, nil},
 	{"List Dir", "list current dir -- just for testing", nil,
-		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, false, nil},
+		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, nil},
 	{"Git Status", "git status", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"status", "{FileDirPath}"}}}, true, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status", "{FileDirPath}"}}}, "{FileDirPath}", true, nil},
 	{"Git Push", "git push", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, true, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", true, nil},
 	{"PDFLaTeX File", "run PDFLaTeX on file", LangNames{"LaTeX"},
-		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, false, nil},
+		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, nil},
 }

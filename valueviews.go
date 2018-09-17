@@ -419,27 +419,27 @@ func CmdsView(pt *Commands) {
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
 
-	AvailCmdsChanged = false
+	CustomCmdsChanged = false
 	tv.ViewSig.Connect(mfr.This, func(recv, send ki.Ki, sig int64, data interface{}) {
-		AvailCmdsChanged = true
+		CustomCmdsChanged = true
 	})
 
 	mmen := win.MainMenu
 	giv.MainMenuView(pt, win, mmen)
 
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if AvailCmdsChanged { // only for main avail map..
+		if CustomCmdsChanged { // only for main avail map..
 			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Commands Before Closing?",
-				Prompt: "Do you want to save any changes to std preferences to std commands file before closing, or Cancel the close and do a Save to a different file?"},
+				Prompt: "Do you want to save any changes to custom commands file before closing, or Cancel the close and do a Save to a different file?"},
 				[]string{"Save and Close", "Discard and Close", "Cancel"},
 				win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 					switch sig {
 					case 0:
 						pt.SavePrefs()
-						fmt.Printf("Preferences Saved to %v\n", PrefsCommandsFileName)
+						fmt.Printf("Preferences Saved to %v\n", PrefsCmdsFileName)
 						w.Close()
 					case 1:
-						if pt == &AvailCmds {
+						if pt == &CustomCmds {
 							pt.OpenPrefs() // revert
 						}
 						w.Close()
