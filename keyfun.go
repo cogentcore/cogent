@@ -102,6 +102,17 @@ func SetActiveKeyMapName(mapnm KeyMapName) {
 	km, _, ok := AvailKeyMaps.MapByName(mapnm)
 	if ok {
 		SetActiveKeyMap(km)
+	} else {
+		log.Printf("gide.SetActiveKeyMapName: key map named: %v not found, using default: %v\n", mapnm, DefaultKeyMap)
+		km, _, ok = AvailKeyMaps.MapByName(DefaultKeyMap)
+		if ok {
+			SetActiveKeyMap(km)
+		} else {
+			log.Printf("gide.SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailKeyMaps))
+			if len(AvailKeyMaps) > 0 {
+				SetActiveKeyMap(&AvailKeyMaps[0].Map)
+			}
+		}
 	}
 }
 
