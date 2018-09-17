@@ -160,13 +160,13 @@ func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) boo
 	finstat := ""
 	tstr := time.Now().Format("Mon Jan  2 15:04:05 MST 2006")
 	if err == nil {
-		finstat = fmt.Sprintf("Cmd %v succesful at: %v", cmdstr, tstr)
+		finstat = fmt.Sprintf("%v <b>succesful</b> at: %v", cmdstr, tstr)
 		rval = true
 	} else if ee, ok := err.(*exec.ExitError); ok {
-		finstat = fmt.Sprintf("Cmd %v failed at: %v with error: %v", cmdstr, tstr, ee.Error())
+		finstat = fmt.Sprintf("%v <b>failed</b> at: %v with error: %v", cmdstr, tstr, ee.Error())
 		rval = false
 	} else {
-		finstat = fmt.Sprintf("Cmd %v exec error at: %v error: %v", cmdstr, tstr, err.Error())
+		finstat = fmt.Sprintf("%v <b>exec error</b> at: %v error: %v", cmdstr, tstr, err.Error())
 		rval = false
 	}
 	cm.Buf.AppendTextLine([]byte("\n"))

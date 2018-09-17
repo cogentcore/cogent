@@ -1138,11 +1138,13 @@ var GideProps = ki.Props{
 			},
 		}},
 		{"SelectOpenNode", ki.Props{
-			"icon":  "file-text",
-			"label": "Edit",
+			"icon":            "file-text",
+			"label":           "Edit",
+			"no-update-after": true,
 		}},
 		{"ExecCmd", ki.Props{
-			"icon": "terminal",
+			"icon":            "terminal",
+			"no-update-after": true, // key for methods that have own selector inside -- update runs before command is executed
 		}},
 	},
 	"MainMenu": ki.PropSlice{
