@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -258,6 +259,32 @@ func (ge *Gide) TextViewIndex(av *giv.TextView) int {
 	return -1 // shouldn't happen
 }
 
+// FindTextViewForFileNode finds a TextView that is viewing given FileNode,
+// and its index, or false if none is
+func (ge *Gide) FindTextViewForFileNode(fn *FileNode) (*giv.TextView, int, bool) {
+	if fn.Buf == nil {
+		return nil, -1, false
+	}
+	split := ge.SplitView()
+	for i := 0; i < NTextViews; i++ {
+		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		if tv != nil && tv.Buf != nil && tv.Buf.This == fn.Buf.This {
+			return tv, i, true
+		}
+	}
+	return nil, -1, false
+}
+
+// FindTextViewForFile finds FileNode for file, and returns TextView and index
+// that is viewing that FileNode, or false if none is
+func (ge *Gide) FindTextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+	fn, ok := ge.Files.FindFile(string(fnm))
+	if !ok {
+		return nil, -1, false
+	}
+	return ge.FindTextViewForFileNode(fn.This.(*FileNode))
+}
+
 // SetActiveFilename sets the active filename
 func (ge *Gide) SetActiveFilename(fname gi.FileName) {
 	ge.ActiveFilename = fname
@@ -420,34 +447,39 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
 }
 
 // NextViewFileNode sets the next text view to view file in given node (opens
-// buffer if not already opened)
-func (ge *Gide) NextViewFileNode(fn *FileNode) {
+// buffer if not already opened), returns text view and index
+func (ge *Gide) NextViewFileNode(fn *FileNode) (*giv.TextView, int) {
 	nv, nidx := ge.NextTextView()
 	ge.ViewFileNode(nv, nidx, fn)
+	return nv, nidx
 }
 
 // NextViewFile sets the next text view to view given file name -- include as much
 // of name as possible to disambiguate -- will use the first matching --
-// returns false if not found
-func (ge *Gide) NextViewFile(fnm gi.FileName) bool {
+// returns textview and its index, false if not found
+func (ge *Gide) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
-		return false
+		return nil, -1, false
 	}
-	ge.NextViewFileNode(fn.This.(*FileNode))
-	return true
+	nv, nidx := ge.NextViewFileNode(fn.This.(*FileNode))
+	return nv, nidx, true
 }
 
 // ViewFile views file in an existing TextView if it is already viewing that
 // file, otherwise opens NextViewFile
-func (ge *Gide) ViewFile(fnm gi.FileName) bool {
-	// todo: look for current
+func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
-		return false
+		return nil, -1, false
 	}
-	ge.NextViewFileNode(fn.This.(*FileNode))
-	return true
+	tv, idx, ok := ge.FindTextViewForFileNode(fn.This.(*FileNode))
+	if ok {
+		ge.SetActiveTextViewIdx(idx)
+		return tv, idx, ok
+	}
+	tv, idx = ge.NextViewFileNode(fn.This.(*FileNode))
+	return tv, idx, true
 }
 
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
@@ -506,9 +538,17 @@ func (ge *Gide) OpenFileURL(url string) bool {
 		pos = fpath[pidx+1:]
 		fpath = fpath[:pidx]
 	}
-	// todo: parse pos, set CursorPos
-	pos = pos + ""
-	ge.ViewFile(gi.FileName(fpath))
+	tv, _, ok := ge.ViewFile(gi.FileName(fpath))
+	if !ok {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
+		return false
+	}
+	if pos != "" {
+		txpos := giv.TextPos{}
+		if txpos.FromString(pos) {
+			tv.SetCursorShow(txpos)
+		}
+	}
 	return true
 }
 
@@ -592,6 +632,23 @@ func (ge *Gide) CurPanel() int {
 	return -1 // nobody
 }
 
+// FocusOnPanel moves keyboard focus to given panel
+func (ge *Gide) FocusOnPanel(panel int) {
+	sv := ge.SplitView()
+	if sv == nil {
+		return
+	}
+	if panel == TextView1Idx {
+		ge.SetActiveTextViewIdx(0)
+	} else if panel == TextView2Idx {
+		ge.SetActiveTextViewIdx(1)
+	} else {
+		ski := sv.Kids[panel]
+		win := ge.ParentWindow()
+		win.FocusNext(ski)
+	}
+}
+
 // FocusNextPanel moves the keyboard focus to the next panel to the right
 func (ge *Gide) FocusNextPanel() {
 	sv := ge.SplitView()
@@ -604,15 +661,7 @@ func (ge *Gide) FocusNextPanel() {
 	if cp >= np {
 		cp = 0
 	}
-	if cp == TextView1Idx {
-		ge.SetActiveTextViewIdx(0)
-	} else if cp == TextView2Idx {
-		ge.SetActiveTextViewIdx(1)
-	} else {
-		ski := sv.Kids[cp]
-		win := ge.ParentWindow()
-		win.FocusNext(ski)
-	}
+	ge.FocusOnPanel(cp)
 }
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
@@ -627,15 +676,7 @@ func (ge *Gide) FocusPrevPanel() {
 	if cp < 0 {
 		cp = np - 1
 	}
-	if cp == TextView1Idx {
-		ge.SetActiveTextViewIdx(0)
-	} else if cp == TextView2Idx {
-		ge.SetActiveTextViewIdx(1)
-	} else {
-		ski := sv.Kids[cp]
-		win := ge.ParentWindow()
-		win.FocusNext(ski)
-	}
+	ge.FocusOnPanel(cp)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -699,7 +740,12 @@ func (ge *Gide) ExecCmd() {
 	if tv == nil {
 		return
 	}
-	cmds := AvailCmds.LangCmdNames(ge.ActiveLangs)
+	var cmds []string
+	if len(ge.ActiveLangs) == 0 {
+		cmds = AvailCmds.FilterCmdNames(LangNames{ge.Prefs.MainLang}, ge.Prefs.VersCtrl)
+	} else {
+		cmds = AvailCmds.FilterCmdNames(ge.ActiveLangs, ge.Prefs.VersCtrl)
+	}
 	hsz := len(ge.CmdHistory)
 	lastCmd := ""
 	if hsz > 0 {
@@ -717,7 +763,7 @@ func (ge *Gide) ExecCmd() {
 // and shows output in MainTab with name of command
 func (ge *Gide) ExecCmdFileNode(fn *FileNode) {
 	langs := LangNamesForFilename(fn.Nm)
-	cmds := AvailCmds.LangCmdNames(langs)
+	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		ge.ExecCmdFileNodeName(CmdName(ac.Text), fn)
@@ -739,7 +785,11 @@ func (ge *Gide) ExecCmdName(cmdNm CmdName) {
 	ctv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
 	ctv.SetInactive()
 	ctv.SetBuf(cmd.Buf)
-	SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), &ge.Prefs, tv)
+	if tv.Buf == nil {
+		SetArgVarVals(&ArgVarVals, "", &ge.Prefs, tv)
+	} else {
+		SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), &ge.Prefs, tv)
+	}
 	cmd.Run(ge)
 }
 
@@ -780,6 +830,59 @@ func (ge *Gide) Run() {
 		return
 	}
 	ge.ExecCmds(ge.Prefs.RunCmds)
+}
+
+// Commit commits the current changes using relevant VCS tool, and updates the changelog
+func (ge *Gide) Commit() {
+	if ge.Prefs.VersCtrl == "" {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "No VersCtrl Set", Prompt: fmt.Sprintf("You need to set the VersCtrl in the Project Preferences")}, true, false, nil, nil)
+		return
+	}
+	cmds := AvailCmds.FilterCmdNames(ge.ActiveLangs, ge.Prefs.VersCtrl)
+	cmdnm := ""
+	for _, cm := range cmds {
+		if strings.Contains(cm, "Commit") {
+			cmdnm = cm
+			break
+		}
+	}
+	if cmdnm == "" {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "No Commit command found", Prompt: fmt.Sprintf("Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc")}, true, false, nil, nil)
+		return
+	}
+
+	gi.StringPromptDialog(ge.Viewport, "", "Enter commit message here..",
+		gi.DlgOpts{Title: "Commit Message", Prompt: "Please enter your commit message here -- this will be recorded along with other information from the commit in the project's ChangeLog, which can be viewed under Proj Prefs menu item -- author information comes from User settings in GoGi Preferences."},
+		ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			dlg := send.(*gi.Dialog)
+			if sig == int64(gi.DialogAccepted) {
+				msg := gi.StringPromptDialogValue(dlg)
+				ArgVarVals["{PromptString1}"] = msg
+				ge.Prefs.ChangeLog.Add(ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
+				ge.ExecCmdName(CmdName(cmdnm)) // must be wait
+				ge.CommitUpdtLog(cmdnm)
+			}
+		})
+
+	if len(ge.Prefs.BuildCmds) == 0 {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
+		return
+	}
+	ge.ExecCmds(ge.Prefs.BuildCmds)
+}
+
+// CommitUpdtLog grabs info from buffer in main tabs about the commit, and
+// updates the changelog record
+func (ge *Gide) CommitUpdtLog(cmdnm string) {
+	tvk, _, ok := ge.MainTabByName(cmdnm)
+	if !ok {
+		return
+	}
+	tv := tvk.Embed(giv.KiT_TextView).(*giv.TextView)
+	if tv.Buf == nil {
+		return
+	}
+	// todo: process text!
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1086,7 +1189,7 @@ func (ge *Gide) ConfigSplitView() {
 		txed := txly.KnownChild(0).(*giv.TextView)
 		txed.HiStyle = ge.Prefs.Editor.HiStyle
 		txed.Opts.LineNos = ge.Prefs.Editor.LineNos
-		txed.Opts.AutoIndent = false
+		txed.Opts.AutoIndent = true
 		if ge.Prefs.Editor.WordWrap {
 			txed.SetProp("white-space", gi.WhiteSpacePreWrap)
 		} else {
@@ -1239,6 +1342,9 @@ var GideProps = ki.Props{
 		}},
 		{"Run", ki.Props{
 			"icon": "terminal",
+		}},
+		{"Commit", ki.Props{
+			"icon": "star",
 		}},
 		{"ExecCmd", ki.Props{
 			"icon":            "terminal",

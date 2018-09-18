@@ -99,7 +99,8 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
 	title.SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
+	title.SetProp("white-space", gi.WhiteSpaceNormal)    // wrap
 
 	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
 	sv.Viewport = vp
@@ -273,7 +274,8 @@ func LangsView(pt *Langs) {
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
 	title.SetText("Available Languages: Duplicate an existing (using Ctxt Menu) as starting point for creating a custom entry")
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
+	title.SetProp("white-space", gi.WhiteSpaceNormal)    // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -411,7 +413,8 @@ func CmdsView(pt *Commands) {
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
 	title.SetText("Available Commands: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
+	title.SetProp("white-space", gi.WhiteSpaceNormal)    // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -533,4 +536,66 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 			}
 		})
 
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//  VersCtrlValueView
+
+// ValueView registers VersCtrlValueView as the viewer of VersCtrlName
+func (kn VersCtrlName) ValueView() giv.ValueView {
+	vv := VersCtrlValueView{}
+	vv.Init(&vv)
+	return &vv
+}
+
+// VersCtrlValueView presents an action for displaying an VersCtrlName and selecting
+// from StringPopup
+type VersCtrlValueView struct {
+	giv.ValueViewBase
+}
+
+var KiT_VersCtrlValueView = kit.Types.AddType(&VersCtrlValueView{}, nil)
+
+func (vv *VersCtrlValueView) WidgetType() reflect.Type {
+	vv.WidgetTyp = gi.KiT_Action
+	return vv.WidgetTyp
+}
+
+func (vv *VersCtrlValueView) UpdateWidget() {
+	if vv.Widget == nil {
+		return
+	}
+	ac := vv.Widget.(*gi.Action)
+	txt := kit.ToString(vv.Value.Interface())
+	ac.SetFullReRender()
+	ac.SetText(txt)
+}
+
+func (vv *VersCtrlValueView) ConfigWidget(widg gi.Node2D) {
+	vv.Widget = widg
+	ac := vv.Widget.(*gi.Action)
+	ac.SetProp("border-radius", units.NewValue(4, units.Px))
+	ac.ActionSig.ConnectOnly(vv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		vvv, _ := recv.Embed(KiT_VersCtrlValueView).(*VersCtrlValueView)
+		ac := vvv.Widget.(*gi.Action)
+		vvv.Activate(ac.Viewport, nil, nil)
+	})
+	vv.UpdateWidget()
+}
+
+func (vv *VersCtrlValueView) HasAction() bool {
+	return true
+}
+
+func (vv *VersCtrlValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
+	if vv.IsInactive() {
+		return
+	}
+	ac := vv.Widget.(*gi.Action)
+	cur := kit.ToString(vv.Value.Interface())
+	gi.StringsChooserPopup(VersCtrlSystems, cur, ac, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ac := send.(*gi.Action)
+		vv.SetValue(ac.Text)
+		vv.UpdateWidget()
+	})
 }

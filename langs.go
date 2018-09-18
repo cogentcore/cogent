@@ -312,6 +312,6 @@ var LangsProps = ki.Props{
 // StdLangs is the original compiled-in set of standard languages.
 var StdLangs = Langs{
 	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}},
-	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"PDFLaTeX File"}},
+	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX PDF File"}},
 	{"Markdown", "Markdown document", []string{".md"}, nil},
 }

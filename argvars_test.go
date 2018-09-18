@@ -7,6 +7,7 @@ package gide
 import (
 	"testing"
 
+	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
 )
 
@@ -19,7 +20,10 @@ func TestBind(t *testing.T) {
 	fpath := "/Users/oreilly/go/src/github.com/goki/gide/argvars_test.go"
 	projpath := "/Users/oreilly/go/src/github.com"
 
-	SetArgVarVals(&ArgVarVals, fpath, projpath, &tv)
+	pp := ProjPrefs{}
+	pp.ProjRoot = gi.FileName(projpath)
+
+	SetArgVarVals(&ArgVarVals, fpath, &pp, &tv)
 
 	bv := BindArgVars("FilePath")
 	cv := "FilePath"
