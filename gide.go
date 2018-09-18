@@ -346,6 +346,7 @@ func (ge *Gide) SaveActiveView() {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
 		}
 	}
+	ge.SaveProjIfExists()
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
@@ -357,6 +358,7 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 		ge.Files.UpdateNewFile(filename)
 		ge.ActiveViewRunPostCmds()
 	}
+	ge.SaveProjIfExists()
 }
 
 // RevertActiveView revert active view to saved version
@@ -893,6 +895,7 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 		return
 	}
 	// todo: process text!
+	ge.SaveProjIfExists()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1349,6 +1352,7 @@ var GideProps = ki.Props{
 			"label":           "Edit",
 			"no-update-after": true,
 		}},
+		{"sep-file", ki.BlankProp{}},
 		{"Build", ki.Props{
 			"icon": "terminal",
 		}},

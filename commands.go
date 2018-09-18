@@ -630,10 +630,16 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{FileDirPath}"}}}, "{FileDirPath}", false, nil},
 	{"Build Go Proj", "run go build for project BuildDir", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v", "{BuildDir}"}}}, "{BuildDir}", false, nil},
+	{"Install Go Proj", "run go install for project BuildDir", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v", "{BuildDir}"}}}, "{BuildDir}", false, nil},
 	{"Test Go", "run go test in current dir", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v", "{FileDirPath}"}}}, "{FileDirPath}", false, nil},
 	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet", "{FileDirPath}"}}}, "{FileDirPath}", false, nil},
+	{"Get Go", "run go get with prompt", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, nil},
+	{"Get Go Updt", "run go get -u updt with prompt", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, nil},
 
 	// Git
 	{"Adds Git", "git add file", nil,
