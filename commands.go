@@ -133,6 +133,11 @@ func (cm *Command) HasPrompts() (map[string]struct{}, bool) {
 	}
 }
 
+// CmdNoUserPrompt can be set to true to prevent user from being prompted for strings
+// this is useful when a custom outer-loop has already set the string values.
+// this will be reset automatically after command is run.
+var CmdNoUserPrompt bool
+
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
 func (cm *Command) PromptUser(ge *Gide, pvals map[string]struct{}) {
@@ -166,7 +171,7 @@ func (cm *Command) PromptUser(ge *Gide, pvals map[string]struct{}) {
 // for any values that might be needed for command.
 func (cm *Command) Run(ge *Gide) {
 	pvals, hasp := cm.HasPrompts()
-	if !hasp {
+	if !hasp || CmdNoUserPrompt {
 		cm.RunAfterPrompts(ge)
 	}
 	cm.PromptUser(ge, pvals)
@@ -174,6 +179,7 @@ func (cm *Command) Run(ge *Gide) {
 
 // RunAfterPrompts runs after any prompts have been set, if needed
 func (cm *Command) RunAfterPrompts(ge *Gide) {
+	CmdNoUserPrompt = false
 	if cm.Dir != "" {
 		cds := BindArgVars(cm.Dir)
 		err := os.Chdir(cds)
@@ -277,7 +283,7 @@ func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) boo
 	finstat := ""
 	tstr := time.Now().Format("Mon Jan  2 15:04:05 MST 2006")
 	if err == nil {
-		finstat = fmt.Sprintf("%v <b>succesful</b> at: %v", cmdstr, tstr)
+		finstat = fmt.Sprintf("%v <b>successful</b> at: %v", cmdstr, tstr)
 		rval = true
 	} else if ee, ok := err.(*exec.ExitError); ok {
 		finstat = fmt.Sprintf("%v <b>failed</b> at: %v with error: %v", cmdstr, tstr, ee.Error())

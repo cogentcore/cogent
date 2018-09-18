@@ -334,12 +334,13 @@ func (ge *Gide) NextTextView() (*giv.TextView, int) {
 	return ge.TextViewByIndex(nxt), nxt
 }
 
-// SaveActiveView saves the contents of the currently-active textview
+// View saves the contents of the currently-active textview
 func (ge *Gide) SaveActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		if tv.Buf.Filename != "" {
 			tv.Buf.Save()
+			ge.SetStatus("File Saved")
 			ge.ActiveViewRunPostCmds()
 		} else {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
@@ -485,8 +486,8 @@ func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
 // in current active textview
 func (ge *Gide) SelectOpenNode() {
-	if len(ge.OpenNodes) < 2 {
-		ge.SetStatus("No other open nodes to choose from")
+	if len(ge.OpenNodes) == 0 {
+		ge.SetStatus("No open nodes to choose from")
 		return
 	}
 	nl := ge.OpenNodes.Strings()
@@ -706,10 +707,22 @@ func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type) (gi.Node2D, in
 
 // FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
-// one with a TextView in it.  returns widget and tab index.
+// one with a Layout and then a TextView in it.  returns widget and tab index.
 func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
-	tvk, idx := ge.FindOrMakeMainTab(label, giv.KiT_TextView)
-	tv := tvk.Embed(giv.KiT_TextView).(*giv.TextView)
+	lyk, idx := ge.FindOrMakeMainTab(label, gi.KiT_Layout)
+	ly := lyk.Embed(gi.KiT_Layout).(*gi.Layout)
+	ly.Lay = gi.LayoutVert
+	ly.SetStretchMaxWidth()
+	ly.SetStretchMaxHeight()
+	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
+	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
+	var tv *giv.TextView
+	if ly.HasChildren() {
+		tv = ly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+	} else {
+		tv = ly.AddNewChild(giv.KiT_TextView, label).(*giv.TextView)
+	}
+
 	if ge.Prefs.Editor.WordWrap {
 		tv.SetProp("white-space", gi.WhiteSpacePreWrap)
 	} else {
@@ -858,6 +871,7 @@ func (ge *Gide) Commit() {
 			if sig == int64(gi.DialogAccepted) {
 				msg := gi.StringPromptDialogValue(dlg)
 				ArgVarVals["{PromptString1}"] = msg
+				CmdNoUserPrompt = true // don't re-prompt!
 				ge.Prefs.ChangeLog.Add(ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
 				ge.ExecCmdName(CmdName(cmdnm)) // must be wait
 				ge.CommitUpdtLog(cmdnm)
@@ -874,12 +888,11 @@ func (ge *Gide) Commit() {
 // CommitUpdtLog grabs info from buffer in main tabs about the commit, and
 // updates the changelog record
 func (ge *Gide) CommitUpdtLog(cmdnm string) {
-	tvk, _, ok := ge.MainTabByName(cmdnm)
-	if !ok {
+	ctv, _ := ge.FindOrMakeMainTabTextView(cmdnm)
+	if ctv == nil {
 		return
 	}
-	tv := tvk.Embed(giv.KiT_TextView).(*giv.TextView)
-	if tv.Buf == nil {
+	if ctv.Buf == nil {
 		return
 	}
 	// todo: process text!
@@ -1143,14 +1156,16 @@ func (ge *Gide) ConfigSplitView() {
 				}
 				tvn, _ := data.(ki.Ki).Embed(giv.KiT_FileTreeView).(*giv.FileTreeView)
 				gee, _ := recv.Embed(KiT_Gide).(*Gide)
-				fn := tvn.SrcNode.Ptr.Embed(KiT_FileNode).(*FileNode)
-				switch sig {
-				case int64(giv.TreeViewSelected):
-					gee.FileNodeSelected(fn, tvn)
-				case int64(giv.TreeViewOpened):
-					gee.FileNodeOpened(fn, tvn)
-				case int64(giv.TreeViewClosed):
-					gee.FileNodeClosed(fn, tvn)
+				if tvn.SrcNode.Ptr != nil {
+					fn := tvn.SrcNode.Ptr.Embed(KiT_FileNode).(*FileNode)
+					switch sig {
+					case int64(giv.TreeViewSelected):
+						gee.FileNodeSelected(fn, tvn)
+					case int64(giv.TreeViewOpened):
+						gee.FileNodeOpened(fn, tvn)
+					case int64(giv.TreeViewClosed):
+						gee.FileNodeClosed(fn, tvn)
+					}
 				}
 			})
 		}

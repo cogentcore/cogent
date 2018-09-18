@@ -41,11 +41,12 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* ChangeLog record of all commits in project -- special status of commit -- not just any cmd
+* super slow on isearch -- need speed.. what is causing slowness?  focus search on things just after the current cursor
 
-* need general internal link system and ability to parse output results to go to errors..
-* markup links in other output
-* cd to directory first before executing commands!
+* key repeat speed is too slow also.
+
+* close buffer
+
 * add all the other commands!
 
 * named splitter configs and save etc
@@ -57,4 +58,5 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
 
 * Find / replace in TextView -- isearch already there now..
+
 
