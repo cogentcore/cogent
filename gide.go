@@ -12,10 +12,13 @@ package gide
 
 import (
 	"fmt"
+	"github.com/goki/gi/complete"
+	"go/token"
 	"log"
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -446,6 +449,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
 		ge.AutoSaveCheck(tv, vidx, fn)
 		ge.OpenNodes.Add(fn)
 		ge.SetActiveTextViewIdx(vidx)
+		tv.SetCompleter(tv, CompleteGocode, CompleteEdit)
 	}
 }
 
@@ -1538,4 +1542,48 @@ func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
 
 	win.GoStartEventLoop()
 	return win, ge
+}
+
+// CompleteGocode uses github.com/mdempsky/gocode to do code completion
+func CompleteGocode(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+	var txbuf *giv.TextBuf
+	switch t := data.(type) {
+	case *giv.TextView:
+		txbuf = t.Buf
+	}
+	if txbuf == nil {
+		log.Printf("complete.CompleteGo: txbuf is nil - can't do code completion\n")
+		return
+	}
+
+	seed = complete.SeedGolang(text)
+	textbytes := make([]byte, 0, txbuf.NLines*40)
+	for _, lr := range txbuf.Lines {
+		textbytes = append(textbytes, []byte(string(lr))...)
+		textbytes = append(textbytes, '\n')
+	}
+	results := complete.GetCompletions(textbytes, pos)
+
+	// MatchSeed assumes a sorted list
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].Text < results[j].Text {
+			return true
+		}
+		if results[i].Text > results[j].Text {
+			return false
+		}
+		return results[i].Text < results[j].Text
+	})
+	if len(seed) > 0 {
+		matches = complete.MatchSeedCompletion(results, seed)
+	} else {
+		matches = results
+	}
+	return matches, seed
+}
+
+// CompleteEdit uses the selected completion to edit the text
+func CompleteEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
+	s, delta = complete.EditWord(text, cursorPos, selection, seed)
+	return s, delta
 }
