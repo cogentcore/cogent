@@ -16,6 +16,7 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -1541,6 +1542,10 @@ func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
 	vp.UpdateEndNoSig(updt)
 
 	win.GoStartEventLoop()
+
+	cmd := exec.Command("gocode", "close")
+	defer cmd.Run()
+
 	return win, ge
 }
 
