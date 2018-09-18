@@ -783,6 +783,16 @@ func (ge *Gide) ExecCmdFileNode(fn *FileNode) {
 	})
 }
 
+// SetArgVarVals sets the ArgVar values for commands, from Gide values
+func (ge *Gide) SetArgVarVals() {
+	tv := ge.ActiveTextView()
+	if tv == nil || tv.Buf == nil {
+		SetArgVarVals(&ArgVarVals, "", &ge.Prefs, tv)
+	} else {
+		SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), &ge.Prefs, tv)
+	}
+}
+
 // ExecCmdName executes command of given name
 func (ge *Gide) ExecCmdName(cmdNm CmdName) {
 	CurGide = ge
@@ -790,19 +800,11 @@ func (ge *Gide) ExecCmdName(cmdNm CmdName) {
 	if !ok {
 		return
 	}
-	tv := ge.ActiveTextView()
-	if tv == nil { // todo: could just issue warning
-		return
-	}
+	ge.SetArgVarVals()
 	cmd.MakeBuf(true)
 	ctv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
 	ctv.SetInactive()
 	ctv.SetBuf(cmd.Buf)
-	if tv.Buf == nil {
-		SetArgVarVals(&ArgVarVals, "", &ge.Prefs, tv)
-	} else {
-		SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), &ge.Prefs, tv)
-	}
 	cmd.Run(ge)
 }
 
@@ -863,6 +865,7 @@ func (ge *Gide) Commit() {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "No Commit command found", Prompt: fmt.Sprintf("Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc")}, true, false, nil, nil)
 		return
 	}
+	ge.SetArgVarVals() // need to set before setting prompt string below..
 
 	gi.StringPromptDialog(ge.Viewport, "", "Enter commit message here..",
 		gi.DlgOpts{Title: "Commit Message", Prompt: "Please enter your commit message here -- this will be recorded along with other information from the commit in the project's ChangeLog, which can be viewed under Proj Prefs menu item -- author information comes from User settings in GoGi Preferences."},
@@ -877,12 +880,6 @@ func (ge *Gide) Commit() {
 				ge.CommitUpdtLog(cmdnm)
 			}
 		})
-
-	if len(ge.Prefs.BuildCmds) == 0 {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
-		return
-	}
-	ge.ExecCmds(ge.Prefs.BuildCmds)
 }
 
 // CommitUpdtLog grabs info from buffer in main tabs about the commit, and

@@ -173,6 +173,7 @@ func (cm *Command) Run(ge *Gide) {
 	pvals, hasp := cm.HasPrompts()
 	if !hasp || CmdNoUserPrompt {
 		cm.RunAfterPrompts(ge)
+		return
 	}
 	cm.PromptUser(ge, pvals)
 }
