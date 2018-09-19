@@ -486,7 +486,7 @@ func (ge *Gide) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 }
 
 // ViewFile views file in an existing TextView if it is already viewing that
-// file, otherwise opens NextViewFile
+// file, otherwise opens ViewFileNode in active buffer
 func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
@@ -501,7 +501,9 @@ func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 		ge.SetActiveTextViewIdx(idx)
 		return tv, idx, ok
 	}
-	tv, idx = ge.NextViewFileNode(fn)
+	tv = ge.ActiveTextView()
+	idx = ge.ActiveTextViewIdx
+	ge.ViewFileNode(tv, idx, fn)
 	return tv, idx, true
 }
 
@@ -1342,12 +1344,14 @@ var GideProps = ki.Props{
 	},
 	"ToolBar": ki.PropSlice{
 		{"UpdateFiles", ki.Props{
-			"shortcut": "Command+U",
-			"icon":     "update",
+			"shortcut":        "Command+U",
+			"icon":            "update",
+			"no-update-after": true,
 		}},
 		{"ViewFile", ki.Props{
-			"label": "Open",
-			"icon":  "file-open",
+			"label":           "Open",
+			"icon":            "file-open",
+			"no-update-after": true,
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
@@ -1355,12 +1359,14 @@ var GideProps = ki.Props{
 			},
 		}},
 		{"SaveActiveView", ki.Props{
-			"label": "Save",
-			"icon":  "file-save",
+			"label":           "Save",
+			"no-update-after": true,
+			"icon":            "file-save",
 		}},
 		{"SaveActiveViewAs", ki.Props{
-			"label": "Save As...",
-			"icon":  "file-save",
+			"label":           "Save As...",
+			"icon":            "file-save",
+			"no-update-after": true,
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
@@ -1374,13 +1380,16 @@ var GideProps = ki.Props{
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"Build", ki.Props{
-			"icon": "terminal",
+			"no-update-after": true,
+			"icon":            "terminal",
 		}},
 		{"Run", ki.Props{
-			"icon": "terminal",
+			"no-update-after": true,
+			"icon":            "terminal",
 		}},
 		{"Commit", ki.Props{
-			"icon": "star",
+			"no-update-after": true,
+			"icon":            "star",
 		}},
 		{"ExecCmd", ki.Props{
 			"icon":            "terminal",
@@ -1391,7 +1400,8 @@ var GideProps = ki.Props{
 		{"AppMenu", ki.BlankProp{}},
 		{"File", ki.PropSlice{
 			{"OpenRecent", ki.Props{
-				"submenu": &SavedPaths,
+				"submenu":         &SavedPaths,
+				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
@@ -1406,7 +1416,8 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"OpenProj", ki.Props{
-				"shortcut": "Command+O",
+				"shortcut":        "Command+O",
+				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
@@ -1416,10 +1427,12 @@ var GideProps = ki.Props{
 			}},
 			{"SaveProj", ki.Props{
 				// "shortcut": "Command+S",
+				"no-update-after": true,
 			}},
 			{"SaveProjAs", ki.Props{
 				// "shortcut": "Shift+Command+S",
-				"label": "Save Proj As...",
+				"label":           "Save Proj As...",
+				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
@@ -1429,18 +1442,21 @@ var GideProps = ki.Props{
 			}},
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
-				"label": "Open File",
+				"label":           "Open File",
+				"no-update-after": true,
 				// "shortcut": "Command+O",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
 			}},
 			{"SaveActiveView", ki.Props{
-				"label": "Save File",
+				"label":           "Save File",
+				"no-update-after": true,
 				// "shortcut": "Command+S", // todo: need gide shortcuts
 			}},
 			{"SaveActiveViewAs", ki.Props{
-				"label": "Save File As...",
+				"label":           "Save File As...",
+				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ActiveFilename",
@@ -1448,9 +1464,10 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"RevertActiveView", ki.Props{
-				"desc":    "Revert active file to last saved version: this will lose all active changes -- are you sure?",
-				"confirm": true,
-				"label":   "Revert File",
+				"desc":            "Revert active file to last saved version: this will lose all active changes -- are you sure?",
+				"confirm":         true,
+				"label":           "Revert File",
+				"no-update-after": true,
 			}},
 			{"sep-prefs", ki.BlankProp{}},
 			{"ProjPrefs", ki.Props{

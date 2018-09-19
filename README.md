@@ -41,7 +41,22 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* fileview window not closing quickly on C-x-f -- weird lags..
+
+* check for all filesaved before doing commit!
+
+* horiz scroll with line numbers: render needs to know about scrolling delta.
+
+* need JSON formatter for date in ChangeLog
+
+* ALL of the methods in gide should be no-update-after -- more efficient to have a general override flag there to prevent that for everything
+
+* cursor still getting reset for C-x b
+
+* C-x f still not opening in active buffer..
+
+* cursor goes to hand for links in TextView
+
+* detect if an open file has changed in FS, prompt to revert etc
 
 * close buffer
 
@@ -56,5 +71,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
 
 * Find / replace in TextView -- isearch already there now..
+
+
 
 
