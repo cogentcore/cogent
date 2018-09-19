@@ -41,9 +41,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* super slow on isearch -- need speed.. what is causing slowness?  focus search on things just after the current cursor
-
-* key repeat speed is too slow also.
+* fileview window not closing quickly on C-x-f -- weird lags..
 
 * close buffer
 

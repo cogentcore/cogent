@@ -35,9 +35,11 @@ type CmdAndArgs struct {
 // and the set of such args
 func (cm *CmdAndArgs) HasPrompts() (map[string]struct{}, bool) {
 	var ps map[string]struct{}
+	if aps, has := ArgVarPrompts(cm.Cmd); has {
+		ps = aps
+	}
 	for _, av := range cm.Args {
-		aps, has := ArgVarPrompts(av)
-		if has {
+		if aps, has := ArgVarPrompts(av); has {
 			if ps == nil {
 				ps = aps
 			} else {
@@ -71,14 +73,28 @@ func (cm *CmdAndArgs) BindArgs() []string {
 // PrepCmd prepares to run command, returning *exec.Cmd and a string of the full command
 func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 	cstr := BindArgVars(cm.Cmd)
-	cmdstr := cstr
-	args := cm.BindArgs()
-	if args != nil {
-		astr := strings.Join(args, " ")
-		cmdstr += " " + astr
+	if cm.Cmd == "{PromptString1}" { // special case -- expand args
+		cmdstr := cstr
+		args := strings.Fields(cmdstr)
+		if len(args) > 1 {
+			cstr = args[0]
+			args = args[1:]
+		} else {
+			cstr = args[0]
+			args = nil
+		}
+		cmd := exec.Command(cstr, args...)
+		return cmd, cmdstr
+	} else {
+		cmdstr := cstr
+		args := cm.BindArgs()
+		if args != nil {
+			astr := strings.Join(args, " ")
+			cmdstr += " " + astr
+		}
+		cmd := exec.Command(cstr, args...)
+		return cmd, cmdstr
 	}
-	cmd := exec.Command(cstr, args...)
-	return cmd, cmdstr
 }
 
 // Command defines different types of commands that can be run in the project.
@@ -115,8 +131,7 @@ func (cm *Command) HasPrompts() (map[string]struct{}, bool) {
 	var ps map[string]struct{}
 	for i := range cm.Cmds {
 		cma := &cm.Cmds[i]
-		aps, has := cma.HasPrompts()
-		if has {
+		if aps, has := cma.HasPrompts(); has {
 			if ps == nil {
 				ps = aps
 			} else {
@@ -149,7 +164,7 @@ func (cm *Command) PromptUser(ge *Gide, pvals map[string]struct{}) {
 			fallthrough
 		case "{PromptString2}":
 			gi.StringPromptDialog(ge.Viewport, "", "Enter string value here..",
-				gi.DlgOpts{Title: pv, Prompt: "Enter string value for executing command: " + cm.Name},
+				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v:", cm.Name, cm.Desc)},
 				ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 					dlg := send.(*gi.Dialog)
 					if sig == int64(gi.DialogAccepted) {
@@ -239,9 +254,20 @@ func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
 		err = cmd.Start()
 		if err == nil {
 			outscan := bufio.NewScanner(stdout) // line at a time
+			ts := time.Now()
+			wupdt := ge.Viewport.Win.UpdateStart()
 			for outscan.Scan() {
-				cm.Buf.AppendTextLine(MarkupCmdOutput(outscan.Bytes()))
+				cm.Buf.AppendTextLine(MarkupCmdOutput(outscan.Bytes())) // autoscroll
+				now := time.Now()
+				lag := int(now.Sub(ts) / time.Millisecond)
+				if lag > 200 {
+					ts = now
+					cm.Buf.AutoScrollViews()
+					ge.Viewport.Win.UpdateEnd(wupdt)
+					wupdt = ge.Viewport.Win.UpdateStart()
+				}
 			}
+			ge.Viewport.Win.UpdateEnd(wupdt)
 		}
 		err = cmd.Wait()
 	}
@@ -262,11 +288,13 @@ func (cm *Command) AppendCmdOut(ge *Gide, out []byte) {
 	if cm.Buf == nil {
 		return
 	}
-	// todo: add update start / end to textbuf
+	updt := ge.Viewport.Win.UpdateStart()
 	lns := bytes.Split(out, []byte("\n"))
 	for _, txt := range lns {
 		cm.Buf.AppendTextLine(MarkupCmdOutput(txt))
 	}
+	cm.Buf.AutoScrollViews()
+	ge.Viewport.Win.UpdateEnd(updt)
 }
 
 // CmdOutStatusLen is amount of command output to include in the status update
@@ -295,7 +323,8 @@ func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) boo
 	}
 	cm.Buf.AppendTextLine([]byte("\n"))
 	cm.Buf.AppendTextLine(MarkupCmdOutput([]byte(finstat)))
-	cm.Buf.Refresh()
+	cm.Buf.AutoScrollViews()
+	// cm.Buf.Refresh()
 	ge.SetStatus(cmdstr + " " + outstr)
 	return rval
 }
@@ -326,6 +355,7 @@ func MarkupCmdOutput(out []byte) []byte {
 	if len(flds) == 0 {
 		return out
 	}
+	var orig, link []byte
 	mx := gi.MinInt(len(flds), 2)
 	for i := 0; i < mx; i++ {
 		ff := flds[i]
@@ -347,19 +377,22 @@ func MarkupCmdOutput(out []byte) []byte {
 		if !strings.HasPrefix(fn, cpath) {
 			fn = filepath.Join(cpath, strings.TrimPrefix(fn, "./"))
 		}
-		link := ""
+		lstr := ""
 		if col != "" {
-			link = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, col, string(ff))
+			lstr = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, col, string(ff))
 		} else if pos != "" {
-			link = fmt.Sprintf(`<a href="file:///%v#L%v">%v</a>`, fn, pos, string(ff))
+			lstr = fmt.Sprintf(`<a href="file:///%v#L%v">%v</a>`, fn, pos, string(ff))
 		} else {
-			link = fmt.Sprintf(`<a href="file:///%v">%v</a>`, fn, string(ff))
+			lstr = fmt.Sprintf(`<a href="file:///%v">%v</a>`, fn, string(ff))
 		}
-		flds[i] = []byte(link)
+		orig = ff
+		link = []byte(lstr)
 		break
 	}
-	jf := bytes.Join(flds, []byte(" "))
-	return jf
+	if len(link) > 0 {
+		return bytes.Replace(out, orig, link, -1)
+	}
+	return out
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -620,6 +653,8 @@ var CommandsProps = ki.Props{
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", nil,
 		[]CmdAndArgs{CmdAndArgs{"{RunExec}", nil}}, "", false, nil},
+	{"Run Prompt", "run any command you enter at the prompt", nil,
+		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, nil},
 
 	// Go
 	{"Imports Go File", "run goimports on file", LangNames{"Go"},
@@ -636,18 +671,20 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false, nil},
 	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false, nil},
-	{"Get Go", "run go get with prompt", LangNames{"Go"},
+	{"Get Go", "run go get on package you enter at prompt", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, nil},
-	{"Get Go Updt", "run go get -u updt with prompt", LangNames{"Go"},
+	{"Get Go Updt", "run go get -u (updt) on package you enter at prompt", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, nil},
 
 	// Git
 	{"Adds Git", "git add file", nil,
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", true, nil},
 	{"Status Git", "git status", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"status", "{FileDirPath}"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", true, nil},
+	{"Diff Git", "git diff -- see changes since last checkin", nil,
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false, nil},
 	{"Log Git", "git log", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"log", "{FileDirPath}"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false, nil},
 	{"Commit Git", "git commit", nil,
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true, nil}, // promptstring1 provided during normal commit process, MUST be wait!
 	{"Pull Git ", "git pull", nil,
@@ -659,23 +696,21 @@ var StdCmds = Commands{
 	{"Adds SVN", "svn add file", nil,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", true, nil},
 	{"Status SVN", "svn status", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status", "{FileDirPath}"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", true, nil},
 	{"Info SVN", "svn info", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info", "{FileDirPath}"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", true, nil},
 	{"Log SVN", "svn log", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v", "{FileDirPath}"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, nil},
 	{"Commit SVN", "svn commit", nil,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, nil}, // promptstring1 provided during normal commit process
 	{"Update SVN", "svn update", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"push"}}}, "", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", true, nil},
 
 	// LaTeX
 	{"LaTeX PDF File", "run PDFLaTeX on file", LangNames{"LaTeX"},
 		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, nil},
 
 	// Misc testing
-	{"List Dir", "list current dir -- just for testing", nil,
+	{"List Dir", "list current dir", nil,
 		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, nil},
-	{"Echo prompt", "echo string prompt 1 -- just for testing", nil,
-		[]CmdAndArgs{CmdAndArgs{"echo", []string{"{PromptString1}"}}}, "{FileDirPath}", false, nil},
 }

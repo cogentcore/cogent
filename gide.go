@@ -302,6 +302,9 @@ func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
 	if idx < 0 {
 		return -1
 	}
+	if ge.ActiveTextViewIdx == idx {
+		return idx
+	}
 	ge.ActiveTextViewIdx = idx
 	if av.Buf != nil {
 		ge.SetActiveFilename(av.Buf.Filename)
@@ -971,6 +974,17 @@ func (ge *Gide) ApplyPrefs() {
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+	sv := ge.SplitView()
+	if sv != nil {
+		for i := 0; i < NTextViews; i++ {
+			txly := sv.KnownChild(1 + i).(*gi.Layout)
+			txed := txly.KnownChild(0).(*giv.TextView)
+			txed.HiStyle = ge.Prefs.Editor.HiStyle
+			txed.Opts.LineNos = ge.Prefs.Editor.LineNos
+			txed.Opts.AutoIndent = true
+			txed.Opts.Completion = ge.Prefs.Editor.Completion
+		}
+	}
 }
 
 // ApplyPrefsAction applies current preferences to the project, and updates the project
@@ -1190,18 +1204,6 @@ func (ge *Gide) ConfigSplitView() {
 				})
 			}
 		}
-
-		// tabs := split.KnownChild(len(*split.Children()) - 1).(*giv.TabView)
-		// if !tabs.HasChildren() {
-		// 	lbl1 := tabs.AddNewTab(gi.KiT_Label, "Label1").(*gi.Label)
-		// 	lbl1.SetText("this is the contents of the first tab")
-		// 	lbl1.SetProp("word-wrap", true)
-
-		// 	lbl2 := tabs.AddNewTab(gi.KiT_Label, "Label2").(*gi.Label)
-		// 	lbl2.SetText("this is the contents of the second tab")
-		// 	lbl2.SetProp("word-wrap", true)
-		// 	tabs.SelectTabIndex(0)
-		// }
 		split.SetSplits(ge.Prefs.Splits...)
 		split.UpdateEnd(updt)
 	}
