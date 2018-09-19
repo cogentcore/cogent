@@ -66,6 +66,7 @@ func (pf *EditorPrefs) Defaults() {
 	pf.TabSize = 4
 	pf.WordWrap = true
 	pf.LineNos = true
+	pf.Completion = true
 }
 
 func (pf *Preferences) Defaults() {
