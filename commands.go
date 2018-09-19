@@ -105,7 +105,7 @@ type Command struct {
 	Langs LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
 	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
 	Dir   string       `desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
-	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- for quick commands and those where subsequent steps. If multiple commands are present, then subsequent steps always wait for prior steps in the sequence"`
+	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
 	Buf   *giv.TextBuf `tableview:"-" view:"-" desc:"text buffer for displaying output of command"`
 }
 
@@ -163,7 +163,8 @@ func (cm *Command) PromptUser(ge *Gide, pvals map[string]struct{}) {
 		case "{PromptString1}":
 			fallthrough
 		case "{PromptString2}":
-			gi.StringPromptDialog(ge.Viewport, "", "Enter string value here..",
+			curval := ArgVarVals[pv]
+			gi.StringPromptDialog(ge.Viewport, curval, "Enter string value here..",
 				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v:", cm.Name, cm.Desc)},
 				ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 					dlg := send.(*gi.Dialog)
@@ -678,9 +679,9 @@ var StdCmds = Commands{
 
 	// Git
 	{"Adds Git", "git add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, nil},
 	{"Status Git", "git status", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false, nil},
 	{"Diff Git", "git diff -- see changes since last checkin", nil,
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false, nil},
 	{"Log Git", "git log", nil,
@@ -688,9 +689,9 @@ var StdCmds = Commands{
 	{"Commit Git", "git commit", nil,
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true, nil}, // promptstring1 provided during normal commit process, MUST be wait!
 	{"Pull Git ", "git pull", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "", false, nil},
 	{"Push Git ", "git push", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", false, nil},
 
 	// SVN
 	{"Adds SVN", "svn add file", nil,

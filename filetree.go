@@ -31,7 +31,7 @@ func (fn *FileNode) ViewFile() {
 	gek, ok := fn.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		ge.NextViewFileNode(fn)
+		ge.NextViewFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
 }
 
@@ -41,18 +41,18 @@ func (fn *FileNode) ExecCmdFile() {
 	gek, ok := fn.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		ge.ExecCmdFileNode(fn)
+		ge.ExecCmdFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
 }
 
 // OpenNodes is a list of file nodes that have been opened for editing -- it
 // is maintained in recency order -- most recent on top -- call Add every time
 // a node is opened / visited for editing
-type OpenNodes []*FileNode
+type OpenNodes []*giv.FileNode
 
 // Add adds given node to list of open nodes -- if already on the list it is
 // moved to the top
-func (on *OpenNodes) Add(fn *FileNode) {
+func (on *OpenNodes) Add(fn *giv.FileNode) {
 	sz := len(*on)
 
 	for i, f := range *on {

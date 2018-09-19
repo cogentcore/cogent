@@ -266,7 +266,7 @@ func (ge *Gide) TextViewIndex(av *giv.TextView) int {
 
 // FindTextViewForFileNode finds a TextView that is viewing given FileNode,
 // and its index, or false if none is
-func (ge *Gide) FindTextViewForFileNode(fn *FileNode) (*giv.TextView, int, bool) {
+func (ge *Gide) FindTextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool) {
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
@@ -287,7 +287,7 @@ func (ge *Gide) FindTextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) 
 	if !ok {
 		return nil, -1, false
 	}
-	return ge.FindTextViewForFileNode(fn.This.(*FileNode))
+	return ge.FindTextViewForFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
 }
 
 // SetActiveFilename sets the active filename
@@ -420,7 +420,7 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 // AutoSaveCheck checks for an autosave file and prompts user about opening it
 // -- returns true if autosave file does exist for a file that currently
 // unchanged (means just opened)
-func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *FileNode) bool {
+func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool {
 	if strings.HasPrefix(fn.Nm, "#") && strings.HasSuffix(fn.Nm, "#") {
 		fn.Buf.Autosave = false
 		return false // we are the autosave file
@@ -445,7 +445,10 @@ func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *FileNode) bool {
 
 // ViewFileNode sets the given text view to view file in given node (opens
 // buffer if not already opened)
-func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
+func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
+	if fn.IsDir() {
+		return
+	}
 	if err := fn.OpenBuf(); err == nil {
 		if tv.IsChanged() {
 			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
@@ -460,7 +463,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *FileNode) {
 
 // NextViewFileNode sets the next text view to view file in given node (opens
 // buffer if not already opened), returns text view and index
-func (ge *Gide) NextViewFileNode(fn *FileNode) (*giv.TextView, int) {
+func (ge *Gide) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
 	nv, nidx := ge.NextTextView()
 	ge.ViewFileNode(nv, nidx, fn)
 	return nv, nidx
@@ -470,27 +473,35 @@ func (ge *Gide) NextViewFileNode(fn *FileNode) (*giv.TextView, int) {
 // of name as possible to disambiguate -- will use the first matching --
 // returns textview and its index, false if not found
 func (ge *Gide) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
-	fn, ok := ge.Files.FindFile(string(fnm))
+	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
 	}
-	nv, nidx := ge.NextViewFileNode(fn.This.(*FileNode))
+	fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	if fn.IsDir() {
+		return nil, -1, false
+	}
+	nv, nidx := ge.NextViewFileNode(fn)
 	return nv, nidx, true
 }
 
 // ViewFile views file in an existing TextView if it is already viewing that
 // file, otherwise opens NextViewFile
 func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
-	fn, ok := ge.Files.FindFile(string(fnm))
+	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
 	}
-	tv, idx, ok := ge.FindTextViewForFileNode(fn.This.(*FileNode))
+	fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	if fn.IsDir() {
+		return nil, -1, false
+	}
+	tv, idx, ok := ge.FindTextViewForFileNode(fn)
 	if ok {
 		ge.SetActiveTextViewIdx(idx)
 		return tv, idx, ok
 	}
-	tv, idx = ge.NextViewFileNode(fn.This.(*FileNode))
+	tv, idx = ge.NextViewFileNode(fn)
 	return tv, idx, true
 }
 
@@ -785,7 +796,7 @@ func (ge *Gide) ExecCmd() {
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
-func (ge *Gide) ExecCmdFileNode(fn *FileNode) {
+func (ge *Gide) ExecCmdFileNode(fn *giv.FileNode) {
 	langs := LangNamesForFilename(fn.Nm)
 	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -827,7 +838,7 @@ func (ge *Gide) ExecCmds(cmdNms CmdNames) {
 }
 
 // ExecCmdFileNodeName executes command of given name on given node
-func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *FileNode) {
+func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *giv.FileNode) {
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
 	if !ok {
 		return
@@ -1177,7 +1188,7 @@ func (ge *Gide) ConfigSplitView() {
 				tvn, _ := data.(ki.Ki).Embed(giv.KiT_FileTreeView).(*giv.FileTreeView)
 				gee, _ := recv.Embed(KiT_Gide).(*Gide)
 				if tvn.SrcNode.Ptr != nil {
-					fn := tvn.SrcNode.Ptr.Embed(KiT_FileNode).(*FileNode)
+					fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
 					switch sig {
 					case int64(giv.TreeViewSelected):
 						gee.FileNodeSelected(fn, tvn)
@@ -1227,24 +1238,24 @@ func (ge *Gide) ConfigSplitView() {
 	split.SetSplits(ge.Prefs.Splits...)
 }
 
-func (ge *Gide) FileNodeSelected(fn *FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	// if fn.IsDir() {
 	// } else {
 	// }
 }
 
-func (ge *Gide) FileNodeOpened(fn *FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	if fn.IsDir() {
 		if !fn.IsOpen() {
 			tvn.SetOpen()
 			fn.OpenDir()
 		}
 	} else {
-		ge.NextViewFileNode(fn.This.(*FileNode))
+		ge.NextViewFileNode(fn)
 	}
 }
 
-func (ge *Gide) FileNodeClosed(fn *FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	if fn.IsDir() {
 		if fn.IsOpen() {
 			fn.CloseDir()
