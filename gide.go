@@ -12,7 +12,6 @@ package gide
 
 import (
 	"fmt"
-	"github.com/goki/gi/complete"
 	"go/token"
 	"log"
 	"os"
@@ -23,6 +22,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/goki/gi/complete"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -1210,6 +1211,7 @@ func (ge *Gide) ConfigSplitView() {
 		txed.HiStyle = ge.Prefs.Editor.HiStyle
 		txed.Opts.LineNos = ge.Prefs.Editor.LineNos
 		txed.Opts.AutoIndent = true
+		txed.Opts.Completion = ge.Prefs.Editor.Completion
 		if ge.Prefs.Editor.WordWrap {
 			txed.SetProp("white-space", gi.WhiteSpacePreWrap)
 		} else {

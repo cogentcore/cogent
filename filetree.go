@@ -2,12 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-/*
-package gide provides the core Gide editor object.
-
-Derived classes can extend the functionality for specific domains.
-
-*/
 package gide
 
 import (

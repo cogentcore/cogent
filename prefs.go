@@ -29,6 +29,7 @@ type EditorPrefs struct {
 	TabSize    int             `desc:"size of a tab, in chars"`
 	WordWrap   bool            `desc:"wrap lines at word boundaries -- otherwise long lines scroll off the end"`
 	LineNos    bool            `desc:"show line numbers"`
+	Completion bool            `desc:"use the completion system to suggest options while typing"`
 }
 
 // Preferences are the overall user preferences for Gide.
