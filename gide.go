@@ -1408,6 +1408,7 @@ var GideProps = ki.Props{
 			}},
 			{"NewProj", ki.Props{
 				"shortcut":        "Command+N",
+				"label":           "New Project…",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"Proj Dir", ki.Props{
@@ -1417,6 +1418,7 @@ var GideProps = ki.Props{
 			}},
 			{"OpenProj", ki.Props{
 				"shortcut":        "Command+O",
+				"label":           "Open Project…",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -1431,7 +1433,7 @@ var GideProps = ki.Props{
 			}},
 			{"SaveProjAs", ki.Props{
 				// "shortcut": "Shift+Command+S",
-				"label":           "Save Proj As...",
+				"label":           "Save Project As…",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -1442,7 +1444,7 @@ var GideProps = ki.Props{
 			}},
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
-				"label":           "Open File",
+				"label":           "Open File…",
 				"no-update-after": true,
 				// "shortcut": "Command+O",
 				"Args": ki.PropSlice{
@@ -1455,7 +1457,7 @@ var GideProps = ki.Props{
 				// "shortcut": "Command+S", // todo: need gide shortcuts
 			}},
 			{"SaveActiveViewAs", ki.Props{
-				"label":           "Save File As...",
+				"label":           "Save File As…",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -1495,7 +1497,7 @@ var GideProps = ki.Props{
 
 func init() {
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
-		m.InsertActionAfter("GoGi Preferences", gi.ActOpts{Label: "Gide Preferences"},
+		m.InsertActionAfter("GoGi Preferences", gi.ActOpts{Label: "Gide Preferences…"},
 			win, func(recv, send ki.Ki, sig int64, data interface{}) {
 				PrefsView(&Prefs)
 			})
