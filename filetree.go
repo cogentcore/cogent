@@ -172,7 +172,7 @@ var FileNodeProps = ki.Props{
 			},
 		}},
 		{"ExecCmdFile", ki.Props{
-			"label": "Exec Cmd…",
+			"label": "Exec Cmd...",
 		}},
 		{"DuplicateFile", ki.Props{
 			"label": "Duplicate",
@@ -182,7 +182,7 @@ var FileNodeProps = ki.Props{
 			},
 		}},
 		{"DeleteFile", ki.Props{
-			"label":   "Delete…",
+			"label":   "Delete...",
 			"desc":    "Ok to delete this file?  This is not undoable and is not moving to trash / recycle bin",
 			"confirm": true,
 			"updtfunc": func(fni interface{}, act *gi.Action) {
@@ -191,7 +191,7 @@ var FileNodeProps = ki.Props{
 			},
 		}},
 		{"RenameFile", ki.Props{
-			"label": "Rename…",
+			"label": "Rename...",
 			"desc":  "Rename file to new file name",
 			"Args": ki.PropSlice{
 				{"New Name", ki.Props{
