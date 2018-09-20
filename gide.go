@@ -162,7 +162,6 @@ func (ge *Gide) SaveProjAs(filename gi.FileName) {
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
 	ge.Changed = false
-	ge.UpdateSig()
 }
 
 // OpenProj opens project and its settings from given filename, in a standard

@@ -100,7 +100,7 @@ func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
-	Name  string       `desc:"name of this type of project (must be unique in list of such types)"`
+	Name  string       `desc:"name of this command (must be unique in list of commands)"`
 	Desc  string       `desc:"brief description of this command"`
 	Langs LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
 	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
