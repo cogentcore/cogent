@@ -1662,7 +1662,7 @@ func CompleteGocode(data interface{}, text string, pos token.Position) (matches 
 		txbuf = t.Buf
 	}
 	if txbuf == nil {
-		log.Printf("complete.CompleteGo: txbuf is nil - can't do code completion\n")
+		log.Printf("complete.CompleteGocode: txbuf is nil - can't do code completion\n")
 		return
 	}
 
@@ -1672,9 +1672,16 @@ func CompleteGocode(data interface{}, text string, pos token.Position) (matches 
 		textbytes = append(textbytes, []byte(string(lr))...)
 		textbytes = append(textbytes, '\n')
 	}
-	results := complete.GetCompletions(textbytes, pos)
 
-	// MatchSeed assumes a sorted list
+	// check first for file level declarations, import, const, type, var, func
+	// by parsing the file to create AST - if none returned let gocode of a try
+	var results []complete.Completion
+	results = complete.FirstPassComplete(textbytes, pos)
+	if len(results) == 0 { // no, continue on with gocode parsing which doesn't handle the file level decls
+		results = complete.GetCompletions(textbytes, pos)
+	}
+
+	// MatchSeed requires a sorted list - maybe MatchSeed should do sorting?
 	sort.Slice(results, func(i, j int) bool {
 		if results[i].Text < results[j].Text {
 			return true
