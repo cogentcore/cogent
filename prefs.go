@@ -50,10 +50,11 @@ var Prefs = Preferences{}
 
 // InitPrefs must be called at startup in mainrun()
 func InitPrefs() {
+	DefaultKeyMap = "MacEmacs" // todo
+	SetActiveKeyMapName(DefaultKeyMap)
 	Prefs.Defaults()
 	Prefs.Open()
 	OpenPaths()
-	DefaultKeyMap = "MacEmacs" // todo
 }
 
 func (pf *FilePrefs) Defaults() {

@@ -668,6 +668,8 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false, nil},
 	{"Install Go Proj", "run go install for project BuildDir", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false, nil},
+	{"Generate Go", "run go generate in current dir", LangNames{"Go"},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false, nil},
 	{"Test Go", "run go test in current dir", LangNames{"Go"},
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false, nil},
 	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
@@ -678,7 +680,7 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, nil},
 
 	// Git
-	{"Adds Git", "git add file", nil,
+	{"Add Git", "git add file", nil,
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, nil},
 	{"Status Git", "git status", nil,
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false, nil},
@@ -694,7 +696,7 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", false, nil},
 
 	// SVN
-	{"Adds SVN", "svn add file", nil,
+	{"Add SVN", "svn add file", nil,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", true, nil},
 	{"Status SVN", "svn status", nil,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", true, nil},

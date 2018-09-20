@@ -112,8 +112,10 @@ func (ge *Gide) NewProj(path gi.FileName) {
 		ge.Prefs.ProjFilename = gi.FileName(filepath.Join(root, pnm+".gide"))
 		ge.ProjFilename = ge.Prefs.ProjFilename
 		ge.Prefs.ProjRoot = ge.ProjRoot
-		ge.GuessMainLang()
 		ge.UpdateProj()
+		ge.GuessMainLang()
+		ge.LangDefaults()
+		ge.GuessVersCtrl()
 		win := ge.ParentWindow()
 		if win != nil {
 			winm := "gide-" + pnm
@@ -244,6 +246,38 @@ func (ge *Gide) GuessMainLang() bool {
 	return false
 }
 
+// LangDefaults applies default language settings based on MainLang
+func (ge *Gide) LangDefaults() bool {
+	ge.Prefs.RunCmds = CmdNames{"Run Proj"}
+	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
+	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
+	ge.Prefs.RunExec = gi.FileName(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
+	if ge.Prefs.MainLang == "" {
+		return false
+	}
+	got := false
+	switch ge.Prefs.MainLang {
+	case LangName("Go"):
+		ge.Prefs.BuildCmds = CmdNames{"Build Go Proj"}
+		got = true
+	}
+	return got
+}
+
+// GuessVersCtrl guesses the version control system in use
+func (ge *Gide) GuessVersCtrl() bool {
+	got := false
+	for vc, fn := range VersCtrlFiles {
+		ftest := filepath.Join(string(ge.Prefs.ProjRoot), fn)
+		if _, err := os.Stat(ftest); os.IsNotExist(err) {
+			continue
+		}
+		ge.Prefs.VersCtrl = VersCtrlName(vc)
+		got = true
+	}
+	return got
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //   TextViews
 
@@ -275,6 +309,20 @@ func (ge *Gide) FindTextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, b
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
 		if tv != nil && tv.Buf != nil && tv.Buf.This == fn.Buf.This {
 			return tv, i, true
+		}
+	}
+	return nil, -1, false
+}
+
+// FindOpenNodeForTextView finds the FileNode that a given TextView is
+// viewing, returning its index within OpenNodes list, or false if not found
+func (ge *Gide) FindOpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, bool) {
+	if tv.Buf == nil {
+		return nil, -1, false
+	}
+	for i, ond := range ge.OpenNodes {
+		if ond.Buf == tv.Buf {
+			return ond, i, true
 		}
 	}
 	return nil, -1, false
@@ -375,6 +423,18 @@ func (ge *Gide) RevertActiveView() {
 	if tv.Buf != nil {
 		tv.Buf.ReOpen()
 	}
+}
+
+// CloseActiveView closes the buffer associated with active view
+func (ge *Gide) CloseActiveView() bool {
+	tv := ge.ActiveTextView()
+	ond, idx, got := ge.FindOpenNodeForTextView(tv)
+	if got {
+		ond.Buf.Close() // todo: we can't know yet if buffer was closed if has changes!
+		ge.OpenNodes.DeleteIdx(idx)
+		return true
+	}
+	return false
 }
 
 // ActiveViewRunPostCmds runs any registered post commands on the active view
@@ -516,7 +576,11 @@ func (ge *Gide) SelectOpenNode() {
 	}
 	nl := ge.OpenNodes.Strings()
 	tv := ge.ActiveTextView() // nl[0] is always currently viewed
-	gi.StringsChooserPopup(nl, nl[1], tv, func(recv, send ki.Ki, sig int64, data interface{}) {
+	def := nl[0]
+	if len(nl) > 1 {
+		def = nl[1]
+	}
+	gi.StringsChooserPopup(nl, def, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		idx := ac.Data.(int)
 		nb := ge.OpenNodes[idx]
@@ -1300,6 +1364,12 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	case KeyFunBufSave:
 		kt.SetProcessed()
 		ge.SaveActiveView()
+	case KeyFunBufSaveAs:
+		kt.SetProcessed()
+		giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport)
+	case KeyFunBufClose:
+		kt.SetProcessed()
+		ge.CloseActiveView()
 	case KeyFunExecCmd:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "ExecCmd", ge.Viewport)
@@ -1408,7 +1478,7 @@ var GideProps = ki.Props{
 			}},
 			{"NewProj", ki.Props{
 				"shortcut":        "Command+N",
-				"label":           "New Project…",
+				"label":           "New Project...",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"Proj Dir", ki.Props{
@@ -1418,7 +1488,7 @@ var GideProps = ki.Props{
 			}},
 			{"OpenProj", ki.Props{
 				"shortcut":        "Command+O",
-				"label":           "Open Project…",
+				"label":           "Open Project...",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -1429,11 +1499,12 @@ var GideProps = ki.Props{
 			}},
 			{"SaveProj", ki.Props{
 				// "shortcut": "Command+S",
+				"label":           "Save Project",
 				"no-update-after": true,
 			}},
 			{"SaveProjAs", ki.Props{
 				// "shortcut": "Shift+Command+S",
-				"label":           "Save Project As…",
+				"label":           "Save Project As...",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -1444,7 +1515,7 @@ var GideProps = ki.Props{
 			}},
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
-				"label":           "Open File…",
+				"label":           "Open File...",
 				"no-update-after": true,
 				// "shortcut": "Command+O",
 				"Args": ki.PropSlice{
@@ -1457,7 +1528,7 @@ var GideProps = ki.Props{
 				// "shortcut": "Command+S", // todo: need gide shortcuts
 			}},
 			{"SaveActiveViewAs", ki.Props{
-				"label":           "Save File As…",
+				"label":           "Save File As...",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -1497,7 +1568,7 @@ var GideProps = ki.Props{
 
 func init() {
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
-		m.InsertActionAfter("GoGi Preferences", gi.ActOpts{Label: "Gide Preferences…"},
+		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
 			win, func(recv, send ki.Ki, sig int64, data interface{}) {
 				PrefsView(&Prefs)
 			})

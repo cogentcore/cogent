@@ -41,24 +41,16 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* FileTree update new file not working
 
 * check for all filesaved before doing commit!
+* detect if an open file has changed in FS, prompt to revert etc
 
 * horiz scroll with line numbers: render needs to know about scrolling delta.
 
-* need JSON formatter for date in ChangeLog
-
 * ALL of the methods in gide should be no-update-after -- more efficient to have a general override flag there to prevent that for everything
 
-* cursor still getting reset for C-x b
-
-* C-x f still not opening in active buffer..
-
 * cursor goes to hand for links in TextView
-
-* detect if an open file has changed in FS, prompt to revert etc
-
-* close buffer
 
 * add all the other commands!
 

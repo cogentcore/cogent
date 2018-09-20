@@ -73,6 +73,22 @@ func (on *OpenNodes) Add(fn *giv.FileNode) {
 	(*on)[0] = fn
 }
 
+// Delete deletes given node in list of open nodes, returning true if found and deleted
+func (on *OpenNodes) Delete(fn *giv.FileNode) bool {
+	for i, f := range *on {
+		if f == fn {
+			on.DeleteIdx(i)
+			return true
+		}
+	}
+	return false
+}
+
+// DeleteIdx deletes at given index
+func (on *OpenNodes) DeleteIdx(idx int) {
+	*on = append((*on)[:idx], (*on)[idx+1:]...)
+}
+
 // Strings returns a string list of nodes, with paths relative to proj root
 func (on *OpenNodes) Strings() []string {
 	sl := make([]string, len(*on))
