@@ -18,7 +18,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -1679,22 +1678,7 @@ func CompleteGocode(data interface{}, text string, pos token.Position) (matches 
 	if len(results) == 0 { // no, continue on with gocode parsing which doesn't handle the file level decls
 		results = complete.GetCompletions(textbytes, pos)
 	}
-
-	// MatchSeed requires a sorted list - maybe MatchSeed should do sorting?
-	sort.Slice(results, func(i, j int) bool {
-		if results[i].Text < results[j].Text {
-			return true
-		}
-		if results[i].Text > results[j].Text {
-			return false
-		}
-		return results[i].Text < results[j].Text
-	})
-	if len(seed) > 0 {
-		matches = complete.MatchSeedCompletion(results, seed)
-	} else {
-		matches = results
-	}
+	matches = complete.MatchSeedCompletion(results, seed)
 	return matches, seed
 }
 
