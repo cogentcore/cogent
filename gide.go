@@ -53,24 +53,22 @@ const (
 // middle, and a tabbed viewer on the right.
 type Gide struct {
 	gi.Frame
-	ProjRoot          gi.FileName  `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
-	ProjFilename      gi.FileName  `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
-	ActiveFilename    gi.FileName  `desc:"filename of the currently-active textview"`
-	ActiveLangs       LangNames    `desc:"languages for current active filename"`
-	Changed           bool         `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
-	Files             giv.FileTree `desc:"all the files in the project directory and subdirectories"`
-	ActiveTextViewIdx int          `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
-	OpenNodes         OpenNodes    `json:"-" desc:"list of open nodes, most recent first"`
-	CmdHistory        CmdNames     `json:"-" desc:"history of commands executed in this session"`
-	Prefs             ProjPrefs    `desc:"preferences for this project -- this is what is saved in a .gide project file"`
-	KeySeq1           key.Chord    `desc:"first key in sequence if needs2 key pressed"`
-	UpdtMu            sync.Mutex   `desc:"mutex for protecting overall updates to Gide"`
+	ProjRoot          gi.FileName             `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	ProjFilename      gi.FileName             `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
+	ActiveFilename    gi.FileName             `desc:"filename of the currently-active textview"`
+	ActiveLangs       LangNames               `desc:"languages for current active filename"`
+	Changed           bool                    `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+	Files             giv.FileTree            `desc:"all the files in the project directory and subdirectories"`
+	ActiveTextViewIdx int                     `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
+	OpenNodes         OpenNodes               `json:"-" desc:"list of open nodes, most recent first"`
+	CmdBufs           map[string]*giv.TextBuf `json:"-" desc:"the command buffers for commands run in this project"`
+	CmdHistory        CmdNames                `json:"-" desc:"history of commands executed in this session"`
+	Prefs             ProjPrefs               `desc:"preferences for this project -- this is what is saved in a .gide project file"`
+	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
+	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
-
-// CurGide is updated to be the most recently used Gide project todo!
-var CurGide *Gide
 
 // UpdateFiles updates the list of files saved in project
 func (ge *Gide) UpdateFiles() {
@@ -100,7 +98,6 @@ func (ge *Gide) NewProj(path gi.FileName) {
 		return
 	}
 	ge.Defaults()
-	CurGide = ge
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
@@ -152,7 +149,6 @@ func (ge *Gide) SaveProjIfExists() bool {
 // SaveProjAs saves project custom settings to given filename, in a standard
 // JSON-formatted file
 func (ge *Gide) SaveProjAs(filename gi.FileName) {
-	CurGide = ge
 	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
 	SavePaths()
 	ge.Files.UpdateNewFile(filename)
@@ -170,7 +166,6 @@ func (ge *Gide) OpenProj(filename gi.FileName) {
 		OpenGideProj(string(filename))
 		return
 	}
-	CurGide = ge
 	ge.Prefs.OpenJSON(filename)
 	ge.Prefs.ProjFilename = filename // should already be set but..
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
@@ -192,7 +187,6 @@ func (ge *Gide) OpenProj(filename gi.FileName) {
 
 // UpdateProj does full update to current proj
 func (ge *Gide) UpdateProj() {
-	CurGide = ge
 	mods, updt := ge.StdConfig()
 	ge.UpdateFiles()
 	ge.ConfigSplitView()
@@ -600,21 +594,26 @@ func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 //////////////////////////////////////////////////////////////////////////////////////
 //   Links
 
-// TextLinkHandler is the Gide handler for text links
+// TextLinkHandler is the Gide handler for text links -- preferred one b/c
+// directly connects to correct Gide project
 func TextLinkHandler(tl gi.TextLink) bool {
-	// todo: not really doing anything with text-link specific info right now..
-	return URLHandler(tl.URL)
-}
-
-// URLHandler is the Gide handler for urls
-func URLHandler(url string) bool {
-	// todo: use net/url package for more systematic parsing
-	switch {
-	case strings.HasPrefix(url, "file:///"):
-		CurGide.OpenFileURL(url)
+	gek, ok := tl.Widget.ParentByType(KiT_Gide, true)
+	if ok {
+		ge := gek.Embed(KiT_Gide).(*Gide)
+		url := tl.URL
+		// todo: use net/url package for more systematic parsing
+		switch {
+		case strings.HasPrefix(url, "file:///"):
+			ge.OpenFileURL(url)
+		}
 	}
 	return true
 }
+
+// // URLHandler is the Gide handler for urls --
+// func URLHandler(url string) bool {
+// 	return true
+// }
 
 // OpenFileURL opens given file:/// url
 func (ge *Gide) OpenFileURL(url string) bool {
@@ -640,7 +639,7 @@ func (ge *Gide) OpenFileURL(url string) bool {
 }
 
 func init() {
-	gi.URLHandler = URLHandler
+	// gi.URLHandler = URLHandler
 	gi.TextLinkHandler = TextLinkHandler
 }
 
@@ -832,6 +831,60 @@ func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Commands / Tabs
 
+// ExecCmdName executes command of given name -- this is the final common
+// pathway for all command invokation except on a node
+func (ge *Gide) ExecCmdName(cmdNm CmdName) {
+	cmd, _, ok := AvailCmds.CmdByName(cmdNm, true)
+	if !ok {
+		return
+	}
+	ge.SetArgVarVals()
+	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, true) // clear
+	cmd.Run(ge, cbuf)
+}
+
+// ExecCmdFileNodeName executes command of given name on given node
+func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *giv.FileNode) {
+	cmd, _, ok := AvailCmds.CmdByName(cmdNm, true)
+	if !ok {
+		return
+	}
+	SetArgVarVals(&ArgVarVals, string(fn.FPath), &ge.Prefs, nil)
+	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, true) // clear
+	cmd.Run(ge, cbuf)
+}
+
+// FindOrMakeCmdBuf creates the buffer for command output, or returns
+// existing. If clear is true, then any existing buffer is cleared.
+// Returns true if new buffer created.
+func (ge *Gide) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) {
+	if ge.CmdBufs == nil {
+		ge.CmdBufs = make(map[string]*giv.TextBuf, 20)
+	}
+	if buf, has := ge.CmdBufs[cmdNm]; has {
+		if clear {
+			buf.New(0)
+		}
+		return buf, false
+	}
+	buf := &giv.TextBuf{}
+	buf.InitName(buf, cmdNm+"-buf")
+	ge.CmdBufs[cmdNm] = buf
+	return buf, true
+}
+
+// FindOrMakeCmdTab creates the tab to show command output, including making a
+// buffer object to save output from the command. returns true if a new buffer
+// was created, false if one already existed -- if clearBuf is true, then any
+// existing buffer is cleared.  Also returns index of tab.
+func (ge *Gide) FindOrMakeCmdTab(cmdNm string, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
+	buf, nw := ge.FindOrMakeCmdBuf(cmdNm, clearBuf)
+	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm)
+	ctv.SetInactive()
+	ctv.SetBuf(buf)
+	return buf, ctv, idx, nw
+}
+
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in MainTab with name of command
 func (ge *Gide) ExecCmd() {
@@ -879,40 +932,11 @@ func (ge *Gide) SetArgVarVals() {
 	}
 }
 
-// ExecCmdName executes command of given name
-func (ge *Gide) ExecCmdName(cmdNm CmdName) {
-	CurGide = ge
-	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
-	if !ok {
-		return
-	}
-	ge.SetArgVarVals()
-	cmd.MakeBuf(true)
-	ctv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
-	ctv.SetInactive()
-	ctv.SetBuf(cmd.Buf)
-	cmd.Run(ge)
-}
-
 // ExecCmds executes a sequence of commands
 func (ge *Gide) ExecCmds(cmdNms CmdNames) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdName(cmdNm)
 	}
-}
-
-// ExecCmdFileNodeName executes command of given name on given node
-func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *giv.FileNode) {
-	cmd, _, ok := AvailCmds.CmdByName(cmdNm)
-	if !ok {
-		return
-	}
-	ctv, _ := ge.FindOrMakeMainTabTextView(cmd.Name)
-	ctv.SetInactive()
-	cmd.MakeBuf(true)
-	ctv.SetBuf(cmd.Buf)
-	SetArgVarVals(&ArgVarVals, string(fn.FPath), &ge.Prefs, nil)
-	cmd.Run(ge)
 }
 
 // Build runs the BuildCmds set for this project
@@ -987,7 +1011,6 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 
 // SetStatus updates the statusbar label with given message, along with other status info
 func (ge *Gide) SetStatus(msg string) {
-	CurGide = ge
 	sb := ge.StatusBar()
 	if sb == nil {
 		return

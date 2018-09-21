@@ -106,23 +106,6 @@ type Command struct {
 	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
 	Dir   string       `desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
 	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
-	Buf   *giv.TextBuf `tableview:"-" view:"-" desc:"text buffer for displaying output of command"`
-}
-
-// MakeBuf creates the buffer object to save output from the command -- if
-// this is not called in advance of Run, then output is ignored.  returns true
-// if a new buffer was created, false if one already existed -- if clear is
-// true, then any existing buffer is cleared.
-func (cm *Command) MakeBuf(clear bool) bool {
-	if cm.Buf != nil {
-		if clear {
-			cm.Buf.New(0)
-		}
-		return false
-	}
-	cm.Buf = &giv.TextBuf{}
-	cm.Buf.InitName(cm.Buf, cm.Name+"-buf")
-	return true
 }
 
 // HasPrompts returns true if any prompts are required before running command,
@@ -155,7 +138,7 @@ var CmdNoUserPrompt bool
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(ge *Gide, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
 	sz := len(pvals)
 	cnt := 0
 	for pv, _ := range pvals {
@@ -173,7 +156,7 @@ func (cm *Command) PromptUser(ge *Gide, pvals map[string]struct{}) {
 						ArgVarVals[pv] = val
 						cnt++
 						if cnt == sz {
-							cm.RunAfterPrompts(ge)
+							cm.RunAfterPrompts(ge, buf)
 						}
 					}
 				})
@@ -185,69 +168,63 @@ func (cm *Command) PromptUser(ge *Gide, pvals map[string]struct{}) {
 // which can be displayed -- if !wait, then Buf is updated online as output
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(ge *Gide) {
+func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
 	pvals, hasp := cm.HasPrompts()
 	if !hasp || CmdNoUserPrompt {
-		cm.RunAfterPrompts(ge)
+		cm.RunAfterPrompts(ge, buf)
 		return
 	}
-	cm.PromptUser(ge, pvals)
+	cm.PromptUser(ge, buf, pvals)
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(ge *Gide) {
+func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 	CmdNoUserPrompt = false
 	if cm.Dir != "" {
 		cds := BindArgVars(cm.Dir)
 		err := os.Chdir(cds)
-		cm.AppendCmdOut(ge, []byte(fmt.Sprintf("cd %v (from: %v)", cds, cm.Dir)))
+		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)", cds, cm.Dir)))
 		if err != nil {
-			cm.AppendCmdOut(ge, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v", cds, err)))
+			cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v", cds, err)))
 		}
 	}
 
 	if cm.Wait || len(cm.Cmds) > 1 {
 		for i := range cm.Cmds {
 			cma := &cm.Cmds[i]
-			if cm.Buf == nil {
+			if buf == nil {
 				if !cm.RunNoBuf(ge, cma) {
 					break
 				}
 			} else {
-				if !cm.RunBufWait(ge, cma) {
+				if !cm.RunBufWait(ge, buf, cma) {
 					break
 				}
 			}
 		}
 	} else {
 		cma := &cm.Cmds[0]
-		if cm.Buf == nil {
+		if buf == nil {
 			go cm.RunNoBuf(ge, cma)
 		} else {
-			go cm.RunBuf(ge, cma)
+			go cm.RunBuf(ge, buf, cma)
 		}
 	}
-
-	// cds := BindArgVars("{ProjPath}")
-	// err := os.Chdir(cds)
-	// if err != nil { // shouldn't happen
-	// 	log.Printf("Could not change to proj directory %v (spec: {ProjPath}): error: %v", cds, err)
-	// }
 }
 
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
 // line of the command output to gide statusbar
-func (cm *Command) RunBufWait(ge *Gide, cma *CmdAndArgs) bool {
+func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
 	out, err := cmd.CombinedOutput()
-	cm.AppendCmdOut(ge, out)
-	return cm.RunStatus(ge, cmdstr, err, out)
+	cm.AppendCmdOut(ge, buf, out)
+	return cm.RunStatus(ge, buf, cmdstr, err, out)
 }
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
+func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
 	stdout, err := cmd.StdoutPipe()
 	if err == nil {
@@ -255,21 +232,28 @@ func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
 		err = cmd.Start()
 		if err == nil {
 			outscan := bufio.NewScanner(stdout) // line at a time
+			outlns := make([][]byte, 0, 100)
 			ts := time.Now()
 			// note: can't blank whole screen here b/c some processes will continue for long time
 			for outscan.Scan() {
-				cm.Buf.AppendTextLine(MarkupCmdOutput(outscan.Bytes())) // autoscroll
+				outlns = append(outlns, MarkupCmdOutput(outscan.Bytes())) // adds \n
 				now := time.Now()
 				lag := int(now.Sub(ts) / time.Millisecond)
 				if lag > 200 {
 					ts = now
-					cm.Buf.AutoScrollViews()
+					buf.AppendText(bytes.Join(outlns, []byte{}))
+					buf.AutoScrollViews()
+					outlns = make([][]byte, 0, 100)
 				}
+			}
+			if len(outlns) > 0 {
+				buf.AppendText(bytes.Join(outlns, []byte{}))
+				buf.AutoScrollViews()
 			}
 		}
 		err = cmd.Wait()
 	}
-	return cm.RunStatus(ge, cmdstr, err, nil)
+	return cm.RunStatus(ge, buf, cmdstr, err, nil)
 }
 
 // RunNoBuf runs a command without any output to the buffer -- can call using
@@ -278,20 +262,23 @@ func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
 func (cm *Command) RunNoBuf(ge *Gide, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
 	out, err := cmd.CombinedOutput()
-	return cm.RunStatus(ge, cmdstr, err, out)
+	return cm.RunStatus(ge, nil, cmdstr, err, out)
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(ge *Gide, out []byte) {
-	if cm.Buf == nil {
+func (cm *Command) AppendCmdOut(ge *Gide, buf *giv.TextBuf, out []byte) {
+	if buf == nil {
 		return
 	}
 	updt := ge.Viewport.Win.UpdateStart()
 	lns := bytes.Split(out, []byte("\n"))
-	for _, txt := range lns {
-		cm.Buf.AppendTextLine(MarkupCmdOutput(txt))
+	sz := len(lns)
+	outlns := make([][]byte, sz)
+	for i, txt := range lns {
+		outlns[i] = MarkupCmdOutput(txt)
 	}
-	cm.Buf.AutoScrollViews()
+	buf.AppendText(bytes.Join(outlns, []byte{}))
+	buf.AutoScrollViews()
 	ge.Viewport.Win.UpdateEnd(updt)
 }
 
@@ -301,7 +288,7 @@ var CmdOutStatusLen = 80
 // RunStatus reports the status of the command run (given in cmdstr) to
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
-func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) bool {
+func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
 	rval := true
 	outstr := ""
 	if out != nil {
@@ -319,10 +306,11 @@ func (cm *Command) RunStatus(ge *Gide, cmdstr string, err error, out []byte) boo
 		finstat = fmt.Sprintf("%v <b>exec error</b> at: %v error: %v", cmdstr, tstr, err.Error())
 		rval = false
 	}
-	cm.Buf.AppendTextLine([]byte("\n"))
-	cm.Buf.AppendTextLine(MarkupCmdOutput([]byte(finstat)))
-	cm.Buf.AutoScrollViews()
-	// cm.Buf.Refresh()
+	if buf != nil {
+		buf.AppendTextLine([]byte("\n"))
+		buf.AppendTextLine(MarkupCmdOutput([]byte(finstat)))
+		buf.AutoScrollViews()
+	}
 	ge.SetStatus(cmdstr + " " + outstr)
 	return rval
 }
@@ -347,7 +335,7 @@ func (cm *Command) LangMatch(langs LangNames) bool {
 }
 
 // MarkupCmdOutput applies links to the first element in command output line
-// if it looks like a file name / position
+// if it looks like a file name / position -- also adds a final \n
 func MarkupCmdOutput(out []byte) []byte {
 	flds := bytes.Fields(out)
 	if len(flds) == 0 {
@@ -388,9 +376,15 @@ func MarkupCmdOutput(out []byte) []byte {
 		break
 	}
 	if len(link) > 0 {
-		return bytes.Replace(out, orig, link, -1)
+		nt := bytes.Replace(out, orig, link, -1)
+		nt = append(nt, '\n')
+		return nt
 	}
-	return out
+	sz := len(out)
+	nt := make([]byte, sz+1)
+	copy(nt, out)
+	nt[sz] = '\n'
+	return nt
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -407,14 +401,14 @@ type CmdName string
 
 // IsValid checks if command name exists on AvailCmds list
 func (cn CmdName) IsValid() bool {
-	_, _, ok := AvailCmds.CmdByName(cn)
+	_, _, ok := AvailCmds.CmdByName(cn, false)
 	return ok
 }
 
 // Command returns command associated with command name in AvailCmds, and
 // false if it doesn't exist
 func (cn CmdName) Command() (*Command, bool) {
-	cmd, _, ok := AvailCmds.CmdByName(cn)
+	cmd, _, ok := AvailCmds.CmdByName(cn, true)
 	return cmd, ok
 }
 
@@ -481,14 +475,16 @@ func init() {
 }
 
 // CmdByName returns a command and index by name -- returns false and emits a
-// message to stdout if not found
-func (cm *Commands) CmdByName(name CmdName) (*Command, int, bool) {
+// message to log if not found if msg is true
+func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 	for i, cmd := range *cm {
 		if cmd.Name == string(name) {
 			return cmd, i, true
 		}
 	}
-	fmt.Printf("gi.Commands.CmdByName: command named: %v not found\n", name)
+	if msg {
+		log.Printf("gi.Commands.CmdByName: command named: %v not found\n", name)
+	}
 	return nil, -1, false
 }
 
@@ -555,7 +551,7 @@ func (cm *Commands) CopyFrom(cp Commands) {
 func MergeAvailCmds() {
 	AvailCmds.CopyFrom(StdCmds)
 	for _, cmd := range CustomCmds {
-		_, idx, has := AvailCmds.CmdByName(CmdName(cmd.Name))
+		_, idx, has := AvailCmds.CmdByName(CmdName(cmd.Name), false)
 		if has {
 			AvailCmds[idx] = cmd // replace
 		} else {
@@ -650,67 +646,67 @@ var CommandsProps = ki.Props{
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", nil,
-		[]CmdAndArgs{CmdAndArgs{"{RunExec}", nil}}, "", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"{RunExec}", nil}}, "", false},
 	{"Run Prompt", "run any command you enter at the prompt", nil,
-		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false},
 
 	// Go
 	{"Imports Go File", "run goimports on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true},
 	{"Fmt Go File", "run go fmt on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true},
 	{"Build Go Dir", "run go build to build in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", false},
 	{"Build Go Proj", "run go build for project BuildDir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false},
 	{"Install Go Proj", "run go install for project BuildDir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false},
 	{"Generate Go", "run go generate in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false},
 	{"Test Go", "run go test in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false},
 	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false},
 	{"Get Go", "run go get on package you enter at prompt", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false},
 	{"Get Go Updt", "run go get -u (updt) on package you enter at prompt", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false},
 
 	// Git
 	{"Add Git", "git add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false},
 	{"Status Git", "git status", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false},
 	{"Diff Git", "git diff -- see changes since last checkin", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false},
 	{"Log Git", "git log", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false},
 	{"Commit Git", "git commit", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true, nil}, // promptstring1 provided during normal commit process, MUST be wait!
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true}, // promptstring1 provided during normal commit process, MUST be wait!
 	{"Pull Git ", "git pull", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "", false},
 	{"Push Git ", "git push", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", false},
 
 	// SVN
 	{"Add SVN", "svn add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false},
 	{"Status SVN", "svn status", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false},
 	{"Info SVN", "svn info", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false},
 	{"Log SVN", "svn log", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false},
 	{"Commit SVN", "svn commit", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, nil}, // promptstring1 provided during normal commit process
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true}, // promptstring1 provided during normal commit process
 	{"Update SVN", "svn update", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", false},
 
 	// LaTeX
 	{"LaTeX PDF File", "run PDFLaTeX on file", LangNames{"LaTeX"},
-		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false},
 
 	// Misc testing
 	{"List Dir", "list current dir", nil,
-		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, nil},
+		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false},
 }

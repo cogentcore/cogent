@@ -528,7 +528,7 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 	cur := kit.ToString(vv.Value.Interface())
 	curRow := -1
 	if cur != "" {
-		_, curRow, _ = AvailCmds.CmdByName(CmdName(cur))
+		_, curRow, _ = AvailCmds.CmdByName(CmdName(cur), false)
 	}
 	desc, _ := vv.Tag("desc")
 	giv.TableViewSelectDialog(vp, &AvailCmds, giv.DlgOpts{Title: "Select a Command", Prompt: desc}, curRow, nil,
