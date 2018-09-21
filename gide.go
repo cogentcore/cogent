@@ -1537,7 +1537,7 @@ var GideProps = ki.Props{
 			{"RevertActiveView", ki.Props{
 				"desc":            "Revert active file to last saved version: this will lose all active changes -- are you sure?",
 				"confirm":         true,
-				"label":           "Revert File",
+				"label":           "Revert File...",
 				"no-update-after": true,
 			}},
 			{"sep-prefs", ki.BlankProp{}},
