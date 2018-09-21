@@ -1564,6 +1564,7 @@ var GideProps = ki.Props{
 			}},
 			{"sep-prefs", ki.BlankProp{}},
 			{"ProjPrefs", ki.Props{
+				"label": "Project Prefs...",
 				// "shortcut": "Command+S",
 			}},
 			{"sep-close", ki.BlankProp{}},
