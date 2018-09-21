@@ -228,11 +228,11 @@ func (cm *Command) RunAfterPrompts(ge *Gide) {
 		}
 	}
 
-	cds := BindArgVars("{ProjPath}")
-	err := os.Chdir(cds)
-	if err != nil { // shouldn't happen
-		log.Printf("Could not change to proj directory %v (spec: {ProjPath}): error: %v", cds, err)
-	}
+	// cds := BindArgVars("{ProjPath}")
+	// err := os.Chdir(cds)
+	// if err != nil { // shouldn't happen
+	// 	log.Printf("Could not change to proj directory %v (spec: {ProjPath}): error: %v", cds, err)
+	// }
 }
 
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
@@ -256,7 +256,7 @@ func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
 		if err == nil {
 			outscan := bufio.NewScanner(stdout) // line at a time
 			ts := time.Now()
-			wupdt := ge.Viewport.Win.UpdateStart()
+			// note: can't blank whole screen here b/c some processes will continue for long time
 			for outscan.Scan() {
 				cm.Buf.AppendTextLine(MarkupCmdOutput(outscan.Bytes())) // autoscroll
 				now := time.Now()
@@ -264,11 +264,8 @@ func (cm *Command) RunBuf(ge *Gide, cma *CmdAndArgs) bool {
 				if lag > 200 {
 					ts = now
 					cm.Buf.AutoScrollViews()
-					ge.Viewport.Win.UpdateEnd(wupdt)
-					wupdt = ge.Viewport.Win.UpdateStart()
 				}
 			}
-			ge.Viewport.Win.UpdateEnd(wupdt)
 		}
 		err = cmd.Wait()
 	}
@@ -697,17 +694,17 @@ var StdCmds = Commands{
 
 	// SVN
 	{"Add SVN", "svn add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, nil},
 	{"Status SVN", "svn status", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false, nil},
 	{"Info SVN", "svn info", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false, nil},
 	{"Log SVN", "svn log", nil,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, nil},
 	{"Commit SVN", "svn commit", nil,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, nil}, // promptstring1 provided during normal commit process
 	{"Update SVN", "svn update", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", true, nil},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", false, nil},
 
 	// LaTeX
 	{"LaTeX PDF File", "run PDFLaTeX on file", LangNames{"LaTeX"},

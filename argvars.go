@@ -88,12 +88,17 @@ func SetArgVarVals(avp *map[string]string, fpath string, ppref *ProjPrefs, tv *g
 
 	projpath, _ := filepath.Abs(string(ppref.ProjRoot))
 
+	emptyPath := false
 	if fpath == "" {
+		emptyPath = true
 		fpath = projpath
 	}
 	fpath, _ = filepath.Abs(fpath)
 
 	dirpath, fnm := filepath.Split(fpath)
+	if emptyPath {
+		dirpath = projpath
+	}
 	dirpath = filepath.Clean(dirpath)
 	_, dir := filepath.Split(dirpath)
 	dirrel, _ := filepath.Rel(projpath, dirpath)

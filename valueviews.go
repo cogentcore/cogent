@@ -215,7 +215,9 @@ func (vv *KeyMapValueView) UpdateWidget() {
 	}
 	ac := vv.Widget.(*gi.Action)
 	txt := kit.ToString(vv.Value.Interface())
-	ac.SetFullReRender()
+	if txt == "" {
+		txt = "(none -- click to set)"
+	}
 	ac.SetText(txt)
 }
 
@@ -355,7 +357,9 @@ func (vv *LangValueView) UpdateWidget() {
 	}
 	ac := vv.Widget.(*gi.Action)
 	txt := kit.ToString(vv.Value.Interface())
-	ac.SetFullReRender()
+	if txt == "" {
+		txt = "(none)"
+	}
 	ac.SetText(txt)
 }
 
@@ -495,7 +499,9 @@ func (vv *CmdValueView) UpdateWidget() {
 	}
 	ac := vv.Widget.(*gi.Action)
 	txt := kit.ToString(vv.Value.Interface())
-	ac.SetFullReRender()
+	if txt == "" {
+		txt = "(none)"
+	}
 	ac.SetText(txt)
 }
 
@@ -572,7 +578,9 @@ func (vv *VersCtrlValueView) UpdateWidget() {
 	}
 	ac := vv.Widget.(*gi.Action)
 	txt := kit.ToString(vv.Value.Interface())
-	ac.SetFullReRender()
+	if txt == "" {
+		txt = "(none)"
+	}
 	ac.SetText(txt)
 }
 
