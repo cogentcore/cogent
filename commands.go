@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/token"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/goki/gi"
+	"github.com/goki/gi/complete"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki"
@@ -29,6 +31,15 @@ import (
 type CmdAndArgs struct {
 	Cmd  string   `desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
 	Args []string `desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
+}
+
+func (cm *CmdAndArgs) SetCompleter(tf *gi.TextField, id string) {
+	if id == "arg" {
+		fmt.Println(id)
+		tf.SetCompleter(cm, CompleteArg, CompleteArgEdit)
+		return
+	}
+	fmt.Printf("no match for SetCompleter id argument")
 }
 
 // HasPrompts returns true if any prompts are required before running command,
@@ -104,7 +115,7 @@ type Command struct {
 	Desc  string       `desc:"brief description of this command"`
 	Langs LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
 	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
-	Dir   string       `desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
+	Dir   string       `complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
 	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
 }
 
@@ -709,4 +720,32 @@ var StdCmds = Commands{
 	// Misc testing
 	{"List Dir", "list current dir", nil,
 		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false},
+}
+
+// SetCompleter adds a completer to the textfield - each field
+// can have its own match and edit functions
+// For this to be called add a "complete" tag to the struct field
+func (cmd *Command) SetCompleter(tf *gi.TextField, id string) {
+	if id == "arg" {
+		tf.SetCompleter(cmd, CompleteArg, CompleteArgEdit)
+		return
+	}
+	fmt.Printf("no match for SetCompleter id argument")
+}
+
+// CompleteArg supplies directory variables to the completer
+func CompleteArg(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+	seed = complete.SeedWhiteSpace(text)
+	possibles := complete.MatchSeedString(ArgVarKeys(), seed)
+	for _, p := range possibles {
+		m := complete.Completion{Text: p, Icon: ""}
+		matches = append(matches, m)
+	}
+	return matches, seed
+}
+
+// CompleteArgEdit edits completer text field after the user chooses from the candidate completions
+func CompleteArgEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
+	s, delta = complete.EditWord(text, cursorPos, selection, seed)
+	return s, delta
 }

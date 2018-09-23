@@ -257,6 +257,14 @@ func ArgVarPrompts(arg string) (map[string]struct{}, bool) {
 	}
 }
 
+func ArgVarKeys() []string {
+	keys := make([]string, 0, len(ArgVars))
+	for k := range ArgVars {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // ArgVarTypes describe the type of information in the arg var -- used for
 // checking usage and special features.
 type ArgVarTypes int32
