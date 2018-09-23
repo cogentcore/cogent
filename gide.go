@@ -1159,20 +1159,20 @@ func (ge *Gide) TextViewByIndex(idx int) *giv.TextView {
 }
 
 // MainTabs returns the main TabView
-func (ge *Gide) MainTabs() *giv.TabView {
+func (ge *Gide) MainTabs() *gi.TabView {
 	split := ge.SplitView()
 	if split != nil {
-		tv := split.KnownChild(MainTabsIdx).Embed(giv.KiT_TabView).(*giv.TabView)
+		tv := split.KnownChild(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 		return tv
 	}
 	return nil
 }
 
 // VisTabs returns the second, visualization TabView
-func (ge *Gide) VisTabs() *giv.TabView {
+func (ge *Gide) VisTabs() *gi.TabView {
 	split := ge.SplitView()
 	if split != nil {
-		tv := split.KnownChild(VisTabsIdx).Embed(giv.KiT_TabView).(*giv.TabView)
+		tv := split.KnownChild(VisTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 		return tv
 	}
 	return nil
@@ -1242,8 +1242,8 @@ func (ge *Gide) SplitViewConfig() kit.TypeAndNameList {
 	for i := 0; i < NTextViews; i++ {
 		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-%v", i))
 	}
-	config.Add(giv.KiT_TabView, "main-tabs")
-	config.Add(giv.KiT_TabView, "vis-tabs")
+	config.Add(gi.KiT_TabView, "main-tabs")
+	config.Add(gi.KiT_TabView, "vis-tabs")
 	return config
 }
 

@@ -41,6 +41,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* C-c C-c coming up in the wrong window!
+
 * C-X C-o -- open same file in other view -- super handy!
 
 * auto-post commands taking too long -- too much updating etc.  major part of it is the re-open - not sure what to do about that but perhaps we could, in that specific case, display the current markup and put the re-highlight into the background thread?
@@ -67,6 +69,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
 
 * Find / replace in TextView -- isearch already there now..
+
 
 
 
