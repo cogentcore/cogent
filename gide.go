@@ -1346,9 +1346,9 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 		CmdNoUserPrompt = true // don't re-prompt!
 		ge.ExecCmdName(CmdName("Run Prompt"))
 	default:
-		if int(fn.Size) > GideBigFileSize {
+		if int(fn.Info.Size) > GideBigFileSize {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
-				Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Size)},
+				Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
 				[]string{"Open", "Cancel"},
 				ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 					switch sig {
