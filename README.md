@@ -45,12 +45,9 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * C-X C-o -- open same file in other view -- super handy!
 
-* auto-post commands taking too long -- too much updating etc.  major part of it is the re-open - not sure what to do about that but perhaps we could, in that specific case, display the current markup and put the re-highlight into the background thread?
-
 * FileTree update new file not working
 
 * check for all filesaved before doing commit!
-* detect if an open file has changed in FS, prompt to revert etc
 
 * horiz scroll with line numbers: render needs to know about scrolling delta.
 
@@ -64,9 +61,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
-
-* filenode and fileinfo: detect +x files and mark as executable -- don't edit..
-* and in fact, if hilight doesn't recognize it, don't open!  seems to hang..
 
 * Find / replace in TextView -- isearch already there now..
 

@@ -296,6 +296,7 @@ func (ge *Gide) FindTextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, b
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
+	fn.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
@@ -413,6 +414,7 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 func (ge *Gide) RevertActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
+		tv.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
 		tv.Buf.ReOpen()
 	}
 }
@@ -501,6 +503,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 	if fn.IsDir() {
 		return
 	}
+	giv.FileNodeHiStyle = ge.Prefs.Editor.HiStyle // must be set prior to OpenBuf
 	if err := fn.OpenBuf(); err == nil {
 		if tv.IsChanged() {
 			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
@@ -1077,7 +1080,6 @@ func (ge *Gide) ApplyPrefs() {
 		for i := 0; i < NTextViews; i++ {
 			txly := sv.KnownChild(1 + i).(*gi.Layout)
 			txed := txly.KnownChild(0).(*giv.TextView)
-			txed.HiStyle = ge.Prefs.Editor.HiStyle
 			txed.Opts.LineNos = ge.Prefs.Editor.LineNos
 			txed.Opts.AutoIndent = true
 			txed.Opts.Completion = ge.Prefs.Editor.Completion
@@ -1308,7 +1310,6 @@ func (ge *Gide) ConfigSplitView() {
 	for i := 0; i < NTextViews; i++ {
 		txly := split.KnownChild(1 + i).(*gi.Layout)
 		txed := txly.KnownChild(0).(*giv.TextView)
-		txed.HiStyle = ge.Prefs.Editor.HiStyle
 		txed.Opts.LineNos = ge.Prefs.Editor.LineNos
 		txed.Opts.AutoIndent = true
 		txed.Opts.Completion = ge.Prefs.Editor.Completion
