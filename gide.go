@@ -431,6 +431,7 @@ func (ge *Gide) CloseActiveView() bool {
 	if got {
 		ond.Buf.Close() // todo: we can't know yet if buffer was closed if has changes!
 		ge.OpenNodes.DeleteIdx(idx)
+		ond.SetClosed()
 		return true
 	}
 	return false
@@ -450,7 +451,7 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 	if len(ls) == 1 {
 		lr := ls[0]
 		if len(lr.PostSaveCmds) > 0 {
-			ge.ExecCmds(lr.PostSaveCmds)
+			ge.ExecCmds(lr.PostSaveCmds, false, true) // no select, yes clear
 			ran = true
 		}
 	} else if len(ls) > 1 {
@@ -459,14 +460,14 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 			if len(lr.PostSaveCmds) > 0 {
 				hasPosts = true
 				if lr.Name == string(ge.Prefs.MainLang) {
-					ge.ExecCmds(lr.PostSaveCmds)
+					ge.ExecCmds(lr.PostSaveCmds, false, true)
 					ran = true
 					break
 				}
 			}
 		}
 		if hasPosts && !ran {
-			ge.SetStatus("File has multiple associated languages and none match main language of project, cannot run any post commands")
+			ge.SetStatus("File has multiple associated languages and none match main languages of project, cannot run any post commands")
 		}
 	}
 	if ran {
@@ -516,6 +517,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		tv.SetBuf(fn.Buf)
 		ge.AutoSaveCheck(tv, vidx, fn)
 		ge.OpenNodes.Add(fn)
+		fn.SetOpen()
 		ge.SetActiveTextViewIdx(vidx)
 		tv.SetCompleter(tv, CompleteGocode, CompleteEdit)
 	}
@@ -635,7 +637,7 @@ func (ge *Gide) OpenFileURL(ur string) bool {
 	}
 	fpath := up.Path[1:] // has double //
 	pos := up.Fragment
-	tv, _, ok := ge.ViewFile(gi.FileName(fpath))
+	tv, _, ok := ge.NextViewFile(gi.FileName(fpath))
 	if !ok {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
 		return false
@@ -820,25 +822,25 @@ func (ge *Gide) MainTabByName(label string) (gi.Node2D, int, bool) {
 
 // FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
-// one with widget of given type.  returns widget and tab index.
-func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type) (gi.Node2D, int) {
+// one with widget of given type.  if sel, then select it.  returns widget and tab index.
+func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) (gi.Node2D, int) {
 	tv := ge.MainTabs()
 	widg, idx, ok := ge.MainTabByName(label)
 	if ok {
-		tv.SelectTabIndex(idx)
+		if sel {
+			tv.SelectTabIndex(idx)
+		}
 		return widg, idx
 	}
 	widg, idx = tv.AddNewTab(typ, label)
-	tv.SelectTabIndex(idx)
+	if sel {
+		tv.SelectTabIndex(idx)
+	}
 	return widg, idx
 }
 
-// FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
-// name, first by looking for an existing one, and if not found, making a new
-// one with a Layout and then a TextView in it.  returns widget and tab index.
-func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
-	lyk, idx := ge.FindOrMakeMainTab(label, gi.KiT_Layout)
-	ly := lyk.Embed(gi.KiT_Layout).(*gi.Layout)
+// ConfigOutputTextView configures a command-output textview within given parent layout
+func (ge *Gide) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	ly.Lay = gi.LayoutVert
 	ly.SetStretchMaxWidth()
 	ly.SetStretchMaxHeight()
@@ -848,7 +850,7 @@ func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
 	if ly.HasChildren() {
 		tv = ly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
 	} else {
-		tv = ly.AddNewChild(giv.KiT_TextView, label).(*giv.TextView)
+		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
 	}
 
 	if ge.Prefs.Editor.WordWrap {
@@ -858,6 +860,17 @@ func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
 	}
 	tv.SetProp("tab-size", 8) // std for output
 	tv.SetProp("font-family", ge.Prefs.Editor.FontFamily)
+	return tv
+}
+
+// FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
+// name, first by looking for an existing one, and if not found, making a new
+// one with a Layout and then a TextView in it.  if sel, then select it.
+// returns widget and tab index.
+func (ge *Gide) FindOrMakeMainTabTextView(label string, sel bool) (*giv.TextView, int) {
+	lyk, idx := ge.FindOrMakeMainTab(label, gi.KiT_Layout, sel)
+	ly := lyk.Embed(gi.KiT_Layout).(*gi.Layout)
+	tv := ge.ConfigOutputTextView(ly)
 	return tv, idx
 }
 
@@ -882,11 +895,11 @@ func (ge *Gide) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) 
 
 // FindOrMakeCmdTab creates the tab to show command output, including making a
 // buffer object to save output from the command. returns true if a new buffer
-// was created, false if one already existed -- if clearBuf is true, then any
+// was created, false if one already existed. if sel, select tab.  if clearBuf, then any
 // existing buffer is cleared.  Also returns index of tab.
-func (ge *Gide) FindOrMakeCmdTab(cmdNm string, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
+func (ge *Gide) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
 	buf, nw := ge.FindOrMakeCmdBuf(cmdNm, clearBuf)
-	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm)
+	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm, sel)
 	ctv.SetInactive()
 	ctv.SetBuf(buf)
 	return buf, ctv, idx, nw
@@ -906,25 +919,26 @@ func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
 //    Commands / Tabs
 
 // ExecCmdName executes command of given name -- this is the final common
-// pathway for all command invokation except on a node
-func (ge *Gide) ExecCmdName(cmdNm CmdName) {
+// pathway for all command invokation except on a node.  if sel, select tab.
+// if clearBuf, clear the buffer prior to command
+func (ge *Gide) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
 	ge.SetArgVarVals()
-	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, true) // clear
+	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
 // ExecCmdFileNodeName executes command of given name on given node
-func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *giv.FileNode) {
+func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *giv.FileNode, sel bool, clearBuf bool) {
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
 	SetArgVarVals(&ArgVarVals, string(fn.FPath), &ge.Prefs, nil)
-	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, true) // clear
+	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
@@ -949,8 +963,8 @@ func (ge *Gide) ExecCmd() {
 	gi.StringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		cmdNm := CmdName(ac.Text)
-		ge.CmdHistory.Add(cmdNm) // only save commands executed via chooser
-		ge.ExecCmdName(cmdNm)
+		ge.CmdHistory.Add(cmdNm)          // only save commands executed via chooser
+		ge.ExecCmdName(cmdNm, true, true) // sel, clear
 	})
 }
 
@@ -961,7 +975,7 @@ func (ge *Gide) ExecCmdFileNode(fn *giv.FileNode) {
 	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
-		ge.ExecCmdFileNodeName(CmdName(ac.Text), fn)
+		ge.ExecCmdFileNodeName(CmdName(ac.Text), fn, true, true) // sel, clearbuf
 	})
 }
 
@@ -975,10 +989,10 @@ func (ge *Gide) SetArgVarVals() {
 	}
 }
 
-// ExecCmds executes a sequence of commands
-func (ge *Gide) ExecCmds(cmdNms CmdNames) {
+// ExecCmds executes a sequence of commands, sel = select tab, clearBuf = clear buffer
+func (ge *Gide) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
-		ge.ExecCmdName(cmdNm)
+		ge.ExecCmdName(cmdNm, sel, clearBuf)
 	}
 }
 
@@ -988,7 +1002,7 @@ func (ge *Gide) Build() {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
-	ge.ExecCmds(ge.Prefs.BuildCmds)
+	ge.ExecCmds(ge.Prefs.BuildCmds, true, true)
 }
 
 // Run runs the RunCmds set for this project
@@ -997,15 +1011,37 @@ func (ge *Gide) Run() {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
-	ge.ExecCmds(ge.Prefs.RunCmds)
+	ge.ExecCmds(ge.Prefs.RunCmds, true, true)
 }
 
-// Commit commits the current changes using relevant VCS tool, and updates the changelog
+// Commit commits the current changes using relevant VCS tool, and updates the changelog.
+// Checks for VCS setting and
 func (ge *Gide) Commit() {
 	if ge.Prefs.VersCtrl == "" {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "No VersCtrl Set", Prompt: fmt.Sprintf("You need to set the VersCtrl in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
+
+	nch := ge.NChangedFiles()
+	if nch > 0 {
+		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Commit: There are Unsaved Files",
+			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to cancel commit and review  / save those files first?", ge.Nm, nch)},
+			[]string{"Cancel", "Commit Without Saving"},
+			ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					// do nothing, will have bailed already
+				case 1:
+					ge.CommitNoChecks()
+				}
+			})
+	} else {
+		ge.CommitNoChecks()
+	}
+}
+
+// CommitNoChecks does the commit without any further checks for VCS, and unsaved files
+func (ge *Gide) CommitNoChecks() {
 	cmds := AvailCmds.FilterCmdNames(ge.ActiveLangs, ge.Prefs.VersCtrl)
 	cmdnm := ""
 	for _, cm := range cmds {
@@ -1029,7 +1065,7 @@ func (ge *Gide) Commit() {
 				ArgVarVals["{PromptString1}"] = msg
 				CmdNoUserPrompt = true // don't re-prompt!
 				ge.Prefs.ChangeLog.Add(ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
-				ge.ExecCmdName(CmdName(cmdnm)) // must be wait
+				ge.ExecCmdName(CmdName(cmdnm), true, true) // must be wait
 				ge.CommitUpdtLog(cmdnm)
 			}
 		})
@@ -1038,7 +1074,7 @@ func (ge *Gide) Commit() {
 // CommitUpdtLog grabs info from buffer in main tabs about the commit, and
 // updates the changelog record
 func (ge *Gide) CommitUpdtLog(cmdnm string) {
-	ctv, _ := ge.FindOrMakeMainTabTextView(cmdnm)
+	ctv, _ := ge.FindOrMakeMainTabTextView(cmdnm, false) // don't sel
 	if ctv == nil {
 		return
 	}
@@ -1060,7 +1096,7 @@ func (ge *Gide) Find(find string, ignoreCase bool, langs LangNames) {
 	ge.FindString = find
 	ge.FindIgnoreCase = ignoreCase
 	ge.FindLangs = langs
-	cbuf, ctv, _, _ := ge.FindOrMakeCmdTab("Find", true) // clear
+	cbuf, ctv, _, _ := ge.FindOrMakeCmdTab("Find", true, true) // sel, clear
 	root := ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode)
 
 	res := FileTreeSearch(root, find, ignoreCase, langs)
@@ -1101,7 +1137,7 @@ func (ge *Gide) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	}
 	fpath := up.Path[1:] // has double //
 	pos := up.Fragment
-	tv, _, ok := ge.ViewFile(gi.FileName(fpath))
+	tv, _, ok := ge.NextViewFile(gi.FileName(fpath))
 	if !ok {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
 		return false
@@ -1467,6 +1503,7 @@ func (ge *Gide) ConfigSplitView() {
 	split.SetSplits(ge.Prefs.Splits...)
 }
 
+// FileNodeSelected is called whenever tree browser has file node selected
 func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	// if fn.IsDir() {
 	// } else {
@@ -1475,6 +1512,7 @@ func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
 
 var GideBigFileSize = 10000000 // 10Mb?
 
+// FileNodeOpened is called whenever file node is double-clicked in file tree
 func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	switch {
 	case fn.IsDir():
@@ -1485,8 +1523,8 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	case fn.IsExec():
 		ge.SetArgVarVals()
 		ArgVarVals["{PromptString1}"] = string(fn.FPath)
-		CmdNoUserPrompt = true // don't re-prompt!
-		ge.ExecCmdName(CmdName("Run Prompt"))
+		CmdNoUserPrompt = true                            // don't re-prompt!
+		ge.ExecCmdName(CmdName("Run Prompt"), true, true) // sel, clear
 	default:
 		if int(fn.Info.Size) > GideBigFileSize {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
@@ -1506,6 +1544,7 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	}
 }
 
+// FileNodeClosed is called whenever file tree browser node is closed
 func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	if fn.IsDir() {
 		if fn.IsOpen() {

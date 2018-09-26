@@ -43,15 +43,31 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* Replace in TextView, based on Find interface
+
+* cmd output rendering even when tab is not selected -- textview needs to check its parents vpbbox -- in general it might be better to have a Visible flag (might already have it) and use that more robustly throughout codebase instead of relying on vp = empty.  but still a question of reliably updating flag up / down hierarchy etc.  But probably worth it.  Similar to updating flag logic.  ugh.
+
+* go imports: gi.TextRender SetHTMLPre end tag: span doesn't match current tag:  for string
+</span>
+
+* Need to fix un-indent for } and have 2nd tab override auto-indent
+
+* save current cursor position from last view to move cursor in textbuf, reactivate that when switching bufs.  
+
+* textview rendering not taking into account bottom scrollbar
+
+* Post-save commands don't select tab unless there is an error -- prevents overwriting eg., Find
+
+* Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
+
+* Find currently always starts at top and searches all open trees -- need to at least document that.  Not sure that there is a much better way of doing it in terms of flexibly specifying what to search over..
+
+* Replace in TextView, based on Find interface: add find / replace bar to top of Find panel
 
 * C-c C-c coming up in the wrong window!
 
 * C-X C-o -- open same file in other view -- super handy!
 
 * FileTree update new file not working
-
-* check for all filesaved before doing commit!
 
 * horiz scroll with line numbers: render needs to know about scrolling delta.
 
@@ -65,6 +81,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
+
 
 
 
