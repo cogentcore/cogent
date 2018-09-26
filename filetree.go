@@ -125,14 +125,14 @@ func (on *OpenNodes) NChanged() int {
 type FileSearchResults struct {
 	Node    *giv.FileNode
 	Count   int
-	Matches []giv.TextPos
+	Matches []giv.FileSearchResult
 }
 
 // FileTreeSearch returns list of all nodes starting at given node of given
 // language(s) that contain the given string (non regexp version), sorted in
 // descending order by number of occurrances -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool) []FileSearchResults {
+func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, langs LangNames) []FileSearchResults {
 	fsz := len(find)
 	if fsz == 0 {
 		return nil
@@ -146,16 +146,12 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool) []FileSea
 		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" {
 			return true
 		}
-		if ignoreCase {
-			cnt, matches := giv.FileSearchCI(string(sfn.FPath), []byte(find))
-			if cnt > 0 {
-				mls = append(mls, FileSearchResults{sfn, cnt, matches})
-			}
-		} else {
-			cnt, matches := giv.FileSearch(string(sfn.FPath), []byte(find))
-			if cnt > 0 {
-				mls = append(mls, FileSearchResults{sfn, cnt, matches})
-			}
+		if !LangNamesMatchFilename(sfn.Nm, langs) {
+			return true
+		}
+		cnt, matches := giv.FileSearch(string(sfn.FPath), []byte(find), ignoreCase)
+		if cnt > 0 {
+			mls = append(mls, FileSearchResults{sfn, cnt, matches})
 		}
 		return true
 	})

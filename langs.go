@@ -96,6 +96,27 @@ func LangsForExt(ext string) Langs {
 	return nil
 }
 
+// LangNamesMatchFilename returns true if given filename is one of langauges
+// in langs name -- if langs is empty then EVERYTHING matches.
+func LangNamesMatchFilename(filename string, langs LangNames) bool {
+	if len(langs) == 0 {
+		return true
+	}
+	ls := LangNamesForFilename(filename)
+	sz := len(ls)
+	if sz == 0 {
+		return false
+	}
+	for i := range ls {
+		for j := range langs {
+			if ls[i] == langs[j] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // AvailLangs is the current list of available languages defined -- can be
 // loaded / saved / edited with preferences.  This is set to StdLangs at
 // startup.
@@ -108,6 +129,9 @@ func init() {
 // LangByName returns a language and index by name -- returns false and emits a
 // message to stdout if not found
 func (lt *Langs) LangByName(name LangName) (*Lang, int, bool) {
+	if name == "" {
+		return nil, -1, false
+	}
 	for i, lr := range *lt {
 		if lr.Name == string(name) {
 			return lr, i, true

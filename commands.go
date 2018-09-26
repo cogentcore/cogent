@@ -23,6 +23,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki"
+	"github.com/goki/ki/ints"
 	"github.com/goki/ki/kit"
 )
 
@@ -117,6 +118,7 @@ type Command struct {
 	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
 	Dir   string       `complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
 	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
+	Focus bool         `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
 }
 
 // HasPrompts returns true if any prompts are required before running command,
@@ -321,6 +323,9 @@ func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err erro
 		buf.AppendTextLine([]byte("\n"))
 		buf.AppendTextLine(MarkupCmdOutput([]byte(finstat)))
 		buf.AutoScrollViews()
+		if cm.Focus {
+			ge.FocusOnPanel(MainTabsIdx)
+		}
 	}
 	ge.SetStatus(cmdstr + " " + outstr)
 	return rval
@@ -353,7 +358,7 @@ func MarkupCmdOutput(out []byte) []byte {
 		return out
 	}
 	var orig, link []byte
-	mx := gi.MinInt(len(flds), 2)
+	mx := ints.MinInt(len(flds), 2)
 	for i := 0; i < mx; i++ {
 		ff := flds[i]
 		if !(bytes.Contains(ff, []byte(".")) || bytes.Contains(ff, []byte("/"))) { // extension or path
@@ -657,75 +662,75 @@ var CommandsProps = ki.Props{
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", nil,
-		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "", false},
+		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "", false, false},
 	{"Run Prompt", "run any command you enter at the prompt", nil,
-		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, false},
 
 	// Make
 	{"Make", "run make with no args", nil,
-		[]CmdAndArgs{CmdAndArgs{"make", nil}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"make", nil}}, "{FileDirPath}", false, false},
 	{"Make Prompt", "run make with prompted make target", nil,
-		[]CmdAndArgs{CmdAndArgs{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", false, false},
 
 	// Go
 	{"Imports Go File", "run goimports on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true},
+		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false},
 	{"Fmt Go File", "run go fmt on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true},
+		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false},
 	{"Build Go Dir", "run go build to build in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", false, false},
 	{"Build Go Proj", "run go build for project BuildDir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false, false},
 	{"Install Go Proj", "run go install for project BuildDir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false, false},
 	{"Generate Go", "run go generate in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false, false},
 	{"Test Go", "run go test in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false, false},
 	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false, false},
 	{"Get Go", "run go get on package you enter at prompt", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false},
 	{"Get Go Updt", "run go get -u (updt) on package you enter at prompt", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false},
 
 	// Git
 	{"Add Git", "git add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false},
 	{"Status Git", "git status", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false, false},
 	{"Diff Git", "git diff -- see changes since last checkin", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false, false},
 	{"Log Git", "git log", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false, false},
 	{"Commit Git", "git commit", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true}, // promptstring1 provided during normal commit process, MUST be wait!
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true, false}, // promptstring1 provided during normal commit process, MUST be wait!
 	{"Pull Git ", "git pull", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "", false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "", false, false},
 	{"Push Git ", "git push", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", false, false},
 
 	// SVN
 	{"Add SVN", "svn add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false},
 	{"Status SVN", "svn status", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false, false},
 	{"Info SVN", "svn info", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false, false},
 	{"Log SVN", "svn log", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, false},
 	{"Commit SVN", "svn commit", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true}, // promptstring1 provided during normal commit process
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, false}, // promptstring1 provided during normal commit process
 	{"Update SVN", "svn update", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", false, false},
 
 	// LaTeX
 	{"LaTeX PDF File", "run PDFLaTeX on file", LangNames{"LaTeX"},
-		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false},
 
 	// Misc testing
 	{"List Dir", "list current dir", nil,
-		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false},
+		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, false},
 }
 
 // SetCompleter adds a completer to the textfield - each field

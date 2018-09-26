@@ -2,7 +2,9 @@
 
 ![alt tag](logo/gide_icon.png)
 
-**gide** is a flexible IDE (integrated development environment) framework in pure Go, using the GoGi GUI.  When CamelCase is needed, use `Gide`, but the command is `gide` etc.
+**Gide** is a flexible IDE (integrated development environment) framework in pure Go, using the GoGi GUI.
+
+See the [Wiki](https://github.com/goki/gide/wiki) for more docs, discussion, etc.
 
 After all these years, nothing beats a great text editor for coding.  All that drag-n-drop, graphical stuff just gets in the way.
 
@@ -41,7 +43,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* click on file selects all results in highlight region
+* Replace in TextView, based on Find interface
 
 * C-c C-c coming up in the wrong window!
 
@@ -64,7 +66,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
 
-* Find / replace in TextView -- isearch already there now..
 
 
 

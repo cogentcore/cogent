@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"go/token"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -69,6 +70,7 @@ type Gide struct {
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
 	FindString        string                  `json:"-" xml:"-" desc:"saved find arg"`
 	FindIgnoreCase    bool                    `json:"-" xml:"-" desc:"saved find arg"`
+	FindLangs         LangNames               `json:"-" xml:"-" desc:"saved find arg"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
@@ -603,14 +605,17 @@ func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 // TextLinkHandler is the Gide handler for text links -- preferred one b/c
 // directly connects to correct Gide project
 func TextLinkHandler(tl gi.TextLink) bool {
+	ftv, _ := tl.Widget.(*giv.TextView)
 	gek, ok := tl.Widget.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		url := tl.URL
+		ur := tl.URL
 		// todo: use net/url package for more systematic parsing
 		switch {
-		case strings.HasPrefix(url, "file:///"):
-			ge.OpenFileURL(url)
+		case strings.HasPrefix(ur, "find:///"):
+			ge.OpenFindURL(ur, ftv)
+		case strings.HasPrefix(ur, "file:///"):
+			ge.OpenFileURL(ur)
 		}
 	}
 	return true
@@ -622,24 +627,26 @@ func TextLinkHandler(tl gi.TextLink) bool {
 // }
 
 // OpenFileURL opens given file:/// url
-func (ge *Gide) OpenFileURL(url string) bool {
-	// todo: use net/url package for more systematic parsing
-	fpath := strings.TrimPrefix(url, "file:///")
-	pos := ""
-	if pidx := strings.Index(fpath, "#"); pidx > 0 {
-		pos = fpath[pidx+1:]
-		fpath = fpath[:pidx]
+func (ge *Gide) OpenFileURL(ur string) bool {
+	up, err := url.Parse(ur)
+	if err != nil {
+		log.Printf("Gide OpenFileURL parse err: %v\n", err)
+		return false
 	}
+	fpath := up.Path[1:] // has double //
+	pos := up.Fragment
 	tv, _, ok := ge.ViewFile(gi.FileName(fpath))
 	if !ok {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
 		return false
 	}
-	if pos != "" {
-		txpos := giv.TextPos{}
-		if txpos.FromString(pos) {
-			tv.SetCursorShow(txpos)
-		}
+	if pos == "" {
+		return true
+	}
+	fmt.Printf("pos: %v\n", pos)
+	txpos := giv.TextPos{}
+	if txpos.FromString(pos) {
+		tv.SetCursorShow(txpos)
 	}
 	return true
 }
@@ -724,21 +731,39 @@ func (ge *Gide) CurPanel() int {
 	return -1 // nobody
 }
 
-// FocusOnPanel moves keyboard focus to given panel
-func (ge *Gide) FocusOnPanel(panel int) {
+// FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
+func (ge *Gide) FocusOnPanel(panel int) bool {
 	sv := ge.SplitView()
 	if sv == nil {
-		return
+		return false
 	}
-	if panel == TextView1Idx {
+	win := ge.ParentWindow()
+	switch panel {
+	case TextView1Idx:
 		ge.SetActiveTextViewIdx(0)
-	} else if panel == TextView2Idx {
+	case TextView2Idx:
 		ge.SetActiveTextViewIdx(1)
-	} else {
+	case MainTabsIdx:
+		tv := ge.MainTabs()
+		ct, _, has := tv.CurTab()
+		if has {
+			win.FocusNext(ct)
+		} else {
+			return false
+		}
+	case VisTabsIdx:
+		tv := ge.VisTabs()
+		ct, _, has := tv.CurTab()
+		if has {
+			win.FocusNext(ct)
+		} else {
+			return false
+		}
+	default:
 		ski := sv.Kids[panel]
-		win := ge.ParentWindow()
 		win.FocusNext(ski)
 	}
+	return true
 }
 
 // FocusNextPanel moves the keyboard focus to the next panel to the right
@@ -752,6 +777,12 @@ func (ge *Gide) FocusNextPanel() {
 	np := len(sv.Kids)
 	if cp >= np {
 		cp = 0
+	}
+	for sv.Splits[cp] <= 0.01 {
+		cp++
+		if cp >= np {
+			cp = 0
+		}
 	}
 	ge.FocusOnPanel(cp)
 }
@@ -767,6 +798,12 @@ func (ge *Gide) FocusPrevPanel() {
 	np := len(sv.Kids)
 	if cp < 0 {
 		cp = np - 1
+	}
+	for sv.Splits[cp] <= 0.01 {
+		cp--
+		if cp < 0 {
+			cp = np - 1
+		}
 	}
 	ge.FocusOnPanel(cp)
 }
@@ -1016,24 +1053,101 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 //    Find / Replace
 
 // Find in files
-func (ge *Gide) Find(find string, ignoreCase bool) {
-	cbuf, _, _, _ := ge.FindOrMakeCmdTab("Find", true) // clear
-	res := FileTreeSearch(ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode), find, ignoreCase)
+func (ge *Gide) Find(find string, ignoreCase bool, langs LangNames) {
+	if find == "" {
+		return
+	}
+	ge.FindString = find
+	ge.FindIgnoreCase = ignoreCase
+	ge.FindLangs = langs
+	cbuf, ctv, _, _ := ge.FindOrMakeCmdTab("Find", true) // clear
+	root := ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode)
+
+	res := FileTreeSearch(root, find, ignoreCase, langs)
+
 	outlns := make([][]byte, 0, 100)
+	lstr := fmt.Sprintf("Find: %s IgnoreCase: %t", find, ignoreCase)
+	outlns = append(outlns, []byte(lstr))
+	outlns = append(outlns, []byte(""))
+
 	for _, fs := range res {
 		// todo: maybe a tree does make sense for results -- dir, tree, etc..
-		fn := fs.Node.Info.Path
+		fp := fs.Node.Info.Path
+		fn := fs.Node.RelPath()
 		outlns = append(outlns, []byte(""))
-		lstr := fmt.Sprintf(`<a href="file:///%v">%v</a>: %v`, fn, fn, fs.Count)
+		fbStLn := len(outlns) // find buf start ln
+		lstr := fmt.Sprintf(`<a href="find:///%v#R%vN%v">%v</a>: %v`, fp, fbStLn, fs.Count, fn, fs.Count)
 		outlns = append(outlns, []byte(lstr))
 		for _, mt := range fs.Matches {
-			ln := mt.Ln + 1
-			lstr = fmt.Sprintf(`	<a href="file:///%v#L%vC%v">%v</a> L: %v C: %v`, fn, ln, mt.Ch, fn, ln, mt.Ch)
+			ln := mt.Reg.Start.Ln + 1
+			ch := mt.Reg.Start.Ch + 1
+			ech := mt.Reg.End.Ch + 1
+			lstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fn, mt.Text)
 			outlns = append(outlns, []byte(lstr))
 		}
 	}
 	cbuf.AppendText(bytes.Join(outlns, []byte("\n")))
-	cbuf.AutoScrollViews()
+	ctv.CursorStartDoc()
+	ctv.CursorNextLink()
+	ge.FocusOnPanel(MainTabsIdx)
+}
+
+// OpenFindURL opens given find:/// url from Find
+func (ge *Gide) OpenFindURL(ur string, ftv *giv.TextView) bool {
+	up, err := url.Parse(ur)
+	if err != nil {
+		log.Printf("Gide OpenFindURL parse err: %v\n", err)
+		return false
+	}
+	fpath := up.Path[1:] // has double //
+	pos := up.Fragment
+	tv, _, ok := ge.ViewFile(gi.FileName(fpath))
+	if !ok {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
+		return false
+	}
+	if pos == "" {
+		return true
+	}
+
+	reg := giv.TextRegion{}
+	var fbStLn, fCount int
+	lidx := strings.Index(pos, "L")
+	if lidx > 0 {
+		reg.FromString(pos[lidx:])
+		pos = pos[:lidx]
+	}
+	fmt.Sscanf(pos, "R%dN%d", &fbStLn, &fCount)
+
+	fb := ftv.Buf
+	fndtxt := fb.LineBytes[0]
+	find := ""
+	ignoreCase := false
+	fmt.Sscanf(string(fndtxt), "Find: %s IgnoreCase: %t", &find, &ignoreCase)
+	tv.PrevISearchString = find
+	tv.PrevISearchCase = !ignoreCase
+
+	if len(tv.Highlights) != fCount { // highlight
+		hi := make([]giv.TextRegion, fCount)
+		for i := 0; i < fCount; i++ {
+			fln := fbStLn + 1 + i
+			ltxt := fb.LineBytes[fln]
+			fpi := 1 + bytes.Index(ltxt, []byte(`"`))
+			epi := fpi + bytes.Index(ltxt[fpi:], []byte(`"`))
+			lnk := string(ltxt[fpi:epi])
+			iup, err := url.Parse(lnk)
+			if err != nil {
+				continue
+			}
+			ireg := giv.TextRegion{}
+			lidx := strings.Index(iup.Fragment, "L")
+			ireg.FromString(iup.Fragment[lidx:])
+			hi[i] = ireg
+		}
+		tv.Highlights = hi
+	}
+	tv.SetCursorShow(reg.Start)
+	return true
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1403,6 +1517,7 @@ func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *giv.FileTreeView) {
 func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	kf := KeyFunNil
 	kc := kt.Chord()
+	gkf := gi.KeyFun(kc)
 	if ge.KeySeq1 != "" {
 		kf = KeyFun(ge.KeySeq1, kc)
 		if kf == KeyFunNil && kc == "Escape" {
@@ -1418,6 +1533,15 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 			ge.SetStatus(string(ge.KeySeq1))
 			return
 		}
+	}
+
+	switch gkf {
+	case gi.KeyFunFind:
+		kt.SetProcessed()
+		giv.CallMethod(ge, "Find", ge.Viewport)
+	}
+	if kt.IsProcessed() {
+		return
 	}
 	switch kf {
 	case KeyFunNextPanel:
@@ -1459,6 +1583,10 @@ func (ge *Gide) KeyChordEvent() {
 func (ge *Gide) Render2D() {
 	ge.ToolBar().UpdateActions()
 	if win := ge.ParentWindow(); win != nil {
+		sv := ge.SplitView()
+		if sv != nil {
+			win.SetStartFocus(sv.This)
+		}
 		if !win.IsResizing() {
 			win.MainMenuUpdateActives()
 		}
@@ -1523,6 +1651,7 @@ var GideProps = ki.Props{
 		{"Find", ki.Props{
 			"label":           "Find...",
 			"icon":            "search",
+			"desc":            "Find in all files in project (for given language -- leave empty for all files)",
 			"no-update-after": true,
 			"Args": ki.PropSlice{
 				{"Search For", ki.Props{
@@ -1531,6 +1660,9 @@ var GideProps = ki.Props{
 				}},
 				{"Ignore Case", ki.Props{
 					"default-field": "FindIgnoreCase",
+				}},
+				{"Languages", ki.Props{
+					"default-field": "FindLangs",
 				}},
 			},
 		}},
