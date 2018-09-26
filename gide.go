@@ -11,6 +11,7 @@ Derived classes can extend the functionality for specific domains.
 package gide
 
 import (
+	"bytes"
 	"fmt"
 	"go/token"
 	"log"
@@ -66,6 +67,8 @@ type Gide struct {
 	Prefs             ProjPrefs               `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
+	FindString        string                  `json:"-" xml:"-" desc:"saved find arg"`
+	FindIgnoreCase    bool                    `json:"-" xml:"-" desc:"saved find arg"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
@@ -821,6 +824,37 @@ func (ge *Gide) FindOrMakeMainTabTextView(label string) (*giv.TextView, int) {
 	return tv, idx
 }
 
+// FindOrMakeCmdBuf creates the buffer for command output, or returns
+// existing. If clear is true, then any existing buffer is cleared.
+// Returns true if new buffer created.
+func (ge *Gide) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) {
+	if ge.CmdBufs == nil {
+		ge.CmdBufs = make(map[string]*giv.TextBuf, 20)
+	}
+	if buf, has := ge.CmdBufs[cmdNm]; has {
+		if clear {
+			buf.New(0)
+		}
+		return buf, false
+	}
+	buf := &giv.TextBuf{}
+	buf.InitName(buf, cmdNm+"-buf")
+	ge.CmdBufs[cmdNm] = buf
+	return buf, true
+}
+
+// FindOrMakeCmdTab creates the tab to show command output, including making a
+// buffer object to save output from the command. returns true if a new buffer
+// was created, false if one already existed -- if clearBuf is true, then any
+// existing buffer is cleared.  Also returns index of tab.
+func (ge *Gide) FindOrMakeCmdTab(cmdNm string, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
+	buf, nw := ge.FindOrMakeCmdBuf(cmdNm, clearBuf)
+	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm)
+	ctv.SetInactive()
+	ctv.SetBuf(buf)
+	return buf, ctv, idx, nw
+}
+
 // VisTabByName returns a VisTabs (second set of tabs for visualizations) tab
 // with given name, and its index -- returns false if not found
 func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
@@ -855,37 +889,6 @@ func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *giv.FileNode) {
 	SetArgVarVals(&ArgVarVals, string(fn.FPath), &ge.Prefs, nil)
 	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, true) // clear
 	cmd.Run(ge, cbuf)
-}
-
-// FindOrMakeCmdBuf creates the buffer for command output, or returns
-// existing. If clear is true, then any existing buffer is cleared.
-// Returns true if new buffer created.
-func (ge *Gide) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) {
-	if ge.CmdBufs == nil {
-		ge.CmdBufs = make(map[string]*giv.TextBuf, 20)
-	}
-	if buf, has := ge.CmdBufs[cmdNm]; has {
-		if clear {
-			buf.New(0)
-		}
-		return buf, false
-	}
-	buf := &giv.TextBuf{}
-	buf.InitName(buf, cmdNm+"-buf")
-	ge.CmdBufs[cmdNm] = buf
-	return buf, true
-}
-
-// FindOrMakeCmdTab creates the tab to show command output, including making a
-// buffer object to save output from the command. returns true if a new buffer
-// was created, false if one already existed -- if clearBuf is true, then any
-// existing buffer is cleared.  Also returns index of tab.
-func (ge *Gide) FindOrMakeCmdTab(cmdNm string, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
-	buf, nw := ge.FindOrMakeCmdBuf(cmdNm, clearBuf)
-	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm)
-	ctv.SetInactive()
-	ctv.SetBuf(buf)
-	return buf, ctv, idx, nw
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
@@ -1007,6 +1010,30 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 	}
 	// todo: process text!
 	ge.SaveProjIfExists()
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+//    Find / Replace
+
+// Find in files
+func (ge *Gide) Find(find string, ignoreCase bool) {
+	cbuf, _, _, _ := ge.FindOrMakeCmdTab("Find", true) // clear
+	res := FileTreeSearch(ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode), find, ignoreCase)
+	outlns := make([][]byte, 0, 100)
+	for _, fs := range res {
+		// todo: maybe a tree does make sense for results -- dir, tree, etc..
+		fn := fs.Node.Info.Path
+		outlns = append(outlns, []byte(""))
+		lstr := fmt.Sprintf(`<a href="file:///%v">%v</a>: %v`, fn, fn, fs.Count)
+		outlns = append(outlns, []byte(lstr))
+		for _, mt := range fs.Matches {
+			ln := mt.Ln + 1
+			lstr = fmt.Sprintf(`	<a href="file:///%v#L%vC%v">%v</a> L: %v C: %v`, fn, ln, mt.Ch, fn, ln, mt.Ch)
+			outlns = append(outlns, []byte(lstr))
+		}
+	}
+	cbuf.AppendText(bytes.Join(outlns, []byte("\n")))
+	cbuf.AutoScrollViews()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1491,6 +1518,21 @@ var GideProps = ki.Props{
 			"icon":            "file-text",
 			"label":           "Edit",
 			"no-update-after": true,
+		}},
+		{"sep-find", ki.BlankProp{}},
+		{"Find", ki.Props{
+			"label":           "Find...",
+			"icon":            "search",
+			"no-update-after": true,
+			"Args": ki.PropSlice{
+				{"Search For", ki.Props{
+					"default-field": "FindString",
+					"width":         "80",
+				}},
+				{"Ignore Case", ki.Props{
+					"default-field": "FindIgnoreCase",
+				}},
+			},
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"Build", ki.Props{

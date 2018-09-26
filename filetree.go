@@ -143,6 +143,9 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool) []FileSea
 	}
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
 		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
+		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" {
+			return true
+		}
 		if ignoreCase {
 			cnt, matches := giv.FileSearchCI(string(sfn.FPath), []byte(find))
 			if cnt > 0 {

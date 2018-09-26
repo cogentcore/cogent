@@ -41,6 +41,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* click on file selects all results in highlight region
+
 * C-c C-c coming up in the wrong window!
 
 * C-X C-o -- open same file in other view -- super handy!

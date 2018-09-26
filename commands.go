@@ -657,9 +657,15 @@ var CommandsProps = ki.Props{
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", nil,
-		[]CmdAndArgs{CmdAndArgs{"{RunExec}", nil}}, "", false},
+		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "", false},
 	{"Run Prompt", "run any command you enter at the prompt", nil,
 		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false},
+
+	// Make
+	{"Make", "run make with no args", nil,
+		[]CmdAndArgs{CmdAndArgs{"make", nil}}, "{FileDirPath}", false},
+	{"Make Prompt", "run make with prompted make target", nil,
+		[]CmdAndArgs{CmdAndArgs{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", false},
 
 	// Go
 	{"Imports Go File", "run goimports on file", LangNames{"Go"},
