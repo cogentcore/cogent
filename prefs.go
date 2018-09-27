@@ -224,6 +224,7 @@ type ProjPrefs struct {
 	BuildTarg    gi.FileName    `desc:"build target for main Build button, if relevant for your  BuildCmds"`
 	RunExec      gi.FileName    `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
 	RunCmds      CmdNames       `desc:"command(s) to run for main Run button (typically Run Proj)"`
+	Find         FindParams     `view:"-" desc:"saved find params"`
 	OpenDirs     giv.OpenDirMap `view:"-" desc:"open directories"`
 	Splits       []float32      `view:"-" desc:"splitter splits"`
 	Changed      bool           `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`

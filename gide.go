@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/token"
+	"html"
 	"log"
 	"net/url"
 	"os"
@@ -68,9 +69,6 @@ type Gide struct {
 	Prefs             ProjPrefs               `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
-	FindString        string                  `json:"-" xml:"-" desc:"saved find arg"`
-	FindIgnoreCase    bool                    `json:"-" xml:"-" desc:"saved find arg"`
-	FindLangs         LangNames               `json:"-" xml:"-" desc:"saved find arg"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
@@ -524,16 +522,23 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 }
 
 // NextViewFileNode sets the next text view to view file in given node (opens
-// buffer if not already opened), returns text view and index
+// buffer if not already opened) -- if already being viewed, that is
+// activated, returns text view and index
 func (ge *Gide) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
+	tv, idx, ok := ge.FindTextViewForFileNode(fn)
+	if ok {
+		ge.SetActiveTextViewIdx(idx)
+		return tv, idx
+	}
 	nv, nidx := ge.NextTextView()
 	ge.ViewFileNode(nv, nidx, fn)
 	return nv, nidx
 }
 
-// NextViewFile sets the next text view to view given file name -- include as much
-// of name as possible to disambiguate -- will use the first matching --
-// returns textview and its index, false if not found
+// NextViewFile sets the next text view to view given file name -- include as
+// much of name as possible to disambiguate -- will use the first matching --
+// if already being viewed, that is activated -- returns textview and its
+// index, false if not found
 func (ge *Gide) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
@@ -639,7 +644,7 @@ func (ge *Gide) OpenFileURL(ur string) bool {
 	pos := up.Fragment
 	tv, _, ok := ge.NextViewFile(gi.FileName(fpath))
 	if !ok {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
 		return false
 	}
 	if pos == "" {
@@ -818,6 +823,16 @@ func (ge *Gide) FocusPrevPanel() {
 func (ge *Gide) MainTabByName(label string) (gi.Node2D, int, bool) {
 	tv := ge.MainTabs()
 	return tv.TabByName(label)
+}
+
+// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
+func (ge *Gide) SelectMainTabByName(label string) (gi.Node2D, int, bool) {
+	tv := ge.MainTabs()
+	widg, idx, ok := ge.MainTabByName(label)
+	if ok {
+		tv.SelectTabIndex(idx)
+	}
+	return widg, idx, ok
 }
 
 // FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
@@ -999,7 +1014,7 @@ func (ge *Gide) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
 // Build runs the BuildCmds set for this project
 func (ge *Gide) Build() {
 	if len(ge.Prefs.BuildCmds) == 0 {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
 	ge.ExecCmds(ge.Prefs.BuildCmds, true, true)
@@ -1008,7 +1023,7 @@ func (ge *Gide) Build() {
 // Run runs the RunCmds set for this project
 func (ge *Gide) Run() {
 	if len(ge.Prefs.RunCmds) == 0 {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
 	ge.ExecCmds(ge.Prefs.RunCmds, true, true)
@@ -1018,7 +1033,7 @@ func (ge *Gide) Run() {
 // Checks for VCS setting and
 func (ge *Gide) Commit() {
 	if ge.Prefs.VersCtrl == "" {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "No VersCtrl Set", Prompt: fmt.Sprintf("You need to set the VersCtrl in the Project Preferences")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No VersCtrl Set", Prompt: fmt.Sprintf("You need to set the VersCtrl in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
 
@@ -1051,7 +1066,7 @@ func (ge *Gide) CommitNoChecks() {
 		}
 	}
 	if cmdnm == "" {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "No Commit command found", Prompt: fmt.Sprintf("Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Commit command found", Prompt: fmt.Sprintf("Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc")}, true, false, nil, nil)
 		return
 	}
 	ge.SetArgVarVals() // need to set before setting prompt string below..
@@ -1093,97 +1108,63 @@ func (ge *Gide) Find(find string, ignoreCase bool, langs LangNames) {
 	if find == "" {
 		return
 	}
-	ge.FindString = find
-	ge.FindIgnoreCase = ignoreCase
-	ge.FindLangs = langs
-	cbuf, ctv, _, _ := ge.FindOrMakeCmdTab("Find", true, true) // sel, clear
+	ge.Prefs.Find.Find = find
+	ge.Prefs.Find.IgnoreCase = ignoreCase
+	ge.Prefs.Find.Langs = langs
+
+	cbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
+	fvi, _ := ge.FindOrMakeMainTab("Find", KiT_FindView, true) // sel
+	fv := fvi.Embed(KiT_FindView).(*FindView)
+	fv.UpdateView(ge, ge.Prefs.Find)
+	ctv := fv.TextView()
+	ctv.SetInactive()
+	ctv.SetBuf(cbuf)
+
 	root := ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode)
 
 	res := FileTreeSearch(root, find, ignoreCase, langs)
 
 	outlns := make([][]byte, 0, 100)
-	lstr := fmt.Sprintf("Find: %s IgnoreCase: %t", find, ignoreCase)
-	outlns = append(outlns, []byte(lstr))
-	outlns = append(outlns, []byte(""))
-
+	outmus := make([][]byte, 0, 100) // markups
 	for _, fs := range res {
-		// todo: maybe a tree does make sense for results -- dir, tree, etc..
 		fp := fs.Node.Info.Path
 		fn := fs.Node.RelPath()
-		outlns = append(outlns, []byte(""))
 		fbStLn := len(outlns) // find buf start ln
-		lstr := fmt.Sprintf(`<a href="find:///%v#R%vN%v">%v</a>: %v`, fp, fbStLn, fs.Count, fn, fs.Count)
+		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
 		outlns = append(outlns, []byte(lstr))
+		mstr := fmt.Sprintf(`<a href="find:///%v#R%vN%v">%v</a>: %v`, fp, fbStLn, fs.Count, fn, fs.Count)
+		outmus = append(outmus, []byte(mstr))
 		for _, mt := range fs.Matches {
 			ln := mt.Reg.Start.Ln + 1
 			ch := mt.Reg.Start.Ch + 1
 			ech := mt.Reg.End.Ch + 1
-			lstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fn, mt.Text)
+			nomu := bytes.Replace(mt.Text, []byte("<mark>"), nil, -1)
+			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
+			nomus := html.EscapeString(string(nomu))
+			lstr = fmt.Sprintf(`	%v: %s`, fn, nomus)
 			outlns = append(outlns, []byte(lstr))
+			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fn, mt.Text)
+			outmus = append(outmus, []byte(mstr))
 		}
+		outlns = append(outlns, []byte(""))
+		outmus = append(outmus, []byte(""))
 	}
-	cbuf.AppendText(bytes.Join(outlns, []byte("\n")))
+	ltxt := bytes.Join(outlns, []byte("\n"))
+	mtxt := bytes.Join(outmus, []byte("\n"))
+	cbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
 	ctv.CursorStartDoc()
 	ctv.CursorNextLink()
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
-// OpenFindURL opens given find:/// url from Find
+// OpenFindURL opens given find:/// url from Find -- delegates to FindView
 func (ge *Gide) OpenFindURL(ur string, ftv *giv.TextView) bool {
-	up, err := url.Parse(ur)
-	if err != nil {
-		log.Printf("Gide OpenFindURL parse err: %v\n", err)
-		return false
-	}
-	fpath := up.Path[1:] // has double //
-	pos := up.Fragment
-	tv, _, ok := ge.NextViewFile(gi.FileName(fpath))
+	fvk, ok := ftv.ParentByType(KiT_FindView, true)
 	if !ok {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
 		return false
 	}
-	if pos == "" {
-		return true
-	}
-
-	reg := giv.TextRegion{}
-	var fbStLn, fCount int
-	lidx := strings.Index(pos, "L")
-	if lidx > 0 {
-		reg.FromString(pos[lidx:])
-		pos = pos[:lidx]
-	}
-	fmt.Sscanf(pos, "R%dN%d", &fbStLn, &fCount)
-
-	fb := ftv.Buf
-	fndtxt := fb.LineBytes[0]
-	find := ""
-	ignoreCase := false
-	fmt.Sscanf(string(fndtxt), "Find: %s IgnoreCase: %t", &find, &ignoreCase)
-	tv.PrevISearchString = find
-	tv.PrevISearchCase = !ignoreCase
-
-	if len(tv.Highlights) != fCount { // highlight
-		hi := make([]giv.TextRegion, fCount)
-		for i := 0; i < fCount; i++ {
-			fln := fbStLn + 1 + i
-			ltxt := fb.LineBytes[fln]
-			fpi := 1 + bytes.Index(ltxt, []byte(`"`))
-			epi := fpi + bytes.Index(ltxt[fpi:], []byte(`"`))
-			lnk := string(ltxt[fpi:epi])
-			iup, err := url.Parse(lnk)
-			if err != nil {
-				continue
-			}
-			ireg := giv.TextRegion{}
-			lidx := strings.Index(iup.Fragment, "L")
-			ireg.FromString(iup.Fragment[lidx:])
-			hi[i] = ireg
-		}
-		tv.Highlights = hi
-	}
-	tv.SetCursorShow(reg.Start)
-	return true
+	fv := fvk.(*FindView)
+	return fv.OpenFindURL(ur, ftv)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/token"
+	"html"
 	"io/ioutil"
 	"log"
 	"os"
@@ -246,21 +247,29 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 		if err == nil {
 			outscan := bufio.NewScanner(stdout) // line at a time
 			outlns := make([][]byte, 0, 100)
+			outmus := make([][]byte, 0, 100)
 			ts := time.Now()
 			// note: can't blank whole screen here b/c some processes will continue for long time
 			for outscan.Scan() {
-				outlns = append(outlns, MarkupCmdOutput(outscan.Bytes())) // adds \n
+				ob := outscan.Bytes()
+				outlns = append(outlns, ob)
+				outmus = append(outmus, MarkupCmdOutput(ob))
 				now := time.Now()
 				lag := int(now.Sub(ts) / time.Millisecond)
 				if lag > 200 {
 					ts = now
-					buf.AppendText(bytes.Join(outlns, []byte{}))
+					tlns := bytes.Join(outlns, []byte("\n"))
+					mlns := bytes.Join(outmus, []byte("\n"))
+					buf.AppendTextMarkup(tlns, mlns, false, true) // no undo, yes signal
 					buf.AutoScrollViews()
 					outlns = make([][]byte, 0, 100)
+					outmus = make([][]byte, 0, 100)
 				}
 			}
 			if len(outlns) > 0 {
-				buf.AppendText(bytes.Join(outlns, []byte{}))
+				tlns := bytes.Join(outlns, []byte("\n"))
+				mlns := bytes.Join(outmus, []byte("\n"))
+				buf.AppendTextMarkup(tlns, mlns, false, true)
 				buf.AutoScrollViews()
 			}
 		}
@@ -286,11 +295,11 @@ func (cm *Command) AppendCmdOut(ge *Gide, buf *giv.TextBuf, out []byte) {
 	updt := ge.Viewport.Win.UpdateStart()
 	lns := bytes.Split(out, []byte("\n"))
 	sz := len(lns)
-	outlns := make([][]byte, sz)
+	outmus := make([][]byte, sz)
 	for i, txt := range lns {
-		outlns[i] = MarkupCmdOutput(txt)
+		outmus[i] = MarkupCmdOutput(txt)
 	}
-	buf.AppendText(bytes.Join(outlns, []byte{}))
+	buf.AppendTextMarkup(out, bytes.Join(outmus, []byte("\n")), false, true)
 	buf.AutoScrollViews()
 	ge.Viewport.Win.UpdateEnd(updt)
 }
@@ -320,8 +329,12 @@ func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err erro
 		rval = false
 	}
 	if buf != nil {
-		buf.AppendTextLine([]byte("\n"))
-		buf.AppendTextLine(MarkupCmdOutput([]byte(finstat)))
+		if err != nil {
+			ge.SelectMainTabByName(cm.Name) // sometimes it isn't
+		}
+		fsb := []byte(finstat)
+		buf.AppendTextLine([]byte("\n"), false, true) // no save undo, yes signal
+		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), false, true)
 		buf.AutoScrollViews()
 		if cm.Focus {
 			ge.FocusOnPanel(MainTabsIdx)
@@ -351,9 +364,9 @@ func (cm *Command) LangMatch(langs LangNames) bool {
 }
 
 // MarkupCmdOutput applies links to the first element in command output line
-// if it looks like a file name / position -- also adds a final \n
+// if it looks like a file name / position
 func MarkupCmdOutput(out []byte) []byte {
-	flds := bytes.Fields(out)
+	flds := strings.Fields(html.EscapeString(string(out)))
 	if len(flds) == 0 {
 		return out
 	}
@@ -361,10 +374,10 @@ func MarkupCmdOutput(out []byte) []byte {
 	mx := ints.MinInt(len(flds), 2)
 	for i := 0; i < mx; i++ {
 		ff := flds[i]
-		if !(bytes.Contains(ff, []byte(".")) || bytes.Contains(ff, []byte("/"))) { // extension or path
+		if !(strings.Contains(ff, ".") || strings.Contains(ff, "/")) { // extension or path
 			continue
 		}
-		fnflds := bytes.Split(ff, []byte(":"))
+		fnflds := strings.Split(ff, ":")
 		fn := string(fnflds[0])
 		pos := ""
 		col := ""
@@ -387,20 +400,15 @@ func MarkupCmdOutput(out []byte) []byte {
 		} else {
 			lstr = fmt.Sprintf(`<a href="file:///%v">%v</a>`, fn, string(ff))
 		}
-		orig = ff
+		orig = []byte(ff)
 		link = []byte(lstr)
 		break
 	}
 	if len(link) > 0 {
 		nt := bytes.Replace(out, orig, link, -1)
-		nt = append(nt, '\n')
 		return nt
 	}
-	sz := len(out)
-	nt := make([]byte, sz+1)
-	copy(nt, out)
-	nt[sz] = '\n'
-	return nt
+	return out
 }
 
 ////////////////////////////////////////////////////////////////////////////////
