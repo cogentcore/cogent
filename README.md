@@ -63,8 +63,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * C-c C-c coming up in the wrong window!
 
-* C-X C-o -- open same file in other view -- super handy!
-
 * FileTree update new file not working
 
 * horiz scroll with line numbers: render needs to know about scrolling delta.

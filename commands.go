@@ -197,9 +197,9 @@ func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 	if cm.Dir != "" {
 		cds := BindArgVars(cm.Dir)
 		err := os.Chdir(cds)
-		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)", cds, cm.Dir)))
+		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cm.Dir)))
 		if err != nil {
-			cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v", cds, err)))
+			cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
 		}
 	}
 
@@ -241,6 +241,7 @@ func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool 
 func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
 	stdout, err := cmd.StdoutPipe()
+	lfb := []byte("\n")
 	if err == nil {
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Start()
@@ -258,8 +259,10 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 				lag := int(now.Sub(ts) / time.Millisecond)
 				if lag > 200 {
 					ts = now
-					tlns := bytes.Join(outlns, []byte("\n"))
-					mlns := bytes.Join(outmus, []byte("\n"))
+					tlns := bytes.Join(outlns, lfb)
+					mlns := bytes.Join(outmus, lfb)
+					tlns = append(tlns, lfb...)
+					mlns = append(mlns, lfb...)
 					buf.AppendTextMarkup(tlns, mlns, false, true) // no undo, yes signal
 					buf.AutoScrollViews()
 					outlns = make([][]byte, 0, 100)
@@ -267,8 +270,10 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 				}
 			}
 			if len(outlns) > 0 {
-				tlns := bytes.Join(outlns, []byte("\n"))
-				mlns := bytes.Join(outmus, []byte("\n"))
+				tlns := bytes.Join(outlns, lfb)
+				mlns := bytes.Join(outmus, lfb)
+				tlns = append(tlns, lfb...)
+				mlns = append(mlns, lfb...)
 				buf.AppendTextMarkup(tlns, mlns, false, true)
 				buf.AutoScrollViews()
 			}
@@ -299,7 +304,11 @@ func (cm *Command) AppendCmdOut(ge *Gide, buf *giv.TextBuf, out []byte) {
 	for i, txt := range lns {
 		outmus[i] = MarkupCmdOutput(txt)
 	}
-	buf.AppendTextMarkup(out, bytes.Join(outmus, []byte("\n")), false, true)
+	lfb := []byte("\n")
+	mlns := bytes.Join(outmus, lfb)
+	mlns = append(mlns, lfb...)
+
+	buf.AppendTextMarkup(out, mlns, false, true)
 	buf.AutoScrollViews()
 	ge.Viewport.Win.UpdateEnd(updt)
 }
@@ -333,7 +342,7 @@ func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err erro
 			ge.SelectMainTabByName(cm.Name) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
-		buf.AppendTextLine([]byte("\n"), false, true) // no save undo, yes signal
+		buf.AppendTextLineMarkup([]byte("\n"), []byte("\n"), false, true) // no save undo, yes signal
 		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), false, true)
 		buf.AutoScrollViews()
 		if cm.Focus {

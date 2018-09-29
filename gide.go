@@ -595,6 +595,22 @@ func (ge *Gide) SelectOpenNode() {
 	})
 }
 
+// CloneActiveView sets the next text view to view the same file currently being vieweds
+// in the active view. returns text view and index
+func (ge *Gide) CloneActiveView() (*giv.TextView, int) {
+	tv := ge.ActiveTextView()
+	if tv == nil {
+		return nil, -1
+	}
+	ond, _, got := ge.FindOpenNodeForTextView(tv)
+	if got {
+		nv, nidx := ge.NextTextView()
+		ge.ViewFileNode(nv, nidx, ond)
+		return nv, nidx
+	}
+	return nil, -1
+}
+
 // TextViewSig handles all signals from the textviews
 func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
@@ -650,7 +666,7 @@ func (ge *Gide) OpenFileURL(ur string) bool {
 	if pos == "" {
 		return true
 	}
-	fmt.Printf("pos: %v\n", pos)
+	// fmt.Printf("pos: %v\n", pos)
 	txpos := giv.TextPos{}
 	if txpos.FromString(pos) {
 		tv.SetCursorShow(txpos)
@@ -1157,6 +1173,67 @@ func (ge *Gide) Find(find string, ignoreCase bool, langs LangNames) {
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
+// ParseOpenFindURL parses and opens given find:/// url from Find, return text
+// region encoded in url, and starting line of results in find buffer, and
+// number of results returned -- for parsing all the find results
+func (ge *Gide) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool) {
+	up, err := url.Parse(ur)
+	if err != nil {
+		log.Printf("FindView OpenFindURL parse err: %v\n", err)
+		return
+	}
+	fpath := up.Path[1:] // has double //
+	pos := up.Fragment
+	tv, _, ok = ge.NextViewFile(gi.FileName(fpath))
+	if !ok {
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
+		return
+	}
+	if pos == "" {
+		return
+	}
+
+	lidx := strings.Index(pos, "L")
+	if lidx > 0 {
+		reg.FromString(pos[lidx:])
+		pos = pos[:lidx]
+	}
+	fmt.Sscanf(pos, "R%dN%d", &findBufStLn, &findCount)
+	return
+}
+
+// HighlightFinds highlights all the find results in ftv buffer
+func (ge *Gide) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, find string) {
+	lnka := []byte(`<a href="`)
+	lnkasz := len(lnka)
+
+	fb := ftv.Buf
+
+	if len(tv.Highlights) != fCount { // highlight
+		hi := make([]giv.TextRegion, fCount)
+		for i := 0; i < fCount; i++ {
+			fln := fbStLn + 1 + i
+			ltxt := fb.Markup[fln]
+			fpi := bytes.Index(ltxt, lnka)
+			if fpi < 0 {
+				continue
+			}
+			fpi += lnkasz
+			epi := fpi + bytes.Index(ltxt[fpi:], []byte(`"`))
+			lnk := string(ltxt[fpi:epi])
+			iup, err := url.Parse(lnk)
+			if err != nil {
+				continue
+			}
+			ireg := giv.TextRegion{}
+			lidx := strings.Index(iup.Fragment, "L")
+			ireg.FromString(iup.Fragment[lidx:])
+			hi[i] = ireg
+		}
+		tv.Highlights = hi
+	}
+}
+
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
 func (ge *Gide) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	fvk, ok := ftv.ParentByType(KiT_FindView, true)
@@ -1576,6 +1653,9 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	case KeyFunBufSelect:
 		kt.SetProcessed()
 		ge.SelectOpenNode()
+	case KeyFunBufClone:
+		kt.SetProcessed()
+		ge.CloneActiveView()
 	case KeyFunBufSave:
 		kt.SetProcessed()
 		ge.SaveActiveView()

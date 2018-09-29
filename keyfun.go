@@ -41,6 +41,7 @@ const (
 	KeyFunSearchProj         // search / replace across entire project
 	KeyFunFileOpen           // open a new file in active textview
 	KeyFunBufSelect          // select an open buffer to edit in active textview
+	KeyFunBufClone           // open active file in other view
 	KeyFunBufSave            // save active textview buffer to its file
 	KeyFunBufSaveAs          // save as active textview buffer to its file
 	KeyFunBufClose           // close active textview buffer
@@ -480,6 +481,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+C"}: KeyFunExecCmd,
 		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 		KeySeq{"Control+C", "c"}:         KeyFunExecCmd,
+		KeySeq{"Control+C", "Control+O"}: KeyFunBufClone,
 	}},
 	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,
