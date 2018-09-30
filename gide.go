@@ -1120,21 +1120,22 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 //    Find / Replace
 
 // Find in files
-func (ge *Gide) Find(find string, ignoreCase bool, langs LangNames) {
+func (ge *Gide) Find(find, repl string, ignoreCase bool, langs LangNames) {
 	if find == "" {
 		return
 	}
 	ge.Prefs.Find.Find = find
+	ge.Prefs.Find.Replace = repl
 	ge.Prefs.Find.IgnoreCase = ignoreCase
 	ge.Prefs.Find.Langs = langs
 
-	cbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
+	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
 	fvi, _ := ge.FindOrMakeMainTab("Find", KiT_FindView, true) // sel
 	fv := fvi.Embed(KiT_FindView).(*FindView)
 	fv.UpdateView(ge, ge.Prefs.Find)
-	ctv := fv.TextView()
-	ctv.SetInactive()
-	ctv.SetBuf(cbuf)
+	ftv := fv.TextView()
+	ftv.SetInactive()
+	ftv.SetBuf(fbuf)
 
 	root := ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode)
 
@@ -1167,9 +1168,13 @@ func (ge *Gide) Find(find string, ignoreCase bool, langs LangNames) {
 	}
 	ltxt := bytes.Join(outlns, []byte("\n"))
 	mtxt := bytes.Join(outmus, []byte("\n"))
-	cbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
-	ctv.CursorStartDoc()
-	ctv.CursorNextLink()
+	fbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
+	ftv.CursorStartDoc()
+	ok := ftv.CursorNextLink(false) // no wrap
+	if ok {
+		ftv.OpenLinkAt(ftv.CursorPos)
+		ftv.CursorNextLink(false)
+	}
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
@@ -1751,18 +1756,24 @@ var GideProps = ki.Props{
 		{"Find", ki.Props{
 			"label":           "Find...",
 			"icon":            "search",
-			"desc":            "Find in all files in project (for given language -- leave empty for all files)",
+			"desc":            "Find / replace in all open folders in file browser",
 			"no-update-after": true,
 			"Args": ki.PropSlice{
 				{"Search For", ki.Props{
-					"default-field": "FindString",
+					"default-field": "Prefs.Find.Find",
+					"width":         "80",
+				}},
+				{"Replace With", ki.Props{
+					"desc":          "Optional replace string -- replace will be controlled interactively in Find panel, including replace all",
+					"default-field": "Prefs.Find.Replace",
 					"width":         "80",
 				}},
 				{"Ignore Case", ki.Props{
-					"default-field": "FindIgnoreCase",
+					"default-field": "Prefs.Find.IgnoreCase",
 				}},
 				{"Languages", ki.Props{
-					"default-field": "FindLangs",
+					"desc":          "restrict find to files associated with these languages -- leave empty for all files",
+					"default-field": "Prefs.Find.Langs",
 				}},
 			},
 		}},

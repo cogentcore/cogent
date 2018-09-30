@@ -34,7 +34,8 @@ var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
-	fv.Gide.Find(fv.Find.Find, fv.Find.IgnoreCase, fv.Find.Langs)
+	fv.Gide.Prefs.Find = fv.Find
+	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.Langs)
 }
 
 // ReplaceAction performs the replace
@@ -42,7 +43,10 @@ func (fv *FindView) ReplaceAction() bool {
 	ftv := fv.TextView()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
 	if !ok {
-		ok = ftv.CursorNextLink()
+		ok = ftv.CursorNextLink(false) // no wrap
+		if !ok {
+			return false
+		}
 		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
 		if !ok {
 			return false
@@ -51,37 +55,48 @@ func (fv *FindView) ReplaceAction() bool {
 	er := giv.TextRegion{}
 	ge := fv.Gide
 	tv, reg, _, _, ok := ge.ParseOpenFindURL(tl.URL, ftv)
-	if !ok || reg == er {
+	if !ok {
 		return false
 	}
+	if reg == er {
+		ok = ftv.CursorNextLink(false) // no wrap
+		if !ok {
+			return false
+		}
+		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
+		tv, reg, _, _, ok = ge.ParseOpenFindURL(tl.URL, ftv)
+		if !ok || reg == er {
+			return false
+		}
+	}
+	tv.RefreshIfNeeded()
 	tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
 	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
 
-	ftv.CursorNextLink()
-	tv.SetCursorShow(reg.Start)
-	return true
+	return ftv.CursorNextLink(false) // no wrap
 }
 
 // ReplaceAllAction performs replace all
 func (fv *FindView) ReplaceAllAction() {
-	ftv := fv.TextView()
-
-	ftv.CursorNextLink()
-	ftv.OpenLinkAt(ftv.CursorPos)
-
+	for {
+		ok := fv.ReplaceAction()
+		if !ok {
+			break
+		}
+	}
 }
 
 // NextFind shows next find result
 func (fv *FindView) NextFind() {
 	ftv := fv.TextView()
-	ftv.CursorNextLink()
+	ftv.CursorNextLink(true) // wrap
 	ftv.OpenLinkAt(ftv.CursorPos)
 }
 
 // PrevFind shows previous find result
 func (fv *FindView) PrevFind() {
 	ftv := fv.TextView()
-	ftv.CursorPrevLink()
+	ftv.CursorPrevLink(true) // wrap
 	ftv.OpenLinkAt(ftv.CursorPos)
 }
 
@@ -98,6 +113,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	tv.PrevISearchCase = !ignoreCase
 	ge.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
 
+	tv.RefreshIfNeeded()
 	tv.SetCursorShow(reg.Start)
 	return true
 }
@@ -248,6 +264,7 @@ func (fv *FindView) ConfigToolbar() {
 
 	finda := fb.AddNewChild(gi.KiT_Action, "find-act").(*gi.Action)
 	finda.SetText("Find:")
+	finda.Tooltip = "Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search"
 	finda.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.FindAction()
@@ -255,6 +272,7 @@ func (fv *FindView) ConfigToolbar() {
 
 	finds := fb.AddNewChild(gi.KiT_TextField, "find-str").(*gi.TextField)
 	finds.SetStretchMaxWidth()
+	finds.Tooltip = "String to find -- hit enter or tab to update search"
 	finds.TextFieldSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
@@ -292,6 +310,7 @@ func (fv *FindView) ConfigToolbar() {
 
 	repla := rb.AddNewChild(gi.KiT_Action, "repl-act").(*gi.Action)
 	repla.SetText("Replace:")
+	repla.Tooltip = "Replace find string with replace string for currently-selected find result"
 	repla.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.ReplaceAction()
@@ -299,17 +318,18 @@ func (fv *FindView) ConfigToolbar() {
 
 	repls := rb.AddNewChild(gi.KiT_TextField, "repl-str").(*gi.TextField)
 	repls.SetStretchMaxWidth()
+	repls.Tooltip = "String to replace find string"
 	repls.TextFieldSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
 			fvv.Find.Replace = tf.Text()
-			fvv.ReplaceAction()
 		}
 	})
 
 	repall := rb.AddNewChild(gi.KiT_Action, "repl-all").(*gi.Action)
 	repall.SetText("All")
+	repall.Tooltip = "replace all find strings with replace string"
 	repall.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.ReplaceAllAction()
@@ -323,6 +343,7 @@ func (fv *FindView) ConfigToolbar() {
 	vtyp := fv.LangVV.WidgetType()
 	langw := rb.AddNewChild(vtyp, "langs").(gi.Node2D)
 	fv.LangVV.ConfigWidget(langw)
+	langw.AsWidget().Tooltip = "Language(s) to restrict search / replace to"
 	//	vvb := vv.AsValueViewBase()
 	//	vvb.ViewSig.ConnectOnly(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 	//		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
