@@ -45,37 +45,20 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * named splitter configs and save etc
 
+* git diff markup not aligning with raw text -- less than expected..
+
 * go imports: gi.TextRender SetHTMLPre end tag: span doesn't match current tag:  for string
 </span>
 
-* Need to fix un-indent for } and have 2nd tab override auto-indent
-
-* save current cursor position from last view to move cursor in textbuf, reactivate that when switching bufs.  
-
-* textview rendering not taking into account bottom scrollbar? logic is there.. should be working..
-
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
-
-* C-c C-c coming up in the wrong window!  still?
 
 * FileTree update new file not working
 
-* horiz scroll with line numbers: render needs to know about scrolling delta.
-
 * ALL of the methods in gide should be no-update-after -- more efficient to have a general override flag there to prevent that for everything
-
-* cursor goes to hand for links in TextView
 
 * add all the other commands!
 
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
-
-
-
-
-
-
-
 
 

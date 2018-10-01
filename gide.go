@@ -255,6 +255,10 @@ func (ge *Gide) LangDefaults() bool {
 	case LangName("Go"):
 		ge.Prefs.BuildCmds = CmdNames{"Build Go Proj"}
 		got = true
+	case LangName("LaTeX"):
+		ge.Prefs.BuildCmds = CmdNames{"LaTeX PDF"}
+		ge.Prefs.RunCmds = CmdNames{"View Target PDF"}
+		got = true
 	}
 	return got
 }

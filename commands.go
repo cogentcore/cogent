@@ -86,7 +86,8 @@ func (cm *CmdAndArgs) BindArgs() []string {
 // PrepCmd prepares to run command, returning *exec.Cmd and a string of the full command
 func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 	cstr := BindArgVars(cm.Cmd)
-	if cm.Cmd == "{PromptString1}" { // special case -- expand args
+	switch cm.Cmd {
+	case "{PromptString1}": // special case -- expand args
 		cmdstr := cstr
 		args := strings.Fields(cmdstr)
 		if len(args) > 1 {
@@ -98,7 +99,24 @@ func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 		}
 		cmd := exec.Command(cstr, args...)
 		return cmd, cmdstr
-	} else {
+	case "open":
+		switch oswin.TheApp.Platform() {
+		case oswin.MacOS:
+			// open is fine
+		case oswin.LinuxX11:
+			cstr = "xdg-open"
+		case oswin.Windows:
+			// todo
+		}
+		cmdstr := cstr
+		args := cm.BindArgs()
+		if args != nil {
+			astr := strings.Join(args, " ")
+			cmdstr += " " + astr
+		}
+		cmd := exec.Command(cstr, args...)
+		return cmd, cmdstr
+	default:
 		cmdstr := cstr
 		args := cm.BindArgs()
 		if args != nil {
@@ -742,8 +760,12 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", false, false},
 
 	// LaTeX
-	{"LaTeX PDF File", "run PDFLaTeX on file", LangNames{"LaTeX"},
+	{"LaTeX PDF", "run PDFLaTeX on file", LangNames{"LaTeX"},
 		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false},
+	{"View PDF", "open PDF file", LangNames{"LaTeX", "PDF"},
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", false, false},
+	{"View Target PDF", "open project target PDF file", LangNames{"LaTeX", "PDF"},
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", false, false},
 
 	// Misc testing
 	{"List Dir", "list current dir", nil,
