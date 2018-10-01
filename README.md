@@ -43,10 +43,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* Replace in TextView, based on Find interface -- now should be very easy
-
-* support default-field in MethodView as a path of fields.. need a good kit
-  fun if not already there
+* named splitter configs and save etc
 
 * go imports: gi.TextRender SetHTMLPre end tag: span doesn't match current tag:  for string
 </span>
@@ -55,13 +52,11 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * save current cursor position from last view to move cursor in textbuf, reactivate that when switching bufs.  
 
-* textview rendering not taking into account bottom scrollbar
+* textview rendering not taking into account bottom scrollbar? logic is there.. should be working..
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
 
-* Find currently always starts at top and searches all open trees -- need to at least document that.  Not sure that there is a much better way of doing it in terms of flexibly specifying what to search over..
-
-* C-c C-c coming up in the wrong window!
+* C-c C-c coming up in the wrong window!  still?
 
 * FileTree update new file not working
 
@@ -72,8 +67,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * cursor goes to hand for links in TextView
 
 * add all the other commands!
-
-* named splitter configs and save etc
 
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
