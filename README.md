@@ -43,6 +43,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* find needs to use open buffer when avail -- don't want to have to save every time
+
 * named splitter configs and save etc
 
 * git diff markup not aligning with raw text -- less than expected..

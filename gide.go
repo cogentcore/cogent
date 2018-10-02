@@ -512,12 +512,14 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		return
 	}
 	giv.FileNodeHiStyle = ge.Prefs.Editor.HiStyle // must be set prior to OpenBuf
-	if err := fn.OpenBuf(); err == nil {
+	if nw, err := fn.OpenBuf(); err == nil {
 		if tv.IsChanged() {
 			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
 		}
 		tv.SetBuf(fn.Buf)
-		ge.AutoSaveCheck(tv, vidx, fn)
+		if nw {
+			ge.AutoSaveCheck(tv, vidx, fn)
+		}
 		ge.OpenNodes.Add(fn)
 		fn.SetOpen()
 		ge.SetActiveTextViewIdx(vidx)

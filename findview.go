@@ -58,7 +58,7 @@ func (fv *FindView) ReplaceAction() bool {
 	if !ok {
 		return false
 	}
-	if reg == er {
+	if reg == er { // nil
 		ok = ftv.CursorNextLink(false) // no wrap
 		if !ok {
 			return false
@@ -73,7 +73,11 @@ func (fv *FindView) ReplaceAction() bool {
 	tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
 	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
 
-	return ftv.CursorNextLink(false) // no wrap
+	ok = ftv.CursorNextLink(false) // no wrap
+	if ok {
+		ftv.OpenLinkAt(ftv.CursorPos) // move to next
+	}
+	return ok
 }
 
 // ReplaceAllAction performs replace all
@@ -89,15 +93,19 @@ func (fv *FindView) ReplaceAllAction() {
 // NextFind shows next find result
 func (fv *FindView) NextFind() {
 	ftv := fv.TextView()
-	ftv.CursorNextLink(true) // wrap
-	ftv.OpenLinkAt(ftv.CursorPos)
+	ok := ftv.CursorNextLink(true) // wrap
+	if ok {
+		ftv.OpenLinkAt(ftv.CursorPos)
+	}
 }
 
 // PrevFind shows previous find result
 func (fv *FindView) PrevFind() {
 	ftv := fv.TextView()
-	ftv.CursorPrevLink(true) // wrap
-	ftv.OpenLinkAt(ftv.CursorPos)
+	ok := ftv.CursorPrevLink(true) // wrap
+	if ok {
+		ftv.OpenLinkAt(ftv.CursorPos)
+	}
 }
 
 // OpenFindURL opens given find:/// url from Find
