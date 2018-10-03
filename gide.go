@@ -1829,7 +1829,7 @@ var GideProps = ki.Props{
 		{"sep-splt", ki.BlankProp{}},
 		{"Splits", ki.PropSlice{
 			{"SetSplit", ki.Props{
-				"label":           "Set...",
+				"label":           "Set",
 				"submenu":         &AvailSplitNames,
 				"no-update-after": true,
 				"Args": ki.PropSlice{
@@ -1840,12 +1840,16 @@ var GideProps = ki.Props{
 				"label":           "Save...",
 				"no-update-after": true,
 				"Args": ki.PropSlice{
-					{"Name", ki.Props{}},
-					{"Desc", ki.Props{}},
+					{"Name", ki.Props{
+						"width": "60",
+					}},
+					{"Desc", ki.Props{
+						"width": "60",
+					}},
 				},
 			}},
 			{"EditSplits", ki.Props{
-				"label":           "Edit",
+				"label":           "Edit...",
 				"no-update-after": true,
 			}},
 		}},
