@@ -28,6 +28,7 @@ type Lang struct {
 	Desc         string   `desc:"<i>brief</i> description of it"`
 	Exts         []string `desc:"associated lower-case file extensions -- if the filename itself is more diagnostic (e.g., Makefile), specify that -- if it doesn't start with a . then it will be treated as the start of the filename"`
 	PostSaveCmds CmdNames `desc:"command(s) to run after a file of this type is saved"`
+	Comment      string   `desc:"string used for commenting-out individual lines"`
 }
 
 // Langs is a list of language types
@@ -333,8 +334,8 @@ var LangsProps = ki.Props{
 
 // StdLangs is the original compiled-in set of standard languages.
 var StdLangs = Langs{
-	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}},
-	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX PDF"}},
-	{"PDF", "PDF document", []string{".pdf"}, CmdNames{"View PDF"}},
-	{"Markdown", "Markdown document", []string{".md"}, nil},
+	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}, "// "},
+	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX PDF"}, "% "},
+	{"PDF", "PDF document", []string{".pdf"}, CmdNames{"View PDF"}, ""},
+	{"Markdown", "Markdown document", []string{".md"}, nil, "<--- "},
 }

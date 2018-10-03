@@ -48,6 +48,8 @@ const (
 	KeyFunExecCmd            // execute a command on active textview buffer
 	KeyFunRegSave            // save selection to named register
 	KeyFunRegPaste           // paste selection from named register
+	KeyFunCommentOut         // comment out region
+	KeyFunIndent             // indent region
 	KeyFunSetSplit           // set named splitter config
 	KeyFunsN
 )
@@ -487,6 +489,10 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+C", "Control+O"}: KeyFunBufClone,
 		KeySeq{"Control+X", "x"}:         KeyFunRegSave,
 		KeySeq{"Control+X", "g"}:         KeyFunRegPaste,
+		KeySeq{"Control+C", "k"}:         KeyFunCommentOut,
+		KeySeq{"Control+C", "Control+K"}: KeyFunCommentOut,
+		KeySeq{"Control+X", "Control+I"}: KeyFunIndent,
+		KeySeq{"Control+X", "i"}:         KeyFunIndent,
 		KeySeq{"Control+X", "v"}:         KeyFunSetSplit, // view
 	}},
 	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{

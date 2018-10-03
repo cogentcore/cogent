@@ -7,9 +7,9 @@ import (
 	"strconv"
 )
 
-const _KeyFuns_name = "KeyFunNilKeyFunNeeds2KeyFunNextPanelKeyFunPrevPanelKeyFunGotoLineKeyFunSearchFileKeyFunSearchProjKeyFunFileOpenKeyFunBufSelectKeyFunBufCloneKeyFunBufSaveKeyFunBufSaveAsKeyFunBufCloseKeyFunExecCmdKeyFunRegSaveKeyFunRegPasteKeyFunSetSplitKeyFunsN"
+const _KeyFuns_name = "KeyFunNilKeyFunNeeds2KeyFunNextPanelKeyFunPrevPanelKeyFunGotoLineKeyFunSearchFileKeyFunSearchProjKeyFunFileOpenKeyFunBufSelectKeyFunBufCloneKeyFunBufSaveKeyFunBufSaveAsKeyFunBufCloseKeyFunExecCmdKeyFunRegSaveKeyFunRegPasteKeyFunCommentOutKeyFunIndentKeyFunSetSplitKeyFunsN"
 
-var _KeyFuns_index = [...]uint8{0, 9, 21, 36, 51, 65, 81, 97, 111, 126, 140, 153, 168, 182, 195, 208, 222, 236, 244}
+var _KeyFuns_index = [...]uint16{0, 9, 21, 36, 51, 65, 81, 97, 111, 126, 140, 153, 168, 182, 195, 208, 222, 238, 250, 264, 272}
 
 func (i KeyFuns) String() string {
 	if i < 0 || i >= KeyFuns(len(_KeyFuns_index)-1) {

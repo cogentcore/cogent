@@ -1307,6 +1307,46 @@ func (ge *Gide) RegisterPaste(name RegisterName) bool {
 	return true
 }
 
+// CommentOut comments-out selected lines in active text view
+func (ge *Gide) CommentOut() bool {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return false
+	}
+	sel := tv.Selection()
+	if sel == nil {
+		return false
+	}
+	cmt := []byte("// ")
+	ls := LangsForFilename(string(tv.Buf.Filename))
+	if len(ls) == 1 {
+		cmt = []byte(ls[0].Comment)
+	}
+	tv.Buf.CommentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, cmt, tv.Sty.Text.TabSize)
+	return true
+}
+
+// Indent indents selected lines in active view
+func (ge *Gide) Indent() bool {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return false
+	}
+	sel := tv.Selection()
+	if sel == nil {
+		return false
+	}
+	// todo: add indent chars to langs
+	// cmt := []byte("// ")
+	// ls := LangsForFilename(string(tv.Buf.Filename))
+	// if len(ls) == 1 {
+	//		cmt = []byte(ls[0].Comment)
+	// }
+	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, tv.Opts.SpaceIndent, tv.Sty.Text.TabSize,
+		giv.DefaultIndentStrings, giv.DefaultUnindentStrings)
+	return true
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    StatusBar
 
@@ -1765,6 +1805,12 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	case KeyFunRegPaste:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "RegisterPaste", ge.Viewport)
+	case KeyFunCommentOut:
+		kt.SetProcessed()
+		ge.CommentOut()
+	case KeyFunIndent:
+		kt.SetProcessed()
+		ge.Indent()
 	case KeyFunSetSplit:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "SetSplit", ge.Viewport)
