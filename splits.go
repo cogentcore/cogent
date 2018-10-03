@@ -215,5 +215,6 @@ var SplitsProps = ki.Props{
 var StdSplits = Splits{
 	{"Edit", "2 text views, main tabs, no vis tabs", []float32{.1, .3, .3, .3, 0}},
 	{"Vis", "1 text view, main and vis tabs", []float32{.1, .3, 0, .3, .3}},
+	{"Small", "1 text view, and main tabs", []float32{.1, .5, 0, .4, 0}},
 	{"All", "All panels open", []float32{.1, .225, .225, .225, .225}},
 }
