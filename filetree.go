@@ -125,7 +125,7 @@ func (on *OpenNodes) NChanged() int {
 type FileSearchResults struct {
 	Node    *giv.FileNode
 	Count   int
-	Matches []giv.FileSearchResult
+	Matches []giv.FileSearchMatch
 }
 
 // FileTreeSearch returns list of all nodes starting at given node of given
@@ -152,7 +152,13 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, langs Lan
 		if !LangNamesMatchFilename(sfn.Nm, langs) {
 			return true
 		}
-		cnt, matches := giv.FileSearch(string(sfn.FPath), []byte(find), ignoreCase)
+		var cnt int
+		var matches []giv.FileSearchMatch
+		if sfn.IsOpen() && sfn.Buf != nil {
+			cnt, matches = sfn.Buf.Search([]byte(find), ignoreCase)
+		} else {
+			cnt, matches = giv.FileSearch(string(sfn.FPath), []byte(find), ignoreCase)
+		}
 		if cnt > 0 {
 			mls = append(mls, FileSearchResults{sfn, cnt, matches})
 		}

@@ -79,7 +79,7 @@ func (lt *Splits) Names() []string {
 }
 
 // PrefsSplitsFileName is the name of the preferences file in App prefs
-// directory for saving / loading the default AvailSplits languages list
+// directory for saving / loading the default AvailSplits
 var PrefsSplitsFileName = "splits_prefs.json"
 
 // OpenJSON opens named splits from a JSON-formatted file.
@@ -115,8 +115,11 @@ func (lt *Splits) OpenPrefs() error {
 	pdir := oswin.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
-	AvailSplitNames = lt.Names()
-	return lt.OpenJSON(gi.FileName(pnm))
+	err := lt.OpenJSON(gi.FileName(pnm))
+	if err == nil {
+		AvailSplitNames = lt.Names()
+	}
+	return err
 }
 
 // SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFileName

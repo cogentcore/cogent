@@ -43,15 +43,11 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* SaveAs does not update all the other pointers etc for previous file -- creates some confusion about old vs. new names
-
-* find needs to use open buffer when avail -- don't want to have to save every time -- also as you start replacing, positions within a single line get off (lines stay ok)
+* find needs to: as you start replacing, positions within a single line get off (lines stay ok)
 
 * git diff markup not aligning with raw text -- less than expected..
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
-
-* FileTree update new file not working
 
 * ALL of the methods in gide should be no-update-after -- more efficient to have a general override flag there to prevent that for everything
 

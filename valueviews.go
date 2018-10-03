@@ -693,6 +693,145 @@ func (vv *SplitValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.
 
 }
 
+//////////////////////////////////////////////////////////////////////////////////////
+//  RegistersView
+
+// RegistersView opens a view of a commands table
+func RegistersView(pt *Registers) {
+	winm := "gide-registers"
+	width := 800
+	height := 800
+	win := gi.NewWindow2D(winm, "Gide Registers", width, height, true)
+
+	vp := win.WinViewport2D()
+	updt := vp.UpdateStart()
+
+	mfr := win.SetMainFrame()
+	mfr.Lay = gi.LayoutVert
+
+	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title.SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
+	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
+	title.SetStretchMaxWidth()
+	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+
+	tv := mfr.AddNewChild(giv.KiT_MapView, "tv").(*giv.MapView)
+	tv.Viewport = vp
+	tv.SetMap(pt, nil)
+	tv.SetStretchMaxWidth()
+	tv.SetStretchMaxHeight()
+
+	AvailRegistersChanged = false
+	tv.ViewSig.Connect(mfr.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		AvailRegistersChanged = true
+	})
+
+	mmen := win.MainMenu
+	giv.MainMenuView(pt, win, mmen)
+
+	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+		if AvailRegistersChanged { // only for main avail map..
+			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Registers Before Closing?",
+				Prompt: "Do you want to save any changes to custom register file before closing, or Cancel the close and do a Save to a different file?"},
+				[]string{"Save and Close", "Discard and Close", "Cancel"},
+				win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+					switch sig {
+					case 0:
+						pt.SavePrefs()
+						fmt.Printf("Preferences Saved to %v\n", PrefsRegistersFileName)
+						w.Close()
+					case 1:
+						if pt == &AvailRegisters {
+							pt.OpenPrefs() // revert
+						}
+						w.Close()
+					case 2:
+						// default is to do nothing, i.e., cancel
+					}
+				})
+		} else {
+			w.Close()
+		}
+	})
+
+	win.MainMenuUpdated()
+
+	vp.UpdateEndNoSig(updt)
+	win.GoStartEventLoop()
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//  RegisterValueView
+
+// ValueView registers RegisterValueView as the viewer of RegisterName
+func (kn RegisterName) ValueView() giv.ValueView {
+	vv := RegisterValueView{}
+	vv.Init(&vv)
+	return &vv
+}
+
+// RegisterValueView presents an action for displaying an RegisterName and selecting
+type RegisterValueView struct {
+	giv.ValueViewBase
+}
+
+var KiT_RegisterValueView = kit.Types.AddType(&RegisterValueView{}, nil)
+
+func (vv *RegisterValueView) WidgetType() reflect.Type {
+	vv.WidgetTyp = gi.KiT_Action
+	return vv.WidgetTyp
+}
+
+func (vv *RegisterValueView) UpdateWidget() {
+	if vv.Widget == nil {
+		return
+	}
+	ac := vv.Widget.(*gi.Action)
+	txt := kit.ToString(vv.Value.Interface())
+	if txt == "" {
+		txt = "(none)"
+	}
+	ac.SetText(txt)
+}
+
+func (vv *RegisterValueView) ConfigWidget(widg gi.Node2D) {
+	vv.Widget = widg
+	ac := vv.Widget.(*gi.Action)
+	ac.SetProp("border-radius", units.NewValue(4, units.Px))
+	ac.ActionSig.ConnectOnly(vv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		vvv, _ := recv.Embed(KiT_RegisterValueView).(*RegisterValueView)
+		ac := vvv.Widget.(*gi.Action)
+		vvv.Activate(ac.Viewport, nil, nil)
+	})
+	vv.UpdateWidget()
+}
+
+func (vv *RegisterValueView) HasAction() bool {
+	return true
+}
+
+func (vv *RegisterValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
+	if vv.IsInactive() {
+		return
+	}
+	cur := kit.ToString(vv.Value.Interface())
+	var recv gi.Node2D
+	if vv.Widget != nil {
+		recv = vv.Widget
+	} else {
+		recv = vp.This.(gi.Node2D)
+	}
+	gi.StringsChooserPopup(AvailRegisterNames, cur, recv, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ac := send.(*gi.Action)
+		vv.SetValue(ac.Text)
+		vv.UpdateWidget()
+		if dlgRecv != nil && dlgFunc != nil {
+			dlgFunc(dlgRecv, send, int64(gi.DialogAccepted), data)
+		}
+	})
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //  VersCtrlValueView
 
@@ -748,11 +887,19 @@ func (vv *VersCtrlValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 	if vv.IsInactive() {
 		return
 	}
-	ac := vv.Widget.(*gi.Action)
 	cur := kit.ToString(vv.Value.Interface())
-	gi.StringsChooserPopup(VersCtrlSystems, cur, ac, func(recv, send ki.Ki, sig int64, data interface{}) {
+	var recv gi.Node2D
+	if vv.Widget != nil {
+		recv = vv.Widget
+	} else {
+		recv = vp.This.(gi.Node2D)
+	}
+	gi.StringsChooserPopup(VersCtrlSystems, cur, recv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		vv.SetValue(ac.Text)
 		vv.UpdateWidget()
+		if dlgRecv != nil && dlgFunc != nil {
+			dlgFunc(dlgRecv, send, int64(gi.DialogAccepted), data)
+		}
 	})
 }

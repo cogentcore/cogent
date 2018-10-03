@@ -107,6 +107,7 @@ func (pf *Preferences) Open() error {
 		CustomCmds.OpenPrefs()
 	}
 	AvailSplits.OpenPrefs()
+	AvailRegisters.OpenPrefs()
 	pf.Apply()
 	pf.Changed = false
 	return err
@@ -135,6 +136,7 @@ func (pf *Preferences) Save() error {
 		CustomCmds.SavePrefs()
 	}
 	AvailSplits.SavePrefs()
+	AvailRegisters.SavePrefs()
 	pf.Changed = false
 	return err
 }
@@ -167,6 +169,12 @@ func (pf *Preferences) EditCmds() {
 func (pf *Preferences) EditSplits() {
 	pf.Changed = true
 	SplitsView(&AvailSplits)
+}
+
+// EditRegisters opens the RegistersView editor to customize saved registers
+func (pf *Preferences) EditRegisters() {
+	pf.Changed = true
+	RegistersView(&AvailRegisters)
 }
 
 // PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
@@ -216,6 +224,10 @@ var PreferencesProps = ki.Props{
 			"icon": "file-binary",
 			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with preferences automatically.",
 		}},
+		{"EditRegisters", ki.Props{
+			"icon": "file-binary",
+			"desc": "opens the RegistersView editor of saved named text registers.  Current values are saved and loaded with preferences automatically.",
+		}},
 	},
 }
 
@@ -238,6 +250,7 @@ type ProjPrefs struct {
 	RunCmds      CmdNames       `desc:"command(s) to run for main Run button (typically Run Proj)"`
 	Find         FindParams     `view:"-" desc:"saved find params"`
 	OpenDirs     giv.OpenDirMap `view:"-" desc:"open directories"`
+	Register     RegisterName   `view:"-" desc:"last register used"`
 	Splits       []float32      `view:"-" desc:"current splitter splits"`
 	Changed      bool           `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }

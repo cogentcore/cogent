@@ -410,9 +410,18 @@ func (ge *Gide) SaveActiveView() {
 func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
+		ofn := tv.Buf.Filename
+		obuf := tv.Buf
 		tv.Buf.SaveAs(filename)
-		ge.Files.UpdateNewFile(filename)
+		ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
 		ge.ActiveViewRunPostCmds()
+		obuf.Open(ofn)                   // revert old buffer to old filename
+		ge.Files.UpdateNewFile(filename) // new node will have this file!
+		fnk, ok := ge.Files.FindFile(string(filename))
+		if ok {
+			fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+			ge.ViewFileNode(tv, ge.ActiveTextViewIdx, fn)
+		}
 	}
 	ge.SaveProjIfExists()
 }
@@ -1256,6 +1265,49 @@ func (ge *Gide) OpenFindURL(ur string, ftv *giv.TextView) bool {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
+//    Registers
+
+// RegisterSave saves current selection in active text view to register of given name
+// returns true if saved
+func (ge *Gide) RegisterSave(name string) bool {
+	if name == "" {
+		return false
+	}
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return false
+	}
+	sel := tv.Selection()
+	if sel == nil {
+		return false
+	}
+	if AvailRegisters == nil {
+		AvailRegisters = make(Registers, 100)
+	}
+	AvailRegisters[name] = string(sel.ToBytes())
+	AvailRegisters.SavePrefs()
+	return true
+}
+
+// RegisterPaste pastes register of given name into active text view
+// returns true if pasted
+func (ge *Gide) RegisterPaste(name RegisterName) bool {
+	if name == "" {
+		return false
+	}
+	str, ok := AvailRegisters[string(name)]
+	if !ok {
+		return false
+	}
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return false
+	}
+	tv.InsertAtCursor([]byte(str))
+	return true
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
 //    StatusBar
 
 // SetStatus updates the statusbar label with given message, along with other status info
@@ -1264,8 +1316,8 @@ func (ge *Gide) SetStatus(msg string) {
 	if sb == nil {
 		return
 	}
-	ge.UpdtMu.Lock()
-	defer ge.UpdtMu.Unlock()
+	// ge.UpdtMu.Lock()
+	// defer ge.UpdtMu.Unlock()
 
 	updt := sb.UpdateStart()
 	lbl := ge.StatusLabel()
@@ -1654,9 +1706,11 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	gkf := gi.KeyFun(kc)
 	if ge.KeySeq1 != "" {
 		kf = KeyFun(ge.KeySeq1, kc)
-		if kf == KeyFunNil && kc == "Escape" {
+		if kf == KeyFunNil || kc == "Escape" {
 			ge.SetStatus(string(ge.KeySeq1) + " " + string(kc) + " -- aborted")
 			kt.SetProcessed() // abort key sequence, don't send esc to anyone else
+			ge.KeySeq1 = ""
+			return
 		}
 		ge.SetStatus(string(ge.KeySeq1) + " " + string(kc))
 		ge.KeySeq1 = ""
@@ -1705,6 +1759,15 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	case KeyFunExecCmd:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "ExecCmd", ge.Viewport)
+	case KeyFunRegSave:
+		kt.SetProcessed()
+		giv.CallMethod(ge, "RegisterSave", ge.Viewport)
+	case KeyFunRegPaste:
+		kt.SetProcessed()
+		giv.CallMethod(ge, "RegisterPaste", ge.Viewport)
+	case KeyFunSetSplit:
+		kt.SetProcessed()
+		giv.CallMethod(ge, "SetSplit", ge.Viewport)
 	}
 }
 
@@ -1947,6 +2010,25 @@ var GideProps = ki.Props{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
 				}},
+			},
+		}},
+		{"RegisterSave", ki.Props{
+			"Args": ki.PropSlice{
+				{"Register Name", ki.Props{
+					"default-field": "Prefs.Register",
+				}},
+			},
+		}},
+		{"RegisterPaste", ki.Props{
+			"Args": ki.PropSlice{
+				{"Register Name", ki.Props{
+					"default-field": "Prefs.Register",
+				}},
+			},
+		}},
+		{"SetSplit", ki.Props{
+			"Args": ki.PropSlice{
+				{"Split Name", ki.Props{}},
 			},
 		}},
 	},
