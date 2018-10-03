@@ -43,14 +43,11 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* find needs to use open buffer when avail -- don't want to have to save every time
+* SaveAs does not update all the other pointers etc for previous file -- creates some confusion about old vs. new names
 
-* named splitter configs and save etc
+* find needs to use open buffer when avail -- don't want to have to save every time -- also as you start replacing, positions within a single line get off (lines stay ok)
 
 * git diff markup not aligning with raw text -- less than expected..
-
-* go imports: gi.TextRender SetHTMLPre end tag: span doesn't match current tag:  for string
-</span>
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
 

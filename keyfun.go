@@ -46,6 +46,8 @@ const (
 	KeyFunBufSaveAs          // save as active textview buffer to its file
 	KeyFunBufClose           // close active textview buffer
 	KeyFunExecCmd            // execute a command on active textview buffer
+	KeyFunRegSave            // save selection to named register
+	KeyFunRegPaste           // paste selection from named register
 	KeyFunsN
 )
 
@@ -300,13 +302,13 @@ var PrefsKeyMapsFileName = "key_maps_prefs.json"
 
 // OpenJSON opens keymaps from a JSON-formatted file.
 func (km *KeyMaps) OpenJSON(filename gi.FileName) error {
-	*km = make(KeyMaps, 0, 10) // reset
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, true, false, nil, nil)
 		log.Println(err)
 		return err
 	}
+	*km = make(KeyMaps, 0, 10) // reset
 	return json.Unmarshal(b, km)
 }
 
@@ -482,6 +484,8 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 		KeySeq{"Control+C", "c"}:         KeyFunExecCmd,
 		KeySeq{"Control+C", "Control+O"}: KeyFunBufClone,
+		KeySeq{"Control+X", "x"}:         KeyFunRegSave,
+		KeySeq{"Control+X", "g"}:         KeyFunRegPaste,
 	}},
 	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{
 		KeySeq{"Control+X", "o"}:         KeyFunNextPanel,

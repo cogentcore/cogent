@@ -106,6 +106,7 @@ func (pf *Preferences) Open() error {
 	if pf.SaveCmds {
 		CustomCmds.OpenPrefs()
 	}
+	AvailSplits.OpenPrefs()
 	pf.Apply()
 	pf.Changed = false
 	return err
@@ -133,6 +134,7 @@ func (pf *Preferences) Save() error {
 	if pf.SaveCmds {
 		CustomCmds.SavePrefs()
 	}
+	AvailSplits.SavePrefs()
 	pf.Changed = false
 	return err
 }
@@ -159,6 +161,12 @@ func (pf *Preferences) EditCmds() {
 	pf.SaveCmds = true
 	pf.Changed = true
 	CmdsView(&CustomCmds)
+}
+
+// EditSplits opens the SplitsView editor to customize saved splitter settings
+func (pf *Preferences) EditSplits() {
+	pf.Changed = true
+	SplitsView(&AvailSplits)
 }
 
 // PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
@@ -204,6 +212,10 @@ var PreferencesProps = ki.Props{
 			"icon": "file-binary",
 			"desc": "opens the CmdsView editor to add custom commands you can run, in addition to standard commands built into the system.  Current customized settings are saved and loaded with preferences automatically if SaveCmds is clicked (will be turned on automatically if you open this editor).",
 		}},
+		{"EditSplits", ki.Props{
+			"icon": "file-binary",
+			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with preferences automatically.",
+		}},
 	},
 }
 
@@ -226,7 +238,7 @@ type ProjPrefs struct {
 	RunCmds      CmdNames       `desc:"command(s) to run for main Run button (typically Run Proj)"`
 	Find         FindParams     `view:"-" desc:"saved find params"`
 	OpenDirs     giv.OpenDirMap `view:"-" desc:"open directories"`
-	Splits       []float32      `view:"-" desc:"splitter splits"`
+	Splits       []float32      `view:"-" desc:"current splitter splits"`
 	Changed      bool           `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 

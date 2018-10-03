@@ -18,8 +18,6 @@ import (
 	"github.com/goki/ki/kit"
 )
 
-// todo: really need a consolidated mimetype system too, that integrates with this
-
 // currently use this as a list:
 // https://github.com/alecthomas/chroma
 
@@ -179,13 +177,13 @@ var PrefsLangsFileName = "lang_prefs.json"
 
 // OpenJSON opens languages from a JSON-formatted file.
 func (lt *Langs) OpenJSON(filename gi.FileName) error {
-	*lt = make(Langs, 0, 10) // reset
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
 		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, true, false, nil, nil)
 		// log.Println(err)
 		return err
 	}
+	*lt = make(Langs, 0, 10) // reset
 	rval := json.Unmarshal(b, lt)
 	UpdtExtToLangMap()
 	return rval

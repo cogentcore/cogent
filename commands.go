@@ -545,13 +545,13 @@ var PrefsCmdsFileName = "command_prefs.json"
 
 // OpenJSON opens commands from a JSON-formatted file.
 func (cm *Commands) OpenJSON(filename gi.FileName) error {
-	*cm = make(Commands, 0, 10) // reset
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
 		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, true, false, nil, nil)
 		// log.Println(err)
 		return err
 	}
+	*cm = make(Commands, 0, 10) // reset
 	return json.Unmarshal(b, cm)
 }
 

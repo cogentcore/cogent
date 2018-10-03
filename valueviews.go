@@ -408,7 +408,7 @@ func (vv *LangValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.R
 
 // CmdsView opens a view of a commands table
 func CmdsView(pt *Commands) {
-	winm := "gide-proj-types"
+	winm := "gide-commands"
 	width := 800
 	height := 800
 	win := gi.NewWindow2D(winm, "Gide Commands", width, height, true)
@@ -481,7 +481,6 @@ func (kn CmdName) ValueView() giv.ValueView {
 }
 
 // CmdValueView presents an action for displaying an CmdName and selecting
-// from CommandChooserDialog
 type CmdValueView struct {
 	giv.ValueViewBase
 }
@@ -538,6 +537,151 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 				si := giv.TableViewSelectDialogValue(ddlg)
 				if si >= 0 {
 					pt := AvailCmds[si]
+					vv.SetValue(pt.Name)
+					vv.UpdateWidget()
+				}
+			}
+			if dlgRecv != nil && dlgFunc != nil {
+				dlgFunc(dlgRecv, send, sig, data)
+			}
+		})
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+//  SplitsView
+
+// SplitsView opens a view of a commands table
+func SplitsView(pt *Splits) {
+	winm := "gide-splits"
+	width := 800
+	height := 800
+	win := gi.NewWindow2D(winm, "Gide Splitter Settings", width, height, true)
+
+	vp := win.WinViewport2D()
+	updt := vp.UpdateStart()
+
+	mfr := win.SetMainFrame()
+	mfr.Lay = gi.LayoutVert
+
+	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title.SetText("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
+	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
+	title.SetStretchMaxWidth()
+	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+
+	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
+	tv.Viewport = vp
+	tv.SetSlice(pt, nil)
+	tv.SetStretchMaxWidth()
+	tv.SetStretchMaxHeight()
+
+	AvailSplitsChanged = false
+	tv.ViewSig.Connect(mfr.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		AvailSplitsChanged = true
+	})
+
+	mmen := win.MainMenu
+	giv.MainMenuView(pt, win, mmen)
+
+	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+		if AvailSplitsChanged { // only for main avail map..
+			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Splits Before Closing?",
+				Prompt: "Do you want to save any changes to custom splitter settings file before closing, or Cancel the close and do a Save to a different file?"},
+				[]string{"Save and Close", "Discard and Close", "Cancel"},
+				win.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+					switch sig {
+					case 0:
+						pt.SavePrefs()
+						fmt.Printf("Preferences Saved to %v\n", PrefsSplitsFileName)
+						w.Close()
+					case 1:
+						if pt == &AvailSplits {
+							pt.OpenPrefs() // revert
+						}
+						w.Close()
+					case 2:
+						// default is to do nothing, i.e., cancel
+					}
+				})
+		} else {
+			w.Close()
+		}
+	})
+
+	win.MainMenuUpdated()
+
+	vp.UpdateEndNoSig(updt)
+	win.GoStartEventLoop()
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//  SplitValueView
+
+// ValueView registers SplitValueView as the viewer of SplitName
+func (kn SplitName) ValueView() giv.ValueView {
+	vv := SplitValueView{}
+	vv.Init(&vv)
+	return &vv
+}
+
+// SplitValueView presents an action for displaying an SplitName and selecting
+type SplitValueView struct {
+	giv.ValueViewBase
+}
+
+var KiT_SplitValueView = kit.Types.AddType(&SplitValueView{}, nil)
+
+func (vv *SplitValueView) WidgetType() reflect.Type {
+	vv.WidgetTyp = gi.KiT_Action
+	return vv.WidgetTyp
+}
+
+func (vv *SplitValueView) UpdateWidget() {
+	if vv.Widget == nil {
+		return
+	}
+	ac := vv.Widget.(*gi.Action)
+	txt := kit.ToString(vv.Value.Interface())
+	if txt == "" {
+		txt = "(none)"
+	}
+	ac.SetText(txt)
+}
+
+func (vv *SplitValueView) ConfigWidget(widg gi.Node2D) {
+	vv.Widget = widg
+	ac := vv.Widget.(*gi.Action)
+	ac.SetProp("border-radius", units.NewValue(4, units.Px))
+	ac.ActionSig.ConnectOnly(vv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		vvv, _ := recv.Embed(KiT_SplitValueView).(*SplitValueView)
+		ac := vvv.Widget.(*gi.Action)
+		vvv.Activate(ac.Viewport, nil, nil)
+	})
+	vv.UpdateWidget()
+}
+
+func (vv *SplitValueView) HasAction() bool {
+	return true
+}
+
+func (vv *SplitValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
+	if vv.IsInactive() {
+		return
+	}
+	cur := kit.ToString(vv.Value.Interface())
+	curRow := -1
+	if cur != "" {
+		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
+	}
+	desc, _ := vv.Tag("desc")
+	giv.TableViewSelectDialog(vp, &AvailSplits, giv.DlgOpts{Title: "Select a Named Splitter Config", Prompt: desc}, curRow, nil,
+		vv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig == int64(gi.DialogAccepted) {
+				ddlg, _ := send.(*gi.Dialog)
+				si := giv.TableViewSelectDialogValue(ddlg)
+				if si >= 0 {
+					pt := AvailSplits[si]
 					vv.SetValue(pt.Name)
 					vv.UpdateWidget()
 				}

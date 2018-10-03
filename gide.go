@@ -1350,6 +1350,32 @@ func (ge *Gide) ProjPrefs() {
 	})
 }
 
+// SetSplit sets splitter to given named setting
+func (ge *Gide) SetSplit(split SplitName) {
+	sv := ge.SplitView()
+	if sv != nil {
+		sp, _, ok := AvailSplits.SplitByName(split)
+		if ok {
+			sv.SetSplits(sp.Splits...)
+		}
+	}
+}
+
+// SaveSplit saves current splitter settings to named splitter settings, and
+// saves to prefs file
+func (ge *Gide) SaveSplit(name, desc string) {
+	sv := ge.SplitView()
+	if sv != nil {
+		AvailSplits.Add(name, desc, sv.Splits)
+		AvailSplits.SavePrefs()
+	}
+}
+
+// EditSplits opens the SplitsView editor to customize saved splitter settings
+func (ge *Gide) EditSplits() {
+	SplitsView(&AvailSplits)
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //   GUI configs
 
@@ -1799,6 +1825,29 @@ var GideProps = ki.Props{
 		{"ExecCmd", ki.Props{
 			"icon":            "terminal",
 			"no-update-after": true, // key for methods that have own selector inside -- update runs before command is executed
+		}},
+		{"sep-splt", ki.BlankProp{}},
+		{"Splits", ki.PropSlice{
+			{"SetSplit", ki.Props{
+				"label":           "Set...",
+				"submenu":         &AvailSplitNames,
+				"no-update-after": true,
+				"Args": ki.PropSlice{
+					{"Split Name", ki.Props{}},
+				},
+			}},
+			{"SaveSplit", ki.Props{
+				"label":           "Save...",
+				"no-update-after": true,
+				"Args": ki.PropSlice{
+					{"Name", ki.Props{}},
+					{"Desc", ki.Props{}},
+				},
+			}},
+			{"EditSplits", ki.Props{
+				"label":           "Edit",
+				"no-update-after": true,
+			}},
 		}},
 	},
 	"MainMenu": ki.PropSlice{
