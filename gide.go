@@ -675,8 +675,12 @@ func (ge *Gide) OpenFileURL(ur string) bool {
 	pos := up.Fragment
 	tv, _, ok := ge.NextViewFile(gi.FileName(fpath))
 	if !ok {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
-		return false
+		_, fnm := filepath.Split(fpath)
+		tv, _, ok = ge.NextViewFile(gi.FileName(fnm))
+		if !ok {
+			gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
+			return false
+		}
 	}
 	if pos == "" {
 		return true
@@ -1323,6 +1327,7 @@ func (ge *Gide) CommentOut() bool {
 		cmt = []byte(ls[0].Comment)
 	}
 	tv.Buf.CommentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, cmt, tv.Sty.Text.TabSize)
+	tv.SelectReset()
 	return true
 }
 
@@ -1344,6 +1349,7 @@ func (ge *Gide) Indent() bool {
 	// }
 	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, tv.Opts.SpaceIndent, tv.Sty.Text.TabSize,
 		giv.DefaultIndentStrings, giv.DefaultUnindentStrings)
+	tv.SelectReset()
 	return true
 }
 

@@ -43,9 +43,9 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* find needs to: as you start replacing, positions within a single line get off (lines stay ok)
+* selecting a buffer does not reset cursor (still..)
 
-* git diff markup not aligning with raw text -- less than expected..
+* find needs to: as you start replacing, positions within a single line get off (lines stay ok)
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
 

@@ -270,7 +270,9 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 			ts := time.Now()
 			// note: can't blank whole screen here b/c some processes will continue for long time
 			for outscan.Scan() {
-				ob := outscan.Bytes()
+				b := outscan.Bytes()
+				ob := make([]byte, len(b)) // note: scanner bytes are temp -- must copy!
+				copy(ob, b)
 				outlns = append(outlns, ob)
 				outmus = append(outmus, MarkupCmdOutput(ob))
 				now := time.Now()
@@ -292,6 +294,7 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 				mlns := bytes.Join(outmus, lfb)
 				tlns = append(tlns, lfb...)
 				mlns = append(mlns, lfb...)
+
 				buf.AppendTextMarkup(tlns, mlns, false, true)
 				buf.AutoScrollViews()
 			}
@@ -360,7 +363,7 @@ func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err erro
 			ge.SelectMainTabByName(cm.Name) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
-		buf.AppendTextLineMarkup([]byte("\n"), []byte("\n"), false, true) // no save undo, yes signal
+		buf.AppendTextLineMarkup([]byte(""), []byte(""), false, true) // no save undo, yes signal
 		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), false, true)
 		buf.AutoScrollViews()
 		if cm.Focus {
