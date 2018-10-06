@@ -380,13 +380,16 @@ func (ge *Gide) SetActiveTextViewIdx(idx int) *giv.TextView {
 
 // NextTextView returns the next text view available for viewing a file and
 // its index -- if the active text view is empty, then it is used, otherwise
-// it is the next one
+// it is the next one (if visible)
 func (ge *Gide) NextTextView() (*giv.TextView, int) {
 	av := ge.TextViewByIndex(ge.ActiveTextViewIdx)
 	if av.Buf == nil {
 		return av, ge.ActiveTextViewIdx
 	}
 	nxt := (ge.ActiveTextViewIdx + 1) % NTextViews
+	if !ge.PanelIsOpen(nxt + TextView1Idx) {
+		return av, ge.ActiveTextViewIdx
+	}
 	return ge.TextViewByIndex(nxt), nxt
 }
 
@@ -757,6 +760,22 @@ func QuitReq() bool {
 
 //////////////////////////////////////////////////////////////////////////////////////
 //   Panels
+
+// PanelIsOpen returns true if the given panel has not been collapsed and is avail
+// and visible for displaying something
+func (ge *Gide) PanelIsOpen(panel int) bool {
+	sv := ge.SplitView()
+	if sv == nil {
+		return false
+	}
+	if panel < 0 || panel >= len(sv.Kids) {
+		return false
+	}
+	if sv.Splits[panel] <= 0.01 {
+		return false
+	}
+	return true
+}
 
 // CurPanel returns the splitter panel that currently has keyboard focus
 func (ge *Gide) CurPanel() int {
