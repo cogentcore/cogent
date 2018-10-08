@@ -307,7 +307,7 @@ func (ge *Gide) FindTextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, b
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
-		if tv != nil && tv.Buf != nil && tv.Buf.This == fn.Buf.This {
+		if tv != nil && tv.Buf != nil && tv.Buf.This == fn.Buf.This && ge.PanelIsOpen(i+TextView1Idx) {
 			return tv, i, true
 		}
 	}
@@ -1737,6 +1737,8 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 		ArgVarVals["{PromptString1}"] = string(fn.FPath)
 		CmdNoUserPrompt = true                            // don't re-prompt!
 		ge.ExecCmdName(CmdName("Run Prompt"), true, true) // sel, clear
+	case strings.HasPrefix(fn.Info.Mime, "image"):
+		ge.ExecCmdFileNodeName(CmdName("Open File"), fn, true, true) // sel, clear
 	default:
 		if int(fn.Info.Size) > GideBigFileSize {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",

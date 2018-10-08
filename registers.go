@@ -36,8 +36,11 @@ var AvailRegisterNames []string
 func (lt *Registers) Names() []string {
 	nms := make([]string, len(*lt))
 	i := 0
-	for key, _ := range *lt {
-		nms[i] = key
+	for key, val := range *lt {
+		if len(val) > 20 {
+			val = val[:20]
+		}
+		nms[i] = key + ": " + val
 		i++
 	}
 	return nms

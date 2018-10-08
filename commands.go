@@ -770,6 +770,9 @@ var StdCmds = Commands{
 	{"View Target PDF", "open project target PDF file", LangNames{"LaTeX", "PDF"},
 		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", false, false},
 
+	{"Open File", "open file using OS 'open' command", nil,
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", false, false},
+
 	// Misc testing
 	{"List Dir", "list current dir", nil,
 		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, false},

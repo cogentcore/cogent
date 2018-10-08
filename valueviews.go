@@ -7,6 +7,7 @@ package gide
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -823,7 +824,11 @@ func (vv *RegisterValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 	}
 	gi.StringsChooserPopup(AvailRegisterNames, cur, recv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
-		vv.SetValue(ac.Text)
+		rnm := ac.Text
+		if ci := strings.Index(rnm, ":"); ci > 0 {
+			rnm = rnm[:ci]
+		}
+		vv.SetValue(rnm)
 		vv.UpdateWidget()
 		if dlgRecv != nil && dlgFunc != nil {
 			dlgFunc(dlgRecv, send, int64(gi.DialogAccepted), data)
