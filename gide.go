@@ -25,9 +25,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goki/gi/complete"
-
 	"github.com/goki/gi"
+	"github.com/goki/gi/complete"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
@@ -535,7 +534,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		ge.OpenNodes.Add(fn)
 		fn.SetOpen()
 		ge.SetActiveTextViewIdx(vidx)
-		tv.SetCompleter(tv, CompleteGocode, CompleteEdit)
+		tv.SetCompleter(tv, Complete, CompleteEdit)
 	}
 }
 
@@ -2199,14 +2198,14 @@ func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
 }
 
 // CompleteGocode uses github.com/mdempsky/gocode to do code completion
-func CompleteGocode(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+func Complete(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
 	var txbuf *giv.TextBuf
 	switch t := data.(type) {
 	case *giv.TextView:
 		txbuf = t.Buf
 	}
 	if txbuf == nil {
-		log.Printf("complete.CompleteGocode: txbuf is nil - can't do code completion\n")
+		log.Printf("complete.Complete: txbuf is nil - can't do code completion\n")
 		return
 	}
 
@@ -2216,14 +2215,7 @@ func CompleteGocode(data interface{}, text string, pos token.Position) (matches 
 		textbytes = append(textbytes, []byte(string(lr))...)
 		textbytes = append(textbytes, '\n')
 	}
-
-	// check first for file level declarations, import, const, type, var, func
-	// by parsing the file to create AST - if none returned let gocode of a try
-	var results []complete.Completion
-	results = complete.FirstPassComplete(textbytes, pos)
-	if len(results) == 0 { // no, continue on with gocode parsing which doesn't handle the file level decls
-		results = complete.GetCompletions(textbytes, pos)
-	}
+	results := complete.Complete(textbytes, pos)
 	matches = complete.MatchSeedCompletion(results, seed)
 	return matches, seed
 }
