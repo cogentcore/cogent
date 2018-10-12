@@ -536,7 +536,16 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		ge.OpenNodes.Add(fn)
 		fn.SetOpen()
 		ge.SetActiveTextViewIdx(vidx)
-		tv.SetCompleter(tv, Complete, CompleteEdit)
+		ext := filepath.Ext(fn.Name())
+		langs := LangsForExt(ext)
+		ln := langs[0].Name
+		// todo: completer funcs should be stored in language struct
+		switch ln {
+		case "Go":
+			tv.SetCompleter(tv, CompleteGo, CompleteGoEdit)
+		case "Tex":
+			tv.SetCompleter(tv, CompleteTex, CompleteTexEdit)
+		}
 	}
 }
 
@@ -2256,14 +2265,14 @@ func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
 }
 
 // CompleteGocode uses github.com/mdempsky/gocode to do code completion
-func Complete(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+func CompleteGo(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
 	var txbuf *giv.TextBuf
 	switch t := data.(type) {
 	case *giv.TextView:
 		txbuf = t.Buf
 	}
 	if txbuf == nil {
-		log.Printf("complete.Complete: txbuf is nil - can't do code completion\n")
+		log.Printf("complete.Complete: txbuf is nil - can't complete\n")
 		return
 	}
 
@@ -2273,13 +2282,42 @@ func Complete(data interface{}, text string, pos token.Position) (matches comple
 		textbytes = append(textbytes, []byte(string(lr))...)
 		textbytes = append(textbytes, '\n')
 	}
-	results := complete.Complete(textbytes, pos)
+	results := complete.CompleteGo(textbytes, pos)
 	matches = complete.MatchSeedCompletion(results, seed)
 	return matches, seed
 }
 
-// CompleteEdit uses the selected completion to edit the text
-func CompleteEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
-	s, delta = complete.EditCode(text, cursorPos, selection, seed)
+// CompleteGoEdit uses the selected completion to edit the text
+func CompleteGoEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
+	s, delta = complete.EditGoCode(text, cursorPos, selection, seed)
+	return s, delta
+}
+
+// CompleteTex does completion for tex files
+func CompleteTex(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+	var txbuf *giv.TextBuf
+	switch t := data.(type) {
+	case *giv.TextView:
+		txbuf = t.Buf
+	}
+	if txbuf == nil {
+		log.Printf("complete.Complete: txbuf is nil - can't complete\n")
+		return
+	}
+
+	seed = complete.SeedGolang(text)
+	textbytes := make([]byte, 0, txbuf.NLines*40)
+	for _, lr := range txbuf.Lines {
+		textbytes = append(textbytes, []byte(string(lr))...)
+		textbytes = append(textbytes, '\n')
+	}
+	results := complete.CompleteTex(textbytes, pos)
+	matches = complete.MatchSeedCompletion(results, seed)
+	return matches, seed
+}
+
+// CompleteTexEdit uses the selected completion to edit the text
+func CompleteTexEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
+	s, delta = complete.EditTex(text, cursorPos, selection, seed)
 	return s, delta
 }
