@@ -249,6 +249,7 @@ type ProjPrefs struct {
 	RunExec      gi.FileName    `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
 	RunCmds      CmdNames       `desc:"command(s) to run for main Run button (typically Run Proj)"`
 	Find         FindParams     `view:"-" desc:"saved find params"`
+	Spell        SpellParams    `view:"-" desc:"saved spell params"`
 	OpenDirs     giv.OpenDirMap `view:"-" desc:"open directories"`
 	Register     RegisterName   `view:"-" desc:"last register used"`
 	Splits       []float32      `view:"-" desc:"current splitter splits"`

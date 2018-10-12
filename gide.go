@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -30,6 +31,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/spell"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
@@ -654,6 +656,8 @@ func TextLinkHandler(tl gi.TextLink) bool {
 		switch {
 		case strings.HasPrefix(ur, "find:///"):
 			ge.OpenFindURL(ur, ftv)
+		case strings.HasPrefix(ur, "spell:///"):
+			ge.OpenSpellURL(ur, ftv)
 		case strings.HasPrefix(ur, "file:///"):
 			ge.OpenFileURL(ur)
 		}
@@ -1215,6 +1219,47 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, langs LangNames) {
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
+// Spell checks spelling in files
+func (ge *Gide) Spell() {
+	fbuf, _ := ge.FindOrMakeCmdBuf("Spell", true)
+	svi, _ := ge.FindOrMakeMainTab("Spell", KiT_SpellView, true) // sel
+	sv := svi.Embed(KiT_SpellView).(*SpellView)
+	sv.UpdateView(ge, ge.Prefs.Spell)
+	stv := sv.TextView()
+	stv.SetInactive()
+	stv.SetBuf(fbuf)
+
+	fp := string(ge.ActiveFilename)
+	_, fn := path.Split(fp)
+
+	if fp == "" {
+		return
+	}
+	unknowns, err := spell.CheckFile(fp)
+	if err != nil {
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Dictionaries not found", Prompt: err.Error()}, true, false, nil, nil)
+		return
+	}
+	outlns := make([][]byte, 0, 100)
+	outmus := make([][]byte, 0, 100) // markups
+	fbStLn := len(outlns)            // find buf start ln
+	lstr := fmt.Sprintf(`%v:`, fn)
+	outlns = append(outlns, []byte(lstr))
+	mstr := fmt.Sprintf(`<a href="spell:///%v#R%v">%v</a>`, fp, fbStLn, fn)
+	outmus = append(outmus, []byte(mstr))
+	for _, u := range unknowns {
+		lstr := fmt.Sprintf(`%v: %v`, u.LineNo, u.Word)
+		outlns = append(outlns, []byte(lstr))
+		mstr = fmt.Sprintf(`	<a href="spell:///%v#R%vL%v-L%v">%v:%v</a>`, fp, fbStLn, u.LineNo, u.LineNo, u.LineNo, u.Word)
+		outmus = append(outmus, []byte(mstr))
+	}
+	ltxt := bytes.Join(outlns, []byte("\n"))
+	mtxt := bytes.Join(outmus, []byte("\n"))
+	fbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
+	stv.CursorStartDoc()
+	ge.FocusOnPanel(MainTabsIdx)
+}
+
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
@@ -1284,6 +1329,16 @@ func (ge *Gide) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	}
 	fv := fvk.(*FindView)
 	return fv.OpenFindURL(ur, ftv)
+}
+
+// OpenSpellURL opens given spell:/// url from Spell -- delegates to SpellView
+func (ge *Gide) OpenSpellURL(ur string, stv *giv.TextView) bool {
+	svk, ok := stv.ParentByType(KiT_SpellView, true)
+	if !ok {
+		return false
+	}
+	fv := svk.(*SpellView)
+	return fv.OpenSpellURL(ur, stv)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1941,6 +1996,11 @@ var GideProps = ki.Props{
 					"default-field": "Prefs.Find.Langs",
 				}},
 			},
+		}},
+		{"Spell", ki.Props{
+			"label":           "Spelling...",
+			"no-update-after": true,
+			"icon":            "spelling",
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"Build", ki.Props{
