@@ -35,7 +35,7 @@ var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
 	fv.Gide.Prefs.Find = fv.Find
-	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.Langs)
+	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.Langs, false)
 }
 
 // ReplaceAction performs the replace

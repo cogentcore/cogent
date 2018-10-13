@@ -146,7 +146,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, langs Lan
 		if sfn.IsDir() && !sfn.IsOpen() {
 			return false // don't go down into closed directories!
 		}
-		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" {
+		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" || sfn.IsAutoSave() {
 			return true
 		}
 		if !LangNamesMatchFilename(sfn.Nm, langs) {

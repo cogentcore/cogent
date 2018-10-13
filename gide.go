@@ -272,7 +272,7 @@ func (ge *Gide) LangDefaults() bool {
 		got = true
 	case LangName("LaTeX"):
 		ge.Prefs.BuildCmds = CmdNames{"LaTeX PDF"}
-		ge.Prefs.RunCmds = CmdNames{"View Target PDF"}
+		ge.Prefs.RunCmds = CmdNames{"Open Target File"}
 		got = true
 	}
 	return got
@@ -312,9 +312,9 @@ func (ge *Gide) TextViewIndex(av *giv.TextView) int {
 	return -1 // shouldn't happen
 }
 
-// FindTextViewForFileNode finds a TextView that is viewing given FileNode,
+// TextViewForFileNode finds a TextView that is viewing given FileNode,
 // and its index, or false if none is
-func (ge *Gide) FindTextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool) {
+func (ge *Gide) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool) {
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
@@ -329,9 +329,9 @@ func (ge *Gide) FindTextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, b
 	return nil, -1, false
 }
 
-// FindOpenNodeForTextView finds the FileNode that a given TextView is
+// OpenNodeForTextView finds the FileNode that a given TextView is
 // viewing, returning its index within OpenNodes list, or false if not found
-func (ge *Gide) FindOpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, bool) {
+func (ge *Gide) OpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, bool) {
 	if tv.Buf == nil {
 		return nil, -1, false
 	}
@@ -343,14 +343,14 @@ func (ge *Gide) FindOpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, b
 	return nil, -1, false
 }
 
-// FindTextViewForFile finds FileNode for file, and returns TextView and index
+// TextViewForFile finds FileNode for file, and returns TextView and index
 // that is viewing that FileNode, or false if none is
-func (ge *Gide) FindTextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *Gide) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
 	}
-	return ge.FindTextViewForFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
+	return ge.TextViewForFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
 }
 
 // SetActiveFilename sets the active filename
@@ -456,7 +456,7 @@ func (ge *Gide) RevertActiveView() {
 // CloseActiveView closes the buffer associated with active view
 func (ge *Gide) CloseActiveView() bool {
 	tv := ge.ActiveTextView()
-	ond, idx, got := ge.FindOpenNodeForTextView(tv)
+	ond, idx, got := ge.OpenNodeForTextView(tv)
 	if got {
 		ond.Buf.Close() // todo: we can't know yet if buffer was closed if has changes!
 		ge.OpenNodes.DeleteIdx(idx)
@@ -471,7 +471,7 @@ func (ge *Gide) CloseActiveView() bool {
 // uses MainLang to disambiguate if multiple languages associated with extension.
 func (ge *Gide) RunPostCmdsActiveView() bool {
 	tv := ge.ActiveTextView()
-	ond, _, got := ge.FindOpenNodeForTextView(tv)
+	ond, _, got := ge.OpenNodeForTextView(tv)
 	if got {
 		return ge.RunPostCmdsFileNode(ond)
 	}
@@ -574,7 +574,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 // buffer if not already opened) -- if already being viewed, that is
 // activated, returns text view and index
 func (ge *Gide) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
-	tv, idx, ok := ge.FindTextViewForFileNode(fn)
+	tv, idx, ok := ge.TextViewForFileNode(fn)
 	if ok {
 		ge.SetActiveTextViewIdx(idx)
 		return tv, idx
@@ -612,7 +612,7 @@ func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	if fn.IsDir() {
 		return nil, -1, false
 	}
-	tv, idx, ok := ge.FindTextViewForFileNode(fn)
+	tv, idx, ok := ge.TextViewForFileNode(fn)
 	if ok {
 		ge.SetActiveTextViewIdx(idx)
 		return tv, idx, ok
@@ -651,7 +651,7 @@ func (ge *Gide) CloneActiveView() (*giv.TextView, int) {
 	if tv == nil {
 		return nil, -1
 	}
-	ond, _, got := ge.FindOpenNodeForTextView(tv)
+	ond, _, got := ge.OpenNodeForTextView(tv)
 	if got {
 		nv, nidx := ge.NextTextView()
 		ge.ViewFileNode(nv, nidx, ond)
@@ -662,7 +662,7 @@ func (ge *Gide) CloneActiveView() (*giv.TextView, int) {
 
 // SaveAllOpenNodes saves all of the open filenodes to their current file names
 func (ge *Gide) SaveAllOpenNodes() {
-	for i, ond := range ge.OpenNodes {
+	for _, ond := range ge.OpenNodes {
 		ond.Buf.Save()
 		ge.RunPostCmdsFileNode(ond)
 	}
@@ -1209,8 +1209,9 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Find / Replace
 
-// Find in files
-func (ge *Gide) Find(find, repl string, ignoreCase bool, langs LangNames) {
+// Find does Find / Replace in files, using given options and filters -- opens up a
+// main tab with the results and further controls.
+func (ge *Gide) Find(find, repl string, ignoreCase bool, langs LangNames, curFileOnly bool) {
 	if find == "" {
 		return
 	}
@@ -1229,7 +1230,17 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, langs LangNames) {
 
 	root := ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode)
 
-	res := FileTreeSearch(root, find, ignoreCase, langs)
+	var res []FileSearchResults
+	if curFileOnly {
+		tv := ge.ActiveTextView()
+		ond, _, got := ge.OpenNodeForTextView(tv)
+		if got {
+			cnt, matches := tv.Buf.Search([]byte(find), ignoreCase)
+			res = append(res, FileSearchResults{ond, cnt, matches})
+		}
+	} else {
+		res = FileTreeSearch(root, find, ignoreCase, langs)
+	}
 
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100) // markups
@@ -2047,6 +2058,9 @@ var GideProps = ki.Props{
 				{"Languages", ki.Props{
 					"desc":          "restrict find to files associated with these languages -- leave empty for all files",
 					"default-field": "Prefs.Find.Langs",
+				}},
+				{"Current File Only", ki.Props{
+					"desc": "only look in current active file",
 				}},
 			},
 		}},
