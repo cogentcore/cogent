@@ -43,7 +43,9 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* selecting a buffer does not reset cursor (still..)
+* selecting a buffer does not reset cursor (still??)
+
+* need to be able to cancel process -- menu associated with tab or panel?
 
 * find needs to: as you start replacing, positions within a single line get off (lines stay ok)
 

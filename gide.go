@@ -161,6 +161,20 @@ func (ge *Gide) SaveProjAs(filename gi.FileName) {
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
 	ge.Changed = false
+	nch := ge.NChangedFiles()
+	if nch > 0 {
+		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Save Project: There are Unsaved Files",
+			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch)},
+			[]string{"Cancel", "Save All"},
+			ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+				// do nothing, will have returned false already
+				case 1:
+					ge.SaveAllOpenNodes()
+				}
+			})
+	}
 }
 
 // OpenProj opens project and its settings from given filename, in a standard
@@ -394,14 +408,14 @@ func (ge *Gide) NextTextView() (*giv.TextView, int) {
 	return ge.TextViewByIndex(nxt), nxt
 }
 
-// View saves the contents of the currently-active textview
+// SaveActiveView saves the contents of the currently-active textview
 func (ge *Gide) SaveActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		if tv.Buf.Filename != "" {
 			tv.Buf.Save()
 			ge.SetStatus("File Saved")
-			ge.ActiveViewRunPostCmds()
+			ge.RunPostCmdsActiveView()
 		} else {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
 		}
@@ -418,7 +432,7 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 		obuf := tv.Buf
 		tv.Buf.SaveAs(filename)
 		ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
-		ge.ActiveViewRunPostCmds()
+		ge.RunPostCmdsActiveView()
 		obuf.Open(ofn)                   // revert old buffer to old filename
 		ge.Files.UpdateNewFile(filename) // new node will have this file!
 		fnk, ok := ge.Files.FindFile(string(filename))
@@ -452,21 +466,28 @@ func (ge *Gide) CloseActiveView() bool {
 	return false
 }
 
-// ActiveViewRunPostCmds runs any registered post commands on the active view
+// RunPostCmdsActiveView runs any registered post commands on the active view
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
-func (ge *Gide) ActiveViewRunPostCmds() bool {
+func (ge *Gide) RunPostCmdsActiveView() bool {
 	tv := ge.ActiveTextView()
-	ran := false
-	if tv.Buf == nil || tv.Buf.Filename == "" {
-		return false
+	ond, _, got := ge.FindOpenNodeForTextView(tv)
+	if got {
+		return ge.RunPostCmdsFileNode(ond)
 	}
+	return false
+}
 
-	ls := LangsForFilename(string(tv.Buf.Filename))
+// RunPostCmdsFileNode runs any registered post commands on the given file node
+// -- returns true if commands were run and file was reverted after that --
+// uses MainLang to disambiguate if multiple languages associated with extension.
+func (ge *Gide) RunPostCmdsFileNode(fn *giv.FileNode) bool {
+	ls := LangsForFilename(string(fn.Buf.Filename))
+	ran := false
 	if len(ls) == 1 {
 		lr := ls[0]
 		if len(lr.PostSaveCmds) > 0 {
-			ge.ExecCmds(lr.PostSaveCmds, false, true) // no select, yes clear
+			ge.ExecCmdsFileNode(fn, lr.PostSaveCmds, false, true) // no select, yes clear
 			ran = true
 		}
 	} else if len(ls) > 1 {
@@ -475,7 +496,7 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 			if len(lr.PostSaveCmds) > 0 {
 				hasPosts = true
 				if lr.Name == string(ge.Prefs.MainLang) {
-					ge.ExecCmds(lr.PostSaveCmds, false, true)
+					ge.ExecCmdsFileNode(fn, lr.PostSaveCmds, false, true)
 					ran = true
 					break
 				}
@@ -486,7 +507,7 @@ func (ge *Gide) ActiveViewRunPostCmds() bool {
 		}
 	}
 	if ran {
-		tv.Buf.ReOpen()
+		fn.Buf.ReOpen()
 		return true
 	}
 	return false
@@ -630,6 +651,14 @@ func (ge *Gide) CloneActiveView() (*giv.TextView, int) {
 	return nil, -1
 }
 
+// SaveAllOpenNodes saves all of the open filenodes to their current file names
+func (ge *Gide) SaveAllOpenNodes() {
+	for i, ond := range ge.OpenNodes {
+		ond.Buf.Save()
+		ge.RunPostCmdsFileNode(ond)
+	}
+}
+
 // TextViewSig handles all signals from the textviews
 func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
@@ -724,13 +753,15 @@ func (ge *Gide) CloseWindowReq() bool {
 		return true
 	}
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Files",
-		Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to cancel closing this project and review  / save those files first?", ge.Nm, nch)},
-		[]string{"Cancel", "Close Without Saving"},
+		Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", ge.Nm, nch)},
+		[]string{"Cancel", "Save All", "Close Without Saving"},
 		ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 			switch sig {
 			case 0:
 				// do nothing, will have returned false already
 			case 1:
+				ge.SaveAllOpenNodes()
+			case 2:
 				ge.ParentWindow().OSWin.Close() // will not be prompted again!
 			}
 		})
@@ -1003,8 +1034,8 @@ func (ge *Gide) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
 	cmd.Run(ge, cbuf)
 }
 
-// ExecCmdFileNodeName executes command of given name on given node
-func (ge *Gide) ExecCmdFileNodeName(cmdNm CmdName, fn *giv.FileNode, sel bool, clearBuf bool) {
+// ExecCmdNameFileNode executes command of given name on given node
+func (ge *Gide) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm CmdName, sel bool, clearBuf bool) {
 	cmd, _, ok := AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return
@@ -1047,7 +1078,7 @@ func (ge *Gide) ExecCmdFileNode(fn *giv.FileNode) {
 	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
-		ge.ExecCmdFileNodeName(CmdName(ac.Text), fn, true, true) // sel, clearbuf
+		ge.ExecCmdNameFileNode(fn, CmdName(ac.Text), true, true) // sel, clearbuf
 	})
 }
 
@@ -1065,6 +1096,13 @@ func (ge *Gide) SetArgVarVals() {
 func (ge *Gide) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdName(cmdNm, sel, clearBuf)
+	}
+}
+
+// ExecCmdsFileNode executes a sequence of commands on file node, sel = select tab, clearBuf = clear buffer
+func (ge *Gide) ExecCmdsFileNode(fn *giv.FileNode, cmdNms CmdNames, sel bool, clearBuf bool) {
+	for _, cmdNm := range cmdNms {
+		ge.ExecCmdNameFileNode(fn, cmdNm, sel, clearBuf)
 	}
 }
 
@@ -1097,13 +1135,15 @@ func (ge *Gide) Commit() {
 	nch := ge.NChangedFiles()
 	if nch > 0 {
 		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Commit: There are Unsaved Files",
-			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to cancel commit and review  / save those files first?", ge.Nm, nch)},
-			[]string{"Cancel", "Commit Without Saving"},
+			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel commit and review  / save those files first?", ge.Nm, nch)},
+			[]string{"Cancel", "Save All", "Commit Without Saving"},
 			ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 				switch sig {
 				case 0:
 					// do nothing, will have bailed already
 				case 1:
+					ge.SaveAllOpenNodes()
+				case 2:
 					ge.CommitNoChecks()
 				}
 			})
@@ -1792,7 +1832,9 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 		CmdNoUserPrompt = true                            // don't re-prompt!
 		ge.ExecCmdName(CmdName("Run Prompt"), true, true) // sel, clear
 	case strings.HasPrefix(fn.Info.Mime, "image"):
-		ge.ExecCmdFileNodeName(CmdName("Open File"), fn, true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+	case fn.Info.Mime == "application/pdf":
+		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
 	default:
 		if int(fn.Info.Size) > GideBigFileSize {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",

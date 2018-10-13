@@ -765,13 +765,12 @@ var StdCmds = Commands{
 	// LaTeX
 	{"LaTeX PDF", "run PDFLaTeX on file", LangNames{"LaTeX"},
 		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false},
-	{"View PDF", "open PDF file", LangNames{"LaTeX", "PDF"},
-		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", false, false},
-	{"View Target PDF", "open project target PDF file", LangNames{"LaTeX", "PDF"},
-		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", false, false},
 
+	// Generic files / images / etc
 	{"Open File", "open file using OS 'open' command", nil,
 		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", false, false},
+	{"Open Target File", "open project target file using OS 'open' command", nil,
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", false, false},
 
 	// Misc testing
 	{"List Dir", "list current dir", nil,
