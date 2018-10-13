@@ -336,6 +336,6 @@ var LangsProps = ki.Props{
 var StdLangs = Langs{
 	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}, "// "},
 	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX PDF"}, "% "},
-	{"PDF", "PDF document", []string{".pdf"}, CmdNames{"View PDF"}, ""},
+	{"PDF", "PDF document", []string{".pdf"}, CmdNames{"Open File"}, ""},
 	{"Markdown", "Markdown document", []string{".md"}, nil, "<--- "},
 }
