@@ -559,7 +559,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		ge.SetActiveTextViewIdx(vidx)
 		ext := filepath.Ext(fn.Name())
 		langs := LangsForExt(ext)
-		if langs != nil {
+		if len(langs) > 0 {
 			ln := langs[0].Name
 			// todo: completer funcs should be stored in language struct
 			switch ln {
