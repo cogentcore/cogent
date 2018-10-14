@@ -559,13 +559,15 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		ge.SetActiveTextViewIdx(vidx)
 		ext := filepath.Ext(fn.Name())
 		langs := LangsForExt(ext)
-		ln := langs[0].Name
-		// todo: completer funcs should be stored in language struct
-		switch ln {
-		case "Go":
-			tv.SetCompleter(tv, CompleteGo, CompleteGoEdit)
-		case "Tex":
-			tv.SetCompleter(tv, CompleteTex, CompleteTexEdit)
+		if langs != nil {
+			ln := langs[0].Name
+			// todo: completer funcs should be stored in language struct
+			switch ln {
+			case "Go":
+				tv.SetCompleter(tv, CompleteGo, CompleteGoEdit)
+			case "Tex":
+				tv.SetCompleter(tv, CompleteTex, CompleteTexEdit)
+			}
 		}
 	}
 }
