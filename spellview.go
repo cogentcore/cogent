@@ -50,10 +50,21 @@ func (sv *SpellView) UpdateView(ge *Gide, sp SpellParams) {
 	sv.Gide = ge
 	sv.Spell = sp
 	_, updt := sv.StdSpellConfig()
-	//sv.ConfigToolbar()
+	sv.ConfigToolbar()
 	tvly := sv.TextViewLay()
 	sv.Gide.ConfigOutputTextView(tvly)
 	sv.UpdateEnd(updt)
+}
+
+// StdConfig returns a TypeAndNameList for configuring a standard Frame
+// -- can modify as desired before calling ConfigChildren on Frame using this
+func (sv *SpellView) StdConfig() kit.TypeAndNameList {
+	config := kit.TypeAndNameList{}
+	config.Add(gi.KiT_ToolBar, "spellbar")
+	config.Add(gi.KiT_ToolBar, "unknownbar")
+	config.Add(gi.KiT_ToolBar, "suggestbar")
+	config.Add(gi.KiT_Layout, "spelltext")
+	return config
 }
 
 // StdSpellConfig configures a standard setup of the overall layout -- returns
@@ -75,14 +86,83 @@ func (sv *SpellView) TextViewLay() *gi.Layout {
 	return tvi.(*gi.Layout)
 }
 
-// StdConfig returns a TypeAndNameList for configuring a standard Frame
-// -- can modify as desired before calling ConfigChildren on Frame using this
-func (sv *SpellView) StdConfig() kit.TypeAndNameList {
-	config := kit.TypeAndNameList{}
-	//config.Add(gi.KiT_ToolBar, "findbar")
-	//config.Add(gi.KiT_ToolBar, "replbar")
-	config.Add(gi.KiT_Layout, "spelltext")
-	return config
+// SpellBar returns the spell toolbar
+func (sv *SpellView) SpellBar() *gi.ToolBar {
+	tbi, ok := sv.ChildByName("spellbar", 0)
+	if !ok {
+		return nil
+	}
+	return tbi.(*gi.ToolBar)
+}
+
+// UnknownBar returns the toolbar that displays the unknown word
+func (sv *SpellView) UnknownBar() *gi.ToolBar {
+	tbi, ok := sv.ChildByName("unknownbar", 0)
+	if !ok {
+		return nil
+	}
+	return tbi.(*gi.ToolBar)
+}
+
+// SuggestBar returns the suggest toolbar
+func (sv *SpellView) SuggestBar() *gi.ToolBar {
+	tbi, ok := sv.ChildByName("suggestbar", 0)
+	if !ok {
+		return nil
+	}
+	return tbi.(*gi.ToolBar)
+}
+
+// SpellNextAct returns the spell next action in toolbar
+func (sv *SpellView) SpellNextAct() *gi.Action {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("next", 3)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.Action)
+}
+
+// SpellCheckAct returns the spell check action in toolbar
+func (sv *SpellView) FindCheckAct() *gi.Action {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("check", 3)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.Action)
+}
+
+// SpellIgnoreAct returns the ignore action in toolbar
+func (sv *SpellView) SpellIgnoreAct() *gi.Action {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("ignore", 3)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.Action)
+}
+
+// SpellLearnAct returns the learn action in toolbar
+func (sv *SpellView) SpellLearnAct() *gi.Action {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("learn", 3)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.Action)
 }
 
 // TextView returns the spell check results TextView
@@ -93,6 +173,132 @@ func (sv *SpellView) TextView() *giv.TextView {
 	}
 	tv := tvly.KnownChild(0).(*giv.TextView)
 	return tv
+}
+
+// FindUnknownText returns the unknown word textfield in toolbar
+func (sv *SpellView) FindUnknownText() *gi.TextField {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("unknown-str", 1)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.TextField)
+}
+
+// FindSuggestText returns the unknown word textfield in toolbar
+func (sv *SpellView) FindSuggestText() *gi.TextField {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("suggest-str", 1)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.TextField)
+}
+
+// ConfigToolbar adds toolbar.
+func (sv *SpellView) ConfigToolbar() {
+	spbar := sv.SpellBar()
+	if spbar.HasChildren() {
+		return
+	}
+	spbar.SetStretchMaxWidth()
+
+	unknbar := sv.UnknownBar()
+	if unknbar.HasChildren() {
+		return
+	}
+	unknbar.SetStretchMaxWidth()
+
+	sugbar := sv.SuggestBar()
+	if sugbar.HasChildren() {
+		return
+	}
+	sugbar.SetStretchMaxWidth()
+
+	//lbl := spbar.AddNewChild(gi.KiT_Label, "check-lbl").(*gi.Label)
+	//lbl.SetStretchMaxWidth()
+	//lbl.SetText("Spell check current file")
+
+	check := spbar.AddNewChild(gi.KiT_Action, "check").(*gi.Action)
+	check.SetText("Check Current File")
+	check.Tooltip = "spell check the current file"
+	check.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		svv.ChangeAction()
+	})
+
+	unknown := unknbar.AddNewChild(gi.KiT_TextField, "unknown-str").(*gi.TextField)
+	unknown.SetStretchMaxWidth()
+	unknown.Tooltip = "Word not found in dictionary"
+	unknown.TextFieldSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		//if sig == int64(gi.TextFieldDone) {
+		//	svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		//	tf := send.(*gi.TextField)
+		//	svv.Spell.Check = tf.Text()
+		//}
+	})
+
+	suggest := sugbar.AddNewChild(gi.KiT_TextField, "suggest-str").(*gi.TextField)
+	suggest.SetStretchMaxWidth()
+	suggest.Tooltip = "Suggestion"
+	suggest.TextFieldSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		//if sig == int64(gi.TextFieldDone) {
+		//	svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		//	tf := send.(*gi.TextField)
+		//	svv.Find.Replace = tf.Text()
+		//}
+	})
+	tf := sv.FindSuggestText()
+	if tf != nil {
+		tf.SetInactive()
+	}
+
+	change := sugbar.AddNewChild(gi.KiT_Action, "change").(*gi.Action)
+	change.SetText("Change")
+	change.Tooltip = "change the unknown word to the selected suggestion"
+	change.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		svv.ChangeAction()
+	})
+
+	ignore := unknbar.AddNewChild(gi.KiT_Action, "ignore").(*gi.Action)
+	ignore.SetText("Ignore")
+	ignore.Tooltip = "ignore all instances of the unknown word"
+	ignore.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		svv.IgnoreAction()
+	})
+
+	learn := unknbar.AddNewChild(gi.KiT_Action, "learn").(*gi.Action)
+	learn.SetText("Learn")
+	learn.Tooltip = "add the unknown word to my personal dictionary"
+	learn.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		svv.LearnAction()
+	})
+}
+
+// ChangeAction replaces the known word with the selected suggested word
+func (sv *SpellView) CheckAction() {
+}
+
+// ChangeAction replaces the known word with the selected suggested word
+func (sv *SpellView) ChangeAction() {
+	// todo: borrow code from findview replace action
+}
+
+func (sv *SpellView) IgnoreAction() {
+
+}
+
+func (sv *SpellView) LearnAction() {
+
 }
 
 var SpellViewProps = ki.Props{
