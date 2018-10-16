@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c"strings") 2018, The Gide Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -11,7 +11,10 @@ import (
 	"github.com/goki/gi/spell"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
+	"strings"
 )
+
+var curunknown string // the current misspelled/unknown word
 
 // SpellParams
 type SpellParams struct {
@@ -305,6 +308,7 @@ func (sv *SpellView) CheckNext() {
 func (sv *SpellView) SetUnknownAndSuggest(unknown string, suggests []string) {
 	uf := sv.FindUnknownText()
 	uf.SetText(unknown)
+	curunknown = unknown
 
 	sf := sv.FindSuggestText()
 	if len(suggests) == 0 {
@@ -331,7 +335,8 @@ func (sv *SpellView) IgnoreAction() {
 // LearnAction will add the current unknown word to corpus
 // and call CheckNext
 func (sv *SpellView) LearnAction() {
-	spell.LearnWord()
+	new := strings.ToLower(curunknown)
+	spell.LearnWord(new)
 	sv.CheckNext()
 }
 
