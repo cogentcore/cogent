@@ -19,7 +19,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -1294,33 +1293,37 @@ func (ge *Gide) Spell() {
 	stv.SetBuf(fbuf)
 
 	fp := string(ge.ActiveFilename)
-	_, fn := path.Split(fp)
-
 	if fp == "" {
 		return
 	}
-	unknowns, err := spell.CheckFile(fp)
-	if err != nil {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Dictionaries not found", Prompt: err.Error()}, true, false, nil, nil)
-		return
-	}
-	outlns := make([][]byte, 0, 100)
-	outmus := make([][]byte, 0, 100) // markups
-	fbStLn := len(outlns)            // find buf start ln
-	lstr := fmt.Sprintf(`%v:`, fn)
-	outlns = append(outlns, []byte(lstr))
-	mstr := fmt.Sprintf(`<a href="spell:///%v#R%v">%v</a>`, fp, fbStLn, fn)
-	outmus = append(outmus, []byte(mstr))
-	for _, u := range unknowns {
-		lstr := fmt.Sprintf(`%v: %v`, u.LineNo, u.Word)
-		outlns = append(outlns, []byte(lstr))
-		mstr = fmt.Sprintf(`	<a href="spell:///%v#R%vL%v-L%v">%v:%v</a>`, fp, fbStLn, u.LineNo, u.LineNo, u.LineNo, u.Word)
-		outmus = append(outmus, []byte(mstr))
-	}
-	ltxt := bytes.Join(outlns, []byte("\n"))
-	mtxt := bytes.Join(outmus, []byte("\n"))
-	fbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
-	stv.CursorStartDoc()
+
+	tv := ge.ActiveTextView()
+	spell.NewSpellCheck(tv.Buf.Txt)
+	word, suggests := spell.NextUnknownWord()
+	sv.SetUnknownAndSuggest(word, suggests)
+
+	//unknowns, err := spell.CheckFile(fp)
+	//if err != nil {
+	//	gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Dictionaries not found", Prompt: err.Error()}, true, false, nil, nil)
+	//	return
+	//}
+	//outlns := make([][]byte, 0, 100)
+	//outmus := make([][]byte, 0, 100) // markups
+	//fbStLn := len(outlns)            // find buf start ln
+	//lstr := fmt.Sprintf(`%v:`, fn)
+	//outlns = append(outlns, []byte(lstr))
+	//mstr := fmt.Sprintf(`<a href="spell:///%v#R%v">%v</a>`, fp, fbStLn, fn)
+	//outmus = append(outmus, []byte(mstr))
+	//for _, u := range unknowns {
+	//	lstr := fmt.Sprintf(`%v: %v`, u.LineNo, u.Word)
+	//	outlns = append(outlns, []byte(lstr))
+	//	mstr = fmt.Sprintf(`	<a href="spell:///%v#R%vL%v-L%v">%v:%v</a>`, fp, fbStLn, u.LineNo, u.LineNo, u.LineNo, u.Word)
+	//	outmus = append(outmus, []byte(mstr))
+	//}
+	//ltxt := bytes.Join(outlns, []byte("\n"))
+	//mtxt := bytes.Join(outmus, []byte("\n"))
+	//fbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
+	//stv.CursorStartDoc()
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
