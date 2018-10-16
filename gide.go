@@ -206,14 +206,15 @@ func (ge *Gide) OpenProj(filename gi.FileName) {
 // UpdateProj does full update to current proj
 func (ge *Gide) UpdateProj() {
 	mods, updt := ge.StdConfig()
+	if !mods {
+		updt = ge.UpdateStart()
+	}
 	ge.UpdateFiles()
 	ge.ConfigSplitView()
 	ge.ConfigToolbar()
 	ge.ConfigStatusBar()
 	ge.SetStatus("just updated")
-	if mods {
-		ge.UpdateEnd(updt)
-	}
+	ge.UpdateEnd(updt)
 }
 
 // ProjPathParse parses given project path into a root directory (which could
@@ -1221,6 +1222,7 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, langs LangNames, curFil
 	ge.Prefs.Find.Replace = repl
 	ge.Prefs.Find.IgnoreCase = ignoreCase
 	ge.Prefs.Find.Langs = langs
+	ge.Prefs.Find.CurFile = curFileOnly
 
 	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
 	fvi, _ := ge.FindOrMakeMainTab("Find", KiT_FindView, true) // sel
@@ -2062,7 +2064,8 @@ var GideProps = ki.Props{
 					"default-field": "Prefs.Find.Langs",
 				}},
 				{"Current File Only", ki.Props{
-					"desc": "only look in current active file",
+					"desc":          "only look in current active file",
+					"default-field": "Prefs.Find.CurFile",
 				}},
 			},
 		}},

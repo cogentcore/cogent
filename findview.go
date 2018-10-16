@@ -19,6 +19,7 @@ type FindParams struct {
 	Replace    string    `desc:"replace string"`
 	IgnoreCase bool      `desc:"ignore case"`
 	Langs      LangNames `desc:"languages for files to search"`
+	CurFile    bool      `desc:"only process current active file"`
 }
 
 // FindView is a find / replace widget that displays results in a TextView
@@ -35,7 +36,7 @@ var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
 	fv.Gide.Prefs.Find = fv.Find
-	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.Langs, false)
+	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.Langs, fv.Find.CurFile)
 }
 
 // ReplaceAction performs the replace
@@ -141,6 +142,8 @@ func (fv *FindView) UpdateView(ge *Gide, fp FindParams) {
 	rt.SetText(fv.Find.Replace)
 	ib := fv.IgnoreBox()
 	ib.SetChecked(fv.Find.IgnoreCase)
+	cf := fv.CurFileBox()
+	cf.SetChecked(fv.Find.CurFile)
 	tvly := fv.TextViewLay()
 	fv.Gide.ConfigOutputTextView(tvly)
 	if mods {
@@ -221,6 +224,19 @@ func (fv *FindView) IgnoreBox() *gi.CheckBox {
 		return nil
 	}
 	tfi, ok := tb.ChildByName("ignore-case", 2)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.CheckBox)
+}
+
+// CurFileBox returns the cur file checkbox in toolbar
+func (fv *FindView) CurFileBox() *gi.CheckBox {
+	tb := fv.ReplBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("cur-file", 5)
 	if !ok {
 		return nil
 	}
@@ -357,6 +373,17 @@ func (fv *FindView) ConfigToolbar() {
 	//		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 	// hmm, langs updated..
 	//	})
+
+	cf := rb.AddNewChild(gi.KiT_CheckBox, "cur-file").(*gi.CheckBox)
+	cf.SetText("Cur File")
+	cf.Tooltip = "Only in current active file"
+	cf.ButtonSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.ButtonToggled) {
+			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+			cb := send.(*gi.CheckBox)
+			fvv.Find.CurFile = cb.IsChecked()
+		}
+	})
 
 }
 
