@@ -133,25 +133,27 @@ func (ge *Gide) SaveProj() {
 	if ge.Prefs.ProjFilename == "" {
 		return
 	}
-	ge.SaveProjAs(ge.Prefs.ProjFilename)
+	ge.SaveProjAs(ge.Prefs.ProjFilename, true) // save all files
 }
 
 // SaveProjIfExists saves project file containing custom project settings, in a
 // standard JSON-formatted file, only if it already exists -- returns true if saved
-func (ge *Gide) SaveProjIfExists() bool {
+// saveAllFiles indicates if user should be prompted for saving all files
+func (ge *Gide) SaveProjIfExists(saveAllFiles bool) bool {
 	if ge.Prefs.ProjFilename == "" {
 		return false
 	}
 	if _, err := os.Stat(string(ge.Prefs.ProjFilename)); os.IsNotExist(err) {
 		return false // does not exist
 	}
-	ge.SaveProjAs(ge.Prefs.ProjFilename)
+	ge.SaveProjAs(ge.Prefs.ProjFilename, saveAllFiles)
 	return true
 }
 
 // SaveProjAs saves project custom settings to given filename, in a standard
 // JSON-formatted file
-func (ge *Gide) SaveProjAs(filename gi.FileName) {
+// saveAllFiles indicates if user should be prompted for saving all files
+func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) {
 	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
 	SavePaths()
 	ge.Files.UpdateNewFile(filename)
@@ -161,7 +163,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName) {
 	ge.Prefs.SaveJSON(filename)
 	ge.Changed = false
 	nch := ge.NChangedFiles()
-	if nch > 0 {
+	if saveAllFiles && nch > 0 {
 		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Save Project: There are Unsaved Files",
 			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch)},
 			[]string{"Cancel", "Save All"},
@@ -421,7 +423,7 @@ func (ge *Gide) SaveActiveView() {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
 		}
 	}
-	ge.SaveProjIfExists()
+	ge.SaveProjIfExists(false) // no saveall
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
@@ -442,7 +444,7 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 			ge.ViewFileNode(tv, ge.ActiveTextViewIdx, fn)
 		}
 	}
-	ge.SaveProjIfExists()
+	ge.SaveProjIfExists(false) // no saveall
 }
 
 // RevertActiveView revert active view to saved version
@@ -759,7 +761,7 @@ func (ge *Gide) NChangedFiles() int {
 // to save open files -- if this returns true, then it is OK to close --
 // otherwise not
 func (ge *Gide) CloseWindowReq() bool {
-	ge.SaveProjIfExists()
+	ge.SaveProjIfExists(true) // saveall
 	nch := ge.NChangedFiles()
 	if nch == 0 {
 		return true
@@ -1206,7 +1208,7 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 		return
 	}
 	// todo: process text!
-	ge.SaveProjIfExists()
+	ge.SaveProjIfExists(true) // saveall
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -2167,6 +2169,9 @@ var GideProps = ki.Props{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
 						"ext":           ".gide",
+					}},
+					{"SaveAll", ki.Props{
+						"value": false,
 					}},
 				},
 			}},

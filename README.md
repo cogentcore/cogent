@@ -43,6 +43,10 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* relative path links ../../../etc should work better
+
+* clicking on links in command output not always working -- need to double-click sometimes -- should just work with single click
+
 * selecting a buffer does not reset cursor (still??)
 
 * need to be able to cancel process -- menu associated with tab or panel?
