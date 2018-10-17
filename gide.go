@@ -174,6 +174,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName) {
 				}
 			})
 	}
+	spell.SaveModel()
 }
 
 // OpenProj opens project and its settings from given filename, in a standard
