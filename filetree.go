@@ -5,12 +5,14 @@
 package gide
 
 import (
+	"image/color"
 	"log"
 	"sort"
 	"strings"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -42,6 +44,15 @@ func (fn *FileNode) ExecCmdFile() {
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
 		ge.ExecCmdFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
+	}
+}
+
+// ExecCmdNameFile executes given command name on node
+func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
+	gek, ok := fn.ParentByType(KiT_Gide, true)
+	if ok {
+		ge := gek.Embed(KiT_Gide).(*Gide)
+		ge.ExecCmdNameFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode), CmdName(cmdNm), true, true)
 	}
 }
 
@@ -171,35 +182,9 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, langs Lan
 }
 
 var FileNodeProps = ki.Props{
-	"CtxtMenu": ki.PropSlice{
-		{"ViewFile", ki.Props{
-			"label": "View",
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(giv.KiT_FileNode).(*giv.FileNode)
-				act.SetInactiveStateUpdt(fn.IsDir())
-			},
-		}},
-		{"ExecCmdFile", ki.Props{
-			"label": "Exec Cmd...",
-		}},
-		{"DuplicateFile", ki.Props{
-			"label": "Duplicate",
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(giv.KiT_FileNode).(*giv.FileNode)
-				act.SetInactiveStateUpdt(fn.IsDir())
-			},
-		}},
-		{"DeleteFile", ki.Props{
-			"label":   "Delete...",
-			"desc":    "Ok to delete this file?  This is not undoable and is not moving to trash / recycle bin",
-			"confirm": true,
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(giv.KiT_FileNode).(*giv.FileNode)
-				act.SetInactiveStateUpdt(fn.IsDir())
-			},
-		}},
+	"CallMethods": ki.PropSlice{
 		{"RenameFile", ki.Props{
-			"label": "Rename...",
+			"label": "Rename",
 			"desc":  "Rename file to new file name",
 			"Args": ki.PropSlice{
 				{"New Name", ki.Props{
@@ -207,12 +192,160 @@ var FileNodeProps = ki.Props{
 				}},
 			},
 		}},
-		{"sep-open", ki.BlankProp{}},
-		{"OpenDir", ki.Props{
-			"desc": "open given directory to see files within",
+	},
+}
+
+/////////////////////////////////////////////////////////////////////////
+// FileTreeView is the Gide version of the FileTreeView
+
+// FileTreeView is a TreeView that knows how to operate on FileNode nodes
+type FileTreeView struct {
+	giv.FileTreeView
+}
+
+var KiT_FileTreeView = kit.Types.AddType(&FileTreeView{}, nil)
+
+func init() {
+	kit.Types.SetProps(KiT_FileTreeView, FileTreeViewProps)
+}
+
+// FileNode returns the SrcNode as a *gide* FileNode
+func (ft *FileTreeView) FileNode() *FileNode {
+	fn := ft.SrcNode.Ptr.Embed(KiT_FileNode).(*FileNode)
+	return fn
+}
+
+// ViewFiles calls ViewFile on selected files
+func (ft *FileTreeView) ViewFiles() {
+	sels := ft.SelectedViews()
+	for i := len(sels) - 1; i >= 0; i-- {
+		sn := sels[i]
+		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
+		ftv.FileNode().ViewFile()
+	}
+}
+
+// FileTreeViewExecCmds gets list of available commands for given file node, as a submenu-func
+func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
+	ft, ok := it.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+	if !ok {
+		return nil
+	}
+	gek, ok := ft.ParentByType(KiT_Gide, true)
+	if !ok {
+		return nil
+	}
+	ge := gek.Embed(KiT_Gide).(*Gide)
+	fn := ft.FileNode()
+	langs := LangNamesForFilename(fn.Nm)
+	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
+	return cmds
+}
+
+// ExecCmdFiles calls given command on selected files
+func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
+	sels := ft.SelectedViews()
+	for i := len(sels) - 1; i >= 0; i-- {
+		sn := sels[i]
+		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
+		ftv.FileNode().ExecCmdNameFile(cmdNm)
+	}
+}
+
+var FileTreeViewProps = ki.Props{
+	"indent":           units.NewValue(2, units.Ch),
+	"spacing":          units.NewValue(.5, units.Ch),
+	"border-width":     units.NewValue(0, units.Px),
+	"border-radius":    units.NewValue(0, units.Px),
+	"padding":          units.NewValue(0, units.Px),
+	"margin":           units.NewValue(1, units.Px),
+	"text-align":       gi.AlignLeft,
+	"vertical-align":   gi.AlignTop,
+	"color":            &gi.Prefs.Colors.Font,
+	"background-color": "inherit",
+	".exec": ki.Props{
+		"font-weight": gi.WeightBold,
+	},
+	".open": ki.Props{
+		"font-style": gi.FontItalic,
+	},
+	"#icon": ki.Props{
+		"width":   units.NewValue(1, units.Em),
+		"height":  units.NewValue(1, units.Em),
+		"margin":  units.NewValue(0, units.Px),
+		"padding": units.NewValue(0, units.Px),
+		"fill":    &gi.Prefs.Colors.Icon,
+		"stroke":  &gi.Prefs.Colors.Font,
+	},
+	"#branch": ki.Props{
+		"icon":             "widget-wedge-down",
+		"icon-off":         "widget-wedge-right",
+		"margin":           units.NewValue(0, units.Px),
+		"padding":          units.NewValue(0, units.Px),
+		"background-color": color.Transparent,
+		"max-width":        units.NewValue(.8, units.Em),
+		"max-height":       units.NewValue(.8, units.Em),
+	},
+	"#space": ki.Props{
+		"width": units.NewValue(.5, units.Em),
+	},
+	"#label": ki.Props{
+		"margin":    units.NewValue(0, units.Px),
+		"padding":   units.NewValue(0, units.Px),
+		"min-width": units.NewValue(16, units.Ch),
+	},
+	"#menu": ki.Props{
+		"indicator": "none",
+	},
+	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Props{},
+	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Props{
+		"background-color": &gi.Prefs.Colors.Select,
+	},
+	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Props{
+		"background-color": &gi.Prefs.Colors.Control,
+	},
+	"CtxtMenuActive": ki.PropSlice{
+		{"ViewFiles", ki.Props{
+			"label": "View",
 			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(giv.KiT_FileNode).(*giv.FileNode)
-				act.SetActiveStateUpdt(fn.IsDir())
+				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
+			},
+		}},
+		{"ExecCmdFiles", ki.Props{
+			"label":        "Exec Cmd",
+			"submenu-func": giv.SubMenuFunc(FileTreeViewExecCmds),
+			"Args": ki.PropSlice{
+				{"Cmd Name", ki.Props{}},
+			},
+		}},
+		{"DuplicateFiles", ki.Props{
+			"label": "Duplicate",
+			"updtfunc": func(fni interface{}, act *gi.Action) {
+				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
+			},
+		}},
+		{"DeleteFiles", ki.Props{
+			"label":   "Delete",
+			"desc":    "Ok to delete file(s)?  This is not undoable and is not moving to trash / recycle bin",
+			"confirm": true,
+			"updtfunc": func(fni interface{}, act *gi.Action) {
+				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
+			},
+		}},
+		{"RenameFiles", ki.Props{
+			"label": "Rename",
+			"desc":  "Rename file to new file name",
+		}},
+		{"sep-open", ki.BlankProp{}},
+		{"OpenDirs", ki.Props{
+			"label": "Open Dir",
+			"desc":  "open given directory to see files within",
+			"updtfunc": func(fni interface{}, act *gi.Action) {
+				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
 			},
 		}},
 	},

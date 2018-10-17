@@ -71,7 +71,11 @@ type Gide struct {
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
 }
 
-var KiT_Gide = kit.Types.AddType(&Gide{}, GideProps)
+var KiT_Gide = kit.Types.AddType(&Gide{}, nil)
+
+func init() {
+	kit.Types.SetProps(KiT_Gide, GideProps)
+}
 
 // UpdateFiles updates the list of files saved in project
 func (ge *Gide) UpdateFiles() {
@@ -1059,6 +1063,34 @@ func (ge *Gide) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm CmdName, sel bool, c
 	cmd.Run(ge, cbuf)
 }
 
+// GideExecCmds gets list of available commands for current active file, as a submenu-func
+func GideExecCmds(it interface{}, vp *gi.Viewport2D) []string {
+	ge, ok := it.(ki.Ki).Embed(KiT_Gide).(*Gide)
+	if !ok {
+		return nil
+	}
+	tv := ge.ActiveTextView()
+	if tv == nil {
+		return nil
+	}
+	var cmds []string
+	if len(ge.ActiveLangs) == 0 {
+		cmds = AvailCmds.FilterCmdNames(LangNames{ge.Prefs.MainLang}, ge.Prefs.VersCtrl)
+	} else {
+		cmds = AvailCmds.FilterCmdNames(ge.ActiveLangs, ge.Prefs.VersCtrl)
+	}
+	return cmds
+}
+
+// ExecCmdNameActive calls given command on current active textview
+func (ge *Gide) ExecCmdNameActive(cmdNm string) {
+	tv := ge.ActiveTextView()
+	if tv == nil {
+		return
+	}
+	ge.ExecCmdName(CmdName(cmdNm), true, true)
+}
+
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in MainTab with name of command
 func (ge *Gide) ExecCmd() {
@@ -1781,13 +1813,13 @@ func (ge *Gide) ConfigSplitView() {
 	if mods {
 		ftfr := split.KnownChild(0).(*gi.Frame)
 		if !ftfr.HasChildren() {
-			ft := ftfr.AddNewChild(giv.KiT_FileTreeView, "filetree").(*giv.FileTreeView)
+			ft := ftfr.AddNewChild(KiT_FileTreeView, "filetree").(*FileTreeView)
 			ft.SetRootNode(&ge.Files)
 			ft.TreeViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
 				if data == nil {
 					return
 				}
-				tvn, _ := data.(ki.Ki).Embed(giv.KiT_FileTreeView).(*giv.FileTreeView)
+				tvn, _ := data.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 				gee, _ := recv.Embed(KiT_Gide).(*Gide)
 				if tvn.SrcNode.Ptr != nil {
 					fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
@@ -1840,7 +1872,7 @@ func (ge *Gide) ConfigSplitView() {
 }
 
 // FileNodeSelected is called whenever tree browser has file node selected
-func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *FileTreeView) {
 	// if fn.IsDir() {
 	// } else {
 	// }
@@ -1849,7 +1881,7 @@ func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *giv.FileTreeView) {
 var GideBigFileSize = 10000000 // 10Mb?
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
-func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
 	switch {
 	case fn.IsDir():
 		if !fn.IsOpen() {
@@ -1885,7 +1917,7 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 }
 
 // FileNodeClosed is called whenever file tree browser node is closed
-func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *giv.FileTreeView) {
+func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *FileTreeView) {
 	if fn.IsDir() {
 		if fn.IsOpen() {
 			fn.CloseDir()
@@ -2093,9 +2125,14 @@ var GideProps = ki.Props{
 			"no-update-after": true,
 			"icon":            "star",
 		}},
-		{"ExecCmd", ki.Props{
+		{"ExecCmdNameActive", ki.Props{
 			"icon":            "terminal",
+			"label":           "Exec Cmd",
+			"submenu-func":    giv.SubMenuFunc(GideExecCmds),
 			"no-update-after": true, // key for methods that have own selector inside -- update runs before command is executed
+			"Args": ki.PropSlice{
+				{"Cmd Name", ki.Props{}},
+			},
 		}},
 		{"sep-splt", ki.BlankProp{}},
 		{"Splits", ki.PropSlice{
