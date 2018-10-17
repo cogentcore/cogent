@@ -362,7 +362,7 @@ func (fv *FindView) ConfigToolbar() {
 	langl := rb.AddNewChild(gi.KiT_Label, "lang-lbl").(*gi.Label)
 	langl.SetText("Lang:")
 
-	fv.LangVV = giv.ToValueView(&fv.Find.Langs)
+	fv.LangVV = giv.ToValueView(&fv.Find.Langs, "")
 	fv.LangVV.SetStandaloneValue(reflect.ValueOf(&fv.Find.Langs))
 	vtyp := fv.LangVV.WidgetType()
 	langw := rb.AddNewChild(vtyp, "langs").(gi.Node2D)

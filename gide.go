@@ -1566,7 +1566,7 @@ func (ge *Gide) ApplyPrefs() {
 			txly := sv.KnownChild(1 + i).(*gi.Layout)
 			txed := txly.KnownChild(0).(*giv.TextView)
 			txed.Opts.LineNos = ge.Prefs.Editor.LineNos
-			txed.Opts.AutoIndent = true
+			txed.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
 			txed.Opts.Completion = ge.Prefs.Editor.Completion
 		}
 	}
@@ -1822,7 +1822,7 @@ func (ge *Gide) ConfigSplitView() {
 		txly := split.KnownChild(1 + i).(*gi.Layout)
 		txed := txly.KnownChild(0).(*giv.TextView)
 		txed.Opts.LineNos = ge.Prefs.Editor.LineNos
-		txed.Opts.AutoIndent = true
+		txed.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
 		txed.Opts.Completion = ge.Prefs.Editor.Completion
 		if ge.Prefs.Editor.WordWrap {
 			txed.SetProp("white-space", gi.WhiteSpacePreWrap)

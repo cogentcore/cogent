@@ -30,12 +30,13 @@ type EditorPrefs struct {
 	WordWrap   bool            `desc:"wrap lines at word boundaries -- otherwise long lines scroll off the end"`
 	LineNos    bool            `desc:"show line numbers"`
 	Completion bool            `desc:"use the completion system to suggest options while typing"`
+	AutoIndent bool            `desc:"automatically indent lines when enter, tab, }, etc pressed"`
 }
 
 // Preferences are the overall user preferences for Gide.
 type Preferences struct {
 	Files       FilePrefs   `desc:"file view preferences"`
-	Editor      EditorPrefs `desc:"editor preferences"`
+	Editor      EditorPrefs `view:"inline" desc:"editor preferences"`
 	KeyMap      KeyMapName  `desc:"key map for gide-specific keyboard sequences"`
 	SaveKeyMaps bool        `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
 	SaveLangs   bool        `desc:"if set, the current customized set of language parameters (see Edit Langs) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
@@ -68,6 +69,7 @@ func (pf *EditorPrefs) Defaults() {
 	pf.WordWrap = true
 	pf.LineNos = true
 	pf.Completion = true
+	pf.AutoIndent = true
 }
 
 func (pf *Preferences) Defaults() {
@@ -237,7 +239,7 @@ var PreferencesProps = ki.Props{
 // ProjPrefs are the preferences for saving for a project -- this IS the project file
 type ProjPrefs struct {
 	Files        FilePrefs      `desc:"file view preferences"`
-	Editor       EditorPrefs    `desc:"editor preferences"`
+	Editor       EditorPrefs    `view:"inline" desc:"editor preferences"`
 	MainLang     LangName       `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
 	VersCtrl     VersCtrlName   `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
 	ChangeLog    ChangeLog      `desc:"log of version control commits made through Gide by current author -- use appropriate VCS log command to see full set of changes"`
