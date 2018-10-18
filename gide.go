@@ -2279,6 +2279,9 @@ var GideProps = ki.Props{
 				{"Split Name", ki.Props{}},
 			},
 		}},
+		{"ExecCmd", ki.Props{
+			"no-update-after": true,
+		}},
 	},
 }
 

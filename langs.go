@@ -239,7 +239,7 @@ func (lt *Langs) RevertToStd() {
 	AvailLangsChanged = true
 }
 
-// ViewStd shows the standard types that are compiled into the program and have
+// ViewStd shows the standard langs that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
 func (lt *Langs) ViewStd() {
 	LangsView(&StdLangs)
@@ -321,8 +321,7 @@ var LangsProps = ki.Props{
 		}},
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
-			"desc":    "Shows the standard types that are compiled into the program and have all the latest changes.  Useful for comparing against custom types.",
-			"confirm": true,
+			"desc": "Shows the standard languages that are compiled into the program and have all the latest changes.  Useful for comparing against custom langs.",
 		}},
 		{"RevertToStd", ki.Props{
 			"icon":    "update",

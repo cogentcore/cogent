@@ -211,8 +211,11 @@ func init() {
 
 // FileNode returns the SrcNode as a *gide* FileNode
 func (ft *FileTreeView) FileNode() *FileNode {
-	fn := ft.SrcNode.Ptr.Embed(KiT_FileNode).(*FileNode)
-	return fn
+	fn := ft.SrcNode.Ptr.Embed(KiT_FileNode)
+	if fn == nil {
+		return nil
+	}
+	return fn.(*FileNode)
 }
 
 // ViewFiles calls ViewFile on selected files
@@ -221,7 +224,10 @@ func (ft *FileTreeView) ViewFiles() {
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i]
 		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
-		ftv.FileNode().ViewFile()
+		fn := ftv.FileNode()
+		if fn != nil {
+			fn.ViewFile()
+		}
 	}
 }
 
@@ -236,8 +242,8 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 		return nil
 	}
 	ge := gek.Embed(KiT_Gide).(*Gide)
-	fn := ft.FileNode()
-	langs := LangNamesForFilename(fn.Nm)
+	fnm := ft.SrcNode.Ptr.Name()
+	langs := LangNamesForFilename(fnm)
 	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
 	return cmds
 }
@@ -248,7 +254,10 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i]
 		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
-		ftv.FileNode().ExecCmdNameFile(cmdNm)
+		fn := ftv.FileNode()
+		if fn != nil {
+			fn.ExecCmdNameFile(cmdNm)
+		}
 	}
 }
 
@@ -308,8 +317,11 @@ var FileTreeViewProps = ki.Props{
 		{"ViewFiles", ki.Props{
 			"label": "View",
 			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
+				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				fn := ft.FileNode()
+				if fn != nil {
+					act.SetInactiveStateUpdt(fn.IsDir())
+				}
 			},
 		}},
 		{"ExecCmdFiles", ki.Props{
@@ -322,8 +334,11 @@ var FileTreeViewProps = ki.Props{
 		{"DuplicateFiles", ki.Props{
 			"label": "Duplicate",
 			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
+				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				fn := ft.FileNode()
+				if fn != nil {
+					act.SetInactiveStateUpdt(fn.IsDir())
+				}
 			},
 		}},
 		{"DeleteFiles", ki.Props{
@@ -331,8 +346,11 @@ var FileTreeViewProps = ki.Props{
 			"desc":    "Ok to delete file(s)?  This is not undoable and is not moving to trash / recycle bin",
 			"confirm": true,
 			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
+				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				fn := ft.FileNode()
+				if fn != nil {
+					act.SetInactiveStateUpdt(fn.IsDir())
+				}
 			},
 		}},
 		{"RenameFiles", ki.Props{
@@ -344,8 +362,11 @@ var FileTreeViewProps = ki.Props{
 			"label": "Open Dir",
 			"desc":  "open given directory to see files within",
 			"updtfunc": func(fni interface{}, act *gi.Action) {
-				fn := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				act.SetInactiveStateUpdt(fn.FileNode().IsDir())
+				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				fn := ft.FileNode()
+				if fn != nil {
+					act.SetActiveStateUpdt(fn.IsDir())
+				}
 			},
 		}},
 	},

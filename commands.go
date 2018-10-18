@@ -691,8 +691,7 @@ var CommandsProps = ki.Props{
 		}},
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
-			"desc":    "Shows the standard commands that are compiled into the program.  Custom commands override standard ones of the same name.",
-			"confirm": true,
+			"desc": "Shows the standard commands that are compiled into the program.  Custom commands override standard ones of the same name.",
 		}},
 	},
 }
