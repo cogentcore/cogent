@@ -32,6 +32,13 @@ var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
 // SpellAction runs a new find with current params
 func (sv *SpellView) SpellAction() {
 	sv.Gide.Prefs.Spell = sv.Spell
+
+	uf := sv.FindUnknownText()
+	uf.SetText("")
+
+	sf := sv.FindSuggestText()
+	sf.SetText("")
+
 	sv.Gide.Spell()
 }
 
