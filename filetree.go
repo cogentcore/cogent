@@ -321,7 +321,7 @@ var FileTreeViewProps = ki.Props{
 				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 				fn := ft.FileNode()
 				if fn != nil {
-					act.SetInactiveStateUpdt(fn.IsDir())
+					act.SetInactiveState(fn.IsDir())
 				}
 			},
 		}},
@@ -338,7 +338,7 @@ var FileTreeViewProps = ki.Props{
 				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 				fn := ft.FileNode()
 				if fn != nil {
-					act.SetInactiveStateUpdt(fn.IsDir())
+					act.SetInactiveState(fn.IsDir())
 				}
 			},
 		}},
@@ -350,7 +350,7 @@ var FileTreeViewProps = ki.Props{
 				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 				fn := ft.FileNode()
 				if fn != nil {
-					act.SetInactiveStateUpdt(fn.IsDir())
+					act.SetInactiveState(fn.IsDir())
 				}
 			},
 		}},
@@ -366,7 +366,7 @@ var FileTreeViewProps = ki.Props{
 				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 				fn := ft.FileNode()
 				if fn != nil {
-					act.SetActiveStateUpdt(fn.IsDir())
+					act.SetActiveState(fn.IsDir())
 				}
 			},
 		}},
@@ -377,8 +377,13 @@ var FileTreeViewProps = ki.Props{
 				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 				fn := ft.FileNode()
 				if fn != nil {
-					act.SetActiveStateUpdt(fn.IsDir())
+					act.SetActiveState(fn.IsDir())
 				}
+			},
+			"Args": ki.PropSlice{
+				{"File Name", ki.Props{
+					"width": 60,
+				}},
 			},
 		}},
 	},

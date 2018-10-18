@@ -421,7 +421,7 @@ func CmdsView(pt *Commands) {
 	mfr.Lay = gi.LayoutVert
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
-	title.SetText("Available Commands: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
+	title.SetText("Gide Commands")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
 	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap

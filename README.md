@@ -55,8 +55,6 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
 
-* ALL of the methods in gide should be no-update-after -- more efficient to have a general override flag there to prevent that for everything
-
 * add all the other commands!
 
 * add gide icon to overall list and plug that into .gide extension -- need to

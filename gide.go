@@ -187,6 +187,7 @@ func (ge *Gide) NewFile(filename string) {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make File", Prompt: fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)}, true, false, nil, nil)
 		return
 	}
+	ge.Files.UpdateNewFile(gi.FileName(np))
 }
 
 // SaveProj saves project file containing custom project settings, in a
@@ -664,6 +665,35 @@ func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	return tv, idx, true
 }
 
+// LinkViewFileNode opens the file node in the 2nd textview, which is next to
+// the tabs where links are clicked, if it is not collapsed -- else 1st
+func (ge *Gide) LinkViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
+	if ge.PanelIsOpen(TextView2Idx) {
+		ge.SetActiveTextViewIdx(1)
+	} else {
+		ge.SetActiveTextViewIdx(0)
+	}
+	tv := ge.ActiveTextView()
+	idx := ge.ActiveTextViewIdx
+	ge.ViewFileNode(tv, idx, fn)
+	return tv, idx
+}
+
+// LinkViewFile opens the file in the 2nd textview, which is next to
+// the tabs where links are clicked, if it is not collapsed -- else 1st
+func (ge *Gide) LinkViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+	fnk, ok := ge.Files.FindFile(string(fnm))
+	if !ok {
+		return nil, -1, false
+	}
+	fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	if fn.IsDir() {
+		return nil, -1, false
+	}
+	nv, nidx := ge.LinkViewFileNode(fn)
+	return nv, nidx, true
+}
+
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
 // in current active textview
 func (ge *Gide) SelectOpenNode() {
@@ -758,10 +788,10 @@ func (ge *Gide) OpenFileURL(ur string) bool {
 	}
 	fpath := up.Path[1:] // has double //
 	pos := up.Fragment
-	tv, _, ok := ge.NextViewFile(gi.FileName(fpath))
+	tv, _, ok := ge.LinkViewFile(gi.FileName(fpath))
 	if !ok {
 		_, fnm := filepath.Split(fpath)
-		tv, _, ok = ge.NextViewFile(gi.FileName(fnm))
+		tv, _, ok = ge.LinkViewFile(gi.FileName(fnm))
 		if !ok {
 			gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
 			return false
@@ -1405,7 +1435,7 @@ func (ge *Gide) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView
 	}
 	fpath := up.Path[1:] // has double //
 	pos := up.Fragment
-	tv, _, ok = ge.NextViewFile(gi.FileName(fpath))
+	tv, _, ok = ge.LinkViewFile(gi.FileName(fpath))
 	if !ok {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
 		return
@@ -2074,16 +2104,15 @@ var GideProps = ki.Props{
 		"horizontal-align": gi.AlignCenter,
 		"vertical-align":   gi.AlignTop,
 	},
+	"MethViewNoUpdateAfter": true, // no update after is default for everything
 	"ToolBar": ki.PropSlice{
 		{"UpdateFiles", ki.Props{
-			"shortcut":        "Command+U",
-			"icon":            "update",
-			"no-update-after": true,
+			"shortcut": "Command+U",
+			"icon":     "update",
 		}},
 		{"ViewFile", ki.Props{
-			"label":           "Open",
-			"icon":            "file-open",
-			"no-update-after": true,
+			"label": "Open",
+			"icon":  "file-open",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
@@ -2091,14 +2120,12 @@ var GideProps = ki.Props{
 			},
 		}},
 		{"SaveActiveView", ki.Props{
-			"label":           "Save",
-			"no-update-after": true,
-			"icon":            "file-save",
+			"label": "Save",
+			"icon":  "file-save",
 		}},
 		{"SaveActiveViewAs", ki.Props{
-			"label":           "Save As...",
-			"icon":            "file-save",
-			"no-update-after": true,
+			"label": "Save As...",
+			"icon":  "file-save",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
@@ -2106,16 +2133,14 @@ var GideProps = ki.Props{
 			},
 		}},
 		{"SelectOpenNode", ki.Props{
-			"icon":            "file-text",
-			"label":           "Edit",
-			"no-update-after": true,
+			"icon":  "file-text",
+			"label": "Edit",
 		}},
 		{"sep-find", ki.BlankProp{}},
 		{"Find", ki.Props{
-			"label":           "Find...",
-			"icon":            "search",
-			"desc":            "Find / replace in all open folders in file browser",
-			"no-update-after": true,
+			"label": "Find...",
+			"icon":  "search",
+			"desc":  "Find / replace in all open folders in file browser",
 			"Args": ki.PropSlice{
 				{"Search For", ki.Props{
 					"default-field": "Prefs.Find.Find",
@@ -2140,28 +2165,23 @@ var GideProps = ki.Props{
 			},
 		}},
 		{"Spell", ki.Props{
-			"label":           "Spelling...",
-			"no-update-after": true,
-			"icon":            "spelling",
+			"label": "Spelling...",
+			"icon":  "spelling",
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"Build", ki.Props{
-			"no-update-after": true,
-			"icon":            "terminal",
+			"icon": "terminal",
 		}},
 		{"Run", ki.Props{
-			"no-update-after": true,
-			"icon":            "terminal",
+			"icon": "terminal",
 		}},
 		{"Commit", ki.Props{
-			"no-update-after": true,
-			"icon":            "star",
+			"icon": "star",
 		}},
 		{"ExecCmdNameActive", ki.Props{
-			"icon":            "terminal",
-			"label":           "Exec Cmd",
-			"submenu-func":    giv.SubMenuFunc(GideExecCmds),
-			"no-update-after": true, // key for methods that have own selector inside -- update runs before command is executed
+			"icon":         "terminal",
+			"label":        "Exec Cmd",
+			"submenu-func": giv.SubMenuFunc(GideExecCmds),
 			"Args": ki.PropSlice{
 				{"Cmd Name", ki.Props{}},
 			},
@@ -2169,16 +2189,14 @@ var GideProps = ki.Props{
 		{"sep-splt", ki.BlankProp{}},
 		{"Splits", ki.PropSlice{
 			{"SetSplit", ki.Props{
-				"label":           "Set",
-				"submenu":         &AvailSplitNames,
-				"no-update-after": true,
+				"label":   "Set",
+				"submenu": &AvailSplitNames,
 				"Args": ki.PropSlice{
 					{"Split Name", ki.Props{}},
 				},
 			}},
 			{"SaveSplit", ki.Props{
-				"label":           "Save...",
-				"no-update-after": true,
+				"label": "Save...",
 				"Args": ki.PropSlice{
 					{"Name", ki.Props{
 						"width": "60",
@@ -2189,8 +2207,7 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"EditSplits", ki.Props{
-				"label":           "Edit...",
-				"no-update-after": true,
+				"label": "Edit...",
 			}},
 		}},
 	},
@@ -2198,16 +2215,14 @@ var GideProps = ki.Props{
 		{"AppMenu", ki.BlankProp{}},
 		{"File", ki.PropSlice{
 			{"OpenRecent", ki.Props{
-				"submenu":         &SavedPaths,
-				"no-update-after": true,
+				"submenu": &SavedPaths,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
 			}},
 			{"OpenProj", ki.Props{
-				"shortcut":        "Command+O",
-				"label":           "Open Project...",
-				"no-update-after": true,
+				"shortcut": "Command+O",
+				"label":    "Open Project...",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
@@ -2216,18 +2231,16 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"OpenPath", ki.Props{
-				"label":           "Open Path...",
-				"no-update-after": true,
+				"label": "Open Path...",
 				"Args": ki.PropSlice{
 					{"Path", ki.Props{}},
 				},
 			}},
 			{"New", ki.PropSlice{
 				{"NewProj", ki.Props{
-					"shortcut":        "Command+N",
-					"label":           "New Project...",
-					"desc":            "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all Gide projects are basically folders with files.  You can also specify the main language and version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
-					"no-update-after": true,
+					"shortcut": "Command+N",
+					"label":    "New Project...",
+					"desc":     "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all Gide projects are basically folders with files.  You can also specify the main language and version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
 					"Args": ki.PropSlice{
 						{"Parent Folder", ki.Props{
 							"dirs-only":     true, // todo: support
@@ -2241,9 +2254,8 @@ var GideProps = ki.Props{
 					},
 				}},
 				{"NewFile", ki.Props{
-					"label":           "New File...",
-					"desc":            "Create a new file in project -- to create in sub-folders, use context menu on folder in file browser",
-					"no-update-after": true,
+					"label": "New File...",
+					"desc":  "Create a new file in project -- to create in sub-folders, use context menu on folder in file browser",
 					"Args": ki.PropSlice{
 						{"File Name", ki.Props{
 							"width": 60,
@@ -2253,13 +2265,19 @@ var GideProps = ki.Props{
 			}},
 			{"SaveProj", ki.Props{
 				// "shortcut": "Command+S",
-				"label":           "Save Project",
-				"no-update-after": true,
+				"label": "Save Project",
+				"updtfunc": func(gei interface{}, act *gi.Action) {
+					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+					act.SetInactiveState(ge.IsEmpty())
+				},
 			}},
 			{"SaveProjAs", ki.Props{
 				// "shortcut": "Shift+Command+S",
-				"label":           "Save Project As...",
-				"no-update-after": true,
+				"label": "Save Project As...",
+				"updtfunc": func(gei interface{}, act *gi.Action) {
+					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+					act.SetInactiveState(ge.IsEmpty())
+				},
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
@@ -2272,21 +2290,28 @@ var GideProps = ki.Props{
 			}},
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
-				"label":           "Open File...",
-				"no-update-after": true,
-				// "shortcut": "Command+O",
+				"label": "Open File...",
+				"updtfunc": func(gei interface{}, act *gi.Action) {
+					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+					act.SetInactiveState(ge.IsEmpty())
+				},
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
 			}},
 			{"SaveActiveView", ki.Props{
-				"label":           "Save File",
-				"no-update-after": true,
-				// "shortcut": "Command+S", // todo: need gide shortcuts
+				"label": "Save File",
+				"updtfunc": func(gei interface{}, act *gi.Action) {
+					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+					act.SetInactiveState(ge.IsEmpty())
+				},
 			}},
 			{"SaveActiveViewAs", ki.Props{
-				"label":           "Save File As...",
-				"no-update-after": true,
+				"label": "Save File As...",
+				"updtfunc": func(gei interface{}, act *gi.Action) {
+					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+					act.SetInactiveState(ge.IsEmpty())
+				},
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ActiveFilename",
@@ -2294,15 +2319,21 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"RevertActiveView", ki.Props{
-				"desc":            "Revert active file to last saved version: this will lose all active changes -- are you sure?",
-				"confirm":         true,
-				"label":           "Revert File...",
-				"no-update-after": true,
+				"desc":    "Revert active file to last saved version: this will lose all active changes -- are you sure?",
+				"confirm": true,
+				"label":   "Revert File...",
+				"updtfunc": func(gei interface{}, act *gi.Action) {
+					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+					act.SetInactiveState(ge.IsEmpty())
+				},
 			}},
 			{"sep-prefs", ki.BlankProp{}},
 			{"ProjPrefs", ki.Props{
 				"label": "Project Prefs...",
-				// "shortcut": "Command+S",
+				"updtfunc": func(gei interface{}, act *gi.Action) {
+					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+					act.SetInactiveState(ge.IsEmpty())
+				},
 			}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
@@ -2337,9 +2368,7 @@ var GideProps = ki.Props{
 				{"Split Name", ki.Props{}},
 			},
 		}},
-		{"ExecCmd", ki.Props{
-			"no-update-after": true,
-		}},
+		{"ExecCmd", ki.Props{}},
 	},
 }
 
@@ -2378,6 +2407,13 @@ func OpenGideProj(projfile string) (*gi.Window, *Gide) {
 // NewGideWindow is common code for Open GideWindow from Proj or Path
 func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
 	winm := "gide-" + projnm
+
+	if win, found := gi.AllWindows.FindName(winm); found {
+		mfr := win.SetMainFrame()
+		ge := mfr.KnownChild(0).Embed(KiT_Gide).(*Gide)
+		win.OSWin.Raise()
+		return win, ge
+	}
 
 	width := 1280
 	height := 720
