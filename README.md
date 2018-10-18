@@ -43,6 +43,12 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
+* add View  then Navigate menus
+
+* add < > arrows for location history
+
+* john will come up with keyboard shortcuts for other examples
+
 * relative path links ../../../etc should work better
 
 * clicking on links in command output not always working -- need to double-click sometimes -- should just work with single click
