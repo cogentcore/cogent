@@ -189,6 +189,7 @@ var FileNodeProps = ki.Props{
 			"Args": ki.PropSlice{
 				{"New Name", ki.Props{
 					"default-field": "Name",
+					"width":         60,
 				}},
 			},
 		}},
@@ -360,7 +361,18 @@ var FileTreeViewProps = ki.Props{
 		{"sep-open", ki.BlankProp{}},
 		{"OpenDirs", ki.Props{
 			"label": "Open Dir",
-			"desc":  "open given directory to see files within",
+			"desc":  "open given folder to see files within",
+			"updtfunc": func(fni interface{}, act *gi.Action) {
+				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+				fn := ft.FileNode()
+				if fn != nil {
+					act.SetActiveStateUpdt(fn.IsDir())
+				}
+			},
+		}},
+		{"NewFile", ki.Props{
+			"label": "New File...",
+			"desc":  "make a new file in this folder",
 			"updtfunc": func(fni interface{}, act *gi.Action) {
 				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 				fn := ft.FileNode()

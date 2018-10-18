@@ -92,17 +92,16 @@ func (ge *Gide) OpenRecent(filename gi.FileName) {
 	if ext == ".gide" {
 		ge.OpenProj(filename)
 	} else {
-		ge.NewProj(filename)
+		ge.OpenPath(filename)
 	}
 }
 
-// NewProj opens a new pproject at given path, which can either be a specific
-// file or a directory containing multiple files of interest -- opens in
+// OpenPath creates a new project by opening given path, which can either be a
+// specific file or a folder containing multiple files of interest -- opens in
 // current Gide object if it is empty, or otherwise opens a new window.
-func (ge *Gide) NewProj(path gi.FileName) {
+func (ge *Gide) OpenPath(path gi.FileName) (*gi.Window, *Gide) {
 	if !ge.IsEmpty() {
-		NewGideProj(string(path))
-		return
+		return NewGideProjPath(string(path))
 	}
 	ge.Defaults()
 	root, pnm, fnm, ok := ProjPathParse(string(path))
@@ -128,6 +127,65 @@ func (ge *Gide) NewProj(path gi.FileName) {
 		if fnm != "" {
 			ge.NextViewFile(gi.FileName(fnm))
 		}
+	}
+	return ge.ParentWindow(), ge
+}
+
+// OpenProj opens .gide project file and its settings from given filename, in a standard
+// JSON-formatted file
+func (ge *Gide) OpenProj(filename gi.FileName) (*gi.Window, *Gide) {
+	if !ge.IsEmpty() {
+		return OpenGideProj(string(filename))
+	}
+	ge.Defaults()
+	ge.Prefs.OpenJSON(filename)
+	ge.Prefs.ProjFilename = filename // should already be set but..
+	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
+	if ok {
+		os.Chdir(string(ge.Prefs.ProjRoot))
+		SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+		SavePaths()
+		ge.SetName(pnm)
+		ge.ApplyPrefs()
+		ge.UpdateProj()
+		win := ge.ParentWindow()
+		if win != nil {
+			winm := "gide-" + pnm
+			win.SetName(winm)
+			win.SetTitle(winm)
+		}
+	}
+	return ge.ParentWindow(), ge
+}
+
+// NewProj creates a new project at given path, making a new folder in that
+// path -- all Gide projects are essentially defined by a path to a folder
+// containing files.  If the folder already exists, then use OpenPath.
+// Can also specify main language and version control type
+func (ge *Gide) NewProj(path gi.FileName, folder string, mainLang LangName, versCtrl VersCtrlName) (*gi.Window, *Gide) {
+	np := filepath.Join(string(path), folder)
+	err := os.MkdirAll(np, 0775)
+	if err != nil {
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make Folder", Prompt: fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err)}, true, false, nil, nil)
+		return nil, nil
+	}
+	win, nge := ge.OpenPath(gi.FileName(np))
+	if mainLang != "" {
+		nge.Prefs.MainLang = mainLang
+	}
+	if versCtrl != "" {
+		nge.Prefs.VersCtrl = versCtrl
+	}
+	return win, nge
+}
+
+// NewFile creates a new file in the project
+func (ge *Gide) NewFile(filename string) {
+	np := filepath.Join(string(ge.ProjRoot), filename)
+	_, err := os.Create(np)
+	if err != nil {
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make File", Prompt: fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)}, true, false, nil, nil)
+		return
 	}
 }
 
@@ -181,32 +239,6 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) {
 			})
 	}
 	spell.SaveModel()
-}
-
-// OpenProj opens project and its settings from given filename, in a standard
-// JSON-formatted file
-func (ge *Gide) OpenProj(filename gi.FileName) {
-	if !ge.IsEmpty() {
-		OpenGideProj(string(filename))
-		return
-	}
-	ge.Prefs.OpenJSON(filename)
-	ge.Prefs.ProjFilename = filename // should already be set but..
-	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
-	if ok {
-		os.Chdir(string(ge.Prefs.ProjRoot))
-		SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
-		SavePaths()
-		ge.SetName(pnm)
-		ge.ApplyPrefs()
-		ge.UpdateProj()
-		win := ge.ParentWindow()
-		if win != nil {
-			winm := "gide-" + pnm
-			win.SetName(winm)
-			win.SetTitle(winm)
-		}
-	}
 }
 
 // UpdateProj does full update to current proj
@@ -456,7 +488,7 @@ func (ge *Gide) RevertActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		tv.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
-		tv.Buf.ReOpen()
+		tv.Buf.Revert()
 	}
 }
 
@@ -514,7 +546,7 @@ func (ge *Gide) RunPostCmdsFileNode(fn *giv.FileNode) bool {
 		}
 	}
 	if ran {
-		fn.Buf.ReOpen()
+		fn.Buf.Revert()
 		return true
 	}
 	return false
@@ -1574,7 +1606,7 @@ func (ge *Gide) Defaults() {
 	ge.Prefs.Editor = Prefs.Editor
 	ge.Prefs.Splits = []float32{.1, .3, .3, .3, 0}
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	ge.Files.SetChildType(KiT_FileNode)
+	ge.Files.NodeType = KiT_FileNode
 }
 
 // GrabPrefs grabs the current project preference settings from various
@@ -2172,16 +2204,6 @@ var GideProps = ki.Props{
 					{"File Name", ki.Props{}},
 				},
 			}},
-			{"NewProj", ki.Props{
-				"shortcut":        "Command+N",
-				"label":           "New Project...",
-				"no-update-after": true,
-				"Args": ki.PropSlice{
-					{"Proj Dir", ki.Props{
-						"dirs-only": true, // todo: support
-					}},
-				},
-			}},
 			{"OpenProj", ki.Props{
 				"shortcut":        "Command+O",
 				"label":           "Open Project...",
@@ -2192,6 +2214,42 @@ var GideProps = ki.Props{
 						"ext":           ".gide",
 					}},
 				},
+			}},
+			{"OpenPath", ki.Props{
+				"label":           "Open Path...",
+				"no-update-after": true,
+				"Args": ki.PropSlice{
+					{"Path", ki.Props{}},
+				},
+			}},
+			{"New", ki.PropSlice{
+				{"NewProj", ki.Props{
+					"shortcut":        "Command+N",
+					"label":           "New Project...",
+					"desc":            "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all Gide projects are basically folders with files.  You can also specify the main language and version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
+					"no-update-after": true,
+					"Args": ki.PropSlice{
+						{"Parent Folder", ki.Props{
+							"dirs-only":     true, // todo: support
+							"default-field": "ProjRoot",
+						}},
+						{"Folder", ki.Props{
+							"width": 60,
+						}},
+						{"Main Lang", ki.Props{}},
+						{"Version Ctrl", ki.Props{}},
+					},
+				}},
+				{"NewFile", ki.Props{
+					"label":           "New File...",
+					"desc":            "Create a new file in project -- to create in sub-folders, use context menu on folder in file browser",
+					"no-update-after": true,
+					"Args": ki.PropSlice{
+						{"File Name", ki.Props{
+							"width": 60,
+						}},
+					},
+				}},
 			}},
 			{"SaveProj", ki.Props{
 				// "shortcut": "Command+S",
@@ -2297,9 +2355,9 @@ func init() {
 	}
 }
 
-// NewGideProj creates a new Gide window with a new Gide project for given
+// NewGideProjPath creates a new Gide window with a new Gide project for given
 // path, returning the window and the path
-func NewGideProj(path string) (*gi.Window, *Gide) {
+func NewGideProjPath(path string) (*gi.Window, *Gide) {
 	_, projnm, _, _ := ProjPathParse(path)
 	return NewGideWindow(path, projnm, true)
 }
@@ -2317,8 +2375,8 @@ func OpenGideProj(projfile string) (*gi.Window, *Gide) {
 	return NewGideWindow(projfile, projnm, false)
 }
 
-// NewGideWindow is common code for New / Open GideWindow
-func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
+// NewGideWindow is common code for Open GideWindow from Proj or Path
+func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
 	winm := "gide-" + projnm
 
 	width := 1280
@@ -2333,8 +2391,8 @@ func NewGideWindow(path, projnm string, doNew bool) (*gi.Window, *Gide) {
 	ge := mfr.AddNewChild(KiT_Gide, "gide").(*Gide)
 	ge.Viewport = vp
 
-	if doNew {
-		ge.NewProj(gi.FileName(path))
+	if doPath {
+		ge.OpenPath(gi.FileName(path))
 	} else {
 		ge.OpenProj(gi.FileName(path))
 	}
