@@ -270,6 +270,7 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 		log.Println(emsg)
 		return
 	}
+	path, _ = filepath.Abs(path)
 	dir, fn := filepath.Split(path)
 	pathIsDir := info.IsDir()
 	if pathIsDir {

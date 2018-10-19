@@ -21,7 +21,7 @@ import (
 type Split struct {
 	Name   string    `desc:"name of splitter config"`
 	Desc   string    `desc:"brief description"`
-	Splits []float32 `min:"0" max:"1" step:".05" desc:"splitter panel proportions"`
+	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"true" desc:"splitter panel proportions"`
 }
 
 // Splits is a list of named splitter configurations
