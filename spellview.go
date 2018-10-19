@@ -14,7 +14,8 @@ import (
 	"strings"
 )
 
-var curunknown string // the current misspelled/unknown word
+var curunknown spell.TextWord // the current misspelled/unknown word
+var cursuggests []string
 
 // SpellParams
 type SpellParams struct {
@@ -300,22 +301,23 @@ func (sv *SpellView) ConfigToolbar() {
 
 // CheckNext will find the next misspelled/unknown word
 func (sv *SpellView) CheckNext() {
-	w, suggests := spell.NextUnknownWord()
-	if w == "" {
+	tw, suggests := spell.NextUnknownWord()
+	if tw.Word == "" {
 		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, true, false, nil, nil)
 		return
 	}
 
-	if w != "" {
-		sv.SetUnknownAndSuggest(w, suggests)
+	if tw.Word != "" {
+		sv.SetUnknownAndSuggest(tw, suggests)
 	}
 }
 
 // SetUnknownAndSuggest
-func (sv *SpellView) SetUnknownAndSuggest(unknown string, suggests []string) {
+func (sv *SpellView) SetUnknownAndSuggest(unknown spell.TextWord, suggests []string) {
 	uf := sv.FindUnknownText()
-	uf.SetText(unknown)
+	uf.SetText(unknown.Word)
 	curunknown = unknown
+	cursuggests = suggests
 
 	sf := sv.FindSuggestText()
 	if len(suggests) == 0 {
@@ -323,13 +325,20 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown string, suggests []string) {
 	} else {
 		sf.SetText(suggests[0])
 	}
+	tv := sv.Gide.ActiveTextView()
+	tp := giv.TextPos{Ln: unknown.Line, Ch: unknown.StartPos}
+	tv.OpenLinkAt(tp)
+
 }
 
 // ChangeAction replaces the known word with the selected suggested word
 // and call CheckNextAction
 func (sv *SpellView) ChangeAction() {
-	// todo: borrow code from findview replace action
-
+	tv := sv.Gide.ActiveTextView()
+	st := giv.TextPos{Ln: curunknown.Line, Ch: curunknown.StartPos}
+	en := giv.TextPos{Ln: curunknown.Line, Ch: curunknown.EndPos}
+	tbe := tv.Buf.DeleteText(st, en, true, true)
+	tv.Buf.InsertText(tbe.Reg.Start, []byte(cursuggests[0]), true, true)
 	sv.CheckNext()
 }
 
@@ -342,7 +351,7 @@ func (sv *SpellView) IgnoreAction() {
 // LearnAction will add the current unknown word to corpus
 // and call CheckNext
 func (sv *SpellView) LearnAction() {
-	new := strings.ToLower(curunknown)
+	new := strings.ToLower(curunknown.Word)
 	spell.LearnWord(new)
 	sv.CheckNext()
 }
