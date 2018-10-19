@@ -300,22 +300,22 @@ func (sv *SpellView) ConfigToolbar() {
 
 // CheckNext will find the next misspelled/unknown word
 func (sv *SpellView) CheckNext() {
-	w, suggests := spell.NextUnknownWord()
-	if w == "" {
+	tw, suggests := spell.NextUnknownWord()
+	if tw.Word == "" {
 		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, true, false, nil, nil)
 		return
 	}
 
-	if w != "" {
-		sv.SetUnknownAndSuggest(w, suggests)
+	if tw.Word != "" {
+		sv.SetUnknownAndSuggest(tw, suggests)
 	}
 }
 
 // SetUnknownAndSuggest
-func (sv *SpellView) SetUnknownAndSuggest(unknown string, suggests []string) {
+func (sv *SpellView) SetUnknownAndSuggest(unknown spell.TextWord, suggests []string) {
 	uf := sv.FindUnknownText()
-	uf.SetText(unknown)
-	curunknown = unknown
+	uf.SetText(unknown.Word)
+	curunknown = unknown.Word
 
 	sf := sv.FindSuggestText()
 	if len(suggests) == 0 {
@@ -323,6 +323,8 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown string, suggests []string) {
 	} else {
 		sf.SetText(suggests[0])
 	}
+	//ftv.OpenLinkAt(ftv.CursorPos)
+
 }
 
 // ChangeAction replaces the known word with the selected suggested word

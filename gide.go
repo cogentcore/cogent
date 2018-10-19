@@ -1396,8 +1396,8 @@ func (ge *Gide) Spell() {
 
 	tv := ge.ActiveTextView()
 	spell.NewSpellCheck(tv.Buf.Txt)
-	word, suggests := spell.NextUnknownWord()
-	sv.SetUnknownAndSuggest(word, suggests)
+	tw, suggests := spell.NextUnknownWord()
+	sv.SetUnknownAndSuggest(tw, suggests)
 
 	//unknowns, err := spell.CheckFile(fp)
 	//if err != nil {
