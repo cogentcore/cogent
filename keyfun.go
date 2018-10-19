@@ -46,7 +46,7 @@ const (
 	KeyFunBufSaveAs          // save as active textview buffer to its file
 	KeyFunBufClose           // close active textview buffer
 	KeyFunExecCmd            // execute a command on active textview buffer
-	KeyFunRegSave            // save selection to named register
+	KeyFunRegCopy            // copy selection to named register
 	KeyFunRegPaste           // paste selection from named register
 	KeyFunCommentOut         // comment out region
 	KeyFunIndent             // indent region
@@ -65,6 +65,16 @@ func (kf *KeyFuns) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(
 type KeySeq struct {
 	Key1 key.Chord // first key
 	Key2 key.Chord // second key (optional)
+}
+
+// String() satisfies fmt.Stringer interface
+func (kf KeySeq) String() string {
+	return string(kf.Key1 + " " + kf.Key2)
+}
+
+// Label() satisfies gi.Labeler interface
+func (kf KeySeq) Label() string {
+	return string(kf.Key1 + " " + kf.Key2)
 }
 
 // TextMarshaler is required for JSON encoding of struct keys
@@ -166,6 +176,9 @@ func (km *KeySeqMap) ToSlice() []KeyMapItem {
 
 // ChordForFun returns first key sequence trigger for given KeyFun in map
 func (km *KeySeqMap) ChordForFun(kf KeyFuns) KeySeq {
+	if km == nil {
+		return KeySeq{}
+	}
 	for key, fun := range *km {
 		if fun == kf {
 			return key
@@ -487,7 +500,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+C", "Control+C"}: KeyFunExecCmd,
 		KeySeq{"Control+C", "c"}:         KeyFunExecCmd,
 		KeySeq{"Control+C", "Control+O"}: KeyFunBufClone,
-		KeySeq{"Control+X", "x"}:         KeyFunRegSave,
+		KeySeq{"Control+X", "x"}:         KeyFunRegCopy,
 		KeySeq{"Control+X", "g"}:         KeyFunRegPaste,
 		KeySeq{"Control+C", "k"}:         KeyFunCommentOut,
 		KeySeq{"Control+C", "Control+K"}: KeyFunCommentOut,

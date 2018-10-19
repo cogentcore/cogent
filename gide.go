@@ -456,6 +456,8 @@ func (ge *Gide) SaveActiveView() {
 		if tv.Buf.Filename != "" {
 			tv.Buf.Save()
 			ge.SetStatus("File Saved")
+			fpath, _ := filepath.Split(string(tv.Buf.Filename))
+			ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
 			ge.RunPostCmdsActiveView()
 		} else {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
@@ -474,8 +476,9 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 		tv.Buf.SaveAs(filename)
 		ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
 		ge.RunPostCmdsActiveView()
-		obuf.Open(ofn)                   // revert old buffer to old filename
-		ge.Files.UpdateNewFile(filename) // new node will have this file!
+		obuf.Open(ofn) // revert old buffer to old filename
+		fpath, _ := filepath.Split(string(filename))
+		ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
 		fnk, ok := ge.Files.FindFile(string(filename))
 		if ok {
 			fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
@@ -1074,6 +1077,7 @@ func (ge *Gide) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) 
 	buf := &giv.TextBuf{}
 	buf.InitName(buf, cmdNm+"-buf")
 	ge.CmdBufs[cmdNm] = buf
+	buf.Autosave = false
 	return buf, true
 }
 
@@ -1509,9 +1513,9 @@ func (ge *Gide) OpenSpellURL(ur string, stv *giv.TextView) bool {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Registers
 
-// RegisterSave saves current selection in active text view to register of given name
+// RegisterCopy saves current selection in active text view to register of given name
 // returns true if saved
-func (ge *Gide) RegisterSave(name string) bool {
+func (ge *Gide) RegisterCopy(name string) bool {
 	if name == "" {
 		return false
 	}
@@ -1528,6 +1532,8 @@ func (ge *Gide) RegisterSave(name string) bool {
 	}
 	AvailRegisters[name] = string(sel.ToBytes())
 	AvailRegisters.SavePrefs()
+	ge.Prefs.Register = RegisterName(name)
+	tv.SelectReset()
 	return true
 }
 
@@ -1546,6 +1552,7 @@ func (ge *Gide) RegisterPaste(name RegisterName) bool {
 		return false
 	}
 	tv.InsertAtCursor([]byte(str))
+	ge.Prefs.Register = name
 	return true
 }
 
@@ -2014,6 +2021,10 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	switch gkf {
 	case gi.KeyFunFind:
 		kt.SetProcessed()
+		tv := ge.ActiveTextView()
+		if tv.HasSelection() {
+			ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
+		}
 		giv.CallMethod(ge, "Find", ge.Viewport)
 	}
 	if kt.IsProcessed() {
@@ -2047,9 +2058,9 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	case KeyFunExecCmd:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "ExecCmd", ge.Viewport)
-	case KeyFunRegSave:
+	case KeyFunRegCopy:
 		kt.SetProcessed()
-		giv.CallMethod(ge, "RegisterSave", ge.Viewport)
+		giv.CallMethod(ge, "RegisterCopy", ge.Viewport)
 	case KeyFunRegPaste:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "RegisterPaste", ge.Viewport)
@@ -2145,12 +2156,12 @@ var GideProps = ki.Props{
 			"Args": ki.PropSlice{
 				{"Search For", ki.Props{
 					"default-field": "Prefs.Find.Find",
-					"width":         "80",
+					"width":         80,
 				}},
 				{"Replace With", ki.Props{
 					"desc":          "Optional replace string -- replace will be controlled interactively in Find panel, including replace all",
 					"default-field": "Prefs.Find.Replace",
-					"width":         "80",
+					"width":         80,
 				}},
 				{"Ignore Case", ki.Props{
 					"default-field": "Prefs.Find.IgnoreCase",
@@ -2200,10 +2211,10 @@ var GideProps = ki.Props{
 				"label": "Save...",
 				"Args": ki.PropSlice{
 					{"Name", ki.Props{
-						"width": "60",
+						"width": 60,
 					}},
 					{"Desc", ki.Props{
-						"width": "60",
+						"width": 60,
 					}},
 				},
 			}},
@@ -2339,7 +2350,135 @@ var GideProps = ki.Props{
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
 		}},
-		{"Edit", "Copy Cut Paste"},
+		{"Edit", ki.PropSlice{
+			{"Copy", ki.Props{
+				"keyfun": gi.KeyFunCopy,
+			}},
+			{"Cut", ki.Props{
+				"keyfun": gi.KeyFunCut,
+			}},
+			{"Paste", ki.Props{
+				"keyfun": gi.KeyFunPaste,
+			}},
+			{"Paste Hist...", ki.Props{
+				"keyfun": gi.KeyFunPasteHist,
+			}},
+			{"Registers", ki.PropSlice{
+				{"RegisterCopy", ki.Props{
+					"label": "Copy...",
+					"shortcut-func": func(gei interface{}, act *gi.Action) string {
+						return ActiveKeyMap.ChordForFun(KeyFunRegCopy).String()
+					},
+					"Args": ki.PropSlice{
+						{"Register Name", ki.Props{
+							"default-field": "Prefs.Register",
+						}},
+					},
+				}},
+				{"RegisterPaste", ki.Props{
+					"label": "Paste...",
+					"shortcut-func": func(gei interface{}, act *gi.Action) string {
+						return ActiveKeyMap.ChordForFun(KeyFunRegCopy).String()
+					},
+					"Args": ki.PropSlice{
+						{"Register Name", ki.Props{
+							"default-field": "Prefs.Register",
+						}},
+					},
+				}},
+			}},
+			{"sep-undo", ki.BlankProp{}},
+			{"Undo", ki.Props{
+				"keyfun": gi.KeyFunUndo,
+			}},
+			{"Redo", ki.Props{
+				"keyfun": gi.KeyFunRedo,
+			}},
+			{"sep-find", ki.BlankProp{}},
+			{"Find", ki.Props{
+				"label":    "Find...",
+				"shortcut": gi.KeyFunFind,
+				"desc":     "Find / replace in all open folders in file browser",
+				"Args": ki.PropSlice{
+					{"Search For", ki.Props{
+						"default-field": "Prefs.Find.Find",
+						"width":         80,
+					}},
+					{"Replace With", ki.Props{
+						"desc":          "Optional replace string -- replace will be controlled interactively in Find panel, including replace all",
+						"default-field": "Prefs.Find.Replace",
+						"width":         80,
+					}},
+					{"Ignore Case", ki.Props{
+						"default-field": "Prefs.Find.IgnoreCase",
+					}},
+					{"Languages", ki.Props{
+						"desc":          "restrict find to files associated with these languages -- leave empty for all files",
+						"default-field": "Prefs.Find.Langs",
+					}},
+					{"Current File Only", ki.Props{
+						"desc":          "only look in current active file",
+						"default-field": "Prefs.Find.CurFile",
+					}},
+				},
+			}},
+			{"Spell", ki.Props{
+				"label": "Spelling...",
+			}},
+			{"sep-adv", ki.BlankProp{}},
+			{"CommentOut", ki.Props{
+				"shortcut-func": func(gei interface{}, act *gi.Action) string {
+					return ActiveKeyMap.ChordForFun(KeyFunCommentOut).String()
+				},
+			}},
+			{"Indent", ki.Props{
+				"shortcut-func": func(gei interface{}, act *gi.Action) string {
+					return ActiveKeyMap.ChordForFun(KeyFunIndent).String()
+				},
+			}},
+		}},
+		{"View", ki.PropSlice{
+			{"CloneActiveView", ki.Props{
+				"shortcut-func": func(gei interface{}, act *gi.Action) string {
+					return ActiveKeyMap.ChordForFun(KeyFunBufClone).String()
+				},
+			}},
+			{"Splits", ki.PropSlice{
+				{"SetSplit", ki.Props{
+					"label":   "Set",
+					"submenu": &AvailSplitNames,
+					"Args": ki.PropSlice{
+						{"Split Name", ki.Props{}},
+					},
+				}},
+				{"SaveSplit", ki.Props{
+					"label": "Save...",
+					"Args": ki.PropSlice{
+						{"Name", ki.Props{
+							"width": 60,
+						}},
+						{"Desc", ki.Props{
+							"width": 60,
+						}},
+					},
+				}},
+				{"EditSplits", ki.Props{
+					"label": "Edit...",
+				}},
+			}},
+		}},
+		{"Command", ki.PropSlice{
+			{"Build", ki.Props{}},
+			{"Run", ki.Props{}},
+			{"Commit", ki.Props{}},
+			{"ExecCmdNameActive", ki.Props{
+				"label":        "Exec Cmd",
+				"submenu-func": giv.SubMenuFunc(GideExecCmds),
+				"Args": ki.PropSlice{
+					{"Cmd Name", ki.Props{}},
+				},
+			}},
+		}},
 		{"Window", "Windows"},
 	},
 	"CallMethods": ki.PropSlice{
@@ -2347,20 +2486,6 @@ var GideProps = ki.Props{
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
-				}},
-			},
-		}},
-		{"RegisterSave", ki.Props{
-			"Args": ki.PropSlice{
-				{"Register Name", ki.Props{
-					"default-field": "Prefs.Register",
-				}},
-			},
-		}},
-		{"RegisterPaste", ki.Props{
-			"Args": ki.PropSlice{
-				{"Register Name", ki.Props{
-					"default-field": "Prefs.Register",
 				}},
 			},
 		}},

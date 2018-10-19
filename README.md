@@ -47,21 +47,17 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * add < > arrows for location history
 
+* add all the other languages
+
 * john will come up with keyboard shortcuts for other examples
 
 * relative path links ../../../etc should work better
 
-* clicking on links in command output not always working -- need to double-click sometimes -- should just work with single click
-
-* selecting a buffer does not reset cursor (still??)
-
-* need to be able to cancel process -- menu associated with tab or panel?
+* tab kill button kills the process
 
 * find needs to: as you start replacing, positions within a single line get off (lines stay ok)
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
-
-* add all the other commands!
 
 * add gide icon to overall list and plug that into .gide extension -- need to
   generalize all that api so it is easily extensible.
