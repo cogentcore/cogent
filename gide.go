@@ -792,7 +792,11 @@ func TextLinkHandler(tl gi.TextLink) bool {
 			ge.OpenSpellURL(ur, ftv)
 		case strings.HasPrefix(ur, "file:///"):
 			ge.OpenFileURL(ur)
+		default:
+			oswin.TheApp.OpenURL(ur)
 		}
+	} else {
+		oswin.TheApp.OpenURL(tl.URL)
 	}
 	return true
 }
@@ -1768,6 +1772,11 @@ func (ge *Gide) SplitsEdit() {
 	SplitsView(&AvailSplits)
 }
 
+// HelpWiki opens wiki page for gide on github
+func (ge *Gide) HelpWiki() {
+	oswin.TheApp.OpenURL("https://github.com/goki/gide/wiki")
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //   GUI configs
 
@@ -2126,7 +2135,7 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 		ge.Indent()
 	case KeyFunSetSplit:
 		kt.SetProcessed()
-		giv.CallMethod(ge, "SetSplit", ge.Viewport)
+		giv.CallMethod(ge, "SplitsSetView", ge.Viewport)
 	}
 }
 
@@ -2606,6 +2615,9 @@ var GideProps = ki.Props{
 			}},
 		}},
 		{"Window", "Windows"},
+		{"Help", ki.PropSlice{
+			{"HelpWiki", ki.Props{}},
+		}},
 	},
 	"CallMethods": ki.PropSlice{
 		{"NextViewFile", ki.Props{
@@ -2615,7 +2627,7 @@ var GideProps = ki.Props{
 				}},
 			},
 		}},
-		{"SetSplit", ki.Props{
+		{"SplitsSetView", ki.Props{
 			"Args": ki.PropSlice{
 				{"Split Name", ki.Props{}},
 			},
