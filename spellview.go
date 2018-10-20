@@ -28,6 +28,7 @@ type SpellView struct {
 	ChangeOffset int            `desc:"compensation for change word length different than original word"`
 	PreviousLine int            `desc:"line of previous unknown word"`
 	CurrentLine  int            `desc:"line of current unknown word"`
+	LastAction   *gi.Action     `desc:"last user action (ignore, change, learn)"`
 }
 
 var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
@@ -365,10 +366,22 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown spell.TextWord, suggests []str
 	} else {
 		cf.SetText(suggests[0])
 		sugview := sv.FindSuggestView()
-		sugview.IsArray = true
+		//sugview.IsArray = true
 		sugview.UpdateFromSlice()
 	}
-
+	tv := sv.Gide.ActiveTextView()
+	st := sv.UnknownStartPos()
+	en := sv.UnknownEndPos()
+	tv.UpdateStart()
+	tv.Highlights = tv.Highlights[:0]
+	tv.SetCursorShow(st)
+	tv.Highlights = append(tv.Highlights, giv.TextRegion{Start: st, End: en})
+	tv.UpdateEnd(true)
+	if sv.LastAction == nil {
+		sv.GrabFocus()
+	} else {
+		sv.LastAction.GrabFocus()
+	}
 }
 
 // ChangeAction replaces the known word with the selected suggested word
@@ -378,23 +391,45 @@ func (sv *SpellView) ChangeAction() {
 	if tv == nil {
 		return
 	}
-	if sv.CurrentLine != sv.PreviousLine {
-		sv.ChangeOffset = 0
-	}
-
-	st := giv.TextPos{Ln: sv.Unknown.Line, Ch: sv.Unknown.StartPos + sv.ChangeOffset}
-	en := giv.TextPos{Ln: sv.Unknown.Line, Ch: sv.Unknown.EndPos + sv.ChangeOffset}
+	st := sv.UnknownStartPos()
+	en := sv.UnknownEndPos()
 	tbe := tv.Buf.DeleteText(st, en, true, true)
 	ct := sv.FindChangeText()
 	bs := []byte(string(ct.EditTxt))
 	tv.Buf.InsertText(tbe.Reg.Start, bs, true, true)
 	sv.ChangeOffset = len(bs) - (en.Ch - st.Ch) // new length - old length
+	sv.LastAction = sv.FindChangeAct()
 	sv.CheckNext()
+}
+
+// UnknownStartPos returns the start position of the current unknown word adjusted for any prior replacement text
+func (sv *SpellView) UnknownStartPos() giv.TextPos {
+	pos := giv.TextPos{Ln: sv.Unknown.Line, Ch: sv.Unknown.StartPos}
+	pos = sv.AdjustTextPos(pos)
+	return pos
+}
+
+// UnknownEndPos returns the end position of the current unknown word adjusted for any prior replacement text
+func (sv *SpellView) UnknownEndPos() giv.TextPos {
+	pos := giv.TextPos{Ln: sv.Unknown.Line, Ch: sv.Unknown.EndPos}
+	pos = sv.AdjustTextPos(pos)
+	return pos
+}
+
+// AdjustTextPos adjust the character position to compensate for replacement text being different length than original text
+func (sv *SpellView) AdjustTextPos(tp giv.TextPos) giv.TextPos {
+	if sv.CurrentLine != sv.PreviousLine {
+		sv.ChangeOffset = 0
+		return tp
+	}
+	tp.Ch += sv.ChangeOffset
+	return tp
 }
 
 // IgnoreAction will skip the current misspelled/unknown word
 // and call CheckNextAction
 func (sv *SpellView) IgnoreAction() {
+	sv.LastAction = sv.FindIgnoreAct()
 	sv.CheckNext()
 }
 
@@ -403,6 +438,7 @@ func (sv *SpellView) IgnoreAction() {
 func (sv *SpellView) LearnAction() {
 	new := strings.ToLower(sv.Unknown.Word)
 	spell.LearnWord(new)
+	sv.LastAction = sv.FindLearnAct()
 	sv.CheckNext()
 }
 
