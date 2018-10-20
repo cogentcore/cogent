@@ -1355,7 +1355,7 @@ func (ge *Gide) CursorToHistNext() bool {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *Gide) Find(find, repl string, ignoreCase bool, langs LangNames, curFileOnly bool) {
+func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs LangNames) {
 	if find == "" {
 		return
 	}
@@ -2269,13 +2269,13 @@ var GideProps = ki.Props{
 				{"Ignore Case", ki.Props{
 					"default-field": "Prefs.Find.IgnoreCase",
 				}},
-				{"Languages", ki.Props{
-					"desc":          "restrict find to files associated with these languages -- leave empty for all files",
-					"default-field": "Prefs.Find.Langs",
-				}},
 				{"Current File Only", ki.Props{
 					"desc":          "only look in current active file",
 					"default-field": "Prefs.Find.CurFile",
+				}},
+				{"Languages", ki.Props{
+					"desc":          "restrict find to files associated with these languages -- leave empty for all files",
+					"default-field": "Prefs.Find.Langs",
 				}},
 			},
 		}},
@@ -2524,13 +2524,13 @@ var GideProps = ki.Props{
 					{"Ignore Case", ki.Props{
 						"default-field": "Prefs.Find.IgnoreCase",
 					}},
-					{"Languages", ki.Props{
-						"desc":          "restrict find to files associated with these languages -- leave empty for all files",
-						"default-field": "Prefs.Find.Langs",
-					}},
 					{"Current File Only", ki.Props{
 						"desc":          "only look in current active file",
 						"default-field": "Prefs.Find.CurFile",
+					}},
+					{"Languages", ki.Props{
+						"desc":          "restrict find to files associated with these languages -- leave empty for all files",
+						"default-field": "Prefs.Find.Langs",
 					}},
 				},
 			}},

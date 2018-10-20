@@ -45,7 +45,9 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 * add Navigate menu?
 
-* add all the other languages
+* add git commands: checkout file
+
+* add all the other languages: C, C++, python, etc
 
 * john will come up with keyboard shortcuts for other examples
 
