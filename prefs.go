@@ -189,10 +189,10 @@ var PreferencesProps = ki.Props{
 			}},
 			{"Save", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": func(pfi interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(pfi interface{}, act *gi.Action) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
-				},
+				}),
 			}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
@@ -204,10 +204,10 @@ var PreferencesProps = ki.Props{
 		{"Save", ki.Props{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updtfunc": func(pfi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(pfi interface{}, act *gi.Action) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdt(pf.Changed)
-			},
+			}),
 		}},
 		{"sep-key", ki.BlankProp{}},
 		{"EditKeyMaps", ki.Props{

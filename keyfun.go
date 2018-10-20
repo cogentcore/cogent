@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/goki/gi"
+	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/ki"
@@ -50,6 +51,7 @@ const (
 	KeyFunRegPaste           // paste selection from named register
 	KeyFunCommentOut         // comment out region
 	KeyFunIndent             // indent region
+	KeyFunJump               // jump to line (same as gi.KeyFunJump)
 	KeyFunSetSplit           // set named splitter config
 	KeyFunsN
 )
@@ -397,9 +399,9 @@ var KeyMapsProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": func(kmi interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(kmi interface{}, act *gi.Action) {
 					act.SetActiveState(AvailKeyMapsChanged)
-				},
+				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
 			{"OpenJSON", ki.Props{
@@ -433,9 +435,9 @@ var KeyMapsProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves KeyMaps to App standard prefs directory, in file key_maps_prefs.json, which will be loaded automatically at startup if prefs SaveKeyMaps is checked (should be if you're using custom keymaps)",
 			"icon": "file-save",
-			"updtfunc": func(kmi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(kmi interface{}, act *gi.Action) {
 				act.SetActiveStateUpdt(AvailKeyMapsChanged)
-			},
+			}),
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"OpenJSON", ki.Props{
@@ -506,6 +508,8 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+C", "Control+K"}: KeyFunCommentOut,
 		KeySeq{"Control+X", "Control+I"}: KeyFunIndent,
 		KeySeq{"Control+X", "i"}:         KeyFunIndent,
+		KeySeq{"Control+X", "Control+J"}: KeyFunJump,
+		KeySeq{"Control+X", "j"}:         KeyFunJump,
 		KeySeq{"Control+X", "v"}:         KeyFunSetSplit, // view
 	}},
 	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{

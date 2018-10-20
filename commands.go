@@ -632,9 +632,9 @@ var CommandsProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": func(cmi interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
 					act.SetActiveState(CustomCmdsChanged)
-				},
+				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
 			{"OpenJSON", ki.Props{
@@ -664,9 +664,9 @@ var CommandsProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Commands to App standard prefs directory, in file proj_types_prefs.json, which will be loaded automatically at startup if prefs SaveCommands is checked (should be if you're using custom commands)",
 			"icon": "file-save",
-			"updtfunc": func(cmi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
 				act.SetActiveStateUpdt(CustomCmdsChanged)
-			},
+			}),
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"OpenJSON", ki.Props{

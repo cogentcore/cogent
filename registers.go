@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/goki/gi"
+	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
@@ -112,9 +113,9 @@ var RegistersProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": func(lti interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
 					act.SetActiveState(AvailRegistersChanged)
-				},
+				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
 			{"OpenJSON", ki.Props{
@@ -144,9 +145,9 @@ var RegistersProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Registers to App standard prefs directory, in file registers_prefs.json, which will be loaded automatically at startup)",
 			"icon": "file-save",
-			"updtfunc": func(lti interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
 				act.SetActiveStateUpdt(AvailRegistersChanged)
-			},
+			}),
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"OpenJSON", ki.Props{

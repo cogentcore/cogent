@@ -577,7 +577,7 @@ func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool
 			case 0:
 				ge.NextViewFile(gi.FileName(fn.Buf.AutoSaveFilename()))
 			case 1:
-				// do nothing
+				fn.Buf.AutoSaveDelete()
 			}
 		})
 	return true
@@ -696,6 +696,25 @@ func (ge *Gide) LinkViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	}
 	nv, nidx := ge.LinkViewFileNode(fn)
 	return nv, nidx, true
+}
+
+// GideOpenNodes gets list of open nodes for submenu-func
+func GideOpenNodes(it interface{}, vp *gi.Viewport2D) []string {
+	ge, ok := it.(ki.Ki).Embed(KiT_Gide).(*Gide)
+	if !ok {
+		return nil
+	}
+	return ge.OpenNodes.Strings()
+}
+
+// ViewOpenNodeName views given open node (by name) in active view
+func (ge *Gide) ViewOpenNodeName(name string) {
+	nb := ge.OpenNodes.ByStringName(name)
+	if nb == nil {
+		return
+	}
+	tv := ge.ActiveTextView()
+	ge.ViewFileNode(tv, ge.ActiveTextViewIdx, nb)
 }
 
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
@@ -1311,6 +1330,23 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
+//    TextView functions
+
+// CursorToHistPrev moves cursor to previous position on history list --
+// returns true if moved
+func (ge *Gide) CursorToHistPrev() bool {
+	tv := ge.ActiveTextView()
+	return tv.CursorToHistPrev()
+}
+
+// CursorToHistNext moves cursor to next position on history list --
+// returns true if moved
+func (ge *Gide) CursorToHistNext() bool {
+	tv := ge.ActiveTextView()
+	return tv.CursorToHistNext()
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
 //    Find / Replace
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
@@ -1693,8 +1729,8 @@ func (ge *Gide) ProjPrefs() {
 	})
 }
 
-// SetSplit sets splitter to given named setting
-func (ge *Gide) SetSplit(split SplitName) {
+// SplitsSetView sets split view splitters to given named setting
+func (ge *Gide) SplitsSetView(split SplitName) {
 	sv := ge.SplitView()
 	if sv != nil {
 		sp, _, ok := AvailSplits.SplitByName(split)
@@ -1704,9 +1740,22 @@ func (ge *Gide) SetSplit(split SplitName) {
 	}
 }
 
-// SaveSplit saves current splitter settings to named splitter settings, and
+// SplitsSave saves current splitter settings to named splitter settings under
+// existing name, and saves to prefs file
+func (ge *Gide) SplitsSave(split SplitName) {
+	sv := ge.SplitView()
+	if sv != nil {
+		sp, _, ok := AvailSplits.SplitByName(split)
+		if ok {
+			sp.SaveSplits(sv.Splits)
+			AvailSplits.SavePrefs()
+		}
+	}
+}
+
+// SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (ge *Gide) SaveSplit(name, desc string) {
+func (ge *Gide) SplitsSaveAs(name, desc string) {
 	sv := ge.SplitView()
 	if sv != nil {
 		AvailSplits.Add(name, desc, sv.Splits)
@@ -1714,8 +1763,8 @@ func (ge *Gide) SaveSplit(name, desc string) {
 	}
 }
 
-// EditSplits opens the SplitsView editor to customize saved splitter settings
-func (ge *Gide) EditSplits() {
+// SplitsEdit opens the SplitsView editor to customize saved splitter settings
+func (ge *Gide) SplitsEdit() {
 	SplitsView(&AvailSplits)
 }
 
@@ -2070,6 +2119,11 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	case KeyFunIndent:
 		kt.SetProcessed()
 		ge.Indent()
+	case KeyFunJump:
+		kt.SetProcessed()
+		tv := ge.ActiveTextView()
+		tv.JumpToLinePrompt()
+		ge.Indent()
 	case KeyFunSetSplit:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "SetSplit", ge.Viewport)
@@ -2106,6 +2160,12 @@ func (ge *Gide) ConnectEvents2D() {
 	ge.KeyChordEvent()
 }
 
+// GideInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
+var GideInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
+	ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+	act.SetInactiveState(ge.IsEmpty())
+})
+
 var GideProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
@@ -2120,11 +2180,16 @@ var GideProps = ki.Props{
 	"ToolBar": ki.PropSlice{
 		{"UpdateFiles", ki.Props{
 			"shortcut": "Command+U",
+			"desc":     "update file browser list of files",
 			"icon":     "update",
 		}},
 		{"ViewFile", ki.Props{
 			"label": "Open",
 			"icon":  "file-open",
+			"desc":  "open a file in current active text view",
+			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				return key.Chord(ActiveKeyMap.ChordForFun(KeyFunFileOpen).String())
+			}),
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
@@ -2133,26 +2198,55 @@ var GideProps = ki.Props{
 		}},
 		{"SaveActiveView", ki.Props{
 			"label": "Save",
+			"desc":  "save active text view file to its current filename",
 			"icon":  "file-save",
+			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufSave).String())
+			}),
 		}},
 		{"SaveActiveViewAs", ki.Props{
 			"label": "Save As...",
 			"icon":  "file-save",
+			"desc":  "save active text view file to a new filename",
+			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufSaveAs).String())
+			}),
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"default-field": "ActiveFilename",
 				}},
 			},
 		}},
-		{"SelectOpenNode", ki.Props{
-			"icon":  "file-text",
-			"label": "Edit",
+		{"ViewOpenNodeName", ki.Props{
+			"icon":         "file-text",
+			"label":        "Edit",
+			"desc":         "select an open file to view in active text view",
+			"submenu-func": giv.SubMenuFunc(GideOpenNodes),
+			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufSelect).String())
+			}),
+			"Args": ki.PropSlice{
+				{"Node Name", ki.Props{}},
+			},
 		}},
 		{"sep-find", ki.BlankProp{}},
+		{"CursorToHistPrev", ki.Props{
+			"icon":     "widget-wedge-left",
+			"shortcut": gi.KeyFunHistPrev,
+			"label":    "",
+			"desc":     "move cursor to previous location in active text view",
+		}},
+		{"CursorToHistNext", ki.Props{
+			"icon":     "widget-wedge-right",
+			"shortcut": gi.KeyFunHistNext,
+			"label":    "",
+			"desc":     "move cursor to next location in active text view",
+		}},
 		{"Find", ki.Props{
-			"label": "Find...",
-			"icon":  "search",
-			"desc":  "Find / replace in all open folders in file browser",
+			"label":    "Find...",
+			"icon":     "search",
+			"desc":     "Find / replace in all open folders in file browser",
+			"shortcut": gi.KeyFunFind,
 			"Args": ki.PropSlice{
 				{"Search For", ki.Props{
 					"default-field": "Prefs.Find.Find",
@@ -2193,22 +2287,27 @@ var GideProps = ki.Props{
 		{"ExecCmdNameActive", ki.Props{
 			"icon":         "terminal",
 			"label":        "Exec Cmd",
+			"desc":         "execute given command on active file / directory / project",
 			"submenu-func": giv.SubMenuFunc(GideExecCmds),
+			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				return key.Chord(ActiveKeyMap.ChordForFun(KeyFunExecCmd).String())
+			}),
 			"Args": ki.PropSlice{
 				{"Cmd Name", ki.Props{}},
 			},
 		}},
 		{"sep-splt", ki.BlankProp{}},
 		{"Splits", ki.PropSlice{
-			{"SetSplit", ki.Props{
-				"label":   "Set",
+			{"SplitsSetView", ki.Props{
+				"label":   "Set View",
 				"submenu": &AvailSplitNames,
 				"Args": ki.PropSlice{
 					{"Split Name", ki.Props{}},
 				},
 			}},
-			{"SaveSplit", ki.Props{
-				"label": "Save...",
+			{"SplitsSaveAs", ki.Props{
+				"label": "Save As...",
+				"desc":  "save current splitter values to a new named split configuration",
 				"Args": ki.PropSlice{
 					{"Name", ki.Props{
 						"width": 60,
@@ -2218,7 +2317,14 @@ var GideProps = ki.Props{
 					}},
 				},
 			}},
-			{"EditSplits", ki.Props{
+			{"SplitsSave", ki.Props{
+				"label":   "Save",
+				"submenu": &AvailSplitNames,
+				"Args": ki.PropSlice{
+					{"Split Name", ki.Props{}},
+				},
+			}},
+			{"SplitsEdit", ki.Props{
 				"label": "Edit...",
 			}},
 		}},
@@ -2235,6 +2341,7 @@ var GideProps = ki.Props{
 			{"OpenProj", ki.Props{
 				"shortcut": "Command+O",
 				"label":    "Open Project...",
+				"desc":     "open a gide project -- can be a .gide file or just a file or directory (projects are just directories with relevant files)",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
@@ -2244,6 +2351,7 @@ var GideProps = ki.Props{
 			}},
 			{"OpenPath", ki.Props{
 				"label": "Open Path...",
+				"desc":  "open a gide project for a file or directory (projects are just directories with relevant files)",
 				"Args": ki.PropSlice{
 					{"Path", ki.Props{}},
 				},
@@ -2277,19 +2385,14 @@ var GideProps = ki.Props{
 			}},
 			{"SaveProj", ki.Props{
 				// "shortcut": "Command+S",
-				"label": "Save Project",
-				"updtfunc": func(gei interface{}, act *gi.Action) {
-					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
-					act.SetInactiveState(ge.IsEmpty())
-				},
+				"label":    "Save Project",
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"SaveProjAs", ki.Props{
 				// "shortcut": "Shift+Command+S",
-				"label": "Save Project As...",
-				"updtfunc": func(gei interface{}, act *gi.Action) {
-					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
-					act.SetInactiveState(ge.IsEmpty())
-				},
+				"label":    "Save Project As...",
+				"desc":     "Save project to given file name -- this is the .gide file containing preferences and current settings -- also saves all open files -- once saved, further saving is automatic",
+				"updtfunc": GideInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
@@ -2303,27 +2406,28 @@ var GideProps = ki.Props{
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
 				"label": "Open File...",
-				"updtfunc": func(gei interface{}, act *gi.Action) {
-					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
-					act.SetInactiveState(ge.IsEmpty())
+				"shortcut-func": func(gei interface{}, act *gi.Action) key.Chord {
+					return key.Chord(ActiveKeyMap.ChordForFun(KeyFunFileOpen).String())
 				},
+				"updtfunc": GideInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
 			}},
 			{"SaveActiveView", ki.Props{
 				"label": "Save File",
-				"updtfunc": func(gei interface{}, act *gi.Action) {
-					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
-					act.SetInactiveState(ge.IsEmpty())
-				},
+				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufSave).String())
+				}),
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"SaveActiveViewAs", ki.Props{
-				"label": "Save File As...",
-				"updtfunc": func(gei interface{}, act *gi.Action) {
-					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
-					act.SetInactiveState(ge.IsEmpty())
-				},
+				"label":    "Save File As...",
+				"updtfunc": GideInactiveEmptyFunc,
+				"desc":     "save active text view file to a new filename",
+				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufSaveAs).String())
+				}),
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ActiveFilename",
@@ -2331,21 +2435,15 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"RevertActiveView", ki.Props{
-				"desc":    "Revert active file to last saved version: this will lose all active changes -- are you sure?",
-				"confirm": true,
-				"label":   "Revert File...",
-				"updtfunc": func(gei interface{}, act *gi.Action) {
-					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
-					act.SetInactiveState(ge.IsEmpty())
-				},
+				"desc":     "Revert active file to last saved version: this will lose all active changes -- are you sure?",
+				"confirm":  true,
+				"label":    "Revert File...",
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"sep-prefs", ki.BlankProp{}},
 			{"ProjPrefs", ki.Props{
-				"label": "Project Prefs...",
-				"updtfunc": func(gei interface{}, act *gi.Action) {
-					ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
-					act.SetInactiveState(ge.IsEmpty())
-				},
+				"label":    "Project Prefs...",
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
@@ -2360,15 +2458,17 @@ var GideProps = ki.Props{
 			{"Paste", ki.Props{
 				"keyfun": gi.KeyFunPaste,
 			}},
-			{"Paste Hist...", ki.Props{
+			{"Paste History...", ki.Props{
 				"keyfun": gi.KeyFunPasteHist,
 			}},
 			{"Registers", ki.PropSlice{
 				{"RegisterCopy", ki.Props{
 					"label": "Copy...",
-					"shortcut-func": func(gei interface{}, act *gi.Action) string {
-						return ActiveKeyMap.ChordForFun(KeyFunRegCopy).String()
-					},
+					"desc":  "save currently-selected text to a named register, which can be pasted later -- persistent across sessions as well",
+					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+						return key.Chord(ActiveKeyMap.ChordForFun(KeyFunRegCopy).String())
+					}),
+					"updtfunc": GideInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Register Name", ki.Props{
 							"default-field": "Prefs.Register",
@@ -2377,9 +2477,11 @@ var GideProps = ki.Props{
 				}},
 				{"RegisterPaste", ki.Props{
 					"label": "Paste...",
-					"shortcut-func": func(gei interface{}, act *gi.Action) string {
-						return ActiveKeyMap.ChordForFun(KeyFunRegCopy).String()
-					},
+					"desc":  "paste text from named register",
+					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+						return key.Chord(ActiveKeyMap.ChordForFun(KeyFunRegPaste).String())
+					}),
+					"updtfunc": GideInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Register Name", ki.Props{
 							"default-field": "Prefs.Register",
@@ -2399,6 +2501,7 @@ var GideProps = ki.Props{
 				"label":    "Find...",
 				"shortcut": gi.KeyFunFind,
 				"desc":     "Find / replace in all open folders in file browser",
+				"updtfunc": GideInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"Search For", ki.Props{
 						"default-field": "Prefs.Find.Find",
@@ -2423,36 +2526,43 @@ var GideProps = ki.Props{
 				},
 			}},
 			{"Spell", ki.Props{
-				"label": "Spelling...",
+				"label":    "Spelling...",
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"sep-adv", ki.BlankProp{}},
 			{"CommentOut", ki.Props{
-				"shortcut-func": func(gei interface{}, act *gi.Action) string {
-					return ActiveKeyMap.ChordForFun(KeyFunCommentOut).String()
-				},
+				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					return key.Chord(ActiveKeyMap.ChordForFun(KeyFunCommentOut).String())
+				}),
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"Indent", ki.Props{
-				"shortcut-func": func(gei interface{}, act *gi.Action) string {
-					return ActiveKeyMap.ChordForFun(KeyFunIndent).String()
-				},
+				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					return key.Chord(ActiveKeyMap.ChordForFun(KeyFunIndent).String())
+				}),
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 		}},
 		{"View", ki.PropSlice{
 			{"CloneActiveView", ki.Props{
-				"shortcut-func": func(gei interface{}, act *gi.Action) string {
-					return ActiveKeyMap.ChordForFun(KeyFunBufClone).String()
-				},
+				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufClone).String())
+				}),
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"Splits", ki.PropSlice{
-				{"SetSplit", ki.Props{
-					"label":   "Set",
-					"submenu": &AvailSplitNames,
+				{"SplitsSetView", ki.Props{
+					"label":    "Set View",
+					"submenu":  &AvailSplitNames,
+					"updtfunc": GideInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Split Name", ki.Props{}},
 					},
 				}},
-				{"SaveSplit", ki.Props{
-					"label": "Save...",
+				{"SplitsSaveAs", ki.Props{
+					"label":    "Save As...",
+					"desc":     "save current splitter values to a new named split configuration",
+					"updtfunc": GideInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Name", ki.Props{
 							"width": 60,
@@ -2462,18 +2572,34 @@ var GideProps = ki.Props{
 						}},
 					},
 				}},
-				{"EditSplits", ki.Props{
-					"label": "Edit...",
+				{"SplitsSave", ki.Props{
+					"label":    "Save",
+					"submenu":  &AvailSplitNames,
+					"updtfunc": GideInactiveEmptyFunc,
+					"Args": ki.PropSlice{
+						{"Split Name", ki.Props{}},
+					},
+				}},
+				{"SplitsEdit", ki.Props{
+					"updtfunc": GideInactiveEmptyFunc,
+					"label":    "Edit...",
 				}},
 			}},
 		}},
 		{"Command", ki.PropSlice{
-			{"Build", ki.Props{}},
-			{"Run", ki.Props{}},
-			{"Commit", ki.Props{}},
+			{"Build", ki.Props{
+				"updtfunc": GideInactiveEmptyFunc,
+			}},
+			{"Run", ki.Props{
+				"updtfunc": GideInactiveEmptyFunc,
+			}},
+			{"Commit", ki.Props{
+				"updtfunc": GideInactiveEmptyFunc,
+			}},
 			{"ExecCmdNameActive", ki.Props{
 				"label":        "Exec Cmd",
 				"submenu-func": giv.SubMenuFunc(GideExecCmds),
+				"updtfunc":     GideInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"Cmd Name", ki.Props{}},
 				},

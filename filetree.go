@@ -100,8 +100,20 @@ func (on *OpenNodes) DeleteIdx(idx int) {
 	*on = append((*on)[:idx], (*on)[idx+1:]...)
 }
 
+// DeleteDeleted deletes deleted nodes on list
+func (on *OpenNodes) DeleteDeleted() {
+	sz := len(*on)
+	for i := sz - 1; i >= 0; i-- {
+		fn := (*on)[i]
+		if fn.This == nil || fn.FRoot == nil || fn.IsDeleted() {
+			on.DeleteIdx(i)
+		}
+	}
+}
+
 // Strings returns a string list of nodes, with paths relative to proj root
 func (on *OpenNodes) Strings() []string {
+	on.DeleteDeleted()
 	sl := make([]string, len(*on))
 	for i, fn := range *on {
 		rp := fn.FRoot.RelPath(fn.FPath)
@@ -116,6 +128,17 @@ func (on *OpenNodes) Strings() []string {
 		}
 	}
 	return sl
+}
+
+// ByStringName returns the open node with given strings name
+func (on *OpenNodes) ByStringName(name string) *giv.FileNode {
+	sl := on.Strings()
+	for i, ns := range sl {
+		if ns == name {
+			return (*on)[i]
+		}
+	}
+	return nil
 }
 
 // NChanged returns number of changed open files
@@ -149,9 +172,6 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, langs Lan
 		return nil
 	}
 	mls := make([]FileSearchResults, 0)
-	if ignoreCase {
-		find = strings.ToLower(find)
-	}
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
 		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
 		if sfn.IsDir() && !sfn.IsOpen() {
@@ -262,6 +282,24 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 	}
 }
 
+// FileTreeInactiveDirFunc is an ActionUpdateFunc that inactivates action if node is a dir
+var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.Action) {
+	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+	fn := ft.FileNode()
+	if fn != nil {
+		act.SetInactiveState(fn.IsDir())
+	}
+})
+
+// FileTreeActiveDirFunc is an ActionUpdateFunc that activates action if node is a dir
+var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.Action) {
+	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+	fn := ft.FileNode()
+	if fn != nil {
+		act.SetActiveState(fn.IsDir())
+	}
+})
+
 var FileTreeViewProps = ki.Props{
 	"indent":           units.NewValue(2, units.Ch),
 	"spacing":          units.NewValue(.5, units.Ch),
@@ -316,14 +354,8 @@ var FileTreeViewProps = ki.Props{
 	},
 	"CtxtMenuActive": ki.PropSlice{
 		{"ViewFiles", ki.Props{
-			"label": "View",
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				fn := ft.FileNode()
-				if fn != nil {
-					act.SetInactiveState(fn.IsDir())
-				}
-			},
+			"label":    "View",
+			"updtfunc": FileTreeInactiveDirFunc,
 		}},
 		{"ExecCmdFiles", ki.Props{
 			"label":        "Exec Cmd",
@@ -333,26 +365,14 @@ var FileTreeViewProps = ki.Props{
 			},
 		}},
 		{"DuplicateFiles", ki.Props{
-			"label": "Duplicate",
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				fn := ft.FileNode()
-				if fn != nil {
-					act.SetInactiveState(fn.IsDir())
-				}
-			},
+			"label":    "Duplicate",
+			"updtfunc": FileTreeInactiveDirFunc,
 		}},
 		{"DeleteFiles", ki.Props{
-			"label":   "Delete",
-			"desc":    "Ok to delete file(s)?  This is not undoable and is not moving to trash / recycle bin",
-			"confirm": true,
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				fn := ft.FileNode()
-				if fn != nil {
-					act.SetInactiveState(fn.IsDir())
-				}
-			},
+			"label":    "Delete",
+			"desc":     "Ok to delete file(s)?  This is not undoable and is not moving to trash / recycle bin",
+			"confirm":  true,
+			"updtfunc": FileTreeInactiveDirFunc,
 		}},
 		{"RenameFiles", ki.Props{
 			"label": "Rename",
@@ -360,26 +380,14 @@ var FileTreeViewProps = ki.Props{
 		}},
 		{"sep-open", ki.BlankProp{}},
 		{"OpenDirs", ki.Props{
-			"label": "Open Dir",
-			"desc":  "open given folder to see files within",
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				fn := ft.FileNode()
-				if fn != nil {
-					act.SetActiveState(fn.IsDir())
-				}
-			},
+			"label":    "Open Dir",
+			"desc":     "open given folder to see files within",
+			"updtfunc": FileTreeActiveDirFunc,
 		}},
 		{"NewFile", ki.Props{
-			"label": "New File...",
-			"desc":  "make a new file in this folder",
-			"updtfunc": func(fni interface{}, act *gi.Action) {
-				ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				fn := ft.FileNode()
-				if fn != nil {
-					act.SetActiveState(fn.IsDir())
-				}
-			},
+			"label":    "New File...",
+			"desc":     "make a new file in this folder",
+			"updtfunc": FileTreeActiveDirFunc,
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"width": 60,

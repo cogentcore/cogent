@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/goki/gi"
+	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
@@ -258,9 +259,9 @@ var LangsProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": func(lti interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
 					act.SetActiveState(AvailLangsChanged)
-				},
+				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
 			{"OpenJSON", ki.Props{
@@ -294,9 +295,9 @@ var LangsProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Langs to App standard prefs directory, in file lang_prefs.json, which will be loaded automatically at startup if prefs SaveLangs is checked (should be if you're using custom languages)",
 			"icon": "file-save",
-			"updtfunc": func(lti interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
 				act.SetActiveStateUpdt(AvailLangsChanged)
-			},
+			}),
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"OpenJSON", ki.Props{

@@ -43,9 +43,7 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 
 # TODO
 
-* add View  then Navigate menus
-
-* add < > arrows for location history
+* add Navigate menu?
 
 * add all the other languages
 
