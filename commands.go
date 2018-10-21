@@ -131,13 +131,14 @@ func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
-	Name  string       `desc:"name of this command (must be unique in list of commands)"`
-	Desc  string       `desc:"brief description of this command"`
-	Langs LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
-	Cmds  []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
-	Dir   string       `complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
-	Wait  bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
-	Focus bool         `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
+	Name    string       `desc:"name of this command (must be unique in list of commands)"`
+	Desc    string       `desc:"brief description of this command"`
+	Langs   LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
+	Cmds    []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
+	Dir     string       `complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
+	Wait    bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
+	Focus   bool         `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
+	Confirm bool         `desc:"if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands"`
 }
 
 // HasPrompts returns true if any prompts are required before running command,
@@ -201,6 +202,14 @@ func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struc
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
 func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
+	if cm.Confirm {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Commmand: %v: %v", cm.Name, cm.Desc)}, true, true, ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig == int64(gi.DialogAccepted) {
+				cm.RunAfterPrompts(ge, buf)
+			}
+		})
+		return
+	}
 	pvals, hasp := cm.HasPrompts()
 	if !hasp || CmdNoUserPrompt {
 		cm.RunAfterPrompts(ge, buf)
@@ -212,13 +221,15 @@ func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
 // RunAfterPrompts runs after any prompts have been set, if needed
 func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 	CmdNoUserPrompt = false
+	cdir := "{ProjPath}"
 	if cm.Dir != "" {
-		cds := BindArgVars(cm.Dir)
-		err := os.Chdir(cds)
-		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cm.Dir)))
-		if err != nil {
-			cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
-		}
+		cdir = cm.Dir
+	}
+	cds := BindArgVars(cdir)
+	err := os.Chdir(cds)
+	cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cm.Dir)))
+	if err != nil {
+		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
 	}
 
 	if cm.Wait || len(cm.Cmds) > 1 {
@@ -699,81 +710,83 @@ var CommandsProps = ki.Props{
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", nil,
-		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "", false, false},
+		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "", false, false, false},
 	{"Run Prompt", "run any command you enter at the prompt", nil,
-		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, false, false},
 
 	// Make
 	{"Make", "run make with no args", nil,
-		[]CmdAndArgs{CmdAndArgs{"make", nil}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"make", nil}}, "{FileDirPath}", false, false, false},
 	{"Make Prompt", "run make with prompted make target", nil,
-		[]CmdAndArgs{CmdAndArgs{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", false, false, false},
 
 	// Go
 	{"Imports Go File", "run goimports on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false},
+		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false, false},
 	{"Fmt Go File", "run go fmt on file", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false},
+		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false, false},
 	{"Build Go Dir", "run go build to build in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", false, false, false},
 	{"Build Go Proj", "run go build for project BuildDir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false, false, false},
 	{"Install Go Proj", "run go install for project BuildDir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false, false, false},
 	{"Generate Go", "run go generate in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false, false, false},
 	{"Test Go", "run go test in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false, false, false},
 	{"Vet Go", "run go vet in current dir", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false, false, false},
 	{"Get Go", "run go get on package you enter at prompt", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false, false},
 	{"Get Go Updt", "run go get -u (updt) on package you enter at prompt", LangNames{"Go"},
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false, false},
 
 	// Git
 	{"Add Git", "git add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
+	{"Checkout Git", "git checkout file or directory -- WARNING will overwrite local changes!", nil,
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"checkout", "{FilePath}"}}}, "{FileDirPath}", false, false, true},
 	{"Status Git", "git status", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false, false, false},
 	{"Diff Git", "git diff -- see changes since last checkin", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false, false, false},
 	{"Log Git", "git log", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false, false, false},
 	{"Commit Git", "git commit", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true, false}, // promptstring1 provided during normal commit process, MUST be wait!
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true, false, false}, // promptstring1 provided during normal commit process, MUST be wait!
 	{"Pull Git ", "git pull", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "", false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "{FileDirPath}", false, false, false},
 	{"Push Git ", "git push", nil,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "", false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "{FileDirPath}", false, false, false},
 
 	// SVN
 	{"Add SVN", "svn add file", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
 	{"Status SVN", "svn status", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false, false, false},
 	{"Info SVN", "svn info", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false, false, false},
 	{"Log SVN", "svn log", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, false, false},
 	{"Commit SVN", "svn commit", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, false}, // promptstring1 provided during normal commit process
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, false, false}, // promptstring1 provided during normal commit process
 	{"Update SVN", "svn update", nil,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "", false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "{FileDirPath}", false, false, false},
 
 	// LaTeX
 	{"LaTeX PDF", "run PDFLaTeX on file", LangNames{"LaTeX"},
-		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
 
 	// Generic files / images / etc
 	{"Open File", "open file using OS 'open' command", nil,
-		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", false, false, false},
 	{"Open Target File", "open project target file using OS 'open' command", nil,
-		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", false, false, false},
 
 	// Misc testing
 	{"List Dir", "list current dir", nil,
-		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, false},
+		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, false, false},
 }
 
 // SetCompleter adds a completer to the textfield - each field
