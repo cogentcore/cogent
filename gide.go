@@ -1384,6 +1384,7 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs
 	ftv := fv.TextView()
 	ftv.SetInactive()
 	ftv.SetBuf(fbuf)
+	fv.InitPosParams()
 
 	root := ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode)
 

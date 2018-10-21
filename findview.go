@@ -5,7 +5,11 @@
 package gide
 
 import (
+	"fmt"
 	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -39,6 +43,7 @@ var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
 	fv.Gide.Prefs.Find = fv.Find
+	fv.InitPosParams()
 	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.CurFile, fv.Find.Langs)
 }
 
@@ -46,6 +51,10 @@ func (fv *FindView) FindAction() {
 func (fv *FindView) ReplaceAction() bool {
 	ftv := fv.TextView()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
+	ur, updated := fv.UpdateUrlTextPos(tl.URL)
+	if updated {
+		tl.URL = ur
+	}
 	if !ok {
 		ok = ftv.CursorNextLink(false) // no wrap
 		if !ok {
@@ -75,13 +84,10 @@ func (fv *FindView) ReplaceAction() bool {
 	}
 	tv.RefreshIfNeeded()
 	fv.CurrentLine = reg.Start.Ln
-	st := fv.AdjustTextPos(reg.Start)
-	en := fv.AdjustTextPos(reg.End)
-	tv.Buf.DeleteText(st, en, true, true)
-	//tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
-	tv.Buf.InsertText(st, []byte(fv.Find.Replace), true, true)
-	fv.ChangeOffset = fv.ChangeOffset + len(fv.Find.Replace) - (en.Ch - st.Ch) // current offset + new length - old length
-	ok = ftv.CursorNextLink(false)                                             // no wrap
+	tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
+	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
+	fv.ChangeOffset = fv.ChangeOffset + len(fv.Find.Replace) - (reg.End.Ch - reg.Start.Ch) // current offset + new length - old length
+	ok = ftv.CursorNextLink(false)                                                         // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos) // move to next
 	}
@@ -89,14 +95,68 @@ func (fv *FindView) ReplaceAction() bool {
 	return ok
 }
 
-// AdjustTextPos adjust the character position to compensate for replacement text being different length than original text
-func (fv *FindView) AdjustTextPos(tp giv.TextPos) giv.TextPos {
-	if fv.CurrentLine != fv.PreviousLine {
-		fv.ChangeOffset = 0
-		return tp
+func (fv *FindView) InitPosParams() {
+	fv.PreviousLine = -1
+	fv.CurrentLine = -1
+	fv.ChangeOffset = 0
+}
+
+func (fv *FindView) UpdateUrlTextPos(url string) (string, bool) {
+	fmt.Println("original: ", url)
+
+	// get start position
+	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
+	if err != nil {
+		fmt.Printf("error %s", err)
 	}
-	tp.Ch += fv.ChangeOffset
-	return tp
+	s := regexstart.FindString(url)
+	start := strings.TrimSuffix(s, "-")
+	scidx := strings.Index(start, "C")
+	startL := start[0:scidx]
+	SL := strings.TrimPrefix(startL, "L")
+	line, err := strconv.Atoi(SL)
+	if (line - 1) != fv.PreviousLine {
+		fv.ChangeOffset = 0
+		return url, false
+	}
+	startC := start[scidx:]
+	SC := strings.TrimPrefix(startC, "C")
+
+	// get end position
+	regexend, err := regexp.Compile(`-L[0-9]+C[0-9]+`)
+	if err != nil {
+		fmt.Printf("error %s", err)
+	}
+	e := regexend.FindString(url)
+	end := strings.TrimPrefix(e, "-")
+	ecidx := strings.Index(end, "C")
+	endL := end[0:ecidx]
+	EL := strings.TrimPrefix(endL, "L")
+	endC := end[ecidx:]
+	EC := strings.TrimPrefix(endC, "C")
+
+	tail := s + end
+	ur := strings.TrimSuffix(url, tail)
+
+	// now do the update
+	sc, err := strconv.Atoi(SC) // start char
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	ec, err := strconv.Atoi(EC) // end char
+	if err != nil {
+		fmt.Println(err)
+	}
+	sc += fv.ChangeOffset
+	ec += fv.ChangeOffset
+	SC = strconv.Itoa(sc)
+	EC = strconv.Itoa(ec)
+	update := "L" + SL + "C" + SC + "-L" + EL + "C" + EC
+	url = ur + update
+	fmt.Println("updated: ", url)
+
+	return url, true
 }
 
 // ReplaceAllAction performs replace all
