@@ -397,7 +397,7 @@ func (sv *SpellView) ChangeAction() {
 	ct := sv.FindChangeText()
 	bs := []byte(string(ct.EditTxt))
 	tv.Buf.InsertText(tbe.Reg.Start, bs, true, true)
-	sv.ChangeOffset = len(bs) - (en.Ch - st.Ch) // new length - old length
+	sv.ChangeOffset = sv.ChangeOffset + len(bs) - (en.Ch - st.Ch) // new length - old length
 	sv.LastAction = sv.FindChangeAct()
 	sv.CheckNext()
 }

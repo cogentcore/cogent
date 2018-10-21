@@ -26,9 +26,12 @@ type FindParams struct {
 // and has a toolbar for controlling find / replace process.
 type FindView struct {
 	gi.Layout
-	Gide   *Gide         `json:"-" xml:"-" desc:"parent gide project"`
-	Find   FindParams    `desc:"params for find / replace"`
-	LangVV giv.ValueView `desc:"langs value view"`
+	Gide         *Gide         `json:"-" xml:"-" desc:"parent gide project"`
+	Find         FindParams    `desc:"params for find / replace"`
+	LangVV       giv.ValueView `desc:"langs value view"`
+	PreviousLine int           `desc:"line of previous replace"`
+	CurrentLine  int           `desc:"line of current replace"`
+	ChangeOffset int           `desc:"compensation for change in word length when replacing"`
 }
 
 var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
@@ -71,14 +74,29 @@ func (fv *FindView) ReplaceAction() bool {
 		}
 	}
 	tv.RefreshIfNeeded()
-	tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
-	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
-
-	ok = ftv.CursorNextLink(false) // no wrap
+	fv.CurrentLine = reg.Start.Ln
+	st := fv.AdjustTextPos(reg.Start)
+	en := fv.AdjustTextPos(reg.End)
+	tv.Buf.DeleteText(st, en, true, true)
+	//tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
+	tv.Buf.InsertText(st, []byte(fv.Find.Replace), true, true)
+	fv.ChangeOffset = fv.ChangeOffset + len(fv.Find.Replace) - (en.Ch - st.Ch) // current offset + new length - old length
+	ok = ftv.CursorNextLink(false)                                             // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos) // move to next
 	}
+	fv.PreviousLine = fv.CurrentLine
 	return ok
+}
+
+// AdjustTextPos adjust the character position to compensate for replacement text being different length than original text
+func (fv *FindView) AdjustTextPos(tp giv.TextPos) giv.TextPos {
+	if fv.CurrentLine != fv.PreviousLine {
+		fv.ChangeOffset = 0
+		return tp
+	}
+	tp.Ch += fv.ChangeOffset
+	return tp
 }
 
 // ReplaceAllAction performs replace all
