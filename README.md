@@ -52,6 +52,8 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
+* Console redirecting stdout, err
+
 * add Navigate menu?
 
 * add git commands: checkout file
