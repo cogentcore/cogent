@@ -336,6 +336,15 @@ func (ge *Gide) GuessVersCtrl() bool {
 //////////////////////////////////////////////////////////////////////////////////////
 //   TextViews
 
+// ConfigNodeTextBuf configures the text buf for given node according to prefs
+func (ge *Gide) ConfigNodeTextBuf(fn *giv.FileNode) {
+	fn.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
+	fn.Buf.Opts.LineNos = ge.Prefs.Editor.LineNos
+	fn.Buf.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
+	fn.Buf.Opts.Completion = ge.Prefs.Editor.Completion
+	fn.Buf.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
+}
+
 // ActiveTextView returns the currently-active TextView
 func (ge *Gide) ActiveTextView() *giv.TextView {
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
@@ -359,7 +368,7 @@ func (ge *Gide) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool)
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
-	fn.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
+	ge.ConfigNodeTextBuf(fn)
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
@@ -594,6 +603,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		if tv.IsChanged() {
 			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
 		}
+		ge.ConfigNodeTextBuf(fn)
 		tv.SetBuf(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
@@ -767,6 +777,8 @@ func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
 	switch sig {
 	case giv.TextViewISearch:
+		fallthrough
+	case giv.TextViewQReplace:
 		fallthrough
 	case giv.TextViewCursorMoved:
 		ge.SetStatus("")
@@ -1550,6 +1562,12 @@ func (ge *Gide) OpenSpellURL(ur string, stv *giv.TextView) bool {
 	return fv.OpenSpellURL(ur, stv)
 }
 
+// ReplaceInActive does query-replace in active file only
+func (ge *Gide) ReplaceInActive() {
+	tv := ge.ActiveTextView()
+	tv.QReplacePrompt()
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    Registers
 
@@ -1632,7 +1650,7 @@ func (ge *Gide) Indent() bool {
 	// if len(ls) == 1 {
 	//		cmt = []byte(ls[0].Comment)
 	// }
-	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, tv.Opts.SpaceIndent, tv.Sty.Text.TabSize,
+	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, tv.Buf.Opts.SpaceIndent, tv.Sty.Text.TabSize,
 		giv.DefaultIndentStrings, giv.DefaultUnindentStrings)
 	tv.SelectReset()
 	return true
@@ -1665,8 +1683,11 @@ func (ge *Gide) SetStatus(msg string) {
 				fnm += "*"
 			}
 		}
-		if tv.ISearchMode {
-			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearchString, len(tv.SearchMatches), msg)
+		if tv.ISearch.On {
+			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearch.Find, len(tv.ISearch.Matches), msg)
+		}
+		if tv.QReplace.On {
+			msg = fmt.Sprintf("\tQReplace: %v -> %v (n=%v)\t%v", tv.QReplace.Find, tv.QReplace.Replace, len(tv.QReplace.Matches), msg)
 		}
 	}
 
@@ -1682,7 +1703,7 @@ func (ge *Gide) SetStatus(msg string) {
 func (ge *Gide) Defaults() {
 	ge.Prefs.Files = Prefs.Files
 	ge.Prefs.Editor = Prefs.Editor
-	ge.Prefs.Splits = []float32{.1, .3, .3, .3, 0}
+	ge.Prefs.Splits = []float32{.1, .325, .325, .25, 0}
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
 	ge.Files.NodeType = KiT_FileNode
 }
@@ -1709,9 +1730,11 @@ func (ge *Gide) ApplyPrefs() {
 		for i := 0; i < NTextViews; i++ {
 			txly := sv.KnownChild(1 + i).(*gi.Layout)
 			txed := txly.KnownChild(0).(*giv.TextView)
-			txed.Opts.LineNos = ge.Prefs.Editor.LineNos
-			txed.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
-			txed.Opts.Completion = ge.Prefs.Editor.Completion
+			if txed.Buf != nil {
+				txed.Buf.Opts.LineNos = ge.Prefs.Editor.LineNos
+				txed.Buf.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
+				txed.Buf.Opts.Completion = ge.Prefs.Editor.Completion
+			}
 		}
 	}
 }
@@ -1740,6 +1763,7 @@ func (ge *Gide) SplitsSetView(split SplitName) {
 		sp, _, ok := AvailSplits.SplitByName(split)
 		if ok {
 			sv.SetSplits(sp.Splits...)
+			ge.Prefs.SplitName = split
 		}
 	}
 }
@@ -1983,9 +2007,6 @@ func (ge *Gide) ConfigSplitView() {
 	for i := 0; i < NTextViews; i++ {
 		txly := split.KnownChild(1 + i).(*gi.Layout)
 		txed := txly.KnownChild(0).(*giv.TextView)
-		txed.Opts.LineNos = ge.Prefs.Editor.LineNos
-		txed.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
-		txed.Opts.Completion = ge.Prefs.Editor.Completion
 		if ge.Prefs.Editor.WordWrap {
 			txed.SetProp("white-space", gi.WhiteSpacePreWrap)
 		} else {
@@ -2311,7 +2332,9 @@ var GideProps = ki.Props{
 				"label":   "Set View",
 				"submenu": &AvailSplitNames,
 				"Args": ki.PropSlice{
-					{"Split Name", ki.Props{}},
+					{"Split Name", ki.Props{
+						"default-field": "Prefs.SplitName",
+					}},
 				},
 			}},
 			{"SplitsSaveAs", ki.Props{
@@ -2330,7 +2353,9 @@ var GideProps = ki.Props{
 				"label":   "Save",
 				"submenu": &AvailSplitNames,
 				"Args": ki.PropSlice{
-					{"Split Name", ki.Props{}},
+					{"Split Name", ki.Props{
+						"default-field": "Prefs.SplitName",
+					}},
 				},
 			}},
 			{"SplitsEdit", ki.Props{
@@ -2369,7 +2394,7 @@ var GideProps = ki.Props{
 				{"NewProj", ki.Props{
 					"shortcut": "Command+N",
 					"label":    "New Project...",
-					"desc":     "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all Gide projects are basically folders with files.  You can also specify the main language and version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
+					"desc":     "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all Gide projects are basically folders with files.  You can also specify the main language and {version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
 					"Args": ki.PropSlice{
 						{"Parent Folder", ki.Props{
 							"dirs-only":     true, // todo: support
@@ -2533,6 +2558,12 @@ var GideProps = ki.Props{
 						"default-field": "Prefs.Find.Langs",
 					}},
 				},
+			}},
+			{"ReplaceInActive", ki.Props{
+				"label":    "Replace In Active...",
+				"shortcut": gi.KeyFunReplace,
+				"desc":     "query-replace in current active text view only (use Find for multi-file)",
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 			{"Spell", ki.Props{
 				"label":    "Spelling...",
