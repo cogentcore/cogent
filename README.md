@@ -52,6 +52,8 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
+* fix keyfun edit crash
+
 * Console redirecting stdout, err
 
 * add Navigate menu?
