@@ -135,9 +135,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 		return false
 	}
 	find := fv.Find.Find
-	ignoreCase := fv.Find.IgnoreCase
 	giv.PrevISearchString = find
-	giv.PrevISearchCase = !ignoreCase
 	ge.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
 
 	tv.RefreshIfNeeded()

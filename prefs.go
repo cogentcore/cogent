@@ -31,6 +31,7 @@ type EditorPrefs struct {
 	LineNos    bool            `desc:"show line numbers"`
 	Completion bool            `desc:"use the completion system to suggest options while typing"`
 	AutoIndent bool            `desc:"automatically indent lines when enter, tab, }, etc pressed"`
+	EmacsUndo  bool            `desc:"use emacs-style undo, where after a non-undo command, all the current undo actions are added to the undo stack, such that a subsequent undo is actually a redo"`
 }
 
 // Preferences are the overall user preferences for Gide.
@@ -240,6 +241,7 @@ var PreferencesProps = ki.Props{
 type ProjPrefs struct {
 	Files        FilePrefs      `desc:"file view preferences"`
 	Editor       EditorPrefs    `view:"inline" desc:"editor preferences"`
+	SplitName    SplitName      `desc:"current named-split config in use for configuring the splitters"`
 	MainLang     LangName       `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
 	VersCtrl     VersCtrlName   `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
 	ChangeLog    ChangeLog      `desc:"log of version control commits made through Gide by current author -- use appropriate VCS log command to see full set of changes"`

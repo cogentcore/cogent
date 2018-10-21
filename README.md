@@ -31,9 +31,18 @@ Hence, the need for *gide*, which features:
 
 # Current Status
 
-As of 9/2018, work has just begun.. This will quickly be self-hosting for all further development, so lots of dog food will be consumed and made ever-tastier!  Hoping to have some kind of actually-usable first pass in a few weeks.
+As of mid 10/2018, *nearly* ready for an initial beta release along with rest of GoGi.
 
-In case it isn't obvious, the features listed above are goals.. :)  Feel free to file issues for anything you'd like to see that isn't listed here.
+Basic editing and tooling for `Go`, `C`, `LaTeX` is in reasonably functional and solid.  It is fully self-hosting -- all further development of Gide is happening within Gide!
+
+Near-term major goals (i.e., these are not yet implemented):
+* Connect to Python interpreter, run e.g., PyTorch, display graphic output in visualizer tab.
+* And same for gonum & gomacro.
+* Support for `delve` debugger for Go.  Then `lldb` after that maybe.  And see about python debugging.
+* See about our own dynamic parsing framework within GoKi, for general dynamic structured language support.
+* Native GoGi 3D and interactive visualizations.
+
+Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # Design Goals
 
@@ -42,6 +51,8 @@ In case it isn't obvious, the features listed above are goals.. :)  Feel free to
 * Initially will be relying on basic syntax highlighting via https://github.com/alecthomas/chroma, but to provide more advanced IDE-level functionality, a flexible dynamic parsing framework is envisioned, based on the GoKi tree (ki) structures.  This will provide multi-pass robust AST (abstract syntax tree) level parsing of supported languages, and the goal is to make the parser fully GUI editable to support "easy" extension to new languages.
 
 # TODO
+
+* Console redirecting stdout, err
 
 * add Navigate menu?
 
