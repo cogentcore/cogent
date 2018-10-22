@@ -69,6 +69,7 @@ type Gide struct {
 	Prefs             ProjPrefs               `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
+	Speller           *spell.Spell            `desc:"current spell checker"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, nil)
@@ -239,7 +240,9 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) {
 				}
 			})
 	}
-	spell.SaveModel()
+	if ge.Speller != nil {
+		ge.Speller.SaveModel()
+	}
 }
 
 // UpdateProj does full update to current proj
@@ -1453,8 +1456,9 @@ func (ge *Gide) Spell() {
 	}
 
 	tv := ge.ActiveTextView()
-	spell.NewSpellCheck(tv.Buf.Txt)
-	tw, suggests := spell.NextUnknownWord()
+	ge.Speller = spell.NewSpeller()
+	ge.Speller.NewSpellCheck(tv.Buf.Txt)
+	tw, suggests := ge.Speller.NextUnknownWord()
 	sv.SetUnknownAndSuggest(tw, suggests)
 
 	//unknowns, err := spell.CheckFile(fp)
