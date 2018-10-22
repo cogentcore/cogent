@@ -227,7 +227,7 @@ func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 	}
 	cds := BindArgVars(cdir)
 	err := os.Chdir(cds)
-	cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cm.Dir)))
+	cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
 	if err != nil {
 		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
 	}
@@ -710,7 +710,7 @@ var CommandsProps = ki.Props{
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", nil,
-		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "{RunExecDir}", false, false, false},
 	{"Run Prompt", "run any command you enter at the prompt", nil,
 		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, false, false},
 

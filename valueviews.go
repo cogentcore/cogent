@@ -59,10 +59,10 @@ func PrefsView(pf *Preferences) (*giv.StructView, *gi.Window) {
 						case 0:
 							pf.Save()
 							fmt.Println("Preferences Saved to prefs.json")
-							w.Close()
+							win.Close()
 						case 1:
 							pf.Open() // if we don't do this, then it actually remains in edited state
-							w.Close()
+							win.Close()
 						case 2:
 							inClosePrompt = false
 							// default is to do nothing, i.e., cancel
@@ -70,7 +70,7 @@ func PrefsView(pf *Preferences) (*giv.StructView, *gi.Window) {
 					})
 			}
 		} else {
-			w.Close()
+			win.Close()
 		}
 	})
 

@@ -2505,9 +2505,7 @@ var GideProps = ki.Props{
 					}),
 					"updtfunc": GideInactiveEmptyFunc,
 					"Args": ki.PropSlice{
-						{"Register Name", ki.Props{
-							"default-field": "Prefs.Register",
-						}},
+						{"Register Name", ki.Props{}},
 					},
 				}},
 				{"RegisterPaste", ki.Props{
