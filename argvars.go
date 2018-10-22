@@ -49,10 +49,10 @@ var ArgVars = map[string]ArgVarInfo{
 	"{BuildTargDirPathRel}": ArgVarInfo{"Project-relative path to build target directory, without filename.", ArgVarDir},
 
 	// RunExec
-	"{RunExec}":       ArgVarInfo{"Run-time executable file RunExec specified in project prefs -- just the raw name of the file, without path.", ArgVarFile},
-	"{RunExecPath}":   ArgVarInfo{"Full path to the run-time executable file RunExec specified in project prefs.", ArgVarFile},
-	"{RunExecDir}":    ArgVarInfo{"Full path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
-	"{RunExecDirRel}": ArgVarInfo{"Project-root relative path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
+	"{RunExec}":           ArgVarInfo{"Run-time executable file RunExec specified in project prefs -- just the raw name of the file, without path.", ArgVarFile},
+	"{RunExecPath}":       ArgVarInfo{"Full path to the run-time executable file RunExec specified in project prefs.", ArgVarFile},
+	"{RunExecDirPath}":    ArgVarInfo{"Full path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
+	"{RunExecDirPathRel}": ArgVarInfo{"Project-root relative path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
 
 	// Cursor, Selection
 	"{CurLine}":      ArgVarInfo{"Cursor current line number (starts at 1).", ArgVarPos},
@@ -200,6 +200,8 @@ func BindArgVars(arg string) string {
 			bs = append(bs[:ci], []byte(val)...)
 			ci = len(bs)
 			bs = append(bs, end...)
+		} else {
+			break
 		}
 		sz = len(bs)
 	}

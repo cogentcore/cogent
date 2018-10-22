@@ -2739,7 +2739,7 @@ func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
 		if !inClosePrompt {
 			inClosePrompt = true
 			if ge.CloseWindowReq() {
-				w.Close()
+				win.Close()
 			} else {
 				inClosePrompt = false
 			}

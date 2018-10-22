@@ -710,7 +710,7 @@ var CommandsProps = ki.Props{
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", nil,
-		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "{RunExecDir}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "{RunExecDirPath}", false, false, false},
 	{"Run Prompt", "run any command you enter at the prompt", nil,
 		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, false, false},
 

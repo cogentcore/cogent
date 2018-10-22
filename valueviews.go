@@ -166,18 +166,18 @@ func KeyMapsView(km *KeyMaps) {
 					case 0:
 						km.SavePrefs()
 						fmt.Printf("Preferences Saved to %v\n", PrefsKeyMapsFileName)
-						w.Close()
+						win.Close()
 					case 1:
 						if km == &AvailKeyMaps {
 							km.OpenPrefs() // revert
 						}
-						w.Close()
+						win.Close()
 					case 2:
 						// default is to do nothing, i.e., cancel
 					}
 				})
 		} else {
-			w.Close()
+			win.Close()
 		}
 	})
 
@@ -308,18 +308,18 @@ func LangsView(pt *Langs) {
 					case 0:
 						pt.SavePrefs()
 						fmt.Printf("Preferences Saved to %v\n", PrefsLangsFileName)
-						w.Close()
+						win.Close()
 					case 1:
 						if pt == &AvailLangs {
 							pt.OpenPrefs() // revert
 						}
-						w.Close()
+						win.Close()
 					case 2:
 						// default is to do nothing, i.e., cancel
 					}
 				})
 		} else {
-			w.Close()
+			win.Close()
 		}
 	})
 
@@ -450,18 +450,18 @@ func CmdsView(pt *Commands) {
 					case 0:
 						pt.SavePrefs()
 						fmt.Printf("Preferences Saved to %v\n", PrefsCmdsFileName)
-						w.Close()
+						win.Close()
 					case 1:
 						if pt == &CustomCmds {
 							pt.OpenPrefs() // revert
 						}
-						w.Close()
+						win.Close()
 					case 2:
 						// default is to do nothing, i.e., cancel
 					}
 				})
 		} else {
-			w.Close()
+			win.Close()
 		}
 	})
 
@@ -595,18 +595,18 @@ func SplitsView(pt *Splits) {
 					case 0:
 						pt.SavePrefs()
 						fmt.Printf("Preferences Saved to %v\n", PrefsSplitsFileName)
-						w.Close()
+						win.Close()
 					case 1:
 						if pt == &AvailSplits {
 							pt.OpenPrefs() // revert
 						}
-						w.Close()
+						win.Close()
 					case 2:
 						// default is to do nothing, i.e., cancel
 					}
 				})
 		} else {
-			w.Close()
+			win.Close()
 		}
 	})
 
@@ -740,18 +740,18 @@ func RegistersView(pt *Registers) {
 					case 0:
 						pt.SavePrefs()
 						fmt.Printf("Preferences Saved to %v\n", PrefsRegistersFileName)
-						w.Close()
+						win.Close()
 					case 1:
 						if pt == &AvailRegisters {
 							pt.OpenPrefs() // revert
 						}
-						w.Close()
+						win.Close()
 					case 2:
 						// default is to do nothing, i.e., cancel
 					}
 				})
 		} else {
-			w.Close()
+			win.Close()
 		}
 	})
 
