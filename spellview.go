@@ -362,7 +362,8 @@ func (sv *SpellView) ConfigToolbar() {
 
 // CheckNext will find the next misspelled/unknown word
 func (sv *SpellView) CheckNext() {
-	tw, suggests := spell.NextUnknownWord()
+	ge := sv.Gide
+	tw, suggests := ge.Speller.NextUnknownWord()
 	if tw.Word == "" {
 		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, true, false, nil, nil)
 		return
@@ -477,7 +478,8 @@ func (sv *SpellView) IgnoreAllAction() {
 // and call CheckNext
 func (sv *SpellView) LearnAction() {
 	new := strings.ToLower(sv.Unknown.Word)
-	spell.LearnWord(new)
+	ge := sv.Gide
+	ge.Speller.LearnWord(new)
 	sv.LastAction = sv.FindLearnAct()
 	sv.CheckNext()
 }
