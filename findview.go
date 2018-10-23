@@ -6,6 +6,7 @@ package gide
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -30,12 +31,9 @@ type FindParams struct {
 // and has a toolbar for controlling find / replace process.
 type FindView struct {
 	gi.Layout
-	Gide         *Gide         `json:"-" xml:"-" desc:"parent gide project"`
-	Find         FindParams    `desc:"params for find / replace"`
-	LangVV       giv.ValueView `desc:"langs value view"`
-	PreviousLine int           `desc:"line of previous replace"`
-	CurrentLine  int           `desc:"line of current replace"`
-	ChangeOffset int           `desc:"compensation for change in word length when replacing"`
+	Gide   *Gide         `json:"-" xml:"-" desc:"parent gide project"`
+	Find   FindParams    `desc:"params for find / replace"`
+	LangVV giv.ValueView `desc:"langs value view"`
 }
 
 var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
@@ -43,7 +41,6 @@ var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
 	fv.Gide.Prefs.Find = fv.Find
-	fv.InitPosParams()
 	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.CurFile, fv.Find.Langs)
 }
 
@@ -51,10 +48,6 @@ func (fv *FindView) FindAction() {
 func (fv *FindView) ReplaceAction() bool {
 	ftv := fv.TextView()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
-	ur, updated := fv.UpdateUrlTextPos(tl.URL)
-	if updated {
-		tl.URL = ur
-	}
 	if !ok {
 		ok = ftv.CursorNextLink(false) // no wrap
 		if !ok {
@@ -83,78 +76,122 @@ func (fv *FindView) ReplaceAction() bool {
 		}
 	}
 	tv.RefreshIfNeeded()
-	fv.CurrentLine = reg.Start.Ln
 	tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
 	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
-	fv.ChangeOffset = fv.ChangeOffset + len(fv.Find.Replace) - (reg.End.Ch - reg.Start.Ch) // current offset + new length - old length
-	ok = ftv.CursorNextLink(false)                                                         // no wrap
+	offset := len(fv.Find.Replace) - (reg.End.Ch - reg.Start.Ch) // current offset + new length - old length
+
+	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
+	if err != nil {
+		fmt.Printf("error %s", err)
+	}
+
+	// on what line was the replace
+	var curline = -1
+	url, err := url.Parse(tl.URL)
+	if err == nil {
+		s := regexstart.FindString(url.Fragment)
+		s = strings.TrimSuffix(s, "-")
+		line, _ := fv.UrlPos(s)
+		curline = line - 1 // -1 because url is 1 based and text is 0 based
+	}
+
+	// update the find link for the just done replace
+	var curlinkidx int
+	for i, r := range ftv.Renders {
+		if r.Links != nil {
+			if r.Links[0].URL == tl.URL {
+				ur, ch := fv.UpdateUrlTextPos(r.Links[0].URL, 0, offset)
+				if ch {
+					r.Links[0].URL = ur
+					curlinkidx = i
+					break
+				}
+				//fmt.Println(r.Links[0].Props)
+				//tl := r.Links[0].Props
+				//tl["href"] = "foo"
+				//fmt.Println(r.Links[0].Props)
+			}
+		}
+	}
+
+	// update the find links for any others for the same line of text
+	for i := curlinkidx + 1; i < len(ftv.Renders); i++ {
+		r := ftv.Renders[i]
+		if r.Links != nil {
+			urlstr := r.Links[0].URL
+			url, err := url.Parse(urlstr)
+			if err == nil {
+				s := regexstart.FindString(url.Fragment)
+				s = strings.TrimSuffix(s, "-")
+				line, _ := fv.UrlPos(s)
+				if (line - 1) == curline {
+					ur, ch := fv.UpdateUrlTextPos(urlstr, offset, offset)
+					if ch {
+						r.Links[0].URL = ur
+					}
+				}
+			}
+		}
+	}
+
+	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos) // move to next
 	}
-	fv.PreviousLine = fv.CurrentLine
 	return ok
 }
 
-func (fv *FindView) InitPosParams() {
-	fv.PreviousLine = -1
-	fv.CurrentLine = -1
-	fv.ChangeOffset = 0
+// UrlPos returns the line and char from a url fragment "LxxCxx"
+func (fv *FindView) UrlPos(lnch string) (int, int) {
+	scidx := strings.Index(lnch, "C")
+	if scidx == -1 { // url does not have TextPos
+		return -1, -1
+	}
+	ln := lnch[0:scidx]
+	ln = strings.TrimPrefix(ln, "L")
+	ch := lnch[scidx:]
+	ch = strings.TrimPrefix(ch, "C")
+
+	lni, lnerr := strconv.Atoi(ln)
+	chi, cherr := strconv.Atoi(ch)
+	if lnerr == nil && cherr == nil {
+		return lni, chi
+	}
+	return -1, -1
 }
 
-func (fv *FindView) UpdateUrlTextPos(url string) (string, bool) {
-	fmt.Println("original: ", url)
+// UpdateUrlTextPos updates the link character position (e.g. when replace string is different length than original)
+func (fv *FindView) UpdateUrlTextPos(url string, stoff, enoff int) (string, bool) {
+	//fmt.Println("original: ", url)
 
-	// get start position
 	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
 	if err != nil {
 		fmt.Printf("error %s", err)
 	}
 	s := regexstart.FindString(url)
-	start := strings.TrimSuffix(s, "-")
-	scidx := strings.Index(start, "C")
-	startL := start[0:scidx]
-	SL := strings.TrimPrefix(startL, "L")
-	line, err := strconv.Atoi(SL)
-	if (line - 1) != fv.PreviousLine {
-		fv.ChangeOffset = 0
-		return url, false
-	}
-	startC := start[scidx:]
-	SC := strings.TrimPrefix(startC, "C")
+	s = strings.TrimSuffix(s, "-")
+	sl, sc := fv.UrlPos(s)
 
-	// get end position
 	regexend, err := regexp.Compile(`-L[0-9]+C[0-9]+`)
 	if err != nil {
 		fmt.Printf("error %s", err)
 	}
-	e := regexend.FindString(url)
-	end := strings.TrimPrefix(e, "-")
-	ecidx := strings.Index(end, "C")
-	endL := end[0:ecidx]
-	EL := strings.TrimPrefix(endL, "L")
-	endC := end[ecidx:]
-	EC := strings.TrimPrefix(endC, "C")
+	end := regexend.FindString(url)
+	e := strings.TrimPrefix(end, "-")
+	el, ec := fv.UrlPos(e)
 
 	tail := s + end
 	ur := strings.TrimSuffix(url, tail)
 
-	// now do the update
-	sc, err := strconv.Atoi(SC) // start char
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	ec, err := strconv.Atoi(EC) // end char
-	if err != nil {
-		fmt.Println(err)
-	}
-	sc += fv.ChangeOffset
-	ec += fv.ChangeOffset
-	SC = strconv.Itoa(sc)
-	EC = strconv.Itoa(ec)
+	sc += stoff
+	ec += enoff
+	SC := strconv.Itoa(sc)
+	SL := strconv.Itoa(sl)
+	EC := strconv.Itoa(ec)
+	EL := strconv.Itoa(el)
 	update := "L" + SL + "C" + SC + "-L" + EL + "C" + EC
 	url = ur + update
-	fmt.Println("updated: ", url)
+	//fmt.Println("updated: ", url)
 
 	return url, true
 }
