@@ -121,6 +121,9 @@ func (fv *FindView) ReplaceAction() bool {
 	for linkidx := curlinkidx + 1; linkidx < len(ftv.Renders); linkidx++ {
 		r := ftv.Renders[linkidx]
 		if r.Links != nil {
+			if r.Links[0].Label != tl.Label { // another file
+				break
+			}
 			urlstr := r.Links[0].URL
 			url, err := url.Parse(urlstr)
 			if err == nil {
@@ -143,6 +146,7 @@ func (fv *FindView) ReplaceAction() bool {
 		}
 	}
 
+	// delete the link for the just done replace
 	ftvln := ftv.CursorPos.Ln
 	st := giv.TextPos{Ln: ftvln, Ch: 0}
 	len := len(ftv.Buf.Lines[ftvln])
