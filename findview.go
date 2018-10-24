@@ -95,28 +95,31 @@ func (fv *FindView) ReplaceAction() bool {
 		curline = line - 1 // -1 because url is 1 based and text is 0 based
 	}
 
+	ftv.UpdateStart()
 	// update the find link for the just done replace
 	var curlinkidx int
 	for i, r := range ftv.Renders {
 		if r.Links != nil {
 			if r.Links[0].URL == tl.URL {
-				ur, ch := fv.UpdateUrlTextPos(r.Links[0].URL, 0, offset)
-				if ch {
+				ur, urup := fv.UpdateUrl(r.Links[0].URL, 0, offset)
+				if urup {
 					r.Links[0].URL = ur
 					curlinkidx = i
+					mu := string(ftv.Buf.Markup[curlinkidx])
+					umu, umuup := fv.UpdateMarkup(mu, 0, offset, true, fv.Find.Replace)
+					if umuup {
+						bmu := []byte(umu)
+						ftv.Buf.Markup[curlinkidx] = bmu
+					}
 					break
 				}
-				//fmt.Println(r.Links[0].Props)
-				//tl := r.Links[0].Props
-				//tl["href"] = "foo"
-				//fmt.Println(r.Links[0].Props)
 			}
 		}
 	}
 
 	// update the find links for any others for the same line of text
-	for i := curlinkidx + 1; i < len(ftv.Renders); i++ {
-		r := ftv.Renders[i]
+	for linkidx := curlinkidx + 1; linkidx < len(ftv.Renders); linkidx++ {
+		r := ftv.Renders[linkidx]
 		if r.Links != nil {
 			urlstr := r.Links[0].URL
 			url, err := url.Parse(urlstr)
@@ -125,14 +128,24 @@ func (fv *FindView) ReplaceAction() bool {
 				s = strings.TrimSuffix(s, "-")
 				line, _ := fv.UrlPos(s)
 				if (line - 1) == curline {
-					ur, ch := fv.UpdateUrlTextPos(urlstr, offset, offset)
-					if ch {
+					ur, urup := fv.UpdateUrl(urlstr, offset, offset)
+					if urup {
 						r.Links[0].URL = ur
+						mu := string(ftv.Buf.Markup[linkidx])
+						umu, umuup := fv.UpdateMarkup(mu, offset, offset, false, fv.Find.Replace)
+						if umuup {
+							bmu := []byte(umu)
+							ftv.Buf.Markup[linkidx] = bmu
+						}
 					}
 				}
 			}
 		}
 	}
+	ftv.UpdateEnd(true)
+	ftv.Refresh()
+
+	tv.Highlights = tv.Highlights[:0]
 
 	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -161,7 +174,7 @@ func (fv *FindView) UrlPos(lnch string) (int, int) {
 }
 
 // UpdateUrlTextPos updates the link character position (e.g. when replace string is different length than original)
-func (fv *FindView) UpdateUrlTextPos(url string, stoff, enoff int) (string, bool) {
+func (fv *FindView) UpdateUrl(url string, stoff, enoff int) (string, bool) {
 	//fmt.Println("original: ", url)
 
 	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
@@ -191,8 +204,51 @@ func (fv *FindView) UpdateUrlTextPos(url string, stoff, enoff int) (string, bool
 	EL := strconv.Itoa(el)
 	update := "L" + SL + "C" + SC + "-L" + EL + "C" + EC
 	url = ur + update
-	//fmt.Println("updated: ", url)
+	//fmt.Println("new: ", url)
 
+	return url, true
+}
+
+func (fv *FindView) UpdateMarkup(url string, stoff, enoff int, dorep bool, rep string) (string, bool) {
+	//fmt.Println("original: ", url)
+
+	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
+	if err != nil {
+		fmt.Printf("error %s", err)
+	}
+	s := regexstart.FindString(url)
+	s = strings.TrimSuffix(s, "-")
+	sl, sc := fv.UrlPos(s)
+
+	regexend, err := regexp.Compile(`-L[0-9]+C[0-9]+`)
+	if err != nil {
+		fmt.Printf("error %s", err)
+	}
+	end := regexend.FindString(url)
+	e := strings.TrimPrefix(end, "-")
+	el, ec := fv.UrlPos(e)
+
+	lnch := s + end
+	//ur := strings.TrimSuffix(url, tail)
+
+	sc += stoff
+	ec += enoff
+	SC := strconv.Itoa(sc)
+	SL := strconv.Itoa(sl)
+	EC := strconv.Itoa(ec)
+	EL := strconv.Itoa(el)
+	update := "L" + SL + "C" + SC + "-L" + EL + "C" + EC
+
+	url = strings.Replace(url, lnch, update, 1)
+
+	if dorep {
+		regexspan, err := regexp.Compile(`<mark>.*</mark>`)
+		if err != nil {
+			fmt.Printf("error %s", err)
+		}
+		url = regexspan.ReplaceAllString(url, rep)
+	}
+	//fmt.Println("new: ", url)
 	return url, true
 }
 
