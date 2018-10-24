@@ -104,15 +104,19 @@ type KeySeqMap map[KeySeq]KeyFuns
 // alternative map in Prefs
 var ActiveKeyMap *KeySeqMap
 
+// ActiveKeyMapName is the name of the active keymap
+var ActiveKeyMapName KeyMapName
+
 // Needs2KeyMap is a map of the starting key sequences that require a second
 // key -- auto-generated from active keymap
 var Needs2KeyMap gi.KeyMap
 
 // SetActiveKeyMap sets the current ActiveKeyMap, calling Update on the map
 // prior to setting it to ensure that it is a valid, complete map
-func SetActiveKeyMap(km *KeySeqMap) {
-	km.Update()
+func SetActiveKeyMap(km *KeySeqMap, kmName KeyMapName) {
+	km.Update(kmName)
 	ActiveKeyMap = km
+	ActiveKeyMapName = kmName
 }
 
 // SetActiveKeyMapName sets the current ActiveKeyMap by name from those
@@ -121,16 +125,17 @@ func SetActiveKeyMap(km *KeySeqMap) {
 func SetActiveKeyMapName(mapnm KeyMapName) {
 	km, _, ok := AvailKeyMaps.MapByName(mapnm)
 	if ok {
-		SetActiveKeyMap(km)
+		SetActiveKeyMap(km, mapnm)
 	} else {
 		log.Printf("gide.SetActiveKeyMapName: key map named: %v not found, using default: %v\n", mapnm, DefaultKeyMap)
 		km, _, ok = AvailKeyMaps.MapByName(DefaultKeyMap)
 		if ok {
-			SetActiveKeyMap(km)
+			SetActiveKeyMap(km, DefaultKeyMap)
 		} else {
 			log.Printf("gide.SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailKeyMaps))
 			if len(AvailKeyMaps) > 0 {
-				SetActiveKeyMap(&AvailKeyMaps[0].Map)
+				skm := AvailKeyMaps[0]
+				SetActiveKeyMap(&skm.Map, KeyMapName(skm.Name))
 			}
 		}
 	}
@@ -144,15 +149,22 @@ func KeyFun(key1, key2 key.Chord) KeyFuns {
 	ks := KeySeq{key1, key2}
 	if key1 != "" && key2 != "" {
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
-			// fmt.Printf("seq: %v = %v\n", ks, kfg)
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun 2 key seq: %v = %v\n", ks, kfg)
+			}
 			kf = kfg
 		}
 	} else if key1 != "" {
 		if _, need2 := Needs2KeyMap[key1]; need2 {
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun 1st key in 2key seq: %v\n", key1)
+			}
 			return KeyFunNeeds2
 		}
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
-			// fmt.Printf("1 key seq: %v = %v\n", ks, kfg)
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun 1 key seq: %v = %v\n", ks, kfg)
+			}
 			kf = kfg
 		}
 	}
@@ -192,55 +204,36 @@ func (km *KeySeqMap) ChordForFun(kf KeyFuns) KeySeq {
 // Update ensures that the given keymap has at least one entry for every
 // defined KeyFun, grabbing ones from the default map if not, and also
 // eliminates any Nil entries which might reflect out-of-date functions
-func (km *KeySeqMap) Update() {
+func (km *KeySeqMap) Update(kmName KeyMapName) {
 	for key, val := range *km {
 		if val == KeyFunNil {
 			log.Printf("gide.KeySeqMap: key function is nil -- probably renamed, for key: %v\n", key)
 			delete(*km, key)
 		}
 	}
-	dkm, _, _ := AvailKeyMaps.MapByName(DefaultKeyMap)
-
-	dkms := dkm.ToSlice()
 	kms := km.ToSlice()
-
 	addkm := make([]KeyMapItem, 0)
 
-	if len(kms) == 0 { // set custom to match default
-		for _, dki := range dkms {
-			addkm = append(addkm, dki)
-			fmt.Println(dki.Fun.String())
-		}
-		for _, ai := range addkm {
-			(*km)[ai.Keys] = ai.Fun
-		}
-		return
-	}
-
-	sort.Slice(dkms, func(i, j int) bool {
-		return dkms[i].Fun < dkms[j].Fun
-	})
 	sort.Slice(kms, func(i, j int) bool {
 		return kms[i].Fun < kms[j].Fun
 	})
 
-	mi := 0
-	for _, dki := range dkms {
-		if mi >= len(kms) {
-			break
-		}
-		mmi := kms[mi]
-		if dki.Fun < mmi.Fun {
-			fmt.Printf("warning - %v has no key mapping", dki.Fun)
-			addkm = append(addkm, dki)
-			s := dki.Fun.String()
-			s = strings.TrimPrefix(s, "KeyFun")
-			s = "- Not Set - " + s
-			addkm[len(addkm)-1].Keys.Key1 = key.Chord(s)
-		} else if dki.Fun > mmi.Fun { // shouldn't happen but..
-			mi++
-		} else {
-			mi++
+	lfun := KeyFunNil
+	for _, ki := range kms {
+		fun := ki.Fun
+		if fun != lfun {
+			del := fun - lfun
+			if del > 1 {
+				for mi := lfun + 1; mi < fun; mi++ {
+					fmt.Printf("gide.KeyMap: %v is missing a key for function: %v\n", kmName, mi)
+					s := mi.String()
+					s = strings.TrimPrefix(s, "KeyFun")
+					s = "- Not Set - " + s
+					nski := KeyMapItem{Keys: KeySeq{Key1: key.Chord(s)}, Fun: mi}
+					addkm = append(addkm, nski)
+				}
+			}
+			lfun = fun
 		}
 	}
 

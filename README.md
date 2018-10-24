@@ -54,11 +54,11 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 * fix keyfun edit crash
 
+* add history combobox to Find
+
 * Console redirecting stdout, err
 
 * add Navigate menu?
-
-* add git commands: checkout file
 
 * add all the other languages: C, C++, python, etc
 

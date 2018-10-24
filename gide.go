@@ -1416,12 +1416,14 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs
 			ln := mt.Reg.Start.Ln + 1
 			ch := mt.Reg.Start.Ch + 1
 			ech := mt.Reg.End.Ch + 1
+			fnstr := fmt.Sprintf(`	%v:%d:%d`, fn, ln, ch)
 			nomu := bytes.Replace(mt.Text, []byte("<mark>"), nil, -1)
 			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
 			nomus := html.EscapeString(string(nomu))
-			lstr = fmt.Sprintf(`	%v: %s`, fn, nomus)
+			lstr = fmt.Sprintf(`	%v: %s`, fnstr, nomus)
+
 			outlns = append(outlns, []byte(lstr))
-			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fn, mt.Text)
+			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fnstr, mt.Text)
 			outmus = append(outmus, []byte(mstr))
 		}
 		outlns = append(outlns, []byte(""))
