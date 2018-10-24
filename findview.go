@@ -142,10 +142,17 @@ func (fv *FindView) ReplaceAction() bool {
 			}
 		}
 	}
+
+	ftvln := ftv.CursorPos.Ln
+	st := giv.TextPos{Ln: ftvln, Ch: 0}
+	len := len(ftv.Buf.Lines[ftvln])
+	en := giv.TextPos{Ln: ftvln, Ch: len}
+	ftv.Buf.DeleteText(st, en, false, true)
 	ftv.UpdateEnd(true)
-	ftv.Refresh()
+	ftv.NeedsRefresh()
 
 	tv.Highlights = tv.Highlights[:0]
+	tv.NeedsRefresh()
 
 	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -175,6 +182,7 @@ func (fv *FindView) UrlPos(lnch string) (int, int) {
 
 // UpdateUrlTextPos updates the link character position (e.g. when replace string is different length than original)
 func (fv *FindView) UpdateUrl(url string, stoff, enoff int) (string, bool) {
+	//fmt.Println("old:", url)
 	regextr, err := regexp.Compile(`L[0-9]+C[0-9]+-L[0-9]+C[0-9]+`)
 	if err != nil {
 		fmt.Printf("error %s", err)
@@ -182,13 +190,14 @@ func (fv *FindView) UpdateUrl(url string, stoff, enoff int) (string, bool) {
 	trstr := regextr.FindString(url)
 	tr := giv.TextRegion{}
 	tr.FromString(trstr)
-	update := fmt.Sprintf("L%dC%d-L%dC%d", tr.Start.Ln, tr.Start.Ch+stoff, tr.End.Ln, tr.End.Ch+enoff)
+	update := fmt.Sprintf("L%dC%d-L%dC%d", tr.Start.Ln+1, tr.Start.Ch+1+stoff, tr.End.Ln+1, tr.End.Ch+1+enoff)
 	url = strings.Replace(url, trstr, update, 1)
-
+	//fmt.Println("new:", url)
 	return url, true
 }
 
 func (fv *FindView) UpdateMarkup(url string, stoff, enoff int, dorep bool, rep string) (string, bool) {
+	//fmt.Println("old:", url)
 	regextr, err := regexp.Compile(`L[0-9]+C[0-9]+-L[0-9]+C[0-9]+`)
 	if err != nil {
 		fmt.Printf("error %s", err)
@@ -207,6 +216,7 @@ func (fv *FindView) UpdateMarkup(url string, stoff, enoff int, dorep bool, rep s
 		}
 		url = regexspan.ReplaceAllString(url, rep)
 	}
+	//fmt.Println("new:", url)
 	return url, true
 }
 
@@ -248,7 +258,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	find := fv.Find.Find
 	giv.PrevISearchString = find
 	ge.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
-
+	tv.SetNeedsRefresh()
 	tv.RefreshIfNeeded()
 	tv.SetCursorShow(reg.Start)
 	return true
