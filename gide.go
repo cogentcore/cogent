@@ -1688,15 +1688,20 @@ func (ge *Gide) CommentOut() bool {
 		return false
 	}
 	sel := tv.Selection()
+	var stl, etl int
 	if sel == nil {
-		return false
+		stl = tv.CursorPos.Ln
+		etl = stl
+	} else {
+		stl = sel.Reg.Start.Ln
+		etl = sel.Reg.End.Ln
 	}
 	cmt := []byte("// ")
 	ls := LangsForFilename(string(tv.Buf.Filename))
 	if len(ls) == 1 {
 		cmt = []byte(ls[0].Comment)
 	}
-	tv.Buf.CommentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, cmt, tv.Sty.Text.TabSize)
+	tv.Buf.CommentRegion(stl, etl, cmt, tv.Sty.Text.TabSize)
 	tv.SelectReset()
 	return true
 }
