@@ -581,6 +581,7 @@ func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool
 	if tv.IsChanged() || !fn.Buf.AutoSaveCheck() {
 		return false
 	}
+	ge.DiffFileNode(gi.FileName(fn.Buf.AutoSaveFilename()), fn)
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Autosave file Exists",
 		Prompt: fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm)},
 		[]string{"Open", "Ignore and Overwrite"},
@@ -595,24 +596,36 @@ func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool
 	return true
 }
 
+// OpenFileNode opens file for file node -- returns new bool and error
+func (ge *Gide) OpenFileNode(fn *giv.FileNode) (bool, error) {
+	if fn.IsDir() {
+		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
+	}
+	giv.FileNodeHiStyle = ge.Prefs.Editor.HiStyle // must be set prior to OpenBuf
+	nw, err := fn.OpenBuf()
+	if err == nil {
+		ge.ConfigNodeTextBuf(fn)
+		ge.OpenNodes.Add(fn)
+		fn.SetOpen()
+	}
+	return nw, err
+}
+
 // ViewFileNode sets the given text view to view file in given node (opens
 // buffer if not already opened)
 func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 	if fn.IsDir() {
 		return
 	}
-	giv.FileNodeHiStyle = ge.Prefs.Editor.HiStyle // must be set prior to OpenBuf
-	if nw, err := fn.OpenBuf(); err == nil {
-		if tv.IsChanged() {
-			ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
-		}
-		ge.ConfigNodeTextBuf(fn)
+	if tv.IsChanged() {
+		ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
+	}
+	nw, err := ge.OpenFileNode(fn)
+	if err == nil {
 		tv.SetBuf(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
 		}
-		ge.OpenNodes.Add(fn)
-		fn.SetOpen()
 		ge.SetActiveTextViewIdx(vidx)
 		ext := filepath.Ext(fn.Name())
 		langs := LangsForExt(ext)
@@ -786,6 +799,49 @@ func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	case giv.TextViewCursorMoved:
 		ge.SetStatus("")
 	}
+}
+
+// DiffFiles shows the differences between two given files (currently outputs a context diff
+// but will show a side-by-side view soon..
+func (ge *Gide) DiffFiles(fnm1, fnm2 gi.FileName) {
+	fnk2, ok := ge.Files.FindFile(string(fnm2))
+	if !ok {
+		return
+	}
+	fn2 := fnk2.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	if fn2.IsDir() {
+		return
+	}
+	ge.DiffFileNode(fnm1, fn2)
+}
+
+// DiffFileNode shows the differences between two given files (currently outputs a context diff
+// but will show a side-by-side view soon..
+func (ge *Gide) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
+	fnk1, ok := ge.Files.FindFile(string(fnm))
+	if !ok {
+		return
+	}
+	fn1 := fnk1.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	if fn1.IsDir() {
+		return
+	}
+	if fn1.Buf == nil {
+		ge.OpenFileNode(fn1)
+	}
+	if fn1.Buf == nil {
+		return
+	}
+	if fn.Buf == nil {
+		ge.OpenFileNode(fn)
+	}
+	if fn.Buf == nil {
+		return
+	}
+	dif := fn1.Buf.DiffBufsUnified(fn.Buf, 3)
+	cbuf, _, _, _ := ge.FindOrMakeCmdTab("Diffs", true, true)
+	cbuf.SetText(dif)
+	cbuf.AutoScrollViews()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -2646,6 +2702,13 @@ var GideProps = ki.Props{
 				"updtfunc":     GideInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"Cmd Name", ki.Props{}},
+				},
+			}},
+			{"DiffFiles", ki.Props{
+				"updtfunc": GideInactiveEmptyFunc,
+				"Args": ki.PropSlice{
+					{"File Name 1", ki.Props{}},
+					{"File Name 2", ki.Props{}},
 				},
 			}},
 		}},

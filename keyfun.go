@@ -37,9 +37,6 @@ const (
 	KeyFunNeeds2             // special internal signal returned by KeyFun indicating need for second key
 	KeyFunNextPanel          // move to next panel to the right
 	KeyFunPrevPanel          // move to prev panel to the left
-	KeyFunGotoLine           // go to a specific line number in active textview
-	KeyFunSearchFile         // search / replace within active textview
-	KeyFunSearchProj         // search / replace across entire project
 	KeyFunFileOpen           // open a new file in active textview
 	KeyFunBufSelect          // select an open buffer to edit in active textview
 	KeyFunBufClone           // open active file in other view
@@ -145,7 +142,7 @@ func SetActiveKeyMapName(mapnm KeyMapName) {
 // get chord -- it returns KeyFunNeeds2 if the key sequence requires 2 keys to
 // be entered, and only the first is present
 func KeyFun(key1, key2 key.Chord) KeyFuns {
-	kf := KeyFunNil
+	kf := KeyFunNeeds2
 	ks := KeySeq{key1, key2}
 	if key1 != "" && key2 != "" {
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
@@ -218,7 +215,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 		return kms[i].Fun < kms[j].Fun
 	})
 
-	lfun := KeyFunNil
+	lfun := KeyFunNeeds2
 	for _, ki := range kms {
 		fun := ki.Fun
 		if fun != lfun {
