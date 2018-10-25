@@ -121,6 +121,9 @@ func (fv *FindView) ReplaceAction() bool {
 	for linkidx := curlinkidx + 1; linkidx < len(ftv.Renders); linkidx++ {
 		r := ftv.Renders[linkidx]
 		if r.Links != nil {
+			if r.Links[0].Label != tl.Label { // another file
+				break
+			}
 			urlstr := r.Links[0].URL
 			url, err := url.Parse(urlstr)
 			if err == nil {
@@ -142,10 +145,18 @@ func (fv *FindView) ReplaceAction() bool {
 			}
 		}
 	}
+
+	// delete the link for the just done replace
+	ftvln := ftv.CursorPos.Ln
+	st := giv.TextPos{Ln: ftvln, Ch: 0}
+	len := len(ftv.Buf.Lines[ftvln])
+	en := giv.TextPos{Ln: ftvln, Ch: len}
+	ftv.Buf.DeleteText(st, en, false, true)
 	ftv.UpdateEnd(true)
-	ftv.Refresh()
+	ftv.NeedsRefresh()
 
 	tv.Highlights = tv.Highlights[:0]
+	tv.NeedsRefresh()
 
 	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -175,71 +186,32 @@ func (fv *FindView) UrlPos(lnch string) (int, int) {
 
 // UpdateUrlTextPos updates the link character position (e.g. when replace string is different length than original)
 func (fv *FindView) UpdateUrl(url string, stoff, enoff int) (string, bool) {
-	//fmt.Println("original: ", url)
-
-	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
+	//fmt.Println("old:", url)
+	regextr, err := regexp.Compile(`L[0-9]+C[0-9]+-L[0-9]+C[0-9]+`)
 	if err != nil {
 		fmt.Printf("error %s", err)
 	}
-	s := regexstart.FindString(url)
-	s = strings.TrimSuffix(s, "-")
-	sl, sc := fv.UrlPos(s)
-
-	regexend, err := regexp.Compile(`-L[0-9]+C[0-9]+`)
-	if err != nil {
-		fmt.Printf("error %s", err)
-	}
-	end := regexend.FindString(url)
-	e := strings.TrimPrefix(end, "-")
-	el, ec := fv.UrlPos(e)
-
-	tail := s + end
-	ur := strings.TrimSuffix(url, tail)
-
-	sc += stoff
-	ec += enoff
-	SC := strconv.Itoa(sc)
-	SL := strconv.Itoa(sl)
-	EC := strconv.Itoa(ec)
-	EL := strconv.Itoa(el)
-	update := "L" + SL + "C" + SC + "-L" + EL + "C" + EC
-	url = ur + update
-	//fmt.Println("new: ", url)
-
+	trstr := regextr.FindString(url)
+	tr := giv.TextRegion{}
+	tr.FromString(trstr)
+	update := fmt.Sprintf("L%dC%d-L%dC%d", tr.Start.Ln+1, tr.Start.Ch+1+stoff, tr.End.Ln+1, tr.End.Ch+1+enoff)
+	url = strings.Replace(url, trstr, update, 1)
+	//fmt.Println("new:", url)
 	return url, true
 }
 
 func (fv *FindView) UpdateMarkup(url string, stoff, enoff int, dorep bool, rep string) (string, bool) {
-	//fmt.Println("original: ", url)
-
-	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
+	//fmt.Println("old:", url)
+	regextr, err := regexp.Compile(`L[0-9]+C[0-9]+-L[0-9]+C[0-9]+`)
 	if err != nil {
 		fmt.Printf("error %s", err)
 	}
-	s := regexstart.FindString(url)
-	s = strings.TrimSuffix(s, "-")
-	sl, sc := fv.UrlPos(s)
-
-	regexend, err := regexp.Compile(`-L[0-9]+C[0-9]+`)
-	if err != nil {
-		fmt.Printf("error %s", err)
-	}
-	end := regexend.FindString(url)
-	e := strings.TrimPrefix(end, "-")
-	el, ec := fv.UrlPos(e)
-
-	lnch := s + end
-	//ur := strings.TrimSuffix(url, tail)
-
-	sc += stoff
-	ec += enoff
-	SC := strconv.Itoa(sc)
-	SL := strconv.Itoa(sl)
-	EC := strconv.Itoa(ec)
-	EL := strconv.Itoa(el)
-	update := "L" + SL + "C" + SC + "-L" + EL + "C" + EC
-
-	url = strings.Replace(url, lnch, update, 1)
+	trstr := regextr.FindString(url)
+	tr := giv.TextRegion{}
+	tr.FromString(trstr)
+	// text links are 1 based - compensate for the -1 done in FromString()
+	update := fmt.Sprintf("L%dC%d-L%dC%d", tr.Start.Ln+1, tr.Start.Ch+1+stoff, tr.End.Ln+1, tr.End.Ch+1+enoff)
+	url = strings.Replace(url, trstr, update, 1)
 
 	if dorep {
 		regexspan, err := regexp.Compile(`<mark>.*</mark>`)
@@ -248,7 +220,7 @@ func (fv *FindView) UpdateMarkup(url string, stoff, enoff int, dorep bool, rep s
 		}
 		url = regexspan.ReplaceAllString(url, rep)
 	}
-	//fmt.Println("new: ", url)
+	//fmt.Println("new:", url)
 	return url, true
 }
 
@@ -290,7 +262,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	find := fv.Find.Find
 	giv.PrevISearchString = find
 	ge.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
-
+	tv.SetNeedsRefresh()
 	tv.RefreshIfNeeded()
 	tv.SetCursorShow(reg.Start)
 	return true
