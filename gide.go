@@ -217,7 +217,8 @@ func (ge *Gide) SaveProjIfExists(saveAllFiles bool) bool {
 // SaveProjAs saves project custom settings to given filename, in a standard
 // JSON-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
-func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) {
+// returns true if the user was prompted, false otherwise
+func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
 	SavePaths()
 	ge.Files.UpdateNewFile(filename)
@@ -225,6 +226,9 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
+	if ge.Speller != nil {
+		ge.Speller.SaveModel()
+	}
 	ge.Changed = false
 	nch := ge.NChangedFiles()
 	if saveAllFiles && nch > 0 {
@@ -239,10 +243,9 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) {
 					ge.SaveAllOpenNodes()
 				}
 			})
+		return true
 	}
-	if ge.Speller != nil {
-		ge.Speller.SaveModel()
-	}
+	return false
 }
 
 // UpdateProj does full update to current proj
@@ -925,7 +928,7 @@ func (ge *Gide) NChangedFiles() int {
 // to save open files -- if this returns true, then it is OK to close --
 // otherwise not
 func (ge *Gide) CloseWindowReq() bool {
-	ge.SaveProjIfExists(true) // saveall
+	ge.SaveProjIfExists(false) // don't prompt here, as we will do it now..
 	nch := ge.NChangedFiles()
 	if nch == 0 {
 		return true
@@ -2142,20 +2145,34 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	gkf := gi.KeyFun(kc)
 	if ge.KeySeq1 != "" {
 		kf = KeyFun(ge.KeySeq1, kc)
+		seqstr := string(ge.KeySeq1) + " " + string(kc)
 		if kf == KeyFunNil || kc == "Escape" {
-			ge.SetStatus(string(ge.KeySeq1) + " " + string(kc) + " -- aborted")
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
+			}
+			ge.SetStatus(seqstr + " -- aborted")
 			kt.SetProcessed() // abort key sequence, don't send esc to anyone else
 			ge.KeySeq1 = ""
 			return
 		}
-		ge.SetStatus(string(ge.KeySeq1) + " " + string(kc))
+		ge.SetStatus(seqstr)
 		ge.KeySeq1 = ""
+		gkf = gi.KeyFunNil // override!
 	} else {
 		kf = KeyFun(kc, "")
 		if kf == KeyFunNeeds2 {
+			kt.SetProcessed()
 			ge.KeySeq1 = kt.Chord()
 			ge.SetStatus(string(ge.KeySeq1))
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
+			}
 			return
+		} else if kf != KeyFunNil {
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
+			}
+			gkf = gi.KeyFunNil // override!
 		}
 	}
 
