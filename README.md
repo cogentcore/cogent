@@ -52,7 +52,7 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
-* fix keyfun edit crash
+* keyfun does not apply for editing just the keys -- need to edit the value too..
 
 * add history combobox to Find
 
@@ -61,8 +61,6 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 * add Navigate menu?
 
 * add all the other languages: C, C++, python, etc
-
-* john will come up with keyboard shortcuts for other examples
 
 * relative path links ../../../etc should work better
 

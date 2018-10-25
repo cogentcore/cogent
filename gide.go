@@ -904,6 +904,8 @@ func (ge *Gide) OpenFileURL(ur string) bool {
 	// fmt.Printf("pos: %v\n", pos)
 	txpos := giv.TextPos{}
 	if txpos.FromString(pos) {
+		reg := giv.TextRegion{Start: txpos, End: giv.TextPos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		tv.HighlightRegion(reg)
 		tv.SetCursorShow(txpos)
 	}
 	return true
