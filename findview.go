@@ -121,7 +121,10 @@ func (fv *FindView) ReplaceAction() bool {
 	for linkidx := curlinkidx + 1; linkidx < len(ftv.Renders); linkidx++ {
 		r := ftv.Renders[linkidx]
 		if r.Links != nil {
-			if r.Links[0].Label != tl.Label { // another file
+			cidx := strings.Index(tl.Label, ".")
+			tllabel := tl.Label[0:cidx]
+			rlinklabel := r.Links[0].Label[0:cidx]
+			if rlinklabel != tllabel {
 				break
 			}
 			urlstr := r.Links[0].URL
