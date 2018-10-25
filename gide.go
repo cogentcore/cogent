@@ -321,6 +321,8 @@ func (ge *Gide) LangDefaults() bool {
 		ge.Prefs.BuildCmds = CmdNames{"LaTeX PDF"}
 		ge.Prefs.RunCmds = CmdNames{"Open Target File"}
 		got = true
+	default:
+		ge.Prefs.BuildCmds = CmdNames{"Make"}
 	}
 	return got
 }
@@ -349,6 +351,7 @@ func (ge *Gide) ConfigNodeTextBuf(fn *giv.FileNode) {
 	fn.Buf.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
 	fn.Buf.Opts.Completion = ge.Prefs.Editor.Completion
 	fn.Buf.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
+	fn.Buf.SetAutoFullMarkup()
 }
 
 // ActiveTextView returns the currently-active TextView
