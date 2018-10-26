@@ -123,7 +123,11 @@ func (fv *FindView) ReplaceAction() bool {
 		if r.Links != nil {
 			cidx := strings.Index(tl.Label, ".")
 			tllabel := tl.Label[0:cidx]
-			rlinklabel := r.Links[0].Label[0:cidx]
+			rcidx := strings.Index(r.Links[0].Label, ".")
+			if rcidx != cidx {
+				break
+			}
+			rlinklabel := r.Links[0].Label[0:rcidx]
 			if rlinklabel != tllabel {
 				break
 			}

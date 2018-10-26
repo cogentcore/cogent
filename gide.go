@@ -1479,11 +1479,11 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs
 			ln := mt.Reg.Start.Ln + 1
 			ch := mt.Reg.Start.Ch + 1
 			ech := mt.Reg.End.Ch + 1
-			fnstr := fmt.Sprintf(`	%v:%d:%d`, fn, ln, ch)
+			fnstr := fmt.Sprintf("%v:%d:%d", fn, ln, ch)
 			nomu := bytes.Replace(mt.Text, []byte("<mark>"), nil, -1)
 			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
 			nomus := html.EscapeString(string(nomu))
-			lstr = fmt.Sprintf(`	%v: %s`, fnstr, nomus)
+			lstr = fmt.Sprintf(`%v: %s`, fnstr, nomus) // note: has tab embedded at start of lstr
 
 			outlns = append(outlns, []byte(lstr))
 			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fnstr, mt.Text)
@@ -2672,11 +2672,28 @@ var GideProps = ki.Props{
 			}},
 		}},
 		{"View", ki.PropSlice{
-			{"CloneActiveView", ki.Props{
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufClone).String())
-				}),
-				"updtfunc": GideInactiveEmptyFunc,
+			{"Panels", ki.PropSlice{
+				{"FocusNextPanel", ki.Props{
+					"label": "Focus Next",
+					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+						return key.Chord(ActiveKeyMap.ChordForFun(KeyFunNextPanel).String())
+					}),
+					"updtfunc": GideInactiveEmptyFunc,
+				}},
+				{"FocusPrevPanel", ki.Props{
+					"label": "Focus Prev",
+					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+						return key.Chord(ActiveKeyMap.ChordForFun(KeyFunPrevPanel).String())
+					}),
+					"updtfunc": GideInactiveEmptyFunc,
+				}},
+				{"CloneActiveView", ki.Props{
+					"label": "Clone Active",
+					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+						return key.Chord(ActiveKeyMap.ChordForFun(KeyFunBufClone).String())
+					}),
+					"updtfunc": GideInactiveEmptyFunc,
+				}},
 			}},
 			{"Splits", ki.PropSlice{
 				{"SplitsSetView", ki.Props{
@@ -2711,6 +2728,19 @@ var GideProps = ki.Props{
 				{"SplitsEdit", ki.Props{
 					"updtfunc": GideInactiveEmptyFunc,
 					"label":    "Edit...",
+				}},
+			}},
+		}},
+		{"Navigate", ki.PropSlice{
+			{"Cursor", ki.PropSlice{
+				{"Back", ki.Props{
+					"keyfun": gi.KeyFunHistPrev,
+				}},
+				{"Forward", ki.Props{
+					"keyfun": gi.KeyFunHistNext,
+				}},
+				{"Jump To Line", ki.Props{
+					"keyfun": gi.KeyFunJump,
 				}},
 			}},
 		}},
