@@ -1838,7 +1838,7 @@ func (ge *Gide) SplitsSetView(split SplitName) {
 	if sv != nil {
 		sp, _, ok := AvailSplits.SplitByName(split)
 		if ok {
-			sv.SetSplits(sp.Splits...)
+			sv.SetSplitsAction(sp.Splits...)
 			ge.Prefs.SplitName = split
 		}
 	}
