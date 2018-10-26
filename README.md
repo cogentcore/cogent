@@ -60,13 +60,9 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 * Console redirecting stdout, err
 
-* add Navigate menu?
-
 * add more other languages: ??
 
 * relative path links ../../../etc should work better
-
-* find needs to: as you start replacing, positions within a single line get off (lines stay ok)
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
 
