@@ -1682,6 +1682,8 @@ func (ge *Gide) RegisterPaste(name RegisterName) bool {
 }
 
 // CommentOut comments-out selected lines in active text view
+// and uncomments if already commented
+// If multiple lines are selected and any line is uncommented all will be commented
 func (ge *Gide) CommentOut() bool {
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
@@ -1691,7 +1693,7 @@ func (ge *Gide) CommentOut() bool {
 	var stl, etl int
 	if sel == nil {
 		stl = tv.CursorPos.Ln
-		etl = stl
+		etl = stl + 1
 	} else {
 		stl = sel.Reg.Start.Ln
 		etl = sel.Reg.End.Ln
