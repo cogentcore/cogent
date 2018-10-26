@@ -97,19 +97,19 @@ func (fv *FindView) ReplaceAction() bool {
 
 	ftv.UpdateStart()
 	// update the find link for the just done replace
-	var curlinkidx int
+	var curLinkIdx int
 	for i, r := range ftv.Renders {
 		if r.Links != nil {
 			if r.Links[0].URL == tl.URL {
 				ur, urup := fv.UpdateUrl(r.Links[0].URL, 0, offset)
 				if urup {
 					r.Links[0].URL = ur
-					curlinkidx = i
-					mu := string(ftv.Buf.Markup[curlinkidx])
+					curLinkIdx = i
+					mu := string(ftv.Buf.Markup[curLinkIdx])
 					umu, umuup := fv.UpdateMarkup(mu, 0, offset, true, fv.Find.Replace)
 					if umuup {
 						bmu := []byte(umu)
-						ftv.Buf.Markup[curlinkidx] = bmu
+						ftv.Buf.Markup[curLinkIdx] = bmu
 					}
 					break
 				}
@@ -118,8 +118,8 @@ func (fv *FindView) ReplaceAction() bool {
 	}
 
 	// update the find links for any others for the same line of text
-	for linkidx := curlinkidx + 1; linkidx < len(ftv.Renders); linkidx++ {
-		r := ftv.Renders[linkidx]
+	for linkIdx := curLinkIdx + 1; linkIdx < len(ftv.Renders); linkIdx++ {
+		r := ftv.Renders[linkIdx]
 		if r.Links != nil {
 			cidx := strings.Index(tl.Label, ".")
 			tllabel := tl.Label[0:cidx]
@@ -141,11 +141,11 @@ func (fv *FindView) ReplaceAction() bool {
 					ur, urup := fv.UpdateUrl(urlstr, offset, offset)
 					if urup {
 						r.Links[0].URL = ur
-						mu := string(ftv.Buf.Markup[linkidx])
+						mu := string(ftv.Buf.Markup[linkIdx])
 						umu, umuup := fv.UpdateMarkup(mu, offset, offset, false, fv.Find.Replace)
 						if umuup {
 							bmu := []byte(umu)
-							ftv.Buf.Markup[linkidx] = bmu
+							ftv.Buf.Markup[linkIdx] = bmu
 						}
 					}
 				}
