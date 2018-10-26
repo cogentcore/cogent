@@ -169,6 +169,13 @@ func (cm *Command) HasPrompts() (map[string]struct{}, bool) {
 // this will be reset automatically after command is run.
 var CmdNoUserPrompt bool
 
+// CmdWaitOverride will cause the next commands that are run to be in wait mode
+// (sequentially, waiting for completion after each), instead of running each in
+// a separate process as is typical.  Don't forget to reset it after commands.
+// This is important when running multiple of the same command, to prevent collisions
+// in the output buffer.
+var CmdWaitOverride bool
+
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
 func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
@@ -232,7 +239,7 @@ func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
 	}
 
-	if cm.Wait || len(cm.Cmds) > 1 {
+	if CmdWaitOverride || cm.Wait || len(cm.Cmds) > 1 {
 		for i := range cm.Cmds {
 			cma := &cm.Cmds[i]
 			if buf == nil {

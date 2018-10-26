@@ -52,9 +52,6 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
-* running command on mutiple files needs to set a global "wait" flag to switch all commands 
-to run in wait mode!
-
 * tab kill button kills the process
 
 * keyfun does not apply for editing just the keys -- need to edit the value too..

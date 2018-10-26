@@ -351,7 +351,6 @@ func (ge *Gide) ConfigNodeTextBuf(fn *giv.FileNode) {
 	fn.Buf.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
 	fn.Buf.Opts.Completion = ge.Prefs.Editor.Completion
 	fn.Buf.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
-	fn.Buf.SetAutoFullMarkup()
 }
 
 // ActiveTextView returns the currently-active TextView

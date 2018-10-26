@@ -272,6 +272,9 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 // ExecCmdFiles calls given command on selected files
 func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 	sels := ft.SelectedViews()
+	if len(sels) > 1 {
+		CmdWaitOverride = true // force wait mode
+	}
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i]
 		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
@@ -279,6 +282,9 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 		if fn != nil {
 			fn.ExecCmdNameFile(cmdNm)
 		}
+	}
+	if CmdWaitOverride {
+		CmdWaitOverride = false
 	}
 }
 
