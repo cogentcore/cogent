@@ -52,6 +52,11 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
+* running command on mutiple files needs to set a global "wait" flag to switch all commands 
+to run in wait mode!
+
+* tab kill button kills the process
+
 * keyfun does not apply for editing just the keys -- need to edit the value too..
 
 * add history combobox to Find
@@ -60,11 +65,9 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 * add Navigate menu?
 
-* add all the other languages: C, C++, python, etc
+* add more other languages: ??
 
 * relative path links ../../../etc should work better
-
-* tab kill button kills the process
 
 * find needs to: as you start replacing, positions within a single line get off (lines stay ok)
 

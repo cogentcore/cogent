@@ -376,6 +376,7 @@ func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err erro
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), false, true) // no save undo, yes signal
 		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), false, true)
+		buf.RefreshViews()
 		buf.AutoScrollViews()
 		if cm.Focus {
 			ge.FocusOnPanel(MainTabsIdx)
