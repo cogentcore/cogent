@@ -50,6 +50,8 @@ const (
 	KeyFunIndent             // indent region
 	KeyFunJump               // jump to line (same as gi.KeyFunJump)
 	KeyFunSetSplit           // set named splitter config
+	KeyFunBuildProj          // build overall project
+	KeyFunRunProj            // run overall project
 	KeyFunsN
 )
 
@@ -196,6 +198,11 @@ func (km *KeySeqMap) ChordForFun(kf KeyFuns) KeySeq {
 		}
 	}
 	return KeySeq{}
+}
+
+// ChordForFun returns first key sequence trigger for given KeyFun in ActiveKeyMap
+func ChordForFun(kf KeyFuns) KeySeq {
+	return ActiveKeyMap.ChordForFun(kf)
 }
 
 // Update ensures that the given keymap has at least one entry for every
@@ -499,8 +506,12 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+I"}: KeyFunIndent,
 		KeySeq{"Control+M", "j"}:         KeyFunJump,
 		KeySeq{"Control+M", "Control+J"}: KeyFunJump,
-		KeySeq{"Control+M", "v"}:         KeyFunSetSplit, // view
-		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit, // view
+		KeySeq{"Control+M", "v"}:         KeyFunSetSplit,
+		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit,
+		KeySeq{"Control+M", "m"}:         KeyFunBuildProj,
+		KeySeq{"Control+M", "Control+M"}: KeyFunBuildProj,
+		KeySeq{"Control+M", "r"}:         KeyFunRunProj,
+		KeySeq{"Control+M", "Control+R"}: KeyFunRunProj,
 	}},
 	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
@@ -533,8 +544,12 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+I"}: KeyFunIndent,
 		KeySeq{"Control+X", "j"}:         KeyFunJump,
 		KeySeq{"Control+X", "Control+J"}: KeyFunJump,
-		KeySeq{"Control+X", "v"}:         KeyFunSetSplit, // view
+		KeySeq{"Control+X", "v"}:         KeyFunSetSplit,
 		KeySeq{"Control+X", "Control+V"}: KeyFunSetSplit,
+		KeySeq{"Control+X", "m"}:         KeyFunBuildProj,
+		KeySeq{"Control+X", "Control+M"}: KeyFunBuildProj,
+		KeySeq{"Control+X", "r"}:         KeyFunRunProj,
+		KeySeq{"Control+X", "Control+R"}: KeyFunRunProj,
 	}},
 	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
@@ -567,8 +582,12 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+I"}: KeyFunIndent,
 		KeySeq{"Control+X", "j"}:         KeyFunJump,
 		KeySeq{"Control+X", "Control+J"}: KeyFunJump,
-		KeySeq{"Control+X", "v"}:         KeyFunSetSplit, // view
+		KeySeq{"Control+X", "v"}:         KeyFunSetSplit,
 		KeySeq{"Control+X", "Control+V"}: KeyFunSetSplit,
+		KeySeq{"Control+M", "m"}:         KeyFunBuildProj,
+		KeySeq{"Control+M", "Control+M"}: KeyFunBuildProj,
+		KeySeq{"Control+M", "r"}:         KeyFunRunProj,
+		KeySeq{"Control+M", "Control+R"}: KeyFunRunProj,
 	}},
 	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
@@ -603,8 +622,12 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+I"}: KeyFunIndent,
 		KeySeq{"Control+M", "j"}:         KeyFunJump,
 		KeySeq{"Control+M", "Control+J"}: KeyFunJump,
-		KeySeq{"Control+M", "v"}:         KeyFunSetSplit, // view
-		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit, // view
+		KeySeq{"Control+M", "v"}:         KeyFunSetSplit,
+		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit,
+		KeySeq{"Control+M", "m"}:         KeyFunBuildProj,
+		KeySeq{"Control+M", "Control+M"}: KeyFunBuildProj,
+		KeySeq{"Control+M", "r"}:         KeyFunRunProj,
+		KeySeq{"Control+M", "Control+R"}: KeyFunRunProj,
 	}},
 	{"WindowsStd", "Standard Windows KeySeqMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
@@ -639,8 +662,12 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+I"}: KeyFunIndent,
 		KeySeq{"Control+M", "j"}:         KeyFunJump,
 		KeySeq{"Control+M", "Control+J"}: KeyFunJump,
-		KeySeq{"Control+M", "v"}:         KeyFunSetSplit, // view
-		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit, // view
+		KeySeq{"Control+M", "v"}:         KeyFunSetSplit,
+		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit,
+		KeySeq{"Control+M", "m"}:         KeyFunBuildProj,
+		KeySeq{"Control+M", "Control+M"}: KeyFunBuildProj,
+		KeySeq{"Control+M", "r"}:         KeyFunRunProj,
+		KeySeq{"Control+M", "Control+R"}: KeyFunRunProj,
 	}},
 	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
@@ -675,7 +702,11 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+I"}: KeyFunIndent,
 		KeySeq{"Control+M", "j"}:         KeyFunJump,
 		KeySeq{"Control+M", "Control+J"}: KeyFunJump,
-		KeySeq{"Control+M", "v"}:         KeyFunSetSplit, // view
-		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit, // view
+		KeySeq{"Control+M", "v"}:         KeyFunSetSplit,
+		KeySeq{"Control+M", "Control+V"}: KeyFunSetSplit,
+		KeySeq{"Control+M", "m"}:         KeyFunBuildProj,
+		KeySeq{"Control+M", "Control+M"}: KeyFunBuildProj,
+		KeySeq{"Control+M", "r"}:         KeyFunRunProj,
+		KeySeq{"Control+M", "Control+R"}: KeyFunRunProj,
 	}},
 }
