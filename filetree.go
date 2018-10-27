@@ -400,5 +400,15 @@ var FileTreeViewProps = ki.Props{
 				}},
 			},
 		}},
+		{"NewFolder", ki.Props{
+			"label":    "New Folder...",
+			"desc":     "make a new folder within this folder",
+			"updtfunc": FileTreeActiveDirFunc,
+			"Args": ki.PropSlice{
+				{"Folder Name", ki.Props{
+					"width": 60,
+				}},
+			},
+		}},
 	},
 }

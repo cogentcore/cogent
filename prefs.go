@@ -13,6 +13,7 @@ import (
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
+	"github.com/goki/gi/svg"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -50,6 +51,17 @@ var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
 // Prefs are the overall Gide preferences
 var Prefs = Preferences{}
 
+// OpenIcons loads the gide icons into the current icon set
+func OpenIcons() error {
+	path, err := kit.GoSrcDir("github.com/goki/gide/icons")
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	svg.CurIconSet.OpenIconsFromPath(path)
+	return nil
+}
+
 // InitPrefs must be called at startup in mainrun()
 func InitPrefs() {
 	DefaultKeyMap = "MacEmacs" // todo
@@ -57,6 +69,7 @@ func InitPrefs() {
 	Prefs.Defaults()
 	Prefs.Open()
 	OpenPaths()
+	OpenIcons()
 }
 
 func (pf *FilePrefs) Defaults() {
