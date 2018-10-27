@@ -511,6 +511,8 @@ func (ge *Gide) RevertActiveView() {
 	if tv.Buf != nil {
 		tv.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
 		tv.Buf.Revert()
+		fpath, _ := filepath.Split(string(tv.Buf.Filename))
+		ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
 	}
 }
 
@@ -2153,6 +2155,9 @@ func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *FileTreeView) {
 func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	kf := KeyFunNil
 	kc := kt.Chord()
+	if gi.KeyEventTrace {
+		fmt.Printf("Gide KeyInput: %v\n", ge.PathUnique())
+	}
 	gkf := gi.KeyFun(kc)
 	if ge.KeySeq1 != "" {
 		kf = KeyFun(ge.KeySeq1, kc)
