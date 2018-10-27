@@ -52,6 +52,9 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
+* if user tries to open a file under a closed directory, it doesn't work
+-- need to look at paths and open dirs as needed.
+
 * tab kill button kills the process
 
 * keyfun does not apply for editing just the keys -- need to edit the value too..
