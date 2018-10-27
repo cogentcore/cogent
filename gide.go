@@ -69,7 +69,6 @@ type Gide struct {
 	Prefs             ProjPrefs               `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
-	Speller           *spell.Spell            `desc:"current spell checker"`
 }
 
 var KiT_Gide = kit.Types.AddType(&Gide{}, nil)
@@ -226,9 +225,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
-	if ge.Speller != nil {
-		ge.Speller.SaveModel()
-	}
+	spell.SaveModel()
 	ge.Changed = false
 	nch := ge.NChangedFiles()
 	if saveAllFiles && nch > 0 {
@@ -642,8 +639,8 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 			switch ln {
 			case "Go":
 				tv.SetCompleter(tv, CompleteGo, CompleteGoEdit)
-			case "Tex":
-				tv.SetCompleter(tv, CompleteTex, CompleteTexEdit)
+			default:
+				tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 			}
 		}
 	}
@@ -1522,33 +1519,9 @@ func (ge *Gide) Spell() {
 	}
 
 	tv := ge.ActiveTextView()
-	ge.Speller = spell.NewSpeller()
-	ge.Speller.NewSpellCheck(tv.Buf.Txt)
-	tw, suggests := ge.Speller.NextUnknownWord()
+	spell.NewSpellCheck(tv.Buf.Txt)
+	tw, suggests := spell.NextUnknownWord()
 	sv.SetUnknownAndSuggest(tw, suggests)
-
-	//unknowns, err := spell.CheckFile(fp)
-	//if err != nil {
-	//	gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Dictionaries not found", Prompt: err.Error()}, true, false, nil, nil)
-	//	return
-	//}
-	//outlns := make([][]byte, 0, 100)
-	//outmus := make([][]byte, 0, 100) // markups
-	//fbStLn := len(outlns)            // find buf start ln
-	//lstr := fmt.Sprintf(`%v:`, fn)
-	//outlns = append(outlns, []byte(lstr))
-	//mstr := fmt.Sprintf(`<a href="spell:///%v#R%v">%v</a>`, fp, fbStLn, fn)
-	//outmus = append(outmus, []byte(mstr))
-	//for _, u := range unknowns {
-	//	lstr := fmt.Sprintf(`%v: %v`, u.LineNo, u.Word)
-	//	outlns = append(outlns, []byte(lstr))
-	//	mstr = fmt.Sprintf(`	<a href="spell:///%v#R%vL%v-L%v">%v:%v</a>`, fp, fbStLn, u.LineNo, u.LineNo, u.LineNo, u.Word)
-	//	outmus = append(outmus, []byte(mstr))
-	//}
-	//ltxt := bytes.Join(outlns, []byte("\n"))
-	//mtxt := bytes.Join(outmus, []byte("\n"))
-	//fbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
-	//stv.CursorStartDoc()
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
@@ -2944,8 +2917,8 @@ func CompleteGoEdit(data interface{}, text string, cursorPos int, selection stri
 	return s, delta
 }
 
-// CompleteTex does completion for tex files
-func CompleteTex(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+// CompleteText does completion for tex files
+func CompleteText(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
 	var txbuf *giv.TextBuf
 	switch t := data.(type) {
 	case *giv.TextView:
@@ -2962,13 +2935,13 @@ func CompleteTex(data interface{}, text string, pos token.Position) (matches com
 		textbytes = append(textbytes, []byte(string(lr))...)
 		textbytes = append(textbytes, '\n')
 	}
-	results := complete.CompleteTex(textbytes, pos)
+	results := complete.CompleteText(textbytes, pos)
 	matches = complete.MatchSeedCompletion(results, seed)
 	return matches, seed
 }
 
-// CompleteTexEdit uses the selected completion to edit the text
-func CompleteTexEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
-	s, delta = complete.EditTex(text, cursorPos, selection, seed)
+// CompleteTextEdit uses the selected completion to edit the text
+func CompleteTextEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
+	s, delta = complete.EditText(text, cursorPos, selection, seed)
 	return s, delta
 }
