@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gi/spell"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 	"strings"
@@ -21,20 +20,20 @@ type SpellParams struct {
 // SpellView is a widget that displays results of spell check
 type SpellView struct {
 	gi.Layout
-	Gide         *Gide          `json:"-" xml:"-" desc:"parent gide project"`
-	Spell        SpellParams    `desc:"params for spelling"`
-	Unknown      spell.TextWord `desc:"current unknown/misspelled word"`
-	Suggestions  []string       `desc:"a list of suggestions from spell checker"`
-	Ignore       []string       `desc:"a list of ignore-all words"`
-	ChangeOffset int            `desc:"compensation for change word length different than original word"`
-	PreviousLine int            `desc:"line of previous unknown word"`
-	CurrentLine  int            `desc:"line of current unknown word"`
-	LastAction   *gi.Action     `desc:"last user action (ignore, change, learn)"`
+	Gide         *Gide       `json:"-" xml:"-" desc:"parent gide project"`
+	Spell        SpellParams `desc:"params for spelling"`
+	Unknown      gi.TextWord `desc:"current unknown/misspelled word"`
+	Suggestions  []string    `desc:"a list of suggestions from spell checker"`
+	Ignore       []string    `desc:"a list of ignore-all words"`
+	ChangeOffset int         `desc:"compensation for change word length different than original word"`
+	PreviousLine int         `desc:"line of previous unknown word"`
+	CurrentLine  int         `desc:"line of current unknown word"`
+	LastAction   *gi.Action  `desc:"last user action (ignore, change, learn)"`
 }
 
 var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
 
-// SpellAction runs a new find with current params
+// SpellAction runs a new spell check with current params
 func (sv *SpellView) SpellAction() {
 	sv.Gide.Prefs.Spell = sv.Spell
 
@@ -360,9 +359,9 @@ func (sv *SpellView) ConfigToolbar() {
 
 }
 
-// CheckNext will find the next misspelled/unknown word
+// CheckNext will find the next misspelled/unknown word and get suggestions for replacing it
 func (sv *SpellView) CheckNext() {
-	tw, suggests := spell.NextUnknownWord()
+	tw, suggests, _ := gi.NextUnknownWord()
 	if tw.Word == "" {
 		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, true, false, nil, nil)
 		return
@@ -384,7 +383,12 @@ func (sv *SpellView) CheckNext() {
 }
 
 // SetUnknownAndSuggest
-func (sv *SpellView) SetUnknownAndSuggest(unknown spell.TextWord, suggests []string) {
+func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string) {
+	for _, w := range sv.Ignore {
+		if w == unknown.Word { // move on!
+			sv.CheckNext()
+		}
+	}
 	uf := sv.FindUnknownText()
 	uf.SetText(unknown.Word)
 	sv.Unknown = unknown
@@ -477,7 +481,7 @@ func (sv *SpellView) IgnoreAllAction() {
 // and call CheckNext
 func (sv *SpellView) LearnAction() {
 	new := strings.ToLower(sv.Unknown.Word)
-	spell.LearnWord(new)
+	gi.LearnWord(new)
 	sv.LastAction = sv.FindLearnAct()
 	sv.CheckNext()
 }

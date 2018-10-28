@@ -30,7 +30,6 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
-	"github.com/goki/gi/spell"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
@@ -225,7 +224,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
-	spell.SaveModel()
+	gi.SaveSpell()
 	ge.Changed = false
 	nch := ge.NChangedFiles()
 	if saveAllFiles && nch > 0 {
@@ -1519,8 +1518,12 @@ func (ge *Gide) Spell() {
 	}
 
 	tv := ge.ActiveTextView()
-	spell.NewSpellCheck(tv.Buf.Txt)
-	tw, suggests := spell.NextUnknownWord()
+	gi.InitSpell()
+	gi.InitNewCheck(tv.Buf.Txt)
+	tw, suggests, err := gi.NextUnknownWord()
+	if err != nil {
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Error Running Spell Check", Prompt: fmt.Sprintf("%v", err)}, true, false, nil, nil)
+	}
 	sv.SetUnknownAndSuggest(tw, suggests)
 	ge.FocusOnPanel(MainTabsIdx)
 }
