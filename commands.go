@@ -795,6 +795,8 @@ var StdCmds = Commands{
 	// Misc testing
 	{"List Dir", "list current dir", nil,
 		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, false, false},
+	{"Grep", "recursive grep of all files for prompted value", nil,
+		[]CmdAndArgs{CmdAndArgs{"grep", []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}}, "{FileDirPath}", false, false, false},
 }
 
 // SetCompleter adds a completer to the textfield - each field
