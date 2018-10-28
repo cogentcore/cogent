@@ -2892,6 +2892,7 @@ func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
 }
 
 // CompleteGocode uses github.com/mdempsky/gocode to do code completion
+// gocode requires the entire file and the position of the cursor within the file
 func CompleteGo(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
 	var txbuf *giv.TextBuf
 	switch t := data.(type) {
@@ -2920,26 +2921,20 @@ func CompleteGoEdit(data interface{}, text string, cursorPos int, selection stri
 	return s, delta
 }
 
-// CompleteText does completion for tex files
+// CompleteText does completion for text files
 func CompleteText(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
-	var txbuf *giv.TextBuf
-	switch t := data.(type) {
-	case *giv.TextView:
-		txbuf = t.Buf
-	}
-	if txbuf == nil {
-		log.Printf("complete.Complete: txbuf is nil - can't complete\n")
-		return
-	}
+	gi.InitSpell() // text completion uses the spell code to generate completions and suggestions
 
-	seed = complete.SeedGolang(text)
-	textbytes := make([]byte, 0, txbuf.NLines*40)
-	for _, lr := range txbuf.Lines {
-		textbytes = append(textbytes, []byte(string(lr))...)
-		textbytes = append(textbytes, '\n')
+	seed = complete.SeedWhiteSpace(text)
+	if seed == "" {
+		return nil, seed
 	}
-	results := complete.CompleteText(textbytes, pos)
-	matches = complete.MatchSeedCompletion(results, seed)
+	result := complete.CompleteText(seed)
+	possibles := complete.MatchSeedString(result, seed)
+	for _, p := range possibles {
+		m := complete.Completion{Text: p, Icon: ""}
+		matches = append(matches, m)
+	}
 	return matches, seed
 }
 
@@ -2947,4 +2942,8 @@ func CompleteText(data interface{}, text string, pos token.Position) (matches co
 func CompleteTextEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
 	s, delta = complete.EditText(text, cursorPos, selection, seed)
 	return s, delta
+}
+
+func Complete(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+	return matches, seed
 }
