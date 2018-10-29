@@ -1521,7 +1521,12 @@ func (ge *Gide) Spell() {
 
 	tv := ge.ActiveTextView()
 	gi.InitSpell()
-	gi.InitNewCheck(tv.Buf.Txt)
+	textbytes := make([]byte, 0, tv.Buf.NLines*40)
+	for _, lr := range tv.Buf.Lines {
+		textbytes = append(textbytes, []byte(string(lr))...)
+		textbytes = append(textbytes, '\n')
+	}
+	gi.InitNewCheck(textbytes)
 	tw, suggests, err := gi.NextUnknownWord()
 	if err != nil {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Error Running Spell Check", Prompt: fmt.Sprintf("%v", err)}, true, false, nil, nil)
