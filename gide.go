@@ -1473,7 +1473,7 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs
 		fbStLn := len(outlns) // find buf start ln
 		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
 		outlns = append(outlns, []byte(lstr))
-		mstr := fmt.Sprintf(`<a href="find:///%v#R%vN%v">%v</a>: %v`, fp, fbStLn, fs.Count, fn, fs.Count)
+		mstr := fmt.Sprintf(`<b>%v</b>`, lstr)
 		outmus = append(outmus, []byte(mstr))
 		for _, mt := range fs.Matches {
 			ln := mt.Reg.Start.Ln + 1
@@ -1499,7 +1499,6 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
-		ftv.CursorNextLink(false)
 	}
 	ge.FocusOnPanel(MainTabsIdx)
 }
@@ -2880,7 +2879,7 @@ func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
 	// })
 
 	win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
-		if len(gi.MainWindows) <= 1 {
+		if gi.MainWindows.Len() <= 1 {
 			go oswin.TheApp.Quit() // once main window is closed, quit
 		}
 	})

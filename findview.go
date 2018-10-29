@@ -46,6 +46,9 @@ func (fv *FindView) FindAction() {
 
 // ReplaceAction performs the replace
 func (fv *FindView) ReplaceAction() bool {
+	winUpdt := fv.Gide.Viewport.Win.UpdateStart()
+	defer fv.Gide.Viewport.Win.UpdateEnd(winUpdt)
+
 	ftv := fv.TextView()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
 	if !ok {
@@ -95,7 +98,6 @@ func (fv *FindView) ReplaceAction() bool {
 		curline = line - 1 // -1 because url is 1 based and text is 0 based
 	}
 
-	ftv.UpdateStart()
 	// update the find link for the just done replace
 	var curLinkIdx int
 	for i, r := range ftv.Renders {
@@ -159,7 +161,6 @@ func (fv *FindView) ReplaceAction() bool {
 	len := len(ftv.Buf.Lines[ftvln])
 	en := giv.TextPos{Ln: ftvln, Ch: len}
 	ftv.Buf.DeleteText(st, en, false, true)
-	ftv.UpdateEnd(true)
 	ftv.NeedsRefresh()
 
 	tv.Highlights = tv.Highlights[:0]
