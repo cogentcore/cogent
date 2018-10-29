@@ -2925,6 +2925,10 @@ func CompleteGoEdit(data interface{}, text string, cursorPos int, selection stri
 
 // CompleteText does completion for text files
 func CompleteText(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+	// todo: resolve issue with saved model not saving suffixes and
+	// then the next line can be removed allowing completion to proceed
+	return nil, seed
+
 	err := gi.InitSpell() // text completion uses the spell code to generate completions and suggestions
 	if err != nil {
 		fmt.Println("Could not initialize spelling model: Spelling model needed for text completion: %v", err)
