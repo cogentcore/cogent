@@ -224,7 +224,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
-	gi.SaveSpell()
+	gi.SaveModel()
 	ge.Changed = false
 	nch := ge.NChangedFiles()
 	if saveAllFiles && nch > 0 {
