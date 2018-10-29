@@ -231,7 +231,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Save Project: There are Unsaved Files",
 			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch)},
 			[]string{"Cancel", "Save All"},
-			ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				switch sig {
 				case 0:
 				// do nothing, will have returned false already
@@ -359,7 +359,7 @@ func (ge *Gide) TextViewIndex(av *giv.TextView) int {
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
-		if tv.This == av.This {
+		if tv.This() == av.This() {
 			return i
 		}
 	}
@@ -376,7 +376,7 @@ func (ge *Gide) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool)
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
-		if tv != nil && tv.Buf != nil && tv.Buf.This == fn.Buf.This && ge.PanelIsOpen(i+TextView1Idx) {
+		if tv != nil && tv.Buf != nil && tv.Buf.This() == fn.Buf.This() && ge.PanelIsOpen(i+TextView1Idx) {
 			return tv, i, true
 		}
 	}
@@ -404,7 +404,7 @@ func (ge *Gide) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	if !ok {
 		return nil, -1, false
 	}
-	return ge.TextViewForFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
+	return ge.TextViewForFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 }
 
 // SetActiveFilename sets the active filename
@@ -494,7 +494,7 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 		ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
 		fnk, ok := ge.Files.FindFile(string(filename))
 		if ok {
-			fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+			fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
 			ge.ViewFileNode(tv, ge.ActiveTextViewIdx, fn)
 		}
 	}
@@ -588,7 +588,7 @@ func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Autosave file Exists",
 		Prompt: fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm)},
 		[]string{"Open", "Ignore and Overwrite"},
-		ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			switch sig {
 			case 0:
 				ge.NextViewFile(gi.FileName(fn.Buf.AutoSaveFilename()))
@@ -668,7 +668,7 @@ func (ge *Gide) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	if !ok {
 		return nil, -1, false
 	}
-	fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
 	if fn.IsDir() {
 		return nil, -1, false
 	}
@@ -683,7 +683,7 @@ func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	if !ok {
 		return nil, -1, false
 	}
-	fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
 	if fn.IsDir() {
 		return nil, -1, false
 	}
@@ -719,7 +719,7 @@ func (ge *Gide) LinkViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	if !ok {
 		return nil, -1, false
 	}
-	fn := fnk.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
 	if fn.IsDir() {
 		return nil, -1, false
 	}
@@ -811,7 +811,7 @@ func (ge *Gide) DiffFiles(fnm1, fnm2 gi.FileName) {
 	if !ok {
 		return
 	}
-	fn2 := fnk2.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	fn2 := fnk2.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
 	if fn2.IsDir() {
 		return
 	}
@@ -825,7 +825,7 @@ func (ge *Gide) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 	if !ok {
 		return
 	}
-	fn1 := fnk1.This.Embed(giv.KiT_FileNode).(*giv.FileNode)
+	fn1 := fnk1.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
 	if fn1.IsDir() {
 		return
 	}
@@ -938,7 +938,7 @@ func (ge *Gide) CloseWindowReq() bool {
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Files",
 		Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", ge.Nm, nch)},
 		[]string{"Cancel", "Save All", "Close Without Saving"},
-		ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			switch sig {
 			case 0:
 				// do nothing, will have returned false already
@@ -1349,7 +1349,7 @@ func (ge *Gide) Commit() {
 		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Commit: There are Unsaved Files",
 			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel commit and review  / save those files first?", ge.Nm, nch)},
 			[]string{"Cancel", "Save All", "Commit Without Saving"},
-			ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				switch sig {
 				case 0:
 					// do nothing, will have bailed already
@@ -1382,7 +1382,7 @@ func (ge *Gide) CommitNoChecks() {
 
 	gi.StringPromptDialog(ge.Viewport, "", "Enter commit message here..",
 		gi.DlgOpts{Title: "Commit Message", Prompt: "Please enter your commit message here -- this will be recorded along with other information from the commit in the project's ChangeLog, which can be viewed under Proj Prefs menu item -- author information comes from User settings in GoGi Preferences."},
-		ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			dlg := send.(*gi.Dialog)
 			if sig == int64(gi.DialogAccepted) {
 				msg := gi.StringPromptDialogValue(dlg)
@@ -1804,7 +1804,7 @@ func (ge *Gide) ApplyPrefsAction() {
 func (ge *Gide) ProjPrefs() {
 	sv, _ := ProjPrefsView(&ge.Prefs)
 	// we connect to changes and apply them
-	sv.ViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	sv.ViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		gee, _ := recv.Embed(KiT_Gide).(*Gide)
 		gee.ApplyPrefsAction()
 	})
@@ -2021,7 +2021,7 @@ func (ge *Gide) ConfigSplitView() {
 		if !ftfr.HasChildren() {
 			ft := ftfr.AddNewChild(KiT_FileTreeView, "filetree").(*FileTreeView)
 			ft.SetRootNode(&ge.Files)
-			ft.TreeViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+			ft.TreeViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				if data == nil {
 					return
 				}
@@ -2048,7 +2048,7 @@ func (ge *Gide) ConfigSplitView() {
 			txly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 			if !txly.HasChildren() {
 				ted := txly.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
-				ted.TextViewSig.Connect(ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+				ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					gee, _ := recv.Embed(KiT_Gide).(*Gide)
 					tee := send.Embed(giv.KiT_TextView).(*giv.TextView)
 					gee.TextViewSig(tee, giv.TextViewSignals(sig))
@@ -2105,7 +2105,7 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
 				Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
 				[]string{"Open", "Cancel"},
-				ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+				ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					switch sig {
 					case 0:
 						ge.NextViewFileNode(fn)
@@ -2251,7 +2251,7 @@ func (ge *Gide) Render2D() {
 	if win := ge.ParentWindow(); win != nil {
 		sv := ge.SplitView()
 		if sv != nil {
-			win.SetStartFocus(sv.This)
+			win.SetStartFocus(sv.This())
 		}
 		if !win.IsResizing() {
 			win.MainMenuUpdateActives()
