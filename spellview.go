@@ -6,11 +6,12 @@ package gide
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
-	"strings"
 )
 
 // SpellParams
@@ -296,7 +297,7 @@ func (sv *SpellView) ConfigToolbar() {
 	check := spbar.AddNewChild(gi.KiT_Action, "check").(*gi.Action)
 	check.SetText("Check Current File")
 	check.Tooltip = "spell check the current file"
-	check.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	check.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.SpellAction()
 	})
@@ -305,7 +306,7 @@ func (sv *SpellView) ConfigToolbar() {
 	unknown := unknbar.AddNewChild(gi.KiT_TextField, "unknown-str").(*gi.TextField)
 	unknown.SetStretchMaxWidth()
 	unknown.Tooltip = "Unknown word"
-	unknown.TextFieldSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	unknown.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 	})
 	tf := sv.FindUnknownText()
 	if tf != nil {
@@ -315,7 +316,7 @@ func (sv *SpellView) ConfigToolbar() {
 	ignore := unknbar.AddNewChild(gi.KiT_Action, "ignore").(*gi.Action)
 	ignore.SetText("Ignore")
 	ignore.Tooltip = "ignore this instance"
-	ignore.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	ignore.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.IgnoreAction()
 	})
@@ -323,7 +324,7 @@ func (sv *SpellView) ConfigToolbar() {
 	ignoreall := unknbar.AddNewChild(gi.KiT_Action, "ignore-all").(*gi.Action)
 	ignoreall.SetText("Ignore All")
 	ignoreall.Tooltip = "ignore all instances while project open - use learn for permanent ignore"
-	ignoreall.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	ignoreall.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.IgnoreAllAction()
 	})
@@ -331,7 +332,7 @@ func (sv *SpellView) ConfigToolbar() {
 	learn := unknbar.AddNewChild(gi.KiT_Action, "learn").(*gi.Action)
 	learn.SetText("Learn")
 	learn.Tooltip = "add the unknown word to my personal dictionary"
-	learn.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	learn.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.LearnAction()
 	})
@@ -340,13 +341,13 @@ func (sv *SpellView) ConfigToolbar() {
 	changestr := chgbar.AddNewChild(gi.KiT_TextField, "change-str").(*gi.TextField)
 	changestr.SetStretchMaxWidth()
 	changestr.Tooltip = "This string will replace the unknown word in text"
-	changestr.TextFieldSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	changestr.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 	})
 
 	change := chgbar.AddNewChild(gi.KiT_Action, "change").(*gi.Action)
 	change.SetText("Change")
 	change.Tooltip = "change the unknown word to the selected suggestion"
-	change.ActionSig.Connect(sv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	change.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.ChangeAction()
 	})

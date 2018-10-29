@@ -189,7 +189,7 @@ func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struc
 			curval := ArgVarVals[pv]
 			gi.StringPromptDialog(ge.Viewport, curval, "Enter string value here..",
 				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v:", cm.Name, cm.Desc)},
-				ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+				ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					dlg := send.(*gi.Dialog)
 					if sig == int64(gi.DialogAccepted) {
 						val := gi.StringPromptDialogValue(dlg)
@@ -210,7 +210,7 @@ func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struc
 // for any values that might be needed for command.
 func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
 	if cm.Confirm {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Commmand: %v: %v", cm.Name, cm.Desc)}, true, true, ge.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Commmand: %v: %v", cm.Name, cm.Desc)}, true, true, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
 				cm.RunAfterPrompts(ge, buf)
 			}

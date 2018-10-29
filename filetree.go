@@ -33,7 +33,7 @@ func (fn *FileNode) ViewFile() {
 	gek, ok := fn.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		ge.NextViewFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
+		ge.NextViewFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
 }
 
@@ -43,7 +43,7 @@ func (fn *FileNode) ExecCmdFile() {
 	gek, ok := fn.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		ge.ExecCmdFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode))
+		ge.ExecCmdFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
 }
 
@@ -52,7 +52,7 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	gek, ok := fn.ParentByType(KiT_Gide, true)
 	if ok {
 		ge := gek.Embed(KiT_Gide).(*Gide)
-		ge.ExecCmdNameFileNode(fn.This.Embed(giv.KiT_FileNode).(*giv.FileNode), CmdName(cmdNm), true, true)
+		ge.ExecCmdNameFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode), CmdName(cmdNm), true, true)
 	}
 }
 
@@ -105,7 +105,7 @@ func (on *OpenNodes) DeleteDeleted() {
 	sz := len(*on)
 	for i := sz - 1; i >= 0; i-- {
 		fn := (*on)[i]
-		if fn.This == nil || fn.FRoot == nil || fn.IsDeleted() {
+		if fn.This() == nil || fn.FRoot == nil || fn.IsDeleted() {
 			on.DeleteIdx(i)
 		}
 	}

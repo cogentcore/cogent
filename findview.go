@@ -437,7 +437,7 @@ func (fv *FindView) ConfigToolbar() {
 	finda := fb.AddNewChild(gi.KiT_Action, "find-act").(*gi.Action)
 	finda.SetText("Find:")
 	finda.Tooltip = "Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search"
-	finda.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	finda.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.FindAction()
 	})
@@ -445,7 +445,7 @@ func (fv *FindView) ConfigToolbar() {
 	finds := fb.AddNewChild(gi.KiT_TextField, "find-str").(*gi.TextField)
 	finds.SetStretchMaxWidth()
 	finds.Tooltip = "String to find -- hit enter or tab to update search"
-	finds.TextFieldSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	finds.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
@@ -456,7 +456,7 @@ func (fv *FindView) ConfigToolbar() {
 
 	ic := fb.AddNewChild(gi.KiT_CheckBox, "ignore-case").(*gi.CheckBox)
 	ic.SetText("Ignore Case")
-	ic.ButtonSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	ic.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.ButtonToggled) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			cb := send.(*gi.CheckBox)
@@ -467,7 +467,7 @@ func (fv *FindView) ConfigToolbar() {
 	next := fb.AddNewChild(gi.KiT_Action, "next").(*gi.Action)
 	next.SetIcon("widget-wedge-down")
 	next.Tooltip = "go to next result"
-	next.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	next.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.NextFind()
 	})
@@ -475,7 +475,7 @@ func (fv *FindView) ConfigToolbar() {
 	prev := fb.AddNewChild(gi.KiT_Action, "prev").(*gi.Action)
 	prev.SetIcon("widget-wedge-up")
 	prev.Tooltip = "go to previous result"
-	prev.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	prev.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.PrevFind()
 	})
@@ -483,7 +483,7 @@ func (fv *FindView) ConfigToolbar() {
 	repla := rb.AddNewChild(gi.KiT_Action, "repl-act").(*gi.Action)
 	repla.SetText("Replace:")
 	repla.Tooltip = "Replace find string with replace string for currently-selected find result"
-	repla.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	repla.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.ReplaceAction()
 	})
@@ -491,7 +491,7 @@ func (fv *FindView) ConfigToolbar() {
 	repls := rb.AddNewChild(gi.KiT_TextField, "repl-str").(*gi.TextField)
 	repls.SetStretchMaxWidth()
 	repls.Tooltip = "String to replace find string"
-	repls.TextFieldSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	repls.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
@@ -502,7 +502,7 @@ func (fv *FindView) ConfigToolbar() {
 	repall := rb.AddNewChild(gi.KiT_Action, "repl-all").(*gi.Action)
 	repall.SetText("All")
 	repall.Tooltip = "replace all find strings with replace string"
-	repall.ActionSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	repall.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.ReplaceAllAction()
 	})
@@ -517,7 +517,7 @@ func (fv *FindView) ConfigToolbar() {
 	fv.LangVV.ConfigWidget(langw)
 	langw.AsWidget().Tooltip = "Language(s) to restrict search / replace to"
 	//	vvb := vv.AsValueViewBase()
-	//	vvb.ViewSig.ConnectOnly(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	//	vvb.ViewSig.ConnectOnly(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 	//		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 	// hmm, langs updated..
 	//	})
@@ -525,7 +525,7 @@ func (fv *FindView) ConfigToolbar() {
 	cf := rb.AddNewChild(gi.KiT_CheckBox, "cur-file").(*gi.CheckBox)
 	cf.SetText("Cur File")
 	cf.Tooltip = "Only in current active file"
-	cf.ButtonSig.Connect(fv.This, func(recv, send ki.Ki, sig int64, data interface{}) {
+	cf.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.ButtonToggled) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			cb := send.(*gi.CheckBox)
