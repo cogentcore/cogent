@@ -52,6 +52,8 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
+* gide ./ opens .gide file if avail
+
 * build and all commands do save all check
 
 * find / replace all batches over file, and has "current dir" option

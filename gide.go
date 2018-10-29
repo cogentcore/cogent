@@ -340,13 +340,13 @@ func (ge *Gide) GuessVersCtrl() bool {
 //////////////////////////////////////////////////////////////////////////////////////
 //   TextViews
 
-// ConfigNodeTextBuf configures the text buf for given node according to prefs
-func (ge *Gide) ConfigNodeTextBuf(fn *giv.FileNode) {
-	fn.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
-	fn.Buf.Opts.LineNos = ge.Prefs.Editor.LineNos
-	fn.Buf.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
-	fn.Buf.Opts.Completion = ge.Prefs.Editor.Completion
-	fn.Buf.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
+// ConfigTextBuf configures the text buf according to prefs
+func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
+	tb.SetHiStyle(ge.Prefs.Editor.HiStyle)
+	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
+	tb.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
+	tb.Opts.Completion = ge.Prefs.Editor.Completion
+	tb.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
 }
 
 // ActiveTextView returns the currently-active TextView
@@ -372,7 +372,7 @@ func (ge *Gide) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool)
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
-	ge.ConfigNodeTextBuf(fn)
+	ge.ConfigTextBuf(fn.Buf)
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
@@ -607,7 +607,7 @@ func (ge *Gide) OpenFileNode(fn *giv.FileNode) (bool, error) {
 	giv.FileNodeHiStyle = ge.Prefs.Editor.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
-		ge.ConfigNodeTextBuf(fn)
+		ge.ConfigTextBuf(fn.Buf)
 		ge.OpenNodes.Add(fn)
 		fn.SetOpen()
 	}
@@ -1779,15 +1779,19 @@ func (ge *Gide) ApplyPrefs() {
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+	giv.HiStyleDefault = ge.Prefs.Editor.HiStyle
 	sv := ge.SplitView()
 	if sv != nil {
 		for i := 0; i < NTextViews; i++ {
 			txly := sv.KnownChild(1 + i).(*gi.Layout)
 			txed := txly.KnownChild(0).(*giv.TextView)
 			if txed.Buf != nil {
-				txed.Buf.Opts.LineNos = ge.Prefs.Editor.LineNos
-				txed.Buf.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
-				txed.Buf.Opts.Completion = ge.Prefs.Editor.Completion
+				ge.ConfigTextBuf(txed.Buf)
+			}
+		}
+		for _, ond := range ge.OpenNodes {
+			if ond.Buf != nil {
+				ge.ConfigTextBuf(ond.Buf)
 			}
 		}
 	}

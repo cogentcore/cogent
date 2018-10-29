@@ -102,6 +102,7 @@ func (pf *Preferences) Apply() {
 	}
 	MergeAvailCmds()
 	AvailLangs.Validate()
+	giv.HiStyleDefault = pf.Editor.HiStyle
 }
 
 // Open preferences from GoGi standard prefs directory, and applies them
@@ -215,6 +216,10 @@ var PreferencesProps = ki.Props{
 		{"Window", "Windows"},
 	},
 	"ToolBar": ki.PropSlice{
+		{"Apply", ki.Props{
+			"desc": "Applies current prefs settings so they affect actual functionality.",
+			"icon": "update",
+		}},
 		{"Save", ki.Props{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
