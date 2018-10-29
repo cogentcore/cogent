@@ -234,7 +234,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				switch sig {
 				case 0:
-				// do nothing, will have returned false already
+					// do nothing, will have returned false already
 				case 1:
 					ge.SaveAllOpenNodes()
 				}
@@ -641,6 +641,8 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 			default:
 				tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 			}
+		} else {
+			tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 		}
 	}
 }
@@ -2923,13 +2925,21 @@ func CompleteGoEdit(data interface{}, text string, cursorPos int, selection stri
 
 // CompleteText does completion for text files
 func CompleteText(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
-	gi.InitSpell() // text completion uses the spell code to generate completions and suggestions
+	err := gi.InitSpell() // text completion uses the spell code to generate completions and suggestions
+	if err != nil {
+		fmt.Println("Could not initialize spelling model: Spelling model needed for text completion: %v", err)
+		return nil, seed
+	}
 
 	seed = complete.SeedWhiteSpace(text)
 	if seed == "" {
 		return nil, seed
 	}
-	result := complete.CompleteText(seed)
+	result, err := complete.CompleteText(seed)
+	if err != nil {
+		fmt.Println("Error completing text: %v", err)
+		return nil, seed
+	}
 	possibles := complete.MatchSeedString(result, seed)
 	for _, p := range possibles {
 		m := complete.Completion{Text: p, Icon: ""}
