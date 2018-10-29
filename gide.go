@@ -234,7 +234,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				switch sig {
 				case 0:
-				// do nothing, will have returned false already
+					// do nothing, will have returned false already
 				case 1:
 					ge.SaveAllOpenNodes()
 				}
@@ -641,6 +641,8 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 			default:
 				tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 			}
+		} else {
+			tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 		}
 	}
 }
@@ -2896,6 +2898,7 @@ func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
 }
 
 // CompleteGocode uses github.com/mdempsky/gocode to do code completion
+// gocode requires the entire file and the position of the cursor within the file
 func CompleteGo(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
 	var txbuf *giv.TextBuf
 	switch t := data.(type) {
@@ -2924,26 +2927,32 @@ func CompleteGoEdit(data interface{}, text string, cursorPos int, selection stri
 	return s, delta
 }
 
-// CompleteText does completion for tex files
+// CompleteText does completion for text files
 func CompleteText(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
-	var txbuf *giv.TextBuf
-	switch t := data.(type) {
-	case *giv.TextView:
-		txbuf = t.Buf
-	}
-	if txbuf == nil {
-		log.Printf("complete.Complete: txbuf is nil - can't complete\n")
-		return
+	// todo: resolve issue with saved model not saving suffixes and
+	// then the next line can be removed allowing completion to proceed
+	return nil, seed
+
+	err := gi.InitSpell() // text completion uses the spell code to generate completions and suggestions
+	if err != nil {
+		fmt.Println("Could not initialize spelling model: Spelling model needed for text completion: %v", err)
+		return nil, seed
 	}
 
-	seed = complete.SeedGolang(text)
-	textbytes := make([]byte, 0, txbuf.NLines*40)
-	for _, lr := range txbuf.Lines {
-		textbytes = append(textbytes, []byte(string(lr))...)
-		textbytes = append(textbytes, '\n')
+	seed = complete.SeedWhiteSpace(text)
+	if seed == "" {
+		return nil, seed
 	}
-	results := complete.CompleteText(textbytes, pos)
-	matches = complete.MatchSeedCompletion(results, seed)
+	result, err := complete.CompleteText(seed)
+	if err != nil {
+		fmt.Println("Error completing text: %v", err)
+		return nil, seed
+	}
+	possibles := complete.MatchSeedString(result, seed)
+	for _, p := range possibles {
+		m := complete.Completion{Text: p, Icon: ""}
+		matches = append(matches, m)
+	}
 	return matches, seed
 }
 
@@ -2951,4 +2960,8 @@ func CompleteText(data interface{}, text string, pos token.Position) (matches co
 func CompleteTextEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
 	s, delta = complete.EditText(text, cursorPos, selection, seed)
 	return s, delta
+}
+
+func Complete(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
+	return matches, seed
 }
