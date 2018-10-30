@@ -224,7 +224,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
-	gi.SaveModel()
+	gi.SaveSpellModel()
 	ge.Changed = false
 	nch := ge.NChangedFiles()
 	if saveAllFiles && nch > 0 {
@@ -1520,7 +1520,8 @@ func (ge *Gide) Spell() {
 
 	tv := ge.ActiveTextView()
 	gi.InitSpell()
-	gi.InitNewCheck(tv.Buf.Txt)
+	text := tv.Buf.LinesToBytesCopy()
+	gi.InitNewSpellCheck(text)
 	tw, suggests, err := gi.NextUnknownWord()
 	if err != nil {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Error Running Spell Check", Prompt: fmt.Sprintf("%v", err)}, true, false, nil, nil)
