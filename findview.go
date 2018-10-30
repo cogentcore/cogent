@@ -25,6 +25,8 @@ type FindParams struct {
 	IgnoreCase bool      `desc:"ignore case"`
 	Langs      LangNames `desc:"languages for files to search"`
 	CurFile    bool      `desc:"only process current active file"`
+	FindHist   []string  `desc:"history of finds"`
+	ReplHist   []string  `desc:"history of replaces"`
 }
 
 // FindView is a find / replace widget that displays results in a TextView
@@ -32,22 +34,28 @@ type FindParams struct {
 type FindView struct {
 	gi.Layout
 	Gide   *Gide         `json:"-" xml:"-" desc:"parent gide project"`
-	Find   FindParams    `desc:"params for find / replace"`
 	LangVV giv.ValueView `desc:"langs value view"`
 }
 
 var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 
+// Params returns the find params
+func (fv *FindView) Params() *FindParams {
+	return &fv.Gide.Prefs.Find
+}
+
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
-	fv.Gide.Prefs.Find = fv.Find
-	fv.Gide.Find(fv.Find.Find, fv.Find.Replace, fv.Find.IgnoreCase, fv.Find.CurFile, fv.Find.Langs)
+	gi.StringsInsertFirstUnique(&fv.Params().FindHist, fv.Params().Find, gi.Prefs.SavedPathsMax)
+	fv.Gide.Find(fv.Params().Find, fv.Params().Replace, fv.Params().IgnoreCase, fv.Params().CurFile, fv.Params().Langs)
 }
 
 // ReplaceAction performs the replace
 func (fv *FindView) ReplaceAction() bool {
 	winUpdt := fv.Gide.Viewport.Win.UpdateStart()
 	defer fv.Gide.Viewport.Win.UpdateEnd(winUpdt)
+
+	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, fv.Params().Replace, gi.Prefs.SavedPathsMax)
 
 	ftv := fv.TextView()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
@@ -80,8 +88,8 @@ func (fv *FindView) ReplaceAction() bool {
 	}
 	tv.RefreshIfNeeded()
 	tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
-	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Find.Replace), true, true)
-	offset := len(fv.Find.Replace) - (reg.End.Ch - reg.Start.Ch) // current offset + new length - old length
+	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Params().Replace), true, true)
+	offset := len(fv.Params().Replace) - (reg.End.Ch - reg.Start.Ch) // current offset + new length - old length
 
 	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
 	if err != nil {
@@ -108,7 +116,7 @@ func (fv *FindView) ReplaceAction() bool {
 					r.Links[0].URL = ur
 					curLinkIdx = i
 					mu := string(ftv.Buf.Markup[curLinkIdx])
-					umu, umuup := fv.UpdateMarkup(mu, 0, offset, true, fv.Find.Replace)
+					umu, umuup := fv.UpdateMarkup(mu, 0, offset, true, fv.Params().Replace)
 					if umuup {
 						bmu := []byte(umu)
 						ftv.Buf.Markup[curLinkIdx] = bmu
@@ -144,7 +152,7 @@ func (fv *FindView) ReplaceAction() bool {
 					if urup {
 						r.Links[0].URL = ur
 						mu := string(ftv.Buf.Markup[linkIdx])
-						umu, umuup := fv.UpdateMarkup(mu, offset, offset, false, fv.Find.Replace)
+						umu, umuup := fv.UpdateMarkup(mu, offset, offset, false, fv.Params().Replace)
 						if umuup {
 							bmu := []byte(umu)
 							ftv.Buf.Markup[linkIdx] = bmu
@@ -161,9 +169,9 @@ func (fv *FindView) ReplaceAction() bool {
 	len := len(ftv.Buf.Lines[ftvln])
 	en := giv.TextPos{Ln: ftvln, Ch: len}
 	ftv.Buf.DeleteText(st, en, false, true)
-	ftv.NeedsRefresh()
+	// ftv.NeedsRefresh()
 
-	tv.Highlights = tv.Highlights[:0]
+	tv.Highlights = nil
 	tv.NeedsRefresh()
 
 	ok = ftv.CursorNextLink(false) // no wrap
@@ -267,7 +275,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	if !ok {
 		return false
 	}
-	find := fv.Find.Find
+	find := fv.Params().Find
 	giv.PrevISearchString = find
 	ge.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
 	tv.SetNeedsRefresh()
@@ -280,19 +288,18 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 //    GUI config
 
 // UpdateView updates view with current settings
-func (fv *FindView) UpdateView(ge *Gide, fp FindParams) {
+func (fv *FindView) UpdateView(ge *Gide) {
 	fv.Gide = ge
-	fv.Find = fp
 	mods, updt := fv.StdFindConfig()
 	fv.ConfigToolbar()
 	ft := fv.FindText()
-	ft.SetText(fv.Find.Find)
+	ft.SetText(fv.Params().Find)
 	rt := fv.ReplText()
-	rt.SetText(fv.Find.Replace)
+	rt.SetText(fv.Params().Replace)
 	ib := fv.IgnoreBox()
-	ib.SetChecked(fv.Find.IgnoreCase)
+	ib.SetChecked(fv.Params().IgnoreCase)
 	cf := fv.CurFileBox()
-	cf.SetChecked(fv.Find.CurFile)
+	cf.SetChecked(fv.Params().CurFile)
 	tvly := fv.TextViewLay()
 	fv.Gide.ConfigOutputTextView(tvly)
 	if mods {
@@ -341,7 +348,7 @@ func (fv *FindView) ReplBar() *gi.ToolBar {
 }
 
 // FindText returns the find textfield in toolbar
-func (fv *FindView) FindText() *gi.TextField {
+func (fv *FindView) FindText() *gi.ComboBox {
 	tb := fv.FindBar()
 	if tb == nil {
 		return nil
@@ -350,11 +357,11 @@ func (fv *FindView) FindText() *gi.TextField {
 	if !ok {
 		return nil
 	}
-	return tfi.(*gi.TextField)
+	return tfi.(*gi.ComboBox)
 }
 
 // ReplText returns the replace textfield in toolbar
-func (fv *FindView) ReplText() *gi.TextField {
+func (fv *FindView) ReplText() *gi.ComboBox {
 	tb := fv.ReplBar()
 	if tb == nil {
 		return nil
@@ -363,7 +370,7 @@ func (fv *FindView) ReplText() *gi.TextField {
 	if !ok {
 		return nil
 	}
-	return tfi.(*gi.TextField)
+	return tfi.(*gi.ComboBox)
 }
 
 // IgnoreBox returns the ignore case checkbox in toolbar
@@ -443,14 +450,18 @@ func (fv *FindView) ConfigToolbar() {
 		fvv.FindAction()
 	})
 
-	finds := fb.AddNewChild(gi.KiT_TextField, "find-str").(*gi.TextField)
+	finds := fb.AddNewChild(gi.KiT_ComboBox, "find-str").(*gi.ComboBox)
+	finds.Editable = true
 	finds.SetStretchMaxWidth()
-	finds.Tooltip = "String to find -- hit enter or tab to update search"
-	finds.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	finds.Tooltip = "String to find -- hit enter or tab to update search -- click for history"
+	finds.ConfigParts()
+	finds.ItemsFromStringList(fv.Params().FindHist, true, 0)
+	ftf, _ := finds.TextField()
+	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
-			fvv.Find.Find = tf.Text()
+			fvv.Params().Find = tf.Text()
 			fvv.FindAction()
 		}
 	})
@@ -461,7 +472,7 @@ func (fv *FindView) ConfigToolbar() {
 		if sig == int64(gi.ButtonToggled) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			cb := send.(*gi.CheckBox)
-			fvv.Find.IgnoreCase = cb.IsChecked()
+			fvv.Params().IgnoreCase = cb.IsChecked()
 		}
 	})
 
@@ -489,14 +500,18 @@ func (fv *FindView) ConfigToolbar() {
 		fvv.ReplaceAction()
 	})
 
-	repls := rb.AddNewChild(gi.KiT_TextField, "repl-str").(*gi.TextField)
+	repls := rb.AddNewChild(gi.KiT_ComboBox, "repl-str").(*gi.ComboBox)
+	repls.Editable = true
 	repls.SetStretchMaxWidth()
-	repls.Tooltip = "String to replace find string"
-	repls.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	repls.Tooltip = "String to replace find string -- click for history"
+	repls.ConfigParts()
+	repls.ItemsFromStringList(fv.Params().ReplHist, true, 0)
+	rtf, _ := repls.TextField()
+	rtf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
-			fvv.Find.Replace = tf.Text()
+			fvv.Params().Replace = tf.Text()
 		}
 	})
 
@@ -511,8 +526,8 @@ func (fv *FindView) ConfigToolbar() {
 	langl := rb.AddNewChild(gi.KiT_Label, "lang-lbl").(*gi.Label)
 	langl.SetText("Lang:")
 
-	fv.LangVV = giv.ToValueView(&fv.Find.Langs, "")
-	fv.LangVV.SetStandaloneValue(reflect.ValueOf(&fv.Find.Langs))
+	fv.LangVV = giv.ToValueView(&fv.Params().Langs, "")
+	fv.LangVV.SetStandaloneValue(reflect.ValueOf(&fv.Params().Langs))
 	vtyp := fv.LangVV.WidgetType()
 	langw := rb.AddNewChild(vtyp, "langs").(gi.Node2D)
 	fv.LangVV.ConfigWidget(langw)
@@ -530,7 +545,7 @@ func (fv *FindView) ConfigToolbar() {
 		if sig == int64(gi.ButtonToggled) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			cb := send.(*gi.CheckBox)
-			fvv.Find.CurFile = cb.IsChecked()
+			fvv.Params().CurFile = cb.IsChecked()
 		}
 	})
 

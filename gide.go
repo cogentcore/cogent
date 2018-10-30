@@ -1446,7 +1446,7 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs
 	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
 	fvi, _ := ge.FindOrMakeMainTab("Find", KiT_FindView, true) // sel
 	fv := fvi.Embed(KiT_FindView).(*FindView)
-	fv.UpdateView(ge, ge.Prefs.Find)
+	fv.UpdateView(ge)
 	ftv := fv.TextView()
 	ftv.SetInactive()
 	ftv.SetBuf(fbuf)
