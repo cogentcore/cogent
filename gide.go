@@ -505,17 +505,22 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 	if tv.Buf != nil {
 		ofn := tv.Buf.Filename
 		obuf := tv.Buf
-		tv.Buf.SaveAs(filename)
-		ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
-		ge.RunPostCmdsActiveView()
-		obuf.Open(ofn) // revert old buffer to old filename
-		fpath, _ := filepath.Split(string(filename))
-		ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
-		fnk, ok := ge.Files.FindFile(string(filename))
-		if ok {
-			fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
-			ge.ViewFileNode(tv, ge.ActiveTextViewIdx, fn)
-		}
+		tv.Buf.SaveAs(filename, func(canceled bool) {
+			if canceled {
+				ge.SetStatus(fmt.Sprintf("File %v NOT Saved As: %v", ofn, filename))
+				return
+			}
+			ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
+			ge.RunPostCmdsActiveView()
+			obuf.Open(ofn) // revert old buffer to old filename
+			fpath, _ := filepath.Split(string(filename))
+			ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
+			fnk, ok := ge.Files.FindFile(string(filename))
+			if ok {
+				fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
+				ge.ViewFileNode(tv, ge.ActiveTextViewIdx, fn)
+			}
+		})
 	}
 	ge.SaveProjIfExists(false) // no saveall
 }

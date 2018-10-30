@@ -518,6 +518,12 @@ func (fv *FindView) ConfigToolbar() {
 	finds.ConfigParts()
 	finds.ItemsFromStringList(fv.Params().FindHist, true, 0)
 	ftf, _ := finds.TextField()
+	finds.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+		cb := send.(*gi.ComboBox)
+		fvv.Params().Find = cb.CurVal.(string)
+		fvv.FindAction()
+	})
 	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
@@ -568,6 +574,11 @@ func (fv *FindView) ConfigToolbar() {
 	repls.ConfigParts()
 	repls.ItemsFromStringList(fv.Params().ReplHist, true, 0)
 	rtf, _ := repls.TextField()
+	repls.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+		cb := send.(*gi.ComboBox)
+		fvv.Params().Replace = cb.CurVal.(string)
+	})
 	rtf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)

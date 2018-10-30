@@ -52,6 +52,8 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
+* saveas needs to revert any existing node with same name!
+
 * gide ./ opens .gide file if avail
 
 * if user tries to open a file under a closed directory, it doesn't work
