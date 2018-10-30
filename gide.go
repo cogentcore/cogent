@@ -1228,6 +1228,12 @@ func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
 	return tv.TabByName(label)
 }
 
+// MainTabDeleted is called when a main tab is deleted -- we cancel any running commmands
+func (ge *Gide) MainTabDeleted(tabnm string) {
+	fmt.Printf("main tab deleted: %v\n", tabnm)
+	// todo: lookup any command still running, kill it..
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    Commands / Tabs
 
@@ -2044,7 +2050,7 @@ func (ge *Gide) ConfigSplitView() {
 	config := ge.SplitViewConfig()
 	mods, updt := split.ConfigChildren(config, true)
 	if mods {
-		ftfr := split.KnownChild(0).(*gi.Frame)
+		ftfr := split.KnownChild(FileTreeIdx).(*gi.Frame)
 		if !ftfr.HasChildren() {
 			ft := ftfr.AddNewChild(KiT_FileTreeView, "filetree").(*FileTreeView)
 			ft.SetRootNode(&ge.Files)
@@ -2068,7 +2074,7 @@ func (ge *Gide) ConfigSplitView() {
 			})
 		}
 		for i := 0; i < NTextViews; i++ {
-			txly := split.KnownChild(1 + i).(*gi.Layout)
+			txly := split.KnownChild(TextView1Idx + i).(*gi.Layout)
 			txly.SetStretchMaxWidth()
 			txly.SetStretchMaxHeight()
 			txly.SetMinPrefWidth(units.NewValue(20, units.Ch))
@@ -2082,6 +2088,17 @@ func (ge *Gide) ConfigSplitView() {
 				})
 			}
 		}
+
+		mtab := split.KnownChild(MainTabsIdx).(*gi.TabView)
+		mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			gee, _ := recv.Embed(KiT_Gide).(*Gide)
+			tvsig := gi.TabViewSignals(sig)
+			switch tvsig {
+			case gi.TabDeleted:
+				gee.MainTabDeleted(data.(string))
+			}
+		})
+
 		split.SetSplits(ge.Prefs.Splits...)
 		split.UpdateEnd(updt)
 	}
