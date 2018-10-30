@@ -54,18 +54,12 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 * gide ./ opens .gide file if avail
 
-* build and all commands do save all check
-
-* find / replace all batches over file, and has "current dir" option
-
 * if user tries to open a file under a closed directory, it doesn't work
 -- need to look at paths and open dirs as needed.
 
 * tab kill button kills the process
 
 * keyfun does not apply for editing just the keys -- need to edit the value too..
-
-* add history combobox to Find
 
 * Console redirecting stdout, err
 

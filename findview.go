@@ -18,13 +18,38 @@ import (
 	"github.com/goki/ki/kit"
 )
 
+type FindLoc int
+
+const (
+	// FindLocAll finds in all open folders in the left file browser
+	FindLocAll FindLoc = iota
+
+	// FindLocFile only finds in the current active file
+	FindLocFile
+
+	// FindLocDir only finds in the directory of the current active file
+	FindLocDir
+
+	// FindLocNotTop finds in all open folders *except* the top-level folder
+	FindLocNotTop
+
+	FindLocN
+)
+
+//go:generate stringer -type=FindLoc
+
+var KiT_FindLoc = kit.Enums.AddEnumAltLower(FindLocN, false, nil, "FindLoc")
+
+func (ev FindLoc) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
+func (ev *FindLoc) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
+
 // FindParams are parameters for find / replace
 type FindParams struct {
 	Find       string    `desc:"find string"`
 	Replace    string    `desc:"replace string"`
 	IgnoreCase bool      `desc:"ignore case"`
 	Langs      LangNames `desc:"languages for files to search"`
-	CurFile    bool      `desc:"only process current active file"`
+	Loc        FindLoc   `desc:"locations to search in"`
 	FindHist   []string  `desc:"history of finds"`
 	ReplHist   []string  `desc:"history of replaces"`
 }
@@ -44,10 +69,30 @@ func (fv *FindView) Params() *FindParams {
 	return &fv.Gide.Prefs.Find
 }
 
+// SaveFindString saves the given find string to the find params history and current str
+func (fv *FindView) SaveFindString(find string) {
+	fv.Params().Find = find
+	gi.StringsInsertFirstUnique(&fv.Params().FindHist, find, gi.Prefs.SavedPathsMax)
+	ftc := fv.FindText()
+	if ftc != nil {
+		ftc.ItemsFromStringList(fv.Params().FindHist, true, 0)
+	}
+}
+
+// SaveReplString saves the given replace string to the find params history and current str
+func (fv *FindView) SaveReplString(repl string) {
+	fv.Params().Replace = repl
+	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, gi.Prefs.SavedPathsMax)
+	rtc := fv.ReplText()
+	if rtc != nil {
+		rtc.ItemsFromStringList(fv.Params().ReplHist, true, 0)
+	}
+}
+
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
-	gi.StringsInsertFirstUnique(&fv.Params().FindHist, fv.Params().Find, gi.Prefs.SavedPathsMax)
-	fv.Gide.Find(fv.Params().Find, fv.Params().Replace, fv.Params().IgnoreCase, fv.Params().CurFile, fv.Params().Langs)
+	fv.SaveFindString(fv.Params().Find)
+	fv.Gide.Find(fv.Params().Find, fv.Params().Replace, fv.Params().IgnoreCase, fv.Params().Loc, fv.Params().Langs)
 }
 
 // ReplaceAction performs the replace
@@ -55,6 +100,7 @@ func (fv *FindView) ReplaceAction() bool {
 	winUpdt := fv.Gide.Viewport.Win.UpdateStart()
 	defer fv.Gide.Viewport.Win.UpdateEnd(winUpdt)
 
+	fv.SaveReplString(fv.Params().Replace)
 	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, fv.Params().Replace, gi.Prefs.SavedPathsMax)
 
 	ftv := fv.TextView()
@@ -293,13 +339,15 @@ func (fv *FindView) UpdateView(ge *Gide) {
 	mods, updt := fv.StdFindConfig()
 	fv.ConfigToolbar()
 	ft := fv.FindText()
+	ft.ItemsFromStringList(fv.Params().FindHist, true, 0)
 	ft.SetText(fv.Params().Find)
 	rt := fv.ReplText()
+	rt.ItemsFromStringList(fv.Params().ReplHist, true, 0)
 	rt.SetText(fv.Params().Replace)
 	ib := fv.IgnoreBox()
 	ib.SetChecked(fv.Params().IgnoreCase)
-	cf := fv.CurFileBox()
-	cf.SetChecked(fv.Params().CurFile)
+	cf := fv.LocCombo()
+	cf.SetCurIndex(int(fv.Params().Loc))
 	tvly := fv.TextViewLay()
 	fv.Gide.ConfigOutputTextView(tvly)
 	if mods {
@@ -386,13 +434,26 @@ func (fv *FindView) IgnoreBox() *gi.CheckBox {
 	return tfi.(*gi.CheckBox)
 }
 
-// CurFileBox returns the cur file checkbox in toolbar
-func (fv *FindView) CurFileBox() *gi.CheckBox {
+// LocCombo returns the loc combobox
+func (fv *FindView) LocCombo() *gi.ComboBox {
 	tb := fv.ReplBar()
 	if tb == nil {
 		return nil
 	}
-	tfi, ok := tb.ChildByName("cur-file", 5)
+	tfi, ok := tb.ChildByName("loc", 5)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.ComboBox)
+}
+
+// CurDirBox returns the cur file checkbox in toolbar
+func (fv *FindView) CurDirBox() *gi.CheckBox {
+	tb := fv.ReplBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("cur-dir", 6)
 	if !ok {
 		return nil
 	}
@@ -523,31 +584,38 @@ func (fv *FindView) ConfigToolbar() {
 		fvv.ReplaceAllAction()
 	})
 
+	locl := rb.AddNewChild(gi.KiT_Label, "loc-lbl").(*gi.Label)
+	locl.SetText("Loc:")
+	locl.Tooltip = "location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser"
+	// locl.SetProp("vertical-align", gi.AlignMiddle)
+
+	cf := rb.AddNewChild(gi.KiT_ComboBox, "loc").(*gi.ComboBox)
+	cf.SetText("Loc")
+	cf.Tooltip = locl.Tooltip
+	cf.ItemsFromEnum(KiT_FindLoc, false, 0)
+	cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+		cb := send.(*gi.ComboBox)
+		eval := cb.CurVal.(kit.EnumValue)
+		fvv.Params().Loc = FindLoc(eval.Value)
+	})
+
 	langl := rb.AddNewChild(gi.KiT_Label, "lang-lbl").(*gi.Label)
 	langl.SetText("Lang:")
+	langl.Tooltip = "Language(s) to restrict search / replace to"
+	// langl.SetProp("vertical-align", gi.AlignMiddle)
 
 	fv.LangVV = giv.ToValueView(&fv.Params().Langs, "")
 	fv.LangVV.SetStandaloneValue(reflect.ValueOf(&fv.Params().Langs))
 	vtyp := fv.LangVV.WidgetType()
 	langw := rb.AddNewChild(vtyp, "langs").(gi.Node2D)
 	fv.LangVV.ConfigWidget(langw)
-	langw.AsWidget().Tooltip = "Language(s) to restrict search / replace to"
+	langw.AsWidget().Tooltip = langl.Tooltip
 	//	vvb := vv.AsValueViewBase()
 	//	vvb.ViewSig.ConnectOnly(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 	//		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 	// hmm, langs updated..
 	//	})
-
-	cf := rb.AddNewChild(gi.KiT_CheckBox, "cur-file").(*gi.CheckBox)
-	cf.SetText("Cur File")
-	cf.Tooltip = "Only in current active file"
-	cf.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if sig == int64(gi.ButtonToggled) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			cb := send.(*gi.CheckBox)
-			fvv.Params().CurFile = cb.IsChecked()
-		}
-	})
 
 }
 

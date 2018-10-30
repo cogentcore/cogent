@@ -226,22 +226,41 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	ge.Prefs.SaveJSON(filename)
 	gi.SaveSpellModel()
 	ge.Changed = false
-	nch := ge.NChangedFiles()
-	if saveAllFiles && nch > 0 {
-		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Save Project: There are Unsaved Files",
-			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch)},
-			[]string{"Cancel", "Save All"},
-			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-				switch sig {
-				case 0:
-					// do nothing, will have returned false already
-				case 1:
-					ge.SaveAllOpenNodes()
-				}
-			})
-		return true
+	if saveAllFiles {
+		return ge.SaveAllCheck(false, nil) // false = no cancel option
 	}
 	return false
+}
+
+// SaveAllCheck -- check if any files have not been saved, and prompt to save them
+// returns true if there were unsaved files, false otherwise.
+// cancelOpt presents an option to cancel current command, in which case function is not called.
+// if function is passed, then it is called in all cases except if the user selects cancel.
+func (ge *Gide) SaveAllCheck(cancelOpt bool, fun func(ge *Gide)) bool {
+	nch := ge.NChangedFiles()
+	if nch == 0 {
+		if fun != nil {
+			fun(ge)
+		}
+		return false
+	}
+	opts := []string{"Save All", "Don't Save"}
+	if cancelOpt {
+		opts = []string{"Save All", "Don't Save", "Cancel Command"}
+	}
+	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "There are Unsaved Files",
+		Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch)}, opts,
+		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig != 2 {
+				if sig == 0 {
+					ge.SaveAllOpenNodes()
+				}
+				if fun != nil {
+					fun(ge)
+				}
+			}
+		})
+	return true
 }
 
 // UpdateProj does full update to current proj
@@ -1256,7 +1275,9 @@ func (ge *Gide) ExecCmdNameActive(cmdNm string) {
 	if tv == nil {
 		return
 	}
-	ge.ExecCmdName(CmdName(cmdNm), true, true)
+	ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
+		gee.ExecCmdName(CmdName(cmdNm), true, true)
+	})
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
@@ -1280,8 +1301,10 @@ func (ge *Gide) ExecCmd() {
 	gi.StringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		cmdNm := CmdName(ac.Text)
-		ge.CmdHistory.Add(cmdNm)          // only save commands executed via chooser
-		ge.ExecCmdName(cmdNm, true, true) // sel, clear
+		ge.CmdHistory.Add(cmdNm)                // only save commands executed via chooser
+		ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
+			gee.ExecCmdName(cmdNm, true, true) // sel, clear
+		})
 	})
 }
 
@@ -1326,7 +1349,9 @@ func (ge *Gide) Build() {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
-	ge.ExecCmds(ge.Prefs.BuildCmds, true, true)
+	ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
+		gee.ExecCmds(ge.Prefs.BuildCmds, true, true)
+	})
 }
 
 // Run runs the RunCmds set for this project
@@ -1346,24 +1371,9 @@ func (ge *Gide) Commit() {
 		return
 	}
 
-	nch := ge.NChangedFiles()
-	if nch > 0 {
-		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Commit: There are Unsaved Files",
-			Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel commit and review  / save those files first?", ge.Nm, nch)},
-			[]string{"Cancel", "Save All", "Commit Without Saving"},
-			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-				switch sig {
-				case 0:
-					// do nothing, will have bailed already
-				case 1:
-					ge.SaveAllOpenNodes()
-				case 2:
-					ge.CommitNoChecks()
-				}
-			})
-	} else {
+	ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
 		ge.CommitNoChecks()
-	}
+	})
 }
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
@@ -1433,15 +1443,13 @@ func (ge *Gide) CursorToHistNext() bool {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs LangNames) {
+func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs LangNames) {
 	if find == "" {
 		return
 	}
-	ge.Prefs.Find.Find = find
-	ge.Prefs.Find.Replace = repl
 	ge.Prefs.Find.IgnoreCase = ignoreCase
 	ge.Prefs.Find.Langs = langs
-	ge.Prefs.Find.CurFile = curFileOnly
+	ge.Prefs.Find.Loc = loc
 
 	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
 	fvi, _ := ge.FindOrMakeMainTab("Find", KiT_FindView, true) // sel
@@ -1451,18 +1459,26 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, curFileOnly bool, langs
 	ftv.SetInactive()
 	ftv.SetBuf(fbuf)
 
+	fv.SaveFindString(find)
+	fv.SaveReplString(repl)
+
 	root := ge.Files.Embed(giv.KiT_FileNode).(*giv.FileNode)
 
+	atv := ge.ActiveTextView()
+	ond, _, got := ge.OpenNodeForTextView(atv)
+	adir := ""
+	if got {
+		adir, _ = filepath.Split(string(ond.FPath))
+	}
+
 	var res []FileSearchResults
-	if curFileOnly {
-		tv := ge.ActiveTextView()
-		ond, _, got := ge.OpenNodeForTextView(tv)
+	if loc == FindLocFile {
 		if got {
-			cnt, matches := tv.Buf.Search([]byte(find), ignoreCase)
+			cnt, matches := atv.Buf.Search([]byte(find), ignoreCase)
 			res = append(res, FileSearchResults{ond, cnt, matches})
 		}
 	} else {
-		res = FileTreeSearch(root, find, ignoreCase, langs)
+		res = FileTreeSearch(root, find, ignoreCase, loc, adir, langs)
 	}
 
 	outlns := make([][]byte, 0, 100)
@@ -2363,19 +2379,21 @@ var GideProps = ki.Props{
 			"Args": ki.PropSlice{
 				{"Search For", ki.Props{
 					"default-field": "Prefs.Find.Find",
+					"history-field": "Prefs.Find.FindHist",
 					"width":         80,
 				}},
 				{"Replace With", ki.Props{
 					"desc":          "Optional replace string -- replace will be controlled interactively in Find panel, including replace all",
 					"default-field": "Prefs.Find.Replace",
+					"history-field": "Prefs.Find.ReplHist",
 					"width":         80,
 				}},
 				{"Ignore Case", ki.Props{
 					"default-field": "Prefs.Find.IgnoreCase",
 				}},
-				{"Current File Only", ki.Props{
-					"desc":          "only look in current active file",
-					"default-field": "Prefs.Find.CurFile",
+				{"Location", ki.Props{
+					"desc":          "location to find in",
+					"default-field": "Prefs.Find.Loc",
 				}},
 				{"Languages", ki.Props{
 					"desc":          "restrict find to files associated with these languages -- leave empty for all files",
@@ -2628,19 +2646,21 @@ var GideProps = ki.Props{
 				"Args": ki.PropSlice{
 					{"Search For", ki.Props{
 						"default-field": "Prefs.Find.Find",
+						"history-field": "Prefs.Find.FindHist",
 						"width":         80,
 					}},
 					{"Replace With", ki.Props{
 						"desc":          "Optional replace string -- replace will be controlled interactively in Find panel, including replace all",
 						"default-field": "Prefs.Find.Replace",
+						"history-field": "Prefs.Find.ReplHist",
 						"width":         80,
 					}},
 					{"Ignore Case", ki.Props{
 						"default-field": "Prefs.Find.IgnoreCase",
 					}},
-					{"Current File Only", ki.Props{
-						"desc":          "only look in current active file",
-						"default-field": "Prefs.Find.CurFile",
+					{"Location", ki.Props{
+						"desc":          "location to find in",
+						"default-field": "Prefs.Find.Loc",
 					}},
 					{"Languages", ki.Props{
 						"desc":          "restrict find to files associated with these languages -- leave empty for all files",

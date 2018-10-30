@@ -7,6 +7,7 @@ package gide
 import (
 	"image/color"
 	"log"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -164,9 +165,9 @@ type FileSearchResults struct {
 
 // FileTreeSearch returns list of all nodes starting at given node of given
 // language(s) that contain the given string (non regexp version), sorted in
-// descending order by number of occurrances -- ignoreCase transforms
+// descending order by number of occurrences -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, langs LangNames) []FileSearchResults {
+func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindLoc, activeDir string, langs LangNames) []FileSearchResults {
 	fsz := len(find)
 	if fsz == 0 {
 		return nil
@@ -182,6 +183,16 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, langs Lan
 		}
 		if !LangNamesMatchFilename(sfn.Nm, langs) {
 			return true
+		}
+		if loc == FindLocDir {
+			cdir, _ := filepath.Split(string(sfn.FPath))
+			if activeDir != cdir {
+				return true
+			}
+		} else if loc == FindLocNotTop {
+			if level == 1 {
+				return true
+			}
 		}
 		var cnt int
 		var matches []giv.FileSearchMatch
