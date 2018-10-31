@@ -7,6 +7,7 @@ package gide
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -18,13 +19,15 @@ import (
 
 // Console redirects our os.Stdout and os.Stderr to a buffer for display within app
 type Console struct {
-	StdOutWrite *os.File     `json:"-" xml:"-" desc:"std out writer -- set to os.Stdout"`
-	StdOutRead  *os.File     `json:"-" xml:"-" desc:"std out reader -- used to read os.Stdout"`
-	StdErrWrite *os.File     `json:"-" xml:"-" desc:"std err writer -- set to os.Stderr"`
-	StdErrRead  *os.File     `json:"-" xml:"-" desc:"std err reader -- used to read os.Stderr"`
+	StdoutWrite *os.File     `json:"-" xml:"-" desc:"std out writer -- set to os.Stdout"`
+	StdoutRead  *os.File     `json:"-" xml:"-" desc:"std out reader -- used to read os.Stdout"`
+	StderrWrite *os.File     `json:"-" xml:"-" desc:"std err writer -- set to os.Stderr"`
+	StderrRead  *os.File     `json:"-" xml:"-" desc:"std err reader -- used to read os.Stderr"`
 	Buf         *giv.TextBuf `json:"-" xml:"-" desc:"text buffer holding all output"`
 	Cancel      bool         `json:"-" xml:"-" desc:"set to true to cancel monitoring"`
 	Mu          sync.Mutex   `json:"-" xml:"-" desc:"mutex protecting updating of buffer between out / err"`
+	OrgoutWrite *os.File     `json:"-" xml:"-" desc:"original os.Stdout writer"`
+	OrgerrWrite *os.File     `json:"-" xml:"-" desc:"original os.Stderr writer"`
 }
 
 var KiT_Console = kit.Types.AddType(&Console{}, nil)
@@ -34,11 +37,13 @@ var TheConsole Console
 // Init initializes the console -- sets up the capture, Buf, and
 // starts the routine that monitors output
 func (cn *Console) Init() {
-	cn.StdOutRead, cn.StdOutWrite, _ = os.Pipe() // seriously, does this ever fail?
-	cn.StdErrRead, cn.StdErrWrite, _ = os.Pipe() // seriously, does this ever fail?
-	os.Stdout = cn.StdOutWrite
-	os.Stderr = cn.StdErrWrite
-	log.SetOutput(cn.StdErrWrite)
+	cn.StdoutRead, cn.StdoutWrite, _ = os.Pipe() // seriously, does this ever fail?
+	cn.StderrRead, cn.StderrWrite, _ = os.Pipe() // seriously, does this ever fail?
+	cn.OrgoutWrite = os.Stdout
+	cn.OrgerrWrite = os.Stderr
+	os.Stdout = cn.StdoutWrite
+	os.Stderr = cn.StderrWrite
+	log.SetOutput(cn.StderrWrite)
 	cn.Buf = &giv.TextBuf{}
 	cn.Buf.InitName(cn.Buf, "console-buf")
 	go cn.MonitorOut()
@@ -48,7 +53,7 @@ func (cn *Console) Init() {
 // MonitorOut monitors std output and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorOut() {
-	outscan := bufio.NewScanner(cn.StdOutRead)
+	outscan := bufio.NewScanner(cn.StdoutRead)
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100)
 	lfb := []byte("\n")
@@ -62,6 +67,7 @@ func (cn *Console) MonitorOut() {
 		copy(ob, b)
 		outlns = append(outlns, ob)
 		outmus = append(outmus, MarkupCmdOutput(ob))
+		fmt.Fprintln(cn.OrgoutWrite, string(ob))
 		now := time.Now()
 		lag := int(now.Sub(ts) / time.Millisecond)
 		if lag > 200 {
@@ -83,7 +89,7 @@ func (cn *Console) MonitorOut() {
 // MonitorErr monitors std error and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorErr() {
-	outscan := bufio.NewScanner(cn.StdErrRead)
+	outscan := bufio.NewScanner(cn.StderrRead)
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100)
 	lfb := []byte("\n")
@@ -100,6 +106,7 @@ func (cn *Console) MonitorErr() {
 		copy(ob, b)
 		outlns = append(outlns, ob)
 		mb := MarkupCmdOutput(ob)
+		fmt.Fprintln(cn.OrgerrWrite, string(ob))
 		mbb := make([]byte, 0, len(mb)+esz)
 		mbb = append(mbb, sst...)
 		mbb = append(mbb, mb...)

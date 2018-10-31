@@ -1441,6 +1441,10 @@ func (ge *Gide) OpenConsoleTab() {
 	ctv, _ := ge.FindOrMakeMainTabTextView("Console", true)
 	ctv.SetInactive()
 	ctv.SetBuf(TheConsole.Buf)
+	TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gee, _ := recv.Embed(KiT_Gide).(*Gide)
+		gee.SelectMainTabByName("Console")
+	})
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
