@@ -99,6 +99,9 @@ func (ge *Gide) OpenRecent(filename gi.FileName) {
 // specific file or a folder containing multiple files of interest -- opens in
 // current Gide object if it is empty, or otherwise opens a new window.
 func (ge *Gide) OpenPath(path gi.FileName) (*gi.Window, *Gide) {
+	if gproj, has := CheckForProjAtPath(string(path)); has {
+		return ge.OpenProj(gi.FileName(gproj))
+	}
 	if !ge.IsEmpty() {
 		return NewGideProjPath(string(path))
 	}
@@ -306,6 +309,20 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 	_, projnm = filepath.Split(root)
 	ok = true
 	return
+}
+
+// CheckForProjAtPath checks if there is a .gide project at the given path
+// returns project path and true if found, otherwise false
+func CheckForProjAtPath(path string) (string, bool) {
+	root, pnm, _, ok := ProjPathParse(path)
+	if !ok {
+		return "", false
+	}
+	gproj := filepath.Join(root, pnm+".gide")
+	if _, err := os.Stat(gproj); os.IsNotExist(err) {
+		return "", false // does not exist
+	}
+	return gproj, true
 }
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
