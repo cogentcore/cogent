@@ -15,7 +15,7 @@ build:
 install:
 	$(GOINSTALL) -v
 dbg-build:
-	$(GOBUILD) -v -gcflags=all="-N -l"
+	$(GOBUILD) -v -gcflags=all="-N -l" -tags debug
 test: 
 	$(GOTEST) -v ./...
 clean: 

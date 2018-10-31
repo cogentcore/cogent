@@ -128,6 +128,84 @@ func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////
+//  CmdRun, RunningCmds
+
+// CmdRun tracks running commands
+type CmdRun struct {
+	Name    string      `desc:"Name of command being run -- same as Command.Name"`
+	CmdStr  string      `desc:"command string"`
+	CmdArgs *CmdAndArgs `desc:"Details of the command and args"`
+	Exec    *exec.Cmd   `desc:"exec.Cmd for the command"`
+}
+
+// Kill kills the process
+func (cm *CmdRun) Kill() {
+	if cm.Exec.Process != nil {
+		cm.Exec.Process.Kill()
+	}
+}
+
+// CmdRuns is a slice list of running commands
+type CmdRuns []*CmdRun
+
+// RunningCmds is the global list of running commands
+var RunningCmds CmdRuns
+
+// Add adds a new running command
+func (rc *CmdRuns) Add(cm *CmdRun) {
+	if *rc == nil {
+		*rc = make(CmdRuns, 0, 100)
+	}
+	*rc = append(*rc, cm)
+}
+
+// AddCmd adds a new running command, creating CmdRun via args
+func (rc *CmdRuns) AddCmd(name, cmdstr string, cmdargs *CmdAndArgs, ex *exec.Cmd) {
+	cm := &CmdRun{name, cmdstr, cmdargs, ex}
+	rc.Add(cm)
+}
+
+// DeleteIdx delete command at given index
+func (rc *CmdRuns) DeleteIdx(idx int) {
+	*rc = append((*rc)[:idx], (*rc)[idx+1:]...)
+}
+
+// ByName returns command with given name
+func (rc *CmdRuns) ByName(name string) (*CmdRun, int) {
+	for i, cm := range *rc {
+		if cm.Name == name {
+			return cm, i
+		}
+	}
+	return nil, -1
+}
+
+// DeleteByName deletes command by name
+func (rc *CmdRuns) DeleteByName(name string) bool {
+	_, idx := rc.ByName(name)
+	if idx >= 0 {
+		rc.DeleteIdx(idx)
+		return true
+	}
+	return false
+}
+
+// KillByName kills a running process by name, and removes it from the list of
+// running commands
+func (rc *CmdRuns) KillByName(name string) bool {
+	cm, idx := rc.ByName(name)
+	if idx >= 0 {
+		cm.Kill()
+		rc.DeleteIdx(idx)
+		return true
+	}
+	return false
+}
+
+///////////////////////////////////////////////////////////////////////////
+//  Command
+
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
@@ -227,6 +305,7 @@ func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
 
 // RunAfterPrompts runs after any prompts have been set, if needed
 func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
+	RunningCmds.KillByName(cm.Name) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
 	if cm.Dir != "" {
@@ -267,6 +346,7 @@ func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 // line of the command output to gide statusbar
 func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
+	RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	cm.AppendCmdOut(ge, buf, out)
 	return cm.RunStatus(ge, buf, cmdstr, err, out)
@@ -276,6 +356,7 @@ func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool 
 // buffer with new results line-by-line as they come in
 func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
+	RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
 	lfb := []byte("\n")
 	if err == nil {
@@ -327,6 +408,7 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 // logs one line of the command output to gide statusbar
 func (cm *Command) RunNoBuf(ge *Gide, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
+	RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	return cm.RunStatus(ge, nil, cmdstr, err, out)
 }
@@ -359,6 +441,7 @@ var CmdOutStatusLen = 80
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
 func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
+	RunningCmds.DeleteByName(cm.Name)
 	rval := true
 	outstr := ""
 	if out != nil {

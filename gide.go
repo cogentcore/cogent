@@ -1230,8 +1230,7 @@ func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
 
 // MainTabDeleted is called when a main tab is deleted -- we cancel any running commmands
 func (ge *Gide) MainTabDeleted(tabnm string) {
-	fmt.Printf("main tab deleted: %v\n", tabnm)
-	// todo: lookup any command still running, kill it..
+	RunningCmds.KillByName(tabnm)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
