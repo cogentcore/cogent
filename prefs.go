@@ -70,6 +70,7 @@ func InitPrefs() {
 	Prefs.Open()
 	OpenPaths()
 	OpenIcons()
+	TheConsole.Init()
 }
 
 func (pf *FilePrefs) Defaults() {

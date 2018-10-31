@@ -52,20 +52,11 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
-* saveas needs to revert any existing node with same name!
-
 * gide ./ opens .gide file if avail
-
-* if user tries to open a file under a closed directory, it doesn't work
--- need to look at paths and open dirs as needed.
 
 * keyfun does not apply for editing just the keys -- need to edit the value too..
 
-* Console redirecting stdout, err
-
 * add more other languages: ??
-
-* relative path links ../../../etc should work better
 
 * Need some way of selecting the tabs via keyboard -- maybe just go back to having it focus on tabs for panel nav keys, but it is nicer to go directly to the relevant panel.  but then need another key..
 

@@ -186,7 +186,7 @@ func (ge *Gide) NewFile(filename string) {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make File", Prompt: fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)}, true, false, nil, nil)
 		return
 	}
-	ge.Files.UpdateNewFile(gi.FileName(np))
+	ge.Files.UpdateNewFile(np)
 }
 
 // SaveProj saves project file containing custom project settings, in a
@@ -219,7 +219,7 @@ func (ge *Gide) SaveProjIfExists(saveAllFiles bool) bool {
 func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
 	SavePaths()
-	ge.Files.UpdateNewFile(filename)
+	ge.Files.UpdateNewFile(string(filename))
 	ge.Prefs.ProjFilename = filename
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
@@ -274,6 +274,9 @@ func (ge *Gide) UpdateProj() {
 	ge.ConfigToolbar()
 	ge.ConfigStatusBar()
 	ge.SetStatus("just updated")
+	if mods {
+		ge.OpenConsoleTab()
+	}
 	ge.UpdateEnd(updt)
 }
 
@@ -370,6 +373,8 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 
 // ActiveTextView returns the currently-active TextView
 func (ge *Gide) ActiveTextView() *giv.TextView {
+	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
+	log.Printf("stderr: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
 }
 
@@ -489,7 +494,7 @@ func (ge *Gide) SaveActiveView() {
 			tv.Buf.Save()
 			ge.SetStatus("File Saved")
 			fpath, _ := filepath.Split(string(tv.Buf.Filename))
-			ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
+			ge.Files.UpdateNewFile(fpath) // update everything in dir -- will have removed autosave
 			ge.RunPostCmdsActiveView()
 		} else {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
@@ -504,7 +509,6 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		ofn := tv.Buf.Filename
-		obuf := tv.Buf
 		tv.Buf.SaveAs(filename, func(canceled bool) {
 			if canceled {
 				ge.SetStatus(fmt.Sprintf("File %v NOT Saved As: %v", ofn, filename))
@@ -512,12 +516,11 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 			}
 			ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
 			ge.RunPostCmdsActiveView()
-			obuf.Open(ofn) // revert old buffer to old filename
-			fpath, _ := filepath.Split(string(filename))
-			ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
+			ge.Files.UpdateNewFile(string(filename)) // update everything in dir -- will have removed autosave
 			fnk, ok := ge.Files.FindFile(string(filename))
 			if ok {
 				fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
+				fn.Buf.Revert()
 				ge.ViewFileNode(tv, ge.ActiveTextViewIdx, fn)
 			}
 		})
@@ -529,10 +532,10 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 func (ge *Gide) RevertActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
-		tv.Buf.Hi.Style = ge.Prefs.Editor.HiStyle
+		ge.ConfigTextBuf(tv.Buf)
 		tv.Buf.Revert()
 		fpath, _ := filepath.Split(string(tv.Buf.Filename))
-		ge.Files.UpdateNewFile(gi.FileName(fpath)) // update everything in dir -- will have removed autosave
+		ge.Files.UpdateNewFile(fpath) // update everything in dir -- will have removed autosave
 	}
 }
 
@@ -618,6 +621,7 @@ func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool
 				ge.NextViewFile(gi.FileName(fn.Buf.AutoSaveFilename()))
 			case 1:
 				fn.Buf.AutoSaveDelete()
+				ge.Files.UpdateNewFile(fn.Buf.AutoSaveFilename()) // will update dir
 			}
 		})
 	return true
@@ -1172,6 +1176,7 @@ func (ge *Gide) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	}
 	tv.SetProp("tab-size", 8) // std for output
 	tv.SetProp("font-family", ge.Prefs.Editor.FontFamily)
+	tv.SetInactive()
 	return tv
 }
 
@@ -1431,6 +1436,13 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 	ge.SaveProjIfExists(true) // saveall
 }
 
+// OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
+func (ge *Gide) OpenConsoleTab() {
+	ctv, _ := ge.FindOrMakeMainTabTextView("Console", true)
+	ctv.SetInactive()
+	ctv.SetBuf(TheConsole.Buf)
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    TextView functions
 
@@ -1495,7 +1507,7 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs Lang
 	outmus := make([][]byte, 0, 100) // markups
 	for _, fs := range res {
 		fp := fs.Node.Info.Path
-		fn := fs.Node.RelPath()
+		fn := fs.Node.MyRelPath()
 		fbStLn := len(outlns) // find buf start ln
 		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
 		outlns = append(outlns, []byte(lstr))
@@ -1850,6 +1862,9 @@ func (ge *Gide) SplitsSetView(split SplitName) {
 		if ok {
 			sv.SetSplitsAction(sp.Splits...)
 			ge.Prefs.SplitName = split
+			if !ge.PanelIsOpen(ge.ActiveTextViewIdx + TextView1Idx) {
+				ge.SetActiveTextViewIdx((ge.ActiveTextViewIdx + 1) % 2)
+			}
 		}
 	}
 }
