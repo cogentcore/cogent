@@ -354,10 +354,18 @@ func (sv *SpellView) ConfigToolbar() {
 
 	// suggest toolbar
 	suggest := sugbar.AddNewChild(giv.KiT_SliceView, "suggestions").(*giv.SliceView)
+	suggest.SetInactive()
+	suggest.SetProp("index", false)
 	suggest.SetSlice(&sv.Suggestions, nil)
 	suggest.SetStretchMaxWidth()
 	suggest.SetStretchMaxHeight()
-
+	suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
+		idx := svv.SelectedIdx
+		if idx >= 0 && idx < len(sv.Suggestions) {
+			sv.AcceptSuggestion(sv.Suggestions[svv.SelectedIdx])
+		}
+	})
 }
 
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it
@@ -393,7 +401,11 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string
 	uf := sv.FindUnknownText()
 	uf.SetText(unknown.Word)
 	sv.Unknown = unknown
-	sv.Suggestions = suggests
+	sv.Suggestions = sv.Suggestions[:0]
+	sv.Suggestions = make([]string, len(suggests))
+	for i, _ := range suggests {
+		sv.Suggestions[i] = suggests[i]
+	}
 	sv.PreviousLine = sv.CurrentLine
 	sv.CurrentLine = unknown.Line
 
@@ -403,7 +415,6 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string
 	} else {
 		cf.SetText(suggests[0])
 		sugview := sv.FindSuggestView()
-		//sugview.IsArray = true
 		sugview.UpdateFromSlice()
 	}
 	tv := sv.Gide.ActiveTextView()
@@ -485,6 +496,11 @@ func (sv *SpellView) LearnAction() {
 	gi.LearnWord(new)
 	sv.LastAction = sv.FindLearnAct()
 	sv.CheckNext()
+}
+
+func (sv *SpellView) AcceptSuggestion(s string) {
+	ct := sv.FindChangeText()
+	ct.SetText(s)
 }
 
 var SpellViewProps = ki.Props{
