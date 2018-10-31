@@ -373,8 +373,8 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 
 // ActiveTextView returns the currently-active TextView
 func (ge *Gide) ActiveTextView() *giv.TextView {
-	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
-	log.Printf("stderr: active text view idx: %v\n", ge.ActiveTextViewIdx)
+	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
+	//	log.Printf("stderr: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
 }
 

@@ -38,10 +38,10 @@ var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
 func (sv *SpellView) SpellAction() {
 	sv.Gide.Prefs.Spell = sv.Spell
 
-	uf := sv.FindUnknownText()
+	uf := sv.UnknownText()
 	uf.SetText("")
 
-	sf := sv.FindChangeText()
+	sf := sv.ChangeText()
 	sf.SetText("")
 
 	sv.Gide.Spell()
@@ -153,8 +153,8 @@ func (sv *SpellView) SpellNextAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// FindCheckAct returns the spell check action from toolbar
-func (sv *SpellView) FindCheckAct() *gi.Action {
+// CheckAct returns the spell check action from toolbar
+func (sv *SpellView) CheckAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
 		return nil
@@ -166,8 +166,8 @@ func (sv *SpellView) FindCheckAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// FindChangeAct returns the spell change action from toolbar
-func (sv *SpellView) FindChangeAct() *gi.Action {
+// ChangeAct returns the spell change action from toolbar
+func (sv *SpellView) ChangeAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
 		return nil
@@ -179,8 +179,8 @@ func (sv *SpellView) FindChangeAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// FindIgnoreAct returns the ignore action from toolbar
-func (sv *SpellView) FindIgnoreAct() *gi.Action {
+// IgnoreAct returns the ignore action from toolbar
+func (sv *SpellView) IgnoreAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
 		return nil
@@ -192,8 +192,8 @@ func (sv *SpellView) FindIgnoreAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// FindIgnoreAllAct returns the ignore-all action from toolbar
-func (sv *SpellView) FindIgnoreAllAct() *gi.Action {
+// IgnoreAllAct returns the ignore-all action from toolbar
+func (sv *SpellView) IgnoreAllAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
 		return nil
@@ -205,8 +205,8 @@ func (sv *SpellView) FindIgnoreAllAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// FindLearnAct returns the learn action from toolbar
-func (sv *SpellView) FindLearnAct() *gi.Action {
+// LearnAct returns the learn action from toolbar
+func (sv *SpellView) LearnAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
 		return nil
@@ -228,8 +228,8 @@ func (sv *SpellView) TextView() *giv.TextView {
 	return tv
 }
 
-// FindUnknownText returns the unknown word textfield from toolbar
-func (sv *SpellView) FindUnknownText() *gi.TextField {
+// UnknownText returns the unknown word textfield from toolbar
+func (sv *SpellView) UnknownText() *gi.TextField {
 	tb := sv.UnknownBar()
 	if tb == nil {
 		return nil
@@ -241,8 +241,8 @@ func (sv *SpellView) FindUnknownText() *gi.TextField {
 	return tfi.(*gi.TextField)
 }
 
-// FindChangeText returns the unknown word textfield from toolbar
-func (sv *SpellView) FindChangeText() *gi.TextField {
+// ChangeText returns the unknown word textfield from toolbar
+func (sv *SpellView) ChangeText() *gi.TextField {
 	tb := sv.ChangeBar()
 	if tb == nil {
 		return nil
@@ -254,8 +254,8 @@ func (sv *SpellView) FindChangeText() *gi.TextField {
 	return tfi.(*gi.TextField)
 }
 
-// FindSuggestView returns the view for the list of suggestions
-func (sv *SpellView) FindSuggestView() *giv.SliceView {
+// SuggestView returns the view for the list of suggestions
+func (sv *SpellView) SuggestView() *giv.SliceView {
 	sb := sv.SuggestBar()
 	if sb == nil {
 		return nil
@@ -308,7 +308,7 @@ func (sv *SpellView) ConfigToolbar() {
 	unknown.Tooltip = "Unknown word"
 	unknown.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 	})
-	tf := sv.FindUnknownText()
+	tf := sv.UnknownText()
 	if tf != nil {
 		tf.SetInactive()
 	}
@@ -398,23 +398,19 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string
 			sv.CheckNext()
 		}
 	}
-	uf := sv.FindUnknownText()
+	uf := sv.UnknownText()
 	uf.SetText(unknown.Word)
 	sv.Unknown = unknown
-	sv.Suggestions = sv.Suggestions[:0]
-	sv.Suggestions = make([]string, len(suggests))
-	for i, _ := range suggests {
-		sv.Suggestions[i] = suggests[i]
-	}
+	sv.Suggestions = suggests
 	sv.PreviousLine = sv.CurrentLine
 	sv.CurrentLine = unknown.Line
 
-	cf := sv.FindChangeText()
+	cf := sv.ChangeText()
 	if len(suggests) == 0 {
 		cf.SetText("")
 	} else {
 		cf.SetText(suggests[0])
-		sugview := sv.FindSuggestView()
+		sugview := sv.SuggestView()
 		sugview.UpdateFromSlice()
 	}
 	tv := sv.Gide.ActiveTextView()
@@ -442,11 +438,11 @@ func (sv *SpellView) ChangeAction() {
 	st := sv.UnknownStartPos()
 	en := sv.UnknownEndPos()
 	tbe := tv.Buf.DeleteText(st, en, true, true)
-	ct := sv.FindChangeText()
+	ct := sv.ChangeText()
 	bs := []byte(string(ct.EditTxt))
 	tv.Buf.InsertText(tbe.Reg.Start, bs, true, true)
 	sv.ChangeOffset = sv.ChangeOffset + len(bs) - (en.Ch - st.Ch) // new length - old length
-	sv.LastAction = sv.FindChangeAct()
+	sv.LastAction = sv.ChangeAct()
 	sv.CheckNext()
 }
 
@@ -477,7 +473,7 @@ func (sv *SpellView) AdjustTextPos(tp giv.TextPos) giv.TextPos {
 // IgnoreAction will skip the current misspelled/unknown word
 // and call CheckNextAction
 func (sv *SpellView) IgnoreAction() {
-	sv.LastAction = sv.FindIgnoreAct()
+	sv.LastAction = sv.IgnoreAct()
 	sv.CheckNext()
 }
 
@@ -485,7 +481,7 @@ func (sv *SpellView) IgnoreAction() {
 // and call CheckNextAction
 func (sv *SpellView) IgnoreAllAction() {
 	sv.Ignore = append(sv.Ignore, sv.Unknown.Word)
-	sv.LastAction = sv.FindIgnoreAllAct()
+	sv.LastAction = sv.IgnoreAllAct()
 	sv.CheckNext()
 }
 
@@ -494,12 +490,12 @@ func (sv *SpellView) IgnoreAllAction() {
 func (sv *SpellView) LearnAction() {
 	new := strings.ToLower(sv.Unknown.Word)
 	gi.LearnWord(new)
-	sv.LastAction = sv.FindLearnAct()
+	sv.LastAction = sv.LearnAct()
 	sv.CheckNext()
 }
 
 func (sv *SpellView) AcceptSuggestion(s string) {
-	ct := sv.FindChangeText()
+	ct := sv.ChangeText()
 	ct.SetText(s)
 }
 
