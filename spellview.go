@@ -302,6 +302,15 @@ func (sv *SpellView) ConfigToolbar() {
 		svv.SpellAction()
 	})
 
+	train := spbar.AddNewChild(gi.KiT_Action, "train").(*gi.Action)
+	train.SetProp("horizontal-align", gi.AlignRight)
+	train.SetText("Train")
+	train.Tooltip = "add additional text to the training corpus"
+	train.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		svv.TrainAction()
+	})
+
 	// unknown toolbar
 	unknown := unknbar.AddNewChild(gi.KiT_TextField, "unknown-str").(*gi.TextField)
 	unknown.SetStretchMaxWidth()
@@ -444,6 +453,19 @@ func (sv *SpellView) ChangeAction() {
 	sv.ChangeOffset = sv.ChangeOffset + len(bs) - (en.Ch - st.Ch) // new length - old length
 	sv.LastAction = sv.ChangeAct()
 	sv.CheckNext()
+}
+
+// TrainAction allows you to train on additional text files and also to rebuild the spell model
+func (sv *SpellView) TrainAction() {
+	vp := sv.Viewport
+	giv.FileViewDialog(vp, "", ".txt", giv.DlgOpts{Title: "Select a Text File to Add to Corpus"}, nil,
+		vp.Win, func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig == int64(gi.DialogAccepted) {
+				dlg, _ := send.(*gi.Dialog)
+				filepath := giv.FileViewDialogValue(dlg)
+				gi.AddToSpellModel(filepath)
+			}
+		})
 }
 
 // UnknownStartPos returns the start position of the current unknown word adjusted for any prior replacement text
