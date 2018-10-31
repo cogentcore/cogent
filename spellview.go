@@ -497,6 +497,7 @@ func (sv *SpellView) LearnAction() {
 func (sv *SpellView) AcceptSuggestion(s string) {
 	ct := sv.ChangeText()
 	ct.SetText(s)
+	sv.ChangeAction()
 }
 
 var SpellViewProps = ki.Props{
