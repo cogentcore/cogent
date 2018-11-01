@@ -25,14 +25,15 @@ type FilePrefs struct {
 
 // EditorPrefs contains editor preferences
 type EditorPrefs struct {
-	HiStyle    giv.HiStyleName `desc:"highilighting style / theme"`
-	FontFamily gi.FontName     `desc:"monospaced font family for editor"`
-	TabSize    int             `desc:"size of a tab, in chars"`
-	WordWrap   bool            `desc:"wrap lines at word boundaries -- otherwise long lines scroll off the end"`
-	LineNos    bool            `desc:"show line numbers"`
-	Completion bool            `desc:"use the completion system to suggest options while typing"`
-	AutoIndent bool            `desc:"automatically indent lines when enter, tab, }, etc pressed"`
-	EmacsUndo  bool            `desc:"use emacs-style undo, where after a non-undo command, all the current undo actions are added to the undo stack, such that a subsequent undo is actually a redo"`
+	HiStyle     giv.HiStyleName `desc:"highilighting style / theme"`
+	FontFamily  gi.FontName     `desc:"monospaced font family for editor"`
+	TabSize     int             `desc:"size of a tab, in chars -- also determines indent level for space indent"`
+	SpaceIndent bool            `desc:"use spaces for indentation, otherwise tabs"`
+	WordWrap    bool            `desc:"wrap lines at word boundaries -- otherwise long lines scroll off the end"`
+	LineNos     bool            `desc:"show line numbers"`
+	Completion  bool            `desc:"use the completion system to suggest options while typing"`
+	AutoIndent  bool            `desc:"automatically indent lines when enter, tab, }, etc pressed"`
+	EmacsUndo   bool            `desc:"use emacs-style undo, where after a non-undo command, all the current undo actions are added to the undo stack, such that a subsequent undo is actually a redo"`
 }
 
 // Preferences are the overall user preferences for Gide.

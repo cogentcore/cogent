@@ -382,6 +382,8 @@ func (ge *Gide) GuessVersCtrl() bool {
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.SetHiStyle(ge.Prefs.Editor.HiStyle)
+	tb.Opts.TabSize = ge.Prefs.Editor.TabSize
+	tb.Opts.SpaceIndent = ge.Prefs.Editor.SpaceIndent
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
 	tb.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
 	tb.Opts.Completion = ge.Prefs.Editor.Completion
@@ -833,8 +835,10 @@ func (ge *Gide) CloneActiveView() (*giv.TextView, int) {
 // SaveAllOpenNodes saves all of the open filenodes to their current file names
 func (ge *Gide) SaveAllOpenNodes() {
 	for _, ond := range ge.OpenNodes {
-		ond.Buf.Save()
-		ge.RunPostCmdsFileNode(ond)
+		if ond.Buf.IsChanged() {
+			ond.Buf.Save()
+			ge.RunPostCmdsFileNode(ond)
+		}
 	}
 }
 
@@ -1457,11 +1461,13 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 func (ge *Gide) OpenConsoleTab() {
 	ctv, _ := ge.FindOrMakeMainTabTextView("Console", true)
 	ctv.SetInactive()
-	ctv.SetBuf(TheConsole.Buf)
-	TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		gee, _ := recv.Embed(KiT_Gide).(*Gide)
-		gee.SelectMainTabByName("Console")
-	})
+	if ctv.Buf == nil || ctv.Buf != TheConsole.Buf {
+		ctv.SetBuf(TheConsole.Buf)
+		TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			gee, _ := recv.Embed(KiT_Gide).(*Gide)
+			gee.SelectMainTabByName("Console")
+		})
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1744,7 +1750,7 @@ func (ge *Gide) CommentOut() bool {
 	if len(ls) == 1 {
 		cmt = []byte(ls[0].Comment)
 	}
-	tv.Buf.CommentRegion(stl, etl, cmt, tv.Sty.Text.TabSize)
+	tv.Buf.CommentRegion(stl, etl, cmt)
 	tv.SelectReset()
 	return true
 }
@@ -1765,8 +1771,7 @@ func (ge *Gide) Indent() bool {
 	// if len(ls) == 1 {
 	//		cmt = []byte(ls[0].Comment)
 	// }
-	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, tv.Buf.Opts.SpaceIndent, tv.Sty.Text.TabSize,
-		giv.DefaultIndentStrings, giv.DefaultUnindentStrings)
+	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, giv.DefaultIndentStrings, giv.DefaultUnindentStrings)
 	tv.SelectReset()
 	return true
 }
@@ -1794,7 +1799,7 @@ func (ge *Gide) SetStatus(msg string) {
 		ch = tv.CursorPos.Ch
 		if tv.Buf != nil {
 			fnm = ge.Files.RelPath(tv.Buf.Filename)
-			if tv.Buf.Changed {
+			if tv.Buf.IsChanged() {
 				fnm += "*"
 			}
 		}
@@ -2735,6 +2740,10 @@ var GideProps = ki.Props{
 				"label":    "Spelling...",
 				"updtfunc": GideInactiveEmptyFunc,
 			}},
+			{"ShowCompletions", ki.Props{
+				"keyfun":   gi.KeyFunComplete,
+				"updtfunc": GideInactiveEmptyFunc,
+			}},
 			{"sep-adv", ki.BlankProp{}},
 			{"CommentOut", ki.Props{
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
@@ -2807,6 +2816,9 @@ var GideProps = ki.Props{
 					"updtfunc": GideInactiveEmptyFunc,
 					"label":    "Edit...",
 				}},
+			}},
+			{"OpenConsoleTab", ki.Props{
+				"updtfunc": GideInactiveEmptyFunc,
 			}},
 		}},
 		{"Navigate", ki.PropSlice{
