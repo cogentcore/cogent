@@ -2977,8 +2977,9 @@ func CompleteGo(data interface{}, text string, pos token.Position) (matches comp
 		textbytes = append(textbytes, '\n')
 	}
 	results := complete.CompleteGo(textbytes, pos)
-	matches = complete.MatchSeedCompletion(results, seed)
-	return matches, seed
+	//matches = complete.MatchSeedCompletion(results, seed)
+	//return matches, seed
+	return results, seed
 }
 
 // CompleteGoEdit uses the selected completion to edit the text
