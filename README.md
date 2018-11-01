@@ -52,8 +52,6 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 # TODO
 
-* gide ./ opens .gide file if avail
-
 * keyfun does not apply for editing just the keys -- need to edit the value too..
 
 * add more other languages: ??
