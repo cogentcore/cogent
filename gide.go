@@ -534,12 +534,14 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 				return
 			}
 			ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
-			ge.RunPostCmdsActiveView()
+			// ge.RunPostCmdsActiveView() // doesn't make sense..
 			ge.Files.UpdateNewFile(string(filename)) // update everything in dir -- will have removed autosave
 			fnk, ok := ge.Files.FindFile(string(filename))
 			if ok {
 				fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
-				fn.Buf.Revert()
+				if fn.Buf != nil {
+					fn.Buf.Revert()
+				}
 				ge.ViewFileNode(tv, ge.ActiveTextViewIdx, fn)
 			}
 		})
