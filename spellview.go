@@ -419,9 +419,9 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string
 		cf.SetText("")
 	} else {
 		cf.SetText(suggests[0])
-		sugview := sv.SuggestView()
-		sugview.UpdateFromSlice()
 	}
+	sugview := sv.SuggestView()
+	sugview.UpdateFromSlice()
 	tv := sv.Gide.ActiveTextView()
 	st := sv.UnknownStartPos()
 	en := sv.UnknownEndPos()

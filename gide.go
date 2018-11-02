@@ -1241,6 +1241,10 @@ func (ge *Gide) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.Te
 	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm, sel)
 	ctv.SetInactive()
 	ctv.SetBuf(buf)
+	if clearBuf {
+		ctv.SetFullReRender()
+		ctv.UpdateSig()
+	}
 	return buf, ctv, idx, nw
 }
 
