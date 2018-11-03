@@ -324,7 +324,6 @@ func (sv *SpellView) ConfigToolbar() {
 
 	ignore := unknbar.AddNewChild(gi.KiT_Action, "ignore").(*gi.Action)
 	ignore.SetText("Ignore")
-	// ignore.Tooltip = "ignore this instance"
 	ignore.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.IgnoreAction()
@@ -332,7 +331,6 @@ func (sv *SpellView) ConfigToolbar() {
 
 	ignoreall := unknbar.AddNewChild(gi.KiT_Action, "ignore-all").(*gi.Action)
 	ignoreall.SetText("Ignore All")
-	// ignoreall.Tooltip = "ignore all instances while project open - use learn for permanent ignore"
 	ignoreall.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.IgnoreAllAction()
@@ -340,7 +338,6 @@ func (sv *SpellView) ConfigToolbar() {
 
 	learn := unknbar.AddNewChild(gi.KiT_Action, "learn").(*gi.Action)
 	learn.SetText("Learn")
-	// learn.Tooltip = "add the unknown word to my personal dictionary"
 	learn.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.LearnAction()

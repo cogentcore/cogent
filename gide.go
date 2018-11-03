@@ -30,6 +30,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/spell"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
@@ -687,11 +688,13 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 			switch ln {
 			case "Go":
 				tv.SetCompleter(tv, CompleteGo, CompleteGoEdit)
+			case "Markdown":
+				tv.SetSpellCorrect(tv, SpellCorrectEdit)
 			default:
-				tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
+				//tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 			}
 		} else {
-			tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
+			//tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 		}
 	}
 }
@@ -3050,6 +3053,8 @@ func CompleteTextEdit(data interface{}, text string, cursorPos int, selection st
 	return s, delta
 }
 
-func Complete(data interface{}, text string, pos token.Position) (matches complete.Completions, seed string) {
-	return matches, seed
+// SpellCorrectEdit uses the selected correction to edit the text
+func SpellCorrectEdit(data interface{}, text string, cursorPos int, new string, old string) (s string, delta int) {
+	s, delta = spell.CorrectText(text, cursorPos, old, new)
+	return s, delta
 }
