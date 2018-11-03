@@ -35,6 +35,7 @@ type CmdAndArgs struct {
 	Args CmdArgs `complete:"arg" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
 }
 
+// CmdArgs is a slice of arguments for a command
 type CmdArgs []string
 
 func (cm *CmdArgs) SetCompleter(tf *gi.TextField, id string) {
