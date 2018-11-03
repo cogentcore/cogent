@@ -31,11 +31,13 @@ import (
 // CmdAndArgs contains the name of an external program to execute and args to
 // pass to that program
 type CmdAndArgs struct {
-	Cmd  string   `desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
-	Args []string `desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
+	Cmd  string  `desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
+	Args CmdArgs `complete:"arg" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
 }
 
-func (cm *CmdAndArgs) SetCompleter(tf *gi.TextField, id string) {
+type CmdArgs []string
+
+func (cm *CmdArgs) SetCompleter(tf *gi.TextField, id string) {
 	if id == "arg" {
 		fmt.Println(id)
 		tf.SetCompleter(cm, CompleteArg, CompleteArgEdit)
@@ -793,7 +795,7 @@ var CommandsProps = ki.Props{
 		}},
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
-			"desc": "Shows the standard commands that are compiled into the program.  Custom commands override standard ones of the same name.",
+			"desc": "Shows the standard commands that are compiled into the program (edits will not be saved -- even though the viewer is editable).  Custom commands override standard ones of the same name, so that is the way to change any existing commands.",
 		}},
 	},
 }
