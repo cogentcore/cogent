@@ -40,7 +40,6 @@ type CmdArgs []string
 
 func (cm *CmdArgs) SetCompleter(tf *gi.TextField, id string) {
 	if id == "arg" {
-		fmt.Println(id)
 		tf.SetCompleter(cm, CompleteArg, CompleteArgEdit)
 		return
 	}
@@ -684,7 +683,11 @@ func (cm *Commands) OpenPrefs() error {
 	pdir := oswin.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
-	return cm.OpenJSON(gi.FileName(pnm))
+	err := cm.OpenJSON(gi.FileName(pnm))
+	if err == nil {
+		MergeAvailCmds()
+	}
+	return err
 }
 
 // SavePrefs saves custom Commands to App standard prefs directory, using
@@ -693,7 +696,11 @@ func (cm *Commands) SavePrefs() error {
 	pdir := oswin.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
-	return cm.SaveJSON(gi.FileName(pnm))
+	err := cm.SaveJSON(gi.FileName(pnm))
+	if err == nil {
+		MergeAvailCmds()
+	}
+	return err
 }
 
 // CopyFrom copies commands from given other map
