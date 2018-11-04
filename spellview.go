@@ -10,6 +10,7 @@ import (
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -25,7 +26,6 @@ type SpellView struct {
 	Spell        SpellParams `desc:"params for spelling"`
 	Unknown      gi.TextWord `desc:"current unknown/misspelled word"`
 	Suggestions  []string    `desc:"a list of suggestions from spell checker"`
-	Ignore       []string    `desc:"a list of ignore-all words"`
 	ChangeOffset int         `desc:"compensation for change word length different than original word"`
 	PreviousLine int         `desc:"line of previous unknown word"`
 	CurrentLine  int         `desc:"line of current unknown word"`
@@ -179,20 +179,7 @@ func (sv *SpellView) ChangeAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// IgnoreAct returns the ignore action from toolbar
-func (sv *SpellView) IgnoreAct() *gi.Action {
-	tb := sv.UnknownBar()
-	if tb == nil {
-		return nil
-	}
-	tfi, ok := tb.ChildByName("ignore", 3)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.Action)
-}
-
-// IgnoreAllAct returns the ignore-all action from toolbar
+// IgnoreAllAct returns the ignore action from toolbar
 func (sv *SpellView) IgnoreAllAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
@@ -292,6 +279,7 @@ func (sv *SpellView) ConfigToolbar() {
 		return
 	}
 	sugbar.SetStretchMaxWidth()
+	sugbar.SetMinPrefHeight(units.NewValue(50, units.Ch))
 
 	// spell toolbar
 	check := spbar.AddNewChild(gi.KiT_Action, "check").(*gi.Action)
@@ -322,16 +310,9 @@ func (sv *SpellView) ConfigToolbar() {
 		tf.SetInactive()
 	}
 
-	ignore := unknbar.AddNewChild(gi.KiT_Action, "ignore").(*gi.Action)
+	ignore := unknbar.AddNewChild(gi.KiT_Action, "ignore-all").(*gi.Action)
 	ignore.SetText("Ignore")
 	ignore.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-		svv.IgnoreAction()
-	})
-
-	ignoreall := unknbar.AddNewChild(gi.KiT_Action, "ignore-all").(*gi.Action)
-	ignoreall.SetText("Ignore All")
-	ignoreall.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.IgnoreAllAction()
 	})
@@ -382,14 +363,7 @@ func (sv *SpellView) CheckNext() {
 		return
 	}
 
-	var ignore = false
-	for _, w := range sv.Ignore {
-		if w == tw.Word {
-			ignore = true
-			break
-		}
-	}
-
+	ignore := gi.DoIgnore(tw.Word)
 	if ignore {
 		sv.CheckNext()
 	} else {
@@ -399,11 +373,10 @@ func (sv *SpellView) CheckNext() {
 
 // SetUnknownAndSuggest
 func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string) {
-	for _, w := range sv.Ignore {
-		if w == unknown.Word { // move on!
-			sv.CheckNext()
-		}
+	if gi.DoIgnore(unknown.Word) {
+		sv.CheckNext()
 	}
+
 	uf := sv.UnknownText()
 	uf.SetText(unknown.Word)
 	sv.Unknown = unknown
@@ -489,17 +462,11 @@ func (sv *SpellView) AdjustTextPos(tp giv.TextPos) giv.TextPos {
 	return tp
 }
 
-// IgnoreAction will skip the current misspelled/unknown word
-// and call CheckNextAction
-func (sv *SpellView) IgnoreAction() {
-	sv.LastAction = sv.IgnoreAct()
-	sv.CheckNext()
-}
-
 // IgnoreAllAction will skip this and future instances of misspelled/unknown word
 // and call CheckNextAction
 func (sv *SpellView) IgnoreAllAction() {
-	sv.Ignore = append(sv.Ignore, sv.Unknown.Word)
+	// sv.Ignore = append(sv.Ignore, sv.Unknown.Word)
+	gi.IgnoreWord(sv.Unknown.Word)
 	sv.LastAction = sv.IgnoreAllAct()
 	sv.CheckNext()
 }
