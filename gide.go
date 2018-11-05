@@ -685,11 +685,18 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		if len(langs) > 0 {
 			ln := langs[0].Name
 			// todo: completer funcs should be stored in language struct
+			// todo: completer, spellcorrect should be set on the *BUFFER* not the
+			// textview -- the buffer is always language-specific but the viewer
+			// switches around -- see ConfigTextBuf where this stuff belongs
 			switch ln {
 			case "Go":
-				tv.SetCompleter(tv, CompleteGo, CompleteGoEdit)
+				if ge.Prefs.Editor.Completion {
+					tv.SetCompleter(tv, CompleteGo, CompleteGoEdit)
+				}
 			case "Markdown":
-				tv.SetSpellCorrect(tv, SpellCorrectEdit)
+				if ge.Prefs.Editor.SpellCorrect {
+					tv.SetSpellCorrect(tv, SpellCorrectEdit)
+				}
 			default:
 				//tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
 			}
