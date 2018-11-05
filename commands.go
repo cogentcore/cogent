@@ -31,8 +31,8 @@ import (
 // CmdAndArgs contains the name of an external program to execute and args to
 // pass to that program
 type CmdAndArgs struct {
-	Cmd  string  `desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
-	Args CmdArgs `complete:"arg" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
+	Cmd  string  `width:"25" desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
+	Args CmdArgs `complete:"arg" width:"25" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
 }
 
 // CmdArgs is a slice of arguments for a command
@@ -211,11 +211,11 @@ func (rc *CmdRuns) KillByName(name string) bool {
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
-	Name    string       `desc:"name of this command (must be unique in list of commands)"`
-	Desc    string       `desc:"brief description of this command"`
+	Name    string       `width:"20" desc:"name of this command (must be unique in list of commands)"`
+	Desc    string       `width:"40" desc:"brief description of this command"`
 	Langs   LangNames    `desc:"language(s) that this command applies to -- leave empty if it applies to any -- filters the list of commands shown based on file language type"`
 	Cmds    []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
-	Dir     string       `complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
+	Dir     string       `width:"20" complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
 	Wait    bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
 	Focus   bool         `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
 	Confirm bool         `desc:"if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands"`
