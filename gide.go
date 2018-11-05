@@ -388,6 +388,7 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
 	tb.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
 	tb.Opts.Completion = ge.Prefs.Editor.Completion
+	tb.Opts.SpellCorrect = ge.Prefs.Editor.SpellCorrect
 	tb.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
 }
 
