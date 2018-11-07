@@ -179,6 +179,19 @@ func (sv *SpellView) ChangeAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
+// ChangeAct returns the spell change action from toolbar
+func (sv *SpellView) ChangeAllAct() *gi.Action {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("change-all", 3)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.Action)
+}
+
 // SkitpAct returns the skip action from toolbar
 func (sv *SpellView) SkipAct() *gi.Action {
 	tb := sv.UnknownBar()
@@ -359,6 +372,14 @@ func (sv *SpellView) ConfigToolbar() {
 		svv.ChangeAction()
 	})
 
+	changeAll := chgbar.AddNewChild(gi.KiT_Action, "change-all").(*gi.Action)
+	changeAll.SetText("Change All")
+	changeAll.Tooltip = "change all instances of the unknown word in this document"
+	changeAll.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		svv.ChangeAllAction()
+	})
+
 	// suggest toolbar
 	suggest := sugbar.AddNewChild(giv.KiT_SliceView, "suggestions").(*giv.SliceView)
 	suggest.SetInactive()
@@ -432,6 +453,19 @@ func (sv *SpellView) ChangeAction() {
 	tv.Buf.InsertText(tbe.Reg.Start, bs, true, true)
 	sv.ChangeOffset = sv.ChangeOffset + len(bs) - (en.Ch - st.Ch) // new length - old length
 	sv.LastAction = sv.ChangeAct()
+	sv.CheckNext()
+}
+
+// ChangeAllAction replaces the known word with the selected suggested word
+// and call CheckNextAction
+func (sv *SpellView) ChangeAllAction() {
+	tv := sv.Gide.ActiveTextView()
+	if tv == nil {
+		return
+	}
+	tv.QReplaceStart(sv.Unknown.Word, sv.ChangeText().Txt)
+	tv.QReplaceReplaceAll(0)
+	sv.LastAction = sv.ChangeAllAct()
 	sv.CheckNext()
 }
 
