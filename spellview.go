@@ -179,13 +179,26 @@ func (sv *SpellView) ChangeAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// IgnoreAllAct returns the ignore action from toolbar
-func (sv *SpellView) IgnoreAllAct() *gi.Action {
+// SkitpAct returns the skip action from toolbar
+func (sv *SpellView) SkipAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
 		return nil
 	}
-	tfi, ok := tb.ChildByName("ignore-all", 3)
+	tfi, ok := tb.ChildByName("skip", 3)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.Action)
+}
+
+// IgnoreAct returns the ignore action from toolbar
+func (sv *SpellView) IgnoreAct() *gi.Action {
+	tb := sv.UnknownBar()
+	if tb == nil {
+		return nil
+	}
+	tfi, ok := tb.ChildByName("ignore", 3)
 	if !ok {
 		return nil
 	}
@@ -310,11 +323,18 @@ func (sv *SpellView) ConfigToolbar() {
 		tf.SetInactive()
 	}
 
-	ignore := unknbar.AddNewChild(gi.KiT_Action, "ignore-all").(*gi.Action)
+	skip := unknbar.AddNewChild(gi.KiT_Action, "skip").(*gi.Action)
+	skip.SetText("Skip")
+	skip.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+		svv.SkipAction()
+	})
+
+	ignore := unknbar.AddNewChild(gi.KiT_Action, "ignore").(*gi.Action)
 	ignore.SetText("Ignore")
 	ignore.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-		svv.IgnoreAllAction()
+		svv.IgnoreAction()
 	})
 
 	learn := unknbar.AddNewChild(gi.KiT_Action, "learn").(*gi.Action)
@@ -362,21 +382,11 @@ func (sv *SpellView) CheckNext() {
 		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, true, false, nil, nil)
 		return
 	}
-
-	ignore := gi.DoIgnore(tw.Word)
-	if ignore {
-		sv.CheckNext()
-	} else {
-		sv.SetUnknownAndSuggest(tw, suggests)
-	}
+	sv.SetUnknownAndSuggest(tw, suggests)
 }
 
 // SetUnknownAndSuggest
 func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string) {
-	if gi.DoIgnore(unknown.Word) {
-		sv.CheckNext()
-	}
-
 	uf := sv.UnknownText()
 	uf.SetText(unknown.Word)
 	sv.Unknown = unknown
@@ -462,12 +472,18 @@ func (sv *SpellView) AdjustTextPos(tp giv.TextPos) giv.TextPos {
 	return tp
 }
 
-// IgnoreAllAction will skip this and future instances of misspelled/unknown word
+// SkipAction will skip this single instance of misspelled/unknown word
 // and call CheckNextAction
-func (sv *SpellView) IgnoreAllAction() {
-	// sv.Ignore = append(sv.Ignore, sv.Unknown.Word)
+func (sv *SpellView) SkipAction() {
+	sv.LastAction = sv.SkipAct()
+	sv.CheckNext()
+}
+
+// IgnoreAction will skip this and future instances of misspelled/unknown word
+// and call CheckNextAction
+func (sv *SpellView) IgnoreAction() {
 	gi.IgnoreWord(sv.Unknown.Word)
-	sv.LastAction = sv.IgnoreAllAct()
+	sv.LastAction = sv.IgnoreAct()
 	sv.CheckNext()
 }
 
