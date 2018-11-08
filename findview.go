@@ -5,12 +5,11 @@
 package gide
 
 import (
-	"fmt"
+	"bytes"
 	"net/url"
 	"reflect"
-	"regexp"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
@@ -60,6 +59,7 @@ type FindView struct {
 	gi.Layout
 	Gide   *Gide         `json:"-" xml:"-" desc:"parent gide project"`
 	LangVV giv.ValueView `desc:"langs value view"`
+	Time   time.Time     `desc:"time of last find"`
 }
 
 var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
@@ -115,107 +115,37 @@ func (fv *FindView) ReplaceAction() bool {
 			return false
 		}
 	}
-	er := giv.TextRegion{}
 	ge := fv.Gide
 	tv, reg, _, _, ok := ge.ParseOpenFindURL(tl.URL, ftv)
 	if !ok {
 		return false
 	}
-	if reg == er { // nil
+	if reg.IsNil() {
 		ok = ftv.CursorNextLink(false) // no wrap
 		if !ok {
 			return false
 		}
 		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
 		tv, reg, _, _, ok = ge.ParseOpenFindURL(tl.URL, ftv)
-		if !ok || reg == er {
+		if !ok || reg.IsNil() {
 			return false
 		}
 	}
-	tv.RefreshIfNeeded()
-	tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
-	tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Params().Replace), true, true)
-	offset := len(fv.Params().Replace) - (reg.End.Ch - reg.Start.Ch) // current offset + new length - old length
+	reg.Time.SetTime(fv.Time)
+	reg = tv.Buf.AdjustReg(reg)
+	if !reg.IsNil() {
+		tv.RefreshIfNeeded()
+		tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
+		tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Params().Replace), true, true)
 
-	regexstart, err := regexp.Compile(`L[0-9]+C[0-9]+-`)
-	if err != nil {
-		fmt.Printf("error %s", err)
+		// delete the link for the just done replace
+		ftvln := ftv.CursorPos.Ln
+		st := giv.TextPos{Ln: ftvln, Ch: 0}
+		len := len(ftv.Buf.Lines[ftvln])
+		en := giv.TextPos{Ln: ftvln, Ch: len}
+		ftv.Buf.DeleteText(st, en, false, true)
+		// ftv.NeedsRefresh()
 	}
-
-	// on what line was the replace
-	var curline = -1
-	url, err := url.Parse(tl.URL)
-	if err == nil {
-		s := regexstart.FindString(url.Fragment)
-		s = strings.TrimSuffix(s, "-")
-		line, _ := fv.UrlPos(s)
-		curline = line - 1 // -1 because url is 1 based and text is 0 based
-	}
-
-	// update the find link for the just done replace
-	var curLinkIdx int
-	for i, r := range ftv.Renders {
-		if r.Links != nil {
-			if r.Links[0].URL == tl.URL {
-				ur, urup := fv.UpdateUrl(r.Links[0].URL, 0, offset)
-				if urup {
-					r.Links[0].URL = ur
-					curLinkIdx = i
-					mu := string(ftv.Buf.Markup[curLinkIdx])
-					umu, umuup := fv.UpdateMarkup(mu, 0, offset, true, fv.Params().Replace)
-					if umuup {
-						bmu := []byte(umu)
-						ftv.Buf.Markup[curLinkIdx] = bmu
-					}
-					break
-				}
-			}
-		}
-	}
-
-	// update the find links for any others for the same line of text
-	for linkIdx := curLinkIdx + 1; linkIdx < len(ftv.Renders); linkIdx++ {
-		r := ftv.Renders[linkIdx]
-		if r.Links != nil {
-			cidx := strings.Index(tl.Label, ".")
-			tllabel := tl.Label[0:cidx]
-			rcidx := strings.Index(r.Links[0].Label, ".")
-			if rcidx != cidx {
-				break
-			}
-			rlinklabel := r.Links[0].Label[0:rcidx]
-			if rlinklabel != tllabel {
-				break
-			}
-			urlstr := r.Links[0].URL
-			url, err := url.Parse(urlstr)
-			if err == nil {
-				s := regexstart.FindString(url.Fragment)
-				s = strings.TrimSuffix(s, "-")
-				line, _ := fv.UrlPos(s)
-				if (line - 1) == curline {
-					ur, urup := fv.UpdateUrl(urlstr, offset, offset)
-					if urup {
-						r.Links[0].URL = ur
-						mu := string(ftv.Buf.Markup[linkIdx])
-						umu, umuup := fv.UpdateMarkup(mu, offset, offset, false, fv.Params().Replace)
-						if umuup {
-							bmu := []byte(umu)
-							ftv.Buf.Markup[linkIdx] = bmu
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// delete the link for the just done replace
-	ftvln := ftv.CursorPos.Ln
-	st := giv.TextPos{Ln: ftvln, Ch: 0}
-	len := len(ftv.Buf.Lines[ftvln])
-	en := giv.TextPos{Ln: ftvln, Ch: len}
-	ftv.Buf.DeleteText(st, en, false, true)
-	// ftv.NeedsRefresh()
 
 	tv.Highlights = nil
 	tv.NeedsRefresh()
@@ -225,65 +155,6 @@ func (fv *FindView) ReplaceAction() bool {
 		ftv.OpenLinkAt(ftv.CursorPos) // move to next
 	}
 	return ok
-}
-
-// UrlPos returns the line and char from a url fragment "LxxCxx"
-func (fv *FindView) UrlPos(lnch string) (int, int) {
-	scidx := strings.Index(lnch, "C")
-	if scidx == -1 { // url does not have TextPos
-		return -1, -1
-	}
-	ln := lnch[0:scidx]
-	ln = strings.TrimPrefix(ln, "L")
-	ch := lnch[scidx:]
-	ch = strings.TrimPrefix(ch, "C")
-
-	lni, lnerr := strconv.Atoi(ln)
-	chi, cherr := strconv.Atoi(ch)
-	if lnerr == nil && cherr == nil {
-		return lni, chi
-	}
-	return -1, -1
-}
-
-// UpdateUrlTextPos updates the link character position (e.g. when replace string is different length than original)
-func (fv *FindView) UpdateUrl(url string, stoff, enoff int) (string, bool) {
-	//fmt.Println("old:", url)
-	regextr, err := regexp.Compile(`L[0-9]+C[0-9]+-L[0-9]+C[0-9]+`)
-	if err != nil {
-		fmt.Printf("error %s", err)
-	}
-	trstr := regextr.FindString(url)
-	tr := giv.TextRegion{}
-	tr.FromString(trstr)
-	update := fmt.Sprintf("L%dC%d-L%dC%d", tr.Start.Ln+1, tr.Start.Ch+1+stoff, tr.End.Ln+1, tr.End.Ch+1+enoff)
-	url = strings.Replace(url, trstr, update, 1)
-	//fmt.Println("new:", url)
-	return url, true
-}
-
-func (fv *FindView) UpdateMarkup(url string, stoff, enoff int, dorep bool, rep string) (string, bool) {
-	//fmt.Println("old:", url)
-	regextr, err := regexp.Compile(`L[0-9]+C[0-9]+-L[0-9]+C[0-9]+`)
-	if err != nil {
-		fmt.Printf("error %s", err)
-	}
-	trstr := regextr.FindString(url)
-	tr := giv.TextRegion{}
-	tr.FromString(trstr)
-	// text links are 1 based - compensate for the -1 done in FromString()
-	update := fmt.Sprintf("L%dC%d-L%dC%d", tr.Start.Ln+1, tr.Start.Ch+1+stoff, tr.End.Ln+1, tr.End.Ch+1+enoff)
-	url = strings.Replace(url, trstr, update, 1)
-
-	if dorep {
-		regexspan, err := regexp.Compile(`<mark>.*</mark>`)
-		if err != nil {
-			fmt.Printf("error %s", err)
-		}
-		url = regexspan.ReplaceAllString(url, rep)
-	}
-	//fmt.Println("new:", url)
-	return url, true
 }
 
 // ReplaceAllAction performs replace all
@@ -321,13 +192,48 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	if !ok {
 		return false
 	}
+	reg.Time.SetTime(fv.Time)
+	reg = tv.Buf.AdjustReg(reg)
 	find := fv.Params().Find
 	giv.PrevISearchString = find
-	ge.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
+	fv.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
 	tv.SetNeedsRefresh()
 	tv.RefreshIfNeeded()
 	tv.SetCursorShow(reg.Start)
 	return true
+}
+
+// HighlightFinds highlights all the find results in ftv buffer
+func (fv *FindView) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, find string) {
+	lnka := []byte(`<a href="`)
+	lnkasz := len(lnka)
+
+	fb := ftv.Buf
+
+	if len(tv.Highlights) != fCount { // highlight
+		hi := make([]giv.TextRegion, fCount)
+		for i := 0; i < fCount; i++ {
+			fln := fbStLn + 1 + i
+			ltxt := fb.Markup[fln]
+			fpi := bytes.Index(ltxt, lnka)
+			if fpi < 0 {
+				continue
+			}
+			fpi += lnkasz
+			epi := fpi + bytes.Index(ltxt[fpi:], []byte(`"`))
+			lnk := string(ltxt[fpi:epi])
+			iup, err := url.Parse(lnk)
+			if err != nil {
+				continue
+			}
+			ireg := giv.TextRegion{}
+			lidx := strings.Index(iup.Fragment, "L")
+			ireg.FromString(iup.Fragment[lidx:])
+			ireg.Time.SetTime(fv.Time)
+			hi[i] = ireg
+		}
+		tv.Highlights = hi
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

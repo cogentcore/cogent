@@ -563,16 +563,20 @@ func (ge *Gide) RevertActiveView() {
 }
 
 // CloseActiveView closes the buffer associated with active view
-func (ge *Gide) CloseActiveView() bool {
+func (ge *Gide) CloseActiveView() {
 	tv := ge.ActiveTextView()
 	ond, idx, got := ge.OpenNodeForTextView(tv)
 	if got {
-		ond.Buf.Close() // todo: we can't know yet if buffer was closed if has changes!
-		ge.OpenNodes.DeleteIdx(idx)
-		ond.SetClosed()
-		return true
+		ond.Buf.Close(func(canceled bool) {
+			if canceled {
+				ge.SetStatus(fmt.Sprintf("File %v NOT closed", ond.FPath))
+				return
+			}
+			ge.OpenNodes.DeleteIdx(idx)
+			ond.SetClosed()
+			ge.SetStatus(fmt.Sprintf("File %v closed", ond.FPath))
+		})
 	}
-	return false
 }
 
 // RunPostCmdsActiveView runs any registered post commands on the active view
@@ -1517,6 +1521,7 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs Lang
 	fvi, _ := ge.FindOrMakeMainTab("Find", KiT_FindView, true) // sel
 	fv := fvi.Embed(KiT_FindView).(*FindView)
 	fv.UpdateView(ge)
+	fv.Time = time.Now()
 	ftv := fv.TextView()
 	ftv.SetInactive()
 	ftv.SetBuf(fbuf)
@@ -1635,38 +1640,6 @@ func (ge *Gide) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView
 	}
 	fmt.Sscanf(pos, "R%dN%d", &findBufStLn, &findCount)
 	return
-}
-
-// HighlightFinds highlights all the find results in ftv buffer
-func (ge *Gide) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, find string) {
-	lnka := []byte(`<a href="`)
-	lnkasz := len(lnka)
-
-	fb := ftv.Buf
-
-	if len(tv.Highlights) != fCount { // highlight
-		hi := make([]giv.TextRegion, fCount)
-		for i := 0; i < fCount; i++ {
-			fln := fbStLn + 1 + i
-			ltxt := fb.Markup[fln]
-			fpi := bytes.Index(ltxt, lnka)
-			if fpi < 0 {
-				continue
-			}
-			fpi += lnkasz
-			epi := fpi + bytes.Index(ltxt[fpi:], []byte(`"`))
-			lnk := string(ltxt[fpi:epi])
-			iup, err := url.Parse(lnk)
-			if err != nil {
-				continue
-			}
-			ireg := giv.TextRegion{}
-			lidx := strings.Index(iup.Fragment, "L")
-			ireg.FromString(iup.Fragment[lidx:])
-			hi[i] = ireg
-		}
-		tv.Highlights = hi
-	}
 }
 
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
@@ -2657,6 +2630,13 @@ var GideProps = ki.Props{
 				"confirm":  true,
 				"label":    "Revert File...",
 				"updtfunc": GideInactiveEmptyFunc,
+			}},
+			{"CloseActiveView", ki.Props{
+				"label":    "Close File",
+				"updtfunc": GideInactiveEmptyFunc,
+				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					return key.Chord(ChordForFun(KeyFunBufClose).String())
+				}),
 			}},
 			{"sep-prefs", ki.BlankProp{}},
 			{"ProjPrefs", ki.Props{
