@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/alecthomas/chroma"
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
@@ -907,4 +908,40 @@ func (vv *VersCtrlValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 			dlgFunc(dlgRecv, send, int64(gi.DialogAccepted), data)
 		}
 	})
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+//  HiStylesView
+
+// HiStylesView opens a view of a key maps table
+func HiStylesView(st *(map[string]*chroma.Style)) {
+	winm := "gide-hi-styles"
+	width := 800
+	height := 800
+	win := gi.NewWindow2D(winm, "Gide Hilighting Styles", width, height, true)
+
+	vp := win.WinViewport2D()
+	updt := vp.UpdateStart()
+
+	mfr := win.SetMainFrame()
+	mfr.Lay = gi.LayoutVert
+
+	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title.SetText("Hilighting Styles")
+	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
+	title.SetStretchMaxWidth()
+	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+
+	tv := mfr.AddNewChild(giv.KiT_MapView, "tv").(*giv.MapView)
+	tv.Viewport = vp
+	tv.SetMap(st, nil)
+	tv.SetStretchMaxWidth()
+	tv.SetStretchMaxHeight()
+
+	// mmen := win.MainMenu
+	// giv.MainMenuView(km, win, mmen)
+	// win.MainMenuUpdated()
+
+	vp.UpdateEndNoSig(updt)
+	win.GoStartEventLoop()
 }

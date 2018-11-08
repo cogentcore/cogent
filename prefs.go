@@ -10,6 +10,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/alecthomas/chroma/styles"
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
@@ -188,14 +189,17 @@ func (pf *Preferences) EditCmds() {
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
 func (pf *Preferences) EditSplits() {
-	pf.Changed = true
 	SplitsView(&AvailSplits)
 }
 
 // EditRegisters opens the RegistersView editor to customize saved registers
 func (pf *Preferences) EditRegisters() {
-	pf.Changed = true
 	RegistersView(&AvailRegisters)
+}
+
+// EditHiStyles opens the HiStyleView editor to customize highlighting styles
+func (pf *Preferences) EditHiStyles() {
+	HiStylesView(&styles.Registry)
 }
 
 // PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
@@ -252,6 +256,10 @@ var PreferencesProps = ki.Props{
 		{"EditRegisters", ki.Props{
 			"icon": "file-binary",
 			"desc": "opens the RegistersView editor of saved named text registers.  Current values are saved and loaded with preferences automatically.",
+		}},
+		{"EditHiStyles", ki.Props{
+			"icon": "file-binary",
+			"desc": "opens the HiStylesView editor of highlighting styles.",
 		}},
 	},
 }
