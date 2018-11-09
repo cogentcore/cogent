@@ -301,7 +301,7 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 	if pathIsDir {
 		root = path
 	} else {
-		root = strings.TrimSuffix(dir, string(filepath.Separator))
+		root = filepath.Clean(dir)
 		fnm = fn
 	}
 	_, projnm = filepath.Split(root)
