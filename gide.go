@@ -301,7 +301,7 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 	if pathIsDir {
 		root = path
 	} else {
-		root = dir
+		root = strings.TrimSuffix(dir, string(filepath.Separator))
 		fnm = fn
 	}
 	_, projnm = filepath.Split(root)
@@ -387,6 +387,30 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.Opts.Completion = ge.Prefs.Editor.Completion
 	tb.Opts.SpellCorrect = ge.Prefs.Editor.SpellCorrect
 	tb.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
+
+	ext := filepath.Ext(string(tb.Filename))
+	langs := LangsForExt(ext)
+	if len(langs) > 0 {
+		ln := langs[0].Name
+		// todo: completer funcs should be stored in language struct
+		switch ln {
+		case "Go":
+			if ge.Prefs.Editor.Completion {
+				tb.SetCompleter(tb, giv.CompleteGo, giv.CompleteGoEdit)
+			}
+		default:
+			//if ge.Prefs.Editor.Completion {
+		//	tb.SetCompleter(tb, giv.CompleteText, giv.CompleteTextEdit)
+		//}
+		case "Markdown":
+			if ge.Prefs.Editor.SpellCorrect {
+				tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)
+			}
+			//tb.SetCompleter(tb, CompleteText, CompleteTextEdit)
+		}
+	} else {
+		//tb.SetCompleter(tb, CompleteText, CompleteTextEdit)
+	}
 }
 
 // ActiveTextView returns the currently-active TextView
@@ -682,32 +706,6 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 			ge.AutoSaveCheck(tv, vidx, fn)
 		}
 		ge.SetActiveTextViewIdx(vidx)
-		ext := filepath.Ext(fn.Name())
-		langs := LangsForExt(ext)
-		if len(langs) > 0 {
-			ln := langs[0].Name
-			// todo: completer funcs should be stored in language struct
-			// todo: completer, spellcorrect should be set on the *BUFFER* not the
-			// textview -- the buffer is always language-specific but the viewer
-			// switches around -- see ConfigTextBuf where this stuff belongs
-			switch ln {
-			case "Go":
-				if ge.Prefs.Editor.Completion {
-					tv.SetCompleter(tv, giv.CompleteGo, giv.CompleteGoEdit)
-				}
-			default:
-				//if ge.Prefs.Editor.Completion {
-				//	tv.SetCompleter(tv, giv.CompleteText, giv.CompleteTextEdit)
-				//}
-			case "Markdown":
-				if ge.Prefs.Editor.SpellCorrect {
-					tv.SetSpellCorrect(tv, giv.SpellCorrectEdit)
-				}
-				//tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
-			}
-		} else {
-			//tv.SetCompleter(tv, CompleteText, CompleteTextEdit)
-		}
 	}
 }
 
