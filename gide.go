@@ -2122,6 +2122,9 @@ func (ge *Gide) ConfigSplitView() {
 			switch tvsig {
 			case gi.TabDeleted:
 				gee.MainTabDeleted(data.(string))
+				if data == "Find" {
+					ge.ActiveTextView().ClearHighlights()
+				}
 			}
 		})
 

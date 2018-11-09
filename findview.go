@@ -6,6 +6,7 @@ package gide
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
@@ -436,6 +437,18 @@ func (fv *FindView) ConfigToolbar() {
 			tf := send.(*gi.TextField)
 			fvv.Params().Find = tf.Text()
 			fvv.FindAction()
+		}
+	})
+	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.TextFieldClear) {
+			tv := fv.Gide.ActiveTextView()
+			if tv != nil {
+				tv.ClearHighlights()
+			}
+			fvtv := fv.TextView()
+			if fvtv != nil {
+				fmt.Println("Delete all lines from buf")
+			}
 		}
 	})
 
