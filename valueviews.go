@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/alecthomas/chroma"
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
@@ -914,7 +913,7 @@ func (vv *VersCtrlValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 //  HiStylesView
 
 // HiStylesView opens a view of a key maps table
-func HiStylesView(st *(map[string]*chroma.Style)) {
+func HiStylesView(st *giv.HiStyles) {
 	winm := "gide-hi-styles"
 	width := 800
 	height := 800

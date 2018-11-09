@@ -10,7 +10,6 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/alecthomas/chroma/styles"
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
@@ -74,6 +73,7 @@ func InitPrefs() {
 	OpenPaths()
 	OpenIcons()
 	TheConsole.Init()
+	giv.InitHiStyles()
 }
 
 func (pf *FilePrefs) Defaults() {
@@ -199,7 +199,7 @@ func (pf *Preferences) EditRegisters() {
 
 // EditHiStyles opens the HiStyleView editor to customize highlighting styles
 func (pf *Preferences) EditHiStyles() {
-	HiStylesView(&styles.Registry)
+	HiStylesView(&giv.AvailHiStyles)
 }
 
 // PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
