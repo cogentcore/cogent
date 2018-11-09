@@ -6,7 +6,6 @@ package gide
 
 import (
 	"bytes"
-	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
@@ -447,7 +446,7 @@ func (fv *FindView) ConfigToolbar() {
 			}
 			fvtv := fv.TextView()
 			if fvtv != nil {
-				fmt.Println("Delete all lines from buf")
+				fvtv.Buf.New(0)
 			}
 		}
 	})
