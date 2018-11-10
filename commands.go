@@ -925,7 +925,7 @@ func CompleteArg(data interface{}, text string, pos token.Position) (matches com
 }
 
 // CompleteArgEdit edits completer text field after the user chooses from the candidate completions
-func CompleteArgEdit(data interface{}, text string, cursorPos int, selection string, seed string) (s string, delta int) {
-	s, delta = complete.EditWord(text, cursorPos, selection, seed)
+func CompleteArgEdit(data interface{}, text string, cursorPos int, c complete.Completion, seed string) (s string, delta int) {
+	s, delta = complete.EditWord(text, cursorPos, c.Text, seed)
 	return s, delta
 }
