@@ -26,6 +26,7 @@ import (
 
 	"github.com/goki/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/histyle"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/units"
@@ -1829,7 +1830,7 @@ func (ge *Gide) ApplyPrefs() {
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	giv.HiStyleDefault = ge.Prefs.Editor.HiStyle
+	histyle.StyleDefault = ge.Prefs.Editor.HiStyle
 	sv := ge.SplitView()
 	if sv != nil {
 		for i := 0; i < NTextViews; i++ {

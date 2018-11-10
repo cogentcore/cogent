@@ -49,29 +49,31 @@ func PrefsView(pf *Preferences) (*giv.StructView, *gi.Window) {
 
 	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if pf.Changed {
-			if !inClosePrompt {
-				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Prefs Before Closing?",
-					Prompt: "Do you want to save any changes to preferences before closing?"},
-					[]string{"Save and Close", "Discard and Close", "Cancel"},
-					win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-						switch sig {
-						case 0:
-							pf.Save()
-							fmt.Println("Preferences Saved to prefs.json")
-							win.Close()
-						case 1:
-							pf.Open() // if we don't do this, then it actually remains in edited state
-							win.Close()
-						case 2:
-							inClosePrompt = false
-							// default is to do nothing, i.e., cancel
-						}
-					})
-			}
-		} else {
+		if !pf.Changed {
 			win.Close()
+			return
 		}
+		if inClosePrompt {
+			return
+		}
+		inClosePrompt = true
+		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Prefs Before Closing?",
+			Prompt: "Do you want to save any changes to preferences before closing?"},
+			[]string{"Save and Close", "Discard and Close", "Cancel"},
+			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					pf.Save()
+					fmt.Println("Preferences Saved to prefs.json")
+					win.Close()
+				case 1:
+					pf.Open() // if we don't do this, then it actually remains in edited state
+					win.Close()
+				case 2:
+					inClosePrompt = false
+					// default is to do nothing, i.e., cancel
+				}
+			})
 	})
 
 	win.MainMenuUpdated()
@@ -156,29 +158,33 @@ func KeyMapsView(km *KeyMaps) {
 	mmen := win.MainMenu
 	giv.MainMenuView(km, win, mmen)
 
+	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if AvailKeyMapsChanged { // only for main avail map..
-			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save KeyMaps Before Closing?",
-				Prompt: "Do you want to save any changes to std preferences to std keymaps file before closing, or Cancel the close and do a Save to a different file?"},
-				[]string{"Save and Close", "Discard and Close", "Cancel"},
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-					switch sig {
-					case 0:
-						km.SavePrefs()
-						fmt.Printf("Preferences Saved to %v\n", PrefsKeyMapsFileName)
-						win.Close()
-					case 1:
-						if km == &AvailKeyMaps {
-							km.OpenPrefs() // revert
-						}
-						win.Close()
-					case 2:
-						// default is to do nothing, i.e., cancel
-					}
-				})
-		} else {
+		if !AvailKeyMapsChanged || km != &AvailKeyMaps { // only for main avail map..
 			win.Close()
+			return
 		}
+		if inClosePrompt {
+			return
+		}
+		inClosePrompt = true
+		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save KeyMaps Before Closing?",
+			Prompt: "Do you want to save any changes to preferences keymaps file before closing, or Cancel the close and do a Save to a different file?"},
+			[]string{"Save and Close", "Discard and Close", "Cancel"},
+			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					km.SavePrefs()
+					fmt.Printf("Preferences Saved to %v\n", PrefsKeyMapsFileName)
+					win.Close()
+				case 1:
+					km.OpenPrefs() // revert
+					win.Close()
+				case 2:
+					inClosePrompt = false
+					// default is to do nothing, i.e., cancel
+				}
+			})
 	})
 
 	win.MainMenuUpdated()
@@ -298,29 +304,33 @@ func LangsView(pt *Langs) {
 	mmen := win.MainMenu
 	giv.MainMenuView(pt, win, mmen)
 
+	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if AvailLangsChanged { // only for main avail map..
-			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Langs Before Closing?",
-				Prompt: "Do you want to save any changes to std preferences of std languages file before closing, or Cancel the close and do a Save to a different file?"},
-				[]string{"Save and Close", "Discard and Close", "Cancel"},
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-					switch sig {
-					case 0:
-						pt.SavePrefs()
-						fmt.Printf("Preferences Saved to %v\n", PrefsLangsFileName)
-						win.Close()
-					case 1:
-						if pt == &AvailLangs {
-							pt.OpenPrefs() // revert
-						}
-						win.Close()
-					case 2:
-						// default is to do nothing, i.e., cancel
-					}
-				})
-		} else {
+		if !AvailLangsChanged || pt != &AvailLangs { // only for main avail map..
 			win.Close()
+			return
 		}
+		if inClosePrompt {
+			return
+		}
+		inClosePrompt = true
+		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Langs Before Closing?",
+			Prompt: "Do you want to save any changes to preferences languages file before closing, or Cancel the close and do a Save to a different file?"},
+			[]string{"Save and Close", "Discard and Close", "Cancel"},
+			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					pt.SavePrefs()
+					fmt.Printf("Preferences Saved to %v\n", PrefsLangsFileName)
+					win.Close()
+				case 1:
+					pt.OpenPrefs() // revert
+					win.Close()
+				case 2:
+					inClosePrompt = true
+					// default is to do nothing, i.e., cancel
+				}
+			})
 	})
 
 	win.MainMenuUpdated()
@@ -440,29 +450,33 @@ func CmdsView(pt *Commands) {
 	mmen := win.MainMenu
 	giv.MainMenuView(pt, win, mmen)
 
+	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if CustomCmdsChanged { // only for main avail map..
-			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Commands Before Closing?",
-				Prompt: "Do you want to save any changes to custom commands file before closing, or Cancel the close and do a Save to a different file?"},
-				[]string{"Save and Close", "Discard and Close", "Cancel"},
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-					switch sig {
-					case 0:
-						pt.SavePrefs()
-						fmt.Printf("Preferences Saved to %v\n", PrefsCmdsFileName)
-						win.Close()
-					case 1:
-						if pt == &CustomCmds {
-							pt.OpenPrefs() // revert
-						}
-						win.Close()
-					case 2:
-						// default is to do nothing, i.e., cancel
-					}
-				})
-		} else {
+		if !CustomCmdsChanged || pt != &CustomCmds { // only for main avail map..
 			win.Close()
+			return
 		}
+		if inClosePrompt {
+			return
+		}
+		inClosePrompt = true
+		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Commands Before Closing?",
+			Prompt: "Do you want to save any changes to custom commands file before closing, or Cancel the close and do a Save to a different file?"},
+			[]string{"Save and Close", "Discard and Close", "Cancel"},
+			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					pt.SavePrefs()
+					fmt.Printf("Preferences Saved to %v\n", PrefsCmdsFileName)
+					win.Close()
+				case 1:
+					pt.OpenPrefs() // revert
+					win.Close()
+				case 2:
+					inClosePrompt = false
+					// default is to do nothing, i.e., cancel
+				}
+			})
 	})
 
 	win.MainMenuUpdated()
@@ -585,29 +599,33 @@ func SplitsView(pt *Splits) {
 	mmen := win.MainMenu
 	giv.MainMenuView(pt, win, mmen)
 
+	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if AvailSplitsChanged { // only for main avail map..
-			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Splits Before Closing?",
-				Prompt: "Do you want to save any changes to custom splitter settings file before closing, or Cancel the close and do a Save to a different file?"},
-				[]string{"Save and Close", "Discard and Close", "Cancel"},
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-					switch sig {
-					case 0:
-						pt.SavePrefs()
-						fmt.Printf("Preferences Saved to %v\n", PrefsSplitsFileName)
-						win.Close()
-					case 1:
-						if pt == &AvailSplits {
-							pt.OpenPrefs() // revert
-						}
-						win.Close()
-					case 2:
-						// default is to do nothing, i.e., cancel
-					}
-				})
-		} else {
+		if !AvailSplitsChanged || pt != &AvailSplits { // only for main avail map..
 			win.Close()
+			return
 		}
+		if inClosePrompt {
+			return
+		}
+		inClosePrompt = true
+		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Splits Before Closing?",
+			Prompt: "Do you want to save any changes to custom splitter settings file before closing, or Cancel the close and do a Save to a different file?"},
+			[]string{"Save and Close", "Discard and Close", "Cancel"},
+			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					pt.SavePrefs()
+					fmt.Printf("Preferences Saved to %v\n", PrefsSplitsFileName)
+					win.Close()
+				case 1:
+					pt.OpenPrefs() // revert
+					win.Close()
+				case 2:
+					inClosePrompt = false
+					// default is to do nothing, i.e., cancel
+				}
+			})
 	})
 
 	win.MainMenuUpdated()
@@ -730,29 +748,33 @@ func RegistersView(pt *Registers) {
 	mmen := win.MainMenu
 	giv.MainMenuView(pt, win, mmen)
 
+	inClosePrompt := false
 	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if AvailRegistersChanged { // only for main avail map..
-			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Registers Before Closing?",
-				Prompt: "Do you want to save any changes to custom register file before closing, or Cancel the close and do a Save to a different file?"},
-				[]string{"Save and Close", "Discard and Close", "Cancel"},
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-					switch sig {
-					case 0:
-						pt.SavePrefs()
-						fmt.Printf("Preferences Saved to %v\n", PrefsRegistersFileName)
-						win.Close()
-					case 1:
-						if pt == &AvailRegisters {
-							pt.OpenPrefs() // revert
-						}
-						win.Close()
-					case 2:
-						// default is to do nothing, i.e., cancel
-					}
-				})
-		} else {
+		if !AvailRegistersChanged || pt != &AvailRegisters { // only for main avail map..
 			win.Close()
+			return
 		}
+		if inClosePrompt {
+			return
+		}
+		inClosePrompt = true
+		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Registers Before Closing?",
+			Prompt: "Do you want to save any changes to custom register file before closing, or Cancel the close and do a Save to a different file?"},
+			[]string{"Save and Close", "Discard and Close", "Cancel"},
+			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					pt.SavePrefs()
+					fmt.Printf("Preferences Saved to %v\n", PrefsRegistersFileName)
+					win.Close()
+				case 1:
+					pt.OpenPrefs() // revert
+					win.Close()
+				case 2:
+					inClosePrompt = false
+					// default is to do nothing, i.e., cancel
+				}
+			})
 	})
 
 	win.MainMenuUpdated()
@@ -907,40 +929,4 @@ func (vv *VersCtrlValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 			dlgFunc(dlgRecv, send, int64(gi.DialogAccepted), data)
 		}
 	})
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  HiStylesView
-
-// HiStylesView opens a view of a key maps table
-func HiStylesView(st *giv.HiStyles) {
-	winm := "gide-hi-styles"
-	width := 800
-	height := 800
-	win := gi.NewWindow2D(winm, "Gide Hilighting Styles", width, height, true)
-
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
-
-	mfr := win.SetMainFrame()
-	mfr.Lay = gi.LayoutVert
-
-	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
-	title.SetText("Hilighting Styles")
-	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
-	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
-
-	tv := mfr.AddNewChild(giv.KiT_MapView, "tv").(*giv.MapView)
-	tv.Viewport = vp
-	tv.SetMap(st, nil)
-	tv.SetStretchMaxWidth()
-	tv.SetStretchMaxHeight()
-
-	// mmen := win.MainMenu
-	// giv.MainMenuView(km, win, mmen)
-	// win.MainMenuUpdated()
-
-	vp.UpdateEndNoSig(updt)
-	win.GoStartEventLoop()
 }
