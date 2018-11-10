@@ -26,27 +26,27 @@ type FilePrefs struct {
 
 // EditorPrefs contains editor preferences
 type EditorPrefs struct {
-	HiStyle      histyle.StyleName `desc:"highilighting style / theme"`
-	FontFamily   gi.FontName       `desc:"monospaced font family for editor"`
-	TabSize      int               `desc:"size of a tab, in chars -- also determines indent level for space indent"`
-	SpaceIndent  bool              `desc:"use spaces for indentation, otherwise tabs"`
-	WordWrap     bool              `desc:"wrap lines at word boundaries -- otherwise long lines scroll off the end"`
-	LineNos      bool              `desc:"show line numbers"`
-	Completion   bool              `desc:"use the completion system to suggest options while typing"`
-	SpellCorrect bool              `desc:"suggest corrections for unknown words while typing"`
-	AutoIndent   bool              `desc:"automatically indent lines when enter, tab, }, etc pressed"`
-	EmacsUndo    bool              `desc:"use emacs-style undo, where after a non-undo command, all the current undo actions are added to the undo stack, such that a subsequent undo is actually a redo"`
+	TabSize      int  `desc:"size of a tab, in chars -- also determines indent level for space indent"`
+	SpaceIndent  bool `desc:"use spaces for indentation, otherwise tabs"`
+	WordWrap     bool `desc:"wrap lines at word boundaries -- otherwise long lines scroll off the end"`
+	LineNos      bool `desc:"show line numbers"`
+	Completion   bool `desc:"use the completion system to suggest options while typing"`
+	SpellCorrect bool `desc:"suggest corrections for unknown words while typing"`
+	AutoIndent   bool `desc:"automatically indent lines when enter, tab, }, etc pressed"`
+	EmacsUndo    bool `desc:"use emacs-style undo, where after a non-undo command, all the current undo actions are added to the undo stack, such that a subsequent undo is actually a redo"`
 }
 
 // Preferences are the overall user preferences for Gide.
 type Preferences struct {
-	Files       FilePrefs   `desc:"file view preferences"`
-	Editor      EditorPrefs `view:"inline" desc:"editor preferences"`
-	KeyMap      KeyMapName  `desc:"key map for gide-specific keyboard sequences"`
-	SaveKeyMaps bool        `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
-	SaveLangs   bool        `desc:"if set, the current customized set of language parameters (see Edit Langs) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	SaveCmds    bool        `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	Changed     bool        `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	HiStyle     histyle.StyleName `desc:"highilighting style / theme"`
+	FontFamily  gi.FontName       `desc:"monospaced font family for editor"`
+	Files       FilePrefs         `desc:"file view preferences"`
+	Editor      EditorPrefs       `view:"inline" desc:"editor preferences"`
+	KeyMap      KeyMapName        `desc:"key map for gide-specific keyboard sequences"`
+	SaveKeyMaps bool              `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
+	SaveLangs   bool              `desc:"if set, the current customized set of language parameters (see Edit Langs) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	SaveCmds    bool              `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	Changed     bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -82,8 +82,6 @@ func (pf *FilePrefs) Defaults() {
 }
 
 func (pf *EditorPrefs) Defaults() {
-	pf.HiStyle = "emacs"
-	pf.FontFamily = "Go Mono"
 	pf.TabSize = 4
 	pf.WordWrap = true
 	pf.LineNos = true
@@ -93,6 +91,8 @@ func (pf *EditorPrefs) Defaults() {
 }
 
 func (pf *Preferences) Defaults() {
+	pf.HiStyle = "emacs"
+	pf.FontFamily = "Go Mono"
 	pf.Files.Defaults()
 	pf.Editor.Defaults()
 	pf.KeyMap = DefaultKeyMap
@@ -108,7 +108,7 @@ func (pf *Preferences) Apply() {
 	}
 	MergeAvailCmds()
 	AvailLangs.Validate()
-	histyle.StyleDefault = pf.Editor.HiStyle
+	histyle.StyleDefault = pf.HiStyle
 }
 
 // Open preferences from GoGi standard prefs directory, and applies them

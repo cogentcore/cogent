@@ -25,6 +25,11 @@ type Split struct {
 	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"5" desc:"splitter panel proportions"`
 }
 
+// Label satisfies the Labeler interface
+func (sp Split) Label() string {
+	return sp.Name
+}
+
 // SaveSplits saves given splits to this setting -- must use copy!
 func (lt *Split) SaveSplits(sp []float32) {
 	copy(lt.Splits, sp)

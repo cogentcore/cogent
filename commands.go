@@ -35,6 +35,11 @@ type CmdAndArgs struct {
 	Args CmdArgs `complete:"arg" width:"25" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use \{ to insert a literal curly bracket.  A '/' path separator directly between path variables will be replaced with \ on Windows."`
 }
 
+// Label satisfies the Labeler interface
+func (cm CmdAndArgs) Label() string {
+	return cm.Cmd
+}
+
 // CmdArgs is a slice of arguments for a command
 type CmdArgs []string
 
@@ -151,9 +156,6 @@ func (cm *CmdRun) Kill() {
 // CmdRuns is a slice list of running commands
 type CmdRuns []*CmdRun
 
-// RunningCmds is the global list of running commands
-var RunningCmds CmdRuns
-
 // Add adds a new running command
 func (rc *CmdRuns) Add(cm *CmdRun) {
 	if *rc == nil {
@@ -219,6 +221,11 @@ type Command struct {
 	Wait    bool         `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
 	Focus   bool         `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
 	Confirm bool         `desc:"if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands"`
+}
+
+// Label satisfies the Labeler interface
+func (cm Command) Label() string {
+	return cm.Name
 }
 
 // HasPrompts returns true if any prompts are required before running command,
@@ -307,7 +314,7 @@ func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
 
 // RunAfterPrompts runs after any prompts have been set, if needed
 func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
-	RunningCmds.KillByName(cm.Name) // make sure nothing still running for us..
+	ge.RunningCmds.KillByName(cm.Name) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
 	if cm.Dir != "" {
@@ -348,7 +355,7 @@ func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 // line of the command output to gide statusbar
 func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
-	RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
+	ge.RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	cm.AppendCmdOut(ge, buf, out)
 	return cm.RunStatus(ge, buf, cmdstr, err, out)
@@ -358,7 +365,7 @@ func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool 
 // buffer with new results line-by-line as they come in
 func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
-	RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
+	ge.RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
 	lfb := []byte("\n")
 	if err == nil {
@@ -410,7 +417,7 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 // logs one line of the command output to gide statusbar
 func (cm *Command) RunNoBuf(ge *Gide, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
-	RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
+	ge.RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	return cm.RunStatus(ge, nil, cmdstr, err, out)
 }
@@ -443,7 +450,7 @@ var CmdOutStatusLen = 80
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
 func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
-	RunningCmds.DeleteByName(cm.Name)
+	ge.RunningCmds.DeleteByName(cm.Name)
 	rval := true
 	outstr := ""
 	if out != nil {

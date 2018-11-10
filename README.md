@@ -50,6 +50,4 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 * Initially will be relying on basic syntax highlighting via https://github.com/alecthomas/chroma, but to provide more advanced IDE-level functionality, a flexible dynamic parsing framework is envisioned, based on the GoKi tree (ki) structures.  This will provide multi-pass robust AST (abstract syntax tree) level parsing of supported languages, and the goal is to make the parser fully GUI editable to support "easy" extension to new languages.
 
-# TODO
 
-* running commands needs to be within project!  currently global.

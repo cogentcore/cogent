@@ -32,6 +32,11 @@ type Lang struct {
 	Comment      string   `desc:"string used for commenting-out individual lines"`
 }
 
+// Label satisfies the Labeler interface
+func (ln Lang) Label() string {
+	return ln.Name
+}
+
 // Langs is a list of language types
 type Langs []*Lang
 

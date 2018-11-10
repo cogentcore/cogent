@@ -64,6 +64,7 @@ type Gide struct {
 	OpenNodes         OpenNodes               `json:"-" desc:"list of open nodes, most recent first"`
 	CmdBufs           map[string]*giv.TextBuf `json:"-" desc:"the command buffers for commands run in this project"`
 	CmdHistory        CmdNames                `json:"-" desc:"history of commands executed in this session"`
+	RunningCmds       CmdRuns                 `json:"-" xml:"-" desc:"currently running commands in this project"`
 	Prefs             ProjPrefs               `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
@@ -380,7 +381,7 @@ func (ge *Gide) GuessVersCtrl() bool {
 
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
-	tb.SetHiStyle(ge.Prefs.Editor.HiStyle)
+	tb.SetHiStyle(Prefs.HiStyle)
 	tb.Opts.TabSize = ge.Prefs.Editor.TabSize
 	tb.Opts.SpaceIndent = ge.Prefs.Editor.SpaceIndent
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
@@ -681,7 +682,7 @@ func (ge *Gide) OpenFileNode(fn *giv.FileNode) (bool, error) {
 	if fn.IsDir() {
 		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
 	}
-	giv.FileNodeHiStyle = ge.Prefs.Editor.HiStyle // must be set prior to OpenBuf
+	giv.FileNodeHiStyle = Prefs.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
 		ge.ConfigTextBuf(fn.Buf)
@@ -1212,7 +1213,7 @@ func (ge *Gide) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 		tv.SetProp("white-space", gi.WhiteSpacePre)
 	}
 	tv.SetProp("tab-size", 8) // std for output
-	tv.SetProp("font-family", ge.Prefs.Editor.FontFamily)
+	tv.SetProp("font-family", Prefs.FontFamily)
 	tv.SetInactive()
 	return tv
 }
@@ -1272,7 +1273,7 @@ func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
 
 // MainTabDeleted is called when a main tab is deleted -- we cancel any running commmands
 func (ge *Gide) MainTabDeleted(tabnm string) {
-	RunningCmds.KillByName(tabnm)
+	ge.RunningCmds.KillByName(tabnm)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1830,7 +1831,7 @@ func (ge *Gide) ApplyPrefs() {
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	histyle.StyleDefault = ge.Prefs.Editor.HiStyle
+	histyle.StyleDefault = Prefs.HiStyle
 	sv := ge.SplitView()
 	if sv != nil {
 		for i := 0; i < NTextViews; i++ {
@@ -2139,7 +2140,7 @@ func (ge *Gide) ConfigSplitView() {
 			txed.SetProp("white-space", gi.WhiteSpacePre)
 		}
 		txed.SetProp("tab-size", ge.Prefs.Editor.TabSize)
-		txed.SetProp("font-family", ge.Prefs.Editor.FontFamily)
+		txed.SetProp("font-family", Prefs.FontFamily)
 	}
 
 	// set some properties always, even if no mods
