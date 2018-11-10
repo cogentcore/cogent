@@ -113,8 +113,8 @@ var RegistersProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
-					act.SetActiveState(AvailRegistersChanged)
+				"updtfunc": giv.ActionUpdateFunc(func(ari interface{}, act *gi.Action) {
+					act.SetActiveState(AvailRegistersChanged && ari.(*Registers) == &AvailRegisters)
 				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
@@ -145,8 +145,8 @@ var RegistersProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Registers to App standard prefs directory, in file registers_prefs.json, which will be loaded automatically at startup)",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
-				act.SetActiveStateUpdt(AvailRegistersChanged)
+			"updtfunc": giv.ActionUpdateFunc(func(ari interface{}, act *gi.Action) {
+				act.SetActiveState(AvailRegistersChanged && ari.(*Registers) == &AvailRegisters)
 			}),
 		}},
 		{"sep-file", ki.BlankProp{}},

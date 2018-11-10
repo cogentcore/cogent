@@ -260,7 +260,7 @@ var LangsProps = ki.Props{
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
 				"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
-					act.SetActiveState(AvailLangsChanged)
+					act.SetActiveState(AvailLangsChanged && lti.(*Langs) == &AvailLangs)
 				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
@@ -296,7 +296,7 @@ var LangsProps = ki.Props{
 			"desc": "saves Langs to App standard prefs directory, in file lang_prefs.json, which will be loaded automatically at startup if prefs SaveLangs is checked (should be if you're using custom languages)",
 			"icon": "file-save",
 			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
-				act.SetActiveStateUpdt(AvailLangsChanged)
+				act.SetActiveState(AvailLangsChanged && lti.(*Langs) == &AvailLangs)
 			}),
 		}},
 		{"sep-file", ki.BlankProp{}},
@@ -323,11 +323,17 @@ var LangsProps = ki.Props{
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
 			"desc": "Shows the standard languages that are compiled into the program and have all the latest changes.  Useful for comparing against custom langs.",
+			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
+				act.SetActiveState(lti.(*Langs) != &StdLangs)
+			}),
 		}},
 		{"RevertToStd", ki.Props{
 			"icon":    "update",
 			"desc":    "This reverts the languages to using the StdLangs that are compiled into the program and have all the lastest standards.  <b>Your current edits will be lost if you proceed!</b>  Continue?",
 			"confirm": true,
+			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
+				act.SetActiveState(lti.(*Langs) != &StdLangs)
+			}),
 		}},
 	},
 }

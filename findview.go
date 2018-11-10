@@ -431,15 +431,12 @@ func (fv *FindView) ConfigToolbar() {
 		fvv.FindAction()
 	})
 	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if sig == int64(gi.TextFieldDone) {
+		if sig == int64(gi.TextFieldDone) || sig == int64(gi.TextFieldDeFocused) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
 			fvv.Params().Find = tf.Text()
 			fvv.FindAction()
-		}
-	})
-	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if sig == int64(gi.TextFieldClear) {
+		} else if sig == int64(gi.TextFieldCleared) {
 			tv := fv.Gide.ActiveTextView()
 			if tv != nil {
 				tv.ClearHighlights()

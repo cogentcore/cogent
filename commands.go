@@ -745,7 +745,7 @@ var CommandsProps = ki.Props{
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
 				"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
-					act.SetActiveState(CustomCmdsChanged)
+					act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
 				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
@@ -777,7 +777,7 @@ var CommandsProps = ki.Props{
 			"desc": "saves Commands to App standard prefs directory, in file proj_types_prefs.json, which will be loaded automatically at startup if prefs SaveCommands is checked (should be if you're using custom commands)",
 			"icon": "file-save",
 			"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
-				act.SetActiveStateUpdt(CustomCmdsChanged)
+				act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
 			}),
 		}},
 		{"sep-file", ki.BlankProp{}},
@@ -804,6 +804,9 @@ var CommandsProps = ki.Props{
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
 			"desc": "Shows the standard commands that are compiled into the program (edits will not be saved -- even though the viewer is editable).  Custom commands override standard ones of the same name, so that is the way to change any existing commands.",
+			"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
+				act.SetActiveState(cmi.(*Commands) != &StdCmds)
+			}),
 		}},
 	},
 }

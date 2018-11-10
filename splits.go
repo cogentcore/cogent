@@ -160,8 +160,8 @@ var SplitsProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
-					act.SetActiveState(AvailSplitsChanged)
+				"updtfunc": giv.ActionUpdateFunc(func(spi interface{}, act *gi.Action) {
+					act.SetActiveState(AvailSplitsChanged && spi.(*Splits) == &AvailSplits)
 				}),
 			}},
 			{"sep-file", ki.BlankProp{}},
@@ -192,8 +192,8 @@ var SplitsProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Splits to App standard prefs directory, in file splits_prefs.json, which will be loaded automatically at startup)",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
-				act.SetActiveStateUpdt(AvailSplitsChanged)
+			"updtfunc": giv.ActionUpdateFunc(func(spi interface{}, act *gi.Action) {
+				act.SetActiveState(AvailSplitsChanged && spi.(*Splits) == &AvailSplits)
 			}),
 		}},
 		{"sep-file", ki.BlankProp{}},
