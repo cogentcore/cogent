@@ -408,10 +408,10 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 			if ge.Prefs.Editor.SpellCorrect {
 				tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)
 			}
-			//tb.SetCompleter(tb, CompleteText, CompleteTextEdit)
+			//tb.SetCompleter(tb, giv.CompleteText, giv.CompleteTextEdit)
 		}
 	} else {
-		//tb.SetCompleter(tb, CompleteText, CompleteTextEdit)
+		//tb.SetCompleter(tb, giv.CompleteText, giv.CompleteTextEdit)
 	}
 }
 
