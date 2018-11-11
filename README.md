@@ -6,13 +6,16 @@
 
 See the [Wiki](https://github.com/goki/gide/wiki) for more docs, discussion, etc.
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/goki/gide)](https://goreportcard.com/report/github.com/goki/gide)
+[![GoDoc](https://godoc.org/github.com/goki/gide?status.svg)](http://godoc.org/github.com/goki/gide)
+
 After all these years, nothing beats a great text editor for coding.  All that drag-n-drop, graphical stuff just gets in the way.
 
 And nothing beats coding for efficiently doing just about anything you want to do, whether it is data analysis, AI, etc (and obviously for "regular" coding).
 
 Even writing documents is best done in a markup language (markdown, LaTeX, etc), and needs a great text editor.  In short, virtually your entire workflow as a scientist, researcher, etc depends on the same core functionality.
 
-And yet, the perfect text editor / IDE has yet to be written... *until now!* (or at least *N* years hence.. :)
+And yet, the perfect text editor / IDE has yet to be written... *until now!*
 
 * `Sublime` lives up to its name according to many, but it is proprietary..
 * `Atom` is open and very popular, but... electron.. javascript.. ugh..
@@ -21,7 +24,7 @@ And yet, the perfect text editor / IDE has yet to be written... *until now!* (or
 
 Hence, the need for *gide*, which features:
 
-* Pure opensource Go (golang) implementation, built on top of brand new, very clean, lightweight, fast cross-platform GUI framework: GoGi (https://github.com/goki/gi).
+* Pure opensource Go (golang) implementation, built on top of brand new, very clean, lightweight, fast cross-platform GUI framework: [GoGi](https://github.com/goki/gi).
 
 * Designed from the ground up to handle a very wide range of use-cases, from core coding to scientific computing to writing documents, etc.
 
@@ -31,7 +34,7 @@ Hence, the need for *gide*, which features:
 
 # Current Status
 
-As of mid 10/2018, *nearly* ready for an initial beta release along with rest of GoGi.
+As of 11/2018, it is fully functional as an editor, but many planned features remain to be implemented.
 
 Basic editing and tooling for `Go`, `C`, `LaTeX` is in reasonably functional and solid.  It is fully self-hosting -- all further development of Gide is happening within Gide!
 
@@ -48,6 +51,10 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 
 * Although implemented in Go, and that will obviously have most-favored status for language support, the goal is to make it as general as possible, with REPL support for various interpreted languages, and Go via https://github.com/cosmos72/gomacro (similar to https://github.com/gopherdata/gophernotes for `Jupyter` and `nteract`).
 
-* Initially will be relying on basic syntax highlighting via https://github.com/alecthomas/chroma, but to provide more advanced IDE-level functionality, a flexible dynamic parsing framework is envisioned, based on the GoKi tree (ki) structures.  This will provide multi-pass robust AST (abstract syntax tree) level parsing of supported languages, and the goal is to make the parser fully GUI editable to support "easy" extension to new languages.
+* Initially we are relying on basic syntax highlighting via [chroma](https://github.com/alecthomas/chroma), but to provide more advanced IDE-level functionality, a flexible dynamic parsing framework is envisioned, based on the GoKi tree (ki) structures.  This will provide multi-pass robust AST (abstract syntax tree) level parsing of supported languages, and the goal is to make the parser fully GUI editable to support "easy" extension to new languages.
 
+* Again see the [Wiki](https://github.com/goki/gide/wiki) for much more info about installation, usage, etc.
 
+![Screenshot](screenshot.png?raw=true "Screenshot")
+
+![Screenshot, darker](screenshot_dark.png?raw=true "Screenshot, darker color scheme")
