@@ -7,7 +7,7 @@ package gide
 import (
 	"testing"
 
-	"github.com/goki/gi"
+	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 )
 

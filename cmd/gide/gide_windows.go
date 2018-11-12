@@ -6,7 +6,7 @@
 
 package main
 
-import "github.com/goki/gide"
+import "github.com/goki/gide/gide"
 
 func init() {
 	gide.DefaultKeyMap = gide.KeyMapName("WindowsStd")

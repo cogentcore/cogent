@@ -2,14 +2,14 @@
 
 ![alt tag](logo/gide_icon.png)
 
-**Gide** is a flexible IDE (integrated development environment) framework in pure Go, using the GoGi GUI.
+**Gide** is a flexible IDE (integrated development environment) framework in pure Go, using the [GoGi](https://github.com/goki/gi) GUI.
 
 See the [Wiki](https://github.com/goki/gide/wiki) for more docs, discussion, etc.
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goki/gide)](https://goreportcard.com/report/github.com/goki/gide)
 [![GoDoc](https://godoc.org/github.com/goki/gide?status.svg)](http://godoc.org/github.com/goki/gide)
 
-After all these years, nothing beats a great text editor for coding.  All that drag-n-drop, graphical stuff just gets in the way.
+After all these years, nothing beats a great text editor for coding.  Every attempt at more "visual" or structured forms of programming haven't really caught on (though the IDE and GUI-augmented editor can give you the best of both worlds).
 
 And nothing beats coding for efficiently doing just about anything you want to do, whether it is data analysis, AI, etc (and obviously for "regular" coding).
 
@@ -20,11 +20,11 @@ And yet, the perfect text editor / IDE has yet to be written... *until now!*
 * `Sublime` lives up to its name according to many, but it is proprietary..
 * `Atom` is open and very popular, but... electron.. javascript.. ugh..
 * `Emacs` is.. complicated.. and.. lisp?
-* `IntelliJ` is also very well done, but also proprietary and has some kind of crazy bug on Mac that has been around for years, driving high CPU loads.. https://intellij-support.jetbrains.com/hc/en-us/community/posts/115000693290-Extreme-lag-and-high-CPU-usage-on-OSX-High-Sierra?page=2#comments
+* `IntelliJ` is also very well done, but also proprietary and has some kind of [crazy bug](https://intellij-support.jetbrains.com/hc/en-us/community/posts/115000693290-Extreme-lag-and-high-CPU-usage-on-OSX-High-Sierra?page=2#comments) on Mac that has been around for years, driving high CPU loads.. 
 
-Hence, the need for *gide*, which features:
+Hence, the need for *Gide*, which features:
 
-* Pure opensource Go (golang) implementation, built on top of brand new, very clean, lightweight, fast cross-platform GUI framework: [GoGi](https://github.com/goki/gi).
+* Pure opensource Go (golang) implementation, built on top of a brand new, very clean, lightweight, fast cross-platform GUI framework: [GoGi](https://github.com/goki/gi).
 
 * Designed from the ground up to handle a very wide range of use-cases, from core coding to scientific computing to writing documents, etc.
 
@@ -54,6 +54,8 @@ Feel free to file issues for anything you'd like to see that isn't listed here.
 * Initially we are relying on basic syntax highlighting via [chroma](https://github.com/alecthomas/chroma), but to provide more advanced IDE-level functionality, a flexible dynamic parsing framework is envisioned, based on the GoKi tree (ki) structures.  This will provide multi-pass robust AST (abstract syntax tree) level parsing of supported languages, and the goal is to make the parser fully GUI editable to support "easy" extension to new languages.
 
 * Again see the [Wiki](https://github.com/goki/gide/wiki) for much more info about installation, usage, etc.
+
+# Screenshots
 
 ![Screenshot](screenshot.png?raw=true "Screenshot")
 
