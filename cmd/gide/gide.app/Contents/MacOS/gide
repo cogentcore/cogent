@@ -1,6 +1,11 @@
 #!/bin/bash
 
-export $PATH="$HOME/go/bin:$PATH"
+if [ -z "$GOPATH" ]
+then
+	export GOPATH="$HOME/go"
+fi
 
-$HOME/go/bin/gide "$@" > /dev/null 2>&1
+export PATH="$GOPATH/bin:$PATH"
+
+"$GOPATH/bin/gide" "$@" > "$HOME/Library/gide/gide.log" 2>&1
 
