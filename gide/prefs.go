@@ -164,6 +164,12 @@ func (pf *Preferences) Save() error {
 	return err
 }
 
+// VersionInfo returns GoGi version information
+func (pf *Preferences) VersionInfo() string {
+	vinfo := VersionLong + " versioned on: " + VersionDate
+	return vinfo
+}
+
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
 // load from other files, etc.  Current avail keymaps are saved and loaded
 // with preferences automatically.
@@ -236,6 +242,11 @@ var PreferencesProps = ki.Props{
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdt(pf.Changed)
 			}),
+		}},
+		{"VersionInfo", ki.Props{
+			"desc":        "shows current Gide version information",
+			"icon":        "info",
+			"show-return": true,
 		}},
 		{"sep-key", ki.BlankProp{}},
 		{"EditKeyMaps", ki.Props{
