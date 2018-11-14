@@ -1338,6 +1338,7 @@ func (ge *Gide) ExecCmdNameActive(cmdNm string) {
 func (ge *Gide) ExecCmd() {
 	tv := ge.ActiveTextView()
 	if tv == nil {
+		fmt.Printf("no Active view for ExecCmd\n")
 		return
 	}
 	var cmds []string
