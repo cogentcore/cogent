@@ -400,6 +400,9 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 			if ge.Prefs.Editor.Completion {
 				tb.SetCompleter(tb, giv.CompleteGo, giv.CompleteGoEdit)
 			}
+			if ge.Prefs.Editor.SpellCorrect {
+				tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)
+			}
 		default:
 			//if ge.Prefs.Editor.Completion {
 		//	tb.SetCompleter(tb, giv.CompleteText, giv.CompleteTextEdit)
