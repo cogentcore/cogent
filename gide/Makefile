@@ -16,7 +16,7 @@ test:
 clean: 
 	$(GOCLEAN)
 
-VERS=`git describe --always --tags`
+VERS=`git describe --always --tags --abbrev=0`
 VERS_LONG=`git describe --always --long`
 VERS_DATE=`date -u +%Y-%m-%d\ %H:%M`
 VERS_FILE=version.go
