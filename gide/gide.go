@@ -390,31 +390,24 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.Opts.SpellCorrect = ge.Prefs.Editor.SpellCorrect
 	tb.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
 
+	if ge.Prefs.Editor.SpellCorrect {
+		tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)
+	}
+
 	ext := filepath.Ext(string(tb.Filename))
 	langs := LangsForExt(ext)
 	if len(langs) > 0 {
 		ln := langs[0].Name
+		tb.Opts.CommentLn = langs[0].CommentLn
+		tb.Opts.CommentSt = langs[0].CommentSt
+		tb.Opts.CommentEd = langs[0].CommentEd
 		// todo: completer funcs should be stored in language struct
 		switch ln {
 		case "Go":
 			if ge.Prefs.Editor.Completion {
 				tb.SetCompleter(tb, giv.CompleteGo, giv.CompleteGoEdit)
 			}
-			if ge.Prefs.Editor.SpellCorrect {
-				tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)
-			}
-		default:
-			//if ge.Prefs.Editor.Completion {
-		//	tb.SetCompleter(tb, giv.CompleteText, giv.CompleteTextEdit)
-		//}
-		case "Markdown":
-			if ge.Prefs.Editor.SpellCorrect {
-				tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)
-			}
-			//tb.SetCompleter(tb, giv.CompleteText, giv.CompleteTextEdit)
 		}
-	} else {
-		//tb.SetCompleter(tb, giv.CompleteText, giv.CompleteTextEdit)
 	}
 }
 
@@ -1735,12 +1728,7 @@ func (ge *Gide) CommentOut() bool {
 		stl = sel.Reg.Start.Ln
 		etl = sel.Reg.End.Ln
 	}
-	cmt := []byte("// ")
-	ls := LangsForFilename(string(tv.Buf.Filename))
-	if len(ls) == 1 {
-		cmt = []byte(ls[0].Comment)
-	}
-	tv.Buf.CommentRegion(stl, etl, cmt)
+	tv.Buf.CommentRegion(stl, etl)
 	tv.SelectReset()
 	return true
 }
@@ -1756,11 +1744,6 @@ func (ge *Gide) Indent() bool {
 		return false
 	}
 	// todo: add indent chars to langs
-	// cmt := []byte("// ")
-	// ls := LangsForFilename(string(tv.Buf.Filename))
-	// if len(ls) == 1 {
-	//		cmt = []byte(ls[0].Comment)
-	// }
 	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, giv.DefaultIndentStrings, giv.DefaultUnindentStrings)
 	tv.SelectReset()
 	return true

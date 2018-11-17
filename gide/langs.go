@@ -29,7 +29,9 @@ type Lang struct {
 	Desc         string   `desc:"<i>brief</i> description of it"`
 	Exts         []string `desc:"associated lower-case file extensions -- if the filename itself is more diagnostic (e.g., Makefile), specify that -- if it doesn't start with a . then it will be treated as the start of the filename"`
 	PostSaveCmds CmdNames `desc:"command(s) to run after a file of this type is saved"`
-	Comment      string   `desc:"string used for commenting-out individual lines"`
+	CommentLn    string   `desc:"character(s) that start a single-line comment -- if empty then multi-line comment syntax will be used"`
+	CommentSt    string   `desc:"character(s) that start a multi-line comment or one that requires both start and end"`
+	CommentEd    string   `desc:"character(s) that end a multi-line comment or one that requires both start and end"`
 }
 
 // Label satisfies the Labeler interface
@@ -345,12 +347,12 @@ var LangsProps = ki.Props{
 
 // StdLangs is the original compiled-in set of standard languages.
 var StdLangs = Langs{
-	{"C", "C code", []string{".c", ".h"}, nil, "// "},
-	{"C++", "C++ code", []string{".cpp", ".cxx", ".cc", ".h", ".hh", ".hpp"}, nil, "// "},
-	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}, "// "},
-	{"HTML", "HTML document", []string{".html", ".htm"}, nil, "<-- "},
-	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX PDF"}, "% "},
-	{"Markdown", "Markdown document", []string{".md"}, nil, "<--- "},
-	{"PDF", "PDF document", []string{".pdf"}, CmdNames{"Open File"}, ""},
-	{"Python", "Python code", []string{".py"}, nil, "# "},
+	{"C", "C code", []string{".c", ".h"}, nil, "// ", "/* ", " */"},
+	{"C++", "C++ code", []string{".cpp", ".cxx", ".cc", ".h", ".hh", ".hpp"}, nil, "// ", "/* ", " */"},
+	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}, "// ", "/* ", " */"},
+	{"HTML", "HTML document", []string{".html", ".htm"}, nil, "", "<!-- ", " -->"},
+	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX PDF"}, "% ", "", ""},
+	{"Markdown", "Markdown document", []string{".md"}, nil, "", "<!--- ", " -->"},
+	{"PDF", "PDF document", []string{".pdf"}, CmdNames{"Open File"}, "", "", ""},
+	{"Python", "Python code", []string{".py"}, nil, "# ", "", ""},
 }
