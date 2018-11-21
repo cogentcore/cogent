@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/units"
@@ -167,7 +168,7 @@ type FileSearchResults struct {
 // language(s) that contain the given string (non regexp version), sorted in
 // descending order by number of occurrences -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindLoc, activeDir string, langs LangNames) []FileSearchResults {
+func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindLoc, activeDir string, langs []filecat.Supported) []FileSearchResults {
 	fsz := len(find)
 	if fsz == 0 {
 		return nil
@@ -181,7 +182,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" || sfn.IsAutoSave() {
 			return true
 		}
-		if !LangNamesMatchFilename(sfn.Nm, langs) {
+		if !filecat.IsMatchList(langs, sfn.Info.Sup) {
 			return true
 		}
 		if loc == FindLocDir {
@@ -274,9 +275,12 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 		return nil
 	}
 	ge := gek.Embed(KiT_Gide).(*Gide)
-	fnm := ft.SrcNode.Ptr.Name()
-	langs := LangNamesForFilename(fnm)
-	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
+	fn := ft.FileNode()
+	lang := filecat.NoSupport
+	if fn != nil {
+		lang = fn.Info.Sup
+	}
+	cmds := AvailCmds.FilterCmdNames(lang, ge.Prefs.VersCtrl)
 	return cmds
 }
 

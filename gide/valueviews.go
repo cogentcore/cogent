@@ -271,7 +271,7 @@ func (vv *KeyMapValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki
 //////////////////////////////////////////////////////////////////////////////////////
 //  LangsView
 
-// LangsView opens a view of a languages table
+// LangsView opens a view of a languages options map
 func LangsView(pt *Langs) {
 	winm := "gide-langs"
 	width := 800
@@ -285,19 +285,19 @@ func LangsView(pt *Langs) {
 	mfr.Lay = gi.LayoutVert
 
 	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
-	title.SetText("Available Languages: Duplicate an existing (using Ctxt Menu) as starting point for creating a custom entry")
+	title.SetText("Available Language Opts: Add or modify entries to customize options for language / file types")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
 	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
 
-	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
-	tv.Viewport = vp
-	tv.SetSlice(pt, nil)
-	tv.SetStretchMaxWidth()
-	tv.SetStretchMaxHeight()
+	mv := mfr.AddNewChild(giv.KiT_MapView, "mv").(*giv.MapView)
+	mv.Viewport = vp
+	mv.SetMap(pt, nil)
+	mv.SetStretchMaxWidth()
+	mv.SetStretchMaxHeight()
 
 	AvailLangsChanged = false
-	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		AvailLangsChanged = true
 	})
 
@@ -314,8 +314,8 @@ func LangsView(pt *Langs) {
 			return
 		}
 		inClosePrompt = true
-		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Langs Before Closing?",
-			Prompt: "Do you want to save any changes to preferences languages file before closing, or Cancel the close and do a Save to a different file?"},
+		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Lang Opts Before Closing?",
+			Prompt: "Do you want to save any changes to preferences language options file before closing, or Cancel the close and do a Save to a different file?"},
 			[]string{"Save and Close", "Discard and Close", "Cancel"},
 			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				switch sig {
@@ -337,81 +337,6 @@ func LangsView(pt *Langs) {
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
-}
-
-////////////////////////////////////////////////////////////////////////////////////////
-//  LangValueView
-
-// ValueView registers LangValueView as the viewer of LangName
-func (kn LangName) ValueView() giv.ValueView {
-	vv := LangValueView{}
-	vv.Init(&vv)
-	return &vv
-}
-
-// LangValueView presents an action for displaying an LangName and selecting
-// from LangChooserDialog
-type LangValueView struct {
-	giv.ValueViewBase
-}
-
-var KiT_LangValueView = kit.Types.AddType(&LangValueView{}, nil)
-
-func (vv *LangValueView) WidgetType() reflect.Type {
-	vv.WidgetTyp = gi.KiT_Action
-	return vv.WidgetTyp
-}
-
-func (vv *LangValueView) UpdateWidget() {
-	if vv.Widget == nil {
-		return
-	}
-	ac := vv.Widget.(*gi.Action)
-	txt := kit.ToString(vv.Value.Interface())
-	if txt == "" {
-		txt = "(none)"
-	}
-	ac.SetText(txt)
-}
-
-func (vv *LangValueView) ConfigWidget(widg gi.Node2D) {
-	vv.Widget = widg
-	ac := vv.Widget.(*gi.Action)
-	ac.SetProp("border-radius", units.NewValue(4, units.Px))
-	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		vvv, _ := recv.Embed(KiT_LangValueView).(*LangValueView)
-		ac := vvv.Widget.(*gi.Action)
-		vvv.Activate(ac.Viewport, nil, nil)
-	})
-	vv.UpdateWidget()
-}
-
-func (vv *LangValueView) HasAction() bool {
-	return true
-}
-
-func (vv *LangValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
-	if vv.IsInactive() {
-		return
-	}
-	cur := kit.ToString(vv.Value.Interface())
-	_, curRow, _ := AvailLangs.LangByName(LangName(cur))
-	desc, _ := vv.Tag("desc")
-	giv.TableViewSelectDialog(vp, &AvailLangs, giv.DlgOpts{Title: "Select a Lang", Prompt: desc}, curRow, nil,
-		vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			if sig == int64(gi.DialogAccepted) {
-				ddlg, _ := send.(*gi.Dialog)
-				si := giv.TableViewSelectDialogValue(ddlg)
-				if si >= 0 {
-					pt := AvailLangs[si]
-					vv.SetValue(pt.Name)
-					vv.UpdateWidget()
-				}
-			}
-			if dlgRecv != nil && dlgFunc != nil {
-				dlgFunc(dlgRecv, send, sig, data)
-			}
-		})
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

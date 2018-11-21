@@ -6,12 +6,11 @@ package gide
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
-	"strings"
 
+	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
@@ -19,112 +18,18 @@ import (
 	"github.com/goki/ki/kit"
 )
 
-// currently use this as a list:
-// https://github.com/alecthomas/chroma
-
-// Lang defines properties associated with a given language or file type more
-// generally (e.g., image files, data files, etc)
-type Lang struct {
-	Name         string   `desc:"name of this language / data / file type (must be unique)"`
-	Desc         string   `desc:"<i>brief</i> description of it"`
-	Exts         []string `desc:"associated lower-case file extensions -- if the filename itself is more diagnostic (e.g., Makefile), specify that -- if it doesn't start with a . then it will be treated as the start of the filename"`
+// LangOpts defines options associated with a given language / file format
+// only languages in filecat.Supported list are supported..
+type LangOpts struct {
 	PostSaveCmds CmdNames `desc:"command(s) to run after a file of this type is saved"`
-	CommentLn    string   `desc:"character(s) that start a single-line comment -- if empty then multi-line comment syntax will be used"`
-	CommentSt    string   `desc:"character(s) that start a multi-line comment or one that requires both start and end"`
-	CommentEd    string   `desc:"character(s) that end a multi-line comment or one that requires both start and end"`
 }
 
-// Label satisfies the Labeler interface
-func (ln Lang) Label() string {
-	return ln.Name
-}
-
-// Langs is a list of language types
-type Langs []*Lang
+// Langs is a map of language options
+type Langs map[filecat.Supported]*LangOpts
 
 var KiT_Langs = kit.Types.AddType(&Langs{}, LangsProps)
 
-// LangName has an associated ValueView for selecting from the list of
-// available language names, for use in preferences etc.
-type LangName string
-
-// LangNames is a list of language names
-type LangNames []LangName
-
-// ExtToLangMap is a compiled map of file extensions (always lowercased) and
-// their associated language(s) -- there can be some ambiguity (e.g.,
-// .h files), so multiple languages are allowed
-var ExtToLangMap = map[string]Langs{}
-
-// UpdtExtToLangMap updates the map from current avail langs list
-func UpdtExtToLangMap() {
-	ExtToLangMap = AvailLangs.CompileExtMap()
-}
-
-// LangsForFilename returns the language(s) associated with given filename
-func LangsForFilename(filename string) Langs {
-	ext := strings.ToLower(filepath.Ext(filename))
-	if ext != "" {
-		if ls, has := ExtToLangMap[ext]; has {
-			return ls
-		}
-		mf := strings.TrimSuffix(filename, ext) // try the main file part, e.g., Makefile
-		if ls, has := ExtToLangMap[mf]; has {
-			return ls
-		}
-		return nil
-	} else {
-		if ls, has := ExtToLangMap[filename]; has {
-			return ls
-		}
-		return nil
-	}
-}
-
-// LangNamesForFilename returns the language(s) associated with given filename
-func LangNamesForFilename(filename string) LangNames {
-	ls := LangsForFilename(filename)
-	sz := len(ls)
-	if sz == 0 {
-		return nil
-	}
-	lns := make(LangNames, sz)
-	for i := range ls {
-		lns[i] = LangName(ls[i].Name)
-	}
-	return lns
-}
-
-// LangsForExt returns the language(s) associated with given extension
-func LangsForExt(ext string) Langs {
-	if ls, has := ExtToLangMap[ext]; has {
-		return ls
-	}
-	return nil
-}
-
-// LangNamesMatchFilename returns true if given filename is one of langauges
-// in langs name -- if langs is empty then EVERYTHING matches.
-func LangNamesMatchFilename(filename string, langs LangNames) bool {
-	if len(langs) == 0 {
-		return true
-	}
-	ls := LangNamesForFilename(filename)
-	sz := len(ls)
-	if sz == 0 {
-		return false
-	}
-	for i := range ls {
-		for j := range langs {
-			if ls[i] == langs[j] {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// AvailLangs is the current list of available languages defined -- can be
+// AvailLangs is the current set of language options -- can be
 // loaded / saved / edited with preferences.  This is set to StdLangs at
 // startup.
 var AvailLangs Langs
@@ -133,43 +38,11 @@ func init() {
 	AvailLangs.CopyFrom(StdLangs)
 }
 
-// LangByName returns a language and index by name -- returns false and emits a
-// message to stdout if not found
-func (lt *Langs) LangByName(name LangName) (*Lang, int, bool) {
-	if name == "" {
-		return nil, -1, false
-	}
-	for i, lr := range *lt {
-		if lr.Name == string(name) {
-			return lr, i, true
-		}
-	}
-	fmt.Printf("gide.LangByName: language named: %v not found\n", name)
-	return nil, -1, false
-}
-
-// CompileExtMap compiles a map between extensions and language(s)
-func (lt *Langs) CompileExtMap() map[string]Langs {
-	em := make(map[string]Langs, len(*lt))
-	for _, lr := range *lt {
-		for _, ex := range lr.Exts {
-			if eml, has := em[ex]; has {
-				eml = append(eml, lr)
-			} else {
-				eml := make(Langs, 1)
-				eml[0] = lr
-				em[ex] = eml
-			}
-		}
-	}
-	return em
-}
-
 // Validate checks to make sure post save command names exist, issuing
 // warnings to log for those that don't
-func (lt *Langs) Validate() bool {
+func (lt Langs) Validate() bool {
 	ok := true
-	for _, lr := range *lt {
+	for _, lr := range lt {
 		for _, cmdnm := range lr.PostSaveCmds {
 			if !cmdnm.IsValid() {
 				log.Printf("gide.Langs Validate: post-save command: %v not found on current AvailCmds list\n", cmdnm)
@@ -192,9 +65,8 @@ func (lt *Langs) OpenJSON(filename gi.FileName) error {
 		// log.Println(err)
 		return err
 	}
-	*lt = make(Langs, 0, 10) // reset
+	*lt = make(Langs) // reset
 	rval := json.Unmarshal(b, lt)
-	UpdtExtToLangMap()
 	return rval
 }
 
@@ -231,13 +103,10 @@ func (lt *Langs) SavePrefs() error {
 
 // CopyFrom copies languages from given other map
 func (lt *Langs) CopyFrom(cp Langs) {
-	*lt = make(Langs, 0, len(cp)) // reset
-	b, err := json.Marshal(cp)
-	if err != nil {
-		fmt.Printf("json err: %v\n", err.Error())
+	*lt = make(Langs, len(cp)) // reset
+	for ky, val := range cp {
+		(*lt)[ky] = val
 	}
-	json.Unmarshal(b, lt)
-	UpdtExtToLangMap()
 }
 
 // RevertToStd reverts this map to using the StdLangs that are compiled into
@@ -273,7 +142,7 @@ var LangsProps = ki.Props{
 			{"sep-file", ki.BlankProp{}},
 			{"OpenJSON", ki.Props{
 				"label":    "Open from file",
-				"desc":     "You can save and open languages to / from files to share, experiment, transfer, etc",
+				"desc":     "You can save and open language options to / from files to share, experiment, transfer, etc",
 				"shortcut": "Command+O",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -283,7 +152,7 @@ var LangsProps = ki.Props{
 			}},
 			{"SaveJSON", ki.Props{
 				"label": "Save to file",
-				"desc":  "You can save and open languages to / from files to share, experiment, transfer, etc",
+				"desc":  "You can save and open language options to / from files to share, experiment, transfer, etc",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"ext": ".json",
@@ -291,7 +160,7 @@ var LangsProps = ki.Props{
 				},
 			}},
 			{"RevertToStd", ki.Props{
-				"desc":    "This reverts the languages to using the StdLangs that are compiled into the program and have all the lastest standards. <b>Your current edits will be lost if you proceed!</b>  Continue?",
+				"desc":    "This reverts the language options to using the StdLangs that are compiled into the program and have all the lastest standards. <b>Your current edits will be lost if you proceed!</b>  Continue?",
 				"confirm": true,
 			}},
 		}},
@@ -300,7 +169,7 @@ var LangsProps = ki.Props{
 	},
 	"ToolBar": ki.PropSlice{
 		{"SavePrefs", ki.Props{
-			"desc": "saves Langs to App standard prefs directory, in file lang_prefs.json, which will be loaded automatically at startup if prefs SaveLangs is checked (should be if you're using custom languages)",
+			"desc": "saves Langs to App standard prefs directory, in file lang_prefs.json, which will be loaded automatically at startup if prefs SaveLangs is checked (should be if you're using custom language options)",
 			"icon": "file-save",
 			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
 				act.SetActiveState(AvailLangsChanged && lti.(*Langs) == &AvailLangs)
@@ -310,7 +179,7 @@ var LangsProps = ki.Props{
 		{"OpenJSON", ki.Props{
 			"label": "Open from file",
 			"icon":  "file-open",
-			"desc":  "You can save and open languages to / from files to share, experiment, transfer, etc",
+			"desc":  "You can save and open language options to / from files to share, experiment, transfer, etc",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"ext": ".json",
@@ -320,7 +189,7 @@ var LangsProps = ki.Props{
 		{"SaveJSON", ki.Props{
 			"label": "Save to file",
 			"icon":  "file-save",
-			"desc":  "You can save and open languages to / from files to share, experiment, transfer, etc",
+			"desc":  "You can save and open language options to / from files to share, experiment, transfer, etc",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
 					"ext": ".json",
@@ -329,14 +198,14 @@ var LangsProps = ki.Props{
 		}},
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
-			"desc": "Shows the standard languages that are compiled into the program and have all the latest changes.  Useful for comparing against custom langs.",
+			"desc": "Shows the standard language options that are compiled into the program and have all the latest changes.  Useful for comparing against custom langs.",
 			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
 				act.SetActiveState(lti.(*Langs) != &StdLangs)
 			}),
 		}},
 		{"RevertToStd", ki.Props{
 			"icon":    "update",
-			"desc":    "This reverts the languages to using the StdLangs that are compiled into the program and have all the lastest standards.  <b>Your current edits will be lost if you proceed!</b>  Continue?",
+			"desc":    "This reverts the language options to using the StdLangs that are compiled into the program and have all the lastest standards.  <b>Your current edits will be lost if you proceed!</b>  Continue?",
 			"confirm": true,
 			"updtfunc": giv.ActionUpdateFunc(func(lti interface{}, act *gi.Action) {
 				act.SetActiveState(lti.(*Langs) != &StdLangs)
@@ -345,14 +214,7 @@ var LangsProps = ki.Props{
 	},
 }
 
-// StdLangs is the original compiled-in set of standard languages.
+// StdLangs is the original compiled-in set of standard language options.
 var StdLangs = Langs{
-	{"C", "C code", []string{".c", ".h"}, nil, "// ", "/* ", " */"},
-	{"C++", "C++ code", []string{".cpp", ".cxx", ".cc", ".h", ".hh", ".hpp"}, nil, "// ", "/* ", " */"},
-	{"Go", "Go code", []string{".go"}, CmdNames{"Imports Go File"}, "// ", "/* ", " */"},
-	{"HTML", "HTML document", []string{".html", ".htm"}, nil, "", "<!-- ", " -->"},
-	{"LaTeX", "LaTeX document", []string{".tex"}, CmdNames{"LaTeX PDF"}, "% ", "", ""},
-	{"Markdown", "Markdown document", []string{".md"}, nil, "", "<!--- ", " -->"},
-	{"PDF", "PDF document", []string{".pdf"}, CmdNames{"Open File"}, "", "", ""},
-	{"Python", "Python code", []string{".py"}, nil, "# ", "", ""},
+	filecat.Go: {CmdNames{"Imports Go File"}},
 }

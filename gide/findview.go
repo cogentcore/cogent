@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki"
@@ -44,13 +45,13 @@ func (ev *FindLoc) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(
 
 // FindParams are parameters for find / replace
 type FindParams struct {
-	Find       string    `desc:"find string"`
-	Replace    string    `desc:"replace string"`
-	IgnoreCase bool      `desc:"ignore case"`
-	Langs      LangNames `desc:"languages for files to search"`
-	Loc        FindLoc   `desc:"locations to search in"`
-	FindHist   []string  `desc:"history of finds"`
-	ReplHist   []string  `desc:"history of replaces"`
+	Find       string              `desc:"find string"`
+	Replace    string              `desc:"replace string"`
+	IgnoreCase bool                `desc:"ignore case"`
+	Langs      []filecat.Supported `desc:"languages for files to search"`
+	Loc        FindLoc             `desc:"locations to search in"`
+	FindHist   []string            `desc:"history of finds"`
+	ReplHist   []string            `desc:"history of replaces"`
 }
 
 // FindView is a find / replace widget that displays results in a TextView

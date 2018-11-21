@@ -10,6 +10,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/histyle"
@@ -38,15 +39,15 @@ type EditorPrefs struct {
 
 // Preferences are the overall user preferences for Gide.
 type Preferences struct {
-	HiStyle     histyle.StyleName `desc:"highilighting style / theme"`
-	FontFamily  gi.FontName       `desc:"monospaced font family for editor"`
-	Files       FilePrefs         `desc:"file view preferences"`
-	Editor      EditorPrefs       `view:"inline" desc:"editor preferences"`
-	KeyMap      KeyMapName        `desc:"key map for gide-specific keyboard sequences"`
-	SaveKeyMaps bool              `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
-	SaveLangs   bool              `desc:"if set, the current customized set of language parameters (see Edit Langs) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	SaveCmds    bool              `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	Changed     bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	HiStyle      histyle.StyleName `desc:"highilighting style / theme"`
+	FontFamily   gi.FontName       `desc:"monospaced font family for editor"`
+	Files        FilePrefs         `desc:"file view preferences"`
+	Editor       EditorPrefs       `view:"inline" desc:"editor preferences"`
+	KeyMap       KeyMapName        `desc:"key map for gide-specific keyboard sequences"`
+	SaveKeyMaps  bool              `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
+	SaveLangOpts bool              `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	SaveCmds     bool              `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	Changed      bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -123,7 +124,7 @@ func (pf *Preferences) Open() error {
 	if pf.SaveKeyMaps {
 		AvailKeyMaps.OpenPrefs()
 	}
-	if pf.SaveLangs {
+	if pf.SaveLangOpts {
 		AvailLangs.OpenPrefs()
 	}
 	if pf.SaveCmds {
@@ -152,7 +153,7 @@ func (pf *Preferences) Save() error {
 	if pf.SaveKeyMaps {
 		AvailKeyMaps.SavePrefs()
 	}
-	if pf.SaveLangs {
+	if pf.SaveLangOpts {
 		AvailLangs.SavePrefs()
 	}
 	if pf.SaveCmds {
@@ -179,10 +180,10 @@ func (pf *Preferences) EditKeyMaps() {
 	KeyMapsView(&AvailKeyMaps)
 }
 
-// EditLangs opens the LangsView editor to customize settings for each type of
+// EditLangOpts opens the LangsView editor to customize options for each type of
 // language / data / file type.
-func (pf *Preferences) EditLangs() {
-	pf.SaveLangs = true
+func (pf *Preferences) EditLangOpts() {
+	pf.SaveLangOpts = true
 	pf.Changed = true
 	LangsView(&AvailLangs)
 }
@@ -253,9 +254,9 @@ var PreferencesProps = ki.Props{
 			"icon": "keyboard",
 			"desc": "opens the KeyMapsView editor to create new keymaps / save / load from other files, etc.  Current keymaps are saved and loaded with preferences automatically if SaveKeyMaps is clicked (will be turned on automatically if you open this editor).",
 		}},
-		{"EditLangs", ki.Props{
+		{"EditLangOpts", ki.Props{
 			"icon": "file-text",
-			"desc": "opens the LangsView editor to customize settings for each type of language / data / file type.  Current customized settings are saved and loaded with preferences automatically if SaveLangs is clicked (will be turned on automatically if you open this editor).",
+			"desc": "opens the LangsView editor to customize options different language / data / file types.  Current customized settings are saved and loaded with preferences automatically if SaveLangOpts is clicked (will be turned on automatically if you open this editor).",
 		}},
 		{"EditCmds", ki.Props{
 			"icon": "file-binary",
@@ -281,25 +282,25 @@ var PreferencesProps = ki.Props{
 
 // ProjPrefs are the preferences for saving for a project -- this IS the project file
 type ProjPrefs struct {
-	Files        FilePrefs      `desc:"file view preferences"`
-	Editor       EditorPrefs    `view:"inline" desc:"editor preferences"`
-	SplitName    SplitName      `desc:"current named-split config in use for configuring the splitters"`
-	MainLang     LangName       `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
-	VersCtrl     VersCtrlName   `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
-	ChangeLog    ChangeLog      `desc:"log of version control commits made through Gide by current author -- use appropriate VCS log command to see full set of changes"`
-	ProjFilename gi.FileName    `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
-	ProjRoot     gi.FileName    `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
-	BuildCmds    CmdNames       `desc:"command(s) to run for main Build button"`
-	BuildDir     gi.FileName    `desc:"build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"`
-	BuildTarg    gi.FileName    `desc:"build target for main Build button, if relevant for your  BuildCmds"`
-	RunExec      gi.FileName    `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
-	RunCmds      CmdNames       `desc:"command(s) to run for main Run button (typically Run Proj)"`
-	Find         FindParams     `view:"-" desc:"saved find params"`
-	Spell        SpellParams    `view:"-" desc:"saved spell params"`
-	OpenDirs     giv.OpenDirMap `view:"-" desc:"open directories"`
-	Register     RegisterName   `view:"-" desc:"last register used"`
-	Splits       []float32      `view:"-" desc:"current splitter splits"`
-	Changed      bool           `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	Files        FilePrefs         `desc:"file view preferences"`
+	Editor       EditorPrefs       `view:"inline" desc:"editor preferences"`
+	SplitName    SplitName         `desc:"current named-split config in use for configuring the splitters"`
+	MainLang     filecat.Supported `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
+	VersCtrl     VersCtrlName      `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
+	ChangeLog    ChangeLog         `desc:"log of version control commits made through Gide by current author -- use appropriate VCS log command to see full set of changes"`
+	ProjFilename gi.FileName       `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
+	ProjRoot     gi.FileName       `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	BuildCmds    CmdNames          `desc:"command(s) to run for main Build button"`
+	BuildDir     gi.FileName       `desc:"build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"`
+	BuildTarg    gi.FileName       `desc:"build target for main Build button, if relevant for your  BuildCmds"`
+	RunExec      gi.FileName       `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
+	RunCmds      CmdNames          `desc:"command(s) to run for main Run button (typically Run Proj)"`
+	Find         FindParams        `view:"-" desc:"saved find params"`
+	Spell        SpellParams       `view:"-" desc:"saved spell params"`
+	OpenDirs     giv.OpenDirMap    `view:"-" desc:"open directories"`
+	Register     RegisterName      `view:"-" desc:"last register used"`
+	Splits       []float32         `view:"-" desc:"current splitter splits"`
+	Changed      bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_ProjPrefs = kit.Types.AddType(&ProjPrefs{}, ProjPrefsProps)

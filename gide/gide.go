@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/histyle"
@@ -57,7 +58,7 @@ type Gide struct {
 	ProjRoot          gi.FileName             `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
 	ProjFilename      gi.FileName             `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ActiveFilename    gi.FileName             `desc:"filename of the currently-active textview"`
-	ActiveLangs       LangNames               `desc:"languages for current active filename"`
+	ActiveLang        filecat.Supported       `desc:"language for current active filename"`
 	Changed           bool                    `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
 	Files             giv.FileTree            `desc:"all the files in the project directory and subdirectories"`
 	ActiveTextViewIdx int                     `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
@@ -164,7 +165,7 @@ func (ge *Gide) OpenProj(filename gi.FileName) (*gi.Window, *Gide) {
 // path -- all Gide projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *Gide) NewProj(path gi.FileName, folder string, mainLang LangName, versCtrl VersCtrlName) (*gi.Window, *Gide) {
+func (ge *Gide) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl VersCtrlName) (*gi.Window, *Gide) {
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
@@ -172,9 +173,7 @@ func (ge *Gide) NewProj(path gi.FileName, folder string, mainLang LangName, vers
 		return nil, nil
 	}
 	win, nge := ge.OpenPath(gi.FileName(np))
-	if mainLang != "" {
-		nge.Prefs.MainLang = mainLang
-	}
+	nge.Prefs.MainLang = mainLang
 	if versCtrl != "" {
 		nge.Prefs.VersCtrl = versCtrl
 	}
@@ -329,9 +328,9 @@ func CheckForProjAtPath(path string) (string, bool) {
 func (ge *Gide) GuessMainLang() bool {
 	ecs := ge.Files.FileExtCounts()
 	for _, ec := range ecs {
-		ls := LangsForExt(ec.Name)
-		if len(ls) == 1 {
-			ge.Prefs.MainLang = LangName(ls[0].Name)
+		ls := filecat.ExtSupported(ec.Name)
+		if ls != filecat.NoSupport {
+			ge.Prefs.MainLang = ls
 			return true
 		}
 	}
@@ -344,15 +343,12 @@ func (ge *Gide) LangDefaults() bool {
 	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
 	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
 	ge.Prefs.RunExec = gi.FileName(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
-	if ge.Prefs.MainLang == "" {
-		return false
-	}
 	got := false
 	switch ge.Prefs.MainLang {
-	case LangName("Go"):
+	case filecat.Go:
 		ge.Prefs.BuildCmds = CmdNames{"Build Go Proj"}
 		got = true
-	case LangName("LaTeX"):
+	case filecat.TeX:
 		ge.Prefs.BuildCmds = CmdNames{"LaTeX PDF"}
 		ge.Prefs.RunCmds = CmdNames{"Open Target File"}
 		got = true
@@ -390,23 +386,14 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.Opts.SpellCorrect = ge.Prefs.Editor.SpellCorrect
 	tb.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
 
-	if ge.Prefs.Editor.SpellCorrect {
-		tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)
-	}
+	tb.SetSpellCorrect(tb, giv.SpellCorrectEdit) // always set -- option can override
 
-	ext := filepath.Ext(string(tb.Filename))
-	langs := LangsForExt(ext)
-	if len(langs) > 0 {
-		ln := langs[0].Name
-		tb.Opts.CommentLn = langs[0].CommentLn
-		tb.Opts.CommentSt = langs[0].CommentSt
-		tb.Opts.CommentEd = langs[0].CommentEd
-		// todo: completer funcs should be stored in language struct
-		switch ln {
-		case "Go":
-			if ge.Prefs.Editor.Completion {
-				tb.SetCompleter(tb, giv.CompleteGo, giv.CompleteGoEdit)
-			}
+	lang := tb.Info.Sup
+	// todo: completer funcs should be stored in language struct
+	switch lang {
+	case filecat.Go:
+		if ge.Prefs.Editor.Completion {
+			tb.SetCompleter(tb, giv.CompleteGo, giv.CompleteGoEdit)
 		}
 	}
 }
@@ -471,10 +458,10 @@ func (ge *Gide) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	return ge.TextViewForFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 }
 
-// SetActiveFilename sets the active filename
-func (ge *Gide) SetActiveFilename(fname gi.FileName) {
-	ge.ActiveFilename = fname
-	ge.ActiveLangs = LangNamesForFilename(string(fname))
+// SetActiveFilename sets the active file info from textbuf
+func (ge *Gide) SetActiveFileInfo(buf *giv.TextBuf) {
+	ge.ActiveFilename = buf.Filename
+	ge.ActiveLang = buf.Info.Sup
 }
 
 // SetActiveTextView sets the given textview as the active one, and returns its index
@@ -488,7 +475,7 @@ func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
 	}
 	ge.ActiveTextViewIdx = idx
 	if av.Buf != nil {
-		ge.SetActiveFilename(av.Buf.Filename)
+		ge.SetActiveFileInfo(av.Buf)
 	}
 	ge.SetStatus("")
 	return idx
@@ -504,7 +491,7 @@ func (ge *Gide) SetActiveTextViewIdx(idx int) *giv.TextView {
 	ge.ActiveTextViewIdx = idx
 	av := ge.ActiveTextView()
 	if av.Buf != nil {
-		ge.SetActiveFilename(av.Buf.Filename)
+		ge.SetActiveFileInfo(av.Buf)
 	}
 	ge.SetStatus("")
 	av.GrabFocus()
@@ -614,33 +601,13 @@ func (ge *Gide) RunPostCmdsActiveView() bool {
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
 func (ge *Gide) RunPostCmdsFileNode(fn *giv.FileNode) bool {
-	ls := LangsForFilename(string(fn.Buf.Filename))
-	ran := false
-	if len(ls) == 1 {
-		lr := ls[0]
-		if len(lr.PostSaveCmds) > 0 {
-			ge.ExecCmdsFileNode(fn, lr.PostSaveCmds, false, true) // no select, yes clear
-			ran = true
+	lang := fn.Info.Sup
+	if lopt, has := AvailLangs[lang]; has {
+		if len(lopt.PostSaveCmds) > 0 {
+			ge.ExecCmdsFileNode(fn, lopt.PostSaveCmds, false, true) // no select, yes clear
+			fn.Buf.Revert()
+			return true
 		}
-	} else if len(ls) > 1 {
-		hasPosts := false
-		for _, lr := range ls {
-			if len(lr.PostSaveCmds) > 0 {
-				hasPosts = true
-				if lr.Name == string(ge.Prefs.MainLang) {
-					ge.ExecCmdsFileNode(fn, lr.PostSaveCmds, false, true)
-					ran = true
-					break
-				}
-			}
-		}
-		if hasPosts && !ran {
-			ge.SetStatus("File has multiple associated languages and none match main languages of project, cannot run any post commands")
-		}
-	}
-	if ran {
-		fn.Buf.Revert()
-		return true
 	}
 	return false
 }
@@ -1310,10 +1277,10 @@ func GideExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 		return nil
 	}
 	var cmds []string
-	if len(ge.ActiveLangs) == 0 {
-		cmds = AvailCmds.FilterCmdNames(LangNames{ge.Prefs.MainLang}, ge.Prefs.VersCtrl)
+	if ge.ActiveLang == filecat.NoSupport {
+		cmds = AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
 	} else {
-		cmds = AvailCmds.FilterCmdNames(ge.ActiveLangs, ge.Prefs.VersCtrl)
+		cmds = AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
 	}
 	return cmds
 }
@@ -1338,10 +1305,10 @@ func (ge *Gide) ExecCmd() {
 		return
 	}
 	var cmds []string
-	if len(ge.ActiveLangs) == 0 {
-		cmds = AvailCmds.FilterCmdNames(LangNames{ge.Prefs.MainLang}, ge.Prefs.VersCtrl)
+	if ge.ActiveLang == filecat.NoSupport {
+		cmds = AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
 	} else {
-		cmds = AvailCmds.FilterCmdNames(ge.ActiveLangs, ge.Prefs.VersCtrl)
+		cmds = AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
 	}
 	hsz := len(ge.CmdHistory)
 	lastCmd := ""
@@ -1361,8 +1328,8 @@ func (ge *Gide) ExecCmd() {
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (ge *Gide) ExecCmdFileNode(fn *giv.FileNode) {
-	langs := LangNamesForFilename(fn.Nm)
-	cmds := AvailCmds.FilterCmdNames(langs, ge.Prefs.VersCtrl)
+	lang := fn.Info.Sup
+	cmds := AvailCmds.FilterCmdNames(lang, ge.Prefs.VersCtrl)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		ge.ExecCmdNameFileNode(fn, CmdName(ac.Text), true, true) // sel, clearbuf
@@ -1428,7 +1395,7 @@ func (ge *Gide) Commit() {
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
 func (ge *Gide) CommitNoChecks() {
-	cmds := AvailCmds.FilterCmdNames(ge.ActiveLangs, ge.Prefs.VersCtrl)
+	cmds := AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
 	cmdnm := ""
 	for _, cm := range cmds {
 		if strings.Contains(cm, "Commit") {
@@ -1506,7 +1473,7 @@ func (ge *Gide) CursorToHistNext() bool {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs LangNames) {
+func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs []filecat.Supported) {
 	if find == "" {
 		return
 	}
@@ -2145,22 +2112,36 @@ var GideBigFileSize = 10000000 // 10Mb?
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
 func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
-	switch {
-	case fn.IsDir():
+	// todo: could add all these options in LangOpts
+	switch fn.Info.Cat {
+	case filecat.Folder:
 		if !fn.IsOpen() {
 			tvn.SetOpen()
 			fn.OpenDir()
 		}
-	case fn.IsExec():
+	case filecat.Exe:
 		ge.SetArgVarVals()
 		ArgVarVals["{PromptString1}"] = string(fn.FPath)
 		CmdNoUserPrompt = true                            // don't re-prompt!
 		ge.ExecCmdName(CmdName("Run Prompt"), true, true) // sel, clear
-	case strings.HasPrefix(fn.Info.Mime, "image"):
+	case filecat.Font:
+		fallthrough
+	case filecat.Video:
+		fallthrough
+	case filecat.Audio:
 		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
-	case fn.Info.Mime == "application/pdf":
+	case filecat.Sheet:
+		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+	case filecat.Bin:
+		// todo: prompt??
+		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+	case filecat.Archive:
+		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+	case filecat.Image:
+		// todo: handle various image types in visualizer natively..
 		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
 	default:
+		// program, document, data
 		if int(fn.Info.Size) > GideBigFileSize {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
 				Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
