@@ -2170,7 +2170,7 @@ func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *FileTreeView) {
 }
 
 func (ge *Gide) GideKeys(kt *key.ChordEvent) {
-	kf := KeyFunNil
+	var kf KeyFuns
 	kc := kt.Chord()
 	if gi.KeyEventTrace {
 		fmt.Printf("Gide KeyInput: %v\n", ge.PathUnique())
