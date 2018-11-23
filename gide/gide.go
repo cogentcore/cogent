@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-package gide provides the core Gide editor object.
+Package gide provides the core Gide editor object.
 
 Derived classes can extend the functionality for specific domains.
 
@@ -82,6 +82,7 @@ func (ge *Gide) UpdateFiles() {
 	ge.Files.OpenPath(string(ge.ProjRoot))
 }
 
+// IsEmpty returns true if there if the current gide object is empty
 func (ge *Gide) IsEmpty() bool {
 	return ge.ProjRoot == ""
 }
@@ -458,7 +459,7 @@ func (ge *Gide) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	return ge.TextViewForFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 }
 
-// SetActiveFilename sets the active file info from textbuf
+// SetActiveFileInfo sets the active file info from textbuf
 func (ge *Gide) SetActiveFileInfo(buf *giv.TextBuf) {
 	ge.ActiveFilename = buf.Filename
 	ge.ActiveLang = buf.Info.Sup
@@ -2108,6 +2109,7 @@ func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *FileTreeView) {
 	// }
 }
 
+// GideBigFileSize is the maximum file size in bytes
 var GideBigFileSize = 10000000 // 10Mb?
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
@@ -2169,6 +2171,7 @@ func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *FileTreeView) {
 	}
 }
 
+// GideKeys acts on gide key sequences
 func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 	var kf KeyFuns
 	kc := kt.Chord()
@@ -2287,6 +2290,7 @@ func (ge *Gide) KeyChordEvent() {
 	})
 }
 
+//Render2D renders the gide frame
 func (ge *Gide) Render2D() {
 	ge.ToolBar().UpdateActions()
 	if win := ge.ParentWindow(); win != nil {
@@ -2314,6 +2318,7 @@ var GideInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.A
 	act.SetInactiveState(ge.IsEmpty())
 })
 
+// GideProps are the style properties, sizes, colors, menus of the gide object
 var GideProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
