@@ -1,4 +1,4 @@
-// Copyright (c"strings") 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, The Gide Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goki/gi/spell"
+
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/units"
@@ -15,7 +17,7 @@ import (
 	"github.com/goki/ki/kit"
 )
 
-// SpellParams
+// SpellParams are parameters for spell check and correction
 type SpellParams struct {
 }
 
@@ -47,7 +49,7 @@ func (sv *SpellView) SpellAction() {
 	sv.Gide.Spell()
 }
 
-// OpenFindURL opens given spell:/// url from Find
+// OpenSpellURL opens given spell:/// url from Find
 func (sv *SpellView) OpenSpellURL(ur string, ftv *giv.TextView) bool {
 	ge := sv.Gide
 	tv, reg, _, _, ok := ge.ParseOpenFindURL(ur, ftv)
@@ -179,7 +181,7 @@ func (sv *SpellView) ChangeAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// ChangeAct returns the spell change action from toolbar
+// ChangeAllAct returns the spell change action from toolbar
 func (sv *SpellView) ChangeAllAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
@@ -192,7 +194,7 @@ func (sv *SpellView) ChangeAllAct() *gi.Action {
 	return tfi.(*gi.Action)
 }
 
-// SkitpAct returns the skip action from toolbar
+// SkipAct returns the skip action from toolbar
 func (sv *SpellView) SkipAct() *gi.Action {
 	tb := sv.UnknownBar()
 	if tb == nil {
@@ -406,7 +408,8 @@ func (sv *SpellView) CheckNext() {
 	sv.SetUnknownAndSuggest(tw, suggests)
 }
 
-// SetUnknownAndSuggest
+// SetUnknownAndSuggest sets the textfield unknown with the best suggestion
+// and fills the suggestions with all suggestions up to the max
 func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string) {
 	uf := sv.UnknownText()
 	uf.SetText(unknown.Word)
@@ -516,7 +519,7 @@ func (sv *SpellView) SkipAction() {
 // IgnoreAction will skip this and future instances of misspelled/unknown word
 // and call CheckNextAction
 func (sv *SpellView) IgnoreAction() {
-	gi.IgnoreWord(sv.Unknown.Word)
+	spell.IgnoreWord(sv.Unknown.Word)
 	sv.LastAction = sv.IgnoreAct()
 	sv.CheckNext()
 }
@@ -524,12 +527,13 @@ func (sv *SpellView) IgnoreAction() {
 // LearnAction will add the current unknown word to corpus
 // and call CheckNext
 func (sv *SpellView) LearnAction() {
-	new := strings.ToLower(sv.Unknown.Word)
-	gi.LearnWord(new)
+	nw := strings.ToLower(sv.Unknown.Word)
+	gi.LearnWord(nw)
 	sv.LastAction = sv.LearnAct()
 	sv.CheckNext()
 }
 
+// AcceptSuggestion replaces the misspelled word with the word in the ChangeText field
 func (sv *SpellView) AcceptSuggestion(s string) {
 	ct := sv.ChangeText()
 	ct.SetText(s)
