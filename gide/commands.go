@@ -66,7 +66,7 @@ func (cm *CmdAndArgs) HasPrompts() (map[string]struct{}, bool) {
 			if ps == nil {
 				ps = aps
 			} else {
-				for key, _ := range aps {
+				for key := range aps {
 					ps[key] = struct{}{}
 				}
 			}
@@ -240,7 +240,7 @@ func (cm *Command) HasPrompts() (map[string]struct{}, bool) {
 			if ps == nil {
 				ps = aps
 			} else {
-				for key, _ := range aps {
+				for key := range aps {
 					ps[key] = struct{}{}
 				}
 			}
@@ -269,7 +269,7 @@ var CmdWaitOverride bool
 func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
 	sz := len(pvals)
 	cnt := 0
-	for pv, _ := range pvals {
+	for pv := range pvals {
 		switch pv {
 		case "{PromptString1}":
 			fallthrough
