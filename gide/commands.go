@@ -44,6 +44,8 @@ func (cm CmdAndArgs) Label() string {
 // CmdArgs is a slice of arguments for a command
 type CmdArgs []string
 
+// SetCompleter specifies the functions that do completion and post selection
+// editing when inserting the chosen completion
 func (cm *CmdArgs) SetCompleter(tf *gi.TextField, id string) {
 	if id == "arg" {
 		tf.SetCompleter(cm, CompleteArg, CompleteArgEdit)
@@ -72,9 +74,8 @@ func (cm *CmdAndArgs) HasPrompts() (map[string]struct{}, bool) {
 	}
 	if len(ps) > 0 {
 		return ps, true
-	} else {
-		return nil, false
 	}
+	return nil, false
 }
 
 // BindArgs replaces any variables in the args with their values, and returns resulting args
@@ -247,9 +248,8 @@ func (cm *Command) HasPrompts() (map[string]struct{}, bool) {
 	}
 	if len(ps) > 0 {
 		return ps, true
-	} else {
-		return nil, false
 	}
+	return nil, false
 }
 
 // CmdNoUserPrompt can be set to true to prevent user from being prompted for strings
@@ -298,7 +298,7 @@ func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struc
 // for any values that might be needed for command.
 func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
 	if cm.Confirm {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Commmand: %v: %v", cm.Name, cm.Desc)}, true, true, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)}, true, true, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
 				cm.RunAfterPrompts(ge, buf)
 			}
@@ -452,7 +452,7 @@ var CmdOutStatusLen = 80
 // were errors
 func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
 	ge.RunningCmds.DeleteByName(cm.Name)
-	rval := true
+	var rval bool
 	outstr := ""
 	if out != nil {
 		outstr = string(out[:CmdOutStatusLen])
