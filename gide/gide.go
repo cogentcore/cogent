@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-/*
-package gide provides the core Gide editor object.
-
-Derived classes can extend the functionality for specific domains.
-
-*/
+// Package gide provides the core Gide editor object and supporting gui
+// for filetree, commands, console, and 2-sequence key functions,
+//
+// Derived classes can extend the functionality for specific domains.
+//
 package gide
 
 import (
@@ -458,7 +457,7 @@ func (ge *Gide) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	return ge.TextViewForFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 }
 
-// SetActiveFilename sets the active file info from textbuf
+// SetActiveFileInfo sets the active file info from textbuf
 func (ge *Gide) SetActiveFileInfo(buf *giv.TextBuf) {
 	ge.ActiveFilename = buf.Filename
 	ge.ActiveLang = buf.Info.Sup
@@ -955,7 +954,6 @@ func (ge *Gide) NChangedFiles() int {
 	return ge.OpenNodes.NChanged()
 }
 
-// CurPanel returns the splitter panel that currently has keyboard focus
 // CloseWindowReq is called when user tries to close window -- we
 // automatically save the project if it already exists (no harm), and prompt
 // to save open files -- if this returns true, then it is OK to close --
@@ -1266,8 +1264,8 @@ func (ge *Gide) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm CmdName, sel bool, c
 	cmd.Run(ge, cbuf)
 }
 
-// GideExecCmds gets list of available commands for current active file, as a submenu-func
-func GideExecCmds(it interface{}, vp *gi.Viewport2D) []string {
+// ExecCmds gets list of available commands for current active file, as a submenu-func
+func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	ge, ok := it.(ki.Ki).Embed(KiT_Gide).(*Gide)
 	if !ok {
 		return nil
@@ -2108,7 +2106,9 @@ func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *FileTreeView) {
 	// }
 }
 
-var GideBigFileSize = 10000000 // 10Mb?
+// BigFileSize is the limit of file size, above which user will be prompted
+// before opening.
+var BigFileSize = 10000000 // 10Mb?
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
 func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
@@ -2142,7 +2142,7 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
 		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
 	default:
 		// program, document, data
-		if int(fn.Info.Size) > GideBigFileSize {
+		if int(fn.Info.Size) > BigFileSize {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
 				Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
 				[]string{"Open", "Cancel"},
@@ -2446,7 +2446,7 @@ var GideProps = ki.Props{
 			"icon":         "terminal",
 			"label":        "Exec Cmd",
 			"desc":         "execute given command on active file / directory / project",
-			"submenu-func": giv.SubMenuFunc(GideExecCmds),
+			"submenu-func": giv.SubMenuFunc(ExecCmds),
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
 				return key.Chord(ChordForFun(KeyFunExecCmd).String())
 			}),
@@ -2816,7 +2816,7 @@ var GideProps = ki.Props{
 			}},
 			{"ExecCmdNameActive", ki.Props{
 				"label":        "Exec Cmd",
-				"submenu-func": giv.SubMenuFunc(GideExecCmds),
+				"submenu-func": giv.SubMenuFunc(ExecCmds),
 				"updtfunc":     GideInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"Cmd Name", ki.Props{}},

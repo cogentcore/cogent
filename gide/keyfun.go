@@ -248,7 +248,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 	// "needs1" that start with needs2!
 	Needs2KeyMap = make(gi.KeyMap)
 
-	for key, _ := range *km {
+	for key := range *km {
 		if key.Key2 != "" {
 			Needs2KeyMap[key.Key1] = gi.KeyFunNil
 		}
