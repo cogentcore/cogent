@@ -254,11 +254,11 @@ func ArgVarPrompts(arg string) (map[string]struct{}, bool) {
 	}
 	if len(ps) > 0 {
 		return ps, true
-	} else {
-		return nil, false
 	}
+	return nil, false
 }
 
+// ArgVarKeys creates a slice of string to hold the keys
 func ArgVarKeys() []string {
 	keys := make([]string, 0, len(ArgVars))
 	for k := range ArgVars {
@@ -290,6 +290,7 @@ const (
 	// ArgVarPrompt is a user-prompted variable
 	ArgVarPrompt
 
+	// ArgVarTypesN is the number of ArgVarTypes
 	ArgVarTypesN
 )
 
@@ -297,5 +298,8 @@ const (
 
 var KiT_ArgVarTypes = kit.Enums.AddEnumAltLower(ArgVarTypesN, false, nil, "ArgVar")
 
-func (kf ArgVarTypes) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(kf) }
+// MarshalJSON saves arg variables to a JSON-formatted file
+func (kf ArgVarTypes) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(kf) }
+
+// UnmarshalJSON decodes arg variables from a JSON-formatted file
 func (kf *ArgVarTypes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(kf, b) }

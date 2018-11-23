@@ -540,6 +540,7 @@ func (sv *SpellView) AcceptSuggestion(s string) {
 	sv.ChangeAction()
 }
 
+// SpellViewProps are style properties for SpellView
 var SpellViewProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
