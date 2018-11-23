@@ -18,6 +18,7 @@ import (
 	"github.com/goki/ki/kit"
 )
 
+// FindLoc corresponds to the search scope
 type FindLoc int
 
 const (
@@ -33,6 +34,7 @@ const (
 	// FindLocNotTop finds in all open folders *except* the top-level folder
 	FindLocNotTop
 
+	// FindLocN is the number of find locations (scopes)
 	FindLocN
 )
 
@@ -40,7 +42,10 @@ const (
 
 var KiT_FindLoc = kit.Enums.AddEnumAltLower(FindLocN, false, nil, "FindLoc")
 
-func (ev FindLoc) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
+// MarshalJSON encodes
+func (ev FindLoc) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(ev) }
+
+// UnmarshalJSON decodes
 func (ev *FindLoc) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
 // FindParams are parameters for find / replace
@@ -127,6 +132,9 @@ func (fv *FindView) ReplaceAction() bool {
 			return false
 		}
 		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
+		if !ok {
+			return false
+		}
 		tv, reg, _, _, ok = ge.ParseOpenFindURL(tl.URL, ftv)
 		if !ok || reg.IsNil() {
 			return false
@@ -546,6 +554,7 @@ func (fv *FindView) ConfigToolbar() {
 
 }
 
+// FindViewProps are style properties for FindView
 var FindViewProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
