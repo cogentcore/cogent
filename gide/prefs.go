@@ -78,10 +78,12 @@ func InitPrefs() {
 	histyle.Init()
 }
 
+// Defaults are the defaults for FilePrefs
 func (pf *FilePrefs) Defaults() {
 	pf.DirsOnTop = true
 }
 
+// Defaults are the defaults for EditorPrefs
 func (pf *EditorPrefs) Defaults() {
 	pf.TabSize = 4
 	pf.WordWrap = true
@@ -91,6 +93,7 @@ func (pf *EditorPrefs) Defaults() {
 	pf.AutoIndent = true
 }
 
+// Defaults are the defaults for Preferences
 func (pf *Preferences) Defaults() {
 	pf.HiStyle = "emacs"
 	pf.FontFamily = "Go Mono"
@@ -348,6 +351,7 @@ var ProjPrefsProps = ki.Props{
 //////////////////////////////////////////////////////////////////////////////////////
 //   Saved Projects / Paths
 
+// SavedPaths is a slice of strings that are file paths
 var SavedPaths gi.FilePaths
 
 // SavedPathsFileName is the name of the saved file paths file in GoGi prefs directory

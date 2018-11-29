@@ -27,7 +27,7 @@ import (
 // https://swifteducation.github.io/assets/pdfs/XcodeKeyboardShortcuts.pdf
 // https://en.wikipedia.org/wiki/Table_of_keyboard_shortcuts <- great!
 
-// gide.KeyFuns are special functions for the overall control of the system --
+// KeyFuns (i.e. gide.KeytFuns) are special functions for the overall control of the system --
 // moving between windows, running commands, etc.  Multi-key sequences can be used.
 type KeyFuns int32
 
@@ -56,9 +56,13 @@ const (
 
 //go:generate stringer -type=KeyFuns
 
+// KiT_KeyFuns adds a type to the EnumRegistry
 var KiT_KeyFuns = kit.Enums.AddEnumAltLower(KeyFunsN, false, nil, "KeyFun")
 
-func (kf KeyFuns) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(kf) }
+// MarshalJSON saves the KeyFuns in JSON format
+func (kf KeyFuns) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(kf) }
+
+// UnmarshalJSON reads the JSON formatted KeyFun info from file and loads into memory
 func (kf *KeyFuns) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(kf, b) }
 
 // KeySeq defines a multiple-key sequence to initiate a key function
@@ -72,12 +76,12 @@ func (kf KeySeq) String() string {
 	return string(kf.Key1 + " " + kf.Key2)
 }
 
-// Label() satisfies gi.Labeler interface
+// Label satisfies gi.Labeler interface
 func (kf KeySeq) Label() string {
 	return string(kf.Key1 + " " + kf.Key2)
 }
 
-// TextMarshaler is required for JSON encoding of struct keys
+// MarshalText is required for JSON encoding of struct keys
 func (kf KeySeq) MarshalText() ([]byte, error) {
 	bs := make([][]byte, 2)
 	bs[0] = []byte(kf.Key1)
@@ -86,6 +90,7 @@ func (kf KeySeq) MarshalText() ([]byte, error) {
 	return b, nil
 }
 
+// UnmarshalText is required for JSON decoding of struct keys
 func (kf *KeySeq) UnmarshalText(b []byte) error {
 	bs := bytes.Split(b, []byte(";"))
 	kf.Key1 = key.Chord(string(bs[0]))
@@ -292,6 +297,7 @@ func (km KeyMapsItem) Label() string {
 // a custom one, just duplicate an existing map, rename, and customize
 type KeyMaps []KeyMapsItem
 
+// KiT_KeyMaps registers KeyMaps as a type
 var KiT_KeyMaps = kit.Types.AddType(&KeyMaps{}, KeyMapsProps)
 
 // AvailKeyMaps is the current list of available keymaps for use -- can be
