@@ -5,7 +5,6 @@
 package gide
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -368,45 +367,13 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd()
 	ge.RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
-	lfb := []byte("\n")
 	if err == nil {
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Start()
 		if err == nil {
-			outscan := bufio.NewScanner(stdout) // line at a time
-			outlns := make([][]byte, 0, 100)
-			outmus := make([][]byte, 0, 100)
-			ts := time.Now()
-			// note: can't blank whole screen here b/c some processes will continue for long time
-			for outscan.Scan() {
-				b := outscan.Bytes()
-				ob := make([]byte, len(b)) // note: scanner bytes are temp -- must copy!
-				copy(ob, b)
-				outlns = append(outlns, ob)
-				outmus = append(outmus, MarkupCmdOutput(ob))
-				now := time.Now()
-				lag := int(now.Sub(ts) / time.Millisecond)
-				if lag > 200 {
-					ts = now
-					tlns := bytes.Join(outlns, lfb)
-					mlns := bytes.Join(outmus, lfb)
-					tlns = append(tlns, lfb...)
-					mlns = append(mlns, lfb...)
-					buf.AppendTextMarkup(tlns, mlns, false, true) // no undo, yes signal
-					buf.AutoScrollViews()
-					outlns = make([][]byte, 0, 100)
-					outmus = make([][]byte, 0, 100)
-				}
-			}
-			if len(outlns) > 0 {
-				tlns := bytes.Join(outlns, lfb)
-				mlns := bytes.Join(outmus, lfb)
-				tlns = append(tlns, lfb...)
-				mlns = append(mlns, lfb...)
-
-				buf.AppendTextMarkup(tlns, mlns, false, true)
-				buf.AutoScrollViews()
-			}
+			obuf := giv.OutBuf{}
+			obuf.Init(stdout, buf, 0, MarkupCmdOutput)
+			obuf.MonOut()
 		}
 		err = cmd.Wait()
 	}

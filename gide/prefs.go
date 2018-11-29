@@ -165,7 +165,7 @@ func (pf *Preferences) Save() error {
 	return err
 }
 
-// VersionInfo returns GoGi version information
+// VersionInfo returns Gide version information
 func (pf *Preferences) VersionInfo() string {
 	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
 	return vinfo
