@@ -23,7 +23,7 @@ func TestBind(t *testing.T) {
 	pp := ProjPrefs{}
 	pp.ProjRoot = gi.FileName(projpath)
 
-	var avp ArgVarVAls
+	var avp ArgVarVals
 	avp.Set(fpath, &pp, &tv)
 
 	bv := avp.Bind("FilePath")

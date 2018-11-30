@@ -2529,7 +2529,7 @@ var GideViewProps = ki.Props{
 				},
 			}},
 			{"OpenProj", ki.Props{
-				"shortcut": "Command+O",
+				"shortcut": gi.KeyFunMenuOpen,
 				"label":    "Open Project...",
 				"desc":     "open a gide project -- can be a .gide file or just a file or directory (projects are just directories with relevant files)",
 				"Args": ki.PropSlice{
@@ -2540,15 +2540,16 @@ var GideViewProps = ki.Props{
 				},
 			}},
 			{"OpenPath", ki.Props{
-				"label": "Open Path...",
-				"desc":  "open a gide project for a file or directory (projects are just directories with relevant files)",
+				"shortcut": gi.KeyFunMenuOpenAlt1,
+				"label":    "Open Path...",
+				"desc":     "open a gide project for a file or directory (projects are just directories with relevant files)",
 				"Args": ki.PropSlice{
 					{"Path", ki.Props{}},
 				},
 			}},
 			{"New", ki.PropSlice{
 				{"NewProj", ki.Props{
-					"shortcut": "Command+N",
+					"shortcut": gi.KeyFunMenuNew,
 					"label":    "New Project...",
 					"desc":     "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all GideView projects are basically folders with files.  You can also specify the main language and {version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
 					"Args": ki.PropSlice{
@@ -2564,8 +2565,9 @@ var GideViewProps = ki.Props{
 					},
 				}},
 				{"NewFile", ki.Props{
-					"label": "New File...",
-					"desc":  "Create a new file in project -- to create in sub-folders, use context menu on folder in file browser",
+					"shortcut": gi.KeyFunMenuNewAlt1,
+					"label":    "New File...",
+					"desc":     "Create a new file in project -- to create in sub-folders, use context menu on folder in file browser",
 					"Args": ki.PropSlice{
 						{"File Name", ki.Props{
 							"width": 60,
@@ -2574,12 +2576,12 @@ var GideViewProps = ki.Props{
 				}},
 			}},
 			{"SaveProj", ki.Props{
-				// "shortcut": "Command+S",
+				"shortcut": gi.KeyFunMenuSave,
 				"label":    "Save Project",
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"SaveProjAs", ki.Props{
-				// "shortcut": "Shift+Command+S",
+				"shortcut": gi.KeyFunMenuSaveAs,
 				"label":    "Save Project As...",
 				"desc":     "Save project to given file name -- this is the .gide file containing preferences and current settings -- also saves all open files -- once saved, further saving is automatic",
 				"updtfunc": GideViewInactiveEmptyFunc,
