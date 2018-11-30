@@ -24,7 +24,7 @@ type SpellParams struct {
 // SpellView is a widget that displays results of spell check
 type SpellView struct {
 	gi.Layout
-	Gide         *Gide       `json:"-" xml:"-" desc:"parent gide project"`
+	Gide         Gide        `json:"-" xml:"-" desc:"parent gide project"`
 	Spell        SpellParams `desc:"params for spelling"`
 	Unknown      gi.TextWord `desc:"current unknown/misspelled word"`
 	Suggestions  []string    `desc:"a list of suggestions from spell checker"`
@@ -38,7 +38,7 @@ var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
 
 // SpellAction runs a new spell check with current params
 func (sv *SpellView) SpellAction() {
-	sv.Gide.Prefs.Spell = sv.Spell
+	sv.Gide.ProjPrefs().Spell = sv.Spell
 
 	uf := sv.UnknownText()
 	uf.SetText("")
@@ -65,7 +65,7 @@ func (sv *SpellView) OpenSpellURL(ur string, ftv *giv.TextView) bool {
 //    GUI config
 
 // UpdateView updates view with current settings
-func (sv *SpellView) UpdateView(ge *Gide, sp SpellParams) {
+func (sv *SpellView) UpdateView(ge Gide, sp SpellParams) {
 	sv.Gide = ge
 	sv.Spell = sp
 	_, updt := sv.StdSpellConfig()

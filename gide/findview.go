@@ -63,7 +63,7 @@ type FindParams struct {
 // and has a toolbar for controlling find / replace process.
 type FindView struct {
 	gi.Layout
-	Gide   *Gide         `json:"-" xml:"-" desc:"parent gide project"`
+	Gide   Gide          `json:"-" xml:"-" desc:"parent gide project"`
 	LangVV giv.ValueView `desc:"langs value view"`
 	Time   time.Time     `desc:"time of last find"`
 }
@@ -72,7 +72,7 @@ var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
-	return &fv.Gide.Prefs.Find
+	return &fv.Gide.ProjPrefs().Find
 }
 
 // SaveFindString saves the given find string to the find params history and current str
@@ -103,8 +103,8 @@ func (fv *FindView) FindAction() {
 
 // ReplaceAction performs the replace
 func (fv *FindView) ReplaceAction() bool {
-	winUpdt := fv.Gide.Viewport.Win.UpdateStart()
-	defer fv.Gide.Viewport.Win.UpdateEnd(winUpdt)
+	winUpdt := fv.Gide.VPort().Win.UpdateStart()
+	defer fv.Gide.VPort().Win.UpdateEnd(winUpdt)
 
 	fv.SaveReplString(fv.Params().Replace)
 	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, fv.Params().Replace, gi.Prefs.SavedPathsMax)
@@ -249,7 +249,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, fi
 //    GUI config
 
 // UpdateView updates view with current settings
-func (fv *FindView) UpdateView(ge *Gide) {
+func (fv *FindView) UpdateView(ge Gide) {
 	fv.Gide = ge
 	mods, updt := fv.StdFindConfig()
 	fv.ConfigToolbar()

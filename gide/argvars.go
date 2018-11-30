@@ -77,12 +77,12 @@ var ArgVars = map[string]ArgVarInfo{
 
 // ArgVarVals are current values of arg var vals -- updated on demand when a
 // command is invoked
-var ArgVarVals map[string]string
+type ArgVarVals map[string]string
 
-// SetArgVarVals sets the current values for arg variables -- prompts must be already set!
-func SetArgVarVals(avp *map[string]string, fpath string, ppref *ProjPrefs, tv *giv.TextView) {
+// Set sets the current values for arg variables -- prompts must be already set!
+func (avp *ArgVarVals) Set(fpath string, ppref *ProjPrefs, tv *giv.TextView) {
 	if *avp == nil {
-		*avp = make(map[string]string, len(ArgVars))
+		*avp = make(ArgVarVals, len(ArgVars))
 	}
 	av := *avp
 
@@ -170,8 +170,8 @@ func SetArgVarVals(avp *map[string]string, fpath string, ppref *ProjPrefs, tv *g
 	}
 }
 
-// BindArgVars replaces the variables in the given arg string with their values
-func BindArgVars(arg string) string {
+// Bind replaces the variables in the given arg string with their values
+func (avp *ArgVarVals) Bind(arg string) string {
 	sz := len(arg)
 	bs := []byte(arg)
 	ci := 0
@@ -194,7 +194,7 @@ func BindArgVars(arg string) string {
 		eb += ci + 1
 		vnm := string(bs[ci : eb+1])
 		// fmt.Printf("%v\n", vnm)
-		if val, ok := ArgVarVals[vnm]; ok {
+		if val, ok := (*avp)[vnm]; ok {
 			end := make([]byte, sz-(eb+1))
 			copy(end, bs[eb+1:])
 			bs = append(bs[:ci], []byte(val)...)

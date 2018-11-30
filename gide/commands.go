@@ -78,22 +78,22 @@ func (cm *CmdAndArgs) HasPrompts() (map[string]struct{}, bool) {
 }
 
 // BindArgs replaces any variables in the args with their values, and returns resulting args
-func (cm *CmdAndArgs) BindArgs() []string {
+func (cm *CmdAndArgs) BindArgs(avp *ArgVarVals) []string {
 	sz := len(cm.Args)
 	if sz == 0 {
 		return nil
 	}
 	args := make([]string, sz)
 	for i := range cm.Args {
-		av := BindArgVars(cm.Args[i])
+		av := avp.Bind(cm.Args[i])
 		args[i] = av
 	}
 	return args
 }
 
 // PrepCmd prepares to run command, returning *exec.Cmd and a string of the full command
-func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
-	cstr := BindArgVars(cm.Cmd)
+func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
+	cstr := avp.Bind(cm.Cmd)
 	switch cm.Cmd {
 	case "{PromptString1}": // special case -- expand args
 		cmdstr := cstr
@@ -117,7 +117,7 @@ func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 			// todo
 		}
 		cmdstr := cstr
-		args := cm.BindArgs()
+		args := cm.BindArgs(avp)
 		if args != nil {
 			astr := strings.Join(args, " ")
 			cmdstr += " " + astr
@@ -126,7 +126,7 @@ func (cm *CmdAndArgs) PrepCmd() (*exec.Cmd, string) {
 		return cmd, cmdstr
 	default:
 		cmdstr := cstr
-		args := cm.BindArgs()
+		args := cm.BindArgs(avp)
 		if args != nil {
 			astr := strings.Join(args, " ")
 			cmdstr += " " + astr
@@ -265,22 +265,23 @@ var CmdWaitOverride bool
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
 	sz := len(pvals)
+	avp := ge.ArgVarVals()
 	cnt := 0
 	for pv := range pvals {
 		switch pv {
 		case "{PromptString1}":
 			fallthrough
 		case "{PromptString2}":
-			curval := ArgVarVals[pv]
-			gi.StringPromptDialog(ge.Viewport, curval, "Enter string value here..",
+			curval := (*avp)[pv]
+			gi.StringPromptDialog(ge.VPort(), curval, "Enter string value here..",
 				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v:", cm.Name, cm.Desc)},
 				ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					dlg := send.(*gi.Dialog)
 					if sig == int64(gi.DialogAccepted) {
 						val := gi.StringPromptDialogValue(dlg)
-						ArgVarVals[pv] = val
+						(*avp)[pv] = val
 						cnt++
 						if cnt == sz {
 							cm.RunAfterPrompts(ge, buf)
@@ -295,7 +296,7 @@ func (cm *Command) PromptUser(ge *Gide, buf *giv.TextBuf, pvals map[string]struc
 // which can be displayed -- if !wait, then Buf is updated online as output
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
+func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
 	if cm.Confirm {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)}, true, true, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
@@ -313,14 +314,14 @@ func (cm *Command) Run(ge *Gide, buf *giv.TextBuf) {
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
-	ge.RunningCmds.KillByName(cm.Name) // make sure nothing still running for us..
+func (cm *Command) RunAfterPrompts(ge Gide, buf *giv.TextBuf) {
+	ge.CmdRuns().KillByName(cm.Name) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
 	if cm.Dir != "" {
 		cdir = cm.Dir
 	}
-	cds := BindArgVars(cdir)
+	cds := ge.ArgVarVals().Bind(cdir)
 	err := os.Chdir(cds)
 	cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
 	if err != nil {
@@ -353,9 +354,9 @@ func (cm *Command) RunAfterPrompts(ge *Gide, buf *giv.TextBuf) {
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
 // line of the command output to gide statusbar
-func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
-	cmd, cmdstr := cma.PrepCmd()
-	ge.RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
+func (cm *Command) RunBufWait(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
+	ge.CmdRuns().AddCmd(cm.Name, cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	cm.AppendCmdOut(ge, buf, out)
 	return cm.RunStatus(ge, buf, cmdstr, err, out)
@@ -363,9 +364,9 @@ func (cm *Command) RunBufWait(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool 
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
-	cmd, cmdstr := cma.PrepCmd()
-	ge.RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
+func (cm *Command) RunBuf(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
+	ge.CmdRuns().AddCmd(cm.Name, cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
 	if err == nil {
 		cmd.Stderr = cmd.Stdout
@@ -383,19 +384,19 @@ func (cm *Command) RunBuf(ge *Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 // RunNoBuf runs a command without any output to the buffer -- can call using
 // go as a goroutine for no-wait case -- returns overall command success, and
 // logs one line of the command output to gide statusbar
-func (cm *Command) RunNoBuf(ge *Gide, cma *CmdAndArgs) bool {
-	cmd, cmdstr := cma.PrepCmd()
-	ge.RunningCmds.AddCmd(cm.Name, cmdstr, cma, cmd)
+func (cm *Command) RunNoBuf(ge Gide, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
+	ge.CmdRuns().AddCmd(cm.Name, cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	return cm.RunStatus(ge, nil, cmdstr, err, out)
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(ge *Gide, buf *giv.TextBuf, out []byte) {
+func (cm *Command) AppendCmdOut(ge Gide, buf *giv.TextBuf, out []byte) {
 	if buf == nil {
 		return
 	}
-	updt := ge.Viewport.Win.UpdateStart()
+	updt := ge.VPort().Win.UpdateStart()
 	lns := bytes.Split(out, []byte("\n"))
 	sz := len(lns)
 	outmus := make([][]byte, sz)
@@ -408,7 +409,7 @@ func (cm *Command) AppendCmdOut(ge *Gide, buf *giv.TextBuf, out []byte) {
 
 	buf.AppendTextMarkup(out, mlns, false, true)
 	buf.AutoScrollViews()
-	ge.Viewport.Win.UpdateEnd(updt)
+	ge.VPort().Win.UpdateEnd(updt)
 }
 
 // CmdOutStatusLen is amount of command output to include in the status update
@@ -417,8 +418,8 @@ var CmdOutStatusLen = 80
 // RunStatus reports the status of the command run (given in cmdstr) to
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
-func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
-	ge.RunningCmds.DeleteByName(cm.Name)
+func (cm *Command) RunStatus(ge Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
+	ge.CmdRuns().DeleteByName(cm.Name)
 	var rval bool
 	outstr := ""
 	if out != nil {
@@ -446,7 +447,7 @@ func (cm *Command) RunStatus(ge *Gide, buf *giv.TextBuf, cmdstr string, err erro
 		buf.RefreshViews()
 		buf.AutoScrollViews()
 		if cm.Focus {
-			ge.FocusOnPanel(MainTabsIdx)
+			ge.FocusOnMainTabs()
 		}
 	}
 	ge.SetStatus(cmdstr + " " + outstr)
@@ -483,10 +484,10 @@ func MarkupCmdOutput(out []byte) []byte {
 				col = string(fnflds[2])
 			}
 		}
-		cpath := ArgVarVals["{FileDirPath}"]
-		if !strings.HasPrefix(fn, cpath) {
-			fn = filepath.Join(cpath, strings.TrimPrefix(fn, "./"))
-		}
+		// cpath := ArgVarVals["{FileDirPath}"]
+		// if !strings.HasPrefix(fn, cpath) {
+		// 	fn = filepath.Join(cpath, strings.TrimPrefix(fn, "./"))
+		// }
 		lstr := ""
 		if col != "" {
 			lstr = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, col, string(ff))

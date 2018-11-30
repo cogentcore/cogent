@@ -23,39 +23,40 @@ func TestBind(t *testing.T) {
 	pp := ProjPrefs{}
 	pp.ProjRoot = gi.FileName(projpath)
 
-	SetArgVarVals(&ArgVarVals, fpath, &pp, &tv)
+	var avp ArgVarVAls
+	avp.Set(fpath, &pp, &tv)
 
-	bv := BindArgVars("FilePath")
+	bv := avp.Bind("FilePath")
 	cv := "FilePath"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = BindArgVars("{FilePath}")
+	bv = avp.Bind("{FilePath}")
 	cv = fpath
 	if bv != fpath {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = BindArgVars("\\{FilePath}")
+	bv = avp.Bind("\\{FilePath}")
 	cv = "{FilePath}"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = BindArgVars("This is the: {FilePath} and so on")
+	bv = avp.Bind("This is the: {FilePath} and so on")
 	cv = "This is the: " + fpath + " and so on"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = BindArgVars("{FileDir}/{FileName}")
+	bv = avp.Bind("{FileDir}/{FileName}")
 	cv = "gide/argvars_test.go"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = BindArgVars("{FileDirProjRel}/{FileNameNoExt}")
+	bv = avp.Bind("{FileDirProjRel}/{FileNameNoExt}")
 	cv = "goki/gide/argvars_test"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)

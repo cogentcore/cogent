@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package gide provides the core Gide editor object and supporting gui
-// for filetree, commands, console, and 2-sequence key functions,
+// Package gidev implements the GideView editor, using all the elements
+// from the gide infrastructure.  Having it in a separate package
+// allows GideView to also include other packages that tap into
+// the gide infrastructure, such as the GoPi interactive parser.
 //
-// Derived classes can extend the functionality for specific domains.
-//
-package gide
+package gidev
 
 import (
 	"bytes"
@@ -30,6 +30,7 @@ import (
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/units"
+	"github.com/goki/gide/gide"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -49,10 +50,10 @@ const (
 	VisTabsIdx
 )
 
-// Gide is the core editor and tab viewer framework for the Gide system.  The
+// GideView is the core editor and tab viewer framework for the Gide system.  The
 // default view has a tree browser of files on the left, editor panels in the
 // middle, and a tabbed viewer on the right.
-type Gide struct {
+type GideView struct {
 	gi.Frame
 	ProjRoot          gi.FileName             `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
 	ProjFilename      gi.FileName             `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
@@ -61,32 +62,59 @@ type Gide struct {
 	Changed           bool                    `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
 	Files             giv.FileTree            `desc:"all the files in the project directory and subdirectories"`
 	ActiveTextViewIdx int                     `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
-	OpenNodes         OpenNodes               `json:"-" desc:"list of open nodes, most recent first"`
+	OpenNodes         gide.OpenNodes          `json:"-" desc:"list of open nodes, most recent first"`
 	CmdBufs           map[string]*giv.TextBuf `json:"-" desc:"the command buffers for commands run in this project"`
-	CmdHistory        CmdNames                `json:"-" desc:"history of commands executed in this session"`
-	RunningCmds       CmdRuns                 `json:"-" xml:"-" desc:"currently running commands in this project"`
-	Prefs             ProjPrefs               `desc:"preferences for this project -- this is what is saved in a .gide project file"`
+	CmdHistory        gide.CmdNames           `json:"-" desc:"history of commands executed in this session"`
+	RunningCmds       gide.CmdRuns            `json:"-" xml:"-" desc:"currently running commands in this project"`
+	ArgVals           gide.ArgVarVals         `json:"-" xml:"-" desc:"current arg var vals"`
+	Prefs             gide.ProjPrefs          `desc:"preferences for this project -- this is what is saved in a .gide project file"`
 	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
-	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to Gide"`
+	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to GideView"`
 }
 
-var KiT_Gide = kit.Types.AddType(&Gide{}, nil)
+var KiT_GideView = kit.Types.AddType(&GideView{}, nil)
 
 func init() {
-	kit.Types.SetProps(KiT_Gide, GideProps)
+	kit.Types.SetProps(KiT_GideView, GideViewProps)
 }
 
+////////////////////////////////////////////////////////
+// Gide interface
+
+func (ge *GideView) VPort() *gi.Viewport2D {
+	return ge.Viewport
+}
+
+func (ge *GideView) ProjPrefs() *gide.ProjPrefs {
+	return &ge.Prefs
+}
+
+func (ge *GideView) CmdRuns() *gide.CmdRuns {
+	return &ge.RunningCmds
+}
+
+func (ge *GideView) ArgVarVals() *gide.ArgVarVals {
+	return &ge.ArgVals
+}
+
+func (ge *GideView) FocusOnMainTabs() bool {
+	return ge.FocusOnPanel(MainTabsIdx)
+}
+
+////////////////////////////////////////////////////////
+//  Main project API
+
 // UpdateFiles updates the list of files saved in project
-func (ge *Gide) UpdateFiles() {
+func (ge *GideView) UpdateFiles() {
 	ge.Files.OpenPath(string(ge.ProjRoot))
 }
 
-func (ge *Gide) IsEmpty() bool {
+func (ge *GideView) IsEmpty() bool {
 	return ge.ProjRoot == ""
 }
 
 // OpenRecent opens a recently-used file
-func (ge *Gide) OpenRecent(filename gi.FileName) {
+func (ge *GideView) OpenRecent(filename gi.FileName) {
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".gide" {
 		ge.OpenProj(filename)
@@ -97,8 +125,8 @@ func (ge *Gide) OpenRecent(filename gi.FileName) {
 
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
-// current Gide object if it is empty, or otherwise opens a new window.
-func (ge *Gide) OpenPath(path gi.FileName) (*gi.Window, *Gide) {
+// current GideView object if it is empty, or otherwise opens a new window.
+func (ge *GideView) OpenPath(path gi.FileName) (*gi.Window, *GideView) {
 	if gproj, has := CheckForProjAtPath(string(path)); has {
 		return ge.OpenProj(gi.FileName(gproj))
 	}
@@ -109,8 +137,8 @@ func (ge *Gide) OpenPath(path gi.FileName) (*gi.Window, *Gide) {
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
-		SavedPaths.AddPath(root, gi.Prefs.SavedPathsMax)
-		SavePaths()
+		gide.SavedPaths.AddPath(root, gi.Prefs.SavedPathsMax)
+		gide.SavePaths()
 		ge.ProjRoot = gi.FileName(root)
 		ge.SetName(pnm)
 		ge.Prefs.ProjFilename = gi.FileName(filepath.Join(root, pnm+".gide"))
@@ -135,7 +163,7 @@ func (ge *Gide) OpenPath(path gi.FileName) (*gi.Window, *Gide) {
 
 // OpenProj opens .gide project file and its settings from given filename, in a standard
 // JSON-formatted file
-func (ge *Gide) OpenProj(filename gi.FileName) (*gi.Window, *Gide) {
+func (ge *GideView) OpenProj(filename gi.FileName) (*gi.Window, *GideView) {
 	if !ge.IsEmpty() {
 		return OpenGideProj(string(filename))
 	}
@@ -145,8 +173,8 @@ func (ge *Gide) OpenProj(filename gi.FileName) (*gi.Window, *Gide) {
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
 	if ok {
 		os.Chdir(string(ge.Prefs.ProjRoot))
-		SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
-		SavePaths()
+		gide.SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.ApplyPrefs()
 		ge.UpdateProj()
@@ -161,10 +189,10 @@ func (ge *Gide) OpenProj(filename gi.FileName) (*gi.Window, *Gide) {
 }
 
 // NewProj creates a new project at given path, making a new folder in that
-// path -- all Gide projects are essentially defined by a path to a folder
+// path -- all GideView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *Gide) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl VersCtrlName) (*gi.Window, *Gide) {
+func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl gide.VersCtrlName) (*gi.Window, *GideView) {
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
@@ -180,7 +208,7 @@ func (ge *Gide) NewProj(path gi.FileName, folder string, mainLang filecat.Suppor
 }
 
 // NewFile creates a new file in the project
-func (ge *Gide) NewFile(filename string) {
+func (ge *GideView) NewFile(filename string) {
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
@@ -192,7 +220,7 @@ func (ge *Gide) NewFile(filename string) {
 
 // SaveProj saves project file containing custom project settings, in a
 // standard JSON-formatted file
-func (ge *Gide) SaveProj() {
+func (ge *GideView) SaveProj() {
 	if ge.Prefs.ProjFilename == "" {
 		return
 	}
@@ -202,7 +230,7 @@ func (ge *Gide) SaveProj() {
 // SaveProjIfExists saves project file containing custom project settings, in a
 // standard JSON-formatted file, only if it already exists -- returns true if saved
 // saveAllFiles indicates if user should be prompted for saving all files
-func (ge *Gide) SaveProjIfExists(saveAllFiles bool) bool {
+func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 	if ge.Prefs.ProjFilename == "" {
 		return false
 	}
@@ -217,9 +245,9 @@ func (ge *Gide) SaveProjIfExists(saveAllFiles bool) bool {
 // JSON-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
-	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
-	SavePaths()
+func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
+	gide.SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+	gide.SavePaths()
 	ge.Files.UpdateNewFile(string(filename))
 	ge.Prefs.ProjFilename = filename
 	ge.ProjFilename = ge.Prefs.ProjFilename
@@ -237,7 +265,7 @@ func (ge *Gide) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 // returns true if there were unsaved files, false otherwise.
 // cancelOpt presents an option to cancel current command, in which case function is not called.
 // if function is passed, then it is called in all cases except if the user selects cancel.
-func (ge *Gide) SaveAllCheck(cancelOpt bool, fun func(ge *Gide)) bool {
+func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func(ge *GideView)) bool {
 	nch := ge.NChangedFiles()
 	if nch == 0 {
 		if fun != nil {
@@ -265,7 +293,7 @@ func (ge *Gide) SaveAllCheck(cancelOpt bool, fun func(ge *Gide)) bool {
 }
 
 // UpdateProj does full update to current proj
-func (ge *Gide) UpdateProj() {
+func (ge *GideView) UpdateProj() {
 	mods, updt := ge.StdConfig()
 	if !mods {
 		updt = ge.UpdateStart()
@@ -324,7 +352,7 @@ func CheckForProjAtPath(path string) (string, bool) {
 }
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
-func (ge *Gide) GuessMainLang() bool {
+func (ge *GideView) GuessMainLang() bool {
 	ecs := ge.Files.FileExtCounts()
 	for _, ec := range ecs {
 		ls := filecat.ExtSupported(ec.Name)
@@ -337,35 +365,35 @@ func (ge *Gide) GuessMainLang() bool {
 }
 
 // LangDefaults applies default language settings based on MainLang
-func (ge *Gide) LangDefaults() bool {
-	ge.Prefs.RunCmds = CmdNames{"Run Proj"}
+func (ge *GideView) LangDefaults() bool {
+	ge.Prefs.RunCmds = gide.CmdNames{"Run Proj"}
 	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
 	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
 	ge.Prefs.RunExec = gi.FileName(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
 	got := false
 	switch ge.Prefs.MainLang {
 	case filecat.Go:
-		ge.Prefs.BuildCmds = CmdNames{"Build Go Proj"}
+		ge.Prefs.BuildCmds = gide.CmdNames{"Build Go Proj"}
 		got = true
 	case filecat.TeX:
-		ge.Prefs.BuildCmds = CmdNames{"LaTeX PDF"}
-		ge.Prefs.RunCmds = CmdNames{"Open Target File"}
+		ge.Prefs.BuildCmds = gide.CmdNames{"LaTeX PDF"}
+		ge.Prefs.RunCmds = gide.CmdNames{"Open Target File"}
 		got = true
 	default:
-		ge.Prefs.BuildCmds = CmdNames{"Make"}
+		ge.Prefs.BuildCmds = gide.CmdNames{"Make"}
 	}
 	return got
 }
 
 // GuessVersCtrl guesses the version control system in use
-func (ge *Gide) GuessVersCtrl() bool {
+func (ge *GideView) GuessVersCtrl() bool {
 	got := false
-	for vc, fn := range VersCtrlFiles {
+	for vc, fn := range gide.VersCtrlFiles {
 		ftest := filepath.Join(string(ge.Prefs.ProjRoot), fn)
 		if _, err := os.Stat(ftest); os.IsNotExist(err) {
 			continue
 		}
-		ge.Prefs.VersCtrl = VersCtrlName(vc)
+		ge.Prefs.VersCtrl = gide.VersCtrlName(vc)
 		got = true
 	}
 	return got
@@ -375,8 +403,8 @@ func (ge *Gide) GuessVersCtrl() bool {
 //   TextViews
 
 // ConfigTextBuf configures the text buf according to prefs
-func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
-	tb.SetHiStyle(Prefs.HiStyle)
+func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
+	tb.SetHiStyle(gide.Prefs.HiStyle)
 	tb.Opts.TabSize = ge.Prefs.Editor.TabSize
 	tb.Opts.SpaceIndent = ge.Prefs.Editor.SpaceIndent
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
@@ -398,14 +426,14 @@ func (ge *Gide) ConfigTextBuf(tb *giv.TextBuf) {
 }
 
 // ActiveTextView returns the currently-active TextView
-func (ge *Gide) ActiveTextView() *giv.TextView {
+func (ge *GideView) ActiveTextView() *giv.TextView {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	//	log.Printf("stderr: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
 }
 
 // TextViewIndex finds index of given textview (0 or 1)
-func (ge *Gide) TextViewIndex(av *giv.TextView) int {
+func (ge *GideView) TextViewIndex(av *giv.TextView) int {
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
@@ -418,7 +446,7 @@ func (ge *Gide) TextViewIndex(av *giv.TextView) int {
 
 // TextViewForFileNode finds a TextView that is viewing given FileNode,
 // and its index, or false if none is
-func (ge *Gide) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool) {
+func (ge *GideView) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool) {
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
@@ -435,7 +463,7 @@ func (ge *Gide) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool)
 
 // OpenNodeForTextView finds the FileNode that a given TextView is
 // viewing, returning its index within OpenNodes list, or false if not found
-func (ge *Gide) OpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, bool) {
+func (ge *GideView) OpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, bool) {
 	if tv.Buf == nil {
 		return nil, -1, false
 	}
@@ -449,7 +477,7 @@ func (ge *Gide) OpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, bool)
 
 // TextViewForFile finds FileNode for file, and returns TextView and index
 // that is viewing that FileNode, or false if none is
-func (ge *Gide) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -458,13 +486,13 @@ func (ge *Gide) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 }
 
 // SetActiveFileInfo sets the active file info from textbuf
-func (ge *Gide) SetActiveFileInfo(buf *giv.TextBuf) {
+func (ge *GideView) SetActiveFileInfo(buf *giv.TextBuf) {
 	ge.ActiveFilename = buf.Filename
 	ge.ActiveLang = buf.Info.Sup
 }
 
 // SetActiveTextView sets the given textview as the active one, and returns its index
-func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
+func (ge *GideView) SetActiveTextView(av *giv.TextView) int {
 	idx := ge.TextViewIndex(av)
 	if idx < 0 {
 		return -1
@@ -482,9 +510,9 @@ func (ge *Gide) SetActiveTextView(av *giv.TextView) int {
 
 // SetActiveTextViewIdx sets the given view index as the currently-active
 // TextView -- returns that textview
-func (ge *Gide) SetActiveTextViewIdx(idx int) *giv.TextView {
+func (ge *GideView) SetActiveTextViewIdx(idx int) *giv.TextView {
 	if idx < 0 || idx >= NTextViews {
-		log.Printf("Gide SetActiveTextViewIdx: text view index out of range: %v\n", idx)
+		log.Printf("GideView SetActiveTextViewIdx: text view index out of range: %v\n", idx)
 		return nil
 	}
 	ge.ActiveTextViewIdx = idx
@@ -500,7 +528,7 @@ func (ge *Gide) SetActiveTextViewIdx(idx int) *giv.TextView {
 // NextTextView returns the next text view available for viewing a file and
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
-func (ge *Gide) NextTextView() (*giv.TextView, int) {
+func (ge *GideView) NextTextView() (*giv.TextView, int) {
 	av := ge.TextViewByIndex(ge.ActiveTextViewIdx)
 	if av.Buf == nil {
 		return av, ge.ActiveTextViewIdx
@@ -513,7 +541,7 @@ func (ge *Gide) NextTextView() (*giv.TextView, int) {
 }
 
 // SaveActiveView saves the contents of the currently-active textview
-func (ge *Gide) SaveActiveView() {
+func (ge *GideView) SaveActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		if tv.Buf.Filename != "" {
@@ -531,7 +559,7 @@ func (ge *Gide) SaveActiveView() {
 
 // SaveActiveViewAs save with specified filename the contents of the
 // currently-active textview
-func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
+func (ge *GideView) SaveActiveViewAs(filename gi.FileName) {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		ofn := tv.Buf.Filename
@@ -557,7 +585,7 @@ func (ge *Gide) SaveActiveViewAs(filename gi.FileName) {
 }
 
 // RevertActiveView revert active view to saved version
-func (ge *Gide) RevertActiveView() {
+func (ge *GideView) RevertActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		ge.ConfigTextBuf(tv.Buf)
@@ -568,7 +596,7 @@ func (ge *Gide) RevertActiveView() {
 }
 
 // CloseActiveView closes the buffer associated with active view
-func (ge *Gide) CloseActiveView() {
+func (ge *GideView) CloseActiveView() {
 	tv := ge.ActiveTextView()
 	ond, idx, got := ge.OpenNodeForTextView(tv)
 	if got {
@@ -587,7 +615,7 @@ func (ge *Gide) CloseActiveView() {
 // RunPostCmdsActiveView runs any registered post commands on the active view
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
-func (ge *Gide) RunPostCmdsActiveView() bool {
+func (ge *GideView) RunPostCmdsActiveView() bool {
 	tv := ge.ActiveTextView()
 	ond, _, got := ge.OpenNodeForTextView(tv)
 	if got {
@@ -599,9 +627,9 @@ func (ge *Gide) RunPostCmdsActiveView() bool {
 // RunPostCmdsFileNode runs any registered post commands on the given file node
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
-func (ge *Gide) RunPostCmdsFileNode(fn *giv.FileNode) bool {
+func (ge *GideView) RunPostCmdsFileNode(fn *giv.FileNode) bool {
 	lang := fn.Info.Sup
-	if lopt, has := AvailLangs[lang]; has {
+	if lopt, has := gide.AvailLangs[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
 			ge.ExecCmdsFileNode(fn, lopt.PostSaveCmds, false, true) // no select, yes clear
 			fn.Buf.Revert()
@@ -614,7 +642,7 @@ func (ge *Gide) RunPostCmdsFileNode(fn *giv.FileNode) bool {
 // AutoSaveCheck checks for an autosave file and prompts user about opening it
 // -- returns true if autosave file does exist for a file that currently
 // unchanged (means just opened)
-func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool {
+func (ge *GideView) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool {
 	if strings.HasPrefix(fn.Nm, "#") && strings.HasSuffix(fn.Nm, "#") {
 		fn.Buf.Autosave = false
 		return false // we are the autosave file
@@ -640,11 +668,11 @@ func (ge *Gide) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool
 }
 
 // OpenFileNode opens file for file node -- returns new bool and error
-func (ge *Gide) OpenFileNode(fn *giv.FileNode) (bool, error) {
+func (ge *GideView) OpenFileNode(fn *giv.FileNode) (bool, error) {
 	if fn.IsDir() {
 		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
 	}
-	giv.FileNodeHiStyle = Prefs.HiStyle // must be set prior to OpenBuf
+	giv.FileNodeHiStyle = gide.Prefs.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
 		ge.ConfigTextBuf(fn.Buf)
@@ -656,7 +684,7 @@ func (ge *Gide) OpenFileNode(fn *giv.FileNode) (bool, error) {
 
 // ViewFileNode sets the given text view to view file in given node (opens
 // buffer if not already opened)
-func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
+func (ge *GideView) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 	if fn.IsDir() {
 		return
 	}
@@ -676,7 +704,7 @@ func (ge *Gide) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 // NextViewFileNode sets the next text view to view file in given node (opens
 // buffer if not already opened) -- if already being viewed, that is
 // activated, returns text view and index
-func (ge *Gide) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
+func (ge *GideView) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
 	tv, idx, ok := ge.TextViewForFileNode(fn)
 	if ok {
 		ge.SetActiveTextViewIdx(idx)
@@ -691,7 +719,7 @@ func (ge *Gide) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns textview and its
 // index, false if not found
-func (ge *Gide) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -706,7 +734,7 @@ func (ge *Gide) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 
 // ViewFile views file in an existing TextView if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
-func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -728,7 +756,7 @@ func (ge *Gide) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 
 // LinkViewFileNode opens the file node in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *Gide) LinkViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
+func (ge *GideView) LinkViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
 	if ge.PanelIsOpen(TextView2Idx) {
 		ge.SetActiveTextViewIdx(1)
 	} else {
@@ -742,7 +770,7 @@ func (ge *Gide) LinkViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
 
 // LinkViewFile opens the file in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *Gide) LinkViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) LinkViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -755,9 +783,9 @@ func (ge *Gide) LinkViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 	return nv, nidx, true
 }
 
-// GideOpenNodes gets list of open nodes for submenu-func
-func GideOpenNodes(it interface{}, vp *gi.Viewport2D) []string {
-	ge, ok := it.(ki.Ki).Embed(KiT_Gide).(*Gide)
+// GideViewOpenNodes gets list of open nodes for submenu-func
+func GideViewOpenNodes(it interface{}, vp *gi.Viewport2D) []string {
+	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return nil
 	}
@@ -765,7 +793,7 @@ func GideOpenNodes(it interface{}, vp *gi.Viewport2D) []string {
 }
 
 // ViewOpenNodeName views given open node (by name) in active view
-func (ge *Gide) ViewOpenNodeName(name string) {
+func (ge *GideView) ViewOpenNodeName(name string) {
 	nb := ge.OpenNodes.ByStringName(name)
 	if nb == nil {
 		return
@@ -776,7 +804,7 @@ func (ge *Gide) ViewOpenNodeName(name string) {
 
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
 // in current active textview
-func (ge *Gide) SelectOpenNode() {
+func (ge *GideView) SelectOpenNode() {
 	if len(ge.OpenNodes) == 0 {
 		ge.SetStatus("No open nodes to choose from")
 		return
@@ -797,7 +825,7 @@ func (ge *Gide) SelectOpenNode() {
 
 // CloneActiveView sets the next text view to view the same file currently being vieweds
 // in the active view. returns text view and index
-func (ge *Gide) CloneActiveView() (*giv.TextView, int) {
+func (ge *GideView) CloneActiveView() (*giv.TextView, int) {
 	tv := ge.ActiveTextView()
 	if tv == nil {
 		return nil, -1
@@ -812,7 +840,7 @@ func (ge *Gide) CloneActiveView() (*giv.TextView, int) {
 }
 
 // SaveAllOpenNodes saves all of the open filenodes to their current file names
-func (ge *Gide) SaveAllOpenNodes() {
+func (ge *GideView) SaveAllOpenNodes() {
 	for _, ond := range ge.OpenNodes {
 		if ond.Buf.IsChanged() {
 			ond.Buf.Save()
@@ -822,7 +850,7 @@ func (ge *Gide) SaveAllOpenNodes() {
 }
 
 // TextViewSig handles all signals from the textviews
-func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
+func (ge *GideView) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
 	switch sig {
 	case giv.TextViewISearch:
@@ -836,7 +864,7 @@ func (ge *Gide) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
 
 // DiffFiles shows the differences between two given files (currently outputs a context diff
 // but will show a side-by-side view soon..
-func (ge *Gide) DiffFiles(fnm1, fnm2 gi.FileName) {
+func (ge *GideView) DiffFiles(fnm1, fnm2 gi.FileName) {
 	fnk2, ok := ge.Files.FindFile(string(fnm2))
 	if !ok {
 		return
@@ -850,7 +878,7 @@ func (ge *Gide) DiffFiles(fnm1, fnm2 gi.FileName) {
 
 // DiffFileNode shows the differences between two given files (currently outputs a context diff
 // but will show a side-by-side view soon..
-func (ge *Gide) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
+func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 	fnk1, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return
@@ -880,13 +908,13 @@ func (ge *Gide) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 //////////////////////////////////////////////////////////////////////////////////////
 //   Links
 
-// TextLinkHandler is the Gide handler for text links -- preferred one b/c
-// directly connects to correct Gide project
+// TextLinkHandler is the GideView handler for text links -- preferred one b/c
+// directly connects to correct GideView project
 func TextLinkHandler(tl gi.TextLink) bool {
 	ftv, _ := tl.Widget.(*giv.TextView)
-	gek, ok := tl.Widget.ParentByType(KiT_Gide, true)
+	gek, ok := tl.Widget.ParentByType(KiT_GideView, true)
 	if ok {
-		ge := gek.Embed(KiT_Gide).(*Gide)
+		ge := gek.Embed(KiT_GideView).(*GideView)
 		ur := tl.URL
 		// todo: use net/url package for more systematic parsing
 		switch {
@@ -905,16 +933,16 @@ func TextLinkHandler(tl gi.TextLink) bool {
 	return true
 }
 
-// // URLHandler is the Gide handler for urls --
+// // URLHandler is the GideView handler for urls --
 // func URLHandler(url string) bool {
 // 	return true
 // }
 
 // OpenFileURL opens given file:/// url
-func (ge *Gide) OpenFileURL(ur string) bool {
+func (ge *GideView) OpenFileURL(ur string) bool {
 	up, err := url.Parse(ur)
 	if err != nil {
-		log.Printf("Gide OpenFileURL parse err: %v\n", err)
+		log.Printf("GideView OpenFileURL parse err: %v\n", err)
 		return false
 	}
 	fpath := up.Path[1:] // has double //
@@ -950,7 +978,7 @@ func init() {
 //   Close / Quit Req
 
 // NChangedFiles returns number of opened files with unsaved changes
-func (ge *Gide) NChangedFiles() int {
+func (ge *GideView) NChangedFiles() int {
 	return ge.OpenNodes.NChanged()
 }
 
@@ -958,7 +986,7 @@ func (ge *Gide) NChangedFiles() int {
 // automatically save the project if it already exists (no harm), and prompt
 // to save open files -- if this returns true, then it is OK to close --
 // otherwise not
-func (ge *Gide) CloseWindowReq() bool {
+func (ge *GideView) CloseWindowReq() bool {
 	ge.SaveProjIfExists(false) // don't prompt here, as we will do it now..
 	nch := ge.NChangedFiles()
 	if nch == 0 {
@@ -996,7 +1024,7 @@ func QuitReq() bool {
 		if !ok {
 			continue
 		}
-		ge := gek.Embed(KiT_Gide).(*Gide)
+		ge := gek.Embed(KiT_GideView).(*GideView)
 		if !ge.CloseWindowReq() {
 			return false
 		}
@@ -1009,7 +1037,7 @@ func QuitReq() bool {
 
 // PanelIsOpen returns true if the given panel has not been collapsed and is avail
 // and visible for displaying something
-func (ge *Gide) PanelIsOpen(panel int) bool {
+func (ge *GideView) PanelIsOpen(panel int) bool {
 	sv := ge.SplitView()
 	if sv == nil {
 		return false
@@ -1024,7 +1052,7 @@ func (ge *Gide) PanelIsOpen(panel int) bool {
 }
 
 // CurPanel returns the splitter panel that currently has keyboard focus
-func (ge *Gide) CurPanel() int {
+func (ge *GideView) CurPanel() int {
 	sv := ge.SplitView()
 	if sv == nil {
 		return -1
@@ -1039,7 +1067,7 @@ func (ge *Gide) CurPanel() int {
 }
 
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
-func (ge *Gide) FocusOnPanel(panel int) bool {
+func (ge *GideView) FocusOnPanel(panel int) bool {
 	sv := ge.SplitView()
 	if sv == nil {
 		return false
@@ -1074,7 +1102,7 @@ func (ge *Gide) FocusOnPanel(panel int) bool {
 }
 
 // FocusNextPanel moves the keyboard focus to the next panel to the right
-func (ge *Gide) FocusNextPanel() {
+func (ge *GideView) FocusNextPanel() {
 	sv := ge.SplitView()
 	if sv == nil {
 		return
@@ -1095,7 +1123,7 @@ func (ge *Gide) FocusNextPanel() {
 }
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
-func (ge *Gide) FocusPrevPanel() {
+func (ge *GideView) FocusPrevPanel() {
 	sv := ge.SplitView()
 	if sv == nil {
 		return
@@ -1120,13 +1148,13 @@ func (ge *Gide) FocusPrevPanel() {
 
 // MainTabByName returns a MainTabs (first set of tabs) tab with given name,
 // and its index -- returns false if not found
-func (ge *Gide) MainTabByName(label string) (gi.Node2D, int, bool) {
+func (ge *GideView) MainTabByName(label string) (gi.Node2D, int, bool) {
 	tv := ge.MainTabs()
 	return tv.TabByName(label)
 }
 
 // SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *Gide) SelectMainTabByName(label string) (gi.Node2D, int, bool) {
+func (ge *GideView) SelectMainTabByName(label string) (gi.Node2D, int, bool) {
 	tv := ge.MainTabs()
 	widg, idx, ok := ge.MainTabByName(label)
 	if ok {
@@ -1138,7 +1166,7 @@ func (ge *Gide) SelectMainTabByName(label string) (gi.Node2D, int, bool) {
 // FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with widget of given type.  if sel, then select it.  returns widget and tab index.
-func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) (gi.Node2D, int) {
+func (ge *GideView) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) (gi.Node2D, int) {
 	tv := ge.MainTabs()
 	widg, idx, ok := ge.MainTabByName(label)
 	if ok {
@@ -1155,7 +1183,7 @@ func (ge *Gide) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) (gi.
 }
 
 // ConfigOutputTextView configures a command-output textview within given parent layout
-func (ge *Gide) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
+func (ge *GideView) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	ly.Lay = gi.LayoutVert
 	ly.SetStretchMaxWidth()
 	ly.SetStretchMaxHeight()
@@ -1174,7 +1202,7 @@ func (ge *Gide) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 		tv.SetProp("white-space", gi.WhiteSpacePre)
 	}
 	tv.SetProp("tab-size", 8) // std for output
-	tv.SetProp("font-family", Prefs.FontFamily)
+	tv.SetProp("font-family", gide.Prefs.FontFamily)
 	tv.SetInactive()
 	return tv
 }
@@ -1183,7 +1211,7 @@ func (ge *Gide) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget and tab index.
-func (ge *Gide) FindOrMakeMainTabTextView(label string, sel bool) (*giv.TextView, int) {
+func (ge *GideView) FindOrMakeMainTabTextView(label string, sel bool) (*giv.TextView, int) {
 	lyk, idx := ge.FindOrMakeMainTab(label, gi.KiT_Layout, sel)
 	ly := lyk.Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := ge.ConfigOutputTextView(ly)
@@ -1193,7 +1221,7 @@ func (ge *Gide) FindOrMakeMainTabTextView(label string, sel bool) (*giv.TextView
 // FindOrMakeCmdBuf creates the buffer for command output, or returns
 // existing. If clear is true, then any existing buffer is cleared.
 // Returns true if new buffer created.
-func (ge *Gide) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) {
+func (ge *GideView) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) {
 	if ge.CmdBufs == nil {
 		ge.CmdBufs = make(map[string]*giv.TextBuf, 20)
 	}
@@ -1214,7 +1242,7 @@ func (ge *Gide) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) 
 // buffer object to save output from the command. returns true if a new buffer
 // was created, false if one already existed. if sel, select tab.  if clearBuf, then any
 // existing buffer is cleared.  Also returns index of tab.
-func (ge *Gide) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
+func (ge *GideView) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
 	buf, nw := ge.FindOrMakeCmdBuf(cmdNm, clearBuf)
 	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm, sel)
 	ctv.SetInactive()
@@ -1224,7 +1252,7 @@ func (ge *Gide) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.Te
 
 // VisTabByName returns a VisTabs (second set of tabs for visualizations) tab
 // with given name, and its index -- returns false if not found
-func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
+func (ge *GideView) VisTabByName(label string) (gi.Node2D, int, bool) {
 	tv := ge.VisTabs()
 	if tv == nil {
 		return nil, -1, false
@@ -1233,7 +1261,7 @@ func (ge *Gide) VisTabByName(label string) (gi.Node2D, int, bool) {
 }
 
 // MainTabDeleted is called when a main tab is deleted -- we cancel any running commmands
-func (ge *Gide) MainTabDeleted(tabnm string) {
+func (ge *GideView) MainTabDeleted(tabnm string) {
 	ge.RunningCmds.KillByName(tabnm)
 }
 
@@ -1243,8 +1271,8 @@ func (ge *Gide) MainTabDeleted(tabnm string) {
 // ExecCmdName executes command of given name -- this is the final common
 // pathway for all command invokation except on a node.  if sel, select tab.
 // if clearBuf, clear the buffer prior to command
-func (ge *Gide) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := AvailCmds.CmdByName(cmdNm, true)
+func (ge *GideView) ExecCmdName(cmdNm gide.CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := gide.AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
@@ -1254,19 +1282,19 @@ func (ge *Gide) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
 }
 
 // ExecCmdNameFileNode executes command of given name on given node
-func (ge *Gide) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := AvailCmds.CmdByName(cmdNm, true)
+func (ge *GideView) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm gide.CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := gide.AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
-	SetArgVarVals(&ArgVarVals, string(fn.FPath), &ge.Prefs, nil)
+	ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
 	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
 // ExecCmds gets list of available commands for current active file, as a submenu-func
 func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
-	ge, ok := it.(ki.Ki).Embed(KiT_Gide).(*Gide)
+	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return nil
 	}
@@ -1276,27 +1304,27 @@ func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	}
 	var cmds []string
 	if ge.ActiveLang == filecat.NoSupport {
-		cmds = AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
 	} else {
-		cmds = AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
 	}
 	return cmds
 }
 
 // ExecCmdNameActive calls given command on current active textview
-func (ge *Gide) ExecCmdNameActive(cmdNm string) {
+func (ge *GideView) ExecCmdNameActive(cmdNm string) {
 	tv := ge.ActiveTextView()
 	if tv == nil {
 		return
 	}
-	ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
-		gee.ExecCmdName(CmdName(cmdNm), true, true)
+	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
+		gee.ExecCmdName(gide.CmdName(cmdNm), true, true)
 	})
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in MainTab with name of command
-func (ge *Gide) ExecCmd() {
+func (ge *GideView) ExecCmd() {
 	tv := ge.ActiveTextView()
 	if tv == nil {
 		fmt.Printf("no Active view for ExecCmd\n")
@@ -1304,9 +1332,9 @@ func (ge *Gide) ExecCmd() {
 	}
 	var cmds []string
 	if ge.ActiveLang == filecat.NoSupport {
-		cmds = AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
 	} else {
-		cmds = AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
 	}
 	hsz := len(ge.CmdHistory)
 	lastCmd := ""
@@ -1315,9 +1343,9 @@ func (ge *Gide) ExecCmd() {
 	}
 	gi.StringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
-		cmdNm := CmdName(ac.Text)
-		ge.CmdHistory.Add(cmdNm)                // only save commands executed via chooser
-		ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
+		cmdNm := gide.CmdName(ac.Text)
+		ge.CmdHistory.Add(cmdNm)                    // only save commands executed via chooser
+		ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
 			gee.ExecCmdName(cmdNm, true, true) // sel, clear
 		})
 	})
@@ -1325,52 +1353,52 @@ func (ge *Gide) ExecCmd() {
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
-func (ge *Gide) ExecCmdFileNode(fn *giv.FileNode) {
+func (ge *GideView) ExecCmdFileNode(fn *giv.FileNode) {
 	lang := fn.Info.Sup
-	cmds := AvailCmds.FilterCmdNames(lang, ge.Prefs.VersCtrl)
+	cmds := gide.AvailCmds.FilterCmdNames(lang, ge.Prefs.VersCtrl)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
-		ge.ExecCmdNameFileNode(fn, CmdName(ac.Text), true, true) // sel, clearbuf
+		ge.ExecCmdNameFileNode(fn, gide.CmdName(ac.Text), true, true) // sel, clearbuf
 	})
 }
 
-// SetArgVarVals sets the ArgVar values for commands, from Gide values
-func (ge *Gide) SetArgVarVals() {
+// SetArgVarVals sets the ArgVar values for commands, from GideView values
+func (ge *GideView) SetArgVarVals() {
 	tv := ge.ActiveTextView()
 	if tv == nil || tv.Buf == nil {
-		SetArgVarVals(&ArgVarVals, "", &ge.Prefs, tv)
+		ge.ArgVals.Set("", &ge.Prefs, tv)
 	} else {
-		SetArgVarVals(&ArgVarVals, string(tv.Buf.Filename), &ge.Prefs, tv)
+		ge.ArgVals.Set(string(tv.Buf.Filename), &ge.Prefs, tv)
 	}
 }
 
 // ExecCmds executes a sequence of commands, sel = select tab, clearBuf = clear buffer
-func (ge *Gide) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
+func (ge *GideView) ExecCmds(cmdNms gide.CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdName(cmdNm, sel, clearBuf)
 	}
 }
 
 // ExecCmdsFileNode executes a sequence of commands on file node, sel = select tab, clearBuf = clear buffer
-func (ge *Gide) ExecCmdsFileNode(fn *giv.FileNode, cmdNms CmdNames, sel bool, clearBuf bool) {
+func (ge *GideView) ExecCmdsFileNode(fn *giv.FileNode, cmdNms gide.CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdNameFileNode(fn, cmdNm, sel, clearBuf)
 	}
 }
 
 // Build runs the BuildCmds set for this project
-func (ge *Gide) Build() {
+func (ge *GideView) Build() {
 	if len(ge.Prefs.BuildCmds) == 0 {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
-	ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
+	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
 		gee.ExecCmds(ge.Prefs.BuildCmds, true, true)
 	})
 }
 
 // Run runs the RunCmds set for this project
-func (ge *Gide) Run() {
+func (ge *GideView) Run() {
 	if len(ge.Prefs.RunCmds) == 0 {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, true, false, nil, nil)
 		return
@@ -1380,20 +1408,20 @@ func (ge *Gide) Run() {
 
 // Commit commits the current changes using relevant VCS tool, and updates the changelog.
 // Checks for VCS setting and
-func (ge *Gide) Commit() {
+func (ge *GideView) Commit() {
 	if ge.Prefs.VersCtrl == "" {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No VersCtrl Set", Prompt: fmt.Sprintf("You need to set the VersCtrl in the Project Preferences")}, true, false, nil, nil)
 		return
 	}
 
-	ge.SaveAllCheck(true, func(gee *Gide) { // true = cancel option
+	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
 		ge.CommitNoChecks()
 	})
 }
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
-func (ge *Gide) CommitNoChecks() {
-	cmds := AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
+func (ge *GideView) CommitNoChecks() {
+	cmds := gide.AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
 	cmdnm := ""
 	for _, cm := range cmds {
 		if strings.Contains(cm, "Commit") {
@@ -1413,10 +1441,10 @@ func (ge *Gide) CommitNoChecks() {
 			dlg := send.(*gi.Dialog)
 			if sig == int64(gi.DialogAccepted) {
 				msg := gi.StringPromptDialogValue(dlg)
-				ArgVarVals["{PromptString1}"] = msg
-				CmdNoUserPrompt = true // don't re-prompt!
-				ge.Prefs.ChangeLog.Add(ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
-				ge.ExecCmdName(CmdName(cmdnm), true, true) // must be wait
+				ge.ArgVals["{PromptString1}"] = msg
+				gide.CmdNoUserPrompt = true // don't re-prompt!
+				ge.Prefs.ChangeLog.Add(gide.ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
+				ge.ExecCmdName(gide.CmdName(cmdnm), true, true) // must be wait
 				ge.CommitUpdtLog(cmdnm)
 			}
 		})
@@ -1424,7 +1452,7 @@ func (ge *Gide) CommitNoChecks() {
 
 // CommitUpdtLog grabs info from buffer in main tabs about the commit, and
 // updates the changelog record
-func (ge *Gide) CommitUpdtLog(cmdnm string) {
+func (ge *GideView) CommitUpdtLog(cmdnm string) {
 	ctv, _ := ge.FindOrMakeMainTabTextView(cmdnm, false) // don't sel
 	if ctv == nil {
 		return
@@ -1437,13 +1465,13 @@ func (ge *Gide) CommitUpdtLog(cmdnm string) {
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
-func (ge *Gide) OpenConsoleTab() {
+func (ge *GideView) OpenConsoleTab() {
 	ctv, _ := ge.FindOrMakeMainTabTextView("Console", true)
 	ctv.SetInactive()
-	if ctv.Buf == nil || ctv.Buf != TheConsole.Buf {
-		ctv.SetBuf(TheConsole.Buf)
-		TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			gee, _ := recv.Embed(KiT_Gide).(*Gide)
+	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
+		ctv.SetBuf(gide.TheConsole.Buf)
+		gide.TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			gee, _ := recv.Embed(KiT_GideView).(*GideView)
 			gee.SelectMainTabByName("Console")
 		})
 	}
@@ -1454,14 +1482,14 @@ func (ge *Gide) OpenConsoleTab() {
 
 // CursorToHistPrev moves cursor to previous position on history list --
 // returns true if moved
-func (ge *Gide) CursorToHistPrev() bool {
+func (ge *GideView) CursorToHistPrev() bool {
 	tv := ge.ActiveTextView()
 	return tv.CursorToHistPrev()
 }
 
 // CursorToHistNext moves cursor to next position on history list --
 // returns true if moved
-func (ge *Gide) CursorToHistNext() bool {
+func (ge *GideView) CursorToHistNext() bool {
 	tv := ge.ActiveTextView()
 	return tv.CursorToHistNext()
 }
@@ -1471,7 +1499,7 @@ func (ge *Gide) CursorToHistNext() bool {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs []filecat.Supported) {
+func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, langs []filecat.Supported) {
 	if find == "" {
 		return
 	}
@@ -1480,8 +1508,8 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs []fi
 	ge.Prefs.Find.Loc = loc
 
 	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
-	fvi, _ := ge.FindOrMakeMainTab("Find", KiT_FindView, true) // sel
-	fv := fvi.Embed(KiT_FindView).(*FindView)
+	fvi, _ := ge.FindOrMakeMainTab("Find", gide.KiT_FindView, true) // sel
+	fv := fvi.Embed(gide.KiT_FindView).(*gide.FindView)
 	fv.UpdateView(ge)
 	fv.Time = time.Now()
 	ftv := fv.TextView()
@@ -1500,14 +1528,14 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs []fi
 		adir, _ = filepath.Split(string(ond.FPath))
 	}
 
-	var res []FileSearchResults
-	if loc == FindLocFile {
+	var res []gide.FileSearchResults
+	if loc == gide.FindLocFile {
 		if got {
 			cnt, matches := atv.Buf.Search([]byte(find), ignoreCase)
-			res = append(res, FileSearchResults{ond, cnt, matches})
+			res = append(res, gide.FileSearchResults{ond, cnt, matches})
 		}
 	} else {
-		res = FileTreeSearch(root, find, ignoreCase, loc, adir, langs)
+		res = gide.FileTreeSearch(root, find, ignoreCase, loc, adir, langs)
 	}
 
 	outlns := make([][]byte, 0, 100)
@@ -1549,10 +1577,10 @@ func (ge *Gide) Find(find, repl string, ignoreCase bool, loc FindLoc, langs []fi
 }
 
 // Spell checks spelling in files
-func (ge *Gide) Spell() {
+func (ge *GideView) Spell() {
 	fbuf, _ := ge.FindOrMakeCmdBuf("Spell", true)
-	svi, _ := ge.FindOrMakeMainTab("Spell", KiT_SpellView, true) // sel
-	sv := svi.Embed(KiT_SpellView).(*SpellView)
+	svi, _ := ge.FindOrMakeMainTab("Spell", gide.KiT_SpellView, true) // sel
+	sv := svi.Embed(gide.KiT_SpellView).(*gide.SpellView)
 	sv.UpdateView(ge, ge.Prefs.Spell)
 	stv := sv.TextView()
 	stv.SetInactive()
@@ -1578,7 +1606,7 @@ func (ge *Gide) Spell() {
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (ge *Gide) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool) {
+func (ge *GideView) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindView OpenFindURL parse err: %v\n", err)
@@ -1605,27 +1633,27 @@ func (ge *Gide) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView
 }
 
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
-func (ge *Gide) OpenFindURL(ur string, ftv *giv.TextView) bool {
-	fvk, ok := ftv.ParentByType(KiT_FindView, true)
+func (ge *GideView) OpenFindURL(ur string, ftv *giv.TextView) bool {
+	fvk, ok := ftv.ParentByType(gide.KiT_FindView, true)
 	if !ok {
 		return false
 	}
-	fv := fvk.(*FindView)
+	fv := fvk.(*gide.FindView)
 	return fv.OpenFindURL(ur, ftv)
 }
 
 // OpenSpellURL opens given spell:/// url from Spell -- delegates to SpellView
-func (ge *Gide) OpenSpellURL(ur string, stv *giv.TextView) bool {
-	svk, ok := stv.ParentByType(KiT_SpellView, true)
+func (ge *GideView) OpenSpellURL(ur string, stv *giv.TextView) bool {
+	svk, ok := stv.ParentByType(gide.KiT_SpellView, true)
 	if !ok {
 		return false
 	}
-	fv := svk.(*SpellView)
+	fv := svk.(*gide.SpellView)
 	return fv.OpenSpellURL(ur, stv)
 }
 
 // ReplaceInActive does query-replace in active file only
-func (ge *Gide) ReplaceInActive() {
+func (ge *GideView) ReplaceInActive() {
 	tv := ge.ActiveTextView()
 	tv.QReplacePrompt()
 }
@@ -1635,7 +1663,7 @@ func (ge *Gide) ReplaceInActive() {
 
 // RegisterCopy saves current selection in active text view to register of given name
 // returns true if saved
-func (ge *Gide) RegisterCopy(name string) bool {
+func (ge *GideView) RegisterCopy(name string) bool {
 	if name == "" {
 		return false
 	}
@@ -1647,23 +1675,23 @@ func (ge *Gide) RegisterCopy(name string) bool {
 	if sel == nil {
 		return false
 	}
-	if AvailRegisters == nil {
-		AvailRegisters = make(Registers, 100)
+	if gide.AvailRegisters == nil {
+		gide.AvailRegisters = make(gide.Registers, 100)
 	}
-	AvailRegisters[name] = string(sel.ToBytes())
-	AvailRegisters.SavePrefs()
-	ge.Prefs.Register = RegisterName(name)
+	gide.AvailRegisters[name] = string(sel.ToBytes())
+	gide.AvailRegisters.SavePrefs()
+	ge.Prefs.Register = gide.RegisterName(name)
 	tv.SelectReset()
 	return true
 }
 
 // RegisterPaste pastes register of given name into active text view
 // returns true if pasted
-func (ge *Gide) RegisterPaste(name RegisterName) bool {
+func (ge *GideView) RegisterPaste(name gide.RegisterName) bool {
 	if name == "" {
 		return false
 	}
-	str, ok := AvailRegisters[string(name)]
+	str, ok := gide.AvailRegisters[string(name)]
 	if !ok {
 		return false
 	}
@@ -1679,7 +1707,7 @@ func (ge *Gide) RegisterPaste(name RegisterName) bool {
 // CommentOut comments-out selected lines in active text view
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
-func (ge *Gide) CommentOut() bool {
+func (ge *GideView) CommentOut() bool {
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return false
@@ -1699,7 +1727,7 @@ func (ge *Gide) CommentOut() bool {
 }
 
 // Indent indents selected lines in active view
-func (ge *Gide) Indent() bool {
+func (ge *GideView) Indent() bool {
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return false
@@ -1718,7 +1746,7 @@ func (ge *Gide) Indent() bool {
 //    StatusBar
 
 // SetStatus updates the statusbar label with given message, along with other status info
-func (ge *Gide) SetStatus(msg string) {
+func (ge *GideView) SetStatus(msg string) {
 	sb := ge.StatusBar()
 	if sb == nil {
 		return
@@ -1758,17 +1786,17 @@ func (ge *Gide) SetStatus(msg string) {
 //    Defaults, Prefs
 
 // Defaults sets new project defaults based on overall preferences
-func (ge *Gide) Defaults() {
-	ge.Prefs.Files = Prefs.Files
-	ge.Prefs.Editor = Prefs.Editor
+func (ge *GideView) Defaults() {
+	ge.Prefs.Files = gide.Prefs.Files
+	ge.Prefs.Editor = gide.Prefs.Editor
 	ge.Prefs.Splits = []float32{.1, .325, .325, .25, 0}
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	ge.Files.NodeType = KiT_FileNode
+	ge.Files.NodeType = gide.KiT_FileNode
 }
 
 // GrabPrefs grabs the current project preference settings from various
 // places, e.g., prior to saving or editing.
-func (ge *Gide) GrabPrefs() {
+func (ge *GideView) GrabPrefs() {
 	sv := ge.SplitView()
 	if sv != nil {
 		ge.Prefs.Splits = sv.Splits
@@ -1778,12 +1806,12 @@ func (ge *Gide) GrabPrefs() {
 
 // ApplyPrefs applies current project preference settings into places where
 // they are used -- only for those done prior to loading
-func (ge *Gide) ApplyPrefs() {
+func (ge *GideView) ApplyPrefs() {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	histyle.StyleDefault = Prefs.HiStyle
+	histyle.StyleDefault = gide.Prefs.HiStyle
 	sv := ge.SplitView()
 	if sv != nil {
 		for i := 0; i < NTextViews; i++ {
@@ -1802,27 +1830,27 @@ func (ge *Gide) ApplyPrefs() {
 }
 
 // ApplyPrefsAction applies current preferences to the project, and updates the project
-func (ge *Gide) ApplyPrefsAction() {
+func (ge *GideView) ApplyPrefsAction() {
 	ge.ApplyPrefs()
 	ge.SetFullReRender()
 	ge.UpdateProj()
 }
 
-// ProjPrefs allows editing of project preferences (settings specific to this project)
-func (ge *Gide) ProjPrefs() {
-	sv, _ := ProjPrefsView(&ge.Prefs)
+// EditProjPrefs allows editing of project preferences (settings specific to this project)
+func (ge *GideView) EditProjPrefs() {
+	sv, _ := gide.ProjPrefsView(&ge.Prefs)
 	// we connect to changes and apply them
 	sv.ViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		gee, _ := recv.Embed(KiT_Gide).(*Gide)
+		gee, _ := recv.Embed(KiT_GideView).(*GideView)
 		gee.ApplyPrefsAction()
 	})
 }
 
 // SplitsSetView sets split view splitters to given named setting
-func (ge *Gide) SplitsSetView(split SplitName) {
+func (ge *GideView) SplitsSetView(split gide.SplitName) {
 	sv := ge.SplitView()
 	if sv != nil {
-		sp, _, ok := AvailSplits.SplitByName(split)
+		sp, _, ok := gide.AvailSplits.SplitByName(split)
 		if ok {
 			sv.SetSplitsAction(sp.Splits...)
 			ge.Prefs.SplitName = split
@@ -1835,34 +1863,34 @@ func (ge *Gide) SplitsSetView(split SplitName) {
 
 // SplitsSave saves current splitter settings to named splitter settings under
 // existing name, and saves to prefs file
-func (ge *Gide) SplitsSave(split SplitName) {
+func (ge *GideView) SplitsSave(split gide.SplitName) {
 	sv := ge.SplitView()
 	if sv != nil {
-		sp, _, ok := AvailSplits.SplitByName(split)
+		sp, _, ok := gide.AvailSplits.SplitByName(split)
 		if ok {
 			sp.SaveSplits(sv.Splits)
-			AvailSplits.SavePrefs()
+			gide.AvailSplits.SavePrefs()
 		}
 	}
 }
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (ge *Gide) SplitsSaveAs(name, desc string) {
+func (ge *GideView) SplitsSaveAs(name, desc string) {
 	sv := ge.SplitView()
 	if sv != nil {
-		AvailSplits.Add(name, desc, sv.Splits)
-		AvailSplits.SavePrefs()
+		gide.AvailSplits.Add(name, desc, sv.Splits)
+		gide.AvailSplits.SavePrefs()
 	}
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (ge *Gide) SplitsEdit() {
-	SplitsView(&AvailSplits)
+func (ge *GideView) SplitsEdit() {
+	gide.SplitsView(&gide.AvailSplits)
 }
 
 // HelpWiki opens wiki page for gide on github
-func (ge *Gide) HelpWiki() {
+func (ge *GideView) HelpWiki() {
 	oswin.TheApp.OpenURL("https://github.com/goki/gide/wiki")
 }
 
@@ -1871,7 +1899,7 @@ func (ge *Gide) HelpWiki() {
 
 // StdFrameConfig returns a TypeAndNameList for configuring a standard Frame
 // -- can modify as desired before calling ConfigChildren on Frame using this
-func (ge *Gide) StdFrameConfig() kit.TypeAndNameList {
+func (ge *GideView) StdFrameConfig() kit.TypeAndNameList {
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
@@ -1881,7 +1909,7 @@ func (ge *Gide) StdFrameConfig() kit.TypeAndNameList {
 
 // StdConfig configures a standard setup of the overall Frame -- returns mods,
 // updt from ConfigChildren and does NOT call UpdateEnd
-func (ge *Gide) StdConfig() (mods, updt bool) {
+func (ge *GideView) StdConfig() (mods, updt bool) {
 	ge.Lay = gi.LayoutVert
 	ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ge.StdFrameConfig()
@@ -1890,7 +1918,7 @@ func (ge *Gide) StdConfig() (mods, updt bool) {
 }
 
 // SplitView returns the main SplitView
-func (ge *Gide) SplitView() *gi.SplitView {
+func (ge *GideView) SplitView() *gi.SplitView {
 	svi, ok := ge.ChildByName("splitview", 2)
 	if !ok {
 		return nil
@@ -1899,7 +1927,7 @@ func (ge *Gide) SplitView() *gi.SplitView {
 }
 
 // FileTree returns the main FileTree
-func (ge *Gide) FileTree() *giv.TreeView {
+func (ge *GideView) FileTree() *giv.TreeView {
 	split := ge.SplitView()
 	if split != nil {
 		tv := split.KnownChild(FileTreeIdx).KnownChild(0).(*giv.TreeView)
@@ -1909,9 +1937,9 @@ func (ge *Gide) FileTree() *giv.TreeView {
 }
 
 // TextViewByIndex returns the TextView by index (0 or 1), nil if not found
-func (ge *Gide) TextViewByIndex(idx int) *giv.TextView {
+func (ge *GideView) TextViewByIndex(idx int) *giv.TextView {
 	if idx < 0 || idx >= NTextViews {
-		log.Printf("Gide: text view index out of range: %v\n", idx)
+		log.Printf("GideView: text view index out of range: %v\n", idx)
 		return nil
 	}
 	split := ge.SplitView()
@@ -1923,7 +1951,7 @@ func (ge *Gide) TextViewByIndex(idx int) *giv.TextView {
 }
 
 // MainTabs returns the main TabView
-func (ge *Gide) MainTabs() *gi.TabView {
+func (ge *GideView) MainTabs() *gi.TabView {
 	split := ge.SplitView()
 	if split != nil {
 		tv := split.KnownChild(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
@@ -1933,7 +1961,7 @@ func (ge *Gide) MainTabs() *gi.TabView {
 }
 
 // VisTabs returns the second, visualization TabView
-func (ge *Gide) VisTabs() *gi.TabView {
+func (ge *GideView) VisTabs() *gi.TabView {
 	split := ge.SplitView()
 	if split != nil {
 		tv := split.KnownChild(VisTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
@@ -1943,7 +1971,7 @@ func (ge *Gide) VisTabs() *gi.TabView {
 }
 
 // ToolBar returns the main toolbar
-func (ge *Gide) ToolBar() *gi.ToolBar {
+func (ge *GideView) ToolBar() *gi.ToolBar {
 	tbi, ok := ge.ChildByName("toolbar", 2)
 	if !ok {
 		return nil
@@ -1952,7 +1980,7 @@ func (ge *Gide) ToolBar() *gi.ToolBar {
 }
 
 // StatusBar returns the statusbar widget
-func (ge *Gide) StatusBar() *gi.Frame {
+func (ge *GideView) StatusBar() *gi.Frame {
 	tbi, ok := ge.ChildByName("statusbar", 2)
 	if !ok {
 		return nil
@@ -1961,7 +1989,7 @@ func (ge *Gide) StatusBar() *gi.Frame {
 }
 
 // StatusLabel returns the statusbar label widget
-func (ge *Gide) StatusLabel() *gi.Label {
+func (ge *GideView) StatusLabel() *gi.Label {
 	sb := ge.StatusBar()
 	if sb != nil {
 		return sb.KnownChild(0).Embed(gi.KiT_Label).(*gi.Label)
@@ -1970,7 +1998,7 @@ func (ge *Gide) StatusLabel() *gi.Label {
 }
 
 // ConfigStatusBar configures statusbar with label
-func (ge *Gide) ConfigStatusBar() {
+func (ge *GideView) ConfigStatusBar() {
 	sb := ge.StatusBar()
 	if sb == nil || sb.HasChildren() {
 		return
@@ -1989,8 +2017,8 @@ func (ge *Gide) ConfigStatusBar() {
 	lbl.SetProp("tab-size", 4)
 }
 
-// ConfigToolbar adds a Gide toolbar.
-func (ge *Gide) ConfigToolbar() {
+// ConfigToolbar adds a GideView toolbar.
+func (ge *GideView) ConfigToolbar() {
 	tb := ge.ToolBar()
 	if tb.HasChildren() {
 		return
@@ -2000,7 +2028,7 @@ func (ge *Gide) ConfigToolbar() {
 }
 
 // SplitViewConfig returns a TypeAndNameList for configuring the SplitView
-func (ge *Gide) SplitViewConfig() kit.TypeAndNameList {
+func (ge *GideView) SplitViewConfig() kit.TypeAndNameList {
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_Frame, "filetree")
 	for i := 0; i < NTextViews; i++ {
@@ -2017,7 +2045,7 @@ var fnFolderProps = ki.Props{
 }
 
 // ConfigSplitView configures the SplitView.
-func (ge *Gide) ConfigSplitView() {
+func (ge *GideView) ConfigSplitView() {
 	split := ge.SplitView()
 	if split == nil {
 		return
@@ -2030,14 +2058,14 @@ func (ge *Gide) ConfigSplitView() {
 	if mods {
 		ftfr := split.KnownChild(FileTreeIdx).(*gi.Frame)
 		if !ftfr.HasChildren() {
-			ft := ftfr.AddNewChild(KiT_FileTreeView, "filetree").(*FileTreeView)
+			ft := ftfr.AddNewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
 			ft.SetRootNode(&ge.Files)
 			ft.TreeViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				if data == nil {
 					return
 				}
-				tvn, _ := data.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-				gee, _ := recv.Embed(KiT_Gide).(*Gide)
+				tvn, _ := data.(ki.Ki).Embed(gide.KiT_FileTreeView).(*gide.FileTreeView)
+				gee, _ := recv.Embed(KiT_GideView).(*GideView)
 				if tvn.SrcNode.Ptr != nil {
 					fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
 					switch sig {
@@ -2060,7 +2088,7 @@ func (ge *Gide) ConfigSplitView() {
 			if !txly.HasChildren() {
 				ted := txly.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
 				ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-					gee, _ := recv.Embed(KiT_Gide).(*Gide)
+					gee, _ := recv.Embed(KiT_GideView).(*GideView)
 					tee := send.Embed(giv.KiT_TextView).(*giv.TextView)
 					gee.TextViewSig(tee, giv.TextViewSignals(sig))
 				})
@@ -2069,7 +2097,7 @@ func (ge *Gide) ConfigSplitView() {
 
 		mtab := split.KnownChild(MainTabsIdx).(*gi.TabView)
 		mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			gee, _ := recv.Embed(KiT_Gide).(*Gide)
+			gee, _ := recv.Embed(KiT_GideView).(*GideView)
 			tvsig := gi.TabViewSignals(sig)
 			switch tvsig {
 			case gi.TabDeleted:
@@ -2092,7 +2120,7 @@ func (ge *Gide) ConfigSplitView() {
 			txed.SetProp("white-space", gi.WhiteSpacePre)
 		}
 		txed.SetProp("tab-size", ge.Prefs.Editor.TabSize)
-		txed.SetProp("font-family", Prefs.FontFamily)
+		txed.SetProp("font-family", gide.Prefs.FontFamily)
 	}
 
 	// set some properties always, even if no mods
@@ -2100,7 +2128,7 @@ func (ge *Gide) ConfigSplitView() {
 }
 
 // FileNodeSelected is called whenever tree browser has file node selected
-func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *FileTreeView) {
+func (ge *GideView) FileNodeSelected(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	// if fn.IsDir() {
 	// } else {
 	// }
@@ -2111,7 +2139,7 @@ func (ge *Gide) FileNodeSelected(fn *giv.FileNode, tvn *FileTreeView) {
 var BigFileSize = 10000000 // 10Mb?
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
-func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
+func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	// todo: could add all these options in LangOpts
 	switch fn.Info.Cat {
 	case filecat.Folder:
@@ -2121,25 +2149,25 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
 		}
 	case filecat.Exe:
 		ge.SetArgVarVals()
-		ArgVarVals["{PromptString1}"] = string(fn.FPath)
-		CmdNoUserPrompt = true                            // don't re-prompt!
-		ge.ExecCmdName(CmdName("Run Prompt"), true, true) // sel, clear
+		ge.ArgVals["{PromptString1}"] = string(fn.FPath)
+		gide.CmdNoUserPrompt = true                            // don't re-prompt!
+		ge.ExecCmdName(gide.CmdName("Run Prompt"), true, true) // sel, clear
 	case filecat.Font:
 		fallthrough
 	case filecat.Video:
 		fallthrough
 	case filecat.Audio:
-		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
 	case filecat.Sheet:
-		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
 	case filecat.Bin:
 		// todo: prompt??
-		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
 	case filecat.Archive:
-		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
 	case filecat.Image:
 		// todo: handle various image types in visualizer natively..
-		ge.ExecCmdNameFileNode(fn, CmdName("Open File"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
 	default:
 		// program, document, data
 		if int(fn.Info.Size) > BigFileSize {
@@ -2161,7 +2189,7 @@ func (ge *Gide) FileNodeOpened(fn *giv.FileNode, tvn *FileTreeView) {
 }
 
 // FileNodeClosed is called whenever file tree browser node is closed
-func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *FileTreeView) {
+func (ge *GideView) FileNodeClosed(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	if fn.IsDir() {
 		if fn.IsOpen() {
 			fn.CloseDir()
@@ -2169,17 +2197,17 @@ func (ge *Gide) FileNodeClosed(fn *giv.FileNode, tvn *FileTreeView) {
 	}
 }
 
-func (ge *Gide) GideKeys(kt *key.ChordEvent) {
-	var kf KeyFuns
+func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
+	var kf gide.KeyFuns
 	kc := kt.Chord()
 	if gi.KeyEventTrace {
-		fmt.Printf("Gide KeyInput: %v\n", ge.PathUnique())
+		fmt.Printf("GideView KeyInput: %v\n", ge.PathUnique())
 	}
 	gkf := gi.KeyFun(kc)
 	if ge.KeySeq1 != "" {
-		kf = KeyFun(ge.KeySeq1, kc)
+		kf = gide.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
-		if kf == KeyFunNil || kc == "Escape" {
+		if kf == gide.KeyFunNil || kc == "Escape" {
 			if gi.KeyEventTrace {
 				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
 			}
@@ -2192,8 +2220,8 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 		ge.KeySeq1 = ""
 		gkf = gi.KeyFunNil // override!
 	} else {
-		kf = KeyFun(kc, "")
-		if kf == KeyFunNeeds2 {
+		kf = gide.KeyFun(kc, "")
+		if kf == gide.KeyFunNeeds2 {
 			kt.SetProcessed()
 			ge.KeySeq1 = kt.Chord()
 			ge.SetStatus(string(ge.KeySeq1))
@@ -2201,7 +2229,7 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
 			}
 			return
-		} else if kf != KeyFunNil {
+		} else if kf != gide.KeyFunNil {
 			if gi.KeyEventTrace {
 				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
@@ -2222,72 +2250,72 @@ func (ge *Gide) GideKeys(kt *key.ChordEvent) {
 		return
 	}
 	switch kf {
-	case KeyFunNextPanel:
+	case gide.KeyFunNextPanel:
 		kt.SetProcessed()
 		ge.FocusNextPanel()
-	case KeyFunPrevPanel:
+	case gide.KeyFunPrevPanel:
 		kt.SetProcessed()
 		ge.FocusPrevPanel()
-	case KeyFunFileOpen:
+	case gide.KeyFunFileOpen:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "ViewFile", ge.Viewport)
-	case KeyFunBufSelect:
+	case gide.KeyFunBufSelect:
 		kt.SetProcessed()
 		ge.SelectOpenNode()
-	case KeyFunBufClone:
+	case gide.KeyFunBufClone:
 		kt.SetProcessed()
 		ge.CloneActiveView()
-	case KeyFunBufSave:
+	case gide.KeyFunBufSave:
 		kt.SetProcessed()
 		ge.SaveActiveView()
-	case KeyFunBufSaveAs:
+	case gide.KeyFunBufSaveAs:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport)
-	case KeyFunBufClose:
+	case gide.KeyFunBufClose:
 		kt.SetProcessed()
 		ge.CloseActiveView()
-	case KeyFunExecCmd:
+	case gide.KeyFunExecCmd:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "ExecCmd", ge.Viewport)
-	case KeyFunRegCopy:
+	case gide.KeyFunRegCopy:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "RegisterCopy", ge.Viewport)
-	case KeyFunRegPaste:
+	case gide.KeyFunRegPaste:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "RegisterPaste", ge.Viewport)
-	case KeyFunCommentOut:
+	case gide.KeyFunCommentOut:
 		kt.SetProcessed()
 		ge.CommentOut()
-	case KeyFunIndent:
+	case gide.KeyFunIndent:
 		kt.SetProcessed()
 		ge.Indent()
-	case KeyFunJump:
+	case gide.KeyFunJump:
 		kt.SetProcessed()
 		tv := ge.ActiveTextView()
 		tv.JumpToLinePrompt()
 		ge.Indent()
-	case KeyFunSetSplit:
+	case gide.KeyFunSetSplit:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "SplitsSetView", ge.Viewport)
-	case KeyFunBuildProj:
+	case gide.KeyFunBuildProj:
 		kt.SetProcessed()
 		ge.Build()
-	case KeyFunRunProj:
+	case gide.KeyFunRunProj:
 		kt.SetProcessed()
 		ge.Run()
 	}
 }
 
-func (ge *Gide) KeyChordEvent() {
+func (ge *GideView) KeyChordEvent() {
 	// need hipri to prevent 2-seq guys from being captured by others
 	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d interface{}) {
-		gee := recv.Embed(KiT_Gide).(*Gide)
+		gee := recv.Embed(KiT_GideView).(*GideView)
 		kt := d.(*key.ChordEvent)
-		gee.GideKeys(kt)
+		gee.GideViewKeys(kt)
 	})
 }
 
-func (ge *Gide) Render2D() {
+func (ge *GideView) Render2D() {
 	ge.ToolBar().UpdateActions()
 	if win := ge.ParentWindow(); win != nil {
 		sv := ge.SplitView()
@@ -2301,20 +2329,20 @@ func (ge *Gide) Render2D() {
 	ge.Frame.Render2D()
 }
 
-func (ge *Gide) ConnectEvents2D() {
+func (ge *GideView) ConnectEvents2D() {
 	if ge.HasAnyScroll() {
 		ge.LayoutScrollEvents()
 	}
 	ge.KeyChordEvent()
 }
 
-// GideInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
-var GideInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
-	ge := gei.(ki.Ki).Embed(KiT_Gide).(*Gide)
+// GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
+var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
+	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	act.SetInactiveState(ge.IsEmpty())
 })
 
-var GideProps = ki.Props{
+var GideViewProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
 	"max-width":        -1,
@@ -2336,7 +2364,7 @@ var GideProps = ki.Props{
 			"icon":  "file-open",
 			"desc":  "open a file in current active text view",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-				return key.Chord(ChordForFun(KeyFunFileOpen).String())
+				return key.Chord(gide.ChordForFun(gide.KeyFunFileOpen).String())
 			}),
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
@@ -2349,7 +2377,7 @@ var GideProps = ki.Props{
 			"desc":  "save active text view file to its current filename",
 			"icon":  "file-save",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-				return key.Chord(ChordForFun(KeyFunBufSave).String())
+				return key.Chord(gide.ChordForFun(gide.KeyFunBufSave).String())
 			}),
 		}},
 		{"SaveActiveViewAs", ki.Props{
@@ -2357,7 +2385,7 @@ var GideProps = ki.Props{
 			"icon":  "file-save",
 			"desc":  "save active text view file to a new filename",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-				return key.Chord(ChordForFun(KeyFunBufSaveAs).String())
+				return key.Chord(gide.ChordForFun(gide.KeyFunBufSaveAs).String())
 			}),
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
@@ -2369,9 +2397,9 @@ var GideProps = ki.Props{
 			"icon":         "file-text",
 			"label":        "Edit",
 			"desc":         "select an open file to view in active text view",
-			"submenu-func": giv.SubMenuFunc(GideOpenNodes),
+			"submenu-func": giv.SubMenuFunc(GideViewOpenNodes),
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-				return key.Chord(ChordForFun(KeyFunBufSelect).String())
+				return key.Chord(gide.ChordForFun(gide.KeyFunBufSelect).String())
 			}),
 			"Args": ki.PropSlice{
 				{"Node Name", ki.Props{}},
@@ -2429,14 +2457,14 @@ var GideProps = ki.Props{
 			"icon":    "terminal",
 			"tooltip": "build the project -- command(s) specified in Project Prefs",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-				return key.Chord(ChordForFun(KeyFunBuildProj).String())
+				return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
 			}),
 		}},
 		{"Run", ki.Props{
 			"icon":    "terminal",
 			"tooltip": "run the project -- command(s) specified in Project Prefs",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-				return key.Chord(ChordForFun(KeyFunRunProj).String())
+				return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 			}),
 		}},
 		{"Commit", ki.Props{
@@ -2448,7 +2476,7 @@ var GideProps = ki.Props{
 			"desc":         "execute given command on active file / directory / project",
 			"submenu-func": giv.SubMenuFunc(ExecCmds),
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-				return key.Chord(ChordForFun(KeyFunExecCmd).String())
+				return key.Chord(gide.ChordForFun(gide.KeyFunExecCmd).String())
 			}),
 			"Args": ki.PropSlice{
 				{"Cmd Name", ki.Props{}},
@@ -2458,7 +2486,7 @@ var GideProps = ki.Props{
 		{"Splits", ki.PropSlice{
 			{"SplitsSetView", ki.Props{
 				"label":   "Set View",
-				"submenu": &AvailSplitNames,
+				"submenu": &gide.AvailSplitNames,
 				"Args": ki.PropSlice{
 					{"Split Name", ki.Props{
 						"default-field": "Prefs.SplitName",
@@ -2479,7 +2507,7 @@ var GideProps = ki.Props{
 			}},
 			{"SplitsSave", ki.Props{
 				"label":   "Save",
-				"submenu": &AvailSplitNames,
+				"submenu": &gide.AvailSplitNames,
 				"Args": ki.PropSlice{
 					{"Split Name", ki.Props{
 						"default-field": "Prefs.SplitName",
@@ -2495,7 +2523,7 @@ var GideProps = ki.Props{
 		{"AppMenu", ki.BlankProp{}},
 		{"File", ki.PropSlice{
 			{"OpenRecent", ki.Props{
-				"submenu": &SavedPaths,
+				"submenu": &gide.SavedPaths,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
@@ -2522,7 +2550,7 @@ var GideProps = ki.Props{
 				{"NewProj", ki.Props{
 					"shortcut": "Command+N",
 					"label":    "New Project...",
-					"desc":     "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all Gide projects are basically folders with files.  You can also specify the main language and {version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
+					"desc":     "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all GideView projects are basically folders with files.  You can also specify the main language and {version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
 					"Args": ki.PropSlice{
 						{"Parent Folder", ki.Props{
 							"dirs-only":     true, // todo: support
@@ -2548,13 +2576,13 @@ var GideProps = ki.Props{
 			{"SaveProj", ki.Props{
 				// "shortcut": "Command+S",
 				"label":    "Save Project",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"SaveProjAs", ki.Props{
 				// "shortcut": "Shift+Command+S",
 				"label":    "Save Project As...",
 				"desc":     "Save project to given file name -- this is the .gide file containing preferences and current settings -- also saves all open files -- once saved, further saving is automatic",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
 						"default-field": "ProjFilename",
@@ -2569,9 +2597,9 @@ var GideProps = ki.Props{
 			{"ViewFile", ki.Props{
 				"label": "Open File...",
 				"shortcut-func": func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunFileOpen).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunFileOpen).String())
 				},
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
@@ -2579,16 +2607,16 @@ var GideProps = ki.Props{
 			{"SaveActiveView", ki.Props{
 				"label": "Save File",
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunBufSave).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunBufSave).String())
 				}),
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"SaveActiveViewAs", ki.Props{
 				"label":    "Save File As...",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"desc":     "save active text view file to a new filename",
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunBufSaveAs).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunBufSaveAs).String())
 				}),
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
@@ -2600,19 +2628,19 @@ var GideProps = ki.Props{
 				"desc":     "Revert active file to last saved version: this will lose all active changes -- are you sure?",
 				"confirm":  true,
 				"label":    "Revert File...",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"CloseActiveView", ki.Props{
 				"label":    "Close File",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunBufClose).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunBufClose).String())
 				}),
 			}},
 			{"sep-prefs", ki.BlankProp{}},
-			{"ProjPrefs", ki.Props{
+			{"EditProjPrefs", ki.Props{
 				"label":    "Project Prefs...",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
@@ -2635,9 +2663,9 @@ var GideProps = ki.Props{
 					"label": "Copy...",
 					"desc":  "save currently-selected text to a named register, which can be pasted later -- persistent across sessions as well",
 					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(ChordForFun(KeyFunRegCopy).String())
+						return key.Chord(gide.ChordForFun(gide.KeyFunRegCopy).String())
 					}),
-					"updtfunc": GideInactiveEmptyFunc,
+					"updtfunc": GideViewInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Register Name", ki.Props{}},
 					},
@@ -2646,9 +2674,9 @@ var GideProps = ki.Props{
 					"label": "Paste...",
 					"desc":  "paste text from named register",
 					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(ChordForFun(KeyFunRegPaste).String())
+						return key.Chord(gide.ChordForFun(gide.KeyFunRegPaste).String())
 					}),
-					"updtfunc": GideInactiveEmptyFunc,
+					"updtfunc": GideViewInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Register Name", ki.Props{
 							"default-field": "Prefs.Register",
@@ -2668,7 +2696,7 @@ var GideProps = ki.Props{
 				"label":    "Find...",
 				"shortcut": gi.KeyFunFind,
 				"desc":     "Find / replace in all open folders in file browser",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"Search For", ki.Props{
 						"default-field": "Prefs.Find.Find",
@@ -2698,28 +2726,28 @@ var GideProps = ki.Props{
 				"label":    "Replace In Active...",
 				"shortcut": gi.KeyFunReplace,
 				"desc":     "query-replace in current active text view only (use Find for multi-file)",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"Spell", ki.Props{
 				"label":    "Spelling...",
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"ShowCompletions", ki.Props{
 				"keyfun":   gi.KeyFunComplete,
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"sep-adv", ki.BlankProp{}},
 			{"CommentOut", ki.Props{
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunCommentOut).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunCommentOut).String())
 				}),
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"Indent", ki.Props{
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunIndent).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunIndent).String())
 				}),
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 		}},
 		{"View", ki.PropSlice{
@@ -2727,30 +2755,30 @@ var GideProps = ki.Props{
 				{"FocusNextPanel", ki.Props{
 					"label": "Focus Next",
 					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(ChordForFun(KeyFunNextPanel).String())
+						return key.Chord(gide.ChordForFun(gide.KeyFunNextPanel).String())
 					}),
-					"updtfunc": GideInactiveEmptyFunc,
+					"updtfunc": GideViewInactiveEmptyFunc,
 				}},
 				{"FocusPrevPanel", ki.Props{
 					"label": "Focus Prev",
 					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(ChordForFun(KeyFunPrevPanel).String())
+						return key.Chord(gide.ChordForFun(gide.KeyFunPrevPanel).String())
 					}),
-					"updtfunc": GideInactiveEmptyFunc,
+					"updtfunc": GideViewInactiveEmptyFunc,
 				}},
 				{"CloneActiveView", ki.Props{
 					"label": "Clone Active",
 					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(ChordForFun(KeyFunBufClone).String())
+						return key.Chord(gide.ChordForFun(gide.KeyFunBufClone).String())
 					}),
-					"updtfunc": GideInactiveEmptyFunc,
+					"updtfunc": GideViewInactiveEmptyFunc,
 				}},
 			}},
 			{"Splits", ki.PropSlice{
 				{"SplitsSetView", ki.Props{
 					"label":    "Set View",
-					"submenu":  &AvailSplitNames,
-					"updtfunc": GideInactiveEmptyFunc,
+					"submenu":  &gide.AvailSplitNames,
+					"updtfunc": GideViewInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Split Name", ki.Props{}},
 					},
@@ -2758,7 +2786,7 @@ var GideProps = ki.Props{
 				{"SplitsSaveAs", ki.Props{
 					"label":    "Save As...",
 					"desc":     "save current splitter values to a new named split configuration",
-					"updtfunc": GideInactiveEmptyFunc,
+					"updtfunc": GideViewInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Name", ki.Props{
 							"width": 60,
@@ -2770,19 +2798,19 @@ var GideProps = ki.Props{
 				}},
 				{"SplitsSave", ki.Props{
 					"label":    "Save",
-					"submenu":  &AvailSplitNames,
-					"updtfunc": GideInactiveEmptyFunc,
+					"submenu":  &gide.AvailSplitNames,
+					"updtfunc": GideViewInactiveEmptyFunc,
 					"Args": ki.PropSlice{
 						{"Split Name", ki.Props{}},
 					},
 				}},
 				{"SplitsEdit", ki.Props{
-					"updtfunc": GideInactiveEmptyFunc,
+					"updtfunc": GideViewInactiveEmptyFunc,
 					"label":    "Edit...",
 				}},
 			}},
 			{"OpenConsoleTab", ki.Props{
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 		}},
 		{"Navigate", ki.PropSlice{
@@ -2800,30 +2828,30 @@ var GideProps = ki.Props{
 		}},
 		{"Command", ki.PropSlice{
 			{"Build", ki.Props{
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunBuildProj).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
 				}),
 			}},
 			{"Run", ki.Props{
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(ChordForFun(KeyFunRunProj).String())
+					return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 				}),
 			}},
 			{"Commit", ki.Props{
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"ExecCmdNameActive", ki.Props{
 				"label":        "Exec Cmd",
 				"submenu-func": giv.SubMenuFunc(ExecCmds),
-				"updtfunc":     GideInactiveEmptyFunc,
+				"updtfunc":     GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"Cmd Name", ki.Props{}},
 				},
 			}},
 			{"DiffFiles", ki.Props{
-				"updtfunc": GideInactiveEmptyFunc,
+				"updtfunc": GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"File Name 1", ki.Props{}},
 					{"File Name 2", ki.Props{}},
@@ -2857,24 +2885,24 @@ var GideProps = ki.Props{
 
 func init() {
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
-		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
+		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "GideView Preferences..."},
 			win, func(recv, send ki.Ki, sig int64, data interface{}) {
-				PrefsView(&Prefs)
+				gide.PrefsView(&gide.Prefs)
 			})
 	}
 }
 
-// NewGideProjPath creates a new Gide window with a new Gide project for given
+// NewGideProjPath creates a new GideView window with a new GideView project for given
 // path, returning the window and the path
-func NewGideProjPath(path string) (*gi.Window, *Gide) {
+func NewGideProjPath(path string) (*gi.Window, *GideView) {
 	_, projnm, _, _ := ProjPathParse(path)
 	return NewGideWindow(path, projnm, true)
 }
 
-// OpenGideProj creates a new Gide window opened to given Gide project,
+// OpenGideProj creates a new GideView window opened to given GideView project,
 // returning the window and the path
-func OpenGideProj(projfile string) (*gi.Window, *Gide) {
-	pp := &ProjPrefs{}
+func OpenGideProj(projfile string) (*gi.Window, *GideView) {
+	pp := &gide.ProjPrefs{}
 	if err := pp.OpenJSON(gi.FileName(projfile)); err != nil {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "Project File Could Not Be Opened", Prompt: fmt.Sprintf("Project file open encountered error: %v", err.Error())}, true, false, nil, nil)
 		return nil, nil
@@ -2885,12 +2913,12 @@ func OpenGideProj(projfile string) (*gi.Window, *Gide) {
 }
 
 // NewGideWindow is common code for Open GideWindow from Proj or Path
-func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
+func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *GideView) {
 	winm := "gide-" + projnm
 
 	if win, found := gi.AllWindows.FindName(winm); found {
 		mfr := win.SetMainFrame()
-		ge := mfr.KnownChild(0).Embed(KiT_Gide).(*Gide)
+		ge := mfr.KnownChild(0).Embed(KiT_GideView).(*GideView)
 		win.OSWin.Raise()
 		return win, ge
 	}
@@ -2904,7 +2932,7 @@ func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *Gide) {
 	updt := vp.UpdateStart()
 
 	mfr := win.SetMainFrame()
-	ge := mfr.AddNewChild(KiT_Gide, "gide").(*Gide)
+	ge := mfr.AddNewChild(KiT_GideView, "gide").(*GideView)
 	ge.Viewport = vp
 
 	if doPath {

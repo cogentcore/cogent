@@ -26,15 +26,29 @@ type FileNode struct {
 
 var KiT_FileNode = kit.Types.AddType(&FileNode{}, FileNodeProps)
 
+func (fn *FileNode) ParentGide() (Gide, bool) {
+	if fn.IsRoot() {
+		return nil, false
+	}
+	var ge Gide
+	fn.FuncUpParent(0, fn, func(k ki.Ki, level int, d interface{}) bool {
+		if kit.EmbedImplements(k.Type(), GideType) {
+			ge = k.(Gide)
+			return false
+		}
+		return true
+	})
+	return ge, ge != nil
+}
+
 // ViewFile pulls up this file in Gide
 func (fn *FileNode) ViewFile() {
 	if fn.IsDir() {
 		log.Printf("FileNode Edit -- cannot edit directories!\n")
 		return
 	}
-	gek, ok := fn.ParentByType(KiT_Gide, true)
+	ge, ok := fn.ParentGide()
 	if ok {
-		ge := gek.Embed(KiT_Gide).(*Gide)
 		ge.NextViewFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
 }
@@ -42,18 +56,16 @@ func (fn *FileNode) ViewFile() {
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() {
-	gek, ok := fn.ParentByType(KiT_Gide, true)
+	ge, ok := fn.ParentGide()
 	if ok {
-		ge := gek.Embed(KiT_Gide).(*Gide)
 		ge.ExecCmdFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
 }
 
 // ExecCmdNameFile executes given command name on node
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	gek, ok := fn.ParentByType(KiT_Gide, true)
+	ge, ok := fn.ParentGide()
 	if ok {
-		ge := gek.Embed(KiT_Gide).(*Gide)
 		ge.ExecCmdNameFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode), CmdName(cmdNm), true, true)
 	}
 }
@@ -270,17 +282,16 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	if !ok {
 		return nil
 	}
-	gek, ok := ft.ParentByType(KiT_Gide, true)
+	fn := ft.FileNode()
+	ge, ok := fn.ParentGide()
 	if !ok {
 		return nil
 	}
-	ge := gek.Embed(KiT_Gide).(*Gide)
-	fn := ft.FileNode()
 	lang := filecat.NoSupport
 	if fn != nil {
 		lang = fn.Info.Sup
 	}
-	cmds := AvailCmds.FilterCmdNames(lang, ge.Prefs.VersCtrl)
+	cmds := AvailCmds.FilterCmdNames(lang, ge.ProjPrefs().VersCtrl)
 	return cmds
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gide/gide"
+	"github.com/goki/gide/gidev"
 )
 
 func main() {
@@ -65,7 +66,7 @@ Version: ` + gide.Prefs.VersionInfo())
 	oswin.TheApp.SetQuitReqFunc(func() {
 		if !inQuitPrompt {
 			inQuitPrompt = true
-			if gide.QuitReq() {
+			if gidev.QuitReq() {
 				oswin.TheApp.Quit()
 			} else {
 				inQuitPrompt = false
@@ -75,12 +76,12 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	if proj != "" {
 		proj, _ = filepath.Abs(proj)
-		gide.OpenGideProj(proj)
+		gidev.OpenGideProj(proj)
 	} else {
 		if path != "" {
 			path, _ = filepath.Abs(path)
 		}
-		gide.NewGideProjPath(path)
+		gidev.NewGideProjPath(path)
 	}
 	// above NewGideProj calls will have added to WinWait..
 	gi.WinWait.Wait()
