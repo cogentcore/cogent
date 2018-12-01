@@ -963,7 +963,8 @@ func (ge *GideView) OpenFileURL(ur string) bool {
 	txpos := giv.TextPos{}
 	if txpos.FromString(pos) {
 		reg := giv.TextRegion{Start: txpos, End: giv.TextPos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
-		reg = tv.Buf.AdjustReg(reg)
+		// todo: need some way of tagging the time stamp for adjusting!
+		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start
 		tv.HighlightRegion(reg)
 		tv.SetCursorShow(txpos)
