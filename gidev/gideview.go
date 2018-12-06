@@ -581,7 +581,7 @@ func (ge *GideView) SaveActiveViewAs(filename gi.FileName) {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		ofn := tv.Buf.Filename
-		tv.Buf.SaveAs(filename, func(canceled bool) {
+		tv.Buf.SaveAsFunc(filename, func(canceled bool) {
 			if canceled {
 				ge.SetStatus(fmt.Sprintf("File %v NOT Saved As: %v", ofn, filename))
 				return
