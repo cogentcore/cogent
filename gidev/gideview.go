@@ -123,6 +123,24 @@ func (ge *GideView) OpenRecent(filename gi.FileName) {
 	}
 }
 
+// RecentsEdit opens a dialog editor for deleting from the recents project list
+func (ge *GideView) RecentsEdit() {
+
+	//gide.RecentsView(&gide.SavedPaths)
+
+	tmp := make([]string, len(gide.SavedPaths))
+	copy(tmp, gide.SavedPaths)
+	giv.SliceViewDialog(ge.Viewport, &gide.SavedPaths, giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true},
+		nil, ge, func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig == int64(gi.DialogAccepted) {
+				gide.SavePaths()
+			} else {
+				gide.SavedPaths = gide.SavedPaths[:0]
+				gide.SavedPaths = append(gide.SavedPaths, tmp...)
+			}
+		})
+}
+
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
 // current GideView object if it is empty, or otherwise opens a new window.
@@ -2530,6 +2548,9 @@ var GideViewProps = ki.Props{
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
+			}},
+			{"RecentsEdit", ki.Props{
+				"label": "Edit Recents...",
 			}},
 			{"OpenProj", ki.Props{
 				"shortcut": gi.KeyFunMenuOpen,
