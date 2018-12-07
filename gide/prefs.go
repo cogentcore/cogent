@@ -364,9 +364,15 @@ func SavePaths() {
 	SavedPaths.SaveJSON(pnm)
 }
 
+var GideViewResetRecents = "<i>Reset Recents</i>"
+var GideViewEditRecents = "<i>Edit Recents...</i>"
+
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
 	pdir := oswin.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
+
+	gi.StringsAppendIfUnique((*[]string)(&SavedPaths), GideViewResetRecents, gi.Prefs.SavedPathsMax)
+	gi.StringsAppendIfUnique((*[]string)(&SavedPaths), GideViewEditRecents, gi.Prefs.SavedPathsMax)
 }

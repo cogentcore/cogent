@@ -115,28 +115,36 @@ func (ge *GideView) IsEmpty() bool {
 
 // OpenRecent opens a recently-used file
 func (ge *GideView) OpenRecent(filename gi.FileName) {
-	ext := strings.ToLower(filepath.Ext(string(filename)))
-	if ext == ".gide" {
-		ge.OpenProj(filename)
+	if string(filename) == gide.GideViewResetRecents {
+		gide.SavedPaths = nil
+		gide.SavedPaths = append(gide.SavedPaths, gide.GideViewResetRecents)
+		gide.SavedPaths = append(gide.SavedPaths, gide.GideViewEditRecents)
+	} else if string(filename) == gide.GideViewEditRecents {
+		ge.EditRecents()
 	} else {
-		ge.OpenPath(filename)
+		ext := strings.ToLower(filepath.Ext(string(filename)))
+		if ext == ".gide" {
+			ge.OpenProj(filename)
+		} else {
+			ge.OpenPath(filename)
+		}
 	}
 }
 
 // RecentsEdit opens a dialog editor for deleting from the recents project list
-func (ge *GideView) RecentsEdit() {
-
-	//gide.RecentsView(&gide.SavedPaths)
-
-	tmp := make([]string, len(gide.SavedPaths))
+func (ge *GideView) EditRecents() {
+	// drop the reset/edit items from editable slice
+	tmp := make([]string, len(gide.SavedPaths)-2)
 	copy(tmp, gide.SavedPaths)
-	giv.SliceViewDialog(ge.Viewport, &gide.SavedPaths, giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true},
+	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, DeleteOnly: true}
+	giv.SliceViewDialog(ge.Viewport, &tmp, opts,
 		nil, ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
-				gide.SavePaths()
-			} else {
-				gide.SavedPaths = gide.SavedPaths[:0]
+				gide.SavedPaths = nil
 				gide.SavedPaths = append(gide.SavedPaths, tmp...)
+				// add back the reset/edit menu items
+				gi.StringsAppendIfUnique((*[]string)(&gide.SavedPaths), gide.GideViewResetRecents, gi.Prefs.SavedPathsMax)
+				gi.StringsAppendIfUnique((*[]string)(&gide.SavedPaths), gide.GideViewEditRecents, gi.Prefs.SavedPathsMax)
 			}
 		})
 }
@@ -2548,9 +2556,6 @@ var GideViewProps = ki.Props{
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
-			}},
-			{"RecentsEdit", ki.Props{
-				"label": "Edit Recents...",
 			}},
 			{"OpenProj", ki.Props{
 				"shortcut": gi.KeyFunMenuOpen,
