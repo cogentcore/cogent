@@ -117,8 +117,7 @@ func (ge *GideView) IsEmpty() bool {
 func (ge *GideView) OpenRecent(filename gi.FileName) {
 	if string(filename) == gide.GideViewResetRecents {
 		gide.SavedPaths = nil
-		gide.SavedPaths = append(gide.SavedPaths, gide.GideViewResetRecents)
-		gide.SavedPaths = append(gide.SavedPaths, gide.GideViewEditRecents)
+		gi.StringsAddExtras((*[]string)(&gide.SavedPaths), gide.SavedPathsExtras)
 	} else if string(filename) == gide.GideViewEditRecents {
 		ge.EditRecents()
 	} else {
@@ -133,18 +132,16 @@ func (ge *GideView) OpenRecent(filename gi.FileName) {
 
 // RecentsEdit opens a dialog editor for deleting from the recents project list
 func (ge *GideView) EditRecents() {
-	// drop the reset/edit items from editable slice
-	tmp := make([]string, len(gide.SavedPaths)-2)
+	tmp := make([]string, len(gide.SavedPaths))
 	copy(tmp, gide.SavedPaths)
+	gi.StringsRemoveExtras((*[]string)(&tmp), gide.SavedPathsExtras)
 	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, DeleteOnly: true}
 	giv.SliceViewDialog(ge.Viewport, &tmp, opts,
 		nil, ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
 				gide.SavedPaths = nil
 				gide.SavedPaths = append(gide.SavedPaths, tmp...)
-				// add back the reset/edit menu items
-				gi.StringsAppendIfUnique((*[]string)(&gide.SavedPaths), gide.GideViewResetRecents, gi.Prefs.SavedPathsMax)
-				gi.StringsAppendIfUnique((*[]string)(&gide.SavedPaths), gide.GideViewEditRecents, gi.Prefs.SavedPathsMax)
+				gi.StringsAddExtras((*[]string)(&gide.SavedPaths), gide.SavedPathsExtras)
 			}
 		})
 }
