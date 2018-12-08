@@ -357,22 +357,31 @@ var SavedPaths gi.FilePaths
 // SavedPathsFileName is the name of the saved file paths file in GoGi prefs directory
 var SavedPathsFileName = "gide_saved_paths.json"
 
+// GideViewResetRecents defines a string that is added as an item to the recents menu
+var GideViewResetRecents = "<i>Reset Recents</i>"
+
+// GideViewEditRecents defines a string that is added as an item to the recents menu
+var GideViewEditRecents = "<i>Edit Recents...</i>"
+
+// SavedPathsExtras are the reset and edit items we add to the recents menu
+var SavedPathsExtras = []string{gi.MenuTextSeparator, GideViewResetRecents, GideViewEditRecents}
+
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
+	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := oswin.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.SaveJSON(pnm)
+	// add back after save
+	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 }
-
-var GideViewResetRecents = "<i>Reset Recents</i>"
-var GideViewEditRecents = "<i>Edit Recents...</i>"
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
+	// remove to be sure we don't have duplicate extras
+	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := oswin.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
-
-	gi.StringsAppendIfUnique((*[]string)(&SavedPaths), GideViewResetRecents, gi.Prefs.SavedPathsMax)
-	gi.StringsAppendIfUnique((*[]string)(&SavedPaths), GideViewEditRecents, gi.Prefs.SavedPathsMax)
+	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 }
