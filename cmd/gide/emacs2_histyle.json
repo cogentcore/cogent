@@ -119,7 +119,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericDeleted": {
+  "TextStyleDeleted": {
     "Color": {
       "R": 160,
       "G": 0,
@@ -143,7 +143,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericEmph": {
+  "TextStyleEmph": {
     "Color": {
       "R": 0,
       "G": 0,
@@ -167,7 +167,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericError": {
+  "TextStyleError": {
     "Color": {
       "R": 255,
       "G": 0,
@@ -191,7 +191,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericHeading": {
+  "TextStyleHeading": {
     "Color": {
       "R": 0,
       "G": 0,
@@ -215,7 +215,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericInserted": {
+  "TextStyleInserted": {
     "Color": {
       "R": 0,
       "G": 160,
@@ -239,7 +239,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericOutput": {
+  "TextStyleOutput": {
     "Color": {
       "R": 136,
       "G": 136,
@@ -263,7 +263,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericPrompt": {
+  "TextStylePrompt": {
     "Color": {
       "R": 0,
       "G": 0,
@@ -287,7 +287,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericStrong": {
+  "TextStyleStrong": {
     "Color": {
       "R": 0,
       "G": 0,
@@ -311,7 +311,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericSubheading": {
+  "TextStyleSubheading": {
     "Color": {
       "R": 128,
       "G": 0,
@@ -335,7 +335,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericTraceback": {
+  "TextStyleTraceback": {
     "Color": {
       "R": 0,
       "G": 68,
@@ -359,7 +359,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "GenericUnderline": {
+  "TextStyleUnderline": {
     "Color": {
       "R": 0,
       "G": 0,
@@ -455,7 +455,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralNumber": {
+  "LitNum": {
     "Color": {
       "R": 102,
       "G": 102,
@@ -479,7 +479,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralString": {
+  "LitStr": {
     "Color": {
       "R": 187,
       "G": 68,
@@ -503,7 +503,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralStringBacktick": {
+  "LitStrBacktick": {
     "Color": {
       "R": 0,
       "G": 0,
@@ -527,7 +527,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralStringDoc": {
+  "LitStrDoc": {
     "Color": {
       "R": 187,
       "G": 68,
@@ -551,7 +551,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralStringEscape": {
+  "LitStrEscape": {
     "Color": {
       "R": 187,
       "G": 102,
@@ -575,7 +575,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralStringInterpol": {
+  "LitStrInterpol": {
     "Color": {
       "R": 187,
       "G": 102,
@@ -599,7 +599,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralStringOther": {
+  "LitStrOther": {
     "Color": {
       "R": 0,
       "G": 128,
@@ -623,7 +623,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralStringRegex": {
+  "LitStrRegex": {
     "Color": {
       "R": 187,
       "G": 102,
@@ -647,7 +647,7 @@
     "Underline": "Pass",
     "NoInherit": false
   },
-  "LiteralStringSymbol": {
+  "LitStrSymbol": {
     "Color": {
       "R": 184,
       "G": 134,

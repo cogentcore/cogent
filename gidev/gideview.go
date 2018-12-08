@@ -2909,15 +2909,6 @@ var GideViewProps = ki.Props{
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project window
 
-func init() {
-	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
-		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "GideView Preferences..."},
-			win, func(recv, send ki.Ki, sig int64, data interface{}) {
-				gide.PrefsView(&gide.Prefs)
-			})
-	}
-}
-
 // NewGideProjPath creates a new GideView window with a new GideView project for given
 // path, returning the window and the path
 func NewGideProjPath(path string) (*gi.Window, *GideView) {
