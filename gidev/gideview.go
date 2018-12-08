@@ -431,13 +431,7 @@ func (ge *GideView) GuessVersCtrl() bool {
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.SetHiStyle(gide.Prefs.HiStyle)
-	tb.Opts.TabSize = ge.Prefs.Editor.TabSize
-	tb.Opts.SpaceIndent = ge.Prefs.Editor.SpaceIndent
-	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
-	tb.Opts.AutoIndent = ge.Prefs.Editor.AutoIndent
-	tb.Opts.Completion = ge.Prefs.Editor.Completion
-	tb.Opts.SpellCorrect = ge.Prefs.Editor.SpellCorrect
-	tb.Opts.EmacsUndo = ge.Prefs.Editor.EmacsUndo
+	ge.Prefs.Editor.ConfigTextBuf(&tb.Opts)
 
 	tb.SetSpellCorrect(tb, giv.SpellCorrectEdit) // always set -- option can override
 

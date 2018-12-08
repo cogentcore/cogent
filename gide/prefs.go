@@ -35,6 +35,7 @@ type EditorPrefs struct {
 	SpellCorrect bool `desc:"suggest corrections for unknown words while typing"`
 	AutoIndent   bool `desc:"automatically indent lines when enter, tab, }, etc pressed"`
 	EmacsUndo    bool `desc:"use emacs-style undo, where after a non-undo command, all the current undo actions are added to the undo stack, such that a subsequent undo is actually a redo"`
+	DepthColor   bool `desc:"colorize the background according to nesting depth"`
 }
 
 // Preferences are the overall user preferences for Gide.
@@ -97,6 +98,19 @@ func (pf *EditorPrefs) Defaults() {
 	pf.Completion = true
 	pf.SpellCorrect = true
 	pf.AutoIndent = true
+	pf.DepthColor = true
+}
+
+// ConfigTextBuf sets TextBuf Opts according to prefs
+func (pf *EditorPrefs) ConfigTextBuf(opts *giv.TextBufOpts) {
+	opts.TabSize = pf.TabSize
+	opts.SpaceIndent = pf.SpaceIndent
+	opts.LineNos = pf.LineNos
+	opts.AutoIndent = pf.AutoIndent
+	opts.Completion = pf.Completion
+	opts.SpellCorrect = pf.SpellCorrect
+	opts.EmacsUndo = pf.EmacsUndo
+	opts.DepthColor = pf.DepthColor
 }
 
 // Defaults are the defaults for Preferences
