@@ -428,7 +428,7 @@ func (ge *GideView) GuessVersCtrl() bool {
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.SetHiStyle(gide.Prefs.HiStyle)
-	ge.Prefs.Editor.ConfigTextBuf(&tb.Opts)
+	ge.Prefs.Editor.ConfigTextBuf(tb)
 
 	tb.SetSpellCorrect(tb, giv.SpellCorrectEdit) // always set -- option can override
 

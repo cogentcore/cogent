@@ -102,15 +102,16 @@ func (pf *EditorPrefs) Defaults() {
 }
 
 // ConfigTextBuf sets TextBuf Opts according to prefs
-func (pf *EditorPrefs) ConfigTextBuf(opts *giv.TextBufOpts) {
-	opts.TabSize = pf.TabSize
-	opts.SpaceIndent = pf.SpaceIndent
-	opts.LineNos = pf.LineNos
-	opts.AutoIndent = pf.AutoIndent
-	opts.Completion = pf.Completion
-	opts.SpellCorrect = pf.SpellCorrect
-	opts.EmacsUndo = pf.EmacsUndo
-	opts.DepthColor = pf.DepthColor
+func (pf *EditorPrefs) ConfigTextBuf(tb *giv.TextBuf) {
+	tb.Opts.TabSize = pf.TabSize
+	tb.Opts.SpaceIndent = pf.SpaceIndent
+	tb.Opts.LineNos = pf.LineNos
+	tb.Opts.AutoIndent = pf.AutoIndent
+	tb.Opts.Completion = pf.Completion
+	tb.Opts.SpellCorrect = pf.SpellCorrect
+	tb.Opts.EmacsUndo = pf.EmacsUndo
+	tb.Opts.DepthColor = pf.DepthColor
+	tb.ConfigSupported()
 }
 
 // Defaults are the defaults for Preferences
