@@ -389,6 +389,9 @@ var FileTreeViewProps = ki.Props{
 			"label":    "View",
 			"updtfunc": FileTreeInactiveDirFunc,
 		}},
+		{"ShowFileInfo", ki.Props{
+			"label": "File Info",
+		}},
 		{"ExecCmdFiles", ki.Props{
 			"label":        "Exec Cmd",
 			"submenu-func": giv.SubMenuFunc(FileTreeViewExecCmds),
