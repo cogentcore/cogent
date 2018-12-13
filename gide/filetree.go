@@ -407,8 +407,6 @@ var FileTreeViewProps = ki.Props{
 		{"DeleteFiles", ki.Props{
 			"label":    "Delete",
 			"desc":     "Ok to delete file(s)?  This is not undoable and is not moving to trash / recycle bin",
-			"confirm":  true,
-			"updtfunc": FileTreeInactiveDirFunc,
 			"shortcut": gi.KeyFunDelete,
 		}},
 		{"RenameFiles", ki.Props{
