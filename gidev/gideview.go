@@ -215,7 +215,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) (*gi.Window, *GideView) {
 // path -- all GideView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl gide.VersCtrlName) (*gi.Window, *GideView) {
+func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl giv.VersCtrlName) (*gi.Window, *GideView) {
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
@@ -411,12 +411,12 @@ func (ge *GideView) LangDefaults() bool {
 // GuessVersCtrl guesses the version control system in use
 func (ge *GideView) GuessVersCtrl() bool {
 	got := false
-	for vc, fn := range gide.VersCtrlFiles {
+	for vc, fn := range giv.VersCtrlFiles {
 		ftest := filepath.Join(string(ge.Prefs.ProjRoot), fn)
 		if _, err := os.Stat(ftest); os.IsNotExist(err) {
 			continue
 		}
-		ge.Prefs.VersCtrl = gide.VersCtrlName(vc)
+		ge.Prefs.VersCtrl = giv.VersCtrlName(vc)
 		got = true
 	}
 	return got
@@ -1463,7 +1463,7 @@ func (ge *GideView) CommitNoChecks() {
 				msg := gi.StringPromptDialogValue(dlg)
 				ge.ArgVals["{PromptString1}"] = msg
 				gide.CmdNoUserPrompt = true // don't re-prompt!
-				ge.Prefs.ChangeLog.Add(gide.ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
+				ge.Prefs.ChangeLog.Add(giv.ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
 				ge.ExecCmdName(gide.CmdName(cmdnm), true, true) // must be wait
 				ge.CommitUpdtLog(cmdnm)
 			}

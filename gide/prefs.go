@@ -310,8 +310,8 @@ type ProjPrefs struct {
 	Editor       EditorPrefs       `view:"inline" desc:"editor preferences"`
 	SplitName    SplitName         `desc:"current named-split config in use for configuring the splitters"`
 	MainLang     filecat.Supported `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
-	VersCtrl     VersCtrlName      `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
-	ChangeLog    ChangeLog         `desc:"log of version control commits made through Gide by current author -- use appropriate VCS log command to see full set of changes"`
+	VersCtrl     giv.VersCtrlName  `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
+	ChangeLog    giv.ChangeLog     `desc:"log of version control commits made through Gide by current author -- use appropriate VCS log command to see full set of changes"`
 	ProjFilename gi.FileName       `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ProjRoot     gi.FileName       `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
 	BuildCmds    CmdNames          `desc:"command(s) to run for main Build button"`

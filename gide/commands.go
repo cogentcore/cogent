@@ -563,7 +563,7 @@ func (cm *Commands) LangCmdNames(lang filecat.Supported) []string {
 
 // VersCtrlCmdNames returns a slice of commands that contain in their name the
 // specific version control name, but NOT the others -- takes the output of LangCmdNames
-func VersCtrlCmdNames(vcnm VersCtrlName, cmds []string) []string {
+func VersCtrlCmdNames(vcnm giv.VersCtrlName, cmds []string) []string {
 	if vcnm == "" {
 		return cmds
 	}
@@ -573,7 +573,7 @@ func VersCtrlCmdNames(vcnm VersCtrlName, cmds []string) []string {
 		if strings.Contains(cmd, string(vcnm)) {
 			continue
 		}
-		for _, vcs := range VersCtrlSystems {
+		for _, vcs := range giv.VersCtrlSystems {
 			if vcs != string(vcnm) {
 				if strings.Contains(cmd, vcs) {
 					cmds = append(cmds[:i], cmds[i+1:]...)
@@ -586,7 +586,7 @@ func VersCtrlCmdNames(vcnm VersCtrlName, cmds []string) []string {
 
 // FilterCmdNames returns a slice of commands that are compatible with given
 // language and version control system.
-func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm VersCtrlName) []string {
+func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm giv.VersCtrlName) []string {
 	return VersCtrlCmdNames(vcnm, cm.LangCmdNames(lang))
 }
 
