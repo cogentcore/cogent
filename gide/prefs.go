@@ -17,6 +17,7 @@ import (
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/svg"
 	"github.com/goki/ki"
+	"github.com/goki/ki/dirs"
 	"github.com/goki/ki/kit"
 )
 
@@ -58,7 +59,7 @@ var Prefs = Preferences{}
 
 // OpenIcons loads the gide icons into the current icon set
 func OpenIcons() error {
-	path, err := kit.GoSrcDir("github.com/goki/gide/icons")
+	path, err := dirs.GoSrcDir("github.com/goki/gide/icons")
 	if err != nil {
 		log.Println(err)
 		return err
