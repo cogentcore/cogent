@@ -441,5 +441,10 @@ var FileTreeViewProps = ki.Props{
 				}},
 			},
 		}},
+		{"AddToVersCtrl", ki.Props{
+			"label":    "Add To Version Control",
+			"desc":     "Add file to version control git/svn",
+			"updtfunc": giv.FileTreeActiveNotInVersCtrlFunc,
+		}},
 	},
 }
