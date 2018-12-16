@@ -443,14 +443,16 @@ var FileTreeViewProps = ki.Props{
 		}},
 		{"sep-versctrl", ki.BlankProp{}},
 		{"AddToVersCtrl", ki.Props{
-			"label":    "Add To Version Control",
-			"desc":     "Add file to version control git/svn",
-			"updtfunc": giv.FileTreeActiveNotInVersCtrlFunc,
+			//"label":    "Add To Git",
+			"desc":       "Add file to version control git/svn",
+			"updtfunc":   giv.FileTreeActiveNotInVersCtrlFunc,
+			"label-func": giv.VersCtrlGetAddLabelFunc,
 		}},
 		{"RemoveFromVersCtrl", ki.Props{
-			"label":    "Remove From Version Control",
-			"desc":     "Remove file from version control git/svn",
-			"updtfunc": giv.FileTreeActiveInVersCtrlFunc,
+			//"label":    "Remove From Version Control",
+			"desc":       "Remove file from version control git/svn",
+			"updtfunc":   giv.FileTreeActiveInVersCtrlFunc,
+			"label-func": giv.VersCtrlGetRemoveLabelFunc,
 		}},
 	},
 }
