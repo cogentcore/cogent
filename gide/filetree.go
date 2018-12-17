@@ -349,6 +349,9 @@ var FileTreeViewProps = ki.Props{
 	".open": ki.Props{
 		"font-style": gi.FontItalic,
 	},
+	".vc-not": ki.Props{
+		"color": "#ce4252",
+	},
 	"#icon": ki.Props{
 		"width":   units.NewValue(1, units.Em),
 		"height":  units.NewValue(1, units.Em),
