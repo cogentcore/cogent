@@ -430,16 +430,9 @@ func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.SetHiStyle(gide.Prefs.HiStyle)
 	ge.Prefs.Editor.ConfigTextBuf(tb)
 
-	tb.SetSpellCorrect(tb, giv.SpellCorrectEdit) // always set -- option can override
-
-	lang := tb.Info.Sup
-	// todo: completer funcs should be stored in language struct
-	switch lang {
-	case filecat.Go:
-		if ge.Prefs.Editor.Completion {
-			tb.SetCompleter(tb, giv.CompleteGo, giv.CompleteGoEdit)
-		}
-	}
+	// these are now set in std textbuf..
+	// tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)                    // always set -- option can override
+	// tb.SetCompleter(&tb.PiState, pi.CompletePi, giv.CompleteGoEdit) // todo: need pi edit too..
 }
 
 // ActiveTextView returns the currently-active TextView
