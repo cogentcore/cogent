@@ -349,7 +349,7 @@ var FileTreeViewProps = ki.Props{
 	".open": ki.Props{
 		"font-style": gi.FontItalic,
 	},
-	".vc-not": ki.Props{
+	".vcs-no": ki.Props{
 		"color": "#ce4252",
 	},
 	"#icon": ki.Props{
@@ -444,18 +444,18 @@ var FileTreeViewProps = ki.Props{
 				}},
 			},
 		}},
-		{"sep-versctrl", ki.BlankProp{}},
-		{"AddToVersCtrl", ki.Props{
+		{"sep-vcs", ki.BlankProp{}},
+		{"AddToVcs", ki.Props{
 			//"label":    "Add To Git",
 			"desc":       "Add file to version control git/svn",
-			"updtfunc":   giv.FileTreeActiveNotInVersCtrlFunc,
-			"label-func": giv.VersCtrlGetAddLabelFunc,
+			"updtfunc":   giv.FileTreeActiveNotInVcsFunc,
+			"label-func": giv.VcsGetAddLabelFunc,
 		}},
-		{"RemoveFromVersCtrl", ki.Props{
+		{"RemoveFromVcs", ki.Props{
 			//"label":    "Remove From Version Control",
 			"desc":       "Remove file from version control git/svn",
-			"updtfunc":   giv.FileTreeActiveInVersCtrlFunc,
-			"label-func": giv.VersCtrlGetRemoveLabelFunc,
+			"updtfunc":   giv.FileTreeActiveInVcsFunc,
+			"label-func": giv.VcsGetRemoveLabelFunc,
 		}},
 	},
 }
