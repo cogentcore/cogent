@@ -843,6 +843,8 @@ var StdCmds = Commands{
 	// LaTeX
 	{"LaTeX PDF", "run PDFLaTeX on file", filecat.TeX,
 		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
+	{"BibTeX", "run BibTeX on file", filecat.TeX,
+		[]CmdAndArgs{CmdAndArgs{"bibtex", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", false, false, false},
 
 	// Generic files / images / etc
 	{"Open File", "open file using OS 'open' command", filecat.Any,
