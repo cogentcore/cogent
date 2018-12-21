@@ -449,13 +449,13 @@ var FileTreeViewProps = ki.Props{
 			//"label":    "Add To Git",
 			"desc":       "Add file to version control git/svn",
 			"updtfunc":   giv.FileTreeActiveNotInVcsFunc,
-			"label-func": giv.VcsGetAddLabelFunc,
+			"label-func": giv.VcsLabelFunc,
 		}},
 		{"RemoveFromVcs", ki.Props{
 			//"label":    "Remove From Version Control",
 			"desc":       "Remove file from version control git/svn",
 			"updtfunc":   giv.FileTreeActiveInVcsFunc,
-			"label-func": giv.VcsGetRemoveLabelFunc,
+			"label-func": giv.VcsLabelFunc,
 		}},
 	},
 }
