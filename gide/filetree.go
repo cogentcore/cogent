@@ -346,11 +346,25 @@ var FileTreeViewProps = ki.Props{
 	".exec": ki.Props{
 		"font-weight": gi.WeightBold,
 	},
-	".open": ki.Props{
+	".open-repo-no": ki.Props{
 		"font-style": gi.FontItalic,
 	},
-	".vcs-no": ki.Props{
+	".open-invcs-no": ki.Props{
+		"font-style": gi.FontItalic,
+		"color":      "#ce4252",
+	},
+	".open-invcs": ki.Props{
+		"font-style": gi.FontItalic,
+	},
+	".invcs-no": ki.Props{
 		"color": "#ce4252",
+	},
+	".invcs-chng": ki.Props{
+		"color": "#4b7fd1",
+	},
+	".open-invcs-chng": ki.Props{
+		"font-style": gi.FontItalic,
+		"color":      "#4b7fd1",
 	},
 	"#icon": ki.Props{
 		"width":   units.NewValue(1, units.Em),
@@ -456,6 +470,16 @@ var FileTreeViewProps = ki.Props{
 			"desc":       "Remove file from version control git/svn",
 			"updtfunc":   giv.FileTreeActiveInVcsFunc,
 			"label-func": giv.VcsLabelFunc,
+		}},
+		{"CommitToVcs", ki.Props{
+			"desc":       "Commit file to version control",
+			"updtfunc":   giv.FileTreeActiveInVcsChangedFunc,
+			"label-func": giv.VcsLabelFunc,
+		}},
+		{"RevertVcs", ki.Props{
+			"label":    "Revert",
+			"desc":     "Revert file to last commit",
+			"updtfunc": giv.FileTreeActiveInVcsChangedFunc,
 		}},
 	},
 }
