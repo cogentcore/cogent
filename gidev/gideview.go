@@ -170,7 +170,6 @@ func (ge *GideView) OpenPath(path gi.FileName) (*gi.Window, *GideView) {
 		ge.UpdateProj()
 		ge.GuessMainLang()
 		ge.LangDefaults()
-		ge.GuessVersCtrl()
 		win := ge.ParentWindow()
 		if win != nil {
 			winm := "gide-" + pnm
@@ -404,20 +403,6 @@ func (ge *GideView) LangDefaults() bool {
 		got = true
 	default:
 		ge.Prefs.BuildCmds = gide.CmdNames{"Make"}
-	}
-	return got
-}
-
-// GuessVersCtrl guesses the version control system in use
-func (ge *GideView) GuessVersCtrl() bool {
-	got := false
-	for vc, fn := range giv.VersCtrlFiles {
-		ftest := filepath.Join(string(ge.Prefs.ProjRoot), fn)
-		if _, err := os.Stat(ftest); os.IsNotExist(err) {
-			continue
-		}
-		ge.Prefs.VersCtrl = giv.VersCtrlName(vc)
-		got = true
 	}
 	return got
 }
@@ -1316,10 +1301,15 @@ func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 		return nil
 	}
 	var cmds []string
+
+	vc := ge.Prefs.VersCtrl
+	if ge.Files.Repo != nil {
+		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
+	}
 	if ge.ActiveLang == filecat.NoSupport {
-		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
 	} else {
-		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	}
 	return cmds
 }
@@ -1344,10 +1334,14 @@ func (ge *GideView) ExecCmd() {
 		return
 	}
 	var cmds []string
+	vc := ge.Prefs.VersCtrl
+	if ge.Files.Repo != nil {
+		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
+	}
 	if ge.ActiveLang == filecat.NoSupport {
-		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
 	} else {
-		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
+		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	}
 	hsz := len(ge.CmdHistory)
 	lastCmd := ""
@@ -1368,7 +1362,11 @@ func (ge *GideView) ExecCmd() {
 // and shows output in MainTab with name of command
 func (ge *GideView) ExecCmdFileNode(fn *giv.FileNode) {
 	lang := fn.Info.Sup
-	cmds := gide.AvailCmds.FilterCmdNames(lang, ge.Prefs.VersCtrl)
+	vc := ge.Prefs.VersCtrl
+	if ge.Files.Repo != nil {
+		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
+	}
+	cmds := gide.AvailCmds.FilterCmdNames(lang, vc)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		ge.ExecCmdNameFileNode(fn, gide.CmdName(ac.Text), true, true) // sel, clearbuf
@@ -1422,11 +1420,10 @@ func (ge *GideView) Run() {
 // Commit commits the current changes using relevant VCS tool, and updates the changelog.
 // Checks for VCS setting and
 func (ge *GideView) Commit() {
-	if ge.Prefs.VersCtrl == "" {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No VersCtrl Set", Prompt: fmt.Sprintf("You need to set the VersCtrl in the Project Preferences")}, true, false, nil, nil)
+	if ge.Files.Repo == nil {
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Version Control Repository Found", Prompt: fmt.Sprintf("No version control repository found")}, true, false, nil, nil)
 		return
 	}
-
 	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
 		ge.CommitNoChecks()
 	})
@@ -1434,7 +1431,11 @@ func (ge *GideView) Commit() {
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
 func (ge *GideView) CommitNoChecks() {
-	cmds := gide.AvailCmds.FilterCmdNames(ge.ActiveLang, ge.Prefs.VersCtrl)
+	vc := ge.Prefs.VersCtrl
+	if ge.Files.Repo != nil {
+		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
+	}
+	cmds := gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	cmdnm := ""
 	for _, cm := range cmds {
 		if strings.Contains(cm, "Commit") {
