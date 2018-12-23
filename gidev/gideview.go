@@ -1455,8 +1455,7 @@ func (ge *GideView) CommitNoChecks() {
 			if sig == int64(gi.DialogAccepted) {
 				msg := gi.StringPromptDialogValue(dlg)
 				ge.ArgVals["{PromptString1}"] = msg
-				gide.CmdNoUserPrompt = true // don't re-prompt!
-				ge.Prefs.ChangeLog.Add(giv.ChangeRec{Date: giv.FileTime(time.Now()), Author: gi.Prefs.User.Name, Email: gi.Prefs.User.Email, Message: msg})
+				gide.CmdNoUserPrompt = true                     // don't re-prompt!
 				ge.ExecCmdName(gide.CmdName(cmdnm), true, true) // must be wait
 				ge.CommitUpdtLog(cmdnm)
 			}
