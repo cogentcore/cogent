@@ -33,6 +33,7 @@ import (
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/pi"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -1490,6 +1491,42 @@ func (ge *GideView) OpenConsoleTab() {
 	}
 }
 
+// GoToFunc calls given command on current active textview
+func (ge *GideView) GoToFunc(fn string) {
+	tv := ge.ActiveTextView()
+	if tv == nil {
+		return
+	}
+
+	fmt.Println("go to func")
+
+	//st := giv.TextPos{Ln:100, Ch:0}
+	//en := giv.TextPos{Ln:100, Ch:20}
+	//
+	//reg := giv.TextRegion{Start: st, End: en}
+	//tv.HighlightRegion(reg)
+	//tv.SetCursorShow(st)
+}
+
+// FileFuncs gets list of funcs for the current active file, as a submenu-func
+func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []string) {
+	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
+	if !ok {
+		return nil
+	}
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return nil
+	}
+	if ge.ActiveTextView() != nil {
+		sms := pi.FileFuncsPi(&ge.ActiveTextView().Buf.PiState)
+		for k, _ := range sms {
+			funcs = append(funcs, k)
+		}
+	}
+	return funcs
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    TextView functions
 
@@ -2355,6 +2392,12 @@ var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *
 	act.SetInactiveState(ge.IsEmpty())
 })
 
+// GideViewInactiveTextViewFunc is an ActionUpdateFunc that inactivates action there is no active text view
+var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
+	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
+	act.SetInactiveState(ge.ActiveTextView().Buf == nil)
+})
+
 var GideViewProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
@@ -2373,7 +2416,7 @@ var GideViewProps = ki.Props{
 			"icon":     "update",
 		}},
 		{"ViewFile", ki.Props{
-			"label": "Open",
+			"label": "Open...",
 			"icon":  "file-open",
 			"desc":  "open a file in current active text view",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
@@ -2493,6 +2536,15 @@ var GideViewProps = ki.Props{
 			}),
 			"Args": ki.PropSlice{
 				{"Cmd Name", ki.Props{}},
+			},
+		}},
+		{"GoToFunc", ki.Props{
+			"label":        "Funcs",
+			"desc":         "display a menu of funcs in this file",
+			"submenu-func": giv.SubMenuFunc(FileFuncs),
+			"updtfunc":     GideViewInactiveEmptyFunc,
+			"Args": ki.PropSlice{
+				{"Func Name", ki.Props{}},
 			},
 		}},
 		{"sep-splt", ki.BlankProp{}},
