@@ -1499,29 +1499,22 @@ func (ge *GideView) GoToFunc(fn string) {
 	}
 
 	fmt.Println("go to func")
-
-	//st := giv.TextPos{Ln:100, Ch:0}
-	//en := giv.TextPos{Ln:100, Ch:20}
-	//
-	//reg := giv.TextRegion{Start: st, End: en}
-	//tv.HighlightRegion(reg)
-	//tv.SetCursorShow(st)
 }
 
-// FileFuncs gets list of funcs for the current active file, as a submenu-func
+// FileFuncs gets list of functions and methods for the current active file, as a submenu-func
 func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []string) {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
-		return nil
+		return funcs
 	}
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
-		return nil
+		return funcs
 	}
 	if ge.ActiveTextView() != nil {
 		sms := pi.FileFuncsPi(&ge.ActiveTextView().Buf.PiState)
-		for k, _ := range sms {
-			funcs = append(funcs, k)
+		for i := range sms {
+			funcs = append(funcs, sms[i].Name)
 		}
 	}
 	return funcs
