@@ -1505,7 +1505,7 @@ func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []syms.Symbol) {
 		return funcs
 	}
 	if ge.ActiveTextView() != nil {
-		funcs = pi.FileFuncsPi(&ge.ActiveTextView().Buf.PiState)
+		funcs = pi.LangSupport.FileFuncs(&ge.ActiveTextView().Buf.PiState)
 	}
 	return funcs
 }
