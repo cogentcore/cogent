@@ -69,6 +69,9 @@ type Gide interface {
 
 	// Spell checks spelling in files
 	Spell()
+
+	// Structure calls a function to parse file or package
+	Structure()
 }
 
 // GideType is a Gide reflect.Type, suitable for checking for Type.Implements.

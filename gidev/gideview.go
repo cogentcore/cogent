@@ -34,6 +34,7 @@ import (
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/pi"
+	"github.com/goki/pi/syms"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -918,6 +919,8 @@ func TextLinkHandler(tl gi.TextLink) bool {
 			ge.OpenFindURL(ur, ftv)
 		case strings.HasPrefix(ur, "spell:///"):
 			ge.OpenSpellURL(ur, ftv)
+		case strings.HasPrefix(ur, "structure:///"):
+			ge.OpenStructureURL(ur, ftv)
 		case strings.HasPrefix(ur, "file:///"):
 			ge.OpenFileURL(ur)
 		default:
@@ -1491,18 +1494,8 @@ func (ge *GideView) OpenConsoleTab() {
 	}
 }
 
-// GoToFunc calls given command on current active textview
-func (ge *GideView) GoToFunc(fn string) {
-	tv := ge.ActiveTextView()
-	if tv == nil {
-		return
-	}
-
-	fmt.Println("go to func")
-}
-
 // FileFuncs gets list of functions and methods for the current active file, as a submenu-func
-func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []string) {
+func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []syms.Symbol) {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return funcs
@@ -1512,10 +1505,7 @@ func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []string) {
 		return funcs
 	}
 	if ge.ActiveTextView() != nil {
-		sms := pi.FileFuncsPi(&ge.ActiveTextView().Buf.PiState)
-		for i := range sms {
-			funcs = append(funcs, sms[i].Name)
-		}
+		funcs = pi.FileFuncsPi(&ge.ActiveTextView().Buf.PiState)
 	}
 	return funcs
 }
@@ -1646,6 +1636,21 @@ func (ge *GideView) Spell() {
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
+// Structure displays the structure of a file or package
+func (ge *GideView) Structure() {
+	fbuf, _ := ge.FindOrMakeCmdBuf("Structure", true)
+	svi, _ := ge.FindOrMakeMainTab("Structure", gide.KiT_StructureView, true) // sel
+	sv := svi.Embed(gide.KiT_StructureView).(*gide.StructureView)
+	sv.UpdateView(ge, ge.Prefs.Structure)
+	stv := sv.TextView()
+	stv.SetInactive()
+	stv.SetBuf(fbuf)
+
+	funcs := FileFuncs(ge, ge.Viewport)
+	sv.Display(funcs)
+	ge.FocusOnPanel(MainTabsIdx)
+}
+
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
@@ -1693,6 +1698,16 @@ func (ge *GideView) OpenSpellURL(ur string, stv *giv.TextView) bool {
 	}
 	fv := svk.(*gide.SpellView)
 	return fv.OpenSpellURL(ur, stv)
+}
+
+// OpenStructureURL opens given structure:/// url from Structure -- delegates to StructureView
+func (ge *GideView) OpenStructureURL(ur string, stv *giv.TextView) bool {
+	svk, ok := stv.ParentByType(gide.KiT_StructureView, true)
+	if !ok {
+		return false
+	}
+	fv := svk.(*gide.StructureView)
+	return fv.OpenStructureURL(ur, stv)
 }
 
 // ReplaceInActive does query-replace in active file only
@@ -2497,8 +2512,12 @@ var GideViewProps = ki.Props{
 				}},
 			},
 		}},
+		{"Structure", ki.Props{
+			"label": "Structure",
+			"icon":  "structure",
+		}},
 		{"Spell", ki.Props{
-			"label": "Spelling...",
+			"label": "Spelling",
 			"icon":  "spelling",
 		}},
 		{"sep-file", ki.BlankProp{}},
@@ -2529,15 +2548,6 @@ var GideViewProps = ki.Props{
 			}),
 			"Args": ki.PropSlice{
 				{"Cmd Name", ki.Props{}},
-			},
-		}},
-		{"GoToFunc", ki.Props{
-			"label":        "Funcs",
-			"desc":         "display a menu of funcs in this file",
-			"submenu-func": giv.SubMenuFunc(FileFuncs),
-			"updtfunc":     GideViewInactiveEmptyFunc,
-			"Args": ki.PropSlice{
-				{"Func Name", ki.Props{}},
 			},
 		}},
 		{"sep-splt", ki.BlankProp{}},
