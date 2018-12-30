@@ -33,8 +33,8 @@ import (
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
-	"github.com/goki/pi/pi"
 	"github.com/goki/pi/syms"
+	"github.com/goki/pi/token"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -1494,18 +1494,35 @@ func (ge *GideView) OpenConsoleTab() {
 	}
 }
 
-// FileFuncs gets list of functions and methods for the current active file, as a submenu-func
 func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []syms.Symbol) {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return funcs
 	}
 	tv := ge.ActiveTextView()
-	if tv.Buf == nil {
+	if tv == nil || tv.Buf == nil {
 		return funcs
 	}
-	if ge.ActiveTextView() != nil {
-		funcs = pi.LangSupport.FileFuncs(&ge.ActiveTextView().Buf.PiState)
+	fs := &tv.Buf.PiState
+	for _, v := range fs.Syms {
+		if v.Kind != token.NamePackage { // note: package symbol filename won't always corresp.
+			continue
+		}
+		for _, w := range v.Children {
+			if w.Filename != fs.Src.Filename {
+				continue
+			}
+			switch w.Kind {
+			case token.NameFunction:
+				funcs = append(funcs, *w)
+			case token.NameStruct:
+				for _, x := range w.Children {
+					if x.Kind == token.NameMethod {
+						funcs = append(funcs, *x)
+					}
+				}
+			}
+		}
 	}
 	return funcs
 }

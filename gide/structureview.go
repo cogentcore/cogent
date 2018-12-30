@@ -43,9 +43,9 @@ func (sv *StructureView) Display(funcs []syms.Symbol) {
 	for i := range funcs {
 		sbStLn := len(outlns) // find buf start ln
 		f = funcs[i]
-		ln := f.Region.St.Ln + 1
-		ch := f.Region.St.Ch + 1
-		ech := f.Region.Ed.Ch + 1
+		ln := f.SelectReg.St.Ln + 1
+		ch := f.SelectReg.St.Ch + 1
+		ech := f.SelectReg.Ed.Ch + 1
 		d := f.Detail
 		if len(d) == 0 {
 			d = "()"
@@ -112,10 +112,6 @@ func (sv *StructureView) StdStructureConfig() (mods, updt bool) {
 	return
 }
 
-// ConfigToolbar adds toolbar.
-func (sv *StructureView) ConfigToolbar() {
-}
-
 // TextViewLay returns the structure view TextView layout
 func (sv *StructureView) TextViewLay() *gi.Layout {
 	tvi, ok := sv.ChildByName("structuretext", 1)
@@ -133,6 +129,46 @@ func (sv *StructureView) TextView() *giv.TextView {
 	}
 	tv := tvly.KnownChild(0).(*giv.TextView)
 	return tv
+}
+
+// StructureBar returns the spell toolbar
+func (sv *StructureView) StructureBar() *gi.ToolBar {
+	tbi, ok := sv.ChildByName("structurebar", 0)
+	if !ok {
+		return nil
+	}
+	return tbi.(*gi.ToolBar)
+}
+
+// ConfigToolbar adds toolbar.
+func (sv *StructureView) ConfigToolbar() {
+	stbar := sv.StructureBar()
+	if stbar.HasChildren() {
+		return
+	}
+	stbar.SetStretchMaxWidth()
+
+	//// structure toolbar
+	//pkg := stbar.AddNewChild(gi.KiT_Action, "package").(*gi.Action)
+	//pkg.SetText("Package Structure")
+	//pkg.Tooltip = "show the structure of the entire package"
+	////check.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	////	svv, _ := recv.Embed(KiT_SpellView).(*StructureView)
+	//	//svv.PackageAction
+	////})
+	//
+	//vars := stbar.AddNewChild(gi.KiT_Action, "vars").(*gi.Action)
+	//vars.SetProp("horizontal-align", gi.AlignRight)
+	//vars.SetText("Vars")
+	//vars.Tooltip = "show variables as well as functions"
+	////train.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	////	svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
+	////	svv.VarAction()
+	////})
+	//
+	//checkbox := stbar.AddNewChild(gi.KiT_CheckBox, "checkbox").(*gi.CheckBox)
+	//checkbox.SetProp("horizontal-align", gi.AlignRight)
+	//
 }
 
 // StructureViewProps are style properties for StructureView
