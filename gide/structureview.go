@@ -12,6 +12,8 @@ import (
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/syms"
+	"sort"
+	"strings"
 )
 
 // StructureParams are parameters for structure view of file or package
@@ -35,6 +37,9 @@ func (sv *StructureView) StructureAction() {
 
 // Display appends the results of the parse to textview of the structure tab
 func (sv *StructureView) Display(funcs []syms.Symbol) {
+	sort.Slice(funcs, func(i, j int) bool {
+		return funcs[i].Name < funcs[j].Name
+	})
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100) // markups
 	lstr := ""
@@ -47,10 +52,13 @@ func (sv *StructureView) Display(funcs []syms.Symbol) {
 		ch := f.SelectReg.St.Ch + 1
 		ech := f.SelectReg.Ed.Ch + 1
 		d := f.Detail
-		if len(d) == 0 {
-			d = "()"
+		s1 := strings.SplitAfterN(d, "(", 2)
+		s0 := strings.SplitAfterN(s1[1], ")", 2)
+		sd := "(" + s0[0]
+		if len(sd) == 0 {
+			sd = "()"
 		}
-		lstr = fmt.Sprintf(`%v%v`, f.Name, d)
+		lstr = fmt.Sprintf(`%v%v`, f.Name, sd)
 		outlns = append(outlns, []byte(lstr))
 		mstr = fmt.Sprintf(`	<a href="structure:///%v#R%vL%vC%v-L%vC%v">%v</a>`, f.Filename, sbStLn, ln, ch, ln, ech, lstr)
 		outmus = append(outmus, []byte(mstr))
