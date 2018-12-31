@@ -515,6 +515,7 @@ func (ge *GideView) SetActiveTextViewIdx(idx int) *giv.TextView {
 	ge.ActiveTextViewIdx = idx
 	av := ge.ActiveTextView()
 	if av.Buf != nil {
+		av.Buf.FileModCheck()
 		ge.SetActiveFileInfo(av.Buf)
 	}
 	ge.SetStatus("")
@@ -693,6 +694,8 @@ func (ge *GideView) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 		tv.SetBuf(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
+		} else {
+			fn.Buf.FileModCheck()
 		}
 		ge.SetActiveTextViewIdx(vidx)
 	}
