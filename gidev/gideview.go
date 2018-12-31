@@ -1843,6 +1843,9 @@ func (ge *GideView) SetStatus(msg string) {
 			if tv.Buf.IsChanged() {
 				fnm += "*"
 			}
+			if tv.Buf.Info.Sup != filecat.NoSupport {
+				fnm += " (" + tv.Buf.Info.Sup.String() + ")"
+			}
 		}
 		if tv.ISearch.On {
 			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearch.Find, len(tv.ISearch.Matches), msg)

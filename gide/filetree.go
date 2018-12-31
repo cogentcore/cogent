@@ -346,25 +346,14 @@ var FileTreeViewProps = ki.Props{
 	".exec": ki.Props{
 		"font-weight": gi.WeightBold,
 	},
-	".open-repo-no": ki.Props{
+	".open": ki.Props{
 		"font-style": gi.FontItalic,
 	},
-	".open-invcs-no": ki.Props{
-		"font-style": gi.FontItalic,
-		"color":      "#ce4252",
-	},
-	".open-invcs": ki.Props{
-		"font-style": gi.FontItalic,
-	},
-	".invcs-no": ki.Props{
+	".notinvcs": ki.Props{
 		"color": "#ce4252",
 	},
-	".invcs-chng": ki.Props{
+	".changed": ki.Props{
 		"color": "#4b7fd1",
-	},
-	".open-invcs-chng": ki.Props{
-		"font-style": gi.FontItalic,
-		"color":      "#4b7fd1",
 	},
 	"#icon": ki.Props{
 		"width":   units.NewValue(1, units.Em),
