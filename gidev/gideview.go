@@ -16,7 +16,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -3055,9 +3054,6 @@ func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *GideView) {
 	vp.UpdateEndNoSig(updt)
 
 	win.GoStartEventLoop()
-
-	cmd := exec.Command("gocode", "close")
-	defer cmd.Run()
 
 	return win, ge
 }
