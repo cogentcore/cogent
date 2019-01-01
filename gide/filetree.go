@@ -434,6 +434,7 @@ var FileTreeViewProps = ki.Props{
 				{"File Name", ki.Props{
 					"width": 60,
 				}},
+				{"Add To Version Control", ki.Props{}},
 			},
 		}},
 		{"NewFolder", ki.Props{
