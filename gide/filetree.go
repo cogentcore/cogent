@@ -374,8 +374,11 @@ var FileTreeViewProps = ki.Props{
 	".notinvcs": ki.Props{
 		"color": "#ce4252",
 	},
-	".changed": ki.Props{
+	".modified": ki.Props{
 		"color": "#4b7fd1",
+	},
+	".added": ki.Props{
+		"color": "#52af36",
 	},
 	"#icon": ki.Props{
 		"width":   units.NewValue(1, units.Em),
@@ -485,13 +488,13 @@ var FileTreeViewProps = ki.Props{
 		}},
 		{"CommitToVcs", ki.Props{
 			"desc":       "Commit file to version control",
-			"updtfunc":   giv.FileTreeActiveInVcsChangedFunc,
+			"updtfunc":   giv.FileTreeActiveInVcsModifiedFunc,
 			"label-func": giv.VcsLabelFunc,
 		}},
 		{"RevertVcs", ki.Props{
 			"label":    "Revert",
 			"desc":     "Revert file to last commit",
-			"updtfunc": giv.FileTreeActiveInVcsChangedFunc,
+			"updtfunc": giv.FileTreeActiveInVcsModifiedFunc,
 		}},
 	},
 }
