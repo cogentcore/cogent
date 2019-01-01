@@ -231,7 +231,7 @@ func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Su
 }
 
 // NewFile creates a new file in the project
-func (ge *GideView) NewFile(filename string) {
+func (ge *GideView) NewFile(filename string, addToVcs bool) {
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
@@ -239,6 +239,12 @@ func (ge *GideView) NewFile(filename string) {
 		return
 	}
 	ge.Files.UpdateNewFile(np)
+	if addToVcs {
+		nfn, ok := ge.Files.FindFile(np)
+		if ok {
+			nfn.AddToVcs()
+		}
+	}
 }
 
 // SaveProj saves project file containing custom project settings, in a
