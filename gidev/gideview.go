@@ -1302,6 +1302,17 @@ func (ge *GideView) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm gide.CmdName, se
 	cmd.Run(ge, cbuf)
 }
 
+// ExecCmdNameFileName executes command of given name on given file name
+func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := gide.AvailCmds.CmdByName(cmdNm, true)
+	if !ok {
+		return
+	}
+	ge.ArgVals.Set(fn, &ge.Prefs, nil)
+	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
+	cmd.Run(ge, cbuf)
+}
+
 // ExecCmds gets list of available commands for current active file, as a submenu-func
 func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)

@@ -58,6 +58,9 @@ type Gide interface {
 	// ExecCmdNameFileNode executes command of given name on given node
 	ExecCmdNameFileNode(fn *giv.FileNode, cmdNm CmdName, sel bool, clearBuf bool)
 
+	// ExecCmdNameFileName executes command of given name on given file name
+	ExecCmdNameFileName(fn string, cmdNm CmdName, sel bool, clearBuf bool)
+
 	// Find does Find / Replace in files, using given options and filters -- opens up a
 	// main tab with the results and further controls.
 	Find(find, repl string, ignoreCase bool, loc FindLoc, langs []filecat.Supported)

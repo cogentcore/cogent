@@ -26,12 +26,13 @@ type FileNode struct {
 
 var KiT_FileNode = kit.Types.AddType(&FileNode{}, FileNodeProps)
 
-func (fn *FileNode) ParentGide() (Gide, bool) {
-	if fn.IsRoot() {
+// ParentGide returns the Gide parent of given node
+func ParentGide(kn ki.Ki) (Gide, bool) {
+	if kn.IsRoot() {
 		return nil, false
 	}
 	var ge Gide
-	fn.FuncUpParent(0, fn, func(k ki.Ki, level int, d interface{}) bool {
+	kn.FuncUpParent(0, kn, func(k ki.Ki, level int, d interface{}) bool {
 		if kit.EmbedImplements(k.Type(), GideType) {
 			ge = k.(Gide)
 			return false
@@ -47,7 +48,7 @@ func (fn *FileNode) ViewFile() {
 		log.Printf("FileNode Edit -- cannot edit directories!\n")
 		return
 	}
-	ge, ok := fn.ParentGide()
+	ge, ok := ParentGide(fn.This())
 	if ok {
 		ge.NextViewFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
@@ -56,7 +57,7 @@ func (fn *FileNode) ViewFile() {
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() {
-	ge, ok := fn.ParentGide()
+	ge, ok := ParentGide(fn.This())
 	if ok {
 		ge.ExecCmdFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
 	}
@@ -64,7 +65,7 @@ func (fn *FileNode) ExecCmdFile() {
 
 // ExecCmdNameFile executes given command name on node
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	ge, ok := fn.ParentGide()
+	ge, ok := ParentGide(fn.This())
 	if ok {
 		ge.ExecCmdNameFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode), CmdName(cmdNm), true, true)
 	}
@@ -282,8 +283,15 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	if !ok {
 		return nil
 	}
+	if ft.This() == ft.RootView.This() {
+		ge, ok := ParentGide(ft.SrcNode.Ptr)
+		if !ok {
+			return nil
+		}
+		return AvailCmds.FilterCmdNames(filecat.NoSupport, ge.ProjPrefs().VersCtrl)
+	}
 	fn := ft.FileNode()
-	ge, ok := fn.ParentGide()
+	ge, ok := ParentGide(fn.This())
 	if !ok {
 		return nil
 	}
@@ -304,9 +312,20 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i]
 		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
-		fn := ftv.FileNode()
-		if fn != nil {
-			fn.ExecCmdNameFile(cmdNm)
+		if ftv.This() == ft.RootView.This() {
+			if ft.SrcNode.Ptr == nil {
+				continue
+			}
+			ftr := ft.SrcNode.Ptr.(*giv.FileTree)
+			ge, ok := ParentGide(ftr)
+			if ok {
+				ge.ExecCmdNameFileName(string(ftr.FPath), CmdName(cmdNm), true, true)
+			}
+		} else {
+			fn := ftv.FileNode()
+			if fn != nil {
+				fn.ExecCmdNameFile(cmdNm)
+			}
 		}
 	}
 	if CmdWaitOverride {
