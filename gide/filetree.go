@@ -291,6 +291,9 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 		return AvailCmds.FilterCmdNames(filecat.NoSupport, ge.ProjPrefs().VersCtrl)
 	}
 	fn := ft.FileNode()
+	if fn == nil {
+		return nil
+	}
 	ge, ok := ParentGide(fn.This())
 	if !ok {
 		return nil
