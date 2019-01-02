@@ -3,9 +3,9 @@
 // license that can be found in the LICENSE file.
 
 // Package gidev implements the GideView editor, using all the elements
-// from the gide infrastructure.  Having it in a separate package
+// from the gide infraSymbols.  Having it in a separate package
 // allows GideView to also include other packages that tap into
-// the gide infrastructure, such as the GoPi interactive parser.
+// the gide infraSymbols, such as the GoPi interactive parser.
 //
 package gidev
 
@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -927,8 +928,8 @@ func TextLinkHandler(tl gi.TextLink) bool {
 			ge.OpenFindURL(ur, ftv)
 		case strings.HasPrefix(ur, "spell:///"):
 			ge.OpenSpellURL(ur, ftv)
-		case strings.HasPrefix(ur, "structure:///"):
-			ge.OpenStructureURL(ur, ftv)
+		case strings.HasPrefix(ur, "symbols:///"):
+			ge.OpenSymbolsURL(ur, ftv)
 		case strings.HasPrefix(ur, "file:///"):
 			ge.OpenFileURL(ur)
 		default:
@@ -1513,16 +1514,17 @@ func (ge *GideView) OpenConsoleTab() {
 	}
 }
 
-func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []syms.Symbol) {
+func FileSymbols(it interface{}, vp *gi.Viewport2D) (filesyms []syms.Symbol) {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
-		return funcs
+		return filesyms
 	}
 	tv := ge.ActiveTextView()
 	if tv == nil || tv.Buf == nil {
-		return funcs
+		return filesyms
 	}
 	fs := &tv.Buf.PiState
+	funcs := []syms.Symbol{} // collect and add to end
 	for _, v := range fs.Syms {
 		if v.Kind != token.NamePackage { // note: package symbol filename won't always corresp.
 			continue
@@ -1534,16 +1536,23 @@ func FileFuncs(it interface{}, vp *gi.Viewport2D) (funcs []syms.Symbol) {
 			switch w.Kind {
 			case token.NameFunction:
 				funcs = append(funcs, *w)
-			case token.NameStruct:
+			case token.NameStruct, token.NameMap, token.NameArray:
+				filesyms = append(filesyms, *w)
+				var temp []syms.Symbol
 				for _, x := range w.Children {
 					if x.Kind == token.NameMethod {
-						funcs = append(funcs, *x)
+						temp = append(temp, *x)
 					}
 				}
+				sort.Slice(temp, func(i, j int) bool {
+					return temp[i].Name < temp[j].Name
+				})
+				filesyms = append(filesyms, temp...)
 			}
 		}
+		filesyms = append(filesyms, funcs...)
 	}
-	return funcs
+	return filesyms
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1672,17 +1681,17 @@ func (ge *GideView) Spell() {
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
-// Structure displays the structure of a file or package
-func (ge *GideView) Structure() {
-	fbuf, _ := ge.FindOrMakeCmdBuf("Structure", true)
-	svi, _ := ge.FindOrMakeMainTab("Structure", gide.KiT_StructureView, true) // sel
-	sv := svi.Embed(gide.KiT_StructureView).(*gide.StructureView)
-	sv.UpdateView(ge, ge.Prefs.Structure)
+// Symbols displays the Symbols of a file or package
+func (ge *GideView) Symbols() {
+	fbuf, _ := ge.FindOrMakeCmdBuf("Symbols", true)
+	svi, _ := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true) // sel
+	sv := svi.Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
+	sv.UpdateView(ge, ge.Prefs.Symbols)
 	stv := sv.TextView()
 	stv.SetInactive()
 	stv.SetBuf(fbuf)
 
-	funcs := FileFuncs(ge, ge.Viewport)
+	funcs := FileSymbols(ge, ge.Viewport)
 	sv.Display(funcs)
 	ge.FocusOnPanel(MainTabsIdx)
 }
@@ -1736,14 +1745,14 @@ func (ge *GideView) OpenSpellURL(ur string, stv *giv.TextView) bool {
 	return fv.OpenSpellURL(ur, stv)
 }
 
-// OpenStructureURL opens given structure:/// url from Structure -- delegates to StructureView
-func (ge *GideView) OpenStructureURL(ur string, stv *giv.TextView) bool {
-	svk, ok := stv.ParentByType(gide.KiT_StructureView, true)
+// OpenSymbolsURL opens given Symbols:/// url from Symbols -- delegates to SymbolsView
+func (ge *GideView) OpenSymbolsURL(ur string, stv *giv.TextView) bool {
+	svk, ok := stv.ParentByType(gide.KiT_SymbolsView, true)
 	if !ok {
 		return false
 	}
-	fv := svk.(*gide.StructureView)
-	return fv.OpenStructureURL(ur, stv)
+	fv := svk.(*gide.SymbolsView)
+	return fv.OpenSymbolsURL(ur, stv)
 }
 
 // ReplaceInActive does query-replace in active file only
@@ -2551,8 +2560,8 @@ var GideViewProps = ki.Props{
 				}},
 			},
 		}},
-		{"Structure", ki.Props{
-			"label": "Structure",
+		{"Symbols", ki.Props{
+			"label": "Symbols",
 			"icon":  "structure",
 		}},
 		{"Spell", ki.Props{

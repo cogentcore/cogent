@@ -321,7 +321,7 @@ type ProjPrefs struct {
 	RunCmds      CmdNames          `desc:"command(s) to run for main Run button (typically Run Proj)"`
 	Find         FindParams        `view:"-" desc:"saved find params"`
 	Spell        SpellParams       `view:"-" desc:"saved spell params"`
-	Structure    StructureParams   `view:"-" desc:"saved structure params"`
+	Symbols      SymbolsParams     `view:"-" desc:"saved structure params"`
 	OpenDirs     giv.OpenDirMap    `view:"-" desc:"open directories"`
 	Register     RegisterName      `view:"-" desc:"last register used"`
 	Splits       []float32         `view:"-" desc:"current splitter splits"`

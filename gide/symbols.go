@@ -7,39 +7,37 @@ package gide
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/syms"
-	"sort"
-	"strings"
+	"github.com/goki/pi/token"
 )
 
-// StructureParams are parameters for structure view of file or package
-type StructureParams struct {
+// SymbolsParams are parameters for structure view of file or package
+type SymbolsParams struct {
 }
 
-// StructureView is a widget that displays results of a file parse
-type StructureView struct {
+// SymbolsView is a widget that displays results of a file parse
+type SymbolsView struct {
 	gi.Layout
-	Gide      Gide            `json:"-" xml:"-" desc:"parent gide project"`
-	Structure StructureParams `desc:"params for structure display"`
+	Gide    Gide          `json:"-" xml:"-" desc:"parent gide project"`
+	Symbols SymbolsParams `desc:"params for structure display"`
 }
 
-var KiT_StructureView = kit.Types.AddType(&StructureView{}, StructureViewProps)
+var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
 
-// StructureAction runs a new parse with current params
-func (sv *StructureView) StructureAction() {
-	sv.Gide.ProjPrefs().Structure = sv.Structure
-	sv.Gide.Structure()
+// SymbolsAction runs a new parse with current params
+func (sv *SymbolsView) SymbolsAction() {
+	sv.Gide.ProjPrefs().Symbols = sv.Symbols
+	sv.Gide.Symbols()
 }
 
-// Display appends the results of the parse to textview of the structure tab
-func (sv *StructureView) Display(funcs []syms.Symbol) {
-	sort.Slice(funcs, func(i, j int) bool {
-		return funcs[i].Name < funcs[j].Name
-	})
+// Display appends the results of the parse to textview of the symbols tab
+func (sv *SymbolsView) Display(funcs []syms.Symbol) {
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100) // markups
 	lstr := ""
@@ -51,16 +49,24 @@ func (sv *StructureView) Display(funcs []syms.Symbol) {
 		ln := f.SelectReg.St.Ln + 1
 		ch := f.SelectReg.St.Ch + 1
 		ech := f.SelectReg.Ed.Ch + 1
-		d := f.Detail
-		s1 := strings.SplitAfterN(d, "(", 2)
-		s0 := strings.SplitAfterN(s1[1], ")", 2)
-		sd := "(" + s0[0]
-		if len(sd) == 0 {
-			sd = "()"
+		if f.Kind == token.NameFunction || f.Kind == token.NameMethod {
+			d := f.Detail
+			s1 := strings.SplitAfterN(d, "(", 2)
+			s0 := strings.SplitAfterN(s1[1], ")", 2)
+			sd := "(" + s0[0]
+			if len(sd) == 0 {
+				sd = "()"
+			}
+			lead := ""
+			if f.Kind == token.NameMethod {
+				lead = "\t"
+			}
+			lstr = fmt.Sprintf(`%s%v%v`, lead, f.Name, sd)
+		} else {
+			lstr = f.Name
 		}
-		lstr = fmt.Sprintf(`%v%v`, f.Name, sd)
 		outlns = append(outlns, []byte(lstr))
-		mstr = fmt.Sprintf(`	<a href="structure:///%v#R%vL%vC%v-L%vC%v">%v</a>`, f.Filename, sbStLn, ln, ch, ln, ech, lstr)
+		mstr = fmt.Sprintf(`<a href="symbols:///%v#R%vL%vC%v-L%vC%v">%v</a>`, f.Filename, sbStLn, ln, ch, ln, ech, lstr)
 		outmus = append(outmus, []byte(mstr))
 		outlns = append(outlns, []byte(""))
 		outmus = append(outmus, []byte(""))
@@ -70,8 +76,8 @@ func (sv *StructureView) Display(funcs []syms.Symbol) {
 	sv.TextView().Buf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
 }
 
-// OpenStructureURL opens given structure:/// url from Find
-func (sv *StructureView) OpenStructureURL(ur string, ftv *giv.TextView) bool {
+// OpenSymbolsURL opens given symbols:/// url from Find
+func (sv *SymbolsView) OpenSymbolsURL(ur string, ftv *giv.TextView) bool {
 	ge := sv.Gide
 	tv, reg, _, _, ok := ge.ParseOpenFindURL(ur, ftv)
 	if !ok {
@@ -91,10 +97,10 @@ func (sv *StructureView) OpenStructureURL(ur string, ftv *giv.TextView) bool {
 //    GUI config
 
 // UpdateView updates view with current settings
-func (sv *StructureView) UpdateView(ge Gide, sp StructureParams) {
+func (sv *SymbolsView) UpdateView(ge Gide, sp SymbolsParams) {
 	sv.Gide = ge
-	sv.Structure = sp
-	_, updt := sv.StdStructureConfig()
+	sv.Symbols = sp
+	_, updt := sv.StdSymbolsConfig()
 	sv.ConfigToolbar()
 	tvly := sv.TextViewLay()
 	sv.Gide.ConfigOutputTextView(tvly)
@@ -103,16 +109,16 @@ func (sv *StructureView) UpdateView(ge Gide, sp StructureParams) {
 
 // StdConfig returns a TypeAndNameList for configuring a standard Frame
 // -- can modify as desired before calling ConfigChildren on Frame using this
-func (sv *StructureView) StdConfig() kit.TypeAndNameList {
+func (sv *SymbolsView) StdConfig() kit.TypeAndNameList {
 	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_ToolBar, "structurebar")
-	config.Add(gi.KiT_Layout, "structuretext")
+	config.Add(gi.KiT_ToolBar, "symbolsbar")
+	config.Add(gi.KiT_Layout, "symbolstext")
 	return config
 }
 
-// StdStructureConfig configures a standard setup of the overall layout -- returns
+// StdSymbolsConfig configures a standard setup of the overall layout -- returns
 // mods, updt from ConfigChildren and does NOT call UpdateEnd
-func (sv *StructureView) StdStructureConfig() (mods, updt bool) {
+func (sv *SymbolsView) StdSymbolsConfig() (mods, updt bool) {
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := sv.StdConfig()
@@ -120,17 +126,17 @@ func (sv *StructureView) StdStructureConfig() (mods, updt bool) {
 	return
 }
 
-// TextViewLay returns the structure view TextView layout
-func (sv *StructureView) TextViewLay() *gi.Layout {
-	tvi, ok := sv.ChildByName("structuretext", 1)
+// TextViewLay returns the symbols view TextView layout
+func (sv *SymbolsView) TextViewLay() *gi.Layout {
+	tvi, ok := sv.ChildByName("symbolstext", 1)
 	if !ok {
 		return nil
 	}
 	return tvi.(*gi.Layout)
 }
 
-// TextView returns the structure parse results
-func (sv *StructureView) TextView() *giv.TextView {
+// TextView returns the symbols parse results
+func (sv *SymbolsView) TextView() *giv.TextView {
 	tvly := sv.TextViewLay()
 	if tvly == nil {
 		return nil
@@ -139,9 +145,9 @@ func (sv *StructureView) TextView() *giv.TextView {
 	return tv
 }
 
-// StructureBar returns the spell toolbar
-func (sv *StructureView) StructureBar() *gi.ToolBar {
-	tbi, ok := sv.ChildByName("structurebar", 0)
+// SymbolsBar returns the spell toolbar
+func (sv *SymbolsView) SymbolsBar() *gi.ToolBar {
+	tbi, ok := sv.ChildByName("symbolsbar", 0)
 	if !ok {
 		return nil
 	}
@@ -149,19 +155,19 @@ func (sv *StructureView) StructureBar() *gi.ToolBar {
 }
 
 // ConfigToolbar adds toolbar.
-func (sv *StructureView) ConfigToolbar() {
-	stbar := sv.StructureBar()
+func (sv *SymbolsView) ConfigToolbar() {
+	stbar := sv.SymbolsBar()
 	if stbar.HasChildren() {
 		return
 	}
 	stbar.SetStretchMaxWidth()
 
-	//// structure toolbar
+	//// symbols toolbar
 	//pkg := stbar.AddNewChild(gi.KiT_Action, "package").(*gi.Action)
-	//pkg.SetText("Package Structure")
-	//pkg.Tooltip = "show the structure of the entire package"
+	//pkg.SetText("Package Symbols")
+	//pkg.Tooltip = "show the symbols of the entire package"
 	////check.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-	////	svv, _ := recv.Embed(KiT_SpellView).(*StructureView)
+	////	svv, _ := recv.Embed(KiT_SpellView).(*SymbolsView)
 	//	//svv.PackageAction
 	////})
 	//
@@ -179,8 +185,8 @@ func (sv *StructureView) ConfigToolbar() {
 	//
 }
 
-// StructureViewProps are style properties for StructureView
-var StructureViewProps = ki.Props{
+// SymbolsViewProps are style properties for SymbolsView
+var SymbolsViewProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
 	"max-width":        -1,
