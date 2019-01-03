@@ -1686,13 +1686,14 @@ func (ge *GideView) Symbols() {
 	fbuf, _ := ge.FindOrMakeCmdBuf("Symbols", true)
 	svi, _ := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true) // sel
 	sv := svi.Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
+	filesyms := FileSymbols(ge, ge.Viewport)
+	sv.SetSymbols(filesyms)
+
 	sv.UpdateView(ge, ge.Prefs.Symbols)
 	stv := sv.TextView()
 	stv.SetInactive()
 	stv.SetBuf(fbuf)
-
-	funcs := FileSymbols(ge, ge.Viewport)
-	sv.Display(funcs)
+	sv.Display()
 	ge.FocusOnPanel(MainTabsIdx)
 }
 

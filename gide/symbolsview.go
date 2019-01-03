@@ -7,6 +7,7 @@ package gide
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/goki/gi/gi"
@@ -17,15 +18,27 @@ import (
 	"github.com/goki/pi/token"
 )
 
+// SymNode represents a language symbol -- the name of the node is
+// the name of the symbol. Some symbols, e.g. type have children
+type SymNode struct {
+	ki.Node
+	Symbol syms.Symbol `desc:"a string"`
+	SRoot  *SymTree    `json:"-" xml:"-" desc:"root of the tree -- has global state"`
+}
+
+var KiT_SymNode = kit.Types.AddType(&SymNode{}, nil)
+
 // SymbolsParams are parameters for structure view of file or package
 type SymbolsParams struct {
 }
 
-// SymbolsView is a widget that displays results of a file parse
+// SymbolsView is a widget that displays results of a file or package parse
 type SymbolsView struct {
 	gi.Layout
-	Gide    Gide          `json:"-" xml:"-" desc:"parent gide project"`
-	Symbols SymbolsParams `desc:"params for structure display"`
+	Gide     Gide          `json:"-" xml:"-" desc:"parent gide project"`
+	Symbols  SymbolsParams `desc:"params for structure display"`
+	SymsTree SymTree       `desc:"all the syms for the file or package in a tree"`
+	Syms     []syms.Symbol `desc:"the slice of symbols to display"`
 }
 
 var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
@@ -36,16 +49,21 @@ func (sv *SymbolsView) SymbolsAction() {
 	sv.Gide.Symbols()
 }
 
+// SetSymbols sets the slice of symbols for the SymbolsView
+func (sv *SymbolsView) SetSymbols(filesyms []syms.Symbol) {
+	sv.Syms = filesyms
+}
+
 // Display appends the results of the parse to textview of the symbols tab
-func (sv *SymbolsView) Display(funcs []syms.Symbol) {
+func (sv *SymbolsView) Display() {
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100) // markups
 	lstr := ""
 	mstr := ""
 	var f syms.Symbol
-	for i := range funcs {
+	for i := range sv.Syms {
 		sbStLn := len(outlns) // find buf start ln
-		f = funcs[i]
+		f = sv.Syms[i]
 		ln := f.SelectReg.St.Ln + 1
 		ch := f.SelectReg.St.Ch + 1
 		ech := f.SelectReg.Ed.Ch + 1
@@ -102,6 +120,8 @@ func (sv *SymbolsView) UpdateView(ge Gide, sp SymbolsParams) {
 	sv.Symbols = sp
 	_, updt := sv.StdSymbolsConfig()
 	sv.ConfigToolbar()
+	sv.ConfigTree()
+
 	tvly := sv.TextViewLay()
 	sv.Gide.ConfigOutputTextView(tvly)
 	sv.UpdateEnd(updt)
@@ -113,6 +133,7 @@ func (sv *SymbolsView) StdConfig() kit.TypeAndNameList {
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "symbolsbar")
 	config.Add(gi.KiT_Layout, "symbolstext")
+	config.Add(gi.KiT_Frame, "symbolstree")
 	return config
 }
 
@@ -154,13 +175,22 @@ func (sv *SymbolsView) SymbolsBar() *gi.ToolBar {
 	return tbi.(*gi.ToolBar)
 }
 
+// SymbolsBar returns the spell toolbar
+func (sv *SymbolsView) SymbolsTree() *gi.Frame {
+	tvi, ok := sv.ChildByName("symbolstree", 0)
+	if !ok {
+		return nil
+	}
+	return tvi.(*gi.Frame)
+}
+
 // ConfigToolbar adds toolbar.
 func (sv *SymbolsView) ConfigToolbar() {
-	stbar := sv.SymbolsBar()
-	if stbar.HasChildren() {
+	svbar := sv.SymbolsBar()
+	if svbar.HasChildren() {
 		return
 	}
-	stbar.SetStretchMaxWidth()
+	svbar.SetStretchMaxWidth()
 
 	//// symbols toolbar
 	//pkg := stbar.AddNewChild(gi.KiT_Action, "package").(*gi.Action)
@@ -185,10 +215,106 @@ func (sv *SymbolsView) ConfigToolbar() {
 	//
 }
 
+// ConfigTree adds a treeview to the symbolsview
+func (sv *SymbolsView) ConfigTree() {
+	svtree := sv.SymbolsTree()
+	svtree.SetStretchMaxWidth()
+	sv.SymsTree.OpenTree(sv, sv.Syms)
+	if !svtree.HasChildren() {
+		svt := svtree.AddNewChild(giv.KiT_TreeView, "symtree").(*giv.TreeView)
+		svt.SetRootNode(&sv.SymsTree)
+		svt.TreeViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			if data == nil {
+				return
+			}
+			tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+			//sve, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
+			if tvn.SrcNode.Ptr != nil {
+				sn := tvn.SrcNode.Ptr.Embed(KiT_SymNode).(*SymNode)
+				switch sig {
+				case int64(giv.TreeViewSelected):
+					sv.SelectSymbol(sn.Symbol)
+					//sve.FileNodeSelected(fn, tvn)
+					//case int64(giv.TreeViewOpened):
+					//	sve.FileNodeOpened(fn, tvn)
+					//case int64(giv.TreeViewClosed):
+					//	sve.FileNodeClosed(fn, tvn)
+				}
+			}
+		})
+	}
+}
+
+func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
+	ge := sv.Gide
+	tv := ge.ActiveTextView()
+	if tv == nil {
+		return
+	}
+	tv.UpdateStart()
+	tv.Highlights = tv.Highlights[:0]
+	tr := giv.NewTextRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+	tv.Highlights = append(tv.Highlights, tr)
+	tv.UpdateEnd(true)
+	tv.RefreshIfNeeded()
+	tv.SetCursorShow(tr.Start)
+	tv.GrabFocus()
+}
+
 // SymbolsViewProps are style properties for SymbolsView
 var SymbolsViewProps = ki.Props{
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
 	"max-width":        -1,
 	"max-height":       -1,
+}
+
+// SymTree is the root of a tree representing symbols of a package or file
+type SymTree struct {
+	SymNode
+	NodeType reflect.Type `view:"-" json:"-" qxml:"-" desc:"type of node to create -- defaults to giv.FileNode but can use custom node types"`
+	View     *SymbolsView
+}
+
+var KiT_SymTree = kit.Types.AddType(&SymTree{}, SymTreeProps)
+
+var SymTreeProps = ki.Props{}
+
+// OpenTree opens a SymTree of symbols from a file or package parse
+func (st *SymTree) OpenTree(view *SymbolsView, fsyms []syms.Symbol) {
+	st.SRoot = st // we are our own root..
+	if st.NodeType == nil {
+		st.NodeType = KiT_SymNode
+	}
+	st.SRoot.View = view
+	st.ReadSyms(fsyms)
+}
+
+// ReadSyms adds the symbols resulting from a file(s) parse into this SymNode
+func (sn *SymNode) ReadSyms(fsyms []syms.Symbol) {
+	sv := sn.SRoot.View
+	if len(sv.Syms) > 0 {
+		config := sn.ConfigOfSyms(fsyms)
+		mods, updt := sn.ConfigChildren(config, false) // NOT unique names
+		for i, snk := range sn.Kids {
+			k := snk.Embed(KiT_SymNode).(*SymNode)
+			k.SRoot = sn.SRoot
+			k.Symbol = fsyms[i]
+		}
+		if mods {
+			sn.UpdateEnd(updt)
+		}
+	}
+}
+
+// ConfigOfSyms returns a type-and-name list for configuring nodes based on
+// files in the list of parsed symbols passed to function
+func (sn *SymNode) ConfigOfSyms(fsyms []syms.Symbol) kit.TypeAndNameList {
+	config1 := kit.TypeAndNameList{}
+	typ := sn.SRoot.NodeType
+
+	for i := range fsyms {
+		config1.Add(typ, fsyms[i].Name)
+	}
+	return config1
 }
