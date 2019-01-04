@@ -7,9 +7,9 @@ package gide
 import (
 	"reflect"
 
-	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/pi/filecat"
 )
 
 // Gide provides the interface for the GideView functionality that is needed

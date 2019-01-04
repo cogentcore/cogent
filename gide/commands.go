@@ -18,14 +18,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goki/gi/complete"
-	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki"
 	"github.com/goki/ki/ints"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/complete"
+	"github.com/goki/pi/filecat"
 )
 
 // CmdAndArgs contains the name of an external program to execute and args to

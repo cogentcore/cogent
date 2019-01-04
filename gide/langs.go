@@ -10,12 +10,12 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/filecat"
 )
 
 // LangOpts defines options associated with a given language / file format

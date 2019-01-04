@@ -22,7 +22,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/histyle"
@@ -32,6 +31,7 @@ import (
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/filecat"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple

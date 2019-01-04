@@ -11,12 +11,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/goki/gi/filecat"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/filecat"
 )
 
 // FileNode is Gide version of FileNode for FileTree view
