@@ -18,7 +18,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -33,8 +32,6 @@ import (
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
-	"github.com/goki/pi/syms"
-	"github.com/goki/pi/token"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -1514,47 +1511,6 @@ func (ge *GideView) OpenConsoleTab() {
 	}
 }
 
-func FileSymbols(it interface{}, vp *gi.Viewport2D) (filesyms []syms.Symbol) {
-	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
-	if !ok {
-		return filesyms
-	}
-	tv := ge.ActiveTextView()
-	if tv == nil || tv.Buf == nil {
-		return filesyms
-	}
-	fs := &tv.Buf.PiState
-	funcs := []syms.Symbol{} // collect and add to end
-	for _, v := range fs.Syms {
-		if v.Kind != token.NamePackage { // note: package symbol filename won't always corresp.
-			continue
-		}
-		for _, w := range v.Children {
-			if w.Filename != fs.Src.Filename {
-				continue
-			}
-			switch w.Kind {
-			case token.NameFunction:
-				funcs = append(funcs, *w)
-			case token.NameStruct, token.NameMap, token.NameArray:
-				filesyms = append(filesyms, *w)
-				var temp []syms.Symbol
-				for _, x := range w.Children {
-					if x.Kind == token.NameMethod {
-						temp = append(temp, *x)
-					}
-				}
-				sort.Slice(temp, func(i, j int) bool {
-					return temp[i].Name < temp[j].Name
-				})
-				filesyms = append(filesyms, temp...)
-			}
-		}
-		filesyms = append(filesyms, funcs...)
-	}
-	return filesyms
-}
-
 //////////////////////////////////////////////////////////////////////////////////////
 //    TextView functions
 
@@ -1683,17 +1639,9 @@ func (ge *GideView) Spell() {
 
 // Symbols displays the Symbols of a file or package
 func (ge *GideView) Symbols() {
-	fbuf, _ := ge.FindOrMakeCmdBuf("Symbols", true)
 	svi, _ := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true) // sel
 	sv := svi.Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
-	filesyms := FileSymbols(ge, ge.Viewport)
-	sv.SetSymbols(filesyms)
-
 	sv.UpdateView(ge, ge.Prefs.Symbols)
-	stv := sv.TextView()
-	stv.SetInactive()
-	stv.SetBuf(fbuf)
-	sv.Display()
 	ge.FocusOnPanel(MainTabsIdx)
 }
 
