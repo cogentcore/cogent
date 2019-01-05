@@ -7,12 +7,15 @@ package gide
 import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/syms"
 	"github.com/goki/pi/token"
+	"image/color"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 // SymNode represents a language symbol -- the name of the node is
@@ -34,7 +37,7 @@ type SymbolsView struct {
 	gi.Layout
 	Gide      Gide          `json:"-" xml:"-" desc:"parent gide project"`
 	SymParams SymbolsParams `desc:"params for structure display"`
-	SymsTree  SymTree       `desc:"all the syms for the file or package in a tree"`
+	SymTree   SymTree       `desc:"all the syms for the file or package in a tree"`
 }
 
 var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
@@ -145,17 +148,24 @@ func (sv *SymbolsView) ConfigToolbar() {
 
 // ConfigTree adds a treeview to the symbolsview
 func (sv *SymbolsView) ConfigTree() {
+	if sv.SymTree.HasChildren() {
+		sv.SymTree.DeleteChildren(true)
+		sv.SymTree.OpenTree(sv)
+		sv.SymTree.TreeView.OpenAll()
+		sv.GrabFocus()
+		return
+	}
 	svtree := sv.SymbolsTree()
 	svtree.SetStretchMaxWidth()
-	sv.SymsTree.OpenTree(sv)
-	//if !svtree.HasChildren() {
-	svt := svtree.AddNewChild(giv.KiT_TreeView, "symtree").(*giv.TreeView)
-	svt.SetRootNode(&sv.SymsTree)
+	sv.SymTree.OpenTree(sv)
+	svt := svtree.AddNewChild(KiT_SymbolTreeView, "symtree").(*SymbolTreeView)
+	svt.SetRootNode(&sv.SymTree)
+	sv.SymTree.TreeView = svt
 	svt.TreeViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+		tvn, _ := data.(ki.Ki).Embed(KiT_SymbolTreeView).(*SymbolTreeView)
 		//sve, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
 		if tvn.SrcNode.Ptr != nil {
 			sn := tvn.SrcNode.Ptr.Embed(KiT_SymNode).(*SymNode)
@@ -170,7 +180,6 @@ func (sv *SymbolsView) ConfigTree() {
 			}
 		}
 	})
-	//}
 }
 
 func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
@@ -202,6 +211,7 @@ type SymTree struct {
 	SymNode
 	NodeType reflect.Type `view:"-" json:"-" qxml:"-" desc:"type of node to create -- defaults to giv.FileNode but can use custom node types"`
 	View     *SymbolsView
+	TreeView *SymbolTreeView
 }
 
 var KiT_SymTree = kit.Types.AddType(&SymTree{}, SymTreeProps)
@@ -216,7 +226,7 @@ func (st *SymTree) OpenTree(view *SymbolsView) {
 		return
 	}
 
-	fs := &tv.Buf.PiState
+	fs := &tv.Buf.PiState // the parse info
 
 	st.SRoot = st // we are our own root..
 	if st.NodeType == nil {
@@ -251,7 +261,12 @@ func (st *SymTree) OpenTree(view *SymbolsView) {
 					return temp[i].Name < temp[j].Name
 				})
 				for i, _ := range temp {
-					skid := kid.AddNewChild(nil, temp[i].Name)
+					dnm := temp[i].Name
+					idx := strings.Index(temp[i].Detail, "(")
+					if idx > -1 {
+						dnm = dnm + temp[i].Detail[idx-1:]
+					}
+					skid := kid.AddNewChild(nil, dnm)
 					kn := skid.Embed(KiT_SymNode).(*SymNode)
 					kn.SRoot = st.SRoot
 					kn.Symbol = temp[i]
@@ -260,9 +275,105 @@ func (st *SymTree) OpenTree(view *SymbolsView) {
 		}
 	}
 	for i, _ := range funcs {
+		dnm := funcs[i].Name
+		idx := strings.Index(funcs[i].Detail, "(")
+		if idx > 0 {
+			dnm = dnm + funcs[i].Detail[idx-1:]
+		}
 		skid := st.AddNewChild(nil, funcs[i].Name)
 		kn := skid.Embed(KiT_SymNode).(*SymNode)
 		kn.SRoot = st.SRoot
 		kn.Symbol = funcs[i]
 	}
+}
+
+// SymbolTreeView is a TreeView that knows how to operate on FileNode nodes
+type SymbolTreeView struct {
+	giv.TreeView
+}
+
+var KiT_SymbolTreeView = kit.Types.AddType(&SymbolTreeView{}, nil)
+
+func init() {
+	kit.Types.SetProps(KiT_SymbolTreeView, SymbolTreeViewProps)
+}
+
+// SymNode returns the SrcNode as a *gide* SymNode
+func (st *SymbolTreeView) SymNode() *SymNode {
+	sn := st.SrcNode.Ptr.Embed(KiT_SymNode)
+	if sn == nil {
+		return nil
+	}
+	return sn.(*SymNode)
+}
+
+var SymbolTreeViewProps = ki.Props{
+	"indent":           units.NewValue(2, units.Ch),
+	"spacing":          units.NewValue(.5, units.Ch),
+	"border-width":     units.NewValue(0, units.Px),
+	"border-radius":    units.NewValue(0, units.Px),
+	"padding":          units.NewValue(0, units.Px),
+	"margin":           units.NewValue(1, units.Px),
+	"text-align":       gi.AlignLeft,
+	"vertical-align":   gi.AlignTop,
+	"color":            &gi.Prefs.Colors.Font,
+	"background-color": "inherit",
+	".exec": ki.Props{
+		"font-weight": gi.WeightBold,
+	},
+	".open": ki.Props{
+		"font-style": gi.FontItalic,
+	},
+	"#icon": ki.Props{
+		"width":   units.NewValue(1, units.Em),
+		"height":  units.NewValue(1, units.Em),
+		"margin":  units.NewValue(0, units.Px),
+		"padding": units.NewValue(0, units.Px),
+		"fill":    &gi.Prefs.Colors.Icon,
+		"stroke":  &gi.Prefs.Colors.Font,
+	},
+	"#branch": ki.Props{
+		"icon":             "widget-wedge-down",
+		"icon-off":         "widget-wedge-right",
+		"margin":           units.NewValue(0, units.Px),
+		"padding":          units.NewValue(0, units.Px),
+		"background-color": color.Transparent,
+		"max-width":        units.NewValue(.8, units.Em),
+		"max-height":       units.NewValue(.8, units.Em),
+	},
+	"#space": ki.Props{
+		"width": units.NewValue(.5, units.Em),
+	},
+	"#label": ki.Props{
+		"margin":    units.NewValue(0, units.Px),
+		"padding":   units.NewValue(0, units.Px),
+		"min-width": units.NewValue(16, units.Ch),
+	},
+	"#menu": ki.Props{
+		"indicator": "none",
+	},
+	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Props{},
+	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Props{
+		"background-color": &gi.Prefs.Colors.Select,
+	},
+	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Props{
+		"background-color": &gi.Prefs.Colors.Control,
+	},
+	"CtxtMenuActive": ki.PropSlice{},
+}
+
+func (st *SymbolTreeView) Style2D() {
+	sn := st.SymNode()
+	st.Class = ""
+	if sn != nil {
+		if sn.Symbol.Kind.InSubCat(token.NameType) {
+			st.Icon = gi.IconName("type")
+		} else if sn.Symbol.Kind.InSubCat(token.NameVar) {
+			st.Icon = gi.IconName("var")
+		} else if sn.Symbol.Kind.InSubCat(token.NameFunction) {
+			st.Icon = gi.IconName("func")
+		}
+	}
+	st.StyleTreeView()
+	st.LayData.SetFromStyle(&st.Sty.Layout) // also does reset
 }
