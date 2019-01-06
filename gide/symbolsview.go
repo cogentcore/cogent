@@ -150,13 +150,17 @@ func (sv *SymbolsView) ConfigToolbar() {
 func (sv *SymbolsView) ConfigTree() {
 	if sv.SymTree.HasChildren() {
 		sv.SymTree.DeleteChildren(true)
+		updt := sv.SymbolsTree().UpdateStart()
 		sv.SymTree.OpenTree(sv)
 		sv.SymTree.TreeView.OpenAll()
+		sv.SymbolsTree().UpdateEnd(updt)
 		sv.GrabFocus()
+
 		return
 	}
 	svtree := sv.SymbolsTree()
 	svtree.SetStretchMaxWidth()
+	svtree.SetStretchMaxHeight()
 	sv.SymTree.OpenTree(sv)
 	svt := svtree.AddNewChild(KiT_SymbolTreeView, "symtree").(*SymbolTreeView)
 	svt.SetRootNode(&sv.SymTree)
@@ -240,9 +244,6 @@ func (st *SymTree) OpenTree(view *SymbolsView) {
 			continue
 		}
 		for _, w := range v.Children {
-			if w.Filename != fs.Src.Filename {
-				continue
-			}
 			switch w.Kind {
 			case token.NameFunction:
 				funcs = append(funcs, *w)
