@@ -18,6 +18,30 @@ import (
 	"strings"
 )
 
+// SymScope corresponds to the search scope
+type SymScope int
+
+const (
+	// SymScopeFile restricts the list of symbols to the active file
+	SymScopeFile SymScope = iota
+
+	// SymScopePackage scopes list of symbols to the package of the active file
+	SymScopePackage
+
+	// SymScopeN is the number of symbol scopes
+	SymScopeN
+)
+
+//go:generate stringer -type=SymScope
+
+var KiT_SymScope = kit.Enums.AddEnumAltLower(SymScopeN, false, nil, "SymScope")
+
+// MarshalJSON encodes
+func (ev SymScope) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(ev) }
+
+// UnmarshalJSON decodes
+func (ev *SymScope) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
+
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
 type SymNode struct {
@@ -30,6 +54,7 @@ var KiT_SymNode = kit.Types.AddType(&SymNode{}, nil)
 
 // SymbolsParams are parameters for structure view of file or package
 type SymbolsParams struct {
+	Scope SymScope `desc:"scope of symbols to list"`
 }
 
 // SymbolsView is a widget that displays results of a file or package parse
@@ -41,6 +66,11 @@ type SymbolsView struct {
 }
 
 var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
+
+// Params returns the symbols params
+func (sv *SymbolsView) Params() *SymbolsParams {
+	return &sv.Gide.ProjPrefs().Symbols
+}
 
 // SymbolsAction runs a new parse with current params
 func (sv *SymbolsView) SymbolsAction() {
@@ -74,6 +104,8 @@ func (sv *SymbolsView) UpdateView(ge Gide, sp SymbolsParams) {
 	sv.SymParams = sp
 	_, updt := sv.StdSymbolsConfig()
 	sv.ConfigToolbar()
+	//sb := sv.ScopeCombo()
+	//sb.SetCurIndex(int(sv.Params().Scope))
 	sv.ConfigTree()
 	sv.UpdateEnd(updt)
 }
@@ -82,8 +114,8 @@ func (sv *SymbolsView) UpdateView(ge Gide, sp SymbolsParams) {
 // -- can modify as desired before calling ConfigChildren on Frame using this
 func (sv *SymbolsView) StdConfig() kit.TypeAndNameList {
 	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_ToolBar, "symbolsbar")
-	config.Add(gi.KiT_Frame, "symbolstree")
+	config.Add(gi.KiT_ToolBar, "symbols-bar")
+	config.Add(gi.KiT_Frame, "symbols-tree")
 	return config
 }
 
@@ -99,7 +131,7 @@ func (sv *SymbolsView) StdSymbolsConfig() (mods, updt bool) {
 
 // SymbolsBar returns the spell toolbar
 func (sv *SymbolsView) SymbolsBar() *gi.ToolBar {
-	tbi, ok := sv.ChildByName("symbolsbar", 0)
+	tbi, ok := sv.ChildByName("symbols-bar", 0)
 	if !ok {
 		return nil
 	}
@@ -108,11 +140,24 @@ func (sv *SymbolsView) SymbolsBar() *gi.ToolBar {
 
 // SymbolsBar returns the spell toolbar
 func (sv *SymbolsView) SymbolsTree() *gi.Frame {
-	tvi, ok := sv.ChildByName("symbolstree", 0)
+	tvi, ok := sv.ChildByName("symbols-tree", 0)
 	if !ok {
 		return nil
 	}
 	return tvi.(*gi.Frame)
+}
+
+// ScopeCombo returns the scope ComboBox
+func (sv *SymbolsView) ScopeCombo() *gi.ComboBox {
+	sb := sv.SymbolsBar()
+	if sb == nil {
+		return nil
+	}
+	scb, ok := sb.ChildByName("scope-combo", 5)
+	if !ok {
+		return nil
+	}
+	return scb.(*gi.ComboBox)
 }
 
 // ConfigToolbar adds toolbar.
@@ -123,27 +168,20 @@ func (sv *SymbolsView) ConfigToolbar() {
 	}
 	svbar.SetStretchMaxWidth()
 
-	//// symbols toolbar
-	//pkg := stbar.AddNewChild(gi.KiT_Action, "package").(*gi.Action)
-	//pkg.SetText("Package Symbols")
-	//pkg.Tooltip = "show the symbols of the entire package"
-	////check.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-	////	svv, _ := recv.Embed(KiT_SpellView).(*SymbolsView)
-	//	//svv.PackageAction
-	////})
+	//sl := svbar.AddNewChild(gi.KiT_Label, "scope-lbl").(*gi.Label)
+	//sl.SetText("Scope:")
+	//sl.Tooltip = "scope symbols to:"
 	//
-	//vars := stbar.AddNewChild(gi.KiT_Action, "vars").(*gi.Action)
-	//vars.SetProp("horizontal-align", gi.AlignRight)
-	//vars.SetText("Vars")
-	//vars.Tooltip = "show variables as well as functions"
-	////train.ActionSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-	////	svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-	////	svv.VarAction()
-	////})
-	//
-	//checkbox := stbar.AddNewChild(gi.KiT_CheckBox, "checkbox").(*gi.CheckBox)
-	//checkbox.SetProp("horizontal-align", gi.AlignRight)
-	//
+	//scb := svbar.AddNewChild(gi.KiT_ComboBox, "scope-combo").(*gi.ComboBox)
+	//scb.SetText("Scope")
+	//scb.Tooltip = sl.Tooltip
+	//scb.ItemsFromEnum(KiT_SymScope, false, 0)
+	//scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	//	svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
+	//	smb := send.(*gi.ComboBox)
+	//	eval := smb.CurVal.(kit.EnumValue)
+	//	svv.Params().Scope = SymScope(eval.Value)
+	//})
 }
 
 // ConfigTree adds a treeview to the symbolsview
