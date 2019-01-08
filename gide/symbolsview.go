@@ -326,17 +326,17 @@ func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 				kn.Symbol = temp[i]
 			}
 		}
-		for i, _ := range funcs {
-			dnm := funcs[i].Name
-			idx := strings.Index(funcs[i].Detail, "(")
-			if idx > 0 {
-				dnm = dnm + funcs[i].Detail[idx-1:]
-			}
-			skid := st.AddNewChild(nil, funcs[i].Name)
-			kn := skid.Embed(KiT_SymNode).(*SymNode)
-			kn.SRoot = st.SRoot
-			kn.Symbol = funcs[i]
+	}
+	for i, _ := range funcs {
+		dnm := funcs[i].Name
+		idx := strings.Index(funcs[i].Detail, "(")
+		if idx > 0 {
+			dnm = dnm + funcs[i].Detail[idx-1:]
 		}
+		skid := st.AddNewChild(nil, funcs[i].Name)
+		kn := skid.Embed(KiT_SymNode).(*SymNode)
+		kn.SRoot = st.SRoot
+		kn.Symbol = funcs[i]
 	}
 }
 
