@@ -5,6 +5,15 @@
 package gide
 
 import (
+	"fmt"
+	"github.com/goki/pi/filecat"
+	"github.com/goki/pi/pi"
+	"image/color"
+	"path/filepath"
+	"reflect"
+	"sort"
+	"strings"
+
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/units"
@@ -12,18 +21,14 @@ import (
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/syms"
 	"github.com/goki/pi/token"
-	"image/color"
-	"reflect"
-	"sort"
-	"strings"
 )
 
 // SymScope corresponds to the search scope
-type SymScope int
+type SymbolsViewScope int
 
 const (
 	// SymScopeFile restricts the list of symbols to the active file
-	SymScopeFile SymScope = iota
+	SymScopeFile SymbolsViewScope = iota
 
 	// SymScopePackage scopes list of symbols to the package of the active file
 	SymScopePackage
@@ -32,15 +37,15 @@ const (
 	SymScopeN
 )
 
-//go:generate stringer -type=SymScope
+//go:generate stringer -type=SymbolsViewScope
 
-var KiT_SymScope = kit.Enums.AddEnumAltLower(SymScopeN, false, nil, "SymScope")
+var Kit_SymbolsViewScope = kit.Enums.AddEnumAltLower(SymScopeN, false, nil, "SymScope")
 
 // MarshalJSON encodes
-func (ev SymScope) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(ev) }
+func (ev SymbolsViewScope) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(ev) }
 
 // UnmarshalJSON decodes
-func (ev *SymScope) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
+func (ev *SymbolsViewScope) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
@@ -54,7 +59,7 @@ var KiT_SymNode = kit.Types.AddType(&SymNode{}, nil)
 
 // SymbolsParams are parameters for structure view of file or package
 type SymbolsParams struct {
-	Scope SymScope `desc:"scope of symbols to list"`
+	Scope SymbolsViewScope `desc:"scope of symbols to list"`
 }
 
 // SymbolsView is a widget that displays results of a file or package parse
@@ -104,8 +109,8 @@ func (sv *SymbolsView) UpdateView(ge Gide, sp SymbolsParams) {
 	sv.SymParams = sp
 	_, updt := sv.StdSymbolsConfig()
 	sv.ConfigToolbar()
-	//sb := sv.ScopeCombo()
-	//sb.SetCurIndex(int(sv.Params().Scope))
+	sb := sv.ScopeCombo()
+	sb.SetCurIndex(int(sv.Params().Scope))
 	sv.ConfigTree()
 	sv.UpdateEnd(updt)
 }
@@ -168,28 +173,31 @@ func (sv *SymbolsView) ConfigToolbar() {
 	}
 	svbar.SetStretchMaxWidth()
 
-	//sl := svbar.AddNewChild(gi.KiT_Label, "scope-lbl").(*gi.Label)
-	//sl.SetText("Scope:")
-	//sl.Tooltip = "scope symbols to:"
-	//
-	//scb := svbar.AddNewChild(gi.KiT_ComboBox, "scope-combo").(*gi.ComboBox)
-	//scb.SetText("Scope")
-	//scb.Tooltip = sl.Tooltip
-	//scb.ItemsFromEnum(KiT_SymScope, false, 0)
-	//scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-	//	svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
-	//	smb := send.(*gi.ComboBox)
-	//	eval := smb.CurVal.(kit.EnumValue)
-	//	svv.Params().Scope = SymScope(eval.Value)
-	//})
+	sl := svbar.AddNewChild(gi.KiT_Label, "scope-lbl").(*gi.Label)
+	sl.SetText("Scope:")
+	sl.Tooltip = "scope symbols to:"
+	scb := svbar.AddNewChild(gi.KiT_ComboBox, "scope-combo").(*gi.ComboBox)
+	scb.SetText("Scope")
+	scb.Tooltip = sl.Tooltip
+	scb.ItemsFromEnum(Kit_SymbolsViewScope, false, 0)
+	scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
+		smb := send.(*gi.ComboBox)
+		eval := smb.CurVal.(kit.EnumValue)
+		svv.Params().Scope = SymbolsViewScope(eval.Value)
+	})
 }
 
 // ConfigTree adds a treeview to the symbolsview
 func (sv *SymbolsView) ConfigTree() {
-	if sv.SymTree.HasChildren() {
-		sv.SymTree.DeleteChildren(true)
+	if sv.SymTree.SRoot != nil {
 		updt := sv.SymbolsTree().UpdateStart()
-		sv.SymTree.OpenTree(sv)
+		sv.SymTree.DeleteChildren(true)
+		if sv.SymParams.Scope == SymScopePackage {
+			sv.SymTree.OpenPackageSymTree(sv)
+		} else {
+			sv.SymTree.OpenFileSymTree(sv)
+		}
 		sv.SymTree.TreeView.OpenAll()
 		sv.SymbolsTree().UpdateEnd(updt)
 		sv.GrabFocus()
@@ -199,7 +207,11 @@ func (sv *SymbolsView) ConfigTree() {
 	svtree := sv.SymbolsTree()
 	svtree.SetStretchMaxWidth()
 	svtree.SetStretchMaxHeight()
-	sv.SymTree.OpenTree(sv)
+	if sv.SymParams.Scope == SymScopePackage {
+		sv.SymTree.OpenPackageSymTree(sv)
+	} else {
+		sv.SymTree.OpenFileSymTree(sv)
+	}
 	svt := svtree.AddNewChild(KiT_SymbolTreeView, "symtree").(*SymbolTreeView)
 	svt.SetRootNode(&sv.SymTree)
 	sv.SymTree.TreeView = svt
@@ -261,16 +273,82 @@ var KiT_SymTree = kit.Types.AddType(&SymTree{}, SymTreeProps)
 var SymTreeProps = ki.Props{}
 
 // OpenTree opens a SymTree of symbols from a file or package parse
-func (st *SymTree) OpenTree(view *SymbolsView) {
+func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 	ge := view.Gide
 	tv := ge.ActiveTextView()
 	if tv == nil || tv.Buf == nil {
 		return
 	}
-
-	fs := &tv.Buf.PiState // the parse info
-
 	st.SRoot = st // we are our own root..
+	if st.NodeType == nil {
+		st.NodeType = KiT_SymNode
+	}
+	st.SRoot.View = view
+
+	path, _ := filepath.Split(string(tv.Buf.Filename))
+	lp, _ := pi.LangSupport.Props(filecat.Go)
+	pr := lp.Lang.Parser()
+	pr.ReportErrs = true
+	pkgsym := lp.Lang.ParseDir(path, pi.LangDirOpts{})
+	if pkgsym != nil {
+		syms.SaveSymDoc(pkgsym, filecat.Go, path)
+	}
+
+	fmt.Println("package parse")
+	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
+	for _, w := range pkgsym.Children {
+		switch w.Kind {
+		case token.NameFunction:
+			funcs = append(funcs, *w)
+		case token.NameStruct, token.NameMap, token.NameArray:
+			kid := st.AddNewChild(nil, w.Name)
+			kn := kid.Embed(KiT_SymNode).(*SymNode)
+			kn.SRoot = st.SRoot
+			kn.Symbol = *w
+			var temp []syms.Symbol
+			for _, x := range w.Children {
+				if x.Kind == token.NameMethod {
+					temp = append(temp, *x)
+				}
+			}
+			sort.Slice(temp, func(i, j int) bool {
+				return temp[i].Name < temp[j].Name
+			})
+			for i, _ := range temp {
+				dnm := temp[i].Name
+				idx := strings.Index(temp[i].Detail, "(")
+				if idx > -1 {
+					dnm = dnm + temp[i].Detail[idx-1:]
+				}
+				skid := kid.AddNewChild(nil, dnm)
+				kn := skid.Embed(KiT_SymNode).(*SymNode)
+				kn.SRoot = st.SRoot
+				kn.Symbol = temp[i]
+			}
+		}
+		for i, _ := range funcs {
+			dnm := funcs[i].Name
+			idx := strings.Index(funcs[i].Detail, "(")
+			if idx > 0 {
+				dnm = dnm + funcs[i].Detail[idx-1:]
+			}
+			skid := st.AddNewChild(nil, funcs[i].Name)
+			kn := skid.Embed(KiT_SymNode).(*SymNode)
+			kn.SRoot = st.SRoot
+			kn.Symbol = funcs[i]
+		}
+	}
+}
+
+// OpenTree opens a SymTree of symbols from a file or package parse
+func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
+	ge := view.Gide
+	tv := ge.ActiveTextView()
+	if tv == nil || tv.Buf == nil {
+		return
+	}
+	fs := &tv.Buf.PiState // the parse info
+	st.SRoot = st         // we are our own root..
 	if st.NodeType == nil {
 		st.NodeType = KiT_SymNode
 	}
