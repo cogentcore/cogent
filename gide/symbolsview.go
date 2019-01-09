@@ -5,14 +5,14 @@
 package gide
 
 import (
-	"fmt"
-	"github.com/goki/pi/filecat"
-	"github.com/goki/pi/pi"
 	"image/color"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/goki/pi/filecat"
+	"github.com/goki/pi/pi"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
@@ -294,22 +294,62 @@ func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 		syms.SaveSymDoc(pkgsym, filecat.Go, path)
 	}
 
-	fmt.Println("package parse")
+	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
 	for _, w := range pkgsym.Children {
 		switch w.Kind {
 		case token.NameFunction:
 			funcs = append(funcs, *w)
-		case token.NameStruct, token.NameMap, token.NameArray:
+		case token.NameVarGlobal:
+			gvars = append(gvars, *w)
+		case token.NameStruct, token.NameMap, token.NameArray, token.NameType, token.NameEnum:
+			kid := st.AddNewChild(nil, w.Name)
+			kn := kid.Embed(KiT_SymNode).(*SymNode)
+			kn.SRoot = st.SRoot
+			kn.Symbol = *w
+			var methods []syms.Symbol
+			var fields []syms.Symbol
+			for _, x := range w.Children {
+				if x.Kind == token.NameMethod {
+					methods = append(methods, *x)
+				} else if x.Kind == token.NameField {
+					fields = append(fields, *x)
+				}
+			}
+			sort.Slice(fields, func(i, j int) bool {
+				return fields[i].Name < fields[j].Name
+			})
+			sort.Slice(methods, func(i, j int) bool {
+				return methods[i].Name < methods[j].Name
+			})
+			for i, _ := range fields {
+				dnm := fields[i].Name + ": " + fields[i].Type
+				skid := kid.AddNewChild(nil, dnm)
+				kn := skid.Embed(KiT_SymNode).(*SymNode)
+				kn.SRoot = st.SRoot
+				kn.Symbol = fields[i]
+			}
+			for i, _ := range methods {
+				dnm := methods[i].Name
+				idx := strings.Index(methods[i].Detail, "(")
+				if idx > -1 {
+					dnm = dnm + methods[i].Detail[idx-1:]
+				} else {
+					dnm = dnm + methods[i].Detail
+				}
+				skid := kid.AddNewChild(nil, dnm)
+				kn := skid.Embed(KiT_SymNode).(*SymNode)
+				kn.SRoot = st.SRoot
+				kn.Symbol = methods[i]
+			}
+		case token.NameVar, token.NameVarClass:
 			kid := st.AddNewChild(nil, w.Name)
 			kn := kid.Embed(KiT_SymNode).(*SymNode)
 			kn.SRoot = st.SRoot
 			kn.Symbol = *w
 			var temp []syms.Symbol
 			for _, x := range w.Children {
-				if x.Kind == token.NameMethod {
-					temp = append(temp, *x)
-				}
+				temp = append(temp, *x)
 			}
 			sort.Slice(temp, func(i, j int) bool {
 				return temp[i].Name < temp[j].Name
@@ -319,6 +359,8 @@ func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 				idx := strings.Index(temp[i].Detail, "(")
 				if idx > -1 {
 					dnm = dnm + temp[i].Detail[idx-1:]
+				} else {
+					dnm = dnm + temp[i].Detail
 				}
 				skid := kid.AddNewChild(nil, dnm)
 				kn := skid.Embed(KiT_SymNode).(*SymNode)
@@ -327,7 +369,7 @@ func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 			}
 		}
 	}
-	for i, _ := range funcs {
+	for i := range funcs {
 		dnm := funcs[i].Name
 		idx := strings.Index(funcs[i].Detail, "(")
 		if idx > 0 {
@@ -337,6 +379,13 @@ func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 		kn := skid.Embed(KiT_SymNode).(*SymNode)
 		kn.SRoot = st.SRoot
 		kn.Symbol = funcs[i]
+	}
+	for i := range gvars {
+		dnm := gvars[i].Name + ": " + gvars[i].Type
+		skid := st.InsertNewChild(nil, 0, dnm)
+		kn := skid.Embed(KiT_SymNode).(*SymNode)
+		kn.SRoot = st.SRoot
+		kn.Symbol = gvars[i]
 	}
 }
 
@@ -354,6 +403,7 @@ func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
 	}
 	st.SRoot.View = view
 
+	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
 	for _, v := range fs.Syms {
 		if v.Kind != token.NamePackage { // note: package symbol filename won't always corresp.
@@ -363,16 +413,58 @@ func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
 			switch w.Kind {
 			case token.NameFunction:
 				funcs = append(funcs, *w)
-			case token.NameStruct, token.NameMap, token.NameArray:
+			case token.NameVarGlobal:
+				gvars = append(gvars, *w)
+			case token.NameStruct, token.NameMap, token.NameArray, token.NameType, token.NameEnum:
+				kid := st.AddNewChild(nil, w.Name)
+				kn := kid.Embed(KiT_SymNode).(*SymNode)
+				kn.SRoot = st.SRoot
+				kn.Symbol = *w
+				var methods []syms.Symbol
+				var fields []syms.Symbol
+				for _, x := range w.Children {
+					if x.Kind == token.NameMethod {
+						methods = append(methods, *x)
+					} else if x.Kind == token.NameField {
+						fields = append(fields, *x)
+					}
+				}
+				sort.Slice(fields, func(i, j int) bool {
+					return fields[i].Name < fields[j].Name
+				})
+				sort.Slice(methods, func(i, j int) bool {
+					return methods[i].Name < methods[j].Name
+				})
+				for i, _ := range fields {
+					dnm := fields[i].Name + ": " + fields[i].Type
+					skid := kid.AddNewChild(nil, dnm)
+					kn := skid.Embed(KiT_SymNode).(*SymNode)
+					kn.SRoot = st.SRoot
+					kn.Symbol = fields[i]
+				}
+				for i, _ := range methods {
+					dnm := methods[i].Name
+					idx := strings.Index(methods[i].Detail, "(")
+					if idx > -1 {
+						dnm = dnm + methods[i].Detail[idx-1:]
+					} else {
+						dnm = dnm + methods[i].Detail
+					}
+					skid := kid.AddNewChild(nil, dnm)
+					kn := skid.Embed(KiT_SymNode).(*SymNode)
+					kn.SRoot = st.SRoot
+					kn.Symbol = methods[i]
+				}
+			case token.NameVar, token.NameVarClass:
 				kid := st.AddNewChild(nil, w.Name)
 				kn := kid.Embed(KiT_SymNode).(*SymNode)
 				kn.SRoot = st.SRoot
 				kn.Symbol = *w
 				var temp []syms.Symbol
 				for _, x := range w.Children {
-					if x.Kind == token.NameMethod {
-						temp = append(temp, *x)
-					}
+					//if x.Kind == token.NameMethod || x.Kind == token.NameVar {
+					temp = append(temp, *x)
+					//}
 				}
 				sort.Slice(temp, func(i, j int) bool {
 					return temp[i].Name < temp[j].Name
@@ -382,6 +474,8 @@ func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
 					idx := strings.Index(temp[i].Detail, "(")
 					if idx > -1 {
 						dnm = dnm + temp[i].Detail[idx-1:]
+					} else {
+						dnm = dnm + temp[i].Detail
 					}
 					skid := kid.AddNewChild(nil, dnm)
 					kn := skid.Embed(KiT_SymNode).(*SymNode)
@@ -391,7 +485,7 @@ func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
 			}
 		}
 	}
-	for i, _ := range funcs {
+	for i := range funcs {
 		dnm := funcs[i].Name
 		idx := strings.Index(funcs[i].Detail, "(")
 		if idx > 0 {
@@ -401,6 +495,13 @@ func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
 		kn := skid.Embed(KiT_SymNode).(*SymNode)
 		kn.SRoot = st.SRoot
 		kn.Symbol = funcs[i]
+	}
+	for i := range gvars {
+		dnm := gvars[i].Name + ": " + gvars[i].Type
+		skid := st.InsertNewChild(nil, 0, dnm)
+		kn := skid.Embed(KiT_SymNode).(*SymNode)
+		kn.SRoot = st.SRoot
+		kn.Symbol = gvars[i]
 	}
 }
 
@@ -483,12 +584,16 @@ func (st *SymbolTreeView) Style2D() {
 	sn := st.SymNode()
 	st.Class = ""
 	if sn != nil {
-		if sn.Symbol.Kind.InSubCat(token.NameType) {
+		if sn.Symbol.Kind == token.NameType {
 			st.Icon = gi.IconName("type")
-		} else if sn.Symbol.Kind.InSubCat(token.NameVar) {
+		} else if sn.Symbol.Kind == token.NameVar || sn.Symbol.Kind == token.NameVarGlobal {
 			st.Icon = gi.IconName("var")
-		} else if sn.Symbol.Kind.InSubCat(token.NameFunction) {
-			st.Icon = gi.IconName("func")
+		} else if sn.Symbol.Kind == token.NameMethod {
+			st.Icon = gi.IconName("method")
+		} else if sn.Symbol.Kind == token.NameFunction {
+			st.Icon = gi.IconName("function")
+		} else if sn.Symbol.Kind == token.NameField {
+			st.Icon = gi.IconName("field")
 		}
 	}
 	st.StyleTreeView()
