@@ -77,12 +77,6 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 	return &sv.Gide.ProjPrefs().Symbols
 }
 
-// SymbolsAction runs a new parse with current params
-func (sv *SymbolsView) SymbolsAction() {
-	sv.Gide.ProjPrefs().Symbols = sv.SymParams
-	sv.Gide.Symbols()
-}
-
 // OpenSymbolsURL opens given symbols:/// url from Find
 func (sv *SymbolsView) OpenSymbolsURL(ur string, ftv *giv.TextView) bool {
 	ge := sv.Gide
@@ -111,7 +105,14 @@ func (sv *SymbolsView) UpdateView(ge Gide, sp SymbolsParams) {
 	sv.ConfigToolbar()
 	sb := sv.ScopeCombo()
 	sb.SetCurIndex(int(sv.Params().Scope))
-	sv.ConfigTree()
+	sv.ConfigTree(sp.Scope)
+	sv.UpdateEnd(updt)
+}
+
+// ReView updates view with current settings
+func (sv *SymbolsView) ReView(scope SymbolsViewScope) {
+	_, updt := sv.StdSymbolsConfig()
+	sv.ConfigTree(scope)
 	sv.UpdateEnd(updt)
 }
 
@@ -185,15 +186,17 @@ func (sv *SymbolsView) ConfigToolbar() {
 		smb := send.(*gi.ComboBox)
 		eval := smb.CurVal.(kit.EnumValue)
 		svv.Params().Scope = SymbolsViewScope(eval.Value)
+		sv.Gide.ProjPrefs().Symbols = sv.SymParams
+		sv.ReView(SymbolsViewScope(eval.Value))
 	})
 }
 
 // ConfigTree adds a treeview to the symbolsview
-func (sv *SymbolsView) ConfigTree() {
+func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 	if sv.SymTree.SRoot != nil {
 		updt := sv.SymbolsTree().UpdateStart()
 		sv.SymTree.DeleteChildren(true)
-		if sv.SymParams.Scope == SymScopePackage {
+		if scope == SymScopePackage {
 			sv.SymTree.OpenPackageSymTree(sv)
 		} else {
 			sv.SymTree.OpenFileSymTree(sv)
@@ -201,13 +204,12 @@ func (sv *SymbolsView) ConfigTree() {
 		sv.SymTree.TreeView.OpenAll()
 		sv.SymbolsTree().UpdateEnd(updt)
 		sv.GrabFocus()
-
 		return
 	}
 	svtree := sv.SymbolsTree()
 	svtree.SetStretchMaxWidth()
 	svtree.SetStretchMaxHeight()
-	if sv.SymParams.Scope == SymScopePackage {
+	if scope == SymScopePackage {
 		sv.SymTree.OpenPackageSymTree(sv)
 	} else {
 		sv.SymTree.OpenFileSymTree(sv)
@@ -272,9 +274,10 @@ var KiT_SymTree = kit.Types.AddType(&SymTree{}, SymTreeProps)
 
 var SymTreeProps = ki.Props{}
 
+// todo: should OpenPackageSymTree and OpenFileSymTree be combined
 // OpenTree opens a SymTree of symbols from a file or package parse
-func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
-	ge := view.Gide
+func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
+	ge := sv.Gide
 	tv := ge.ActiveTextView()
 	if tv == nil || tv.Buf == nil {
 		return
@@ -283,15 +286,15 @@ func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 	if st.NodeType == nil {
 		st.NodeType = KiT_SymNode
 	}
-	st.SRoot.View = view
+	st.SRoot.View = sv
 
 	path, _ := filepath.Split(string(tv.Buf.Filename))
 	lp, _ := pi.LangSupport.Props(filecat.Go)
 	pr := lp.Lang.Parser()
 	pr.ReportErrs = true
 	pkgsym := lp.Lang.ParseDir(path, pi.LangDirOpts{})
-	if pkgsym != nil {
-		syms.SaveSymDoc(pkgsym, filecat.Go, path)
+	if pkgsym == nil {
+		return
 	}
 
 	gvars := []syms.Symbol{} // collect and list global vars first
@@ -390,8 +393,8 @@ func (st *SymTree) OpenPackageSymTree(view *SymbolsView) {
 }
 
 // OpenTree opens a SymTree of symbols from a file or package parse
-func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
-	ge := view.Gide
+func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
+	ge := sv.Gide
 	tv := ge.ActiveTextView()
 	if tv == nil || tv.Buf == nil {
 		return
@@ -401,7 +404,7 @@ func (st *SymTree) OpenFileSymTree(view *SymbolsView) {
 	if st.NodeType == nil {
 		st.NodeType = KiT_SymNode
 	}
-	st.SRoot.View = view
+	st.SRoot.View = sv
 
 	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
