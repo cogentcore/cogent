@@ -372,6 +372,9 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 			}
 		}
 	}
+	sort.Slice(funcs, func(i, j int) bool {
+		return funcs[i].Name < funcs[j].Name
+	})
 	for i := range funcs {
 		dnm := funcs[i].Name
 		idx := strings.Index(funcs[i].Detail, "(")
@@ -383,6 +386,9 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 		kn.SRoot = st.SRoot
 		kn.Symbol = funcs[i]
 	}
+	sort.Slice(gvars, func(i, j int) bool {
+		return gvars[i].Name < gvars[j].Name
+	})
 	for i := range gvars {
 		dnm := gvars[i].Name + ": " + gvars[i].Type
 		skid := st.InsertNewChild(nil, 0, dnm)
@@ -488,6 +494,9 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 			}
 		}
 	}
+	sort.Slice(funcs, func(i, j int) bool {
+		return funcs[i].Name < funcs[j].Name
+	})
 	for i := range funcs {
 		dnm := funcs[i].Name
 		idx := strings.Index(funcs[i].Detail, "(")
@@ -499,6 +508,9 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 		kn.SRoot = st.SRoot
 		kn.Symbol = funcs[i]
 	}
+	sort.Slice(gvars, func(i, j int) bool {
+		return gvars[i].Name < gvars[j].Name
+	})
 	for i := range gvars {
 		dnm := gvars[i].Name + ": " + gvars[i].Type
 		skid := st.InsertNewChild(nil, 0, dnm)
