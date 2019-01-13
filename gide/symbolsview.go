@@ -77,23 +77,6 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 	return &sv.Gide.ProjPrefs().Symbols
 }
 
-// OpenSymbolsURL opens given symbols:/// url from Find
-func (sv *SymbolsView) OpenSymbolsURL(ur string, ftv *giv.TextView) bool {
-	ge := sv.Gide
-	tv, reg, _, _, ok := ge.ParseOpenFindURL(ur, ftv)
-	if !ok {
-		return false
-	}
-	tv.UpdateStart()
-	tv.Highlights = tv.Highlights[:0]
-	tv.Highlights = append(tv.Highlights, reg)
-	tv.UpdateEnd(true)
-	tv.RefreshIfNeeded()
-	tv.SetCursorShow(reg.Start)
-	tv.GrabFocus()
-	return true
-}
-
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
@@ -186,7 +169,6 @@ func (sv *SymbolsView) ConfigToolbar() {
 		smb := send.(*gi.ComboBox)
 		eval := smb.CurVal.(kit.EnumValue)
 		svv.Params().Scope = SymbolsViewScope(eval.Value)
-		sv.Gide.ProjPrefs().Symbols = sv.SymParams
 		sv.ReView(SymbolsViewScope(eval.Value))
 	})
 }
