@@ -32,6 +32,7 @@ import (
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
+	"github.com/goki/pi/pi"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -925,8 +926,6 @@ func TextLinkHandler(tl gi.TextLink) bool {
 			ge.OpenFindURL(ur, ftv)
 		case strings.HasPrefix(ur, "spell:///"):
 			ge.OpenSpellURL(ur, ftv)
-		case strings.HasPrefix(ur, "symbols:///"):
-			ge.OpenSymbolsURL(ur, ftv)
 		case strings.HasPrefix(ur, "file:///"):
 			ge.OpenFileURL(ur)
 		default:
@@ -1639,6 +1638,10 @@ func (ge *GideView) Spell() {
 
 // Symbols displays the Symbols of a file or package
 func (ge *GideView) Symbols() {
+	tv := ge.ActiveTextView()
+	if tv == nil || tv.Buf == nil {
+		return
+	}
 	svi, _ := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true) // sel
 	sv := svi.Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
 	sv.UpdateView(ge, ge.Prefs.Symbols)
@@ -1692,16 +1695,6 @@ func (ge *GideView) OpenSpellURL(ur string, stv *giv.TextView) bool {
 	}
 	fv := svk.(*gide.SpellView)
 	return fv.OpenSpellURL(ur, stv)
-}
-
-// OpenSymbolsURL opens given Symbols:/// url from Symbols -- delegates to SymbolsView
-func (ge *GideView) OpenSymbolsURL(ur string, stv *giv.TextView) bool {
-	svk, ok := stv.ParentByType(gide.KiT_SymbolsView, true)
-	if !ok {
-		return false
-	}
-	fv := svk.(*gide.SymbolsView)
-	return fv.OpenSymbolsURL(ur, stv)
 }
 
 // ReplaceInActive does query-replace in active file only
@@ -2391,6 +2384,43 @@ func (ge *GideView) ConnectEvents2D() {
 	ge.KeyChordEvent()
 }
 
+// Declaration looks up the declaration for the selected text and if found moves cursor and highlights
+func (ge *GideView) Declaration() {
+	//tr := ge.ActiveTextView().Selection()
+	s := string(ge.ActiveTextView().Selection().ToBytes())
+	path, _ := filepath.Split(string(ge.ActiveTextView().Buf.Filename))
+	lp, _ := pi.LangSupport.Props(filecat.Go)
+	pr := lp.Lang.Parser()
+	pr.ReportErrs = true
+	pkgsym := lp.Lang.ParseDir(path, pi.LangDirOpts{})
+	if pkgsym != nil {
+		sym, fnd := pkgsym.Children.FindName(s)
+		//if !fnd {
+		//	for _, sym := range pkgsym.Children {
+		//		if sym.Kind == token.NameLibrary {
+		//			// need to get last part of library name after the "/"
+		//			&& sym.Name == "gi"
+		//			fmt.Println("found import")
+		//		}
+		//	}
+		//}
+		if fnd {
+			tv := ge.ActiveTextView()
+			if tv == nil {
+				return
+			}
+			tv.UpdateStart()
+			tv.Highlights = tv.Highlights[:0]
+			tr := giv.NewTextRegion(sym.SelectReg.St.Ln, sym.SelectReg.St.Ch, sym.SelectReg.Ed.Ln, sym.SelectReg.Ed.Ch)
+			tv.Highlights = append(tv.Highlights, tr)
+			tv.UpdateEnd(true)
+			tv.RefreshIfNeeded()
+			tv.SetCursorShow(tr.Start)
+			tv.GrabFocus()
+		}
+	}
+}
+
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
 var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
@@ -2401,6 +2431,16 @@ var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *
 var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	act.SetInactiveState(ge.ActiveTextView().Buf == nil)
+})
+
+// GideViewInactiveTextSelectionFunc is an ActionUpdateFunc that inactivates action there is no active text view
+var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
+	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
+	if ge.ActiveTextView() != nil && ge.ActiveTextView().Buf != nil {
+		act.SetActiveState(ge.ActiveTextView().HasSelection())
+	} else {
+		act.SetActiveState(false)
+	}
 })
 
 var GideViewProps = ki.Props{
@@ -2715,10 +2755,12 @@ var GideViewProps = ki.Props{
 		}},
 		{"Edit", ki.PropSlice{
 			{"Copy", ki.Props{
-				"keyfun": gi.KeyFunCopy,
+				"keyfun":   gi.KeyFunCopy,
+				"updtfunc": GideViewInactiveTextSelectionFunc,
 			}},
 			{"Cut", ki.Props{
-				"keyfun": gi.KeyFunCut,
+				"keyfun":   gi.KeyFunCut,
+				"updtfunc": GideViewInactiveTextSelectionFunc,
 			}},
 			{"Paste", ki.Props{
 				"keyfun": gi.KeyFunPaste,
@@ -2893,6 +2935,9 @@ var GideViewProps = ki.Props{
 					"keyfun": gi.KeyFunJump,
 				}},
 			}},
+			//{"Declaration", ki.Props{
+			//	"updtfunc": GideViewInactiveTextSelectionFunc,
+			//}},
 		}},
 		{"Command", ki.PropSlice{
 			{"Build", ki.Props{
