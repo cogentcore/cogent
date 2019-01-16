@@ -43,10 +43,10 @@ type Gide interface {
 	// NextViewFileNode sets the next text view to view file in given node (opens
 	// buffer if not already opened) -- if already being viewed, that is
 	// activated, returns text view and index
-	NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int)
+	NextViewFileNode(fn *giv.FileNode) (*TextView, int)
 
 	// ActiveTextView returns the currently-active TextView
-	ActiveTextView() *giv.TextView
+	ActiveTextView() *TextView
 
 	// ConfigOutputTextView configures a command-output textview within given parent layout
 	ConfigOutputTextView(ly *gi.Layout) *giv.TextView
@@ -68,13 +68,16 @@ type Gide interface {
 	// ParseOpenFindURL parses and opens given find:/// url from Find, return text
 	// region encoded in url, and starting line of results in find buffer, and
 	// number of results returned -- for parsing all the find results
-	ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool)
+	ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool)
 
 	// Spell checks spelling in files
 	Spell()
 
 	// Symbols calls a function to parse file or package
 	Symbols()
+
+	// Declaration
+	Declaration()
 }
 
 // GideType is a Gide reflect.Type, suitable for checking for Type.Implements.

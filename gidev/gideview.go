@@ -32,7 +32,6 @@ import (
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
-	"github.com/goki/pi/pi"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -427,14 +426,14 @@ func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 }
 
 // ActiveTextView returns the currently-active TextView
-func (ge *GideView) ActiveTextView() *giv.TextView {
+func (ge *GideView) ActiveTextView() *gide.TextView {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	//	log.Printf("stderr: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
 }
 
 // TextViewIndex finds index of given textview (0 or 1)
-func (ge *GideView) TextViewIndex(av *giv.TextView) int {
+func (ge *GideView) TextViewIndex(av *gide.TextView) int {
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
 		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
@@ -447,14 +446,14 @@ func (ge *GideView) TextViewIndex(av *giv.TextView) int {
 
 // TextViewForFileNode finds a TextView that is viewing given FileNode,
 // and its index, or false if none is
-func (ge *GideView) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, bool) {
+func (ge *GideView) TextViewForFileNode(fn *giv.FileNode) (*gide.TextView, int, bool) {
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
 	ge.ConfigTextBuf(fn.Buf)
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
-		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(gide.KiT_TextView).(*gide.TextView)
 		if tv != nil && tv.Buf != nil && tv.Buf.This() == fn.Buf.This() && ge.PanelIsOpen(i+TextView1Idx) {
 			return tv, i, true
 		}
@@ -464,12 +463,13 @@ func (ge *GideView) TextViewForFileNode(fn *giv.FileNode) (*giv.TextView, int, b
 
 // OpenNodeForTextView finds the FileNode that a given TextView is
 // viewing, returning its index within OpenNodes list, or false if not found
-func (ge *GideView) OpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, bool) {
+func (ge *GideView) OpenNodeForTextView(tv *gide.TextView) (*giv.FileNode, int, bool) {
 	if tv.Buf == nil {
 		return nil, -1, false
 	}
 	for i, ond := range ge.OpenNodes {
-		if ond.Buf == tv.Buf {
+		tve := tv.Embed(giv.KiT_TextView).(*giv.TextView)
+		if ond.Buf == tve.Buf {
 			return ond, i, true
 		}
 	}
@@ -478,7 +478,7 @@ func (ge *GideView) OpenNodeForTextView(tv *giv.TextView) (*giv.FileNode, int, b
 
 // TextViewForFile finds FileNode for file, and returns TextView and index
 // that is viewing that FileNode, or false if none is
-func (ge *GideView) TextViewForFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) TextViewForFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -493,7 +493,7 @@ func (ge *GideView) SetActiveFileInfo(buf *giv.TextBuf) {
 }
 
 // SetActiveTextView sets the given textview as the active one, and returns its index
-func (ge *GideView) SetActiveTextView(av *giv.TextView) int {
+func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
 	idx := ge.TextViewIndex(av)
 	if idx < 0 {
 		return -1
@@ -511,7 +511,7 @@ func (ge *GideView) SetActiveTextView(av *giv.TextView) int {
 
 // SetActiveTextViewIdx sets the given view index as the currently-active
 // TextView -- returns that textview
-func (ge *GideView) SetActiveTextViewIdx(idx int) *giv.TextView {
+func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
 	if idx < 0 || idx >= NTextViews {
 		log.Printf("GideView SetActiveTextViewIdx: text view index out of range: %v\n", idx)
 		return nil
@@ -530,7 +530,7 @@ func (ge *GideView) SetActiveTextViewIdx(idx int) *giv.TextView {
 // NextTextView returns the next text view available for viewing a file and
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
-func (ge *GideView) NextTextView() (*giv.TextView, int) {
+func (ge *GideView) NextTextView() (*gide.TextView, int) {
 	av := ge.TextViewByIndex(ge.ActiveTextViewIdx)
 	if av.Buf == nil {
 		return av, ge.ActiveTextViewIdx
@@ -644,7 +644,7 @@ func (ge *GideView) RunPostCmdsFileNode(fn *giv.FileNode) bool {
 // AutoSaveCheck checks for an autosave file and prompts user about opening it
 // -- returns true if autosave file does exist for a file that currently
 // unchanged (means just opened)
-func (ge *GideView) AutoSaveCheck(tv *giv.TextView, vidx int, fn *giv.FileNode) bool {
+func (ge *GideView) AutoSaveCheck(tv *gide.TextView, vidx int, fn *giv.FileNode) bool {
 	if strings.HasPrefix(fn.Nm, "#") && strings.HasSuffix(fn.Nm, "#") {
 		fn.Buf.Autosave = false
 		return false // we are the autosave file
@@ -686,7 +686,7 @@ func (ge *GideView) OpenFileNode(fn *giv.FileNode) (bool, error) {
 
 // ViewFileNode sets the given text view to view file in given node (opens
 // buffer if not already opened)
-func (ge *GideView) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
+func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *giv.FileNode) {
 	if fn.IsDir() {
 		return
 	}
@@ -708,7 +708,7 @@ func (ge *GideView) ViewFileNode(tv *giv.TextView, vidx int, fn *giv.FileNode) {
 // NextViewFileNode sets the next text view to view file in given node (opens
 // buffer if not already opened) -- if already being viewed, that is
 // activated, returns text view and index
-func (ge *GideView) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
+func (ge *GideView) NextViewFileNode(fn *giv.FileNode) (*gide.TextView, int) {
 	tv, idx, ok := ge.TextViewForFileNode(fn)
 	if ok {
 		ge.SetActiveTextViewIdx(idx)
@@ -723,7 +723,7 @@ func (ge *GideView) NextViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns textview and its
 // index, false if not found
-func (ge *GideView) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -738,7 +738,7 @@ func (ge *GideView) NextViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 
 // ViewFile views file in an existing TextView if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
-func (ge *GideView) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -760,7 +760,7 @@ func (ge *GideView) ViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
 
 // LinkViewFileNode opens the file node in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *GideView) LinkViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
+func (ge *GideView) LinkViewFileNode(fn *giv.FileNode) (*gide.TextView, int) {
 	if ge.PanelIsOpen(TextView2Idx) {
 		ge.SetActiveTextViewIdx(1)
 	} else {
@@ -774,7 +774,7 @@ func (ge *GideView) LinkViewFileNode(fn *giv.FileNode) (*giv.TextView, int) {
 
 // LinkViewFile opens the file in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *GideView) LinkViewFile(fnm gi.FileName) (*giv.TextView, int, bool) {
+func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 	fnk, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -829,7 +829,7 @@ func (ge *GideView) SelectOpenNode() {
 
 // CloneActiveView sets the next text view to view the same file currently being vieweds
 // in the active view. returns text view and index
-func (ge *GideView) CloneActiveView() (*giv.TextView, int) {
+func (ge *GideView) CloneActiveView() (*gide.TextView, int) {
 	tv := ge.ActiveTextView()
 	if tv == nil {
 		return nil, -1
@@ -854,7 +854,7 @@ func (ge *GideView) SaveAllOpenNodes() {
 }
 
 // TextViewSig handles all signals from the textviews
-func (ge *GideView) TextViewSig(tv *giv.TextView, sig giv.TextViewSignals) {
+func (ge *GideView) TextViewSig(tv *gide.TextView, sig giv.TextViewSignals) {
 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
 	switch sig {
 	case giv.TextViewISearch:
@@ -1396,10 +1396,11 @@ func (ge *GideView) ExecCmdFileNode(fn *giv.FileNode) {
 // SetArgVarVals sets the ArgVar values for commands, from GideView values
 func (ge *GideView) SetArgVarVals() {
 	tv := ge.ActiveTextView()
+	tve := tv.Embed(giv.KiT_TextView).(*giv.TextView)
 	if tv == nil || tv.Buf == nil {
-		ge.ArgVals.Set("", &ge.Prefs, tv)
+		ge.ArgVals.Set("", &ge.Prefs, tve)
 	} else {
-		ge.ArgVals.Set(string(tv.Buf.Filename), &ge.Prefs, tv)
+		ge.ArgVals.Set(string(tv.Buf.Filename), &ge.Prefs, tve)
 	}
 }
 
@@ -1651,7 +1652,7 @@ func (ge *GideView) Symbols() {
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (ge *GideView) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *giv.TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool) {
+func (ge *GideView) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *gide.TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindView OpenFindURL parse err: %v\n", err)
@@ -1985,7 +1986,7 @@ func (ge *GideView) FileTree() *giv.TreeView {
 }
 
 // TextViewByIndex returns the TextView by index (0 or 1), nil if not found
-func (ge *GideView) TextViewByIndex(idx int) *giv.TextView {
+func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
 	if idx < 0 || idx >= NTextViews {
 		log.Printf("GideView: text view index out of range: %v\n", idx)
 		return nil
@@ -1993,7 +1994,7 @@ func (ge *GideView) TextViewByIndex(idx int) *giv.TextView {
 	split := ge.SplitView()
 	if split != nil {
 		svk := split.KnownChild(TextView1Idx + idx).KnownChild(0)
-		return svk.Embed(giv.KiT_TextView).(*giv.TextView)
+		return svk.Embed(gide.KiT_TextView).(*gide.TextView)
 	}
 	return nil
 }
@@ -2134,10 +2135,10 @@ func (ge *GideView) ConfigSplitView() {
 			txly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 			txly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 			if !txly.HasChildren() {
-				ted := txly.AddNewChild(giv.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*giv.TextView)
+				ted := txly.AddNewChild(gide.KiT_TextView, fmt.Sprintf("textview-%v", i)).(*gide.TextView)
 				ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					gee, _ := recv.Embed(KiT_GideView).(*GideView)
-					tee := send.Embed(giv.KiT_TextView).(*giv.TextView)
+					tee := send.Embed(gide.KiT_TextView).(*gide.TextView)
 					gee.TextViewSig(tee, giv.TextViewSignals(sig))
 				})
 			}
@@ -2161,7 +2162,7 @@ func (ge *GideView) ConfigSplitView() {
 	}
 	for i := 0; i < NTextViews; i++ {
 		txly := split.KnownChild(1 + i).(*gi.Layout)
-		txed := txly.KnownChild(0).(*giv.TextView)
+		txed := txly.KnownChild(0).(*gide.TextView)
 		if ge.Prefs.Editor.WordWrap {
 			txed.SetProp("white-space", gi.WhiteSpacePreWrap)
 		} else {
@@ -2386,39 +2387,41 @@ func (ge *GideView) ConnectEvents2D() {
 
 // Declaration looks up the declaration for the selected text and if found moves cursor and highlights
 func (ge *GideView) Declaration() {
+	fmt.Println("Go to Declaration not yet implemented")
+	return
 	//tr := ge.ActiveTextView().Selection()
-	s := string(ge.ActiveTextView().Selection().ToBytes())
-	path, _ := filepath.Split(string(ge.ActiveTextView().Buf.Filename))
-	lp, _ := pi.LangSupport.Props(filecat.Go)
-	pr := lp.Lang.Parser()
-	pr.ReportErrs = true
-	pkgsym := lp.Lang.ParseDir(path, pi.LangDirOpts{})
-	if pkgsym != nil {
-		sym, fnd := pkgsym.Children.FindName(s)
-		//if !fnd {
-		//	for _, sym := range pkgsym.Children {
-		//		if sym.Kind == token.NameLibrary {
-		//			// need to get last part of library name after the "/"
-		//			&& sym.Name == "gi"
-		//			fmt.Println("found import")
-		//		}
-		//	}
-		//}
-		if fnd {
-			tv := ge.ActiveTextView()
-			if tv == nil {
-				return
-			}
-			tv.UpdateStart()
-			tv.Highlights = tv.Highlights[:0]
-			tr := giv.NewTextRegion(sym.SelectReg.St.Ln, sym.SelectReg.St.Ch, sym.SelectReg.Ed.Ln, sym.SelectReg.Ed.Ch)
-			tv.Highlights = append(tv.Highlights, tr)
-			tv.UpdateEnd(true)
-			tv.RefreshIfNeeded()
-			tv.SetCursorShow(tr.Start)
-			tv.GrabFocus()
-		}
-	}
+	//s := string(ge.ActiveTextView().Selection().ToBytes())
+	//path, _ := filepath.Split(string(ge.ActiveTextView().Buf.Filename))
+	//lp, _ := pi.LangSupport.Props(filecat.Go)
+	//pr := lp.Lang.Parser()
+	//pr.ReportErrs = true
+	//pkgsym := lp.Lang.ParseDir(path, pi.LangDirOpts{})
+	//if pkgsym != nil {
+	//	sym, fnd := pkgsym.Children.FindName(s)
+	//if !fnd {
+	//	for _, sym := range pkgsym.Children {
+	//		if sym.Kind == token.NameLibrary {
+	//			// need to get last part of library name after the "/"
+	//			&& sym.Name == "gi"
+	//			fmt.Println("found import")
+	//		}
+	//	}
+	//}
+	//	if fnd {
+	//		tv := ge.ActiveTextView()
+	//		if tv == nil {
+	//			return
+	//		}
+	//		tv.UpdateStart()
+	//		tv.Highlights = tv.Highlights[:0]
+	//		tr := giv.NewTextRegion(sym.SelectReg.St.Ln, sym.SelectReg.St.Ch, sym.SelectReg.Ed.Ln, sym.SelectReg.Ed.Ch)
+	//		tv.Highlights = append(tv.Highlights, tr)
+	//		tv.UpdateEnd(true)
+	//		tv.RefreshIfNeeded()
+	//		tv.SetCursorShow(tr.Start)
+	//		tv.GrabFocus()
+	//	}
+	//}
 }
 
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
@@ -2935,9 +2938,9 @@ var GideViewProps = ki.Props{
 					"keyfun": gi.KeyFunJump,
 				}},
 			}},
-			//{"Declaration", ki.Props{
-			//	"updtfunc": GideViewInactiveTextSelectionFunc,
-			//}},
+			{"Declaration", ki.Props{
+				"updtfunc": GideViewInactiveTextSelectionFunc,
+			}},
 		}},
 		{"Command", ki.PropSlice{
 			{"Build", ki.Props{

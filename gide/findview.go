@@ -205,7 +205,8 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	reg = tv.Buf.AdjustReg(reg)
 	find := fv.Params().Find
 	giv.PrevISearchString = find
-	fv.HighlightFinds(tv, ftv, fbBufStLn, fCount, find)
+	tve := tv.Embed(giv.KiT_TextView).(*giv.TextView)
+	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
 	tv.SetNeedsRefresh()
 	tv.RefreshIfNeeded()
 	tv.SetCursorShow(reg.Start)
