@@ -436,7 +436,7 @@ func (ge *GideView) ActiveTextView() *gide.TextView {
 func (ge *GideView) TextViewIndex(av *gide.TextView) int {
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
-		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(gide.KiT_TextView).(*gide.TextView)
 		if tv.This() == av.This() {
 			return i
 		}
@@ -915,7 +915,7 @@ func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 // TextLinkHandler is the GideView handler for text links -- preferred one b/c
 // directly connects to correct GideView project
 func TextLinkHandler(tl gi.TextLink) bool {
-	ftv, _ := tl.Widget.(*giv.TextView)
+	ftv, _ := tl.Widget.Embed(giv.KiT_TextView).(*giv.TextView)
 	gek, ok := tl.Widget.ParentByType(KiT_GideView, true)
 	if ok {
 		ge := gek.Embed(KiT_GideView).(*GideView)
@@ -1865,7 +1865,7 @@ func (ge *GideView) ApplyPrefs() {
 	if sv != nil {
 		for i := 0; i < NTextViews; i++ {
 			txly := sv.KnownChild(1 + i).(*gi.Layout)
-			txed := txly.KnownChild(0).(*giv.TextView)
+			txed := txly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
 			if txed.Buf != nil {
 				ge.ConfigTextBuf(txed.Buf)
 			}

@@ -404,7 +404,7 @@ func (fv *FindView) TextView() *giv.TextView {
 	if tvly == nil {
 		return nil
 	}
-	tv := tvly.KnownChild(0).(*giv.TextView)
+	tv := tvly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
 	return tv
 }
 
