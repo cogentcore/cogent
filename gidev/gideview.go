@@ -3002,8 +3002,8 @@ var GideViewProps = ki.Props{
 // NewGideProjPath creates a new GideView window with a new GideView project for given
 // path, returning the window and the path
 func NewGideProjPath(path string) (*gi.Window, *GideView) {
-	_, projnm, _, _ := ProjPathParse(path)
-	return NewGideWindow(path, projnm, true)
+	root, projnm, _, _ := ProjPathParse(path)
+	return NewGideWindow(path, projnm, root, true)
 }
 
 // OpenGideProj creates a new GideView window opened to given GideView project,
@@ -3015,19 +3015,21 @@ func OpenGideProj(projfile string) (*gi.Window, *GideView) {
 		return nil, nil
 	}
 	path := string(pp.ProjRoot)
-	_, projnm, _, _ := ProjPathParse(path)
-	return NewGideWindow(projfile, projnm, false)
+	root, projnm, _, _ := ProjPathParse(path)
+	return NewGideWindow(projfile, projnm, root, false)
 }
 
 // NewGideWindow is common code for Open GideWindow from Proj or Path
-func NewGideWindow(path, projnm string, doPath bool) (*gi.Window, *GideView) {
+func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideView) {
 	winm := "gide-" + projnm
 
 	if win, found := gi.AllWindows.FindName(winm); found {
 		mfr := win.SetMainFrame()
 		ge := mfr.KnownChild(0).Embed(KiT_GideView).(*GideView)
-		win.OSWin.Raise()
-		return win, ge
+		if string(ge.ProjRoot) == root {
+			win.OSWin.Raise()
+			return win, ge
+		}
 	}
 
 	width := 1280
