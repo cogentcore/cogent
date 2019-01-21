@@ -927,7 +927,7 @@ func TextLinkHandler(tl gi.TextLink) bool {
 		case strings.HasPrefix(ur, "spell:///"):
 			ge.OpenSpellURL(ur, ftv)
 		case strings.HasPrefix(ur, "file:///"):
-			ge.OpenFileURL(ur)
+			ge.OpenFileURL(ur, ftv)
 		default:
 			oswin.TheApp.OpenURL(ur)
 		}
@@ -943,13 +943,27 @@ func TextLinkHandler(tl gi.TextLink) bool {
 // }
 
 // OpenFileURL opens given file:/// url
-func (ge *GideView) OpenFileURL(ur string) bool {
+func (ge *GideView) OpenFileURL(ur string, ftv *giv.TextView) bool {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("GideView OpenFileURL parse err: %v\n", err)
 		return false
 	}
 	fpath := up.Path[1:] // has double //
+	cdpath := ""
+	if ftv != nil && ftv.Buf != nil { // get cd path for non-pathed fnames
+		cdln := ftv.Buf.BytesLine(0)
+		if bytes.HasPrefix(cdln, []byte("cd ")) {
+			fmidx := bytes.Index(cdln, []byte(" (from: "))
+			if fmidx > 0 {
+				cdpath = string(cdln[3:fmidx])
+				dr, _ := filepath.Split(fpath)
+				if dr == "" || !filepath.IsAbs(dr) {
+					fpath = filepath.Join(cdpath, fpath)
+				}
+			}
+		}
+	}
 	pos := up.Fragment
 	tv, _, ok := ge.LinkViewFile(gi.FileName(fpath))
 	if !ok {
