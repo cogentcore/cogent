@@ -288,7 +288,7 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 		if !ok {
 			return nil
 		}
-		return AvailCmds.FilterCmdNames(filecat.NoSupport, ge.ProjPrefs().VersCtrl)
+		return AvailCmds.FilterCmdNames(filecat.NoSupport, ge.VersCtrl())
 	}
 	fn := ft.FileNode()
 	if fn == nil {
@@ -302,7 +302,7 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	if fn != nil {
 		lang = fn.Info.Sup
 	}
-	cmds := AvailCmds.FilterCmdNames(lang, ge.ProjPrefs().VersCtrl)
+	cmds := AvailCmds.FilterCmdNames(lang, ge.VersCtrl())
 	return cmds
 }
 
