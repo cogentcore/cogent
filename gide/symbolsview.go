@@ -6,6 +6,7 @@ package gide
 
 import (
 	"image/color"
+	"log"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -223,17 +224,23 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 	ge := sv.Gide
 	tv := ge.ActiveTextView()
-	if tv == nil {
-		return
+	if tv == nil || string(tv.Buf.Filename) != ssym.Filename {
+		var ok = false
+		tr := giv.NewTextRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+		tv, ok = ge.OpenFileAtRegion(gi.FileName(ssym.Filename), tr)
+		if ok == false {
+			log.Printf("GideView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
+		}
+	} else {
+		tv.UpdateStart()
+		tv.Highlights = tv.Highlights[:0]
+		tr := giv.NewTextRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+		tv.Highlights = append(tv.Highlights, tr)
+		tv.UpdateEnd(true)
+		tv.RefreshIfNeeded()
+		tv.SetCursorShow(tr.Start)
+		tv.GrabFocus()
 	}
-	tv.UpdateStart()
-	tv.Highlights = tv.Highlights[:0]
-	tr := giv.NewTextRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
-	tv.Highlights = append(tv.Highlights, tr)
-	tv.UpdateEnd(true)
-	tv.RefreshIfNeeded()
-	tv.SetCursorShow(tr.Start)
-	tv.GrabFocus()
 }
 
 // SymbolsViewProps are style properties for SymbolsView

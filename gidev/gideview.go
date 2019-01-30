@@ -1718,6 +1718,22 @@ func (ge *GideView) ReplaceInActive() {
 	tv.QReplacePrompt()
 }
 
+func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr giv.TextRegion) (tv *gide.TextView, ok bool) {
+	tv, _, ok = ge.LinkViewFile(filename)
+	if tv != nil {
+		tv.UpdateStart()
+		tv.Highlights = tv.Highlights[:0]
+		tv.Highlights = append(tv.Highlights, tr)
+		tv.UpdateEnd(true)
+		tv.RefreshIfNeeded()
+		tv.SetCursorShow(tr.Start)
+		tv.GrabFocus()
+		return tv, true
+
+	}
+	return nil, false
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    Registers
 
@@ -2403,7 +2419,22 @@ func (ge *GideView) ConnectEvents2D() {
 func (ge *GideView) Declaration() {
 	fmt.Println("Go to Declaration not yet implemented")
 	return
+
+	// todo: work in progress
 	//tr := ge.ActiveTextView().Selection()
+	//
+	//
+	//fs := &ge.ActiveTextView().Buf.PiState // the parse info
+	//
+	//ln := tr.Reg.Start.Ln
+	//lx := fs.Src.LexLine(ln)
+	//for _, lex := range lx {
+	//	if lex.St == tr.Reg.Start.Ch {
+	//		fmt.Println("found")
+	//	}
+	//}
+	//fmt.Println(fs.LexState.Filename)
+	//
 	//s := string(ge.ActiveTextView().Selection().ToBytes())
 	//path, _ := filepath.Split(string(ge.ActiveTextView().Buf.Filename))
 	//lp, _ := pi.LangSupport.Props(filecat.Go)
@@ -2412,15 +2443,15 @@ func (ge *GideView) Declaration() {
 	//pkgsym := lp.Lang.ParseDir(path, pi.LangDirOpts{})
 	//if pkgsym != nil {
 	//	sym, fnd := pkgsym.Children.FindName(s)
-	//if !fnd {
-	//	for _, sym := range pkgsym.Children {
-	//		if sym.Kind == token.NameLibrary {
-	//			// need to get last part of library name after the "/"
-	//			&& sym.Name == "gi"
-	//			fmt.Println("found import")
-	//		}
-	//	}
-	//}
+	////if !fnd {
+	////	for _, sym := range pkgsym.Children {
+	////		if sym.Kind == token.NameLibrary {
+	////			// need to get last part of library name after the "/"
+	////			&& sym.Name == "gi"
+	////			fmt.Println("found import")
+	////		}
+	////	}
+	////}
 	//	if fnd {
 	//		tv := ge.ActiveTextView()
 	//		if tv == nil {

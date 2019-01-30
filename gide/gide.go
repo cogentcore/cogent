@@ -70,6 +70,9 @@ type Gide interface {
 	// number of results returned -- for parsing all the find results
 	ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool)
 
+	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
+	OpenFileAtRegion(filename gi.FileName, reg giv.TextRegion) (tv *TextView, ok bool)
+
 	// Spell checks spelling in files
 	Spell()
 
