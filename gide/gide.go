@@ -24,6 +24,10 @@ type Gide interface {
 	// ProjPrefs() returns the gide.ProjPrefs
 	ProjPrefs() *ProjPrefs
 
+	// VersCtrl returns the version control system in effect, using the file tree detected
+	// version or whatever is set in project preferences
+	VersCtrl() giv.VersCtrlName
+
 	// CmdRuns returns the CmdRuns manager of running commands, used extensively
 	// in commands.go
 	CmdRuns() *CmdRuns

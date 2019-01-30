@@ -88,6 +88,16 @@ func (ge *GideView) ProjPrefs() *gide.ProjPrefs {
 	return &ge.Prefs
 }
 
+// VersCtrl returns the version control system in effect, using the file tree detected
+// version or whatever is set in project preferences
+func (ge *GideView) VersCtrl() giv.VersCtrlName {
+	vc := ge.Prefs.VersCtrl
+	if ge.Files.Repo != nil {
+		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
+	}
+	return vc
+}
+
 func (ge *GideView) CmdRuns() *gide.CmdRuns {
 	return &ge.RunningCmds
 }
@@ -1336,10 +1346,7 @@ func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	}
 	var cmds []string
 
-	vc := ge.Prefs.VersCtrl
-	if ge.Files.Repo != nil {
-		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
-	}
+	vc := ge.VersCtrl()
 	if ge.ActiveLang == filecat.NoSupport {
 		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
 	} else {
@@ -1368,10 +1375,7 @@ func (ge *GideView) ExecCmd() {
 		return
 	}
 	var cmds []string
-	vc := ge.Prefs.VersCtrl
-	if ge.Files.Repo != nil {
-		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
-	}
+	vc := ge.VersCtrl()
 	if ge.ActiveLang == filecat.NoSupport {
 		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
 	} else {
@@ -1396,10 +1400,7 @@ func (ge *GideView) ExecCmd() {
 // and shows output in MainTab with name of command
 func (ge *GideView) ExecCmdFileNode(fn *giv.FileNode) {
 	lang := fn.Info.Sup
-	vc := ge.Prefs.VersCtrl
-	if ge.Files.Repo != nil {
-		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
-	}
+	vc := ge.VersCtrl()
 	cmds := gide.AvailCmds.FilterCmdNames(lang, vc)
 	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
@@ -1455,8 +1456,9 @@ func (ge *GideView) Run() {
 // Commit commits the current changes using relevant VCS tool, and updates the changelog.
 // Checks for VCS setting and
 func (ge *GideView) Commit() {
-	if ge.Files.Repo == nil {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Version Control Repository Found", Prompt: fmt.Sprintf("No version control repository found")}, true, false, nil, nil)
+	vc := ge.VersCtrl()
+	if vc == "" {
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Version Control System Found", Prompt: fmt.Sprintf("No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository")}, true, false, nil, nil)
 		return
 	}
 	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
@@ -1466,10 +1468,7 @@ func (ge *GideView) Commit() {
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
 func (ge *GideView) CommitNoChecks() {
-	vc := ge.Prefs.VersCtrl
-	if ge.Files.Repo != nil {
-		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
-	}
+	vc := ge.VersCtrl()
 	cmds := gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	cmdnm := ""
 	for _, cm := range cmds {
