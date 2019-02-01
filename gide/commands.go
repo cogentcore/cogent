@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/token"
-	"html"
 	"io/ioutil"
 	"log"
 	"os"
@@ -462,7 +461,7 @@ func (cm *Command) LangMatch(lang filecat.Supported) bool {
 // MarkupCmdOutput applies links to the first element in command output line
 // if it looks like a file name / position
 func MarkupCmdOutput(out []byte) []byte {
-	flds := strings.Fields(html.EscapeString(string(out)))
+	flds := strings.Fields(string(out))
 	if len(flds) == 0 {
 		return out
 	}
@@ -835,7 +834,9 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false, false, false},
 	{"Log SVN", "svn log", filecat.Any,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, false, false},
-	{"Commit SVN", "svn commit", filecat.Any,
+	{"Commit SVN Proj", "svn commit for entire project directory", filecat.Any,
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{ProjPath}", true, false, false}, // promptstring1 provided during normal commit process
+	{"Commit SVN Dir", "svn commit in directory of current file", filecat.Any,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, false, false}, // promptstring1 provided during normal commit process
 	{"Update SVN", "svn update", filecat.Any,
 		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "{FileDirPath}", false, false, false},

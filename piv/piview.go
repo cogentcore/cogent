@@ -57,6 +57,7 @@ var KiT_PiView = kit.Types.AddType(&PiView{}, PiViewProps)
 // InitView initializes the viewer / editor
 func (pv *PiView) InitView() {
 	parse.GuiActive = true
+	fmt.Printf("PiView enabling GoPi parser output\n")
 	pv.Parser.Init()
 	mods, updt := pv.StdConfig()
 	if !mods {
