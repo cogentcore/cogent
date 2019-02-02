@@ -69,6 +69,7 @@ type SymbolsView struct {
 	Gide      Gide          `json:"-" xml:"-" desc:"parent gide project"`
 	SymParams SymbolsParams `desc:"params for structure display"`
 	SymTree   SymTree       `desc:"all the syms for the file or package in a tree"`
+	Match     string        `desc:"only show symbols that match this string"`
 }
 
 var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
@@ -119,7 +120,7 @@ func (sv *SymbolsView) StdSymbolsConfig() (mods, updt bool) {
 	return
 }
 
-// SymbolsBar returns the spell toolbar
+// SymbolsBar returns the symbols toolbar
 func (sv *SymbolsView) SymbolsBar() *gi.ToolBar {
 	tbi, ok := sv.ChildByName("symbols-bar", 0)
 	if !ok {
@@ -150,6 +151,19 @@ func (sv *SymbolsView) ScopeCombo() *gi.ComboBox {
 	return scb.(*gi.ComboBox)
 }
 
+// SearchText returns the unknown word textfield from toolbar
+func (sv *SymbolsView) SearchText() *gi.TextField {
+	sb := sv.SymbolsBar()
+	if sb == nil {
+		return nil
+	}
+	tfi, ok := sb.ChildByName("search-str", 1)
+	if !ok {
+		return nil
+	}
+	return tfi.(*gi.TextField)
+}
+
 // ConfigToolbar adds toolbar.
 func (sv *SymbolsView) ConfigToolbar() {
 	svbar := sv.SymbolsBar()
@@ -171,6 +185,20 @@ func (sv *SymbolsView) ConfigToolbar() {
 		eval := smb.CurVal.(kit.EnumValue)
 		svv.Params().Scope = SymbolsViewScope(eval.Value)
 		sv.ReView(SymbolsViewScope(eval.Value))
+		sv.SearchText().GrabFocus()
+	})
+
+	stxt := svbar.AddNewChild(gi.KiT_TextField, "search-str").(*gi.TextField)
+	stxt.SetStretchMaxWidth()
+	stxt.Tooltip = "narrow symbols list by entering a search string"
+	stxt.SetActiveState(true)
+	stxt.TextFieldSig.ConnectOnly(stxt.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.TextFieldInsert) || sig == int64(gi.TextFieldBackspace) || sig == int64(gi.TextFieldDelete) {
+			sv.Match = string(sv.SearchText().EditTxt)
+			sv.Match = strings.ToLower(sv.Match)
+			sv.UpdateView(sv.Gide, *sv.Params())
+			sv.SearchText().GrabFocus()
+		}
 	})
 }
 
@@ -185,8 +213,9 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 			sv.SymTree.OpenFileSymTree(sv)
 		}
 		sv.SymTree.TreeView.OpenAll()
+		sv.SymTree.TreeView.FullRender2DTree()
 		sv.SymbolsTree().UpdateEnd(updt)
-		sv.GrabFocus()
+		sv.SearchText().GrabFocus()
 		return
 	}
 	svtree := sv.SymbolsTree()
@@ -291,73 +320,86 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 	for _, w := range pkgsym.Children {
 		switch w.Kind {
 		case token.NameFunction:
-			funcs = append(funcs, *w)
+			name := strings.ToLower(w.Name)
+			if sv.Match == "" || strings.Contains(name, sv.Match) {
+				funcs = append(funcs, *w)
+			}
 		case token.NameVarGlobal:
-			gvars = append(gvars, *w)
+			name := strings.ToLower(w.Name)
+			if sv.Match == "" || strings.Contains(name, sv.Match) {
+				gvars = append(gvars, *w)
+			}
 		case token.NameStruct, token.NameMap, token.NameArray, token.NameType, token.NameEnum:
-			kid := st.AddNewChild(nil, w.Name)
-			kn := kid.Embed(KiT_SymNode).(*SymNode)
-			kn.SRoot = st.SRoot
-			kn.Symbol = *w
 			var methods []syms.Symbol
 			var fields []syms.Symbol
 			for _, x := range w.Children {
-				if x.Kind == token.NameMethod {
-					methods = append(methods, *x)
-				} else if x.Kind == token.NameField {
-					fields = append(fields, *x)
+				name := strings.ToLower(x.Name)
+				if sv.Match == "" || strings.Contains(name, sv.Match) {
+					if x.Kind == token.NameMethod {
+						methods = append(methods, *x)
+					} else if x.Kind == token.NameField {
+						fields = append(fields, *x)
+					}
 				}
 			}
-			sort.Slice(fields, func(i, j int) bool {
-				return fields[i].Name < fields[j].Name
-			})
-			sort.Slice(methods, func(i, j int) bool {
-				return methods[i].Name < methods[j].Name
-			})
-			for i, _ := range fields {
-				dnm := fields[i].Name + ": " + fields[i].Type
-				skid := kid.AddNewChild(nil, dnm)
-				kn := skid.Embed(KiT_SymNode).(*SymNode)
+			if len(methods) > 0 || len(fields) > 0 {
+				kid := st.AddNewChild(nil, w.Name)
+				kn := kid.Embed(KiT_SymNode).(*SymNode)
 				kn.SRoot = st.SRoot
-				kn.Symbol = fields[i]
-			}
-			for i, _ := range methods {
-				dnm := methods[i].Name
-				idx := strings.Index(methods[i].Detail, "(")
-				if idx > -1 {
-					dnm = dnm + methods[i].Detail[idx-1:]
-				} else {
-					dnm = dnm + methods[i].Detail
+				kn.Symbol = *w
+				sort.Slice(fields, func(i, j int) bool {
+					return fields[i].Name < fields[j].Name
+				})
+				sort.Slice(methods, func(i, j int) bool {
+					return methods[i].Name < methods[j].Name
+				})
+				for i, _ := range fields {
+					dnm := fields[i].Name + ": " + fields[i].Type
+					skid := kid.AddNewChild(nil, dnm)
+					kn := skid.Embed(KiT_SymNode).(*SymNode)
+					kn.SRoot = st.SRoot
+					kn.Symbol = fields[i]
 				}
-				skid := kid.AddNewChild(nil, dnm)
-				kn := skid.Embed(KiT_SymNode).(*SymNode)
-				kn.SRoot = st.SRoot
-				kn.Symbol = methods[i]
+				for i, _ := range methods {
+					dnm := methods[i].Name
+					idx := strings.Index(methods[i].Detail, "(")
+					if idx > -1 {
+						dnm = dnm + methods[i].Detail[idx-1:]
+					} else {
+						dnm = dnm + methods[i].Detail
+					}
+					skid := kid.AddNewChild(nil, dnm)
+					kn := skid.Embed(KiT_SymNode).(*SymNode)
+					kn.SRoot = st.SRoot
+					kn.Symbol = methods[i]
+				}
 			}
 		case token.NameVar, token.NameVarClass:
-			kid := st.AddNewChild(nil, w.Name)
-			kn := kid.Embed(KiT_SymNode).(*SymNode)
-			kn.SRoot = st.SRoot
-			kn.Symbol = *w
 			var temp []syms.Symbol
 			for _, x := range w.Children {
 				temp = append(temp, *x)
 			}
-			sort.Slice(temp, func(i, j int) bool {
-				return temp[i].Name < temp[j].Name
-			})
-			for i, _ := range temp {
-				dnm := temp[i].Name
-				idx := strings.Index(temp[i].Detail, "(")
-				if idx > -1 {
-					dnm = dnm + temp[i].Detail[idx-1:]
-				} else {
-					dnm = dnm + temp[i].Detail
-				}
-				skid := kid.AddNewChild(nil, dnm)
-				kn := skid.Embed(KiT_SymNode).(*SymNode)
+			if len(temp) > 0 {
+				kid := st.AddNewChild(nil, w.Name)
+				kn := kid.Embed(KiT_SymNode).(*SymNode)
 				kn.SRoot = st.SRoot
-				kn.Symbol = temp[i]
+				kn.Symbol = *w
+				sort.Slice(temp, func(i, j int) bool {
+					return temp[i].Name < temp[j].Name
+				})
+				for i, _ := range temp {
+					dnm := temp[i].Name
+					idx := strings.Index(temp[i].Detail, "(")
+					if idx > -1 {
+						dnm = dnm + temp[i].Detail[idx-1:]
+					} else {
+						dnm = dnm + temp[i].Detail
+					}
+					skid := kid.AddNewChild(nil, dnm)
+					kn := skid.Embed(KiT_SymNode).(*SymNode)
+					kn.SRoot = st.SRoot
+					kn.Symbol = temp[i]
+				}
 			}
 		}
 	}
@@ -394,6 +436,7 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 	if tv == nil || tv.Buf == nil {
 		return
 	}
+
 	fs := &tv.Buf.PiState // the parse info
 	st.SRoot = st         // we are our own root..
 	if st.NodeType == nil {
@@ -410,75 +453,89 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 		for _, w := range v.Children {
 			switch w.Kind {
 			case token.NameFunction:
-				funcs = append(funcs, *w)
+				name := strings.ToLower(w.Name)
+				if sv.Match == "" || strings.Contains(name, sv.Match) {
+					funcs = append(funcs, *w)
+				}
 			case token.NameVarGlobal:
-				gvars = append(gvars, *w)
+				name := strings.ToLower(w.Name)
+				if sv.Match == "" || strings.Contains(name, sv.Match) {
+					gvars = append(gvars, *w)
+				}
 			case token.NameStruct, token.NameMap, token.NameArray, token.NameType, token.NameEnum:
-				kid := st.AddNewChild(nil, w.Name)
-				kn := kid.Embed(KiT_SymNode).(*SymNode)
-				kn.SRoot = st.SRoot
-				kn.Symbol = *w
 				var methods []syms.Symbol
 				var fields []syms.Symbol
 				for _, x := range w.Children {
-					if x.Kind == token.NameMethod {
-						methods = append(methods, *x)
-					} else if x.Kind == token.NameField {
-						fields = append(fields, *x)
+					name := strings.ToLower(x.Name)
+					if sv.Match == "" || strings.Contains(name, sv.Match) {
+						if x.Kind == token.NameMethod {
+							methods = append(methods, *x)
+						} else if x.Kind == token.NameField {
+							fields = append(fields, *x)
+						}
 					}
 				}
-				sort.Slice(fields, func(i, j int) bool {
-					return fields[i].Name < fields[j].Name
-				})
-				sort.Slice(methods, func(i, j int) bool {
-					return methods[i].Name < methods[j].Name
-				})
-				for i, _ := range fields {
-					dnm := fields[i].Name + ": " + fields[i].Type
-					skid := kid.AddNewChild(nil, dnm)
-					kn := skid.Embed(KiT_SymNode).(*SymNode)
+				if len(methods) > 0 || len(fields) > 0 {
+					kid := st.AddNewChild(nil, w.Name)
+					kn := kid.Embed(KiT_SymNode).(*SymNode)
 					kn.SRoot = st.SRoot
-					kn.Symbol = fields[i]
-				}
-				for i, _ := range methods {
-					dnm := methods[i].Name
-					idx := strings.Index(methods[i].Detail, "(")
-					if idx > -1 {
-						dnm = dnm + methods[i].Detail[idx-1:]
-					} else {
-						dnm = dnm + methods[i].Detail
+					kn.Symbol = *w
+					sort.Slice(fields, func(i, j int) bool {
+						return fields[i].Name < fields[j].Name
+					})
+					sort.Slice(methods, func(i, j int) bool {
+						return methods[i].Name < methods[j].Name
+					})
+					for i, _ := range fields {
+						dnm := fields[i].Name + ": " + fields[i].Type
+						skid := kid.AddNewChild(nil, dnm)
+						kn := skid.Embed(KiT_SymNode).(*SymNode)
+						kn.SRoot = st.SRoot
+						kn.Symbol = fields[i]
 					}
-					skid := kid.AddNewChild(nil, dnm)
-					kn := skid.Embed(KiT_SymNode).(*SymNode)
-					kn.SRoot = st.SRoot
-					kn.Symbol = methods[i]
+					for i, _ := range methods {
+						dnm := methods[i].Name
+						idx := strings.Index(methods[i].Detail, "(")
+						if idx > -1 {
+							dnm = dnm + methods[i].Detail[idx-1:]
+						} else {
+							dnm = dnm + methods[i].Detail
+						}
+						skid := kid.AddNewChild(nil, dnm)
+						kn := skid.Embed(KiT_SymNode).(*SymNode)
+						kn.SRoot = st.SRoot
+						kn.Symbol = methods[i]
+					}
 				}
 			case token.NameVar, token.NameVarClass:
-				kid := st.AddNewChild(nil, w.Name)
-				kn := kid.Embed(KiT_SymNode).(*SymNode)
-				kn.SRoot = st.SRoot
-				kn.Symbol = *w
-				var temp []syms.Symbol
-				for _, x := range w.Children {
-					//if x.Kind == token.NameMethod || x.Kind == token.NameVar {
-					temp = append(temp, *x)
-					//}
-				}
-				sort.Slice(temp, func(i, j int) bool {
-					return temp[i].Name < temp[j].Name
-				})
-				for i, _ := range temp {
-					dnm := temp[i].Name
-					idx := strings.Index(temp[i].Detail, "(")
-					if idx > -1 {
-						dnm = dnm + temp[i].Detail[idx-1:]
-					} else {
-						dnm = dnm + temp[i].Detail
+				name := strings.ToLower(w.Name)
+				if sv.Match == "" || strings.Contains(name, sv.Match) {
+					var temp []syms.Symbol
+					for _, x := range w.Children {
+						temp = append(temp, *x)
 					}
-					skid := kid.AddNewChild(nil, dnm)
-					kn := skid.Embed(KiT_SymNode).(*SymNode)
-					kn.SRoot = st.SRoot
-					kn.Symbol = temp[i]
+					if len(temp) > 0 {
+						kid := st.AddNewChild(nil, w.Name)
+						kn := kid.Embed(KiT_SymNode).(*SymNode)
+						kn.SRoot = st.SRoot
+						kn.Symbol = *w
+						sort.Slice(temp, func(i, j int) bool {
+							return temp[i].Name < temp[j].Name
+						})
+						for i, _ := range temp {
+							dnm := temp[i].Name
+							idx := strings.Index(temp[i].Detail, "(")
+							if idx > -1 {
+								dnm = dnm + temp[i].Detail[idx-1:]
+							} else {
+								dnm = dnm + temp[i].Detail
+							}
+							skid := kid.AddNewChild(nil, dnm)
+							kn := skid.Embed(KiT_SymNode).(*SymNode)
+							kn.SRoot = st.SRoot
+							kn.Symbol = temp[i]
+						}
+					}
 				}
 			}
 		}
