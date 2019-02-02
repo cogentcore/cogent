@@ -12,14 +12,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/goki/pi/filecat"
-	"github.com/goki/pi/pi"
-
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/filecat"
+	"github.com/goki/pi/pi"
 	"github.com/goki/pi/syms"
 	"github.com/goki/pi/token"
 )
@@ -196,6 +195,11 @@ func (sv *SymbolsView) ConfigToolbar() {
 		if sig == int64(gi.TextFieldInsert) || sig == int64(gi.TextFieldBackspace) || sig == int64(gi.TextFieldDelete) {
 			sv.Match = string(sv.SearchText().EditTxt)
 			sv.Match = strings.ToLower(sv.Match)
+			sv.UpdateView(sv.Gide, *sv.Params())
+			sv.SearchText().GrabFocus()
+		}
+		if sig == int64(gi.TextFieldCleared) {
+			sv.Match = ""
 			sv.UpdateView(sv.Gide, *sv.Params())
 			sv.SearchText().GrabFocus()
 		}
