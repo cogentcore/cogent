@@ -296,7 +296,6 @@ var KiT_SymTree = kit.Types.AddType(&SymTree{}, SymTreeProps)
 
 var SymTreeProps = ki.Props{}
 
-// todo: should OpenPackageSymTree and OpenFileSymTree be combined
 // OpenTree opens a SymTree of symbols from a file or package parse
 func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 	ge := sv.Gide
@@ -346,7 +345,9 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 					}
 				}
 			}
-			if len(methods) > 0 || len(fields) > 0 {
+
+			wname := strings.ToLower(w.Name)
+			if sv.Match == "" || strings.Contains(wname, sv.Match) || len(methods) > 0 || len(fields) > 0 {
 				kid := st.AddNewChild(nil, w.Name)
 				kn := kid.Embed(KiT_SymNode).(*SymNode)
 				kn.SRoot = st.SRoot
@@ -376,33 +377,6 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 					kn := skid.Embed(KiT_SymNode).(*SymNode)
 					kn.SRoot = st.SRoot
 					kn.Symbol = methods[i]
-				}
-			}
-		case token.NameVar, token.NameVarClass:
-			var temp []syms.Symbol
-			for _, x := range w.Children {
-				temp = append(temp, *x)
-			}
-			if len(temp) > 0 {
-				kid := st.AddNewChild(nil, w.Name)
-				kn := kid.Embed(KiT_SymNode).(*SymNode)
-				kn.SRoot = st.SRoot
-				kn.Symbol = *w
-				sort.Slice(temp, func(i, j int) bool {
-					return temp[i].Name < temp[j].Name
-				})
-				for i, _ := range temp {
-					dnm := temp[i].Name
-					idx := strings.Index(temp[i].Detail, "(")
-					if idx > -1 {
-						dnm = dnm + temp[i].Detail[idx-1:]
-					} else {
-						dnm = dnm + temp[i].Detail
-					}
-					skid := kid.AddNewChild(nil, dnm)
-					kn := skid.Embed(KiT_SymNode).(*SymNode)
-					kn.SRoot = st.SRoot
-					kn.Symbol = temp[i]
 				}
 			}
 		}
@@ -479,7 +453,8 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 						}
 					}
 				}
-				if len(methods) > 0 || len(fields) > 0 {
+				wname := strings.ToLower(w.Name)
+				if sv.Match == "" || strings.Contains(wname, sv.Match) || len(methods) > 0 || len(fields) > 0 {
 					kid := st.AddNewChild(nil, w.Name)
 					kn := kid.Embed(KiT_SymNode).(*SymNode)
 					kn.SRoot = st.SRoot
@@ -509,36 +484,6 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 						kn := skid.Embed(KiT_SymNode).(*SymNode)
 						kn.SRoot = st.SRoot
 						kn.Symbol = methods[i]
-					}
-				}
-			case token.NameVar, token.NameVarClass:
-				name := strings.ToLower(w.Name)
-				if sv.Match == "" || strings.Contains(name, sv.Match) {
-					var temp []syms.Symbol
-					for _, x := range w.Children {
-						temp = append(temp, *x)
-					}
-					if len(temp) > 0 {
-						kid := st.AddNewChild(nil, w.Name)
-						kn := kid.Embed(KiT_SymNode).(*SymNode)
-						kn.SRoot = st.SRoot
-						kn.Symbol = *w
-						sort.Slice(temp, func(i, j int) bool {
-							return temp[i].Name < temp[j].Name
-						})
-						for i, _ := range temp {
-							dnm := temp[i].Name
-							idx := strings.Index(temp[i].Detail, "(")
-							if idx > -1 {
-								dnm = dnm + temp[i].Detail[idx-1:]
-							} else {
-								dnm = dnm + temp[i].Detail
-							}
-							skid := kid.AddNewChild(nil, dnm)
-							kn := skid.Embed(KiT_SymNode).(*SymNode)
-							kn.SRoot = st.SRoot
-							kn.Symbol = temp[i]
-						}
 					}
 				}
 			}
