@@ -320,7 +320,9 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 
 	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
-	for _, w := range pkgsym.Children {
+
+	children := pkgsym.Children.Slice(true)
+	for _, w := range children {
 		switch w.Kind {
 		case token.NameFunction:
 			name := strings.ToLower(w.Name)
@@ -381,9 +383,6 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 			}
 		}
 	}
-	sort.Slice(funcs, func(i, j int) bool {
-		return funcs[i].Name < funcs[j].Name
-	})
 	for i := range funcs {
 		dnm := funcs[i].Name
 		idx := strings.Index(funcs[i].Detail, "(")
@@ -395,12 +394,9 @@ func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
 		kn.SRoot = st.SRoot
 		kn.Symbol = funcs[i]
 	}
-	sort.Slice(gvars, func(i, j int) bool {
-		return gvars[i].Name < gvars[j].Name
-	})
 	for i := range gvars {
 		dnm := gvars[i].Name + ": " + gvars[i].Type
-		skid := st.InsertNewChild(nil, 0, dnm)
+		skid := st.AddNewChild(nil, dnm)
 		kn := skid.Embed(KiT_SymNode).(*SymNode)
 		kn.SRoot = st.SRoot
 		kn.Symbol = gvars[i]
@@ -428,7 +424,8 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 		if v.Kind != token.NamePackage { // note: package symbol filename won't always corresp.
 			continue
 		}
-		for _, w := range v.Children {
+		children := v.Children.Slice(true)
+		for _, w := range children {
 			switch w.Kind {
 			case token.NameFunction:
 				name := strings.ToLower(w.Name)
@@ -489,9 +486,6 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 			}
 		}
 	}
-	sort.Slice(funcs, func(i, j int) bool {
-		return funcs[i].Name < funcs[j].Name
-	})
 	for i := range funcs {
 		dnm := funcs[i].Name
 		idx := strings.Index(funcs[i].Detail, "(")
@@ -503,12 +497,9 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 		kn.SRoot = st.SRoot
 		kn.Symbol = funcs[i]
 	}
-	sort.Slice(gvars, func(i, j int) bool {
-		return gvars[i].Name < gvars[j].Name
-	})
 	for i := range gvars {
 		dnm := gvars[i].Name + ": " + gvars[i].Type
-		skid := st.InsertNewChild(nil, 0, dnm)
+		skid := st.AddNewChild(nil, dnm)
 		kn := skid.Embed(KiT_SymNode).(*SymNode)
 		kn.SRoot = st.SRoot
 		kn.Symbol = gvars[i]
