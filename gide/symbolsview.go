@@ -121,46 +121,22 @@ func (sv *SymbolsView) StdSymbolsConfig() (mods, updt bool) {
 
 // SymbolsBar returns the symbols toolbar
 func (sv *SymbolsView) SymbolsBar() *gi.ToolBar {
-	tbi, ok := sv.ChildByName("symbols-bar", 0)
-	if !ok {
-		return nil
-	}
-	return tbi.(*gi.ToolBar)
+	return sv.ChildByName("symbols-bar", 0).(*gi.ToolBar)
 }
 
 // SymbolsBar returns the spell toolbar
 func (sv *SymbolsView) SymbolsTree() *gi.Frame {
-	tvi, ok := sv.ChildByName("symbols-tree", 0)
-	if !ok {
-		return nil
-	}
-	return tvi.(*gi.Frame)
+	return sv.ChildByName("symbols-tree", 0).(*gi.Frame)
 }
 
 // ScopeCombo returns the scope ComboBox
 func (sv *SymbolsView) ScopeCombo() *gi.ComboBox {
-	sb := sv.SymbolsBar()
-	if sb == nil {
-		return nil
-	}
-	scb, ok := sb.ChildByName("scope-combo", 5)
-	if !ok {
-		return nil
-	}
-	return scb.(*gi.ComboBox)
+	return sv.SymbolsBar().ChildByName("scope-combo", 5).(*gi.ComboBox)
 }
 
 // SearchText returns the unknown word textfield from toolbar
 func (sv *SymbolsView) SearchText() *gi.TextField {
-	sb := sv.SymbolsBar()
-	if sb == nil {
-		return nil
-	}
-	tfi, ok := sb.ChildByName("search-str", 1)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.TextField)
+	return sv.SymbolsBar().ChildByName("search-str", 1).(*gi.TextField)
 }
 
 // ConfigToolbar adds toolbar.

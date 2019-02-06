@@ -295,117 +295,52 @@ func (fv *FindView) StdFindConfig() (mods, updt bool) {
 
 // FindBar returns the find toolbar
 func (fv *FindView) FindBar() *gi.ToolBar {
-	tbi, ok := fv.ChildByName("findbar", 0)
-	if !ok {
-		return nil
-	}
-	return tbi.(*gi.ToolBar)
+	return fv.ChildByName("findbar", 0).(*gi.ToolBar)
 }
 
 // ReplBar returns the replace toolbar
 func (fv *FindView) ReplBar() *gi.ToolBar {
-	tbi, ok := fv.ChildByName("replbar", 1)
-	if !ok {
-		return nil
-	}
-	return tbi.(*gi.ToolBar)
+	return fv.ChildByName("replbar", 1).(*gi.ToolBar)
 }
 
 // FindText returns the find textfield in toolbar
 func (fv *FindView) FindText() *gi.ComboBox {
-	tb := fv.FindBar()
-	if tb == nil {
-		return nil
-	}
-	tfi, ok := tb.ChildByName("find-str", 1)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.ComboBox)
+	return fv.FindBar().ChildByName("find-str", 1).(*gi.ComboBox)
 }
 
 // ReplText returns the replace textfield in toolbar
 func (fv *FindView) ReplText() *gi.ComboBox {
-	tb := fv.ReplBar()
-	if tb == nil {
-		return nil
-	}
-	tfi, ok := tb.ChildByName("repl-str", 1)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.ComboBox)
+	return fv.ReplBar().ChildByName("repl-str", 1).(*gi.ComboBox)
 }
 
 // IgnoreBox returns the ignore case checkbox in toolbar
 func (fv *FindView) IgnoreBox() *gi.CheckBox {
-	tb := fv.FindBar()
-	if tb == nil {
-		return nil
-	}
-	tfi, ok := tb.ChildByName("ignore-case", 2)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.CheckBox)
+	return fv.FindBar().ChildByName("ignore-case", 2).(*gi.CheckBox)
 }
 
 // LocCombo returns the loc combobox
 func (fv *FindView) LocCombo() *gi.ComboBox {
-	tb := fv.ReplBar()
-	if tb == nil {
-		return nil
-	}
-	tfi, ok := tb.ChildByName("loc", 5)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.ComboBox)
+	return fv.ReplBar().ChildByName("loc", 5).(*gi.ComboBox)
 }
 
 // CurDirBox returns the cur file checkbox in toolbar
 func (fv *FindView) CurDirBox() *gi.CheckBox {
-	tb := fv.ReplBar()
-	if tb == nil {
-		return nil
-	}
-	tfi, ok := tb.ChildByName("cur-dir", 6)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.CheckBox)
+	return fv.ReplBar().ChildByName("cur-dir", 6).(*gi.CheckBox)
 }
 
 // FindNextAct returns the find next action in toolbar -- selected first
 func (fv *FindView) FindNextAct() *gi.Action {
-	tb := fv.FindBar()
-	if tb == nil {
-		return nil
-	}
-	tfi, ok := tb.ChildByName("next", 3)
-	if !ok {
-		return nil
-	}
-	return tfi.(*gi.Action)
+	return fv.FindBar().ChildByName("next", 3).(*gi.Action)
 }
 
 // TextViewLay returns the find results TextView layout
 func (fv *FindView) TextViewLay() *gi.Layout {
-	tvi, ok := fv.ChildByName("findtext", 1)
-	if !ok {
-		return nil
-	}
-	return tvi.(*gi.Layout)
+	return fv.ChildByName("findtext", 1).(*gi.Layout)
 }
 
 // TextView returns the find results TextView
 func (fv *FindView) TextView() *giv.TextView {
-	tvly := fv.TextViewLay()
-	if tvly == nil {
-		return nil
-	}
-	tv := tvly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
-	return tv
+	return fv.TextViewLay().Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
 }
 
 // ConfigToolbar adds toolbar.
@@ -419,13 +354,11 @@ func (fv *FindView) ConfigToolbar() {
 	rb := fv.ReplBar()
 	rb.SetStretchMaxWidth()
 
-	finda := fb.AddNewChild(gi.KiT_Action, "find-act").(*gi.Action)
-	finda.SetText("Find:")
-	finda.Tooltip = "Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search"
-	finda.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		fvv.FindAction()
-	})
+	fb.AddAction(gi.ActOpts{Label: "Find:", Tooltip: "Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search"},
+		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+			fvv.FindAction()
+		})
 
 	finds := fb.AddNewChild(gi.KiT_ComboBox, "find-str").(*gi.ComboBox)
 	finds.Editable = true
@@ -468,26 +401,19 @@ func (fv *FindView) ConfigToolbar() {
 		}
 	})
 
-	next := fb.AddNewChild(gi.KiT_Action, "next").(*gi.Action)
-	next.SetIcon("widget-wedge-down")
-	next.Tooltip = "go to next result"
-	next.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		fvv.NextFind()
-	})
+	fb.AddAction(gi.ActOpts{Name: "next", Icon: "widget-wedge-down", Tooltip: "go to next result"},
+		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+			fvv.NextFind()
+		})
 
-	prev := fb.AddNewChild(gi.KiT_Action, "prev").(*gi.Action)
-	prev.SetIcon("widget-wedge-up")
-	prev.Tooltip = "go to previous result"
-	prev.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		fvv.PrevFind()
-	})
+	fb.AddAction(gi.ActOpts{Name: "prev", Icon: "widget-wedge-up", Tooltip: "go to previous result"},
+		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+			fvv.PrevFind()
+		})
 
-	repla := rb.AddNewChild(gi.KiT_Action, "repl-act").(*gi.Action)
-	repla.SetText("Replace:")
-	repla.Tooltip = "Replace find string with replace string for currently-selected find result"
-	repla.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	rb.AddAction(gi.ActOpts{Label: "Replace:", Tooltip: "Replace find string with replace string for currently-selected find result"}, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.ReplaceAction()
 	})
@@ -512,13 +438,11 @@ func (fv *FindView) ConfigToolbar() {
 		}
 	})
 
-	repall := rb.AddNewChild(gi.KiT_Action, "repl-all").(*gi.Action)
-	repall.SetText("All")
-	repall.Tooltip = "replace all find strings with replace string"
-	repall.ActionSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		fvv.ReplaceAllAction()
-	})
+	rb.AddAction(gi.ActOpts{Label: "All", Tooltip: "replace all find strings with replace string"},
+		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+			fvv.ReplaceAllAction()
+		})
 
 	locl := rb.AddNewChild(gi.KiT_Label, "loc-lbl").(*gi.Label)
 	locl.SetText("Loc:")

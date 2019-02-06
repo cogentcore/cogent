@@ -446,7 +446,7 @@ func (ge *GideView) ActiveTextView() *gide.TextView {
 func (ge *GideView) TextViewIndex(av *gide.TextView) int {
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
-		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(gide.KiT_TextView).(*gide.TextView)
+		tv := split.Child(TextView1Idx + i).Child(0).Embed(gide.KiT_TextView).(*gide.TextView)
 		if tv.This() == av.This() {
 			return i
 		}
@@ -463,7 +463,7 @@ func (ge *GideView) TextViewForFileNode(fn *giv.FileNode) (*gide.TextView, int, 
 	ge.ConfigTextBuf(fn.Buf)
 	split := ge.SplitView()
 	for i := 0; i < NTextViews; i++ {
-		tv := split.KnownChild(TextView1Idx + i).KnownChild(0).Embed(gide.KiT_TextView).(*gide.TextView)
+		tv := split.Child(TextView1Idx + i).Child(0).Embed(gide.KiT_TextView).(*gide.TextView)
 		if tv != nil && tv.Buf != nil && tv.Buf.This() == fn.Buf.This() && ge.PanelIsOpen(i+TextView1Idx) {
 			return tv, i, true
 		}
@@ -926,8 +926,8 @@ func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 // directly connects to correct GideView project
 func TextLinkHandler(tl gi.TextLink) bool {
 	ftv, _ := tl.Widget.Embed(giv.KiT_TextView).(*giv.TextView)
-	gek, ok := tl.Widget.ParentByType(KiT_GideView, true)
-	if ok {
+	gek := tl.Widget.ParentByType(KiT_GideView, true)
+	if gek != nil {
 		ge := gek.Embed(KiT_GideView).(*GideView)
 		ur := tl.URL
 		// todo: use net/url package for more systematic parsing
@@ -1047,12 +1047,12 @@ func QuitReq() bool {
 		if !strings.HasPrefix(win.Nm, "gide-") {
 			continue
 		}
-		mfr, ok := win.MainWidget()
-		if !ok {
+		mfr, err := win.MainWidget()
+		if err != nil {
 			continue
 		}
-		gek, ok := mfr.ChildByName("gide", 0)
-		if !ok {
+		gek := mfr.ChildByName("gide", 0)
+		if gek == nil {
 			continue
 		}
 		ge := gek.Embed(KiT_GideView).(*GideView)
@@ -1222,7 +1222,7 @@ func (ge *GideView) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 	var tv *giv.TextView
 	if ly.HasChildren() {
-		tv = ly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
 	} else {
 		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
 	}
@@ -1693,8 +1693,8 @@ func (ge *GideView) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *gide.Tex
 
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
 func (ge *GideView) OpenFindURL(ur string, ftv *giv.TextView) bool {
-	fvk, ok := ftv.ParentByType(gide.KiT_FindView, true)
-	if !ok {
+	fvk := ftv.ParentByType(gide.KiT_FindView, true)
+	if fvk == nil {
 		return false
 	}
 	fv := fvk.(*gide.FindView)
@@ -1703,8 +1703,8 @@ func (ge *GideView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 
 // OpenSpellURL opens given spell:/// url from Spell -- delegates to SpellView
 func (ge *GideView) OpenSpellURL(ur string, stv *giv.TextView) bool {
-	svk, ok := stv.ParentByType(gide.KiT_SpellView, true)
-	if !ok {
+	svk := stv.ParentByType(gide.KiT_SpellView, true)
+	if svk == nil {
 		return false
 	}
 	fv := svk.(*gide.SpellView)
@@ -1893,8 +1893,8 @@ func (ge *GideView) ApplyPrefs() {
 	sv := ge.SplitView()
 	if sv != nil {
 		for i := 0; i < NTextViews; i++ {
-			txly := sv.KnownChild(1 + i).(*gi.Layout)
-			txed := txly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+			txly := sv.Child(1 + i).(*gi.Layout)
+			txed := txly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
 			if txed.Buf != nil {
 				ge.ConfigTextBuf(txed.Buf)
 			}
@@ -1997,21 +1997,16 @@ func (ge *GideView) StdConfig() (mods, updt bool) {
 
 // SplitView returns the main SplitView
 func (ge *GideView) SplitView() *gi.SplitView {
-	svi, ok := ge.ChildByName("splitview", 2)
-	if !ok {
+	spk := ge.ChildByName("splitview", 2)
+	if spk == nil {
 		return nil
 	}
-	return svi.(*gi.SplitView)
+	return spk.(*gi.SplitView)
 }
 
 // FileTree returns the main FileTree
 func (ge *GideView) FileTree() *giv.TreeView {
-	split := ge.SplitView()
-	if split != nil {
-		tv := split.KnownChild(FileTreeIdx).KnownChild(0).(*giv.TreeView)
-		return tv
-	}
-	return nil
+	return ge.SplitView().Child(FileTreeIdx).Child(0).(*giv.TreeView)
 }
 
 // TextViewByIndex returns the TextView by index (0 or 1), nil if not found
@@ -2022,7 +2017,7 @@ func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
 	}
 	split := ge.SplitView()
 	if split != nil {
-		svk := split.KnownChild(TextView1Idx + idx).KnownChild(0)
+		svk := split.Child(TextView1Idx + idx).Child(0)
 		return svk.Embed(gide.KiT_TextView).(*gide.TextView)
 	}
 	return nil
@@ -2032,7 +2027,7 @@ func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
 func (ge *GideView) MainTabs() *gi.TabView {
 	split := ge.SplitView()
 	if split != nil {
-		tv := split.KnownChild(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+		tv := split.Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 		return tv
 	}
 	return nil
@@ -2042,7 +2037,7 @@ func (ge *GideView) MainTabs() *gi.TabView {
 func (ge *GideView) VisTabs() *gi.TabView {
 	split := ge.SplitView()
 	if split != nil {
-		tv := split.KnownChild(VisTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+		tv := split.Child(VisTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 		return tv
 	}
 	return nil
@@ -2050,29 +2045,21 @@ func (ge *GideView) VisTabs() *gi.TabView {
 
 // ToolBar returns the main toolbar
 func (ge *GideView) ToolBar() *gi.ToolBar {
-	tbi, ok := ge.ChildByName("toolbar", 2)
-	if !ok {
+	tbk := ge.ChildByName("toolbar", 2)
+	if tbk == nil {
 		return nil
 	}
-	return tbi.(*gi.ToolBar)
+	return tbk.(*gi.ToolBar)
 }
 
 // StatusBar returns the statusbar widget
 func (ge *GideView) StatusBar() *gi.Frame {
-	tbi, ok := ge.ChildByName("statusbar", 2)
-	if !ok {
-		return nil
-	}
-	return tbi.(*gi.Frame)
+	return ge.ChildByName("statusbar", 2).(*gi.Frame)
 }
 
 // StatusLabel returns the statusbar label widget
 func (ge *GideView) StatusLabel() *gi.Label {
-	sb := ge.StatusBar()
-	if sb != nil {
-		return sb.KnownChild(0).Embed(gi.KiT_Label).(*gi.Label)
-	}
-	return nil
+	return ge.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -2134,7 +2121,7 @@ func (ge *GideView) ConfigSplitView() {
 	config := ge.SplitViewConfig()
 	mods, updt := split.ConfigChildren(config, true)
 	if mods {
-		ftfr := split.KnownChild(FileTreeIdx).(*gi.Frame)
+		ftfr := split.Child(FileTreeIdx).(*gi.Frame)
 		if !ftfr.HasChildren() {
 			ft := ftfr.AddNewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
 			ft.SetRootNode(&ge.Files)
@@ -2158,7 +2145,7 @@ func (ge *GideView) ConfigSplitView() {
 			})
 		}
 		for i := 0; i < NTextViews; i++ {
-			txly := split.KnownChild(TextView1Idx + i).(*gi.Layout)
+			txly := split.Child(TextView1Idx + i).(*gi.Layout)
 			txly.SetStretchMaxWidth()
 			txly.SetStretchMaxHeight()
 			txly.SetMinPrefWidth(units.NewValue(20, units.Ch))
@@ -2173,7 +2160,7 @@ func (ge *GideView) ConfigSplitView() {
 			}
 		}
 
-		mtab := split.KnownChild(MainTabsIdx).(*gi.TabView)
+		mtab := split.Child(MainTabsIdx).(*gi.TabView)
 		mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			gee, _ := recv.Embed(KiT_GideView).(*GideView)
 			tvsig := gi.TabViewSignals(sig)
@@ -2190,8 +2177,8 @@ func (ge *GideView) ConfigSplitView() {
 		split.UpdateEnd(updt)
 	}
 	for i := 0; i < NTextViews; i++ {
-		txly := split.KnownChild(1 + i).(*gi.Layout)
-		txed := txly.KnownChild(0).(*gide.TextView)
+		txly := split.Child(1 + i).(*gi.Layout)
+		txed := txly.Child(0).(*gide.TextView)
 		if ge.Prefs.Editor.WordWrap {
 			txed.SetProp("white-space", gi.WhiteSpacePreWrap)
 		} else {
@@ -3069,7 +3056,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 
 	if win, found := gi.AllWindows.FindName(winm); found {
 		mfr := win.SetMainFrame()
-		ge := mfr.KnownChild(0).Embed(KiT_GideView).(*GideView)
+		ge := mfr.Child(0).Embed(KiT_GideView).(*GideView)
 		if string(ge.ProjRoot) == root {
 			win.OSWin.Raise()
 			return win, ge

@@ -616,7 +616,7 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 	var tv *giv.TextView
 	if ly.HasChildren() {
-		tv = ly.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
 	} else {
 		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
 	}
@@ -651,7 +651,7 @@ func (pv *PiView) MainTabTextViewByName(tabnm string) (*giv.TextView, bool) {
 	if !got {
 		return nil, false
 	}
-	ctv := lyk.KnownChild(0).Embed(giv.KiT_TextView).(*giv.TextView)
+	ctv := lyk.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
 	return ctv, true
 }
 
@@ -737,14 +737,14 @@ func (pv *PiView) SplitView() *gi.SplitView {
 	if !ok {
 		return nil
 	}
-	return pv.KnownChild(idx).(*gi.SplitView)
+	return pv.Child(idx).(*gi.SplitView)
 }
 
 // LexTree returns the lex rules tree view
 func (pv *PiView) LexTree() *giv.TreeView {
 	split := pv.SplitView()
 	if split != nil {
-		tv := split.KnownChild(LexRulesIdx).KnownChild(0).(*giv.TreeView)
+		tv := split.Child(LexRulesIdx).Child(0).(*giv.TreeView)
 		return tv
 	}
 	return nil
@@ -754,7 +754,7 @@ func (pv *PiView) LexTree() *giv.TreeView {
 func (pv *PiView) ParseTree() *giv.TreeView {
 	split := pv.SplitView()
 	if split != nil {
-		tv := split.KnownChild(ParseRulesIdx).KnownChild(0).(*giv.TreeView)
+		tv := split.Child(ParseRulesIdx).Child(0).(*giv.TreeView)
 		return tv
 	}
 	return nil
@@ -764,7 +764,7 @@ func (pv *PiView) ParseTree() *giv.TreeView {
 func (pv *PiView) AstTree() *giv.TreeView {
 	split := pv.SplitView()
 	if split != nil {
-		tv := split.KnownChild(AstOutIdx).KnownChild(0).(*giv.TreeView)
+		tv := split.Child(AstOutIdx).Child(0).(*giv.TreeView)
 		return tv
 	}
 	return nil
@@ -774,7 +774,7 @@ func (pv *PiView) AstTree() *giv.TreeView {
 func (pv *PiView) StructView() *giv.StructView {
 	split := pv.SplitView()
 	if split != nil {
-		return split.KnownChild(StructViewIdx).(*giv.StructView)
+		return split.Child(StructViewIdx).(*giv.StructView)
 	}
 	return nil
 }
@@ -783,7 +783,7 @@ func (pv *PiView) StructView() *giv.StructView {
 func (pv *PiView) MainTabs() *gi.TabView {
 	split := pv.SplitView()
 	if split != nil {
-		tv := split.KnownChild(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+		tv := split.Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 		return tv
 	}
 	return nil
@@ -791,20 +791,12 @@ func (pv *PiView) MainTabs() *gi.TabView {
 
 // StatusBar returns the statusbar widget
 func (pv *PiView) StatusBar() *gi.Frame {
-	tbi, ok := pv.ChildByName("statusbar", 2)
-	if !ok {
-		return nil
-	}
-	return tbi.(*gi.Frame)
+	return pv.ChildByName("statusbar", 2).(*gi.Frame)
 }
 
 // StatusLabel returns the statusbar label widget
 func (pv *PiView) StatusLabel() *gi.Label {
-	sb := pv.StatusBar()
-	if sb != nil {
-		return sb.KnownChild(0).Embed(gi.KiT_Label).(*gi.Label)
-	}
-	return nil
+	return pv.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -833,7 +825,7 @@ func (pv *PiView) ToolBar() *gi.ToolBar {
 	if !ok {
 		return nil
 	}
-	return pv.KnownChild(idx).(*gi.ToolBar)
+	return pv.Child(idx).(*gi.ToolBar)
 }
 
 // ConfigToolbar adds a PiView toolbar.
@@ -890,15 +882,15 @@ func (pv *PiView) ConfigSplitView() {
 	config := pv.SplitViewConfig()
 	mods, updt := split.ConfigChildren(config, true)
 	if mods {
-		lxfr := split.KnownChild(LexRulesIdx).(*gi.Frame)
+		lxfr := split.Child(LexRulesIdx).(*gi.Frame)
 		lxt := lxfr.AddNewChild(giv.KiT_TreeView, "lex-tree").(*giv.TreeView)
 		lxt.SetRootNode(&pv.Parser.Lexer)
 
-		prfr := split.KnownChild(ParseRulesIdx).(*gi.Frame)
+		prfr := split.Child(ParseRulesIdx).(*gi.Frame)
 		prt := prfr.AddNewChild(giv.KiT_TreeView, "parse-tree").(*giv.TreeView)
 		prt.SetRootNode(&pv.Parser.Parser)
 
-		astfr := split.KnownChild(AstOutIdx).(*gi.Frame)
+		astfr := split.Child(AstOutIdx).(*gi.Frame)
 		astt := astfr.AddNewChild(giv.KiT_TreeView, "ast-tree").(*giv.TreeView)
 		astt.SetRootNode(&fs.Ast)
 
@@ -1376,12 +1368,12 @@ func QuitReq() bool {
 		if !strings.HasPrefix(win.Nm, "Pie") {
 			continue
 		}
-		mfr, ok := win.MainWidget()
-		if !ok {
+		mfr, err := win.MainWidget()
+		if err != nil {
 			continue
 		}
-		gek, ok := mfr.ChildByName("piview", 0)
-		if !ok {
+		gek := mfr.ChildByName("piview", 0)
+		if gek == nil {
 			continue
 		}
 		ge := gek.Embed(KiT_PiView).(*PiView)
