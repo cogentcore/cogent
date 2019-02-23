@@ -856,6 +856,9 @@ func (ge *GideView) CloneActiveView() (*gide.TextView, int) {
 // SaveAllOpenNodes saves all of the open filenodes to their current file names
 func (ge *GideView) SaveAllOpenNodes() {
 	for _, ond := range ge.OpenNodes {
+		if ond.Buf == nil {
+			continue
+		}
 		if ond.Buf.IsChanged() {
 			ond.Buf.Save()
 			ge.RunPostCmdsFileNode(ond)
