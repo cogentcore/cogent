@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go/token"
 	"io/ioutil"
 	"log"
 	"os"
@@ -872,7 +871,7 @@ func (cmd *Command) SetCompleter(tf *gi.TextField, id string) {
 }
 
 // CompleteArg supplies directory variables to the completer
-func CompleteArg(data interface{}, text string, pos token.Position) (md complete.MatchData) {
+func CompleteArg(data interface{}, text string, posLn, posCh int) (md complete.MatchData) {
 	md.Seed = complete.SeedWhiteSpace(text)
 	possibles := complete.MatchSeedString(ArgVarKeys(), md.Seed)
 	for _, p := range possibles {
