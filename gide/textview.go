@@ -2,10 +2,11 @@ package gide
 
 import (
 	"fmt"
+
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/units"
-	"github.com/goki/ki"
+	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 )
 

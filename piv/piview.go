@@ -20,7 +20,7 @@ import (
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/units"
 	"github.com/goki/gide/gide"
-	"github.com/goki/ki"
+	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/parse"
