@@ -917,7 +917,7 @@ func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 		return
 	}
 	dif := fn1.Buf.DiffBufsUnified(fn.Buf, 3)
-	cbuf, _, _, _ := ge.FindOrMakeCmdTab("Diffs", true, true)
+	cbuf, _, _ := ge.FindOrMakeCmdTab("Diffs", true, true)
 	cbuf.SetText(dif)
 	cbuf.AutoScrollViews()
 }
@@ -1181,39 +1181,41 @@ func (ge *GideView) FocusPrevPanel() {
 //    Tabs
 
 // MainTabByName returns a MainTabs (first set of tabs) tab with given name,
-// and its index -- returns false if not found
-func (ge *GideView) MainTabByName(label string) (gi.Node2D, int, bool) {
+func (ge *GideView) MainTabByName(label string) gi.Node2D {
 	tv := ge.MainTabs()
 	return tv.TabByName(label)
 }
 
-// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *GideView) SelectMainTabByName(label string) (gi.Node2D, int, bool) {
+// MainTabByNameTry returns a MainTabs (first set of tabs) tab with given name,
+// error if not found.
+func (ge *GideView) MainTabByNameTry(label string) (gi.Node2D, error) {
 	tv := ge.MainTabs()
-	widg, idx, ok := ge.MainTabByName(label)
-	if ok {
-		tv.SelectTabIndex(idx)
-	}
-	return widg, idx, ok
+	return tv.TabByNameTry(label)
+}
+
+// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
+func (ge *GideView) SelectMainTabByName(label string) gi.Node2D {
+	tv := ge.MainTabs()
+	return tv.SelectTabByName(label)
 }
 
 // FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
-// one with widget of given type.  if sel, then select it.  returns widget and tab index.
-func (ge *GideView) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) (gi.Node2D, int) {
+// one with widget of given type.  if sel, then select it.  returns widget
+func (ge *GideView) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
 	tv := ge.MainTabs()
-	widg, idx, ok := ge.MainTabByName(label)
-	if ok {
+	widg, err := ge.MainTabByNameTry(label)
+	if err == nil {
 		if sel {
-			tv.SelectTabIndex(idx)
+			tv.SelectTabByName(label)
 		}
-		return widg, idx
+		return widg
 	}
-	widg, idx = tv.AddNewTab(typ, label)
+	widg = tv.AddNewTab(typ, label)
 	if sel {
-		tv.SelectTabIndex(idx)
+		tv.SelectTabByName(label)
 	}
-	return widg, idx
+	return widg
 }
 
 // ConfigOutputTextView configures a command-output textview within given parent layout
@@ -1244,12 +1246,11 @@ func (ge *GideView) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 // FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
-// returns widget and tab index.
-func (ge *GideView) FindOrMakeMainTabTextView(label string, sel bool) (*giv.TextView, int) {
-	lyk, idx := ge.FindOrMakeMainTab(label, gi.KiT_Layout, sel)
-	ly := lyk.Embed(gi.KiT_Layout).(*gi.Layout)
+// returns widget
+func (ge *GideView) FindOrMakeMainTabTextView(label string, sel bool) *giv.TextView {
+	ly := ge.FindOrMakeMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := ge.ConfigOutputTextView(ly)
-	return tv, idx
+	return tv
 }
 
 // FindOrMakeCmdBuf creates the buffer for command output, or returns
@@ -1276,20 +1277,20 @@ func (ge *GideView) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bo
 // buffer object to save output from the command. returns true if a new buffer
 // was created, false if one already existed. if sel, select tab.  if clearBuf, then any
 // existing buffer is cleared.  Also returns index of tab.
-func (ge *GideView) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, int, bool) {
+func (ge *GideView) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, bool) {
 	buf, nw := ge.FindOrMakeCmdBuf(cmdNm, clearBuf)
-	ctv, idx := ge.FindOrMakeMainTabTextView(cmdNm, sel)
+	ctv := ge.FindOrMakeMainTabTextView(cmdNm, sel)
 	ctv.SetInactive()
 	ctv.SetBuf(buf)
-	return buf, ctv, idx, nw
+	return buf, ctv, nw
 }
 
 // VisTabByName returns a VisTabs (second set of tabs for visualizations) tab
-// with given name, and its index -- returns false if not found
-func (ge *GideView) VisTabByName(label string) (gi.Node2D, int, bool) {
+// with given name
+func (ge *GideView) VisTabByName(label string) gi.Node2D {
 	tv := ge.VisTabs()
 	if tv == nil {
-		return nil, -1, false
+		return nil
 	}
 	return tv.TabByName(label)
 }
@@ -1311,7 +1312,7 @@ func (ge *GideView) ExecCmdName(cmdNm gide.CmdName, sel bool, clearBuf bool) {
 		return
 	}
 	ge.SetArgVarVals()
-	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
@@ -1322,7 +1323,7 @@ func (ge *GideView) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm gide.CmdName, se
 		return
 	}
 	ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
-	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
@@ -1333,7 +1334,7 @@ func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool,
 		return
 	}
 	ge.ArgVals.Set(fn, &ge.Prefs, nil)
-	cbuf, _, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
@@ -1503,7 +1504,7 @@ func (ge *GideView) CommitNoChecks() {
 // CommitUpdtLog grabs info from buffer in main tabs about the commit, and
 // updates the changelog record
 func (ge *GideView) CommitUpdtLog(cmdnm string) {
-	ctv, _ := ge.FindOrMakeMainTabTextView(cmdnm, false) // don't sel
+	ctv := ge.FindOrMakeMainTabTextView(cmdnm, false) // don't sel
 	if ctv == nil {
 		return
 	}
@@ -1516,7 +1517,7 @@ func (ge *GideView) CommitUpdtLog(cmdnm string) {
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *GideView) OpenConsoleTab() {
-	ctv, _ := ge.FindOrMakeMainTabTextView("Console", true)
+	ctv := ge.FindOrMakeMainTabTextView("Console", true)
 	ctv.SetInactive()
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
@@ -1558,7 +1559,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	ge.Prefs.Find.Loc = loc
 
 	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
-	fvi, _ := ge.FindOrMakeMainTab("Find", gide.KiT_FindView, true) // sel
+	fvi := ge.FindOrMakeMainTab("Find", gide.KiT_FindView, true) // sel
 	fv := fvi.Embed(gide.KiT_FindView).(*gide.FindView)
 	fv.UpdateView(ge)
 	fv.Time = time.Now()
@@ -1629,8 +1630,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 // Spell checks spelling in files
 func (ge *GideView) Spell() {
 	fbuf, _ := ge.FindOrMakeCmdBuf("Spell", true)
-	svi, _ := ge.FindOrMakeMainTab("Spell", gide.KiT_SpellView, true) // sel
-	sv := svi.Embed(gide.KiT_SpellView).(*gide.SpellView)
+	sv := ge.FindOrMakeMainTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
 	sv.UpdateView(ge, ge.Prefs.Spell)
 	stv := sv.TextView()
 	stv.SetInactive()
@@ -1659,8 +1659,7 @@ func (ge *GideView) Symbols() {
 	if tv == nil || tv.Buf == nil {
 		return
 	}
-	svi, _ := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true) // sel
-	sv := svi.Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
+	sv := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
 	sv.UpdateView(ge, ge.Prefs.Symbols)
 	ge.FocusOnPanel(MainTabsIdx)
 }

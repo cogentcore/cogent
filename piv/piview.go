@@ -571,40 +571,45 @@ func (pv *PiView) FocusPrevPanel() {
 //////////////////////////////////////////////////////////////////////////////////////
 //   Tabs
 
-// MainTabByName returns a MainTabs (first set of tabs) tab with given name,
-// and its index -- returns false if not found
-func (pv *PiView) MainTabByName(label string) (gi.Node2D, int, bool) {
+// MainTabByName returns a MainTabs (first set of tabs) tab with given name
+func (pv *PiView) MainTabByName(label string) gi.Node2D {
 	tv := pv.MainTabs()
 	return tv.TabByName(label)
 }
 
-// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-func (pv *PiView) SelectMainTabByName(label string) (gi.Node2D, int, bool) {
+// MainTabByNameTry returns a MainTabs (first set of tabs) tab with given name, err if not found
+func (pv *PiView) MainTabByNameTry(label string) (gi.Node2D, error) {
 	tv := pv.MainTabs()
-	widg, idx, ok := pv.MainTabByName(label)
-	if ok {
-		tv.SelectTabIndex(idx)
+	return tv.TabByNameTry(label)
+}
+
+// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
+func (pv *PiView) SelectMainTabByName(label string) gi.Node2D {
+	tv := pv.MainTabs()
+	widg, err := pv.MainTabByNameTry(label)
+	if err == nil {
+		tv.SelectTabByName(label)
 	}
-	return widg, idx, ok
+	return widg
 }
 
 // FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
-// one with widget of given type.  if sel, then select it.  returns widget and tab index.
-func (pv *PiView) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) (gi.Node2D, int) {
+// one with widget of given type.  if sel, then select it.  returns widget
+func (pv *PiView) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
 	tv := pv.MainTabs()
-	widg, idx, ok := pv.MainTabByName(label)
-	if ok {
+	widg, err := pv.MainTabByNameTry(label)
+	if err == nil {
 		if sel {
-			tv.SelectTabIndex(idx)
+			tv.SelectTabByName(label)
 		}
-		return widg, idx
+		return widg
 	}
-	widg, idx = tv.AddNewTab(typ, label)
+	widg = tv.AddNewTab(typ, label)
 	if sel {
-		tv.SelectTabIndex(idx)
+		tv.SelectTabByName(label)
 	}
-	return widg, idx
+	return widg
 }
 
 // ConfigTextView configures text view
@@ -637,18 +642,17 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 // FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
-// returns widget and tab index.
-func (pv *PiView) FindOrMakeMainTabTextView(label string, sel bool, out bool) (*giv.TextView, int) {
-	lyk, idx := pv.FindOrMakeMainTab(label, gi.KiT_Layout, sel)
-	ly := lyk.Embed(gi.KiT_Layout).(*gi.Layout)
+// returns widget
+func (pv *PiView) FindOrMakeMainTabTextView(label string, sel bool, out bool) *giv.TextView {
+	ly := pv.FindOrMakeMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := pv.ConfigTextView(ly, out)
-	return tv, idx
+	return tv
 }
 
 // MainTabTextViewByName returns the textview for given main tab, if it exists
 func (pv *PiView) MainTabTextViewByName(tabnm string) (*giv.TextView, bool) {
-	lyk, _, got := pv.MainTabByName(tabnm)
-	if !got {
+	lyk, err := pv.MainTabByNameTry(tabnm)
+	if err != nil {
 		return nil, false
 	}
 	ctv := lyk.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
@@ -662,7 +666,7 @@ func (pv *PiView) TestTextView() (*giv.TextView, bool) {
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (pv *PiView) OpenConsoleTab() {
-	ctv, _ := pv.FindOrMakeMainTabTextView("Console", true, true)
+	ctv := pv.FindOrMakeMainTabTextView("Console", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", gi.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
@@ -676,7 +680,7 @@ func (pv *PiView) OpenConsoleTab() {
 
 // OpenTestTextTab opens a main tab displaying test text
 func (pv *PiView) OpenTestTextTab() {
-	ctv, _ := pv.FindOrMakeMainTabTextView("TestText", true, false)
+	ctv := pv.FindOrMakeMainTabTextView("TestText", true, false)
 	if ctv.Buf == nil || ctv.Buf != &pv.TestBuf {
 		ctv.SetBuf(&pv.TestBuf)
 	}
@@ -684,7 +688,7 @@ func (pv *PiView) OpenTestTextTab() {
 
 // OpenOutTab opens a main tab displaying all output
 func (pv *PiView) OpenOutTab() {
-	ctv, _ := pv.FindOrMakeMainTabTextView("Output", true, true)
+	ctv := pv.FindOrMakeMainTabTextView("Output", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", gi.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != &pv.OutBuf {
@@ -694,7 +698,7 @@ func (pv *PiView) OpenOutTab() {
 
 // OpenLexTab opens a main tab displaying lexer output
 func (pv *PiView) OpenLexTab() {
-	ctv, _ := pv.FindOrMakeMainTabTextView("LexOut", true, true)
+	ctv := pv.FindOrMakeMainTabTextView("LexOut", true, true)
 	if ctv.Buf == nil || ctv.Buf != &pv.LexBuf {
 		ctv.SetBuf(&pv.LexBuf)
 	}
@@ -702,7 +706,7 @@ func (pv *PiView) OpenLexTab() {
 
 // OpenParseTab opens a main tab displaying parser output
 func (pv *PiView) OpenParseTab() {
-	ctv, _ := pv.FindOrMakeMainTabTextView("ParseOut", true, true)
+	ctv := pv.FindOrMakeMainTabTextView("ParseOut", true, true)
 	if ctv.Buf == nil || ctv.Buf != &pv.ParseBuf {
 		ctv.SetBuf(&pv.ParseBuf)
 	}

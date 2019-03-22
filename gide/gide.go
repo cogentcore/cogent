@@ -39,7 +39,7 @@ type Gide interface {
 	SetStatus(msg string)
 
 	// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-	SelectMainTabByName(label string) (gi.Node2D, int, bool)
+	SelectMainTabByName(label string) gi.Node2D
 
 	// FocusOnMainTabs moves keyboard focus to MainTabs panel -- returns false if nothing at that tab
 	FocusOnMainTabs() bool
