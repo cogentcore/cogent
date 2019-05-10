@@ -2544,13 +2544,13 @@ var GideViewProps = ki.Props{
 		}},
 		{"sep-find", ki.BlankProp{}},
 		{"CursorToHistPrev", ki.Props{
-			"icon":     "widget-wedge-left",
+			"icon":     "wedge-left",
 			"shortcut": gi.KeyFunHistPrev,
 			"label":    "",
 			"desc":     "move cursor to previous location in active text view",
 		}},
 		{"CursorToHistNext", ki.Props{
-			"icon":     "widget-wedge-right",
+			"icon":     "wedge-right",
 			"shortcut": gi.KeyFunHistNext,
 			"label":    "",
 			"desc":     "move cursor to next location in active text view",

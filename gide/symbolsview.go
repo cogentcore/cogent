@@ -528,8 +528,8 @@ var SymbolTreeViewProps = ki.Props{
 		"stroke":  &gi.Prefs.Colors.Font,
 	},
 	"#branch": ki.Props{
-		"icon":             "widget-wedge-down",
-		"icon-off":         "widget-wedge-right",
+		"icon":             "wedge-down",
+		"icon-off":         "wedge-right",
 		"margin":           units.NewValue(0, units.Px),
 		"padding":          units.NewValue(0, units.Px),
 		"background-color": color.Transparent,

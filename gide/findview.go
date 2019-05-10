@@ -401,13 +401,13 @@ func (fv *FindView) ConfigToolbar() {
 		}
 	})
 
-	fb.AddAction(gi.ActOpts{Name: "next", Icon: "widget-wedge-down", Tooltip: "go to next result"},
+	fb.AddAction(gi.ActOpts{Name: "next", Icon: "wedge-down", Tooltip: "go to next result"},
 		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.NextFind()
 		})
 
-	fb.AddAction(gi.ActOpts{Name: "prev", Icon: "widget-wedge-up", Tooltip: "go to previous result"},
+	fb.AddAction(gi.ActOpts{Name: "prev", Icon: "wedge-up", Tooltip: "go to previous result"},
 		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.PrevFind()
