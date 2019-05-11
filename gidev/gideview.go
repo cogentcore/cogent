@@ -176,7 +176,7 @@ func (ge *GideView) OpenPath(path gi.FileName) (*gi.Window, *GideView) {
 		ge.Prefs.ProjFilename = gi.FileName(filepath.Join(root, pnm+".gide"))
 		ge.ProjFilename = ge.Prefs.ProjFilename
 		ge.Prefs.ProjRoot = ge.ProjRoot
-		ge.UpdateProj()
+		ge.Config()
 		ge.GuessMainLang()
 		ge.LangDefaults()
 		win := ge.ParentWindow()
@@ -208,7 +208,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) (*gi.Window, *GideView) {
 		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.ApplyPrefs()
-		ge.UpdateProj()
+		ge.Config()
 		win := ge.ParentWindow()
 		if win != nil {
 			winm := "gide-" + pnm
@@ -327,23 +327,6 @@ func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func(ge *GideView)) bool {
 			}
 		})
 	return true
-}
-
-// UpdateProj does full update to current proj
-func (ge *GideView) UpdateProj() {
-	mods, updt := ge.StdConfig()
-	if !mods {
-		updt = ge.UpdateStart()
-	}
-	ge.UpdateFiles()
-	ge.ConfigSplitView()
-	ge.ConfigToolbar()
-	ge.ConfigStatusBar()
-	ge.SetStatus("just updated")
-	if mods {
-		ge.OpenConsoleTab()
-	}
-	ge.UpdateEnd(updt)
 }
 
 // ProjPathParse parses given project path into a root directory (which could
@@ -1073,9 +1056,6 @@ func QuitReq() bool {
 // and visible for displaying something
 func (ge *GideView) PanelIsOpen(panel int) bool {
 	sv := ge.SplitView()
-	if sv == nil {
-		return false
-	}
 	if panel < 0 || panel >= len(sv.Kids) {
 		return false
 	}
@@ -1088,9 +1068,6 @@ func (ge *GideView) PanelIsOpen(panel int) bool {
 // CurPanel returns the splitter panel that currently has keyboard focus
 func (ge *GideView) CurPanel() int {
 	sv := ge.SplitView()
-	if sv == nil {
-		return -1
-	}
 	for i, ski := range sv.Kids {
 		_, sk := gi.KiToNode2D(ski)
 		if sk.ContainsFocus() {
@@ -1103,9 +1080,6 @@ func (ge *GideView) CurPanel() int {
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
 func (ge *GideView) FocusOnPanel(panel int) bool {
 	sv := ge.SplitView()
-	if sv == nil {
-		return false
-	}
 	win := ge.ParentWindow()
 	switch panel {
 	case TextView1Idx:
@@ -1138,9 +1112,6 @@ func (ge *GideView) FocusOnPanel(panel int) bool {
 // FocusNextPanel moves the keyboard focus to the next panel to the right
 func (ge *GideView) FocusNextPanel() {
 	sv := ge.SplitView()
-	if sv == nil {
-		return
-	}
 	cp := ge.CurPanel()
 	cp++
 	np := len(sv.Kids)
@@ -1159,9 +1130,6 @@ func (ge *GideView) FocusNextPanel() {
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
 func (ge *GideView) FocusPrevPanel() {
 	sv := ge.SplitView()
-	if sv == nil {
-		return
-	}
 	cp := ge.CurPanel()
 	cp--
 	np := len(sv.Kids)
@@ -1878,9 +1846,7 @@ func (ge *GideView) Defaults() {
 // places, e.g., prior to saving or editing.
 func (ge *GideView) GrabPrefs() {
 	sv := ge.SplitView()
-	if sv != nil {
-		ge.Prefs.Splits = sv.Splits
-	}
+	ge.Prefs.Splits = sv.Splits
 	ge.Prefs.OpenDirs = ge.Files.OpenDirs
 }
 
@@ -1892,8 +1858,8 @@ func (ge *GideView) ApplyPrefs() {
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
 	histyle.StyleDefault = gide.Prefs.HiStyle
-	sv := ge.SplitView()
-	if sv != nil {
+	if len(ge.Kids) > 0 {
+		sv := ge.SplitView()
 		for i := 0; i < NTextViews; i++ {
 			txly := sv.Child(1 + i).(*gi.Layout)
 			txed := txly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
@@ -1913,7 +1879,7 @@ func (ge *GideView) ApplyPrefs() {
 func (ge *GideView) ApplyPrefsAction() {
 	ge.ApplyPrefs()
 	ge.SetFullReRender()
-	ge.UpdateProj()
+	ge.Config()
 }
 
 // EditProjPrefs allows editing of project preferences (settings specific to this project)
@@ -1929,14 +1895,12 @@ func (ge *GideView) EditProjPrefs() {
 // SplitsSetView sets split view splitters to given named setting
 func (ge *GideView) SplitsSetView(split gide.SplitName) {
 	sv := ge.SplitView()
-	if sv != nil {
-		sp, _, ok := gide.AvailSplits.SplitByName(split)
-		if ok {
-			sv.SetSplitsAction(sp.Splits...)
-			ge.Prefs.SplitName = split
-			if !ge.PanelIsOpen(ge.ActiveTextViewIdx + TextView1Idx) {
-				ge.SetActiveTextViewIdx((ge.ActiveTextViewIdx + 1) % 2)
-			}
+	sp, _, ok := gide.AvailSplits.SplitByName(split)
+	if ok {
+		sv.SetSplitsAction(sp.Splits...)
+		ge.Prefs.SplitName = split
+		if !ge.PanelIsOpen(ge.ActiveTextViewIdx + TextView1Idx) {
+			ge.SetActiveTextViewIdx((ge.ActiveTextViewIdx + 1) % 2)
 		}
 	}
 }
@@ -1945,12 +1909,10 @@ func (ge *GideView) SplitsSetView(split gide.SplitName) {
 // existing name, and saves to prefs file
 func (ge *GideView) SplitsSave(split gide.SplitName) {
 	sv := ge.SplitView()
-	if sv != nil {
-		sp, _, ok := gide.AvailSplits.SplitByName(split)
-		if ok {
-			sp.SaveSplits(sv.Splits)
-			gide.AvailSplits.SavePrefs()
-		}
+	sp, _, ok := gide.AvailSplits.SplitByName(split)
+	if ok {
+		sp.SaveSplits(sv.Splits)
+		gide.AvailSplits.SavePrefs()
 	}
 }
 
@@ -1958,10 +1920,8 @@ func (ge *GideView) SplitsSave(split gide.SplitName) {
 // saves to prefs file
 func (ge *GideView) SplitsSaveAs(name, desc string) {
 	sv := ge.SplitView()
-	if sv != nil {
-		gide.AvailSplits.Add(name, desc, sv.Splits)
-		gide.AvailSplits.SavePrefs()
-	}
+	gide.AvailSplits.Add(name, desc, sv.Splits)
+	gide.AvailSplits.SavePrefs()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
@@ -1977,33 +1937,32 @@ func (ge *GideView) HelpWiki() {
 //////////////////////////////////////////////////////////////////////////////////////
 //   GUI configs
 
-// StdFrameConfig returns a TypeAndNameList for configuring a standard Frame
-// -- can modify as desired before calling ConfigChildren on Frame using this
-func (ge *GideView) StdFrameConfig() kit.TypeAndNameList {
+// Config configures the view
+func (ge *GideView) Config() {
+	ge.Lay = gi.LayoutVert
+	ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	config.Add(gi.KiT_Frame, "statusbar")
-	return config
-}
-
-// StdConfig configures a standard setup of the overall Frame -- returns mods,
-// updt from ConfigChildren and does NOT call UpdateEnd
-func (ge *GideView) StdConfig() (mods, updt bool) {
-	ge.Lay = gi.LayoutVert
-	ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := ge.StdFrameConfig()
-	mods, updt = ge.ConfigChildren(config, false)
-	return
+	mods, updt := ge.ConfigChildren(config, false)
+	if !mods {
+		updt = ge.UpdateStart()
+	}
+	ge.UpdateFiles()
+	ge.ConfigSplitView()
+	ge.ConfigToolbar()
+	ge.ConfigStatusBar()
+	ge.SetStatus("just updated")
+	if mods {
+		ge.OpenConsoleTab()
+	}
+	ge.UpdateEnd(updt)
 }
 
 // SplitView returns the main SplitView
 func (ge *GideView) SplitView() *gi.SplitView {
-	spk := ge.ChildByName("splitview", 2)
-	if spk == nil {
-		return nil
-	}
-	return spk.(*gi.SplitView)
+	return ge.ChildByName("splitview", 2).(*gi.SplitView)
 }
 
 // FileTree returns the main FileTree
@@ -2018,31 +1977,22 @@ func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
 		return nil
 	}
 	split := ge.SplitView()
-	if split != nil {
-		svk := split.Child(TextView1Idx + idx).Child(0)
-		return svk.Embed(gide.KiT_TextView).(*gide.TextView)
-	}
-	return nil
+	svk := split.Child(TextView1Idx + idx).Child(0)
+	return svk.Embed(gide.KiT_TextView).(*gide.TextView)
 }
 
 // MainTabs returns the main TabView
 func (ge *GideView) MainTabs() *gi.TabView {
 	split := ge.SplitView()
-	if split != nil {
-		tv := split.Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
-		return tv
-	}
-	return nil
+	tv := split.Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+	return tv
 }
 
 // VisTabs returns the second, visualization TabView
 func (ge *GideView) VisTabs() *gi.TabView {
 	split := ge.SplitView()
-	if split != nil {
-		tv := split.Child(VisTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
-		return tv
-	}
-	return nil
+	tv := split.Child(VisTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+	return tv
 }
 
 // ToolBar returns the main toolbar
@@ -2094,18 +2044,6 @@ func (ge *GideView) ConfigToolbar() {
 	giv.ToolBarView(ge, ge.Viewport, tb)
 }
 
-// SplitViewConfig returns a TypeAndNameList for configuring the SplitView
-func (ge *GideView) SplitViewConfig() kit.TypeAndNameList {
-	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_Frame, "filetree")
-	for i := 0; i < NTextViews; i++ {
-		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-%v", i))
-	}
-	config.Add(gi.KiT_TabView, "main-tabs")
-	config.Add(gi.KiT_TabView, "vis-tabs")
-	return config
-}
-
 var fnFolderProps = ki.Props{
 	"icon":     "folder-open",
 	"icon-off": "folder",
@@ -2114,13 +2052,16 @@ var fnFolderProps = ki.Props{
 // ConfigSplitView configures the SplitView.
 func (ge *GideView) ConfigSplitView() {
 	split := ge.SplitView()
-	if split == nil {
-		return
-	}
 	split.Dim = gi.X
 	//	split.Dim = gi.Y
 
-	config := ge.SplitViewConfig()
+	config := kit.TypeAndNameList{}
+	config.Add(gi.KiT_Frame, "filetree")
+	for i := 0; i < NTextViews; i++ {
+		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-%v", i))
+	}
+	config.Add(gi.KiT_TabView, "main-tabs")
+	config.Add(gi.KiT_TabView, "vis-tabs")
 	mods, updt := split.ConfigChildren(config, true)
 	if mods {
 		ftfr := split.Child(FileTreeIdx).(*gi.Frame)
@@ -2383,14 +2324,14 @@ func (ge *GideView) KeyChordEvent() {
 }
 
 func (ge *GideView) Render2D() {
-	ge.ToolBar().UpdateActions()
-	if win := ge.ParentWindow(); win != nil {
-		sv := ge.SplitView()
-		if sv != nil {
+	if len(ge.Kids) > 0 {
+		ge.ToolBar().UpdateActions()
+		if win := ge.ParentWindow(); win != nil {
+			sv := ge.SplitView()
 			win.SetStartFocus(sv.This())
-		}
-		if !win.IsResizing() {
-			win.MainMenuUpdateActives()
+			if !win.IsResizing() {
+				win.MainMenuUpdateActives()
+			}
 		}
 	}
 	ge.Frame.Render2D()
@@ -2460,18 +2401,27 @@ func (ge *GideView) Declaration() {
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
 var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
+	if len(ge.Kids) == 0 {
+		return
+	}
 	act.SetInactiveState(ge.IsEmpty())
 })
 
 // GideViewInactiveTextViewFunc is an ActionUpdateFunc that inactivates action there is no active text view
 var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
+	if len(ge.Kids) == 0 {
+		return
+	}
 	act.SetInactiveState(ge.ActiveTextView().Buf == nil)
 })
 
 // GideViewInactiveTextSelectionFunc is an ActionUpdateFunc that inactivates action there is no active text view
 var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
+	if len(ge.Kids) == 0 {
+		return
+	}
 	if ge.ActiveTextView() != nil && ge.ActiveTextView().Buf != nil {
 		act.SetActiveState(ge.ActiveTextView().HasSelection())
 	} else {

@@ -297,7 +297,7 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string
 		cf.SetText(suggests[0])
 	}
 	sugview := sv.SuggestView()
-	sugview.UpdateFromSlice()
+	sugview.Config()
 	tv := sv.Gide.ActiveTextView()
 	st := sv.UnknownStartPos()
 	en := sv.UnknownEndPos()

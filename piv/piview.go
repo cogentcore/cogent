@@ -54,22 +54,6 @@ type PiView struct {
 
 var KiT_PiView = kit.Types.AddType(&PiView{}, PiViewProps)
 
-// InitView initializes the viewer / editor
-func (pv *PiView) InitView() {
-	parse.GuiActive = true
-	fmt.Printf("PiView enabling GoPi parser output\n")
-	pv.Parser.Init()
-	mods, updt := pv.StdConfig()
-	if !mods {
-		updt = pv.UpdateStart()
-	}
-	pv.ConfigSplitView()
-	pv.ConfigStatusBar()
-	pv.ConfigToolbar()
-	pv.UpdateEnd(updt)
-	go pv.MonitorOut()
-}
-
 // IsEmpty returns true if current project is empty
 func (pv *PiView) IsEmpty() bool {
 	return (!pv.Parser.Lexer.HasChildren() && !pv.Parser.Parser.HasChildren())
@@ -89,7 +73,7 @@ func (pv *PiView) OpenProj(filename gi.FileName) *PiView {
 		return nprj
 	}
 	pv.Prefs.OpenJSON(filename)
-	pv.InitView()
+	pv.Config()
 	pv.ApplyPrefs()
 	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
 	SavePaths()
@@ -153,7 +137,7 @@ func (pv *PiView) GetPrefs() {
 func (pv *PiView) OpenParser(filename gi.FileName) {
 	pv.Parser.OpenJSON(string(filename))
 	pv.Prefs.ParserFile = filename
-	pv.InitView()
+	pv.Config()
 }
 
 // SaveParser saves lexer and parser rules to current filename, in a standard JSON-formatted file
@@ -715,82 +699,56 @@ func (pv *PiView) OpenParseTab() {
 //////////////////////////////////////////////////////////////////////////////////////
 //   GUI configs
 
-// StdFrameConfig returns a TypeAndNameList for configuring a standard Frame
-// -- can modify as desired before calling ConfigChildren on Frame using this
-func (pv *PiView) StdFrameConfig() kit.TypeAndNameList {
+// Config configures the view
+func (pv *PiView) Config() {
+	parse.GuiActive = true
+	fmt.Printf("PiView enabling GoPi parser output\n")
+	pv.Parser.Init()
+	pv.Lay = gi.LayoutVert
+	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	config.Add(gi.KiT_Frame, "statusbar")
-	return config
-}
-
-// StdConfig configures a standard setup of the overall Frame -- returns mods,
-// updt from ConfigChildren and does NOT call UpdateEnd
-func (pv *PiView) StdConfig() (mods, updt bool) {
-	pv.Lay = gi.LayoutVert
-	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := pv.StdFrameConfig()
-	mods, updt = pv.ConfigChildren(config, false)
-	return
+	mods, updt := pv.ConfigChildren(config, false)
+	if !mods {
+		updt = pv.UpdateStart()
+	}
+	pv.ConfigSplitView()
+	pv.ConfigStatusBar()
+	pv.ConfigToolbar()
+	pv.UpdateEnd(updt)
+	go pv.MonitorOut()
 }
 
 // SplitView returns the main SplitView
 func (pv *PiView) SplitView() *gi.SplitView {
-	idx, ok := pv.Children().IndexByName("splitview", 4)
-	if !ok {
-		return nil
-	}
-	return pv.Child(idx).(*gi.SplitView)
+	return pv.ChildByName("splitview", 4).(*gi.SplitView)
 }
 
 // LexTree returns the lex rules tree view
 func (pv *PiView) LexTree() *giv.TreeView {
-	split := pv.SplitView()
-	if split != nil {
-		tv := split.Child(LexRulesIdx).Child(0).(*giv.TreeView)
-		return tv
-	}
-	return nil
+	return pv.SplitView().Child(LexRulesIdx).Child(0).(*giv.TreeView)
 }
 
 // ParseTree returns the parse rules tree view
 func (pv *PiView) ParseTree() *giv.TreeView {
-	split := pv.SplitView()
-	if split != nil {
-		tv := split.Child(ParseRulesIdx).Child(0).(*giv.TreeView)
-		return tv
-	}
-	return nil
+	return pv.SplitView().Child(ParseRulesIdx).Child(0).(*giv.TreeView)
 }
 
 // AstTree returns the Ast output tree view
 func (pv *PiView) AstTree() *giv.TreeView {
-	split := pv.SplitView()
-	if split != nil {
-		tv := split.Child(AstOutIdx).Child(0).(*giv.TreeView)
-		return tv
-	}
-	return nil
+	return pv.SplitView().Child(AstOutIdx).Child(0).(*giv.TreeView)
 }
 
 // StructView returns the StructView for editing rules
 func (pv *PiView) StructView() *giv.StructView {
-	split := pv.SplitView()
-	if split != nil {
-		return split.Child(StructViewIdx).(*giv.StructView)
-	}
-	return nil
+	return pv.SplitView().Child(StructViewIdx).(*giv.StructView)
 }
 
 // MainTabs returns the main TabView
 func (pv *PiView) MainTabs() *gi.TabView {
-	split := pv.SplitView()
-	if split != nil {
-		tv := split.Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
-		return tv
-	}
-	return nil
+	return pv.SplitView().Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 }
 
 // StatusBar returns the statusbar widget
@@ -1124,10 +1082,12 @@ func (ge *PiView) ConnectEvents2D() {
 }
 
 func (pv *PiView) Render2D() {
-	pv.ToolBar().UpdateActions()
-	if win := pv.ParentWindow(); win != nil {
-		if !win.IsResizing() {
-			win.MainMenuUpdateActives()
+	if len(pv.Kids) > 0 {
+		pv.ToolBar().UpdateActions()
+		if win := pv.ParentWindow(); win != nil {
+			if !win.IsResizing() {
+				win.MainMenuUpdateActives()
+			}
 		}
 	}
 	pv.Frame.Render2D()
@@ -1458,7 +1418,7 @@ func NewPiView() (*gi.Window, *PiView) {
 
 	win.MainMenuUpdated()
 
-	pv.InitView()
+	pv.Config()
 
 	vp.UpdateEndNoSig(updt)
 
