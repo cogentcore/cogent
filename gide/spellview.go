@@ -64,37 +64,26 @@ func (sv *SpellView) OpenSpellURL(ur string, ftv *giv.TextView) bool {
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// UpdateView updates view with current settings
-func (sv *SpellView) UpdateView(ge Gide, sp SpellParams) {
+// Config configures the view
+func (sv *SpellView) Config(ge Gide, sp SpellParams) {
 	sv.Gide = ge
 	sv.Spell = sp
-	_, updt := sv.StdSpellConfig()
-	sv.ConfigToolbar()
-	tvly := sv.TextViewLay()
-	sv.Gide.ConfigOutputTextView(tvly)
-	sv.UpdateEnd(updt)
-}
-
-// StdConfig returns a TypeAndNameList for configuring a standard Frame
-// -- can modify as desired before calling ConfigChildren on Frame using this
-func (sv *SpellView) StdConfig() kit.TypeAndNameList {
+	sv.Lay = gi.LayoutVert
+	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "spellbar")
 	config.Add(gi.KiT_ToolBar, "unknownbar")
 	config.Add(gi.KiT_ToolBar, "changebar")
 	config.Add(gi.KiT_ToolBar, "suggestbar")
 	config.Add(gi.KiT_Layout, "spelltext")
-	return config
-}
-
-// StdSpellConfig configures a standard setup of the overall layout -- returns
-// mods, updt from ConfigChildren and does NOT call UpdateEnd
-func (sv *SpellView) StdSpellConfig() (mods, updt bool) {
-	sv.Lay = gi.LayoutVert
-	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := sv.StdConfig()
-	mods, updt = sv.ConfigChildren(config, false)
-	return
+	mods, updt := sv.ConfigChildren(config, false)
+	if !mods {
+		updt = sv.UpdateStart()
+	}
+	sv.ConfigToolbar()
+	tvly := sv.TextViewLay()
+	sv.Gide.ConfigOutputTextView(tvly)
+	sv.UpdateEnd(updt)
 }
 
 // TextViewLay returns the spell check results TextView layout

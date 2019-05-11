@@ -1529,7 +1529,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
 	fvi := ge.FindOrMakeMainTab("Find", gide.KiT_FindView, true) // sel
 	fv := fvi.Embed(gide.KiT_FindView).(*gide.FindView)
-	fv.UpdateView(ge)
+	fv.Config(ge)
 	fv.Time = time.Now()
 	ftv := fv.TextView()
 	ftv.SetInactive()
@@ -1599,7 +1599,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 func (ge *GideView) Spell() {
 	fbuf, _ := ge.FindOrMakeCmdBuf("Spell", true)
 	sv := ge.FindOrMakeMainTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
-	sv.UpdateView(ge, ge.Prefs.Spell)
+	sv.Config(ge, ge.Prefs.Spell)
 	stv := sv.TextView()
 	stv.SetInactive()
 	stv.SetBuf(fbuf)
@@ -1628,7 +1628,7 @@ func (ge *GideView) Symbols() {
 		return
 	}
 	sv := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
-	sv.UpdateView(ge, ge.Prefs.Symbols)
+	sv.Config(ge, ge.Prefs.Symbols)
 	ge.FocusOnPanel(MainTabsIdx)
 }
 

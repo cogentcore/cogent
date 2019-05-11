@@ -249,10 +249,19 @@ func (fv *FindView) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, fi
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// UpdateView updates view with current settings
-func (fv *FindView) UpdateView(ge Gide) {
+// Config configures the view
+func (fv *FindView) Config(ge Gide) {
 	fv.Gide = ge
-	mods, updt := fv.StdFindConfig()
+	fv.Lay = gi.LayoutVert
+	fv.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	config := kit.TypeAndNameList{}
+	config.Add(gi.KiT_ToolBar, "findbar")
+	config.Add(gi.KiT_ToolBar, "replbar")
+	config.Add(gi.KiT_Layout, "findtext")
+	mods, updt := fv.ConfigChildren(config, false)
+	if !mods {
+		updt = fv.UpdateStart()
+	}
 	fv.ConfigToolbar()
 	ft := fv.FindText()
 	ft.ItemsFromStringList(fv.Params().FindHist, true, 0)
@@ -269,28 +278,8 @@ func (fv *FindView) UpdateView(ge Gide) {
 	if mods {
 		na := fv.FindNextAct()
 		na.GrabFocus()
-		fv.UpdateEnd(updt)
 	}
-}
-
-// StdConfig returns a TypeAndNameList for configuring a standard Frame
-// -- can modify as desired before calling ConfigChildren on Frame using this
-func (fv *FindView) StdConfig() kit.TypeAndNameList {
-	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_ToolBar, "findbar")
-	config.Add(gi.KiT_ToolBar, "replbar")
-	config.Add(gi.KiT_Layout, "findtext")
-	return config
-}
-
-// StdFindConfig configures a standard setup of the overall layout -- returns
-// mods, updt from ConfigChildren and does NOT call UpdateEnd
-func (fv *FindView) StdFindConfig() (mods, updt bool) {
-	fv.Lay = gi.LayoutVert
-	fv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := fv.StdConfig()
-	mods, updt = fv.ConfigChildren(config, false)
-	return
+	fv.UpdateEnd(updt)
 }
 
 // FindBar returns the find toolbar

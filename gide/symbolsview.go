@@ -81,42 +81,24 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// UpdateView updates view with current settings
-func (sv *SymbolsView) UpdateView(ge Gide, sp SymbolsParams) {
+// Config configures the view
+func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
 	sv.Gide = ge
 	sv.SymParams = sp
-	_, updt := sv.StdSymbolsConfig()
+	sv.Lay = gi.LayoutVert
+	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	config := kit.TypeAndNameList{}
+	config.Add(gi.KiT_ToolBar, "symbols-bar")
+	config.Add(gi.KiT_Frame, "symbols-tree")
+	mods, updt := sv.ConfigChildren(config, false)
+	if !mods {
+		updt = sv.UpdateStart()
+	}
 	sv.ConfigToolbar()
 	sb := sv.ScopeCombo()
 	sb.SetCurIndex(int(sv.Params().Scope))
 	sv.ConfigTree(sp.Scope)
 	sv.UpdateEnd(updt)
-}
-
-// ReView updates view with current settings
-func (sv *SymbolsView) ReView(scope SymbolsViewScope) {
-	_, updt := sv.StdSymbolsConfig()
-	sv.ConfigTree(scope)
-	sv.UpdateEnd(updt)
-}
-
-// StdConfig returns a TypeAndNameList for configuring a standard Frame
-// -- can modify as desired before calling ConfigChildren on Frame using this
-func (sv *SymbolsView) StdConfig() kit.TypeAndNameList {
-	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_ToolBar, "symbols-bar")
-	config.Add(gi.KiT_Frame, "symbols-tree")
-	return config
-}
-
-// StdSymbolsConfig configures a standard setup of the overall layout -- returns
-// mods, updt from ConfigChildren and does NOT call UpdateEnd
-func (sv *SymbolsView) StdSymbolsConfig() (mods, updt bool) {
-	sv.Lay = gi.LayoutVert
-	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := sv.StdConfig()
-	mods, updt = sv.ConfigChildren(config, false)
-	return
 }
 
 // SymbolsBar returns the symbols toolbar
@@ -159,7 +141,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 		smb := send.(*gi.ComboBox)
 		eval := smb.CurVal.(kit.EnumValue)
 		svv.Params().Scope = SymbolsViewScope(eval.Value)
-		sv.ReView(SymbolsViewScope(eval.Value))
+		sv.ConfigTree(SymbolsViewScope(eval.Value))
 		sv.SearchText().GrabFocus()
 	})
 
@@ -171,12 +153,12 @@ func (sv *SymbolsView) ConfigToolbar() {
 		if sig == int64(gi.TextFieldInsert) || sig == int64(gi.TextFieldBackspace) || sig == int64(gi.TextFieldDelete) {
 			sv.Match = string(sv.SearchText().EditTxt)
 			sv.Match = strings.ToLower(sv.Match)
-			sv.UpdateView(sv.Gide, *sv.Params())
+			sv.Config(sv.Gide, *sv.Params())
 			sv.SearchText().GrabFocus()
 		}
 		if sig == int64(gi.TextFieldCleared) {
 			sv.Match = ""
-			sv.UpdateView(sv.Gide, *sv.Params())
+			sv.Config(sv.Gide, *sv.Params())
 			sv.SearchText().GrabFocus()
 		}
 	})
@@ -199,6 +181,8 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 		return
 	}
 	svtree := sv.SymbolsTree()
+	updt := svtree.UpdateStart()
+	svtree.SetProp("height", units.NewEm(5)) // enables scrolling
 	svtree.SetStretchMaxWidth()
 	svtree.SetStretchMaxHeight()
 	if scope == SymScopePackage {
@@ -216,18 +200,22 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 		tvn, _ := data.(ki.Ki).Embed(KiT_SymbolTreeView).(*SymbolTreeView)
 		//sve, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
 		if tvn.SrcNode.Ptr != nil {
-			sn := tvn.SrcNode.Ptr.Embed(KiT_SymNode).(*SymNode)
-			switch sig {
-			case int64(giv.TreeViewSelected):
-				sv.SelectSymbol(sn.Symbol)
-				//sve.FileNodeSelected(fn, tvn)
-				//case int64(giv.TreeViewOpened):
-				//	sve.FileNodeOpened(fn, tvn)
-				//case int64(giv.TreeViewClosed):
-				//	sve.FileNodeClosed(fn, tvn)
+			snn := tvn.SrcNode.Ptr.Embed(KiT_SymNode)
+			if snn != nil {
+				sn := snn.(*SymNode)
+				switch sig {
+				case int64(giv.TreeViewSelected):
+					sv.SelectSymbol(sn.Symbol)
+					//sve.FileNodeSelected(fn, tvn)
+					//case int64(giv.TreeViewOpened):
+					//	sve.FileNodeOpened(fn, tvn)
+					//case int64(giv.TreeViewClosed):
+					//	sve.FileNodeClosed(fn, tvn)
+				}
 			}
 		}
 	})
+	svtree.UpdateEnd(updt)
 }
 
 func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
