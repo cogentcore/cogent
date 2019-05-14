@@ -8,6 +8,7 @@ See the [Wiki](https://github.com/goki/gide/wiki) for more docs,   [Install](htt
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goki/gide)](https://goreportcard.com/report/github.com/goki/gide)
 [![GoDoc](https://godoc.org/github.com/goki/gide?status.svg)](https://godoc.org/github.com/goki/gide)
+[![Travis](https://travis-ci.com/goki/gide.svg?branch=master)](https://travis-ci.com/goki/gide)
 
 After all these years, nothing beats a great text editor for coding.  Every attempt at more "visual" or structured forms of programming haven't really caught on (though the IDE and GUI-augmented editor can give you the best of both worlds).
 
