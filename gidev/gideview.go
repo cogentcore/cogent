@@ -1960,6 +1960,18 @@ func (ge *GideView) Config() {
 	ge.UpdateEnd(updt)
 }
 
+// IsConfiged returns true if the view is fully configured
+func (ge *GideView) IsConfiged() bool {
+	if len(ge.Kids) == 0 {
+		return false
+	}
+	sv := ge.SplitView()
+	if len(sv.Kids) == 0 {
+		return false
+	}
+	return true
+}
+
 // SplitView returns the main SplitView
 func (ge *GideView) SplitView() *gi.SplitView {
 	return ge.ChildByName("splitview", 2).(*gi.SplitView)
@@ -2401,7 +2413,7 @@ func (ge *GideView) Declaration() {
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
 var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
-	if len(ge.Kids) == 0 {
+	if !ge.IsConfiged() {
 		return
 	}
 	act.SetInactiveState(ge.IsEmpty())
@@ -2410,7 +2422,7 @@ var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *
 // GideViewInactiveTextViewFunc is an ActionUpdateFunc that inactivates action there is no active text view
 var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
-	if len(ge.Kids) == 0 {
+	if !ge.IsConfiged() {
 		return
 	}
 	act.SetInactiveState(ge.ActiveTextView().Buf == nil)
@@ -2419,7 +2431,7 @@ var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei interface{}, ac
 // GideViewInactiveTextSelectionFunc is an ActionUpdateFunc that inactivates action there is no active text view
 var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
-	if len(ge.Kids) == 0 {
+	if !ge.IsConfiged() {
 		return
 	}
 	if ge.ActiveTextView() != nil && ge.ActiveTextView().Buf != nil {

@@ -721,6 +721,18 @@ func (pv *PiView) Config() {
 	go pv.MonitorOut()
 }
 
+// IsConfiged returns true if the view is fully configured
+func (pv *PiView) IsConfiged() bool {
+	if len(pv.Kids) == 0 {
+		return false
+	}
+	sv := pv.SplitView()
+	if len(sv.Kids) == 0 {
+		return false
+	}
+	return true
+}
+
 // SplitView returns the main SplitView
 func (pv *PiView) SplitView() *gi.SplitView {
 	return pv.ChildByName("splitview", 4).(*gi.SplitView)
@@ -761,6 +773,11 @@ func (pv *PiView) StatusLabel() *gi.Label {
 	return pv.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
 }
 
+// ToolBar returns the toolbar widget
+func (pv *PiView) ToolBar() *gi.ToolBar {
+	return pv.ChildByName("toolbar", 0).(*gi.ToolBar)
+}
+
 // ConfigStatusBar configures statusbar with label
 func (pv *PiView) ConfigStatusBar() {
 	sb := pv.StatusBar()
@@ -779,15 +796,6 @@ func (pv *PiView) ConfigStatusBar() {
 	lbl.SetProp("margin", 0)
 	lbl.SetProp("padding", 0)
 	lbl.SetProp("tab-size", 4)
-}
-
-// ToolBar returns the toolbar widget
-func (pv *PiView) ToolBar() *gi.ToolBar {
-	idx, ok := pv.Children().IndexByName("toolbar", 0)
-	if !ok {
-		return nil
-	}
-	return pv.Child(idx).(*gi.ToolBar)
 }
 
 // ConfigToolbar adds a PiView toolbar.
