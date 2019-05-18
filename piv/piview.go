@@ -309,7 +309,7 @@ func (pv *PiView) SelectLexRule(rule *lex.Rule) {
 			return true
 		}
 		ln := lnt.(*giv.TreeView)
-		if ln.SrcNode.Ptr == rule.This() {
+		if ln.SrcNode == rule.This() {
 			ln.Select()
 			return false
 		}
@@ -451,7 +451,7 @@ func (pv *PiView) SelectParseRule(rule *parse.Rule) {
 			return true
 		}
 		ln := lnt.(*giv.TreeView)
-		if ln.SrcNode.Ptr == rule.This() {
+		if ln.SrcNode == rule.This() {
 			ln.Select()
 			return false
 		}
@@ -949,7 +949,7 @@ func (pv *PiView) ConfigSplitView() {
 func (pv *PiView) ViewNode(tv *giv.TreeView) {
 	sv := pv.StructView()
 	if sv != nil {
-		sv.SetStruct(tv.SrcNode.Ptr, nil)
+		sv.SetStruct(tv.SrcNode, nil)
 	}
 }
 
