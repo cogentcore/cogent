@@ -257,7 +257,7 @@ func init() {
 
 // FileNode returns the SrcNode as a *gide* FileNode
 func (ft *FileTreeView) FileNode() *FileNode {
-	fn := ft.SrcNode.Ptr.Embed(KiT_FileNode)
+	fn := ft.SrcNode.Embed(KiT_FileNode)
 	if fn == nil {
 		return nil
 	}
@@ -284,7 +284,7 @@ func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 		return nil
 	}
 	if ft.This() == ft.RootView.This() {
-		ge, ok := ParentGide(ft.SrcNode.Ptr)
+		ge, ok := ParentGide(ft.SrcNode)
 		if !ok {
 			return nil
 		}
@@ -316,10 +316,10 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 		sn := sels[i]
 		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
 		if ftv.This() == ft.RootView.This() {
-			if ft.SrcNode.Ptr == nil {
+			if ft.SrcNode == nil {
 				continue
 			}
-			ftr := ft.SrcNode.Ptr.(*giv.FileTree)
+			ftr := ft.SrcNode.(*giv.FileTree)
 			ge, ok := ParentGide(ftr)
 			if ok {
 				ge.ExecCmdNameFileName(string(ftr.FPath), CmdName(cmdNm), true, true)

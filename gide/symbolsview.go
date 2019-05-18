@@ -199,8 +199,8 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 		}
 		tvn, _ := data.(ki.Ki).Embed(KiT_SymbolTreeView).(*SymbolTreeView)
 		//sve, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
-		if tvn.SrcNode.Ptr != nil {
-			snn := tvn.SrcNode.Ptr.Embed(KiT_SymNode)
+		if tvn.SrcNode != nil {
+			snn := tvn.SrcNode.Embed(KiT_SymNode)
 			if snn != nil {
 				sn := snn.(*SymNode)
 				switch sig {
@@ -483,7 +483,7 @@ func init() {
 
 // SymNode returns the SrcNode as a *gide* SymNode
 func (st *SymbolTreeView) SymNode() *SymNode {
-	sn := st.SrcNode.Ptr.Embed(KiT_SymNode)
+	sn := st.SrcNode.Embed(KiT_SymNode)
 	if sn == nil {
 		return nil
 	}

@@ -2086,8 +2086,8 @@ func (ge *GideView) ConfigSplitView() {
 				}
 				tvn, _ := data.(ki.Ki).Embed(gide.KiT_FileTreeView).(*gide.FileTreeView)
 				gee, _ := recv.Embed(KiT_GideView).(*GideView)
-				if tvn.SrcNode.Ptr != nil {
-					fn := tvn.SrcNode.Ptr.Embed(giv.KiT_FileNode).(*giv.FileNode)
+				if tvn.SrcNode != nil {
+					fn := tvn.SrcNode.Embed(giv.KiT_FileNode).(*giv.FileNode)
 					switch sig {
 					case int64(giv.TreeViewSelected):
 						gee.FileNodeSelected(fn, tvn)
