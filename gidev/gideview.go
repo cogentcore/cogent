@@ -144,7 +144,7 @@ func (ge *GideView) EditRecents() {
 	tmp := make([]string, len(gide.SavedPaths))
 	copy(tmp, gide.SavedPaths)
 	gi.StringsRemoveExtras((*[]string)(&tmp), gide.SavedPathsExtras)
-	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, DeleteOnly: true}
+	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
 	giv.SliceViewDialog(ge.Viewport, &tmp, opts,
 		nil, ge, func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
