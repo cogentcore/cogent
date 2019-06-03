@@ -40,7 +40,7 @@ func PrefsView(pf *Preferences) (*giv.StructView, *gi.Window) {
 
 	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
 	sv.Viewport = vp
-	sv.SetStruct(pf, nil)
+	sv.SetStruct(pf)
 	sv.SetStretchMaxWidth()
 	sv.SetStretchMaxHeight()
 
@@ -108,7 +108,7 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 
 	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
 	sv.Viewport = vp
-	sv.SetStruct(pf, nil)
+	sv.SetStruct(pf)
 	sv.SetStretchMaxWidth()
 	sv.SetStretchMaxHeight()
 
@@ -146,7 +146,7 @@ func KeyMapsView(km *KeyMaps) {
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
-	tv.SetSlice(km, nil)
+	tv.SetSlice(km)
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
 
@@ -292,7 +292,7 @@ func LangsView(pt *Langs) {
 
 	mv := mfr.AddNewChild(giv.KiT_MapView, "mv").(*giv.MapView)
 	mv.Viewport = vp
-	mv.SetMap(pt, nil)
+	mv.SetMap(pt)
 	mv.SetStretchMaxWidth()
 	mv.SetStretchMaxHeight()
 
@@ -363,7 +363,7 @@ func CmdsView(pt *Commands) {
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
-	tv.SetSlice(pt, nil)
+	tv.SetSlice(pt)
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
 
@@ -512,7 +512,7 @@ func SplitsView(pt *Splits) {
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
-	tv.SetSlice(pt, nil)
+	tv.SetSlice(pt)
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
 
@@ -661,7 +661,7 @@ func RegistersView(pt *Registers) {
 
 	tv := mfr.AddNewChild(giv.KiT_MapView, "tv").(*giv.MapView)
 	tv.Viewport = vp
-	tv.SetMap(pt, nil)
+	tv.SetMap(pt)
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
 

@@ -247,7 +247,7 @@ func (sv *SpellView) ConfigToolbar() {
 	suggest := sugbar.AddNewChild(giv.KiT_SliceView, "suggestions").(*giv.SliceView)
 	suggest.SetInactive()
 	suggest.SetProp("index", false)
-	suggest.SetSlice(&sv.Suggestions, nil)
+	suggest.SetSlice(&sv.Suggestions)
 	suggest.SetStretchMaxWidth()
 	suggest.SetStretchMaxHeight()
 	suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data interface{}) {
