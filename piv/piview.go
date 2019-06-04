@@ -334,7 +334,7 @@ func (pv *PiView) UpdtLexBuf() {
 func (pv *PiView) EditPassTwo() {
 	sv := pv.StructView()
 	if sv != nil {
-		sv.SetStruct(&pv.Parser.PassTwo, nil)
+		sv.SetStruct(&pv.Parser.PassTwo)
 	}
 }
 
@@ -359,7 +359,7 @@ func (pv *PiView) EditTrace() {
 	sv := pv.StructView()
 	if sv != nil {
 		fs := &pv.TestBuf.PiState
-		sv.SetStruct(&fs.ParseState.Trace, nil)
+		sv.SetStruct(&fs.ParseState.Trace)
 	}
 }
 
@@ -476,7 +476,7 @@ func (pv *PiView) UpdtParseBuf() {
 func (pv *PiView) ViewParseState() {
 	sv := pv.StructView()
 	if sv != nil {
-		sv.SetStruct(&pv.TestBuf.PiState.ParseState, nil)
+		sv.SetStruct(&pv.TestBuf.PiState.ParseState)
 	}
 }
 
@@ -898,7 +898,7 @@ func (pv *PiView) ConfigSplitView() {
 		pv.ParseTree().Open()
 		pv.AstTree().SetRootNode(&fs.Ast)
 		pv.AstTree().Open()
-		pv.StructView().SetStruct(&pv.Parser.Lexer, nil)
+		pv.StructView().SetStruct(&pv.Parser.Lexer)
 	}
 
 	pv.LexTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -949,7 +949,7 @@ func (pv *PiView) ConfigSplitView() {
 func (pv *PiView) ViewNode(tv *giv.TreeView) {
 	sv := pv.StructView()
 	if sv != nil {
-		sv.SetStruct(tv.SrcNode, nil)
+		sv.SetStruct(tv.SrcNode)
 	}
 }
 
