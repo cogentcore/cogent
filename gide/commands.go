@@ -81,10 +81,17 @@ func (cm *CmdAndArgs) BindArgs(avp *ArgVarVals) []string {
 	if sz == 0 {
 		return nil
 	}
-	args := make([]string, sz)
+	args := []string{}
 	for i := range cm.Args {
 		av := avp.Bind(cm.Args[i])
-		args[i] = av
+		if strings.Count(av, "*") == 1 {
+			glob, err := filepath.Glob(av)
+			if err == nil && len(glob) > 0 {
+				args = append(args, glob...)
+			}
+			continue
+		}
+		args = append(args, av)
 	}
 	return args
 }
@@ -845,6 +852,8 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
 	{"BibTeX", "run BibTeX on file", filecat.TeX,
 		[]CmdAndArgs{CmdAndArgs{"bibtex", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", false, false, false},
+	{"CleanTeX", "remove aux LaTeX files", filecat.TeX,
+		[]CmdAndArgs{CmdAndArgs{"rm", []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc"}}}, "{FileDirPath}", false, false, false},
 
 	// Generic files / images / etc
 	{"Open File", "open file using OS 'open' command", filecat.Any,
