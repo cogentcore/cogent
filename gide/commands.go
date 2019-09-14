@@ -853,7 +853,7 @@ var StdCmds = Commands{
 	{"BibTeX", "run BibTeX on file", filecat.TeX,
 		[]CmdAndArgs{CmdAndArgs{"bibtex", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", false, false, false},
 	{"CleanTeX", "remove aux LaTeX files", filecat.TeX,
-		[]CmdAndArgs{CmdAndArgs{"rm", []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"rm", []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc", "*.spl"}}}, "{FileDirPath}", false, false, false},
 
 	// Generic files / images / etc
 	{"Open File", "open file using OS 'open' command", filecat.Any,
