@@ -2168,10 +2168,16 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 			fn.OpenDir()
 		}
 	case filecat.Exe:
+		// this uses exe path for cd to this path!
 		ge.SetArgVarVals()
 		ge.ArgVals["{PromptString1}"] = string(fn.FPath)
-		gide.CmdNoUserPrompt = true                            // don't re-prompt!
-		ge.ExecCmdName(gide.CmdName("Run Prompt"), true, true) // sel, clear
+		gide.CmdNoUserPrompt = true // don't re-prompt!
+		cmd, _, ok := gide.AvailCmds.CmdByName(gide.CmdName("Run Prompt"), true)
+		if ok {
+			ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
+			cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, true, true)
+			cmd.Run(ge, cbuf)
+		}
 	case filecat.Font:
 		fallthrough
 	case filecat.Video:
