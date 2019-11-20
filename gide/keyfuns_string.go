@@ -9,6 +9,32 @@ import (
 
 var _ = errors.New("dummy error")
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[KeyFunNil-0]
+	_ = x[KeyFunNeeds2-1]
+	_ = x[KeyFunNextPanel-2]
+	_ = x[KeyFunPrevPanel-3]
+	_ = x[KeyFunFileOpen-4]
+	_ = x[KeyFunBufSelect-5]
+	_ = x[KeyFunBufClone-6]
+	_ = x[KeyFunBufSave-7]
+	_ = x[KeyFunBufSaveAs-8]
+	_ = x[KeyFunBufClose-9]
+	_ = x[KeyFunExecCmd-10]
+	_ = x[KeyFunRegCopy-11]
+	_ = x[KeyFunRegPaste-12]
+	_ = x[KeyFunCommentOut-13]
+	_ = x[KeyFunIndent-14]
+	_ = x[KeyFunJump-15]
+	_ = x[KeyFunSetSplit-16]
+	_ = x[KeyFunBuildProj-17]
+	_ = x[KeyFunRunProj-18]
+	_ = x[KeyFunsN-19]
+}
+
 const _KeyFuns_name = "KeyFunNilKeyFunNeeds2KeyFunNextPanelKeyFunPrevPanelKeyFunFileOpenKeyFunBufSelectKeyFunBufCloneKeyFunBufSaveKeyFunBufSaveAsKeyFunBufCloseKeyFunExecCmdKeyFunRegCopyKeyFunRegPasteKeyFunCommentOutKeyFunIndentKeyFunJumpKeyFunSetSplitKeyFunBuildProjKeyFunRunProjKeyFunsN"
 
 var _KeyFuns_index = [...]uint16{0, 9, 21, 36, 51, 65, 80, 94, 107, 122, 136, 149, 162, 176, 192, 204, 214, 228, 243, 256, 264}

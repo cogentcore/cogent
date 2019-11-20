@@ -9,6 +9,19 @@ import (
 
 var _ = errors.New("dummy error")
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[ArgVarFile-0]
+	_ = x[ArgVarDir-1]
+	_ = x[ArgVarExt-2]
+	_ = x[ArgVarPos-3]
+	_ = x[ArgVarText-4]
+	_ = x[ArgVarPrompt-5]
+	_ = x[ArgVarTypesN-6]
+}
+
 const _ArgVarTypes_name = "ArgVarFileArgVarDirArgVarExtArgVarPosArgVarTextArgVarPromptArgVarTypesN"
 
 var _ArgVarTypes_index = [...]uint8{0, 10, 19, 28, 37, 47, 59, 71}

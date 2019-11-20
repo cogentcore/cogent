@@ -55,7 +55,7 @@ type SymNode struct {
 	SRoot  *SymTree    `json:"-" xml:"-" desc:"root of the tree -- has global state"`
 }
 
-var KiT_SymNode = kit.Types.AddType(&SymNode{}, nil)
+var KiT_SymNode = kit.Types.AddType(&SymNode{}, ki.Props{"EnumType:Flag": ki.KiT_Flags})
 
 // SymbolsParams are parameters for structure view of file or package
 type SymbolsParams struct {
@@ -242,6 +242,7 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 
 // SymbolsViewProps are style properties for SymbolsView
 var SymbolsViewProps = ki.Props{
+	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
 	"max-width":        -1,
@@ -258,7 +259,9 @@ type SymTree struct {
 
 var KiT_SymTree = kit.Types.AddType(&SymTree{}, SymTreeProps)
 
-var SymTreeProps = ki.Props{}
+var SymTreeProps = ki.Props{
+	"EnumType:Flag": ki.KiT_Flags,
+}
 
 // OpenTree opens a SymTree of symbols from a file or package parse
 func (st *SymTree) OpenPackageSymTree(sv *SymbolsView) {
@@ -491,6 +494,7 @@ func (st *SymbolTreeView) SymNode() *SymNode {
 }
 
 var SymbolTreeViewProps = ki.Props{
+	"EnumType:Flag":    giv.KiT_TreeViewFlags,
 	"indent":           units.NewValue(2, units.Ch),
 	"spacing":          units.NewValue(.5, units.Ch),
 	"border-width":     units.NewValue(0, units.Px),

@@ -6,3 +6,5 @@ require (
 	github.com/goki/pi v0.5.8
 	gonum.org/v1/plot v0.0.0-20190515093506-e2840ee46a6b
 )
+
+go 1.13

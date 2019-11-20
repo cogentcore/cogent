@@ -9,6 +9,17 @@ import (
 
 var _ = errors.New("dummy error")
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[FindLocAll-0]
+	_ = x[FindLocFile-1]
+	_ = x[FindLocDir-2]
+	_ = x[FindLocNotTop-3]
+	_ = x[FindLocN-4]
+}
+
 const _FindLoc_name = "FindLocAllFindLocFileFindLocDirFindLocNotTopFindLocN"
 
 var _FindLoc_index = [...]uint8{0, 10, 21, 31, 44, 52}

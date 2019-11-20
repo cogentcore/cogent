@@ -1102,6 +1102,7 @@ func (pv *PiView) Render2D() {
 }
 
 var PiViewProps = ki.Props{
+	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
 	"max-width":        -1,

@@ -227,6 +227,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 }
 
 var FileNodeProps = ki.Props{
+	"EnumType:Flag": giv.KiT_FileNodeFlags,
 	"CallMethods": ki.PropSlice{
 		{"RenameFile", ki.Props{
 			"label": "Rename",
@@ -355,6 +356,7 @@ var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.A
 })
 
 var FileTreeViewProps = ki.Props{
+	"EnumType:Flag":    giv.KiT_TreeViewFlags,
 	"indent":           units.NewValue(2, units.Ch),
 	"spacing":          units.NewValue(.5, units.Ch),
 	"border-width":     units.NewValue(0, units.Px),

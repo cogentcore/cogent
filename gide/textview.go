@@ -17,6 +17,7 @@ type TextView struct {
 var KiT_TextView = kit.Types.AddType(&TextView{}, TextViewProps)
 
 var TextViewProps = ki.Props{
+	"EnumType:Flag":    giv.KiT_TextViewFlags,
 	"white-space":      gi.WhiteSpacePreWrap,
 	"font-family":      "Go Mono",
 	"border-width":     0, // don't render our own border

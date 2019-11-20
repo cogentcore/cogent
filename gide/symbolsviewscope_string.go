@@ -9,6 +9,15 @@ import (
 
 var _ = errors.New("dummy error")
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[SymScopeFile-0]
+	_ = x[SymScopePackage-1]
+	_ = x[SymScopeN-2]
+}
+
 const _SymbolsViewScope_name = "SymScopeFileSymScopePackageSymScopeN"
 
 var _SymbolsViewScope_index = [...]uint8{0, 12, 27, 36}
