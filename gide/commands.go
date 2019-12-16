@@ -268,24 +268,38 @@ var CmdNoUserPrompt bool
 // in the output buffer.
 var CmdWaitOverride bool
 
+// CmdPrompt1Vals holds last values  for PromptString1 per command, so that
+// each such command has its own appropriate history
+var CmdPrompt1Vals = map[string]string{}
+
+// CmdPrompt2Vals holds last values  for PromptString2 per command, so that
+// each such command has its own appropriate history
+var CmdPrompt2Vals = map[string]string{}
+
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
 func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
 	sz := len(pvals)
 	avp := ge.ArgVarVals()
 	cnt := 0
+	var cmvals map[string]string
 	for pv := range pvals {
 		switch pv {
 		case "{PromptString1}":
+			cmvals = CmdPrompt1Vals
 			fallthrough
 		case "{PromptString2}":
-			curval := (*avp)[pv]
+			if cmvals == nil {
+				cmvals = CmdPrompt2Vals
+			}
+			curval, _ := cmvals[cm.Name] // (*avp)[pv]
 			gi.StringPromptDialog(ge.VPort(), curval, "Enter string value here..",
 				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v:", cm.Name, cm.Desc)},
 				ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					dlg := send.(*gi.Dialog)
 					if sig == int64(gi.DialogAccepted) {
 						val := gi.StringPromptDialogValue(dlg)
+						cmvals[cm.Name] = val
 						(*avp)[pv] = val
 						cnt++
 						if cnt == sz {
