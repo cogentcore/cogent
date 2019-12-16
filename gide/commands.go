@@ -778,94 +778,124 @@ var CommandsProps = ki.Props{
 	},
 }
 
+// Use these for more obvious command options
+const (
+	CmdWait      = true
+	CmdNoWait    = false
+	CmdFocus     = true
+	CmdNoFocus   = false
+	CmdConfirm   = true
+	CmdNoConfirm = false
+)
+
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
 	{"Run Proj", "run RunExec executable set in project", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "{RunExecDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"{RunExecPath}", nil}}, "{RunExecDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Run Prompt", "run any command you enter at the prompt", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"{PromptString1}", nil}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// Make
 	{"Make", "run make with no args", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"make", nil}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"make", nil}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Make Prompt", "run make with prompted make target", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// Go
 	{"Imports Go File", "run goimports on file", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false, false},
+		[]CmdAndArgs{CmdAndArgs{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
 	{"Fmt Go File", "run go fmt on file", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", true, false, false},
+		[]CmdAndArgs{CmdAndArgs{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
 	{"Build Go Dir", "run go build to build in current dir", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Build Go Proj", "run go build for project BuildDir", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"build", "-v"}}}, "{BuildDir}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Install Go Proj", "run go install for project BuildDir", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"install", "-v"}}}, "{BuildDir}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Generate Go", "run go generate in current dir", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"generate"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Test Go", "run go test in current dir", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"test", "-v"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Vet Go", "run go vet in current dir", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Get Go", "run go get on package you enter at prompt", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Get Go Updt", "run go get -u (updt) on package you enter at prompt", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// Git
 	{"Add Git", "git add file", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Checkout Git", "git checkout file or directory -- WARNING will overwrite local changes!", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"checkout", "{FilePath}"}}}, "{FileDirPath}", false, false, true},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"checkout", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdConfirm},
 	{"Status Git", "git status", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"status"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Diff Git", "git diff -- see changes since last checkin", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"diff"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Log Git", "git log", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"log"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Commit Git", "git commit", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", true, false, false}, // promptstring1 provided during normal commit process, MUST be wait!
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process, MUST be wait!
 	{"Pull Git ", "git pull", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"pull"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Push Git ", "git push", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"git", []string{"push"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// SVN
 	{"Add SVN", "svn add file", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Status SVN", "svn status", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"status"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Info SVN", "svn info", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"info"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Log SVN", "svn log", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"log", "-v"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Commit SVN Proj", "svn commit for entire project directory", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{ProjPath}", true, false, false}, // promptstring1 provided during normal commit process
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{ProjPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process
 	{"Commit SVN Dir", "svn commit in directory of current file", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", true, false, false}, // promptstring1 provided during normal commit process
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process
 	{"Update SVN", "svn update", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"svn", []string{"update"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// LaTeX
 	{"LaTeX PDF", "run PDFLaTeX on file", filecat.TeX,
-		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"BibTeX", "run BibTeX on file", filecat.TeX,
-		[]CmdAndArgs{CmdAndArgs{"bibtex", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"bibtex", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"CleanTeX", "remove aux LaTeX files", filecat.TeX,
-		[]CmdAndArgs{CmdAndArgs{"rm", []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc", "*.spl"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"rm", []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc", "*.spl"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// Generic files / images / etc
 	{"Open File", "open file using OS 'open' command", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Open Target File", "open project target file using OS 'open' command", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// Misc
 	{"List Dir", "list current dir", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Grep", "recursive grep of all files for prompted value", filecat.Any,
-		[]CmdAndArgs{CmdAndArgs{"grep", []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}}, "{FileDirPath}", false, false, false},
+		[]CmdAndArgs{CmdAndArgs{"grep", []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+
+	//	CRun for Go emergent
+	{"Submit CRun", "crun submit", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"submit", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
+	{"Jobs CRun", "crun jobs", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"jobs"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Done CRun", "crun jobs done", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"jobs", "done"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Stat CRun", "crun stat", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"stat"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Update CRun", "crun update", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"update"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Out CRun Job", "crun out jobid", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"out", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
+	{"Update CRun Job", "crun update jobid", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"update", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
+	{"Link CRun Job", "crun link jobid", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"link", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
+	{"Pull CRun", "crun pull", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"crun", []string{"pull"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 }
 
 // SetCompleter adds a completer to the textfield - each field
