@@ -891,21 +891,21 @@ var StdCmds = Commands{
 	{"Grep", "recursive grep of all files for prompted value", filecat.Any,
 		[]CmdAndArgs{CmdAndArgs{"grep", []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
-	//	CRun for Go emergent
-	{"Submit CRun", "crun submit", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"crun", []string{"submit", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Jobs CRun", "crun jobs", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"crun", []string{"jobs"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Stat CRun", "crun stat", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"crun", []string{"stat"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Out CRun Job", "crun out jobid", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"crun", []string{"out", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Update CRun", "crun update", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"crun", []string{"update"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Update CRun Job", "crun update jobid", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"crun", []string{"update", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Pull CRun", "crun pull", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"crun", []string{"pull"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	//	grunt for Go emergent
+	{"Submit grunt", "grunt submit", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"submit", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
+	{"Jobs grunt", "grunt jobs", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"jobs"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Status grunt", "grunt stat", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"status"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Out grunt job", "grunt out jobid", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"out", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
+	{"Update grunt", "grunt update", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"update"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Update grunt job", "grunt update jobid", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"update", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
+	{"Pull grunt", "grunt pull", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"pull"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 }
 
 // SetCompleter adds a completer to the textfield - each field
