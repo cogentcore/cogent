@@ -296,7 +296,7 @@ const (
 
 //go:generate stringer -type=ArgVarTypes
 
-var KiT_ArgVarTypes = kit.Enums.AddEnumAltLower(ArgVarTypesN, false, nil, "ArgVar")
+var KiT_ArgVarTypes = kit.Enums.AddEnumAltLower(ArgVarTypesN, kit.NotBitFlag, nil, "ArgVar")
 
 // MarshalJSON saves arg variables to a JSON-formatted file
 func (kf ArgVarTypes) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(kf) }

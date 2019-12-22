@@ -39,7 +39,7 @@ const (
 
 //go:generate stringer -type=SymbolsViewScope
 
-var Kit_SymbolsViewScope = kit.Enums.AddEnumAltLower(SymScopeN, false, nil, "SymScope")
+var Kit_SymbolsViewScope = kit.Enums.AddEnumAltLower(SymScopeN, kit.NotBitFlag, nil, "SymScope")
 
 // MarshalJSON encodes
 func (ev SymbolsViewScope) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(ev) }

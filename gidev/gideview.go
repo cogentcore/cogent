@@ -227,7 +227,7 @@ func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Su
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make Folder", Prompt: fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err)}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make Folder", Prompt: fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err)}, gi.AddOk, gi.NoCancel, nil, nil)
 		return nil, nil
 	}
 	win, nge := ge.OpenPath(gi.FileName(np))
@@ -243,7 +243,7 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) {
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make File", Prompt: fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Make File", Prompt: fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
 	ge.Files.UpdateNewFile(np)
@@ -900,7 +900,7 @@ func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 		return
 	}
 	dif := fn1.Buf.DiffBufsUnified(fn.Buf, 3)
-	cbuf, _, _ := ge.FindOrMakeCmdTab("Diffs", true, true)
+	cbuf, _, _ := ge.RecycleCmdTab("Diffs", true, true)
 	cbuf.SetText(dif)
 	cbuf.AutoScrollViews()
 }
@@ -966,7 +966,7 @@ func (ge *GideView) OpenFileURL(ur string, ftv *giv.TextView) bool {
 		_, fnm := filepath.Split(fpath)
 		tv, _, ok = ge.LinkViewFile(gi.FileName(fnm))
 		if !ok {
-			gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
+			gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, gi.AddOk, gi.NoCancel, nil, nil)
 			return false
 		}
 	}
@@ -1167,10 +1167,10 @@ func (ge *GideView) SelectMainTabByName(label string) gi.Node2D {
 	return tv.SelectTabByName(label)
 }
 
-// FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
+// RecycleMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with widget of given type.  if sel, then select it.  returns widget
-func (ge *GideView) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
+func (ge *GideView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
 	tv := ge.MainTabs()
 	widg, err := ge.MainTabByNameTry(label)
 	if err == nil {
@@ -1211,20 +1211,20 @@ func (ge *GideView) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	return tv
 }
 
-// FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
+// RecycleMainTabTextView returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
-func (ge *GideView) FindOrMakeMainTabTextView(label string, sel bool) *giv.TextView {
-	ly := ge.FindOrMakeMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
+func (ge *GideView) RecycleMainTabTextView(label string, sel bool) *giv.TextView {
+	ly := ge.RecycleMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := ge.ConfigOutputTextView(ly)
 	return tv
 }
 
-// FindOrMakeCmdBuf creates the buffer for command output, or returns
+// RecycleCmdBuf creates the buffer for command output, or returns
 // existing. If clear is true, then any existing buffer is cleared.
 // Returns true if new buffer created.
-func (ge *GideView) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) {
+func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool) {
 	if ge.CmdBufs == nil {
 		ge.CmdBufs = make(map[string]*giv.TextBuf, 20)
 	}
@@ -1241,13 +1241,13 @@ func (ge *GideView) FindOrMakeCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bo
 	return buf, true
 }
 
-// FindOrMakeCmdTab creates the tab to show command output, including making a
+// RecycleCmdTab creates the tab to show command output, including making a
 // buffer object to save output from the command. returns true if a new buffer
 // was created, false if one already existed. if sel, select tab.  if clearBuf, then any
 // existing buffer is cleared.  Also returns index of tab.
-func (ge *GideView) FindOrMakeCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, bool) {
-	buf, nw := ge.FindOrMakeCmdBuf(cmdNm, clearBuf)
-	ctv := ge.FindOrMakeMainTabTextView(cmdNm, sel)
+func (ge *GideView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, bool) {
+	buf, nw := ge.RecycleCmdBuf(cmdNm, clearBuf)
+	ctv := ge.RecycleMainTabTextView(cmdNm, sel)
 	ctv.SetInactive()
 	ctv.SetBuf(buf)
 	return buf, ctv, nw
@@ -1280,7 +1280,7 @@ func (ge *GideView) ExecCmdName(cmdNm gide.CmdName, sel bool, clearBuf bool) {
 		return
 	}
 	ge.SetArgVarVals()
-	cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
@@ -1291,7 +1291,7 @@ func (ge *GideView) ExecCmdNameFileNode(fn *giv.FileNode, cmdNm gide.CmdName, se
 		return
 	}
 	ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
-	cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
@@ -1302,7 +1302,7 @@ func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool,
 		return
 	}
 	ge.ArgVals.Set(fn, &ge.Prefs, nil)
-	cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
 
@@ -1408,7 +1408,7 @@ func (ge *GideView) ExecCmdsFileNode(fn *giv.FileNode, cmdNms gide.CmdNames, sel
 // Build runs the BuildCmds set for this project
 func (ge *GideView) Build() {
 	if len(ge.Prefs.BuildCmds) == 0 {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
 	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
@@ -1419,7 +1419,7 @@ func (ge *GideView) Build() {
 // Run runs the RunCmds set for this project
 func (ge *GideView) Run() {
 	if len(ge.Prefs.RunCmds) == 0 {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
 	ge.ExecCmds(ge.Prefs.RunCmds, true, true)
@@ -1430,7 +1430,7 @@ func (ge *GideView) Run() {
 func (ge *GideView) Commit() {
 	vc := ge.VersCtrl()
 	if vc == "" {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Version Control System Found", Prompt: fmt.Sprintf("No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Version Control System Found", Prompt: fmt.Sprintf("No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
 	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
@@ -1450,7 +1450,7 @@ func (ge *GideView) CommitNoChecks() {
 		}
 	}
 	if cmdnm == "" {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Commit command found", Prompt: fmt.Sprintf("Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc")}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Commit command found", Prompt: fmt.Sprintf("Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
 	ge.SetArgVarVals() // need to set before setting prompt string below..
@@ -1472,7 +1472,7 @@ func (ge *GideView) CommitNoChecks() {
 // CommitUpdtLog grabs info from buffer in main tabs about the commit, and
 // updates the changelog record
 func (ge *GideView) CommitUpdtLog(cmdnm string) {
-	ctv := ge.FindOrMakeMainTabTextView(cmdnm, false) // don't sel
+	ctv := ge.RecycleMainTabTextView(cmdnm, false) // don't sel
 	if ctv == nil {
 		return
 	}
@@ -1485,7 +1485,7 @@ func (ge *GideView) CommitUpdtLog(cmdnm string) {
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *GideView) OpenConsoleTab() {
-	ctv := ge.FindOrMakeMainTabTextView("Console", true)
+	ctv := ge.RecycleMainTabTextView("Console", true)
 	ctv.SetInactive()
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
@@ -1526,8 +1526,8 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	ge.Prefs.Find.Langs = langs
 	ge.Prefs.Find.Loc = loc
 
-	fbuf, _ := ge.FindOrMakeCmdBuf("Find", true)
-	fvi := ge.FindOrMakeMainTab("Find", gide.KiT_FindView, true) // sel
+	fbuf, _ := ge.RecycleCmdBuf("Find", true)
+	fvi := ge.RecycleMainTab("Find", gide.KiT_FindView, true) // sel
 	fv := fvi.Embed(gide.KiT_FindView).(*gide.FindView)
 	fv.Config(ge)
 	fv.Time = time.Now()
@@ -1597,8 +1597,8 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 
 // Spell checks spelling in files
 func (ge *GideView) Spell() {
-	fbuf, _ := ge.FindOrMakeCmdBuf("Spell", true)
-	sv := ge.FindOrMakeMainTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
+	fbuf, _ := ge.RecycleCmdBuf("Spell", true)
+	sv := ge.RecycleMainTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
 	sv.Config(ge, ge.Prefs.Spell)
 	stv := sv.TextView()
 	stv.SetInactive()
@@ -1615,7 +1615,7 @@ func (ge *GideView) Spell() {
 	gi.InitNewSpellCheck(text)
 	tw, suggests, err := gi.NextUnknownWord()
 	if err != nil {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Error Running Spell Check", Prompt: fmt.Sprintf("%v", err)}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Error Running Spell Check", Prompt: fmt.Sprintf("%v", err)}, gi.AddOk, gi.NoCancel, nil, nil)
 	}
 	sv.SetUnknownAndSuggest(tw, suggests)
 	ge.FocusOnPanel(MainTabsIdx)
@@ -1627,7 +1627,7 @@ func (ge *GideView) Symbols() {
 	if tv == nil || tv.Buf == nil {
 		return
 	}
-	sv := ge.FindOrMakeMainTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
+	sv := ge.RecycleMainTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
 	sv.Config(ge, ge.Prefs.Symbols)
 	ge.FocusOnPanel(MainTabsIdx)
 }
@@ -1645,7 +1645,7 @@ func (ge *GideView) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *gide.Tex
 	pos := up.Fragment
 	tv, _, ok = ge.LinkViewFile(gi.FileName(fpath))
 	if !ok {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, true, false, nil, nil)
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Couldn't Open File at Link", Prompt: fmt.Sprintf("Could not find or open file path in project: %v", fpath)}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
 	if pos == "" {
@@ -2175,7 +2175,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 		cmd, _, ok := gide.AvailCmds.CmdByName(gide.CmdName("Run Prompt"), true)
 		if ok {
 			ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
-			cbuf, _, _ := ge.FindOrMakeCmdTab(cmd.Name, true, true)
+			cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)
 			cmd.Run(ge, cbuf)
 		}
 	case filecat.Font:
@@ -3013,7 +3013,7 @@ func NewGideProjPath(path string) (*gi.Window, *GideView) {
 func OpenGideProj(projfile string) (*gi.Window, *GideView) {
 	pp := &gide.ProjPrefs{}
 	if err := pp.OpenJSON(gi.FileName(projfile)); err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Project File Could Not Be Opened", Prompt: fmt.Sprintf("Project file open encountered error: %v", err.Error())}, true, false, nil, nil)
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Project File Could Not Be Opened", Prompt: fmt.Sprintf("Project file open encountered error: %v", err.Error())}, gi.AddOk, gi.NoCancel, nil, nil)
 		return nil, nil
 	}
 	path := string(pp.ProjRoot)
@@ -3037,7 +3037,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 	width := 1280
 	height := 720
 
-	win := gi.NewWindow2D(winm, winm, width, height, true) // true = pixel sizes
+	win := gi.NewMainWindow(winm, winm, width, height)
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()

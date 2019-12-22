@@ -57,7 +57,7 @@ const (
 //go:generate stringer -type=KeyFuns
 
 // KiT_KeyFuns adds a type to the EnumRegistry
-var KiT_KeyFuns = kit.Enums.AddEnumAltLower(KeyFunsN, false, nil, "KeyFun")
+var KiT_KeyFuns = kit.Enums.AddEnumAltLower(KeyFunsN, kit.NotBitFlag, nil, "KeyFun")
 
 // MarshalJSON saves the KeyFuns in JSON format
 func (kf KeyFuns) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(kf) }
@@ -329,7 +329,7 @@ var PrefsKeyMapsFileName = "key_maps_prefs.json"
 func (km *KeyMaps) OpenJSON(filename gi.FileName) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, true, false, nil, nil)
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
 		log.Println(err)
 		return err
 	}

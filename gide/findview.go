@@ -40,7 +40,7 @@ const (
 
 //go:generate stringer -type=FindLoc
 
-var KiT_FindLoc = kit.Enums.AddEnumAltLower(FindLocN, false, nil, "FindLoc")
+var KiT_FindLoc = kit.Enums.AddEnumAltLower(FindLocN, kit.NotBitFlag, nil, "FindLoc")
 
 // MarshalJSON encodes
 func (ev FindLoc) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(ev) }

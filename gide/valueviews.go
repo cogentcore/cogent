@@ -21,16 +21,14 @@ import (
 //  PrefsView
 
 // PrefsView opens a view of user preferences, returns structview and window
-func PrefsView(pf *Preferences) (*giv.StructView, *gi.Window) {
+func PrefsView(pf *Preferences) *gi.Window {
 	winm := "gide-prefs"
-	if w, ok := gi.MainWindows.FindName(winm); ok {
-		w.OSWin.Raise()
-		return nil, nil
-	}
-
 	width := 800
 	height := 800
-	win := gi.NewWindow2D(winm, "Gide Preferences", width, height, true)
+	win, recyc := gi.RecycleMainWindow(pf, winm, "Gide Preferences", width, height)
+	if recyc {
+		return win
+	}
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
@@ -80,7 +78,7 @@ func PrefsView(pf *Preferences) (*giv.StructView, *gi.Window) {
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
-	return sv, win
+	return win
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -92,7 +90,12 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 
 	width := 800
 	height := 800
-	win := gi.NewWindow2D(winm, "Gide Project Preferences", width, height, true)
+	win, recyc := gi.RecycleMainWindow(pf, winm, "Gide Project Preferences", width, height)
+	if recyc {
+		mfr, _ := win.MainFrame()
+		sv := mfr.Child(1).(*giv.StructView)
+		return sv, win
+	}
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
@@ -130,7 +133,10 @@ func KeyMapsView(km *KeyMaps) {
 	winm := "gide-key-maps"
 	width := 800
 	height := 800
-	win := gi.NewWindow2D(winm, "Gide Key Maps", width, height, true)
+	win, recycle := gi.RecycleMainWindow(km, winm, "Gide Key Maps", width, height)
+	if recycle {
+		return
+	}
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
@@ -276,7 +282,10 @@ func LangsView(pt *Langs) {
 	winm := "gide-langs"
 	width := 800
 	height := 800
-	win := gi.NewWindow2D(winm, "Gide Languages", width, height, true)
+	win, recyc := gi.RecycleMainWindow(pt, winm, "Gide Languages", width, height)
+	if recyc {
+		return
+	}
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
@@ -347,7 +356,10 @@ func CmdsView(pt *Commands) {
 	winm := "gide-commands"
 	width := 800
 	height := 800
-	win := gi.NewWindow2D(winm, "Gide Commands", width, height, true)
+	win, recyc := gi.RecycleMainWindow(pt, winm, "Gide Commands", width, height)
+	if recyc {
+		return
+	}
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
@@ -496,7 +508,10 @@ func SplitsView(pt *Splits) {
 	winm := "gide-splits"
 	width := 800
 	height := 800
-	win := gi.NewWindow2D(winm, "Gide Splitter Settings", width, height, true)
+	win, recyc := gi.RecycleMainWindow(pt, winm, "Gide Splitter Settings", width, height)
+	if recyc {
+		return
+	}
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
@@ -645,7 +660,10 @@ func RegistersView(pt *Registers) {
 	winm := "gide-registers"
 	width := 800
 	height := 800
-	win := gi.NewWindow2D(winm, "Gide Registers", width, height, true)
+	win, recyc := gi.RecycleMainWindow(pt, winm, "Gide Registers", width, height)
+	if recyc {
+		return
+	}
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()

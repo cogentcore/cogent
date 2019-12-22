@@ -231,7 +231,7 @@ func (pv *PiView) LexInit() {
 		errs := fs.LexErrReport()
 		fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
 		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Lex Error",
-			Prompt: "The Lexer validation has errors<br>\n" + errs}, true, false, nil, nil)
+			Prompt: "The Lexer validation has errors<br>\n" + errs}, gi.AddOk, gi.NoCancel, nil, nil)
 	}
 	pv.UpdtLexBuf()
 }
@@ -247,11 +247,11 @@ func (pv *PiView) LexStopped() {
 			fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
 			pv.SetStatus("Lexer Errors!")
 			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Lex Error",
-				Prompt: "The Lexer has stopped due to errors<br>\n" + errs}, true, false, nil, nil)
+				Prompt: "The Lexer has stopped due to errors<br>\n" + errs}, gi.AddOk, gi.NoCancel, nil, nil)
 		} else {
 			pv.SetStatus("Lexer Missing Rules!")
 			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Lex Error",
-				Prompt: "The Lexer has stopped because it cannot process the source at this point:<br>\n" + fs.LexNextSrcLine()}, true, false, nil, nil)
+				Prompt: "The Lexer has stopped because it cannot process the source at this point:<br>\n" + fs.LexNextSrcLine()}, gi.AddOk, gi.NoCancel, nil, nil)
 		}
 	}
 }
@@ -347,7 +347,7 @@ func (pv *PiView) PassTwo() {
 		errs := fs.PassTwoErrReport()
 		fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
 		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "PassTwo Error",
-			Prompt: "The PassTwo had the following errors<br>\n" + errs}, true, false, nil, nil)
+			Prompt: "The PassTwo had the following errors<br>\n" + errs}, gi.AddOk, gi.NoCancel, nil, nil)
 	}
 }
 
@@ -377,7 +377,7 @@ func (pv *PiView) ParseInit() {
 	if fs.ParseHasErrs() {
 		errs := fs.ParseErrReportDetailed()
 		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Parse Error",
-			Prompt: "The Parser validation has errors<br>\n" + errs}, true, false, nil, nil)
+			Prompt: "The Parser validation has errors<br>\n" + errs}, gi.AddOk, gi.NoCancel, nil, nil)
 	}
 }
 
@@ -391,11 +391,11 @@ func (pv *PiView) ParseStopped() {
 		if errs != "" {
 			pv.SetStatus("Parse Error!")
 			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Parse Error",
-				Prompt: "The Parser has the following errors (see Output tab for full list)<br>\n" + errs}, true, false, nil, nil)
+				Prompt: "The Parser has the following errors (see Output tab for full list)<br>\n" + errs}, gi.AddOk, gi.NoCancel, nil, nil)
 		} else {
 			pv.SetStatus("Parse Missing Rules!")
 			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Parse Error",
-				Prompt: "The Parser has stopped because it cannot process the source at this point:<br>\n" + fs.ParseNextSrcLine()}, true, false, nil, nil)
+				Prompt: "The Parser has stopped because it cannot process the source at this point:<br>\n" + fs.ParseNextSrcLine()}, gi.AddOk, gi.NoCancel, nil, nil)
 		}
 	}
 }
@@ -577,10 +577,10 @@ func (pv *PiView) SelectMainTabByName(label string) gi.Node2D {
 	return widg
 }
 
-// FindOrMakeMainTab returns a MainTabs (first set of tabs) tab with given
+// RecycleMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with widget of given type.  if sel, then select it.  returns widget
-func (pv *PiView) FindOrMakeMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
+func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
 	tv := pv.MainTabs()
 	widg, err := pv.MainTabByNameTry(label)
 	if err == nil {
@@ -623,12 +623,12 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 	return tv
 }
 
-// FindOrMakeMainTabTextView returns a MainTabs (first set of tabs) tab with given
+// RecycleMainTabTextView returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
-func (pv *PiView) FindOrMakeMainTabTextView(label string, sel bool, out bool) *giv.TextView {
-	ly := pv.FindOrMakeMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
+func (pv *PiView) RecycleMainTabTextView(label string, sel bool, out bool) *giv.TextView {
+	ly := pv.RecycleMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := pv.ConfigTextView(ly, out)
 	return tv
 }
@@ -650,7 +650,7 @@ func (pv *PiView) TestTextView() (*giv.TextView, bool) {
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (pv *PiView) OpenConsoleTab() {
-	ctv := pv.FindOrMakeMainTabTextView("Console", true, true)
+	ctv := pv.RecycleMainTabTextView("Console", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", gi.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
@@ -664,7 +664,7 @@ func (pv *PiView) OpenConsoleTab() {
 
 // OpenTestTextTab opens a main tab displaying test text
 func (pv *PiView) OpenTestTextTab() {
-	ctv := pv.FindOrMakeMainTabTextView("TestText", true, false)
+	ctv := pv.RecycleMainTabTextView("TestText", true, false)
 	if ctv.Buf == nil || ctv.Buf != &pv.TestBuf {
 		ctv.SetBuf(&pv.TestBuf)
 	}
@@ -672,7 +672,7 @@ func (pv *PiView) OpenTestTextTab() {
 
 // OpenOutTab opens a main tab displaying all output
 func (pv *PiView) OpenOutTab() {
-	ctv := pv.FindOrMakeMainTabTextView("Output", true, true)
+	ctv := pv.RecycleMainTabTextView("Output", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", gi.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != &pv.OutBuf {
@@ -682,7 +682,7 @@ func (pv *PiView) OpenOutTab() {
 
 // OpenLexTab opens a main tab displaying lexer output
 func (pv *PiView) OpenLexTab() {
-	ctv := pv.FindOrMakeMainTabTextView("LexOut", true, true)
+	ctv := pv.RecycleMainTabTextView("LexOut", true, true)
 	if ctv.Buf == nil || ctv.Buf != &pv.LexBuf {
 		ctv.SetBuf(&pv.LexBuf)
 	}
@@ -690,7 +690,7 @@ func (pv *PiView) OpenLexTab() {
 
 // OpenParseTab opens a main tab displaying parser output
 func (pv *PiView) OpenParseTab() {
-	ctv := pv.FindOrMakeMainTabTextView("ParseOut", true, true)
+	ctv := pv.RecycleMainTabTextView("ParseOut", true, true)
 	if ctv.Buf == nil || ctv.Buf != &pv.ParseBuf {
 		ctv.SetBuf(&pv.ParseBuf)
 	}
@@ -1364,7 +1364,7 @@ func NewPiView() (*gi.Window, *PiView) {
 	width := 1280
 	height := 720
 
-	win := gi.NewWindow2D(winm, winm, width, height, true) // true = pixel sizes
+	win := gi.NewMainWindow(winm, winm, width, height)
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
