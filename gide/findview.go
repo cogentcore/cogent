@@ -455,7 +455,7 @@ func (fv *FindView) ConfigToolbar() {
 	// langl.SetProp("vertical-align", gi.AlignMiddle)
 
 	fv.LangVV = giv.ToValueView(&fv.Params().Langs, "")
-	fv.LangVV.SetStandaloneValue(reflect.ValueOf(&fv.Params().Langs))
+	fv.LangVV.SetSoloValue(reflect.ValueOf(&fv.Params().Langs))
 	vtyp := fv.LangVV.WidgetType()
 	langw := rb.AddNewChild(vtyp, "langs").(gi.Node2D)
 	fv.LangVV.ConfigWidget(langw)
