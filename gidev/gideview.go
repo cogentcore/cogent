@@ -25,6 +25,7 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/histyle"
+	"github.com/goki/gi/mat32"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/units"
@@ -2064,8 +2065,8 @@ var fnFolderProps = ki.Props{
 // ConfigSplitView configures the SplitView.
 func (ge *GideView) ConfigSplitView() {
 	split := ge.SplitView()
-	split.Dim = gi.X
-	//	split.Dim = gi.Y
+	split.Dim = mat32.X
+	//	split.Dim = mat32.Y
 
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_Frame, "filetree")

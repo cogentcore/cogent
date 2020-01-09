@@ -5,6 +5,10 @@ then
 	export GOPATH="$HOME/go"
 fi
 
+# this should get all your env settings:
+source $HOME/.bash_profile
+
+# in general don't want to be using modules for development work:
 export GO111MODULE=off
 export PATH="$GOPATH/bin:$PATH"
 
