@@ -506,7 +506,7 @@ func (pv *PiView) FocusOnPanel(panel int) bool {
 	}
 	win := pv.ParentWindow()
 	ski := sv.Kids[panel]
-	win.FocusNext(ski)
+	win.EventMgr.FocusNext(ski)
 	return true
 }
 
