@@ -1091,7 +1091,7 @@ func (ge *GideView) FocusOnPanel(panel int) bool {
 		tv := ge.MainTabs()
 		ct, _, has := tv.CurTab()
 		if has {
-			win.FocusNext(ct)
+			win.EventMgr.FocusNext(ct)
 		} else {
 			return false
 		}
@@ -1099,13 +1099,13 @@ func (ge *GideView) FocusOnPanel(panel int) bool {
 		tv := ge.VisTabs()
 		ct, _, has := tv.CurTab()
 		if has {
-			win.FocusNext(ct)
+			win.EventMgr.FocusNext(ct)
 		} else {
 			return false
 		}
 	default:
 		ski := sv.Kids[panel]
-		win.FocusNext(ski)
+		win.EventMgr.FocusNext(ski)
 	}
 	return true
 }
@@ -2347,7 +2347,7 @@ func (ge *GideView) Render2D() {
 		ge.ToolBar().UpdateActions()
 		if win := ge.ParentWindow(); win != nil {
 			sv := ge.SplitView()
-			win.SetStartFocus(sv.This())
+			win.EventMgr.SetStartFocus(sv.This())
 			if !win.IsResizing() {
 				win.MainMenuUpdateActives()
 			}
