@@ -61,6 +61,7 @@ type GideView struct {
 	ActiveLang        filecat.Supported       `desc:"language for current active filename"`
 	Changed           bool                    `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
 	Files             giv.FileTree            `desc:"all the files in the project directory and subdirectories"`
+	FilesView         *gide.FileTreeView      `json:"-" desc:"the files tree view"`
 	ActiveTextViewIdx int                     `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
 	OpenNodes         gide.OpenNodes          `json:"-" desc:"list of open nodes, most recent first"`
 	CmdBufs           map[string]*giv.TextBuf `json:"-" desc:"the command buffers for commands run in this project"`
@@ -76,6 +77,8 @@ var KiT_GideView = kit.Types.AddType(&GideView{}, nil)
 
 func init() {
 	kit.Types.SetProps(KiT_GideView, GideViewProps)
+	// gi.URLHandler = URLHandler
+	gi.TextLinkHandler = TextLinkHandler
 }
 
 ////////////////////////////////////////////////////////
@@ -93,9 +96,9 @@ func (ge *GideView) ProjPrefs() *gide.ProjPrefs {
 // version or whatever is set in project preferences
 func (ge *GideView) VersCtrl() giv.VersCtrlName {
 	vc := ge.Prefs.VersCtrl
-	if ge.Files.Repo != nil {
-		vc = giv.VersCtrlNameProper(ge.Files.RepoType)
-	}
+	// if ge.Files.Repo != nil {
+	// 	vc = giv.VersCtrlNameProper(ge.Files.RepoType)
+	// }
 	return vc
 }
 
@@ -116,7 +119,14 @@ func (ge *GideView) FocusOnMainTabs() bool {
 
 // UpdateFiles updates the list of files saved in project
 func (ge *GideView) UpdateFiles() {
-	ge.Files.OpenPath(string(ge.ProjRoot))
+	if ge.FilesView == nil {
+		ge.Files.OpenPath(string(ge.ProjRoot))
+	} else {
+		updt := ge.FilesView.UpdateStart()
+		ge.FilesView.SetFullReRender()
+		ge.Files.OpenPath(string(ge.ProjRoot))
+		ge.FilesView.UpdateEnd(updt)
+	}
 }
 
 func (ge *GideView) IsEmpty() bool {
@@ -286,7 +296,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	gide.SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
 	gide.SavePaths()
-	ge.Files.UpdateNewFile(string(filename))
+	// ge.Files.UpdateNewFile(string(filename))
 	ge.Prefs.ProjFilename = filename
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
@@ -543,8 +553,12 @@ func (ge *GideView) SaveActiveView() {
 		if tv.Buf.Filename != "" {
 			tv.Buf.Save()
 			ge.SetStatus("File Saved")
-			fpath, _ := filepath.Split(string(tv.Buf.Filename))
+			fnm := string(tv.Buf.Filename)
+			updt := ge.FilesView.UpdateStart()
+			ge.FilesView.SetFullReRender()
+			fpath, _ := filepath.Split(fnm)
 			ge.Files.UpdateNewFile(fpath) // update everything in dir -- will have removed autosave
+			ge.FilesView.UpdateEnd(updt)
 			ge.RunPostCmdsActiveView()
 		} else {
 			giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport) // uses fileview
@@ -674,6 +688,10 @@ func (ge *GideView) OpenFileNode(fn *giv.FileNode) (bool, error) {
 		ge.ConfigTextBuf(fn.Buf)
 		ge.OpenNodes.Add(fn)
 		fn.SetOpen()
+		updt := ge.FilesView.UpdateStart()
+		ge.FilesView.SetFullReRender()
+		fn.UpdateNode()
+		ge.FilesView.UpdateEnd(updt)
 	}
 	return nw, err
 }
@@ -985,11 +1003,6 @@ func (ge *GideView) OpenFileURL(ur string, ftv *giv.TextView) bool {
 		tv.SetCursorShow(txpos)
 	}
 	return true
-}
-
-func init() {
-	// gi.URLHandler = URLHandler
-	gi.TextLinkHandler = TextLinkHandler
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1946,7 +1959,7 @@ func (ge *GideView) Config() {
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	config.Add(gi.KiT_Frame, "statusbar")
-	mods, updt := ge.ConfigChildren(config, false)
+	mods, updt := ge.ConfigChildren(config, ki.NonUniqueNames)
 	if !mods {
 		updt = ge.UpdateStart()
 	}
@@ -2075,11 +2088,12 @@ func (ge *GideView) ConfigSplitView() {
 	}
 	config.Add(gi.KiT_TabView, "main-tabs")
 	config.Add(gi.KiT_TabView, "vis-tabs")
-	mods, updt := split.ConfigChildren(config, true)
+	mods, updt := split.ConfigChildren(config, ki.UniqueNames)
 	if mods {
 		ftfr := split.Child(FileTreeIdx).(*gi.Frame)
 		if !ftfr.HasChildren() {
 			ft := ftfr.AddNewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
+			ge.FilesView = ft
 			ft.SetRootNode(&ge.Files)
 			ft.TreeViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 				if data == nil {

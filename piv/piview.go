@@ -710,7 +710,7 @@ func (pv *PiView) Config() {
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	config.Add(gi.KiT_Frame, "statusbar")
-	mods, updt := pv.ConfigChildren(config, false)
+	mods, updt := pv.ConfigChildren(config, ki.NonUniqueNames)
 	if !mods {
 		updt = pv.UpdateStart()
 	}
@@ -850,7 +850,7 @@ func (pv *PiView) ConfigSplitView() {
 	split.SetProp("tab-size", 4)
 
 	config := pv.SplitViewConfig()
-	mods, updt := split.ConfigChildren(config, true)
+	mods, updt := split.ConfigChildren(config, ki.UniqueNames)
 	if mods {
 		lxfr := split.Child(LexRulesIdx).(*gi.Frame)
 		lxt := lxfr.AddNewChild(giv.KiT_TreeView, "lex-tree").(*giv.TreeView)

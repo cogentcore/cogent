@@ -76,7 +76,7 @@ func (sv *SpellView) Config(ge Gide, sp SpellParams) {
 	config.Add(gi.KiT_ToolBar, "changebar")
 	config.Add(gi.KiT_ToolBar, "suggestbar")
 	config.Add(gi.KiT_Layout, "spelltext")
-	mods, updt := sv.ConfigChildren(config, false)
+	mods, updt := sv.ConfigChildren(config, ki.NonUniqueNames)
 	if !mods {
 		updt = sv.UpdateStart()
 	}

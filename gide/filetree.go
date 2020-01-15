@@ -5,7 +5,6 @@
 package gide
 
 import (
-	"image/color"
 	"log"
 	"path/filepath"
 	"sort"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
@@ -25,6 +23,12 @@ type FileNode struct {
 }
 
 var KiT_FileNode = kit.Types.AddType(&FileNode{}, FileNodeProps)
+
+func (fn *FileNode) CopyFieldsFrom(frm interface{}) {
+	fr := frm.(*FileNode)
+	fn.FileNode.CopyFieldsFrom(&fr.FileNode)
+	// no copy here
+}
 
 // ParentGide returns the Gide parent of given node
 func ParentGide(kn ki.Ki) (Gide, bool) {
@@ -250,9 +254,29 @@ type FileTreeView struct {
 	giv.FileTreeView
 }
 
+var FileTreeViewProps map[string]interface{}
+
 var KiT_FileTreeView = kit.Types.AddType(&FileTreeView{}, nil)
 
 func init() {
+	FileTreeViewProps = make(ki.Props, len(giv.FileTreeViewProps))
+	ki.CopyProps(&FileTreeViewProps, giv.FileTreeViewProps, true)
+	cm := FileTreeViewProps["CtxtMenuActive"].(ki.PropSlice)
+	cm = append(ki.PropSlice{
+		{"ExecCmdFiles", ki.Props{
+			"label":        "Exec Cmd",
+			"submenu-func": giv.SubMenuFunc(FileTreeViewExecCmds),
+			"Args": ki.PropSlice{
+				{"Cmd Name", ki.Props{}},
+			},
+		}},
+		{"ViewFiles", ki.Props{
+			"label":    "View",
+			"updtfunc": FileTreeInactiveDirFunc,
+		}},
+		{"sep-view", ki.BlankProp{}},
+	}, cm...)
+	FileTreeViewProps["CtxtMenuActive"] = cm
 	kit.Types.SetProps(KiT_FileTreeView, FileTreeViewProps)
 }
 
@@ -354,149 +378,3 @@ var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.A
 		act.SetActiveState(fn.IsDir())
 	}
 })
-
-var FileTreeViewProps = ki.Props{
-	"EnumType:Flag":    giv.KiT_TreeViewFlags,
-	"indent":           units.NewValue(2, units.Ch),
-	"spacing":          units.NewValue(.5, units.Ch),
-	"border-width":     units.NewValue(0, units.Px),
-	"border-radius":    units.NewValue(0, units.Px),
-	"padding":          units.NewValue(0, units.Px),
-	"margin":           units.NewValue(1, units.Px),
-	"text-align":       gi.AlignLeft,
-	"vertical-align":   gi.AlignTop,
-	"color":            &gi.Prefs.Colors.Font,
-	"background-color": "inherit",
-	".exec": ki.Props{
-		"font-weight": gi.WeightBold,
-	},
-	".open": ki.Props{
-		"font-style": gi.FontItalic,
-	},
-	".notinvcs": ki.Props{
-		"color": "#ce4252",
-	},
-	".modified": ki.Props{
-		"color": "#4b7fd1",
-	},
-	".added": ki.Props{
-		"color": "#52af36",
-	},
-	"#icon": ki.Props{
-		"width":   units.NewValue(1, units.Em),
-		"height":  units.NewValue(1, units.Em),
-		"margin":  units.NewValue(0, units.Px),
-		"padding": units.NewValue(0, units.Px),
-		"fill":    &gi.Prefs.Colors.Icon,
-		"stroke":  &gi.Prefs.Colors.Font,
-	},
-	"#branch": ki.Props{
-		"icon":             "wedge-down",
-		"icon-off":         "wedge-right",
-		"margin":           units.NewValue(0, units.Px),
-		"padding":          units.NewValue(0, units.Px),
-		"background-color": color.Transparent,
-		"max-width":        units.NewValue(.8, units.Em),
-		"max-height":       units.NewValue(.8, units.Em),
-	},
-	"#space": ki.Props{
-		"width": units.NewValue(.5, units.Em),
-	},
-	"#label": ki.Props{
-		"margin":    units.NewValue(0, units.Px),
-		"padding":   units.NewValue(0, units.Px),
-		"min-width": units.NewValue(16, units.Ch),
-	},
-	"#menu": ki.Props{
-		"indicator": "none",
-	},
-	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Props{},
-	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Select,
-	},
-	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Control,
-	},
-	"CtxtMenuActive": ki.PropSlice{
-		{"ViewFiles", ki.Props{
-			"label":    "View",
-			"updtfunc": FileTreeInactiveDirFunc,
-		}},
-		{"ShowFileInfo", ki.Props{
-			"label": "File Info",
-		}},
-		{"ExecCmdFiles", ki.Props{
-			"label":        "Exec Cmd",
-			"submenu-func": giv.SubMenuFunc(FileTreeViewExecCmds),
-			"Args": ki.PropSlice{
-				{"Cmd Name", ki.Props{}},
-			},
-		}},
-		{"DuplicateFiles", ki.Props{
-			"label":    "Duplicate",
-			"updtfunc": FileTreeInactiveDirFunc,
-			"shortcut": gi.KeyFunDuplicate,
-		}},
-		{"DeleteFiles", ki.Props{
-			"label":    "Delete",
-			"desc":     "Ok to delete file(s)?  This is not undoable and is not moving to trash / recycle bin",
-			"shortcut": gi.KeyFunDelete,
-		}},
-		{"RenameFiles", ki.Props{
-			"label": "Rename",
-			"desc":  "Rename file to new file name",
-		}},
-		{"sep-open", ki.BlankProp{}},
-		{"OpenDirs", ki.Props{
-			"label":    "Open Dir",
-			"desc":     "open given folder to see files within",
-			"updtfunc": FileTreeActiveDirFunc,
-		}},
-		{"NewFile", ki.Props{
-			"label":    "New File...",
-			"desc":     "make a new file in this folder",
-			"shortcut": gi.KeyFunInsert,
-			"updtfunc": FileTreeActiveDirFunc,
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"width": 60,
-				}},
-				{"Add To Version Control", ki.Props{}},
-			},
-		}},
-		{"NewFolder", ki.Props{
-			"label":    "New Folder...",
-			"desc":     "make a new folder within this folder",
-			"shortcut": gi.KeyFunInsertAfter,
-			"updtfunc": FileTreeActiveDirFunc,
-			"Args": ki.PropSlice{
-				{"Folder Name", ki.Props{
-					"width": 60,
-				}},
-			},
-		}},
-		{"sep-vcs", ki.BlankProp{}},
-		{"AddToVcs", ki.Props{
-			//"label":    "Add To Git",
-			"desc":       "Add file to version control git/svn",
-			"updtfunc":   giv.FileTreeActiveNotInVcsFunc,
-			"label-func": giv.VcsLabelFunc,
-		}},
-		{"RemoveFromVcs", ki.Props{
-			//"label":    "Remove From Version Control",
-			"desc":       "Remove file from version control git/svn",
-			"updtfunc":   giv.FileTreeActiveInVcsFunc,
-			"label-func": giv.VcsLabelFunc,
-		}},
-		{"CommitToVcs", ki.Props{
-			"desc":       "Commit file to version control",
-			"updtfunc":   giv.FileTreeActiveInVcsModifiedFunc,
-			"label-func": giv.VcsLabelFunc,
-		}},
-		{"RevertVcs", ki.Props{
-			"label":    "Revert",
-			"desc":     "Revert file to last commit",
-			"updtfunc": giv.FileTreeActiveInVcsModifiedFunc,
-		}},
-	},
-}

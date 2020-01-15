@@ -90,7 +90,7 @@ func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "symbols-bar")
 	config.Add(gi.KiT_Frame, "symbols-tree")
-	mods, updt := sv.ConfigChildren(config, false)
+	mods, updt := sv.ConfigChildren(config, ki.NonUniqueNames)
 	if !mods {
 		updt = sv.UpdateStart()
 	}
@@ -168,7 +168,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 	if sv.SymTree.SRoot != nil {
 		updt := sv.SymbolsTree().UpdateStart()
-		sv.SymTree.DeleteChildren(true)
+		sv.SymTree.DeleteChildren(ki.DestroyKids)
 		if scope == SymScopePackage {
 			sv.SymTree.OpenPackageSymTree(sv)
 		} else {
