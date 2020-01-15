@@ -1450,6 +1450,7 @@ func (ge *GideView) Commit() {
 	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
 		ge.CommitNoChecks()
 	})
+	ge.UpdateFiles()
 }
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
