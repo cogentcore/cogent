@@ -1474,7 +1474,6 @@ func (ge *GideView) Commit() {
 	ge.SaveAllCheck(true, func() { // true = cancel option
 		ge.CommitNoChecks()
 	})
-	ge.UpdateFiles()
 }
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
@@ -1504,6 +1503,7 @@ func (ge *GideView) CommitNoChecks() {
 				gide.CmdNoUserPrompt = true                     // don't re-prompt!
 				ge.ExecCmdName(gide.CmdName(cmdnm), true, true) // must be wait
 				ge.CommitUpdtLog(cmdnm)
+				ge.UpdateFiles()
 			}
 		})
 }

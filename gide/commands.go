@@ -84,13 +84,14 @@ func (cm *CmdAndArgs) BindArgs(avp *ArgVarVals) []string {
 	args := []string{}
 	for i := range cm.Args {
 		av := avp.Bind(cm.Args[i])
-		if strings.Count(av, "*") == 1 {
-			glob, err := filepath.Glob(av)
-			if err == nil && len(glob) > 0 {
-				args = append(args, glob...)
-			}
-			continue
-		}
+		// note: no globbing for now -- not sure when ever used.. revisit if needed.
+		// if strings.Count(av, "*") == 1 {
+		// 	glob, err := filepath.Glob(av)
+		// 	if err == nil && len(glob) > 0 {
+		// 		args = append(args, glob...)
+		// 	}
+		// 	continue
+		// }
 		args = append(args, av)
 	}
 	return args
