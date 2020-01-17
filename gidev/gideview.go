@@ -46,8 +46,7 @@ const (
 	FileTreeIdx = iota
 	TextView1Idx
 	TextView2Idx
-	MainTabsIdx
-	VisTabsIdx
+	TabsIdx
 )
 
 // GideView is the core editor and tab viewer framework for the Gide system.  The
@@ -110,8 +109,8 @@ func (ge *GideView) ArgVarVals() *gide.ArgVarVals {
 	return &ge.ArgVals
 }
 
-func (ge *GideView) FocusOnMainTabs() bool {
-	return ge.FocusOnPanel(MainTabsIdx)
+func (ge *GideView) FocusOnTabs() bool {
+	return ge.FocusOnPanel(TabsIdx)
 }
 
 ////////////////////////////////////////////////////////
@@ -119,14 +118,7 @@ func (ge *GideView) FocusOnMainTabs() bool {
 
 // UpdateFiles updates the list of files saved in project
 func (ge *GideView) UpdateFiles() {
-	if ge.FilesView == nil {
-		ge.Files.OpenPath(string(ge.ProjRoot))
-	} else {
-		updt := ge.FilesView.UpdateStart()
-		ge.FilesView.SetFullReRender()
-		ge.Files.OpenPath(string(ge.ProjRoot))
-		ge.FilesView.UpdateEnd(updt)
-	}
+	ge.Files.OpenPath(string(ge.ProjRoot))
 }
 
 func (ge *GideView) IsEmpty() bool {
@@ -313,11 +305,11 @@ func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 // returns true if there were unsaved files, false otherwise.
 // cancelOpt presents an option to cancel current command, in which case function is not called.
 // if function is passed, then it is called in all cases except if the user selects cancel.
-func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func(ge *GideView)) bool {
+func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 	nch := ge.NChangedFiles()
 	if nch == 0 {
 		if fun != nil {
-			fun(ge)
+			fun()
 		}
 		return false
 	}
@@ -333,7 +325,7 @@ func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func(ge *GideView)) bool {
 					ge.SaveAllOpenNodes()
 				}
 				if fun != nil {
-					fun(ge)
+					fun()
 				}
 			}
 		})
@@ -523,8 +515,8 @@ func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
 	ge.ActiveTextViewIdx = idx
 	av := ge.ActiveTextView()
 	if av.Buf != nil {
-		av.Buf.FileModCheck()
 		ge.SetActiveFileInfo(av.Buf)
+		av.Buf.FileModCheck()
 	}
 	ge.SetStatus("")
 	av.GrabFocus()
@@ -688,10 +680,10 @@ func (ge *GideView) OpenFileNode(fn *giv.FileNode) (bool, error) {
 		ge.ConfigTextBuf(fn.Buf)
 		ge.OpenNodes.Add(fn)
 		fn.SetOpen()
-		updt := ge.FilesView.UpdateStart()
-		ge.FilesView.SetFullReRender()
+		// updt := ge.FilesView.UpdateStart()
+		// ge.FilesView.SetFullReRender()
 		fn.UpdateNode()
-		ge.FilesView.UpdateEnd(updt)
+		// ge.FilesView.UpdateEnd(updt)
 	}
 	return nw, err
 }
@@ -710,10 +702,8 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *giv.FileNode) 
 		tv.SetBuf(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
-		} else {
-			fn.Buf.FileModCheck()
 		}
-		ge.SetActiveTextViewIdx(vidx)
+		ge.SetActiveTextViewIdx(vidx) // this calls FileModCheck
 	}
 }
 
@@ -864,6 +854,58 @@ func (ge *GideView) SaveAllOpenNodes() {
 		if ond.Buf.IsChanged() {
 			ond.Buf.Save()
 			ge.RunPostCmdsFileNode(ond)
+		}
+	}
+}
+
+// UpdateAllOpenNodes go through all open filenodes and check if e.g., file has been
+// deleted or renamed.
+func (ge *GideView) UpdateAllOpenNodes() {
+	ge.UpdateFiles()
+	nn := len(ge.OpenNodes)
+	for ni := nn - 1; ni >= 0; ni-- {
+		ond := ge.OpenNodes[ni]
+		if ond.Buf == nil {
+			continue
+		}
+		fmt.Printf("buf: %v   fpath: %v\n", ond.Buf.Filename, ond.FPath)
+		if ond.Buf.Filename != ond.FPath {
+			ond.Buf.Close(func(canceled bool) {
+				if canceled {
+					ge.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.FPath))
+					return
+				}
+				ge.OpenNodes.DeleteIdx(ni)
+				ond.SetClosed()
+				ge.SetStatus(fmt.Sprintf("File %v closed due to file name change", ond.FPath))
+			})
+		}
+	}
+}
+
+// CloseOpenNodes closes any nodes with open views (including those in directories under nodes).
+// called prior to rename.
+func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
+	nn := len(ge.OpenNodes)
+	for ni := nn - 1; ni >= 0; ni-- {
+		ond := ge.OpenNodes[ni]
+		if ond.Buf == nil {
+			continue
+		}
+		path := string(ond.Buf.Filename)
+		for _, cnd := range nodes {
+			if strings.HasPrefix(path, string(cnd.FPath)) {
+				ond.Buf.Close(func(canceled bool) {
+					if canceled {
+						ge.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.FPath))
+						return
+					}
+					ge.OpenNodes.DeleteIdx(ni)
+					ond.SetClosed()
+					ge.SetStatus(fmt.Sprintf("File %v closed due to file name change", ond.FPath))
+				})
+				break // out of inner node loop
+			}
 		}
 	}
 }
@@ -1100,16 +1142,8 @@ func (ge *GideView) FocusOnPanel(panel int) bool {
 		ge.SetActiveTextViewIdx(0)
 	case TextView2Idx:
 		ge.SetActiveTextViewIdx(1)
-	case MainTabsIdx:
-		tv := ge.MainTabs()
-		ct, _, has := tv.CurTab()
-		if has {
-			win.EventMgr.FocusNext(ct)
-		} else {
-			return false
-		}
-	case VisTabsIdx:
-		tv := ge.VisTabs()
+	case TabsIdx:
+		tv := ge.Tabs()
 		ct, _, has := tv.CurTab()
 		if has {
 			win.EventMgr.FocusNext(ct)
@@ -1162,31 +1196,31 @@ func (ge *GideView) FocusPrevPanel() {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Tabs
 
-// MainTabByName returns a MainTabs (first set of tabs) tab with given name,
-func (ge *GideView) MainTabByName(label string) gi.Node2D {
-	tv := ge.MainTabs()
+// TabByName returns a Tabs (first set of tabs) tab with given name,
+func (ge *GideView) TabByName(label string) gi.Node2D {
+	tv := ge.Tabs()
 	return tv.TabByName(label)
 }
 
-// MainTabByNameTry returns a MainTabs (first set of tabs) tab with given name,
+// TabByNameTry returns a Tabs (first set of tabs) tab with given name,
 // error if not found.
-func (ge *GideView) MainTabByNameTry(label string) (gi.Node2D, error) {
-	tv := ge.MainTabs()
+func (ge *GideView) TabByNameTry(label string) (gi.Node2D, error) {
+	tv := ge.Tabs()
 	return tv.TabByNameTry(label)
 }
 
-// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *GideView) SelectMainTabByName(label string) gi.Node2D {
-	tv := ge.MainTabs()
+// SelectTabByName Selects given main tab, and returns all of its contents as well.
+func (ge *GideView) SelectTabByName(label string) gi.Node2D {
+	tv := ge.Tabs()
 	return tv.SelectTabByName(label)
 }
 
-// RecycleMainTab returns a MainTabs (first set of tabs) tab with given
+// RecycleTab returns a Tabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with widget of given type.  if sel, then select it.  returns widget
-func (ge *GideView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
-	tv := ge.MainTabs()
-	widg, err := ge.MainTabByNameTry(label)
+func (ge *GideView) RecycleTab(label string, typ reflect.Type, sel bool) gi.Node2D {
+	tv := ge.Tabs()
+	widg, err := ge.TabByNameTry(label)
 	if err == nil {
 		if sel {
 			tv.SelectTabByName(label)
@@ -1225,12 +1259,12 @@ func (ge *GideView) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	return tv
 }
 
-// RecycleMainTabTextView returns a MainTabs (first set of tabs) tab with given
+// RecycleTabTextView returns a Tabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
-func (ge *GideView) RecycleMainTabTextView(label string, sel bool) *giv.TextView {
-	ly := ge.RecycleMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
+func (ge *GideView) RecycleTabTextView(label string, sel bool) *giv.TextView {
+	ly := ge.RecycleTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := ge.ConfigOutputTextView(ly)
 	return tv
 }
@@ -1261,24 +1295,14 @@ func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool)
 // existing buffer is cleared.  Also returns index of tab.
 func (ge *GideView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, bool) {
 	buf, nw := ge.RecycleCmdBuf(cmdNm, clearBuf)
-	ctv := ge.RecycleMainTabTextView(cmdNm, sel)
+	ctv := ge.RecycleTabTextView(cmdNm, sel)
 	ctv.SetInactive()
 	ctv.SetBuf(buf)
 	return buf, ctv, nw
 }
 
-// VisTabByName returns a VisTabs (second set of tabs for visualizations) tab
-// with given name
-func (ge *GideView) VisTabByName(label string) gi.Node2D {
-	tv := ge.VisTabs()
-	if tv == nil {
-		return nil
-	}
-	return tv.TabByName(label)
-}
-
-// MainTabDeleted is called when a main tab is deleted -- we cancel any running commmands
-func (ge *GideView) MainTabDeleted(tabnm string) {
+// TabDeleted is called when a main tab is deleted -- we cancel any running commmands
+func (ge *GideView) TabDeleted(tabnm string) {
 	ge.RunningCmds.KillByName(tabnm)
 }
 
@@ -1347,13 +1371,13 @@ func (ge *GideView) ExecCmdNameActive(cmdNm string) {
 	if tv == nil {
 		return
 	}
-	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
-		gee.ExecCmdName(gide.CmdName(cmdNm), true, true)
+	ge.SaveAllCheck(true, func() { // true = cancel option
+		ge.ExecCmdName(gide.CmdName(cmdNm), true, true)
 	})
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
-// active text view, and shows output in MainTab with name of command
+// active text view, and shows output in Tab with name of command
 func (ge *GideView) ExecCmd() {
 	tv := ge.ActiveTextView()
 	if tv == nil {
@@ -1375,15 +1399,15 @@ func (ge *GideView) ExecCmd() {
 	gi.StringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
 		ac := send.(*gi.Action)
 		cmdNm := gide.CmdName(ac.Text)
-		ge.CmdHistory.Add(cmdNm)                    // only save commands executed via chooser
-		ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
-			gee.ExecCmdName(cmdNm, true, true) // sel, clear
+		ge.CmdHistory.Add(cmdNm)       // only save commands executed via chooser
+		ge.SaveAllCheck(true, func() { // true = cancel option
+			ge.ExecCmdName(cmdNm, true, true) // sel, clear
 		})
 	})
 }
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
-// and shows output in MainTab with name of command
+// and shows output in Tab with name of command
 func (ge *GideView) ExecCmdFileNode(fn *giv.FileNode) {
 	lang := fn.Info.Sup
 	vc := ge.VersCtrl()
@@ -1425,8 +1449,8 @@ func (ge *GideView) Build() {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No BuildCmds Set", Prompt: fmt.Sprintf("You need to set the BuildCmds in the Project Preferences")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
-	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
-		gee.ExecCmds(ge.Prefs.BuildCmds, true, true)
+	ge.SaveAllCheck(true, func() { // true = cancel option
+		ge.ExecCmds(ge.Prefs.BuildCmds, true, true)
 	})
 }
 
@@ -1447,7 +1471,7 @@ func (ge *GideView) Commit() {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No Version Control System Found", Prompt: fmt.Sprintf("No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
-	ge.SaveAllCheck(true, func(gee *GideView) { // true = cancel option
+	ge.SaveAllCheck(true, func() { // true = cancel option
 		ge.CommitNoChecks()
 	})
 	ge.UpdateFiles()
@@ -1487,7 +1511,7 @@ func (ge *GideView) CommitNoChecks() {
 // CommitUpdtLog grabs info from buffer in main tabs about the commit, and
 // updates the changelog record
 func (ge *GideView) CommitUpdtLog(cmdnm string) {
-	ctv := ge.RecycleMainTabTextView(cmdnm, false) // don't sel
+	ctv := ge.RecycleTabTextView(cmdnm, false) // don't sel
 	if ctv == nil {
 		return
 	}
@@ -1500,13 +1524,13 @@ func (ge *GideView) CommitUpdtLog(cmdnm string) {
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *GideView) OpenConsoleTab() {
-	ctv := ge.RecycleMainTabTextView("Console", true)
+	ctv := ge.RecycleTabTextView("Console", true)
 	ctv.SetInactive()
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
 		gide.TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			gee, _ := recv.Embed(KiT_GideView).(*GideView)
-			gee.SelectMainTabByName("Console")
+			gee.SelectTabByName("Console")
 		})
 	}
 }
@@ -1542,7 +1566,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	ge.Prefs.Find.Loc = loc
 
 	fbuf, _ := ge.RecycleCmdBuf("Find", true)
-	fvi := ge.RecycleMainTab("Find", gide.KiT_FindView, true) // sel
+	fvi := ge.RecycleTab("Find", gide.KiT_FindView, true) // sel
 	fv := fvi.Embed(gide.KiT_FindView).(*gide.FindView)
 	fv.Config(ge)
 	fv.Time = time.Now()
@@ -1607,13 +1631,13 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
 	}
-	ge.FocusOnPanel(MainTabsIdx)
+	ge.FocusOnPanel(TabsIdx)
 }
 
 // Spell checks spelling in files
 func (ge *GideView) Spell() {
 	fbuf, _ := ge.RecycleCmdBuf("Spell", true)
-	sv := ge.RecycleMainTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
+	sv := ge.RecycleTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
 	sv.Config(ge, ge.Prefs.Spell)
 	stv := sv.TextView()
 	stv.SetInactive()
@@ -1633,7 +1657,7 @@ func (ge *GideView) Spell() {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Error Running Spell Check", Prompt: fmt.Sprintf("%v", err)}, gi.AddOk, gi.NoCancel, nil, nil)
 	}
 	sv.SetUnknownAndSuggest(tw, suggests)
-	ge.FocusOnPanel(MainTabsIdx)
+	ge.FocusOnPanel(TabsIdx)
 }
 
 // Symbols displays the Symbols of a file or package
@@ -1642,9 +1666,9 @@ func (ge *GideView) Symbols() {
 	if tv == nil || tv.Buf == nil {
 		return
 	}
-	sv := ge.RecycleMainTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
+	sv := ge.RecycleTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
 	sv.Config(ge, ge.Prefs.Symbols)
-	ge.FocusOnPanel(MainTabsIdx)
+	ge.FocusOnPanel(TabsIdx)
 }
 
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
@@ -2008,17 +2032,10 @@ func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
 	return svk.Embed(gide.KiT_TextView).(*gide.TextView)
 }
 
-// MainTabs returns the main TabView
-func (ge *GideView) MainTabs() *gi.TabView {
+// Tabs returns the main TabView
+func (ge *GideView) Tabs() *gi.TabView {
 	split := ge.SplitView()
-	tv := split.Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
-	return tv
-}
-
-// VisTabs returns the second, visualization TabView
-func (ge *GideView) VisTabs() *gi.TabView {
-	split := ge.SplitView()
-	tv := split.Child(VisTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+	tv := split.Child(TabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 	return tv
 }
 
@@ -2087,8 +2104,7 @@ func (ge *GideView) ConfigSplitView() {
 	for i := 0; i < NTextViews; i++ {
 		config.Add(gi.KiT_Layout, fmt.Sprintf("textview-%v", i))
 	}
-	config.Add(gi.KiT_TabView, "main-tabs")
-	config.Add(gi.KiT_TabView, "vis-tabs")
+	config.Add(gi.KiT_TabView, "tabs")
 	mods, updt := split.ConfigChildren(config, ki.UniqueNames)
 	if mods {
 		ftfr := split.Child(FileTreeIdx).(*gi.Frame)
@@ -2131,13 +2147,13 @@ func (ge *GideView) ConfigSplitView() {
 			}
 		}
 
-		mtab := split.Child(MainTabsIdx).(*gi.TabView)
+		mtab := split.Child(TabsIdx).(*gi.TabView)
 		mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			gee, _ := recv.Embed(KiT_GideView).(*GideView)
 			tvsig := gi.TabViewSignals(sig)
 			switch tvsig {
 			case gi.TabDeleted:
-				gee.MainTabDeleted(data.(string))
+				gee.TabDeleted(data.(string))
 				if data == "Find" {
 					ge.ActiveTextView().ClearHighlights()
 				}
@@ -2169,10 +2185,6 @@ func (ge *GideView) FileNodeSelected(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	// } else {
 	// }
 }
-
-// BigFileSize is the limit of file size, above which user will be prompted
-// before opening.
-var BigFileSize = 10000000 // 10Mb?
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
 func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
@@ -2212,7 +2224,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
 	default:
 		// program, document, data
-		if int(fn.Info.Size) > BigFileSize {
+		if int(fn.Info.Size) > gi.Prefs.Params.BigFileSize {
 			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
 				Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
 				[]string{"Open", "Cancel"},

@@ -227,8 +227,7 @@ var SplitsProps = ki.Props{
 
 // StdSplits is the original compiled-in set of standard named splits.
 var StdSplits = Splits{
-	{"Code", "2 text views, main tabs, no vis tabs", []float32{.1, .325, .325, .25, 0}},
-	{"Vis", "1 text view, main and vis tabs", []float32{.1, .3, 0, .3, .3}},
-	{"Small", "1 text view, and main tabs", []float32{.1, .5, 0, .4, 0}},
-	{"All", "All panels open", []float32{.1, .25, .25, .2, .2}},
+	{"Code", "2 text views, tabs", []float32{.1, .325, .325, .25}},
+	{"Small", "1 text view, tabs", []float32{.1, .5, 0, .4}},
+	{"BigTabs", "1 text view, big tabs", []float32{.1, .3, 0, .6}},
 }

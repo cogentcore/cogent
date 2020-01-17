@@ -22,7 +22,7 @@ type FileNode struct {
 	giv.FileNode
 }
 
-var KiT_FileNode = kit.Types.AddType(&FileNode{}, FileNodeProps)
+var KiT_FileNode = kit.Types.AddType(&FileNode{}, nil)
 
 func (fn *FileNode) CopyFieldsFrom(frm interface{}) {
 	fr := frm.(*FileNode)
@@ -74,6 +74,9 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 		ge.ExecCmdNameFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode), CmdName(cmdNm), true, true)
 	}
 }
+
+/////////////////////////////////////////////////////////////////////
+//   OpenNodes
 
 // OpenNodes is a list of file nodes that have been opened for editing -- it
 // is maintained in recency order -- most recent on top -- call Add every time
@@ -230,22 +233,6 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 	return mls
 }
 
-var FileNodeProps = ki.Props{
-	"EnumType:Flag": giv.KiT_FileNodeFlags,
-	"CallMethods": ki.PropSlice{
-		{"RenameFile", ki.Props{
-			"label": "Rename",
-			"desc":  "Rename file to new file name",
-			"Args": ki.PropSlice{
-				{"New Name", ki.Props{
-					"default-field": "Name",
-					"width":         60,
-				}},
-			},
-		}},
-	},
-}
-
 /////////////////////////////////////////////////////////////////////////
 // FileTreeView is the Gide version of the FileTreeView
 
@@ -255,10 +242,15 @@ type FileTreeView struct {
 }
 
 var FileTreeViewProps map[string]interface{}
+var FileNodeProps map[string]interface{}
 
 var KiT_FileTreeView = kit.Types.AddType(&FileTreeView{}, nil)
 
 func init() {
+	FileNodeProps = make(ki.Props, len(giv.FileNodeProps))
+	ki.CopyProps(&FileNodeProps, giv.FileNodeProps, true)
+	kit.Types.SetProps(KiT_FileNode, FileNodeProps)
+
 	FileTreeViewProps = make(ki.Props, len(giv.FileTreeViewProps))
 	ki.CopyProps(&FileTreeViewProps, giv.FileTreeViewProps, true)
 	cm := FileTreeViewProps["CtxtMenuActive"].(ki.PropSlice)
@@ -300,6 +292,34 @@ func (ft *FileTreeView) ViewFiles() {
 			fn.ViewFile()
 		}
 	}
+}
+
+// RenameFiles calls RenameFile on any selected nodes
+func (ftv *FileTreeView) RenameFiles() {
+	fn := ftv.FileNode()
+	if fn == nil {
+		return
+	}
+	ge, ok := ParentGide(fn.This())
+	if !ok {
+		return
+	}
+	ge.SaveAllCheck(true, func() {
+		var nodes []*FileNode
+		sels := ftv.SelectedViews()
+		for i := len(sels) - 1; i >= 0; i-- {
+			sn := sels[i]
+			ftvv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
+			fn := ftvv.FileNode()
+			if fn != nil {
+				nodes = append(nodes, fn)
+			}
+		}
+		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
+		for _, fn := range nodes {
+			giv.CallMethod(fn, "RenameFile", ftv.Viewport)
+		}
+	})
 }
 
 // FileTreeViewExecCmds gets list of available commands for given file node, as a submenu-func

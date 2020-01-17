@@ -330,6 +330,17 @@ type ProjPrefs struct {
 
 var KiT_ProjPrefs = kit.Types.AddType(&ProjPrefs{}, ProjPrefsProps)
 
+func (pf *ProjPrefs) Update() {
+	if pf.BuildDir != pf.ProjRoot {
+		if pf.BuildTarg == pf.ProjRoot {
+			pf.BuildTarg = pf.BuildDir
+		}
+		if pf.RunExec == pf.ProjRoot {
+			pf.RunExec = pf.BuildDir
+		}
+	}
+}
+
 // OpenJSON open from JSON file
 func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error {
 	b, err := ioutil.ReadFile(string(filename))

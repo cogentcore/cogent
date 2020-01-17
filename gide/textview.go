@@ -87,3 +87,13 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 func (tv *TextView) Declaration() {
 	fmt.Println("Go to Declaration: not yet implemented")
 }
+
+func (tv *TextView) FocusChanged2D(change gi.FocusChanges) {
+	tv.TextView.FocusChanged2D(change)
+	ge, ok := ParentGide(tv)
+	if ok {
+		if change == gi.FocusGot || change == gi.FocusActive {
+			ge.SetActiveTextView(tv)
+		}
+	}
+}

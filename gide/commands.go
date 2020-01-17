@@ -458,7 +458,7 @@ func (cm *Command) RunStatus(ge Gide, buf *giv.TextBuf, cmdstr string, err error
 	}
 	if buf != nil {
 		if err != nil {
-			ge.SelectMainTabByName(cm.Name) // sometimes it isn't
+			ge.SelectTabByName(cm.Name) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), false, true) // no save undo, yes signal
@@ -466,7 +466,7 @@ func (cm *Command) RunStatus(ge Gide, buf *giv.TextBuf, cmdstr string, err error
 		buf.RefreshViews()
 		buf.AutoScrollViews()
 		if cm.Focus {
-			ge.FocusOnMainTabs()
+			ge.FocusOnTabs()
 		}
 	}
 	ge.SetStatus(cmdstr + " " + outstr)

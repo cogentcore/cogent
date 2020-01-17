@@ -38,11 +38,11 @@ type Gide interface {
 	// SetStatus updates the statusbar label with given message, along with other status info
 	SetStatus(msg string)
 
-	// SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-	SelectMainTabByName(label string) gi.Node2D
+	// SelectTabByName Selects given main tab, and returns all of its contents as well.
+	SelectTabByName(label string) gi.Node2D
 
-	// FocusOnMainTabs moves keyboard focus to MainTabs panel -- returns false if nothing at that tab
-	FocusOnMainTabs() bool
+	// FocusOnTabs moves keyboard focus to Tabs panel -- returns false if nothing at that tab
+	FocusOnTabs() bool
 
 	// NextViewFileNode sets the next text view to view file in given node (opens
 	// buffer if not already opened) -- if already being viewed, that is
@@ -52,11 +52,14 @@ type Gide interface {
 	// ActiveTextView returns the currently-active TextView
 	ActiveTextView() *TextView
 
+	// SetActiveTextView sets the given textview as the active one, and returns its index
+	SetActiveTextView(av *TextView) int
+
 	// ConfigOutputTextView configures a command-output textview within given parent layout
 	ConfigOutputTextView(ly *gi.Layout) *giv.TextView
 
 	// ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
-	// and shows output in MainTab with name of command
+	// and shows output in Tab with name of command
 	ExecCmdFileNode(fn *giv.FileNode)
 
 	// ExecCmdNameFileNode executes command of given name on given node
@@ -76,6 +79,25 @@ type Gide interface {
 
 	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
 	OpenFileAtRegion(filename gi.FileName, reg giv.TextRegion) (tv *TextView, ok bool)
+
+	// SaveAllCheck checks if any files have not been saved, and prompt to save them.
+	// returns true if there were unsaved files, false otherwise.
+	// cancelOpt presents an option to cancel current command,
+	// in which case function is not called.
+	// if function is passed, then it is called in all cases except
+	// if the user selects cancel.
+	SaveAllCheck(cancelOpt bool, fun func()) bool
+
+	// SaveAllOpenNodes saves all of the open filenodes to their current file names
+	SaveAllOpenNodes()
+
+	// UpdateAllOpenNodes go through all open filenodes and check if e.g., file has been
+	// deleted or renamed.
+	UpdateAllOpenNodes()
+
+	// CloseOpenNodes closes any nodes with open views (including those in directories under nodes).
+	// called prior to rename.
+	CloseOpenNodes(nodes []*FileNode)
 
 	// Spell checks spelling in files
 	Spell()
