@@ -921,7 +921,7 @@ func (cmd *Command) SetCompleter(tf *gi.TextField, id string) {
 }
 
 // CompleteArg supplies directory variables to the completer
-func CompleteArg(data interface{}, text string, posLn, posCh int) (md complete.MatchData) {
+func CompleteArg(data interface{}, text string, posLn, posCh int) (md complete.Matches) {
 	md.Seed = complete.SeedWhiteSpace(text)
 	possibles := complete.MatchSeedString(ArgVarKeys(), md.Seed)
 	for _, p := range possibles {
@@ -932,7 +932,7 @@ func CompleteArg(data interface{}, text string, posLn, posCh int) (md complete.M
 }
 
 // CompleteArgEdit edits completer text field after the user chooses from the candidate completions
-func CompleteArgEdit(data interface{}, text string, cursorPos int, c complete.Completion, seed string) (ed complete.EditData) {
+func CompleteArgEdit(data interface{}, text string, cursorPos int, c complete.Completion, seed string) (ed complete.Edit) {
 	ed = complete.EditWord(text, cursorPos, c.Text, seed)
 	return ed
 }
