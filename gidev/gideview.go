@@ -24,6 +24,7 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/gi/histyle"
 	"github.com/goki/gi/mat32"
 	"github.com/goki/gi/oswin"
@@ -1035,9 +1036,9 @@ func (ge *GideView) OpenFileURL(ur string, ftv *giv.TextView) bool {
 		return true
 	}
 	// fmt.Printf("pos: %v\n", pos)
-	txpos := giv.TextPos{}
+	txpos := textbuf.Pos{}
 	if txpos.FromString(pos) {
-		reg := giv.TextRegion{Start: txpos, End: giv.TextPos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		reg := textbuf.Region{Start: txpos, End: textbuf.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start
@@ -1212,6 +1213,9 @@ func (ge *GideView) TabByNameTry(label string) (gi.Node2D, error) {
 // SelectTabByName Selects given main tab, and returns all of its contents as well.
 func (ge *GideView) SelectTabByName(label string) gi.Node2D {
 	tv := ge.Tabs()
+	if tv == nil {
+		return nil
+	}
 	return tv.SelectTabByName(label)
 }
 
@@ -1220,6 +1224,9 @@ func (ge *GideView) SelectTabByName(label string) gi.Node2D {
 // one with widget of given type.  if sel, then select it.  returns widget
 func (ge *GideView) RecycleTab(label string, typ reflect.Type, sel bool) gi.Node2D {
 	tv := ge.Tabs()
+	if tv == nil {
+		return nil
+	}
 	widg, err := ge.TabByNameTry(label)
 	if err == nil {
 		if sel {
@@ -1264,7 +1271,11 @@ func (ge *GideView) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
 func (ge *GideView) RecycleTabTextView(label string, sel bool) *giv.TextView {
-	ly := ge.RecycleTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
+	retab := ge.RecycleTab(label, gi.KiT_Layout, sel)
+	if retab == nil {
+		return nil
+	}
+	ly := retab.Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := ge.ConfigOutputTextView(ly)
 	return tv
 }
@@ -1296,6 +1307,9 @@ func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool)
 func (ge *GideView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*giv.TextBuf, *giv.TextView, bool) {
 	buf, nw := ge.RecycleCmdBuf(cmdNm, clearBuf)
 	ctv := ge.RecycleTabTextView(cmdNm, sel)
+	if ctv == nil {
+		return nil, nil, false
+	}
 	ctv.SetInactive()
 	ctv.SetBuf(buf)
 	return buf, ctv, nw
@@ -1525,6 +1539,9 @@ func (ge *GideView) CommitUpdtLog(cmdnm string) {
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *GideView) OpenConsoleTab() {
 	ctv := ge.RecycleTabTextView("Console", true)
+	if ctv == nil {
+		return
+	}
 	ctv.SetInactive()
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
@@ -1567,6 +1584,9 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 
 	fbuf, _ := ge.RecycleCmdBuf("Find", true)
 	fvi := ge.RecycleTab("Find", gide.KiT_FindView, true) // sel
+	if fvi == nil {
+		return
+	}
 	fv := fvi.Embed(gide.KiT_FindView).(*gide.FindView)
 	fv.Config(ge)
 	fv.Time = time.Now()
@@ -1625,7 +1645,8 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	}
 	ltxt := bytes.Join(outlns, []byte("\n"))
 	mtxt := bytes.Join(outmus, []byte("\n"))
-	fbuf.AppendTextMarkup(ltxt, mtxt, false, true) // no save undo, yes signal
+	fbuf.SetInactive(true)
+	fbuf.AppendTextMarkup(ltxt, mtxt, giv.EditSignal)
 	ftv.CursorStartDoc()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -1674,7 +1695,7 @@ func (ge *GideView) Symbols() {
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (ge *GideView) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *gide.TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool) {
+func (ge *GideView) ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *gide.TextView, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindView OpenFindURL parse err: %v\n", err)
@@ -1726,7 +1747,7 @@ func (ge *GideView) ReplaceInActive() {
 	tv.QReplacePrompt()
 }
 
-func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr giv.TextRegion) (tv *gide.TextView, ok bool) {
+func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (tv *gide.TextView, ok bool) {
 	tv, _, ok = ge.LinkViewFile(filename)
 	if tv != nil {
 		tv.UpdateStart()
@@ -2013,7 +2034,11 @@ func (ge *GideView) IsConfiged() bool {
 
 // SplitView returns the main SplitView
 func (ge *GideView) SplitView() *gi.SplitView {
-	return ge.ChildByName("splitview", 2).(*gi.SplitView)
+	spi := ge.ChildByName("splitview", 2)
+	if spi == nil {
+		return nil
+	}
+	return spi.(*gi.SplitView)
 }
 
 // FileTree returns the main FileTree
@@ -2035,6 +2060,9 @@ func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
 // Tabs returns the main TabView
 func (ge *GideView) Tabs() *gi.TabView {
 	split := ge.SplitView()
+	if split == nil {
+		return nil
+	}
 	tv := split.Child(TabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 	return tv
 }
@@ -3062,8 +3090,14 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 		}
 	}
 
-	width := 1280
-	height := 720
+	width := 1600
+	height := 1280
+	sc := oswin.TheApp.Screen(0)
+	if sc != nil {
+		scsz := sc.Geometry.Size()
+		width = scsz.X
+		height = scsz.Y
+	}
 
 	win := gi.NewMainWindow(winm, winm, width, height)
 

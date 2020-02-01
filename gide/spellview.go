@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/gi/spell"
 
 	"github.com/goki/gi/gi"
@@ -293,7 +294,7 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string
 	tv.UpdateStart()
 	tv.Highlights = tv.Highlights[:0]
 	tv.SetCursorShow(st)
-	tv.Highlights = append(tv.Highlights, giv.TextRegion{Start: st, End: en})
+	tv.Highlights = append(tv.Highlights, textbuf.Region{Start: st, End: en})
 	tv.UpdateEnd(true)
 	if sv.LastAction == nil {
 		sv.GrabFocus()
@@ -311,10 +312,10 @@ func (sv *SpellView) ChangeAction() {
 	}
 	st := sv.UnknownStartPos()
 	en := sv.UnknownEndPos()
-	tbe := tv.Buf.DeleteText(st, en, true, true)
+	tbe := tv.Buf.DeleteText(st, en, giv.EditSignal)
 	ct := sv.ChangeText()
 	bs := []byte(string(ct.EditTxt))
-	tv.Buf.InsertText(tbe.Reg.Start, bs, true, true)
+	tv.Buf.InsertText(tbe.Reg.Start, bs, giv.EditSignal)
 	sv.ChangeOffset = sv.ChangeOffset + len(bs) - (en.Ch - st.Ch) // new length - old length
 	sv.LastAction = sv.ChangeAct()
 	sv.CheckNext()
@@ -347,21 +348,21 @@ func (sv *SpellView) TrainAction() {
 }
 
 // UnknownStartPos returns the start position of the current unknown word adjusted for any prior replacement text
-func (sv *SpellView) UnknownStartPos() giv.TextPos {
-	pos := giv.TextPos{Ln: sv.Unknown.Line, Ch: sv.Unknown.StartPos}
+func (sv *SpellView) UnknownStartPos() textbuf.Pos {
+	pos := textbuf.Pos{Ln: sv.Unknown.Line, Ch: sv.Unknown.StartPos}
 	pos = sv.AdjustTextPos(pos)
 	return pos
 }
 
 // UnknownEndPos returns the end position of the current unknown word adjusted for any prior replacement text
-func (sv *SpellView) UnknownEndPos() giv.TextPos {
-	pos := giv.TextPos{Ln: sv.Unknown.Line, Ch: sv.Unknown.EndPos}
+func (sv *SpellView) UnknownEndPos() textbuf.Pos {
+	pos := textbuf.Pos{Ln: sv.Unknown.Line, Ch: sv.Unknown.EndPos}
 	pos = sv.AdjustTextPos(pos)
 	return pos
 }
 
 // AdjustTextPos adjust the character position to compensate for replacement text being different length than original text
-func (sv *SpellView) AdjustTextPos(tp giv.TextPos) giv.TextPos {
+func (sv *SpellView) AdjustTextPos(tp textbuf.Pos) textbuf.Pos {
 	if sv.CurrentLine != sv.PreviousLine {
 		sv.ChangeOffset = 0
 		return tp

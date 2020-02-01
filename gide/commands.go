@@ -416,6 +416,7 @@ func (cm *Command) AppendCmdOut(ge Gide, buf *giv.TextBuf, out []byte) {
 	if buf == nil {
 		return
 	}
+	buf.SetInactive(true)
 	updt := ge.VPort().Win.UpdateStart()
 	lns := bytes.Split(out, []byte("\n"))
 	sz := len(lns)
@@ -427,7 +428,7 @@ func (cm *Command) AppendCmdOut(ge Gide, buf *giv.TextBuf, out []byte) {
 	mlns := bytes.Join(outmus, lfb)
 	mlns = append(mlns, lfb...)
 
-	buf.AppendTextMarkup(out, mlns, false, true)
+	buf.AppendTextMarkup(out, mlns, giv.EditSignal)
 	buf.AutoScrollViews()
 	ge.VPort().Win.UpdateEnd(updt)
 }
@@ -458,12 +459,13 @@ func (cm *Command) RunStatus(ge Gide, buf *giv.TextBuf, cmdstr string, err error
 		rval = false
 	}
 	if buf != nil {
+		buf.SetInactive(true)
 		if err != nil {
 			ge.SelectTabByName(cm.Name) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
-		buf.AppendTextLineMarkup([]byte(""), []byte(""), false, true) // no save undo, yes signal
-		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), false, true)
+		buf.AppendTextLineMarkup([]byte(""), []byte(""), giv.EditSignal)
+		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), giv.EditSignal)
 		buf.RefreshViews()
 		buf.AutoScrollViews()
 		if cm.Focus {

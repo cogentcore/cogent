@@ -14,6 +14,7 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -223,7 +224,7 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 	tv := ge.ActiveTextView()
 	if tv == nil || string(tv.Buf.Filename) != ssym.Filename {
 		var ok = false
-		tr := giv.NewTextRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv, ok = ge.OpenFileAtRegion(gi.FileName(ssym.Filename), tr)
 		if ok == false {
 			log.Printf("GideView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
@@ -231,7 +232,7 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 	} else {
 		tv.UpdateStart()
 		tv.Highlights = tv.Highlights[:0]
-		tr := giv.NewTextRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv.Highlights = append(tv.Highlights, tr)
 		tv.UpdateEnd(true)
 		tv.RefreshIfNeeded()
@@ -378,8 +379,8 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 		return
 	}
 
-	fs := &tv.Buf.PiState // the parse info
-	st.SRoot = st         // we are our own root..
+	fs := tv.Buf.PiState.Done() // the parse info
+	st.SRoot = st               // we are our own root..
 	if st.NodeType == nil {
 		st.NodeType = KiT_SymNode
 	}

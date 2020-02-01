@@ -12,6 +12,7 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
@@ -181,7 +182,7 @@ func (on *OpenNodes) NChanged() int {
 type FileSearchResults struct {
 	Node    *giv.FileNode
 	Count   int
-	Matches []giv.FileSearchMatch
+	Matches []textbuf.Match
 }
 
 // FileTreeSearch returns list of all nodes starting at given node of given
@@ -216,11 +217,11 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 			}
 		}
 		var cnt int
-		var matches []giv.FileSearchMatch
+		var matches []textbuf.Match
 		if sfn.IsOpen() && sfn.Buf != nil {
 			cnt, matches = sfn.Buf.Search([]byte(find), ignoreCase)
 		} else {
-			cnt, matches = giv.FileSearch(string(sfn.FPath), []byte(find), ignoreCase)
+			cnt, matches = textbuf.SearchFile(string(sfn.FPath), []byte(find), ignoreCase)
 		}
 		if cnt > 0 {
 			mls = append(mls, FileSearchResults{sfn, cnt, matches})

@@ -43,7 +43,7 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	// process command args
 	if len(os.Args) > 1 {
-		flag.StringVar(&path, "path", "", "path to open -- can be to a directory or a filename within the directory")
+		flag.StringVar(&path, "path", "", "path to open -- can be to a directory or a filename within the directory ")
 		flag.StringVar(&proj, "proj", "", "project file to open -- typically has .gide extension")
 		// todo: other args?
 		flag.Parse()

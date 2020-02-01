@@ -13,6 +13,7 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
@@ -144,15 +145,15 @@ func (fv *FindView) ReplaceAction() bool {
 	reg = tv.Buf.AdjustReg(reg)
 	if !reg.IsNil() {
 		tv.RefreshIfNeeded()
-		tbe := tv.Buf.DeleteText(reg.Start, reg.End, true, true)
-		tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Params().Replace), true, true)
+		tbe := tv.Buf.DeleteText(reg.Start, reg.End, giv.EditSignal)
+		tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Params().Replace), giv.EditSignal)
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Ln
-		st := giv.TextPos{Ln: ftvln, Ch: 0}
+		st := textbuf.Pos{Ln: ftvln, Ch: 0}
 		len := len(ftv.Buf.Lines[ftvln])
-		en := giv.TextPos{Ln: ftvln, Ch: len}
-		ftv.Buf.DeleteText(st, en, false, true)
+		en := textbuf.Pos{Ln: ftvln, Ch: len}
+		ftv.Buf.DeleteText(st, en, giv.EditSignal)
 		// ftv.NeedsRefresh()
 	}
 
@@ -221,7 +222,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, fi
 	fb := ftv.Buf
 
 	if len(tv.Highlights) != fCount { // highlight
-		hi := make([]giv.TextRegion, fCount)
+		hi := make([]textbuf.Region, fCount)
 		for i := 0; i < fCount; i++ {
 			fln := fbStLn + 1 + i
 			ltxt := fb.Markup[fln]
@@ -236,7 +237,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, fi
 			if err != nil {
 				continue
 			}
-			ireg := giv.TextRegion{}
+			ireg := textbuf.Region{}
 			lidx := strings.Index(iup.Fragment, "L")
 			ireg.FromString(iup.Fragment[lidx:])
 			ireg.Time.SetTime(fv.Time)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/pi/filecat"
 )
 
@@ -75,10 +76,10 @@ type Gide interface {
 	// ParseOpenFindURL parses and opens given find:/// url from Find, return text
 	// region encoded in url, and starting line of results in find buffer, and
 	// number of results returned -- for parsing all the find results
-	ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *TextView, reg giv.TextRegion, findBufStLn, findCount int, ok bool)
+	ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *TextView, reg textbuf.Region, findBufStLn, findCount int, ok bool)
 
 	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
-	OpenFileAtRegion(filename gi.FileName, reg giv.TextRegion) (tv *TextView, ok bool)
+	OpenFileAtRegion(filename gi.FileName, reg textbuf.Region) (tv *TextView, ok bool)
 
 	// SaveAllCheck checks if any files have not been saved, and prompt to save them.
 	// returns true if there were unsaved files, false otherwise.
