@@ -40,16 +40,17 @@ const (
 // lexer and parser
 type PiView struct {
 	gi.Frame
-	Parser        pi.Parser   `desc:"the parser we are viewing"`
-	Prefs         ProjPrefs   `desc:"project preferences -- this IS the project file"`
-	Changed       bool        `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
-	TestBuf       giv.TextBuf `json:"-" desc:"test file buffer"`
-	OutBuf        giv.TextBuf `json:"-" desc:"output buffer -- shows all errors, tracing"`
-	LexBuf        giv.TextBuf `json:"-" desc:"buffer of lexified tokens"`
-	ParseBuf      giv.TextBuf `json:"-" desc:"buffer of parse info"`
-	KeySeq1       key.Chord   `desc:"first key in sequence if needs2 key pressed"`
-	OutMonRunning bool        `json:"-" desc:"is the output monitor running?"`
-	OutMonMu      sync.Mutex  `json:"-" desc:"mutex for updating, checking output monitor run status"`
+	Parser        pi.Parser    `desc:"the parser we are viewing"`
+	Prefs         ProjPrefs    `desc:"project preferences -- this IS the project file"`
+	Changed       bool         `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+	FileState     pi.FileState `json:"-" desc:"our own dedicated filestate for controlled parsing"`
+	TestBuf       giv.TextBuf  `json:"-" desc:"test file buffer"`
+	OutBuf        giv.TextBuf  `json:"-" desc:"output buffer -- shows all errors, tracing"`
+	LexBuf        giv.TextBuf  `json:"-" desc:"buffer of lexified tokens"`
+	ParseBuf      giv.TextBuf  `json:"-" desc:"buffer of parse info"`
+	KeySeq1       key.Chord    `desc:"first key in sequence if needs2 key pressed"`
+	OutMonRunning bool         `json:"-" desc:"is the output monitor running?"`
+	OutMonMu      sync.Mutex   `json:"-" desc:"mutex for updating, checking output monitor run status"`
 }
 
 var KiT_PiView = kit.Types.AddType(&PiView{}, PiViewProps)
@@ -114,7 +115,7 @@ func (pv *PiView) SaveProjAs(filename gi.FileName) {
 
 // ApplyPrefs applies project-level prefs (e.g., after opening)
 func (pv *PiView) ApplyPrefs() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	fs.ParseState.Trace.CopyOpts(&pv.Prefs.TraceOpts)
 	if pv.Prefs.ParserFile != "" {
 		pv.OpenParser(pv.Prefs.ParserFile)
@@ -126,7 +127,7 @@ func (pv *PiView) ApplyPrefs() {
 
 // GetPrefs gets the current values of things for prefs
 func (pv *PiView) GetPrefs() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	pv.Prefs.TraceOpts.CopyOpts(&fs.ParseState.Trace)
 }
 
@@ -221,8 +222,8 @@ func (pv *PiView) SetStatus(msg string) {
 func (pv *PiView) LexInit() {
 	pv.OutBuf.New(0)
 	go pv.MonitorOut()
-	fs := &pv.TestBuf.PiState
-	fs.SetSrc(&pv.TestBuf.Lines, string(pv.TestBuf.Filename), pv.TestBuf.Info.Sup)
+	fs := &pv.FileState
+	fs.SetSrc(pv.TestBuf.Lines, string(pv.TestBuf.Filename), "", pv.TestBuf.Info.Sup)
 	// pv.Hi.SetParser(&pv.Parser)
 	pv.Parser.Lexer.CompileAll(&fs.LexState)
 	pv.Parser.Lexer.Validate(&fs.LexState)
@@ -238,7 +239,7 @@ func (pv *PiView) LexInit() {
 
 // LexStopped tells the user why the lexer stopped
 func (pv *PiView) LexStopped() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	if fs.LexAtEnd() {
 		pv.SetStatus("The Lexer is now at the end of available text")
 	} else {
@@ -258,7 +259,7 @@ func (pv *PiView) LexStopped() {
 
 // LexNext does next step of lexing
 func (pv *PiView) LexNext() *lex.Rule {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	mrule := pv.Parser.LexNext(fs)
 	if mrule == nil {
 		pv.LexStopped()
@@ -272,7 +273,7 @@ func (pv *PiView) LexNext() *lex.Rule {
 
 // LexLine does next line of lexing
 func (pv *PiView) LexNextLine() *lex.Rule {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	mrule := pv.Parser.LexNextLine(fs)
 	if mrule == nil && fs.LexHasErrs() {
 		pv.LexStopped()
@@ -286,7 +287,7 @@ func (pv *PiView) LexNextLine() *lex.Rule {
 
 // LexAll does all remaining lexing until end or error
 func (pv *PiView) LexAll() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	for {
 		mrule := pv.Parser.LexNext(fs)
 		if mrule == nil {
@@ -319,7 +320,7 @@ func (pv *PiView) SelectLexRule(rule *lex.Rule) {
 
 // UpdtLexBuf sets the LexBuf to current lex content
 func (pv *PiView) UpdtLexBuf() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	txt := fs.Src.LexTagSrc()
 	pv.LexBuf.SetText([]byte(txt))
 	pv.TestBuf.HiTags = fs.Src.Lexs
@@ -341,7 +342,7 @@ func (pv *PiView) EditPassTwo() {
 // PassTwo does the second pass after lexing, per current settings
 func (pv *PiView) PassTwo() {
 	pv.OutBuf.New(0)
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	pv.Parser.DoPassTwo(fs)
 	if fs.PassTwoHasErrs() {
 		errs := fs.PassTwoErrReport()
@@ -358,14 +359,14 @@ func (pv *PiView) PassTwo() {
 func (pv *PiView) EditTrace() {
 	sv := pv.StructView()
 	if sv != nil {
-		fs := &pv.TestBuf.PiState
+		fs := &pv.FileState
 		sv.SetStruct(&fs.ParseState.Trace)
 	}
 }
 
 // ParseInit initializes / restarts lexing process for current test file
 func (pv *PiView) ParseInit() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	pv.OutBuf.New(0)
 	go pv.MonitorOut()
 	pv.LexInit()
@@ -383,7 +384,7 @@ func (pv *PiView) ParseInit() {
 
 // ParseStopped tells the user why the lexer stopped
 func (pv *PiView) ParseStopped() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	if fs.ParseAtEnd() && !fs.ParseHasErrs() {
 		pv.SetStatus("The Parser is now at the end of available text")
 	} else {
@@ -402,7 +403,7 @@ func (pv *PiView) ParseStopped() {
 
 // ParseNext does next step of lexing
 func (pv *PiView) ParseNext() *parse.Rule {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	at := pv.AstTree()
 	updt := at.UpdateStart()
 	mrule := pv.Parser.ParseNext(fs)
@@ -424,7 +425,7 @@ func (pv *PiView) ParseNext() *parse.Rule {
 
 // ParseAll does all remaining lexing until end or error
 func (pv *PiView) ParseAll() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	at := pv.AstTree()
 	updt := at.UpdateStart()
 	for {
@@ -467,7 +468,7 @@ func (pv *PiView) AstTreeToEnd() {
 
 // UpdtParseBuf sets the ParseBuf to current parse rule output
 func (pv *PiView) UpdtParseBuf() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	txt := fs.ParseRuleString(fs.ParseState.Trace.FullStackOut)
 	pv.ParseBuf.SetText([]byte(txt))
 }
@@ -476,7 +477,7 @@ func (pv *PiView) UpdtParseBuf() {
 func (pv *PiView) ViewParseState() {
 	sv := pv.StructView()
 	if sv != nil {
-		sv.SetStruct(&pv.TestBuf.PiState.ParseState)
+		sv.SetStruct(&pv.FileState.ParseState)
 	}
 }
 
@@ -829,7 +830,7 @@ func (pv *PiView) MonitorOut() {
 	pv.OutMonRunning = true
 	pv.OutMonMu.Unlock()
 	obuf := giv.OutBuf{}
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	obuf.Init(fs.ParseState.Trace.OutRead, &pv.OutBuf, 0, gide.MarkupCmdOutput)
 	obuf.MonOut()
 	pv.OutMonMu.Lock()
@@ -839,7 +840,7 @@ func (pv *PiView) MonitorOut() {
 
 // ConfigSplitView configures the SplitView.
 func (pv *PiView) ConfigSplitView() {
-	fs := &pv.TestBuf.PiState
+	fs := &pv.FileState
 	split := pv.SplitView()
 	if split == nil {
 		return
