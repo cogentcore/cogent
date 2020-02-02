@@ -9,13 +9,14 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/giv/textbuf"
 )
 
 func TestBind(t *testing.T) {
 	tv := giv.TextView{}
-	tv.CursorPos = giv.TextPos{22, 44}
-	tv.SelectReg.Start = giv.TextPos{11, 14}
-	tv.SelectReg.End = giv.TextPos{55, 0}
+	tv.CursorPos = textbuf.Pos{22, 44}
+	tv.SelectReg.Start = textbuf.Pos{11, 14}
+	tv.SelectReg.End = textbuf.Pos{55, 0}
 
 	fpath := "/Users/oreilly/go/src/github.com/goki/gide/argvars_test.go"
 	projpath := "/Users/oreilly/go/src/github.com"
