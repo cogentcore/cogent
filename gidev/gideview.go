@@ -1692,6 +1692,26 @@ func (ge *GideView) Symbols() {
 	ge.FocusOnPanel(TabsIdx)
 }
 
+// Debug displays the DebugView
+func (ge *GideView) Debug() {
+	if ge.Prefs.RunExec != "" {
+		exePath := string(ge.Prefs.RunExec)
+		exe := filepath.Base(exePath)
+		dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
+		dv.Config(ge, ge.Prefs.MainLang, exePath)
+		ge.FocusOnPanel(TabsIdx)
+	} else {
+		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
+	}
+}
+
+// ChooseRunExec selects the executable to run for the project
+func (ge *GideView) ChooseRunExec(exePath gi.FileName) {
+	if exePath != "" {
+		ge.Prefs.RunExec = exePath
+	}
+}
+
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
@@ -2611,8 +2631,7 @@ var GideViewProps = ki.Props{
 			},
 		}},
 		{"Symbols", ki.Props{
-			"label": "Symbols",
-			"icon":  "structure",
+			"icon": "structure",
 		}},
 		{"Spell", ki.Props{
 			"label": "Spelling",
@@ -2632,6 +2651,9 @@ var GideViewProps = ki.Props{
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 			}),
+		}},
+		{"Debug", ki.Props{
+			"icon": "terminal",
 		}},
 		{"Commit", ki.Props{
 			"icon": "star",
@@ -3051,6 +3073,11 @@ var GideViewProps = ki.Props{
 			},
 		}},
 		{"ExecCmd", ki.Props{}},
+		{"ChooseRunExec", ki.Props{
+			"Args": ki.PropSlice{
+				{"Exec File Name", ki.Props{}},
+			},
+		}},
 	},
 }
 

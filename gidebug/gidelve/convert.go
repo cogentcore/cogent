@@ -70,6 +70,18 @@ func CvtGoroutine(ds *api.Goroutine) *gidebug.Goroutine {
 	return gr
 }
 
+func CvtGoroutines(ds []*api.Goroutine) []*gidebug.Goroutine {
+	if ds == nil || len(ds) == 0 {
+		return nil
+	}
+	nd := len(ds)
+	th := make([]*gidebug.Goroutine, nd)
+	for i, dt := range ds {
+		th[i] = CvtGoroutine(dt)
+	}
+	return th
+}
+
 func CvtLocation(ds *api.Location) *gidebug.Location {
 	if ds == nil {
 		return nil
@@ -79,7 +91,20 @@ func CvtLocation(ds *api.Location) *gidebug.Location {
 	lc.File = ds.File
 	lc.Line = ds.Line
 	lc.Function = CvtFunction(ds.Function)
+	lc.PCs = ds.PCs
 	return lc
+}
+
+func CvtLocations(ds []api.Location) []gidebug.Location {
+	if ds == nil || len(ds) == 0 {
+		return nil
+	}
+	nd := len(ds)
+	th := make([]gidebug.Location, nd)
+	for i := range ds {
+		th[i] = *CvtLocation(&ds[i])
+	}
+	return th
 }
 
 func CvtFunction(ds *api.Function) *gidebug.Function {
@@ -103,6 +128,7 @@ func CvtBreakpoint(ds *api.Breakpoint) *gidebug.Breakpoint {
 	bp.ID = ds.ID
 	bp.Name = ds.Name
 	bp.Addr = ds.Addr
+	bp.Addrs = ds.Addrs
 	bp.File = ds.File
 	bp.Line = ds.Line
 	bp.FunctionName = ds.FunctionName
@@ -117,6 +143,37 @@ func CvtBreakpoint(ds *api.Breakpoint) *gidebug.Breakpoint {
 	bp.HitCount = ds.HitCount
 	bp.TotalHitCount = ds.TotalHitCount
 	return bp
+}
+
+func ToBreakpoint(ds *gidebug.Breakpoint) *api.Breakpoint {
+	if ds == nil {
+		return nil
+	}
+	bp := &api.Breakpoint{}
+	bp.ID = ds.ID
+	bp.Name = ds.Name
+	bp.Addr = ds.Addr
+	bp.Addrs = ds.Addrs
+	bp.File = ds.File
+	bp.Line = ds.Line
+	bp.FunctionName = ds.FunctionName
+	bp.Cond = ds.Cond
+	bp.Tracepoint = ds.Tracepoint
+	bp.TraceReturn = ds.TraceReturn
+	bp.Goroutine = ds.Goroutine
+	return bp
+}
+
+func CvtBreakpoints(ds []*api.Breakpoint) []*gidebug.Breakpoint {
+	if ds == nil || len(ds) == 0 {
+		return nil
+	}
+	nd := len(ds)
+	vr := make([]*gidebug.Breakpoint, nd)
+	for i := range ds {
+		vr[i] = CvtBreakpoint(ds[i])
+	}
+	return vr
 }
 
 func CvtBreakpointInfo(ds *api.BreakpointInfo) *gidebug.BreakpointInfo {
@@ -206,4 +263,37 @@ func CvtLoadConfig(ds *api.LoadConfig) *gidebug.LoadConfig {
 	lc.MaxArrayValues = ds.MaxArrayValues
 	lc.MaxStructFields = ds.MaxStructFields
 	return lc
+}
+
+func ToLoadConfig(ds *gidebug.LoadConfig) *api.LoadConfig {
+	if ds == nil {
+		return nil
+	}
+	lc := &api.LoadConfig{}
+	lc.FollowPointers = ds.FollowPointers
+	lc.MaxVariableRecurse = ds.MaxVariableRecurse
+	lc.MaxStringLen = ds.MaxStringLen
+	lc.MaxArrayValues = ds.MaxArrayValues
+	lc.MaxStructFields = ds.MaxStructFields
+	return lc
+}
+
+func CvtDebuggerStateChan(in <-chan *api.DebuggerState) <-chan *gidebug.DebuggerState {
+	sc := make(chan *gidebug.DebuggerState)
+	go func() {
+		nv := <-in
+		sc <- CvtDebuggerState(nv)
+	}()
+	return sc
+}
+
+func ToEvalScope(ds *gidebug.EvalScope) *api.EvalScope {
+	if ds == nil {
+		return nil
+	}
+	es := &api.EvalScope{}
+	es.GoroutineID = ds.GoroutineID
+	es.Frame = ds.Frame
+	es.DeferredCall = ds.DeferredCall
+	return es
 }

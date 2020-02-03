@@ -4,13 +4,6 @@
 
 package gidebug
 
-import (
-	"errors"
-	"fmt"
-	"strconv"
-	"unicode"
-)
-
 // Breakpoint addresses a location at which process execution may be
 // suspended.
 type Breakpoint struct {
@@ -22,6 +15,9 @@ type Breakpoint struct {
 
 	// Addr is the address of the breakpoint.
 	Addr uint64 `json:"addr"`
+
+	// Addrs is the list of addresses for this breakpoint.
+	Addrs []uint64 `json:"addrs"`
 
 	// File is the source file for the breakpoint.
 	File string `json:"file"`
@@ -63,24 +59,6 @@ type Breakpoint struct {
 
 	// number of times a breakpoint has been reached
 	TotalHitCount uint64 `json:"totalHitCount"`
-}
-
-// ValidBreakpointName returns an error if
-// the name to be chosen for a breakpoint is invalid.
-// The name can not be just a number, and must contain a series
-// of letters or numbers.
-func ValidBreakpointName(name string) error {
-	if _, err := strconv.Atoi(name); err == nil {
-		return errors.New("breakpoint name can not be a number")
-	}
-
-	for _, ch := range name {
-		if !(unicode.IsLetter(ch) || unicode.IsDigit(ch)) {
-			return fmt.Errorf("invalid character in breakpoint name '%c'", ch)
-		}
-	}
-
-	return nil
 }
 
 // BreakpointInfo contains informations about the current breakpoint

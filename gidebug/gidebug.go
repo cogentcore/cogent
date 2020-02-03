@@ -55,7 +55,7 @@ type GiDebug interface {
 	StepOut() (*DebuggerState, error)
 
 	// Call resumes process execution while making a function call.
-	Call(expr string, unsafe bool) (*DebuggerState, error)
+	Call(goroutineID int, expr string, unsafe bool) (*DebuggerState, error)
 
 	// SingleStep will step a single cpu instruction.
 	StepInstruction() (*DebuggerState, error)
@@ -76,7 +76,7 @@ type GiDebug interface {
 	GetBreakpointByName(name string) (*Breakpoint, error)
 
 	// CreateBreakpoint creates a new breakpoint.
-	CreateBreakpoint(*Breakpoint) (*Breakpoint, error)
+	CreateBreakpoint(bp *Breakpoint) (*Breakpoint, error)
 
 	// ListBreakpoints gets all breakpoints.
 	ListBreakpoints() ([]*Breakpoint, error)
@@ -87,9 +87,10 @@ type GiDebug interface {
 	// ClearBreakpointByName deletes a breakpoint by name
 	ClearBreakpointByName(name string) (*Breakpoint, error)
 
-	// Allows user to update an existing breakpoint for example to change the information
-	// retrieved when the breakpoint is hit or to change, add or remove the break condition
-	AmendBreakpoint(*Breakpoint) error
+	// AmmendBreakpoint allows user to update an existing breakpoint for example
+	// to change the information retrieved when the breakpoint is hit or to change,
+	// add or remove the break condition
+	AmendBreakpoint(bp *Breakpoint) error
 
 	// Cancels a Next or Step call that was interrupted by a manual stop or by another breakpoint
 	CancelNext() error
@@ -131,7 +132,7 @@ type GiDebug interface {
 	ListGoroutines(start, count int) ([]*Goroutine, int, error)
 
 	// Returns stacktrace
-	Stacktrace(goroutineID int, depth int, readDefers bool, cfg *LoadConfig) ([]Stackframe, error)
+	Stacktrace(goroutineID int, depth int, opts StacktraceOptions, cfg *LoadConfig) ([]Stackframe, error)
 
 	// Returns whether we attached to a running process or not
 	AttachedToExistingProcess() bool
@@ -147,7 +148,8 @@ type GiDebug interface {
 	// * <line> returns a location for a line in the current file
 	// * *<address> returns the location corresponding to the specified address
 	// NOTE: this function does not actually set breakpoints.
-	FindLocation(scope EvalScope, loc string) ([]Location, error)
+	// If findInstruction is true FindLocation will only return locations that correspond to instructions.
+	FindLocation(scope EvalScope, loc string, findInstruction bool) ([]Location, error)
 
 	/*
 		// Disassemble code between startPC and endPC
@@ -156,6 +158,9 @@ type GiDebug interface {
 		// Disassemble code of the function containing PC
 		DisassemblePC(scope EvalScope, pc uint64, flavour AssemblyFlavour) (AsmInstructions, error)
 	*/
+
+	// SetReturnValuesLoadConfig sets the load configuration for return values.
+	SetReturnValuesLoadConfig(cfg *LoadConfig)
 
 	// Disconnect closes the connection to the server without sending a Detach request first.
 	// If cont is true a continue command will be sent instead.
