@@ -275,7 +275,7 @@ func (fv *FindView) Config(ge Gide) {
 	cf := fv.LocCombo()
 	cf.SetCurIndex(int(fv.Params().Loc))
 	tvly := fv.TextViewLay()
-	fv.Gide.ConfigOutputTextView(tvly)
+	ConfigOutputTextView(tvly)
 	if mods {
 		na := fv.FindNextAct()
 		na.GrabFocus()

@@ -83,7 +83,7 @@ func (sv *SpellView) Config(ge Gide, sp SpellParams) {
 	}
 	sv.ConfigToolbar()
 	tvly := sv.TextViewLay()
-	sv.Gide.ConfigOutputTextView(tvly)
+	ConfigOutputTextView(tvly)
 	sv.UpdateEnd(updt)
 }
 

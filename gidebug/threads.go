@@ -26,7 +26,7 @@ type Thread struct {
 	BreakpointInfo *BreakpointInfo `json:"breakPointInfo,omitempty"`
 
 	// ReturnValues contains the return values of the function we just stepped out of
-	ReturnValues []Variable
+	ReturnValues []*Variable
 }
 
 // Goroutine represents the information relevant to Delve from the runtime's

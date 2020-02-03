@@ -10,27 +10,23 @@ package gidebug
 // FindLocations however returns logical locations that can either have
 // multiple PC addresses each (due to inlining) or no PC address at all.
 type Location struct {
-	PC       uint64    `json:"pc"`
-	File     string    `json:"file"`
-	Line     int       `json:"line"`
+	PC       uint64    `desc:"program counter (address)"`
+	File     string    `desc:"file"`
+	Line     int       `desc"line within file"`
 	Function *Function `json:"function,omitempty"`
-	PCs      []uint64  `json:"pcs,omitempty"`
+	PCs      []uint64  `tableview:"-" desc:"multiple PCs if needed for this location"`
 }
 
 // Stackframe describes one frame in a stack trace.
 type Stackframe struct {
 	Location
-	Locals    []Variable
-	Arguments []Variable
-
-	FrameOffset        int64
-	FramePointerOffset int64
-
-	Defers []Defer
-
-	Bottom bool `json:"Bottom,omitempty"` // Bottom is true if this is the bottom frame of the stack
-
-	Err string
+	Locals             []*Variable `tableview:"-" desc:"local variables"`
+	Arguments          []*Variable `tableview:"-" desc:"local function args"`
+	Bottom             bool        `tableview:"-" desc:"this is true if last row"`
+	FrameOffset        int64       `tableview:"-" desc:"?"`
+	FramePointerOffset int64       `tableview:"-" desc:"?"`
+	Defers             []Defer     `tableview:"-" desc:"?"`
+	Err                string      `tableview:"-" desc:"err?"`
 }
 
 // Defer describes a deferred function.
@@ -46,12 +42,12 @@ type Defer struct {
 func (frame *Stackframe) Var(name string) *Variable {
 	for i := range frame.Locals {
 		if frame.Locals[i].Name == name {
-			return &frame.Locals[i]
+			return frame.Locals[i]
 		}
 	}
 	for i := range frame.Arguments {
 		if frame.Arguments[i].Name == name {
-			return &frame.Arguments[i]
+			return frame.Arguments[i]
 		}
 	}
 	return nil

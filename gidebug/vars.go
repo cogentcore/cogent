@@ -63,7 +63,7 @@ type Variable struct {
 	// For maps each map entry will have to items in this slice, even numbered items will represent map keys and odd numbered items will represent their values
 	// This field's length is capped at proc.maxArrayValues for slices and arrays and 2*proc.maxArrayValues for maps, in the circumstances where the cap takes effect len(Children) != Len
 	// The other length cap applied to this field is related to maximum recursion depth, when the maximum recursion depth is reached this field is left empty, contrary to the previous one this cap also applies to structs (otherwise structs will always have all their member fields returned)
-	Children []Variable `json:"children"`
+	Children []*Variable `json:"children"`
 
 	// Base address of arrays, Base address of the backing array for slices (0 for nil slices)
 	// Base address of the backing byte array for strings
@@ -92,4 +92,13 @@ type LoadConfig struct {
 	MaxArrayValues int
 	// MaxStructFields is the maximum number of fields read from a struct, -1 will read all fields.
 	MaxStructFields int
+}
+
+// DefaultConfig can be used by default
+var DefaultConfig = LoadConfig{
+	FollowPointers:     true,
+	MaxVariableRecurse: 2,
+	MaxStringLen:       200,
+	MaxArrayValues:     100,
+	MaxStructFields:    -1,
 }

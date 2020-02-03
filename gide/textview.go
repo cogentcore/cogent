@@ -97,3 +97,27 @@ func (tv *TextView) FocusChanged2D(change gi.FocusChanges) {
 		}
 	}
 }
+
+// ConfigOutputTextView configures a command-output textview within given parent layout
+func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
+	ly.Lay = gi.LayoutVert
+	ly.SetStretchMaxWidth()
+	ly.SetStretchMaxHeight()
+	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
+	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
+	var tv *giv.TextView
+	if ly.HasChildren() {
+		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
+	} else {
+		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
+	}
+	// if ge.Prefs.Editor.WordWrap {
+	tv.SetProp("white-space", gi.WhiteSpacePreWrap)
+	// } else {
+	// 	tv.SetProp("white-space", gi.WhiteSpacePre)
+	// }
+	tv.SetProp("tab-size", 8) // std for output
+	tv.SetProp("font-family", Prefs.FontFamily)
+	tv.SetInactive()
+	return tv
+}

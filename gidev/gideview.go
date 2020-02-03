@@ -790,6 +790,17 @@ func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 	return nv, nidx, true
 }
 
+// ShowFile shows given file name at given line, returning TextView showing it
+// or error if not found.
+func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextView, error) {
+	tv, _, ok := ge.LinkViewFile(gi.FileName(fname))
+	if ok {
+		tv.SetCursorShow(textbuf.Pos{Ln: ln + 1})
+		return tv, nil
+	}
+	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fname)
+}
+
 // GideViewOpenNodes gets list of open nodes for submenu-func
 func GideViewOpenNodes(it interface{}, vp *gi.Viewport2D) []string {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
@@ -1197,14 +1208,13 @@ func (ge *GideView) FocusPrevPanel() {
 //////////////////////////////////////////////////////////////////////////////////////
 //    Tabs
 
-// TabByName returns a Tabs (first set of tabs) tab with given name,
+// TabByName returns a tab with given name, nil if not found.
 func (ge *GideView) TabByName(label string) gi.Node2D {
 	tv := ge.Tabs()
 	return tv.TabByName(label)
 }
 
-// TabByNameTry returns a Tabs (first set of tabs) tab with given name,
-// error if not found.
+// TabByNameTry returns a tab with given name, error if not found.
 func (ge *GideView) TabByNameTry(label string) (gi.Node2D, error) {
 	tv := ge.Tabs()
 	return tv.TabByNameTry(label)
@@ -1219,54 +1229,18 @@ func (ge *GideView) SelectTabByName(label string) gi.Node2D {
 	return tv.SelectTabByName(label)
 }
 
-// RecycleTab returns a Tabs (first set of tabs) tab with given
-// name, first by looking for an existing one, and if not found, making a new
-// one with widget of given type.  if sel, then select it.  returns widget
+// RecycleTab returns a tab with given name, first by looking for an existing one,
+// and if not found, making a new one with widget of given type.
+// If sel, then select it.  returns widget for tab.
 func (ge *GideView) RecycleTab(label string, typ reflect.Type, sel bool) gi.Node2D {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
 	}
-	widg, err := ge.TabByNameTry(label)
-	if err == nil {
-		if sel {
-			tv.SelectTabByName(label)
-		}
-		return widg
-	}
-	widg = tv.AddNewTab(typ, label)
-	if sel {
-		tv.SelectTabByName(label)
-	}
-	return widg
+	return tv.RecycleTab(label, typ, sel)
 }
 
-// ConfigOutputTextView configures a command-output textview within given parent layout
-func (ge *GideView) ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
-	ly.Lay = gi.LayoutVert
-	ly.SetStretchMaxWidth()
-	ly.SetStretchMaxHeight()
-	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
-	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
-	var tv *giv.TextView
-	if ly.HasChildren() {
-		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
-	} else {
-		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
-	}
-
-	if ge.Prefs.Editor.WordWrap {
-		tv.SetProp("white-space", gi.WhiteSpacePreWrap)
-	} else {
-		tv.SetProp("white-space", gi.WhiteSpacePre)
-	}
-	tv.SetProp("tab-size", 8) // std for output
-	tv.SetProp("font-family", gide.Prefs.FontFamily)
-	tv.SetInactive()
-	return tv
-}
-
-// RecycleTabTextView returns a Tabs (first set of tabs) tab with given
+// RecycleTabTextView returns a tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
@@ -1276,7 +1250,7 @@ func (ge *GideView) RecycleTabTextView(label string, sel bool) *giv.TextView {
 		return nil
 	}
 	ly := retab.Embed(gi.KiT_Layout).(*gi.Layout)
-	tv := ge.ConfigOutputTextView(ly)
+	tv := gide.ConfigOutputTextView(ly)
 	return tv
 }
 

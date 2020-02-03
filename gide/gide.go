@@ -45,6 +45,10 @@ type Gide interface {
 	// FocusOnTabs moves keyboard focus to Tabs panel -- returns false if nothing at that tab
 	FocusOnTabs() bool
 
+	// ShowFile shows given file name at given line, returning TextView showing it
+	// or error if not found.
+	ShowFile(fname string, ln int) (*TextView, error)
+
 	// NextViewFileNode sets the next text view to view file in given node (opens
 	// buffer if not already opened) -- if already being viewed, that is
 	// activated, returns text view and index
@@ -55,9 +59,6 @@ type Gide interface {
 
 	// SetActiveTextView sets the given textview as the active one, and returns its index
 	SetActiveTextView(av *TextView) int
-
-	// ConfigOutputTextView configures a command-output textview within given parent layout
-	ConfigOutputTextView(ly *gi.Layout) *giv.TextView
 
 	// ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 	// and shows output in Tab with name of command

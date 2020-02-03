@@ -95,14 +95,14 @@ func CvtLocation(ds *api.Location) *gidebug.Location {
 	return lc
 }
 
-func CvtLocations(ds []api.Location) []gidebug.Location {
+func CvtLocations(ds []api.Location) []*gidebug.Location {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	th := make([]gidebug.Location, nd)
+	th := make([]*gidebug.Location, nd)
 	for i := range ds {
-		th[i] = *CvtLocation(&ds[i])
+		th[i] = CvtLocation(&ds[i])
 	}
 	return th
 }
@@ -205,14 +205,14 @@ func CvtStackframe(ds *api.Stackframe) *gidebug.Stackframe {
 	return fr
 }
 
-func CvtStackframes(ds []api.Stackframe) []gidebug.Stackframe {
+func CvtStackframes(ds []api.Stackframe) []*gidebug.Stackframe {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	vr := make([]gidebug.Stackframe, nd)
+	vr := make([]*gidebug.Stackframe, nd)
 	for i := range ds {
-		vr[i] = *CvtStackframe(&ds[i])
+		vr[i] = CvtStackframe(&ds[i])
 	}
 	return vr
 }
@@ -240,14 +240,14 @@ func CvtVariable(ds *api.Variable) *gidebug.Variable {
 	return vr
 }
 
-func CvtVariables(ds []api.Variable) []gidebug.Variable {
+func CvtVariables(ds []api.Variable) []*gidebug.Variable {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	vr := make([]gidebug.Variable, nd)
+	vr := make([]*gidebug.Variable, nd)
 	for i := range ds {
-		vr[i] = *CvtVariable(&ds[i])
+		vr[i] = CvtVariable(&ds[i])
 	}
 	return vr
 }

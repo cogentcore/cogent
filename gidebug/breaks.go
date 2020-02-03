@@ -63,11 +63,11 @@ type Breakpoint struct {
 
 // BreakpointInfo contains informations about the current breakpoint
 type BreakpointInfo struct {
-	Stacktrace []Stackframe `json:"stacktrace,omitempty"`
-	Goroutine  *Goroutine   `json:"goroutine,omitempty"`
-	Variables  []Variable   `json:"variables,omitempty"`
-	Arguments  []Variable   `json:"arguments,omitempty"`
-	Locals     []Variable   `json:"locals,omitempty"`
+	Stacktrace []*Stackframe `json:"stacktrace,omitempty"`
+	Goroutine  *Goroutine    `json:"goroutine,omitempty"`
+	Variables  []*Variable   `json:"variables,omitempty"`
+	Arguments  []*Variable   `json:"arguments,omitempty"`
+	Locals     []*Variable   `json:"locals,omitempty"`
 }
 
 // DiscardedBreakpoint is a breakpoint that is not

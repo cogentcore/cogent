@@ -7,6 +7,8 @@ package gidebug
 import (
 	"errors"
 	"time"
+
+	"github.com/goki/gi/giv"
 )
 
 var NotStartedErr = errors.New("debugger not started")
@@ -14,8 +16,12 @@ var NotStartedErr = errors.New("debugger not started")
 // GiDebug is the interface for all supported debuggers.
 // It is based directly on the Delve Client interface.
 type GiDebug interface {
-	// Start starts the debugger for a given exe path
-	Start(path string) error
+	// Start starts the debugger for a given exe path, and sets output of debugger
+	// session to given textbuf which is used to monitor output
+	Start(path string, outbuf *giv.TextBuf) error
+
+	// IsActive returns true if the debugger is active and ready for commands
+	IsActive() bool
 
 	// Returns the pid of the process we are debugging.
 	ProcessPid() int
@@ -27,10 +33,10 @@ type GiDebug interface {
 	Detach(killProcess bool) error
 
 	// Restarts program.
-	Restart() ([]DiscardedBreakpoint, error)
+	Restart() ([]*DiscardedBreakpoint, error)
 
 	// Restarts program from the specified position.
-	RestartFrom(pos string, resetArgs bool, newArgs []string) ([]DiscardedBreakpoint, error)
+	RestartFrom(pos string, resetArgs bool, newArgs []string) ([]*DiscardedBreakpoint, error)
 
 	// GetState returns the current debugger state.
 	GetState() (*DebuggerState, error)
@@ -102,7 +108,7 @@ type GiDebug interface {
 	GetThread(id int) (*Thread, error)
 
 	// ListPackageVariables lists all package variables in the context of the current thread.
-	ListPackageVariables(filter string, cfg LoadConfig) ([]Variable, error)
+	ListPackageVariables(filter string, cfg LoadConfig) ([]*Variable, error)
 
 	// EvalVariable returns a variable in the context of the current thread.
 	EvalVariable(scope EvalScope, symbol string, cfg LoadConfig) (*Variable, error)
@@ -120,10 +126,10 @@ type GiDebug interface {
 	ListTypes(filter string) ([]string, error)
 
 	// ListLocals lists all local variables in scope.
-	ListLocalVariables(scope EvalScope, cfg LoadConfig) ([]Variable, error)
+	ListLocalVariables(scope EvalScope, cfg LoadConfig) ([]*Variable, error)
 
 	// ListFunctionArgs lists all arguments to the current function.
-	ListFunctionArgs(scope EvalScope, cfg LoadConfig) ([]Variable, error)
+	ListFunctionArgs(scope EvalScope, cfg LoadConfig) ([]*Variable, error)
 
 	// ListRegisters lists registers and their values.
 	// ListRegisters(threadID int, includeFp bool) (Registers, error)
@@ -132,7 +138,7 @@ type GiDebug interface {
 	ListGoroutines(start, count int) ([]*Goroutine, int, error)
 
 	// Returns stacktrace
-	Stacktrace(goroutineID int, depth int, opts StacktraceOptions, cfg *LoadConfig) ([]Stackframe, error)
+	Stacktrace(goroutineID int, depth int, opts StacktraceOptions, cfg *LoadConfig) ([]*Stackframe, error)
 
 	// Returns whether we attached to a running process or not
 	AttachedToExistingProcess() bool
@@ -149,7 +155,7 @@ type GiDebug interface {
 	// * *<address> returns the location corresponding to the specified address
 	// NOTE: this function does not actually set breakpoints.
 	// If findInstruction is true FindLocation will only return locations that correspond to instructions.
-	FindLocation(scope EvalScope, loc string, findInstruction bool) ([]Location, error)
+	FindLocation(scope EvalScope, loc string, findInstruction bool) ([]*Location, error)
 
 	/*
 		// Disassemble code between startPC and endPC

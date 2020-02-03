@@ -8,25 +8,29 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
+	"github.com/goki/gi/giv"
 	"github.com/goki/gide/gidebug"
 )
 
 // GiDelve is the Delve implementation of the GiDebug interface
 type GiDelve struct {
 	path string          // path to exe
+	conn string          // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
 	dlv  *rpc2.RPCClient // the delve rpc2 client interface
 	cmd  *exec.Cmd       // command running delve
+	obuf *giv.OutBuf     // output buffer
 }
 
 // NewGiDelve creates a new debugger exe and client
 // for given path
-func NewGiDelve(path string) (*GiDelve, error) {
+func NewGiDelve(path string, outbuf *giv.TextBuf) (*GiDelve, error) {
 	gd := &GiDelve{}
-	err := gd.Start(path)
+	err := gd.Start(path, outbuf)
 	return gd, err
 }
 
@@ -41,17 +45,45 @@ func (gd *GiDelve) StartedCheck() error {
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path string) error {
+func (gd *GiDelve) Start(path string, outbuf *giv.TextBuf) error {
 	gd.path = path
-	gd.cmd = exec.Command("dlv", "debug", "--headless", "--api-version=2", "--log", "--listen=127.0.0.1:8181")
+	gd.cmd = exec.Command("dlv", "debug", "--headless", "--api-version=2", "--log") // , "--listen=127.0.0.1:8182")
 	gd.cmd.Dir = filepath.Dir(path)
-	err := gd.cmd.Start()
+	stdout, err := gd.cmd.StdoutPipe()
+	if err == nil {
+		gd.cmd.Stderr = gd.cmd.Stdout
+		err = gd.cmd.Start()
+		if err == nil {
+			gd.obuf = &giv.OutBuf{}
+			gd.obuf.Init(stdout, outbuf, 0, gd.MonitorOutput)
+			go gd.obuf.MonOut()
+		}
+	}
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	gd.dlv = rpc2.NewClient("127.0.0.1:8181")
 	return nil
+}
+
+func (gd *GiDelve) MonitorOutput(out []byte) []byte {
+	if gd.conn != "" {
+		return out
+	}
+	flds := strings.Fields(string(out))
+	if len(flds) == 0 {
+		return out
+	}
+	if flds[0] == "API" && flds[1] == "server" && flds[2] == "listening" && flds[3] == "at:" {
+		gd.conn = flds[4]
+		gd.dlv = rpc2.NewClient(gd.conn)
+	}
+	return out
+}
+
+// IsActive returns whether debugger is active and ready for commands
+func (gd *GiDelve) IsActive() bool {
+	return gd.cmd != nil && gd.dlv != nil
 }
 
 // Returns the pid of the process we are debugging.
@@ -77,11 +109,15 @@ func (gd *GiDelve) Detach(killProcess bool) error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
-	return gd.dlv.Detach(killProcess)
+	err := gd.dlv.Detach(killProcess)
+	if err == nil {
+		gd.dlv = nil
+	}
+	return err
 }
 
 // Restarts program.
-func (gd *GiDelve) Restart() ([]gidebug.DiscardedBreakpoint, error) {
+func (gd *GiDelve) Restart() ([]*gidebug.DiscardedBreakpoint, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -91,7 +127,7 @@ func (gd *GiDelve) Restart() ([]gidebug.DiscardedBreakpoint, error) {
 }
 
 // Restarts program from the specified position.
-func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) ([]gidebug.DiscardedBreakpoint, error) {
+func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) ([]*gidebug.DiscardedBreakpoint, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -304,7 +340,7 @@ func (gd *GiDelve) GetThread(id int) (*gidebug.Thread, error) {
 }
 
 // ListPackageVariables lists all package variables in the context of the current thread.
-func (gd *GiDelve) ListPackageVariables(filter string, cfg gidebug.LoadConfig) ([]gidebug.Variable, error) {
+func (gd *GiDelve) ListPackageVariables(filter string, cfg gidebug.LoadConfig) ([]*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -362,7 +398,7 @@ func (gd *GiDelve) ListTypes(filter string) ([]string, error) {
 }
 
 // ListLocals lists all local variables in scope.
-func (gd *GiDelve) ListLocalVariables(scope gidebug.EvalScope, cfg gidebug.LoadConfig) ([]gidebug.Variable, error) {
+func (gd *GiDelve) ListLocalVariables(scope gidebug.EvalScope, cfg gidebug.LoadConfig) ([]*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -373,7 +409,7 @@ func (gd *GiDelve) ListLocalVariables(scope gidebug.EvalScope, cfg gidebug.LoadC
 }
 
 // ListFunctionArgs lists all arguments to the current function.
-func (gd *GiDelve) ListFunctionArgs(scope gidebug.EvalScope, cfg gidebug.LoadConfig) ([]gidebug.Variable, error) {
+func (gd *GiDelve) ListFunctionArgs(scope gidebug.EvalScope, cfg gidebug.LoadConfig) ([]*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -396,7 +432,7 @@ func (gd *GiDelve) ListGoroutines(start, count int) ([]*gidebug.Goroutine, int, 
 }
 
 // Returns stacktrace
-func (gd *GiDelve) Stacktrace(goroutineID int, depth int, opts gidebug.StacktraceOptions, cfg *gidebug.LoadConfig) ([]gidebug.Stackframe, error) {
+func (gd *GiDelve) Stacktrace(goroutineID int, depth int, opts gidebug.StacktraceOptions, cfg *gidebug.LoadConfig) ([]*gidebug.Stackframe, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -426,7 +462,7 @@ func (gd *GiDelve) AttachedToExistingProcess() bool {
 // * *<address> returns the location corresponding to the specified address
 // NOTE: this function does not actually set breakpoints.
 // If findInstruction is true FindLocation will only return locations that correspond to instructions.
-func (gd *GiDelve) FindLocation(scope gidebug.EvalScope, loc string, findInstruction bool) ([]gidebug.Location, error) {
+func (gd *GiDelve) FindLocation(scope gidebug.EvalScope, loc string, findInstruction bool) ([]*gidebug.Location, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
