@@ -69,6 +69,7 @@ type GideView struct {
 	RunningCmds       gide.CmdRuns            `json:"-" xml:"-" desc:"currently running commands in this project"`
 	ArgVals           gide.ArgVarVals         `json:"-" xml:"-" desc:"current arg var vals"`
 	Prefs             gide.ProjPrefs          `desc:"preferences for this project -- this is what is saved in a .gide project file"`
+	CurDbg            *gide.DebugView         `desc:"current debug view"`
 	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
 	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to GideView"`
 }
@@ -1674,9 +1675,15 @@ func (ge *GideView) Debug() {
 		dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
 		dv.Config(ge, ge.Prefs.MainLang, exePath)
 		ge.FocusOnPanel(TabsIdx)
+		ge.CurDbg = dv
 	} else {
 		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
 	}
+}
+
+// CurDebug returns the current debug view
+func (ge *GideView) CurDebug() *gide.DebugView {
+	return ge.CurDbg
 }
 
 // ChooseRunExec selects the executable to run for the project

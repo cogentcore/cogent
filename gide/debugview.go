@@ -70,14 +70,14 @@ func (dv *DebugView) Start() {
 		}
 	} else {
 		dv.Dbg.Restart()
-		go dv.Dbg.Continue()
+		go dv.Continue()
 	}
 }
 
 // Continue continues running from current point
 func (dv *DebugView) Continue() {
 	ds := <-dv.Dbg.Continue()
-	fmt.Printf("%v\n", ds)
+	// fmt.Printf("%v\n", ds)
 	dv.UpdateFmState(ds)
 }
 
@@ -108,6 +108,16 @@ func (dv *DebugView) Stop() {
 	dv.UpdateFmState(ds)
 }
 
+// SetBreak
+func (dv *DebugView) SetBreak(fname string, line int) {
+	// fmt.Printf("set bp: %v:%v\n", fname, line)
+	_, err := dv.Dbg.SetBreakpoint(fname, line)
+	if err != nil {
+		return
+	}
+	// dv.UpdateFmState(ds)
+}
+
 // UpdateFmState updates the View from given debug state
 func (dv *DebugView) UpdateFmState(ds *gidebug.DebuggerState) {
 	dv.ShowFileThread(ds.CurrentThread)
@@ -118,7 +128,7 @@ func (dv *DebugView) UpdateFmState(ds *gidebug.DebuggerState) {
 
 // ShowFile shows the file name in gide
 func (dv *DebugView) ShowFile(fname string, ln int) {
-	fmt.Printf("File: %s:%d\n", fname, ln)
+	// fmt.Printf("File: %s:%d\n", fname, ln)
 	dv.Gide.ShowFile(fname, ln)
 }
 
@@ -138,7 +148,7 @@ func (dv *DebugView) ShowStack(goroutineID int) {
 	if err != nil {
 		return
 	}
-	sv := dv.StackView()
+	sv := dv.StackVw()
 	sv.SetStack(st)
 }
 
@@ -179,7 +189,7 @@ func (dv *DebugView) Tabs() *gi.TabView {
 }
 
 // StackView returns the stack view from tabs
-func (dv DebugView) StackView() *StackView {
+func (dv DebugView) StackVw() *StackView {
 	tv := dv.Tabs()
 	return tv.TabByName("Stack").(*StackView)
 }
@@ -270,7 +280,7 @@ type StackView struct {
 
 var KiT_StackView = kit.Types.AddType(&StackView{}, StackViewProps)
 
-func (sv *StackView) DebugView() *DebugView {
+func (sv *StackView) DebugVw() *DebugView {
 	dv := sv.ParentByType(KiT_DebugView, ki.Embeds).Embed(KiT_DebugView).(*DebugView)
 	return dv
 }
@@ -287,6 +297,7 @@ func (sv *StackView) Config() {
 	// sv.ConfigToolbar()
 	tv := sv.TableView()
 	tv.SetStretchMax()
+	tv.SetInactive()
 	sv.UpdateEnd(updt)
 }
 
@@ -303,7 +314,11 @@ func (sv *StackView) TableView() *giv.TableView {
 // SetStack sets the stack to view
 func (sv *StackView) SetStack(stack []*gidebug.Stackframe) {
 	tv := sv.TableView()
-	tv.SetSlice(stack)
+	dv := sv.DebugVw()
+	pp := dv.Gide.ProjPrefs()
+	df := gidebug.StackToDisp(stack, string(pp.ProjRoot))
+	tv.SetFullReRender()
+	tv.SetSlice(&df)
 }
 
 // StackViewProps are style properties for DebugView

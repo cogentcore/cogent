@@ -107,6 +107,12 @@ type Gide interface {
 	// Symbols calls a function to parse file or package
 	Symbols()
 
+	// Debug runs debugger on default exe
+	Debug()
+
+	// CurDebug returns the current debug view, or nil
+	CurDebug() *DebugView
+
 	// Declaration
 	Declaration()
 }

@@ -81,6 +81,9 @@ type GiDebug interface {
 	// GetBreakpointByName gets a breakpoint by name.
 	GetBreakpointByName(name string) (*Breakpoint, error)
 
+	// SetBreakpoint sets a new breakpoint at given file and line number
+	SetBreakpoint(fname string, line int) (*Breakpoint, error)
+
 	// CreateBreakpoint creates a new breakpoint.
 	CreateBreakpoint(bp *Breakpoint) (*Breakpoint, error)
 

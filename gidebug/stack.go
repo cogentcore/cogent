@@ -4,6 +4,11 @@
 
 package gidebug
 
+import (
+	"path/filepath"
+	"strings"
+)
+
 // Location holds program location information.
 // In most cases a Location object will represent a physical location, with
 // a single PC address held in the PC field.
@@ -13,8 +18,8 @@ type Location struct {
 	PC       uint64    `desc:"program counter (address)"`
 	File     string    `desc:"file"`
 	Line     int       `desc"line within file"`
-	Function *Function `json:"function,omitempty"`
-	PCs      []uint64  `tableview:"-" desc:"multiple PCs if needed for this location"`
+	Function *Function `desc:"the function"`
+	PCs      []uint64  `desc:"multiple possible PCs possible due to inlining"`
 }
 
 // Stackframe describes one frame in a stack trace.
@@ -55,21 +60,11 @@ func (frame *Stackframe) Var(name string) *Variable {
 
 // Function represents thread-scoped function information.
 type Function struct {
-	// Name is the function name.
-	Name_  string `json:"name"`
-	Value  uint64 `json:"value"`
-	Type   byte   `json:"type"`
-	GoType uint64 `json:"goType"`
-	// Optimized is true if the function was optimized
-	Optimized bool `json:"optimized"`
-}
-
-// Name will return the function name.
-func (fn *Function) Name() string {
-	if fn == nil {
-		return "???"
-	}
-	return fn.Name_
+	Name      string
+	Value     uint64
+	Type      byte   `tableview:"-"`
+	GoType    uint64 `tableview:"-"`
+	Optimized bool   `tableview:"-" desc:"Optimized is true if the function was optimized"`
 }
 
 // StacktraceOptions is the type of the Opts field of StacktraceIn that
@@ -96,4 +91,37 @@ type PackageBuildInfo struct {
 	ImportPath    string
 	DirectoryPath string
 	Files         []string
+}
+
+// RelFile sets the file name relative to given base file path
+func RelFile(file, base string) string {
+	nf, err := filepath.Rel(base, file)
+	if err == nil && !strings.HasPrefix(nf, "..") {
+		file = nf
+	}
+	return file
+}
+
+// DispStackframe is the stack frame for display purposes
+type DispStackframe struct {
+	PC       uint64 `desc:"program counter (address)"`
+	File     string `desc:"file"`
+	Line     int    `desc"line within file"`
+	Function string `desc:"the function name"`
+}
+
+// StackToDisp translates a stackframe into a more cleanly displayable format
+func StackToDisp(sf []*Stackframe, basePath string) []*DispStackframe {
+	df := make([]*DispStackframe, len(sf))
+	for i, f := range sf {
+		ds := &DispStackframe{}
+		ds.PC = f.PC
+		ds.File = RelFile(f.File, basePath)
+		ds.Line = f.Line
+		if f.Function != nil && f.Function.Name != "" {
+			ds.Function = f.Function.Name
+		}
+		df[i] = ds
+	}
+	return df
 }

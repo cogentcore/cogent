@@ -263,6 +263,19 @@ func (gd *GiDelve) GetBreakpointByName(name string) (*gidebug.Breakpoint, error)
 	return CvtBreakpoint(ds), err
 }
 
+// SetBreakpoint sets a new breakpoint at given file and line number
+func (gd *GiDelve) SetBreakpoint(fname string, line int) (*gidebug.Breakpoint, error) {
+	if err := gd.StartedCheck(); err != nil {
+		return nil, err
+	}
+	bp := &gidebug.Breakpoint{}
+	bp.File = fname
+	bp.Line = line
+	gbp := ToBreakpoint(bp)
+	ds, err := gd.dlv.CreateBreakpoint(gbp)
+	return CvtBreakpoint(ds), err
+}
+
 // CreateBreakpoint creates a new breakpoint.
 func (gd *GiDelve) CreateBreakpoint(bp *gidebug.Breakpoint) (*gidebug.Breakpoint, error) {
 	if err := gd.StartedCheck(); err != nil {

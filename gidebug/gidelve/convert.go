@@ -112,7 +112,7 @@ func CvtFunction(ds *api.Function) *gidebug.Function {
 		return nil
 	}
 	fc := &gidebug.Function{}
-	fc.Name_ = ds.Name_
+	fc.Name = ds.Name_
 	fc.Value = ds.Value
 	fc.Type = ds.Type
 	fc.GoType = ds.GoType
