@@ -19,19 +19,34 @@ import (
 
 // GiDelve is the Delve implementation of the GiDebug interface
 type GiDelve struct {
-	path string          // path to exe
-	conn string          // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
-	dlv  *rpc2.RPCClient // the delve rpc2 client interface
-	cmd  *exec.Cmd       // command running delve
-	obuf *giv.OutBuf     // output buffer
+	path     string          // path to exe
+	rootPath string          // root path for project
+	conn     string          // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
+	dlv      *rpc2.RPCClient // the delve rpc2 client interface
+	cmd      *exec.Cmd       // command running delve
+	obuf     *giv.OutBuf     // output buffer
+	params   gidebug.Params
 }
 
 // NewGiDelve creates a new debugger exe and client
-// for given path
-func NewGiDelve(path string, outbuf *giv.TextBuf) (*GiDelve, error) {
+// for given path, and project root path
+func NewGiDelve(path, rootPath string, outbuf *giv.TextBuf) (*GiDelve, error) {
 	gd := &GiDelve{}
-	err := gd.Start(path, outbuf)
+	err := gd.Start(path, rootPath, outbuf)
 	return gd, err
+}
+
+func (gd *GiDelve) HasTasks() bool {
+	return true
+}
+
+func (gd *GiDelve) SetParams(params *gidebug.Params) {
+	gd.params = *params
+	if err := gd.StartedCheck(); err != nil {
+		return
+	}
+	lc := gd.toLoadConfig(&gd.params)
+	gd.dlv.SetReturnValuesLoadConfig(lc)
 }
 
 // StartedCheck checks that delve client is running properly
@@ -41,12 +56,16 @@ func (gd *GiDelve) StartedCheck() error {
 		log.Println(err)
 		return err
 	}
+	if gd.params.MaxStringLen == 0 {
+		gd.params = gidebug.DefaultParams
+	}
 	return nil
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path string, outbuf *giv.TextBuf) error {
+func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf) error {
 	gd.path = path
+	gd.rootPath = rootPath
 	gd.cmd = exec.Command("dlv", "debug", "--headless", "--api-version=2", "--log") // , "--listen=127.0.0.1:8182")
 	gd.cmd.Dir = filepath.Dir(path)
 	stdout, err := gd.cmd.StdoutPipe()
@@ -55,7 +74,7 @@ func (gd *GiDelve) Start(path string, outbuf *giv.TextBuf) error {
 		err = gd.cmd.Start()
 		if err == nil {
 			gd.obuf = &giv.OutBuf{}
-			gd.obuf.Init(stdout, outbuf, 0, gd.MonitorOutput)
+			gd.obuf.Init(stdout, outbuf, 0, gd.monitorOutput)
 			go gd.obuf.MonOut()
 		}
 	}
@@ -66,7 +85,7 @@ func (gd *GiDelve) Start(path string, outbuf *giv.TextBuf) error {
 	return nil
 }
 
-func (gd *GiDelve) MonitorOutput(out []byte) []byte {
+func (gd *GiDelve) monitorOutput(out []byte) []byte {
 	if gd.conn != "" {
 		return out
 	}
@@ -116,212 +135,205 @@ func (gd *GiDelve) Detach(killProcess bool) error {
 	return err
 }
 
-// Restarts program.
-func (gd *GiDelve) Restart() ([]*gidebug.DiscardedBreakpoint, error) {
+// Disconnect closes the connection to the server without sending a Detach request first.
+// If cont is true a continue command will be sent instead.
+func (gd *GiDelve) Disconnect(cont bool) error {
 	if err := gd.StartedCheck(); err != nil {
-		return nil, err
+		return err
 	}
-	db, err := gd.dlv.Restart()
-	_ = db
-	return nil, err
+	gd.dlv.Disconnect(cont)
+	return nil
+}
+
+// Restarts program.
+func (gd *GiDelve) Restart() error {
+	if err := gd.StartedCheck(); err != nil {
+		return err
+	}
+	_, err := gd.dlv.Restart()
+	return err
 }
 
 // Restarts program from the specified position.
-func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) ([]*gidebug.DiscardedBreakpoint, error) {
+func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) error {
 	if err := gd.StartedCheck(); err != nil {
-		return nil, err
+		return err
 	}
-	db, err := gd.dlv.RestartFrom(false, pos, resetArgs, newArgs)
-	_ = db
-	return nil, err
+	_, err := gd.dlv.RestartFrom(false, pos, resetArgs, newArgs)
+	return err
 }
 
 // GetState returns the current debugger state.
-func (gd *GiDelve) GetState() (*gidebug.DebuggerState, error) {
+// This will return immediately -- if the target is running then
+// the Running flag will be set and a Stop bus be called to
+// get any further information about the target.
+func (gd *GiDelve) GetState() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ds, err := gd.dlv.GetState()
-	return CvtDebuggerState(ds), err
-}
-
-// GetStateNonBlocking returns the current debugger state,
-// returning immediately if the target is already running.
-func (gd *GiDelve) GetStateNonBlocking() (*gidebug.DebuggerState, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	ds, err := gd.dlv.GetStateNonBlocking()
-	return CvtDebuggerState(ds), err
+	ds, err := gd.dlv.GetStateNonBlocking() // using non-blocking!
+	return gd.cvtState(ds), err
 }
 
 // Continue resumes process execution.
-func (gd *GiDelve) Continue() <-chan *gidebug.DebuggerState {
+func (gd *GiDelve) Continue() <-chan *gidebug.State {
 	if err := gd.StartedCheck(); err != nil {
 		return nil
 	}
 	ds := gd.dlv.Continue()
-	return CvtDebuggerStateChan(ds)
+	return gd.cvtStateChan(ds)
 }
 
 // Rewind resumes process execution backwards.
-func (gd *GiDelve) Rewind() <-chan *gidebug.DebuggerState {
+func (gd *GiDelve) Rewind() <-chan *gidebug.State {
 	if err := gd.StartedCheck(); err != nil {
 		return nil
 	}
 	ds := gd.dlv.Rewind()
-	return CvtDebuggerStateChan(ds)
+	return gd.cvtStateChan(ds)
 }
 
 // Next continues to the next source line, not entering function calls.
-func (gd *GiDelve) Next() (*gidebug.DebuggerState, error) {
+func (gd *GiDelve) Next() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.Next()
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
 // Step continues to the next source line, entering function calls.
-func (gd *GiDelve) Step() (*gidebug.DebuggerState, error) {
+func (gd *GiDelve) Step() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.Step()
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
 // StepOut continues to the return address of the current function
-func (gd *GiDelve) StepOut() (*gidebug.DebuggerState, error) {
+func (gd *GiDelve) StepOut() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.StepOut()
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
 // Call resumes process execution while making a function call.
-func (gd *GiDelve) Call(goroutineID int, expr string, unsafe bool) (*gidebug.DebuggerState, error) {
+func (gd *GiDelve) Call(goroutineID int, expr string, unsafe bool) (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.Call(goroutineID, expr, unsafe)
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
 // SingleStep will step a single cpu instruction.
-func (gd *GiDelve) StepInstruction() (*gidebug.DebuggerState, error) {
+func (gd *GiDelve) SingleStep() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.StepInstruction()
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
 // SwitchThread switches the current thread context.
-func (gd *GiDelve) SwitchThread(threadID int) (*gidebug.DebuggerState, error) {
+func (gd *GiDelve) SwitchThread(threadID int) (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.SwitchThread(threadID)
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
-// SwitchGoroutine switches the current goroutine (and the current thread as well)
-func (gd *GiDelve) SwitchGoroutine(goroutineID int) (*gidebug.DebuggerState, error) {
+// SwitchTask switches the current goroutine (and the current thread as well)
+func (gd *GiDelve) SwitchTask(goroutineID int) (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.SwitchGoroutine(goroutineID)
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
-// Halt suspends the process.
-func (gd *GiDelve) Halt() (*gidebug.DebuggerState, error) {
+// Stop suspends the process.
+func (gd *GiDelve) Stop() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.Halt()
-	return CvtDebuggerState(ds), err
+	return gd.cvtState(ds), err
 }
 
-// GetBreakpoint gets a breakpoint by ID.
-func (gd *GiDelve) GetBreakpoint(id int) (*gidebug.Breakpoint, error) {
+// GetBreak gets a breakpoint by ID.
+func (gd *GiDelve) GetBreak(id int) (*gidebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.GetBreakpoint(id)
-	return CvtBreakpoint(ds), err
+	return gd.cvtBreak(ds), err
 }
 
-// GetBreakpointByName gets a breakpoint by name.
-func (gd *GiDelve) GetBreakpointByName(name string) (*gidebug.Breakpoint, error) {
+// GetBreakByName gets a breakpoint by name.
+func (gd *GiDelve) GetBreakByName(name string) (*gidebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.GetBreakpointByName(name)
-	return CvtBreakpoint(ds), err
+	return gd.cvtBreak(ds), err
 }
 
-// SetBreakpoint sets a new breakpoint at given file and line number
-func (gd *GiDelve) SetBreakpoint(fname string, line int) (*gidebug.Breakpoint, error) {
+// SetBreak sets a new breakpoint at given file and line number
+func (gd *GiDelve) SetBreak(fname string, line int) (*gidebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	bp := &gidebug.Breakpoint{}
+	bp := &api.Breakpoint{}
 	bp.File = fname
 	bp.Line = line
-	gbp := ToBreakpoint(bp)
-	ds, err := gd.dlv.CreateBreakpoint(gbp)
-	return CvtBreakpoint(ds), err
+	ds, err := gd.dlv.CreateBreakpoint(bp)
+	return gd.cvtBreak(ds), err
 }
 
-// CreateBreakpoint creates a new breakpoint.
-func (gd *GiDelve) CreateBreakpoint(bp *gidebug.Breakpoint) (*gidebug.Breakpoint, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	gbp := ToBreakpoint(bp)
-	ds, err := gd.dlv.CreateBreakpoint(gbp)
-	return CvtBreakpoint(ds), err
-}
-
-// ListBreakpoints gets all breakpoints.
-func (gd *GiDelve) ListBreakpoints() ([]*gidebug.Breakpoint, error) {
+// ListBreaks gets all breakpoints.
+func (gd *GiDelve) ListBreaks() ([]*gidebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.ListBreakpoints()
-	return CvtBreakpoints(ds), err
+	return gd.cvtBreaks(ds), err
 }
 
-// ClearBreakpoint deletes a breakpoint by ID.
-func (gd *GiDelve) ClearBreakpoint(id int) (*gidebug.Breakpoint, error) {
+// ClearBreak deletes a breakpoint by ID.
+func (gd *GiDelve) ClearBreak(id int) error {
 	if err := gd.StartedCheck(); err != nil {
-		return nil, err
+		return err
 	}
-	ds, err := gd.dlv.ClearBreakpoint(id)
-	return CvtBreakpoint(ds), err
+	_, err := gd.dlv.ClearBreakpoint(id)
+	return err
 }
 
-// ClearBreakpointByName deletes a breakpoint by name
-func (gd *GiDelve) ClearBreakpointByName(name string) (*gidebug.Breakpoint, error) {
+// ClearBreakByName deletes a breakpoint by name
+func (gd *GiDelve) ClearBreakByName(name string) (*gidebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.ClearBreakpointByName(name)
-	return CvtBreakpoint(ds), err
+	return gd.cvtBreak(ds), err
 }
 
-// AmmendBreakpoint allows user to update an existing breakpoint for example
+// AmmendBreak allows user to update an existing breakpoint for example
 // to change the information retrieved when the breakpoint is hit or to change,
 // add or remove the break condition
-func (gd *GiDelve) AmendBreakpoint(bp *gidebug.Breakpoint) error {
+func (gd *GiDelve) AmendBreak(id int, cond string, trace bool) error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
-	gbp := ToBreakpoint(bp)
-	err := gd.dlv.AmendBreakpoint(gbp)
+	bp := &api.Breakpoint{}
+	bp.ID = id
+	bp.Cond = cond
+	bp.Tracepoint = trace
+	err := gd.dlv.AmendBreakpoint(bp)
 	return err
 }
 
@@ -334,13 +346,97 @@ func (gd *GiDelve) CancelNext() error {
 	return err
 }
 
+// InitAllState initializes the given AllState with relevant info for
+// current state of things.  Does Not get AllVars
+func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
+	bs, err := gd.GetState()
+	if err != nil {
+		return err
+	}
+	if bs.Running {
+		all.State.Running = true
+		return gidebug.IsRunningErr
+	}
+	all.State = *bs
+	all.CurThread = all.State.Thread.ID
+	all.CurTask = all.State.Task.ID
+	bk, err := gd.ListBreaks()
+	if err != nil {
+		return err
+	}
+	all.Breaks = bk
+	st, err := gd.ListThreads()
+	if err != nil {
+		return err
+	}
+	all.Threads = st
+	th, err := gd.ListTasks()
+	if err != nil {
+		return err
+	}
+	all.Tasks = th
+	sf, err := gd.Stack(all.CurTask, 100)
+	if err != nil {
+		return err
+	}
+	all.Stack = sf
+	vr, err := gd.ListVars(all.CurTask, 0)
+	if err != nil {
+		return err
+	}
+	all.Vars = vr
+	va, err := gd.ListArgs(all.CurTask, 0)
+	if err != nil {
+		return err
+	}
+	all.Args = va
+	return nil
+}
+
+// UpdateAllState updates the state for given threadId and
+// frame number (only info different from current results is updated).
+// For given thread (lowest-level supported by language,
+// e.g., Task if supported, else Thread), and frame number.
+func (gd *GiDelve) UpdateAllState(all *gidebug.AllState, threadID int, frame int) error {
+	updt := false
+	if threadID != all.CurTask {
+		updt = true
+		all.CurTask = threadID
+		sf, err := gd.Stack(all.CurTask, 100)
+		if err != nil {
+			return err
+		}
+		all.Stack = sf
+	}
+	if updt || all.CurFrame != frame {
+		all.CurFrame = frame
+		vr, err := gd.ListVars(all.CurTask, all.CurFrame)
+		if err != nil {
+			return err
+		}
+		all.Vars = vr
+		va, err := gd.ListArgs(all.CurTask, all.CurFrame)
+		if err != nil {
+			return err
+		}
+		all.Args = va
+	}
+	return nil
+}
+
+// CurThreadID returns the proper current threadID (task or thread)
+// based on debugger, from given state.
+func (gd *GiDelve) CurThreadID(all *gidebug.AllState) int {
+	return all.CurTask
+}
+
 // ListThreads lists all threads.
 func (gd *GiDelve) ListThreads() ([]*gidebug.Thread, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.ListThreads()
-	return CvtThreads(ds), err
+	return gd.cvtThreads(ds), err
 }
 
 // GetThread gets a thread by its ID.
@@ -349,37 +445,77 @@ func (gd *GiDelve) GetThread(id int) (*gidebug.Thread, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.GetThread(id)
-	return CvtThread(ds), err
+	return gd.cvtThread(ds), err
 }
 
-// ListPackageVariables lists all package variables in the context of the current thread.
-func (gd *GiDelve) ListPackageVariables(filter string, cfg gidebug.LoadConfig) ([]*gidebug.Variable, error) {
+// ListTasks lists all goroutines.
+func (gd *GiDelve) ListTasks() ([]*gidebug.Task, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	lc := ToLoadConfig(&cfg)
+	ds, _, err := gd.dlv.ListGoroutines(0, -1)
+	return gd.cvtTasks(ds), err
+}
+
+// Stack returns stacktrace
+func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*gidebug.Frame, error) {
+	if err := gd.StartedCheck(); err != nil {
+		return nil, err
+	}
+	ds, err := gd.dlv.Stacktrace(goroutineID, depth, api.StacktraceSimple, nil)
+	return gd.cvtStack(ds), err
+}
+
+// ListAllVarslists all package variables in the context of the current thread.
+func (gd *GiDelve) ListAllVars(filter string) ([]*gidebug.Variable, error) {
+	if err := gd.StartedCheck(); err != nil {
+		return nil, err
+	}
+	lc := gd.toLoadConfig(&gd.params)
 	ds, err := gd.dlv.ListPackageVariables(filter, *lc)
-	return CvtVariables(ds), err
+	return gd.cvtVars(ds), err
 }
 
-// EvalVariable returns a variable in the context of the current thread.
-func (gd *GiDelve) EvalVariable(scope gidebug.EvalScope, symbol string, cfg gidebug.LoadConfig) (*gidebug.Variable, error) {
+// ListVars lists all local variables in scope.
+func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ec := ToEvalScope(&scope)
-	lc := ToLoadConfig(&cfg)
-	ds, err := gd.dlv.EvalVariable(*ec, symbol, *lc)
-	return CvtVariable(ds), err
+	ec := gd.toEvalScope(threadID, frame)
+	lc := gd.toLoadConfig(&gd.params)
+	ds, err := gd.dlv.ListLocalVariables(*ec, *lc)
+	return gd.cvtVars(ds), err
 }
 
-// SetVariable sets the value of a variable
-func (gd *GiDelve) SetVariable(scope gidebug.EvalScope, symbol, value string) error {
+// ListArgs lists all arguments to the current function.
+func (gd *GiDelve) ListArgs(threadID int, frame int) ([]*gidebug.Variable, error) {
+	if err := gd.StartedCheck(); err != nil {
+		return nil, err
+	}
+	ec := gd.toEvalScope(threadID, frame)
+	lc := gd.toLoadConfig(&gd.params)
+	ds, err := gd.dlv.ListFunctionArgs(*ec, *lc)
+	return gd.cvtVars(ds), err
+}
+
+// GetVariable returns a variable in the context of the current thread.
+func (gd *GiDelve) GetVar(name string, threadID int, frame int) (*gidebug.Variable, error) {
+	if err := gd.StartedCheck(); err != nil {
+		return nil, err
+	}
+	ec := gd.toEvalScope(threadID, frame)
+	lc := gd.toLoadConfig(&gd.params)
+	ds, err := gd.dlv.EvalVariable(*ec, name, *lc)
+	return gd.cvtVar(ds), err
+}
+
+// SetVar sets the value of a variable
+func (gd *GiDelve) SetVar(name, value string, threadID int, frame int) error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
-	ec := ToEvalScope(&scope)
-	err := gd.dlv.SetVariable(*ec, symbol, value)
+	ec := gd.toEvalScope(threadID, frame)
+	err := gd.dlv.SetVariable(*ec, name, value)
 	return err
 }
 
@@ -392,8 +528,8 @@ func (gd *GiDelve) ListSources(filter string) ([]string, error) {
 	return ds, err
 }
 
-// ListFunctions lists all functions in the process matching filter.
-func (gd *GiDelve) ListFunctions(filter string) ([]string, error) {
+// ListFuncs lists all functions in the process matching filter.
+func (gd *GiDelve) ListFuncs(filter string) ([]string, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -410,50 +546,6 @@ func (gd *GiDelve) ListTypes(filter string) ([]string, error) {
 	return ds, err
 }
 
-// ListLocals lists all local variables in scope.
-func (gd *GiDelve) ListLocalVariables(scope gidebug.EvalScope, cfg gidebug.LoadConfig) ([]*gidebug.Variable, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	ec := ToEvalScope(&scope)
-	lc := ToLoadConfig(&cfg)
-	ds, err := gd.dlv.ListLocalVariables(*ec, *lc)
-	return CvtVariables(ds), err
-}
-
-// ListFunctionArgs lists all arguments to the current function.
-func (gd *GiDelve) ListFunctionArgs(scope gidebug.EvalScope, cfg gidebug.LoadConfig) ([]*gidebug.Variable, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	ec := ToEvalScope(&scope)
-	lc := ToLoadConfig(&cfg)
-	ds, err := gd.dlv.ListFunctionArgs(*ec, *lc)
-	return CvtVariables(ds), err
-}
-
-// ListRegisters lists registers and their values.
-// func (gd *GiDelve) ListRegisters(threadID int, includeFp bool) (Registers, error)
-
-// ListGoroutines lists all goroutines.
-func (gd *GiDelve) ListGoroutines(start, count int) ([]*gidebug.Goroutine, int, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, 0, err
-	}
-	ds, ct, err := gd.dlv.ListGoroutines(start, count)
-	return CvtGoroutines(ds), ct, err
-}
-
-// Returns stacktrace
-func (gd *GiDelve) Stacktrace(goroutineID int, depth int, opts gidebug.StacktraceOptions, cfg *gidebug.LoadConfig) ([]*gidebug.Stackframe, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	lc := ToLoadConfig(cfg)
-	ds, err := gd.dlv.Stacktrace(goroutineID, depth, api.StacktraceOptions(opts), lc)
-	return CvtStackframes(ds), err
-}
-
 // Returns whether we attached to a running process or not
 func (gd *GiDelve) AttachedToExistingProcess() bool {
 	if err := gd.StartedCheck(); err != nil {
@@ -461,52 +553,4 @@ func (gd *GiDelve) AttachedToExistingProcess() bool {
 	}
 	ds := gd.dlv.AttachedToExistingProcess()
 	return ds
-}
-
-// Returns concrete location information described by a location expression
-// loc ::= <filename>:<line> | <function>[:<line>] | /<regex>/ | (+|-)<offset> | <line> | *<address>
-// * <filename> can be the full path of a file or just a suffix
-// * <function> ::= <package>.<receiver type>.<name> | <package>.(*<receiver type>).<name> | <receiver type>.<name> | <package>.<name> | (*<receiver type>).<name> | <name>
-// * <function> must be unambiguous
-// * /<regex>/ will return a location for each function matched by regex
-// * +<offset> returns a location for the line that is <offset> lines after the current line
-// * -<offset> returns a location for the line that is <offset> lines before the current line
-// * <line> returns a location for a line in the current file
-// * *<address> returns the location corresponding to the specified address
-// NOTE: this function does not actually set breakpoints.
-// If findInstruction is true FindLocation will only return locations that correspond to instructions.
-func (gd *GiDelve) FindLocation(scope gidebug.EvalScope, loc string, findInstruction bool) ([]*gidebug.Location, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	ec := ToEvalScope(&scope)
-	ds, err := gd.dlv.FindLocation(*ec, loc, findInstruction)
-	return CvtLocations(ds), err
-}
-
-/*
-	// Disassemble code between startPC and endPC
-	DisassembleRange(scope gidebug.EvalScope, startPC, endPC uint64, flavour AssemblyFlavour) (AsmInstructions, error)
-
-	// Disassemble code of the function containing PC
-	DisassemblePC(scope gidebug.EvalScope, pc uint64, flavour AssemblyFlavour) (AsmInstructions, error)
-*/
-
-// SetReturnValuesLoadConfig sets the load configuration for return values.
-func (gd *GiDelve) SetReturnValuesLoadConfig(cfg *gidebug.LoadConfig) {
-	if err := gd.StartedCheck(); err != nil {
-		return
-	}
-	lc := ToLoadConfig(cfg)
-	gd.dlv.SetReturnValuesLoadConfig(lc)
-}
-
-// Disconnect closes the connection to the server without sending a Detach request first.
-// If cont is true a continue command will be sent instead.
-func (gd *GiDelve) Disconnect(cont bool) error {
-	if err := gd.StartedCheck(); err != nil {
-		return err
-	}
-	gd.dlv.Disconnect(cont)
-	return nil
 }

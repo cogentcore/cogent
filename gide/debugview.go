@@ -17,20 +17,20 @@ import (
 	"github.com/goki/pi/filecat"
 )
 
-var Debuggers = map[filecat.Supported]func(path string, outbuf *giv.TextBuf) (gidebug.GiDebug, error){
-	filecat.Go: func(path string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
-		return gidelve.NewGiDelve(path, outbuf)
+var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error){
+	filecat.Go: func(path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
+		return gidelve.NewGiDelve(path, rootPath, outbuf)
 	},
 }
 
-func NewDebugger(sup filecat.Supported, path string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
+func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported\n", sup)
 		log.Println(err)
 		return nil, err
 	}
-	dbg, err := df(path, outbuf)
+	dbg, err := df(path, rootPath, outbuf)
 	if err != nil {
 		log.Println(err)
 	}
@@ -47,6 +47,7 @@ type DebugView struct {
 	Sup     filecat.Supported `desc:"supported file type to determine debugger"`
 	ExePath string            `desc:"path to executable / dir to debug"`
 	Dbg     gidebug.GiDebug   `json:"-" xml:"-" desc:"the debugger"`
+	State   gidebug.AllState  `json:"-" xml:"-" desc:"all relevant debug state info"`
 	OutBuf  *giv.TextBuf      `json:"-" xml:"-" desc:"output from the debugger"`
 	Gide    Gide              `json:"-" xml:"-" desc:"parent gide project"`
 }
@@ -64,7 +65,11 @@ func (dv *DebugView) Destroy() {
 // Start starts the debuger
 func (dv *DebugView) Start() {
 	if dv.Dbg == nil {
-		dbg, err := NewDebugger(dv.Sup, dv.ExePath, dv.OutBuf)
+		rootPath := ""
+		if dv.Gide != nil {
+			rootPath = string(dv.Gide.ProjPrefs().ProjRoot)
+		}
+		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf)
 		if err == nil {
 			dv.Dbg = dbg
 		}
@@ -77,7 +82,6 @@ func (dv *DebugView) Start() {
 // Continue continues running from current point
 func (dv *DebugView) Continue() {
 	ds := <-dv.Dbg.Continue()
-	// fmt.Printf("%v\n", ds)
 	dv.UpdateFmState(ds)
 }
 
@@ -101,7 +105,7 @@ func (dv *DebugView) Step() {
 
 // Stop
 func (dv *DebugView) Stop() {
-	ds, err := dv.Dbg.Halt()
+	ds, err := dv.Dbg.Stop()
 	if err != nil {
 		return
 	}
@@ -111,7 +115,7 @@ func (dv *DebugView) Stop() {
 // SetBreak
 func (dv *DebugView) SetBreak(fname string, line int) {
 	// fmt.Printf("set bp: %v:%v\n", fname, line)
-	_, err := dv.Dbg.SetBreakpoint(fname, line)
+	_, err := dv.Dbg.SetBreak(fname, line)
 	if err != nil {
 		return
 	}
@@ -129,10 +133,18 @@ func (dv *DebugView) ClearBreak(fname string, line int) {
 }
 
 // UpdateFmState updates the View from given debug state
-func (dv *DebugView) UpdateFmState(ds *gidebug.DebuggerState) {
-	dv.ShowFileThread(ds.CurrentThread)
-	if ds.SelectedGoroutine != nil {
-		dv.ShowStack(ds.SelectedGoroutine.ID)
+func (dv *DebugView) UpdateFmState(ds *gidebug.State) {
+	if ds.Running {
+		return
+	}
+	err := dv.Dbg.InitAllState(&dv.State)
+	if err == gidebug.IsRunningErr {
+		return
+	}
+	cf := dv.State.CurStackFrame()
+	if cf != nil {
+		dv.ShowFile(cf.Loc.FPath, cf.Loc.Line)
+		dv.ShowStack()
 	}
 }
 
@@ -142,24 +154,10 @@ func (dv *DebugView) ShowFile(fname string, ln int) {
 	dv.Gide.ShowFile(fname, ln)
 }
 
-// ShowFileThread shows the file for given thread (if non-nil)
-func (dv *DebugView) ShowFileThread(th *gidebug.Thread) {
-	if th == nil {
-		return
-	}
-	dv.ShowFile(th.File, th.Line)
-}
-
-// todo: need a more generic term for goroutine
-
-// ShowStack shows the stack for given goroutine
-func (dv *DebugView) ShowStack(goroutineID int) {
-	st, err := dv.Dbg.Stacktrace(goroutineID, 100, gidebug.StacktraceSimple, &gidebug.DefaultConfig)
-	if err != nil {
-		return
-	}
+// ShowStack shows the current stack
+func (dv *DebugView) ShowStack() {
 	sv := dv.StackVw()
-	sv.SetStack(st)
+	sv.ShowStack()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +174,6 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "ctrlbar")
-	// config.Add(gi.KiT_ToolBar, "replbar")
 	config.Add(gi.KiT_TabView, "tabs")
 	mods, updt := dv.ConfigChildren(config, ki.UniqueNames)
 	if !mods {
@@ -244,10 +241,16 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
 
-	cb.AddAction(gi.ActOpts{Icon: "play", Tooltip: "(re)start the debugger on" + dv.ExePath}, dv.This(),
+	cb.AddAction(gi.ActOpts{Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Start()
+			cb.UpdateActions()
+		})
+	cb.AddAction(gi.ActOpts{Icon: "play", Tooltip: "continue execution from current point"}, dv.This(),
+		func(recv, send ki.Ki, sig int64, data interface{}) {
+			dvv := recv.Embed(KiT_DebugView).(*DebugView)
+			dvv.Continue()
 			cb.UpdateActions()
 		})
 	cb.AddAction(gi.ActOpts{Icon: "fast-fwd", Tooltip: "step to next source line, skipping over methods", UpdateFunc: dv.ActionActivate}, dv.This(),
@@ -306,7 +309,11 @@ func (sv *StackView) Config() {
 	}
 	// sv.ConfigToolbar()
 	tv := sv.TableView()
+	sv.SetProp("inactive", true)
 	tv.SetStretchMax()
+	tv.SetInactive()
+	dv := sv.DebugVw()
+	tv.SetSlice(&dv.State.Stack)
 	tv.SetInactive()
 	sv.UpdateEnd(updt)
 }
@@ -321,16 +328,16 @@ func (sv *StackView) TableView() *giv.TableView {
 	return sv.ChildByName("stack", 1).(*giv.TableView)
 }
 
-// SetStack sets the stack to view
-func (sv *StackView) SetStack(stack []*gidebug.Stackframe) {
+// ShowStack triggers update of view of State.Stack
+func (sv *StackView) ShowStack() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
-	pp := dv.Gide.ProjPrefs()
-	df := gidebug.StackToDisp(stack, string(pp.ProjRoot))
-	sv.SetFullReRender()
-	updt := sv.UpdateStart()
-	tv.SetSlice(&df)
-	sv.UpdateEnd(updt)
+	dv.SetFullReRender()
+	updt := dv.UpdateStart()
+	tv.SetInactive()
+	tv.SetSlice(&dv.State.Stack)
+	tv.SetInactive()
+	dv.UpdateEnd(updt)
 }
 
 // StackViewProps are style properties for DebugView
