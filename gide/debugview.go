@@ -118,6 +118,16 @@ func (dv *DebugView) SetBreak(fname string, line int) {
 	// dv.UpdateFmState(ds)
 }
 
+// ClearBreak
+func (dv *DebugView) ClearBreak(fname string, line int) {
+	// fmt.Printf("set bp: %v:%v\n", fname, line)
+	// _, err := dv.Dbg.ClearBreakpoint(fname, line)
+	// if err != nil {
+	// 	return
+	// }
+	// dv.UpdateFmState(ds)
+}
+
 // UpdateFmState updates the View from given debug state
 func (dv *DebugView) UpdateFmState(ds *gidebug.DebuggerState) {
 	dv.ShowFileThread(ds.CurrentThread)
@@ -317,8 +327,10 @@ func (sv *StackView) SetStack(stack []*gidebug.Stackframe) {
 	dv := sv.DebugVw()
 	pp := dv.Gide.ProjPrefs()
 	df := gidebug.StackToDisp(stack, string(pp.ProjRoot))
-	tv.SetFullReRender()
+	sv.SetFullReRender()
+	updt := sv.UpdateStart()
 	tv.SetSlice(&df)
+	sv.UpdateEnd(updt)
 }
 
 // StackViewProps are style properties for DebugView
