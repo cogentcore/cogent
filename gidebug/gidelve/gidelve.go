@@ -337,6 +337,53 @@ func (gd *GiDelve) AmendBreak(id int, cond string, trace bool) error {
 	return err
 }
 
+// UpdateBreaks updates current breakpoints based on given list of breakpoints.
+// first gets the current list, and does actions to ensure that the list is set.
+func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
+	if err := gd.StartedCheck(); err != nil {
+		return err
+	}
+	cb, err := gd.ListBreaks()
+	if err != nil {
+		return err
+	}
+	for itr := 0; itr < 2; itr++ {
+		updt := false
+		for _, b := range *brk {
+			c, ci := gidebug.BreakByFile(cb, b.FPath, b.Line)
+			if c != nil {
+				bc := b.Cond
+				bt := b.Trace
+				if bc != c.Cond || bt != c.Trace {
+					gd.AmendBreak(c.ID, b.Cond, b.Trace)
+				}
+				*b = *c
+				b.Cond = bc
+				b.Trace = bt
+				cb = append(cb[:ci], cb[ci+1:]...)
+			} else {
+				if b.On {
+					updt = true // need another iter
+					gd.SetBreak(b.FPath, b.Line)
+				}
+			}
+		}
+		for _, c := range cb { // any we didn't get
+			if c.ID <= 0 {
+				continue
+			}
+			*brk = append(*brk, c)
+		}
+		if updt {
+			cb, err = gd.ListBreaks()
+		} else {
+			break
+		}
+	}
+	gidebug.SortBreaks(*brk)
+	return nil
+}
+
 // Cancels a Next or Step call that was interrupted by a manual stop or by another breakpoint
 func (gd *GiDelve) CancelNext() error {
 	if err := gd.StartedCheck(); err != nil {
@@ -385,11 +432,6 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 		return err
 	}
 	all.Vars = vr
-	va, err := gd.ListArgs(all.CurTask, 0)
-	if err != nil {
-		return err
-	}
-	all.Args = va
 	return nil
 }
 
@@ -415,11 +457,6 @@ func (gd *GiDelve) UpdateAllState(all *gidebug.AllState, threadID int, frame int
 			return err
 		}
 		all.Vars = vr
-		va, err := gd.ListArgs(all.CurTask, all.CurFrame)
-		if err != nil {
-			return err
-		}
-		all.Args = va
 	}
 	return nil
 }
@@ -453,7 +490,7 @@ func (gd *GiDelve) ListTasks() ([]*gidebug.Task, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ds, _, err := gd.dlv.ListGoroutines(0, -1)
+	ds, _, err := gd.dlv.ListGoroutines(0, 1000)
 	return gd.cvtTasks(ds), err
 }
 
@@ -476,26 +513,20 @@ func (gd *GiDelve) ListAllVars(filter string) ([]*gidebug.Variable, error) {
 	return gd.cvtVars(ds), err
 }
 
-// ListVars lists all local variables in scope.
+// ListVars lists all local variables in scope, including args
 func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ec := gd.toEvalScope(threadID, frame)
 	lc := gd.toLoadConfig(&gd.params)
-	ds, err := gd.dlv.ListLocalVariables(*ec, *lc)
-	return gd.cvtVars(ds), err
-}
-
-// ListArgs lists all arguments to the current function.
-func (gd *GiDelve) ListArgs(threadID int, frame int) ([]*gidebug.Variable, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	ec := gd.toEvalScope(threadID, frame)
-	lc := gd.toLoadConfig(&gd.params)
-	ds, err := gd.dlv.ListFunctionArgs(*ec, *lc)
-	return gd.cvtVars(ds), err
+	vs, err := gd.dlv.ListLocalVariables(*ec, *lc)
+	as, err := gd.dlv.ListFunctionArgs(*ec, *lc)
+	cv := gd.cvtVars(vs)
+	ca := gd.cvtVars(as)
+	cv = append(cv, ca...)
+	gidebug.SortVars(cv)
+	return cv, err
 }
 
 // GetVariable returns a variable in the context of the current thread.

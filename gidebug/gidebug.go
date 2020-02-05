@@ -73,7 +73,7 @@ type GiDebug interface {
 	// StepOut continues to the return address of the current function
 	StepOut() (*State, error)
 
-	// SingleStep will step a single cpu instruction.
+	// SingleStep step a single cpu instruction.
 	SingleStep() (*State, error)
 
 	// SwitchThread switches the current system thread context to given one
@@ -101,6 +101,10 @@ type GiDebug interface {
 	// AmmendBreak updates the Condition and Trace information
 	// for the given breakpoint
 	AmendBreak(id int, cond string, trace bool) error
+
+	// UpdateBreaks updates current breakpoints based on given list of breakpoints.
+	// first gets the current list, and does actions to ensure that the list is set.
+	UpdateBreaks(brk *[]*Break) error
 
 	// Cancels a Next or Step call that was interrupted by a
 	// manual stop or by another breakpoint
@@ -138,15 +142,10 @@ type GiDebug interface {
 	// of the current thread.
 	ListAllVars(filter string) ([]*Variable, error)
 
-	// ListVars lists all stack-frame local variables
+	// ListVars lists all stack-frame local variables (including args)
 	// for given thread (lowest-level supported by language,
 	// e.g., Task if supported, else Thread), and frame number.
 	ListVars(threadID int, frame int) ([]*Variable, error)
-
-	// ListArgs lists all arguments to the function.
-	// for given thread (lowest-level supported by language,
-	// e.g., Task if supported, else Thread), and frame number.
-	ListArgs(threadID int, frame int) ([]*Variable, error)
 
 	// GetVar returns a variable for given thread (lowest-level supported by
 	// language -- e.g., Task if supported, else Thread), and frame number.

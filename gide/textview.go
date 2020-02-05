@@ -138,17 +138,17 @@ func (tv *TextView) SetBreakpoint(ln int) {
 	}
 	tv.Buf.SetLineIcon(ln, "stop")
 	tv.Buf.SetLineColor(ln, "red")
-	dbg.SetBreak(string(tv.Buf.Filename), ln+1)
+	dbg.AddBreak(string(tv.Buf.Filename), ln+1)
 }
 
 func (tv *TextView) ClearBreakpoint(ln int) {
-	// tv.Buf.DeleteLineIcon(ln) // testing
+	tv.Buf.DeleteLineIcon(ln)
 	tv.Buf.DeleteLineColor(ln)
 	dbg, has := tv.CurDebug()
 	if !has {
 		return
 	}
-	dbg.ClearBreak(string(tv.Buf.Filename), ln+1)
+	dbg.DeleteBreak(string(tv.Buf.Filename), ln+1)
 }
 
 // HasBreakpoint checks if line has a breakpoint

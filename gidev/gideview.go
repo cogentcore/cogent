@@ -723,17 +723,39 @@ func (ge *GideView) NextViewFileNode(fn *giv.FileNode) (*gide.TextView, int) {
 	return nv, nidx
 }
 
+// FileNodeForFile returns file node for given file path
+func (ge *GideView) FileNodeForFile(fpath string) *giv.FileNode {
+	fnk, ok := ge.Files.FindFile(fpath)
+	if !ok {
+		return nil
+	}
+	fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
+	if fn.IsDir() {
+		return nil
+	}
+	return fn
+}
+
+// TextBufForFile returns TextBuf for given file path
+func (ge *GideView) TextBufForFile(fpath string) *giv.TextBuf {
+	fn := ge.FileNodeForFile(fpath)
+	if fn == nil {
+		return nil
+	}
+	ok, _ := ge.OpenFileNode(fn)
+	if ok {
+		return fn.Buf
+	}
+	return nil
+}
+
 // NextViewFile sets the next text view to view given file name -- include as
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns textview and its
 // index, false if not found
 func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
-	fnk, ok := ge.Files.FindFile(string(fnm))
-	if !ok {
-		return nil, -1, false
-	}
-	fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
-	if fn.IsDir() {
+	fn := ge.FileNodeForFile(string(fnm))
+	if fn == nil {
 		return nil, -1, false
 	}
 	nv, nidx := ge.NextViewFileNode(fn)
@@ -743,12 +765,8 @@ func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 // ViewFile views file in an existing TextView if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
 func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
-	fnk, ok := ge.Files.FindFile(string(fnm))
-	if !ok {
-		return nil, -1, false
-	}
-	fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
-	if fn.IsDir() {
+	fn := ge.FileNodeForFile(string(fnm))
+	if fn == nil {
 		return nil, -1, false
 	}
 	tv, idx, ok := ge.TextViewForFileNode(fn)
@@ -779,12 +797,8 @@ func (ge *GideView) LinkViewFileNode(fn *giv.FileNode) (*gide.TextView, int) {
 // LinkViewFile opens the file in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
-	fnk, ok := ge.Files.FindFile(string(fnm))
-	if !ok {
-		return nil, -1, false
-	}
-	fn := fnk.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
-	if fn.IsDir() {
+	fn := ge.FileNodeForFile(string(fnm))
+	if fn == nil {
 		return nil, -1, false
 	}
 	nv, nidx := ge.LinkViewFileNode(fn)
@@ -939,12 +953,8 @@ func (ge *GideView) TextViewSig(tv *gide.TextView, sig giv.TextViewSignals) {
 // DiffFiles shows the differences between two given files (currently outputs a context diff
 // but will show a side-by-side view soon..
 func (ge *GideView) DiffFiles(fnm1, fnm2 gi.FileName) {
-	fnk2, ok := ge.Files.FindFile(string(fnm2))
-	if !ok {
-		return
-	}
-	fn2 := fnk2.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
-	if fn2.IsDir() {
+	fn2 := ge.FileNodeForFile(string(fnm2))
+	if fn2 == nil {
 		return
 	}
 	ge.DiffFileNode(fnm1, fn2)
@@ -953,12 +963,8 @@ func (ge *GideView) DiffFiles(fnm1, fnm2 gi.FileName) {
 // DiffFileNode shows the differences between two given files (currently outputs a context diff
 // but will show a side-by-side view soon..
 func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
-	fnk1, ok := ge.Files.FindFile(string(fnm))
-	if !ok {
-		return
-	}
-	fn1 := fnk1.This().Embed(giv.KiT_FileNode).(*giv.FileNode)
-	if fn1.IsDir() {
+	fn1 := ge.FileNodeForFile(string(fnm))
+	if fn1 == nil {
 		return
 	}
 	if fn1.Buf == nil {
@@ -2636,6 +2642,7 @@ var GideViewProps = ki.Props{
 		{"Debug", ki.Props{
 			"icon": "terminal",
 		}},
+		{"sep-exe", ki.BlankProp{}},
 		{"Commit", ki.Props{
 			"icon": "star",
 		}},

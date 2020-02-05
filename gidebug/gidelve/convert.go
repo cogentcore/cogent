@@ -36,12 +36,12 @@ func (gd *GiDelve) cvtThread(ds *api.Thread) *gidebug.Thread {
 	}
 	th := &gidebug.Thread{}
 	th.ID = ds.ID
-	th.Loc.PC = ds.PC
-	th.Loc.File = gidebug.RelFile(ds.File, gd.rootPath)
-	th.Loc.Line = ds.Line
-	th.Loc.FPath = ds.File
+	th.PC = ds.PC
+	th.File = gidebug.RelFile(ds.File, gd.rootPath)
+	th.Line = ds.Line
+	th.FPath = ds.File
 	if ds.Function != nil {
-		th.Loc.Func = ds.Function.Name_
+		th.Func = ds.Function.Name_
 	}
 	th.Task = ds.GoroutineID
 	return th
@@ -65,7 +65,13 @@ func (gd *GiDelve) cvtTask(ds *api.Goroutine) *gidebug.Task {
 	}
 	gr := &gidebug.Task{}
 	gr.ID = ds.ID
-	gr.Loc = *gd.cvtLocation(&ds.UserCurrentLoc)
+	gr.PC = ds.UserCurrentLoc.PC
+	gr.File = gidebug.RelFile(ds.UserCurrentLoc.File, gd.rootPath)
+	gr.Line = ds.UserCurrentLoc.Line
+	gr.FPath = ds.UserCurrentLoc.File
+	if ds.UserCurrentLoc.Function != nil {
+		gr.Func = ds.UserCurrentLoc.Function.Name_
+	}
 	gr.Thread = ds.ThreadID
 	gr.LaunchLoc = *gd.cvtLocation(&ds.GoStatementLoc)
 	gr.StartLoc = *gd.cvtLocation(&ds.StartLoc)
@@ -104,12 +110,13 @@ func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *gidebug.Break {
 		return nil
 	}
 	bp := &gidebug.Break{}
+	bp.On = true // if we're converting, it is on..
 	bp.ID = ds.ID
-	bp.Loc.PC = ds.Addr
-	bp.Loc.File = gidebug.RelFile(ds.File, gd.rootPath)
-	bp.Loc.FPath = ds.File
-	bp.Loc.Line = ds.Line
-	bp.Loc.Func = ds.FunctionName
+	bp.PC = ds.Addr
+	bp.File = gidebug.RelFile(ds.File, gd.rootPath)
+	bp.FPath = ds.File
+	bp.Line = ds.Line
+	bp.Func = ds.FunctionName
 	bp.Cond = ds.Cond
 	bp.Trace = ds.Tracepoint
 	return bp
@@ -132,7 +139,13 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe) *gidebug.Frame {
 		return nil
 	}
 	fr := &gidebug.Frame{}
-	fr.Loc = *gd.cvtLocation(&ds.Location)
+	fr.PC = ds.Location.PC
+	fr.File = gidebug.RelFile(ds.Location.File, gd.rootPath)
+	fr.Line = ds.Location.Line
+	fr.FPath = ds.Location.File
+	if ds.Location.Function != nil {
+		fr.Func = ds.Location.Function.Name_
+	}
 	fr.Vars = gd.cvtVars(ds.Locals)
 	fr.Args = gd.cvtVars(ds.Arguments)
 	return fr
