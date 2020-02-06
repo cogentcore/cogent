@@ -18,6 +18,8 @@ import (
 )
 
 // todo:
+// * select current depth, task, thread based on cur vals.
+// * support proper thread / task abstractions -- currently using Task baked in.
 // * breakpoints not updating properly, etc
 // * highlight at end not working.
 // * use a treeview for single-var view -- need a ki node version of variable
