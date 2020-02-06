@@ -6,6 +6,7 @@ package gidelve
 
 import (
 	"github.com/go-delve/delve/service/api"
+	"github.com/goki/gi/giv"
 	"github.com/goki/gide/gidebug"
 )
 
@@ -37,7 +38,7 @@ func (gd *GiDelve) cvtThread(ds *api.Thread) *gidebug.Thread {
 	th := &gidebug.Thread{}
 	th.ID = ds.ID
 	th.PC = ds.PC
-	th.File = gidebug.RelFile(ds.File, gd.rootPath)
+	th.File = giv.RelFilePath(ds.File, gd.rootPath)
 	th.Line = ds.Line
 	th.FPath = ds.File
 	if ds.Function != nil {
@@ -66,7 +67,7 @@ func (gd *GiDelve) cvtTask(ds *api.Goroutine) *gidebug.Task {
 	gr := &gidebug.Task{}
 	gr.ID = ds.ID
 	gr.PC = ds.UserCurrentLoc.PC
-	gr.File = gidebug.RelFile(ds.UserCurrentLoc.File, gd.rootPath)
+	gr.File = giv.RelFilePath(ds.UserCurrentLoc.File, gd.rootPath)
 	gr.Line = ds.UserCurrentLoc.Line
 	gr.FPath = ds.UserCurrentLoc.File
 	if ds.UserCurrentLoc.Function != nil {
@@ -96,7 +97,7 @@ func (gd *GiDelve) cvtLocation(ds *api.Location) *gidebug.Location {
 	}
 	lc := &gidebug.Location{}
 	lc.PC = ds.PC
-	lc.File = gidebug.RelFile(ds.File, gd.rootPath)
+	lc.File = giv.RelFilePath(ds.File, gd.rootPath)
 	lc.Line = ds.Line
 	lc.FPath = ds.File
 	if ds.Function != nil {
@@ -113,7 +114,7 @@ func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *gidebug.Break {
 	bp.On = true // if we're converting, it is on..
 	bp.ID = ds.ID
 	bp.PC = ds.Addr
-	bp.File = gidebug.RelFile(ds.File, gd.rootPath)
+	bp.File = giv.RelFilePath(ds.File, gd.rootPath)
 	bp.FPath = ds.File
 	bp.Line = ds.Line
 	bp.Func = ds.FunctionName
@@ -140,7 +141,7 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe) *gidebug.Frame {
 	}
 	fr := &gidebug.Frame{}
 	fr.PC = ds.Location.PC
-	fr.File = gidebug.RelFile(ds.Location.File, gd.rootPath)
+	fr.File = giv.RelFilePath(ds.Location.File, gd.rootPath)
 	fr.Line = ds.Location.Line
 	fr.FPath = ds.Location.File
 	if ds.Location.Function != nil {
@@ -176,12 +177,13 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 		vr.Heap = true
 	}
 	// vr.Kind = ds.Kind
-	vr.Value = ds.Value
+	vr.ElValue = ds.Value
 	vr.Len = ds.Len
 	vr.Cap = ds.Cap
 	vr.Els = gd.cvtVars(ds.Children)
 	vr.Loc.Line = int(ds.DeclLine)
 	vr.Loc.FPath = ds.LocationExpr
+	vr.Value = ds.Value // note: NOT calling vr.ValueString(false, 0)
 	return vr
 }
 

@@ -49,11 +49,15 @@ type Gide interface {
 	// or error if not found.
 	ShowFile(fname string, ln int) (*TextView, error)
 
-	// FileNodeForFile returns file node for given file path
-	FileNodeForFile(fpath string) *giv.FileNode
+	// FileNodeForFile returns file node for given file path.
+	// add: if not found in existing tree and external files, then if add is true,
+	// it is added to the ExtFiles list.
+	FileNodeForFile(fpath string, add bool) *giv.FileNode
 
 	// TextBufForFile returns the TextBuf for given file path
-	TextBufForFile(fpath string) *giv.TextBuf
+	// add: if not found in existing tree and external files, then if add is true,
+	// it is added to the ExtFiles list.
+	TextBufForFile(fpath string, add bool) *giv.TextBuf
 
 	// NextViewFileNode sets the next text view to view file in given node (opens
 	// buffer if not already opened) -- if already being viewed, that is

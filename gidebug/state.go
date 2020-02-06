@@ -5,9 +5,12 @@
 package gidebug
 
 import (
-	"path/filepath"
+	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/goki/gi/giv"
+	"github.com/goki/ki/indent"
 )
 
 // This file contains all the state structs used in communciating with the
@@ -109,15 +112,16 @@ func SortBreaks(brk []*Break) {
 
 // Variable describes a variable.
 type Variable struct {
-	Name  string      `desc:"name of variable"`
-	Type  string      `desc:"type of variable"`
-	Value string      `desc:"value of variable -- may be truncated if long"`
-	Len   int64       `desc:"length of variable (slices, maps, strings etc)"`
-	Cap   int64       `tableview:"-" desc:"capacity of vaiable"`
-	Addr  uintptr     `desc:"address where variable is located in memory"`
-	Heap  bool        `desc:"if true, the variable is stored in the main memory heap, not the stack"`
-	Els   []*Variable `tableview:"-" desc:"elements of compount variables (struct fields, list / map elements)"`
-	Loc   Location    `tableview:"-" desc:"location where the variable was defined in source"`
+	Name    string      `desc:"name of variable"`
+	Type    string      `desc:"type of variable"`
+	ElValue string      `tableview:"-" desc:"own elemental value of variable (blank for composite types)"`
+	Value   string      `desc:"value of variable -- may be truncated if long"`
+	Len     int64       `desc:"length of variable (slices, maps, strings etc)"`
+	Cap     int64       `tableview:"-" desc:"capacity of vaiable"`
+	Addr    uintptr     `desc:"address where variable is located in memory"`
+	Heap    bool        `desc:"if true, the variable is stored in the main memory heap, not the stack"`
+	Els     []*Variable `tableview:"-" desc:"elements of compount variables (struct fields, list / map elements)"`
+	Loc     Location    `tableview:"-" desc:"location where the variable was defined in source"`
 }
 
 // SortVars sorts vars by name
@@ -125,6 +129,57 @@ func SortVars(vrs []*Variable) {
 	sort.Slice(vrs, func(i, j int) bool {
 		return vrs[i].Name < vrs[j].Name
 	})
+}
+
+// ValueString returns the value of the variable, integrating over sub-elements
+// if newlines, each element is separated by a new line, and indented.
+// Generally this should be used to set the Value field after getting new data.
+// The maxdepth and maxlen parameters provide constraints on the detail
+// provided by this string.
+func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int) string {
+	if vr.ElValue != "" {
+		return vr.ElValue
+	}
+	tabSz := 2
+	ichr := indent.Space
+	var b strings.Builder
+	b.WriteString(vr.Type)
+	b.WriteString(" {")
+	if ident > maxdepth {
+		b.WriteString("...")
+	} else {
+		for _, ve := range vr.Els {
+			if newlines {
+				b.WriteString("\n")
+				b.WriteString(indent.String(ichr, ident+1, tabSz))
+			}
+			if ve.Name != "" {
+				b.WriteString(ve.Name + ": ")
+			}
+			b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen))
+			if b.Len() > maxlen {
+				b.WriteString("...")
+				break
+			}
+		}
+	}
+	if newlines {
+		b.WriteString("\n")
+		b.WriteString(indent.String(ichr, ident, tabSz))
+	}
+	b.WriteString("}")
+	return b.String()
+}
+
+// TypeInfo returns a string of type information -- if newlines, then
+// include newlines between each item (else tabs)
+func (vr *Variable) TypeInfo(newlines bool) string {
+	sep := "\t"
+	if newlines {
+		sep = "\n"
+	}
+	info := []string{"Name: " + vr.Name, "Type: " + vr.Type, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
+	return strings.Join(info, sep)
 }
 
 // State represents the current immediate execution state of the debugger.
@@ -196,7 +251,7 @@ func (as *AllState) AddBreak(fpath string, line int) *Break {
 	br = &Break{}
 	br.On = true
 	br.FPath = fpath
-	br.File = DirAndFile(fpath)
+	br.File = giv.DirAndFile(fpath)
 	br.Line = line
 	as.Breaks = append(as.Breaks, br)
 	return br
@@ -259,25 +314,18 @@ type Params struct {
 
 // DefaultParams are default parameter values
 var DefaultParams = Params{
-	FollowPointers:     true,
+	FollowPointers:     false,
 	MaxVariableRecurse: 5,
 	MaxStringLen:       200,
 	MaxArrayValues:     100,
 	MaxStructFields:    -1,
 }
 
-// DirAndFile returns the final dir and file name.
-func DirAndFile(file string) string {
-	dir, fnm := filepath.Split(file)
-	return filepath.Join(filepath.Base(dir), fnm)
-}
-
-// RelFile returns the file name relative to given root file path, if it is
-// under that root -- otherwise it returns the final dir and file name.
-func RelFile(file, root string) string {
-	rp, err := filepath.Rel(root, file)
-	if err == nil && !strings.HasPrefix(rp, "..") {
-		return rp
-	}
-	return DirAndFile(file)
+// DeepParams are parameters for getting deep results, following pointers etc
+var DeepParams = Params{
+	FollowPointers:     true,
+	MaxVariableRecurse: 10,
+	MaxStringLen:       200,
+	MaxArrayValues:     100,
+	MaxStructFields:    -1,
 }

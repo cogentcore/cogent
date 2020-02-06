@@ -17,12 +17,25 @@ import (
 	"github.com/goki/pi/filecat"
 )
 
+// todo:
+// * breakpoints not updating properly, etc
+// * highlight at end not working.
+// * use a treeview for single-var view -- need a ki node version of variable
+//   and potentially do incremental fetching, esp of pointers which seem like
+//   the major issue..
+// * also need to map to pi.syms.Kind so we know what kind of thing it is, and
+//   customize display based on that
+// * still getting weird focus issues.  how to do a complete reset?  why is it happening?
+// * add button / filenode menu for choosing exe target
+
+// Debuggers is the list of supported debuggers
 var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error){
 	filecat.Go: func(path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
 		return gidelve.NewGiDelve(path, rootPath, outbuf)
 	},
 }
 
+// NewDebugger returns a new debugger for given supported file type
 func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
@@ -35,10 +48,6 @@ func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextB
 		log.Println(err)
 	}
 	return dbg, err
-}
-
-// DebugParams are parameters for the debugger
-type DebugParams struct {
 }
 
 // DebugView is the debugger
@@ -101,7 +110,7 @@ func (dv *DebugView) DeleteAllBreaks() {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
-		tb := dv.Gide.TextBufForFile(bk.FPath)
+		tb := dv.Gide.TextBufForFile(bk.FPath, false)
 		if tb != nil {
 			tb.DeleteLineColor(bk.Line)
 			tb.DeleteLineIcon(bk.Line)
@@ -136,8 +145,10 @@ func (dv *DebugView) Continue() {
 	dv.SetBreaks()
 	dv.State.State.Running = true
 	ds := <-dv.Dbg.Continue() // we wait here until it returns
-	dv.InitState(ds)          // todo: do we need a mutex for this?  probably not
+	updt := dv.UpdateStart()
+	dv.InitState(ds) // todo: do we need a mutex for this?  probably not
 	dv.ShowStack(true)
+	dv.UpdateEnd(updt)
 }
 
 // StepOver continues to the next source line, not entering function calls.
@@ -197,11 +208,11 @@ func (dv *DebugView) Stop() {
 	// if !dv.DbgIsActive() || dv.DbgIsAvail() {
 	// 	return
 	// }
-	ds, err := dv.Dbg.Stop()
+	_, err := dv.Dbg.Stop()
 	if err != nil {
 		return
 	}
-	dv.InitState(ds)
+	// note: it will auto update from continue stopping.
 }
 
 // SetBreaks sets the current breakpoints from State, call this prior to running
@@ -282,7 +293,7 @@ func (dv *DebugView) SetFrame(depth int) {
 	}
 	cf := dv.State.StackFrame(depth)
 	if cf != nil {
-		dv.Dbg.UpdateAllState(&dv.State, dv.State.CurTask, depth)
+		dv.Dbg.UpdateAllState(&dv.State, dv.State.CurTask, depth) // todo: CurTask is not general!
 	}
 	dv.UpdateFmState()
 }
@@ -299,6 +310,9 @@ func (dv *DebugView) SetThread(threadID int) {
 
 // ShowFile shows the file name in gide
 func (dv *DebugView) ShowFile(fname string, ln int) {
+	if fname == "" || fname == "?" {
+		return
+	}
 	// fmt.Printf("File: %s:%d\n", fname, ln)
 	dv.Gide.ShowFile(fname, ln)
 }
@@ -346,6 +360,29 @@ func (dv *DebugView) ShowThreads(selTab bool) {
 	}
 	sv := dv.ThreadVw()
 	sv.ShowThreads()
+}
+
+// ShowVar shows info on a given variable within the current frame scope in a text view dialog
+// todo: replace with a treeview!
+func (dv *DebugView) ShowVar(name string) error {
+	if !dv.DbgIsAvail() {
+		return nil
+	}
+	dv.Dbg.SetParams(&gidebug.DeepParams)
+	vv, err := dv.Dbg.GetVar(name, dv.State.CurTask, dv.State.CurFrame)
+	dv.Dbg.SetParams(&gidebug.DefaultParams)
+	if err != nil {
+		return err
+	}
+	tinfo := vv.TypeInfo(true)
+	tinfo += "\n" + vv.ValueString(true, 0, 20, 4096)
+	prompt := ""
+	cf := dv.State.StackFrame(dv.State.CurFrame)
+	if cf != nil {
+		prompt = "at: " + cf.FPath + fmt.Sprintf(":%d  Thread: %d  Depth: %d", cf.Line, dv.State.CurTask, dv.State.CurFrame)
+	}
+	giv.TextViewDialog(dv.Viewport, []byte(tinfo), giv.DlgOpts{Title: "Variable: " + name, Prompt: prompt, Ok: true})
+	return nil
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -781,8 +818,8 @@ func (sv *VarsView) Config(dv *DebugView) {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
-				th := dv.State.Tasks[idx]
-				dv.SetThread(th.ID)
+				vr := dv.State.Vars[idx]
+				dv.ShowVar(vr.Name)
 			}
 		})
 	} else {
@@ -790,7 +827,7 @@ func (sv *VarsView) Config(dv *DebugView) {
 	}
 	tv.SetStretchMax()
 	tv.SetInactive()
-	tv.SetSlice(&dv.State.Tasks)
+	tv.SetSlice(&dv.State.Vars)
 	sv.UpdateEnd(updt)
 }
 

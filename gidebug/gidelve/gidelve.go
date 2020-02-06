@@ -561,6 +561,9 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 	ca := gd.cvtVars(as)
 	cv = append(cv, ca...)
 	gidebug.SortVars(cv)
+	for _, vr := range cv {
+		vr.Value = vr.ValueString(false, 0, 2, 256) // max depth, max len -- short for summary
+	}
 	gd.LogErr(err)
 	return cv, err
 }
