@@ -1,8 +1,6 @@
 package gide
 
 import (
-	"fmt"
-
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
@@ -72,11 +70,6 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 				txf.Paste()
 			})
 		m.AddSeparator("sep-tvmenu")
-		ac = m.AddAction(gi.ActOpts{Label: "Declaration"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-				txf := recv.Embed(KiT_TextView).(*TextView)
-				txf.Declaration()
-			})
 		ac.SetActiveState(tv.HasSelection() && !tv.Buf.InComment(tv.CursorPos))
 		hasDbg := false
 		if ge, ok := ParentGide(tv); ok {
@@ -103,10 +96,6 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 				txf.Clear()
 			})
 	}
-}
-
-func (tv *TextView) Declaration() {
-	fmt.Println("Go to Declaration: not yet implemented")
 }
 
 func (tv *TextView) FocusChanged2D(change gi.FocusChanges) {
