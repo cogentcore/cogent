@@ -118,9 +118,6 @@ type Gide interface {
 
 	// CurDebug returns the current debug view, or nil
 	CurDebug() *DebugView
-
-	// Declaration
-	Declaration()
 }
 
 // GideType is a Gide reflect.Type, suitable for checking for Type.Implements.

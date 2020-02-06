@@ -2425,60 +2425,6 @@ func (ge *GideView) ConnectEvents2D() {
 	ge.KeyChordEvent()
 }
 
-// Declaration looks up the declaration for the selected text and if found moves cursor and highlights
-func (ge *GideView) Declaration() {
-	fmt.Println("Go to Declaration not yet implemented")
-	return
-
-	// todo: work in progress
-	//tr := ge.ActiveTextView().Selection()
-	//
-	//
-	//fs := &ge.ActiveTextView().Buf.PiState // the parse info
-	//
-	//ln := tr.Reg.Start.Ln
-	//lx := fs.Src.LexLine(ln)
-	//for _, lex := range lx {
-	//	if lex.St == tr.Reg.Start.Ch {
-	//		fmt.Println("found")
-	//	}
-	//}
-	//fmt.Println(fs.LexState.Filename)
-	//
-	//s := string(ge.ActiveTextView().Selection().ToBytes())
-	//path, _ := filepath.Split(string(ge.ActiveTextView().Buf.Filename))
-	//lp, _ := pi.LangSupport.Props(filecat.Go)
-	//pr := lp.Lang.Parser()
-	//pr.ReportErrs = true
-	//pkgsym := lp.Lang.ParseDir(path, pi.LangDirOpts{})
-	//if pkgsym != nil {
-	//	sym, fnd := pkgsym.Children.FindName(s)
-	////if !fnd {
-	////	for _, sym := range pkgsym.Children {
-	////		if sym.Kind == token.NameLibrary {
-	////			// need to get last part of library name after the "/"
-	////			&& sym.Name == "gi"
-	////			fmt.Println("found import")
-	////		}
-	////	}
-	////}
-	//	if fnd {
-	//		tv := ge.ActiveTextView()
-	//		if tv == nil {
-	//			return
-	//		}
-	//		tv.UpdateStart()
-	//		tv.Highlights = tv.Highlights[:0]
-	//		tr := giv.NewTextRegion(sym.SelectReg.St.Ln, sym.SelectReg.St.Ch, sym.SelectReg.Ed.Ln, sym.SelectReg.Ed.Ch)
-	//		tv.Highlights = append(tv.Highlights, tr)
-	//		tv.UpdateEnd(true)
-	//		tv.RefreshIfNeeded()
-	//		tv.SetCursorShow(tr.Start)
-	//		tv.GrabFocus()
-	//	}
-	//}
-}
-
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
 var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
@@ -3005,9 +2951,6 @@ var GideViewProps = ki.Props{
 				{"Jump To Line", ki.Props{
 					"keyfun": gi.KeyFunJump,
 				}},
-			}},
-			{"Declaration", ki.Props{
-				"updtfunc": GideViewInactiveTextSelectionFunc,
 			}},
 		}},
 		{"Command", ki.PropSlice{
