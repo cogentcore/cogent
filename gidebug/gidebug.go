@@ -64,17 +64,17 @@ type GiDebug interface {
 	// Rewind resumes process execution backwards. (What does this do??)
 	Rewind() <-chan *State
 
-	// Next continues to the next source line, not entering function calls.
-	Next() (*State, error)
+	// StepOver continues to the next source line, not entering function calls.
+	StepOver() (*State, error)
 
-	// Step continues to the next source line, entering function calls.
-	Step() (*State, error)
+	// StepInto continues to the next source line, entering function calls.
+	StepInto() (*State, error)
 
-	// StepOut continues to the return address of the current function
+	// StepOut continues to the return point of the current function
 	StepOut() (*State, error)
 
-	// SingleStep step a single cpu instruction.
-	SingleStep() (*State, error)
+	// StepSingle step a single cpu instruction.
+	StepSingle() (*State, error)
 
 	// SwitchThread switches the current system thread context to given one
 	SwitchThread(threadID int) (*State, error)

@@ -40,6 +40,20 @@ func (gd *GiDelve) HasTasks() bool {
 	return true
 }
 
+func (gd *GiDelve) LogErr(err error) error {
+	if err == nil {
+		return err
+	}
+	if gd.obuf == nil {
+		log.Println(err)
+		return err
+	}
+	tlns := []byte(err.Error() + "\n")
+	mlns := tlns
+	gd.obuf.Buf.AppendTextMarkup(tlns, mlns, giv.EditSignal)
+	return err
+}
+
 func (gd *GiDelve) SetParams(params *gidebug.Params) {
 	gd.params = *params
 	if err := gd.StartedCheck(); err != nil {
@@ -53,8 +67,7 @@ func (gd *GiDelve) SetParams(params *gidebug.Params) {
 func (gd *GiDelve) StartedCheck() error {
 	if gd.cmd == nil || gd.dlv == nil {
 		err := gidebug.NotStartedErr
-		log.Println(err)
-		return err
+		return gd.LogErr(err)
 	}
 	if gd.params.MaxStringLen == 0 {
 		gd.params = gidebug.DefaultParams
@@ -79,8 +92,7 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf) error {
 		}
 	}
 	if err != nil {
-		log.Println(err)
-		return err
+		return gd.LogErr(err)
 	}
 	return nil
 }
@@ -96,6 +108,7 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 	if flds[0] == "API" && flds[1] == "server" && flds[2] == "listening" && flds[3] == "at:" {
 		gd.conn = flds[4]
 		gd.dlv = rpc2.NewClient(gd.conn)
+		gd.SetParams(&gd.params)
 	}
 	return out
 }
@@ -151,7 +164,7 @@ func (gd *GiDelve) Restart() error {
 		return err
 	}
 	_, err := gd.dlv.Restart()
-	return err
+	return gd.LogErr(err)
 }
 
 // Restarts program from the specified position.
@@ -160,7 +173,7 @@ func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) err
 		return err
 	}
 	_, err := gd.dlv.RestartFrom(false, pos, resetArgs, newArgs)
-	return err
+	return gd.LogErr(err)
 }
 
 // GetState returns the current debugger state.
@@ -172,6 +185,7 @@ func (gd *GiDelve) GetState() (*gidebug.State, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.GetStateNonBlocking() // using non-blocking!
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
@@ -193,21 +207,23 @@ func (gd *GiDelve) Rewind() <-chan *gidebug.State {
 	return gd.cvtStateChan(ds)
 }
 
-// Next continues to the next source line, not entering function calls.
-func (gd *GiDelve) Next() (*gidebug.State, error) {
+// StepOver continues to the next source line, not entering function calls.
+func (gd *GiDelve) StepOver() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.Next()
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
-// Step continues to the next source line, entering function calls.
-func (gd *GiDelve) Step() (*gidebug.State, error) {
+// StepInto continues to the next source line, entering function calls.
+func (gd *GiDelve) StepInto() (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ds, err := gd.dlv.Step()
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
@@ -217,6 +233,17 @@ func (gd *GiDelve) StepOut() (*gidebug.State, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.StepOut()
+	gd.LogErr(err)
+	return gd.cvtState(ds), err
+}
+
+// StepSingle steps a single cpu instruction.
+func (gd *GiDelve) StepSingle() (*gidebug.State, error) {
+	if err := gd.StartedCheck(); err != nil {
+		return nil, err
+	}
+	ds, err := gd.dlv.StepInstruction()
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
@@ -226,15 +253,7 @@ func (gd *GiDelve) Call(goroutineID int, expr string, unsafe bool) (*gidebug.Sta
 		return nil, err
 	}
 	ds, err := gd.dlv.Call(goroutineID, expr, unsafe)
-	return gd.cvtState(ds), err
-}
-
-// SingleStep will step a single cpu instruction.
-func (gd *GiDelve) SingleStep() (*gidebug.State, error) {
-	if err := gd.StartedCheck(); err != nil {
-		return nil, err
-	}
-	ds, err := gd.dlv.StepInstruction()
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
@@ -244,6 +263,7 @@ func (gd *GiDelve) SwitchThread(threadID int) (*gidebug.State, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.SwitchThread(threadID)
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
@@ -253,6 +273,7 @@ func (gd *GiDelve) SwitchTask(goroutineID int) (*gidebug.State, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.SwitchGoroutine(goroutineID)
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
@@ -262,6 +283,7 @@ func (gd *GiDelve) Stop() (*gidebug.State, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.Halt()
+	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
 
@@ -271,6 +293,7 @@ func (gd *GiDelve) GetBreak(id int) (*gidebug.Break, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.GetBreakpoint(id)
+	gd.LogErr(err)
 	return gd.cvtBreak(ds), err
 }
 
@@ -280,6 +303,7 @@ func (gd *GiDelve) GetBreakByName(name string) (*gidebug.Break, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.GetBreakpointByName(name)
+	gd.LogErr(err)
 	return gd.cvtBreak(ds), err
 }
 
@@ -292,6 +316,7 @@ func (gd *GiDelve) SetBreak(fname string, line int) (*gidebug.Break, error) {
 	bp.File = fname
 	bp.Line = line
 	ds, err := gd.dlv.CreateBreakpoint(bp)
+	gd.LogErr(err)
 	return gd.cvtBreak(ds), err
 }
 
@@ -301,6 +326,7 @@ func (gd *GiDelve) ListBreaks() ([]*gidebug.Break, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.ListBreakpoints()
+	gd.LogErr(err)
 	return gd.cvtBreaks(ds), err
 }
 
@@ -310,7 +336,7 @@ func (gd *GiDelve) ClearBreak(id int) error {
 		return err
 	}
 	_, err := gd.dlv.ClearBreakpoint(id)
-	return err
+	return gd.LogErr(err)
 }
 
 // ClearBreakByName deletes a breakpoint by name
@@ -319,6 +345,7 @@ func (gd *GiDelve) ClearBreakByName(name string) (*gidebug.Break, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.ClearBreakpointByName(name)
+	gd.LogErr(err)
 	return gd.cvtBreak(ds), err
 }
 
@@ -334,7 +361,7 @@ func (gd *GiDelve) AmendBreak(id int, cond string, trace bool) error {
 	bp.Cond = cond
 	bp.Tracepoint = trace
 	err := gd.dlv.AmendBreakpoint(bp)
-	return err
+	return gd.LogErr(err)
 }
 
 // UpdateBreaks updates current breakpoints based on given list of breakpoints.
@@ -345,7 +372,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
 	}
 	cb, err := gd.ListBreaks()
 	if err != nil {
-		return err
+		return gd.LogErr(err)
 	}
 	for itr := 0; itr < 2; itr++ {
 		updt := false
@@ -390,7 +417,7 @@ func (gd *GiDelve) CancelNext() error {
 		return err
 	}
 	err := gd.dlv.CancelNext()
-	return err
+	return gd.LogErr(err)
 }
 
 // InitAllState initializes the given AllState with relevant info for
@@ -402,7 +429,8 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 	}
 	if bs.Running {
 		all.State.Running = true
-		return gidebug.IsRunningErr
+		err = gidebug.IsRunningErr
+		return gd.LogErr(err)
 	}
 	all.State = *bs
 	all.CurThread = all.State.Thread.ID
@@ -473,6 +501,7 @@ func (gd *GiDelve) ListThreads() ([]*gidebug.Thread, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.ListThreads()
+	gd.LogErr(err)
 	return gd.cvtThreads(ds), err
 }
 
@@ -482,6 +511,7 @@ func (gd *GiDelve) GetThread(id int) (*gidebug.Thread, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.GetThread(id)
+	gd.LogErr(err)
 	return gd.cvtThread(ds), err
 }
 
@@ -491,6 +521,7 @@ func (gd *GiDelve) ListTasks() ([]*gidebug.Task, error) {
 		return nil, err
 	}
 	ds, _, err := gd.dlv.ListGoroutines(0, 1000)
+	gd.LogErr(err)
 	return gd.cvtTasks(ds), err
 }
 
@@ -500,6 +531,7 @@ func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*gidebug.Frame, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.Stacktrace(goroutineID, depth, api.StacktraceSimple, nil)
+	gd.LogErr(err)
 	return gd.cvtStack(ds), err
 }
 
@@ -510,6 +542,7 @@ func (gd *GiDelve) ListAllVars(filter string) ([]*gidebug.Variable, error) {
 	}
 	lc := gd.toLoadConfig(&gd.params)
 	ds, err := gd.dlv.ListPackageVariables(filter, *lc)
+	gd.LogErr(err)
 	return gd.cvtVars(ds), err
 }
 
@@ -521,11 +554,14 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 	ec := gd.toEvalScope(threadID, frame)
 	lc := gd.toLoadConfig(&gd.params)
 	vs, err := gd.dlv.ListLocalVariables(*ec, *lc)
+	gd.LogErr(err)
 	as, err := gd.dlv.ListFunctionArgs(*ec, *lc)
+	gd.LogErr(err)
 	cv := gd.cvtVars(vs)
 	ca := gd.cvtVars(as)
 	cv = append(cv, ca...)
 	gidebug.SortVars(cv)
+	gd.LogErr(err)
 	return cv, err
 }
 
@@ -537,6 +573,7 @@ func (gd *GiDelve) GetVar(name string, threadID int, frame int) (*gidebug.Variab
 	ec := gd.toEvalScope(threadID, frame)
 	lc := gd.toLoadConfig(&gd.params)
 	ds, err := gd.dlv.EvalVariable(*ec, name, *lc)
+	gd.LogErr(err)
 	return gd.cvtVar(ds), err
 }
 
@@ -547,7 +584,7 @@ func (gd *GiDelve) SetVar(name, value string, threadID int, frame int) error {
 	}
 	ec := gd.toEvalScope(threadID, frame)
 	err := gd.dlv.SetVariable(*ec, name, value)
-	return err
+	return gd.LogErr(err)
 }
 
 // ListSources lists all source files in the process matching filter.
@@ -556,6 +593,7 @@ func (gd *GiDelve) ListSources(filter string) ([]string, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.ListSources(filter)
+	gd.LogErr(err)
 	return ds, err
 }
 
@@ -565,6 +603,7 @@ func (gd *GiDelve) ListFuncs(filter string) ([]string, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.ListFunctions(filter)
+	gd.LogErr(err)
 	return ds, err
 }
 
@@ -574,6 +613,7 @@ func (gd *GiDelve) ListTypes(filter string) ([]string, error) {
 		return nil, err
 	}
 	ds, err := gd.dlv.ListTypes(filter)
+	gd.LogErr(err)
 	return ds, err
 }
 

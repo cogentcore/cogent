@@ -154,6 +154,17 @@ type AllState struct {
 	AllVars   []*Variable `desc:"all variables for current thread / task"`
 }
 
+// BlankState initializes state with a blank initial state with the various slices
+// having a single entry -- for GUI initialization.
+func (as *AllState) BlankState() {
+	as.Breaks = []*Break{{ID: 0}}
+	as.Threads = []*Thread{{ID: 0}}
+	as.Tasks = []*Task{{ID: 0}}
+	as.Stack = []*Frame{{Depth: 0}}
+	as.Vars = []*Variable{{Name: ""}}
+	as.AllVars = []*Variable{{Name: ""}}
+}
+
 // StackFrame safely returns the given stack frame -- nil if out of range
 func (as *AllState) StackFrame(idx int) *Frame {
 	if idx < 0 || idx >= len(as.Stack) {
@@ -249,7 +260,7 @@ type Params struct {
 // DefaultParams are default parameter values
 var DefaultParams = Params{
 	FollowPointers:     true,
-	MaxVariableRecurse: 2,
+	MaxVariableRecurse: 5,
 	MaxStringLen:       200,
 	MaxArrayValues:     100,
 	MaxStructFields:    -1,

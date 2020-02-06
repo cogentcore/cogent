@@ -135,37 +135,38 @@ func (dv *DebugView) Continue() {
 	}
 	dv.SetBreaks()
 	dv.State.State.Running = true
-	ds := <-dv.Dbg.Continue()
-	dv.InitState(ds) // todo: do we need a mutex for this?  probably not
+	ds := <-dv.Dbg.Continue() // we wait here until it returns
+	dv.InitState(ds)          // todo: do we need a mutex for this?  probably not
+	dv.ShowStack(true)
 }
 
-// Next continues to the next source line, not entering function calls.
-func (dv *DebugView) Next() {
+// StepOver continues to the next source line, not entering function calls.
+func (dv *DebugView) StepOver() {
 	if !dv.DbgCanStep() {
 		return
 	}
 	dv.SetBreaks()
-	ds, err := dv.Dbg.Next()
+	ds, err := dv.Dbg.StepOver()
 	if err != nil {
 		return
 	}
 	dv.InitState(ds)
 }
 
-// Step continues to the next source line, entering function calls.
-func (dv *DebugView) Step() {
+// StepInto continues to the next source line, entering function calls.
+func (dv *DebugView) StepInto() {
 	if !dv.DbgCanStep() {
 		return
 	}
 	dv.SetBreaks()
-	ds, err := dv.Dbg.Step()
+	ds, err := dv.Dbg.StepInto()
 	if err != nil {
 		return
 	}
 	dv.InitState(ds)
 }
 
-// StepOut continues to the return address of the current function
+// StepOut continues to the return point of the current function
 func (dv *DebugView) StepOut() {
 	if !dv.DbgCanStep() {
 		return
@@ -178,13 +179,13 @@ func (dv *DebugView) StepOut() {
 	dv.InitState(ds)
 }
 
-// SingleStep steps a single cpu instruction.
+// StepSingle steps a single cpu instruction.
 func (dv *DebugView) SingleStep() {
 	if !dv.DbgCanStep() {
 		return
 	}
 	dv.SetBreaks()
-	ds, err := dv.Dbg.SingleStep()
+	ds, err := dv.Dbg.StepSingle()
 	if err != nil {
 		return
 	}
@@ -209,7 +210,7 @@ func (dv *DebugView) SetBreaks() {
 		return
 	}
 	dv.Dbg.UpdateBreaks(&dv.State.Breaks)
-	dv.ShowBreaks()
+	dv.ShowBreaks(false)
 }
 
 // AddBreak adds a breakpoint at given file path and line number.
@@ -217,7 +218,7 @@ func (dv *DebugView) SetBreaks() {
 // uploaded to the system right before starting running.
 func (dv *DebugView) AddBreak(fpath string, line int) {
 	dv.State.AddBreak(fpath, line)
-	dv.ShowBreaks()
+	dv.ShowBreaks(true)
 }
 
 // DeleteBreak deletes given breakpoint.  If debugger is not yet
@@ -229,7 +230,7 @@ func (dv *DebugView) DeleteBreak(fpath string, line int) {
 	}
 	if !dv.DbgIsAvail() {
 		dv.State.DeleteBreakByFile(fpath, line)
-		dv.ShowBreaks()
+		dv.ShowBreaks(true)
 		return
 	}
 	bk, _ := dv.State.BreakByFile(fpath, line)
@@ -237,7 +238,7 @@ func (dv *DebugView) DeleteBreak(fpath string, line int) {
 		dv.Dbg.ClearBreak(bk.ID)
 		dv.State.DeleteBreakByID(bk.ID)
 	}
-	dv.ShowBreaks()
+	dv.ShowBreaks(true)
 }
 
 // InitState updates the State and View from given debug state
@@ -265,12 +266,12 @@ func (dv *DebugView) UpdateFmState() {
 	if cf != nil {
 		dv.ShowFile(cf.FPath, cf.Line)
 	}
-	dv.ShowBreaks()
-	dv.ShowStack()
-	dv.ShowVars()
-	dv.ShowThreads()
+	dv.ShowBreaks(false)
+	dv.ShowStack(false)
+	dv.ShowVars(false)
+	dv.ShowThreads(false)
 	if dv.Dbg.HasTasks() {
-		dv.ShowTasks()
+		dv.ShowTasks(false)
 	}
 }
 
@@ -303,31 +304,46 @@ func (dv *DebugView) ShowFile(fname string, ln int) {
 }
 
 // ShowBreaks shows the current breaks
-func (dv *DebugView) ShowBreaks() {
+func (dv *DebugView) ShowBreaks(selTab bool) {
+	if selTab {
+		dv.Tabs().SelectTabByName("Breaks")
+	}
 	sv := dv.BreakVw()
 	sv.ShowBreaks()
 }
 
 // ShowStack shows the current stack
-func (dv *DebugView) ShowStack() {
+func (dv *DebugView) ShowStack(selTab bool) {
+	if selTab {
+		dv.Tabs().SelectTabByName("Stack")
+	}
 	sv := dv.StackVw()
 	sv.ShowStack()
 }
 
 // ShowVars shows the current vars
-func (dv *DebugView) ShowVars() {
+func (dv *DebugView) ShowVars(selTab bool) {
+	if selTab {
+		dv.Tabs().SelectTabByName("Vars")
+	}
 	sv := dv.VarVw()
 	sv.ShowVars()
 }
 
 // ShowTasks shows the current tasks
-func (dv *DebugView) ShowTasks() {
+func (dv *DebugView) ShowTasks(selTab bool) {
+	if selTab {
+		dv.Tabs().SelectTabByName("Tasks")
+	}
 	sv := dv.TaskVw()
 	sv.ShowTasks()
 }
 
 // ShowThreads shows the current threads
-func (dv *DebugView) ShowThreads() {
+func (dv *DebugView) ShowThreads(selTab bool) {
+	if selTab {
+		dv.Tabs().SelectTabByName("Threads")
+	}
 	sv := dv.ThreadVw()
 	sv.ShowThreads()
 }
@@ -340,6 +356,7 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
+	dv.State.BlankState()
 	dv.OutBuf = &giv.TextBuf{}
 	dv.OutBuf.InitName(dv.OutBuf, "debug-outbuf")
 	dv.Lay = gi.LayoutVert
@@ -353,6 +370,7 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	}
 	dv.ConfigToolbar()
 	dv.ConfigTabs()
+	dv.State.Breaks = nil // get rid of dummy
 	dv.Start()
 	dv.SetFullReRender()
 	dv.UpdateEnd(updt)
@@ -442,31 +460,44 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
 
-	cb.AddAction(gi.ActOpts{Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
+	cb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Start()
 			cb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Icon: "play", Tooltip: "continue execution from current point"}, dv.This(),
+	cb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point"}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			go dvv.Continue()
 			cb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Icon: "fast-fwd", Tooltip: "continues to the next source line, not entering function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
+	gi.AddNewLabel(cb, "step", "Step: ")
+	cb.AddAction(gi.ActOpts{Label: "Over", Icon: "step-over", Tooltip: "continues to the next source line, not entering function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
-			dvv.Next()
+			dvv.StepOver()
 			cb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Icon: "step-fwd", Tooltip: "continues to the next source line, entering function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
+	cb.AddAction(gi.ActOpts{Label: "Into", Icon: "step-into", Tooltip: "continues to the next source line, entering into function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
-			dvv.Step()
+			dvv.StepInto()
 			cb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Icon: "stop", Tooltip: "stop execution", UpdateFunc: dv.ActionActivate}, dv.This(),
+	cb.AddAction(gi.ActOpts{Label: "Out", Icon: "step-out", Tooltip: "continues to the return point of the current function", UpdateFunc: dv.ActionActivate}, dv.This(),
+		func(recv, send ki.Ki, sig int64, data interface{}) {
+			dvv := recv.Embed(KiT_DebugView).(*DebugView)
+			dvv.StepOut()
+			cb.UpdateActions()
+		})
+	cb.AddAction(gi.ActOpts{Label: "Single", Icon: "step-fwd", Tooltip: "steps a single CPU instruction", UpdateFunc: dv.ActionActivate}, dv.This(),
+		func(recv, send ki.Ki, sig int64, data interface{}) {
+			dvv := recv.Embed(KiT_DebugView).(*DebugView)
+			dvv.StepOut()
+			cb.UpdateActions()
+		})
+	cb.AddAction(gi.ActOpts{Label: "Stop", Icon: "stop", Tooltip: "stop execution"}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Stop()
@@ -636,6 +667,7 @@ func (sv *ThreadView) Config(dv *DebugView) {
 		updt = sv.UpdateStart()
 	}
 	tv.SetStretchMax()
+	tv.SetInactive()
 	tv.SetSlice(&dv.State.Threads)
 	sv.UpdateEnd(updt)
 }
@@ -696,6 +728,7 @@ func (sv *TaskView) Config(dv *DebugView) {
 		updt = sv.UpdateStart()
 	}
 	tv.SetStretchMax()
+	tv.SetInactive()
 	tv.SetSlice(&dv.State.Tasks)
 	sv.UpdateEnd(updt)
 }
