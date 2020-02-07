@@ -8,6 +8,7 @@ import (
 	"github.com/go-delve/delve/service/api"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gide/gidebug"
+	"github.com/goki/pi/syms"
 )
 
 func (gd *GiDelve) cvtState(ds *api.DebuggerState) *gidebug.State {
@@ -170,20 +171,81 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 		return nil
 	}
 	vr := &gidebug.Variable{}
-	vr.Name = ds.Name
+	vr.InitName(vr, ds.Name)
 	vr.Addr = ds.Addr
-	vr.Type = ds.RealType
+	vr.TypeStr = ds.RealType
 	if ds.Flags&api.VariableEscaped != 0 {
 		vr.Heap = true
 	}
-	// vr.Kind = ds.Kind
+	vr.Kind = syms.ReflectKindMap[ds.Kind]
 	vr.ElValue = ds.Value
+	vr.Value = ds.Value // note: NOT calling vr.ValueString(false, 0)
 	vr.Len = ds.Len
 	vr.Cap = ds.Cap
-	vr.Els = gd.cvtVars(ds.Children)
 	vr.Loc.Line = int(ds.DeclLine)
 	vr.Loc.FPath = ds.LocationExpr
-	vr.Value = ds.Value // note: NOT calling vr.ValueString(false, 0)
+	nkids := len(ds.Children)
+	switch {
+	case nkids > 0 && vr.Kind.SubCat() == syms.List:
+		el := &ds.Children[0]
+		elk := syms.ReflectKindMap[el.Kind]
+		if elk.Cat() == syms.Primitive {
+			vr.List = make([]string, nkids)
+			for i, _ := range ds.Children {
+				vr.List[i] = ds.Children[i].Value
+			}
+			return vr
+		}
+	case nkids > 1 && vr.Kind.SubCat() == syms.Map:
+		mapn := nkids / 2
+		el := &ds.Children[1] // alternates key / value
+		elk := syms.ReflectKindMap[el.Kind]
+		if elk.Cat() == syms.Primitive {
+			vr.Map = make(map[string]string, mapn)
+			for i := 0; i < mapn; i++ {
+				k := &ds.Children[2*i]
+				el = &ds.Children[2*i+1]
+				vr.Map[k.Value] = el.Value
+			}
+			return vr
+		}
+		// object map
+		vr.MapVar = make(map[string]*gidebug.Variable, mapn)
+		for i := 0; i < mapn; i++ {
+			k := &ds.Children[2*i]
+			el = &ds.Children[2*i+1]
+			vr.MapVar[k.Value] = gd.cvtVar(el)
+		}
+		return vr
+	case nkids > 0 && nkids < 10 && vr.Kind.SubCat() == syms.Struct:
+		allPrim := true
+		for i, _ := range ds.Children {
+			el := &ds.Children[i]
+			elk := syms.ReflectKindMap[el.Kind]
+			if elk.Cat() != syms.Primitive {
+				allPrim = false
+				break
+			}
+		}
+		if allPrim {
+			vstr := ""
+			for i, _ := range ds.Children {
+				el := &ds.Children[i]
+				vstr += el.Name + ": " + el.Value
+				if i < nkids-1 {
+					vstr += ", "
+				}
+			}
+			vr.Value = vstr
+			return vr
+		}
+	}
+	for i, _ := range ds.Children {
+		el := &ds.Children[i]
+		if el.Name != "Ths" && el.Name != "Par" { // todo: check for parent ki type here
+			vr.AddChild(gd.cvtVar(el))
+		}
+	}
 	return vr
 }
 

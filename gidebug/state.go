@@ -11,6 +11,8 @@ import (
 
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki/indent"
+	"github.com/goki/ki/ki"
+	"github.com/goki/pi/syms"
 )
 
 // This file contains all the state structs used in communciating with the
@@ -110,24 +112,28 @@ func SortBreaks(brk []*Break) {
 	})
 }
 
-// Variable describes a variable.
+// Variable describes a variable.  It is a Ki tree type so that full tree
+// can be visualized.
 type Variable struct {
-	Name    string      `desc:"name of variable"`
-	Type    string      `desc:"type of variable"`
-	ElValue string      `tableview:"-" desc:"own elemental value of variable (blank for composite types)"`
-	Value   string      `desc:"value of variable -- may be truncated if long"`
-	Len     int64       `desc:"length of variable (slices, maps, strings etc)"`
-	Cap     int64       `tableview:"-" desc:"capacity of vaiable"`
-	Addr    uintptr     `desc:"address where variable is located in memory"`
-	Heap    bool        `desc:"if true, the variable is stored in the main memory heap, not the stack"`
-	Els     []*Variable `tableview:"-" desc:"elements of compount variables (struct fields, list / map elements)"`
-	Loc     Location    `tableview:"-" desc:"location where the variable was defined in source"`
+	ki.Node
+	TypeStr string               `inactive:"-" desc:"type of variable as a string expression"`
+	Kind    syms.Kinds           `inactive:"-" desc:"kind of element"`
+	ElValue string               `inactive:"-" view:"-" desc:"own elemental value of variable (blank for composite types)"`
+	Value   string               `inactive:"-" width:"80" desc:"value of variable -- may be truncated if long"`
+	Len     int64                `inactive:"-" desc:"length of variable (slices, maps, strings etc)"`
+	Cap     int64                `inactive:"-" tableview:"-" desc:"capacity of vaiable"`
+	Addr    uintptr              `inactive:"-" desc:"address where variable is located in memory"`
+	Heap    bool                 `inactive:"-" desc:"if true, the variable is stored in the main memory heap, not the stack"`
+	Loc     Location             `inactive:"-" tableview:"-" desc:"location where the variable was defined in source"`
+	List    []string             `tableview:"-" desc:"if kind is a list type (array, slice), and elements are primitive types, this is the contents"`
+	Map     map[string]string    `tableview:"-" desc:"if kind is a map, and elements are primitive types, this is the contents"`
+	MapVar  map[string]*Variable `tableview:"-" desc:"if kind is a map, and elements are not primitive types, this is the contents"`
 }
 
 // SortVars sorts vars by name
 func SortVars(vrs []*Variable) {
 	sort.Slice(vrs, func(i, j int) bool {
-		return vrs[i].Name < vrs[j].Name
+		return vrs[i].Nm < vrs[j].Nm
 	})
 }
 
@@ -143,18 +149,49 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int) 
 	tabSz := 2
 	ichr := indent.Space
 	var b strings.Builder
-	b.WriteString(vr.Type)
+	b.WriteString(vr.TypeStr)
 	b.WriteString(" {")
 	if ident > maxdepth {
 		b.WriteString("...")
 	} else {
-		for _, ve := range vr.Els {
+		lln := len(vr.List)
+		if lln > 0 {
+			for i, el := range vr.List {
+				b.WriteString(fmt.Sprintf("%d: %s", i, el))
+				if i < lln-1 {
+					b.WriteString(", ")
+				}
+			}
+		}
+		lln = len(vr.Map)
+		if lln > 0 {
+			for k, v := range vr.Map {
+				b.WriteString(fmt.Sprintf("%s: %s, ", k, v))
+			}
+		}
+		lln = len(vr.MapVar)
+		if lln > 0 {
+			for k, ve := range vr.MapVar {
+				if newlines {
+					b.WriteString("\n")
+					b.WriteString(indent.String(ichr, ident+1, tabSz))
+				}
+				b.WriteString(k + ": ")
+				b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen))
+				if b.Len() > maxlen {
+					b.WriteString("...")
+					break
+				}
+			}
+		}
+		for _, vek := range vr.Kids {
+			ve := vek.(*Variable)
 			if newlines {
 				b.WriteString("\n")
 				b.WriteString(indent.String(ichr, ident+1, tabSz))
 			}
-			if ve.Name != "" {
-				b.WriteString(ve.Name + ": ")
+			if ve.Nm != "" {
+				b.WriteString(ve.Nm + ": ")
 			}
 			b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen))
 			if b.Len() > maxlen {
@@ -178,7 +215,7 @@ func (vr *Variable) TypeInfo(newlines bool) string {
 	if newlines {
 		sep = "\n"
 	}
-	info := []string{"Name: " + vr.Name, "Type: " + vr.Type, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
+	info := []string{"Name: " + vr.Nm, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
 	return strings.Join(info, sep)
 }
 
@@ -212,12 +249,12 @@ type AllState struct {
 // BlankState initializes state with a blank initial state with the various slices
 // having a single entry -- for GUI initialization.
 func (as *AllState) BlankState() {
-	as.Breaks = []*Break{{ID: 0}}
-	as.Threads = []*Thread{{ID: 0}}
-	as.Tasks = []*Task{{ID: 0}}
-	as.Stack = []*Frame{{Depth: 0}}
-	as.Vars = []*Variable{{Name: ""}}
-	as.AllVars = []*Variable{{Name: ""}}
+	as.Breaks = []*Break{&Break{}}
+	as.Threads = []*Thread{&Thread{}}
+	as.Tasks = []*Task{&Task{}}
+	as.Stack = []*Frame{&Frame{}}
+	as.Vars = []*Variable{&Variable{}}
+	as.AllVars = []*Variable{&Variable{}}
 }
 
 // StackFrame safely returns the given stack frame -- nil if out of range

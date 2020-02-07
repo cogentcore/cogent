@@ -32,6 +32,7 @@ import (
 	"github.com/goki/gi/oswin/mimedata"
 	"github.com/goki/gi/units"
 	"github.com/goki/gide/gide"
+	"github.com/goki/gide/gidebug"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/complete"
@@ -422,7 +423,9 @@ func (ge *GideView) LangDefaults() bool {
 func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.SetHiStyle(gide.Prefs.HiStyle)
 	ge.Prefs.Editor.ConfigTextBuf(tb)
-	tb.Complete.LookupFunc = ge.LookupFun
+	if tb.Complete != nil {
+		tb.Complete.LookupFunc = ge.LookupFun
+	}
 
 	// these are now set in std textbuf..
 	// tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)                    // always set -- option can override
@@ -2018,7 +2021,8 @@ func (ge *GideView) SetStatus(msg string) {
 func (ge *GideView) Defaults() {
 	ge.Prefs.Files = gide.Prefs.Files
 	ge.Prefs.Editor = gide.Prefs.Editor
-	ge.Prefs.Splits = []float32{.1, .325, .325, .25, 0}
+	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
+	ge.Prefs.Debug = gidebug.DefaultParams
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
 	ge.Files.NodeType = gide.KiT_FileNode
 }

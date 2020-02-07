@@ -139,7 +139,7 @@ func (dv *DebugView) Start() {
 		}
 	} else {
 		dv.Dbg.Restart()
-		go dv.Continue()
+		dv.SetStatus("Ready")
 	}
 }
 
@@ -381,14 +381,16 @@ func (dv *DebugView) ShowVar(name string) error {
 	if err != nil {
 		return err
 	}
-	tinfo := vv.TypeInfo(true)
-	tinfo += "\n" + vv.ValueString(true, 0, 20, 4096)
-	prompt := ""
-	cf := dv.State.StackFrame(dv.State.CurFrame)
-	if cf != nil {
-		prompt = "at: " + cf.FPath + fmt.Sprintf(":%d  Thread: %d  Depth: %d", cf.Line, dv.State.CurTask, dv.State.CurFrame)
-	}
-	giv.TextViewDialog(dv.Viewport, []byte(tinfo), giv.DlgOpts{Title: "Variable: " + name, Prompt: prompt, Ok: true})
+	// tinfo := vv.TypeInfo(true)
+	// tinfo += "\n" + vv.ValueString(true, 0, 20, 4096)
+	// prompt := ""
+	// cf := dv.State.StackFrame(dv.State.CurFrame)
+	// if cf != nil {
+	// 	prompt = "at: " + cf.FPath + fmt.Sprintf(":%d  Thread: %d  Depth: %d", cf.Line, dv.State.CurTask, dv.State.CurFrame)
+	// }
+	// giv.TextViewDialog(dv.Viewport, []byte(tinfo), giv.DlgOpts{Title: "Variable: " + name, Prompt: prompt, Ok: true})
+	ged := giv.GoGiEditorDialog(vv)
+	ged.TreeView().CloseAll()
 	return nil
 }
 
@@ -834,7 +836,7 @@ func (sv *VarsView) Config(dv *DebugView) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				vr := dv.State.Vars[idx]
-				dv.ShowVar(vr.Name)
+				dv.ShowVar(vr.Nm)
 			}
 		})
 	} else {

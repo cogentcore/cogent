@@ -47,15 +47,28 @@ func ParentGide(kn ki.Ki) (Gide, bool) {
 	return ge, ge != nil
 }
 
-// ViewFile pulls up this file in Gide
-func (fn *FileNode) ViewFile() {
+// EditFile pulls up this file in Gide
+func (fn *FileNode) EditFile() {
 	if fn.IsDir() {
-		log.Printf("FileNode Edit -- cannot edit directories!\n")
+		log.Printf("FileNode Edit -- cannot view (edit) directories!\n")
 		return
 	}
 	ge, ok := ParentGide(fn.This())
 	if ok {
 		ge.NextViewFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
+	}
+}
+
+// SetRunExec sets executable as the RunExec executable that will be run with Run / Debug buttons
+func (fn *FileNode) SetRunExec() {
+	if !fn.IsExec() {
+		log.Printf("FileNode SetRunExec -- only works for executable files!\n")
+		return
+	}
+	ge, ok := ParentGide(fn.This())
+	if ok {
+		ge.ProjPrefs().RunExec = fn.FPath
+		ge.ProjPrefs().BuildDir = gi.FileName(filepath.Dir(string(fn.FPath)))
 	}
 }
 
@@ -263,9 +276,13 @@ func init() {
 				{"Cmd Name", ki.Props{}},
 			},
 		}},
-		{"ViewFiles", ki.Props{
-			"label":    "View",
+		{"EditFiles", ki.Props{
+			"label":    "Edit",
 			"updtfunc": FileTreeInactiveDirFunc,
+		}},
+		{"SetRunExec", ki.Props{
+			"label":    "Set Run Exec",
+			"updtfunc": FileTreeActiveExecFunc,
 		}},
 		{"sep-view", ki.BlankProp{}},
 	}, cm...)
@@ -282,15 +299,29 @@ func (ft *FileTreeView) FileNode() *FileNode {
 	return fn.(*FileNode)
 }
 
-// ViewFiles calls ViewFile on selected files
-func (ft *FileTreeView) ViewFiles() {
+// EditFiles calls EditFile on selected files
+func (ft *FileTreeView) EditFiles() {
 	sels := ft.SelectedViews()
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i]
 		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
 		fn := ftv.FileNode()
 		if fn != nil {
-			fn.ViewFile()
+			fn.EditFile()
+		}
+	}
+}
+
+// SetRunExec sets executable as the RunExec executable that will be run with Run / Debug buttons
+func (ft *FileTreeView) SetRunExec() {
+	sels := ft.SelectedViews()
+	for i := len(sels) - 1; i >= 0; i-- {
+		sn := sels[i]
+		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
+		fn := ftv.FileNode()
+		if fn != nil {
+			fn.SetRunExec()
+			break
 		}
 	}
 }
@@ -397,5 +428,14 @@ var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.A
 	fn := ft.FileNode()
 	if fn != nil {
 		act.SetActiveState(fn.IsDir())
+	}
+})
+
+// FileTreeActiveExecFunc is an ActionUpdateFunc that activates action if node is executable
+var FileTreeActiveExecFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.Action) {
+	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
+	fn := ft.FileNode()
+	if fn != nil {
+		act.SetActiveState(fn.IsExec())
 	}
 })
