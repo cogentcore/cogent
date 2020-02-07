@@ -1773,18 +1773,32 @@ func (ge *GideView) Symbols() {
 	ge.FocusOnPanel(TabsIdx)
 }
 
-// Debug displays the DebugView
+// Debug starts the debugger if RunExec is set, else prompts for run exec choice
 func (ge *GideView) Debug() {
 	if ge.Prefs.RunExec != "" {
 		exePath := string(ge.Prefs.RunExec)
 		exe := filepath.Base(exePath)
 		dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
-		dv.Config(ge, ge.Prefs.MainLang, exePath)
+		dv.Config(ge, ge.Prefs.MainLang, exePath, false)
 		ge.FocusOnPanel(TabsIdx)
 		ge.CurDbg = dv
 	} else {
 		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
 	}
+}
+
+// DebugTest runs the debugger using testing mode in current active textview path
+func (ge *GideView) DebugTest() {
+	tv := ge.ActiveTextView()
+	if tv == nil || tv.Buf == nil {
+		return
+	}
+	tstPath := string(tv.Buf.Filename)
+	dir := filepath.Base(filepath.Dir(tstPath))
+	dv := ge.RecycleTab("Debug "+dir, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
+	dv.Config(ge, ge.Prefs.MainLang, tstPath, true)
+	ge.FocusOnPanel(TabsIdx)
+	ge.CurDbg = dv
 }
 
 // CurDebug returns the current debug view
@@ -2686,7 +2700,12 @@ var GideViewProps = ki.Props{
 			}),
 		}},
 		{"Debug", ki.Props{
-			"icon": "terminal",
+			"icon":    "terminal",
+			"tooltip": "debug currently selected executable -- if none selected, prompts to select one",
+		}},
+		{"DebugTest", ki.Props{
+			"icon":    "terminal",
+			"tooltip": "debug test in current active view directory",
 		}},
 		{"sep-exe", ki.BlankProp{}},
 		{"Commit", ki.Props{
@@ -3066,6 +3085,9 @@ var GideViewProps = ki.Props{
 					return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 				}),
 			}},
+			{"Debug", ki.Props{}},
+			{"DebugTest", ki.Props{}},
+			{"sep-run", ki.BlankProp{}},
 			{"Commit", ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},

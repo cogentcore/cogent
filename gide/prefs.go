@@ -15,6 +15,7 @@ import (
 	"github.com/goki/gi/histyle"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/svg"
+	"github.com/goki/gide/gidebug"
 	"github.com/goki/ki/dirs"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -319,6 +320,7 @@ type ProjPrefs struct {
 	BuildTarg    gi.FileName       `desc:"build target for main Build button, if relevant for your  BuildCmds"`
 	RunExec      gi.FileName       `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
 	RunCmds      CmdNames          `desc:"command(s) to run for main Run button (typically Run Proj)"`
+	Debug        gidebug.Params    `json:"-" desc:"custom debugger parameters for this project"` // todo: turn on saving once stable!
 	Find         FindParams        `view:"-" desc:"saved find params"`
 	Spell        SpellParams       `view:"-" desc:"saved spell params"`
 	Symbols      SymbolsParams     `view:"-" desc:"saved structure params"`

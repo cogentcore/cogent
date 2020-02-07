@@ -303,8 +303,9 @@ func (as *AllState) MergeBreaks() {
 	SortBreaks(as.Breaks)
 }
 
-// Params are parameters controlling the behavior of the debugger
-type Params struct {
+// VarParams are parameters controlling how much detail the debugger reports
+// about variables.
+type VarParams struct {
 	FollowPointers     bool `desc:"requests pointers to be automatically dereferenced."`
 	MaxVariableRecurse int  `desc:"how far to recurse when evaluating nested types."`
 	MaxStringLen       int  `desc:"the maximum number of bytes read from a string"`
@@ -312,20 +313,27 @@ type Params struct {
 	MaxStructFields    int  `desc:"the maximum number of fields read from a struct, -1 will read all fields."`
 }
 
-// DefaultParams are default parameter values
-var DefaultParams = Params{
-	FollowPointers:     false,
-	MaxVariableRecurse: 5,
-	MaxStringLen:       200,
-	MaxArrayValues:     100,
-	MaxStructFields:    -1,
+// Params are overall debugger parameters
+type Params struct {
+	Args    []string  `desc:"optional extra args to pass to the debugger"`
+	VarList VarParams `desc:"parameters for level of detail on overall list of variables"`
+	GetVar  VarParams `desc:"parameters for level of detail retrieving a specific variable"`
 }
 
-// DeepParams are parameters for getting deep results, following pointers etc
-var DeepParams = Params{
-	FollowPointers:     true,
-	MaxVariableRecurse: 10,
-	MaxStringLen:       200,
-	MaxArrayValues:     100,
-	MaxStructFields:    -1,
+// DefaultParams are default parameter values
+var DefaultParams = Params{
+	VarList: VarParams{
+		FollowPointers:     false,
+		MaxVariableRecurse: 5,
+		MaxStringLen:       200,
+		MaxArrayValues:     100,
+		MaxStructFields:    -1,
+	},
+	GetVar: VarParams{
+		FollowPointers:     true,
+		MaxVariableRecurse: 10,
+		MaxStringLen:       200,
+		MaxArrayValues:     100,
+		MaxStructFields:    -1,
+	},
 }

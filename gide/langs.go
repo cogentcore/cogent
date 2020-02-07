@@ -79,7 +79,6 @@ func (lt *Langs) SaveJSON(filename gi.FileName) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, true, false, nil, nil)
 		log.Println(err)
 	}
 	return err

@@ -27,7 +27,10 @@ type GiDebug interface {
 	// Start starts the debugger for a given exe path, and overall project
 	// root path (for trimming file names), and sets output of debugger
 	// session to given textbuf which is used to monitor output.
-	Start(path, rootPath string, outbuf *giv.TextBuf) error
+	// test = run in test mode, and args are optional additional args to pass
+	// to the debugger.  startFunc is a function callback that is called when
+	// the debugger successfully builds and connects.
+	Start(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *Params, startFunc func()) error
 
 	// SetParams sets the current parameters to control how info is returned
 	SetParams(params *Params)

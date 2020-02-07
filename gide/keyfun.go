@@ -329,7 +329,6 @@ var PrefsKeyMapsFileName = "key_maps_prefs.json"
 func (km *KeyMaps) OpenJSON(filename gi.FileName) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
 		log.Println(err)
 		return err
 	}
@@ -346,7 +345,6 @@ func (km *KeyMaps) SaveJSON(filename gi.FileName) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, true, false, nil, nil)
 		log.Println(err)
 	}
 	return err

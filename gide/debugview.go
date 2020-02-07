@@ -31,21 +31,21 @@ import (
 // * add button / filenode menu for choosing exe target
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error){
-	filecat.Go: func(path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
-		return gidelve.NewGiDelve(path, rootPath, outbuf)
+var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (gidebug.GiDebug, error){
+	filecat.Go: func(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (gidebug.GiDebug, error) {
+		return gidelve.NewGiDelve(path, rootPath, outbuf, test, pars, startFunc)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf) (gidebug.GiDebug, error) {
+func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported\n", sup)
 		log.Println(err)
 		return nil, err
 	}
-	dbg, err := df(path, rootPath, outbuf)
+	dbg, err := df(path, rootPath, outbuf, test, pars, startFunc)
 	if err != nil {
 		log.Println(err)
 	}
@@ -57,6 +57,7 @@ type DebugView struct {
 	gi.Layout
 	Sup     filecat.Supported `desc:"supported file type to determine debugger"`
 	ExePath string            `desc:"path to executable / dir to debug"`
+	Test    bool              `desc:"if true, run debugger on tests instead of an executable"`
 	Dbg     gidebug.GiDebug   `json:"-" xml:"-" desc:"the debugger"`
 	State   gidebug.AllState  `json:"-" xml:"-" desc:"all relevant debug state info"`
 	OutBuf  *giv.TextBuf      `json:"-" xml:"-" desc:"output from the debugger"`
@@ -125,10 +126,14 @@ func (dv *DebugView) DeleteAllBreaks() {
 func (dv *DebugView) Start() {
 	if dv.Dbg == nil {
 		rootPath := ""
+		var pars *gidebug.Params
 		if dv.Gide != nil {
 			rootPath = string(dv.Gide.ProjPrefs().ProjRoot)
+			pars = &dv.Gide.ProjPrefs().Debug
 		}
-		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf)
+		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, dv.Test, pars, func() {
+			dv.SetStatus("Ready")
+		})
 		if err == nil {
 			dv.Dbg = dbg
 		}
@@ -146,6 +151,7 @@ func (dv *DebugView) Continue() {
 	}
 	dv.SetBreaks()
 	dv.State.State.Running = true
+	dv.SetStatus("Running")
 	ds := <-dv.Dbg.Continue() // we wait here until it returns
 	updt := dv.UpdateStart()
 	dv.InitState(ds) // todo: do we need a mutex for this?  probably not
@@ -261,6 +267,7 @@ func (dv *DebugView) InitState(ds *gidebug.State) {
 	if ds.Running {
 		return
 	}
+	dv.SetStatus("Stopped")
 	err := dv.Dbg.InitAllState(&dv.State)
 	if err == gidebug.IsRunningErr {
 		return
@@ -370,9 +377,7 @@ func (dv *DebugView) ShowVar(name string) error {
 	if !dv.DbgIsAvail() {
 		return nil
 	}
-	dv.Dbg.SetParams(&gidebug.DeepParams)
 	vv, err := dv.Dbg.GetVar(name, dv.State.CurTask, dv.State.CurFrame)
-	dv.Dbg.SetParams(&gidebug.DefaultParams)
 	if err != nil {
 		return err
 	}
@@ -387,11 +392,17 @@ func (dv *DebugView) ShowVar(name string) error {
 	return nil
 }
 
+func (dv *DebugView) SetStatus(stat string) {
+	cb := dv.CtrlBar()
+	stl := cb.Child(0).(*gi.Label)
+	stl.SetText(stat)
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// Config configures the view
-func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
+// Config configures the view -- test = run in test mode
+func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string, test bool) {
 	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
@@ -499,13 +510,15 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
 
+	stl := gi.AddNewLabel(cb, "status", "Building..   ")
+	stl.Redrawable = true
 	cb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Start()
 			cb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point"}, dv.This(),
+	cb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			go dvv.Continue()

@@ -199,7 +199,7 @@ func (gd *GiDelve) cvtVars(ds []api.Variable) []*gidebug.Variable {
 	return vr
 }
 
-func (gd *GiDelve) toLoadConfig(ds *gidebug.Params) *api.LoadConfig {
+func (gd *GiDelve) toLoadConfig(ds *gidebug.VarParams) *api.LoadConfig {
 	if ds == nil {
 		return nil
 	}

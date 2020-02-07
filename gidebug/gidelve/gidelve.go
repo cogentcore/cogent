@@ -19,20 +19,23 @@ import (
 
 // GiDelve is the Delve implementation of the GiDebug interface
 type GiDelve struct {
-	path     string          // path to exe
-	rootPath string          // root path for project
-	conn     string          // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
-	dlv      *rpc2.RPCClient // the delve rpc2 client interface
-	cmd      *exec.Cmd       // command running delve
-	obuf     *giv.OutBuf     // output buffer
-	params   gidebug.Params
+	path      string          // path to exe
+	rootPath  string          // root path for project
+	conn      string          // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
+	dlv       *rpc2.RPCClient // the delve rpc2 client interface
+	cmd       *exec.Cmd       // command running delve
+	obuf      *giv.OutBuf     // output buffer
+	startFunc func()          // startup function
+	params    gidebug.Params
 }
 
 // NewGiDelve creates a new debugger exe and client
 // for given path, and project root path
-func NewGiDelve(path, rootPath string, outbuf *giv.TextBuf) (*GiDelve, error) {
+// test = run in test mode, and args are optional additional args to pass
+// to the debugger.
+func NewGiDelve(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (*GiDelve, error) {
 	gd := &GiDelve{}
-	err := gd.Start(path, rootPath, outbuf)
+	err := gd.Start(path, rootPath, outbuf, test, pars, startFunc)
 	return gd, err
 }
 
@@ -59,7 +62,7 @@ func (gd *GiDelve) SetParams(params *gidebug.Params) {
 	if err := gd.StartedCheck(); err != nil {
 		return
 	}
-	lc := gd.toLoadConfig(&gd.params)
+	lc := gd.toLoadConfig(&gd.params.VarList)
 	gd.dlv.SetReturnValuesLoadConfig(lc)
 }
 
@@ -69,17 +72,29 @@ func (gd *GiDelve) StartedCheck() error {
 		err := gidebug.NotStartedErr
 		return gd.LogErr(err)
 	}
-	if gd.params.MaxStringLen == 0 {
+	if gd.params.VarList.MaxStringLen == 0 {
 		gd.params = gidebug.DefaultParams
 	}
 	return nil
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf) error {
+func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) error {
 	gd.path = path
 	gd.rootPath = rootPath
-	gd.cmd = exec.Command("dlv", "debug", "--headless", "--api-version=2", "--log") // , "--listen=127.0.0.1:8182")
+	gd.startFunc = startFunc
+	if pars != nil {
+		gd.params = *pars
+	}
+	if test {
+		targs := []string{"test", "--headless", "--api-version=2", "--log"}
+		targs = append(targs, gd.params.Args...)
+		gd.cmd = exec.Command("dlv", targs...)
+	} else {
+		targs := []string{"debug", "--headless", "--api-version=2", "--log"}
+		targs = append(targs, gd.params.Args...)
+		gd.cmd = exec.Command("dlv", targs...)
+	}
 	gd.cmd.Dir = filepath.Dir(path)
 	stdout, err := gd.cmd.StdoutPipe()
 	if err == nil {
@@ -109,6 +124,9 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		gd.conn = flds[4]
 		gd.dlv = rpc2.NewClient(gd.conn)
 		gd.SetParams(&gd.params)
+		if gd.startFunc != nil {
+			gd.startFunc()
+		}
 	}
 	return out
 }
@@ -540,7 +558,7 @@ func (gd *GiDelve) ListAllVars(filter string) ([]*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	lc := gd.toLoadConfig(&gd.params)
+	lc := gd.toLoadConfig(&gd.params.VarList)
 	ds, err := gd.dlv.ListPackageVariables(filter, *lc)
 	gd.LogErr(err)
 	return gd.cvtVars(ds), err
@@ -552,7 +570,7 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 		return nil, err
 	}
 	ec := gd.toEvalScope(threadID, frame)
-	lc := gd.toLoadConfig(&gd.params)
+	lc := gd.toLoadConfig(&gd.params.VarList)
 	vs, err := gd.dlv.ListLocalVariables(*ec, *lc)
 	gd.LogErr(err)
 	as, err := gd.dlv.ListFunctionArgs(*ec, *lc)
@@ -574,7 +592,7 @@ func (gd *GiDelve) GetVar(name string, threadID int, frame int) (*gidebug.Variab
 		return nil, err
 	}
 	ec := gd.toEvalScope(threadID, frame)
-	lc := gd.toLoadConfig(&gd.params)
+	lc := gd.toLoadConfig(&gd.params.GetVar)
 	ds, err := gd.dlv.EvalVariable(*ec, name, *lc)
 	gd.LogErr(err)
 	return gd.cvtVar(ds), err
