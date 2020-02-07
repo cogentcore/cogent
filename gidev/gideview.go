@@ -29,11 +29,16 @@ import (
 	"github.com/goki/gi/mat32"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/oswin/mimedata"
 	"github.com/goki/gi/units"
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/complete"
 	"github.com/goki/pi/filecat"
+	"github.com/goki/pi/lex"
+	"github.com/goki/pi/parse"
+	"github.com/goki/pi/pi"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -417,6 +422,7 @@ func (ge *GideView) LangDefaults() bool {
 func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 	tb.SetHiStyle(gide.Prefs.HiStyle)
 	ge.Prefs.Editor.ConfigTextBuf(tb)
+	tb.Complete.LookupFunc = ge.LookupFun
 
 	// these are now set in std textbuf..
 	// tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)                    // always set -- option can override
@@ -1560,6 +1566,88 @@ func (ge *GideView) CursorToHistPrev() bool {
 func (ge *GideView) CursorToHistNext() bool {
 	tv := ge.ActiveTextView()
 	return tv.CursorToHistNext()
+}
+
+// LookupFun is the completion system Lookup function that makes a custom
+// textview dialog that has option to edit resulting file.
+func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (ld complete.Lookup) {
+	sfs := data.(*pi.FileStates)
+	if sfs == nil {
+		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
+		return ld
+	}
+	lp, err := pi.LangSupport.Props(sfs.Sup)
+	if err != nil {
+		log.Printf("LookupFun: %v\n", err)
+		return ld
+	}
+	if lp.Lang == nil {
+		return ld
+	}
+
+	// note: must have this set to ture to allow viewing of AST
+	// must set it in pi/parse directly -- so it is changed in the fileparse too
+	parse.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
+
+	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
+	if len(ld.Text) > 0 {
+		giv.TextViewDialog(nil, ld.Text, giv.DlgOpts{Title: "Lookup: " + text})
+		return ld
+	}
+	if ld.Filename == "" {
+		return ld
+	}
+
+	txt := textbuf.FileRegionBytes(ld.Filename, ld.StLine, ld.EdLine, true, 10) // comments, 10 lines back max
+	prmpt := fmt.Sprintf("%v [%d:%d]", ld.Filename, ld.StLine, ld.EdLine)
+	opts := giv.DlgOpts{Title: "Lookup: " + text, Prompt: prmpt}
+
+	dlg := gi.NewStdDialog(opts.ToGiOpts(), gi.NoOk, gi.NoCancel)
+	frame := dlg.Frame()
+	_, prIdx := dlg.PromptWidget(frame)
+
+	tb := &giv.TextBuf{}
+	tb.InitName(tb, "text-view-dialog-buf")
+	tb.Filename = gi.FileName(ld.Filename)
+	tb.Hi.Style = gide.Prefs.HiStyle
+	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
+	tb.Stat() // update markup
+	tb.SetText(txt)
+
+	tlv := frame.InsertNewChild(gi.KiT_Layout, prIdx+1, "text-lay").(*gi.Layout)
+	tlv.SetProp("width", units.NewEm(5))
+	tlv.SetProp("height", units.NewEm(5))
+	tlv.SetStretchMax()
+	tv := giv.AddNewTextView(tlv, "text-view")
+	tv.Viewport = dlg.Embed(gi.KiT_Viewport2D).(*gi.Viewport2D)
+	tv.SetInactive()
+	tv.SetProp("font-family", gide.Prefs.FontFamily)
+	tv.SetBuf(tb)
+
+	bbox, _ := dlg.ButtonBox(frame)
+	if bbox == nil {
+		bbox = dlg.AddButtonBox(frame)
+	}
+	ofb := gi.AddNewButton(bbox, "open-file")
+	ofb.SetText("Open File")
+	ofb.SetIcon("file-open")
+	ofb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.ButtonClicked) {
+			ge.ViewFile(gi.FileName(ld.Filename))
+		}
+	})
+	cpb := gi.AddNewButton(bbox, "copy-to-clip")
+	cpb.SetText("Copy To Clipboard")
+	cpb.SetIcon("copy")
+	cpb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.ButtonClicked) {
+			ddlg := recv.Embed(gi.KiT_Dialog).(*gi.Dialog)
+			oswin.TheApp.ClipBoard(ddlg.Win.OSWin).Write(mimedata.NewTextBytes(txt))
+		}
+	})
+	dlg.UpdateEndNoSig(true) // going to be shown
+	dlg.Open(0, 0, ge.Viewport, nil)
+	return ld
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

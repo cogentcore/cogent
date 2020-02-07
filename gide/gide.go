@@ -10,6 +10,7 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/giv/textbuf"
+	"github.com/goki/pi/complete"
 	"github.com/goki/pi/filecat"
 )
 
@@ -110,6 +111,10 @@ type Gide interface {
 	// CloseOpenNodes closes any nodes with open views (including those in directories under nodes).
 	// called prior to rename.
 	CloseOpenNodes(nodes []*FileNode)
+
+	// LookupFun is the completion system Lookup function that makes a custom
+	// textview dialog that has option to edit resulting file.
+	LookupFun(data interface{}, text string, posLn, posCh int) (ld complete.Lookup)
 
 	// Spell checks spelling in files
 	Spell()
