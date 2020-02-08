@@ -103,8 +103,8 @@ func (dv *DebugView) DeleteAllBreaks() {
 	for _, bk := range dv.State.Breaks {
 		tb := dv.Gide.TextBufForFile(bk.FPath, false)
 		if tb != nil {
-			tb.DeleteLineColor(bk.Line)
-			tb.DeleteLineIcon(bk.Line)
+			tb.DeleteLineColor(bk.Line - 1)
+			tb.DeleteLineIcon(bk.Line - 1)
 			tb.Refresh()
 		}
 	}
