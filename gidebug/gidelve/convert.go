@@ -5,9 +5,14 @@
 package gidelve
 
 import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/go-delve/delve/service/api"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gide/gidebug"
+	"github.com/goki/pi/langs/golang"
 	"github.com/goki/pi/syms"
 )
 
@@ -166,6 +171,18 @@ func (gd *GiDelve) cvtStack(ds []api.Stackframe) []*gidebug.Frame {
 	return vr
 }
 
+func ShortType(typ string) string {
+	si := strings.Index(typ, "/")
+	if si < 0 {
+		return typ
+	}
+	tnm := golang.TrimLeftToAlpha(typ)
+	tsi := strings.Index(typ, tnm)
+	fdir, fnm := filepath.Split(tnm)
+	fdd := filepath.Base(fdir)
+	return typ[:tsi] + fdd + "/" + fnm
+}
+
 func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 	if ds == nil {
 		return nil
@@ -173,7 +190,8 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 	vr := &gidebug.Variable{}
 	vr.InitName(vr, ds.Name)
 	vr.Addr = ds.Addr
-	vr.TypeStr = ds.RealType
+	vr.FullTypeStr = ds.RealType
+	vr.TypeStr = ShortType(ds.RealType)
 	if ds.Flags&api.VariableEscaped != 0 {
 		vr.Heap = true
 	}
@@ -186,10 +204,15 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 	vr.Loc.FPath = ds.LocationExpr
 	nkids := len(ds.Children)
 	switch {
+	case nkids == 1 && vr.Kind.IsPtr():
+		el := &ds.Children[0]
+		if el.Name == "" {
+			el.Name = "*" + ds.Name
+		}
 	case nkids > 0 && vr.Kind.SubCat() == syms.List:
 		el := &ds.Children[0]
 		elk := syms.ReflectKindMap[el.Kind]
-		if elk.Cat() == syms.Primitive {
+		if elk.IsPrimitiveNonPtr() {
 			vr.List = make([]string, nkids)
 			for i, _ := range ds.Children {
 				vr.List[i] = ds.Children[i].Value
@@ -200,7 +223,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 		mapn := nkids / 2
 		el := &ds.Children[1] // alternates key / value
 		elk := syms.ReflectKindMap[el.Kind]
-		if elk.Cat() == syms.Primitive {
+		if elk.IsPrimitiveNonPtr() {
 			vr.Map = make(map[string]string, mapn)
 			for i := 0; i < mapn; i++ {
 				k := &ds.Children[2*i]
@@ -222,7 +245,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 		for i, _ := range ds.Children {
 			el := &ds.Children[i]
 			elk := syms.ReflectKindMap[el.Kind]
-			if elk.Cat() != syms.Primitive {
+			if !elk.IsPrimitiveNonPtr() {
 				allPrim = false
 				break
 			}
@@ -237,14 +260,17 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 				}
 			}
 			vr.Value = vstr
+			vr.ElValue = vstr
 			return vr
 		}
 	}
 	for i, _ := range ds.Children {
 		el := &ds.Children[i]
-		if el.Name != "Ths" && el.Name != "Par" { // todo: check for parent ki type here
-			vr.AddChild(gd.cvtVar(el))
+		nkv := gd.cvtVar(el)
+		if nkv.Nm == "" {
+			nkv.SetName(fmt.Sprintf("[%d]", i))
 		}
+		vr.AddChild(nkv)
 	}
 	return vr
 }
@@ -267,7 +293,7 @@ func (gd *GiDelve) toLoadConfig(ds *gidebug.VarParams) *api.LoadConfig {
 	}
 	lc := &api.LoadConfig{}
 	lc.FollowPointers = ds.FollowPointers
-	lc.MaxVariableRecurse = ds.MaxVariableRecurse
+	lc.MaxVariableRecurse = ds.MaxRecurse
 	lc.MaxStringLen = ds.MaxStringLen
 	lc.MaxArrayValues = ds.MaxArrayValues
 	lc.MaxStructFields = ds.MaxStructFields

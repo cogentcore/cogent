@@ -5,14 +5,9 @@
 package gidebug
 
 import (
-	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/goki/gi/giv"
-	"github.com/goki/ki/indent"
-	"github.com/goki/ki/ki"
-	"github.com/goki/pi/syms"
 )
 
 // This file contains all the state structs used in communciating with the
@@ -34,6 +29,17 @@ type Thread struct {
 	Task  int    `desc:"id of the current Task within this system thread (if relevant)"`
 }
 
+// ThreadByID returns the given thread by ID from full list, and index.
+// returns nil, -1 if not found.
+func ThreadByID(thrs []*Thread, id int) (*Thread, int) {
+	for i, thr := range thrs {
+		if thr.ID == id {
+			return thr, i
+		}
+	}
+	return nil, -1
+}
+
 // Task is an optional finer-grained, lighter-weight thread, e.g.,
 // a goroutine in the Go language.  if GiDebug HasTasks() == false then
 // it is not used.
@@ -47,6 +53,17 @@ type Task struct {
 	Thread    int      `desc:"id of the current Thread this task is running on"`
 	StartLoc  Location `tableview:"-" desc:"where did this task first start running?"`
 	LaunchLoc Location `tableview:"-" desc:"at what point was this task launched from another task?"`
+}
+
+// TaskByID returns the given thread by ID from full list, and index.
+// returns nil, -1 if not found.
+func TaskByID(thrs []*Task, id int) (*Task, int) {
+	for i, thr := range thrs {
+		if thr.ID == id {
+			return thr, i
+		}
+	}
+	return nil, -1
 }
 
 // Location holds program location information.
@@ -110,113 +127,6 @@ func SortBreaks(brk []*Break) {
 	sort.Slice(brk, func(i, j int) bool {
 		return brk[i].ID < brk[j].ID
 	})
-}
-
-// Variable describes a variable.  It is a Ki tree type so that full tree
-// can be visualized.
-type Variable struct {
-	ki.Node
-	TypeStr string               `inactive:"-" desc:"type of variable as a string expression"`
-	Kind    syms.Kinds           `inactive:"-" desc:"kind of element"`
-	ElValue string               `inactive:"-" view:"-" desc:"own elemental value of variable (blank for composite types)"`
-	Value   string               `inactive:"-" width:"80" desc:"value of variable -- may be truncated if long"`
-	Len     int64                `inactive:"-" desc:"length of variable (slices, maps, strings etc)"`
-	Cap     int64                `inactive:"-" tableview:"-" desc:"capacity of vaiable"`
-	Addr    uintptr              `inactive:"-" desc:"address where variable is located in memory"`
-	Heap    bool                 `inactive:"-" desc:"if true, the variable is stored in the main memory heap, not the stack"`
-	Loc     Location             `inactive:"-" tableview:"-" desc:"location where the variable was defined in source"`
-	List    []string             `tableview:"-" desc:"if kind is a list type (array, slice), and elements are primitive types, this is the contents"`
-	Map     map[string]string    `tableview:"-" desc:"if kind is a map, and elements are primitive types, this is the contents"`
-	MapVar  map[string]*Variable `tableview:"-" desc:"if kind is a map, and elements are not primitive types, this is the contents"`
-}
-
-// SortVars sorts vars by name
-func SortVars(vrs []*Variable) {
-	sort.Slice(vrs, func(i, j int) bool {
-		return vrs[i].Nm < vrs[j].Nm
-	})
-}
-
-// ValueString returns the value of the variable, integrating over sub-elements
-// if newlines, each element is separated by a new line, and indented.
-// Generally this should be used to set the Value field after getting new data.
-// The maxdepth and maxlen parameters provide constraints on the detail
-// provided by this string.
-func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int) string {
-	if vr.ElValue != "" {
-		return vr.ElValue
-	}
-	tabSz := 2
-	ichr := indent.Space
-	var b strings.Builder
-	b.WriteString(vr.TypeStr)
-	b.WriteString(" {")
-	if ident > maxdepth {
-		b.WriteString("...")
-	} else {
-		lln := len(vr.List)
-		if lln > 0 {
-			for i, el := range vr.List {
-				b.WriteString(fmt.Sprintf("%d: %s", i, el))
-				if i < lln-1 {
-					b.WriteString(", ")
-				}
-			}
-		}
-		lln = len(vr.Map)
-		if lln > 0 {
-			for k, v := range vr.Map {
-				b.WriteString(fmt.Sprintf("%s: %s, ", k, v))
-			}
-		}
-		lln = len(vr.MapVar)
-		if lln > 0 {
-			for k, ve := range vr.MapVar {
-				if newlines {
-					b.WriteString("\n")
-					b.WriteString(indent.String(ichr, ident+1, tabSz))
-				}
-				b.WriteString(k + ": ")
-				b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen))
-				if b.Len() > maxlen {
-					b.WriteString("...")
-					break
-				}
-			}
-		}
-		for _, vek := range vr.Kids {
-			ve := vek.(*Variable)
-			if newlines {
-				b.WriteString("\n")
-				b.WriteString(indent.String(ichr, ident+1, tabSz))
-			}
-			if ve.Nm != "" {
-				b.WriteString(ve.Nm + ": ")
-			}
-			b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen))
-			if b.Len() > maxlen {
-				b.WriteString("...")
-				break
-			}
-		}
-	}
-	if newlines {
-		b.WriteString("\n")
-		b.WriteString(indent.String(ichr, ident, tabSz))
-	}
-	b.WriteString("}")
-	return b.String()
-}
-
-// TypeInfo returns a string of type information -- if newlines, then
-// include newlines between each item (else tabs)
-func (vr *Variable) TypeInfo(newlines bool) string {
-	sep := "\t"
-	if newlines {
-		sep = "\n"
-	}
-	info := []string{"Name: " + vr.Nm, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
-	return strings.Join(info, sep)
 }
 
 // State represents the current immediate execution state of the debugger.
@@ -343,11 +253,11 @@ func (as *AllState) MergeBreaks() {
 // VarParams are parameters controlling how much detail the debugger reports
 // about variables.
 type VarParams struct {
-	FollowPointers     bool `desc:"requests pointers to be automatically dereferenced."`
-	MaxVariableRecurse int  `desc:"how far to recurse when evaluating nested types."`
-	MaxStringLen       int  `desc:"the maximum number of bytes read from a string"`
-	MaxArrayValues     int  `desc:"the maximum number of elements read from an array, a slice or a map."`
-	MaxStructFields    int  `desc:"the maximum number of fields read from a struct, -1 will read all fields."`
+	FollowPointers  bool `def:"false" desc:"requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not reccommended."`
+	MaxRecurse      int  `desc:"how far to recurse when evaluating nested types."`
+	MaxStringLen    int  `desc:"the maximum number of bytes read from a string"`
+	MaxArrayValues  int  `desc:"the maximum number of elements read from an array, a slice or a map."`
+	MaxStructFields int  `desc:"the maximum number of fields read from a struct, -1 will read all fields."`
 }
 
 // Params are overall debugger parameters
@@ -360,17 +270,17 @@ type Params struct {
 // DefaultParams are default parameter values
 var DefaultParams = Params{
 	VarList: VarParams{
-		FollowPointers:     false,
-		MaxVariableRecurse: 5,
-		MaxStringLen:       200,
-		MaxArrayValues:     100,
-		MaxStructFields:    -1,
+		FollowPointers:  false,
+		MaxRecurse:      4,
+		MaxStringLen:    100,
+		MaxArrayValues:  10,
+		MaxStructFields: -1,
 	},
 	GetVar: VarParams{
-		FollowPointers:     true,
-		MaxVariableRecurse: 10,
-		MaxStringLen:       200,
-		MaxArrayValues:     100,
-		MaxStructFields:    -1,
+		FollowPointers:  false,
+		MaxRecurse:      10,
+		MaxStringLen:    1024,
+		MaxArrayValues:  1024,
+		MaxStructFields: -1,
 	},
 }

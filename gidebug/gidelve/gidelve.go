@@ -396,7 +396,12 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
 		updt := false
 		for _, b := range *brk {
 			c, ci := gidebug.BreakByFile(cb, b.FPath, b.Line)
-			if c != nil {
+			if c != nil && c.ID > 0 {
+				if !b.On {
+					cb = append(cb[:ci], cb[ci+1:]...) // remove from cb
+					gd.ClearBreak(c.ID)                // remove from list
+					continue
+				}
 				bc := b.Cond
 				bt := b.Trace
 				if bc != c.Cond || bt != c.Trace {
@@ -405,8 +410,8 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
 				*b = *c
 				b.Cond = bc
 				b.Trace = bt
-				cb = append(cb[:ci], cb[ci+1:]...)
-			} else {
+				cb = append(cb[:ci], cb[ci+1:]...) // remove from cb
+			} else { // set but not found
 				if b.On {
 					updt = true // need another iter
 					gd.SetBreak(b.FPath, b.Line)
@@ -453,11 +458,6 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 	all.State = *bs
 	all.CurThread = all.State.Thread.ID
 	all.CurTask = all.State.Task.ID
-	bk, err := gd.ListBreaks()
-	if err != nil {
-		return err
-	}
-	all.Breaks = bk
 	st, err := gd.ListThreads()
 	if err != nil {
 		return err
@@ -579,8 +579,23 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 	ca := gd.cvtVars(as)
 	cv = append(cv, ca...)
 	gidebug.SortVars(cv)
+	// now we have to fill in the pointers here
 	for _, vr := range cv {
-		vr.Value = vr.ValueString(false, 0, 2, 256) // max depth, max len -- short for summary
+		if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Nm != "" {
+			vrk := vr.Child(0).(*gidebug.Variable)
+			if vrk.NumChildren() == 0 && !vrk.Kind.IsPrimitiveNonPtr() {
+				vnm := "*" + vr.Nm
+				vrkr, err := gd.GetVar(vnm, threadID, frame)
+				if err == nil {
+					if vrkr.Nm == "" {
+						vrkr.SetName(vnm)
+					}
+					vr.DeleteChildAtIndex(0, true)
+					vr.AddChild(vrkr)
+				}
+			}
+		}
+		vr.Value = vr.ValueString(false, 0, gd.params.VarList.MaxRecurse, 256, false) // max depth, max len -- short for summary -- no type
 	}
 	gd.LogErr(err)
 	return cv, err
@@ -595,7 +610,26 @@ func (gd *GiDelve) GetVar(name string, threadID int, frame int) (*gidebug.Variab
 	lc := gd.toLoadConfig(&gd.params.GetVar)
 	ds, err := gd.dlv.EvalVariable(*ec, name, *lc)
 	gd.LogErr(err)
-	return gd.cvtVar(ds), err
+	if err != nil {
+		return nil, err
+	}
+	vr := gd.cvtVar(ds)
+	if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Nm != "" {
+		vrk := vr.Child(0).(*gidebug.Variable)
+		if vrk.NumChildren() == 0 && !vrk.Kind.IsPrimitiveNonPtr() {
+			vnm := "*" + vr.Nm
+			dss, err := gd.dlv.EvalVariable(*ec, vnm, *lc)
+			if err == nil {
+				vrkr := gd.cvtVar(dss)
+				if vrkr.Nm == "" {
+					vrkr.SetName(vnm)
+				}
+				vr.DeleteChildAtIndex(0, true)
+				vr.AddChild(vrkr)
+			}
+		}
+	}
+	return vr, err
 }
 
 // SetVar sets the value of a variable

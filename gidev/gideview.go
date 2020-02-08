@@ -741,6 +741,10 @@ func (ge *GideView) FileNodeForFile(fpath string, add bool) *giv.FileNode {
 		if !add {
 			return nil
 		}
+		if strings.HasSuffix(fpath, "/") {
+			log.Printf("GideView: attempt to add dir to external files: %v\n", fpath)
+			return nil
+		}
 		efn, err := ge.Files.AddExtFile(fpath)
 		if err != nil {
 			log.Printf("GideView: cannot add external file: %v\n", err)
@@ -763,8 +767,8 @@ func (ge *GideView) TextBufForFile(fpath string, add bool) *giv.TextBuf {
 	if fn == nil {
 		return nil
 	}
-	ok, _ := ge.OpenFileNode(fn)
-	if ok {
+	_, err := ge.OpenFileNode(fn)
+	if err == nil {
 		return fn.Buf
 	}
 	return nil
@@ -2263,6 +2267,7 @@ func (ge *GideView) ConfigSplitView() {
 		ftfr := split.Child(FileTreeIdx).(*gi.Frame)
 		if !ftfr.HasChildren() {
 			ft := ftfr.AddNewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
+			ft.OpenDepth = 4
 			ge.FilesView = ft
 			ft.SetRootNode(&ge.Files)
 			ft.TreeViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {

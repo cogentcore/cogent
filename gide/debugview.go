@@ -10,25 +10,13 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/mat32"
 	"github.com/goki/gide/gidebug"
 	"github.com/goki/gide/gidebug/gidelve"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
 )
-
-// todo:
-// * select current depth, task, thread based on cur vals.
-// * support proper thread / task abstractions -- currently using Task baked in.
-// * breakpoints not updating properly, etc
-// * highlight at end not working.
-// * use a treeview for single-var view -- need a ki node version of variable
-//   and potentially do incremental fetching, esp of pointers which seem like
-//   the major issue..
-// * also need to map to pi.syms.Kind so we know what kind of thing it is, and
-//   customize display based on that
-// * still getting weird focus issues.  how to do a complete reset?  why is it happening?
-// * add button / filenode menu for choosing exe target
 
 // Debuggers is the list of supported debuggers
 var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (gidebug.GiDebug, error){
@@ -143,6 +131,15 @@ func (dv *DebugView) Start() {
 	}
 }
 
+// UpdateView updates current view of state
+func (dv *DebugView) UpdateView() {
+	ds, err := dv.Dbg.GetState()
+	if err != nil {
+		return
+	}
+	dv.InitState(ds)
+}
+
 // Continue continues running from current point -- this MUST be called
 // in a separate goroutine!
 func (dv *DebugView) Continue() {
@@ -154,8 +151,8 @@ func (dv *DebugView) Continue() {
 	dv.SetStatus("Running")
 	ds := <-dv.Dbg.Continue() // we wait here until it returns
 	updt := dv.UpdateStart()
+	dv.SetStatus("Stopped")
 	dv.InitState(ds) // todo: do we need a mutex for this?  probably not
-	dv.ShowStack(true)
 	dv.UpdateEnd(updt)
 }
 
@@ -248,7 +245,7 @@ func (dv *DebugView) DeleteBreak(fpath string, line int) {
 		return
 	}
 	if !dv.DbgIsAvail() {
-		dv.State.DeleteBreakByFile(fpath, line)
+		dv.State.DeleteBreakByFile(fpath, line) // already doing this!
 		dv.ShowBreaks(true)
 		return
 	}
@@ -317,6 +314,30 @@ func (dv *DebugView) SetThread(threadID int) {
 	dv.UpdateFmState()
 }
 
+// SetThreadIdx sets the given thread by index in threads list as active
+// this must be TaskID if HasTasks and ThreadID if not.
+func (dv *DebugView) SetThreadIdx(thridx int) {
+	if !dv.DbgIsAvail() || thridx < 0 {
+		return
+	}
+	thid := 0
+	if dv.Dbg.HasTasks() {
+		if thridx >= len(dv.State.Tasks) {
+			return
+		}
+		th := dv.State.Tasks[thridx]
+		thid = th.ID
+	} else {
+		if thridx >= len(dv.State.Threads) {
+			return
+		}
+		th := dv.State.Threads[thridx]
+		thid = th.ID
+	}
+	dv.Dbg.UpdateAllState(&dv.State, thid, 0)
+	dv.UpdateFmState()
+}
+
 // ShowFile shows the file name in gide
 func (dv *DebugView) ShowFile(fname string, ln int) {
 	if fname == "" || fname == "?" {
@@ -324,6 +345,15 @@ func (dv *DebugView) ShowFile(fname string, ln int) {
 	}
 	// fmt.Printf("File: %s:%d\n", fname, ln)
 	dv.Gide.ShowFile(fname, ln)
+}
+
+// ShowBreakFile shows the file for given break index
+func (dv *DebugView) ShowBreakFile(bidx int) {
+	if bidx < 0 || bidx >= len(dv.State.Breaks) {
+		return
+	}
+	bk := dv.State.Breaks[bidx]
+	dv.ShowFile(bk.FPath, bk.Line)
 }
 
 // ShowBreaks shows the current breaks
@@ -381,22 +411,18 @@ func (dv *DebugView) ShowVar(name string) error {
 	if err != nil {
 		return err
 	}
-	// tinfo := vv.TypeInfo(true)
-	// tinfo += "\n" + vv.ValueString(true, 0, 20, 4096)
-	// prompt := ""
-	// cf := dv.State.StackFrame(dv.State.CurFrame)
-	// if cf != nil {
-	// 	prompt = "at: " + cf.FPath + fmt.Sprintf(":%d  Thread: %d  Depth: %d", cf.Line, dv.State.CurTask, dv.State.CurFrame)
-	// }
-	// giv.TextViewDialog(dv.Viewport, []byte(tinfo), giv.DlgOpts{Title: "Variable: " + name, Prompt: prompt, Ok: true})
-	ged := giv.GoGiEditorDialog(vv)
-	ged.TreeView().CloseAll()
+	frinfo := ""
+	cf := dv.State.StackFrame(dv.State.CurFrame)
+	if cf != nil {
+		frinfo = "at: " + cf.FPath + fmt.Sprintf(":%d  Thread: %d  Depth: %d", cf.Line, dv.State.CurTask, dv.State.CurFrame)
+	}
+	VarViewDialog(vv, frinfo, dv)
 	return nil
 }
 
 func (dv *DebugView) SetStatus(stat string) {
 	cb := dv.CtrlBar()
-	stl := cb.Child(0).(*gi.Label)
+	stl := cb.ChildByName("status", 1).(*gi.Label)
 	stl.SetText(stat)
 }
 
@@ -512,6 +538,12 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
 
+	// cb.AddAction(gi.ActOpts{Label: "Updt", Icon: "update", Tooltip: "update current state"}, dv.This(),
+	// 	func(recv, send ki.Ki, sig int64, data interface{}) {
+	// 		dvv := recv.Embed(KiT_DebugView).(*DebugView)
+	// 		dvv.UpdateView()
+	// 		cb.UpdateActions()
+	// 	})
 	stl := gi.AddNewLabel(cb, "status", "Building..   ")
 	stl.Redrawable = true
 	cb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
@@ -616,6 +648,7 @@ func (sv *StackView) ShowStack() {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	tv.SetInactive()
+	tv.SelectedIdx = dv.State.CurFrame
 	tv.SetSlice(&dv.State.Stack)
 	sv.UpdateEnd(updt)
 }
@@ -652,8 +685,7 @@ func (sv *BreakView) Config(dv *DebugView) {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
-				bk := dv.State.Breaks[idx]
-				dv.ShowFile(bk.FPath, bk.Line)
+				dv.ShowBreakFile(idx)
 			}
 		})
 	} else {
@@ -712,8 +744,7 @@ func (sv *ThreadView) Config(dv *DebugView) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				if dv.Dbg != nil && !dv.Dbg.HasTasks() {
-					th := dv.State.Threads[idx]
-					dv.SetThread(th.ID)
+					dv.SetThreadIdx(idx)
 				}
 			}
 		})
@@ -738,6 +769,10 @@ func (sv *ThreadView) ShowThreads() {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	tv.SetInactive()
+	_, idx := gidebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
+	if idx > 0 {
+		tv.SelectedIdx = idx
+	}
 	tv.SetSlice(&dv.State.Threads)
 	sv.UpdateEnd(updt)
 }
@@ -774,8 +809,9 @@ func (sv *TaskView) Config(dv *DebugView) {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
-				th := dv.State.Tasks[idx]
-				dv.SetThread(th.ID)
+				if dv.Dbg != nil && dv.Dbg.HasTasks() {
+					dv.SetThreadIdx(idx)
+				}
 			}
 		})
 	} else {
@@ -799,6 +835,10 @@ func (sv *TaskView) ShowTasks() {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	tv.SetInactive()
+	_, idx := gidebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
+	if idx > 0 {
+		tv.SelectedIdx = idx
+	}
 	tv.SetSlice(&dv.State.Tasks)
 	sv.UpdateEnd(updt)
 }
@@ -869,4 +909,179 @@ var VarsViewProps = ki.Props{
 	"EnumType:Flag": gi.KiT_NodeFlags,
 	"max-width":     -1,
 	"max-height":    -1,
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+//  VarView
+
+// VarView represents a struct, creating a property editor of the fields --
+// constructs Children widgets to show the field names and editor fields for
+// each field, within an overall frame with an optional title, and a button
+// box at the bottom where methods can be invoked
+type VarView struct {
+	gi.Frame
+	Var       *gidebug.Variable `desc:"variable being edited"`
+	FrameInfo string            `desc:"frame info"`
+	DbgView   *DebugView        `json:"-" xml:"-" desc:"parent DebugView"`
+}
+
+var KiT_VarView = kit.Types.AddType(&VarView{}, VarViewProps)
+
+// AddNewVarView adds a new gieditor to given parent node, with given name.
+func AddNewVarView(parent ki.Ki, name string) *VarView {
+	return parent.AddNewChild(KiT_VarView, name).(*VarView)
+}
+
+// SetVar sets the source variable and ensures configuration
+func (vv *VarView) SetVar(vr *gidebug.Variable, frinfo string) {
+	vv.FrameInfo = frinfo
+	updt := false
+	if vv.Var != vr {
+		updt = vv.UpdateStart()
+		vv.Var = vr
+	}
+	vv.Config()
+	vv.UpdateEnd(updt)
+}
+
+// Config configures the widget
+func (vv *VarView) Config() {
+	if vv.Var == nil {
+		return
+	}
+	vv.Lay = gi.LayoutVert
+	vv.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	config := kit.TypeAndNameList{}
+	config.Add(gi.KiT_Label, "frame-info")
+	// config.Add(gi.KiT_ToolBar, "toolbar")
+	config.Add(gi.KiT_SplitView, "splitview")
+	mods, updt := vv.ConfigChildren(config, ki.UniqueNames)
+	vv.SetFrameInfo(vv.FrameInfo)
+	vv.ConfigSplitView()
+	// vv.ConfigToolbar()
+	if mods {
+		vv.UpdateEnd(updt)
+	}
+	return
+}
+
+// SplitView returns the main SplitView
+func (vv *VarView) SplitView() *gi.SplitView {
+	return vv.ChildByName("splitview", 1).(*gi.SplitView)
+}
+
+// TreeView returns the main TreeView
+func (vv *VarView) TreeView() *giv.TreeView {
+	return vv.SplitView().Child(0).Child(0).(*giv.TreeView)
+}
+
+// StructView returns the main StructView
+func (vv *VarView) StructView() *giv.StructView {
+	return vv.SplitView().Child(1).(*giv.StructView)
+}
+
+// // ToolBar returns the toolbar widget
+// func (vv *VarView) ToolBar() *gi.ToolBar {
+// 	return vv.ChildByName("toolbar", 0).(*gi.ToolBar)
+// }
+
+// SetFrameInfo sets the frame info
+func (vv *VarView) SetFrameInfo(finfo string) {
+	lab := vv.ChildByName("frame-info", 0).(*gi.Label)
+	lab.Text = finfo
+}
+
+// // ConfigToolbar adds a VarView toolbar.
+// func (vv *VarView) ConfigToolbar() {
+// 	tb := vv.ToolBar()
+// 	if tb != nil && tb.HasChildren() {
+// 		return
+// 	}
+// 	tb.SetStretchMaxWidth()
+// 	giv.ToolBarView(vv, vv.Viewport, tb)
+// }
+
+// ConfigSplitView configures the SplitView.
+func (vv *VarView) ConfigSplitView() {
+	if vv.Var == nil {
+		return
+	}
+	split := vv.SplitView()
+	// split.Dim = mat32.Y
+	split.Dim = mat32.X
+
+	if len(split.Kids) == 0 {
+		tvfr := gi.AddNewFrame(split, "tvfr", gi.LayoutHoriz)
+		tv := giv.AddNewTreeView(tvfr, "tv")
+		giv.AddNewStructView(split, "sv")
+		tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			if data == nil {
+				return
+			}
+			vve, _ := recv.Embed(KiT_VarView).(*VarView)
+			svr := vve.StructView()
+			tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+			if sig == int64(giv.TreeViewSelected) {
+				svr.SetStruct(tvn.SrcNode)
+			}
+		})
+		split.SetSplits(.3, .7)
+	}
+	tv := vv.TreeView()
+	tv.SetRootNode(vv.Var)
+	sv := vv.StructView()
+	sv.SetStruct(vv.Var)
+}
+
+// func (ge *VarView) Render2D() {
+// 	// ge.ToolBar().UpdateActions()
+// 	ge.Frame.Render2D()
+// }
+
+var VarViewProps = ki.Props{
+	"EnumType:Flag":    gi.KiT_NodeFlags,
+	"background-color": &gi.Prefs.Colors.Background,
+	"color":            &gi.Prefs.Colors.Font,
+	"max-width":        -1,
+	"max-height":       -1,
+}
+
+// VarViewDialog opens an interactive editor of the given Ki tree, at its
+// root, returns VarView and window
+func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarView {
+	width := 1280
+	height := 920
+	wnm := "var-view"
+	wti := "Var View"
+	if vr != nil {
+		wnm += "-" + vr.Name()
+		wti += ": " + vr.Name()
+	}
+
+	win, recyc := gi.RecycleMainWindow(vr, wnm, wti, width, height)
+	if recyc {
+		mfr, err := win.MainFrame()
+		if err == nil {
+			vv := mfr.Child(0).(*VarView)
+			vv.SetFrameInfo(frinfo)
+		}
+	}
+
+	vp := win.WinViewport2D()
+	updt := vp.UpdateStart()
+
+	mfr := win.SetMainFrame()
+	mfr.Lay = gi.LayoutVert
+
+	vv := AddNewVarView(mfr, "view")
+	vv.Viewport = vp
+	vv.DbgView = dbgVw
+	vv.SetVar(vr, frinfo)
+
+	// tb := vv.ToolBar()
+	// tb.UpdateActions()
+
+	vp.UpdateEndNoSig(updt)
+	win.GoStartEventLoop() // in a separate goroutine
+	return vv
 }
