@@ -153,3 +153,41 @@ func (vr *Variable) TypeInfo(newlines bool) string {
 	info := []string{"Name: " + vr.Nm, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
 	return strings.Join(info, sep)
 }
+
+// VarParams are parameters controlling how much detail the debugger reports
+// about variables.
+type VarParams struct {
+	FollowPointers  bool `def:"false" desc:"requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not reccommended."`
+	MaxRecurse      int  `desc:"how far to recurse when evaluating nested types."`
+	MaxStringLen    int  `desc:"the maximum number of bytes read from a string"`
+	MaxArrayValues  int  `desc:"the maximum number of elements read from an array, a slice or a map."`
+	MaxStructFields int  `desc:"the maximum number of fields read from a struct, -1 will read all fields."`
+}
+
+// Params are overall debugger parameters
+type Params struct {
+	Mode     Modes             `xml:"-" json:"-" view:"-" desc:"mode for running the debugger"`
+	PID      uint64            `xml:"-" json:"-" view:"-" desc:"process id number to attach to, for Attach mode"`
+	Args     []string          `desc:"optional extra args to pass to the debugger"`
+	StatFunc func(stat Status) `xml:"-" json:"-" view:"-" desc:"status function for debugger updating status"`
+	VarList  VarParams         `desc:"parameters for level of detail on overall list of variables"`
+	GetVar   VarParams         `desc:"parameters for level of detail retrieving a specific variable"`
+}
+
+// DefaultParams are default parameter values
+var DefaultParams = Params{
+	VarList: VarParams{
+		FollowPointers:  false,
+		MaxRecurse:      4,
+		MaxStringLen:    100,
+		MaxArrayValues:  10,
+		MaxStructFields: -1,
+	},
+	GetVar: VarParams{
+		FollowPointers:  false,
+		MaxRecurse:      10,
+		MaxStringLen:    1024,
+		MaxArrayValues:  1024,
+		MaxStructFields: -1,
+	},
+}

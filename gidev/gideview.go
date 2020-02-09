@@ -1480,6 +1480,10 @@ func (ge *GideView) Run() {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
+	if ge.Prefs.RunCmds[0] == "Run Proj" && ge.Prefs.RunExec == "" {
+		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
+		return
+	}
 	ge.ExecCmds(ge.Prefs.RunCmds, true, true)
 }
 
@@ -1780,18 +1784,21 @@ func (ge *GideView) Symbols() {
 	ge.FocusOnPanel(TabsIdx)
 }
 
-// Debug starts the debugger if RunExec is set, else prompts for run exec choice
+// Debug starts the debugger on the RunExec executable, if it is set,
+// else prompts for run exec choice.
 func (ge *GideView) Debug() {
-	if ge.Prefs.RunExec != "" {
-		exePath := string(ge.Prefs.RunExec)
-		exe := filepath.Base(exePath)
-		dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
-		dv.Config(ge, ge.Prefs.MainLang, exePath, false)
-		ge.FocusOnPanel(TabsIdx)
-		ge.CurDbg = dv
-	} else {
+	if ge.Prefs.RunExec == "" {
 		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
+		return
 	}
+	pp := ge.ProjPrefs()
+	pp.Debug.Mode = gidebug.Exec
+	exePath := string(ge.Prefs.RunExec)
+	exe := filepath.Base(exePath)
+	dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
+	dv.Config(ge, ge.Prefs.MainLang, exePath)
+	ge.FocusOnPanel(TabsIdx)
+	ge.CurDbg = dv
 }
 
 // DebugTest runs the debugger using testing mode in current active textview path
@@ -1800,10 +1807,31 @@ func (ge *GideView) DebugTest() {
 	if tv == nil || tv.Buf == nil {
 		return
 	}
+	pp := ge.ProjPrefs()
+	pp.Debug.Mode = gidebug.Test
 	tstPath := string(tv.Buf.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := ge.RecycleTab("Debug "+dir, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
-	dv.Config(ge, ge.Prefs.MainLang, tstPath, true)
+	dv.Config(ge, ge.Prefs.MainLang, tstPath)
+	ge.FocusOnPanel(TabsIdx)
+	ge.CurDbg = dv
+}
+
+// DebugAttach runs the debugger by attaching to an already-running process.
+// it uses (and requires) the current RunExec path -- prompts if not set.
+// pid is the process id to attach to.
+func (ge *GideView) DebugAttach(pid uint64) {
+	if ge.Prefs.RunExec == "" {
+		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
+		return
+	}
+	pp := ge.ProjPrefs()
+	pp.Debug.Mode = gidebug.Attach
+	pp.Debug.PID = pid
+	exePath := string(ge.Prefs.RunExec)
+	exe := filepath.Base(exePath)
+	dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
+	dv.Config(ge, ge.Prefs.MainLang, exePath)
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }
@@ -3096,6 +3124,12 @@ var GideViewProps = ki.Props{
 			}},
 			{"Debug", ki.Props{}},
 			{"DebugTest", ki.Props{}},
+			{"DebugAttach", ki.Props{
+				"desc": "attach to an already running process: enter the process PID",
+				"Args": ki.PropSlice{
+					{"Process PID", ki.Props{}},
+				},
+			}},
 			{"sep-run", ki.BlankProp{}},
 			{"Commit", ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,

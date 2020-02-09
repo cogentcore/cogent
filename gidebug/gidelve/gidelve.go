@@ -5,6 +5,7 @@
 package gidelve
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 	"path/filepath"
@@ -19,23 +20,23 @@ import (
 
 // GiDelve is the Delve implementation of the GiDebug interface
 type GiDelve struct {
-	path      string          // path to exe
-	rootPath  string          // root path for project
-	conn      string          // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
-	dlv       *rpc2.RPCClient // the delve rpc2 client interface
-	cmd       *exec.Cmd       // command running delve
-	obuf      *giv.OutBuf     // output buffer
-	startFunc func()          // startup function
-	params    gidebug.Params
+	path     string                    // path to exe
+	rootPath string                    // root path for project
+	conn     string                    // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
+	dlv      *rpc2.RPCClient           // the delve rpc2 client interface
+	cmd      *exec.Cmd                 // command running delve
+	obuf     *giv.OutBuf               // output buffer
+	statFunc func(stat gidebug.Status) // status function
+	params   gidebug.Params
 }
 
 // NewGiDelve creates a new debugger exe and client
 // for given path, and project root path
 // test = run in test mode, and args are optional additional args to pass
 // to the debugger.
-func NewGiDelve(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (*GiDelve, error) {
+func NewGiDelve(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (*GiDelve, error) {
 	gd := &GiDelve{}
-	err := gd.Start(path, rootPath, outbuf, test, pars, startFunc)
+	err := gd.Start(path, rootPath, outbuf, pars)
 	return gd, err
 }
 
@@ -79,19 +80,22 @@ func (gd *GiDelve) StartedCheck() error {
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) error {
+func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) error {
 	gd.path = path
 	gd.rootPath = rootPath
-	gd.startFunc = startFunc
-	if pars != nil {
-		gd.params = *pars
-	}
-	if test {
+	gd.params = *pars
+	gd.statFunc = pars.StatFunc
+	switch pars.Mode {
+	case gidebug.Exec:
+		targs := []string{"debug", "--headless", "--api-version=2", "--log"}
+		targs = append(targs, gd.params.Args...)
+		gd.cmd = exec.Command("dlv", targs...)
+	case gidebug.Test:
 		targs := []string{"test", "--headless", "--api-version=2", "--log"}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
-	} else {
-		targs := []string{"debug", "--headless", "--api-version=2", "--log"}
+	case gidebug.Attach:
+		targs := []string{"attach", fmt.Sprintf("%d", gd.params.PID), "--headless", "--api-version=2", "--log"}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
 	}
@@ -107,6 +111,7 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf, test bool, 
 		}
 	}
 	if err != nil {
+		gd.statFunc(gidebug.Error)
 		return gd.LogErr(err)
 	}
 	return nil
@@ -124,8 +129,8 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		gd.conn = flds[4]
 		gd.dlv = rpc2.NewClient(gd.conn)
 		gd.SetParams(&gd.params)
-		if gd.startFunc != nil {
-			gd.startFunc()
+		if gd.statFunc != nil {
+			gd.statFunc(gidebug.Ready)
 		}
 	}
 	return out

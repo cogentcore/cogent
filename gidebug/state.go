@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/goki/gi/giv"
+	"github.com/goki/ki/kit"
 )
 
 // This file contains all the state structs used in communciating with the
@@ -143,6 +144,7 @@ type State struct {
 // AllState holds all relevant state information.
 // This can be maintained and updated in the debug view.
 type AllState struct {
+	Status    Status      `desc:"overall debugger status"`
 	State     State       `desc:"current run state"`
 	CurThread int         `desc:"id of the current system thread to examine"`
 	CurTask   int         `desc:"id of the current task to examine"`
@@ -159,6 +161,7 @@ type AllState struct {
 // BlankState initializes state with a blank initial state with the various slices
 // having a single entry -- for GUI initialization.
 func (as *AllState) BlankState() {
+	as.Status = NotInit
 	as.Breaks = []*Break{&Break{}}
 	as.Threads = []*Thread{&Thread{}}
 	as.Tasks = []*Task{&Task{}}
@@ -250,37 +253,40 @@ func (as *AllState) MergeBreaks() {
 	SortBreaks(as.Breaks)
 }
 
-// VarParams are parameters controlling how much detail the debugger reports
-// about variables.
-type VarParams struct {
-	FollowPointers  bool `def:"false" desc:"requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not reccommended."`
-	MaxRecurse      int  `desc:"how far to recurse when evaluating nested types."`
-	MaxStringLen    int  `desc:"the maximum number of bytes read from a string"`
-	MaxArrayValues  int  `desc:"the maximum number of elements read from an array, a slice or a map."`
-	MaxStructFields int  `desc:"the maximum number of fields read from a struct, -1 will read all fields."`
-}
+// Status of the debugger
+type Status int32
 
-// Params are overall debugger parameters
-type Params struct {
-	Args    []string  `desc:"optional extra args to pass to the debugger"`
-	VarList VarParams `desc:"parameters for level of detail on overall list of variables"`
-	GetVar  VarParams `desc:"parameters for level of detail retrieving a specific variable"`
-}
+const (
+	// NotInit is not initialized
+	NotInit Status = iota
 
-// DefaultParams are default parameter values
-var DefaultParams = Params{
-	VarList: VarParams{
-		FollowPointers:  false,
-		MaxRecurse:      4,
-		MaxStringLen:    100,
-		MaxArrayValues:  10,
-		MaxStructFields: -1,
-	},
-	GetVar: VarParams{
-		FollowPointers:  false,
-		MaxRecurse:      10,
-		MaxStringLen:    1024,
-		MaxArrayValues:  1024,
-		MaxStructFields: -1,
-	},
-}
+	// Error means the debugger has an error -- usually from building
+	Error
+
+	// Building is building the exe for debugging
+	Building
+
+	// Ready means executable is built and ready to start (or restarted)
+	Ready
+
+	// Running means the process is running
+	Running
+
+	// Stopped means the process has stopped
+	// (at a breakpoint, crash, or from single stepping)
+	Stopped
+
+	// Finished means the process has finished running.
+	// See console for output and return value etc
+	Finished
+
+	// StatusN is the number of find locations (scopes)
+	StatusN
+)
+
+//go:generate stringer -type=Status
+
+var KiT_Status = kit.Enums.AddEnum(StatusN, kit.NotBitFlag, nil)
+
+func (ev Status) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
+func (ev *Status) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

@@ -43,10 +43,7 @@ const (
 
 var KiT_FindLoc = kit.Enums.AddEnumAltLower(FindLocN, kit.NotBitFlag, nil, "FindLoc")
 
-// MarshalJSON encodes
-func (ev FindLoc) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(ev) }
-
-// UnmarshalJSON decodes
+func (ev FindLoc) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *FindLoc) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
 // FindParams are parameters for find / replace

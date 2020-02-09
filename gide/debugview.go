@@ -19,21 +19,21 @@ import (
 )
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (gidebug.GiDebug, error){
-	filecat.Go: func(path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (gidebug.GiDebug, error) {
-		return gidelve.NewGiDelve(path, rootPath, outbuf, test, pars, startFunc)
+var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error){
+	filecat.Go: func(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+		return gidelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf, test bool, pars *gidebug.Params, startFunc func()) (gidebug.GiDebug, error) {
+func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported\n", sup)
 		log.Println(err)
 		return nil, err
 	}
-	dbg, err := df(path, rootPath, outbuf, test, pars, startFunc)
+	dbg, err := df(path, rootPath, outbuf, pars)
 	if err != nil {
 		log.Println(err)
 	}
@@ -45,7 +45,6 @@ type DebugView struct {
 	gi.Layout
 	Sup     filecat.Supported `desc:"supported file type to determine debugger"`
 	ExePath string            `desc:"path to executable / dir to debug"`
-	Test    bool              `desc:"if true, run debugger on tests instead of an executable"`
 	Dbg     gidebug.GiDebug   `json:"-" xml:"-" desc:"the debugger"`
 	State   gidebug.AllState  `json:"-" xml:"-" desc:"all relevant debug state info"`
 	OutBuf  *giv.TextBuf      `json:"-" xml:"-" desc:"output from the debugger"`
@@ -112,22 +111,24 @@ func (dv *DebugView) DeleteAllBreaks() {
 
 // Start starts the debuger
 func (dv *DebugView) Start() {
+	if dv.Gide == nil {
+		return
+	}
 	if dv.Dbg == nil {
-		rootPath := ""
-		var pars *gidebug.Params
-		if dv.Gide != nil {
-			rootPath = string(dv.Gide.ProjPrefs().ProjRoot)
-			pars = &dv.Gide.ProjPrefs().Debug
+		rootPath := string(dv.Gide.ProjPrefs().ProjRoot)
+		pars := &dv.Gide.ProjPrefs().Debug
+		pars.StatFunc = func(stat gidebug.Status) {
+			dv.SetStatus(stat)
 		}
-		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, dv.Test, pars, func() {
-			dv.SetStatus("Ready")
-		})
+		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, pars)
 		if err == nil {
 			dv.Dbg = dbg
+		} else {
+			dv.SetStatus(gidebug.Error)
 		}
 	} else {
 		dv.Dbg.Restart()
-		dv.SetStatus("Ready")
+		dv.SetStatus(gidebug.Ready)
 	}
 }
 
@@ -148,10 +149,10 @@ func (dv *DebugView) Continue() {
 	}
 	dv.SetBreaks()
 	dv.State.State.Running = true
-	dv.SetStatus("Running")
+	dv.SetStatus(gidebug.Running)
 	ds := <-dv.Dbg.Continue() // we wait here until it returns
 	updt := dv.UpdateStart()
-	dv.SetStatus("Stopped")
+	dv.SetStatus(gidebug.Stopped)
 	dv.InitState(ds) // todo: do we need a mutex for this?  probably not
 	dv.UpdateEnd(updt)
 }
@@ -264,7 +265,7 @@ func (dv *DebugView) InitState(ds *gidebug.State) {
 	if ds.Running {
 		return
 	}
-	dv.SetStatus("Stopped")
+	dv.SetStatus(gidebug.Stopped)
 	err := dv.Dbg.InitAllState(&dv.State)
 	if err == gidebug.IsRunningErr {
 		return
@@ -420,17 +421,31 @@ func (dv *DebugView) ShowVar(name string) error {
 	return nil
 }
 
-func (dv *DebugView) SetStatus(stat string) {
+var DebugStatusColors = map[gidebug.Status]string{
+	gidebug.NotInit:  "grey",
+	gidebug.Error:    "#FF8080",
+	gidebug.Building: "yellow",
+	gidebug.Ready:    "#80FF80",
+	gidebug.Running:  "#FF80FF",
+	gidebug.Stopped:  "#8080FF",
+	gidebug.Finished: "tan",
+}
+
+func (dv *DebugView) SetStatus(stat gidebug.Status) {
+	dv.State.Status = stat
 	cb := dv.CtrlBar()
 	stl := cb.ChildByName("status", 1).(*gi.Label)
-	stl.SetText(stat)
+	clr := DebugStatusColors[stat]
+	stl.CurBgColor.SetString(clr, nil)
+	stl.SetText(stat.String())
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// Config configures the view -- test = run in test mode
-func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string, test bool) {
+// Config configures the view -- parameters for the job must have
+// already been set in ge.ProjParams.Debug.
+func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
@@ -546,6 +561,7 @@ func (dv *DebugView) ConfigToolbar() {
 	// 	})
 	stl := gi.AddNewLabel(cb, "status", "Building..   ")
 	stl.Redrawable = true
+	stl.CurBgColor.SetString("yellow", nil)
 	cb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
