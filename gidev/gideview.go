@@ -1480,7 +1480,7 @@ func (ge *GideView) Run() {
 		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No RunCmds Set", Prompt: fmt.Sprintf("You need to set the RunCmds in the Project Preferences")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
-	if ge.Prefs.RunCmds[0] == "Run Proj" && ge.Prefs.RunExec == "" {
+	if ge.Prefs.RunCmds[0] == "Run Proj" && !ge.Prefs.RunExecIsExec() {
 		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
 		return
 	}
@@ -1787,12 +1787,11 @@ func (ge *GideView) Symbols() {
 // Debug starts the debugger on the RunExec executable, if it is set,
 // else prompts for run exec choice.
 func (ge *GideView) Debug() {
-	if ge.Prefs.RunExec == "" {
+	if !ge.Prefs.RunExecIsExec() {
 		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
 		return
 	}
-	pp := ge.ProjPrefs()
-	pp.Debug.Mode = gidebug.Exec
+	ge.Prefs.Debug.Mode = gidebug.Exec
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
@@ -1807,8 +1806,7 @@ func (ge *GideView) DebugTest() {
 	if tv == nil || tv.Buf == nil {
 		return
 	}
-	pp := ge.ProjPrefs()
-	pp.Debug.Mode = gidebug.Test
+	ge.Prefs.Debug.Mode = gidebug.Test
 	tstPath := string(tv.Buf.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := ge.RecycleTab("Debug "+dir, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
@@ -1821,13 +1819,12 @@ func (ge *GideView) DebugTest() {
 // it uses (and requires) the current RunExec path -- prompts if not set.
 // pid is the process id to attach to.
 func (ge *GideView) DebugAttach(pid uint64) {
-	if ge.Prefs.RunExec == "" {
+	if !ge.Prefs.RunExecIsExec() {
 		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
 		return
 	}
-	pp := ge.ProjPrefs()
-	pp.Debug.Mode = gidebug.Attach
-	pp.Debug.PID = pid
+	ge.Prefs.Debug.Mode = gidebug.Attach
+	ge.Prefs.Debug.PID = pid
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
@@ -1845,6 +1842,9 @@ func (ge *GideView) CurDebug() *gide.DebugView {
 func (ge *GideView) ChooseRunExec(exePath gi.FileName) {
 	if exePath != "" {
 		ge.Prefs.RunExec = exePath
+		if !ge.Prefs.RunExecIsExec() {
+			gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Not Executable", Prompt: fmt.Sprintf("RunExec file: %v is not exectable", exePath)}, gi.AddOk, gi.NoCancel, nil, nil)
+		}
 	}
 }
 

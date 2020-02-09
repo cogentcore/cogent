@@ -369,6 +369,15 @@ func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error {
 	return err
 }
 
+// RunExecIsExec returns true if the RunExec is actually executable
+func (pf *ProjPrefs) RunExecIsExec() bool {
+	fi, err := giv.NewFileInfo(string(pf.RunExec))
+	if err != nil {
+		return false
+	}
+	return fi.IsExec()
+}
+
 // ProjPrefsProps define the ToolBar and MenuBar for StructView, e.g.,
 // giv.PrefsView -- don't have a save option as that would save to regular prefs
 var ProjPrefsProps = ki.Props{
