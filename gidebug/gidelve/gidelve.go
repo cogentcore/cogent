@@ -27,7 +27,7 @@ type GiDelve struct {
 	cmd      *exec.Cmd                 // command running delve
 	obuf     *giv.OutBuf               // output buffer
 	statFunc func(stat gidebug.Status) // status function
-	params   gidebug.Params
+	params   gidebug.Params            // local copy of initial params
 }
 
 // NewGiDelve creates a new debugger exe and client
@@ -72,9 +72,6 @@ func (gd *GiDelve) StartedCheck() error {
 	if gd.cmd == nil || gd.dlv == nil {
 		err := gidebug.NotStartedErr
 		return gd.LogErr(err)
-	}
-	if gd.params.VarList.MaxStringLen == 0 {
-		gd.params = gidebug.DefaultParams
 	}
 	return nil
 }
@@ -162,12 +159,13 @@ func (gd *GiDelve) LastModified() time.Time {
 
 // Detach detaches the debugger, optionally killing the process.
 func (gd *GiDelve) Detach(killProcess bool) error {
-	if err := gd.StartedCheck(); err != nil {
-		return err
-	}
-	err := gd.dlv.Detach(killProcess)
-	if err == nil {
+	var err error
+	if gd.dlv != nil {
+		err = gd.dlv.Detach(killProcess)
 		gd.dlv = nil
+	}
+	if gd.cmd != nil && gd.cmd.Process != nil { // make sure it dies!
+		err = gd.cmd.Process.Kill()
 	}
 	return err
 }

@@ -144,6 +144,7 @@ type State struct {
 // AllState holds all relevant state information.
 // This can be maintained and updated in the debug view.
 type AllState struct {
+	Mode      Modes       `desc:"mode we're running in"`
 	Status    Status      `desc:"overall debugger status"`
 	State     State       `desc:"current run state"`
 	CurThread int         `desc:"id of the current system thread to examine"`

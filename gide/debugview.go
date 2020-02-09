@@ -85,16 +85,24 @@ func (dv *DebugView) DbgCanStep() bool {
 	return true
 }
 
-// Detatch debugger on our death..
 func (dv *DebugView) Destroy() {
-	if dv.DbgIsAvail() {
-		dv.Dbg.Detach(true)
-	} else if dv.DbgIsActive() {
-		dv.Stop()
-		dv.Dbg.Detach(true)
-	}
+	dv.Detach()
 	dv.DeleteAllBreaks()
 	dv.Layout.Destroy()
+}
+
+// Detach from debugger
+func (dv *DebugView) Detach() {
+	killProc := true
+	if dv.State.Mode == gidebug.Attach {
+		killProc = false
+	}
+	if dv.DbgIsAvail() {
+		dv.Dbg.Detach(killProc)
+	} else if dv.DbgIsActive() {
+		dv.Stop()
+		dv.Dbg.Detach(killProc)
+	}
 }
 
 // DeleteAllBreaks deletes all breakpoints
@@ -120,7 +128,11 @@ func (dv *DebugView) Start() {
 	if dv.Dbg == nil {
 		rootPath := string(dv.Gide.ProjPrefs().ProjRoot)
 		pars := &dv.Gide.ProjPrefs().Debug
+		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat gidebug.Status) {
+			if stat == gidebug.Ready && dv.State.Mode == gidebug.Attach {
+				dv.UpdateFmState()
+			}
 			dv.SetStatus(stat)
 		}
 		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, pars)
@@ -159,7 +171,7 @@ func (dv *DebugView) Continue() {
 	}
 	updt := dv.UpdateStart()
 	dv.SetStatus(gidebug.Stopped)
-	dv.InitState(ds) // todo: do we need a mutex for this?  probably not
+	dv.InitState(ds)
 	dv.UpdateEnd(updt)
 }
 
@@ -274,6 +286,7 @@ func (dv *DebugView) InitState(ds *gidebug.State) {
 	dv.SetStatus(gidebug.Stopped)
 	err := dv.Dbg.InitAllState(&dv.State)
 	if err == gidebug.IsRunningErr {
+		dv.SetStatus(gidebug.Running)
 		return
 	}
 	dv.UpdateFmState()
