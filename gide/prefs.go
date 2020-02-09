@@ -12,7 +12,6 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gi/histyle"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gide/gidebug"
@@ -27,30 +26,15 @@ type FilePrefs struct {
 	DirsOnTop bool `desc:"if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"`
 }
 
-// EditorPrefs contains editor preferences
-type EditorPrefs struct {
-	TabSize      int  `desc:"size of a tab, in chars -- also determines indent level for space indent"`
-	SpaceIndent  bool `desc:"use spaces for indentation, otherwise tabs"`
-	WordWrap     bool `desc:"wrap lines at word boundaries -- otherwise long lines scroll off the end"`
-	LineNos      bool `desc:"show line numbers"`
-	Completion   bool `desc:"use the completion system to suggest options while typing"`
-	SpellCorrect bool `desc:"suggest corrections for unknown words while typing"`
-	AutoIndent   bool `desc:"automatically indent lines when enter, tab, }, etc pressed"`
-	EmacsUndo    bool `desc:"use emacs-style undo, where after a non-undo command, all the current undo actions are added to the undo stack, such that a subsequent undo is actually a redo"`
-	DepthColor   bool `desc:"colorize the background according to nesting depth"`
-}
-
 // Preferences are the overall user preferences for Gide.
 type Preferences struct {
-	HiStyle      histyle.StyleName `desc:"highilighting style / theme"`
-	FontFamily   gi.FontName       `desc:"monospaced font family for editor"`
-	Files        FilePrefs         `desc:"file view preferences"`
-	Editor       EditorPrefs       `view:"inline" desc:"editor preferences"`
-	KeyMap       KeyMapName        `desc:"key map for gide-specific keyboard sequences"`
-	SaveKeyMaps  bool              `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
-	SaveLangOpts bool              `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	SaveCmds     bool              `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	Changed      bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	FontFamily   gi.FontName `desc:"monospaced font family for editor"`
+	Files        FilePrefs   `desc:"file view preferences"`
+	KeyMap       KeyMapName  `desc:"key map for gide-specific keyboard sequences"`
+	SaveKeyMaps  bool        `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
+	SaveLangOpts bool        `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	SaveCmds     bool        `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	Changed      bool        `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -78,7 +62,6 @@ func InitPrefs() {
 	OpenPaths()
 	OpenIcons()
 	TheConsole.Init()
-	histyle.Init()
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
 		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
 			win, func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -92,36 +75,10 @@ func (pf *FilePrefs) Defaults() {
 	pf.DirsOnTop = true
 }
 
-// Defaults are the defaults for EditorPrefs
-func (pf *EditorPrefs) Defaults() {
-	pf.TabSize = 4
-	pf.WordWrap = true
-	pf.LineNos = true
-	pf.Completion = true
-	pf.SpellCorrect = true
-	pf.AutoIndent = true
-	pf.DepthColor = true
-}
-
-// ConfigTextBuf sets TextBuf Opts according to prefs
-func (pf *EditorPrefs) ConfigTextBuf(tb *giv.TextBuf) {
-	tb.Opts.TabSize = pf.TabSize
-	tb.Opts.SpaceIndent = pf.SpaceIndent
-	tb.Opts.LineNos = pf.LineNos
-	tb.Opts.AutoIndent = pf.AutoIndent
-	tb.Opts.Completion = pf.Completion
-	tb.Opts.SpellCorrect = pf.SpellCorrect
-	tb.Opts.EmacsUndo = pf.EmacsUndo
-	tb.Opts.DepthColor = pf.DepthColor
-	tb.ConfigSupported()
-}
-
 // Defaults are the defaults for Preferences
 func (pf *Preferences) Defaults() {
-	pf.HiStyle = "emacs"
 	pf.FontFamily = "Go Mono"
 	pf.Files.Defaults()
-	pf.Editor.Defaults()
 	pf.KeyMap = DefaultKeyMap
 }
 
@@ -135,7 +92,6 @@ func (pf *Preferences) Apply() {
 	}
 	MergeAvailCmds()
 	AvailLangs.Validate()
-	histyle.StyleDefault = pf.HiStyle
 }
 
 // Open preferences from GoGi standard prefs directory, and applies them
@@ -231,11 +187,6 @@ func (pf *Preferences) EditRegisters() {
 	RegistersView(&AvailRegisters)
 }
 
-// EditHiStyles opens the HiStyleView editor to customize highlighting styles
-func (pf *Preferences) EditHiStyles() {
-	giv.HiStylesView(&histyle.CustomStyles)
-}
-
 // PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
 var PreferencesProps = ki.Props{
 	"MainMenu": ki.PropSlice{
@@ -296,10 +247,6 @@ var PreferencesProps = ki.Props{
 			"icon": "file-binary",
 			"desc": "opens the RegistersView editor of saved named text registers.  Current values are saved and loaded with preferences automatically.",
 		}},
-		{"EditHiStyles", ki.Props{
-			"icon": "file-binary",
-			"desc": "opens the HiStylesView editor of highlighting styles.",
-		}},
 	},
 }
 
@@ -309,7 +256,7 @@ var PreferencesProps = ki.Props{
 // ProjPrefs are the preferences for saving for a project -- this IS the project file
 type ProjPrefs struct {
 	Files        FilePrefs         `desc:"file view preferences"`
-	Editor       EditorPrefs       `view:"inline" desc:"editor preferences"`
+	Editor       gi.EditorPrefs    `view:"inline" desc:"editor preferences"`
 	SplitName    SplitName         `desc:"current named-split config in use for configuring the splitters"`
 	MainLang     filecat.Supported `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
 	VersCtrl     giv.VersCtrlName  `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`

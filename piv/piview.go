@@ -76,7 +76,7 @@ func (pv *PiView) OpenProj(filename gi.FileName) *PiView {
 	pv.Prefs.OpenJSON(filename)
 	pv.Config()
 	pv.ApplyPrefs()
-	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+	SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
 	return pv
 }
@@ -103,7 +103,7 @@ func (pv *PiView) SaveProj() {
 // SaveProjAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
 // also saves the current parser
 func (pv *PiView) SaveProjAs(filename gi.FileName) {
-	SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+	SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
 	pv.SaveParser()
 	pv.GetPrefs()
@@ -611,7 +611,7 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
 	}
 
-	if gide.Prefs.Editor.WordWrap {
+	if gi.Prefs.Editor.WordWrap {
 		tv.SetProp("white-space", gi.WhiteSpacePreWrap)
 	} else {
 		tv.SetProp("white-space", gi.WhiteSpacePre)
@@ -865,23 +865,18 @@ func (pv *PiView) ConfigSplitView() {
 		astt := astfr.AddNewChild(giv.KiT_TreeView, "ast-tree").(*giv.TreeView)
 		astt.SetRootNode(&fs.Ast)
 
-		pv.TestBuf.SetHiStyle(gide.Prefs.HiStyle)
-		gide.Prefs.Editor.ConfigTextBuf(&pv.TestBuf)
+		pv.TestBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
 		pv.TestBuf.Hi.Off = true // prevent auto-hi
 
-		pv.OutBuf.SetHiStyle(gide.Prefs.HiStyle)
-		gide.Prefs.Editor.ConfigTextBuf(&pv.OutBuf)
+		pv.OutBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
 		pv.OutBuf.Opts.LineNos = false
 
 		fs.ParseState.Trace.Init()
 		fs.ParseState.Trace.PipeOut()
 		go pv.MonitorOut()
 
-		pv.LexBuf.SetHiStyle(gide.Prefs.HiStyle)
-		gide.Prefs.Editor.ConfigTextBuf(&pv.LexBuf)
-
-		pv.ParseBuf.SetHiStyle(gide.Prefs.HiStyle)
-		gide.Prefs.Editor.ConfigTextBuf(&pv.ParseBuf)
+		pv.LexBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
+		pv.ParseBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
 
 		split.SetSplits(.15, .15, .2, .15, .35)
 		split.UpdateEnd(updt)

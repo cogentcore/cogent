@@ -25,7 +25,6 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/gi/histyle"
 	"github.com/goki/gi/mat32"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
@@ -180,7 +179,7 @@ func (ge *GideView) OpenPath(path gi.FileName) (*gi.Window, *GideView) {
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
-		gide.SavedPaths.AddPath(root, gi.Prefs.SavedPathsMax)
+		gide.SavedPaths.AddPath(root, gi.Prefs.Params.SavedPathsMax)
 		gide.SavePaths()
 		ge.ProjRoot = gi.FileName(root)
 		ge.SetName(pnm)
@@ -215,7 +214,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) (*gi.Window, *GideView) {
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
 	if ok {
 		os.Chdir(string(ge.Prefs.ProjRoot))
-		gide.SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+		gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.ApplyPrefs()
@@ -294,7 +293,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
 func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
-	gide.SavedPaths.AddPath(string(filename), gi.Prefs.SavedPathsMax)
+	gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	gide.SavePaths()
 	// ge.Files.UpdateNewFile(string(filename))
 	ge.Prefs.ProjFilename = filename
@@ -421,8 +420,9 @@ func (ge *GideView) LangDefaults() bool {
 
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
-	tb.SetHiStyle(gide.Prefs.HiStyle)
-	ge.Prefs.Editor.ConfigTextBuf(tb)
+	tb.SetHiStyle(gi.Prefs.Colors.HiStyle)
+	tb.Opts.EditorPrefs = ge.Prefs.Editor
+	tb.ConfigSupported()
 	if tb.Complete != nil {
 		tb.Complete.LookupFunc = ge.LookupFun
 	}
@@ -685,7 +685,7 @@ func (ge *GideView) OpenFileNode(fn *giv.FileNode) (bool, error) {
 	if fn.IsDir() {
 		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
 	}
-	giv.FileNodeHiStyle = gide.Prefs.HiStyle // must be set prior to OpenBuf
+	giv.FileNodeHiStyle = gi.Prefs.Colors.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
 		ge.ConfigTextBuf(fn.Buf)
@@ -1620,7 +1620,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tb := &giv.TextBuf{}
 	tb.InitName(tb, "text-view-dialog-buf")
 	tb.Filename = gi.FileName(ld.Filename)
-	tb.Hi.Style = gide.Prefs.HiStyle
+	tb.Hi.Style = gi.Prefs.Colors.HiStyle
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
 	tb.Stat() // update markup
 	tb.SetText(txt)
@@ -1832,6 +1832,7 @@ func (ge *GideView) CurDebug() *gide.DebugView {
 func (ge *GideView) ChooseRunExec(exePath gi.FileName) {
 	if exePath != "" {
 		ge.Prefs.RunExec = exePath
+		ge.Prefs.BuildDir = gi.FileName(filepath.Dir(string(exePath)))
 		if !ge.Prefs.RunExecIsExec() {
 			gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Not Executable", Prompt: fmt.Sprintf("RunExec file: %v is not exectable", exePath)}, gi.AddOk, gi.NoCancel, nil, nil)
 		}
@@ -2042,7 +2043,7 @@ func (ge *GideView) SetStatus(msg string) {
 // Defaults sets new project defaults based on overall preferences
 func (ge *GideView) Defaults() {
 	ge.Prefs.Files = gide.Prefs.Files
-	ge.Prefs.Editor = gide.Prefs.Editor
+	ge.Prefs.Editor = gi.Prefs.Editor
 	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
 	ge.Prefs.Debug = gidebug.DefaultParams
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
@@ -2064,7 +2065,6 @@ func (ge *GideView) ApplyPrefs() {
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	ge.Files.OpenDirs = ge.Prefs.OpenDirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	histyle.StyleDefault = gide.Prefs.HiStyle
 	if len(ge.Kids) > 0 {
 		sv := ge.SplitView()
 		for i := 0; i < NTextViews; i++ {

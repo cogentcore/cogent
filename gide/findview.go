@@ -76,7 +76,7 @@ func (fv *FindView) Params() *FindParams {
 // SaveFindString saves the given find string to the find params history and current str
 func (fv *FindView) SaveFindString(find string) {
 	fv.Params().Find = find
-	gi.StringsInsertFirstUnique(&fv.Params().FindHist, find, gi.Prefs.SavedPathsMax)
+	gi.StringsInsertFirstUnique(&fv.Params().FindHist, find, gi.Prefs.Params.SavedPathsMax)
 	ftc := fv.FindText()
 	if ftc != nil {
 		ftc.ItemsFromStringList(fv.Params().FindHist, true, 0)
@@ -86,7 +86,7 @@ func (fv *FindView) SaveFindString(find string) {
 // SaveReplString saves the given replace string to the find params history and current str
 func (fv *FindView) SaveReplString(repl string) {
 	fv.Params().Replace = repl
-	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, gi.Prefs.SavedPathsMax)
+	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, gi.Prefs.Params.SavedPathsMax)
 	rtc := fv.ReplText()
 	if rtc != nil {
 		rtc.ItemsFromStringList(fv.Params().ReplHist, true, 0)
@@ -105,7 +105,7 @@ func (fv *FindView) ReplaceAction() bool {
 	defer fv.Gide.VPort().Win.UpdateEnd(winUpdt)
 
 	fv.SaveReplString(fv.Params().Replace)
-	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, fv.Params().Replace, gi.Prefs.SavedPathsMax)
+	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, fv.Params().Replace, gi.Prefs.Params.SavedPathsMax)
 
 	ftv := fv.TextView()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
