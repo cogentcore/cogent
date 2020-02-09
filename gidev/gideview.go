@@ -1784,13 +1784,8 @@ func (ge *GideView) Symbols() {
 	ge.FocusOnPanel(TabsIdx)
 }
 
-// Debug starts the debugger on the RunExec executable, if it is set,
-// else prompts for run exec choice.
+// Debug starts the debugger on the RunExec executable.
 func (ge *GideView) Debug() {
-	if !ge.Prefs.RunExecIsExec() {
-		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
-		return
-	}
 	ge.Prefs.Debug.Mode = gidebug.Exec
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
@@ -1816,13 +1811,8 @@ func (ge *GideView) DebugTest() {
 }
 
 // DebugAttach runs the debugger by attaching to an already-running process.
-// it uses (and requires) the current RunExec path -- prompts if not set.
 // pid is the process id to attach to.
 func (ge *GideView) DebugAttach(pid uint64) {
-	if !ge.Prefs.RunExecIsExec() {
-		giv.CallMethod(ge, "ChooseRunExec", ge.Viewport)
-		return
-	}
 	ge.Prefs.Debug.Mode = gidebug.Attach
 	ge.Prefs.Debug.PID = pid
 	exePath := string(ge.Prefs.RunExec)
@@ -3128,6 +3118,14 @@ var GideViewProps = ki.Props{
 				"desc": "attach to an already running process: enter the process PID",
 				"Args": ki.PropSlice{
 					{"Process PID", ki.Props{}},
+				},
+			}},
+			{"ChooseRunExec", ki.Props{
+				"desc": "choose the executable to run for this project using the Run button",
+				"Args": ki.PropSlice{
+					{"RunExec", ki.Props{
+						"default-field": "Prefs.RunExec",
+					}},
 				},
 			}},
 			{"sep-run", ki.BlankProp{}},

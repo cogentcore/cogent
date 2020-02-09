@@ -87,15 +87,16 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf, pars *gideb
 	gd.statFunc = pars.StatFunc
 	switch pars.Mode {
 	case gidebug.Exec:
-		targs := []string{"debug", "--headless", "--api-version=2", "--log"}
+		targs := []string{"debug", "--headless", "--api-version=2"}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
 	case gidebug.Test:
-		targs := []string{"test", "--headless", "--api-version=2", "--log"}
+		targs := []string{"test", "--headless", "--api-version=2"}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
 	case gidebug.Attach:
-		targs := []string{"attach", fmt.Sprintf("%d", gd.params.PID), "--headless", "--api-version=2", "--log"}
+		// note: --log here creates huge amounts of messages and doesn't work..
+		targs := []string{"attach", fmt.Sprintf("%d", gd.params.PID), "--headless", "--api-version=2"}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
 	}

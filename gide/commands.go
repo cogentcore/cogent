@@ -361,7 +361,7 @@ func (cm *Command) RunAfterPrompts(ge Gide, buf *giv.TextBuf) {
 				}
 			}
 		}
-	} else {
+	} else if len(cm.Cmds) > 0 {
 		cma := &cm.Cmds[0]
 		if buf == nil {
 			go cm.RunNoBuf(ge, cma)

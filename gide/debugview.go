@@ -87,7 +87,10 @@ func (dv *DebugView) DbgCanStep() bool {
 
 // Detatch debugger on our death..
 func (dv *DebugView) Destroy() {
-	if dv.Dbg != nil {
+	if dv.DbgIsAvail() {
+		dv.Dbg.Detach(true)
+	} else if dv.DbgIsActive() {
+		dv.Stop()
 		dv.Dbg.Detach(true)
 	}
 	dv.DeleteAllBreaks()
@@ -151,6 +154,9 @@ func (dv *DebugView) Continue() {
 	dv.State.State.Running = true
 	dv.SetStatus(gidebug.Running)
 	ds := <-dv.Dbg.Continue() // we wait here until it returns
+	if dv.IsDeleted() || dv.IsDestroyed() {
+		return // we already died.
+	}
 	updt := dv.UpdateStart()
 	dv.SetStatus(gidebug.Stopped)
 	dv.InitState(ds) // todo: do we need a mutex for this?  probably not
