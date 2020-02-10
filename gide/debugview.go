@@ -538,9 +538,10 @@ func (dv DebugView) ConsoleText() *giv.TextView {
 // ConfigTabs configures the tabs
 func (dv *DebugView) ConfigTabs() {
 	tb := dv.Tabs()
-	// todo: set tabs as non-closable
+	tb.NoDeleteTabs = true
 	cv := tb.RecycleTab("Console", gi.KiT_Layout, false).(*gi.Layout)
 	otv := ConfigOutputTextView(cv)
+	dv.OutBuf.Opts.LineNos = false
 	otv.SetBuf(dv.OutBuf)
 	bv := tb.RecycleTab("Breaks", KiT_BreakView, false).(*BreakView)
 	bv.Config(dv)

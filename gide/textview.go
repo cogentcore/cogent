@@ -209,6 +209,7 @@ func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	} else {
 		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
 	}
+	tv.SetProp("line-nos", false)
 	// if ge.Prefs.Editor.WordWrap {
 	tv.SetProp("white-space", gi.WhiteSpacePreWrap)
 	// } else {

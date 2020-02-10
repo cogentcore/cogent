@@ -1301,6 +1301,7 @@ func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*giv.TextBuf, bool)
 	}
 	buf := &giv.TextBuf{}
 	buf.InitName(buf, cmdNm+"-buf")
+	buf.New(0)
 	ge.CmdBufs[cmdNm] = buf
 	buf.Autosave = false
 	return buf, true
