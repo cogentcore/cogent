@@ -484,8 +484,10 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.ConfigTabs()
 	dv.State.Breaks = nil // get rid of dummy
 	dv.Start()
-	dv.SetFullReRender()
-	dv.UpdateEnd(updt)
+	if dv.State.Status != gidebug.Error {
+		dv.SetFullReRender()
+		dv.UpdateEnd(updt)
+	}
 }
 
 // CtrlBar returns the find toolbar
