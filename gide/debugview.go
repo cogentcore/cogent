@@ -487,10 +487,8 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.ConfigTabs()
 	dv.State.Breaks = nil // get rid of dummy
 	dv.Start()
-	if dv.State.Status != gidebug.Error {
-		dv.SetFullReRender()
-		dv.UpdateEnd(updt)
-	}
+	dv.SetFullReRender()
+	dv.UpdateEnd(updt)
 }
 
 // CtrlBar returns the find toolbar
@@ -587,6 +585,9 @@ func (dv *DebugView) ConfigToolbar() {
 	stl := gi.AddNewLabel(cb, "status", "Building..   ")
 	stl.Redrawable = true
 	stl.CurBgColor.SetString("yellow", nil)
+	if gi.Prefs.IsDarkMode() {
+		stl.CurBgColor = stl.CurBgColor.Darker(75)
+	}
 	cb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)

@@ -1004,10 +1004,15 @@ func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 	if fn.Buf == nil {
 		return
 	}
-	dif := fn1.Buf.DiffBufsUnified(fn.Buf, 3)
+	dif := fn.Buf.DiffBufsUnified(fn1.Buf, 3)
 	cbuf, _, _ := ge.RecycleCmdTab("Diffs", true, true)
 	cbuf.SetText(dif)
 	cbuf.AutoScrollViews()
+
+	astr := fn.Buf.Strings(false)
+	bstr := fn1.Buf.Strings(false)
+
+	giv.DiffViewDialog(ge.Viewport, astr, bstr, string(fnm), string(fn.Buf.Filename), giv.DlgOpts{Title: "Diff File View:"})
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -1610,8 +1615,19 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 		return ld
 	}
 
-	txt := textbuf.FileRegionBytes(ld.Filename, ld.StLine, ld.EdLine, true, 10) // comments, 10 lines back max
-	prmpt := fmt.Sprintf("%v [%d:%d]", ld.Filename, ld.StLine, ld.EdLine)
+	txt := textbuf.FileBytes(ld.Filename)
+	if ld.StLine > 0 {
+		lns := bytes.Split(txt, []byte("\n"))
+		comLn, comSt, comEd := textbuf.SupportedComments(ld.Filename)
+		ld.StLine = textbuf.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
+	}
+
+	prmpt := ""
+	if ld.EdLine > ld.StLine {
+		prmpt = fmt.Sprintf("%v [%d -- %d]", ld.Filename, ld.StLine, ld.EdLine)
+	} else {
+		prmpt = fmt.Sprintf("%v:%d", ld.Filename, ld.StLine)
+	}
 	opts := giv.DlgOpts{Title: "Lookup: " + text, Prompt: prmpt}
 
 	dlg := gi.NewStdDialog(opts.ToGiOpts(), gi.NoOk, gi.NoCancel)
@@ -1635,6 +1651,8 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tv.SetInactive()
 	tv.SetProp("font-family", gide.Prefs.FontFamily)
 	tv.SetBuf(tb)
+	tv.CursorPos = textbuf.Pos{Ln: ld.StLine}
+	tv.ScrollToCursorOnRender = true
 
 	bbox, _ := dlg.ButtonBox(frame)
 	if bbox == nil {
