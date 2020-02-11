@@ -456,6 +456,9 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 	stl := cb.ChildByName("status", 1).(*gi.Label)
 	clr := DebugStatusColors[stat]
 	stl.CurBgColor.SetString(clr, nil)
+	if gi.Prefs.IsDarkMode() {
+		stl.CurBgColor = stl.CurBgColor.Darker(75)
+	}
 	stl.SetText(stat.String())
 }
 

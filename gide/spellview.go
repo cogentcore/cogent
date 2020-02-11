@@ -328,7 +328,7 @@ func (sv *SpellView) ChangeAllAction() {
 	if tv == nil {
 		return
 	}
-	tv.QReplaceStart(sv.Unknown.Word, sv.ChangeText().Txt)
+	tv.QReplaceStart(sv.Unknown.Word, sv.ChangeText().Txt, false)
 	tv.QReplaceReplaceAll(0)
 	sv.LastAction = sv.ChangeAllAct()
 	sv.CheckNext()

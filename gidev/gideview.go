@@ -1702,7 +1702,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	var res []gide.FileSearchResults
 	if loc == gide.FindLocFile {
 		if got {
-			cnt, matches := atv.Buf.Search([]byte(find), ignoreCase)
+			cnt, matches := atv.Buf.Search([]byte(find), ignoreCase, false)
 			res = append(res, gide.FileSearchResults{ond, cnt, matches})
 		}
 	} else {

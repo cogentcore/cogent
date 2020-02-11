@@ -232,7 +232,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 		var cnt int
 		var matches []textbuf.Match
 		if sfn.IsOpen() && sfn.Buf != nil {
-			cnt, matches = sfn.Buf.Search([]byte(find), ignoreCase)
+			cnt, matches = sfn.Buf.Search([]byte(find), ignoreCase, false)
 		} else {
 			cnt, matches = textbuf.SearchFile(string(sfn.FPath), []byte(find), ignoreCase)
 		}
