@@ -28,13 +28,12 @@ type FilePrefs struct {
 
 // Preferences are the overall user preferences for Gide.
 type Preferences struct {
-	FontFamily   gi.FontName `desc:"monospaced font family for editor"`
-	Files        FilePrefs   `desc:"file view preferences"`
-	KeyMap       KeyMapName  `desc:"key map for gide-specific keyboard sequences"`
-	SaveKeyMaps  bool        `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
-	SaveLangOpts bool        `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	SaveCmds     bool        `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	Changed      bool        `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	Files        FilePrefs  `desc:"file view preferences"`
+	KeyMap       KeyMapName `desc:"key map for gide-specific keyboard sequences"`
+	SaveKeyMaps  bool       `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
+	SaveLangOpts bool       `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	SaveCmds     bool       `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	Changed      bool       `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -77,7 +76,6 @@ func (pf *FilePrefs) Defaults() {
 
 // Defaults are the defaults for Preferences
 func (pf *Preferences) Defaults() {
-	pf.FontFamily = "Go Mono"
 	pf.Files.Defaults()
 	pf.KeyMap = DefaultKeyMap
 }

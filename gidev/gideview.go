@@ -1615,7 +1615,10 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 		return ld
 	}
 
-	txt := textbuf.FileBytes(ld.Filename)
+	txt, err := textbuf.FileBytes(ld.Filename)
+	if err != nil {
+		return ld
+	}
 	if ld.StLine > 0 {
 		lns := bytes.Split(txt, []byte("\n"))
 		comLn, comSt, comEd := textbuf.SupportedComments(ld.Filename)
@@ -1649,7 +1652,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tv := giv.AddNewTextView(tlv, "text-view")
 	tv.Viewport = dlg.Embed(gi.KiT_Viewport2D).(*gi.Viewport2D)
 	tv.SetInactive()
-	tv.SetProp("font-family", gide.Prefs.FontFamily)
+	tv.SetProp("font-family", gi.Prefs.MonoFont)
 	tv.SetBuf(tb)
 	tv.CursorPos = textbuf.Pos{Ln: ld.StLine}
 	tv.ScrollToCursorOnRender = true
@@ -2367,7 +2370,7 @@ func (ge *GideView) ConfigSplitView() {
 			txed.SetProp("white-space", gi.WhiteSpacePre)
 		}
 		txed.SetProp("tab-size", ge.Prefs.Editor.TabSize)
-		txed.SetProp("font-family", gide.Prefs.FontFamily)
+		txed.SetProp("font-family", gi.Prefs.MonoFont)
 	}
 
 	// set some properties always, even if no mods

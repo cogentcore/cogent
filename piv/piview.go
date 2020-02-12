@@ -617,7 +617,7 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 		tv.SetProp("white-space", gi.WhiteSpacePre)
 	}
 	tv.SetProp("tab-size", 4)
-	tv.SetProp("font-family", gide.Prefs.FontFamily)
+	tv.SetProp("font-family", gi.Prefs.MonoFont)
 	if out {
 		tv.SetInactive()
 	}

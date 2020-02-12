@@ -20,7 +20,6 @@ var KiT_TextView = kit.Types.AddType(&TextView{}, TextViewProps)
 var TextViewProps = ki.Props{
 	"EnumType:Flag":    giv.KiT_TextViewFlags,
 	"white-space":      gi.WhiteSpacePreWrap,
-	"font-family":      "Go Mono",
 	"border-width":     0, // don't render our own border
 	"cursor-width":     units.NewValue(3, units.Px),
 	"border-color":     &gi.Prefs.Colors.Border,
@@ -216,7 +215,7 @@ func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	// 	tv.SetProp("white-space", gi.WhiteSpacePre)
 	// }
 	tv.SetProp("tab-size", 8) // std for output
-	tv.SetProp("font-family", Prefs.FontFamily)
+	tv.SetProp("font-family", gi.Prefs.MonoFont)
 	tv.SetInactive()
 	return tv
 }
