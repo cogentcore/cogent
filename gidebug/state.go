@@ -91,14 +91,14 @@ type Frame struct {
 // Break describes one breakpoint
 type Break struct {
 	ID    int    `inactive:"+" desc:"unique numerical ID of the breakpoint"`
-	On    bool   `desc:"whether the breakpoint is currently enabled"`
+	On    bool   `width:"4" desc:"whether the breakpoint is currently enabled"`
 	PC    uint64 `inactive:"+" format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
 	File  string `inactive:"+" desc:"file name (trimmed up to point of project base path)"`
 	Line  int    `inactive:"+" desc:"line within file"`
 	FPath string `inactive:"+" view:"-" tableview:"-" desc:"full path to file"`
 	Func  string `inactive:"+" desc:"the name of the function"`
 	Cond  string `desc:"condition for conditional breakbpoint"`
-	Trace bool   `desc:"if true, execution does not stop -- just a message is reported when this point is hit"`
+	Trace bool   `width:"7" desc:"if true, execution does not stop -- just a message is reported when this point is hit"`
 }
 
 // BreakByID returns the given breakpoint by ID from full list, and index.

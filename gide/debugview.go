@@ -734,6 +734,8 @@ func (sv *BreakView) Config(dv *DebugView) {
 		updt = sv.UpdateStart()
 	}
 	tv.SetStretchMax()
+	tv.NoAdd = true
+	tv.NoDelete = true
 	tv.SetSlice(&dv.State.Breaks)
 	sv.UpdateEnd(updt)
 }

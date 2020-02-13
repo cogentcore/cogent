@@ -98,18 +98,37 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 type OpenNodes []*giv.FileNode
 
 // Add adds given node to list of open nodes -- if already on the list it is
-// moved to the top
-func (on *OpenNodes) Add(fn *giv.FileNode) {
+// moved to the top -- returns true if actually added.
+// Connects to fn.TextBuf signal and auto-closes when buffer closes.
+func (on *OpenNodes) Add(fn *giv.FileNode) bool {
+	added := on.AddImpl(fn)
+	if !added {
+		return added
+	}
+	if fn.Buf != nil {
+		fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig == int64(giv.TextBufClosed) {
+				fno, _ := recv.Embed(giv.KiT_FileNode).(*giv.FileNode)
+				on.Delete(fno)
+			}
+		})
+	}
+	return added
+}
+
+// AddImpl adds given node to list of open nodes -- if already on the list it is
+// moved to the top -- returns true if actually added.
+func (on *OpenNodes) AddImpl(fn *giv.FileNode) bool {
 	sz := len(*on)
 
 	for i, f := range *on {
 		if f == fn {
 			if i == 0 {
-				return
+				return false
 			}
 			copy((*on)[1:i+1], (*on)[0:i])
 			(*on)[0] = fn
-			return
+			return false
 		}
 	}
 
@@ -118,6 +137,7 @@ func (on *OpenNodes) Add(fn *giv.FileNode) {
 		copy((*on)[1:], (*on)[0:sz])
 	}
 	(*on)[0] = fn
+	return true
 }
 
 // Delete deletes given node in list of open nodes, returning true if found and deleted

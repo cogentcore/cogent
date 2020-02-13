@@ -104,10 +104,6 @@ type Gide interface {
 	// SaveAllOpenNodes saves all of the open filenodes to their current file names
 	SaveAllOpenNodes()
 
-	// UpdateAllOpenNodes go through all open filenodes and check if e.g., file has been
-	// deleted or renamed.
-	UpdateAllOpenNodes()
-
 	// CloseOpenNodes closes any nodes with open views (including those in directories under nodes).
 	// called prior to rename.
 	CloseOpenNodes(nodes []*FileNode)

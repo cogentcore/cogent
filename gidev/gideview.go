@@ -611,15 +611,13 @@ func (ge *GideView) RevertActiveView() {
 // CloseActiveView closes the buffer associated with active view
 func (ge *GideView) CloseActiveView() {
 	tv := ge.ActiveTextView()
-	ond, idx, got := ge.OpenNodeForTextView(tv)
+	ond, _, got := ge.OpenNodeForTextView(tv)
 	if got {
 		ond.Buf.Close(func(canceled bool) {
 			if canceled {
 				ge.SetStatus(fmt.Sprintf("File %v NOT closed", ond.FPath))
 				return
 			}
-			ge.OpenNodes.DeleteIdx(idx)
-			ond.SetClosed()
 			ge.SetStatus(fmt.Sprintf("File %v closed", ond.FPath))
 		})
 	}
@@ -910,31 +908,6 @@ func (ge *GideView) SaveAllOpenNodes() {
 	}
 }
 
-// UpdateAllOpenNodes go through all open filenodes and check if e.g., file has been
-// deleted or renamed.
-func (ge *GideView) UpdateAllOpenNodes() {
-	ge.UpdateFiles()
-	nn := len(ge.OpenNodes)
-	for ni := nn - 1; ni >= 0; ni-- {
-		ond := ge.OpenNodes[ni]
-		if ond.Buf == nil {
-			continue
-		}
-		fmt.Printf("buf: %v   fpath: %v\n", ond.Buf.Filename, ond.FPath)
-		if ond.Buf.Filename != ond.FPath {
-			ond.Buf.Close(func(canceled bool) {
-				if canceled {
-					ge.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.FPath))
-					return
-				}
-				ge.OpenNodes.DeleteIdx(ni)
-				ond.SetClosed()
-				ge.SetStatus(fmt.Sprintf("File %v closed due to file name change", ond.FPath))
-			})
-		}
-	}
-}
-
 // CloseOpenNodes closes any nodes with open views (including those in directories under nodes).
 // called prior to rename.
 func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
@@ -952,8 +925,6 @@ func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
 						ge.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.FPath))
 						return
 					}
-					ge.OpenNodes.DeleteIdx(ni)
-					ond.SetClosed()
 					ge.SetStatus(fmt.Sprintf("File %v closed due to file name change", ond.FPath))
 				})
 				break // out of inner node loop
