@@ -19,13 +19,14 @@ func _() {
 	_ = x[Ready-3]
 	_ = x[Running-4]
 	_ = x[Stopped-5]
-	_ = x[Finished-6]
-	_ = x[StatusN-7]
+	_ = x[Breakpoint-6]
+	_ = x[Finished-7]
+	_ = x[StatusN-8]
 }
 
-const _Status_name = "NotInitErrorBuildingReadyRunningStoppedFinishedStatusN"
+const _Status_name = "NotInitErrorBuildingReadyRunningStoppedBreakpointFinishedStatusN"
 
-var _Status_index = [...]uint8{0, 7, 12, 20, 25, 32, 39, 47, 54}
+var _Status_index = [...]uint8{0, 7, 12, 20, 25, 32, 39, 49, 57, 64}
 
 func (i Status) String() string {
 	if i < 0 || i >= Status(len(_Status_index)-1) {

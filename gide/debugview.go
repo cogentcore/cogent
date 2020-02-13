@@ -170,7 +170,6 @@ func (dv *DebugView) Continue() {
 		return // we already died.
 	}
 	updt := dv.UpdateStart()
-	dv.SetStatus(gidebug.Stopped)
 	dv.InitState(ds)
 	dv.UpdateEnd(updt)
 }
@@ -300,8 +299,14 @@ func (dv *DebugView) UpdateFmState() {
 		dv.State.MergeBreaks()
 	}
 	cf := dv.State.StackFrame(dv.State.CurFrame)
+	dv.State.CurBreak = 0
 	if cf != nil {
 		dv.ShowFile(cf.FPath, cf.Line)
+		bk, _ := gidebug.BreakByFile(dv.State.Breaks, cf.FPath, cf.Line)
+		if bk != nil {
+			dv.State.CurBreak = bk.ID
+			dv.SetStatus(gidebug.Breakpoint)
+		}
 	}
 	dv.ShowBreaks(false)
 	dv.ShowStack(false)
@@ -441,13 +446,14 @@ func (dv *DebugView) ShowVar(name string) error {
 }
 
 var DebugStatusColors = map[gidebug.Status]string{
-	gidebug.NotInit:  "grey",
-	gidebug.Error:    "#FF8080",
-	gidebug.Building: "yellow",
-	gidebug.Ready:    "#80FF80",
-	gidebug.Running:  "#FF80FF",
-	gidebug.Stopped:  "#8080FF",
-	gidebug.Finished: "tan",
+	gidebug.NotInit:    "grey",
+	gidebug.Error:      "#FF8080",
+	gidebug.Building:   "yellow",
+	gidebug.Ready:      "#80FF80",
+	gidebug.Running:    "#FF80FF",
+	gidebug.Stopped:    "#8080FF",
+	gidebug.Breakpoint: "#8080FF",
+	gidebug.Finished:   "tan",
 }
 
 func (dv *DebugView) SetStatus(stat gidebug.Status) {
@@ -459,7 +465,11 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 	if gi.Prefs.IsDarkMode() {
 		stl.CurBgColor = stl.CurBgColor.Darker(75)
 	}
-	stl.SetText(stat.String())
+	lbl := stat.String()
+	if stat == gidebug.Breakpoint {
+		lbl = fmt.Sprintf("Break: %d", dv.State.CurBreak)
+	}
+	stl.SetText(lbl)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -751,6 +761,12 @@ func (sv *BreakView) ShowBreaks() {
 	dv := sv.DebugVw()
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
+	if dv.State.CurBreak > 0 {
+		_, idx := gidebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
+		if idx >= 0 {
+			tv.SelectedIdx = idx
+		}
+	}
 	tv.SetSlice(&dv.State.Breaks)
 	sv.UpdateEnd(updt)
 }
@@ -814,7 +830,7 @@ func (sv *ThreadView) ShowThreads() {
 	sv.SetFullReRender()
 	tv.SetInactive()
 	_, idx := gidebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
-	if idx > 0 {
+	if idx >= 0 {
 		tv.SelectedIdx = idx
 	}
 	tv.SetSlice(&dv.State.Threads)
@@ -880,7 +896,7 @@ func (sv *TaskView) ShowTasks() {
 	sv.SetFullReRender()
 	tv.SetInactive()
 	_, idx := gidebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
-	if idx > 0 {
+	if idx >= 0 {
 		tv.SelectedIdx = idx
 	}
 	tv.SetSlice(&dv.State.Tasks)

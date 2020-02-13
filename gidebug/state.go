@@ -150,6 +150,7 @@ type AllState struct {
 	CurThread int         `desc:"id of the current system thread to examine"`
 	CurTask   int         `desc:"id of the current task to examine"`
 	CurFrame  int         `desc:"frame number within current thread"`
+	CurBreak  int         `desc:"current breakpoint that we stopped at"`
 	Breaks    []*Break    `desc:"all breakpoints that have been set -- some may not be On"`
 	CurBreaks []*Break    `desc:"current, active breakpoints as retrieved from debugger"`
 	Threads   []*Thread   `desc:"all system threads"`
@@ -276,6 +277,9 @@ const (
 	// Stopped means the process has stopped
 	// (at a breakpoint, crash, or from single stepping)
 	Stopped
+
+	// Breakpoint means the process has stopped at a breakpoint
+	Breakpoint
 
 	// Finished means the process has finished running.
 	// See console for output and return value etc
