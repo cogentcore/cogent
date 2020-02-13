@@ -169,6 +169,12 @@ func (dv *DebugView) Continue() {
 	if dv.IsDeleted() || dv.IsDestroyed() {
 		return // we already died.
 	}
+	if dv.Gide != nil {
+		vp := dv.Gide.VPort()
+		if vp != nil && vp.Win != nil {
+			vp.Win.OSWin.Raise()
+		}
+	}
 	updt := dv.UpdateStart()
 	dv.InitState(ds)
 	dv.UpdateEnd(updt)
