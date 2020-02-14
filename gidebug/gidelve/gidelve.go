@@ -225,11 +225,11 @@ func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 	dsc := gd.dlv.Continue()
 	sc := make(chan *gidebug.State)
 	go func() {
-		for {
-			nv, ok := <-dsc
-			if !ok {
+		for nv := range dsc {
+			if nv.Err != nil {
+				gd.LogErr(nv.Err)
 				close(sc)
-				break
+				return
 			}
 			ds := gd.cvtState(nv)
 			if !ds.Exited {
@@ -237,10 +237,12 @@ func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 				if bk != nil && bk.Trace {
 					ds.CurTrace = bk.ID
 					gd.WriteToConsole(fmt.Sprintf("Trace: %d File: %s:%d\n", bk.ID, ds.Task.File, ds.Task.Line))
+					continue
 				}
 			}
 			sc <- ds
 		}
+		close(sc)
 	}()
 	return sc
 }

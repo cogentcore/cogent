@@ -165,25 +165,19 @@ func (dv *DebugView) Continue() {
 	dv.SetBreaks()
 	dv.State.State.Running = true
 	dv.SetStatus(gidebug.Running)
-	for {
-		ds, ok := <-dv.Dbg.Continue(&dv.State) // we wait here until it returns
-		if !ok || dv.IsDeleted() || dv.IsDestroyed() {
-			return
-		}
-		if ds.CurTrace > 0 { // hit tracepoint, continue
-			continue
-		}
-		if dv.Gide != nil {
-			vp := dv.Gide.VPort()
-			if vp != nil && vp.Win != nil {
-				vp.Win.OSWin.Raise()
-			}
-		}
-		updt := dv.UpdateStart()
-		dv.InitState(ds)
-		dv.UpdateEnd(updt)
-		break // done
+	ds, ok := <-dv.Dbg.Continue(&dv.State) // we wait here until it returns
+	if !ok || dv.IsDeleted() || dv.IsDestroyed() {
+		return
 	}
+	if dv.Gide != nil {
+		vp := dv.Gide.VPort()
+		if vp != nil && vp.Win != nil {
+			vp.Win.OSWin.Raise()
+		}
+	}
+	updt := dv.UpdateStart()
+	dv.InitState(ds)
+	dv.UpdateEnd(updt)
 }
 
 // StepOver continues to the next source line, not entering function calls.
