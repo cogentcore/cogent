@@ -59,11 +59,9 @@ type GiDebug interface {
 	// get any further information about the target.
 	GetState() (*State, error)
 
-	// Continue resumes process execution.
-	Continue() <-chan *State
-
-	// Rewind resumes process execution backwards. (What does this do??)
-	Rewind() <-chan *State
+	// Continue resumes process execution.  It requires access to the AllState
+	// to determine if it hit a tracepoint, which is set in State if so.
+	Continue(all *AllState) <-chan *State
 
 	// StepOver continues to the next source line, not entering function calls.
 	StepOver() (*State, error)
@@ -101,7 +99,7 @@ type GiDebug interface {
 
 	// AmmendBreak updates the Condition and Trace information
 	// for the given breakpoint
-	AmendBreak(id int, cond string, trace bool) error
+	AmendBreak(id int, fname string, line int, cond string, trace bool) error
 
 	// UpdateBreaks updates current breakpoints based on given list of breakpoints.
 	// first gets the current list, and does actions to ensure that the list is set.
@@ -120,6 +118,11 @@ type GiDebug interface {
 	// For given thread (lowest-level supported by language,
 	// e.g., Task if supported, else Thread), and frame number.
 	UpdateAllState(all *AllState, threadID int, frame int) error
+
+	// FindFrames looks through the Stacks of all Tasks / Threads
+	// for the closest Stack Frame to given file and line number.
+	// Results are sorted by line number proximity to given line.
+	FindFrames(all *AllState, fname string, line int) ([]*Frame, error)
 
 	// CurThreadID returns the proper current threadID (task or thread)
 	// based on debugger, from given state.
@@ -165,6 +168,10 @@ type GiDebug interface {
 
 	// ListTypes lists all types in the process matching filter.
 	ListTypes(filter string) ([]string, error)
+
+	// WriteToConsole writes given message string to the debugger's output console.
+	// message should end in newline
+	WriteToConsole(msg string)
 }
 
 // Modes are different modes of running the debugger

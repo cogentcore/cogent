@@ -165,19 +165,25 @@ func (dv *DebugView) Continue() {
 	dv.SetBreaks()
 	dv.State.State.Running = true
 	dv.SetStatus(gidebug.Running)
-	ds := <-dv.Dbg.Continue() // we wait here until it returns
-	if dv.IsDeleted() || dv.IsDestroyed() {
-		return // we already died.
-	}
-	if dv.Gide != nil {
-		vp := dv.Gide.VPort()
-		if vp != nil && vp.Win != nil {
-			vp.Win.OSWin.Raise()
+	for {
+		ds, ok := <-dv.Dbg.Continue(&dv.State) // we wait here until it returns
+		if !ok || dv.IsDeleted() || dv.IsDestroyed() {
+			return
 		}
+		if ds.CurTrace > 0 { // hit tracepoint, continue
+			continue
+		}
+		if dv.Gide != nil {
+			vp := dv.Gide.VPort()
+			if vp != nil && vp.Win != nil {
+				vp.Win.OSWin.Raise()
+			}
+		}
+		updt := dv.UpdateStart()
+		dv.InitState(ds)
+		dv.UpdateEnd(updt)
+		break // done
 	}
-	updt := dv.UpdateStart()
-	dv.InitState(ds)
-	dv.UpdateEnd(updt)
 }
 
 // StepOver continues to the next source line, not entering function calls.
@@ -305,12 +311,9 @@ func (dv *DebugView) UpdateFmState() {
 		dv.State.MergeBreaks()
 	}
 	cf := dv.State.StackFrame(dv.State.CurFrame)
-	dv.State.CurBreak = 0
 	if cf != nil {
 		dv.ShowFile(cf.FPath, cf.Line)
-		bk, _ := gidebug.BreakByFile(dv.State.Breaks, cf.FPath, cf.Line)
-		if bk != nil {
-			dv.State.CurBreak = bk.ID
+		if dv.State.CurBreak > 0 {
 			dv.SetStatus(gidebug.Breakpoint)
 		}
 	}
@@ -367,6 +370,21 @@ func (dv *DebugView) SetThreadIdx(thridx int) {
 	}
 	dv.Dbg.UpdateAllState(&dv.State, thid, 0)
 	dv.UpdateFmState()
+}
+
+// FindFrames finds the frames where given file and line are active
+// Selects the one that is closest and shows the others in Find Tab
+func (dv *DebugView) FindFrames(fpath string, line int) {
+	if !dv.DbgIsAvail() {
+		return
+	}
+	fr, err := dv.Dbg.FindFrames(&dv.State, fpath, line)
+	if fr == nil || err != nil {
+		gi.PromptDialog(dv.Viewport, gi.DlgOpts{Title: "No Frames Found", Prompt: fmt.Sprintf("Could not find any stack frames for file name: %v, err: %v", fpath, err)}, gi.AddOk, gi.NoCancel, nil, nil)
+		return
+	}
+	dv.State.FindFrames = fr
+	dv.ShowFindFrames(true)
 }
 
 // ShowFile shows the file name in gide
@@ -430,6 +448,15 @@ func (dv *DebugView) ShowThreads(selTab bool) {
 	}
 	sv := dv.ThreadVw()
 	sv.ShowThreads()
+}
+
+// ShowFindFrames shows the current find frames
+func (dv *DebugView) ShowFindFrames(selTab bool) {
+	if selTab {
+		dv.Tabs().SelectTabByName("Find Frames")
+	}
+	sv := dv.FindFramesVw()
+	sv.ShowStack()
 }
 
 // ShowVar shows info on a given variable within the current frame scope in a text view dialog
@@ -517,34 +544,40 @@ func (dv *DebugView) Tabs() *gi.TabView {
 	return dv.ChildByName("tabs", 1).(*gi.TabView)
 }
 
-// BreakView returns the break view from tabs
+// BreakVw returns the break view from tabs
 func (dv DebugView) BreakVw() *BreakView {
 	tv := dv.Tabs()
 	return tv.TabByName("Breaks").(*BreakView)
 }
 
-// StackView returns the stack view from tabs
+// StackVw returns the stack view from tabs
 func (dv DebugView) StackVw() *StackView {
 	tv := dv.Tabs()
 	return tv.TabByName("Stack").(*StackView)
 }
 
-// VarView returns the thread view from tabs
+// VarVw returns the thread view from tabs
 func (dv DebugView) VarVw() *VarsView {
 	tv := dv.Tabs()
 	return tv.TabByName("Vars").(*VarsView)
 }
 
-// TaskView returns the thread view from tabs
+// TaskVw returns the thread view from tabs
 func (dv DebugView) TaskVw() *TaskView {
 	tv := dv.Tabs()
 	return tv.TabByName("Tasks").(*TaskView)
 }
 
-// ThreadView returns the thread view from tabs
+// ThreadVw returns the thread view from tabs
 func (dv DebugView) ThreadVw() *ThreadView {
 	tv := dv.Tabs()
 	return tv.TabByName("Threads").(*ThreadView)
+}
+
+// FindFramesVw returns the find frames view from tabs
+func (dv DebugView) FindFramesVw() *StackView {
+	tv := dv.Tabs()
+	return tv.TabByName("Find Frames").(*StackView)
 }
 
 // ConsoleText returns the console TextView
@@ -565,7 +598,7 @@ func (dv *DebugView) ConfigTabs() {
 	bv := tb.RecycleTab("Breaks", KiT_BreakView, false).(*BreakView)
 	bv.Config(dv)
 	sv := tb.RecycleTab("Stack", KiT_StackView, false).(*StackView)
-	sv.Config(dv)
+	sv.Config(dv, false) // reg stack
 	vv := tb.RecycleTab("Vars", KiT_VarsView, false).(*VarsView)
 	vv.Config(dv)
 	if dv.Sup == filecat.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
@@ -574,6 +607,8 @@ func (dv *DebugView) ConfigTabs() {
 	}
 	th := tb.RecycleTab("Threads", KiT_ThreadView, false).(*ThreadView)
 	th.Config(dv)
+	ff := tb.RecycleTab("Find Frames", KiT_StackView, false).(*StackView)
+	ff.Config(dv, true) // find frames
 }
 
 // ActionActivate is the update function for actions that depend on the debugger being avail
@@ -663,6 +698,7 @@ var DebugViewProps = ki.Props{
 // StackView is a view of the stack trace
 type StackView struct {
 	gi.Layout
+	FindFrames bool `desc:"if true, this is a find frames, not a regular stack"`
 }
 
 var KiT_StackView = kit.Types.AddType(&StackView{}, StackViewProps)
@@ -672,8 +708,9 @@ func (sv *StackView) DebugVw() *DebugView {
 	return dv
 }
 
-func (sv *StackView) Config(dv *DebugView) {
+func (sv *StackView) Config(dv *DebugView, findFrames bool) {
 	sv.Lay = gi.LayoutVert
+	sv.FindFrames = findFrames
 	config := kit.TypeAndNameList{}
 	config.Add(giv.KiT_TableView, "stack")
 	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
@@ -682,7 +719,14 @@ func (sv *StackView) Config(dv *DebugView) {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
-				dv.SetFrame(idx)
+				if sv.FindFrames {
+					if idx >= 0 && idx < len(dv.State.FindFrames) {
+						fr := dv.State.FindFrames[idx]
+						dv.SetThread(fr.ThreadID)
+					}
+				} else {
+					dv.SetFrame(idx)
+				}
 			}
 		})
 	} else {
@@ -690,7 +734,11 @@ func (sv *StackView) Config(dv *DebugView) {
 	}
 	tv.SetStretchMax()
 	tv.SetInactive()
-	tv.SetSlice(&dv.State.Stack)
+	if sv.FindFrames {
+		tv.SetSlice(&dv.State.FindFrames)
+	} else {
+		tv.SetSlice(&dv.State.Stack)
+	}
 	sv.UpdateEnd(updt)
 }
 
@@ -706,8 +754,12 @@ func (sv *StackView) ShowStack() {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	tv.SetInactive()
-	tv.SelectedIdx = dv.State.CurFrame
-	tv.SetSlice(&dv.State.Stack)
+	if sv.FindFrames {
+		tv.SetSlice(&dv.State.FindFrames)
+	} else {
+		tv.SelectedIdx = dv.State.CurFrame
+		tv.SetSlice(&dv.State.Stack)
+	}
 	sv.UpdateEnd(updt)
 }
 

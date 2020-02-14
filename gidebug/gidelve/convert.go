@@ -141,11 +141,12 @@ func (gd *GiDelve) cvtBreaks(ds []*api.Breakpoint) []*gidebug.Break {
 	return vr
 }
 
-func (gd *GiDelve) cvtFrame(ds *api.Stackframe) *gidebug.Frame {
+func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *gidebug.Frame {
 	if ds == nil {
 		return nil
 	}
 	fr := &gidebug.Frame{}
+	fr.ThreadID = taskID
 	fr.PC = ds.Location.PC
 	fr.File = giv.RelFilePath(ds.Location.File, gd.rootPath)
 	fr.Line = ds.Location.Line
@@ -158,14 +159,14 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe) *gidebug.Frame {
 	return fr
 }
 
-func (gd *GiDelve) cvtStack(ds []api.Stackframe) []*gidebug.Frame {
+func (gd *GiDelve) cvtStack(ds []api.Stackframe, taskID int) []*gidebug.Frame {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
 	vr := make([]*gidebug.Frame, nd)
 	for i := range ds {
-		vr[i] = gd.cvtFrame(&ds[i])
+		vr[i] = gd.cvtFrame(&ds[i], taskID)
 		vr[i].Depth = i
 	}
 	return vr
@@ -298,15 +299,6 @@ func (gd *GiDelve) toLoadConfig(ds *gidebug.VarParams) *api.LoadConfig {
 	lc.MaxArrayValues = ds.MaxArrayValues
 	lc.MaxStructFields = ds.MaxStructFields
 	return lc
-}
-
-func (gd *GiDelve) cvtStateChan(in <-chan *api.DebuggerState) <-chan *gidebug.State {
-	sc := make(chan *gidebug.State)
-	go func() {
-		nv := <-in
-		sc <- gd.cvtState(nv)
-	}()
-	return sc
 }
 
 func (gd *GiDelve) toEvalScope(threadID int, frame int) *api.EvalScope {

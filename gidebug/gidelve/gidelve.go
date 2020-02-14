@@ -9,6 +9,7 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/go-delve/delve/service/rpc2"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gide/gidebug"
+	"github.com/goki/ki/ints"
 )
 
 // GiDelve is the Delve implementation of the GiDebug interface
@@ -44,17 +46,21 @@ func (gd *GiDelve) HasTasks() bool {
 	return true
 }
 
+func (gd *GiDelve) WriteToConsole(msg string) {
+	if gd.obuf == nil {
+		log.Println(msg)
+		return
+	}
+	tlns := []byte(msg)
+	mlns := tlns
+	gd.obuf.Buf.AppendTextMarkup(tlns, mlns, giv.EditSignal)
+}
+
 func (gd *GiDelve) LogErr(err error) error {
 	if err == nil {
 		return err
 	}
-	if gd.obuf == nil {
-		log.Println(err)
-		return err
-	}
-	tlns := []byte(err.Error() + "\n")
-	mlns := tlns
-	gd.obuf.Buf.AppendTextMarkup(tlns, mlns, giv.EditSignal)
+	gd.WriteToConsole(err.Error() + "\n")
 	return err
 }
 
@@ -212,22 +218,41 @@ func (gd *GiDelve) GetState() (*gidebug.State, error) {
 }
 
 // Continue resumes process execution.
-func (gd *GiDelve) Continue() <-chan *gidebug.State {
+func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 	if err := gd.StartedCheck(); err != nil {
 		return nil
 	}
-	ds := gd.dlv.Continue()
-	return gd.cvtStateChan(ds)
+	dsc := gd.dlv.Continue()
+	sc := make(chan *gidebug.State)
+	go func() {
+		for {
+			nv, ok := <-dsc
+			if !ok {
+				close(sc)
+				break
+			}
+			ds := gd.cvtState(nv)
+			if !ds.Exited {
+				bk, _ := gidebug.BreakByFile(all.Breaks, ds.Task.FPath, ds.Task.Line)
+				if bk != nil && bk.Trace {
+					ds.CurTrace = bk.ID
+					gd.WriteToConsole(fmt.Sprintf("Trace: %d File: %s:%d\n", bk.ID, ds.Task.File, ds.Task.Line))
+				}
+			}
+			sc <- ds
+		}
+	}()
+	return sc
 }
 
-// Rewind resumes process execution backwards.
-func (gd *GiDelve) Rewind() <-chan *gidebug.State {
-	if err := gd.StartedCheck(); err != nil {
-		return nil
-	}
-	ds := gd.dlv.Rewind()
-	return gd.cvtStateChan(ds)
-}
+// // Rewind resumes process execution backwards.
+// func (gd *GiDelve) Rewind() <-chan *gidebug.State {
+// 	if err := gd.StartedCheck(); err != nil {
+// 		return nil
+// 	}
+// 	ds := gd.dlv.Rewind()
+// 	return gd.cvtStateChan(ds)
+// }
 
 // StepOver continues to the next source line, not entering function calls.
 func (gd *GiDelve) StepOver() (*gidebug.State, error) {
@@ -374,12 +399,14 @@ func (gd *GiDelve) ClearBreakByName(name string) (*gidebug.Break, error) {
 // AmmendBreak allows user to update an existing breakpoint for example
 // to change the information retrieved when the breakpoint is hit or to change,
 // add or remove the break condition
-func (gd *GiDelve) AmendBreak(id int, cond string, trace bool) error {
+func (gd *GiDelve) AmendBreak(id int, fname string, line int, cond string, trace bool) error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
 	bp := &api.Breakpoint{}
 	bp.ID = id
+	bp.File = fname
+	bp.Line = line
 	bp.Cond = cond
 	bp.Tracepoint = trace
 	err := gd.dlv.AmendBreakpoint(bp)
@@ -409,7 +436,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
 				bc := b.Cond
 				bt := b.Trace
 				if bc != c.Cond || bt != c.Trace {
-					gd.AmendBreak(c.ID, b.Cond, b.Trace)
+					gd.AmendBreak(c.ID, c.File, c.Line, b.Cond, b.Trace)
 				}
 				*b = *c
 				b.Cond = bc
@@ -462,6 +489,7 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 	all.State = *bs
 	all.CurThread = all.State.Thread.ID
 	all.CurTask = all.State.Task.ID
+	all.CurFrame = 0
 	st, err := gd.ListThreads()
 	if err != nil {
 		return err
@@ -482,6 +510,16 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 		return err
 	}
 	all.Vars = vr
+
+	all.CurBreak = 0
+	cf := all.StackFrame(0)
+	if cf != nil {
+		bk, _ := gidebug.BreakByFile(all.Breaks, cf.FPath, cf.Line)
+		if bk != nil {
+			all.CurBreak = bk.ID
+		}
+	}
+
 	return nil
 }
 
@@ -509,6 +547,33 @@ func (gd *GiDelve) UpdateAllState(all *gidebug.AllState, threadID int, frame int
 		all.Vars = vr
 	}
 	return nil
+}
+
+// FindFrames looks through the Stacks of all Tasks / Threads
+// for the closest Stack Frame to given file and line number.
+// Results are sorted by line number proximity to given line.
+func (gd *GiDelve) FindFrames(all *gidebug.AllState, fname string, line int) ([]*gidebug.Frame, error) {
+	var err error
+	var fr []*gidebug.Frame
+	for _, tsk := range all.Tasks {
+		sf, err := gd.Stack(tsk.ID, 100)
+		if err != nil {
+			break
+		}
+		for _, f := range sf {
+			if f.FPath != fname {
+				continue
+			}
+			fr = append(fr, f)
+			break
+		}
+	}
+	sort.Slice(fr, func(i, j int) bool {
+		dsti := ints.AbsInt(fr[i].Line - line)
+		dstj := ints.AbsInt(fr[j].Line - line)
+		return dsti < dstj
+	})
+	return fr, err
 }
 
 // CurThreadID returns the proper current threadID (task or thread)
@@ -554,7 +619,7 @@ func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*gidebug.Frame, error) {
 	}
 	ds, err := gd.dlv.Stacktrace(goroutineID, depth, api.StacktraceSimple, nil)
 	gd.LogErr(err)
-	return gd.cvtStack(ds), err
+	return gd.cvtStack(ds, goroutineID), err
 }
 
 // ListAllVarslists all package variables in the context of the current thread.

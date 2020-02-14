@@ -88,6 +88,12 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 				txf.ClearBreakpoint(tv.CursorPos.Ln)
 			})
 		ac.SetActiveState(hasDbg && tv.HasBreakpoint(tv.CursorPos.Ln))
+		ac = m.AddAction(gi.ActOpts{Label: "Debug: Find Frames"},
+			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				txf := recv.Embed(KiT_TextView).(*TextView)
+				txf.FindFrames(tv.CursorPos.Ln)
+			})
+		ac.SetActiveState(hasDbg)
 	} else {
 		ac = m.AddAction(gi.ActOpts{Label: "Clear"},
 			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -152,6 +158,15 @@ func (tv *TextView) ToggleBreakpoint(ln int) {
 	} else {
 		tv.SetBreakpoint(ln)
 	}
+}
+
+// FindFrames finds stack frames in the debugger containing this file and line
+func (tv *TextView) FindFrames(ln int) {
+	dbg, has := tv.CurDebug()
+	if !has {
+		return
+	}
+	dbg.FindFrames(string(tv.Buf.Filename), ln+1)
 }
 
 // MouseEvent handles the mouse.Event

@@ -78,14 +78,15 @@ type Location struct {
 
 // Frame describes one frame in a stack trace.
 type Frame struct {
-	Depth int         `desc:"depth in overall stack -- 0 is the bottom (currently executing) frame, and it counts up from there"`
-	PC    uint64      `format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
-	File  string      `desc:"file name (trimmed up to point of project base path)"`
-	Line  int         `desc:"line within file"`
-	FPath string      `tableview:"-" tableview:"-" desc:"full path to file"`
-	Func  string      `desc:"the name of the function"`
-	Vars  []*Variable `tableview:"-" desc:"values of the local variables at this frame"`
-	Args  []*Variable `tableview:"-" desc:"values of the local function args at this frame"`
+	Depth    int         `desc:"depth in overall stack -- 0 is the bottom (currently executing) frame, and it counts up from there"`
+	ThreadID int         `desc:"the Task or Thread id that this frame belongs to"`
+	PC       uint64      `format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
+	File     string      `desc:"file name (trimmed up to point of project base path)"`
+	Line     int         `desc:"line within file"`
+	FPath    string      `tableview:"-" tableview:"-" desc:"full path to file"`
+	Func     string      `desc:"the name of the function"`
+	Vars     []*Variable `tableview:"-" desc:"values of the local variables at this frame"`
+	Args     []*Variable `tableview:"-" desc:"values of the local function args at this frame"`
 }
 
 // Break describes one breakpoint
@@ -139,25 +140,27 @@ type State struct {
 	Exited     bool   `desc:"if true, the program has exited"`
 	ExitStatus int    `desc:"indicates the exit status if Exited"`
 	Err        error  `desc:"error communicated to client -- if non-empty, something bad happened"`
+	CurTrace   int    `desc:"if this is > 0, then we just hit that tracepoint -- the Continue process will continue execution"`
 }
 
 // AllState holds all relevant state information.
 // This can be maintained and updated in the debug view.
 type AllState struct {
-	Mode      Modes       `desc:"mode we're running in"`
-	Status    Status      `desc:"overall debugger status"`
-	State     State       `desc:"current run state"`
-	CurThread int         `desc:"id of the current system thread to examine"`
-	CurTask   int         `desc:"id of the current task to examine"`
-	CurFrame  int         `desc:"frame number within current thread"`
-	CurBreak  int         `desc:"current breakpoint that we stopped at"`
-	Breaks    []*Break    `desc:"all breakpoints that have been set -- some may not be On"`
-	CurBreaks []*Break    `desc:"current, active breakpoints as retrieved from debugger"`
-	Threads   []*Thread   `desc:"all system threads"`
-	Tasks     []*Task     `desc:"all tasks"`
-	Stack     []*Frame    `desc:"current stack frame for current thread / task"`
-	Vars      []*Variable `desc:"current local variables and args for current frame"`
-	AllVars   []*Variable `desc:"all variables for current thread / task"`
+	Mode       Modes       `desc:"mode we're running in"`
+	Status     Status      `desc:"overall debugger status"`
+	State      State       `desc:"current run state"`
+	CurThread  int         `desc:"id of the current system thread to examine"`
+	CurTask    int         `desc:"id of the current task to examine"`
+	CurFrame   int         `desc:"frame number within current thread"`
+	CurBreak   int         `desc:"current breakpoint that we stopped at -- will be 0 if none, after UpdateState"`
+	Breaks     []*Break    `desc:"all breakpoints that have been set -- some may not be On"`
+	CurBreaks  []*Break    `desc:"current, active breakpoints as retrieved from debugger"`
+	Threads    []*Thread   `desc:"all system threads"`
+	Tasks      []*Task     `desc:"all tasks"`
+	Stack      []*Frame    `desc:"current stack frame for current thread / task"`
+	Vars       []*Variable `desc:"current local variables and args for current frame"`
+	AllVars    []*Variable `desc:"all variables for current thread / task"`
+	FindFrames []*Frame    `desc:"current find-frames result"`
 }
 
 // BlankState initializes state with a blank initial state with the various slices
@@ -170,6 +173,7 @@ func (as *AllState) BlankState() {
 	as.Stack = []*Frame{&Frame{}}
 	as.Vars = []*Variable{&Variable{}}
 	as.AllVars = []*Variable{&Variable{}}
+	as.FindFrames = []*Frame{&Frame{}}
 }
 
 // StackFrame safely returns the given stack frame -- nil if out of range
