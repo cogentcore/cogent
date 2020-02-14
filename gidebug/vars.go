@@ -33,6 +33,7 @@ type Variable struct {
 	List        []string             `tableview:"-" desc:"if kind is a list type (array, slice), and elements are primitive types, this is the contents"`
 	Map         map[string]string    `tableview:"-" desc:"if kind is a map, and elements are primitive types, this is the contents"`
 	MapVar      map[string]*Variable `tableview:"-" desc:"if kind is a map, and elements are not primitive types, this is the contents"`
+	Dbg         GiDebug              `view:"-" desc:"our debugger -- for getting further variable data"`
 }
 
 var KiT_Variable = kit.Types.AddType(&Variable{}, VariableProps)
@@ -44,6 +45,12 @@ var VariableProps = ki.Props{
 		"Flag":     `view:"-"`,
 		"Kids":     `view:"-"`,
 		"Props":    `view:"-"`,
+	},
+	"ToolBar": ki.PropSlice{
+		{"FollowPtr", ki.Props{
+			"desc": "retrieve the contents of this pointer and add it as a child.",
+			"icon": "update",
+		}},
 	},
 }
 
@@ -152,6 +159,16 @@ func (vr *Variable) TypeInfo(newlines bool) string {
 	}
 	info := []string{"Name: " + vr.Nm, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
 	return strings.Join(info, sep)
+}
+
+// FollowPtr retrieves the contents of this pointer and adds it as a child.
+func (vr *Variable) FollowPtr() {
+	if vr.Dbg == nil {
+		return
+	}
+	updt := vr.UpdateStart()
+	vr.Dbg.FollowPtr(vr)
+	vr.UpdateEnd(updt)
 }
 
 // VarParams are parameters controlling how much detail the debugger reports

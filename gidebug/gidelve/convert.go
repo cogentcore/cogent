@@ -203,6 +203,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 	vr.Cap = ds.Cap
 	vr.Loc.Line = int(ds.DeclLine)
 	vr.Loc.FPath = ds.LocationExpr
+	vr.Dbg = gd
 	nkids := len(ds.Children)
 	switch {
 	case nkids == 1 && vr.Kind.IsPtr():
@@ -286,6 +287,31 @@ func (gd *GiDelve) cvtVars(ds []api.Variable) []*gidebug.Variable {
 		vr[i] = gd.cvtVar(&ds[i])
 	}
 	return vr
+}
+
+func (gd *GiDelve) fixVarList(cv []*gidebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
+	for _, vr := range cv {
+		gd.fixVar(vr, ec, lc)
+	}
+}
+
+func (gd *GiDelve) fixVar(vr *gidebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
+	if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Nm != "" {
+		vrk := vr.Child(0).(*gidebug.Variable)
+		if vrk.NumChildren() == 0 && !vrk.Kind.IsPrimitiveNonPtr() {
+			vnm := "*" + vr.Nm
+			dss, err := gd.dlv.EvalVariable(*ec, vnm, *lc)
+			if err == nil {
+				vrkr := gd.cvtVar(dss)
+				if vrkr.Nm == "" {
+					vrkr.SetName(vnm)
+				}
+				vr.DeleteChildAtIndex(0, true)
+				vr.AddChild(vrkr)
+			}
+		}
+	}
+	vr.Value = vr.ValueString(false, 0, gd.params.VarList.MaxRecurse, 256, false) // max depth, max len -- short for summary -- no type
 }
 
 func (gd *GiDelve) toLoadConfig(ds *gidebug.VarParams) *api.LoadConfig {

@@ -11,9 +11,11 @@ import (
 	"github.com/goki/gi/giv"
 )
 
-var NotStartedErr = errors.New("debugger not started")
+var (
+	NotStartedErr = errors.New("debugger not started")
 
-var IsRunningErr = errors.New("debugger is currently running and cannot return info")
+	IsRunningErr = errors.New("debugger is currently running and cannot return info")
+)
 
 // GiDebug is the interface for all supported debuggers.
 // It is based directly on the Delve Client interface.
@@ -146,9 +148,9 @@ type GiDebug interface {
 	// e.g., Task if supported, else Thread), and frame number.
 	Stack(threadID int, depth int) ([]*Frame, error)
 
-	// ListAllVars lists all variables (subject to filter) in the context
+	// ListGlobalVars lists global variables (subject to filter) in the context
 	// of the current thread.
-	ListAllVars(filter string) ([]*Variable, error)
+	ListGlobalVars(filter string) ([]*Variable, error)
 
 	// ListVars lists all stack-frame local variables (including args)
 	// for given thread (lowest-level supported by language,
@@ -156,8 +158,14 @@ type GiDebug interface {
 	ListVars(threadID int, frame int) ([]*Variable, error)
 
 	// GetVar returns a variable for given thread (lowest-level supported by
-	// language -- e.g., Task if supported, else Thread), and frame number.
-	GetVar(name string, threadID int, frame int) (*Variable, error)
+	// language -- e.g., Task if supported, else Thread), and frame number,
+	// from given expression, which depending on debugger can be a full
+	// expression (e.g., path, address with cast, etc)
+	GetVar(expr string, threadID int, frame int) (*Variable, error)
+
+	// FollowPtr fills in the Child of given Variable
+	// with retrieved value.  Uses last eval scope.
+	FollowPtr(vr *Variable) error
 
 	// SetVar sets the value of a variable.
 	// for given thread (lowest-level supported by language,

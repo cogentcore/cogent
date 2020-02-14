@@ -393,6 +393,19 @@ func (dv *DebugView) FindFrames(fpath string, line int) {
 	dv.ShowFindFrames(true)
 }
 
+// ListGlobalVars lists global vars matching given optional filter in Global Vars tab
+func (dv *DebugView) ListGlobalVars(filter string) {
+	if !dv.DbgIsAvail() {
+		return
+	}
+	vrs, err := dv.Dbg.ListGlobalVars(filter)
+	if err != nil {
+		return
+	}
+	dv.State.GlobalVars = vrs
+	dv.ShowGlobalVars(true)
+}
+
 // ShowFile shows the file name in gide
 func (dv *DebugView) ShowFile(fname string, ln int) {
 	if fname == "" || fname == "?" {
@@ -463,6 +476,15 @@ func (dv *DebugView) ShowFindFrames(selTab bool) {
 	}
 	sv := dv.FindFramesVw()
 	sv.ShowStack()
+}
+
+// ShowGlobalVars shows the current allvars
+func (dv *DebugView) ShowGlobalVars(selTab bool) {
+	if selTab {
+		dv.Tabs().SelectTabByName("Global Vars")
+	}
+	sv := dv.AllVarVw()
+	sv.ShowVars()
 }
 
 // ShowVar shows info on a given variable within the current frame scope in a text view dialog
@@ -562,13 +584,13 @@ func (dv DebugView) StackVw() *StackView {
 	return tv.TabByName("Stack").(*StackView)
 }
 
-// VarVw returns the thread view from tabs
+// VarVw returns the vars view from tabs
 func (dv DebugView) VarVw() *VarsView {
 	tv := dv.Tabs()
 	return tv.TabByName("Vars").(*VarsView)
 }
 
-// TaskVw returns the thread view from tabs
+// TaskVw returns the task view from tabs
 func (dv DebugView) TaskVw() *TaskView {
 	tv := dv.Tabs()
 	return tv.TabByName("Tasks").(*TaskView)
@@ -584,6 +606,12 @@ func (dv DebugView) ThreadVw() *ThreadView {
 func (dv DebugView) FindFramesVw() *StackView {
 	tv := dv.Tabs()
 	return tv.TabByName("Find Frames").(*StackView)
+}
+
+// AllVarVw returns the all vars view from tabs
+func (dv DebugView) AllVarVw() *VarsView {
+	tv := dv.Tabs()
+	return tv.TabByName("Global Vars").(*VarsView)
 }
 
 // ConsoleText returns the console TextView
@@ -606,7 +634,7 @@ func (dv *DebugView) ConfigTabs() {
 	sv := tb.RecycleTab("Stack", KiT_StackView, false).(*StackView)
 	sv.Config(dv, false) // reg stack
 	vv := tb.RecycleTab("Vars", KiT_VarsView, false).(*VarsView)
-	vv.Config(dv)
+	vv.Config(dv, false)
 	if dv.Sup == filecat.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		ta := tb.RecycleTab("Tasks", KiT_TaskView, false).(*TaskView)
 		ta.Config(dv)
@@ -615,6 +643,8 @@ func (dv *DebugView) ConfigTabs() {
 	th.Config(dv)
 	ff := tb.RecycleTab("Find Frames", KiT_StackView, false).(*StackView)
 	ff.Config(dv, true) // find frames
+	av := tb.RecycleTab("Global Vars", KiT_VarsView, false).(*VarsView)
+	av.Config(dv, true) // all vars
 }
 
 // ActionActivate is the update function for actions that depend on the debugger being avail
@@ -688,7 +718,13 @@ func (dv *DebugView) ConfigToolbar() {
 			dvv.Stop()
 			cb.UpdateActions()
 		})
-
+	cb.AddSeparator("sep-av")
+	cb.AddAction(gi.ActOpts{Label: "Global Vars", Icon: "search", Tooltip: "list variables at global scope, subject to filter (name contains)"}, dv.This(),
+		func(recv, send ki.Ki, sig int64, data interface{}) {
+			dvv := recv.Embed(KiT_DebugView).(*DebugView)
+			giv.CallMethod(dvv, "ListGlobalVars", dvv.Viewport)
+			cb.UpdateActions()
+		})
 }
 
 // DebugViewProps are style properties for DebugView
@@ -696,6 +732,15 @@ var DebugViewProps = ki.Props{
 	"EnumType:Flag": gi.KiT_NodeFlags,
 	"max-width":     -1,
 	"max-height":    -1,
+	"CallMethods": ki.PropSlice{
+		{"ListGlobalVars", ki.Props{
+			"Args": ki.PropSlice{
+				{"Filter", ki.Props{
+					"width": 40,
+				}},
+			},
+		}},
+	},
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -980,6 +1025,7 @@ var TaskViewProps = ki.Props{
 // VarsView is a view of the variables
 type VarsView struct {
 	gi.Layout
+	GlobalVars bool `desc:"if true, this is global vars, not local ones"`
 }
 
 var KiT_VarsView = kit.Types.AddType(&VarsView{}, VarsViewProps)
@@ -989,8 +1035,9 @@ func (sv *VarsView) DebugVw() *DebugView {
 	return dv
 }
 
-func (sv *VarsView) Config(dv *DebugView) {
+func (sv *VarsView) Config(dv *DebugView, globalVars bool) {
 	sv.Lay = gi.LayoutVert
+	sv.GlobalVars = globalVars
 	config := kit.TypeAndNameList{}
 	config.Add(giv.KiT_TableView, "vars")
 	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
@@ -999,8 +1046,13 @@ func (sv *VarsView) Config(dv *DebugView) {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
-				vr := dv.State.Vars[idx]
-				dv.ShowVar(vr.Nm)
+				if sv.GlobalVars {
+					vr := dv.State.GlobalVars[idx]
+					dv.ShowVar(vr.Nm)
+				} else {
+					vr := dv.State.Vars[idx]
+					dv.ShowVar(vr.Nm)
+				}
 			}
 		})
 	} else {
@@ -1008,7 +1060,11 @@ func (sv *VarsView) Config(dv *DebugView) {
 	}
 	tv.SetStretchMax()
 	tv.SetInactive()
-	tv.SetSlice(&dv.State.Vars)
+	if sv.GlobalVars {
+		tv.SetSlice(&dv.State.GlobalVars)
+	} else {
+		tv.SetSlice(&dv.State.Vars)
+	}
 	sv.UpdateEnd(updt)
 }
 
@@ -1024,7 +1080,11 @@ func (sv *VarsView) ShowVars() {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	tv.SetInactive()
-	tv.SetSlice(&dv.State.Vars)
+	if sv.GlobalVars {
+		tv.SetSlice(&dv.State.GlobalVars)
+	} else {
+		tv.SetSlice(&dv.State.Vars)
+	}
 	sv.UpdateEnd(updt)
 }
 

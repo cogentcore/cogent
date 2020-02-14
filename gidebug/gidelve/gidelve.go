@@ -22,14 +22,15 @@ import (
 
 // GiDelve is the Delve implementation of the GiDebug interface
 type GiDelve struct {
-	path     string                    // path to exe
-	rootPath string                    // root path for project
-	conn     string                    // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
-	dlv      *rpc2.RPCClient           // the delve rpc2 client interface
-	cmd      *exec.Cmd                 // command running delve
-	obuf     *giv.OutBuf               // output buffer
-	statFunc func(stat gidebug.Status) // status function
-	params   gidebug.Params            // local copy of initial params
+	path          string                    // path to exe
+	rootPath      string                    // root path for project
+	conn          string                    // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
+	dlv           *rpc2.RPCClient           // the delve rpc2 client interface
+	cmd           *exec.Cmd                 // command running delve
+	obuf          *giv.OutBuf               // output buffer
+	lastEvalScope *api.EvalScope            // last used EvalScope
+	statFunc      func(stat gidebug.Status) // status function
+	params        gidebug.Params            // local copy of initial params
 }
 
 // NewGiDelve creates a new debugger exe and client
@@ -228,8 +229,6 @@ func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 		for nv := range dsc {
 			if nv.Err != nil {
 				gd.LogErr(nv.Err)
-				close(sc)
-				return
 			}
 			ds := gd.cvtState(nv)
 			if !ds.Exited {
@@ -624,15 +623,19 @@ func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*gidebug.Frame, error) {
 	return gd.cvtStack(ds, goroutineID), err
 }
 
-// ListAllVarslists all package variables in the context of the current thread.
-func (gd *GiDelve) ListAllVars(filter string) ([]*gidebug.Variable, error) {
+// ListGlobalVars lists all package variables in the context of the current thread.
+func (gd *GiDelve) ListGlobalVars(filter string) ([]*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	lc := gd.toLoadConfig(&gd.params.VarList)
 	ds, err := gd.dlv.ListPackageVariables(filter, *lc)
 	gd.LogErr(err)
-	return gd.cvtVars(ds), err
+	cv := gd.cvtVars(ds)
+	// now we have to fill in the pointers here
+	gd.fixVarList(cv, gd.lastEvalScope, lc)
+	gd.LogErr(err)
+	return cv, err
 }
 
 // ListVars lists all local variables in scope, including args
@@ -641,6 +644,7 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 		return nil, err
 	}
 	ec := gd.toEvalScope(threadID, frame)
+	gd.lastEvalScope = ec
 	lc := gd.toLoadConfig(&gd.params.VarList)
 	vs, err := gd.dlv.ListLocalVariables(*ec, *lc)
 	gd.LogErr(err)
@@ -651,56 +655,45 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 	cv = append(cv, ca...)
 	gidebug.SortVars(cv)
 	// now we have to fill in the pointers here
-	for _, vr := range cv {
-		if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Nm != "" {
-			vrk := vr.Child(0).(*gidebug.Variable)
-			if vrk.NumChildren() == 0 && !vrk.Kind.IsPrimitiveNonPtr() {
-				vnm := "*" + vr.Nm
-				vrkr, err := gd.GetVar(vnm, threadID, frame)
-				if err == nil {
-					if vrkr.Nm == "" {
-						vrkr.SetName(vnm)
-					}
-					vr.DeleteChildAtIndex(0, true)
-					vr.AddChild(vrkr)
-				}
-			}
-		}
-		vr.Value = vr.ValueString(false, 0, gd.params.VarList.MaxRecurse, 256, false) // max depth, max len -- short for summary -- no type
-	}
+	gd.fixVarList(cv, ec, lc)
 	gd.LogErr(err)
 	return cv, err
 }
 
-// GetVariable returns a variable in the context of the current thread.
-func (gd *GiDelve) GetVar(name string, threadID int, frame int) (*gidebug.Variable, error) {
+// GetVariable returns a variable based on expression in the context of the current thread.
+func (gd *GiDelve) GetVar(expr string, threadID int, frame int) (*gidebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
 	ec := gd.toEvalScope(threadID, frame)
+	gd.lastEvalScope = ec
 	lc := gd.toLoadConfig(&gd.params.GetVar)
-	ds, err := gd.dlv.EvalVariable(*ec, name, *lc)
+	ds, err := gd.dlv.EvalVariable(*ec, expr, *lc)
 	gd.LogErr(err)
 	if err != nil {
 		return nil, err
 	}
 	vr := gd.cvtVar(ds)
-	if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Nm != "" {
-		vrk := vr.Child(0).(*gidebug.Variable)
-		if vrk.NumChildren() == 0 && !vrk.Kind.IsPrimitiveNonPtr() {
-			vnm := "*" + vr.Nm
-			dss, err := gd.dlv.EvalVariable(*ec, vnm, *lc)
-			if err == nil {
-				vrkr := gd.cvtVar(dss)
-				if vrkr.Nm == "" {
-					vrkr.SetName(vnm)
-				}
-				vr.DeleteChildAtIndex(0, true)
-				vr.AddChild(vrkr)
-			}
-		}
-	}
+	gd.fixVar(vr, ec, lc)
 	return vr, err
+}
+
+// FollowPtr fills in the Child of given Variable
+// with retrieved value.
+func (gd *GiDelve) FollowPtr(vr *gidebug.Variable) error {
+	if err := gd.StartedCheck(); err != nil {
+		return err
+	}
+	if gd.lastEvalScope == nil {
+		return fmt.Errorf("FollowPtr: no previous eval scope")
+	}
+	expr := fmt.Sprintf("(%q)(%#x)", vr.FullTypeStr, vr.Addr)
+	fmt.Printf("expr: %s   addr: %v\n", expr, vr.Addr)
+	ch, err := gd.GetVar(expr, gd.lastEvalScope.GoroutineID, gd.lastEvalScope.Frame)
+	if err == nil {
+		vr.AddChild(ch)
+	}
+	return err
 }
 
 // SetVar sets the value of a variable

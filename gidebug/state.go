@@ -159,7 +159,7 @@ type AllState struct {
 	Tasks      []*Task     `desc:"all tasks"`
 	Stack      []*Frame    `desc:"current stack frame for current thread / task"`
 	Vars       []*Variable `desc:"current local variables and args for current frame"`
-	AllVars    []*Variable `desc:"all variables for current thread / task"`
+	GlobalVars []*Variable `desc:"global variables for current thread / task"`
 	FindFrames []*Frame    `desc:"current find-frames result"`
 }
 
@@ -172,7 +172,7 @@ func (as *AllState) BlankState() {
 	as.Tasks = []*Task{&Task{}}
 	as.Stack = []*Frame{&Frame{}}
 	as.Vars = []*Variable{&Variable{}}
-	as.AllVars = []*Variable{&Variable{}}
+	as.GlobalVars = []*Variable{&Variable{}}
 	as.FindFrames = []*Frame{&Frame{}}
 }
 
