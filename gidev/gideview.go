@@ -1627,6 +1627,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tv.SetBuf(tb)
 	tv.CursorPos = textbuf.Pos{Ln: ld.StLine}
 	tv.ScrollToCursorOnRender = true
+	tb.ReMarkup()
 
 	bbox, _ := dlg.ButtonBox(frame)
 	if bbox == nil {

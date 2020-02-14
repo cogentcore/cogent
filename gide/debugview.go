@@ -165,9 +165,12 @@ func (dv *DebugView) Continue() {
 	dv.SetBreaks()
 	dv.State.State.Running = true
 	dv.SetStatus(gidebug.Running)
-	ds, ok := <-dv.Dbg.Continue(&dv.State) // we wait here until it returns
-	if !ok || dv.IsDeleted() || dv.IsDestroyed() {
-		return
+	dsc := dv.Dbg.Continue(&dv.State)
+	var ds *gidebug.State
+	for ds = range dsc { // get everything
+		if dv.IsDeleted() || dv.IsDestroyed() {
+			return
+		}
 	}
 	if dv.Gide != nil {
 		vp := dv.Gide.VPort()
@@ -175,9 +178,14 @@ func (dv *DebugView) Continue() {
 			vp.Win.OSWin.Raise()
 		}
 	}
-	updt := dv.UpdateStart()
-	dv.InitState(ds)
-	dv.UpdateEnd(updt)
+	if ds != nil {
+		updt := dv.UpdateStart()
+		dv.InitState(ds)
+		dv.UpdateEnd(updt)
+	} else {
+		dv.State.State.Running = false
+		dv.SetStatus(gidebug.Finished)
+	}
 }
 
 // StepOver continues to the next source line, not entering function calls.
@@ -288,7 +296,11 @@ func (dv *DebugView) InitState(ds *gidebug.State) {
 	if ds.Running {
 		return
 	}
-	dv.SetStatus(gidebug.Stopped)
+	if ds.Exited {
+		dv.SetStatus(gidebug.Finished)
+	} else {
+		dv.SetStatus(gidebug.Stopped)
+	}
 	err := dv.Dbg.InitAllState(&dv.State)
 	if err == gidebug.IsRunningErr {
 		dv.SetStatus(gidebug.Running)

@@ -59,8 +59,12 @@ type GiDebug interface {
 	// get any further information about the target.
 	GetState() (*State, error)
 
-	// Continue resumes process execution.  It requires access to the AllState
-	// to determine if it hit a tracepoint, which is set in State if so.
+	// Continue resumes process execution.  The channel will block until the
+	// process stops by any means.  Tracepoints are automatically handled by
+	// the debugger, and do not appear.  Typically there is just one State
+	// in the channel, but perhaps there could be more -- use a range to iterate
+	// over all items in the channel -- it will close after data is sent.
+	// The last state can be used for further updating.
 	Continue(all *AllState) <-chan *State
 
 	// StepOver continues to the next source line, not entering function calls.

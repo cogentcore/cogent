@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/goki/gi/gi"
@@ -33,6 +34,7 @@ type Preferences struct {
 	SaveKeyMaps  bool       `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
 	SaveLangOpts bool       `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
 	SaveCmds     bool       `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	GoMod        bool       `desc:"if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- this cannot be set on a per-project basis as it affects overall environment state (must do Apply to change)"`
 	Changed      bool       `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
@@ -90,6 +92,11 @@ func (pf *Preferences) Apply() {
 	}
 	MergeAvailCmds()
 	AvailLangs.Validate()
+	if pf.GoMod {
+		os.Setenv("GO111MODULE", "on")
+	} else {
+		os.Setenv("GO111MODULE", "off")
+	}
 }
 
 // Open preferences from GoGi standard prefs directory, and applies them
