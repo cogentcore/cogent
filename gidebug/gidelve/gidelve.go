@@ -668,6 +668,7 @@ func (gd *GiDelve) GetVar(expr string, threadID int, frame int) (*gidebug.Variab
 	ec := gd.toEvalScope(threadID, frame)
 	gd.lastEvalScope = ec
 	lc := gd.toLoadConfig(&gd.params.GetVar)
+	expr = quotePkgPaths(expr)
 	ds, err := gd.dlv.EvalVariable(*ec, expr, *lc)
 	gd.LogErr(err)
 	if err != nil {
@@ -687,11 +688,18 @@ func (gd *GiDelve) FollowPtr(vr *gidebug.Variable) error {
 	if gd.lastEvalScope == nil {
 		return fmt.Errorf("FollowPtr: no previous eval scope")
 	}
-	expr := fmt.Sprintf("(%q)(%#x)", vr.FullTypeStr, vr.Addr)
-	fmt.Printf("expr: %s   addr: %v\n", expr, vr.Addr)
+	expr := ""
+	if vr.FullTypeStr[0] != '*' {
+		expr = fmt.Sprintf("(*%q)(%#x)", vr.FullTypeStr, vr.Addr)
+	} else {
+		expr = fmt.Sprintf("(%q)(%#x)", vr.FullTypeStr, vr.Addr)
+	}
+	// fmt.Printf("expr: %s\n", expr)
 	ch, err := gd.GetVar(expr, gd.lastEvalScope.GoroutineID, gd.lastEvalScope.Frame)
 	if err == nil {
 		vr.AddChild(ch)
+	} else {
+		gd.LogErr(err)
 	}
 	return err
 }

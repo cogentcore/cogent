@@ -1214,6 +1214,7 @@ func (vv *VarView) ConfigSplitView() {
 	tv := vv.TreeView()
 	tv.SetRootNode(vv.Var)
 	sv := vv.StructView()
+	sv.Viewport = vv.Viewport
 	sv.SetStruct(vv.Var)
 }
 

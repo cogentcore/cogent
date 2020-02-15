@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/go-delve/delve/service/api"
 	"github.com/goki/gi/giv"
@@ -293,6 +294,33 @@ func (gd *GiDelve) fixVarList(cv []*gidebug.Variable, ec *api.EvalScope, lc *api
 	for _, vr := range cv {
 		gd.fixVar(vr, ec, lc)
 	}
+}
+
+// trimLeftToAlpha returns string without any leading non-alpha runes
+func trimLeftToAlpha(nm string) string {
+	return strings.TrimLeftFunc(nm, func(r rune) bool {
+		return !unicode.IsLetter(r)
+	})
+}
+
+// quotePkgPaths puts quotes around a package path
+func quotePkgPaths(vnm string) string {
+	if strings.Contains(vnm, "/") && !strings.Contains(vnm, `"`) { // unquoted path
+		pstr := trimLeftToAlpha(vnm)
+		pi := strings.Index(vnm, pstr)
+		segs := strings.Split(pstr, "/")
+		lseg := segs[len(segs)-1]
+		di := strings.Index(lseg, ".")
+		post := ""
+		if di > 0 {
+			post = lseg[di:]
+			lseg = lseg[:di]
+		}
+		pstr = strings.Join(segs[:len(segs)-1], "/")
+		pstr += "/" + lseg
+		vnm = vnm[:pi] + `"` + pstr + `"` + post
+	}
+	return vnm
 }
 
 func (gd *GiDelve) fixVar(vr *gidebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
