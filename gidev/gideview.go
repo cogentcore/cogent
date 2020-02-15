@@ -603,6 +603,7 @@ func (ge *GideView) RevertActiveView() {
 	if tv.Buf != nil {
 		ge.ConfigTextBuf(tv.Buf)
 		tv.Buf.Revert()
+		tv.Buf.Undos.Reset() // key implication of revert
 		fpath, _ := filepath.Split(string(tv.Buf.Filename))
 		ge.Files.UpdateNewFile(fpath) // update everything in dir -- will have removed autosave
 	}

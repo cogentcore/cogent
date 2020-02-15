@@ -697,7 +697,7 @@ func (gd *GiDelve) FollowPtr(vr *gidebug.Variable) error {
 	// fmt.Printf("expr: %s\n", expr)
 	ch, err := gd.GetVar(expr, gd.lastEvalScope.GoroutineID, gd.lastEvalScope.Frame)
 	if err == nil {
-		vr.AddChild(ch)
+		vr.CopyFrom(ch)
 	} else {
 		gd.LogErr(err)
 	}

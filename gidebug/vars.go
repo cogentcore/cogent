@@ -38,6 +38,24 @@ type Variable struct {
 
 var KiT_Variable = kit.Types.AddType(&Variable{}, VariableProps)
 
+func (vr *Variable) CopyFieldsFrom(frm interface{}) {
+	fr := frm.(*Variable)
+	vr.Value = fr.Value
+	vr.TypeStr = fr.TypeStr
+	vr.FullTypeStr = fr.FullTypeStr
+	vr.Kind = fr.Kind
+	vr.ElValue = fr.ElValue
+	vr.Len = fr.Len
+	vr.Cap = fr.Cap
+	vr.Addr = fr.Addr
+	vr.Heap = fr.Heap
+	vr.Loc = fr.Loc
+	vr.List = fr.List
+	vr.Map = fr.Map
+	vr.MapVar = fr.MapVar
+	vr.Dbg = fr.Dbg
+}
+
 var VariableProps = ki.Props{
 	"EnumType:Flag": gi.KiT_NodeFlags,
 	"StructViewFields": ki.Props{ // hide in view
@@ -48,7 +66,7 @@ var VariableProps = ki.Props{
 	},
 	"ToolBar": ki.PropSlice{
 		{"FollowPtr", ki.Props{
-			"desc": "retrieve the contents of this pointer and add it as a child.",
+			"desc": "retrieve the contents of this pointer -- child nodes will contain further data",
 			"icon": "update",
 		}},
 	},
