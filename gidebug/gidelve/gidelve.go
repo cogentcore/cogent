@@ -689,6 +689,7 @@ func (gd *GiDelve) FollowPtr(vr *gidebug.Variable) error {
 		return fmt.Errorf("FollowPtr: no previous eval scope")
 	}
 	expr := ""
+	addr := vr.Addr
 	if vr.FullTypeStr[0] != '*' {
 		expr = fmt.Sprintf("(*%q)(%#x)", vr.FullTypeStr, vr.Addr)
 	} else {
@@ -698,6 +699,7 @@ func (gd *GiDelve) FollowPtr(vr *gidebug.Variable) error {
 	ch, err := gd.GetVar(expr, gd.lastEvalScope.GoroutineID, gd.lastEvalScope.Frame)
 	if err == nil {
 		vr.CopyFrom(ch)
+		vr.Addr = addr
 	} else {
 		gd.LogErr(err)
 	}

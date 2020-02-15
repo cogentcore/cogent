@@ -36,7 +36,7 @@ type Variable struct {
 	Dbg         GiDebug              `view:"-" desc:"our debugger -- for getting further variable data"`
 }
 
-var KiT_Variable = kit.Types.AddType(&Variable{}, VariableProps)
+var KiT_Variable = kit.Types.AddType(&Variable{}, nil)
 
 func (vr *Variable) CopyFieldsFrom(frm interface{}) {
 	fr := frm.(*Variable)
@@ -56,6 +56,10 @@ func (vr *Variable) CopyFieldsFrom(frm interface{}) {
 	vr.Dbg = fr.Dbg
 }
 
+func init() {
+	kit.Types.SetProps(KiT_Variable, VariableProps)
+}
+
 var VariableProps = ki.Props{
 	"EnumType:Flag": gi.KiT_NodeFlags,
 	"StructViewFields": ki.Props{ // hide in view
@@ -68,6 +72,10 @@ var VariableProps = ki.Props{
 		{"FollowPtr", ki.Props{
 			"desc": "retrieve the contents of this pointer -- child nodes will contain further data",
 			"icon": "update",
+			"updtfunc": func(vri interface{}, act *gi.Action) {
+				vr := vri.(ki.Ki).Embed(KiT_Variable).(*Variable)
+				act.SetActiveState(!vr.HasChildren())
+			},
 		}},
 	},
 }
