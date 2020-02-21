@@ -4,49 +4,36 @@
 
 **Gide** is a flexible IDE (integrated development environment) framework in pure Go, using the [GoGi](https://github.com/goki/gi) GUI and the [GoPi](https://github.com/goki/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
 
-See the [Wiki](https://github.com/goki/gide/wiki) for more docs,   [Install](https://github.com/goki/gide/wiki/Install) instructions (just standard `go get ...`), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
+See the [Wiki](https://github.com/goki/gide/wiki) for more docs,   [Install](https://github.com/goki/gide/wiki/Install) instructions (mostly just `go get ...`), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/goki/gide)](https://goreportcard.com/report/github.com/goki/gide)
 [![GoDoc](https://godoc.org/github.com/goki/gide?status.svg)](https://godoc.org/github.com/goki/gide)
 [![Travis](https://travis-ci.com/goki/gide.svg?branch=master)](https://travis-ci.com/goki/gide)
 
-After all these years, nothing beats a great text editor for coding.  Every attempt at more "visual" or structured forms of programming haven't really caught on (though the IDE and GUI-augmented editor can give you the best of both worlds).
+There are many existing, excellent choices for text editors and IDE's.  However, few of these options are: a) fully open-source *and* b) written entirely in a single, modern, easy-to-read and understand language, within a GUI framework that was developed in parallel to support the core functionality (e.g., the TextView element from GoGi supports most of the core editor functionality in Gide).  Thus, Gide may represent a particularly accessible platform for those wishing to adapt the IDE to their own liking.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Gide.
 
-And nothing beats coding for efficiently doing just about anything you want to do, whether it is data analysis, AI, etc (and obviously for "regular" coding).
+Some of the main features of *Gide* include:
 
-Even writing documents is best done in a markup language (markdown, LaTeX, etc), and needs a great text editor.  In short, virtually your entire workflow as a scientist, researcher, etc depends on the same core functionality.
+* Designed to function as both a general-purpose text editor *and* an IDE.  It comes configured with command support for LaTeX, Markdown, and Makefiles, in addition to Go, and the command system is fully extensible to support any command-line tools.
 
-But does the world need yet-another-IDE? Probably not, but at one point we thought it was on our critical path for developing our mission-critical [emergent](https://github.com/emer/emergent) neural network simulation environment, so here it is!
+* Provides a full tree-based file browser on the left, with builtin support for version control (git, svn, etc) and standard file management functionality through drag-and-drop, etc.  You can look at git logs, diffs, etc through this interface.
 
-Some of the main current / planned features of *Gide* include:
+* Command actions show output on a tabbed output display on the right, along with other special interfaces such as Find / Replace, Symbols, Debugger, etc.  Thus, the overall design is extensible and new interfaces can be easily added to supply new functionality.  You don't spend any time fiddling around with lots of different panels all over the place, and you always know where to look to find something.  Maybe the result is less fancy and "bespoke" for a given use-case (e.g., Debugging), but our guiding principle is to use a simple framework that does most things well, much like the Go language itself.
 
-* Pure opensource Go (golang) implementation, built on top of a Go-based cross-platform GUI framework: [GoGi](https://github.com/goki/gi).  Go means you can read and understand the code, and it compiles in seconds, so if you want to customize or fork to make your own personal favorite IDE, this could be a good starting point!
-
-* Designed from the ground up to handle a wide range of use-cases, from core coding to scientific computing to writing documents, etc.  Handles heterogenous file types all mixed together in a given project, supports customizable commands that can be associated with different file types, etc.
-
-* Centered around a `FileTree`-based file browser on the left, which supports full version control and standard file management functionality etc.  The plan is to make this a highly useful but still simple and straightforward file browser interface that can handle all the basic tasks.
-
-* Command actions show output on a tabbed output display on the right, along with other special interfaces such as Find / Replace, Symbols, etc.  Overall design works well without having to constantly move widgets and panels around, although we'll have to see how well it scales.
-
-* Very keyboard focused, and especially usable with standard Emacs command sequences -- emacs users will feel very at home, but also perhaps excited to have a more complete GUI experience as well.  Everything is customizable to fit whatever framework you're familiar with (and file tickets if we can me it better).
-
-* The original plan was to add functionality comparable to `JupyterLab` and other such scientific computing frameworks (`nteract`, R studio, etc), where you can easily pop up advanced 2D and 3D graphics, and powerful interactive GUI interfaces to all manner of data types and structures.  Not sure if that will actually happen...
+* Strongly keyboard focused, inspired by Emacs -- existing Emacs users should be immediately productive.  However, other common keyboard bindings are also supported, and key bindings are entirely customizable.  If you're considering actually using it, we strongly recommend reading the [Wiki](https://github.com/goki/gide/wiki) tips to get the most out of it, and understand the key design principles (e.g., why there are no tabs for open files!).
 
 # Current Status
 
-As of 11/2018, it is fully functional as an editor, but many planned features remain to be implemented (still true as of 6/2019 -- will get back to it after all the other higher-priority stuff :)
+As of 2/2020, it is feature complete as a Go IDE, including intelligent type-comprehension-based completion, and an integrated GUI debugger, running on top of [delve](https://github.com/go-delve/delve).  It is in daily use by the primary developers, and very stable at this point.
 
-Basic editing and tooling for `Go`, `C`, `LaTeX`, `Markdown` is reasonably functional and solid.  It is fully self-hosting -- further development of Gide (and GoGi etc) is happening within Gide!
+A 1.0 release is upcoming soon (March, 2020) pending final testing and bug fixing, after a major coding spree.
 
-Near-term major goals (i.e., these are not yet implemented):
-* Fix the `FileTree` to be rock solid.  Currently has a few issues..
-* Support for `delve` debugger for Go.  Then `lldb` after that maybe.  And see about python debugging.
-* Extend the [GoPi](https://github.com/goki/pi) interactive parser to handle Python and maybe C / C++, so it will have been worth writing instead of just using the native Go parser.
+In addition to Issues shown on github, some important features to be added longer-term include:
 
-Maybe / maybe not:
-* `Jupyter Lab` / `nteract` level functionality.  How hard would it be?  Probably need to get GoGi plugged in as a backend to matplotlib etc -- could be a big job..
+* More coding automation, refactoring, etc.  We don't want to go too crazy here, prefering the more general-purpose and simple approach, but probably some more could be done.
 
-Feel free to file issues for anything you'd like to see that isn't listed here.
+* Full support for Python, including extending the [GoPi](https://github.com/goki/pi) interactive parser to handle Python, so it will have been worth writing instead of just using the native Go parser.
+
 
 # Screenshots
 

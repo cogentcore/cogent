@@ -2448,6 +2448,10 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 		kf = gide.KeyFun(kc, "")
 		if kf == gide.KeyFunNeeds2 {
 			kt.SetProcessed()
+			tv := ge.ActiveTextView()
+			if tv != nil {
+				tv.CancelComplete()
+			}
 			ge.KeySeq1 = kt.Chord()
 			ge.SetStatus(string(ge.KeySeq1))
 			if gi.KeyEventTrace {
@@ -2466,7 +2470,7 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 	case gi.KeyFunFind:
 		kt.SetProcessed()
 		tv := ge.ActiveTextView()
-		if tv.HasSelection() {
+		if tv != nil && tv.HasSelection() {
 			ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
 		}
 		giv.CallMethod(ge, "Find", ge.Viewport)
@@ -2517,7 +2521,9 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 	case gide.KeyFunJump:
 		kt.SetProcessed()
 		tv := ge.ActiveTextView()
-		tv.JumpToLinePrompt()
+		if tv != nil {
+			tv.JumpToLinePrompt()
+		}
 		ge.Indent()
 	case gide.KeyFunSetSplit:
 		kt.SetProcessed()

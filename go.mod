@@ -2,6 +2,7 @@ module github.com/goki/gide
 
 require (
 	github.com/ajstarks/svgo v0.0.0-20200204031535-0cbcf57ea1d8 // indirect
+	github.com/emer/emergent v1.0.0 // indirect
 	github.com/go-delve/delve v1.4.0
 	github.com/goki/gi v0.9.12
 	github.com/goki/ki v0.9.11
