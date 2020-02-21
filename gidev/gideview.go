@@ -1465,8 +1465,8 @@ func (ge *GideView) Run() {
 	ge.ExecCmds(ge.Prefs.RunCmds, true, true)
 }
 
-// Commit commits the current changes using relevant VCS tool, and updates the changelog.
-// Checks for VCS setting and
+// Commit commits the current changes using relevant VCS tool.
+// Checks for VCS setting and for unsaved files.
 func (ge *GideView) Commit() {
 	vc := ge.VersCtrl()
 	if vc == "" {
@@ -1504,24 +1504,19 @@ func (ge *GideView) CommitNoChecks() {
 				ge.ArgVals["{PromptString1}"] = msg
 				gide.CmdNoUserPrompt = true                     // don't re-prompt!
 				ge.ExecCmdName(gide.CmdName(cmdnm), true, true) // must be wait
-				ge.CommitUpdtLog(cmdnm)
+				ge.SaveProjIfExists(true)                       // saveall
 				ge.UpdateFiles()
 			}
 		})
 }
 
-// CommitUpdtLog grabs info from buffer in main tabs about the commit, and
-// updates the changelog record
-func (ge *GideView) CommitUpdtLog(cmdnm string) {
-	ctv := ge.RecycleTabTextView(cmdnm, false) // don't sel
-	if ctv == nil {
-		return
-	}
-	if ctv.Buf == nil {
-		return
-	}
-	// todo: process text!
-	ge.SaveProjIfExists(true) // saveall
+// VCSUpdateAll does an Update (e.g., Pull) on all VCS repositories within
+// the open tree nodes in FileTree.
+func (ge *GideView) VCSUpdateAll() {
+	updt := ge.FilesView.UpdateStart()
+	ge.FilesView.SetFullReRender()
+	ge.Files.UpdateAllVcs()
+	ge.FilesView.UpdateEnd(updt)
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
@@ -2184,8 +2179,8 @@ func (ge *GideView) SplitView() *gi.SplitView {
 }
 
 // FileTree returns the main FileTree
-func (ge *GideView) FileTree() *giv.TreeView {
-	return ge.SplitView().Child(FileTreeIdx).Child(0).(*giv.TreeView)
+func (ge *GideView) FileTree() *gide.FileTreeView {
+	return ge.SplitView().Child(FileTreeIdx).Child(0).(*gide.FileTreeView)
 }
 
 // TextViewByIndex returns the TextView by index (0 or 1), nil if not found
@@ -3131,6 +3126,10 @@ var GideViewProps = ki.Props{
 			}},
 			{"sep-run", ki.BlankProp{}},
 			{"Commit", ki.Props{
+				"updtfunc": GideViewInactiveEmptyFunc,
+			}},
+			{"VCSUpdateAll", ki.Props{
+				"label":    "VCS Update All",
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"ExecCmdNameActive", ki.Props{
