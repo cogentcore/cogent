@@ -4,9 +4,9 @@ require (
 	github.com/ajstarks/svgo v0.0.0-20200204031535-0cbcf57ea1d8 // indirect
 	github.com/emer/emergent v1.0.0 // indirect
 	github.com/go-delve/delve v1.4.0
-	github.com/goki/gi v0.9.13-0.20200221082344-b86e6f216ed3
+	github.com/goki/gi v0.9.13-0.20200222120508-8537db5395dc
 	github.com/goki/ki v0.9.11
-	github.com/goki/pi v0.9.12
+	github.com/goki/pi v0.9.13-0.20200222120254-24a3c89e424d
 	github.com/jung-kurt/gofpdf v1.16.2 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect

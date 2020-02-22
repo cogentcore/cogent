@@ -984,7 +984,7 @@ func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
 	astr := fn.Buf.Strings(false)
 	bstr := fn1.Buf.Strings(false)
 
-	giv.DiffViewDialog(ge.Viewport, astr, bstr, string(fnm), string(fn.Buf.Filename), giv.DlgOpts{Title: "Diff File View:"})
+	giv.DiffViewDialog(ge.Viewport, astr, bstr, string(fnm), string(fn.Buf.Filename), "", "", giv.DlgOpts{Title: "Diff File View:"})
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

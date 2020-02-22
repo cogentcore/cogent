@@ -11,42 +11,13 @@ import (
 	"github.com/goki/ki/kit"
 )
 
+// TextView is the Gide-specific version of the TextView, with support for
+// setting / clearing breakpoints, etc
 type TextView struct {
 	giv.TextView
 }
 
-var KiT_TextView = kit.Types.AddType(&TextView{}, TextViewProps)
-
-var TextViewProps = ki.Props{
-	"EnumType:Flag":    giv.KiT_TextViewFlags,
-	"white-space":      gi.WhiteSpacePreWrap,
-	"border-width":     0, // don't render our own border
-	"cursor-width":     units.NewValue(3, units.Px),
-	"border-color":     &gi.Prefs.Colors.Border,
-	"border-style":     gi.BorderSolid,
-	"padding":          units.NewValue(2, units.Px),
-	"margin":           units.NewValue(2, units.Px),
-	"vertical-align":   gi.AlignTop,
-	"text-align":       gi.AlignLeft,
-	"tab-size":         4,
-	"color":            &gi.Prefs.Colors.Font,
-	"background-color": &gi.Prefs.Colors.Background,
-	giv.TextViewSelectors[giv.TextViewActive]: ki.Props{
-		"background-color": "highlight-10",
-	},
-	giv.TextViewSelectors[giv.TextViewFocus]: ki.Props{
-		"background-color": "lighter-0",
-	},
-	giv.TextViewSelectors[giv.TextViewInactive]: ki.Props{
-		"background-color": "highlight-20",
-	},
-	giv.TextViewSelectors[giv.TextViewSel]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Select,
-	},
-	giv.TextViewSelectors[giv.TextViewHighlight]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Highlight,
-	},
-}
+var KiT_TextView = kit.Types.AddType(&TextView{}, giv.TextViewProps)
 
 // MakeContextMenu builds the textview context menu
 func (tv *TextView) MakeContextMenu(m *gi.Menu) {
