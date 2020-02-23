@@ -663,7 +663,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextView, vidx int, fn *giv.FileNode)
 	if tv.IsChanged() || !fn.Buf.AutoSaveCheck() {
 		return false
 	}
-	ge.DiffFileNode(gi.FileName(fn.Buf.AutoSaveFilename()), fn)
+	ge.DiffFileNode(fn, gi.FileName(fn.Buf.AutoSaveFilename()))
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Autosave file Exists",
 		Prompt: fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm)},
 		[]string{"Open", "Ignore and Overwrite"},
@@ -947,44 +947,46 @@ func (ge *GideView) TextViewSig(tv *gide.TextView, sig giv.TextViewSignals) {
 	}
 }
 
-// DiffFiles shows the differences between two given files (currently outputs a context diff
-// but will show a side-by-side view soon..
-func (ge *GideView) DiffFiles(fnm1, fnm2 gi.FileName) {
-	fn2 := ge.FileNodeForFile(string(fnm2), true)
-	if fn2 == nil {
+// DiffFiles shows the differences between two given files
+// in side-by-side DiffView and in the console as a context diff.
+// It opens the files as file nodes and uses existing contents if open already.
+func (ge *GideView) DiffFiles(fnmA, fnmB gi.FileName) {
+	fna := ge.FileNodeForFile(string(fnmA), true)
+	if fna == nil {
 		return
 	}
-	ge.DiffFileNode(fnm1, fn2)
+	if fna.Buf == nil {
+		ge.OpenFileNode(fna)
+	}
+	if fna.Buf == nil {
+		return
+	}
+	ge.DiffFileNode(fna, fnmB)
 }
 
-// DiffFileNode shows the differences between two given files (currently outputs a context diff
-// but will show a side-by-side view soon..
-func (ge *GideView) DiffFileNode(fnm gi.FileName, fn *giv.FileNode) {
-	fn1 := ge.FileNodeForFile(string(fnm), true)
-	if fn1 == nil {
+// DiffFileNode shows the differences between given file node as the A file,
+// and another given file as the B file,
+// in side-by-side DiffView and in the console as a context diff.
+func (ge *GideView) DiffFileNode(fna *giv.FileNode, fnmB gi.FileName) {
+	fnb := ge.FileNodeForFile(string(fnmB), true)
+	if fnb == nil {
 		return
 	}
-	if fn1.Buf == nil {
-		ge.OpenFileNode(fn1)
+	if fnb.Buf == nil {
+		ge.OpenFileNode(fnb)
 	}
-	if fn1.Buf == nil {
+	if fnb.Buf == nil {
 		return
 	}
-	if fn.Buf == nil {
-		ge.OpenFileNode(fn)
-	}
-	if fn.Buf == nil {
-		return
-	}
-	dif := fn.Buf.DiffBufsUnified(fn1.Buf, 3)
+	dif := fna.Buf.DiffBufsUnified(fnb.Buf, 3)
 	cbuf, _, _ := ge.RecycleCmdTab("Diffs", true, true)
 	cbuf.SetText(dif)
 	cbuf.AutoScrollViews()
 
-	astr := fn.Buf.Strings(false)
-	bstr := fn1.Buf.Strings(false)
+	astr := fna.Buf.Strings(false)
+	bstr := fnb.Buf.Strings(false)
 
-	giv.DiffViewDialog(ge.Viewport, astr, bstr, string(fnm), string(fn.Buf.Filename), "", "", giv.DlgOpts{Title: "Diff File View:"})
+	giv.DiffViewDialog(ge.Viewport, astr, bstr, string(fna.Buf.Filename), string(fnb.Buf.Filename), "", "", giv.DlgOpts{Title: "Diff File View:"})
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
