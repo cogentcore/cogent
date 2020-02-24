@@ -330,6 +330,7 @@ func (dv *DebugView) UpdateFmState() {
 	if dv.Dbg.HasTasks() {
 		dv.ShowTasks(false)
 	}
+	dv.UpdateToolBar()
 }
 
 // SetFrame sets the given frame depth level as active
@@ -519,8 +520,8 @@ var DebugStatusColors = map[gidebug.Status]string{
 
 func (dv *DebugView) SetStatus(stat gidebug.Status) {
 	dv.State.Status = stat
-	cb := dv.CtrlBar()
-	stl := cb.ChildByName("status", 1).(*gi.Label)
+	tb := dv.ToolBar()
+	stl := tb.ChildByName("status", 1).(*gi.Label)
 	clr := DebugStatusColors[stat]
 	stl.CurBgColor.SetString(clr, nil)
 	if gi.Prefs.IsDarkMode() {
@@ -531,6 +532,7 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 		lbl = fmt.Sprintf("Break: %d", dv.State.CurBreak)
 	}
 	stl.SetText(lbl)
+	tb.UpdateActions()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -548,13 +550,13 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.Lay = gi.LayoutVert
 	dv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_ToolBar, "ctrlbar")
+	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_TabView, "tabs")
 	mods, updt := dv.ConfigChildren(config, ki.UniqueNames)
 	if !mods {
 		updt = dv.UpdateStart()
 	}
-	dv.ConfigToolbar()
+	dv.ConfigToolBar()
 	dv.ConfigTabs()
 	dv.State.Breaks = nil // get rid of dummy
 	dv.Start()
@@ -562,9 +564,9 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.UpdateEnd(updt)
 }
 
-// CtrlBar returns the find toolbar
-func (dv *DebugView) CtrlBar() *gi.ToolBar {
-	return dv.ChildByName("ctrlbar", 0).(*gi.ToolBar)
+// ToolBar returns the find toolbar
+func (dv *DebugView) ToolBar() *gi.ToolBar {
+	return dv.ChildByName("toolbar", 0).(*gi.ToolBar)
 }
 
 // Tabs returns the tabs
@@ -653,12 +655,17 @@ func (dv *DebugView) ActionActivate(act *gi.Action) {
 	act.SetActiveStateUpdt(dv.DbgIsAvail())
 }
 
-func (dv *DebugView) ConfigToolbar() {
-	cb := dv.CtrlBar()
-	if cb.HasChildren() {
+func (dv *DebugView) UpdateToolBar() {
+	tb := dv.ToolBar()
+	tb.UpdateActions()
+}
+
+func (dv *DebugView) ConfigToolBar() {
+	tb := dv.ToolBar()
+	if tb.HasChildren() {
 		return
 	}
-	cb.SetStretchMaxWidth()
+	tb.SetStretchMaxWidth()
 
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
@@ -669,61 +676,61 @@ func (dv *DebugView) ConfigToolbar() {
 	// 		dvv.UpdateView()
 	// 		cb.UpdateActions()
 	// 	})
-	stl := gi.AddNewLabel(cb, "status", "Building..   ")
+	stl := gi.AddNewLabel(tb, "status", "Building..   ")
 	stl.Redrawable = true
 	stl.CurBgColor.SetString("yellow", nil)
 	if gi.Prefs.IsDarkMode() {
 		stl.CurBgColor = stl.CurBgColor.Darker(75)
 	}
-	cb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Start()
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			go dvv.Continue()
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
-	gi.AddNewLabel(cb, "step", "Step: ")
-	cb.AddAction(gi.ActOpts{Label: "Over", Icon: "step-over", Tooltip: "continues to the next source line, not entering function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
+	gi.AddNewLabel(tb, "step", "Step: ")
+	tb.AddAction(gi.ActOpts{Label: "Over", Icon: "step-over", Tooltip: "continues to the next source line, not entering function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOver()
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Label: "Into", Icon: "step-into", Tooltip: "continues to the next source line, entering into function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Into", Icon: "step-into", Tooltip: "continues to the next source line, entering into function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepInto()
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Label: "Out", Icon: "step-out", Tooltip: "continues to the return point of the current function", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Out", Icon: "step-out", Tooltip: "continues to the return point of the current function", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOut()
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Label: "Single", Icon: "step-fwd", Tooltip: "steps a single CPU instruction", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Single", Icon: "step-fwd", Tooltip: "steps a single CPU instruction", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOut()
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
-	cb.AddAction(gi.ActOpts{Label: "Stop", Icon: "stop", Tooltip: "stop execution"}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Stop", Icon: "stop", Tooltip: "stop execution"}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Stop()
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
-	cb.AddSeparator("sep-av")
-	cb.AddAction(gi.ActOpts{Label: "Global Vars", Icon: "search", Tooltip: "list variables at global scope, subject to filter (name contains)"}, dv.This(),
+	tb.AddSeparator("sep-av")
+	tb.AddAction(gi.ActOpts{Label: "Global Vars", Icon: "search", Tooltip: "list variables at global scope, subject to filter (name contains)"}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			giv.CallMethod(dvv, "ListGlobalVars", dvv.Viewport)
-			cb.UpdateActions()
+			tb.UpdateActions()
 		})
 }
 
@@ -1142,7 +1149,7 @@ func (vv *VarView) Config() {
 	mods, updt := vv.ConfigChildren(config, ki.UniqueNames)
 	vv.SetFrameInfo(vv.FrameInfo)
 	vv.ConfigSplitView()
-	// vv.ConfigToolbar()
+	// vv.ConfigToolBar()
 	if mods {
 		vv.UpdateEnd(updt)
 	}
@@ -1175,8 +1182,8 @@ func (vv *VarView) SetFrameInfo(finfo string) {
 	lab.Text = finfo
 }
 
-// // ConfigToolbar adds a VarView toolbar.
-// func (vv *VarView) ConfigToolbar() {
+// // ConfigToolBar adds a VarView toolbar.
+// func (vv *VarView) ConfigToolBar() {
 // 	tb := vv.ToolBar()
 // 	if tb != nil && tb.HasChildren() {
 // 		return
