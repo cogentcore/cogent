@@ -13,7 +13,7 @@ import (
 	"github.com/go-delve/delve/service/api"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gide/gidebug"
-	"github.com/goki/pi/langs/golang"
+	"github.com/goki/pi/lex"
 	"github.com/goki/pi/syms"
 )
 
@@ -178,7 +178,7 @@ func ShortType(typ string) string {
 	if si < 0 {
 		return typ
 	}
-	tnm := golang.TrimLeftToAlpha(typ)
+	tnm := lex.TrimLeftToAlpha(typ)
 	tsi := strings.Index(typ, tnm)
 	fdir, fnm := filepath.Split(tnm)
 	fdd := filepath.Base(fdir)
