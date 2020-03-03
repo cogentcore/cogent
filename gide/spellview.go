@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/gi/spell"
+	"github.com/goki/pi/spell"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"

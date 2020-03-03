@@ -39,6 +39,7 @@ import (
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/parse"
 	"github.com/goki/pi/pi"
+	"github.com/goki/pi/vci"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -1498,7 +1499,7 @@ func (ge *GideView) CommitNoChecks() {
 	ge.SetArgVarVals() // need to set before setting prompt string below..
 
 	gi.StringPromptDialog(ge.Viewport, "", "Enter commit message here..",
-		gi.DlgOpts{Title: "Commit Message", Prompt: "Please enter your commit message here -- this will be recorded along with other information from the commit in the project's ChangeLog, which can be viewed under Proj Prefs menu item -- author information comes from User settings in GoGi Preferences."},
+		gi.DlgOpts{Title: "Commit Message", Prompt: "Please enter your commit message here -- remember this is essential front-line documentation.  Author information comes from User settings in GoGi Preferences."},
 		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			dlg := send.(*gi.Dialog)
 			if sig == int64(gi.DialogAccepted) {
@@ -1519,6 +1520,23 @@ func (ge *GideView) VCSUpdateAll() {
 	ge.FilesView.SetFullReRender()
 	ge.Files.UpdateAllVcs()
 	ge.FilesView.UpdateEnd(updt)
+}
+
+// VCSLog shows the VCS log of commits for this file, optionally with a
+// since date qualifier: If since is non-empty, it should be
+// a date-like expression that the VCS will understand, such as
+// 1/1/2020, yesterday, last year, etc.  SVN only understands a
+// number as a maximum number of items to return.
+// If allFiles is true, then the log will show revisions for all files, not just
+// this one.
+// Returns the Log and also shows it in a VCSLogView which supports further actions.
+func (ge *GideView) VCSLog(since string) (vci.Log, error) {
+	atv := ge.ActiveTextView()
+	ond, _, got := ge.OpenNodeForTextView(atv)
+	if !got {
+		return nil, fmt.Errorf("No active file for VCS Log")
+	}
+	return ond.LogVcs(true, since)
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
@@ -3130,10 +3148,19 @@ var GideViewProps = ki.Props{
 			{"Commit", ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
+			{"VCSLog", ki.Props{
+				"label":    "VCS Log View",
+				"desc":     "shows the VCS log of commits to repository associated with active file, optionally with a since date qualifier: If since is non-empty, it should be a date-like expression that the VCS will understand, such as 1/1/2020, yesterday, last year, etc (SVN only supports a max number of entries).",
+				"updtfunc": GideViewInactiveEmptyFunc,
+				"Args": ki.PropSlice{
+					{"Since Date", ki.Props{}},
+				},
+			}},
 			{"VCSUpdateAll", ki.Props{
 				"label":    "VCS Update All",
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
+			{"sep-cmd", ki.BlankProp{}},
 			{"ExecCmdNameActive", ki.Props{
 				"label":        "Exec Cmd",
 				"submenu-func": giv.SubMenuFunc(ExecCmds),
