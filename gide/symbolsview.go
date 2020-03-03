@@ -154,12 +154,16 @@ func (sv *SymbolsView) ConfigToolbar() {
 		if sig == int64(gi.TextFieldInsert) || sig == int64(gi.TextFieldBackspace) || sig == int64(gi.TextFieldDelete) {
 			sv.Match = string(sv.SearchText().EditTxt)
 			sv.Match = strings.ToLower(sv.Match)
-			sv.Config(sv.Gide, *sv.Params())
+			sv.ConfigTree(sv.Params().Scope)
+			stxt.SetText(sv.Match)
+			stxt.CursorEnd()
 			sv.SearchText().GrabFocus()
 		}
 		if sig == int64(gi.TextFieldCleared) {
 			sv.Match = ""
-			sv.Config(sv.Gide, *sv.Params())
+			stxt.SetText(sv.Match)
+			stxt.CursorEnd()
+			sv.ConfigTree(sv.Params().Scope)
 			sv.SearchText().GrabFocus()
 		}
 	})
