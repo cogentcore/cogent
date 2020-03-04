@@ -6,6 +6,7 @@ package gidebug
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki/kit"
@@ -266,8 +267,13 @@ func (as *AllState) VarByName(varNm string) *Variable {
 			return vr
 		}
 	}
+	nmspl := strings.Split(varNm, ".")
 	for _, vr := range as.GlobalVars {
-		if vr.Nm == varNm {
+		spl := strings.Split(vr.Nm, ".")
+		if len(spl) == len(nmspl) && vr.Nm == varNm {
+			return vr
+		}
+		if len(nmspl) == 1 && len(spl) == 2 && spl[1] == varNm {
 			return vr
 		}
 	}
