@@ -88,6 +88,7 @@ func (dv *DebugView) DbgCanStep() bool {
 func (dv *DebugView) Destroy() {
 	dv.Detach()
 	dv.DeleteAllBreaks()
+	dv.Gide.ClearDebug()
 	dv.Layout.Destroy()
 }
 
@@ -489,7 +490,6 @@ func (dv *DebugView) ShowGlobalVars(selTab bool) {
 }
 
 // ShowVar shows info on a given variable within the current frame scope in a text view dialog
-// todo: replace with a treeview!
 func (dv *DebugView) ShowVar(name string) error {
 	if !dv.DbgIsAvail() {
 		return nil
@@ -505,6 +505,16 @@ func (dv *DebugView) ShowVar(name string) error {
 	}
 	VarViewDialog(vv, frinfo, dv)
 	return nil
+}
+
+// VarValue returns the value of given variable, first looking in local stack vars
+// and then in global vars
+func (dv *DebugView) VarValue(varNm string) string {
+	vr := dv.State.VarByName(varNm)
+	if vr != nil {
+		return vr.Value
+	}
+	return ""
 }
 
 var DebugStatusColors = map[gidebug.Status]string{
@@ -688,26 +698,26 @@ func (dv *DebugView) ConfigToolBar() {
 			dvv.Start()
 			tb.UpdateActions()
 		})
-	tb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point", Shortcut: "Control+Alt+R", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			go dvv.Continue()
 			tb.UpdateActions()
 		})
 	gi.AddNewLabel(tb, "step", "Step: ")
-	tb.AddAction(gi.ActOpts{Label: "Over", Icon: "step-over", Tooltip: "continues to the next source line, not entering function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Over", Icon: "step-over", Tooltip: "continues to the next source line, not entering function calls", Shortcut: "F6", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOver()
 			tb.UpdateActions()
 		})
-	tb.AddAction(gi.ActOpts{Label: "Into", Icon: "step-into", Tooltip: "continues to the next source line, entering into function calls", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Into", Icon: "step-into", Tooltip: "continues to the next source line, entering into function calls", Shortcut: "F7", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepInto()
 			tb.UpdateActions()
 		})
-	tb.AddAction(gi.ActOpts{Label: "Out", Icon: "step-out", Tooltip: "continues to the return point of the current function", UpdateFunc: dv.ActionActivate}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Out", Icon: "step-out", Tooltip: "continues to the return point of the current function", Shortcut: "F8", UpdateFunc: dv.ActionActivate}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOut()

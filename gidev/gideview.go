@@ -11,6 +11,7 @@ package gidev
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html"
 	"log"
@@ -1534,7 +1535,11 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) {
 	atv := ge.ActiveTextView()
 	ond, _, got := ge.OpenNodeForTextView(atv)
 	if !got {
-		return nil, fmt.Errorf("No active file for VCS Log")
+		if ge.Files.DirRepo != nil {
+			return ge.Files.LogVcs(true, since)
+		}
+		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "No VCS Repository", Prompt: "No VCS Repository found in current active file or Root path: Open a file in a repository and try again"}, gi.AddOk, gi.NoCancel, nil, nil)
+		return nil, errors.New("No VCS Repository found in current active file or Root path")
 	}
 	return ond.LogVcs(true, since)
 }
@@ -1836,6 +1841,11 @@ func (ge *GideView) DebugAttach(pid uint64) {
 // CurDebug returns the current debug view
 func (ge *GideView) CurDebug() *gide.DebugView {
 	return ge.CurDbg
+}
+
+// ClearDebug clears the current debugger setting -- no more debugger active.
+func (ge *GideView) ClearDebug() {
+	ge.CurDbg = nil
 }
 
 // ChooseRunExec selects the executable to run for the project
@@ -2729,26 +2739,26 @@ var GideViewProps = ki.Props{
 		}},
 		{"sep-file", ki.BlankProp{}},
 		{"Build", ki.Props{
-			"icon":    "terminal",
-			"tooltip": "build the project -- command(s) specified in Project Prefs",
+			"icon": "terminal",
+			"desc": "build the project -- command(s) specified in Project Prefs",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
 			}),
 		}},
 		{"Run", ki.Props{
-			"icon":    "terminal",
-			"tooltip": "run the project -- command(s) specified in Project Prefs",
+			"icon": "terminal",
+			"desc": "run the project -- command(s) specified in Project Prefs",
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 			}),
 		}},
 		{"Debug", ki.Props{
-			"icon":    "terminal",
-			"tooltip": "debug currently selected executable -- if none selected, prompts to select one",
+			"icon": "terminal",
+			"desc": "debug currently selected executable -- if none selected, prompts to select one",
 		}},
 		{"DebugTest", ki.Props{
-			"icon":    "terminal",
-			"tooltip": "debug test in current active view directory",
+			"icon": "terminal",
+			"desc": "debug test in current active view directory",
 		}},
 		{"sep-exe", ki.BlankProp{}},
 		{"Commit", ki.Props{

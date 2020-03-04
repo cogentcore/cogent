@@ -1,14 +1,18 @@
 package gide
 
 import (
+	"image"
+
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/token"
 )
 
 // TextView is the Gide-specific version of the TextView, with support for
@@ -86,6 +90,9 @@ func (tv *TextView) FocusChanged2D(change gi.FocusChanges) {
 
 // CurDebug returns the current debugger, true if it is present
 func (tv *TextView) CurDebug() (*DebugView, bool) {
+	if tv.Buf == nil {
+		return nil, false
+	}
 	if ge, ok := ParentGide(tv); ok {
 		dbg := ge.CurDebug()
 		if dbg != nil {
@@ -107,6 +114,9 @@ func (tv *TextView) SetBreakpoint(ln int) {
 }
 
 func (tv *TextView) ClearBreakpoint(ln int) {
+	if tv.Buf == nil {
+		return
+	}
 	tv.Buf.DeleteLineIcon(ln)
 	tv.Buf.DeleteLineColor(ln)
 	dbg, has := tv.CurDebug()
@@ -118,7 +128,9 @@ func (tv *TextView) ClearBreakpoint(ln int) {
 
 // HasBreakpoint checks if line has a breakpoint
 func (tv *TextView) HasBreakpoint(ln int) bool {
-	// todo: use debugger instead of local info..
+	if tv.Buf == nil {
+		return false
+	}
 	_, has := tv.Buf.LineColors[ln]
 	return has
 }
@@ -131,6 +143,29 @@ func (tv *TextView) ToggleBreakpoint(ln int) {
 	}
 }
 
+// DebugVarValueAtPos returns debugger variable value for given mouse position
+func (tv *TextView) DebugVarValueAtPos(pos image.Point) string {
+	dbg, has := tv.CurDebug()
+	if !has {
+		return ""
+	}
+	pt := tv.PointToRelPos(pos)
+	tpos := tv.PixelToCursor(pt)
+	lx := tv.Buf.HiTagAtPos(tpos)
+	if lx == nil {
+		return ""
+	}
+	if !lx.Tok.Tok.InCat(token.Name) {
+		return ""
+	}
+	varNm := tv.Buf.LexString(tpos.Ln, lx)
+	val := dbg.VarValue(varNm)
+	if val != "" {
+		return varNm + " = " + val
+	}
+	return ""
+}
+
 // FindFrames finds stack frames in the debugger containing this file and line
 func (tv *TextView) FindFrames(ln int) {
 	dbg, has := tv.CurDebug()
@@ -140,27 +175,72 @@ func (tv *TextView) FindFrames(ln int) {
 	dbg.FindFrames(string(tv.Buf.Filename), ln+1)
 }
 
+// LineNoDoubleClick processes double-clicks on the line-number section
+func (tv *TextView) LineNoDoubleClick(tpos textbuf.Pos) {
+	ln := tpos.Ln
+	tv.ToggleBreakpoint(ln)
+	tv.RenderLines(ln, ln)
+}
+
+// DoubleClickEvent processes double-clicks NOT on the line-number section
+func (tv *TextView) DoubleClickEvent(tpos textbuf.Pos) {
+	dbg, has := tv.CurDebug()
+	lx := tv.Buf.HiTagAtPos(tpos)
+	if has && lx != nil && lx.Tok.Tok.InCat(token.Name) {
+		varNm := tv.Buf.LexString(tpos.Ln, lx)
+		err := dbg.ShowVar(varNm)
+		if err == nil {
+			return
+		}
+	}
+	// todo: could do e.g., lookup here, but messes with normal select..
+}
+
 // MouseEvent handles the mouse.Event
 func (tv *TextView) MouseEvent(me *mouse.Event) {
 	if me.Button != mouse.Left || me.Action != mouse.DoubleClick {
 		tv.TextView.MouseEvent(me)
 		return
 	}
-	pt := tv.PointToRelPos(me.Pos())
-	if pt.X >= 0 && pt.X < int(tv.LineNoOff) {
-		newPos := tv.PixelToCursor(pt)
-		ln := newPos.Ln
-		tv.ToggleBreakpoint(ln)
-		tv.RenderLines(ln, ln)
-		me.SetProcessed()
+	if tv.Buf == nil {
 		return
+	}
+	pt := tv.PointToRelPos(me.Pos())
+	tpos := tv.PixelToCursor(pt)
+	if pt.X >= 0 && tv.Buf.IsValidLine(tpos.Ln) {
+		if pt.X < int(tv.LineNoOff) {
+			me.SetProcessed()
+			tv.LineNoDoubleClick(tpos)
+			return
+		}
+		me.SetProcessed()
+		tv.DoubleClickEvent(tpos)
 	}
 	tv.TextView.MouseEvent(me)
 }
 
+func (tv *TextView) HoverEvent() {
+	tv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+		me := d.(*mouse.HoverEvent)
+		txf := recv.Embed(KiT_TextView).(*TextView)
+		tt := ""
+		vv := tv.DebugVarValueAtPos(me.Pos())
+		if vv != "" {
+			tt = vv
+		}
+		if tt != "" {
+			me.SetProcessed()
+			pos := me.Pos()
+			pos.X += 20
+			pos.Y += 20
+			gi.PopupTooltip(tt, pos.X, pos.Y, txf.Viewport, txf.Nm)
+		}
+	})
+}
+
 // TextViewEvents sets connections between mouse and key events and actions
 func (tv *TextView) TextViewEvents() {
-	tv.HoverTooltipEvent()
+	tv.HoverEvent()
 	tv.MouseMoveEvent()
 	tv.MouseDragEvent()
 	tv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {

@@ -123,6 +123,9 @@ type Gide interface {
 
 	// CurDebug returns the current debug view, or nil
 	CurDebug() *DebugView
+
+	// ClearDebug clears the current debugger setting -- no more debugger active.
+	ClearDebug()
 }
 
 // GideType is a Gide reflect.Type, suitable for checking for Type.Implements.

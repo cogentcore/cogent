@@ -64,6 +64,8 @@ github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff h1:W71vTCKoxtdXgnm1E
 github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff/go.mod h1:wfqRWLHRBsRgkp5dmbG56SA0DmVtwrF5N3oPdI8t+Aw=
 github.com/goki/gi v0.9.13 h1:yNITk6A2adF06p6MN3Ma6ucIWO5XhdY3h6RAZBV+8D8=
 github.com/goki/gi v0.9.13/go.mod h1:jd1u84lqs9sdshw7oLzEAaixsx1eagWVcS1w2TCDvKY=
+github.com/goki/gi v0.9.14-0.20200304083036-3c7037a7a377 h1:lkMeLOcD/liZOrPgo99v7fQfzSqCyavZhq/4OAX85cg=
+github.com/goki/gi v0.9.14-0.20200304083036-3c7037a7a377/go.mod h1:jd1u84lqs9sdshw7oLzEAaixsx1eagWVcS1w2TCDvKY=
 github.com/goki/ki v0.9.11 h1:LOsRjJUuWTj8kgo30qyDoJPhk3Da6kVvclNfAz8nJMU=
 github.com/goki/ki v0.9.11/go.mod h1:/nsdYEYyX152+uLTOaHGxFBLoe1qcbkCpNVwAj5W1HU=
 github.com/goki/ki v0.9.12-0.20200223093637-40d12ff3ad0d h1:sboJ4bObavAk4Nh4bNf2WVMgpRlwexSltnBQB3axtXU=

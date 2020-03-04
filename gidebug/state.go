@@ -259,6 +259,21 @@ func (as *AllState) MergeBreaks() {
 	SortBreaks(as.Breaks)
 }
 
+// VarByName returns variable with the given name, or nil if not found
+func (as *AllState) VarByName(varNm string) *Variable {
+	for _, vr := range as.Vars {
+		if vr.Nm == varNm {
+			return vr
+		}
+	}
+	for _, vr := range as.GlobalVars {
+		if vr.Nm == varNm {
+			return vr
+		}
+	}
+	return nil
+}
+
 // Status of the debugger
 type Status int32
 
