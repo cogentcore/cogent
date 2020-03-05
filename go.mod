@@ -3,7 +3,7 @@ module github.com/goki/gide
 require (
 	github.com/ajstarks/svgo v0.0.0-20200204031535-0cbcf57ea1d8 // indirect
 	github.com/go-delve/delve v1.4.0
-	github.com/goki/gi v0.9.14-0.20200304083036-3c7037a7a377
+	github.com/goki/gi v0.9.14-0.20200305123821-a84afd2d0103
 	github.com/goki/ki v0.9.12-0.20200223093637-40d12ff3ad0d
 	github.com/goki/pi v0.9.13
 	github.com/jung-kurt/gofpdf v1.16.2 // indirect

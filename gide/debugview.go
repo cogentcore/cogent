@@ -7,6 +7,7 @@ package gide
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
@@ -17,6 +18,25 @@ import (
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
 )
+
+// DebugBreakStatus is the status of a given breakpoint
+type DebugBreakStatus int32
+
+const (
+	// DebugBreakInactive is an inactive break point
+	DebugBreakInactive DebugBreakStatus = iota
+
+	// DebugBreakActive is an active break point
+	DebugBreakActive
+
+	// DebugBreakCurrent is the current break point
+	DebugBreakCurrent
+
+	DebugBreakStatusN
+)
+
+// DebugBreakColors are the colors indicating different breakpoint statuses
+var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange"}
 
 // Debuggers is the list of supported debuggers
 var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error){
@@ -45,8 +65,10 @@ type DebugView struct {
 	gi.Layout
 	Sup     filecat.Supported `desc:"supported file type to determine debugger"`
 	ExePath string            `desc:"path to executable / dir to debug"`
+	DbgTime time.Time         `desc:"time when dbg was last restarted"`
 	Dbg     gidebug.GiDebug   `json:"-" xml:"-" desc:"the debugger"`
 	State   gidebug.AllState  `json:"-" xml:"-" desc:"all relevant debug state info"`
+	BBreaks []*gidebug.Break  `json:"-" xml:"-" desc:"backup breakpoints list -- to track deletes"`
 	OutBuf  *giv.TextBuf      `json:"-" xml:"-" desc:"output from the debugger"`
 	Gide    Gide              `json:"-" xml:"-" desc:"parent gide project"`
 }
@@ -104,21 +126,7 @@ func (dv *DebugView) Detach() {
 		dv.Stop()
 		dv.Dbg.Detach(killProc)
 	}
-}
-
-// DeleteAllBreaks deletes all breakpoints
-func (dv *DebugView) DeleteAllBreaks() {
-	if dv.Gide == nil || dv.Gide.IsDeleted() {
-		return
-	}
-	for _, bk := range dv.State.Breaks {
-		tb := dv.Gide.TextBufForFile(bk.FPath, false)
-		if tb != nil {
-			tb.DeleteLineColor(bk.Line - 1)
-			tb.DeleteLineIcon(bk.Line - 1)
-			tb.Refresh()
-		}
-	}
+	dv.Dbg = nil
 }
 
 // Start starts the debuger
@@ -126,7 +134,16 @@ func (dv *DebugView) Start() {
 	if dv.Gide == nil {
 		return
 	}
-	if dv.Dbg == nil {
+	rebuild := false
+	if dv.Dbg != nil && dv.State.Mode != gidebug.Attach {
+		lmod := dv.Gide.FileTree().LatestFileMod(filecat.Code)
+		rebuild = lmod.After(dv.DbgTime)
+	}
+	if dv.Dbg == nil || rebuild {
+		if dv.Dbg != nil {
+			dv.SetStatus(gidebug.Building)
+			dv.Detach()
+		}
 		rootPath := string(dv.Gide.ProjPrefs().ProjRoot)
 		pars := &dv.Gide.ProjPrefs().Debug
 		dv.State.Mode = pars.Mode
@@ -139,6 +156,7 @@ func (dv *DebugView) Start() {
 		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, pars)
 		if err == nil {
 			dv.Dbg = dbg
+			dv.DbgTime = time.Now()
 		} else {
 			dv.SetStatus(gidebug.Error)
 		}
@@ -258,7 +276,9 @@ func (dv *DebugView) SetBreaks() {
 	if !dv.DbgIsAvail() {
 		return
 	}
+	dv.State.CurBreak = 0 // reset
 	dv.Dbg.UpdateBreaks(&dv.State.Breaks)
+	dv.UpdateAllBreaks()
 	dv.ShowBreaks(false)
 }
 
@@ -277,9 +297,14 @@ func (dv *DebugView) DeleteBreak(fpath string, line int) {
 	if dv.IsDeleted() {
 		return
 	}
+	dv.DeleteBreakImpl(fpath, line)
+	dv.ShowBreaks(true)
+}
+
+// DeleteBreakImpl deletes given breakpoint with no other updates
+func (dv *DebugView) DeleteBreakImpl(fpath string, line int) {
 	if !dv.DbgIsAvail() {
 		dv.State.DeleteBreakByFile(fpath, line) // already doing this!
-		dv.ShowBreaks(true)
 		return
 	}
 	bk, _ := dv.State.BreakByFile(fpath, line)
@@ -287,7 +312,84 @@ func (dv *DebugView) DeleteBreak(fpath string, line int) {
 		dv.Dbg.ClearBreak(bk.ID)
 		dv.State.DeleteBreakByID(bk.ID)
 	}
-	dv.ShowBreaks(true)
+}
+
+// DeleteBreakIdx deletes break at given index in list of breaks
+func (dv *DebugView) DeleteBreakIdx(bidx int) {
+	if bidx < 0 || bidx >= len(dv.BBreaks) {
+		return
+	}
+	bk := dv.BBreaks[bidx]
+	dv.DeleteBreakInBuf(bk.FPath, bk.Line)
+	if !dv.DbgIsAvail() {
+		dv.State.DeleteBreakByFile(bk.FPath, bk.Line)
+		return
+	}
+	dv.Dbg.ClearBreak(bk.ID)
+	dv.State.DeleteBreakByID(bk.ID)
+	dv.BackupBreaks()
+}
+
+// DeleteBreakInBuf delete breakpoint in its TextBuf
+// line is 1-based line number
+func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
+	if dv.Gide == nil || dv.Gide.IsDeleted() {
+		return
+	}
+	tb := dv.Gide.TextBufForFile(fpath, false)
+	if tb != nil {
+		tb.DeleteLineColor(line - 1)
+		tb.Refresh()
+	}
+}
+
+// DeleteAllBreaks deletes all breakpoints
+func (dv *DebugView) DeleteAllBreaks() {
+	if dv.Gide == nil || dv.Gide.IsDeleted() {
+		return
+	}
+	for _, bk := range dv.State.Breaks {
+		dv.DeleteBreakInBuf(bk.FPath, bk.Line)
+	}
+}
+
+// UpdateBreakInBuf updates break status in its TextBuf
+// line is 1-based line number
+func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
+	if dv.Gide == nil || dv.Gide.IsDeleted() {
+		return
+	}
+	wupdt := dv.TopUpdateStart()
+	tb := dv.Gide.TextBufForFile(fpath, false)
+	if tb != nil {
+		tb.SetLineColor(line-1, DebugBreakColors[stat])
+		tb.Refresh()
+	}
+	dv.TopUpdateEnd(wupdt)
+}
+
+// UpdateAllBreaks updates all breakpoints
+func (dv *DebugView) UpdateAllBreaks() {
+	if dv.Gide == nil || dv.Gide.IsDeleted() {
+		return
+	}
+	for _, bk := range dv.State.Breaks {
+		if bk.ID == dv.State.CurBreak {
+			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakCurrent)
+		} else if bk.On {
+			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakActive)
+		} else {
+			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakInactive)
+		}
+	}
+}
+
+// BackupBreaks makes a backup copy of current breaks
+func (dv *DebugView) BackupBreaks() {
+	dv.BBreaks = make([]*gidebug.Break, len(dv.State.Breaks))
+	for i, b := range dv.State.Breaks {
+		dv.BBreaks[i] = b
+	}
 }
 
 // InitState updates the State and View from given debug state
@@ -324,6 +426,7 @@ func (dv *DebugView) UpdateFmState() {
 			dv.SetStatus(gidebug.Breakpoint)
 		}
 	}
+	dv.UpdateAllBreaks()
 	dv.ShowBreaks(false)
 	dv.ShowStack(false)
 	dv.ShowVars(false)
@@ -554,21 +657,22 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
-	dv.State.BlankState()
-	dv.OutBuf = &giv.TextBuf{}
-	dv.OutBuf.InitName(dv.OutBuf, "debug-outbuf")
 	dv.Lay = gi.LayoutVert
 	dv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_TabView, "tabs")
 	mods, updt := dv.ConfigChildren(config, ki.UniqueNames)
-	if !mods {
+	if mods {
+		dv.State.BlankState()
+		dv.OutBuf = &giv.TextBuf{}
+		dv.OutBuf.InitName(dv.OutBuf, "debug-outbuf")
+		dv.ConfigToolBar()
+		dv.ConfigTabs()
+		dv.State.Breaks = nil // get rid of dummy
+	} else {
 		updt = dv.UpdateStart()
 	}
-	dv.ConfigToolBar()
-	dv.ConfigTabs()
-	dv.State.Breaks = nil // get rid of dummy
 	dv.Start()
 	dv.SetFullReRender()
 	dv.UpdateEnd(updt)
@@ -692,7 +796,7 @@ func (dv *DebugView) ConfigToolBar() {
 	if gi.Prefs.IsDarkMode() {
 		stl.CurBgColor = stl.CurBgColor.Darker(75)
 	}
-	tb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath}, dv.This(),
+	tb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath + " -- automatically rebuilds exe if any source files have changed"}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data interface{}) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Start()
@@ -864,6 +968,9 @@ func (sv *BreakView) Config(dv *DebugView) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				dv.ShowBreakFile(idx)
+			} else if sig == int64(giv.SliceViewDeleted) {
+				idx := data.(int)
+				dv.DeleteBreakIdx(idx)
 			}
 		})
 	} else {
@@ -871,7 +978,6 @@ func (sv *BreakView) Config(dv *DebugView) {
 	}
 	tv.SetStretchMax()
 	tv.NoAdd = true
-	tv.NoDelete = true
 	tv.SetSlice(&dv.State.Breaks)
 	sv.UpdateEnd(updt)
 }
@@ -894,6 +1000,7 @@ func (sv *BreakView) ShowBreaks() {
 		}
 	}
 	tv.SetSlice(&dv.State.Breaks)
+	dv.BackupBreaks()
 	sv.UpdateEnd(updt)
 }
 

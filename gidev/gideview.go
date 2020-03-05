@@ -100,6 +100,10 @@ func (ge *GideView) ProjPrefs() *gide.ProjPrefs {
 	return &ge.Prefs
 }
 
+func (ge *GideView) FileTree() *giv.FileTree {
+	return &ge.Files
+}
+
 // VersCtrl returns the version control system in effect, using the file tree detected
 // version or whatever is set in project preferences
 func (ge *GideView) VersCtrl() giv.VersCtrlName {
@@ -2208,8 +2212,8 @@ func (ge *GideView) SplitView() *gi.SplitView {
 	return spi.(*gi.SplitView)
 }
 
-// FileTree returns the main FileTree
-func (ge *GideView) FileTree() *gide.FileTreeView {
+// FileTree returns the main FileTreeView
+func (ge *GideView) FileTreeView() *gide.FileTreeView {
 	return ge.SplitView().Child(FileTreeIdx).Child(0).(*gide.FileTreeView)
 }
 

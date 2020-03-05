@@ -23,8 +23,11 @@ type Gide interface {
 	// VPort returns the viewport for the view
 	VPort() *gi.Viewport2D
 
-	// ProjPrefs() returns the gide.ProjPrefs
+	// ProjPrefs returns the gide.ProjPrefs
 	ProjPrefs() *ProjPrefs
+
+	// FileTree returns the gide.Files file tree
+	FileTree() *giv.FileTree
 
 	// VersCtrl returns the version control system in effect, using the file tree detected
 	// version or whatever is set in project preferences
