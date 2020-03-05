@@ -84,14 +84,13 @@ func (cm *CmdAndArgs) BindArgs(avp *ArgVarVals) []string {
 	args := []string{}
 	for i := range cm.Args {
 		av := avp.Bind(cm.Args[i])
-		// note: no globbing for now -- not sure when ever used.. revisit if needed.
-		// if strings.Count(av, "*") == 1 {
-		// 	glob, err := filepath.Glob(av)
-		// 	if err == nil && len(glob) > 0 {
-		// 		args = append(args, glob...)
-		// 	}
-		// 	continue
-		// }
+		if len(av) > 0 && av[0] == '*' { // only allow at *start* of command -- for *.ext exprs
+			glob, err := filepath.Glob(av)
+			if err == nil && len(glob) > 0 {
+				args = append(args, glob...)
+			}
+			continue
+		}
 		args = append(args, av)
 	}
 	return args
@@ -114,14 +113,7 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 		cmd := exec.Command(cstr, args...)
 		return cmd, cmdstr
 	case "open":
-		switch oswin.TheApp.Platform() {
-		case oswin.MacOS:
-			// open is fine
-		case oswin.LinuxX11:
-			cstr = "xdg-open"
-		case oswin.Windows:
-			// todo
-		}
+		cstr = giv.OSOpenCommand()
 		cmdstr := cstr
 		args := cm.BindArgs(avp)
 		if args != nil {
@@ -895,22 +887,6 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Grep", "recursive grep of all files for prompted value", filecat.Any,
 		[]CmdAndArgs{CmdAndArgs{"grep", []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	//	grunt for Go emergent
-	{"Submit grunt", "grunt submit", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"submit", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Jobs grunt", "grunt jobs", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"jobs"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Status grunt", "grunt stat", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"status"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Out grunt job", "grunt out jobid", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"out", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Update grunt", "grunt update", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"update"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Update grunt job", "grunt update jobid", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"update", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Pull grunt", "grunt pull", filecat.Go,
-		[]CmdAndArgs{CmdAndArgs{"grunt", []string{"pull"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 }
 
 // SetCompleter adds a completer to the textfield - each field
