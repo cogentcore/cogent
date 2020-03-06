@@ -672,7 +672,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextView, vidx int, fn *giv.FileNode)
 	ge.DiffFileNode(fn, gi.FileName(fn.Buf.AutoSaveFilename()))
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Autosave file Exists",
 		Prompt: fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm)},
-		[]string{"Open", "Ignore and Overwrite"},
+		[]string{"Open Autosave File", "Ignore and Overwrite Autosave File"},
 		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			switch sig {
 			case 0:
@@ -1639,7 +1639,6 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tb.Hi.Style = gi.Prefs.Colors.HiStyle
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
 	tb.Stat() // update markup
-	tb.SetText(txt)
 
 	tlv := frame.InsertNewChild(gi.KiT_Layout, prIdx+1, "text-lay").(*gi.Layout)
 	tlv.SetProp("width", units.NewEm(5))
@@ -1652,7 +1651,8 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tv.SetBuf(tb)
 	tv.CursorPos = textbuf.Pos{Ln: ld.StLine}
 	tv.ScrollToCursorOnRender = true
-	tb.ReMarkup()
+
+	tb.SetText(txt) // calls remarkup
 
 	bbox, _ := dlg.ButtonBox(frame)
 	if bbox == nil {

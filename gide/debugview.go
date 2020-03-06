@@ -32,11 +32,15 @@ const (
 	// DebugBreakCurrent is the current break point
 	DebugBreakCurrent
 
+	// DebugPCCurrent is the current program execution point,
+	// updated for every ShowFile action
+	DebugPCCurrent
+
 	DebugBreakStatusN
 )
 
 // DebugBreakColors are the colors indicating different breakpoint statuses
-var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange"}
+var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
 
 // Debuggers is the list of supported debuggers
 var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error){
@@ -63,14 +67,15 @@ func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextB
 // DebugView is the debugger
 type DebugView struct {
 	gi.Layout
-	Sup     filecat.Supported `desc:"supported file type to determine debugger"`
-	ExePath string            `desc:"path to executable / dir to debug"`
-	DbgTime time.Time         `desc:"time when dbg was last restarted"`
-	Dbg     gidebug.GiDebug   `json:"-" xml:"-" desc:"the debugger"`
-	State   gidebug.AllState  `json:"-" xml:"-" desc:"all relevant debug state info"`
-	BBreaks []*gidebug.Break  `json:"-" xml:"-" desc:"backup breakpoints list -- to track deletes"`
-	OutBuf  *giv.TextBuf      `json:"-" xml:"-" desc:"output from the debugger"`
-	Gide    Gide              `json:"-" xml:"-" desc:"parent gide project"`
+	Sup        filecat.Supported `desc:"supported file type to determine debugger"`
+	ExePath    string            `desc:"path to executable / dir to debug"`
+	DbgTime    time.Time         `desc:"time when dbg was last restarted"`
+	Dbg        gidebug.GiDebug   `json:"-" xml:"-" desc:"the debugger"`
+	State      gidebug.AllState  `json:"-" xml:"-" desc:"all relevant debug state info"`
+	CurFileLoc gidebug.Location  `json:"-" xml:"-" desc:"current ShowFile location -- cleared before next one or run"`
+	BBreaks    []*gidebug.Break  `json:"-" xml:"-" desc:"backup breakpoints list -- to track deletes"`
+	OutBuf     *giv.TextBuf      `json:"-" xml:"-" desc:"output from the debugger"`
+	Gide       Gide              `json:"-" xml:"-" desc:"parent gide project"`
 }
 
 var KiT_DebugView = kit.Types.AddType(&DebugView{}, DebugViewProps)
@@ -110,6 +115,7 @@ func (dv *DebugView) DbgCanStep() bool {
 func (dv *DebugView) Destroy() {
 	dv.Detach()
 	dv.DeleteAllBreaks()
+	dv.DeleteCurPCInBuf()
 	dv.Gide.ClearDebug()
 	dv.Layout.Destroy()
 }
@@ -276,6 +282,7 @@ func (dv *DebugView) SetBreaks() {
 	if !dv.DbgIsAvail() {
 		return
 	}
+	dv.DeleteCurPCInBuf()
 	dv.State.CurBreak = 0 // reset
 	dv.Dbg.UpdateBreaks(&dv.State.Breaks)
 	dv.UpdateAllBreaks()
@@ -359,13 +366,11 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 	if dv.Gide == nil || dv.Gide.IsDeleted() {
 		return
 	}
-	wupdt := dv.TopUpdateStart()
 	tb := dv.Gide.TextBufForFile(fpath, false)
 	if tb != nil {
 		tb.SetLineColor(line-1, DebugBreakColors[stat])
 		tb.Refresh()
 	}
-	dv.TopUpdateEnd(wupdt)
 }
 
 // UpdateAllBreaks updates all breakpoints
@@ -373,6 +378,7 @@ func (dv *DebugView) UpdateAllBreaks() {
 	if dv.Gide == nil || dv.Gide.IsDeleted() {
 		return
 	}
+	wupdt := dv.TopUpdateStart()
 	for _, bk := range dv.State.Breaks {
 		if bk.ID == dv.State.CurBreak {
 			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakCurrent)
@@ -382,6 +388,7 @@ func (dv *DebugView) UpdateAllBreaks() {
 			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakInactive)
 		}
 	}
+	dv.TopUpdateEnd(wupdt)
 }
 
 // BackupBreaks makes a backup copy of current breaks
@@ -414,6 +421,8 @@ func (dv *DebugView) InitState(ds *gidebug.State) {
 
 // UpdateFmState updates the view from current debugger state
 func (dv *DebugView) UpdateFmState() {
+	wupdt := dv.TopUpdateStart()
+	defer dv.TopUpdateEnd(wupdt)
 	cb, err := dv.Dbg.ListBreaks()
 	if err == nil {
 		dv.State.CurBreaks = cb
@@ -512,12 +521,46 @@ func (dv *DebugView) ListGlobalVars(filter string) {
 }
 
 // ShowFile shows the file name in gide
-func (dv *DebugView) ShowFile(fname string, ln int) {
-	if fname == "" || fname == "?" {
+func (dv *DebugView) ShowFile(fpath string, line int) {
+	if fpath == "" || fpath == "?" {
 		return
 	}
-	// fmt.Printf("File: %s:%d\n", fname, ln)
-	dv.Gide.ShowFile(fname, ln)
+	// fmt.Printf("File: %s:%d\n", fpath, ln)
+	wupdt := dv.TopUpdateStart()
+	dv.DeleteCurPCInBuf()
+	dv.Gide.ShowFile(fpath, line)
+	dv.SetCurPCInBuf(fpath, line)
+	dv.TopUpdateEnd(wupdt)
+}
+
+// SetCurPCInBuf sets the current PC location in given file
+// line is 1-based line number
+func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
+	tb := dv.Gide.TextBufForFile(fpath, false)
+	if tb != nil {
+		if !tb.HasLineColor(line - 1) {
+			tb.SetLineColor(line-1, DebugBreakColors[DebugPCCurrent])
+			tb.Refresh()
+			dv.CurFileLoc.FPath = fpath
+			dv.CurFileLoc.Line = line
+		}
+	}
+}
+
+// DeleteCurPCInBuf deletes the current PC location in given file
+// line is 1-based line number
+func (dv *DebugView) DeleteCurPCInBuf() {
+	fpath := dv.CurFileLoc.FPath
+	line := dv.CurFileLoc.Line
+	if fpath != "" && line > 0 {
+		tb := dv.Gide.TextBufForFile(fpath, false)
+		if tb != nil {
+			tb.DeleteLineColor(line - 1)
+			tb.Refresh()
+		}
+	}
+	dv.CurFileLoc.FPath = ""
+	dv.CurFileLoc.Line = 0
 }
 
 // ShowBreakFile shows the file for given break index
