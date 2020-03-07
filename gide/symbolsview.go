@@ -146,6 +146,9 @@ func (sv *SymbolsView) ConfigToolbar() {
 		sv.SearchText().GrabFocus()
 	})
 
+	slbl := svbar.AddNewChild(gi.KiT_Label, "search-lbl").(*gi.Label)
+	slbl.SetText("Search:")
+	slbl.Tooltip = "narrow symbols list to symbols containing text you enter here"
 	stxt := svbar.AddNewChild(gi.KiT_TextField, "search-str").(*gi.TextField)
 	stxt.SetStretchMaxWidth()
 	stxt.Tooltip = "narrow symbols list by entering a search string"
@@ -167,6 +170,18 @@ func (sv *SymbolsView) ConfigToolbar() {
 			sv.SearchText().GrabFocus()
 		}
 	})
+
+	svbar.AddAction(gi.ActOpts{Label: "Refresh", Tooltip: "refresh symbols for current file and scope"},
+		sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
+			svv.RefreshAction()
+		})
+}
+
+// RefreshAction loads symbols for current file and scope
+func (sv *SymbolsView) RefreshAction() {
+	sv.ConfigTree(SymbolsViewScope(sv.Params().Scope))
+	sv.SearchText().GrabFocus()
 }
 
 // ConfigTree adds a treeview to the symbolsview
@@ -393,11 +408,11 @@ func (st *SymTree) OpenFileSymTree(sv *SymbolsView) {
 	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
 	for _, v := range fs.Syms {
-		if v.Kind != token.NamePackage { // note: package symbol filename won't always corresp.
-			continue
-		}
 		children := v.Children.Slice(true)
 		for _, w := range children {
+			if w.Filename != string(tv.Buf.Filename) {
+				continue
+			}
 			switch w.Kind {
 			case token.NameFunction:
 				name := strings.ToLower(w.Name)
