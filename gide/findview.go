@@ -164,8 +164,17 @@ func (fv *FindView) ReplaceAction() bool {
 	return ok
 }
 
-// ReplaceAllAction performs replace all
+// ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindView) ReplaceAllAction() {
+	gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Replace All", Prompt: "Are you sure you want to Replace All?"}, true, true, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.DialogAccepted) {
+			fv.ReplaceAll()
+		}
+	})
+}
+
+// ReplaceAll performs replace all
+func (fv *FindView) ReplaceAll() {
 	for {
 		ok := fv.ReplaceAction()
 		if !ok {

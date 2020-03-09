@@ -3,8 +3,8 @@ module github.com/goki/gide
 require (
 	github.com/ajstarks/svgo v0.0.0-20200204031535-0cbcf57ea1d8 // indirect
 	github.com/go-delve/delve v1.4.0
-	github.com/goki/gi v0.9.14-0.20200306123504-a12e803e06b1
-	github.com/goki/ki v0.9.12-0.20200223093637-40d12ff3ad0d
+	github.com/goki/gi v0.9.14-0.20200309091024-017038054ced
+	github.com/goki/ki v0.9.12-0.20200309063305-3102412f93be
 	github.com/goki/pi v0.9.14-0.20200306123125-091efb5735ab
 	github.com/jung-kurt/gofpdf v1.16.2 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

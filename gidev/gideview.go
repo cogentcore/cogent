@@ -995,6 +995,38 @@ func (ge *GideView) DiffFileNode(fna *giv.FileNode, fnmB gi.FileName) {
 	giv.DiffViewDialog(ge.Viewport, astr, bstr, string(fna.Buf.Filename), string(fnb.Buf.Filename), "", "", giv.DlgOpts{Title: "Diff File View:"})
 }
 
+// CountWords counts number of words (and lines) in active file
+// returns a string report thereof.
+func (ge *GideView) CountWords() string {
+	av := ge.ActiveTextView()
+	if av.Buf == nil || av.Buf.NLines <= 0 {
+		return "empty"
+	}
+	av.Buf.LinesMu.RLock()
+	defer av.Buf.LinesMu.RUnlock()
+	ll := av.Buf.NLines - 1
+	reg := textbuf.NewRegion(0, 0, ll, len(av.Buf.Lines[ll]))
+	words, lines := textbuf.CountWordsLinesRegion(av.Buf.Lines, reg)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", giv.DirAndFile(string(av.Buf.Filename)), words, lines)
+}
+
+// CountWordsRegion counts number of words (and lines) in selected region in file
+// if no selection, returns numbers for entire file.
+func (ge *GideView) CountWordsRegion() string {
+	av := ge.ActiveTextView()
+	if av.Buf == nil || av.Buf.NLines <= 0 {
+		return "empty"
+	}
+	if !av.HasSelection() {
+		return ge.CountWords()
+	}
+	av.Buf.LinesMu.RLock()
+	defer av.Buf.LinesMu.RUnlock()
+	sel := av.Selection()
+	words, lines := textbuf.CountWordsLinesRegion(av.Buf.Lines, sel.Reg)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", giv.DirAndFile(string(av.Buf.Filename)), words, lines)
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //   Links
 
@@ -1604,7 +1636,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 
 	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
 	if len(ld.Text) > 0 {
-		giv.TextViewDialog(nil, ld.Text, giv.DlgOpts{Title: "Lookup: " + text})
+		giv.TextViewDialog(nil, ld.Text, giv.DlgOpts{Title: "Lookup: " + text, Data: text})
 		return ld
 	}
 	if ld.Filename == "" {
@@ -1629,7 +1661,10 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	}
 	opts := giv.DlgOpts{Title: "Lookup: " + text, Prompt: prmpt}
 
-	dlg := gi.NewStdDialog(opts.ToGiOpts(), gi.NoOk, gi.NoCancel)
+	dlg, recyc := gi.RecycleStdDialog(prmpt, opts.ToGiOpts(), gi.NoOk, gi.NoCancel)
+	if recyc {
+		return ld
+	}
 	frame := dlg.Frame()
 	_, prIdx := dlg.PromptWidget(frame)
 
@@ -1664,6 +1699,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	ofb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.ButtonClicked) {
 			ge.ViewFile(gi.FileName(ld.Filename))
+			dlg.Close()
 		}
 	})
 	cpb := gi.AddNewButton(bbox, "copy-to-clip")
@@ -3039,6 +3075,10 @@ var GideViewProps = ki.Props{
 				"keyfun":   gi.KeyFunComplete,
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
+			{"LookupSymbol", ki.Props{
+				"keyfun":   gi.KeyFunLookup,
+				"updtfunc": GideViewInactiveEmptyFunc,
+			}},
 			{"sep-adv", ki.BlankProp{}},
 			{"CommentOut", ki.Props{
 				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
@@ -3189,6 +3229,15 @@ var GideViewProps = ki.Props{
 					{"File Name 1", ki.Props{}},
 					{"File Name 2", ki.Props{}},
 				},
+			}},
+			{"sep-cmd", ki.BlankProp{}},
+			{"CountWords", ki.Props{
+				"updtfunc":    GideViewInactiveEmptyFunc,
+				"show-return": true,
+			}},
+			{"CountWordsRegion", ki.Props{
+				"updtfunc":    GideViewInactiveEmptyFunc,
+				"show-return": true,
 			}},
 		}},
 		{"Window", "Windows"},
