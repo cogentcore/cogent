@@ -421,6 +421,9 @@ func (dv *DebugView) InitState(ds *gidebug.State) {
 
 // UpdateFmState updates the view from current debugger state
 func (dv *DebugView) UpdateFmState() {
+	if dv == nil || dv.This() == nil || dv.IsDeleted() || dv.IsDestroyed() {
+		return
+	}
 	wupdt := dv.TopUpdateStart()
 	defer dv.TopUpdateEnd(wupdt)
 	cb, err := dv.Dbg.ListBreaks()
@@ -675,6 +678,9 @@ var DebugStatusColors = map[gidebug.Status]string{
 }
 
 func (dv *DebugView) SetStatus(stat gidebug.Status) {
+	if dv == nil || dv.This() == nil || dv.IsDeleted() || dv.IsDestroyed() {
+		return
+	}
 	dv.State.Status = stat
 	tb := dv.ToolBar()
 	stl := tb.ChildByName("status", 1).(*gi.Label)
