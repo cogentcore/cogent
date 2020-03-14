@@ -279,7 +279,6 @@ type ProjPrefs struct {
 	RunCmds      CmdNames          `desc:"command(s) to run for main Run button (typically Run Proj)"`
 	Debug        gidebug.Params    `json:"-" desc:"custom debugger parameters for this project"` // todo: turn on saving once stable!
 	Find         FindParams        `view:"-" desc:"saved find params"`
-	Spell        SpellParams       `view:"-" desc:"saved spell params"`
 	Symbols      SymbolsParams     `view:"-" desc:"saved structure params"`
 	OpenDirs     giv.OpenDirMap    `view:"-" desc:"open directories"`
 	Register     RegisterName      `view:"-" desc:"last register used"`

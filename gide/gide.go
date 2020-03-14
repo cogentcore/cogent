@@ -115,7 +115,7 @@ type Gide interface {
 	// textview dialog that has option to edit resulting file.
 	LookupFun(data interface{}, text string, posLn, posCh int) (ld complete.Lookup)
 
-	// Spell checks spelling in files
+	// Spell checks spelling in active text view
 	Spell()
 
 	// Symbols calls a function to parse file or package

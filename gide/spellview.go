@@ -9,38 +9,33 @@ import (
 	"strings"
 
 	"github.com/goki/gi/giv/textbuf"
+	"github.com/goki/pi/lex"
 	"github.com/goki/pi/spell"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 )
 
-// SpellParams are parameters for spell check and correction
-type SpellParams struct {
-}
-
 // SpellView is a widget that displays results of spell check
 type SpellView struct {
 	gi.Layout
-	Gide         Gide        `json:"-" xml:"-" desc:"parent gide project"`
-	Spell        SpellParams `desc:"params for spelling"`
-	Unknown      gi.TextWord `desc:"current unknown/misspelled word"`
-	Suggestions  []string    `desc:"a list of suggestions from spell checker"`
-	ChangeOffset int         `desc:"compensation for change word length different than original word"`
-	PreviousLine int         `desc:"line of previous unknown word"`
-	CurrentLine  int         `desc:"line of current unknown word"`
-	LastAction   *gi.Action  `desc:"last user action (ignore, change, learn)"`
+	Gide       Gide       `json:"-" xml:"-" copy:"-" desc:"parent gide project"`
+	Text       *TextView  `json:"-" xml:"-" copy:"-" desc:"textview that we're spell-checking"`
+	Errs       lex.Line   `desc:"current spelling errors"`
+	CurLn      int        `desc:"current line in text we're on"`
+	CurIdx     int        `desc:"current index in Errs we're on"`
+	UnkLex     lex.Lex    `desc:"current unknown lex token"`
+	UnkWord    string     `desc:"current unknown word"`
+	Suggest    []string   `desc:"a list of suggestions from spell checker"`
+	LastAction *gi.Action `desc:"last user action (ignore, change, learn)"`
 }
 
 var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
 
 // SpellAction runs a new spell check with current params
 func (sv *SpellView) SpellAction() {
-	sv.Gide.ProjPrefs().Spell = sv.Spell
-
 	uf := sv.UnknownText()
 	uf.SetText("")
 
@@ -50,46 +45,31 @@ func (sv *SpellView) SpellAction() {
 	sv.Gide.Spell()
 }
 
-// OpenSpellURL opens given spell:/// url from Find
-func (sv *SpellView) OpenSpellURL(ur string, ftv *giv.TextView) bool {
-	ge := sv.Gide
-	tv, reg, _, _, ok := ge.ParseOpenFindURL(ur, ftv)
-	if !ok {
-		return false
-	}
-	tv.RefreshIfNeeded()
-	tv.SetCursorShow(reg.Start)
-	return true
-}
-
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
 // Config configures the view
-func (sv *SpellView) Config(ge Gide, sp SpellParams) {
+func (sv *SpellView) Config(ge Gide, atv *TextView) {
 	sv.Gide = ge
-	sv.Spell = sp
+	sv.Text = atv
+	sv.CurLn = 0
+	sv.CurIdx = 0
+	sv.Errs = nil
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "spellbar")
 	config.Add(gi.KiT_ToolBar, "unknownbar")
 	config.Add(gi.KiT_ToolBar, "changebar")
-	config.Add(gi.KiT_ToolBar, "suggestbar")
-	config.Add(gi.KiT_Layout, "spelltext")
-	mods, updt := sv.ConfigChildren(config, ki.NonUniqueNames)
+	config.Add(giv.KiT_SliceView, "suggest")
+	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
 	if !mods {
 		updt = sv.UpdateStart()
 	}
 	sv.ConfigToolbar()
-	tvly := sv.TextViewLay()
-	ConfigOutputTextView(tvly)
 	sv.UpdateEnd(updt)
-}
-
-// TextViewLay returns the spell check results TextView layout
-func (sv *SpellView) TextViewLay() *gi.Layout {
-	return sv.ChildByName("spelltext", 1).(*gi.Layout)
+	gi.InitSpell()
+	sv.CheckNext()
 }
 
 // SpellBar returns the spell toolbar
@@ -105,11 +85,6 @@ func (sv *SpellView) UnknownBar() *gi.ToolBar {
 // ChangeBar returns the suggest toolbar
 func (sv *SpellView) ChangeBar() *gi.ToolBar {
 	return sv.ChildByName("changebar", 0).(*gi.ToolBar)
-}
-
-// SuggestBar returns the suggest toolbar
-func (sv *SpellView) SuggestBar() *gi.ToolBar {
-	return sv.ChildByName("suggestbar", 0).(*gi.ToolBar)
 }
 
 // ChangeAct returns the spell change action from toolbar
@@ -137,11 +112,6 @@ func (sv *SpellView) LearnAct() *gi.Action {
 	return sv.UnknownBar().ChildByName("learn", 3).(*gi.Action)
 }
 
-// TextView returns the spell check results TextView
-func (sv *SpellView) TextView() *giv.TextView {
-	return sv.TextViewLay().Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
-}
-
 // UnknownText returns the unknown word textfield from toolbar
 func (sv *SpellView) UnknownText() *gi.TextField {
 	return sv.UnknownBar().ChildByName("unknown-str", 1).(*gi.TextField)
@@ -154,7 +124,7 @@ func (sv *SpellView) ChangeText() *gi.TextField {
 
 // SuggestView returns the view for the list of suggestions
 func (sv *SpellView) SuggestView() *giv.SliceView {
-	return sv.SuggestBar().ChildByName("suggestions", 1).(*giv.SliceView)
+	return sv.ChildByName("suggest", 1).(*giv.SliceView)
 }
 
 // ConfigToolbar adds toolbar.
@@ -176,13 +146,6 @@ func (sv *SpellView) ConfigToolbar() {
 		return
 	}
 	chgbar.SetStretchMaxWidth()
-
-	sugbar := sv.SuggestBar()
-	if sugbar.HasChildren() {
-		return
-	}
-	sugbar.SetStretchMaxWidth()
-	sugbar.SetMinPrefHeight(units.NewValue(50, units.Ch))
 
 	// spell toolbar
 	spbar.AddAction(gi.ActOpts{Label: "Check Current File", Tooltip: "spell check the current file"},
@@ -245,56 +208,73 @@ func (sv *SpellView) ConfigToolbar() {
 	})
 
 	// suggest toolbar
-	suggest := sugbar.AddNewChild(giv.KiT_SliceView, "suggestions").(*giv.SliceView)
+	suggest := sv.SuggestView()
+	sv.Suggest = []string{"                                              "}
 	suggest.SetInactive()
 	suggest.SetProp("index", false)
-	suggest.SetSlice(&sv.Suggestions)
+	suggest.SetSlice(&sv.Suggest)
 	suggest.SetStretchMaxWidth()
 	suggest.SetStretchMaxHeight()
 	suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data interface{}) {
 		svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
 		idx := svv.SelectedIdx
-		if idx >= 0 && idx < len(sv.Suggestions) {
-			sv.AcceptSuggestion(sv.Suggestions[svv.SelectedIdx])
+		if idx >= 0 && idx < len(sv.Suggest) {
+			sv.AcceptSuggestion(sv.Suggest[svv.SelectedIdx])
 		}
 	})
 }
 
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it
 func (sv *SpellView) CheckNext() {
-	tw, suggests, _ := gi.NextUnknownWord()
-	if tw.Word == "" {
-		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, true, false, nil, nil)
+	tv := sv.Text
+	if tv == nil || tv.Buf == nil {
 		return
 	}
-	sv.SetUnknownAndSuggest(tw, suggests)
-}
+	if sv.CurLn == 0 && sv.Errs == nil {
+		sv.CurLn = -1
+	}
+	done := false
+	for sv.CurIdx >= len(sv.Errs) {
+		sv.CurLn++
+		if sv.CurLn >= tv.NLines {
+			done = true
+			break
+		}
+		sv.CurIdx = 0
+		sv.Errs = tv.Buf.SpellCheckLineErrs(sv.CurLn)
+	}
+	if done {
+		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, gi.AddOk, gi.NoCancel, nil, nil)
+		return
+	}
+	sv.UnkLex = sv.Errs[sv.CurIdx]
+	sv.CurIdx++
+	sv.UnkWord = string(sv.UnkLex.Src(tv.Buf.Lines[sv.CurLn]))
+	sv.Suggest, _ = spell.CheckWord(sv.UnkWord)
 
-// SetUnknownAndSuggest sets the textfield unknown with the best suggestion
-// and fills the suggestions with all suggestions up to the max
-func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string) {
 	uf := sv.UnknownText()
-	uf.SetText(unknown.Word)
-	sv.Unknown = unknown
-	sv.Suggestions = suggests
-	sv.PreviousLine = sv.CurrentLine
-	sv.CurrentLine = unknown.Line
+	uf.SetText(sv.UnkWord)
 
 	cf := sv.ChangeText()
-	if len(suggests) == 0 {
+	if len(sv.Suggest) == 0 {
 		cf.SetText("")
 	} else {
-		cf.SetText(suggests[0])
+		cf.SetText(sv.Suggest[0])
 	}
+
 	sugview := sv.SuggestView()
-	sugview.Config()
-	tv := sv.Gide.ActiveTextView()
-	st := sv.UnknownStartPos()
-	en := sv.UnknownEndPos()
+	sugview.SetFullReRender()
+	sugview.Slice = &sv.Suggest
+	sugview.Update()
+
+	st := sv.UnkStartPos()
+	en := sv.UnkEndPos()
 	tv.UpdateStart()
 	tv.Highlights = tv.Highlights[:0]
 	tv.SetCursorShow(st)
-	tv.Highlights = append(tv.Highlights, textbuf.Region{Start: st, End: en})
+	hr := textbuf.Region{Start: st, End: en}
+	hr.TimeNow()
+	tv.Highlights = append(tv.Highlights, hr)
 	tv.UpdateEnd(true)
 	if sv.LastAction == nil {
 		sv.GrabFocus()
@@ -306,17 +286,21 @@ func (sv *SpellView) SetUnknownAndSuggest(unknown gi.TextWord, suggests []string
 // ChangeAction replaces the known word with the selected suggested word
 // and call CheckNextAction
 func (sv *SpellView) ChangeAction() {
-	tv := sv.Gide.ActiveTextView()
-	if tv == nil {
+	tv := sv.Text
+	if tv == nil || tv.Buf == nil {
 		return
 	}
-	st := sv.UnknownStartPos()
-	en := sv.UnknownEndPos()
+	st := sv.UnkStartPos()
+	en := sv.UnkEndPos()
 	tbe := tv.Buf.DeleteText(st, en, giv.EditSignal)
 	ct := sv.ChangeText()
 	bs := []byte(string(ct.EditTxt))
 	tv.Buf.InsertText(tbe.Reg.Start, bs, giv.EditSignal)
-	sv.ChangeOffset = sv.ChangeOffset + len(bs) - (en.Ch - st.Ch) // new length - old length
+	nwrs := tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
+	if len(nwrs) == len(sv.Errs)-1 && sv.CurIdx > 0 {  // Adjust got rid of changed one..
+		sv.CurIdx--
+	}
+	sv.Errs = nwrs
 	sv.LastAction = sv.ChangeAct()
 	sv.CheckNext()
 }
@@ -324,13 +308,14 @@ func (sv *SpellView) ChangeAction() {
 // ChangeAllAction replaces the known word with the selected suggested word
 // and call CheckNextAction
 func (sv *SpellView) ChangeAllAction() {
-	tv := sv.Gide.ActiveTextView()
-	if tv == nil {
+	tv := sv.Text
+	if tv == nil || tv.Buf == nil {
 		return
 	}
-	tv.QReplaceStart(sv.Unknown.Word, sv.ChangeText().Txt, false)
+	tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Txt, false)
 	tv.QReplaceReplaceAll(0)
 	sv.LastAction = sv.ChangeAllAct()
+	sv.Errs = tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
 	sv.CheckNext()
 }
 
@@ -347,28 +332,16 @@ func (sv *SpellView) TrainAction() {
 		})
 }
 
-// UnknownStartPos returns the start position of the current unknown word adjusted for any prior replacement text
-func (sv *SpellView) UnknownStartPos() textbuf.Pos {
-	pos := textbuf.Pos{Ln: sv.Unknown.Line, Ch: sv.Unknown.StartPos}
-	pos = sv.AdjustTextPos(pos)
+// UnkStartPos returns the start position of the current unknown word
+func (sv *SpellView) UnkStartPos() textbuf.Pos {
+	pos := textbuf.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
 	return pos
 }
 
-// UnknownEndPos returns the end position of the current unknown word adjusted for any prior replacement text
-func (sv *SpellView) UnknownEndPos() textbuf.Pos {
-	pos := textbuf.Pos{Ln: sv.Unknown.Line, Ch: sv.Unknown.EndPos}
-	pos = sv.AdjustTextPos(pos)
+// UnkEndPos returns the end position of the current unknown word
+func (sv *SpellView) UnkEndPos() textbuf.Pos {
+	pos := textbuf.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
 	return pos
-}
-
-// AdjustTextPos adjust the character position to compensate for replacement text being different length than original text
-func (sv *SpellView) AdjustTextPos(tp textbuf.Pos) textbuf.Pos {
-	if sv.CurrentLine != sv.PreviousLine {
-		sv.ChangeOffset = 0
-		return tp
-	}
-	tp.Ch += sv.ChangeOffset
-	return tp
 }
 
 // SkipAction will skip this single instance of misspelled/unknown word
@@ -381,7 +354,7 @@ func (sv *SpellView) SkipAction() {
 // IgnoreAction will skip this and future instances of misspelled/unknown word
 // and call CheckNextAction
 func (sv *SpellView) IgnoreAction() {
-	spell.IgnoreWord(sv.Unknown.Word)
+	spell.IgnoreWord(sv.UnkWord)
 	sv.LastAction = sv.IgnoreAct()
 	sv.CheckNext()
 }
@@ -389,8 +362,8 @@ func (sv *SpellView) IgnoreAction() {
 // LearnAction will add the current unknown word to corpus
 // and call CheckNext
 func (sv *SpellView) LearnAction() {
-	nw := strings.ToLower(sv.Unknown.Word)
-	gi.LearnWord(nw)
+	nw := strings.ToLower(sv.UnkWord)
+	spell.LearnWord(nw)
 	sv.LastAction = sv.LearnAct()
 	sv.CheckNext()
 }
@@ -400,6 +373,14 @@ func (sv *SpellView) AcceptSuggestion(s string) {
 	ct := sv.ChangeText()
 	ct.SetText(s)
 	sv.ChangeAction()
+}
+
+func (sv *SpellView) Destroy() {
+	tv := sv.Text
+	if tv == nil || tv.Buf == nil || tv.IsDeleted() || tv.IsDestroyed() {
+		return
+	}
+	tv.ClearHighlights()
 }
 
 // SpellViewProps are style properties for SpellView

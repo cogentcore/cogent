@@ -1042,8 +1042,6 @@ func TextLinkHandler(tl gi.TextLink) bool {
 		switch {
 		case strings.HasPrefix(ur, "find:///"):
 			ge.OpenFindURL(ur, ftv)
-		case strings.HasPrefix(ur, "spell:///"):
-			ge.OpenSpellURL(ur, ftv)
 		case strings.HasPrefix(ur, "file:///"):
 			ge.OpenFileURL(ur, ftv)
 		default:
@@ -1802,29 +1800,14 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	ge.FocusOnPanel(TabsIdx)
 }
 
-// Spell checks spelling in files
+// Spell checks spelling in active text view
 func (ge *GideView) Spell() {
-	fbuf, _ := ge.RecycleCmdBuf("Spell", true)
-	sv := ge.RecycleTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
-	sv.Config(ge, ge.Prefs.Spell)
-	stv := sv.TextView()
-	stv.SetInactive()
-	stv.SetBuf(fbuf)
-
-	fp := string(ge.ActiveFilename)
-	if fp == "" {
+	tv := ge.ActiveTextView()
+	if tv == nil || tv.Buf == nil {
 		return
 	}
-
-	tv := ge.ActiveTextView()
-	gi.InitSpell()
-	text := tv.Buf.LinesToBytesCopy()
-	gi.InitNewSpellCheck(text)
-	tw, suggests, err := gi.NextUnknownWord()
-	if err != nil {
-		gi.PromptDialog(ge.Viewport, gi.DlgOpts{Title: "Error Running Spell Check", Prompt: fmt.Sprintf("%v", err)}, gi.AddOk, gi.NoCancel, nil, nil)
-	}
-	sv.SetUnknownAndSuggest(tw, suggests)
+	sv := ge.RecycleTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
+	sv.Config(ge, tv)
 	ge.FocusOnPanel(TabsIdx)
 }
 
@@ -1936,16 +1919,6 @@ func (ge *GideView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	}
 	fv := fvk.(*gide.FindView)
 	return fv.OpenFindURL(ur, ftv)
-}
-
-// OpenSpellURL opens given spell:/// url from Spell -- delegates to SpellView
-func (ge *GideView) OpenSpellURL(ur string, stv *giv.TextView) bool {
-	svk := stv.ParentByType(gide.KiT_SpellView, true)
-	if svk == nil {
-		return false
-	}
-	fv := svk.(*gide.SpellView)
-	return fv.OpenSpellURL(ur, stv)
 }
 
 // ReplaceInActive does query-replace in active file only
