@@ -304,10 +304,8 @@ func (sv *SpellView) ChangeAction() {
 	}
 	st := sv.UnkStartPos()
 	en := sv.UnkEndPos()
-	tbe := tv.Buf.DeleteText(st, en, giv.EditSignal)
 	ct := sv.ChangeText()
-	bs := []byte(string(ct.Text()))
-	tv.Buf.InsertText(tbe.Reg.Start, bs, giv.EditSignal)
+	tv.Buf.ReplaceText(st, en, st, ct.Text(), giv.EditSignal, giv.ReplaceNoMatchCase)
 	nwrs := tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
 	if len(nwrs) == len(sv.Errs)-1 && sv.CurIdx > 0 {  // Adjust got rid of changed one..
 		sv.CurIdx--
