@@ -234,16 +234,28 @@ func (sv *SpellView) CheckNext() {
 		sv.CurLn = -1
 	}
 	done := false
-	for sv.CurIdx >= len(sv.Errs) {
-		sv.CurLn++
-		if sv.CurLn >= tv.NLines {
-			done = true
+	for {
+		if sv.CurIdx < len(sv.Errs) {
+			lx := sv.Errs[sv.CurIdx]
+			word := string(lx.Src(tv.Buf.Lines[sv.CurLn]))
+			_, known := spell.CheckWord(word) // could have been fixed by now..
+			if known {
+				sv.CurIdx++
+				continue
+			}
 			break
+		} else {
+			sv.CurLn++
+			if sv.CurLn >= tv.NLines {
+				done = true
+				break
+			}
+			sv.CurIdx = 0
+			sv.Errs = tv.Buf.SpellCheckLineErrs(sv.CurLn)
 		}
-		sv.CurIdx = 0
-		sv.Errs = tv.Buf.SpellCheckLineErrs(sv.CurLn)
 	}
 	if done {
+		tv.ClearHighlights()
 		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, gi.AddOk, gi.NoCancel, nil, nil)
 		return
 	}
@@ -294,7 +306,7 @@ func (sv *SpellView) ChangeAction() {
 	en := sv.UnkEndPos()
 	tbe := tv.Buf.DeleteText(st, en, giv.EditSignal)
 	ct := sv.ChangeText()
-	bs := []byte(string(ct.EditTxt))
+	bs := []byte(string(ct.Text()))
 	tv.Buf.InsertText(tbe.Reg.Start, bs, giv.EditSignal)
 	nwrs := tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
 	if len(nwrs) == len(sv.Errs)-1 && sv.CurIdx > 0 {  // Adjust got rid of changed one..

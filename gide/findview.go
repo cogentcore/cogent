@@ -142,8 +142,8 @@ func (fv *FindView) ReplaceAction() bool {
 	reg = tv.Buf.AdjustReg(reg)
 	if !reg.IsNil() {
 		tv.RefreshIfNeeded()
-		tbe := tv.Buf.DeleteText(reg.Start, reg.End, giv.EditSignal)
-		tv.Buf.InsertText(tbe.Reg.Start, []byte(fv.Params().Replace), giv.EditSignal)
+		// MatchCase only if doing IgnoreCase
+		tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, fv.Params().Replace, giv.EditSignal, fv.Params().IgnoreCase)
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Ln

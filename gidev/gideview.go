@@ -40,6 +40,7 @@ import (
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/parse"
 	"github.com/goki/pi/pi"
+	"github.com/goki/pi/spell"
 	"github.com/goki/pi/vci"
 )
 
@@ -284,6 +285,7 @@ func (ge *GideView) SaveProj() {
 // standard JSON-formatted file, only if it already exists -- returns true if saved
 // saveAllFiles indicates if user should be prompted for saving all files
 func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
+	spell.SaveIfLearn()
 	if ge.Prefs.ProjFilename == "" {
 		return false
 	}
@@ -299,6 +301,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
 func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
+	spell.SaveIfLearn()
 	gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	gide.SavePaths()
 	// ge.Files.UpdateNewFile(string(filename))
@@ -306,7 +309,6 @@ func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
-	gi.SaveSpellModel()
 	ge.Changed = false
 	if saveAllFiles {
 		return ge.SaveAllCheck(false, nil) // false = no cancel option
@@ -1806,6 +1808,7 @@ func (ge *GideView) Spell() {
 	if tv == nil || tv.Buf == nil {
 		return
 	}
+	spell.OpenCheck() // make sure latest file opened
 	sv := ge.RecycleTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
 	sv.Config(ge, tv)
 	ge.FocusOnPanel(TabsIdx)
