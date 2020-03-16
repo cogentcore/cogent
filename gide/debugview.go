@@ -11,11 +11,11 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gi/mat32"
 	"github.com/goki/gide/gidebug"
 	"github.com/goki/gide/gidebug/gidelve"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/mat32"
 	"github.com/goki/pi/filecat"
 )
 

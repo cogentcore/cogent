@@ -26,7 +26,6 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/gi/mat32"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mimedata"
@@ -35,13 +34,14 @@ import (
 	"github.com/goki/gide/gidebug"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/mat32"
 	"github.com/goki/pi/complete"
 	"github.com/goki/pi/filecat"
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/parse"
 	"github.com/goki/pi/pi"
 	"github.com/goki/pi/spell"
-	"github.com/goki/pi/vci"
+	"github.com/goki/vci"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
