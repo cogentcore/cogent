@@ -17,6 +17,7 @@ import (
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
+	"github.com/goki/pi/lex"
 )
 
 // FindLoc corresponds to the search scope
@@ -147,9 +148,9 @@ func (fv *FindView) ReplaceAction() bool {
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Ln
-		st := textbuf.Pos{Ln: ftvln, Ch: 0}
+		st := lex.Pos{Ln: ftvln, Ch: 0}
 		len := len(ftv.Buf.Lines[ftvln])
-		en := textbuf.Pos{Ln: ftvln, Ch: len}
+		en := lex.Pos{Ln: ftvln, Ch: len}
 		ftv.Buf.DeleteText(st, en, giv.EditSignal)
 		// ftv.NeedsRefresh()
 	}

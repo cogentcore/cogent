@@ -5,13 +5,13 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/lex"
 	"github.com/goki/pi/token"
 )
 
@@ -176,14 +176,14 @@ func (tv *TextView) FindFrames(ln int) {
 }
 
 // LineNoDoubleClick processes double-clicks on the line-number section
-func (tv *TextView) LineNoDoubleClick(tpos textbuf.Pos) {
+func (tv *TextView) LineNoDoubleClick(tpos lex.Pos) {
 	ln := tpos.Ln
 	tv.ToggleBreakpoint(ln)
 	tv.RenderLines(ln, ln)
 }
 
 // DoubleClickEvent processes double-clicks NOT on the line-number section
-func (tv *TextView) DoubleClickEvent(tpos textbuf.Pos) {
+func (tv *TextView) DoubleClickEvent(tpos lex.Pos) {
 	dbg, has := tv.CurDebug()
 	lx := tv.Buf.HiTagAtPos(tpos)
 	if has && lx != nil && lx.Tok.Tok.InCat(token.Name) {

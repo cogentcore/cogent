@@ -842,7 +842,7 @@ func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextView, error) {
 	tv, _, ok := ge.LinkViewFile(gi.FileName(fname))
 	if ok {
-		tv.SetCursorShow(textbuf.Pos{Ln: ln - 1})
+		tv.SetCursorShow(lex.Pos{Ln: ln - 1})
 		return tv, nil
 	}
 	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fname)
@@ -1096,9 +1096,9 @@ func (ge *GideView) OpenFileURL(ur string, ftv *giv.TextView) bool {
 		return true
 	}
 	// fmt.Printf("pos: %v\n", pos)
-	txpos := textbuf.Pos{}
+	txpos := lex.Pos{}
 	if txpos.FromString(pos) {
-		reg := textbuf.Region{Start: txpos, End: textbuf.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		reg := textbuf.Region{Start: txpos, End: lex.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start
@@ -1684,7 +1684,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tv.SetInactive()
 	tv.SetProp("font-family", gi.Prefs.MonoFont)
 	tv.SetBuf(tb)
-	tv.CursorPos = textbuf.Pos{Ln: ld.StLine}
+	tv.CursorPos = lex.Pos{Ln: ld.StLine}
 	tv.ScrollToCursorOnRender = true
 
 	tb.SetText(txt) // calls remarkup
@@ -2024,8 +2024,7 @@ func (ge *GideView) Indent() bool {
 	if sel == nil {
 		return false
 	}
-	// todo: add indent chars to langs
-	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln, giv.DefaultIndentStrings, giv.DefaultUnindentStrings)
+	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln)
 	tv.SelectReset()
 	return true
 }

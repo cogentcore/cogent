@@ -19,11 +19,11 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
-	"github.com/goki/ki/ints"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/complete"
 	"github.com/goki/pi/filecat"
+	"github.com/goki/pi/lex"
 )
 
 // CmdAndArgs contains the name of an external program to execute and args to
@@ -480,40 +480,7 @@ func MarkupCmdOutput(out []byte) []byte {
 	if len(flds) == 0 {
 		return out
 	}
-	var orig, link []byte
-	mx := ints.MinInt(len(flds), 2)
-	for i := 0; i < mx; i++ {
-		ff := flds[i]
-		if !(strings.Contains(ff, ".") || strings.Contains(ff, "/")) { // extension or path
-			continue
-		}
-		fnflds := strings.Split(ff, ":")
-		fn := string(fnflds[0])
-		pos := ""
-		col := ""
-		if len(fnflds) > 1 {
-			pos = string(fnflds[1])
-			col = ""
-			if len(fnflds) > 2 {
-				col = string(fnflds[2])
-			}
-		}
-		// cpath := ArgVarVals["{FileDirPath}"]
-		// if !strings.HasPrefix(fn, cpath) {
-		// 	fn = filepath.Join(cpath, strings.TrimPrefix(fn, "./"))
-		// }
-		lstr := ""
-		if col != "" {
-			lstr = fmt.Sprintf(`<a href="file:///%v#L%vC%v">%v</a>`, fn, pos, col, string(ff))
-		} else if pos != "" {
-			lstr = fmt.Sprintf(`<a href="file:///%v#L%v">%v</a>`, fn, pos, string(ff))
-		} else {
-			lstr = fmt.Sprintf(`<a href="file:///%v">%v</a>`, fn, string(ff))
-		}
-		orig = []byte(ff)
-		link = []byte(lstr)
-		break
-	}
+	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
 	if len(link) > 0 {
 		nt := bytes.Replace(out, orig, link, -1)
 		return nt

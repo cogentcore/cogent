@@ -343,14 +343,14 @@ func (sv *SpellView) TrainAction() {
 }
 
 // UnkStartPos returns the start position of the current unknown word
-func (sv *SpellView) UnkStartPos() textbuf.Pos {
-	pos := textbuf.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
+func (sv *SpellView) UnkStartPos() lex.Pos {
+	pos := lex.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
 	return pos
 }
 
 // UnkEndPos returns the end position of the current unknown word
-func (sv *SpellView) UnkEndPos() textbuf.Pos {
-	pos := textbuf.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
+func (sv *SpellView) UnkEndPos() lex.Pos {
+	pos := lex.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
 	return pos
 }
 

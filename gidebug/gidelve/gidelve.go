@@ -5,6 +5,7 @@
 package gidelve
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os/exec"
@@ -18,6 +19,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gide/gidebug"
 	"github.com/goki/ki/ints"
+	"github.com/goki/pi/lex"
 )
 
 // GiDelve is the Delve implementation of the GiDebug interface
@@ -137,6 +139,12 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		if gd.statFunc != nil {
 			gd.statFunc(gidebug.Ready)
 		}
+		return out
+	}
+	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	if len(link) > 0 {
+		nt := bytes.Replace(out, orig, link, -1)
+		return nt
 	}
 	return out
 }
