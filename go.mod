@@ -2,10 +2,10 @@ module github.com/goki/gide
 
 require (
 	github.com/go-delve/delve v1.4.0
-	github.com/goki/gi v0.9.15-0.20200316123703-e61e80a59209
+	github.com/goki/gi v0.9.15-0.20200317113117-eda4c32ca3ee
 	github.com/goki/ki v0.9.12-0.20200309063305-3102412f93be
 	github.com/goki/mat32 v1.0.0
-	github.com/goki/pi v0.9.15-0.20200316123443-6c91d88281b6
+	github.com/goki/pi v0.9.15-0.20200317112559-fe329456ad02
 	github.com/goki/vci v0.90.1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
