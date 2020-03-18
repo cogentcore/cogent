@@ -2090,7 +2090,7 @@ func (ge *GideView) Defaults() {
 func (ge *GideView) GrabPrefs() {
 	sv := ge.SplitView()
 	ge.Prefs.Splits = sv.Splits
-	ge.Prefs.OpenDirs = ge.Files.OpenDirs
+	ge.Prefs.Dirs = ge.Files.Dirs
 }
 
 // ApplyPrefs applies current project preference settings into places where
@@ -2098,7 +2098,7 @@ func (ge *GideView) GrabPrefs() {
 func (ge *GideView) ApplyPrefs() {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.ProjRoot = ge.Prefs.ProjRoot
-	ge.Files.OpenDirs = ge.Prefs.OpenDirs
+	ge.Files.Dirs = ge.Prefs.Dirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
 	if len(ge.Kids) > 0 {
 		sv := ge.SplitView()

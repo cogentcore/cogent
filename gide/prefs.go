@@ -280,7 +280,7 @@ type ProjPrefs struct {
 	Debug        gidebug.Params    `json:"-" desc:"custom debugger parameters for this project"` // todo: turn on saving once stable!
 	Find         FindParams        `view:"-" desc:"saved find params"`
 	Symbols      SymbolsParams     `view:"-" desc:"saved structure params"`
-	OpenDirs     giv.OpenDirMap    `view:"-" desc:"open directories"`
+	Dirs         giv.DirFlagMap    `view:"-" desc:"directory properties"`
 	Register     RegisterName      `view:"-" desc:"last register used"`
 	Splits       []float32         `view:"-" desc:"current splitter splits"`
 	Changed      bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
