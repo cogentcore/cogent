@@ -142,7 +142,6 @@ func (fv *FindView) ReplaceAction() bool {
 	reg.Time.SetTime(fv.Time)
 	reg = tv.Buf.AdjustReg(reg)
 	if !reg.IsNil() {
-		tv.RefreshIfNeeded()
 		// MatchCase only if doing IgnoreCase
 		tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, fv.Params().Replace, giv.EditSignal, fv.Params().IgnoreCase)
 
@@ -152,11 +151,9 @@ func (fv *FindView) ReplaceAction() bool {
 		len := len(ftv.Buf.Lines[ftvln])
 		en := lex.Pos{Ln: ftvln, Ch: len}
 		ftv.Buf.DeleteText(st, en, giv.EditSignal)
-		// ftv.NeedsRefresh()
 	}
 
-	tv.Highlights = nil
-	tv.NeedsRefresh()
+	tv.ClearHighlights()
 
 	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
