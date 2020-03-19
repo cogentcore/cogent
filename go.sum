@@ -63,6 +63,8 @@ github.com/goki/gi v0.9.15-0.20200318123400-586cc61599c5 h1:aR/ZqRXh8NF2xkJ6BLtB
 github.com/goki/gi v0.9.15-0.20200318123400-586cc61599c5/go.mod h1:BnAc2ZJOT7ggz9bRFDSAa7QKA/jhBNmXnnbT6EQB1mo=
 github.com/goki/gi v0.9.15-0.20200319114049-4bd3db775c02 h1:r0ZuhVF0UPMopj0OfRBZWg4CCVAoh+0Ht9A5Oao6X6E=
 github.com/goki/gi v0.9.15-0.20200319114049-4bd3db775c02/go.mod h1:3PszDkplmvkNwDWBz4U6DLo1CURNKH7jVKpqNYATGDg=
+github.com/goki/gi v0.9.15-0.20200319125329-aa4fe58e2282 h1:qWPjSASI0ke6WkzXFKcPFzrI+gNrx/gheER5wg+ju5w=
+github.com/goki/gi v0.9.15-0.20200319125329-aa4fe58e2282/go.mod h1:3PszDkplmvkNwDWBz4U6DLo1CURNKH7jVKpqNYATGDg=
 github.com/goki/ki v0.9.11 h1:LOsRjJUuWTj8kgo30qyDoJPhk3Da6kVvclNfAz8nJMU=
 github.com/goki/ki v0.9.11/go.mod h1:/nsdYEYyX152+uLTOaHGxFBLoe1qcbkCpNVwAj5W1HU=
 github.com/goki/ki v0.9.12-0.20200309063305-3102412f93be h1:dLFbi7ohTbYjzyVLB17MlH7+5v7odKobmjfQpzzD4dU=

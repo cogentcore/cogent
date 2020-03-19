@@ -130,6 +130,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 		}
 		if sig == int64(gi.TextFieldCleared) {
 			sv.Match = ""
+			sv.SearchText().SetText(sv.Match)
 			sv.ConfigTree(sv.Params().Scope)
 			sv.SearchText().GrabFocus()
 		}
@@ -152,6 +153,7 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 		sfr.SetProp("height", units.NewEm(5)) // enables scrolling
 		sfr.SetStretchMaxWidth()
 		sfr.SetStretchMaxHeight()
+		sfr.SetReRenderAnchor()
 
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")

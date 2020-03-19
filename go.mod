@@ -2,7 +2,7 @@ module github.com/goki/gide
 
 require (
 	github.com/go-delve/delve v1.4.0
-	github.com/goki/gi v0.9.15-0.20200319114049-4bd3db775c02
+	github.com/goki/gi v0.9.15-0.20200319125329-aa4fe58e2282
 	github.com/goki/ki v0.9.12-0.20200318123627-01262b2b1568
 	github.com/goki/mat32 v1.0.0
 	github.com/goki/pi v0.9.15-0.20200319112209-88c4d0bd24a8
