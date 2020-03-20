@@ -146,8 +146,8 @@ func (dv *DebugView) Start() {
 		rebuild = lmod.After(dv.DbgTime)
 	}
 	if dv.Dbg == nil || rebuild {
+		dv.SetStatus(gidebug.Building)
 		if dv.Dbg != nil {
-			dv.SetStatus(gidebug.Building)
 			dv.Detach()
 		}
 		rootPath := string(dv.Gide.ProjPrefs().ProjRoot)
@@ -158,6 +158,9 @@ func (dv *DebugView) Start() {
 				dv.UpdateFmState()
 			}
 			dv.SetStatus(stat)
+			if stat == gidebug.Error {
+				dv.Dbg = nil
+			}
 		}
 		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, pars)
 		if err == nil {

@@ -141,6 +141,12 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		}
 		return out
 	}
+	if flds[0] == "exit" && flds[1] == "status" {
+		if gd.statFunc != nil {
+			gd.statFunc(gidebug.Error)
+		}
+		return out
+	}
 	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
 	if len(link) > 0 {
 		nt := bytes.Replace(out, orig, link, -1)
