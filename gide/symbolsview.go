@@ -153,7 +153,7 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 		sfr.SetProp("height", units.NewEm(5)) // enables scrolling
 		sfr.SetStretchMaxWidth()
 		sfr.SetStretchMaxHeight()
-		sfr.SetReRenderAnchor()
+		// sfr.SetReRenderAnchor()  // must be off if using SetFullReRender
 
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")
