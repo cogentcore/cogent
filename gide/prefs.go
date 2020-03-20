@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
@@ -306,6 +307,7 @@ func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error {
 		return err
 	}
 	err = json.Unmarshal(b, pf)
+	pf.VersCtrl = giv.VersCtrlName(strings.ToLower(string(pf.VersCtrl))) // official names are lowercase now
 	pf.Changed = false
 	return err
 }

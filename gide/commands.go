@@ -548,14 +548,15 @@ func VersCtrlCmdNames(vcnm giv.VersCtrlName, cmds []string) []string {
 	if vcnm == "" {
 		return cmds
 	}
+	vnm := strings.ToLower(string(vcnm))
 	sz := len(cmds)
 	for i := sz - 1; i >= 0; i-- {
-		cmd := cmds[i]
-		if strings.Contains(cmd, string(vcnm)) {
+		cmd := strings.ToLower(cmds[i])
+		if strings.Contains(cmd, vnm) {
 			continue
 		}
 		for _, vcs := range giv.VersCtrlSystems {
-			if vcs != string(vcnm) {
+			if vcs != vnm {
 				if strings.Contains(cmd, vcs) {
 					cmds = append(cmds[:i], cmds[i+1:]...)
 				}
