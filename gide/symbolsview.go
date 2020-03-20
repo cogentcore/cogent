@@ -147,13 +147,12 @@ func (sv *SymbolsView) RefreshAction() {
 func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 	sfr := sv.Frame()
 	updt := sfr.UpdateStart()
-	sfr.SetFullReRender()
 	var tv *SymTreeView
 	if sv.Syms == nil {
 		sfr.SetProp("height", units.NewEm(5)) // enables scrolling
 		sfr.SetStretchMaxWidth()
 		sfr.SetStretchMaxHeight()
-		sfr.SetReRenderAnchor()
+		sfr.SetReRenderAnchor() // this is key for tree updating to rebuild when needed
 
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")

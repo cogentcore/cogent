@@ -109,9 +109,6 @@ func (ge *GideView) FileTree() *giv.FileTree {
 // version or whatever is set in project preferences
 func (ge *GideView) VersCtrl() giv.VersCtrlName {
 	vc := ge.Prefs.VersCtrl
-	// if ge.Files.Repo != nil {
-	// 	vc = giv.VersCtrlNameProper(ge.Files.RepoType)
-	// }
 	return vc
 }
 
@@ -391,7 +388,10 @@ func CheckForProjAtPath(path string) (string, bool) {
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
 func (ge *GideView) GuessMainLang() bool {
-	ecs := ge.Files.FileExtCounts()
+	ecsc := ge.Files.FileExtCounts(filecat.Code)
+	ecsd := ge.Files.FileExtCounts(filecat.Doc)
+	ecs := append(ecsc, ecsd...)
+	giv.FileNodeNameCountSort(ecs)
 	for _, ec := range ecs {
 		ls := filecat.ExtSupported(ec.Name)
 		if ls != filecat.NoSupport {
@@ -403,24 +403,28 @@ func (ge *GideView) GuessMainLang() bool {
 }
 
 // LangDefaults applies default language settings based on MainLang
-func (ge *GideView) LangDefaults() bool {
+func (ge *GideView) LangDefaults() {
 	ge.Prefs.RunCmds = gide.CmdNames{"Run Proj"}
 	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
 	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
 	ge.Prefs.RunExec = gi.FileName(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
-	got := false
-	switch ge.Prefs.MainLang {
-	case filecat.Go:
-		ge.Prefs.BuildCmds = gide.CmdNames{"Build Go Proj"}
-		got = true
-	case filecat.TeX:
-		ge.Prefs.BuildCmds = gide.CmdNames{"LaTeX PDF"}
-		ge.Prefs.RunCmds = gide.CmdNames{"Open Target File"}
-		got = true
-	default:
-		ge.Prefs.BuildCmds = gide.CmdNames{"Make"}
+	if len(ge.Prefs.BuildCmds) == 0 {
+		switch ge.Prefs.MainLang {
+		case filecat.Go:
+			ge.Prefs.BuildCmds = gide.CmdNames{"Build Go Proj"}
+		case filecat.TeX:
+			ge.Prefs.BuildCmds = gide.CmdNames{"LaTeX PDF"}
+			ge.Prefs.RunCmds = gide.CmdNames{"Open Target File"}
+		default:
+			ge.Prefs.BuildCmds = gide.CmdNames{"Make"}
+		}
 	}
-	return got
+	if ge.Prefs.VersCtrl == "" {
+		repo, _ := ge.Files.FirstVCS()
+		if repo != nil {
+			ge.Prefs.VersCtrl = giv.VersCtrlName(repo.Vcs())
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
