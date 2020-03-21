@@ -3,9 +3,9 @@
 // license that can be found in the LICENSE file.
 
 // Package gidev implements the GideView editor, using all the elements
-// from the gide infraSymbols.  Having it in a separate package
+// from the gide interface.  Having it in a separate package
 // allows GideView to also include other packages that tap into
-// the gide infraSymbols, such as the GoPi interactive parser.
+// the gide interface, such as the GoPi interactive parser.
 //
 package gidev
 
@@ -2033,6 +2033,15 @@ func (ge *GideView) Indent() bool {
 	return true
 }
 
+// ReCase replaces currently selected text in current active view with given case
+func (ge *GideView) ReCase(c textbuf.Cases) string {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return ""
+	}
+	return tv.ReCaseSelection(c)
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    StatusBar
 
@@ -3070,6 +3079,13 @@ var GideViewProps = ki.Props{
 					return key.Chord(gide.ChordForFun(gide.KeyFunIndent).String())
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
+			}},
+			{"ReCase", ki.Props{
+				"desc":     "replace currently-selected text with text of given case",
+				"updtfunc": GideViewInactiveEmptyFunc,
+				"Args": ki.PropSlice{
+					{"To Case", ki.Props{}},
+				},
 			}},
 		}},
 		{"View", ki.PropSlice{
