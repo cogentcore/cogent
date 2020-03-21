@@ -76,6 +76,11 @@ func PrefsView(pf *Preferences) *gi.Window {
 
 	win.MainMenuUpdated()
 
+	if !win.HasGeomPrefs() { // resize to contents
+		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+		win.SetSize(vpsz)
+	}
+
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 	return win
@@ -119,6 +124,11 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 	giv.MainMenuView(pf, win, mmen)
 
 	win.MainMenuUpdated()
+
+	if !win.HasGeomPrefs() { // resize to contents
+		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+		win.SetSize(vpsz)
+	}
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -194,6 +204,11 @@ func KeyMapsView(km *KeyMaps) {
 	})
 
 	win.MainMenuUpdated()
+
+	if !win.HasGeomPrefs() { // resize to contents
+		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+		win.SetSize(vpsz)
+	}
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -344,6 +359,11 @@ func LangsView(pt *Langs) {
 
 	win.MainMenuUpdated()
 
+	if !win.HasGeomPrefs() { // resize to contents
+		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+		win.SetSize(vpsz)
+	}
+
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 }
@@ -417,6 +437,11 @@ func CmdsView(pt *Commands) {
 	})
 
 	win.MainMenuUpdated()
+
+	if !win.HasGeomPrefs() { // resize to contents
+		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+		win.SetSize(vpsz)
+	}
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -570,6 +595,11 @@ func SplitsView(pt *Splits) {
 
 	win.MainMenuUpdated()
 
+	if !win.HasGeomPrefs() { // resize to contents
+		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+		win.SetSize(vpsz)
+	}
+
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 }
@@ -721,6 +751,11 @@ func RegistersView(pt *Registers) {
 	})
 
 	win.MainMenuUpdated()
+
+	if !win.HasGeomPrefs() { // resize to contents
+		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+		win.SetSize(vpsz)
+	}
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
