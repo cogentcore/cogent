@@ -6,6 +6,7 @@ package gide
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
@@ -28,6 +29,10 @@ type Gide interface {
 
 	// FileTree returns the gide.Files file tree
 	FileTree() *giv.FileTree
+
+	// LastSaveTime returns the time stamp when a file was last saved within project --
+	// can be used for dirty flag state relative to other time stamps.
+	LastSaveTime() time.Time
 
 	// VersCtrl returns the version control system in effect, using the file tree detected
 	// version or whatever is set in project preferences

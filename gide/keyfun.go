@@ -43,6 +43,9 @@ const (
 	KeyFunBufSaveAs          // save as active textview buffer to its file
 	KeyFunBufClose           // close active textview buffer
 	KeyFunExecCmd            // execute a command on active textview buffer
+	KeyFunRectCopy           // copy rectangle
+	KeyFunRectCut            // cut rectangle
+	KeyFunRectPaste          // paste rectangle
 	KeyFunRegCopy            // copy selection to named register
 	KeyFunRegPaste           // paste selection from named register
 	KeyFunCommentOut         // comment out region
@@ -513,6 +516,9 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+N"}: KeyFunBufClone,
 		KeySeq{"Control+M", "x"}:         KeyFunRegCopy,
 		KeySeq{"Control+M", "g"}:         KeyFunRegPaste,
+		KeySeq{"Control+M", "Control+X"}: KeyFunRectCut,
+		KeySeq{"Control+M", "Control+Y"}: KeyFunRectPaste,
+		KeySeq{"Control+M", "Alt+∑"}:     KeyFunRectCopy,
 		KeySeq{"Control+/", ""}:          KeyFunCommentOut,
 		KeySeq{"Control+M", "t"}:         KeyFunCommentOut,
 		KeySeq{"Control+M", "Control+T"}: KeyFunCommentOut,
@@ -552,6 +558,9 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+C", "Control+O"}: KeyFunBufClone,
 		KeySeq{"Control+X", "x"}:         KeyFunRegCopy,
 		KeySeq{"Control+X", "g"}:         KeyFunRegPaste,
+		KeySeq{"Control+X", "Control+X"}: KeyFunRectCut,
+		KeySeq{"Control+X", "Control+Y"}: KeyFunRectPaste,
+		KeySeq{"Control+X", "Alt+∑"}:     KeyFunRectCopy,
 		KeySeq{"Control+C", "k"}:         KeyFunCommentOut,
 		KeySeq{"Control+C", "Control+K"}: KeyFunCommentOut,
 		KeySeq{"Control+X", "i"}:         KeyFunIndent,
@@ -590,6 +599,9 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+C", "Control+O"}: KeyFunBufClone,
 		KeySeq{"Control+X", "x"}:         KeyFunRegCopy,
 		KeySeq{"Control+X", "g"}:         KeyFunRegPaste,
+		KeySeq{"Control+X", "Control+X"}: KeyFunRectCut,
+		KeySeq{"Control+X", "Control+Y"}: KeyFunRectPaste,
+		KeySeq{"Control+X", "Alt+∑"}:     KeyFunRectCopy,
 		KeySeq{"Control+C", "k"}:         KeyFunCommentOut,
 		KeySeq{"Control+C", "Control+K"}: KeyFunCommentOut,
 		KeySeq{"Control+X", "i"}:         KeyFunIndent,
@@ -629,6 +641,9 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+N"}: KeyFunBufClone,
 		KeySeq{"Control+M", "x"}:         KeyFunRegCopy,
 		KeySeq{"Control+M", "g"}:         KeyFunRegPaste,
+		KeySeq{"Control+M", "Control+X"}: KeyFunRectCut,
+		KeySeq{"Control+M", "Control+Y"}: KeyFunRectPaste,
+		KeySeq{"Control+M", "Alt+∑"}:     KeyFunRectCopy,
 		KeySeq{"Control+/", ""}:          KeyFunCommentOut,
 		KeySeq{"Control+M", "t"}:         KeyFunCommentOut,
 		KeySeq{"Control+M", "Control+T"}: KeyFunCommentOut,
@@ -669,6 +684,9 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+N"}: KeyFunBufClone,
 		KeySeq{"Control+M", "x"}:         KeyFunRegCopy,
 		KeySeq{"Control+M", "g"}:         KeyFunRegPaste,
+		KeySeq{"Control+M", "Control+X"}: KeyFunRectCut,
+		KeySeq{"Control+M", "Control+Y"}: KeyFunRectPaste,
+		KeySeq{"Control+M", "Alt+∑"}:     KeyFunRectCopy,
 		KeySeq{"Control+/", ""}:          KeyFunCommentOut,
 		KeySeq{"Control+M", "t"}:         KeyFunCommentOut,
 		KeySeq{"Control+M", "Control+T"}: KeyFunCommentOut,
@@ -709,6 +727,9 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+N"}: KeyFunBufClone,
 		KeySeq{"Control+M", "x"}:         KeyFunRegCopy,
 		KeySeq{"Control+M", "g"}:         KeyFunRegPaste,
+		KeySeq{"Control+M", "Control+X"}: KeyFunRectCut,
+		KeySeq{"Control+M", "Control+Y"}: KeyFunRectPaste,
+		KeySeq{"Control+M", "Alt+∑"}:     KeyFunRectCopy,
 		KeySeq{"Control+/", ""}:          KeyFunCommentOut,
 		KeySeq{"Control+M", "t"}:         KeyFunCommentOut,
 		KeySeq{"Control+M", "Control+T"}: KeyFunCommentOut,

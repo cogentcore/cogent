@@ -24,20 +24,23 @@ func _() {
 	_ = x[KeyFunBufSaveAs-8]
 	_ = x[KeyFunBufClose-9]
 	_ = x[KeyFunExecCmd-10]
-	_ = x[KeyFunRegCopy-11]
-	_ = x[KeyFunRegPaste-12]
-	_ = x[KeyFunCommentOut-13]
-	_ = x[KeyFunIndent-14]
-	_ = x[KeyFunJump-15]
-	_ = x[KeyFunSetSplit-16]
-	_ = x[KeyFunBuildProj-17]
-	_ = x[KeyFunRunProj-18]
-	_ = x[KeyFunsN-19]
+	_ = x[KeyFunRectCopy-11]
+	_ = x[KeyFunRectCut-12]
+	_ = x[KeyFunRectPaste-13]
+	_ = x[KeyFunRegCopy-14]
+	_ = x[KeyFunRegPaste-15]
+	_ = x[KeyFunCommentOut-16]
+	_ = x[KeyFunIndent-17]
+	_ = x[KeyFunJump-18]
+	_ = x[KeyFunSetSplit-19]
+	_ = x[KeyFunBuildProj-20]
+	_ = x[KeyFunRunProj-21]
+	_ = x[KeyFunsN-22]
 }
 
-const _KeyFuns_name = "KeyFunNilKeyFunNeeds2KeyFunNextPanelKeyFunPrevPanelKeyFunFileOpenKeyFunBufSelectKeyFunBufCloneKeyFunBufSaveKeyFunBufSaveAsKeyFunBufCloseKeyFunExecCmdKeyFunRegCopyKeyFunRegPasteKeyFunCommentOutKeyFunIndentKeyFunJumpKeyFunSetSplitKeyFunBuildProjKeyFunRunProjKeyFunsN"
+const _KeyFuns_name = "KeyFunNilKeyFunNeeds2KeyFunNextPanelKeyFunPrevPanelKeyFunFileOpenKeyFunBufSelectKeyFunBufCloneKeyFunBufSaveKeyFunBufSaveAsKeyFunBufCloseKeyFunExecCmdKeyFunRectCopyKeyFunRectCutKeyFunRectPasteKeyFunRegCopyKeyFunRegPasteKeyFunCommentOutKeyFunIndentKeyFunJumpKeyFunSetSplitKeyFunBuildProjKeyFunRunProjKeyFunsN"
 
-var _KeyFuns_index = [...]uint16{0, 9, 21, 36, 51, 65, 80, 94, 107, 122, 136, 149, 162, 176, 192, 204, 214, 228, 243, 256, 264}
+var _KeyFuns_index = [...]uint16{0, 9, 21, 36, 51, 65, 80, 94, 107, 122, 136, 149, 163, 176, 191, 204, 218, 234, 246, 256, 270, 285, 298, 306}
 
 func (i KeyFuns) String() string {
 	if i < 0 || i >= KeyFuns(len(_KeyFuns_index)-1) {

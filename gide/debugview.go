@@ -143,7 +143,7 @@ func (dv *DebugView) Start() {
 	rebuild := false
 	if dv.Dbg != nil && dv.State.Mode != gidebug.Attach {
 		lmod := dv.Gide.FileTree().LatestFileMod(filecat.Code)
-		rebuild = lmod.After(dv.DbgTime)
+		rebuild = lmod.After(dv.DbgTime) || dv.Gide.LastSaveTime().After(dv.DbgTime)
 	}
 	if dv.Dbg == nil || rebuild {
 		dv.SetStatus(gidebug.Building)

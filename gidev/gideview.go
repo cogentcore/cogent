@@ -68,6 +68,7 @@ type GideView struct {
 	ActiveFilename    gi.FileName             `desc:"filename of the currently-active textview"`
 	ActiveLang        filecat.Supported       `desc:"language for current active filename"`
 	Changed           bool                    `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+	LastSaveTStamp    time.Time               `json:"-" desc:"timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger"`
 	Files             giv.FileTree            `desc:"all the files in the project directory and subdirectories"`
 	FilesView         *gide.FileTreeView      `json:"-" desc:"the files tree view"`
 	ActiveTextViewIdx int                     `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
@@ -103,6 +104,10 @@ func (ge *GideView) ProjPrefs() *gide.ProjPrefs {
 
 func (ge *GideView) FileTree() *giv.FileTree {
 	return &ge.Files
+}
+
+func (ge *GideView) LastSaveTime() time.Time {
+	return ge.LastSaveTStamp
 }
 
 // VersCtrl returns the version control system in effect, using the file tree detected
@@ -565,6 +570,7 @@ func (ge *GideView) NextTextView() (*gide.TextView, int) {
 func (ge *GideView) SaveActiveView() {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
+		ge.LastSaveTStamp = time.Now()
 		if tv.Buf.Filename != "" {
 			tv.Buf.Save()
 			ge.SetStatus("File Saved")
@@ -587,6 +593,7 @@ func (ge *GideView) SaveActiveView() {
 func (ge *GideView) SaveActiveViewAs(filename gi.FileName) {
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
+		ge.LastSaveTStamp = time.Now()
 		ofn := tv.Buf.Filename
 		tv.Buf.SaveAsFunc(filename, func(canceled bool) {
 			if canceled {
@@ -1680,8 +1687,8 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tb.Stat() // update markup
 
 	tlv := frame.InsertNewChild(gi.KiT_Layout, prIdx+1, "text-lay").(*gi.Layout)
-	tlv.SetProp("width", units.NewEm(5))
-	tlv.SetProp("height", units.NewEm(5))
+	tlv.SetProp("width", units.NewCh(80))
+	tlv.SetProp("height", units.NewEm(40))
 	tlv.SetStretchMax()
 	tv := giv.AddNewTextView(tlv, "text-view")
 	tv.Viewport = dlg.Embed(gi.KiT_Viewport2D).(*gi.Viewport2D)
@@ -1951,7 +1958,34 @@ func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (t
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-//    Registers
+//    Rects, Registers
+
+// CutRect cuts rectangle in active text view
+func (ge *GideView) CutRect() {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return
+	}
+	tv.CutRect()
+}
+
+// CopyRect copies rectangle in active text view
+func (ge *GideView) CopyRect() {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return
+	}
+	tv.CopyRect(true)
+}
+
+// PasteRect cuts rectangle in active text view
+func (ge *GideView) PasteRect() {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return
+	}
+	tv.PasteRect()
+}
 
 // RegisterCopy saves current selection in active text view to register of given name
 // returns true if saved
@@ -2273,6 +2307,9 @@ func (ge *GideView) ToolBar() *gi.ToolBar {
 
 // StatusBar returns the statusbar widget
 func (ge *GideView) StatusBar() *gi.Frame {
+	if ge.This() == nil || ge.IsDeleted() || ge.IsDestroyed() || !ge.HasChildren() {
+		return nil
+	}
 	return ge.ChildByName("statusbar", 2).(*gi.Frame)
 }
 
@@ -2559,6 +2596,15 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 	case gide.KeyFunExecCmd:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "ExecCmd", ge.Viewport)
+	case gide.KeyFunRectCut:
+		kt.SetProcessed()
+		ge.CutRect()
+	case gide.KeyFunRectCopy:
+		kt.SetProcessed()
+		ge.CopyRect()
+	case gide.KeyFunRectPaste:
+		kt.SetProcessed()
+		ge.PasteRect()
 	case gide.KeyFunRegCopy:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "RegisterCopy", ge.Viewport)
@@ -3303,8 +3349,8 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 	sc := oswin.TheApp.Screen(0)
 	if sc != nil {
 		scsz := sc.Geometry.Size()
-		width = scsz.X
-		height = scsz.Y
+		width = int(.9 * float64(scsz.X))
+		height = int(.8 * float64(scsz.Y))
 	}
 
 	win := gi.NewMainWindow(winm, winm, width, height)
