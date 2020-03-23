@@ -87,6 +87,19 @@ func SortVars(vrs []*Variable) {
 	})
 }
 
+// Label satisfies the gi.Labeler interface for showing name = value
+func (vr *Variable) Label() string {
+	val := vr.Value
+	sz := len(vr.Value)
+	if sz == 0 {
+		return vr.Nm
+	}
+	if sz > 40 {
+		val = val[:40] + "..."
+	}
+	return vr.Nm + " = " + val
+}
+
 // ValueString returns the value of the variable, integrating over sub-elements
 // if newlines, each element is separated by a new line, and indented.
 // Generally this should be used to set the Value field after getting new data.
