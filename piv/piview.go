@@ -1357,8 +1357,14 @@ func QuitReq() bool {
 func NewPiView() (*gi.Window, *PiView) {
 	winm := "Pie Interactive Parser Editor"
 
-	width := 1280
-	height := 720
+	width := 1600
+	height := 1280
+	sc := oswin.TheApp.Screen(0)
+	if sc != nil {
+		scsz := sc.Geometry.Size()
+		width = int(.9 * float64(scsz.X))
+		height = int(.8 * float64(scsz.Y))
+	}
 
 	win := gi.NewMainWindow(winm, winm, width, height)
 

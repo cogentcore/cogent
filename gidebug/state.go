@@ -22,8 +22,8 @@ import (
 // within the Thread. For example, go routines in Go are represented
 // by Tasks in the GiDebug framework.
 type Thread struct {
-	ID    int    `desc:"thread identifier"`
-	PC    uint64 `format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
+	ID    int    `format:"%#X" desc:"thread identifier"`
+	PC    uint64 `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
 	File  string `desc:"file name (trimmed up to point of project base path)"`
 	Line  int    `desc:"line within file"`
 	FPath string `tableview:"-" tableview:"-" desc:"full path to file"`
@@ -47,12 +47,12 @@ func ThreadByID(thrs []*Thread, id int) (*Thread, int) {
 // it is not used.
 type Task struct {
 	ID        int      `desc:"task identifier"`
-	PC        uint64   `format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
+	PC        uint64   `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
 	File      string   `desc:"file name (trimmed up to point of project base path)"`
 	Line      int      `desc:"line within file"`
 	FPath     string   `tableview:"-" tableview:"-" desc:"full path to file"`
 	Func      string   `desc:"the name of the function"`
-	Thread    int      `desc:"id of the current Thread this task is running on"`
+	Thread    int      `format:"%#X" desc:"id of the current Thread this task is running on"`
 	StartLoc  Location `tableview:"-" desc:"where did this task first start running?"`
 	LaunchLoc Location `tableview:"-" desc:"at what point was this task launched from another task?"`
 }
@@ -70,7 +70,7 @@ func TaskByID(thrs []*Task, id int) (*Task, int) {
 
 // Location holds program location information.
 type Location struct {
-	PC    uint64 `format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
+	PC    uint64 `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
 	File  string `desc:"file name (trimmed up to point of project base path)"`
 	Line  int    `desc:"line within file"`
 	FPath string `view:"-" tableview:"-" desc:"full path to file"`
@@ -81,7 +81,7 @@ type Location struct {
 type Frame struct {
 	Depth    int         `desc:"depth in overall stack -- 0 is the bottom (currently executing) frame, and it counts up from there"`
 	ThreadID int         `desc:"the Task or Thread id that this frame belongs to"`
-	PC       uint64      `format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
+	PC       uint64      `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
 	File     string      `desc:"file name (trimmed up to point of project base path)"`
 	Line     int         `desc:"line within file"`
 	FPath    string      `tableview:"-" tableview:"-" desc:"full path to file"`
@@ -94,7 +94,7 @@ type Frame struct {
 type Break struct {
 	ID    int    `inactive:"+" desc:"unique numerical ID of the breakpoint"`
 	On    bool   `width:"4" desc:"whether the breakpoint is currently enabled"`
-	PC    uint64 `inactive:"+" format:"0x%X" desc:"program counter (address) -- may be subset of multiple"`
+	PC    uint64 `inactive:"+" format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
 	File  string `inactive:"+" desc:"file name (trimmed up to point of project base path)"`
 	Line  int    `inactive:"+" desc:"line within file"`
 	FPath string `inactive:"+" view:"-" tableview:"-" desc:"full path to file"`
