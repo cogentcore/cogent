@@ -7,6 +7,7 @@ package gide
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/goki/gi/gi"
@@ -662,9 +663,16 @@ func (dv *DebugView) ShowVar(name string) error {
 // VarValue returns the value of given variable, first looking in local stack vars
 // and then in global vars
 func (dv *DebugView) VarValue(varNm string) string {
-	vr := dv.State.VarByName(varNm)
-	if vr != nil {
-		return vr.Value
+	if strings.Contains(varNm, ".") {
+		vv, err := dv.Dbg.GetVar(varNm, dv.State.CurTask, dv.State.CurFrame)
+		if err == nil {
+			return vv.Value
+		}
+	} else {
+		vr := dv.State.VarByName(varNm)
+		if vr != nil {
+			return vr.Value
+		}
 	}
 	return ""
 }

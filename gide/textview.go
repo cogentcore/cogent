@@ -151,14 +151,14 @@ func (tv *TextView) DebugVarValueAtPos(pos image.Point) string {
 	}
 	pt := tv.PointToRelPos(pos)
 	tpos := tv.PixelToCursor(pt)
-	lx := tv.Buf.HiTagAtPos(tpos)
+	lx, _ := tv.Buf.HiTagAtPos(tpos)
 	if lx == nil {
 		return ""
 	}
 	if !lx.Tok.Tok.InCat(token.Name) {
 		return ""
 	}
-	varNm := tv.Buf.LexString(tpos.Ln, lx)
+	varNm := tv.Buf.LexObjPathString(tpos.Ln, lx) // get full path
 	val := dbg.VarValue(varNm)
 	if val != "" {
 		return varNm + " = " + val
@@ -185,9 +185,9 @@ func (tv *TextView) LineNoDoubleClick(tpos lex.Pos) {
 // DoubleClickEvent processes double-clicks NOT on the line-number section
 func (tv *TextView) DoubleClickEvent(tpos lex.Pos) {
 	dbg, has := tv.CurDebug()
-	lx := tv.Buf.HiTagAtPos(tpos)
+	lx, _ := tv.Buf.HiTagAtPos(tpos)
 	if has && lx != nil && lx.Tok.Tok.InCat(token.Name) {
-		varNm := tv.Buf.LexString(tpos.Ln, lx)
+		varNm := tv.Buf.LexObjPathString(tpos.Ln, lx)
 		err := dbg.ShowVar(varNm)
 		if err == nil {
 			return
