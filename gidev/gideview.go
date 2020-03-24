@@ -452,7 +452,6 @@ func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 // ActiveTextView returns the currently-active TextView
 func (ge *GideView) ActiveTextView() *gide.TextView {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
-	//	log.Printf("stderr: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
 }
 
@@ -565,6 +564,24 @@ func (ge *GideView) NextTextView() (*gide.TextView, int) {
 	}
 	return ge.TextViewByIndex(nxt), nxt
 }
+
+// SwapTextViews switches the buffers for the two open textviews
+// only operates if both panels are open
+func (ge *GideView) SwapTextViews() bool {
+	if !ge.PanelIsOpen(TextView1Idx) || !ge.PanelIsOpen(TextView1Idx+1) {
+		return false
+	}
+	tva := ge.TextViewByIndex(0)
+	tvb := ge.TextViewByIndex(1)
+	bufa := tva.Buf
+	bufb := tvb.Buf
+	tva.SetBuf(bufb)
+	tvb.SetBuf(bufa)
+	return true
+}
+
+///////////////////////////////////////////////////////////////////////
+//  File Actions
 
 // SaveActiveView saves the contents of the currently-active textview
 func (ge *GideView) SaveActiveView() {
@@ -843,6 +860,15 @@ func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
+	}
+	tv, idx, ok := ge.TextViewForFileNode(fn)
+	if ok {
+		if idx == 1 {
+			return tv, idx, true
+		}
+		if ge.SwapTextViews() {
+			return ge.TextViewByIndex(1), 1, true
+		}
 	}
 	nv, nidx := ge.LinkViewFileNode(fn)
 	return nv, nidx, true
