@@ -2140,9 +2140,6 @@ func (ge *GideView) ReCase(c textbuf.Cases) string {
 
 // SetStatus updates the statusbar label with given message, along with other status info
 func (ge *GideView) SetStatus(msg string) {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
-
 	sb := ge.StatusBar()
 	if sb == nil {
 		return
@@ -2350,7 +2347,7 @@ func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
 // TextViewButtonByIndex returns the top textview menu button by index (0 or 1)
 func (ge *GideView) TextViewButtonByIndex(idx int) *gi.MenuButton {
 	split := ge.SplitView()
-	svk := split.Child(TextView1Idx + idx).Child(0)
+	svk := split.Child(TextView1Idx + idx).Child(0).Child(0)
 	return svk.Embed(gi.KiT_MenuButton).(*gi.MenuButton)
 }
 
@@ -2458,8 +2455,15 @@ func (ge *GideView) ConfigSplitView() {
 		txly := gi.AddNewLayout(split, "textlay-"+txnm, gi.LayoutVert)
 		txly.SetStretchMaxWidth()
 		txly.SetStretchMaxHeight()
+		txly.SetReRenderAnchor() // anchor here: SplitView will only anchor Frame, but we just have layout
 
-		txbut := gi.AddNewMenuButton(txly, "textbut-"+txnm)
+		// need to sandbox the button in its own layer to isolate FullReRender issues
+		txbly := gi.AddNewLayout(txly, "butlay-"+txnm, gi.LayoutVert)
+		txbly.SetProp("spacing", units.NewEm(0))
+		txbly.SetStretchMaxWidth()
+		txbly.SetReRenderAnchor() // anchor here!
+
+		txbut := gi.AddNewMenuButton(txbly, "textbut-"+txnm)
 		txbut.SetStretchMaxWidth()
 		txbut.SetText("textview: " + txnm)
 		txbut.MakeMenuFunc = ge.TextViewButtonMenu

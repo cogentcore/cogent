@@ -77,6 +77,8 @@ github.com/goki/gi v0.9.15-0.20200323100029-117e1a346c7f h1:oQv+U871j0wcZMKlNkyC
 github.com/goki/gi v0.9.15-0.20200323100029-117e1a346c7f/go.mod h1:bRUyiXoaRm4TzF2H0SnRDfDRhR8KRIxeUpFQk3XLOzk=
 github.com/goki/gi v0.9.15 h1:2XepeEaV9vlbPAeBXljZ4C0XJoPBL6dv9ZI2sCku9xA=
 github.com/goki/gi v0.9.15/go.mod h1:zWhmCB597n05lQfljX6Takuk2vGjLYUvnQIkSXG9nlE=
+github.com/goki/gi v0.9.16 h1:Bd6Lysyjle/g3MbNUgL2DwCZ/zg7GUS4HIHR/iwP9bQ=
+github.com/goki/gi v0.9.16/go.mod h1:zWhmCB597n05lQfljX6Takuk2vGjLYUvnQIkSXG9nlE=
 github.com/goki/ki v0.9.11 h1:LOsRjJUuWTj8kgo30qyDoJPhk3Da6kVvclNfAz8nJMU=
 github.com/goki/ki v0.9.11/go.mod h1:/nsdYEYyX152+uLTOaHGxFBLoe1qcbkCpNVwAj5W1HU=
 github.com/goki/ki v0.9.12-0.20200309063305-3102412f93be h1:dLFbi7ohTbYjzyVLB17MlH7+5v7odKobmjfQpzzD4dU=

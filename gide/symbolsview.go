@@ -453,5 +453,5 @@ func (st *SymTreeView) Style2D() {
 		}
 	}
 	st.StyleTreeView()
-	st.LayData.SetFromStyle(&st.Sty.Layout) // also does reset
+	st.LayState.SetFromStyle(&st.Sty.Layout) // also does reset
 }
