@@ -236,6 +236,9 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" || sfn.IsAutoSave() {
 			return true
 		}
+		if strings.HasSuffix(sfn.Nm, ".gide") { // exclude self
+			return true
+		}
 		if !filecat.IsMatchList(langs, sfn.Info.Sup) {
 			return true
 		}
