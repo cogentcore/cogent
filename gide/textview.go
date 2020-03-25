@@ -23,6 +23,11 @@ type TextView struct {
 
 var KiT_TextView = kit.Types.AddType(&TextView{}, giv.TextViewProps)
 
+// AddNewTextView adds a new textview to given parent node, with given name.
+func AddNewTextView(parent ki.Ki, name string) *TextView {
+	return parent.AddNewChild(KiT_TextView, name).(*TextView)
+}
+
 // MakeContextMenu builds the textview context menu
 func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 	ac := m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: gi.KeyFunCopy},

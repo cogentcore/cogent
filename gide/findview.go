@@ -102,8 +102,8 @@ func (fv *FindView) FindAction() {
 
 // ReplaceAction performs the replace
 func (fv *FindView) ReplaceAction() bool {
-	winUpdt := fv.Gide.VPort().Win.UpdateStart()
-	defer fv.Gide.VPort().Win.UpdateEnd(winUpdt)
+	wupdt := fv.TopUpdateStart()
+	defer fv.TopUpdateEnd(wupdt)
 
 	fv.SaveReplString(fv.Params().Replace)
 	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, fv.Params().Replace, gi.Prefs.Params.SavedPathsMax)

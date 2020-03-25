@@ -408,8 +408,12 @@ func (cm *Command) AppendCmdOut(ge Gide, buf *giv.TextBuf, out []byte) {
 	if buf == nil {
 		return
 	}
+
+	wupdt := ge.VPort().TopUpdateStart()
+	defer ge.VPort().TopUpdateEnd(wupdt)
+
 	buf.SetInactive(true)
-	updt := ge.VPort().Win.UpdateStart()
+
 	lns := bytes.Split(out, []byte("\n"))
 	sz := len(lns)
 	outmus := make([][]byte, sz)
@@ -422,7 +426,6 @@ func (cm *Command) AppendCmdOut(ge Gide, buf *giv.TextBuf, out []byte) {
 
 	buf.AppendTextMarkup(out, mlns, giv.EditSignal)
 	buf.AutoScrollViews()
-	ge.VPort().Win.UpdateEnd(updt)
 }
 
 // CmdOutStatusLen is amount of command output to include in the status update
