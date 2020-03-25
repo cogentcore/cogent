@@ -2463,6 +2463,18 @@ func (ge *GideView) ConfigSplitView() {
 		txbut.SetStretchMaxWidth()
 		txbut.SetText("textview: " + txnm)
 		txbut.MakeMenuFunc = ge.TextViewButtonMenu
+		txbut.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig == int64(gi.ButtonClicked) {
+				gee, _ := recv.Embed(KiT_GideView).(*GideView)
+				idx := 0
+				nm := send.Name()
+				nln := len(nm)
+				if nm[nln-1] == '1' {
+					idx = 1
+				}
+				gee.SetActiveTextViewIdx(idx)
+			}
+		})
 
 		txily := gi.AddNewLayout(txly, "textilay-"+txnm, gi.LayoutVert)
 		txily.SetStretchMaxWidth()
@@ -2546,14 +2558,22 @@ func (ge *GideView) TextViewButtonMenu(obj ki.Ki, m *gi.Menu) {
 	}
 	opn := ge.OpenNodes.Strings()
 	*m = gi.Menu{}
+
+	m.AddAction(gi.ActOpts{Label: "Open File..."}, ge.This(),
+		func(recv, send ki.Ki, sig int64, data interface{}) {
+			giv.CallMethod(ge, "ViewFile", ge.Viewport)
+		})
+
+	m.AddSeparator("file-sep")
+
 	tv := ge.TextViewByIndex(idx)
 	for i, n := range opn {
 		m.AddAction(gi.ActOpts{Label: n, Data: i}, ge.This(),
 			func(recv, send ki.Ki, sig int64, data interface{}) {
 				ac := send.(*gi.Action)
-				idx := ac.Data.(int)
-				nb := ge.OpenNodes[idx]
-				ge.ViewFileNode(tv, 0, nb)
+				gidx := ac.Data.(int)
+				nb := ge.OpenNodes[gidx]
+				ge.ViewFileNode(tv, idx, nb)
 			})
 	}
 }
