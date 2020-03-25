@@ -3,8 +3,8 @@
 package gide
 
 const (
-	Version = "v0.9.15"
-	GitCommit = "0e7214d" // the commit JUST BEFORE the release
-	VersionDate = "2020-03-25 12:23" // UTC
+	Version = "v0.9.16"
+	GitCommit = "620c051" // the commit JUST BEFORE the release
+	VersionDate = "2020-03-25 23:15" // UTC
 )
 
