@@ -2135,6 +2135,20 @@ func (ge *GideView) ReCase(c textbuf.Cases) string {
 	return tv.ReCaseSelection(c)
 }
 
+// JoinParaLines merges a sequence of lines separated by blank lines into a single line
+// for given selected region (full text if no selection)
+func (ge *GideView) JoinParaLines() {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return
+	}
+	if tv.HasSelection() {
+		tv.Buf.JoinParaLines(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+	} else {
+		tv.Buf.JoinParaLines(0, tv.NLines-1)
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    StatusBar
 
@@ -3274,6 +3288,11 @@ var GideViewProps = ki.Props{
 				"Args": ki.PropSlice{
 					{"To Case", ki.Props{}},
 				},
+			}},
+			{"JoinParaLines", ki.Props{
+				"desc":     "merges a sequence of lines separated by blank lines into a single line for given selected region (full text if no selection)",
+				"confirm":  true,
+				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 		}},
 		{"View", ki.PropSlice{
