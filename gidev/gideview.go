@@ -2222,12 +2222,10 @@ func (ge *GideView) ApplyPrefs() {
 	ge.Files.Dirs = ge.Prefs.Dirs
 	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
 	if len(ge.Kids) > 0 {
-		sv := ge.SplitView()
 		for i := 0; i < NTextViews; i++ {
-			txly := sv.Child(1 + i).(*gi.Layout)
-			txed := txly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
-			if txed.Buf != nil {
-				ge.ConfigTextBuf(txed.Buf)
+			tv := ge.TextViewByIndex(i)
+			if tv.Buf != nil {
+				ge.ConfigTextBuf(tv.Buf)
 			}
 		}
 		for _, ond := range ge.OpenNodes {
