@@ -2135,7 +2135,8 @@ func (ge *GideView) ReCase(c textbuf.Cases) string {
 	return tv.ReCaseSelection(c)
 }
 
-// JoinParaLines merges a sequence of lines separated by blank lines into a single line
+// JoinParaLines merges sequences of lines with hard returns forming paragraphs,
+// separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
 func (ge *GideView) JoinParaLines() {
 	tv := ge.ActiveTextView()
@@ -3194,7 +3195,9 @@ var GideViewProps = ki.Props{
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
 					"Args": ki.PropSlice{
-						{"Register Name", ki.Props{}},
+						{"Register Name", ki.Props{
+							"default": "", // override memory of last
+						}},
 					},
 				}},
 				{"RegisterPaste", ki.Props{
@@ -3288,7 +3291,7 @@ var GideViewProps = ki.Props{
 				},
 			}},
 			{"JoinParaLines", ki.Props{
-				"desc":     "merges a sequence of lines separated by blank lines into a single line for given selected region (full text if no selection)",
+				"desc":     "merges sequences of lines with hard returns forming paragraphs, separated by blank lines, into a single line per paragraph, for given selected region (full text if no selection)",
 				"confirm":  true,
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
