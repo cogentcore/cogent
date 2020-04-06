@@ -231,9 +231,11 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
 		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
 		if sfn.IsDir() && !sfn.IsOpen() {
+			// fmt.Printf("dir: %v closed\n", sfn.Nm)
 			return false // don't go down into closed directories!
 		}
 		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" || sfn.IsAutoSave() {
+			// fmt.Printf("dir: %v opened\n", sfn.Nm)
 			return true
 		}
 		if strings.HasSuffix(sfn.Nm, ".gide") { // exclude self

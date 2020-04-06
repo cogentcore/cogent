@@ -135,6 +135,10 @@ func (ge *GideView) FocusOnTabs() bool {
 // UpdateFiles updates the list of files saved in project
 func (ge *GideView) UpdateFiles() {
 	ge.Files.OpenPath(string(ge.ProjRoot))
+	if ge.FilesView != nil {
+		ge.FilesView.SetFullReRender()
+		ge.FilesView.UpdateSig()
+	}
 }
 
 func (ge *GideView) IsEmpty() bool {
@@ -756,6 +760,7 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *giv.FileNode) 
 	}
 	nw, err := ge.OpenFileNode(fn)
 	if err == nil {
+		tv.Style2D() // make sure
 		tv.SetBuf(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
@@ -986,6 +991,13 @@ func (ge *GideView) SaveAllOpenNodes() {
 			ge.RunPostCmdsFileNode(ond)
 		}
 	}
+}
+
+// SaveAll saves all of the open filenodes to their current file names
+// and saves the project state if it has been saved before (i.e., the .gide file exists)
+func (ge *GideView) SaveAll() {
+	ge.SaveAllOpenNodes()
+	ge.SaveProjIfExists(false)
 }
 
 // CloseOpenNodes closes any nodes with open views (including those in directories under nodes).
@@ -2870,7 +2882,7 @@ var GideViewProps = ki.Props{
 			"desc":     "update file browser list of files",
 			"icon":     "update",
 		}},
-		{"ViewFile", ki.Props{
+		{"NextViewFile", ki.Props{
 			"label": "Open...",
 			"icon":  "file-open",
 			"desc":  "open a file in current active text view",
@@ -2903,6 +2915,10 @@ var GideViewProps = ki.Props{
 					"default-field": "ActiveFilename",
 				}},
 			},
+		}},
+		{"SaveAll", ki.Props{
+			"icon": "file-save",
+			"desc": "save all open files (if modified) and the current project prefs (if .gide file exists, from prior Save Proj As..)",
 		}},
 		{"ViewOpenNodeName", ki.Props{
 			"icon":         "file-text",
@@ -3119,6 +3135,7 @@ var GideViewProps = ki.Props{
 					}},
 				},
 			}},
+			{"SaveAll", ki.Props{}},
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
 				"label": "Open File...",

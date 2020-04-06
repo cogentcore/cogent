@@ -531,7 +531,7 @@ var AvailCmds Commands
 
 // CustomCmds is user-specific list of commands saved in preferences available
 // for all Gide projects.  These will override StdCmds with the same names.
-var CustomCmds Commands
+var CustomCmds = Commands{}
 
 // LangCmdNames returns a slice of commands that are compatible with given
 // language.
@@ -633,6 +633,8 @@ func (cm *Commands) OpenPrefs() error {
 	err := cm.OpenJSON(gi.FileName(pnm))
 	if err == nil {
 		MergeAvailCmds()
+	} else {
+		cm = &Commands{} // restore a blank
 	}
 	return err
 }

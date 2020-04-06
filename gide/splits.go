@@ -16,13 +16,14 @@ import (
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/ki/sliceclone"
 )
 
 // Split is a named splitter configuration
 type Split struct {
 	Name   string    `desc:"name of splitter config"`
 	Desc   string    `desc:"brief description"`
-	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"5" desc:"splitter panel proportions"`
+	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"4" desc:"splitter panel proportions"`
 }
 
 // Label satisfies the Labeler interface
@@ -36,7 +37,7 @@ func (lt *Split) SaveSplits(sp []float32) {
 }
 
 // Splits is a list of named splitter configurations
-type Splits []Split
+type Splits []*Split
 
 var KiT_Splits = kit.Types.AddType(&Splits{}, SplitsProps)
 
@@ -62,10 +63,9 @@ func (lt *Splits) SplitByName(name SplitName) (*Split, int, bool) {
 	if name == "" {
 		return nil, -1, false
 	}
-	for i := range *lt {
-		lr := &((*lt)[i])
-		if lr.Name == string(name) {
-			return lr, i, true
+	for i, sp := range *lt {
+		if sp.Name == string(name) {
+			return sp, i, true
 		}
 	}
 	fmt.Printf("gide.SplitByName: split named: %v not found\n", name)
@@ -74,17 +74,16 @@ func (lt *Splits) SplitByName(name SplitName) (*Split, int, bool) {
 
 // Add adds a new splitter setting, returns split and index
 func (lt *Splits) Add(name, desc string, splits []float32) (*Split, int) {
-	sp := &Split{Name: name, Desc: desc, Splits: splits}
-	*lt = append(*lt, *sp)
+	sp := &Split{Name: name, Desc: desc, Splits: sliceclone.Float32(splits)}
+	*lt = append(*lt, sp)
 	return sp, len(*lt) - 1
 }
 
 // Names returns a slice of current names
 func (lt *Splits) Names() []string {
 	nms := make([]string, len(*lt))
-	for i := range *lt {
-		lr := &((*lt)[i])
-		nms[i] = lr.Name
+	for i, sp := range *lt {
+		nms[i] = sp.Name
 	}
 	return nms
 }
@@ -92,6 +91,18 @@ func (lt *Splits) Names() []string {
 // PrefsSplitsFileName is the name of the preferences file in App prefs
 // directory for saving / loading the default AvailSplits
 var PrefsSplitsFileName = "splits_prefs.json"
+
+// FixLen ensures that there are exactly 4 splits in each
+func (lt *Splits) FixLen() {
+	for _, sp := range *lt {
+		ln := len(sp.Splits)
+		if ln > 4 {
+			sp.Splits = sp.Splits[:4]
+		} else if ln < 4 {
+			sp.Splits = append(sp.Splits, make([]float32, 4-ln)...)
+		}
+	}
+}
 
 // OpenJSON opens named splits from a JSON-formatted file.
 func (lt *Splits) OpenJSON(filename gi.FileName) error {
@@ -102,8 +113,12 @@ func (lt *Splits) OpenJSON(filename gi.FileName) error {
 		return err
 	}
 	*lt = make(Splits, 0, 10) // reset
-	rval := json.Unmarshal(b, lt)
-	return rval
+	err = json.Unmarshal(b, lt)
+	if err != nil {
+		return err
+	}
+	lt.FixLen()
+	return err
 }
 
 // SaveJSON saves named splits to a JSON-formatted file.
@@ -135,6 +150,7 @@ func (lt *Splits) OpenPrefs() error {
 
 // SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFileName
 func (lt *Splits) SavePrefs() error {
+	lt.FixLen()
 	pdir := oswin.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
@@ -150,6 +166,7 @@ func (lt *Splits) CopyFrom(cp Splits) {
 		fmt.Printf("json err: %v\n", err.Error())
 	}
 	json.Unmarshal(b, lt)
+	lt.FixLen()
 }
 
 // AvailSplitsChanged is used to update toolbars via following menu, toolbar

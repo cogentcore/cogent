@@ -54,7 +54,7 @@ var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.Te
 func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
-		err := fmt.Errorf("Gi Debug: File type %v not supported\n", sup)
+		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Prefs.. to a supported language (Go only option so far)", sup)
 		log.Println(err)
 		return nil, err
 	}

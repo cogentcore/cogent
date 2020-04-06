@@ -185,6 +185,11 @@ func (pf *Preferences) EditLangOpts() {
 func (pf *Preferences) EditCmds() {
 	pf.SaveCmds = true
 	pf.Changed = true
+	if len(CustomCmds) == 0 {
+		CustomCmds = append(CustomCmds, &Command{"Example Cmd", "list current dir", filecat.Any,
+			[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm})
+
+	}
 	CmdsView(&CustomCmds)
 }
 
@@ -278,7 +283,7 @@ type ProjPrefs struct {
 	BuildTarg    gi.FileName       `desc:"build target for main Build button, if relevant for your  BuildCmds"`
 	RunExec      gi.FileName       `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
 	RunCmds      CmdNames          `desc:"command(s) to run for main Run button (typically Run Proj)"`
-	Debug        gidebug.Params    `json:"-" desc:"custom debugger parameters for this project"` // todo: turn on saving once stable!
+	Debug        gidebug.Params    `desc:"custom debugger parameters for this project"`
 	Find         FindParams        `view:"-" desc:"saved find params"`
 	Symbols      SymbolsParams     `view:"-" desc:"saved structure params"`
 	Dirs         giv.DirFlagMap    `view:"-" desc:"directory properties"`
