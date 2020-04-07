@@ -3144,7 +3144,9 @@ var GideViewProps = ki.Props{
 				},
 				"updtfunc": GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
-					{"File Name", ki.Props{}},
+					{"File Name", ki.Props{
+						"default-field": "ActiveFilename",
+					}},
 				},
 			}},
 			{"SaveActiveView", ki.Props{
