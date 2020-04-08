@@ -10,7 +10,7 @@ See the [Wiki](https://github.com/goki/gide/wiki) for more docs,   [Install](htt
 [![GoDoc](https://godoc.org/github.com/goki/gide?status.svg)](https://godoc.org/github.com/goki/gide)
 [![Travis](https://travis-ci.com/goki/gide.svg?branch=master)](https://travis-ci.com/goki/gide)
 
-There are many existing, excellent choices for text editors and IDE's, but *Gide* is possibly the best option available with just a `go get ./...` command.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Gide.  Our ambition is to capture some of those Go attributes in an IDE.
+There are many existing, excellent choices for text editors and IDE's, but *Gide* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Gide.  Our ambition is to capture some of those Go attributes in an IDE.
 
 Some of the main features of *Gide* include:
 
