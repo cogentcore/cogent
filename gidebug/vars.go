@@ -213,7 +213,7 @@ func (vr *Variable) FollowPtr() {
 // VarParams are parameters controlling how much detail the debugger reports
 // about variables.
 type VarParams struct {
-	FollowPointers  bool `def:"false" desc:"requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not reccommended."`
+	FollowPointers  bool `def:"false" desc:"requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not recommended."`
 	MaxRecurse      int  `desc:"how far to recurse when evaluating nested types."`
 	MaxStringLen    int  `desc:"the maximum number of bytes read from a string"`
 	MaxArrayValues  int  `desc:"the maximum number of elements read from an array, a slice or a map."`

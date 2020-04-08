@@ -48,8 +48,17 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Paste()
 			})
-		m.AddSeparator("sep-tvmenu")
 		ac.SetActiveState(tv.HasSelection() && !tv.Buf.InComment(tv.CursorPos))
+
+		m.AddSeparator("sep-clip")
+
+		ac = m.AddAction(gi.ActOpts{Label: "Lookup", ShortcutKey: gi.KeyFunLookup},
+			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				txf := recv.Embed(KiT_TextView).(*TextView)
+				txf.Lookup()
+			})
+
+		m.AddSeparator("sep-dbg")
 		hasDbg := false
 		if ge, ok := ParentGide(tv); ok {
 			if ge.CurDebug() != nil {

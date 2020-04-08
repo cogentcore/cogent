@@ -217,7 +217,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 		elk := syms.ReflectKindMap[el.Kind]
 		if elk.IsPrimitiveNonPtr() {
 			vr.List = make([]string, nkids)
-			for i, _ := range ds.Children {
+			for i := range ds.Children {
 				vr.List[i] = ds.Children[i].Value
 			}
 			return vr
@@ -245,7 +245,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 		return vr
 	case nkids > 0 && nkids < 10 && vr.Kind.SubCat() == syms.Struct:
 		allPrim := true
-		for i, _ := range ds.Children {
+		for i := range ds.Children {
 			el := &ds.Children[i]
 			elk := syms.ReflectKindMap[el.Kind]
 			if !elk.IsPrimitiveNonPtr() {
@@ -255,7 +255,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 		}
 		if allPrim {
 			vstr := ""
-			for i, _ := range ds.Children {
+			for i := range ds.Children {
 				el := &ds.Children[i]
 				vstr += el.Name + ": " + el.Value
 				if i < nkids-1 {
@@ -267,7 +267,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 			return vr
 		}
 	}
-	for i, _ := range ds.Children {
+	for i := range ds.Children {
 		el := &ds.Children[i]
 		nkv := gd.cvtVar(el)
 		if nkv.Nm == "" {

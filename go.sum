@@ -4,6 +4,7 @@ github.com/BurntSushi/graphics-go v0.0.0-20160129215708-b43f31a4a966 h1:lTG4HQym
 github.com/BurntSushi/graphics-go v0.0.0-20160129215708-b43f31a4a966/go.mod h1:Mid70uvE93zn9wgF92A/r5ixgnvX8Lh68fxp9KQBaI0=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802 h1:1BDTz0u9nC3//pOCMdNH+CiXJVYJh5UQNCOBG7jbELc=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
+github.com/BurntSushi/xgb v0.0.0-20200324125942-20f126ea2843/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 h1:O/r2Sj+8QcMF7V5IcmiE2sMFV2q3J47BEirxbXJAdzA=
 github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046/go.mod h1:uw9h2sd4WWHOPdJ13MQpwK5qYWKYDumDqxWWIknEQ+k=
 github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
@@ -86,6 +87,8 @@ github.com/goki/gi v0.9.17-0.20200406131407-f923af835fab h1:NYKLALn6tD8sqNz11jVw
 github.com/goki/gi v0.9.17-0.20200406131407-f923af835fab/go.mod h1:2mICa3wEK55zUBJPM6sJ9U7sGovtHOgZX8mW3Fkf8tQ=
 github.com/goki/gi v0.9.17-0.20200407130046-080cc517b9f7 h1:v9HZqmibXIQQJapI2EVv7cp+CHGrDXExZPBgA+JDSSo=
 github.com/goki/gi v0.9.17-0.20200407130046-080cc517b9f7/go.mod h1:mFlBNmG79+K73Ta/tn/yFvSWK0gQ4bwGYiD3PtGWJxM=
+github.com/goki/gi v1.0.0 h1:8ncQ49KwqHR/znAicHvKRmbcDQ2DWdePwx0kTnQQDWk=
+github.com/goki/gi v1.0.0/go.mod h1:loyKritXpgWGXp+62Lrl0YgvaVJ+9I+gUEqVgBmGKIA=
 github.com/goki/ki v0.9.11 h1:LOsRjJUuWTj8kgo30qyDoJPhk3Da6kVvclNfAz8nJMU=
 github.com/goki/ki v0.9.11/go.mod h1:/nsdYEYyX152+uLTOaHGxFBLoe1qcbkCpNVwAj5W1HU=
 github.com/goki/ki v0.9.12-0.20200309063305-3102412f93be h1:dLFbi7ohTbYjzyVLB17MlH7+5v7odKobmjfQpzzD4dU=
@@ -131,10 +134,13 @@ github.com/goki/pi v0.9.16-0.20200406131204-f61ded3b0e1b h1:BAPlB/ofQskd+c3/DOwi
 github.com/goki/pi v0.9.16-0.20200406131204-f61ded3b0e1b/go.mod h1:AnakYXOwXSsDZybdpD/FRtoeUx5KfUR7lXm8KA6Aey8=
 github.com/goki/pi v1.0.0 h1:R+97nloz0BeJJDs0IAvc2cD1tOIySI/SWV3A8VpUV4Y=
 github.com/goki/pi v1.0.0/go.mod h1:KFpqWw06mlJiVZGbRwdNhBxzEO8umcFAFEqLq3qfObQ=
+github.com/goki/pi v1.0.1 h1:yIORIZLwx5npa5cG/sYRmfVStkcuGdtmgs60os0lM6I=
+github.com/goki/pi v1.0.1/go.mod h1:KFpqWw06mlJiVZGbRwdNhBxzEO8umcFAFEqLq3qfObQ=
 github.com/goki/prof v0.0.0-20180502205428-54bc71b5d09b h1:3zU6niF8uvEaNtRBhOkmgbE/Fx7D6xuALotArTpycNc=
 github.com/goki/prof v0.0.0-20180502205428-54bc71b5d09b/go.mod h1:pgRizZOb3eUJr+ByZnXnPvt+a0fVOTn0Ujc2TqVZpW4=
 github.com/goki/vci v0.90.1 h1:50BIleTIDzkk0QM3BE36a3fBkEbZEkVqvCuSOyOghbk=
 github.com/goki/vci v0.90.1/go.mod h1:Dg6U9TS5Jtc4aw9hKudKkpDwmylO6W50d3v/CrjZDBA=
+github.com/goki/vci v1.0.0/go.mod h1:uOQl8kDy2Nb7MEY8cyz72ntp2PaTwJkm2GZNKrEKHE0=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/gonuts/commander v0.1.0/go.mod h1:qkb5mSlcWodYgo7vs8ulLnXhfinhZsZcm6+H/z1JjgY=
@@ -195,6 +201,7 @@ github.com/spf13/cobra v0.0.0-20170417170307-b6cb39589372/go.mod h1:1l0Ry5zgKvJa
 github.com/spf13/pflag v0.0.0-20170417173400-9e4c21054fa1/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/srwiley/oksvg v0.0.0-20190829233741-58e08c8fe40e h1:LJUrNHytcMXWKxnULIHPe5SCb1jDpO9o672VB1x2EuQ=
 github.com/srwiley/oksvg v0.0.0-20190829233741-58e08c8fe40e/go.mod h1:afMbS0qvv1m5tfENCwnOdZGOF8RGR/FsZ7bvBxQGZG4=
+github.com/srwiley/oksvg v0.0.0-20200311192757-870daf9aa564/go.mod h1:afMbS0qvv1m5tfENCwnOdZGOF8RGR/FsZ7bvBxQGZG4=
 github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9 h1:m59mIOBO4kfcNCEzJNy71UkeF4XIx2EVmL9KLwDQdmM=
 github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9/go.mod h1:mvWM0+15UqyrFKqdRjY6LuAVJR0HOVhJlEgZ5JWtSWU=
 github.com/srwiley/scanFT v0.0.0-20190309001647-3267585b8d6d h1:tPZcpz7r/7L/dB7mMW2CFY1gey/CMpW/mbna3pA0VWQ=
