@@ -24,16 +24,13 @@ Some of the main features of *Gide* include:
 
 # Current Status
 
-As of 3/2020, it is feature complete as a Go IDE, including type-comprehension-based completion, and an integrated GUI debugger, running on top of [delve](https://github.com/go-delve/delve).  It is in daily use by the primary developers, and very stable at this point.
-
-A 1.0 release is upcoming soon (March, 2020) pending final testing and bug fixing, after a major coding spree.
+As of April 2020, it is feature complete as a Go IDE, including type-comprehension-based completion, and an integrated GUI debugger, running on top of [delve](https://github.com/go-delve/delve).  It is in daily use by the primary developers, and very stable at this point, with the initial 1.0 release now available.
 
 In addition to Issues shown on github, some important features to be added longer-term include:
 
-* More coding automation, refactoring, etc.  We don't want to go too crazy here, prefering the more general-purpose and simple approach, but probably some more could be done.
+* More coding automation, refactoring, etc.  We don't want to go too crazy here, preferring the more general-purpose and simple approach, but probably some more could be done.
 
 * Full support for Python, including extending the [GoPi](https://github.com/goki/pi) interactive parser to handle Python, so it will have been worth writing instead of just using the native Go parser.
-
 
 # Screenshots
 
