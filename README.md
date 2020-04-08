@@ -36,4 +36,4 @@ In addition to Issues shown on github, some important features to be added longe
 
 ![Screenshot](screenshot.png?raw=true "Screenshot")
 
-![Screenshot, darker](screenshot_dark.png?raw=true "Screenshot, darker color scheme")
+![Screenshot, darker](screenshot_dark.png?raw=true "Screenshot, dark mode")
