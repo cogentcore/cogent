@@ -663,6 +663,9 @@ func (dv *DebugView) ShowVar(name string) error {
 // VarValue returns the value of given variable, first looking in local stack vars
 // and then in global vars
 func (dv *DebugView) VarValue(varNm string) string {
+	if !dv.DbgIsAvail() {
+		return ""
+	}
 	if strings.Contains(varNm, ".") {
 		vv, err := dv.Dbg.GetVar(varNm, dv.State.CurTask, dv.State.CurFrame)
 		if err == nil {

@@ -760,7 +760,7 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *giv.FileNode) 
 	}
 	nw, err := ge.OpenFileNode(fn)
 	if err == nil {
-		tv.Style2D() // make sure
+		tv.StyleTextView() // make sure
 		tv.SetBuf(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
