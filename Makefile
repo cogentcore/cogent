@@ -12,7 +12,7 @@ DIRS=`go list ./... | grep -v python`
 all: build
 
 install:
-	cd cmd/gide; pwd; go get ./...; go build
+	cd cmd/gide; pwd; go build
 
 build: 
 	@echo "GO111MODULE = $(value GO111MODULE)"

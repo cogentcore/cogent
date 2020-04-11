@@ -802,6 +802,8 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"vet"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Mod Tidy Go", "run go mod tidy in current dir", filecat.Go,
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"mod", "tidy"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Mod Init Go", "run go mod init in current dir with module path from prompt", filecat.Go,
+		[]CmdAndArgs{CmdAndArgs{"go", []string{"mod", "init", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Get Go", "run go get on package you enter at prompt", filecat.Go,
 		[]CmdAndArgs{CmdAndArgs{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Get Go Updt", "run go get -u (updt) on package you enter at prompt", filecat.Go,
