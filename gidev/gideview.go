@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -1803,7 +1804,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, langs []filecat.Supported) {
+func (ge *GideView) Find(find, repl string, ignoreCase, regExp bool, loc gide.FindLoc, langs []filecat.Supported) {
 	if find == "" {
 		return
 	}
@@ -1838,11 +1839,21 @@ func (ge *GideView) Find(find, repl string, ignoreCase bool, loc gide.FindLoc, l
 	var res []gide.FileSearchResults
 	if loc == gide.FindLocFile {
 		if got {
-			cnt, matches := atv.Buf.Search([]byte(find), ignoreCase, false)
-			res = append(res, gide.FileSearchResults{ond, cnt, matches})
+			if regExp {
+				re, err := regexp.Compile(find)
+				if err != nil {
+					log.Println(err)
+				} else {
+					cnt, matches := atv.Buf.SearchRegexp(re)
+					res = append(res, gide.FileSearchResults{ond, cnt, matches})
+				}
+			} else {
+				cnt, matches := atv.Buf.Search([]byte(find), ignoreCase, false)
+				res = append(res, gide.FileSearchResults{ond, cnt, matches})
+			}
 		}
 	} else {
-		res = gide.FileTreeSearch(root, find, ignoreCase, loc, adir, langs)
+		res = gide.FileTreeSearch(root, find, ignoreCase, regExp, loc, adir, langs)
 	}
 
 	outlns := make([][]byte, 0, 100)
@@ -2965,6 +2976,9 @@ var GideViewProps = ki.Props{
 				{"Ignore Case", ki.Props{
 					"default-field": "Prefs.Find.IgnoreCase",
 				}},
+				{"Regexp", ki.Props{
+					"default-field": "Prefs.Find.Regexp",
+				}},
 				{"Location", ki.Props{
 					"desc":          "location to find in",
 					"default-field": "Prefs.Find.Loc",
@@ -3260,6 +3274,9 @@ var GideViewProps = ki.Props{
 					}},
 					{"Ignore Case", ki.Props{
 						"default-field": "Prefs.Find.IgnoreCase",
+					}},
+					{"Regexp", ki.Props{
+						"default-field": "Prefs.Find.Regexp",
 					}},
 					{"Location", ki.Props{
 						"desc":          "location to find in",

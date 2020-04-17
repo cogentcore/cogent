@@ -7,6 +7,7 @@ package gide
 import (
 	"log"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -222,10 +223,20 @@ type FileSearchResults struct {
 // language(s) that contain the given string (non regexp version), sorted in
 // descending order by number of occurrences -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindLoc, activeDir string, langs []filecat.Supported) []FileSearchResults {
+func FileTreeSearch(start *giv.FileNode, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []filecat.Supported) []FileSearchResults {
+	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
 		return nil
+	}
+	var re *regexp.Regexp
+	var err error
+	if regExp {
+		re, err = regexp.Compile(find)
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
 	}
 	mls := make([]FileSearchResults, 0)
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
@@ -257,9 +268,17 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase bool, loc FindL
 		var cnt int
 		var matches []textbuf.Match
 		if sfn.IsOpen() && sfn.Buf != nil {
-			cnt, matches = sfn.Buf.Search([]byte(find), ignoreCase, false)
+			if regExp {
+				cnt, matches = sfn.Buf.SearchRegexp(re)
+			} else {
+				cnt, matches = sfn.Buf.Search(fb, ignoreCase, false)
+			}
 		} else {
-			cnt, matches = textbuf.SearchFile(string(sfn.FPath), []byte(find), ignoreCase)
+			if regExp {
+				cnt, matches = textbuf.SearchFileRegexp(string(sfn.FPath), re)
+			} else {
+				cnt, matches = textbuf.SearchFile(string(sfn.FPath), fb, ignoreCase)
+			}
 		}
 		if cnt > 0 {
 			mls = append(mls, FileSearchResults{sfn, cnt, matches})

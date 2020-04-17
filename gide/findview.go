@@ -6,8 +6,10 @@ package gide
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -52,6 +54,7 @@ type FindParams struct {
 	Find       string              `desc:"find string"`
 	Replace    string              `desc:"replace string"`
 	IgnoreCase bool                `desc:"ignore case"`
+	Regexp     bool                `desc:"use regexp regular expression search and replace"`
 	Langs      []filecat.Supported `desc:"languages for files to search"`
 	Loc        FindLoc             `desc:"locations to search in"`
 	FindHist   []string            `desc:"history of finds"`
@@ -62,9 +65,10 @@ type FindParams struct {
 // and has a toolbar for controlling find / replace process.
 type FindView struct {
 	gi.Layout
-	Gide   Gide          `json:"-" xml:"-" desc:"parent gide project"`
-	LangVV giv.ValueView `desc:"langs value view"`
-	Time   time.Time     `desc:"time of last find"`
+	Gide   Gide           `json:"-" xml:"-" desc:"parent gide project"`
+	LangVV giv.ValueView  `desc:"langs value view"`
+	Time   time.Time      `desc:"time of last find"`
+	Re     *regexp.Regexp `desc:"compiled regexp"`
 }
 
 var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
@@ -96,17 +100,37 @@ func (fv *FindView) SaveReplString(repl string) {
 
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
-	fv.SaveFindString(fv.Params().Find)
-	fv.Gide.Find(fv.Params().Find, fv.Params().Replace, fv.Params().IgnoreCase, fv.Params().Loc, fv.Params().Langs)
+	fp := fv.Params()
+	fv.SaveFindString(fp.Find)
+	if !fv.CompileRegexp() {
+		return
+	}
+	fv.Gide.Find(fp.Find, fp.Replace, fp.IgnoreCase, fp.Regexp, fp.Loc, fp.Langs)
 }
 
-// ReplaceAction performs the replace
+// CheckValidRegexp returns false if using regexp and it is not valid
+func (fv *FindView) CheckValidRegexp() bool {
+	fp := fv.Params()
+	if !fp.Regexp {
+		return true
+	}
+	if fv.Re == nil {
+		return false
+	}
+	return true
+}
+
+// ReplaceAction performs the replace -- if using regexp mode, regexp must be compiled in advance
 func (fv *FindView) ReplaceAction() bool {
+	if !fv.CheckValidRegexp() {
+		return false
+	}
 	wupdt := fv.TopUpdateStart()
 	defer fv.TopUpdateEnd(wupdt)
 
-	fv.SaveReplString(fv.Params().Replace)
-	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, fv.Params().Replace, gi.Prefs.Params.SavedPathsMax)
+	fp := fv.Params()
+	fv.SaveReplString(fp.Replace)
+	gi.StringsInsertFirstUnique(&fp.ReplHist, fp.Replace, gi.Prefs.Params.SavedPathsMax)
 
 	ftv := fv.TextView()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
@@ -142,8 +166,15 @@ func (fv *FindView) ReplaceAction() bool {
 	reg.Time.SetTime(fv.Time)
 	reg = tv.Buf.AdjustReg(reg)
 	if !reg.IsNil() {
-		// MatchCase only if doing IgnoreCase
-		tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, fv.Params().Replace, giv.EditSignal, fv.Params().IgnoreCase)
+		if fp.Regexp {
+			rg := tv.Buf.Region(reg.Start, reg.End)
+			b := rg.ToBytes()
+			rb := fv.Re.ReplaceAll(b, []byte(fp.Replace))
+			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), giv.EditSignal, false)
+		} else {
+			// MatchCase only if doing IgnoreCase
+			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, giv.EditSignal, fp.IgnoreCase)
+		}
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Ln
@@ -164,15 +195,34 @@ func (fv *FindView) ReplaceAction() bool {
 
 // ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindView) ReplaceAllAction() {
-	gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Replace All", Prompt: "Are you sure you want to Replace All?"}, true, true, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Replace All", Prompt: "Are you sure you want to Replace All?"}, gi.AddOk, gi.AddCancel, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.DialogAccepted) {
 			fv.ReplaceAll()
 		}
 	})
 }
 
+// CompileRegexp compiles the regexp if necessary -- returns false if it is invalid
+func (fv *FindView) CompileRegexp() bool {
+	fp := fv.Params()
+	if !fp.Regexp {
+		fv.Re = nil
+		return true
+	}
+	var err error
+	fv.Re, err = regexp.Compile(fp.Find)
+	if err != nil {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Regexp is Invalid", Prompt: fmt.Sprintf("The regular expression was invalid: %v", err)}, gi.AddOk, gi.NoCancel, nil, nil)
+		return false
+	}
+	return true
+}
+
 // ReplaceAll performs replace all
 func (fv *FindView) ReplaceAll() {
+	if !fv.CheckValidRegexp() {
+		return
+	}
 	for {
 		ok := fv.ReplaceAction()
 		if !ok {
@@ -267,17 +317,20 @@ func (fv *FindView) Config(ge Gide) {
 	if !mods {
 		updt = fv.UpdateStart()
 	}
+	fp := fv.Params()
 	fv.ConfigToolbar()
 	ft := fv.FindText()
-	ft.ItemsFromStringList(fv.Params().FindHist, true, 0)
-	ft.SetText(fv.Params().Find)
+	ft.ItemsFromStringList(fp.FindHist, true, 0)
+	ft.SetText(fp.Find)
 	rt := fv.ReplText()
-	rt.ItemsFromStringList(fv.Params().ReplHist, true, 0)
-	rt.SetText(fv.Params().Replace)
+	rt.ItemsFromStringList(fp.ReplHist, true, 0)
+	rt.SetText(fp.Replace)
 	ib := fv.IgnoreBox()
-	ib.SetChecked(fv.Params().IgnoreCase)
+	ib.SetChecked(fp.IgnoreCase)
+	rb := fv.RegexpBox()
+	rb.SetChecked(fp.Regexp)
 	cf := fv.LocCombo()
-	cf.SetCurIndex(int(fv.Params().Loc))
+	cf.SetCurIndex(int(fp.Loc))
 	tvly := fv.TextViewLay()
 	ConfigOutputTextView(tvly)
 	if mods {
@@ -310,6 +363,11 @@ func (fv *FindView) ReplText() *gi.ComboBox {
 // IgnoreBox returns the ignore case checkbox in toolbar
 func (fv *FindView) IgnoreBox() *gi.CheckBox {
 	return fv.FindBar().ChildByName("ignore-case", 2).(*gi.CheckBox)
+}
+
+// RegexpBox returns the regexp checkbox in toolbar
+func (fv *FindView) RegexpBox() *gi.CheckBox {
+	return fv.FindBar().ChildByName("regexp", 3).(*gi.CheckBox)
 }
 
 // LocCombo returns the loc combobox
@@ -395,6 +453,17 @@ func (fv *FindView) ConfigToolbar() {
 		}
 	})
 
+	rx := fb.AddNewChild(gi.KiT_CheckBox, "regexp").(*gi.CheckBox)
+	rx.SetText("Regexp")
+	rx.Tooltip = "use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax"
+	rx.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.ButtonToggled) {
+			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+			cb := send.(*gi.CheckBox)
+			fvv.Params().Regexp = cb.IsChecked()
+		}
+	})
+
 	fb.AddAction(gi.ActOpts{Name: "next", Icon: "wedge-down", Tooltip: "go to next result"},
 		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
@@ -409,13 +478,14 @@ func (fv *FindView) ConfigToolbar() {
 
 	rb.AddAction(gi.ActOpts{Label: "Replace:", Tooltip: "Replace find string with replace string for currently-selected find result"}, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+		fvv.CompileRegexp()
 		fvv.ReplaceAction()
 	})
 
 	repls := rb.AddNewChild(gi.KiT_ComboBox, "repl-str").(*gi.ComboBox)
 	repls.Editable = true
 	repls.SetStretchMaxWidth()
-	repls.Tooltip = "String to replace find string -- click for history"
+	repls.Tooltip = "String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc"
 	repls.ConfigParts()
 	repls.ItemsFromStringList(fv.Params().ReplHist, true, 0)
 	rtf, _ := repls.TextField()

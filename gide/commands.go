@@ -310,7 +310,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
 	if cm.Confirm {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)}, true, true, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)}, gi.AddOk, gi.AddCancel, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
 				cm.RunAfterPrompts(ge, buf)
 			}
@@ -601,7 +601,7 @@ var PrefsCmdsFileName = "command_prefs.json"
 func (cm *Commands) OpenJSON(filename gi.FileName) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
-		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, true, false, nil, nil)
+		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.AddCancel, nil, nil)
 		// log.Println(err)
 		return err
 	}
@@ -618,7 +618,7 @@ func (cm *Commands) SaveJSON(filename gi.FileName) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, true, false, nil, nil)
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
 		log.Println(err)
 	}
 	return err
