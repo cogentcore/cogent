@@ -7,6 +7,7 @@ package gide
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -76,6 +77,50 @@ var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
 	return &fv.Gide.ProjPrefs().Find
+}
+
+// ShowResults shows the results in the buffer
+func (fv *FindView) ShowResults(res []FileSearchResults) {
+	ftv := fv.TextView()
+	fbuf := ftv.Buf
+	outlns := make([][]byte, 0, 100)
+	outmus := make([][]byte, 0, 100) // markups
+	for _, fs := range res {
+		fp := fs.Node.Info.Path
+		fn := fs.Node.MyRelPath()
+		fbStLn := len(outlns) // find buf start ln
+		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
+		outlns = append(outlns, []byte(lstr))
+		mstr := fmt.Sprintf(`<b>%v</b>`, lstr)
+		outmus = append(outmus, []byte(mstr))
+		for _, mt := range fs.Matches {
+			txt := bytes.TrimSpace(mt.Text)
+			txt = append([]byte{'\t'}, txt...)
+			ln := mt.Reg.Start.Ln + 1
+			ch := mt.Reg.Start.Ch + 1
+			ech := mt.Reg.End.Ch + 1
+			fnstr := fmt.Sprintf("%v:%d:%d", fn, ln, ch)
+			nomu := bytes.Replace(txt, []byte("<mark>"), nil, -1)
+			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
+			nomus := html.EscapeString(string(nomu))
+			lstr = fmt.Sprintf(`%v: %s`, fnstr, nomus) // note: has tab embedded at start of lstr
+
+			outlns = append(outlns, []byte(lstr))
+			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fnstr, txt)
+			outmus = append(outmus, []byte(mstr))
+		}
+		outlns = append(outlns, []byte(""))
+		outmus = append(outmus, []byte(""))
+	}
+	ltxt := bytes.Join(outlns, []byte("\n"))
+	mtxt := bytes.Join(outmus, []byte("\n"))
+	fbuf.SetInactive(true)
+	fbuf.AppendTextMarkup(ltxt, mtxt, giv.EditSignal)
+	ftv.CursorStartDoc()
+	ok := ftv.CursorNextLink(false) // no wrap
+	if ok {
+		ftv.OpenLinkAt(ftv.CursorPos)
+	}
 }
 
 // SaveFindString saves the given find string to the find params history and current str

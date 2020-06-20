@@ -13,7 +13,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"html"
 	"log"
 	"net/url"
 	"os"
@@ -1855,43 +1854,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase, regExp bool, loc gide.Fi
 	} else {
 		res = gide.FileTreeSearch(root, find, ignoreCase, regExp, loc, adir, langs)
 	}
-
-	outlns := make([][]byte, 0, 100)
-	outmus := make([][]byte, 0, 100) // markups
-	for _, fs := range res {
-		fp := fs.Node.Info.Path
-		fn := fs.Node.MyRelPath()
-		fbStLn := len(outlns) // find buf start ln
-		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
-		outlns = append(outlns, []byte(lstr))
-		mstr := fmt.Sprintf(`<b>%v</b>`, lstr)
-		outmus = append(outmus, []byte(mstr))
-		for _, mt := range fs.Matches {
-			ln := mt.Reg.Start.Ln + 1
-			ch := mt.Reg.Start.Ch + 1
-			ech := mt.Reg.End.Ch + 1
-			fnstr := fmt.Sprintf("%v:%d:%d", fn, ln, ch)
-			nomu := bytes.Replace(mt.Text, []byte("<mark>"), nil, -1)
-			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
-			nomus := html.EscapeString(string(nomu))
-			lstr = fmt.Sprintf(`%v: %s`, fnstr, nomus) // note: has tab embedded at start of lstr
-
-			outlns = append(outlns, []byte(lstr))
-			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fnstr, mt.Text)
-			outmus = append(outmus, []byte(mstr))
-		}
-		outlns = append(outlns, []byte(""))
-		outmus = append(outmus, []byte(""))
-	}
-	ltxt := bytes.Join(outlns, []byte("\n"))
-	mtxt := bytes.Join(outmus, []byte("\n"))
-	fbuf.SetInactive(true)
-	fbuf.AppendTextMarkup(ltxt, mtxt, giv.EditSignal)
-	ftv.CursorStartDoc()
-	ok := ftv.CursorNextLink(false) // no wrap
-	if ok {
-		ftv.OpenLinkAt(ftv.CursorPos)
-	}
+	fv.ShowResults(res)
 	ge.FocusOnPanel(TabsIdx)
 }
 
@@ -2625,6 +2588,17 @@ func (ge *GideView) FileNodeSelected(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	// }
 }
 
+// CatNoEdit are the files to NOT edit from categories: Doc, Data
+var CatNoEdit = map[filecat.Supported]bool{
+	filecat.Rtf:          true,
+	filecat.MSWord:       true,
+	filecat.OpenText:     true,
+	filecat.OpenPres:     true,
+	filecat.MSPowerpoint: true,
+	filecat.EBook:        true,
+	filecat.EPub:         true,
+}
+
 // FileNodeOpened is called whenever file node is double-clicked in file tree
 func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	// todo: could add all these options in LangOpts
@@ -2634,6 +2608,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 			tvn.SetOpen()
 			fn.OpenDir()
 		}
+		return
 	case filecat.Exe:
 		// this uses exe path for cd to this path!
 		ge.SetArgVarVals()
@@ -2645,40 +2620,45 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 			cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)
 			cmd.Run(ge, cbuf)
 		}
-	case filecat.Font:
-		fallthrough
-	case filecat.Video:
-		fallthrough
-	case filecat.Audio:
+		return
+	case filecat.Font, filecat.Video, filecat.Model, filecat.Audio, filecat.Sheet, filecat.Bin,
+		filecat.Archive, filecat.Image:
 		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
-	case filecat.Sheet:
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
-	case filecat.Bin:
-		// todo: prompt??
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
-	case filecat.Archive:
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
-	case filecat.Image:
-		// todo: handle various image types in visualizer natively..
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
+		return
+	}
+
+	edit := true
+	switch fn.Info.Cat {
+	case filecat.Code:
+		edit = true
+	case filecat.Text:
+		edit = true
 	default:
-		// program, document, data
-		if int(fn.Info.Size) > gi.Prefs.Params.BigFileSize {
-			gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
-				Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
-				[]string{"Open", "Cancel"},
-				ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-					switch sig {
-					case 0:
-						ge.NextViewFileNode(fn)
-					case 1:
-						// do nothing
-					}
-				})
-		} else {
-			ge.NextViewFileNode(fn)
+		if _, noed := CatNoEdit[fn.Info.Sup]; noed {
+			edit = false
 		}
 	}
+	if !edit {
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
+		return
+	}
+	// program, document, data
+	if int(fn.Info.Size) > gi.Prefs.Params.BigFileSize {
+		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
+			Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
+			[]string{"Open", "Cancel"},
+			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				switch sig {
+				case 0:
+					ge.NextViewFileNode(fn)
+				case 1:
+					// do nothing
+				}
+			})
+	} else {
+		ge.NextViewFileNode(fn)
+	}
+
 }
 
 // FileNodeClosed is called whenever file tree browser node is closed

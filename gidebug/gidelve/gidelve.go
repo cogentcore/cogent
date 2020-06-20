@@ -206,7 +206,7 @@ func (gd *GiDelve) Restart() error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
-	_, err := gd.dlv.Restart()
+	_, err := gd.dlv.Restart(true)
 	return gd.LogErr(err)
 }
 
@@ -215,7 +215,7 @@ func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) err
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
-	_, err := gd.dlv.RestartFrom(false, pos, resetArgs, newArgs)
+	_, err := gd.dlv.RestartFrom(false, pos, resetArgs, newArgs, true)
 	return gd.LogErr(err)
 }
 

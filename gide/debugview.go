@@ -425,7 +425,7 @@ func (dv *DebugView) InitState(ds *gidebug.State) {
 
 // UpdateFmState updates the view from current debugger state
 func (dv *DebugView) UpdateFmState() {
-	if dv == nil || dv.This() == nil || dv.IsDeleted() || dv.IsDestroyed() {
+	if dv == nil || dv.This() == nil || dv.IsDeleted() || dv.IsDestroyed() || dv.Dbg == nil {
 		return
 	}
 	wupdt := dv.TopUpdateStart()

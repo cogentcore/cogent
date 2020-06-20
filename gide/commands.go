@@ -848,6 +848,8 @@ var StdCmds = Commands{
 		[]CmdAndArgs{CmdAndArgs{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"BibTeX", "run BibTeX on file", filecat.TeX,
 		[]CmdAndArgs{CmdAndArgs{"bibtex", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Biber", "run Biber on file", filecat.TeX,
+		[]CmdAndArgs{CmdAndArgs{"biber", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"CleanTeX", "remove aux LaTeX files", filecat.TeX,
 		[]CmdAndArgs{CmdAndArgs{"rm", []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc", "*.spl"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
