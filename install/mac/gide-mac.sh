@@ -12,7 +12,7 @@ absPath() {
 }
 
 if [ $# -eq 0 ]; then
-    /Applications/gide.app/Contents/MacOS/gide &
+    /Applications/Gide.app/Contents/MacOS/gide &
 else    
     nwargs=""
     for ar in "$@"
@@ -25,7 +25,7 @@ else
 	    nwargs="$nwargs $ap"
 	fi
     done
-    /Applications/gide.app/Contents/MacOS/gide $nwargs &
+    /Applications/Gide.app/Contents/MacOS/gide $nwargs &
 fi
 # wait for jobs to finish so it looks like a normal process
 wait

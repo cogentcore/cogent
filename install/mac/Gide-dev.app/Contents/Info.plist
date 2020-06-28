@@ -47,7 +47,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>gide.gide</string>
 			<key>UTTypeReferenceURL</key>
-			<string>http://grey.colorado.edu/gide</string>
+			<string>https://github.com/goki/gide</string>
 			<key>UTTypeDescription</key>
 			<string>Gide Project</string>
 			<key>UTTypeIconFile</key>

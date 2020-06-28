@@ -1,4 +1,4 @@
-# gide
+# Gide
 
 ![alt tag](logo/gide_icon.png)
 
@@ -10,7 +10,7 @@ See the [Wiki](https://github.com/goki/gide/wiki) for more docs,   [Install](htt
 [![GoDoc](https://godoc.org/github.com/goki/gide?status.svg)](https://godoc.org/github.com/goki/gide)
 [![Travis](https://travis-ci.com/goki/gide.svg?branch=master)](https://travis-ci.com/goki/gide)
 
-There are many existing, excellent choices for text editors and IDE's, but *Gide* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Gide.  Our ambition is to capture some of those Go attributes in an IDE.
+There are many existing, excellent choices for text editors and IDEs, but *Gide* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Gide.  Our ambition is to capture some of those Go attributes in an IDE.
 
 Some of the main features of *Gide* include:
 
@@ -21,6 +21,14 @@ Some of the main features of *Gide* include:
 * Command actions show output on a tabbed output display on the right, along with other special interfaces such as Find / Replace, Symbols, Debugger, etc.  Thus, the overall design is extensible and new interfaces can be easily added to supply new functionality.  You don't spend any time fiddling around with lots of different panels all over the place, and you always know where to look to find something.  Maybe the result is less fancy and "bespoke" for a given use-case (e.g., Debugging), but our "giding" principle is to use a simple framework that does most things well, much like the Go language itself.
 
 * Strongly keyboard focused, inspired by Emacs -- existing Emacs users should be immediately productive.  However, other common keyboard bindings are also supported, and key bindings are entirely customizable.  If you're considering actually using it, we strongly recommend reading the [Wiki](https://github.com/goki/gide/wiki) tips to get the most out of it, and understand the key design principles (e.g., why there are no tabs for open files!).
+
+# Install
+
+* Wiki instructions: [Install](https://github.com/goki/gide/wiki/Install) -- for building directly from source.
+
+* See Releases on this github page for pre-built OS-specific app packages that install the compiled binaries.
+
+* See `install` directory for OS-specific Makefiles to install apps and build packages.
 
 # Current Status
 
