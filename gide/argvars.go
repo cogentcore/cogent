@@ -25,54 +25,54 @@ type ArgVarInfo struct {
 // ArgVars are variables that can be used for arguments to commands in CmdAndArgs
 var ArgVars = map[string]ArgVarInfo{
 	/// Current Filename
-	"{FilePath}":       ArgVarInfo{"Current file name with full path.", ArgVarFile},
-	"{FileName}":       ArgVarInfo{"Current file name only, without path.", ArgVarFile},
-	"{FileExt}":        ArgVarInfo{"Extension of current file name.", ArgVarExt},
-	"{FileExtLC}":      ArgVarInfo{"Extension of current file name, lowercase.", ArgVarExt},
-	"{FileNameNoExt}":  ArgVarInfo{"Current file name without path and extension.", ArgVarFile},
-	"{FileDir}":        ArgVarInfo{"Name only of current file's directory.", ArgVarDir},
-	"{FileDirPath}":    ArgVarInfo{"Full path to current file's directory.", ArgVarDir},
-	"{FileDirProjRel}": ArgVarInfo{"Path to current file's directory relative to project root.", ArgVarDir},
+	"{FilePath}":       {"Current file name with full path.", ArgVarFile},
+	"{FileName}":       {"Current file name only, without path.", ArgVarFile},
+	"{FileExt}":        {"Extension of current file name.", ArgVarExt},
+	"{FileExtLC}":      {"Extension of current file name, lowercase.", ArgVarExt},
+	"{FileNameNoExt}":  {"Current file name without path and extension.", ArgVarFile},
+	"{FileDir}":        {"Name only of current file's directory.", ArgVarDir},
+	"{FileDirPath}":    {"Full path to current file's directory.", ArgVarDir},
+	"{FileDirProjRel}": {"Path to current file's directory relative to project root.", ArgVarDir},
 
 	// Project Root dir
-	"{ProjDir}":  ArgVarInfo{"Current project directory name, without full path.", ArgVarDir},
-	"{ProjPath}": ArgVarInfo{"Full path to current project directory.", ArgVarDir},
+	"{ProjDir}":  {"Current project directory name, without full path.", ArgVarDir},
+	"{ProjPath}": {"Full path to current project directory.", ArgVarDir},
 
 	// BuildDir
-	"{BuildDir}":    ArgVarInfo{"Full path to BuildDir specified in project prefs -- the default Build.", ArgVarDir},
-	"{BuildDirRel}": ArgVarInfo{"Path to BuildDir relative to project root.", ArgVarDir},
+	"{BuildDir}":    {"Full path to BuildDir specified in project prefs -- the default Build.", ArgVarDir},
+	"{BuildDirRel}": {"Path to BuildDir relative to project root.", ArgVarDir},
 
 	// BuildTarg
-	"{BuildTarg}":           ArgVarInfo{"Build target specified in prefs BuildTarg, just filename by itself, without path.", ArgVarFile},
-	"{BuildTargPath}":       ArgVarInfo{"Full path to build target specified in prefs BuildTarg.", ArgVarFile},
-	"{BuildTargDirPath}":    ArgVarInfo{"Full path to build target directory, without filename.", ArgVarDir},
-	"{BuildTargDirPathRel}": ArgVarInfo{"Project-relative path to build target directory, without filename.", ArgVarDir},
+	"{BuildTarg}":           {"Build target specified in prefs BuildTarg, just filename by itself, without path.", ArgVarFile},
+	"{BuildTargPath}":       {"Full path to build target specified in prefs BuildTarg.", ArgVarFile},
+	"{BuildTargDirPath}":    {"Full path to build target directory, without filename.", ArgVarDir},
+	"{BuildTargDirPathRel}": {"Project-relative path to build target directory, without filename.", ArgVarDir},
 
 	// RunExec
-	"{RunExec}":           ArgVarInfo{"Run-time executable file RunExec specified in project prefs -- just the raw name of the file, without path.", ArgVarFile},
-	"{RunExecPath}":       ArgVarInfo{"Full path to the run-time executable file RunExec specified in project prefs.", ArgVarFile},
-	"{RunExecDirPath}":    ArgVarInfo{"Full path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
-	"{RunExecDirPathRel}": ArgVarInfo{"Project-root relative path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
+	"{RunExec}":           {"Run-time executable file RunExec specified in project prefs -- just the raw name of the file, without path.", ArgVarFile},
+	"{RunExecPath}":       {"Full path to the run-time executable file RunExec specified in project prefs.", ArgVarFile},
+	"{RunExecDirPath}":    {"Full path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
+	"{RunExecDirPathRel}": {"Project-root relative path to the directory of the run-time executable file RunExec specified in project prefs.", ArgVarDir},
 
 	// Cursor, Selection
-	"{CurLine}":      ArgVarInfo{"Cursor current line number (starts at 1).", ArgVarPos},
-	"{CurCol}":       ArgVarInfo{"Cursor current column number (starts at 0).", ArgVarPos},
-	"{SelStartLine}": ArgVarInfo{"Selection starting line (same as CurLine if no selection).", ArgVarPos},
-	"{SelStartCol}":  ArgVarInfo{"Selection starting column (same as CurCol if no selection).", ArgVarPos},
-	"{SelEndLine}":   ArgVarInfo{"Selection ending line (same as CurLine if no selection).", ArgVarPos},
-	"{SelEndCol}":    ArgVarInfo{"Selection ending column (same as CurCol if no selection).", ArgVarPos},
+	"{CurLine}":      {"Cursor current line number (starts at 1).", ArgVarPos},
+	"{CurCol}":       {"Cursor current column number (starts at 0).", ArgVarPos},
+	"{SelStartLine}": {"Selection starting line (same as CurLine if no selection).", ArgVarPos},
+	"{SelStartCol}":  {"Selection starting column (same as CurCol if no selection).", ArgVarPos},
+	"{SelEndLine}":   {"Selection ending line (same as CurLine if no selection).", ArgVarPos},
+	"{SelEndCol}":    {"Selection ending column (same as CurCol if no selection).", ArgVarPos},
 
-	"{CurSel}":      ArgVarInfo{"Currently selected text.", ArgVarText},
-	"{CurLineText}": ArgVarInfo{"Current line text under cursor.", ArgVarText},
-	"{CurWord}":     ArgVarInfo{"Current word under cursor.", ArgVarText},
+	"{CurSel}":      {"Currently selected text.", ArgVarText},
+	"{CurLineText}": {"Current line text under cursor.", ArgVarText},
+	"{CurWord}":     {"Current word under cursor.", ArgVarText},
 
-	"{PromptFilePath}":       ArgVarInfo{"Prompt user for a file, and this is the full path to that file.", ArgVarPrompt},
-	"{PromptFileName}":       ArgVarInfo{"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
-	"{PromptFileDir}":        ArgVarInfo{"Prompt user for a file, and this is the directory name (only) of that file.", ArgVarPrompt},
-	"{PromptFileDirPath}":    ArgVarInfo{"Prompt user for a file, and this is the full path to that directory.", ArgVarPrompt},
-	"{PromptFileDirProjRel}": ArgVarInfo{"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
-	"{PromptString1}":        ArgVarInfo{"Prompt user for a string -- this is it.", ArgVarPrompt},
-	"{PromptString2}":        ArgVarInfo{"Prompt user for another string -- this is it.", ArgVarPrompt},
+	"{PromptFilePath}":       {"Prompt user for a file, and this is the full path to that file.", ArgVarPrompt},
+	"{PromptFileName}":       {"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
+	"{PromptFileDir}":        {"Prompt user for a file, and this is the directory name (only) of that file.", ArgVarPrompt},
+	"{PromptFileDirPath}":    {"Prompt user for a file, and this is the full path to that directory.", ArgVarPrompt},
+	"{PromptFileDirProjRel}": {"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
+	"{PromptString1}":        {"Prompt user for a string -- this is it.", ArgVarPrompt},
+	"{PromptString2}":        {"Prompt user for another string -- this is it.", ArgVarPrompt},
 }
 
 // ArgVarVals are current values of arg var vals -- updated on demand when a

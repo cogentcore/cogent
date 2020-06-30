@@ -187,7 +187,7 @@ func (pf *Preferences) EditCmds() {
 	pf.Changed = true
 	if len(CustomCmds) == 0 {
 		CustomCmds = append(CustomCmds, &Command{"Example Cmd", "list current dir", filecat.Any,
-			[]CmdAndArgs{CmdAndArgs{"ls", []string{"-la"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm})
+			[]CmdAndArgs{{"ls", []string{"-la"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm})
 
 	}
 	CmdsView(&CustomCmds)
