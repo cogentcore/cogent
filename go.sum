@@ -60,8 +60,8 @@ github.com/go-gl/mathgl v0.0.0-20190713194549-592312d8590a h1:yoAEv7yeWqfL/l9A/J
 github.com/go-gl/mathgl v0.0.0-20190713194549-592312d8590a/go.mod h1:yhpkQzEiH9yPyxDUGzkmgScbaBVlhC06qodikEM0ZwQ=
 github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff h1:W71vTCKoxtdXgnm1ECDFkfQnpdqAO00zzGXLA5yaEX8=
 github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff/go.mod h1:wfqRWLHRBsRgkp5dmbG56SA0DmVtwrF5N3oPdI8t+Aw=
-github.com/goki/gi v1.0.11 h1:gkXuOsqHNfr54rLEJ7KuKgGzC1eRhg0oX/7CHpCZtJE=
-github.com/goki/gi v1.0.11/go.mod h1:Ig7a4paXz+H2k1L9Yd4ZRnVw/BIh2XAhdTiQhKGkK7c=
+github.com/goki/gi v1.0.14 h1:vm76e/O5VmFig0fkHHjPEQT3EShweYPKzfN+1oJ5UuI=
+github.com/goki/gi v1.0.14/go.mod h1:Ig7a4paXz+H2k1L9Yd4ZRnVw/BIh2XAhdTiQhKGkK7c=
 github.com/goki/ki v1.0.0 h1:tsg8UII9T9vbEI55tNoJe+Y9MMdsE3b9mMrRWGZBZ4Y=
 github.com/goki/ki v1.0.0/go.mod h1:X+gmVeAym3JDSbbiA7iF1qkgAlTVWl1JV9sRsGDzxOA=
 github.com/goki/ki v1.0.2 h1:mupuGLlIFrkpXe28UiZr5tD/2nGMfBEL86/bZclyx8g=
