@@ -2136,6 +2136,20 @@ func (ge *GideView) JoinParaLines() {
 	}
 }
 
+// TabsToSpaces converts tabs to spaces
+// for given selected region (full text if no selection)
+func (ge *GideView) TabsToSpaces() {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return
+	}
+	if tv.HasSelection() {
+		tv.Buf.TabsToSpacesRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+	} else {
+		tv.Buf.TabsToSpacesRegion(0, tv.NLines-1)
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    StatusBar
 
@@ -3308,6 +3322,11 @@ var GideViewProps = ki.Props{
 			}},
 			{"JoinParaLines", ki.Props{
 				"desc":     "merges sequences of lines with hard returns forming paragraphs, separated by blank lines, into a single line per paragraph, for given selected region (full text if no selection)",
+				"confirm":  true,
+				"updtfunc": GideViewInactiveEmptyFunc,
+			}},
+			{"TabsToSpaces", ki.Props{
+				"desc":     "converts tabs to spaces",
 				"confirm":  true,
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},

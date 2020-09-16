@@ -1,7 +1,6 @@
 language: go
 
 go:
-  - 1.12.x
   - 1.13.x
   - 1.14.x
   - master
@@ -17,7 +16,7 @@ matrix:
     - go: master
 
 env:
-  - GO111MODULE=off
+  - GO111MODULE=on
 
 script:
   - go get -d -t -v ./...
