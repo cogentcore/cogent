@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/spell"
@@ -158,7 +159,7 @@ func (sv *SpellView) ConfigToolbar() {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.TrainAction()
 	})
-	train.SetProp("horizontal-align", gi.AlignRight)
+	train.SetProp("horizontal-align", gist.AlignRight)
 
 	// unknown toolbar
 

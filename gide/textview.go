@@ -4,6 +4,7 @@ import (
 	"image"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
@@ -290,9 +291,9 @@ func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	}
 	tv.SetProp("line-nos", false)
 	// if ge.Prefs.Editor.WordWrap {
-	tv.SetProp("white-space", gi.WhiteSpacePreWrap)
+	tv.SetProp("white-space", gist.WhiteSpacePreWrap)
 	// } else {
-	// 	tv.SetProp("white-space", gi.WhiteSpacePre)
+	// 	tv.SetProp("white-space", gist.WhiteSpacePre)
 	// }
 	tv.SetProp("tab-size", 8) // std for output
 	tv.SetProp("font-family", gi.Prefs.MonoFont)

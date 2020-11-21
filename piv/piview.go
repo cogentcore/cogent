@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
@@ -612,9 +613,9 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 	}
 
 	if gi.Prefs.Editor.WordWrap {
-		tv.SetProp("white-space", gi.WhiteSpacePreWrap)
+		tv.SetProp("white-space", gist.WhiteSpacePreWrap)
 	} else {
-		tv.SetProp("white-space", gi.WhiteSpacePre)
+		tv.SetProp("white-space", gist.WhiteSpacePre)
 	}
 	tv.SetProp("tab-size", 4)
 	tv.SetProp("font-family", gi.Prefs.MonoFont)
@@ -653,7 +654,7 @@ func (pv *PiView) TestTextView() (*giv.TextView, bool) {
 func (pv *PiView) OpenConsoleTab() {
 	ctv := pv.RecycleMainTabTextView("Console", true, true)
 	ctv.SetInactive()
-	ctv.SetProp("white-space", gi.WhiteSpacePre) // no word wrap
+	ctv.SetProp("white-space", gist.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
 		gide.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -675,7 +676,7 @@ func (pv *PiView) OpenTestTextTab() {
 func (pv *PiView) OpenOutTab() {
 	ctv := pv.RecycleMainTabTextView("Output", true, true)
 	ctv.SetInactive()
-	ctv.SetProp("white-space", gi.WhiteSpacePre) // no word wrap
+	ctv.SetProp("white-space", gist.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != &pv.OutBuf {
 		ctv.SetBuf(&pv.OutBuf)
 	}
@@ -793,7 +794,7 @@ func (pv *PiView) ConfigStatusBar() {
 	lbl := sb.AddNewChild(gi.KiT_Label, "sb-lbl").(*gi.Label)
 	lbl.SetStretchMaxWidth()
 	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
-	lbl.SetProp("vertical-align", gi.AlignTop)
+	lbl.SetProp("vertical-align", gist.AlignTop)
 	lbl.SetProp("margin", 0)
 	lbl.SetProp("padding", 0)
 	lbl.SetProp("tab-size", 4)
@@ -847,7 +848,7 @@ func (pv *PiView) ConfigSplitView() {
 	}
 	split.Dim = gi.X
 
-	split.SetProp("white-space", gi.WhiteSpacePreWrap)
+	split.SetProp("white-space", gist.WhiteSpacePreWrap)
 	split.SetProp("tab-size", 4)
 
 	config := pv.SplitViewConfig()
@@ -1105,8 +1106,8 @@ var PiViewProps = ki.Props{
 	"max-height":       -1,
 	"#title": ki.Props{
 		"max-width":        -1,
-		"horizontal-align": gi.AlignCenter,
-		"vertical-align":   gi.AlignTop,
+		"horizontal-align": gist.AlignCenter,
+		"vertical-align":   gist.AlignTop,
 	},
 	"ToolBar": ki.PropSlice{
 		{"SaveProj", ki.Props{

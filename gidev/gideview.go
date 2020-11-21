@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/girl"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/gi/oswin"
@@ -88,7 +90,7 @@ var KiT_GideView = kit.Types.AddType(&GideView{}, nil)
 func init() {
 	kit.Types.SetProps(KiT_GideView, GideViewProps)
 	// gi.URLHandler = URLHandler
-	gi.TextLinkHandler = TextLinkHandler
+	girl.TextLinkHandler = TextLinkHandler
 }
 
 ////////////////////////////////////////////////////////
@@ -1113,7 +1115,7 @@ func (ge *GideView) CountWordsRegion() string {
 
 // TextLinkHandler is the GideView handler for text links -- preferred one b/c
 // directly connects to correct GideView project
-func TextLinkHandler(tl gi.TextLink) bool {
+func TextLinkHandler(tl girl.TextLink) bool {
 	ftv, _ := tl.Widget.Embed(giv.KiT_TextView).(*giv.TextView)
 	gek := tl.Widget.ParentByType(KiT_GideView, true)
 	if gek != nil {
@@ -2410,7 +2412,7 @@ func (ge *GideView) ConfigStatusBar() {
 	lbl := sb.AddNewChild(gi.KiT_Label, "sb-lbl").(*gi.Label)
 	lbl.SetStretchMaxWidth()
 	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
-	lbl.SetProp("vertical-align", gi.AlignTop)
+	lbl.SetProp("vertical-align", gist.AlignTop)
 	lbl.SetProp("margin", 0)
 	lbl.SetProp("padding", 0)
 	lbl.SetProp("tab-size", 4)
@@ -2532,9 +2534,9 @@ func (ge *GideView) ConfigTextViews() {
 	for i := 0; i < NTextViews; i++ {
 		tv := ge.TextViewByIndex(i)
 		if ge.Prefs.Editor.WordWrap {
-			tv.SetProp("white-space", gi.WhiteSpacePreWrap)
+			tv.SetProp("white-space", gist.WhiteSpacePreWrap)
 		} else {
-			tv.SetProp("white-space", gi.WhiteSpacePre)
+			tv.SetProp("white-space", gist.WhiteSpacePre)
 		}
 		tv.SetProp("tab-size", ge.Prefs.Editor.TabSize)
 		tv.SetProp("font-family", gi.Prefs.MonoFont)
@@ -2877,8 +2879,8 @@ var GideViewProps = ki.Props{
 	"max-height":       -1,
 	"#title": ki.Props{
 		"max-width":        -1,
-		"horizontal-align": gi.AlignCenter,
-		"vertical-align":   gi.AlignTop,
+		"horizontal-align": gist.AlignCenter,
+		"vertical-align":   gist.AlignTop,
 	},
 	"MethViewNoUpdateAfter": true, // no update after is default for everything
 	"ToolBar": ki.PropSlice{

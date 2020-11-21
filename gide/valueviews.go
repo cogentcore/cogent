@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/units"
@@ -112,7 +113,7 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 	title.SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
 
 	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
 	sv.Viewport = vp
@@ -158,7 +159,7 @@ func KeyMapsView(km *KeyMaps) {
 	title.SetText("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -312,7 +313,7 @@ func LangsView(pt *Langs) {
 	title.SetText("Available Language Opts: Add or modify entries to customize options for language / file types")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
 
 	mv := mfr.AddNewChild(giv.KiT_MapView, "mv").(*giv.MapView)
 	mv.Viewport = vp
@@ -391,7 +392,7 @@ func CmdsView(pt *Commands) {
 	title.SetText("Gide Commands")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -548,7 +549,7 @@ func SplitsView(pt *Splits) {
 	title.SetText("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -705,7 +706,7 @@ func RegistersView(pt *Registers) {
 	title.SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gi.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_MapView, "tv").(*giv.MapView)
 	tv.Viewport = vp

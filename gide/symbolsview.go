@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/giv/textbuf"
 	"github.com/goki/gi/units"
@@ -388,15 +389,15 @@ var SymTreeViewProps = ki.Props{
 	"border-radius":    units.NewValue(0, units.Px),
 	"padding":          units.NewValue(0, units.Px),
 	"margin":           units.NewValue(1, units.Px),
-	"text-align":       gi.AlignLeft,
-	"vertical-align":   gi.AlignTop,
+	"text-align":       gist.AlignLeft,
+	"vertical-align":   gist.AlignTop,
 	"color":            &gi.Prefs.Colors.Font,
 	"background-color": "inherit",
 	".exec": ki.Props{
-		"font-weight": gi.WeightBold,
+		"font-weight": gist.WeightBold,
 	},
 	".open": ki.Props{
-		"font-style": gi.FontItalic,
+		"font-style": gist.FontItalic,
 	},
 	"#icon": ki.Props{
 		"width":   units.NewValue(1, units.Em),
