@@ -138,8 +138,7 @@ func (ge *GideView) FocusOnTabs() bool {
 func (ge *GideView) UpdateFiles() {
 	ge.Files.OpenPath(string(ge.ProjRoot))
 	if ge.FilesView != nil {
-		ge.FilesView.SetFullReRender()
-		ge.FilesView.UpdateSig()
+		ge.FilesView.ReSync()
 	}
 }
 
@@ -208,7 +207,7 @@ func (ge *GideView) OpenPath(path gi.FileName) (*gi.Window, *GideView) {
 		if win != nil {
 			winm := "gide-" + pnm
 			win.SetName(winm)
-			win.SetTitle(winm)
+			win.SetTitle(winm + ": " + root)
 		}
 		if fnm != "" {
 			ge.NextViewFile(gi.FileName(fnm))
@@ -238,7 +237,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) (*gi.Window, *GideView) {
 		if win != nil {
 			winm := "gide-" + pnm
 			win.SetName(winm)
-			win.SetTitle(winm)
+			win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
 		}
 	}
 	return ge.ParentWindow(), ge
@@ -2152,6 +2151,20 @@ func (ge *GideView) TabsToSpaces() {
 	}
 }
 
+// SpacesToTabs converts spaces to tabs
+// for given selected region (full text if no selection)
+func (ge *GideView) SpacesToTabs() {
+	tv := ge.ActiveTextView()
+	if tv.Buf == nil {
+		return
+	}
+	if tv.HasSelection() {
+		tv.Buf.SpacesToTabsRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+	} else {
+		tv.Buf.SpacesToTabsRegion(0, tv.NLines-1)
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //    StatusBar
 
@@ -3315,6 +3328,7 @@ var GideViewProps = ki.Props{
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
+			{"sep-xform", ki.BlankProp{}},
 			{"ReCase", ki.Props{
 				"desc":     "replace currently-selected text with text of given case",
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3328,7 +3342,12 @@ var GideViewProps = ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"TabsToSpaces", ki.Props{
-				"desc":     "converts tabs to spaces",
+				"desc":     "converts tabs to spaces for given selected region (full text if no selection)",
+				"confirm":  true,
+				"updtfunc": GideViewInactiveEmptyFunc,
+			}},
+			{"SpacesToTabs", ki.Props{
+				"desc":     "converts spaces to tabs for given selected region (full text if no selection)",
 				"confirm":  true,
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
@@ -3533,6 +3552,7 @@ func OpenGideProj(projfile string) (*gi.Window, *GideView) {
 // NewGideWindow is common code for Open GideWindow from Proj or Path
 func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideView) {
 	winm := "gide-" + projnm
+	wintitle := winm + ": " + path
 
 	if win, found := gi.AllWindows.FindName(winm); found {
 		mfr := win.SetMainFrame()
@@ -3552,7 +3572,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 		height = int(.8 * float64(scsz.Y))
 	}
 
-	win := gi.NewMainWindow(winm, winm, width, height)
+	win := gi.NewMainWindow(winm, wintitle, width, height)
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()

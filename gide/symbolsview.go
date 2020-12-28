@@ -215,6 +215,10 @@ func (sv *SymbolsView) OpenPackage() {
 		return
 	}
 	pfs := tv.Buf.PiState.Done()
+	if len(pfs.ParseState.Scopes) == 0 {
+		gi.PromptDialog(sv.ViewportSafe(), gi.DlgOpts{Title: "Symbols not yet parsed", Prompt: "Symbols not yet parsed -- try again in a few moments"}, gi.AddOk, gi.NoCancel, nil, nil)
+		return
+	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
 	sv.Syms.OpenSyms(pkg, "", sv.Match)
 }
@@ -227,6 +231,10 @@ func (sv *SymbolsView) OpenFile() {
 		return
 	}
 	pfs := tv.Buf.PiState.Done()
+	if len(pfs.ParseState.Scopes) == 0 {
+		gi.PromptDialog(sv.ViewportSafe(), gi.DlgOpts{Title: "Symbols not yet parsed", Prompt: "Symbols not yet parsed -- try again in a few moments"}, gi.AddOk, gi.NoCancel, nil, nil)
+		return
+	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
 	sv.Syms.OpenSyms(pkg, string(tv.Buf.Filename), sv.Match)
 }
@@ -332,11 +340,11 @@ var SymbolsViewProps = ki.Props{
 type SymbolsViewScope int
 
 const (
-	// SymScopeFile restricts the list of symbols to the active file
-	SymScopeFile SymbolsViewScope = iota
-
 	// SymScopePackage scopes list of symbols to the package of the active file
-	SymScopePackage
+	SymScopePackage SymbolsViewScope = iota
+
+	// SymScopeFile restricts the list of symbols to the active file
+	SymScopeFile
 
 	// SymScopeN is the number of symbol scopes
 	SymScopeN

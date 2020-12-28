@@ -13,14 +13,14 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[SymScopeFile-0]
-	_ = x[SymScopePackage-1]
+	_ = x[SymScopePackage-0]
+	_ = x[SymScopeFile-1]
 	_ = x[SymScopeN-2]
 }
 
-const _SymbolsViewScope_name = "SymScopeFileSymScopePackageSymScopeN"
+const _SymbolsViewScope_name = "SymScopePackageSymScopeFileSymScopeN"
 
-var _SymbolsViewScope_index = [...]uint8{0, 12, 27, 36}
+var _SymbolsViewScope_index = [...]uint8{0, 15, 27, 36}
 
 func (i SymbolsViewScope) String() string {
 	if i < 0 || i >= SymbolsViewScope(len(_SymbolsViewScope_index)-1) {
