@@ -191,7 +191,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 	}
 	vr := &gidebug.Variable{}
 	vr.InitName(vr, ds.Name)
-	vr.Addr = ds.Addr
+	vr.Addr = uintptr(ds.Addr)
 	vr.FullTypeStr = ds.RealType
 	vr.TypeStr = ShortType(ds.RealType)
 	if ds.Flags&api.VariableEscaped != 0 {

@@ -215,7 +215,9 @@ func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) err
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
-	_, err := gd.dlv.RestartFrom(false, pos, resetArgs, newArgs, true)
+	// note: [3]string is new redirects, which are files that can be used to redirect input,
+	// output and error streams.  Introduced in 1.5.1
+	_, err := gd.dlv.RestartFrom(false, pos, resetArgs, newArgs, [3]string{"", "", ""}, true)
 	return gd.LogErr(err)
 }
 
