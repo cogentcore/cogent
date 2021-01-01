@@ -242,27 +242,27 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase, regExp bool, l
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
 		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
 		if sfn.IsDir() && !sfn.IsOpen() {
-			// fmt.Printf("dir: %v closed\n", sfn.Nm)
-			return false // don't go down into closed directories!
+			// fmt.Printf("dir: %v closed\n", sfn.FPath)
+			return ki.Break // don't go down into closed directories!
 		}
 		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" || sfn.IsAutoSave() {
 			// fmt.Printf("dir: %v opened\n", sfn.Nm)
-			return true
+			return ki.Continue
 		}
 		if strings.HasSuffix(sfn.Nm, ".gide") { // exclude self
-			return true
+			return ki.Continue
 		}
 		if !filecat.IsMatchList(langs, sfn.Info.Sup) {
-			return true
+			return ki.Continue
 		}
 		if loc == FindLocDir {
 			cdir, _ := filepath.Split(string(sfn.FPath))
 			if activeDir != cdir {
-				return true
+				return ki.Continue
 			}
 		} else if loc == FindLocNotTop {
 			if level == 1 {
-				return true
+				return ki.Continue
 			}
 		}
 		var cnt int
@@ -283,7 +283,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase, regExp bool, l
 		if cnt > 0 {
 			mls = append(mls, FileSearchResults{sfn, cnt, matches})
 		}
-		return true
+		return ki.Continue
 	})
 	sort.Slice(mls, func(i, j int) bool {
 		return mls[i].Count > mls[j].Count
