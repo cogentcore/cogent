@@ -29,13 +29,14 @@ type FilePrefs struct {
 
 // Preferences are the overall user preferences for Gide.
 type Preferences struct {
-	Files        FilePrefs  `desc:"file view preferences"`
-	KeyMap       KeyMapName `desc:"key map for gide-specific keyboard sequences"`
-	SaveKeyMaps  bool       `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
-	SaveLangOpts bool       `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	SaveCmds     bool       `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	GoMod        bool       `desc:"if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- this cannot be set on a per-project basis as it affects overall environment state (must do Apply to change)"`
-	Changed      bool       `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	Files        FilePrefs         `desc:"file view preferences"`
+	EnvVars      map[string]string `desc:"environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"`
+	KeyMap       KeyMapName        `desc:"key map for gide-specific keyboard sequences"`
+	SaveKeyMaps  bool              `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
+	SaveLangOpts bool              `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	SaveCmds     bool              `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	GoMod        bool              `desc:"if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- this cannot be set on a per-project basis as it affects overall environment state (must do Apply to change)"`
+	Changed      bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -86,6 +87,7 @@ func (pf *FilePrefs) Defaults() {
 func (pf *Preferences) Defaults() {
 	pf.Files.Defaults()
 	pf.KeyMap = DefaultKeyMap
+	pf.EnvVars = make(map[string]string)
 }
 
 // PrefsFileName is the name of the preferences file in GoGi prefs directory
@@ -98,10 +100,18 @@ func (pf *Preferences) Apply() {
 	}
 	MergeAvailCmds()
 	AvailLangs.Validate()
+	pf.ApplyEnvVars()
 	if pf.GoMod {
 		os.Setenv("GO111MODULE", "on")
 	} else {
 		os.Setenv("GO111MODULE", "off")
+	}
+}
+
+// ApplyEnvVars applies environment variables set in EnvVars
+func (pf *Preferences) ApplyEnvVars() {
+	for k, v := range pf.EnvVars {
+		os.Setenv(k, v)
 	}
 }
 

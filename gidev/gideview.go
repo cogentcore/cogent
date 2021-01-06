@@ -31,6 +31,7 @@ import (
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mimedata"
+	"github.com/goki/gi/oswin/osevent"
 	"github.com/goki/gi/units"
 	"github.com/goki/gide/gide"
 	"github.com/goki/gide/gidebug"
@@ -177,6 +178,34 @@ func (ge *GideView) EditRecents() {
 				gi.StringsAddExtras((*[]string)(&gide.SavedPaths), gide.SavedPathsExtras)
 			}
 		})
+}
+
+// OpenFile opens file in an open project if it has the same path as the file
+// or in a new window.
+func (ge *GideView) OpenFile(fnm string) {
+	abfn, _ := filepath.Abs(fnm)
+	fmt.Println(abfn)
+	if strings.HasPrefix(abfn, string(ge.ProjRoot)) {
+		ge.ViewFile(gi.FileName(abfn))
+		return
+	}
+	for _, w := range gi.MainWindows {
+		mfr := w.SetMainFrame()
+		if mfr.NumChildren() == 0 {
+			continue
+		}
+		if mfr.Child(0).Name() != "gide" {
+			continue
+		}
+		geo := mfr.Child(0).(*GideView)
+		if strings.HasPrefix(abfn, string(geo.ProjRoot)) {
+			geo.ViewFile(gi.FileName(abfn))
+			fmt.Println(geo.ProjRoot)
+			return
+		}
+	}
+	// fmt.Printf("open path: %s\n", ge.ProjRoot)
+	ge.OpenPath(gi.FileName(abfn))
 }
 
 // OpenPath creates a new project by opening given path, which can either be a
@@ -2832,6 +2861,16 @@ func (ge *GideView) KeyChordEvent() {
 	})
 }
 
+func (ge *GideView) OSFileEvent() {
+	ge.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+		gee := recv.Embed(KiT_GideView).(*GideView)
+		ofe := d.(*osevent.OpenFilesEvent)
+		for _, fn := range ofe.Files {
+			gee.OpenFile(fn)
+		}
+	})
+}
+
 func (ge *GideView) Render2D() {
 	if len(ge.Kids) > 0 {
 		ge.ToolBar().UpdateActions()
@@ -2851,6 +2890,7 @@ func (ge *GideView) ConnectEvents2D() {
 		ge.LayoutScrollEvents()
 	}
 	ge.KeyChordEvent()
+	ge.OSFileEvent()
 }
 
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty

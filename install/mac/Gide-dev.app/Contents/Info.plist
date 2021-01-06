@@ -32,6 +32,8 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>gide</string>
+				<string>go</string>
+				<string>mod</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>gide.icns</string>
