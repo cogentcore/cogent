@@ -26,6 +26,7 @@ type SVGView struct {
 	Trans         mat32.Vec2 `desc:"view translation offset (from dragging)"`
 	Scale         float32    `desc:"view scaling (from zooming)"`
 	SetDragCursor bool       `view:"-" desc:"has dragging cursor been set yet?"`
+	SelBBox       mat32.Box2 `view:"-" desc:"current selection bounding box"`
 }
 
 var KiT_SVGView = kit.Types.AddType(&SVGView{}, SVGViewProps)
@@ -72,6 +73,7 @@ func (sv *SVGView) MouseDrag() {
 			ssvg.Trans.Y += float32(del.Y)
 			ssvg.SetTransform()
 			ssvg.SetFullReRender()
+			ssvg.UpdateSelects()
 			ssvg.UpdateSig()
 		} else {
 			if ssvg.SetDragCursor {
@@ -99,6 +101,7 @@ func (sv *SVGView) MouseScroll() {
 		}
 		ssvg.SetTransform()
 		ssvg.SetFullReRender()
+		ssvg.UpdateSelects()
 		ssvg.UpdateSig()
 	})
 }
@@ -184,7 +187,6 @@ func (sv *SVGView) Render2D() {
 	if sv.PushBounds() {
 		rs := &sv.Render
 		sv.This().(gi.Node2D).ConnectEvents2D()
-		sv.UpdateSelects()
 		if sv.Fill {
 			sv.FillViewport()
 		}
@@ -225,6 +227,7 @@ func (sv *SVGView) UpdateSelects() {
 		bb.Max.Set(float32(gi.WinBBox.Max.X), float32(gi.WinBBox.Max.Y))
 		bbox.ExpandByBox(bb)
 	}
+	sv.SelBBox = bbox
 	SetSpritePos(SizeUpL, image.Point{int(bbox.Min.X), int(bbox.Min.Y)}, win, sv.This(),
 		func(recv, send ki.Ki, sig int64, d interface{}) {
 			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -272,51 +275,40 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	es := sv.EditState()
 	sls := es.SelectedList(false)
-	/*
-		// could use this to directly update control points:
-			switch sp {
-			case SizeUpL:
-				ActiveSprites[SizeUpL].Geom.Pos.X += delta.X
-				ActiveSprites[SizeUpL].Geom.Pos.Y += delta.Y
-				ActiveSprites[SizeDnL].Geom.Pos.X += delta.X
-				ActiveSprites[SizeUpR].Geom.Pos.Y += delta.Y
-			case SizeUpR:
-				ActiveSprites[SizeUpR].Geom.Pos.X += delta.X
-				ActiveSprites[SizeUpR].Geom.Pos.Y += delta.Y
-				ActiveSprites[SizeDnR].Geom.Pos.X += delta.X
-				ActiveSprites[SizeUpL].Geom.Pos.Y += delta.Y
-			case SizeDnL:
-				ActiveSprites[SizeDnL].Geom.Pos.X += delta.X
-				ActiveSprites[SizeDnL].Geom.Pos.Y += delta.Y
-				ActiveSprites[SizeUpL].Geom.Pos.X += delta.X
-				ActiveSprites[SizeDnR].Geom.Pos.Y += delta.Y
-			case SizeDnR:
-				ActiveSprites[SizeDnR].Geom.Pos.X += delta.X
-				ActiveSprites[SizeDnR].Geom.Pos.Y += delta.Y
-				ActiveSprites[SizeUpR].Geom.Pos.X += delta.X
-				ActiveSprites[SizeDnL].Geom.Pos.Y += delta.Y
-			}
-	*/
-	// todo: need to convert delta to local coords for obj
-	del := mat32.Vec2{float32(delta.X), float32(delta.Y)}
+	xf := mat32.Identity2D()
+	cursz := sv.SelBBox.Size()
+	dv := mat32.NewVec2FmPoint(delta)
+	switch sp {
+	case SizeUpL:
+		ActiveSprites[SizeUpL].Geom.Pos.X += delta.X
+		ActiveSprites[SizeUpL].Geom.Pos.Y += delta.Y
+		ActiveSprites[SizeDnL].Geom.Pos.X += delta.X
+		ActiveSprites[SizeUpR].Geom.Pos.Y += delta.Y
+		nsz := cursz.Add(dv.MulScalar(-1))
+		xf.XX = nsz.X / cursz.X
+		xf.YY = nsz.Y / cursz.Y
+		xf.X0 = dv.X * xf.XX
+		xf.Y0 = dv.Y * xf.YY
+		sv.SelBBox.Min.Add(dv)
+	case SizeUpR:
+		ActiveSprites[SizeUpR].Geom.Pos.X += delta.X
+		ActiveSprites[SizeUpR].Geom.Pos.Y += delta.Y
+		ActiveSprites[SizeDnR].Geom.Pos.X += delta.X
+		ActiveSprites[SizeUpL].Geom.Pos.Y += delta.Y
+	case SizeDnL:
+		ActiveSprites[SizeDnL].Geom.Pos.X += delta.X
+		ActiveSprites[SizeDnL].Geom.Pos.Y += delta.Y
+		ActiveSprites[SizeUpL].Geom.Pos.X += delta.X
+		ActiveSprites[SizeDnR].Geom.Pos.Y += delta.Y
+	case SizeDnR:
+		ActiveSprites[SizeDnR].Geom.Pos.X += delta.X
+		ActiveSprites[SizeDnR].Geom.Pos.Y += delta.Y
+		ActiveSprites[SizeUpR].Geom.Pos.X += delta.X
+		ActiveSprites[SizeDnL].Geom.Pos.Y += delta.Y
+	}
 	for _, itm := range sls {
-		switch ob := itm.(type) {
-		case *svg.Rect:
-			switch sp {
-			case SizeUpL:
-				ob.Size.SetAdd(mat32.Vec2{-del.X, -del.Y})
-				ob.Pos.SetAdd(del)
-			case SizeUpR:
-				ob.Size.SetAdd(mat32.Vec2{del.X, -del.Y})
-				ob.Pos.SetAdd(mat32.Vec2{0, del.Y})
-			case SizeDnL:
-				ob.Size.SetAdd(mat32.Vec2{-del.X, del.Y})
-				ob.Pos.SetAdd(mat32.Vec2{del.X, 0})
-			case SizeDnR:
-				ob.Size.SetAdd(del)
-			}
-		}
+		itm.(svg.NodeSVG).ApplyDeltaXForm(xf)
 	}
 	sv.UpdateSig()
-	// win.RenderOverlays()
+	win.RenderOverlays()
 }

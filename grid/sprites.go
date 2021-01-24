@@ -59,6 +59,7 @@ func SpriteSize() int {
 	return sz
 }
 
+// todo: store this on EditState, pass editstate to Sprite method
 // ActiveSprites are cached only for sprites last accessed by Sprite() method
 var ActiveSprites = map[Sprites]*gi.Sprite{}
 
