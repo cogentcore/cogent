@@ -2,6 +2,8 @@
 
 Grid is a GoGi-based SVG vector drawing program, with design based on Inkscape.
 
+If an acronym is required, how about: "Go-rendered interactive drawing" program.
+
 # plans
 
 Similar to inkscape in overall layout, and read / write inkscape compatible SVG files.
