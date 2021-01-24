@@ -5,7 +5,6 @@
 package grid
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -14,11 +13,7 @@ import (
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/oswin/cursor"
 	"github.com/goki/gi/oswin/key"
-	"github.com/goki/gi/oswin/mouse"
-	"github.com/goki/gi/svg"
-	"github.com/goki/gi/units"
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -28,28 +23,28 @@ import (
 // GridView is the Grid SVG vector drawing program: Go-rendered interactive drawing
 type GridView struct {
 	gi.Frame
-	FilePath      gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
-	Tool          Tools       `desc:"current tool in use"`
-	Prefs         Preferences `desc:"current drawing preferences"`
-	Trans         mat32.Vec2  `desc:"view translation offset (from dragging)"`
-	Scale         float32     `desc:"view scaling (from zooming)"`
-	SetDragCursor bool        `view:"-" desc:"has dragging cursor been set yet?"`
+	FilePath  gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
+	Prefs     Preferences `desc:"current drawing preferences"`
+	EditState EditState   `desc:"current edit state"`
 }
 
 var KiT_GridView = kit.Types.AddType(&GridView{}, GridViewProps)
 
 // AddNewGridView adds a new editor to given parent node, with given name.
 func AddNewGridView(parent ki.Ki, name string) *GridView {
-	return parent.AddNewChild(KiT_GridView, name).(*GridView)
+	gv := parent.AddNewChild(KiT_GridView, name).(*GridView)
+	return gv
 }
 
 func (g *GridView) CopyFieldsFrom(frm interface{}) {
 	fr := frm.(*GridView)
 	g.Frame.CopyFieldsFrom(&fr.Frame)
 	// todo: fill out
-	// g.Trans = fr.Trans
-	// g.Scale = fr.Scale
-	// g.SetDragCursor = fr.SetDragCursor
+}
+
+func (gr *GridView) Defaults() {
+	gr.Prefs.Defaults()
+	// gr.Prefs = Prefs
 }
 
 // OpenDrawing opens a new .svg drawing
@@ -58,8 +53,6 @@ func (gr *GridView) OpenDrawing(fnm gi.FileName) error {
 	gr.FilePath = gi.FileName(path)
 	// TheFile.SetText(CurFilename)
 	sg := gr.SVG()
-	updt := gr.UpdateStart()
-	gr.SetFullReRender()
 	err := sg.OpenXML(path)
 	if err != nil {
 		log.Println(err)
@@ -68,8 +61,7 @@ func (gr *GridView) OpenDrawing(fnm gi.FileName) error {
 	// SetZoom(TheSVG.ParentWindow().LogicalDPI() / 96.0)
 	// SetTrans(0, 0)
 	tv := gr.TreeView()
-	tv.SetRootNode(sg)
-	gr.UpdateEnd(updt)
+	tv.ReSync()
 	return nil
 }
 
@@ -85,7 +77,7 @@ func (gr *GridView) SaveDrawing() error {
 
 // SetTool sets the current active tool
 func (gr *GridView) SetTool(tl Tools) {
-	gr.Tool = tl
+	gr.EditState.Tool = tl
 }
 
 func (gr *GridView) MainToolbar() *gi.ToolBar {
@@ -112,8 +104,8 @@ func (gr *GridView) TreeView() *giv.TreeView {
 	return gr.SplitView().ChildByName("tree-frame", 0).ChildByName("treeview", 0).(*giv.TreeView)
 }
 
-func (gr *GridView) SVG() *svg.SVG {
-	return gr.SplitView().Child(1).(*svg.SVG)
+func (gr *GridView) SVG() *SVGView {
+	return gr.SplitView().Child(1).(*SVGView)
 }
 
 func (gr *GridView) Tabs() *gi.TabView {
@@ -140,16 +132,11 @@ func (gr *GridView) Config() {
 
 	tvfr := gi.AddNewFrame(sv, "tree-frame", gi.LayoutHoriz)
 	tvfr.SetStretchMax()
+	tvfr.SetReRenderAnchor()
 	tv := giv.AddNewTreeView(tvfr, "treeview")
+	tv.OpenDepth = 1
 
-	sg := svg.AddNewSVG(sv, "svg")
-	// sg.Scale = 1
-	sg.Fill = true
-	sg.SetProp("background-color", "white")
-	sg.SetProp("width", units.NewPx(480))
-	sg.SetProp("height", units.NewPx(240))
-	sg.SetStretchMaxWidth()
-	sg.SetStretchMaxHeight()
+	sg := AddNewSVGView(sv, "svg", gr)
 
 	tab := gi.AddNewTabView(sv, "tabs")
 	tab.SetStretchMaxWidth()
@@ -217,98 +204,6 @@ func (gr *GridView) ConfigTools() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(RectTool)
 		})
-}
-
-// GridViewEvents handles svg editing events
-func (gv *GridView) GridViewEvents() {
-	gv.ConnectEvent(oswin.MouseDragEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
-		me := d.(*mouse.DragEvent)
-		me.SetProcessed()
-		ssvg := recv.Embed(KiT_GridView).(*GridView)
-		if ssvg.IsDragging() {
-			if !ssvg.SetDragCursor {
-				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Push(cursor.HandOpen)
-				ssvg.SetDragCursor = true
-			}
-			del := me.Where.Sub(me.From)
-			ssvg.Trans.X += float32(del.X)
-			ssvg.Trans.Y += float32(del.Y)
-			ssvg.SetTransform()
-			ssvg.SetFullReRender()
-			ssvg.UpdateSig()
-		} else {
-			if ssvg.SetDragCursor {
-				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
-				ssvg.SetDragCursor = false
-			}
-		}
-
-	})
-	gv.ConnectEvent(oswin.MouseScrollEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
-		me := d.(*mouse.ScrollEvent)
-		me.SetProcessed()
-		ssvg := recv.Embed(KiT_GridView).(*GridView)
-		if ssvg.SetDragCursor {
-			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
-			ssvg.SetDragCursor = false
-		}
-		ssvg.InitScale()
-		ssvg.Scale += float32(me.NonZeroDelta(false)) / 20
-		if ssvg.Scale <= 0 {
-			ssvg.Scale = 0.01
-		}
-		ssvg.SetTransform()
-		ssvg.SetFullReRender()
-		ssvg.UpdateSig()
-	})
-	gv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
-		me := d.(*mouse.Event)
-		ssvg := recv.Embed(KiT_GridView).(*GridView)
-		if ssvg.SetDragCursor {
-			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
-			ssvg.SetDragCursor = false
-		}
-		obj := ssvg.FirstContainingPoint(me.Where, true)
-		if me.Action == mouse.Release && me.Button == mouse.Right {
-			me.SetProcessed()
-			if obj != nil {
-				giv.StructViewDialog(ssvg.Viewport, obj, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
-			}
-		}
-	})
-	gv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
-		me := d.(*mouse.HoverEvent)
-		me.SetProcessed()
-		ssvg := recv.Embed(KiT_GridView).(*GridView)
-		obj := ssvg.FirstContainingPoint(me.Where, true)
-		if obj != nil {
-			pos := me.Where
-			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name())
-			gi.PopupTooltip(obj.Name(), pos.X, pos.Y, gv.ViewportSafe(), ttxt)
-		}
-	})
-}
-
-func (gv *GridView) ConnectEvents2D() {
-	gv.GridViewEvents()
-}
-
-// InitScale ensures that Scale is initialized and non-zero
-func (gv *GridView) InitScale() {
-	if gv.Scale == 0 {
-		mvp := gv.ViewportSafe()
-		if mvp != nil {
-			gv.Scale = gv.ParentWindow().LogicalDPI() / 96.0
-		} else {
-			gv.Scale = 1
-		}
-	}
-}
-
-// SetTransform sets the transform based on Trans and Scale values
-func (gv *GridView) SetTransform() {
-	gv.InitScale()
-	gv.SetProp("transform", fmt.Sprintf("translate(%v,%v) scale(%v,%v)", gv.Trans.X, gv.Trans.Y, gv.Scale, gv.Scale))
 }
 
 // CloseWindowReq is called when user tries to close window -- we
@@ -391,6 +286,7 @@ func NewGridWindow(fnm string) (*gi.Window, *GridView) {
 	mfr := win.SetMainFrame()
 	gv := AddNewGridView(mfr, "gridview")
 	gv.Viewport = vp
+	gv.Defaults()
 	gv.Config()
 
 	if fnm != "" {
