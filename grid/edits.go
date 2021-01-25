@@ -7,18 +7,35 @@ package grid
 import (
 	"sort"
 
+	"github.com/goki/gi/gi"
 	"github.com/goki/gi/oswin/mouse"
-	"github.com/goki/ki/ki"
+	"github.com/goki/gi/svg"
+	"github.com/goki/mat32"
 )
+
+// SelState is state for selected nodes
+type SelState struct {
+	Order    int       `desc:"order item was selected"`
+	InitGeom []float32 `desc:"initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there"`
+}
 
 // EditState has all the current edit state information
 type EditState struct {
-	Tool     Tools         `desc:"current tool in use"`
-	Selected map[ki.Ki]int `copy:"-" json:"-" xml:"-" desc:"selected item(s) -- int is order of selection"`
+	Tool          Tools                     `desc:"current tool in use"`
+	Selected      map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" desc:"selected item(s)"`
+	SelBBox       mat32.Box2                `desc:"current selection bounding box"`
+	DragStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
+	DragCurBBox   mat32.Box2                `desc:"current bbox during dragging"`
+	ActiveSprites map[Sprites]*gi.Sprite    `desc:"cached only for active sprites during manipulation"`
+}
+
+// HasSelected returns true if there are selected items
+func (es *EditState) HasSelected() bool {
+	return len(es.Selected) > 0
 }
 
 // IsSelected returns the selected status of given slice index
-func (es *EditState) IsSelected(itm ki.Ki) bool {
+func (es *EditState) IsSelected(itm svg.NodeSVG) bool {
 	if _, ok := es.Selected[itm]; ok {
 		return true
 	}
@@ -26,13 +43,13 @@ func (es *EditState) IsSelected(itm ki.Ki) bool {
 }
 
 func (es *EditState) ResetSelected() {
-	es.Selected = make(map[ki.Ki]int)
+	es.Selected = make(map[svg.NodeSVG]*SelState)
 }
 
 // SelectedList returns list of selected items, sorted either ascending or descending
 // according to order of selection
-func (es *EditState) SelectedList(descendingSort bool) []ki.Ki {
-	sls := make([]ki.Ki, len(es.Selected))
+func (es *EditState) SelectedList(descendingSort bool) []svg.NodeSVG {
+	sls := make([]svg.NodeSVG, len(es.Selected))
 	i := 0
 	for it := range es.Selected {
 		sls[i] = it
@@ -40,11 +57,11 @@ func (es *EditState) SelectedList(descendingSort bool) []ki.Ki {
 	}
 	if descendingSort {
 		sort.Slice(sls, func(i, j int) bool {
-			return es.Selected[sls[i]] > es.Selected[sls[j]]
+			return es.Selected[sls[i]].Order > es.Selected[sls[j]].Order
 		})
 	} else {
 		sort.Slice(sls, func(i, j int) bool {
-			return es.Selected[sls[i]] < es.Selected[sls[j]]
+			return es.Selected[sls[i]].Order < es.Selected[sls[j]].Order
 		})
 	}
 	return sls
@@ -52,13 +69,15 @@ func (es *EditState) SelectedList(descendingSort bool) []ki.Ki {
 
 // Select selects given item (if not already selected) -- updates select
 // status of index label
-func (es *EditState) Select(itm ki.Ki) {
+func (es *EditState) Select(itm svg.NodeSVG) {
 	idx := len(es.Selected)
-	es.Selected[itm] = idx
+	ss := &SelState{Order: idx}
+	itm.WriteGeom(&ss.InitGeom)
+	es.Selected[itm] = ss
 }
 
 // Unselect unselects given idx (if selected)
-func (es *EditState) Unselect(itm ki.Ki) {
+func (es *EditState) Unselect(itm svg.NodeSVG) {
 	if es.IsSelected(itm) {
 		delete(es.Selected, itm)
 	}
@@ -67,7 +86,7 @@ func (es *EditState) Unselect(itm ki.Ki) {
 // SelectAction is called when a select action has been received (e.g., a
 // mouse click) -- translates into selection updates -- gets selection mode
 // from mouse event (ExtendContinuous, ExtendOne)
-func (es *EditState) SelectAction(itm ki.Ki, mode mouse.SelectModes) {
+func (es *EditState) SelectAction(itm svg.NodeSVG, mode mouse.SelectModes) {
 	if mode == mouse.NoSelect {
 		return
 	}
@@ -94,5 +113,41 @@ func (es *EditState) SelectAction(itm ki.Ki, mode mouse.SelectModes) {
 		es.Select(itm)
 	case mouse.UnselectQuiet:
 		es.Unselect(itm)
+	}
+}
+
+////////////////////////////////////////////////////////////////
+
+// UpdateSelBBox updates the current selection bbox surrounding all selected items
+func (es *EditState) UpdateSelBBox() {
+	if es.ActiveSprites == nil {
+		es.ActiveSprites = make(map[Sprites]*gi.Sprite)
+	}
+	es.SelBBox.SetEmpty()
+	if len(es.Selected) == 0 {
+		return
+	}
+	bbox := mat32.Box2{}
+	bbox.SetEmpty()
+	for itm := range es.Selected {
+		bb := mat32.Box2{}
+		g := itm.AsSVGNode()
+		bb.Min.Set(float32(g.WinBBox.Min.X), float32(g.WinBBox.Min.Y))
+		bb.Max.Set(float32(g.WinBBox.Max.X), float32(g.WinBBox.Max.Y))
+		bbox.ExpandByBox(bb)
+	}
+	es.SelBBox = bbox
+}
+
+// DragStart captures the current state at start of dragging manipulation
+func (es *EditState) DragStart() {
+	if len(es.Selected) == 0 {
+		return
+	}
+	es.UpdateSelBBox()
+	es.DragStartBBox = es.SelBBox
+	es.DragCurBBox = es.SelBBox
+	for itm, ss := range es.Selected {
+		itm.WriteGeom(&ss.InitGeom)
 	}
 }

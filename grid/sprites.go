@@ -59,10 +59,6 @@ func SpriteSize() int {
 	return sz
 }
 
-// todo: store this on EditState, pass editstate to Sprite method
-// ActiveSprites are cached only for sprites last accessed by Sprite() method
-var ActiveSprites = map[Sprites]*gi.Sprite{}
-
 // Sprite returns given sprite -- renders to window if not yet made
 func Sprite(spi Sprites, win *gi.Window) *gi.Sprite {
 	spnm := SpriteNames[spi]
@@ -82,13 +78,20 @@ func Sprite(spi Sprites, win *gi.Window) *gi.Sprite {
 		sp.Bg = image.NewRGBA(ibd)
 		draw.Draw(sp.Bg, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
 	}
-	ActiveSprites[spi] = sp
 	return sp
 }
 
-// SetSpritePos activates and sets sprite position
-func SetSpritePos(spi Sprites, pos image.Point, win *gi.Window, recv ki.Ki, fun ki.RecvFunc) *gi.Sprite {
+// SpriteConnectEvent activates and sets mouse event functions to given function
+func SpriteConnectEvent(spi Sprites, win *gi.Window, recv ki.Ki, fun ki.RecvFunc) *gi.Sprite {
 	sp := Sprite(spi, win)
+	sp.ConnectEvent(recv, oswin.MouseEvent, fun)
+	sp.ConnectEvent(recv, oswin.MouseDragEvent, fun)
+	win.ActivateSprite(sp.Name)
+	return sp
+}
+
+// SetSpritePos sets sprite position, taking into account relative offsets
+func SetSpritePos(spi Sprites, sp *gi.Sprite, pos image.Point) {
 	sz := SpriteSize()
 	if spi == SizeDnL || spi == SizeUpL || spi == SizeLfC {
 		pos.X -= sz
@@ -97,10 +100,6 @@ func SetSpritePos(spi Sprites, pos image.Point, win *gi.Window, recv ki.Ki, fun 
 		pos.Y -= sz
 	}
 	sp.Geom.Pos = pos
-	sp.ConnectEvent(recv, oswin.MouseEvent, fun)
-	sp.ConnectEvent(recv, oswin.MouseDragEvent, fun)
-	win.ActivateSprite(sp.Name)
-	return sp
 }
 
 // InactivateSprites inactivates all of our sprites

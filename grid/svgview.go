@@ -26,7 +26,6 @@ type SVGView struct {
 	Trans         mat32.Vec2 `desc:"view translation offset (from dragging)"`
 	Scale         float32    `desc:"view scaling (from zooming)"`
 	SetDragCursor bool       `view:"-" desc:"has dragging cursor been set yet?"`
-	SelBBox       mat32.Box2 `view:"-" desc:"current selection bounding box"`
 }
 
 var KiT_SVGView = kit.Types.AddType(&SVGView{}, SVGViewProps)
@@ -68,13 +67,7 @@ func (sv *SVGView) MouseDrag() {
 				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Push(cursor.HandOpen)
 				ssvg.SetDragCursor = true
 			}
-			del := me.Where.Sub(me.From)
-			ssvg.Trans.X += float32(del.X)
-			ssvg.Trans.Y += float32(del.Y)
-			ssvg.SetTransform()
-			ssvg.SetFullReRender()
-			ssvg.UpdateSelects()
-			ssvg.UpdateSig()
+			ssvg.DragEvent(me)
 		} else {
 			if ssvg.SetDragCursor {
 				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
@@ -101,7 +94,7 @@ func (sv *SVGView) MouseScroll() {
 		}
 		ssvg.SetTransform()
 		ssvg.SetFullReRender()
-		ssvg.UpdateSelects()
+		ssvg.UpdateSelSprites()
 		ssvg.UpdateSig()
 	})
 }
@@ -120,21 +113,23 @@ func (sv *SVGView) MouseEvent() {
 		}
 		obj := ssvg.FirstContainingPoint(me.Where, true)
 		if obj != nil {
+			sob := obj.(svg.NodeSVG)
 			switch {
 			case me.Button == mouse.Right:
 				me.SetProcessed()
 				giv.StructViewDialog(ssvg.Viewport, obj, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
 			case es.Tool == SelectTool:
 				me.SetProcessed()
-				es.SelectAction(obj, me.SelectMode())
-				ssvg.UpdateSelects()
+				es.SelectAction(sob, me.SelectMode())
+				ssvg.UpdateSelSprites()
+				ssvg.EditState().DragStart()
 			}
 		} else {
 			switch {
 			case es.Tool == SelectTool:
 				me.SetProcessed()
 				es.ResetSelected()
-				ssvg.UpdateSelects()
+				ssvg.UpdateSelSprites()
 			}
 		}
 	})
@@ -205,50 +200,54 @@ func (sv *SVGView) Render2D() {
 /////////////////////////////////////////////////
 // selection processing
 
-func (sv *SVGView) UpdateSelects() {
+func (sv *SVGView) UpdateSelSprites() {
 	win := sv.GridView.ParentWindow()
 	updt := win.UpdateStart()
 	defer win.UpdateEnd(updt)
 
 	es := sv.EditState()
-	sls := es.SelectedList(false)
-	if len(sls) == 0 {
+	es.UpdateSelBBox()
+	if !es.HasSelected() {
 		InactivateSprites(win)
 		win.RenderOverlays()
 		return
 	}
-	bbox := mat32.Box2{}
-	bbox.SetEmpty()
-	for _, itm := range sls {
-		// fmt.Printf("%d:\t%s\n", i, itm.Name())
-		bb := mat32.Box2{}
-		_, gi := gi.KiToNode2D(itm)
-		bb.Min.Set(float32(gi.WinBBox.Min.X), float32(gi.WinBBox.Min.Y))
-		bb.Max.Set(float32(gi.WinBBox.Max.X), float32(gi.WinBBox.Max.Y))
-		bbox.ExpandByBox(bb)
-	}
-	sv.SelBBox = bbox
-	SetSpritePos(SizeUpL, image.Point{int(bbox.Min.X), int(bbox.Min.Y)}, win, sv.This(),
-		func(recv, send ki.Ki, sig int64, d interface{}) {
-			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			ssvg.SpriteEvent(SizeUpL, oswin.EventType(sig), d)
-		})
-	SetSpritePos(SizeUpR, image.Point{int(bbox.Max.X), int(bbox.Min.Y)}, win, sv.This(),
-		func(recv, send ki.Ki, sig int64, d interface{}) {
-			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			ssvg.SpriteEvent(SizeUpR, oswin.EventType(sig), d)
-		})
-	SetSpritePos(SizeDnL, image.Point{int(bbox.Min.X), int(bbox.Max.Y)}, win, sv.This(),
-		func(recv, send ki.Ki, sig int64, d interface{}) {
-			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			ssvg.SpriteEvent(SizeDnL, oswin.EventType(sig), d)
-		})
-	SetSpritePos(SizeDnR, image.Point{int(bbox.Max.X), int(bbox.Max.Y)}, win, sv.This(),
-		func(recv, send ki.Ki, sig int64, d interface{}) {
-			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			ssvg.SpriteEvent(SizeDnR, oswin.EventType(sig), d)
-		})
+	sp := SpriteConnectEvent(SizeUpL, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		ssvg.SpriteEvent(SizeUpL, oswin.EventType(sig), d)
+	})
+	es.ActiveSprites[SizeUpL] = sp
+
+	sp = SpriteConnectEvent(SizeUpR, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		ssvg.SpriteEvent(SizeUpR, oswin.EventType(sig), d)
+	})
+	es.ActiveSprites[SizeUpR] = sp
+
+	sp = SpriteConnectEvent(SizeDnL, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		ssvg.SpriteEvent(SizeDnL, oswin.EventType(sig), d)
+	})
+	es.ActiveSprites[SizeDnL] = sp
+
+	sp = SpriteConnectEvent(SizeDnR, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		ssvg.SpriteEvent(SizeDnR, oswin.EventType(sig), d)
+	})
+	es.ActiveSprites[SizeDnR] = sp
+
+	sv.SetSelSprites(es.SelBBox)
+
 	win.RenderOverlays()
+}
+
+// SetSelSprites sets active selection sprite locations based on given bounding box
+func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
+	es := sv.EditState()
+	SetSpritePos(SizeUpL, es.ActiveSprites[SizeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
+	SetSpritePos(SizeUpR, es.ActiveSprites[SizeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
+	SetSpritePos(SizeDnL, es.ActiveSprites[SizeDnL], image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
+	SetSpritePos(SizeDnR, es.ActiveSprites[SizeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
 }
 
 func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
@@ -260,6 +259,7 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 		// fmt.Printf("click %s\n", sp)
 		if me.Action == mouse.Press {
 			win.SpriteDragging = SpriteNames[sp]
+			sv.EditState().DragStart()
 			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
 		} else if me.Action == mouse.Release {
 			sv.UpdateSig()
@@ -272,43 +272,67 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 	}
 }
 
+// DragEvent processes a mouse drag event on the SVG canvas
+func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
+	delta := me.Where.Sub(me.From)
+	dv := mat32.NewVec2FmPoint(delta)
+	es := sv.EditState()
+	if es.HasSelected() {
+		win := sv.GridView.ParentWindow()
+		es.DragCurBBox.Min.SetAdd(dv)
+		es.DragCurBBox.Max.SetAdd(dv)
+		tdel := es.DragCurBBox.Min.Sub(es.DragStartBBox.Min)
+		xf := mat32.Identity2D()
+		xf.X0 = tdel.X
+		xf.Y0 = tdel.Y
+		for itm, ss := range es.Selected {
+			itm.ReadGeom(ss.InitGeom)
+			itm.ApplyDeltaXForm(xf)
+		}
+		sv.SetSelSprites(es.DragCurBBox)
+		sv.UpdateSig()
+		win.RenderOverlays()
+	} else {
+		sv.Trans.SetAdd(dv)
+		sv.SetTransform()
+		sv.SetFullReRender()
+		sv.UpdateSig()
+	}
+}
+
+// SpriteDrag processes a mouse drag event on a selection sprite
 func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	es := sv.EditState()
-	sls := es.SelectedList(false)
-	xf := mat32.Identity2D()
-	cursz := sv.SelBBox.Size()
+	stsz := es.DragStartBBox.Size()
+	stpos := es.DragStartBBox.Min
 	dv := mat32.NewVec2FmPoint(delta)
 	switch sp {
 	case SizeUpL:
-		ActiveSprites[SizeUpL].Geom.Pos.X += delta.X
-		ActiveSprites[SizeUpL].Geom.Pos.Y += delta.Y
-		ActiveSprites[SizeDnL].Geom.Pos.X += delta.X
-		ActiveSprites[SizeUpR].Geom.Pos.Y += delta.Y
-		nsz := cursz.Add(dv.MulScalar(-1))
-		xf.XX = nsz.X / cursz.X
-		xf.YY = nsz.Y / cursz.Y
-		xf.X0 = dv.X * xf.XX
-		xf.Y0 = dv.Y * xf.YY
-		sv.SelBBox.Min.Add(dv)
+		es.DragCurBBox.Min.SetAdd(dv)
 	case SizeUpR:
-		ActiveSprites[SizeUpR].Geom.Pos.X += delta.X
-		ActiveSprites[SizeUpR].Geom.Pos.Y += delta.Y
-		ActiveSprites[SizeDnR].Geom.Pos.X += delta.X
-		ActiveSprites[SizeUpL].Geom.Pos.Y += delta.Y
+		es.DragCurBBox.Min.Y += dv.Y
+		es.DragCurBBox.Max.X += dv.X
 	case SizeDnL:
-		ActiveSprites[SizeDnL].Geom.Pos.X += delta.X
-		ActiveSprites[SizeDnL].Geom.Pos.Y += delta.Y
-		ActiveSprites[SizeUpL].Geom.Pos.X += delta.X
-		ActiveSprites[SizeDnR].Geom.Pos.Y += delta.Y
+		es.DragCurBBox.Min.X += dv.X
+		es.DragCurBBox.Max.Y += dv.Y
 	case SizeDnR:
-		ActiveSprites[SizeDnR].Geom.Pos.X += delta.X
-		ActiveSprites[SizeDnR].Geom.Pos.Y += delta.Y
-		ActiveSprites[SizeUpR].Geom.Pos.X += delta.X
-		ActiveSprites[SizeDnL].Geom.Pos.Y += delta.Y
+		es.DragCurBBox.Max.SetAdd(dv)
 	}
-	for _, itm := range sls {
-		itm.(svg.NodeSVG).ApplyDeltaXForm(xf)
+	es.DragCurBBox.Min.SetMin(es.DragCurBBox.Max.SubScalar(1)) // don't allow flipping
+	npos := es.DragCurBBox.Min
+	nsz := es.DragCurBBox.Size()
+	xf := mat32.Identity2D()
+	xf.XX = nsz.X / stsz.X
+	xf.YY = nsz.Y / stsz.Y
+	xf.X0 = npos.X - stpos.X
+	xf.Y0 = npos.Y - stpos.Y
+	for itm, ss := range es.Selected {
+		itm.ReadGeom(ss.InitGeom)
+		itm.ApplyDeltaXForm(xf)
 	}
+
+	sv.SetSelSprites(es.DragCurBBox)
+
 	sv.UpdateSig()
 	win.RenderOverlays()
 }
