@@ -22,7 +22,7 @@ import (
 // SVGView is the element for viewing, interacting with the SVG
 type SVGView struct {
 	svg.SVG
-	GridView      *GridView  `json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+	GridView      *GridView  `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 	Trans         mat32.Vec2 `desc:"view translation offset (from dragging)"`
 	Scale         float32    `desc:"view scaling (from zooming)"`
 	SetDragCursor bool       `view:"-" desc:"has dragging cursor been set yet?"`
@@ -121,6 +121,7 @@ func (sv *SVGView) MouseEvent() {
 			case es.Tool == SelectTool:
 				me.SetProcessed()
 				es.SelectAction(sob, me.SelectMode())
+				ssvg.GridView.UpdateTabs()
 				ssvg.UpdateSelSprites()
 				ssvg.EditState().DragStart()
 			}

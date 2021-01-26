@@ -5,8 +5,10 @@
 package grid
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/goki/gi/gi"
@@ -142,12 +144,24 @@ func (gr *GridView) Config() {
 	tab.SetStretchMaxWidth()
 
 	tv.SetRootNode(sg)
+	tv.Open()
 
-	sv.SetSplits(0.1, 0.7, 0.2)
+	tv.TreeViewSig.Connect(gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if data == nil || sig != int64(giv.TreeViewSelected) {
+			return
+		}
+		ggv, _ := recv.Embed(KiT_GridView).(*GridView)
+		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+		stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
+		stv.SetStruct(tvn.SrcNode)
+	})
+
+	sv.SetSplits(0.1, 0.65, 0.25)
 
 	gr.ConfigMainToolbar()
 	gr.ConfigModalToolbar()
 	gr.ConfigTools()
+	gr.ConfigTabs()
 
 	gr.UpdateEnd(updt)
 }
@@ -322,6 +336,154 @@ func NewGridWindow(fnm string) (*gi.Window, *GridView) {
 
 	return win, gv
 }
+
+/////////////////////////////////////////////////////////////////////////
+//   Controls
+
+// RecycleTab returns a tab with given name, first by looking for an existing one,
+// and if not found, making a new one with widget of given type.
+// If sel, then select it.  returns widget for tab.
+func (gv *GridView) RecycleTab(label string, typ reflect.Type, sel bool) gi.Node2D {
+	tv := gv.Tabs()
+	return tv.RecycleTab(label, typ, sel)
+}
+
+// Tab returns tab with given label
+func (gv *GridView) Tab(label string) gi.Node2D {
+	tv := gv.Tabs()
+	return tv.TabByName(label)
+}
+
+func (gv *GridView) ConfigTabs() {
+	sv := gv.SVG()
+	tv := gv.Tabs()
+	tv.NoDeleteTabs = true
+	pv := gv.RecycleTab("Paint", KiT_PaintView, false).(*PaintView)
+	pv.Config(gv)
+	stv := gv.RecycleTab("Obj", giv.KiT_StructView, false).(*giv.StructView)
+	stv.SetStruct(sv)
+}
+
+func (gv *GridView) UpdateTabs() {
+	es := gv.EditState
+	sls := es.SelectedList(false)
+	if len(sls) > 0 {
+		pnt := &(sls[0].AsSVGNode().Pnt)
+		pv := gv.Tab("Paint").(*PaintView)
+		pv.Update(pnt)
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+//  Actions
+
+// SetStrokeOn sets the stroke on or not
+func (gv *GridView) SetStrokeOn(on bool, clr gist.Color) {
+	es := gv.EditState
+	sv := gv.SVG()
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		g := itm.AsSVGNode()
+		hp := g.Prop("stroke")
+		if hp == nil {
+			if !on {
+				g.SetProp("stroke", "none")
+			} else {
+				g.SetProp("stroke", clr.HexString())
+			}
+		} else {
+			if !on {
+				g.SetProp("stroke", "none")
+			} else {
+				if hps, ok := hp.(string); ok {
+					if hps == "none" {
+						g.SetProp("stroke", clr.HexString())
+					}
+				}
+			}
+		}
+	}
+	sv.UpdateEnd(updt)
+}
+
+// SetStrokeWidth sets the stroke width for selected items
+func (gv *GridView) SetStrokeWidth(wd float32) { // todo: add units
+	es := gv.EditState
+	sv := gv.SVG()
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		g := itm.AsSVGNode()
+		if !g.Pnt.StrokeStyle.Color.IsNil() {
+			g.SetProp("stroke-width", fmt.Sprintf("%gpx", wd))
+		}
+	}
+	sv.UpdateEnd(updt)
+}
+
+// SetStrokeColor sets the stroke color for selected items
+func (gv *GridView) SetStrokeColor(clr gist.Color) {
+	es := gv.EditState
+	sv := gv.SVG()
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		g := itm.AsSVGNode()
+		if !g.Pnt.StrokeStyle.Color.IsNil() {
+			g.SetProp("stroke", clr.HexString())
+		}
+	}
+	sv.UpdateEnd(updt)
+}
+
+// SetFillOn sets the stroke on or not
+func (gv *GridView) SetFillOn(on bool, clr gist.Color) {
+	es := gv.EditState
+	sv := gv.SVG()
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		g := itm.AsSVGNode()
+		hp := g.Prop("fill")
+		if hp == nil {
+			if !on {
+				g.SetProp("fill", "none")
+			} else {
+				g.SetProp("fill", clr.HexString())
+			}
+		} else {
+			if !on {
+				g.SetProp("fill", "none")
+			} else {
+				if hps, ok := hp.(string); ok {
+					if hps == "none" {
+						g.SetProp("fill", clr.HexString())
+					}
+				}
+			}
+		}
+	}
+	sv.UpdateEnd(updt)
+}
+
+// SetFillColor sets the fill color for selected items
+func (gv *GridView) SetFillColor(clr gist.Color) {
+	es := gv.EditState
+	sv := gv.SVG()
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		g := itm.AsSVGNode()
+		if !g.Pnt.FillStyle.Color.IsNil() {
+			g.SetProp("fill", clr.HexString())
+		}
+	}
+	sv.UpdateEnd(updt)
+}
+
+/////////////////////////////////////////////////////////////////////////
+//   Props, MainMenu
 
 var GridViewProps = ki.Props{
 	"EnumType:Flag":    gi.KiT_VpFlags,
