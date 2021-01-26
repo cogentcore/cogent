@@ -24,3 +24,14 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * figure out clipping eventually.
 
+# TODO:
+
+* initial resize to fit content, and button to do that in any case
+
+* paint editor
+
+* svg.Text bbox is wrong
+
+* svg.Node ToPath -- convert any node to a path
+
+

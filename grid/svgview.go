@@ -262,6 +262,8 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 			sv.EditState().DragStart()
 			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
 		} else if me.Action == mouse.Release {
+			sv.UpdateSelSprites()
+			sv.EditState().DragStart()
 			sv.UpdateSig()
 		}
 	case oswin.MouseDragEvent:
@@ -281,13 +283,12 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 		win := sv.GridView.ParentWindow()
 		es.DragCurBBox.Min.SetAdd(dv)
 		es.DragCurBBox.Max.SetAdd(dv)
+		svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+		pt := es.DragStartBBox.Min.Sub(svoff)
 		tdel := es.DragCurBBox.Min.Sub(es.DragStartBBox.Min)
-		xf := mat32.Identity2D()
-		xf.X0 = tdel.X
-		xf.Y0 = tdel.Y
 		for itm, ss := range es.Selected {
 			itm.ReadGeom(ss.InitGeom)
-			itm.ApplyDeltaXForm(xf)
+			itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
 		}
 		sv.SetSelSprites(es.DragCurBBox)
 		sv.UpdateSig()
@@ -321,14 +322,13 @@ func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	es.DragCurBBox.Min.SetMin(es.DragCurBBox.Max.SubScalar(1)) // don't allow flipping
 	npos := es.DragCurBBox.Min
 	nsz := es.DragCurBBox.Size()
-	xf := mat32.Identity2D()
-	xf.XX = nsz.X / stsz.X
-	xf.YY = nsz.Y / stsz.Y
-	xf.X0 = npos.X - stpos.X
-	xf.Y0 = npos.Y - stpos.Y
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	pt := es.DragStartBBox.Min.Sub(svoff)
+	del := npos.Sub(stpos)
+	sc := nsz.Div(stsz)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaXForm(xf)
+		itm.ApplyDeltaXForm(del, sc, 0, pt)
 	}
 
 	sv.SetSelSprites(es.DragCurBBox)
