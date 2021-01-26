@@ -6,6 +6,7 @@ package grid
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"path/filepath"
 	"reflect"
@@ -16,6 +17,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/svg"
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -56,25 +58,39 @@ func (gr *GridView) OpenDrawing(fnm gi.FileName) error {
 	// TheFile.SetText(CurFilename)
 	sg := gr.SVG()
 	err := sg.OpenXML(path)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		log.Println(err)
-		return err
+		// return err
 	}
-	// SetZoom(TheSVG.ParentWindow().LogicalDPI() / 96.0)
-	// SetTrans(0, 0)
+	sg.SetNormXForm()
+	scx, scy := sg.Pnt.XForm.ExtractScale()
+	sg.Scale = 0.5 * (scx + scy)
+	sg.Trans.Set(0, 0)
+	sg.SetTransform()
 	tv := gr.TreeView()
-	tv.ReSync()
+	tv.CloseAll()
+	tv.Open()
 	return nil
 }
 
 // NewDrawing opens a new drawing window
 func (gr *GridView) NewDrawing() *GridView {
-	return nil
+	_, ngr := NewGridWindow("")
+	return ngr
 }
 
 // SaveDrawing saves .svg drawing to current filename
 func (gr *GridView) SaveDrawing() error {
-	return nil
+	fp, fn := filepath.Split(string(gr.FilePath))
+	fn = "tmp_" + fn
+	fp = filepath.Join(fp, fn)
+	sg := gr.SVG()
+	err := sg.SaveXML(fp)
+	if err != nil && err != io.EOF {
+		log.Println(err)
+		// return err
+	}
+	return err
 }
 
 // SetTool sets the current active tool
@@ -103,7 +119,7 @@ func (gr *GridView) SplitView() *gi.SplitView {
 }
 
 func (gr *GridView) TreeView() *giv.TreeView {
-	return gr.SplitView().ChildByName("tree-frame", 0).ChildByName("treeview", 0).(*giv.TreeView)
+	return gr.SplitView().ChildByName("tree-frame", 0).Child(0).(*giv.TreeView) // note: name changes
 }
 
 func (gr *GridView) SVG() *SVGView {
@@ -144,16 +160,18 @@ func (gr *GridView) Config() {
 	tab.SetStretchMaxWidth()
 
 	tv.SetRootNode(sg)
-	tv.Open()
 
 	tv.TreeViewSig.Connect(gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if data == nil || sig != int64(giv.TreeViewSelected) {
 			return
 		}
-		ggv, _ := recv.Embed(KiT_GridView).(*GridView)
 		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
-		stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
-		stv.SetStruct(tvn.SrcNode)
+		_, isgp := tvn.SrcNode.(*svg.Group)
+		if !isgp {
+			ggv, _ := recv.Embed(KiT_GridView).(*GridView)
+			stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
+			stv.SetStruct(tvn.SrcNode)
+		}
 	})
 
 	sv.SetSplits(0.1, 0.65, 0.25)
@@ -365,6 +383,7 @@ func (gv *GridView) ConfigTabs() {
 }
 
 func (gv *GridView) UpdateTabs() {
+	// fmt.Printf("updt-tabs\n")
 	es := gv.EditState
 	sls := es.SelectedList(false)
 	if len(sls) > 0 {
@@ -615,19 +634,6 @@ var GridViewProps = ki.Props{
 				{"SplitsEdit", ki.Props{
 					"label": "Edit...",
 				}},
-			}},
-			{"OpenConsoleTab", ki.Props{}},
-		}},
-		{"Command", ki.PropSlice{
-			{"Build", ki.Props{
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
-				}),
-			}},
-			{"Run", ki.Props{
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-					return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
-				}),
 			}},
 		}},
 		{"Window", "Windows"},

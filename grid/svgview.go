@@ -186,9 +186,9 @@ func (sv *SVGView) Render2D() {
 		if sv.Fill {
 			sv.FillViewport()
 		}
-		if sv.Norm {
-			sv.SetNormXForm()
-		}
+		// if sv.Norm {
+		// 	sv.SetNormXForm()
+		// }
 		rs.PushXForm(sv.Pnt.XForm)
 		sv.Render2DChildren() // we must do children first, then us!
 		sv.PopBounds()

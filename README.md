@@ -20,18 +20,21 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * code in main grid package provides all the editors for right tabs.
 
-* control knobs are sprites, need to add sprite events in gi so we can get mouse events on them.
-
-* figure out clipping eventually.
-
 # TODO:
 
-* initial resize to fit content, and button to do that in any case
 
-* paint editor
+
+* resize to fit content button
 
 * svg.Text bbox is wrong
 
+* objects with their own unique gradient transforms need the gradient updated when repositioned.  
+  gradientUnits = "userSpaceOnUse"
+
 * svg.Node ToPath -- convert any node to a path
+
+
+
+* figure out clipping eventually.
 
 
