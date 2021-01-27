@@ -22,9 +22,17 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 # TODO:
 
-
-
 * resize to fit content button
+
+* display filename in window header (update after opening file)
+
+* SaveAs
+
+* Right click with option to show in tree
+
+* splits code import from gide, and do prefs, add to menu, etc
+
+* save prefs as "base" thing per inkscape
 
 * svg.Text bbox is wrong
 
@@ -33,7 +41,21 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * svg.Node ToPath -- convert any node to a path
 
+* shift + move = pan image, else rubber-band select items in box 
+    rubber band is just 4 separate sprites arranged in box, render dashed for contrast
 
+* continued clicking = select deeper items
+    
+* existing sprites not showing white outline contrast
+
+* alignview
+
+* grid
+
+* dynamic alignment: precompute slice of key X coords, Y coords separately, acts as a kind of grid.
+
+* rasterx radial gradients are in wrong position: maybe specific to ellipse / circle?  should be 
+  in center.  finally debug this!
 
 * figure out clipping eventually.
 
