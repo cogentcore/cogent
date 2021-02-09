@@ -220,9 +220,9 @@ func KeyMapsView(km *KeyMaps) {
 
 // ValueView registers KeyMapValueView as the viewer of KeyMapName
 func (kn KeyMapName) ValueView() giv.ValueView {
-	vv := KeyMapValueView{}
-	vv.Init(&vv)
-	return &vv
+	vv := &KeyMapValueView{}
+	ki.InitNode(vv)
+	return vv
 }
 
 // KeyMapValueView presents an action for displaying an KeyMapName and selecting
@@ -453,9 +453,9 @@ func CmdsView(pt *Commands) {
 
 // ValueView registers CmdValueView as the viewer of CmdName
 func (kn CmdName) ValueView() giv.ValueView {
-	vv := CmdValueView{}
-	vv.Init(&vv)
-	return &vv
+	vv := &CmdValueView{}
+	ki.InitNode(vv)
+	return vv
 }
 
 // CmdValueView presents an action for displaying an CmdName and selecting
@@ -610,9 +610,9 @@ func SplitsView(pt *Splits) {
 
 // ValueView registers SplitValueView as the viewer of SplitName
 func (kn SplitName) ValueView() giv.ValueView {
-	vv := SplitValueView{}
-	vv.Init(&vv)
-	return &vv
+	vv := &SplitValueView{}
+	ki.InitNode(vv)
+	return vv
 }
 
 // SplitValueView presents an action for displaying an SplitName and selecting
@@ -767,9 +767,9 @@ func RegistersView(pt *Registers) {
 
 // ValueView registers RegisterValueView as the viewer of RegisterName
 func (kn RegisterName) ValueView() giv.ValueView {
-	vv := RegisterValueView{}
-	vv.Init(&vv)
-	return &vv
+	vv := &RegisterValueView{}
+	ki.InitNode(vv)
+	return vv
 }
 
 // RegisterValueView presents an action for displaying an RegisterName and selecting

@@ -34,12 +34,12 @@ func (fn *FileNode) CopyFieldsFrom(frm interface{}) {
 
 // ParentGide returns the Gide parent of given node
 func ParentGide(kn ki.Ki) (Gide, bool) {
-	if kn.IsRoot() {
+	if ki.IsRoot(kn) {
 		return nil, false
 	}
 	var ge Gide
 	kn.FuncUpParent(0, kn, func(k ki.Ki, level int, d interface{}) bool {
-		if kit.EmbedImplements(k.Type(), GideType) {
+		if kit.EmbedImplements(ki.Type(k), GideType) {
 			ge = k.(Gide)
 			return false
 		}
@@ -310,7 +310,7 @@ func init() {
 	kit.Types.SetProps(KiT_FileNode, FileNodeProps)
 
 	FileTreeViewProps = make(ki.Props, len(giv.FileTreeViewProps))
-	ki.CopyProps(&FileTreeViewProps, giv.FileTreeViewProps, true)
+	ki.CopyProps(&FileTreeViewProps, giv.FileTreeViewProps, ki.DeepCopy)
 	cm := FileTreeViewProps["CtxtMenuActive"].(ki.PropSlice)
 	cm = append(ki.PropSlice{
 		{"ExecCmdFiles", ki.Props{

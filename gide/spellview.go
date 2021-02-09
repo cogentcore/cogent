@@ -63,7 +63,7 @@ func (sv *SpellView) Config(ge Gide, atv *TextView) {
 	config.Add(gi.KiT_ToolBar, "unknownbar")
 	config.Add(gi.KiT_ToolBar, "changebar")
 	config.Add(giv.KiT_SliceView, "suggest")
-	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := sv.ConfigChildren(config)
 	if !mods {
 		updt = sv.UpdateStart()
 	}

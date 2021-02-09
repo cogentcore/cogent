@@ -284,9 +284,12 @@ func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 	var tv *giv.TextView
+	updt := false
 	if ly.HasChildren() {
 		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
 	} else {
+		updt = ly.UpdateStart()
+		ly.SetChildAdded()
 		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
 	}
 	tv.SetProp("line-nos", false)
@@ -298,5 +301,6 @@ func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	tv.SetProp("tab-size", 8) // std for output
 	tv.SetProp("font-family", gi.Prefs.MonoFont)
 	tv.SetInactive()
+	ly.UpdateEnd(updt)
 	return tv
 }

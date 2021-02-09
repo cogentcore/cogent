@@ -725,7 +725,7 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	config := kit.TypeAndNameList{}
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_TabView, "tabs")
-	mods, updt := dv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := dv.ConfigChildren(config)
 	if mods {
 		dv.State.BlankState()
 		dv.OutBuf = &giv.TextBuf{}
@@ -948,7 +948,7 @@ func (sv *StackView) Config(dv *DebugView, findFrames bool) {
 	sv.FindFrames = findFrames
 	config := kit.TypeAndNameList{}
 	config.Add(giv.KiT_TableView, "stack")
-	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -1024,7 +1024,7 @@ func (sv *BreakView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
 	config := kit.TypeAndNameList{}
 	config.Add(giv.KiT_TableView, "breaks")
-	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -1093,7 +1093,7 @@ func (sv *ThreadView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
 	config := kit.TypeAndNameList{}
 	config.Add(giv.KiT_TableView, "threads")
-	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -1159,7 +1159,7 @@ func (sv *TaskView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
 	config := kit.TypeAndNameList{}
 	config.Add(giv.KiT_TableView, "tasks")
-	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -1227,7 +1227,7 @@ func (sv *VarsView) Config(dv *DebugView, globalVars bool) {
 	sv.GlobalVars = globalVars
 	config := kit.TypeAndNameList{}
 	config.Add(giv.KiT_TableView, "vars")
-	mods, updt := sv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
 		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -1326,7 +1326,7 @@ func (vv *VarView) Config() {
 	config.Add(gi.KiT_Label, "frame-info")
 	// config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
-	mods, updt := vv.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := vv.ConfigChildren(config)
 	vv.SetFrameInfo(vv.FrameInfo)
 	vv.ConfigSplitView()
 	// vv.ConfigToolBar()

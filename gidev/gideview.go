@@ -2347,34 +2347,35 @@ func (ge *GideView) HelpWiki() {
 
 // Config configures the view
 func (ge *GideView) Config() {
+	if ge.HasChildren() {
+		return
+	}
+	updt := ge.UpdateStart()
 	ge.Lay = gi.LayoutVert
 	ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_ToolBar, "toolbar")
-	config.Add(gi.KiT_SplitView, "splitview")
-	config.Add(gi.KiT_Frame, "statusbar")
-	mods, updt := ge.ConfigChildren(config, ki.NonUniqueNames)
-	if !mods {
-		updt = ge.UpdateStart()
-	}
+	gi.AddNewToolBar(ge, "toolbar")
+	gi.AddNewSplitView(ge, "splitview")
+	gi.AddNewFrame(ge, "statusbar", gi.LayoutHoriz)
+
 	ge.UpdateFiles()
 	ge.ConfigSplitView()
 	ge.ConfigToolbar()
 	ge.ConfigStatusBar()
+
 	ge.SetStatus("just updated")
-	if mods {
-		ge.OpenConsoleTab()
-	}
+
+	ge.OpenConsoleTab()
+
 	ge.UpdateEnd(updt)
 }
 
 // IsConfiged returns true if the view is fully configured
 func (ge *GideView) IsConfiged() bool {
-	if len(ge.Kids) == 0 {
+	if !ge.HasChildren() {
 		return false
 	}
 	sv := ge.SplitView()
-	if len(sv.Kids) == 0 {
+	if !sv.HasChildren() {
 		return false
 	}
 	return true
@@ -2484,7 +2485,9 @@ func (ge *GideView) ConfigSplitView() {
 	}
 	updt := split.UpdateStart()
 	ftfr := gi.AddNewFrame(split, "filetree", gi.LayoutVert)
+	ftfr.SetReRenderAnchor()
 	ft := ftfr.AddNewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
+	ft.SetFlag(int(giv.TreeViewFlagUpdtRoot)) // filetree needs this
 	ft.OpenDepth = 4
 	ge.FilesView = ft
 	ft.SetRootNode(&ge.Files)
@@ -2732,7 +2735,7 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 	var kf gide.KeyFuns
 	kc := kt.Chord()
 	if gi.KeyEventTrace {
-		fmt.Printf("GideView KeyInput: %v\n", ge.PathUnique())
+		fmt.Printf("GideView KeyInput: %v\n", ge.Path())
 	}
 	gkf := gi.KeyFun(kc)
 	if ge.KeySeq1 != "" {
@@ -3641,10 +3644,6 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 			}
 		}
 	})
-
-	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
-	// 	fmt.Printf("Doing final Close cleanup here..\n")
-	// })
 
 	win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
 		if gi.MainWindows.Len() <= 1 {

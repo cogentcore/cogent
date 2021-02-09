@@ -358,7 +358,7 @@ func (fv *FindView) Config(ge Gide) {
 	config.Add(gi.KiT_ToolBar, "findbar")
 	config.Add(gi.KiT_ToolBar, "replbar")
 	config.Add(gi.KiT_Layout, "findtext")
-	mods, updt := fv.ConfigChildren(config, ki.NonUniqueNames)
+	mods, updt := fv.ConfigChildren(config)
 	if !mods {
 		updt = fv.UpdateStart()
 	}

@@ -606,9 +606,12 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 	var tv *giv.TextView
+	updt := false
 	if ly.HasChildren() {
 		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
 	} else {
+		updt = ly.UpdateStart()
+		ly.SetChildAdded()
 		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
 	}
 
@@ -622,6 +625,7 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 	if out {
 		tv.SetInactive()
 	}
+	ly.UpdateEnd(updt)
 	return tv
 }
 
@@ -712,7 +716,7 @@ func (pv *PiView) Config() {
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	config.Add(gi.KiT_Frame, "statusbar")
-	mods, updt := pv.ConfigChildren(config, ki.NonUniqueNames)
+	mods, updt := pv.ConfigChildren(config)
 	if !mods {
 		updt = pv.UpdateStart()
 	}
@@ -852,7 +856,7 @@ func (pv *PiView) ConfigSplitView() {
 	split.SetProp("tab-size", 4)
 
 	config := pv.SplitViewConfig()
-	mods, updt := split.ConfigChildren(config, ki.UniqueNames)
+	mods, updt := split.ConfigChildren(config)
 	if mods {
 		lxfr := split.Child(LexRulesIdx).(*gi.Frame)
 		lxt := lxfr.AddNewChild(giv.KiT_TreeView, "lex-tree").(*giv.TreeView)
@@ -976,7 +980,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	var kf gide.KeyFuns
 	kc := kt.Chord()
 	if gi.KeyEventTrace {
-		fmt.Printf("PiView KeyInput: %v\n", ge.PathUnique())
+		fmt.Printf("PiView KeyInput: %v\n", ge.Path())
 	}
 	// gkf := gi.KeyFun(kc)
 	if ge.KeySeq1 != "" {
