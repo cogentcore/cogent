@@ -5,6 +5,7 @@
 package grid
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -81,14 +82,27 @@ func (gr *GridView) NewDrawing() *GridView {
 
 // SaveDrawing saves .svg drawing to current filename
 func (gr *GridView) SaveDrawing() error {
-	fp, fn := filepath.Split(string(gr.FilePath))
-	fn = "tmp_" + fn
-	fp = filepath.Join(fp, fn)
+	if gr.FilePath == "" {
+		giv.CallMethod(gr, "SaveDrawingAs", gr.ViewportSafe())
+		return nil
+	}
 	sg := gr.SVG()
-	err := sg.SaveXML(fp)
+	err := sg.SaveXML(string(gr.FilePath))
 	if err != nil && err != io.EOF {
 		log.Println(err)
-		// return err
+	}
+	return err
+}
+
+// SaveDrawingAs saves .svg drawing to given filename
+func (gr *GridView) SaveDrawingAs(fname gi.FileName) error {
+	if fname == "" {
+		return errors.New("SaveDrawingAs: filename is empty")
+	}
+	sg := gr.SVG()
+	err := sg.SaveXML(string(fname))
+	if err != nil && err != io.EOF {
+		log.Println(err)
 	}
 	return err
 }
@@ -200,15 +214,20 @@ func (gr *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.NewDrawing()
 		})
-	tb.AddAction(gi.ActOpts{Label: "Open", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
+	tb.AddAction(gi.ActOpts{Label: "Open...", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
 		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "OpenDrawing", grr.ViewportSafe())
 		})
-	tb.AddAction(gi.ActOpts{Label: "Save", Icon: "file-save", Tooltip: "Save drawing to .svg file, using current filename"},
+	tb.AddAction(gi.ActOpts{Label: "Save", Icon: "file-save", Tooltip: "Save drawing to .svg file, using current filename (if empty, prompts)"},
 		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SaveDrawing()
+		})
+	tb.AddAction(gi.ActOpts{Label: "Save As...", Icon: "file-save", Tooltip: "Save drawing to a new .svg file"},
+		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			giv.CallMethod(grr, "SaveDrawingAs", grr.ViewportSafe())
 		})
 }
 

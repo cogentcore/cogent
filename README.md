@@ -34,10 +34,12 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * save prefs as "base" thing per inkscape
 
-* svg.Text bbox is wrong
-
 * objects with their own unique gradient transforms need the gradient updated when repositioned.  
-  gradientUnits = "userSpaceOnUse"
+  gradientUnits = "userSpaceOnUse" -- gradients refer to a master that defines stops, and then each
+  object has their own specific gradient instance.  kinda lame, but probably inevitable without using bbox.
+    + gradient editor can enable naming
+
+* separate updating thread, with atomic flags that trigger updates -- gui manip on main thread sets flag every time there is a change, updater checks for flag, clears it after update finishes.  separate flag for final update that ensures final state is reflected.    
 
 * svg.Node ToPath -- convert any node to a path
 
@@ -48,15 +50,23 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
     
 * existing sprites not showing white outline contrast
 
+* diff-based undo: put basic code in gi as a separate package -- on json version of svg tree
+
 * alignview
 
 * grid
 
 * dynamic alignment: precompute slice of key X coords, Y coords separately, acts as a kind of grid.
 
-* rasterx radial gradients are in wrong position: maybe specific to ellipse / circle?  should be 
-  in center.  finally debug this!
+* svg.Text align Center, etc affects different tspans within overall text block
+* svg.Text scale, rotate affects transform -- transform goes into style!
 
-* figure out clipping eventually.
+* figure out mask clipping eventually.
+
+# LINKS
+
+Inkscape special flags
+
+https://wiki.inkscape.org/wiki/index.php/Inkscape_SVG_vs._plain_SVG
 
 
