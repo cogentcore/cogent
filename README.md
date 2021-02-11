@@ -22,11 +22,9 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 # TODO:
 
+* sg.GatherIds is not working for arrows -- and if we rename then need to rename all references!! yikes!
+
 * resize to fit content button
-
-* display filename in window header (update after opening file)
-
-* SaveAs
 
 * Right click with option to show in tree
 
@@ -39,8 +37,6 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
   object has their own specific gradient instance.  kinda lame, but probably inevitable without using bbox.
     + gradient editor can enable naming
 
-* separate updating thread, with atomic flags that trigger updates -- gui manip on main thread sets flag every time there is a change, updater checks for flag, clears it after update finishes.  separate flag for final update that ensures final state is reflected.    
-
 * svg.Node ToPath -- convert any node to a path
 
 * shift + move = pan image, else rubber-band select items in box 
@@ -48,10 +44,6 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * continued clicking = select deeper items
     
-* existing sprites not showing white outline contrast
-
-* diff-based undo: put basic code in gi as a separate package -- on json version of svg tree
-
 * alignview
 
 * grid

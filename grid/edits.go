@@ -6,10 +6,12 @@ package grid
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
+	"github.com/goki/gi/undo"
 	"github.com/goki/mat32"
 )
 
@@ -21,12 +23,41 @@ type SelState struct {
 
 // EditState has all the current edit state information
 type EditState struct {
-	Tool          Tools                     `desc:"current tool in use"`
-	Selected      map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" desc:"selected item(s)"`
+	Tool    Tools    `desc:"current tool in use"`
+	Action  string   `desc:"current action being performed -- used for undo labeling"`
+	UndoMgr undo.Mgr `desc:"undo manager"`
+
+	ActMu         sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
+	Selected      map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
 	SelBBox       mat32.Box2                `desc:"current selection bounding box"`
 	DragStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
 	DragCurBBox   mat32.Box2                `desc:"current bbox during dragging"`
-	ActiveSprites map[Sprites]*gi.Sprite    `desc:"cached only for active sprites during manipulation"`
+	ActiveSprites map[Sprites]*gi.Sprite    `copy:"-" json:"-" xml:"-" view:"-" desc:"cached only for active sprites during manipulation"`
+}
+
+// InAction reports whether we currently doing an action
+func (es *EditState) InAction() bool {
+	es.ActMu.Lock()
+	defer es.ActMu.Unlock()
+	return es.Action != ""
+}
+
+// ActStart starts an action, locking the mutex so only one can start
+func (es *EditState) ActStart(act string) {
+	es.ActMu.Lock()
+	es.Action = act
+}
+
+// ActUnlock unlocks the action mutex -- after done doing all action starting steps
+func (es *EditState) ActUnlock() {
+	es.ActMu.Unlock()
+}
+
+// ActDone finishes an action, resetting action to ""
+func (es *EditState) ActDone() {
+	es.ActMu.Lock()
+	es.Action = ""
+	es.ActMu.Unlock()
 }
 
 // HasSelected returns true if there are selected items
@@ -81,6 +112,20 @@ func (es *EditState) Unselect(itm svg.NodeSVG) {
 	if es.IsSelected(itm) {
 		delete(es.Selected, itm)
 	}
+}
+
+// SelectedNames returns names of selected items, in order selected
+func (es *EditState) SelectedNames() []string {
+	sl := es.SelectedList(false)
+	ns := len(sl)
+	if ns == 0 {
+		return nil
+	}
+	nm := make([]string, ns)
+	for i := range sl {
+		nm[i] = sl[i].Name()
+	}
+	return nm
 }
 
 // SelectAction is called when a select action has been received (e.g., a

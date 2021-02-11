@@ -19,6 +19,7 @@ import (
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/svg"
+	"github.com/goki/gi/units"
 	"github.com/goki/gide/gide"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -47,115 +48,133 @@ func (g *GridView) CopyFieldsFrom(frm interface{}) {
 	// todo: fill out
 }
 
-func (gr *GridView) Defaults() {
-	gr.Prefs.Defaults()
+func (gv *GridView) Defaults() {
+	gv.Prefs.Defaults()
 	// gr.Prefs = Prefs
 }
 
 // OpenDrawing opens a new .svg drawing
-func (gr *GridView) OpenDrawing(fnm gi.FileName) error {
+func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 	path, _ := filepath.Abs(string(fnm))
-	gr.FilePath = gi.FileName(path)
+	gv.FilePath = gi.FileName(path)
+	gv.SetTitle()
 	// TheFile.SetText(CurFilename)
-	sg := gr.SVG()
+	sg := gv.SVG()
 	err := sg.OpenXML(path)
 	if err != nil && err != io.EOF {
 		log.Println(err)
 		// return err
 	}
+	// sg.GatherIds() // also ensures uniqueness, key for json saving
 	sg.SetNormXForm()
 	scx, scy := sg.Pnt.XForm.ExtractScale()
 	sg.Scale = 0.5 * (scx + scy)
 	sg.Trans.Set(0, 0)
 	sg.SetTransform()
-	tv := gr.TreeView()
+	tv := gv.TreeView()
 	tv.CloseAll()
 	tv.Open()
+	gv.SetStatus("Opened: " + path)
 	return nil
 }
 
 // NewDrawing opens a new drawing window
-func (gr *GridView) NewDrawing() *GridView {
+func (gv *GridView) NewDrawing() *GridView {
 	_, ngr := NewGridWindow("")
 	return ngr
 }
 
 // SaveDrawing saves .svg drawing to current filename
-func (gr *GridView) SaveDrawing() error {
-	if gr.FilePath == "" {
-		giv.CallMethod(gr, "SaveDrawingAs", gr.ViewportSafe())
+func (gv *GridView) SaveDrawing() error {
+	if gv.FilePath == "" {
+		giv.CallMethod(gv, "SaveDrawingAs", gv.ViewportSafe())
 		return nil
 	}
-	sg := gr.SVG()
-	err := sg.SaveXML(string(gr.FilePath))
+	sg := gv.SVG()
+	err := sg.SaveXML(string(gv.FilePath))
 	if err != nil && err != io.EOF {
 		log.Println(err)
 	}
+	gv.SetStatus("Saved: " + string(gv.FilePath))
 	return err
 }
 
 // SaveDrawingAs saves .svg drawing to given filename
-func (gr *GridView) SaveDrawingAs(fname gi.FileName) error {
+func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	if fname == "" {
 		return errors.New("SaveDrawingAs: filename is empty")
 	}
-	sg := gr.SVG()
-	err := sg.SaveXML(string(fname))
+	path, _ := filepath.Abs(string(fname))
+	gv.FilePath = gi.FileName(path)
+	sg := gv.SVG()
+	err := sg.SaveXML(path)
 	if err != nil && err != io.EOF {
 		log.Println(err)
 	}
+	gv.SetStatus("Saved: " + path)
 	return err
 }
 
 // SetTool sets the current active tool
-func (gr *GridView) SetTool(tl Tools) {
-	gr.EditState.Tool = tl
+func (gv *GridView) SetTool(tl Tools) {
+	gv.EditState.Tool = tl
 }
 
-func (gr *GridView) MainToolbar() *gi.ToolBar {
-	return gr.ChildByName("main-tb", 0).(*gi.ToolBar)
+func (gv *GridView) MainToolbar() *gi.ToolBar {
+	return gv.ChildByName("main-tb", 0).(*gi.ToolBar)
 }
 
-func (gr *GridView) ModalToolbar() *gi.ToolBar {
-	return gr.ChildByName("modal-tb", 1).(*gi.ToolBar)
+func (gv *GridView) ModalToolbar() *gi.ToolBar {
+	return gv.ChildByName("modal-tb", 1).(*gi.ToolBar)
 }
 
-func (gr *GridView) HBox() *gi.Layout {
-	return gr.ChildByName("hbox", 2).(*gi.Layout)
+func (gv *GridView) HBox() *gi.Layout {
+	return gv.ChildByName("hbox", 2).(*gi.Layout)
 }
 
-func (gr *GridView) Tools() *gi.ToolBar {
-	return gr.HBox().ChildByName("tools", 0).(*gi.ToolBar)
+func (gv *GridView) Tools() *gi.ToolBar {
+	return gv.HBox().ChildByName("tools", 0).(*gi.ToolBar)
 }
 
-func (gr *GridView) SplitView() *gi.SplitView {
-	return gr.HBox().ChildByName("splitview", 1).(*gi.SplitView)
+func (gv *GridView) SplitView() *gi.SplitView {
+	return gv.HBox().ChildByName("splitview", 1).(*gi.SplitView)
 }
 
-func (gr *GridView) TreeView() *giv.TreeView {
-	return gr.SplitView().ChildByName("tree-frame", 0).Child(0).(*giv.TreeView) // note: name changes
+func (gv *GridView) TreeView() *giv.TreeView {
+	return gv.SplitView().ChildByName("tree-frame", 0).Child(0).(*giv.TreeView) // note: name changes
 }
 
-func (gr *GridView) SVG() *SVGView {
-	return gr.SplitView().Child(1).(*SVGView)
+func (gv *GridView) SVG() *SVGView {
+	return gv.SplitView().Child(1).(*SVGView)
 }
 
-func (gr *GridView) Tabs() *gi.TabView {
-	return gr.SplitView().ChildByName("tabs", 2).(*gi.TabView)
+func (gv *GridView) Tabs() *gi.TabView {
+	return gv.SplitView().ChildByName("tabs", 2).(*gi.TabView)
+}
+
+// StatusBar returns the statusbar widget
+func (gv *GridView) StatusBar() *gi.Frame {
+	return gv.ChildByName("statusbar", 4).(*gi.Frame)
+}
+
+// StatusLabel returns the statusbar label widget
+func (gv *GridView) StatusLabel() *gi.Label {
+	return gv.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
 }
 
 // Config configures entire view -- only runs if no children yet
-func (gr *GridView) Config() {
-	if gr.HasChildren() {
+func (gv *GridView) Config() {
+	if gv.HasChildren() {
 		return
 	}
-	updt := gr.UpdateStart()
-	gr.Lay = gi.LayoutVert
-	gr.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	gi.AddNewToolBar(gr, "main-tb")
-	gi.AddNewToolBar(gr, "modal-tb")
-	hb := gi.AddNewLayout(gr, "hbox", gi.LayoutHoriz)
+	updt := gv.UpdateStart()
+	gv.Lay = gi.LayoutVert
+	gv.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	gi.AddNewToolBar(gv, "main-tb")
+	gi.AddNewToolBar(gv, "modal-tb")
+	hb := gi.AddNewLayout(gv, "hbox", gi.LayoutHoriz)
 	hb.SetStretchMax()
+	gi.AddNewFrame(gv, "statusbar", gi.LayoutHoriz)
 
 	tb := gi.AddNewToolBar(hb, "tools")
 	tb.Lay = gi.LayoutVert
@@ -168,14 +187,14 @@ func (gr *GridView) Config() {
 	tv := giv.AddNewTreeView(tvfr, "treeview")
 	tv.OpenDepth = 1
 
-	sg := AddNewSVGView(sv, "svg", gr)
+	sg := AddNewSVGView(sv, "svg", gv)
 
 	tab := gi.AddNewTabView(sv, "tabs")
 	tab.SetStretchMaxWidth()
 
 	tv.SetRootNode(sg)
 
-	tv.TreeViewSig.Connect(gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	tv.TreeViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if data == nil || sig != int64(giv.TreeViewSelected) {
 			return
 		}
@@ -190,71 +209,127 @@ func (gr *GridView) Config() {
 
 	sv.SetSplits(0.1, 0.65, 0.25)
 
-	gr.ConfigMainToolbar()
-	gr.ConfigModalToolbar()
-	gr.ConfigTools()
-	gr.ConfigTabs()
+	gv.ConfigStatusBar()
+	gv.ConfigMainToolbar()
+	gv.ConfigModalToolbar()
+	gv.ConfigTools()
+	gv.ConfigTabs()
 
-	gr.UpdateEnd(updt)
+	gv.UpdateEnd(updt)
 }
 
 // IsConfiged returns true if the view is fully configured
-func (gr *GridView) IsConfiged() bool {
-	if !gr.HasChildren() {
+func (gv *GridView) IsConfiged() bool {
+	if !gv.HasChildren() {
 		return false
 	}
 	return true
 }
 
-func (gr *GridView) ConfigMainToolbar() {
-	tb := gr.MainToolbar()
+// UndoAvailFunc is an ActionUpdateFunc that inactivates action if no more undos
+func (gv *GridView) UndoAvailFunc(act *gi.Action) {
+	es := gv.EditState
+	act.SetInactiveState(!es.UndoMgr.HasUndoAvail())
+}
+
+// RedoAvailFunc is an ActionUpdateFunc that inactivates action if no more redos
+func (gv *GridView) RedoAvailFunc(act *gi.Action) {
+	es := gv.EditState
+	act.SetInactiveState(!es.UndoMgr.HasRedoAvail())
+}
+
+func (gv *GridView) ConfigMainToolbar() {
+	tb := gv.MainToolbar()
 	tb.SetStretchMaxWidth()
 	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing using default drawing preferences"},
-		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.NewDrawing()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Open...", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
-		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "OpenDrawing", grr.ViewportSafe())
 		})
 	tb.AddAction(gi.ActOpts{Label: "Save", Icon: "file-save", Tooltip: "Save drawing to .svg file, using current filename (if empty, prompts)"},
-		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SaveDrawing()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Save As...", Icon: "file-save", Tooltip: "Save drawing to a new .svg file"},
-		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "SaveDrawingAs", grr.ViewportSafe())
 		})
+	tb.AddSeparator("sep-edit")
+	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "undo", Tooltip: "Undo last action", UpdateFunc: gv.UndoAvailFunc},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.Undo()
+		})
+	tb.AddAction(gi.ActOpts{Label: "Redo", Icon: "redo", Tooltip: "Redo last undo action", UpdateFunc: gv.RedoAvailFunc},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.Redo()
+		})
 }
 
-func (gr *GridView) ConfigModalToolbar() {
-	tb := gr.ModalToolbar()
+func (gv *GridView) ConfigModalToolbar() {
+	tb := gv.ModalToolbar()
 	tb.SetStretchMaxWidth()
 }
 
-func (gr *GridView) ConfigTools() {
-	tb := gr.Tools()
+func (gv *GridView) ConfigTools() {
+	tb := gv.Tools()
 	tb.Lay = gi.LayoutVert
 	tb.SetStretchMaxHeight()
 	tb.AddAction(gi.ActOpts{Icon: "arrow", Tooltip: "S, Space: select, move, resize objects"},
-		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(SelectTool)
 		})
 	tb.AddAction(gi.ActOpts{Icon: "arrow", Tooltip: "N: select, move node points within paths"},
-		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(NodeTool)
 		})
 	tb.AddAction(gi.ActOpts{Icon: "plus", Tooltip: "R: create rectangles and squares"},
-		gr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(RectTool)
 		})
+}
+
+// ConfigStatusBar configures statusbar with label
+func (gv *GridView) ConfigStatusBar() {
+	sb := gv.StatusBar()
+	if sb == nil || sb.HasChildren() {
+		return
+	}
+	sb.SetStretchMaxWidth()
+	sb.SetMinPrefHeight(units.NewValue(1.2, units.Em))
+	sb.SetProp("overflow", "hidden") // no scrollbars!
+	sb.SetProp("margin", 0)
+	sb.SetProp("padding", 0)
+	lbl := sb.AddNewChild(gi.KiT_Label, "sb-lbl").(*gi.Label)
+	lbl.SetStretchMaxWidth()
+	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
+	lbl.SetProp("vertical-align", gist.AlignTop)
+	lbl.SetProp("margin", 0)
+	lbl.SetProp("padding", 0)
+	lbl.SetProp("tab-size", 4)
+}
+
+// SetStatus updates the statusbar label with given message, along with other status info
+func (gv *GridView) SetStatus(msg string) {
+	sb := gv.StatusBar()
+	if sb == nil {
+		return
+	}
+	updt := sb.UpdateStart()
+	lbl := gv.StatusLabel()
+	lbl.SetText(msg)
+	sb.UpdateEnd(updt)
 }
 
 // CloseWindowReq is called when user tries to close window -- we
@@ -304,12 +379,28 @@ func QuitReq() bool {
 	return true
 }
 
+func (gv *GridView) SetTitle() {
+	if gv.FilePath == "" {
+		return
+	}
+	dfnm := giv.DirAndFile(string(gv.FilePath))
+	winm := "grid-" + dfnm
+	wintitle := "grid: " + dfnm
+	win := gv.ParentWindow()
+	win.SetName(winm)
+	win.SetTitle(wintitle)
+}
+
 // NewGridWindow returns a new GridWindow loading given file if non-empty
 func NewGridWindow(fnm string) (*gi.Window, *GridView) {
-	path, _ := filepath.Abs(fnm)
-	dfnm := giv.DirAndFile(path)
+	path := ""
+	dfnm := ""
+	if fnm != "" {
+		path, _ = filepath.Abs(fnm)
+		dfnm = giv.DirAndFile(path)
+	}
 	winm := "grid-" + dfnm
-	wintitle := winm + ": " + path
+	wintitle := "grid: " + dfnm
 
 	if win, found := gi.AllWindows.FindName(winm); found {
 		mfr := win.SetMainFrame()
@@ -392,13 +483,11 @@ func (gv *GridView) Tab(label string) gi.Node2D {
 }
 
 func (gv *GridView) ConfigTabs() {
-	sv := gv.SVG()
 	tv := gv.Tabs()
 	tv.NoDeleteTabs = true
 	pv := gv.RecycleTab("Paint", KiT_PaintView, false).(*PaintView)
 	pv.Config(gv)
-	stv := gv.RecycleTab("Obj", giv.KiT_StructView, false).(*giv.StructView)
-	stv.SetStruct(sv)
+	gv.RecycleTab("Obj", giv.KiT_StructView, false)
 }
 
 func (gv *GridView) UpdateTabs() {
@@ -518,6 +607,30 @@ func (gv *GridView) SetFillColor(clr gist.Color) {
 		}
 	}
 	sv.UpdateEnd(updt)
+}
+
+// Undo undoes one step, returning name of action that was undone
+func (gv *GridView) Undo() string {
+	sv := gv.SVG()
+	act := sv.Undo()
+	if act != "" {
+		gv.SetStatus("Undid: " + act)
+	} else {
+		gv.SetStatus("Undo: no more to undo")
+	}
+	return act
+}
+
+// Redo redoes one step, returning name of action that was redone
+func (gv *GridView) Redo() string {
+	sv := gv.SVG()
+	act := sv.Redo()
+	if act != "" {
+		gv.SetStatus("Redid: " + act)
+	} else {
+		gv.SetStatus("Redo: no more to redo")
+	}
+	return act
 }
 
 /////////////////////////////////////////////////////////////////////////

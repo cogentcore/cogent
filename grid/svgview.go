@@ -5,13 +5,16 @@
 package grid
 
 import (
+	"bytes"
 	"fmt"
 	"image"
+	"strings"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/cursor"
+	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/ki/ki"
@@ -31,7 +34,7 @@ type SVGView struct {
 var KiT_SVGView = kit.Types.AddType(&SVGView{}, SVGViewProps)
 
 var SVGViewProps = ki.Props{
-	"EnumType:Flag": gi.KiT_VpFlags,
+	"EnumType:Flag": svg.KiT_SVGFlags,
 }
 
 // AddNewSVGView adds a new editor to given parent node, with given name.
@@ -40,6 +43,7 @@ func AddNewSVGView(parent ki.Ki, name string, gv *GridView) *SVGView {
 	sv.GridView = gv
 	sv.Scale = 1
 	sv.Fill = true
+	sv.Norm = false
 	sv.SetProp("background-color", "white")
 	sv.SetStretchMax()
 	return sv
@@ -53,8 +57,43 @@ func (g *SVGView) CopyFieldsFrom(frm interface{}) {
 	g.SetDragCursor = fr.SetDragCursor
 }
 
-func (g *SVGView) EditState() *EditState {
-	return &g.GridView.EditState
+// EditState returns the EditState for this view
+func (sv *SVGView) EditState() *EditState {
+	return &sv.GridView.EditState
+}
+
+// UpdateView updates the view, optionally with a full re-render
+func (sv *SVGView) UpdateView(full bool) {
+	if full {
+		sv.SetFullReRender()
+	}
+	sv.UpdateSig()
+	sv.UpdateSelSprites()
+}
+
+func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
+	kc := kt.Chord()
+	if gi.KeyEventTrace {
+		fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
+	}
+	kf := gi.KeyFun(kc)
+	switch kf {
+	case gi.KeyFunUndo:
+		kt.SetProcessed()
+		sv.Undo()
+	case gi.KeyFunRedo:
+		kt.SetProcessed()
+		sv.Redo()
+	}
+}
+
+func (sv *SVGView) KeyChordEvent() {
+	// need hipri to prevent 2-seq guys from being captured by others
+	sv.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+		svv := recv.Embed(KiT_SVGView).(*SVGView)
+		kt := d.(*key.ChordEvent)
+		svv.SVGViewKeys(kt)
+	})
 }
 
 func (sv *SVGView) MouseDrag() {
@@ -67,7 +106,7 @@ func (sv *SVGView) MouseDrag() {
 				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Push(cursor.HandOpen)
 				ssvg.SetDragCursor = true
 			}
-			ssvg.DragEvent(me)
+			ssvg.DragEvent(me) // for both scene drag and
 		} else {
 			if ssvg.SetDragCursor {
 				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
@@ -93,9 +132,7 @@ func (sv *SVGView) MouseScroll() {
 			ssvg.Scale = 0.01
 		}
 		ssvg.SetTransform()
-		ssvg.SetFullReRender()
-		ssvg.UpdateSelSprites()
-		ssvg.UpdateSig()
+		ssvg.UpdateView(true)
 	})
 }
 
@@ -103,12 +140,17 @@ func (sv *SVGView) MouseEvent() {
 	sv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
 		me := d.(*mouse.Event)
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		ssvg.GrabFocus()
 		es := ssvg.EditState()
 		if ssvg.SetDragCursor {
 			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
 			ssvg.SetDragCursor = false
 		}
 		if me.Action != mouse.Release {
+			return
+		}
+		if es.InAction() {
+			ssvg.ManipDone()
 			return
 		}
 		obj := ssvg.FirstContainingPoint(me.Where, true)
@@ -151,10 +193,12 @@ func (sv *SVGView) MouseHover() {
 }
 
 func (sv *SVGView) SVGViewEvents() {
+	sv.SetCanFocus()
 	sv.MouseDrag()
 	sv.MouseScroll()
 	sv.MouseEvent()
 	sv.MouseHover()
+	sv.KeyChordEvent()
 }
 
 func (sv *SVGView) ConnectEvents2D() {
@@ -179,23 +223,55 @@ func (sv *SVGView) SetTransform() {
 	sv.SetProp("transform", fmt.Sprintf("translate(%v,%v) scale(%v,%v)", sv.Trans.X, sv.Trans.Y, sv.Scale, sv.Scale))
 }
 
-func (sv *SVGView) Render2D() {
-	if sv.PushBounds() {
-		rs := &sv.Render
-		sv.This().(gi.Node2D).ConnectEvents2D()
-		if sv.Fill {
-			sv.FillViewport()
-		}
-		// if sv.Norm {
-		// 	sv.SetNormXForm()
-		// }
-		rs.PushXForm(sv.Pnt.XForm)
-		sv.Render2DChildren() // we must do children first, then us!
-		sv.PopBounds()
-		rs.PopXForm()
-		// fmt.Printf("geom.bounds: %v  geom: %v\n", svg.Geom.Bounds(), svg.Geom)
-		sv.RenderViewport2D() // update our parent image
+/////////////////////////////////////////////////
+// Undo
+
+// UndoSave save current state for potential undo
+func (sv *SVGView) UndoSave(action, data string) {
+	es := sv.EditState()
+	b := &bytes.Buffer{}
+	sv.WriteXML(b, false)
+	// sv.WriteJSON(b, false)
+	bs := strings.Split(string(b.Bytes()), "\n")
+	es.UndoMgr.Save(action, data, bs)
+}
+
+// Undo undoes one step, returning the action that was undone
+func (sv *SVGView) Undo() string {
+	es := sv.EditState()
+	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
+		b := &bytes.Buffer{}
+		sv.WriteXML(b, false)
+		// sv.WriteJSON(b, false)
+		bs := strings.Split(string(b.Bytes()), "\n")
+		es.UndoMgr.SaveUndoStart(bs)
 	}
+	// fmt.Printf("undo idx: %d\n", es.UndoMgr.Idx)
+	act, _, state := es.UndoMgr.Undo()
+	if state == nil {
+		return act
+	}
+	sb := strings.Join(state, "\n")
+	b := bytes.NewBufferString(sb)
+	sv.ReadXML(b)
+	sv.UpdateSelSprites()
+	return act
+}
+
+// Redo redoes one step, returning the action that was redone
+func (sv *SVGView) Redo() string {
+	es := sv.EditState()
+	// fmt.Printf("redo idx: %d\n", es.UndoMgr.Idx)
+	act, _, state := es.UndoMgr.Redo()
+	if state == nil {
+		return act
+	}
+	sb := strings.Join(state, "\n")
+	b := bytes.NewBufferString(sb)
+	sv.ReadXML(b)
+	// sv.ReadJSON(b) // json preserves all objects
+	sv.UpdateSelSprites()
+	return act
 }
 
 /////////////////////////////////////////////////
@@ -265,7 +341,7 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 		} else if me.Action == mouse.Release {
 			sv.UpdateSelSprites()
 			sv.EditState().DragStart()
-			sv.UpdateSig()
+			sv.ManipDone()
 		}
 	case oswin.MouseDragEvent:
 		me := d.(*mouse.DragEvent)
@@ -280,10 +356,20 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	delta := me.Where.Sub(me.From)
 	dv := mat32.NewVec2FmPoint(delta)
 	es := sv.EditState()
+	// me.SetProcessed()
+	if me.HasAnyModifier(key.Shift) {
+		sv.Trans.SetAdd(dv)
+		sv.SetTransform()
+		sv.UpdateView(true)
+		return
+	}
 	if es.HasSelected() {
 		win := sv.GridView.ParentWindow()
 		es.DragCurBBox.Min.SetAdd(dv)
 		es.DragCurBBox.Max.SetAdd(dv)
+		if !es.InAction() {
+			sv.ManipStart("Move")
+		}
 		svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 		pt := es.DragStartBBox.Min.Sub(svoff)
 		tdel := es.DragCurBBox.Min.Sub(es.DragStartBBox.Min)
@@ -292,19 +378,19 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 			itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
 		}
 		sv.SetSelSprites(es.DragCurBBox)
-		sv.UpdateSig()
+		go sv.ManipUpdate()
 		win.RenderOverlays()
-	} else {
-		sv.Trans.SetAdd(dv)
-		sv.SetTransform()
-		sv.SetFullReRender()
-		sv.UpdateSig()
+	} else { // rubberband select
+
 	}
 }
 
 // SpriteDrag processes a mouse drag event on a selection sprite
 func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	es := sv.EditState()
+	if !es.InAction() {
+		sv.ManipStart("Reshape")
+	}
 	stsz := es.DragStartBBox.Size()
 	stpos := es.DragStartBBox.Min
 	dv := mat32.NewVec2FmPoint(delta)
@@ -334,6 +420,34 @@ func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 
 	sv.SetSelSprites(es.DragCurBBox)
 
-	sv.UpdateSig()
+	go sv.ManipUpdate()
+
 	win.RenderOverlays()
+}
+
+// ManipStart is called at the start of a manipulation, saving the state prior to the action
+func (sv *SVGView) ManipStart(act string) {
+	es := sv.EditState()
+	es.ActStart(act)
+	astr := act + ": " + strings.Join(es.SelectedNames(), " ")
+	sv.GridView.SetStatus(fmt.Sprintf("save undo: %s", astr))
+	sv.UndoSave(astr, act)
+	es.ActUnlock()
+}
+
+// ManipDone happens when a manipulation has finished: resets action, does render
+func (sv *SVGView) ManipDone() {
+	es := sv.EditState()
+	es.ActDone()
+	sv.UpdateSig()
+}
+
+// ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the
+// current display while manipulating.  It checks if already rendering and if so,
+// just returns immediately, so that updates are not stacked up and laggy.
+func (sv *SVGView) ManipUpdate() {
+	if sv.IsRendering() {
+		return
+	}
+	sv.UpdateSig()
 }

@@ -65,7 +65,7 @@ func Sprite(spi Sprites, win *gi.Window) *gi.Sprite {
 	sp, ok := win.SpriteByName(spnm)
 	if !ok {
 		sz := SpriteSize()
-		bsz := ints.MaxInt(sz/6, 1)
+		bsz := ints.MaxInt(sz/6, 2)
 		bbsz := image.Point{sz, sz}
 		sp = win.AddNewSprite(spnm, bbsz, image.ZP)
 		ibd := sp.Pixels.Bounds()
@@ -74,9 +74,8 @@ func Sprite(spi Sprites, win *gi.Window) *gi.Sprite {
 		bbd.Min.Y += bsz
 		bbd.Max.X -= bsz
 		bbd.Max.Y -= bsz
+		draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
 		draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
-		sp.Bg = image.NewRGBA(ibd)
-		draw.Draw(sp.Bg, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
 	}
 	return sp
 }
