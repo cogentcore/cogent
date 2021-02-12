@@ -22,7 +22,7 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 # TODO:
 
-* sg.GatherIds is not working for arrows -- and if we rename then need to rename all references!! yikes!
+* move, reshape transforms on rotated obj not correct (pink guy)
 
 * resize to fit content button
 

@@ -65,7 +65,7 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 		log.Println(err)
 		// return err
 	}
-	// sg.GatherIds() // also ensures uniqueness, key for json saving
+	sg.GatherIds() // also ensures uniqueness, key for json saving
 	sg.SetNormXForm()
 	scx, scy := sg.Pnt.XForm.ExtractScale()
 	sg.Scale = 0.5 * (scx + scy)
@@ -195,16 +195,23 @@ func (gv *GridView) Config() {
 	tv.SetRootNode(sg)
 
 	tv.TreeViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if data == nil || sig != int64(giv.TreeViewSelected) {
+		gvv := recv.Embed(KiT_GridView).(*GridView)
+		if data == nil || sig != int64(giv.TreeViewOpened) {
 			return
 		}
 		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
-		_, isgp := tvn.SrcNode.(*svg.Group)
-		if !isgp {
-			ggv, _ := recv.Embed(KiT_GridView).(*GridView)
-			stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
-			stv.SetStruct(tvn.SrcNode)
+		_, issvg := tvn.SrcNode.(svg.NodeSVG)
+		if !issvg {
+			return
 		}
+		_, isgp := tvn.SrcNode.(*svg.Group)
+		if isgp {
+			return
+		}
+		giv.StructViewDialog(gvv.Viewport, tvn.SrcNode, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
+		// ggv, _ := recv.Embed(KiT_GridView).(*GridView)
+		// 		stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
+		// 		stv.SetStruct(tvn.SrcNode)
 	})
 
 	sv.SetSplits(0.1, 0.65, 0.25)
@@ -228,13 +235,13 @@ func (gv *GridView) IsConfiged() bool {
 
 // UndoAvailFunc is an ActionUpdateFunc that inactivates action if no more undos
 func (gv *GridView) UndoAvailFunc(act *gi.Action) {
-	es := gv.EditState
+	es := &gv.EditState
 	act.SetInactiveState(!es.UndoMgr.HasUndoAvail())
 }
 
 // RedoAvailFunc is an ActionUpdateFunc that inactivates action if no more redos
 func (gv *GridView) RedoAvailFunc(act *gi.Action) {
-	es := gv.EditState
+	es := &gv.EditState
 	act.SetInactiveState(!es.UndoMgr.HasRedoAvail())
 }
 
@@ -487,12 +494,12 @@ func (gv *GridView) ConfigTabs() {
 	tv.NoDeleteTabs = true
 	pv := gv.RecycleTab("Paint", KiT_PaintView, false).(*PaintView)
 	pv.Config(gv)
-	gv.RecycleTab("Obj", giv.KiT_StructView, false)
+	// gv.RecycleTab("Obj", giv.KiT_StructView, false)
 }
 
 func (gv *GridView) UpdateTabs() {
 	// fmt.Printf("updt-tabs\n")
-	es := gv.EditState
+	es := &gv.EditState
 	sls := es.SelectedList(false)
 	if len(sls) > 0 {
 		pnt := &(sls[0].AsSVGNode().Pnt)
@@ -504,10 +511,47 @@ func (gv *GridView) UpdateTabs() {
 /////////////////////////////////////////////////////////////////////////
 //  Actions
 
+// ManipAction manages all the updating etc associated with performing an action
+// that includes an ongoing manipulation with a final non-manip update.
+// runs given function to actually do the update.
+func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	updt := false
+	sv.SetFullReRender()
+	actStart := false
+	finalAct := false
+	if !manip && es.InAction() {
+		finalAct = true
+	}
+	if manip && !es.InAction() {
+		manip = false
+		actStart = true
+		es.ActStart(act)
+		es.ActUnlock()
+	}
+	if !manip {
+		if !finalAct {
+			sv.UndoSave(act, data)
+		}
+		updt = sv.UpdateStart()
+	}
+	fun() // actually do the update
+	if !manip {
+		sv.UpdateEnd(updt)
+		if !actStart {
+			es.ActDone()
+		}
+	} else {
+		sv.ManipUpdate()
+	}
+}
+
 // SetStrokeOn sets the stroke on or not
 func (gv *GridView) SetStrokeOn(on bool, clr gist.Color) {
-	es := gv.EditState
+	es := &gv.EditState
 	sv := gv.SVG()
+	sv.UndoSave("SetStrokeOn", fmt.Sprintf("%v,%s", on, clr))
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
@@ -535,39 +579,49 @@ func (gv *GridView) SetStrokeOn(on bool, clr gist.Color) {
 }
 
 // SetStrokeWidth sets the stroke width for selected items
-func (gv *GridView) SetStrokeWidth(wd float32) { // todo: add units
-	es := gv.EditState
+// manip means currently being manipulated -- don't save undo.
+func (gv *GridView) SetStrokeWidth(wd float32, manip bool) { // todo: add units
+	es := &gv.EditState
 	sv := gv.SVG()
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
+	updt := false
+	if !manip {
+		sv.UndoSave("SetStrokeWidth", fmt.Sprintf("%g", wd))
+		updt = sv.UpdateStart()
+		sv.SetFullReRender()
+	}
 	for itm := range es.Selected {
 		g := itm.AsSVGNode()
 		if !g.Pnt.StrokeStyle.Color.IsNil() {
 			g.SetProp("stroke-width", fmt.Sprintf("%gpx", wd))
 		}
 	}
-	sv.UpdateEnd(updt)
-}
-
-// SetStrokeColor sets the stroke color for selected items
-func (gv *GridView) SetStrokeColor(clr gist.Color) {
-	es := gv.EditState
-	sv := gv.SVG()
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	for itm := range es.Selected {
-		g := itm.AsSVGNode()
-		if !g.Pnt.StrokeStyle.Color.IsNil() {
-			g.SetProp("stroke", clr.HexString())
-		}
+	if !manip {
+		sv.UpdateEnd(updt)
+	} else {
+		sv.ManipUpdate()
 	}
-	sv.UpdateEnd(updt)
 }
 
-// SetFillOn sets the stroke on or not
+// SetStrokeColor sets the stroke color for selected items.
+// manip means currently being manipulated -- don't save undo.
+func (gv *GridView) SetStrokeColor(clr gist.Color, manip bool) {
+	es := &gv.EditState
+	gv.ManipAction("SetStrokeColor", fmt.Sprintf("%s", clr), manip,
+		func() {
+			for itm := range es.Selected {
+				g := itm.AsSVGNode()
+				if !g.Pnt.FillStyle.Color.IsNil() {
+					g.SetProp("stroke", clr.HexString())
+				}
+			}
+		})
+}
+
+// SetFillOn sets the fill on or not
 func (gv *GridView) SetFillOn(on bool, clr gist.Color) {
-	es := gv.EditState
+	es := &gv.EditState
 	sv := gv.SVG()
+	sv.UndoSave("SetFillOn", fmt.Sprintf("%v,%s", on, clr))
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
@@ -595,18 +649,18 @@ func (gv *GridView) SetFillOn(on bool, clr gist.Color) {
 }
 
 // SetFillColor sets the fill color for selected items
-func (gv *GridView) SetFillColor(clr gist.Color) {
-	es := gv.EditState
-	sv := gv.SVG()
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	for itm := range es.Selected {
-		g := itm.AsSVGNode()
-		if !g.Pnt.FillStyle.Color.IsNil() {
-			g.SetProp("fill", clr.HexString())
-		}
-	}
-	sv.UpdateEnd(updt)
+// manip means currently being manipulated -- don't save undo.
+func (gv *GridView) SetFillColor(clr gist.Color, manip bool) {
+	es := &gv.EditState
+	gv.ManipAction("SetFillColor", fmt.Sprintf("%s", clr), manip,
+		func() {
+			for itm := range es.Selected {
+				g := itm.AsSVGNode()
+				if !g.Pnt.FillStyle.Color.IsNil() {
+					g.SetProp("fill", clr.HexString())
+				}
+			}
+		})
 }
 
 // Undo undoes one step, returning name of action that was undone
@@ -618,6 +672,7 @@ func (gv *GridView) Undo() string {
 	} else {
 		gv.SetStatus("Undo: no more to undo")
 	}
+	gv.UpdateTabs()
 	return act
 }
 
@@ -630,6 +685,7 @@ func (gv *GridView) Redo() string {
 	} else {
 		gv.SetStatus("Redo: no more to redo")
 	}
+	gv.UpdateTabs()
 	return act
 }
 

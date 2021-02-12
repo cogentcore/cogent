@@ -40,7 +40,10 @@ func (pv *PaintView) Config(gv *GridView) {
 	sc.Config()
 	sc.SetColor(pv.GridView.Prefs.Style.StrokeStyle.Color.Color)
 	sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetStrokeColor(sc.Color)
+		pv.GridView.SetStrokeColor(sc.Color, false)
+	})
+	sc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		pv.GridView.SetStrokeColor(sc.Color, true) // manip
 	})
 
 	spt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -56,7 +59,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	wsb.SetProp("step", 0.05)
 	wsb.SetValue(pv.GridView.Prefs.Style.StrokeStyle.Width.Val)
 	wsb.SpinBoxSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetStrokeWidth(data.(float32))
+		pv.GridView.SetStrokeWidth(data.(float32), false)
 	})
 	// todo: units from drawing units?
 
@@ -72,7 +75,10 @@ func (pv *PaintView) Config(gv *GridView) {
 	fc.Config()
 	fc.SetColor(pv.GridView.Prefs.Style.FillStyle.Color.Color)
 	fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetFillColor(fc.Color)
+		pv.GridView.SetFillColor(fc.Color, false)
+	})
+	fc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		pv.GridView.SetFillColor(fc.Color, true) // manip
 	})
 
 	fpt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {

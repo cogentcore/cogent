@@ -80,10 +80,10 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	switch kf {
 	case gi.KeyFunUndo:
 		kt.SetProcessed()
-		sv.Undo()
+		sv.GridView.Undo()
 	case gi.KeyFunRedo:
 		kt.SetProcessed()
-		sv.Redo()
+		sv.GridView.Redo()
 	}
 }
 
@@ -230,10 +230,29 @@ func (sv *SVGView) SetTransform() {
 func (sv *SVGView) UndoSave(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
-	sv.WriteXML(b, false)
-	// sv.WriteJSON(b, false)
+	// sv.WriteXML(b, false)
+	err := sv.WriteJSON(b, true) // should be false
+	if err != nil {
+		fmt.Printf("SaveUndo Error: %s\n", err)
+	}
+	// fmt.Printf("%s\n", string(b.Bytes()))
 	bs := strings.Split(string(b.Bytes()), "\n")
 	es.UndoMgr.Save(action, data, bs)
+	// fmt.Println(es.UndoMgr.MemStats(true))
+}
+
+// UndoSaveReplace save current state to replace current
+func (sv *SVGView) UndoSaveReplace(action, data string) {
+	es := sv.EditState()
+	b := &bytes.Buffer{}
+	// sv.WriteXML(b, false)
+	err := sv.WriteJSON(b, true) // should be false
+	if err != nil {
+		fmt.Printf("SaveUndo Error: %s\n", err)
+	}
+	bs := strings.Split(string(b.Bytes()), "\n")
+	es.UndoMgr.SaveReplace(action, data, bs)
+	// fmt.Println(es.UndoMgr.MemStats(true))
 }
 
 // Undo undoes one step, returning the action that was undone
@@ -241,8 +260,11 @@ func (sv *SVGView) Undo() string {
 	es := sv.EditState()
 	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
-		sv.WriteXML(b, false)
-		// sv.WriteJSON(b, false)
+		// sv.WriteXML(b, false)
+		err := sv.WriteJSON(b, false)
+		if err != nil {
+			fmt.Printf("SaveUndo Error: %s\n", err)
+		}
 		bs := strings.Split(string(b.Bytes()), "\n")
 		es.UndoMgr.SaveUndoStart(bs)
 	}
@@ -253,7 +275,13 @@ func (sv *SVGView) Undo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	sv.ReadXML(b)
+	updt := sv.UpdateStart()
+	err := sv.ReadJSON(b)
+	_ = err
+	// if err != nil {
+	// 	fmt.Printf("Undo load Error: %s\n", err)
+	// }
+	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	return act
 }
@@ -268,8 +296,14 @@ func (sv *SVGView) Redo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	sv.ReadXML(b)
-	// sv.ReadJSON(b) // json preserves all objects
+	// sv.ReadXML(b)
+	updt := sv.UpdateStart()
+	err := sv.ReadJSON(b) // json preserves all objects
+	_ = err
+	// if err != nil {
+	// 	fmt.Printf("Redo load Error: %s\n", err)
+	// }
+	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	return act
 }
