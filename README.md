@@ -20,7 +20,16 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * code in main grid package provides all the editors for right tabs.
 
+# Status
+
+Minimally functional with making new basic shapes (rect, ellipse) and reshaping anything,
+color, fill and line width editor, and full undo / redo.
+
 # TODO:
+
+* layer flags, layer select via context menu -- see inkscape for key props
+
+* svg render needs to use visibility flag from layers to not render stuff.
 
 * move, reshape transforms on rotated obj not correct (pink guy)
 
@@ -39,14 +48,14 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * svg.Node ToPath -- convert any node to a path
 
-* shift + move = pan image, else rubber-band select items in box 
+* rubber-band select items in box 
     rubber band is just 4 separate sprites arranged in box, render dashed for contrast
 
 * continued clicking = select deeper items
     
 * alignview
 
-* grid
+* grid -- multiscale if spacing between grid items below some amount, then zoom out grid to 6x larger?
 
 * dynamic alignment: precompute slice of key X coords, Y coords separately, acts as a kind of grid.
 

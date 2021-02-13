@@ -6,6 +6,7 @@ package grid
 
 import (
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/goki/gi/gi"
@@ -23,9 +24,11 @@ type SelState struct {
 
 // EditState has all the current edit state information
 type EditState struct {
-	Tool    Tools    `desc:"current tool in use"`
-	Action  string   `desc:"current action being performed -- used for undo labeling"`
-	UndoMgr undo.Mgr `desc:"undo manager"`
+	Tool     Tools    `desc:"current tool in use"`
+	Action   string   `desc:"current action being performed -- used for undo labeling"`
+	ActData  string   `desc:"action data set at start of action"`
+	CurLayer string   `desc:"current layer -- where new objects are inserted"`
+	UndoMgr  undo.Mgr `desc:"undo manager"`
 
 	ActMu         sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
 	Selected      map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
@@ -43,9 +46,10 @@ func (es *EditState) InAction() bool {
 }
 
 // ActStart starts an action, locking the mutex so only one can start
-func (es *EditState) ActStart(act string) {
+func (es *EditState) ActStart(act, data string) {
 	es.ActMu.Lock()
 	es.Action = act
+	es.ActData = data
 }
 
 // ActUnlock unlocks the action mutex -- after done doing all action starting steps
@@ -57,6 +61,7 @@ func (es *EditState) ActUnlock() {
 func (es *EditState) ActDone() {
 	es.ActMu.Lock()
 	es.Action = ""
+	es.ActData = ""
 	es.ActMu.Unlock()
 }
 
@@ -126,6 +131,17 @@ func (es *EditState) SelectedNames() []string {
 		nm[i] = sl[i].Name()
 	}
 	return nm
+}
+
+// SelectedNamesString returns names of selected items as a
+// space-separated single string.  If over 256 chars long, then
+// truncated.
+func (es *EditState) SelectedNamesString() string {
+	sl := strings.Join(es.SelectedNames(), " ")
+	if len(sl) >= 256 {
+		sl = sl[:255]
+	}
+	return sl
 }
 
 // SelectAction is called when a select action has been received (e.g., a

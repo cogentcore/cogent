@@ -12,8 +12,8 @@ const (
 	SelectTool Tools = iota
 	NodeTool
 	RectTool
-	CircleTool
-	PathTool
+	EllipseTool
+	BezierTool
 	TextTool
 	ToolsN
 )

@@ -6,7 +6,6 @@ package grid
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"path/filepath"
@@ -117,7 +116,15 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 
 // SetTool sets the current active tool
 func (gv *GridView) SetTool(tl Tools) {
+	tls := gv.Tools()
+	updt := tls.UpdateStart()
+	for i, ti := range tls.Kids {
+		t := ti.(gi.Node2D).AsNode2D()
+		t.SetSelectedState(i == int(tl))
+	}
+	tls.UpdateEnd(updt)
 	gv.EditState.Tool = tl
+	gv.SetStatus("Tool")
 }
 
 func (gv *GridView) MainToolbar() *gi.ToolBar {
@@ -269,12 +276,12 @@ func (gv *GridView) ConfigMainToolbar() {
 			giv.CallMethod(grr, "SaveDrawingAs", grr.ViewportSafe())
 		})
 	tb.AddSeparator("sep-edit")
-	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "undo", Tooltip: "Undo last action", UpdateFunc: gv.UndoAvailFunc},
+	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "rotate-left", Tooltip: "Undo last action", UpdateFunc: gv.UndoAvailFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.Undo()
 		})
-	tb.AddAction(gi.ActOpts{Label: "Redo", Icon: "redo", Tooltip: "Redo last undo action", UpdateFunc: gv.RedoAvailFunc},
+	tb.AddAction(gi.ActOpts{Label: "Redo", Icon: "rotate-right", Tooltip: "Redo last undo action", UpdateFunc: gv.RedoAvailFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.Redo()
@@ -295,15 +302,25 @@ func (gv *GridView) ConfigTools() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(SelectTool)
 		})
-	tb.AddAction(gi.ActOpts{Icon: "arrow", Tooltip: "N: select, move node points within paths"},
+	tb.AddAction(gi.ActOpts{Icon: "edit", Tooltip: "N: select, move node points within paths"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(NodeTool)
 		})
-	tb.AddAction(gi.ActOpts{Icon: "plus", Tooltip: "R: create rectangles and squares"},
+	tb.AddAction(gi.ActOpts{Icon: "stop", Tooltip: "R: create rectangles and squares"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(RectTool)
+		})
+	tb.AddAction(gi.ActOpts{Icon: "circlebutton-off", Tooltip: "E: create circles, ellipses, and arcs"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(EllipseTool)
+		})
+	tb.AddAction(gi.ActOpts{Icon: "color", Tooltip: "B: create bezier curves (straight lines, curves with control points)"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(BezierTool)
 		})
 }
 
@@ -335,7 +352,13 @@ func (gv *GridView) SetStatus(msg string) {
 	}
 	updt := sb.UpdateStart()
 	lbl := gv.StatusLabel()
-	lbl.SetText(msg)
+	es := &gv.EditState
+	str := "<b>" + strings.TrimSuffix(es.Tool.String(), "Tool") + "</b>\t"
+	if es.CurLayer != "" {
+		str += "Layer: " + es.CurLayer + "\t\t"
+	}
+	str += msg
+	lbl.SetText(str)
 	sb.UpdateEnd(updt)
 }
 
@@ -497,6 +520,10 @@ func (gv *GridView) ConfigTabs() {
 	// gv.RecycleTab("Obj", giv.KiT_StructView, false)
 }
 
+func (gv *GridView) PaintView() *PaintView {
+	return gv.Tab("Paint").(*PaintView)
+}
+
 func (gv *GridView) UpdateTabs() {
 	// fmt.Printf("updt-tabs\n")
 	es := &gv.EditState
@@ -527,7 +554,7 @@ func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
 	if manip && !es.InAction() {
 		manip = false
 		actStart = true
-		es.ActStart(act)
+		es.ActStart(act, data)
 		es.ActUnlock()
 	}
 	if !manip {
@@ -548,51 +575,34 @@ func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
 }
 
 // SetStrokeOn sets the stroke on or not
-func (gv *GridView) SetStrokeOn(on bool, clr gist.Color) {
+func (gv *GridView) SetStrokeOn(sp string) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	sv.UndoSave("SetStrokeOn", fmt.Sprintf("%v,%s", on, clr))
+	sv.UndoSave("SetStrokeOn", sp)
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
 		g := itm.AsSVGNode()
-		hp := g.Prop("stroke")
-		if hp == nil {
-			if !on {
-				g.SetProp("stroke", "none")
-			} else {
-				g.SetProp("stroke", clr.HexString())
-			}
-		} else {
-			if !on {
-				g.SetProp("stroke", "none")
-			} else {
-				if hps, ok := hp.(string); ok {
-					if hps == "none" {
-						g.SetProp("stroke", clr.HexString())
-					}
-				}
-			}
-		}
+		g.SetProp("stroke", sp)
 	}
 	sv.UpdateEnd(updt)
 }
 
-// SetStrokeWidth sets the stroke width for selected items
+// SetStrokeWidth sets the stroke width property for selected items
 // manip means currently being manipulated -- don't save undo.
-func (gv *GridView) SetStrokeWidth(wd float32, manip bool) { // todo: add units
+func (gv *GridView) SetStrokeWidth(wp string, manip bool) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	updt := false
 	if !manip {
-		sv.UndoSave("SetStrokeWidth", fmt.Sprintf("%g", wd))
+		sv.UndoSave("SetStrokeWidth", wp)
 		updt = sv.UpdateStart()
 		sv.SetFullReRender()
 	}
 	for itm := range es.Selected {
 		g := itm.AsSVGNode()
 		if !g.Pnt.StrokeStyle.Color.IsNil() {
-			g.SetProp("stroke-width", fmt.Sprintf("%gpx", wd))
+			g.SetProp("stroke-width", wp)
 		}
 	}
 	if !manip {
@@ -604,60 +614,43 @@ func (gv *GridView) SetStrokeWidth(wd float32, manip bool) { // todo: add units
 
 // SetStrokeColor sets the stroke color for selected items.
 // manip means currently being manipulated -- don't save undo.
-func (gv *GridView) SetStrokeColor(clr gist.Color, manip bool) {
+func (gv *GridView) SetStrokeColor(sp string, manip bool) {
 	es := &gv.EditState
-	gv.ManipAction("SetStrokeColor", fmt.Sprintf("%s", clr), manip,
+	gv.ManipAction("SetStrokeColor", sp, manip,
 		func() {
 			for itm := range es.Selected {
 				g := itm.AsSVGNode()
 				if !g.Pnt.FillStyle.Color.IsNil() {
-					g.SetProp("stroke", clr.HexString())
+					g.SetProp("stroke", sp)
 				}
 			}
 		})
 }
 
 // SetFillOn sets the fill on or not
-func (gv *GridView) SetFillOn(on bool, clr gist.Color) {
+func (gv *GridView) SetFillOn(fp string) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	sv.UndoSave("SetFillOn", fmt.Sprintf("%v,%s", on, clr))
+	sv.UndoSave("SetFillOn", fp)
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
 		g := itm.AsSVGNode()
-		hp := g.Prop("fill")
-		if hp == nil {
-			if !on {
-				g.SetProp("fill", "none")
-			} else {
-				g.SetProp("fill", clr.HexString())
-			}
-		} else {
-			if !on {
-				g.SetProp("fill", "none")
-			} else {
-				if hps, ok := hp.(string); ok {
-					if hps == "none" {
-						g.SetProp("fill", clr.HexString())
-					}
-				}
-			}
-		}
+		g.SetProp("fill", fp)
 	}
 	sv.UpdateEnd(updt)
 }
 
 // SetFillColor sets the fill color for selected items
 // manip means currently being manipulated -- don't save undo.
-func (gv *GridView) SetFillColor(clr gist.Color, manip bool) {
+func (gv *GridView) SetFillColor(fp string, manip bool) {
 	es := &gv.EditState
-	gv.ManipAction("SetFillColor", fmt.Sprintf("%s", clr), manip,
+	gv.ManipAction("SetFillColor", fp, manip,
 		func() {
 			for itm := range es.Selected {
 				g := itm.AsSVGNode()
 				if !g.Pnt.FillStyle.Color.IsNil() {
-					g.SetProp("fill", clr.HexString())
+					g.SetProp("fill", fp)
 				}
 			}
 		})

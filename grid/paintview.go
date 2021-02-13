@@ -5,6 +5,8 @@
 package grid
 
 import (
+	"fmt"
+
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/girl"
 	"github.com/goki/gi/giv"
@@ -35,20 +37,25 @@ func (pv *PaintView) Config(gv *GridView) {
 	spt := gi.AddNewCheckBox(spl, "stroke-on")
 	spt.SetText("On")
 	spt.Tooltip = "whether to paint stroke"
+	spt.SetChecked(true)
 
 	sc := giv.AddNewColorView(pv, "stroke-clr")
 	sc.Config()
 	sc.SetColor(pv.GridView.Prefs.Style.StrokeStyle.Color.Color)
 	sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetStrokeColor(sc.Color, false)
+		if pv.IsStrokeOn() {
+			pv.GridView.SetStrokeColor(pv.StrokeProp(), false) // not manip
+		}
 	})
 	sc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetStrokeColor(sc.Color, true) // manip
+		if pv.IsStrokeOn() {
+			pv.GridView.SetStrokeColor(pv.StrokeProp(), true) // manip
+		}
 	})
 
 	spt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.ButtonToggled) {
-			pv.GridView.SetStrokeOn(spt.IsChecked(), sc.Color)
+			pv.GridView.SetStrokeOn(pv.StrokeProp())
 		}
 	})
 
@@ -59,7 +66,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	wsb.SetProp("step", 0.05)
 	wsb.SetValue(pv.GridView.Prefs.Style.StrokeStyle.Width.Val)
 	wsb.SpinBoxSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetStrokeWidth(data.(float32), false)
+		pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
 	})
 	// todo: units from drawing units?
 
@@ -70,25 +77,67 @@ func (pv *PaintView) Config(gv *GridView) {
 	fpt := gi.AddNewCheckBox(fpl, "fill-on")
 	fpt.SetText("On")
 	fpt.Tooltip = "whether to fill paint"
+	fpt.SetChecked(true)
 
 	fc := giv.AddNewColorView(pv, "fill-clr")
 	fc.Config()
 	fc.SetColor(pv.GridView.Prefs.Style.FillStyle.Color.Color)
 	fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetFillColor(fc.Color, false)
+		if pv.IsFillOn() {
+			pv.GridView.SetFillColor(pv.FillProp(), false)
+		}
 	})
 	fc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		pv.GridView.SetFillColor(fc.Color, true) // manip
+		if pv.IsFillOn() {
+			pv.GridView.SetFillColor(pv.FillProp(), true) // manip
+		}
 	})
 
 	fpt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if sig == int64(gi.ButtonToggled) {
-			pv.GridView.SetFillOn(fpt.IsChecked(), fc.Color)
+			pv.GridView.SetFillOn(pv.FillProp())
 		}
 	})
 	pv.UpdateEnd(updt)
 }
 
+// IsStrokeOn returns true if Stroke checkbox is on
+func (pv *PaintView) IsStrokeOn() bool {
+	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-on", 1).(*gi.CheckBox)
+	return spt.IsChecked()
+}
+
+// StrokeProp returns the stroke property string according to current settings
+func (pv *PaintView) StrokeProp() string {
+	if !pv.IsStrokeOn() {
+		return "none"
+	}
+	sc := pv.ChildByName("stroke-clr", 1).(*giv.ColorView)
+	return sc.Color.HexString()
+}
+
+// StrokeWidthProp returns stroke-width property
+func (pv *PaintView) StrokeWidthProp() string {
+	wsb := pv.ChildByName("stroke-width", 2).ChildByName("width", 1).(*gi.SpinBox)
+	return fmt.Sprintf("%gpx", wsb.Value) // todo units
+}
+
+// IsFillOn returns true if Fill checkbox is on
+func (pv *PaintView) IsFillOn() bool {
+	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-on", 1).(*gi.CheckBox)
+	return fpt.IsChecked()
+}
+
+// FillProp returns the fill property string according to current settings
+func (pv *PaintView) FillProp() string {
+	if !pv.IsFillOn() {
+		return "none"
+	}
+	sc := pv.ChildByName("fill-clr", 1).(*giv.ColorView)
+	return sc.Color.HexString()
+}
+
+// Update updates the current settings based on the values in the given Paint
 func (pv *PaintView) Update(pnt *girl.Paint) {
 	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-on", 1).(*gi.CheckBox)
 	spt.SetChecked(!pnt.StrokeStyle.Color.IsNil())
@@ -111,6 +160,15 @@ func (pv *PaintView) Update(pnt *girl.Paint) {
 		fc := pv.ChildByName("fill-clr", 1).(*giv.ColorView)
 		fc.SetColor(pnt.FillStyle.Color.Color)
 	}
+}
+
+// SetProps sets the props for given node according to current settings
+func (pv *PaintView) SetProps(kn ki.Ki) {
+	kn.SetProp("stroke", pv.StrokeProp())
+	if pv.IsStrokeOn() {
+		kn.SetProp("stroke-width", pv.StrokeWidthProp())
+	}
+	kn.SetProp("fill", pv.FillProp())
 }
 
 var PaintViewProps = ki.Props{

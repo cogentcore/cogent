@@ -16,15 +16,15 @@ func _() {
 	_ = x[SelectTool-0]
 	_ = x[NodeTool-1]
 	_ = x[RectTool-2]
-	_ = x[CircleTool-3]
-	_ = x[PathTool-4]
+	_ = x[EllipseTool-3]
+	_ = x[BezierTool-4]
 	_ = x[TextTool-5]
 	_ = x[ToolsN-6]
 }
 
-const _Tools_name = "SelectToolNodeToolRectToolCircleToolPathToolTextToolToolsN"
+const _Tools_name = "SelectToolNodeToolRectToolEllipseToolBezierToolTextToolToolsN"
 
-var _Tools_index = [...]uint8{0, 10, 18, 26, 36, 44, 52, 58}
+var _Tools_index = [...]uint8{0, 10, 18, 26, 37, 47, 55, 61}
 
 func (i Tools) String() string {
 	if i < 0 || i >= Tools(len(_Tools_index)-1) {

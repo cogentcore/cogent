@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"reflect"
 	"strings"
 
 	"github.com/goki/gi/gi"
@@ -78,12 +79,33 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	}
 	kf := gi.KeyFun(kc)
 	switch kf {
+	case gi.KeyFunAbort:
+		// todo: maybe something else
+		kt.SetProcessed()
+		sv.GridView.SetTool(SelectTool)
 	case gi.KeyFunUndo:
 		kt.SetProcessed()
 		sv.GridView.Undo()
 	case gi.KeyFunRedo:
 		kt.SetProcessed()
 		sv.GridView.Redo()
+	}
+	if kt.IsProcessed() {
+		return
+	}
+	switch kc {
+	case "s", "S", " ":
+		kt.SetProcessed()
+		sv.GridView.SetTool(SelectTool)
+	case "R", "r":
+		kt.SetProcessed()
+		sv.GridView.SetTool(RectTool)
+	case "E", "e":
+		kt.SetProcessed()
+		sv.GridView.SetTool(EllipseTool)
+	case "B", "b":
+		kt.SetProcessed()
+		sv.GridView.SetTool(BezierTool)
 	}
 }
 
@@ -168,12 +190,10 @@ func (sv *SVGView) MouseEvent() {
 				ssvg.EditState().DragStart()
 			}
 		} else {
-			switch {
-			case es.Tool == SelectTool:
-				me.SetProcessed()
-				es.ResetSelected()
-				ssvg.UpdateSelSprites()
-			}
+			// for any tool
+			me.SetProcessed()
+			es.ResetSelected()
+			ssvg.UpdateSelSprites()
 		}
 	})
 }
@@ -387,10 +407,12 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 
 // DragEvent processes a mouse drag event on the SVG canvas
 func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
+	win := sv.GridView.ParentWindow()
 	delta := me.Where.Sub(me.From)
 	dv := mat32.NewVec2FmPoint(delta)
 	es := sv.EditState()
-	// me.SetProcessed()
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	me.SetProcessed()
 	if me.HasAnyModifier(key.Shift) {
 		sv.Trans.SetAdd(dv)
 		sv.SetTransform()
@@ -398,13 +420,11 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 		return
 	}
 	if es.HasSelected() {
-		win := sv.GridView.ParentWindow()
 		es.DragCurBBox.Min.SetAdd(dv)
 		es.DragCurBBox.Max.SetAdd(dv)
 		if !es.InAction() {
-			sv.ManipStart("Move")
+			sv.ManipStart("Move", es.SelectedNamesString())
 		}
-		svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 		pt := es.DragStartBBox.Min.Sub(svoff)
 		tdel := es.DragCurBBox.Min.Sub(es.DragStartBBox.Min)
 		for itm, ss := range es.Selected {
@@ -414,8 +434,17 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 		sv.SetSelSprites(es.DragCurBBox)
 		go sv.ManipUpdate()
 		win.RenderOverlays()
-	} else { // rubberband select
-
+	} else {
+		if !es.InAction() {
+			switch es.Tool {
+			case SelectTool:
+				// rubberband select
+			case RectTool:
+				sv.NewElDrag(svg.KiT_Rect, me.From, me.Where)
+			case EllipseTool:
+				sv.NewElDrag(svg.KiT_Ellipse, me.From, me.Where)
+			}
+		}
 	}
 }
 
@@ -423,7 +452,7 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	es := sv.EditState()
 	if !es.InAction() {
-		sv.ManipStart("Reshape")
+		sv.ManipStart("Reshape", es.SelectedNamesString())
 	}
 	stsz := es.DragStartBBox.Size()
 	stpos := es.DragStartBBox.Min
@@ -460,12 +489,12 @@ func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 }
 
 // ManipStart is called at the start of a manipulation, saving the state prior to the action
-func (sv *SVGView) ManipStart(act string) {
+func (sv *SVGView) ManipStart(act, data string) {
 	es := sv.EditState()
-	es.ActStart(act)
-	astr := act + ": " + strings.Join(es.SelectedNames(), " ")
-	sv.GridView.SetStatus(fmt.Sprintf("save undo: %s", astr))
-	sv.UndoSave(astr, act)
+	es.ActStart(act, data)
+	// astr := act + ": " +
+	// sv.GridView.SetStatus(fmt.Sprintf("save undo: %s: %s", act, data))
+	sv.UndoSave(act, data)
 	es.ActUnlock()
 }
 
@@ -484,4 +513,54 @@ func (sv *SVGView) ManipUpdate() {
 		return
 	}
 	sv.UpdateSig()
+}
+
+///////////////////////////////////////////////////////////////////////
+// New objects
+
+// NewEl makes a new SVG element, giving it a new unique name.
+// Uses currently active layer if set.
+func (sv *SVGView) NewEl(typ reflect.Type) svg.NodeSVG {
+	es := sv.EditState()
+	par := sv.This()
+	if es.CurLayer != "" {
+		ly := sv.ChildByName(es.CurLayer, 1)
+		if ly != nil {
+			par = ly
+		}
+	}
+	nwid := sv.NewUniqueId()
+	nwnm := fmt.Sprintf("%s%d", typ.Name(), nwid)
+	par.SetChildAdded()
+	nw := par.AddNewChild(typ, nwnm).(svg.NodeSVG)
+	nwnm = fmt.Sprintf("%s%d", nw.SVGName(), nwid)
+	nw.SetName(nwnm)
+	sv.GridView.PaintView().SetProps(nw)
+	return nw
+}
+
+// NewElDrag makes a new SVG element during the drag operation
+func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeSVG {
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+	tn := typ.Name()
+	sv.ManipStart("New"+tn, "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	nr := sv.NewEl(typ)
+	xfi := sv.Pnt.XForm.Inverse()
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
+	dv := mat32.NewVec2FmPoint(end.Sub(start))
+	minsz := float32(20)
+	pos.SetSubScalar(minsz)
+	nr.SetPos(xfi.MulVec2AsPt(pos))
+	sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	nr.SetSize(xfi.MulVec2AsVec(sz))
+	es.SelectAction(nr, mouse.SelectOne)
+	sv.UpdateEnd(updt)
+	sv.EditState().DragStart()
+	sv.UpdateSelSprites()
+	win.SpriteDragging = SpriteNames[SizeDnR]
+	return nr
 }
