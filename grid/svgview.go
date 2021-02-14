@@ -343,30 +343,15 @@ func (sv *SVGView) UpdateSelSprites() {
 		win.RenderOverlays()
 		return
 	}
-	sp := SpriteConnectEvent(SizeUpL, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		ssvg.SpriteEvent(SizeUpL, oswin.EventType(sig), d)
-	})
-	es.ActiveSprites[SizeUpL] = sp
 
-	sp = SpriteConnectEvent(SizeUpR, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		ssvg.SpriteEvent(SizeUpR, oswin.EventType(sig), d)
-	})
-	es.ActiveSprites[SizeUpR] = sp
-
-	sp = SpriteConnectEvent(SizeDnL, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		ssvg.SpriteEvent(SizeDnL, oswin.EventType(sig), d)
-	})
-	es.ActiveSprites[SizeDnL] = sp
-
-	sp = SpriteConnectEvent(SizeDnR, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		ssvg.SpriteEvent(SizeDnR, oswin.EventType(sig), d)
-	})
-	es.ActiveSprites[SizeDnR] = sp
-
+	for i := SizeUpL; i <= SizeRtC; i++ {
+		spi := i // key to get a unique local var
+		sp := SpriteConnectEvent(spi, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+			ssvg.SpriteEvent(spi, oswin.EventType(sig), d)
+		})
+		es.ActiveSprites[spi] = sp
+	}
 	sv.SetSelSprites(es.SelBBox)
 
 	win.RenderOverlays()
@@ -375,10 +360,17 @@ func (sv *SVGView) UpdateSelSprites() {
 // SetSelSprites sets active selection sprite locations based on given bounding box
 func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
 	es := sv.EditState()
+	spsz := float32(SpriteSize())
+	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - spsz))
+	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - spsz))
 	SetSpritePos(SizeUpL, es.ActiveSprites[SizeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
+	SetSpritePos(SizeUpM, es.ActiveSprites[SizeUpM], image.Point{midX, int(bbox.Min.Y)})
 	SetSpritePos(SizeUpR, es.ActiveSprites[SizeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
 	SetSpritePos(SizeDnL, es.ActiveSprites[SizeDnL], image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
+	SetSpritePos(SizeDnM, es.ActiveSprites[SizeDnM], image.Point{midX, int(bbox.Max.Y)})
 	SetSpritePos(SizeDnR, es.ActiveSprites[SizeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
+	SetSpritePos(SizeLfC, es.ActiveSprites[SizeLfC], image.Point{int(bbox.Min.X), midY})
+	SetSpritePos(SizeRtC, es.ActiveSprites[SizeRtC], image.Point{int(bbox.Max.X), midY})
 }
 
 func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
@@ -460,14 +452,22 @@ func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	switch sp {
 	case SizeUpL:
 		es.DragCurBBox.Min.SetAdd(dv)
+	case SizeUpM:
+		es.DragCurBBox.Min.Y += dv.Y
 	case SizeUpR:
 		es.DragCurBBox.Min.Y += dv.Y
 		es.DragCurBBox.Max.X += dv.X
 	case SizeDnL:
 		es.DragCurBBox.Min.X += dv.X
 		es.DragCurBBox.Max.Y += dv.Y
+	case SizeDnM:
+		es.DragCurBBox.Max.Y += dv.Y
 	case SizeDnR:
 		es.DragCurBBox.Max.SetAdd(dv)
+	case SizeLfC:
+		es.DragCurBBox.Min.X += dv.X
+	case SizeRtC:
+		es.DragCurBBox.Max.X += dv.X
 	}
 	es.DragCurBBox.Min.SetMin(es.DragCurBBox.Max.SubScalar(1)) // don't allow flipping
 	npos := es.DragCurBBox.Min

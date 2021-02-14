@@ -297,27 +297,27 @@ func (gv *GridView) ConfigTools() {
 	tb := gv.Tools()
 	tb.Lay = gi.LayoutVert
 	tb.SetStretchMaxHeight()
-	tb.AddAction(gi.ActOpts{Icon: "arrow", Tooltip: "S, Space: select, move, resize objects"},
+	tb.AddAction(gi.ActOpts{Label: "S", Icon: "arrow", Tooltip: "S, Space: select, move, resize objects"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(SelectTool)
 		})
-	tb.AddAction(gi.ActOpts{Icon: "edit", Tooltip: "N: select, move node points within paths"},
+	tb.AddAction(gi.ActOpts{Label: "N", Icon: "edit", Tooltip: "N: select, move node points within paths"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(NodeTool)
 		})
-	tb.AddAction(gi.ActOpts{Icon: "stop", Tooltip: "R: create rectangles and squares"},
+	tb.AddAction(gi.ActOpts{Label: "R", Icon: "stop", Tooltip: "R: create rectangles and squares"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(RectTool)
 		})
-	tb.AddAction(gi.ActOpts{Icon: "circlebutton-off", Tooltip: "E: create circles, ellipses, and arcs"},
+	tb.AddAction(gi.ActOpts{Label: "E", Icon: "circlebutton-off", Tooltip: "E: create circles, ellipses, and arcs"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(EllipseTool)
 		})
-	tb.AddAction(gi.ActOpts{Icon: "color", Tooltip: "B: create bezier curves (straight lines, curves with control points)"},
+	tb.AddAction(gi.ActOpts{Label: "B", Icon: "color", Tooltip: "B: create bezier curves (straight lines, curves with control points)"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(BezierTool)
@@ -529,9 +529,9 @@ func (gv *GridView) UpdateTabs() {
 	es := &gv.EditState
 	sls := es.SelectedList(false)
 	if len(sls) > 0 {
-		pnt := &(sls[0].AsSVGNode().Pnt)
+		sel := sls[0].AsSVGNode()
 		pv := gv.Tab("Paint").(*PaintView)
-		pv.Update(pnt)
+		pv.Update(sel)
 	}
 }
 
@@ -574,16 +574,23 @@ func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
 	}
 }
 
-// SetStrokeOn sets the stroke on or not
-func (gv *GridView) SetStrokeOn(sp string) {
+// SetStroke sets the stroke properties
+func (gv *GridView) SetStroke(pt PaintTypes, sp string) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	sv.UndoSave("SetStrokeOn", sp)
+	sv.UndoSave("SetStroke", sp)
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
 		g := itm.AsSVGNode()
-		g.SetProp("stroke", sp)
+		switch pt {
+		case PaintLinear:
+			svg.UpdateNodeGradientProp(g, "stroke", false, sp)
+		case PaintRadial:
+			svg.UpdateNodeGradientProp(g, "stroke", true, sp)
+		default:
+			g.SetProp("stroke", sp)
+		}
 	}
 	sv.UpdateEnd(updt)
 }
@@ -627,16 +634,23 @@ func (gv *GridView) SetStrokeColor(sp string, manip bool) {
 		})
 }
 
-// SetFillOn sets the fill on or not
-func (gv *GridView) SetFillOn(fp string) {
+// SetFill sets the fill type and props
+func (gv *GridView) SetFill(pt PaintTypes, fp string) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	sv.UndoSave("SetFillOn", fp)
+	sv.UndoSave("SetFill", fp)
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
 		g := itm.AsSVGNode()
-		g.SetProp("fill", fp)
+		switch pt {
+		case PaintLinear:
+			svg.UpdateNodeGradientProp(g, "fill", false, fp)
+		case PaintRadial:
+			svg.UpdateNodeGradientProp(g, "fill", true, fp)
+		default:
+			g.SetProp("fill", fp)
+		}
 	}
 	sv.UpdateEnd(updt)
 }

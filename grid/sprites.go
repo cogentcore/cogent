@@ -49,7 +49,7 @@ var SpriteNames = map[Sprites]string{
 	SizeRtC: "grid-size-rt-c",
 }
 
-var SpriteScale = float32(24)
+var SpriteScale = float32(18)
 
 func SpriteSize() int {
 	sz := int(math32.Ceil(gi.Prefs.LogicalDPIScale * SpriteScale))

@@ -27,7 +27,12 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
+* too many undos for paint setting.  stack layout for gradient selector.
+
+* add rotation for second select click (or maybe a special key might be better with reg click?)
+
 * layer flags, layer select via context menu -- see inkscape for key props
+* Right click with option to show in tree
 
 * svg render needs to use visibility flag from layers to not render stuff.
 
@@ -35,11 +40,11 @@ color, fill and line width editor, and full undo / redo.
 
 * resize to fit content button
 
-* Right click with option to show in tree
-
 * splits code import from gide, and do prefs, add to menu, etc
 
 * save prefs as "base" thing per inkscape
+
+* node editor -- big job but needed for making basic bezier curves..
 
 * objects with their own unique gradient transforms need the gradient updated when repositioned.  
   gradientUnits = "userSpaceOnUse" -- gradients refer to a master that defines stops, and then each
