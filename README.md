@@ -27,7 +27,10 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
-* too many undos for paint setting.  stack layout for gradient selector.
+* svggview SpriteDrag, UpdateNodeGradientPoints not working for new nodes -- points are good but stops
+are not set -- need to get stops 
+
+* some kind of mutex hang in undo / redo ?
 
 * add rotation for second select click (or maybe a special key might be better with reg click?)
 

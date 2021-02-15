@@ -60,16 +60,33 @@ func (pv *PaintView) DecodeType(g *svg.NodeBase, cs *gist.ColorSpec, prop string
 
 // Update updates the current settings based on the values in the given Paint
 func (pv *PaintView) Update(g *svg.NodeBase) {
+	updt := pv.UpdateStart()
+	defer pv.UpdateEnd(updt)
+
 	pv.StrokeType, pv.StrokeStops = pv.DecodeType(g, &g.Pnt.StrokeStyle.Color, "stroke")
 	pv.FillType, pv.FillStops = pv.DecodeType(g, &g.Pnt.FillStyle.Color, "fill")
+
+	es := &pv.GridView.EditState
+	grl := &es.Gradients
 
 	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-type", 1).(*gi.ButtonBox)
 	spt.SelectItem(int(pv.StrokeType))
 
-	// todo: stack
-	if pv.StrokeType == PaintSolid {
-		sc := pv.ChildByName("stroke-clr", 1).(*giv.ColorView)
+	ss := pv.ChildByName("stroke-stack", 1).(*gi.Frame)
+	ss.SetFullReRender()
+
+	switch pv.StrokeType {
+	case PaintSolid:
+		ss.StackTop = 1
+		sc := ss.ChildByName("stroke-clr", 1).(*giv.ColorView)
 		sc.SetColor(g.Pnt.StrokeStyle.Color.Color)
+	case PaintLinear, PaintRadial:
+		ss.StackTop = 2
+		sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
+		sg.SetSlice(grl)
+		pv.SelectStrokeGrad()
+	default:
+		ss.StackTop = 0
 	}
 
 	wsb := pv.ChildByName("stroke-width", 2).ChildByName("width", 1).(*gi.SpinBox)
@@ -79,10 +96,49 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*gi.ButtonBox)
 	fpt.SelectItem(int(pv.FillType))
 
-	// todo: stack
-	if pv.FillType == PaintSolid {
-		fc := pv.ChildByName("fill-clr", 1).(*giv.ColorView)
+	fs := pv.ChildByName("fill-stack", 1).(*gi.Frame)
+	fs.SetFullReRender()
+
+	switch pv.FillType {
+	case PaintSolid:
+		fs.StackTop = 1
+		fc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
 		fc.SetColor(g.Pnt.FillStyle.Color.Color)
+	case PaintLinear, PaintRadial:
+		fs.StackTop = 2
+		fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
+		fg.SetSlice(grl)
+		pv.SelectFillGrad()
+	default:
+		fs.StackTop = 0
+	}
+}
+
+func (pv *PaintView) SelectStrokeGrad() {
+	es := &pv.GridView.EditState
+	grl := &es.Gradients
+	ss := pv.ChildByName("stroke-stack", 1).(*gi.Frame)
+	sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
+	sg.UnselectAllIdxs()
+	for i, g := range *grl {
+		if g.Name == pv.StrokeStops {
+			sg.SelectIdx(i)
+			break
+		}
+	}
+}
+
+func (pv *PaintView) SelectFillGrad() {
+	es := &pv.GridView.EditState
+	grl := &es.Gradients
+	fs := pv.ChildByName("fill-stack", 1).(*gi.Frame)
+	fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
+	fg.UnselectAllIdxs()
+	for i, g := range *grl {
+		if g.Name == pv.FillStops {
+			fg.SelectIdx(i)
+			break
+		}
 	}
 }
 
@@ -105,12 +161,39 @@ func (pv *PaintView) Config(gv *GridView) {
 	spt.ItemsFromStringList(PaintTypeNames)
 	spt.SelectItem(int(pv.StrokeType))
 	spt.Mutex = true
+
+	ss := gi.AddNewFrame(pv, "stroke-stack", gi.LayoutStacked)
+	ss.StackTop = 1
+	ss.SetStretchMax()
+	ss.SetReRenderAnchor()
+	// ss.StackTopOnly = true
+
+	gi.AddNewFrame(ss, "stroke-blank", gi.LayoutHoriz) // nothing
+
 	spt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		prev := pv.StrokeType
 		pv.StrokeType = PaintTypes(sig)
-		pv.GridView.SetStroke(pv.StrokeType, pv.StrokeProp())
+		updt := ss.UpdateStart()
+		ss.SetFullReRender()
+		sp := pv.StrokeProp()
+		switch pv.StrokeType {
+		case PaintOff, PaintInherit:
+			ss.StackTop = 0
+		case PaintSolid:
+			ss.StackTop = 1
+		case PaintLinear, PaintRadial:
+			if pv.StrokeStops == "" {
+				pv.StrokeStops = pv.GridView.DefaultGradient()
+			}
+			sp = pv.StrokeStops
+			ss.StackTop = 2
+			pv.SelectStrokeGrad()
+		}
+		ss.UpdateEnd(updt)
+		pv.GridView.SetStroke(prev, pv.StrokeType, sp)
 	})
 
-	sc := giv.AddNewColorView(pv, "stroke-clr")
+	sc := giv.AddNewColorView(ss, "stroke-clr")
 	sc.Config()
 	sc.SetColor(pv.GridView.Prefs.Style.StrokeStyle.Color.Color)
 	sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -121,6 +204,21 @@ func (pv *PaintView) Config(gv *GridView) {
 	sc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.StrokeType == PaintSolid {
 			pv.GridView.SetStrokeColor(pv.StrokeProp(), true) // manip
+		}
+	})
+
+	sg := giv.AddNewTableView(ss, "stroke-grad")
+	sg.SetProp("index", true)
+	sg.SetProp("toolbar", true)
+	sg.SelectedIdx = -1
+	sg.SetSlice(&pv.GridView.EditState.Gradients)
+	sg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.WidgetSelected) {
+			svv, _ := send.(*giv.TableView)
+			if svv.SelectedIdx >= 0 {
+				pv.StrokeStops = pv.GridView.EditState.Gradients[svv.SelectedIdx].Name
+				pv.GridView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
+			}
 		}
 	})
 
@@ -146,12 +244,39 @@ func (pv *PaintView) Config(gv *GridView) {
 	fpt.ItemsFromStringList(PaintTypeNames)
 	fpt.SelectItem(int(pv.FillType))
 	fpt.Mutex = true
+
+	fs := gi.AddNewFrame(pv, "fill-stack", gi.LayoutStacked)
+	fs.SetStretchMax()
+	fs.StackTop = 1
+	fs.SetReRenderAnchor()
+	fs.StackTopOnly = true
+
+	gi.AddNewFrame(fs, "fill-blank", gi.LayoutHoriz) // nothing
+
 	fpt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		prev := pv.FillType
 		pv.FillType = PaintTypes(sig)
-		pv.GridView.SetFill(pv.FillType, pv.FillProp())
+		updt := fs.UpdateStart()
+		fs.SetFullReRender()
+		fp := pv.FillProp()
+		switch pv.FillType {
+		case PaintOff, PaintInherit:
+			fs.StackTop = 0
+		case PaintSolid:
+			fs.StackTop = 1
+		case PaintLinear, PaintRadial:
+			if pv.FillStops == "" {
+				pv.FillStops = pv.GridView.DefaultGradient()
+			}
+			fp = pv.FillStops
+			fs.StackTop = 2
+			pv.SelectFillGrad()
+		}
+		fs.UpdateEnd(updt)
+		pv.GridView.SetFill(prev, pv.FillType, fp)
 	})
 
-	fc := giv.AddNewColorView(pv, "fill-clr")
+	fc := giv.AddNewColorView(fs, "fill-clr")
 	fc.Config()
 	fc.SetColor(pv.GridView.Prefs.Style.FillStyle.Color.Color)
 	fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -165,16 +290,43 @@ func (pv *PaintView) Config(gv *GridView) {
 		}
 	})
 
+	fg := giv.AddNewTableView(fs, "fill-grad")
+	fg.SetProp("index", true)
+	fg.SetProp("toolbar", true)
+	fg.SelectedIdx = -1
+	fg.SetSlice(&pv.GridView.EditState.Gradients)
+	fg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.WidgetSelected) {
+			svv, _ := send.(*giv.TableView)
+			if svv.SelectedIdx >= 0 {
+				pv.FillStops = pv.GridView.EditState.Gradients[svv.SelectedIdx].Name
+				pv.GridView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
+			}
+		}
+	})
+	fg.SliceViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		// svv, _ := send.(*giv.TableView)
+		if sig == int64(giv.SliceViewDeleted) { // not clear what we can do here
+		} else {
+			pv.GridView.UpdateGradients()
+		}
+	})
+	fg.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		// svv, _ := send.(*giv.TableView)
+		pv.GridView.UpdateGradients()
+	})
+
 	pv.UpdateEnd(updt)
 }
 
 // StrokeProp returns the stroke property string according to current settings
 func (pv *PaintView) StrokeProp() string {
+	ss := pv.ChildByName("stroke-stack", 1).(*gi.Frame)
 	switch pv.StrokeType {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		sc := pv.ChildByName("stroke-clr", 1).(*giv.ColorView)
+		sc := ss.ChildByName("stroke-clr", 1).(*giv.ColorView)
 		return sc.Color.HexString()
 	case PaintLinear:
 		return pv.StrokeStops
@@ -204,11 +356,12 @@ func (pv *PaintView) IsFillOn() bool {
 
 // FillProp returns the fill property string according to current settings
 func (pv *PaintView) FillProp() string {
+	fs := pv.ChildByName("fill-stack", 1).(*gi.Frame)
 	switch pv.FillType {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		sc := pv.ChildByName("fill-clr", 1).(*giv.ColorView)
+		sc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
 		return sc.Color.HexString()
 	case PaintLinear:
 		return pv.FillStops
@@ -221,12 +374,12 @@ func (pv *PaintView) FillProp() string {
 }
 
 // SetProps sets the props for given node according to current settings
-func (pv *PaintView) SetProps(kn ki.Ki) {
-	kn.SetProp("stroke", pv.StrokeProp())
+func (pv *PaintView) SetProps(sii svg.NodeSVG) {
+	pv.GridView.SetStrokeNode(sii, pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
-		kn.SetProp("stroke-width", pv.StrokeWidthProp())
+		sii.SetProp("stroke-width", pv.StrokeWidthProp())
 	}
-	kn.SetProp("fill", pv.FillProp())
+	pv.GridView.SetFillNode(sii, pv.FillType, pv.FillType, pv.FillProp())
 }
 
 var PaintViewProps = ki.Props{

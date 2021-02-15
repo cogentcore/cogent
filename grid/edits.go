@@ -5,30 +5,28 @@
 package grid
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/undo"
 	"github.com/goki/mat32"
+	"github.com/srwiley/rasterx"
 )
-
-// SelState is state for selected nodes
-type SelState struct {
-	Order    int       `desc:"order item was selected"`
-	InitGeom []float32 `desc:"initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there"`
-}
 
 // EditState has all the current edit state information
 type EditState struct {
-	Tool     Tools    `desc:"current tool in use"`
-	Action   string   `desc:"current action being performed -- used for undo labeling"`
-	ActData  string   `desc:"action data set at start of action"`
-	CurLayer string   `desc:"current layer -- where new objects are inserted"`
-	UndoMgr  undo.Mgr `desc:"undo manager"`
+	Tool      Tools       `desc:"current tool in use"`
+	Action    string      `desc:"current action being performed -- used for undo labeling"`
+	ActData   string      `desc:"action data set at start of action"`
+	CurLayer  string      `desc:"current layer -- where new objects are inserted"`
+	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
+	UndoMgr   undo.Mgr    `desc:"undo manager"`
 
 	ActMu         sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
 	Selected      map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
@@ -36,6 +34,15 @@ type EditState struct {
 	DragStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
 	DragCurBBox   mat32.Box2                `desc:"current bbox during dragging"`
 	ActiveSprites map[Sprites]*gi.Sprite    `copy:"-" json:"-" xml:"-" view:"-" desc:"cached only for active sprites during manipulation"`
+}
+
+// Init initializes the edit state -- e.g. after opening a new file
+func (es *EditState) Init() {
+	es.Action = ""
+	es.ActData = ""
+	es.CurLayer = ""
+	es.Gradients = nil
+	es.UndoMgr.Reset()
 }
 
 // InAction reports whether we currently doing an action
@@ -211,4 +218,99 @@ func (es *EditState) DragStart() {
 	for itm, ss := range es.Selected {
 		itm.WriteGeom(&ss.InitGeom)
 	}
+}
+
+//////////////////////////////////////////////////////
+//  Other Types
+
+// SelState is state for selected nodes
+type SelState struct {
+	Order    int       `desc:"order item was selected"`
+	InitGeom []float32 `desc:"initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there"`
+}
+
+// GradStop represents a single gradient stop
+type GradStop struct {
+	Color   gist.Color `desc:"color -- alpha is ignored -- set opacity separately"`
+	Opacity float64    `desc:"opacity determines how opaque color is - used instead of alpha in color"`
+	Offset  float64    `desc:"offset position along the gradient vector: 0 = start, 1 = nominal end"`
+}
+
+// Gradient represents a single gradient that defines stops (referenced in StopName of other gradients)
+type Gradient struct {
+	Ic    gi.IconName `inactive:"+" tableview:"no-header" desc:"icon of gradient -- generated to display each gradient"`
+	Id    string      `inactive:"+" width:"6" desc:"name of gradient (id)"`
+	Name  string      `view:"-" desc:"full name of gradient as SVG element"`
+	Stops []*GradStop `desc:"gradient stops"`
+}
+
+// Updates our gradient from svg gradient
+func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
+	_, id := svg.SplitNameIdDig(g.Nm)
+	gr.Id = fmt.Sprintf("%d", id)
+	gr.Name = g.Nm
+	if g.Grad.Gradient == nil {
+		gr.Stops = nil
+		return
+	}
+	gr.Ic = "stop" // todo manage separate list of gradient icons
+	xgr := g.Grad.Gradient
+	nst := len(xgr.Stops)
+	if len(gr.Stops) != nst || gr.Stops == nil {
+		gr.Stops = make([]*GradStop, nst)
+	}
+	for i, xst := range xgr.Stops {
+		gst := gr.Stops[i]
+		if gr.Stops[i] == nil {
+			gst = &GradStop{}
+		}
+		gst.Color.SetColor(xst.StopColor)
+		gst.Opacity = xst.Opacity
+		gst.Offset = xst.Offset
+		gr.Stops[i] = gst
+	}
+}
+
+// Updates svg gradient from our gradient
+func (gr *Gradient) UpdateGrad(g *gi.Gradient) {
+	_, id := svg.SplitNameIdDig(g.Nm) // we always need to sync to id & name though
+	gr.Id = fmt.Sprintf("%d", id)
+	gr.Name = g.Nm
+	gr.Ic = "stop" // todo manage separate list of gradient icons -- update
+	if g.Grad.Gradient == nil {
+		if strings.HasPrefix(gr.Name, "radial") {
+			g.Grad.NewRadialGradient()
+		} else {
+			g.Grad.NewLinearGradient()
+		}
+	}
+	xgr := g.Grad.Gradient
+	if gr.Stops == nil {
+		gr.Stops = make([]*GradStop, 1)
+		gr.Stops[0] = &GradStop{}
+	}
+	nst := len(gr.Stops)
+	if len(xgr.Stops) != nst {
+		xgr.Stops = make([]rasterx.GradStop, nst)
+	}
+	for i, gst := range gr.Stops {
+		xst := &xgr.Stops[i]
+		xst.StopColor = gst.Color
+		xst.Opacity = gst.Opacity
+		xst.Offset = gst.Offset
+	}
+}
+
+// ConfigDefaultGradient configures a new default gradient
+func (es *EditState) ConfigDefaultGradient() {
+	es.Gradients = make([]*Gradient, 1)
+	gr := &Gradient{}
+	es.Gradients[0] = gr
+	gr.Stops = make([]*GradStop, 2)
+	st1 := &GradStop{Opacity: 1, Offset: 0}
+	st1.Color.SetName("blue")
+	st2 := &GradStop{Opacity: 1, Offset: 1}
+	st2.Color.SetName("white")
+	gr.Stops[0] = st1
+	gr.Stops[1] = st2
 }

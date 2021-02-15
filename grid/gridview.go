@@ -64,6 +64,8 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 		log.Println(err)
 		// return err
 	}
+	gv.EditState.Init()
+	gv.EditState.Gradients = sg.Gradients()
 	sg.GatherIds() // also ensures uniqueness, key for json saving
 	sg.SetNormXForm()
 	scx, scy := sg.Pnt.XForm.ExtractScale()
@@ -322,6 +324,8 @@ func (gv *GridView) ConfigTools() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(BezierTool)
 		})
+
+	gv.SetTool(SelectTool)
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -574,23 +578,33 @@ func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
 	}
 }
 
-// SetStroke sets the stroke properties
-func (gv *GridView) SetStroke(pt PaintTypes, sp string) {
+// SetStrokeNode sets the stroke properties of Node
+// based on previous and current PaintType
+func (gv *GridView) SetStrokeNode(sii svg.NodeSVG, prev, pt PaintTypes, sp string) {
+	switch pt {
+	case PaintLinear:
+		svg.UpdateNodeGradientProp(sii, "stroke", false, sp)
+	case PaintRadial:
+		svg.UpdateNodeGradientProp(sii, "stroke", true, sp)
+	default:
+		if prev == PaintLinear || prev == PaintRadial {
+			pstr := sii.Prop("stroke").(string)
+			svg.DeleteNodeGradient(sii, pstr)
+		}
+		sii.SetProp("stroke", sp)
+	}
+}
+
+// SetStroke sets the stroke properties of selected items
+// based on previous and current PaintType
+func (gv *GridView) SetStroke(prev, pt PaintTypes, sp string) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("SetStroke", sp)
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
-		g := itm.AsSVGNode()
-		switch pt {
-		case PaintLinear:
-			svg.UpdateNodeGradientProp(g, "stroke", false, sp)
-		case PaintRadial:
-			svg.UpdateNodeGradientProp(g, "stroke", true, sp)
-		default:
-			g.SetProp("stroke", sp)
-		}
+		gv.SetStrokeNode(itm, prev, pt, sp)
 	}
 	sv.UpdateEnd(updt)
 }
@@ -634,23 +648,33 @@ func (gv *GridView) SetStrokeColor(sp string, manip bool) {
 		})
 }
 
-// SetFill sets the fill type and props
-func (gv *GridView) SetFill(pt PaintTypes, fp string) {
+// SetFillNode sets the fill props of given node
+// based on previous and current PaintType
+func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string) {
+	switch pt {
+	case PaintLinear:
+		svg.UpdateNodeGradientProp(sii, "fill", false, fp)
+	case PaintRadial:
+		svg.UpdateNodeGradientProp(sii, "fill", true, fp)
+	default:
+		if prev == PaintLinear || prev == PaintRadial {
+			pstr := sii.Prop("fill").(string)
+			svg.DeleteNodeGradient(sii, pstr)
+		}
+		sii.SetProp("fill", fp)
+	}
+}
+
+// SetFill sets the fill props of selected items
+// based on previous and current PaintType
+func (gv *GridView) SetFill(prev, pt PaintTypes, fp string) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("SetFill", fp)
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
-		g := itm.AsSVGNode()
-		switch pt {
-		case PaintLinear:
-			svg.UpdateNodeGradientProp(g, "fill", false, fp)
-		case PaintRadial:
-			svg.UpdateNodeGradientProp(g, "fill", true, fp)
-		default:
-			g.SetProp("fill", fp)
-		}
+		gv.SetFillNode(itm, prev, pt, fp)
 	}
 	sv.UpdateEnd(updt)
 }
@@ -668,6 +692,26 @@ func (gv *GridView) SetFillColor(fp string, manip bool) {
 				}
 			}
 		})
+}
+
+// DefaultGradient returns the default gradient to use for setting stops
+func (gv *GridView) DefaultGradient() string {
+	es := &gv.EditState
+	sv := gv.SVG()
+	if len(gv.EditState.Gradients) == 0 {
+		es.ConfigDefaultGradient()
+		sv.UpdateGradients(es.Gradients)
+	}
+	return es.Gradients[0].Name
+}
+
+// UpdateGradients updates gradients from EditState
+func (gv *GridView) UpdateGradients() {
+	es := &gv.EditState
+	sv := gv.SVG()
+	updt := sv.UpdateStart()
+	sv.UpdateGradients(es.Gradients)
+	sv.UpdateEnd(updt)
 }
 
 // Undo undoes one step, returning name of action that was undone

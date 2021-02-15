@@ -212,6 +212,152 @@ func (sv *SVGView) MouseHover() {
 	})
 }
 
+func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
+	win := sv.GridView.ParentWindow()
+	switch et {
+	case oswin.MouseEvent:
+		me := d.(*mouse.Event)
+		me.SetProcessed()
+		// fmt.Printf("click %s\n", sp)
+		if me.Action == mouse.Press {
+			win.SpriteDragging = SpriteNames[sp]
+			sv.EditState().DragStart()
+			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
+		} else if me.Action == mouse.Release {
+			sv.UpdateSelSprites()
+			sv.EditState().DragStart()
+			sv.ManipDone()
+		}
+	case oswin.MouseDragEvent:
+		me := d.(*mouse.DragEvent)
+		me.SetProcessed()
+		// fmt.Printf("drag %v delta: %v\n", sp, me.Delta())
+		sv.SpriteDrag(sp, me.Delta(), win)
+	}
+}
+
+// DragEvent processes a mouse drag event on the SVG canvas
+func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
+	win := sv.GridView.ParentWindow()
+	delta := me.Where.Sub(me.From)
+	dv := mat32.NewVec2FmPoint(delta)
+	es := sv.EditState()
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	me.SetProcessed()
+	if me.HasAnyModifier(key.Shift) {
+		sv.Trans.SetAdd(dv)
+		sv.SetTransform()
+		sv.UpdateView(true)
+		return
+	}
+	if es.HasSelected() {
+		es.DragCurBBox.Min.SetAdd(dv)
+		es.DragCurBBox.Max.SetAdd(dv)
+		if !es.InAction() {
+			sv.ManipStart("Move", es.SelectedNamesString())
+		}
+		pt := es.DragStartBBox.Min.Sub(svoff)
+		tdel := es.DragCurBBox.Min.Sub(es.DragStartBBox.Min)
+		for itm, ss := range es.Selected {
+			itm.ReadGeom(ss.InitGeom)
+			itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
+		}
+		sv.SetSelSprites(es.DragCurBBox)
+		go sv.ManipUpdate()
+		win.RenderOverlays()
+	} else {
+		if !es.InAction() {
+			switch es.Tool {
+			case SelectTool:
+				// rubberband select
+			case RectTool:
+				sv.NewElDrag(svg.KiT_Rect, me.From, me.Where)
+			case EllipseTool:
+				sv.NewElDrag(svg.KiT_Ellipse, me.From, me.Where)
+			}
+		}
+	}
+}
+
+// SpriteDrag processes a mouse drag event on a selection sprite
+func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
+	es := sv.EditState()
+	if !es.InAction() {
+		sv.ManipStart("Reshape", es.SelectedNamesString())
+	}
+	stsz := es.DragStartBBox.Size()
+	stpos := es.DragStartBBox.Min
+	dv := mat32.NewVec2FmPoint(delta)
+	switch sp {
+	case SizeUpL:
+		es.DragCurBBox.Min.SetAdd(dv)
+	case SizeUpM:
+		es.DragCurBBox.Min.Y += dv.Y
+	case SizeUpR:
+		es.DragCurBBox.Min.Y += dv.Y
+		es.DragCurBBox.Max.X += dv.X
+	case SizeDnL:
+		es.DragCurBBox.Min.X += dv.X
+		es.DragCurBBox.Max.Y += dv.Y
+	case SizeDnM:
+		es.DragCurBBox.Max.Y += dv.Y
+	case SizeDnR:
+		es.DragCurBBox.Max.SetAdd(dv)
+	case SizeLfC:
+		es.DragCurBBox.Min.X += dv.X
+	case SizeRtC:
+		es.DragCurBBox.Max.X += dv.X
+	}
+	es.DragCurBBox.Min.SetMin(es.DragCurBBox.Max.SubScalar(1)) // don't allow flipping
+	npos := es.DragCurBBox.Min
+	nsz := es.DragCurBBox.Size()
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	pt := es.DragStartBBox.Min.Sub(svoff)
+	del := npos.Sub(stpos)
+	sc := nsz.Div(stsz)
+	for itm, ss := range es.Selected {
+		itm.ReadGeom(ss.InitGeom)
+		itm.ApplyDeltaXForm(del, sc, 0, pt)
+		if strings.HasPrefix(es.Action, "New") {
+			svg.UpdateNodeGradientPoints(itm, "fill")
+			svg.UpdateNodeGradientPoints(itm, "stroke")
+		}
+	}
+
+	sv.SetSelSprites(es.DragCurBBox)
+
+	go sv.ManipUpdate()
+
+	win.RenderOverlays()
+}
+
+// ManipStart is called at the start of a manipulation, saving the state prior to the action
+func (sv *SVGView) ManipStart(act, data string) {
+	es := sv.EditState()
+	es.ActStart(act, data)
+	// astr := act + ": " +
+	// sv.GridView.SetStatus(fmt.Sprintf("save undo: %s: %s", act, data))
+	sv.UndoSave(act, data)
+	es.ActUnlock()
+}
+
+// ManipDone happens when a manipulation has finished: resets action, does render
+func (sv *SVGView) ManipDone() {
+	es := sv.EditState()
+	es.ActDone()
+	sv.UpdateSig()
+}
+
+// ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the
+// current display while manipulating.  It checks if already rendering and if so,
+// just returns immediately, so that updates are not stacked up and laggy.
+func (sv *SVGView) ManipUpdate() {
+	if sv.IsRendering() {
+		return
+	}
+	sv.UpdateSig()
+}
+
 func (sv *SVGView) SVGViewEvents() {
 	sv.SetCanFocus()
 	sv.MouseDrag()
@@ -328,7 +474,7 @@ func (sv *SVGView) Redo() string {
 	return act
 }
 
-/////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 // selection processing
 
 func (sv *SVGView) UpdateSelSprites() {
@@ -371,148 +517,6 @@ func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
 	SetSpritePos(SizeDnR, es.ActiveSprites[SizeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
 	SetSpritePos(SizeLfC, es.ActiveSprites[SizeLfC], image.Point{int(bbox.Min.X), midY})
 	SetSpritePos(SizeRtC, es.ActiveSprites[SizeRtC], image.Point{int(bbox.Max.X), midY})
-}
-
-func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
-	win := sv.GridView.ParentWindow()
-	switch et {
-	case oswin.MouseEvent:
-		me := d.(*mouse.Event)
-		me.SetProcessed()
-		// fmt.Printf("click %s\n", sp)
-		if me.Action == mouse.Press {
-			win.SpriteDragging = SpriteNames[sp]
-			sv.EditState().DragStart()
-			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
-		} else if me.Action == mouse.Release {
-			sv.UpdateSelSprites()
-			sv.EditState().DragStart()
-			sv.ManipDone()
-		}
-	case oswin.MouseDragEvent:
-		me := d.(*mouse.DragEvent)
-		me.SetProcessed()
-		// fmt.Printf("drag %v delta: %v\n", sp, me.Delta())
-		sv.SpriteDrag(sp, me.Delta(), win)
-	}
-}
-
-// DragEvent processes a mouse drag event on the SVG canvas
-func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
-	win := sv.GridView.ParentWindow()
-	delta := me.Where.Sub(me.From)
-	dv := mat32.NewVec2FmPoint(delta)
-	es := sv.EditState()
-	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
-	me.SetProcessed()
-	if me.HasAnyModifier(key.Shift) {
-		sv.Trans.SetAdd(dv)
-		sv.SetTransform()
-		sv.UpdateView(true)
-		return
-	}
-	if es.HasSelected() {
-		es.DragCurBBox.Min.SetAdd(dv)
-		es.DragCurBBox.Max.SetAdd(dv)
-		if !es.InAction() {
-			sv.ManipStart("Move", es.SelectedNamesString())
-		}
-		pt := es.DragStartBBox.Min.Sub(svoff)
-		tdel := es.DragCurBBox.Min.Sub(es.DragStartBBox.Min)
-		for itm, ss := range es.Selected {
-			itm.ReadGeom(ss.InitGeom)
-			itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
-		}
-		sv.SetSelSprites(es.DragCurBBox)
-		go sv.ManipUpdate()
-		win.RenderOverlays()
-	} else {
-		if !es.InAction() {
-			switch es.Tool {
-			case SelectTool:
-				// rubberband select
-			case RectTool:
-				sv.NewElDrag(svg.KiT_Rect, me.From, me.Where)
-			case EllipseTool:
-				sv.NewElDrag(svg.KiT_Ellipse, me.From, me.Where)
-			}
-		}
-	}
-}
-
-// SpriteDrag processes a mouse drag event on a selection sprite
-func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
-	es := sv.EditState()
-	if !es.InAction() {
-		sv.ManipStart("Reshape", es.SelectedNamesString())
-	}
-	stsz := es.DragStartBBox.Size()
-	stpos := es.DragStartBBox.Min
-	dv := mat32.NewVec2FmPoint(delta)
-	switch sp {
-	case SizeUpL:
-		es.DragCurBBox.Min.SetAdd(dv)
-	case SizeUpM:
-		es.DragCurBBox.Min.Y += dv.Y
-	case SizeUpR:
-		es.DragCurBBox.Min.Y += dv.Y
-		es.DragCurBBox.Max.X += dv.X
-	case SizeDnL:
-		es.DragCurBBox.Min.X += dv.X
-		es.DragCurBBox.Max.Y += dv.Y
-	case SizeDnM:
-		es.DragCurBBox.Max.Y += dv.Y
-	case SizeDnR:
-		es.DragCurBBox.Max.SetAdd(dv)
-	case SizeLfC:
-		es.DragCurBBox.Min.X += dv.X
-	case SizeRtC:
-		es.DragCurBBox.Max.X += dv.X
-	}
-	es.DragCurBBox.Min.SetMin(es.DragCurBBox.Max.SubScalar(1)) // don't allow flipping
-	npos := es.DragCurBBox.Min
-	nsz := es.DragCurBBox.Size()
-	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
-	pt := es.DragStartBBox.Min.Sub(svoff)
-	del := npos.Sub(stpos)
-	sc := nsz.Div(stsz)
-	for itm, ss := range es.Selected {
-		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaXForm(del, sc, 0, pt)
-	}
-
-	sv.SetSelSprites(es.DragCurBBox)
-
-	go sv.ManipUpdate()
-
-	win.RenderOverlays()
-}
-
-// ManipStart is called at the start of a manipulation, saving the state prior to the action
-func (sv *SVGView) ManipStart(act, data string) {
-	es := sv.EditState()
-	es.ActStart(act, data)
-	// astr := act + ": " +
-	// sv.GridView.SetStatus(fmt.Sprintf("save undo: %s: %s", act, data))
-	sv.UndoSave(act, data)
-	es.ActUnlock()
-}
-
-// ManipDone happens when a manipulation has finished: resets action, does render
-func (sv *SVGView) ManipDone() {
-	es := sv.EditState()
-	es.ActDone()
-	sv.UpdateSig()
-}
-
-// ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the
-// current display while manipulating.  It checks if already rendering and if so,
-// just returns immediately, so that updates are not stacked up and laggy.
-func (sv *SVGView) ManipUpdate() {
-	if sv.IsRendering() {
-		return
-	}
-	sv.UpdateSig()
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -563,4 +567,44 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	sv.UpdateSelSprites()
 	win.SpriteDragging = SpriteNames[SizeDnR]
 	return nr
+}
+
+///////////////////////////////////////////////////////////////////////
+// Gradients
+
+// Gradients returns the currently-defined gradients with stops
+// that are shared among obj-specific ones
+func (sv *SVGView) Gradients() []*Gradient {
+	gl := make([]*Gradient, 0)
+	for _, gii := range sv.Defs.Kids {
+		g, ok := gii.(*gi.Gradient)
+		if !ok {
+			continue
+		}
+		if g.StopsName != "" {
+			continue
+		}
+		gr := &Gradient{}
+		gr.UpdateFromGrad(g)
+		gl = append(gl, gr)
+	}
+	return gl
+}
+
+// UpdateGradients update SVG gradients from given gradient list
+func (sv *SVGView) UpdateGradients(gl []*Gradient) {
+	for _, gr := range gl {
+		radial := false
+		if strings.HasPrefix(gr.Name, "radial") {
+			radial = true
+		}
+		var g *gi.Gradient
+		gg := sv.FindDefByName(gr.Name)
+		if gg == nil {
+			g, _ = sv.AddNewGradient(radial)
+		} else {
+			g = gg.(*gi.Gradient)
+		}
+		gr.UpdateGrad(g)
+	}
 }
