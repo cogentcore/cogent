@@ -27,6 +27,8 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
+* Text edit panel
+
 * autosave
 
 * cut / paste not updating tree reliably.  more tree update debugging fun!

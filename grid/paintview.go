@@ -96,6 +96,22 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 	uncb := wr.ChildByName("width-units", 2).(*gi.ComboBox)
 	uncb.SetCurIndex(int(g.Pnt.StrokeStyle.Width.Un))
 
+	ms := kit.ToString(g.Prop("marker-start"))
+	if ms != "" {
+		mscb := wr.ChildByName("marker-start", 4).(*gi.ComboBox)
+		mscb.SetCurVal(svg.URLName(ms))
+	}
+	mm := kit.ToString(g.Prop("marker-mid"))
+	if mm != "" {
+		mmcb := wr.ChildByName("marker-mid", 4).(*gi.ComboBox)
+		mmcb.SetCurVal(svg.URLName(mm))
+	}
+	me := kit.ToString(g.Prop("marker-end"))
+	if me != "" {
+		mecb := wr.ChildByName("marker-end", 4).(*gi.ComboBox)
+		mecb.SetCurVal(svg.URLName(me))
+	}
+
 	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*gi.ButtonBox)
 	fpt.SelectItem(int(pv.FillType))
 
@@ -183,6 +199,37 @@ func (pv *PaintView) Config(gv *GridView) {
 			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
 		}
 	})
+
+	spc := gi.AddNewSpace(wr, "sp1")
+	spc.SetProp("width", units.NewCh(5))
+
+	mscb := gi.AddNewComboBox(wr, "marker-start")
+	mscb.ItemsFromStringList(AllMarkerNames, true, 0)
+	mscb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			s, m, e := pv.MarkerProps()
+			pv.GridView.SetMarkerProps(s, m, e)
+		}
+	})
+	mmcb := gi.AddNewComboBox(wr, "marker-mid")
+	mmcb.ItemsFromStringList(AllMarkerNames, true, 0)
+	mmcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			s, m, e := pv.MarkerProps()
+			pv.GridView.SetMarkerProps(s, m, e)
+		}
+	})
+	mecb := gi.AddNewComboBox(wr, "marker-end")
+	mecb.ItemsFromStringList(AllMarkerNames, true, 0)
+	mecb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			s, m, e := pv.MarkerProps()
+			pv.GridView.SetMarkerProps(s, m, e)
+		}
+	})
+
+	////////////////////////////////
+	// stroke stack
 
 	ss := gi.AddNewFrame(pv, "stroke-stack", gi.LayoutStacked)
 	ss.StackTop = 1
@@ -349,6 +396,27 @@ func (pv *PaintView) StrokeProp() string {
 		return "inherit"
 	}
 	return "none"
+}
+
+// MarkerProp returns the marker property string according to current settings
+func (pv *PaintView) MarkerProps() (start, mid, end string) {
+	wr := pv.ChildByName("stroke-width", 2)
+	mscb := wr.ChildByName("marker-start", 4).(*gi.ComboBox)
+	ms := kit.ToString(mscb.CurVal)
+	if ms != "" && ms != "-" {
+		start = "url(#" + ms + ")"
+	}
+	mmcb := wr.ChildByName("marker-mid", 4).(*gi.ComboBox)
+	mm := kit.ToString(mmcb.CurVal)
+	if mm != "" && mm != "-" {
+		mid = "url(#" + mm + ")"
+	}
+	mecb := wr.ChildByName("marker-end", 4).(*gi.ComboBox)
+	me := kit.ToString(mecb.CurVal)
+	if me != "" && me != "-" {
+		end = "url(#" + me + ")"
+	}
+	return
 }
 
 // IsStrokeOn returns true if stroke is active

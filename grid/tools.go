@@ -6,6 +6,7 @@ package grid
 
 import "github.com/goki/ki/kit"
 
+// Tools are the drawing tools
 type Tools int
 
 const (

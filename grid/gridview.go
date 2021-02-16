@@ -673,6 +673,38 @@ func (gv *GridView) SetStrokeColor(sp string, manip bool) {
 		})
 }
 
+// SetMarkerNode sets the marker properties of Node.
+func (gv *GridView) SetMarkerNode(sii svg.NodeSVG, start, mid, end string) {
+	if start != "" {
+		sii.SetProp("marker-start", start) // todo: custom, etc
+	} else {
+		sii.DeleteProp("marker-start")
+	}
+	if mid != "" {
+		sii.SetProp("marker-mid", mid) // todo: custom, etc
+	} else {
+		sii.DeleteProp("marker-mid")
+	}
+	if end != "" {
+		sii.SetProp("marker-end", end) // todo: custom, etc
+	} else {
+		sii.DeleteProp("marker-end")
+	}
+}
+
+// SetMarkerProps sets the marker props
+func (gv *GridView) SetMarkerProps(start, mid, end string) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("SetMarkerProps", start+mid+end)
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		gv.SetMarkerNode(itm, start, mid, end)
+	}
+	sv.UpdateEnd(updt)
+}
+
 // SetFillNode sets the fill props of given node
 // based on previous and current PaintType
 func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string) {
