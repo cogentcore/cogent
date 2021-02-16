@@ -41,10 +41,7 @@ func (pv *PaintView) GradStopsName(g *svg.NodeBase, url string) string {
 // DecodeType decodes the paint type from paint and props
 // also returns the name of the gradient if using one.
 func (pv *PaintView) DecodeType(g *svg.NodeBase, cs *gist.ColorSpec, prop string) (PaintTypes, string) {
-	pstr := ""
-	if p := g.Prop(prop); p != nil {
-		pstr = p.(string)
-	}
+	pstr := kit.ToString(g.Prop(prop))
 	switch {
 	case pstr == "inherit":
 		return PaintInherit, ""

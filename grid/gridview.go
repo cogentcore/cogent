@@ -17,6 +17,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
 	"github.com/goki/gide/gide"
@@ -149,8 +150,8 @@ func (gv *GridView) SplitView() *gi.SplitView {
 	return gv.HBox().ChildByName("splitview", 1).(*gi.SplitView)
 }
 
-func (gv *GridView) TreeView() *giv.TreeView {
-	return gv.SplitView().ChildByName("tree-frame", 0).Child(0).(*giv.TreeView) // note: name changes
+func (gv *GridView) TreeView() *TreeView {
+	return gv.SplitView().ChildByName("tree-frame", 0).Child(0).(*TreeView) // note: name changes
 }
 
 func (gv *GridView) SVG() *SVGView {
@@ -193,7 +194,8 @@ func (gv *GridView) Config() {
 	tvfr := gi.AddNewFrame(sv, "tree-frame", gi.LayoutHoriz)
 	tvfr.SetStretchMax()
 	tvfr.SetReRenderAnchor()
-	tv := giv.AddNewTreeView(tvfr, "treeview")
+	tv := AddNewTreeView(tvfr, "treeview")
+	tv.GridView = gv
 	tv.OpenDepth = 1
 
 	sg := AddNewSVGView(sv, "svg", gv)
@@ -205,10 +207,29 @@ func (gv *GridView) Config() {
 
 	tv.TreeViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		gvv := recv.Embed(KiT_GridView).(*GridView)
-		if data == nil || sig != int64(giv.TreeViewOpened) {
+		if data == nil {
 			return
 		}
-		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+		if sig == int64(giv.TreeViewInserted) {
+			sn, ok := data.(svg.NodeSVG)
+			if ok {
+				svg.CloneNodeGradientProp(sn, "fill")
+				svg.CloneNodeGradientProp(sn, "stroke")
+			}
+			return
+		}
+		if sig == int64(giv.TreeViewDeleted) {
+			sn, ok := data.(svg.NodeSVG)
+			if ok {
+				svg.DeleteNodeGradientProp(sn, "fill")
+				svg.DeleteNodeGradientProp(sn, "stroke")
+			}
+			return
+		}
+		if sig != int64(giv.TreeViewOpened) {
+			return
+		}
+		tvn, _ := data.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
 		_, issvg := tvn.SrcNode.(svg.NodeSVG)
 		if !issvg {
 			return
@@ -588,7 +609,7 @@ func (gv *GridView) SetStrokeNode(sii svg.NodeSVG, prev, pt PaintTypes, sp strin
 		svg.UpdateNodeGradientProp(sii, "stroke", true, sp)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
-			pstr := sii.Prop("stroke").(string)
+			pstr := kit.ToString(sii.Prop("stroke"))
 			svg.DeleteNodeGradient(sii, pstr)
 		}
 		sii.SetProp("stroke", sp)
@@ -658,7 +679,7 @@ func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string)
 		svg.UpdateNodeGradientProp(sii, "fill", true, fp)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
-			pstr := sii.Prop("fill").(string)
+			pstr := kit.ToString(sii.Prop("fill"))
 			svg.DeleteNodeGradient(sii, pstr)
 		}
 		sii.SetProp("fill", fp)
@@ -712,6 +733,39 @@ func (gv *GridView) UpdateGradients() {
 	updt := sv.UpdateStart()
 	sv.UpdateGradients(es.Gradients)
 	sv.UpdateEnd(updt)
+}
+
+// IsCurLayer returns true if given layer is the current layer
+// for creating items
+func (gv *GridView) IsCurLayer(lay string) bool {
+	return gv.EditState.CurLayer == lay
+}
+
+// SetCurLayer sets the current layer for creating items to given one
+func (gv *GridView) SetCurLayer(lay string) {
+	gv.EditState.CurLayer = lay
+	gv.SetStatus("set current layer to: " + lay)
+}
+
+// ClearCurLayer clears the current layer for creating items if it
+// was set to the given layer name
+func (gv *GridView) ClearCurLayer(lay string) {
+	if gv.EditState.CurLayer == lay {
+		gv.EditState.CurLayer = ""
+		gv.SetStatus("clear current layer from: " + lay)
+	}
+}
+
+// SelectNode selects given svg node
+func (gv *GridView) SelectNode(kn ki.Ki) {
+	sii, ok := kn.(svg.NodeSVG)
+	if !ok {
+		return
+	}
+	sv := gv.SVG()
+	es := &gv.EditState
+	es.SelectAction(sii, mouse.SelectOne)
+	sv.UpdateView(false)
 }
 
 // Undo undoes one step, returning name of action that was undone

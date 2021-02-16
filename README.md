@@ -4,7 +4,7 @@ Grid is a GoGi-based SVG vector drawing program, with design based on Inkscape.
 
 If an acronym is required, how about: "Go-rendered interactive drawing" program.
 
-# plans
+# Design
 
 Similar to inkscape in overall layout, and read / write inkscape compatible SVG files.
 
@@ -12,9 +12,9 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 * Left vert toolbar with drawing tools
 
-* Left panel with drawing structure.  This is just like GiEditor tree -- should be trivial, and provides direct access as needed.  In particular this provides layer-level organization -- always have a layer group by default, and can drag items into different layers, and also have view and freeze flags on layers.  usu only show layer level, and selection there determines which layer things are added to!
+* Left panel with drawing structure.  This is just like GiEditor tree -- provides direct access as needed.  In particular this provides layer-level organization -- always have a layer group by default, and can drag items into different layers, and also have view and freeze flags on layers.  usu only show layer level, and selection there determines which layer things are added to!
 
-* Main middle panel with drawing.  Have an optional grid underlay?  Need to figure out good gpu-based way to do that -- texture is required, similar to scene?  do this later.
+* Main middle panel with drawing.  Grid underlay is a separate image that is drawn first, updated with any changes.
 
 * Right tab panel with all the controls, just like gide in terms of tab & Inkscape overall. tabs are easier to find vs. inkscape.
 
@@ -27,17 +27,17 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
-* svggview SpriteDrag, UpdateNodeGradientPoints not working for new nodes -- points are good but stops
-are not set -- need to get stops 
+* duplicate = clone gradient too as needed
 
 * some kind of mutex hang in undo / redo ?
 
 * add rotation for second select click (or maybe a special key might be better with reg click?)
 
-* layer flags, layer select via context menu -- see inkscape for key props
 * Right click with option to show in tree
 
 * svg render needs to use visibility flag from layers to not render stuff.
+* generic display: flag -- not same as setting visible -- all levels
+  need to process that flag.
 
 * move, reshape transforms on rotated obj not correct (pink guy)
 
@@ -48,11 +48,6 @@ are not set -- need to get stops
 * save prefs as "base" thing per inkscape
 
 * node editor -- big job but needed for making basic bezier curves..
-
-* objects with their own unique gradient transforms need the gradient updated when repositioned.  
-  gradientUnits = "userSpaceOnUse" -- gradients refer to a master that defines stops, and then each
-  object has their own specific gradient instance.  kinda lame, but probably inevitable without using bbox.
-    + gradient editor can enable naming
 
 * svg.Node ToPath -- convert any node to a path
 

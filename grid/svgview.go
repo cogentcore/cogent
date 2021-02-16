@@ -89,6 +89,10 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	case gi.KeyFunRedo:
 		kt.SetProcessed()
 		sv.GridView.Redo()
+	case gi.KeyFunCopy:
+		kt.SetProcessed()
+		// todo: gridview treeview copy
+		// sv.GridView.Redo()
 	}
 	if kt.IsProcessed() {
 		return
