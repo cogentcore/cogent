@@ -12,6 +12,7 @@ import (
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/svg"
+	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -32,6 +33,9 @@ var KiT_PaintView = kit.Types.AddType(&PaintView{}, PaintViewProps)
 // GradStopsName returns the stopsname for gradient from url
 func (pv *PaintView) GradStopsName(g *svg.NodeBase, url string) string {
 	gr := svg.GradientByName(g, url)
+	if gr == nil {
+		return ""
+	}
 	if gr.StopsName != "" {
 		return gr.StopsName
 	}
@@ -86,9 +90,11 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 		ss.StackTop = 0
 	}
 
-	wsb := pv.ChildByName("stroke-width", 2).ChildByName("width", 1).(*gi.SpinBox)
+	wr := pv.ChildByName("stroke-width", 2)
+	wsb := wr.ChildByName("width", 1).(*gi.SpinBox)
 	wsb.SetValue(g.Pnt.StrokeStyle.Width.Val)
-	// todo: units
+	uncb := wr.ChildByName("width-units", 2).(*gi.ComboBox)
+	uncb.SetCurIndex(int(g.Pnt.StrokeStyle.Width.Un))
 
 	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*gi.ButtonBox)
 	fpt.SelectItem(int(pv.FillType))
@@ -153,11 +159,30 @@ func (pv *PaintView) Config(gv *GridView) {
 
 	spl := gi.AddNewLayout(pv, "stroke-lab", gi.LayoutHoriz)
 	gi.AddNewLabel(spl, "stroke-pnt-lab", "<b>Stroke Paint:  </b>")
-
 	spt := gi.AddNewButtonBox(spl, "stroke-type")
 	spt.ItemsFromStringList(PaintTypeNames)
 	spt.SelectItem(int(pv.StrokeType))
 	spt.Mutex = true
+
+	wr := gi.AddNewLayout(pv, "stroke-width", gi.LayoutHoriz)
+	gi.AddNewLabel(wr, "width-lab", "Width:  ")
+	wsb := gi.AddNewSpinBox(wr, "width")
+	wsb.SetProp("min", 0)
+	wsb.SetProp("step", 0.05)
+	wsb.SetValue(pv.GridView.Prefs.Style.StrokeStyle.Width.Val)
+	wsb.SpinBoxSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
+		}
+	})
+
+	uncb := gi.AddNewComboBox(wr, "width-units")
+	uncb.ItemsFromEnum(units.KiT_Units, true, 0)
+	uncb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
+		}
+	})
 
 	ss := gi.AddNewFrame(pv, "stroke-stack", gi.LayoutStacked)
 	ss.StackTop = 1
@@ -191,6 +216,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	})
 
 	sc := giv.AddNewColorView(ss, "stroke-clr")
+	sc.SetProp("vertical-align", gist.AlignTop)
 	sc.Config()
 	sc.SetColor(pv.GridView.Prefs.Style.StrokeStyle.Color.Color)
 	sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -218,19 +244,6 @@ func (pv *PaintView) Config(gv *GridView) {
 			}
 		}
 	})
-
-	wr := gi.AddNewLayout(pv, "stroke-width", gi.LayoutHoriz)
-	gi.AddNewLabel(wr, "width-lab", "Width:  ")
-	wsb := gi.AddNewSpinBox(wr, "width")
-	wsb.SetProp("min", 0)
-	wsb.SetProp("step", 0.05)
-	wsb.SetValue(pv.GridView.Prefs.Style.StrokeStyle.Width.Val)
-	wsb.SpinBoxSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if pv.IsStrokeOn() {
-			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
-		}
-	})
-	// todo: units from drawing units?
 
 	gi.AddNewSeparator(pv, "fill-sep", true)
 
@@ -274,6 +287,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	})
 
 	fc := giv.AddNewColorView(fs, "fill-clr")
+	fc.SetProp("vertical-align", gist.AlignTop)
 	fc.Config()
 	fc.SetColor(pv.GridView.Prefs.Style.FillStyle.Color.Color)
 	fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -313,6 +327,8 @@ func (pv *PaintView) Config(gv *GridView) {
 		pv.GridView.UpdateGradients()
 	})
 
+	gi.AddNewStretch(pv, "endstr")
+
 	pv.UpdateEnd(updt)
 }
 
@@ -342,8 +358,15 @@ func (pv *PaintView) IsStrokeOn() bool {
 
 // StrokeWidthProp returns stroke-width property
 func (pv *PaintView) StrokeWidthProp() string {
-	wsb := pv.ChildByName("stroke-width", 2).ChildByName("width", 1).(*gi.SpinBox)
-	return fmt.Sprintf("%gpx", wsb.Value) // todo units
+	wr := pv.ChildByName("stroke-width", 2)
+	wsb := wr.ChildByName("width", 1).(*gi.SpinBox)
+	uncb := wr.ChildByName("width-units", 2).(*gi.ComboBox)
+	unnm := "px"
+	if uncb.CurIndex > 0 {
+		unvl := units.Units(uncb.CurIndex)
+		unnm = unvl.String()
+	}
+	return fmt.Sprintf("%g%s", wsb.Value, unnm)
 }
 
 // IsFillOn returns true if Fill is active

@@ -20,7 +20,11 @@ func main() {
 
 func mainrun() {
 	gi.SetAppName("grid")
-	gi.SetAppAbout(`Grid is a Go-rendered interactive drawing program for SVG vector dawings.  See <a href="https://github.com/goki/grid">Grid on GitHub</a>`)
+	gi.SetAppAbout(`Grid is a Go-rendered interactive drawing program for SVG vector dawings.  See <a href="https://github.com/goki/grid">Grid on GitHub</a><br>
+<br>
+Version: ` + grid.Prefs.VersionInfo())
+
+	grid.InitPrefs()
 
 	fnm := ""
 	if len(os.Args) > 1 {

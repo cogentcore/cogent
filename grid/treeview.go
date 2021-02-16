@@ -10,6 +10,7 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
@@ -27,6 +28,7 @@ var KiT_TreeView = kit.Types.AddType(&TreeView{}, nil)
 // AddNewTreeView adds a new filetreeview to given parent node, with given name.
 func AddNewTreeView(parent ki.Ki, name string) *TreeView {
 	tv := parent.AddNewChild(KiT_TreeView, name).(*TreeView)
+	// tv.SetFlag(int(giv.TreeViewFlagUpdtRoot))
 	tv.OpenDepth = 1
 	return tv
 }
@@ -54,7 +56,7 @@ func (tv *TreeView) ParGridView() *GridView {
 func (tv *TreeView) SelectSVG() {
 	gv := tv.ParGridView()
 	if gv != nil {
-		gv.SelectNode(tv.SrcNode)
+		gv.SelectNodeInSVG(tv.SrcNode, mouse.SelectOne)
 	}
 }
 

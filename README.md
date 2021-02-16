@@ -27,13 +27,19 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
-* duplicate = clone gradient too as needed
+* autosave
+
+* cut / paste not updating tree reliably.  more tree update debugging fun!
+
+* lower / raise = move in parent layer or global -- find parent layer
+
+* make zoom stay centered on mouse point -- subtract mouse pos then add back..
+
+* markers
 
 * some kind of mutex hang in undo / redo ?
 
 * add rotation for second select click (or maybe a special key might be better with reg click?)
-
-* Right click with option to show in tree
 
 * svg render needs to use visibility flag from layers to not render stuff.
 * generic display: flag -- not same as setting visible -- all levels
@@ -64,6 +70,8 @@ color, fill and line width editor, and full undo / redo.
 
 * svg.Text align Center, etc affects different tspans within overall text block
 * svg.Text scale, rotate affects transform -- transform goes into style!
+
+* use program to render all new icons!
 
 * figure out mask clipping eventually.
 

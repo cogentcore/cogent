@@ -16,14 +16,14 @@ import (
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/oswin/dnd"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
-	"github.com/goki/gide/gide"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/mat32"
+	"github.com/goki/pi/filecat"
 )
 
 // GridView is the Grid SVG vector drawing program: Go-rendered interactive drawing
@@ -65,6 +65,8 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 		log.Println(err)
 		// return err
 	}
+	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
+	SavePaths()
 	gv.EditState.Init()
 	gv.EditState.Gradients = sg.Gradients()
 	sg.GatherIds() // also ensures uniqueness, key for json saving
@@ -108,6 +110,8 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	}
 	path, _ := filepath.Abs(string(fname))
 	gv.FilePath = gi.FileName(path)
+	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
+	SavePaths()
 	sg := gv.SVG()
 	err := sg.SaveXML(path)
 	if err != nil && err != io.EOF {
@@ -213,6 +217,7 @@ func (gv *GridView) Config() {
 		if sig == int64(giv.TreeViewInserted) {
 			sn, ok := data.(svg.NodeSVG)
 			if ok {
+				gvv.SVG().NodeEnsureUniqueId(sn)
 				svg.CloneNodeGradientProp(sn, "fill")
 				svg.CloneNodeGradientProp(sn, "stroke")
 			}
@@ -234,8 +239,7 @@ func (gv *GridView) Config() {
 		if !issvg {
 			return
 		}
-		_, isgp := tvn.SrcNode.(*svg.Group)
-		if isgp {
+		if tvn.SrcNode.HasChildren() {
 			return
 		}
 		giv.StructViewDialog(gvv.Viewport, tvn.SrcNode, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
@@ -411,18 +415,18 @@ func (gv *GridView) CloseWindowReq() bool {
 }
 
 // QuitReq is called when user tries to quit the app -- we go through all open
-// main windows and look for gide windows and call their CloseWindowReq
+// main windows and look for grid windows and call their CloseWindowReq
 // functions!
 func QuitReq() bool {
 	for _, win := range gi.MainWindows {
-		if !strings.HasPrefix(win.Nm, "gide-") {
+		if !strings.HasPrefix(win.Nm, "grid-") {
 			continue
 		}
 		mfr, err := win.MainWidget()
 		if err != nil {
 			continue
 		}
-		gek := mfr.ChildByName("gide", 0)
+		gek := mfr.ChildByName("grid", 0)
 		if gek == nil {
 			continue
 		}
@@ -756,16 +760,126 @@ func (gv *GridView) ClearCurLayer(lay string) {
 	}
 }
 
-// SelectNode selects given svg node
-func (gv *GridView) SelectNode(kn ki.Ki) {
+// SelectNodeInSVG selects given svg node in SVG drawing
+func (gv *GridView) SelectNodeInSVG(kn ki.Ki, mode mouse.SelectModes) {
 	sii, ok := kn.(svg.NodeSVG)
 	if !ok {
 		return
 	}
 	sv := gv.SVG()
 	es := &gv.EditState
-	es.SelectAction(sii, mouse.SelectOne)
+	es.SelectAction(sii, mode)
 	sv.UpdateView(false)
+}
+
+// SelectNodeInTree selects given node in TreeView
+func (gv *GridView) SelectNodeInTree(kn ki.Ki, mode mouse.SelectModes) {
+	tv := gv.TreeView()
+	tvn := tv.FindSrcNode(kn)
+	if tvn != nil {
+		tvn.SelectAction(mode)
+	}
+}
+
+// SelectedAsTreeViews returns the currently-selected items from SVG as TreeView nodes
+func (gv *GridView) SelectedAsTreeViews() []*giv.TreeView {
+	es := &gv.EditState
+	sl := es.SelectedList(false)
+	if len(sl) == 0 {
+		return nil
+	}
+	tv := gv.TreeView()
+	var tvl []*giv.TreeView
+	for _, si := range sl {
+		tvn := tv.FindSrcNode(si.This())
+		if tvn != nil {
+			tvl = append(tvl, tvn)
+		}
+	}
+	return tvl
+}
+
+// DuplicateSelected duplicates selected items in SVG view, using TreeView methods
+func (gv *GridView) DuplicateSelected() {
+	tvl := gv.SelectedAsTreeViews()
+	if len(tvl) == 0 {
+		gv.SetStatus("Duplicate: no tree items found")
+		return
+	}
+	sv := gv.SVG()
+	sv.UndoSave("DuplicateSelected", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	tv := gv.TreeView()
+	tvupdt := tv.UpdateStart()
+	tv.SetFullReRender()
+	for _, tvi := range tvl {
+		tvi.SrcDuplicate()
+	}
+	gv.SetStatus("Duplicated selected items")
+	tv.UpdateEnd(tvupdt)
+	sv.UpdateEnd(updt)
+}
+
+// CopySelected copies selected items in SVG view, using TreeView methods
+func (gv *GridView) CopySelected() {
+	tvl := gv.SelectedAsTreeViews()
+	if len(tvl) == 0 {
+		gv.SetStatus("Copy: no tree items found")
+		return
+	}
+	tv := gv.TreeView()
+	tv.SetSelectedViews(tvl)
+	tvl[0].Copy(true) // operates on first element in selection
+	gv.SetStatus("Copied selected items")
+}
+
+// CutSelected cuts selected items in SVG view, using TreeView methods
+func (gv *GridView) CutSelected() {
+	tvl := gv.SelectedAsTreeViews()
+	if len(tvl) == 0 {
+		gv.SetStatus("Cut: no tree items found")
+		return
+	}
+	sv := gv.SVG()
+	sv.UndoSave("CutSelected", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	tv := gv.TreeView()
+	tvupdt := tv.UpdateStart()
+	tv.SetFullReRender()
+	tv.SetSelectedViews(tvl)
+	tvl[0].Cut() // operates on first element in selection
+	gv.SetStatus("Cut selected items")
+	tv.UpdateEnd(tvupdt)
+	sv.UpdateEnd(updt)
+}
+
+// PasteClip pastes clipboard, using cur layer etc
+func (gv *GridView) PasteClip() {
+	md := oswin.TheApp.ClipBoard(gv.ParentWindow().OSWin).Read([]string{filecat.DataJson})
+	if md == nil {
+		return
+	}
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("Paste", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	tv := gv.TreeView()
+	tvupdt := tv.UpdateStart()
+	tv.SetFullReRender()
+	par := tv
+	if es.CurLayer != "" {
+		ly := tv.ChildByName("tv_"+es.CurLayer, 1)
+		if ly != nil {
+			par = ly.Embed(KiT_TreeView).(*TreeView)
+		}
+	}
+	par.PasteChildren(md, dnd.DropCopy)
+	gv.SetStatus("Pasted items from clipboard")
+	tv.UpdateEnd(tvupdt)
+	sv.UpdateEnd(updt)
 }
 
 // Undo undoes one step, returning name of action that was undone
@@ -795,6 +909,80 @@ func (gv *GridView) Redo() string {
 }
 
 /////////////////////////////////////////////////////////////////////////
+//   Basic infrastructure
+
+func (gv *GridView) EditPrefs() {
+	giv.StructViewDialog(gv.Viewport, &gv.Prefs, giv.DlgOpts{Title: "Grid Prefs"}, nil, nil)
+}
+
+// OpenRecent opens a recently-used file
+func (gv *GridView) OpenRecent(filename gi.FileName) {
+	if string(filename) == GridViewResetRecents {
+		SavedPaths = nil
+		gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+	} else if string(filename) == GridViewEditRecents {
+		gv.EditRecents()
+	} else {
+		gv.OpenDrawing(filename)
+	}
+}
+
+// RecentsEdit opens a dialog editor for deleting from the recents project list
+func (gv *GridView) EditRecents() {
+	tmp := make([]string, len(SavedPaths))
+	copy(tmp, SavedPaths)
+	gi.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
+	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
+	giv.SliceViewDialog(gv.Viewport, &tmp, opts,
+		nil, gv, func(recv, send ki.Ki, sig int64, data interface{}) {
+			if sig == int64(gi.DialogAccepted) {
+				SavedPaths = nil
+				SavedPaths = append(SavedPaths, tmp...)
+				gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+			}
+		})
+}
+
+// SplitsSetView sets split view splitters to given named setting
+func (gv *GridView) SplitsSetView(split SplitName) {
+	sv := gv.SplitView()
+	sp, _, ok := AvailSplits.SplitByName(split)
+	if ok {
+		sv.SetSplitsAction(sp.Splits...)
+		gv.Prefs.SplitName = split
+	}
+}
+
+// SplitsSave saves current splitter settings to named splitter settings under
+// existing name, and saves to prefs file
+func (gv *GridView) SplitsSave(split SplitName) {
+	sv := gv.SplitView()
+	sp, _, ok := AvailSplits.SplitByName(split)
+	if ok {
+		sp.SaveSplits(sv.Splits)
+		AvailSplits.SavePrefs()
+	}
+}
+
+// SplitsSaveAs saves current splitter settings to new named splitter settings, and
+// saves to prefs file
+func (gv *GridView) SplitsSaveAs(name, desc string) {
+	sv := gv.SplitView()
+	AvailSplits.Add(name, desc, sv.Splits)
+	AvailSplits.SavePrefs()
+}
+
+// SplitsEdit opens the SplitsView editor to customize saved splitter settings
+func (gv *GridView) SplitsEdit() {
+	SplitsView(&AvailSplits)
+}
+
+// HelpWiki opens wiki page for grid on github
+func (gv *GridView) HelpWiki() {
+	oswin.TheApp.OpenURL("https://github.com/goki/grid/wiki")
+}
+
+/////////////////////////////////////////////////////////////////////////
 //   Props, MainMenu
 
 var GridViewProps = ki.Props{
@@ -812,7 +1000,7 @@ var GridViewProps = ki.Props{
 		{"AppMenu", ki.BlankProp{}},
 		{"File", ki.PropSlice{
 			{"OpenRecent", ki.Props{
-				// "submenu": &gide.SavedPaths,
+				"submenu": &SavedPaths,
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{}},
 				},
@@ -854,6 +1042,10 @@ var GridViewProps = ki.Props{
 			{"Close Window", ki.BlankProp{}},
 		}},
 		{"Edit", ki.PropSlice{
+			{"Duplicate", ki.Props{
+				"keyfun": gi.KeyFunDuplicate,
+				// "updtfunc": GridViewInactiveTextSelectionFunc,
+			}},
 			{"Copy", ki.Props{
 				"keyfun": gi.KeyFunCopy,
 				// "updtfunc": GridViewInactiveTextSelectionFunc,
@@ -865,9 +1057,6 @@ var GridViewProps = ki.Props{
 			{"Paste", ki.Props{
 				"keyfun": gi.KeyFunPaste,
 			}},
-			{"Paste History...", ki.Props{
-				"keyfun": gi.KeyFunPasteHist,
-			}},
 			{"sep-undo", ki.BlankProp{}},
 			{"Undo", ki.Props{
 				"keyfun": gi.KeyFunUndo,
@@ -877,30 +1066,10 @@ var GridViewProps = ki.Props{
 			}},
 		}},
 		{"View", ki.PropSlice{
-			{"Panels", ki.PropSlice{
-				{"FocusNextPanel", ki.Props{
-					"label": "Focus Next",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(gide.ChordForFun(gide.KeyFunNextPanel).String())
-					}),
-				}},
-				{"FocusPrevPanel", ki.Props{
-					"label": "Focus Prev",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(gide.ChordForFun(gide.KeyFunPrevPanel).String())
-					}),
-				}},
-				{"CloneActiveView", ki.Props{
-					"label": "Clone Active",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
-						return key.Chord(gide.ChordForFun(gide.KeyFunBufClone).String())
-					}),
-				}},
-			}},
 			{"Splits", ki.PropSlice{
 				{"SplitsSetView", ki.Props{
 					"label":   "Set View",
-					"submenu": &gide.AvailSplitNames,
+					"submenu": &AvailSplitNames,
 					"Args": ki.PropSlice{
 						{"Split Name", ki.Props{}},
 					},
@@ -919,7 +1088,7 @@ var GridViewProps = ki.Props{
 				}},
 				{"SplitsSave", ki.Props{
 					"label":   "Save",
-					"submenu": &gide.AvailSplitNames,
+					"submenu": &AvailSplitNames,
 					"Args": ki.PropSlice{
 						{"Split Name", ki.Props{}},
 					},

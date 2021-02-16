@@ -89,10 +89,18 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	case gi.KeyFunRedo:
 		kt.SetProcessed()
 		sv.GridView.Redo()
+	case gi.KeyFunDuplicate:
+		kt.SetProcessed()
+		sv.GridView.DuplicateSelected()
 	case gi.KeyFunCopy:
 		kt.SetProcessed()
-		// todo: gridview treeview copy
-		// sv.GridView.Redo()
+		sv.GridView.CopySelected()
+	case gi.KeyFunCut:
+		kt.SetProcessed()
+		sv.GridView.CutSelected()
+	case gi.KeyFunPaste:
+		kt.SetProcessed()
+		sv.GridView.PasteClip()
 	}
 	if kt.IsProcessed() {
 		return
@@ -185,7 +193,7 @@ func (sv *SVGView) MouseEvent() {
 			switch {
 			case me.Button == mouse.Right:
 				me.SetProcessed()
-				giv.StructViewDialog(ssvg.Viewport, obj, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
+				sv.NodeContextMenu(obj, me.Where)
 			case es.Tool == SelectTool:
 				me.SetProcessed()
 				es.SelectAction(sob, me.SelectMode())
@@ -393,7 +401,56 @@ func (sv *SVGView) SetTransform() {
 	sv.SetProp("transform", fmt.Sprintf("translate(%v,%v) scale(%v,%v)", sv.Trans.X, sv.Trans.Y, sv.Scale, sv.Scale))
 }
 
-/////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+//  ContextMenu / Actions
+
+// EditNode opens a structview editor on node
+func (sv *SVGView) EditNode(kn ki.Ki) {
+	giv.StructViewDialog(sv.Viewport, kn, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
+}
+
+// MakeNodeContextMenu makes the menu of options for context right click
+func (sv *SVGView) MakeNodeContextMenu(m *gi.Menu, kn ki.Ki) {
+	m.AddAction(gi.ActOpts{Label: "Edit"}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.EditNode(kn)
+	})
+	m.AddAction(gi.ActOpts{Label: "Select in Tree"}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.GridView.SelectNodeInTree(kn, mouse.SelectOne)
+	})
+	m.AddSeparator("sep-clip")
+	m.AddAction(gi.ActOpts{Label: "Duplicate", ShortcutKey: gi.KeyFunDuplicate}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.GridView.DuplicateSelected()
+	})
+	m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: gi.KeyFunCopy}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.GridView.CopySelected()
+	})
+	m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: gi.KeyFunCut}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.GridView.CutSelected()
+	})
+	m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: gi.KeyFunPaste}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.GridView.PasteClip()
+	})
+}
+
+// ContextMenuPos returns position to use for context menu, based on input position
+func (sv *SVGView) NodeContextMenuPos(pos image.Point) image.Point {
+	if pos != image.ZP {
+		return pos
+	}
+	pos.X = (sv.WinBBox.Min.X + sv.WinBBox.Max.X) / 2
+	pos.Y = (sv.WinBBox.Min.Y + sv.WinBBox.Max.Y) / 2
+	return pos
+}
+
+// NodeContextMenu pops up the right-click context menu for given node
+func (sv *SVGView) NodeContextMenu(kn ki.Ki, pos image.Point) {
+	var men gi.Menu
+	sv.MakeNodeContextMenu(&men, kn)
+	pos = sv.NodeContextMenuPos(pos)
+	gi.PopupMenu(men, pos.X, pos.Y, sv.Viewport, "svNodeContextMenu")
+}
+
+///////////////////////////////////////////////////////////////////////////
 // Undo
 
 // UndoSave save current state for potential undo
