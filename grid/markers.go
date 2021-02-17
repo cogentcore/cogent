@@ -4,6 +4,312 @@
 
 package grid
 
+import (
+	"bytes"
+	"io"
+	"log"
+	"strings"
+
+	"github.com/goki/gi/svg"
+	"github.com/goki/ki/ki"
+	"github.com/goki/ki/kit"
+)
+
+// MarkerFromNodeProp returns the marker name (canonicalized -- no id)
+// and id and color type
+func MarkerFromNodeProp(kn ki.Ki, prop string) (string, int, MarkerColors) {
+	p := kn.Prop(prop)
+	if p == nil {
+		return "", 0, MarkerStdColor
+	}
+	ms := kit.ToString(p)
+	if ms == "" {
+		return "", 0, MarkerStdColor
+	}
+	mc := MarkerStdColor
+	nm, id := svg.SplitNameIdDig(svg.NameFromURL(ms))
+	if id > 0 {
+		_, sid := svg.SplitNameIdDig(kn.Name())
+		if id == sid { // if match, then copy
+			mc = MarkerCopyColor
+		} else { // then custom
+			mc = MarkerCustomColor
+		}
+	}
+	return nm, id, mc
+}
+
+// RecycleMarker ensures that given marker name and id exists in SVG,
+// making a new one, copying from standard markers if not.
+// if mc is MarkerCopyColor then sets marker colors to node colors.
+func RecycleMarker(sg *svg.SVG, sii svg.NodeSVG, name string, id int, mc MarkerColors) *svg.Marker {
+	nmeff := svg.NameId(name, id)
+	mk := sg.FindDefByName(nmeff)
+	fc := kit.ToString(sii.Prop("fill"))
+	sc := kit.ToString(sii.Prop("stroke"))
+	var mmk *svg.Marker
+	newmk := false
+	if mk != nil {
+		mmk = mk.(*svg.Marker)
+	} else {
+		mmk = NewMarker(sg, name, id)
+		newmk = true
+	}
+	switch mc {
+	case MarkerStdColor:
+		if newmk {
+			MarkerDeleteCtxtColors(mmk) // get rid of those context-stroke etc
+		}
+	case MarkerCopyColor:
+		MarkerSetColors(mmk, fc, sc)
+	case MarkerCustomColor:
+		if newmk {
+			MarkerSetColors(mmk, "blue", "red")
+		}
+	}
+	return mmk
+}
+
+// MarkerSetColors sets color properties in each element
+func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
+	mk.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+		fp := k.Prop("fill")
+		if fp != nil {
+			if strings.HasPrefix(mk.Nm, "Empty") {
+				k.SetProp("fill", fill)
+			} else {
+				k.SetProp("fill", stroke)
+			}
+		}
+		sp := k.Prop("stroke")
+		if sp != nil {
+			if strings.HasPrefix(mk.Nm, "Distance") {
+				k.SetProp("stroke", fill)
+			} else {
+				k.SetProp("stroke", stroke)
+			}
+		}
+		return ki.Continue
+	})
+}
+
+// MarkerDeleteCtxtColors deletes context-* color names from standard code
+func MarkerDeleteCtxtColors(mk *svg.Marker) {
+	mk.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+		fp := k.Prop("fill")
+		if fp != nil {
+			fps := kit.ToString(fp)
+			if strings.HasPrefix(fps, "context-") {
+				k.DeleteProp("fill")
+			}
+		}
+		sp := k.Prop("stroke")
+		if sp != nil {
+			sps := kit.ToString(sp)
+			if strings.HasPrefix(sps, "context-") {
+				k.DeleteProp("stroke")
+			}
+		}
+		return ki.Continue
+	})
+}
+
+// NewMarker makes a new marker of given name and id in given svg
+// name must exist by in AllMarkersMap -- else will panic crash.
+func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
+	mxml := AllMarkersMap[name]
+	tmpsvg := &svg.SVG{}
+	tmpsvg.InitName(tmpsvg, "tmpsvg")
+	b := bytes.NewBufferString(mxml)
+	err := tmpsvg.ReadXML(b)
+	if err != nil && err != io.EOF {
+		log.Printf("New Marker failure loading marker XML for %s", name)
+		log.Println(err)
+		return nil
+	}
+	if tmpsvg.NumChildren() != 1 {
+		log.Printf("New Marker kids != 1 (%d) after loading marker XML for %s", tmpsvg.NumChildren(), name)
+		return nil
+	}
+	mk := tmpsvg.Child(0).(*svg.Marker)
+	updt := sg.UpdateStart()
+	mk.SetName(svg.NameId(name, id))
+	sg.SetChildAdded()
+	sg.Defs.AddChild(mk)
+	sg.UpdateEnd(updt)
+	return mk
+}
+
+// MarkerSetProp sets marker property for given node to given marker name (canonical)
+func MarkerSetProp(sg *svg.SVG, sii svg.NodeSVG, prop, name string, mc MarkerColors) {
+	onm, oid, omc := MarkerFromNodeProp(sii, prop)
+	_, nid := svg.SplitNameIdDig(sii.Name())
+	if onm == name && oid == nid && omc == mc {
+		return
+	}
+	if name == "" || name == "-" {
+		if onm != "" && omc == MarkerCopyColor {
+			sg.Defs.DeleteChildByName(svg.NameId(onm, oid), ki.DestroyKids)
+		}
+		sii.DeleteProp(prop)
+		return
+	}
+	if omc == MarkerCopyColor && omc != mc { // implies onm != ""
+		sg.Defs.DeleteChildByName(svg.NameId(onm, oid), ki.DestroyKids)
+	}
+
+	_, ok := AllMarkersMap[name]
+	if !ok {
+		log.Printf("MarkerSetProp: marker named %s not found in AllMarkersMap\n", name)
+		return
+	}
+
+	var nmk *svg.Marker
+	switch mc {
+	case MarkerStdColor:
+		nmk = RecycleMarker(sg, sii, name, 0, mc)
+	case MarkerCopyColor:
+		nmk = RecycleMarker(sg, sii, name, nid, mc)
+	case MarkerCustomColor:
+		id := oid
+		if onm != name || id == 0 {
+			id = sg.NewUniqueId()
+		}
+		nmk = RecycleMarker(sg, sii, name, id, mc)
+	}
+	sii.SetProp(prop, svg.NameToURL(nmk.Nm))
+}
+
+// MarkerUpdateColorProp updates marker color for given marker property
+func MarkerUpdateColorProp(sg *svg.SVG, sii svg.NodeSVG, prop string) {
+	nm, id, mc := MarkerFromNodeProp(sii, prop)
+	if nm == "" || mc != MarkerCopyColor {
+		return
+	}
+	RecycleMarker(sg, sii, nm, id, mc)
+}
+
+// MarkerColors are the drawing tools
+type MarkerColors int
+
+const (
+	// use the default color of marker (typically black)
+	MarkerStdColor MarkerColors = iota
+
+	// copy color of object using marker (create separate marker object per element)
+	MarkerCopyColor
+
+	// marker has its own separate custom color
+	MarkerCustomColor
+
+	MarkerColorsN
+)
+
+//go:generate stringer -type=MarkerColors
+
+var KiT_MarkerColors = kit.Enums.AddEnumAltLower(MarkerColorsN, kit.NotBitFlag, nil, "")
+
+func (ev MarkerColors) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
+func (ev *MarkerColors) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
+
+// MarkerColorNames are user-facing names for colors (todo: use icons instead)
+var MarkerColorNames = []string{
+	"Def",
+	"Copy",
+	"Cust",
+}
+
+// StdMarkerNames is an ordered list of marker names
+var StdMarkerNames = []string{
+	"-",
+
+	"Arrow1Sstart",
+	"Arrow1Send",
+	"Arrow1Mstart",
+	"Arrow1Mend",
+	"Arrow1Lstart",
+	"Arrow1Lend",
+
+	"Arrow2Sstart",
+	"Arrow2Send",
+	"Arrow2Mstart",
+	"Arrow2Mend",
+	"Arrow2Lstart",
+	"Arrow2Lend",
+
+	"Tail",
+
+	"DistanceStart",
+	"DistanceEnd",
+
+	"DotS",
+	"DotM",
+	"DotL",
+
+	"SquareS",
+	"SquareM",
+	"SquareL",
+
+	"DiamondS",
+	"DiamondM",
+	"DiamondL",
+
+	"DiamondSstart",
+	"DiamondSend",
+	"DiamondMstart",
+	"DiamondMend",
+	"DiamondLstart",
+	"DiamondLend",
+
+	"EmptyDiamondS",
+	"EmptyDiamondM",
+	"EmptyDiamondL",
+
+	"EmptyDiamondSstart",
+	"EmptyDiamondSend",
+	"EmptyDiamondMstart",
+	"EmptyDiamondMend",
+	"EmptyDiamondLstart",
+	"EmptyDiamondLend",
+
+	"TriangleInS",
+	"TriangleInM",
+	"TriangleInL",
+
+	"TriangleOutS",
+	"TriangleOutM",
+	"TriangleOutL",
+
+	"EmptyTriangleInS",
+	"EmptyTriangleInM",
+	"EmptyTriangleInL",
+
+	"EmptyTriangleOutS",
+	"EmptyTriangleOutM",
+	"EmptyTriangleOutL",
+
+	"StopS",
+	"StopM",
+	"StopL",
+
+	"SemiCircleIn",
+	"SemiCircleOut",
+
+	"CurveIn",
+	"CurveOut",
+	"CurvyCross",
+
+	"Scissors",
+	"Legs",
+	"Torso",
+	"Club",
+	"RazorWire",
+
+	"InfiniteLineStart",
+	"InfiniteLineEnd",
+}
+
+// StdMarkersMap is a map of the standard markers
 var StdMarkersMap = map[string]string{
 	"-": "",
 	"Arrow1Lstart": `<marker style="overflow:visible" id="Arrow1Lstart" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Lstart">
@@ -272,97 +578,12 @@ var StdMarkersMap = map[string]string{
     </marker>`,
 }
 
-// StdMarkerNames is an ordered list of marker names
-var StdMarkerNames = []string{
-	"-",
-
-	"Arrow1Sstart",
-	"Arrow1Send",
-	"Arrow1Mstart",
-	"Arrow1Mend",
-	"Arrow1Lstart",
-	"Arrow1Lend",
-
-	"Arrow2Sstart",
-	"Arrow2Send",
-	"Arrow2Mstart",
-	"Arrow2Mend",
-	"Arrow2Lstart",
-	"Arrow2Lend",
-
-	"Tail",
-
-	"DistanceStart",
-	"DistanceEnd",
-
-	"DotS",
-	"DotM",
-	"DotL",
-
-	"SquareS",
-	"SquareM",
-	"SquareL",
-
-	"DiamondS",
-	"DiamondM",
-	"DiamondL",
-
-	"DiamondSstart",
-	"DiamondSend",
-	"DiamondMstart",
-	"DiamondMend",
-	"DiamondLstart",
-	"DiamondLend",
-
-	"EmptyDiamondS",
-	"EmptyDiamondM",
-	"EmptyDiamondL",
-
-	"EmptyDiamondSstart",
-	"EmptyDiamondSend",
-	"EmptyDiamondMstart",
-	"EmptyDiamondMend",
-	"EmptyDiamondLstart",
-	"EmptyDiamondLend",
-
-	"TriangleInS",
-	"TriangleInM",
-	"TriangleInL",
-
-	"TriangleOutS",
-	"TriangleOutM",
-	"TriangleOutL",
-
-	"EmptyTriangleInS",
-	"EmptyTriangleInM",
-	"EmptyTriangleInL",
-
-	"EmptyTriangleOutS",
-	"EmptyTriangleOutM",
-	"EmptyTriangleOutL",
-
-	"StopS",
-	"StopM",
-	"StopL",
-
-	"SemiCircleIn",
-	"SemiCircleOut",
-
-	"CurveIn",
-	"CurveOut",
-	"CurvyCross",
-
-	"Scissors",
-	"Legs",
-	"Torso",
-	"Club",
-	"RazorWire",
-
-	"InfiniteLineStart",
-	"InfiniteLineEnd",
-}
-
+// AllMarkersMap contains all of the available Markers.
+// it is initialized from StdMarkersMap
 var AllMarkersMap map[string]string
+
+// AllMarkerNames contains all of the available marker names.
+// it is initialized from StdMarkerNames.
 var AllMarkerNames []string
 
 func init() {

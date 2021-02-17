@@ -96,20 +96,35 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 	uncb := wr.ChildByName("width-units", 2).(*gi.ComboBox)
 	uncb.SetCurIndex(int(g.Pnt.StrokeStyle.Width.Un))
 
-	ms := kit.ToString(g.Prop("marker-start"))
+	dshcb := wr.ChildByName("dashes", 3).(*gi.ComboBox)
+	nwdsh, dnm := DashMatchArray(float64(g.Pnt.StrokeStyle.Width.Dots), g.Pnt.StrokeStyle.Dashes)
+	if nwdsh {
+		dshcb.ItemsFromStringList(AllDashNames, false, 0)
+	}
+	dshcb.SetCurVal(dnm)
+
+	mkr := pv.ChildByName("stroke-markers", 3)
+
+	ms, _, mc := MarkerFromNodeProp(g, "marker-start")
 	if ms != "" {
-		mscb := wr.ChildByName("marker-start", 4).(*gi.ComboBox)
-		mscb.SetCurVal(svg.URLName(ms))
+		mscb := mkr.ChildByName("marker-start", 0).(*gi.ComboBox)
+		mscc := mkr.ChildByName("marker-start-color", 1).(*gi.ComboBox)
+		mscb.SetCurVal(ms)
+		mscc.SetCurIndex(int(mc))
 	}
-	mm := kit.ToString(g.Prop("marker-mid"))
-	if mm != "" {
-		mmcb := wr.ChildByName("marker-mid", 4).(*gi.ComboBox)
-		mmcb.SetCurVal(svg.URLName(mm))
+	ms, _, mc = MarkerFromNodeProp(g, "marker-mid")
+	if ms != "" {
+		mmcb := mkr.ChildByName("marker-mid", 2).(*gi.ComboBox)
+		mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.ComboBox)
+		mmcb.SetCurVal(ms)
+		mmcc.SetCurIndex(int(mc))
 	}
-	me := kit.ToString(g.Prop("marker-end"))
-	if me != "" {
-		mecb := wr.ChildByName("marker-end", 4).(*gi.ComboBox)
-		mecb.SetCurVal(svg.URLName(me))
+	ms, _, mc = MarkerFromNodeProp(g, "marker-end")
+	if ms != "" {
+		mecb := mkr.ChildByName("marker-end", 4).(*gi.ComboBox)
+		mecc := mkr.ChildByName("marker-end-color", 5).(*gi.ComboBox)
+		mecb.SetCurVal(ms)
+		mecc.SetCurIndex(int(mc))
 	}
 
 	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*gi.ButtonBox)
@@ -200,31 +215,71 @@ func (pv *PaintView) Config(gv *GridView) {
 		}
 	})
 
-	spc := gi.AddNewSpace(wr, "sp1")
-	spc.SetProp("width", units.NewCh(5))
+	gi.AddNewSpace(wr, "sp1").SetProp("width", units.NewCh(5))
 
-	mscb := gi.AddNewComboBox(wr, "marker-start")
+	dshcb := gi.AddNewComboBox(wr, "dashes")
+	dshcb.SetProp("width", units.NewCh(15))
+	dshcb.ItemsFromStringList(AllDashNames, true, 0)
+	dshcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			pv.GridView.SetDashProps(pv.StrokeDashProp())
+		}
+	})
+
+	mkr := gi.AddNewLayout(pv, "stroke-markers", gi.LayoutHoriz)
+
+	mscb := gi.AddNewComboBox(mkr, "marker-start")
+	mscb.SetProp("width", units.NewCh(20))
 	mscb.ItemsFromStringList(AllMarkerNames, true, 0)
 	mscb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
-			s, m, e := pv.MarkerProps()
-			pv.GridView.SetMarkerProps(s, m, e)
+			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
 	})
-	mmcb := gi.AddNewComboBox(wr, "marker-mid")
+	mscc := gi.AddNewComboBox(mkr, "marker-start-color")
+	mscc.SetProp("width", units.NewCh(5))
+	mscc.ItemsFromStringList(MarkerColorNames, true, 0)
+	mscc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			pv.GridView.SetMarkerProps(pv.MarkerProps())
+		}
+	})
+
+	gi.AddNewSeparator(mkr, "sp1", false)
+
+	mmcb := gi.AddNewComboBox(mkr, "marker-mid")
+	mmcb.SetProp("width", units.NewCh(20))
 	mmcb.ItemsFromStringList(AllMarkerNames, true, 0)
 	mmcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
-			s, m, e := pv.MarkerProps()
-			pv.GridView.SetMarkerProps(s, m, e)
+			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
 	})
-	mecb := gi.AddNewComboBox(wr, "marker-end")
+	mmcc := gi.AddNewComboBox(mkr, "marker-mid-color")
+	mmcc.SetProp("width", units.NewCh(5))
+	mmcc.ItemsFromStringList(MarkerColorNames, true, 0)
+	mmcc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			pv.GridView.SetMarkerProps(pv.MarkerProps())
+		}
+	})
+
+	gi.AddNewSeparator(mkr, "sp1", false)
+
+	mecb := gi.AddNewComboBox(mkr, "marker-end")
+	mecb.SetProp("width", units.NewCh(20))
 	mecb.ItemsFromStringList(AllMarkerNames, true, 0)
 	mecb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
-			s, m, e := pv.MarkerProps()
-			pv.GridView.SetMarkerProps(s, m, e)
+			pv.GridView.SetMarkerProps(pv.MarkerProps())
+		}
+	})
+	mecc := gi.AddNewComboBox(mkr, "marker-end-color")
+	mecc.SetProp("width", units.NewCh(5))
+	mecc.ItemsFromStringList(MarkerColorNames, true, 0)
+	mecc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if pv.IsStrokeOn() {
+			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
 	})
 
@@ -399,23 +454,25 @@ func (pv *PaintView) StrokeProp() string {
 }
 
 // MarkerProp returns the marker property string according to current settings
-func (pv *PaintView) MarkerProps() (start, mid, end string) {
-	wr := pv.ChildByName("stroke-width", 2)
-	mscb := wr.ChildByName("marker-start", 4).(*gi.ComboBox)
-	ms := kit.ToString(mscb.CurVal)
-	if ms != "" && ms != "-" {
-		start = "url(#" + ms + ")"
-	}
-	mmcb := wr.ChildByName("marker-mid", 4).(*gi.ComboBox)
-	mm := kit.ToString(mmcb.CurVal)
-	if mm != "" && mm != "-" {
-		mid = "url(#" + mm + ")"
-	}
-	mecb := wr.ChildByName("marker-end", 4).(*gi.ComboBox)
-	me := kit.ToString(mecb.CurVal)
-	if me != "" && me != "-" {
-		end = "url(#" + me + ")"
-	}
+// along with color type to set.
+func (pv *PaintView) MarkerProps() (start, mid, end string, sc, mc, ec MarkerColors) {
+	mkr := pv.ChildByName("stroke-markers", 3)
+
+	mscb := mkr.ChildByName("marker-start", 0).(*gi.ComboBox)
+	mscc := mkr.ChildByName("marker-start-color", 1).(*gi.ComboBox)
+	start = kit.ToString(mscb.CurVal)
+	sc = MarkerColors(mscc.CurIndex)
+
+	mmcb := mkr.ChildByName("marker-mid", 2).(*gi.ComboBox)
+	mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.ComboBox)
+	mid = kit.ToString(mmcb.CurVal)
+	mc = MarkerColors(mmcc.CurIndex)
+
+	mecb := mkr.ChildByName("marker-end", 4).(*gi.ComboBox)
+	mecc := mkr.ChildByName("marker-end-color", 5).(*gi.ComboBox)
+	end = kit.ToString(mecb.CurVal)
+	ec = MarkerColors(mecc.CurIndex)
+
 	return
 }
 
@@ -435,6 +492,25 @@ func (pv *PaintView) StrokeWidthProp() string {
 		unnm = unvl.String()
 	}
 	return fmt.Sprintf("%g%s", wsb.Value, unnm)
+}
+
+// StrokeDashProp returns stroke-dasharray property as an array (nil = none)
+// these values need to be multiplied by line widths for each item.
+func (pv *PaintView) StrokeDashProp() []float64 {
+	wr := pv.ChildByName("stroke-width", 2)
+	dshcb := wr.ChildByName("dashes", 3).(*gi.ComboBox)
+	if dshcb.CurIndex == 0 {
+		return nil
+	}
+	dnm := kit.ToString(dshcb.CurVal)
+	if dnm == "" {
+		return nil
+	}
+	dary, ok := AllDashesMap[dnm]
+	if !ok {
+		return nil
+	}
+	return dary
 }
 
 // IsFillOn returns true if Fill is active

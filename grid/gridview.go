@@ -618,6 +618,7 @@ func (gv *GridView) SetStrokeNode(sii svg.NodeSVG, prev, pt PaintTypes, sp strin
 		}
 		sii.SetProp("stroke", sp)
 	}
+	gv.UpdateMarkerColors(sii)
 }
 
 // SetStroke sets the stroke properties of selected items
@@ -665,42 +666,69 @@ func (gv *GridView) SetStrokeColor(sp string, manip bool) {
 	gv.ManipAction("SetStrokeColor", sp, manip,
 		func() {
 			for itm := range es.Selected {
-				g := itm.AsSVGNode()
-				if !g.Pnt.FillStyle.Color.IsNil() {
-					g.SetProp("stroke", sp)
+				p := itm.Prop("stroke")
+				if p != nil {
+					itm.SetProp("stroke", sp)
+					gv.UpdateMarkerColors(itm)
 				}
 			}
 		})
 }
 
 // SetMarkerNode sets the marker properties of Node.
-func (gv *GridView) SetMarkerNode(sii svg.NodeSVG, start, mid, end string) {
-	if start != "" {
-		sii.SetProp("marker-start", start) // todo: custom, etc
-	} else {
-		sii.DeleteProp("marker-start")
-	}
-	if mid != "" {
-		sii.SetProp("marker-mid", mid) // todo: custom, etc
-	} else {
-		sii.DeleteProp("marker-mid")
-	}
-	if end != "" {
-		sii.SetProp("marker-end", end) // todo: custom, etc
-	} else {
-		sii.DeleteProp("marker-end")
-	}
+func (gv *GridView) SetMarkerNode(sii svg.NodeSVG, start, mid, end string, sc, mc, ec MarkerColors) {
+	sv := gv.SVG()
+	MarkerSetProp(&sv.SVG, sii, "marker-start", start, sc)
+	MarkerSetProp(&sv.SVG, sii, "marker-mid", mid, mc)
+	MarkerSetProp(&sv.SVG, sii, "marker-end", end, ec)
 }
 
 // SetMarkerProps sets the marker props
-func (gv *GridView) SetMarkerProps(start, mid, end string) {
+func (gv *GridView) SetMarkerProps(start, mid, end string, sc, mc, ec MarkerColors) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	sv.UndoSave("SetMarkerProps", start+mid+end)
+	sv.UndoSave("SetMarkerProps", start+" "+mid+" "+end)
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
-		gv.SetMarkerNode(itm, start, mid, end)
+		gv.SetMarkerNode(itm, start, mid, end, sc, mc, ec)
+	}
+	sv.UpdateEnd(updt)
+}
+
+// UpdateMarkerColors updates the marker colors, when setting fill or stroke
+func (gv *GridView) UpdateMarkerColors(sii svg.NodeSVG) {
+	if sii == nil {
+		return
+	}
+	sv := gv.SVG()
+	MarkerUpdateColorProp(&sv.SVG, sii, "marker-start")
+	MarkerUpdateColorProp(&sv.SVG, sii, "marker-mid")
+	MarkerUpdateColorProp(&sv.SVG, sii, "marker-end")
+}
+
+// SetDashNode sets the stroke-dasharray property of Node.
+// multiplies dash values by the line width in dots.
+func (gv *GridView) SetDashNode(sii svg.NodeSVG, dary []float64) {
+	if len(dary) == 0 {
+		sii.DeleteProp("stroke-dasharray")
+		return
+	}
+	g := sii.AsSVGNode()
+	mary := DashMulWidth(float64(g.Pnt.StrokeStyle.Width.Dots), dary)
+	ds := DashString(mary)
+	sii.SetProp("stroke-dasharray", ds)
+}
+
+// SetDashProps sets the dash props
+func (gv *GridView) SetDashProps(dary []float64) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("SetDashProps", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		gv.SetDashNode(itm, dary)
 	}
 	sv.UpdateEnd(updt)
 }
@@ -720,6 +748,7 @@ func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string)
 		}
 		sii.SetProp("fill", fp)
 	}
+	gv.UpdateMarkerColors(sii)
 }
 
 // SetFill sets the fill props of selected items
@@ -743,9 +772,10 @@ func (gv *GridView) SetFillColor(fp string, manip bool) {
 	gv.ManipAction("SetFillColor", fp, manip,
 		func() {
 			for itm := range es.Selected {
-				g := itm.AsSVGNode()
-				if !g.Pnt.FillStyle.Color.IsNil() {
-					g.SetProp("fill", fp)
+				p := itm.Prop("fill")
+				if p != nil {
+					itm.SetProp("fill", fp)
+					gv.UpdateMarkerColors(itm)
 				}
 			}
 		})
