@@ -95,6 +95,7 @@ func (gv *GridView) SaveDrawing() error {
 		return nil
 	}
 	sg := gv.SVG()
+	sg.RemoveOrphanedDefs()
 	err := sg.SaveXML(string(gv.FilePath))
 	if err != nil && err != io.EOF {
 		log.Println(err)
@@ -113,6 +114,7 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
 	sg := gv.SVG()
+	sg.RemoveOrphanedDefs()
 	err := sg.SaveXML(path)
 	if err != nil && err != io.EOF {
 		log.Println(err)

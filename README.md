@@ -37,8 +37,6 @@ color, fill and line width editor, and full undo / redo.
 
 * make zoom stay centered on mouse point -- subtract mouse pos then add back..
 
-* markers
-
 * some kind of mutex hang in undo / redo ?
 
 * add rotation for second select click (or maybe a special key might be better with reg click?)
@@ -50,8 +48,6 @@ color, fill and line width editor, and full undo / redo.
 * move, reshape transforms on rotated obj not correct (pink guy)
 
 * resize to fit content button
-
-* splits code import from gide, and do prefs, add to menu, etc
 
 * save prefs as "base" thing per inkscape
 
