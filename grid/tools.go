@@ -25,3 +25,8 @@ var KiT_Tools = kit.Enums.AddEnumAltLower(ToolsN, kit.NotBitFlag, nil, "")
 
 func (ev Tools) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *Tools) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
+
+// ToolDoesBasicSelect returns true if tool should do select for clicks
+func ToolDoesBasicSelect(tl Tools) bool {
+	return tl != NodeTool
+}

@@ -27,6 +27,13 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
+* rubber-band select items in box 
+    rubber band is just 4 separate sprites arranged in box, render dashed for contrast
+
+* continued clicking = select deeper items
+    
+* node editor -- big job but needed for making basic bezier curves..
+
 * Text edit panel
 
 * autosave
@@ -51,15 +58,8 @@ color, fill and line width editor, and full undo / redo.
 
 * save prefs as "base" thing per inkscape
 
-* node editor -- big job but needed for making basic bezier curves..
-
 * svg.Node ToPath -- convert any node to a path
 
-* rubber-band select items in box 
-    rubber band is just 4 separate sprites arranged in box, render dashed for contrast
-
-* continued clicking = select deeper items
-    
 * alignview
 
 * grid -- multiscale if spacing between grid items below some amount, then zoom out grid to 6x larger?
@@ -69,7 +69,7 @@ color, fill and line width editor, and full undo / redo.
 * svg.Text align Center, etc affects different tspans within overall text block
 * svg.Text scale, rotate affects transform -- transform goes into style!
 
-* use program to render all new icons!
+* use grid to render all new icons!
 
 * figure out mask clipping eventually.
 

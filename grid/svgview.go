@@ -136,10 +136,6 @@ func (sv *SVGView) MouseDrag() {
 		me.SetProcessed()
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		if ssvg.IsDragging() {
-			if !ssvg.SetDragCursor {
-				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Push(cursor.HandOpen)
-				ssvg.SetDragCursor = true
-			}
 			ssvg.DragEvent(me) // for both scene drag and
 		} else {
 			if ssvg.SetDragCursor {
@@ -187,19 +183,19 @@ func (sv *SVGView) MouseEvent() {
 			ssvg.ManipDone()
 			return
 		}
-		obj := ssvg.FirstContainingPoint(me.Where, true)
+		obj := ssvg.FirstContainingPoint(me.Where, false)
 		if obj != nil {
 			sob := obj.(svg.NodeSVG)
 			switch {
 			case me.Button == mouse.Right:
 				me.SetProcessed()
 				sv.NodeContextMenu(obj, me.Where)
-			case es.Tool == SelectTool:
+			case ToolDoesBasicSelect(es.Tool):
 				me.SetProcessed()
 				es.SelectAction(sob, me.SelectMode())
 				ssvg.GridView.UpdateTabs()
 				ssvg.UpdateSelSprites()
-				ssvg.EditState().DragStart()
+				ssvg.EditState().DragStart(me.Where)
 			}
 		} else {
 			// for any tool
@@ -233,11 +229,11 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 		// fmt.Printf("click %s\n", sp)
 		if me.Action == mouse.Press {
 			win.SpriteDragging = SpriteNames[sp]
-			sv.EditState().DragStart()
+			sv.EditState().DragSelStart(me.Where)
 			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
 		} else if me.Action == mouse.Release {
 			sv.UpdateSelSprites()
-			sv.EditState().DragStart()
+			sv.EditState().DragSelStart(me.Where)
 			sv.ManipDone()
 		}
 	case oswin.MouseDragEvent:
@@ -257,35 +253,44 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	me.SetProcessed()
 	if me.HasAnyModifier(key.Shift) {
+		if !sv.SetDragCursor {
+			oswin.TheApp.Cursor(win.OSWin).Push(cursor.HandOpen)
+			sv.SetDragCursor = true
+		}
 		sv.Trans.SetAdd(dv)
 		sv.SetTransform()
 		sv.UpdateView(true)
 		return
 	}
 	if es.HasSelected() {
-		es.DragCurBBox.Min.SetAdd(dv)
-		es.DragCurBBox.Max.SetAdd(dv)
+		es.DragSelCurBBox.Min.SetAdd(dv)
+		es.DragSelCurBBox.Max.SetAdd(dv)
 		if !es.InAction() {
 			sv.ManipStart("Move", es.SelectedNamesString())
 		}
-		pt := es.DragStartBBox.Min.Sub(svoff)
-		tdel := es.DragCurBBox.Min.Sub(es.DragStartBBox.Min)
+		pt := es.DragSelStartBBox.Min.Sub(svoff)
+		tdel := es.DragSelCurBBox.Min.Sub(es.DragSelStartBBox.Min)
 		for itm, ss := range es.Selected {
 			itm.ReadGeom(ss.InitGeom)
 			itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
 		}
-		sv.SetSelSprites(es.DragCurBBox)
+		sv.SetSelSprites(es.DragSelCurBBox)
 		go sv.ManipUpdate()
 		win.RenderOverlays()
 	} else {
 		if !es.InAction() {
 			switch es.Tool {
 			case SelectTool:
-				// rubberband select
+				sv.SetRubberBand(me.From)
 			case RectTool:
 				sv.NewElDrag(svg.KiT_Rect, me.From, me.Where)
 			case EllipseTool:
 				sv.NewElDrag(svg.KiT_Ellipse, me.From, me.Where)
+			}
+		} else {
+			switch {
+			case es.Action == "BoxSelect":
+				sv.SetRubberBand(me.Where)
 			}
 		}
 	}
@@ -297,34 +302,34 @@ func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	if !es.InAction() {
 		sv.ManipStart("Reshape", es.SelectedNamesString())
 	}
-	stsz := es.DragStartBBox.Size()
-	stpos := es.DragStartBBox.Min
+	stsz := es.DragSelStartBBox.Size()
+	stpos := es.DragSelStartBBox.Min
 	dv := mat32.NewVec2FmPoint(delta)
 	switch sp {
 	case SizeUpL:
-		es.DragCurBBox.Min.SetAdd(dv)
+		es.DragSelCurBBox.Min.SetAdd(dv)
 	case SizeUpM:
-		es.DragCurBBox.Min.Y += dv.Y
+		es.DragSelCurBBox.Min.Y += dv.Y
 	case SizeUpR:
-		es.DragCurBBox.Min.Y += dv.Y
-		es.DragCurBBox.Max.X += dv.X
+		es.DragSelCurBBox.Min.Y += dv.Y
+		es.DragSelCurBBox.Max.X += dv.X
 	case SizeDnL:
-		es.DragCurBBox.Min.X += dv.X
-		es.DragCurBBox.Max.Y += dv.Y
+		es.DragSelCurBBox.Min.X += dv.X
+		es.DragSelCurBBox.Max.Y += dv.Y
 	case SizeDnM:
-		es.DragCurBBox.Max.Y += dv.Y
+		es.DragSelCurBBox.Max.Y += dv.Y
 	case SizeDnR:
-		es.DragCurBBox.Max.SetAdd(dv)
+		es.DragSelCurBBox.Max.SetAdd(dv)
 	case SizeLfC:
-		es.DragCurBBox.Min.X += dv.X
+		es.DragSelCurBBox.Min.X += dv.X
 	case SizeRtC:
-		es.DragCurBBox.Max.X += dv.X
+		es.DragSelCurBBox.Max.X += dv.X
 	}
-	es.DragCurBBox.Min.SetMin(es.DragCurBBox.Max.SubScalar(1)) // don't allow flipping
-	npos := es.DragCurBBox.Min
-	nsz := es.DragCurBBox.Size()
+	es.DragSelCurBBox.Min.SetMin(es.DragSelCurBBox.Max.SubScalar(1)) // don't allow flipping
+	npos := es.DragSelCurBBox.Min
+	nsz := es.DragSelCurBBox.Size()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
-	pt := es.DragStartBBox.Min.Sub(svoff)
+	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
 	for itm, ss := range es.Selected {
@@ -336,7 +341,7 @@ func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 		}
 	}
 
-	sv.SetSelSprites(es.DragCurBBox)
+	sv.SetSelSprites(es.DragSelCurBBox)
 
 	go sv.ManipUpdate()
 
@@ -355,7 +360,29 @@ func (sv *SVGView) ManipStart(act, data string) {
 
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVGView) ManipDone() {
+	win := sv.GridView.ParentWindow()
 	es := sv.EditState()
+	switch {
+	case es.Action == "BoxSelect":
+		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+		InactivateSprites(win)
+		es.DragReset()
+		sel := sv.AllWithinBBox(bbox, false)
+		if len(sel) > 0 {
+			es.ResetSelected() // todo: extend select -- need mouse mod
+			for _, se := range sel {
+				if ssi, ok := se.(svg.NodeSVG); ok {
+					if !NodeIsLayer(se) {
+						es.Select(ssi)
+					}
+				}
+			}
+			sv.GridView.UpdateTabs()
+			sv.UpdateSelSprites()
+			sv.EditState().DragStart(es.DragCurPos)
+		}
+		win.RenderOverlays()
+	}
 	es.ActDone()
 	sv.UpdateSig()
 }
@@ -553,7 +580,7 @@ func (sv *SVGView) UpdateSelSprites() {
 
 	for i := SizeUpL; i <= SizeRtC; i++ {
 		spi := i // key to get a unique local var
-		sp := SpriteConnectEvent(spi, win, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		sp := SpriteConnectEvent(spi, win, image.Point{}, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
 			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 			ssvg.SpriteEvent(spi, oswin.EventType(sig), d)
 		})
@@ -567,9 +594,9 @@ func (sv *SVGView) UpdateSelSprites() {
 // SetSelSprites sets active selection sprite locations based on given bounding box
 func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
 	es := sv.EditState()
-	spsz := float32(SpriteSize())
-	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - spsz))
-	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - spsz))
+	_, spsz := HandleSpriteSize()
+	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
+	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
 	SetSpritePos(SizeUpL, es.ActiveSprites[SizeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
 	SetSpritePos(SizeUpM, es.ActiveSprites[SizeUpM], image.Point{midX, int(bbox.Min.Y)})
 	SetSpritePos(SizeUpR, es.ActiveSprites[SizeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
@@ -578,6 +605,44 @@ func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
 	SetSpritePos(SizeDnR, es.ActiveSprites[SizeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
 	SetSpritePos(SizeLfC, es.ActiveSprites[SizeLfC], image.Point{int(bbox.Min.X), midY})
 	SetSpritePos(SizeRtC, es.ActiveSprites[SizeRtC], image.Point{int(bbox.Max.X), midY})
+}
+
+// SetRubberBand updates the rubber band postion
+func (sv *SVGView) SetRubberBand(cur image.Point) {
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+
+	st, nwdrag := es.DragStart(cur)
+	if nwdrag {
+		es.ActStart("BoxSelect", fmt.Sprintf("%v", st))
+		es.ActUnlock()
+	}
+	if st.X > cur.X {
+		st.X, cur.X = cur.X, st.X
+	}
+	if st.Y > cur.Y {
+		st.Y, cur.Y = cur.Y, st.Y
+	}
+	es.DragStartPos = st // reset in case of flip
+	es.DragCurPos = cur
+	sz := cur.Sub(st)
+	if sz.X < 4 {
+		sz.X = 4
+	}
+	if sz.Y < 4 {
+		sz.Y = 4
+	}
+	es.EnsureActiveSprites()
+	rt := SpriteConnectEvent(RubberBandT, win, sz, nil, nil)
+	rb := SpriteConnectEvent(RubberBandB, win, sz, nil, nil)
+	rr := SpriteConnectEvent(RubberBandR, win, sz, nil, nil)
+	rl := SpriteConnectEvent(RubberBandL, win, sz, nil, nil)
+	SetSpritePos(RubberBandT, rt, st)
+	SetSpritePos(RubberBandB, rb, image.Point{st.X, cur.Y})
+	SetSpritePos(RubberBandR, rr, image.Point{cur.X, st.Y})
+	SetSpritePos(RubberBandL, rl, image.Point{st.X, st.Y})
+
+	win.RenderOverlays()
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -624,7 +689,7 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	nr.SetSize(xfi.MulVec2AsVec(sz))
 	es.SelectAction(nr, mouse.SelectOne)
 	sv.UpdateEnd(updt)
-	sv.EditState().DragStart()
+	sv.EditState().DragSelStart(start)
 	sv.UpdateSelSprites()
 	win.SpriteDragging = SpriteNames[SizeDnR]
 	return nr

@@ -6,6 +6,7 @@ package grid
 
 import (
 	"fmt"
+	"image"
 	"sort"
 	"strings"
 	"sync"
@@ -28,12 +29,14 @@ type EditState struct {
 	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
 	UndoMgr   undo.Mgr    `desc:"undo manager"`
 
-	ActMu         sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
-	Selected      map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
-	SelBBox       mat32.Box2                `desc:"current selection bounding box"`
-	DragStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
-	DragCurBBox   mat32.Box2                `desc:"current bbox during dragging"`
-	ActiveSprites map[Sprites]*gi.Sprite    `copy:"-" json:"-" xml:"-" view:"-" desc:"cached only for active sprites during manipulation"`
+	ActMu            sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
+	Selected         map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
+	DragStartPos     image.Point               `desc:"point where dragging started, mouse coords"`
+	DragCurPos       image.Point               `desc:"current dragging position, mouse coords"`
+	SelBBox          mat32.Box2                `desc:"current selection bounding box"`
+	DragSelStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
+	DragSelCurBBox   mat32.Box2                `desc:"current bbox during dragging"`
+	ActiveSprites    map[Sprites]*gi.Sprite    `copy:"-" json:"-" xml:"-" view:"-" desc:"cached only for active sprites during manipulation"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
@@ -186,11 +189,15 @@ func (es *EditState) SelectAction(itm svg.NodeSVG, mode mouse.SelectModes) {
 
 ////////////////////////////////////////////////////////////////
 
-// UpdateSelBBox updates the current selection bbox surrounding all selected items
-func (es *EditState) UpdateSelBBox() {
+func (es *EditState) EnsureActiveSprites() {
 	if es.ActiveSprites == nil {
 		es.ActiveSprites = make(map[Sprites]*gi.Sprite)
 	}
+}
+
+// UpdateSelBBox updates the current selection bbox surrounding all selected items
+func (es *EditState) UpdateSelBBox() {
+	es.EnsureActiveSprites()
 	es.SelBBox.SetEmpty()
 	if len(es.Selected) == 0 {
 		return
@@ -207,14 +214,31 @@ func (es *EditState) UpdateSelBBox() {
 	es.SelBBox = bbox
 }
 
-// DragStart captures the current state at start of dragging manipulation
-func (es *EditState) DragStart() {
+// DragStart starts the drag if it hasn't yet started
+// returns the starting pos, and true if is start
+func (es *EditState) DragStart(pos image.Point) (image.Point, bool) {
+	if es.DragStartPos == image.ZP {
+		es.DragStartPos = pos
+		return pos, true
+	}
+	return es.DragStartPos, false
+}
+
+// DragReset resets drag state information
+func (es *EditState) DragReset() {
+	es.DragStartPos = image.ZP
+}
+
+// DragSelStart captures the current state at start of dragging manipulation
+// with selected items. position is starting position.
+func (es *EditState) DragSelStart(pos image.Point) {
+	es.DragStartPos = pos
 	if len(es.Selected) == 0 {
 		return
 	}
 	es.UpdateSelBBox()
-	es.DragStartBBox = es.SelBBox
-	es.DragCurBBox = es.SelBBox
+	es.DragSelStartBBox = es.SelBBox
+	es.DragSelCurBBox = es.SelBBox
 	for itm, ss := range es.Selected {
 		itm.WriteGeom(&ss.InitGeom)
 	}

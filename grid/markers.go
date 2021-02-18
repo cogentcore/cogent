@@ -312,7 +312,7 @@ func MarkerIconsInit() {
 		}
 		ic := &svg.Icon{}
 		ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
-		ic.SetProp("width", units.NewCh(8))
+		ic.SetProp("width", units.NewCh(6))
 		ic.SetProp("height", units.NewEm(2))
 		ic.ViewBox.Size = mat32.Vec2{1, 1}
 		var p *svg.Path

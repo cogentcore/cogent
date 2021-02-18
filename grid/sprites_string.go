@@ -21,12 +21,16 @@ func _() {
 	_ = x[SizeDnR-5]
 	_ = x[SizeLfC-6]
 	_ = x[SizeRtC-7]
-	_ = x[SpritesN-8]
+	_ = x[RubberBandT-8]
+	_ = x[RubberBandR-9]
+	_ = x[RubberBandL-10]
+	_ = x[RubberBandB-11]
+	_ = x[SpritesN-12]
 }
 
-const _Sprites_name = "SizeUpLSizeUpMSizeUpRSizeDnLSizeDnMSizeDnRSizeLfCSizeRtCSpritesN"
+const _Sprites_name = "SizeUpLSizeUpMSizeUpRSizeDnLSizeDnMSizeDnRSizeLfCSizeRtCRubberBandTRubberBandRRubberBandLRubberBandBSpritesN"
 
-var _Sprites_index = [...]uint8{0, 7, 14, 21, 28, 35, 42, 49, 56, 64}
+var _Sprites_index = [...]uint8{0, 7, 14, 21, 28, 35, 42, 49, 56, 67, 78, 89, 100, 108}
 
 func (i Sprites) String() string {
 	if i < 0 || i >= Sprites(len(_Sprites_index)-1) {
