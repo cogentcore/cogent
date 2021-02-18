@@ -10,9 +10,12 @@ import (
 	"log"
 	"strings"
 
+	"github.com/goki/gi/gi"
 	"github.com/goki/gi/svg"
+	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/mat32"
 )
 
 // MarkerFromNodeProp returns the marker name (canonicalized -- no id)
@@ -114,30 +117,45 @@ func MarkerDeleteCtxtColors(mk *svg.Marker) {
 	})
 }
 
-// NewMarker makes a new marker of given name and id in given svg
-// name must exist by in AllMarkersMap -- else will panic crash.
-func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
-	mxml := AllMarkersMap[name]
+// NewMarkerFromXML makes a new marker from given XML source.
+func NewMarkerFromXML(name, xml string) *svg.Marker {
 	tmpsvg := &svg.SVG{}
 	tmpsvg.InitName(tmpsvg, "tmpsvg")
-	b := bytes.NewBufferString(mxml)
+	b := bytes.NewBufferString(xml)
 	err := tmpsvg.ReadXML(b)
 	if err != nil && err != io.EOF {
-		log.Printf("New Marker failure loading marker XML for %s", name)
+		log.Printf("NewMarkerFromXML: failure loading marker XML for %s", name)
 		log.Println(err)
 		return nil
 	}
 	if tmpsvg.NumChildren() != 1 {
-		log.Printf("New Marker kids != 1 (%d) after loading marker XML for %s", tmpsvg.NumChildren(), name)
+		log.Printf("NewMarkerFromXML: kids != 1 (%d) after loading marker XML for %s", tmpsvg.NumChildren(), name)
 		return nil
 	}
 	mk := tmpsvg.Child(0).(*svg.Marker)
-	updt := sg.UpdateStart()
-	mk.SetName(svg.NameId(name, id))
-	sg.SetChildAdded()
-	sg.Defs.AddChild(mk)
-	sg.UpdateEnd(updt)
+	mk.SetName(name)
+	ki.UniquifyNamesAll(mk) // critical b/c doing copy!
 	return mk
+}
+
+// NewMarker makes a new marker of given name and id in given svg,
+// copying from existing one in AllMarkersSVGMap.
+func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
+	mk, ok := AllMarkersSVGMap[name]
+	if !ok {
+		log.Printf("NewMarker: marker named %s not found in AllMarkersSVGMap -- will likely crash!\n")
+		return nil
+	}
+	updt := sg.UpdateStart()
+	nmk := &svg.Marker{}
+	fnm := svg.NameId(name, id)
+	nmk.InitName(nmk, fnm)
+	nmk.CopyFrom(mk)
+	mk.SetName(fnm) // double check
+	sg.SetChildAdded()
+	sg.Defs.AddChild(nmk)
+	sg.UpdateEnd(updt)
+	return nmk
 }
 
 // MarkerSetProp sets marker property for given node to given marker name (canonical)
@@ -158,9 +176,9 @@ func MarkerSetProp(sg *svg.SVG, sii svg.NodeSVG, prop, name string, mc MarkerCol
 		sg.Defs.DeleteChildByName(svg.NameId(onm, oid), ki.DestroyKids)
 	}
 
-	_, ok := AllMarkersMap[name]
+	_, ok := AllMarkersXMLMap[name]
 	if !ok {
-		log.Printf("MarkerSetProp: marker named %s not found in AllMarkersMap\n", name)
+		log.Printf("MarkerSetProp: marker named %s not found in AllMarkersXMLMap\n", name)
 		return
 	}
 
@@ -218,6 +236,115 @@ var MarkerColorNames = []string{
 	"Copy",
 	"Cust",
 }
+
+//////////////////////////////////////////////////////////////////////////
+//  AllMarkers Collection
+
+// AllMarkersXMLMap contains all of the available Markers as XML
+// source.  It is initialized from StdMarkersMap
+var AllMarkersXMLMap map[string]string
+
+// AllMarkersSVGMap contains all of the available Markers
+// as *svg.Marker elements that have been converted from
+// the XML source.
+var AllMarkersSVGMap map[string]*svg.Marker
+
+// AllMarkerNames contains all of the available marker names.
+// it is initialized from StdMarkerNames.
+var AllMarkerNames []string
+
+// AllMarkerIconNames contains all of the available marker names as
+// IconNames -- for chooser.  All names have marker- prefix in addition
+// to regular marker names.
+var AllMarkerIconNames []gi.IconName
+
+func init() {
+	AllMarkersXMLMap = make(map[string]string, len(StdMarkersMap))
+	AllMarkerNames = make([]string, len(StdMarkerNames))
+	for k, v := range StdMarkersMap {
+		AllMarkersXMLMap[k] = v
+	}
+	for i, v := range StdMarkerNames {
+		AllMarkerNames[i] = v
+	}
+}
+
+// IconToMarkerName converts a gi.IconName (as an interface{})
+// to a marker name suitable for use (removes marker- prefix)
+func IconToMarkerName(icnm interface{}) string {
+	return strings.TrimPrefix(kit.ToString(icnm), "marker-")
+}
+
+// MarkerNameToIcon converts a marker name to a gi.IconName
+func MarkerNameToIcon(nm string) gi.IconName {
+	return gi.IconName("marker-" + nm)
+}
+
+// MarkerIconsInited records whether the dashes have been initialized into
+// Icons for use in selectors: see MarkerIconsInit()
+var MarkerIconsInited = false
+
+// MarkerIconsInit ensures that the markers have been turned into icons
+// for selectors, with marker- preix.  Call this after startup,
+// when configuring a gui element that needs it.
+// It also initializes the AllMarkersSVGMap.
+func MarkerIconsInit() {
+	if MarkerIconsInited {
+		return
+	}
+
+	AllMarkerIconNames = make([]gi.IconName, len(AllMarkerNames))
+	for i, v := range AllMarkerNames {
+		AllMarkerIconNames[i] = gi.IconName("marker-" + v)
+	}
+
+	AllMarkersSVGMap = make(map[string]*svg.Marker, len(AllMarkersXMLMap))
+
+	for k, v := range AllMarkersXMLMap {
+		empty := true
+		if v != "" {
+			mk := NewMarkerFromXML(k, v)
+			if mk == nil { // badness
+				continue
+			}
+			empty = false
+			AllMarkersSVGMap[k] = mk
+		}
+		ic := &svg.Icon{}
+		ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
+		ic.SetProp("width", units.NewCh(8))
+		ic.SetProp("height", units.NewEm(2))
+		ic.ViewBox.Size = mat32.Vec2{1, 1}
+		var p *svg.Path
+		lk := strings.ToLower(k)
+		start := true
+		switch {
+		case empty:
+			p = svg.AddNewPath(ic, "p", "M 0.1 0.5 0.9 0.5 Z")
+		case strings.Contains(lk, "end"):
+			start = false
+			p = svg.AddNewPath(ic, "p", "M 0.8 0.5 0.9 0.5 Z")
+		case strings.Contains(lk, "start"):
+			p = svg.AddNewPath(ic, "p", "M 0.1 0.5 0.2 0.5 Z")
+		default:
+			p = svg.AddNewPath(ic, "p", "M 0.4 0.5 0.5 0.5 Z")
+		}
+		p.SetProp("stroke-width", units.NewPct(5))
+		if !empty {
+			mk := NewMarker(&ic.SVG, k, 0)
+			MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
+			if start {
+				p.SetProp("marker-start", svg.NameToURL(k))
+			} else {
+				p.SetProp("marker-end", svg.NameToURL(k))
+			}
+		}
+		svg.CurIconSet[ic.Nm] = ic
+	}
+	MarkerIconsInited = true
+}
+
+//////////////////////////////////////////////////
 
 // StdMarkerNames is an ordered list of marker names
 var StdMarkerNames = []string{
@@ -576,23 +703,4 @@ var StdMarkersMap = map[string]string{
         <circle cx="10" cy="0" r="0.8"/>
       </g>
     </marker>`,
-}
-
-// AllMarkersMap contains all of the available Markers.
-// it is initialized from StdMarkersMap
-var AllMarkersMap map[string]string
-
-// AllMarkerNames contains all of the available marker names.
-// it is initialized from StdMarkerNames.
-var AllMarkerNames []string
-
-func init() {
-	AllMarkersMap = make(map[string]string, len(StdMarkersMap))
-	AllMarkerNames = make([]string, len(StdMarkerNames))
-	for k, v := range StdMarkersMap {
-		AllMarkersMap[k] = v
-	}
-	for i, v := range StdMarkerNames {
-		AllMarkerNames[i] = v
-	}
 }

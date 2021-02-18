@@ -99,32 +99,41 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 	dshcb := wr.ChildByName("dashes", 3).(*gi.ComboBox)
 	nwdsh, dnm := DashMatchArray(float64(g.Pnt.StrokeStyle.Width.Dots), g.Pnt.StrokeStyle.Dashes)
 	if nwdsh {
-		dshcb.ItemsFromStringList(AllDashNames, false, 0)
+		dshcb.ItemsFromIconList(AllDashIconNames, false, 0)
 	}
-	dshcb.SetCurVal(dnm)
+	dshcb.SetCurVal(gi.IconName(dnm))
 
 	mkr := pv.ChildByName("stroke-markers", 3)
 
 	ms, _, mc := MarkerFromNodeProp(g, "marker-start")
+	mscb := mkr.ChildByName("marker-start", 0).(*gi.ComboBox)
+	mscc := mkr.ChildByName("marker-start-color", 1).(*gi.ComboBox)
 	if ms != "" {
-		mscb := mkr.ChildByName("marker-start", 0).(*gi.ComboBox)
-		mscc := mkr.ChildByName("marker-start-color", 1).(*gi.ComboBox)
-		mscb.SetCurVal(ms)
+		mscb.SetCurVal(MarkerNameToIcon(ms))
 		mscc.SetCurIndex(int(mc))
+	} else {
+		mscb.SetCurIndex(0)
+		mscc.SetCurIndex(0)
 	}
 	ms, _, mc = MarkerFromNodeProp(g, "marker-mid")
+	mmcb := mkr.ChildByName("marker-mid", 2).(*gi.ComboBox)
+	mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.ComboBox)
 	if ms != "" {
-		mmcb := mkr.ChildByName("marker-mid", 2).(*gi.ComboBox)
-		mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.ComboBox)
-		mmcb.SetCurVal(ms)
+		mmcb.SetCurVal(MarkerNameToIcon(ms))
 		mmcc.SetCurIndex(int(mc))
+	} else {
+		mmcb.SetCurIndex(0)
+		mmcc.SetCurIndex(0)
 	}
 	ms, _, mc = MarkerFromNodeProp(g, "marker-end")
+	mecb := mkr.ChildByName("marker-end", 4).(*gi.ComboBox)
+	mecc := mkr.ChildByName("marker-end-color", 5).(*gi.ComboBox)
 	if ms != "" {
-		mecb := mkr.ChildByName("marker-end", 4).(*gi.ComboBox)
-		mecc := mkr.ChildByName("marker-end-color", 5).(*gi.ComboBox)
-		mecb.SetCurVal(ms)
+		mecb.SetCurVal(MarkerNameToIcon(ms))
 		mecc.SetCurIndex(int(mc))
+	} else {
+		mecb.SetCurIndex(0)
+		mecc.SetCurIndex(0)
 	}
 
 	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*gi.ButtonBox)
@@ -184,6 +193,9 @@ func (pv *PaintView) Config(gv *GridView) {
 	pv.StrokeType = PaintSolid
 	pv.FillType = PaintSolid
 
+	DashIconsInit()
+	MarkerIconsInit()
+
 	pv.GridView = gv
 	pv.Lay = gi.LayoutVert
 	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
@@ -219,7 +231,7 @@ func (pv *PaintView) Config(gv *GridView) {
 
 	dshcb := gi.AddNewComboBox(wr, "dashes")
 	dshcb.SetProp("width", units.NewCh(15))
-	dshcb.ItemsFromStringList(AllDashNames, true, 0)
+	dshcb.ItemsFromIconList(AllDashIconNames, true, 0)
 	dshcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetDashProps(pv.StrokeDashProp())
@@ -229,8 +241,8 @@ func (pv *PaintView) Config(gv *GridView) {
 	mkr := gi.AddNewLayout(pv, "stroke-markers", gi.LayoutHoriz)
 
 	mscb := gi.AddNewComboBox(mkr, "marker-start")
-	mscb.SetProp("width", units.NewCh(20))
-	mscb.ItemsFromStringList(AllMarkerNames, true, 0)
+	// mscb.SetProp("width", units.NewCh(20))
+	mscb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mscb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
@@ -248,8 +260,8 @@ func (pv *PaintView) Config(gv *GridView) {
 	gi.AddNewSeparator(mkr, "sp1", false)
 
 	mmcb := gi.AddNewComboBox(mkr, "marker-mid")
-	mmcb.SetProp("width", units.NewCh(20))
-	mmcb.ItemsFromStringList(AllMarkerNames, true, 0)
+	// mmcb.SetProp("width", units.NewCh(20))
+	mmcb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mmcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
@@ -267,8 +279,8 @@ func (pv *PaintView) Config(gv *GridView) {
 	gi.AddNewSeparator(mkr, "sp1", false)
 
 	mecb := gi.AddNewComboBox(mkr, "marker-end")
-	mecb.SetProp("width", units.NewCh(20))
-	mecb.ItemsFromStringList(AllMarkerNames, true, 0)
+	// mecb.SetProp("width", units.NewCh(20))
+	mecb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mecb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
@@ -460,17 +472,17 @@ func (pv *PaintView) MarkerProps() (start, mid, end string, sc, mc, ec MarkerCol
 
 	mscb := mkr.ChildByName("marker-start", 0).(*gi.ComboBox)
 	mscc := mkr.ChildByName("marker-start-color", 1).(*gi.ComboBox)
-	start = kit.ToString(mscb.CurVal)
+	start = IconToMarkerName(mscb.CurVal)
 	sc = MarkerColors(mscc.CurIndex)
 
 	mmcb := mkr.ChildByName("marker-mid", 2).(*gi.ComboBox)
 	mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.ComboBox)
-	mid = kit.ToString(mmcb.CurVal)
+	mid = IconToMarkerName(mmcb.CurVal)
 	mc = MarkerColors(mmcc.CurIndex)
 
 	mecb := mkr.ChildByName("marker-end", 4).(*gi.ComboBox)
 	mecc := mkr.ChildByName("marker-end-color", 5).(*gi.ComboBox)
-	end = kit.ToString(mecb.CurVal)
+	end = IconToMarkerName(mecb.CurVal)
 	ec = MarkerColors(mecc.CurIndex)
 
 	return

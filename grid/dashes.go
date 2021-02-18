@@ -9,7 +9,11 @@ import (
 	"math"
 	"strings"
 
+	"github.com/goki/gi/gi"
+	"github.com/goki/gi/svg"
+	"github.com/goki/gi/units"
 	"github.com/goki/ki/sliceclone"
+	"github.com/goki/mat32"
 )
 
 // DashMulWidth returns the dash array multiplied by the line width -- what is actually set
@@ -40,7 +44,7 @@ func DashMatchArray(lwidth float64, dary []float64) (bool, string) {
 	}
 	sz := len(dary)
 	if sz == 0 {
-		return false, "solid"
+		return false, "dash-solid"
 	}
 	mary := sliceclone.Float64(dary)
 	for i := range mary {
@@ -79,7 +83,7 @@ func AddNewDash(dary []float64) string {
 
 // StdDashNames are standard dash patterns
 var StdDashNames = []string{
-	"solid",
+	"dash-solid",
 	"dash-1-1",
 	"dash-1-2",
 	"dash-1-3",
@@ -120,7 +124,7 @@ var StdDashNames = []string{
 
 // StdDashesMap are standard dash patterns
 var StdDashesMap = map[string][]float64{
-	"solid":          {},
+	"dash-solid":     {},
 	"dash-1-1":       {1, 1},
 	"dash-1-2":       {1, 2},
 	"dash-1-3":       {1, 3},
@@ -166,6 +170,40 @@ var AllDashesMap map[string][]float64
 // AllDashNames contains all of the available dash names.
 // it is initialized from StdDashNames.
 var AllDashNames []string
+
+// AllDashIconNames contains all of the available dash names as
+// IconNames -- for chooser.
+var AllDashIconNames []gi.IconName
+
+// DashIconsInited records whether the dashes have been initialized into
+// Icons for use in selectors: see DashIconsInit()
+var DashIconsInited = false
+
+// DashIconsInit ensures that the dashes have been turned into icons
+// for selectors, with same name (dash- prefix).  Call this after
+// startup, when configuring a gui element that needs it.
+func DashIconsInit() {
+	if DashIconsInited {
+		return
+	}
+
+	AllDashIconNames = make([]gi.IconName, len(AllDashNames))
+	for i, v := range AllDashNames {
+		AllDashIconNames[i] = gi.IconName(v)
+	}
+
+	for k, v := range AllDashesMap {
+		ic := &svg.Icon{}
+		ic.InitName(ic, k)
+		ic.SetProp("width", units.NewCh(20))
+		ic.ViewBox.Size = mat32.Vec2{1, 1}
+		p := svg.AddNewPath(ic, "p", "M 0.05 0.5 .95 0.5 Z")
+		p.SetProp("stroke-width", units.NewPct(2))
+		p.SetProp("stroke-dasharray", DashString(DashMulWidth(.05, v)))
+		svg.CurIconSet[ic.Nm] = ic
+	}
+	DashIconsInited = true
+}
 
 func init() {
 	AllDashesMap = make(map[string][]float64, len(StdDashesMap))
