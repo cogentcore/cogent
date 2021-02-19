@@ -27,11 +27,6 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
-* rubber-band select items in box 
-    rubber band is just 4 separate sprites arranged in box, render dashed for contrast
-
-* continued clicking = select deeper items
-    
 * node editor -- big job but needed for making basic bezier curves..
 
 * Text edit panel
@@ -46,13 +41,9 @@ color, fill and line width editor, and full undo / redo.
 
 * some kind of mutex hang in undo / redo ?
 
-* add rotation for second select click (or maybe a special key might be better with reg click?)
-
 * svg render needs to use visibility flag from layers to not render stuff.
 * generic display: flag -- not same as setting visible -- all levels
   need to process that flag.
-
-* move, reshape transforms on rotated obj not correct (pink guy)
 
 * resize to fit content button
 

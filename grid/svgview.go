@@ -249,7 +249,11 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 		me := d.(*mouse.DragEvent)
 		me.SetProcessed()
 		// fmt.Printf("drag %v delta: %v\n", sp, me.Delta())
-		sv.SpriteDrag(sp, me.Delta(), win)
+		if me.HasAnyModifier(key.Alt) {
+			sv.SpriteRotateDrag(sp, me.Delta(), win)
+		} else {
+			sv.SpriteReshapeDrag(sp, me.Delta(), win)
+		}
 	}
 }
 
@@ -305,8 +309,8 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	}
 }
 
-// SpriteDrag processes a mouse drag event on a selection sprite
-func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
+// SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
+func (sv *SVGView) SpriteReshapeDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("Reshape", es.SelectedNamesString())
@@ -351,10 +355,96 @@ func (sv *SVGView) SpriteDrag(sp Sprites, delta image.Point, win *gi.Window) {
 	}
 
 	sv.SetSelSprites(es.DragSelCurBBox)
-
 	go sv.ManipUpdate()
-
 	win.RenderOverlays()
+}
+
+// SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
+func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Window) {
+	es := sv.EditState()
+	if !es.InAction() {
+		sv.ManipStart("Rotate", es.SelectedNamesString())
+	}
+	dv := mat32.NewVec2FmPoint(delta)
+	pt := es.DragSelStartBBox.Min
+	ctr := es.DragSelStartBBox.Min.Add(es.DragSelStartBBox.Max).MulScalar(.5)
+	var dx, dy float32
+	switch sp {
+	case SizeUpL:
+		es.DragSelCurBBox.Min.SetAdd(dv)
+		dy = es.DragSelStartBBox.Min.Y - es.DragSelCurBBox.Min.Y
+		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
+		pt.X = es.DragSelStartBBox.Max.X
+	case SizeUpM:
+		es.DragSelCurBBox.Min.Y += dv.Y
+		es.DragSelCurBBox.Max.X += dv.X
+		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
+		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		pt = ctr
+	case SizeUpR:
+		es.DragSelCurBBox.Min.Y += dv.Y
+		es.DragSelCurBBox.Max.X += dv.X
+		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
+		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		pt = es.DragSelStartBBox.Min
+	case SizeDnL:
+		es.DragSelCurBBox.Min.X += dv.X
+		es.DragSelCurBBox.Max.Y += dv.Y
+		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
+		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
+		pt = es.DragSelStartBBox.Max
+	case SizeDnM:
+		es.DragSelCurBBox.Max.SetAdd(dv)
+		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
+		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		pt = ctr
+	case SizeDnR:
+		es.DragSelCurBBox.Max.SetAdd(dv)
+		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
+		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		pt.X = es.DragSelStartBBox.Min.X
+		pt.Y = es.DragSelStartBBox.Max.Y
+	case SizeLfC:
+		es.DragSelCurBBox.Min.X += dv.X
+		es.DragSelCurBBox.Max.Y += dv.Y
+		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
+		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
+		pt = ctr
+	case SizeRtC:
+		es.DragSelCurBBox.Max.SetAdd(dv)
+		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
+		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		pt = ctr
+	}
+	ang := mat32.Atan2(dy, dx)
+	ang = mat32.DegToRad(SnapTo(mat32.RadToDeg(ang), 15, 0.05))
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	pt = pt.Sub(svoff)
+	del := mat32.Vec2{}
+	sc := mat32.Vec2{1, 1}
+	for itm, ss := range es.Selected {
+		itm.ReadGeom(ss.InitGeom)
+		itm.ApplyDeltaXForm(del, sc, ang, pt)
+		if strings.HasPrefix(es.Action, "New") {
+			svg.UpdateNodeGradientPoints(itm, "fill")
+			svg.UpdateNodeGradientPoints(itm, "stroke")
+		}
+	}
+
+	sv.SetSelSprites(es.DragSelCurBBox)
+	go sv.ManipUpdate()
+	win.RenderOverlays()
+}
+
+// SnapTo snaps value to given increment, with given *proportion* tolerance
+// where tol is a fraction of incr.
+func SnapTo(val, incr, tol float32) float32 {
+	nint := mat32.Round(val/incr) * incr
+	dint := mat32.Abs(val - nint)
+	if dint < tol*incr {
+		return nint
+	}
+	return val
 }
 
 // ManipStart is called at the start of a manipulation, saving the state prior to the action
