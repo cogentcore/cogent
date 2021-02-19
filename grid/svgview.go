@@ -183,7 +183,7 @@ func (sv *SVGView) MouseEvent() {
 			ssvg.ManipDone()
 			return
 		}
-		obj := ssvg.FirstContainingPoint(me.Where, false)
+		obj := ssvg.SelectContainsPoint(me.Where, false)
 		if obj != nil {
 			sob := obj.(svg.NodeSVG)
 			switch {
@@ -195,7 +195,7 @@ func (sv *SVGView) MouseEvent() {
 				es.SelectAction(sob, me.SelectMode())
 				ssvg.GridView.UpdateTabs()
 				ssvg.UpdateSelSprites()
-				ssvg.EditState().DragStart(me.Where)
+				ssvg.EditState().DragSelStart(me.Where)
 			}
 		} else {
 			// for any tool
@@ -365,24 +365,22 @@ func (sv *SVGView) ManipDone() {
 	switch {
 	case es.Action == "BoxSelect":
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+		bbox = bbox.Canon()
 		InactivateSprites(win)
-		es.DragReset()
-		sel := sv.AllWithinBBox(bbox, false)
+		win.RenderOverlays()
+		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
 			es.ResetSelected() // todo: extend select -- need mouse mod
 			for _, se := range sel {
-				if ssi, ok := se.(svg.NodeSVG); ok {
-					if !NodeIsLayer(se) {
-						es.Select(ssi)
-					}
-				}
+				es.Select(se)
 			}
 			sv.GridView.UpdateTabs()
 			sv.UpdateSelSprites()
-			sv.EditState().DragStart(es.DragCurPos)
+			sv.EditState().DragSelStart(es.DragCurPos)
 		}
 		win.RenderOverlays()
 	}
+	es.DragReset()
 	es.ActDone()
 	sv.UpdateSig()
 }
@@ -612,20 +610,17 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	win := sv.GridView.ParentWindow()
 	es := sv.EditState()
 
-	st, nwdrag := es.DragStart(cur)
-	if nwdrag {
-		es.ActStart("BoxSelect", fmt.Sprintf("%v", st))
+	if !es.InAction() {
+		es.DragStartPos = cur
+		es.ActStart("BoxSelect", fmt.Sprintf("%v", cur))
 		es.ActUnlock()
 	}
-	if st.X > cur.X {
-		st.X, cur.X = cur.X, st.X
-	}
-	if st.Y > cur.Y {
-		st.Y, cur.Y = cur.Y, st.Y
-	}
-	es.DragStartPos = st // reset in case of flip
 	es.DragCurPos = cur
-	sz := cur.Sub(st)
+
+	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+	bbox = bbox.Canon()
+
+	sz := bbox.Size()
 	if sz.X < 4 {
 		sz.X = 4
 	}
@@ -637,10 +632,10 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	rb := SpriteConnectEvent(RubberBandB, win, sz, nil, nil)
 	rr := SpriteConnectEvent(RubberBandR, win, sz, nil, nil)
 	rl := SpriteConnectEvent(RubberBandL, win, sz, nil, nil)
-	SetSpritePos(RubberBandT, rt, st)
-	SetSpritePos(RubberBandB, rb, image.Point{st.X, cur.Y})
-	SetSpritePos(RubberBandR, rr, image.Point{cur.X, st.Y})
-	SetSpritePos(RubberBandL, rl, image.Point{st.X, st.Y})
+	SetSpritePos(RubberBandT, rt, bbox.Min)
+	SetSpritePos(RubberBandB, rb, image.Point{bbox.Min.X, bbox.Max.Y})
+	SetSpritePos(RubberBandR, rr, image.Point{bbox.Max.X, bbox.Min.Y})
+	SetSpritePos(RubberBandL, rl, bbox.Min)
 
 	win.RenderOverlays()
 }

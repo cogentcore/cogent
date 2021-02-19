@@ -110,6 +110,12 @@ func NodeIsLayer(kn ki.Ki) bool {
 	return gm == "layer"
 }
 
+// NodeIsMetaData returns true if given node is a MetaData
+func NodeIsMetaData(kn ki.Ki) bool {
+	_, ismd := kn.(*gi.MetaData2D)
+	return ismd
+}
+
 // LayerIsLocked returns true if layer is locked (insensitive = true)
 func LayerIsLocked(kn ki.Ki) bool {
 	cp := kit.ToString(kn.Prop("insensitive"))

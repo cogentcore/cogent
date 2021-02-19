@@ -214,16 +214,6 @@ func (es *EditState) UpdateSelBBox() {
 	es.SelBBox = bbox
 }
 
-// DragStart starts the drag if it hasn't yet started
-// returns the starting pos, and true if is start
-func (es *EditState) DragStart(pos image.Point) (image.Point, bool) {
-	if es.DragStartPos == image.ZP {
-		es.DragStartPos = pos
-		return pos, true
-	}
-	return es.DragStartPos, false
-}
-
 // DragReset resets drag state information
 func (es *EditState) DragReset() {
 	es.DragStartPos = image.ZP
