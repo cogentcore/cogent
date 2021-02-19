@@ -176,11 +176,20 @@ func (sv *SVGView) MouseEvent() {
 			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
 			ssvg.SetDragCursor = false
 		}
+		if me.Action == mouse.Press {
+			es.DragStartPos = me.Where
+		}
 		if me.Action != mouse.Release {
 			return
 		}
 		if es.InAction() {
 			ssvg.ManipDone()
+			return
+		}
+		if me.Button == mouse.Right && es.HasSelected() {
+			me.SetProcessed()
+			obj := es.SelectedList(false)[0]
+			ssvg.NodeContextMenu(obj, me.Where)
 			return
 		}
 		obj := ssvg.SelectContainsPoint(me.Where, false)
@@ -189,7 +198,7 @@ func (sv *SVGView) MouseEvent() {
 			switch {
 			case me.Button == mouse.Right:
 				me.SetProcessed()
-				sv.NodeContextMenu(obj, me.Where)
+				ssvg.NodeContextMenu(obj, me.Where)
 			case ToolDoesBasicSelect(es.Tool):
 				me.SetProcessed()
 				es.SelectAction(sob, me.SelectMode())
@@ -611,8 +620,7 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	es := sv.EditState()
 
 	if !es.InAction() {
-		es.DragStartPos = cur
-		es.ActStart("BoxSelect", fmt.Sprintf("%v", cur))
+		es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
 		es.ActUnlock()
 	}
 	es.DragCurPos = cur

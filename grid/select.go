@@ -5,7 +5,6 @@
 package grid
 
 import (
-	"fmt"
 	"image"
 
 	"github.com/goki/gi/svg"
@@ -42,7 +41,6 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 		}
 		return ki.Continue
 	})
-	fmt.Printf("sel: %v\n", rval)
 	return rval
 }
 

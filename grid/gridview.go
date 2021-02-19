@@ -841,6 +841,7 @@ func (gv *GridView) SelectNodeInTree(kn ki.Ki, mode mouse.SelectModes) {
 	tv := gv.TreeView()
 	tvn := tv.FindSrcNode(kn)
 	if tvn != nil {
+		tvn.OpenParents()
 		tvn.SelectAction(mode)
 	}
 }
