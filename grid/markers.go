@@ -228,7 +228,7 @@ const (
 
 //go:generate stringer -type=MarkerColors
 
-var KiT_MarkerColors = kit.Enums.AddEnumAltLower(MarkerColorsN, kit.NotBitFlag, nil, "")
+var KiT_MarkerColors = kit.Enums.AddEnum(MarkerColorsN, kit.NotBitFlag, nil)
 
 func (ev MarkerColors) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *MarkerColors) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

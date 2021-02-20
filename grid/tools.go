@@ -25,7 +25,7 @@ const (
 
 //go:generate stringer -type=Tools
 
-var KiT_Tools = kit.Enums.AddEnumAltLower(ToolsN, kit.NotBitFlag, nil, "")
+var KiT_Tools = kit.Enums.AddEnum(ToolsN, kit.NotBitFlag, nil)
 
 func (ev Tools) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *Tools) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

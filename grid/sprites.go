@@ -39,7 +39,7 @@ const (
 
 //go:generate stringer -type=Sprites
 
-var KiT_Sprites = kit.Enums.AddEnumAltLower(SpritesN, kit.NotBitFlag, nil, "")
+var KiT_Sprites = kit.Enums.AddEnum(SpritesN, kit.NotBitFlag, nil)
 
 func (ev Sprites) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *Sprites) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

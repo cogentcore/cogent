@@ -59,7 +59,7 @@ const (
 
 //go:generate stringer -type=StdSizes
 
-var KiT_StdSizes = kit.Enums.AddEnumAltLower(StdSizesN, kit.NotBitFlag, nil, "")
+var KiT_StdSizes = kit.Enums.AddEnum(StdSizesN, kit.NotBitFlag, nil)
 
 func (ev StdSizes) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *StdSizes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

@@ -827,7 +827,7 @@ var PaintTypeNames = []string{"Off", "Solid", "Linear", "Radial", "Inherit"}
 
 //go:generate stringer -type=PaintTypes
 
-var KiT_PaintTypes = kit.Enums.AddEnumAltLower(PaintTypesN, kit.NotBitFlag, nil, "")
+var KiT_PaintTypes = kit.Enums.AddEnum(PaintTypesN, kit.NotBitFlag, nil)
 
 func (ev PaintTypes) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *PaintTypes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

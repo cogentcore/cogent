@@ -118,6 +118,7 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	if err != nil && err != io.EOF {
 		log.Println(err)
 	}
+	gv.SetTitle()
 	gv.SetStatus("Saved: " + path)
 	return err
 }
@@ -557,6 +558,8 @@ func (gv *GridView) ConfigTabs() {
 	tv.NoDeleteTabs = true
 	pv := gv.RecycleTab("Paint", KiT_PaintView, false).(*PaintView)
 	pv.Config(gv)
+	av := gv.RecycleTab("Align", KiT_AlignView, false).(*AlignView)
+	av.Config(gv)
 	// gv.RecycleTab("Obj", giv.KiT_StructView, false)
 }
 

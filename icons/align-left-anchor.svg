@@ -1,0 +1,39 @@
+<svg
+  width="16mm"
+  height="16mm"
+  viewBox="0 0 16 16">
+  <defs
+    id="Defs" />
+  <g
+    id="align-horizontal-left-to-anchor"
+    transform="matrix(0.666667,0,0,0.666667,-797.33333,-396.90812)">
+    <g
+      id="g22384"
+      transform="matrix(-1,0,0,1,2264,0)">
+      <path
+        id="path22386"
+        style="connector-curvature:0;opacity:0;fill:none;"
+        d="m 1044,595.3622 h 24 v 24 h -24 z " />
+      <path
+        id="path22388"
+        style="connector-curvature:0;opacity:0.5;fill:#009909;fill-opacity:1;stroke-width:0.99999;"
+        d="m 1064.0006,595.3619 h 4 v 4 h -4 z " />
+      <path
+        id="path22390"
+        style="fill-opacity:1;stroke-width:1.15474;connector-curvature:0;opacity:1;fill:#009909;"
+        d="m 1061.0007,595.3617 h 2.0001 v 24 h -2.0001 z " />
+      <path
+        id="path22392"
+        style="connector-curvature:0;opacity:1;stroke-width:0.952992;"
+        d="m 1045.0009,599.3617 h 13.9999 v 5 h -13.9999 z " />
+      <path
+        id="path22394"
+        style="connector-curvature:0;opacity:1;stroke-width:0.966509;"
+        d="m 1050.0009,606.3617 h 8.9999 v 3 h -8.9999 z " />
+      <path
+        id="path22396"
+        style="connector-curvature:0;opacity:1;stroke-width:0.943216;"
+        d="m 1047.0009,611.3617 h 11.9999 v 4 h -11.9999 z " />
+    </g>
+  </g>
+</svg>
