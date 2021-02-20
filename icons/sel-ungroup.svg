@@ -1,0 +1,96 @@
+<svg
+  width="16mm"
+  height="16mm"
+  viewBox="0 0 16 16">
+  <defs
+    id="Defs" />
+  <g
+    id="selection_ungroup">
+    <rect
+      id="rect10077"
+      style="stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;opacity:1;fill:#ffffff;fill-opacity:0;stroke:none;stroke-width:1;stroke-dashoffset:0;"
+      x="0"
+      y="0"
+      width="16"
+      height="16" />
+    <rect
+      id="rect10980"
+      style="stroke-opacity:1;marker:none;marker-start:none;overflow:visible;opacity:1;fill:#dfdfdb;fill-rule:evenodd;enable-background:accumulate;visibility:visible;fill-opacity:1;stroke-width:1.0000875;stroke-dasharray:none;display:inline;stroke-dashoffset:0;marker-end:none;marker-mid:none;stroke:#888a85;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:0;"
+      x="2.5"
+      y="5.499999"
+      width="8"
+      height="8.000001" />
+    <rect
+      id="rect10073"
+      style="fill:none;stroke:#ffffff;stroke-linejoin:miter;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;opacity:1;fill-opacity:1;stroke-width:0.99999988;stroke-linecap:butt;stroke-miterlimit:0;"
+      x="3.5"
+      y="6.500002"
+      width="6"
+      height="5.999999" />
+    <ellipse
+      id="ellipse10031"
+      style="stroke-width:1.0946542;stroke-linecap:butt;stroke-miterlimit:0;stroke-dashoffset:0;opacity:1;fill:#729fcf;fill-opacity:1;stroke-opacity:1;stroke:#204a87;stroke-linejoin:round;stroke-dasharray:none;"
+      transform="matrix(0.944587,0,0,0.8834952,0.2021317,0.6974191)"
+      cx="10.90198"
+      cy="5.435891"
+      rx="4.234653"
+      ry="4.527475" />
+    <rect
+      id="rect10059"
+      style="fill-opacity:1;stroke-linecap:butt;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;opacity:1;stroke:none;stroke-width:1;stroke-linejoin:round;stroke-miterlimit:0;fill:#555753;"
+      x="14"
+      y="8"
+      width="2"
+      height="2" />
+    <rect
+      id="rect10061"
+      style="stroke-dashoffset:0;stroke:none;stroke-width:1;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;opacity:1;fill:#555753;"
+      x="14"
+      y="0"
+      width="2"
+      height="2" />
+    <rect
+      id="rect10063"
+      style="stroke-miterlimit:0;stroke-dasharray:none;opacity:1;fill:#555753;fill-opacity:1;stroke-linejoin:round;stroke-dashoffset:0;stroke-opacity:1;stroke:none;stroke-width:1;stroke-linecap:butt;"
+      x="6"
+      y="8"
+      width="2"
+      height="2" />
+    <rect
+      id="rect10065"
+      style="fill-opacity:1;stroke-miterlimit:0;stroke-opacity:1;stroke-dashoffset:0;opacity:1;fill:#555753;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;"
+      x="6"
+      y="0"
+      width="2"
+      height="2" />
+    <rect
+      id="rect10067"
+      style="fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;opacity:1;fill:#555753;stroke-miterlimit:0;stroke-dashoffset:0;"
+      x="0"
+      y="14"
+      width="2"
+      height="2" />
+    <rect
+      id="rect10069"
+      style="opacity:1;stroke-width:1;stroke-linejoin:round;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;fill:#555753;fill-opacity:1;stroke:none;stroke-linecap:butt;stroke-miterlimit:0;"
+      x="0"
+      y="4"
+      width="2"
+      height="2" />
+    <rect
+      id="rect10071"
+      style="fill-opacity:1;stroke-width:1;stroke-linecap:butt;stroke-dashoffset:0;stroke-opacity:1;opacity:1;stroke:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;fill:#555753;"
+      x="11"
+      y="14"
+      width="2"
+      height="2" />
+    <ellipse
+      id="ellipse10075"
+      style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:1.45953846;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;opacity:0.4;stroke-linejoin:round;stroke-dashoffset:0;stroke-opacity:1;"
+      transform="matrix(0.708441,0,0,0.6626212,2.776589,1.898065)"
+      cx="10.90198"
+      cy="5.435891"
+      rx="4.234653"
+      ry="4.527475" />
+  </g>
+</svg>

@@ -21,6 +21,9 @@ import (
 // MarkerFromNodeProp returns the marker name (canonicalized -- no id)
 // and id and color type
 func MarkerFromNodeProp(kn ki.Ki, prop string) (string, int, MarkerColors) {
+	if kn == nil {
+		return "", 0, MarkerStdColor
+	}
 	p := kn.Prop(prop)
 	if p == nil {
 		return "", 0, MarkerStdColor

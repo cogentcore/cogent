@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/girl"
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/svg"
@@ -30,42 +31,254 @@ type PaintView struct {
 
 var KiT_PaintView = kit.Types.AddType(&PaintView{}, PaintViewProps)
 
-// GradStopsName returns the stopsname for gradient from url
-func (pv *PaintView) GradStopsName(g *svg.NodeBase, url string) string {
-	gr := svg.GradientByName(g, url)
-	if gr == nil {
-		return ""
+/////////////////////////////////////////////////////////////////////////
+//  Actions
+
+// ManipAction manages all the updating etc associated with performing an action
+// that includes an ongoing manipulation with a final non-manip update.
+// runs given function to actually do the update.
+func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	updt := false
+	sv.SetFullReRender()
+	actStart := false
+	finalAct := false
+	if !manip && es.InAction() {
+		finalAct = true
 	}
-	if gr.StopsName != "" {
-		return gr.StopsName
+	if manip && !es.InAction() {
+		manip = false
+		actStart = true
+		es.ActStart(act, data)
+		es.ActUnlock()
 	}
-	return gr.Nm
+	if !manip {
+		if !finalAct {
+			sv.UndoSave(act, data)
+		}
+		updt = sv.UpdateStart()
+	}
+	fun() // actually do the update
+	if !manip {
+		sv.UpdateEnd(updt)
+		if !actStart {
+			es.ActDone()
+		}
+	} else {
+		sv.ManipUpdate()
+	}
 }
 
-// DecodeType decodes the paint type from paint and props
-// also returns the name of the gradient if using one.
-func (pv *PaintView) DecodeType(g *svg.NodeBase, cs *gist.ColorSpec, prop string) (PaintTypes, string) {
-	pstr := kit.ToString(g.Prop(prop))
-	switch {
-	case pstr == "inherit":
-		return PaintInherit, ""
-	case pstr == "none" || cs.IsNil():
-		return PaintOff, ""
-	case strings.HasPrefix(pstr, "url(#linear") || (cs.Gradient != nil && !cs.Gradient.IsRadial):
-		return PaintLinear, pv.GradStopsName(g, pstr)
-	case strings.HasPrefix(pstr, "url(#radial") || (cs.Gradient != nil && cs.Gradient.IsRadial):
-		return PaintRadial, pv.GradStopsName(g, pstr)
+// SetStrokeNode sets the stroke properties of Node
+// based on previous and current PaintType
+func (gv *GridView) SetStrokeNode(sii svg.NodeSVG, prev, pt PaintTypes, sp string) {
+	switch pt {
+	case PaintLinear:
+		svg.UpdateNodeGradientProp(sii, "stroke", false, sp)
+	case PaintRadial:
+		svg.UpdateNodeGradientProp(sii, "stroke", true, sp)
+	default:
+		if prev == PaintLinear || prev == PaintRadial {
+			pstr := kit.ToString(sii.Prop("stroke"))
+			svg.DeleteNodeGradient(sii, pstr)
+		}
+		sii.SetProp("stroke", sp)
 	}
-	return PaintSolid, ""
+	gv.UpdateMarkerColors(sii)
 }
 
-// Update updates the current settings based on the values in the given Paint
-func (pv *PaintView) Update(g *svg.NodeBase) {
+// SetStroke sets the stroke properties of selected items
+// based on previous and current PaintType
+func (gv *GridView) SetStroke(prev, pt PaintTypes, sp string) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("SetStroke", sp)
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		gv.SetStrokeNode(itm, prev, pt, sp)
+	}
+	sv.UpdateEnd(updt)
+}
+
+// SetStrokeWidth sets the stroke width property for selected items
+// manip means currently being manipulated -- don't save undo.
+func (gv *GridView) SetStrokeWidth(wp string, manip bool) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	updt := false
+	if !manip {
+		sv.UndoSave("SetStrokeWidth", wp)
+		updt = sv.UpdateStart()
+		sv.SetFullReRender()
+	}
+	for itm := range es.Selected {
+		g := itm.AsSVGNode()
+		if !g.Pnt.StrokeStyle.Color.IsNil() {
+			g.SetProp("stroke-width", wp)
+		}
+	}
+	if !manip {
+		sv.UpdateEnd(updt)
+	} else {
+		sv.ManipUpdate()
+	}
+}
+
+// SetStrokeColor sets the stroke color for selected items.
+// manip means currently being manipulated -- don't save undo.
+func (gv *GridView) SetStrokeColor(sp string, manip bool) {
+	es := &gv.EditState
+	gv.ManipAction("SetStrokeColor", sp, manip,
+		func() {
+			for itm := range es.Selected {
+				p := itm.Prop("stroke")
+				if p != nil {
+					itm.SetProp("stroke", sp)
+					gv.UpdateMarkerColors(itm)
+				}
+			}
+		})
+}
+
+// SetMarkerNode sets the marker properties of Node.
+func (gv *GridView) SetMarkerNode(sii svg.NodeSVG, start, mid, end string, sc, mc, ec MarkerColors) {
+	sv := gv.SVG()
+	MarkerSetProp(&sv.SVG, sii, "marker-start", start, sc)
+	MarkerSetProp(&sv.SVG, sii, "marker-mid", mid, mc)
+	MarkerSetProp(&sv.SVG, sii, "marker-end", end, ec)
+}
+
+// SetMarkerProps sets the marker props
+func (gv *GridView) SetMarkerProps(start, mid, end string, sc, mc, ec MarkerColors) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("SetMarkerProps", start+" "+mid+" "+end)
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		gv.SetMarkerNode(itm, start, mid, end, sc, mc, ec)
+	}
+	sv.UpdateEnd(updt)
+}
+
+// UpdateMarkerColors updates the marker colors, when setting fill or stroke
+func (gv *GridView) UpdateMarkerColors(sii svg.NodeSVG) {
+	if sii == nil {
+		return
+	}
+	sv := gv.SVG()
+	MarkerUpdateColorProp(&sv.SVG, sii, "marker-start")
+	MarkerUpdateColorProp(&sv.SVG, sii, "marker-mid")
+	MarkerUpdateColorProp(&sv.SVG, sii, "marker-end")
+}
+
+// SetDashNode sets the stroke-dasharray property of Node.
+// multiplies dash values by the line width in dots.
+func (gv *GridView) SetDashNode(sii svg.NodeSVG, dary []float64) {
+	if len(dary) == 0 {
+		sii.DeleteProp("stroke-dasharray")
+		return
+	}
+	g := sii.AsSVGNode()
+	mary := DashMulWidth(float64(g.Pnt.StrokeStyle.Width.Dots), dary)
+	ds := DashString(mary)
+	sii.SetProp("stroke-dasharray", ds)
+}
+
+// SetDashProps sets the dash props
+func (gv *GridView) SetDashProps(dary []float64) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("SetDashProps", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		gv.SetDashNode(itm, dary)
+	}
+	sv.UpdateEnd(updt)
+}
+
+// SetFillNode sets the fill props of given node
+// based on previous and current PaintType
+func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string) {
+	switch pt {
+	case PaintLinear:
+		svg.UpdateNodeGradientProp(sii, "fill", false, fp)
+	case PaintRadial:
+		svg.UpdateNodeGradientProp(sii, "fill", true, fp)
+	default:
+		if prev == PaintLinear || prev == PaintRadial {
+			pstr := kit.ToString(sii.Prop("fill"))
+			svg.DeleteNodeGradient(sii, pstr)
+		}
+		sii.SetProp("fill", fp)
+	}
+	gv.UpdateMarkerColors(sii)
+}
+
+// SetFill sets the fill props of selected items
+// based on previous and current PaintType
+func (gv *GridView) SetFill(prev, pt PaintTypes, fp string) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("SetFill", fp)
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	for itm := range es.Selected {
+		gv.SetFillNode(itm, prev, pt, fp)
+	}
+	sv.UpdateEnd(updt)
+}
+
+// SetFillColor sets the fill color for selected items
+// manip means currently being manipulated -- don't save undo.
+func (gv *GridView) SetFillColor(fp string, manip bool) {
+	es := &gv.EditState
+	gv.ManipAction("SetFillColor", fp, manip,
+		func() {
+			for itm := range es.Selected {
+				p := itm.Prop("fill")
+				if p != nil {
+					itm.SetProp("fill", fp)
+					gv.UpdateMarkerColors(itm)
+				}
+			}
+		})
+}
+
+// DefaultGradient returns the default gradient to use for setting stops
+func (gv *GridView) DefaultGradient() string {
+	es := &gv.EditState
+	sv := gv.SVG()
+	if len(gv.EditState.Gradients) == 0 {
+		es.ConfigDefaultGradient()
+		sv.UpdateGradients(es.Gradients)
+	}
+	return es.Gradients[0].Name
+}
+
+// UpdateGradients updates gradients from EditState
+func (gv *GridView) UpdateGradients() {
+	es := &gv.EditState
+	sv := gv.SVG()
+	updt := sv.UpdateStart()
+	sv.UpdateGradients(es.Gradients)
+	sv.UpdateEnd(updt)
+}
+
+///////////////////////////////////////////////////////////////
+//  PaintView
+
+// Update updates the current settings based on the values in the given Paint and
+// props from node (node can be nil)
+func (pv *PaintView) Update(pc *girl.Paint, kn ki.Ki) {
 	updt := pv.UpdateStart()
 	defer pv.UpdateEnd(updt)
 
-	pv.StrokeType, pv.StrokeStops = pv.DecodeType(g, &g.Pnt.StrokeStyle.Color, "stroke")
-	pv.FillType, pv.FillStops = pv.DecodeType(g, &g.Pnt.FillStyle.Color, "fill")
+	pv.StrokeType, pv.StrokeStops = pv.DecodeType(kn, &pc.StrokeStyle.Color, "stroke")
+	pv.FillType, pv.FillStops = pv.DecodeType(kn, &pc.FillStyle.Color, "fill")
 
 	es := &pv.GridView.EditState
 	grl := &es.Gradients
@@ -80,7 +293,7 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 	case PaintSolid:
 		ss.StackTop = 1
 		sc := ss.ChildByName("stroke-clr", 1).(*giv.ColorView)
-		sc.SetColor(g.Pnt.StrokeStyle.Color.Color)
+		sc.SetColor(pc.StrokeStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		ss.StackTop = 2
 		sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
@@ -92,12 +305,12 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 
 	wr := pv.ChildByName("stroke-width", 2)
 	wsb := wr.ChildByName("width", 1).(*gi.SpinBox)
-	wsb.SetValue(g.Pnt.StrokeStyle.Width.Val)
+	wsb.SetValue(pc.StrokeStyle.Width.Val)
 	uncb := wr.ChildByName("width-units", 2).(*gi.ComboBox)
-	uncb.SetCurIndex(int(g.Pnt.StrokeStyle.Width.Un))
+	uncb.SetCurIndex(int(pc.StrokeStyle.Width.Un))
 
 	dshcb := wr.ChildByName("dashes", 3).(*gi.ComboBox)
-	nwdsh, dnm := DashMatchArray(float64(g.Pnt.StrokeStyle.Width.Dots), g.Pnt.StrokeStyle.Dashes)
+	nwdsh, dnm := DashMatchArray(float64(pc.StrokeStyle.Width.Dots), pc.StrokeStyle.Dashes)
 	if nwdsh {
 		dshcb.ItemsFromIconList(AllDashIconNames, false, 0)
 	}
@@ -105,7 +318,7 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 
 	mkr := pv.ChildByName("stroke-markers", 3)
 
-	ms, _, mc := MarkerFromNodeProp(g, "marker-start")
+	ms, _, mc := MarkerFromNodeProp(kn, "marker-start")
 	mscb := mkr.ChildByName("marker-start", 0).(*gi.ComboBox)
 	mscc := mkr.ChildByName("marker-start-color", 1).(*gi.ComboBox)
 	if ms != "" {
@@ -115,7 +328,7 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 		mscb.SetCurIndex(0)
 		mscc.SetCurIndex(0)
 	}
-	ms, _, mc = MarkerFromNodeProp(g, "marker-mid")
+	ms, _, mc = MarkerFromNodeProp(kn, "marker-mid")
 	mmcb := mkr.ChildByName("marker-mid", 2).(*gi.ComboBox)
 	mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.ComboBox)
 	if ms != "" {
@@ -125,7 +338,7 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 		mmcb.SetCurIndex(0)
 		mmcc.SetCurIndex(0)
 	}
-	ms, _, mc = MarkerFromNodeProp(g, "marker-end")
+	ms, _, mc = MarkerFromNodeProp(kn, "marker-end")
 	mecb := mkr.ChildByName("marker-end", 4).(*gi.ComboBox)
 	mecc := mkr.ChildByName("marker-end-color", 5).(*gi.ComboBox)
 	if ms != "" {
@@ -146,7 +359,7 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 	case PaintSolid:
 		fs.StackTop = 1
 		fc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
-		fc.SetColor(g.Pnt.FillStyle.Color.Color)
+		fc.SetColor(pc.FillStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		fs.StackTop = 2
 		fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
@@ -155,6 +368,38 @@ func (pv *PaintView) Update(g *svg.NodeBase) {
 	default:
 		fs.StackTop = 0
 	}
+}
+
+// GradStopsName returns the stopsname for gradient from url
+func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
+	gr := svg.GradientByName(gii, url)
+	if gr == nil {
+		return ""
+	}
+	if gr.StopsName != "" {
+		return gr.StopsName
+	}
+	return gr.Nm
+}
+
+// DecodeType decodes the paint type from paint and props
+// also returns the name of the gradient if using one.
+func (pv *PaintView) DecodeType(kn ki.Ki, cs *gist.ColorSpec, prop string) (PaintTypes, string) {
+	pstr := ""
+	if kn != nil {
+		pstr = kit.ToString(kn.Prop(prop))
+	}
+	switch {
+	case pstr == "inherit":
+		return PaintInherit, ""
+	case pstr == "none" || cs.IsNil():
+		return PaintOff, ""
+	case strings.HasPrefix(pstr, "url(#linear") || (cs.Gradient != nil && !cs.Gradient.IsRadial):
+		return PaintLinear, pv.GradStopsName(kn.(gi.Node2D), pstr)
+	case strings.HasPrefix(pstr, "url(#radial") || (cs.Gradient != nil && cs.Gradient.IsRadial):
+		return PaintRadial, pv.GradStopsName(kn.(gi.Node2D), pstr)
+	}
+	return PaintSolid, ""
 }
 
 func (pv *PaintView) SelectStrokeGrad() {
@@ -208,7 +453,8 @@ func (pv *PaintView) Config(gv *GridView) {
 	spt.Mutex = true
 
 	wr := gi.AddNewLayout(pv, "stroke-width", gi.LayoutHoriz)
-	gi.AddNewLabel(wr, "width-lab", "Width:  ")
+	gi.AddNewLabel(wr, "width-lab", "Width:  ").SetProp("vertical-align", gist.AlignMiddle)
+
 	wsb := gi.AddNewSpinBox(wr, "width")
 	wsb.SetProp("min", 0)
 	wsb.SetProp("step", 0.05)

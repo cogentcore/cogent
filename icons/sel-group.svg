@@ -1,0 +1,75 @@
+<svg
+  width="16mm"
+  height="16mm"
+  viewBox="0 0 16 16">
+  <defs
+    id="Defs" />
+  <g
+    id="selection_group">
+    <rect
+      id="rect11004"
+      style="stroke:none;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;opacity:1;fill-opacity:0;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none;stroke-dashoffset:0;fill:#ffffff;"
+      x="0"
+      y="0"
+      width="16"
+      height="16" />
+    <rect
+      id="rect11006"
+      style="stroke-linecap:square;enable-background:accumulate;fill:#dfdfdb;stroke:#888a85;stroke-miterlimit:0;marker:none;marker-start:none;fill-opacity:1;stroke-linejoin:round;visibility:visible;opacity:1;fill-rule:evenodd;stroke-width:1.00008762;stroke-dasharray:none;stroke-dashoffset:0;display:inline;overflow:visible;stroke-opacity:1;marker-mid:none;marker-end:none;"
+      x="2.500044"
+      y="5.499999"
+      width="7.999913"
+      height="7.999957" />
+    <rect
+      id="rect11008"
+      style="opacity:1;fill-opacity:1;stroke:#ffffff;stroke-width:0.99999988;stroke-linejoin:miter;stroke-opacity:1;fill:none;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-dashoffset:0;"
+      x="3.5"
+      y="6.500002"
+      width="6"
+      height="5.999999" />
+    <ellipse
+      id="ellipse11010"
+      style="overflow:visible;fill-rule:evenodd;stroke-linejoin:round;stroke-dashoffset:0;marker-end:none;opacity:1;fill:#dfdfdb;fill-opacity:1;stroke:#888a85;stroke-width:1.09475553;stroke-linecap:square;marker-start:none;visibility:visible;stroke-opacity:1;marker-mid:none;enable-background:accumulate;display:inline;stroke-miterlimit:0;stroke-dasharray:none;marker:none;"
+      transform="matrix(0.9445825,0,0,0.8834904,0.2021618,0.6974671)"
+      cx="10.90198"
+      cy="5.435891"
+      rx="4.234653"
+      ry="4.527475" />
+    <rect
+      id="rect11012"
+      style="fill:#555753;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dashoffset:0;stroke-opacity:1;opacity:1;fill-opacity:1;stroke-linejoin:round;stroke-dasharray:none;"
+      x="14"
+      y="0"
+      width="2"
+      height="2" />
+    <rect
+      id="rect11014"
+      style="stroke-opacity:1;opacity:1;fill-opacity:1;stroke-width:1;stroke-miterlimit:0;stroke-dashoffset:0;fill:#555753;stroke:none;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;"
+      x="0"
+      y="14"
+      width="2"
+      height="2" />
+    <rect
+      id="rect11016"
+      style="fill:#555753;stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-dashoffset:0;opacity:1;fill-opacity:1;stroke:none;stroke-linejoin:round;stroke-opacity:1;"
+      x="0"
+      y="0"
+      width="2"
+      height="2" />
+    <rect
+      id="rect11018"
+      style="stroke-opacity:1;opacity:1;fill:#555753;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dashoffset:0;fill-opacity:1;stroke-linejoin:round;stroke-dasharray:none;"
+      x="14"
+      y="14"
+      width="2"
+      height="2" />
+    <ellipse
+      id="ellipse11020"
+      style="fill:none;fill-opacity:1;stroke-linecap:butt;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;opacity:1;stroke:#ffffff;stroke-width:1.45953846;stroke-linejoin:round;stroke-miterlimit:0;"
+      transform="matrix(0.708441,0,0,0.6626212,2.776589,1.898065)"
+      cx="10.90198"
+      cy="5.435891"
+      rx="4.234653"
+      ry="4.527475" />
+  </g>
+</svg>

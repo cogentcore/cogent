@@ -27,15 +27,11 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
-* node editor -- big job but needed for making basic bezier curves..
-
 * Text edit panel
 
 * autosave
 
 * cut / paste not updating tree reliably.  more tree update debugging fun!
-
-* lower / raise = move in parent layer or global -- find parent layer
 
 * make zoom stay centered on mouse point -- subtract mouse pos then add back..
 
@@ -50,6 +46,7 @@ color, fill and line width editor, and full undo / redo.
 * save prefs as "base" thing per inkscape
 
 * svg.Node ToPath -- convert any node to a path
+* node editor -- big job but needed for making basic bezier curves..
 
 * alignview
 

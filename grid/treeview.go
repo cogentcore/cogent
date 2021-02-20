@@ -10,11 +10,14 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
+	"github.com/goki/gi/oswin"
+	"github.com/goki/gi/oswin/dnd"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/pi/filecat"
 )
 
 // TreeView is a TreeView that knows how to operate on FileNode nodes
@@ -36,6 +39,123 @@ func AddNewTreeView(parent ki.Ki, name string) *TreeView {
 func init() {
 	kit.Types.SetProps(KiT_TreeView, TreeViewProps)
 }
+
+// SelectNodeInTree selects given node in TreeView
+func (gv *GridView) SelectNodeInTree(kn ki.Ki, mode mouse.SelectModes) {
+	tv := gv.TreeView()
+	tvn := tv.FindSrcNode(kn)
+	if tvn != nil {
+		tvn.OpenParents()
+		tvn.SelectAction(mode)
+	}
+}
+
+// SelectedAsTreeViews returns the currently-selected items from SVG as TreeView nodes
+func (gv *GridView) SelectedAsTreeViews() []*giv.TreeView {
+	es := &gv.EditState
+	sl := es.SelectedList(false)
+	if len(sl) == 0 {
+		return nil
+	}
+	tv := gv.TreeView()
+	var tvl []*giv.TreeView
+	for _, si := range sl {
+		tvn := tv.FindSrcNode(si.This())
+		if tvn != nil {
+			tvl = append(tvl, tvn)
+		}
+	}
+	return tvl
+}
+
+// DuplicateSelected duplicates selected items in SVG view, using TreeView methods
+func (gv *GridView) DuplicateSelected() {
+	tvl := gv.SelectedAsTreeViews()
+	if len(tvl) == 0 {
+		gv.SetStatus("Duplicate: no tree items found")
+		return
+	}
+	sv := gv.SVG()
+	sv.UndoSave("DuplicateSelected", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	tv := gv.TreeView()
+	tvupdt := tv.UpdateStart()
+	tv.SetFullReRender()
+	for _, tvi := range tvl {
+		tvi.SrcDuplicate()
+	}
+	gv.SetStatus("Duplicated selected items")
+	tv.ReSync() // todo: should not be needed
+	tv.UpdateEnd(tvupdt)
+	sv.UpdateEnd(updt)
+}
+
+// CopySelected copies selected items in SVG view, using TreeView methods
+func (gv *GridView) CopySelected() {
+	tvl := gv.SelectedAsTreeViews()
+	if len(tvl) == 0 {
+		gv.SetStatus("Copy: no tree items found")
+		return
+	}
+	tv := gv.TreeView()
+	tv.SetSelectedViews(tvl)
+	tvl[0].Copy(true) // operates on first element in selection
+	gv.SetStatus("Copied selected items")
+}
+
+// CutSelected cuts selected items in SVG view, using TreeView methods
+func (gv *GridView) CutSelected() {
+	tvl := gv.SelectedAsTreeViews()
+	if len(tvl) == 0 {
+		gv.SetStatus("Cut: no tree items found")
+		return
+	}
+	sv := gv.SVG()
+	sv.UndoSave("CutSelected", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	tv := gv.TreeView()
+	tvupdt := tv.UpdateStart()
+	tv.SetFullReRender()
+	tv.SetSelectedViews(tvl)
+	tvl[0].Cut() // operates on first element in selection
+	gv.SetStatus("Cut selected items")
+	tv.ReSync() // todo: should not be needed
+	tv.UpdateEnd(tvupdt)
+	sv.UpdateEnd(updt)
+}
+
+// PasteClip pastes clipboard, using cur layer etc
+func (gv *GridView) PasteClip() {
+	md := oswin.TheApp.ClipBoard(gv.ParentWindow().OSWin).Read([]string{filecat.DataJson})
+	if md == nil {
+		return
+	}
+	es := &gv.EditState
+	sv := gv.SVG()
+	sv.UndoSave("Paste", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	tv := gv.TreeView()
+	tvupdt := tv.UpdateStart()
+	tv.SetFullReRender()
+	par := tv
+	if es.CurLayer != "" {
+		ly := tv.ChildByName("tv_"+es.CurLayer, 1)
+		if ly != nil {
+			par = ly.Embed(KiT_TreeView).(*TreeView)
+		}
+	}
+	par.PasteChildren(md, dnd.DropCopy)
+	gv.SetStatus("Pasted items from clipboard")
+	tv.ReSync() // todo: should not be needed
+	tv.UpdateEnd(tvupdt)
+	sv.UpdateEnd(updt)
+}
+
+///////////////////////////////////////////////
+//  TreeView
 
 // TreeViewIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
 var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.Action) {
@@ -104,28 +224,10 @@ func (tv *TreeView) LayerClearCurrent() {
 	}
 }
 
-// NodeIsLayer returns true if given node is a layer
-func NodeIsLayer(kn ki.Ki) bool {
-	gm := kit.ToString(kn.Prop("groupmode"))
-	return gm == "layer"
-}
-
 // NodeIsMetaData returns true if given node is a MetaData
 func NodeIsMetaData(kn ki.Ki) bool {
 	_, ismd := kn.(*gi.MetaData2D)
 	return ismd
-}
-
-// LayerIsLocked returns true if layer is locked (insensitive = true)
-func LayerIsLocked(kn ki.Ki) bool {
-	cp := kit.ToString(kn.Prop("insensitive"))
-	return cp == "true"
-}
-
-// LayerIsVisible returns true if layer is visible
-func LayerIsVisible(kn ki.Ki) bool {
-	cp := kit.ToString(kn.Prop("style"))
-	return cp != "display:none"
 }
 
 // LayerToggleLock toggles whether layer is locked or not

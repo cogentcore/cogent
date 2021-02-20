@@ -1,0 +1,35 @@
+<svg
+  width="16mm"
+  height="16mm"
+  viewBox="0 0 16 16">
+  <defs
+    id="Defs" />
+  <g
+    id="selection-top"
+    transform="translate(-135,-667.36218)">
+    <path
+      id="path12171"
+      style="opacity:0;fill:none;connector-curvature:0;"
+      d="m 135,667.3622 h 16 v 16 h -16 z " />
+    <path
+      id="path12173"
+      style="opacity:0.5;connector-curvature:0;"
+      d="m 136,672.3622 h 5 v 2 h -5 z " />
+    <path
+      id="path12175"
+      style="opacity:1;connector-curvature:0;"
+      d="m 136,668.3622 h 13 v 2 h -13 z " />
+    <path
+      id="path12177"
+      style="connector-curvature:0;opacity:0.5;"
+      d="m 136,676.3622 h 5 v 2 h -5 z " />
+    <path
+      id="path12179"
+      style="opacity:0.5;connector-curvature:0;"
+      d="m 136,680.3622 h 5 v 2 h -5 z " />
+    <path
+      id="path12181"
+      style="connector-curvature:0;opacity:1;"
+      d="m 145,682.3622 h 2 v -7 h 2 l -3,-2.9883 -3,2.9883 h 2 z " />
+  </g>
+</svg>

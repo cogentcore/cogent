@@ -16,14 +16,12 @@ import (
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/oswin/dnd"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/mat32"
-	"github.com/goki/pi/filecat"
 )
 
 // GridView is the Grid SVG vector drawing program: Go-rendered interactive drawing
@@ -85,6 +83,7 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 // NewDrawing opens a new drawing window
 func (gv *GridView) NewDrawing() *GridView {
 	_, ngr := NewGridWindow("")
+	// todo: set prefs
 	return ngr
 }
 
@@ -123,25 +122,30 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	return err
 }
 
-// SetTool sets the current active tool
-func (gv *GridView) SetTool(tl Tools) {
-	tls := gv.Tools()
-	updt := tls.UpdateStart()
-	for i, ti := range tls.Kids {
-		t := ti.(gi.Node2D).AsNode2D()
-		t.SetSelectedState(i == int(tl))
-	}
-	tls.UpdateEnd(updt)
-	gv.EditState.Tool = tl
-	gv.SetStatus("Tool")
-}
-
 func (gv *GridView) MainToolbar() *gi.ToolBar {
 	return gv.ChildByName("main-tb", 0).(*gi.ToolBar)
 }
 
-func (gv *GridView) ModalToolbar() *gi.ToolBar {
-	return gv.ChildByName("modal-tb", 1).(*gi.ToolBar)
+func (gv *GridView) ModalToolbarStack() *gi.Layout {
+	return gv.ChildByName("modal-tb", 1).(*gi.Layout)
+}
+
+// SetModalToolbarSelect sets the modal toolbar to be the select one
+func (gv *GridView) SetModalToolbarSelect() {
+	tbs := gv.ModalToolbarStack()
+	updt := tbs.UpdateStart()
+	tbs.SetFullReRender()
+	tbs.StackTop = 0
+	tbs.UpdateEnd(updt)
+}
+
+// SetModalToolbarNode sets the modal toolbar to be the node editing one
+func (gv *GridView) SetModalToolbarNode() {
+	tbs := gv.ModalToolbarStack()
+	updt := tbs.UpdateStart()
+	tbs.SetFullReRender()
+	tbs.StackTop = 0 // todo 1
+	tbs.UpdateEnd(updt)
 }
 
 func (gv *GridView) HBox() *gi.Layout {
@@ -187,7 +191,7 @@ func (gv *GridView) Config() {
 	gv.Lay = gi.LayoutVert
 	gv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	gi.AddNewToolBar(gv, "main-tb")
-	gi.AddNewToolBar(gv, "modal-tb")
+	gi.AddNewLayout(gv, "modal-tb", gi.LayoutStacked)
 	hb := gi.AddNewLayout(gv, "hbox", gi.LayoutHoriz)
 	hb.SetStretchMax()
 	gi.AddNewFrame(gv, "statusbar", gi.LayoutHoriz)
@@ -281,9 +285,20 @@ func (gv *GridView) RedoAvailFunc(act *gi.Action) {
 	act.SetInactiveState(!es.UndoMgr.HasRedoAvail())
 }
 
+// PasteAvailFunc is an ActionUpdateFunc that inactivates action if no paste avail
+func (gv *GridView) PasteAvailFunc(act *gi.Action) {
+	empty := oswin.TheApp.ClipBoard(gv.ParentWindow().OSWin).IsEmpty()
+	act.SetInactiveState(empty)
+}
+
 func (gv *GridView) ConfigMainToolbar() {
 	tb := gv.MainToolbar()
 	tb.SetStretchMaxWidth()
+	tb.AddAction(gi.ActOpts{Label: "Updt", Icon: "update", Tooltip: "update display -- should not be needed but sometimes, while still under development..."},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.UpdateDisp()
+		})
 	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing using default drawing preferences"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
@@ -304,7 +319,7 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "SaveDrawingAs", grr.ViewportSafe())
 		})
-	tb.AddSeparator("sep-edit")
+	tb.AddSeparator("sep-undo")
 	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "rotate-left", Tooltip: "Undo last action", UpdateFunc: gv.UndoAvailFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
@@ -315,44 +330,38 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.Redo()
 		})
+	tb.AddSeparator("sep-edit")
+	tb.AddAction(gi.ActOpts{Label: "Duplicate", Icon: "documents", Tooltip: "Duplicate current selection -- original items will remain selected", UpdateFunc: gv.SelectedEnableFunc},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.DuplicateSelected()
+		})
+	tb.AddAction(gi.ActOpts{Label: "Copy", Icon: "copy", Tooltip: "Copy current selection to clipboard", UpdateFunc: gv.SelectedEnableFunc},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.CopySelected()
+		})
+	tb.AddAction(gi.ActOpts{Label: "Cut", Icon: "cut", Tooltip: "Cut current selection -- delete and copy to clipboard", UpdateFunc: gv.SelectedEnableFunc},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.CutSelected()
+		})
+	tb.AddAction(gi.ActOpts{Label: "Paste", Icon: "paste", Tooltip: "Paste clipboard contents", UpdateFunc: gv.PasteAvailFunc},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.PasteClip()
+		})
 }
 
 func (gv *GridView) ConfigModalToolbar() {
-	tb := gv.ModalToolbar()
+	tb := gv.ModalToolbarStack()
+	if tb == nil || tb.HasChildren() {
+		return
+	}
 	tb.SetStretchMaxWidth()
-}
+	gi.AddNewToolBar(tb, "select-tb")
 
-func (gv *GridView) ConfigTools() {
-	tb := gv.Tools()
-	tb.Lay = gi.LayoutVert
-	tb.SetStretchMaxHeight()
-	tb.AddAction(gi.ActOpts{Label: "S", Icon: "arrow", Tooltip: "S, Space: select, move, resize objects"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.SetTool(SelectTool)
-		})
-	tb.AddAction(gi.ActOpts{Label: "N", Icon: "edit", Tooltip: "N: select, move node points within paths"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.SetTool(NodeTool)
-		})
-	tb.AddAction(gi.ActOpts{Label: "R", Icon: "stop", Tooltip: "R: create rectangles and squares"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.SetTool(RectTool)
-		})
-	tb.AddAction(gi.ActOpts{Label: "E", Icon: "circlebutton-off", Tooltip: "E: create circles, ellipses, and arcs"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.SetTool(EllipseTool)
-		})
-	tb.AddAction(gi.ActOpts{Label: "B", Icon: "color", Tooltip: "B: create bezier curves (straight lines, curves with control points)"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.SetTool(BezierTool)
-		})
-
-	gv.SetTool(SelectTool)
+	gv.ConfigSelectToolbar()
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -555,6 +564,17 @@ func (gv *GridView) PaintView() *PaintView {
 	return gv.Tab("Paint").(*PaintView)
 }
 
+func (gv *GridView) UpdateDisp() {
+	gv.UpdateTreeView()
+	sv := gv.SVG()
+	sv.UpdateView(true)
+}
+
+func (gv *GridView) UpdateTreeView() {
+	tv := gv.TreeView()
+	tv.ReSync()
+}
+
 func (gv *GridView) UpdateTabs() {
 	// fmt.Printf("updt-tabs\n")
 	es := &gv.EditState
@@ -562,266 +582,9 @@ func (gv *GridView) UpdateTabs() {
 	if len(sls) > 0 {
 		sel := sls[0].AsSVGNode()
 		pv := gv.Tab("Paint").(*PaintView)
-		pv.Update(sel)
+		pv.Update(&sel.Pnt, sel.This())
 	}
-}
-
-/////////////////////////////////////////////////////////////////////////
-//  Actions
-
-// ManipAction manages all the updating etc associated with performing an action
-// that includes an ongoing manipulation with a final non-manip update.
-// runs given function to actually do the update.
-func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
-	es := &gv.EditState
-	sv := gv.SVG()
-	updt := false
-	sv.SetFullReRender()
-	actStart := false
-	finalAct := false
-	if !manip && es.InAction() {
-		finalAct = true
-	}
-	if manip && !es.InAction() {
-		manip = false
-		actStart = true
-		es.ActStart(act, data)
-		es.ActUnlock()
-	}
-	if !manip {
-		if !finalAct {
-			sv.UndoSave(act, data)
-		}
-		updt = sv.UpdateStart()
-	}
-	fun() // actually do the update
-	if !manip {
-		sv.UpdateEnd(updt)
-		if !actStart {
-			es.ActDone()
-		}
-	} else {
-		sv.ManipUpdate()
-	}
-}
-
-// SetStrokeNode sets the stroke properties of Node
-// based on previous and current PaintType
-func (gv *GridView) SetStrokeNode(sii svg.NodeSVG, prev, pt PaintTypes, sp string) {
-	switch pt {
-	case PaintLinear:
-		svg.UpdateNodeGradientProp(sii, "stroke", false, sp)
-	case PaintRadial:
-		svg.UpdateNodeGradientProp(sii, "stroke", true, sp)
-	default:
-		if prev == PaintLinear || prev == PaintRadial {
-			pstr := kit.ToString(sii.Prop("stroke"))
-			svg.DeleteNodeGradient(sii, pstr)
-		}
-		sii.SetProp("stroke", sp)
-	}
-	gv.UpdateMarkerColors(sii)
-}
-
-// SetStroke sets the stroke properties of selected items
-// based on previous and current PaintType
-func (gv *GridView) SetStroke(prev, pt PaintTypes, sp string) {
-	es := &gv.EditState
-	sv := gv.SVG()
-	sv.UndoSave("SetStroke", sp)
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	for itm := range es.Selected {
-		gv.SetStrokeNode(itm, prev, pt, sp)
-	}
-	sv.UpdateEnd(updt)
-}
-
-// SetStrokeWidth sets the stroke width property for selected items
-// manip means currently being manipulated -- don't save undo.
-func (gv *GridView) SetStrokeWidth(wp string, manip bool) {
-	es := &gv.EditState
-	sv := gv.SVG()
-	updt := false
-	if !manip {
-		sv.UndoSave("SetStrokeWidth", wp)
-		updt = sv.UpdateStart()
-		sv.SetFullReRender()
-	}
-	for itm := range es.Selected {
-		g := itm.AsSVGNode()
-		if !g.Pnt.StrokeStyle.Color.IsNil() {
-			g.SetProp("stroke-width", wp)
-		}
-	}
-	if !manip {
-		sv.UpdateEnd(updt)
-	} else {
-		sv.ManipUpdate()
-	}
-}
-
-// SetStrokeColor sets the stroke color for selected items.
-// manip means currently being manipulated -- don't save undo.
-func (gv *GridView) SetStrokeColor(sp string, manip bool) {
-	es := &gv.EditState
-	gv.ManipAction("SetStrokeColor", sp, manip,
-		func() {
-			for itm := range es.Selected {
-				p := itm.Prop("stroke")
-				if p != nil {
-					itm.SetProp("stroke", sp)
-					gv.UpdateMarkerColors(itm)
-				}
-			}
-		})
-}
-
-// SetMarkerNode sets the marker properties of Node.
-func (gv *GridView) SetMarkerNode(sii svg.NodeSVG, start, mid, end string, sc, mc, ec MarkerColors) {
-	sv := gv.SVG()
-	MarkerSetProp(&sv.SVG, sii, "marker-start", start, sc)
-	MarkerSetProp(&sv.SVG, sii, "marker-mid", mid, mc)
-	MarkerSetProp(&sv.SVG, sii, "marker-end", end, ec)
-}
-
-// SetMarkerProps sets the marker props
-func (gv *GridView) SetMarkerProps(start, mid, end string, sc, mc, ec MarkerColors) {
-	es := &gv.EditState
-	sv := gv.SVG()
-	sv.UndoSave("SetMarkerProps", start+" "+mid+" "+end)
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	for itm := range es.Selected {
-		gv.SetMarkerNode(itm, start, mid, end, sc, mc, ec)
-	}
-	sv.UpdateEnd(updt)
-}
-
-// UpdateMarkerColors updates the marker colors, when setting fill or stroke
-func (gv *GridView) UpdateMarkerColors(sii svg.NodeSVG) {
-	if sii == nil {
-		return
-	}
-	sv := gv.SVG()
-	MarkerUpdateColorProp(&sv.SVG, sii, "marker-start")
-	MarkerUpdateColorProp(&sv.SVG, sii, "marker-mid")
-	MarkerUpdateColorProp(&sv.SVG, sii, "marker-end")
-}
-
-// SetDashNode sets the stroke-dasharray property of Node.
-// multiplies dash values by the line width in dots.
-func (gv *GridView) SetDashNode(sii svg.NodeSVG, dary []float64) {
-	if len(dary) == 0 {
-		sii.DeleteProp("stroke-dasharray")
-		return
-	}
-	g := sii.AsSVGNode()
-	mary := DashMulWidth(float64(g.Pnt.StrokeStyle.Width.Dots), dary)
-	ds := DashString(mary)
-	sii.SetProp("stroke-dasharray", ds)
-}
-
-// SetDashProps sets the dash props
-func (gv *GridView) SetDashProps(dary []float64) {
-	es := &gv.EditState
-	sv := gv.SVG()
-	sv.UndoSave("SetDashProps", "")
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	for itm := range es.Selected {
-		gv.SetDashNode(itm, dary)
-	}
-	sv.UpdateEnd(updt)
-}
-
-// SetFillNode sets the fill props of given node
-// based on previous and current PaintType
-func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string) {
-	switch pt {
-	case PaintLinear:
-		svg.UpdateNodeGradientProp(sii, "fill", false, fp)
-	case PaintRadial:
-		svg.UpdateNodeGradientProp(sii, "fill", true, fp)
-	default:
-		if prev == PaintLinear || prev == PaintRadial {
-			pstr := kit.ToString(sii.Prop("fill"))
-			svg.DeleteNodeGradient(sii, pstr)
-		}
-		sii.SetProp("fill", fp)
-	}
-	gv.UpdateMarkerColors(sii)
-}
-
-// SetFill sets the fill props of selected items
-// based on previous and current PaintType
-func (gv *GridView) SetFill(prev, pt PaintTypes, fp string) {
-	es := &gv.EditState
-	sv := gv.SVG()
-	sv.UndoSave("SetFill", fp)
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	for itm := range es.Selected {
-		gv.SetFillNode(itm, prev, pt, fp)
-	}
-	sv.UpdateEnd(updt)
-}
-
-// SetFillColor sets the fill color for selected items
-// manip means currently being manipulated -- don't save undo.
-func (gv *GridView) SetFillColor(fp string, manip bool) {
-	es := &gv.EditState
-	gv.ManipAction("SetFillColor", fp, manip,
-		func() {
-			for itm := range es.Selected {
-				p := itm.Prop("fill")
-				if p != nil {
-					itm.SetProp("fill", fp)
-					gv.UpdateMarkerColors(itm)
-				}
-			}
-		})
-}
-
-// DefaultGradient returns the default gradient to use for setting stops
-func (gv *GridView) DefaultGradient() string {
-	es := &gv.EditState
-	sv := gv.SVG()
-	if len(gv.EditState.Gradients) == 0 {
-		es.ConfigDefaultGradient()
-		sv.UpdateGradients(es.Gradients)
-	}
-	return es.Gradients[0].Name
-}
-
-// UpdateGradients updates gradients from EditState
-func (gv *GridView) UpdateGradients() {
-	es := &gv.EditState
-	sv := gv.SVG()
-	updt := sv.UpdateStart()
-	sv.UpdateGradients(es.Gradients)
-	sv.UpdateEnd(updt)
-}
-
-// IsCurLayer returns true if given layer is the current layer
-// for creating items
-func (gv *GridView) IsCurLayer(lay string) bool {
-	return gv.EditState.CurLayer == lay
-}
-
-// SetCurLayer sets the current layer for creating items to given one
-func (gv *GridView) SetCurLayer(lay string) {
-	gv.EditState.CurLayer = lay
-	gv.SetStatus("set current layer to: " + lay)
-}
-
-// ClearCurLayer clears the current layer for creating items if it
-// was set to the given layer name
-func (gv *GridView) ClearCurLayer(lay string) {
-	if gv.EditState.CurLayer == lay {
-		gv.EditState.CurLayer = ""
-		gv.SetStatus("clear current layer from: " + lay)
-	}
+	gv.UpdateTreeView()
 }
 
 // SelectNodeInSVG selects given svg node in SVG drawing
@@ -834,117 +597,6 @@ func (gv *GridView) SelectNodeInSVG(kn ki.Ki, mode mouse.SelectModes) {
 	es := &gv.EditState
 	es.SelectAction(sii, mode)
 	sv.UpdateView(false)
-}
-
-// SelectNodeInTree selects given node in TreeView
-func (gv *GridView) SelectNodeInTree(kn ki.Ki, mode mouse.SelectModes) {
-	tv := gv.TreeView()
-	tvn := tv.FindSrcNode(kn)
-	if tvn != nil {
-		tvn.OpenParents()
-		tvn.SelectAction(mode)
-	}
-}
-
-// SelectedAsTreeViews returns the currently-selected items from SVG as TreeView nodes
-func (gv *GridView) SelectedAsTreeViews() []*giv.TreeView {
-	es := &gv.EditState
-	sl := es.SelectedList(false)
-	if len(sl) == 0 {
-		return nil
-	}
-	tv := gv.TreeView()
-	var tvl []*giv.TreeView
-	for _, si := range sl {
-		tvn := tv.FindSrcNode(si.This())
-		if tvn != nil {
-			tvl = append(tvl, tvn)
-		}
-	}
-	return tvl
-}
-
-// DuplicateSelected duplicates selected items in SVG view, using TreeView methods
-func (gv *GridView) DuplicateSelected() {
-	tvl := gv.SelectedAsTreeViews()
-	if len(tvl) == 0 {
-		gv.SetStatus("Duplicate: no tree items found")
-		return
-	}
-	sv := gv.SVG()
-	sv.UndoSave("DuplicateSelected", "")
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	tv := gv.TreeView()
-	tvupdt := tv.UpdateStart()
-	tv.SetFullReRender()
-	for _, tvi := range tvl {
-		tvi.SrcDuplicate()
-	}
-	gv.SetStatus("Duplicated selected items")
-	tv.UpdateEnd(tvupdt)
-	sv.UpdateEnd(updt)
-}
-
-// CopySelected copies selected items in SVG view, using TreeView methods
-func (gv *GridView) CopySelected() {
-	tvl := gv.SelectedAsTreeViews()
-	if len(tvl) == 0 {
-		gv.SetStatus("Copy: no tree items found")
-		return
-	}
-	tv := gv.TreeView()
-	tv.SetSelectedViews(tvl)
-	tvl[0].Copy(true) // operates on first element in selection
-	gv.SetStatus("Copied selected items")
-}
-
-// CutSelected cuts selected items in SVG view, using TreeView methods
-func (gv *GridView) CutSelected() {
-	tvl := gv.SelectedAsTreeViews()
-	if len(tvl) == 0 {
-		gv.SetStatus("Cut: no tree items found")
-		return
-	}
-	sv := gv.SVG()
-	sv.UndoSave("CutSelected", "")
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	tv := gv.TreeView()
-	tvupdt := tv.UpdateStart()
-	tv.SetFullReRender()
-	tv.SetSelectedViews(tvl)
-	tvl[0].Cut() // operates on first element in selection
-	gv.SetStatus("Cut selected items")
-	tv.UpdateEnd(tvupdt)
-	sv.UpdateEnd(updt)
-}
-
-// PasteClip pastes clipboard, using cur layer etc
-func (gv *GridView) PasteClip() {
-	md := oswin.TheApp.ClipBoard(gv.ParentWindow().OSWin).Read([]string{filecat.DataJson})
-	if md == nil {
-		return
-	}
-	es := &gv.EditState
-	sv := gv.SVG()
-	sv.UndoSave("Paste", "")
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	tv := gv.TreeView()
-	tvupdt := tv.UpdateStart()
-	tv.SetFullReRender()
-	par := tv
-	if es.CurLayer != "" {
-		ly := tv.ChildByName("tv_"+es.CurLayer, 1)
-		if ly != nil {
-			par = ly.Embed(KiT_TreeView).(*TreeView)
-		}
-	}
-	par.PasteChildren(md, dnd.DropCopy)
-	gv.SetStatus("Pasted items from clipboard")
-	tv.UpdateEnd(tvupdt)
-	sv.UpdateEnd(updt)
 }
 
 // Undo undoes one step, returning name of action that was undone

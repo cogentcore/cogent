@@ -1,0 +1,35 @@
+<svg
+  width="16mm"
+  height="16mm"
+  viewBox="0 0 16 16">
+  <defs
+    id="Defs" />
+  <g
+    id="snap"
+    transform="matrix(0.996066,0,0,0.998048,-556.80064,-504.35705)">
+    <path
+      id="path22340"
+      style="connector-curvature:0;opacity:0;fill:none;"
+      d="m 559,505.3621 h 16 v 16 h -16 z " />
+    <path
+      id="path22342"
+      style="opacity:0;fill:none;connector-curvature:0;"
+      d="m 559,505.3627 h 16 v 16 h -16 z " />
+    <path
+      id="path22373"
+      style="connector-curvature:0;opacity:1;"
+      d="m 562.5,505.3621 c 0.831,0 1.5,0.669 1.5,1.5 0,0.831 -0.669,1.5 -1.5,1.5 -0.831,0 -1.5,-0.669 -1.5,-1.5 0,-0.831 0.669,-1.5 1.5,-1.5 z " />
+    <path
+      id="path22375"
+      style="connector-curvature:0;opacity:1;fill-opacity:1;"
+      d="m 562.5,518.3621 c 0.831,0 1.5,0.669 1.5,1.5 0,0.831 -0.669,1.5 -1.5,1.5 -0.831,0 -1.5,-0.669 -1.5,-1.5 0,-0.831 0.669,-1.5 1.5,-1.5 z " />
+    <path
+      id="path22386"
+      style="opacity:1;connector-curvature:0;"
+      d="m 561,510.3622 -2,2 2,2 -2,2 h 2 l 2,-2 -2,-2 2,-2 z " />
+    <path
+      id="path14123"
+      style="opacity:1;connector-curvature:0;nodetypes:cccsscccsscc;"
+      d="m 565.02344,518.3689 v 3.00586 c 0,0 1.06334,0 1.51965,0 4.6236,0 8.52011,-3.53287 8.52011,-7.99977 0,-4.467 -3.9076,-8.0313 -8.5312,-8.0313 H 565.0007 565 v 3 h 1.5312 c 3.1184,0 5.5313,2.3107 5.5313,5.0313 0,2.7206 -2.37962,5.00941 -5.70087,4.99391 z " />
+  </g>
+</svg>

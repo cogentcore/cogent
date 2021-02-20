@@ -4,7 +4,11 @@
 
 package grid
 
-import "github.com/goki/ki/kit"
+import (
+	"github.com/goki/gi/gi"
+	"github.com/goki/ki/ki"
+	"github.com/goki/ki/kit"
+)
 
 // Tools are the drawing tools
 type Tools int
@@ -29,4 +33,60 @@ func (ev *Tools) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev
 // ToolDoesBasicSelect returns true if tool should do select for clicks
 func ToolDoesBasicSelect(tl Tools) bool {
 	return tl != NodeTool
+}
+
+// SetTool sets the current active tool
+func (gv *GridView) SetTool(tl Tools) {
+	tls := gv.Tools()
+	updt := tls.UpdateStart()
+	for i, ti := range tls.Kids {
+		t := ti.(gi.Node2D).AsNode2D()
+		t.SetSelectedState(i == int(tl))
+	}
+	tls.UpdateEnd(updt)
+	gv.EditState.Tool = tl
+	if tl == NodeTool {
+		gv.SetModalToolbarNode()
+	} else {
+		gv.SetModalToolbarSelect()
+	}
+	gv.SetStatus("Tool")
+}
+
+func (gv *GridView) ConfigTools() {
+	tb := gv.Tools()
+
+	if tb.HasChildren() {
+		return
+	}
+
+	tb.Lay = gi.LayoutVert
+	tb.SetStretchMaxHeight()
+	tb.AddAction(gi.ActOpts{Label: "S", Icon: "arrow", Tooltip: "S, Space: select, move, resize objects"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(SelectTool)
+		})
+	tb.AddAction(gi.ActOpts{Label: "N", Icon: "edit", Tooltip: "N: select, move node points within paths"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(NodeTool)
+		})
+	tb.AddAction(gi.ActOpts{Label: "R", Icon: "stop", Tooltip: "R: create rectangles and squares"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(RectTool)
+		})
+	tb.AddAction(gi.ActOpts{Label: "E", Icon: "circlebutton-off", Tooltip: "E: create circles, ellipses, and arcs"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(EllipseTool)
+		})
+	tb.AddAction(gi.ActOpts{Label: "B", Icon: "color", Tooltip: "B: create bezier curves (straight lines, curves with control points)"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(BezierTool)
+		})
+
+	gv.SetTool(SelectTool)
 }
