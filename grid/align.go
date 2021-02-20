@@ -6,6 +6,7 @@ package grid
 
 import (
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -31,6 +32,47 @@ func (gv *GridView) AlignLeft() {
 	sv.UndoSave("AlignLeft", es.SelectedNamesString())
 }
 
+// GatherAlignPoints gets all the potential points of alignment for objects not
+// in selection group
+func (sv *SVGView) GatherAlignPoints() {
+	es := sv.EditState()
+	if !es.HasSelected() {
+		return
+	}
+
+	for ap := BBLeft; ap < BBoxPointsN; ap++ {
+		es.AlignPts[ap] = make([]float32, 0)
+	}
+
+	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
+		if k == sv.This() {
+			return ki.Continue
+		}
+		if k.IsDeleted() || k.IsDestroyed() {
+			return ki.Break
+		}
+		if k == sv.Defs.This() || NodeIsMetaData(k) {
+			return ki.Break
+		}
+		if NodeIsLayer(k) {
+			return ki.Continue
+		}
+		sii, issvg := k.(svg.NodeSVG)
+		if !issvg {
+			return ki.Continue
+		}
+		if _, issel := es.Selected[sii]; issel {
+			return ki.Continue
+		}
+		sg := sii.AsSVGNode()
+
+		for ap := BBLeft; ap < BBoxPointsN; ap++ {
+			es.AlignPts[ap] = append(es.AlignPts[ap], ap.ValRect(sg.WinBBox))
+		}
+		return ki.Continue
+	})
+}
+
 ///////////////////////////////////////////////////////////////
 //  AlignView
 
@@ -48,7 +90,7 @@ func (av *AlignView) Config(gv *GridView) {
 	gi.AddNewLabel(all, "align-lab", "<b>Align:  </b>")
 
 	atcb := gi.AddNewComboBox(all, "align-rel")
-	atcb.ItemsFromEnum(KiT_AlignTypes, true, 0)
+	atcb.ItemsFromEnum(KiT_AlignAnchors, true, 0)
 
 	atyp := gi.AddNewLayout(av, "align-grid", gi.LayoutGrid)
 	atyp.SetProp("columns", 6)
@@ -172,19 +214,20 @@ var AlignViewProps = ki.Props{
 	"max-height":       -1,
 }
 
-type AlignTypes int
+// AlignAnchors are ways of anchoring alignment
+type AlignAnchors int
 
 const (
-	AlignFirst AlignTypes = iota
+	AlignFirst AlignAnchors = iota
 	AlignLast
 	AlignDrawing
 	AlignSelectBox
-	AlignTypesN
+	AlignAnchorsN
 )
 
-//go:generate stringer -type=AlignTypes
+//go:generate stringer -type=AlignAnchors
 
-var KiT_AlignTypes = kit.Enums.AddEnum(AlignTypesN, kit.NotBitFlag, nil)
+var KiT_AlignAnchors = kit.Enums.AddEnum(AlignAnchorsN, kit.NotBitFlag, nil)
 
-func (ev AlignTypes) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
-func (ev *AlignTypes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
+func (ev AlignAnchors) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
+func (ev *AlignAnchors) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

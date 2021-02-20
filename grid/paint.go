@@ -386,20 +386,35 @@ func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
 // also returns the name of the gradient if using one.
 func (pv *PaintView) DecodeType(kn ki.Ki, cs *gist.ColorSpec, prop string) (PaintTypes, string) {
 	pstr := ""
+	var gii gi.Node2D
 	if kn != nil {
 		pstr = kit.ToString(kn.Prop(prop))
+		gii = kn.(gi.Node2D)
 	}
+	ptyp := PaintSolid
+	grnm := ""
 	switch {
 	case pstr == "inherit":
-		return PaintInherit, ""
+		ptyp = PaintInherit
 	case pstr == "none" || cs.IsNil():
-		return PaintOff, ""
+		ptyp = PaintOff
 	case strings.HasPrefix(pstr, "url(#linear") || (cs.Gradient != nil && !cs.Gradient.IsRadial):
-		return PaintLinear, pv.GradStopsName(kn.(gi.Node2D), pstr)
+		ptyp = PaintLinear
+		grnm = pv.GradStopsName(gii, pstr)
 	case strings.HasPrefix(pstr, "url(#radial") || (cs.Gradient != nil && cs.Gradient.IsRadial):
-		return PaintRadial, pv.GradStopsName(kn.(gi.Node2D), pstr)
+		ptyp = PaintRadial
+		grnm = pv.GradStopsName(gii, pstr)
+	default:
+		ptyp = PaintSolid
 	}
-	return PaintSolid, ""
+	if grnm == "" {
+		if prop == "fill" {
+			grnm = pv.FillStops
+		} else {
+			grnm = pv.StrokeStops
+		}
+	}
+	return ptyp, grnm
 }
 
 func (pv *PaintView) SelectStrokeGrad() {
@@ -458,7 +473,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	wsb := gi.AddNewSpinBox(wr, "width")
 	wsb.SetProp("min", 0)
 	wsb.SetProp("step", 0.05)
-	wsb.SetValue(pv.GridView.Prefs.Style.StrokeStyle.Width.Val)
+	wsb.SetValue(Prefs.Style.StrokeStyle.Width.Val)
 	wsb.SpinBoxSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
@@ -578,7 +593,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	sc := giv.AddNewColorView(ss, "stroke-clr")
 	sc.SetProp("vertical-align", gist.AlignTop)
 	sc.Config()
-	sc.SetColor(pv.GridView.Prefs.Style.StrokeStyle.Color.Color)
+	sc.SetColor(Prefs.Style.StrokeStyle.Color.Color)
 	sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.StrokeType == PaintSolid {
 			pv.GridView.SetStrokeColor(pv.StrokeProp(), false) // not manip
@@ -649,7 +664,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	fc := giv.AddNewColorView(fs, "fill-clr")
 	fc.SetProp("vertical-align", gist.AlignTop)
 	fc.Config()
-	fc.SetColor(pv.GridView.Prefs.Style.FillStyle.Color.Color)
+	fc.SetColor(Prefs.Style.FillStyle.Color.Color)
 	fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.FillType == PaintSolid {
 			pv.GridView.SetFillColor(pv.FillProp(), false)

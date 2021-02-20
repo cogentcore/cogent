@@ -30,7 +30,7 @@ type DrawingPrefs struct {
 	Size     mat32.Vec2 `desc:"drawing size, in Units"`
 	Scale    mat32.Vec2 `desc:"drawing scale factor"`
 	GridDisp bool       `desc:"turns on the grid display"`
-	Grid     mat32.Vec2 `desc:"grid spacing, in *integer* units of basic Units"`
+	Grid     int        `desc:"grid spacing, in *integer* units of basic Units"`
 }
 
 func (dp *DrawingPrefs) Defaults() {
@@ -39,7 +39,7 @@ func (dp *DrawingPrefs) Defaults() {
 	dp.Size.Set(612, 792)
 	dp.Scale.Set(1, 1)
 	dp.GridDisp = true
-	dp.Grid.Set(12, 12)
+	dp.Grid = 12
 }
 
 func (dp *DrawingPrefs) Update() {

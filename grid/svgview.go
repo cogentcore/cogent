@@ -263,44 +263,29 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	win := sv.GridView.ParentWindow()
 	delta := me.Where.Sub(me.From)
-	dv := mat32.NewVec2FmPoint(delta)
 	es := sv.EditState()
-	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	me.SetProcessed()
 	if me.HasAnyModifier(key.Shift) {
 		if !sv.SetDragCursor {
 			oswin.TheApp.Cursor(win.OSWin).Push(cursor.HandOpen)
 			sv.SetDragCursor = true
 		}
-		sv.Trans.SetAdd(dv)
+		sv.Trans.SetAdd(mat32.NewVec2FmPoint(delta))
 		sv.SetTransform()
 		sv.UpdateView(true)
 		return
 	}
 	if es.HasSelected() {
-		es.DragSelCurBBox.Min.SetAdd(dv)
-		es.DragSelCurBBox.Max.SetAdd(dv)
-		if !es.InAction() {
-			sv.ManipStart("Move", es.SelectedNamesString())
-		}
-		pt := es.DragSelStartBBox.Min.Sub(svoff)
-		tdel := es.DragSelCurBBox.Min.Sub(es.DragSelStartBBox.Min)
-		for itm, ss := range es.Selected {
-			itm.ReadGeom(ss.InitGeom)
-			itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
-		}
-		sv.SetSelSprites(es.DragSelCurBBox)
-		go sv.ManipUpdate()
-		win.RenderOverlays()
+		sv.DragMove(delta, win)
 	} else {
 		if !es.InAction() {
 			switch es.Tool {
 			case SelectTool:
 				sv.SetRubberBand(me.From)
 			case RectTool:
-				sv.NewElDrag(svg.KiT_Rect, me.From, me.Where)
+				sv.NewElDrag(svg.KiT_Rect, es.DragStartPos, me.Where)
 			case EllipseTool:
-				sv.NewElDrag(svg.KiT_Ellipse, me.From, me.Where)
+				sv.NewElDrag(svg.KiT_Ellipse, es.DragStartPos, me.Where)
 			}
 		} else {
 			switch {

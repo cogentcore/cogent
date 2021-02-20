@@ -27,9 +27,9 @@ import (
 // GridView is the Grid SVG vector drawing program: Go-rendered interactive drawing
 type GridView struct {
 	gi.Frame
-	FilePath  gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
-	Prefs     Preferences `desc:"current drawing preferences"`
-	EditState EditState   `desc:"current edit state"`
+	FilePath  gi.FileName  `ext:".svg" desc:"full path to current drawing filename"`
+	Prefs     DrawingPrefs `desc:"current drawing preferences"`
+	EditState EditState    `desc:"current edit state"`
 }
 
 var KiT_GridView = kit.Types.AddType(&GridView{}, GridViewProps)
@@ -47,12 +47,12 @@ func (g *GridView) CopyFieldsFrom(frm interface{}) {
 }
 
 func (gv *GridView) Defaults() {
-	gv.Prefs.Defaults()
-	// gr.Prefs = Prefs
+	gv.Prefs = Prefs.Drawing
 }
 
 // OpenDrawing opens a new .svg drawing
 func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
+	gv.Defaults()
 	path, _ := filepath.Abs(string(fnm))
 	gv.FilePath = gi.FileName(path)
 	gv.SetTitle()
@@ -83,7 +83,7 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 // NewDrawing opens a new drawing window
 func (gv *GridView) NewDrawing() *GridView {
 	_, ngr := NewGridWindow("")
-	// todo: set prefs
+	ngr.Defaults()
 	return ngr
 }
 
@@ -669,7 +669,7 @@ func (gv *GridView) SplitsSetView(split SplitName) {
 	sp, _, ok := AvailSplits.SplitByName(split)
 	if ok {
 		sv.SetSplitsAction(sp.Splits...)
-		gv.Prefs.SplitName = split
+		Prefs.SplitName = split
 	}
 }
 

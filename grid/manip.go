@@ -6,10 +6,12 @@ package grid
 
 import (
 	"image"
+	"math"
 	"strings"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/svg"
+	"github.com/goki/gi/units"
 	"github.com/goki/mat32"
 )
 
@@ -61,16 +63,108 @@ func (sv *SVGView) ManipUpdate() {
 	sv.UpdateSig()
 }
 
-// SnapTo snaps value to given increment, first subtracting given offset.
-// Tolerance is determined by preferences.
-func (sv *SVGView) SnapTo(val, off, incr float32) float32 {
+// GridDots is the current grid spacing and offset in dots
+func (sv *SVGView) GridDots() (float32, float32) {
+	grid := sv.GridView.Prefs.Grid
+	if grid <= 0 {
+		grid = 12
+	}
+	un := units.NewValue(float32(grid), sv.GridView.Prefs.Units)
+	un.ToDots(&sv.Pnt.UnContext)
+	incr := un.Dots * sv.Scale // our zoom factor
+	// todo: offset!
+	return incr, 0
+}
+
+// SnapToPt snaps value to given potential snap point, using tolRef reference value
+// for computing tolerance (e.g., grid spacing).
+// Tolerance is determined by preferences.  Returns true if snapped.
+func SnapToPt(val, snap, tolRef float32) (float32, bool) {
+	tol := Prefs.SnapTol
+	d := mat32.Abs(val - snap)
+	if d < tol*tolRef {
+		return snap, true
+	}
+	return val, false
+}
+
+// SnapToIncr snaps value to given increment, first subtracting given offset.
+// Tolerance is determined by preferences.  Returns true if snapped.
+func SnapToIncr(val, off, incr float32) (float32, bool) {
 	tol := Prefs.SnapTol
 	nint := mat32.Round((val-off)/incr)*incr + off
 	dint := mat32.Abs(val - nint)
 	if dint < tol*incr {
-		return nint
+		return nint, true
 	}
-	return val
+	return val, false
+}
+
+// SnapCurBBox does snapping on current bbox according to preferences
+// if move is true, then
+func (sv *SVGView) SnapCurBBox(move bool) {
+	es := sv.EditState()
+	es.DragSelEffBBox = es.DragSelCurBBox
+	snapped := false
+	grinc, groff := sv.GridDots()
+	_ = groff
+	if Prefs.SnapGuide {
+		clPt := BBoxPointsN
+		clDst := float32(math.MaxFloat32)
+		clVal := float32(0)
+		bbval := float32(0)
+		for ap := BBLeft; ap < BBoxPointsN; ap++ {
+			bbp := ap.ValBox(es.DragSelCurBBox)
+			pts := es.AlignPts[ap]
+			for _, pt := range pts {
+				dst := mat32.Abs(pt - bbp)
+				if dst < clDst {
+					clDst = dst
+					clPt = ap
+					clVal = pt
+					bbval = bbp
+				}
+			}
+		}
+		sval, snap := SnapToPt(bbval, clVal, grinc)
+		if snap {
+			if move {
+				clPt.MoveDelta(&es.DragSelEffBBox, sval-bbval)
+			}
+			snapped = true
+		}
+	}
+	if !snapped && Prefs.SnapGrid {
+		// todo: moving check Min, else ?
+	}
+}
+
+// DragMove is when dragging a selection for moving
+func (sv *SVGView) DragMove(delta image.Point, win *gi.Window) {
+	es := sv.EditState()
+	dv := mat32.NewVec2FmPoint(delta)
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+
+	es.DragSelCurBBox.Min.SetAdd(dv)
+	es.DragSelCurBBox.Max.SetAdd(dv)
+
+	if !es.InAction() {
+		sv.ManipStart("Move", es.SelectedNamesString())
+		sv.GatherAlignPoints()
+	}
+
+	sv.SnapCurBBox(true)
+
+	pt := es.DragSelStartBBox.Min.Sub(svoff)
+	tdel := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
+	for itm, ss := range es.Selected {
+		itm.ReadGeom(ss.InitGeom)
+		itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
+	}
+	sv.SetSelSprites(es.DragSelEffBBox)
+	go sv.ManipUpdate()
+	win.RenderOverlays()
+
 }
 
 // SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
@@ -103,8 +197,10 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, delta image.Point, win *gi.Wind
 		es.DragSelCurBBox.Max.X += dv.X
 	}
 	es.DragSelCurBBox.Min.SetMin(es.DragSelCurBBox.Max.SubScalar(1)) // don't allow flipping
-	npos := es.DragSelCurBBox.Min
-	nsz := es.DragSelCurBBox.Size()
+	sv.SnapCurBBox(true)
+
+	npos := es.DragSelEffBBox.Min
+	nsz := es.DragSelEffBBox.Size()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
@@ -118,7 +214,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, delta image.Point, win *gi.Wind
 		}
 	}
 
-	sv.SetSelSprites(es.DragSelCurBBox)
+	sv.SetSelSprites(es.DragSelEffBBox)
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 }
@@ -181,7 +277,8 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 		pt = ctr
 	}
 	ang := mat32.Atan2(dy, dx)
-	ang = mat32.DegToRad(sv.SnapTo(mat32.RadToDeg(ang), 0, 15))
+	ang, _ = SnapToIncr(mat32.RadToDeg(ang), 0, 15)
+	ang = mat32.DegToRad(ang)
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pt = pt.Sub(svoff)
 	del := mat32.Vec2{}
