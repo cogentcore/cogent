@@ -419,6 +419,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 		sg := sii.AsSVGNode()
 		if sg.WinBBoxInBBox(bbox) {
 			rval = append(rval, sii)
+			return ki.Break // don't go into groups!
 		}
 		return ki.Continue
 	})
