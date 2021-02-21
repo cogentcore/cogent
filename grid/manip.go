@@ -5,13 +5,17 @@
 package grid
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"strings"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
+	"github.com/goki/ki/ints"
 	"github.com/goki/mat32"
 )
 
@@ -19,8 +23,8 @@ import (
 func (sv *SVGView) ManipStart(act, data string) {
 	es := sv.EditState()
 	es.ActStart(act, data)
-	// astr := act + ": " +
-	// sv.GridView.SetStatus(fmt.Sprintf("save undo: %s: %s", act, data))
+	help := ActionHelpMap[act]
+	sv.GridView.SetStatus(fmt.Sprintf("<b>%s</b>: %s", act, help))
 	sv.UndoSave(act, data)
 	es.ActUnlock()
 }
@@ -28,6 +32,7 @@ func (sv *SVGView) ManipStart(act, data string) {
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVGView) ManipDone() {
 	win := sv.GridView.ParentWindow()
+	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
 	es := sv.EditState()
 	switch {
 	case es.Action == "BoxSelect":
@@ -45,12 +50,12 @@ func (sv *SVGView) ManipDone() {
 			sv.UpdateSelSprites()
 			sv.EditState().DragSelStart(es.DragCurPos)
 		}
-		win.RenderOverlays()
 	}
 	es.DragReset()
 	es.ActDone()
 	sv.GridView.UpdateSelectToolbar()
 	sv.UpdateSig()
+	win.RenderOverlays()
 }
 
 // ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the
@@ -76,71 +81,143 @@ func (sv *SVGView) GridDots() (float32, float32) {
 	return incr, 0
 }
 
-// SnapToPt snaps value to given potential snap point, using tolRef reference value
-// for computing tolerance (e.g., grid spacing).
+// SnapToPt snaps value to given potential snap point, in screen pixel units.
 // Tolerance is determined by preferences.  Returns true if snapped.
-func SnapToPt(val, snap, tolRef float32) (float32, bool) {
-	tol := Prefs.SnapTol
+func SnapToPt(val, snap float32) (float32, bool) {
 	d := mat32.Abs(val - snap)
-	if d < tol*tolRef {
+	if d <= float32(Prefs.SnapTol) {
 		return snap, true
 	}
 	return val, false
 }
 
 // SnapToIncr snaps value to given increment, first subtracting given offset.
-// Tolerance is determined by preferences.  Returns true if snapped.
+// Tolerance is determined by preferences, which is in screen pixels.
+// Returns true if snapped.
 func SnapToIncr(val, off, incr float32) (float32, bool) {
-	tol := Prefs.SnapTol
 	nint := mat32.Round((val-off)/incr)*incr + off
 	dint := mat32.Abs(val - nint)
-	if dint < tol*incr {
+	if dint <= float32(Prefs.SnapTol) {
 		return nint, true
 	}
 	return val, false
 }
 
 // SnapCurBBox does snapping on current bbox according to preferences
-// if move is true, then
-func (sv *SVGView) SnapCurBBox(move bool) {
+// if move is true, then is for moving, else reshaping, with given target points
+// in X and Y axes
+func (sv *SVGView) SnapCurBBox(move bool, trgX, trgY BBoxPoints) {
 	es := sv.EditState()
-	es.DragSelEffBBox = es.DragSelCurBBox
 	snapped := false
-	grinc, groff := sv.GridDots()
-	_ = groff
 	if Prefs.SnapGuide {
-		clPt := BBoxPointsN
-		clDst := float32(math.MaxFloat32)
-		clVal := float32(0)
-		bbval := float32(0)
+		clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
+		var clPts [2][]BBoxPoints
+		var clVals [2][]mat32.Vec2
+		var bbval [2]mat32.Vec2
 		for ap := BBLeft; ap < BBoxPointsN; ap++ {
-			bbp := ap.ValBox(es.DragSelCurBBox)
+			if !move && (ap != trgX && ap != trgY) {
+				continue
+			}
+			bbp := ap.PointBox(es.DragSelCurBBox)
 			pts := es.AlignPts[ap]
+			dim := ap.Dim()
 			for _, pt := range pts {
-				dst := mat32.Abs(pt - bbp)
-				if dst < clDst {
-					clDst = dst
-					clPt = ap
-					clVal = pt
-					bbval = bbp
+				pv := pt.Dim(dim)
+				bv := bbp.Dim(dim)
+				dst := mat32.Abs(pv - bv)
+				if dst < clDst[dim] {
+					clDst[dim] = dst
+					clPts[dim] = []BBoxPoints{ap}
+					clVals[dim] = []mat32.Vec2{pt}
+					bbval[dim] = bbp
+				} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
+					clPts[dim] = append(clPts[dim], ap)
+					clVals[dim] = append(clVals[dim], pt)
 				}
 			}
 		}
-		sval, snap := SnapToPt(bbval, clVal, grinc)
-		if snap {
-			if move {
-				clPt.MoveDelta(&es.DragSelEffBBox, sval-bbval)
+		var alpts []image.Rectangle
+		var altyps []BBoxPoints
+		for dim := mat32.X; dim <= mat32.Y; dim++ {
+			if len(clVals[dim]) == 0 {
+				continue
 			}
-			snapped = true
+			bv := bbval[dim].Dim(dim)
+			sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
+			if snap {
+				if move {
+					clPts[dim][0].MoveDelta(&es.DragSelEffBBox, sval-bv)
+				} else {
+					BBoxReshapeDelta(&es.DragSelEffBBox, sval-bv, trgX, trgY)
+				}
+				mx := ints.MinInt(len(clVals[dim]), 4)
+				for i := 0; i < mx; i++ {
+					pt := clVals[dim][i]
+					rpt := image.Rectangle{}
+					rpt.Min = bbval[dim].ToPoint()
+					rpt.Max = pt.ToPoint()
+					if dim == mat32.X {
+						rpt.Min.X = rpt.Max.X
+					} else {
+						rpt.Min.Y = rpt.Max.Y
+					}
+					alpts = append(alpts, rpt)
+					altyps = append(altyps, clPts[dim][i])
+				}
+				snapped = true
+			}
 		}
+		sv.ShowAlignMatches(alpts, altyps)
 	}
 	if !snapped && Prefs.SnapGrid {
+		// grinc, groff := sv.GridDots()
 		// todo: moving check Min, else ?
 	}
 }
 
+// ConstrainCurBBox constrains bounding box to dimension with smallest change
+// e.g., when using control key.
+func (sv *SVGView) ConstrainCurBBox(move bool, trgX, trgY BBoxPoints) {
+	es := sv.EditState()
+	dmin := es.DragSelCurBBox.Min.Sub(es.DragSelStartBBox.Min)
+	dmax := es.DragSelCurBBox.Max.Sub(es.DragSelStartBBox.Max)
+	bb := mat32.Box2{Min: dmin, Max: dmax}
+
+	var alpts []image.Rectangle
+	var altyps []BBoxPoints
+
+	xval := trgX.ValBox(bb)
+	yval := trgY.ValBox(bb)
+	if mat32.Abs(yval) < mat32.Abs(xval) {
+		trgY.SetValBox(&es.DragSelEffBBox, trgY.ValBox(es.DragSelStartBBox))
+		if move {
+			es.DragSelEffBBox.Max.Y = es.DragSelStartBBox.Max.Y
+		}
+		rpt := image.Rectangle{}
+		rpt.Min.X = int(trgX.ValBox(es.DragSelStartBBox))
+		rpt.Min.Y = int(trgY.ValBox(es.DragSelStartBBox))
+		rpt.Max = rpt.Min
+		rpt.Max.X = int(trgX.ValBox(es.DragSelEffBBox))
+		alpts = append(alpts, rpt)
+		altyps = append(altyps, trgY)
+	} else {
+		trgX.SetValBox(&es.DragSelEffBBox, trgX.ValBox(es.DragSelStartBBox))
+		if move {
+			es.DragSelEffBBox.Max.X = es.DragSelStartBBox.Max.X
+		}
+		rpt := image.Rectangle{}
+		rpt.Min.X = int(trgX.ValBox(es.DragSelStartBBox))
+		rpt.Min.Y = int(trgY.ValBox(es.DragSelStartBBox))
+		rpt.Max = rpt.Min
+		rpt.Max.Y = int(trgY.ValBox(es.DragSelEffBBox))
+		alpts = append(alpts, rpt)
+		altyps = append(altyps, trgX)
+	}
+	sv.ShowAlignMatches(alpts, altyps)
+}
+
 // DragMove is when dragging a selection for moving
-func (sv *SVGView) DragMove(delta image.Point, win *gi.Window) {
+func (sv *SVGView) DragMove(delta image.Point, win *gi.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 	dv := mat32.NewVec2FmPoint(delta)
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
@@ -153,7 +230,15 @@ func (sv *SVGView) DragMove(delta image.Point, win *gi.Window) {
 		sv.GatherAlignPoints()
 	}
 
-	sv.SnapCurBBox(true)
+	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
+	es.DragSelEffBBox = es.DragSelCurBBox
+	switch {
+	case me.HasAnyModifier(key.Alt):
+	case me.HasAnyModifier(key.Control):
+		sv.ConstrainCurBBox(true, BBLeft, BBTop) // move
+	default:
+		sv.SnapCurBBox(true, BBLeft, BBTop) // move
+	}
 
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	tdel := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
@@ -168,7 +253,7 @@ func (sv *SVGView) DragMove(delta image.Point, win *gi.Window) {
 }
 
 // SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
-func (sv *SVGView) SpriteReshapeDrag(sp Sprites, delta image.Point, win *gi.Window) {
+func (sv *SVGView) SpriteReshapeDrag(sp Sprites, delta image.Point, win *gi.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("Reshape", es.SelectedNamesString())
@@ -177,27 +262,38 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, delta image.Point, win *gi.Wind
 	stpos := es.DragSelStartBBox.Min
 	dv := mat32.NewVec2FmPoint(delta)
 	switch sp {
-	case SizeUpL:
+	case ReshapeUpL:
 		es.DragSelCurBBox.Min.SetAdd(dv)
-	case SizeUpM:
+	case ReshapeUpC:
 		es.DragSelCurBBox.Min.Y += dv.Y
-	case SizeUpR:
+	case ReshapeUpR:
 		es.DragSelCurBBox.Min.Y += dv.Y
 		es.DragSelCurBBox.Max.X += dv.X
-	case SizeDnL:
+	case ReshapeDnL:
 		es.DragSelCurBBox.Min.X += dv.X
 		es.DragSelCurBBox.Max.Y += dv.Y
-	case SizeDnM:
+	case ReshapeDnC:
 		es.DragSelCurBBox.Max.Y += dv.Y
-	case SizeDnR:
+	case ReshapeDnR:
 		es.DragSelCurBBox.Max.SetAdd(dv)
-	case SizeLfC:
+	case ReshapeLfM:
 		es.DragSelCurBBox.Min.X += dv.X
-	case SizeRtC:
+	case ReshapeRtM:
 		es.DragSelCurBBox.Max.X += dv.X
 	}
 	es.DragSelCurBBox.Min.SetMin(es.DragSelCurBBox.Max.SubScalar(1)) // don't allow flipping
-	sv.SnapCurBBox(true)
+
+	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
+	es.DragSelEffBBox = es.DragSelCurBBox
+	bbX, bbY := ReshapeBBoxPoints(sp)
+	switch {
+	case me.HasAnyModifier(key.Control):
+		if bbX != BBCenter && bbY != BBMiddle {
+			sv.ConstrainCurBBox(false, bbX, bbY) // reshape
+		}
+	default:
+		sv.SnapCurBBox(false, bbX, bbY) // reshape
+	}
 
 	npos := es.DragSelEffBBox.Min
 	nsz := es.DragSelEffBBox.Size()
@@ -230,47 +326,47 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 	ctr := es.DragSelStartBBox.Min.Add(es.DragSelStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
 	switch sp {
-	case SizeUpL:
+	case ReshapeUpL:
 		es.DragSelCurBBox.Min.SetAdd(dv)
 		dy = es.DragSelStartBBox.Min.Y - es.DragSelCurBBox.Min.Y
 		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
 		pt.X = es.DragSelStartBBox.Max.X
-	case SizeUpM:
+	case ReshapeUpC:
 		es.DragSelCurBBox.Min.Y += dv.Y
 		es.DragSelCurBBox.Max.X += dv.X
 		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt = ctr
-	case SizeUpR:
+	case ReshapeUpR:
 		es.DragSelCurBBox.Min.Y += dv.Y
 		es.DragSelCurBBox.Max.X += dv.X
 		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt = es.DragSelStartBBox.Min
-	case SizeDnL:
+	case ReshapeDnL:
 		es.DragSelCurBBox.Min.X += dv.X
 		es.DragSelCurBBox.Max.Y += dv.Y
 		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
 		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
 		pt = es.DragSelStartBBox.Max
-	case SizeDnM:
+	case ReshapeDnC:
 		es.DragSelCurBBox.Max.SetAdd(dv)
 		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt = ctr
-	case SizeDnR:
+	case ReshapeDnR:
 		es.DragSelCurBBox.Max.SetAdd(dv)
 		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt.X = es.DragSelStartBBox.Min.X
 		pt.Y = es.DragSelStartBBox.Max.Y
-	case SizeLfC:
+	case ReshapeLfM:
 		es.DragSelCurBBox.Min.X += dv.X
 		es.DragSelCurBBox.Max.Y += dv.Y
 		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
 		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
 		pt = ctr
-	case SizeRtC:
+	case ReshapeRtM:
 		es.DragSelCurBBox.Max.SetAdd(dv)
 		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X

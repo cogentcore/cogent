@@ -33,7 +33,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	grs.Tooltip = "snap movement and sizing of selection to grid"
 	grs.SetChecked(Prefs.SnapGrid)
 	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if sig == int64(gi.ButtonClicked) {
+		if sig == int64(gi.ButtonToggled) {
 			Prefs.SnapGrid = grs.IsChecked()
 		}
 	})
@@ -43,7 +43,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	gis.Tooltip = "snap movement and sizing of selection to align with other elements in the scene"
 	gis.SetChecked(Prefs.SnapGuide)
 	gis.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		if sig == int64(gi.ButtonClicked) {
+		if sig == int64(gi.ButtonToggled) {
 			Prefs.SnapGuide = gis.IsChecked()
 		}
 	})
@@ -137,7 +137,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 		grr.SelSetWidth(wd.Value)
 	})
 
-	gi.AddNewLabel(tb, "height-lab", "W: ").SetProp("vertical-align", gist.AlignMiddle)
+	gi.AddNewLabel(tb, "height-lab", "H: ").SetProp("vertical-align", gist.AlignMiddle)
 	ht := gi.AddNewSpinBox(tb, "height")
 	ht.SetProp("step", 1)
 	ht.SetValue(0)

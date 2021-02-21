@@ -10,6 +10,7 @@ import (
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/mat32"
 )
 
 // AlignView provides a range of alignment actions on selected objects.
@@ -41,7 +42,7 @@ func (sv *SVGView) GatherAlignPoints() {
 	}
 
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
-		es.AlignPts[ap] = make([]float32, 0)
+		es.AlignPts[ap] = make([]mat32.Vec2, 0)
 	}
 
 	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
@@ -67,7 +68,7 @@ func (sv *SVGView) GatherAlignPoints() {
 		sg := sii.AsSVGNode()
 
 		for ap := BBLeft; ap < BBoxPointsN; ap++ {
-			es.AlignPts[ap] = append(es.AlignPts[ap], ap.ValRect(sg.WinBBox))
+			es.AlignPts[ap] = append(es.AlignPts[ap], ap.PointRect(sg.WinBBox))
 		}
 		return ki.Continue
 	})

@@ -67,7 +67,7 @@ type Preferences struct {
 	Style     girl.Paint   `desc:"default styles"`
 	SnapGrid  bool         `desc:"snap positions and sizes to underlying grid"`
 	SnapGuide bool         `desc:"snap positions and sizes to line up with other elements"`
-	SnapTol   float32      `desc:"proportion tolerance for snapping to grid or any other such guide, e.g., .1 = 10%"`
+	SnapTol   int          `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
 	SplitName SplitName    `desc:"named-split config in use for configuring the splitters"`
 	Changed   bool         `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
@@ -77,7 +77,7 @@ var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
 func (pr *Preferences) Defaults() {
 	pr.Drawing.Defaults()
 	pr.Style.Defaults()
-	pr.SnapTol = 0.1
+	pr.SnapTol = 3
 	pr.SnapGrid = true
 	pr.SnapGuide = true
 }

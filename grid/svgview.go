@@ -18,6 +18,7 @@ import (
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
+	"github.com/goki/ki/ints"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/mat32"
@@ -254,7 +255,7 @@ func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 		if me.HasAnyModifier(key.Alt) {
 			sv.SpriteRotateDrag(sp, me.Delta(), win)
 		} else {
-			sv.SpriteReshapeDrag(sp, me.Delta(), win)
+			sv.SpriteReshapeDrag(sp, me.Delta(), win, me)
 		}
 	}
 }
@@ -276,7 +277,7 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 		return
 	}
 	if es.HasSelected() {
-		sv.DragMove(delta, win)
+		sv.DragMove(delta, win, me)
 	} else {
 		if !es.InAction() {
 			switch es.Tool {
@@ -477,7 +478,7 @@ func (sv *SVGView) UpdateSelSprites() {
 		return
 	}
 
-	for i := SizeUpL; i <= SizeRtC; i++ {
+	for i := ReshapeUpL; i <= ReshapeRtM; i++ {
 		spi := i // key to get a unique local var
 		sp := SpriteConnectEvent(spi, win, image.Point{}, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
 			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -496,14 +497,14 @@ func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
 	_, spsz := HandleSpriteSize()
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
-	SetSpritePos(SizeUpL, es.ActiveSprites[SizeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
-	SetSpritePos(SizeUpM, es.ActiveSprites[SizeUpM], image.Point{midX, int(bbox.Min.Y)})
-	SetSpritePos(SizeUpR, es.ActiveSprites[SizeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
-	SetSpritePos(SizeDnL, es.ActiveSprites[SizeDnL], image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
-	SetSpritePos(SizeDnM, es.ActiveSprites[SizeDnM], image.Point{midX, int(bbox.Max.Y)})
-	SetSpritePos(SizeDnR, es.ActiveSprites[SizeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
-	SetSpritePos(SizeLfC, es.ActiveSprites[SizeLfC], image.Point{int(bbox.Min.X), midY})
-	SetSpritePos(SizeRtC, es.ActiveSprites[SizeRtC], image.Point{int(bbox.Max.X), midY})
+	SetSpritePos(ReshapeUpL, es.ActiveSprites[ReshapeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
+	SetSpritePos(ReshapeUpC, es.ActiveSprites[ReshapeUpC], image.Point{midX, int(bbox.Min.Y)})
+	SetSpritePos(ReshapeUpR, es.ActiveSprites[ReshapeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
+	SetSpritePos(ReshapeDnL, es.ActiveSprites[ReshapeDnL], image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
+	SetSpritePos(ReshapeDnC, es.ActiveSprites[ReshapeDnC], image.Point{midX, int(bbox.Max.Y)})
+	SetSpritePos(ReshapeDnR, es.ActiveSprites[ReshapeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
+	SetSpritePos(ReshapeLfM, es.ActiveSprites[ReshapeLfM], image.Point{int(bbox.Min.X), midY})
+	SetSpritePos(ReshapeRtM, es.ActiveSprites[ReshapeRtM], image.Point{int(bbox.Max.X), midY})
 }
 
 // SetRubberBand updates the rubber band postion
@@ -538,6 +539,24 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	SetSpritePos(RubberBandL, rl, bbox.Min)
 
 	win.RenderOverlays()
+}
+
+// ShowAlignMatches draws the align matches as given
+// between BBox Min - Max.  typs are corresponding bounding box sources.
+func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+
+	es.EnsureActiveSprites()
+	sz := ints.MinInt(len(pts), 8)
+	for i := 0; i < sz; i++ {
+		spi := Sprites(int(AlignMatch1) + i)
+		pt := pts[i].Canon()
+		lsz := pt.Max.Sub(pt.Min)
+		sp := SpriteConnectEvent(spi, win, lsz, nil, nil)
+		sp.Props.Set("bbox", typs[i])
+		SetSpritePos(spi, sp, pt.Min)
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -591,7 +610,7 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	sv.UpdateEnd(updt)
 	sv.EditState().DragSelStart(start)
 	sv.UpdateSelSprites()
-	win.SpriteDragging = SpriteNames[SizeDnR]
+	win.SpriteDragging = SpriteNames[ReshapeDnR]
 	return nr
 }
 

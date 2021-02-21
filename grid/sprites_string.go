@@ -13,24 +13,32 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[SizeUpL-0]
-	_ = x[SizeUpM-1]
-	_ = x[SizeUpR-2]
-	_ = x[SizeDnL-3]
-	_ = x[SizeDnM-4]
-	_ = x[SizeDnR-5]
-	_ = x[SizeLfC-6]
-	_ = x[SizeRtC-7]
+	_ = x[ReshapeUpL-0]
+	_ = x[ReshapeUpC-1]
+	_ = x[ReshapeUpR-2]
+	_ = x[ReshapeDnL-3]
+	_ = x[ReshapeDnC-4]
+	_ = x[ReshapeDnR-5]
+	_ = x[ReshapeLfM-6]
+	_ = x[ReshapeRtM-7]
 	_ = x[RubberBandT-8]
 	_ = x[RubberBandR-9]
 	_ = x[RubberBandL-10]
 	_ = x[RubberBandB-11]
-	_ = x[SpritesN-12]
+	_ = x[AlignMatch1-12]
+	_ = x[AlignMatch2-13]
+	_ = x[AlignMatch3-14]
+	_ = x[AlignMatch4-15]
+	_ = x[AlignMatch5-16]
+	_ = x[AlignMatch6-17]
+	_ = x[AlignMatch7-18]
+	_ = x[AlignMatch8-19]
+	_ = x[SpritesN-20]
 }
 
-const _Sprites_name = "SizeUpLSizeUpMSizeUpRSizeDnLSizeDnMSizeDnRSizeLfCSizeRtCRubberBandTRubberBandRRubberBandLRubberBandBSpritesN"
+const _Sprites_name = "ReshapeUpLReshapeUpCReshapeUpRReshapeDnLReshapeDnCReshapeDnRReshapeLfMReshapeRtMRubberBandTRubberBandRRubberBandLRubberBandBAlignMatch1AlignMatch2AlignMatch3AlignMatch4AlignMatch5AlignMatch6AlignMatch7AlignMatch8SpritesN"
 
-var _Sprites_index = [...]uint8{0, 7, 14, 21, 28, 35, 42, 49, 56, 67, 78, 89, 100, 108}
+var _Sprites_index = [...]uint8{0, 10, 20, 30, 40, 50, 60, 70, 80, 91, 102, 113, 124, 135, 146, 157, 168, 179, 190, 201, 212, 220}
 
 func (i Sprites) String() string {
 	if i < 0 || i >= Sprites(len(_Sprites_index)-1) {

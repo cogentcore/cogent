@@ -37,7 +37,7 @@ type EditState struct {
 	DragSelStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
 	DragSelCurBBox   mat32.Box2                `desc:"current bbox during dragging -- non-snapped version"`
 	DragSelEffBBox   mat32.Box2                `desc:"current effective bbox during dragging -- snapped version"`
-	AlignPts         [BBoxPointsN][]float32    `desc:"potential points of alignment for dragging"`
+	AlignPts         [BBoxPointsN][]mat32.Vec2 `desc:"potential points of alignment for dragging"`
 	ActiveSprites    map[Sprites]*gi.Sprite    `copy:"-" json:"-" xml:"-" view:"-" desc:"cached only for active sprites during manipulation"`
 }
 
