@@ -46,16 +46,13 @@ func (sv *SVGView) ManipDone() {
 			for _, se := range sel {
 				es.Select(se)
 			}
-			sv.GridView.UpdateTabs()
-			sv.UpdateSelSprites()
-			sv.EditState().DragSelStart(es.DragCurPos)
 		}
+	default:
 	}
 	es.DragReset()
 	es.ActDone()
-	sv.GridView.UpdateSelectToolbar()
-	sv.UpdateSig()
-	win.RenderOverlays()
+	sv.UpdateView(true)
+	sv.UpdateSelect()
 }
 
 // ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the

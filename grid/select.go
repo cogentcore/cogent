@@ -16,7 +16,7 @@ import (
 
 func (gv *GridView) SelectToolbar() *gi.ToolBar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.Child(0).(*gi.ToolBar)
+	tb := tbs.ChildByName("select-tb", 0).(*gi.ToolBar)
 	return tb
 }
 
@@ -173,6 +173,15 @@ func (gv *GridView) UpdateSelectToolbar() {
 	ht.SetValue(sz.Y)
 }
 
+// UpdateSelect should be called whenever selection changes
+func (sv *SVGView) UpdateSelect() {
+	wupdt := sv.TopUpdateStart()
+	defer sv.TopUpdateEnd(wupdt)
+	sv.GridView.UpdateTabs()
+	sv.GridView.UpdateSelectToolbar()
+	sv.UpdateSelSprites()
+}
+
 ///////////////////////////////////////////////////////////////////////
 //   Actions
 
@@ -195,8 +204,12 @@ func (gv *GridView) SelGroup() {
 	for _, se := range sl {
 		ki.MoveToParent(se, ng)
 	}
+
+	es.ResetSelected()
+	es.Select(ng)
+
 	sv.UpdateEnd(updt)
-	gv.UpdateDisp()
+	gv.UpdateAll()
 }
 
 func (gv *GridView) SelUnGroup() {
@@ -228,7 +241,7 @@ func (gv *GridView) SelUnGroup() {
 		gp.Delete(ki.DestroyKids)
 	}
 	sv.UpdateEnd(updt)
-	gv.UpdateDisp()
+	gv.UpdateAll()
 }
 
 func (gv *GridView) SelRotate(deg float32) {
@@ -429,9 +442,10 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 // SelectContainsPoint finds the first node whose WinBBox contains the given
 // point -- nil if none.  If leavesOnly is set then only nodes that have no
 // nodes (leaves, terminal nodes) will be considered.
-// Any leaf nodes that are within the current edit selection are also
-// excluded, as are layer groups.
-func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly bool) svg.NodeSVG {
+// if leavesOnly, only terminal leaves (no children) are included
+// if excludeSel, any leaf nodes that are within the current edit selection are
+// excluded,
+func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.NodeSVG {
 	es := sv.EditState()
 	var rval svg.NodeSVG
 	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
@@ -454,8 +468,10 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly bool) svg.Node
 		if !issvg {
 			return ki.Continue
 		}
-		if _, issel := es.Selected[sii]; issel {
-			return ki.Continue
+		if excludeSel {
+			if _, issel := es.Selected[sii]; issel {
+				return ki.Continue
+			}
 		}
 		sg := sii.AsSVGNode()
 		if sg.PosInWinBBox(pt) {

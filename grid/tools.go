@@ -45,12 +45,21 @@ func (gv *GridView) SetTool(tl Tools) {
 	}
 	tls.UpdateEnd(updt)
 	gv.EditState.Tool = tl
-	if tl == NodeTool {
-		gv.SetModalToolbarNode()
-	} else {
-		gv.SetModalToolbarSelect()
-	}
+	gv.SetModalToolbar()
 	gv.SetStatus("Tool")
+}
+
+// SetModalToolbar sets the current modal toolbar based on tool
+func (gv *GridView) SetModalToolbar() {
+	tl := gv.EditState.Tool
+	switch tl {
+	case NodeTool:
+		gv.SetModalNode()
+	case TextTool:
+		gv.SetModalText()
+	default:
+		gv.SetModalSelect()
+	}
 }
 
 func (gv *GridView) ConfigTools() {
@@ -67,7 +76,7 @@ func (gv *GridView) ConfigTools() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(SelectTool)
 		})
-	tb.AddAction(gi.ActOpts{Label: "N", Icon: "edit", Tooltip: "N: select, move node points within paths"},
+	tb.AddAction(gi.ActOpts{Label: "N", Icon: "tool-node", Tooltip: "N: select, move node points within paths"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(NodeTool)
@@ -86,6 +95,11 @@ func (gv *GridView) ConfigTools() {
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(BezierTool)
+		})
+	tb.AddAction(gi.ActOpts{Label: "T", Icon: "tool-text", Tooltip: "T: add / edit text"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SetTool(TextTool)
 		})
 
 	gv.SetTool(SelectTool)

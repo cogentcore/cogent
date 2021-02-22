@@ -102,11 +102,21 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	case gi.KeyFunPaste:
 		kt.SetProcessed()
 		sv.GridView.PasteClip()
+	case gi.KeyFunDelete:
+		kt.SetProcessed()
+		sv.GridView.DeleteSelected()
 	}
 	if kt.IsProcessed() {
 		return
 	}
+	fmt.Println(kc)
 	switch kc {
+	case "Control+G", "Meta+G":
+		kt.SetProcessed()
+		sv.GridView.SelGroup()
+	case "Shift+Control+G", "Shift+Meta+G":
+		kt.SetProcessed()
+		sv.GridView.SelUnGroup()
 	case "s", "S", " ":
 		kt.SetProcessed()
 		sv.GridView.SetTool(SelectTool)
@@ -177,43 +187,61 @@ func (sv *SVGView) MouseEvent() {
 			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
 			ssvg.SetDragCursor = false
 		}
-		if me.Action == mouse.Press {
+		sob := ssvg.SelectContainsPoint(me.Where, false, true) // not leavesonly, yes exclude existing sels
+		if me.Action == mouse.Press && me.Button == mouse.Left {
+			es.SelNoDrag = false
 			es.DragStartPos = me.Where
+			switch {
+			case es.HasSelected() && es.SelBBox.ContainsPoint(mat32.NewVec2FmPoint(me.Where)):
+				// note: this absorbs potential secondary selections within selection -- handeled
+				// on release below, if nothing else happened
+				es.SelNoDrag = true
+				ssvg.EditState().DragSelStart(me.Where)
+			case sob != nil && ToolDoesBasicSelect(es.Tool):
+				me.SetProcessed()
+				es.SelectAction(sob, me.SelectMode())
+				ssvg.EditState().DragSelStart(me.Where)
+				ssvg.UpdateSelect()
+			case sob == nil:
+				me.SetProcessed()
+				es.ResetSelected()
+				ssvg.UpdateSelect()
+			}
 		}
 		if me.Action != mouse.Release {
 			return
 		}
 		if es.InAction() {
+			es.SelNoDrag = false
 			ssvg.ManipDone()
 			return
 		}
-		if me.Button == mouse.Right && es.HasSelected() {
-			me.SetProcessed()
-			obj := es.SelectedList(false)[0]
-			ssvg.NodeContextMenu(obj, me.Where)
+		if me.Button == mouse.Left {
+			// release on select -- do extended selection processing
+			if es.SelNoDrag && ToolDoesBasicSelect(es.Tool) {
+				es.SelNoDrag = false
+				me.SetProcessed()
+				if sob == nil {
+					sob = ssvg.SelectContainsPoint(me.Where, false, false) // don't exclude existing sel
+				}
+				if sob != nil {
+					es.SelectAction(sob, me.SelectMode())
+					ssvg.UpdateSelect()
+				}
+			}
 			return
 		}
-		obj := ssvg.SelectContainsPoint(me.Where, false)
-		if obj != nil {
-			sob := obj.(svg.NodeSVG)
-			switch {
-			case me.Button == mouse.Right:
-				me.SetProcessed()
-				ssvg.NodeContextMenu(obj, me.Where)
-			case ToolDoesBasicSelect(es.Tool):
-				me.SetProcessed()
-				es.SelectAction(sob, me.SelectMode())
-				ssvg.GridView.UpdateTabs()
-				ssvg.UpdateSelSprites()
-				ssvg.EditState().DragSelStart(me.Where)
-				ssvg.GridView.UpdateSelectToolbar()
-			}
-		} else {
-			// for any tool
+		if me.Button == mouse.Right {
 			me.SetProcessed()
-			es.ResetSelected()
-			ssvg.UpdateSelSprites()
-			ssvg.GridView.UpdateSelectToolbar()
+			if es.HasSelected() {
+				fobj := es.FirstSelectedNode()
+				if fobj != nil {
+					ssvg.NodeContextMenu(fobj, me.Where)
+				}
+			} else if sob != nil {
+				ssvg.NodeContextMenu(sob, me.Where)
+			}
+			return
 		}
 	})
 }
@@ -234,6 +262,8 @@ func (sv *SVGView) MouseHover() {
 
 func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
 	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+	es.SelNoDrag = false
 	switch et {
 	case oswin.MouseEvent:
 		me := d.(*mouse.Event)
@@ -265,6 +295,7 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	win := sv.GridView.ParentWindow()
 	delta := me.Where.Sub(me.From)
 	es := sv.EditState()
+	es.SelNoDrag = false
 	me.SetProcessed()
 	if me.HasAnyModifier(key.Shift) {
 		if !sv.SetDragCursor {
@@ -412,6 +443,7 @@ func (sv *SVGView) UndoSaveReplace(action, data string) {
 // Undo undoes one step, returning the action that was undone
 func (sv *SVGView) Undo() string {
 	es := sv.EditState()
+	es.ResetSelected()
 	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
 		// sv.WriteXML(b, false)
@@ -436,13 +468,14 @@ func (sv *SVGView) Undo() string {
 	// 	fmt.Printf("Undo load Error: %s\n", err)
 	// }
 	sv.UpdateEnd(updt)
-	sv.UpdateSelSprites()
+	sv.UpdateSelect()
 	return act
 }
 
 // Redo redoes one step, returning the action that was redone
 func (sv *SVGView) Redo() string {
 	es := sv.EditState()
+	es.ResetSelected()
 	// fmt.Printf("redo idx: %d\n", es.UndoMgr.Idx)
 	act, _, state := es.UndoMgr.Redo()
 	if state == nil {
@@ -458,7 +491,7 @@ func (sv *SVGView) Redo() string {
 	// 	fmt.Printf("Redo load Error: %s\n", err)
 	// }
 	sv.UpdateEnd(updt)
-	sv.UpdateSelSprites()
+	sv.UpdateSelect()
 	return act
 }
 
@@ -608,8 +641,8 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	nr.SetSize(xfi.MulVec2AsVec(sz))
 	es.SelectAction(nr, mouse.SelectOne)
 	sv.UpdateEnd(updt)
-	sv.EditState().DragSelStart(start)
 	sv.UpdateSelSprites()
+	sv.EditState().DragSelStart(start)
 	win.SpriteDragging = SpriteNames[ReshapeDnR]
 	return nr
 }

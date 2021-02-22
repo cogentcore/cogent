@@ -27,10 +27,12 @@ type EditState struct {
 	ActData   string      `desc:"action data set at start of action"`
 	CurLayer  string      `desc:"current layer -- where new objects are inserted"`
 	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
+	Text      TextStyle   `desc:"current text styling info"`
 	UndoMgr   undo.Mgr    `desc:"undo manager"`
 
 	ActMu            sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
 	Selected         map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
+	SelNoDrag        bool                      `desc:"selection just happened on press, and no drag happened in between"`
 	DragStartPos     image.Point               `desc:"point where dragging started, mouse coords"`
 	DragCurPos       image.Point               `desc:"current dragging position, mouse coords"`
 	SelBBox          mat32.Box2                `desc:"current selection bounding box"`
@@ -97,11 +99,13 @@ func (es *EditState) ResetSelected() {
 // SelectedList returns list of selected items, sorted either ascending or descending
 // according to order of selection
 func (es *EditState) SelectedList(descendingSort bool) []svg.NodeSVG {
-	sls := make([]svg.NodeSVG, len(es.Selected))
-	i := 0
+	sls := make([]svg.NodeSVG, 0, len(es.Selected))
 	for it := range es.Selected {
-		sls[i] = it
-		i++
+		if it == nil || it.This() == nil || it.IsDeleted() || it.IsDestroyed() {
+			delete(es.Selected, it)
+			continue
+		}
+		sls = append(sls, it)
 	}
 	if descendingSort {
 		sort.Slice(sls, func(i, j int) bool {
@@ -113,6 +117,22 @@ func (es *EditState) SelectedList(descendingSort bool) []svg.NodeSVG {
 		})
 	}
 	return sls
+}
+
+// FirstSelectedNode returns the first selected node, that is not a Group
+// (recurses into groups)
+func (es *EditState) FirstSelectedNode() svg.NodeSVG {
+	if !es.HasSelected() {
+		return nil
+	}
+	sls := es.SelectedList(true)
+	for _, sl := range sls {
+		fsl := svg.FirstNonGroupNode(sl.This())
+		if fsl != nil {
+			return fsl.(svg.NodeSVG)
+		}
+	}
+	return nil
 }
 
 // Select selects given item (if not already selected) -- updates select
@@ -231,6 +251,7 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	es.UpdateSelBBox()
 	es.DragSelStartBBox = es.SelBBox
 	es.DragSelCurBBox = es.SelBBox
+	es.DragSelEffBBox = es.SelBBox
 	for itm, ss := range es.Selected {
 		itm.WriteGeom(&ss.InitGeom)
 	}

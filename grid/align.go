@@ -203,7 +203,7 @@ func (sv *SVGView) GatherAlignPoints() {
 			return ki.Continue
 		}
 		if _, issel := es.Selected[sii]; issel {
-			return ki.Continue
+			return ki.Break // go no further into kids
 		}
 		sg := sii.AsSVGNode()
 

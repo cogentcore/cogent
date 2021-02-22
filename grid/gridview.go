@@ -58,7 +58,7 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 	gv.SetTitle()
 	// TheFile.SetText(CurFilename)
 	sg := gv.SVG()
-	err := sg.OpenXML(path)
+	err := sg.OpenXML(gi.FileName(path))
 	if err != nil && err != io.EOF {
 		log.Println(err)
 		// return err
@@ -95,7 +95,7 @@ func (gv *GridView) SaveDrawing() error {
 	}
 	sg := gv.SVG()
 	sg.RemoveOrphanedDefs()
-	err := sg.SaveXML(string(gv.FilePath))
+	err := sg.SaveXML(gv.FilePath)
 	if err != nil && err != io.EOF {
 		log.Println(err)
 	}
@@ -114,7 +114,7 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	SavePaths()
 	sg := gv.SVG()
 	sg.RemoveOrphanedDefs()
-	err := sg.SaveXML(path)
+	err := sg.SaveXML(gi.FileName(path))
 	if err != nil && err != io.EOF {
 		log.Println(err)
 	}
@@ -122,6 +122,21 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	gv.SetStatus("Saved: " + path)
 	return err
 }
+
+// AddImage adds a new image node set to given image
+func (gv *GridView) AddImage(fname gi.FileName, width, height float32) error {
+	sg := gv.SVG()
+	sg.UndoSave("AddImage", string(fname))
+	ind := sg.NewEl(svg.KiT_Image).(*svg.Image)
+	ind.Pos.X = 100 // todo: default pos
+	ind.Pos.Y = 100 // todo: default pos
+	err := ind.OpenImage(fname, width, height)
+	sg.UpdateView(true)
+	return err
+}
+
+//////////////////////////////////////////////////////////////////////////
+//  GUI Config
 
 func (gv *GridView) MainToolbar() *gi.ToolBar {
 	return gv.ChildByName("main-tb", 0).(*gi.ToolBar)
@@ -131,21 +146,33 @@ func (gv *GridView) ModalToolbarStack() *gi.Layout {
 	return gv.ChildByName("modal-tb", 1).(*gi.Layout)
 }
 
-// SetModalToolbarSelect sets the modal toolbar to be the select one
-func (gv *GridView) SetModalToolbarSelect() {
+// SetModalSelect sets the modal toolbar to be the select one
+func (gv *GridView) SetModalSelect() {
 	tbs := gv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
 	tbs.SetFullReRender()
-	tbs.StackTop = 0
+	idx, _ := tbs.Kids.IndexByName("select-tb", 0)
+	tbs.StackTop = idx
 	tbs.UpdateEnd(updt)
 }
 
-// SetModalToolbarNode sets the modal toolbar to be the node editing one
-func (gv *GridView) SetModalToolbarNode() {
+// SetModalNode sets the modal toolbar to be the node editing one
+func (gv *GridView) SetModalNode() {
 	tbs := gv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
 	tbs.SetFullReRender()
-	tbs.StackTop = 0 // todo 1
+	idx, _ := tbs.Kids.IndexByName("node-tb", 1)
+	tbs.StackTop = idx
+	tbs.UpdateEnd(updt)
+}
+
+// SetModalText sets the modal toolbar to be the text editing one
+func (gv *GridView) SetModalText() {
+	tbs := gv.ModalToolbarStack()
+	updt := tbs.UpdateStart()
+	tbs.SetFullReRender()
+	idx, _ := tbs.Kids.IndexByName("text-tb", 2)
+	tbs.StackTop = idx
 	tbs.UpdateEnd(updt)
 }
 
@@ -352,6 +379,12 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.PasteClip()
 		})
+	tb.AddSeparator("sep-import")
+	tb.AddAction(gi.ActOpts{Label: "Add Image...", Icon: "file-image", Tooltip: "add an image from a file"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			giv.CallMethod(grr, "AddImage", grr.ViewportSafe())
+		})
 }
 
 func (gv *GridView) ConfigModalToolbar() {
@@ -361,8 +394,10 @@ func (gv *GridView) ConfigModalToolbar() {
 	}
 	tb.SetStretchMaxWidth()
 	gi.AddNewToolBar(tb, "select-tb")
+	gi.AddNewToolBar(tb, "text-tb")
 
 	gv.ConfigSelectToolbar()
+	gv.ConfigTextToolbar()
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -560,15 +595,21 @@ func (gv *GridView) ConfigTabs() {
 	pv.Config(gv)
 	av := gv.RecycleTab("Align", KiT_AlignView, false).(*AlignView)
 	av.Config(gv)
-	// gv.RecycleTab("Obj", giv.KiT_StructView, false)
+	txv := gv.RecycleTab("Text", giv.KiT_StructView, false).(*giv.StructView)
+	txv.SetStruct(&gv.EditState.Text)
 }
 
 func (gv *GridView) PaintView() *PaintView {
 	return gv.Tab("Paint").(*PaintView)
 }
 
-func (gv *GridView) UpdateDisp() {
+func (gv *GridView) UpdateAll() {
+	gv.UpdateTabs()
 	gv.UpdateTreeView()
+	gv.UpdateDisp()
+}
+
+func (gv *GridView) UpdateDisp() {
 	sv := gv.SVG()
 	sv.UpdateView(true)
 }
@@ -581,13 +622,22 @@ func (gv *GridView) UpdateTreeView() {
 func (gv *GridView) UpdateTabs() {
 	// fmt.Printf("updt-tabs\n")
 	es := &gv.EditState
-	sls := es.SelectedList(false)
-	if len(sls) > 0 {
-		sel := sls[0].AsSVGNode()
+	fsel := es.FirstSelectedNode()
+	if fsel != nil {
+		sel := fsel.AsSVGNode()
 		pv := gv.Tab("Paint").(*PaintView)
 		pv.Update(&sel.Pnt, sel.This())
+		txt, istxt := fsel.(*svg.Text)
+		if istxt {
+			es.Text.SetFromNode(txt)
+			txv := gv.Tab("Text").(*giv.StructView)
+			txv.UpdateSig()
+			gv.SetModalText()
+			gv.UpdateTextToolbar()
+		} else {
+			gv.SetModalToolbar()
+		}
 	}
-	gv.UpdateTreeView()
 }
 
 // SelectNodeInSVG selects given svg node in SVG drawing
@@ -611,7 +661,7 @@ func (gv *GridView) Undo() string {
 	} else {
 		gv.SetStatus("Undo: no more to undo")
 	}
-	gv.UpdateTabs()
+	gv.UpdateAll()
 	return act
 }
 
@@ -624,7 +674,7 @@ func (gv *GridView) Redo() string {
 	} else {
 		gv.SetStatus("Redo: no more to redo")
 	}
-	gv.UpdateTabs()
+	gv.UpdateAll()
 	return act
 }
 
@@ -752,6 +802,19 @@ var GridViewProps = ki.Props{
 					{"File Name", ki.Props{
 						"ext": ".svg",
 					}},
+				},
+			}},
+			{"sep-imp", ki.BlankProp{}},
+			{"AddImage", ki.Props{
+				"label": "Add Image...",
+				"desc":  "Add a new Image node with given image file for this image node, rescaling to given size -- use 0, 0 to use native image size.",
+				"Args": ki.PropSlice{
+					{"File Name", ki.Props{
+						"default-field": "Filename",
+						"ext":           ".png,.jpg,.jpeg",
+					}},
+					{"Width", ki.Props{}},
+					{"Height", ki.Props{}},
 				},
 			}},
 			{"sep-af", ki.BlankProp{}},

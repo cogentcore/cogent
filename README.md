@@ -4,6 +4,12 @@ Grid is a GoGi-based SVG vector drawing program, with design based on Inkscape.
 
 If an acronym is required, how about: "Go-rendered interactive drawing" program.
 
+# Behavior
+
+* multiple select actions keep doing down even inside groups, so it is easy to operate inside groups but group is the "default"
+
+* Alt on control knobs -> rotate instead of clicking again to get rotation knobs -- this is compatible with above and better :)
+
 # Design
 
 Similar to inkscape in overall layout, and read / write inkscape compatible SVG files.
@@ -27,15 +33,19 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
-* Text edit panel
+* Text edit panel -- finish toolbar, add NewEl.
 
-* autosave
+* fix url finding bug on inkscape.svg and track down gi.StyleSheet error
 
-* cut / paste not updating tree reliably.  more tree update debugging fun!
+* esc aborts new el drag
+
+* import svg -- same as marker
+
+* changed bit, autosave, prompt before quit
+
+* rest of shortcuts
 
 * make zoom stay centered on mouse point -- subtract mouse pos then add back..
-
-* some kind of mutex hang in undo / redo ?
 
 * svg render needs to use visibility flag from layers to not render stuff.
 * generic display: flag -- not same as setting visible -- all levels
@@ -48,14 +58,14 @@ color, fill and line width editor, and full undo / redo.
 * svg.Node ToPath -- convert any node to a path
 * node editor -- big job but needed for making basic bezier curves..
 
-* alignview
-
 * grid -- multiscale if spacing between grid items below some amount, then zoom out grid to 6x larger?
-
-* dynamic alignment: precompute slice of key X coords, Y coords separately, acts as a kind of grid.
 
 * svg.Text align Center, etc affects different tspans within overall text block
 * svg.Text scale, rotate affects transform -- transform goes into style!
+
+* some kind of mutex hang in undo / redo ?
+
+* cut / paste not updating tree reliably.  more tree update debugging fun!
 
 * use grid to render all new icons!
 

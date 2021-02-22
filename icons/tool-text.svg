@@ -1,0 +1,22 @@
+<svg
+  width="16mm"
+  height="16mm"
+  viewBox="0 0 16 16">
+  <defs
+    id="Defs" />
+  <g
+    id="g847">
+    <path
+      id="path59"
+      style="connector-curvature:0;opacity:0;"
+      d="M 0,0 H 16 V 16 H 0 Z " />
+    <path
+      id="path1713"
+      style="stroke-width:0.962502;connector-curvature:0;nodetypes:ccccccccccccc;"
+      d="M 8.308649,12.191652 H 3.6868973 L 3,14 H 0 L 4.696748,3 H 7.316639 L 12,14 H 9 Z M 6.037498,6.0826244 4.690476,10 h 2.614595 z " />
+    <path
+      id="path1717"
+      style="connector-curvature:0;stroke-width:1.12034;"
+      d="M 13.981332,0 H 16 v 16 h -2.018668 z " />
+  </g>
+</svg>

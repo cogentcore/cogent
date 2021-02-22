@@ -115,6 +115,7 @@ func (gv *GridView) CutSelected() {
 	sv.UndoSave("CutSelected", "")
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
+	sv.EditState().ResetSelected()
 	tv := gv.TreeView()
 	tvupdt := tv.UpdateStart()
 	tv.SetFullReRender()
@@ -149,6 +150,30 @@ func (gv *GridView) PasteClip() {
 	}
 	par.PasteChildren(md, dnd.DropCopy)
 	gv.SetStatus("Pasted items from clipboard")
+	tv.ReSync() // todo: should not be needed
+	tv.UpdateEnd(tvupdt)
+	sv.UpdateEnd(updt)
+}
+
+// DeleteSelected deletes selected items in SVG view, using TreeView methods
+func (gv *GridView) DeleteSelected() {
+	tvl := gv.SelectedAsTreeViews()
+	if len(tvl) == 0 {
+		gv.SetStatus("Delete: no tree items found")
+		return
+	}
+	sv := gv.SVG()
+	sv.UndoSave("DeleteSelected", "")
+	updt := sv.UpdateStart()
+	sv.EditState().ResetSelected()
+	sv.SetFullReRender()
+	tv := gv.TreeView()
+	tvupdt := tv.UpdateStart()
+	tv.SetFullReRender()
+	for _, tvi := range tvl {
+		tvi.SrcDelete()
+	}
+	gv.SetStatus("Deleted selected items")
 	tv.ReSync() // todo: should not be needed
 	tv.UpdateEnd(tvupdt)
 	sv.UpdateEnd(updt)

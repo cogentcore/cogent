@@ -37,7 +37,7 @@ var KiT_PaintView = kit.Types.AddType(&PaintView{}, PaintViewProps)
 // ManipAction manages all the updating etc associated with performing an action
 // that includes an ongoing manipulation with a final non-manip update.
 // runs given function to actually do the update.
-func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
+func (gv *GridView) ManipAction(act, data string, manip bool, fun func(sii svg.NodeSVG)) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	updt := false
@@ -59,7 +59,9 @@ func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
 		}
 		updt = sv.UpdateStart()
 	}
-	fun() // actually do the update
+	for itm := range es.Selected {
+		gv.ManipActionFun(itm, fun)
+	}
 	if !manip {
 		sv.UpdateEnd(updt)
 		if !actStart {
@@ -70,9 +72,25 @@ func (gv *GridView) ManipAction(act, data string, manip bool, fun func()) {
 	}
 }
 
+func (gv *GridView) ManipActionFun(sii svg.NodeSVG, fun func(itm svg.NodeSVG)) {
+	if gp, isgp := sii.(*svg.Group); isgp {
+		for _, kid := range gp.Kids {
+			gv.ManipActionFun(kid.(svg.NodeSVG), fun)
+		}
+		return
+	}
+	fun(sii)
+}
+
 // SetStrokeNode sets the stroke properties of Node
 // based on previous and current PaintType
 func (gv *GridView) SetStrokeNode(sii svg.NodeSVG, prev, pt PaintTypes, sp string) {
+	if gp, isgp := sii.(*svg.Group); isgp {
+		for _, kid := range gp.Kids {
+			gv.SetStrokeNode(kid.(svg.NodeSVG), prev, pt, sp)
+		}
+		return
+	}
 	switch pt {
 	case PaintLinear:
 		svg.UpdateNodeGradientProp(sii, "stroke", false, sp)
@@ -102,6 +120,20 @@ func (gv *GridView) SetStroke(prev, pt PaintTypes, sp string) {
 	sv.UpdateEnd(updt)
 }
 
+// SetStrokeWidthNode sets the stroke width of Node
+func (gv *GridView) SetStrokeWidthNode(sii svg.NodeSVG, wp string) {
+	if gp, isgp := sii.(*svg.Group); isgp {
+		for _, kid := range gp.Kids {
+			gv.SetStrokeWidthNode(kid.(svg.NodeSVG), wp)
+		}
+		return
+	}
+	g := sii.AsSVGNode()
+	if !g.Pnt.StrokeStyle.Color.IsNil() {
+		g.SetProp("stroke-width", wp)
+	}
+}
+
 // SetStrokeWidth sets the stroke width property for selected items
 // manip means currently being manipulated -- don't save undo.
 func (gv *GridView) SetStrokeWidth(wp string, manip bool) {
@@ -114,10 +146,7 @@ func (gv *GridView) SetStrokeWidth(wp string, manip bool) {
 		sv.SetFullReRender()
 	}
 	for itm := range es.Selected {
-		g := itm.AsSVGNode()
-		if !g.Pnt.StrokeStyle.Color.IsNil() {
-			g.SetProp("stroke-width", wp)
-		}
+		gv.SetStrokeWidthNode(itm.(svg.NodeSVG), wp)
 	}
 	if !manip {
 		sv.UpdateEnd(updt)
@@ -129,21 +158,24 @@ func (gv *GridView) SetStrokeWidth(wp string, manip bool) {
 // SetStrokeColor sets the stroke color for selected items.
 // manip means currently being manipulated -- don't save undo.
 func (gv *GridView) SetStrokeColor(sp string, manip bool) {
-	es := &gv.EditState
 	gv.ManipAction("SetStrokeColor", sp, manip,
-		func() {
-			for itm := range es.Selected {
-				p := itm.Prop("stroke")
-				if p != nil {
-					itm.SetProp("stroke", sp)
-					gv.UpdateMarkerColors(itm)
-				}
+		func(itm svg.NodeSVG) {
+			p := itm.Prop("stroke")
+			if p != nil {
+				itm.SetProp("stroke", sp)
+				gv.UpdateMarkerColors(itm)
 			}
 		})
 }
 
 // SetMarkerNode sets the marker properties of Node.
 func (gv *GridView) SetMarkerNode(sii svg.NodeSVG, start, mid, end string, sc, mc, ec MarkerColors) {
+	if gp, isgp := sii.(*svg.Group); isgp {
+		for _, kid := range gp.Kids {
+			gv.SetMarkerNode(kid.(svg.NodeSVG), start, mid, end, sc, mc, ec)
+		}
+		return
+	}
 	sv := gv.SVG()
 	MarkerSetProp(&sv.SVG, sii, "marker-start", start, sc)
 	MarkerSetProp(&sv.SVG, sii, "marker-mid", mid, mc)
@@ -177,6 +209,12 @@ func (gv *GridView) UpdateMarkerColors(sii svg.NodeSVG) {
 // SetDashNode sets the stroke-dasharray property of Node.
 // multiplies dash values by the line width in dots.
 func (gv *GridView) SetDashNode(sii svg.NodeSVG, dary []float64) {
+	if gp, isgp := sii.(*svg.Group); isgp {
+		for _, kid := range gp.Kids {
+			gv.SetDashNode(kid.(svg.NodeSVG), dary)
+		}
+		return
+	}
 	if len(dary) == 0 {
 		sii.DeleteProp("stroke-dasharray")
 		return
@@ -203,6 +241,12 @@ func (gv *GridView) SetDashProps(dary []float64) {
 // SetFillNode sets the fill props of given node
 // based on previous and current PaintType
 func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string) {
+	if gp, isgp := sii.(*svg.Group); isgp {
+		for _, kid := range gp.Kids {
+			gv.SetFillNode(kid.(svg.NodeSVG), prev, pt, fp)
+		}
+		return
+	}
 	switch pt {
 	case PaintLinear:
 		svg.UpdateNodeGradientProp(sii, "fill", false, fp)
@@ -235,15 +279,12 @@ func (gv *GridView) SetFill(prev, pt PaintTypes, fp string) {
 // SetFillColor sets the fill color for selected items
 // manip means currently being manipulated -- don't save undo.
 func (gv *GridView) SetFillColor(fp string, manip bool) {
-	es := &gv.EditState
 	gv.ManipAction("SetFillColor", fp, manip,
-		func() {
-			for itm := range es.Selected {
-				p := itm.Prop("fill")
-				if p != nil {
-					itm.SetProp("fill", fp)
-					gv.UpdateMarkerColors(itm)
-				}
+		func(itm svg.NodeSVG) {
+			p := itm.Prop("fill")
+			if p != nil {
+				itm.SetProp("fill", fp)
+				gv.UpdateMarkerColors(itm)
 			}
 		})
 }
