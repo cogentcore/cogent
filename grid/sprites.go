@@ -5,6 +5,7 @@
 package grid
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -45,6 +46,7 @@ const (
 	AlignMatch8
 
 	SpritesN
+	// beyond this are the node markers!
 )
 
 //go:generate stringer -type=Sprites
@@ -186,10 +188,17 @@ func DrawAlignMatchVert(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Poi
 	draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
 }
 
+func SpriteName(spi Sprites) string {
+	if spi < SpritesN {
+		return SpriteNames[spi]
+	}
+	return fmt.Sprintf("path-point-%d", spi-SpritesN)
+}
+
 // Sprite returns given sprite -- renders to window if not yet made.
 // trgsz is the target size (e.g., for rubber band boxes)
 func Sprite(spi Sprites, win *gi.Window, trgsz image.Point) *gi.Sprite {
-	spnm := SpriteNames[spi]
+	spnm := SpriteName(spi)
 	sp, ok := win.SpriteByName(spnm)
 	switch {
 	case spi >= ReshapeUpL && spi <= ReshapeRtM:
@@ -225,6 +234,12 @@ func Sprite(spi Sprites, win *gi.Window, trgsz image.Point) *gi.Sprite {
 				sp = win.AddNewSprite(spnm, image.Point{sz, trgsz.Y}, image.ZP)
 			}
 			DrawAlignMatchVert(spi, sp, bsz, sz, trgsz)
+		}
+	case spi >= SpritesN:
+		if !ok {
+			bsz, bbsz := HandleSpriteSize()
+			sp = win.AddNewSprite(spnm, bbsz, image.ZP)
+			DrawSpriteSize(spi, sp, bsz, bbsz)
 		}
 	}
 	return sp
@@ -275,6 +290,11 @@ func SetSpritePos(spi Sprites, sp *gi.Sprite, pos image.Point) {
 		case BBMiddle:
 			pos.Y -= sz / 2
 		}
+		sp.Geom.Pos = pos
+	case spi >= SpritesN:
+		_, sz := HandleSpriteSize()
+		pos.X -= sz.X / 2
+		pos.Y -= sz.Y / 2
 		sp.Geom.Pos = pos
 	}
 }

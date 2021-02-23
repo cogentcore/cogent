@@ -109,7 +109,7 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	if kt.IsProcessed() {
 		return
 	}
-	fmt.Println(kc)
+	// fmt.Println(kc)
 	switch kc {
 	case "Control+G", "Meta+G":
 		kt.SetProcessed()
@@ -117,18 +117,24 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	case "Shift+Control+G", "Shift+Meta+G":
 		kt.SetProcessed()
 		sv.GridView.SelUnGroup()
-	case "s", "S", " ":
+	case "s", "Shift+S", " ":
 		kt.SetProcessed()
 		sv.GridView.SetTool(SelectTool)
-	case "R", "r":
+	case "n", "Shift+N":
+		kt.SetProcessed()
+		sv.GridView.SetTool(NodeTool)
+	case "r", "Shift+R":
 		kt.SetProcessed()
 		sv.GridView.SetTool(RectTool)
-	case "E", "e":
+	case "e", "Shift+E":
 		kt.SetProcessed()
 		sv.GridView.SetTool(EllipseTool)
-	case "B", "b":
+	case "b", "Shift+B":
 		kt.SetProcessed()
 		sv.GridView.SetTool(BezierTool)
+	case "t", "Shift+T":
+		kt.SetProcessed()
+		sv.GridView.SetTool(TextTool)
 	}
 }
 
@@ -189,6 +195,7 @@ func (sv *SVGView) MouseEvent() {
 		}
 		sob := ssvg.SelectContainsPoint(me.Where, false, true) // not leavesonly, yes exclude existing sels
 		if me.Action == mouse.Press && me.Button == mouse.Left {
+			me.SetProcessed()
 			es.SelNoDrag = false
 			es.DragStartPos = me.Where
 			switch {
@@ -198,12 +205,14 @@ func (sv *SVGView) MouseEvent() {
 				es.SelNoDrag = true
 				ssvg.EditState().DragSelStart(me.Where)
 			case sob != nil && ToolDoesBasicSelect(es.Tool):
-				me.SetProcessed()
 				es.SelectAction(sob, me.SelectMode())
 				ssvg.EditState().DragSelStart(me.Where)
 				ssvg.UpdateSelect()
+			case sob != nil && es.Tool == NodeTool:
+				es.SelectAction(sob, mouse.SelectOne)
+				ssvg.EditState().DragSelStart(me.Where)
+				ssvg.UpdateNodeSprites()
 			case sob == nil:
-				me.SetProcessed()
 				es.ResetSelected()
 				ssvg.UpdateSelect()
 			}
@@ -213,6 +222,7 @@ func (sv *SVGView) MouseEvent() {
 		}
 		if es.InAction() {
 			es.SelNoDrag = false
+			es.NewTextMade = false
 			ssvg.ManipDone()
 			return
 		}
@@ -260,36 +270,6 @@ func (sv *SVGView) MouseHover() {
 	})
 }
 
-func (sv *SVGView) SpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
-	win := sv.GridView.ParentWindow()
-	es := sv.EditState()
-	es.SelNoDrag = false
-	switch et {
-	case oswin.MouseEvent:
-		me := d.(*mouse.Event)
-		me.SetProcessed()
-		// fmt.Printf("click %s\n", sp)
-		if me.Action == mouse.Press {
-			win.SpriteDragging = SpriteNames[sp]
-			sv.EditState().DragSelStart(me.Where)
-			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
-		} else if me.Action == mouse.Release {
-			sv.UpdateSelSprites()
-			sv.EditState().DragSelStart(me.Where)
-			sv.ManipDone()
-		}
-	case oswin.MouseDragEvent:
-		me := d.(*mouse.DragEvent)
-		me.SetProcessed()
-		// fmt.Printf("drag %v delta: %v\n", sp, me.Delta())
-		if me.HasAnyModifier(key.Alt) {
-			sv.SpriteRotateDrag(sp, me.Delta(), win)
-		} else {
-			sv.SpriteReshapeDrag(sp, me.Delta(), win, me)
-		}
-	}
-}
-
 // DragEvent processes a mouse drag event on the SVG canvas
 func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	win := sv.GridView.ParentWindow()
@@ -308,7 +288,9 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 		return
 	}
 	if es.HasSelected() {
-		sv.DragMove(delta, win, me)
+		if !es.NewTextMade {
+			sv.DragMove(delta, win, me) // in manip
+		}
 	} else {
 		if !es.InAction() {
 			switch es.Tool {
@@ -318,6 +300,11 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 				sv.NewElDrag(svg.KiT_Rect, es.DragStartPos, me.Where)
 			case EllipseTool:
 				sv.NewElDrag(svg.KiT_Ellipse, es.DragStartPos, me.Where)
+			case TextTool:
+				sv.NewText(es.DragStartPos, me.Where)
+				es.NewTextMade = true
+			case BezierTool:
+				sv.NewElDrag(svg.KiT_Path, es.DragStartPos, me.Where)
 			}
 		} else {
 			switch {
@@ -498,82 +485,6 @@ func (sv *SVGView) Redo() string {
 ///////////////////////////////////////////////////////////////////
 // selection processing
 
-func (sv *SVGView) UpdateSelSprites() {
-	win := sv.GridView.ParentWindow()
-	updt := win.UpdateStart()
-	defer win.UpdateEnd(updt)
-
-	es := sv.EditState()
-	es.UpdateSelBBox()
-	if !es.HasSelected() {
-		InactivateSprites(win)
-		win.RenderOverlays()
-		return
-	}
-
-	for i := ReshapeUpL; i <= ReshapeRtM; i++ {
-		spi := i // key to get a unique local var
-		sp := SpriteConnectEvent(spi, win, image.Point{}, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
-			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			ssvg.SpriteEvent(spi, oswin.EventType(sig), d)
-		})
-		es.ActiveSprites[spi] = sp
-	}
-	sv.SetSelSprites(es.SelBBox)
-
-	win.RenderOverlays()
-}
-
-// SetSelSprites sets active selection sprite locations based on given bounding box
-func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
-	es := sv.EditState()
-	_, spsz := HandleSpriteSize()
-	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
-	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
-	SetSpritePos(ReshapeUpL, es.ActiveSprites[ReshapeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
-	SetSpritePos(ReshapeUpC, es.ActiveSprites[ReshapeUpC], image.Point{midX, int(bbox.Min.Y)})
-	SetSpritePos(ReshapeUpR, es.ActiveSprites[ReshapeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
-	SetSpritePos(ReshapeDnL, es.ActiveSprites[ReshapeDnL], image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
-	SetSpritePos(ReshapeDnC, es.ActiveSprites[ReshapeDnC], image.Point{midX, int(bbox.Max.Y)})
-	SetSpritePos(ReshapeDnR, es.ActiveSprites[ReshapeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
-	SetSpritePos(ReshapeLfM, es.ActiveSprites[ReshapeLfM], image.Point{int(bbox.Min.X), midY})
-	SetSpritePos(ReshapeRtM, es.ActiveSprites[ReshapeRtM], image.Point{int(bbox.Max.X), midY})
-}
-
-// SetRubberBand updates the rubber band postion
-func (sv *SVGView) SetRubberBand(cur image.Point) {
-	win := sv.GridView.ParentWindow()
-	es := sv.EditState()
-
-	if !es.InAction() {
-		es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
-		es.ActUnlock()
-	}
-	es.DragCurPos = cur
-
-	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
-	bbox = bbox.Canon()
-
-	sz := bbox.Size()
-	if sz.X < 4 {
-		sz.X = 4
-	}
-	if sz.Y < 4 {
-		sz.Y = 4
-	}
-	es.EnsureActiveSprites()
-	rt := SpriteConnectEvent(RubberBandT, win, sz, nil, nil)
-	rb := SpriteConnectEvent(RubberBandB, win, sz, nil, nil)
-	rr := SpriteConnectEvent(RubberBandR, win, sz, nil, nil)
-	rl := SpriteConnectEvent(RubberBandL, win, sz, nil, nil)
-	SetSpritePos(RubberBandT, rt, bbox.Min)
-	SetSpritePos(RubberBandB, rb, image.Point{bbox.Min.X, bbox.Max.Y})
-	SetSpritePos(RubberBandR, rr, image.Point{bbox.Max.X, bbox.Min.Y})
-	SetSpritePos(RubberBandL, rl, bbox.Min)
-
-	win.RenderOverlays()
-}
-
 // ShowAlignMatches draws the align matches as given
 // between BBox Min - Max.  typs are corresponding bounding box sources.
 func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
@@ -644,6 +555,37 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
 	win.SpriteDragging = SpriteNames[ReshapeDnR]
+	return nr
+}
+
+// NewText makes a new Text element with embedded tspan
+func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
+	// win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+	sv.ManipStart("NewText", "")
+	sv.SetFullReRender()
+	nr := sv.NewEl(svg.KiT_Text).(*svg.Text)
+	tsnm := fmt.Sprintf("tspan%d", sv.NewUniqueId())
+	tspan := nr.AddNewChild(svg.KiT_Text, tsnm).(*svg.Text)
+	tspan.Text = "Text"
+	tspan.Width = 200
+	xfi := sv.Pnt.XForm.Inverse()
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
+	minsz := float32(20)
+	pos.SetSubScalar(minsz)
+	pos = xfi.MulVec2AsPt(pos)
+	sv.GridView.SetTextPropsNode(nr, es.Text.TextProps())
+	nr.Pos = pos
+	tspan.Pos = pos
+	// dv := mat32.NewVec2FmPoint(end.Sub(start))
+	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	nr.Width = 100
+	tspan.Width = 100
+	es.SelectAction(nr, mouse.SelectOne)
+	sv.UpdateView(true)
+	sv.UpdateSelect()
+	// win.SpriteDragging = SpriteNames[ReshapeDnR]
 	return nr
 }
 

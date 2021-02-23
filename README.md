@@ -33,9 +33,9 @@ color, fill and line width editor, and full undo / redo.
 
 # TODO:
 
-* Text edit panel -- finish toolbar, add NewEl.
+* Text edit panel -- finish toolbar
 
-* fix url finding bug on inkscape.svg and track down gi.StyleSheet error
+* control during reshape = square box
 
 * esc aborts new el drag
 

@@ -173,7 +173,7 @@ func (sv *SVGView) SnapCurBBox(move bool, trgX, trgY BBoxPoints) {
 }
 
 // ConstrainCurBBox constrains bounding box to dimension with smallest change
-// e.g., when using control key.
+// including diagonal, e.g., when using control key.
 func (sv *SVGView) ConstrainCurBBox(move bool, trgX, trgY BBoxPoints) {
 	es := sv.EditState()
 	dmin := es.DragSelCurBBox.Min.Sub(es.DragSelStartBBox.Min)
@@ -185,7 +185,19 @@ func (sv *SVGView) ConstrainCurBBox(move bool, trgX, trgY BBoxPoints) {
 
 	xval := trgX.ValBox(bb)
 	yval := trgY.ValBox(bb)
-	if mat32.Abs(yval) < mat32.Abs(xval) {
+	if mat32.Abs(yval-xval) <= float32(Prefs.SnapTol) {
+		trgY.SetValBox(&es.DragSelEffBBox, trgX.ValBox(es.DragSelEffBBox))
+		if move {
+			es.DragSelEffBBox.Max.Y = es.DragSelEffBBox.Max.X
+		}
+		// rpt := image.Rectangle{}
+		// rpt.Min.X = int(trgX.ValBox(es.DragSelStartBBox))
+		// rpt.Min.Y = int(trgY.ValBox(es.DragSelStartBBox))
+		// rpt.Max = rpt.Min
+		// rpt.Max.X = int(trgX.ValBox(es.DragSelEffBBox))
+		// alpts = append(alpts, rpt)
+		// altyps = append(altyps, trgY)
+	} else if mat32.Abs(yval) < mat32.Abs(xval) {
 		trgY.SetValBox(&es.DragSelEffBBox, trgY.ValBox(es.DragSelStartBBox))
 		if move {
 			es.DragSelEffBBox.Max.Y = es.DragSelStartBBox.Max.Y

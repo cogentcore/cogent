@@ -217,7 +217,7 @@ func (gv *GridView) Config() {
 	}
 	updt := gv.UpdateStart()
 	gv.Lay = gi.LayoutVert
-	gv.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	// gv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	gi.AddNewToolBar(gv, "main-tb")
 	gi.AddNewLayout(gv, "modal-tb", gi.LayoutStacked)
 	hb := gi.AddNewLayout(gv, "hbox", gi.LayoutHoriz)
@@ -595,6 +595,7 @@ func (gv *GridView) ConfigTabs() {
 	pv.Config(gv)
 	av := gv.RecycleTab("Align", KiT_AlignView, false).(*AlignView)
 	av.Config(gv)
+	gv.EditState.Text.Defaults()
 	txv := gv.RecycleTab("Text", giv.KiT_StructView, false).(*giv.StructView)
 	txv.SetStruct(&gv.EditState.Text)
 }

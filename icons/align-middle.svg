@@ -4,21 +4,17 @@
   viewBox="0 0 16 16">
   <defs
     id="Defs" />
-  <gi.StyleSheet
-    id="s0" />
-  <gi.StyleSheet
-    id="s2" />
   <g
     id="align-horizontal-center"
     transform="matrix(0,0.666667,-0.666666,0,412.90774,-746.66664)">
     <path
       id="path22217"
-      style="connector-curvature:0;opacity:0;fill:none;"
+      style="opacity:0;fill:none;connector-curvature:0;"
       transform="scale(-1,1)"
       d="m -1144,595.3622 h 24 v 24 h -24 z " />
     <path
       id="path22219"
-      style="fill-opacity:1;stroke-width:1.15471;connector-curvature:0;opacity:1;"
+      style="opacity:1;fill-opacity:1;stroke-width:1.15471;connector-curvature:0;"
       d="m 1132.9993,595.3622 h -2 v 24 h 2 z " />
     <path
       id="path22225"

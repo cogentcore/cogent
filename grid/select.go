@@ -10,8 +10,12 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gist"
+	"github.com/goki/gi/oswin"
+	"github.com/goki/gi/oswin/key"
+	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/ki/ki"
+	"github.com/goki/mat32"
 )
 
 func (gv *GridView) SelectToolbar() *gi.ToolBar {
@@ -177,9 +181,125 @@ func (gv *GridView) UpdateSelectToolbar() {
 func (sv *SVGView) UpdateSelect() {
 	wupdt := sv.TopUpdateStart()
 	defer sv.TopUpdateEnd(wupdt)
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
 	sv.GridView.UpdateTabs()
 	sv.GridView.UpdateSelectToolbar()
-	sv.UpdateSelSprites()
+	if es.Tool == NodeTool {
+		sv.UpdateNodeSprites()
+		sv.RemoveSelSprites(win)
+	} else {
+		sv.RemoveNodeSprites(win)
+		sv.UpdateSelSprites()
+	}
+}
+
+func (sv *SVGView) RemoveSelSprites(win *gi.Window) {
+	InactivateSprites(win)
+	win.RenderOverlays()
+}
+
+func (sv *SVGView) UpdateSelSprites() {
+	win := sv.GridView.ParentWindow()
+	updt := win.UpdateStart()
+	defer win.UpdateEnd(updt)
+
+	es := sv.EditState()
+	es.UpdateSelBBox()
+	if !es.HasSelected() {
+		sv.RemoveSelSprites(win)
+		return
+	}
+
+	for i := ReshapeUpL; i <= ReshapeRtM; i++ {
+		spi := i // key to get a unique local var
+		sp := SpriteConnectEvent(spi, win, image.Point{}, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+			ssvg.SelSpriteEvent(spi, oswin.EventType(sig), d)
+		})
+		es.ActiveSprites[spi] = sp
+	}
+	sv.SetSelSprites(es.SelBBox)
+
+	win.RenderOverlays()
+}
+
+// SetSelSprites sets active selection sprite locations based on given bounding box
+func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
+	es := sv.EditState()
+	_, spsz := HandleSpriteSize()
+	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
+	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
+	SetSpritePos(ReshapeUpL, es.ActiveSprites[ReshapeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
+	SetSpritePos(ReshapeUpC, es.ActiveSprites[ReshapeUpC], image.Point{midX, int(bbox.Min.Y)})
+	SetSpritePos(ReshapeUpR, es.ActiveSprites[ReshapeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
+	SetSpritePos(ReshapeDnL, es.ActiveSprites[ReshapeDnL], image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
+	SetSpritePos(ReshapeDnC, es.ActiveSprites[ReshapeDnC], image.Point{midX, int(bbox.Max.Y)})
+	SetSpritePos(ReshapeDnR, es.ActiveSprites[ReshapeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
+	SetSpritePos(ReshapeLfM, es.ActiveSprites[ReshapeLfM], image.Point{int(bbox.Min.X), midY})
+	SetSpritePos(ReshapeRtM, es.ActiveSprites[ReshapeRtM], image.Point{int(bbox.Max.X), midY})
+}
+
+func (sv *SVGView) SelSpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+	es.SelNoDrag = false
+	switch et {
+	case oswin.MouseEvent:
+		me := d.(*mouse.Event)
+		me.SetProcessed()
+		// fmt.Printf("click %s\n", sp)
+		if me.Action == mouse.Press {
+			win.SpriteDragging = SpriteNames[sp]
+			sv.EditState().DragSelStart(me.Where)
+			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
+		} else if me.Action == mouse.Release {
+			sv.ManipDone()
+		}
+	case oswin.MouseDragEvent:
+		me := d.(*mouse.DragEvent)
+		me.SetProcessed()
+		// fmt.Printf("drag %v delta: %v\n", sp, me.Delta())
+		if me.HasAnyModifier(key.Alt) {
+			sv.SpriteRotateDrag(sp, me.Delta(), win)
+		} else {
+			sv.SpriteReshapeDrag(sp, me.Delta(), win, me)
+		}
+	}
+}
+
+// SetRubberBand updates the rubber band postion
+func (sv *SVGView) SetRubberBand(cur image.Point) {
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+
+	if !es.InAction() {
+		es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
+		es.ActUnlock()
+	}
+	es.DragCurPos = cur
+
+	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+	bbox = bbox.Canon()
+
+	sz := bbox.Size()
+	if sz.X < 4 {
+		sz.X = 4
+	}
+	if sz.Y < 4 {
+		sz.Y = 4
+	}
+	es.EnsureActiveSprites()
+	rt := SpriteConnectEvent(RubberBandT, win, sz, nil, nil)
+	rb := SpriteConnectEvent(RubberBandB, win, sz, nil, nil)
+	rr := SpriteConnectEvent(RubberBandR, win, sz, nil, nil)
+	rl := SpriteConnectEvent(RubberBandL, win, sz, nil, nil)
+	SetSpritePos(RubberBandT, rt, bbox.Min)
+	SetSpritePos(RubberBandB, rb, image.Point{bbox.Min.X, bbox.Max.Y})
+	SetSpritePos(RubberBandR, rr, image.Point{bbox.Max.X, bbox.Min.Y})
+	SetSpritePos(RubberBandL, rl, bbox.Min)
+
+	win.RenderOverlays()
 }
 
 ///////////////////////////////////////////////////////////////////////

@@ -33,6 +33,7 @@ type EditState struct {
 	ActMu            sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
 	Selected         map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
 	SelNoDrag        bool                      `desc:"selection just happened on press, and no drag happened in between"`
+	NewTextMade      bool                      `desc:"true if a new text item was made while dragging"`
 	DragStartPos     image.Point               `desc:"point where dragging started, mouse coords"`
 	DragCurPos       image.Point               `desc:"current dragging position, mouse coords"`
 	SelBBox          mat32.Box2                `desc:"current selection bounding box"`
@@ -41,6 +42,10 @@ type EditState struct {
 	DragSelEffBBox   mat32.Box2                `desc:"current effective bbox during dragging -- snapped version"`
 	AlignPts         [BBoxPointsN][]mat32.Vec2 `desc:"potential points of alignment for dragging"`
 	ActiveSprites    map[Sprites]*gi.Sprite    `copy:"-" json:"-" xml:"-" view:"-" desc:"cached only for active sprites during manipulation"`
+	NNodeSprites     int                       `desc:"number of current node sprites in use"`
+	ActivePath       *svg.Path                 `desc:"currently manipulating path object"`
+	PathNodes        []*PathNode               `desc:"current path node points"`
+	PathCmds         []int                     `desc:"current path command indexes within PathNodes -- where the commands start"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
@@ -133,6 +138,20 @@ func (es *EditState) FirstSelectedNode() svg.NodeSVG {
 		}
 	}
 	return nil
+}
+
+// FirstSelectedPath returns the first selected Path, that is not a Group
+// (recurses into groups)
+func (es *EditState) FirstSelectedPath() *svg.Path {
+	fsn := es.FirstSelectedNode()
+	if fsn == nil {
+		return nil
+	}
+	path, ok := fsn.(*svg.Path)
+	if !ok {
+		return nil
+	}
+	return path
 }
 
 // Select selects given item (if not already selected) -- updates select
@@ -255,6 +274,12 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	for itm, ss := range es.Selected {
 		itm.WriteGeom(&ss.InitGeom)
 	}
+}
+
+// DragNodeStart captures the current state at start of node dragging.
+// position is starting position.
+func (es *EditState) DragNodeStart(pos image.Point) {
+	es.DragStartPos = pos
 }
 
 //////////////////////////////////////////////////////

@@ -5,7 +5,6 @@
 package grid
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/goki/gi/gi"
@@ -35,7 +34,6 @@ type TextStyle struct {
 
 func (ts *TextStyle) Update() {
 	// this is called automatically when edited
-	fmt.Printf("set text style!\n")
 	if ts.GridView != nil {
 		ts.GridView.SetTextProps(ts.TextProps())
 		ts.GridView.SetText(ts.Text)
@@ -171,14 +169,13 @@ func (gv *GridView) SetText(txt string) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("SetText", "")
-	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
 		if gv.SetTextNode(itm.(svg.NodeSVG), txt) {
 			break // only set first..
 		}
 	}
-	sv.UpdateEnd(updt)
+	sv.UpdateView(true) // needs full update
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -216,6 +213,21 @@ func (gv *GridView) ConfigTextToolbar() {
 	ts.FontVal.SetSoloValue(reflect.ValueOf(&ts.Font))
 	fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(gi.Node2D)
 	ts.FontVal.ConfigWidget(fw)
+
+	fsz := gi.AddNewSpinBox(tb, "size")
+	fsz.SetValue(ts.Size.Val)
+	fsz.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		ts.Size.Val = fsz.Value
+		ts.Update()
+	})
+
+	fzu := gi.AddNewComboBox(tb, "size-units")
+	fzu.ItemsFromEnum(units.KiT_Units, true, 0)
+	fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		ts.Size.Un = units.Units(fzu.CurIndex)
+		ts.Update()
+	})
+
 }
 
 // UpdateTextToolbar updates the select toolbar based on current selection

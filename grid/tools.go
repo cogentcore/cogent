@@ -47,6 +47,8 @@ func (gv *GridView) SetTool(tl Tools) {
 	gv.EditState.Tool = tl
 	gv.SetModalToolbar()
 	gv.SetStatus("Tool")
+	sv := gv.SVG()
+	sv.UpdateSelect()
 }
 
 // SetModalToolbar sets the current modal toolbar based on tool
