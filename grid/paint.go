@@ -856,6 +856,8 @@ func (pv *PaintView) SetProps(sii svg.NodeSVG) {
 	pv.GridView.SetStrokeNode(sii, pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
 		sii.SetProp("stroke-width", pv.StrokeWidthProp())
+		start, mid, end, sc, mc, ec := pv.MarkerProps()
+		pv.GridView.SetMarkerNode(sii, start, mid, end, sc, mc, ec)
 	}
 	pv.GridView.SetFillNode(sii, pv.FillType, pv.FillType, pv.FillProp())
 }

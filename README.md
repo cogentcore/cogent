@@ -28,14 +28,34 @@ Similar to inkscape in overall layout, and read / write inkscape compatible SVG 
 
 # Status
 
-Minimally functional with making new basic shapes (rect, ellipse) and reshaping anything,
-color, fill and line width editor, and full undo / redo.
+Basic functionality now in place:
+
+* create: rect, ellipse, line, text, import image
+
+* full basic paint settings (gradients, markers, etc), and text properties, editing
+
+* dynamic guide alignment, Align panel
+
+* basic node editor -- can move the main points, not the extra control points
+
+* full undo / redo for everything.
+
+* Preferences (though need to save with svg, optionally)
 
 # TODO:
 
-* Text edit panel -- finish toolbar
+* only move should use bbox -- reshape just use snappoint and then compute delta from there
 
-* control during reshape = square box
+* show selected path node in diff color..  red?
+
+* path set point: change all other points in opposite delta to compensate
+
+* rest of line props -- easy
+
+* dropper = grab style from containsnode, apply to selection -- don't affect selection!
+
+* svg.Node ToPath -- convert any node to a path
+* node editor -- big job but needed for making basic bezier curves..
 
 * esc aborts new el drag
 
@@ -43,7 +63,7 @@ color, fill and line width editor, and full undo / redo.
 
 * changed bit, autosave, prompt before quit
 
-* rest of shortcuts
+* add distribute to Align
 
 * make zoom stay centered on mouse point -- subtract mouse pos then add back..
 
@@ -55,21 +75,17 @@ color, fill and line width editor, and full undo / redo.
 
 * save prefs as "base" thing per inkscape
 
-* svg.Node ToPath -- convert any node to a path
-* node editor -- big job but needed for making basic bezier curves..
-
 * grid -- multiscale if spacing between grid items below some amount, then zoom out grid to 6x larger?
 
 * svg.Text align Center, etc affects different tspans within overall text block
-* svg.Text scale, rotate affects transform -- transform goes into style!
-
-* some kind of mutex hang in undo / redo ?
+* Text edit panel -- finish toolbar
 
 * cut / paste not updating tree reliably.  more tree update debugging fun!
 
 * use grid to render all new icons!
 
 * figure out mask clipping eventually.
+
 
 # LINKS
 

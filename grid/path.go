@@ -6,11 +6,13 @@ package grid
 
 import (
 	"image"
+	"math"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
+	"github.com/goki/ki/ints"
 	"github.com/goki/ki/ki"
 	"github.com/goki/mat32"
 )
@@ -169,35 +171,95 @@ func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt mat32.Vec2
 	}
 }
 
+// SnapPoint does snapping on one raw point, given that point,
+// in window coordinates. returns the snapped point.
+func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
+	es := sv.EditState()
+	snapped := false
+	snpt := rawpt
+	if Prefs.SnapGuide {
+		clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
+		var clPts [2][]BBoxPoints
+		var clVals [2][]mat32.Vec2
+		for ap := BBLeft; ap < BBoxPointsN; ap++ {
+			pts := es.AlignPts[ap]
+			dim := ap.Dim()
+			for _, pt := range pts {
+				pv := pt.Dim(dim)
+				bv := rawpt.Dim(dim)
+				dst := mat32.Abs(pv - bv)
+				if dst < clDst[dim] {
+					clDst[dim] = dst
+					clPts[dim] = []BBoxPoints{ap}
+					clVals[dim] = []mat32.Vec2{pt}
+				} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
+					clPts[dim] = append(clPts[dim], ap)
+					clVals[dim] = append(clVals[dim], pt)
+				}
+			}
+		}
+		var alpts []image.Rectangle
+		var altyps []BBoxPoints
+		for dim := mat32.X; dim <= mat32.Y; dim++ {
+			if len(clVals[dim]) == 0 {
+				continue
+			}
+			bv := rawpt.Dim(dim)
+			sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
+			if snap {
+				snpt.SetDim(dim, sval)
+				mx := ints.MinInt(len(clVals[dim]), 4)
+				for i := 0; i < mx; i++ {
+					pt := clVals[dim][i]
+					rpt := image.Rectangle{}
+					rpt.Min = rawpt.ToPoint()
+					rpt.Max = pt.ToPoint()
+					if dim == mat32.X {
+						rpt.Min.X = rpt.Max.X
+					} else {
+						rpt.Min.Y = rpt.Max.Y
+					}
+					alpts = append(alpts, rpt)
+					altyps = append(altyps, clPts[dim][i])
+				}
+				snapped = true
+			}
+		}
+		sv.ShowAlignMatches(alpts, altyps)
+	}
+	if !snapped && Prefs.SnapGrid {
+		// grinc, groff := sv.GridDots()
+		// todo: moving check Min, else ?
+	}
+	return snpt
+}
+
 // SpriteNodeDrag processes a mouse node drag event on a path node sprite
 func (sv *SVGView) SpriteNodeDrag(spi Sprites, delta image.Point, win *gi.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("NodeAdj", es.ActivePath.Nm)
+		sv.GatherAlignPoints()
 	}
 
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
-	es.DragCurPos = me.Where
-	mdel := es.DragCurPos.Sub(es.DragStartPos)
-	dv := mat32.NewVec2FmPoint(mdel)
-
 	spt := int(spi - SpritesN)
 	pn := es.PathNodes[spt]
 
-	nwc := pn.WinPt.Add(dv) // new window coord
-
-	// todo: snaps..
-	// InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
-	// es.DragSelEffBBox = es.DragSelCurBBox
-	// bbX, bbY := ReshapeBBoxPoints(sp)
+	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
 	// switch {
 	// case me.HasAnyModifier(key.Control):
 	// 	if bbX != BBCenter && bbY != BBMiddle {
 	// 		sv.ConstrainCurBBox(false, bbX, bbY) // reshape
 	// 	}
 	// default:
-	// 	sv.SnapCurBBox(false, bbX, bbY) // reshape
+	snpt := sv.SnapPoint(mat32.NewVec2FmPoint(me.Where))
 	// }
+
+	es.DragCurPos = snpt.ToPoint()
+	mdel := es.DragCurPos.Sub(es.DragStartPos)
+	dv := mat32.NewVec2FmPoint(mdel)
+	nwc := pn.WinPt.Add(dv) // new window coord
 
 	wbmin := mat32.NewVec2FmPoint(es.ActivePath.WinBBox.Min)
 	pt := wbmin.Sub(svoff)

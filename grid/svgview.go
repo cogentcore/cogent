@@ -102,7 +102,7 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	case gi.KeyFunPaste:
 		kt.SetProcessed()
 		sv.GridView.PasteClip()
-	case gi.KeyFunDelete:
+	case gi.KeyFunDelete, gi.KeyFunBackspace:
 		kt.SetProcessed()
 		sv.GridView.DeleteSelected()
 	}
@@ -304,7 +304,7 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 				sv.NewText(es.DragStartPos, me.Where)
 				es.NewTextMade = true
 			case BezierTool:
-				sv.NewElDrag(svg.KiT_Path, es.DragStartPos, me.Where)
+				sv.NewPath(es.DragStartPos, me.Where)
 			}
 		} else {
 			switch {
@@ -586,6 +586,35 @@ func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
 	sv.UpdateView(true)
 	sv.UpdateSelect()
 	// win.SpriteDragging = SpriteNames[ReshapeDnR]
+	return nr
+}
+
+// NewPath makes a new SVG Path element during the drag operation
+func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+	sv.ManipStart("NewPath", "")
+	updt := sv.UpdateStart()
+	sv.SetFullReRender()
+	nr := sv.NewEl(svg.KiT_Path).(*svg.Path)
+	xfi := sv.Pnt.XForm.Inverse()
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
+	minsz := float32(20)
+	pos.SetSubScalar(minsz)
+	pos = xfi.MulVec2AsPt(pos)
+
+	dv := mat32.NewVec2FmPoint(end.Sub(start))
+	sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	sz = xfi.MulVec2AsVec(sz)
+
+	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
+
+	es.SelectAction(nr, mouse.SelectOne)
+	sv.UpdateEnd(updt)
+	sv.UpdateSelSprites()
+	sv.EditState().DragSelStart(start)
+	win.SpriteDragging = SpriteNames[ReshapeDnR]
 	return nr
 }
 

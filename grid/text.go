@@ -223,6 +223,7 @@ func (gv *GridView) ConfigTextToolbar() {
 
 	fzu := gi.AddNewComboBox(tb, "size-units")
 	fzu.ItemsFromEnum(units.KiT_Units, true, 0)
+	fzu.SetCurIndex(int(ts.Size.Un))
 	fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		ts.Size.Un = units.Units(fzu.CurIndex)
 		ts.Update()
@@ -242,4 +243,10 @@ func (gv *GridView) UpdateTextToolbar() {
 
 	// fw := tb.ChildByName("font", 0).(gi.Node2D)
 	ts.FontVal.UpdateWidget()
+
+	fsz := tb.ChildByName("size", 0).(*gi.SpinBox)
+	fsz.SetValue(ts.Size.Val)
+
+	fzu := tb.ChildByName("size-units", 0).(*gi.ComboBox)
+	fzu.SetCurIndex(int(ts.Size.Un))
 }
