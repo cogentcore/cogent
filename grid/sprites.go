@@ -109,7 +109,7 @@ func DrawSpriteSize(spi Sprites, sp *gi.Sprite, bsz int, bbsz image.Point) {
 }
 
 var (
-	LineSpriteScale = float32(10)
+	LineSpriteScale = float32(8)
 	LineSizeMin     = 3
 	LineBorderMin   = 1
 )

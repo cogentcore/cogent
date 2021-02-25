@@ -263,7 +263,7 @@ func (sv *SVGView) SelSpriteEvent(sp Sprites, et oswin.EventType, d interface{})
 		if me.HasAnyModifier(key.Alt) {
 			sv.SpriteRotateDrag(sp, me.Delta(), win)
 		} else {
-			sv.SpriteReshapeDrag(sp, me.Delta(), win, me)
+			sv.SpriteReshapeDrag(sp, win, me)
 		}
 	}
 }

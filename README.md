@@ -44,9 +44,7 @@ Basic functionality now in place:
 
 # TODO:
 
-* only move should use bbox -- reshape just use snappoint and then compute delta from there
-
-* show selected path node in diff color..  red?
+* show selected path node in diff color..  red?  node sel map
 
 * path set point: change all other points in opposite delta to compensate
 

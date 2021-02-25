@@ -66,6 +66,8 @@ func (sv *SVGView) EditState() *EditState {
 
 // UpdateView updates the view, optionally with a full re-render
 func (sv *SVGView) UpdateView(full bool) {
+	wupdt := sv.TopUpdateStart()
+	defer sv.TopUpdateEnd(wupdt)
 	if full {
 		sv.SetFullReRender()
 	}
@@ -289,7 +291,7 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	}
 	if es.HasSelected() {
 		if !es.NewTextMade {
-			sv.DragMove(delta, win, me) // in manip
+			sv.DragMove(win, me) // in manip
 		}
 	} else {
 		if !es.InAction() {

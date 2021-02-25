@@ -52,6 +52,10 @@ func (gv *GridView) Defaults() {
 
 // OpenDrawing opens a new .svg drawing
 func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
+	wupdt := gv.TopUpdateStart()
+	defer gv.TopUpdateEnd(wupdt)
+	updt := gv.UpdateStart()
+	gv.SetFullReRender()
 	gv.Defaults()
 	path, _ := filepath.Abs(string(fnm))
 	gv.FilePath = gi.FileName(path)
@@ -75,8 +79,10 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 	sg.SetTransform()
 	tv := gv.TreeView()
 	tv.CloseAll()
-	tv.Open()
+	tv.ReSync()
 	gv.SetStatus("Opened: " + path)
+	gv.UpdateEnd(updt)
+	tv.CloseAll()
 	return nil
 }
 
