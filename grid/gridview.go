@@ -27,9 +27,8 @@ import (
 // GridView is the Grid SVG vector drawing program: Go-rendered interactive drawing
 type GridView struct {
 	gi.Frame
-	FilePath  gi.FileName  `ext:".svg" desc:"full path to current drawing filename"`
-	Prefs     DrawingPrefs `desc:"current drawing preferences"`
-	EditState EditState    `desc:"current edit state"`
+	FilePath  gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
+	EditState EditState   `desc:"current edit state"`
 }
 
 var KiT_GridView = kit.Types.AddType(&GridView{}, GridViewProps)
@@ -47,7 +46,6 @@ func (g *GridView) CopyFieldsFrom(frm interface{}) {
 }
 
 func (gv *GridView) Defaults() {
-	gv.Prefs = Prefs.Drawing
 }
 
 // OpenDrawing opens a new .svg drawing
@@ -87,10 +85,21 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 }
 
 // NewDrawing opens a new drawing window
-func (gv *GridView) NewDrawing() *GridView {
+func (gv *GridView) NewDrawing(size PhysSize) *GridView {
 	_, ngr := NewGridWindow("")
-	ngr.Defaults()
+	ngr.SetPhysSize(size)
 	return ngr
+}
+
+// SetPhysSize sets physical size of drawing -- the
+func (gv *GridView) SetPhysSize(size PhysSize) {
+	if size.Size.IsNil() {
+		size.SetStdSize(Prefs.Size.StdSize)
+	}
+	sv := gv.SVG()
+	sv.PhysWidth.Set(size.Size.X, size.Units)
+	sv.PhysHeight.Set(size.Size.Y, size.Units)
+	sv.ViewBox.Size = size.Size
 }
 
 // SaveDrawing saves .svg drawing to current filename
@@ -296,6 +305,8 @@ func (gv *GridView) Config() {
 	gv.ConfigTools()
 	gv.ConfigTabs()
 
+	gv.SetPhysSize(Prefs.Size)
+
 	gv.UpdateEnd(updt)
 }
 
@@ -333,10 +344,11 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.UpdateDisp()
 		})
-	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing using default drawing preferences"},
+	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing of specified size"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.NewDrawing()
+			giv.CallMethod(grr, "NewDrawing", grr.ViewportSafe())
+			// grr.NewDrawing()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Open...", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -688,10 +700,6 @@ func (gv *GridView) Redo() string {
 /////////////////////////////////////////////////////////////////////////
 //   Basic infrastructure
 
-func (gv *GridView) EditPrefs() {
-	giv.StructViewDialog(gv.Viewport, &gv.Prefs, giv.DlgOpts{Title: "Grid Prefs"}, nil, nil)
-}
-
 // OpenRecent opens a recently-used file
 func (gv *GridView) OpenRecent(filename gi.FileName) {
 	if string(filename) == GridViewResetRecents {
@@ -795,7 +803,21 @@ var GridViewProps = ki.Props{
 			{"NewDrawing", ki.Props{
 				"shortcut": gi.KeyFunMenuNew,
 				"label":    "New",
-				"desc":     "Create a new drawing using current default preferences.",
+				"desc":     "Create a new drawing of given physical size (size units are used for ViewBox).",
+				"Args": ki.PropSlice{
+					{"Physical Size", ki.Props{
+						"default": Prefs.Size,
+					}},
+				},
+			}},
+			{"SetPhysSize", ki.Props{
+				"label": "Set Size",
+				"desc":  "sets the physical size (size units are used for ViewBox)",
+				"Args": ki.PropSlice{
+					{"Physical Size", ki.Props{
+						"default": Prefs.Size,
+					}},
+				},
 			}},
 			{"SaveDrawing", ki.Props{
 				"shortcut": gi.KeyFunMenuSave,
@@ -825,10 +847,6 @@ var GridViewProps = ki.Props{
 				},
 			}},
 			{"sep-af", ki.BlankProp{}},
-			{"EditPrefs", ki.Props{
-				"label": "Drawing Prefs...",
-			}},
-			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
 		}},
 		{"Edit", ki.PropSlice{

@@ -14,25 +14,33 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[CustomSize-0]
-	_ = x[A4-1]
-	_ = x[USLetter-2]
-	_ = x[USLegal-3]
-	_ = x[A0-4]
-	_ = x[A1-5]
-	_ = x[A2-6]
-	_ = x[A3-7]
-	_ = x[A5-8]
-	_ = x[A6-9]
-	_ = x[A7-10]
-	_ = x[A8-11]
-	_ = x[A9-12]
-	_ = x[A10-13]
-	_ = x[StdSizesN-14]
+	_ = x[Img1280x720-1]
+	_ = x[Img1920x1080-2]
+	_ = x[Img3840x2160-3]
+	_ = x[Img7680x4320-4]
+	_ = x[Img1024x768-5]
+	_ = x[Img720x480-6]
+	_ = x[Img640x480-7]
+	_ = x[Img320x240-8]
+	_ = x[A4-9]
+	_ = x[USLetter-10]
+	_ = x[USLegal-11]
+	_ = x[A0-12]
+	_ = x[A1-13]
+	_ = x[A2-14]
+	_ = x[A3-15]
+	_ = x[A5-16]
+	_ = x[A6-17]
+	_ = x[A7-18]
+	_ = x[A8-19]
+	_ = x[A9-20]
+	_ = x[A10-21]
+	_ = x[StdSizesN-22]
 }
 
-const _StdSizes_name = "CustomSizeA4USLetterUSLegalA0A1A2A3A5A6A7A8A9A10StdSizesN"
+const _StdSizes_name = "CustomSizeImg1280x720Img1920x1080Img3840x2160Img7680x4320Img1024x768Img720x480Img640x480Img320x240A4USLetterUSLegalA0A1A2A3A5A6A7A8A9A10StdSizesN"
 
-var _StdSizes_index = [...]uint8{0, 10, 12, 20, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 48, 57}
+var _StdSizes_index = [...]uint8{0, 10, 21, 33, 45, 57, 68, 78, 88, 98, 100, 108, 115, 117, 119, 121, 123, 125, 127, 129, 131, 133, 136, 145}
 
 func (i StdSizes) String() string {
 	if i < 0 || i >= StdSizes(len(_StdSizes_index)-1) {

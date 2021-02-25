@@ -6,7 +6,6 @@ package grid
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -19,67 +18,31 @@ import (
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
-	"github.com/goki/mat32"
 )
-
-// Preferences for drawing size, etc
-type DrawingPrefs struct {
-	StdSize  StdSizes `desc:"select a standard size -- this will set units and size"`
-	Portrait bool     `desc:"for standard size, use first number as width, second as height"`
-	Units    units.Units
-	Size     mat32.Vec2 `desc:"drawing size, in Units"`
-	Scale    mat32.Vec2 `desc:"drawing scale factor"`
-	GridDisp bool       `desc:"turns on the grid display"`
-	Grid     int        `desc:"grid spacing, in *integer* units of basic Units"`
-}
-
-func (dp *DrawingPrefs) Defaults() {
-	dp.StdSize = CustomSize
-	dp.Units = units.Pt
-	dp.Size.Set(612, 792)
-	dp.Scale.Set(1, 1)
-	dp.GridDisp = true
-	dp.Grid = 12
-}
-
-func (dp *DrawingPrefs) Update() {
-	if dp.StdSize != CustomSize {
-		dp.SetStdSize(dp.StdSize)
-	}
-}
-
-// SetStdSize sets drawing to a standard size
-func (dp *DrawingPrefs) SetStdSize(std StdSizes) error {
-	ssv, has := StdSizesMap[std]
-	if !has {
-		return fmt.Errorf("StdSize: %v not found in StdSizesMap")
-	}
-	dp.StdSize = std
-	dp.Units = ssv.Units
-	dp.Size.X = ssv.X
-	dp.Size.Y = ssv.Y
-	return nil
-}
 
 // Preferences is the overall Grid preferences
 type Preferences struct {
-	Drawing   DrawingPrefs `desc:"default new drawing prefs"`
-	Style     girl.Paint   `desc:"default styles"`
-	SnapGrid  bool         `desc:"snap positions and sizes to underlying grid"`
-	SnapGuide bool         `desc:"snap positions and sizes to line up with other elements"`
-	SnapNodes bool         `desc:"snap node movements to align with guides"`
-	SnapTol   int          `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
-	SplitName SplitName    `desc:"named-split config in use for configuring the splitters"`
-	Changed   bool         `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	Size      PhysSize   `desc:"default physical size, when app is started without opening a file"`
+	Style     girl.Paint `desc:"default styles"`
+	GridDisp  bool       `desc:"turns on the grid display"`
+	Grid      int        `desc:"grid spacing, in *integer* units of basic Units"`
+	SnapGrid  bool       `desc:"snap positions and sizes to underlying grid"`
+	SnapGuide bool       `desc:"snap positions and sizes to line up with other elements"`
+	SnapNodes bool       `desc:"snap node movements to align with guides"`
+	SnapTol   int        `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
+	SplitName SplitName  `desc:"named-split config in use for configuring the splitters"`
+	Changed   bool       `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
 
 func (pr *Preferences) Defaults() {
-	pr.Drawing.Defaults()
+	pr.Size.Defaults()
 	pr.Style.Defaults()
 	pr.Style.FontStyle.Family = "Arial"
 	pr.Style.FontStyle.Size.Set(12, units.Pt)
+	pr.GridDisp = true
+	pr.Grid = 12
 	pr.SnapTol = 3
 	pr.SnapGrid = true
 	pr.SnapGuide = true
@@ -87,8 +50,7 @@ func (pr *Preferences) Defaults() {
 }
 
 func (pr *Preferences) Update() {
-	pr.Drawing.Update()
-	// pr.Style.Update()
+	pr.Size.Update()
 }
 
 // Prefs are the overall Grid preferences

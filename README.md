@@ -44,9 +44,15 @@ Basic functionality now in place:
 
 # TODO:
 
-* show selected path node in diff color..  red?  node sel map
+* only param save in metadata is grid size -- add to svg, set in physical size setting -- add a grid size option to that basically -- init phys size etc with current values, then set in update.  add grid color to prefs.  
 
-* path set point: change all other points in opposite delta to compensate
+* grid -- multiscale if spacing between grid items below some amount, then zoom out grid to 2x larger until has at least 2x tolerance pixels between grids..  grid spacing is just scale xform -- should also compute scale to fit for initial view:
+
+* resize to fit content button
+
+* implement flip and rotate, and also the full transform panel
+
+* show selected path node in diff color..  red?  node sel map
 
 * rest of line props -- easy
 
@@ -68,12 +74,6 @@ Basic functionality now in place:
 * svg render needs to use visibility flag from layers to not render stuff.
 * generic display: flag -- not same as setting visible -- all levels
   need to process that flag.
-
-* resize to fit content button
-
-* save prefs as "base" thing per inkscape
-
-* grid -- multiscale if spacing between grid items below some amount, then zoom out grid to 6x larger?
 
 * svg.Text align Center, etc affects different tspans within overall text block
 * Text edit panel -- finish toolbar

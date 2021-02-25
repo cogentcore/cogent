@@ -523,6 +523,7 @@ func (pv *PaintView) Config(gv *GridView) {
 
 	uncb := gi.AddNewComboBox(wr, "width-units")
 	uncb.ItemsFromEnum(units.KiT_Units, true, 0)
+	uncb.SetCurVal(Prefs.Size.Units)
 	uncb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)

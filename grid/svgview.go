@@ -8,16 +8,21 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/draw"
 	"reflect"
 	"strings"
 
+	"github.com/chewxy/math32"
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/girl"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/cursor"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
+	"github.com/goki/gi/units"
 	"github.com/goki/ki/ints"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
@@ -27,16 +32,21 @@ import (
 // SVGView is the element for viewing, interacting with the SVG
 type SVGView struct {
 	svg.SVG
-	GridView      *GridView  `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
-	Trans         mat32.Vec2 `desc:"view translation offset (from dragging)"`
-	Scale         float32    `desc:"view scaling (from zooming)"`
-	SetDragCursor bool       `view:"-" desc:"has dragging cursor been set yet?"`
+	GridView      *GridView   `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+	Trans         mat32.Vec2  `desc:"view translation offset (from dragging)"`
+	Scale         float32     `desc:"view scaling (from zooming)"`
+	SetDragCursor bool        `view:"-" desc:"has dragging cursor been set yet?"`
+	BgPixels      *image.RGBA `copy:"-" json:"-" xml:"-" view:"-" desc:"background pixels, includes page outline and grid"`
+	BgRender      girl.State  `copy:"-" json:"-" xml:"-" view:"-" desc:"render state for background rendering"`
 }
 
 var KiT_SVGView = kit.Types.AddType(&SVGView{}, SVGViewProps)
 
 var SVGViewProps = ki.Props{
-	"EnumType:Flag": svg.KiT_SVGFlags,
+	"EnumType:Flag":    svg.KiT_SVGFlags,
+	"background-color": gist.White,
+	"border-width":     units.NewDot(1),
+	"border-color":     gist.Black,
 }
 
 // AddNewSVGView adds a new editor to given parent node, with given name.
@@ -44,9 +54,8 @@ func AddNewSVGView(parent ki.Ki, name string, gv *GridView) *SVGView {
 	sv := parent.AddNewChild(KiT_SVGView, name).(*SVGView)
 	sv.GridView = gv
 	sv.Scale = 1
-	sv.Fill = true
+	sv.Fill = false // managed separately
 	sv.Norm = false
-	sv.SetProp("background-color", "white")
 	sv.SetStretchMax()
 	return sv
 }
@@ -346,6 +355,7 @@ func (sv *SVGView) InitScale() {
 func (sv *SVGView) SetTransform() {
 	sv.InitScale()
 	sv.SetProp("transform", fmt.Sprintf("translate(%v,%v) scale(%v,%v)", sv.Trans.X, sv.Trans.Y, sv.Scale, sv.Scale))
+	sv.RenderBg() // needs update
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -658,4 +668,94 @@ func (sv *SVGView) UpdateGradients(gl []*Gradient) {
 		}
 		gr.UpdateGrad(g)
 	}
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Bg render
+
+func (sv *SVGView) Render2D() {
+	if sv.PushBounds() {
+		sv.SetFlag(int(svg.Rendering))
+		sv.This().(gi.Node2D).ConnectEvents2D()
+		sv.FillViewportWithBg()
+		rs := &sv.Render
+		rs.PushXForm(sv.Pnt.XForm)
+		sv.Render2DChildren() // we must do children first, then us!
+		sv.PopBounds()
+		rs.PopXForm()
+		sv.RenderViewport2D() // update our parent image
+		sv.ClearFlag(int(svg.Rendering))
+	}
+}
+
+func (sv *SVGView) FillViewportWithBg() {
+	if sv.EnsureBgSize() {
+		sv.RenderBg()
+	}
+	draw.Draw(sv.Pixels, sv.Pixels.Bounds(), sv.BgPixels, image.ZP, draw.Over) // draw the bg first
+}
+
+// EnsureBgSize ensures Bg is set to the right size -- returns true if resized
+func (sv *SVGView) EnsureBgSize() bool {
+	sz := sv.Pixels.Bounds().Size()
+	if sv.BgPixels != nil {
+		ib := sv.BgPixels.Bounds().Size()
+		if ib == sz {
+			return false
+		}
+	}
+	if sv.BgPixels != nil {
+		sv.BgPixels = nil
+	}
+	sv.BgPixels = image.NewRGBA(image.Rectangle{Max: sz})
+	sv.BgRender.Init(sz.X, sz.Y, sv.BgPixels)
+	return true
+}
+
+// RenderBg renders our background image
+func (sv *SVGView) RenderBg() {
+	st := &sv.Sty
+	rs := &sv.BgRender
+	pc := &rs.Paint
+	sv.EnsureBgSize()
+
+	bb := sv.BgPixels.Bounds()
+
+	draw.Draw(sv.BgPixels, bb, &image.Uniform{st.Font.BgColor.Color}, image.ZP, draw.Src)
+
+	rs.PushBounds(bb)
+	rs.PushXForm(sv.Pnt.XForm)
+
+	pc.StrokeStyle.SetColor(&st.Border.Color)
+	// pc.StrokeStyle.Width = st.Border.Width
+
+	scx, scy := rs.XForm.ExtractScale()
+	sc := 0.5 * (math32.Abs(scx) + math32.Abs(scy))
+
+	wd := 1 / sc
+	pc.StrokeStyle.Width.Dots = wd
+	// pc.FillStyle.SetColor(&st.Font.BgColor)
+	pos := sv.ViewBox.Min
+	// pos = pos.AddScalar(0.5 * wd)
+	sz := sv.ViewBox.Size
+	// sz = sz.SubScalar(wd)
+	pc.FillStyle.SetColor(nil)
+
+	pc.DrawRectangle(rs, pos.X, pos.Y, sz.X, sz.Y)
+	pc.FillStrokeClear(rs)
+
+	if Prefs.GridDisp {
+		gsz := float32(Prefs.Grid)
+		pc.StrokeStyle.SetColor(gist.Color{200, 200, 200, 255})
+		for x := gsz; x < sz.X; x += gsz {
+			pc.DrawLine(rs, x, 0, x, sz.Y)
+		}
+		for y := gsz; y < sz.Y; y += gsz {
+			pc.DrawLine(rs, 0, y, sz.X, y)
+		}
+		pc.FillStrokeClear(rs)
+	}
+
+	rs.PopXForm()
+	rs.PopBounds()
 }

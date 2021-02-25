@@ -160,6 +160,9 @@ func (es *EditState) Select(itm svg.NodeSVG) {
 	idx := len(es.Selected)
 	ss := &SelState{Order: idx}
 	itm.WriteGeom(&ss.InitGeom)
+	if es.Selected == nil {
+		es.ResetSelected()
+	}
 	es.Selected[itm] = ss
 }
 

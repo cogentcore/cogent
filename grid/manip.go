@@ -14,7 +14,6 @@ import (
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
-	"github.com/goki/gi/units"
 	"github.com/goki/ki/ints"
 	"github.com/goki/mat32"
 )
@@ -67,14 +66,12 @@ func (sv *SVGView) ManipUpdate() {
 
 // GridDots is the current grid spacing and offset in dots
 func (sv *SVGView) GridDots() (float32, float32) {
-	grid := sv.GridView.Prefs.Grid
+	grid := Prefs.Grid
 	if grid <= 0 {
 		grid = 12
 	}
-	un := units.NewValue(float32(grid), sv.GridView.Prefs.Units)
-	un.ToDots(&sv.Pnt.UnContext)
-	incr := un.Dots * sv.Scale // our zoom factor
-	// todo: offset!
+	incr := float32(grid) * sv.Scale // our zoom factor
+	// todo: offset from trans, and use wider factor if incr too small
 	return incr, 0
 }
 
