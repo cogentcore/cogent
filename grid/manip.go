@@ -10,6 +10,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/chewxy/math32"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
@@ -64,15 +65,29 @@ func (sv *SVGView) ManipUpdate() {
 	sv.UpdateSig()
 }
 
-// GridDots is the current grid spacing and offset in dots
-func (sv *SVGView) GridDots() (float32, float32) {
-	grid := Prefs.Grid
+// GridDots is the current grid spacing and offsets in dots
+func (sv *SVGView) GridDots() (float32, mat32.Vec2) {
+	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
+	grid := sv.GridEff
 	if grid <= 0 {
 		grid = 12
 	}
-	incr := float32(grid) * sv.Scale // our zoom factor
-	// todo: offset from trans, and use wider factor if incr too small
-	return incr, 0
+	incr := grid * sv.Scale // our zoom factor
+
+	org := mat32.Vec2{}
+	org = sv.Pnt.XForm.MulVec2AsPt(org)
+
+	// fmt.Printf("org: %v\n", org)
+
+	org.SetAdd(svoff)
+	// fmt.Printf("org: %v   svgoff: %v\n", org, svoff)
+
+	org.X = math32.Mod(org.X, incr)
+	org.Y = math32.Mod(org.Y, incr)
+
+	// fmt.Printf("mod org: %v   incr: %v\n", org, incr)
+
+	return incr, org
 }
 
 // SnapToPt snaps value to given potential snap point, in screen pixel units.
@@ -97,66 +112,73 @@ func SnapToIncr(val, off, incr float32) (float32, bool) {
 	return val, false
 }
 
+func (sv *SVGView) SnapPointToGrid(rawpt mat32.Vec2) mat32.Vec2 {
+	if !Prefs.SnapGrid {
+		return rawpt
+	}
+	grinc, groff := sv.GridDots()
+	var snpt mat32.Vec2
+	snpt.X, _ = SnapToIncr(rawpt.X, groff.X, grinc)
+	snpt.Y, _ = SnapToIncr(rawpt.Y, groff.Y, grinc)
+	return snpt
+}
+
 // SnapPoint does snapping on one raw point, given that point,
 // in window coordinates. returns the snapped point.
 func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 	es := sv.EditState()
-	snapped := false
-	snpt := rawpt
-	if Prefs.SnapGuide {
-		clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
-		var clPts [2][]BBoxPoints
-		var clVals [2][]mat32.Vec2
-		for ap := BBLeft; ap < BBoxPointsN; ap++ {
-			pts := es.AlignPts[ap]
-			dim := ap.Dim()
-			for _, pt := range pts {
-				pv := pt.Dim(dim)
-				bv := rawpt.Dim(dim)
-				dst := mat32.Abs(pv - bv)
-				if dst < clDst[dim] {
-					clDst[dim] = dst
-					clPts[dim] = []BBoxPoints{ap}
-					clVals[dim] = []mat32.Vec2{pt}
-				} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
-					clPts[dim] = append(clPts[dim], ap)
-					clVals[dim] = append(clVals[dim], pt)
-				}
-			}
-		}
-		var alpts []image.Rectangle
-		var altyps []BBoxPoints
-		for dim := mat32.X; dim <= mat32.Y; dim++ {
-			if len(clVals[dim]) == 0 {
-				continue
-			}
+	snpt := sv.SnapPointToGrid(rawpt)
+	if !Prefs.SnapGuide {
+		return snpt
+	}
+	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
+	var clPts [2][]BBoxPoints
+	var clVals [2][]mat32.Vec2
+	for ap := BBLeft; ap < BBoxPointsN; ap++ {
+		pts := es.AlignPts[ap]
+		dim := ap.Dim()
+		for _, pt := range pts {
+			pv := pt.Dim(dim)
 			bv := rawpt.Dim(dim)
-			sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
-			if snap {
-				snpt.SetDim(dim, sval)
-				mx := ints.MinInt(len(clVals[dim]), 4)
-				for i := 0; i < mx; i++ {
-					pt := clVals[dim][i]
-					rpt := image.Rectangle{}
-					rpt.Min = rawpt.ToPoint()
-					rpt.Max = pt.ToPoint()
-					if dim == mat32.X {
-						rpt.Min.X = rpt.Max.X
-					} else {
-						rpt.Min.Y = rpt.Max.Y
-					}
-					alpts = append(alpts, rpt)
-					altyps = append(altyps, clPts[dim][i])
-				}
-				snapped = true
+			dst := mat32.Abs(pv - bv)
+			if dst < clDst[dim] {
+				clDst[dim] = dst
+				clPts[dim] = []BBoxPoints{ap}
+				clVals[dim] = []mat32.Vec2{pt}
+			} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
+				clPts[dim] = append(clPts[dim], ap)
+				clVals[dim] = append(clVals[dim], pt)
 			}
 		}
-		sv.ShowAlignMatches(alpts, altyps)
 	}
-	if !snapped && Prefs.SnapGrid {
-		// grinc, groff := sv.GridDots()
-		// todo: moving check Min, else ?
+	var alpts []image.Rectangle
+	var altyps []BBoxPoints
+	for dim := mat32.X; dim <= mat32.Y; dim++ {
+		if len(clVals[dim]) == 0 {
+			continue
+		}
+		bv := rawpt.Dim(dim)
+		sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
+		if snap {
+			snpt.SetDim(dim, sval)
+			mx := ints.MinInt(len(clVals[dim]), 4)
+			for i := 0; i < mx; i++ {
+				pt := clVals[dim][i]
+				rpt := image.Rectangle{}
+				rpt.Min = rawpt.ToPoint()
+				rpt.Max = pt.ToPoint()
+				if dim == mat32.X {
+					rpt.Min.X = rpt.Max.X
+				} else {
+					rpt.Min.Y = rpt.Max.Y
+				}
+				alpts = append(alpts, rpt)
+				altyps = append(altyps, clPts[dim][i])
+			}
+			snapped = true
+		}
 	}
+	sv.ShowAlignMatches(alpts, altyps)
 	return snpt
 }
 
@@ -164,68 +186,61 @@ func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 // aligning movement of bbox edges / centers relative to other bboxes..
 // returns snapped bbox.
 func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
+	if !Prefs.SnapGuide {
+		return rawbb
+	}
 	es := sv.EditState()
-	snapped := false
-
 	snapbb := rawbb
-
-	if Prefs.SnapGuide {
-		clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
-		var clPts [2][]BBoxPoints
-		var clVals [2][]mat32.Vec2
-		var bbval [2]mat32.Vec2
-		for ap := BBLeft; ap < BBoxPointsN; ap++ {
-			bbp := ap.PointBox(rawbb)
-			pts := es.AlignPts[ap]
-			dim := ap.Dim()
-			for _, pt := range pts {
-				pv := pt.Dim(dim)
-				bv := bbp.Dim(dim)
-				dst := mat32.Abs(pv - bv)
-				if dst < clDst[dim] {
-					clDst[dim] = dst
-					clPts[dim] = []BBoxPoints{ap}
-					clVals[dim] = []mat32.Vec2{pt}
-					bbval[dim] = bbp
-				} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
-					clPts[dim] = append(clPts[dim], ap)
-					clVals[dim] = append(clVals[dim], pt)
-				}
+	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
+	var clPts [2][]BBoxPoints
+	var clVals [2][]mat32.Vec2
+	var bbval [2]mat32.Vec2
+	for ap := BBLeft; ap < BBoxPointsN; ap++ {
+		bbp := ap.PointBox(rawbb)
+		pts := es.AlignPts[ap]
+		dim := ap.Dim()
+		for _, pt := range pts {
+			pv := pt.Dim(dim)
+			bv := bbp.Dim(dim)
+			dst := mat32.Abs(pv - bv)
+			if dst < clDst[dim] {
+				clDst[dim] = dst
+				clPts[dim] = []BBoxPoints{ap}
+				clVals[dim] = []mat32.Vec2{pt}
+				bbval[dim] = bbp
+			} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
+				clPts[dim] = append(clPts[dim], ap)
+				clVals[dim] = append(clVals[dim], pt)
 			}
 		}
-		var alpts []image.Rectangle
-		var altyps []BBoxPoints
-		for dim := mat32.X; dim <= mat32.Y; dim++ {
-			if len(clVals[dim]) == 0 {
-				continue
-			}
-			bv := bbval[dim].Dim(dim)
-			sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
-			if snap {
-				clPts[dim][0].MoveDelta(&snapbb, sval-bv)
-				mx := ints.MinInt(len(clVals[dim]), 4)
-				for i := 0; i < mx; i++ {
-					pt := clVals[dim][i]
-					rpt := image.Rectangle{}
-					rpt.Min = bbval[dim].ToPoint()
-					rpt.Max = pt.ToPoint()
-					if dim == mat32.X {
-						rpt.Min.X = rpt.Max.X
-					} else {
-						rpt.Min.Y = rpt.Max.Y
-					}
-					alpts = append(alpts, rpt)
-					altyps = append(altyps, clPts[dim][i])
+	}
+	var alpts []image.Rectangle
+	var altyps []BBoxPoints
+	for dim := mat32.X; dim <= mat32.Y; dim++ {
+		if len(clVals[dim]) == 0 {
+			continue
+		}
+		bv := bbval[dim].Dim(dim)
+		sval, snap := SnapToPt(bv, clVals[dim][0].Dim(dim))
+		if snap {
+			clPts[dim][0].MoveDelta(&snapbb, sval-bv)
+			mx := ints.MinInt(len(clVals[dim]), 4)
+			for i := 0; i < mx; i++ {
+				pt := clVals[dim][i]
+				rpt := image.Rectangle{}
+				rpt.Min = bbval[dim].ToPoint()
+				rpt.Max = pt.ToPoint()
+				if dim == mat32.X {
+					rpt.Min.X = rpt.Max.X
+				} else {
+					rpt.Min.Y = rpt.Max.Y
 				}
-				snapped = true
+				alpts = append(alpts, rpt)
+				altyps = append(altyps, clPts[dim][i])
 			}
 		}
-		sv.ShowAlignMatches(alpts, altyps)
 	}
-	if !snapped && Prefs.SnapGrid {
-		// grinc, groff := sv.GridDots()
-		// todo: moving check Min, else ?
-	}
+	sv.ShowAlignMatches(alpts, altyps)
 	return snapbb
 }
 
@@ -307,8 +322,6 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 	mpt := mat32.NewVec2FmPoint(me.Where)
 	if me.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
-	} else {
-		mpt = sv.SnapPoint(mpt)
 	}
 	dv := mpt.Sub(spt)
 
@@ -316,7 +329,11 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 	es.DragSelCurBBox.Min.SetAdd(dv)
 	es.DragSelCurBBox.Max.SetAdd(dv)
 
-	es.DragSelEffBBox = sv.SnapBBox(es.DragSelCurBBox)
+	es.DragSelEffBBox.Min = sv.SnapPointToGrid(es.DragSelCurBBox.Min)
+	ndv := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
+	es.DragSelEffBBox.Max = es.DragSelStartBBox.Max.Add(ndv)
+
+	es.DragSelEffBBox = sv.SnapBBox(es.DragSelEffBBox)
 
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	tdel := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
@@ -361,34 +378,41 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	if me.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
 		mpt, diag = sv.ConstrainPoint(spt, mpt)
 	}
-	mpt = sv.SnapPoint(mpt)
-
 	dv := mpt.Sub(spt)
-	es.DragSelEffBBox = es.DragSelStartBBox
+	es.DragSelCurBBox = es.DragSelStartBBox
 	if diag {
-		es.DragSelEffBBox = SquareBBox(es.DragSelStartBBox)
+		es.DragSelCurBBox = SquareBBox(es.DragSelStartBBox)
 	}
 	switch sp {
 	case ReshapeUpL:
-		es.DragSelEffBBox.Min.SetAdd(dv)
+		es.DragSelCurBBox.Min.SetAdd(dv)
+		es.DragSelEffBBox.Min = sv.SnapPoint(es.DragSelCurBBox.Min)
 	case ReshapeUpC:
-		es.DragSelEffBBox.Min.Y += dv.Y
+		es.DragSelCurBBox.Min.Y += dv.Y
+		es.DragSelEffBBox.Min.Y = sv.SnapPoint(es.DragSelCurBBox.Min).Y
 	case ReshapeUpR:
-		es.DragSelEffBBox.Min.Y += dv.Y
-		es.DragSelEffBBox.Max.X += dv.X
+		es.DragSelCurBBox.Min.Y += dv.Y
+		es.DragSelEffBBox.Min.Y = sv.SnapPoint(es.DragSelCurBBox.Min).Y
+		es.DragSelCurBBox.Max.X += dv.X
+		es.DragSelEffBBox.Max.X = sv.SnapPoint(es.DragSelCurBBox.Max).X
 	case ReshapeDnL:
-		es.DragSelEffBBox.Min.X += dv.X
-		es.DragSelEffBBox.Max.Y += dv.Y
+		es.DragSelCurBBox.Min.X += dv.X
+		es.DragSelEffBBox.Min.X = sv.SnapPoint(es.DragSelCurBBox.Min).X
+		es.DragSelCurBBox.Max.Y += dv.Y
+		es.DragSelEffBBox.Max.Y = sv.SnapPoint(es.DragSelCurBBox.Max).Y
 	case ReshapeDnC:
-		es.DragSelEffBBox.Max.Y += dv.Y
+		es.DragSelCurBBox.Max.Y += dv.Y
+		es.DragSelEffBBox.Max.Y = sv.SnapPoint(es.DragSelCurBBox.Max).Y
 	case ReshapeDnR:
-		es.DragSelEffBBox.Max.SetAdd(dv)
+		es.DragSelCurBBox.Max.SetAdd(dv)
+		es.DragSelEffBBox.Max = sv.SnapPoint(es.DragSelCurBBox.Max)
 	case ReshapeLfM:
-		es.DragSelEffBBox.Min.X += dv.X
+		es.DragSelCurBBox.Min.X += dv.X
+		es.DragSelEffBBox.Min.X = sv.SnapPoint(es.DragSelCurBBox.Min).X
 	case ReshapeRtM:
-		es.DragSelEffBBox.Max.X += dv.X
+		es.DragSelCurBBox.Max.X += dv.X
+		es.DragSelEffBBox.Max.X = sv.SnapPoint(es.DragSelCurBBox.Max).X
 	}
-	es.DragSelCurBBox = es.DragSelEffBBox
 
 	npos := es.DragSelEffBBox.Min
 	nsz := es.DragSelEffBBox.Size()

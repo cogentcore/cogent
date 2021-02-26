@@ -12,6 +12,7 @@ import (
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/girl"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/svg"
@@ -22,35 +23,39 @@ import (
 
 // Preferences is the overall Grid preferences
 type Preferences struct {
-	Size      PhysSize   `desc:"default physical size, when app is started without opening a file"`
-	Style     girl.Paint `desc:"default styles"`
-	GridDisp  bool       `desc:"turns on the grid display"`
-	Grid      int        `desc:"grid spacing, in *integer* units of basic Units"`
-	SnapGrid  bool       `desc:"snap positions and sizes to underlying grid"`
-	SnapGuide bool       `desc:"snap positions and sizes to line up with other elements"`
-	SnapNodes bool       `desc:"snap node movements to align with guides"`
-	SnapTol   int        `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
-	SplitName SplitName  `desc:"named-split config in use for configuring the splitters"`
-	Changed   bool       `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	Size         PhysSize               `desc:"default physical size, when app is started without opening a file"`
+	Colors       ColorPrefs             `desc:"active color preferences"`
+	ColorSchemes map[string]*ColorPrefs `desc:"named color schemes -- has Light and Dark schemes by default"`
+	Style        girl.Paint             `desc:"default styles"`
+	GridDisp     bool                   `desc:"turns on the grid display"`
+	Grid         float32                `desc:"grid spacing, in units of ViewBox size"`
+	SnapGrid     bool                   `desc:"snap positions and sizes to underlying grid"`
+	SnapGuide    bool                   `desc:"snap positions and sizes to line up with other elements"`
+	SnapNodes    bool                   `desc:"snap node movements to align with guides"`
+	SnapTol      int                    `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
+	SplitName    SplitName              `desc:"named-split config in use for configuring the splitters"`
+	Changed      bool                   `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
 
-func (pr *Preferences) Defaults() {
-	pr.Size.Defaults()
-	pr.Style.Defaults()
-	pr.Style.FontStyle.Family = "Arial"
-	pr.Style.FontStyle.Size.Set(12, units.Pt)
-	pr.GridDisp = true
-	pr.Grid = 12
-	pr.SnapTol = 3
-	pr.SnapGrid = true
-	pr.SnapGuide = true
-	pr.SnapNodes = false
+func (pf *Preferences) Defaults() {
+	pf.Size.Defaults()
+	pf.Colors.Defaults()
+	pf.ColorSchemes = DefaultColorSchemes()
+	pf.Style.Defaults()
+	pf.Style.FontStyle.Family = "Arial"
+	pf.Style.FontStyle.Size.Set(12, units.Pt)
+	pf.GridDisp = true
+	pf.Grid = 12
+	pf.SnapTol = 3
+	pf.SnapGrid = true
+	pf.SnapGuide = true
+	pf.SnapNodes = false
 }
 
-func (pr *Preferences) Update() {
-	pr.Size.Update()
+func (pf *Preferences) Update() {
+	pf.Size.Update()
 }
 
 // Prefs are the overall Grid preferences
@@ -105,6 +110,30 @@ func (pf *Preferences) Save() error {
 	return err
 }
 
+// LightMode sets colors to light mode
+func (pf *Preferences) LightMode() {
+	lc, ok := pf.ColorSchemes["Light"]
+	if !ok {
+		log.Printf("Light ColorScheme not found\n")
+		return
+	}
+	pf.Colors = *lc
+	pf.Save()
+	pf.UpdateAll()
+}
+
+// DarkMode sets colors to dark mode
+func (pf *Preferences) DarkMode() {
+	lc, ok := pf.ColorSchemes["Dark"]
+	if !ok {
+		log.Printf("Dark ColorScheme not found\n")
+		return
+	}
+	pf.Colors = *lc
+	pf.Save()
+	pf.UpdateAll()
+}
+
 // EditSplits opens the SplitsView editor to customize saved splitter settings
 func (pf *Preferences) EditSplits() {
 	SplitsView(&AvailSplits)
@@ -114,6 +143,26 @@ func (pf *Preferences) EditSplits() {
 func (pf *Preferences) VersionInfo() string {
 	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
 	return vinfo
+}
+
+// UpdateAll updates all open windows with current preferences -- triggers
+// rebuild of default styles.
+func (pf *Preferences) UpdateAll() {
+	gist.RebuildDefaultStyles = true
+	gist.ColorSpecCache = nil
+	gist.StyleTemplates = nil
+	// for _, w := range gi.AllWindows {  // no need and just messes stuff up!
+	// 	w.SetSize(w.OSWin.Size())
+	// }
+	// needs another pass through to get it right..
+	for _, w := range gi.AllWindows {
+		w.FullReRender()
+	}
+	gist.RebuildDefaultStyles = false
+	// and another without rebuilding?  yep all are required
+	for _, w := range gi.AllWindows {
+		w.FullReRender()
+	}
 }
 
 // PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
@@ -131,6 +180,9 @@ var PreferencesProps = ki.Props{
 					act.SetActiveState(pf.Changed)
 				}),
 			}},
+			{"sep-color", ki.BlankProp{}},
+			{"LightMode", ki.Props{}},
+			{"DarkMode", ki.Props{}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
 		}},
@@ -146,6 +198,16 @@ var PreferencesProps = ki.Props{
 				act.SetActiveStateUpdt(pf.Changed)
 			}),
 		}},
+		{"sep-color", ki.BlankProp{}},
+		{"LightMode", ki.Props{
+			"desc": "Set color mode to Light mode as defined in ColorSchemes -- automatically does Save and UpdateAll ",
+			"icon": "color",
+		}},
+		{"DarkMode", ki.Props{
+			"desc": "Set color mode to Dark mode as defined in ColorSchemes -- automatically does Save and UpdateAll",
+			"icon": "color",
+		}},
+		{"sep-misc", ki.BlankProp{}},
 		{"VersionInfo", ki.Props{
 			"desc":        "shows current Grid version information",
 			"icon":        "info",
@@ -195,4 +257,102 @@ func OpenPaths() {
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+//   ColorPrefs
+
+// ColorPrefs for
+type ColorPrefs struct {
+	Background gist.Color `desc:"drawing background color"`
+	Border     gist.Color `desc:"border color of the drawing"`
+	Grid       gist.Color `desc:"grid line color"`
+}
+
+var KiT_ColorPrefs = kit.Types.AddType(&ColorPrefs{}, ColorPrefsProps)
+
+func (pf *ColorPrefs) Defaults() {
+	pf.Background = gist.White
+	pf.Border = gist.Black
+	pf.Grid.SetUInt8(220, 220, 220, 255)
+}
+
+func (pf *ColorPrefs) DarkDefaults() {
+	pf.Background = gist.Black
+	pf.Border.SetUInt8(102, 102, 102, 255)
+	pf.Grid.SetUInt8(40, 40, 40, 255)
+}
+
+func DefaultColorSchemes() map[string]*ColorPrefs {
+	cs := map[string]*ColorPrefs{}
+	lc := &ColorPrefs{}
+	lc.Defaults()
+	cs["Light"] = lc
+	dc := &ColorPrefs{}
+	dc.DarkDefaults()
+	cs["Dark"] = dc
+	return cs
+}
+
+// OpenJSON opens colors from a JSON-formatted file.
+func (pf *ColorPrefs) OpenJSON(filename gi.FileName) error {
+	b, err := ioutil.ReadFile(string(filename))
+	if err != nil {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
+		log.Println(err)
+		return err
+	}
+	return json.Unmarshal(b, pf)
+}
+
+// SaveJSON saves colors to a JSON-formatted file.
+func (pf *ColorPrefs) SaveJSON(filename gi.FileName) error {
+	b, err := json.MarshalIndent(pf, "", "  ")
+	if err != nil {
+		log.Println(err) // unlikely
+		return err
+	}
+	err = ioutil.WriteFile(string(filename), b, 0644)
+	if err != nil {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
+		log.Println(err)
+	}
+	return err
+}
+
+// SetToPrefs sets this color scheme as the current active setting in overall
+// default prefs.
+func (pf *ColorPrefs) SetToPrefs() {
+	Prefs.Colors = *pf
+	Prefs.UpdateAll()
+}
+
+// ColorPrefsProps defines the ToolBar
+var ColorPrefsProps = ki.Props{
+	"ToolBar": ki.PropSlice{
+		{"OpenJSON", ki.Props{
+			"label": "Open...",
+			"icon":  "file-open",
+			"desc":  "open set of colors from a json-formatted file",
+			"Args": ki.PropSlice{
+				{"Color File Name", ki.Props{
+					"ext": ".json",
+				}},
+			},
+		}},
+		{"SaveJSON", ki.Props{
+			"label": "Save As...",
+			"desc":  "Saves colors to JSON formatted file.",
+			"icon":  "file-save",
+			"Args": ki.PropSlice{
+				{"Color File Name", ki.Props{
+					"ext": ".json",
+				}},
+			},
+		}},
+		{"SetToPrefs", ki.Props{
+			"desc": "Sets this color scheme as the current active color scheme in Prefs.",
+			"icon": "reset",
+		}},
+	},
 }

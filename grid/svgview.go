@@ -12,10 +12,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/chewxy/math32"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/girl"
-	"github.com/goki/gi/gist"
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/cursor"
@@ -35,24 +33,29 @@ type SVGView struct {
 	GridView      *GridView   `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 	Trans         mat32.Vec2  `desc:"view translation offset (from dragging)"`
 	Scale         float32     `desc:"view scaling (from zooming)"`
+	Grid          float32     `desc:"grid spacing, in native ViewBox units"`
+	GridEff       float32     `view:"inactive" desc:"effective grid spacing given Scale level"`
 	SetDragCursor bool        `view:"-" desc:"has dragging cursor been set yet?"`
 	BgPixels      *image.RGBA `copy:"-" json:"-" xml:"-" view:"-" desc:"background pixels, includes page outline and grid"`
 	BgRender      girl.State  `copy:"-" json:"-" xml:"-" view:"-" desc:"render state for background rendering"`
+	bgTrans       mat32.Vec2  `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered translation"`
+	bgScale       float32     `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered scale"`
+	bgGridEff     float32     `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered grid"`
 }
 
 var KiT_SVGView = kit.Types.AddType(&SVGView{}, SVGViewProps)
 
 var SVGViewProps = ki.Props{
 	"EnumType:Flag":    svg.KiT_SVGFlags,
-	"background-color": gist.White,
+	"background-color": &Prefs.Colors.Background,
 	"border-width":     units.NewDot(1),
-	"border-color":     gist.Black,
 }
 
 // AddNewSVGView adds a new editor to given parent node, with given name.
 func AddNewSVGView(parent ki.Ki, name string, gv *GridView) *SVGView {
 	sv := parent.AddNewChild(KiT_SVGView, name).(*SVGView)
 	sv.GridView = gv
+	sv.Grid = Prefs.Grid
 	sv.Scale = 1
 	sv.Fill = false // managed separately
 	sv.Norm = false
@@ -77,10 +80,13 @@ func (sv *SVGView) EditState() *EditState {
 func (sv *SVGView) UpdateView(full bool) {
 	wupdt := sv.TopUpdateStart()
 	defer sv.TopUpdateEnd(wupdt)
-	if full {
+	if full || sv.BgNeedsUpdate() {
 		sv.SetFullReRender()
 	}
 	sv.UpdateSig()
+	if sv.BgNeedsUpdate() {
+		fmt.Printf("needs update still\n")
+	}
 	sv.UpdateSelSprites()
 }
 
@@ -175,6 +181,25 @@ func (sv *SVGView) MouseDrag() {
 	})
 }
 
+// ZoomAt updates the scale and translate parameters at given point
+// by given delta (+ means zoom in, - means zoom out -- delta should always be < 1)
+func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
+	sc := float32(1)
+	if delta > 1 {
+		sc += delta
+	} else {
+		sc *= (1 - mat32.Min(-delta, .5))
+	}
+	mpt := mat32.NewVec2FmPoint(pt.Sub(sv.WinBBox.Min))
+	mxi := sv.Pnt.XForm.Inverse()
+	lpt := mxi.MulVec2AsPt(mpt)
+	xf := mat32.Scale2D(sc, sc)
+
+	ntrans := xf.MulVec2AsPtCtr(sv.Trans, lpt)
+	sv.Trans = ntrans
+	sv.Scale = sc * sv.Scale
+}
+
 func (sv *SVGView) MouseScroll() {
 	sv.ConnectEvent(oswin.MouseScrollEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
 		me := d.(*mouse.ScrollEvent)
@@ -184,11 +209,13 @@ func (sv *SVGView) MouseScroll() {
 			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
 			ssvg.SetDragCursor = false
 		}
-		ssvg.InitScale()
-		ssvg.Scale += float32(me.NonZeroDelta(false)) / 20
-		if ssvg.Scale <= 0 {
-			ssvg.Scale = 0.01
-		}
+		delta := float32(me.NonZeroDelta(false)) / 20
+		sv.ZoomAt(me.Where, delta)
+		// ssvg.InitScale()
+		// ssvg.Scale +=
+		// if ssvg.Scale <= 0 {
+		// 	ssvg.Scale = 0.01
+		// }
 		ssvg.SetTransform()
 		ssvg.UpdateView(true)
 	})
@@ -355,7 +382,6 @@ func (sv *SVGView) InitScale() {
 func (sv *SVGView) SetTransform() {
 	sv.InitScale()
 	sv.SetProp("transform", fmt.Sprintf("translate(%v,%v) scale(%v,%v)", sv.Trans.X, sv.Trans.Y, sv.Scale, sv.Scale))
-	sv.RenderBg() // needs update
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -688,8 +714,14 @@ func (sv *SVGView) Render2D() {
 	}
 }
 
+func (sv *SVGView) BgNeedsUpdate() bool {
+	updt := sv.EnsureBgSize() || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.GridEff != sv.bgGridEff)
+	// fmt.Printf("updt: %v\n", updt)
+	return updt
+}
+
 func (sv *SVGView) FillViewportWithBg() {
-	if sv.EnsureBgSize() {
+	if sv.BgNeedsUpdate() {
 		sv.RenderBg()
 	}
 	draw.Draw(sv.Pixels, sv.Pixels.Bounds(), sv.BgPixels, image.ZP, draw.Over) // draw the bg first
@@ -712,41 +744,47 @@ func (sv *SVGView) EnsureBgSize() bool {
 	return true
 }
 
+// UpdateGridEff updates the GirdEff value based on current scale
+func (sv *SVGView) UpdateGridEff() {
+	sv.GridEff = sv.Grid
+	sp := sv.GridEff * sv.Scale
+	for sp <= 2*(float32(Prefs.SnapTol)+1) {
+		sv.GridEff *= 2
+		sp = sv.GridEff * sv.Scale
+	}
+}
+
 // RenderBg renders our background image
 func (sv *SVGView) RenderBg() {
-	st := &sv.Sty
 	rs := &sv.BgRender
 	pc := &rs.Paint
 	sv.EnsureBgSize()
 
+	sv.UpdateGridEff()
+
 	bb := sv.BgPixels.Bounds()
 
-	draw.Draw(sv.BgPixels, bb, &image.Uniform{st.Font.BgColor.Color}, image.ZP, draw.Src)
+	draw.Draw(sv.BgPixels, bb, &image.Uniform{Prefs.Colors.Background}, image.ZP, draw.Src)
 
 	rs.PushBounds(bb)
 	rs.PushXForm(sv.Pnt.XForm)
 
-	pc.StrokeStyle.SetColor(&st.Border.Color)
-	// pc.StrokeStyle.Width = st.Border.Width
+	pc.StrokeStyle.SetColor(&Prefs.Colors.Border)
 
-	scx, scy := rs.XForm.ExtractScale()
-	sc := 0.5 * (math32.Abs(scx) + math32.Abs(scy))
+	sc := sv.Scale
 
 	wd := 1 / sc
 	pc.StrokeStyle.Width.Dots = wd
-	// pc.FillStyle.SetColor(&st.Font.BgColor)
 	pos := sv.ViewBox.Min
-	// pos = pos.AddScalar(0.5 * wd)
 	sz := sv.ViewBox.Size
-	// sz = sz.SubScalar(wd)
 	pc.FillStyle.SetColor(nil)
 
 	pc.DrawRectangle(rs, pos.X, pos.Y, sz.X, sz.Y)
 	pc.FillStrokeClear(rs)
 
 	if Prefs.GridDisp {
-		gsz := float32(Prefs.Grid)
-		pc.StrokeStyle.SetColor(gist.Color{200, 200, 200, 255})
+		gsz := float32(sv.GridEff)
+		pc.StrokeStyle.SetColor(&Prefs.Colors.Grid)
 		for x := gsz; x < sz.X; x += gsz {
 			pc.DrawLine(rs, x, 0, x, sz.Y)
 		}
@@ -755,6 +793,10 @@ func (sv *SVGView) RenderBg() {
 		}
 		pc.FillStrokeClear(rs)
 	}
+
+	sv.bgTrans = sv.Trans
+	sv.bgScale = sv.Scale
+	sv.bgGridEff = sv.GridEff
 
 	rs.PopXForm()
 	rs.PopBounds()

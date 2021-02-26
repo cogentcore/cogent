@@ -46,9 +46,7 @@ Basic functionality now in place:
 
 * only param save in metadata is grid size -- add to svg, set in physical size setting -- add a grid size option to that basically -- init phys size etc with current values, then set in update.  add grid color to prefs.  
 
-* grid -- multiscale if spacing between grid items below some amount, then zoom out grid to 2x larger until has at least 2x tolerance pixels between grids..  grid spacing is just scale xform -- should also compute scale to fit for initial view:
-
-* resize to fit content button
+* resize to fit content button -- two versions: resize doc phys size to fit bbox and rescale view to fit bbox or page..
 
 * implement flip and rotate, and also the full transform panel
 
@@ -68,8 +66,6 @@ Basic functionality now in place:
 * changed bit, autosave, prompt before quit
 
 * add distribute to Align
-
-* make zoom stay centered on mouse point -- subtract mouse pos then add back..
 
 * svg render needs to use visibility flag from layers to not render stuff.
 * generic display: flag -- not same as setting visible -- all levels

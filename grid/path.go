@@ -204,7 +204,9 @@ func (sv *SVGView) SpriteNodeDrag(spi Sprites, win *gi.Window, me *mouse.DragEve
 	if me.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
 	}
-	mpt = sv.SnapPoint(mpt)
+	if Prefs.SnapNodes {
+		mpt = sv.SnapPoint(mpt)
+	}
 
 	es.DragCurPos = mpt.ToPoint()
 	mdel := es.DragCurPos.Sub(es.DragStartPos)
