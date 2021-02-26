@@ -257,7 +257,14 @@ func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string)
 			pstr := kit.ToString(sii.Prop("fill"))
 			svg.DeleteNodeGradient(sii, pstr)
 		}
-		sii.SetProp("fill", fp)
+		if fp[0] == '#' && len(fp) == 9 {
+			sii.SetProp("fill", fp[:7]) // exclude alpha
+			alphai := 0
+			fmt.Sscanf(fp[7:], "%02x", &alphai)
+			sii.SetProp("fill-opacity", fmt.Sprintf("%g", float32(alphai)/255))
+		} else {
+			sii.SetProp("fill", fp)
+		}
 	}
 	gv.UpdateMarkerColors(sii)
 }

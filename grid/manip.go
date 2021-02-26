@@ -175,7 +175,6 @@ func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 				alpts = append(alpts, rpt)
 				altyps = append(altyps, clPts[dim][i])
 			}
-			snapped = true
 		}
 	}
 	sv.ShowAlignMatches(alpts, altyps)

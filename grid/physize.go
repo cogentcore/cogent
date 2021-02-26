@@ -18,42 +18,72 @@ type PhysSize struct {
 	Portrait bool        `desc:"for standard size, use first number as width, second as height"`
 	Units    units.Units `desc:"default units to use, e.g., in line widths etc"`
 	Size     mat32.Vec2  `desc:"drawing size, in Units"`
+	Grid     float32     `desc:"grid spacing, in units of ViewBox size"`
 }
 
 var KiT_PhysSize = kit.Types.AddType(&PhysSize{}, nil)
 
-func (dp *PhysSize) Defaults() {
-	dp.StdSize = Img1280x720
-	dp.Units = units.Px
-	dp.Size.Set(1280, 720)
+func (ps *PhysSize) Defaults() {
+	ps.StdSize = Img1280x720
+	ps.Units = units.Px
+	ps.Size.Set(1280, 720)
+	ps.Grid = 12
 }
 
-func (dp *PhysSize) Update() {
-	if dp.StdSize != CustomSize {
-		dp.SetToStdSize()
+func (ps *PhysSize) Update() {
+	if ps.StdSize != CustomSize {
+		ps.SetToStdSize()
 	}
 }
 
 // SetStdSize sets drawing to a standard size
-func (dp *PhysSize) SetStdSize(std StdSizes) error {
-	dp.StdSize = std
-	return dp.SetToStdSize()
+func (ps *PhysSize) SetStdSize(std StdSizes) error {
+	ps.StdSize = std
+	return ps.SetToStdSize()
 }
 
 // SetToStdSize sets drawing to the current standard size value
-func (dp *PhysSize) SetToStdSize() error {
-	ssv, has := StdSizesMap[dp.StdSize]
+func (ps *PhysSize) SetToStdSize() error {
+	ssv, has := StdSizesMap[ps.StdSize]
 	if !has {
 		return fmt.Errorf("StdSize: %v not found in StdSizesMap")
 	}
-	dp.Units = ssv.Units
-	dp.Size.X = ssv.X
-	dp.Size.Y = ssv.Y
+	ps.Units = ssv.Units
+	ps.Size.X = ssv.X
+	ps.Size.Y = ssv.Y
 	return nil
+}
+
+// SetFromSVG sets from svg
+func (ps *PhysSize) SetFromSVG(sv *SVGView) {
+	ps.Size.X = sv.PhysWidth.Val
+	ps.Units = sv.PhysWidth.Un
+	ps.Size.Y = sv.PhysHeight.Val
+	ps.Grid = sv.Grid
+	ps.StdSize = MatchStdSize(ps.Size.X, ps.Size.Y, ps.Units)
+}
+
+// SetToSVG sets svg from us
+func (ps *PhysSize) SetToSVG(sv *SVGView) {
+	sv.PhysWidth.Set(ps.Size.X, ps.Units)
+	sv.PhysHeight.Set(ps.Size.Y, ps.Units)
+	sv.ViewBox.Size = ps.Size
+	sv.Grid = ps.Grid
 }
 
 // StdSizes are standard physical drawing sizes
 type StdSizes int
+
+func MatchStdSize(wd, ht float32, un units.Units) StdSizes {
+	trgl := StdSizeVals{Units: un, X: wd, Y: ht}
+	trgp := StdSizeVals{Units: un, X: ht, Y: wd}
+	for k, v := range StdSizesMap {
+		if *v == trgl || *v == trgp {
+			return k
+		}
+	}
+	return CustomSize
+}
 
 const (
 	// CustomSize =  nonstandard

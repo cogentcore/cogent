@@ -71,35 +71,53 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 	gv.EditState.Gradients = sg.Gradients()
 	sg.GatherIds() // also ensures uniqueness, key for json saving
 	sg.SetNormXForm()
-	scx, scy := sg.Pnt.XForm.ExtractScale()
-	sg.Scale = 0.5 * (scx + scy)
-	sg.Trans.Set(0, 0)
-	sg.SetTransform()
 	tv := gv.TreeView()
 	tv.CloseAll()
 	tv.ReSync()
 	gv.SetStatus("Opened: " + path)
 	gv.UpdateEnd(updt)
 	tv.CloseAll()
+	sg.FitInView(false)
+	sg.ReadMetaData()
+	sg.SetTransform()
+	sg.bgGridEff = 0
+	sg.UpdateView(true)
 	return nil
 }
 
 // NewDrawing opens a new drawing window
-func (gv *GridView) NewDrawing(size PhysSize) *GridView {
+func (gv *GridView) NewDrawing(sz PhysSize) *GridView {
 	_, ngr := NewGridWindow("")
-	ngr.SetPhysSize(size)
+	ngr.SetPhysSize(&sz)
 	return ngr
 }
 
-// SetPhysSize sets physical size of drawing -- the
-func (gv *GridView) SetPhysSize(size PhysSize) {
-	if size.Size.IsNil() {
-		size.SetStdSize(Prefs.Size.StdSize)
+// PromptPhysSize prompts for physical size of drawing and sets it
+func (gv *GridView) PromptPhysSize() {
+	sv := gv.SVG()
+	sz := &PhysSize{}
+	sz.SetFromSVG(sv)
+	giv.StructViewDialog(gv.Viewport, sz, giv.DlgOpts{Title: "SVG Physical Size", Ok: true, Cancel: true}, gv.This(),
+		func(recv, send ki.Ki, sig int64, d interface{}) {
+			if sig == int64(gi.DialogAccepted) {
+				gv.SetPhysSize(sz)
+				sv.bgGridEff = -1
+				sv.UpdateView(true)
+			}
+		})
+}
+
+// SetPhysSize sets physical size of drawing
+func (gv *GridView) SetPhysSize(sz *PhysSize) {
+	if sz == nil {
+		return
+	}
+	if sz.Size.IsNil() {
+		sz.SetStdSize(Prefs.Size.StdSize)
 	}
 	sv := gv.SVG()
-	sv.PhysWidth.Set(size.Size.X, size.Units)
-	sv.PhysHeight.Set(size.Size.Y, size.Units)
-	sv.ViewBox.Size = size.Size
+	sz.SetToSVG(sv)
+	sv.SetMetaData()
 }
 
 // SaveDrawing saves .svg drawing to current filename
@@ -110,6 +128,7 @@ func (gv *GridView) SaveDrawing() error {
 	}
 	sg := gv.SVG()
 	sg.RemoveOrphanedDefs()
+	sg.SetMetaData()
 	err := sg.SaveXML(gv.FilePath)
 	if err != nil && err != io.EOF {
 		log.Println(err)
@@ -129,6 +148,7 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	SavePaths()
 	sg := gv.SVG()
 	sg.RemoveOrphanedDefs()
+	sg.SetMetaData()
 	err := sg.SaveXML(gi.FileName(path))
 	if err != nil && err != io.EOF {
 		log.Println(err)
@@ -166,6 +186,7 @@ func (gv *GridView) SetModalSelect() {
 	tbs := gv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
 	tbs.SetFullReRender()
+	gv.UpdateSelectToolbar()
 	idx, _ := tbs.Kids.IndexByName("select-tb", 0)
 	tbs.StackTop = idx
 	tbs.UpdateEnd(updt)
@@ -176,6 +197,7 @@ func (gv *GridView) SetModalNode() {
 	tbs := gv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
 	tbs.SetFullReRender()
+	gv.UpdateNodeToolbar()
 	idx, _ := tbs.Kids.IndexByName("node-tb", 1)
 	tbs.StackTop = idx
 	tbs.UpdateEnd(updt)
@@ -186,6 +208,7 @@ func (gv *GridView) SetModalText() {
 	tbs := gv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
 	tbs.SetFullReRender()
+	gv.UpdateTextToolbar()
 	idx, _ := tbs.Kids.IndexByName("text-tb", 2)
 	tbs.StackTop = idx
 	tbs.UpdateEnd(updt)
@@ -305,7 +328,7 @@ func (gv *GridView) Config() {
 	gv.ConfigTools()
 	gv.ConfigTabs()
 
-	gv.SetPhysSize(Prefs.Size)
+	gv.SetPhysSize(&Prefs.Size)
 
 	gv.UpdateEnd(updt)
 }
@@ -347,8 +370,13 @@ func (gv *GridView) ConfigMainToolbar() {
 	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing of specified size"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
-			giv.CallMethod(grr, "NewDrawing", grr.ViewportSafe())
-			// grr.NewDrawing()
+			ndr := grr.NewDrawing(Prefs.Size)
+			ndr.PromptPhysSize()
+		})
+	tb.AddAction(gi.ActOpts{Label: "Size...", Icon: "gear", Tooltip: "set size and grid spacing of drawing"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.PromptPhysSize()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Open...", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -403,6 +431,12 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "AddImage", grr.ViewportSafe())
 		})
+	tb.AddSeparator("sep-view")
+	tb.AddAction(gi.ActOpts{Label: "Zoom All", Icon: "zoom-out", Tooltip: "zoom to see entire contents"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.SVG().FitInView(false)
+		})
 }
 
 func (gv *GridView) ConfigModalToolbar() {
@@ -412,9 +446,11 @@ func (gv *GridView) ConfigModalToolbar() {
 	}
 	tb.SetStretchMaxWidth()
 	gi.AddNewToolBar(tb, "select-tb")
+	gi.AddNewToolBar(tb, "node-tb")
 	gi.AddNewToolBar(tb, "text-tb")
 
 	gv.ConfigSelectToolbar()
+	gv.ConfigNodeToolbar()
 	gv.ConfigTextToolbar()
 }
 
@@ -810,14 +846,9 @@ var GridViewProps = ki.Props{
 					}},
 				},
 			}},
-			{"SetPhysSize", ki.Props{
+			{"PromptPhysSize", ki.Props{
 				"label": "Set Size",
 				"desc":  "sets the physical size (size units are used for ViewBox)",
-				"Args": ki.PropSlice{
-					{"Physical Size", ki.Props{
-						"default": Prefs.Size,
-					}},
-				},
 			}},
 			{"SaveDrawing", ki.Props{
 				"shortcut": gi.KeyFunMenuSave,

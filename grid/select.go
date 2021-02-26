@@ -166,11 +166,11 @@ func (gv *GridView) UpdateSelectToolbar() {
 	if !es.HasSelected() {
 		return
 	}
-	sz := es.DragSelCurBBox.Size()
+	sz := es.DragSelEffBBox.Size()
 	px := tb.ChildByName("posx", 8).(*gi.SpinBox)
-	px.SetValue(es.DragSelCurBBox.Min.X)
+	px.SetValue(es.DragSelEffBBox.Min.X)
 	py := tb.ChildByName("posy", 9).(*gi.SpinBox)
-	py.SetValue(es.DragSelCurBBox.Min.Y)
+	py.SetValue(es.DragSelEffBBox.Min.Y)
 	wd := tb.ChildByName("width", 10).(*gi.SpinBox)
 	wd.SetValue(sz.X)
 	ht := tb.ChildByName("height", 11).(*gi.SpinBox)

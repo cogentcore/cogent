@@ -5,9 +5,11 @@
 package grid
 
 import (
+	"fmt"
 	"image"
 
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/gist"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
@@ -16,7 +18,105 @@ import (
 	"github.com/goki/mat32"
 )
 
-// node = path
+func (gv *GridView) NodeToolbar() *gi.ToolBar {
+	tbs := gv.ModalToolbarStack()
+	tb := tbs.ChildByName("node-tb", 0).(*gi.ToolBar)
+	return tb
+}
+
+// ConfigNodeToolbar configures the node modal toolbar (default tooblar)
+func (gv *GridView) ConfigNodeToolbar() {
+	tb := gv.NodeToolbar()
+	if tb.HasChildren() {
+		return
+	}
+	tb.SetStretchMaxWidth()
+
+	grs := gi.AddNewCheckBox(tb, "snap-node")
+	grs.SetText("Snap Node")
+	grs.Tooltip = "snap movement and sizing of nodes, using overall snap settings"
+	grs.SetChecked(Prefs.SnapNodes)
+	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.ButtonToggled) {
+			Prefs.SnapNodes = grs.IsChecked()
+		}
+	})
+
+	tb.AddSeparator("sep-snap")
+
+	// tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
+	// 	gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	// 		grr := recv.Embed(KiT_GridView).(*GridView)
+	// 		grr.SelGroup()
+	// 	})
+	//
+	// tb.AddSeparator("sep-group")
+
+	gi.AddNewLabel(tb, "posx-lab", "X: ").SetProp("vertical-align", gist.AlignMiddle)
+	px := gi.AddNewSpinBox(tb, "posx")
+	px.SetProp("step", 1)
+	px.SetValue(0)
+	px.Tooltip = "horizontal coordinate of node, in document units"
+	px.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		grr := recv.Embed(KiT_GridView).(*GridView)
+		grr.NodeSetXPos(px.Value)
+	})
+
+	gi.AddNewLabel(tb, "posy-lab", "Y: ").SetProp("vertical-align", gist.AlignMiddle)
+	py := gi.AddNewSpinBox(tb, "posy")
+	py.SetProp("step", 1)
+	py.SetValue(0)
+	py.Tooltip = "vertical coordinate of node, in document units"
+	py.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		grr := recv.Embed(KiT_GridView).(*GridView)
+		grr.NodeSetYPos(py.Value)
+	})
+
+}
+
+// NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
+func (gv *GridView) NodeEnableFunc(act *gi.Action) {
+	// es := &gv.EditState
+	// act.SetInactiveState(!es.HasNodeed())
+}
+
+// UpdateNodeToolbar updates the node toolbar based on current nodeion
+func (gv *GridView) UpdateNodeToolbar() {
+	tb := gv.NodeToolbar()
+	tb.UpdateActions()
+	es := &gv.EditState
+	if es.Tool != NodeTool {
+		return
+	}
+	px := tb.ChildByName("posx", 8).(*gi.SpinBox)
+	px.SetValue(es.DragSelCurBBox.Min.X)
+	py := tb.ChildByName("posy", 9).(*gi.SpinBox)
+	py.SetValue(es.DragSelCurBBox.Min.Y)
+}
+
+///////////////////////////////////////////////////////////////////////
+//   Actions
+
+func (gv *GridView) NodeSetXPos(xp float32) {
+	es := &gv.EditState
+	if !es.HasSelected() {
+		return
+	}
+	sv := gv.SVG()
+	sv.UndoSave("NodeToX", fmt.Sprintf("%g", xp))
+}
+
+func (gv *GridView) NodeSetYPos(yp float32) {
+	es := &gv.EditState
+	if !es.HasSelected() {
+		return
+	}
+	sv := gv.SVG()
+	sv.UndoSave("NodeToY", fmt.Sprintf("%g", yp))
+}
+
+//////////////////////////////////////////////////////////////////////////
+//  PathNode
 
 // PathNode is info about each node in a path that is being edited
 type PathNode struct {
@@ -95,6 +195,8 @@ func (sv *SVGView) UpdateNodeSprites() {
 			win.DeleteSprite(sp.Name)
 		}
 	}
+
+	sv.GridView.UpdateNodeToolbar()
 
 	win.RenderOverlays()
 }

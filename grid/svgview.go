@@ -55,7 +55,7 @@ var SVGViewProps = ki.Props{
 func AddNewSVGView(parent ki.Ki, name string, gv *GridView) *SVGView {
 	sv := parent.AddNewChild(KiT_SVGView, name).(*SVGView)
 	sv.GridView = gv
-	sv.Grid = Prefs.Grid
+	sv.Grid = Prefs.Size.Grid
 	sv.Scale = 1
 	sv.Fill = false // managed separately
 	sv.Norm = false
@@ -366,22 +366,126 @@ func (sv *SVGView) ConnectEvents2D() {
 	sv.SVGViewEvents()
 }
 
-// InitScale ensures that Scale is initialized and non-zero
-func (sv *SVGView) InitScale() {
-	if sv.Scale == 0 {
-		mvp := sv.ViewportSafe()
-		if mvp != nil {
-			sv.Scale = sv.ParentWindow().LogicalDPI() / 96.0
-		} else {
-			sv.Scale = 1
+// ContentsBBox returns the object-level box of the entire contents
+func (sv *SVGView) ContentsBBox() mat32.Box2 {
+	bbox := mat32.Box2{}
+	bbox.SetEmpty()
+	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+		sni, issv := k.(svg.NodeSVG)
+		if !issv {
+			return ki.Break
 		}
+		sn := sni.AsSVGNode()
+		bb := mat32.Box2{}
+		bb.SetFromRect(sn.BBox)
+		bbox.ExpandByBox(bb)
+		return ki.Continue
+	})
+	return bbox
+}
+
+// FitInView sets the scale to fit the current contents into view
+func (sv *SVGView) FitInView(width bool) {
+	bb := sv.ContentsBBox()
+	bsz := bb.Size()
+	if bsz.X <= 0 || bsz.Y <= 0 {
+		return
+	}
+	vb := sv.ViewBox.Size
+	sc := vb.Div(bsz)
+	if width {
+		sv.Scale = sc.X
+	} else {
+		sv.Scale = mat32.Min(sc.X, sc.Y)
 	}
 }
 
 // SetTransform sets the transform based on Trans and Scale values
 func (sv *SVGView) SetTransform() {
-	sv.InitScale()
 	sv.SetProp("transform", fmt.Sprintf("translate(%v,%v) scale(%v,%v)", sv.Trans.X, sv.Trans.Y, sv.Scale, sv.Scale))
+}
+
+// MetaData returns the overall metadata and grid if present.
+// if mknew is true, it will create new ones if not found.
+func (sv *SVGView) MetaData(mknew bool) (main, grid *gi.MetaData2D) {
+	if sv.NumChildren() > 0 {
+		kd := sv.Kids[0]
+		if md, ismd := kd.(*gi.MetaData2D); ismd {
+			main = md
+		}
+	}
+	if main == nil && mknew {
+		id := sv.NewUniqueId()
+		main = sv.InsertNewChild(gi.KiT_MetaData2D, 0, svg.NameId("namedview", id)).(*gi.MetaData2D)
+	}
+	if main == nil {
+		return
+	}
+	if main.NumChildren() > 0 {
+		kd := main.Kids[0]
+		if md, ismd := kd.(*gi.MetaData2D); ismd {
+			grid = md
+		}
+	}
+	if grid == nil && mknew {
+		id := sv.NewUniqueId()
+		grid = main.InsertNewChild(gi.KiT_MetaData2D, 0, svg.NameId("grid", id)).(*gi.MetaData2D)
+	}
+	return
+}
+
+// SetMetaData sets meta data of drawing
+func (sv *SVGView) SetMetaData() {
+	es := sv.EditState()
+	nv, gr := sv.MetaData(true)
+
+	uts := strings.ToLower(sv.PhysWidth.Un.String())
+
+	nv.SetProp("current-layer", es.CurLayer)
+	nv.SetProp("cx", fmt.Sprintf("%g", sv.Trans.X))
+	nv.SetProp("cy", fmt.Sprintf("%g", sv.Trans.Y))
+	nv.SetProp("zoom", fmt.Sprintf("%g", sv.Scale))
+	nv.SetProp("document-units", uts)
+
+	spc := fmt.Sprintf("%g", sv.Grid)
+	gr.SetProp("spacingx", spc)
+	gr.SetProp("spacingy", spc)
+	gr.SetProp("type", "xygrid")
+	gr.SetProp("units", uts)
+}
+
+// ReadMetaData reads meta data of drawing
+func (sv *SVGView) ReadMetaData() {
+	es := sv.EditState()
+	nv, gr := sv.MetaData(false)
+	if nv == nil {
+		return
+	}
+	if cx := nv.Prop("cx"); cx != nil {
+		sv.Trans.X, _ = kit.ToFloat32(cx)
+	}
+	if cy := nv.Prop("cy"); cy != nil {
+		sv.Trans.Y, _ = kit.ToFloat32(cy)
+	}
+	if zm := nv.Prop("zoom"); zm != nil {
+		sc, _ := kit.ToFloat32(zm)
+		if sc > 0 {
+			sv.Scale = sc
+		}
+	}
+	if cl := nv.Prop("current-layer"); cl != nil {
+		es.CurLayer = kit.ToString(cl)
+	}
+
+	if gr == nil {
+		return
+	}
+	if gs := gr.Prop("spacingx"); gs != nil {
+		gv, _ := kit.ToFloat32(gs)
+		if gv > 0 {
+			sv.Grid = gv
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////

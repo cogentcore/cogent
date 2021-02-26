@@ -249,10 +249,9 @@ func (es *EditState) UpdateSelBBox() {
 	bbox := mat32.Box2{}
 	bbox.SetEmpty()
 	for itm := range es.Selected {
-		bb := mat32.Box2{}
 		g := itm.AsSVGNode()
-		bb.Min.Set(float32(g.WinBBox.Min.X), float32(g.WinBBox.Min.Y))
-		bb.Max.Set(float32(g.WinBBox.Max.X), float32(g.WinBBox.Max.Y))
+		bb := mat32.Box2{}
+		bb.SetFromRect(g.WinBBox)
 		bbox.ExpandByBox(bb)
 	}
 	es.SelBBox = bbox

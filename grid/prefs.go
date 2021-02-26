@@ -28,7 +28,6 @@ type Preferences struct {
 	ColorSchemes map[string]*ColorPrefs `desc:"named color schemes -- has Light and Dark schemes by default"`
 	Style        girl.Paint             `desc:"default styles"`
 	GridDisp     bool                   `desc:"turns on the grid display"`
-	Grid         float32                `desc:"grid spacing, in units of ViewBox size"`
 	SnapGrid     bool                   `desc:"snap positions and sizes to underlying grid"`
 	SnapGuide    bool                   `desc:"snap positions and sizes to line up with other elements"`
 	SnapNodes    bool                   `desc:"snap node movements to align with guides"`
@@ -47,7 +46,6 @@ func (pf *Preferences) Defaults() {
 	pf.Style.FontStyle.Family = "Arial"
 	pf.Style.FontStyle.Size.Set(12, units.Pt)
 	pf.GridDisp = true
-	pf.Grid = 12
 	pf.SnapTol = 3
 	pf.SnapGrid = true
 	pf.SnapGuide = true
