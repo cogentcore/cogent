@@ -435,7 +435,10 @@ func (gv *GridView) ConfigMainToolbar() {
 	tb.AddAction(gi.ActOpts{Label: "Zoom All", Icon: "zoom-out", Tooltip: "zoom to see entire contents"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.SVG().FitInView(false)
+			svvv := grr.SVG()
+			svvv.FitInView(false)
+			svvv.SetTransform()
+			svvv.UpdateView(true)
 		})
 }
 
