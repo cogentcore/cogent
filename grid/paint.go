@@ -82,26 +82,39 @@ func (gv *GridView) ManipActionFun(sii svg.NodeSVG, fun func(itm svg.NodeSVG)) {
 	fun(sii)
 }
 
-// SetStrokeNode sets the stroke properties of Node
+// SetColorProps sets color property -- breaks color alpha
+// out as opacity
+func (gv *GridView) SetColorProps(sii svg.NodeSVG, prop, color string) {
+	if color[0] == '#' && len(color) == 9 {
+		sii.SetProp(prop, color[:7]) // exclude alpha
+		alphai := 0
+		fmt.Sscanf(color[7:], "%02x", &alphai)
+		sii.SetProp(prop+"-opacity", fmt.Sprintf("%g", float32(alphai)/255))
+	} else {
+		sii.SetProp(prop, color)
+	}
+}
+
+// SetColorNode sets the color properties of Node
 // based on previous and current PaintType
-func (gv *GridView) SetStrokeNode(sii svg.NodeSVG, prev, pt PaintTypes, sp string) {
+func (gv *GridView) SetColorNode(sii svg.NodeSVG, prop string, prev, pt PaintTypes, sp string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
 		for _, kid := range gp.Kids {
-			gv.SetStrokeNode(kid.(svg.NodeSVG), prev, pt, sp)
+			gv.SetColorNode(kid.(svg.NodeSVG), prop, prev, pt, sp)
 		}
 		return
 	}
 	switch pt {
 	case PaintLinear:
-		svg.UpdateNodeGradientProp(sii, "stroke", false, sp)
+		svg.UpdateNodeGradientProp(sii, prop, false, sp)
 	case PaintRadial:
-		svg.UpdateNodeGradientProp(sii, "stroke", true, sp)
+		svg.UpdateNodeGradientProp(sii, prop, true, sp)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
-			pstr := kit.ToString(sii.Prop("stroke"))
+			pstr := kit.ToString(sii.Prop(prop))
 			svg.DeleteNodeGradient(sii, pstr)
 		}
-		sii.SetProp("stroke", sp)
+		gv.SetColorProps(sii, prop, sp)
 	}
 	gv.UpdateMarkerColors(sii)
 }
@@ -115,7 +128,7 @@ func (gv *GridView) SetStroke(prev, pt PaintTypes, sp string) {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
-		gv.SetStrokeNode(itm, prev, pt, sp)
+		gv.SetColorNode(itm, "stroke", prev, pt, sp)
 	}
 	sv.UpdateEnd(updt)
 }
@@ -162,7 +175,7 @@ func (gv *GridView) SetStrokeColor(sp string, manip bool) {
 		func(itm svg.NodeSVG) {
 			p := itm.Prop("stroke")
 			if p != nil {
-				itm.SetProp("stroke", sp)
+				gv.SetColorProps(itm, "stroke", sp)
 				gv.UpdateMarkerColors(itm)
 			}
 		})
@@ -238,37 +251,6 @@ func (gv *GridView) SetDashProps(dary []float64) {
 	sv.UpdateEnd(updt)
 }
 
-// SetFillNode sets the fill props of given node
-// based on previous and current PaintType
-func (gv *GridView) SetFillNode(sii svg.NodeSVG, prev, pt PaintTypes, fp string) {
-	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
-			gv.SetFillNode(kid.(svg.NodeSVG), prev, pt, fp)
-		}
-		return
-	}
-	switch pt {
-	case PaintLinear:
-		svg.UpdateNodeGradientProp(sii, "fill", false, fp)
-	case PaintRadial:
-		svg.UpdateNodeGradientProp(sii, "fill", true, fp)
-	default:
-		if prev == PaintLinear || prev == PaintRadial {
-			pstr := kit.ToString(sii.Prop("fill"))
-			svg.DeleteNodeGradient(sii, pstr)
-		}
-		if fp[0] == '#' && len(fp) == 9 {
-			sii.SetProp("fill", fp[:7]) // exclude alpha
-			alphai := 0
-			fmt.Sscanf(fp[7:], "%02x", &alphai)
-			sii.SetProp("fill-opacity", fmt.Sprintf("%g", float32(alphai)/255))
-		} else {
-			sii.SetProp("fill", fp)
-		}
-	}
-	gv.UpdateMarkerColors(sii)
-}
-
 // SetFill sets the fill props of selected items
 // based on previous and current PaintType
 func (gv *GridView) SetFill(prev, pt PaintTypes, fp string) {
@@ -278,7 +260,7 @@ func (gv *GridView) SetFill(prev, pt PaintTypes, fp string) {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	for itm := range es.Selected {
-		gv.SetFillNode(itm, prev, pt, fp)
+		gv.SetColorNode(itm, "fill", prev, pt, fp)
 	}
 	sv.UpdateEnd(updt)
 }
@@ -290,7 +272,7 @@ func (gv *GridView) SetFillColor(fp string, manip bool) {
 		func(itm svg.NodeSVG) {
 			p := itm.Prop("fill")
 			if p != nil {
-				itm.SetProp("fill", fp)
+				gv.SetColorProps(itm, "fill", fp)
 				gv.UpdateMarkerColors(itm)
 			}
 		})
@@ -530,7 +512,7 @@ func (pv *PaintView) Config(gv *GridView) {
 
 	uncb := gi.AddNewComboBox(wr, "width-units")
 	uncb.ItemsFromEnum(units.KiT_Units, true, 0)
-	uncb.SetCurVal(Prefs.Size.Units)
+	uncb.SetCurIndex(int(Prefs.Size.Units))
 	uncb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
@@ -861,13 +843,13 @@ func (pv *PaintView) FillProp() string {
 
 // SetProps sets the props for given node according to current settings
 func (pv *PaintView) SetProps(sii svg.NodeSVG) {
-	pv.GridView.SetStrokeNode(sii, pv.StrokeType, pv.StrokeType, pv.StrokeProp())
+	pv.GridView.SetColorNode(sii, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
 		sii.SetProp("stroke-width", pv.StrokeWidthProp())
 		start, mid, end, sc, mc, ec := pv.MarkerProps()
 		pv.GridView.SetMarkerNode(sii, start, mid, end, sc, mc, ec)
 	}
-	pv.GridView.SetFillNode(sii, pv.FillType, pv.FillType, pv.FillProp())
+	pv.GridView.SetColorNode(sii, "fill", pv.FillType, pv.FillType, pv.FillProp())
 }
 
 var PaintViewProps = ki.Props{

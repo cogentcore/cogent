@@ -447,6 +447,18 @@ func (sv *SVGView) SetMetaData() {
 	nv.SetProp("zoom", fmt.Sprintf("%g", sv.Scale))
 	nv.SetProp("document-units", uts)
 
+	//	get rid of inkscape props we don't set
+	nv.DeleteProp("objecttolerance")
+	nv.DeleteProp("guidetolerance")
+	nv.DeleteProp("gridtolerance")
+	nv.DeleteProp("pageopacity")
+	nv.DeleteProp("borderopacity")
+	nv.DeleteProp("bordercolor")
+	nv.DeleteProp("pagecolor")
+	nv.DeleteProp("pageshadow")
+	nv.DeleteProp("pagecheckerboard")
+	nv.DeleteProp("showgrid")
+
 	spc := fmt.Sprintf("%g", sv.Grid)
 	gr.SetProp("spacingx", spc)
 	gr.SetProp("spacingy", spc)

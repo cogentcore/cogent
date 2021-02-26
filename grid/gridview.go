@@ -677,6 +677,11 @@ func (gv *GridView) UpdateTreeView() {
 	tv.ReSync()
 }
 
+func (gv *GridView) SetDefaultStyle() {
+	pv := gv.Tab("Paint").(*PaintView)
+	pv.Update(&Prefs.Style, nil)
+}
+
 func (gv *GridView) UpdateTabs() {
 	// fmt.Printf("updt-tabs\n")
 	es := &gv.EditState

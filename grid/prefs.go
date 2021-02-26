@@ -49,7 +49,7 @@ func (pf *Preferences) Defaults() {
 	pf.SnapTol = 3
 	pf.SnapGrid = true
 	pf.SnapGuide = true
-	pf.SnapNodes = false
+	pf.SnapNodes = true
 }
 
 func (pf *Preferences) Update() {
