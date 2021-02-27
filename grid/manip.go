@@ -32,13 +32,13 @@ func (sv *SVGView) ManipStart(act, data string) {
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVGView) ManipDone() {
 	win := sv.GridView.ParentWindow()
-	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
+	InactivateSprites(win, SpAlignMatch)
 	es := sv.EditState()
 	switch {
 	case es.Action == "BoxSelect":
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
 		bbox = bbox.Canon()
-		InactivateSprites(win)
+		InactivateSprites(win, SpRubberBand)
 		win.RenderOverlays()
 		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
@@ -309,7 +309,7 @@ func (sv *SVGView) ConstrainPoint(st, rawpt mat32.Vec2) (mat32.Vec2, bool) {
 func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 
-	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
+	InactivateSprites(win, SpAlignMatch)
 
 	if !es.InAction() {
 		sv.ManipStart("Move", es.SelectedNamesString())
@@ -340,7 +340,7 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 		itm.ReadGeom(ss.InitGeom)
 		itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
 	}
-	sv.SetSelSprites(es.DragSelEffBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 
@@ -361,7 +361,7 @@ func SquareBBox(bb mat32.Box2) mat32.Box2 {
 func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 
-	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
+	InactivateSprites(win, SpAlignMatch)
 
 	if !es.InAction() {
 		sv.ManipStart("Reshape", es.SelectedNamesString())
@@ -383,32 +383,32 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 		es.DragSelCurBBox = SquareBBox(es.DragSelStartBBox)
 	}
 	switch sp {
-	case ReshapeUpL:
+	case SpBBoxUpL:
 		es.DragSelCurBBox.Min.SetAdd(dv)
 		es.DragSelEffBBox.Min = sv.SnapPoint(es.DragSelCurBBox.Min)
-	case ReshapeUpC:
+	case SpBBoxUpC:
 		es.DragSelCurBBox.Min.Y += dv.Y
 		es.DragSelEffBBox.Min.Y = sv.SnapPoint(es.DragSelCurBBox.Min).Y
-	case ReshapeUpR:
+	case SpBBoxUpR:
 		es.DragSelCurBBox.Min.Y += dv.Y
 		es.DragSelEffBBox.Min.Y = sv.SnapPoint(es.DragSelCurBBox.Min).Y
 		es.DragSelCurBBox.Max.X += dv.X
 		es.DragSelEffBBox.Max.X = sv.SnapPoint(es.DragSelCurBBox.Max).X
-	case ReshapeDnL:
+	case SpBBoxDnL:
 		es.DragSelCurBBox.Min.X += dv.X
 		es.DragSelEffBBox.Min.X = sv.SnapPoint(es.DragSelCurBBox.Min).X
 		es.DragSelCurBBox.Max.Y += dv.Y
 		es.DragSelEffBBox.Max.Y = sv.SnapPoint(es.DragSelCurBBox.Max).Y
-	case ReshapeDnC:
+	case SpBBoxDnC:
 		es.DragSelCurBBox.Max.Y += dv.Y
 		es.DragSelEffBBox.Max.Y = sv.SnapPoint(es.DragSelCurBBox.Max).Y
-	case ReshapeDnR:
+	case SpBBoxDnR:
 		es.DragSelCurBBox.Max.SetAdd(dv)
 		es.DragSelEffBBox.Max = sv.SnapPoint(es.DragSelCurBBox.Max)
-	case ReshapeLfM:
+	case SpBBoxLfM:
 		es.DragSelCurBBox.Min.X += dv.X
 		es.DragSelEffBBox.Min.X = sv.SnapPoint(es.DragSelCurBBox.Min).X
-	case ReshapeRtM:
+	case SpBBoxRtM:
 		es.DragSelCurBBox.Max.X += dv.X
 		es.DragSelEffBBox.Max.X = sv.SnapPoint(es.DragSelCurBBox.Max).X
 	}
@@ -428,7 +428,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 		}
 	}
 
-	sv.SetSelSprites(es.DragSelEffBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 }
@@ -444,47 +444,47 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 	ctr := es.DragSelStartBBox.Min.Add(es.DragSelStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
 	switch sp {
-	case ReshapeUpL:
+	case SpBBoxUpL:
 		es.DragSelCurBBox.Min.SetAdd(dv)
 		dy = es.DragSelStartBBox.Min.Y - es.DragSelCurBBox.Min.Y
 		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
 		pt.X = es.DragSelStartBBox.Max.X
-	case ReshapeUpC:
+	case SpBBoxUpC:
 		es.DragSelCurBBox.Min.Y += dv.Y
 		es.DragSelCurBBox.Max.X += dv.X
 		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt = ctr
-	case ReshapeUpR:
+	case SpBBoxUpR:
 		es.DragSelCurBBox.Min.Y += dv.Y
 		es.DragSelCurBBox.Max.X += dv.X
 		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt = es.DragSelStartBBox.Min
-	case ReshapeDnL:
+	case SpBBoxDnL:
 		es.DragSelCurBBox.Min.X += dv.X
 		es.DragSelCurBBox.Max.Y += dv.Y
 		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
 		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
 		pt = es.DragSelStartBBox.Max
-	case ReshapeDnC:
+	case SpBBoxDnC:
 		es.DragSelCurBBox.Max.SetAdd(dv)
 		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt = ctr
-	case ReshapeDnR:
+	case SpBBoxDnR:
 		es.DragSelCurBBox.Max.SetAdd(dv)
 		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
 		pt.X = es.DragSelStartBBox.Min.X
 		pt.Y = es.DragSelStartBBox.Max.Y
-	case ReshapeLfM:
+	case SpBBoxLfM:
 		es.DragSelCurBBox.Min.X += dv.X
 		es.DragSelCurBBox.Max.Y += dv.Y
 		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
 		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
 		pt = ctr
-	case ReshapeRtM:
+	case SpBBoxRtM:
 		es.DragSelCurBBox.Max.SetAdd(dv)
 		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
 		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
@@ -506,7 +506,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 		}
 	}
 
-	sv.SetSelSprites(es.DragSelCurBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelCurBBox)
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 }

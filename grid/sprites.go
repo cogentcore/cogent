@@ -19,34 +19,49 @@ import (
 	"github.com/goki/ki/kit"
 )
 
+// Sprites are the type of sprite
 type Sprites int
 
 const (
-	ReshapeUpL Sprites = iota
-	ReshapeUpC
-	ReshapeUpR
-	ReshapeDnL
-	ReshapeDnC
-	ReshapeDnR
-	ReshapeLfM
-	ReshapeRtM
+	// SpUnk is an unknown sprite type
+	SpUnk Sprites = iota
 
-	RubberBandT
-	RubberBandR
-	RubberBandL
-	RubberBandB
+	// SpReshapeBBox is a reshape bbox -- the overall active selection BBox
+	// for active manipulation
+	SpReshapeBBox
 
-	AlignMatch1
-	AlignMatch2
-	AlignMatch3
-	AlignMatch4
-	AlignMatch5
-	AlignMatch6
-	AlignMatch7
-	AlignMatch8
+	// SpSelBBox is a selection bounding box -- display only
+	SpSelBBox
+
+	// SpNodePoint is a main coordinate point for path node
+	SpNodePoint
+
+	// SpNodeCtrl is a control coordinate point for path node
+	SpNodeCtrl
+
+	// SpRubberBand is the draggable sel box
+	// subtyp = UpC, LfM, RtM, DnC for sides
+	SpRubberBand
+
+	// SpAlignMatch is an alignment match (n of these),
+	// subtyp is actually BBoxPoints so we just hack cast that
+	SpAlignMatch
+
+	// below are subtypes:
+
+	// Sprite bounding boxes are set as a "bbox" property on sprites
+	SpBBoxUpL
+	SpBBoxUpC
+	SpBBoxUpR
+	SpBBoxDnL
+	SpBBoxDnC
+	SpBBoxDnR
+	SpBBoxLfM
+	SpBBoxRtM
+
+	// todo: add nodectrl subtypes
 
 	SpritesN
-	// beyond this are the node markers!
 )
 
 //go:generate stringer -type=Sprites
@@ -56,30 +71,176 @@ var KiT_Sprites = kit.Enums.AddEnum(SpritesN, kit.NotBitFlag, nil)
 func (ev Sprites) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
 func (ev *Sprites) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
+// SpriteNames are name strings to use for naming sprites
 var SpriteNames = map[Sprites]string{
-	ReshapeUpL: "grid-size-up-l",
-	ReshapeUpC: "grid-size-up-m",
-	ReshapeUpR: "grid-size-up-r",
-	ReshapeDnL: "grid-size-dn-l",
-	ReshapeDnC: "grid-size-dn-m",
-	ReshapeDnR: "grid-size-dn-r",
-	ReshapeLfM: "grid-size-lf-c",
-	ReshapeRtM: "grid-size-rt-c",
+	SpBBoxUpL: "up-l",
+	SpBBoxUpC: "up-c",
+	SpBBoxUpR: "up-r",
+	SpBBoxDnL: "dn-l",
+	SpBBoxDnC: "dn-c",
+	SpBBoxDnR: "dn-r",
+	SpBBoxLfM: "lf-m",
+	SpBBoxRtM: "rt-m",
 
-	RubberBandT: "rubber-band-t",
-	RubberBandR: "rubber-band-r",
-	RubberBandL: "rubber-band-l",
-	RubberBandB: "rubber-band-b",
+	SpReshapeBBox: "reshape-bbox",
 
-	AlignMatch1: "align-match-1",
-	AlignMatch2: "align-match-2",
-	AlignMatch3: "align-match-3",
-	AlignMatch4: "align-match-4",
-	AlignMatch5: "align-match-5",
-	AlignMatch6: "align-match-6",
-	AlignMatch7: "align-match-7",
-	AlignMatch8: "align-match-8",
+	SpSelBBox: "sel-bbox",
+
+	SpNodePoint: "node-point",
+	SpNodeCtrl:  "node-ctrl",
+
+	SpRubberBand: "rubber-band",
+
+	SpAlignMatch: "align-match",
 }
+
+// SpriteName returns the unique name of the sprite based
+// on main type, subtype (e.g., bbox) if relevant, and index if relevant
+func SpriteName(typ, subtyp Sprites, idx int) string {
+	nm := SpriteNames[typ]
+	switch typ {
+	case SpReshapeBBox:
+		nm += "-" + SpriteNames[subtyp]
+	case SpSelBBox:
+		nm += fmt.Sprintf("-%d-%s", idx, SpriteNames[subtyp])
+	case SpNodePoint:
+		nm += fmt.Sprintf("-%d", idx)
+	case SpNodeCtrl: // todo: subtype
+		nm += fmt.Sprintf("-%d", idx)
+	case SpRubberBand:
+		nm += "-" + SpriteNames[subtyp]
+	case SpAlignMatch:
+		nm += fmt.Sprintf("-%d", idx)
+	}
+	return nm
+}
+
+// SetSpriteProps sets sprite properties
+func SetSpriteProps(sp *gi.Sprite, typ, subtyp Sprites, idx int) {
+	sp.Name = SpriteName(typ, subtyp, idx)
+	sp.Props.Set("grid-type", typ)
+	sp.Props.Set("grid-sub", subtyp)
+	sp.Props.Set("grid-idx", idx)
+}
+
+// SpriteProps reads the sprite properties -- returns SpUnk if
+// not one of our sprites.
+func SpriteProps(sp *gi.Sprite) (typ, subtyp Sprites, idx int) {
+	typi, has := sp.Props["grid-type"]
+	if !has {
+		typ = SpUnk
+		return
+	}
+	typ = typi.(Sprites)
+	subtyp = sp.Props["grid-sub"].(Sprites)
+	idx = sp.Props["grid-idx"].(int)
+	return
+}
+
+// Sprite returns given sprite -- renders to window if not yet made.
+// trgsz is the target size (e.g., for rubber band boxes)
+func Sprite(win *gi.Window, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.Sprite {
+	spnm := SpriteName(typ, subtyp, idx)
+	sp, ok := win.SpriteByName(spnm)
+	if !ok {
+		sp = win.AddNewSprite(spnm, image.ZP, image.ZP)
+		SetSpriteProps(sp, typ, subtyp, idx)
+	}
+	switch typ {
+	case SpReshapeBBox:
+		DrawSpriteReshape(sp, subtyp)
+	case SpSelBBox:
+		DrawSpriteSel(sp, subtyp)
+	case SpNodePoint:
+		DrawSpriteNodePoint(sp, subtyp)
+	case SpNodeCtrl:
+		DrawSpriteNodeCtrl(sp, subtyp)
+	case SpRubberBand:
+		switch subtyp {
+		case SpBBoxUpC, SpBBoxDnC:
+			DrawRubberBandHoriz(sp, trgsz)
+		case SpBBoxLfM, SpBBoxRtM:
+			DrawRubberBandVert(sp, trgsz)
+		}
+	case SpAlignMatch:
+		switch {
+		case trgsz.X > trgsz.Y:
+			DrawAlignMatchHoriz(sp, trgsz)
+		default:
+			DrawAlignMatchVert(sp, trgsz)
+		}
+	}
+	win.ActivateSprite(sp.Name)
+	return sp
+}
+
+// SpriteConnectEvent activates and sets mouse event functions to given function
+func SpriteConnectEvent(win *gi.Window, typ, subtyp Sprites, idx int, trgsz image.Point, recv ki.Ki, fun ki.RecvFunc) *gi.Sprite {
+	sp := Sprite(win, typ, subtyp, idx, trgsz)
+	if recv != nil {
+		sp.ConnectEvent(recv, oswin.MouseEvent, fun)
+		sp.ConnectEvent(recv, oswin.MouseDragEvent, fun)
+	}
+	return sp
+}
+
+// SetSpritePos sets sprite position, taking into account relative offsets
+func SetSpritePos(sp *gi.Sprite, pos image.Point) {
+	typ, subtyp, _ := SpriteProps(sp)
+	switch {
+	case typ == SpRubberBand:
+		_, sz := LineSpriteSize()
+		switch subtyp {
+		case SpBBoxUpC:
+			pos.Y -= sz
+		case SpBBoxLfM:
+			pos.X -= sz
+		}
+	case typ == SpAlignMatch:
+		_, sz := LineSpriteSize()
+		bbtp := BBoxPoints(subtyp) // just hack it
+		switch bbtp {
+		case BBLeft:
+			pos.X -= sz
+		case BBCenter:
+			pos.X -= sz / 2
+		case BBTop:
+			pos.Y -= sz
+		case BBMiddle:
+			pos.Y -= sz / 2
+		}
+	case typ == SpNodePoint || typ == SpNodeCtrl:
+		_, sz := HandleSpriteSize(1)
+		pos.X -= sz.X / 2
+		pos.Y -= sz.Y / 2
+	case subtyp >= SpBBoxUpL && subtyp <= SpBBoxRtM: // Reshape, Sel BBox
+		sc := float32(1)
+		if typ == SpSelBBox {
+			sc = .5
+		}
+		_, sz := HandleSpriteSize(sc)
+		if subtyp == SpBBoxDnL || subtyp == SpBBoxUpL || subtyp == SpBBoxLfM {
+			pos.X -= sz.X
+		}
+		if subtyp == SpBBoxUpL || subtyp == SpBBoxUpC || subtyp == SpBBoxUpR {
+			pos.Y -= sz.Y
+		}
+	}
+	sp.Geom.Pos = pos
+}
+
+// InactivateSprites inactivates sprites of given type
+func InactivateSprites(win *gi.Window, typ Sprites) {
+	for nm, sp := range win.Sprites {
+		st, _, _ := SpriteProps(sp)
+		if st == typ {
+			win.InactivateSprite(nm)
+		}
+	}
+}
+
+///////////////////////////////////////////////////////////////////
+//  Sprite rendering
 
 var (
 	HandleSpriteScale = float32(18)
@@ -87,17 +248,70 @@ var (
 	HandleBorderMin   = 2
 )
 
-// HandleSpriteSize returns the border size and overall size of handle-type sprites
-func HandleSpriteSize() (int, image.Point) {
-	sz := int(math32.Ceil(gi.Prefs.LogicalDPIScale * HandleSpriteScale))
+// HandleSpriteSize returns the border size and overall size
+// of handle-type sprites, with given scaling factor
+func HandleSpriteSize(scale float32) (int, image.Point) {
+	sz := int(math32.Ceil(scale * gi.Prefs.LogicalDPIScale * HandleSpriteScale))
 	sz = ints.MaxInt(sz, HandleSizeMin)
 	bsz := ints.MaxInt(sz/6, HandleBorderMin)
 	bbsz := image.Point{sz, sz}
 	return bsz, bbsz
 }
 
-// DrawSpriteSize renders a Size sprite handle
-func DrawSpriteSize(spi Sprites, sp *gi.Sprite, bsz int, bbsz image.Point) {
+// DrawSpriteReshape renders a Reshape sprite handle
+func DrawSpriteReshape(sp *gi.Sprite, bbtyp Sprites) {
+	bsz, bbsz := HandleSpriteSize(1)
+	if !sp.SetSize(bbsz) { // already set
+		return
+	}
+	ibd := sp.Pixels.Bounds()
+	bbd := ibd
+	bbd.Min.X += bsz
+	bbd.Min.Y += bsz
+	bbd.Max.X -= bsz
+	bbd.Max.Y -= bsz
+	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
+	draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
+}
+
+// DrawSpriteSel renders a Select sprite handle -- smaller
+func DrawSpriteSel(sp *gi.Sprite, bbtyp Sprites) {
+	bsz, bbsz := HandleSpriteSize(.5)
+	if !sp.SetSize(bbsz) { // already set
+		return
+	}
+	ibd := sp.Pixels.Bounds()
+	bbd := ibd
+	bbd.Min.X += bsz
+	bbd.Min.Y += bsz
+	bbd.Max.X -= bsz
+	bbd.Max.Y -= bsz
+	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
+	draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
+}
+
+// DrawSpriteNodePoint renders a NodePoint sprite handle
+func DrawSpriteNodePoint(sp *gi.Sprite, bbtyp Sprites) {
+	bsz, bbsz := HandleSpriteSize(1)
+	if !sp.SetSize(bbsz) { // already set
+		return
+	}
+	ibd := sp.Pixels.Bounds()
+	bbd := ibd
+	bbd.Min.X += bsz
+	bbd.Min.Y += bsz
+	bbd.Max.X -= bsz
+	bbd.Max.Y -= bsz
+	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
+	draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
+}
+
+// DrawSpriteNodeCtrl renders a NodePoint sprite handle
+func DrawSpriteNodeCtrl(sp *gi.Sprite, subtyp Sprites) {
+	bsz, bbsz := HandleSpriteSize(1)
+	if !sp.SetSize(bbsz) { // already set
+		return
+	}
 	ibd := sp.Pixels.Bounds()
 	bbd := ibd
 	bbd.Min.X += bsz
@@ -123,7 +337,8 @@ func LineSpriteSize() (int, int) {
 }
 
 // DrawRubberBandHoriz renders a horizontal rubber band line
-func DrawRubberBandHoriz(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Point) {
+func DrawRubberBandHoriz(sp *gi.Sprite, trgsz image.Point) {
+	bsz, sz := LineSpriteSize()
 	ssz := image.Point{trgsz.X, sz}
 	if !sp.SetSize(ssz) { // already set
 		return
@@ -141,7 +356,8 @@ func DrawRubberBandHoriz(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Po
 }
 
 // DrawRubberBandVert renders a vertical rubber band line
-func DrawRubberBandVert(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Point) {
+func DrawRubberBandVert(sp *gi.Sprite, trgsz image.Point) {
+	bsz, sz := LineSpriteSize()
 	ssz := image.Point{sz, trgsz.Y}
 	if !sp.SetSize(ssz) { // already set
 		return
@@ -159,7 +375,8 @@ func DrawRubberBandVert(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Poi
 }
 
 // DrawAlignMatchHoriz renders a horizontal alignment line
-func DrawAlignMatchHoriz(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Point) {
+func DrawAlignMatchHoriz(sp *gi.Sprite, trgsz image.Point) {
+	bsz, sz := LineSpriteSize()
 	ssz := image.Point{trgsz.X, sz}
 	if !sp.SetSize(ssz) { // already set
 		return
@@ -174,7 +391,8 @@ func DrawAlignMatchHoriz(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Po
 }
 
 // DrawAlignMatchVert renders a vertical alignment line
-func DrawAlignMatchVert(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Point) {
+func DrawAlignMatchVert(sp *gi.Sprite, trgsz image.Point) {
+	bsz, sz := LineSpriteSize()
 	ssz := image.Point{sz, trgsz.Y}
 	if !sp.SetSize(ssz) { // already set
 		return
@@ -186,131 +404,4 @@ func DrawAlignMatchVert(spi Sprites, sp *gi.Sprite, bsz, sz int, trgsz image.Poi
 	clr := gist.Color{0, 200, 200, 255}
 	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
 	draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
-}
-
-func SpriteName(spi Sprites) string {
-	if spi < SpritesN {
-		return SpriteNames[spi]
-	}
-	return fmt.Sprintf("path-point-%d", spi-SpritesN)
-}
-
-// Sprite returns given sprite -- renders to window if not yet made.
-// trgsz is the target size (e.g., for rubber band boxes)
-func Sprite(spi Sprites, win *gi.Window, trgsz image.Point) *gi.Sprite {
-	spnm := SpriteName(spi)
-	sp, ok := win.SpriteByName(spnm)
-	switch {
-	case spi >= ReshapeUpL && spi <= ReshapeRtM:
-		if !ok {
-			bsz, bbsz := HandleSpriteSize()
-			sp = win.AddNewSprite(spnm, bbsz, image.ZP)
-			DrawSpriteSize(spi, sp, bsz, bbsz)
-		}
-	case spi >= RubberBandT && spi <= RubberBandB:
-		bsz, sz := LineSpriteSize()
-		switch spi {
-		case RubberBandT, RubberBandB:
-			if !ok {
-				sp = win.AddNewSprite(spnm, image.Point{trgsz.X, sz}, image.ZP)
-			}
-			DrawRubberBandHoriz(spi, sp, bsz, sz, trgsz)
-		case RubberBandR, RubberBandL:
-			if !ok {
-				sp = win.AddNewSprite(spnm, image.Point{sz, trgsz.Y}, image.ZP)
-			}
-			DrawRubberBandVert(spi, sp, bsz, sz, trgsz)
-		}
-	case spi >= AlignMatch1 && spi <= AlignMatch8:
-		bsz, sz := LineSpriteSize()
-		switch {
-		case trgsz.X > trgsz.Y:
-			if !ok {
-				sp = win.AddNewSprite(spnm, image.Point{trgsz.X, sz}, image.ZP)
-			}
-			DrawAlignMatchHoriz(spi, sp, bsz, sz, trgsz)
-		default:
-			if !ok {
-				sp = win.AddNewSprite(spnm, image.Point{sz, trgsz.Y}, image.ZP)
-			}
-			DrawAlignMatchVert(spi, sp, bsz, sz, trgsz)
-		}
-	case spi >= SpritesN:
-		if !ok {
-			bsz, bbsz := HandleSpriteSize()
-			sp = win.AddNewSprite(spnm, bbsz, image.ZP)
-			DrawSpriteSize(spi, sp, bsz, bbsz)
-		}
-	}
-	return sp
-}
-
-// SpriteConnectEvent activates and sets mouse event functions to given function
-func SpriteConnectEvent(spi Sprites, win *gi.Window, trgsz image.Point, recv ki.Ki, fun ki.RecvFunc) *gi.Sprite {
-	sp := Sprite(spi, win, trgsz)
-	if recv != nil {
-		sp.ConnectEvent(recv, oswin.MouseEvent, fun)
-		sp.ConnectEvent(recv, oswin.MouseDragEvent, fun)
-	}
-	win.ActivateSprite(sp.Name)
-	return sp
-}
-
-// SetSpritePos sets sprite position, taking into account relative offsets
-func SetSpritePos(spi Sprites, sp *gi.Sprite, pos image.Point) {
-	switch {
-	case spi >= ReshapeUpL && spi <= ReshapeRtM:
-		_, sz := HandleSpriteSize()
-		if spi == ReshapeDnL || spi == ReshapeUpL || spi == ReshapeLfM {
-			pos.X -= sz.X
-		}
-		if spi == ReshapeUpL || spi == ReshapeUpC || spi == ReshapeUpR {
-			pos.Y -= sz.Y
-		}
-		sp.Geom.Pos = pos
-	case spi >= RubberBandT && spi <= RubberBandB:
-		_, sz := LineSpriteSize()
-		switch spi {
-		case RubberBandT:
-			pos.Y -= sz
-		case RubberBandL:
-			pos.X -= sz
-		}
-		sp.Geom.Pos = pos
-	case spi >= AlignMatch1 && spi <= AlignMatch8:
-		_, sz := LineSpriteSize()
-		bbt := sp.Props.Prop("bbox").(BBoxPoints)
-		switch bbt {
-		case BBLeft:
-			pos.X -= sz
-		case BBCenter:
-			pos.X -= sz / 2
-		case BBTop:
-			pos.Y -= sz
-		case BBMiddle:
-			pos.Y -= sz / 2
-		}
-		sp.Geom.Pos = pos
-	case spi >= SpritesN:
-		_, sz := HandleSpriteSize()
-		pos.X -= sz.X / 2
-		pos.Y -= sz.Y / 2
-		sp.Geom.Pos = pos
-	}
-}
-
-// InactivateSprites inactivates all of our sprites
-func InactivateSprites(win *gi.Window) {
-	for spi := Sprites(0); spi < SpritesN; spi++ {
-		spnm := SpriteNames[spi]
-		win.InactivateSprite(spnm)
-	}
-}
-
-// InactivateSpriteRange inactivates range of sprites (end is inclusive)
-func InactivateSpriteRange(win *gi.Window, st, end Sprites) {
-	for spi := st; spi <= end; spi++ {
-		spnm := SpriteNames[spi]
-		win.InactivateSprite(spnm)
-	}
 }

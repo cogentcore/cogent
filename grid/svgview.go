@@ -85,7 +85,7 @@ func (sv *SVGView) UpdateView(full bool) {
 	}
 	sv.UpdateSig()
 	if sv.BgNeedsUpdate() {
-		fmt.Printf("needs update still\n")
+		sv.RenderBg()
 	}
 	sv.UpdateSelSprites()
 }
@@ -643,17 +643,13 @@ func (sv *SVGView) Redo() string {
 // between BBox Min - Max.  typs are corresponding bounding box sources.
 func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	win := sv.GridView.ParentWindow()
-	es := sv.EditState()
 
-	es.EnsureActiveSprites()
 	sz := ints.MinInt(len(pts), 8)
 	for i := 0; i < sz; i++ {
-		spi := Sprites(int(AlignMatch1) + i)
 		pt := pts[i].Canon()
 		lsz := pt.Max.Sub(pt.Min)
-		sp := SpriteConnectEvent(spi, win, lsz, nil, nil)
-		sp.Props.Set("bbox", typs[i])
-		SetSpritePos(spi, sp, pt.Min)
+		sp := Sprite(win, SpAlignMatch, Sprites(typs[i]), i, lsz)
+		SetSpritePos(sp, pt.Min)
 	}
 }
 
@@ -708,7 +704,7 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
-	win.SpriteDragging = SpriteNames[ReshapeDnR]
+	win.SpriteDragging = SpriteNames[SpBBoxDnR]
 	return nr
 }
 
@@ -739,7 +735,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
 	es.SelectAction(nr, mouse.SelectOne)
 	sv.UpdateView(true)
 	sv.UpdateSelect()
-	// win.SpriteDragging = SpriteNames[ReshapeDnR]
+	// win.SpriteDragging = SpriteNames[SpBBoxDnR]
 	return nr
 }
 
@@ -768,7 +764,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
-	win.SpriteDragging = SpriteNames[ReshapeDnR]
+	win.SpriteDragging = SpriteNames[SpBBoxDnR]
 	return nr
 }
 

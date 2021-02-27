@@ -41,10 +41,10 @@ type EditState struct {
 	DragSelCurBBox   mat32.Box2                `desc:"current bbox during dragging -- non-snapped version"`
 	DragSelEffBBox   mat32.Box2                `desc:"current effective bbox during dragging -- snapped version"`
 	AlignPts         [BBoxPointsN][]mat32.Vec2 `desc:"potential points of alignment for dragging"`
-	ActiveSprites    map[Sprites]*gi.Sprite    `copy:"-" json:"-" xml:"-" view:"-" desc:"cached only for active sprites during manipulation"`
 	NNodeSprites     int                       `desc:"number of current node sprites in use"`
 	ActivePath       *svg.Path                 `desc:"currently manipulating path object"`
 	PathNodes        []*PathNode               `desc:"current path node points"`
+	PathSel          map[int]struct{}          `desc:"selected path nodes"`
 	PathCmds         []int                     `desc:"current path command indexes within PathNodes -- where the commands start"`
 }
 
@@ -233,15 +233,8 @@ func (es *EditState) SelectAction(itm svg.NodeSVG, mode mouse.SelectModes) {
 
 ////////////////////////////////////////////////////////////////
 
-func (es *EditState) EnsureActiveSprites() {
-	if es.ActiveSprites == nil {
-		es.ActiveSprites = make(map[Sprites]*gi.Sprite)
-	}
-}
-
 // UpdateSelBBox updates the current selection bbox surrounding all selected items
 func (es *EditState) UpdateSelBBox() {
-	es.EnsureActiveSprites()
 	es.SelBBox.SetEmpty()
 	if len(es.Selected) == 0 {
 		return

@@ -195,7 +195,8 @@ func (sv *SVGView) UpdateSelect() {
 }
 
 func (sv *SVGView) RemoveSelSprites(win *gi.Window) {
-	InactivateSprites(win)
+	InactivateSprites(win, SpReshapeBBox)
+	InactivateSprites(win, SpSelBBox)
 	win.RenderOverlays()
 }
 
@@ -211,33 +212,46 @@ func (sv *SVGView) UpdateSelSprites() {
 		return
 	}
 
-	for i := ReshapeUpL; i <= ReshapeRtM; i++ {
+	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
 		spi := i // key to get a unique local var
-		sp := SpriteConnectEvent(spi, win, image.Point{}, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
 			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 			ssvg.SelSpriteEvent(spi, oswin.EventType(sig), d)
 		})
-		es.ActiveSprites[spi] = sp
 	}
-	sv.SetSelSprites(es.SelBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
 
 	win.RenderOverlays()
 }
 
-// SetSelSprites sets active selection sprite locations based on given bounding box
-func (sv *SVGView) SetSelSprites(bbox mat32.Box2) {
-	es := sv.EditState()
-	_, spsz := HandleSpriteSize()
+// SetBBoxSpritePos sets positions of given type of sprites
+func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox mat32.Box2) {
+	win := sv.GridView.ParentWindow()
+	_, spsz := HandleSpriteSize(1)
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
-	SetSpritePos(ReshapeUpL, es.ActiveSprites[ReshapeUpL], image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
-	SetSpritePos(ReshapeUpC, es.ActiveSprites[ReshapeUpC], image.Point{midX, int(bbox.Min.Y)})
-	SetSpritePos(ReshapeUpR, es.ActiveSprites[ReshapeUpR], image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
-	SetSpritePos(ReshapeDnL, es.ActiveSprites[ReshapeDnL], image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
-	SetSpritePos(ReshapeDnC, es.ActiveSprites[ReshapeDnC], image.Point{midX, int(bbox.Max.Y)})
-	SetSpritePos(ReshapeDnR, es.ActiveSprites[ReshapeDnR], image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
-	SetSpritePos(ReshapeLfM, es.ActiveSprites[ReshapeLfM], image.Point{int(bbox.Min.X), midY})
-	SetSpritePos(ReshapeRtM, es.ActiveSprites[ReshapeRtM], image.Point{int(bbox.Max.X), midY})
+	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+		spi := i // key to get a unique local var
+		sp := Sprite(win, typ, spi, idx, image.ZP)
+		switch spi {
+		case SpBBoxUpL:
+			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
+		case SpBBoxUpC:
+			SetSpritePos(sp, image.Point{midX, int(bbox.Min.Y)})
+		case SpBBoxUpR:
+			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
+		case SpBBoxDnL:
+			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
+		case SpBBoxDnC:
+			SetSpritePos(sp, image.Point{midX, int(bbox.Max.Y)})
+		case SpBBoxDnR:
+			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
+		case SpBBoxLfM:
+			SetSpritePos(sp, image.Point{int(bbox.Min.X), midY})
+		case SpBBoxRtM:
+			SetSpritePos(sp, image.Point{int(bbox.Max.X), midY})
+		}
+	}
 }
 
 func (sv *SVGView) SelSpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
@@ -289,15 +303,14 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	if sz.Y < 4 {
 		sz.Y = 4
 	}
-	es.EnsureActiveSprites()
-	rt := SpriteConnectEvent(RubberBandT, win, sz, nil, nil)
-	rb := SpriteConnectEvent(RubberBandB, win, sz, nil, nil)
-	rr := SpriteConnectEvent(RubberBandR, win, sz, nil, nil)
-	rl := SpriteConnectEvent(RubberBandL, win, sz, nil, nil)
-	SetSpritePos(RubberBandT, rt, bbox.Min)
-	SetSpritePos(RubberBandB, rb, image.Point{bbox.Min.X, bbox.Max.Y})
-	SetSpritePos(RubberBandR, rr, image.Point{bbox.Max.X, bbox.Min.Y})
-	SetSpritePos(RubberBandL, rl, bbox.Min)
+	rt := Sprite(win, SpRubberBand, SpBBoxUpC, 0, sz)
+	rb := Sprite(win, SpRubberBand, SpBBoxDnC, 0, sz)
+	rr := Sprite(win, SpRubberBand, SpBBoxRtM, 0, sz)
+	rl := Sprite(win, SpRubberBand, SpBBoxLfM, 0, sz)
+	SetSpritePos(rt, bbox.Min)
+	SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
+	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
+	SetSpritePos(rl, bbox.Min)
 
 	win.RenderOverlays()
 }

@@ -178,22 +178,18 @@ func (sv *SVGView) UpdateNodeSprites() {
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		spi := SpritesN + Sprites(i) // key to get a unique local var
-		sp := SpriteConnectEvent(spi, win, image.Point{}, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		idx := i // key to get local var
+		sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
 			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			ssvg.NodeSpriteEvent(spi, oswin.EventType(sig), d)
+			ssvg.NodeSpriteEvent(idx, oswin.EventType(sig), d)
 		})
-		es.ActiveSprites[spi] = sp
-
-		SetSpritePos(spi, sp, image.Point{int(pn.WinPt.X), int(pn.WinPt.Y)})
+		SetSpritePos(sp, image.Point{int(pn.WinPt.X), int(pn.WinPt.Y)})
 	}
 
 	// remove extra
 	for i := es.NNodeSprites; i < prvn; i++ {
-		sp, has := es.ActiveSprites[SpritesN+Sprites(i)]
-		if has {
-			win.DeleteSprite(sp.Name)
-		}
+		spnm := SpriteName(SpNodePoint, SpUnk, i)
+		win.InactivateSprite(spnm)
 	}
 
 	sv.GridView.UpdateNodeToolbar()
@@ -204,10 +200,8 @@ func (sv *SVGView) UpdateNodeSprites() {
 func (sv *SVGView) RemoveNodeSprites(win *gi.Window) {
 	es := sv.EditState()
 	for i := 0; i < es.NNodeSprites; i++ {
-		sp, has := es.ActiveSprites[SpritesN+Sprites(i)]
-		if has {
-			win.DeleteSprite(sp.Name)
-		}
+		spnm := SpriteName(SpNodePoint, SpUnk, i)
+		win.InactivateSprite(spnm)
 	}
 	es.NNodeSprites = 0
 	es.PathNodes = nil
@@ -215,7 +209,7 @@ func (sv *SVGView) RemoveNodeSprites(win *gi.Window) {
 	es.ActivePath = nil
 }
 
-func (sv *SVGView) NodeSpriteEvent(spi Sprites, et oswin.EventType, d interface{}) {
+func (sv *SVGView) NodeSpriteEvent(idx int, et oswin.EventType, d interface{}) {
 	win := sv.GridView.ParentWindow()
 	es := sv.EditState()
 	es.SelNoDrag = false
@@ -224,7 +218,7 @@ func (sv *SVGView) NodeSpriteEvent(spi Sprites, et oswin.EventType, d interface{
 		me := d.(*mouse.Event)
 		me.SetProcessed()
 		if me.Action == mouse.Press {
-			win.SpriteDragging = SpriteName(spi)
+			win.SpriteDragging = SpriteName(SpNodePoint, SpUnk, idx)
 			es.DragNodeStart(me.Where)
 		} else if me.Action == mouse.Release {
 			sv.UpdateNodeSprites()
@@ -233,7 +227,7 @@ func (sv *SVGView) NodeSpriteEvent(spi Sprites, et oswin.EventType, d interface{
 	case oswin.MouseDragEvent:
 		me := d.(*mouse.DragEvent)
 		me.SetProcessed()
-		sv.SpriteNodeDrag(spi, win, me)
+		sv.SpriteNodeDrag(idx, win, me)
 	}
 }
 
@@ -287,7 +281,7 @@ func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt mat32.Vec2
 }
 
 // SpriteNodeDrag processes a mouse node drag event on a path node sprite
-func (sv *SVGView) SpriteNodeDrag(spi Sprites, win *gi.Window, me *mouse.DragEvent) {
+func (sv *SVGView) SpriteNodeDrag(idx int, win *gi.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("NodeAdj", es.ActivePath.Nm)
@@ -295,10 +289,9 @@ func (sv *SVGView) SpriteNodeDrag(spi Sprites, win *gi.Window, me *mouse.DragEve
 	}
 
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
-	pidx := int(spi - SpritesN)
-	pn := es.PathNodes[pidx]
+	pn := es.PathNodes[idx]
 
-	InactivateSpriteRange(win, AlignMatch1, AlignMatch8)
+	InactivateSprites(win, SpAlignMatch)
 
 	spt := mat32.NewVec2FmPoint(es.DragStartPos)
 	mpt := mat32.NewVec2FmPoint(me.Where)
@@ -315,10 +308,11 @@ func (sv *SVGView) SpriteNodeDrag(spi Sprites, win *gi.Window, me *mouse.DragEve
 	dv := mat32.NewVec2FmPoint(mdel)
 
 	nwc := pn.WinPt.Add(dv) // new window coord
-	sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, pidx, dv, svoff)
+	sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, idx, dv, svoff)
 
-	sp := es.ActiveSprites[spi]
-	SetSpritePos(spi, sp, image.Point{int(nwc.X), int(nwc.Y)})
+	spnm := SpriteName(SpNodePoint, SpUnk, idx)
+	sp := win.Sprites[spnm]
+	SetSpritePos(sp, image.Point{int(nwc.X), int(nwc.Y)})
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 }
