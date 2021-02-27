@@ -194,10 +194,11 @@ func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
 	mxi := sv.Pnt.XForm.Inverse()
 	lpt := mxi.MulVec2AsPt(mpt)
 	xf := mat32.Scale2D(sc, sc)
-
-	ntrans := xf.MulVec2AsPtCtr(sv.Trans, lpt)
-	sv.Trans = ntrans
+	nt := sv.Pnt.XForm.MulCtr(xf, lpt)
+	sv.Trans.X = nt.X0
+	sv.Trans.Y = nt.Y0
 	sv.Scale = sc * sv.Scale
+	sv.SetTransform()
 }
 
 func (sv *SVGView) MouseScroll() {
@@ -216,7 +217,6 @@ func (sv *SVGView) MouseScroll() {
 		// if ssvg.Scale <= 0 {
 		// 	ssvg.Scale = 0.01
 		// }
-		ssvg.SetTransform()
 		ssvg.UpdateView(true)
 	})
 }
