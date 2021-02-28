@@ -238,16 +238,16 @@ func (sv *SVGView) MouseEvent() {
 			es.DragStartPos = me.Where
 			switch {
 			case es.HasSelected() && es.SelBBox.ContainsPoint(mat32.NewVec2FmPoint(me.Where)):
-				// note: this absorbs potential secondary selections within selection -- handeled
+				// note: this absorbs potential secondary selections within selection -- handled
 				// on release below, if nothing else happened
 				es.SelNoDrag = true
 				ssvg.EditState().DragSelStart(me.Where)
-			case sob != nil && ToolDoesBasicSelect(es.Tool):
-				es.SelectAction(sob, me.SelectMode())
+			case sob != nil && es.Tool == SelectTool:
+				es.SelectAction(sob, me.SelectMode(), me.Where)
 				ssvg.EditState().DragSelStart(me.Where)
 				ssvg.UpdateSelect()
 			case sob != nil && es.Tool == NodeTool:
-				es.SelectAction(sob, mouse.SelectOne)
+				es.SelectAction(sob, mouse.SelectOne, me.Where)
 				ssvg.EditState().DragSelStart(me.Where)
 				ssvg.UpdateNodeSprites()
 			case sob == nil:
@@ -266,14 +266,15 @@ func (sv *SVGView) MouseEvent() {
 		}
 		if me.Button == mouse.Left {
 			// release on select -- do extended selection processing
-			if es.SelNoDrag && ToolDoesBasicSelect(es.Tool) {
+
+			if (es.SelNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
 				es.SelNoDrag = false
 				me.SetProcessed()
 				if sob == nil {
 					sob = ssvg.SelectContainsPoint(me.Where, false, false) // don't exclude existing sel
 				}
 				if sob != nil {
-					es.SelectAction(sob, me.SelectMode())
+					es.SelectAction(sob, me.SelectMode(), me.Where)
 					ssvg.UpdateSelect()
 				}
 			}
@@ -700,11 +701,11 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	nr.SetPos(xfi.MulVec2AsPt(pos))
 	sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
 	nr.SetSize(xfi.MulVec2AsVec(sz))
-	es.SelectAction(nr, mouse.SelectOne)
+	es.SelectAction(nr, mouse.SelectOne, end)
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
-	win.SpriteDragging = SpriteNames[SpBBoxDnR]
+	win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
 	return nr
 }
 
@@ -732,10 +733,9 @@ func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
 	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
 	nr.Width = 100
 	tspan.Width = 100
-	es.SelectAction(nr, mouse.SelectOne)
+	es.SelectAction(nr, mouse.SelectOne, end)
 	sv.UpdateView(true)
 	sv.UpdateSelect()
-	// win.SpriteDragging = SpriteNames[SpBBoxDnR]
 	return nr
 }
 
@@ -760,11 +760,11 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 
-	es.SelectAction(nr, mouse.SelectOne)
+	es.SelectAction(nr, mouse.SelectOne, end)
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
-	win.SpriteDragging = SpriteNames[SpBBoxDnR]
+	win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
 	return nr
 }
 

@@ -216,7 +216,7 @@ func SetSpritePos(sp *gi.Sprite, pos image.Point) {
 	case subtyp >= SpBBoxUpL && subtyp <= SpBBoxRtM: // Reshape, Sel BBox
 		sc := float32(1)
 		if typ == SpSelBBox {
-			sc = .5
+			sc = .8
 		}
 		_, sz := HandleSpriteSize(sc)
 		if subtyp == SpBBoxDnL || subtyp == SpBBoxUpL || subtyp == SpBBoxLfM {
@@ -276,7 +276,7 @@ func DrawSpriteReshape(sp *gi.Sprite, bbtyp Sprites) {
 
 // DrawSpriteSel renders a Select sprite handle -- smaller
 func DrawSpriteSel(sp *gi.Sprite, bbtyp Sprites) {
-	bsz, bbsz := HandleSpriteSize(.5)
+	bsz, bbsz := HandleSpriteSize(.8)
 	if !sp.SetSize(bbsz) { // already set
 		return
 	}

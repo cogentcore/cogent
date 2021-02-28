@@ -6,6 +6,7 @@ package grid
 
 import (
 	"errors"
+	"image"
 	"io"
 	"log"
 	"path/filepath"
@@ -711,7 +712,7 @@ func (gv *GridView) SelectNodeInSVG(kn ki.Ki, mode mouse.SelectModes) {
 	}
 	sv := gv.SVG()
 	es := &gv.EditState
-	es.SelectAction(sii, mode)
+	es.SelectAction(sii, mode, image.ZP)
 	sv.UpdateView(false)
 }
 

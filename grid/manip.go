@@ -341,6 +341,7 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 		itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
+	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 
@@ -429,6 +430,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
+	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 }
@@ -507,6 +509,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelCurBBox)
+	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
 	win.RenderOverlays()
 }

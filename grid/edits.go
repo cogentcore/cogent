@@ -37,6 +37,9 @@ type EditState struct {
 	DragStartPos     image.Point               `desc:"point where dragging started, mouse coords"`
 	DragCurPos       image.Point               `desc:"current dragging position, mouse coords"`
 	SelBBox          mat32.Box2                `desc:"current selection bounding box"`
+	NSelSprites      int                       `desc:"number of current selectbox sprites"`
+	LastSelPos       image.Point               `desc:"last select action position -- continued clicks in same area lead to deeper selection"`
+	RecentlySelected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"recently selected item(s) -- within the same selection position"`
 	DragSelStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
 	DragSelCurBBox   mat32.Box2                `desc:"current bbox during dragging -- non-snapped version"`
 	DragSelEffBBox   mat32.Box2                `desc:"current effective bbox during dragging -- snapped version"`
@@ -97,7 +100,14 @@ func (es *EditState) IsSelected(itm svg.NodeSVG) bool {
 	return false
 }
 
+// ResetSelected resets the selection list, including recents
 func (es *EditState) ResetSelected() {
+	es.NewSelected()
+	es.StartRecents(image.ZP)
+}
+
+// NewSelected makes a new Selected list
+func (es *EditState) NewSelected() {
 	es.Selected = make(map[svg.NodeSVG]*SelState)
 }
 
@@ -161,15 +171,32 @@ func (es *EditState) Select(itm svg.NodeSVG) {
 	ss := &SelState{Order: idx}
 	itm.WriteGeom(&ss.InitGeom)
 	if es.Selected == nil {
-		es.ResetSelected()
+		es.NewSelected()
 	}
 	es.Selected[itm] = ss
+	es.SanitizeSelected()
 }
 
 // Unselect unselects given idx (if selected)
 func (es *EditState) Unselect(itm svg.NodeSVG) {
 	if es.IsSelected(itm) {
+		ss := es.Selected[itm]
+		es.RecentlySelected[itm] = ss
 		delete(es.Selected, itm)
+	}
+}
+
+// SanitizeSelected ensures that the current selected list makes
+// sense.  E.g., it prevents having a group and a child both in
+// the selected list (removes the parent group).
+func (es *EditState) SanitizeSelected() {
+	for k := range es.Selected {
+		if pg, has := k.Parent().(*svg.Group); has {
+			pgi := pg.This().(svg.NodeSVG)
+			if _, issel := es.Selected[pgi]; issel {
+				delete(es.Selected, pgi)
+			}
+		}
 	}
 }
 
@@ -201,19 +228,22 @@ func (es *EditState) SelectedNamesString() string {
 // SelectAction is called when a select action has been received (e.g., a
 // mouse click) -- translates into selection updates -- gets selection mode
 // from mouse event (ExtendContinuous, ExtendOne)
-func (es *EditState) SelectAction(itm svg.NodeSVG, mode mouse.SelectModes) {
+func (es *EditState) SelectAction(itm svg.NodeSVG, mode mouse.SelectModes, pos image.Point) {
 	if mode == mouse.NoSelect {
 		return
+	}
+	if !es.HasSelected() || !es.PosInLastSel(pos) {
+		es.StartRecents(pos)
 	}
 	switch mode {
 	case mouse.SelectOne:
 		if es.IsSelected(itm) {
 			if len(es.Selected) > 1 {
-				es.ResetSelected()
+				es.SelectedToRecents()
 			}
 			es.Select(itm)
 		} else {
-			es.ResetSelected()
+			es.SelectedToRecents()
 			es.Select(itm)
 		}
 	case mouse.ExtendContinuous, mouse.ExtendOne:
@@ -229,6 +259,31 @@ func (es *EditState) SelectAction(itm svg.NodeSVG, mode mouse.SelectModes) {
 	case mouse.UnselectQuiet:
 		es.Unselect(itm)
 	}
+}
+
+func (es *EditState) SelectedToRecents() {
+	for k, v := range es.Selected {
+		es.RecentlySelected[k] = v
+		delete(es.Selected, k)
+	}
+}
+
+func (es *EditState) NewRecents() {
+	es.RecentlySelected = make(map[svg.NodeSVG]*SelState)
+}
+
+// StartRecents starts a new list of recently-selected items
+func (es *EditState) StartRecents(pos image.Point) {
+	es.NewRecents()
+	es.LastSelPos = pos
+}
+
+// PosInLastSel returns true if position is within tolerance of
+// last selection point
+func (es *EditState) PosInLastSel(pos image.Point) bool {
+	tol := image.Point{Prefs.SnapTol, Prefs.SnapTol}
+	bb := image.Rectangle{Min: es.LastSelPos.Sub(tol), Max: es.LastSelPos.Add(tol)}
+	return pos.In(bb)
 }
 
 ////////////////////////////////////////////////////////////////

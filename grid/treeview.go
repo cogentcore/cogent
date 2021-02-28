@@ -125,6 +125,7 @@ func (gv *GridView) CutSelected() {
 	tv.ReSync() // todo: should not be needed
 	tv.UpdateEnd(tvupdt)
 	sv.UpdateEnd(updt)
+	sv.UpdateSelSprites()
 }
 
 // PasteClip pastes clipboard, using cur layer etc
@@ -177,6 +178,7 @@ func (gv *GridView) DeleteSelected() {
 	tv.ReSync() // todo: should not be needed
 	tv.UpdateEnd(tvupdt)
 	sv.UpdateEnd(updt)
+	sv.UpdateSelSprites()
 }
 
 ///////////////////////////////////////////////

@@ -197,6 +197,8 @@ func (sv *SVGView) UpdateSelect() {
 func (sv *SVGView) RemoveSelSprites(win *gi.Window) {
 	InactivateSprites(win, SpReshapeBBox)
 	InactivateSprites(win, SpSelBBox)
+	es := sv.EditState()
+	es.NSelSprites = 0
 	win.RenderOverlays()
 }
 
@@ -220,8 +222,39 @@ func (sv *SVGView) UpdateSelSprites() {
 		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
+	sv.SetSelSpritePos()
 
 	win.RenderOverlays()
+}
+
+func (sv *SVGView) SetSelSpritePos() {
+	win := sv.GridView.ParentWindow()
+	es := sv.EditState()
+	nsel := es.NSelSprites
+
+	es.NSelSprites = 0
+	if len(es.Selected) > 1 {
+		nbox := 0
+		sl := es.SelectedList(false)
+		for si, sii := range sl {
+			sn := sii.AsSVGNode()
+			if sn.WinBBox.Size() == image.ZP {
+				continue
+			}
+			bb := mat32.Box2{}
+			bb.SetFromRect(sn.WinBBox)
+			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
+			nbox++
+		}
+		es.NSelSprites = nbox
+	}
+
+	for si := es.NSelSprites; si < nsel; si++ {
+		for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+			spnm := SpriteName(SpSelBBox, i, si)
+			win.InactivateSprite(spnm)
+		}
+	}
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites
@@ -264,7 +297,7 @@ func (sv *SVGView) SelSpriteEvent(sp Sprites, et oswin.EventType, d interface{})
 		me.SetProcessed()
 		// fmt.Printf("click %s\n", sp)
 		if me.Action == mouse.Press {
-			win.SpriteDragging = SpriteNames[sp]
+			win.SpriteDragging = SpriteName(SpReshapeBBox, sp, 0)
 			sv.EditState().DragSelStart(me.Where)
 			// fmt.Printf("dragging: %s\n", win.SpriteDragging)
 		} else if me.Action == mouse.Release {
@@ -599,10 +632,18 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		}
 		sii, issvg := k.(svg.NodeSVG)
 		if !issvg {
-			return ki.Continue
+			return ki.Break
+		}
+		if txt, istxt := sii.(*svg.Text); istxt { // no tspans
+			if txt.Text != "" {
+				return ki.Break
+			}
 		}
 		if excludeSel {
 			if _, issel := es.Selected[sii]; issel {
+				return ki.Continue
+			}
+			if _, issel := es.RecentlySelected[sii]; issel {
 				return ki.Continue
 			}
 		}

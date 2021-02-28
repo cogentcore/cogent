@@ -44,8 +44,6 @@ Basic functionality now in place:
 
 # TODO:
 
-* only param save in metadata is grid size -- add to svg, set in physical size setting -- add a grid size option to that basically -- init phys size etc with current values, then set in update.  add grid color to prefs.  
-
 * resize to fit content button -- two versions: resize doc phys size to fit bbox and rescale view to fit bbox or page..
 
 * implement flip and rotate, and also the full transform panel
