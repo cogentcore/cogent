@@ -6,6 +6,7 @@ package grid
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"io"
 	"log"
@@ -60,8 +61,8 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 	gv.FilePath = gi.FileName(path)
 	gv.SetTitle()
 	// TheFile.SetText(CurFilename)
-	sg := gv.SVG()
-	err := sg.OpenXML(gi.FileName(path))
+	sv := gv.SVG()
+	err := sv.OpenXML(gi.FileName(path))
 	if err != nil && err != io.EOF {
 		log.Println(err)
 		// return err
@@ -69,20 +70,20 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
 	gv.EditState.Init()
-	gv.EditState.Gradients = sg.Gradients()
-	sg.GatherIds() // also ensures uniqueness, key for json saving
-	sg.SetNormXForm()
+	gv.EditState.Gradients = sv.Gradients()
+	sv.GatherIds() // also ensures uniqueness, key for json saving
+	sv.SetNormXForm()
 	tv := gv.TreeView()
 	tv.CloseAll()
 	tv.ReSync()
 	gv.SetStatus("Opened: " + path)
 	gv.UpdateEnd(updt)
 	tv.CloseAll()
-	sg.FitInView(false)
-	sg.ReadMetaData()
-	sg.SetTransform()
-	sg.bgGridEff = 0
-	sg.UpdateView(true)
+	sv.ZoomToContents(false)
+	sv.ReadMetaData()
+	sv.SetTransform()
+	sv.bgGridEff = 0
+	sv.UpdateView(true)
 	return nil
 }
 
@@ -119,6 +120,7 @@ func (gv *GridView) SetPhysSize(sz *PhysSize) {
 	sv := gv.SVG()
 	sz.SetToSVG(sv)
 	sv.SetMetaData()
+	sv.ZoomToPage(false)
 }
 
 // SaveDrawing saves .svg drawing to current filename
@@ -127,14 +129,15 @@ func (gv *GridView) SaveDrawing() error {
 		giv.CallMethod(gv, "SaveDrawingAs", gv.ViewportSafe())
 		return nil
 	}
-	sg := gv.SVG()
-	sg.RemoveOrphanedDefs()
-	sg.SetMetaData()
-	err := sg.SaveXML(gv.FilePath)
+	sv := gv.SVG()
+	sv.RemoveOrphanedDefs()
+	sv.SetMetaData()
+	err := sv.SaveXML(gv.FilePath)
 	if err != nil && err != io.EOF {
 		log.Println(err)
 	}
 	gv.SetStatus("Saved: " + string(gv.FilePath))
+	gv.EditState.Changed = false
 	return err
 }
 
@@ -147,27 +150,58 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	gv.FilePath = gi.FileName(path)
 	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
-	sg := gv.SVG()
-	sg.RemoveOrphanedDefs()
-	sg.SetMetaData()
-	err := sg.SaveXML(gi.FileName(path))
+	sv := gv.SVG()
+	sv.RemoveOrphanedDefs()
+	sv.SetMetaData()
+	err := sv.SaveXML(gi.FileName(path))
 	if err != nil && err != io.EOF {
 		log.Println(err)
 	}
 	gv.SetTitle()
 	gv.SetStatus("Saved: " + path)
+	gv.EditState.Changed = false
 	return err
+}
+
+// ResizeToContents resizes the drawing to just fit the current contents,
+// including moving everything to start at upper-left corner,
+// preserving the current grid offset.
+func (gv *GridView) ResizeToContents() {
+	sv := gv.SVG()
+	sv.UndoSave("ResizeToContents", "")
+	sv.ZoomToPage(false)
+	sv.UpdateView(true)
+	bb := sv.ContentsBBox()
+	bsz := bb.Size()
+	if bsz.X <= 0 || bsz.Y <= 0 {
+		return
+	}
+	trans := bb.Min
+	incr := sv.Grid * sv.Scale // our zoom factor
+	treff := trans
+	treff.X = mat32.Floor(trans.X/incr) * incr
+	treff.Y = mat32.Floor(trans.Y/incr) * incr
+	bsz.SetAdd(trans.Sub(treff))
+	treff = treff.Negate()
+
+	bsz = bsz.DivScalar(sv.Scale)
+
+	sv.XFormAllLeaves(treff, mat32.Vec2{1, 1}, 0, mat32.Vec2{0, 0})
+	sv.ViewBox.Size = bsz
+	sv.PhysWidth.Val = bsz.X
+	sv.PhysHeight.Val = bsz.Y
+	sv.ZoomToPage(false)
 }
 
 // AddImage adds a new image node set to given image
 func (gv *GridView) AddImage(fname gi.FileName, width, height float32) error {
-	sg := gv.SVG()
-	sg.UndoSave("AddImage", string(fname))
-	ind := sg.NewEl(svg.KiT_Image).(*svg.Image)
+	sv := gv.SVG()
+	sv.UndoSave("AddImage", string(fname))
+	ind := sv.NewEl(svg.KiT_Image).(*svg.Image)
 	ind.Pos.X = 100 // todo: default pos
 	ind.Pos.Y = 100 // todo: default pos
 	err := ind.OpenImage(fname, width, height)
-	sg.UpdateView(true)
+	sv.UpdateView(true)
 	return err
 }
 
@@ -265,22 +299,22 @@ func (gv *GridView) Config() {
 
 	tb := gi.AddNewToolBar(hb, "tools")
 	tb.Lay = gi.LayoutVert
-	sv := gi.AddNewSplitView(hb, "splitview")
-	sv.Dim = mat32.X
+	spv := gi.AddNewSplitView(hb, "splitview")
+	spv.Dim = mat32.X
 
-	tvfr := gi.AddNewFrame(sv, "tree-frame", gi.LayoutHoriz)
+	tvfr := gi.AddNewFrame(spv, "tree-frame", gi.LayoutHoriz)
 	tvfr.SetStretchMax()
 	tvfr.SetReRenderAnchor()
 	tv := AddNewTreeView(tvfr, "treeview")
 	tv.GridView = gv
 	tv.OpenDepth = 1
 
-	sg := AddNewSVGView(sv, "svg", gv)
+	sv := AddNewSVGView(spv, "svg", gv)
 
-	tab := gi.AddNewTabView(sv, "tabs")
+	tab := gi.AddNewTabView(spv, "tabs")
 	tab.SetStretchMaxWidth()
 
-	tv.SetRootNode(sg)
+	tv.SetRootNode(sv)
 
 	tv.TreeViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 		gvv := recv.Embed(KiT_GridView).(*GridView)
@@ -321,7 +355,7 @@ func (gv *GridView) Config() {
 		// 		stv.SetStruct(tvn.SrcNode)
 	})
 
-	sv.SetSplits(0.1, 0.65, 0.25)
+	spv.SetSplits(0.1, 0.65, 0.25)
 
 	gv.ConfigStatusBar()
 	gv.ConfigMainToolbar()
@@ -433,12 +467,18 @@ func (gv *GridView) ConfigMainToolbar() {
 			giv.CallMethod(grr, "AddImage", grr.ViewportSafe())
 		})
 	tb.AddSeparator("sep-view")
+	tb.AddAction(gi.ActOpts{Label: "Zoom Page", Icon: "zoom-out", Tooltip: "zoom to see entire page size for drawing"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			svvv := grr.SVG()
+			svvv.ZoomToPage(false)
+			svvv.UpdateView(true)
+		})
 	tb.AddAction(gi.ActOpts{Label: "Zoom All", Icon: "zoom-out", Tooltip: "zoom to see entire contents"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			svvv := grr.SVG()
-			svvv.FitInView(false)
-			svvv.SetTransform()
+			svvv.ZoomToContents(false)
 			svvv.UpdateView(true)
 		})
 }
@@ -501,22 +541,23 @@ func (gv *GridView) SetStatus(msg string) {
 // to save open files -- if this returns true, then it is OK to close --
 // otherwise not
 func (gv *GridView) CloseWindowReq() bool {
-	// todo: do this
-	// gi.ChoiceDialog(gv.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Files",
-	// 	Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", gv.Nm, nch)},
-	// 	[]string{"Cancel", "Save All", "Close Without Saving"},
-	// 	gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-	// 		switch sig {
-	// 		case 0:
-	// 			// do nothing, will have returned false already
-	// 		case 1:
-	// 			gv.SaveAllOpenNodes()
-	// 		case 2:
-	// 			gv.ParentWindow().OSWin.Close() // will not be prompted again!
-	// 		}
-	// 	})
-	// return false // not yet
-	return true
+	if !gv.EditState.Changed {
+		return true
+	}
+	gi.ChoiceDialog(gv.Viewport, gi.DlgOpts{Title: "Close Drawing: There are Unsaved Changes",
+		Prompt: fmt.Sprintf("In Drawing: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this drawing?", giv.DirAndFile(string(gv.FilePath)))},
+		[]string{"Cancel", "Save", "Close Without Saving"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			switch sig {
+			case 0:
+				// do nothing, will have returned false already
+			case 1:
+				gv.SaveDrawing()
+			case 2:
+				gv.ParentWindow().OSWin.Close() // will not be prompted again!
+			}
+		})
+	return false // not yet
 }
 
 // QuitReq is called when user tries to quit the app -- we go through all open
@@ -695,9 +736,10 @@ func (gv *GridView) UpdateTabs() {
 		if istxt {
 			es.Text.SetFromNode(txt)
 			txv := gv.Tab("Text").(*giv.StructView)
-			txv.UpdateSig()
-			gv.SetModalText()
-			gv.UpdateTextToolbar()
+			txv.UpdateFields()
+			// todo: only show text toolbar on double-click
+			// gv.SetModalText()
+			// gv.UpdateTextToolbar()
 		} else {
 			gv.SetModalToolbar()
 		}
@@ -855,10 +897,6 @@ var GridViewProps = ki.Props{
 					}},
 				},
 			}},
-			{"PromptPhysSize", ki.Props{
-				"label": "Set Size",
-				"desc":  "sets the physical size (size units are used for ViewBox)",
-			}},
 			{"SaveDrawing", ki.Props{
 				"shortcut": gi.KeyFunMenuSave,
 				"label":    "Save Drawing",
@@ -872,6 +910,15 @@ var GridViewProps = ki.Props{
 						"ext": ".svg",
 					}},
 				},
+			}},
+			{"sep-file", ki.BlankProp{}},
+			{"PromptPhysSize", ki.Props{
+				"label": "Set Size",
+				"desc":  "sets the physical size (size units are used for ViewBox)",
+			}},
+			{"ResizeToContents", ki.Props{
+				"label": "Resize To Contents",
+				"desc":  "resizes the drawing to fit the current contents, moving everything to upper-left corner while preserving grid alignment",
 			}},
 			{"sep-imp", ki.BlankProp{}},
 			{"AddImage", ki.Props{

@@ -29,6 +29,7 @@ type EditState struct {
 	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
 	Text      TextStyle   `desc:"current text styling info"`
 	UndoMgr   undo.Mgr    `desc:"undo manager"`
+	Changed   bool        `view:"inactive" desc:"contents have changed"`
 
 	ActMu            sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
 	Selected         map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
@@ -58,6 +59,7 @@ func (es *EditState) Init() {
 	es.CurLayer = ""
 	es.Gradients = nil
 	es.UndoMgr.Reset()
+	es.Changed = false
 }
 
 // InAction reports whether we currently doing an action

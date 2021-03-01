@@ -181,26 +181,6 @@ func (sv *SVGView) MouseDrag() {
 	})
 }
 
-// ZoomAt updates the scale and translate parameters at given point
-// by given delta (+ means zoom in, - means zoom out -- delta should always be < 1)
-func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
-	sc := float32(1)
-	if delta > 1 {
-		sc += delta
-	} else {
-		sc *= (1 - mat32.Min(-delta, .5))
-	}
-	mpt := mat32.NewVec2FmPoint(pt.Sub(sv.WinBBox.Min))
-	mxi := sv.Pnt.XForm.Inverse()
-	lpt := mxi.MulVec2AsPt(mpt)
-	xf := mat32.Scale2D(sc, sc)
-	nt := sv.Pnt.XForm.MulCtr(xf, lpt)
-	sv.Trans.X = nt.X0
-	sv.Trans.Y = nt.Y0
-	sv.Scale = sc * sv.Scale
-	sv.SetTransform()
-}
-
 func (sv *SVGView) MouseScroll() {
 	sv.ConnectEvent(oswin.MouseScrollEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
 		me := d.(*mouse.ScrollEvent)
@@ -210,7 +190,7 @@ func (sv *SVGView) MouseScroll() {
 			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
 			ssvg.SetDragCursor = false
 		}
-		delta := float32(me.NonZeroDelta(false)) / 20
+		delta := float32(me.NonZeroDelta(false)) / 50
 		sv.ZoomAt(me.Where, delta)
 		// ssvg.InitScale()
 		// ssvg.Scale +=
@@ -321,7 +301,7 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 			oswin.TheApp.Cursor(win.OSWin).Push(cursor.HandOpen)
 			sv.SetDragCursor = true
 		}
-		sv.Trans.SetAdd(mat32.NewVec2FmPoint(delta))
+		sv.Trans.SetAdd(mat32.NewVec2FmPoint(delta).DivScalar(sv.Scale))
 		sv.SetTransform()
 		sv.UpdateView(true)
 		return
@@ -372,38 +352,135 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 	bbox := mat32.Box2{}
 	bbox.SetEmpty()
 	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+		if k.This() == sv.This() {
+			return ki.Continue
+		}
+		if k.This() == sv.Defs.This() {
+			return ki.Break
+		}
 		sni, issv := k.(svg.NodeSVG)
 		if !issv {
 			return ki.Break
+		}
+		if NodeIsLayer(k) {
+			return ki.Continue
+		}
+		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
+			if txt.Text != "" {
+				return ki.Break
+			}
 		}
 		sn := sni.AsSVGNode()
 		bb := mat32.Box2{}
 		bb.SetFromRect(sn.BBox)
 		bbox.ExpandByBox(bb)
+		if _, isgp := sni.(*svg.Group); isgp { // subsumes all
+			return ki.Break
+		}
 		return ki.Continue
 	})
+	if bbox.IsEmpty() {
+		bbox = mat32.Box2{}
+	}
 	return bbox
 }
 
-// FitInView sets the scale to fit the current contents into view
-func (sv *SVGView) FitInView(width bool) {
-	bb := sv.ContentsBBox()
-	bsz := bb.Size()
-	if bsz.X <= 0 || bsz.Y <= 0 {
+// XFormAllLeaves transforms all the leaf items in the drawing (not groups)
+// uses ApplyDeltaXForm manipulation.
+func (sv *SVGView) XFormAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
+	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+		if k.This() == sv.This() {
+			return ki.Continue
+		}
+		if k.This() == sv.Defs.This() {
+			return ki.Break
+		}
+		sni, issv := k.(svg.NodeSVG)
+		if !issv {
+			return ki.Break
+		}
+		if NodeIsLayer(k) {
+			return ki.Continue
+		}
+		if _, isgp := sni.(*svg.Group); isgp {
+			return ki.Continue
+		}
+		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
+			if txt.Text != "" {
+				return ki.Break
+			}
+		}
+		sni.ApplyDeltaXForm(trans, scale, rot, pt)
+		return ki.Continue
+	})
+}
+
+// ZoomToPage sets the scale to fit the current viewbox
+func (sv *SVGView) ZoomToPage(width bool) {
+	vb := mat32.NewVec2FmPoint(sv.WinBBox.Size())
+	if vb.IsNil() {
 		return
 	}
-	vb := sv.ViewBox.Size
+	bsz := sv.ViewBox.Size
 	sc := vb.Div(bsz)
+	sv.Trans.Set(0, 0)
 	if width {
 		sv.Scale = sc.X
 	} else {
 		sv.Scale = mat32.Min(sc.X, sc.Y)
 	}
+	sv.SetTransform()
+}
+
+// ZoomToContents sets the scale to fit the current contents into view
+func (sv *SVGView) ZoomToContents(width bool) {
+	vb := mat32.NewVec2FmPoint(sv.WinBBox.Size())
+	if vb.IsNil() {
+		return
+	}
+	sv.ZoomToPage(width)
+	sv.UpdateView(true)
+	bb := sv.ContentsBBox()
+	bsz := bb.Size()
+	if bsz.X <= 0 || bsz.Y <= 0 {
+		return
+	}
+	sc := vb.Div(bsz)
+	sv.Trans = bb.Min.DivScalar(sv.Scale).Negate()
+	if width {
+		sv.Scale *= sc.X
+	} else {
+		sv.Scale *= mat32.Min(sc.X, sc.Y)
+	}
+	sv.SetTransform()
+}
+
+// ZoomAt updates the scale and translate parameters at given point
+// by given delta: + means zoom in, - means zoom out,
+// delta should always be < 1)
+func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
+	sc := float32(1)
+	if delta > 1 {
+		sc += delta
+	} else {
+		sc *= (1 - mat32.Min(-delta, .5))
+	}
+
+	nsc := sv.Scale * sc
+
+	mpt := mat32.NewVec2FmPoint(pt.Sub(sv.WinBBox.Min))
+	lpt := mpt.DivScalar(sv.Scale).Sub(sv.Trans) // point in drawing coords
+
+	dt := lpt.Add(sv.Trans).MulScalar((nsc - sv.Scale) / nsc) // delta from zooming
+	sv.Trans.SetSub(dt)
+
+	sv.Scale = nsc
+	sv.SetTransform()
 }
 
 // SetTransform sets the transform based on Trans and Scale values
 func (sv *SVGView) SetTransform() {
-	sv.SetProp("transform", fmt.Sprintf("translate(%v,%v) scale(%v,%v)", sv.Trans.X, sv.Trans.Y, sv.Scale, sv.Scale))
+	sv.SetProp("transform", fmt.Sprintf("scale(%v,%v) translate(%v,%v)", sv.Scale, sv.Scale, sv.Trans.X, sv.Trans.Y))
 }
 
 // MetaData returns the overall metadata and grid if present.
@@ -442,13 +519,18 @@ func (sv *SVGView) SetMetaData() {
 
 	uts := strings.ToLower(sv.PhysWidth.Un.String())
 
-	nv.SetProp("current-layer", es.CurLayer)
-	nv.SetProp("cx", fmt.Sprintf("%g", sv.Trans.X))
-	nv.SetProp("cy", fmt.Sprintf("%g", sv.Trans.Y))
-	nv.SetProp("zoom", fmt.Sprintf("%g", sv.Scale))
-	nv.SetProp("document-units", uts)
+	nv.SetProp("inkscape:current-layer", es.CurLayer)
+	nv.SetProp("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
+	nv.SetProp("inkscape:cy", fmt.Sprintf("%g", sv.Trans.Y))
+	nv.SetProp("inkscape:zoom", fmt.Sprintf("%g", sv.Scale))
+	nv.SetProp("inkscape:document-units", uts)
 
 	//	get rid of inkscape props we don't set
+	nv.DeleteProp("cx")
+	nv.DeleteProp("cy")
+	nv.DeleteProp("zoom")
+	nv.DeleteProp("document-units")
+	nv.DeleteProp("current-layer")
 	nv.DeleteProp("objecttolerance")
 	nv.DeleteProp("guidetolerance")
 	nv.DeleteProp("gridtolerance")
@@ -556,6 +638,7 @@ func (sv *SVGView) NodeContextMenu(kn ki.Ki, pos image.Point) {
 // UndoSave save current state for potential undo
 func (sv *SVGView) UndoSave(action, data string) {
 	es := sv.EditState()
+	es.Changed = true
 	b := &bytes.Buffer{}
 	// sv.WriteXML(b, false)
 	err := sv.WriteJSON(b, true) // should be false

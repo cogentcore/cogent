@@ -418,7 +418,18 @@ func (gv *GridView) SelRotate(deg float32) {
 	sv := gv.SVG()
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
-	gv.UpdateSelectToolbar()
+	svoff := sv.WinBBox.Min
+	del := mat32.Vec2{}
+	sc := mat32.Vec2{1, 1}
+	rot := mat32.DegToRad(deg)
+	for sn := range es.Selected {
+		sng := sn.AsSVGNode()
+		sz := mat32.NewVec2FmPoint(sng.WinBBox.Size())
+		mn := mat32.NewVec2FmPoint(sng.WinBBox.Min.Sub(svoff))
+		ctr := mn.Add(sz.MulScalar(.5))
+		sn.ApplyDeltaXForm(del, sc, rot, ctr)
+	}
+	sv.UpdateView(true)
 }
 
 func (gv *GridView) SelScale(scx, scy float32) {
@@ -429,7 +440,17 @@ func (gv *GridView) SelScale(scx, scy float32) {
 	sv := gv.SVG()
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
-	gv.UpdateSelectToolbar()
+	svoff := sv.WinBBox.Min
+	del := mat32.Vec2{}
+	sc := mat32.Vec2{scx, scy}
+	for sn := range es.Selected {
+		sng := sn.AsSVGNode()
+		sz := mat32.NewVec2FmPoint(sng.WinBBox.Size())
+		mn := mat32.NewVec2FmPoint(sng.WinBBox.Min.Sub(svoff))
+		ctr := mn.Add(sz.MulScalar(.5))
+		sn.ApplyDeltaXForm(del, sc, 0, ctr)
+	}
+	sv.UpdateView(true)
 }
 
 func (gv *GridView) SelRotateLeft() {

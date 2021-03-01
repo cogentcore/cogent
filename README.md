@@ -44,9 +44,9 @@ Basic functionality now in place:
 
 # TODO:
 
-* resize to fit content button -- two versions: resize doc phys size to fit bbox and rescale view to fit bbox or page..
+* implement the full transform panel
 
-* implement flip and rotate, and also the full transform panel
+* render gradient icons
 
 * show selected path node in diff color..  red?  node sel map
 

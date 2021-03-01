@@ -82,19 +82,6 @@ func (gv *GridView) ManipActionFun(sii svg.NodeSVG, fun func(itm svg.NodeSVG)) {
 	fun(sii)
 }
 
-// SetColorProps sets color property -- breaks color alpha
-// out as opacity
-func (gv *GridView) SetColorProps(sii svg.NodeSVG, prop, color string) {
-	if color[0] == '#' && len(color) == 9 {
-		sii.SetProp(prop, color[:7]) // exclude alpha
-		alphai := 0
-		fmt.Sscanf(color[7:], "%02x", &alphai)
-		sii.SetProp(prop+"-opacity", fmt.Sprintf("%g", float32(alphai)/255))
-	} else {
-		sii.SetProp(prop, color)
-	}
-}
-
 // SetColorNode sets the color properties of Node
 // based on previous and current PaintType
 func (gv *GridView) SetColorNode(sii svg.NodeSVG, prop string, prev, pt PaintTypes, sp string) {
@@ -114,7 +101,7 @@ func (gv *GridView) SetColorNode(sii svg.NodeSVG, prop string, prev, pt PaintTyp
 			pstr := kit.ToString(sii.Prop(prop))
 			svg.DeleteNodeGradient(sii, pstr)
 		}
-		gv.SetColorProps(sii, prop, sp)
+		sii.AsSVGNode().SetColorProps(prop, sp)
 	}
 	gv.UpdateMarkerColors(sii)
 }
@@ -175,7 +162,7 @@ func (gv *GridView) SetStrokeColor(sp string, manip bool) {
 		func(itm svg.NodeSVG) {
 			p := itm.Prop("stroke")
 			if p != nil {
-				gv.SetColorProps(itm, "stroke", sp)
+				itm.AsSVGNode().SetColorProps("stroke", sp)
 				gv.UpdateMarkerColors(itm)
 			}
 		})
@@ -272,7 +259,7 @@ func (gv *GridView) SetFillColor(fp string, manip bool) {
 		func(itm svg.NodeSVG) {
 			p := itm.Prop("fill")
 			if p != nil {
-				gv.SetColorProps(itm, "fill", fp)
+				itm.AsSVGNode().SetColorProps("fill", fp)
 				gv.UpdateMarkerColors(itm)
 			}
 		})
