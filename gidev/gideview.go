@@ -184,23 +184,22 @@ func (ge *GideView) EditRecents() {
 // or in a new window.
 func (ge *GideView) OpenFile(fnm string) {
 	abfn, _ := filepath.Abs(fnm)
-	fmt.Println(abfn)
 	if strings.HasPrefix(abfn, string(ge.ProjRoot)) {
 		ge.ViewFile(gi.FileName(abfn))
 		return
 	}
 	for _, w := range gi.MainWindows {
-		mfr := w.SetMainFrame()
-		if mfr.NumChildren() == 0 {
+		mfr, err := w.MainFrame()
+		if err != nil || mfr.NumChildren() == 0 {
 			continue
 		}
-		if mfr.Child(0).Name() != "gide" {
+		gevi := mfr.Child(0).Embed(KiT_GideView)
+		if gevi == nil {
 			continue
 		}
-		geo := mfr.Child(0).(*GideView)
+		geo := gevi.(*GideView)
 		if strings.HasPrefix(abfn, string(geo.ProjRoot)) {
 			geo.ViewFile(gi.FileName(abfn))
-			fmt.Println(geo.ProjRoot)
 			return
 		}
 	}

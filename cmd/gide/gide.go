@@ -38,6 +38,15 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	gide.InitPrefs()
 
+	pdir := oswin.TheApp.AppPrefsDir()
+	pnm := filepath.Join(pdir, "gide.log")
+
+	lf, err := os.Create(pnm)
+	if err == nil {
+		os.Stdout = lf
+		os.Stderr = lf
+	}
+
 	var path string
 	var proj string
 
@@ -56,6 +65,11 @@ Version: ` + gide.Prefs.VersionInfo())
 					path = flag.Arg(0)
 				}
 			}
+		}
+	} else {
+		ofs := oswin.TheApp.OpenFiles()
+		if len(ofs) > 0 {
+			path = ofs[0]
 		}
 	}
 
