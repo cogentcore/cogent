@@ -376,6 +376,7 @@ func (gv *GridView) SelGroup() {
 
 	sv.UpdateEnd(updt)
 	gv.UpdateAll()
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelUnGroup() {
@@ -408,6 +409,7 @@ func (gv *GridView) SelUnGroup() {
 	}
 	sv.UpdateEnd(updt)
 	gv.UpdateAll()
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelRotate(deg float32) {
@@ -430,6 +432,7 @@ func (gv *GridView) SelRotate(deg float32) {
 		sn.ApplyDeltaXForm(del, sc, rot, ctr)
 	}
 	sv.UpdateView(true)
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelScale(scx, scy float32) {
@@ -451,6 +454,7 @@ func (gv *GridView) SelScale(scx, scy float32) {
 		sn.ApplyDeltaXForm(del, sc, 0, ctr)
 	}
 	sv.UpdateView(true)
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelRotateLeft() {
@@ -487,6 +491,7 @@ func (gv *GridView) SelRaiseTop() {
 		par.Children().Move(ci, par.NumChildren()-1)
 	}
 	gv.UpdateDisp()
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelRaise() {
@@ -509,6 +514,7 @@ func (gv *GridView) SelRaise() {
 		}
 	}
 	gv.UpdateDisp()
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelLowerBot() {
@@ -529,6 +535,7 @@ func (gv *GridView) SelLowerBot() {
 		par.Children().Move(ci, 0)
 	}
 	gv.UpdateDisp()
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelLower() {
@@ -551,6 +558,7 @@ func (gv *GridView) SelLower() {
 		}
 	}
 	gv.UpdateDisp()
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelSetXPos(xp float32) {
@@ -560,6 +568,8 @@ func (gv *GridView) SelSetXPos(xp float32) {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("MoveToX", fmt.Sprintf("%g", xp))
+	// todo
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelSetYPos(yp float32) {
@@ -569,6 +579,8 @@ func (gv *GridView) SelSetYPos(yp float32) {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("MoveToY", fmt.Sprintf("%g", yp))
+	// todo
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelSetWidth(wd float32) {
@@ -578,6 +590,8 @@ func (gv *GridView) SelSetWidth(wd float32) {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("SetWidth", fmt.Sprintf("%g", wd))
+	// todo
+	gv.ChangeMade()
 }
 
 func (gv *GridView) SelSetHeight(ht float32) {
@@ -587,6 +601,8 @@ func (gv *GridView) SelSetHeight(ht float32) {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("SetHeight", fmt.Sprintf("%g", ht))
+	// todo
+	gv.ChangeMade()
 }
 
 ///////////////////////////////////////////////////////////////////////

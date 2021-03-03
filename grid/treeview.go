@@ -89,6 +89,7 @@ func (gv *GridView) DuplicateSelected() {
 	tv.ReSync() // todo: should not be needed
 	tv.UpdateEnd(tvupdt)
 	sv.UpdateEnd(updt)
+	gv.ChangeMade()
 }
 
 // CopySelected copies selected items in SVG view, using TreeView methods
@@ -126,6 +127,7 @@ func (gv *GridView) CutSelected() {
 	tv.UpdateEnd(tvupdt)
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
+	gv.ChangeMade()
 }
 
 // PasteClip pastes clipboard, using cur layer etc
@@ -154,6 +156,7 @@ func (gv *GridView) PasteClip() {
 	tv.ReSync() // todo: should not be needed
 	tv.UpdateEnd(tvupdt)
 	sv.UpdateEnd(updt)
+	gv.ChangeMade()
 }
 
 // DeleteSelected deletes selected items in SVG view, using TreeView methods
@@ -179,6 +182,7 @@ func (gv *GridView) DeleteSelected() {
 	tv.UpdateEnd(tvupdt)
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
+	gv.ChangeMade()
 }
 
 ///////////////////////////////////////////////

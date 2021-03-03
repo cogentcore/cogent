@@ -73,6 +73,7 @@ func (gv *GridView) AlignMin(aa AlignAnchors, dim mat32.Dims, act string) {
 		sn.ApplyDeltaXForm(del, sc, 0, mat32.NewVec2FmPoint(bb.Min))
 	}
 	sv.UpdateView(true)
+	gv.ChangeMade()
 }
 
 func (gv *GridView) AlignMinAnchor(aa AlignAnchors, dim mat32.Dims, act string) {
@@ -97,6 +98,7 @@ func (gv *GridView) AlignMinAnchor(aa AlignAnchors, dim mat32.Dims, act string) 
 		sn.ApplyDeltaXForm(del, sc, 0, mat32.NewVec2FmPoint(bb.Min))
 	}
 	sv.UpdateView(true)
+	gv.ChangeMade()
 }
 
 func (gv *GridView) AlignMax(aa AlignAnchors, dim mat32.Dims, act string) {
@@ -121,6 +123,7 @@ func (gv *GridView) AlignMax(aa AlignAnchors, dim mat32.Dims, act string) {
 		sn.ApplyDeltaXForm(del, sc, 0, mat32.NewVec2FmPoint(bb.Min))
 	}
 	sv.UpdateView(true)
+	gv.ChangeMade()
 }
 
 func (gv *GridView) AlignMaxAnchor(aa AlignAnchors, dim mat32.Dims, act string) {
@@ -145,6 +148,7 @@ func (gv *GridView) AlignMaxAnchor(aa AlignAnchors, dim mat32.Dims, act string) 
 		sn.ApplyDeltaXForm(del, sc, 0, mat32.NewVec2FmPoint(bb.Min))
 	}
 	sv.UpdateView(true)
+	gv.ChangeMade()
 }
 
 func (gv *GridView) AlignCenter(aa AlignAnchors, dim mat32.Dims, act string) {
@@ -171,6 +175,7 @@ func (gv *GridView) AlignCenter(aa AlignAnchors, dim mat32.Dims, act string) {
 		sn.ApplyDeltaXForm(del, sc, 0, mat32.NewVec2FmPoint(bb.Min))
 	}
 	sv.UpdateView(true)
+	gv.ChangeMade()
 }
 
 // GatherAlignPoints gets all the potential points of alignment for objects not

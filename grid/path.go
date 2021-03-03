@@ -104,6 +104,8 @@ func (gv *GridView) NodeSetXPos(xp float32) {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("NodeToX", fmt.Sprintf("%g", xp))
+	// todo
+	gv.ChangeMade()
 }
 
 func (gv *GridView) NodeSetYPos(yp float32) {
@@ -113,6 +115,8 @@ func (gv *GridView) NodeSetYPos(yp float32) {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("NodeToY", fmt.Sprintf("%g", yp))
+	// todo
+	gv.ChangeMade()
 }
 
 //////////////////////////////////////////////////////////////////////////

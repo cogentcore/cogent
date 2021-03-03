@@ -488,6 +488,7 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 	sv.PhysWidth.Val = bsz.X
 	sv.PhysHeight.Val = bsz.Y
 	sv.ZoomToPage(false)
+	sv.GridView.ChangeMade()
 }
 
 // ZoomAt updates the scale and translate parameters at given point
@@ -677,7 +678,6 @@ func (sv *SVGView) UndoSave(action, data string) {
 		return
 	}
 	es.Changed = true
-	go sv.GridView.AutoSave()
 	b := &bytes.Buffer{}
 	// sv.WriteXML(b, false)
 	err := sv.WriteJSON(b, true) // should be false

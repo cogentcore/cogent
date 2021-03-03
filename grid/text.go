@@ -110,6 +110,7 @@ func (gv *GridView) SetTextProps(tps map[string]string) {
 		gv.SetTextPropsNode(itm.(svg.NodeSVG), tps)
 	}
 	sv.UpdateEnd(updt)
+	gv.ChangeMade()
 }
 
 // TextProps returns non-default text properties to set
@@ -176,6 +177,7 @@ func (gv *GridView) SetText(txt string) {
 		}
 	}
 	sv.UpdateView(true) // needs full update
+	gv.ChangeMade()
 }
 
 ///////////////////////////////////////////////////////////////////////

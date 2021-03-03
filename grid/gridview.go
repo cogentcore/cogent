@@ -265,6 +265,7 @@ func (gv *GridView) AddImage(fname gi.FileName, width, height float32) error {
 	ind.Pos.Y = 100 // todo: default pos
 	err := ind.OpenImage(fname, width, height)
 	sv.UpdateView(true)
+	gv.ChangeMade()
 	return err
 }
 
@@ -865,6 +866,12 @@ func (gv *GridView) Redo() string {
 	return act
 }
 
+// ChangeMade should be called after any change is completed on the drawing.
+// Calls autosave.
+func (gv *GridView) ChangeMade() {
+	go gv.AutoSave()
+}
+
 /////////////////////////////////////////////////////////////////////////
 //   Basic infrastructure
 
@@ -955,7 +962,7 @@ func (gv *GridView) HelpWiki() {
 func (gv *GridView) AutoSaveFilename() string {
 	path, fn := filepath.Split(string(gv.Filename))
 	if fn == "" {
-		fn = "new_file_" + gv.Nm
+		fn = "new_file_" + gv.Nm + ".svg"
 	}
 	asfn := filepath.Join(path, "#"+fn+"#")
 	return asfn

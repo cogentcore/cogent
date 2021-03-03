@@ -53,6 +53,7 @@ func (sv *SVGView) ManipDone() {
 	es.ActDone()
 	sv.UpdateView(true)
 	sv.UpdateSelect()
+	sv.GridView.ChangeMade()
 }
 
 // ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the

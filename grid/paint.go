@@ -66,6 +66,7 @@ func (gv *GridView) ManipAction(act, data string, manip bool, fun func(sii svg.N
 		sv.UpdateEnd(updt)
 		if !actStart {
 			es.ActDone()
+			gv.ChangeMade()
 		}
 	} else {
 		sv.ManipUpdate()
@@ -118,6 +119,7 @@ func (gv *GridView) SetStroke(prev, pt PaintTypes, sp string) {
 		gv.SetColorNode(itm, "stroke", prev, pt, sp)
 	}
 	sv.UpdateEnd(updt)
+	gv.ChangeMade()
 }
 
 // SetStrokeWidthNode sets the stroke width of Node
@@ -150,6 +152,7 @@ func (gv *GridView) SetStrokeWidth(wp string, manip bool) {
 	}
 	if !manip {
 		sv.UpdateEnd(updt)
+		gv.ChangeMade()
 	} else {
 		sv.ManipUpdate()
 	}
@@ -193,6 +196,7 @@ func (gv *GridView) SetMarkerProps(start, mid, end string, sc, mc, ec MarkerColo
 		gv.SetMarkerNode(itm, start, mid, end, sc, mc, ec)
 	}
 	sv.UpdateEnd(updt)
+	gv.ChangeMade()
 }
 
 // UpdateMarkerColors updates the marker colors, when setting fill or stroke
@@ -236,6 +240,7 @@ func (gv *GridView) SetDashProps(dary []float64) {
 		gv.SetDashNode(itm, dary)
 	}
 	sv.UpdateEnd(updt)
+	gv.ChangeMade()
 }
 
 // SetFill sets the fill props of selected items
@@ -250,6 +255,7 @@ func (gv *GridView) SetFill(prev, pt PaintTypes, fp string) {
 		gv.SetColorNode(itm, "fill", prev, pt, fp)
 	}
 	sv.UpdateEnd(updt)
+	gv.ChangeMade()
 }
 
 // SetFillColor sets the fill color for selected items
@@ -670,7 +676,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	fs.SetStretchMax()
 	fs.StackTop = 1
 	fs.SetReRenderAnchor()
-	fs.StackTopOnly = true
+	// fs.StackTopOnly = true
 
 	gi.AddNewFrame(fs, "fill-blank", gi.LayoutHoriz) // nothing
 
