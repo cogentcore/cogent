@@ -12,7 +12,19 @@ If an acronym is required, how about: "Go-rendered interactive drawing" program.
 
 # Install
 
+The simple Go install command should work, for modules mode: 
 
+```bash
+$ go get github.com/goki/grid/cmd/grid
+```
+
+See [GoKi Install](https://github.com/goki/gi/wiki/Install) for more information and prereqs for different platforms -- if you encounter any difficulties, ensure that GoKi works first.
+
+Exporting PNG and PDF depends on https://cairosvg.org (which depends on python), install as follows:
+
+```bash
+$ pip3 install cairosvg
+```
 
 # Design
 
@@ -44,19 +56,11 @@ Basic functionality now in place:
 
 * full undo / redo for everything.
 
-* Preferences (though need to save with svg, optionally)
+* Preferences 
 
 # TODO:
 
-* cairosvg for .png and svg output.
-
-* mac get oswin first arg
-
-* icon has too many grid lines -- cut in half
-
 * import svg -- same as marker
-
-* autosave -- go at undosave
 
 * implement the full transform panel
 
