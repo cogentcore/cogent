@@ -5,10 +5,13 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
+	"github.com/goki/gi/oswin"
 	"github.com/goki/grid/grid"
 )
 
@@ -26,11 +29,31 @@ Version: ` + grid.Prefs.VersionInfo())
 
 	grid.InitPrefs()
 
-	fnm := ""
-	if len(os.Args) > 1 {
-		fnm = os.Args[1]
+	pdir := oswin.TheApp.AppPrefsDir()
+	pnm := filepath.Join(pdir, "grid.log")
+
+	lf, err := os.Create(pnm)
+	if err == nil {
+		os.Stdout = lf
+		os.Stderr = lf
 	}
 
-	grid.NewGridWindow(fnm)
+	ofs := oswin.TheApp.OpenFiles()
+
+	var fnms []string
+	if len(os.Args) > 1 {
+		fnms = os.Args[1:]
+	} else if len(ofs) > 0 {
+		fnms = ofs
+	}
+
+	if len(fnms) == 0 {
+		grid.NewGridWindow("")
+	} else {
+		for _, fnm := range fnms {
+			fmt.Println(fnm)
+			grid.NewGridWindow(fnm)
+		}
+	}
 	gi.WinWait.Wait()
 }

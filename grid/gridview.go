@@ -10,6 +10,8 @@ import (
 	"image"
 	"io"
 	"log"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -19,6 +21,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/oswin/mouse"
+	"github.com/goki/gi/oswin/osevent"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
 	"github.com/goki/ki/ki"
@@ -29,7 +32,7 @@ import (
 // GridView is the Grid SVG vector drawing program: Go-rendered interactive drawing
 type GridView struct {
 	gi.Frame
-	FilePath  gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
+	Filename  gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
 	EditState EditState   `desc:"current edit state"`
 }
 
@@ -50,17 +53,10 @@ func (g *GridView) CopyFieldsFrom(frm interface{}) {
 func (gv *GridView) Defaults() {
 }
 
-// OpenDrawing opens a new .svg drawing
-func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
-	wupdt := gv.TopUpdateStart()
-	defer gv.TopUpdateEnd(wupdt)
-	updt := gv.UpdateStart()
-	gv.SetFullReRender()
-	gv.Defaults()
+// OpenDrawingFile opens a new .svg drawing file -- just the basic opening
+func (gv *GridView) OpenDrawingFile(fnm gi.FileName) error {
 	path, _ := filepath.Abs(string(fnm))
-	gv.FilePath = gi.FileName(path)
-	gv.SetTitle()
-	// TheFile.SetText(CurFilename)
+	gv.Filename = gi.FileName(path)
 	sv := gv.SVG()
 	err := sv.OpenXML(gi.FileName(path))
 	if err != nil && err != io.EOF {
@@ -72,19 +68,33 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 	gv.EditState.Init()
 	gv.EditState.Gradients = sv.Gradients()
 	sv.GatherIds() // also ensures uniqueness, key for json saving
-	sv.SetNormXForm()
-	tv := gv.TreeView()
-	tv.CloseAll()
-	tv.ReSync()
-	gv.SetStatus("Opened: " + path)
-	gv.UpdateEnd(updt)
-	tv.CloseAll()
 	sv.ZoomToContents(false)
 	sv.ReadMetaData()
 	sv.SetTransform()
+	return err
+}
+
+// OpenDrawing opens a new .svg drawing
+func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
+	wupdt := gv.TopUpdateStart()
+	defer gv.TopUpdateEnd(wupdt)
+	updt := gv.UpdateStart()
+	gv.SetFullReRender()
+
+	gv.Defaults()
+	err := gv.OpenDrawingFile(fnm)
+
+	sv := gv.SVG()
+	gv.SetTitle()
+	tv := gv.TreeView()
+	tv.CloseAll()
+	tv.ReSync()
+	gv.SetStatus("Opened: " + string(gv.Filename))
+	gv.UpdateEnd(updt)
+	tv.CloseAll()
 	sv.bgGridEff = 0
 	sv.UpdateView(true)
-	return nil
+	return err
 }
 
 // NewDrawing opens a new drawing window
@@ -125,18 +135,20 @@ func (gv *GridView) SetPhysSize(sz *PhysSize) {
 
 // SaveDrawing saves .svg drawing to current filename
 func (gv *GridView) SaveDrawing() error {
-	if gv.FilePath == "" {
+	if gv.Filename == "" {
 		giv.CallMethod(gv, "SaveDrawingAs", gv.ViewportSafe())
 		return nil
 	}
 	sv := gv.SVG()
 	sv.RemoveOrphanedDefs()
 	sv.SetMetaData()
-	err := sv.SaveXML(gv.FilePath)
+	err := sv.SaveXML(gv.Filename)
 	if err != nil && err != io.EOF {
 		log.Println(err)
+	} else {
+		gv.AutoSaveDelete()
 	}
-	gv.SetStatus("Saved: " + string(gv.FilePath))
+	gv.SetStatus("Saved: " + string(gv.Filename))
 	gv.EditState.Changed = false
 	return err
 }
@@ -147,7 +159,7 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 		return errors.New("SaveDrawingAs: filename is empty")
 	}
 	path, _ := filepath.Abs(string(fname))
-	gv.FilePath = gi.FileName(path)
+	gv.Filename = gi.FileName(path)
 	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
 	sv := gv.SVG()
@@ -156,6 +168,8 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	err := sv.SaveXML(gi.FileName(path))
 	if err != nil && err != io.EOF {
 		log.Println(err)
+	} else {
+		gv.AutoSaveDelete()
 	}
 	gv.SetTitle()
 	gv.SetStatus("Saved: " + path)
@@ -163,34 +177,83 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 	return err
 }
 
+// ExportPNG exports drawing to a PNG image (auto-names to same name
+// with .png suffix).  Calls cairosvg (e.g., pip3 install cairosvg).
+// specify either width or height of resulting image, or nothing for
+// physical size as set.  Renders full current page -- do ResizeToContents
+// to render just current contents.
+func (gv *GridView) ExportPNG(width, height float32) error {
+	path, _ := filepath.Split(string(gv.Filename))
+	fnm := filepath.Join(path, "export_png.svg")
+	sv := gv.SVG()
+	err := sv.SaveXML(gi.FileName(fnm))
+	if err != nil && err != io.EOF {
+		log.Println(err)
+		return err
+	}
+	fext := filepath.Ext(string(gv.Filename))
+	onm := strings.TrimSuffix(string(gv.Filename), fext) + ".png"
+	cstr := "cairosvg"
+	args := []string{"-o", onm}
+	if width > 0 {
+		args = append(args, "--output-width")
+		args = append(args, fmt.Sprintf("%g", width))
+	}
+	if height > 0 {
+		args = append(args, "--output-height")
+		args = append(args, fmt.Sprintf("%g", height))
+	}
+	args = append(args, fnm)
+	cmd := exec.Command(cstr, args...)
+	fmt.Printf("executing command: %s %v\n", cstr, args)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(string(out))
+	}
+	os.Remove(fnm)
+	return err
+}
+
+// ExportPDF exports drawing to a PDF file (auto-names to same name
+// with .pdf suffix).  Calls cairosvg (e.g., pip3 install cairosvg).
+// specify DPI of resulting image for effects rendering.
+// Renders full current page -- do ResizeToContents
+// to render just current contents.
+func (gv *GridView) ExportPDF(dpi float32) error {
+	path, _ := filepath.Split(string(gv.Filename))
+	fnm := filepath.Join(path, "export_pdf.svg")
+	sv := gv.SVG()
+	err := sv.SaveXML(gi.FileName(fnm))
+	if err != nil && err != io.EOF {
+		log.Println(err)
+		return err
+	}
+	fext := filepath.Ext(string(gv.Filename))
+	onm := strings.TrimSuffix(string(gv.Filename), fext) + ".pdf"
+	cstr := "cairosvg"
+	args := []string{"-o", onm}
+	if dpi > 0 {
+		args = append(args, "--dpi")
+		args = append(args, fmt.Sprintf("%g", dpi))
+	}
+	args = append(args, fnm)
+	cmd := exec.Command(cstr, args...)
+	fmt.Printf("executing command: %s %v\n", cstr, args)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(string(out))
+	}
+	os.Remove(fnm)
+	return err
+}
+
 // ResizeToContents resizes the drawing to just fit the current contents,
 // including moving everything to start at upper-left corner,
-// preserving the current grid offset.
+// preserving the current grid offset, so grid snapping
+// is preserved.
 func (gv *GridView) ResizeToContents() {
 	sv := gv.SVG()
-	sv.UndoSave("ResizeToContents", "")
-	sv.ZoomToPage(false)
-	sv.UpdateView(true)
-	bb := sv.ContentsBBox()
-	bsz := bb.Size()
-	if bsz.X <= 0 || bsz.Y <= 0 {
-		return
-	}
-	trans := bb.Min
-	incr := sv.Grid * sv.Scale // our zoom factor
-	treff := trans
-	treff.X = mat32.Floor(trans.X/incr) * incr
-	treff.Y = mat32.Floor(trans.Y/incr) * incr
-	bsz.SetAdd(trans.Sub(treff))
-	treff = treff.Negate()
-
-	bsz = bsz.DivScalar(sv.Scale)
-
-	sv.XFormAllLeaves(treff, mat32.Vec2{1, 1}, 0, mat32.Vec2{0, 0})
-	sv.ViewBox.Size = bsz
-	sv.PhysWidth.Val = bsz.X
-	sv.PhysHeight.Val = bsz.Y
-	sv.ZoomToPage(false)
+	sv.ResizeToContents(true)
 }
 
 // AddImage adds a new image node set to given image
@@ -408,10 +471,16 @@ func (gv *GridView) ConfigMainToolbar() {
 			ndr := grr.NewDrawing(Prefs.Size)
 			ndr.PromptPhysSize()
 		})
-	tb.AddAction(gi.ActOpts{Label: "Size...", Icon: "gear", Tooltip: "set size and grid spacing of drawing"},
+	szmen := tb.AddAction(gi.ActOpts{Label: "Size", Icon: "gear"}, nil, nil)
+	szmen.Menu.AddAction(gi.ActOpts{Label: "Set Size...", Icon: "gear", Tooltip: "set size and grid spacing of drawing"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.PromptPhysSize()
+		})
+	szmen.Menu.AddAction(gi.ActOpts{Label: "Resize To Contents", Icon: "gear", Tooltip: "resizes the drawing to fit the current contents, moving everything to upper-left corner while preserving grid alignment"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			grr.ResizeToContents()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Open...", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -428,6 +497,18 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "SaveDrawingAs", grr.ViewportSafe())
 		})
+	expmen := tb.AddAction(gi.ActOpts{Label: "Export", Icon: "file-save"}, nil, nil)
+	expmen.Menu.AddAction(gi.ActOpts{Label: "Export PNG", Icon: "file-image", Tooltip: "Export drawing to a .png file -- requires cairosvg.org to be installed"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			giv.CallMethod(grr, "ExportPNG", grr.ViewportSafe())
+		})
+	expmen.Menu.AddAction(gi.ActOpts{Label: "Export PDF", Icon: "file-pdf", Tooltip: "Export drawing to a .pdf  file -- requires cairosvg.org to be installed"},
+		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			grr := recv.Embed(KiT_GridView).(*GridView)
+			giv.CallMethod(grr, "ExportPDF", grr.ViewportSafe())
+		})
+
 	tb.AddSeparator("sep-undo")
 	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "rotate-left", Tooltip: "Undo last action", UpdateFunc: gv.UndoAvailFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -545,7 +626,7 @@ func (gv *GridView) CloseWindowReq() bool {
 		return true
 	}
 	gi.ChoiceDialog(gv.Viewport, gi.DlgOpts{Title: "Close Drawing: There are Unsaved Changes",
-		Prompt: fmt.Sprintf("In Drawing: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this drawing?", giv.DirAndFile(string(gv.FilePath)))},
+		Prompt: fmt.Sprintf("In Drawing: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this drawing?", giv.DirAndFile(string(gv.Filename)))},
 		[]string{"Cancel", "Save", "Close Without Saving"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			switch sig {
@@ -585,10 +666,10 @@ func QuitReq() bool {
 }
 
 func (gv *GridView) SetTitle() {
-	if gv.FilePath == "" {
+	if gv.Filename == "" {
 		return
 	}
-	dfnm := giv.DirAndFile(string(gv.FilePath))
+	dfnm := giv.DirAndFile(string(gv.Filename))
 	winm := "grid-" + dfnm
 	wintitle := "grid: " + dfnm
 	win := gv.ParentWindow()
@@ -610,7 +691,7 @@ func NewGridWindow(fnm string) (*gi.Window, *GridView) {
 	if win, found := gi.AllWindows.FindName(winm); found {
 		mfr := win.SetMainFrame()
 		gv := mfr.Child(0).Embed(KiT_GridView).(*GridView)
-		if string(gv.FilePath) == path {
+		if string(gv.Filename) == path {
 			win.OSWin.Raise()
 			return win, gv
 		}
@@ -635,10 +716,6 @@ func NewGridWindow(fnm string) (*gi.Window, *GridView) {
 	gv.Viewport = vp
 	gv.Defaults()
 	gv.Config()
-
-	if fnm != "" {
-		gv.OpenDrawing(gi.FileName(path))
-	}
 
 	mmen := win.MainMenu
 	giv.MainMenuView(gv, win, mmen)
@@ -666,6 +743,10 @@ func NewGridWindow(fnm string) (*gi.Window, *GridView) {
 	vp.UpdateEndNoSig(updt)
 
 	win.GoStartEventLoop()
+
+	if fnm != "" {
+		gv.OpenDrawingFile(gi.FileName(path))
+	}
 
 	return win, gv
 }
@@ -787,6 +868,19 @@ func (gv *GridView) Redo() string {
 /////////////////////////////////////////////////////////////////////////
 //   Basic infrastructure
 
+func (gv *GridView) ConnectEvents2D() {
+	gv.OSFileEvent()
+}
+
+func (gv *GridView) OSFileEvent() {
+	gv.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+		ofe := d.(*osevent.OpenFilesEvent)
+		for _, fn := range ofe.Files {
+			NewGridWindow(fn)
+		}
+	})
+}
+
 // OpenRecent opens a recently-used file
 func (gv *GridView) OpenRecent(filename gi.FileName) {
 	if string(filename) == GridViewResetRecents {
@@ -839,8 +933,8 @@ func (gv *GridView) SplitsSave(split SplitName) {
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
 func (gv *GridView) SplitsSaveAs(name, desc string) {
-	sv := gv.SplitView()
-	AvailSplits.Add(name, desc, sv.Splits)
+	spv := gv.SplitView()
+	AvailSplits.Add(name, desc, spv.Splits)
 	AvailSplits.SavePrefs()
 }
 
@@ -854,11 +948,74 @@ func (gv *GridView) HelpWiki() {
 	oswin.TheApp.OpenURL("https://github.com/goki/grid/wiki")
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+//		AutoSave
+
+// AutoSaveFilename returns the autosave filename
+func (gv *GridView) AutoSaveFilename() string {
+	path, fn := filepath.Split(string(gv.Filename))
+	if fn == "" {
+		fn = "new_file_" + gv.Nm
+	}
+	asfn := filepath.Join(path, "#"+fn+"#")
+	return asfn
+}
+
+// AutoSave does the autosave -- safe to call in a separate goroutine
+func (gv *GridView) AutoSave() error {
+	if gv.HasFlag(int(GridViewAutoSaving)) {
+		return nil
+	}
+	gv.SetFlag(int(GridViewAutoSaving))
+	asfn := gv.AutoSaveFilename()
+	sv := gv.SVG()
+	err := sv.SaveXML(gi.FileName(asfn))
+	if err != nil && err != io.EOF {
+		log.Println(err)
+	}
+	gv.ClearFlag(int(GridViewAutoSaving))
+	return err
+}
+
+// AutoSaveDelete deletes any existing autosave file
+func (gv *GridView) AutoSaveDelete() {
+	asfn := gv.AutoSaveFilename()
+	os.Remove(asfn)
+}
+
+// AutoSaveCheck checks if an autosave file exists -- logic for dealing with
+// it is left to larger app -- call this before opening a file
+func (gv *GridView) AutoSaveCheck() bool {
+	asfn := gv.AutoSaveFilename()
+	if _, err := os.Stat(asfn); os.IsNotExist(err) {
+		return false // does not exist
+	}
+	return true
+}
+
+/////////////////////////////////////////////////////////////////////////
+//   Props, MainMenu
+
+// GridViewFlags extend NodeBase NodeFlags to hold viewport state
+type GridViewFlags int
+
+//go:generate stringer -type=GridViewFlags
+
+var KiT_GridViewFlags = kit.Enums.AddEnumExt(gi.KiT_NodeFlags, GridViewFlagsN, kit.BitFlag, nil)
+
+const (
+	// VpFlagPopup means viewport is a popup (menu or dialog) -- does not obey
+	// parent bounds (otherwise does)
+	GridViewAutoSaving GridViewFlags = GridViewFlags(gi.NodeFlagsN) + iota
+
+	GridViewFlagsN
+)
+
 /////////////////////////////////////////////////////////////////////////
 //   Props, MainMenu
 
 var GridViewProps = ki.Props{
-	"EnumType:Flag":    gi.KiT_VpFlags,
+	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
 	"max-width":        -1,
@@ -919,6 +1076,26 @@ var GridViewProps = ki.Props{
 			{"ResizeToContents", ki.Props{
 				"label": "Resize To Contents",
 				"desc":  "resizes the drawing to fit the current contents, moving everything to upper-left corner while preserving grid alignment",
+			}},
+			{"sep-exp", ki.BlankProp{}},
+			{"ExportPNG", ki.Props{
+				"desc": "Export drawing as a PNG image file (uses cairosvg -- must install!) -- specify either width or height in pixels as non-zero, or both 0 to use physical size.  Renders full page -- do Resize To Contents to only render contents.",
+				"Args": ki.PropSlice{
+					{"Width", ki.Props{
+						"default": 1280,
+					}},
+					{"Height", ki.Props{
+						"default": 0,
+					}},
+				},
+			}},
+			{"ExportPDF", ki.Props{
+				"desc": "Export drawing as a PDF file (uses cairosvg -- must install!), at given specified DPI (only relevant for rendered effects).  Renders full page -- do Resize To Contents to only render contents.",
+				"Args": ki.PropSlice{
+					{"DPI", ki.Props{
+						"default": 300,
+					}},
+				},
 			}},
 			{"sep-imp", ki.BlankProp{}},
 			{"AddImage", ki.Props{

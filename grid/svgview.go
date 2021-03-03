@@ -73,6 +73,9 @@ func (g *SVGView) CopyFieldsFrom(frm interface{}) {
 
 // EditState returns the EditState for this view
 func (sv *SVGView) EditState() *EditState {
+	if sv.GridView == nil {
+		return nil
+	}
 	return &sv.GridView.EditState
 }
 
@@ -455,6 +458,38 @@ func (sv *SVGView) ZoomToContents(width bool) {
 	sv.SetTransform()
 }
 
+// ResizeToContents resizes the drawing to just fit the current contents,
+// including moving everything to start at upper-left corner,
+// optionally preserving the current grid offset, so grid snapping
+// is preserved -- recommended.
+func (sv *SVGView) ResizeToContents(grid_off bool) {
+	sv.UndoSave("ResizeToContents", "")
+	sv.ZoomToPage(false)
+	sv.UpdateView(true)
+	bb := sv.ContentsBBox()
+	bsz := bb.Size()
+	if bsz.X <= 0 || bsz.Y <= 0 {
+		return
+	}
+	trans := bb.Min
+	incr := sv.Grid * sv.Scale // our zoom factor
+	treff := trans
+	if grid_off {
+		treff.X = mat32.Floor(trans.X/incr) * incr
+		treff.Y = mat32.Floor(trans.Y/incr) * incr
+	}
+	bsz.SetAdd(trans.Sub(treff))
+	treff = treff.Negate()
+
+	bsz = bsz.DivScalar(sv.Scale)
+
+	sv.XFormAllLeaves(treff, mat32.Vec2{1, 1}, 0, mat32.Vec2{0, 0})
+	sv.ViewBox.Size = bsz
+	sv.PhysWidth.Val = bsz.X
+	sv.PhysHeight.Val = bsz.Y
+	sv.ZoomToPage(false)
+}
+
 // ZoomAt updates the scale and translate parameters at given point
 // by given delta: + means zoom in, - means zoom out,
 // delta should always be < 1)
@@ -638,7 +673,11 @@ func (sv *SVGView) NodeContextMenu(kn ki.Ki, pos image.Point) {
 // UndoSave save current state for potential undo
 func (sv *SVGView) UndoSave(action, data string) {
 	es := sv.EditState()
+	if es == nil {
+		return
+	}
 	es.Changed = true
+	go sv.GridView.AutoSave()
 	b := &bytes.Buffer{}
 	// sv.WriteXML(b, false)
 	err := sv.WriteJSON(b, true) // should be false

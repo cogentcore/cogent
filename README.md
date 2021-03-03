@@ -10,6 +10,10 @@ If an acronym is required, how about: "Go-rendered interactive drawing" program.
 
 * Alt on control knobs -> rotate instead of clicking again to get rotation knobs -- this is compatible with above and better :)
 
+# Install
+
+
+
 # Design
 
 Similar to inkscape in overall layout, and read / write inkscape compatible SVG files.
@@ -44,6 +48,16 @@ Basic functionality now in place:
 
 # TODO:
 
+* cairosvg for .png and svg output.
+
+* mac get oswin first arg
+
+* icon has too many grid lines -- cut in half
+
+* import svg -- same as marker
+
+* autosave -- go at undosave
+
 * implement the full transform panel
 
 * render gradient icons
@@ -58,10 +72,6 @@ Basic functionality now in place:
 * node editor -- big job but needed for making basic bezier curves..
 
 * esc aborts new el drag
-
-* import svg -- same as marker
-
-* changed bit, autosave, prompt before quit
 
 * add distribute to Align
 
