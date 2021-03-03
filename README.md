@@ -1,4 +1,4 @@
-![alt tag](logo/grid_icon.png)
+![alt tag](logo/grid-icon.png)
 
 Grid is a GoGi-based SVG vector drawing program, with design based on Inkscape.
 
