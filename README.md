@@ -60,7 +60,25 @@ Basic functionality now in place:
 
 # TODO:
 
+* redo bbox computation: use basic geom to compute BBox, then filter on that if out of bounds so not even rendered and use that for rband box selection.  ObjBBox remains as full rendered bbox.
+
+* rubber-band selection bug: when zoomed, including some kind of 0 BBox points -- this is a limitation of
+ using the window-rendered BBoxes, instead of purely logical bboxes.. hmmm..
+
+* double-click on text brings up text bar and text panel
+
+* prevent selecting of items across different layers -- leads to all manner of weirdness.
+* add more layer logic -- if layers, everything should be in a layer?
+
+* some kind of crashing in group / ungroup -- .log file not recording crashes
+
+* group MUST retain depth order of original items!  currently using select order?
+
+* autosave not working?
+
 * import svg -- same as marker
+
+* add group / ungroup to context menu (conditional on selection n etc)
 
 * implement the full transform panel
 

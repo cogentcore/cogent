@@ -6,8 +6,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
@@ -36,7 +38,17 @@ Version: ` + grid.Prefs.VersionInfo())
 	if err == nil {
 		os.Stdout = lf
 		os.Stderr = lf
+		log.SetOutput(lf)
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+			lf.Close()
+			os.Exit(1)
+		}
+		lf.Close()
+	}()
 
 	ofs := oswin.TheApp.OpenFiles()
 

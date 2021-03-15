@@ -349,11 +349,26 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 }
 
 func SquareBBox(bb mat32.Box2) mat32.Box2 {
-	del := bb.Max.Sub(bb.Min)
+	del := bb.Size()
 	if del.X > del.Y {
 		del.Y = del.X
 	} else {
 		del.X = del.Y
+	}
+	bb.Max = bb.Min.Add(del)
+	return bb
+}
+
+func ProportionalBBox(bb, orig mat32.Box2) mat32.Box2 {
+	prop := orig.Size()
+	if prop.X == 0 || prop.Y == 0 {
+		return bb
+	}
+	del := bb.Size()
+	if del.X > del.Y {
+		del.Y = del.X * (prop.Y / prop.X)
+	} else {
+		del.X = del.Y * (prop.X / prop.Y)
 	}
 	bb.Max = bb.Min.Add(del)
 	return bb
@@ -381,9 +396,6 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	}
 	dv := mpt.Sub(spt)
 	es.DragSelCurBBox = es.DragSelStartBBox
-	if diag {
-		es.DragSelCurBBox = SquareBBox(es.DragSelStartBBox)
-	}
 	switch sp {
 	case SpBBoxUpL:
 		es.DragSelCurBBox.Min.SetAdd(dv)
@@ -413,6 +425,26 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	case SpBBoxRtM:
 		es.DragSelCurBBox.Max.X += dv.X
 		es.DragSelEffBBox.Max.X = sv.SnapPoint(es.DragSelCurBBox.Max).X
+	}
+
+	if diag {
+		sq := false
+		if len(es.Selected) == 1 {
+			so := es.SelectedList(false)[0]
+			switch so.(type) {
+			case *svg.Rect:
+				sq = true
+			case *svg.Ellipse:
+				sq = true
+			case *svg.Circle:
+				sq = true
+			}
+		}
+		if sq {
+			es.DragSelEffBBox = SquareBBox(es.DragSelEffBBox)
+		} else {
+			es.DragSelEffBBox = ProportionalBBox(es.DragSelEffBBox, es.DragSelStartBBox)
+		}
 	}
 
 	npos := es.DragSelEffBBox.Min

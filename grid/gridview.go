@@ -254,6 +254,7 @@ func (gv *GridView) ExportPDF(dpi float32) error {
 func (gv *GridView) ResizeToContents() {
 	sv := gv.SVG()
 	sv.ResizeToContents(true)
+	sv.UpdateView(true)
 }
 
 // AddImage adds a new image node set to given image

@@ -205,7 +205,7 @@ func (sv *SVGView) GatherAlignPoints() {
 		}
 		sii, issvg := k.(svg.NodeSVG)
 		if !issvg {
-			return ki.Continue
+			return ki.Break
 		}
 		if _, issel := es.Selected[sii]; issel {
 			return ki.Break // go no further into kids

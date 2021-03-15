@@ -168,6 +168,9 @@ func (gv *GridView) SetTextNode(sii svg.NodeSVG, txt string) bool {
 // SetText sets the text of selected Text node
 func (gv *GridView) SetText(txt string) {
 	es := &gv.EditState
+	if len(es.Selected) != 1 { // only if exactly one selected
+		return
+	}
 	sv := gv.SVG()
 	sv.UndoSave("SetText", "")
 	sv.SetFullReRender()

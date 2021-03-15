@@ -425,6 +425,9 @@ func (sv *SVGView) ZoomToPage(width bool) {
 		return
 	}
 	bsz := sv.ViewBox.Size
+	if bsz.X <= 0 || bsz.Y <= 0 {
+		return
+	}
 	sc := vb.Div(bsz)
 	sv.Trans.Set(0, 0)
 	if width {

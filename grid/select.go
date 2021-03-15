@@ -630,10 +630,16 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 		}
 		sii, issvg := k.(svg.NodeSVG)
 		if !issvg {
-			return ki.Continue
+			return ki.Break
+		}
+		if txt, istxt := sii.(*svg.Text); istxt { // no tspans
+			if txt.Text != "" {
+				return ki.Break
+			}
 		}
 		sg := sii.AsSVGNode()
 		if sg.WinBBoxInBBox(bbox) {
+			fmt.Printf("%s sel bb: %v\n", sg.Name(), sg.WinBBox)
 			rval = append(rval, sii)
 			return ki.Break // don't go into groups!
 		}
