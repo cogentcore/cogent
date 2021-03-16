@@ -74,6 +74,11 @@ Basic functionality now in place:
 
 * group MUST retain depth order of original items!  currently using select order?
 
+* ungroup on icons/align-middle is not working -- applyxform is not taking into account
+local xform -- cannot just go direct -- if a local xform exists, just apply it to that
+and update transform prop.  also, h, v commands in path need to be converted to regular 
+non-optimized cases if there is a rotation in the transform!  argh.
+
 * autosave not working?
 
 * import svg -- same as marker

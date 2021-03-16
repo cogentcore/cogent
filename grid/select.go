@@ -403,7 +403,9 @@ func (gv *GridView) SelUnGroup() {
 		for _, k := range klist {
 			ki.MoveToParent(k, np)
 			se := k.(svg.NodeSVG)
-			se.ApplyXForm(gp.Pnt.XForm) // group no longer there!
+			if !gp.Pnt.XForm.IsIdentity() {
+				se.ApplyXForm(gp.Pnt.XForm) // group no longer there!
+			}
 		}
 		gp.Delete(ki.DestroyKids)
 	}
@@ -639,7 +641,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 		}
 		sg := sii.AsSVGNode()
 		if sg.WinBBoxInBBox(bbox) {
-			fmt.Printf("%s sel bb: %v\n", sg.Name(), sg.WinBBox)
+			// fmt.Printf("%s sel bb: %v in: %v\n", sg.Name(), sg.WinBBox, bbox)
 			rval = append(rval, sii)
 			return ki.Break // don't go into groups!
 		}

@@ -138,7 +138,7 @@ type PathNode struct {
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
 func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
-	pxf := path.ParXForm()
+	pxf := path.ParXForm(true) // include self
 
 	lstCmdIdx := 0
 	lstCmd := svg.PcErr
