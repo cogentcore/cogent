@@ -1,5 +1,3 @@
-# Gide
-
 ![alt tag](logo/gide_icon.png)
 
 **Gide** is a flexible IDE (integrated development environment) framework in pure Go, using the [GoGi](https://github.com/goki/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://github.com/goki/pi) interactive parser for syntax highlighting and more advanced IDE code processing.

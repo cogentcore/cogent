@@ -14,6 +14,12 @@ all: build
 install:
 	cd cmd/gide; pwd; go build
 
+app-install:
+	$(MAKE) -C install/mac app-install
+	
+dev-install:
+	$(MAKE) -C install/mac dev-install
+	
 build: 
 	@echo "GO111MODULE = $(value GO111MODULE)"
 	$(GOBUILD) -v $(DIRS)

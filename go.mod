@@ -2,9 +2,9 @@ module github.com/goki/gide
 
 require (
 	github.com/go-delve/delve v1.5.1
-	github.com/goki/gi v1.2.4
+	github.com/goki/gi v1.2.5
 	github.com/goki/ki v1.1.3
-	github.com/goki/mat32 v1.0.5
+	github.com/goki/mat32 v1.0.7
 	github.com/goki/pi v1.0.13
 	github.com/goki/vci v1.0.0
 	github.com/kr/pretty v0.1.0 // indirect

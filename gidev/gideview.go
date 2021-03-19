@@ -2351,7 +2351,7 @@ func (ge *GideView) Config() {
 	}
 	updt := ge.UpdateStart()
 	ge.Lay = gi.LayoutVert
-	ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	gi.AddNewToolBar(ge, "toolbar")
 	gi.AddNewSplitView(ge, "splitview")
 	gi.AddNewFrame(ge, "statusbar", gi.LayoutHoriz)

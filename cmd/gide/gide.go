@@ -6,8 +6,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
 	"github.com/goki/gi/gi"
@@ -45,7 +48,17 @@ Version: ` + gide.Prefs.VersionInfo())
 	if err == nil {
 		os.Stdout = lf
 		os.Stderr = lf
+		log.SetOutput(lf)
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+			lf.Close()
+			os.Exit(1)
+		}
+		lf.Close()
+	}()
 
 	var path string
 	var proj string
