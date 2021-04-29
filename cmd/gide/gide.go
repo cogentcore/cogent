@@ -63,8 +63,10 @@ Version: ` + gide.Prefs.VersionInfo())
 	var path string
 	var proj string
 
-	// process command args
-	if len(os.Args) > 1 {
+	ofs := oswin.TheApp.OpenFiles()
+	if len(ofs) > 0 {
+		path = ofs[0]
+	} else if len(os.Args) > 1 {
 		flag.StringVar(&path, "path", "", "path to open -- can be to a directory or a filename within the directory ")
 		flag.StringVar(&proj, "proj", "", "project file to open -- typically has .gide extension")
 		// todo: other args?
@@ -78,11 +80,6 @@ Version: ` + gide.Prefs.VersionInfo())
 					path = flag.Arg(0)
 				}
 			}
-		}
-	} else {
-		ofs := oswin.TheApp.OpenFiles()
-		if len(ofs) > 0 {
-			path = ofs[0]
 		}
 	}
 
