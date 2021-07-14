@@ -69,7 +69,7 @@ func InitPrefs() {
 	Prefs.Open()
 	OpenPaths()
 	OpenIcons()
-	TheConsole.Init()
+	// TheConsole.Init() // must do this manually
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
 		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
 			win, func(recv, send ki.Ki, sig int64, data interface{}) {

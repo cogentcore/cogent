@@ -51,6 +51,8 @@ Version: ` + gide.Prefs.VersionInfo())
 		log.SetOutput(lf)
 	}
 
+	gide.TheConsole.Init() // must do this after changing stdout
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
