@@ -62,6 +62,8 @@ Basic functionality now in place:
 
 * double-click on text brings up text bar and text panel
 
+* text should have its own default color settings that is not set from other graphical elements -- typically text needs to have fill no outline..
+
 * prevent selecting of items across different layers -- leads to all manner of weirdness.
 * add more layer logic -- if layers, everything should be in a layer?
 

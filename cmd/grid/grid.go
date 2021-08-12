@@ -53,15 +53,18 @@ Version: ` + grid.Prefs.VersionInfo())
 	ofs := oswin.TheApp.OpenFiles()
 
 	var fnms []string
-	if len(os.Args) > 1 {
-		fnms = os.Args[1:]
-	} else if len(ofs) > 0 {
+	if len(ofs) > 0 {
 		fnms = ofs
+	} else if len(os.Args) > 1 {
+		fnms = os.Args[1:]
 	}
 
 	if len(fnms) == 0 {
+		os.Chdir(gi.Prefs.User.HomeDir)
 		grid.NewGridWindow("")
 	} else {
+		fdir, _ := filepath.Split(fnms[0])
+		os.Chdir(fdir)
 		for _, fnm := range fnms {
 			fmt.Println(fnm)
 			grid.NewGridWindow(fnm)

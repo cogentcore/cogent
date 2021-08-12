@@ -65,6 +65,8 @@ func (gv *GridView) OpenDrawingFile(fnm gi.FileName) error {
 	}
 	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
+	fdir, _ := filepath.Split(path)
+	os.Chdir(fdir)
 	gv.EditState.Init()
 	gv.EditState.Gradients = sv.Gradients()
 	sv.GatherIds() // also ensures uniqueness, key for json saving

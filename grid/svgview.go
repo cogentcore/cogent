@@ -218,7 +218,6 @@ func (sv *SVGView) MouseEvent() {
 		if me.Action == mouse.Press && me.Button == mouse.Left {
 			me.SetProcessed()
 			es.SelNoDrag = false
-			es.DragStartPos = me.Where
 			switch {
 			case es.HasSelected() && es.SelBBox.ContainsPoint(mat32.NewVec2FmPoint(me.Where)):
 				// note: this absorbs potential secondary selections within selection -- handled
@@ -299,6 +298,7 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 	es := sv.EditState()
 	es.SelNoDrag = false
 	me.SetProcessed()
+	es.DragStartPos = me.Start
 	if me.HasAnyModifier(key.Shift) {
 		if !sv.SetDragCursor {
 			oswin.TheApp.Cursor(win.OSWin).Push(cursor.HandOpen)
@@ -320,6 +320,11 @@ func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
 				sv.SetRubberBand(me.From)
 			case RectTool:
 				sv.NewElDrag(svg.KiT_Rect, es.DragStartPos, me.Where)
+				es.SelBBox.Min.X += 1
+				es.SelBBox.Min.Y += 1
+				es.DragSelStartBBox = es.SelBBox
+				es.DragSelCurBBox = es.SelBBox
+				es.DragSelEffBBox = es.SelBBox
 			case EllipseTool:
 				sv.NewElDrag(svg.KiT_Ellipse, es.DragStartPos, me.Where)
 			case TextTool:
@@ -810,8 +815,13 @@ func (sv *SVGView) NewEl(typ reflect.Type) svg.NodeSVG {
 
 // NewElDrag makes a new SVG element during the drag operation
 func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeSVG {
-	win := sv.GridView.ParentWindow()
+	minsz := float32(10)
 	es := sv.EditState()
+	dv := mat32.NewVec2FmPoint(end.Sub(start))
+	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+		return nil
+	}
+	win := sv.GridView.ParentWindow()
 	tn := typ.Name()
 	sv.ManipStart("New"+tn, "")
 	updt := sv.UpdateStart()
@@ -820,23 +830,20 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	xfi := sv.Pnt.XForm.Inverse()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
-	dv := mat32.NewVec2FmPoint(end.Sub(start))
-	minsz := float32(20)
-	pos.SetSubScalar(minsz)
 	nr.SetPos(xfi.MulVec2AsPt(pos))
-	sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	sz := dv
 	nr.SetSize(xfi.MulVec2AsVec(sz))
 	es.SelectAction(nr, mouse.SelectOne, end)
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
-	sv.EditState().DragSelStart(start)
+	es.DragSelStart(start)
 	win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
 	return nr
 }
 
 // NewText makes a new Text element with embedded tspan
 func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
-	// win := sv.GridView.ParentWindow()
 	es := sv.EditState()
 	sv.ManipStart("NewText", "")
 	sv.SetFullReRender()
@@ -848,8 +855,8 @@ func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
 	xfi := sv.Pnt.XForm.Inverse()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
-	minsz := float32(20)
-	pos.SetSubScalar(minsz)
+	// minsz := float32(20)
+	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVec2AsPt(pos)
 	sv.GridView.SetTextPropsNode(nr, es.Text.TextProps())
 	nr.Pos = pos
@@ -866,8 +873,13 @@ func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
 
 // NewPath makes a new SVG Path element during the drag operation
 func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
-	win := sv.GridView.ParentWindow()
+	minsz := float32(10)
 	es := sv.EditState()
+	dv := mat32.NewVec2FmPoint(end.Sub(start))
+	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+		return nil
+	}
+	win := sv.GridView.ParentWindow()
 	sv.ManipStart("NewPath", "")
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
@@ -875,12 +887,9 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	xfi := sv.Pnt.XForm.Inverse()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
-	minsz := float32(20)
-	pos.SetSubScalar(minsz)
 	pos = xfi.MulVec2AsPt(pos)
-
-	dv := mat32.NewVec2FmPoint(end.Sub(start))
-	sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	sz := dv
+	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
 	sz = xfi.MulVec2AsVec(sz)
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
@@ -889,6 +898,13 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
+
+	es.SelBBox.Min.X += 1
+	es.SelBBox.Min.Y += 1
+	es.DragSelStartBBox = es.SelBBox
+	es.DragSelCurBBox = es.SelBBox
+	es.DragSelEffBBox = es.SelBBox
+
 	win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
 	return nr
 }
