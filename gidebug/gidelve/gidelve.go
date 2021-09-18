@@ -389,7 +389,7 @@ func (gd *GiDelve) ListBreaks() ([]*gidebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ds, err := gd.dlv.ListBreakpoints()
+	ds, err := gd.dlv.ListBreakpoints(true) // true = all
 	gd.LogErr(err)
 	return gd.cvtBreaks(ds), err
 }
