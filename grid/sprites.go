@@ -10,13 +10,13 @@ import (
 	"image/color"
 	"image/draw"
 
-	"github.com/chewxy/math32"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gist"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/ki/ints"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/mat32"
 )
 
 // Sprites are the type of sprite
@@ -251,7 +251,7 @@ var (
 // HandleSpriteSize returns the border size and overall size
 // of handle-type sprites, with given scaling factor
 func HandleSpriteSize(scale float32) (int, image.Point) {
-	sz := int(math32.Ceil(scale * gi.Prefs.LogicalDPIScale * HandleSpriteScale))
+	sz := int(mat32.Ceil(scale * gi.Prefs.LogicalDPIScale * HandleSpriteScale))
 	sz = ints.MaxInt(sz, HandleSizeMin)
 	bsz := ints.MaxInt(sz/6, HandleBorderMin)
 	bbsz := image.Point{sz, sz}
@@ -330,7 +330,7 @@ var (
 
 // LineSpriteSize returns the border size and overall size of line-type sprites
 func LineSpriteSize() (int, int) {
-	sz := int(math32.Ceil(gi.Prefs.LogicalDPIScale * LineSpriteScale))
+	sz := int(mat32.Ceil(gi.Prefs.LogicalDPIScale * LineSpriteScale))
 	sz = ints.MaxInt(sz, LineSizeMin)
 	bsz := ints.MaxInt(sz/6, LineBorderMin)
 	return bsz, sz

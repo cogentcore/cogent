@@ -1,8 +1,7 @@
 module github.com/goki/grid
 
 require (
-	github.com/chewxy/math32 v1.0.6
-	github.com/goki/gi v1.2.10
+	github.com/goki/gi v1.2.13
 	github.com/goki/ki v1.1.3
 	github.com/goki/mat32 v1.0.9
 	github.com/goki/pi v1.0.14

@@ -10,7 +10,6 @@ import (
 	"math"
 	"strings"
 
-	"github.com/chewxy/math32"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
@@ -83,8 +82,8 @@ func (sv *SVGView) GridDots() (float32, mat32.Vec2) {
 	org.SetAdd(svoff)
 	// fmt.Printf("org: %v   svgoff: %v\n", org, svoff)
 
-	org.X = math32.Mod(org.X, incr)
-	org.Y = math32.Mod(org.Y, incr)
+	org.X = mat32.Mod(org.X, incr)
+	org.Y = mat32.Mod(org.Y, incr)
 
 	// fmt.Printf("mod org: %v   incr: %v\n", org, incr)
 
