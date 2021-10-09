@@ -24,6 +24,7 @@ import (
 	"github.com/goki/ki/ints"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"github.com/goki/ki/walki"
 	"github.com/goki/mat32"
 )
 
@@ -782,6 +783,20 @@ func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 		sp := Sprite(win, SpAlignMatch, Sprites(typs[i]), i, lsz)
 		SetSpritePos(sp, pt.Min)
 	}
+}
+
+// DepthMap returns a map of all nodes and their associated depth count
+// counting up from 0 as the deepest, first drawn node.
+func (sv *SVGView) DepthMap() map[ki.Ki]int {
+	m := make(map[ki.Ki]int)
+	depth := 0
+	n := walki.Next(sv.This())
+	for n != nil {
+		m[n] = depth
+		depth++
+		n = walki.Next(n)
+	}
+	return m
 }
 
 ///////////////////////////////////////////////////////////////////////

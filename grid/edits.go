@@ -25,6 +25,7 @@ type EditState struct {
 	Tool      Tools       `desc:"current tool in use"`
 	Action    string      `desc:"current action being performed -- used for undo labeling"`
 	ActData   string      `desc:"action data set at start of action"`
+	Layers    Layers      `desc:"list of layers"`
 	CurLayer  string      `desc:"current layer -- where new objects are inserted"`
 	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
 	Text      TextStyle   `desc:"current text styling info"`
@@ -131,6 +132,31 @@ func (es *EditState) SelectedList(descendingSort bool) []svg.NodeSVG {
 	} else {
 		sort.Slice(sls, func(i, j int) bool {
 			return es.Selected[sls[i]].Order < es.Selected[sls[j]].Order
+		})
+	}
+	return sls
+}
+
+// SelectedListDepth returns list of selected items, sorted either
+// ascending or descending according to depth:
+// ascending = deepest first, descending = highest first
+func (es *EditState) SelectedListDepth(sv *SVGView, descendingSort bool) []svg.NodeSVG {
+	dm := sv.DepthMap()
+	sls := make([]svg.NodeSVG, 0, len(es.Selected))
+	for it := range es.Selected {
+		if it == nil || it.This() == nil || it.IsDeleted() || it.IsDestroyed() {
+			delete(es.Selected, it)
+			continue
+		}
+		sls = append(sls, it)
+	}
+	if descendingSort {
+		sort.Slice(sls, func(i, j int) bool {
+			return dm[sls[i].This()] > dm[sls[j].This()]
+		})
+	} else {
+		sort.Slice(sls, func(i, j int) bool {
+			return dm[sls[i].This()] < dm[sls[j].This()]
 		})
 	}
 	return sls

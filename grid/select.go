@@ -360,7 +360,7 @@ func (gv *GridView) SelGroup() {
 	sv.UndoSave("Group", es.SelectedNamesString())
 
 	updt := sv.UpdateStart()
-	sl := es.SelectedList(true) // true = descending = reverse order
+	sl := es.SelectedListDepth(sv, false) // ascending depth order
 
 	fsel := sl[len(sl)-1] // first selected -- use parent of this for new group
 

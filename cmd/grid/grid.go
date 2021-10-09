@@ -65,6 +65,7 @@ Version: ` + grid.Prefs.VersionInfo())
 	} else {
 		fdir, _ := filepath.Split(fnms[0])
 		os.Chdir(fdir)
+		fmt.Printf("fdir: %s\n", fdir)
 		for _, fnm := range fnms {
 			fmt.Println(fnm)
 			grid.NewGridWindow(fnm)

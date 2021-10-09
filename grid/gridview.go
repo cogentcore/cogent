@@ -68,6 +68,8 @@ func (gv *GridView) OpenDrawingFile(fnm gi.FileName) error {
 	fdir, _ := filepath.Split(path)
 	os.Chdir(fdir)
 	gv.EditState.Init()
+	gv.UpdateLayerView()
+
 	gv.EditState.Gradients = sv.Gradients()
 	sv.GatherIds() // also ensures uniqueness, key for json saving
 	sv.ZoomToContents(false)
@@ -328,8 +330,16 @@ func (gv *GridView) SplitView() *gi.SplitView {
 	return gv.HBox().ChildByName("splitview", 1).(*gi.SplitView)
 }
 
+func (gv *GridView) LayerTree() *gi.Layout {
+	return gv.SplitView().ChildByName("layer-tree", 0).(*gi.Layout)
+}
+
+func (gv *GridView) LayerView() *giv.TableView {
+	return gv.LayerTree().ChildByName("layers", 0).(*giv.TableView)
+}
+
 func (gv *GridView) TreeView() *TreeView {
-	return gv.SplitView().ChildByName("tree-frame", 0).Child(0).(*TreeView) // note: name changes
+	return gv.LayerTree().ChildByName("tree-frame", 1).Child(0).(*TreeView)
 }
 
 func (gv *GridView) SVG() *SVGView {
@@ -369,7 +379,23 @@ func (gv *GridView) Config() {
 	spv := gi.AddNewSplitView(hb, "splitview")
 	spv.Dim = mat32.X
 
-	tvfr := gi.AddNewFrame(spv, "tree-frame", gi.LayoutHoriz)
+	tly := gi.AddNewLayout(spv, "layer-tree", gi.LayoutVert)
+	tly.SetStretchMax()
+
+	nly := gi.AddNewButton(tly, "add-layer")
+	nly.SetText("Add Layer")
+	nly.ButtonSig.Connect(gv, func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.ButtonClicked) {
+			gv.AddLayer()
+		}
+	})
+
+	lyv := giv.AddNewTableView(tly, "layers")
+	lyv.SetMinPrefHeight(units.NewEm(6))
+	lyv.SetStretchMax()
+
+	tvfr := gi.AddNewFrame(tly, "tree-frame", gi.LayoutVert)
+	tvfr.SetMinPrefHeight(units.NewEm(12))
 	tvfr.SetStretchMax()
 	tvfr.SetReRenderAnchor()
 	tv := AddNewTreeView(tvfr, "treeview")
@@ -422,7 +448,7 @@ func (gv *GridView) Config() {
 		// 		stv.SetStruct(tvn.SrcNode)
 	})
 
-	spv.SetSplits(0.1, 0.65, 0.25)
+	spv.SetSplits(0.15, 0.60, 0.25)
 
 	gv.ConfigStatusBar()
 	gv.ConfigMainToolbar()
@@ -431,6 +457,9 @@ func (gv *GridView) Config() {
 	gv.ConfigTabs()
 
 	gv.SetPhysSize(&Prefs.Size)
+
+	gv.SyncLayers()
+	lyv.SetSlice(&gv.EditState.Layers)
 
 	gv.UpdateEnd(updt)
 }
