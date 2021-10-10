@@ -6,10 +6,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
@@ -31,24 +29,26 @@ Version: ` + grid.Prefs.VersionInfo())
 
 	grid.InitPrefs()
 
-	pdir := oswin.TheApp.AppPrefsDir()
-	pnm := filepath.Join(pdir, "grid.log")
+	/*
+			pdir := oswin.TheApp.AppPrefsDir()
+			pnm := filepath.Join(pdir, "grid.log")
 
-	lf, err := os.Create(pnm)
-	if err == nil {
-		os.Stdout = lf
-		os.Stderr = lf
-		log.SetOutput(lf)
-	}
+			lf, err := os.Create(pnm)
+			if err == nil {
+				os.Stdout = lf
+				os.Stderr = lf
+				log.SetOutput(lf)
+			}
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+				lf.Close()
+				os.Exit(1)
+			}
 			lf.Close()
-			os.Exit(1)
-		}
-		lf.Close()
-	}()
+		}()
+	*/
 
 	ofs := oswin.TheApp.OpenFiles()
 

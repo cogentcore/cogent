@@ -7,7 +7,10 @@ package grid
 import (
 	"fmt"
 
+	"github.com/goki/gi/gi"
+	"github.com/goki/gi/giv"
 	"github.com/goki/gi/svg"
+	"github.com/goki/ki/ints"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -19,15 +22,44 @@ type Layer struct {
 	Lck  bool `desc:"lock toggle"`
 }
 
+// FromNode copies state / prop values from given node
+func (l *Layer) FromNode(k ki.Ki) {
+	l.Vis = LayerIsVisible(k)
+	l.Lck = LayerIsLocked(k)
+}
+
+// ToNode copies state / prop values to given node
+func (l *Layer) ToNode(k ki.Ki) {
+	if l.Vis {
+		k.SetProp("style", "")
+		k.SetProp("display", "inline")
+	} else {
+		k.SetProp("style", "display:none")
+		k.SetProp("display", "none")
+	}
+	k.SetProp("insensitive", l.Lck)
+}
+
 // Layers is the list of all layers
 type Layers []*Layer
 
-func (ly *Layers) SyncLayers(svg *SVGView) {
+func (ly *Layers) SyncLayers(sv *SVGView) {
 	*ly = make(Layers, 0)
-	for _, kc := range svg.Kids {
+	for _, kc := range sv.Kids {
 		if NodeIsLayer(kc) {
-			l := &Layer{Name: kc.Name(), Vis: LayerIsVisible(kc), Lck: LayerIsLocked(kc)}
+			l := &Layer{Name: kc.Name()}
+			l.FromNode(kc)
 			*ly = append(*ly, l)
+		}
+	}
+}
+
+func (ly *Layers) LayersUpdated(svg *SVGView) {
+	si := 1 // starting index -- assuming namedview
+	for i, l := range *ly {
+		kc := svg.ChildByName(l.Name, si+i)
+		if kc != nil {
+			l.ToNode(kc)
 		}
 	}
 }
@@ -43,6 +75,57 @@ func (ly *Layers) LayerIdxByName(nm string) int {
 
 /////////////////////////////////////////////////////////////////
 //  GridView
+
+// FirstLayerIndex returns index of first layer group in svg
+func (gv *GridView) FirstLayerIndex() int {
+	sv := gv.SVG()
+	for i, kc := range sv.Kids {
+		if NodeIsLayer(kc) {
+			return i
+		}
+	}
+	return ints.MinInt(1, len(sv.Kids))
+}
+
+func (gv *GridView) LayerViewSigs(lyv *giv.TableView) {
+	es := &gv.EditState
+	sv := gv.SVG()
+	lyv.ViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		// fmt.Printf("tv viewsig: %v  data: %v  send: %v\n", sig, data, send.Path())
+		updt := sv.UpdateStart()
+		es.Layers.LayersUpdated(sv)
+		sv.UpdateEnd(updt)
+		gv.UpdateLayerView()
+	})
+
+	lyv.SliceViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		svs := giv.SliceViewSignals(sig)
+		idx := data.(int)
+		fmt.Printf("tv sliceviewsig: %v  data: %v\n", svs.String(), idx)
+		switch svs {
+		case giv.SliceViewInserted:
+			si := gv.FirstLayerIndex()
+			li := si + idx
+			l := es.Layers[idx]
+			l.Name = fmt.Sprintf("Layer%d", li)
+			l.Vis = true
+			sl := sv.InsertNewChild(svg.KiT_Group, li, l.Name)
+			sl.SetProp("groupmode", "layer")
+			// todo: move selected into this new group
+			gv.UpdateLayerView()
+		case giv.SliceViewDeleted:
+		}
+	})
+
+	lyv.WidgetSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fmt.Printf("tv widgetsig: %v  data: %v\n", gi.WidgetSignals(sig).String(), data)
+		if sig == int64(gi.WidgetSelected) {
+			idx := data.(int)
+			ly := es.Layers[idx]
+			gv.SetCurLayer(ly.Name)
+		}
+	})
+}
 
 func (gv *GridView) SyncLayers() {
 	sv := gv.SVG()

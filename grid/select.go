@@ -364,7 +364,9 @@ func (gv *GridView) SelGroup() {
 
 	fsel := sl[len(sl)-1] // first selected -- use parent of this for new group
 
-	ng := fsel.Parent().AddNewChild(svg.KiT_Group, "newgp").(svg.NodeSVG)
+	fidx, _ := fsel.IndexInParent()
+
+	ng := fsel.Parent().InsertNewChild(svg.KiT_Group, fidx, "newgp").(svg.NodeSVG)
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {
@@ -640,6 +642,15 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 			}
 		}
 		sg := sii.AsSVGNode()
+		if sg.Pnt.Off {
+			return ki.Break
+		}
+		nl := NodeParentLayer(k)
+		if nl != nil {
+			if LayerIsLocked(nl) || !LayerIsVisible(nl) {
+				return ki.Break
+			}
+		}
 		if sg.WinBBoxInBBox(bbox) {
 			// fmt.Printf("%s sel bb: %v in: %v\n", sg.Name(), sg.WinBBox, bbox)
 			rval = append(rval, sii)
@@ -693,6 +704,15 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 			}
 		}
 		sg := sii.AsSVGNode()
+		if sg.Pnt.Off {
+			return ki.Break
+		}
+		nl := NodeParentLayer(k)
+		if nl != nil {
+			if LayerIsLocked(nl) || !LayerIsVisible(nl) {
+				return ki.Break
+			}
+		}
 		if sg.PosInWinBBox(pt) {
 			rval = sii
 			return ki.Break

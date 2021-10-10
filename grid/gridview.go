@@ -384,10 +384,8 @@ func (gv *GridView) Config() {
 
 	nly := gi.AddNewButton(tly, "add-layer")
 	nly.SetText("Add Layer")
-	nly.ButtonSig.Connect(gv, func(recv, send ki.Ki, sig int64, data interface{}) {
-		if sig == int64(gi.ButtonClicked) {
-			gv.AddLayer()
-		}
+	nly.OnClicked(func() {
+		gv.AddLayer()
 	})
 
 	lyv := giv.AddNewTableView(tly, "layers")
@@ -460,6 +458,7 @@ func (gv *GridView) Config() {
 
 	gv.SyncLayers()
 	lyv.SetSlice(&gv.EditState.Layers)
+	gv.LayerViewSigs(lyv)
 
 	gv.UpdateEnd(updt)
 }
