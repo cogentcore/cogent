@@ -3,7 +3,7 @@ module github.com/goki/gide
 require (
 	github.com/aquasecurity/libbpfgo v0.2.1-libbpf-0.4.0 // indirect
 	github.com/go-delve/delve v1.7.1
-	github.com/goki/gi v1.2.13
+	github.com/goki/gi v1.2.14
 	github.com/goki/ki v1.1.3
 	github.com/goki/mat32 v1.0.9
 	github.com/goki/pi v1.0.14
