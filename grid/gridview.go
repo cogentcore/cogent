@@ -398,7 +398,7 @@ func (gv *GridView) Config() {
 	tvfr.SetReRenderAnchor()
 	tv := AddNewTreeView(tvfr, "treeview")
 	tv.GridView = gv
-	tv.OpenDepth = 1
+	tv.OpenDepth = 4
 
 	sv := AddNewSVGView(spv, "svg", gv)
 
@@ -495,7 +495,7 @@ func (gv *GridView) ConfigMainToolbar() {
 	tb.AddAction(gi.ActOpts{Label: "Updt", Icon: "update", Tooltip: "update display -- should not be needed but sometimes, while still under development..."},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
-			grr.UpdateDisp()
+			grr.UpdateAll()
 		})
 	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing of specified size"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {

@@ -32,7 +32,7 @@ var KiT_TreeView = kit.Types.AddType(&TreeView{}, nil)
 func AddNewTreeView(parent ki.Ki, name string) *TreeView {
 	tv := parent.AddNewChild(KiT_TreeView, name).(*TreeView)
 	// tv.SetFlag(int(giv.TreeViewFlagUpdtRoot))
-	tv.OpenDepth = 1
+	tv.OpenDepth = 4
 	return tv
 }
 

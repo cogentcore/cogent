@@ -165,6 +165,7 @@ func (gv *GridView) AddLayer() {
 		bg.SetProp("groupmode", "layer")
 		l1 := sv.InsertNewChild(svg.KiT_Group, si+1, "Layer1")
 		l1.SetProp("groupmode", "layer")
+		sv.SetChildAdded()
 		nk := len(sv.Kids)
 		for i := nk - 1; i >= 3; i-- {
 			kc := sv.Child(i)
@@ -173,6 +174,7 @@ func (gv *GridView) AddLayer() {
 		gv.SetCurLayer(l1.Name())
 	} else {
 		l1 := sv.InsertNewChild(svg.KiT_Group, si+nl, fmt.Sprintf("Layer%d", nl))
+		sv.SetChildAdded()
 		l1.SetProp("groupmode", "layer")
 		gv.SetCurLayer(l1.Name())
 	}

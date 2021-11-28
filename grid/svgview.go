@@ -825,6 +825,7 @@ func (sv *SVGView) NewEl(typ reflect.Type) svg.NodeSVG {
 	nw := par.AddNewChild(typ, nwnm).(svg.NodeSVG)
 	sv.SetSVGName(nw)
 	sv.GridView.PaintView().SetProps(nw)
+	sv.GridView.UpdateTreeView()
 	return nw
 }
 
