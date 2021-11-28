@@ -398,12 +398,15 @@ func (gv *GridView) SelUnGroup() {
 			continue
 		}
 		np := gp.Par
+		gidx, _ := gp.IndexInParent()
 		klist := make(ki.Slice, len(gp.Kids)) // make a temp copy of list of kids
 		for i, k := range gp.Kids {
 			klist[i] = k
 		}
 		for _, k := range klist {
-			ki.MoveToParent(k, np)
+			ki.SetParent(k, nil)
+			gp.DeleteChild(k, false) // no destroy
+			np.InsertChild(k, gidx)
 			se := k.(svg.NodeSVG)
 			if !gp.Pnt.XForm.IsIdentity() {
 				se.ApplyXForm(gp.Pnt.XForm) // group no longer there!
