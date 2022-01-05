@@ -417,17 +417,12 @@ func (fv *FindView) RegexpBox() *gi.CheckBox {
 
 // LocCombo returns the loc combobox
 func (fv *FindView) LocCombo() *gi.ComboBox {
-	return fv.ReplBar().ChildByName("loc", 5).(*gi.ComboBox)
-}
-
-// CurDirBox returns the cur file checkbox in toolbar
-func (fv *FindView) CurDirBox() *gi.CheckBox {
-	return fv.ReplBar().ChildByName("cur-dir", 6).(*gi.CheckBox)
+	return fv.FindBar().ChildByName("loc", 5).(*gi.ComboBox)
 }
 
 // FindNextAct returns the find next action in toolbar -- selected first
 func (fv *FindView) FindNextAct() *gi.Action {
-	return fv.FindBar().ChildByName("next", 3).(*gi.Action)
+	return fv.ReplBar().ChildByName("next", 3).(*gi.Action)
 }
 
 // TextViewLay returns the find results TextView layout
@@ -509,16 +504,34 @@ func (fv *FindView) ConfigToolbar() {
 		}
 	})
 
-	fb.AddAction(gi.ActOpts{Name: "next", Icon: "wedge-down", Tooltip: "go to next result"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			fvv.NextFind()
-		})
+	locl := fb.AddNewChild(gi.KiT_Label, "loc-lbl").(*gi.Label)
+	locl.SetText("Loc:")
+	locl.Tooltip = "location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser"
+	// locl.SetProp("vertical-align", gi.AlignMiddle)
 
-	fb.AddAction(gi.ActOpts{Name: "prev", Icon: "wedge-up", Tooltip: "go to previous result"},
+	cf := fb.AddNewChild(gi.KiT_ComboBox, "loc").(*gi.ComboBox)
+	cf.SetText("Loc")
+	cf.Tooltip = locl.Tooltip
+	cf.ItemsFromEnum(KiT_FindLoc, false, 0)
+	cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+		cb := send.(*gi.ComboBox)
+		eval := cb.CurVal.(kit.EnumValue)
+		fvv.Params().Loc = FindLoc(eval.Value)
+	})
+
+	//////////////// ReplBar
+
+	rb.AddAction(gi.ActOpts{Name: "prev", Icon: "wedge-up", Tooltip: "go to previous result"},
 		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.PrevFind()
+		})
+
+	rb.AddAction(gi.ActOpts{Name: "next", Icon: "wedge-down", Tooltip: "go to next result"},
+		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+			fvv.NextFind()
 		})
 
 	rb.AddAction(gi.ActOpts{Label: "Replace:", Tooltip: "Replace find string with replace string for currently-selected find result"}, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -546,28 +559,11 @@ func (fv *FindView) ConfigToolbar() {
 			fvv.Params().Replace = tf.Text()
 		}
 	})
-
 	rb.AddAction(gi.ActOpts{Label: "All", Tooltip: "replace all find strings with replace string"},
 		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.ReplaceAllAction()
 		})
-
-	locl := rb.AddNewChild(gi.KiT_Label, "loc-lbl").(*gi.Label)
-	locl.SetText("Loc:")
-	locl.Tooltip = "location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser"
-	// locl.SetProp("vertical-align", gi.AlignMiddle)
-
-	cf := rb.AddNewChild(gi.KiT_ComboBox, "loc").(*gi.ComboBox)
-	cf.SetText("Loc")
-	cf.Tooltip = locl.Tooltip
-	cf.ItemsFromEnum(KiT_FindLoc, false, 0)
-	cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		cb := send.(*gi.ComboBox)
-		eval := cb.CurVal.(kit.EnumValue)
-		fvv.Params().Loc = FindLoc(eval.Value)
-	})
 
 	langl := rb.AddNewChild(gi.KiT_Label, "lang-lbl").(*gi.Label)
 	langl.SetText("Lang:")
@@ -577,6 +573,7 @@ func (fv *FindView) ConfigToolbar() {
 	fv.LangVV = giv.ToValueView(&fv.Params().Langs, "")
 	fv.LangVV.SetSoloValue(reflect.ValueOf(&fv.Params().Langs))
 	vtyp := fv.LangVV.WidgetType()
+
 	langw := rb.AddNewChild(vtyp, "langs").(gi.Node2D)
 	fv.LangVV.ConfigWidget(langw)
 	langw.AsWidget().Tooltip = langl.Tooltip
