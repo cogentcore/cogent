@@ -8,7 +8,7 @@ require (
 	github.com/goki/gi v1.2.15
 	github.com/goki/ki v1.1.4
 	github.com/goki/mat32 v1.0.9
-	github.com/goki/pi v1.0.16
+	github.com/goki/pi v1.0.17
 	github.com/goki/vci v1.0.0
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect

@@ -32,6 +32,8 @@ Version: ` + pi.VersionInfo())
 	gide.InitPrefs()
 	piv.InitPrefs()
 
+	gide.TheConsole.Init() // must do this after changing stdout
+
 	// var path string
 	// var proj string
 	//
