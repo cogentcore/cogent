@@ -826,6 +826,8 @@ var StdCmds = Commands{
 		[]CmdAndArgs{{"git", []string{"pull"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Push Git ", "git push", filecat.Any,
 		[]CmdAndArgs{{"git", []string{"push"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Branch Git", "git branch", filecat.Any,
+		[]CmdAndArgs{{"git", []string{"branch", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process, MUST be wait!
 
 	// SVN
 	{"Add SVN", "svn add file", filecat.Any,

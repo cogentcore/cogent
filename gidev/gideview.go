@@ -70,6 +70,8 @@ type GideView struct {
 	ProjFilename      gi.FileName             `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ActiveFilename    gi.FileName             `desc:"filename of the currently-active textview"`
 	ActiveLang        filecat.Supported       `desc:"language for current active filename"`
+	ActiveVCS         vci.Repo                `desc:"VCS repo for current active filename"`
+	ActiveVCSInfo     string                  `desc:"VCS info for current active filename (typically branch or revision) -- for status"`
 	Changed           bool                    `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
 	LastSaveTStamp    time.Time               `json:"-" desc:"timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger"`
 	Files             giv.FileTree            `desc:"all the files in the project directory and subdirectories"`
@@ -544,6 +546,19 @@ func (ge *GideView) TextViewForFile(fnm gi.FileName) (*gide.TextView, int, bool)
 func (ge *GideView) SetActiveFileInfo(buf *giv.TextBuf) {
 	ge.ActiveFilename = buf.Filename
 	ge.ActiveLang = buf.Info.Sup
+	fn := ge.FileNodeForFile(string(ge.ActiveFilename), false)
+	ge.ActiveVCSInfo = ""
+	ge.ActiveVCS = nil
+	if fn != nil {
+		repo, _ := fn.Repo()
+		if repo != nil {
+			ge.ActiveVCS = repo
+			cur, err := repo.Current()
+			if err == nil {
+				ge.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", repo.Vcs(), cur)
+			}
+		}
+	}
 }
 
 // SetActiveTextView sets the given textview as the active one, and returns its index
@@ -1058,7 +1073,9 @@ func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
 func (ge *GideView) TextViewSig(tv *gide.TextView, sig giv.TextViewSignals) {
 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
 	switch sig {
-	case giv.TextViewISearch, giv.TextViewQReplace, giv.TextViewCursorMoved:
+	case giv.TextViewCursorMoved:
+		ge.SetStatus("") // this really doesn't make any noticeable diff in perf
+	case giv.TextViewISearch, giv.TextViewQReplace:
 		ge.SetStatus("")
 	}
 }
@@ -2231,7 +2248,7 @@ func (ge *GideView) SetStatus(msg string) {
 		}
 	}
 
-	str := fmt.Sprintf("%v\t<b>%v:</b>\t(%v,%v)\t%v", ge.Nm, fnm, ln, ch, msg)
+	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", ge.Nm, ge.ActiveVCSInfo, fnm, ln, ch, msg)
 	lbl.SetText(str)
 	sb.UpdateEnd(updt)
 	ge.UpdateTextButtons()
