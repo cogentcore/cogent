@@ -180,6 +180,7 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 	} else {
 		sv.OpenFile()
 	}
+	tv.ReSync()
 
 	tv.OpenAll()
 	sfr.UpdateEnd(updt)
@@ -291,7 +292,7 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 				}
 			}
 			if symMatch(sy.Name, match, ignoreCase) || len(methods) > 0 || len(fields) > 0 {
-				kn := sn.AddNewChild(nil, sy.Name).(*SymNode)
+				kn := sn.AddNewChild(KiT_SymNode, sy.Name).(*SymNode)
 				kn.Symbol = *sy
 				sort.Slice(fields, func(i, j int) bool {
 					return fields[i].Name < fields[j].Name
@@ -301,12 +302,12 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 				})
 				for _, fld := range fields {
 					dnm := fld.Label()
-					fn := kn.AddNewChild(nil, dnm).(*SymNode)
+					fn := kn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
 					fn.Symbol = fld
 				}
 				for _, mth := range methods {
 					dnm := mth.Label()
-					mn := kn.AddNewChild(nil, dnm).(*SymNode)
+					mn := kn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
 					mn.Symbol = mth
 				}
 			}
@@ -314,12 +315,12 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 	}
 	for _, fn := range funcs {
 		dnm := fn.Label()
-		fk := sn.AddNewChild(nil, dnm).(*SymNode)
+		fk := sn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
 		fk.Symbol = fn
 	}
 	for _, vr := range gvars {
 		dnm := vr.Label()
-		vk := sn.AddNewChild(nil, dnm).(*SymNode)
+		vk := sn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
 		vk.Symbol = vr
 	}
 }
