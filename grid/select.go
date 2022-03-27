@@ -403,10 +403,10 @@ func (gv *GridView) SelUnGroup() {
 		for i, k := range gp.Kids {
 			klist[i] = k
 		}
-		for _, k := range klist {
+		for i, k := range klist {
 			ki.SetParent(k, nil)
 			gp.DeleteChild(k, false) // no destroy
-			np.InsertChild(k, gidx)
+			np.InsertChild(k, gidx+i)
 			se := k.(svg.NodeSVG)
 			if !gp.Pnt.XForm.IsIdentity() {
 				se.ApplyXForm(gp.Pnt.XForm) // group no longer there!
