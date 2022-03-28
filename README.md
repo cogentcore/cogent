@@ -69,8 +69,6 @@ Basic functionality now in place:
 
 * some kind of crashing in group / ungroup -- .log file not recording crashes
 
-* group MUST retain depth order of original items!  currently using select order?
-
 * ungroup on icons/align-middle is not working -- applyxform is not taking into account
 local xform -- cannot just go direct -- if a local xform exists, just apply it to that
 and update transform prop.  also, h, v commands in path need to be converted to regular 
@@ -99,7 +97,6 @@ non-optimized cases if there is a rotation in the transform!  argh.
 
 * add distribute to Align
 
-* svg render needs to use visibility flag from layers to not render stuff.
 * generic display: flag -- not same as setting visible -- all levels
   need to process that flag.
 
