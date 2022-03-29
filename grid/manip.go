@@ -452,6 +452,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
+	// fmt.Printf("del: %v   sc:  %v\n", del, sc)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(ss.InitGeom)
 		itm.ApplyDeltaXForm(del, sc, 0, pt)

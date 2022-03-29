@@ -62,19 +62,7 @@ Basic functionality now in place:
 
 * double-click on text brings up text bar and text panel
 
-* text should have its own default color settings that is not set from other graphical elements -- typically text needs to have fill no outline..
-
-* prevent selecting of items across different layers -- leads to all manner of weirdness.
 * add more layer logic -- if layers, everything should be in a layer?
-
-* some kind of crashing in group / ungroup -- .log file not recording crashes
-
-* ungroup on icons/align-middle is not working -- applyxform is not taking into account
-local xform -- cannot just go direct -- if a local xform exists, just apply it to that
-and update transform prop.  also, h, v commands in path need to be converted to regular 
-non-optimized cases if there is a rotation in the transform!  argh.
-
-* autosave not working?
 
 * import svg -- same as marker
 
@@ -97,15 +85,12 @@ non-optimized cases if there is a rotation in the transform!  argh.
 
 * add distribute to Align
 
-* generic display: flag -- not same as setting visible -- all levels
-  need to process that flag.
-
 * svg.Text align Center, etc affects different tspans within overall text block
 * Text edit panel -- finish toolbar
 
 * cut / paste not updating tree reliably.  more tree update debugging fun!
 
-* use grid to render all new icons!
+* use grid itself to render all new icons!
 
 * figure out mask clipping eventually.
 

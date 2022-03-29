@@ -43,7 +43,7 @@ func (ts *TextStyle) Update() {
 func (ts *TextStyle) Defaults() {
 	ts.Text = ""
 	ts.Font = "Arial"
-	ts.Size.SetPt(12)
+	ts.Size.SetPx(12)
 	ts.Style = gist.FontStyles(0)
 	ts.Weight = gist.FontWeights(0)
 	ts.Stretch = gist.FontStretch(0)
@@ -52,7 +52,7 @@ func (ts *TextStyle) Defaults() {
 	ts.Shift = gist.BaselineShifts(0)
 	ts.Align = gist.AlignLeft
 
-	ts.SetFromFontStyle(&Prefs.Style.FontStyle)
+	ts.SetFromFontStyle(&Prefs.TextStyle.FontStyle)
 }
 
 // SetFromFontStyle sets from standard gist.Font style

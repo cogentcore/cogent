@@ -26,7 +26,10 @@ type Preferences struct {
 	Size         PhysSize               `desc:"default physical size, when app is started without opening a file"`
 	Colors       ColorPrefs             `desc:"active color preferences"`
 	ColorSchemes map[string]*ColorPrefs `desc:"named color schemes -- has Light and Dark schemes by default"`
-	Style        girl.Paint             `desc:"default styles"`
+	ShapeStyle   girl.Paint             `desc:"default shape styles"`
+	TextStyle    girl.Paint             `desc:"default text styles"`
+	PathStyle    girl.Paint             `desc:"default line styles"`
+	LineStyle    girl.Paint             `desc:"default line styles"`
 	GridDisp     bool                   `desc:"turns on the grid display"`
 	SnapGrid     bool                   `desc:"snap positions and sizes to underlying grid"`
 	SnapGuide    bool                   `desc:"snap positions and sizes to line up with other elements"`
@@ -42,9 +45,27 @@ func (pf *Preferences) Defaults() {
 	pf.Size.Defaults()
 	pf.Colors.Defaults()
 	pf.ColorSchemes = DefaultColorSchemes()
-	pf.Style.Defaults()
-	pf.Style.FontStyle.Family = "Arial"
-	pf.Style.FontStyle.Size.Set(12, units.Pt)
+	pf.ShapeStyle.Defaults()
+	pf.ShapeStyle.FontStyle.Family = "Arial"
+	pf.ShapeStyle.FontStyle.Size.Set(12, units.Px)
+	pf.ShapeStyle.FillStyle.Color.SetName("blue")
+	pf.ShapeStyle.StrokeStyle.On = true
+	pf.ShapeStyle.FillStyle.On = true
+	pf.TextStyle.Defaults()
+	pf.TextStyle.FontStyle.Family = "Arial"
+	pf.TextStyle.FontStyle.Size.Set(12, units.Px)
+	pf.TextStyle.StrokeStyle.On = false
+	pf.TextStyle.FillStyle.On = true
+	pf.PathStyle.Defaults()
+	pf.PathStyle.FontStyle.Family = "Arial"
+	pf.PathStyle.FontStyle.Size.Set(12, units.Px)
+	pf.PathStyle.StrokeStyle.On = true
+	pf.PathStyle.FillStyle.On = false
+	pf.LineStyle.Defaults()
+	pf.LineStyle.FontStyle.Family = "Arial"
+	pf.LineStyle.FontStyle.Size.Set(12, units.Px)
+	pf.LineStyle.StrokeStyle.On = true
+	pf.LineStyle.FillStyle.On = false
 	pf.GridDisp = true
 	pf.SnapTol = 3
 	pf.SnapGrid = true

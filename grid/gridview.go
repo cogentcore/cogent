@@ -834,7 +834,15 @@ func (gv *GridView) UpdateTreeView() {
 
 func (gv *GridView) SetDefaultStyle() {
 	pv := gv.Tab("Paint").(*PaintView)
-	pv.Update(&Prefs.Style, nil)
+	es := &gv.EditState
+	switch es.Tool {
+	case TextTool:
+		pv.Update(&Prefs.TextStyle, nil)
+	case BezierTool:
+		pv.Update(&Prefs.PathStyle, nil)
+	default:
+		pv.Update(&Prefs.ShapeStyle, nil)
+	}
 }
 
 func (gv *GridView) UpdateTabs() {

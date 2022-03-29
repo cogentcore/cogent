@@ -6,6 +6,7 @@ package grid
 
 import (
 	"github.com/goki/gi/gi"
+	"github.com/goki/gi/svg"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -37,6 +38,10 @@ func ToolDoesBasicSelect(tl Tools) bool {
 
 // SetTool sets the current active tool
 func (gv *GridView) SetTool(tl Tools) {
+	es := &gv.EditState
+	if es.Tool == tl {
+		return
+	}
 	tls := gv.Tools()
 	updt := tls.UpdateStart()
 	for i, ti := range tls.Kids {
@@ -44,7 +49,23 @@ func (gv *GridView) SetTool(tl Tools) {
 		t.SetSelectedState(i == int(tl))
 	}
 	tls.UpdateEnd(updt)
+	fs := es.FirstSelectedNode()
+	if fs != nil {
+		switch v := fs.(type) {
+		case *svg.Text:
+			Prefs.TextStyle.CopyStyleFrom(&v.Pnt.Paint)
+		case *svg.Line:
+			Prefs.LineStyle.CopyStyleFrom(&v.Pnt.Paint)
+		case *svg.Path:
+			Prefs.PathStyle.CopyStyleFrom(&v.Pnt.Paint)
+		default:
+			gg := fs.AsSVGNode()
+			Prefs.ShapeStyle.CopyStyleFrom(&gg.Pnt.Paint)
+		}
+	}
+	es.ResetSelected()
 	gv.EditState.Tool = tl
+	gv.SetDefaultStyle()
 	gv.SetModalToolbar()
 	gv.SetStatus("Tool")
 	sv := gv.SVG()

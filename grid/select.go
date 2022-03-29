@@ -619,6 +619,7 @@ func (gv *GridView) SelSetHeight(ht float32) {
 // within the given BBox. SVG version excludes layer groups.
 func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.NodeSVG {
 	var rval []svg.NodeSVG
+	var curlay ki.Ki
 	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
 		if k == sv.This() {
 			return ki.Continue
@@ -641,7 +642,9 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 		}
 		if txt, istxt := sii.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				return ki.Break
+				if _, istxt := txt.Par.(*svg.Text); istxt {
+					return ki.Break
+				}
 			}
 		}
 		sg := sii.AsSVGNode()
@@ -650,13 +653,16 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 		}
 		nl := NodeParentLayer(k)
 		if nl != nil {
-			if LayerIsLocked(nl) || !LayerIsVisible(nl) {
+			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return ki.Break
 			}
 		}
 		if sg.WinBBoxInBBox(bbox) {
 			// fmt.Printf("%s sel bb: %v in: %v\n", sg.Name(), sg.WinBBox, bbox)
 			rval = append(rval, sii)
+			if curlay == nil && nl != nil {
+				curlay = nl
+			}
 			return ki.Break // don't go into groups!
 		}
 		return ki.Continue
@@ -672,6 +678,11 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 // excluded,
 func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.NodeSVG {
 	es := sv.EditState()
+	var curlay ki.Ki
+	fn := es.FirstSelectedNode()
+	if fn != nil {
+		curlay = NodeParentLayer(fn)
+	}
 	var rval svg.NodeSVG
 	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
 		if k == sv.This() {
@@ -695,7 +706,9 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		}
 		if txt, istxt := sii.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				return ki.Break
+				if _, istxt := txt.Par.(*svg.Text); istxt {
+					return ki.Break
+				}
 			}
 		}
 		if excludeSel {
@@ -712,7 +725,7 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		}
 		nl := NodeParentLayer(k)
 		if nl != nil {
-			if LayerIsLocked(nl) || !LayerIsVisible(nl) {
+			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return ki.Break
 			}
 		}
