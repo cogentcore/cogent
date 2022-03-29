@@ -5,6 +5,7 @@
 package gidebug
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -42,6 +43,10 @@ func ThreadByID(thrs []*Thread, id int) (*Thread, int) {
 	return nil, -1
 }
 
+func (th *Thread) String() string {
+	return fmt.Sprintf("id: %v  %v:%v", th.ID, th.File, th.Line)
+}
+
 // Task is an optional finer-grained, lighter-weight thread, e.g.,
 // a goroutine in the Go language.  if GiDebug HasTasks() == false then
 // it is not used.
@@ -66,6 +71,10 @@ func TaskByID(thrs []*Task, id int) (*Task, int) {
 		}
 	}
 	return nil, -1
+}
+
+func (th *Task) String() string {
+	return fmt.Sprintf("id: %v  %v:%v", th.ID, th.File, th.Line)
 }
 
 // Location holds program location information.
@@ -142,6 +151,10 @@ type State struct {
 	ExitStatus int    `desc:"indicates the exit status if Exited"`
 	Err        error  `desc:"error communicated to client -- if non-empty, something bad happened"`
 	CurTrace   int    `desc:"if this is > 0, then we just hit that tracepoint -- the Continue process will continue execution"`
+}
+
+func (st *State) String() string {
+	return fmt.Sprintf("th: %s  ta: %s  Run: %v", st.Thread.String(), st.Task.String(), st.Running)
 }
 
 // AllState holds all relevant state information.

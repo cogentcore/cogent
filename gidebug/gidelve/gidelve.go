@@ -255,6 +255,7 @@ func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 					continue
 				}
 			}
+			// fmt.Printf("sending %s\n", ds.String())
 			sc <- ds
 		}
 		close(sc)
@@ -494,16 +495,6 @@ func (gd *GiDelve) CancelNext() error {
 // InitAllState initializes the given AllState with relevant info for
 // current state of things.  Does Not get AllVars
 func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
-	bs, err := gd.GetState()
-	if err != nil {
-		return err
-	}
-	if bs.Running {
-		all.State.Running = true
-		err = gidebug.IsRunningErr
-		return gd.LogErr(err)
-	}
-	all.State = *bs
 	all.CurThread = all.State.Thread.ID
 	all.CurTask = all.State.Task.ID
 	all.CurFrame = 0
@@ -522,11 +513,14 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 		return err
 	}
 	all.Stack = sf
-	vr, err := gd.ListVars(all.CurTask, 0)
-	if err != nil {
-		return err
+	tsk, _ := gidebug.TaskByID(all.Tasks, all.CurTask)
+	if tsk != nil && tsk.Func != "" {
+		vr, err := gd.ListVars(all.CurTask, 0)
+		if err != nil {
+			return err
+		}
+		all.Vars = vr
 	}
-	all.Vars = vr
 
 	all.CurBreak = 0
 	cf := all.StackFrame(0)
@@ -557,11 +551,15 @@ func (gd *GiDelve) UpdateAllState(all *gidebug.AllState, threadID int, frame int
 	}
 	if updt || all.CurFrame != frame {
 		all.CurFrame = frame
-		vr, err := gd.ListVars(all.CurTask, all.CurFrame)
-		if err != nil {
-			return err
+		tsk, _ := gidebug.TaskByID(all.Tasks, all.CurTask)
+		if tsk != nil && tsk.Func != "" {
+			vr, err := gd.ListVars(all.CurTask, all.CurFrame)
+			if err != nil {
+				return err
+			}
+			all.Vars = vr
 		}
-		all.Vars = vr
+
 	}
 	return nil
 }
