@@ -17,7 +17,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -1406,29 +1405,20 @@ func (ge *GideView) SelectTabByName(label string) gi.Node2D {
 	return tv.SelectTabByName(label)
 }
 
-// RecycleTab returns a tab with given name, first by looking for an existing one,
-// and if not found, making a new one with widget of given type.
-// If sel, then select it.  returns widget for tab.
-func (ge *GideView) RecycleTab(label string, typ reflect.Type, sel bool) gi.Node2D {
-	tv := ge.Tabs()
-	if tv == nil {
-		return nil
-	}
-	return tv.RecycleTab(label, typ, sel)
-}
-
 // RecycleTabTextView returns a tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
 func (ge *GideView) RecycleTabTextView(label string, sel bool) *giv.TextView {
-	retab := ge.RecycleTab(label, gi.KiT_Layout, sel)
-	if retab == nil {
+	tv := ge.Tabs()
+	if tv == nil {
 		return nil
 	}
-	ly := retab.Embed(gi.KiT_Layout).(*gi.Layout)
-	tv := gide.ConfigOutputTextView(ly)
-	return tv
+	updt := tv.UpdateStart()
+	ly := tv.RecycleTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
+	txv := gide.ConfigOutputTextView(ly)
+	tv.UpdateEnd(updt)
+	return txv
 }
 
 // RecycleCmdBuf creates the buffer for command output, or returns
@@ -1812,7 +1802,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	tv.SetInactive()
 	tv.SetProp("font-family", gi.Prefs.MonoFont)
 	tv.SetBuf(tb)
-	tv.CursorPos = lex.Pos{Ln: ld.StLine}
+	tv.ScrollToCursorPos = lex.Pos{Ln: ld.StLine}
 	tv.ScrollToCursorOnRender = true
 
 	tb.SetText(txt) // calls remarkup
@@ -1857,12 +1847,13 @@ func (ge *GideView) Find(find, repl string, ignoreCase, regExp bool, loc gide.Fi
 	ge.Prefs.Find.Langs = langs
 	ge.Prefs.Find.Loc = loc
 
-	fbuf, _ := ge.RecycleCmdBuf("Find", true)
-	fvi := ge.RecycleTab("Find", gide.KiT_FindView, true) // sel
-	if fvi == nil {
+	tv := ge.Tabs()
+	if tv == nil {
 		return
 	}
-	fv := fvi.Embed(gide.KiT_FindView).(*gide.FindView)
+	updt := tv.UpdateStart()
+	fbuf, _ := ge.RecycleCmdBuf("Find", true)
+	fv := tv.RecycleTab("Find", gide.KiT_FindView, true).Embed(gide.KiT_FindView).(*gide.FindView)
 	fv.Config(ge)
 	fv.Time = time.Now()
 	ftv := fv.TextView()
@@ -1901,54 +1892,79 @@ func (ge *GideView) Find(find, repl string, ignoreCase, regExp bool, loc gide.Fi
 		res = gide.FileTreeSearch(root, find, ignoreCase, regExp, loc, adir, langs)
 	}
 	fv.ShowResults(res)
+	tv.UpdateEnd(updt)
 	ge.FocusOnPanel(TabsIdx)
 }
 
 // Spell checks spelling in active text view
 func (ge *GideView) Spell() {
-	tv := ge.ActiveTextView()
-	if tv == nil || tv.Buf == nil {
+	txv := ge.ActiveTextView()
+	if txv == nil || txv.Buf == nil {
 		return
 	}
 	spell.OpenCheck() // make sure latest file opened
-	sv := ge.RecycleTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
-	sv.Config(ge, tv)
+	tv := ge.Tabs()
+	if tv == nil {
+		return
+	}
+	updt := tv.UpdateStart()
+	sv := tv.RecycleTab("Spell", gide.KiT_SpellView, true).Embed(gide.KiT_SpellView).(*gide.SpellView)
+	sv.Config(ge, txv)
+	tv.UpdateEnd(updt)
 	ge.FocusOnPanel(TabsIdx)
 }
 
 // Symbols displays the Symbols of a file or package
 func (ge *GideView) Symbols() {
-	tv := ge.ActiveTextView()
-	if tv == nil || tv.Buf == nil {
+	txv := ge.ActiveTextView()
+	if txv == nil || txv.Buf == nil {
 		return
 	}
-	sv := ge.RecycleTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
+	tv := ge.Tabs()
+	if tv == nil {
+		return
+	}
+	updt := tv.UpdateStart()
+	sv := tv.RecycleTab("Symbols", gide.KiT_SymbolsView, true).Embed(gide.KiT_SymbolsView).(*gide.SymbolsView)
 	sv.Config(ge, ge.Prefs.Symbols)
+	tv.UpdateEnd(updt)
 	ge.FocusOnPanel(TabsIdx)
 }
 
 // Debug starts the debugger on the RunExec executable.
 func (ge *GideView) Debug() {
+	tv := ge.Tabs()
+	if tv == nil {
+		return
+	}
+	updt := tv.UpdateStart()
 	ge.Prefs.Debug.Mode = gidebug.Exec
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
-	dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
+	dv := tv.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
 	dv.Config(ge, ge.Prefs.MainLang, exePath)
+	tv.UpdateEnd(updt)
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }
 
 // DebugTest runs the debugger using testing mode in current active textview path
 func (ge *GideView) DebugTest() {
-	tv := ge.ActiveTextView()
-	if tv == nil || tv.Buf == nil {
+	txv := ge.ActiveTextView()
+	if txv == nil || txv.Buf == nil {
 		return
 	}
+	tv := ge.Tabs()
+	if tv == nil {
+		return
+	}
+	updt := tv.UpdateStart()
 	ge.Prefs.Debug.Mode = gidebug.Test
-	tstPath := string(tv.Buf.Filename)
+	tstPath := string(txv.Buf.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
-	dv := ge.RecycleTab("Debug "+dir, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
+	dv := tv.RecycleTab("Debug "+dir, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
 	dv.Config(ge, ge.Prefs.MainLang, tstPath)
+	tv.UpdateEnd(updt)
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }
@@ -1956,12 +1972,18 @@ func (ge *GideView) DebugTest() {
 // DebugAttach runs the debugger by attaching to an already-running process.
 // pid is the process id to attach to.
 func (ge *GideView) DebugAttach(pid uint64) {
+	tv := ge.Tabs()
+	if tv == nil {
+		return
+	}
+	updt := tv.UpdateStart()
 	ge.Prefs.Debug.Mode = gidebug.Attach
 	ge.Prefs.Debug.PID = pid
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
-	dv := ge.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
+	dv := tv.RecycleTab("Debug "+exe, gide.KiT_DebugView, true).Embed(gide.KiT_DebugView).(*gide.DebugView)
 	dv.Config(ge, ge.Prefs.MainLang, exePath)
+	tv.UpdateEnd(updt)
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }

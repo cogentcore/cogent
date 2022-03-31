@@ -279,8 +279,7 @@ func (tv *TextView) ConnectEvents2D() {
 // ConfigOutputTextView configures a command-output textview within given parent layout
 func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
 	ly.Lay = gi.LayoutVert
-	ly.SetStretchMaxWidth()
-	ly.SetStretchMaxHeight()
+	ly.SetStretchMax()
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 	var tv *giv.TextView
