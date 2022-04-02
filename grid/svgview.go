@@ -949,6 +949,15 @@ func (sv *SVGView) Gradients() []*Gradient {
 
 // UpdateGradients update SVG gradients from given gradient list
 func (sv *SVGView) UpdateGradients(gl []*Gradient) {
+	nms := make(map[string]bool)
+	for _, gr := range gl {
+		if _, has := nms[gr.Name]; has {
+			id := sv.NewUniqueId()
+			gr.Name = fmt.Sprintf("%d", id)
+		}
+		nms[gr.Name] = true
+	}
+
 	for _, gr := range gl {
 		radial := false
 		if strings.HasPrefix(gr.Name, "radial") {
@@ -961,8 +970,10 @@ func (sv *SVGView) UpdateGradients(gl []*Gradient) {
 		} else {
 			g = gg.(*gi.Gradient)
 		}
+
 		gr.UpdateGrad(g)
 	}
+	sv.UpdateAllGradientStops()
 }
 
 ///////////////////////////////////////////////////////////////////////

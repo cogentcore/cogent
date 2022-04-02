@@ -61,7 +61,7 @@ Version: ` + grid.Prefs.VersionInfo())
 
 	if len(fnms) == 0 {
 		os.Chdir(gi.Prefs.User.HomeDir)
-		grid.NewGridWindow("")
+		grid.NewDrawing(grid.Prefs.Size)
 	} else {
 		fdir, _ := filepath.Split(fnms[0])
 		os.Chdir(fdir)

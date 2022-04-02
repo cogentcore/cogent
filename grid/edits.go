@@ -16,6 +16,8 @@ import (
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/undo"
+	"github.com/goki/gi/units"
+	"github.com/goki/ki/kit"
 	"github.com/goki/mat32"
 	"github.com/srwiley/rasterx"
 )
@@ -378,7 +380,7 @@ type GradStop struct {
 
 // Gradient represents a single gradient that defines stops (referenced in StopName of other gradients)
 type Gradient struct {
-	Ic    gi.IconName `inactive:"+" tableview:"no-header" desc:"icon of gradient -- generated to display each gradient"`
+	Ic    gi.IconName `inactive:"+" tableview:"no-header" width:"5" desc:"icon of gradient -- generated to display each gradient"`
 	Id    string      `inactive:"+" width:"6" desc:"name of gradient (id)"`
 	Name  string      `view:"-" desc:"full name of gradient as SVG element"`
 	Stops []*GradStop `desc:"gradient stops"`
@@ -393,7 +395,6 @@ func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
 		gr.Stops = nil
 		return
 	}
-	gr.Ic = "stop" // todo manage separate list of gradient icons
 	xgr := g.Grad.Gradient
 	nst := len(xgr.Stops)
 	if len(gr.Stops) != nst || gr.Stops == nil {
@@ -409,7 +410,10 @@ func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
 		gst.Offset = xst.Offset
 		gr.Stops[i] = gst
 	}
+	gr.UpdateIcon()
 }
+
+// todo: update grad to sane vals for offs etc
 
 // Updates svg gradient from our gradient
 func (gr *Gradient) UpdateGrad(g *gi.Gradient) {
@@ -426,19 +430,31 @@ func (gr *Gradient) UpdateGrad(g *gi.Gradient) {
 	}
 	xgr := g.Grad.Gradient
 	if gr.Stops == nil {
-		gr.Stops = make([]*GradStop, 1)
-		gr.Stops[0] = &GradStop{}
+		gr.ConfigDefaultGradientStops()
 	}
 	nst := len(gr.Stops)
 	if len(xgr.Stops) != nst {
 		xgr.Stops = make([]rasterx.GradStop, nst)
 	}
+	all0 := true
+	for _, gst := range gr.Stops {
+		if gst.Offset != 0 {
+			all0 = false
+		}
+	}
+	if all0 {
+		for i, gst := range gr.Stops {
+			gst.Offset = float64(i)
+		}
+	}
+
 	for i, gst := range gr.Stops {
 		xst := &xgr.Stops[i]
 		xst.StopColor = gst.Color
 		xst.Opacity = gst.Opacity
 		xst.Offset = gst.Offset
 	}
+	gr.UpdateIcon()
 }
 
 // ConfigDefaultGradient configures a new default gradient
@@ -446,11 +462,55 @@ func (es *EditState) ConfigDefaultGradient() {
 	es.Gradients = make([]*Gradient, 1)
 	gr := &Gradient{}
 	es.Gradients[0] = gr
+	gr.ConfigDefaultGradientStops()
+	gr.UpdateIcon()
+}
+
+// ConfigDefaultGradientStops configures a new default gradient stops
+func (gr *Gradient) ConfigDefaultGradientStops() {
 	gr.Stops = make([]*GradStop, 2)
 	st1 := &GradStop{Opacity: 1, Offset: 0}
-	st1.Color.SetName("blue")
+	st1.Color.SetName("white")
 	st2 := &GradStop{Opacity: 1, Offset: 1}
-	st2.Color.SetName("white")
+	st2.Color.SetName("blue")
 	gr.Stops[0] = st1
 	gr.Stops[1] = st2
+}
+
+// UpdateIcon updates icon
+func (gr *Gradient) UpdateIcon() {
+	nm := fmt.Sprintf("grid_grad_%s", gr.Name)
+	ici, err := gi.TheIconMgr.IconByName(nm)
+	var ic *svg.Icon
+	if err != nil {
+		ic = &svg.Icon{}
+		ic.InitName(ic, nm)
+		ic.ViewBox.Size = mat32.Vec2{1, 1}
+		ic.SetProp("width", units.NewCh(5))
+		svg.CurIconSet[nm] = ic
+	} else {
+		ic = ici.(*svg.Icon)
+	}
+	nst := len(gr.Stops)
+	if ic.NumChildren() != nst {
+		config := kit.TypeAndNameList{}
+		for i := range gr.Stops {
+			config.Add(svg.KiT_Rect, fmt.Sprintf("%d", i))
+		}
+		ic.ConfigChildren(config)
+
+	}
+
+	px := 0.9 / float32(nst)
+	for i, gst := range gr.Stops {
+		bx := ic.Child(i).(*svg.Rect)
+		bx.Pos.X = 0.05 + float32(i)*px
+		bx.Pos.Y = 0.05
+		bx.Size.X = px
+		bx.Size.Y = 0.9
+		bx.SetProp("stroke-width", units.NewPx(0))
+		bx.SetProp("stroke", "none")
+		bx.SetProp("fill", gst.Color.HexString())
+	}
+	gr.Ic = gi.IconName(nm)
 }

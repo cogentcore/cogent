@@ -41,6 +41,7 @@ var KiT_GridView = kit.Types.AddType(&GridView{}, GridViewProps)
 // AddNewGridView adds a new editor to given parent node, with given name.
 func AddNewGridView(parent ki.Ki, name string) *GridView {
 	gv := parent.AddNewChild(KiT_GridView, name).(*GridView)
+	gv.Defaults()
 	return gv
 }
 
@@ -51,6 +52,8 @@ func (g *GridView) CopyFieldsFrom(frm interface{}) {
 }
 
 func (gv *GridView) Defaults() {
+	es := &gv.EditState
+	es.ConfigDefaultGradient()
 }
 
 // OpenDrawingFile opens a new .svg drawing file -- just the basic opening
@@ -103,8 +106,7 @@ func (gv *GridView) OpenDrawing(fnm gi.FileName) error {
 
 // NewDrawing opens a new drawing window
 func (gv *GridView) NewDrawing(sz PhysSize) *GridView {
-	_, ngr := NewGridWindow("")
-	ngr.SetPhysSize(&sz)
+	ngr := NewDrawing(sz)
 	return ngr
 }
 
@@ -460,6 +462,8 @@ func (gv *GridView) Config() {
 	lyv.SetSlice(&gv.EditState.Layers)
 	gv.LayerViewSigs(lyv)
 
+	sv.UpdateGradients(gv.EditState.Gradients)
+
 	gv.UpdateEnd(updt)
 }
 
@@ -707,6 +711,13 @@ func (gv *GridView) SetTitle() {
 	win := gv.ParentWindow()
 	win.SetName(winm)
 	win.SetTitle(wintitle)
+}
+
+// NewDrawing opens a new drawing window
+func NewDrawing(sz PhysSize) *GridView {
+	_, ngr := NewGridWindow("")
+	ngr.SetPhysSize(&sz)
+	return ngr
 }
 
 // NewGridWindow returns a new GridWindow loading given file if non-empty

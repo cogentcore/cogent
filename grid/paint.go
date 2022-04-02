@@ -399,6 +399,9 @@ func (pv *PaintView) Update(pc *girl.Paint, kn ki.Ki) {
 		}
 		fs.StackTop = 2
 		fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
+		if fg.Slice != grl {
+			pv.SetFullReRender()
+		}
 		fg.SetSlice(grl)
 		pv.SelectFillGrad()
 	default:
@@ -439,10 +442,14 @@ func (pv *PaintView) DecodeType(kn ki.Ki, cs *gist.ColorSpec, prop string) (Pain
 		ptyp = PaintOff
 	case strings.HasPrefix(pstr, "url(#linear") || (cs.Gradient != nil && !cs.Gradient.IsRadial):
 		ptyp = PaintLinear
-		grnm = pv.GradStopsName(gii, pstr)
+		if gii != nil {
+			grnm = pv.GradStopsName(gii, pstr)
+		}
 	case strings.HasPrefix(pstr, "url(#radial") || (cs.Gradient != nil && cs.Gradient.IsRadial):
 		ptyp = PaintRadial
-		grnm = pv.GradStopsName(gii, pstr)
+		if gii != nil {
+			grnm = pv.GradStopsName(gii, pstr)
+		}
 	default:
 		ptyp = PaintSolid
 	}
@@ -737,6 +744,7 @@ func (pv *PaintView) Config(gv *GridView) {
 		}
 	})
 	fg.SliceViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		// fmt.Printf("svs: %v   %v\n", sig, data)
 		// svv, _ := send.(*giv.TableView)
 		if sig == int64(giv.SliceViewDeleted) { // not clear what we can do here
 		} else {
@@ -744,6 +752,7 @@ func (pv *PaintView) Config(gv *GridView) {
 		}
 	})
 	fg.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		// fmt.Printf("vs: %v   %v\n", sig, data)
 		// svv, _ := send.(*giv.TableView)
 		pv.GridView.UpdateGradients()
 	})
