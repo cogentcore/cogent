@@ -324,6 +324,9 @@ func (fv *FindView) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, fi
 		hi := make([]textbuf.Region, fCount)
 		for i := 0; i < fCount; i++ {
 			fln := fbStLn + 1 + i
+			if fln >= len(fb.Markup) {
+				continue
+			}
 			ltxt := fb.Markup[fln]
 			fpi := bytes.Index(ltxt, lnka)
 			if fpi < 0 {
