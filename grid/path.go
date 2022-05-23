@@ -173,7 +173,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 
 	if path == nil {
 		sv.RemoveNodeSprites(win)
-		win.RenderOverlays()
+		win.UpdateSig()
 		return
 	}
 
@@ -198,7 +198,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 
 	sv.GridView.UpdateNodeToolbar()
 
-	win.RenderOverlays()
+	win.UpdateSig()
 }
 
 func (sv *SVGView) RemoveNodeSprites(win *gi.Window) {
@@ -315,8 +315,8 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *gi.Window, me *mouse.DragEvent) 
 	sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, idx, dv, svoff)
 
 	spnm := SpriteName(SpNodePoint, SpUnk, idx)
-	sp := win.Sprites[spnm]
+	sp, _ := win.SpriteByName(spnm)
 	SetSpritePos(sp, image.Point{int(nwc.X), int(nwc.Y)})
 	go sv.ManipUpdate()
-	win.RenderOverlays()
+	win.UpdateSig()
 }

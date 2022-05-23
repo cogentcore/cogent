@@ -143,32 +143,33 @@ func Sprite(win *gi.Window, typ, subtyp Sprites, idx int, trgsz image.Point) *gi
 	spnm := SpriteName(typ, subtyp, idx)
 	sp, ok := win.SpriteByName(spnm)
 	if !ok {
-		sp = win.AddNewSprite(spnm, image.ZP, image.ZP)
+		sp = gi.NewSprite(spnm, image.ZP, image.ZP)
 		SetSpriteProps(sp, typ, subtyp, idx)
-	}
-	switch typ {
-	case SpReshapeBBox:
-		DrawSpriteReshape(sp, subtyp)
-	case SpSelBBox:
-		DrawSpriteSel(sp, subtyp)
-	case SpNodePoint:
-		DrawSpriteNodePoint(sp, subtyp)
-	case SpNodeCtrl:
-		DrawSpriteNodeCtrl(sp, subtyp)
-	case SpRubberBand:
-		switch subtyp {
-		case SpBBoxUpC, SpBBoxDnC:
-			DrawRubberBandHoriz(sp, trgsz)
-		case SpBBoxLfM, SpBBoxRtM:
-			DrawRubberBandVert(sp, trgsz)
+		switch typ {
+		case SpReshapeBBox:
+			DrawSpriteReshape(sp, subtyp)
+		case SpSelBBox:
+			DrawSpriteSel(sp, subtyp)
+		case SpNodePoint:
+			DrawSpriteNodePoint(sp, subtyp)
+		case SpNodeCtrl:
+			DrawSpriteNodeCtrl(sp, subtyp)
+		case SpRubberBand:
+			switch subtyp {
+			case SpBBoxUpC, SpBBoxDnC:
+				DrawRubberBandHoriz(sp, trgsz)
+			case SpBBoxLfM, SpBBoxRtM:
+				DrawRubberBandVert(sp, trgsz)
+			}
+		case SpAlignMatch:
+			switch {
+			case trgsz.X > trgsz.Y:
+				DrawAlignMatchHoriz(sp, trgsz)
+			default:
+				DrawAlignMatchVert(sp, trgsz)
+			}
 		}
-	case SpAlignMatch:
-		switch {
-		case trgsz.X > trgsz.Y:
-			DrawAlignMatchHoriz(sp, trgsz)
-		default:
-			DrawAlignMatchVert(sp, trgsz)
-		}
+		win.AddSprite(sp)
 	}
 	win.ActivateSprite(sp.Name)
 	return sp
@@ -231,10 +232,11 @@ func SetSpritePos(sp *gi.Sprite, pos image.Point) {
 
 // InactivateSprites inactivates sprites of given type
 func InactivateSprites(win *gi.Window, typ Sprites) {
-	for nm, sp := range win.Sprites {
+	for _, spkv := range win.Sprites.Names.Order {
+		sp := spkv.Val
 		st, _, _ := SpriteProps(sp)
 		if st == typ {
-			win.InactivateSprite(nm)
+			win.InactivateSprite(sp.Name)
 		}
 	}
 }

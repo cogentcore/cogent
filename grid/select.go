@@ -199,7 +199,7 @@ func (sv *SVGView) RemoveSelSprites(win *gi.Window) {
 	InactivateSprites(win, SpSelBBox)
 	es := sv.EditState()
 	es.NSelSprites = 0
-	win.RenderOverlays()
+	win.UpdateSig()
 }
 
 func (sv *SVGView) UpdateSelSprites() {
@@ -224,7 +224,7 @@ func (sv *SVGView) UpdateSelSprites() {
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
 	sv.SetSelSpritePos()
 
-	win.RenderOverlays()
+	win.UpdateSig()
 }
 
 func (sv *SVGView) SetSelSpritePos() {
@@ -345,7 +345,7 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
 	SetSpritePos(rl, bbox.Min)
 
-	win.RenderOverlays()
+	win.UpdateSig()
 }
 
 ///////////////////////////////////////////////////////////////////////

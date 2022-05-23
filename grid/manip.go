@@ -38,7 +38,7 @@ func (sv *SVGView) ManipDone() {
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
 		bbox = bbox.Canon()
 		InactivateSprites(win, SpRubberBand)
-		win.RenderOverlays()
+		win.UpdateSig()
 		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
 			es.ResetSelected() // todo: extend select -- need mouse mod
@@ -343,7 +343,7 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
-	win.RenderOverlays()
+	win.UpdateSig()
 
 }
 
@@ -465,7 +465,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
-	win.RenderOverlays()
+	win.UpdateSig()
 }
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
@@ -544,5 +544,5 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelCurBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
-	win.RenderOverlays()
+	win.UpdateSig()
 }
