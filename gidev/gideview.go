@@ -1415,6 +1415,7 @@ func (ge *GideView) RecycleTabTextView(label string, sel bool) *giv.TextView {
 		return nil
 	}
 	updt := tv.UpdateStart()
+	tv.SetFullReRender()
 	ly := tv.RecycleTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
 	txv := gide.ConfigOutputTextView(ly)
 	tv.UpdateEnd(updt)
