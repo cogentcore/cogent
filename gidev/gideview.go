@@ -3103,7 +3103,7 @@ var GideViewProps = ki.Props{
 		}},
 		{"Debug", ki.Props{
 			"icon": "terminal",
-			"desc": "debug currently selected executable -- if none selected, prompts to select one",
+			"desc": "debug currently selected executable (context menu on executable, select Set Run Exec) -- if none selected, prompts to select one",
 		}},
 		{"DebugTest", ki.Props{
 			"icon": "terminal",

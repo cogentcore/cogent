@@ -141,6 +141,8 @@ func (dv *DebugView) Start() {
 	if dv.Gide == nil {
 		return
 	}
+	console := dv.ConsoleText()
+	console.Clear()
 	rebuild := false
 	if dv.Dbg != nil && dv.State.Mode != gidebug.Attach {
 		lmod := dv.Gide.FileTree().LatestFileMod(filecat.Code)
