@@ -145,31 +145,31 @@ func Sprite(win *gi.Window, typ, subtyp Sprites, idx int, trgsz image.Point) *gi
 	if !ok {
 		sp = gi.NewSprite(spnm, image.ZP, image.ZP)
 		SetSpriteProps(sp, typ, subtyp, idx)
-		switch typ {
-		case SpReshapeBBox:
-			DrawSpriteReshape(sp, subtyp)
-		case SpSelBBox:
-			DrawSpriteSel(sp, subtyp)
-		case SpNodePoint:
-			DrawSpriteNodePoint(sp, subtyp)
-		case SpNodeCtrl:
-			DrawSpriteNodeCtrl(sp, subtyp)
-		case SpRubberBand:
-			switch subtyp {
-			case SpBBoxUpC, SpBBoxDnC:
-				DrawRubberBandHoriz(sp, trgsz)
-			case SpBBoxLfM, SpBBoxRtM:
-				DrawRubberBandVert(sp, trgsz)
-			}
-		case SpAlignMatch:
-			switch {
-			case trgsz.X > trgsz.Y:
-				DrawAlignMatchHoriz(sp, trgsz)
-			default:
-				DrawAlignMatchVert(sp, trgsz)
-			}
-		}
 		win.AddSprite(sp)
+	}
+	switch typ {
+	case SpReshapeBBox:
+		DrawSpriteReshape(sp, subtyp)
+	case SpSelBBox:
+		DrawSpriteSel(sp, subtyp)
+	case SpNodePoint:
+		DrawSpriteNodePoint(sp, subtyp)
+	case SpNodeCtrl:
+		DrawSpriteNodeCtrl(sp, subtyp)
+	case SpRubberBand:
+		switch subtyp {
+		case SpBBoxUpC, SpBBoxDnC:
+			DrawRubberBandHoriz(sp, trgsz)
+		case SpBBoxLfM, SpBBoxRtM:
+			DrawRubberBandVert(sp, trgsz)
+		}
+	case SpAlignMatch:
+		switch {
+		case trgsz.X > trgsz.Y:
+			DrawAlignMatchHoriz(sp, trgsz)
+		default:
+			DrawAlignMatchVert(sp, trgsz)
+		}
 	}
 	win.ActivateSprite(sp.Name)
 	return sp
