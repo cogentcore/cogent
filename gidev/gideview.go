@@ -2511,7 +2511,7 @@ func (ge *GideView) ConfigToolbar() {
 	giv.ToolBarView(ge, ge.Viewport, tb)
 	tb.AddSeparator("sepmod")
 	sm := tb.AddNewChild(gi.KiT_CheckBox, "go-mod").(*gi.CheckBox)
-	sm.SetChecked(gide.Prefs.GoMod)
+	sm.SetChecked(ge.Prefs.GoMod)
 	sm.SetText("Go Mod")
 	sm.Tooltip = "Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode"
 	sm.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
