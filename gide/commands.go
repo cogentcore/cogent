@@ -812,8 +812,8 @@ var StdCmds = Commands{
 	// Git
 	{"Add Git", "git add file", filecat.Any,
 		[]CmdAndArgs{{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Checkout Git", "git checkout file or directory -- WARNING will overwrite local changes!", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"checkout", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdConfirm},
+	{"Checkout Git", "git checkout: file, directory, branch; -b <branch> creates a new branch", filecat.Any,
+		[]CmdAndArgs{{"git", []string{"checkout", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Status Git", "git status", filecat.Any,
 		[]CmdAndArgs{{"git", []string{"status"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Diff Git", "git diff -- see changes since last checkin", filecat.Any,
@@ -823,11 +823,11 @@ var StdCmds = Commands{
 	{"Commit Git", "git commit", filecat.Any,
 		[]CmdAndArgs{{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process, MUST be wait!
 	{"Pull Git ", "git pull", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"pull"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+		[]CmdAndArgs{{"git", []string{"pull", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 	{"Push Git ", "git push", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"push"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Branch Git", "git branch", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"branch", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process, MUST be wait!
+		[]CmdAndArgs{{"git", []string{"push", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
+	{"Branch Git", "git branch: -a shows all; <branchname> makes a new one, optionally given sha", filecat.Any,
+		[]CmdAndArgs{{"git", []string{"branch", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 
 	// SVN
 	{"Add SVN", "svn add file", filecat.Any,

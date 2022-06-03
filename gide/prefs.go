@@ -35,7 +35,7 @@ type Preferences struct {
 	SaveKeyMaps  bool              `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
 	SaveLangOpts bool              `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
 	SaveCmds     bool              `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
-	GoMod        bool              `desc:"if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- this cannot be set on a per-project basis as it affects overall environment state (must do Apply to change)"`
+	GoMod        bool              `desc:"if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- this is also set on a per-project basis in ProjPrefs"`
 	Changed      bool              `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
@@ -101,7 +101,12 @@ func (pf *Preferences) Apply() {
 	MergeAvailCmds()
 	AvailLangs.Validate()
 	pf.ApplyEnvVars()
-	if pf.GoMod {
+	SetGoMod(pf.GoMod)
+}
+
+// ApplyGoMod applies the given gomod setting, setting the GO111MODULE env var
+func SetGoMod(gomod bool) {
+	if gomod {
 		os.Setenv("GO111MODULE", "on")
 	} else {
 		os.Setenv("GO111MODULE", "off")
@@ -288,6 +293,7 @@ type ProjPrefs struct {
 	VersCtrl     giv.VersCtrlName  `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
 	ProjFilename gi.FileName       `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
 	ProjRoot     gi.FileName       `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	GoMod        bool              `desc:"if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- this is also set on a per-project basis in ProjPrefs"`
 	BuildCmds    CmdNames          `desc:"command(s) to run for main Build button"`
 	BuildDir     gi.FileName       `desc:"build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"`
 	BuildTarg    gi.FileName       `desc:"build target for main Build button, if relevant for your  BuildCmds"`

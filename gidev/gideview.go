@@ -256,6 +256,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) (*gi.Window, *GideView) {
 	ge.Prefs.ProjFilename = filename // should already be set but..
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
 	if ok {
+		gide.SetGoMod(ge.Prefs.GoMod)
 		os.Chdir(string(ge.Prefs.ProjRoot))
 		gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 		gide.SavePaths()
@@ -2508,6 +2509,18 @@ func (ge *GideView) ConfigToolbar() {
 	}
 	tb.SetStretchMaxWidth()
 	giv.ToolBarView(ge, ge.Viewport, tb)
+	tb.AddSeparator("sepmod")
+	sm := tb.AddNewChild(gi.KiT_CheckBox, "go-mod").(*gi.CheckBox)
+	sm.SetChecked(gide.Prefs.GoMod)
+	sm.SetText("Go Mod")
+	sm.Tooltip = "Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode"
+	sm.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		if sig == int64(gi.ButtonToggled) {
+			cb := send.(*gi.CheckBox)
+			ge.Prefs.GoMod = cb.IsChecked()
+			gide.SetGoMod(ge.Prefs.GoMod)
+		}
+	})
 }
 
 var fnFolderProps = ki.Props{
@@ -2704,10 +2717,10 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	// todo: could add all these options in LangOpts
 	switch fn.Info.Cat {
 	case filecat.Folder:
-		if !fn.IsOpen() {
-			tvn.SetOpen()
-			fn.OpenDir()
-		}
+		// if !fn.IsOpen() {
+		tvn.SetOpen()
+		fn.OpenDir()
+		// }
 		return
 	case filecat.Exe:
 		// this uses exe path for cd to this path!
@@ -2771,6 +2784,7 @@ func (ge *GideView) FileNodeClosed(fn *giv.FileNode, tvn *gide.FileTreeView) {
 }
 
 func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
+	gide.SetGoMod(ge.Prefs.GoMod)
 	var kf gide.KeyFuns
 	kc := kt.Chord()
 	if gi.KeyEventTrace {
@@ -2903,6 +2917,13 @@ func (ge *GideView) KeyChordEvent() {
 	})
 }
 
+func (ge *GideView) MouseEvent() {
+	ge.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+		gee := recv.Embed(KiT_GideView).(*GideView)
+		gide.SetGoMod(gee.Prefs.GoMod)
+	})
+}
+
 func (ge *GideView) OSFileEvent() {
 	ge.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
 		gee := recv.Embed(KiT_GideView).(*GideView)
@@ -2932,6 +2953,7 @@ func (ge *GideView) ConnectEvents2D() {
 		ge.LayoutScrollEvents()
 	}
 	ge.KeyChordEvent()
+	ge.MouseEvent()
 	ge.OSFileEvent()
 }
 
