@@ -2778,6 +2778,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 func (ge *GideView) FileNodeClosed(fn *giv.FileNode, tvn *gide.FileTreeView) {
 	if fn.IsDir() {
 		if fn.IsOpen() {
+			// fmt.Printf("FileNodeClosed, was open: %s\n", fn.FPath)
 			fn.CloseDir()
 		}
 	}
