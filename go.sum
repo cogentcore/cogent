@@ -99,8 +99,8 @@ github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7a
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/goki/freetype v0.0.0-20220119013949-7a161fd3728c h1:JGCm/+tJ9gC6THUxooTldS+CUDsba0qvkvU3DHklqW8=
 github.com/goki/freetype v0.0.0-20220119013949-7a161fd3728c/go.mod h1:wfqRWLHRBsRgkp5dmbG56SA0DmVtwrF5N3oPdI8t+Aw=
-github.com/goki/gi v1.3.1 h1:iYawrZg30ozk51DveAmoeEfb5fqmxWTf4tys8xUWmRY=
-github.com/goki/gi v1.3.1/go.mod h1:ugOd3lSAMhRoxpwYmK78CDZKfd+oN3k5NxxOcRHOSOA=
+github.com/goki/gi v1.3.2 h1:s4g52fpnecCcHGg+aZ1K9CBHXeHVVjoEPzVHJp2XMUQ=
+github.com/goki/gi v1.3.2/go.mod h1:HXMEFqIO8HhcDK1XHlZKimQmr+dLNMBZYfPL42XE3zo=
 github.com/goki/go-difflib v1.2.1 h1:zqSi9rTf0vYFia92PaZeKrTfofGVqku2WYOtfsUYqxU=
 github.com/goki/go-difflib v1.2.1/go.mod h1:uZuY072AYTnMjRxCn6IkpZQKRVcTj4SIpHHXOUGOxrg=
 github.com/goki/ki v1.0.0/go.mod h1:X+gmVeAym3JDSbbiA7iF1qkgAlTVWl1JV9sRsGDzxOA=
@@ -117,8 +117,8 @@ github.com/goki/prof v0.0.0-20180502205428-54bc71b5d09b h1:3zU6niF8uvEaNtRBhOkmg
 github.com/goki/prof v0.0.0-20180502205428-54bc71b5d09b/go.mod h1:pgRizZOb3eUJr+ByZnXnPvt+a0fVOTn0Ujc2TqVZpW4=
 github.com/goki/vci v1.0.1 h1:tHtx4LzSNM1WeAYVf3e7hdinZmCizJMkE0NyYX/eXp0=
 github.com/goki/vci v1.0.1/go.mod h1:uOQl8kDy2Nb7MEY8cyz72ntp2PaTwJkm2GZNKrEKHE0=
-github.com/goki/vgpu v1.0.3 h1:G9sxBtkc/e4pedJws5c4Y0Jh8qoiXPakovnAjzacnt0=
-github.com/goki/vgpu v1.0.3/go.mod h1:pQstHPgSgj9TakWVBakxgm2Hwkmj5IPczbAMNg8divY=
+github.com/goki/vgpu v1.0.4 h1:Z+gzFbt6u6x3tG7ZkFG9pofbpx7PSSvHt1GbdeRC4PE=
+github.com/goki/vgpu v1.0.4/go.mod h1:pQstHPgSgj9TakWVBakxgm2Hwkmj5IPczbAMNg8divY=
 github.com/goki/vulkan v0.0.0-20220512102541-6e89b8ce8542 h1:siy8s9EpUyiBnKMfkFqHYWxG20YaxRZhLNFJcmiLSK8=
 github.com/goki/vulkan v0.0.0-20220512102541-6e89b8ce8542/go.mod h1:EQmEmj96usMHFqWqC5M/8i53EE83igRgY8uGfw0snDs=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
