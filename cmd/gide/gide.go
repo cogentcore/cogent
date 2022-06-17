@@ -41,16 +41,14 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	gide.InitPrefs()
 
-	if false {
-		pdir := oswin.TheApp.AppPrefsDir()
-		pnm := filepath.Join(pdir, "gide.log")
+	pdir := oswin.TheApp.AppPrefsDir()
+	pnm := filepath.Join(pdir, "gide.log")
 
-		lf, err := os.Create(pnm)
-		if err == nil {
-			os.Stdout = lf
-			os.Stderr = lf
-			log.SetOutput(lf)
-		}
+	lf, err := os.Create(pnm)
+	if err == nil {
+		os.Stdout = lf
+		os.Stderr = lf
+		log.SetOutput(lf)
 	}
 
 	gide.TheConsole.Init() // must do this after changing stdout
@@ -58,10 +56,10 @@ Version: ` + gide.Prefs.VersionInfo())
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
-			// lf.Close()
+			lf.Close()
 			os.Exit(1)
 		}
-		// lf.Close()
+		lf.Close()
 	}()
 
 	var path string
