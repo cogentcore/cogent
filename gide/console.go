@@ -25,6 +25,7 @@ type Console struct {
 	Mu          sync.Mutex   `json:"-" xml:"-" desc:"mutex protecting updating of buffer between out / err"`
 	OrgoutWrite *os.File     `json:"-" xml:"-" desc:"original os.Stdout writer"`
 	OrgerrWrite *os.File     `json:"-" xml:"-" desc:"original os.Stderr writer"`
+	LogWrite    *os.File     `json:"-" xml:"-" desc:"log file writer"`
 }
 
 var KiT_Console = kit.Types.AddType(&Console{}, nil)
@@ -32,8 +33,9 @@ var KiT_Console = kit.Types.AddType(&Console{}, nil)
 var TheConsole Console
 
 // Init initializes the console -- sets up the capture, Buf, and
-// starts the routine that monitors output
-func (cn *Console) Init() {
+// starts the routine that monitors output.
+// if logFile is non-empty, writes output to that file as well.
+func (cn *Console) Init(logFile string) {
 	cn.StdoutRead, cn.StdoutWrite, _ = os.Pipe() // seriously, does this ever fail?
 	cn.StderrRead, cn.StderrWrite, _ = os.Pipe() // seriously, does this ever fail?
 	cn.OrgoutWrite = os.Stdout
@@ -43,8 +45,21 @@ func (cn *Console) Init() {
 	log.SetOutput(cn.StderrWrite)
 	cn.Buf = &giv.TextBuf{}
 	cn.Buf.InitName(cn.Buf, "console-buf")
+	if logFile != "" {
+		cn.LogWrite, _ = os.Create(logFile)
+	}
 	go cn.MonitorOut()
 	go cn.MonitorErr()
+}
+
+// Close closes all the files -- call on exit
+func (cn *Console) Close() {
+	if cn.LogWrite != nil {
+		cn.LogWrite.Close()
+		cn.LogWrite = nil
+	}
+	os.Stdout = cn.OrgoutWrite
+	os.Stderr = cn.OrgerrWrite
 }
 
 // MonitorOut monitors std output and appends it to the buffer
@@ -65,6 +80,9 @@ func (cn *Console) MonitorErr() {
 
 func MarkupStdout(out []byte) []byte {
 	fmt.Fprintln(TheConsole.OrgoutWrite, string(out))
+	if TheConsole.LogWrite != nil {
+		fmt.Fprintln(TheConsole.LogWrite, string(out))
+	}
 	return MarkupCmdOutput(out)
 }
 
@@ -74,6 +92,9 @@ func MarkupStderr(out []byte) []byte {
 	esz := len(sst) + len(est)
 
 	fmt.Fprintln(TheConsole.OrgerrWrite, string(out))
+	if TheConsole.LogWrite != nil {
+		fmt.Fprintln(TheConsole.LogWrite, string(out))
+	}
 	mb := MarkupCmdOutput(out)
 	mbb := make([]byte, 0, len(mb)+esz)
 	mbb = append(mbb, sst...)

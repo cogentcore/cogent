@@ -7,7 +7,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -42,24 +41,19 @@ Version: ` + gide.Prefs.VersionInfo())
 	gide.InitPrefs()
 
 	pdir := oswin.TheApp.AppPrefsDir()
-	pnm := filepath.Join(pdir, "gide.log")
+	lfnm := filepath.Join(pdir, "gide.log")
 
-	lf, err := os.Create(pnm)
-	if err == nil {
-		os.Stdout = lf
-		os.Stderr = lf
-		log.SetOutput(lf)
-	}
-
-	gide.TheConsole.Init() // must do this after changing stdout
+	gide.TheConsole.Init(lfnm)
 
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
-			lf.Close()
+			stack := string(debug.Stack())
+			fmt.Printf("stacktrace from panic:\n%s\n%s\n", r, stack)
+			fmt.Fprintf(gide.TheConsole.LogWrite, "stacktrace from panic:\n%s\n%s\n", r, stack)
+			gide.TheConsole.Close()
 			os.Exit(1)
 		}
-		lf.Close()
+		gide.TheConsole.Close()
 	}()
 
 	var path string
