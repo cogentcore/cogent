@@ -29,8 +29,10 @@ import (
 // CmdAndArgs contains the name of an external program to execute and args to
 // pass to that program
 type CmdAndArgs struct {
-	Cmd  string  `width:"25" desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
-	Args CmdArgs `complete:"arg" width:"25" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows)."`
+	Cmd            string  `width:"25" desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
+	Args           CmdArgs `complete:"arg" width:"25" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows)."`
+	Default        string  `width:"25" desc:"default value for prompt string, for first use -- thereafter it uses last value provided for given command"`
+	PromptIsString bool    `desc:"if true, then do not split any prompted string into separate space-separated fields -- otherwise do so, except for values within quotes"`
 }
 
 // Label satisfies the Labeler interface
@@ -83,8 +85,18 @@ func (cm *CmdAndArgs) BindArgs(avp *ArgVarVals) []string {
 	}
 	args := []string{}
 	for i := range cm.Args {
-		av := avp.Bind(cm.Args[i])
-		if len(av) > 0 && av[0] == '*' { // only allow at *start* of command -- for *.ext exprs
+		argNm := cm.Args[i]
+		av := avp.Bind(argNm)
+		if len(av) == 0 {
+			continue
+		}
+		switch {
+		case !cm.PromptIsString && argNm == "{PromptString1}":
+			fallthrough
+		case !cm.PromptIsString && argNm == "{PromptString2}":
+			args = append(args, strings.Fields(av)...)
+			continue
+		case av[0] == '*': // only allow at *start* of args -- for *.ext exprs
 			glob, err := filepath.Glob(av)
 			if err == nil && len(glob) > 0 {
 				args = append(args, glob...)
@@ -286,8 +298,11 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 				cmvals = CmdPrompt2Vals
 			}
 			curval, _ := cmvals[cm.Name] // (*avp)[pv]
+			if curval == "" && cm.Cmds[0].Default != "" {
+				curval = cm.Cmds[0].Default
+			}
 			gi.StringPromptDialog(ge.VPort(), curval, "Enter string value here..",
-				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v:", cm.Name, cm.Desc)},
+				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)},
 				ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 					dlg := send.(*gi.Dialog)
 					if sig == int64(gi.DialogAccepted) {
@@ -758,114 +773,6 @@ var CommandsProps = ki.Props{
 			}),
 		}},
 	},
-}
-
-// Use these for more obvious command options
-const (
-	CmdWait      = true
-	CmdNoWait    = false
-	CmdFocus     = true
-	CmdNoFocus   = false
-	CmdConfirm   = true
-	CmdNoConfirm = false
-)
-
-// StdCmds is the original compiled-in set of standard commands.
-var StdCmds = Commands{
-	{"Run Proj", "run RunExec executable set in project", filecat.Any,
-		[]CmdAndArgs{{"{RunExecPath}", nil}}, "{RunExecDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Run Prompt", "run any command you enter at the prompt", filecat.Any,
-		[]CmdAndArgs{{"{PromptString1}", nil}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	// Make
-	{"Make", "run make with no args", filecat.Any,
-		[]CmdAndArgs{{"make", nil}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Make Prompt", "run make with prompted make target", filecat.Any,
-		[]CmdAndArgs{{"make", []string{"{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	// Go
-	{"Imports Go File", "run goimports on file", filecat.Go,
-		[]CmdAndArgs{{"goimports", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Fmt Go File", "run go fmt on file", filecat.Go,
-		[]CmdAndArgs{{"gofmt", []string{"-w", "{FilePath}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm},
-	{"Build Go Dir", "run go build to build in current dir", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"build", "-v"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Build Go Proj", "run go build for project BuildDir", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"build", "-v"}}}, "{BuildDir}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Install Go Proj", "run go install for project BuildDir", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"install", "-v"}}}, "{BuildDir}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Generate Go", "run go generate in current dir", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"generate"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Test Go", "run go test in current dir", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"test", "-v"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Vet Go", "run go vet in current dir", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"vet"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Mod Tidy Go", "run go mod tidy in current dir", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"mod", "tidy"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Mod Init Go", "run go mod init in current dir with module path from prompt", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"mod", "init", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Get Go", "run go get on package you enter at prompt", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Get Go Updt", "run go get -u (updt) on package you enter at prompt", filecat.Go,
-		[]CmdAndArgs{{"go", []string{"get", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	// Git
-	{"Add Git", "git add file", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"add", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Checkout Git", "git checkout: file, directory, branch; -b <branch> creates a new branch", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"checkout", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Status Git", "git status", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"status"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Diff Git", "git diff -- see changes since last checkin", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"diff"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Log Git", "git log", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"log"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Commit Git", "git commit", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"commit", "-am", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process, MUST be wait!
-	{"Pull Git ", "git pull", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"pull", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Push Git ", "git push", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"push", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Branch Git", "git branch: -a shows all; <branchname> makes a new one, optionally given sha", filecat.Any,
-		[]CmdAndArgs{{"git", []string{"branch", "{PromptString1}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	// SVN
-	{"Add SVN", "svn add file", filecat.Any,
-		[]CmdAndArgs{{"svn", []string{"add", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Status SVN", "svn status", filecat.Any,
-		[]CmdAndArgs{{"svn", []string{"status"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Info SVN", "svn info", filecat.Any,
-		[]CmdAndArgs{{"svn", []string{"info"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Log SVN", "svn log", filecat.Any,
-		[]CmdAndArgs{{"svn", []string{"log", "-v"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Commit SVN Proj", "svn commit for entire project directory", filecat.Any,
-		[]CmdAndArgs{{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{ProjPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process
-	{"Commit SVN Dir", "svn commit in directory of current file", filecat.Any,
-		[]CmdAndArgs{{"svn", []string{"commit", "-m", "{PromptString1}"}}}, "{FileDirPath}", CmdWait, CmdNoFocus, CmdNoConfirm}, // promptstring1 provided during normal commit process
-	{"Update SVN", "svn update", filecat.Any,
-		[]CmdAndArgs{{"svn", []string{"update"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	// LaTeX
-	{"LaTeX PDF", "run PDFLaTeX on file", filecat.TeX,
-		[]CmdAndArgs{{"pdflatex", []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"BibTeX", "run BibTeX on file", filecat.TeX,
-		[]CmdAndArgs{{"bibtex", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Biber", "run Biber on file", filecat.TeX,
-		[]CmdAndArgs{{"biber", []string{"{FileNameNoExt}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"CleanTeX", "remove aux LaTeX files", filecat.TeX,
-		[]CmdAndArgs{{"rm", []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc", "*.spl"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	// Generic files / images / etc
-	{"Open File", "open file using OS 'open' command", filecat.Any,
-		[]CmdAndArgs{{"open", []string{"{FilePath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Open Target File", "open project target file using OS 'open' command", filecat.Any,
-		[]CmdAndArgs{{"open", []string{"{RunExecPath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-
-	// Misc
-	{"List Dir", "list current dir", filecat.Any,
-		[]CmdAndArgs{{"ls", []string{"-la"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
-	{"Grep", "recursive grep of all files for prompted value", filecat.Any,
-		[]CmdAndArgs{{"grep", []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}}, "{FileDirPath}", CmdNoWait, CmdNoFocus, CmdNoConfirm},
 }
 
 // SetCompleter adds a completer to the textfield - each field
