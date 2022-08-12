@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/go-delve/delve v1.7.2
-	github.com/goki/gi v1.3.6
+	github.com/goki/gi v1.3.7
 	github.com/goki/ki v1.1.8
 	github.com/goki/mat32 v1.0.12
 	github.com/goki/pi v1.0.20
@@ -33,7 +33,7 @@ require (
 	github.com/goki/go-difflib v1.2.1 // indirect
 	github.com/goki/kigen v1.0.0 // indirect
 	github.com/goki/prof v1.0.0 // indirect
-	github.com/goki/vgpu v1.0.4 // indirect
+	github.com/goki/vgpu v1.0.5 // indirect
 	github.com/goki/vulkan v0.0.0-20220512102541-6e89b8ce8542 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect

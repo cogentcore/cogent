@@ -342,7 +342,7 @@ func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
 
 // RunAfterPrompts runs after any prompts have been set, if needed
 func (cm *Command) RunAfterPrompts(ge Gide, buf *giv.TextBuf) {
-	ge.CmdRuns().KillByName(cm.Name) // make sure nothing still running for us..
+	// ge.CmdRuns().KillByName(cm.Name) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
 	if cm.Dir != "" {
