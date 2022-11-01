@@ -22,6 +22,11 @@ func main() {
 }
 
 func mainrun() {
+
+	// todo: debug vgpu -- rubber band selection or multi-select causing
+	// crashing.
+	// vgpu.Debug = true
+
 	gi.SetAppName("grid")
 	gi.SetAppAbout(`Grid is a Go-rendered interactive drawing program for SVG vector dawings.  See <a href="https://github.com/goki/grid">Grid on GitHub</a><br>
 <br>

@@ -20,10 +20,10 @@ $ go get github.com/goki/grid/cmd/grid
 
 See [GoKi Install](https://github.com/goki/gi/wiki/Install) for more information and prereqs for different platforms -- if you encounter any difficulties, ensure that GoKi works first.
 
-Exporting PNG and PDF depends on https://cairosvg.org (which depends on python), install as follows:
+Exporting PNG and PDF depends on https://inkscape.org -- on the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:
 
 ```bash
-$ pip3 install cairosvg
+$ sudo ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape /usr/local/bin/
 ```
 
 # Design

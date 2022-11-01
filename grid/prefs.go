@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/goki/gi/gi"
@@ -36,6 +37,7 @@ type Preferences struct {
 	SnapNodes    bool                   `desc:"snap node movements to align with guides"`
 	SnapTol      int                    `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
 	SplitName    SplitName              `desc:"named-split config in use for configuring the splitters"`
+	EnvVars      map[string]string      `desc:"environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"`
 	Changed      bool                   `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
@@ -71,6 +73,10 @@ func (pf *Preferences) Defaults() {
 	pf.SnapGrid = true
 	pf.SnapGuide = true
 	pf.SnapNodes = true
+	home := gi.Prefs.User.HomeDir
+	pf.EnvVars = map[string]string{
+		"PATH": home + "/bin:" + home + "/go/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/shbin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
+	}
 }
 
 func (pf *Preferences) Update() {
@@ -107,6 +113,7 @@ func (pf *Preferences) Open() error {
 	}
 	err = json.Unmarshal(b, pf)
 	AvailSplits.OpenPrefs()
+	pf.ApplyEnvVars()
 	pf.Changed = false
 	return err
 }
@@ -127,6 +134,13 @@ func (pf *Preferences) Save() error {
 	AvailSplits.SavePrefs()
 	pf.Changed = false
 	return err
+}
+
+// ApplyEnvVars applies environment variables set in EnvVars
+func (pf *Preferences) ApplyEnvVars() {
+	for k, v := range pf.EnvVars {
+		os.Setenv(k, v)
+	}
 }
 
 // LightMode sets colors to light mode

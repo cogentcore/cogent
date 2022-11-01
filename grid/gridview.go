@@ -184,7 +184,7 @@ func (gv *GridView) SaveDrawingAs(fname gi.FileName) error {
 }
 
 // ExportPNG exports drawing to a PNG image (auto-names to same name
-// with .png suffix).  Calls cairosvg (e.g., pip3 install cairosvg).
+// with .png suffix).  Calls inkscape -- needs to be on the PATH.
 // specify either width or height of resulting image, or nothing for
 // physical size as set.  Renders full current page -- do ResizeToContents
 // to render just current contents.
@@ -199,15 +199,13 @@ func (gv *GridView) ExportPNG(width, height float32) error {
 	}
 	fext := filepath.Ext(string(gv.Filename))
 	onm := strings.TrimSuffix(string(gv.Filename), fext) + ".png"
-	cstr := "cairosvg"
-	args := []string{"-o", onm}
+	cstr := "/usr/local/bin/inkscape"
+	args := []string{`--export-type="png"`, "-o", onm}
 	if width > 0 {
-		args = append(args, "--output-width")
-		args = append(args, fmt.Sprintf("%g", width))
+		args = append(args, fmt.Sprintf("--export-width=%g", width))
 	}
 	if height > 0 {
-		args = append(args, "--output-height")
-		args = append(args, fmt.Sprintf("%g", height))
+		args = append(args, fmt.Sprintf("--export-height=%g", height))
 	}
 	args = append(args, fnm)
 	cmd := exec.Command(cstr, args...)
@@ -221,7 +219,7 @@ func (gv *GridView) ExportPNG(width, height float32) error {
 }
 
 // ExportPDF exports drawing to a PDF file (auto-names to same name
-// with .pdf suffix).  Calls cairosvg (e.g., pip3 install cairosvg).
+// with .pdf suffix).  Calls inkscape -- needs to be on the PATH.
 // specify DPI of resulting image for effects rendering.
 // Renders full current page -- do ResizeToContents
 // to render just current contents.
@@ -236,11 +234,10 @@ func (gv *GridView) ExportPDF(dpi float32) error {
 	}
 	fext := filepath.Ext(string(gv.Filename))
 	onm := strings.TrimSuffix(string(gv.Filename), fext) + ".pdf"
-	cstr := "cairosvg"
-	args := []string{"-o", onm}
+	cstr := "/usr/local/bin/inkscape"
+	args := []string{`--export-type="pdf"`, "-o", onm}
 	if dpi > 0 {
-		args = append(args, "--dpi")
-		args = append(args, fmt.Sprintf("%g", dpi))
+		args = append(args, fmt.Sprintf("--export-dpi=%g", dpi))
 	}
 	args = append(args, fnm)
 	cmd := exec.Command(cstr, args...)
