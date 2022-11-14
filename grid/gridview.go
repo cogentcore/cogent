@@ -199,8 +199,8 @@ func (gv *GridView) ExportPNG(width, height float32) error {
 	}
 	fext := filepath.Ext(string(gv.Filename))
 	onm := strings.TrimSuffix(string(gv.Filename), fext) + ".png"
-	cstr := "/usr/local/bin/inkscape"
-	args := []string{`--export-type="png"`, "-o", onm}
+	cstr := "inkscape"
+	args := []string{`--export-type=png`, "-o", onm}
 	if width > 0 {
 		args = append(args, fmt.Sprintf("--export-width=%g", width))
 	}
@@ -211,9 +211,9 @@ func (gv *GridView) ExportPNG(width, height float32) error {
 	cmd := exec.Command(cstr, args...)
 	fmt.Printf("executing command: %s %v\n", cstr, args)
 	out, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Println(string(out))
-	}
+	// if err != nil {
+	fmt.Println(string(out))
+	// }
 	os.Remove(fnm)
 	return err
 }
@@ -234,8 +234,8 @@ func (gv *GridView) ExportPDF(dpi float32) error {
 	}
 	fext := filepath.Ext(string(gv.Filename))
 	onm := strings.TrimSuffix(string(gv.Filename), fext) + ".pdf"
-	cstr := "/usr/local/bin/inkscape"
-	args := []string{`--export-type="pdf"`, "-o", onm}
+	cstr := "inkscape"
+	args := []string{`--export-type=pdf`, "-o", onm}
 	if dpi > 0 {
 		args = append(args, fmt.Sprintf("--export-dpi=%g", dpi))
 	}
@@ -243,9 +243,9 @@ func (gv *GridView) ExportPDF(dpi float32) error {
 	cmd := exec.Command(cstr, args...)
 	fmt.Printf("executing command: %s %v\n", cstr, args)
 	out, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Println(string(out))
-	}
+	// if err != nil {
+	fmt.Println(string(out))
+	// }
 	os.Remove(fnm)
 	return err
 }
