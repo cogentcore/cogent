@@ -42,18 +42,24 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	pdir := oswin.TheApp.AppPrefsDir()
 	lfnm := filepath.Join(pdir, "gide.log")
+	crnm := filepath.Join(pdir, "crash.log")
 
 	gide.TheConsole.Init(lfnm)
 
 	defer func() {
-		if r := recover(); r != nil {
-			stack := string(debug.Stack())
-			fmt.Printf("stacktrace from panic:\n%s\n%s\n", r, stack)
+		r := recover()
+		stack := string(debug.Stack())
+		if r != nil {
+			fmt.Printf("stacktrace from panic:\n%v\n%s\n", r, stack)
 			fmt.Fprintf(gide.TheConsole.LogWrite, "stacktrace from panic:\n%s\n%s\n", r, stack)
-			gide.TheConsole.Close()
+		}
+		cf, _ := os.Create(crnm)
+		fmt.Fprintf(cf, "stacktrace from panic:\n%v\n%s\n", r, stack)
+		cf.Close()
+		gide.TheConsole.Close()
+		if r != nil {
 			os.Exit(1)
 		}
-		gide.TheConsole.Close()
 	}()
 
 	var path string

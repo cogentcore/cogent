@@ -317,7 +317,7 @@ func (gd *GiDelve) Call(goroutineID int, expr string, unsafe bool) (*gidebug.Sta
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ds, err := gd.dlv.Call(goroutineID, expr, unsafe)
+	ds, err := gd.dlv.Call(int64(goroutineID), expr, unsafe)
 	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
@@ -337,7 +337,7 @@ func (gd *GiDelve) SwitchTask(goroutineID int) (*gidebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ds, err := gd.dlv.SwitchGoroutine(goroutineID)
+	ds, err := gd.dlv.SwitchGoroutine(int64(goroutineID))
 	gd.LogErr(err)
 	return gd.cvtState(ds), err
 }
@@ -632,7 +632,7 @@ func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*gidebug.Frame, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
-	ds, err := gd.dlv.Stacktrace(goroutineID, depth, api.StacktraceSimple, nil)
+	ds, err := gd.dlv.Stacktrace(int64(goroutineID), depth, api.StacktraceSimple, nil)
 	gd.LogErr(err)
 	return gd.cvtStack(ds, goroutineID), err
 }
@@ -710,7 +710,7 @@ func (gd *GiDelve) FollowPtr(vr *gidebug.Variable) error {
 		expr = fmt.Sprintf("(%q)(%#x)", vr.FullTypeStr, vr.Addr)
 	}
 	// fmt.Printf("expr: %s\n", expr)
-	ch, err := gd.GetVar(expr, gd.lastEvalScope.GoroutineID, gd.lastEvalScope.Frame)
+	ch, err := gd.GetVar(expr, int(gd.lastEvalScope.GoroutineID), gd.lastEvalScope.Frame)
 	if err == nil {
 		vr.CopyFrom(ch)
 		vr.Addr = addr

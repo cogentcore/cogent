@@ -51,7 +51,7 @@ func (gd *GiDelve) cvtThread(ds *api.Thread) *gidebug.Thread {
 	if ds.Function != nil {
 		th.Func = ds.Function.Name_
 	}
-	th.Task = ds.GoroutineID
+	th.Task = int(ds.GoroutineID)
 	return th
 }
 
@@ -72,7 +72,7 @@ func (gd *GiDelve) cvtTask(ds *api.Goroutine) *gidebug.Task {
 		return nil
 	}
 	gr := &gidebug.Task{}
-	gr.ID = ds.ID
+	gr.ID = int(ds.ID)
 	gr.PC = ds.UserCurrentLoc.PC
 	gr.File = giv.RelFilePath(ds.UserCurrentLoc.File, gd.rootPath)
 	gr.Line = ds.UserCurrentLoc.Line
@@ -357,7 +357,7 @@ func (gd *GiDelve) toLoadConfig(ds *gidebug.VarParams) *api.LoadConfig {
 
 func (gd *GiDelve) toEvalScope(threadID int, frame int) *api.EvalScope {
 	es := &api.EvalScope{}
-	es.GoroutineID = threadID
+	es.GoroutineID = int64(threadID)
 	es.Frame = frame
 	// es.DeferredCall
 	return es

@@ -86,7 +86,15 @@ func (pf *FilePrefs) Defaults() {
 func (pf *Preferences) Defaults() {
 	pf.Files.Defaults()
 	pf.KeyMap = DefaultKeyMap
-	pf.EnvVars = make(map[string]string)
+	home := gi.Prefs.User.HomeDir
+	texPath := ".:" + home + "/texmf/tex/latex:/Library/TeX/Root/texmf-dist/tex/latex:"
+	pf.EnvVars = map[string]string{
+		"TEXINPUTS":       texPath,
+		"BIBINPUTS":       texPath,
+		"BSTINPUTS":       texPath,
+		"PATH":            home + "/bin:" + home + "/go/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/shbin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
+		"PKG_CONFIG_PATH": "/usr/local/lib/pkgconfig:/opt/homebrew/lib",
+	}
 }
 
 // PrefsFileName is the name of the preferences file in GoGi prefs directory
