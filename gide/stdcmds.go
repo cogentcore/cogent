@@ -80,12 +80,12 @@ var StdCmds = Commands{
 		Dir:  "{BuildDir}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Install Go Proj",
-		Desc: "run go install for project BuildDir",
+	{Name: "Install Go Dir",
+		Desc: "run go install in current dir",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"install", "-v"}}},
-		Dir:  "{BuildDir}",
+		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Name: "Generate Go",
