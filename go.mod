@@ -4,10 +4,10 @@ go 1.18
 
 require (
 	github.com/go-delve/delve v1.20.1
-	github.com/goki/gi v1.3.9
-	github.com/goki/ki v1.1.9
-	github.com/goki/mat32 v1.0.13
-	github.com/goki/pi v1.0.21
+	github.com/goki/gi v1.3.10
+	github.com/goki/ki v1.1.11
+	github.com/goki/mat32 v1.0.14
+	github.com/goki/pi v1.0.22
 	github.com/goki/vci v1.0.1
 )
 
@@ -20,10 +20,11 @@ require (
 	github.com/akutz/sortfold v0.2.1 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
+	github.com/antonmedv/expr v1.10.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20220606134207-859f65c6625b // indirect
 	github.com/cilium/ebpf v0.9.3 // indirect
-	github.com/dlclark/regexp2 v1.7.0 // indirect
+	github.com/dlclark/regexp2 v1.8.0 // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.1 // indirect
@@ -31,9 +32,10 @@ require (
 	github.com/go-gl/mathgl v1.0.0 // indirect
 	github.com/goki/freetype v0.0.0-20220119013949-7a161fd3728c // indirect
 	github.com/goki/go-difflib v1.2.1 // indirect
+	github.com/goki/gosl v1.0.6 // indirect
 	github.com/goki/kigen v1.0.2 // indirect
 	github.com/goki/prof v1.0.0 // indirect
-	github.com/goki/vgpu v1.0.7 // indirect
+	github.com/goki/vgpu v1.0.11 // indirect
 	github.com/goki/vulkan v0.0.0-20220928215615-c67065a9cfc2 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
@@ -45,7 +47,6 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/srwiley/scanx v0.0.0-20190309010443-e94503791388 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	golang.org/x/arch v0.2.0 // indirect
 	golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3 // indirect
 	golang.org/x/image v0.3.0 // indirect
