@@ -314,8 +314,8 @@ func init() {
 	cm := FileTreeViewProps["CtxtMenuActive"].(ki.PropSlice)
 	cm = append(ki.PropSlice{
 		{"ExecCmdFiles", ki.Props{
-			"label":        "Exec Cmd",
-			"submenu-func": giv.SubMenuFunc(FileTreeViewExecCmds),
+			"label":           "Exec Cmd",
+			"subsubmenu-func": giv.SubSubMenuFunc(FileTreeViewExecCmds),
 			"Args": ki.PropSlice{
 				{"Cmd Name", ki.Props{}},
 			},
@@ -399,7 +399,7 @@ func (ftv *FileTreeView) RenameFiles() {
 }
 
 // FileTreeViewExecCmds gets list of available commands for given file node, as a submenu-func
-func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) []string {
+func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) [][]string {
 	ft, ok := it.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	if !ok {
 		return nil

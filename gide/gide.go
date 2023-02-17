@@ -79,6 +79,9 @@ type Gide interface {
 	// SetActiveTextView sets the given textview as the active one, and returns its index
 	SetActiveTextView(av *TextView) int
 
+	// ActiveFileNode returns the file node for the active file -- nil if none
+	ActiveFileNode() *giv.FileNode
+
 	// ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 	// and shows output in Tab with name of command
 	ExecCmdFileNode(fn *giv.FileNode)

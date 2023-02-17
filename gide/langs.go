@@ -215,5 +215,5 @@ var LangsProps = ki.Props{
 
 // StdLangs is the original compiled-in set of standard language options.
 var StdLangs = Langs{
-	filecat.Go: {CmdNames{"Imports Go File"}},
+	filecat.Go: {CmdNames{"Go: Imports File"}},
 }

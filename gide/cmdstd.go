@@ -18,28 +18,27 @@ const (
 
 // StdCmds is the original compiled-in set of standard commands.
 var StdCmds = Commands{
-	{Name: "Run Proj",
+	{Cat: "Build", Name: "Run Proj",
 		Desc: "run RunExec executable set in project",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "{RunExecPath}"}},
 		Dir:  "{RunExecDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
-	{Name: "Run Prompt",
+	{Cat: "Build", Name: "Run Prompt",
 		Desc: "run any command you enter at the prompt",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "{PromptString1}"}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
-
 	// Make
-	{Name: "Make",
+	{Cat: "Build", Name: "Make",
 		Desc: "run make with no args",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "make"}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Make Prompt",
+	{Cat: "Build", Name: "Make Prompt",
 		Desc: "run make with prompted make target",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "make",
@@ -47,8 +46,32 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
+	{Cat: "File", Name: "Grep",
+		Desc: "recursive grep of all files for prompted value",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "grep",
+			Args: []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "File", Name: "Open",
+		Desc: "open file using OS 'open' command",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "open",
+			Args: []string{"{FilePath}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "File", Name: "Open Target",
+		Desc: "open project target file using OS 'open' command",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "open",
+			Args: []string{"{RunExecPath}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
 	// Go
-	{Name: "Imports Go File",
+	{Cat: "Go", Name: "Imports File",
 		Desc: "run goimports on file",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "goimports",
@@ -56,7 +79,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Fmt Go File",
+	{Cat: "Go", Name: "Fmt File",
 		Desc: "run go fmt on file",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "gofmt",
@@ -64,7 +87,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Build Go Dir",
+	{Cat: "Go", Name: "Build Dir",
 		Desc: "run go build to build in current dir",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -72,7 +95,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Build Go Proj",
+	{Cat: "Go", Name: "Build Proj",
 		Desc: "run go build for project BuildDir",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -80,7 +103,7 @@ var StdCmds = Commands{
 		Dir:  "{BuildDir}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Install Go Dir",
+	{Cat: "Go", Name: "Install Dir",
 		Desc: "run go install in current dir",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -88,7 +111,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Generate Go",
+	{Cat: "Go", Name: "Generate",
 		Desc: "run go generate in current dir",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -96,15 +119,15 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Test Go",
-		Desc: "run go test in current dir",
+	{Cat: "Go", Name: "Test",
+		Desc: "run go test in current dir.  Options include: -run TestName or -bench",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
-			Args: []string{"test", "-v"}}},
+			Args: []string{"test", "-v", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Vet Go",
+	{Cat: "Go", Name: "Vet",
 		Desc: "run go vet in current dir",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -112,7 +135,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Mod Tidy Go",
+	{Cat: "Go", Name: "Mod Tidy",
 		Desc: "run go mod tidy in current dir",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -120,7 +143,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Mod Init Go",
+	{Cat: "Go", Name: "Mod Init",
 		Desc: "run go mod init in current dir with module path from prompt",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -128,7 +151,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Get Go",
+	{Cat: "Go", Name: "Get",
 		Desc: "run go get on package you enter at prompt",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -136,7 +159,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Get Go Updt",
+	{Cat: "Go", Name: "Get Updt",
 		Desc: "run go get -u (updt) on package you enter at prompt",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
@@ -145,7 +168,7 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	// Git
-	{Name: "Add Git",
+	{Cat: "Git", Name: "Add",
 		Desc: "git add file",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -153,7 +176,15 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Checkout Git",
+	{Cat: "Git", Name: "Checkout Branch",
+		Desc: "git checkout: switch to an existing branch",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args: []string{"checkout", "{PromptBranch}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "Git", Name: "Checkout",
 		Desc: "git checkout: file, directory, branch; -b <branch> creates a new branch",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -161,7 +192,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Status Git",
+	{Cat: "Git", Name: "Status",
 		Desc: "git status",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -169,7 +200,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Diff Git",
+	{Cat: "Git", Name: "Diff",
 		Desc: "git diff -- see changes since last checkin",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -177,7 +208,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Log Git",
+	{Cat: "Git", Name: "Log",
 		Desc: "git log",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -185,7 +216,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Commit Git",
+	{Cat: "Git", Name: "Commit",
 		Desc: "git commit",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -193,7 +224,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}, // promptstring1 provided during normal commit process, MUST be wait!
 
-	{Name: "Pull Git ",
+	{Cat: "Git", Name: "Pull",
 		Desc: "git pull",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -202,7 +233,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Push Git ",
+	{Cat: "Git", Name: "Push",
 		Desc: "git push",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
@@ -211,8 +242,17 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Branch Git",
-		Desc: "git branch: -a shows all; <branchname> makes a new one, optionally given sha",
+	{Cat: "Git", Name: "Stash",
+		Desc: "git stash: push / pop local changes for later without committing, resetting to HEAD: also list, show, drop, clear",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args:    []string{"stash", "{PromptString1}"},
+			Default: "push"}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "Git", Name: "Branch",
+		Desc: "git branch: -a shows all; <branchname> makes a new one, optionally given sha, --delete to delete",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"branch", "{PromptString1}"},
@@ -220,8 +260,34 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
+	{Cat: "Git", Name: "Branch Delete",
+		Desc: "git branch --delete selected branch name",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args: []string{"branch", "--delete", "{PromptBranch}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "Git", Name: "Rebase",
+		Desc: "git rebase: updates current branch to given branch, often master",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args:    []string{"rebase", "{PromptBranch}"},
+			Default: "master"}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "Git", Name: "Reset",
+		Desc: "git reset: resets current state to given source -- use --hard to override -- CAN RESULT IN LOSS OF CHANGES -- make sure everything is committed",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args:    []string{"reset", "{PromptString1}"},
+			Default: "--hard origin/master"}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
 	// SVN
-	{Name: "Add SVN",
+	{Cat: "SVN", Name: "Add",
 		Desc: "svn add file",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -229,7 +295,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Status SVN",
+	{Cat: "SVN", Name: "Status",
 		Desc: "svn status",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -237,7 +303,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Info SVN",
+	{Cat: "SVN", Name: "Info",
 		Desc: "svn info",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -245,7 +311,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Log SVN",
+	{Cat: "SVN", Name: "Log",
 		Desc: "svn log",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -253,7 +319,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Commit SVN Proj",
+	{Cat: "SVN", Name: "Commit Proj",
 		Desc: "svn commit for entire project directory",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -261,7 +327,7 @@ var StdCmds = Commands{
 		Dir:  "{ProjPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}, // promptstring1 provided during normal commit process
 
-	{Name: "Commit SVN Dir",
+	{Cat: "SVN", Name: "Commit Dir",
 		Desc: "svn commit in directory of current file",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -269,7 +335,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}, // promptstring1 provided during normal commit process
 
-	{Name: "Update SVN",
+	{Cat: "SVN", Name: "Update",
 		Desc: "svn update",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -278,7 +344,7 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	// LaTeX
-	{Name: "LaTeX PDF",
+	{Cat: "LaTeX", Name: "LaTeX PDF",
 		Desc: "run PDFLaTeX on file",
 		Lang: filecat.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "pdflatex",
@@ -286,7 +352,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "BibTeX",
+	{Cat: "LaTeX", Name: "BibTeX",
 		Desc: "run BibTeX on file",
 		Lang: filecat.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "bibtex",
@@ -294,7 +360,7 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "Biber",
+	{Cat: "LaTeX", Name: "Biber",
 		Desc: "run Biber on file",
 		Lang: filecat.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "biber",
@@ -302,45 +368,11 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Name: "CleanTeX",
+	{Cat: "LaTeX", Name: "CleanTeX",
 		Desc: "remove aux LaTeX files",
 		Lang: filecat.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "rm",
 			Args: []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc", "*.spl"}}},
-		Dir:  "{FileDirPath}",
-		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
-
-	// Generic files / images / etc
-	{Name: "Open File",
-		Desc: "open file using OS 'open' command",
-		Lang: filecat.Any,
-		Cmds: []CmdAndArgs{{Cmd: "open",
-			Args: []string{"{FilePath}"}}},
-		Dir:  "{FileDirPath}",
-		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
-
-	{Name: "Open Target File",
-		Desc: "open project target file using OS 'open' command",
-		Lang: filecat.Any,
-		Cmds: []CmdAndArgs{{Cmd: "open",
-			Args: []string{"{RunExecPath}"}}},
-		Dir:  "{FileDirPath}",
-		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
-
-	// Misc
-	{Name: "List Dir",
-		Desc: "list current dir",
-		Lang: filecat.Any,
-		Cmds: []CmdAndArgs{{Cmd: "ls",
-			Args: []string{"-la"}}},
-		Dir:  "{FileDirPath}",
-		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
-
-	{Name: "Grep",
-		Desc: "recursive grep of all files for prompted value",
-		Lang: filecat.Any,
-		Cmds: []CmdAndArgs{{Cmd: "grep",
-			Args: []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 }

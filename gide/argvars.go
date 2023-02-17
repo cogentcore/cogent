@@ -73,6 +73,7 @@ var ArgVars = map[string]ArgVarInfo{
 	"{PromptFileDirProjRel}": {"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
 	"{PromptString1}":        {"Prompt user for a string -- this is it.", ArgVarPrompt},
 	"{PromptString2}":        {"Prompt user for another string -- this is it.", ArgVarPrompt},
+	"{PromptBranch}":         {"Prompt user for a VCS branch.", ArgVarPrompt},
 }
 
 // ArgVarVals are current values of arg var vals -- updated on demand when a

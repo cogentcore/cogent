@@ -6,7 +6,6 @@
 // from the gide interface.  Having it in a separate package
 // allows GideView to also include other packages that tap into
 // the gide interface, such as the GoPi interactive parser.
-//
 package gidev
 
 import (
@@ -488,6 +487,11 @@ func (ge *GideView) ConfigTextBuf(tb *giv.TextBuf) {
 func (ge *GideView) ActiveTextView() *gide.TextView {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
 	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
+}
+
+// ActiveFileNode returns the file node for the active file -- nil if none
+func (ge *GideView) ActiveFileNode() *giv.FileNode {
+	return ge.FileNodeForFile(string(ge.ActiveFilename), false)
 }
 
 // TextViewIndex finds index of given textview (0 or 1)
@@ -1503,7 +1507,7 @@ func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool,
 }
 
 // ExecCmds gets list of available commands for current active file, as a submenu-func
-func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
+func ExecCmds(it interface{}, vp *gi.Viewport2D) [][]string {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return nil
@@ -1512,7 +1516,7 @@ func ExecCmds(it interface{}, vp *gi.Viewport2D) []string {
 	if tv == nil {
 		return nil
 	}
-	var cmds []string
+	var cmds [][]string
 
 	vc := ge.VersCtrl()
 	if ge.ActiveLang == filecat.NoSupport {
@@ -1542,7 +1546,7 @@ func (ge *GideView) ExecCmd() {
 		fmt.Printf("no Active view for ExecCmd\n")
 		return
 	}
-	var cmds []string
+	var cmds [][]string
 	vc := ge.VersCtrl()
 	if ge.ActiveLang == filecat.NoSupport {
 		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
@@ -1554,9 +1558,12 @@ func (ge *GideView) ExecCmd() {
 	if hsz > 0 {
 		lastCmd = string(ge.CmdHistory[hsz-1])
 	}
-	gi.StringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
-		ac := send.(*gi.Action)
-		cmdNm := gide.CmdName(ac.Text)
+	gi.SubStringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
+		didx := data.([]int)
+		si := didx[0]
+		ii := didx[1]
+		cmdCat := cmds[si][0]
+		cmdNm := gide.CmdName(gide.CommandName(cmdCat, cmds[si][ii]))
 		ge.CmdHistory.Add(cmdNm)       // only save commands executed via chooser
 		ge.SaveAllCheck(true, func() { // true = cancel option
 			ge.ExecCmdName(cmdNm, true, true) // sel, clear
@@ -1570,9 +1577,13 @@ func (ge *GideView) ExecCmdFileNode(fn *giv.FileNode) {
 	lang := fn.Info.Sup
 	vc := ge.VersCtrl()
 	cmds := gide.AvailCmds.FilterCmdNames(lang, vc)
-	gi.StringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
-		ac := send.(*gi.Action)
-		ge.ExecCmdNameFileNode(fn, gide.CmdName(ac.Text), true, true) // sel, clearbuf
+	gi.SubStringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
+		didx := data.([]int)
+		si := didx[0]
+		ii := didx[1]
+		cmdCat := cmds[si][0]
+		cmdNm := gide.CmdName(gide.CommandName(cmdCat, cmds[si][ii]))
+		ge.ExecCmdNameFileNode(fn, cmdNm, true, true) // sel, clearbuf
 	})
 }
 
@@ -1643,10 +1654,18 @@ func (ge *GideView) CommitNoChecks() {
 	vc := ge.VersCtrl()
 	cmds := gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	cmdnm := ""
-	for _, cm := range cmds {
-		if strings.Contains(cm, "Commit") {
-			cmdnm = cm
-			break
+	for _, ct := range cmds {
+		if len(ct) < 2 {
+			continue
+		}
+		if !giv.IsVersCtrlSystem(ct[0]) {
+			continue
+		}
+		for _, cm := range ct {
+			if strings.Contains(cm, "Commit") {
+				cmdnm = gide.CommandName(ct[0], cm)
+				break
+			}
 		}
 	}
 	if cmdnm == "" {
@@ -3138,10 +3157,10 @@ var GideViewProps = ki.Props{
 			"icon": "star",
 		}},
 		{"ExecCmdNameActive", ki.Props{
-			"icon":         "terminal",
-			"label":        "Exec Cmd",
-			"desc":         "execute given command on active file / directory / project",
-			"submenu-func": giv.SubMenuFunc(ExecCmds),
+			"icon":            "terminal",
+			"label":           "Exec Cmd",
+			"desc":            "execute given command on active file / directory / project",
+			"subsubmenu-func": giv.SubSubMenuFunc(ExecCmds),
 			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunExecCmd).String())
 			}),
@@ -3580,9 +3599,9 @@ var GideViewProps = ki.Props{
 			}},
 			{"sep-cmd", ki.BlankProp{}},
 			{"ExecCmdNameActive", ki.Props{
-				"label":        "Exec Cmd",
-				"submenu-func": giv.SubMenuFunc(ExecCmds),
-				"updtfunc":     GideViewInactiveEmptyFunc,
+				"label":           "Exec Cmd",
+				"subsubmenu-func": giv.SubSubMenuFunc(ExecCmds),
+				"updtfunc":        GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
 					{"Cmd Name", ki.Props{}},
 				},

@@ -515,7 +515,7 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 				si := giv.TableViewSelectDialogValue(ddlg)
 				if si >= 0 {
 					pt := AvailCmds[si]
-					vv.SetValue(pt.Name)
+					vv.SetValue(CommandName(pt.Cat, pt.Name))
 					vv.UpdateWidget()
 				}
 			}

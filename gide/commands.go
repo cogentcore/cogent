@@ -24,6 +24,7 @@ import (
 	"github.com/goki/pi/complete"
 	"github.com/goki/pi/filecat"
 	"github.com/goki/pi/lex"
+	"github.com/mattn/go-shellwords"
 )
 
 // CmdAndArgs contains the name of an external program to execute and args to
@@ -94,7 +95,11 @@ func (cm *CmdAndArgs) BindArgs(avp *ArgVarVals) []string {
 		case !cm.PromptIsString && argNm == "{PromptString1}":
 			fallthrough
 		case !cm.PromptIsString && argNm == "{PromptString2}":
-			args = append(args, strings.Fields(av)...)
+			flds, err := shellwords.Parse(av)
+			if err != nil {
+				fmt.Println(err)
+			}
+			args = append(args, flds...)
 			continue
 		case av[0] == '*': // only allow at *start* of args -- for *.ext exprs
 			glob, err := filepath.Glob(av)
@@ -114,7 +119,10 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 	switch cm.Cmd {
 	case "{PromptString1}": // special case -- expand args
 		cmdstr := cstr
-		args := strings.Fields(cmdstr)
+		args, err := shellwords.Parse(cmdstr)
+		if err != nil {
+			fmt.Println(err)
+		}
 		if len(args) > 1 {
 			cstr = args[0]
 			args = args[1:]
@@ -224,6 +232,7 @@ func (rc *CmdRuns) KillByName(name string) bool {
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
+	Cat     string            `desc:"category for the command -- commands are organized in to hierarchical menus according to category"`
 	Name    string            `width:"20" desc:"name of this command (must be unique in list of commands)"`
 	Desc    string            `width:"40" desc:"brief description of this command"`
 	Lang    filecat.Supported `desc:"supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type"`
@@ -234,9 +243,14 @@ type Command struct {
 	Confirm bool              `desc:"if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands"`
 }
 
+// CommandName returns a qualified command name as cat: cmd
+func CommandName(cat, cmd string) string {
+	return cat + ": " + cmd
+}
+
 // Label satisfies the Labeler interface
 func (cm Command) Label() string {
-	return cm.Name
+	return CommandName(cm.Cat, cm.Name)
 }
 
 // HasPrompts returns true if any prompts are required before running command,
@@ -307,7 +321,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 					dlg := send.(*gi.Dialog)
 					if sig == int64(gi.DialogAccepted) {
 						val := gi.StringPromptDialogValue(dlg)
-						cmvals[cm.Name] = val
+						cmvals[cm.Label()] = val
 						(*avp)[pv] = val
 						cnt++
 						if cnt == sz {
@@ -315,6 +329,29 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 						}
 					}
 				})
+		// todo: looks like all the file prompts are not supported?
+		case "{PromptBranch}":
+			fn := ge.ActiveFileNode()
+			if fn != nil {
+				repo, _ := fn.Repo()
+				if repo != nil {
+					br, err := repo.Branches()
+					cur, _ := repo.Current()
+					if err == nil {
+						gi.StringsChooserPopup(br, cur, ge.VPort(), func(recv, send ki.Ki, sig int64, data interface{}) {
+							ac := send.(*gi.Action)
+							brnm := ac.Text
+							(*avp)[pv] = brnm
+							cnt++
+							if cnt == sz {
+								cm.RunAfterPrompts(ge, buf)
+							}
+						})
+					} else {
+						fmt.Println(err)
+					}
+				}
+			}
 		}
 	}
 }
@@ -325,7 +362,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
 	if cm.Confirm {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)}, gi.AddOk, gi.AddCancel, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)}, gi.AddOk, gi.AddCancel, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
 			if sig == int64(gi.DialogAccepted) {
 				cm.RunAfterPrompts(ge, buf)
 			}
@@ -342,7 +379,7 @@ func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
 
 // RunAfterPrompts runs after any prompts have been set, if needed
 func (cm *Command) RunAfterPrompts(ge Gide, buf *giv.TextBuf) {
-	// ge.CmdRuns().KillByName(cm.Name) // make sure nothing still running for us..
+	// ge.CmdRuns().KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
 	if cm.Dir != "" {
@@ -383,7 +420,7 @@ func (cm *Command) RunAfterPrompts(ge Gide, buf *giv.TextBuf) {
 // line of the command output to gide statusbar
 func (cm *Command) RunBufWait(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
-	ge.CmdRuns().AddCmd(cm.Name, cmdstr, cma, cmd)
+	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	cm.AppendCmdOut(ge, buf, out)
 	return cm.RunStatus(ge, buf, cmdstr, err, out)
@@ -393,7 +430,7 @@ func (cm *Command) RunBufWait(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 // buffer with new results line-by-line as they come in
 func (cm *Command) RunBuf(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
-	ge.CmdRuns().AddCmd(cm.Name, cmdstr, cma, cmd)
+	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
 	if err == nil {
 		cmd.Stderr = cmd.Stdout
@@ -413,7 +450,7 @@ func (cm *Command) RunBuf(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 // logs one line of the command output to gide statusbar
 func (cm *Command) RunNoBuf(ge Gide, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
-	ge.CmdRuns().AddCmd(cm.Name, cmdstr, cma, cmd)
+	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	return cm.RunStatus(ge, nil, cmdstr, err, out)
 }
@@ -450,7 +487,7 @@ var CmdOutStatusLen = 80
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
 func (cm *Command) RunStatus(ge Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
-	ge.CmdRuns().DeleteByName(cm.Name)
+	ge.CmdRuns().DeleteByName(cm.Label())
 	var rval bool
 	outstr := ""
 	if out != nil {
@@ -471,7 +508,7 @@ func (cm *Command) RunStatus(ge Gide, buf *giv.TextBuf, cmdstr string, err error
 	if buf != nil {
 		buf.SetInactive(true)
 		if err != nil {
-			ge.SelectTabByName(cm.Name) // sometimes it isn't
+			ge.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), giv.EditSignal)
@@ -516,6 +553,7 @@ var KiT_Commands = kit.Types.AddType(&Commands{}, CommandsProps)
 
 // CmdName has an associated ValueView for selecting from the list of
 // available command names, for use in preferences etc.
+// Formatted as Cat: Name as in Command.Label()
 type CmdName string
 
 // IsValid checks if command name exists on AvailCmds list
@@ -548,46 +586,29 @@ var AvailCmds Commands
 // for all Gide projects.  These will override StdCmds with the same names.
 var CustomCmds = Commands{}
 
-// LangCmdNames returns a slice of commands that are compatible with given
-// language.
-func (cm *Commands) LangCmdNames(lang filecat.Supported) []string {
-	cmds := make([]string, 0, len(*cm))
+// FilterCmdNames returns a slice of commands organized by category
+// that are compatible with given language and version control system.
+func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm giv.VersCtrlName) [][]string {
+	vnm := strings.ToLower(string(vcnm))
+	var cmds [][]string
+	cat := ""
+	var csub []string
 	for _, cmd := range *cm {
 		if cmd.LangMatch(lang) {
-			cmds = append(cmds, cmd.Name)
-		}
-	}
-	return cmds
-}
-
-// VersCtrlCmdNames returns a slice of commands that contain in their name the
-// specific version control name, but NOT the others -- takes the output of LangCmdNames
-func VersCtrlCmdNames(vcnm giv.VersCtrlName, cmds []string) []string {
-	if vcnm == "" {
-		return cmds
-	}
-	vnm := strings.ToLower(string(vcnm))
-	sz := len(cmds)
-	for i := sz - 1; i >= 0; i-- {
-		cmd := strings.ToLower(cmds[i])
-		if strings.Contains(cmd, vnm) {
-			continue
-		}
-		for _, vcs := range giv.VersCtrlSystems {
-			if vcs != vnm {
-				if strings.Contains(cmd, vcs) {
-					cmds = append(cmds[:i], cmds[i+1:]...)
+			if cmd.Cat != cat {
+				lcat := strings.ToLower(cmd.Cat)
+				if giv.IsVersCtrlSystem(lcat) && lcat != vnm {
+					continue
 				}
+				cat = cmd.Cat
+				csub = []string{cat}
+				cmds = append(cmds, csub)
 			}
+			csub = append(csub, cmd.Name)
+			cmds[len(cmds)-1] = csub // in case updated
 		}
 	}
 	return cmds
-}
-
-// FilterCmdNames returns a slice of commands that are compatible with given
-// language and version control system.
-func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm giv.VersCtrlName) []string {
-	return VersCtrlCmdNames(vcnm, cm.LangCmdNames(lang))
 }
 
 func init() {
@@ -598,7 +619,7 @@ func init() {
 // message to log if not found if msg is true
 func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 	for i, cmd := range *cm {
-		if cmd.Name == string(name) {
+		if cmd.Label() == string(name) {
 			return cmd, i, true
 		}
 	}
@@ -681,7 +702,7 @@ func (cm *Commands) CopyFrom(cp Commands) {
 func MergeAvailCmds() {
 	AvailCmds.CopyFrom(StdCmds)
 	for _, cmd := range CustomCmds {
-		_, idx, has := AvailCmds.CmdByName(CmdName(cmd.Name), false)
+		_, idx, has := AvailCmds.CmdByName(CmdName(cmd.Label()), false)
 		if has {
 			AvailCmds[idx] = cmd // replace
 		} else {
