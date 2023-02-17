@@ -443,19 +443,19 @@ func (ge *GideView) GuessMainLang() bool {
 
 // LangDefaults applies default language settings based on MainLang
 func (ge *GideView) LangDefaults() {
-	ge.Prefs.RunCmds = gide.CmdNames{"Run Proj"}
+	ge.Prefs.RunCmds = gide.CmdNames{"Build: Run Proj"}
 	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
 	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
 	ge.Prefs.RunExec = gi.FileName(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
 	if len(ge.Prefs.BuildCmds) == 0 {
 		switch ge.Prefs.MainLang {
 		case filecat.Go:
-			ge.Prefs.BuildCmds = gide.CmdNames{"Build Go Proj"}
+			ge.Prefs.BuildCmds = gide.CmdNames{"Go: Build Proj"}
 		case filecat.TeX:
-			ge.Prefs.BuildCmds = gide.CmdNames{"LaTeX PDF"}
-			ge.Prefs.RunCmds = gide.CmdNames{"Open Target File"}
+			ge.Prefs.BuildCmds = gide.CmdNames{"LaTeX: LaTeX PDF"}
+			ge.Prefs.RunCmds = gide.CmdNames{"File: Open Target"}
 		default:
-			ge.Prefs.BuildCmds = gide.CmdNames{"Make"}
+			ge.Prefs.BuildCmds = gide.CmdNames{"Build: Make"}
 		}
 	}
 	if ge.Prefs.VersCtrl == "" {
@@ -2746,7 +2746,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 		ge.SetArgVarVals()
 		ge.ArgVals["{PromptString1}"] = string(fn.FPath)
 		gide.CmdNoUserPrompt = true // don't re-prompt!
-		cmd, _, ok := gide.AvailCmds.CmdByName(gide.CmdName("Run Prompt"), true)
+		cmd, _, ok := gide.AvailCmds.CmdByName(gide.CmdName("Build: Run Prompt"), true)
 		if ok {
 			ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
 			cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)
@@ -2755,7 +2755,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 		return
 	case filecat.Font, filecat.Video, filecat.Model, filecat.Audio, filecat.Sheet, filecat.Bin,
 		filecat.Archive, filecat.Image:
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("File: Open"), true, true) // sel, clear
 		return
 	}
 
@@ -2771,7 +2771,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 		}
 	}
 	if !edit {
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("Open File"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, gide.CmdName("File: Open"), true, true) // sel, clear
 		return
 	}
 	// program, document, data
