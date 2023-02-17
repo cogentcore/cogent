@@ -237,7 +237,7 @@ var StdCmds = Commands{
 		Desc: "git push",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
-			Args:    []string{"push", "{PromptString1}"},
+			Args:    []string{"push", "origin", "{PromptBranch}"},
 			Default: "origin"}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
