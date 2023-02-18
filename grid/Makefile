@@ -19,7 +19,7 @@ clean:
 	$(GOCLEAN)
 
 # NOTE: MUST update version number here prior to running 'make release'
-VERS=v0.5.3
+VERS=v0.5.4
 PACKAGE=grid
 GIT_COMMIT=`git rev-parse --short HEAD`
 VERS_DATE=`date -u +%Y-%m-%d\ %H:%M`
