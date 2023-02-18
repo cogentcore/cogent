@@ -311,7 +311,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 			if cmvals == nil {
 				cmvals = CmdPrompt2Vals
 			}
-			curval, _ := cmvals[cm.Name] // (*avp)[pv]
+			curval, _ := cmvals[cm.Label()] // (*avp)[pv]
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}

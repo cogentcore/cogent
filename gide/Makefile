@@ -18,9 +18,6 @@ test:
 clean: 
 	$(GOCLEAN)
 
-bindata:
-	go-bindata -pkg gide ../icons/*.svg
-	
 # NOTE: MUST update version number here prior to running 'make release'
 VERS=v1.1.7
 PACKAGE=gide
