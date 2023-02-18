@@ -152,7 +152,7 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Go", Name: "Get",
-		Desc: "run go get on package you enter at prompt",
+		Desc: "run go get on package(s) you enter at prompt",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"get", "{PromptString1}"}}},
@@ -160,10 +160,11 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Go", Name: "Get Updt",
-		Desc: "run go get -u (updt) on package you enter at prompt",
+		Desc: "run go get -u (updt) on package(s) you enter at prompt.  use ./... for all.",
 		Lang: filecat.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
-			Args: []string{"get", "{PromptString1}"}}},
+			Args:    []string{"get", "-u", "{PromptString1}"},
+			Default: "./..."}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 

@@ -24,7 +24,7 @@ require (
 	github.com/antonmedv/expr v1.12.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20220606134207-859f65c6625b // indirect
-	github.com/cilium/ebpf v0.9.3 // indirect
+	github.com/cilium/ebpf v0.10.0 // indirect
 	github.com/dlclark/regexp2 v1.8.0 // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
