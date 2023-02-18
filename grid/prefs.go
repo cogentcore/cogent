@@ -18,6 +18,7 @@ import (
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
+	"github.com/goki/grid/icons"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 )
@@ -91,7 +92,7 @@ func InitPrefs() {
 	Prefs.Defaults()
 	Prefs.Open()
 	OpenPaths()
-	svg.CurIconSet.OpenIconsFromAssetDir("../icons", AssetDir, Asset)
+	svg.CurIconSet.OpenIconsFromEmbedDir(icons.Icons, ".")
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
 		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Grid Preferences..."},
 			win, func(recv, send ki.Ki, sig int64, data interface{}) {

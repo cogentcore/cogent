@@ -18,9 +18,6 @@ test:
 clean: 
 	$(GOCLEAN)
 
-bindata:
-	go-bindata -pkg grid ../icons/*.svg
-	
 # NOTE: MUST update version number here prior to running 'make release'
 VERS=v0.5.3
 PACKAGE=grid
