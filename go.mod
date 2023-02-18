@@ -4,10 +4,10 @@ go 1.18
 
 require (
 	github.com/go-delve/delve v1.20.1
-	github.com/goki/gi v1.3.13
+	github.com/goki/gi v1.3.14
 	github.com/goki/ki v1.1.11
 	github.com/goki/mat32 v1.0.14
-	github.com/goki/pi v1.0.23
+	github.com/goki/pi v1.0.25
 	github.com/goki/vci v1.0.1
 	github.com/mattn/go-shellwords v1.0.12
 )
@@ -19,7 +19,7 @@ require (
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046 // indirect
 	github.com/Masterminds/vcs v1.13.3 // indirect
 	github.com/akutz/sortfold v0.2.1 // indirect
-	github.com/alecthomas/chroma v0.10.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.5.0 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/antonmedv/expr v1.12.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect

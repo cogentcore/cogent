@@ -24,6 +24,7 @@ import (
 	"github.com/goki/pi/complete"
 	"github.com/goki/pi/filecat"
 	"github.com/goki/pi/lex"
+	"github.com/goki/vci"
 	"github.com/mattn/go-shellwords"
 )
 
@@ -295,6 +296,31 @@ var CmdPrompt1Vals = map[string]string{}
 // each such command has its own appropriate history
 var CmdPrompt2Vals = map[string]string{}
 
+// RepoCurBranches returns the current branch and a list of all branches
+// ensuring that the current also appears on the list of all.
+// In git, a new branch may not so appear.
+func RepoCurBranches(repo vci.Repo) (string, []string, error) {
+	cur, err := repo.Current()
+	if err != nil {
+		return "", nil, err
+	}
+	br, err := repo.Branches()
+	if err != nil {
+		return cur, nil, err
+	}
+	hasCur := false
+	for _, b := range br {
+		if b == cur {
+			hasCur = true
+			break
+		}
+	}
+	if !hasCur {
+		br = append(br, cur)
+	}
+	return cur, br, nil
+}
+
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
 func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
@@ -335,8 +361,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 			if fn != nil {
 				repo, _ := fn.Repo()
 				if repo != nil {
-					br, err := repo.Branches()
-					cur, _ := repo.Current()
+					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
 						gi.StringsChooserPopup(br, cur, ge.VPort(), func(recv, send ki.Ki, sig int64, data interface{}) {
 							ac := send.(*gi.Action)

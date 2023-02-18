@@ -253,7 +253,7 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Git", Name: "Branch",
-		Desc: "git branch: -a shows all; <branchname> makes a new one, optionally given sha, --delete to delete",
+		Desc: "git branch: -a shows all; --list shows local; <branchname> makes a new one, optionally given sha; -d to delete; -r delete remote; -D force delete",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"branch", "{PromptString1}"},
@@ -262,10 +262,10 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Git", Name: "Branch Delete",
-		Desc: "git branch --delete selected branch name",
+		Desc: "git branch -d -r selected branch name",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
-			Args: []string{"branch", "--delete", "{PromptBranch}"}}},
+			Args: []string{"branch", "-d", "-r", "{PromptBranch}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
@@ -284,6 +284,15 @@ var StdCmds = Commands{
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"reset", "{PromptString1}"},
 			Default: "--hard origin/master"}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "Git", Name: "Remote",
+		Desc: "git remote: prune origin = remove stale branches; show; add <name> <URL>; remove <name>; get-url / set-url <name>",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args:    []string{"reset", "{PromptString1}"},
+			Default: "prune origin"}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
