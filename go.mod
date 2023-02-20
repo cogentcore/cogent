@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/go-delve/delve v1.20.1
-	github.com/goki/gi v1.3.14
+	github.com/goki/gi v1.3.15
 	github.com/goki/ki v1.1.11
 	github.com/goki/mat32 v1.0.14
 	github.com/goki/pi v1.0.25

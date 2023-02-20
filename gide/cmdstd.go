@@ -291,7 +291,7 @@ var StdCmds = Commands{
 		Desc: "git remote: prune origin = remove stale branches; show; add <name> <URL>; remove <name>; get-url / set-url <name>",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
-			Args:    []string{"reset", "{PromptString1}"},
+			Args:    []string{"remote", "{PromptString1}"},
 			Default: "prune origin"}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},

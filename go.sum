@@ -108,8 +108,8 @@ github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7a
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/goki/freetype v0.0.0-20220119013949-7a161fd3728c h1:JGCm/+tJ9gC6THUxooTldS+CUDsba0qvkvU3DHklqW8=
 github.com/goki/freetype v0.0.0-20220119013949-7a161fd3728c/go.mod h1:wfqRWLHRBsRgkp5dmbG56SA0DmVtwrF5N3oPdI8t+Aw=
-github.com/goki/gi v1.3.14 h1:UusxtZUdBPuqR4Rv23yS+wh7eCrn7D/uiwyohC7vD58=
-github.com/goki/gi v1.3.14/go.mod h1:su8+fk5Ih3mdXXAyiV0yG3vU6l0ncY3XFBux5rLYNQY=
+github.com/goki/gi v1.3.15 h1:ADEQBDASEmNSgQCsyj++kZOYgNisQp4WqjVofBSdbPA=
+github.com/goki/gi v1.3.15/go.mod h1:su8+fk5Ih3mdXXAyiV0yG3vU6l0ncY3XFBux5rLYNQY=
 github.com/goki/go-difflib v1.2.1 h1:zqSi9rTf0vYFia92PaZeKrTfofGVqku2WYOtfsUYqxU=
 github.com/goki/go-difflib v1.2.1/go.mod h1:uZuY072AYTnMjRxCn6IkpZQKRVcTj4SIpHHXOUGOxrg=
 github.com/goki/gosl v1.0.11 h1:ghnHWptmfsxN1K3izk5AxDzavjhnV1GV+68v9fnuNfw=
