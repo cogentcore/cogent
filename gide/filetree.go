@@ -26,7 +26,7 @@ type FileNode struct {
 
 var KiT_FileNode = kit.Types.AddType(&FileNode{}, nil)
 
-func (fn *FileNode) CopyFieldsFrom(frm interface{}) {
+func (fn *FileNode) CopyFieldsFrom(frm any) {
 	fr := frm.(*FileNode)
 	fn.FileNode.CopyFieldsFrom(&fr.FileNode)
 	// no copy here
@@ -38,7 +38,7 @@ func ParentGide(kn ki.Ki) (Gide, bool) {
 		return nil, false
 	}
 	var ge Gide
-	kn.FuncUpParent(0, kn, func(k ki.Ki, level int, d interface{}) bool {
+	kn.FuncUpParent(0, kn, func(k ki.Ki, level int, d any) bool {
 		if kit.EmbedImplements(ki.Type(k), GideType) {
 			ge = k.(Gide)
 			return false
@@ -107,7 +107,7 @@ func (on *OpenNodes) Add(fn *giv.FileNode) bool {
 		return added
 	}
 	if fn.Buf != nil {
-		fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(giv.TextBufClosed) {
 				fno, _ := recv.Embed(giv.KiT_FileNode).(*giv.FileNode)
 				on.Delete(fno)
@@ -239,7 +239,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase, regExp bool, l
 		}
 	}
 	mls := make([]FileSearchResults, 0)
-	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d interface{}) bool {
+	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d any) bool {
 		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
 		if sfn.IsDir() && !sfn.IsOpen() {
 			// fmt.Printf("dir: %v closed\n", sfn.FPath)
@@ -299,8 +299,8 @@ type FileTreeView struct {
 	giv.FileTreeView
 }
 
-var FileTreeViewProps map[string]interface{}
-var FileNodeProps map[string]interface{}
+var FileTreeViewProps map[string]any
+var FileNodeProps map[string]any
 
 var KiT_FileTreeView = kit.Types.AddType(&FileTreeView{}, nil)
 
@@ -399,7 +399,7 @@ func (ftv *FileTreeView) RenameFiles() {
 }
 
 // FileTreeViewExecCmds gets list of available commands for given file node, as a submenu-func
-func FileTreeViewExecCmds(it interface{}, vp *gi.Viewport2D) [][]string {
+func FileTreeViewExecCmds(it any, vp *gi.Viewport2D) [][]string {
 	ft, ok := it.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	if !ok {
 		return nil
@@ -458,7 +458,7 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 }
 
 // FileTreeInactiveDirFunc is an ActionUpdateFunc that inactivates action if node is a dir
-var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.Action) {
+var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
 	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	fn := ft.FileNode()
 	if fn != nil {
@@ -467,7 +467,7 @@ var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi
 })
 
 // FileTreeActiveDirFunc is an ActionUpdateFunc that activates action if node is a dir
-var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.Action) {
+var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
 	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	fn := ft.FileNode()
 	if fn != nil {
@@ -476,7 +476,7 @@ var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.A
 })
 
 // FileTreeActiveExecFunc is an ActionUpdateFunc that activates action if node is executable
-var FileTreeActiveExecFunc = giv.ActionUpdateFunc(func(fni interface{}, act *gi.Action) {
+var FileTreeActiveExecFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
 	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	fn := ft.FileNode()
 	if fn != nil {

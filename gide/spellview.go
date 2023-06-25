@@ -150,12 +150,12 @@ func (sv *SpellView) ConfigToolbar() {
 
 	// spell toolbar
 	spbar.AddAction(gi.ActOpts{Label: "Check Current File", Tooltip: "spell check the current file"},
-		sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 			svv.SpellAction()
 		})
 
-	train := spbar.AddAction(gi.ActOpts{Label: "Train", Tooltip: "add additional text to the training corpus"}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	train := spbar.AddAction(gi.ActOpts{Label: "Train", Tooltip: "add additional text to the training corpus"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.TrainAction()
 	})
@@ -166,7 +166,7 @@ func (sv *SpellView) ConfigToolbar() {
 	unknown := unknbar.AddNewChild(gi.KiT_TextField, "unknown-str").(*gi.TextField)
 	unknown.SetStretchMaxWidth()
 	unknown.Tooltip = "Unknown word"
-	unknown.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	unknown.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 	})
 	tf := sv.UnknownText()
 	if tf != nil {
@@ -174,19 +174,19 @@ func (sv *SpellView) ConfigToolbar() {
 	}
 
 	unknbar.AddAction(gi.ActOpts{Name: "skip", Label: "Skip"}, sv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 			svv.SkipAction()
 		})
 
 	unknbar.AddAction(gi.ActOpts{Name: "ignore", Label: "Ignore"}, sv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 			svv.IgnoreAction()
 		})
 
 	unknbar.AddAction(gi.ActOpts{Name: "learn", Label: "Learn"}, sv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 			svv.LearnAction()
 		})
@@ -195,15 +195,15 @@ func (sv *SpellView) ConfigToolbar() {
 	changestr := chgbar.AddNewChild(gi.KiT_TextField, "change-str").(*gi.TextField)
 	changestr.SetStretchMaxWidth()
 	changestr.Tooltip = "This string will replace the unknown word in text"
-	changestr.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	changestr.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 	})
 
-	chgbar.AddAction(gi.ActOpts{Name: "change", Label: "Change", Tooltip: "change the unknown word to the selected suggestion"}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	chgbar.AddAction(gi.ActOpts{Name: "change", Label: "Change", Tooltip: "change the unknown word to the selected suggestion"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.ChangeAction()
 	})
 
-	chgbar.AddAction(gi.ActOpts{Name: "change-all", Label: "Change All", Tooltip: "change all instances of the unknown word in this document"}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	chgbar.AddAction(gi.ActOpts{Name: "change-all", Label: "Change All", Tooltip: "change all instances of the unknown word in this document"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.ChangeAllAction()
 	})
@@ -216,7 +216,7 @@ func (sv *SpellView) ConfigToolbar() {
 	suggest.SetSlice(&sv.Suggest)
 	suggest.SetStretchMaxWidth()
 	suggest.SetStretchMaxHeight()
-	suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data interface{}) {
+	suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data any) {
 		svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
 		idx := svv.SelectedIdx
 		if idx >= 0 && idx < len(sv.Suggest) {
@@ -334,7 +334,7 @@ func (sv *SpellView) ChangeAllAction() {
 func (sv *SpellView) TrainAction() {
 	vp := sv.Viewport
 	giv.FileViewDialog(vp, "", ".txt", giv.DlgOpts{Title: "Select a Text File to Add to Corpus"}, nil,
-		vp.Win, func(recv, send ki.Ki, sig int64, data interface{}) {
+		vp.Win, func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				dlg, _ := send.(*gi.Dialog)
 				filepath := giv.FileViewDialogValue(dlg)

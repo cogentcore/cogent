@@ -32,20 +32,20 @@ func AddNewTextView(parent ki.Ki, name string) *TextView {
 // MakeContextMenu builds the textview context menu
 func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 	ac := m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: gi.KeyFunCopy},
-		tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			txf := recv.Embed(KiT_TextView).(*TextView)
 			txf.Copy(true)
 		})
 	ac.SetActiveState(tv.HasSelection())
 	if !tv.IsInactive() {
 		ac = m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: gi.KeyFunCut},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Cut()
 			})
 		ac.SetActiveState(tv.HasSelection())
 		ac = m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: gi.KeyFunPaste},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Paste()
 			})
@@ -54,7 +54,7 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 		m.AddSeparator("sep-clip")
 
 		ac = m.AddAction(gi.ActOpts{Label: "Lookup", ShortcutKey: gi.KeyFunLookup},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Lookup()
 			})
@@ -67,26 +67,26 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 			}
 		}
 		ac = m.AddAction(gi.ActOpts{Label: "SetBreakpoint"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.SetBreakpoint(tv.CursorPos.Ln)
 			})
 		ac.SetActiveState(hasDbg)
 		ac = m.AddAction(gi.ActOpts{Label: "ClearBreakpoint"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.ClearBreakpoint(tv.CursorPos.Ln)
 			})
 		ac.SetActiveState(hasDbg && tv.HasBreakpoint(tv.CursorPos.Ln))
 		ac = m.AddAction(gi.ActOpts{Label: "Debug: Find Frames"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.FindFrames(tv.CursorPos.Ln)
 			})
 		ac.SetActiveState(hasDbg)
 	} else {
 		ac = m.AddAction(gi.ActOpts{Label: "Clear"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Clear()
 			})
@@ -235,7 +235,7 @@ func (tv *TextView) MouseEvent(me *mouse.Event) {
 }
 
 func (tv *TextView) HoverEvent() {
-	tv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	tv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		me := d.(*mouse.HoverEvent)
 		txf := recv.Embed(KiT_TextView).(*TextView)
 		tt := ""
@@ -258,13 +258,13 @@ func (tv *TextView) TextViewEvents() {
 	tv.HoverEvent()
 	tv.MouseMoveEvent()
 	tv.MouseDragEvent()
-	tv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	tv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		txf := recv.Embed(KiT_TextView).(*TextView)
 		me := d.(*mouse.Event)
 		txf.MouseEvent(me) // gets our new one
 	})
 	tv.MouseFocusEvent()
-	tv.ConnectEvent(oswin.KeyChordEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	tv.ConnectEvent(oswin.KeyChordEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		txf := recv.Embed(KiT_TextView).(*TextView)
 		kt := d.(*key.ChordEvent)
 		txf.KeyInput(kt)

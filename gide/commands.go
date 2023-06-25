@@ -343,7 +343,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 			}
 			gi.StringPromptDialog(ge.VPort(), curval, "Enter string value here..",
 				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)},
-				ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 					dlg := send.(*gi.Dialog)
 					if sig == int64(gi.DialogAccepted) {
 						val := gi.StringPromptDialogValue(dlg)
@@ -363,7 +363,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 				if repo != nil {
 					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
-						gi.StringsChooserPopup(br, cur, ge.VPort(), func(recv, send ki.Ki, sig int64, data interface{}) {
+						gi.StringsChooserPopup(br, cur, ge.VPort(), func(recv, send ki.Ki, sig int64, data any) {
 							ac := send.(*gi.Action)
 							brnm := ac.Text
 							(*avp)[pv] = brnm
@@ -387,7 +387,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
 	if cm.Confirm {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)}, gi.AddOk, gi.AddCancel, ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)}, gi.AddOk, gi.AddCancel, ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				cm.RunAfterPrompts(ge, buf)
 			}
@@ -754,7 +754,7 @@ var CommandsProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Action) {
 					act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
 				}),
 			}},
@@ -786,7 +786,7 @@ var CommandsProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Commands to App standard prefs directory, in file proj_types_prefs.json, which will be loaded automatically at startup if prefs SaveCommands is checked (should be if you're using custom commands)",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Action) {
 				act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
 			}),
 		}},
@@ -814,7 +814,7 @@ var CommandsProps = ki.Props{
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
 			"desc": "Shows the standard commands that are compiled into the program (edits will not be saved -- even though the viewer is editable).  Custom commands override standard ones of the same name, so that is the way to change any existing commands.",
-			"updtfunc": giv.ActionUpdateFunc(func(cmi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Action) {
 				act.SetActiveState(cmi.(*Commands) != &StdCmds)
 			}),
 		}},
@@ -833,7 +833,7 @@ func (cmd *Command) SetCompleter(tf *gi.TextField, id string) {
 }
 
 // CompleteArg supplies directory variables to the completer
-func CompleteArg(data interface{}, text string, posLn, posCh int) (md complete.Matches) {
+func CompleteArg(data any, text string, posLn, posCh int) (md complete.Matches) {
 	md.Seed = complete.SeedWhiteSpace(text)
 	possibles := complete.MatchSeedString(ArgVarKeys(), md.Seed)
 	for _, p := range possibles {
@@ -844,7 +844,7 @@ func CompleteArg(data interface{}, text string, posLn, posCh int) (md complete.M
 }
 
 // CompleteArgEdit edits completer text field after the user chooses from the candidate completions
-func CompleteArgEdit(data interface{}, text string, cursorPos int, c complete.Completion, seed string) (ed complete.Edit) {
+func CompleteArgEdit(data any, text string, cursorPos int, c complete.Completion, seed string) (ed complete.Edit) {
 	ed = complete.EditWord(text, cursorPos, c.Text, seed)
 	return ed
 }

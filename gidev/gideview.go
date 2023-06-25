@@ -171,7 +171,7 @@ func (ge *GideView) EditRecents() {
 	gi.StringsRemoveExtras((*[]string)(&tmp), gide.SavedPathsExtras)
 	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
 	giv.SliceViewDialog(ge.Viewport, &tmp, opts,
-		nil, ge, func(recv, send ki.Ki, sig int64, data interface{}) {
+		nil, ge, func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				gide.SavedPaths = nil
 				gide.SavedPaths = append(gide.SavedPaths, tmp...)
@@ -370,7 +370,7 @@ func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 	}
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "There are Unsaved Files",
 		Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch)}, opts,
-		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig != 2 {
 				if sig == 0 {
 					ge.SaveAllOpenNodes()
@@ -763,7 +763,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextView, vidx int, fn *giv.FileNode)
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Autosave file Exists",
 		Prompt: fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm)},
 		[]string{"Open Autosave File", "Ignore and Overwrite Autosave File"},
-		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			switch sig {
 			case 0:
 				ge.NextViewFile(gi.FileName(fn.Buf.AutoSaveFilename()))
@@ -973,7 +973,7 @@ func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextView, error) {
 }
 
 // GideViewOpenNodes gets list of open nodes for submenu-func
-func GideViewOpenNodes(it interface{}, vp *gi.Viewport2D) []string {
+func GideViewOpenNodes(it any, vp *gi.Viewport2D) []string {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return nil
@@ -1004,7 +1004,7 @@ func (ge *GideView) SelectOpenNode() {
 	if len(nl) > 1 {
 		def = nl[1]
 	}
-	gi.StringsChooserPopup(nl, def, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
+	gi.StringsChooserPopup(nl, def, tv, func(recv, send ki.Ki, sig int64, data any) {
 		ac := send.(*gi.Action)
 		idx := ac.Data.(int)
 		nb := ge.OpenNodes[idx]
@@ -1258,7 +1258,7 @@ func (ge *GideView) CloseWindowReq() bool {
 	gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Files",
 		Prompt: fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", ge.Nm, nch)},
 		[]string{"Cancel", "Save All", "Close Without Saving"},
-		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			switch sig {
 			case 0:
 				// do nothing, will have returned false already
@@ -1507,7 +1507,7 @@ func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool,
 }
 
 // ExecCmds gets list of available commands for current active file, as a submenu-func
-func ExecCmds(it interface{}, vp *gi.Viewport2D) [][]string {
+func ExecCmds(it any, vp *gi.Viewport2D) [][]string {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return nil
@@ -1558,7 +1558,7 @@ func (ge *GideView) ExecCmd() {
 	if hsz > 0 {
 		lastCmd = string(ge.CmdHistory[hsz-1])
 	}
-	gi.SubStringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data interface{}) {
+	gi.SubStringsChooserPopup(cmds, lastCmd, tv, func(recv, send ki.Ki, sig int64, data any) {
 		didx := data.([]int)
 		si := didx[0]
 		ii := didx[1]
@@ -1577,7 +1577,7 @@ func (ge *GideView) ExecCmdFileNode(fn *giv.FileNode) {
 	lang := fn.Info.Sup
 	vc := ge.VersCtrl()
 	cmds := gide.AvailCmds.FilterCmdNames(lang, vc)
-	gi.SubStringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data interface{}) {
+	gi.SubStringsChooserPopup(cmds, "", ge, func(recv, send ki.Ki, sig int64, data any) {
 		didx := data.([]int)
 		si := didx[0]
 		ii := didx[1]
@@ -1676,7 +1676,7 @@ func (ge *GideView) CommitNoChecks() {
 
 	gi.StringPromptDialog(ge.Viewport, "", "Enter commit message here..",
 		gi.DlgOpts{Title: "Commit Message", Prompt: "Please enter your commit message here -- remember this is essential front-line documentation.  Author information comes from User settings in GoGi Preferences."},
-		ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			dlg := send.(*gi.Dialog)
 			if sig == int64(gi.DialogAccepted) {
 				msg := gi.StringPromptDialogValue(dlg)
@@ -1728,7 +1728,7 @@ func (ge *GideView) OpenConsoleTab() {
 	ctv.SetInactive()
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
-		gide.TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gide.TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			gee, _ := recv.Embed(KiT_GideView).(*GideView)
 			gee.SelectTabByName("Console")
 		})
@@ -1754,7 +1754,7 @@ func (ge *GideView) CursorToHistNext() bool {
 
 // LookupFun is the completion system Lookup function that makes a custom
 // textview dialog that has option to edit resulting file.
-func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (ld complete.Lookup) {
+func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
 	sfs := data.(*pi.FileStates)
 	if sfs == nil {
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
@@ -1835,7 +1835,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	ofb := gi.AddNewButton(bbox, "open-file")
 	ofb.SetText("Open File")
 	ofb.SetIcon("file-open")
-	ofb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ofb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonClicked) {
 			ge.ViewFile(gi.FileName(ld.Filename))
 			dlg.Close()
@@ -1844,7 +1844,7 @@ func (ge *GideView) LookupFun(data interface{}, text string, posLn, posCh int) (
 	cpb := gi.AddNewButton(bbox, "copy-to-clip")
 	cpb.SetText("Copy To Clipboard")
 	cpb.SetIcon("copy")
-	cpb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	cpb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonClicked) {
 			ddlg := recv.Embed(gi.KiT_Dialog).(*gi.Dialog)
 			oswin.TheApp.ClipBoard(ddlg.Win.OSWin).Write(mimedata.NewTextBytes(txt))
@@ -2353,7 +2353,7 @@ func (ge *GideView) ApplyPrefsAction() {
 func (ge *GideView) EditProjPrefs() {
 	sv, _ := gide.ProjPrefsView(&ge.Prefs)
 	// we connect to changes and apply them
-	sv.ViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	sv.ViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 		gee, _ := recv.Embed(KiT_GideView).(*GideView)
 		gee.ApplyPrefsAction()
 	})
@@ -2533,7 +2533,7 @@ func (ge *GideView) ConfigToolbar() {
 	sm.SetChecked(ge.Prefs.GoMod)
 	sm.SetText("Go Mod")
 	sm.Tooltip = "Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode"
-	sm.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	sm.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonToggled) {
 			cb := send.(*gi.CheckBox)
 			ge.Prefs.GoMod = cb.IsChecked()
@@ -2562,7 +2562,7 @@ func (ge *GideView) ConfigSplitView() {
 	ft.OpenDepth = 4
 	ge.FilesView = ft
 	ft.SetRootNode(&ge.Files)
-	ft.TreeViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ft.TreeViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if data == nil {
 			return
 		}
@@ -2598,7 +2598,7 @@ func (ge *GideView) ConfigSplitView() {
 		txbut.SetStretchMaxWidth()
 		txbut.SetText("textview: " + txnm)
 		txbut.MakeMenuFunc = ge.TextViewButtonMenu
-		txbut.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		txbut.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.ButtonClicked) {
 				gee, _ := recv.Embed(KiT_GideView).(*GideView)
 				idx := 0
@@ -2618,7 +2618,7 @@ func (ge *GideView) ConfigSplitView() {
 		txily.SetMinPrefHeight(units.NewEm(40))
 
 		ted := gide.AddNewTextView(txily, "textview-"+txnm)
-		ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			gee, _ := recv.Embed(KiT_GideView).(*GideView)
 			tee := send.Embed(gide.KiT_TextView).(*gide.TextView)
 			gee.TextViewSig(tee, giv.TextViewSignals(sig))
@@ -2629,7 +2629,7 @@ func (ge *GideView) ConfigSplitView() {
 	ge.UpdateTextButtons()
 
 	mtab := gi.AddNewTabView(split, "tabs")
-	mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 		gee, _ := recv.Embed(KiT_GideView).(*GideView)
 		tvsig := gi.TabViewSignals(sig)
 		switch tvsig {
@@ -2695,7 +2695,7 @@ func (ge *GideView) TextViewButtonMenu(obj ki.Ki, m *gi.Menu) {
 	*m = gi.Menu{}
 
 	m.AddAction(gi.ActOpts{Label: "Open File..."}, ge.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			giv.CallMethod(ge, "ViewFile", ge.Viewport)
 		})
 
@@ -2704,7 +2704,7 @@ func (ge *GideView) TextViewButtonMenu(obj ki.Ki, m *gi.Menu) {
 	tv := ge.TextViewByIndex(idx)
 	for i, n := range opn {
 		m.AddAction(gi.ActOpts{Label: n, Data: i}, ge.This(),
-			func(recv, send ki.Ki, sig int64, data interface{}) {
+			func(recv, send ki.Ki, sig int64, data any) {
 				ac := send.(*gi.Action)
 				gidx := ac.Data.(int)
 				nb := ge.OpenNodes[gidx]
@@ -2779,7 +2779,7 @@ func (ge *GideView) FileNodeOpened(fn *giv.FileNode, tvn *gide.FileTreeView) {
 		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
 			Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
 			[]string{"Open", "Cancel"},
-			ge.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 				switch sig {
 				case 0:
 					ge.NextViewFileNode(fn)
@@ -2930,7 +2930,7 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 
 func (ge *GideView) KeyChordEvent() {
 	// need hipri to prevent 2-seq guys from being captured by others
-	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
 		gee := recv.Embed(KiT_GideView).(*GideView)
 		kt := d.(*key.ChordEvent)
 		gee.GideViewKeys(kt)
@@ -2938,14 +2938,14 @@ func (ge *GideView) KeyChordEvent() {
 }
 
 func (ge *GideView) MouseEvent() {
-	ge.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	ge.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		gee := recv.Embed(KiT_GideView).(*GideView)
 		gide.SetGoMod(gee.Prefs.GoMod)
 	})
 }
 
 func (ge *GideView) OSFileEvent() {
-	ge.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	ge.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		gee := recv.Embed(KiT_GideView).(*GideView)
 		ofe := d.(*osevent.OpenFilesEvent)
 		for _, fn := range ofe.Files {
@@ -2978,7 +2978,7 @@ func (ge *GideView) ConnectEvents2D() {
 }
 
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
-var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
+var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ge.IsConfiged() {
 		return
@@ -2987,7 +2987,7 @@ var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei interface{}, act *
 })
 
 // GideViewInactiveTextViewFunc is an ActionUpdateFunc that inactivates action there is no active text view
-var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
+var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ge.IsConfiged() {
 		return
@@ -2996,7 +2996,7 @@ var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei interface{}, ac
 })
 
 // GideViewInactiveTextSelectionFunc is an ActionUpdateFunc that inactivates action there is no active text view
-var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei interface{}, act *gi.Action) {
+var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Action) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ge.IsConfiged() {
 		return
@@ -3030,7 +3030,7 @@ var GideViewProps = ki.Props{
 			"label": "Open...",
 			"icon":  "file-open",
 			"desc":  "open a file in current active text view",
-			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunFileOpen).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3043,7 +3043,7 @@ var GideViewProps = ki.Props{
 			"label": "Save",
 			"desc":  "save active text view file to its current filename",
 			"icon":  "file-save",
-			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBufSave).String())
 			}),
 		}},
@@ -3051,7 +3051,7 @@ var GideViewProps = ki.Props{
 			"label": "Save As...",
 			"icon":  "file-save",
 			"desc":  "save active text view file to a new filename",
-			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBufSaveAs).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3069,7 +3069,7 @@ var GideViewProps = ki.Props{
 			"label":        "Edit",
 			"desc":         "select an open file to view in active text view",
 			"submenu-func": giv.SubMenuFunc(GideViewOpenNodes),
-			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBufSelect).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3133,14 +3133,14 @@ var GideViewProps = ki.Props{
 		{"Build", ki.Props{
 			"icon": "terminal",
 			"desc": "build the project -- command(s) specified in Project Prefs",
-			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
 			}),
 		}},
 		{"Run", ki.Props{
 			"icon": "terminal",
 			"desc": "run the project -- command(s) specified in Project Prefs",
-			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 			}),
 		}},
@@ -3161,7 +3161,7 @@ var GideViewProps = ki.Props{
 			"label":           "Exec Cmd",
 			"desc":            "execute given command on active file / directory / project",
 			"subsubmenu-func": giv.SubSubMenuFunc(ExecCmds),
-			"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunExecCmd).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3286,7 +3286,7 @@ var GideViewProps = ki.Props{
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
 				"label": "Open File...",
-				"shortcut-func": func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunFileOpen).String())
 				},
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3298,7 +3298,7 @@ var GideViewProps = ki.Props{
 			}},
 			{"SaveActiveView", ki.Props{
 				"label": "Save File",
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBufSave).String())
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3307,7 +3307,7 @@ var GideViewProps = ki.Props{
 				"label":    "Save File As...",
 				"updtfunc": GideViewInactiveEmptyFunc,
 				"desc":     "save active text view file to a new filename",
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBufSaveAs).String())
 				}),
 				"Args": ki.PropSlice{
@@ -3325,7 +3325,7 @@ var GideViewProps = ki.Props{
 			{"CloseActiveView", ki.Props{
 				"label":    "Close File",
 				"updtfunc": GideViewInactiveEmptyFunc,
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBufClose).String())
 				}),
 			}},
@@ -3356,7 +3356,7 @@ var GideViewProps = ki.Props{
 				{"RegisterCopy", ki.Props{
 					"label": "Copy...",
 					"desc":  "save currently-selected text to a named register, which can be pasted later -- persistent across sessions as well",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunRegCopy).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
@@ -3369,7 +3369,7 @@ var GideViewProps = ki.Props{
 				{"RegisterPaste", ki.Props{
 					"label": "Paste...",
 					"desc":  "paste text from named register",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunRegPaste).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
@@ -3441,13 +3441,13 @@ var GideViewProps = ki.Props{
 			}},
 			{"sep-adv", ki.BlankProp{}},
 			{"CommentOut", ki.Props{
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunCommentOut).String())
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"Indent", ki.Props{
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunIndent).String())
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3480,21 +3480,21 @@ var GideViewProps = ki.Props{
 			{"Panels", ki.PropSlice{
 				{"FocusNextPanel", ki.Props{
 					"label": "Focus Next",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunNextPanel).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
 				}},
 				{"FocusPrevPanel", ki.Props{
 					"label": "Focus Prev",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunPrevPanel).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
 				}},
 				{"CloneActiveView", ki.Props{
 					"label": "Clone Active",
-					"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunBufClone).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
@@ -3555,13 +3555,13 @@ var GideViewProps = ki.Props{
 		{"Command", ki.PropSlice{
 			{"Build", ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
 				}),
 			}},
 			{"Run", ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
-				"shortcut-func": giv.ShortcutFunc(func(gei interface{}, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 				}),
 			}},

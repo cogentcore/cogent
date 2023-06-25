@@ -121,7 +121,7 @@ type Gide interface {
 
 	// LookupFun is the completion system Lookup function that makes a custom
 	// textview dialog that has option to edit resulting file.
-	LookupFun(data interface{}, text string, posLn, posCh int) (ld complete.Lookup)
+	LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup)
 
 	// Spell checks spelling in active text view
 	Spell()

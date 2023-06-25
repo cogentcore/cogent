@@ -305,7 +305,7 @@ func (pv *PiView) LexAll() {
 func (pv *PiView) SelectLexRule(rule *lex.Rule) {
 	lt := pv.LexTree()
 	lt.UnselectAll()
-	lt.FuncDownMeFirst(0, lt.This(), func(k ki.Ki, level int, d interface{}) bool {
+	lt.FuncDownMeFirst(0, lt.This(), func(k ki.Ki, level int, d any) bool {
 		lnt := k.Embed(giv.KiT_TreeView)
 		if lnt == nil {
 			return true
@@ -447,7 +447,7 @@ func (pv *PiView) ParseAll() {
 func (pv *PiView) SelectParseRule(rule *parse.Rule) {
 	lt := pv.ParseTree()
 	lt.UnselectAll()
-	lt.FuncDownMeFirst(0, lt.This(), func(k ki.Ki, level int, d interface{}) bool {
+	lt.FuncDownMeFirst(0, lt.This(), func(k ki.Ki, level int, d any) bool {
 		lnt := k.Embed(giv.KiT_TreeView)
 		if lnt == nil {
 			return true
@@ -661,7 +661,7 @@ func (pv *PiView) OpenConsoleTab() {
 	ctv.SetProp("white-space", gist.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
-		gide.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gide.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			pve, _ := recv.Embed(KiT_PiView).(*PiView)
 			pve.SelectMainTabByName("Console")
 		})
@@ -902,7 +902,7 @@ func (pv *PiView) ConfigSplitView() {
 		pv.StructView().SetStruct(&pv.Parser.Lexer)
 	}
 
-	pv.LexTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	pv.LexTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if data == nil {
 			return
 		}
@@ -916,7 +916,7 @@ func (pv *PiView) ConfigSplitView() {
 		}
 	})
 
-	pv.ParseTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	pv.ParseTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if data == nil {
 			return
 		}
@@ -930,7 +930,7 @@ func (pv *PiView) ConfigSplitView() {
 		}
 	})
 
-	pv.AstTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	pv.AstTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if data == nil {
 			return
 		}
@@ -1076,7 +1076,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 
 func (ge *PiView) KeyChordEvent() {
 	// need hipri to prevent 2-seq guys from being captured by others
-	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
 		gee := recv.Embed(KiT_PiView).(*PiView)
 		kt := d.(*key.ChordEvent)
 		gee.PiViewKeys(kt)
@@ -1118,7 +1118,7 @@ var PiViewProps = ki.Props{
 			"shortcut": gi.KeyFunMenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
-			"updtfunc": giv.ActionUpdateFunc(func(pvi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
 				pv := pvi.(*PiView)
 				act.SetActiveState( /* pv.Changed && */ pv.Prefs.ProjFile != "")
 			}),
@@ -1138,7 +1138,7 @@ var PiViewProps = ki.Props{
 		{"SaveParser", ki.Props{
 			"icon": "file-save",
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
-			"updtfunc": giv.ActionUpdateFunc(func(pvi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
 				pv := pvi.(*PiView)
 				act.SetActiveStateUpdt( /* pv.Changed && */ pv.Prefs.ParserFile != "")
 			}),
@@ -1252,7 +1252,7 @@ var PiViewProps = ki.Props{
 				"shortcut": gi.KeyFunMenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
-				"updtfunc": giv.ActionUpdateFunc(func(pvi interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( /* pv.Changed && */ pv.Prefs.ProjFile != "")
 				}),
@@ -1283,7 +1283,7 @@ var PiViewProps = ki.Props{
 			{"SaveParser", ki.Props{
 				"shortcut": gi.KeyFunMenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
-				"updtfunc": giv.ActionUpdateFunc(func(pvi interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( /* pv.Changed && */ pv.Prefs.ParserFile != "")
 				}),
@@ -1321,7 +1321,7 @@ func (pv *PiView) CloseWindowReq() bool {
 	gi.ChoiceDialog(pv.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Changes",
 		Prompt: fmt.Sprintf("In Project: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this project and review?", pv.Nm)},
 		[]string{"Cancel", "Save Proj", "Close Without Saving"},
-		pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			switch sig {
 			case 0:
 				// do nothing, will have returned false already
@@ -1392,7 +1392,7 @@ func NewPiView() (*gi.Window, *PiView) {
 				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
 					Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
 					[]string{"Close Without Saving", "Cancel"},
-					win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+					win.This(), func(recv, send ki.Ki, sig int64, data any) {
 						switch sig {
 						case 0:
 							w.Close()
@@ -1412,7 +1412,7 @@ func NewPiView() (*gi.Window, *PiView) {
 			inQuitPrompt = true
 			gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
 				Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
-				win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+				win.This(), func(recv, send ki.Ki, sig int64, data any) {
 					if sig == int64(gi.DialogAccepted) {
 						oswin.TheApp.Quit()
 					} else {

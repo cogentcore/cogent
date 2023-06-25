@@ -38,7 +38,7 @@ type Variable struct {
 
 var KiT_Variable = kit.Types.AddType(&Variable{}, nil)
 
-func (vr *Variable) CopyFieldsFrom(frm interface{}) {
+func (vr *Variable) CopyFieldsFrom(frm any) {
 	fr := frm.(*Variable)
 	vr.Value = fr.Value
 	vr.TypeStr = fr.TypeStr
@@ -72,7 +72,7 @@ var VariableProps = ki.Props{
 		{"FollowPtr", ki.Props{
 			"desc": "retrieve the contents of this pointer -- child nodes will contain further data",
 			"icon": "update",
-			"updtfunc": func(vri interface{}, act *gi.Action) {
+			"updtfunc": func(vri any, act *gi.Action) {
 				vr := vri.(ki.Ki).Embed(KiT_Variable).(*Variable)
 				act.SetActiveState(!vr.HasChildren())
 			},

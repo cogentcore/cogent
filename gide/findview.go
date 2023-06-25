@@ -240,7 +240,7 @@ func (fv *FindView) ReplaceAction() bool {
 
 // ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindView) ReplaceAllAction() {
-	gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Replace All", Prompt: "Are you sure you want to Replace All?"}, gi.AddOk, gi.AddCancel, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Replace All", Prompt: "Are you sure you want to Replace All?"}, gi.AddOk, gi.AddCancel, fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.DialogAccepted) {
 			fv.ReplaceAll()
 		}
@@ -450,7 +450,7 @@ func (fv *FindView) ConfigToolbar() {
 	rb.SetStretchMaxWidth()
 
 	fb.AddAction(gi.ActOpts{Label: "Find:", Tooltip: "Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.FindAction()
 		})
@@ -462,13 +462,13 @@ func (fv *FindView) ConfigToolbar() {
 	finds.ConfigParts()
 	finds.ItemsFromStringList(fv.Params().FindHist, true, 0)
 	ftf, _ := finds.TextField()
-	finds.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	finds.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		cb := send.(*gi.ComboBox)
 		fvv.Params().Find = cb.CurVal.(string)
 		fvv.FindAction()
 	})
-	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.TextFieldDone) || sig == int64(gi.TextFieldDeFocused) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
@@ -488,7 +488,7 @@ func (fv *FindView) ConfigToolbar() {
 
 	ic := fb.AddNewChild(gi.KiT_CheckBox, "ignore-case").(*gi.CheckBox)
 	ic.SetText("Ignore Case")
-	ic.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ic.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonToggled) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			cb := send.(*gi.CheckBox)
@@ -499,7 +499,7 @@ func (fv *FindView) ConfigToolbar() {
 	rx := fb.AddNewChild(gi.KiT_CheckBox, "regexp").(*gi.CheckBox)
 	rx.SetText("Regexp")
 	rx.Tooltip = "use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax"
-	rx.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	rx.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonToggled) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			cb := send.(*gi.CheckBox)
@@ -516,7 +516,7 @@ func (fv *FindView) ConfigToolbar() {
 	cf.SetText("Loc")
 	cf.Tooltip = locl.Tooltip
 	cf.ItemsFromEnum(KiT_FindLoc, false, 0)
-	cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		cb := send.(*gi.ComboBox)
 		eval := cb.CurVal.(kit.EnumValue)
@@ -526,18 +526,18 @@ func (fv *FindView) ConfigToolbar() {
 	//////////////// ReplBar
 
 	rb.AddAction(gi.ActOpts{Name: "prev", Icon: "wedge-up", Tooltip: "go to previous result"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.PrevFind()
 		})
 
 	rb.AddAction(gi.ActOpts{Name: "next", Icon: "wedge-down", Tooltip: "go to next result"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.NextFind()
 		})
 
-	rb.AddAction(gi.ActOpts{Label: "Replace:", Tooltip: "Replace find string with replace string for currently-selected find result"}, fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	rb.AddAction(gi.ActOpts{Label: "Replace:", Tooltip: "Replace find string with replace string for currently-selected find result"}, fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		fvv.CompileRegexp()
 		fvv.ReplaceAction()
@@ -550,12 +550,12 @@ func (fv *FindView) ConfigToolbar() {
 	repls.ConfigParts()
 	repls.ItemsFromStringList(fv.Params().ReplHist, true, 0)
 	rtf, _ := repls.TextField()
-	repls.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	repls.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 		cb := send.(*gi.ComboBox)
 		fvv.Params().Replace = cb.CurVal.(string)
 	})
-	rtf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	rtf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.TextFieldDone) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			tf := send.(*gi.TextField)
@@ -563,7 +563,7 @@ func (fv *FindView) ConfigToolbar() {
 		}
 	})
 	rb.AddAction(gi.ActOpts{Label: "All", Tooltip: "replace all find strings with replace string"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
 			fvv.ReplaceAllAction()
 		})

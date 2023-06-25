@@ -59,7 +59,7 @@ func PrefsView(pf *Preferences) *gi.Window {
 		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Prefs Before Closing?",
 			Prompt: "Do you want to save any changes to preferences before closing?"},
 			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			win.This(), func(recv, send ki.Ki, sig int64, data any) {
 				switch sig {
 				case 0:
 					pf.Save()
@@ -168,7 +168,7 @@ func KeyMapsView(km *KeyMaps) {
 	tv.SetStretchMaxHeight()
 
 	AvailKeyMapsChanged = false
-	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data any) {
 		AvailKeyMapsChanged = true
 	})
 
@@ -188,7 +188,7 @@ func KeyMapsView(km *KeyMaps) {
 		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save KeyMaps Before Closing?",
 			Prompt: "Do you want to save any changes to preferences keymaps file before closing, or Cancel the close and do a Save to a different file?"},
 			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			win.This(), func(recv, send ki.Ki, sig int64, data any) {
 				switch sig {
 				case 0:
 					km.SavePrefs()
@@ -254,7 +254,7 @@ func (vv *KeyMapValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Action)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
-	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_KeyMapValueView).(*KeyMapValueView)
 		ac := vvv.Widget.(*gi.Action)
 		vvv.Activate(ac.Viewport, nil, nil)
@@ -274,7 +274,7 @@ func (vv *KeyMapValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
 	desc, _ := vv.Tag("desc")
 	giv.TableViewSelectDialog(vp, &AvailKeyMaps, giv.DlgOpts{Title: "Select a KeyMap", Prompt: desc}, curRow, nil,
-		vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				ddlg, _ := send.(*gi.Dialog)
 				si := giv.TableViewSelectDialogValue(ddlg)
@@ -322,7 +322,7 @@ func LangsView(pt *Langs) {
 	mv.SetStretchMaxHeight()
 
 	AvailLangsChanged = false
-	mv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data any) {
 		AvailLangsChanged = true
 	})
 
@@ -342,7 +342,7 @@ func LangsView(pt *Langs) {
 		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Lang Opts Before Closing?",
 			Prompt: "Do you want to save any changes to preferences language options file before closing, or Cancel the close and do a Save to a different file?"},
 			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			win.This(), func(recv, send ki.Ki, sig int64, data any) {
 				switch sig {
 				case 0:
 					pt.SavePrefs()
@@ -401,7 +401,7 @@ func CmdsView(pt *Commands) {
 	tv.SetStretchMaxHeight()
 
 	CustomCmdsChanged = false
-	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data any) {
 		CustomCmdsChanged = true
 	})
 
@@ -421,7 +421,7 @@ func CmdsView(pt *Commands) {
 		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Commands Before Closing?",
 			Prompt: "Do you want to save any changes to custom commands file before closing, or Cancel the close and do a Save to a different file?"},
 			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			win.This(), func(recv, send ki.Ki, sig int64, data any) {
 				switch sig {
 				case 0:
 					pt.SavePrefs()
@@ -486,7 +486,7 @@ func (vv *CmdValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Action)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
-	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_CmdValueView).(*CmdValueView)
 		ac := vvv.Widget.(*gi.Action)
 		vvv.Activate(ac.Viewport, nil, nil)
@@ -509,7 +509,7 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 	}
 	desc, _ := vv.Tag("desc")
 	giv.TableViewSelectDialog(vp, &AvailCmds, giv.DlgOpts{Title: "Select a Command", Prompt: desc}, curRow, nil,
-		vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				ddlg, _ := send.(*gi.Dialog)
 				si := giv.TableViewSelectDialogValue(ddlg)
@@ -558,7 +558,7 @@ func SplitsView(pt *Splits) {
 	tv.SetStretchMaxHeight()
 
 	AvailSplitsChanged = false
-	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data any) {
 		AvailSplitsChanged = true
 	})
 
@@ -578,7 +578,7 @@ func SplitsView(pt *Splits) {
 		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Splits Before Closing?",
 			Prompt: "Do you want to save any changes to custom splitter settings file before closing, or Cancel the close and do a Save to a different file?"},
 			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			win.This(), func(recv, send ki.Ki, sig int64, data any) {
 				switch sig {
 				case 0:
 					pt.SavePrefs()
@@ -643,7 +643,7 @@ func (vv *SplitValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Action)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
-	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_SplitValueView).(*SplitValueView)
 		ac := vvv.Widget.(*gi.Action)
 		vvv.Activate(ac.Viewport, nil, nil)
@@ -666,7 +666,7 @@ func (vv *SplitValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.
 	}
 	desc, _ := vv.Tag("desc")
 	giv.TableViewSelectDialog(vp, &AvailSplits, giv.DlgOpts{Title: "Select a Named Splitter Config", Prompt: desc}, curRow, nil,
-		vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				ddlg, _ := send.(*gi.Dialog)
 				si := giv.TableViewSelectDialogValue(ddlg)
@@ -715,7 +715,7 @@ func RegistersView(pt *Registers) {
 	tv.SetStretchMaxHeight()
 
 	AvailRegistersChanged = false
-	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data any) {
 		AvailRegistersChanged = true
 	})
 
@@ -735,7 +735,7 @@ func RegistersView(pt *Registers) {
 		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Registers Before Closing?",
 			Prompt: "Do you want to save any changes to custom register file before closing, or Cancel the close and do a Save to a different file?"},
 			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+			win.This(), func(recv, send ki.Ki, sig int64, data any) {
 				switch sig {
 				case 0:
 					pt.SavePrefs()
@@ -800,7 +800,7 @@ func (vv *RegisterValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Action)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
-	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_RegisterValueView).(*RegisterValueView)
 		ac := vvv.Widget.(*gi.Action)
 		vvv.Activate(ac.Viewport, nil, nil)
@@ -823,7 +823,7 @@ func (vv *RegisterValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 	} else {
 		recv = vp.This().(gi.Node2D)
 	}
-	gi.StringsChooserPopup(AvailRegisterNames, cur, recv, func(recv, send ki.Ki, sig int64, data interface{}) {
+	gi.StringsChooserPopup(AvailRegisterNames, cur, recv, func(recv, send ki.Ki, sig int64, data any) {
 		ac := send.(*gi.Action)
 		rnm := ac.Text
 		if ci := strings.Index(rnm, ":"); ci > 0 {

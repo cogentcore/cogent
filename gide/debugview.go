@@ -862,51 +862,51 @@ func (dv *DebugView) ConfigToolBar() {
 		stl.CurBgColor = stl.CurBgColor.Darker(75)
 	}
 	tb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath + " -- automatically rebuilds exe if any source files have changed"}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Start()
 			tb.UpdateActions()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point", Shortcut: "Control+Alt+R", UpdateFunc: dv.ActionActivate}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			go dvv.Continue()
 			tb.UpdateActions()
 		})
 	gi.AddNewLabel(tb, "step", "Step: ")
 	tb.AddAction(gi.ActOpts{Label: "Over", Icon: "step-over", Tooltip: "continues to the next source line, not entering function calls", Shortcut: "F6", UpdateFunc: dv.ActionActivate}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOver()
 			tb.UpdateActions()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Into", Icon: "step-into", Tooltip: "continues to the next source line, entering into function calls", Shortcut: "F7", UpdateFunc: dv.ActionActivate}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepInto()
 			tb.UpdateActions()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Out", Icon: "step-out", Tooltip: "continues to the return point of the current function", Shortcut: "F8", UpdateFunc: dv.ActionActivate}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOut()
 			tb.UpdateActions()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Single", Icon: "step-fwd", Tooltip: "steps a single CPU instruction", UpdateFunc: dv.ActionActivate}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.StepOut()
 			tb.UpdateActions()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Stop", Icon: "stop", Tooltip: "stop execution"}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			dvv.Stop()
 			tb.UpdateActions()
 		})
 	tb.AddSeparator("sep-av")
 	tb.AddAction(gi.ActOpts{Label: "Global Vars", Icon: "search", Tooltip: "list variables at global scope, subject to filter (name contains)"}, dv.This(),
-		func(recv, send ki.Ki, sig int64, data interface{}) {
+		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
 			giv.CallMethod(dvv, "ListGlobalVars", dvv.Viewport)
 			tb.UpdateActions()
@@ -953,7 +953,7 @@ func (sv *StackView) Config(dv *DebugView, findFrames bool) {
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
-		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				if sv.FindFrames {
@@ -1029,7 +1029,7 @@ func (sv *BreakView) Config(dv *DebugView) {
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
-		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				dv.ShowBreakFile(idx)
@@ -1098,7 +1098,7 @@ func (sv *ThreadView) Config(dv *DebugView) {
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
-		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				if dv.Dbg != nil && !dv.Dbg.HasTasks() {
@@ -1164,7 +1164,7 @@ func (sv *TaskView) Config(dv *DebugView) {
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
-		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				if dv.Dbg != nil && dv.Dbg.HasTasks() {
@@ -1232,7 +1232,7 @@ func (sv *VarsView) Config(dv *DebugView, globalVars bool) {
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
 	if mods {
-		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(giv.SliceViewDoubleClicked) {
 				idx := data.(int)
 				if sv.GlobalVars {
@@ -1387,7 +1387,7 @@ func (vv *VarView) ConfigSplitView() {
 		tvfr := gi.AddNewFrame(split, "tvfr", gi.LayoutHoriz)
 		tv := giv.AddNewTreeView(tvfr, "tv")
 		giv.AddNewStructView(split, "sv")
-		tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if data == nil {
 				return
 			}

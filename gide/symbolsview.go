@@ -95,7 +95,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 	svbar.SetStretchMaxWidth()
 
 	svbar.AddAction(gi.ActOpts{Label: "Refresh", Icon: "update", Tooltip: "refresh symbols for current file and scope"},
-		sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
 			svv.RefreshAction()
 		})
@@ -106,7 +106,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 	scb.SetText("Scope")
 	scb.Tooltip = sl.Tooltip
 	scb.ItemsFromEnum(Kit_SymbolsViewScope, false, 0)
-	scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
 		smb := send.(*gi.ComboBox)
 		eval := smb.CurVal.(kit.EnumValue)
@@ -122,7 +122,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 	stxt.SetStretchMaxWidth()
 	stxt.Tooltip = "narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched"
 	stxt.SetActiveState(true)
-	stxt.TextFieldSig.ConnectOnly(stxt.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	stxt.TextFieldSig.ConnectOnly(stxt.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.TextFieldInsert) || sig == int64(gi.TextFieldBackspace) || sig == int64(gi.TextFieldDelete) {
 			sv.Match = sv.SearchText().Text()
 			sv.ConfigTree(sv.Params().Scope)
@@ -161,7 +161,7 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 
 		tv = sfr.AddNewChild(KiT_SymTreeView, "treeview").(*SymTreeView)
 		tv.SetRootNode(sv.Syms)
-		tv.TreeViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		tv.TreeViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if data == nil || sig != int64(giv.TreeViewSelected) {
 				return
 			}

@@ -65,7 +65,7 @@ func InitPrefs() {
 	// TheConsole.Init() // must do this manually
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
 		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
-			win, func(recv, send ki.Ki, sig int64, data interface{}) {
+			win, func(recv, send ki.Ki, sig int64, data any) {
 				PrefsView(&Prefs)
 			})
 	}
@@ -233,7 +233,7 @@ var PreferencesProps = ki.Props{
 			}},
 			{"Save", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(pfi interface{}, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Action) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
 				}),
@@ -252,7 +252,7 @@ var PreferencesProps = ki.Props{
 		{"Save", ki.Props{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(pfi interface{}, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Action) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdt(pf.Changed)
 			}),
