@@ -45,7 +45,7 @@ func AddNewGridView(parent ki.Ki, name string) *GridView {
 	return gv
 }
 
-func (g *GridView) CopyFieldsFrom(frm interface{}) {
+func (g *GridView) CopyFieldsFrom(frm any) {
 	fr := frm.(*GridView)
 	g.Frame.CopyFieldsFrom(&fr.Frame)
 	// todo: fill out
@@ -116,7 +116,7 @@ func (gv *GridView) PromptPhysSize() {
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
 	giv.StructViewDialog(gv.Viewport, sz, giv.DlgOpts{Title: "SVG Physical Size", Ok: true, Cancel: true}, gv.This(),
-		func(recv, send ki.Ki, sig int64, d interface{}) {
+		func(recv, send ki.Ki, sig int64, d any) {
 			if sig == int64(gi.DialogAccepted) {
 				gv.SetPhysSize(sz)
 				sv.bgGridEff = -1
@@ -406,7 +406,7 @@ func (gv *GridView) Config() {
 
 	tv.SetRootNode(sv)
 
-	tv.TreeViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	tv.TreeViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		gvv := recv.Embed(KiT_GridView).(*GridView)
 		if data == nil {
 			return
@@ -494,102 +494,102 @@ func (gv *GridView) ConfigMainToolbar() {
 	tb := gv.MainToolbar()
 	tb.SetStretchMaxWidth()
 	tb.AddAction(gi.ActOpts{Label: "Updt", Icon: "update", Tooltip: "update display -- should not be needed but sometimes, while still under development..."},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.UpdateAll()
 		})
 	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing of specified size"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			ndr := grr.NewDrawing(Prefs.Size)
 			ndr.PromptPhysSize()
 		})
 	szmen := tb.AddAction(gi.ActOpts{Label: "Size", Icon: "gear"}, nil, nil)
 	szmen.Menu.AddAction(gi.ActOpts{Label: "Set Size...", Icon: "gear", Tooltip: "set size and grid spacing of drawing"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.PromptPhysSize()
 		})
 	szmen.Menu.AddAction(gi.ActOpts{Label: "Resize To Contents", Icon: "gear", Tooltip: "resizes the drawing to fit the current contents, moving everything to upper-left corner while preserving grid alignment"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.ResizeToContents()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Open...", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "OpenDrawing", grr.ViewportSafe())
 		})
 	tb.AddAction(gi.ActOpts{Label: "Save", Icon: "file-save", Tooltip: "Save drawing to .svg file, using current filename (if empty, prompts)"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SaveDrawing()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Save As...", Icon: "file-save", Tooltip: "Save drawing to a new .svg file"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "SaveDrawingAs", grr.ViewportSafe())
 		})
 	expmen := tb.AddAction(gi.ActOpts{Label: "Export", Icon: "file-save"}, nil, nil)
 	expmen.Menu.AddAction(gi.ActOpts{Label: "Export PNG", Icon: "file-image", Tooltip: "Export drawing to a .png file -- requires cairosvg.org to be installed"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "ExportPNG", grr.ViewportSafe())
 		})
 	expmen.Menu.AddAction(gi.ActOpts{Label: "Export PDF", Icon: "file-pdf", Tooltip: "Export drawing to a .pdf  file -- requires cairosvg.org to be installed"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "ExportPDF", grr.ViewportSafe())
 		})
 
 	tb.AddSeparator("sep-undo")
 	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "rotate-left", Tooltip: "Undo last action", UpdateFunc: gv.UndoAvailFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.Undo()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Redo", Icon: "rotate-right", Tooltip: "Redo last undo action", UpdateFunc: gv.RedoAvailFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.Redo()
 		})
 	tb.AddSeparator("sep-edit")
 	tb.AddAction(gi.ActOpts{Label: "Duplicate", Icon: "documents", Tooltip: "Duplicate current selection -- original items will remain selected", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.DuplicateSelected()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Copy", Icon: "copy", Tooltip: "Copy current selection to clipboard", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.CopySelected()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Cut", Icon: "cut", Tooltip: "Cut current selection -- delete and copy to clipboard", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.CutSelected()
 		})
 	tb.AddAction(gi.ActOpts{Label: "Paste", Icon: "paste", Tooltip: "Paste clipboard contents", UpdateFunc: gv.PasteAvailFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.PasteClip()
 		})
 	tb.AddSeparator("sep-import")
 	tb.AddAction(gi.ActOpts{Label: "Add Image...", Icon: "file-image", Tooltip: "add an image from a file"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "AddImage", grr.ViewportSafe())
 		})
 	tb.AddSeparator("sep-view")
 	tb.AddAction(gi.ActOpts{Label: "Zoom Page", Icon: "zoom-out", Tooltip: "zoom to see entire page size for drawing"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			svvv := grr.SVG()
 			svvv.ZoomToPage(false)
 			svvv.UpdateView(true)
 		})
 	tb.AddAction(gi.ActOpts{Label: "Zoom All", Icon: "zoom-out", Tooltip: "zoom to see entire contents"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			svvv := grr.SVG()
 			svvv.ZoomToContents(false)
@@ -661,7 +661,7 @@ func (gv *GridView) CloseWindowReq() bool {
 	gi.ChoiceDialog(gv.Viewport, gi.DlgOpts{Title: "Close Drawing: There are Unsaved Changes",
 		Prompt: fmt.Sprintf("In Drawing: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this drawing?", giv.DirAndFile(string(gv.Filename)))},
 		[]string{"Cancel", "Save", "Close Without Saving"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			switch sig {
 			case 0:
 				// do nothing, will have returned false already
@@ -927,7 +927,7 @@ func (gv *GridView) ConnectEvents2D() {
 }
 
 func (gv *GridView) OSFileEvent() {
-	gv.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	gv.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		ofe := d.(*osevent.OpenFilesEvent)
 		for _, fn := range ofe.Files {
 			NewGridWindow(fn)
@@ -954,7 +954,7 @@ func (gv *GridView) EditRecents() {
 	gi.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
 	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
 	giv.SliceViewDialog(gv.Viewport, &tmp, opts,
-		nil, gv, func(recv, send ki.Ki, sig int64, data interface{}) {
+		nil, gv, func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				SavedPaths = nil
 				SavedPaths = append(SavedPaths, tmp...)

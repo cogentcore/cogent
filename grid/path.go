@@ -36,7 +36,7 @@ func (gv *GridView) ConfigNodeToolbar() {
 	grs.SetText("Snap Node")
 	grs.Tooltip = "snap movement and sizing of nodes, using overall snap settings"
 	grs.SetChecked(Prefs.SnapNodes)
-	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonToggled) {
 			Prefs.SnapNodes = grs.IsChecked()
 		}
@@ -57,7 +57,7 @@ func (gv *GridView) ConfigNodeToolbar() {
 	px.SetProp("step", 1)
 	px.SetValue(0)
 	px.Tooltip = "horizontal coordinate of node, in document units"
-	px.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	px.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		grr := recv.Embed(KiT_GridView).(*GridView)
 		grr.NodeSetXPos(px.Value)
 	})
@@ -67,7 +67,7 @@ func (gv *GridView) ConfigNodeToolbar() {
 	py.SetProp("step", 1)
 	py.SetValue(0)
 	py.Tooltip = "vertical coordinate of node, in document units"
-	py.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	py.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		grr := recv.Embed(KiT_GridView).(*GridView)
 		grr.NodeSetYPos(py.Value)
 	})
@@ -183,7 +183,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 
 	for i, pn := range es.PathNodes {
 		idx := i // key to get local var
-		sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
 			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 			ssvg.NodeSpriteEvent(idx, oswin.EventType(sig), d)
 		})
@@ -213,7 +213,7 @@ func (sv *SVGView) RemoveNodeSprites(win *gi.Window) {
 	es.ActivePath = nil
 }
 
-func (sv *SVGView) NodeSpriteEvent(idx int, et oswin.EventType, d interface{}) {
+func (sv *SVGView) NodeSpriteEvent(idx int, et oswin.EventType, d any) {
 	win := sv.GridView.ParentWindow()
 	es := sv.EditState()
 	es.SelNoDrag = false

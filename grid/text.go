@@ -207,7 +207,7 @@ func (gv *GridView) ConfigTextToolbar() {
 	txt.Tooltip = "current text string"
 	txt.SetText(ts.Text)
 	txt.SetProp("width", units.NewCh(50))
-	txt.TextFieldSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	txt.TextFieldSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.TextFieldDone) {
 			ts.Text = txt.Text()
 			ts.Update()
@@ -221,7 +221,7 @@ func (gv *GridView) ConfigTextToolbar() {
 
 	fsz := gi.AddNewSpinBox(tb, "size")
 	fsz.SetValue(ts.Size.Val)
-	fsz.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fsz.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		ts.Size.Val = fsz.Value
 		ts.Update()
 	})
@@ -229,7 +229,7 @@ func (gv *GridView) ConfigTextToolbar() {
 	fzu := gi.AddNewComboBox(tb, "size-units")
 	fzu.ItemsFromEnum(units.KiT_Units, true, 0)
 	fzu.SetCurIndex(int(ts.Size.Un))
-	fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		ts.Size.Un = units.Units(fzu.CurIndex)
 		ts.Update()
 	})

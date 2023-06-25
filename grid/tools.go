@@ -95,32 +95,32 @@ func (gv *GridView) ConfigTools() {
 	tb.Lay = gi.LayoutVert
 	tb.SetStretchMaxHeight()
 	tb.AddAction(gi.ActOpts{Label: "S", Icon: "arrow", Tooltip: "S, Space: select, move, resize objects"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(SelectTool)
 		})
 	tb.AddAction(gi.ActOpts{Label: "N", Icon: "tool-node", Tooltip: "N: select, move node points within paths"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(NodeTool)
 		})
 	tb.AddAction(gi.ActOpts{Label: "R", Icon: "stop", Tooltip: "R: create rectangles and squares"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(RectTool)
 		})
 	tb.AddAction(gi.ActOpts{Label: "E", Icon: "circlebutton-off", Tooltip: "E: create circles, ellipses, and arcs"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(EllipseTool)
 		})
 	tb.AddAction(gi.ActOpts{Label: "B", Icon: "color", Tooltip: "B: create bezier curves (straight lines, curves with control points)"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(BezierTool)
 		})
 	tb.AddAction(gi.ActOpts{Label: "T", Icon: "tool-text", Tooltip: "T: add / edit text"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SetTool(TextTool)
 		})

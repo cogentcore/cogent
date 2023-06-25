@@ -78,7 +78,7 @@ func RecycleMarker(sg *svg.SVG, sii svg.NodeSVG, name string, id int, mc MarkerC
 
 // MarkerSetColors sets color properties in each element
 func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
-	mk.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+	mk.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d any) bool {
 		fp := k.Prop("fill")
 		if fp != nil {
 			if strings.HasPrefix(mk.Nm, "Empty") {
@@ -101,7 +101,7 @@ func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
 
 // MarkerDeleteCtxtColors deletes context-* color names from standard code
 func MarkerDeleteCtxtColors(mk *svg.Marker) {
-	mk.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+	mk.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d any) bool {
 		fp := k.Prop("fill")
 		if fp != nil {
 			fps := kit.ToString(fp)
@@ -274,7 +274,7 @@ func init() {
 
 // IconToMarkerName converts a gi.IconName (as an interface{})
 // to a marker name suitable for use (removes marker- prefix)
-func IconToMarkerName(icnm interface{}) string {
+func IconToMarkerName(icnm any) string {
 	return strings.TrimPrefix(kit.ToString(icnm), "marker-")
 }
 

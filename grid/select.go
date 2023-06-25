@@ -36,7 +36,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	grs.SetText("Snap Grid")
 	grs.Tooltip = "snap movement and sizing of selection to grid"
 	grs.SetChecked(Prefs.SnapGrid)
-	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonToggled) {
 			Prefs.SnapGrid = grs.IsChecked()
 		}
@@ -46,7 +46,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	gis.SetText("Guide")
 	gis.Tooltip = "snap movement and sizing of selection to align with other elements in the scene"
 	gis.SetChecked(Prefs.SnapGuide)
-	gis.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	gis.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonToggled) {
 			Prefs.SnapGuide = gis.IsChecked()
 		}
@@ -54,13 +54,13 @@ func (gv *GridView) ConfigSelectToolbar() {
 	tb.AddSeparator("sep-snap")
 
 	tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelGroup()
 		})
 
 	tb.AddAction(gi.ActOpts{Icon: "sel-ungroup", Tooltip: "Shift+Ctrl+G: ungroup items", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelUnGroup()
 		})
@@ -68,44 +68,44 @@ func (gv *GridView) ConfigSelectToolbar() {
 	tb.AddSeparator("sep-group")
 
 	tb.AddAction(gi.ActOpts{Icon: "sel-rotate-left", Tooltip: "Ctrl-[: rotate selection 90deg counter-clockwise", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelRotateLeft()
 		})
 	tb.AddAction(gi.ActOpts{Icon: "sel-rotate-right", Tooltip: "Ctrl-]: rotate selection 90deg clockwise", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelRotateRight()
 		})
 	tb.AddAction(gi.ActOpts{Icon: "sel-flip-horiz", Tooltip: "H: flip selection horizontally", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelFlipHoriz()
 		})
 	tb.AddAction(gi.ActOpts{Icon: "sel-flip-vert", Tooltip: "V: flip selection vertically", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelFlipVert()
 		})
 
 	tb.AddSeparator("sep-rot")
 	tb.AddAction(gi.ActOpts{Icon: "sel-raise-top", Tooltip: "Raise selection to top (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelRaiseTop()
 		})
 	tb.AddAction(gi.ActOpts{Icon: "sel-raise", Tooltip: "Raise selection one level (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelRaise()
 		})
 	tb.AddAction(gi.ActOpts{Icon: "sel-lower-bottom", Tooltip: "Lower selection to bottom (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelLowerBot()
 		})
 	tb.AddAction(gi.ActOpts{Icon: "sel-lower", Tooltip: "Lower selection one level (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelLower()
 		})
@@ -116,7 +116,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	px.SetProp("step", 1)
 	px.SetValue(0)
 	px.Tooltip = "horizontal coordinate of selection, in document units"
-	px.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	px.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		grr := recv.Embed(KiT_GridView).(*GridView)
 		grr.SelSetXPos(px.Value)
 	})
@@ -126,7 +126,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	py.SetProp("step", 1)
 	py.SetValue(0)
 	py.Tooltip = "vertical coordinate of selection, in document units"
-	py.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	py.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		grr := recv.Embed(KiT_GridView).(*GridView)
 		grr.SelSetYPos(py.Value)
 	})
@@ -136,7 +136,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	wd.SetProp("step", 1)
 	wd.SetValue(0)
 	wd.Tooltip = "width of selection, in document units"
-	wd.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	wd.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		grr := recv.Embed(KiT_GridView).(*GridView)
 		grr.SelSetWidth(wd.Value)
 	})
@@ -146,7 +146,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 	ht.SetProp("step", 1)
 	ht.SetValue(0)
 	ht.Tooltip = "height of selection, in document units"
-	ht.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ht.SpinBoxSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		grr := recv.Embed(KiT_GridView).(*GridView)
 		grr.SelSetHeight(ht.Value)
 	})
@@ -216,7 +216,7 @@ func (sv *SVGView) UpdateSelSprites() {
 
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
 		spi := i // key to get a unique local var
-		SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d interface{}) {
+		SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
 			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 			ssvg.SelSpriteEvent(spi, oswin.EventType(sig), d)
 		})
@@ -287,7 +287,7 @@ func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox mat32.Box2) {
 	}
 }
 
-func (sv *SVGView) SelSpriteEvent(sp Sprites, et oswin.EventType, d interface{}) {
+func (sv *SVGView) SelSpriteEvent(sp Sprites, et oswin.EventType, d any) {
 	win := sv.GridView.ParentWindow()
 	es := sv.EditState()
 	es.SelNoDrag = false
@@ -620,7 +620,7 @@ func (gv *GridView) SelSetHeight(ht float32) {
 func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.NodeSVG {
 	var rval []svg.NodeSVG
 	var curlay ki.Ki
-	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
+	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d any) bool {
 		if k == sv.This() {
 			return ki.Continue
 		}
@@ -684,7 +684,7 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		curlay = NodeParentLayer(fn)
 	}
 	var rval svg.NodeSVG
-	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
+	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d any) bool {
 		if k == sv.This() {
 			return ki.Continue
 		}

@@ -90,7 +90,7 @@ func (gv *GridView) FirstLayerIndex() int {
 func (gv *GridView) LayerViewSigs(lyv *giv.TableView) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	lyv.ViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	lyv.ViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		// fmt.Printf("tv viewsig: %v  data: %v  send: %v\n", sig, data, send.Path())
 		updt := sv.UpdateStart()
 		es.Layers.LayersUpdated(sv)
@@ -98,7 +98,7 @@ func (gv *GridView) LayerViewSigs(lyv *giv.TableView) {
 		gv.UpdateLayerView()
 	})
 
-	lyv.SliceViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	lyv.SliceViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		svs := giv.SliceViewSignals(sig)
 		idx := data.(int)
 		fmt.Printf("tv sliceviewsig: %v  data: %v\n", svs.String(), idx)
@@ -117,7 +117,7 @@ func (gv *GridView) LayerViewSigs(lyv *giv.TableView) {
 		}
 	})
 
-	lyv.WidgetSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	lyv.WidgetSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		fmt.Printf("tv widgetsig: %v  data: %v\n", gi.WidgetSignals(sig).String(), data)
 		if sig == int64(gi.WidgetSelected) {
 			idx := data.(int)
@@ -205,7 +205,7 @@ func LayerIsVisible(kn ki.Ki) bool {
 // NodeParentLayer returns the parent group that is a layer -- nil if none
 func NodeParentLayer(kn ki.Ki) ki.Ki {
 	var parLay ki.Ki
-	kn.FuncUp(0, kn, func(k ki.Ki, level int, d interface{}) bool {
+	kn.FuncUp(0, kn, func(k ki.Ki, level int, d any) bool {
 		if NodeIsLayer(k) {
 			parLay = k
 			return ki.Break

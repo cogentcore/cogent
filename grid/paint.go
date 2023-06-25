@@ -522,7 +522,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	wsb.SetProp("min", 0)
 	wsb.SetProp("step", 0.05)
 	wsb.SetValue(sty.StrokeStyle.Width.Val)
-	wsb.SpinBoxSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	wsb.SpinBoxSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
 		}
@@ -531,7 +531,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	uncb := gi.AddNewComboBox(wr, "width-units")
 	uncb.ItemsFromEnum(units.KiT_Units, true, 0)
 	uncb.SetCurIndex(int(Prefs.Size.Units))
-	uncb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	uncb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetStrokeWidth(pv.StrokeWidthProp(), false)
 		}
@@ -542,7 +542,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	dshcb := gi.AddNewComboBox(wr, "dashes")
 	dshcb.SetProp("width", units.NewCh(15))
 	dshcb.ItemsFromIconList(AllDashIconNames, true, 0)
-	dshcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	dshcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetDashProps(pv.StrokeDashProp())
 		}
@@ -553,7 +553,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	mscb := gi.AddNewComboBox(mkr, "marker-start")
 	// mscb.SetProp("width", units.NewCh(20))
 	mscb.ItemsFromIconList(AllMarkerIconNames, true, 0)
-	mscb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mscb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
@@ -561,7 +561,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	mscc := gi.AddNewComboBox(mkr, "marker-start-color")
 	mscc.SetProp("width", units.NewCh(5))
 	mscc.ItemsFromStringList(MarkerColorNames, true, 0)
-	mscc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mscc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
@@ -572,7 +572,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	mmcb := gi.AddNewComboBox(mkr, "marker-mid")
 	// mmcb.SetProp("width", units.NewCh(20))
 	mmcb.ItemsFromIconList(AllMarkerIconNames, true, 0)
-	mmcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mmcb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
@@ -580,7 +580,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	mmcc := gi.AddNewComboBox(mkr, "marker-mid-color")
 	mmcc.SetProp("width", units.NewCh(5))
 	mmcc.ItemsFromStringList(MarkerColorNames, true, 0)
-	mmcc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mmcc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
@@ -591,7 +591,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	mecb := gi.AddNewComboBox(mkr, "marker-end")
 	// mecb.SetProp("width", units.NewCh(20))
 	mecb.ItemsFromIconList(AllMarkerIconNames, true, 0)
-	mecb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mecb.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
@@ -599,7 +599,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	mecc := gi.AddNewComboBox(mkr, "marker-end-color")
 	mecc.SetProp("width", units.NewCh(5))
 	mecc.ItemsFromStringList(MarkerColorNames, true, 0)
-	mecc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mecc.ComboSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.IsStrokeOn() {
 			pv.GridView.SetMarkerProps(pv.MarkerProps())
 		}
@@ -616,7 +616,7 @@ func (pv *PaintView) Config(gv *GridView) {
 
 	gi.AddNewFrame(ss, "stroke-blank", gi.LayoutHoriz) // nothing
 
-	spt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	spt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		pvv := recv.Embed(KiT_PaintView).(*PaintView)
 		sss := pvv.StrokeStack()
 		prev := pv.StrokeType
@@ -645,12 +645,12 @@ func (pv *PaintView) Config(gv *GridView) {
 	sc.SetProp("vertical-align", gist.AlignTop)
 	sc.Config()
 	sc.SetColor(sty.StrokeStyle.Color.Color)
-	sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.StrokeType == PaintSolid {
 			pv.GridView.SetStrokeColor(pv.StrokeProp(), false) // not manip
 		}
 	})
-	sc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	sc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.StrokeType == PaintSolid {
 			pv.GridView.SetStrokeColor(pv.StrokeProp(), true) // manip
 		}
@@ -661,7 +661,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	sg.SetProp("toolbar", true)
 	sg.SelectedIdx = -1
 	sg.SetSlice(&pv.GridView.EditState.Gradients)
-	sg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	sg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.WidgetSelected) {
 			svv, _ := send.(*giv.TableView)
 			if svv.SelectedIdx >= 0 {
@@ -689,7 +689,7 @@ func (pv *PaintView) Config(gv *GridView) {
 
 	gi.AddNewFrame(fs, "fill-blank", gi.LayoutHoriz) // nothing
 
-	fpt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fpt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		pvv := recv.Embed(KiT_PaintView).(*PaintView)
 		fss := pvv.FillStack()
 		prev := pvv.FillType
@@ -718,12 +718,12 @@ func (pv *PaintView) Config(gv *GridView) {
 	fc.SetProp("vertical-align", gist.AlignTop)
 	fc.Config()
 	fc.SetColor(sty.FillStyle.Color.Color)
-	fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.FillType == PaintSolid {
 			pv.GridView.SetFillColor(pv.FillProp(), false)
 		}
 	})
-	fc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if pv.FillType == PaintSolid {
 			pv.GridView.SetFillColor(pv.FillProp(), true) // manip
 		}
@@ -734,7 +734,7 @@ func (pv *PaintView) Config(gv *GridView) {
 	fg.SetProp("toolbar", true)
 	fg.SelectedIdx = -1
 	fg.SetSlice(&pv.GridView.EditState.Gradients)
-	fg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.WidgetSelected) {
 			svv, _ := send.(*giv.TableView)
 			if svv.SelectedIdx >= 0 {
@@ -743,7 +743,7 @@ func (pv *PaintView) Config(gv *GridView) {
 			}
 		}
 	})
-	fg.SliceViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fg.SliceViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		// fmt.Printf("svs: %v   %v\n", sig, data)
 		// svv, _ := send.(*giv.TableView)
 		if sig == int64(giv.SliceViewDeleted) { // not clear what we can do here
@@ -751,7 +751,7 @@ func (pv *PaintView) Config(gv *GridView) {
 			pv.GridView.UpdateGradients()
 		}
 	})
-	fg.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	fg.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		// fmt.Printf("vs: %v   %v\n", sig, data)
 		// svv, _ := send.(*giv.TableView)
 		pv.GridView.UpdateGradients()

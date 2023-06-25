@@ -64,7 +64,7 @@ func AddNewSVGView(parent ki.Ki, name string, gv *GridView) *SVGView {
 	return sv
 }
 
-func (g *SVGView) CopyFieldsFrom(frm interface{}) {
+func (g *SVGView) CopyFieldsFrom(frm any) {
 	fr := frm.(*SVGView)
 	g.SVG.CopyFieldsFrom(&fr.SVG)
 	g.Trans = fr.Trans
@@ -161,7 +161,7 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 
 func (sv *SVGView) KeyChordEvent() {
 	// need hipri to prevent 2-seq guys from being captured by others
-	sv.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	sv.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
 		svv := recv.Embed(KiT_SVGView).(*SVGView)
 		kt := d.(*key.ChordEvent)
 		svv.SVGViewKeys(kt)
@@ -169,7 +169,7 @@ func (sv *SVGView) KeyChordEvent() {
 }
 
 func (sv *SVGView) MouseDrag() {
-	sv.ConnectEvent(oswin.MouseDragEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	sv.ConnectEvent(oswin.MouseDragEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		me := d.(*mouse.DragEvent)
 		me.SetProcessed()
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -186,7 +186,7 @@ func (sv *SVGView) MouseDrag() {
 }
 
 func (sv *SVGView) MouseScroll() {
-	sv.ConnectEvent(oswin.MouseScrollEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	sv.ConnectEvent(oswin.MouseScrollEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		me := d.(*mouse.ScrollEvent)
 		me.SetProcessed()
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -206,7 +206,7 @@ func (sv *SVGView) MouseScroll() {
 }
 
 func (sv *SVGView) MouseEvent() {
-	sv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	sv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		me := d.(*mouse.Event)
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		ssvg.GrabFocus()
@@ -279,7 +279,7 @@ func (sv *SVGView) MouseEvent() {
 }
 
 func (sv *SVGView) MouseHover() {
-	sv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d interface{}) {
+	sv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		me := d.(*mouse.HoverEvent)
 		me.SetProcessed()
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -360,7 +360,7 @@ func (sv *SVGView) ConnectEvents2D() {
 func (sv *SVGView) ContentsBBox() mat32.Box2 {
 	bbox := mat32.Box2{}
 	bbox.SetEmpty()
-	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d any) bool {
 		if k.This() == sv.This() {
 			return ki.Continue
 		}
@@ -397,7 +397,7 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 // XFormAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaXForm manipulation.
 func (sv *SVGView) XFormAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
-	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d interface{}) bool {
+	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d any) bool {
 		if k.This() == sv.This() {
 			return ki.Continue
 		}
@@ -638,23 +638,23 @@ func (sv *SVGView) EditNode(kn ki.Ki) {
 
 // MakeNodeContextMenu makes the menu of options for context right click
 func (sv *SVGView) MakeNodeContextMenu(m *gi.Menu, kn ki.Ki) {
-	m.AddAction(gi.ActOpts{Label: "Edit"}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	m.AddAction(gi.ActOpts{Label: "Edit"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.EditNode(kn)
 	})
-	m.AddAction(gi.ActOpts{Label: "Select in Tree"}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	m.AddAction(gi.ActOpts{Label: "Select in Tree"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.SelectNodeInTree(kn, mouse.SelectOne)
 	})
 	m.AddSeparator("sep-clip")
-	m.AddAction(gi.ActOpts{Label: "Duplicate", ShortcutKey: gi.KeyFunDuplicate}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	m.AddAction(gi.ActOpts{Label: "Duplicate", ShortcutKey: gi.KeyFunDuplicate}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.DuplicateSelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: gi.KeyFunCopy}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: gi.KeyFunCopy}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.CopySelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: gi.KeyFunCut}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: gi.KeyFunCut}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.CutSelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: gi.KeyFunPaste}, sv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: gi.KeyFunPaste}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.PasteClip()
 	})
 }

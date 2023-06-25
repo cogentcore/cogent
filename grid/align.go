@@ -190,7 +190,7 @@ func (sv *SVGView) GatherAlignPoints() {
 		es.AlignPts[ap] = make([]mat32.Vec2, 0)
 	}
 
-	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d interface{}) bool {
+	sv.FuncDownMeFirst(0, sv.This(), func(k ki.Ki, level int, d any) bool {
 		if k == sv.This() {
 			return ki.Continue
 		}
@@ -255,7 +255,7 @@ func (av *AlignView) Config(gv *GridView) {
 	rta.SetIcon("align-right-anchor")
 	rta.SetProp("#icon", icprops)
 	rta.Tooltip = "align right edges of selected items to left edge of anchor item"
-	rta.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	rta.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMaxAnchor(av.AlignAnchor(), mat32.X, "AlignRightAnchor")
 	})
 
@@ -263,7 +263,7 @@ func (av *AlignView) Config(gv *GridView) {
 	lft.SetIcon("align-left")
 	lft.SetProp("#icon", icprops)
 	lft.Tooltip = "align left edges of all selected items"
-	lft.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	lft.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMin(av.AlignAnchor(), mat32.X, "AlignLeft")
 	})
 
@@ -271,7 +271,7 @@ func (av *AlignView) Config(gv *GridView) {
 	ctr.SetIcon("align-center")
 	ctr.SetProp("#icon", icprops)
 	ctr.Tooltip = "align centers of all selected items"
-	ctr.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	ctr.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignCenter(av.AlignAnchor(), mat32.X, "AlignCenter")
 	})
 
@@ -279,7 +279,7 @@ func (av *AlignView) Config(gv *GridView) {
 	rgt.SetIcon("align-right")
 	rgt.SetProp("#icon", icprops)
 	rgt.Tooltip = "align right edges of all selected items"
-	rgt.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	rgt.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMax(av.AlignAnchor(), mat32.X, "AlignRight")
 	})
 
@@ -287,7 +287,7 @@ func (av *AlignView) Config(gv *GridView) {
 	lta.SetIcon("align-left-anchor")
 	lta.SetProp("#icon", icprops)
 	lta.Tooltip = "align left edges of all selected items to right edge of anchor item"
-	lta.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	lta.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMinAnchor(av.AlignAnchor(), mat32.X, "AlignLeftAnchor")
 	})
 
@@ -295,7 +295,7 @@ func (av *AlignView) Config(gv *GridView) {
 	bsh.SetIcon("align-baseline-horiz")
 	bsh.SetProp("#icon", icprops)
 	bsh.Tooltip = "align left text baseline edges of all selected items"
-	bsh.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	bsh.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMin(av.AlignAnchor(), mat32.X, "AlignBaseH")
 	})
 
@@ -303,7 +303,7 @@ func (av *AlignView) Config(gv *GridView) {
 	bta.SetIcon("align-bottom-anchor")
 	bta.SetProp("#icon", icprops)
 	bta.Tooltip = "align bottom edges of all selected items to top edge of anchor item"
-	bta.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	bta.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMaxAnchor(av.AlignAnchor(), mat32.Y, "AlignBotAnchor")
 	})
 
@@ -311,7 +311,7 @@ func (av *AlignView) Config(gv *GridView) {
 	top.SetIcon("align-top")
 	top.SetProp("#icon", icprops)
 	top.Tooltip = "align top edges of all selected items"
-	top.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	top.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMin(av.AlignAnchor(), mat32.Y, "AlignTop")
 	})
 
@@ -319,7 +319,7 @@ func (av *AlignView) Config(gv *GridView) {
 	mid.SetIcon("align-middle")
 	mid.SetProp("#icon", icprops)
 	mid.Tooltip = "align middle vertical point of all selected items"
-	mid.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	mid.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignCenter(av.AlignAnchor(), mat32.Y, "AlignTop")
 	})
 
@@ -327,7 +327,7 @@ func (av *AlignView) Config(gv *GridView) {
 	bot.SetIcon("align-bottom")
 	bot.SetProp("#icon", icprops)
 	bot.Tooltip = "align bottom edges of all selected items"
-	bot.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	bot.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMax(av.AlignAnchor(), mat32.Y, "AlignBottom")
 	})
 
@@ -335,7 +335,7 @@ func (av *AlignView) Config(gv *GridView) {
 	tpa.SetIcon("align-top-anchor")
 	tpa.SetProp("#icon", icprops)
 	tpa.Tooltip = "align top edges of all selected items to bottom edge of anchor item"
-	tpa.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	tpa.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMinAnchor(av.AlignAnchor(), mat32.Y, "AlignTopAnchor")
 	})
 
@@ -343,7 +343,7 @@ func (av *AlignView) Config(gv *GridView) {
 	bsv.SetIcon("align-baseline-vert")
 	bsv.SetProp("#icon", icprops)
 	bsv.Tooltip = "align baseline points of all selected items vertically"
-	bsv.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	bsv.ActionSig.Connect(av.This(), func(recv, send ki.Ki, sig int64, data any) {
 		av.GridView.AlignMax(av.AlignAnchor(), mat32.Y, "AlignBaseV")
 	})
 
