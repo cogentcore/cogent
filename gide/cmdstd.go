@@ -177,11 +177,28 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "Git", Name: "Checkout Branch",
-		Desc: "git checkout: switch to an existing branch",
+	{Cat: "Git", Name: "Switch To Branch",
+		Desc: "git switch to an existing branch",
 		Lang: filecat.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
-			Args: []string{"checkout", "{PromptBranch}"}}},
+			Args: []string{"switch", "{PromptBranch}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "Git", Name: "Switch",
+		Desc: "git switch to new branch or existing commit: -c or -C (force) <branch> to create new; --detatch <commit> to switch to older (non-HEAD) commit; --orphan to abandon history",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args:    []string{"switch", "{PromptString1}"},
+			Default: "-c "}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
+	{Cat: "Git", Name: "Restore",
+		Desc: "git restore: file, directory -- undoes any current changes and restores from last commit; -s option specifies source -- also available as revert in file view",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args: []string{"restore", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
@@ -224,6 +241,14 @@ var StdCmds = Commands{
 			Args: []string{"commit", "-am", "{PromptString1}"}, PromptIsString: true}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}, // promptstring1 provided during normal commit process, MUST be wait!
+
+	{Cat: "Git", Name: "Pull Branch",
+		Desc: "git pull from existing branch",
+		Lang: filecat.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args: []string{"pull", "origin", "{PromptBranch}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Git", Name: "Pull",
 		Desc: "git pull",
