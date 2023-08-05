@@ -18,8 +18,12 @@ import (
 // Layer represents one layer group
 type Layer struct {
 	Name string
-	Vis  bool `desc:"visiblity toggle"`
-	Lck  bool `desc:"lock toggle"`
+
+	// visiblity toggle
+	Vis bool `desc:"visiblity toggle"`
+
+	// lock toggle
+	Lck bool `desc:"lock toggle"`
 }
 
 // FromNode copies state / prop values from given node

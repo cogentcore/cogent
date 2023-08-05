@@ -31,17 +31,39 @@ import (
 // SVGView is the element for viewing, interacting with the SVG
 type SVGView struct {
 	svg.SVG
-	GridView      *GridView   `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
-	Trans         mat32.Vec2  `desc:"view translation offset (from dragging)"`
-	Scale         float32     `desc:"view scaling (from zooming)"`
-	Grid          float32     `desc:"grid spacing, in native ViewBox units"`
-	GridEff       float32     `view:"inactive" desc:"effective grid spacing given Scale level"`
-	SetDragCursor bool        `view:"-" desc:"has dragging cursor been set yet?"`
-	BgPixels      *image.RGBA `copy:"-" json:"-" xml:"-" view:"-" desc:"background pixels, includes page outline and grid"`
-	BgRender      girl.State  `copy:"-" json:"-" xml:"-" view:"-" desc:"render state for background rendering"`
-	bgTrans       mat32.Vec2  `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered translation"`
-	bgScale       float32     `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered scale"`
-	bgGridEff     float32     `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered grid"`
+
+	// the parent gridview
+	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+
+	// view translation offset (from dragging)
+	Trans mat32.Vec2 `desc:"view translation offset (from dragging)"`
+
+	// view scaling (from zooming)
+	Scale float32 `desc:"view scaling (from zooming)"`
+
+	// grid spacing, in native ViewBox units
+	Grid float32 `desc:"grid spacing, in native ViewBox units"`
+
+	// effective grid spacing given Scale level
+	GridEff float32 `view:"inactive" desc:"effective grid spacing given Scale level"`
+
+	// has dragging cursor been set yet?
+	SetDragCursor bool `view:"-" desc:"has dragging cursor been set yet?"`
+
+	// background pixels, includes page outline and grid
+	BgPixels *image.RGBA `copy:"-" json:"-" xml:"-" view:"-" desc:"background pixels, includes page outline and grid"`
+
+	// render state for background rendering
+	BgRender girl.State `copy:"-" json:"-" xml:"-" view:"-" desc:"render state for background rendering"`
+
+	// bg rendered translation
+	bgTrans mat32.Vec2 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered translation"`
+
+	// bg rendered scale
+	bgScale float32 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered scale"`
+
+	// bg rendered grid
+	bgGridEff float32 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered grid"`
 }
 
 var KiT_SVGView = kit.Types.AddType(&SVGView{}, SVGViewProps)

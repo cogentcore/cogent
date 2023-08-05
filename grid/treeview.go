@@ -23,6 +23,8 @@ import (
 // TreeView is a TreeView that knows how to operate on FileNode nodes
 type TreeView struct {
 	giv.TreeView
+
+	// the parent gridview
 	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 

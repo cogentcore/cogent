@@ -25,21 +25,51 @@ import (
 
 // Preferences is the overall Grid preferences
 type Preferences struct {
-	Size         PhysSize               `desc:"default physical size, when app is started without opening a file"`
-	Colors       ColorPrefs             `desc:"active color preferences"`
+
+	// default physical size, when app is started without opening a file
+	Size PhysSize `desc:"default physical size, when app is started without opening a file"`
+
+	// active color preferences
+	Colors ColorPrefs `desc:"active color preferences"`
+
+	// named color schemes -- has Light and Dark schemes by default
 	ColorSchemes map[string]*ColorPrefs `desc:"named color schemes -- has Light and Dark schemes by default"`
-	ShapeStyle   girl.Paint             `desc:"default shape styles"`
-	TextStyle    girl.Paint             `desc:"default text styles"`
-	PathStyle    girl.Paint             `desc:"default line styles"`
-	LineStyle    girl.Paint             `desc:"default line styles"`
-	GridDisp     bool                   `desc:"turns on the grid display"`
-	SnapGrid     bool                   `desc:"snap positions and sizes to underlying grid"`
-	SnapGuide    bool                   `desc:"snap positions and sizes to line up with other elements"`
-	SnapNodes    bool                   `desc:"snap node movements to align with guides"`
-	SnapTol      int                    `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
-	SplitName    SplitName              `desc:"named-split config in use for configuring the splitters"`
-	EnvVars      map[string]string      `desc:"environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"`
-	Changed      bool                   `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+
+	// default shape styles
+	ShapeStyle girl.Paint `desc:"default shape styles"`
+
+	// default text styles
+	TextStyle girl.Paint `desc:"default text styles"`
+
+	// default line styles
+	PathStyle girl.Paint `desc:"default line styles"`
+
+	// default line styles
+	LineStyle girl.Paint `desc:"default line styles"`
+
+	// turns on the grid display
+	GridDisp bool `desc:"turns on the grid display"`
+
+	// snap positions and sizes to underlying grid
+	SnapGrid bool `desc:"snap positions and sizes to underlying grid"`
+
+	// snap positions and sizes to line up with other elements
+	SnapGuide bool `desc:"snap positions and sizes to line up with other elements"`
+
+	// snap node movements to align with guides
+	SnapNodes bool `desc:"snap node movements to align with guides"`
+
+	// number of screen pixels around target point (in either direction) to snap
+	SnapTol int `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
+
+	// named-split config in use for configuring the splitters
+	SplitName SplitName `desc:"named-split config in use for configuring the splitters"`
+
+	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
+	EnvVars map[string]string `desc:"environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"`
+
+	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -298,9 +328,15 @@ func OpenPaths() {
 
 // ColorPrefs for
 type ColorPrefs struct {
+
+	// drawing background color
 	Background gist.Color `desc:"drawing background color"`
-	Border     gist.Color `desc:"border color of the drawing"`
-	Grid       gist.Color `desc:"grid line color"`
+
+	// border color of the drawing
+	Border gist.Color `desc:"border color of the drawing"`
+
+	// grid line color
+	Grid gist.Color `desc:"grid line color"`
 }
 
 var KiT_ColorPrefs = kit.Types.AddType(&ColorPrefs{}, ColorPrefsProps)

@@ -32,8 +32,12 @@ import (
 // GridView is the Grid SVG vector drawing program: Go-rendered interactive drawing
 type GridView struct {
 	gi.Frame
-	Filename  gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
-	EditState EditState   `desc:"current edit state"`
+
+	// full path to current drawing filename
+	Filename gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
+
+	// current edit state
+	EditState EditState `desc:"current edit state"`
 }
 
 var KiT_GridView = kit.Types.AddType(&GridView{}, GridViewProps)

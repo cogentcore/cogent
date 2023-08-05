@@ -22,11 +22,21 @@ import (
 // for selected items
 type PaintView struct {
 	gi.Layout
-	StrokeType  PaintTypes `desc:"paint type for stroke"`
-	StrokeStops string     `desc:"name of gradient with stops"`
-	FillType    PaintTypes `desc:"paint type for fill"`
-	FillStops   string     `desc:"name of gradient with stops"`
-	GridView    *GridView  `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+
+	// paint type for stroke
+	StrokeType PaintTypes `desc:"paint type for stroke"`
+
+	// name of gradient with stops
+	StrokeStops string `desc:"name of gradient with stops"`
+
+	// paint type for fill
+	FillType PaintTypes `desc:"paint type for fill"`
+
+	// name of gradient with stops
+	FillStops string `desc:"name of gradient with stops"`
+
+	// the parent gridview
+	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 
 var KiT_PaintView = kit.Types.AddType(&PaintView{}, PaintViewProps)

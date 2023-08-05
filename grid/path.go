@@ -124,14 +124,32 @@ func (gv *GridView) NodeSetYPos(yp float32) {
 
 // PathNode is info about each node in a path that is being edited
 type PathNode struct {
-	Cmd      svg.PathCmds `desc:"path command"`
-	PrevCmd  svg.PathCmds `desc:"previous path command"`
-	CmdIdx   int          `desc:"starting index of command"`
-	Idx      int          `desc:"index of points in data stream"`
-	PtIdx    int          `desc:"logical index of point within current command (0 = first point, etc)"`
-	PCp      mat32.Vec2   `desc:"local coords abs previous current point that is starting point for this command"`
-	Cp       mat32.Vec2   `desc:"local coords abs current point"`
-	WinPt    mat32.Vec2   `desc:"main point coords in window (dot) coords"`
+
+	// path command
+	Cmd svg.PathCmds `desc:"path command"`
+
+	// previous path command
+	PrevCmd svg.PathCmds `desc:"previous path command"`
+
+	// starting index of command
+	CmdIdx int `desc:"starting index of command"`
+
+	// index of points in data stream
+	Idx int `desc:"index of points in data stream"`
+
+	// logical index of point within current command (0 = first point, etc)
+	PtIdx int `desc:"logical index of point within current command (0 = first point, etc)"`
+
+	// local coords abs previous current point that is starting point for this command
+	PCp mat32.Vec2 `desc:"local coords abs previous current point that is starting point for this command"`
+
+	// local coords abs current point
+	Cp mat32.Vec2 `desc:"local coords abs current point"`
+
+	// main point coords in window (dot) coords
+	WinPt mat32.Vec2 `desc:"main point coords in window (dot) coords"`
+
+	// control point coords in window (dot) coords (nil until manipulated)
 	WinCtrls []mat32.Vec2 `desc:"control point coords in window (dot) coords (nil until manipulated)"`
 }
 

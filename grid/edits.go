@@ -24,35 +24,90 @@ import (
 
 // EditState has all the current edit state information
 type EditState struct {
-	Tool      Tools       `desc:"current tool in use"`
-	Action    string      `desc:"current action being performed -- used for undo labeling"`
-	ActData   string      `desc:"action data set at start of action"`
-	Layers    Layers      `desc:"list of layers"`
-	CurLayer  string      `desc:"current layer -- where new objects are inserted"`
-	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
-	Text      TextStyle   `desc:"current text styling info"`
-	UndoMgr   undo.Mgr    `desc:"undo manager"`
-	Changed   bool        `view:"inactive" desc:"contents have changed"`
 
-	ActMu            sync.Mutex                `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
-	Selected         map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
-	SelNoDrag        bool                      `desc:"selection just happened on press, and no drag happened in between"`
-	NewTextMade      bool                      `desc:"true if a new text item was made while dragging"`
-	DragStartPos     image.Point               `desc:"point where dragging started, mouse coords"`
-	DragCurPos       image.Point               `desc:"current dragging position, mouse coords"`
-	SelBBox          mat32.Box2                `desc:"current selection bounding box"`
-	NSelSprites      int                       `desc:"number of current selectbox sprites"`
-	LastSelPos       image.Point               `desc:"last select action position -- continued clicks in same area lead to deeper selection"`
+	// current tool in use
+	Tool Tools `desc:"current tool in use"`
+
+	// current action being performed -- used for undo labeling
+	Action string `desc:"current action being performed -- used for undo labeling"`
+
+	// action data set at start of action
+	ActData string `desc:"action data set at start of action"`
+
+	// list of layers
+	Layers Layers `desc:"list of layers"`
+
+	// current layer -- where new objects are inserted
+	CurLayer string `desc:"current layer -- where new objects are inserted"`
+
+	// current shared gradients, referenced by obj-specific gradients
+	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
+
+	// current text styling info
+	Text TextStyle `desc:"current text styling info"`
+
+	// undo manager
+	UndoMgr undo.Mgr `desc:"undo manager"`
+
+	// contents have changed
+	Changed bool `view:"inactive" desc:"contents have changed"`
+
+	// action mutex, protecting start / end of actions
+	ActMu sync.Mutex `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
+
+	// selected item(s)
+	Selected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
+
+	// selection just happened on press, and no drag happened in between
+	SelNoDrag bool `desc:"selection just happened on press, and no drag happened in between"`
+
+	// true if a new text item was made while dragging
+	NewTextMade bool `desc:"true if a new text item was made while dragging"`
+
+	// point where dragging started, mouse coords
+	DragStartPos image.Point `desc:"point where dragging started, mouse coords"`
+
+	// current dragging position, mouse coords
+	DragCurPos image.Point `desc:"current dragging position, mouse coords"`
+
+	// current selection bounding box
+	SelBBox mat32.Box2 `desc:"current selection bounding box"`
+
+	// number of current selectbox sprites
+	NSelSprites int `desc:"number of current selectbox sprites"`
+
+	// last select action position -- continued clicks in same area lead to deeper selection
+	LastSelPos image.Point `desc:"last select action position -- continued clicks in same area lead to deeper selection"`
+
+	// recently selected item(s) -- within the same selection position
 	RecentlySelected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"recently selected item(s) -- within the same selection position"`
-	DragSelStartBBox mat32.Box2                `desc:"bbox at start of dragging"`
-	DragSelCurBBox   mat32.Box2                `desc:"current bbox during dragging -- non-snapped version"`
-	DragSelEffBBox   mat32.Box2                `desc:"current effective bbox during dragging -- snapped version"`
-	AlignPts         [BBoxPointsN][]mat32.Vec2 `desc:"potential points of alignment for dragging"`
-	NNodeSprites     int                       `desc:"number of current node sprites in use"`
-	ActivePath       *svg.Path                 `desc:"currently manipulating path object"`
-	PathNodes        []*PathNode               `desc:"current path node points"`
-	PathSel          map[int]struct{}          `desc:"selected path nodes"`
-	PathCmds         []int                     `desc:"current path command indexes within PathNodes -- where the commands start"`
+
+	// bbox at start of dragging
+	DragSelStartBBox mat32.Box2 `desc:"bbox at start of dragging"`
+
+	// current bbox during dragging -- non-snapped version
+	DragSelCurBBox mat32.Box2 `desc:"current bbox during dragging -- non-snapped version"`
+
+	// current effective bbox during dragging -- snapped version
+	DragSelEffBBox mat32.Box2 `desc:"current effective bbox during dragging -- snapped version"`
+
+	// potential points of alignment for dragging
+	AlignPts [BBoxPointsN][]mat32.Vec2 `desc:"potential points of alignment for dragging"`
+
+	// number of current node sprites in use
+	NNodeSprites int `desc:"number of current node sprites in use"`
+
+	// currently manipulating path object
+	ActivePath *svg.Path `desc:"currently manipulating path object"`
+
+	// current path node points
+	PathNodes []*PathNode `desc:"current path node points"`
+
+	// selected path nodes
+	PathSel map[int]struct{} `desc:"selected path nodes"`
+
+	// current path command indexes within PathNodes -- where the commands start
+	PathCmds []int `desc:"current path command indexes within PathNodes -- where the commands start"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
@@ -367,22 +422,40 @@ func (es *EditState) DragNodeStart(pos image.Point) {
 
 // SelState is state for selected nodes
 type SelState struct {
-	Order    int       `desc:"order item was selected"`
+
+	// order item was selected
+	Order int `desc:"order item was selected"`
+
+	// initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there
 	InitGeom []float32 `desc:"initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there"`
 }
 
 // GradStop represents a single gradient stop
 type GradStop struct {
-	Color   gist.Color `desc:"color -- alpha is ignored -- set opacity separately"`
-	Opacity float64    `desc:"opacity determines how opaque color is - used instead of alpha in color"`
-	Offset  float64    `desc:"offset position along the gradient vector: 0 = start, 1 = nominal end"`
+
+	// color -- alpha is ignored -- set opacity separately
+	Color gist.Color `desc:"color -- alpha is ignored -- set opacity separately"`
+
+	// opacity determines how opaque color is - used instead of alpha in color
+	Opacity float64 `desc:"opacity determines how opaque color is - used instead of alpha in color"`
+
+	// offset position along the gradient vector: 0 = start, 1 = nominal end
+	Offset float64 `desc:"offset position along the gradient vector: 0 = start, 1 = nominal end"`
 }
 
 // Gradient represents a single gradient that defines stops (referenced in StopName of other gradients)
 type Gradient struct {
-	Ic    gi.IconName `inactive:"+" tableview:"no-header" width:"5" desc:"icon of gradient -- generated to display each gradient"`
-	Id    string      `inactive:"+" width:"6" desc:"name of gradient (id)"`
-	Name  string      `view:"-" desc:"full name of gradient as SVG element"`
+
+	// icon of gradient -- generated to display each gradient
+	Ic gi.IconName `inactive:"+" tableview:"no-header" width:"5" desc:"icon of gradient -- generated to display each gradient"`
+
+	// name of gradient (id)
+	Id string `inactive:"+" width:"6" desc:"name of gradient (id)"`
+
+	// full name of gradient as SVG element
+	Name string `view:"-" desc:"full name of gradient as SVG element"`
+
+	// gradient stops
 	Stops []*GradStop `desc:"gradient stops"`
 }
 

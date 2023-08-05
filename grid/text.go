@@ -18,18 +18,42 @@ import (
 
 // TextStyle is text styling info -- using StructView to do text editor
 type TextStyle struct {
-	Text     string               `desc:"current text to edit"`
-	Font     gi.FontName          `xml:"font-family" desc:"font family"`
-	Size     units.Value          `xml:"font-size" desc:"font size"`
-	Style    gist.FontStyles      `xml:"font-style" inherit:"true" desc:"prop: font-style = style -- normal, italic, etc"`
-	Weight   gist.FontWeights     `xml:"font-weight" inherit:"true" desc:"prop: font-weight = weight: normal, bold, etc"`
-	Stretch  gist.FontStretch     `xml:"font-stretch" inherit:"true" desc:"prop: font-stretch = font stretch / condense options"`
-	Variant  gist.FontVariants    `xml:"font-variant" inherit:"true" desc:"prop: font-variant = normal or small caps"`
-	Deco     gist.TextDecorations `xml:"text-decoration" desc:"prop: text-decoration = underline, line-through, etc -- not inherited"`
-	Shift    gist.BaselineShifts  `xml:"baseline-shift" desc:"prop: baseline-shift = super / sub script -- not inherited"`
-	Align    gist.Align           `xml:"text-align" inherit:"true" desc:"prop: text-align (inherited) = how to align text, horizontally. This *only* applies to the text within its containing element, and is typically relevant only for multi-line text: for single-line text, if element does not have a specified size that is different from the text size, then this has *no effect*."`
-	FontVal  giv.FontValueView    `view:"-" desc:"font value view for font toolbar"`
-	GridView *GridView            `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+
+	// current text to edit
+	Text string `desc:"current text to edit"`
+
+	// font family
+	Font gi.FontName `xml:"font-family" desc:"font family"`
+
+	// font size
+	Size units.Value `xml:"font-size" desc:"font size"`
+
+	// prop: font-style = style -- normal, italic, etc
+	Style gist.FontStyles `xml:"font-style" inherit:"true" desc:"prop: font-style = style -- normal, italic, etc"`
+
+	// prop: font-weight = weight: normal, bold, etc
+	Weight gist.FontWeights `xml:"font-weight" inherit:"true" desc:"prop: font-weight = weight: normal, bold, etc"`
+
+	// prop: font-stretch = font stretch / condense options
+	Stretch gist.FontStretch `xml:"font-stretch" inherit:"true" desc:"prop: font-stretch = font stretch / condense options"`
+
+	// prop: font-variant = normal or small caps
+	Variant gist.FontVariants `xml:"font-variant" inherit:"true" desc:"prop: font-variant = normal or small caps"`
+
+	// prop: text-decoration = underline, line-through, etc -- not inherited
+	Deco gist.TextDecorations `xml:"text-decoration" desc:"prop: text-decoration = underline, line-through, etc -- not inherited"`
+
+	// prop: baseline-shift = super / sub script -- not inherited
+	Shift gist.BaselineShifts `xml:"baseline-shift" desc:"prop: baseline-shift = super / sub script -- not inherited"`
+
+	// prop: text-align (inherited) = how to align text, horizontally. This *only* applies to the text within its containing element, and is typically relevant only for multi-line text: for single-line text, if element does not have a specified size that is different from the text size, then this has *no effect*.
+	Align gist.Align `xml:"text-align" inherit:"true" desc:"prop: text-align (inherited) = how to align text, horizontally. This *only* applies to the text within its containing element, and is typically relevant only for multi-line text: for single-line text, if element does not have a specified size that is different from the text size, then this has *no effect*."`
+
+	// font value view for font toolbar
+	FontVal giv.FontValueView `view:"-" desc:"font value view for font toolbar"`
+
+	// the parent gridview
+	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 
 func (ts *TextStyle) Update() {

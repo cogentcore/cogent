@@ -18,6 +18,8 @@ import (
 // AlignView provides a range of alignment actions on selected objects.
 type AlignView struct {
 	gi.Layout
+
+	// the parent gridview
 	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 

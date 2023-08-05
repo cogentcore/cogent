@@ -14,11 +14,21 @@ import (
 
 // PhysSize specifies the physical size of the drawing, when making a new one
 type PhysSize struct {
-	StdSize  StdSizes    `desc:"select a standard size -- this will set units and size"`
-	Portrait bool        `desc:"for standard size, use first number as width, second as height"`
-	Units    units.Units `desc:"default units to use, e.g., in line widths etc"`
-	Size     mat32.Vec2  `desc:"drawing size, in Units"`
-	Grid     float32     `desc:"grid spacing, in units of ViewBox size"`
+
+	// select a standard size -- this will set units and size
+	StdSize StdSizes `desc:"select a standard size -- this will set units and size"`
+
+	// for standard size, use first number as width, second as height
+	Portrait bool `desc:"for standard size, use first number as width, second as height"`
+
+	// default units to use, e.g., in line widths etc
+	Units units.Units `desc:"default units to use, e.g., in line widths etc"`
+
+	// drawing size, in Units
+	Size mat32.Vec2 `desc:"drawing size, in Units"`
+
+	// grid spacing, in units of ViewBox size
+	Grid float32 `desc:"grid spacing, in units of ViewBox size"`
 }
 
 var KiT_PhysSize = kit.Types.AddType(&PhysSize{}, nil)
