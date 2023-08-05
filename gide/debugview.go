@@ -68,15 +68,33 @@ func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextB
 // DebugView is the debugger
 type DebugView struct {
 	gi.Layout
-	Sup        filecat.Supported `desc:"supported file type to determine debugger"`
-	ExePath    string            `desc:"path to executable / dir to debug"`
-	DbgTime    time.Time         `desc:"time when dbg was last restarted"`
-	Dbg        gidebug.GiDebug   `json:"-" xml:"-" desc:"the debugger"`
-	State      gidebug.AllState  `json:"-" xml:"-" desc:"all relevant debug state info"`
-	CurFileLoc gidebug.Location  `json:"-" xml:"-" desc:"current ShowFile location -- cleared before next one or run"`
-	BBreaks    []*gidebug.Break  `json:"-" xml:"-" desc:"backup breakpoints list -- to track deletes"`
-	OutBuf     *giv.TextBuf      `json:"-" xml:"-" desc:"output from the debugger"`
-	Gide       Gide              `json:"-" xml:"-" desc:"parent gide project"`
+
+	// supported file type to determine debugger
+	Sup filecat.Supported `desc:"supported file type to determine debugger"`
+
+	// path to executable / dir to debug
+	ExePath string `desc:"path to executable / dir to debug"`
+
+	// time when dbg was last restarted
+	DbgTime time.Time `desc:"time when dbg was last restarted"`
+
+	// the debugger
+	Dbg gidebug.GiDebug `json:"-" xml:"-" desc:"the debugger"`
+
+	// all relevant debug state info
+	State gidebug.AllState `json:"-" xml:"-" desc:"all relevant debug state info"`
+
+	// current ShowFile location -- cleared before next one or run
+	CurFileLoc gidebug.Location `json:"-" xml:"-" desc:"current ShowFile location -- cleared before next one or run"`
+
+	// backup breakpoints list -- to track deletes
+	BBreaks []*gidebug.Break `json:"-" xml:"-" desc:"backup breakpoints list -- to track deletes"`
+
+	// output from the debugger
+	OutBuf *giv.TextBuf `json:"-" xml:"-" desc:"output from the debugger"`
+
+	// parent gide project
+	Gide Gide `json:"-" xml:"-" desc:"parent gide project"`
 }
 
 var KiT_DebugView = kit.Types.AddType(&DebugView{}, DebugViewProps)
@@ -935,6 +953,8 @@ var DebugViewProps = ki.Props{
 // StackView is a view of the stack trace
 type StackView struct {
 	gi.Layout
+
+	// if true, this is a find frames, not a regular stack
 	FindFrames bool `desc:"if true, this is a find frames, not a regular stack"`
 }
 
@@ -1214,6 +1234,8 @@ var TaskViewProps = ki.Props{
 // VarsView is a view of the variables
 type VarsView struct {
 	gi.Layout
+
+	// if true, this is global vars, not local ones
 	GlobalVars bool `desc:"if true, this is global vars, not local ones"`
 }
 
@@ -1293,9 +1315,15 @@ var VarsViewProps = ki.Props{
 // box at the bottom where methods can be invoked
 type VarView struct {
 	gi.Frame
-	Var       *gidebug.Variable `desc:"variable being edited"`
-	FrameInfo string            `desc:"frame info"`
-	DbgView   *DebugView        `json:"-" xml:"-" desc:"parent DebugView"`
+
+	// variable being edited
+	Var *gidebug.Variable `desc:"variable being edited"`
+
+	// frame info
+	FrameInfo string `desc:"frame info"`
+
+	// parent DebugView
+	DbgView *DebugView `json:"-" xml:"-" desc:"parent DebugView"`
 }
 
 var KiT_VarView = kit.Types.AddType(&VarView{}, VarViewProps)

@@ -31,10 +31,18 @@ import (
 // CmdAndArgs contains the name of an external program to execute and args to
 // pass to that program
 type CmdAndArgs struct {
-	Cmd            string  `width:"25" desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
-	Args           CmdArgs `complete:"arg" width:"25" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows)."`
-	Default        string  `width:"25" desc:"default value for prompt string, for first use -- thereafter it uses last value provided for given command"`
-	PromptIsString bool    `desc:"if true, then do not split any prompted string into separate space-separated fields -- otherwise do so, except for values within quotes"`
+
+	// external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable.
+	Cmd string `width:"25" desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
+
+	// args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows).
+	Args CmdArgs `complete:"arg" width:"25" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows)."`
+
+	// default value for prompt string, for first use -- thereafter it uses last value provided for given command
+	Default string `width:"25" desc:"default value for prompt string, for first use -- thereafter it uses last value provided for given command"`
+
+	// if true, then do not split any prompted string into separate space-separated fields -- otherwise do so, except for values within quotes
+	PromptIsString bool `desc:"if true, then do not split any prompted string into separate space-separated fields -- otherwise do so, except for values within quotes"`
 }
 
 // Label satisfies the Labeler interface
@@ -160,10 +168,18 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 
 // CmdRun tracks running commands
 type CmdRun struct {
-	Name    string      `desc:"Name of command being run -- same as Command.Name"`
-	CmdStr  string      `desc:"command string"`
+
+	// Name of command being run -- same as Command.Name
+	Name string `desc:"Name of command being run -- same as Command.Name"`
+
+	// command string
+	CmdStr string `desc:"command string"`
+
+	// Details of the command and args
 	CmdArgs *CmdAndArgs `desc:"Details of the command and args"`
-	Exec    *exec.Cmd   `desc:"exec.Cmd for the command"`
+
+	// exec.Cmd for the command
+	Exec *exec.Cmd `desc:"exec.Cmd for the command"`
 }
 
 // Kill kills the process
@@ -233,15 +249,33 @@ func (rc *CmdRuns) KillByName(name string) bool {
 // Command defines different types of commands that can be run in the project.
 // The output of the commands shows up in an associated tab.
 type Command struct {
-	Cat     string            `desc:"category for the command -- commands are organized in to hierarchical menus according to category"`
-	Name    string            `width:"20" desc:"name of this command (must be unique in list of commands)"`
-	Desc    string            `width:"40" desc:"brief description of this command"`
-	Lang    filecat.Supported `desc:"supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type"`
-	Cmds    []CmdAndArgs      `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
-	Dir     string            `width:"20" complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
-	Wait    bool              `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
-	Focus   bool              `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
-	Confirm bool              `desc:"if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands"`
+
+	// category for the command -- commands are organized in to hierarchical menus according to category
+	Cat string `desc:"category for the command -- commands are organized in to hierarchical menus according to category"`
+
+	// name of this command (must be unique in list of commands)
+	Name string `width:"20" desc:"name of this command (must be unique in list of commands)"`
+
+	// brief description of this command
+	Desc string `width:"40" desc:"brief description of this command"`
+
+	// supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type
+	Lang filecat.Supported `desc:"supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type"`
+
+	// sequence of commands to run for this overall command.
+	Cmds []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
+
+	// if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory.
+	Dir string `width:"20" complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
+
+	// if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless.
+	Wait bool `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
+
+	// if true, keyboard focus is directed to the command output tab panel after the command runs.
+	Focus bool `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
+
+	// if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands
+	Confirm bool `desc:"if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands"`
 }
 
 // CommandName returns a qualified command name as cat: cmd

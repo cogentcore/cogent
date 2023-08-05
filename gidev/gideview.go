@@ -64,26 +64,66 @@ const (
 // middle, and a tabbed viewer on the right.
 type GideView struct {
 	gi.Frame
-	ProjRoot          gi.FileName             `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
-	ProjFilename      gi.FileName             `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
-	ActiveFilename    gi.FileName             `desc:"filename of the currently-active textview"`
-	ActiveLang        filecat.Supported       `desc:"language for current active filename"`
-	ActiveVCS         vci.Repo                `desc:"VCS repo for current active filename"`
-	ActiveVCSInfo     string                  `desc:"VCS info for current active filename (typically branch or revision) -- for status"`
-	Changed           bool                    `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
-	LastSaveTStamp    time.Time               `json:"-" desc:"timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger"`
-	Files             giv.FileTree            `desc:"all the files in the project directory and subdirectories"`
-	FilesView         *gide.FileTreeView      `json:"-" desc:"the files tree view"`
-	ActiveTextViewIdx int                     `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
-	OpenNodes         gide.OpenNodes          `json:"-" desc:"list of open nodes, most recent first"`
-	CmdBufs           map[string]*giv.TextBuf `json:"-" desc:"the command buffers for commands run in this project"`
-	CmdHistory        gide.CmdNames           `json:"-" desc:"history of commands executed in this session"`
-	RunningCmds       gide.CmdRuns            `json:"-" xml:"-" desc:"currently running commands in this project"`
-	ArgVals           gide.ArgVarVals         `json:"-" xml:"-" desc:"current arg var vals"`
-	Prefs             gide.ProjPrefs          `desc:"preferences for this project -- this is what is saved in a .gide project file"`
-	CurDbg            *gide.DebugView         `desc:"current debug view"`
-	KeySeq1           key.Chord               `desc:"first key in sequence if needs2 key pressed"`
-	UpdtMu            sync.Mutex              `desc:"mutex for protecting overall updates to GideView"`
+
+	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
+	ProjRoot gi.FileName `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+
+	// current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
+	ProjFilename gi.FileName `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
+
+	// filename of the currently-active textview
+	ActiveFilename gi.FileName `desc:"filename of the currently-active textview"`
+
+	// language for current active filename
+	ActiveLang filecat.Supported `desc:"language for current active filename"`
+
+	// VCS repo for current active filename
+	ActiveVCS vci.Repo `desc:"VCS repo for current active filename"`
+
+	// VCS info for current active filename (typically branch or revision) -- for status
+	ActiveVCSInfo string `desc:"VCS info for current active filename (typically branch or revision) -- for status"`
+
+	// has the root changed?  we receive update signals from root for changes
+	Changed bool `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+
+	// timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger
+	LastSaveTStamp time.Time `json:"-" desc:"timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger"`
+
+	// all the files in the project directory and subdirectories
+	Files giv.FileTree `desc:"all the files in the project directory and subdirectories"`
+
+	// the files tree view
+	FilesView *gide.FileTreeView `json:"-" desc:"the files tree view"`
+
+	// index of the currently-active textview -- new files will be viewed in other views if available
+	ActiveTextViewIdx int `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
+
+	// list of open nodes, most recent first
+	OpenNodes gide.OpenNodes `json:"-" desc:"list of open nodes, most recent first"`
+
+	// the command buffers for commands run in this project
+	CmdBufs map[string]*giv.TextBuf `json:"-" desc:"the command buffers for commands run in this project"`
+
+	// history of commands executed in this session
+	CmdHistory gide.CmdNames `json:"-" desc:"history of commands executed in this session"`
+
+	// currently running commands in this project
+	RunningCmds gide.CmdRuns `json:"-" xml:"-" desc:"currently running commands in this project"`
+
+	// current arg var vals
+	ArgVals gide.ArgVarVals `json:"-" xml:"-" desc:"current arg var vals"`
+
+	// preferences for this project -- this is what is saved in a .gide project file
+	Prefs gide.ProjPrefs `desc:"preferences for this project -- this is what is saved in a .gide project file"`
+
+	// current debug view
+	CurDbg *gide.DebugView `desc:"current debug view"`
+
+	// first key in sequence if needs2 key pressed
+	KeySeq1 key.Chord `desc:"first key in sequence if needs2 key pressed"`
+
+	// mutex for protecting overall updates to GideView
+	UpdtMu sync.Mutex `desc:"mutex for protecting overall updates to GideView"`
 }
 
 var KiT_GideView = kit.Types.AddType(&GideView{}, nil)

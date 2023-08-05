@@ -21,6 +21,8 @@ import (
 // LangOpts defines options associated with a given language / file format
 // only languages in filecat.Supported list are supported..
 type LangOpts struct {
+
+	// command(s) to run after a file of this type is saved
 	PostSaveCmds CmdNames `desc:"command(s) to run after a file of this type is saved"`
 }
 

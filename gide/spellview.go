@@ -22,14 +22,32 @@ import (
 // SpellView is a widget that displays results of spell check
 type SpellView struct {
 	gi.Layout
-	Gide       Gide       `json:"-" xml:"-" copy:"-" desc:"parent gide project"`
-	Text       *TextView  `json:"-" xml:"-" copy:"-" desc:"textview that we're spell-checking"`
-	Errs       lex.Line   `desc:"current spelling errors"`
-	CurLn      int        `desc:"current line in text we're on"`
-	CurIdx     int        `desc:"current index in Errs we're on"`
-	UnkLex     lex.Lex    `desc:"current unknown lex token"`
-	UnkWord    string     `desc:"current unknown word"`
-	Suggest    []string   `desc:"a list of suggestions from spell checker"`
+
+	// parent gide project
+	Gide Gide `json:"-" xml:"-" copy:"-" desc:"parent gide project"`
+
+	// textview that we're spell-checking
+	Text *TextView `json:"-" xml:"-" copy:"-" desc:"textview that we're spell-checking"`
+
+	// current spelling errors
+	Errs lex.Line `desc:"current spelling errors"`
+
+	// current line in text we're on
+	CurLn int `desc:"current line in text we're on"`
+
+	// current index in Errs we're on
+	CurIdx int `desc:"current index in Errs we're on"`
+
+	// current unknown lex token
+	UnkLex lex.Lex `desc:"current unknown lex token"`
+
+	// current unknown word
+	UnkWord string `desc:"current unknown word"`
+
+	// a list of suggestions from spell checker
+	Suggest []string `desc:"a list of suggestions from spell checker"`
+
+	// last user action (ignore, change, learn)
 	LastAction *gi.Action `desc:"last user action (ignore, change, learn)"`
 }
 

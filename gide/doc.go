@@ -9,5 +9,4 @@
 // GideView is in a separate gidev directory so that other packages can
 // tap into the gide infrastructure, and be callable directly from the
 // GideView editor, without creating circular import problems.
-//
 package gide

@@ -16,16 +16,36 @@ import (
 
 // Console redirects our os.Stdout and os.Stderr to a buffer for display within app
 type Console struct {
-	StdoutWrite *os.File     `json:"-" xml:"-" desc:"std out writer -- set to os.Stdout"`
-	StdoutRead  *os.File     `json:"-" xml:"-" desc:"std out reader -- used to read os.Stdout"`
-	StderrWrite *os.File     `json:"-" xml:"-" desc:"std err writer -- set to os.Stderr"`
-	StderrRead  *os.File     `json:"-" xml:"-" desc:"std err reader -- used to read os.Stderr"`
-	Buf         *giv.TextBuf `json:"-" xml:"-" desc:"text buffer holding all output"`
-	Cancel      bool         `json:"-" xml:"-" desc:"set to true to cancel monitoring"`
-	Mu          sync.Mutex   `json:"-" xml:"-" desc:"mutex protecting updating of buffer between out / err"`
-	OrgoutWrite *os.File     `json:"-" xml:"-" desc:"original os.Stdout writer"`
-	OrgerrWrite *os.File     `json:"-" xml:"-" desc:"original os.Stderr writer"`
-	LogWrite    *os.File     `json:"-" xml:"-" desc:"log file writer"`
+
+	// std out writer -- set to os.Stdout
+	StdoutWrite *os.File `json:"-" xml:"-" desc:"std out writer -- set to os.Stdout"`
+
+	// std out reader -- used to read os.Stdout
+	StdoutRead *os.File `json:"-" xml:"-" desc:"std out reader -- used to read os.Stdout"`
+
+	// std err writer -- set to os.Stderr
+	StderrWrite *os.File `json:"-" xml:"-" desc:"std err writer -- set to os.Stderr"`
+
+	// std err reader -- used to read os.Stderr
+	StderrRead *os.File `json:"-" xml:"-" desc:"std err reader -- used to read os.Stderr"`
+
+	// text buffer holding all output
+	Buf *giv.TextBuf `json:"-" xml:"-" desc:"text buffer holding all output"`
+
+	// set to true to cancel monitoring
+	Cancel bool `json:"-" xml:"-" desc:"set to true to cancel monitoring"`
+
+	// mutex protecting updating of buffer between out / err
+	Mu sync.Mutex `json:"-" xml:"-" desc:"mutex protecting updating of buffer between out / err"`
+
+	// original os.Stdout writer
+	OrgoutWrite *os.File `json:"-" xml:"-" desc:"original os.Stdout writer"`
+
+	// original os.Stderr writer
+	OrgerrWrite *os.File `json:"-" xml:"-" desc:"original os.Stderr writer"`
+
+	// log file writer
+	LogWrite *os.File `json:"-" xml:"-" desc:"log file writer"`
 }
 
 var KiT_Console = kit.Types.AddType(&Console{}, nil)

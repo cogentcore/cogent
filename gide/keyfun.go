@@ -179,8 +179,12 @@ func KeyFun(key1, key2 key.Chord) KeyFuns {
 
 // KeyMapItem records one element of the key map -- used for organizing the map.
 type KeyMapItem struct {
-	Keys KeySeq  `desc:"the key chord sequence that activates a function"`
-	Fun  KeyFuns `desc:"the function of that key"`
+
+	// the key chord sequence that activates a function
+	Keys KeySeq `desc:"the key chord sequence that activates a function"`
+
+	// the function of that key
+	Fun KeyFuns `desc:"the function of that key"`
 }
 
 // ToSlice copies this keymap to a slice of KeyMapItem's
@@ -286,9 +290,15 @@ var DefaultKeyMap = KeyMapName("MacEmacs")
 
 // KeyMapsItem is an entry in a KeyMaps list
 type KeyMapsItem struct {
-	Name string    `width:"20" desc:"name of keymap"`
-	Desc string    `desc:"description of keymap -- good idea to include source it was derived from"`
-	Map  KeySeqMap `desc:"to edit key sequence click button and type new key combination; to edit function mapped to key sequence choose from menu"`
+
+	// name of keymap
+	Name string `width:"20" desc:"name of keymap"`
+
+	// description of keymap -- good idea to include source it was derived from
+	Desc string `desc:"description of keymap -- good idea to include source it was derived from"`
+
+	// to edit key sequence click button and type new key combination; to edit function mapped to key sequence choose from menu
+	Map KeySeqMap `desc:"to edit key sequence click button and type new key combination; to edit function mapped to key sequence choose from menu"`
 }
 
 // Label satisfies the Labeler interface

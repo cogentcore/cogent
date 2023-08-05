@@ -18,7 +18,11 @@ import (
 // ArgVarInfo has info about argument variables that fill in relevant values
 // for commands, used in ArgVars list of variables
 type ArgVarInfo struct {
-	Desc string      `desc:"description of arg var"`
+
+	// description of arg var
+	Desc string `desc:"description of arg var"`
+
+	// type of variable -- used for checking usage and other special features such as prompting
 	Type ArgVarTypes `desc:"type of variable -- used for checking usage and other special features such as prompting"`
 }
 

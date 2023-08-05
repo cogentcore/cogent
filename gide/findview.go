@@ -52,24 +52,48 @@ func (ev *FindLoc) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(
 
 // FindParams are parameters for find / replace
 type FindParams struct {
-	Find       string              `desc:"find string"`
-	Replace    string              `desc:"replace string"`
-	IgnoreCase bool                `desc:"ignore case"`
-	Regexp     bool                `desc:"use regexp regular expression search and replace"`
-	Langs      []filecat.Supported `desc:"languages for files to search"`
-	Loc        FindLoc             `desc:"locations to search in"`
-	FindHist   []string            `desc:"history of finds"`
-	ReplHist   []string            `desc:"history of replaces"`
+
+	// find string
+	Find string `desc:"find string"`
+
+	// replace string
+	Replace string `desc:"replace string"`
+
+	// ignore case
+	IgnoreCase bool `desc:"ignore case"`
+
+	// use regexp regular expression search and replace
+	Regexp bool `desc:"use regexp regular expression search and replace"`
+
+	// languages for files to search
+	Langs []filecat.Supported `desc:"languages for files to search"`
+
+	// locations to search in
+	Loc FindLoc `desc:"locations to search in"`
+
+	// history of finds
+	FindHist []string `desc:"history of finds"`
+
+	// history of replaces
+	ReplHist []string `desc:"history of replaces"`
 }
 
 // FindView is a find / replace widget that displays results in a TextView
 // and has a toolbar for controlling find / replace process.
 type FindView struct {
 	gi.Layout
-	Gide   Gide           `json:"-" xml:"-" desc:"parent gide project"`
-	LangVV giv.ValueView  `desc:"langs value view"`
-	Time   time.Time      `desc:"time of last find"`
-	Re     *regexp.Regexp `desc:"compiled regexp"`
+
+	// parent gide project
+	Gide Gide `json:"-" xml:"-" desc:"parent gide project"`
+
+	// langs value view
+	LangVV giv.ValueView `desc:"langs value view"`
+
+	// time of last find
+	Time time.Time `desc:"time of last find"`
+
+	// compiled regexp
+	Re *regexp.Regexp `desc:"compiled regexp"`
 }
 
 var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)

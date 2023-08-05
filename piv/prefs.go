@@ -18,10 +18,18 @@ import (
 
 // ProjPrefs are the preferences for saving for a project -- this IS the project file
 type ProjPrefs struct {
-	ProjFile   gi.FileName     `desc:"filename for project (i.e, these preference)"`
-	ParserFile gi.FileName     `desc:"filename for parser"`
-	TestFile   gi.FileName     `desc:"the file for testing"`
-	TraceOpts  parse.TraceOpts `desc:"the options for tracing parsing"`
+
+	// filename for project (i.e, these preference)
+	ProjFile gi.FileName `desc:"filename for project (i.e, these preference)"`
+
+	// filename for parser
+	ParserFile gi.FileName `desc:"filename for parser"`
+
+	// the file for testing
+	TestFile gi.FileName `desc:"the file for testing"`
+
+	// the options for tracing parsing
+	TraceOpts parse.TraceOpts `desc:"the options for tracing parsing"`
 }
 
 var KiT_ProjPrefs = kit.Types.AddType(&ProjPrefs{}, nil)

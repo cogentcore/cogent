@@ -21,8 +21,14 @@ import (
 
 // Split is a named splitter configuration
 type Split struct {
-	Name   string    `desc:"name of splitter config"`
-	Desc   string    `desc:"brief description"`
+
+	// name of splitter config
+	Name string `desc:"name of splitter config"`
+
+	// brief description
+	Desc string `desc:"brief description"`
+
+	// splitter panel proportions
 	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"4" desc:"splitter panel proportions"`
 }
 

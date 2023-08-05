@@ -24,16 +24,26 @@ import (
 
 // SymbolsParams are parameters for structure view of file or package
 type SymbolsParams struct {
+
+	// scope of symbols to list
 	Scope SymbolsViewScope `desc:"scope of symbols to list"`
 }
 
 // SymbolsView is a widget that displays results of a file or package parse
 type SymbolsView struct {
 	gi.Layout
-	Gide      Gide          `json:"-" xml:"-" desc:"parent gide project"`
+
+	// parent gide project
+	Gide Gide `json:"-" xml:"-" desc:"parent gide project"`
+
+	// params for structure display
 	SymParams SymbolsParams `desc:"params for structure display"`
-	Syms      *SymNode      `desc:"all the symbols for the file or package in a tree"`
-	Match     string        `desc:"only show symbols that match this string"`
+
+	// all the symbols for the file or package in a tree
+	Syms *SymNode `desc:"all the symbols for the file or package in a tree"`
+
+	// only show symbols that match this string
+	Match string `desc:"only show symbols that match this string"`
 }
 
 var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
@@ -362,6 +372,8 @@ func (ev *SymbolsViewScope) UnmarshalJSON(b []byte) error { return kit.EnumUnmar
 // the name of the symbol. Some symbols, e.g. type have children
 type SymNode struct {
 	ki.Node
+
+	// the symbol
 	Symbol syms.Symbol `desc:"the symbol"`
 }
 

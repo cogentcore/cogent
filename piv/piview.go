@@ -41,17 +41,39 @@ const (
 // lexer and parser
 type PiView struct {
 	gi.Frame
-	Parser        pi.Parser    `desc:"the parser we are viewing"`
-	Prefs         ProjPrefs    `desc:"project preferences -- this IS the project file"`
-	Changed       bool         `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
-	FileState     pi.FileState `json:"-" desc:"our own dedicated filestate for controlled parsing"`
-	TestBuf       giv.TextBuf  `json:"-" desc:"test file buffer"`
-	OutBuf        giv.TextBuf  `json:"-" desc:"output buffer -- shows all errors, tracing"`
-	LexBuf        giv.TextBuf  `json:"-" desc:"buffer of lexified tokens"`
-	ParseBuf      giv.TextBuf  `json:"-" desc:"buffer of parse info"`
-	KeySeq1       key.Chord    `desc:"first key in sequence if needs2 key pressed"`
-	OutMonRunning bool         `json:"-" desc:"is the output monitor running?"`
-	OutMonMu      sync.Mutex   `json:"-" desc:"mutex for updating, checking output monitor run status"`
+
+	// the parser we are viewing
+	Parser pi.Parser `desc:"the parser we are viewing"`
+
+	// project preferences -- this IS the project file
+	Prefs ProjPrefs `desc:"project preferences -- this IS the project file"`
+
+	// has the root changed?  we receive update signals from root for changes
+	Changed bool `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+
+	// our own dedicated filestate for controlled parsing
+	FileState pi.FileState `json:"-" desc:"our own dedicated filestate for controlled parsing"`
+
+	// test file buffer
+	TestBuf giv.TextBuf `json:"-" desc:"test file buffer"`
+
+	// output buffer -- shows all errors, tracing
+	OutBuf giv.TextBuf `json:"-" desc:"output buffer -- shows all errors, tracing"`
+
+	// buffer of lexified tokens
+	LexBuf giv.TextBuf `json:"-" desc:"buffer of lexified tokens"`
+
+	// buffer of parse info
+	ParseBuf giv.TextBuf `json:"-" desc:"buffer of parse info"`
+
+	// first key in sequence if needs2 key pressed
+	KeySeq1 key.Chord `desc:"first key in sequence if needs2 key pressed"`
+
+	// is the output monitor running?
+	OutMonRunning bool `json:"-" desc:"is the output monitor running?"`
+
+	// mutex for updating, checking output monitor run status
+	OutMonMu sync.Mutex `json:"-" desc:"mutex for updating, checking output monitor run status"`
 }
 
 var KiT_PiView = kit.Types.AddType(&PiView{}, PiViewProps)
