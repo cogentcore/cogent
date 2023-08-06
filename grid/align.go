@@ -19,7 +19,7 @@ import (
 type AlignView struct {
 	gi.Layout
 
-	// the parent gridview
+	// [view: -] the parent gridview
 	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 

@@ -49,13 +49,13 @@ type EditState struct {
 	// undo manager
 	UndoMgr undo.Mgr `desc:"undo manager"`
 
-	// contents have changed
+	// [view: inactive] contents have changed
 	Changed bool `view:"inactive" desc:"contents have changed"`
 
-	// action mutex, protecting start / end of actions
+	// [view: -] action mutex, protecting start / end of actions
 	ActMu sync.Mutex `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
 
-	// selected item(s)
+	// [view: -] selected item(s)
 	Selected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
 
 	// selection just happened on press, and no drag happened in between
@@ -79,7 +79,7 @@ type EditState struct {
 	// last select action position -- continued clicks in same area lead to deeper selection
 	LastSelPos image.Point `desc:"last select action position -- continued clicks in same area lead to deeper selection"`
 
-	// recently selected item(s) -- within the same selection position
+	// [view: -] recently selected item(s) -- within the same selection position
 	RecentlySelected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"recently selected item(s) -- within the same selection position"`
 
 	// bbox at start of dragging
@@ -446,13 +446,13 @@ type GradStop struct {
 // Gradient represents a single gradient that defines stops (referenced in StopName of other gradients)
 type Gradient struct {
 
-	// icon of gradient -- generated to display each gradient
+	// [tableview: no-header] icon of gradient -- generated to display each gradient
 	Ic gi.IconName `inactive:"+" tableview:"no-header" width:"5" desc:"icon of gradient -- generated to display each gradient"`
 
 	// name of gradient (id)
 	Id string `inactive:"+" width:"6" desc:"name of gradient (id)"`
 
-	// full name of gradient as SVG element
+	// [view: -] full name of gradient as SVG element
 	Name string `view:"-" desc:"full name of gradient as SVG element"`
 
 	// gradient stops

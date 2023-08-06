@@ -59,7 +59,7 @@ type Preferences struct {
 	// snap node movements to align with guides
 	SnapNodes bool `desc:"snap node movements to align with guides"`
 
-	// number of screen pixels around target point (in either direction) to snap
+	// [min: 1] number of screen pixels around target point (in either direction) to snap
 	SnapTol int `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
 
 	// named-split config in use for configuring the splitters
@@ -68,7 +68,7 @@ type Preferences struct {
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
 	EnvVars map[string]string `desc:"environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"`
 
-	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	// [view: -] flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
 	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 

@@ -35,7 +35,7 @@ type PaintView struct {
 	// name of gradient with stops
 	FillStops string `desc:"name of gradient with stops"`
 
-	// the parent gridview
+	// [view: -] the parent gridview
 	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 

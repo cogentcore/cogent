@@ -32,7 +32,7 @@ import (
 type SVGView struct {
 	svg.SVG
 
-	// the parent gridview
+	// [view: -] the parent gridview
 	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 
 	// view translation offset (from dragging)
@@ -44,25 +44,25 @@ type SVGView struct {
 	// grid spacing, in native ViewBox units
 	Grid float32 `desc:"grid spacing, in native ViewBox units"`
 
-	// effective grid spacing given Scale level
+	// [view: inactive] effective grid spacing given Scale level
 	GridEff float32 `view:"inactive" desc:"effective grid spacing given Scale level"`
 
-	// has dragging cursor been set yet?
+	// [view: -] has dragging cursor been set yet?
 	SetDragCursor bool `view:"-" desc:"has dragging cursor been set yet?"`
 
-	// background pixels, includes page outline and grid
+	// [view: -] background pixels, includes page outline and grid
 	BgPixels *image.RGBA `copy:"-" json:"-" xml:"-" view:"-" desc:"background pixels, includes page outline and grid"`
 
-	// render state for background rendering
+	// [view: -] render state for background rendering
 	BgRender girl.State `copy:"-" json:"-" xml:"-" view:"-" desc:"render state for background rendering"`
 
-	// bg rendered translation
+	// [view: -] bg rendered translation
 	bgTrans mat32.Vec2 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered translation"`
 
-	// bg rendered scale
+	// [view: -] bg rendered scale
 	bgScale float32 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered scale"`
 
-	// bg rendered grid
+	// [view: -] bg rendered grid
 	bgGridEff float32 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered grid"`
 }
 

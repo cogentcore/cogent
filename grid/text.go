@@ -49,10 +49,10 @@ type TextStyle struct {
 	// prop: text-align (inherited) = how to align text, horizontally. This *only* applies to the text within its containing element, and is typically relevant only for multi-line text: for single-line text, if element does not have a specified size that is different from the text size, then this has *no effect*.
 	Align gist.Align `xml:"text-align" inherit:"true" desc:"prop: text-align (inherited) = how to align text, horizontally. This *only* applies to the text within its containing element, and is typically relevant only for multi-line text: for single-line text, if element does not have a specified size that is different from the text size, then this has *no effect*."`
 
-	// font value view for font toolbar
+	// [view: -] font value view for font toolbar
 	FontVal giv.FontValueView `view:"-" desc:"font value view for font toolbar"`
 
-	// the parent gridview
+	// [view: -] the parent gridview
 	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 

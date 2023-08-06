@@ -24,7 +24,7 @@ import (
 type TreeView struct {
 	giv.TreeView
 
-	// the parent gridview
+	// [view: -] the parent gridview
 	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
 }
 
