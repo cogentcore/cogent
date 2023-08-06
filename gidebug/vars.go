@@ -27,19 +27,19 @@ type Variable struct {
 	// type of variable as a string expression (shortened for display)
 	TypeStr string `inactive:"-" desc:"type of variable as a string expression (shortened for display)"`
 
-	// type of variable as a string expression (full length)
+	// [view: -] type of variable as a string expression (full length)
 	FullTypeStr string `view:"-" inactive:"-" desc:"type of variable as a string expression (full length)"`
 
 	// kind of element
 	Kind syms.Kinds `inactive:"-" desc:"kind of element"`
 
-	// own elemental value of variable (blank for composite types)
+	// [view: -] own elemental value of variable (blank for composite types)
 	ElValue string `inactive:"-" view:"-" desc:"own elemental value of variable (blank for composite types)"`
 
 	// length of variable (slices, maps, strings etc)
 	Len int64 `inactive:"-" desc:"length of variable (slices, maps, strings etc)"`
 
-	// capacity of vaiable
+	// [tableview: -] capacity of vaiable
 	Cap int64 `inactive:"-" tableview:"-" desc:"capacity of vaiable"`
 
 	// address where variable is located in memory
@@ -48,19 +48,19 @@ type Variable struct {
 	// if true, the variable is stored in the main memory heap, not the stack
 	Heap bool `inactive:"-" desc:"if true, the variable is stored in the main memory heap, not the stack"`
 
-	// location where the variable was defined in source
+	// [tableview: -] location where the variable was defined in source
 	Loc Location `inactive:"-" tableview:"-" desc:"location where the variable was defined in source"`
 
-	// if kind is a list type (array, slice), and elements are primitive types, this is the contents
+	// [tableview: -] if kind is a list type (array, slice), and elements are primitive types, this is the contents
 	List []string `tableview:"-" desc:"if kind is a list type (array, slice), and elements are primitive types, this is the contents"`
 
-	// if kind is a map, and elements are primitive types, this is the contents
+	// [tableview: -] if kind is a map, and elements are primitive types, this is the contents
 	Map map[string]string `tableview:"-" desc:"if kind is a map, and elements are primitive types, this is the contents"`
 
-	// if kind is a map, and elements are not primitive types, this is the contents
+	// [tableview: -] if kind is a map, and elements are not primitive types, this is the contents
 	MapVar map[string]*Variable `tableview:"-" desc:"if kind is a map, and elements are not primitive types, this is the contents"`
 
-	// our debugger -- for getting further variable data
+	// [view: -] our debugger -- for getting further variable data
 	Dbg GiDebug `view:"-" desc:"our debugger -- for getting further variable data"`
 }
 
@@ -242,7 +242,7 @@ func (vr *Variable) FollowPtr() {
 // about variables.
 type VarParams struct {
 
-	// requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not recommended.
+	// [def: false] requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not recommended.
 	FollowPointers bool `def:"false" desc:"requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not recommended."`
 
 	// how far to recurse when evaluating nested types.
@@ -261,16 +261,16 @@ type VarParams struct {
 // Params are overall debugger parameters
 type Params struct {
 
-	// mode for running the debugger
+	// [view: -] mode for running the debugger
 	Mode Modes `xml:"-" json:"-" view:"-" desc:"mode for running the debugger"`
 
-	// process id number to attach to, for Attach mode
+	// [view: -] process id number to attach to, for Attach mode
 	PID uint64 `xml:"-" json:"-" view:"-" desc:"process id number to attach to, for Attach mode"`
 
 	// optional extra args to pass to the debugger.  Use double-dash -- and then add args to pass args to the executable (double-dash is by itself as a separate arg first)
 	Args []string `desc:"optional extra args to pass to the debugger.  Use double-dash -- and then add args to pass args to the executable (double-dash is by itself as a separate arg first)"`
 
-	// status function for debugger updating status
+	// [view: -] status function for debugger updating status
 	StatFunc func(stat Status) `xml:"-" json:"-" view:"-" desc:"status function for debugger updating status"`
 
 	// parameters for level of detail on overall list of variables

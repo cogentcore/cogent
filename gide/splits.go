@@ -28,7 +28,7 @@ type Split struct {
 	// brief description
 	Desc string `desc:"brief description"`
 
-	// splitter panel proportions
+	// [min: 0] [max: 1] [step: .05] splitter panel proportions
 	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"4" desc:"splitter panel proportions"`
 }
 

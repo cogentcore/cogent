@@ -51,7 +51,7 @@ type Preferences struct {
 	// if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveCmds bool `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
 
-	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	// [view: -] flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
 	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 
@@ -311,7 +311,7 @@ type ProjPrefs struct {
 	// file view preferences
 	Files FilePrefs `desc:"file view preferences"`
 
-	// editor preferences
+	// [view: inline] editor preferences
 	Editor gi.EditorPrefs `view:"inline" desc:"editor preferences"`
 
 	// current named-split config in use for configuring the splitters
@@ -350,22 +350,22 @@ type ProjPrefs struct {
 	// custom debugger parameters for this project
 	Debug gidebug.Params `desc:"custom debugger parameters for this project"`
 
-	// saved find params
+	// [view: -] saved find params
 	Find FindParams `view:"-" desc:"saved find params"`
 
-	// saved structure params
+	// [view: -] saved structure params
 	Symbols SymbolsParams `view:"-" desc:"saved structure params"`
 
-	// directory properties
+	// [view: -] directory properties
 	Dirs giv.DirFlagMap `view:"-" desc:"directory properties"`
 
-	// last register used
+	// [view: -] last register used
 	Register RegisterName `view:"-" desc:"last register used"`
 
-	// current splitter splits
+	// [view: -] current splitter splits
 	Splits []float32 `view:"-" desc:"current splitter splits"`
 
-	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	// [view: -] flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
 	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
 }
 

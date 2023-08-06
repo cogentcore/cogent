@@ -36,8 +36,8 @@ type Thread struct {
 	// line within file
 	Line int `desc:"line within file"`
 
-	// full path to file
-	FPath string `tableview:"-" tableview:"-" desc:"full path to file"`
+	// [tableview: -] full path to file
+	FPath string `tableview:"-" desc:"full path to file"`
 
 	// the name of the function
 	Func string `desc:"the name of the function"`
@@ -78,7 +78,7 @@ type Task struct {
 	// line within file
 	Line int `desc:"line within file"`
 
-	// full path to file
+	// [tableview: -] full path to file
 	FPath string `tableview:"-" tableview:"-" desc:"full path to file"`
 
 	// the name of the function
@@ -87,10 +87,10 @@ type Task struct {
 	// id of the current Thread this task is running on
 	Thread int `format:"%#X" desc:"id of the current Thread this task is running on"`
 
-	// where did this task first start running?
+	// [tableview: -] where did this task first start running?
 	StartLoc Location `tableview:"-" desc:"where did this task first start running?"`
 
-	// at what point was this task launched from another task?
+	// [tableview: -] at what point was this task launched from another task?
 	LaunchLoc Location `tableview:"-" desc:"at what point was this task launched from another task?"`
 }
 
@@ -121,7 +121,7 @@ type Location struct {
 	// line within file
 	Line int `desc:"line within file"`
 
-	// full path to file
+	// [view: -] [tableview: -] full path to file
 	FPath string `view:"-" tableview:"-" desc:"full path to file"`
 
 	// the name of the function
@@ -146,16 +146,16 @@ type Frame struct {
 	// line within file
 	Line int `desc:"line within file"`
 
-	// full path to file
+	// [tableview: -] full path to file
 	FPath string `tableview:"-" tableview:"-" desc:"full path to file"`
 
 	// the name of the function
 	Func string `desc:"the name of the function"`
 
-	// values of the local variables at this frame
+	// [tableview: -] values of the local variables at this frame
 	Vars []*Variable `tableview:"-" desc:"values of the local variables at this frame"`
 
-	// values of the local function args at this frame
+	// [tableview: -] values of the local function args at this frame
 	Args []*Variable `tableview:"-" desc:"values of the local function args at this frame"`
 }
 
@@ -177,7 +177,7 @@ type Break struct {
 	// line within file
 	Line int `inactive:"+" desc:"line within file"`
 
-	// full path to file
+	// [view: -] [tableview: -] full path to file
 	FPath string `inactive:"+" view:"-" tableview:"-" desc:"full path to file"`
 
 	// the name of the function
