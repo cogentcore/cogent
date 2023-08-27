@@ -18,7 +18,7 @@ func TestBind(t *testing.T) {
 	tv.SelectReg.Start = lex.Pos{11, 14}
 	tv.SelectReg.End = lex.Pos{55, 0}
 
-	fpath := "/Users/oreilly/go/src/github.com/goki/gide/argvars_test.go"
+	fpath := "/Users/oreilly/go/src/goki.dev/gide/argvars_test.go"
 	projpath := "/Users/oreilly/go/src/github.com"
 
 	pp := ProjPrefs{}

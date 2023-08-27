@@ -12,9 +12,9 @@ import (
 
 	"github.com/go-delve/delve/service/api"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gide/gidebug"
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/syms"
+	"goki.dev/gide/gidebug"
 )
 
 func (gd *GiDelve) cvtState(ds *api.DebuggerState) *gidebug.State {

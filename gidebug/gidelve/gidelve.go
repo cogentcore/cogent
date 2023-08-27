@@ -17,9 +17,9 @@ import (
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
 	"github.com/goki/gi/giv"
-	"github.com/goki/gide/gidebug"
 	"github.com/goki/ki/ints"
 	"github.com/goki/pi/lex"
+	"goki.dev/gide/gidebug"
 )
 
 // GiDelve is the Delve implementation of the GiDebug interface

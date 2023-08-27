@@ -47,7 +47,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>gide.gide</string>
 			<key>UTTypeReferenceURL</key>
-			<string>https://github.com/goki/gide</string>
+			<string>https://goki.dev/gide</string>
 			<key>UTTypeDescription</key>
 			<string>Gide Project</string>
 			<key>UTTypeIconFile</key>

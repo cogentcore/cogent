@@ -16,11 +16,11 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/svg"
-	"github.com/goki/gide/gidebug"
-	"github.com/goki/gide/icons"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
+	"goki.dev/gide/gidebug"
+	"goki.dev/gide/icons"
 )
 
 // FilePrefs contains file view preferences

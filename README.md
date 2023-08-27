@@ -2,10 +2,10 @@
 
 **Gide** is a flexible IDE (integrated development environment) framework in pure Go, using the [GoGi](https://github.com/goki/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://github.com/goki/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
 
-See the [Wiki](https://github.com/goki/gide/wiki) for more docs,   [Install](https://github.com/goki/gide/wiki/Install) instructions (`go install github.com/goki/gide/cmd/gide@latest` should work if GoGi system libraries are in place), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
+See the [Wiki](https://goki.dev/gide/wiki) for more docs,   [Install](https://goki.dev/gide/wiki/Install) instructions (`go install goki.dev/gide/cmd/gide@latest` should work if GoGi system libraries are in place), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/goki/gide)](https://goreportcard.com/report/github.com/goki/gide)
-[![GoDoc](https://godoc.org/github.com/goki/gide?status.svg)](https://godoc.org/github.com/goki/gide)
+[![Go Report Card](https://goreportcard.com/badge/goki.dev/gide)](https://goreportcard.com/report/goki.dev/gide)
+[![GoDoc](https://godoc.org/goki.dev/gide?status.svg)](https://godoc.org/goki.dev/gide)
 [![Travis](https://travis-ci.com/goki/gide.svg?branch=master)](https://travis-ci.com/goki/gide)
 
 There are many existing, excellent choices for text editors and IDEs, but *Gide* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Gide.  Our ambition is to capture some of those Go attributes in an IDE.
@@ -18,11 +18,11 @@ Some of the main features of *Gide* include:
 
 * Command actions show output on a tabbed output display on the right, along with other special interfaces such as Find / Replace, Symbols, Debugger, etc.  Thus, the overall design is extensible and new interfaces can be easily added to supply new functionality.  You don't spend any time fiddling around with lots of different panels all over the place, and you always know where to look to find something.  Maybe the result is less fancy and "bespoke" for a given use-case (e.g., Debugging), but our "giding" principle is to use a simple framework that does most things well, much like the Go language itself.
 
-* Strongly keyboard focused, inspired by Emacs -- existing Emacs users should be immediately productive.  However, other common keyboard bindings are also supported, and key bindings are entirely customizable.  If you're considering actually using it, we strongly recommend reading the [Wiki](https://github.com/goki/gide/wiki) tips to get the most out of it, and understand the key design principles (e.g., why there are no tabs for open files!).
+* Strongly keyboard focused, inspired by Emacs -- existing Emacs users should be immediately productive.  However, other common keyboard bindings are also supported, and key bindings are entirely customizable.  If you're considering actually using it, we strongly recommend reading the [Wiki](https://goki.dev/gide/wiki) tips to get the most out of it, and understand the key design principles (e.g., why there are no tabs for open files!).
 
 # Install
 
-* Wiki instructions: [Install](https://github.com/goki/gide/wiki/Install) -- for building directly from source.
+* Wiki instructions: [Install](https://goki.dev/gide/wiki/Install) -- for building directly from source.
 
 * See Releases on this github page for pre-built OS-specific app packages that install the compiled binaries.
 

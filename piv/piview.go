@@ -20,12 +20,12 @@ import (
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/gi/oswin/mouse"
 	"github.com/goki/gi/units"
-	"github.com/goki/gide/gide"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/parse"
 	"github.com/goki/pi/pi"
+	"goki.dev/gide/gide"
 )
 
 // These are then the fixed indices of the different elements in the splitview

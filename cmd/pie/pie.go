@@ -8,9 +8,9 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/oswin"
-	"github.com/goki/gide/gide"
-	"github.com/goki/gide/piv"
 	"github.com/goki/pi/pi"
+	"goki.dev/gide/gide"
+	"goki.dev/gide/piv"
 )
 
 func main() {
