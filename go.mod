@@ -1,4 +1,4 @@
-module github.com/goki/grid
+module goki.dev/grid
 
 go 1.18
 

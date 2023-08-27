@@ -4,7 +4,6 @@ package grid
 
 const (
 	Version     = "v0.5.5"
-	GitCommit   = "523ae34" // the commit JUST BEFORE the release
+	GitCommit   = "523ae34"          // the commit JUST BEFORE the release
 	VersionDate = "2023-08-27 22:59" // UTC
 )
-

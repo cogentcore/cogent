@@ -15,7 +15,7 @@ If an acronym is required, how about: "Go-rendered interactive drawing" program.
 The simple Go install command should work, for modules mode: 
 
 ```bash
-$ go get github.com/goki/grid/cmd/grid
+$ go get goki.dev/grid/cmd/grid
 ```
 
 See [GoKi Install](https://github.com/goki/gi/wiki/Install) for more information and prereqs for different platforms -- if you encounter any difficulties, ensure that GoKi works first.

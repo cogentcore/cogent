@@ -47,7 +47,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>grid.grid</string>
 			<key>UTTypeReferenceURL</key>
-			<string>https://github.com/goki/grid</string>
+			<string>https://goki.dev/grid</string>
 			<key>UTTypeDescription</key>
 			<string>Grid Drawing</string>
 			<key>UTTypeIconFile</key>

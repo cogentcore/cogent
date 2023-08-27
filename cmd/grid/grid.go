@@ -12,7 +12,7 @@ import (
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/oswin"
-	"github.com/goki/grid/grid"
+	"goki.dev/grid/grid"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 
 func mainrun() {
 	gi.SetAppName("grid")
-	gi.SetAppAbout(`Grid is a Go-rendered interactive drawing program for SVG vector dawings.  See <a href="https://github.com/goki/grid">Grid on GitHub</a><br>
+	gi.SetAppAbout(`Grid is a Go-rendered interactive drawing program for SVG vector dawings.  See <a href="https://goki.dev/grid">Grid on GitHub</a><br>
 <br>
 Version: ` + grid.Prefs.VersionInfo())
 

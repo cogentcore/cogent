@@ -1003,7 +1003,7 @@ func (gv *GridView) SplitsEdit() {
 
 // HelpWiki opens wiki page for grid on github
 func (gv *GridView) HelpWiki() {
-	oswin.TheApp.OpenURL("https://github.com/goki/grid/wiki")
+	oswin.TheApp.OpenURL("https://goki.dev/grid/wiki")
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////

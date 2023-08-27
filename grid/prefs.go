@@ -18,9 +18,9 @@ import (
 	"github.com/goki/gi/oswin"
 	"github.com/goki/gi/svg"
 	"github.com/goki/gi/units"
-	"github.com/goki/grid/icons"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"goki.dev/grid/icons"
 )
 
 // Preferences is the overall Grid preferences
