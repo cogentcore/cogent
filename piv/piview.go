@@ -25,7 +25,7 @@ import (
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/parse"
 	"github.com/goki/pi/pi"
-	"goki.dev/gide/gide"
+	"goki.dev/gide/v2/gide"
 )
 
 // These are then the fixed indices of the different elements in the splitview

@@ -41,8 +41,8 @@ import (
 	"github.com/goki/pi/pi"
 	"github.com/goki/pi/spell"
 	"github.com/goki/vci"
-	"goki.dev/gide/gide"
-	"goki.dev/gide/gidebug"
+	"goki.dev/gide/v2/gide"
+	"goki.dev/gide/v2/gidebug"
 )
 
 // NTextViews is the number of text views to create -- to keep things simple
@@ -2438,7 +2438,7 @@ func (ge *GideView) SplitsEdit() {
 
 // HelpWiki opens wiki page for gide on github
 func (ge *GideView) HelpWiki() {
-	oswin.TheApp.OpenURL("https://goki.dev/gide/wiki")
+	oswin.TheApp.OpenURL("https://goki.dev/gide/v2/wiki")
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

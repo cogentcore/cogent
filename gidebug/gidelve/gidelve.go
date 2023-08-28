@@ -19,7 +19,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/ki/ints"
 	"github.com/goki/pi/lex"
-	"goki.dev/gide/gidebug"
+	"goki.dev/gide/v2/gidebug"
 )
 
 // GiDelve is the Delve implementation of the GiDebug interface

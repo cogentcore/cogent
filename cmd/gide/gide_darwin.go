@@ -7,7 +7,7 @@
 
 package main
 
-import "goki.dev/gide/gide"
+import "goki.dev/gide/v2/gide"
 
 func init() {
 	gide.DefaultKeyMap = gide.KeyMapName("MacStd")

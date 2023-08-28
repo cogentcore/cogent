@@ -16,8 +16,8 @@ import (
 	"github.com/goki/ki/kit"
 	"github.com/goki/mat32"
 	"github.com/goki/pi/filecat"
-	"goki.dev/gide/gidebug"
-	"goki.dev/gide/gidebug/gidelve"
+	"goki.dev/gide/v2/gidebug"
+	"goki.dev/gide/v2/gidebug/gidelve"
 )
 
 // DebugBreakStatus is the status of a given breakpoint

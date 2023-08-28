@@ -19,8 +19,8 @@ import (
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
-	"goki.dev/gide/gidebug"
-	"goki.dev/gide/icons"
+	"goki.dev/gide/v2/gidebug"
+	"goki.dev/gide/v2/icons"
 )
 
 // FilePrefs contains file view preferences

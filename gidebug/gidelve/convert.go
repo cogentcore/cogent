@@ -14,7 +14,7 @@ import (
 	"github.com/goki/gi/giv"
 	"github.com/goki/pi/lex"
 	"github.com/goki/pi/syms"
-	"goki.dev/gide/gidebug"
+	"goki.dev/gide/v2/gidebug"
 )
 
 func (gd *GiDelve) cvtState(ds *api.DebuggerState) *gidebug.State {
