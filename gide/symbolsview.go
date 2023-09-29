@@ -62,7 +62,7 @@ func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
 	sv.SymParams = sp
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(gi.KiT_ToolBar, "sym-toolbar")
 	config.Add(gi.KiT_Frame, "sym-frame")
 	mods, updt := sv.ConfigChildren(config)

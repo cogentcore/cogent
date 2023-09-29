@@ -381,7 +381,7 @@ func (fv *FindView) Config(ge Gide) {
 	fv.Gide = ge
 	fv.Lay = gi.LayoutVert
 	fv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(gi.KiT_ToolBar, "findbar")
 	config.Add(gi.KiT_ToolBar, "replbar")
 	config.Add(gi.KiT_Layout, "findtext")

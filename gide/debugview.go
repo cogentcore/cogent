@@ -742,7 +742,7 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.ExePath = exePath
 	dv.Lay = gi.LayoutVert
 	dv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_TabView, "tabs")
 	mods, updt := dv.ConfigChildren(config)
@@ -968,7 +968,7 @@ func (sv *StackView) DebugVw() *DebugView {
 func (sv *StackView) Config(dv *DebugView, findFrames bool) {
 	sv.Lay = gi.LayoutVert
 	sv.FindFrames = findFrames
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(giv.KiT_TableView, "stack")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1044,7 +1044,7 @@ func (sv *BreakView) DebugVw() *DebugView {
 
 func (sv *BreakView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(giv.KiT_TableView, "breaks")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1113,7 +1113,7 @@ func (sv *ThreadView) DebugVw() *DebugView {
 
 func (sv *ThreadView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(giv.KiT_TableView, "threads")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1179,7 +1179,7 @@ func (sv *TaskView) DebugVw() *DebugView {
 
 func (sv *TaskView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(giv.KiT_TableView, "tasks")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1249,7 +1249,7 @@ func (sv *VarsView) DebugVw() *DebugView {
 func (sv *VarsView) Config(dv *DebugView, globalVars bool) {
 	sv.Lay = gi.LayoutVert
 	sv.GlobalVars = globalVars
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(giv.KiT_TableView, "vars")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1352,7 +1352,7 @@ func (vv *VarView) Config() {
 	}
 	vv.Lay = gi.LayoutVert
 	vv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.TypeAndNameList{}
+	config := kit.Config{}
 	config.Add(gi.KiT_Label, "frame-info")
 	// config.Add(gi.KiT_ToolBar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
