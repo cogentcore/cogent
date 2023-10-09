@@ -1045,7 +1045,7 @@ func (ge *GideView) SelectOpenNode() {
 		def = nl[1]
 	}
 	gi.StringsChooserPopup(nl, def, tv, func(recv, send ki.Ki, sig int64, data any) {
-		ac := send.(*gi.Action)
+		ac := send.(*gi.Button)
 		idx := ac.Data.(int)
 		nb := ge.OpenNodes[idx]
 		ge.ViewFileNode(tv, ge.ActiveTextViewIdx, nb)
@@ -2745,7 +2745,7 @@ func (ge *GideView) TextViewButtonMenu(obj ki.Ki, m *gi.Menu) {
 	for i, n := range opn {
 		m.AddAction(gi.ActOpts{Label: n, Data: i}, ge.This(),
 			func(recv, send ki.Ki, sig int64, data any) {
-				ac := send.(*gi.Action)
+				ac := send.(*gi.Button)
 				gidx := ac.Data.(int)
 				nb := ge.OpenNodes[gidx]
 				ge.ViewFileNode(tv, idx, nb)
@@ -3018,7 +3018,7 @@ func (ge *GideView) ConnectEvents2D() {
 }
 
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
-var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Action) {
+var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ge.IsConfiged() {
 		return
@@ -3027,7 +3027,7 @@ var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Actio
 })
 
 // GideViewInactiveTextViewFunc is an ActionUpdateFunc that inactivates action there is no active text view
-var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Action) {
+var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ge.IsConfiged() {
 		return
@@ -3036,7 +3036,7 @@ var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Ac
 })
 
 // GideViewInactiveTextSelectionFunc is an ActionUpdateFunc that inactivates action there is no active text view
-var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Action) {
+var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ge.IsConfiged() {
 		return
@@ -3070,7 +3070,7 @@ var GideViewProps = ki.Props{
 			"label": "Open...",
 			"icon":  "file-open",
 			"desc":  "open a file in current active text view",
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunFileOpen).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3083,7 +3083,7 @@ var GideViewProps = ki.Props{
 			"label": "Save",
 			"desc":  "save active text view file to its current filename",
 			"icon":  "file-save",
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBufSave).String())
 			}),
 		}},
@@ -3091,7 +3091,7 @@ var GideViewProps = ki.Props{
 			"label": "Save As...",
 			"icon":  "file-save",
 			"desc":  "save active text view file to a new filename",
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBufSaveAs).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3109,7 +3109,7 @@ var GideViewProps = ki.Props{
 			"label":        "Edit",
 			"desc":         "select an open file to view in active text view",
 			"submenu-func": giv.SubMenuFunc(GideViewOpenNodes),
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBufSelect).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3173,14 +3173,14 @@ var GideViewProps = ki.Props{
 		{"Build", ki.Props{
 			"icon": "terminal",
 			"desc": "build the project -- command(s) specified in Project Prefs",
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
 			}),
 		}},
 		{"Run", ki.Props{
 			"icon": "terminal",
 			"desc": "run the project -- command(s) specified in Project Prefs",
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 			}),
 		}},
@@ -3201,7 +3201,7 @@ var GideViewProps = ki.Props{
 			"label":           "Exec Cmd",
 			"desc":            "execute given command on active file / directory / project",
 			"subsubmenu-func": giv.SubSubMenuFunc(ExecCmds),
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 				return key.Chord(gide.ChordForFun(gide.KeyFunExecCmd).String())
 			}),
 			"Args": ki.PropSlice{
@@ -3326,7 +3326,7 @@ var GideViewProps = ki.Props{
 			{"sep-af", ki.BlankProp{}},
 			{"ViewFile", ki.Props{
 				"label": "Open File...",
-				"shortcut-func": func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunFileOpen).String())
 				},
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3338,7 +3338,7 @@ var GideViewProps = ki.Props{
 			}},
 			{"SaveActiveView", ki.Props{
 				"label": "Save File",
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBufSave).String())
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3347,7 +3347,7 @@ var GideViewProps = ki.Props{
 				"label":    "Save File As...",
 				"updtfunc": GideViewInactiveEmptyFunc,
 				"desc":     "save active text view file to a new filename",
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBufSaveAs).String())
 				}),
 				"Args": ki.PropSlice{
@@ -3365,7 +3365,7 @@ var GideViewProps = ki.Props{
 			{"CloseActiveView", ki.Props{
 				"label":    "Close File",
 				"updtfunc": GideViewInactiveEmptyFunc,
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBufClose).String())
 				}),
 			}},
@@ -3396,7 +3396,7 @@ var GideViewProps = ki.Props{
 				{"RegisterCopy", ki.Props{
 					"label": "Copy...",
 					"desc":  "save currently-selected text to a named register, which can be pasted later -- persistent across sessions as well",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunRegCopy).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
@@ -3409,7 +3409,7 @@ var GideViewProps = ki.Props{
 				{"RegisterPaste", ki.Props{
 					"label": "Paste...",
 					"desc":  "paste text from named register",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunRegPaste).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
@@ -3481,13 +3481,13 @@ var GideViewProps = ki.Props{
 			}},
 			{"sep-adv", ki.BlankProp{}},
 			{"CommentOut", ki.Props{
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunCommentOut).String())
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"Indent", ki.Props{
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunIndent).String())
 				}),
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3520,21 +3520,21 @@ var GideViewProps = ki.Props{
 			{"Panels", ki.PropSlice{
 				{"FocusNextPanel", ki.Props{
 					"label": "Focus Next",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunNextPanel).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
 				}},
 				{"FocusPrevPanel", ki.Props{
 					"label": "Focus Prev",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunPrevPanel).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
 				}},
 				{"CloneActiveView", ki.Props{
 					"label": "Clone Active",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 						return key.Chord(gide.ChordForFun(gide.KeyFunBufClone).String())
 					}),
 					"updtfunc": GideViewInactiveEmptyFunc,
@@ -3595,13 +3595,13 @@ var GideViewProps = ki.Props{
 		{"Command", ki.PropSlice{
 			{"Build", ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String())
 				}),
 			}},
 			{"Run", ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Action) key.Chord {
+				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
 					return key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String())
 				}),
 			}},

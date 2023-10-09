@@ -458,7 +458,7 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 }
 
 // FileTreeInactiveDirFunc is an ActionUpdateFunc that inactivates action if node is a dir
-var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
+var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
 	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	fn := ft.FileNode()
 	if fn != nil {
@@ -467,7 +467,7 @@ var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action)
 })
 
 // FileTreeActiveDirFunc is an ActionUpdateFunc that activates action if node is a dir
-var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
+var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
 	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	fn := ft.FileNode()
 	if fn != nil {
@@ -476,7 +476,7 @@ var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
 })
 
 // FileTreeActiveExecFunc is an ActionUpdateFunc that activates action if node is executable
-var FileTreeActiveExecFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
+var FileTreeActiveExecFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
 	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	fn := ft.FileNode()
 	if fn != nil {

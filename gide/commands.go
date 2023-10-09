@@ -398,7 +398,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
 						gi.StringsChooserPopup(br, cur, ge.VPort(), func(recv, send ki.Ki, sig int64, data any) {
-							ac := send.(*gi.Action)
+							ac := send.(*gi.Button)
 							brnm := ac.Text
 							(*avp)[pv] = brnm
 							cnt++
@@ -788,7 +788,7 @@ var CommandsProps = ki.Props{
 			{"OpenPrefs", ki.Props{}},
 			{"SavePrefs", ki.Props{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Button) {
 					act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
 				}),
 			}},
@@ -820,7 +820,7 @@ var CommandsProps = ki.Props{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Commands to App standard prefs directory, in file proj_types_prefs.json, which will be loaded automatically at startup if prefs SaveCommands is checked (should be if you're using custom commands)",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Button) {
 				act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
 			}),
 		}},
@@ -848,7 +848,7 @@ var CommandsProps = ki.Props{
 		{"sep-std", ki.BlankProp{}},
 		{"ViewStd", ki.Props{
 			"desc": "Shows the standard commands that are compiled into the program (edits will not be saved -- even though the viewer is editable).  Custom commands override standard ones of the same name, so that is the way to change any existing commands.",
-			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Button) {
 				act.SetActiveState(cmi.(*Commands) != &StdCmds)
 			}),
 		}},

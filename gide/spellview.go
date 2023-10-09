@@ -48,7 +48,7 @@ type SpellView struct {
 	Suggest []string `desc:"a list of suggestions from spell checker"`
 
 	// last user action (ignore, change, learn)
-	LastAction *gi.Action `desc:"last user action (ignore, change, learn)"`
+	LastAction *gi.Button `desc:"last user action (ignore, change, learn)"`
 }
 
 var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
@@ -107,28 +107,28 @@ func (sv *SpellView) ChangeBar() *gi.ToolBar {
 }
 
 // ChangeAct returns the spell change action from toolbar
-func (sv *SpellView) ChangeAct() *gi.Action {
-	return sv.ChangeBar().ChildByName("change", 3).(*gi.Action)
+func (sv *SpellView) ChangeAct() *gi.Button {
+	return sv.ChangeBar().ChildByName("change", 3).(*gi.Button)
 }
 
 // ChangeAllAct returns the spell change action from toolbar
-func (sv *SpellView) ChangeAllAct() *gi.Action {
-	return sv.ChangeBar().ChildByName("change-all", 3).(*gi.Action)
+func (sv *SpellView) ChangeAllAct() *gi.Button {
+	return sv.ChangeBar().ChildByName("change-all", 3).(*gi.Button)
 }
 
 // SkipAct returns the skip action from toolbar
-func (sv *SpellView) SkipAct() *gi.Action {
-	return sv.UnknownBar().ChildByName("skip", 3).(*gi.Action)
+func (sv *SpellView) SkipAct() *gi.Button {
+	return sv.UnknownBar().ChildByName("skip", 3).(*gi.Button)
 }
 
 // IgnoreAct returns the ignore action from toolbar
-func (sv *SpellView) IgnoreAct() *gi.Action {
-	return sv.UnknownBar().ChildByName("ignore", 3).(*gi.Action)
+func (sv *SpellView) IgnoreAct() *gi.Button {
+	return sv.UnknownBar().ChildByName("ignore", 3).(*gi.Button)
 }
 
 // LearnAct returns the learn action from toolbar
-func (sv *SpellView) LearnAct() *gi.Action {
-	return sv.UnknownBar().ChildByName("learn", 3).(*gi.Action)
+func (sv *SpellView) LearnAct() *gi.Button {
+	return sv.UnknownBar().ChildByName("learn", 3).(*gi.Button)
 }
 
 // UnknownText returns the unknown word textfield from toolbar

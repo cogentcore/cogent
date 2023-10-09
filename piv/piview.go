@@ -1140,7 +1140,7 @@ var PiViewProps = ki.Props{
 			"shortcut": gi.KeyFunMenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
-			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveState( /* pv.Changed && */ pv.Prefs.ProjFile != "")
 			}),
@@ -1160,7 +1160,7 @@ var PiViewProps = ki.Props{
 		{"SaveParser", ki.Props{
 			"icon": "file-save",
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
-			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveStateUpdt( /* pv.Changed && */ pv.Prefs.ParserFile != "")
 			}),
@@ -1274,7 +1274,7 @@ var PiViewProps = ki.Props{
 				"shortcut": gi.KeyFunMenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
-				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( /* pv.Changed && */ pv.Prefs.ProjFile != "")
 				}),
@@ -1305,7 +1305,7 @@ var PiViewProps = ki.Props{
 			{"SaveParser", ki.Props{
 				"shortcut": gi.KeyFunMenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
-				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Action) {
+				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( /* pv.Changed && */ pv.Prefs.ParserFile != "")
 				}),

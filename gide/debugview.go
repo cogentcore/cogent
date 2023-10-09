@@ -848,7 +848,7 @@ func (dv *DebugView) ConfigTabs() {
 
 // ActionActivate is the update function for actions that depend on the debugger being avail
 // for input commands
-func (dv *DebugView) ActionActivate(act *gi.Action) {
+func (dv *DebugView) ActionActivate(act *gi.Button) {
 	act.SetActiveStateUpdt(dv.DbgIsAvail())
 }
 

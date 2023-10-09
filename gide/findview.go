@@ -448,8 +448,8 @@ func (fv *FindView) LocCombo() *gi.ComboBox {
 }
 
 // FindNextAct returns the find next action in toolbar -- selected first
-func (fv *FindView) FindNextAct() *gi.Action {
-	return fv.ReplBar().ChildByName("next", 3).(*gi.Action)
+func (fv *FindView) FindNextAct() *gi.Button {
+	return fv.ReplBar().ChildByName("next", 3).(*gi.Button)
 }
 
 // TextViewLay returns the find results TextView layout

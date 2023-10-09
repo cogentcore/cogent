@@ -100,7 +100,7 @@ var VariableProps = ki.Props{
 		{"FollowPtr", ki.Props{
 			"desc": "retrieve the contents of this pointer -- child nodes will contain further data",
 			"icon": "update",
-			"updtfunc": func(vri any, act *gi.Action) {
+			"updtfunc": func(vri any, act *gi.Button) {
 				vr := vri.(ki.Ki).Embed(KiT_Variable).(*Variable)
 				act.SetActiveState(!vr.HasChildren())
 			},

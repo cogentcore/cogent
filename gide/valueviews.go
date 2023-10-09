@@ -242,7 +242,7 @@ func (vv *KeyMapValueView) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	txt := kit.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none -- click to set)"
@@ -252,11 +252,11 @@ func (vv *KeyMapValueView) UpdateWidget() {
 
 func (vv *KeyMapValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
 	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_KeyMapValueView).(*KeyMapValueView)
-		ac := vvv.Widget.(*gi.Action)
+		ac := vvv.Widget.(*gi.Button)
 		vvv.Activate(ac.Viewport, nil, nil)
 	})
 	vv.UpdateWidget()
@@ -474,7 +474,7 @@ func (vv *CmdValueView) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	txt := kit.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
@@ -484,11 +484,11 @@ func (vv *CmdValueView) UpdateWidget() {
 
 func (vv *CmdValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
 	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_CmdValueView).(*CmdValueView)
-		ac := vvv.Widget.(*gi.Action)
+		ac := vvv.Widget.(*gi.Button)
 		vvv.Activate(ac.Viewport, nil, nil)
 	})
 	vv.UpdateWidget()
@@ -631,7 +631,7 @@ func (vv *SplitValueView) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	txt := kit.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
@@ -641,11 +641,11 @@ func (vv *SplitValueView) UpdateWidget() {
 
 func (vv *SplitValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
 	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_SplitValueView).(*SplitValueView)
-		ac := vvv.Widget.(*gi.Action)
+		ac := vvv.Widget.(*gi.Button)
 		vvv.Activate(ac.Viewport, nil, nil)
 	})
 	vv.UpdateWidget()
@@ -788,7 +788,7 @@ func (vv *RegisterValueView) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	txt := kit.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
@@ -798,11 +798,11 @@ func (vv *RegisterValueView) UpdateWidget() {
 
 func (vv *RegisterValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
 	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_RegisterValueView).(*RegisterValueView)
-		ac := vvv.Widget.(*gi.Action)
+		ac := vvv.Widget.(*gi.Button)
 		vvv.Activate(ac.Viewport, nil, nil)
 	})
 	vv.UpdateWidget()
@@ -824,7 +824,7 @@ func (vv *RegisterValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 		recv = vp.This().(gi.Node2D)
 	}
 	gi.StringsChooserPopup(AvailRegisterNames, cur, recv, func(recv, send ki.Ki, sig int64, data any) {
-		ac := send.(*gi.Action)
+		ac := send.(*gi.Button)
 		rnm := ac.Text
 		if ci := strings.Index(rnm, ":"); ci > 0 {
 			rnm = rnm[:ci]
