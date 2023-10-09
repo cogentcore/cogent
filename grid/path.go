@@ -75,7 +75,7 @@ func (gv *GridView) ConfigNodeToolbar() {
 }
 
 // NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
-func (gv *GridView) NodeEnableFunc(act *gi.Action) {
+func (gv *GridView) NodeEnableFunc(act *gi.Button) {
 	// es := &gv.EditState
 	// act.SetInactiveState(!es.HasNodeed())
 }

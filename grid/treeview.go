@@ -191,7 +191,7 @@ func (gv *GridView) DeleteSelected() {
 //  TreeView
 
 // TreeViewIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
-var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Action) {
+var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
 	tv := fni.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
 	sn := tv.SrcNode
 	if sn != nil {
@@ -375,7 +375,7 @@ var TreeViewProps = ki.Props{
 		}},
 		{"Cut", ki.Props{
 			"shortcut": gi.KeyFunCut,
-			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Action) {
+			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Button) {
 				tv := tvi.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),

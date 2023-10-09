@@ -477,19 +477,19 @@ func (gv *GridView) IsConfiged() bool {
 }
 
 // UndoAvailFunc is an ActionUpdateFunc that inactivates action if no more undos
-func (gv *GridView) UndoAvailFunc(act *gi.Action) {
+func (gv *GridView) UndoAvailFunc(act *gi.Button) {
 	es := &gv.EditState
 	act.SetInactiveState(!es.UndoMgr.HasUndoAvail())
 }
 
 // RedoAvailFunc is an ActionUpdateFunc that inactivates action if no more redos
-func (gv *GridView) RedoAvailFunc(act *gi.Action) {
+func (gv *GridView) RedoAvailFunc(act *gi.Button) {
 	es := &gv.EditState
 	act.SetInactiveState(!es.UndoMgr.HasRedoAvail())
 }
 
 // PasteAvailFunc is an ActionUpdateFunc that inactivates action if no paste avail
-func (gv *GridView) PasteAvailFunc(act *gi.Action) {
+func (gv *GridView) PasteAvailFunc(act *gi.Button) {
 	empty := oswin.TheApp.ClipBoard(gv.ParentWindow().OSWin).IsEmpty()
 	act.SetInactiveState(empty)
 }

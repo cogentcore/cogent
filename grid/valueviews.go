@@ -191,7 +191,7 @@ func (vv *SplitValueView) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	txt := kit.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
@@ -201,11 +201,11 @@ func (vv *SplitValueView) UpdateWidget() {
 
 func (vv *SplitValueView) ConfigWidget(widg gi.Node2D) {
 	vv.Widget = widg
-	ac := vv.Widget.(*gi.Action)
+	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
 	ac.ActionSig.ConnectOnly(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		vvv, _ := recv.Embed(KiT_SplitValueView).(*SplitValueView)
-		ac := vvv.Widget.(*gi.Action)
+		ac := vvv.Widget.(*gi.Button)
 		vvv.Activate(ac.Viewport, nil, nil)
 	})
 	vv.UpdateWidget()

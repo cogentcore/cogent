@@ -153,7 +153,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 }
 
 // SelectedEnableFunc is an ActionUpdateFunc that inactivates action if no selected items
-func (gv *GridView) SelectedEnableFunc(act *gi.Action) {
+func (gv *GridView) SelectedEnableFunc(act *gi.Button) {
 	es := &gv.EditState
 	act.SetInactiveState(!es.HasSelected())
 }
