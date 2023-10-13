@@ -24,8 +24,8 @@ import (
 type TreeView struct {
 	giv.TreeView
 
-	// [view: -] the parent gridview
-	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+	// the parent gridview
+	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-"`
 }
 
 var KiT_TreeView = kit.Types.AddType(&TreeView{}, nil)

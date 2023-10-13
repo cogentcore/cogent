@@ -19,8 +19,8 @@ import (
 type AlignView struct {
 	gi.Layout
 
-	// [view: -] the parent gridview
-	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+	// the parent gridview
+	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-"`
 }
 
 var KiT_AlignView = kit.Types.AddType(&AlignView{}, AlignViewProps)

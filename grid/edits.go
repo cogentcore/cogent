@@ -26,88 +26,88 @@ import (
 type EditState struct {
 
 	// current tool in use
-	Tool Tools `desc:"current tool in use"`
+	Tool Tools
 
 	// current action being performed -- used for undo labeling
-	Action string `desc:"current action being performed -- used for undo labeling"`
+	Action string
 
 	// action data set at start of action
-	ActData string `desc:"action data set at start of action"`
+	ActData string
 
 	// list of layers
-	Layers Layers `desc:"list of layers"`
+	Layers Layers
 
 	// current layer -- where new objects are inserted
-	CurLayer string `desc:"current layer -- where new objects are inserted"`
+	CurLayer string
 
 	// current shared gradients, referenced by obj-specific gradients
-	Gradients []*Gradient `desc:"current shared gradients, referenced by obj-specific gradients"`
+	Gradients []*Gradient
 
 	// current text styling info
-	Text TextStyle `desc:"current text styling info"`
+	Text TextStyle
 
 	// undo manager
-	UndoMgr undo.Mgr `desc:"undo manager"`
+	UndoMgr undo.Mgr
 
-	// [view: inactive] contents have changed
-	Changed bool `view:"inactive" desc:"contents have changed"`
+	// contents have changed
+	Changed bool `view:"inactive"`
 
-	// [view: -] action mutex, protecting start / end of actions
-	ActMu sync.Mutex `copy:"-" json:"-" xml:"-" view:"-" desc:"action mutex, protecting start / end of actions"`
+	// action mutex, protecting start / end of actions
+	ActMu sync.Mutex `copy:"-" json:"-" xml:"-" view:"-"`
 
-	// [view: -] selected item(s)
-	Selected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"selected item(s)"`
+	// selected item(s)
+	Selected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-"`
 
 	// selection just happened on press, and no drag happened in between
-	SelNoDrag bool `desc:"selection just happened on press, and no drag happened in between"`
+	SelNoDrag bool
 
 	// true if a new text item was made while dragging
-	NewTextMade bool `desc:"true if a new text item was made while dragging"`
+	NewTextMade bool
 
 	// point where dragging started, mouse coords
-	DragStartPos image.Point `desc:"point where dragging started, mouse coords"`
+	DragStartPos image.Point
 
 	// current dragging position, mouse coords
-	DragCurPos image.Point `desc:"current dragging position, mouse coords"`
+	DragCurPos image.Point
 
 	// current selection bounding box
-	SelBBox mat32.Box2 `desc:"current selection bounding box"`
+	SelBBox mat32.Box2
 
 	// number of current selectbox sprites
-	NSelSprites int `desc:"number of current selectbox sprites"`
+	NSelSprites int
 
 	// last select action position -- continued clicks in same area lead to deeper selection
-	LastSelPos image.Point `desc:"last select action position -- continued clicks in same area lead to deeper selection"`
+	LastSelPos image.Point
 
-	// [view: -] recently selected item(s) -- within the same selection position
-	RecentlySelected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-" desc:"recently selected item(s) -- within the same selection position"`
+	// recently selected item(s) -- within the same selection position
+	RecentlySelected map[svg.NodeSVG]*SelState `copy:"-" json:"-" xml:"-" view:"-"`
 
 	// bbox at start of dragging
-	DragSelStartBBox mat32.Box2 `desc:"bbox at start of dragging"`
+	DragSelStartBBox mat32.Box2
 
 	// current bbox during dragging -- non-snapped version
-	DragSelCurBBox mat32.Box2 `desc:"current bbox during dragging -- non-snapped version"`
+	DragSelCurBBox mat32.Box2
 
 	// current effective bbox during dragging -- snapped version
-	DragSelEffBBox mat32.Box2 `desc:"current effective bbox during dragging -- snapped version"`
+	DragSelEffBBox mat32.Box2
 
 	// potential points of alignment for dragging
-	AlignPts [BBoxPointsN][]mat32.Vec2 `desc:"potential points of alignment for dragging"`
+	AlignPts [BBoxPointsN][]mat32.Vec2
 
 	// number of current node sprites in use
-	NNodeSprites int `desc:"number of current node sprites in use"`
+	NNodeSprites int
 
 	// currently manipulating path object
-	ActivePath *svg.Path `desc:"currently manipulating path object"`
+	ActivePath *svg.Path
 
 	// current path node points
-	PathNodes []*PathNode `desc:"current path node points"`
+	PathNodes []*PathNode
 
 	// selected path nodes
-	PathSel map[int]struct{} `desc:"selected path nodes"`
+	PathSel map[int]struct{}
 
 	// current path command indexes within PathNodes -- where the commands start
-	PathCmds []int `desc:"current path command indexes within PathNodes -- where the commands start"`
+	PathCmds []int
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
@@ -424,39 +424,39 @@ func (es *EditState) DragNodeStart(pos image.Point) {
 type SelState struct {
 
 	// order item was selected
-	Order int `desc:"order item was selected"`
+	Order int
 
 	// initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there
-	InitGeom []float32 `desc:"initial geometry, saved when first selected or start dragging -- manipulations restore then transform from there"`
+	InitGeom []float32
 }
 
 // GradStop represents a single gradient stop
 type GradStop struct {
 
 	// color -- alpha is ignored -- set opacity separately
-	Color gist.Color `desc:"color -- alpha is ignored -- set opacity separately"`
+	Color gist.Color
 
 	// opacity determines how opaque color is - used instead of alpha in color
-	Opacity float64 `desc:"opacity determines how opaque color is - used instead of alpha in color"`
+	Opacity float64
 
 	// offset position along the gradient vector: 0 = start, 1 = nominal end
-	Offset float64 `desc:"offset position along the gradient vector: 0 = start, 1 = nominal end"`
+	Offset float64
 }
 
 // Gradient represents a single gradient that defines stops (referenced in StopName of other gradients)
 type Gradient struct {
 
-	// [tableview: no-header] icon of gradient -- generated to display each gradient
-	Ic gi.IconName `inactive:"+" tableview:"no-header" width:"5" desc:"icon of gradient -- generated to display each gradient"`
+	// icon of gradient -- generated to display each gradient
+	Ic gi.IconName `inactive:"+" tableview:"no-header" width:"5"`
 
 	// name of gradient (id)
-	Id string `inactive:"+" width:"6" desc:"name of gradient (id)"`
+	Id string `inactive:"+" width:"6"`
 
-	// [view: -] full name of gradient as SVG element
-	Name string `view:"-" desc:"full name of gradient as SVG element"`
+	// full name of gradient as SVG element
+	Name string `view:"-"`
 
 	// gradient stops
-	Stops []*GradStop `desc:"gradient stops"`
+	Stops []*GradStop
 }
 
 // Updates our gradient from svg gradient

@@ -126,31 +126,31 @@ func (gv *GridView) NodeSetYPos(yp float32) {
 type PathNode struct {
 
 	// path command
-	Cmd svg.PathCmds `desc:"path command"`
+	Cmd svg.PathCmds
 
 	// previous path command
-	PrevCmd svg.PathCmds `desc:"previous path command"`
+	PrevCmd svg.PathCmds
 
 	// starting index of command
-	CmdIdx int `desc:"starting index of command"`
+	CmdIdx int
 
 	// index of points in data stream
-	Idx int `desc:"index of points in data stream"`
+	Idx int
 
 	// logical index of point within current command (0 = first point, etc)
-	PtIdx int `desc:"logical index of point within current command (0 = first point, etc)"`
+	PtIdx int
 
 	// local coords abs previous current point that is starting point for this command
-	PCp mat32.Vec2 `desc:"local coords abs previous current point that is starting point for this command"`
+	PCp mat32.Vec2
 
 	// local coords abs current point
-	Cp mat32.Vec2 `desc:"local coords abs current point"`
+	Cp mat32.Vec2
 
 	// main point coords in window (dot) coords
-	WinPt mat32.Vec2 `desc:"main point coords in window (dot) coords"`
+	WinPt mat32.Vec2
 
 	// control point coords in window (dot) coords (nil until manipulated)
-	WinCtrls []mat32.Vec2 `desc:"control point coords in window (dot) coords (nil until manipulated)"`
+	WinCtrls []mat32.Vec2
 }
 
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start

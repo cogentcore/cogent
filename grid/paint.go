@@ -24,19 +24,19 @@ type PaintView struct {
 	gi.Layout
 
 	// paint type for stroke
-	StrokeType PaintTypes `desc:"paint type for stroke"`
+	StrokeType PaintTypes
 
 	// name of gradient with stops
-	StrokeStops string `desc:"name of gradient with stops"`
+	StrokeStops string
 
 	// paint type for fill
-	FillType PaintTypes `desc:"paint type for fill"`
+	FillType PaintTypes
 
 	// name of gradient with stops
-	FillStops string `desc:"name of gradient with stops"`
+	FillStops string
 
-	// [view: -] the parent gridview
-	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+	// the parent gridview
+	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-"`
 }
 
 var KiT_PaintView = kit.Types.AddType(&PaintView{}, PaintViewProps)

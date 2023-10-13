@@ -16,19 +16,19 @@ import (
 type PhysSize struct {
 
 	// select a standard size -- this will set units and size
-	StdSize StdSizes `desc:"select a standard size -- this will set units and size"`
+	StdSize StdSizes
 
 	// for standard size, use first number as width, second as height
-	Portrait bool `desc:"for standard size, use first number as width, second as height"`
+	Portrait bool
 
 	// default units to use, e.g., in line widths etc
-	Units units.Units `desc:"default units to use, e.g., in line widths etc"`
+	Units units.Units
 
 	// drawing size, in Units
-	Size mat32.Vec2 `desc:"drawing size, in Units"`
+	Size mat32.Vec2
 
 	// grid spacing, in units of ViewBox size
-	Grid float32 `desc:"grid spacing, in units of ViewBox size"`
+	Grid float32
 }
 
 var KiT_PhysSize = kit.Types.AddType(&PhysSize{}, nil)

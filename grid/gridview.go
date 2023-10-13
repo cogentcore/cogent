@@ -34,10 +34,10 @@ type GridView struct {
 	gi.Frame
 
 	// full path to current drawing filename
-	Filename gi.FileName `ext:".svg" desc:"full path to current drawing filename"`
+	Filename gi.FileName `ext:".svg"`
 
 	// current edit state
-	EditState EditState `desc:"current edit state"`
+	EditState EditState
 }
 
 var KiT_GridView = kit.Types.AddType(&GridView{}, GridViewProps)

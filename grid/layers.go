@@ -20,10 +20,10 @@ type Layer struct {
 	Name string
 
 	// visiblity toggle
-	Vis bool `desc:"visiblity toggle"`
+	Vis bool
 
 	// lock toggle
-	Lck bool `desc:"lock toggle"`
+	Lck bool
 }
 
 // FromNode copies state / prop values from given node

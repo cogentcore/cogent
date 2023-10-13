@@ -32,38 +32,38 @@ import (
 type SVGView struct {
 	svg.SVG
 
-	// [view: -] the parent gridview
-	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-" desc:"the parent gridview"`
+	// the parent gridview
+	GridView *GridView `copy:"-" json:"-" xml:"-" view:"-"`
 
 	// view translation offset (from dragging)
-	Trans mat32.Vec2 `desc:"view translation offset (from dragging)"`
+	Trans mat32.Vec2
 
 	// view scaling (from zooming)
-	Scale float32 `desc:"view scaling (from zooming)"`
+	Scale float32
 
 	// grid spacing, in native ViewBox units
-	Grid float32 `desc:"grid spacing, in native ViewBox units"`
+	Grid float32
 
-	// [view: inactive] effective grid spacing given Scale level
-	GridEff float32 `view:"inactive" desc:"effective grid spacing given Scale level"`
+	// effective grid spacing given Scale level
+	GridEff float32 `view:"inactive"`
 
-	// [view: -] has dragging cursor been set yet?
-	SetDragCursor bool `view:"-" desc:"has dragging cursor been set yet?"`
+	// has dragging cursor been set yet?
+	SetDragCursor bool `view:"-"`
 
-	// [view: -] background pixels, includes page outline and grid
-	BgPixels *image.RGBA `copy:"-" json:"-" xml:"-" view:"-" desc:"background pixels, includes page outline and grid"`
+	// background pixels, includes page outline and grid
+	BgPixels *image.RGBA `copy:"-" json:"-" xml:"-" view:"-"`
 
-	// [view: -] render state for background rendering
-	BgRender girl.State `copy:"-" json:"-" xml:"-" view:"-" desc:"render state for background rendering"`
+	// render state for background rendering
+	BgRender girl.State `copy:"-" json:"-" xml:"-" view:"-"`
 
-	// [view: -] bg rendered translation
-	bgTrans mat32.Vec2 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered translation"`
+	// bg rendered translation
+	bgTrans mat32.Vec2 `copy:"-" json:"-" xml:"-" view:"-"`
 
-	// [view: -] bg rendered scale
-	bgScale float32 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered scale"`
+	// bg rendered scale
+	bgScale float32 `copy:"-" json:"-" xml:"-" view:"-"`
 
-	// [view: -] bg rendered grid
-	bgGridEff float32 `copy:"-" json:"-" xml:"-" view:"-" desc:"bg rendered grid"`
+	// bg rendered grid
+	bgGridEff float32 `copy:"-" json:"-" xml:"-" view:"-"`
 }
 
 var KiT_SVGView = kit.Types.AddType(&SVGView{}, SVGViewProps)

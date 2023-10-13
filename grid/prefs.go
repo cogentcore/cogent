@@ -27,49 +27,49 @@ import (
 type Preferences struct {
 
 	// default physical size, when app is started without opening a file
-	Size PhysSize `desc:"default physical size, when app is started without opening a file"`
+	Size PhysSize
 
 	// active color preferences
-	Colors ColorPrefs `desc:"active color preferences"`
+	Colors ColorPrefs
 
 	// named color schemes -- has Light and Dark schemes by default
-	ColorSchemes map[string]*ColorPrefs `desc:"named color schemes -- has Light and Dark schemes by default"`
+	ColorSchemes map[string]*ColorPrefs
 
 	// default shape styles
-	ShapeStyle girl.Paint `desc:"default shape styles"`
+	ShapeStyle girl.Paint
 
 	// default text styles
-	TextStyle girl.Paint `desc:"default text styles"`
+	TextStyle girl.Paint
 
 	// default line styles
-	PathStyle girl.Paint `desc:"default line styles"`
+	PathStyle girl.Paint
 
 	// default line styles
-	LineStyle girl.Paint `desc:"default line styles"`
+	LineStyle girl.Paint
 
 	// turns on the grid display
-	GridDisp bool `desc:"turns on the grid display"`
+	GridDisp bool
 
 	// snap positions and sizes to underlying grid
-	SnapGrid bool `desc:"snap positions and sizes to underlying grid"`
+	SnapGrid bool
 
 	// snap positions and sizes to line up with other elements
-	SnapGuide bool `desc:"snap positions and sizes to line up with other elements"`
+	SnapGuide bool
 
 	// snap node movements to align with guides
-	SnapNodes bool `desc:"snap node movements to align with guides"`
+	SnapNodes bool
 
-	// [min: 1] number of screen pixels around target point (in either direction) to snap
-	SnapTol int `min:"1" desc:"number of screen pixels around target point (in either direction) to snap"`
+	// number of screen pixels around target point (in either direction) to snap
+	SnapTol int `min:"1"`
 
 	// named-split config in use for configuring the splitters
-	SplitName SplitName `desc:"named-split config in use for configuring the splitters"`
+	SplitName SplitName
 
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
-	EnvVars map[string]string `desc:"environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"`
+	EnvVars map[string]string
 
-	// [view: -] flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -330,13 +330,13 @@ func OpenPaths() {
 type ColorPrefs struct {
 
 	// drawing background color
-	Background gist.Color `desc:"drawing background color"`
+	Background gist.Color
 
 	// border color of the drawing
-	Border gist.Color `desc:"border color of the drawing"`
+	Border gist.Color
 
 	// grid line color
-	Grid gist.Color `desc:"grid line color"`
+	Grid gist.Color
 }
 
 var KiT_ColorPrefs = kit.Types.AddType(&ColorPrefs{}, ColorPrefsProps)
