@@ -25,25 +25,25 @@ import (
 type Thread struct {
 
 	// thread identifier
-	ID int `format:"%#X" desc:"thread identifier"`
+	ID int `format:"%#X"`
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
+	PC uint64 `format:"%#X"`
 
 	// file name (trimmed up to point of project base path)
-	File string `desc:"file name (trimmed up to point of project base path)"`
+	File string
 
 	// line within file
-	Line int `desc:"line within file"`
+	Line int
 
-	// [tableview: -] full path to file
-	FPath string `tableview:"-" desc:"full path to file"`
+	// full path to file
+	FPath string `tableview:"-"`
 
 	// the name of the function
-	Func string `desc:"the name of the function"`
+	Func string
 
 	// id of the current Task within this system thread (if relevant)
-	Task int `desc:"id of the current Task within this system thread (if relevant)"`
+	Task int
 }
 
 // ThreadByID returns the given thread by ID from full list, and index.
@@ -67,31 +67,31 @@ func (th *Thread) String() string {
 type Task struct {
 
 	// task identifier
-	ID int `desc:"task identifier"`
+	ID int
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
+	PC uint64 `format:"%#X"`
 
 	// file name (trimmed up to point of project base path)
-	File string `desc:"file name (trimmed up to point of project base path)"`
+	File string
 
 	// line within file
-	Line int `desc:"line within file"`
+	Line int
 
-	// [tableview: -] full path to file
-	FPath string `tableview:"-" tableview:"-" desc:"full path to file"`
+	// full path to file
+	FPath string `tableview:"-" tableview:"-"`
 
 	// the name of the function
-	Func string `desc:"the name of the function"`
+	Func string
 
 	// id of the current Thread this task is running on
-	Thread int `format:"%#X" desc:"id of the current Thread this task is running on"`
+	Thread int `format:"%#X"`
 
-	// [tableview: -] where did this task first start running?
-	StartLoc Location `tableview:"-" desc:"where did this task first start running?"`
+	// where did this task first start running?
+	StartLoc Location `tableview:"-"`
 
-	// [tableview: -] at what point was this task launched from another task?
-	LaunchLoc Location `tableview:"-" desc:"at what point was this task launched from another task?"`
+	// at what point was this task launched from another task?
+	LaunchLoc Location `tableview:"-"`
 }
 
 // TaskByID returns the given thread by ID from full list, and index.
@@ -113,81 +113,81 @@ func (th *Task) String() string {
 type Location struct {
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
+	PC uint64 `format:"%#X"`
 
 	// file name (trimmed up to point of project base path)
-	File string `desc:"file name (trimmed up to point of project base path)"`
+	File string
 
 	// line within file
-	Line int `desc:"line within file"`
+	Line int
 
-	// [view: -] [tableview: -] full path to file
-	FPath string `view:"-" tableview:"-" desc:"full path to file"`
+	// full path to file
+	FPath string `view:"-" tableview:"-"`
 
 	// the name of the function
-	Func string `desc:"the name of the function"`
+	Func string
 }
 
 // Frame describes one frame in a stack trace.
 type Frame struct {
 
 	// depth in overall stack -- 0 is the bottom (currently executing) frame, and it counts up from there
-	Depth int `desc:"depth in overall stack -- 0 is the bottom (currently executing) frame, and it counts up from there"`
+	Depth int
 
 	// the Task or Thread id that this frame belongs to
-	ThreadID int `desc:"the Task or Thread id that this frame belongs to"`
+	ThreadID int
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
+	PC uint64 `format:"%#X"`
 
 	// file name (trimmed up to point of project base path)
-	File string `desc:"file name (trimmed up to point of project base path)"`
+	File string
 
 	// line within file
-	Line int `desc:"line within file"`
+	Line int
 
-	// [tableview: -] full path to file
-	FPath string `tableview:"-" tableview:"-" desc:"full path to file"`
+	// full path to file
+	FPath string `tableview:"-" tableview:"-"`
 
 	// the name of the function
-	Func string `desc:"the name of the function"`
+	Func string
 
-	// [tableview: -] values of the local variables at this frame
-	Vars []*Variable `tableview:"-" desc:"values of the local variables at this frame"`
+	// values of the local variables at this frame
+	Vars []*Variable `tableview:"-"`
 
-	// [tableview: -] values of the local function args at this frame
-	Args []*Variable `tableview:"-" desc:"values of the local function args at this frame"`
+	// values of the local function args at this frame
+	Args []*Variable `tableview:"-"`
 }
 
 // Break describes one breakpoint
 type Break struct {
 
 	// unique numerical ID of the breakpoint
-	ID int `inactive:"+" desc:"unique numerical ID of the breakpoint"`
+	ID int `inactive:"+"`
 
 	// whether the breakpoint is currently enabled
-	On bool `width:"4" desc:"whether the breakpoint is currently enabled"`
+	On bool `width:"4"`
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `inactive:"+" format:"%#X" desc:"program counter (address) -- may be subset of multiple"`
+	PC uint64 `inactive:"+" format:"%#X"`
 
 	// file name (trimmed up to point of project base path)
-	File string `inactive:"+" desc:"file name (trimmed up to point of project base path)"`
+	File string `inactive:"+"`
 
 	// line within file
-	Line int `inactive:"+" desc:"line within file"`
+	Line int `inactive:"+"`
 
-	// [view: -] [tableview: -] full path to file
-	FPath string `inactive:"+" view:"-" tableview:"-" desc:"full path to file"`
+	// full path to file
+	FPath string `inactive:"+" view:"-" tableview:"-"`
 
 	// the name of the function
-	Func string `inactive:"+" desc:"the name of the function"`
+	Func string `inactive:"+"`
 
 	// condition for conditional breakbpoint
-	Cond string `desc:"condition for conditional breakbpoint"`
+	Cond string
 
 	// if true, execution does not stop -- just a message is reported when this point is hit
-	Trace bool `width:"7" desc:"if true, execution does not stop -- just a message is reported when this point is hit"`
+	Trace bool `width:"7"`
 }
 
 // BreakByID returns the given breakpoint by ID from full list, and index.
@@ -223,28 +223,28 @@ func SortBreaks(brk []*Break) {
 type State struct {
 
 	// currently executing system thread
-	Thread Thread `desc:"currently executing system thread"`
+	Thread Thread
 
 	// currently executing task
-	Task Task `desc:"currently executing task"`
+	Task Task
 
 	// true if the process is running and no other information can be collected.
-	Running bool `desc:"true if the process is running and no other information can be collected."`
+	Running bool
 
 	// if true, a Next or Step is already in progress and another should not be attempted until after a Continue
-	NextUp bool `desc:"if true, a Next or Step is already in progress and another should not be attempted until after a Continue"`
+	NextUp bool
 
 	// if true, the program has exited
-	Exited bool `desc:"if true, the program has exited"`
+	Exited bool
 
 	// indicates the exit status if Exited
-	ExitStatus int `desc:"indicates the exit status if Exited"`
+	ExitStatus int
 
 	// error communicated to client -- if non-empty, something bad happened
-	Err error `desc:"error communicated to client -- if non-empty, something bad happened"`
+	Err error
 
 	// if this is > 0, then we just hit that tracepoint -- the Continue process will continue execution
-	CurTrace int `desc:"if this is > 0, then we just hit that tracepoint -- the Continue process will continue execution"`
+	CurTrace int
 }
 
 func (st *State) String() string {
@@ -256,49 +256,49 @@ func (st *State) String() string {
 type AllState struct {
 
 	// mode we're running in
-	Mode Modes `desc:"mode we're running in"`
+	Mode Modes
 
 	// overall debugger status
-	Status Status `desc:"overall debugger status"`
+	Status Status
 
 	// current run state
-	State State `desc:"current run state"`
+	State State
 
 	// id of the current system thread to examine
-	CurThread int `desc:"id of the current system thread to examine"`
+	CurThread int
 
 	// id of the current task to examine
-	CurTask int `desc:"id of the current task to examine"`
+	CurTask int
 
 	// frame number within current thread
-	CurFrame int `desc:"frame number within current thread"`
+	CurFrame int
 
 	// current breakpoint that we stopped at -- will be 0 if none, after UpdateState
-	CurBreak int `desc:"current breakpoint that we stopped at -- will be 0 if none, after UpdateState"`
+	CurBreak int
 
 	// all breakpoints that have been set -- some may not be On
-	Breaks []*Break `desc:"all breakpoints that have been set -- some may not be On"`
+	Breaks []*Break
 
 	// current, active breakpoints as retrieved from debugger
-	CurBreaks []*Break `desc:"current, active breakpoints as retrieved from debugger"`
+	CurBreaks []*Break
 
 	// all system threads
-	Threads []*Thread `desc:"all system threads"`
+	Threads []*Thread
 
 	// all tasks
-	Tasks []*Task `desc:"all tasks"`
+	Tasks []*Task
 
 	// current stack frame for current thread / task
-	Stack []*Frame `desc:"current stack frame for current thread / task"`
+	Stack []*Frame
 
 	// current local variables and args for current frame
-	Vars []*Variable `desc:"current local variables and args for current frame"`
+	Vars []*Variable
 
 	// global variables for current thread / task
-	GlobalVars []*Variable `desc:"global variables for current thread / task"`
+	GlobalVars []*Variable
 
 	// current find-frames result
-	FindFrames []*Frame `desc:"current find-frames result"`
+	FindFrames []*Frame
 }
 
 // BlankState initializes state with a blank initial state with the various slices

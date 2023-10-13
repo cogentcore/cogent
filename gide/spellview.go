@@ -24,31 +24,31 @@ type SpellView struct {
 	gi.Layout
 
 	// parent gide project
-	Gide Gide `json:"-" xml:"-" copy:"-" desc:"parent gide project"`
+	Gide Gide `json:"-" xml:"-" copy:"-"`
 
 	// textview that we're spell-checking
-	Text *TextView `json:"-" xml:"-" copy:"-" desc:"textview that we're spell-checking"`
+	Text *TextView `json:"-" xml:"-" copy:"-"`
 
 	// current spelling errors
-	Errs lex.Line `desc:"current spelling errors"`
+	Errs lex.Line
 
 	// current line in text we're on
-	CurLn int `desc:"current line in text we're on"`
+	CurLn int
 
 	// current index in Errs we're on
-	CurIdx int `desc:"current index in Errs we're on"`
+	CurIdx int
 
 	// current unknown lex token
-	UnkLex lex.Lex `desc:"current unknown lex token"`
+	UnkLex lex.Lex
 
 	// current unknown word
-	UnkWord string `desc:"current unknown word"`
+	UnkWord string
 
 	// a list of suggestions from spell checker
-	Suggest []string `desc:"a list of suggestions from spell checker"`
+	Suggest []string
 
 	// last user action (ignore, change, learn)
-	LastAction *gi.Button `desc:"last user action (ignore, change, learn)"`
+	LastAction *gi.Button
 }
 
 var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)

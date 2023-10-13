@@ -66,64 +66,64 @@ type GideView struct {
 	gi.Frame
 
 	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
-	ProjRoot gi.FileName `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	ProjRoot gi.FileName
 
 	// current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
-	ProjFilename gi.FileName `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
+	ProjFilename gi.FileName `ext:".gide"`
 
 	// filename of the currently-active textview
-	ActiveFilename gi.FileName `desc:"filename of the currently-active textview"`
+	ActiveFilename gi.FileName
 
 	// language for current active filename
-	ActiveLang filecat.Supported `desc:"language for current active filename"`
+	ActiveLang filecat.Supported
 
 	// VCS repo for current active filename
-	ActiveVCS vci.Repo `desc:"VCS repo for current active filename"`
+	ActiveVCS vci.Repo
 
 	// VCS info for current active filename (typically branch or revision) -- for status
-	ActiveVCSInfo string `desc:"VCS info for current active filename (typically branch or revision) -- for status"`
+	ActiveVCSInfo string
 
 	// has the root changed?  we receive update signals from root for changes
-	Changed bool `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+	Changed bool `json:"-"`
 
 	// timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger
-	LastSaveTStamp time.Time `json:"-" desc:"timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger"`
+	LastSaveTStamp time.Time `json:"-"`
 
 	// all the files in the project directory and subdirectories
-	Files giv.FileTree `desc:"all the files in the project directory and subdirectories"`
+	Files giv.FileTree
 
 	// the files tree view
-	FilesView *gide.FileTreeView `json:"-" desc:"the files tree view"`
+	FilesView *gide.FileTreeView `json:"-"`
 
 	// index of the currently-active textview -- new files will be viewed in other views if available
-	ActiveTextViewIdx int `json:"-" desc:"index of the currently-active textview -- new files will be viewed in other views if available"`
+	ActiveTextViewIdx int `json:"-"`
 
 	// list of open nodes, most recent first
-	OpenNodes gide.OpenNodes `json:"-" desc:"list of open nodes, most recent first"`
+	OpenNodes gide.OpenNodes `json:"-"`
 
 	// the command buffers for commands run in this project
-	CmdBufs map[string]*giv.TextBuf `json:"-" desc:"the command buffers for commands run in this project"`
+	CmdBufs map[string]*giv.TextBuf `json:"-"`
 
 	// history of commands executed in this session
-	CmdHistory gide.CmdNames `json:"-" desc:"history of commands executed in this session"`
+	CmdHistory gide.CmdNames `json:"-"`
 
 	// currently running commands in this project
-	RunningCmds gide.CmdRuns `json:"-" xml:"-" desc:"currently running commands in this project"`
+	RunningCmds gide.CmdRuns `json:"-" xml:"-"`
 
 	// current arg var vals
-	ArgVals gide.ArgVarVals `json:"-" xml:"-" desc:"current arg var vals"`
+	ArgVals gide.ArgVarVals `json:"-" xml:"-"`
 
 	// preferences for this project -- this is what is saved in a .gide project file
-	Prefs gide.ProjPrefs `desc:"preferences for this project -- this is what is saved in a .gide project file"`
+	Prefs gide.ProjPrefs
 
 	// current debug view
-	CurDbg *gide.DebugView `desc:"current debug view"`
+	CurDbg *gide.DebugView
 
 	// first key in sequence if needs2 key pressed
-	KeySeq1 key.Chord `desc:"first key in sequence if needs2 key pressed"`
+	KeySeq1 key.Chord
 
 	// mutex for protecting overall updates to GideView
-	UpdtMu sync.Mutex `desc:"mutex for protecting overall updates to GideView"`
+	UpdtMu sync.Mutex
 }
 
 var KiT_GideView = kit.Types.AddType(&GideView{}, nil)

@@ -18,34 +18,34 @@ import (
 type Console struct {
 
 	// std out writer -- set to os.Stdout
-	StdoutWrite *os.File `json:"-" xml:"-" desc:"std out writer -- set to os.Stdout"`
+	StdoutWrite *os.File `json:"-" xml:"-"`
 
 	// std out reader -- used to read os.Stdout
-	StdoutRead *os.File `json:"-" xml:"-" desc:"std out reader -- used to read os.Stdout"`
+	StdoutRead *os.File `json:"-" xml:"-"`
 
 	// std err writer -- set to os.Stderr
-	StderrWrite *os.File `json:"-" xml:"-" desc:"std err writer -- set to os.Stderr"`
+	StderrWrite *os.File `json:"-" xml:"-"`
 
 	// std err reader -- used to read os.Stderr
-	StderrRead *os.File `json:"-" xml:"-" desc:"std err reader -- used to read os.Stderr"`
+	StderrRead *os.File `json:"-" xml:"-"`
 
 	// text buffer holding all output
-	Buf *giv.TextBuf `json:"-" xml:"-" desc:"text buffer holding all output"`
+	Buf *giv.TextBuf `json:"-" xml:"-"`
 
 	// set to true to cancel monitoring
-	Cancel bool `json:"-" xml:"-" desc:"set to true to cancel monitoring"`
+	Cancel bool `json:"-" xml:"-"`
 
 	// mutex protecting updating of buffer between out / err
-	Mu sync.Mutex `json:"-" xml:"-" desc:"mutex protecting updating of buffer between out / err"`
+	Mu sync.Mutex `json:"-" xml:"-"`
 
 	// original os.Stdout writer
-	OrgoutWrite *os.File `json:"-" xml:"-" desc:"original os.Stdout writer"`
+	OrgoutWrite *os.File `json:"-" xml:"-"`
 
 	// original os.Stderr writer
-	OrgerrWrite *os.File `json:"-" xml:"-" desc:"original os.Stderr writer"`
+	OrgerrWrite *os.File `json:"-" xml:"-"`
 
 	// log file writer
-	LogWrite *os.File `json:"-" xml:"-" desc:"log file writer"`
+	LogWrite *os.File `json:"-" xml:"-"`
 }
 
 var KiT_Console = kit.Types.AddType(&Console{}, nil)

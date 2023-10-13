@@ -20,16 +20,16 @@ import (
 type ProjPrefs struct {
 
 	// filename for project (i.e, these preference)
-	ProjFile gi.FileName `desc:"filename for project (i.e, these preference)"`
+	ProjFile gi.FileName
 
 	// filename for parser
-	ParserFile gi.FileName `desc:"filename for parser"`
+	ParserFile gi.FileName
 
 	// the file for testing
-	TestFile gi.FileName `desc:"the file for testing"`
+	TestFile gi.FileName
 
 	// the options for tracing parsing
-	TraceOpts parse.TraceOpts `desc:"the options for tracing parsing"`
+	TraceOpts parse.TraceOpts
 }
 
 var KiT_ProjPrefs = kit.Types.AddType(&ProjPrefs{}, nil)

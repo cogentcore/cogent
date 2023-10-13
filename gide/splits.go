@@ -23,13 +23,13 @@ import (
 type Split struct {
 
 	// name of splitter config
-	Name string `desc:"name of splitter config"`
+	Name string
 
 	// brief description
-	Desc string `desc:"brief description"`
+	Desc string
 
-	// [min: 0] [max: 1] [step: .05] splitter panel proportions
-	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"4" desc:"splitter panel proportions"`
+	// splitter panel proportions
+	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"4"`
 }
 
 // Label satisfies the Labeler interface

@@ -43,37 +43,37 @@ type PiView struct {
 	gi.Frame
 
 	// the parser we are viewing
-	Parser pi.Parser `desc:"the parser we are viewing"`
+	Parser pi.Parser
 
 	// project preferences -- this IS the project file
-	Prefs ProjPrefs `desc:"project preferences -- this IS the project file"`
+	Prefs ProjPrefs
 
 	// has the root changed?  we receive update signals from root for changes
-	Changed bool `json:"-" desc:"has the root changed?  we receive update signals from root for changes"`
+	Changed bool `json:"-"`
 
 	// our own dedicated filestate for controlled parsing
-	FileState pi.FileState `json:"-" desc:"our own dedicated filestate for controlled parsing"`
+	FileState pi.FileState `json:"-"`
 
 	// test file buffer
-	TestBuf giv.TextBuf `json:"-" desc:"test file buffer"`
+	TestBuf giv.TextBuf `json:"-"`
 
 	// output buffer -- shows all errors, tracing
-	OutBuf giv.TextBuf `json:"-" desc:"output buffer -- shows all errors, tracing"`
+	OutBuf giv.TextBuf `json:"-"`
 
 	// buffer of lexified tokens
-	LexBuf giv.TextBuf `json:"-" desc:"buffer of lexified tokens"`
+	LexBuf giv.TextBuf `json:"-"`
 
 	// buffer of parse info
-	ParseBuf giv.TextBuf `json:"-" desc:"buffer of parse info"`
+	ParseBuf giv.TextBuf `json:"-"`
 
 	// first key in sequence if needs2 key pressed
-	KeySeq1 key.Chord `desc:"first key in sequence if needs2 key pressed"`
+	KeySeq1 key.Chord
 
 	// is the output monitor running?
-	OutMonRunning bool `json:"-" desc:"is the output monitor running?"`
+	OutMonRunning bool `json:"-"`
 
 	// mutex for updating, checking output monitor run status
-	OutMonMu sync.Mutex `json:"-" desc:"mutex for updating, checking output monitor run status"`
+	OutMonMu sync.Mutex `json:"-"`
 }
 
 var KiT_PiView = kit.Types.AddType(&PiView{}, PiViewProps)

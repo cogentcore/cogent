@@ -27,32 +27,32 @@ import (
 type FilePrefs struct {
 
 	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
-	DirsOnTop bool `desc:"if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"`
+	DirsOnTop bool
 }
 
 // Preferences are the overall user preferences for Gide.
 type Preferences struct {
 
 	// file view preferences
-	Files FilePrefs `desc:"file view preferences"`
+	Files FilePrefs
 
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
-	EnvVars map[string]string `desc:"environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"`
+	EnvVars map[string]string
 
 	// key map for gide-specific keyboard sequences
-	KeyMap KeyMapName `desc:"key map for gide-specific keyboard sequences"`
+	KeyMap KeyMapName
 
 	// if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords
-	SaveKeyMaps bool `desc:"if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"`
+	SaveKeyMaps bool
 
 	// if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)
-	SaveLangOpts bool `desc:"if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	SaveLangOpts bool
 
 	// if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)
-	SaveCmds bool `desc:"if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"`
+	SaveCmds bool
 
-	// [view: -] flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
 var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
@@ -309,64 +309,64 @@ var PreferencesProps = ki.Props{
 type ProjPrefs struct {
 
 	// file view preferences
-	Files FilePrefs `desc:"file view preferences"`
+	Files FilePrefs
 
-	// [view: inline] editor preferences
-	Editor gi.EditorPrefs `view:"inline" desc:"editor preferences"`
+	// editor preferences
+	Editor gi.EditorPrefs `view:"inline"`
 
 	// current named-split config in use for configuring the splitters
-	SplitName SplitName `desc:"current named-split config in use for configuring the splitters"`
+	SplitName SplitName
 
 	// the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well
-	MainLang filecat.Supported `desc:"the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"`
+	MainLang filecat.Supported
 
 	// the type of version control system used in this project (git, svn, etc) -- filters commands available
-	VersCtrl giv.VersCtrlName `desc:"the type of version control system used in this project (git, svn, etc) -- filters commands available"`
+	VersCtrl giv.VersCtrlName
 
 	// current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
-	ProjFilename gi.FileName `ext:".gide" desc:"current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"`
+	ProjFilename gi.FileName `ext:".gide"`
 
 	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
-	ProjRoot gi.FileName `desc:"root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"`
+	ProjRoot gi.FileName
 
 	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
-	GoMod bool `desc:"if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"`
+	GoMod bool
 
 	// command(s) to run for main Build button
-	BuildCmds CmdNames `desc:"command(s) to run for main Build button"`
+	BuildCmds CmdNames
 
 	// build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands
-	BuildDir gi.FileName `desc:"build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"`
+	BuildDir gi.FileName
 
 	// build target for main Build button, if relevant for your  BuildCmds
-	BuildTarg gi.FileName `desc:"build target for main Build button, if relevant for your  BuildCmds"`
+	BuildTarg gi.FileName
 
 	// executable to run for this project via main Run button -- called by standard Run Proj command
-	RunExec gi.FileName `desc:"executable to run for this project via main Run button -- called by standard Run Proj command"`
+	RunExec gi.FileName
 
 	// command(s) to run for main Run button (typically Run Proj)
-	RunCmds CmdNames `desc:"command(s) to run for main Run button (typically Run Proj)"`
+	RunCmds CmdNames
 
 	// custom debugger parameters for this project
-	Debug gidebug.Params `desc:"custom debugger parameters for this project"`
+	Debug gidebug.Params
 
-	// [view: -] saved find params
-	Find FindParams `view:"-" desc:"saved find params"`
+	// saved find params
+	Find FindParams `view:"-"`
 
-	// [view: -] saved structure params
-	Symbols SymbolsParams `view:"-" desc:"saved structure params"`
+	// saved structure params
+	Symbols SymbolsParams `view:"-"`
 
-	// [view: -] directory properties
-	Dirs giv.DirFlagMap `view:"-" desc:"directory properties"`
+	// directory properties
+	Dirs giv.DirFlagMap `view:"-"`
 
-	// [view: -] last register used
-	Register RegisterName `view:"-" desc:"last register used"`
+	// last register used
+	Register RegisterName `view:"-"`
 
-	// [view: -] current splitter splits
-	Splits []float32 `view:"-" desc:"current splitter splits"`
+	// current splitter splits
+	Splits []float32 `view:"-"`
 
-	// [view: -] flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-" desc:"flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."`
+	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
 var KiT_ProjPrefs = kit.Types.AddType(&ProjPrefs{}, ProjPrefsProps)

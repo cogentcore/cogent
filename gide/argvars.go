@@ -20,10 +20,10 @@ import (
 type ArgVarInfo struct {
 
 	// description of arg var
-	Desc string `desc:"description of arg var"`
+	Desc string
 
 	// type of variable -- used for checking usage and other special features such as prompting
-	Type ArgVarTypes `desc:"type of variable -- used for checking usage and other special features such as prompting"`
+	Type ArgVarTypes
 }
 
 // ArgVars are variables that can be used for arguments to commands in CmdAndArgs

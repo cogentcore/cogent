@@ -54,28 +54,28 @@ func (ev *FindLoc) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(
 type FindParams struct {
 
 	// find string
-	Find string `desc:"find string"`
+	Find string
 
 	// replace string
-	Replace string `desc:"replace string"`
+	Replace string
 
 	// ignore case
-	IgnoreCase bool `desc:"ignore case"`
+	IgnoreCase bool
 
 	// use regexp regular expression search and replace
-	Regexp bool `desc:"use regexp regular expression search and replace"`
+	Regexp bool
 
 	// languages for files to search
-	Langs []filecat.Supported `desc:"languages for files to search"`
+	Langs []filecat.Supported
 
 	// locations to search in
-	Loc FindLoc `desc:"locations to search in"`
+	Loc FindLoc
 
 	// history of finds
-	FindHist []string `desc:"history of finds"`
+	FindHist []string
 
 	// history of replaces
-	ReplHist []string `desc:"history of replaces"`
+	ReplHist []string
 }
 
 // FindView is a find / replace widget that displays results in a TextView
@@ -84,16 +84,16 @@ type FindView struct {
 	gi.Layout
 
 	// parent gide project
-	Gide Gide `json:"-" xml:"-" desc:"parent gide project"`
+	Gide Gide `json:"-" xml:"-"`
 
 	// langs value view
-	LangVV giv.ValueView `desc:"langs value view"`
+	LangVV giv.ValueView
 
 	// time of last find
-	Time time.Time `desc:"time of last find"`
+	Time time.Time
 
 	// compiled regexp
-	Re *regexp.Regexp `desc:"compiled regexp"`
+	Re *regexp.Regexp
 }
 
 var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)

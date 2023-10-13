@@ -33,16 +33,16 @@ import (
 type CmdAndArgs struct {
 
 	// external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable.
-	Cmd string `width:"25" desc:"external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable."`
+	Cmd string `width:"25"`
 
 	// args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows).
-	Args CmdArgs `complete:"arg" width:"25" desc:"args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows)."`
+	Args CmdArgs `complete:"arg" width:"25"`
 
 	// default value for prompt string, for first use -- thereafter it uses last value provided for given command
-	Default string `width:"25" desc:"default value for prompt string, for first use -- thereafter it uses last value provided for given command"`
+	Default string `width:"25"`
 
 	// if true, then do not split any prompted string into separate space-separated fields -- otherwise do so, except for values within quotes
-	PromptIsString bool `desc:"if true, then do not split any prompted string into separate space-separated fields -- otherwise do so, except for values within quotes"`
+	PromptIsString bool
 }
 
 // Label satisfies the Labeler interface
@@ -170,16 +170,16 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 type CmdRun struct {
 
 	// Name of command being run -- same as Command.Name
-	Name string `desc:"Name of command being run -- same as Command.Name"`
+	Name string
 
 	// command string
-	CmdStr string `desc:"command string"`
+	CmdStr string
 
 	// Details of the command and args
-	CmdArgs *CmdAndArgs `desc:"Details of the command and args"`
+	CmdArgs *CmdAndArgs
 
 	// exec.Cmd for the command
-	Exec *exec.Cmd `desc:"exec.Cmd for the command"`
+	Exec *exec.Cmd
 }
 
 // Kill kills the process
@@ -251,31 +251,31 @@ func (rc *CmdRuns) KillByName(name string) bool {
 type Command struct {
 
 	// category for the command -- commands are organized in to hierarchical menus according to category
-	Cat string `desc:"category for the command -- commands are organized in to hierarchical menus according to category"`
+	Cat string
 
 	// name of this command (must be unique in list of commands)
-	Name string `width:"20" desc:"name of this command (must be unique in list of commands)"`
+	Name string `width:"20"`
 
 	// brief description of this command
-	Desc string `width:"40" desc:"brief description of this command"`
+	Desc string `width:"40"`
 
 	// supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type
-	Lang filecat.Supported `desc:"supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type"`
+	Lang filecat.Supported
 
 	// sequence of commands to run for this overall command.
-	Cmds []CmdAndArgs `tableview-select:"-" desc:"sequence of commands to run for this overall command."`
+	Cmds []CmdAndArgs `tableview-select:"-"`
 
 	// if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory.
-	Dir string `width:"20" complete:"arg" desc:"if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory."`
+	Dir string `width:"20" complete:"arg"`
 
 	// if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless.
-	Wait bool `desc:"if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless."`
+	Wait bool
 
 	// if true, keyboard focus is directed to the command output tab panel after the command runs.
-	Focus bool `desc:"if true, keyboard focus is directed to the command output tab panel after the command runs."`
+	Focus bool
 
 	// if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands
-	Confirm bool `desc:"if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands"`
+	Confirm bool
 }
 
 // CommandName returns a qualified command name as cat: cmd

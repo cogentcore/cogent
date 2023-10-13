@@ -26,7 +26,7 @@ import (
 type SymbolsParams struct {
 
 	// scope of symbols to list
-	Scope SymbolsViewScope `desc:"scope of symbols to list"`
+	Scope SymbolsViewScope
 }
 
 // SymbolsView is a widget that displays results of a file or package parse
@@ -34,16 +34,16 @@ type SymbolsView struct {
 	gi.Layout
 
 	// parent gide project
-	Gide Gide `json:"-" xml:"-" desc:"parent gide project"`
+	Gide Gide `json:"-" xml:"-"`
 
 	// params for structure display
-	SymParams SymbolsParams `desc:"params for structure display"`
+	SymParams SymbolsParams
 
 	// all the symbols for the file or package in a tree
-	Syms *SymNode `desc:"all the symbols for the file or package in a tree"`
+	Syms *SymNode
 
 	// only show symbols that match this string
-	Match string `desc:"only show symbols that match this string"`
+	Match string
 }
 
 var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
@@ -374,7 +374,7 @@ type SymNode struct {
 	ki.Node
 
 	// the symbol
-	Symbol syms.Symbol `desc:"the symbol"`
+	Symbol syms.Symbol
 }
 
 var KiT_SymNode = kit.Types.AddType(&SymNode{}, ki.Props{"EnumType:Flag": ki.KiT_Flags})

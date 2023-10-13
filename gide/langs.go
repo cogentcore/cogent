@@ -23,7 +23,7 @@ import (
 type LangOpts struct {
 
 	// command(s) to run after a file of this type is saved
-	PostSaveCmds CmdNames `desc:"command(s) to run after a file of this type is saved"`
+	PostSaveCmds CmdNames
 }
 
 // Langs is a map of language options

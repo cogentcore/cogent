@@ -70,31 +70,31 @@ type DebugView struct {
 	gi.Layout
 
 	// supported file type to determine debugger
-	Sup filecat.Supported `desc:"supported file type to determine debugger"`
+	Sup filecat.Supported
 
 	// path to executable / dir to debug
-	ExePath string `desc:"path to executable / dir to debug"`
+	ExePath string
 
 	// time when dbg was last restarted
-	DbgTime time.Time `desc:"time when dbg was last restarted"`
+	DbgTime time.Time
 
 	// the debugger
-	Dbg gidebug.GiDebug `json:"-" xml:"-" desc:"the debugger"`
+	Dbg gidebug.GiDebug `json:"-" xml:"-"`
 
 	// all relevant debug state info
-	State gidebug.AllState `json:"-" xml:"-" desc:"all relevant debug state info"`
+	State gidebug.AllState `json:"-" xml:"-"`
 
 	// current ShowFile location -- cleared before next one or run
-	CurFileLoc gidebug.Location `json:"-" xml:"-" desc:"current ShowFile location -- cleared before next one or run"`
+	CurFileLoc gidebug.Location `json:"-" xml:"-"`
 
 	// backup breakpoints list -- to track deletes
-	BBreaks []*gidebug.Break `json:"-" xml:"-" desc:"backup breakpoints list -- to track deletes"`
+	BBreaks []*gidebug.Break `json:"-" xml:"-"`
 
 	// output from the debugger
-	OutBuf *giv.TextBuf `json:"-" xml:"-" desc:"output from the debugger"`
+	OutBuf *giv.TextBuf `json:"-" xml:"-"`
 
 	// parent gide project
-	Gide Gide `json:"-" xml:"-" desc:"parent gide project"`
+	Gide Gide `json:"-" xml:"-"`
 }
 
 var KiT_DebugView = kit.Types.AddType(&DebugView{}, DebugViewProps)
@@ -955,7 +955,7 @@ type StackView struct {
 	gi.Layout
 
 	// if true, this is a find frames, not a regular stack
-	FindFrames bool `desc:"if true, this is a find frames, not a regular stack"`
+	FindFrames bool
 }
 
 var KiT_StackView = kit.Types.AddType(&StackView{}, StackViewProps)
@@ -1236,7 +1236,7 @@ type VarsView struct {
 	gi.Layout
 
 	// if true, this is global vars, not local ones
-	GlobalVars bool `desc:"if true, this is global vars, not local ones"`
+	GlobalVars bool
 }
 
 var KiT_VarsView = kit.Types.AddType(&VarsView{}, VarsViewProps)
@@ -1317,13 +1317,13 @@ type VarView struct {
 	gi.Frame
 
 	// variable being edited
-	Var *gidebug.Variable `desc:"variable being edited"`
+	Var *gidebug.Variable
 
 	// frame info
-	FrameInfo string `desc:"frame info"`
+	FrameInfo string
 
 	// parent DebugView
-	DbgView *DebugView `json:"-" xml:"-" desc:"parent DebugView"`
+	DbgView *DebugView `json:"-" xml:"-"`
 }
 
 var KiT_VarView = kit.Types.AddType(&VarView{}, VarViewProps)
