@@ -18,9 +18,9 @@ import (
 	"github.com/goki/mat32"
 )
 
-func (gv *GridView) SelectToolbar() *gi.ToolBar {
+func (gv *GridView) SelectToolbar() *gi.Toolbar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("select-tb", 0).(*gi.ToolBar)
+	tb := tbs.ChildByName("select-tb", 0).(*gi.Toolbar)
 	return tb
 }
 

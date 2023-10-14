@@ -18,9 +18,9 @@ import (
 	"github.com/goki/mat32"
 )
 
-func (gv *GridView) NodeToolbar() *gi.ToolBar {
+func (gv *GridView) NodeToolbar() *gi.Toolbar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("node-tb", 0).(*gi.ToolBar)
+	tb := tbs.ChildByName("node-tb", 0).(*gi.Toolbar)
 	return tb
 }
 

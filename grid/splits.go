@@ -180,7 +180,7 @@ func (lt *Splits) CopyFrom(cp Splits) {
 // now..
 var AvailSplitsChanged = false
 
-// SplitsProps define the ToolBar and MenuBar for TableView of Splits
+// SplitsProps define the Toolbar and MenuBar for TableView of Splits
 var SplitsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -216,7 +216,7 @@ var SplitsProps = ki.Props{
 		{"Edit", "Copy Cut Paste Dupe"},
 		{"Window", "Windows"},
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Splits to App standard prefs directory, in file splits_prefs.json, which will be loaded automatically at startup)",
 			"icon": "file-save",

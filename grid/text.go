@@ -210,9 +210,9 @@ func (gv *GridView) SetText(txt string) {
 ///////////////////////////////////////////////////////////////////////
 // Toolbar
 
-func (gv *GridView) TextToolbar() *gi.ToolBar {
+func (gv *GridView) TextToolbar() *gi.Toolbar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("text-tb", 2).(*gi.ToolBar)
+	tb := tbs.ChildByName("text-tb", 2).(*gi.Toolbar)
 	return tb
 }
 

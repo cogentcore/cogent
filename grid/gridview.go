@@ -280,8 +280,8 @@ func (gv *GridView) AddImage(fname gi.FileName, width, height float32) error {
 //////////////////////////////////////////////////////////////////////////
 //  GUI Config
 
-func (gv *GridView) MainToolbar() *gi.ToolBar {
-	return gv.ChildByName("main-tb", 0).(*gi.ToolBar)
+func (gv *GridView) MainToolbar() *gi.Toolbar {
+	return gv.ChildByName("main-tb", 0).(*gi.Toolbar)
 }
 
 func (gv *GridView) ModalToolbarStack() *gi.Layout {
@@ -325,8 +325,8 @@ func (gv *GridView) HBox() *gi.Layout {
 	return gv.ChildByName("hbox", 2).(*gi.Layout)
 }
 
-func (gv *GridView) Tools() *gi.ToolBar {
-	return gv.HBox().ChildByName("tools", 0).(*gi.ToolBar)
+func (gv *GridView) Tools() *gi.Toolbar {
+	return gv.HBox().ChildByName("tools", 0).(*gi.Toolbar)
 }
 
 func (gv *GridView) SplitView() *gi.SplitView {
@@ -371,13 +371,13 @@ func (gv *GridView) Config() {
 	updt := gv.UpdateStart()
 	gv.Lay = gi.LayoutVert
 	// gv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	gi.AddNewToolBar(gv, "main-tb")
+	gi.AddNewToolbar(gv, "main-tb")
 	gi.AddNewLayout(gv, "modal-tb", gi.LayoutStacked)
 	hb := gi.AddNewLayout(gv, "hbox", gi.LayoutHoriz)
 	hb.SetStretchMax()
 	gi.AddNewFrame(gv, "statusbar", gi.LayoutHoriz)
 
-	tb := gi.AddNewToolBar(hb, "tools")
+	tb := gi.AddNewToolbar(hb, "tools")
 	tb.Lay = gi.LayoutVert
 	spv := gi.AddNewSplitView(hb, "splitview")
 	spv.Dim = mat32.X
@@ -607,9 +607,9 @@ func (gv *GridView) ConfigModalToolbar() {
 		return
 	}
 	tb.SetStretchMaxWidth()
-	gi.AddNewToolBar(tb, "select-tb")
-	gi.AddNewToolBar(tb, "node-tb")
-	gi.AddNewToolBar(tb, "text-tb")
+	gi.AddNewToolbar(tb, "select-tb")
+	gi.AddNewToolbar(tb, "node-tb")
+	gi.AddNewToolbar(tb, "text-tb")
 
 	gv.ConfigSelectToolbar()
 	gv.ConfigNodeToolbar()

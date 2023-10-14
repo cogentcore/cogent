@@ -229,7 +229,7 @@ func (pf *Preferences) UpdateAll() {
 	}
 }
 
-// PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
+// PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.PrefsView
 var PreferencesProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -253,7 +253,7 @@ var PreferencesProps = ki.Props{
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"Save", ki.Props{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
@@ -397,9 +397,9 @@ func (pf *ColorPrefs) SetToPrefs() {
 	Prefs.UpdateAll()
 }
 
-// ColorPrefsProps defines the ToolBar
+// ColorPrefsProps defines the Toolbar
 var ColorPrefsProps = ki.Props{
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"OpenJSON", ki.Props{
 			"label": "Open...",
 			"icon":  "file-open",
