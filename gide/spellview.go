@@ -77,9 +77,9 @@ func (sv *SpellView) Config(ge Gide, atv *TextView) {
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.Config{}
-	config.Add(gi.KiT_ToolBar, "spellbar")
-	config.Add(gi.KiT_ToolBar, "unknownbar")
-	config.Add(gi.KiT_ToolBar, "changebar")
+	config.Add(gi.KiT_Toolbar, "spellbar")
+	config.Add(gi.KiT_Toolbar, "unknownbar")
+	config.Add(gi.KiT_Toolbar, "changebar")
 	config.Add(giv.KiT_SliceView, "suggest")
 	mods, updt := sv.ConfigChildren(config)
 	if !mods {
@@ -92,18 +92,18 @@ func (sv *SpellView) Config(ge Gide, atv *TextView) {
 }
 
 // SpellBar returns the spell toolbar
-func (sv *SpellView) SpellBar() *gi.ToolBar {
-	return sv.ChildByName("spellbar", 0).(*gi.ToolBar)
+func (sv *SpellView) SpellBar() *gi.Toolbar {
+	return sv.ChildByName("spellbar", 0).(*gi.Toolbar)
 }
 
 // UnknownBar returns the toolbar that displays the unknown word
-func (sv *SpellView) UnknownBar() *gi.ToolBar {
-	return sv.ChildByName("unknownbar", 0).(*gi.ToolBar)
+func (sv *SpellView) UnknownBar() *gi.Toolbar {
+	return sv.ChildByName("unknownbar", 0).(*gi.Toolbar)
 }
 
 // ChangeBar returns the suggest toolbar
-func (sv *SpellView) ChangeBar() *gi.ToolBar {
-	return sv.ChildByName("changebar", 0).(*gi.ToolBar)
+func (sv *SpellView) ChangeBar() *gi.Toolbar {
+	return sv.ChildByName("changebar", 0).(*gi.Toolbar)
 }
 
 // ChangeAct returns the spell change action from toolbar

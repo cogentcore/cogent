@@ -409,7 +409,7 @@ func (km *KeyMaps) ViewStd() {
 // other map but works for now..
 var AvailKeyMapsChanged = false
 
-// KeyMapsProps define the ToolBar and MenuBar for TableView of KeyMaps, e.g., giv.KeyMapsView
+// KeyMapsProps define the Toolbar and MenuBar for TableView of KeyMaps, e.g., giv.KeyMapsView
 var KeyMapsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -449,7 +449,7 @@ var KeyMapsProps = ki.Props{
 		{"Edit", "Copy Cut Paste Dupe"},
 		{"Window", "Windows"},
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"SavePrefs", ki.Props{
 			"desc": "saves KeyMaps to App standard prefs directory, in file key_maps_prefs.json, which will be loaded automatically at startup if prefs SaveKeyMaps is checked (should be if you're using custom keymaps)",
 			"icon": "file-save",

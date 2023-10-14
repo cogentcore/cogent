@@ -105,7 +105,7 @@ func (lt *Registers) SavePrefs() error {
 // now..
 var AvailRegistersChanged = false
 
-// RegistersProps define the ToolBar and MenuBar for TableView of Registers
+// RegistersProps define the Toolbar and MenuBar for TableView of Registers
 var RegistersProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -141,7 +141,7 @@ var RegistersProps = ki.Props{
 		{"Edit", "Copy Cut Paste Dupe"},
 		{"Window", "Windows"},
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Registers to App standard prefs directory, in file registers_prefs.json, which will be loaded automatically at startup)",
 			"icon": "file-save",

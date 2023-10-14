@@ -128,7 +128,7 @@ func (lt *Langs) ViewStd() {
 // other map but works for now..
 var AvailLangsChanged = false
 
-// LangsProps define the ToolBar and MenuBar for TableView of Langs, e.g., giv.LangsView
+// LangsProps define the Toolbar and MenuBar for TableView of Langs, e.g., giv.LangsView
 var LangsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -168,7 +168,7 @@ var LangsProps = ki.Props{
 		{"Edit", "Copy Cut Paste Dupe"},
 		{"Window", "Windows"},
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Langs to App standard prefs directory, in file lang_prefs.json, which will be loaded automatically at startup if prefs SaveLangs is checked (should be if you're using custom language options)",
 			"icon": "file-save",

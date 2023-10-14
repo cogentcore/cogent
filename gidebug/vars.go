@@ -96,7 +96,7 @@ var VariableProps = ki.Props{
 		"Kids":     `view:"-"`,
 		"Props":    `view:"-"`,
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"FollowPtr", ki.Props{
 			"desc": "retrieve the contents of this pointer -- child nodes will contain further data",
 			"icon": "update",

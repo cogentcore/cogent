@@ -382,8 +382,8 @@ func (fv *FindView) Config(ge Gide) {
 	fv.Lay = gi.LayoutVert
 	fv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.Config{}
-	config.Add(gi.KiT_ToolBar, "findbar")
-	config.Add(gi.KiT_ToolBar, "replbar")
+	config.Add(gi.KiT_Toolbar, "findbar")
+	config.Add(gi.KiT_Toolbar, "replbar")
 	config.Add(gi.KiT_Layout, "findtext")
 	mods, updt := fv.ConfigChildren(config)
 	if !mods {
@@ -413,13 +413,13 @@ func (fv *FindView) Config(ge Gide) {
 }
 
 // FindBar returns the find toolbar
-func (fv *FindView) FindBar() *gi.ToolBar {
-	return fv.ChildByName("findbar", 0).(*gi.ToolBar)
+func (fv *FindView) FindBar() *gi.Toolbar {
+	return fv.ChildByName("findbar", 0).(*gi.Toolbar)
 }
 
 // ReplBar returns the replace toolbar
-func (fv *FindView) ReplBar() *gi.ToolBar {
-	return fv.ChildByName("replbar", 1).(*gi.ToolBar)
+func (fv *FindView) ReplBar() *gi.Toolbar {
+	return fv.ChildByName("replbar", 1).(*gi.Toolbar)
 }
 
 // FindText returns the find textfield in toolbar

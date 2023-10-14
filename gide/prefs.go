@@ -239,7 +239,7 @@ func (pf *Preferences) EditRegisters() {
 	RegistersView(&AvailRegisters)
 }
 
-// PreferencesProps define the ToolBar and MenuBar for StructView, e.g., giv.PrefsView
+// PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.PrefsView
 var PreferencesProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -260,7 +260,7 @@ var PreferencesProps = ki.Props{
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"Apply", ki.Props{
 			"desc": "Applies current prefs settings so they affect actual functionality.",
 			"icon": "update",
@@ -418,7 +418,7 @@ func (pf *ProjPrefs) RunExecIsExec() bool {
 	return fi.IsExec()
 }
 
-// ProjPrefsProps define the ToolBar and MenuBar for StructView, e.g.,
+// ProjPrefsProps define the Toolbar and MenuBar for StructView, e.g.,
 // giv.PrefsView -- don't have a save option as that would save to regular prefs
 var ProjPrefsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
@@ -429,7 +429,7 @@ var ProjPrefsProps = ki.Props{
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},
 	},
-	// "ToolBar": ki.PropSlice{},
+	// "Toolbar": ki.PropSlice{},
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

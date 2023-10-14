@@ -735,7 +735,7 @@ func (pv *PiView) Config() {
 	pv.Lay = gi.LayoutVert
 	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.TypeAndNameList{}
-	config.Add(gi.KiT_ToolBar, "toolbar")
+	config.Add(gi.KiT_Toolbar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	config.Add(gi.KiT_Frame, "statusbar")
 	mods, updt := pv.ConfigChildren(config)
@@ -801,9 +801,9 @@ func (pv *PiView) StatusLabel() *gi.Label {
 	return pv.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
 }
 
-// ToolBar returns the toolbar widget
-func (pv *PiView) ToolBar() *gi.ToolBar {
-	return pv.ChildByName("toolbar", 0).(*gi.ToolBar)
+// Toolbar returns the toolbar widget
+func (pv *PiView) Toolbar() *gi.Toolbar {
+	return pv.ChildByName("toolbar", 0).(*gi.Toolbar)
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -828,12 +828,12 @@ func (pv *PiView) ConfigStatusBar() {
 
 // ConfigToolbar adds a PiView toolbar.
 func (pv *PiView) ConfigToolbar() {
-	tb := pv.ToolBar()
+	tb := pv.Toolbar()
 	if tb.HasChildren() {
 		return
 	}
 	tb.SetStretchMaxWidth()
-	giv.ToolBarView(pv, pv.Viewport, tb)
+	giv.ToolbarView(pv, pv.Viewport, tb)
 }
 
 // SplitViewConfig returns a TypeAndNameList for configuring the SplitView
@@ -978,7 +978,7 @@ func (pv *PiView) ViewNode(tv *giv.TreeView) {
 
 func (pv *PiView) SetChanged() {
 	pv.Changed = true
-	pv.ToolBar().UpdateActions() // nil safe
+	pv.Toolbar().UpdateActions() // nil safe
 }
 
 func (pv *PiView) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
@@ -1114,7 +1114,7 @@ func (ge *PiView) ConnectEvents2D() {
 
 func (pv *PiView) Render2D() {
 	if len(pv.Kids) > 0 {
-		pv.ToolBar().UpdateActions()
+		pv.Toolbar().UpdateActions()
 		if win := pv.ParentWindow(); win != nil {
 			if !win.IsResizing() {
 				win.MainMenuUpdateActives()
@@ -1135,7 +1135,7 @@ var PiViewProps = ki.Props{
 		"horizontal-align": gist.AlignCenter,
 		"vertical-align":   gist.AlignTop,
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"SaveProj", ki.Props{
 			"shortcut": gi.KeyFunMenuSave,
 			"label":    "Save Project",

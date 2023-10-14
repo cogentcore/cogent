@@ -63,7 +63,7 @@ func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.Config{}
-	config.Add(gi.KiT_ToolBar, "sym-toolbar")
+	config.Add(gi.KiT_Toolbar, "sym-toolbar")
 	config.Add(gi.KiT_Frame, "sym-frame")
 	mods, updt := sv.ConfigChildren(config)
 	if !mods {
@@ -76,29 +76,29 @@ func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
 	sv.UpdateEnd(updt)
 }
 
-// ToolBar returns the symbols toolbar
-func (sv *SymbolsView) ToolBar() *gi.ToolBar {
-	return sv.ChildByName("sym-toolbar", 0).(*gi.ToolBar)
+// Toolbar returns the symbols toolbar
+func (sv *SymbolsView) Toolbar() *gi.Toolbar {
+	return sv.ChildByName("sym-toolbar", 0).(*gi.Toolbar)
 }
 
-// ToolBar returns the spell toolbar
+// Toolbar returns the spell toolbar
 func (sv *SymbolsView) Frame() *gi.Frame {
 	return sv.ChildByName("sym-frame", 0).(*gi.Frame)
 }
 
 // ScopeCombo returns the scope ComboBox
 func (sv *SymbolsView) ScopeCombo() *gi.ComboBox {
-	return sv.ToolBar().ChildByName("scope-combo", 5).(*gi.ComboBox)
+	return sv.Toolbar().ChildByName("scope-combo", 5).(*gi.ComboBox)
 }
 
 // SearchText returns the unknown word textfield from toolbar
 func (sv *SymbolsView) SearchText() *gi.TextField {
-	return sv.ToolBar().ChildByName("search-str", 1).(*gi.TextField)
+	return sv.Toolbar().ChildByName("search-str", 1).(*gi.TextField)
 }
 
 // ConfigToolbar adds toolbar.
 func (sv *SymbolsView) ConfigToolbar() {
-	svbar := sv.ToolBar()
+	svbar := sv.Toolbar()
 	if svbar.HasChildren() {
 		return
 	}

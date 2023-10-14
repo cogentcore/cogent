@@ -780,7 +780,7 @@ func (cm *Commands) ViewStd() {
 // menu, toolbar props update methods.
 var CustomCmdsChanged = false
 
-// CommandsProps define the ToolBar and MenuBar for TableView of Commands, e.g., CmdsView
+// CommandsProps define the Toolbar and MenuBar for TableView of Commands, e.g., CmdsView
 var CommandsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -816,7 +816,7 @@ var CommandsProps = ki.Props{
 		{"Edit", "Copy Cut Paste Dupe"},
 		{"Window", "Windows"},
 	},
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"SavePrefs", ki.Props{
 			"desc": "saves Commands to App standard prefs directory, in file proj_types_prefs.json, which will be loaded automatically at startup if prefs SaveCommands is checked (should be if you're using custom commands)",
 			"icon": "file-save",

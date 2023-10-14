@@ -2452,7 +2452,7 @@ func (ge *GideView) Config() {
 	updt := ge.UpdateStart()
 	ge.Lay = gi.LayoutVert
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	gi.AddNewToolBar(ge, "toolbar")
+	gi.AddNewToolbar(ge, "toolbar")
 	gi.AddNewSplitView(ge, "splitview")
 	gi.AddNewFrame(ge, "statusbar", gi.LayoutHoriz)
 
@@ -2518,13 +2518,13 @@ func (ge *GideView) Tabs() *gi.TabView {
 	return tv
 }
 
-// ToolBar returns the main toolbar
-func (ge *GideView) ToolBar() *gi.ToolBar {
+// Toolbar returns the main toolbar
+func (ge *GideView) Toolbar() *gi.Toolbar {
 	tbk := ge.ChildByName("toolbar", 2)
 	if tbk == nil {
 		return nil
 	}
-	return tbk.(*gi.ToolBar)
+	return tbk.(*gi.Toolbar)
 }
 
 // StatusBar returns the statusbar widget
@@ -2562,12 +2562,12 @@ func (ge *GideView) ConfigStatusBar() {
 
 // ConfigToolbar adds a GideView toolbar.
 func (ge *GideView) ConfigToolbar() {
-	tb := ge.ToolBar()
+	tb := ge.Toolbar()
 	if tb.HasChildren() {
 		return
 	}
 	tb.SetStretchMaxWidth()
-	giv.ToolBarView(ge, ge.Viewport, tb)
+	giv.ToolbarView(ge, ge.Viewport, tb)
 	tb.AddSeparator("sepmod")
 	sm := tb.AddNewChild(gi.KiT_CheckBox, "go-mod").(*gi.CheckBox)
 	sm.SetChecked(ge.Prefs.GoMod)
@@ -2996,7 +2996,7 @@ func (ge *GideView) OSFileEvent() {
 
 func (ge *GideView) Render2D() {
 	if len(ge.Kids) > 0 {
-		ge.ToolBar().UpdateActions()
+		ge.Toolbar().UpdateActions()
 		if win := ge.ParentWindow(); win != nil {
 			sv := ge.SplitView()
 			win.EventMgr.SetStartFocus(sv.This())
@@ -3060,7 +3060,7 @@ var GideViewProps = ki.Props{
 		"vertical-align":   gist.AlignTop,
 	},
 	"MethViewNoUpdateAfter": true, // no update after is default for everything
-	"ToolBar": ki.PropSlice{
+	"Toolbar": ki.PropSlice{
 		{"UpdateFiles", ki.Props{
 			"shortcut": "Command+U",
 			"desc":     "update file browser list of files",

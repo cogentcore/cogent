@@ -470,7 +470,7 @@ func (dv *DebugView) UpdateFmState() {
 	if dv.Dbg.HasTasks() {
 		dv.ShowTasks(false)
 	}
-	dv.UpdateToolBar()
+	dv.UpdateToolbar()
 }
 
 // SetFrame sets the given frame depth level as active
@@ -716,7 +716,7 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 		return
 	}
 	dv.State.Status = stat
-	tb := dv.ToolBar()
+	tb := dv.Toolbar()
 	stl := tb.ChildByName("status", 1).(*gi.Label)
 	clr := DebugStatusColors[stat]
 	stl.CurBgColor.SetString(clr, nil)
@@ -743,14 +743,14 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.Lay = gi.LayoutVert
 	dv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.Config{}
-	config.Add(gi.KiT_ToolBar, "toolbar")
+	config.Add(gi.KiT_Toolbar, "toolbar")
 	config.Add(gi.KiT_TabView, "tabs")
 	mods, updt := dv.ConfigChildren(config)
 	if mods {
 		dv.State.BlankState()
 		dv.OutBuf = &giv.TextBuf{}
 		dv.OutBuf.InitName(dv.OutBuf, "debug-outbuf")
-		dv.ConfigToolBar()
+		dv.ConfigToolbar()
 		dv.ConfigTabs()
 		dv.State.Breaks = nil // get rid of dummy
 	} else {
@@ -761,9 +761,9 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.UpdateEnd(updt)
 }
 
-// ToolBar returns the find toolbar
-func (dv *DebugView) ToolBar() *gi.ToolBar {
-	return dv.ChildByName("toolbar", 0).(*gi.ToolBar)
+// Toolbar returns the find toolbar
+func (dv *DebugView) Toolbar() *gi.Toolbar {
+	return dv.ChildByName("toolbar", 0).(*gi.Toolbar)
 }
 
 // Tabs returns the tabs
@@ -852,13 +852,13 @@ func (dv *DebugView) ActionActivate(act *gi.Button) {
 	act.SetActiveStateUpdt(dv.DbgIsAvail())
 }
 
-func (dv *DebugView) UpdateToolBar() {
-	tb := dv.ToolBar()
+func (dv *DebugView) UpdateToolbar() {
+	tb := dv.Toolbar()
 	tb.UpdateActions()
 }
 
-func (dv *DebugView) ConfigToolBar() {
-	tb := dv.ToolBar()
+func (dv *DebugView) ConfigToolbar() {
+	tb := dv.Toolbar()
 	if tb.HasChildren() {
 		return
 	}
@@ -1354,12 +1354,12 @@ func (vv *VarView) Config() {
 	vv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := kit.Config{}
 	config.Add(gi.KiT_Label, "frame-info")
-	// config.Add(gi.KiT_ToolBar, "toolbar")
+	// config.Add(gi.KiT_Toolbar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	mods, updt := vv.ConfigChildren(config)
 	vv.SetFrameInfo(vv.FrameInfo)
 	vv.ConfigSplitView()
-	// vv.ConfigToolBar()
+	// vv.ConfigToolbar()
 	if mods {
 		vv.UpdateEnd(updt)
 	}
@@ -1381,9 +1381,9 @@ func (vv *VarView) StructView() *giv.StructView {
 	return vv.SplitView().Child(1).(*giv.StructView)
 }
 
-// // ToolBar returns the toolbar widget
-// func (vv *VarView) ToolBar() *gi.ToolBar {
-// 	return vv.ChildByName("toolbar", 0).(*gi.ToolBar)
+// // Toolbar returns the toolbar widget
+// func (vv *VarView) Toolbar() *gi.Toolbar {
+// 	return vv.ChildByName("toolbar", 0).(*gi.Toolbar)
 // }
 
 // SetFrameInfo sets the frame info
@@ -1392,14 +1392,14 @@ func (vv *VarView) SetFrameInfo(finfo string) {
 	lab.Text = finfo
 }
 
-// // ConfigToolBar adds a VarView toolbar.
-// func (vv *VarView) ConfigToolBar() {
-// 	tb := vv.ToolBar()
+// // ConfigToolbar adds a VarView toolbar.
+// func (vv *VarView) ConfigToolbar() {
+// 	tb := vv.Toolbar()
 // 	if tb != nil && tb.HasChildren() {
 // 		return
 // 	}
 // 	tb.SetStretchMaxWidth()
-// 	giv.ToolBarView(vv, vv.Viewport, tb)
+// 	giv.ToolbarView(vv, vv.Viewport, tb)
 // }
 
 // ConfigSplitView configures the SplitView.
@@ -1436,7 +1436,7 @@ func (vv *VarView) ConfigSplitView() {
 }
 
 // func (ge *VarView) Render2D() {
-// 	// ge.ToolBar().UpdateActions()
+// 	// ge.Toolbar().UpdateActions()
 // 	ge.Frame.Render2D()
 // }
 
@@ -1480,7 +1480,7 @@ func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarVi
 	vv.DbgView = dbgVw
 	vv.SetVar(vr, frinfo)
 
-	// tb := vv.ToolBar()
+	// tb := vv.Toolbar()
 	// tb.UpdateActions()
 
 	vp.UpdateEndNoSig(updt)
