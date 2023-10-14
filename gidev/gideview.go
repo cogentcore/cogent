@@ -3059,7 +3059,7 @@ var GideViewProps = ki.Props{
 		"horizontal-align": gist.AlignCenter,
 		"vertical-align":   gist.AlignTop,
 	},
-	"MethViewNoUpdateAfter": true, // no update after is default for everything
+	"MethodViewNoUpdateAfter": true, // no update after is default for everything
 	"Toolbar": ki.PropSlice{
 		{"UpdateFiles", ki.Props{
 			"shortcut": "Command+U",
