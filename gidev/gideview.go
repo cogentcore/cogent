@@ -2568,7 +2568,7 @@ func (ge *GideView) ConfigToolbar() {
 	}
 	tb.SetStretchMaxWidth()
 	giv.ToolbarView(ge, ge.Viewport, tb)
-	tb.AddSeparator("sepmod")
+	gi.NewSeparator(tb, "sepmod")
 	sm := tb.AddNewChild(gi.KiT_CheckBox, "go-mod").(*gi.CheckBox)
 	sm.SetChecked(ge.Prefs.GoMod)
 	sm.SetText("Go Mod")

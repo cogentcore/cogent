@@ -922,7 +922,7 @@ func (dv *DebugView) ConfigToolbar() {
 			dvv.Stop()
 			tb.UpdateActions()
 		})
-	tb.AddSeparator("sep-av")
+	gi.NewSeparator(tb, "sep-av")
 	tb.AddAction(gi.ActOpts{Label: "Global Vars", Icon: "search", Tooltip: "list variables at global scope, subject to filter (name contains)"}, dv.This(),
 		func(recv, send ki.Ki, sig int64, data any) {
 			dvv := recv.Embed(KiT_DebugView).(*DebugView)
