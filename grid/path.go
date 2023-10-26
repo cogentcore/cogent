@@ -42,7 +42,7 @@ func (gv *GridView) ConfigNodeToolbar() {
 		}
 	})
 
-	tb.AddSeparator("sep-snap")
+	gi.NewSeparator(tb, "sep-snap")
 
 	// tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
 	// 	gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -50,7 +50,7 @@ func (gv *GridView) ConfigNodeToolbar() {
 	// 		grr.SelGroup()
 	// 	})
 	//
-	// tb.AddSeparator("sep-group")
+	// gi.NewSeparator(tb, "sep-group")
 
 	gi.AddNewLabel(tb, "posx-lab", "X: ").SetProp("vertical-align", gist.AlignMiddle)
 	px := gi.AddNewSpinBox(tb, "posx")

@@ -51,7 +51,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 			Prefs.SnapGuide = gis.IsChecked()
 		}
 	})
-	tb.AddSeparator("sep-snap")
+	gi.NewSeparator(tb, "sep-snap")
 
 	tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.SelectedEnableFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
@@ -65,7 +65,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 			grr.SelUnGroup()
 		})
 
-	tb.AddSeparator("sep-group")
+	gi.NewSeparator(tb, "sep-group")
 
 	tb.AddAction(gi.ActOpts{Icon: "sel-rotate-left", Tooltip: "Ctrl-[: rotate selection 90deg counter-clockwise", UpdateFunc: gv.SelectedEnableFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
@@ -88,7 +88,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 			grr.SelFlipVert()
 		})
 
-	tb.AddSeparator("sep-rot")
+	gi.NewSeparator(tb, "sep-rot")
 	tb.AddAction(gi.ActOpts{Icon: "sel-raise-top", Tooltip: "Raise selection to top (within layer)", UpdateFunc: gv.SelectedEnableFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
@@ -109,7 +109,7 @@ func (gv *GridView) ConfigSelectToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.SelLower()
 		})
-	tb.AddSeparator("sep-size")
+	gi.NewSeparator(tb, "sep-size")
 
 	gi.AddNewLabel(tb, "posx-lab", "X: ").SetProp("vertical-align", gist.AlignMiddle)
 	px := gi.AddNewSpinBox(tb, "posx")

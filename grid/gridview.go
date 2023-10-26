@@ -546,7 +546,7 @@ func (gv *GridView) ConfigMainToolbar() {
 			giv.CallMethod(grr, "ExportPDF", grr.ViewportSafe())
 		})
 
-	tb.AddSeparator("sep-undo")
+	gi.NewSeparator(tb, "sep-undo")
 	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "rotate-left", Tooltip: "Undo last action", UpdateFunc: gv.UndoAvailFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
@@ -557,7 +557,7 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.Redo()
 		})
-	tb.AddSeparator("sep-edit")
+	gi.NewSeparator(tb, "sep-edit")
 	tb.AddAction(gi.ActOpts{Label: "Duplicate", Icon: "documents", Tooltip: "Duplicate current selection -- original items will remain selected", UpdateFunc: gv.SelectedEnableFunc},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
@@ -578,13 +578,13 @@ func (gv *GridView) ConfigMainToolbar() {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			grr.PasteClip()
 		})
-	tb.AddSeparator("sep-import")
+	gi.NewSeparator(tb, "sep-import")
 	tb.AddAction(gi.ActOpts{Label: "Add Image...", Icon: "file-image", Tooltip: "add an image from a file"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
 			giv.CallMethod(grr, "AddImage", grr.ViewportSafe())
 		})
-	tb.AddSeparator("sep-view")
+	gi.NewSeparator(tb, "sep-view")
 	tb.AddAction(gi.ActOpts{Label: "Zoom Page", Icon: "zoom-out", Tooltip: "zoom to see entire page size for drawing"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_GridView).(*GridView)
