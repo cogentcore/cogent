@@ -31,20 +31,20 @@ func AddNewTextView(parent ki.Ki, name string) *TextView {
 
 // MakeContextMenu builds the textview context menu
 func (tv *TextView) MakeContextMenu(m *gi.Menu) {
-	ac := m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: gi.KeyFunCopy},
+	ac := m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: keyfun.Copy},
 		tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			txf := recv.Embed(KiT_TextView).(*TextView)
 			txf.Copy(true)
 		})
 	ac.SetActiveState(tv.HasSelection())
 	if !tv.IsInactive() {
-		ac = m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: gi.KeyFunCut},
+		ac = m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: keyfun.Cut},
 			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Cut()
 			})
 		ac.SetActiveState(tv.HasSelection())
-		ac = m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: gi.KeyFunPaste},
+		ac = m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: keyfun.Paste},
 			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Paste()
@@ -53,7 +53,7 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 
 		m.AddSeparator("sep-clip")
 
-		ac = m.AddAction(gi.ActOpts{Label: "Lookup", ShortcutKey: gi.KeyFunLookup},
+		ac = m.AddAction(gi.ActOpts{Label: "Lookup", ShortcutKey: keyfun.Lookup},
 			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 				txf := recv.Embed(KiT_TextView).(*TextView)
 				txf.Lookup()

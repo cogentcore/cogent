@@ -19,6 +19,7 @@ import (
 	"github.com/goki/gi/oswin/key"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
+	"goki.dev/gi/v2/keyfun"
 )
 
 // https://www.eclipse.org/pdt/help/html/keymap.htm
@@ -50,7 +51,7 @@ const (
 	KeyFunRegPaste           // paste selection from named register
 	KeyFunCommentOut         // comment out region
 	KeyFunIndent             // indent region
-	KeyFunJump               // jump to line (same as gi.KeyFunJump)
+	KeyFunJump               // jump to line (same as keyfun.Jump)
 	KeyFunSetSplit           // set named splitter config
 	KeyFunBuildProj          // build overall project
 	KeyFunRunProj            // run overall project
@@ -262,7 +263,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 
 	for key := range *km {
 		if key.Key2 != "" {
-			Needs2KeyMap[key.Key1] = gi.KeyFunNil
+			Needs2KeyMap[key.Key1] = keyfun.Nil
 		}
 	}
 

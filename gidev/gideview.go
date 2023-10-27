@@ -2850,7 +2850,7 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 	if gi.KeyEventTrace {
 		fmt.Printf("GideView KeyInput: %v\n", ge.Path())
 	}
-	gkf := gi.KeyFun(kc)
+	gkf := keyfun.(kc)
 	if ge.KeySeq1 != "" {
 		kf = gide.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
@@ -2865,7 +2865,7 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 		}
 		ge.SetStatus(seqstr)
 		ge.KeySeq1 = ""
-		gkf = gi.KeyFunNil // override!
+		gkf = keyfun.Nil // override!
 	} else {
 		kf = gide.KeyFun(kc, "")
 		if kf == gide.KeyFunNeeds2 {
@@ -2884,12 +2884,12 @@ func (ge *GideView) GideViewKeys(kt *key.ChordEvent) {
 			if gi.KeyEventTrace {
 				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
-			gkf = gi.KeyFunNil // override!
+			gkf = keyfun.Nil // override!
 		}
 	}
 
 	switch gkf {
-	case gi.KeyFunFind:
+	case keyfun.Find:
 		kt.SetProcessed()
 		tv := ge.ActiveTextView()
 		if tv != nil && tv.HasSelection() {
@@ -3119,13 +3119,13 @@ var GideViewProps = ki.Props{
 		{"sep-find", ki.BlankProp{}},
 		{"CursorToHistPrev", ki.Props{
 			"icon":     "wedge-left",
-			"shortcut": gi.KeyFunHistPrev,
+			"shortcut": keyfun.HistPrev,
 			"label":    "",
 			"desc":     "move cursor to previous location in active text view",
 		}},
 		{"CursorToHistNext", ki.Props{
 			"icon":     "wedge-right",
-			"shortcut": gi.KeyFunHistNext,
+			"shortcut": keyfun.HistNext,
 			"label":    "",
 			"desc":     "move cursor to next location in active text view",
 		}},
@@ -3133,7 +3133,7 @@ var GideViewProps = ki.Props{
 			"label":    "Find...",
 			"icon":     "search",
 			"desc":     "Find / replace in all open folders in file browser",
-			"shortcut": gi.KeyFunFind,
+			"shortcut": keyfun.Find,
 			"Args": ki.PropSlice{
 				{"Search For", ki.Props{
 					"default-field": "Prefs.Find.Find",
@@ -3255,7 +3255,7 @@ var GideViewProps = ki.Props{
 				},
 			}},
 			{"OpenProj", ki.Props{
-				"shortcut": gi.KeyFunMenuOpen,
+				"shortcut": keyfun.MenuOpen,
 				"label":    "Open Project...",
 				"desc":     "open a gide project -- can be a .gide file or just a file or directory (projects are just directories with relevant files)",
 				"Args": ki.PropSlice{
@@ -3266,7 +3266,7 @@ var GideViewProps = ki.Props{
 				},
 			}},
 			{"OpenPath", ki.Props{
-				"shortcut": gi.KeyFunMenuOpenAlt1,
+				"shortcut": keyfun.MenuOpenAlt1,
 				"label":    "Open Path...",
 				"desc":     "open a gide project for a file or directory (projects are just directories with relevant files)",
 				"Args": ki.PropSlice{
@@ -3275,7 +3275,7 @@ var GideViewProps = ki.Props{
 			}},
 			{"New", ki.PropSlice{
 				{"NewProj", ki.Props{
-					"shortcut": gi.KeyFunMenuNew,
+					"shortcut": keyfun.MenuNew,
 					"label":    "New Project...",
 					"desc":     "Create a new project -- select a path for the parent folder, and a folder name for the new project -- all GideView projects are basically folders with files.  You can also specify the main language and {version control system for the project.  For other options, do <code>Proj Prefs</code> in the File menu of the new project.",
 					"Args": ki.PropSlice{
@@ -3291,7 +3291,7 @@ var GideViewProps = ki.Props{
 					},
 				}},
 				{"NewFile", ki.Props{
-					"shortcut": gi.KeyFunMenuNewAlt1,
+					"shortcut": keyfun.MenuNewAlt1,
 					"label":    "New File...",
 					"desc":     "Create a new file in project -- to create in sub-folders, use context menu on folder in file browser",
 					"Args": ki.PropSlice{
@@ -3303,12 +3303,12 @@ var GideViewProps = ki.Props{
 				}},
 			}},
 			{"SaveProj", ki.Props{
-				"shortcut": gi.KeyFunMenuSave,
+				"shortcut": keyfun.MenuSave,
 				"label":    "Save Project",
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"SaveProjAs", ki.Props{
-				"shortcut": gi.KeyFunMenuSaveAs,
+				"shortcut": keyfun.MenuSaveAs,
 				"label":    "Save Project As...",
 				"desc":     "Save project to given file name -- this is the .gide file containing preferences and current settings -- also saves all open files -- once saved, further saving is automatic",
 				"updtfunc": GideViewInactiveEmptyFunc,
@@ -3379,18 +3379,18 @@ var GideViewProps = ki.Props{
 		}},
 		{"Edit", ki.PropSlice{
 			{"Copy", ki.Props{
-				"keyfun":   gi.KeyFunCopy,
+				"keyfun":   keyfun.Copy,
 				"updtfunc": GideViewInactiveTextSelectionFunc,
 			}},
 			{"Cut", ki.Props{
-				"keyfun":   gi.KeyFunCut,
+				"keyfun":   keyfun.Cut,
 				"updtfunc": GideViewInactiveTextSelectionFunc,
 			}},
 			{"Paste", ki.Props{
-				"keyfun": gi.KeyFunPaste,
+				"keyfun": keyfun.Paste,
 			}},
 			{"Paste History...", ki.Props{
-				"keyfun": gi.KeyFunPasteHist,
+				"keyfun": keyfun.PasteHist,
 			}},
 			{"Registers", ki.PropSlice{
 				{"RegisterCopy", ki.Props{
@@ -3422,15 +3422,15 @@ var GideViewProps = ki.Props{
 			}},
 			{"sep-undo", ki.BlankProp{}},
 			{"Undo", ki.Props{
-				"keyfun": gi.KeyFunUndo,
+				"keyfun": keyfun.Undo,
 			}},
 			{"Redo", ki.Props{
-				"keyfun": gi.KeyFunRedo,
+				"keyfun": keyfun.Redo,
 			}},
 			{"sep-find", ki.BlankProp{}},
 			{"Find", ki.Props{
 				"label":    "Find...",
-				"shortcut": gi.KeyFunFind,
+				"shortcut": keyfun.Find,
 				"desc":     "Find / replace in all open folders in file browser",
 				"updtfunc": GideViewInactiveEmptyFunc,
 				"Args": ki.PropSlice{
@@ -3463,7 +3463,7 @@ var GideViewProps = ki.Props{
 			}},
 			{"ReplaceInActive", ki.Props{
 				"label":    "Replace In Active...",
-				"shortcut": gi.KeyFunReplace,
+				"shortcut": keyfun.Replace,
 				"desc":     "query-replace in current active text view only (use Find for multi-file)",
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
@@ -3472,11 +3472,11 @@ var GideViewProps = ki.Props{
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"ShowCompletions", ki.Props{
-				"keyfun":   gi.KeyFunComplete,
+				"keyfun":   keyfun.Complete,
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"LookupSymbol", ki.Props{
-				"keyfun":   gi.KeyFunLookup,
+				"keyfun":   keyfun.Lookup,
 				"updtfunc": GideViewInactiveEmptyFunc,
 			}},
 			{"sep-adv", ki.BlankProp{}},
@@ -3582,13 +3582,13 @@ var GideViewProps = ki.Props{
 		{"Navigate", ki.PropSlice{
 			{"Cursor", ki.PropSlice{
 				{"Back", ki.Props{
-					"keyfun": gi.KeyFunHistPrev,
+					"keyfun": keyfun.HistPrev,
 				}},
 				{"Forward", ki.Props{
-					"keyfun": gi.KeyFunHistNext,
+					"keyfun": keyfun.HistNext,
 				}},
 				{"Jump To Line", ki.Props{
-					"keyfun": gi.KeyFunJump,
+					"keyfun": keyfun.Jump,
 				}},
 			}},
 		}},

@@ -1004,7 +1004,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	if gi.KeyEventTrace {
 		fmt.Printf("PiView KeyInput: %v\n", ge.Path())
 	}
-	// gkf := gi.KeyFun(kc)
+	// gkf := keyfun.(kc)
 	if ge.KeySeq1 != "" {
 		kf = gide.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
@@ -1019,7 +1019,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 		}
 		ge.SetStatus(seqstr)
 		ge.KeySeq1 = ""
-		// gkf = gi.KeyFunNil // override!
+		// gkf = keyfun.Nil // override!
 	} else {
 		kf = gide.KeyFun(kc, "")
 		if kf == gide.KeyFunNeeds2 {
@@ -1034,12 +1034,12 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 			if gi.KeyEventTrace {
 				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
-			// gkf = gi.KeyFunNil // override!
+			// gkf = keyfun.Nil // override!
 		}
 	}
 
 	// switch gkf {
-	// case gi.KeyFunFind:
+	// case keyfun.Find:
 	// 	kt.SetProcessed()
 	// 	tv := ge.ActiveTextView()
 	// 	if tv.HasSelection() {
@@ -1137,7 +1137,7 @@ var PiViewProps = ki.Props{
 	},
 	"Toolbar": ki.PropSlice{
 		{"SaveProj", ki.Props{
-			"shortcut": gi.KeyFunMenuSave,
+			"shortcut": keyfun.MenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
@@ -1255,7 +1255,7 @@ var PiViewProps = ki.Props{
 				},
 			}},
 			{"OpenProj", ki.Props{
-				"shortcut": gi.KeyFunMenuOpen,
+				"shortcut": keyfun.MenuOpen,
 				"label":    "Open Project...",
 				"desc":     "open a GoPi project that has full settings",
 				"Args": ki.PropSlice{
@@ -1266,12 +1266,12 @@ var PiViewProps = ki.Props{
 				},
 			}},
 			{"NewProj", ki.Props{
-				"shortcut": gi.KeyFunMenuNew,
+				"shortcut": keyfun.MenuNew,
 				"label":    "New Project...",
 				"desc":     "create a new project",
 			}},
 			{"SaveProj", ki.Props{
-				"shortcut": gi.KeyFunMenuSave,
+				"shortcut": keyfun.MenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
@@ -1280,7 +1280,7 @@ var PiViewProps = ki.Props{
 				}),
 			}},
 			{"SaveProjAs", ki.Props{
-				"shortcut": gi.KeyFunMenuSaveAs,
+				"shortcut": keyfun.MenuSaveAs,
 				"label":    "Save Project As...",
 				"desc":     "Save GoPi project to file standard JSON-formatted file",
 				"Args": ki.PropSlice{
@@ -1292,7 +1292,7 @@ var PiViewProps = ki.Props{
 			}},
 			{"sep-parse", ki.BlankProp{}},
 			{"OpenParser", ki.Props{
-				"shortcut": gi.KeyFunMenuOpenAlt1,
+				"shortcut": keyfun.MenuOpenAlt1,
 				"label":    "Open Parser...",
 				"desc":     "Open lexer and parser rules from standard JSON-formatted file",
 				"Args": ki.PropSlice{
@@ -1303,7 +1303,7 @@ var PiViewProps = ki.Props{
 				},
 			}},
 			{"SaveParser", ki.Props{
-				"shortcut": gi.KeyFunMenuSaveAlt,
+				"shortcut": keyfun.MenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 					pv := pvi.(*PiView)
