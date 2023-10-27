@@ -1093,7 +1093,7 @@ var GridViewProps = ki.Props{
 				},
 			}},
 			{"OpenDrawing", ki.Props{
-				"shortcut": gi.KeyFunMenuOpen,
+				"shortcut": keyfun.MenuOpen,
 				"label":    "Open SVG...",
 				"desc":     "open an SVG drawing",
 				"Args": ki.PropSlice{
@@ -1103,7 +1103,7 @@ var GridViewProps = ki.Props{
 				},
 			}},
 			{"NewDrawing", ki.Props{
-				"shortcut": gi.KeyFunMenuNew,
+				"shortcut": keyfun.MenuNew,
 				"label":    "New",
 				"desc":     "Create a new drawing of given physical size (size units are used for ViewBox).",
 				"Args": ki.PropSlice{
@@ -1113,11 +1113,11 @@ var GridViewProps = ki.Props{
 				},
 			}},
 			{"SaveDrawing", ki.Props{
-				"shortcut": gi.KeyFunMenuSave,
+				"shortcut": keyfun.MenuSave,
 				"label":    "Save Drawing",
 			}},
 			{"SaveDrawingAs", ki.Props{
-				"shortcut": gi.KeyFunMenuSaveAs,
+				"shortcut": keyfun.MenuSaveAs,
 				"label":    "Save As...",
 				"desc":     "Save drawing to given svg file name",
 				"Args": ki.PropSlice{
@@ -1173,26 +1173,26 @@ var GridViewProps = ki.Props{
 		}},
 		{"Edit", ki.PropSlice{
 			{"Duplicate", ki.Props{
-				"keyfun": gi.KeyFunDuplicate,
+				"keyfun": keyfun.Duplicate,
 				// "updtfunc": GridViewInactiveTextSelectionFunc,
 			}},
 			{"Copy", ki.Props{
-				"keyfun": gi.KeyFunCopy,
+				"keyfun": keyfun.Copy,
 				// "updtfunc": GridViewInactiveTextSelectionFunc,
 			}},
 			{"Cut", ki.Props{
-				"keyfun": gi.KeyFunCut,
+				"keyfun": keyfun.Cut,
 				// "updtfunc": GridViewInactiveTextSelectionFunc,
 			}},
 			{"Paste", ki.Props{
-				"keyfun": gi.KeyFunPaste,
+				"keyfun": keyfun.Paste,
 			}},
 			{"sep-undo", ki.BlankProp{}},
 			{"Undo", ki.Props{
-				"keyfun": gi.KeyFunUndo,
+				"keyfun": keyfun.Undo,
 			}},
 			{"Redo", ki.Props{
-				"keyfun": gi.KeyFunRedo,
+				"keyfun": keyfun.Redo,
 			}},
 		}},
 		{"View", ki.PropSlice{

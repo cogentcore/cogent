@@ -363,10 +363,10 @@ var TreeViewProps = ki.Props{
 		{"sep-edit", ki.BlankProp{}},
 		{"SrcDuplicate", ki.Props{
 			"label":    "Duplicate",
-			"shortcut": gi.KeyFunDuplicate,
+			"shortcut": keyfun.Duplicate,
 		}},
 		{"Copy", ki.Props{
-			"shortcut": gi.KeyFunCopy,
+			"shortcut": keyfun.Copy,
 			"Args": ki.PropSlice{
 				{"reset", ki.Props{
 					"value": true,
@@ -374,14 +374,14 @@ var TreeViewProps = ki.Props{
 			},
 		}},
 		{"Cut", ki.Props{
-			"shortcut": gi.KeyFunCut,
+			"shortcut": keyfun.Cut,
 			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Button) {
 				tv := tvi.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
 		}},
 		{"Paste", ki.Props{
-			"shortcut": gi.KeyFunPaste,
+			"shortcut": keyfun.Paste,
 		}},
 		{"sep-layer", ki.BlankProp{}},
 		{"LayerSetCurrent", ki.Props{

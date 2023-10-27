@@ -121,31 +121,31 @@ func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	if gi.KeyEventTrace {
 		fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
 	}
-	kf := gi.KeyFun(kc)
+	kf := keyfun.(kc)
 	switch kf {
-	case gi.KeyFunAbort:
+	case keyfun.Abort:
 		// todo: maybe something else
 		kt.SetProcessed()
 		sv.GridView.SetTool(SelectTool)
-	case gi.KeyFunUndo:
+	case keyfun.Undo:
 		kt.SetProcessed()
 		sv.GridView.Undo()
-	case gi.KeyFunRedo:
+	case keyfun.Redo:
 		kt.SetProcessed()
 		sv.GridView.Redo()
-	case gi.KeyFunDuplicate:
+	case keyfun.Duplicate:
 		kt.SetProcessed()
 		sv.GridView.DuplicateSelected()
-	case gi.KeyFunCopy:
+	case keyfun.Copy:
 		kt.SetProcessed()
 		sv.GridView.CopySelected()
-	case gi.KeyFunCut:
+	case keyfun.Cut:
 		kt.SetProcessed()
 		sv.GridView.CutSelected()
-	case gi.KeyFunPaste:
+	case keyfun.Paste:
 		kt.SetProcessed()
 		sv.GridView.PasteClip()
-	case gi.KeyFunDelete, gi.KeyFunBackspace:
+	case keyfun.Delete, keyfun.Backspace:
 		kt.SetProcessed()
 		sv.GridView.DeleteSelected()
 	}
@@ -667,16 +667,16 @@ func (sv *SVGView) MakeNodeContextMenu(m *gi.Menu, kn ki.Ki) {
 		sv.GridView.SelectNodeInTree(kn, mouse.SelectOne)
 	})
 	m.AddSeparator("sep-clip")
-	m.AddAction(gi.ActOpts{Label: "Duplicate", ShortcutKey: gi.KeyFunDuplicate}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	m.AddAction(gi.ActOpts{Label: "Duplicate", ShortcutKey: keyfun.Duplicate}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.DuplicateSelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: gi.KeyFunCopy}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: keyfun.Copy}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.CopySelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: gi.KeyFunCut}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: keyfun.Cut}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.CutSelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: gi.KeyFunPaste}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: keyfun.Paste}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		sv.GridView.PasteClip()
 	})
 }
