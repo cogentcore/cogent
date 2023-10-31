@@ -10,8 +10,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/goki/gi/giv"
-	"github.com/goki/ki/kit"
+	"goki.dev/gi/v2/texteditor"
 )
 
 // Console redirects our os.Stdout and os.Stderr to a buffer for display within app
@@ -30,7 +29,7 @@ type Console struct {
 	StderrRead *os.File `json:"-" xml:"-"`
 
 	// text buffer holding all output
-	Buf *giv.TextBuf `json:"-" xml:"-"`
+	Buf *texteditor.Buf `json:"-" xml:"-"`
 
 	// set to true to cancel monitoring
 	Cancel bool `json:"-" xml:"-"`
@@ -48,8 +47,6 @@ type Console struct {
 	LogWrite *os.File `json:"-" xml:"-"`
 }
 
-var KiT_Console = kit.Types.AddType(&Console{}, nil)
-
 var TheConsole Console
 
 // Init initializes the console -- sets up the capture, Buf, and
@@ -63,7 +60,7 @@ func (cn *Console) Init(logFile string) {
 	os.Stdout = cn.StdoutWrite
 	os.Stderr = cn.StderrWrite
 	log.SetOutput(cn.StderrWrite)
-	cn.Buf = &giv.TextBuf{}
+	cn.Buf = &texteditor.Buf{}
 	cn.Buf.InitName(cn.Buf, "console-buf")
 	if logFile != "" {
 		cn.LogWrite, _ = os.Create(logFile)
@@ -85,7 +82,7 @@ func (cn *Console) Close() {
 // MonitorOut monitors std output and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorOut() {
-	obuf := giv.OutBuf{}
+	obuf := texteditor.OutBuf{}
 	obuf.Init(cn.StdoutRead, cn.Buf, 0, MarkupStdout)
 	obuf.MonOut()
 }
@@ -93,7 +90,7 @@ func (cn *Console) MonitorOut() {
 // MonitorErr monitors std error and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorErr() {
-	obuf := giv.OutBuf{}
+	obuf := texteditor.OutBuf{}
 	obuf.Init(cn.StderrRead, cn.Buf, 0, MarkupStderr)
 	obuf.MonOut()
 }

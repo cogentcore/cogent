@@ -4,15 +4,19 @@
 
 package gide
 
+//go:generate goki generate
+
 import (
 	"reflect"
 	"time"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/pi/complete"
-	"github.com/goki/pi/filecat"
+	"goki.dev/gi/v2/filetree"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor"
+	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/pi/v2/complete"
+	"goki.dev/pi/v2/filecat"
 )
 
 // Gide provides the interface for the GideView functionality that is needed
@@ -61,17 +65,17 @@ type Gide interface {
 	// FileNodeForFile returns file node for given file path.
 	// add: if not found in existing tree and external files, then if add is true,
 	// it is added to the ExtFiles list.
-	FileNodeForFile(fpath string, add bool) *giv.FileNode
+	FileNodeForFile(fpath string, add bool) *filetree.Node
 
 	// TextBufForFile returns the TextBuf for given file path
 	// add: if not found in existing tree and external files, then if add is true,
 	// it is added to the ExtFiles list.
-	TextBufForFile(fpath string, add bool) *giv.TextBuf
+	TextBufForFile(fpath string, add bool) *texteditor.Buf
 
 	// NextViewFileNode sets the next text view to view file in given node (opens
 	// buffer if not already opened) -- if already being viewed, that is
 	// activated, returns text view and index
-	NextViewFileNode(fn *giv.FileNode) (*TextView, int)
+	NextViewFileNode(fn *filetree.Node) (*TextView, int)
 
 	// ActiveTextView returns the currently-active TextView
 	ActiveTextView() *TextView
@@ -80,14 +84,14 @@ type Gide interface {
 	SetActiveTextView(av *TextView) int
 
 	// ActiveFileNode returns the file node for the active file -- nil if none
-	ActiveFileNode() *giv.FileNode
+	ActiveFileNode() *filetree.Node
 
 	// ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 	// and shows output in Tab with name of command
-	ExecCmdFileNode(fn *giv.FileNode)
+	ExecCmdFileNode(fn *filetree.Node)
 
 	// ExecCmdNameFileNode executes command of given name on given node
-	ExecCmdNameFileNode(fn *giv.FileNode, cmdNm CmdName, sel bool, clearBuf bool)
+	ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, clearBuf bool)
 
 	// ExecCmdNameFileName executes command of given name on given file name
 	ExecCmdNameFileName(fn string, cmdNm CmdName, sel bool, clearBuf bool)
@@ -99,7 +103,7 @@ type Gide interface {
 	// ParseOpenFindURL parses and opens given find:/// url from Find, return text
 	// region encoded in url, and starting line of results in find buffer, and
 	// number of results returned -- for parsing all the find results
-	ParseOpenFindURL(ur string, ftv *giv.TextView) (tv *TextView, reg textbuf.Region, findBufStLn, findCount int, ok bool)
+	ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextView, reg textbuf.Region, findBufStLn, findCount int, ok bool)
 
 	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
 	OpenFileAtRegion(filename gi.FileName, reg textbuf.Region) (tv *TextView, ok bool)

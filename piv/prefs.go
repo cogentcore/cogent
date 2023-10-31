@@ -10,10 +10,9 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/parse"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/goosi"
+	"goki.dev/pi/v2/parse"
 )
 
 // ProjPrefs are the preferences for saving for a project -- this IS the project file
@@ -31,8 +30,6 @@ type ProjPrefs struct {
 	// the options for tracing parsing
 	TraceOpts parse.TraceOpts
 }
-
-var KiT_ProjPrefs = kit.Types.AddType(&ProjPrefs{}, nil)
 
 // OpenJSON open from JSON file
 func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error {
@@ -78,14 +75,14 @@ var SavedPathsFileName = "gopi_saved_paths.json"
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.SaveJSON(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
 }

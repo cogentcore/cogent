@@ -10,9 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/ki/kit"
+	"goki.dev/gi/v2/texteditor"
+	"goki.dev/goosi"
 )
 
 // ArgVarInfo has info about argument variables that fill in relevant values
@@ -85,7 +84,7 @@ var ArgVars = map[string]ArgVarInfo{
 type ArgVarVals map[string]string
 
 // Set sets the current values for arg variables -- prompts must be already set!
-func (avp *ArgVarVals) Set(fpath string, ppref *ProjPrefs, tv *giv.TextView) {
+func (avp *ArgVarVals) Set(fpath string, ppref *ProjPrefs, tv *texteditor.Editor) {
 	if *avp == nil {
 		*avp = make(ArgVarVals, len(ArgVars))
 	}
@@ -214,8 +213,8 @@ func (avp *ArgVarVals) Bind(arg string) string {
 		bs = bytes.Replace(bs, []byte("\\{"), []byte("{"), -1)
 	}
 
-	if oswin.TheApp != nil {
-		if oswin.TheApp.Platform() == oswin.Windows {
+	if goosi.TheApp != nil {
+		if goosi.TheApp.Platform() == goosi.Windows {
 			bs = bytes.Replace(bs, []byte("}/{"), []byte("}\\{"), -1)
 		}
 	}
@@ -274,7 +273,7 @@ func ArgVarKeys() []string {
 
 // ArgVarTypes describe the type of information in the arg var -- used for
 // checking usage and special features.
-type ArgVarTypes int32
+type ArgVarTypes int32 //enums:enum -trim-prefix ArgVar
 
 const (
 	// ArgVarFile is a file name, not a directory
@@ -298,13 +297,3 @@ const (
 	// ArgVarTypesN is the number of ArgVarTypes
 	ArgVarTypesN
 )
-
-//go:generate stringer -type=ArgVarTypes
-
-var KiT_ArgVarTypes = kit.Enums.AddEnumAltLower(ArgVarTypesN, kit.NotBitFlag, nil, "ArgVar")
-
-// MarshalJSON saves arg variables to a JSON-formatted file
-func (kf ArgVarTypes) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(kf) }
-
-// UnmarshalJSON decodes arg variables from a JSON-formatted file
-func (kf *ArgVarTypes) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(kf, b) }

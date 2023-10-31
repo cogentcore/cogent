@@ -1,28 +1,28 @@
+// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package gide
 
 import (
 	"image"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/gist"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/oswin/key"
-	"github.com/goki/gi/oswin/mouse"
-	"github.com/goki/gi/units"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/lex"
-	"github.com/goki/pi/token"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/keyfun"
+	"goki.dev/gi/v2/texteditor"
+	"goki.dev/girl/styles"
+	"goki.dev/girl/units"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/lex"
+	"goki.dev/pi/v2/token"
 )
 
 // TextView is the Gide-specific version of the TextView, with support for
 // setting / clearing breakpoints, etc
 type TextView struct {
-	giv.TextView
+	texteditor.Editor
 }
-
-var KiT_TextView = kit.Types.AddType(&TextView{}, giv.TextViewProps)
 
 // AddNewTextView adds a new textview to given parent node, with given name.
 func AddNewTextView(parent ki.Ki, name string) *TextView {
@@ -211,6 +211,7 @@ func (tv *TextView) DoubleClickEvent(tpos lex.Pos) {
 	// todo: could do e.g., lookup here, but messes with normal select..
 }
 
+/*
 // MouseEvent handles the mouse.Event
 func (tv *TextView) MouseEvent(me *mouse.Event) {
 	if me.Button != mouse.Left || me.Action != mouse.DoubleClick {
@@ -252,23 +253,26 @@ func (tv *TextView) HoverEvent() {
 		}
 	})
 }
+*/
 
 // TextViewEvents sets connections between mouse and key events and actions
 func (tv *TextView) TextViewEvents() {
 	tv.HoverEvent()
 	tv.MouseMoveEvent()
 	tv.MouseDragEvent()
-	tv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-		txf := recv.Embed(KiT_TextView).(*TextView)
-		me := d.(*mouse.Event)
-		txf.MouseEvent(me) // gets our new one
-	})
-	tv.MouseFocusEvent()
-	tv.ConnectEvent(oswin.KeyChordEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-		txf := recv.Embed(KiT_TextView).(*TextView)
-		kt := d.(*key.ChordEvent)
-		txf.KeyInput(kt)
-	})
+	/*
+		tv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+			txf := recv.Embed(KiT_TextView).(*TextView)
+			me := d.(*mouse.Event)
+			txf.MouseEvent(me) // gets our new one
+		})
+		tv.MouseFocusEvent()
+		tv.ConnectEvent(oswin.KeyChordEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+			txf := recv.Embed(KiT_TextView).(*TextView)
+			kt := d.(*key.ChordEvent)
+			txf.KeyInput(kt)
+		})
+	*/
 }
 
 // ConnectEvents2D indirectly sets connections between mouse and key events and actions
@@ -277,22 +281,22 @@ func (tv *TextView) ConnectEvents2D() {
 }
 
 // ConfigOutputTextView configures a command-output textview within given parent layout
-func ConfigOutputTextView(ly *gi.Layout) *giv.TextView {
+func ConfigOutputTextView(ly *gi.Layout) *texteditor.Editor {
 	updt := ly.UpdateStart()
 	ly.Lay = gi.LayoutVert
 	ly.SetStretchMax()
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
-	var tv *giv.TextView
+	var tv *texteditor.Editor
 	if ly.HasChildren() {
-		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		tv = ly.Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
 	} else {
 		ly.SetChildAdded()
-		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
+		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*texteditor.Editor)
 	}
 	tv.SetProp("line-nos", false)
 	// if ge.Prefs.Editor.WordWrap {
-	tv.SetProp("white-space", gist.WhiteSpacePreWrap)
+	tv.SetProp("white-space", styles.WhiteSpacePreWrap)
 	// } else {
 	// 	tv.SetProp("white-space", gist.WhiteSpacePre)
 	// }

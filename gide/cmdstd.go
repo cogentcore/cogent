@@ -4,7 +4,7 @@
 
 package gide
 
-import "github.com/goki/pi/filecat"
+import "goki.dev/pi/v2/filecat"
 
 // Use these for more obvious command options
 const (

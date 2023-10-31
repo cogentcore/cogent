@@ -5,12 +5,12 @@
 package main
 
 import (
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/gimain"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/pi/pi"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/gimain"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/piv"
+	"goki.dev/goosi"
+	"goki.dev/pi/v2/pi"
 )
 
 func main() {
@@ -20,12 +20,12 @@ func main() {
 }
 
 func mainrun() {
-	oswin.TheApp.SetName("pie")
-	oswin.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>GoGi</b> graphical interface system, within the <b>GoKi</b> tree framework.  See <a href="https://github.com/goki/pi">Gide on GitHub</a> and <a href="https://github.com/goki/pi/wiki">Gide wiki</a> for documentation.<br>
+	goosi.TheApp.SetName("pie")
+	goosi.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>GoGi</b> graphical interface system, within the <b>GoKi</b> tree framework.  See <a href="https://goki.dev/pi">Gide on GitHub</a> and <a href="https://goki.dev/pi/wiki">Gide wiki</a> for documentation.<br>
 <br>
 Version: ` + pi.VersionInfo())
 
-	// oswin.TheApp.SetQuitCleanFunc(func() {
+	// goosi.TheApp.SetQuitCleanFunc(func() {
 	// 	fmt.Printf("Doing final Quit cleanup here..\n")
 	// })
 
@@ -59,11 +59,11 @@ Version: ` + pi.VersionInfo())
 	recv.InitName(&recv, "pie_dummy")
 
 	inQuitPrompt := false
-	oswin.TheApp.SetQuitReqFunc(func() {
+	goosi.TheApp.SetQuitReqFunc(func() {
 		if !inQuitPrompt {
 			inQuitPrompt = true
 			if piv.QuitReq() {
-				oswin.TheApp.Quit()
+				goosi.TheApp.Quit()
 			} else {
 				inQuitPrompt = false
 			}

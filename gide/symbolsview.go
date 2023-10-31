@@ -5,21 +5,18 @@
 package gide
 
 import (
-	"image/color"
 	"log"
 	"sort"
 	"strings"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/gist"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/gi/units"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/lex"
-	"github.com/goki/pi/syms"
-	"github.com/goki/pi/token"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/girl/units"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/lex"
+	"goki.dev/pi/v2/syms"
+	"goki.dev/pi/v2/token"
 )
 
 // SymbolsParams are parameters for structure view of file or package
@@ -46,8 +43,6 @@ type SymbolsView struct {
 	Match string
 }
 
-var KiT_SymbolsView = kit.Types.AddType(&SymbolsView{}, SymbolsViewProps)
-
 // Params returns the symbols params
 func (sv *SymbolsView) Params() *SymbolsParams {
 	return &sv.Gide.ProjPrefs().Symbols
@@ -62,7 +57,7 @@ func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
 	sv.SymParams = sp
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(gi.KiT_Toolbar, "sym-toolbar")
 	config.Add(gi.KiT_Frame, "sym-frame")
 	mods, updt := sv.ConfigChildren(config)
@@ -87,8 +82,8 @@ func (sv *SymbolsView) Frame() *gi.Frame {
 }
 
 // ScopeCombo returns the scope ComboBox
-func (sv *SymbolsView) ScopeCombo() *gi.ComboBox {
-	return sv.Toolbar().ChildByName("scope-combo", 5).(*gi.ComboBox)
+func (sv *SymbolsView) ScopeCombo() *gi.Chooser {
+	return sv.Toolbar().ChildByName("scope-combo", 5).(*gi.Chooser)
 }
 
 // SearchText returns the unknown word textfield from toolbar
@@ -112,18 +107,18 @@ func (sv *SymbolsView) ConfigToolbar() {
 	sl := svbar.AddNewChild(gi.KiT_Label, "scope-lbl").(*gi.Label)
 	sl.SetText("Scope:")
 	sl.Tooltip = "scope symbols to:"
-	scb := svbar.AddNewChild(gi.KiT_ComboBox, "scope-combo").(*gi.ComboBox)
+	scb := svbar.AddNewChild(gi.KiT_ComboBox, "scope-combo").(*gi.Chooser)
 	scb.SetText("Scope")
 	scb.Tooltip = sl.Tooltip
 	scb.ItemsFromEnum(Kit_SymbolsViewScope, false, 0)
-	scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
-		smb := send.(*gi.ComboBox)
-		eval := smb.CurVal.(kit.EnumValue)
-		svv.Params().Scope = SymbolsViewScope(eval.Value)
-		sv.ConfigTree(SymbolsViewScope(eval.Value))
-		sv.SearchText().GrabFocus()
-	})
+	// scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 	svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
+	// 	smb := send.(*gi.Chooser)
+	// 	eval := smb.CurVal.(kit.EnumValue)
+	// 	svv.Params().Scope = SymbolsViewScope(eval.Value)
+	// 	sv.ConfigTree(SymbolsViewScope(eval.Value))
+	// 	sv.SearchText().GrabFocus()
+	// })
 
 	slbl := svbar.AddNewChild(gi.KiT_Label, "search-lbl").(*gi.Label)
 	slbl.SetText("Search:")
@@ -348,7 +343,7 @@ var SymbolsViewProps = ki.Props{
 // SymNode
 
 // SymScope corresponds to the search scope
-type SymbolsViewScope int
+type SymbolsViewScope int32 //enums:enum -trim-prefix SymScope
 
 const (
 	// SymScopePackage scopes list of symbols to the package of the active file
@@ -361,13 +356,6 @@ const (
 	SymScopeN
 )
 
-//go:generate stringer -type=SymbolsViewScope
-
-var Kit_SymbolsViewScope = kit.Enums.AddEnumAltLower(SymScopeN, kit.NotBitFlag, nil, "SymScope")
-
-func (ev SymbolsViewScope) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
-func (ev *SymbolsViewScope) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
-
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
 type SymNode struct {
@@ -377,20 +365,12 @@ type SymNode struct {
 	Symbol syms.Symbol
 }
 
-var KiT_SymNode = kit.Types.AddType(&SymNode{}, ki.Props{"EnumType:Flag": ki.KiT_Flags})
-
 /////////////////////////////////////////////////////////////////////////////
 // SymTreeView
 
 // SymTreeView is a TreeView that knows how to operate on FileNode nodes
 type SymTreeView struct {
 	giv.TreeView
-}
-
-var KiT_SymTreeView = kit.Types.AddType(&SymTreeView{}, nil)
-
-func init() {
-	kit.Types.SetProps(KiT_SymTreeView, SymTreeViewProps)
 }
 
 // SymNode returns the SrcNode as a *gide* SymNode
@@ -402,6 +382,7 @@ func (st *SymTreeView) SymNode() *SymNode {
 	return sn.(*SymNode)
 }
 
+/*
 var SymTreeViewProps = ki.Props{
 	"EnumType:Flag":    giv.KiT_TreeViewFlags,
 	"indent":           units.NewValue(2, units.Ch),
@@ -477,3 +458,4 @@ func (st *SymTreeView) Style2D() {
 	st.StyleTreeView()
 	st.LayState.SetFromStyle(&st.Sty.Layout) // also does reset
 }
+*/

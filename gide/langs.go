@@ -10,12 +10,11 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/filecat"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/goosi"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/filecat"
 )
 
 // LangOpts defines options associated with a given language / file format
@@ -28,8 +27,6 @@ type LangOpts struct {
 
 // Langs is a map of language options
 type Langs map[filecat.Supported]*LangOpts
-
-var KiT_Langs = kit.Types.AddType(&Langs{}, LangsProps)
 
 // AvailLangs is the current set of language options -- can be
 // loaded / saved / edited with preferences.  This is set to StdLangs at
@@ -88,7 +85,7 @@ func (lt *Langs) SaveJSON(filename gi.FileName) error {
 
 // OpenPrefs opens Langs from App standard prefs directory, using PrefsLangsFileName
 func (lt *Langs) OpenPrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
 	return lt.OpenJSON(gi.FileName(pnm))
@@ -96,7 +93,7 @@ func (lt *Langs) OpenPrefs() error {
 
 // SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFileName
 func (lt *Langs) SavePrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
 	return lt.SaveJSON(gi.FileName(pnm))

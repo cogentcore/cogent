@@ -11,20 +11,19 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/filecat"
+	"goki.dev/gi/v2/filetree"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor"
+	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/filecat"
 )
 
 // FileNode is Gide version of FileNode for FileTree view
 type FileNode struct {
-	giv.FileNode
+	filetree.Node
 }
-
-var KiT_FileNode = kit.Types.AddType(&FileNode{}, nil)
 
 func (fn *FileNode) CopyFieldsFrom(frm any) {
 	fr := frm.(*FileNode)
@@ -34,18 +33,21 @@ func (fn *FileNode) CopyFieldsFrom(frm any) {
 
 // ParentGide returns the Gide parent of given node
 func ParentGide(kn ki.Ki) (Gide, bool) {
-	if ki.IsRoot(kn) {
-		return nil, false
-	}
-	var ge Gide
-	kn.FuncUpParent(0, kn, func(k ki.Ki, level int, d any) bool {
-		if kit.EmbedImplements(ki.Type(k), GideType) {
-			ge = k.(Gide)
-			return false
+	return kn.ParentOfType(GideType, ki.Embeds)
+	/*
+		if ki.IsRoot(kn) {
+			return nil, false
 		}
-		return true
-	})
-	return ge, ge != nil
+		var ge Gide
+		kn.FuncUpParent(0, kn, func(k ki.Ki, level int, d any) bool {
+			if kit.EmbedImplements(ki.Type(k), GideType) {
+				ge = k.(Gide)
+				return false
+			}
+			return true
+		})
+		return ge, ge != nil
+	*/
 }
 
 // EditFile pulls up this file in Gide
@@ -56,7 +58,7 @@ func (fn *FileNode) EditFile() {
 	}
 	ge, ok := ParentGide(fn.This())
 	if ok {
-		ge.NextViewFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
+		ge.NextViewFileNode(fn.This().Embed(giv.KiT_FileNode).(*filetree.Node))
 	}
 }
 
@@ -78,7 +80,7 @@ func (fn *FileNode) SetRunExec() {
 func (fn *FileNode) ExecCmdFile() {
 	ge, ok := ParentGide(fn.This())
 	if ok {
-		ge.ExecCmdFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode))
+		ge.ExecCmdFileNode(fn.This().Embed(giv.KiT_FileNode).(*filetree.Node))
 	}
 }
 
@@ -86,7 +88,7 @@ func (fn *FileNode) ExecCmdFile() {
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	ge, ok := ParentGide(fn.This())
 	if ok {
-		ge.ExecCmdNameFileNode(fn.This().Embed(giv.KiT_FileNode).(*giv.FileNode), CmdName(cmdNm), true, true)
+		ge.ExecCmdNameFileNode(fn.This().Embed(giv.KiT_FileNode).(*filetree.Node), CmdName(cmdNm), true, true)
 	}
 }
 
@@ -96,20 +98,20 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 // OpenNodes is a list of file nodes that have been opened for editing -- it
 // is maintained in recency order -- most recent on top -- call Add every time
 // a node is opened / visited for editing
-type OpenNodes []*giv.FileNode
+type OpenNodes []*filetree.Node
 
 // Add adds given node to list of open nodes -- if already on the list it is
 // moved to the top -- returns true if actually added.
 // Connects to fn.TextBuf signal and auto-closes when buffer closes.
-func (on *OpenNodes) Add(fn *giv.FileNode) bool {
+func (on *OpenNodes) Add(fn *filetree.Node) bool {
 	added := on.AddImpl(fn)
 	if !added {
 		return added
 	}
 	if fn.Buf != nil {
 		fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(giv.TextBufClosed) {
-				fno, _ := recv.Embed(giv.KiT_FileNode).(*giv.FileNode)
+			if sig == int64(texteditor.BufClosed) {
+				fno, _ := recv.Embed(giv.KiT_FileNode).(*filetree.Node)
 				on.Delete(fno)
 			}
 		})
@@ -119,7 +121,7 @@ func (on *OpenNodes) Add(fn *giv.FileNode) bool {
 
 // AddImpl adds given node to list of open nodes -- if already on the list it is
 // moved to the top -- returns true if actually added.
-func (on *OpenNodes) AddImpl(fn *giv.FileNode) bool {
+func (on *OpenNodes) AddImpl(fn *filetree.Node) bool {
 	sz := len(*on)
 
 	for i, f := range *on {
@@ -142,7 +144,7 @@ func (on *OpenNodes) AddImpl(fn *giv.FileNode) bool {
 }
 
 // Delete deletes given node in list of open nodes, returning true if found and deleted
-func (on *OpenNodes) Delete(fn *giv.FileNode) bool {
+func (on *OpenNodes) Delete(fn *filetree.Node) bool {
 	for i, f := range *on {
 		if f == fn {
 			on.DeleteIdx(i)
@@ -188,7 +190,7 @@ func (on *OpenNodes) Strings() []string {
 }
 
 // ByStringName returns the open node with given strings name
-func (on *OpenNodes) ByStringName(name string) *giv.FileNode {
+func (on *OpenNodes) ByStringName(name string) *filetree.Node {
 	sl := on.Strings()
 	for i, ns := range sl {
 		if ns == name {
@@ -214,7 +216,7 @@ func (on *OpenNodes) NChanged() int {
 
 // FileSearchResults is used to report search results
 type FileSearchResults struct {
-	Node    *giv.FileNode
+	Node    *filetree.Node
 	Count   int
 	Matches []textbuf.Match
 }
@@ -223,7 +225,7 @@ type FileSearchResults struct {
 // language(s) that contain the given string (non regexp version), sorted in
 // descending order by number of occurrences -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *giv.FileNode, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []filecat.Supported) []FileSearchResults {
+func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []filecat.Supported) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -240,7 +242,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase, regExp bool, l
 	}
 	mls := make([]FileSearchResults, 0)
 	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d any) bool {
-		sfn := k.Embed(giv.KiT_FileNode).(*giv.FileNode)
+		sfn := k.Embed(giv.KiT_FileNode).(*filetree.Node)
 		if sfn.IsDir() && !sfn.IsOpen() {
 			// fmt.Printf("dir: %v closed\n", sfn.FPath)
 			return ki.Break // don't go down into closed directories!
@@ -294,6 +296,7 @@ func FileTreeSearch(start *giv.FileNode, find string, ignoreCase, regExp bool, l
 /////////////////////////////////////////////////////////////////////////
 // FileTreeView is the Gide version of the FileTreeView
 
+/*
 // FileTreeView is a TreeView that knows how to operate on FileNode nodes
 type FileTreeView struct {
 	giv.FileTreeView
@@ -305,8 +308,8 @@ var FileNodeProps map[string]any
 var KiT_FileTreeView = kit.Types.AddType(&FileTreeView{}, nil)
 
 func init() {
-	FileNodeProps = make(ki.Props, len(giv.FileNodeProps))
-	ki.CopyProps(&FileNodeProps, giv.FileNodeProps, true)
+	FileNodeProps = make(ki.Props, len(filetree.NodeProps))
+	ki.CopyProps(&FileNodeProps, filetree.NodeProps, true)
 	kit.Types.SetProps(KiT_FileNode, FileNodeProps)
 
 	FileTreeViewProps = make(ki.Props, len(giv.FileTreeViewProps))
@@ -483,3 +486,5 @@ var FileTreeActiveExecFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) 
 		act.SetActiveState(fn.IsExec())
 	}
 })
+
+*/

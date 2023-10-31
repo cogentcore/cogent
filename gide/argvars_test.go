@@ -7,13 +7,13 @@ package gide
 import (
 	"testing"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/pi/lex"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/texteditor"
+	"goki.dev/pi/v2/lex"
 )
 
 func TestBind(t *testing.T) {
-	tv := giv.TextView{}
+	tv := texteditor.Editor{}
 	tv.CursorPos = lex.Pos{22, 44}
 	tv.SelectReg.Start = lex.Pos{11, 14}
 	tv.SelectReg.End = lex.Pos{55, 0}

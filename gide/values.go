@@ -5,17 +5,15 @@
 package gide
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/gist"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/units"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/girl/styles"
+	"goki.dev/girl/units"
+	"goki.dev/ki/v2"
+	"goki.dev/laser"
 )
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -43,44 +41,44 @@ func PrefsView(pf *Preferences) *gi.Window {
 	sv.SetStretchMaxWidth()
 	sv.SetStretchMaxHeight()
 
-	mmen := win.MainMenu
-	giv.MainMenuView(pf, win, mmen)
+	// mmen := win.MainMenu
+	// giv.MainMenuView(pf, win, mmen)
+	//
+	// inClosePrompt := false
+	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+	// 	if !pf.Changed {
+	// 		win.Close()
+	// 		return
+	// 	}
+	// 	if inClosePrompt {
+	// 		return
+	// 	}
+	// 	inClosePrompt = true
+	// 	gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Prefs Before Closing?",
+	// 		Prompt: "Do you want to save any changes to preferences before closing?"},
+	// 		[]string{"Save and Close", "Discard and Close", "Cancel"},
+	// 		win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 			switch sig {
+	// 			case 0:
+	// 				pf.Save()
+	// 				fmt.Println("Preferences Saved to prefs.json")
+	// 				win.Close()
+	// 			case 1:
+	// 				pf.Open() // if we don't do this, then it actually remains in edited state
+	// 				win.Close()
+	// 			case 2:
+	// 				inClosePrompt = false
+	// 				// default is to do nothing, i.e., cancel
+	// 			}
+	// 		})
+	// })
+	//
+	// win.MainMenuUpdated()
 
-	inClosePrompt := false
-	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if !pf.Changed {
-			win.Close()
-			return
-		}
-		if inClosePrompt {
-			return
-		}
-		inClosePrompt = true
-		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Prefs Before Closing?",
-			Prompt: "Do you want to save any changes to preferences before closing?"},
-			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data any) {
-				switch sig {
-				case 0:
-					pf.Save()
-					fmt.Println("Preferences Saved to prefs.json")
-					win.Close()
-				case 1:
-					pf.Open() // if we don't do this, then it actually remains in edited state
-					win.Close()
-				case 2:
-					inClosePrompt = false
-					// default is to do nothing, i.e., cancel
-				}
-			})
-	})
-
-	win.MainMenuUpdated()
-
-	if !win.HasGeomPrefs() { // resize to contents
-		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-		win.SetSize(vpsz)
-	}
+	// if !win.HasGeomPrefs() { // resize to contents
+	// 	vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+	// 	win.SetSize(vpsz)
+	// }
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -113,7 +111,7 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 	title.SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
 	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
 	sv.Viewport = vp
@@ -121,15 +119,15 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 	sv.SetStretchMaxWidth()
 	sv.SetStretchMaxHeight()
 
-	mmen := win.MainMenu
-	giv.MainMenuView(pf, win, mmen)
-
-	win.MainMenuUpdated()
-
-	if !win.HasGeomPrefs() { // resize to contents
-		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-		win.SetSize(vpsz)
-	}
+	// mmen := win.MainMenu
+	// giv.MainMenuView(pf, win, mmen)
+	//
+	// win.MainMenuUpdated()
+	//
+	// 	if !win.HasGeomPrefs() { // resize to contents
+	// 		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+	// 		win.SetSize(vpsz)
+	// 	}
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -159,7 +157,7 @@ func KeyMapsView(km *KeyMaps) {
 	title.SetText("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -172,44 +170,44 @@ func KeyMapsView(km *KeyMaps) {
 		AvailKeyMapsChanged = true
 	})
 
-	mmen := win.MainMenu
-	giv.MainMenuView(km, win, mmen)
-
-	inClosePrompt := false
-	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if !AvailKeyMapsChanged || km != &AvailKeyMaps { // only for main avail map..
-			win.Close()
-			return
-		}
-		if inClosePrompt {
-			return
-		}
-		inClosePrompt = true
-		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save KeyMaps Before Closing?",
-			Prompt: "Do you want to save any changes to preferences keymaps file before closing, or Cancel the close and do a Save to a different file?"},
-			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data any) {
-				switch sig {
-				case 0:
-					km.SavePrefs()
-					fmt.Printf("Preferences Saved to %v\n", PrefsKeyMapsFileName)
-					win.Close()
-				case 1:
-					km.OpenPrefs() // revert
-					win.Close()
-				case 2:
-					inClosePrompt = false
-					// default is to do nothing, i.e., cancel
-				}
-			})
-	})
-
-	win.MainMenuUpdated()
-
-	if !win.HasGeomPrefs() { // resize to contents
-		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-		win.SetSize(vpsz)
-	}
+	// mmen := win.MainMenu
+	// giv.MainMenuView(km, win, mmen)
+	//
+	// inClosePrompt := false
+	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+	// 	if !AvailKeyMapsChanged || km != &AvailKeyMaps { // only for main avail map..
+	// 		win.Close()
+	// 		return
+	// 	}
+	// 	if inClosePrompt {
+	// 		return
+	// 	}
+	// 	inClosePrompt = true
+	// 	gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save KeyMaps Before Closing?",
+	// 		Prompt: "Do you want to save any changes to preferences keymaps file before closing, or Cancel the close and do a Save to a different file?"},
+	// 		[]string{"Save and Close", "Discard and Close", "Cancel"},
+	// 		win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 			switch sig {
+	// 			case 0:
+	// 				km.SavePrefs()
+	// 				fmt.Printf("Preferences Saved to %v\n", PrefsKeyMapsFileName)
+	// 				win.Close()
+	// 			case 1:
+	// 				km.OpenPrefs() // revert
+	// 				win.Close()
+	// 			case 2:
+	// 				inClosePrompt = false
+	// 				// default is to do nothing, i.e., cancel
+	// 			}
+	// 		})
+	// })
+	//
+	// win.MainMenuUpdated()
+	//
+	// if !win.HasGeomPrefs() { // resize to contents
+	// 	vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+	// 	win.SetSize(vpsz)
+	// }
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -231,8 +229,6 @@ type KeyMapValueView struct {
 	giv.ValueViewBase
 }
 
-var KiT_KeyMapValueView = kit.Types.AddType(&KeyMapValueView{}, nil)
-
 func (vv *KeyMapValueView) WidgetType() reflect.Type {
 	vv.WidgetTyp = gi.KiT_Action
 	return vv.WidgetTyp
@@ -243,7 +239,7 @@ func (vv *KeyMapValueView) UpdateWidget() {
 		return
 	}
 	ac := vv.Widget.(*gi.Button)
-	txt := kit.ToString(vv.Value.Interface())
+	txt := laser.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none -- click to set)"
 	}
@@ -270,7 +266,7 @@ func (vv *KeyMapValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki
 	if vv.IsInactive() {
 		return
 	}
-	cur := kit.ToString(vv.Value.Interface())
+	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
 	desc, _ := vv.Tag("desc")
 	giv.TableViewSelectDialog(vp, &AvailKeyMaps, giv.DlgOpts{Title: "Select a KeyMap", Prompt: desc}, curRow, nil,
@@ -313,7 +309,7 @@ func LangsView(pt *Langs) {
 	title.SetText("Available Language Opts: Add or modify entries to customize options for language / file types")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
 	mv := mfr.AddNewChild(giv.KiT_MapView, "mv").(*giv.MapView)
 	mv.Viewport = vp
@@ -326,44 +322,44 @@ func LangsView(pt *Langs) {
 		AvailLangsChanged = true
 	})
 
-	mmen := win.MainMenu
-	giv.MainMenuView(pt, win, mmen)
-
-	inClosePrompt := false
-	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if !AvailLangsChanged || pt != &AvailLangs { // only for main avail map..
-			win.Close()
-			return
-		}
-		if inClosePrompt {
-			return
-		}
-		inClosePrompt = true
-		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Lang Opts Before Closing?",
-			Prompt: "Do you want to save any changes to preferences language options file before closing, or Cancel the close and do a Save to a different file?"},
-			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data any) {
-				switch sig {
-				case 0:
-					pt.SavePrefs()
-					fmt.Printf("Preferences Saved to %v\n", PrefsLangsFileName)
-					win.Close()
-				case 1:
-					pt.OpenPrefs() // revert
-					win.Close()
-				case 2:
-					inClosePrompt = true
-					// default is to do nothing, i.e., cancel
-				}
-			})
-	})
-
-	win.MainMenuUpdated()
-
-	if !win.HasGeomPrefs() { // resize to contents
-		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-		win.SetSize(vpsz)
-	}
+	// mmen := win.MainMenu
+	// giv.MainMenuView(pt, win, mmen)
+	//
+	// inClosePrompt := false
+	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+	// 	if !AvailLangsChanged || pt != &AvailLangs { // only for main avail map..
+	// 		win.Close()
+	// 		return
+	// 	}
+	// 	if inClosePrompt {
+	// 		return
+	// 	}
+	// 	inClosePrompt = true
+	// 	gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Lang Opts Before Closing?",
+	// 		Prompt: "Do you want to save any changes to preferences language options file before closing, or Cancel the close and do a Save to a different file?"},
+	// 		[]string{"Save and Close", "Discard and Close", "Cancel"},
+	// 		win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 			switch sig {
+	// 			case 0:
+	// 				pt.SavePrefs()
+	// 				fmt.Printf("Preferences Saved to %v\n", PrefsLangsFileName)
+	// 				win.Close()
+	// 			case 1:
+	// 				pt.OpenPrefs() // revert
+	// 				win.Close()
+	// 			case 2:
+	// 				inClosePrompt = true
+	// 				// default is to do nothing, i.e., cancel
+	// 			}
+	// 		})
+	// })
+	//
+	// win.MainMenuUpdated()
+	//
+	// if !win.HasGeomPrefs() { // resize to contents
+	// 	vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+	// 	win.SetSize(vpsz)
+	// }
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -392,7 +388,7 @@ func CmdsView(pt *Commands) {
 	title.SetText("Gide Commands")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -405,44 +401,44 @@ func CmdsView(pt *Commands) {
 		CustomCmdsChanged = true
 	})
 
-	mmen := win.MainMenu
-	giv.MainMenuView(pt, win, mmen)
-
-	inClosePrompt := false
-	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if !CustomCmdsChanged || pt != &CustomCmds { // only for main avail map..
-			win.Close()
-			return
-		}
-		if inClosePrompt {
-			return
-		}
-		inClosePrompt = true
-		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Commands Before Closing?",
-			Prompt: "Do you want to save any changes to custom commands file before closing, or Cancel the close and do a Save to a different file?"},
-			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data any) {
-				switch sig {
-				case 0:
-					pt.SavePrefs()
-					fmt.Printf("Preferences Saved to %v\n", PrefsCmdsFileName)
-					win.Close()
-				case 1:
-					pt.OpenPrefs() // revert
-					win.Close()
-				case 2:
-					inClosePrompt = false
-					// default is to do nothing, i.e., cancel
-				}
-			})
-	})
-
-	win.MainMenuUpdated()
-
-	if !win.HasGeomPrefs() { // resize to contents
-		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-		win.SetSize(vpsz)
-	}
+	// mmen := win.MainMenu
+	// giv.MainMenuView(pt, win, mmen)
+	//
+	// inClosePrompt := false
+	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+	// 	if !CustomCmdsChanged || pt != &CustomCmds { // only for main avail map..
+	// 		win.Close()
+	// 		return
+	// 	}
+	// 	if inClosePrompt {
+	// 		return
+	// 	}
+	// 	inClosePrompt = true
+	// 	gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Commands Before Closing?",
+	// 		Prompt: "Do you want to save any changes to custom commands file before closing, or Cancel the close and do a Save to a different file?"},
+	// 		[]string{"Save and Close", "Discard and Close", "Cancel"},
+	// 		win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 			switch sig {
+	// 			case 0:
+	// 				pt.SavePrefs()
+	// 				fmt.Printf("Preferences Saved to %v\n", PrefsCmdsFileName)
+	// 				win.Close()
+	// 			case 1:
+	// 				pt.OpenPrefs() // revert
+	// 				win.Close()
+	// 			case 2:
+	// 				inClosePrompt = false
+	// 				// default is to do nothing, i.e., cancel
+	// 			}
+	// 		})
+	// })
+	//
+	// win.MainMenuUpdated()
+	//
+	// if !win.HasGeomPrefs() { // resize to contents
+	// 	vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+	// 	win.SetSize(vpsz)
+	// }
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -463,8 +459,6 @@ type CmdValueView struct {
 	giv.ValueViewBase
 }
 
-var KiT_CmdValueView = kit.Types.AddType(&CmdValueView{}, nil)
-
 func (vv *CmdValueView) WidgetType() reflect.Type {
 	vv.WidgetTyp = gi.KiT_Action
 	return vv.WidgetTyp
@@ -475,7 +469,7 @@ func (vv *CmdValueView) UpdateWidget() {
 		return
 	}
 	ac := vv.Widget.(*gi.Button)
-	txt := kit.ToString(vv.Value.Interface())
+	txt := laser.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
@@ -502,7 +496,7 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 	if vv.IsInactive() {
 		return
 	}
-	cur := kit.ToString(vv.Value.Interface())
+	cur := laser.ToString(vv.Value.Interface())
 	curRow := -1
 	if cur != "" {
 		_, curRow, _ = AvailCmds.CmdByName(CmdName(cur), false)
@@ -549,7 +543,7 @@ func SplitsView(pt *Splits) {
 	title.SetText("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
 	tv.Viewport = vp
@@ -562,44 +556,44 @@ func SplitsView(pt *Splits) {
 		AvailSplitsChanged = true
 	})
 
-	mmen := win.MainMenu
-	giv.MainMenuView(pt, win, mmen)
-
-	inClosePrompt := false
-	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if !AvailSplitsChanged || pt != &AvailSplits { // only for main avail map..
-			win.Close()
-			return
-		}
-		if inClosePrompt {
-			return
-		}
-		inClosePrompt = true
-		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Splits Before Closing?",
-			Prompt: "Do you want to save any changes to custom splitter settings file before closing, or Cancel the close and do a Save to a different file?"},
-			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data any) {
-				switch sig {
-				case 0:
-					pt.SavePrefs()
-					fmt.Printf("Preferences Saved to %v\n", PrefsSplitsFileName)
-					win.Close()
-				case 1:
-					pt.OpenPrefs() // revert
-					win.Close()
-				case 2:
-					inClosePrompt = false
-					// default is to do nothing, i.e., cancel
-				}
-			})
-	})
-
-	win.MainMenuUpdated()
-
-	if !win.HasGeomPrefs() { // resize to contents
-		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-		win.SetSize(vpsz)
-	}
+	// mmen := win.MainMenu
+	// giv.MainMenuView(pt, win, mmen)
+	//
+	// inClosePrompt := false
+	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+	// 	if !AvailSplitsChanged || pt != &AvailSplits { // only for main avail map..
+	// 		win.Close()
+	// 		return
+	// 	}
+	// 	if inClosePrompt {
+	// 		return
+	// 	}
+	// 	inClosePrompt = true
+	// 	gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Splits Before Closing?",
+	// 		Prompt: "Do you want to save any changes to custom splitter settings file before closing, or Cancel the close and do a Save to a different file?"},
+	// 		[]string{"Save and Close", "Discard and Close", "Cancel"},
+	// 		win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 			switch sig {
+	// 			case 0:
+	// 				pt.SavePrefs()
+	// 				fmt.Printf("Preferences Saved to %v\n", PrefsSplitsFileName)
+	// 				win.Close()
+	// 			case 1:
+	// 				pt.OpenPrefs() // revert
+	// 				win.Close()
+	// 			case 2:
+	// 				inClosePrompt = false
+	// 				// default is to do nothing, i.e., cancel
+	// 			}
+	// 		})
+	// })
+	//
+	// win.MainMenuUpdated()
+	//
+	// if !win.HasGeomPrefs() { // resize to contents
+	// 	vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+	// 	win.SetSize(vpsz)
+	// }
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -620,8 +614,6 @@ type SplitValueView struct {
 	giv.ValueViewBase
 }
 
-var KiT_SplitValueView = kit.Types.AddType(&SplitValueView{}, nil)
-
 func (vv *SplitValueView) WidgetType() reflect.Type {
 	vv.WidgetTyp = gi.KiT_Action
 	return vv.WidgetTyp
@@ -632,7 +624,7 @@ func (vv *SplitValueView) UpdateWidget() {
 		return
 	}
 	ac := vv.Widget.(*gi.Button)
-	txt := kit.ToString(vv.Value.Interface())
+	txt := laser.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
@@ -659,7 +651,7 @@ func (vv *SplitValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.
 	if vv.IsInactive() {
 		return
 	}
-	cur := kit.ToString(vv.Value.Interface())
+	cur := laser.ToString(vv.Value.Interface())
 	curRow := -1
 	if cur != "" {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
@@ -706,7 +698,7 @@ func RegistersView(pt *Registers) {
 	title.SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
-	title.SetProp("white-space", gist.WhiteSpaceNormal) // wrap
+	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
 	tv := mfr.AddNewChild(giv.KiT_MapView, "tv").(*giv.MapView)
 	tv.Viewport = vp
@@ -719,44 +711,44 @@ func RegistersView(pt *Registers) {
 		AvailRegistersChanged = true
 	})
 
-	mmen := win.MainMenu
-	giv.MainMenuView(pt, win, mmen)
-
-	inClosePrompt := false
-	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if !AvailRegistersChanged || pt != &AvailRegisters { // only for main avail map..
-			win.Close()
-			return
-		}
-		if inClosePrompt {
-			return
-		}
-		inClosePrompt = true
-		gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Registers Before Closing?",
-			Prompt: "Do you want to save any changes to custom register file before closing, or Cancel the close and do a Save to a different file?"},
-			[]string{"Save and Close", "Discard and Close", "Cancel"},
-			win.This(), func(recv, send ki.Ki, sig int64, data any) {
-				switch sig {
-				case 0:
-					pt.SavePrefs()
-					fmt.Printf("Preferences Saved to %v\n", PrefsRegistersFileName)
-					win.Close()
-				case 1:
-					pt.OpenPrefs() // revert
-					win.Close()
-				case 2:
-					inClosePrompt = false
-					// default is to do nothing, i.e., cancel
-				}
-			})
-	})
-
-	win.MainMenuUpdated()
-
-	if !win.HasGeomPrefs() { // resize to contents
-		vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-		win.SetSize(vpsz)
-	}
+	// mmen := win.MainMenu
+	// giv.MainMenuView(pt, win, mmen)
+	//
+	// inClosePrompt := false
+	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+	// 	if !AvailRegistersChanged || pt != &AvailRegisters { // only for main avail map..
+	// 		win.Close()
+	// 		return
+	// 	}
+	// 	if inClosePrompt {
+	// 		return
+	// 	}
+	// 	inClosePrompt = true
+	// 	gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save Registers Before Closing?",
+	// 		Prompt: "Do you want to save any changes to custom register file before closing, or Cancel the close and do a Save to a different file?"},
+	// 		[]string{"Save and Close", "Discard and Close", "Cancel"},
+	// 		win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 			switch sig {
+	// 			case 0:
+	// 				pt.SavePrefs()
+	// 				fmt.Printf("Preferences Saved to %v\n", PrefsRegistersFileName)
+	// 				win.Close()
+	// 			case 1:
+	// 				pt.OpenPrefs() // revert
+	// 				win.Close()
+	// 			case 2:
+	// 				inClosePrompt = false
+	// 				// default is to do nothing, i.e., cancel
+	// 			}
+	// 		})
+	// })
+	//
+	// win.MainMenuUpdated()
+	//
+	// if !win.HasGeomPrefs() { // resize to contents
+	// 	vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
+	// 	win.SetSize(vpsz)
+	// }
 
 	vp.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
@@ -777,8 +769,6 @@ type RegisterValueView struct {
 	giv.ValueViewBase
 }
 
-var KiT_RegisterValueView = kit.Types.AddType(&RegisterValueView{}, nil)
-
 func (vv *RegisterValueView) WidgetType() reflect.Type {
 	vv.WidgetTyp = gi.KiT_Action
 	return vv.WidgetTyp
@@ -789,7 +779,7 @@ func (vv *RegisterValueView) UpdateWidget() {
 		return
 	}
 	ac := vv.Widget.(*gi.Button)
-	txt := kit.ToString(vv.Value.Interface())
+	txt := laser.ToString(vv.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
@@ -816,7 +806,7 @@ func (vv *RegisterValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc 
 	if vv.IsInactive() {
 		return
 	}
-	cur := kit.ToString(vv.Value.Interface())
+	cur := laser.ToString(vv.Value.Interface())
 	var recv gi.Node2D
 	if vv.Widget != nil {
 		recv = vv.Widget

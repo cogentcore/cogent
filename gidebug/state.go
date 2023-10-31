@@ -9,8 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/goki/gi/giv"
-	"github.com/goki/ki/kit"
+	"goki.dev/glop/dirs"
 )
 
 // This file contains all the state structs used in communciating with the
@@ -345,7 +344,7 @@ func (as *AllState) AddBreak(fpath string, line int) *Break {
 	br = &Break{}
 	br.On = true
 	br.FPath = fpath
-	br.File = giv.DirAndFile(fpath)
+	br.File = dirs.DirAndFile(fpath)
 	br.Line = line
 	as.Breaks = append(as.Breaks, br)
 	return br
@@ -418,7 +417,7 @@ func (as *AllState) VarByName(varNm string) *Variable {
 }
 
 // Status of the debugger
-type Status int32
+type Status int32 //enums:enum
 
 const (
 	// NotInit is not initialized
@@ -450,10 +449,3 @@ const (
 	// StatusN is the number of find locations (scopes)
 	StatusN
 )
-
-//go:generate stringer -type=Status
-
-var KiT_Status = kit.Enums.AddEnum(StatusN, kit.NotBitFlag, nil)
-
-func (ev Status) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
-func (ev *Status) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }

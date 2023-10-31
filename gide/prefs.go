@@ -12,15 +12,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/svg"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/filecat"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gidebug"
-	"goki.dev/gide/v2/icons"
+	"goki.dev/goosi"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/filecat"
 )
 
 // FilePrefs contains file view preferences
@@ -55,20 +52,19 @@ type Preferences struct {
 	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
-var KiT_Preferences = kit.Types.AddType(&Preferences{}, PreferencesProps)
-
 // Prefs are the overall Gide preferences
 var Prefs = Preferences{}
 
+// todo:
 // OpenIcons loads the gide icons into the current icon set
-func OpenIcons() error {
-	err := svg.CurIconSet.OpenIconsFromEmbedDir(icons.Icons, ".")
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	return nil
-}
+// func OpenIcons() error {
+// 	err := svg.CurIconSet.OpenIconsFromEmbedDir(icons.Icons, ".")
+// 	if err != nil {
+// 		log.Println(err)
+// 		return err
+// 	}
+// 	return nil
+// }
 
 // InitPrefs must be called at startup in mainrun()
 func InitPrefs() {
@@ -77,7 +73,7 @@ func InitPrefs() {
 	Prefs.Defaults()
 	Prefs.Open()
 	OpenPaths()
-	OpenIcons()
+	// OpenIcons()
 	// TheConsole.Init() // must do this manually
 	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
 		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
@@ -138,7 +134,7 @@ func (pf *Preferences) ApplyEnvVars() {
 
 // Open preferences from GoGi standard prefs directory, and applies them
 func (pf *Preferences) Open() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	b, err := ioutil.ReadFile(pnm)
 	if err != nil {
@@ -163,7 +159,7 @@ func (pf *Preferences) Open() error {
 
 // Save Preferences to GoGi standard prefs directory
 func (pf *Preferences) Save() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
@@ -369,8 +365,6 @@ type ProjPrefs struct {
 	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
-var KiT_ProjPrefs = kit.Types.AddType(&ProjPrefs{}, ProjPrefsProps)
-
 func (pf *ProjPrefs) Update() {
 	if pf.BuildDir != pf.ProjRoot {
 		if pf.BuildTarg == pf.ProjRoot {
@@ -453,7 +447,7 @@ var SavedPathsExtras = []string{gi.MenuTextSeparator, GideViewResetRecents, Gide
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.SaveJSON(pnm)
 	// add back after save
@@ -464,7 +458,7 @@ func SavePaths() {
 func OpenPaths() {
 	// remove to be sure we don't have duplicate extras
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)

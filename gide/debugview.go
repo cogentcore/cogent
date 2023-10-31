@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/mat32"
-	"github.com/goki/pi/filecat"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/gide/v2/gidebug/gidelve"
+	"goki.dev/ki/v2"
+	"goki.dev/mat32/v2"
+	"goki.dev/pi/v2/filecat"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
@@ -44,14 +44,14 @@ const (
 var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error){
-	filecat.Go: func(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error){
+	filecat.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 		return gidelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Prefs.. to a supported language (Go only option so far)", sup)
@@ -91,13 +91,11 @@ type DebugView struct {
 	BBreaks []*gidebug.Break `json:"-" xml:"-"`
 
 	// output from the debugger
-	OutBuf *giv.TextBuf `json:"-" xml:"-"`
+	OutBuf *texteditor.Buf `json:"-" xml:"-"`
 
 	// parent gide project
 	Gide Gide `json:"-" xml:"-"`
 }
-
-var KiT_DebugView = kit.Types.AddType(&DebugView{}, DebugViewProps)
 
 // DbgIsActive means debugger is started.
 func (dv *DebugView) DbgIsActive() bool {
@@ -742,13 +740,13 @@ func (dv *DebugView) Config(ge Gide, sup filecat.Supported, exePath string) {
 	dv.ExePath = exePath
 	dv.Lay = gi.LayoutVert
 	dv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(gi.KiT_Toolbar, "toolbar")
 	config.Add(gi.KiT_TabView, "tabs")
 	mods, updt := dv.ConfigChildren(config)
 	if mods {
 		dv.State.BlankState()
-		dv.OutBuf = &giv.TextBuf{}
+		dv.OutBuf = &texteditor.Buf{}
 		dv.OutBuf.InitName(dv.OutBuf, "debug-outbuf")
 		dv.ConfigToolbar()
 		dv.ConfigTabs()
@@ -814,9 +812,9 @@ func (dv DebugView) AllVarVw() *VarsView {
 }
 
 // ConsoleText returns the console TextView
-func (dv DebugView) ConsoleText() *giv.TextView {
+func (dv DebugView) ConsoleText() *texteditor.Editor {
 	tv := dv.Tabs()
-	cv := tv.TabByName("Console").Child(0).(*giv.TextView)
+	cv := tv.TabByName("Console").Child(0).(*texteditor.Editor)
 	return cv
 }
 
@@ -958,8 +956,6 @@ type StackView struct {
 	FindFrames bool
 }
 
-var KiT_StackView = kit.Types.AddType(&StackView{}, StackViewProps)
-
 func (sv *StackView) DebugVw() *DebugView {
 	dv := sv.ParentByType(KiT_DebugView, ki.Embeds).Embed(KiT_DebugView).(*DebugView)
 	return dv
@@ -968,7 +964,7 @@ func (sv *StackView) DebugVw() *DebugView {
 func (sv *StackView) Config(dv *DebugView, findFrames bool) {
 	sv.Lay = gi.LayoutVert
 	sv.FindFrames = findFrames
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(giv.KiT_TableView, "stack")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1035,8 +1031,6 @@ type BreakView struct {
 	gi.Layout
 }
 
-var KiT_BreakView = kit.Types.AddType(&BreakView{}, BreakViewProps)
-
 func (sv *BreakView) DebugVw() *DebugView {
 	dv := sv.ParentByType(KiT_DebugView, ki.Embeds).Embed(KiT_DebugView).(*DebugView)
 	return dv
@@ -1044,7 +1038,7 @@ func (sv *BreakView) DebugVw() *DebugView {
 
 func (sv *BreakView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(giv.KiT_TableView, "breaks")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1104,8 +1098,6 @@ type ThreadView struct {
 	gi.Layout
 }
 
-var KiT_ThreadView = kit.Types.AddType(&ThreadView{}, ThreadViewProps)
-
 func (sv *ThreadView) DebugVw() *DebugView {
 	dv := sv.ParentByType(KiT_DebugView, ki.Embeds).Embed(KiT_DebugView).(*DebugView)
 	return dv
@@ -1113,7 +1105,7 @@ func (sv *ThreadView) DebugVw() *DebugView {
 
 func (sv *ThreadView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(giv.KiT_TableView, "threads")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1170,8 +1162,6 @@ type TaskView struct {
 	gi.Layout
 }
 
-var KiT_TaskView = kit.Types.AddType(&TaskView{}, TaskViewProps)
-
 func (sv *TaskView) DebugVw() *DebugView {
 	dv := sv.ParentByType(KiT_DebugView, ki.Embeds).Embed(KiT_DebugView).(*DebugView)
 	return dv
@@ -1179,7 +1169,7 @@ func (sv *TaskView) DebugVw() *DebugView {
 
 func (sv *TaskView) Config(dv *DebugView) {
 	sv.Lay = gi.LayoutVert
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(giv.KiT_TableView, "tasks")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1239,8 +1229,6 @@ type VarsView struct {
 	GlobalVars bool
 }
 
-var KiT_VarsView = kit.Types.AddType(&VarsView{}, VarsViewProps)
-
 func (sv *VarsView) DebugVw() *DebugView {
 	dv := sv.ParentByType(KiT_DebugView, ki.Embeds).Embed(KiT_DebugView).(*DebugView)
 	return dv
@@ -1249,7 +1237,7 @@ func (sv *VarsView) DebugVw() *DebugView {
 func (sv *VarsView) Config(dv *DebugView, globalVars bool) {
 	sv.Lay = gi.LayoutVert
 	sv.GlobalVars = globalVars
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(giv.KiT_TableView, "vars")
 	mods, updt := sv.ConfigChildren(config)
 	tv := sv.TableView()
@@ -1326,8 +1314,6 @@ type VarView struct {
 	DbgView *DebugView `json:"-" xml:"-"`
 }
 
-var KiT_VarView = kit.Types.AddType(&VarView{}, VarViewProps)
-
 // AddNewVarView adds a new gieditor to given parent node, with given name.
 func AddNewVarView(parent ki.Ki, name string) *VarView {
 	return parent.AddNewChild(KiT_VarView, name).(*VarView)
@@ -1352,7 +1338,7 @@ func (vv *VarView) Config() {
 	}
 	vv.Lay = gi.LayoutVert
 	vv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(gi.KiT_Label, "frame-info")
 	// config.Add(gi.KiT_Toolbar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")

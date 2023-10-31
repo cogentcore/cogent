@@ -10,17 +10,14 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/goosi"
+	"goki.dev/ki/v2"
 )
 
 // Registers is a list of named strings
 type Registers map[string]string
-
-var KiT_Registers = kit.Types.AddType(&Registers{}, RegistersProps)
 
 // RegisterName has an associated ValueView for selecting from the list of
 // available named registers
@@ -81,7 +78,7 @@ func (lt *Registers) SaveJSON(filename gi.FileName) error {
 
 // OpenPrefs opens Registers from App standard prefs directory, using PrefRegistersFileName
 func (lt *Registers) OpenPrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
 	err := lt.OpenJSON(gi.FileName(pnm))
@@ -93,7 +90,7 @@ func (lt *Registers) OpenPrefs() error {
 
 // SavePrefs saves Registers to App standard prefs directory, using PrefRegistersFileName
 func (lt *Registers) SavePrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
 	AvailRegisterNames = lt.Names()

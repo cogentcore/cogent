@@ -10,13 +10,12 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"slices"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/ki/sliceclone"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/goosi"
+	"goki.dev/ki/v2"
 )
 
 // Split is a named splitter configuration
@@ -44,8 +43,6 @@ func (lt *Split) SaveSplits(sp []float32) {
 
 // Splits is a list of named splitter configurations
 type Splits []*Split
-
-var KiT_Splits = kit.Types.AddType(&Splits{}, SplitsProps)
 
 // SplitName has an associated ValueView for selecting from the list of
 // available named splits
@@ -80,7 +77,7 @@ func (lt *Splits) SplitByName(name SplitName) (*Split, int, bool) {
 
 // Add adds a new splitter setting, returns split and index
 func (lt *Splits) Add(name, desc string, splits []float32) (*Split, int) {
-	sp := &Split{Name: name, Desc: desc, Splits: sliceclone.Float32(splits)}
+	sp := &Split{Name: name, Desc: desc, Splits: slices.Clone(splits)}
 	*lt = append(*lt, sp)
 	return sp, len(*lt) - 1
 }
@@ -144,7 +141,7 @@ func (lt *Splits) SaveJSON(filename gi.FileName) error {
 
 // OpenPrefs opens Splits from App standard prefs directory, using PrefSplitsFileName
 func (lt *Splits) OpenPrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
 	err := lt.OpenJSON(gi.FileName(pnm))
@@ -157,7 +154,7 @@ func (lt *Splits) OpenPrefs() error {
 // SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFileName
 func (lt *Splits) SavePrefs() error {
 	lt.FixLen()
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
 	AvailSplitNames = lt.Names()

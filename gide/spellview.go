@@ -8,15 +8,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/goki/gi/gist"
-	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/pi/lex"
-	"github.com/goki/pi/spell"
+	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/girl/styles"
+	"goki.dev/pi/v2/lex"
+	"goki.dev/pi/v2/spell"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/ki/v2"
 )
 
 // SpellView is a widget that displays results of spell check
@@ -51,8 +50,6 @@ type SpellView struct {
 	LastAction *gi.Button
 }
 
-var KiT_SpellView = kit.Types.AddType(&SpellView{}, SpellViewProps)
-
 // SpellAction runs a new spell check with current params
 func (sv *SpellView) SpellAction() {
 	uf := sv.UnknownText()
@@ -76,7 +73,7 @@ func (sv *SpellView) Config(ge Gide, atv *TextView) {
 	sv.Errs = nil
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(gi.KiT_Toolbar, "spellbar")
 	config.Add(gi.KiT_Toolbar, "unknownbar")
 	config.Add(gi.KiT_Toolbar, "changebar")
@@ -177,7 +174,7 @@ func (sv *SpellView) ConfigToolbar() {
 		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
 		svv.TrainAction()
 	})
-	train.SetProp("horizontal-align", gist.AlignRight)
+	train.SetProp("horizontal-align", styles.AlignRight)
 
 	// unknown toolbar
 

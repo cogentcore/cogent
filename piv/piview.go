@@ -13,19 +13,20 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/gist"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/oswin/key"
-	"github.com/goki/gi/oswin/mouse"
-	"github.com/goki/gi/units"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/lex"
-	"github.com/goki/pi/parse"
-	"github.com/goki/pi/pi"
+	"goki.dev/gi/v2/filetree"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gide"
+	"goki.dev/girl/styles"
+	"goki.dev/girl/units"
+	"goki.dev/goosi"
+	"goki.dev/goosi/events"
+	"goki.dev/goosi/events/key"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/lex"
+	"goki.dev/pi/v2/parse"
+	"goki.dev/pi/v2/pi"
 )
 
 // These are then the fixed indices of the different elements in the splitview
@@ -55,16 +56,16 @@ type PiView struct {
 	FileState pi.FileState `json:"-"`
 
 	// test file buffer
-	TestBuf giv.TextBuf `json:"-"`
+	TestBuf texteditor.Buf `json:"-"`
 
 	// output buffer -- shows all errors, tracing
-	OutBuf giv.TextBuf `json:"-"`
+	OutBuf texteditor.Buf `json:"-"`
 
 	// buffer of lexified tokens
-	LexBuf giv.TextBuf `json:"-"`
+	LexBuf texteditor.Buf `json:"-"`
 
 	// buffer of parse info
-	ParseBuf giv.TextBuf `json:"-"`
+	ParseBuf texteditor.Buf `json:"-"`
 
 	// first key in sequence if needs2 key pressed
 	KeySeq1 key.Chord
@@ -75,8 +76,6 @@ type PiView struct {
 	// mutex for updating, checking output monitor run status
 	OutMonMu sync.Mutex `json:"-"`
 }
-
-var KiT_PiView = kit.Types.AddType(&PiView{}, PiViewProps)
 
 // IsEmpty returns true if current project is empty
 func (pv *PiView) IsEmpty() bool {
@@ -486,7 +485,7 @@ func (pv *PiView) SelectParseRule(rule *parse.Rule) {
 // AstTreeToEnd
 func (pv *PiView) AstTreeToEnd() {
 	lt := pv.AstTree()
-	lt.MoveEndAction(mouse.SelectOne)
+	lt.MoveEndAction(events.SelectOne)
 }
 
 // UpdtParseBuf sets the ParseBuf to current parse rule output
@@ -621,26 +620,26 @@ func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.No
 }
 
 // ConfigTextView configures text view
-func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
+func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *texteditor.Editor {
 	ly.Lay = gi.LayoutVert
 	ly.SetStretchMaxWidth()
 	ly.SetStretchMaxHeight()
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
-	var tv *giv.TextView
+	var tv *texteditor.Editor
 	updt := false
 	if ly.HasChildren() {
-		tv = ly.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
+		tv = ly.Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
 	} else {
 		updt = ly.UpdateStart()
 		ly.SetChildAdded()
-		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*giv.TextView)
+		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*texteditor.Editor)
 	}
 
 	if gi.Prefs.Editor.WordWrap {
-		tv.SetProp("white-space", gist.WhiteSpacePreWrap)
+		tv.SetProp("white-space", styles.WhiteSpacePreWrap)
 	} else {
-		tv.SetProp("white-space", gist.WhiteSpacePre)
+		tv.SetProp("white-space", styles.WhiteSpacePre)
 	}
 	tv.SetProp("tab-size", 4)
 	tv.SetProp("font-family", gi.Prefs.MonoFont)
@@ -655,24 +654,24 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *giv.TextView {
 // name, first by looking for an existing one, and if not found, making a new
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
-func (pv *PiView) RecycleMainTabTextView(label string, sel bool, out bool) *giv.TextView {
+func (pv *PiView) RecycleMainTabTextView(label string, sel bool, out bool) *texteditor.Editor {
 	ly := pv.RecycleMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
 	tv := pv.ConfigTextView(ly, out)
 	return tv
 }
 
 // MainTabTextViewByName returns the textview for given main tab, if it exists
-func (pv *PiView) MainTabTextViewByName(tabnm string) (*giv.TextView, bool) {
+func (pv *PiView) MainTabTextViewByName(tabnm string) (*texteditor.Editor, bool) {
 	lyk, err := pv.MainTabByNameTry(tabnm)
 	if err != nil {
 		return nil, false
 	}
-	ctv := lyk.Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
+	ctv := lyk.Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
 	return ctv, true
 }
 
 // TextTextView returns the textview for TestBuf TextView
-func (pv *PiView) TestTextView() (*giv.TextView, bool) {
+func (pv *PiView) TestTextView() (*texteditor.Editor, bool) {
 	return pv.MainTabTextViewByName("TestText")
 }
 
@@ -680,7 +679,7 @@ func (pv *PiView) TestTextView() (*giv.TextView, bool) {
 func (pv *PiView) OpenConsoleTab() {
 	ctv := pv.RecycleMainTabTextView("Console", true, true)
 	ctv.SetInactive()
-	ctv.SetProp("white-space", gist.WhiteSpacePre) // no word wrap
+	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
 		gide.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
@@ -702,7 +701,7 @@ func (pv *PiView) OpenTestTextTab() {
 func (pv *PiView) OpenOutTab() {
 	ctv := pv.RecycleMainTabTextView("Output", true, true)
 	ctv.SetInactive()
-	ctv.SetProp("white-space", gist.WhiteSpacePre) // no word wrap
+	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != &pv.OutBuf {
 		ctv.SetBuf(&pv.OutBuf)
 	}
@@ -734,7 +733,7 @@ func (pv *PiView) Config() {
 	pv.Parser.Init()
 	pv.Lay = gi.LayoutVert
 	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.TypeAndNameList{}
+	config := ki.Config{}
 	config.Add(gi.KiT_Toolbar, "toolbar")
 	config.Add(gi.KiT_SplitView, "splitview")
 	config.Add(gi.KiT_Frame, "statusbar")
@@ -820,7 +819,7 @@ func (pv *PiView) ConfigStatusBar() {
 	lbl := sb.AddNewChild(gi.KiT_Label, "sb-lbl").(*gi.Label)
 	lbl.SetStretchMaxWidth()
 	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
-	lbl.SetProp("vertical-align", gist.AlignTop)
+	lbl.SetProp("vertical-align", styles.AlignTop)
 	lbl.SetProp("margin", 0)
 	lbl.SetProp("padding", 0)
 	lbl.SetProp("tab-size", 4)
@@ -837,8 +836,8 @@ func (pv *PiView) ConfigToolbar() {
 }
 
 // SplitViewConfig returns a TypeAndNameList for configuring the SplitView
-func (pv *PiView) SplitViewConfig() kit.TypeAndNameList {
-	config := kit.TypeAndNameList{}
+func (pv *PiView) SplitViewConfig() ki.Config {
+	config := ki.Config{}
 	config.Add(gi.KiT_Frame, "lex-tree-fr")
 	config.Add(gi.KiT_Frame, "parse-tree-fr")
 	config.Add(giv.KiT_StructView, "struct-view")
@@ -856,7 +855,7 @@ func (pv *PiView) MonitorOut() {
 	}
 	pv.OutMonRunning = true
 	pv.OutMonMu.Unlock()
-	obuf := giv.OutBuf{}
+	obuf := texteditor.OutBuf{}
 	fs := &pv.FileState
 	obuf.Init(fs.ParseState.Trace.OutRead, &pv.OutBuf, 0, gide.MarkupCmdOutput)
 	obuf.MonOut()
@@ -874,7 +873,7 @@ func (pv *PiView) ConfigSplitView() {
 	}
 	split.Dim = gi.X
 
-	split.SetProp("white-space", gist.WhiteSpacePreWrap)
+	split.SetProp("white-space", styles.WhiteSpacePreWrap)
 	split.SetProp("tab-size", 4)
 
 	config := pv.SplitViewConfig()
@@ -981,7 +980,7 @@ func (pv *PiView) SetChanged() {
 	pv.Toolbar().UpdateActions() // nil safe
 }
 
-func (pv *PiView) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
+func (pv *PiView) FileNodeOpened(fn *filetree.Node, tvn *filetree.Node) {
 	if fn.IsDir() {
 		if !fn.IsOpen() {
 			tvn.SetOpen()
@@ -990,7 +989,7 @@ func (pv *PiView) FileNodeOpened(fn *giv.FileNode, tvn *giv.FileTreeView) {
 	}
 }
 
-func (pv *PiView) FileNodeClosed(fn *giv.FileNode, tvn *giv.FileTreeView) {
+func (pv *PiView) FileNodeClosed(fn *filetree.Node, tvn *filetree.Node) {
 	if fn.IsDir() {
 		if fn.IsOpen() {
 			fn.CloseDir()
@@ -1098,7 +1097,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 
 func (ge *PiView) KeyChordEvent() {
 	// need hipri to prevent 2-seq guys from being captured by others
-	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
+	ge.ConnectEvent(events.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
 		gee := recv.Embed(KiT_PiView).(*PiView)
 		kt := d.(*key.ChordEvent)
 		gee.PiViewKeys(kt)
@@ -1132,8 +1131,8 @@ var PiViewProps = ki.Props{
 	"max-height":       -1,
 	"#title": ki.Props{
 		"max-width":        -1,
-		"horizontal-align": gist.AlignCenter,
-		"vertical-align":   gist.AlignTop,
+		"horizontal-align": styles.AlignCenter,
+		"vertical-align":   styles.AlignTop,
 	},
 	"Toolbar": ki.PropSlice{
 		{"SaveProj", ki.Props{
@@ -1386,7 +1385,7 @@ func NewPiView() (*gi.Window, *PiView) {
 
 	width := 1600
 	height := 1280
-	sc := oswin.TheApp.Screen(0)
+	sc := goosi.TheApp.Screen(0)
 	if sc != nil {
 		scsz := sc.Geometry.Size()
 		width = int(.9 * float64(scsz.X))
@@ -1403,58 +1402,58 @@ func NewPiView() (*gi.Window, *PiView) {
 	pv := mfr.AddNewChild(KiT_PiView, "piview").(*PiView)
 	pv.Viewport = vp
 
-	mmen := win.MainMenu
-	giv.MainMenuView(pv, win, mmen)
-
-	inClosePrompt := false
-	win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-		if !inClosePrompt {
-			inClosePrompt = true
-			if pv.Changed {
-				gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
-					Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
-					[]string{"Close Without Saving", "Cancel"},
-					win.This(), func(recv, send ki.Ki, sig int64, data any) {
-						switch sig {
-						case 0:
-							w.Close()
-						case 1:
-							// default is to do nothing, i.e., cancel
-						}
-					})
-			} else {
-				w.Close()
-			}
-		}
-	})
-
-	inQuitPrompt := false
-	oswin.TheApp.SetQuitReqFunc(func() {
-		if !inQuitPrompt {
-			inQuitPrompt = true
-			gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
-				Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
-				win.This(), func(recv, send ki.Ki, sig int64, data any) {
-					if sig == int64(gi.DialogAccepted) {
-						oswin.TheApp.Quit()
-					} else {
-						inQuitPrompt = false
-					}
-				})
-		}
-	})
+	// mmen := win.MainMenu
+	// giv.MainMenuView(pv, win, mmen)
+	//
+	// inClosePrompt := false
+	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
+	// 	if !inClosePrompt {
+	// 		inClosePrompt = true
+	// 		if pv.Changed {
+	// 			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
+	// 				Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
+	// 				[]string{"Close Without Saving", "Cancel"},
+	// 				win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 					switch sig {
+	// 					case 0:
+	// 						w.Close()
+	// 					case 1:
+	// 						// default is to do nothing, i.e., cancel
+	// 					}
+	// 				})
+	// 		} else {
+	// 			w.Close()
+	// 		}
+	// 	}
+	// })
+	//
+	// inQuitPrompt := false
+	// goosi.TheApp.SetQuitReqFunc(func() {
+	// 	if !inQuitPrompt {
+	// 		inQuitPrompt = true
+	// 		gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
+	// 			Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
+	// 			win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 				if sig == int64(gi.DialogAccepted) {
+	// 					goosi.TheApp.Quit()
+	// 				} else {
+	// 					inQuitPrompt = false
+	// 				}
+	// 			})
+	// 	}
+	// })
 
 	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
 	// 	fmt.Printf("Doing final Close cleanup here..\n")
 	// })
 
-	win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
-		if gi.MainWindows.Len() <= 1 {
-			go oswin.TheApp.Quit() // once main window is closed, quit
-		}
-	})
+	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
+	// 	if gi.MainWindows.Len() <= 1 {
+	// 		go goosi.TheApp.Quit() // once main window is closed, quit
+	// 	}
+	// })
 
-	win.MainMenuUpdated()
+	// win.MainMenuUpdated()
 
 	pv.Config()
 

@@ -16,16 +16,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/complete"
-	"github.com/goki/pi/filecat"
-	"github.com/goki/pi/lex"
-	"github.com/goki/vci"
 	"github.com/mattn/go-shellwords"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor"
+	"goki.dev/goosi"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/complete"
+	"goki.dev/pi/v2/filecat"
+	"goki.dev/pi/v2/lex"
+	"goki.dev/vci/v2"
 )
 
 // CmdAndArgs contains the name of an external program to execute and args to
@@ -357,7 +357,7 @@ func RepoCurBranches(repo vci.Repo) (string, []string, error) {
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]struct{}) {
 	sz := len(pvals)
 	avp := ge.ArgVarVals()
 	cnt := 0
@@ -419,7 +419,7 @@ func (cm *Command) PromptUser(ge Gide, buf *giv.TextBuf, pvals map[string]struct
 // which can be displayed -- if !wait, then Buf is updated online as output
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
+func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
 	if cm.Confirm {
 		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)}, gi.AddOk, gi.AddCancel, ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
@@ -437,7 +437,7 @@ func (cm *Command) Run(ge Gide, buf *giv.TextBuf) {
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(ge Gide, buf *giv.TextBuf) {
+func (cm *Command) RunAfterPrompts(ge Gide, buf *texteditor.Buf) {
 	// ge.CmdRuns().KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
@@ -477,7 +477,7 @@ func (cm *Command) RunAfterPrompts(ge Gide, buf *giv.TextBuf) {
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
 // line of the command output to gide statusbar
-func (cm *Command) RunBufWait(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
+func (cm *Command) RunBufWait(ge Gide, buf *texteditor.Buf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
 	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
@@ -487,7 +487,7 @@ func (cm *Command) RunBufWait(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
+func (cm *Command) RunBuf(ge Gide, buf *texteditor.Buf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
 	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
@@ -495,7 +495,7 @@ func (cm *Command) RunBuf(ge Gide, buf *giv.TextBuf, cma *CmdAndArgs) bool {
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Start()
 		if err == nil {
-			obuf := giv.OutBuf{}
+			obuf := texteditor.OutBuf{}
 			obuf.Init(stdout, buf, 0, MarkupCmdOutput)
 			obuf.MonOut()
 		}
@@ -515,7 +515,7 @@ func (cm *Command) RunNoBuf(ge Gide, cma *CmdAndArgs) bool {
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(ge Gide, buf *giv.TextBuf, out []byte) {
+func (cm *Command) AppendCmdOut(ge Gide, buf *texteditor.Buf, out []byte) {
 	if buf == nil {
 		return
 	}
@@ -545,7 +545,7 @@ var CmdOutStatusLen = 80
 // RunStatus reports the status of the command run (given in cmdstr) to
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
-func (cm *Command) RunStatus(ge Gide, buf *giv.TextBuf, cmdstr string, err error, out []byte) bool {
+func (cm *Command) RunStatus(ge Gide, buf *texteditor.Buf, cmdstr string, err error, out []byte) bool {
 	ge.CmdRuns().DeleteByName(cm.Label())
 	var rval bool
 	outstr := ""
@@ -607,8 +607,6 @@ func MarkupCmdOutput(out []byte) []byte {
 
 // Commands is a list of different commands
 type Commands []*Command
-
-var KiT_Commands = kit.Types.AddType(&Commands{}, CommandsProps)
 
 // CmdName has an associated ValueView for selecting from the list of
 // available command names, for use in preferences etc.
@@ -722,7 +720,7 @@ func (cm *Commands) SaveJSON(filename gi.FileName) error {
 // OpenPrefs opens custom Commands from App standard prefs directory, using
 // PrefsCmdsFileName
 func (cm *Commands) OpenPrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
 	err := cm.OpenJSON(gi.FileName(pnm))
@@ -737,7 +735,7 @@ func (cm *Commands) OpenPrefs() error {
 // SavePrefs saves custom Commands to App standard prefs directory, using
 // PrefsCmdsFileName
 func (cm *Commands) SavePrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
 	err := cm.SaveJSON(gi.FileName(pnm))

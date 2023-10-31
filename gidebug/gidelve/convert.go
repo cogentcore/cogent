@@ -11,10 +11,10 @@ import (
 	"unicode"
 
 	"github.com/go-delve/delve/service/api"
-	"github.com/goki/gi/giv"
-	"github.com/goki/pi/lex"
-	"github.com/goki/pi/syms"
 	"goki.dev/gide/v2/gidebug"
+	"goki.dev/glop/dirs"
+	"goki.dev/pi/v2/lex"
+	"goki.dev/pi/v2/syms"
 )
 
 func (gd *GiDelve) cvtState(ds *api.DebuggerState) *gidebug.State {
@@ -45,7 +45,7 @@ func (gd *GiDelve) cvtThread(ds *api.Thread) *gidebug.Thread {
 	th := &gidebug.Thread{}
 	th.ID = ds.ID
 	th.PC = ds.PC
-	th.File = giv.RelFilePath(ds.File, gd.rootPath)
+	th.File = dirs.RelFilePath(ds.File, gd.rootPath)
 	th.Line = ds.Line
 	th.FPath = ds.File
 	if ds.Function != nil {
@@ -74,7 +74,7 @@ func (gd *GiDelve) cvtTask(ds *api.Goroutine) *gidebug.Task {
 	gr := &gidebug.Task{}
 	gr.ID = int(ds.ID)
 	gr.PC = ds.UserCurrentLoc.PC
-	gr.File = giv.RelFilePath(ds.UserCurrentLoc.File, gd.rootPath)
+	gr.File = dirs.RelFilePath(ds.UserCurrentLoc.File, gd.rootPath)
 	gr.Line = ds.UserCurrentLoc.Line
 	gr.FPath = ds.UserCurrentLoc.File
 	if ds.UserCurrentLoc.Function != nil {
@@ -104,7 +104,7 @@ func (gd *GiDelve) cvtLocation(ds *api.Location) *gidebug.Location {
 	}
 	lc := &gidebug.Location{}
 	lc.PC = ds.PC
-	lc.File = giv.RelFilePath(ds.File, gd.rootPath)
+	lc.File = dirs.RelFilePath(ds.File, gd.rootPath)
 	lc.Line = ds.Line
 	lc.FPath = ds.File
 	if ds.Function != nil {
@@ -121,7 +121,7 @@ func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *gidebug.Break {
 	bp.On = true // if we're converting, it is on..
 	bp.ID = ds.ID
 	bp.PC = ds.Addr
-	bp.File = giv.RelFilePath(ds.File, gd.rootPath)
+	bp.File = dirs.RelFilePath(ds.File, gd.rootPath)
 	bp.FPath = ds.File
 	bp.Line = ds.Line
 	bp.Func = ds.FunctionName
@@ -149,7 +149,7 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *gidebug.Frame {
 	fr := &gidebug.Frame{}
 	fr.ThreadID = taskID
 	fr.PC = ds.Location.PC
-	fr.File = giv.RelFilePath(ds.Location.File, gd.rootPath)
+	fr.File = dirs.RelFilePath(ds.Location.File, gd.rootPath)
 	fr.Line = ds.Location.Line
 	fr.FPath = ds.Location.File
 	if ds.Location.Function != nil {

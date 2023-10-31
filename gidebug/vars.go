@@ -9,11 +9,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/ki/indent"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/syms"
+	"goki.dev/glop/indent"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/syms"
 )
 
 // Variable describes a variable.  It is a Ki tree type so that full tree
@@ -64,8 +62,6 @@ type Variable struct {
 	Dbg GiDebug `view:"-"`
 }
 
-var KiT_Variable = kit.Types.AddType(&Variable{}, nil)
-
 func (vr *Variable) CopyFieldsFrom(frm any) {
 	fr := frm.(*Variable)
 	vr.Value = fr.Value
@@ -84,12 +80,8 @@ func (vr *Variable) CopyFieldsFrom(frm any) {
 	vr.Dbg = fr.Dbg
 }
 
-func init() {
-	kit.Types.SetProps(KiT_Variable, VariableProps)
-}
-
+/*
 var VariableProps = ki.Props{
-	"EnumType:Flag": gi.KiT_NodeFlags,
 	"StructViewFields": ki.Props{ // hide in view
 		"UniqueNm": `view:"-"`,
 		"Flag":     `view:"-"`,
@@ -107,6 +99,7 @@ var VariableProps = ki.Props{
 		}},
 	},
 }
+*/
 
 // SortVars sorts vars by name
 func SortVars(vrs []*Variable) {

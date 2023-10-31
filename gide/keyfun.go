@@ -14,12 +14,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/oswin"
-	"github.com/goki/gi/oswin/key"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
+	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/keyfun"
+	"goki.dev/goosi"
+	"goki.dev/goosi/events/key"
 )
 
 // https://www.eclipse.org/pdt/help/html/keymap.htm
@@ -30,7 +28,7 @@ import (
 
 // KeyFuns (i.e. gide.KeytFuns) are special functions for the overall control of the system --
 // moving between windows, running commands, etc.  Multi-key sequences can be used.
-type KeyFuns int32
+type KeyFuns int32 //enums:enum -trim-prefix KeyFun
 
 const (
 	KeyFunNil        KeyFuns = iota
@@ -57,17 +55,6 @@ const (
 	KeyFunRunProj            // run overall project
 	KeyFunsN
 )
-
-//go:generate stringer -type=KeyFuns
-
-// KiT_KeyFuns adds a type to the EnumRegistry
-var KiT_KeyFuns = kit.Enums.AddEnumAltLower(KeyFunsN, kit.NotBitFlag, nil, "KeyFun")
-
-// MarshalJSON saves the KeyFuns in JSON format
-func (kf KeyFuns) MarshalJSON() ([]byte, error) { return kit.EnumMarshalJSON(kf) }
-
-// UnmarshalJSON reads the JSON formatted KeyFun info from file and loads into memory
-func (kf *KeyFuns) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(kf, b) }
 
 // KeySeq defines a multiple-key sequence to initiate a key function
 type KeySeq struct {
@@ -311,9 +298,6 @@ func (km KeyMapsItem) Label() string {
 // a custom one, just duplicate an existing map, rename, and customize
 type KeyMaps []KeyMapsItem
 
-// KiT_KeyMaps registers KeyMaps as a type
-var KiT_KeyMaps = kit.Types.AddType(&KeyMaps{}, KeyMapsProps)
-
 // AvailKeyMaps is the current list of available keymaps for use -- can be
 // loaded / saved / edited with preferences.  This is set to StdKeyMaps at
 // startup.
@@ -366,7 +350,7 @@ func (km *KeyMaps) SaveJSON(filename gi.FileName) error {
 
 // OpenPrefs opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFileName
 func (km *KeyMaps) OpenPrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
 	return km.OpenJSON(gi.FileName(pnm))
@@ -374,7 +358,7 @@ func (km *KeyMaps) OpenPrefs() error {
 
 // SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFileName
 func (km *KeyMaps) SavePrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
 	return km.SaveJSON(gi.FileName(pnm))
@@ -410,6 +394,7 @@ func (km *KeyMaps) ViewStd() {
 // other map but works for now..
 var AvailKeyMapsChanged = false
 
+/*
 // KeyMapsProps define the Toolbar and MenuBar for TableView of KeyMaps, e.g., giv.KeyMapsView
 var KeyMapsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
@@ -497,6 +482,7 @@ var KeyMapsProps = ki.Props{
 		}},
 	},
 }
+*/
 
 // StdKeyMaps is the original compiled-in set of standard keymaps that have
 // the lastest key functions bound to standard key chords.

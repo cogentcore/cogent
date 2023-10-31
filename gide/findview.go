@@ -14,17 +14,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goki/gi/gi"
-	"github.com/goki/gi/giv"
-	"github.com/goki/gi/giv/textbuf"
-	"github.com/goki/ki/ki"
-	"github.com/goki/ki/kit"
-	"github.com/goki/pi/filecat"
-	"github.com/goki/pi/lex"
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor"
+	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/ki/v2"
+	"goki.dev/pi/v2/filecat"
+	"goki.dev/pi/v2/lex"
 )
 
 // FindLoc corresponds to the search scope
-type FindLoc int
+type FindLoc int32 //enums:enum -trim-prefix FindLoc
 
 const (
 	// FindLocAll finds in all open folders in the left file browser
@@ -42,13 +42,6 @@ const (
 	// FindLocN is the number of find locations (scopes)
 	FindLocN
 )
-
-//go:generate stringer -type=FindLoc
-
-var KiT_FindLoc = kit.Enums.AddEnumAltLower(FindLocN, kit.NotBitFlag, nil, "FindLoc")
-
-func (ev FindLoc) MarshalJSON() ([]byte, error)  { return kit.EnumMarshalJSON(ev) }
-func (ev *FindLoc) UnmarshalJSON(b []byte) error { return kit.EnumUnmarshalJSON(ev, b) }
 
 // FindParams are parameters for find / replace
 type FindParams struct {
@@ -95,8 +88,6 @@ type FindView struct {
 	// compiled regexp
 	Re *regexp.Regexp
 }
-
-var KiT_FindView = kit.Types.AddType(&FindView{}, FindViewProps)
 
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
@@ -319,7 +310,7 @@ func (fv *FindView) PrevFind() {
 }
 
 // OpenFindURL opens given find:/// url from Find
-func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
+func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	ge := fv.Gide
 	tv, reg, fbBufStLn, fCount, ok := ge.ParseOpenFindURL(ur, ftv)
 	if !ok {
@@ -329,7 +320,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 	reg = tv.Buf.AdjustReg(reg)
 	find := fv.Params().Find
 	giv.PrevISearchString = find
-	tve := tv.Embed(giv.KiT_TextView).(*giv.TextView)
+	tve := tv.Embed(giv.KiT_TextView).(*texteditor.Editor)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
 	tv.SetNeedsRefresh()
 	tv.RefreshIfNeeded()
@@ -338,7 +329,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *giv.TextView) bool {
 }
 
 // HighlightFinds highlights all the find results in ftv buffer
-func (fv *FindView) HighlightFinds(tv, ftv *giv.TextView, fbStLn, fCount int, find string) {
+func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount int, find string) {
 	lnka := []byte(`<a href="`)
 	lnkasz := len(lnka)
 
@@ -381,7 +372,7 @@ func (fv *FindView) Config(ge Gide) {
 	fv.Gide = ge
 	fv.Lay = gi.LayoutVert
 	fv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := kit.Config{}
+	config := ki.Config{}
 	config.Add(gi.KiT_Toolbar, "findbar")
 	config.Add(gi.KiT_Toolbar, "replbar")
 	config.Add(gi.KiT_Layout, "findtext")
@@ -423,13 +414,13 @@ func (fv *FindView) ReplBar() *gi.Toolbar {
 }
 
 // FindText returns the find textfield in toolbar
-func (fv *FindView) FindText() *gi.ComboBox {
-	return fv.FindBar().ChildByName("find-str", 1).(*gi.ComboBox)
+func (fv *FindView) FindText() *gi.Chooser {
+	return fv.FindBar().ChildByName("find-str", 1).(*gi.Chooser)
 }
 
 // ReplText returns the replace textfield in toolbar
-func (fv *FindView) ReplText() *gi.ComboBox {
-	return fv.ReplBar().ChildByName("repl-str", 1).(*gi.ComboBox)
+func (fv *FindView) ReplText() *gi.Chooser {
+	return fv.ReplBar().ChildByName("repl-str", 1).(*gi.Chooser)
 }
 
 // IgnoreBox returns the ignore case checkbox in toolbar
@@ -443,8 +434,8 @@ func (fv *FindView) RegexpBox() *gi.CheckBox {
 }
 
 // LocCombo returns the loc combobox
-func (fv *FindView) LocCombo() *gi.ComboBox {
-	return fv.FindBar().ChildByName("loc", 5).(*gi.ComboBox)
+func (fv *FindView) LocCombo() *gi.Chooser {
+	return fv.FindBar().ChildByName("loc", 5).(*gi.Chooser)
 }
 
 // FindNextAct returns the find next action in toolbar -- selected first
@@ -458,8 +449,8 @@ func (fv *FindView) TextViewLay() *gi.Layout {
 }
 
 // TextView returns the find results TextView
-func (fv *FindView) TextView() *giv.TextView {
-	return fv.TextViewLay().Child(0).Embed(giv.KiT_TextView).(*giv.TextView)
+func (fv *FindView) TextView() *texteditor.Editor {
+	return fv.TextViewLay().Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
 }
 
 // ConfigToolbar adds toolbar.
@@ -479,7 +470,7 @@ func (fv *FindView) ConfigToolbar() {
 			fvv.FindAction()
 		})
 
-	finds := fb.AddNewChild(gi.KiT_ComboBox, "find-str").(*gi.ComboBox)
+	finds := fb.AddNewChild(gi.KiT_ComboBox, "find-str").(*gi.Chooser)
 	finds.Editable = true
 	finds.SetStretchMaxWidth()
 	finds.Tooltip = "String to find -- hit enter or tab to update search -- click for history"
@@ -488,7 +479,7 @@ func (fv *FindView) ConfigToolbar() {
 	ftf, _ := finds.TextField()
 	finds.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		cb := send.(*gi.ComboBox)
+		cb := send.(*gi.Chooser)
 		fvv.Params().Find = cb.CurVal.(string)
 		fvv.FindAction()
 	})
@@ -536,16 +527,17 @@ func (fv *FindView) ConfigToolbar() {
 	locl.Tooltip = "location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser"
 	// locl.SetProp("vertical-align", gi.AlignMiddle)
 
-	cf := fb.AddNewChild(gi.KiT_ComboBox, "loc").(*gi.ComboBox)
+	cf := fb.AddNewChild(gi.KiT_ComboBox, "loc").(*gi.Chooser)
 	cf.SetText("Loc")
 	cf.Tooltip = locl.Tooltip
 	cf.ItemsFromEnum(KiT_FindLoc, false, 0)
-	cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		cb := send.(*gi.ComboBox)
-		eval := cb.CurVal.(kit.EnumValue)
-		fvv.Params().Loc = FindLoc(eval.Value)
-	})
+	// todo:
+	// cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 	fvv, _ := recv.Embed(KiT_FindView).(*FindView)
+	// 	cb := send.(*gi.Chooser)
+	// 	eval := cb.CurVal.(kit.EnumValue)
+	// 	fvv.Params().Loc = FindLoc(eval.Value)
+	// })
 
 	//////////////// ReplBar
 
@@ -567,7 +559,7 @@ func (fv *FindView) ConfigToolbar() {
 		fvv.ReplaceAction()
 	})
 
-	repls := rb.AddNewChild(gi.KiT_ComboBox, "repl-str").(*gi.ComboBox)
+	repls := rb.AddNewChild(gi.KiT_ComboBox, "repl-str").(*gi.Chooser)
 	repls.Editable = true
 	repls.SetStretchMaxWidth()
 	repls.Tooltip = "String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc"
@@ -576,7 +568,7 @@ func (fv *FindView) ConfigToolbar() {
 	rtf, _ := repls.TextField()
 	repls.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
 		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		cb := send.(*gi.ComboBox)
+		cb := send.(*gi.Chooser)
 		fvv.Params().Replace = cb.CurVal.(string)
 	})
 	rtf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {

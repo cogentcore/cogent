@@ -16,10 +16,10 @@ import (
 
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
-	"github.com/goki/gi/giv"
-	"github.com/goki/ki/ints"
-	"github.com/goki/pi/lex"
+	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gidebug"
+	"goki.dev/glop/num"
+	"goki.dev/pi/v2/lex"
 )
 
 // GiDelve is the Delve implementation of the GiDebug interface
@@ -29,7 +29,7 @@ type GiDelve struct {
 	conn          string                    // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
 	dlv           *rpc2.RPCClient           // the delve rpc2 client interface
 	cmd           *exec.Cmd                 // command running delve
-	obuf          *giv.OutBuf               // output buffer
+	obuf          *texteditor.OutBuf        // output buffer
 	lastEvalScope *api.EvalScope            // last used EvalScope
 	statFunc      func(stat gidebug.Status) // status function
 	params        gidebug.Params            // local copy of initial params
@@ -39,7 +39,7 @@ type GiDelve struct {
 // for given path, and project root path
 // test = run in test mode, and args are optional additional args to pass
 // to the debugger.
-func NewGiDelve(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) (*GiDelve, error) {
+func NewGiDelve(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (*GiDelve, error) {
 	gd := &GiDelve{}
 	err := gd.Start(path, rootPath, outbuf, pars)
 	return gd, err
@@ -56,7 +56,7 @@ func (gd *GiDelve) WriteToConsole(msg string) {
 	}
 	tlns := []byte(msg)
 	mlns := tlns
-	gd.obuf.Buf.AppendTextMarkup(tlns, mlns, giv.EditSignal)
+	gd.obuf.Buf.AppendTextMarkup(tlns, mlns, texteditor.EditSignal)
 }
 
 func (gd *GiDelve) LogErr(err error) error {
@@ -86,7 +86,7 @@ func (gd *GiDelve) StartedCheck() error {
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf, pars *gidebug.Params) error {
+func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) error {
 	gd.path = path
 	gd.rootPath = rootPath
 	gd.params = *pars
@@ -112,7 +112,7 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *giv.TextBuf, pars *gideb
 		gd.cmd.Stderr = gd.cmd.Stdout
 		err = gd.cmd.Start()
 		if err == nil {
-			gd.obuf = &giv.OutBuf{}
+			gd.obuf = &texteditor.OutBuf{}
 			gd.obuf.Init(stdout, outbuf, 0, gd.monitorOutput)
 			go gd.obuf.MonOut()
 		}
@@ -584,8 +584,8 @@ func (gd *GiDelve) FindFrames(all *gidebug.AllState, fname string, line int) ([]
 		}
 	}
 	sort.Slice(fr, func(i, j int) bool {
-		dsti := ints.AbsInt(fr[i].Line - line)
-		dstj := ints.AbsInt(fr[j].Line - line)
+		dsti := num.Abs(fr[i].Line - line)
+		dstj := num.Abs(fr[j].Line - line)
 		return dsti < dstj
 	})
 	return fr, err

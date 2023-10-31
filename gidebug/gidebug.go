@@ -4,11 +4,13 @@
 
 package gidebug
 
+//go:generate goki generate
+
 import (
 	"errors"
 	"time"
 
-	"github.com/goki/gi/giv"
+	"goki.dev/gi/v2/texteditor"
 )
 
 var (
@@ -30,7 +32,7 @@ type GiDebug interface {
 	// root path (for trimming file names), and sets output of debugger
 	// session to given textbuf which is used to monitor output.
 	// params must have relevant settings in place (StatFunc, Mode, etc).
-	Start(path, rootPath string, outbuf *giv.TextBuf, pars *Params) error
+	Start(path, rootPath string, outbuf *texteditor.Buf, pars *Params) error
 
 	// SetParams sets the current parameters to control how info is returned
 	SetParams(params *Params)
