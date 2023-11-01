@@ -13,9 +13,7 @@ import (
 	"slices"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/goosi"
-	"goki.dev/ki/v2"
 )
 
 // Split is a named splitter configuration
@@ -133,7 +131,8 @@ func (lt *Splits) SaveJSON(filename gi.FileName) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.NewDialog(nil).Title("Could not Save to File").
+			Prompt(err.Error()).Modal(true).Ok().Run()
 		log.Println(err)
 	}
 	return err
@@ -176,6 +175,8 @@ func (lt *Splits) CopyFrom(cp Splits) {
 // props update methods -- not accurate if editing any other map but works for
 // now..
 var AvailSplitsChanged = false
+
+/*
 
 // SplitsProps define the Toolbar and MenuBar for TableView of Splits
 var SplitsProps = ki.Props{
@@ -244,6 +245,7 @@ var SplitsProps = ki.Props{
 		}},
 	},
 }
+*/
 
 // StdSplits is the original compiled-in set of standard named splits.
 var StdSplits = Splits{

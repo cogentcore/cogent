@@ -12,7 +12,8 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor/textbuf"
-	"goki.dev/girl/units"
+	"goki.dev/goosi/events"
+	"goki.dev/icons"
 	"goki.dev/ki/v2"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/syms"
@@ -23,7 +24,7 @@ import (
 type SymbolsParams struct {
 
 	// scope of symbols to list
-	Scope SymbolsViewScope
+	Scope SymScopes
 }
 
 // SymbolsView is a widget that displays results of a file or package parse
@@ -52,7 +53,7 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 //    GUI config
 
 // Config configures the view
-func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
+func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
 	sv.Gide = ge
 	sv.SymParams = sp
 	sv.Lay = gi.LayoutVert
@@ -99,79 +100,53 @@ func (sv *SymbolsView) ConfigToolbar() {
 	}
 	svbar.SetStretchMaxWidth()
 
-	svbar.AddAction(gi.ActOpts{Label: "Refresh", Icon: "update", Tooltip: "refresh symbols for current file and scope"},
-		sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
-			svv.RefreshAction()
+	gi.NewButton(svbar).SetText("Refresh").SetIcon(icons.Update).SetTooltip("refresh symbols for current file and scope").
+		OnClick(func(e events.Event) {
+			sv.RefreshAction()
 		})
-	sl := svbar.NewChild(gi.LabelType, "scope-lbl").(*gi.Label)
-	sl.SetText("Scope:")
-	sl.Tooltip = "scope symbols to:"
-	scb := svbar.NewChild(gi.KiT_ComboBox, "scope-combo").(*gi.Chooser)
-	scb.SetText("Scope")
-	scb.Tooltip = sl.Tooltip
-	scb.ItemsFromEnum(Kit_SymbolsViewScope, false, 0)
-	// scb.ComboSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-	// 	svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
-	// 	smb := send.(*gi.Chooser)
-	// 	eval := smb.CurVal.(kit.EnumValue)
-	// 	svv.Params().Scope = SymbolsViewScope(eval.Value)
-	// 	sv.ConfigTree(SymbolsViewScope(eval.Value))
-	// 	sv.SearchText().GrabFocus()
-	// })
 
-	slbl := svbar.NewChild(gi.LabelType, "search-lbl").(*gi.Label)
-	slbl.SetText("Search:")
-	slbl.Tooltip = "narrow symbols list to symbols containing text you enter here"
-	stxt := svbar.NewChild(gi.TextField, "search-str").(*gi.TextField)
+	sl := gi.NewLabel(svbar).SetText("Scope:").SetTooltip("scope symbols to:")
+	scb := gi.NewChooser(svbar).SetTooltip(sl.Tooltip)
+	scb.ItemsFromEnum(sv.Params().Scope, false, 0)
+	scb.OnChange(func(e events.Event) {
+		sv.Params().Scope = scb.CurVal.(SymScopes)
+		sv.ConfigTree(sv.Params().Scope)
+		sv.SearchText().GrabFocus()
+	})
+
+	gi.NewLabel(svbar).SetText("Search:").SetTooltip("narrow symbols list to symbols containing text you enter here")
+	stxt := gi.NewTextField(svbar, "search-str").SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
 	stxt.SetStretchMaxWidth()
-	stxt.Tooltip = "narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched"
-	stxt.SetActiveState(true)
-	stxt.TextFieldSig.ConnectOnly(stxt.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.TextFieldInsert) || sig == int64(gi.TextFieldBackspace) || sig == int64(gi.TextFieldDelete) {
-			sv.Match = sv.SearchText().Text()
-			sv.ConfigTree(sv.Params().Scope)
-			stxt.CursorEnd()
-			sv.SearchText().GrabFocus()
-		}
-		if sig == int64(gi.TextFieldCleared) {
-			sv.Match = ""
-			sv.SearchText().SetText(sv.Match)
-			sv.ConfigTree(sv.Params().Scope)
-			sv.SearchText().GrabFocus()
-		}
+	stxt.OnChange(func(e events.Event) {
+		sv.Match = stxt.Text()
+		sv.ConfigTree(sv.Params().Scope)
+		stxt.CursorEnd()
+		stxt.GrabFocus()
 	})
 }
 
 // RefreshAction loads symbols for current file and scope
 func (sv *SymbolsView) RefreshAction() {
-	sv.ConfigTree(SymbolsViewScope(sv.Params().Scope))
+	sv.ConfigTree(SymScopes(sv.Params().Scope))
 	sv.SearchText().GrabFocus()
 }
 
 // ConfigTree adds a treeview to the symbolsview
-func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
+func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	sfr := sv.Frame()
 	updt := sfr.UpdateStart()
-	sfr.SetFullReRender()
 	var tv *SymTreeView
 	if sv.Syms == nil {
-		sfr.SetProp("height", units.NewEm(5)) // enables scrolling
-		sfr.SetStretchMaxWidth()
-		sfr.SetStretchMaxHeight()
-		// sfr.SetReRenderAnchor()  // must be off if using SetFullReRender
+		// sfr.SetProp("height", units.NewEm(5)) // enables scrolling
+		sfr.SetStretchMax()
 
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")
 
-		tv = sfr.NewChild(KiT_SymTreeView, "treeview").(*SymTreeView)
-		tv.SetRootNode(sv.Syms)
-		tv.TreeViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			if data == nil || sig != int64(giv.TreeViewSelected) {
-				return
-			}
-			tvn, _ := data.(ki.Ki).Embed(KiT_SymTreeView).(*SymTreeView)
-			sn := tvn.SymNode()
+		tv = NewSymTreeView(sfr)
+		tv.SyncRootNode(sv.Syms)
+		tv.OnSelect(func(e events.Event) {
+			sn := tv.SymNode()
 			if sn != nil {
 				sv.SelectSymbol(sn.Symbol)
 			}
@@ -207,7 +182,6 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv.Highlights = append(tv.Highlights, tr)
 		tv.UpdateEnd(true)
-		tv.RefreshIfNeeded()
 		tv.SetCursorShow(tr.Start)
 		tv.GrabFocus()
 	}
@@ -222,7 +196,8 @@ func (sv *SymbolsView) OpenPackage() {
 	}
 	pfs := tv.Buf.PiState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
-		gi.PromptDialog(sv.ViewportSafe(), gi.DlgOpts{Title: "Symbols not yet parsed", Prompt: "Symbols not yet parsed -- try again in a few moments"}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.NewDialog(sv).Title("Symbols not yet parsed").
+			Prompt("Symbols not yet parsed -- try again in a few moments").Modal(true).Ok().Run()
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
@@ -238,7 +213,8 @@ func (sv *SymbolsView) OpenFile() {
 	}
 	pfs := tv.Buf.PiState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
-		gi.PromptDialog(sv.ViewportSafe(), gi.DlgOpts{Title: "Symbols not yet parsed", Prompt: "Symbols not yet parsed -- try again in a few moments"}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.NewDialog(sv).Title("Symbols not yet parsed").
+			Prompt("Symbols not yet parsed -- try again in a few moments").Modal(true).Ok().Run()
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
@@ -297,8 +273,7 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 				}
 			}
 			if symMatch(sy.Name, match, ignoreCase) || len(methods) > 0 || len(fields) > 0 {
-				kn := sn.NewChild(KiT_SymNode, sy.Name).(*SymNode)
-				kn.Symbol = *sy
+				kn := NewSymNode(sn, sy.Name).SetSymbol(*sy)
 				sort.Slice(fields, func(i, j int) bool {
 					return fields[i].Name < fields[j].Name
 				})
@@ -306,27 +281,19 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 					return methods[i].Name < methods[j].Name
 				})
 				for _, fld := range fields {
-					dnm := fld.Label()
-					fn := kn.NewChild(KiT_SymNode, dnm).(*SymNode)
-					fn.Symbol = fld
+					NewSymNode(kn, fld.Label()).SetSymbol(fld)
 				}
 				for _, mth := range methods {
-					dnm := mth.Label()
-					mn := kn.NewChild(KiT_SymNode, dnm).(*SymNode)
-					mn.Symbol = mth
+					NewSymNode(kn, mth.Label()).SetSymbol(mth)
 				}
 			}
 		}
 	}
 	for _, fn := range funcs {
-		dnm := fn.Label()
-		fk := sn.NewChild(KiT_SymNode, dnm).(*SymNode)
-		fk.Symbol = fn
+		NewSymNode(sn, fn.Label()).SetSymbol(fn)
 	}
 	for _, vr := range gvars {
-		dnm := vr.Label()
-		vk := sn.NewChild(KiT_SymNode, dnm).(*SymNode)
-		vk.Symbol = vr
+		NewSymNode(sn, vr.Label()).SetSymbol(vr)
 	}
 }
 
@@ -342,18 +309,15 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 /////////////////////////////////////////////////////////////////////////////
 // SymNode
 
-// SymScope corresponds to the search scope
-type SymbolsViewScope int32 //enums:enum -trim-prefix SymScope
+// SymScopes corresponds to the search scope
+type SymScopes int32 //enums:enum -trim-prefix SymScope
 
 const (
 	// SymScopePackage scopes list of symbols to the package of the active file
-	SymScopePackage SymbolsViewScope = iota
+	SymScopePackage SymScopes = iota
 
 	// SymScopeFile restricts the list of symbols to the active file
 	SymScopeFile
-
-	// SymScopeN is the number of symbol scopes
-	SymScopeN
 )
 
 // SymNode represents a language symbol -- the name of the node is
@@ -375,11 +339,7 @@ type SymTreeView struct {
 
 // SymNode returns the SrcNode as a *gide* SymNode
 func (st *SymTreeView) SymNode() *SymNode {
-	sn := st.SrcNode.Embed(KiT_SymNode)
-	if sn == nil {
-		return nil
-	}
-	return sn.(*SymNode)
+	return st.SyncNode.(*SymNode)
 }
 
 /*

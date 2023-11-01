@@ -458,113 +458,108 @@ func (i *KeyFuns) UnmarshalText(text []byte) error {
 	return i.SetString(string(text))
 }
 
-var _SymbolsViewScopeValues = []SymbolsViewScope{0, 1, 2}
+var _SymScopesValues = []SymScopes{0, 1}
 
-// SymbolsViewScopeN is the highest valid value
-// for type SymbolsViewScope, plus one.
-const SymbolsViewScopeN SymbolsViewScope = 3
+// SymScopesN is the highest valid value
+// for type SymScopes, plus one.
+const SymScopesN SymScopes = 2
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
-func _SymbolsViewScopeNoOp() {
+func _SymScopesNoOp() {
 	var x [1]struct{}
 	_ = x[SymScopePackage-(0)]
 	_ = x[SymScopeFile-(1)]
-	_ = x[SymScopeN-(2)]
 }
 
-var _SymbolsViewScopeNameToValueMap = map[string]SymbolsViewScope{
+var _SymScopesNameToValueMap = map[string]SymScopes{
 	`Package`: 0,
 	`package`: 0,
 	`File`:    1,
 	`file`:    1,
-	`N`:       2,
-	`n`:       2,
 }
 
-var _SymbolsViewScopeDescMap = map[SymbolsViewScope]string{
+var _SymScopesDescMap = map[SymScopes]string{
 	0: `SymScopePackage scopes list of symbols to the package of the active file`,
 	1: `SymScopeFile restricts the list of symbols to the active file`,
-	2: `SymScopeN is the number of symbol scopes`,
 }
 
-var _SymbolsViewScopeMap = map[SymbolsViewScope]string{
+var _SymScopesMap = map[SymScopes]string{
 	0: `Package`,
 	1: `File`,
-	2: `N`,
 }
 
 // String returns the string representation
-// of this SymbolsViewScope value.
-func (i SymbolsViewScope) String() string {
-	if str, ok := _SymbolsViewScopeMap[i]; ok {
+// of this SymScopes value.
+func (i SymScopes) String() string {
+	if str, ok := _SymScopesMap[i]; ok {
 		return str
 	}
 	return strconv.FormatInt(int64(i), 10)
 }
 
-// SetString sets the SymbolsViewScope value from its
+// SetString sets the SymScopes value from its
 // string representation, and returns an
 // error if the string is invalid.
-func (i *SymbolsViewScope) SetString(s string) error {
-	if val, ok := _SymbolsViewScopeNameToValueMap[s]; ok {
+func (i *SymScopes) SetString(s string) error {
+	if val, ok := _SymScopesNameToValueMap[s]; ok {
 		*i = val
 		return nil
 	}
-	if val, ok := _SymbolsViewScopeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _SymScopesNameToValueMap[strings.ToLower(s)]; ok {
 		*i = val
 		return nil
 	}
-	return errors.New(s + " is not a valid value for type SymbolsViewScope")
+	return errors.New(s + " is not a valid value for type SymScopes")
 }
 
-// Int64 returns the SymbolsViewScope value as an int64.
-func (i SymbolsViewScope) Int64() int64 {
+// Int64 returns the SymScopes value as an int64.
+func (i SymScopes) Int64() int64 {
 	return int64(i)
 }
 
-// SetInt64 sets the SymbolsViewScope value from an int64.
-func (i *SymbolsViewScope) SetInt64(in int64) {
-	*i = SymbolsViewScope(in)
+// SetInt64 sets the SymScopes value from an int64.
+func (i *SymScopes) SetInt64(in int64) {
+	*i = SymScopes(in)
 }
 
-// Desc returns the description of the SymbolsViewScope value.
-func (i SymbolsViewScope) Desc() string {
-	if str, ok := _SymbolsViewScopeDescMap[i]; ok {
+// Desc returns the description of the SymScopes value.
+func (i SymScopes) Desc() string {
+	if str, ok := _SymScopesDescMap[i]; ok {
 		return str
 	}
 	return i.String()
 }
 
-// SymbolsViewScopeValues returns all possible values
-// for the type SymbolsViewScope.
-func SymbolsViewScopeValues() []SymbolsViewScope {
-	return _SymbolsViewScopeValues
+// SymScopesValues returns all possible values
+// for the type SymScopes.
+func SymScopesValues() []SymScopes {
+	return _SymScopesValues
 }
 
 // Values returns all possible values
-// for the type SymbolsViewScope.
-func (i SymbolsViewScope) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_SymbolsViewScopeValues))
-	for i, d := range _SymbolsViewScopeValues {
+// for the type SymScopes.
+func (i SymScopes) Values() []enums.Enum {
+	res := make([]enums.Enum, len(_SymScopesValues))
+	for i, d := range _SymScopesValues {
 		res[i] = d
 	}
 	return res
 }
 
 // IsValid returns whether the value is a
-// valid option for type SymbolsViewScope.
-func (i SymbolsViewScope) IsValid() bool {
-	_, ok := _SymbolsViewScopeMap[i]
+// valid option for type SymScopes.
+func (i SymScopes) IsValid() bool {
+	_, ok := _SymScopesMap[i]
 	return ok
 }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i SymbolsViewScope) MarshalText() ([]byte, error) {
+func (i SymScopes) MarshalText() ([]byte, error) {
 	return []byte(i.String()), nil
 }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *SymbolsViewScope) UnmarshalText(text []byte) error {
+func (i *SymScopes) UnmarshalText(text []byte) error {
 	return i.SetString(string(text))
 }

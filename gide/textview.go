@@ -7,11 +7,13 @@ package gide
 import (
 	"image"
 
+	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
 	"goki.dev/girl/units"
+	"goki.dev/grr"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/token"
 )
@@ -119,7 +121,7 @@ func (tv *TextView) SetBreakpoint(ln int) {
 		return
 	}
 	// tv.Buf.SetLineIcon(ln, "stop")
-	tv.Buf.SetLineColor(ln, DebugBreakColors[DebugBreakInactive])
+	tv.Buf.SetLineColor(ln, grr.Log(colors.FromName(DebugBreakColors[DebugBreakInactive])))
 	dbg.AddBreak(string(tv.Buf.Filename), ln+1)
 }
 
@@ -252,21 +254,21 @@ func (tv *TextView) HoverEvent() {
 
 // TextViewEvents sets connections between mouse and key events and actions
 func (tv *TextView) TextViewEvents() {
-	tv.HoverEvent()
-	tv.MouseMoveEvent()
-	tv.MouseDragEvent()
 	/*
-		tv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-			txf := recv.Embed(KiT_TextView).(*TextView)
-			me := d.(*mouse.Event)
-			txf.MouseEvent(me) // gets our new one
-		})
-		tv.MouseFocusEvent()
-		tv.ConnectEvent(oswin.KeyChordEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-			txf := recv.Embed(KiT_TextView).(*TextView)
-			kt := d.(*key.ChordEvent)
-			txf.KeyInput(kt)
-		})
+		tv.HoverEvent()
+		tv.MouseMoveEvent()
+		tv.MouseDragEvent()
+			tv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+				txf := recv.Embed(KiT_TextView).(*TextView)
+				me := d.(*mouse.Event)
+				txf.MouseEvent(me) // gets our new one
+			})
+			tv.MouseFocusEvent()
+			tv.ConnectEvent(oswin.KeyChordEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+				txf := recv.Embed(KiT_TextView).(*TextView)
+				kt := d.(*key.ChordEvent)
+				txf.KeyInput(kt)
+			})
 	*/
 }
 
@@ -277,13 +279,13 @@ func (tv *TextView) ConnectEvents2D() {
 
 // ConfigOutputTextView configures a command-output textview within given parent layout
 func ConfigOutputTextView(tv *texteditor.Editor) {
-	tv.SetMinPrefWidth(units.NewValue(20, units.Ch))
-	tv.SetMinPrefHeight(units.NewValue(10, units.Ch))
+	tv.SetMinPrefWidth(units.Ch(20))
+	tv.SetMinPrefHeight(units.Ch(10))
 	tv.SetFlag(false, texteditor.EditorHasLineNos)
 	tv.Style(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
-		s.Font.Family = gi.Prefs.MonoFont
+		s.Font.Family = string(gi.Prefs.MonoFont)
 	})
 	tv.SetState(true, states.ReadOnly)
 
