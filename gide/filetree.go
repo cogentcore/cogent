@@ -7,16 +7,16 @@ package gide
 import (
 	"log"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/ki/v2"
+	"goki.dev/laser"
 	"goki.dev/pi/v2/filecat"
 )
 
@@ -25,29 +25,20 @@ type FileNode struct {
 	filetree.Node
 }
 
-func (fn *FileNode) CopyFieldsFrom(frm any) {
-	fr := frm.(*FileNode)
-	fn.FileNode.CopyFieldsFrom(&fr.FileNode)
-	// no copy here
-}
-
 // ParentGide returns the Gide parent of given node
 func ParentGide(kn ki.Ki) (Gide, bool) {
-	return kn.ParentOfType(GideType, ki.Embeds)
-	/*
-		if ki.IsRoot(kn) {
-			return nil, false
+	if ki.IsRoot(kn) {
+		return nil, false
+	}
+	var ge Gide
+	kn.WalkUp(func(k ki.Ki) bool {
+		if laser.EmbedImplements(reflect.TypeOf(k.This()), GideType) {
+			ge = k.(Gide)
+			return false
 		}
-		var ge Gide
-		kn.FuncUpParent(0, kn, func(k ki.Ki, level int, d any) bool {
-			if kit.EmbedImplements(ki.Type(k), GideType) {
-				ge = k.(Gide)
-				return false
-			}
-			return true
-		})
-		return ge, ge != nil
-	*/
+		return true
+	})
+	return ge, ge != nil
 }
 
 // EditFile pulls up this file in Gide
@@ -58,7 +49,7 @@ func (fn *FileNode) EditFile() {
 	}
 	ge, ok := ParentGide(fn.This())
 	if ok {
-		ge.NextViewFileNode(fn.This().Embed(giv.KiT_FileNode).(*filetree.Node))
+		ge.NextViewFileNode(&fn.Node)
 	}
 }
 
@@ -80,7 +71,7 @@ func (fn *FileNode) SetRunExec() {
 func (fn *FileNode) ExecCmdFile() {
 	ge, ok := ParentGide(fn.This())
 	if ok {
-		ge.ExecCmdFileNode(fn.This().Embed(giv.KiT_FileNode).(*filetree.Node))
+		ge.ExecCmdFileNode(&fn.Node)
 	}
 }
 
@@ -88,7 +79,7 @@ func (fn *FileNode) ExecCmdFile() {
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	ge, ok := ParentGide(fn.This())
 	if ok {
-		ge.ExecCmdNameFileNode(fn.This().Embed(giv.KiT_FileNode).(*filetree.Node), CmdName(cmdNm), true, true)
+		ge.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm), true, true)
 	}
 }
 
@@ -109,12 +100,12 @@ func (on *OpenNodes) Add(fn *filetree.Node) bool {
 		return added
 	}
 	if fn.Buf != nil {
-		fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(texteditor.BufClosed) {
-				fno, _ := recv.Embed(giv.KiT_FileNode).(*filetree.Node)
-				on.Delete(fno)
-			}
-		})
+		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data any) {
+		// 	if sig == int64(texteditor.BufClosed) {
+		// 		fno, _ := recv.Embed(giv.KiT_FileNode).(*filetree.Node)
+		// 		on.Delete(fno)
+		// 	}
+		// })
 	}
 	return added
 }
@@ -164,7 +155,7 @@ func (on *OpenNodes) DeleteDeleted() {
 	sz := len(*on)
 	for i := sz - 1; i >= 0; i-- {
 		fn := (*on)[i]
-		if fn.This() == nil || fn.FRoot == nil || fn.IsDeleted() {
+		if fn.This() == nil || fn.FRoot == nil || fn.Is(ki.Deleted) {
 			on.DeleteIdx(i)
 		}
 	}
@@ -241,8 +232,8 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 		}
 	}
 	mls := make([]FileSearchResults, 0)
-	start.FuncDownMeFirst(0, start, func(k ki.Ki, level int, d any) bool {
-		sfn := k.Embed(giv.KiT_FileNode).(*filetree.Node)
+	start.WalkPre(func(k ki.Ki) bool {
+		sfn := filetree.AsNode(k)
 		if sfn.IsDir() && !sfn.IsOpen() {
 			// fmt.Printf("dir: %v closed\n", sfn.FPath)
 			return ki.Break // don't go down into closed directories!
@@ -263,9 +254,9 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 				return ki.Continue
 			}
 		} else if loc == FindLocNotTop {
-			if level == 1 {
-				return ki.Continue
-			}
+			// if level == 1 { // todo
+			// 	return ki.Continue
+			// }
 		}
 		var cnt int
 		var matches []textbuf.Match
@@ -402,7 +393,7 @@ func (ftv *FileTreeView) RenameFiles() {
 }
 
 // FileTreeViewExecCmds gets list of available commands for given file node, as a submenu-func
-func FileTreeViewExecCmds(it any, vp *gi.Viewport2D) [][]string {
+func FileTreeViewExecCmds(it any, vp *gi.Scene) [][]string {
 	ft, ok := it.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
 	if !ok {
 		return nil

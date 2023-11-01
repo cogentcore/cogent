@@ -10,11 +10,11 @@ import (
 	"goki.dev/enums"
 )
 
-var _StatusValues = []Status{0, 1, 2, 3, 4, 5, 6, 7, 8}
+var _StatusValues = []Status{0, 1, 2, 3, 4, 5, 6, 7}
 
 // StatusN is the highest valid value
 // for type Status, plus one.
-const StatusN Status = 9
+const StatusN Status = 8
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
@@ -28,7 +28,6 @@ func _StatusNoOp() {
 	_ = x[Stopped-(5)]
 	_ = x[Breakpoint-(6)]
 	_ = x[Finished-(7)]
-	_ = x[StatusN-(8)]
 }
 
 var _StatusNameToValueMap = map[string]Status{
@@ -48,8 +47,6 @@ var _StatusNameToValueMap = map[string]Status{
 	`breakpoint`: 6,
 	`Finished`:   7,
 	`finished`:   7,
-	`StatusN`:    8,
-	`statusn`:    8,
 }
 
 var _StatusDescMap = map[Status]string{
@@ -61,7 +58,6 @@ var _StatusDescMap = map[Status]string{
 	5: `Stopped means the process has stopped (at a breakpoint, crash, or from single stepping)`,
 	6: `Breakpoint means the process has stopped at a breakpoint`,
 	7: `Finished means the process has finished running. See console for output and return value etc`,
-	8: `StatusN is the number of find locations (scopes)`,
 }
 
 var _StatusMap = map[Status]string{
@@ -73,7 +69,6 @@ var _StatusMap = map[Status]string{
 	5: `Stopped`,
 	6: `Breakpoint`,
 	7: `Finished`,
-	8: `StatusN`,
 }
 
 // String returns the string representation

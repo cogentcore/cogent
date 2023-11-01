@@ -17,11 +17,12 @@ import (
 	"time"
 
 	"github.com/mattn/go-shellwords"
+	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/goosi"
-	"goki.dev/ki/v2"
+	"goki.dev/goosi/events"
 	"goki.dev/pi/v2/complete"
 	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
@@ -142,7 +143,7 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 		cmd := exec.Command(cstr, args...)
 		return cmd, cmdstr
 	case "open":
-		cstr = giv.OSOpenCommand()
+		cstr = filetree.OSOpenCommand()
 		cmdstr := cstr
 		args := cm.BindArgs(avp)
 		if args != nil {
@@ -375,20 +376,33 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			gi.StringPromptDialog(ge.VPort(), curval, "Enter string value here..",
-				gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)},
-				ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-					dlg := send.(*gi.Dialog)
-					if sig == int64(gi.DialogAccepted) {
-						val := gi.StringPromptDialogValue(dlg)
-						cmvals[cm.Label()] = val
-						(*avp)[pv] = val
-						cnt++
-						if cnt == sz {
-							cm.RunAfterPrompts(ge, buf)
-						}
-					}
-				})
+			dlg := gi.NewDialog(ge.Scene()).Title("Gide Command Prompt").
+				Prompt(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)).Modal(true)
+			tf := gi.NewTextField(dlg).SetText(curval)
+			dlg.Cancel().Ok().Run()
+			dlg.OnAccept(func(e events.Event) {
+				val := tf.Text()
+				cmvals[cm.Label()] = val
+				(*avp)[pv] = val
+				cnt++
+				if cnt == sz {
+					cm.RunAfterPrompts(ge, buf)
+				}
+			})
+			// gi.StringPromptDialog(ge.Scene(), curval, "Enter string value here..",
+			// 	gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)},
+			// 	ge.This(), func(recv, send ki.Ki, sig int64, data any) {
+			// 		dlg := send.(*gi.Dialog)
+			// 		if sig == int64(gi.DialogAccepted) {
+			// 			val := gi.StringPromptDialogValue(dlg)
+			// 			cmvals[cm.Label()] = val
+			// 			(*avp)[pv] = val
+			// 			cnt++
+			// 			if cnt == sz {
+			// 				cm.RunAfterPrompts(ge, buf)
+			// 			}
+			// 		}
+			// 	})
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
 			fn := ge.ActiveFileNode()
@@ -397,15 +411,27 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 				if repo != nil {
 					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
-						gi.StringsChooserPopup(br, cur, ge.VPort(), func(recv, send ki.Ki, sig int64, data any) {
-							ac := send.(*gi.Button)
-							brnm := ac.Text
-							(*avp)[pv] = brnm
+						dlg := gi.NewDialog(ge.Scene()).Title("Choose Branch").Modal(true)
+						ch := gi.NewChooser(dlg).ItemsFromStringList(br, false, 30)
+						ch.SetCurVal(cur)
+						dlg.Cancel().Ok().Run()
+						dlg.OnAccept(func(e events.Event) {
+							val := ch.CurVal.(string)
+							(*avp)[pv] = val
 							cnt++
 							if cnt == sz {
 								cm.RunAfterPrompts(ge, buf)
 							}
 						})
+						// gi.StringsChooserPopup(br, cur, ge.Scene(), func(recv, send ki.Ki, sig int64, data any) {
+						// 	ac := send.(*gi.Button)
+						// 	brnm := ac.Text
+						// 	(*avp)[pv] = brnm
+						// 	cnt++
+						// 	if cnt == sz {
+						// 		cm.RunAfterPrompts(ge, buf)
+						// 	}
+						// })
 					} else {
 						fmt.Println(err)
 					}
@@ -421,10 +447,12 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
 	if cm.Confirm {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Command", Prompt: fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)}, gi.AddOk, gi.AddCancel, ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(gi.DialogAccepted) {
-				cm.RunAfterPrompts(ge, buf)
-			}
+		dlg := gi.NewDialog(ge.Scene()).Title("Confirm Command").
+			Prompt(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)).
+			Modal(true).Cancel().Ok("Run")
+		dlg.Run()
+		dlg.OnAccept(func(e events.Event) {
+			cm.RunAfterPrompts(ge, buf)
 		})
 		return
 	}
@@ -520,10 +548,7 @@ func (cm *Command) AppendCmdOut(ge Gide, buf *texteditor.Buf, out []byte) {
 		return
 	}
 
-	wupdt := ge.VPort().TopUpdateStart()
-	defer ge.VPort().TopUpdateEnd(wupdt)
-
-	buf.SetInactive(true)
+	buf.SetReadOnly(true)
 
 	lns := bytes.Split(out, []byte("\n"))
 	sz := len(lns)
@@ -535,7 +560,7 @@ func (cm *Command) AppendCmdOut(ge Gide, buf *texteditor.Buf, out []byte) {
 	mlns := bytes.Join(outmus, lfb)
 	mlns = append(mlns, lfb...)
 
-	buf.AppendTextMarkup(out, mlns, giv.EditSignal)
+	buf.AppendTextMarkup(out, mlns, texteditor.EditSignal)
 	buf.AutoScrollViews()
 }
 
@@ -565,14 +590,15 @@ func (cm *Command) RunStatus(ge Gide, buf *texteditor.Buf, cmdstr string, err er
 		rval = false
 	}
 	if buf != nil {
-		buf.SetInactive(true)
+		buf.SetReadOnly(true)
 		if err != nil {
 			ge.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
-		buf.AppendTextLineMarkup([]byte(""), []byte(""), giv.EditSignal)
-		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), giv.EditSignal)
-		buf.RefreshViews()
+		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)
+		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), texteditor.EditSignal)
+		// todo: add this
+		// buf.RefreshViews()
 		buf.AutoScrollViews()
 		if cm.Focus {
 			ge.FocusOnTabs()
@@ -711,7 +737,8 @@ func (cm *Commands) SaveJSON(filename gi.FileName) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.NewDialog(nil).Title("Could not Save to File").
+			Prompt(err.Error()).Modal(true).Ok().Run()
 		log.Println(err)
 	}
 	return err
@@ -778,6 +805,7 @@ func (cm *Commands) ViewStd() {
 // menu, toolbar props update methods.
 var CustomCmdsChanged = false
 
+/*
 // CommandsProps define the Toolbar and MenuBar for TableView of Commands, e.g., CmdsView
 var CommandsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
@@ -852,6 +880,7 @@ var CommandsProps = ki.Props{
 		}},
 	},
 }
+*/
 
 // SetCompleter adds a completer to the textfield - each field
 // can have its own match and edit functions

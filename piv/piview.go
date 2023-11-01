@@ -347,7 +347,7 @@ func (pv *PiView) UpdtLexBuf() {
 	pv.LexBuf.SetText([]byte(txt))
 	pv.TestBuf.HiTags = fs.Src.Lexs
 	pv.TestBuf.MarkupFromTags()
-	pv.TestBuf.Refresh()
+	pv.TestBuf.Update()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -579,19 +579,19 @@ func (pv *PiView) FocusPrevPanel() {
 //   Tabs
 
 // MainTabByName returns a MainTabs (first set of tabs) tab with given name
-func (pv *PiView) MainTabByName(label string) gi.Node2D {
+func (pv *PiView) MainTabByName(label string) gi.Widget {
 	tv := pv.MainTabs()
 	return tv.TabByName(label)
 }
 
 // MainTabByNameTry returns a MainTabs (first set of tabs) tab with given name, err if not found
-func (pv *PiView) MainTabByNameTry(label string) (gi.Node2D, error) {
+func (pv *PiView) MainTabByNameTry(label string) (gi.Widget, error) {
 	tv := pv.MainTabs()
 	return tv.TabByNameTry(label)
 }
 
 // SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-func (pv *PiView) SelectMainTabByName(label string) gi.Node2D {
+func (pv *PiView) SelectMainTabByName(label string) gi.Widget {
 	tv := pv.MainTabs()
 	widg, err := pv.MainTabByNameTry(label)
 	if err == nil {
@@ -603,7 +603,7 @@ func (pv *PiView) SelectMainTabByName(label string) gi.Node2D {
 // RecycleMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with widget of given type.  if sel, then select it.  returns widget
-func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Node2D {
+func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Widget {
 	tv := pv.MainTabs()
 	widg, err := pv.MainTabByNameTry(label)
 	if err == nil {
@@ -612,7 +612,7 @@ func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.No
 		}
 		return widg
 	}
-	widg = tv.AddNewTab(typ, label)
+	widg = tv.NewTab(typ, label)
 	if sel {
 		tv.SelectTabByName(label)
 	}
@@ -633,7 +633,7 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *texteditor.Editor {
 	} else {
 		updt = ly.UpdateStart()
 		ly.SetChildAdded()
-		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*texteditor.Editor)
+		tv = ly.NewChild(giv.KiT_TextView, ly.Nm).(*texteditor.Editor)
 	}
 
 	if gi.Prefs.Editor.WordWrap {
@@ -655,7 +655,7 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *texteditor.Editor {
 // one with a Layout and then a TextView in it.  if sel, then select it.
 // returns widget
 func (pv *PiView) RecycleMainTabTextView(label string, sel bool, out bool) *texteditor.Editor {
-	ly := pv.RecycleMainTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
+	ly := pv.RecycleMainTab(label, gi.LayoutType, sel).Embed(gi.LayoutType).(*gi.Layout)
 	tv := pv.ConfigTextView(ly, out)
 	return tv
 }
@@ -734,9 +734,9 @@ func (pv *PiView) Config() {
 	pv.Lay = gi.LayoutVert
 	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
-	config.Add(gi.KiT_Toolbar, "toolbar")
-	config.Add(gi.KiT_SplitView, "splitview")
-	config.Add(gi.KiT_Frame, "statusbar")
+	config.Add(gi.ToolbarType, "toolbar")
+	config.Add(gi.SplitViewType, "splitview")
+	config.Add(gi.FrameType, "statusbar")
 	mods, updt := pv.ConfigChildren(config)
 	if !mods {
 		updt = pv.UpdateStart()
@@ -797,7 +797,7 @@ func (pv *PiView) StatusBar() *gi.Frame {
 
 // StatusLabel returns the statusbar label widget
 func (pv *PiView) StatusLabel() *gi.Label {
-	return pv.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
+	return pv.StatusBar().Child(0).Embed(gi.LabelType).(*gi.Label)
 }
 
 // Toolbar returns the toolbar widget
@@ -816,7 +816,7 @@ func (pv *PiView) ConfigStatusBar() {
 	sb.SetProp("overflow", "hidden") // no scrollbars!
 	sb.SetProp("margin", 0)
 	sb.SetProp("padding", 0)
-	lbl := sb.AddNewChild(gi.KiT_Label, "sb-lbl").(*gi.Label)
+	lbl := sb.NewChild(gi.LabelType, "sb-lbl").(*gi.Label)
 	lbl.SetStretchMaxWidth()
 	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
 	lbl.SetProp("vertical-align", styles.AlignTop)
@@ -838,10 +838,10 @@ func (pv *PiView) ConfigToolbar() {
 // SplitViewConfig returns a TypeAndNameList for configuring the SplitView
 func (pv *PiView) SplitViewConfig() ki.Config {
 	config := ki.Config{}
-	config.Add(gi.KiT_Frame, "lex-tree-fr")
-	config.Add(gi.KiT_Frame, "parse-tree-fr")
+	config.Add(gi.FrameType, "lex-tree-fr")
+	config.Add(gi.FrameType, "parse-tree-fr")
 	config.Add(giv.KiT_StructView, "struct-view")
-	config.Add(gi.KiT_Frame, "ast-tree-fr")
+	config.Add(gi.FrameType, "ast-tree-fr")
 	config.Add(gi.KiT_TabView, "main-tabs")
 	return config
 }
@@ -880,15 +880,15 @@ func (pv *PiView) ConfigSplitView() {
 	mods, updt := split.ConfigChildren(config)
 	if mods {
 		lxfr := split.Child(LexRulesIdx).(*gi.Frame)
-		lxt := lxfr.AddNewChild(giv.KiT_TreeView, "lex-tree").(*giv.TreeView)
+		lxt := lxfr.NewChild(giv.KiT_TreeView, "lex-tree").(*giv.TreeView)
 		lxt.SetRootNode(&pv.Parser.Lexer)
 
 		prfr := split.Child(ParseRulesIdx).(*gi.Frame)
-		prt := prfr.AddNewChild(giv.KiT_TreeView, "parse-tree").(*giv.TreeView)
+		prt := prfr.NewChild(giv.KiT_TreeView, "parse-tree").(*giv.TreeView)
 		prt.SetRootNode(&pv.Parser.Parser)
 
 		astfr := split.Child(AstOutIdx).(*gi.Frame)
-		astt := astfr.AddNewChild(giv.KiT_TreeView, "ast-tree").(*giv.TreeView)
+		astt := astfr.NewChild(giv.KiT_TreeView, "ast-tree").(*giv.TreeView)
 		astt.SetRootNode(&fs.Ast)
 
 		pv.TestBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
@@ -1123,6 +1123,8 @@ func (pv *PiView) Render2D() {
 	pv.Frame.Render2D()
 }
 
+/*
+
 var PiViewProps = ki.Props{
 	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Prefs.Colors.Background,
@@ -1327,6 +1329,7 @@ var PiViewProps = ki.Props{
 		{"Window", "Windows"},
 	},
 }
+*/
 
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project window
@@ -1399,7 +1402,7 @@ func NewPiView() (*gi.Window, *PiView) {
 
 	mfr := win.SetMainFrame()
 
-	pv := mfr.AddNewChild(KiT_PiView, "piview").(*PiView)
+	pv := mfr.NewChild(KiT_PiView, "piview").(*PiView)
 	pv.Viewport = vp
 
 	// mmen := win.MainMenu

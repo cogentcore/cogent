@@ -85,7 +85,7 @@ Version: ` + gide.Prefs.VersionInfo())
 		}
 	}
 
-	recv := gi.Node2DBase{}
+	recv := gi.WidgetBase{}
 	recv.InitName(&recv, "gide_dummy")
 
 	inQuitPrompt := false

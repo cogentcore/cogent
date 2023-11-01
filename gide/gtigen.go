@@ -9,8 +9,6 @@ import (
 	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/texteditor"
-	"goki.dev/gide/v2/gidebug"
 	"goki.dev/girl/units"
 	"goki.dev/gti"
 	"goki.dev/icons"
@@ -33,12 +31,12 @@ var DebugViewType = gti.AddType(&gti.Type{
 		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/pi/v2/filecat.Supported", LocalType: "filecat.Supported", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
 		{"ExePath", &gti.Field{Name: "ExePath", Type: "string", LocalType: "string", Doc: "path to executable / dir to debug", Directives: gti.Directives{}, Tag: ""}},
 		{"DbgTime", &gti.Field{Name: "DbgTime", Type: "time.Time", LocalType: "time.Time", Doc: "time when dbg was last restarted", Directives: gti.Directives{}, Tag: ""}},
-		{"Dbg", &gti.Field{Name: "Dbg", Type: "goki.dev/gide/v2/gidebug.GiDebug", LocalType: "gidebug.GiDebug", Doc: "the debugger", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"State", &gti.Field{Name: "State", Type: "goki.dev/gide/v2/gidebug.AllState", LocalType: "gidebug.AllState", Doc: "all relevant debug state info", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"CurFileLoc", &gti.Field{Name: "CurFileLoc", Type: "goki.dev/gide/v2/gidebug.Location", LocalType: "gidebug.Location", Doc: "current ShowFile location -- cleared before next one or run", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"BBreaks", &gti.Field{Name: "BBreaks", Type: "[]*goki.dev/gide/v2/gidebug.Break", LocalType: "[]*gidebug.Break", Doc: "backup breakpoints list -- to track deletes", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"OutBuf", &gti.Field{Name: "OutBuf", Type: "*goki.dev/gi/v2/texteditor.Buf", LocalType: "*texteditor.Buf", Doc: "output from the debugger", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"Gide", &gti.Field{Name: "Gide", Type: "goki.dev/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
+		{"Dbg", &gti.Field{Name: "Dbg", Type: "goki.dev/gide/v2/gidebug.GiDebug", LocalType: "gidebug.GiDebug", Doc: "the debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
+		{"State", &gti.Field{Name: "State", Type: "goki.dev/gide/v2/gidebug.AllState", LocalType: "gidebug.AllState", Doc: "all relevant debug state info", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
+		{"CurFileLoc", &gti.Field{Name: "CurFileLoc", Type: "goki.dev/gide/v2/gidebug.Location", LocalType: "gidebug.Location", Doc: "current ShowFile location -- cleared before next one or run", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
+		{"BBreaks", &gti.Field{Name: "BBreaks", Type: "[]*goki.dev/gide/v2/gidebug.Break", LocalType: "[]*gidebug.Break", Doc: "backup breakpoints list -- to track deletes", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
+		{"OutBuf", &gti.Field{Name: "OutBuf", Type: "*goki.dev/gi/v2/texteditor.Buf", LocalType: "*texteditor.Buf", Doc: "output from the debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
+		{"Gide", &gti.Field{Name: "Gide", Type: "goki.dev/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
 	}),
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi/v2/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
@@ -83,48 +81,6 @@ func (t *DebugView) SetExePath(v string) *DebugView {
 // time when dbg was last restarted
 func (t *DebugView) SetDbgTime(v time.Time) *DebugView {
 	t.DbgTime = v
-	return t
-}
-
-// SetDbg sets the [DebugView.Dbg]:
-// the debugger
-func (t *DebugView) SetDbg(v gidebug.GiDebug) *DebugView {
-	t.Dbg = v
-	return t
-}
-
-// SetState sets the [DebugView.State]:
-// all relevant debug state info
-func (t *DebugView) SetState(v gidebug.AllState) *DebugView {
-	t.State = v
-	return t
-}
-
-// SetCurFileLoc sets the [DebugView.CurFileLoc]:
-// current ShowFile location -- cleared before next one or run
-func (t *DebugView) SetCurFileLoc(v gidebug.Location) *DebugView {
-	t.CurFileLoc = v
-	return t
-}
-
-// SetBbreaks sets the [DebugView.BBreaks]:
-// backup breakpoints list -- to track deletes
-func (t *DebugView) SetBbreaks(v []*gidebug.Break) *DebugView {
-	t.BBreaks = v
-	return t
-}
-
-// SetOutBuf sets the [DebugView.OutBuf]:
-// output from the debugger
-func (t *DebugView) SetOutBuf(v *texteditor.Buf) *DebugView {
-	t.OutBuf = v
-	return t
-}
-
-// SetGide sets the [DebugView.Gide]:
-// parent gide project
-func (t *DebugView) SetGide(v Gide) *DebugView {
-	t.Gide = v
 	return t
 }
 
@@ -535,8 +491,8 @@ var VarViewType = gti.AddType(&gti.Type{
 	Doc:        "VarView represents a struct, creating a property editor of the fields --\nconstructs Children widgets to show the field names and editor fields for\neach field, within an overall frame with an optional title, and a button\nbox at the bottom where methods can be invoked",
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Var", &gti.Field{Name: "Var", Type: "*goki.dev/gide/v2/gidebug.Variable", LocalType: "*gidebug.Variable", Doc: "variable being edited", Directives: gti.Directives{}, Tag: ""}},
-		{"FrameInfo", &gti.Field{Name: "FrameInfo", Type: "string", LocalType: "string", Doc: "frame info", Directives: gti.Directives{}, Tag: ""}},
+		{"Var", &gti.Field{Name: "Var", Type: "*goki.dev/gide/v2/gidebug.Variable", LocalType: "*gidebug.Variable", Doc: "variable being edited", Directives: gti.Directives{}, Tag: "set:\"-\""}},
+		{"FrameInfo", &gti.Field{Name: "FrameInfo", Type: "string", LocalType: "string", Doc: "frame info", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"DbgView", &gti.Field{Name: "DbgView", Type: "*goki.dev/gide/v2/gide.DebugView", LocalType: "*DebugView", Doc: "parent DebugView", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
 	}),
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
@@ -562,20 +518,6 @@ func (t *VarView) KiType() *gti.Type {
 // New returns a new [*VarView] value
 func (t *VarView) New() ki.Ki {
 	return &VarView{}
-}
-
-// SetVar sets the [VarView.Var]:
-// variable being edited
-func (t *VarView) SetVar(v *gidebug.Variable) *VarView {
-	t.Var = v
-	return t
-}
-
-// SetFrameInfo sets the [VarView.FrameInfo]:
-// frame info
-func (t *VarView) SetFrameInfo(v string) *VarView {
-	t.FrameInfo = v
-	return t
 }
 
 // SetDbgView sets the [VarView.DbgView]:
@@ -729,7 +671,7 @@ var FindViewType = gti.AddType(&gti.Type{
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Gide", &gti.Field{Name: "Gide", Type: "goki.dev/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"LangVV", &gti.Field{Name: "LangVV", Type: "invalid type", LocalType: "giv.ValueView", Doc: "langs value view", Directives: gti.Directives{}, Tag: ""}},
+		{"LangVV", &gti.Field{Name: "LangVV", Type: "goki.dev/gi/v2/giv.Value", LocalType: "giv.Value", Doc: "langs value view", Directives: gti.Directives{}, Tag: ""}},
 		{"Time", &gti.Field{Name: "Time", Type: "time.Time", LocalType: "time.Time", Doc: "time of last find", Directives: gti.Directives{}, Tag: ""}},
 		{"Re", &gti.Field{Name: "Re", Type: "*regexp.Regexp", LocalType: "*regexp.Regexp", Doc: "compiled regexp", Directives: gti.Directives{}, Tag: ""}},
 	}),
@@ -767,7 +709,7 @@ func (t *FindView) SetGide(v Gide) *FindView {
 
 // SetLangVv sets the [FindView.LangVV]:
 // langs value view
-func (t *FindView) SetLangVv(v giv.ValueView) *FindView {
+func (t *FindView) SetLangVv(v giv.Value) *FindView {
 	t.LangVV = v
 	return t
 }
@@ -1303,23 +1245,5 @@ func (t *TextView) SetHighlightColor(v colors.Full) *TextView {
 // SetCursorColor sets the [TextView.CursorColor]
 func (t *TextView) SetCursorColor(v colors.Full) *TextView {
 	t.CursorColor = v
-	return t
-}
-
-// SetLastRecenter sets the [TextView.lastRecenter]
-func (t *TextView) SetLastRecenter(v int) *TextView {
-	t.lastRecenter = v
-	return t
-}
-
-// SetLastAutoInsert sets the [TextView.lastAutoInsert]
-func (t *TextView) SetLastAutoInsert(v rune) *TextView {
-	t.lastAutoInsert = v
-	return t
-}
-
-// SetLastFilename sets the [TextView.lastFilename]
-func (t *TextView) SetLastFilename(v gi.FileName) *TextView {
-	t.lastFilename = v
 	return t
 }

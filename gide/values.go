@@ -10,15 +10,70 @@ import (
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/keyfun"
 	"goki.dev/girl/styles"
 	"goki.dev/girl/units"
+	"goki.dev/goosi/events"
+	"goki.dev/icons"
 	"goki.dev/ki/v2"
 	"goki.dev/laser"
 )
 
+// KeyMapsView opens a view of a key maps table
+func KeyMapsView(km *KeyMaps) {
+	if gi.ActivateExistingMainWindow(km) {
+		return
+	}
+	sc := gi.NewScene("gogi-key-maps")
+	sc.Title = "Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map"
+	sc.Lay = gi.LayoutVert
+	sc.Data = km
+
+	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
+	title.Style(func(s *styles.Style) {
+		s.Width.Ch(30) // need for wrap
+		s.SetStretchMaxWidth()
+		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
+	})
+
+	tv := NewTableView(sc).SetSlice(km)
+	tv.SetStretchMax()
+
+	AvailKeyMapsChanged = false
+	tv.OnChange(func(e events.Event) {
+		AvailKeyMapsChanged = true
+	})
+
+	tb := tv.Toolbar()
+	gi.NewSeparator(tb)
+	sp := NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
+	sp.SetUpdateFunc(func() {
+		sp.SetEnabled(AvailMapsChanged && km == &AvailKeyMaps)
+	})
+	oj := NewFuncButton(tb, km.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
+	oj.Args[0].SetTag("ext", ".json")
+	sj := NewFuncButton(tb, km.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+	sj.Args[0].SetTag("ext", ".json")
+	gi.NewSeparator(tb)
+	vs := NewFuncButton(tb, ViewStdKeyMaps).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
+	vs.SetUpdateFunc(func() {
+		vs.SetEnabledUpdt(km != &StdKeyMaps)
+	})
+	rs := NewFuncButton(tb, km.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
+	rs.SetUpdateFunc(func() {
+		rs.SetEnabledUpdt(km != &StdKeyMaps)
+	})
+	tb.OverflowMenu().SetMenu(func(m *gi.Scene) {
+		NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+	})
+
+	gi.NewWindow(sc).Run()
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 //  PrefsView
 
+/*
 // PrefsView opens a view of user preferences, returns structview and window
 func PrefsView(pf *Preferences) *gi.Window {
 	winm := "gide-prefs"
@@ -29,14 +84,14 @@ func PrefsView(pf *Preferences) *gi.Window {
 		return win
 	}
 
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	sc := win.WinViewport2D()
+	updt := sc.UpdateStart()
 
 	mfr := win.SetMainFrame()
 	mfr.Lay = gi.LayoutVert
 
-	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
-	sv.Viewport = vp
+	sv := mfr.NewChild(giv.KiT_StructView, "sv").(*giv.StructView)
+	sv.Viewport = sc
 	sv.SetStruct(pf)
 	sv.SetStretchMaxWidth()
 	sv.SetStretchMaxHeight()
@@ -80,7 +135,7 @@ func PrefsView(pf *Preferences) *gi.Window {
 	// 	win.SetSize(vpsz)
 	// }
 
-	vp.UpdateEndNoSig(updt)
+	sc.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 	return win
 }
@@ -101,20 +156,20 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 		return sv, win
 	}
 
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	sc := win.WinViewport2D()
+	updt := sc.UpdateStart()
 
 	mfr := win.SetMainFrame()
 	mfr.Lay = gi.LayoutVert
 
-	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title := mfr.NewChild(gi.LabelType, "title").(*gi.Label)
 	title.SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
 	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
-	sv := mfr.AddNewChild(giv.KiT_StructView, "sv").(*giv.StructView)
-	sv.Viewport = vp
+	sv := mfr.NewChild(giv.KiT_StructView, "sv").(*giv.StructView)
+	sv.Viewport = sc
 	sv.SetStruct(pf)
 	sv.SetStretchMaxWidth()
 	sv.SetStretchMaxHeight()
@@ -129,95 +184,18 @@ func ProjPrefsView(pf *ProjPrefs) (*giv.StructView, *gi.Window) {
 	// 		win.SetSize(vpsz)
 	// 	}
 
-	vp.UpdateEndNoSig(updt)
+	sc.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 	return sv, win
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//  KeyMapsView
-
-// KeyMapsView opens a view of a key maps table
-func KeyMapsView(km *KeyMaps) {
-	winm := "gide-key-maps"
-	width := 800
-	height := 800
-	win, recycle := gi.RecycleMainWindow(km, winm, "Gide Key Maps", width, height)
-	if recycle {
-		return
-	}
-
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
-
-	mfr := win.SetMainFrame()
-	mfr.Lay = gi.LayoutVert
-
-	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
-	title.SetText("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
-	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
-	title.SetStretchMaxWidth()
-	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
-
-	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
-	tv.Viewport = vp
-	tv.SetSlice(km)
-	tv.SetStretchMaxWidth()
-	tv.SetStretchMaxHeight()
-
-	AvailKeyMapsChanged = false
-	tv.ViewSig.Connect(mfr.This(), func(recv, send ki.Ki, sig int64, data any) {
-		AvailKeyMapsChanged = true
-	})
-
-	// mmen := win.MainMenu
-	// giv.MainMenuView(km, win, mmen)
-	//
-	// inClosePrompt := false
-	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-	// 	if !AvailKeyMapsChanged || km != &AvailKeyMaps { // only for main avail map..
-	// 		win.Close()
-	// 		return
-	// 	}
-	// 	if inClosePrompt {
-	// 		return
-	// 	}
-	// 	inClosePrompt = true
-	// 	gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Save KeyMaps Before Closing?",
-	// 		Prompt: "Do you want to save any changes to preferences keymaps file before closing, or Cancel the close and do a Save to a different file?"},
-	// 		[]string{"Save and Close", "Discard and Close", "Cancel"},
-	// 		win.This(), func(recv, send ki.Ki, sig int64, data any) {
-	// 			switch sig {
-	// 			case 0:
-	// 				km.SavePrefs()
-	// 				fmt.Printf("Preferences Saved to %v\n", PrefsKeyMapsFileName)
-	// 				win.Close()
-	// 			case 1:
-	// 				km.OpenPrefs() // revert
-	// 				win.Close()
-	// 			case 2:
-	// 				inClosePrompt = false
-	// 				// default is to do nothing, i.e., cancel
-	// 			}
-	// 		})
-	// })
-	//
-	// win.MainMenuUpdated()
-	//
-	// if !win.HasGeomPrefs() { // resize to contents
-	// 	vpsz := vp.PrefSize(win.OSWin.Screen().PixSize)
-	// 	win.SetSize(vpsz)
-	// }
-
-	vp.UpdateEndNoSig(updt)
-	win.GoStartEventLoop()
-}
+*/
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //  KeyMapValueView
 
 // ValueView registers KeyMapValueView as the viewer of KeyMapName
-func (kn KeyMapName) ValueView() giv.ValueView {
+func (kn KeyMapName) ValueView() giv.Value {
 	vv := &KeyMapValueView{}
 	ki.InitNode(vv)
 	return vv
@@ -226,11 +204,11 @@ func (kn KeyMapName) ValueView() giv.ValueView {
 // KeyMapValueView presents an action for displaying an KeyMapName and selecting
 // from KeyMapChooserDialog
 type KeyMapValueView struct {
-	giv.ValueViewBase
+	giv.ValueBase
 }
 
 func (vv *KeyMapValueView) WidgetType() reflect.Type {
-	vv.WidgetTyp = gi.KiT_Action
+	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
@@ -246,7 +224,7 @@ func (vv *KeyMapValueView) UpdateWidget() {
 	ac.SetText(txt)
 }
 
-func (vv *KeyMapValueView) ConfigWidget(widg gi.Node2D) {
+func (vv *KeyMapValueView) ConfigWidget(widg gi.Widget) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
@@ -262,14 +240,14 @@ func (vv *KeyMapValueView) HasAction() bool {
 	return true
 }
 
-func (vv *KeyMapValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
+func (vv *KeyMapValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
 	if vv.IsInactive() {
 		return
 	}
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
 	desc, _ := vv.Tag("desc")
-	giv.TableViewSelectDialog(vp, &AvailKeyMaps, giv.DlgOpts{Title: "Select a KeyMap", Prompt: desc}, curRow, nil,
+	giv.TableViewSelectDialog(sc, &AvailKeyMaps, giv.DlgOpts{Title: "Select a KeyMap", Prompt: desc}, curRow, nil,
 		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				ddlg, _ := send.(*gi.Dialog)
@@ -299,20 +277,20 @@ func LangsView(pt *Langs) {
 		return
 	}
 
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	sc := win.WinViewport2D()
+	updt := sc.UpdateStart()
 
 	mfr := win.SetMainFrame()
 	mfr.Lay = gi.LayoutVert
 
-	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title := mfr.NewChild(gi.LabelType, "title").(*gi.Label)
 	title.SetText("Available Language Opts: Add or modify entries to customize options for language / file types")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
 	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
-	mv := mfr.AddNewChild(giv.KiT_MapView, "mv").(*giv.MapView)
-	mv.Viewport = vp
+	mv := mfr.NewChild(giv.KiT_MapView, "mv").(*giv.MapView)
+	mv.Viewport = sc
 	mv.SetMap(pt)
 	mv.SetStretchMaxWidth()
 	mv.SetStretchMaxHeight()
@@ -361,7 +339,7 @@ func LangsView(pt *Langs) {
 	// 	win.SetSize(vpsz)
 	// }
 
-	vp.UpdateEndNoSig(updt)
+	sc.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 }
 
@@ -378,20 +356,20 @@ func CmdsView(pt *Commands) {
 		return
 	}
 
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	sc := win.WinViewport2D()
+	updt := sc.UpdateStart()
 
 	mfr := win.SetMainFrame()
 	mfr.Lay = gi.LayoutVert
 
-	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title := mfr.NewChild(gi.LabelType, "title").(*gi.Label)
 	title.SetText("Gide Commands")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
 	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
-	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
-	tv.Viewport = vp
+	tv := mfr.NewChild(giv.KiT_TableView, "tv").(*giv.TableView)
+	tv.Viewport = sc
 	tv.SetSlice(pt)
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
@@ -440,7 +418,7 @@ func CmdsView(pt *Commands) {
 	// 	win.SetSize(vpsz)
 	// }
 
-	vp.UpdateEndNoSig(updt)
+	sc.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 }
 
@@ -448,7 +426,7 @@ func CmdsView(pt *Commands) {
 //  CmdValueView
 
 // ValueView registers CmdValueView as the viewer of CmdName
-func (kn CmdName) ValueView() giv.ValueView {
+func (kn CmdName) ValueView() giv.Value {
 	vv := &CmdValueView{}
 	ki.InitNode(vv)
 	return vv
@@ -456,11 +434,11 @@ func (kn CmdName) ValueView() giv.ValueView {
 
 // CmdValueView presents an action for displaying an CmdName and selecting
 type CmdValueView struct {
-	giv.ValueViewBase
+	giv.ValueBase
 }
 
 func (vv *CmdValueView) WidgetType() reflect.Type {
-	vv.WidgetTyp = gi.KiT_Action
+	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
@@ -476,7 +454,7 @@ func (vv *CmdValueView) UpdateWidget() {
 	ac.SetText(txt)
 }
 
-func (vv *CmdValueView) ConfigWidget(widg gi.Node2D) {
+func (vv *CmdValueView) ConfigWidget(widg gi.Widget) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
@@ -492,7 +470,7 @@ func (vv *CmdValueView) HasAction() bool {
 	return true
 }
 
-func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
+func (vv *CmdValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
 	if vv.IsInactive() {
 		return
 	}
@@ -502,7 +480,7 @@ func (vv *CmdValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.Re
 		_, curRow, _ = AvailCmds.CmdByName(CmdName(cur), false)
 	}
 	desc, _ := vv.Tag("desc")
-	giv.TableViewSelectDialog(vp, &AvailCmds, giv.DlgOpts{Title: "Select a Command", Prompt: desc}, curRow, nil,
+	giv.TableViewSelectDialog(sc, &AvailCmds, giv.DlgOpts{Title: "Select a Command", Prompt: desc}, curRow, nil,
 		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				ddlg, _ := send.(*gi.Dialog)
@@ -533,20 +511,20 @@ func SplitsView(pt *Splits) {
 		return
 	}
 
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	sc := win.WinViewport2D()
+	updt := sc.UpdateStart()
 
 	mfr := win.SetMainFrame()
 	mfr.Lay = gi.LayoutVert
 
-	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title := mfr.NewChild(gi.LabelType, "title").(*gi.Label)
 	title.SetText("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
 	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
-	tv := mfr.AddNewChild(giv.KiT_TableView, "tv").(*giv.TableView)
-	tv.Viewport = vp
+	tv := mfr.NewChild(giv.KiT_TableView, "tv").(*giv.TableView)
+	tv.Viewport = sc
 	tv.SetSlice(pt)
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
@@ -595,7 +573,7 @@ func SplitsView(pt *Splits) {
 	// 	win.SetSize(vpsz)
 	// }
 
-	vp.UpdateEndNoSig(updt)
+	sc.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 }
 
@@ -603,7 +581,7 @@ func SplitsView(pt *Splits) {
 //  SplitValueView
 
 // ValueView registers SplitValueView as the viewer of SplitName
-func (kn SplitName) ValueView() giv.ValueView {
+func (kn SplitName) ValueView() giv.Value {
 	vv := &SplitValueView{}
 	ki.InitNode(vv)
 	return vv
@@ -611,11 +589,11 @@ func (kn SplitName) ValueView() giv.ValueView {
 
 // SplitValueView presents an action for displaying an SplitName and selecting
 type SplitValueView struct {
-	giv.ValueViewBase
+	giv.ValueBase
 }
 
 func (vv *SplitValueView) WidgetType() reflect.Type {
-	vv.WidgetTyp = gi.KiT_Action
+	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
@@ -631,7 +609,7 @@ func (vv *SplitValueView) UpdateWidget() {
 	ac.SetText(txt)
 }
 
-func (vv *SplitValueView) ConfigWidget(widg gi.Node2D) {
+func (vv *SplitValueView) ConfigWidget(widg gi.Widget) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
@@ -647,7 +625,7 @@ func (vv *SplitValueView) HasAction() bool {
 	return true
 }
 
-func (vv *SplitValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
+func (vv *SplitValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
 	if vv.IsInactive() {
 		return
 	}
@@ -657,7 +635,7 @@ func (vv *SplitValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
 	desc, _ := vv.Tag("desc")
-	giv.TableViewSelectDialog(vp, &AvailSplits, giv.DlgOpts{Title: "Select a Named Splitter Config", Prompt: desc}, curRow, nil,
+	giv.TableViewSelectDialog(sc, &AvailSplits, giv.DlgOpts{Title: "Select a Named Splitter Config", Prompt: desc}, curRow, nil,
 		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if sig == int64(gi.DialogAccepted) {
 				ddlg, _ := send.(*gi.Dialog)
@@ -688,20 +666,20 @@ func RegistersView(pt *Registers) {
 		return
 	}
 
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	sc := win.WinViewport2D()
+	updt := sc.UpdateStart()
 
 	mfr := win.SetMainFrame()
 	mfr.Lay = gi.LayoutVert
 
-	title := mfr.AddNewChild(gi.KiT_Label, "title").(*gi.Label)
+	title := mfr.NewChild(gi.LabelType, "title").(*gi.Label)
 	title.SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
 	title.SetProp("width", units.NewValue(30, units.Ch)) // need for wrap
 	title.SetStretchMaxWidth()
 	title.SetProp("white-space", styles.WhiteSpaceNormal) // wrap
 
-	tv := mfr.AddNewChild(giv.KiT_MapView, "tv").(*giv.MapView)
-	tv.Viewport = vp
+	tv := mfr.NewChild(giv.KiT_MapView, "tv").(*giv.MapView)
+	tv.Viewport = sc
 	tv.SetMap(pt)
 	tv.SetStretchMaxWidth()
 	tv.SetStretchMaxHeight()
@@ -750,7 +728,7 @@ func RegistersView(pt *Registers) {
 	// 	win.SetSize(vpsz)
 	// }
 
-	vp.UpdateEndNoSig(updt)
+	sc.UpdateEndNoSig(updt)
 	win.GoStartEventLoop()
 }
 
@@ -758,7 +736,7 @@ func RegistersView(pt *Registers) {
 //  RegisterValueView
 
 // ValueView registers RegisterValueView as the viewer of RegisterName
-func (kn RegisterName) ValueView() giv.ValueView {
+func (kn RegisterName) ValueView() giv.Value {
 	vv := &RegisterValueView{}
 	ki.InitNode(vv)
 	return vv
@@ -766,11 +744,11 @@ func (kn RegisterName) ValueView() giv.ValueView {
 
 // RegisterValueView presents an action for displaying an RegisterName and selecting
 type RegisterValueView struct {
-	giv.ValueViewBase
+	giv.ValueBase
 }
 
 func (vv *RegisterValueView) WidgetType() reflect.Type {
-	vv.WidgetTyp = gi.KiT_Action
+	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
@@ -786,7 +764,7 @@ func (vv *RegisterValueView) UpdateWidget() {
 	ac.SetText(txt)
 }
 
-func (vv *RegisterValueView) ConfigWidget(widg gi.Node2D) {
+func (vv *RegisterValueView) ConfigWidget(widg gi.Widget) {
 	vv.Widget = widg
 	ac := vv.Widget.(*gi.Button)
 	ac.SetProp("border-radius", units.NewValue(4, units.Px))
@@ -802,16 +780,16 @@ func (vv *RegisterValueView) HasAction() bool {
 	return true
 }
 
-func (vv *RegisterValueView) Activate(vp *gi.Viewport2D, dlgRecv ki.Ki, dlgFunc ki.RecvFunc) {
+func (vv *RegisterValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
 	if vv.IsInactive() {
 		return
 	}
 	cur := laser.ToString(vv.Value.Interface())
-	var recv gi.Node2D
+	var recv gi.Widget
 	if vv.Widget != nil {
 		recv = vv.Widget
 	} else {
-		recv = vp.This().(gi.Node2D)
+		recv = sc.This().(gi.Widget)
 	}
 	gi.StringsChooserPopup(AvailRegisterNames, cur, recv, func(recv, send ki.Ki, sig int64, data any) {
 		ac := send.(*gi.Button)

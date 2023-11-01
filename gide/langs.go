@@ -11,9 +11,7 @@ import (
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/goosi"
-	"goki.dev/ki/v2"
 	"goki.dev/pi/v2/filecat"
 )
 
@@ -125,6 +123,7 @@ func (lt *Langs) ViewStd() {
 // other map but works for now..
 var AvailLangsChanged = false
 
+/*
 // LangsProps define the Toolbar and MenuBar for TableView of Langs, e.g., giv.LangsView
 var LangsProps = ki.Props{
 	"MainMenu": ki.PropSlice{
@@ -211,6 +210,7 @@ var LangsProps = ki.Props{
 		}},
 	},
 }
+*/
 
 // StdLangs is the original compiled-in set of standard language options.
 var StdLangs = Langs{

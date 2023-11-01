@@ -293,7 +293,4 @@ const (
 
 	// ArgVarPrompt is a user-prompted variable
 	ArgVarPrompt
-
-	// ArgVarTypesN is the number of ArgVarTypes
-	ArgVarTypesN
 )

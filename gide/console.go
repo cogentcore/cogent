@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
 )
 
@@ -60,8 +61,8 @@ func (cn *Console) Init(logFile string) {
 	os.Stdout = cn.StdoutWrite
 	os.Stderr = cn.StderrWrite
 	log.SetOutput(cn.StderrWrite)
-	cn.Buf = &texteditor.Buf{}
-	cn.Buf.InitName(cn.Buf, "console-buf")
+	cn.Buf = texteditor.NewBuf()
+	cn.Buf.Filename = gi.FileName("console-buf")
 	if logFile != "" {
 		cn.LogWrite, _ = os.Create(logFile)
 	}

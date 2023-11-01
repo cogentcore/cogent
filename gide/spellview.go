@@ -5,11 +5,12 @@
 package gide
 
 import (
-	"fmt"
 	"strings"
 
+	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
-	"goki.dev/girl/styles"
+	"goki.dev/girl/states"
+	"goki.dev/goosi/events"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/spell"
 
@@ -65,7 +66,7 @@ func (sv *SpellView) SpellAction() {
 //    GUI config
 
 // Config configures the view
-func (sv *SpellView) Config(ge Gide, atv *TextView) {
+func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextView) {
 	sv.Gide = ge
 	sv.Text = atv
 	sv.CurLn = 0
@@ -74,10 +75,10 @@ func (sv *SpellView) Config(ge Gide, atv *TextView) {
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
-	config.Add(gi.KiT_Toolbar, "spellbar")
-	config.Add(gi.KiT_Toolbar, "unknownbar")
-	config.Add(gi.KiT_Toolbar, "changebar")
-	config.Add(giv.KiT_SliceView, "suggest")
+	config.Add(gi.ToolbarType, "spellbar")
+	config.Add(gi.ToolbarType, "unknownbar")
+	config.Add(gi.ToolbarType, "changebar")
+	config.Add(giv.SliceViewType, "suggest")
 	mods, updt := sv.ConfigChildren(config)
 	if !mods {
 		updt = sv.UpdateStart()
@@ -164,80 +165,70 @@ func (sv *SpellView) ConfigToolbar() {
 	chgbar.SetStretchMaxWidth()
 
 	// spell toolbar
-	spbar.AddAction(gi.ActOpts{Label: "Check Current File", Tooltip: "spell check the current file"},
-		sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-			svv.SpellAction()
+	gi.NewButton(spbar).SetText("Check Current File").SetTooltip("spell check the current file").
+		OnClick(func(e events.Event) {
+			sv.SpellAction()
 		})
 
-	train := spbar.AddAction(gi.ActOpts{Label: "Train", Tooltip: "add additional text to the training corpus"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-		svv.TrainAction()
-	})
-	train.SetProp("horizontal-align", styles.AlignRight)
+	gi.NewButton(spbar).SetText("Train").SetTooltip("add additional text to the training corpus").
+		OnClick(func(e events.Event) {
+			sv.TrainAction()
+		})
+	// todo:
+	// train.SetProp("horizontal-align", styles.AlignRight)
 
 	// unknown toolbar
 
-	unknown := unknbar.AddNewChild(gi.KiT_TextField, "unknown-str").(*gi.TextField)
+	unknown := gi.NewTextField(unknbar, "unknown-str").SetTooltip("Unknown word")
 	unknown.SetStretchMaxWidth()
-	unknown.Tooltip = "Unknown word"
-	unknown.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-	})
 	tf := sv.UnknownText()
 	if tf != nil {
-		tf.SetInactive()
+		tf.SetState(true, states.ReadOnly)
 	}
 
-	unknbar.AddAction(gi.ActOpts{Name: "skip", Label: "Skip"}, sv.This(),
-		func(recv, send ki.Ki, sig int64, data any) {
-			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-			svv.SkipAction()
+	gi.NewButton(unknbar).SetText("Skip").
+		OnClick(func(e events.Event) {
+			sv.SkipAction()
 		})
 
-	unknbar.AddAction(gi.ActOpts{Name: "ignore", Label: "Ignore"}, sv.This(),
-		func(recv, send ki.Ki, sig int64, data any) {
-			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-			svv.IgnoreAction()
+	gi.NewButton(unknbar).SetText("Ignore").
+		OnClick(func(e events.Event) {
+			sv.IgnoreAction()
 		})
 
-	unknbar.AddAction(gi.ActOpts{Name: "learn", Label: "Learn"}, sv.This(),
-		func(recv, send ki.Ki, sig int64, data any) {
-			svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-			svv.LearnAction()
+	gi.NewButton(unknbar).SetText("Learn").
+		OnClick(func(e events.Event) {
+			sv.LearnAction()
 		})
 
 	// change toolbar
-	changestr := chgbar.AddNewChild(gi.KiT_TextField, "change-str").(*gi.TextField)
+	changestr := gi.NewTextField(chgbar, "change-str").SetTooltip("This string will replace the unknown word in text")
 	changestr.SetStretchMaxWidth()
-	changestr.Tooltip = "This string will replace the unknown word in text"
-	changestr.TextFieldSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-	})
 
-	chgbar.AddAction(gi.ActOpts{Name: "change", Label: "Change", Tooltip: "change the unknown word to the selected suggestion"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-		svv.ChangeAction()
-	})
+	gi.NewButton(chgbar).SetText("Change").SetTooltip("change the unknown word to the selected suggestion").
+		OnClick(func(e events.Event) {
+			sv.ChangeAction()
+		})
 
-	chgbar.AddAction(gi.ActOpts{Name: "change-all", Label: "Change All", Tooltip: "change all instances of the unknown word in this document"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		svv, _ := recv.Embed(KiT_SpellView).(*SpellView)
-		svv.ChangeAllAction()
-	})
+	gi.NewButton(chgbar).SetText("Change All").SetTooltip("change all instances of the unknown word in this document").
+		OnClick(func(e events.Event) {
+			sv.ChangeAllAction()
+		})
 
 	// suggest toolbar
 	suggest := sv.SuggestView()
 	sv.Suggest = []string{"                                              "}
-	suggest.SetInactive()
+	suggest.SetState(true, states.ReadOnly)
 	suggest.SetProp("index", false)
 	suggest.SetSlice(&sv.Suggest)
-	suggest.SetStretchMaxWidth()
-	suggest.SetStretchMaxHeight()
-	suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data any) {
-		svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
-		idx := svv.SelectedIdx
-		if idx >= 0 && idx < len(sv.Suggest) {
-			sv.AcceptSuggestion(sv.Suggest[svv.SelectedIdx])
-		}
-	})
+	suggest.SetStretchMax()
+	// suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data any) {
+	// 	svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
+	// 	idx := svv.SelectedIdx
+	// 	if idx >= 0 && idx < len(sv.Suggest) {
+	// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIdx])
+	// 	}
+	// })
 }
 
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it
@@ -272,7 +263,8 @@ func (sv *SpellView) CheckNext() {
 	}
 	if done {
 		tv.ClearHighlights()
-		gi.PromptDialog(sv.Viewport, gi.DlgOpts{Title: "Spelling Check Complete", Prompt: fmt.Sprintf("End of file, spelling check complete")}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.NewDialog(sv).Title("Spelling Check Complete").
+			Prompt("End of file, spelling check complete").Modal(true).Ok().Run()
 		return
 	}
 	sv.UnkLex = sv.Errs[sv.CurIdx]
@@ -291,7 +283,6 @@ func (sv *SpellView) CheckNext() {
 	}
 
 	sugview := sv.SuggestView()
-	sugview.SetFullReRender()
 	sugview.Slice = &sv.Suggest
 	sugview.Update()
 
@@ -321,7 +312,7 @@ func (sv *SpellView) ChangeAction() {
 	st := sv.UnkStartPos()
 	en := sv.UnkEndPos()
 	ct := sv.ChangeText()
-	tv.Buf.ReplaceText(st, en, st, ct.Text(), giv.EditSignal, giv.ReplaceNoMatchCase)
+	tv.Buf.ReplaceText(st, en, st, ct.Text(), texteditor.EditSignal, texteditor.ReplaceNoMatchCase)
 	nwrs := tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
 	if len(nwrs) == len(sv.Errs)-1 && sv.CurIdx > 0 {  // Adjust got rid of changed one..
 		sv.CurIdx--
@@ -347,15 +338,18 @@ func (sv *SpellView) ChangeAllAction() {
 
 // TrainAction allows you to train on additional text files and also to rebuild the spell model
 func (sv *SpellView) TrainAction() {
-	vp := sv.Viewport
-	giv.FileViewDialog(vp, "", ".txt", giv.DlgOpts{Title: "Select a Text File to Add to Corpus"}, nil,
-		vp.Win, func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(gi.DialogAccepted) {
-				dlg, _ := send.(*gi.Dialog)
-				filepath := giv.FileViewDialogValue(dlg)
-				gi.AddToSpellModel(filepath)
-			}
-		})
+	cur := ""
+	d := gi.NewDialog(sv).Title("Select a Text File to Add to Corpus").FullWindow(true)
+	fv := giv.NewFileView(d).SetFilename(cur, ".txt")
+	fv.OnSelect(func(e events.Event) {
+		cur = fv.SelectedFile()
+	}).OnDoubleClick(func(e events.Event) {
+		cur = fv.SelectedFile()
+		d.AcceptDialog()
+	})
+	d.Cancel().Ok().OnAccept(func(e events.Event) {
+		gi.AddToSpellModel(cur)
+	}).Run()
 }
 
 // UnkStartPos returns the start position of the current unknown word
@@ -403,17 +397,17 @@ func (sv *SpellView) AcceptSuggestion(s string) {
 
 func (sv *SpellView) Destroy() {
 	tv := sv.Text
-	if tv == nil || tv.Buf == nil || tv.IsDeleted() || tv.IsDestroyed() {
+	if tv == nil || tv.Buf == nil || tv.Is(ki.Deleted) {
 		return
 	}
 	tv.ClearHighlights()
 }
 
 // SpellViewProps are style properties for SpellView
-var SpellViewProps = ki.Props{
-	"EnumType:Flag":    gi.KiT_NodeFlags,
-	"background-color": &gi.Prefs.Colors.Background,
-	"color":            &gi.Prefs.Colors.Font,
-	"max-width":        -1,
-	"max-height":       -1,
-}
+// var SpellViewProps = ki.Props{
+// 	"EnumType:Flag":    gi.KiT_NodeFlags,
+// 	"background-color": &gi.Prefs.Colors.Background,
+// 	"color":            &gi.Prefs.Colors.Font,
+// 	"max-width":        -1,
+// 	"max-height":       -1,
+// }

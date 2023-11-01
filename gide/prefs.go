@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gidebug"
@@ -75,12 +76,13 @@ func InitPrefs() {
 	OpenPaths()
 	// OpenIcons()
 	// TheConsole.Init() // must do this manually
-	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
-		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
-			win, func(recv, send ki.Ki, sig int64, data any) {
-				PrefsView(&Prefs)
-			})
-	}
+	// todo:
+	// gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
+	// 	m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Gide Preferences..."},
+	// 		win, func(recv, send ki.Ki, sig int64, data any) {
+	// 			PrefsView(&Prefs)
+	// 		})
+	// }
 }
 
 // Defaults are the defaults for FilePrefs
@@ -235,6 +237,7 @@ func (pf *Preferences) EditRegisters() {
 	RegistersView(&AvailRegisters)
 }
 
+/*
 // PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.PrefsView
 var PreferencesProps = ki.Props{
 	"MainMenu": ki.PropSlice{
@@ -297,6 +300,7 @@ var PreferencesProps = ki.Props{
 		}},
 	},
 }
+*/
 
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project Prefs
@@ -353,7 +357,7 @@ type ProjPrefs struct {
 	Symbols SymbolsParams `view:"-"`
 
 	// directory properties
-	Dirs giv.DirFlagMap `view:"-"`
+	Dirs filetree.DirFlagMap `view:"-"`
 
 	// last register used
 	Register RegisterName `view:"-"`
@@ -405,7 +409,7 @@ func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error {
 
 // RunExecIsExec returns true if the RunExec is actually executable
 func (pf *ProjPrefs) RunExecIsExec() bool {
-	fi, err := giv.NewFileInfo(string(pf.RunExec))
+	fi, err := filecat.NewFileInfo(string(pf.RunExec))
 	if err != nil {
 		return false
 	}

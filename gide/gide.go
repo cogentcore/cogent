@@ -23,16 +23,16 @@ import (
 // by the core gide infrastructure, to allow GideView to be in a separate package.
 // It is not intended to be the full functionality of the GideView.
 type Gide interface {
-	gi.Node2D
+	gi.Widget
 
-	// VPort returns the viewport for the view
-	VPort() *gi.Viewport2D
+	// Scene returns the scene for the view
+	Scene() *gi.Scene
 
 	// ProjPrefs returns the gide.ProjPrefs
 	ProjPrefs() *ProjPrefs
 
 	// FileTree returns the gide.Files file tree
-	FileTree() *giv.FileTree
+	FileTree() *filetree.Tree
 
 	// LastSaveTime returns the time stamp when a file was last saved within project --
 	// can be used for dirty flag state relative to other time stamps.
@@ -53,7 +53,7 @@ type Gide interface {
 	SetStatus(msg string)
 
 	// SelectTabByName Selects given main tab, and returns all of its contents as well.
-	SelectTabByName(label string) gi.Node2D
+	SelectTabByName(label string) gi.Widget
 
 	// FocusOnTabs moves keyboard focus to Tabs panel -- returns false if nothing at that tab
 	FocusOnTabs() bool

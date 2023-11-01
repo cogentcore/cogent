@@ -55,7 +55,7 @@ Version: ` + pi.VersionInfo())
 	// 	}
 	// }
 
-	recv := gi.Node2DBase{}
+	recv := gi.WidgetBase{}
 	recv.InitName(&recv, "pie_dummy")
 
 	inQuitPrompt := false

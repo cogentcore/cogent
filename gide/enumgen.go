@@ -10,11 +10,11 @@ import (
 	"goki.dev/enums"
 )
 
-var _ArgVarTypesValues = []ArgVarTypes{0, 1, 2, 3, 4, 5, 6}
+var _ArgVarTypesValues = []ArgVarTypes{0, 1, 2, 3, 4, 5}
 
 // ArgVarTypesN is the highest valid value
 // for type ArgVarTypes, plus one.
-const ArgVarTypesN ArgVarTypes = 7
+const ArgVarTypesN ArgVarTypes = 6
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
@@ -26,7 +26,6 @@ func _ArgVarTypesNoOp() {
 	_ = x[ArgVarPos-(3)]
 	_ = x[ArgVarText-(4)]
 	_ = x[ArgVarPrompt-(5)]
-	_ = x[ArgVarTypesN-(6)]
 }
 
 var _ArgVarTypesNameToValueMap = map[string]ArgVarTypes{
@@ -42,8 +41,6 @@ var _ArgVarTypesNameToValueMap = map[string]ArgVarTypes{
 	`text`:   4,
 	`Prompt`: 5,
 	`prompt`: 5,
-	`TypesN`: 6,
-	`typesn`: 6,
 }
 
 var _ArgVarTypesDescMap = map[ArgVarTypes]string{
@@ -53,7 +50,6 @@ var _ArgVarTypesDescMap = map[ArgVarTypes]string{
 	3: `ArgVarPos is a text position`,
 	4: `ArgVarText is text from a buffer`,
 	5: `ArgVarPrompt is a user-prompted variable`,
-	6: `ArgVarTypesN is the number of ArgVarTypes`,
 }
 
 var _ArgVarTypesMap = map[ArgVarTypes]string{
@@ -63,7 +59,6 @@ var _ArgVarTypesMap = map[ArgVarTypes]string{
 	3: `Pos`,
 	4: `Text`,
 	5: `Prompt`,
-	6: `TypesN`,
 }
 
 // String returns the string representation
@@ -141,11 +136,11 @@ func (i *ArgVarTypes) UnmarshalText(text []byte) error {
 	return i.SetString(string(text))
 }
 
-var _FindLocValues = []FindLoc{0, 1, 2, 3, 4}
+var _FindLocValues = []FindLoc{0, 1, 2, 3}
 
 // FindLocN is the highest valid value
 // for type FindLoc, plus one.
-const FindLocN FindLoc = 5
+const FindLocN FindLoc = 4
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
@@ -155,7 +150,6 @@ func _FindLocNoOp() {
 	_ = x[FindLocFile-(1)]
 	_ = x[FindLocDir-(2)]
 	_ = x[FindLocNotTop-(3)]
-	_ = x[FindLocN-(4)]
 }
 
 var _FindLocNameToValueMap = map[string]FindLoc{
@@ -167,8 +161,6 @@ var _FindLocNameToValueMap = map[string]FindLoc{
 	`dir`:    2,
 	`NotTop`: 3,
 	`nottop`: 3,
-	`N`:      4,
-	`n`:      4,
 }
 
 var _FindLocDescMap = map[FindLoc]string{
@@ -176,7 +168,6 @@ var _FindLocDescMap = map[FindLoc]string{
 	1: `FindLocFile only finds in the current active file`,
 	2: `FindLocDir only finds in the directory of the current active file`,
 	3: `FindLocNotTop finds in all open folders *except* the top-level folder`,
-	4: `FindLocN is the number of find locations (scopes)`,
 }
 
 var _FindLocMap = map[FindLoc]string{
@@ -184,7 +175,6 @@ var _FindLocMap = map[FindLoc]string{
 	1: `File`,
 	2: `Dir`,
 	3: `NotTop`,
-	4: `N`,
 }
 
 // String returns the string representation
@@ -262,11 +252,11 @@ func (i *FindLoc) UnmarshalText(text []byte) error {
 	return i.SetString(string(text))
 }
 
-var _KeyFunsValues = []KeyFuns{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22}
+var _KeyFunsValues = []KeyFuns{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}
 
 // KeyFunsN is the highest valid value
 // for type KeyFuns, plus one.
-const KeyFunsN KeyFuns = 23
+const KeyFunsN KeyFuns = 22
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
@@ -294,7 +284,6 @@ func _KeyFunsNoOp() {
 	_ = x[KeyFunSetSplit-(19)]
 	_ = x[KeyFunBuildProj-(20)]
 	_ = x[KeyFunRunProj-(21)]
-	_ = x[KeyFunsN-(22)]
 }
 
 var _KeyFunsNameToValueMap = map[string]KeyFuns{
@@ -342,8 +331,6 @@ var _KeyFunsNameToValueMap = map[string]KeyFuns{
 	`buildproj`:  20,
 	`RunProj`:    21,
 	`runproj`:    21,
-	`sN`:         22,
-	`sn`:         22,
 }
 
 var _KeyFunsDescMap = map[KeyFuns]string{
@@ -369,7 +356,6 @@ var _KeyFunsDescMap = map[KeyFuns]string{
 	19: ``,
 	20: ``,
 	21: ``,
-	22: ``,
 }
 
 var _KeyFunsMap = map[KeyFuns]string{
@@ -395,7 +381,6 @@ var _KeyFunsMap = map[KeyFuns]string{
 	19: `SetSplit`,
 	20: `BuildProj`,
 	21: `RunProj`,
-	22: `sN`,
 }
 
 // String returns the string representation

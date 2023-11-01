@@ -24,6 +24,7 @@ import (
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/keyfun"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
@@ -134,7 +135,7 @@ func init() {
 ////////////////////////////////////////////////////////
 // Gide interface
 
-func (ge *GideView) VPort() *gi.Viewport2D {
+func (ge *GideView) Scene() *gi.Scene {
 	return ge.Viewport
 }
 
@@ -604,8 +605,8 @@ func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 
 // SetActiveTextView sets the given textview as the active one, and returns its index
 func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	idx := ge.TextViewIndex(av)
 	if idx < 0 {
@@ -625,8 +626,8 @@ func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
 // SetActiveTextViewIdx sets the given view index as the currently-active
 // TextView -- returns that textview
 func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	if idx < 0 || idx >= NTextViews {
 		log.Printf("GideView SetActiveTextViewIdx: text view index out of range: %v\n", idx)
@@ -664,8 +665,8 @@ func (ge *GideView) SwapTextViews() bool {
 	if !ge.PanelIsOpen(TextView1Idx) || !ge.PanelIsOpen(TextView1Idx+1) {
 		return false
 	}
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	tva := ge.TextViewByIndex(0)
 	tvb := ge.TextViewByIndex(1)
@@ -837,8 +838,8 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *filetree.Node)
 	if fn.IsDir() {
 		return
 	}
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	if tv.IsChanged() {
 		ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
@@ -858,8 +859,8 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *filetree.Node)
 // buffer if not already opened) -- if already being viewed, that is
 // activated, returns text view and index
 func (ge *GideView) NextViewFileNode(fn *filetree.Node) (*gide.TextView, int) {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	tv, idx, ok := ge.TextViewForFileNode(fn)
 	if ok {
@@ -929,8 +930,8 @@ func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 // ViewFile views file in an existing TextView if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
 func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
@@ -949,8 +950,8 @@ func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
 
 // ViewFileInIdx views file in given text view index
 func (ge *GideView) ViewFileInIdx(fnm gi.FileName, idx int) (*gide.TextView, int, bool) {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
@@ -964,8 +965,8 @@ func (ge *GideView) ViewFileInIdx(fnm gi.FileName, idx int) (*gide.TextView, int
 // LinkViewFileNode opens the file node in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (ge *GideView) LinkViewFileNode(fn *filetree.Node) (*gide.TextView, int) {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	if ge.PanelIsOpen(TextView2Idx) {
 		ge.SetActiveTextViewIdx(1)
@@ -1010,7 +1011,7 @@ func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextView, error) {
 }
 
 // GideViewOpenNodes gets list of open nodes for submenu-func
-func GideViewOpenNodes(it any, vp *gi.Viewport2D) []string {
+func GideViewOpenNodes(it any, sc *gi.Scene) []string {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return nil
@@ -1362,8 +1363,8 @@ func (ge *GideView) CurPanel() int {
 
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
 func (ge *GideView) FocusOnPanel(panel int) bool {
-	wupdt := ge.TopUpdateStart()
-	defer ge.TopUpdateEnd(wupdt)
+	wupdt := ge.UpdateStart()
+	defer ge.UpdateEnd(wupdt)
 
 	sv := ge.SplitView()
 	win := ge.ParentWindow()
@@ -1427,19 +1428,19 @@ func (ge *GideView) FocusPrevPanel() {
 //    Tabs
 
 // TabByName returns a tab with given name, nil if not found.
-func (ge *GideView) TabByName(label string) gi.Node2D {
+func (ge *GideView) TabByName(label string) gi.Widget {
 	tv := ge.Tabs()
 	return tv.TabByName(label)
 }
 
 // TabByNameTry returns a tab with given name, error if not found.
-func (ge *GideView) TabByNameTry(label string) (gi.Node2D, error) {
+func (ge *GideView) TabByNameTry(label string) (gi.Widget, error) {
 	tv := ge.Tabs()
 	return tv.TabByNameTry(label)
 }
 
 // SelectTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *GideView) SelectTabByName(label string) gi.Node2D {
+func (ge *GideView) SelectTabByName(label string) gi.Widget {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
@@ -1458,7 +1459,7 @@ func (ge *GideView) RecycleTabTextView(label string, sel bool) *texteditor.Edito
 	}
 	updt := tv.UpdateStart()
 	tv.SetFullReRender()
-	ly := tv.RecycleTab(label, gi.KiT_Layout, sel).Embed(gi.KiT_Layout).(*gi.Layout)
+	ly := tv.RecycleTab(label, gi.LayoutType, sel).Embed(gi.LayoutType).(*gi.Layout)
 	txv := gide.ConfigOutputTextView(ly)
 	tv.UpdateEnd(updt)
 	return txv
@@ -1544,7 +1545,7 @@ func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool,
 }
 
 // ExecCmds gets list of available commands for current active file, as a submenu-func
-func ExecCmds(it any, vp *gi.Viewport2D) [][]string {
+func ExecCmds(it any, sc *gi.Scene) [][]string {
 	ge, ok := it.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ok {
 		return nil
@@ -1851,12 +1852,12 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
 	tb.Stat() // update markup
 
-	tlv := frame.InsertNewChild(gi.KiT_Layout, prIdx+1, "text-lay").(*gi.Layout)
+	tlv := frame.InsertNewChild(gi.LayoutType, prIdx+1, "text-lay").(*gi.Layout)
 	tlv.SetProp("width", units.NewCh(80))
 	tlv.SetProp("height", units.NewEm(40))
 	tlv.SetStretchMax()
-	tv := giv.AddNewTextView(tlv, "text-view")
-	tv.Viewport = dlg.Embed(gi.KiT_Viewport2D).(*gi.Viewport2D)
+	tv := giv.NewTextView(tlv, "text-view")
+	tv.Viewport = dlg.Embed(gi.KiT_Viewport2D).(*gi.Scene)
 	tv.SetInactive()
 	tv.SetProp("font-family", gi.Prefs.MonoFont)
 	tv.SetBuf(tb)
@@ -1869,7 +1870,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	if bbox == nil {
 		bbox = dlg.AddButtonBox(frame)
 	}
-	ofb := gi.AddNewButton(bbox, "open-file")
+	ofb := gi.NewButton(bbox, "open-file")
 	ofb.SetText("Open File")
 	ofb.SetIcon("file-open")
 	ofb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data any) {
@@ -1878,7 +1879,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 			dlg.Close()
 		}
 	})
-	cpb := gi.AddNewButton(bbox, "copy-to-clip")
+	cpb := gi.NewButton(bbox, "copy-to-clip")
 	cpb.SetText("Copy To Clipboard")
 	cpb.SetIcon("copy")
 	cpb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data any) {
@@ -2449,9 +2450,9 @@ func (ge *GideView) Config() {
 	updt := ge.UpdateStart()
 	ge.Lay = gi.LayoutVert
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	gi.AddNewToolbar(ge, "toolbar")
-	gi.AddNewSplitView(ge, "splitview")
-	gi.AddNewFrame(ge, "statusbar", gi.LayoutHoriz)
+	gi.NewToolbar(ge, "toolbar")
+	gi.NewSplitView(ge, "splitview")
+	gi.NewFrame(ge, "statusbar", gi.LayoutHoriz)
 
 	ge.UpdateFiles()
 	ge.ConfigSplitView()
@@ -2526,7 +2527,7 @@ func (ge *GideView) Toolbar() *gi.Toolbar {
 
 // StatusBar returns the statusbar widget
 func (ge *GideView) StatusBar() *gi.Frame {
-	if ge.This() == nil || ge.IsDeleted() || ge.IsDestroyed() || !ge.HasChildren() {
+	if ge.This() == nil || ge.Is(ki.Deleted) || ge.IsDestroyed() || !ge.HasChildren() {
 		return nil
 	}
 	return ge.ChildByName("statusbar", 2).(*gi.Frame)
@@ -2534,7 +2535,7 @@ func (ge *GideView) StatusBar() *gi.Frame {
 
 // StatusLabel returns the statusbar label widget
 func (ge *GideView) StatusLabel() *gi.Label {
-	return ge.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
+	return ge.StatusBar().Child(0).Embed(gi.LabelType).(*gi.Label)
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -2548,7 +2549,7 @@ func (ge *GideView) ConfigStatusBar() {
 	sb.SetProp("overflow", "hidden") // no scrollbars!
 	sb.SetProp("margin", 0)
 	sb.SetProp("padding", 0)
-	lbl := sb.AddNewChild(gi.KiT_Label, "sb-lbl").(*gi.Label)
+	lbl := sb.NewChild(gi.LabelType, "sb-lbl").(*gi.Label)
 	lbl.SetStretchMaxWidth()
 	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
 	lbl.SetProp("vertical-align", styles.AlignTop)
@@ -2566,13 +2567,13 @@ func (ge *GideView) ConfigToolbar() {
 	tb.SetStretchMaxWidth()
 	giv.ToolbarView(ge, ge.Viewport, tb)
 	gi.NewSeparator(tb, "sepmod")
-	sm := tb.AddNewChild(gi.KiT_CheckBox, "go-mod").(*gi.CheckBox)
+	sm := tb.NewChild(gi.SwitchType, "go-mod").(*gi.Switch)
 	sm.SetChecked(ge.Prefs.GoMod)
 	sm.SetText("Go Mod")
 	sm.Tooltip = "Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode"
 	sm.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 		if sig == int64(gi.ButtonToggled) {
-			cb := send.(*gi.CheckBox)
+			cb := send.(*gi.Switch)
 			ge.Prefs.GoMod = cb.IsChecked()
 			gide.SetGoMod(ge.Prefs.GoMod)
 		}
@@ -2592,9 +2593,9 @@ func (ge *GideView) ConfigSplitView() {
 		return
 	}
 	updt := split.UpdateStart()
-	ftfr := gi.AddNewFrame(split, "filetree", gi.LayoutVert)
+	ftfr := gi.NewFrame(split, "filetree", gi.LayoutVert)
 	ftfr.SetReRenderAnchor()
-	ft := ftfr.AddNewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
+	ft := ftfr.NewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
 	ft.SetFlag(int(giv.TreeViewFlagUpdtRoot)) // filetree needs this
 	ft.OpenDepth = 4
 	ge.FilesView = ft
@@ -2620,18 +2621,18 @@ func (ge *GideView) ConfigSplitView() {
 
 	for i := 0; i < NTextViews; i++ {
 		txnm := fmt.Sprintf("%d", i)
-		txly := gi.AddNewLayout(split, "textlay-"+txnm, gi.LayoutVert)
+		txly := gi.NewLayout(split, "textlay-"+txnm, gi.LayoutVert)
 		txly.SetStretchMaxWidth()
 		txly.SetStretchMaxHeight()
 		txly.SetReRenderAnchor() // anchor here: SplitView will only anchor Frame, but we just have layout
 
 		// need to sandbox the button in its own layer to isolate FullReRender issues
-		txbly := gi.AddNewLayout(txly, "butlay-"+txnm, gi.LayoutVert)
+		txbly := gi.NewLayout(txly, "butlay-"+txnm, gi.LayoutVert)
 		txbly.SetProp("spacing", units.NewEm(0))
 		txbly.SetStretchMaxWidth()
 		txbly.SetReRenderAnchor() // anchor here!
 
-		txbut := gi.AddNewMenuButton(txbly, "textbut-"+txnm)
+		txbut := gi.NewMenuButton(txbly, "textbut-"+txnm)
 		txbut.SetStretchMaxWidth()
 		txbut.SetText("textview: " + txnm)
 		txbut.MakeMenuFunc = ge.TextViewButtonMenu
@@ -2648,13 +2649,13 @@ func (ge *GideView) ConfigSplitView() {
 			}
 		})
 
-		txily := gi.AddNewLayout(txly, "textilay-"+txnm, gi.LayoutVert)
+		txily := gi.NewLayout(txly, "textilay-"+txnm, gi.LayoutVert)
 		txily.SetStretchMaxWidth()
 		txily.SetStretchMaxHeight()
 		txily.SetMinPrefWidth(units.NewCh(80))
 		txily.SetMinPrefHeight(units.NewEm(40))
 
-		ted := gide.AddNewTextView(txily, "textview-"+txnm)
+		ted := gide.NewTextView(txily, "textview-"+txnm)
 		ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 			gee, _ := recv.Embed(KiT_GideView).(*GideView)
 			tee := send.Embed(gide.KiT_TextView).(*gide.TextView)
@@ -2665,7 +2666,7 @@ func (ge *GideView) ConfigSplitView() {
 	ge.ConfigTextViews()
 	ge.UpdateTextButtons()
 
-	mtab := gi.AddNewTabView(split, "tabs")
+	mtab := gi.NewTabView(split, "tabs")
 	mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
 		gee, _ := recv.Embed(KiT_GideView).(*GideView)
 		tvsig := gi.TabViewSignals(sig)
@@ -3047,8 +3048,8 @@ var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei any, act *
 	}
 })
 
+/*
 var GideViewProps = ki.Props{
-	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Prefs.Colors.Background,
 	"color":            &gi.Prefs.Colors.Font,
 	"max-width":        -1,
@@ -3688,6 +3689,7 @@ var GideViewProps = ki.Props{
 		}},
 	},
 }
+*/
 
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project window
@@ -3737,12 +3739,12 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 
 	win := gi.NewMainWindow(winm, wintitle, width, height)
 
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	sc := win.WinViewport2D()
+	updt := sc.UpdateStart()
 
 	mfr := win.SetMainFrame()
-	ge := mfr.AddNewChild(KiT_GideView, "gide").(*GideView)
-	ge.Viewport = vp
+	ge := mfr.NewChild(KiT_GideView, "gide").(*GideView)
+	ge.Viewport = sc
 
 	if doPath {
 		ge.OpenPath(gi.FileName(path))
@@ -3773,7 +3775,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) (*gi.Window, *GideVie
 	//
 	// win.MainMenuUpdated()
 
-	vp.UpdateEndNoSig(updt)
+	sc.UpdateEndNoSig(updt)
 
 	win.GoStartEventLoop()
 

@@ -8,12 +8,10 @@ import (
 	"image"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/keyfun"
 	"goki.dev/gi/v2/texteditor"
+	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
 	"goki.dev/girl/units"
-	"goki.dev/ki/v2"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/token"
 )
@@ -24,13 +22,9 @@ type TextView struct {
 	texteditor.Editor
 }
 
-// AddNewTextView adds a new textview to given parent node, with given name.
-func AddNewTextView(parent ki.Ki, name string) *TextView {
-	return parent.AddNewChild(KiT_TextView, name).(*TextView)
-}
-
+/*
 // MakeContextMenu builds the textview context menu
-func (tv *TextView) MakeContextMenu(m *gi.Menu) {
+func (tv *TextView) MakeContextMenu(m *gi.Scene) {
 	ac := m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: keyfun.Copy},
 		tv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			txf := recv.Embed(KiT_TextView).(*TextView)
@@ -92,16 +86,17 @@ func (tv *TextView) MakeContextMenu(m *gi.Menu) {
 			})
 	}
 }
+*/
 
-func (tv *TextView) FocusChanged2D(change gi.FocusChanges) {
-	tv.TextView.FocusChanged2D(change)
-	ge, ok := ParentGide(tv)
-	if ok {
-		if change == gi.FocusGot || change == gi.FocusActive {
-			ge.SetActiveTextView(tv)
-		}
-	}
-}
+// func (tv *TextView) FocusChanged2D(change gi.FocusChanges) {
+// 	tv.TextView.FocusChanged2D(change)
+// 	ge, ok := ParentGide(tv)
+// 	if ok {
+// 		if change == gi.FocusGot || change == gi.FocusActive {
+// 			ge.SetActiveTextView(tv)
+// 		}
+// 	}
+// }
 
 // CurDebug returns the current debugger, true if it is present
 func (tv *TextView) CurDebug() (*DebugView, bool) {
@@ -281,28 +276,15 @@ func (tv *TextView) ConnectEvents2D() {
 }
 
 // ConfigOutputTextView configures a command-output textview within given parent layout
-func ConfigOutputTextView(ly *gi.Layout) *texteditor.Editor {
-	updt := ly.UpdateStart()
-	ly.Lay = gi.LayoutVert
-	ly.SetStretchMax()
-	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
-	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
-	var tv *texteditor.Editor
-	if ly.HasChildren() {
-		tv = ly.Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
-	} else {
-		ly.SetChildAdded()
-		tv = ly.AddNewChild(giv.KiT_TextView, ly.Nm).(*texteditor.Editor)
-	}
-	tv.SetProp("line-nos", false)
-	// if ge.Prefs.Editor.WordWrap {
-	tv.SetProp("white-space", styles.WhiteSpacePreWrap)
-	// } else {
-	// 	tv.SetProp("white-space", gist.WhiteSpacePre)
-	// }
-	tv.SetProp("tab-size", 8) // std for output
-	tv.SetProp("font-family", gi.Prefs.MonoFont)
-	tv.SetInactive()
-	ly.UpdateEnd(updt)
-	return tv
+func ConfigOutputTextView(tv *texteditor.Editor) {
+	tv.SetMinPrefWidth(units.NewValue(20, units.Ch))
+	tv.SetMinPrefHeight(units.NewValue(10, units.Ch))
+	tv.SetFlag(false, texteditor.EditorHasLineNos)
+	tv.Style(func(s *styles.Style) {
+		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
+		s.Text.TabSize = 8
+		s.Font.Family = gi.Prefs.MonoFont
+	})
+	tv.SetState(true, states.ReadOnly)
+
 }

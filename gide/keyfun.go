@@ -53,7 +53,6 @@ const (
 	KeyFunSetSplit           // set named splitter config
 	KeyFunBuildProj          // build overall project
 	KeyFunRunProj            // run overall project
-	KeyFunsN
 )
 
 // KeySeq defines a multiple-key sequence to initiate a key function
@@ -103,7 +102,7 @@ var ActiveKeyMapName KeyMapName
 
 // Needs2KeyMap is a map of the starting key sequences that require a second
 // key -- auto-generated from active keymap
-var Needs2KeyMap gi.KeyMap
+var Needs2KeyMap keyfun.Map
 
 // SetActiveKeyMap sets the current ActiveKeyMap, calling Update on the map
 // prior to setting it to ensure that it is a valid, complete map
@@ -246,7 +245,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 
 	// now collect all the Needs2 cases, and make sure there aren't any
 	// "needs1" that start with needs2!
-	Needs2KeyMap = make(gi.KeyMap)
+	Needs2KeyMap = make(keyfun.Map)
 
 	for key := range *km {
 		if key.Key2 != "" {

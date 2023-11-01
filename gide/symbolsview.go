@@ -58,8 +58,8 @@ func (sv *SymbolsView) Config(ge Gide, sp SymbolsParams) {
 	sv.Lay = gi.LayoutVert
 	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
-	config.Add(gi.KiT_Toolbar, "sym-toolbar")
-	config.Add(gi.KiT_Frame, "sym-frame")
+	config.Add(gi.ToolbarType, "sym-toolbar")
+	config.Add(gi.FrameType, "sym-frame")
 	mods, updt := sv.ConfigChildren(config)
 	if !mods {
 		updt = sv.UpdateStart()
@@ -104,10 +104,10 @@ func (sv *SymbolsView) ConfigToolbar() {
 			svv, _ := recv.Embed(KiT_SymbolsView).(*SymbolsView)
 			svv.RefreshAction()
 		})
-	sl := svbar.AddNewChild(gi.KiT_Label, "scope-lbl").(*gi.Label)
+	sl := svbar.NewChild(gi.LabelType, "scope-lbl").(*gi.Label)
 	sl.SetText("Scope:")
 	sl.Tooltip = "scope symbols to:"
-	scb := svbar.AddNewChild(gi.KiT_ComboBox, "scope-combo").(*gi.Chooser)
+	scb := svbar.NewChild(gi.KiT_ComboBox, "scope-combo").(*gi.Chooser)
 	scb.SetText("Scope")
 	scb.Tooltip = sl.Tooltip
 	scb.ItemsFromEnum(Kit_SymbolsViewScope, false, 0)
@@ -120,10 +120,10 @@ func (sv *SymbolsView) ConfigToolbar() {
 	// 	sv.SearchText().GrabFocus()
 	// })
 
-	slbl := svbar.AddNewChild(gi.KiT_Label, "search-lbl").(*gi.Label)
+	slbl := svbar.NewChild(gi.LabelType, "search-lbl").(*gi.Label)
 	slbl.SetText("Search:")
 	slbl.Tooltip = "narrow symbols list to symbols containing text you enter here"
-	stxt := svbar.AddNewChild(gi.KiT_TextField, "search-str").(*gi.TextField)
+	stxt := svbar.NewChild(gi.TextField, "search-str").(*gi.TextField)
 	stxt.SetStretchMaxWidth()
 	stxt.Tooltip = "narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched"
 	stxt.SetActiveState(true)
@@ -164,7 +164,7 @@ func (sv *SymbolsView) ConfigTree(scope SymbolsViewScope) {
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")
 
-		tv = sfr.AddNewChild(KiT_SymTreeView, "treeview").(*SymTreeView)
+		tv = sfr.NewChild(KiT_SymTreeView, "treeview").(*SymTreeView)
 		tv.SetRootNode(sv.Syms)
 		tv.TreeViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			if data == nil || sig != int64(giv.TreeViewSelected) {
@@ -297,7 +297,7 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 				}
 			}
 			if symMatch(sy.Name, match, ignoreCase) || len(methods) > 0 || len(fields) > 0 {
-				kn := sn.AddNewChild(KiT_SymNode, sy.Name).(*SymNode)
+				kn := sn.NewChild(KiT_SymNode, sy.Name).(*SymNode)
 				kn.Symbol = *sy
 				sort.Slice(fields, func(i, j int) bool {
 					return fields[i].Name < fields[j].Name
@@ -307,12 +307,12 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 				})
 				for _, fld := range fields {
 					dnm := fld.Label()
-					fn := kn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
+					fn := kn.NewChild(KiT_SymNode, dnm).(*SymNode)
 					fn.Symbol = fld
 				}
 				for _, mth := range methods {
 					dnm := mth.Label()
-					mn := kn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
+					mn := kn.NewChild(KiT_SymNode, dnm).(*SymNode)
 					mn.Symbol = mth
 				}
 			}
@@ -320,24 +320,24 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 	}
 	for _, fn := range funcs {
 		dnm := fn.Label()
-		fk := sn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
+		fk := sn.NewChild(KiT_SymNode, dnm).(*SymNode)
 		fk.Symbol = fn
 	}
 	for _, vr := range gvars {
 		dnm := vr.Label()
-		vk := sn.AddNewChild(KiT_SymNode, dnm).(*SymNode)
+		vk := sn.NewChild(KiT_SymNode, dnm).(*SymNode)
 		vk.Symbol = vr
 	}
 }
 
 // SymbolsViewProps are style properties for SymbolsView
-var SymbolsViewProps = ki.Props{
-	"EnumType:Flag":    gi.KiT_NodeFlags,
-	"background-color": &gi.Prefs.Colors.Background,
-	"color":            &gi.Prefs.Colors.Font,
-	"max-width":        -1,
-	"max-height":       -1,
-}
+// var SymbolsViewProps = ki.Props{
+// 	"EnumType:Flag":    gi.KiT_NodeFlags,
+// 	"background-color": &gi.Prefs.Colors.Background,
+// 	"color":            &gi.Prefs.Colors.Font,
+// 	"max-width":        -1,
+// 	"max-height":       -1,
+// }
 
 /////////////////////////////////////////////////////////////////////////////
 // SymNode

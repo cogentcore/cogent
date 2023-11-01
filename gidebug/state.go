@@ -445,7 +445,4 @@ const (
 	// Finished means the process has finished running.
 	// See console for output and return value etc
 	Finished
-
-	// StatusN is the number of find locations (scopes)
-	StatusN
 )

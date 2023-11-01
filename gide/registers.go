@@ -11,9 +11,7 @@ import (
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/goosi"
-	"goki.dev/ki/v2"
 )
 
 // Registers is a list of named strings
@@ -70,7 +68,8 @@ func (lt *Registers) SaveJSON(filename gi.FileName) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.NewDialog(nil).Title("Could not Save to File").
+			Prompt(err.Error()).Modal(true).Ok().Run()
 		log.Println(err)
 	}
 	return err
@@ -102,6 +101,7 @@ func (lt *Registers) SavePrefs() error {
 // now..
 var AvailRegistersChanged = false
 
+/*
 // RegistersProps define the Toolbar and MenuBar for TableView of Registers
 var RegistersProps = ki.Props{
 	"MainMenu": ki.PropSlice{
@@ -169,3 +169,5 @@ var RegistersProps = ki.Props{
 		}},
 	},
 }
+
+*/

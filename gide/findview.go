@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"html"
 	"net/url"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -18,6 +17,9 @@ import (
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/girl/states"
+	"goki.dev/goosi/events"
+	"goki.dev/icons"
 	"goki.dev/ki/v2"
 	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
@@ -38,9 +40,6 @@ const (
 
 	// FindLocNotTop finds in all open folders *except* the top-level folder
 	FindLocNotTop
-
-	// FindLocN is the number of find locations (scopes)
-	FindLocN
 )
 
 // FindParams are parameters for find / replace
@@ -80,7 +79,7 @@ type FindView struct {
 	Gide Gide `json:"-" xml:"-"`
 
 	// langs value view
-	LangVV giv.ValueView
+	LangVV giv.Value
 
 	// time of last find
 	Time time.Time
@@ -129,8 +128,8 @@ func (fv *FindView) ShowResults(res []FileSearchResults) {
 	}
 	ltxt := bytes.Join(outlns, []byte("\n"))
 	mtxt := bytes.Join(outmus, []byte("\n"))
-	fbuf.SetInactive(true)
-	fbuf.AppendTextMarkup(ltxt, mtxt, giv.EditSignal)
+	fbuf.SetReadOnly(true)
+	fbuf.AppendTextMarkup(ltxt, mtxt, texteditor.EditSignal)
 	ftv.CursorStartDoc()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -185,8 +184,8 @@ func (fv *FindView) ReplaceAction() bool {
 	if !fv.CheckValidRegexp() {
 		return false
 	}
-	wupdt := fv.TopUpdateStart()
-	defer fv.TopUpdateEnd(wupdt)
+	wupdt := fv.UpdateStart()
+	defer fv.UpdateEnd(wupdt)
 
 	fp := fv.Params()
 	fv.SaveReplString(fp.Replace)
@@ -230,10 +229,10 @@ func (fv *FindView) ReplaceAction() bool {
 			rg := tv.Buf.Region(reg.Start, reg.End)
 			b := rg.ToBytes()
 			rb := fv.Re.ReplaceAll(b, []byte(fp.Replace))
-			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), giv.EditSignal, false)
+			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), texteditor.EditSignal, false)
 		} else {
 			// MatchCase only if doing IgnoreCase
-			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, giv.EditSignal, fp.IgnoreCase)
+			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, texteditor.EditSignal, fp.IgnoreCase)
 		}
 
 		// delete the link for the just done replace
@@ -241,7 +240,7 @@ func (fv *FindView) ReplaceAction() bool {
 		st := lex.Pos{Ln: ftvln, Ch: 0}
 		len := len(ftv.Buf.Lines[ftvln])
 		en := lex.Pos{Ln: ftvln, Ch: len}
-		ftv.Buf.DeleteText(st, en, giv.EditSignal)
+		ftv.Buf.DeleteText(st, en, texteditor.EditSignal)
 	}
 
 	tv.ClearHighlights()
@@ -255,10 +254,12 @@ func (fv *FindView) ReplaceAction() bool {
 
 // ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindView) ReplaceAllAction() {
-	gi.PromptDialog(nil, gi.DlgOpts{Title: "Confirm Replace All", Prompt: "Are you sure you want to Replace All?"}, gi.AddOk, gi.AddCancel, fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.DialogAccepted) {
-			fv.ReplaceAll()
-		}
+	d := gi.NewDialog(fv).Title("Confirm Replace All").
+		Prompt("Are you sure you want to Replace All?").
+		Modal(true).Cancel().Ok("Replace All")
+	d.Run()
+	d.OnAccept(func(e events.Event) {
+		fv.ReplaceAll()
 	})
 }
 
@@ -272,7 +273,8 @@ func (fv *FindView) CompileRegexp() bool {
 	var err error
 	fv.Re, err = regexp.Compile(fp.Find)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Regexp is Invalid", Prompt: fmt.Sprintf("The regular expression was invalid: %v", err)}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.NewDialog(fv).Title("Regexp is Invalid").
+			Prompt(fmt.Sprintf("The regular expression was invalid: %v", err)).Modal(true).Ok().Run()
 		return false
 	}
 	return true
@@ -319,11 +321,10 @@ func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	reg.Time.SetTime(fv.Time)
 	reg = tv.Buf.AdjustReg(reg)
 	find := fv.Params().Find
-	giv.PrevISearchString = find
-	tve := tv.Embed(giv.KiT_TextView).(*texteditor.Editor)
+	texteditor.PrevISearchString = find
+	tve := texteditor.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
-	tv.SetNeedsRefresh()
-	tv.RefreshIfNeeded()
+	tv.SetNeedsRender()
 	tv.SetCursorShow(reg.Start)
 	return true
 }
@@ -367,15 +368,19 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
+func (fv *FindView) ConfigWidget(sc *gi.Scene) {
+	// fv.ConfigFindView()
+}
+
 // Config configures the view
-func (fv *FindView) Config(ge Gide) {
+func (fv *FindView) ConfigFindView(ge Gide) {
 	fv.Gide = ge
 	fv.Lay = gi.LayoutVert
 	fv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
-	config.Add(gi.KiT_Toolbar, "findbar")
-	config.Add(gi.KiT_Toolbar, "replbar")
-	config.Add(gi.KiT_Layout, "findtext")
+	config.Add(gi.ToolbarType, "findbar")
+	config.Add(gi.ToolbarType, "replbar")
+	config.Add(gi.LayoutType, "findtext")
 	mods, updt := fv.ConfigChildren(config)
 	if !mods {
 		updt = fv.UpdateStart()
@@ -384,18 +389,18 @@ func (fv *FindView) Config(ge Gide) {
 	fv.ConfigToolbar()
 	ft := fv.FindText()
 	ft.ItemsFromStringList(fp.FindHist, true, 0)
-	ft.SetText(fp.Find)
+	ft.SetCurVal(fp.Find)
 	rt := fv.ReplText()
 	rt.ItemsFromStringList(fp.ReplHist, true, 0)
-	rt.SetText(fp.Replace)
+	rt.SetCurVal(fp.Replace)
 	ib := fv.IgnoreBox()
 	ib.SetChecked(fp.IgnoreCase)
 	rb := fv.RegexpBox()
 	rb.SetChecked(fp.Regexp)
 	cf := fv.LocCombo()
 	cf.SetCurIndex(int(fp.Loc))
-	tvly := fv.TextViewLay()
-	ConfigOutputTextView(tvly)
+	tv := fv.TextView()
+	ConfigOutputTextView(tv)
 	if mods {
 		na := fv.FindNextAct()
 		na.GrabFocus()
@@ -424,13 +429,13 @@ func (fv *FindView) ReplText() *gi.Chooser {
 }
 
 // IgnoreBox returns the ignore case checkbox in toolbar
-func (fv *FindView) IgnoreBox() *gi.CheckBox {
-	return fv.FindBar().ChildByName("ignore-case", 2).(*gi.CheckBox)
+func (fv *FindView) IgnoreBox() *gi.Switch {
+	return fv.FindBar().ChildByName("ignore-case", 2).(*gi.Switch)
 }
 
 // RegexpBox returns the regexp checkbox in toolbar
-func (fv *FindView) RegexpBox() *gi.CheckBox {
-	return fv.FindBar().ChildByName("regexp", 3).(*gi.CheckBox)
+func (fv *FindView) RegexpBox() *gi.Switch {
+	return fv.FindBar().ChildByName("regexp", 3).(*gi.Switch)
 }
 
 // LocCombo returns the loc combobox
@@ -443,14 +448,9 @@ func (fv *FindView) FindNextAct() *gi.Button {
 	return fv.ReplBar().ChildByName("next", 3).(*gi.Button)
 }
 
-// TextViewLay returns the find results TextView layout
-func (fv *FindView) TextViewLay() *gi.Layout {
-	return fv.ChildByName("findtext", 1).(*gi.Layout)
-}
-
-// TextView returns the find results TextView
+// TextViewLay returns the find results TextView
 func (fv *FindView) TextView() *texteditor.Editor {
-	return fv.TextViewLay().Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
+	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
 }
 
 // ConfigToolbar adds toolbar.
@@ -464,151 +464,87 @@ func (fv *FindView) ConfigToolbar() {
 	rb := fv.ReplBar()
 	rb.SetStretchMaxWidth()
 
-	fb.AddAction(gi.ActOpts{Label: "Find:", Tooltip: "Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			fvv.FindAction()
-		})
-
-	finds := fb.AddNewChild(gi.KiT_ComboBox, "find-str").(*gi.Chooser)
-	finds.Editable = true
-	finds.SetStretchMaxWidth()
-	finds.Tooltip = "String to find -- hit enter or tab to update search -- click for history"
-	finds.ConfigParts()
-	finds.ItemsFromStringList(fv.Params().FindHist, true, 0)
-	ftf, _ := finds.TextField()
-	finds.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		cb := send.(*gi.Chooser)
-		fvv.Params().Find = cb.CurVal.(string)
-		fvv.FindAction()
+	gi.NewButton(fb).SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").OnClick(func(e events.Event) {
+		fv.FindAction()
 	})
-	ftf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.TextFieldDone) || sig == int64(gi.TextFieldDeFocused) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			tf := send.(*gi.TextField)
-			fvv.Params().Find = tf.Text()
-			fvv.FindAction()
-		} else if sig == int64(gi.TextFieldCleared) {
+	finds := gi.NewChooser(fb).SetEditable(true).
+		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
+	finds.SetStretchMaxWidth()
+	finds.ItemsFromStringList(fv.Params().FindHist, true, 0)
+	finds.OnChange(func(e events.Event) {
+		fv.Params().Find = finds.CurVal.(string)
+		if fv.Params().Find == "" {
 			tv := fv.Gide.ActiveTextView()
 			if tv != nil {
 				tv.ClearHighlights()
 			}
 			fvtv := fv.TextView()
 			if fvtv != nil {
-				fvtv.Buf.New(0)
+				fvtv.Buf.NewBuf(0)
 			}
+		} else {
+			fv.FindAction()
 		}
 	})
 
-	ic := fb.AddNewChild(gi.KiT_CheckBox, "ignore-case").(*gi.CheckBox)
-	ic.SetText("Ignore Case")
-	ic.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.ButtonToggled) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			cb := send.(*gi.CheckBox)
-			fvv.Params().IgnoreCase = cb.IsChecked()
-		}
+	ic := gi.NewSwitch(fb).SetText("Ignore Case")
+	ic.OnClick(func(e events.Event) {
+		fv.Params().IgnoreCase = ic.StateIs(states.Checked)
+	})
+	rx := gi.NewSwitch(fb).SetText("Regexp").
+		SetTooltip("use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax")
+	rx.OnClick(func(e events.Event) {
+		fv.Params().Regexp = rx.StateIs(states.Checked)
 	})
 
-	rx := fb.AddNewChild(gi.KiT_CheckBox, "regexp").(*gi.CheckBox)
-	rx.SetText("Regexp")
-	rx.Tooltip = "use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax"
-	rx.ButtonSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.ButtonToggled) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			cb := send.(*gi.CheckBox)
-			fvv.Params().Regexp = cb.IsChecked()
-		}
+	locl := gi.NewLabel(fb).SetText("Loc:").
+		SetTooltip("location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser")
+
+	cf := gi.NewChooser(fb).SetTooltip(locl.Tooltip)
+	cf.ItemsFromEnum(fv.Params().Loc, false, 0)
+	cf.OnClick(func(e events.Event) {
+		eval := cf.CurVal.(FindLoc)
+		fv.Params().Loc = eval
 	})
-
-	locl := fb.AddNewChild(gi.KiT_Label, "loc-lbl").(*gi.Label)
-	locl.SetText("Loc:")
-	locl.Tooltip = "location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser"
-	// locl.SetProp("vertical-align", gi.AlignMiddle)
-
-	cf := fb.AddNewChild(gi.KiT_ComboBox, "loc").(*gi.Chooser)
-	cf.SetText("Loc")
-	cf.Tooltip = locl.Tooltip
-	cf.ItemsFromEnum(KiT_FindLoc, false, 0)
-	// todo:
-	// cf.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-	// 	fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-	// 	cb := send.(*gi.Chooser)
-	// 	eval := cb.CurVal.(kit.EnumValue)
-	// 	fvv.Params().Loc = FindLoc(eval.Value)
-	// })
 
 	//////////////// ReplBar
 
-	rb.AddAction(gi.ActOpts{Name: "prev", Icon: "wedge-up", Tooltip: "go to previous result"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			fvv.PrevFind()
+	gi.NewButton(rb).SetIcon(icons.KeyboardArrowUp).SetTooltip("go to previous result").
+		OnClick(func(e events.Event) {
+			fv.PrevFind()
+		})
+	gi.NewButton(rb).SetIcon(icons.KeyboardArrowDown).SetTooltip("go to next result").
+		OnClick(func(e events.Event) {
+			fv.NextFind()
+		})
+	gi.NewButton(rb).SetText("Replace:").SetTooltip("Replace find string with replace string for currently-selected find result").
+		OnClick(func(e events.Event) {
+			fv.ReplaceAction()
 		})
 
-	rb.AddAction(gi.ActOpts{Name: "next", Icon: "wedge-down", Tooltip: "go to next result"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			fvv.NextFind()
-		})
-
-	rb.AddAction(gi.ActOpts{Label: "Replace:", Tooltip: "Replace find string with replace string for currently-selected find result"}, fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		fvv.CompileRegexp()
-		fvv.ReplaceAction()
-	})
-
-	repls := rb.AddNewChild(gi.KiT_ComboBox, "repl-str").(*gi.Chooser)
-	repls.Editable = true
+	repls := gi.NewChooser(rb).SetEditable(true).SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
 	repls.SetStretchMaxWidth()
-	repls.Tooltip = "String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc"
-	repls.ConfigParts()
 	repls.ItemsFromStringList(fv.Params().ReplHist, true, 0)
-	rtf, _ := repls.TextField()
-	repls.ComboSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-		cb := send.(*gi.Chooser)
-		fvv.Params().Replace = cb.CurVal.(string)
+	repls.OnChange(func(e events.Event) {
+		fv.Params().Replace = repls.CurVal.(string)
 	})
-	rtf.TextFieldSig.Connect(fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.TextFieldDone) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			tf := send.(*gi.TextField)
-			fvv.Params().Replace = tf.Text()
-		}
-	})
-	rb.AddAction(gi.ActOpts{Label: "All", Tooltip: "replace all find strings with replace string"},
-		fv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-			fvv.ReplaceAllAction()
+
+	gi.NewButton(rb).SetText("All").SetTooltip("replace all find strings with replace string").
+		OnClick(func(e events.Event) {
+			fv.ReplaceAllAction()
 		})
 
-	langl := rb.AddNewChild(gi.KiT_Label, "lang-lbl").(*gi.Label)
-	langl.SetText("Lang:")
-	langl.Tooltip = "Language(s) to restrict search / replace to"
-	// langl.SetProp("vertical-align", gi.AlignMiddle)
+	langl := gi.NewLabel(rb).SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 
-	fv.LangVV = giv.ToValueView(&fv.Params().Langs, "")
-	fv.LangVV.SetSoloValue(reflect.ValueOf(&fv.Params().Langs))
-	vtyp := fv.LangVV.WidgetType()
-
-	langw := rb.AddNewChild(vtyp, "langs").(gi.Node2D)
-	fv.LangVV.ConfigWidget(langw)
-	langw.AsWidget().Tooltip = langl.Tooltip
-	//	vvb := vv.AsValueViewBase()
-	//	vvb.ViewSig.ConnectOnly(fv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
-	//		fvv, _ := recv.Embed(KiT_FindView).(*FindView)
-	// hmm, langs updated..
-	//	})
-
+	fv.LangVV = giv.NewValue(rb, &fv.Params().Langs)
+	fv.LangVV.AsWidgetBase().SetTooltip(langl.Tooltip)
 }
 
-// FindViewProps are style properties for FindView
-var FindViewProps = ki.Props{
-	"EnumType:Flag":    gi.KiT_NodeFlags,
-	"background-color": &gi.Prefs.Colors.Background,
-	"color":            &gi.Prefs.Colors.Font,
-	"max-width":        -1,
-	"max-height":       -1,
-}
+// // FindViewProps are style properties for FindView
+// var FindViewProps = ki.Props{
+// 	"EnumType:Flag":    gi.KiT_NodeFlags,
+// 	"background-color": &gi.Prefs.Colors.Background,
+// 	"color":            &gi.Prefs.Colors.Font,
+// 	"max-width":        -1,
+// 	"max-height":       -1,
+// }
