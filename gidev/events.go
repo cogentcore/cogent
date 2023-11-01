@@ -1,0 +1,191 @@
+// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package gidev
+
+import (
+	"fmt"
+
+	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/keyfun"
+	"goki.dev/gide/v2/gide"
+	"goki.dev/goosi/events"
+)
+
+func (ge *GideView) HandleGideViewEvents() {
+	if ge.HasAnyScroll() {
+		ge.LayoutScrollEvents()
+	}
+	ge.KeyChordEvent()
+	ge.MouseEvent()
+	ge.OSFileEvent()
+}
+
+func (ge *GideView) GideViewKeys(kt events.Event) {
+	gide.SetGoMod(ge.Prefs.GoMod)
+	var kf gide.KeyFuns
+	kc := kt.Chord()
+	if gi.KeyEventTrace {
+		fmt.Printf("GideView KeyInput: %v\n", ge.Path())
+	}
+	gkf := keyfun.(kc)
+	if ge.KeySeq1 != "" {
+		kf = gide.KeyFun(ge.KeySeq1, kc)
+		seqstr := string(ge.KeySeq1) + " " + string(kc)
+		if kf == gide.KeyFunNil || kc == "Escape" {
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
+			}
+			ge.SetStatus(seqstr + " -- aborted")
+			kt.SetProcessed() // abort key sequence, don't send esc to anyone else
+			ge.KeySeq1 = ""
+			return
+		}
+		ge.SetStatus(seqstr)
+		ge.KeySeq1 = ""
+		gkf = keyfun.Nil // override!
+	} else {
+		kf = gide.KeyFun(kc, "")
+		if kf == gide.KeyFunNeeds2 {
+			kt.SetProcessed()
+			tv := ge.ActiveTextView()
+			if tv != nil {
+				tv.CancelComplete()
+			}
+			ge.KeySeq1 = kt.Chord()
+			ge.SetStatus(string(ge.KeySeq1))
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
+			}
+			return
+		} else if kf != gide.KeyFunNil {
+			if gi.KeyEventTrace {
+				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
+			}
+			gkf = keyfun.Nil // override!
+		}
+	}
+
+	switch gkf {
+	case keyfun.Find:
+		kt.SetProcessed()
+		tv := ge.ActiveTextView()
+		if tv != nil && tv.HasSelection() {
+			ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
+		}
+		giv.NewFuncButton(ge, ge.Find).CallFunc()
+	}
+	if kt.IsProcessed() {
+		return
+	}
+	switch kf {
+	case gide.KeyFunNextPanel:
+		kt.SetProcessed()
+		ge.FocusNextPanel()
+	case gide.KeyFunPrevPanel:
+		kt.SetProcessed()
+		ge.FocusPrevPanel()
+	case gide.KeyFunFileOpen:
+		kt.SetProcessed()
+		giv.NewFuncButton(ge, ge.ViewFile).CallFunc()
+	case gide.KeyFunBufSelect:
+		kt.SetProcessed()
+		ge.SelectOpenNode()
+	case gide.KeyFunBufClone:
+		kt.SetProcessed()
+		ge.CloneActiveView()
+	case gide.KeyFunBufSave:
+		kt.SetProcessed()
+		ge.SaveActiveView()
+	case gide.KeyFunBufSaveAs:
+		kt.SetProcessed()
+		giv.NewFuncButton(ge, ge.SaveActiveViewAs).CallFunc()
+	case gide.KeyFunBufClose:
+		kt.SetProcessed()
+		ge.CloseActiveView()
+	case gide.KeyFunExecCmd:
+		kt.SetProcessed()
+		giv.NewFuncButton(ge, ge.ExecCmd).CallFunc()
+	case gide.KeyFunRectCut:
+		kt.SetProcessed()
+		ge.CutRect()
+	case gide.KeyFunRectCopy:
+		kt.SetProcessed()
+		ge.CopyRect()
+	case gide.KeyFunRectPaste:
+		kt.SetProcessed()
+		ge.PasteRect()
+	case gide.KeyFunRegCopy:
+		kt.SetProcessed()
+		giv.NewFuncButton(ge, ge.RegisterCopy).CallFunc()
+	case gide.KeyFunRegPaste:
+		kt.SetProcessed()
+		giv.NewFuncButton(ge, ge.RegisterPaste).CallFunc()
+	case gide.KeyFunCommentOut:
+		kt.SetProcessed()
+		ge.CommentOut()
+	case gide.KeyFunIndent:
+		kt.SetProcessed()
+		ge.Indent()
+	case gide.KeyFunJump:
+		kt.SetProcessed()
+		tv := ge.ActiveTextView()
+		if tv != nil {
+			tv.JumpToLinePrompt()
+		}
+		ge.Indent()
+	case gide.KeyFunSetSplit:
+		kt.SetProcessed()
+		giv.NewFuncButton(ge, ge.SplitsSetView).CallFunc()
+	case gide.KeyFunBuildProj:
+		kt.SetProcessed()
+		ge.Build()
+	case gide.KeyFunRunProj:
+		kt.SetProcessed()
+		ge.Run()
+	}
+}
+
+/*
+func (ge *GideView) KeyChordEvent() {
+	// need hipri to prevent 2-seq guys from being captured by others
+	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
+		gee := recv.Embed(KiT_GideView).(*GideView)
+		kt := d.(*key.ChordEvent)
+		gee.GideViewKeys(kt)
+	})
+}
+
+func (ge *GideView) MouseEvent() {
+	ge.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+		gee := recv.Embed(KiT_GideView).(*GideView)
+		gide.SetGoMod(gee.Prefs.GoMod)
+	})
+}
+
+func (ge *GideView) OSFileEvent() {
+	ge.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+		gee := recv.Embed(KiT_GideView).(*GideView)
+		ofe := d.(*events.OpenFilesEvent)
+		for _, fn := range ofe.Files {
+			gee.OpenFile(fn)
+		}
+	})
+}
+
+func (ge *GideView) Render2D() {
+	if len(ge.Kids) > 0 {
+		ge.Toolbar().UpdateActions()
+		if win := ge.ParentWindow(); win != nil {
+			sv := ge.Splits()
+			win.EventMgr.SetStartFocus(sv.This())
+			if !win.IsResizing() {
+				win.MainMenuUpdateActives()
+			}
+		}
+	}
+	ge.Frame.Render2D()
+}
+*/
