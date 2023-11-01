@@ -10,7 +10,6 @@ import (
 	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
-	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
 	"goki.dev/girl/units"
 	"goki.dev/grr"
@@ -272,11 +271,6 @@ func (tv *TextView) TextViewEvents() {
 	*/
 }
 
-// ConnectEvents2D indirectly sets connections between mouse and key events and actions
-func (tv *TextView) ConnectEvents2D() {
-	tv.TextViewEvents()
-}
-
 // ConfigOutputTextView configures a command-output textview within given parent layout
 func ConfigOutputTextView(tv *texteditor.Editor) {
 	tv.SetMinPrefWidth(units.Ch(20))
@@ -287,6 +281,6 @@ func ConfigOutputTextView(tv *texteditor.Editor) {
 		s.Text.TabSize = 8
 		s.Font.Family = string(gi.Prefs.MonoFont)
 	})
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 
 }

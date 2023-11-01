@@ -16,7 +16,6 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/gide/v2/gidebug/gidelve"
-	"goki.dev/girl/states"
 	"goki.dev/grr"
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
@@ -986,7 +985,7 @@ func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 		updt = sv.UpdateStart()
 	}
 	tv.SetStretchMax()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	if sv.FindFrames {
 		tv.SetSlice(&dv.State.FindFrames)
 	} else {
@@ -1004,7 +1003,7 @@ func (sv *StackView) TableView() *giv.TableView {
 func (sv *StackView) ShowStack() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	if sv.FindFrames {
 		tv.SetSlice(&dv.State.FindFrames)
 	} else {
@@ -1117,7 +1116,7 @@ func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 		updt = sv.UpdateStart()
 	}
 	tv.SetStretchMax()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Threads)
 	sv.UpdateEnd(updt)
 }
@@ -1131,7 +1130,7 @@ func (sv *ThreadView) TableView() *giv.TableView {
 func (sv *ThreadView) ShowThreads() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	_, idx := gidebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
 	if idx >= 0 {
 		tv.SelIdx = idx
@@ -1178,7 +1177,7 @@ func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 		updt = sv.UpdateStart()
 	}
 	tv.SetStretchMax()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Tasks)
 	sv.UpdateEnd(updt)
 }
@@ -1192,7 +1191,7 @@ func (sv *TaskView) TableView() *giv.TableView {
 func (sv *TaskView) ShowTasks() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	_, idx := gidebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
 	if idx >= 0 {
 		tv.SelIdx = idx
@@ -1247,7 +1246,7 @@ func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 		updt = sv.UpdateStart()
 	}
 	tv.SetStretchMax()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	if sv.GlobalVars {
 		tv.SetSlice(&dv.State.GlobalVars)
 	} else {
@@ -1265,7 +1264,7 @@ func (sv *VarsView) TableView() *giv.TableView {
 func (sv *VarsView) ShowVars() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
-	tv.SetState(true, states.ReadOnly)
+	tv.SetReadOnly(true)
 	if sv.GlobalVars {
 		tv.SetSlice(&dv.State.GlobalVars)
 	} else {

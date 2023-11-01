@@ -9,7 +9,6 @@ import (
 
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
-	"goki.dev/girl/states"
 	"goki.dev/goosi/events"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/spell"
@@ -183,7 +182,7 @@ func (sv *SpellView) ConfigToolbar() {
 	unknown.SetStretchMaxWidth()
 	tf := sv.UnknownText()
 	if tf != nil {
-		tf.SetState(true, states.ReadOnly)
+		tf.SetReadOnly(true)
 	}
 
 	gi.NewButton(unknbar).SetText("Skip").
@@ -218,7 +217,7 @@ func (sv *SpellView) ConfigToolbar() {
 	// suggest toolbar
 	suggest := sv.SuggestView()
 	sv.Suggest = []string{"                                              "}
-	suggest.SetState(true, states.ReadOnly)
+	suggest.SetReadOnly(true)
 	suggest.SetProp("index", false)
 	suggest.SetSlice(&sv.Suggest)
 	suggest.SetStretchMax()

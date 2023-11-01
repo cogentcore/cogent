@@ -376,11 +376,11 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			dlg := gi.NewDialog(ge.Scene()).Title("Gide Command Prompt").
+			d := gi.NewDialog(ge.Scene()).Title("Gide Command Prompt").
 				Prompt(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)).Modal(true)
-			tf := gi.NewTextField(dlg).SetText(curval)
-			dlg.Cancel().Ok().Run()
-			dlg.OnAccept(func(e events.Event) {
+			tf := gi.NewTextField(d).SetText(curval)
+			d.Cancel().Ok().Run()
+			d.OnAccept(func(e events.Event) {
 				val := tf.Text()
 				cmvals[cm.Label()] = val
 				(*avp)[pv] = val
@@ -411,27 +411,14 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 				if repo != nil {
 					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
-						dlg := gi.NewDialog(ge.Scene()).Title("Choose Branch").Modal(true)
-						ch := gi.NewChooser(dlg).ItemsFromStringList(br, false, 30)
-						ch.SetCurVal(cur)
-						dlg.Cancel().Ok().Run()
-						dlg.OnAccept(func(e events.Event) {
-							val := ch.CurVal.(string)
-							(*avp)[pv] = val
+						m := gi.NewMenuFromStrings(br, cur, func(idx int) {
+							(*avp)[pv] = br[idx]
 							cnt++
 							if cnt == sz {
 								cm.RunAfterPrompts(ge, buf)
 							}
 						})
-						// gi.StringsChooserPopup(br, cur, ge.Scene(), func(recv, send ki.Ki, sig int64, data any) {
-						// 	ac := send.(*gi.Button)
-						// 	brnm := ac.Text
-						// 	(*avp)[pv] = brnm
-						// 	cnt++
-						// 	if cnt == sz {
-						// 		cm.RunAfterPrompts(ge, buf)
-						// 	}
-						// })
+						gi.NewMenuFromScene(m, fn, fn.ContextMenuPos(nil)).Run()
 					} else {
 						fmt.Println(err)
 					}
@@ -447,11 +434,11 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
 	if cm.Confirm {
-		dlg := gi.NewDialog(ge.Scene()).Title("Confirm Command").
+		d := gi.NewDialog(ge.Scene()).Title("Confirm Command").
 			Prompt(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)).
 			Modal(true).Cancel().Ok("Run")
-		dlg.Run()
-		dlg.OnAccept(func(e events.Event) {
+		d.Run()
+		d.OnAccept(func(e events.Event) {
 			cm.RunAfterPrompts(ge, buf)
 		})
 		return

@@ -71,10 +71,11 @@ func KeyMapsView(km *KeyMaps) {
 //////////////////////////////////////////////////////////////////////////////////////
 //  PrefsView
 
-// PrefsView opens a view of user preferences, returns structview and window
-func PrefsView(pf *Preferences) {
+// PrefsView opens a view of user preferences,
+// returns structview if new (nil if recycled)
+func PrefsView(pf *Preferences) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
-		return
+		return nil
 	}
 	sc := gi.NewScene("gide-prefs")
 	sc.Title = "Gide Preferences"
@@ -90,7 +91,6 @@ func PrefsView(pf *Preferences) {
 
 	tv := giv.NewStructView(sc).SetStruct(pf)
 	tv.SetStretchMax()
-
 	tv.OnChange(func(e events.Event) {
 		pf.Changed = true
 	})
@@ -121,15 +121,17 @@ func PrefsView(pf *Preferences) {
 	*/
 
 	gi.NewWindow(sc).Run()
+	return tv
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //  ProjPrefsView
 
-// ProjPrefsView opens a view of project preferences (settings), returns structview and window
-func ProjPrefsView(pf *ProjPrefs) { // (*giv.StructView, *gi.Window)
+// ProjPrefsView opens a view of project preferences (settings),
+// returns structview if not already open
+func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
-		return
+		return nil
 	}
 	sc := gi.NewScene("gide-proj-prefs")
 	sc.Title = "Gide Project Preferences"
@@ -145,7 +147,6 @@ func ProjPrefsView(pf *ProjPrefs) { // (*giv.StructView, *gi.Window)
 
 	tv := giv.NewStructView(sc).SetStruct(pf)
 	tv.SetStretchMax()
-
 	tv.OnChange(func(e events.Event) {
 		pf.Changed = true
 	})
@@ -176,6 +177,7 @@ func ProjPrefsView(pf *ProjPrefs) { // (*giv.StructView, *gi.Window)
 	*/
 
 	gi.NewWindow(sc).Run()
+	return tv
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +231,7 @@ func (vv *KeyMapValueView) HasDialog() bool {
 	return true
 }
 
-func (vv *KeyMapValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
+func (vv *KeyMapValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}
@@ -406,7 +408,7 @@ func (vv *CmdValueView) HasDialog() bool {
 	return true
 }
 
-func (vv *CmdValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
+func (vv *CmdValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}
@@ -508,7 +510,7 @@ func (vv *SplitValueView) HasDialog() bool {
 	return true
 }
 
-func (vv *SplitValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
+func (vv *SplitValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}
@@ -613,23 +615,18 @@ func (vv *RegisterValueView) HasDialog() bool {
 	return true
 }
 
-func (vv *RegisterValueView) OpenDialog(ctx gi.Widget, fun func(dlg *gi.Dialog)) {
+func (vv *RegisterValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}
 	cur := laser.ToString(vv.Value.Interface())
-	d := gi.NewDialog(ctx).Title("Select a command").Prompt(vv.Doc()).FullWindow(true)
-	ch := gi.NewChooser(d).ItemsFromStringList(AvailRegisterNames, false, 30)
-	ch.SetCurVal(cur)
-	d.OnAccept(func(e events.Event) {
-		rnm := ch.CurVal.(string)
+	m := gi.NewMenuFromStrings(AvailRegisterNames, cur, func(idx int) {
+		rnm := AvailRegisterNames[idx]
 		if ci := strings.Index(rnm, ":"); ci > 0 {
 			rnm = rnm[:ci]
 		}
 		vv.SetValue(rnm)
 		vv.UpdateWidget()
-		if fun != nil {
-			fun(d)
-		}
-	}).Run()
+	})
+	gi.NewMenuFromScene(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }
