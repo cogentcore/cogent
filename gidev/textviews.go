@@ -16,7 +16,9 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/gide/v2/gide"
+	"goki.dev/girl/states"
 	"goki.dev/glop/dirs"
+	"goki.dev/goosi/events"
 	"goki.dev/ki/v2"
 )
 
@@ -261,10 +263,10 @@ func (ge *GideView) UpdateTextButtons() {
 			}
 		}
 		sel := ati == i
-		if mb.Text != txnm || sel != mb.IsSelected() {
+		if mb.Text != txnm || sel != mb.StateIs(states.Selected) {
 			updt := mb.UpdateStart()
 			mb.SetText(txnm)
-			mb.SetSelectedState(sel)
+			mb.SetSelected(sel)
 			mb.UpdateEnd(updt)
 		}
 	}
@@ -282,39 +284,23 @@ func (ge *GideView) UpdateTextButtons() {
 // 	}
 // }
 
-//
-// // FileNodeSelected is called whenever tree browser has file node selected
-// func (ge *GideView) FileNodeSelected(fn *filetree.Node, tvn *gide.FileTreeView) {
-// 	// if fn.IsDir() {
-// 	// } else {
-// 	// }
-// }
+// FileNodeSelected is called whenever tree browser has file node selected
+func (ge *GideView) FileNodeSelected(fn *filetree.Node) {
+	// not doing anything with this actually
+}
 
-func (ge *GideView) TextViewButtonMenu(obj ki.Ki, m *gi.Scene) {
-	idx := 0
-	nm := obj.Name()
-	nln := len(nm)
-	if nm[nln-1] == '1' {
-		idx = 1
-	}
-	opn := ge.OpenNodes.Strings()
-	*m = gi.Scene{}
-
-	m.AddAction(gi.ActOpts{Label: "Open File..."}, ge.This(),
-		func(recv, send ki.Ki, sig int64, data any) {
-			giv.NewFuncButton(ge, ge.ViewFile).CallFunc()
-		})
-
-	m.AddSeparator("file-sep")
-
+func (ge *GideView) TextViewButtonMenu(idx int, m *gi.Scene) {
 	tv := ge.TextViewByIndex(idx)
+	opn := ge.OpenNodes.Strings()
+	gi.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
+		giv.NewFuncButton(ge, ge.ViewFile).CallFunc()
+	})
+	gi.NewSeparator(m, "file-sep")
 	for i, n := range opn {
-		m.AddAction(gi.ActOpts{Label: n, Data: i}, ge.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				ac := send.(*gi.Button)
-				gidx := ac.Data.(int)
-				nb := ge.OpenNodes[gidx]
-				ge.ViewFileNode(tv, idx, nb)
-			})
+		i := i
+		n := n
+		gi.NewButton(m).SetText(n).OnClick(func(e events.Event) {
+			ge.ViewFileNode(tv, idx, ge.OpenNodes[i])
+		})
 	}
 }

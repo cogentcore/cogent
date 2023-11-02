@@ -19,13 +19,9 @@ import (
 	"goki.dev/goosi"
 )
 
-func main() {
-	gimain.Main(func() {
-		mainrun()
-	})
-}
+func main() { gimain.Run(app) }
 
-func mainrun() {
+func app() {
 	goosi.TheApp.SetName("gide")
 	goosi.TheApp.SetAbout(`<code>Gide</code> is a graphical-interface (gi) integrated-development-environment (ide) written in the <b>GoGi</b> graphical interface system, within the <b>GoKi</b> tree framework.  See <a href="https://goki.dev/gide/v2/gide">Gide on GitHub</a> and <a href="https://goki.dev/gide/v2/wiki">Gide wiki</a> for documentation.<br>
 Gide is based on "projects" which are just directories containing files<br>

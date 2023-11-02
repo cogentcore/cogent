@@ -23,23 +23,10 @@ import (
 	"goki.dev/girl/paint"
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
+	"goki.dev/ki/v2"
 	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/spell"
 	"goki.dev/vci/v2"
-)
-
-// NTextViews is the number of text views to create -- to keep things simple
-// and consistent (e.g., splitter settings always have the same number of
-// values), we fix this degree of freedom, and have flexibility in the
-// splitter settings for what to actually show.
-const NTextViews = 2
-
-// These are then the fixed indices of the different elements in the splitview
-const (
-	FileTreeIdx = iota
-	TextView1Idx
-	TextView2Idx
-	TabsIdx
 )
 
 // GideView is the core editor and tab viewer framework for the Gide system.  The
@@ -55,55 +42,55 @@ type GideView struct {
 	ProjFilename gi.FileName `ext:".gide"`
 
 	// filename of the currently-active textview
-	ActiveFilename gi.FileName
+	ActiveFilename gi.FileName `set:"-"`
 
 	// language for current active filename
 	ActiveLang filecat.Supported
 
 	// VCS repo for current active filename
-	ActiveVCS vci.Repo
+	ActiveVCS vci.Repo `set:"-"`
 
 	// VCS info for current active filename (typically branch or revision) -- for status
-	ActiveVCSInfo string
+	ActiveVCSInfo string `set:"-"`
 
 	// has the root changed?  we receive update signals from root for changes
-	Changed bool `json:"-"`
+	Changed bool `set:"-" json:"-"`
 
 	// timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger
-	LastSaveTStamp time.Time `json:"-"`
+	LastSaveTStamp time.Time `set:"-" json:"-"`
 
 	// all the files in the project directory and subdirectories
-	Files *filetree.Tree `json:"-"`
+	Files *filetree.Tree `set:"-" json:"-"`
 
 	// index of the currently-active textview -- new files will be viewed in other views if available
-	ActiveTextViewIdx int `json:"-"`
+	ActiveTextViewIdx int `set:"-" json:"-"`
 
 	// list of open nodes, most recent first
 	OpenNodes gide.OpenNodes `json:"-"`
 
 	// the command buffers for commands run in this project
-	CmdBufs map[string]*texteditor.Buf `json:"-"`
+	CmdBufs map[string]*texteditor.Buf `set:"-" json:"-"`
 
 	// history of commands executed in this session
-	CmdHistory gide.CmdNames `json:"-"`
+	CmdHistory gide.CmdNames `set:"-" json:"-"`
 
 	// currently running commands in this project
-	RunningCmds gide.CmdRuns `json:"-" xml:"-"`
+	RunningCmds gide.CmdRuns `set:"-" json:"-" xml:"-"`
 
 	// current arg var vals
-	ArgVals gide.ArgVarVals `json:"-" xml:"-"`
+	ArgVals gide.ArgVarVals `set:"-" json:"-" xml:"-"`
 
 	// preferences for this project -- this is what is saved in a .gide project file
-	Prefs gide.ProjPrefs
+	Prefs gide.ProjPrefs `set:"-"`
 
 	// current debug view
-	CurDbg *gide.DebugView
+	CurDbg *gide.DebugView `set:"-"`
 
 	// first key in sequence if needs2 key pressed
-	KeySeq1 key.Chord
+	KeySeq1 key.Chord `set:"-"`
 
 	// mutex for protecting overall updates to GideView
-	UpdtMu sync.Mutex
+	UpdtMu sync.Mutex `set:"-"`
 }
 
 func init() {
@@ -529,7 +516,7 @@ func NewGideProjPath(path string) *GideView {
 func OpenGideProj(projfile string) *GideView {
 	pp := &gide.ProjPrefs{}
 	if err := pp.OpenJSON(gi.FileName(projfile)); err != nil {
-		gi.NewDialog(ge.Scene()).Title("Project File Could Not Be Opened").
+		gi.NewDialog(nil).Title("Project File Could Not Be Opened").
 			Prompt(fmt.Sprintf("Project file open encountered error: %v", err.Error())).Modal(true).Ok().Run()
 		return nil
 	}
@@ -543,9 +530,9 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	winm := "gide-" + projnm
 	wintitle := winm + ": " + path
 
-	if win, found := gi.AllWindows.FindName(winm); found {
+	if win, found := gi.AllRenderWins.FindName(winm); found {
 		sc := win.MainScene()
-		ge := sc.FindChildByType(GideViewType).(*GideView)
+		ge := sc.ChildByType(GideViewType, ki.Embeds).(*GideView)
 		if string(ge.ProjRoot) == root {
 			win.Raise()
 			return ge
@@ -556,7 +543,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	sc.Title = wintitle
 	sc.Lay = gi.LayoutVert
 
-	ge := sc.NewGideView(sc)
+	ge := NewGideView(sc)
 
 	if doPath {
 		ge.OpenPath(gi.FileName(path))

@@ -22,8 +22,6 @@ func (ge *GideView) Defaults() {
 	ge.Prefs.Editor = gi.Prefs.Editor
 	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
 	ge.Prefs.Debug = gidebug.DefaultParams
-	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
-	ge.Files.NodeType = gide.FileNodeType
 }
 
 // GrabPrefs grabs the current project preference settings from various
@@ -54,12 +52,12 @@ func (ge *GideView) ApplyPrefs() {
 			}
 		}
 	}
+	gi.Prefs.UpdateAll() // drives full rebuild
 }
 
 // ApplyPrefsAction applies current preferences to the project, and updates the project
 func (ge *GideView) ApplyPrefsAction() {
 	ge.ApplyPrefs()
-	ge.ConfigTextViews()
 	ge.SplitsSetView(ge.Prefs.SplitName)
 	ge.SetStatus("Applied prefs")
 }

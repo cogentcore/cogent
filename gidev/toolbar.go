@@ -7,9 +7,33 @@ package gidev
 import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
-	"goki.dev/ki/v2"
+	"goki.dev/gi/v2/keyfun"
+	"goki.dev/gide/v2/gide"
+	"goki.dev/girl/states"
+	"goki.dev/goosi/events"
+	"goki.dev/icons"
 )
 
+func (ge *GideView) Toolbar(tb *gi.Toolbar) {
+	gi.DefaultTopAppBar(tb)
+
+	giv.NewFuncButton(tb, ge.UpdateFiles).SetIcon(icons.Refresh).SetShortcut("Command+U")
+	op := giv.NewFuncButton(tb, ge.OpenPath).SetKey(keyfun.Open)
+	_ = op
+	// op.Args[0].SetValue(ge.ActiveFilename)
+	giv.NewFuncButton(tb, ge.SaveActiveView).SetKey(keyfun.Save)
+
+	gi.NewSeparator(tb)
+
+	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
+	sm.SetChecked(ge.Prefs.GoMod)
+	sm.OnClick(func(e events.Event) {
+		ge.Prefs.GoMod = sm.StateIs(states.Checked)
+		gide.SetGoMod(ge.Prefs.GoMod)
+	})
+}
+
+/*
 // GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
 var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
@@ -40,6 +64,7 @@ var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei any, act *
 		act.SetActiveState(false)
 	}
 })
+*/
 
 /*
 var GideViewProps = ki.Props{

@@ -9,95 +9,80 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/styles"
 	"goki.dev/girl/units"
+	"goki.dev/goosi/events"
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
 )
 
+// NTextViews is the number of text views to create -- to keep things simple
+// and consistent (e.g., splitter settings always have the same number of
+// values), we fix this degree of freedom, and have flexibility in the
+// splitter settings for what to actually show.
+const NTextViews = 2
+
+// These are then the fixed indices of the different elements in the splitview
+const (
+	FileTreeIdx = iota
+	TextView1Idx
+	TextView2Idx
+	TabsIdx
+)
+
 func (ge *GideView) ConfigWidget(sc *gi.Scene) {
-	ge.ConfigGideView()
+	ge.ConfigGideView(sc)
 }
 
 // Config configures the view
-func (ge *GideView) ConfigGideView() {
+func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 	if ge.HasChildren() {
 		return
 	}
+
 	updt := ge.UpdateStart()
+	sc.TopAppBar = ge.Toolbar
+
 	ge.Lay = gi.LayoutVert
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	gi.NewToolbar(ge, "toolbar")
 	gi.NewSplits(ge, "splitview")
 	gi.NewFrame(ge, "statusbar").SetLayout(gi.LayoutHoriz)
 
-	ge.UpdateFiles()
 	ge.ConfigSplits()
-	ge.ConfigToolbar()
 	ge.ConfigStatusBar()
 
 	ge.SetStatus("just updated")
 
 	ge.OpenConsoleTab()
+	ge.UpdateFiles()
 
 	ge.UpdateEndLayout(updt)
 }
 
-// IsConfiged returns true if the view is fully configured
+// IsConfiged returns true if the view is configured
 func (ge *GideView) IsConfiged() bool {
-	if !ge.HasChildren() {
-		return false
-	}
-	sv := ge.Splits()
-	if !sv.HasChildren() {
-		return false
-	}
-	return true
+	return ge.HasChildren()
 }
 
 // Splits returns the main Splits
 func (ge *GideView) Splits() *gi.Splits {
-	spi := ge.ChildByName("splitview", 2)
-	if spi == nil {
-		return nil
-	}
-	return spi.(*gi.Splits)
-}
-
-// TextViewByIndex returns the TextView by index (0 or 1), nil if not found
-func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
-	split := ge.Splits()
-	svk := split.Child(TextView1Idx + idx).Child(0).Child(1)
-	return svk.(*gide.TextView)
+	return ge.ChildByName("splitview", 2).(*gi.Splits)
 }
 
 // TextViewButtonByIndex returns the top textview menu button by index (0 or 1)
 func (ge *GideView) TextViewButtonByIndex(idx int) *gi.Button {
-	split := ge.Splits()
-	svk := split.Child(TextView1Idx + idx).Child(0).Child(0)
-	return svk.(*gi.Button)
+	return ge.Splits().Child(TextView1Idx + idx).Child(0).(*gi.Button)
+}
+
+// TextViewByIndex returns the TextView by index (0 or 1), nil if not found
+func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
+	return ge.Splits().Child(TextView1Idx + idx).Child(1).(*gide.TextView)
 }
 
 // Tabs returns the main TabView
 func (ge *GideView) Tabs() *gi.Tabs {
-	split := ge.Splits()
-	if split == nil {
-		return nil
-	}
-	tv := split.Child(TabsIdx).(*gi.Tabs)
-	return tv
-}
-
-// Toolbar returns the main toolbar
-func (ge *GideView) Toolbar() *gi.Toolbar {
-	tbk := ge.ChildByName("toolbar", 2)
-	if tbk == nil {
-		return nil
-	}
-	return tbk.(*gi.Toolbar)
+	return ge.Splits().Child(TabsIdx).(*gi.Tabs)
 }
 
 // StatusBar returns the statusbar widget
@@ -113,163 +98,110 @@ func (ge *GideView) StatusLabel() *gi.Label {
 	return ge.StatusBar().Child(0).(*gi.Label)
 }
 
-// ConfigStatusBar configures statusbar with label
-func (ge *GideView) ConfigStatusBar() {
-	sb := ge.StatusBar()
-	if sb == nil || sb.HasChildren() {
-		return
+// SelectedFileNode returns currently selected file tree node as a *filetree.Node
+// could be nil.
+func (ge *GideView) SelectedFileNode() *filetree.Node {
+	n := len(ge.Files.SelectedNodes)
+	if n == 0 {
+		return nil
 	}
-	sb.Style(func(s *styles.Style) {
-		sb.SetStretchMaxWidth()
-		sb.SetMinPrefHeight(units.NewValue(1.2, units.Em))
-		sb.SetProp("overflow", "hidden") // no scrollbars!
-		sb.SetProp("margin", 0)
-		sb.SetProp("padding", 0)
-	})
-	lbl := sb.NewChild(gi.LabelType, "sb-lbl").(*gi.Label)
-	lbl.SetStretchMaxWidth()
-	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
-	lbl.SetProp("vertical-align", styles.AlignTop)
-	lbl.SetProp("margin", 0)
-	lbl.SetProp("padding", 0)
-	lbl.SetProp("tab-size", 4)
-}
-
-// ConfigToolbar adds a GideView toolbar.
-func (ge *GideView) ConfigToolbar() {
-	tb := ge.Toolbar()
-	if tb.HasChildren() {
-		return
-	}
-	tb.SetStretchMaxWidth()
-	giv.ToolbarView(ge, ge.Viewport, tb)
-	gi.NewSeparator(tb, "sepmod")
-	sm := tb.NewChild(gi.SwitchType, "go-mod").(*gi.Switch)
-	sm.SetChecked(ge.Prefs.GoMod)
-	sm.SetText("Go Mod")
-	sm.Tooltip = "Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode"
-	sm.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.ButtonToggled) {
-			cb := send.(*gi.Switch)
-			ge.Prefs.GoMod = cb.IsChecked()
-			gide.SetGoMod(ge.Prefs.GoMod)
-		}
-	})
-}
-
-var fnFolderProps = ki.Props{
-	"icon":     "folder-open",
-	"icon-off": "folder",
+	return filetree.AsNode(ge.Files.SelectedNodes[n-1].This())
 }
 
 // ConfigSplits configures the Splits.
 func (ge *GideView) ConfigSplits() {
+	// note: covered by global update
 	split := ge.Splits()
 	split.Dim = mat32.X
-	if split.HasChildren() {
-		return
-	}
-	updt := split.UpdateStart()
-	ftfr := gi.NewFrame(split, "filetree", gi.LayoutVert)
-	ftfr.SetReRenderAnchor()
-	ft := ftfr.NewChild(gide.KiT_FileTreeView, "filetree").(*gide.FileTreeView)
-	ft.SetFlag(int(giv.TreeViewFlagUpdtRoot)) // filetree needs this
+	ftfr := gi.NewFrame(split, "filetree").SetLayout(gi.LayoutVert)
+	ft := filetree.NewTree(ftfr, "filetree")
 	ft.OpenDepth = 4
-	ge.FilesView = ft
-	ft.SetRootNode(&ge.Files)
-	ft.TreeViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if data == nil {
-			return
+	ge.Files = ft
+	ft.NodeType = gide.FileNodeType
+
+	ge.Files.OnSelect(func(e events.Event) {
+		e.SetHandled()
+		sn := ge.SelectedFileNode()
+		if sn != nil {
+			ge.FileNodeSelected(sn)
 		}
-		tvn, _ := data.(ki.Ki).Embed(gide.KiT_FileTreeView).(*gide.FileTreeView)
-		gee, _ := recv.Embed(KiT_GideView).(*GideView)
-		if tvn.SrcNode != nil {
-			fn := tvn.SrcNode.Embed(giv.KiT_FileNode).(*filetree.Node)
-			switch sig {
-			case int64(giv.TreeViewSelected):
-				gee.FileNodeSelected(fn, tvn)
-			case int64(giv.TreeViewOpened):
-				gee.FileNodeOpened(fn, tvn)
-			case int64(giv.TreeViewClosed):
-				gee.FileNodeClosed(fn, tvn)
-			}
+	})
+	ge.Files.OnDoubleClick(func(e events.Event) {
+		e.SetHandled()
+		sn := ge.SelectedFileNode()
+		if sn != nil {
+			ge.FileNodeOpened(sn)
 		}
 	})
 
 	for i := 0; i < NTextViews; i++ {
+		i := i
 		txnm := fmt.Sprintf("%d", i)
-		txly := gi.NewLayout(split, "textlay-"+txnm, gi.LayoutVert)
-		txly.SetStretchMaxWidth()
-		txly.SetStretchMaxHeight()
-		txly.SetReRenderAnchor() // anchor here: Splits will only anchor Frame, but we just have layout
+		txly := gi.NewLayout(split, "textlay-"+txnm).SetLayout(gi.LayoutVert)
+		txly.SetStretchMax()
+		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("textview: " + txnm)
+		txbut.Type = gi.ButtonAction
+		txbut.Style(func(s *styles.Style) {
+			s.SetStretchMaxWidth()
+		})
+		txbut.Menu = func(m *gi.Scene) {
+			ge.TextViewButtonMenu(i, m)
+		}
+		txbut.OnClick(func(e events.Event) {
+			ge.SetActiveTextViewIdx(i)
+		})
 
-		// need to sandbox the button in its own layer to isolate FullReRender issues
-		txbly := gi.NewLayout(txly, "butlay-"+txnm, gi.LayoutVert)
-		txbly.SetProp("spacing", units.NewEm(0))
-		txbly.SetStretchMaxWidth()
-		txbly.SetReRenderAnchor() // anchor here!
-
-		txbut := gi.NewMenuButton(txbly, "textbut-"+txnm)
-		txbut.SetStretchMaxWidth()
-		txbut.SetText("textview: " + txnm)
-		txbut.MakeMenuFunc = ge.TextViewButtonMenu
-		txbut.ButtonSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(gi.ButtonClicked) {
-				gee, _ := recv.Embed(KiT_GideView).(*GideView)
-				idx := 0
-				nm := send.Name()
-				nln := len(nm)
-				if nm[nln-1] == '1' {
-					idx = 1
-				}
-				gee.SetActiveTextViewIdx(idx)
+		ted := gide.NewTextView(txly, "textview-"+txnm)
+		ted.Style(func(s *styles.Style) {
+			s.SetStretchMax()
+			s.SetMinPrefWidth(units.Ch(80))
+			s.SetMinPrefHeight(units.Em(40))
+			if ge.Prefs.Editor.WordWrap {
+				s.Text.WhiteSpace = styles.WhiteSpacePreWrap
+			} else {
+				s.Text.WhiteSpace = styles.WhiteSpacePre
 			}
+			s.Text.TabSize = ge.Prefs.Editor.TabSize
+			s.Font.Family = string(gi.Prefs.MonoFont)
 		})
-
-		txily := gi.NewLayout(txly, "textilay-"+txnm, gi.LayoutVert)
-		txily.SetStretchMaxWidth()
-		txily.SetStretchMaxHeight()
-		txily.SetMinPrefWidth(units.NewCh(80))
-		txily.SetMinPrefHeight(units.NewEm(40))
-
-		ted := gide.NewTextView(txily, "textview-"+txnm)
-		ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-			gee, _ := recv.Embed(KiT_GideView).(*GideView)
-			tee := send.Embed(gide.KiT_TextView).(*gide.TextView)
-			gee.TextViewSig(tee, texteditor.EditorSignals(sig))
-		})
+		// todo: need to get updates on cursor movement and qreplace
+		// ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
+		// 	gee.TextViewSig(tee, texteditor.EditorSignals(sig))
+		// })
 	}
 
-	ge.ConfigTextViews()
 	ge.UpdateTextButtons()
 
-	mtab := gi.NewTabView(split, "tabs")
-	mtab.TabViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-		gee, _ := recv.Embed(KiT_GideView).(*GideView)
-		tvsig := gi.TabsSignals(sig)
-		switch tvsig {
-		case gi.TabDeleted:
-			gee.TabDeleted(data.(string))
-			if data == "Find" {
-				ge.ActiveTextView().ClearHighlights()
-			}
-		}
-	})
+	mtab := gi.NewTabs(split, "tabs")
+	_ = mtab
+	// mtab.OnChange(func(e events.Event) {
+	// todo: need to monitor deleted
+	// gee.TabDeleted(data.(string))
+	// if data == "Find" {
+	// 	ge.ActiveTextView().ClearHighlights()
+	// }
+	// })
 
 	split.SetSplits(ge.Prefs.Splits...)
-	split.UpdateEnd(updt)
 }
 
-// ConfigTextViews configures text views according to current settings
-func (ge *GideView) ConfigTextViews() {
-	for i := 0; i < NTextViews; i++ {
-		tv := ge.TextViewByIndex(i)
-		if ge.Prefs.Editor.WordWrap {
-			tv.SetProp("white-space", styles.WhiteSpacePreWrap)
-		} else {
-			tv.SetProp("white-space", styles.WhiteSpacePre)
-		}
-		tv.SetProp("tab-size", ge.Prefs.Editor.TabSize)
-		tv.SetProp("font-family", gi.Prefs.MonoFont)
-	}
+// ConfigStatusBar configures statusbar with label
+func (ge *GideView) ConfigStatusBar() {
+	sb := ge.StatusBar()
+	sb.Style(func(s *styles.Style) {
+		s.SetStretchMaxWidth()
+		s.SetMinPrefHeight(units.Em(1.2))
+		s.Overflow = styles.OverflowHidden // no scrollbars!
+		s.Margin.Set()
+		s.Padding.Set()
+	})
+	lbl := gi.NewLabel(sb, "sb-lbl")
+	lbl.Style(func(s *styles.Style) {
+		s.SetStretchMaxWidth()
+		s.SetMinPrefHeight(units.Em(1))
+		s.AlignV = styles.AlignTop
+		s.Margin.Set()
+		s.Padding.Set()
+		s.Text.TabSize = 4
+	})
 }

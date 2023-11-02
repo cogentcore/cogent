@@ -15,22 +15,22 @@ import (
 )
 
 func (ge *GideView) HandleGideViewEvents() {
-	if ge.HasAnyScroll() {
-		ge.LayoutScrollEvents()
-	}
-	ge.KeyChordEvent()
-	ge.MouseEvent()
-	ge.OSFileEvent()
+	// if ge.HasAnyScroll() {
+	// 	ge.LayoutScrollEvents()
+	// }
+	// ge.KeyChordEvent()
+	// ge.MouseEvent()
+	// ge.OSFileEvent()
 }
 
 func (ge *GideView) GideViewKeys(kt events.Event) {
 	gide.SetGoMod(ge.Prefs.GoMod)
 	var kf gide.KeyFuns
-	kc := kt.Chord()
+	kc := kt.KeyChord()
 	if gi.KeyEventTrace {
 		fmt.Printf("GideView KeyInput: %v\n", ge.Path())
 	}
-	gkf := keyfun.(kc)
+	gkf := keyfun.Of(kc)
 	if ge.KeySeq1 != "" {
 		kf = gide.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
@@ -39,7 +39,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
-			kt.SetProcessed() // abort key sequence, don't send esc to anyone else
+			kt.SetHandled() // abort key sequence, don't send esc to anyone else
 			ge.KeySeq1 = ""
 			return
 		}
@@ -49,12 +49,12 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 	} else {
 		kf = gide.KeyFun(kc, "")
 		if kf == gide.KeyFunNeeds2 {
-			kt.SetProcessed()
+			kt.SetHandled()
 			tv := ge.ActiveTextView()
 			if tv != nil {
 				tv.CancelComplete()
 			}
-			ge.KeySeq1 = kt.Chord()
+			ge.KeySeq1 = kt.KeyChord()
 			ge.SetStatus(string(ge.KeySeq1))
 			if gi.KeyEventTrace {
 				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
@@ -70,80 +70,80 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 
 	switch gkf {
 	case keyfun.Find:
-		kt.SetProcessed()
+		kt.SetHandled()
 		tv := ge.ActiveTextView()
 		if tv != nil && tv.HasSelection() {
 			ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
 		}
 		giv.NewFuncButton(ge, ge.Find).CallFunc()
 	}
-	if kt.IsProcessed() {
+	if kt.IsHandled() {
 		return
 	}
 	switch kf {
 	case gide.KeyFunNextPanel:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.FocusNextPanel()
 	case gide.KeyFunPrevPanel:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.FocusPrevPanel()
 	case gide.KeyFunFileOpen:
-		kt.SetProcessed()
+		kt.SetHandled()
 		giv.NewFuncButton(ge, ge.ViewFile).CallFunc()
 	case gide.KeyFunBufSelect:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.SelectOpenNode()
 	case gide.KeyFunBufClone:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.CloneActiveView()
 	case gide.KeyFunBufSave:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.SaveActiveView()
 	case gide.KeyFunBufSaveAs:
-		kt.SetProcessed()
+		kt.SetHandled()
 		giv.NewFuncButton(ge, ge.SaveActiveViewAs).CallFunc()
 	case gide.KeyFunBufClose:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.CloseActiveView()
 	case gide.KeyFunExecCmd:
-		kt.SetProcessed()
+		kt.SetHandled()
 		giv.NewFuncButton(ge, ge.ExecCmd).CallFunc()
 	case gide.KeyFunRectCut:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.CutRect()
 	case gide.KeyFunRectCopy:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.CopyRect()
 	case gide.KeyFunRectPaste:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.PasteRect()
 	case gide.KeyFunRegCopy:
-		kt.SetProcessed()
+		kt.SetHandled()
 		giv.NewFuncButton(ge, ge.RegisterCopy).CallFunc()
 	case gide.KeyFunRegPaste:
-		kt.SetProcessed()
+		kt.SetHandled()
 		giv.NewFuncButton(ge, ge.RegisterPaste).CallFunc()
 	case gide.KeyFunCommentOut:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.CommentOut()
 	case gide.KeyFunIndent:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.Indent()
 	case gide.KeyFunJump:
-		kt.SetProcessed()
+		kt.SetHandled()
 		tv := ge.ActiveTextView()
 		if tv != nil {
 			tv.JumpToLinePrompt()
 		}
 		ge.Indent()
 	case gide.KeyFunSetSplit:
-		kt.SetProcessed()
+		kt.SetHandled()
 		giv.NewFuncButton(ge, ge.SplitsSetView).CallFunc()
 	case gide.KeyFunBuildProj:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.Build()
 	case gide.KeyFunRunProj:
-		kt.SetProcessed()
+		kt.SetHandled()
 		ge.Run()
 	}
 }

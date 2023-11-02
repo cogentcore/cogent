@@ -980,21 +980,10 @@ func (pv *PiView) SetChanged() {
 	pv.Toolbar().UpdateActions() // nil safe
 }
 
-func (pv *PiView) FileNodeOpened(fn *filetree.Node, tvn *filetree.Node) {
-	if fn.IsDir() {
-		if !fn.IsOpen() {
-			tvn.SetOpen()
-			fn.OpenDir()
-		}
-	}
+func (pv *PiView) FileNodeOpened(fn *filetree.Node) {
 }
 
-func (pv *PiView) FileNodeClosed(fn *filetree.Node, tvn *filetree.Node) {
-	if fn.IsDir() {
-		if fn.IsOpen() {
-			fn.CloseDir()
-		}
-	}
+func (pv *PiView) FileNodeClosed(fn *filetree.Node) {
 }
 
 func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {

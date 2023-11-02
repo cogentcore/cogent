@@ -446,11 +446,7 @@ func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
 func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 	// todo: could add all these options in LangOpts
 	switch fn.Info.Cat {
-	// case filecat.Folder:
-	// 	// if !fn.IsOpen() {
-	// 	fn.OpenDir()
-	// 	// }
-	// 	return
+	case filecat.Folder:
 	case filecat.Exe:
 		// this uses exe path for cd to this path!
 		ge.SetArgVarVals()
@@ -486,17 +482,15 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 	}
 	// program, document, data
 	if int(fn.Info.Size) > gi.Prefs.Params.BigFileSize {
-		gi.ChoiceDialog(ge.Viewport, gi.DlgOpts{Title: "File is relatively large",
-			Prompt: fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size)},
-			[]string{"Open", "Cancel"},
-			ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-				switch sig {
-				case 0:
-					ge.NextViewFileNode(fn)
-				case 1:
-					// do nothing
-				}
-			})
+		d := gi.NewDialog(ge).Title("File is relatively large").
+			Prompt(fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size))
+		gi.NewButton(d.Buttons()).SetText("Cancel").OnClick(func(e events.Event) {
+			d.CancelDialog()
+		})
+		gi.NewButton(d.Buttons()).SetText("Open").OnClick(func(e events.Event) {
+			d.AcceptDialog()
+			ge.NextViewFileNode(fn)
+		})
 	} else {
 		ge.NextViewFileNode(fn)
 	}
