@@ -140,7 +140,7 @@ func (ge *GideView) FocusOnTabs() bool {
 //  Main project API
 
 // UpdateFiles updates the list of files saved in project
-func (ge *GideView) UpdateFiles() {
+func (ge *GideView) UpdateFiles() { //gti:add
 	ge.Files.OpenPath(string(ge.ProjRoot))
 	if ge.Files != nil {
 		ge.Files.UpdateAll()
@@ -152,7 +152,7 @@ func (ge *GideView) IsEmpty() bool {
 }
 
 // OpenRecent opens a recently-used file
-func (ge *GideView) OpenRecent(filename gi.FileName) {
+func (ge *GideView) OpenRecent(filename gi.FileName) { //gti:add
 	if string(filename) == gide.GideViewResetRecents {
 		gide.SavedPaths = nil
 		gi.StringsAddExtras((*[]string)(&gide.SavedPaths), gide.SavedPathsExtras)
@@ -186,7 +186,7 @@ func (ge *GideView) EditRecents() {
 
 // OpenFile opens file in an open project if it has the same path as the file
 // or in a new window.
-func (ge *GideView) OpenFile(fnm string) {
+func (ge *GideView) OpenFile(fnm string) { //gti:add
 	abfn, _ := filepath.Abs(fnm)
 	if strings.HasPrefix(abfn, string(ge.ProjRoot)) {
 		ge.ViewFile(gi.FileName(abfn))
@@ -215,7 +215,7 @@ func (ge *GideView) OpenFile(fnm string) {
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
 // current GideView object if it is empty, or otherwise opens a new window.
-func (ge *GideView) OpenPath(path gi.FileName) *GideView {
+func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 	if gproj, has := CheckForProjAtPath(string(path)); has {
 		return ge.OpenProj(gi.FileName(gproj))
 	}
@@ -251,7 +251,7 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView {
 
 // OpenProj opens .gide project file and its settings from given filename, in a standard
 // JSON-formatted file
-func (ge *GideView) OpenProj(filename gi.FileName) *GideView {
+func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 	if !ge.IsEmpty() {
 		return OpenGideProj(string(filename))
 	}
@@ -298,7 +298,7 @@ func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Su
 }
 
 // NewFile creates a new file in the project
-func (ge *GideView) NewFile(filename string, addToVcs bool) {
+func (ge *GideView) NewFile(filename string, addToVcs bool) { //gti:add
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
@@ -317,7 +317,7 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) {
 
 // SaveProj saves project file containing custom project settings, in a
 // standard JSON-formatted file
-func (ge *GideView) SaveProj() {
+func (ge *GideView) SaveProj() { //gti:add
 	if ge.Prefs.ProjFilename == "" {
 		return
 	}
@@ -343,7 +343,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 // JSON-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool {
+func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool { //gti:add
 	spell.SaveIfLearn()
 	gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	gide.SavePaths()
@@ -544,6 +544,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	sc.Lay = gi.LayoutVert
 
 	ge := NewGideView(sc)
+	sc.TopAppBar = ge.Toolbar
 
 	if doPath {
 		ge.OpenPath(gi.FileName(path))

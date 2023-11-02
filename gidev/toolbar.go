@@ -18,9 +18,8 @@ func (ge *GideView) Toolbar(tb *gi.Toolbar) {
 	gi.DefaultTopAppBar(tb)
 
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetIcon(icons.Refresh).SetShortcut("Command+U")
-	op := giv.NewFuncButton(tb, ge.OpenPath).SetKey(keyfun.Open)
-	_ = op
-	// op.Args[0].SetValue(ge.ActiveFilename)
+	op := giv.NewFuncButton(tb, ge.NextViewFile).SetKey(keyfun.Open)
+	op.Args[0].SetValue(ge.ActiveFilename)
 	giv.NewFuncButton(tb, ge.SaveActiveView).SetKey(keyfun.Save)
 
 	gi.NewSeparator(tb)
@@ -31,6 +30,8 @@ func (ge *GideView) Toolbar(tb *gi.Toolbar) {
 		ge.Prefs.GoMod = sm.StateIs(states.Checked)
 		gide.SetGoMod(ge.Prefs.GoMod)
 	})
+
+	tb.AddDefaultOverflowMenu()
 }
 
 /*

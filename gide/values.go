@@ -42,28 +42,31 @@ func KeyMapsView(km *KeyMaps) {
 		AvailKeyMapsChanged = true
 	})
 
-	tb := tv.Toolbar()
-	gi.NewSeparator(tb)
-	sp := giv.NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
-	sp.SetUpdateFunc(func() {
-		sp.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps)
-	})
-	oj := giv.NewFuncButton(tb, km.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
-	oj.Args[0].SetTag("ext", ".json")
-	sj := giv.NewFuncButton(tb, km.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-	sj.Args[0].SetTag("ext", ".json")
-	gi.NewSeparator(tb)
-	vs := giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
-	vs.SetUpdateFunc(func() {
-		vs.SetEnabledUpdt(km != &StdKeyMaps)
-	})
-	rs := giv.NewFuncButton(tb, km.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
-	rs.SetUpdateFunc(func() {
-		rs.SetEnabledUpdt(km != &StdKeyMaps)
-	})
-	tb.OverflowMenu().SetMenu(func(m *gi.Scene) {
-		giv.NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
-	})
+	sc.TopAppBar = func(tb *gi.Toolbar) {
+		gi.DefaultTopAppBar(tb)
+
+		sp := giv.NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
+		sp.SetUpdateFunc(func() {
+			sp.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps)
+		})
+		oj := giv.NewFuncButton(tb, km.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".json")
+		sj := giv.NewFuncButton(tb, km.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".json")
+		gi.NewSeparator(tb)
+		vs := giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
+		vs.SetUpdateFunc(func() {
+			vs.SetEnabledUpdt(km != &StdKeyMaps)
+		})
+		rs := giv.NewFuncButton(tb, km.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
+		rs.SetUpdateFunc(func() {
+			rs.SetEnabledUpdt(km != &StdKeyMaps)
+		})
+		tb.AddOverflowMenu(func(m *gi.Scene) {
+			giv.NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+		})
+		tb.AddDefaultOverflowMenu()
+	}
 
 	gi.NewWindow(sc).Run()
 }
@@ -95,12 +98,15 @@ func PrefsView(pf *Preferences) *giv.StructView {
 		pf.Changed = true
 	})
 
-	tb := tv.Toolbar()
-	gi.NewSeparator(tb)
-	sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
-	sp.SetUpdateFunc(func() {
-		sp.SetEnabled(pf.Changed)
-	})
+	sc.TopAppBar = func(tb *gi.Toolbar) {
+		gi.DefaultTopAppBar(tb)
+
+		sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
+		sp.SetUpdateFunc(func() {
+			sp.SetEnabled(pf.Changed)
+		})
+		tb.AddDefaultOverflowMenu()
+	}
 	/*
 		oj := giv.NewFuncButton(tb, pf.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".json")
@@ -280,28 +286,31 @@ func LangsView(pt *Langs) {
 		AvailLangsChanged = true
 	})
 
-	tb := tv.Toolbar()
-	gi.NewSeparator(tb)
-	sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
-	sp.SetUpdateFunc(func() {
-		sp.SetEnabled(AvailLangsChanged && pt == &AvailLangs)
-	})
-	oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
-	oj.Args[0].SetTag("ext", ".json")
-	sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-	sj.Args[0].SetTag("ext", ".json")
-	gi.NewSeparator(tb)
-	vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
-	vs.SetUpdateFunc(func() {
-		vs.SetEnabledUpdt(pt != &StdLangs)
-	})
-	rs := giv.NewFuncButton(tb, pt.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
-	rs.SetUpdateFunc(func() {
-		rs.SetEnabledUpdt(pt != &StdLangs)
-	})
-	tb.OverflowMenu().SetMenu(func(m *gi.Scene) {
-		giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
-	})
+	sc.TopAppBar = func(tb *gi.Toolbar) {
+		gi.DefaultTopAppBar(tb)
+
+		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
+		sp.SetUpdateFunc(func() {
+			sp.SetEnabled(AvailLangsChanged && pt == &AvailLangs)
+		})
+		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".json")
+		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".json")
+		gi.NewSeparator(tb)
+		vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
+		vs.SetUpdateFunc(func() {
+			vs.SetEnabledUpdt(pt != &StdLangs)
+		})
+		rs := giv.NewFuncButton(tb, pt.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
+		rs.SetUpdateFunc(func() {
+			rs.SetEnabledUpdt(pt != &StdLangs)
+		})
+		tb.AddOverflowMenu(func(m *gi.Scene) {
+			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+		})
+		tb.AddDefaultOverflowMenu()
+	}
 
 	gi.NewWindow(sc).Run()
 }

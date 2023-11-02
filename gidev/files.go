@@ -250,7 +250,7 @@ func (ge *GideView) TextBufForFile(fpath string, add bool) *texteditor.Buf {
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns textview and its
 // index, false if not found
-func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextView, int, bool) {
+func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextView, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
