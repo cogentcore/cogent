@@ -41,6 +41,8 @@ func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 		return
 	}
 
+	ge.SetStretchMax()
+
 	updt := ge.UpdateStart()
 	sc.TopAppBar = ge.Toolbar
 
@@ -112,8 +114,10 @@ func (ge *GideView) SelectedFileNode() *filetree.Node {
 func (ge *GideView) ConfigSplits() {
 	// note: covered by global update
 	split := ge.Splits()
+	split.SetStretchMax()
 	split.Dim = mat32.X
 	ftfr := gi.NewFrame(split, "filetree").SetLayout(gi.LayoutVert)
+	ftfr.SetStretchMax()
 	ft := filetree.NewTree(ftfr, "filetree")
 	ft.OpenDepth = 4
 	ge.Files = ft
@@ -173,7 +177,10 @@ func (ge *GideView) ConfigSplits() {
 	ge.UpdateTextButtons()
 
 	mtab := gi.NewTabs(split, "tabs")
-	_ = mtab
+	mtab.Style(func(s *styles.Style) {
+		s.SetStretchMax()
+	})
+
 	// mtab.OnChange(func(e events.Event) {
 	// todo: need to monitor deleted
 	// gee.TabDeleted(data.(string))
