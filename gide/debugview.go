@@ -742,7 +742,6 @@ func (dv *DebugView) ConfigDebugView(ge Gide, sup filecat.Supported, exePath str
 	dv.Sup = sup
 	dv.ExePath = exePath
 	dv.Lay = gi.LayoutVert
-	dv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "toolbar")
 	config.Add(gi.TabsType, "tabs")
@@ -1317,7 +1316,6 @@ func (vv *VarView) ConfigVarView() {
 		return
 	}
 	vv.Lay = gi.LayoutVert
-	vv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
 	config.Add(gi.LabelType, "frame-info")
 	// config.Add(gi.ToolbarType, "toolbar")

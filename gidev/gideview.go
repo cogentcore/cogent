@@ -9,6 +9,7 @@ package gidev
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -141,8 +142,8 @@ func (ge *GideView) FocusOnTabs() bool {
 
 // UpdateFiles updates the list of files saved in project
 func (ge *GideView) UpdateFiles() { //gti:add
-	ge.Files.OpenPath(string(ge.ProjRoot))
 	if ge.Files != nil {
+		ge.Files.OpenPath(string(ge.ProjRoot))
 		ge.Files.UpdateAll()
 	}
 }
@@ -256,7 +257,9 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 		return OpenGideProj(string(filename))
 	}
 	ge.Defaults()
-	ge.Prefs.OpenJSON(filename)
+	if err := ge.Prefs.OpenJSON(filename); err != nil {
+		slog.Debug("Project Prefs had a loading error", "error", err)
+	}
 	ge.Prefs.ProjFilename = filename // should already be set but..
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
 	if ok {
@@ -266,13 +269,13 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.ApplyPrefs()
-		// ge.Config()
-		// win := ge.ParentWindow()
-		// if win != nil {
-		// 	winm := "gide-" + pnm
-		// 	win.SetName(winm)
-		// 	win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
-		// }
+		ge.UpdateFiles()
+		win := ge.Sc.RenderWin()
+		if win != nil {
+			winm := "gide-" + pnm
+			win.SetName(winm)
+			win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
+		}
 	}
 	return ge
 }
@@ -516,9 +519,7 @@ func NewGideProjPath(path string) *GideView {
 func OpenGideProj(projfile string) *GideView {
 	pp := &gide.ProjPrefs{}
 	if err := pp.OpenJSON(gi.FileName(projfile)); err != nil {
-		gi.NewDialog(nil).Title("Project File Could Not Be Opened").
-			Prompt(fmt.Sprintf("Project file open encountered error: %v", err.Error())).Modal(true).Ok().Run()
-		return nil
+		slog.Debug("Project Prefs had a loading error", "error", err)
 	}
 	path := string(pp.ProjRoot)
 	root, projnm, _, _ := ProjPathParse(path)
@@ -546,12 +547,6 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	ge := NewGideView(sc)
 	sc.TopAppBar = ge.TopAppBar
 
-	if doPath {
-		ge.OpenPath(gi.FileName(path))
-	} else {
-		ge.OpenProj(gi.FileName(path))
-	}
-
 	// mmen := win.MainMenu
 	// giv.MainMenuView(ge, win, mmen)
 
@@ -576,5 +571,12 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	// win.MainMenuUpdated()
 
 	gi.NewWindow(sc).Run()
+
+	if doPath {
+		ge.OpenPath(gi.FileName(path))
+	} else {
+		ge.OpenProj(gi.FileName(path))
+	}
+
 	return ge
 }

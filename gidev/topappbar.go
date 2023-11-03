@@ -28,19 +28,28 @@ func DefaultTopAppBar(tb *gi.TopAppBar) {
 func (ge *GideView) TopAppBar(tb *gi.TopAppBar) {
 	gi.DefaultTopAppBar(tb)
 
-	giv.NewFuncButton(tb, ge.UpdateFiles).SetIcon(icons.Refresh).SetShortcut("Command+U")
-	op := giv.NewFuncButton(tb, ge.NextViewFile).SetKey(keyfun.Open)
-	op.Args[0].SetValue(ge.ActiveFilename)
-	giv.NewFuncButton(tb, ge.SaveActiveView).SetKey(keyfun.Save)
-
-	gi.NewSeparator(tb)
-
+	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.SetChecked(ge.Prefs.GoMod)
 	sm.OnClick(func(e events.Event) {
 		ge.Prefs.GoMod = sm.StateIs(states.Checked)
 		gide.SetGoMod(ge.Prefs.GoMod)
 	})
+
+	gi.NewButton(tb).SetText("Open Recent").SetMenu(func(m *gi.Scene) {
+		for _, sp := range gide.SavedPaths {
+			sp := sp
+			gi.NewButton(m).SetText(sp).OnClick(func(e events.Event) {
+				ge.OpenRecent(gi.FileName(sp))
+			})
+		}
+	})
+
+	op := giv.NewFuncButton(tb, ge.NextViewFile).SetKey(keyfun.Open)
+	op.Args[0].SetValue(ge.ActiveFilename)
+	giv.NewFuncButton(tb, ge.SaveActiveView).SetKey(keyfun.Save)
+
+	gi.NewSeparator(tb)
 
 }
 

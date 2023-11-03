@@ -72,7 +72,6 @@ func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextView) {
 	sv.CurIdx = 0
 	sv.Errs = nil
 	sv.Lay = gi.LayoutVert
-	sv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "spellbar")
 	config.Add(gi.ToolbarType, "unknownbar")

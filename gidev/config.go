@@ -198,6 +198,7 @@ func (ge *GideView) ConfigStatusBar() {
 	sb.Style(func(s *styles.Style) {
 		s.SetStretchMaxWidth()
 		s.SetMinPrefHeight(units.Em(1.2))
+		s.MaxHeight.Zero()
 		s.Overflow = styles.OverflowHidden // no scrollbars!
 		s.Margin.Set()
 		s.Padding.Set()
@@ -206,6 +207,7 @@ func (ge *GideView) ConfigStatusBar() {
 	lbl.Style(func(s *styles.Style) {
 		s.SetStretchMaxWidth()
 		s.SetMinPrefHeight(units.Em(1))
+		s.MaxHeight.Zero()
 		s.AlignV = styles.AlignTop
 		s.Margin.Set()
 		s.Padding.Set()

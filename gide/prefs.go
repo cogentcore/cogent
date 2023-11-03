@@ -332,20 +332,22 @@ func (pf *ProjPrefs) RunExecIsExec() bool {
 //////////////////////////////////////////////////////////////////////////////////////
 //   Saved Projects / Paths
 
-// SavedPaths is a slice of strings that are file paths
-var SavedPaths gi.FilePaths
+var (
+	// SavedPaths is a slice of strings that are file paths
+	SavedPaths gi.FilePaths
 
-// SavedPathsFileName is the name of the saved file paths file in GoGi prefs directory
-var SavedPathsFileName = "gide_saved_paths.json"
+	// SavedPathsFileName is the name of the saved file paths file in GoGi prefs directory
+	SavedPathsFileName = "gide_saved_paths.json"
 
-// GideViewResetRecents defines a string that is added as an item to the recents menu
-var GideViewResetRecents = "<i>Reset Recents</i>"
+	// GideViewResetRecents defines a string that is added as an item to the recents menu
+	GideViewResetRecents = "<i>Reset Recents</i>"
 
-// GideViewEditRecents defines a string that is added as an item to the recents menu
-var GideViewEditRecents = "<i>Edit Recents...</i>"
+	// GideViewEditRecents defines a string that is added as an item to the recents menu
+	GideViewEditRecents = "<i>Edit Recents...</i>"
 
-// SavedPathsExtras are the reset and edit items we add to the recents menu
-var SavedPathsExtras = []string{gi.MenuTextSeparator, GideViewResetRecents, GideViewEditRecents}
+	// SavedPathsExtras are the reset and edit items we add to the recents menu
+	SavedPathsExtras = []string{gi.MenuTextSeparator, GideViewResetRecents, GideViewEditRecents}
+)
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {

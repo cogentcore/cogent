@@ -376,7 +376,6 @@ func (fv *FindView) ConfigWidget(sc *gi.Scene) {
 func (fv *FindView) ConfigFindView(ge Gide) {
 	fv.Gide = ge
 	fv.Lay = gi.LayoutVert
-	fv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "findbar")
 	config.Add(gi.ToolbarType, "replbar")

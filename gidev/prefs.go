@@ -37,8 +37,10 @@ func (ge *GideView) GrabPrefs() {
 func (ge *GideView) ApplyPrefs() {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.ProjRoot = ge.Prefs.ProjRoot
-	ge.Files.Dirs = ge.Prefs.Dirs
-	ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+	if ge.Files != nil {
+		ge.Files.Dirs = ge.Prefs.Dirs
+		ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+	}
 	if len(ge.Kids) > 0 {
 		for i := 0; i < NTextViews; i++ {
 			tv := ge.TextViewByIndex(i)
