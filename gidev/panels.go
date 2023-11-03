@@ -135,6 +135,7 @@ func (ge *GideView) RecycleTabTextView(label string, sel bool) *texteditor.Edito
 	}
 	txv := texteditor.NewEditor(fr, fr.Nm)
 	gide.ConfigOutputTextView(txv)
+	tv.Update()
 	tv.UpdateEndLayout(updt)
 	return txv
 }

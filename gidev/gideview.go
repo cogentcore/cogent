@@ -99,6 +99,11 @@ func init() {
 	paint.TextLinkHandler = TextLinkHandler
 }
 
+func (ge *GideView) OnInit() {
+	ge.FrameStyles()
+	ge.HandleGideViewEvents()
+}
+
 ////////////////////////////////////////////////////////
 // Gide interface
 

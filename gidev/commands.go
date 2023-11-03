@@ -131,13 +131,16 @@ func (ge *GideView) CommandFromMenu(lang filecat.Supported) {
 	mm := gi.NewScene()
 	cmds := gide.AvailCmds.FilterCmdNames(lang, ge.VersCtrl())
 	for _, cc := range cmds {
+		cc := cc
 		n := len(cc)
 		if n < 2 {
 			continue
 		}
 		cmdCat := cc[0]
-		gi.NewButton(mm).SetText(cmdCat).SetMenu(func(m *gi.Scene) {
+		cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonAction)
+		cb.SetMenu(func(m *gi.Scene) {
 			for ii := 1; ii < n; ii++ {
+				ii := ii
 				it := cc[ii]
 				cmdNm := gide.CommandName(cmdCat, it)
 				b := gi.NewButton(m).SetText(it).OnClick(func(e events.Event) {

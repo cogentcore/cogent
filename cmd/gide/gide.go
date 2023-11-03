@@ -32,6 +32,8 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	gi.DefaultTopAppBar = gidev.DefaultTopAppBar
 
+	gi.KeyEventTrace = true
+
 	// goosi.TheApp.SetQuitCleanFunc(func() {
 	// 	fmt.Printf("Doing final Quit cleanup here..\n")
 	// })

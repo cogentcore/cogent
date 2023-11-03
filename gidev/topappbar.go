@@ -93,12 +93,13 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 			ec := ExecCmds(ge)
 			for _, cc := range ec {
 				cc := cc
-				gi.NewButton(m).SetText(cc[0]).SetMenu(func(mm *gi.Scene) {
+				cat := cc[0]
+				gi.NewButton(m).SetText(cat).SetMenu(func(mm *gi.Scene) {
 					nc := len(cc)
 					for i := 1; i < nc; i++ {
 						cm := cc[i]
 						gi.NewButton(mm).SetText(cm).OnClick(func(e events.Event) {
-							ge.ExecCmdNameActive(cm)
+							ge.ExecCmdNameActive(gide.CommandName(cat, cm))
 						})
 					}
 				})

@@ -18,9 +18,15 @@ func (ge *GideView) HandleGideViewEvents() {
 	// if ge.HasAnyScroll() {
 	// 	ge.LayoutScrollEvents()
 	// }
-	// ge.KeyChordEvent()
-	// ge.MouseEvent()
-	// ge.OSFileEvent()
+	ge.HandleLayoutEvents()
+	ge.HandleGideKeyEvent()
+	ge.HandleOSFileEvent()
+}
+
+func (ge *GideView) HandleGideKeyEvent() {
+	ge.OnKeyChord(func(e events.Event) {
+		ge.GideViewKeys(e)
+	})
 }
 
 func (ge *GideView) GideViewKeys(kt events.Event) {
@@ -148,44 +154,21 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 	}
 }
 
-/*
-func (ge *GideView) KeyChordEvent() {
-	// need hipri to prevent 2-seq guys from being captured by others
-	ge.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
-		gee := recv.Embed(KiT_GideView).(*GideView)
-		kt := d.(*key.ChordEvent)
-		gee.GideViewKeys(kt)
+func (ge *GideView) HandleOSFileEvent() {
+	ge.On(events.OSOpenFiles, func(e events.Event) {
+		ofe := e.(*events.OSFiles)
+		for _, fn := range ofe.Files {
+			ge.OpenFile(fn)
+		}
 	})
 }
+
+/*
 
 func (ge *GideView) MouseEvent() {
 	ge.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		gee := recv.Embed(KiT_GideView).(*GideView)
 		gide.SetGoMod(gee.Prefs.GoMod)
 	})
-}
-
-func (ge *GideView) OSFileEvent() {
-	ge.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-		gee := recv.Embed(KiT_GideView).(*GideView)
-		ofe := d.(*events.OpenFilesEvent)
-		for _, fn := range ofe.Files {
-			gee.OpenFile(fn)
-		}
-	})
-}
-
-func (ge *GideView) Render2D() {
-	if len(ge.Kids) > 0 {
-		ge.Toolbar().UpdateActions()
-		if win := ge.ParentWindow(); win != nil {
-			sv := ge.Splits()
-			win.EventMgr.SetStartFocus(sv.This())
-			if !win.IsResizing() {
-				win.MainMenuUpdateActives()
-			}
-		}
-	}
-	ge.Frame.Render2D()
 }
 */
