@@ -30,6 +30,8 @@ Gide is based on "projects" which are just directories containing files<br>
 <br>
 Version: ` + gide.Prefs.VersionInfo())
 
+	gi.DefaultTopAppBar = gidev.DefaultTopAppBar
+
 	// goosi.TheApp.SetQuitCleanFunc(func() {
 	// 	fmt.Printf("Doing final Quit cleanup here..\n")
 	// })

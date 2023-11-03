@@ -14,6 +14,17 @@ import (
 	"goki.dev/icons"
 )
 
+// DefaultTopAppBar is the default top app bar for gide
+func DefaultTopAppBar(tb *gi.TopAppBar) {
+	gi.DefaultTopAppBarStd(tb)
+	tb.AddOverflowMenu(func(m *gi.Scene) {
+		gi.NewButton(m).SetText("Gide Prefs").SetIcon(icons.Settings).
+			OnClick(func(e events.Event) {
+				gide.PrefsView(&gide.Prefs)
+			})
+	})
+}
+
 func (ge *GideView) TopAppBar(tb *gi.TopAppBar) {
 	gi.DefaultTopAppBar(tb)
 
@@ -30,6 +41,7 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) {
 		ge.Prefs.GoMod = sm.StateIs(states.Checked)
 		gide.SetGoMod(ge.Prefs.GoMod)
 	})
+
 }
 
 /*
