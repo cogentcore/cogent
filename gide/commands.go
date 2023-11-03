@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -23,6 +22,8 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/goosi"
 	"goki.dev/goosi/events"
+	"goki.dev/grows/jsons"
+	"goki.dev/grr"
 	"goki.dev/pi/v2/complete"
 	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
@@ -704,36 +705,19 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 var PrefsCmdsFileName = "command_prefs.json"
 
 // OpenJSON opens commands from a JSON-formatted file.
-func (cm *Commands) OpenJSON(filename gi.FileName) error {
-	b, err := ioutil.ReadFile(string(filename))
-	if err != nil {
-		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.AddCancel, nil, nil)
-		// log.Println(err)
-		return err
-	}
+func (cm *Commands) OpenJSON(filename gi.FileName) error { //gti:add
 	*cm = make(Commands, 0, 10) // reset
-	return json.Unmarshal(b, cm)
+	return grr.Log0(jsons.Open(cm, string(filename)))
 }
 
 // SaveJSON saves commands to a JSON-formatted file.
-func (cm *Commands) SaveJSON(filename gi.FileName) error {
-	b, err := json.MarshalIndent(cm, "", "  ")
-	if err != nil {
-		log.Println(err) // unlikely
-		return err
-	}
-	err = ioutil.WriteFile(string(filename), b, 0644)
-	if err != nil {
-		gi.NewDialog(nil).Title("Could not Save to File").
-			Prompt(err.Error()).Modal(true).Ok().Run()
-		log.Println(err)
-	}
-	return err
+func (cm *Commands) SaveJSON(filename gi.FileName) error { //gti:add
+	return grr.Log0(jsons.Save(cm, string(filename)))
 }
 
 // OpenPrefs opens custom Commands from App standard prefs directory, using
 // PrefsCmdsFileName
-func (cm *Commands) OpenPrefs() error {
+func (cm *Commands) OpenPrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
@@ -748,7 +732,7 @@ func (cm *Commands) OpenPrefs() error {
 
 // SavePrefs saves custom Commands to App standard prefs directory, using
 // PrefsCmdsFileName
-func (cm *Commands) SavePrefs() error {
+func (cm *Commands) SavePrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
@@ -784,90 +768,13 @@ func MergeAvailCmds() {
 
 // ViewStd shows the standard types that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (cm *Commands) ViewStd() {
+func (cm *Commands) ViewStd() { //gti:add
 	CmdsView(&StdCmds)
 }
 
 // CustomCmdsChanged is used to update giv.CmdsView toolbars via following
 // menu, toolbar props update methods.
 var CustomCmdsChanged = false
-
-/*
-// CommandsProps define the Toolbar and MenuBar for TableView of Commands, e.g., CmdsView
-var CommandsProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"OpenPrefs", ki.Props{}},
-			{"SavePrefs", ki.Props{
-				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Button) {
-					act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
-				}),
-			}},
-			{"sep-file", ki.BlankProp{}},
-			{"OpenJSON", ki.Props{
-				"label":    "Open from file",
-				"desc":     "You can save and open commands to / from files to share, experiment, transfer, etc",
-				"shortcut": "Command+O",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-			{"SaveJSON", ki.Props{
-				"label": "Save to file",
-				"desc":  "You can save and open commands to / from files to share, experiment, transfer, etc",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-		}},
-		{"Edit", "Copy Cut Paste Dupe"},
-		{"Window", "Windows"},
-	},
-	"Toolbar": ki.PropSlice{
-		{"SavePrefs", ki.Props{
-			"desc": "saves Commands to App standard prefs directory, in file proj_types_prefs.json, which will be loaded automatically at startup if prefs SaveCommands is checked (should be if you're using custom commands)",
-			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Button) {
-				act.SetActiveState(CustomCmdsChanged && cmi.(*Commands) == &CustomCmds)
-			}),
-		}},
-		{"sep-file", ki.BlankProp{}},
-		{"OpenJSON", ki.Props{
-			"label": "Open from file",
-			"icon":  "file-open",
-			"desc":  "You can save and open commands to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"SaveJSON", ki.Props{
-			"label": "Save to file",
-			"icon":  "file-save",
-			"desc":  "You can save and open commands to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"sep-std", ki.BlankProp{}},
-		{"ViewStd", ki.Props{
-			"desc": "Shows the standard commands that are compiled into the program (edits will not be saved -- even though the viewer is editable).  Custom commands override standard ones of the same name, so that is the way to change any existing commands.",
-			"updtfunc": giv.ActionUpdateFunc(func(cmi any, act *gi.Button) {
-				act.SetActiveState(cmi.(*Commands) != &StdCmds)
-			}),
-		}},
-	},
-}
-*/
 
 // SetCompleter adds a completer to the textfield - each field
 // can have its own match and edit functions

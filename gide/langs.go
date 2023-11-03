@@ -5,13 +5,12 @@
 package gide
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/goosi"
+	"goki.dev/grows/jsons"
 	"goki.dev/pi/v2/filecat"
 )
 
@@ -56,33 +55,17 @@ var PrefsLangsFileName = "lang_prefs.json"
 
 // OpenJSON opens languages from a JSON-formatted file.
 func (lt *Langs) OpenJSON(filename gi.FileName) error {
-	b, err := ioutil.ReadFile(string(filename))
-	if err != nil {
-		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
-		// log.Println(err)
-		return err
-	}
 	*lt = make(Langs) // reset
-	rval := json.Unmarshal(b, lt)
-	return rval
+	return jsons.Open(lt, string(filename))
 }
 
 // SaveJSON saves languages to a JSON-formatted file.
-func (lt *Langs) SaveJSON(filename gi.FileName) error {
-	b, err := json.MarshalIndent(lt, "", "  ")
-	if err != nil {
-		log.Println(err) // unlikely
-		return err
-	}
-	err = ioutil.WriteFile(string(filename), b, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-	return err
+func (lt *Langs) SaveJSON(filename gi.FileName) error { //gti:add
+	return jsons.Save(lt, string(filename))
 }
 
 // OpenPrefs opens Langs from App standard prefs directory, using PrefsLangsFileName
-func (lt *Langs) OpenPrefs() error {
+func (lt *Langs) OpenPrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
@@ -90,7 +73,7 @@ func (lt *Langs) OpenPrefs() error {
 }
 
 // SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFileName
-func (lt *Langs) SavePrefs() error {
+func (lt *Langs) SavePrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
@@ -107,14 +90,14 @@ func (lt *Langs) CopyFrom(cp Langs) {
 
 // RevertToStd reverts this map to using the StdLangs that are compiled into
 // the program and have all the lastest standards.
-func (lt *Langs) RevertToStd() {
+func (lt *Langs) RevertToStd() { //gti:add
 	lt.CopyFrom(StdLangs)
 	AvailLangsChanged = true
 }
 
 // ViewStd shows the standard langs that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (lt *Langs) ViewStd() {
+func (lt *Langs) ViewStd() { //gti:add
 	LangsView(&StdLangs)
 }
 

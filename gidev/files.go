@@ -23,7 +23,7 @@ import (
 )
 
 // SaveActiveView saves the contents of the currently-active textview
-func (ge *GideView) SaveActiveView() {
+func (ge *GideView) SaveActiveView() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		ge.LastSaveTStamp = time.Now()

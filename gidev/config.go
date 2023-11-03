@@ -44,7 +44,7 @@ func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 	ge.SetStretchMax()
 
 	updt := ge.UpdateStart()
-	sc.TopAppBar = ge.Toolbar
+	sc.TopAppBar = ge.TopAppBar
 
 	ge.Lay = gi.LayoutVert
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)

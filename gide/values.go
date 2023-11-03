@@ -42,16 +42,16 @@ func KeyMapsView(km *KeyMaps) {
 		AvailKeyMapsChanged = true
 	})
 
-	sc.TopAppBar = func(tb *gi.Toolbar) {
+	sc.TopAppBar = func(tb *gi.TopAppBar) {
 		gi.DefaultTopAppBar(tb)
 
 		sp := giv.NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps)
 		})
-		oj := giv.NewFuncButton(tb, km.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := giv.NewFuncButton(tb, km.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, km.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := giv.NewFuncButton(tb, km.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".json")
 		gi.NewSeparator(tb)
 		vs := giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
@@ -65,7 +65,6 @@ func KeyMapsView(km *KeyMaps) {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-		tb.AddDefaultOverflowMenu()
 	}
 
 	gi.NewWindow(sc).Run()
@@ -98,33 +97,25 @@ func PrefsView(pf *Preferences) *giv.StructView {
 		pf.Changed = true
 	})
 
-	sc.TopAppBar = func(tb *gi.Toolbar) {
+	sc.TopAppBar = func(tb *gi.TopAppBar) {
 		gi.DefaultTopAppBar(tb)
 
-		sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
+		giv.NewFuncButton(tb, pf.Apply).SetIcon(icons.Done)
+		sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(pf.Changed)
 		})
-		tb.AddDefaultOverflowMenu()
+		giv.NewFuncButton(tb, pf.VersionInfo).SetShowReturn(true).SetIcon(icons.Info)
+		giv.NewFuncButton(tb, pf.EditKeyMaps).SetIcon(icons.Keyboard)
+		giv.NewFuncButton(tb, pf.EditLangOpts).SetIcon(icons.Subtitles)
+		giv.NewFuncButton(tb, pf.EditCmds).SetIcon(icons.KeyboardCommandKey)
+		giv.NewFuncButton(tb, pf.EditSplits).SetIcon(icons.VerticalSplit)
+		giv.NewFuncButton(tb, pf.EditRegisters).SetIcon(icons.Variables)
+
+		tb.AddOverflowMenu(func(m *gi.Scene) {
+			giv.NewFuncButton(m, pf.Open).SetText("Open prefs").SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+		})
 	}
-	/*
-		oj := giv.NewFuncButton(tb, pf.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
-		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, pf.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-		sj.Args[0].SetTag("ext", ".json")
-		gi.NewSeparator(tb)
-		vs := giv.NewFuncButton(tb, pf.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
-		vs.SetUpdateFunc(func() {
-			vs.SetEnabledUpdt(pf != &StdKeyMaps)
-		})
-		rs := giv.NewFuncButton(tb, pf.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
-		rs.SetUpdateFunc(func() {
-			rs.SetEnabledUpdt(pf != &StdKeyMaps)
-		})
-		tb.OverflowMenu().SetMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, pf.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
-		})
-	*/
 
 	gi.NewWindow(sc).Run()
 	return tv
@@ -157,55 +148,30 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 		pf.Changed = true
 	})
 
-	/*
-		tb := tv.Toolbar()
-		gi.NewSeparator(tb)
-		sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
-		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(pf.Changed)
-		})
-			oj := giv.NewFuncButton(tb, pf.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
-			oj.Args[0].SetTag("ext", ".json")
-			sj := giv.NewFuncButton(tb, pf.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-			sj.Args[0].SetTag("ext", ".json")
-			gi.NewSeparator(tb)
-			vs := giv.NewFuncButton(tb, pf.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
-			vs.SetUpdateFunc(func() {
-				vs.SetEnabledUpdt(pf != &StdKeyMaps)
-			})
-			rs := giv.NewFuncButton(tb, pf.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
-			rs.SetUpdateFunc(func() {
-				rs.SetEnabledUpdt(pf != &StdKeyMaps)
-			})
-			tb.OverflowMenu().SetMenu(func(m *gi.Scene) {
-				giv.NewFuncButton(m, pf.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
-			})
-	*/
-
 	gi.NewWindow(sc).Run()
 	return tv
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//  KeyMapValueView
+//  KeyMapValue
 
-// ValueView registers KeyMapValueView as the viewer of KeyMapName
-func (kn KeyMapName) ValueView() giv.Value {
-	return &KeyMapValueView{}
+// Value registers KeyMapValue as the viewer of KeyMapName
+func (kn KeyMapName) Value() giv.Value {
+	return &KeyMapValue{}
 }
 
-// KeyMapValueView presents an action for displaying an KeyMapName and selecting
+// KeyMapValue presents an action for displaying an KeyMapName and selecting
 // from KeyMapChooserDialog
-type KeyMapValueView struct {
+type KeyMapValue struct {
 	giv.ValueBase
 }
 
-func (vv *KeyMapValueView) WidgetType() *gti.Type {
+func (vv *KeyMapValue) WidgetType() *gti.Type {
 	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
-func (vv *KeyMapValueView) UpdateWidget() {
+func (vv *KeyMapValue) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
@@ -217,7 +183,7 @@ func (vv *KeyMapValueView) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *KeyMapValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *KeyMapValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -233,11 +199,11 @@ func (vv *KeyMapValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.UpdateWidget()
 }
 
-func (vv *KeyMapValueView) HasDialog() bool {
+func (vv *KeyMapValue) HasDialog() bool {
 	return true
 }
 
-func (vv *KeyMapValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *KeyMapValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}
@@ -286,16 +252,16 @@ func LangsView(pt *Langs) {
 		AvailLangsChanged = true
 	})
 
-	sc.TopAppBar = func(tb *gi.Toolbar) {
+	sc.TopAppBar = func(tb *gi.TopAppBar) {
 		gi.DefaultTopAppBar(tb)
 
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailLangsChanged && pt == &AvailLangs)
 		})
-		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".json")
 		gi.NewSeparator(tb)
 		vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
@@ -309,7 +275,6 @@ func LangsView(pt *Langs) {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-		tb.AddDefaultOverflowMenu()
 	}
 
 	gi.NewWindow(sc).Run()
@@ -343,49 +308,49 @@ func CmdsView(pt *Commands) {
 		CustomCmdsChanged = true
 	})
 
-	/*
-		tb := tv.Toolbar()
-		gi.NewSeparator(tb)
-		sp := giv.NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
+	sc.TopAppBar = func(tb *gi.TopAppBar) {
+		gi.DefaultTopAppBar(tb)
+
+		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(CustomCmdsChanged && km == &CustomCmds)
+			sp.SetEnabled(CustomCmdsChanged && pt == &CustomCmds)
 		})
-		oj := giv.NewFuncButton(tb, km.OpenJSON).SetText("Open from file").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, km.SaveJSON).SetText("Save to file").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".json")
 		gi.NewSeparator(tb)
-		vs := giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
+		vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
 		vs.SetUpdateFunc(func() {
-			vs.SetEnabledUpdt(km != &StdKeyMaps)
+			vs.SetEnabledUpdt(pt != &StdCmds)
 		})
-		tb.OverflowMenu().SetMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+		tb.AddOverflowMenu(func(m *gi.Scene) {
+			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-	*/
+	}
 
 	gi.NewWindow(sc).Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//  CmdValueView
+//  CmdValue
 
-// ValueView registers CmdValueView as the viewer of CmdName
-func (kn CmdName) ValueView() giv.Value {
-	return &CmdValueView{}
+// Value registers CmdValue as the viewer of CmdName
+func (kn CmdName) Value() giv.Value {
+	return &CmdValue{}
 }
 
-// CmdValueView presents an action for displaying an CmdName and selecting
-type CmdValueView struct {
+// CmdValue presents an action for displaying an CmdName and selecting
+type CmdValue struct {
 	giv.ValueBase
 }
 
-func (vv *CmdValueView) WidgetType() *gti.Type {
+func (vv *CmdValue) WidgetType() *gti.Type {
 	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
-func (vv *CmdValueView) UpdateWidget() {
+func (vv *CmdValue) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
@@ -397,7 +362,7 @@ func (vv *CmdValueView) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *CmdValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *CmdValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -413,11 +378,11 @@ func (vv *CmdValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.UpdateWidget()
 }
 
-func (vv *CmdValueView) HasDialog() bool {
+func (vv *CmdValue) HasDialog() bool {
 	return true
 }
 
-func (vv *CmdValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *CmdValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}
@@ -466,28 +431,44 @@ func SplitsView(pt *Splits) {
 		AvailSplitsChanged = true
 	})
 
+	sc.TopAppBar = func(tb *gi.TopAppBar) {
+		gi.DefaultTopAppBar(tb)
+
+		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
+		sp.SetUpdateFunc(func() {
+			sp.SetEnabled(AvailSplitsChanged && pt == &StdSplits)
+		})
+		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".json")
+		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".json")
+		tb.AddOverflowMenu(func(m *gi.Scene) {
+			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+		})
+	}
+
 	gi.NewWindow(sc).Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//  SplitValueView
+//  SplitValue
 
-// ValueView registers SplitValueView as the viewer of SplitName
-func (kn SplitName) ValueView() giv.Value {
-	return &SplitValueView{}
+// Value registers SplitValue as the viewer of SplitName
+func (kn SplitName) Value() giv.Value {
+	return &SplitValue{}
 }
 
-// SplitValueView presents an action for displaying an SplitName and selecting
-type SplitValueView struct {
+// SplitValue presents an action for displaying an SplitName and selecting
+type SplitValue struct {
 	giv.ValueBase
 }
 
-func (vv *SplitValueView) WidgetType() *gti.Type {
+func (vv *SplitValue) WidgetType() *gti.Type {
 	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
-func (vv *SplitValueView) UpdateWidget() {
+func (vv *SplitValue) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
@@ -499,7 +480,7 @@ func (vv *SplitValueView) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *SplitValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *SplitValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -515,11 +496,11 @@ func (vv *SplitValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.UpdateWidget()
 }
 
-func (vv *SplitValueView) HasDialog() bool {
+func (vv *SplitValue) HasDialog() bool {
 	return true
 }
 
-func (vv *SplitValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}
@@ -571,28 +552,44 @@ func RegistersView(pt *Registers) {
 		AvailRegistersChanged = true
 	})
 
+	sc.TopAppBar = func(tb *gi.TopAppBar) {
+		gi.DefaultTopAppBar(tb)
+
+		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
+		sp.SetUpdateFunc(func() {
+			sp.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters)
+		})
+		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".json")
+		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".json")
+		tb.AddOverflowMenu(func(m *gi.Scene) {
+			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+		})
+	}
+
 	gi.NewWindow(sc).Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//  RegisterValueView
+//  RegisterValue
 
-// ValueView registers RegisterValueView as the viewer of RegisterName
-func (kn RegisterName) ValueView() giv.Value {
-	return &RegisterValueView{}
+// Value registers RegisterValue as the viewer of RegisterName
+func (kn RegisterName) Value() giv.Value {
+	return &RegisterValue{}
 }
 
-// RegisterValueView presents an action for displaying an RegisterName and selecting
-type RegisterValueView struct {
+// RegisterValue presents an action for displaying an RegisterName and selecting
+type RegisterValue struct {
 	giv.ValueBase
 }
 
-func (vv *RegisterValueView) WidgetType() *gti.Type {
+func (vv *RegisterValue) WidgetType() *gti.Type {
 	vv.WidgetTyp = gi.ButtonType
 	return vv.WidgetTyp
 }
 
-func (vv *RegisterValueView) UpdateWidget() {
+func (vv *RegisterValue) UpdateWidget() {
 	if vv.Widget == nil {
 		return
 	}
@@ -604,7 +601,7 @@ func (vv *RegisterValueView) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *RegisterValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *RegisterValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -620,11 +617,11 @@ func (vv *RegisterValueView) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.UpdateWidget()
 }
 
-func (vv *RegisterValueView) HasDialog() bool {
+func (vv *RegisterValue) HasDialog() bool {
 	return true
 }
 
-func (vv *RegisterValueView) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if vv.IsReadOnly() {
 		return
 	}

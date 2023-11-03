@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"path/filepath"
 	"sort"
@@ -18,6 +17,8 @@ import (
 	"goki.dev/gi/v2/keyfun"
 	"goki.dev/goosi"
 	"goki.dev/goosi/events/key"
+	"goki.dev/grows/jsons"
+	"goki.dev/grr"
 )
 
 // https://www.eclipse.org/pdt/help/html/keymap.htm
@@ -323,32 +324,18 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 var PrefsKeyMapsFileName = "key_maps_prefs.json"
 
 // OpenJSON opens keymaps from a JSON-formatted file.
-func (km *KeyMaps) OpenJSON(filename gi.FileName) error {
-	b, err := ioutil.ReadFile(string(filename))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
+func (km *KeyMaps) OpenJSON(filename gi.FileName) error { //gti:add
 	*km = make(KeyMaps, 0, 10) // reset
-	return json.Unmarshal(b, km)
+	return grr.Log0(jsons.Open(km, string(filename)))
 }
 
 // SaveJSON saves keymaps to a JSON-formatted file.
-func (km *KeyMaps) SaveJSON(filename gi.FileName) error {
-	b, err := json.MarshalIndent(km, "", "  ")
-	if err != nil {
-		log.Println(err) // unlikely
-		return err
-	}
-	err = ioutil.WriteFile(string(filename), b, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-	return err
+func (km *KeyMaps) SaveJSON(filename gi.FileName) error { //gti:add
+	return grr.Log0(jsons.Save(km, string(filename)))
 }
 
 // OpenPrefs opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFileName
-func (km *KeyMaps) OpenPrefs() error {
+func (km *KeyMaps) OpenPrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
@@ -356,7 +343,7 @@ func (km *KeyMaps) OpenPrefs() error {
 }
 
 // SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFileName
-func (km *KeyMaps) SavePrefs() error {
+func (km *KeyMaps) SavePrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
@@ -375,8 +362,11 @@ func (km *KeyMaps) CopyFrom(cp KeyMaps) {
 
 // RevertToStd reverts this map to using the StdKeyMaps that are compiled into
 // the program and have all the lastest key functions bound to standard
-// values.
-func (km *KeyMaps) RevertToStd() {
+// values.  If you have edited your maps, and are finding things not working,
+// it is a good idea to save your current maps and try this,
+// or at least do ViewStdMaps to see the current standards.
+// <b>Your current map edits will be lost if you proceed!</b>
+func (km *KeyMaps) RevertToStd() { //gti:add
 	km.CopyFrom(StdKeyMaps)
 	AvailKeyMapsChanged = true
 }
@@ -384,7 +374,7 @@ func (km *KeyMaps) RevertToStd() {
 // ViewStd shows the standard maps that are compiled into the program and have
 // all the lastest key functions bound to standard values.  Useful for
 // comparing against custom maps.
-func (km *KeyMaps) ViewStd() {
+func (km *KeyMaps) ViewStd() { //gti:add
 	KeyMapsView(&StdKeyMaps)
 }
 
@@ -392,96 +382,6 @@ func (km *KeyMaps) ViewStd() {
 // following menu, toolbar props update methods -- not accurate if editing any
 // other map but works for now..
 var AvailKeyMapsChanged = false
-
-/*
-// KeyMapsProps define the Toolbar and MenuBar for TableView of KeyMaps, e.g., giv.KeyMapsView
-var KeyMapsProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"OpenPrefs", ki.Props{}},
-			{"SavePrefs", ki.Props{
-				"shortcut": "Command+S",
-				"updtfunc": func(kmi any, act *gi.Button) {
-					act.SetActiveState(AvailKeyMapsChanged && kmi.(*KeyMaps) == &AvailKeyMaps)
-				},
-			}},
-			{"sep-file", ki.BlankProp{}},
-			{"OpenJSON", ki.Props{
-				"label":    "Open from file",
-				"desc":     "You can save and open key maps to / from files to share, experiment, transfer, etc",
-				"shortcut": "Command+O",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-			{"SaveJSON", ki.Props{
-				"label": "Save to file",
-				"desc":  "You can save and open key maps to / from files to share, experiment, transfer, etc",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-			{"RevertToStd", ki.Props{
-				"desc":    "This reverts the keymaps to using the StdKeyMaps that are compiled into the program and have all the lastest key functions defined.  If you have edited your maps, and are finding things not working, it is a good idea to save your current maps and try this, or at least do ViewStdMaps to see the current standards.  <b>Your current map edits will be lost if you proceed!</b>  Continue?",
-				"confirm": true,
-			}},
-		}},
-		{"Edit", "Copy Cut Paste Dupe"},
-		{"Window", "Windows"},
-	},
-	"Toolbar": ki.PropSlice{
-		{"SavePrefs", ki.Props{
-			"desc": "saves KeyMaps to App standard prefs directory, in file key_maps_prefs.json, which will be loaded automatically at startup if prefs SaveKeyMaps is checked (should be if you're using custom keymaps)",
-			"icon": "file-save",
-			"updtfunc": func(kmi any, act *gi.Button) {
-				act.SetActiveState(AvailKeyMapsChanged && kmi.(*KeyMaps) == &AvailKeyMaps)
-			},
-		}},
-		{"sep-file", ki.BlankProp{}},
-		{"OpenJSON", ki.Props{
-			"label": "Open from file",
-			"icon":  "file-open",
-			"desc":  "You can save and open key maps to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"SaveJSON", ki.Props{
-			"label": "Save to file",
-			"icon":  "file-save",
-			"desc":  "You can save and open key maps to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"sep-std", ki.BlankProp{}},
-		{"ViewStd", ki.Props{
-			"desc":    "Shows the standard maps that are compiled into the program and have all the lastest key functions bound to standard key chords.  Useful for comparing against custom maps.",
-			"confirm": true,
-			"updtfunc": func(kmi any, act *gi.Button) {
-				act.SetActiveStateUpdt(kmi.(*KeyMaps) != &StdKeyMaps)
-			},
-		}},
-		{"RevertToStd", ki.Props{
-			"icon":    "update",
-			"desc":    "This reverts the keymaps to using the StdKeyMaps that are compiled into the program and have all the lastest key functions bound to standard key chords.  If you have edited your maps, and are finding things not working, it is a good idea to save your current maps and try this, or at least do ViewStdMaps to see the current standards.  <b>Your current map edits will be lost if you proceed!</b>  Continue?",
-			"confirm": true,
-			"updtfunc": func(kmi any, act *gi.Button) {
-				act.SetActiveStateUpdt(kmi.(*KeyMaps) != &StdKeyMaps)
-			},
-		}},
-	},
-}
-*/
 
 // StdKeyMaps is the original compiled-in set of standard keymaps that have
 // the lastest key functions bound to standard key chords.

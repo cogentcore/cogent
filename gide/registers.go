@@ -5,13 +5,12 @@
 package gide
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/goosi"
+	"goki.dev/grows/jsons"
+	"goki.dev/grr"
 )
 
 // Registers is a list of named strings
@@ -47,36 +46,18 @@ func (lt *Registers) Names() []string {
 var PrefsRegistersFileName = "registers_prefs.json"
 
 // OpenJSON opens named registers from a JSON-formatted file.
-func (lt *Registers) OpenJSON(filename gi.FileName) error {
-	b, err := ioutil.ReadFile(string(filename))
-	if err != nil {
-		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
-		// log.Println(err)
-		return err
-	}
+func (lt *Registers) OpenJSON(filename gi.FileName) error { //gti:add
 	*lt = make(Registers) // reset
-	rval := json.Unmarshal(b, lt)
-	return rval
+	return grr.Log0(jsons.Open(lt, string(filename)))
 }
 
 // SaveJSON saves named registers to a JSON-formatted file.
-func (lt *Registers) SaveJSON(filename gi.FileName) error {
-	b, err := json.MarshalIndent(lt, "", "  ")
-	if err != nil {
-		log.Println(err) // unlikely
-		return err
-	}
-	err = ioutil.WriteFile(string(filename), b, 0644)
-	if err != nil {
-		gi.NewDialog(nil).Title("Could not Save to File").
-			Prompt(err.Error()).Modal(true).Ok().Run()
-		log.Println(err)
-	}
-	return err
+func (lt *Registers) SaveJSON(filename gi.FileName) error { //gti:add
+	return grr.Log0(jsons.Save(lt, string(filename)))
 }
 
 // OpenPrefs opens Registers from App standard prefs directory, using PrefRegistersFileName
-func (lt *Registers) OpenPrefs() error {
+func (lt *Registers) OpenPrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
@@ -88,7 +69,7 @@ func (lt *Registers) OpenPrefs() error {
 }
 
 // SavePrefs saves Registers to App standard prefs directory, using PrefRegistersFileName
-func (lt *Registers) SavePrefs() error {
+func (lt *Registers) SavePrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
@@ -100,74 +81,3 @@ func (lt *Registers) SavePrefs() error {
 // props update methods -- not accurate if editing any other map but works for
 // now..
 var AvailRegistersChanged = false
-
-/*
-// RegistersProps define the Toolbar and MenuBar for TableView of Registers
-var RegistersProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"OpenPrefs", ki.Props{}},
-			{"SavePrefs", ki.Props{
-				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(ari any, act *gi.Button) {
-					act.SetActiveState(AvailRegistersChanged && ari.(*Registers) == &AvailRegisters)
-				}),
-			}},
-			{"sep-file", ki.BlankProp{}},
-			{"OpenJSON", ki.Props{
-				"label":    "Open from file",
-				"desc":     "You can save and open named registers to / from files to share, experiment, transfer, etc",
-				"shortcut": "Command+O",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-			{"SaveJSON", ki.Props{
-				"label": "Save to file",
-				"desc":  "You can save and open named registers to / from files to share, experiment, transfer, etc",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-		}},
-		{"Edit", "Copy Cut Paste Dupe"},
-		{"Window", "Windows"},
-	},
-	"Toolbar": ki.PropSlice{
-		{"SavePrefs", ki.Props{
-			"desc": "saves Registers to App standard prefs directory, in file registers_prefs.json, which will be loaded automatically at startup)",
-			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(ari any, act *gi.Button) {
-				act.SetActiveState(AvailRegistersChanged && ari.(*Registers) == &AvailRegisters)
-			}),
-		}},
-		{"sep-file", ki.BlankProp{}},
-		{"OpenJSON", ki.Props{
-			"label": "Open from file",
-			"icon":  "file-open",
-			"desc":  "You can save and open named registers to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"SaveJSON", ki.Props{
-			"label": "Save to file",
-			"icon":  "file-save",
-			"desc":  "You can save and open named registers to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-	},
-}
-
-*/

@@ -83,13 +83,13 @@ func (pv *PiView) IsEmpty() bool {
 }
 
 // OpenRecent opens a recently-used project
-func (pv *PiView) OpenRecent(filename gi.FileName) {
+func (pv *PiView) OpenRecent(filename gi.FileName) { //gti:add
 	pv.OpenProj(filename)
 }
 
 // OpenProj opens lexer and parser rules to current filename, in a standard JSON-formatted file
 // if current is not empty, opens in a new window
-func (pv *PiView) OpenProj(filename gi.FileName) *PiView {
+func (pv *PiView) OpenProj(filename gi.FileName) *PiView { //gti:add
 	if !pv.IsEmpty() {
 		_, nprj := NewPiView()
 		nprj.OpenProj(filename)
@@ -104,13 +104,13 @@ func (pv *PiView) OpenProj(filename gi.FileName) *PiView {
 }
 
 // NewProj makes a new project in a new window
-func (pv *PiView) NewProj() (*gi.Window, *PiView) {
+func (pv *PiView) NewProj() (*gi.Window, *PiView) { //gti:add
 	return NewPiView()
 }
 
 // SaveProj saves project prefs to current filename, in a standard JSON-formatted file
 // also saves the current parser
-func (pv *PiView) SaveProj() {
+func (pv *PiView) SaveProj() { //gti:add
 	if pv.Prefs.ProjFile == "" {
 		return
 	}
@@ -124,7 +124,7 @@ func (pv *PiView) SaveProj() {
 
 // SaveProjAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
 // also saves the current parser
-func (pv *PiView) SaveProjAs(filename gi.FileName) {
+func (pv *PiView) SaveProjAs(filename gi.FileName) { //gti:add
 	SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
 	pv.SaveParser()
@@ -136,7 +136,7 @@ func (pv *PiView) SaveProjAs(filename gi.FileName) {
 }
 
 // ApplyPrefs applies project-level prefs (e.g., after opening)
-func (pv *PiView) ApplyPrefs() {
+func (pv *PiView) ApplyPrefs() { //gti:add
 	fs := &pv.FileState
 	fs.ParseState.Trace.CopyOpts(&pv.Prefs.TraceOpts)
 	if pv.Prefs.ParserFile != "" {
@@ -157,14 +157,14 @@ func (pv *PiView) GetPrefs() {
 //  other IO
 
 // OpenParser opens lexer and parser rules to current filename, in a standard JSON-formatted file
-func (pv *PiView) OpenParser(filename gi.FileName) {
+func (pv *PiView) OpenParser(filename gi.FileName) { //gti:add
 	pv.Parser.OpenJSON(string(filename))
 	pv.Prefs.ParserFile = filename
 	pv.Config()
 }
 
 // SaveParser saves lexer and parser rules to current filename, in a standard JSON-formatted file
-func (pv *PiView) SaveParser() {
+func (pv *PiView) SaveParser() { //gti:add
 	if pv.Prefs.ParserFile == "" {
 		return
 	}
@@ -180,7 +180,7 @@ func (pv *PiView) SaveParser() {
 }
 
 // SaveParserAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
-func (pv *PiView) SaveParserAs(filename gi.FileName) {
+func (pv *PiView) SaveParserAs(filename gi.FileName) { //gti:add
 	pv.Parser.SaveJSON(string(filename))
 
 	ext := filepath.Ext(string(pv.Prefs.ParserFile))
@@ -194,7 +194,7 @@ func (pv *PiView) SaveParserAs(filename gi.FileName) {
 }
 
 // OpenTest opens test file
-func (pv *PiView) OpenTest(filename gi.FileName) {
+func (pv *PiView) OpenTest(filename gi.FileName) { //gti:add
 	pv.TestBuf.OpenFile(filename)
 	pv.Prefs.TestFile = filename
 }

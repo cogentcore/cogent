@@ -14,7 +14,7 @@ import (
 	"goki.dev/icons"
 )
 
-func (ge *GideView) Toolbar(tb *gi.Toolbar) {
+func (ge *GideView) TopAppBar(tb *gi.TopAppBar) {
 	gi.DefaultTopAppBar(tb)
 
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetIcon(icons.Refresh).SetShortcut("Command+U")
@@ -30,8 +30,6 @@ func (ge *GideView) Toolbar(tb *gi.Toolbar) {
 		ge.Prefs.GoMod = sm.StateIs(states.Checked)
 		gide.SetGoMod(ge.Prefs.GoMod)
 	})
-
-	tb.AddDefaultOverflowMenu()
 }
 
 /*

@@ -5,9 +5,6 @@
 package gide
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +14,8 @@ import (
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/goosi"
-	"goki.dev/ki/v2"
+	"goki.dev/grows/jsons"
+	"goki.dev/grr"
 	"goki.dev/pi/v2/filecat"
 )
 
@@ -109,7 +107,7 @@ func (pf *Preferences) Defaults() {
 var PrefsFileName = "gide_prefs.json"
 
 // Apply preferences updates things according with settings
-func (pf *Preferences) Apply() {
+func (pf *Preferences) Apply() { //gti:add
 	if pf.KeyMap != "" {
 		SetActiveKeyMapName(pf.KeyMap) // fills in missing pieces
 	}
@@ -135,14 +133,13 @@ func (pf *Preferences) ApplyEnvVars() {
 }
 
 // Open preferences from GoGi standard prefs directory, and applies them
-func (pf *Preferences) Open() error {
+func (pf *Preferences) Open() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
-	b, err := ioutil.ReadFile(pnm)
+	err := grr.Log0(jsons.Open(pf, pnm))
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(b, pf)
 	if pf.SaveKeyMaps {
 		AvailKeyMaps.OpenPrefs()
 	}
@@ -160,17 +157,12 @@ func (pf *Preferences) Open() error {
 }
 
 // Save Preferences to GoGi standard prefs directory
-func (pf *Preferences) Save() error {
+func (pf *Preferences) Save() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
-	b, err := json.MarshalIndent(pf, "", "  ")
+	err := grr.Log0(jsons.Save(pf, pnm))
 	if err != nil {
-		log.Println(err)
 		return err
-	}
-	err = ioutil.WriteFile(pnm, b, 0644)
-	if err != nil {
-		log.Println(err)
 	}
 	if pf.SaveKeyMaps {
 		AvailKeyMaps.SavePrefs()
@@ -188,7 +180,7 @@ func (pf *Preferences) Save() error {
 }
 
 // VersionInfo returns Gide version information
-func (pf *Preferences) VersionInfo() string {
+func (pf *Preferences) VersionInfo() string { //gti:add
 	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
 	return vinfo
 }
@@ -196,7 +188,7 @@ func (pf *Preferences) VersionInfo() string {
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
 // load from other files, etc.  Current avail keymaps are saved and loaded
 // with preferences automatically.
-func (pf *Preferences) EditKeyMaps() {
+func (pf *Preferences) EditKeyMaps() { //gti:add
 	pf.SaveKeyMaps = true
 	pf.Changed = true
 	KeyMapsView(&AvailKeyMaps)
@@ -204,14 +196,14 @@ func (pf *Preferences) EditKeyMaps() {
 
 // EditLangOpts opens the LangsView editor to customize options for each type of
 // language / data / file type.
-func (pf *Preferences) EditLangOpts() {
+func (pf *Preferences) EditLangOpts() { //gti:add
 	pf.SaveLangOpts = true
 	pf.Changed = true
 	LangsView(&AvailLangs)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.
-func (pf *Preferences) EditCmds() {
+func (pf *Preferences) EditCmds() { //gti:add
 	pf.SaveCmds = true
 	pf.Changed = true
 	if len(CustomCmds) == 0 {
@@ -228,79 +220,14 @@ func (pf *Preferences) EditCmds() {
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
-func (pf *Preferences) EditSplits() {
+func (pf *Preferences) EditSplits() { //gti:add
 	SplitsView(&AvailSplits)
 }
 
 // EditRegisters opens the RegistersView editor to customize saved registers
-func (pf *Preferences) EditRegisters() {
+func (pf *Preferences) EditRegisters() { //gti:add
 	RegistersView(&AvailRegisters)
 }
-
-/*
-// PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.PrefsView
-var PreferencesProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"Open", ki.Props{
-				"shortcut": "Command+O",
-			}},
-			{"Save", ki.Props{
-				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
-					pf := pfi.(*Preferences)
-					act.SetActiveState(pf.Changed)
-				}),
-			}},
-			{"sep-close", ki.BlankProp{}},
-			{"Close Window", ki.BlankProp{}},
-		}},
-		{"Edit", "Copy Cut Paste"},
-		{"Window", "Windows"},
-	},
-	"Toolbar": ki.PropSlice{
-		{"Apply", ki.Props{
-			"desc": "Applies current prefs settings so they affect actual functionality.",
-			"icon": "update",
-		}},
-		{"Save", ki.Props{
-			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
-			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
-				pf := pfi.(*Preferences)
-				act.SetActiveStateUpdt(pf.Changed)
-			}),
-		}},
-		{"VersionInfo", ki.Props{
-			"desc":        "shows current Gide version information",
-			"icon":        "info",
-			"show-return": true,
-		}},
-		{"sep-key", ki.BlankProp{}},
-		{"EditKeyMaps", ki.Props{
-			"icon": "keyboard",
-			"desc": "opens the KeyMapsView editor to create new keymaps / save / load from other files, etc.  Current keymaps are saved and loaded with preferences automatically if SaveKeyMaps is clicked (will be turned on automatically if you open this editor).",
-		}},
-		{"EditLangOpts", ki.Props{
-			"icon": "file-text",
-			"desc": "opens the LangsView editor to customize options different language / data / file types.  Current customized settings are saved and loaded with preferences automatically if SaveLangOpts is clicked (will be turned on automatically if you open this editor).",
-		}},
-		{"EditCmds", ki.Props{
-			"icon": "file-binary",
-			"desc": "opens the CmdsView editor to add custom commands you can run, in addition to standard commands built into the system.  Current customized settings are saved and loaded with preferences automatically if SaveCmds is clicked (will be turned on automatically if you open this editor).",
-		}},
-		{"EditSplits", ki.Props{
-			"icon": "file-binary",
-			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with preferences automatically.",
-		}},
-		{"EditRegisters", ki.Props{
-			"icon": "file-binary",
-			"desc": "opens the RegistersView editor of saved named text registers.  Current values are saved and loaded with preferences automatically.",
-		}},
-	},
-}
-*/
 
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project Prefs
@@ -381,30 +308,16 @@ func (pf *ProjPrefs) Update() {
 }
 
 // OpenJSON open from JSON file
-func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error {
-	b, err := ioutil.ReadFile(string(filename))
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(b, pf)
+func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error { //gti:add
+	err := grr.Log0(jsons.Open(pf, string(filename)))
 	pf.VersCtrl = giv.VersCtrlName(strings.ToLower(string(pf.VersCtrl))) // official names are lowercase now
 	pf.Changed = false
 	return err
 }
 
 // SaveJSON save to JSON file
-func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error {
-	b, err := json.MarshalIndent(pf, "", "  ")
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	err = ioutil.WriteFile(string(filename), b, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-	pf.Changed = false
-	return err
+func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error { //gti:add
+	return grr.Log0(jsons.Save(pf, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable
@@ -414,20 +327,6 @@ func (pf *ProjPrefs) RunExecIsExec() bool {
 		return false
 	}
 	return fi.IsExec()
-}
-
-// ProjPrefsProps define the Toolbar and MenuBar for StructView, e.g.,
-// giv.PrefsView -- don't have a save option as that would save to regular prefs
-var ProjPrefsProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"Close Window", ki.BlankProp{}},
-		}},
-		{"Edit", "Copy Cut Paste"},
-		{"Window", "Windows"},
-	},
-	// "Toolbar": ki.PropSlice{},
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

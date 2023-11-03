@@ -7,13 +7,13 @@ package gide
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"path/filepath"
 	"slices"
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/goosi"
+	"goki.dev/grows/jsons"
+	"goki.dev/grr"
 )
 
 // Split is a named splitter configuration
@@ -106,40 +106,20 @@ func (lt *Splits) FixLen() {
 }
 
 // OpenJSON opens named splits from a JSON-formatted file.
-func (lt *Splits) OpenJSON(filename gi.FileName) error {
-	b, err := ioutil.ReadFile(string(filename))
-	if err != nil {
-		// gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
-		// log.Println(err)
-		return err
-	}
+func (lt *Splits) OpenJSON(filename gi.FileName) error { //gti:add
 	*lt = make(Splits, 0, 10) // reset
-	err = json.Unmarshal(b, lt)
-	if err != nil {
-		return err
-	}
+	err := grr.Log0(jsons.Open(lt, string(filename)))
 	lt.FixLen()
 	return err
 }
 
 // SaveJSON saves named splits to a JSON-formatted file.
-func (lt *Splits) SaveJSON(filename gi.FileName) error {
-	b, err := json.MarshalIndent(lt, "", "  ")
-	if err != nil {
-		log.Println(err) // unlikely
-		return err
-	}
-	err = ioutil.WriteFile(string(filename), b, 0644)
-	if err != nil {
-		gi.NewDialog(nil).Title("Could not Save to File").
-			Prompt(err.Error()).Modal(true).Ok().Run()
-		log.Println(err)
-	}
-	return err
+func (lt *Splits) SaveJSON(filename gi.FileName) error { //gti:add
+	return grr.Log0(jsons.Save(lt, string(filename)))
 }
 
 // OpenPrefs opens Splits from App standard prefs directory, using PrefSplitsFileName
-func (lt *Splits) OpenPrefs() error {
+func (lt *Splits) OpenPrefs() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
@@ -151,7 +131,7 @@ func (lt *Splits) OpenPrefs() error {
 }
 
 // SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFileName
-func (lt *Splits) SavePrefs() error {
+func (lt *Splits) SavePrefs() error { //gti:add
 	lt.FixLen()
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
@@ -175,77 +155,6 @@ func (lt *Splits) CopyFrom(cp Splits) {
 // props update methods -- not accurate if editing any other map but works for
 // now..
 var AvailSplitsChanged = false
-
-/*
-
-// SplitsProps define the Toolbar and MenuBar for TableView of Splits
-var SplitsProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"OpenPrefs", ki.Props{}},
-			{"SavePrefs", ki.Props{
-				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(spi any, act *gi.Button) {
-					act.SetActiveState(AvailSplitsChanged && spi.(*Splits) == &AvailSplits)
-				}),
-			}},
-			{"sep-file", ki.BlankProp{}},
-			{"OpenJSON", ki.Props{
-				"label":    "Open from file",
-				"desc":     "You can save and open named splits to / from files to share, experiment, transfer, etc",
-				"shortcut": "Command+O",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-			{"SaveJSON", ki.Props{
-				"label": "Save to file",
-				"desc":  "You can save and open named splits to / from files to share, experiment, transfer, etc",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-		}},
-		{"Edit", "Copy Cut Paste Dupe"},
-		{"Window", "Windows"},
-	},
-	"Toolbar": ki.PropSlice{
-		{"SavePrefs", ki.Props{
-			"desc": "saves Splits to App standard prefs directory, in file splits_prefs.json, which will be loaded automatically at startup)",
-			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(spi any, act *gi.Button) {
-				act.SetActiveState(AvailSplitsChanged && spi.(*Splits) == &AvailSplits)
-			}),
-		}},
-		{"sep-file", ki.BlankProp{}},
-		{"OpenJSON", ki.Props{
-			"label": "Open from file",
-			"icon":  "file-open",
-			"desc":  "You can save and open named splits to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"SaveJSON", ki.Props{
-			"label": "Save to file",
-			"icon":  "file-save",
-			"desc":  "You can save and open named splits to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-	},
-}
-*/
 
 // StdSplits is the original compiled-in set of standard named splits.
 var StdSplits = Splits{

@@ -544,7 +544,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	sc.Lay = gi.LayoutVert
 
 	ge := NewGideView(sc)
-	sc.TopAppBar = ge.Toolbar
+	sc.TopAppBar = ge.TopAppBar
 
 	if doPath {
 		ge.OpenPath(gi.FileName(path))

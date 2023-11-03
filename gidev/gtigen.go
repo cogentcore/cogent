@@ -5,7 +5,6 @@ package gidev
 import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gide"
-	"goki.dev/girl/units"
 	"goki.dev/gti"
 	"goki.dev/ki/v2"
 	"goki.dev/ordmap"
@@ -223,12 +222,6 @@ func (t *GideView) SetCustomContextMenu(v func(m *gi.Scene)) *GideView {
 // SetLayout sets the [GideView.Lay]
 func (t *GideView) SetLayout(v gi.Layouts) *GideView {
 	t.Lay = v
-	return t
-}
-
-// SetSpacing sets the [GideView.Spacing]
-func (t *GideView) SetSpacing(v units.Value) *GideView {
-	t.Spacing = v
 	return t
 }
 

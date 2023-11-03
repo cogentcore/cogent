@@ -108,12 +108,6 @@ func (t *DebugView) SetLayout(v gi.Layouts) *DebugView {
 	return t
 }
 
-// SetSpacing sets the [DebugView.Spacing]
-func (t *DebugView) SetSpacing(v units.Value) *DebugView {
-	t.Spacing = v
-	return t
-}
-
 // SetStackTop sets the [DebugView.StackTop]
 func (t *DebugView) SetStackTop(v int) *DebugView {
 	t.StackTop = v
@@ -186,12 +180,6 @@ func (t *StackView) SetLayout(v gi.Layouts) *StackView {
 	return t
 }
 
-// SetSpacing sets the [StackView.Spacing]
-func (t *StackView) SetSpacing(v units.Value) *StackView {
-	t.Spacing = v
-	return t
-}
-
 // SetStackTop sets the [StackView.StackTop]
 func (t *StackView) SetStackTop(v int) *StackView {
 	t.StackTop = v
@@ -252,12 +240,6 @@ func (t *BreakView) SetCustomContextMenu(v func(m *gi.Scene)) *BreakView {
 // SetLayout sets the [BreakView.Lay]
 func (t *BreakView) SetLayout(v gi.Layouts) *BreakView {
 	t.Lay = v
-	return t
-}
-
-// SetSpacing sets the [BreakView.Spacing]
-func (t *BreakView) SetSpacing(v units.Value) *BreakView {
-	t.Spacing = v
 	return t
 }
 
@@ -324,12 +306,6 @@ func (t *ThreadView) SetLayout(v gi.Layouts) *ThreadView {
 	return t
 }
 
-// SetSpacing sets the [ThreadView.Spacing]
-func (t *ThreadView) SetSpacing(v units.Value) *ThreadView {
-	t.Spacing = v
-	return t
-}
-
 // SetStackTop sets the [ThreadView.StackTop]
 func (t *ThreadView) SetStackTop(v int) *ThreadView {
 	t.StackTop = v
@@ -390,12 +366,6 @@ func (t *TaskView) SetCustomContextMenu(v func(m *gi.Scene)) *TaskView {
 // SetLayout sets the [TaskView.Lay]
 func (t *TaskView) SetLayout(v gi.Layouts) *TaskView {
 	t.Lay = v
-	return t
-}
-
-// SetSpacing sets the [TaskView.Spacing]
-func (t *TaskView) SetSpacing(v units.Value) *TaskView {
-	t.Spacing = v
 	return t
 }
 
@@ -471,12 +441,6 @@ func (t *VarsView) SetLayout(v gi.Layouts) *VarsView {
 	return t
 }
 
-// SetSpacing sets the [VarsView.Spacing]
-func (t *VarsView) SetSpacing(v units.Value) *VarsView {
-	t.Spacing = v
-	return t
-}
-
 // SetStackTop sets the [VarsView.StackTop]
 func (t *VarsView) SetStackTop(v int) *VarsView {
 	t.StackTop = v
@@ -548,12 +512,6 @@ func (t *VarView) SetCustomContextMenu(v func(m *gi.Scene)) *VarView {
 // SetLayout sets the [VarView.Lay]
 func (t *VarView) SetLayout(v gi.Layouts) *VarView {
 	t.Lay = v
-	return t
-}
-
-// SetSpacing sets the [VarView.Spacing]
-func (t *VarView) SetSpacing(v units.Value) *VarView {
-	t.Spacing = v
 	return t
 }
 
@@ -752,12 +710,6 @@ func (t *FindView) SetLayout(v gi.Layouts) *FindView {
 	return t
 }
 
-// SetSpacing sets the [FindView.Spacing]
-func (t *FindView) SetSpacing(v units.Value) *FindView {
-	t.Spacing = v
-	return t
-}
-
 // SetStackTop sets the [FindView.StackTop]
 func (t *FindView) SetStackTop(v int) *FindView {
 	t.StackTop = v
@@ -894,12 +846,6 @@ func (t *SpellView) SetLayout(v gi.Layouts) *SpellView {
 	return t
 }
 
-// SetSpacing sets the [SpellView.Spacing]
-func (t *SpellView) SetSpacing(v units.Value) *SpellView {
-	t.Spacing = v
-	return t
-}
-
 // SetStackTop sets the [SpellView.StackTop]
 func (t *SpellView) SetStackTop(v int) *SpellView {
 	t.StackTop = v
@@ -993,12 +939,6 @@ func (t *SymbolsView) SetCustomContextMenu(v func(m *gi.Scene)) *SymbolsView {
 // SetLayout sets the [SymbolsView.Lay]
 func (t *SymbolsView) SetLayout(v gi.Layouts) *SymbolsView {
 	t.Lay = v
-	return t
-}
-
-// SetSpacing sets the [SymbolsView.Spacing]
-func (t *SymbolsView) SetSpacing(v units.Value) *SymbolsView {
-	t.Spacing = v
 	return t
 }
 
@@ -1197,12 +1137,6 @@ func (t *TextView) SetCustomContextMenu(v func(m *gi.Scene)) *TextView {
 // SetLayout sets the [TextView.Lay]
 func (t *TextView) SetLayout(v gi.Layouts) *TextView {
 	t.Lay = v
-	return t
-}
-
-// SetSpacing sets the [TextView.Spacing]
-func (t *TextView) SetSpacing(v units.Value) *TextView {
-	t.Spacing = v
 	return t
 }
 
