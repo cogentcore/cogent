@@ -114,7 +114,7 @@ func (ge *GideView) Symbols() { //gti:add
 }
 
 // Debug starts the debugger on the RunExec executable.
-func (ge *GideView) Debug() {
+func (ge *GideView) Debug() { //gti:add
 	tv := ge.Tabs()
 	if tv == nil {
 		return
@@ -131,7 +131,7 @@ func (ge *GideView) Debug() {
 }
 
 // DebugTest runs the debugger using testing mode in current active textview path
-func (ge *GideView) DebugTest() {
+func (ge *GideView) DebugTest() { //gti:add
 	txv := ge.ActiveTextView()
 	if txv == nil || txv.Buf == nil {
 		return

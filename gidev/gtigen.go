@@ -43,7 +43,43 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"Frame", &gti.Field{Name: "Frame", Type: "goki.dev/gi/v2/gi.Frame", LocalType: "gi.Frame", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
 	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
+		{"ExecCmdNameActive", &gti.Method{Name: "ExecCmdNameActive", Doc: "ExecCmdNameActive calls given command on current active textview", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"cmdNm", &gti.Field{Name: "cmdNm", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"ExecCmd", &gti.Method{Name: "ExecCmd", Doc: "ExecCmd pops up a menu to select a command appropriate for the current\nactive text view, and shows output in Tab with name of command", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"Build", &gti.Method{Name: "Build", Doc: "Build runs the BuildCmds set for this project", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"Run", &gti.Method{Name: "Run", Doc: "Run runs the RunCmds set for this project", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"Commit", &gti.Method{Name: "Commit", Doc: "Commit commits the current changes using relevant VCS tool.\nChecks for VCS setting and for unsaved files.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"CursorToHistPrev", &gti.Method{Name: "CursorToHistPrev", Doc: "CursorToHistPrev moves cursor to previous position on history list --\nreturns true if moved", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"CursorToHistNext", &gti.Method{Name: "CursorToHistNext", Doc: "CursorToHistNext moves cursor to next position on history list --\nreturns true if moved", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"ReplaceInActive", &gti.Method{Name: "ReplaceInActive", Doc: "ReplaceInActive does query-replace in active file only", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"CutRect", &gti.Method{Name: "CutRect", Doc: "CutRect cuts rectangle in active text view", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"CopyRect", &gti.Method{Name: "CopyRect", Doc: "CopyRect copies rectangle in active text view", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"PasteRect", &gti.Method{Name: "PasteRect", Doc: "PasteRect cuts rectangle in active text view", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"RegisterCopy", &gti.Method{Name: "RegisterCopy", Doc: "RegisterCopy saves current selection in active text view to register of given name\nreturns true if saved", Directives: gti.Directives{
@@ -60,6 +96,53 @@ var GideViewType = gti.AddType(&gti.Type{
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
+		{"CommentOut", &gti.Method{Name: "CommentOut", Doc: "CommentOut comments-out selected lines in active text view\nand uncomments if already commented\nIf multiple lines are selected and any line is uncommented all will be commented", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"Indent", &gti.Method{Name: "Indent", Doc: "Indent indents selected lines in active view", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"ReCase", &gti.Method{Name: "ReCase", Doc: "ReCase replaces currently selected text in current active view with given case", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"c", &gti.Field{Name: "c", Type: "goki.dev/gi/v2/texteditor/textbuf.Cases", LocalType: "textbuf.Cases", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"string", &gti.Field{Name: "string", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"JoinParaLines", &gti.Method{Name: "JoinParaLines", Doc: "JoinParaLines merges sequences of lines with hard returns forming paragraphs,\nseparated by blank lines, into a single line per paragraph,\nfor given selected region (full text if no selection)", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"TabsToSpaces", &gti.Method{Name: "TabsToSpaces", Doc: "TabsToSpaces converts tabs to spaces\nfor given selected region (full text if no selection)", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"SpacesToTabs", &gti.Method{Name: "SpacesToTabs", Doc: "SpacesToTabs converts spaces to tabs\nfor given selected region (full text if no selection)", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"DiffFiles", &gti.Method{Name: "DiffFiles", Doc: "DiffFiles shows the differences between two given files\nin side-by-side DiffView and in the console as a context diff.\nIt opens the files as file nodes and uses existing contents if open already.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"fnmA", &gti.Field{Name: "fnmA", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"DiffFileNode", &gti.Method{Name: "DiffFileNode", Doc: "DiffFileNode shows the differences between given file node as the A file,\nand another given file as the B file,\nin side-by-side DiffView and in the console as a context diff.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"fna", &gti.Field{Name: "fna", Type: "*goki.dev/gi/v2/filetree.Node", LocalType: "*filetree.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"fnmB", &gti.Field{Name: "fnmB", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"CountWords", &gti.Method{Name: "CountWords", Doc: "CountWords counts number of words (and lines) in active file\nreturns a string report thereof.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"string", &gti.Field{Name: "string", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"CountWordsRegion", &gti.Method{Name: "CountWordsRegion", Doc: "CountWordsRegion counts number of words (and lines) in selected region in file\nif no selection, returns numbers for entire file.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"string", &gti.Field{Name: "string", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
 		{"SaveActiveView", &gti.Method{Name: "SaveActiveView", Doc: "SaveActiveView saves the contents of the currently-active textview", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
@@ -68,6 +151,12 @@ var GideViewType = gti.AddType(&gti.Type{
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"RevertActiveView", &gti.Method{Name: "RevertActiveView", Doc: "RevertActiveView revert active view to saved version", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"CloseActiveView", &gti.Method{Name: "CloseActiveView", Doc: "CloseActiveView closes the buffer associated with active view", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"NextViewFile", &gti.Method{Name: "NextViewFile", Doc: "NextViewFile sets the next text view to view given file name -- include as\nmuch of name as possible to disambiguate -- will use the first matching --\nif already being viewed, that is activated -- returns textview and its\nindex, false if not found", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
@@ -86,6 +175,9 @@ var GideViewType = gti.AddType(&gti.Type{
 			{"int", &gti.Field{Name: "int", Type: "int", LocalType: "int", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
+		{"SaveAll", &gti.Method{Name: "SaveAll", Doc: "SaveAll saves all of the open filenodes to their current file names\nand saves the project state if it has been saved before (i.e., the .gide file exists)", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"UpdateFiles", &gti.Method{Name: "UpdateFiles", Doc: "UpdateFiles updates the list of files saved in project", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
@@ -113,6 +205,16 @@ var GideViewType = gti.AddType(&gti.Type{
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"GideView", &gti.Field{Name: "GideView", Type: "*goki.dev/gide/v2/gidev.GideView", LocalType: "*GideView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
+		{"NewProj", &gti.Method{Name: "NewProj", Doc: "NewProj creates a new project at given path, making a new folder in that\npath -- all GideView projects are essentially defined by a path to a folder\ncontaining files.  If the folder already exists, then use OpenPath.\nCan also specify main language and version control type", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"path", &gti.Field{Name: "path", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"folder", &gti.Field{Name: "folder", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"mainLang", &gti.Field{Name: "mainLang", Type: "goki.dev/pi/v2/filecat.Supported", LocalType: "filecat.Supported", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"versCtrl", &gti.Field{Name: "versCtrl", Type: "goki.dev/gi/v2/giv.VersCtrlName", LocalType: "giv.VersCtrlName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"GideView", &gti.Field{Name: "GideView", Type: "*goki.dev/gide/v2/gidev.GideView", LocalType: "*GideView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
 		{"NewFile", &gti.Method{Name: "NewFile", Doc: "NewFile creates a new file in the project", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
@@ -130,10 +232,31 @@ var GideViewType = gti.AddType(&gti.Type{
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
+		{"EditProjPrefs", &gti.Method{Name: "EditProjPrefs", Doc: "EditProjPrefs allows editing of project preferences (settings specific to this project)", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"SplitsSetView", &gti.Method{Name: "SplitsSetView", Doc: "SplitsSetView sets split view splitters to given named setting", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"split", &gti.Field{Name: "split", Type: "goki.dev/gide/v2/gide.SplitName", LocalType: "gide.SplitName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"SplitsSave", &gti.Method{Name: "SplitsSave", Doc: "SplitsSave saves current splitter settings to named splitter settings under\nexisting name, and saves to prefs file", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"split", &gti.Field{Name: "split", Type: "goki.dev/gide/v2/gide.SplitName", LocalType: "gide.SplitName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"SplitsSaveAs", &gti.Method{Name: "SplitsSaveAs", Doc: "SplitsSaveAs saves current splitter settings to new named splitter settings, and\nsaves to prefs file", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"name", &gti.Field{Name: "name", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"SplitsEdit", &gti.Method{Name: "SplitsEdit", Doc: "SplitsEdit opens the SplitsView editor to customize saved splitter settings", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"TopAppBar", &gti.Method{Name: "TopAppBar", Doc: "", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"tb", &gti.Field{Name: "tb", Type: "*goki.dev/gi/v2/gi.TopAppBar", LocalType: "*gi.TopAppBar", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"Find", &gti.Method{Name: "Find", Doc: "Find does Find / Replace in files, using given options and filters -- opens up a\nmain tab with the results and further controls.", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
@@ -147,6 +270,12 @@ var GideViewType = gti.AddType(&gti.Type{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"Symbols", &gti.Method{Name: "Symbols", Doc: "Symbols displays the Symbols of a file or package", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"Debug", &gti.Method{Name: "Debug", Doc: "Debug starts the debugger on the RunExec executable.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"DebugTest", &gti.Method{Name: "DebugTest", Doc: "DebugTest runs the debugger using testing mode in current active textview path", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"ChooseRunExec", &gti.Method{Name: "ChooseRunExec", Doc: "ChooseRunExec selects the executable to run for the project", Directives: gti.Directives{

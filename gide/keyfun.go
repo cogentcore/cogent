@@ -272,6 +272,10 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 // available key map names, for use in preferences etc.
 type KeyMapName string
 
+func (km KeyMapName) String() string {
+	return string(km)
+}
+
 // DefaultKeyMap is the overall default keymap -- reinitialized in gimain init()
 // depending on platform
 var DefaultKeyMap = KeyMapName("MacEmacs")

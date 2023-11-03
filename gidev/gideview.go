@@ -284,7 +284,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 // path -- all GideView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl giv.VersCtrlName) *GideView {
+func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl giv.VersCtrlName) *GideView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {

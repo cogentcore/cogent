@@ -53,6 +53,8 @@ func (ge *GideView) ApplyPrefs() {
 				ge.ConfigTextBuf(ond.Buf)
 			}
 		}
+		split := ge.Splits()
+		split.SetSplits(ge.Prefs.Splits...)
 	}
 	gi.Prefs.UpdateAll() // drives full rebuild
 }
@@ -65,7 +67,7 @@ func (ge *GideView) ApplyPrefsAction() {
 }
 
 // EditProjPrefs allows editing of project preferences (settings specific to this project)
-func (ge *GideView) EditProjPrefs() {
+func (ge *GideView) EditProjPrefs() { //gti:add
 	sv := gide.ProjPrefsView(&ge.Prefs)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
@@ -89,7 +91,7 @@ func (ge *GideView) SplitsSetView(split gide.SplitName) { //gti:add
 
 // SplitsSave saves current splitter settings to named splitter settings under
 // existing name, and saves to prefs file
-func (ge *GideView) SplitsSave(split gide.SplitName) {
+func (ge *GideView) SplitsSave(split gide.SplitName) { //gti:add
 	sv := ge.Splits()
 	sp, _, ok := gide.AvailSplits.SplitByName(split)
 	if ok {
@@ -100,14 +102,14 @@ func (ge *GideView) SplitsSave(split gide.SplitName) {
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (ge *GideView) SplitsSaveAs(name, desc string) {
+func (ge *GideView) SplitsSaveAs(name, desc string) { //gti:add
 	sv := ge.Splits()
 	gide.AvailSplits.Add(name, desc, sv.Splits)
 	gide.AvailSplits.SavePrefs()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (ge *GideView) SplitsEdit() {
+func (ge *GideView) SplitsEdit() { //gti:add
 	gide.SplitsView(&gide.AvailSplits)
 }
 

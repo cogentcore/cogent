@@ -24,14 +24,14 @@ import (
 
 // CursorToHistPrev moves cursor to previous position on history list --
 // returns true if moved
-func (ge *GideView) CursorToHistPrev() bool {
+func (ge *GideView) CursorToHistPrev() bool { //gti:add
 	tv := ge.ActiveTextView()
 	return tv.CursorToHistPrev()
 }
 
 // CursorToHistNext moves cursor to next position on history list --
 // returns true if moved
-func (ge *GideView) CursorToHistNext() bool {
+func (ge *GideView) CursorToHistNext() bool { //gti:add
 	tv := ge.ActiveTextView()
 	return tv.CursorToHistNext()
 }
@@ -142,7 +142,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 }
 
 // ReplaceInActive does query-replace in active file only
-func (ge *GideView) ReplaceInActive() {
+func (ge *GideView) ReplaceInActive() { //gti:add
 	tv := ge.ActiveTextView()
 	tv.QReplacePrompt()
 }
@@ -151,7 +151,7 @@ func (ge *GideView) ReplaceInActive() {
 //    Rects, Registers
 
 // CutRect cuts rectangle in active text view
-func (ge *GideView) CutRect() {
+func (ge *GideView) CutRect() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return
@@ -160,7 +160,7 @@ func (ge *GideView) CutRect() {
 }
 
 // CopyRect copies rectangle in active text view
-func (ge *GideView) CopyRect() {
+func (ge *GideView) CopyRect() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return
@@ -169,7 +169,7 @@ func (ge *GideView) CopyRect() {
 }
 
 // PasteRect cuts rectangle in active text view
-func (ge *GideView) PasteRect() {
+func (ge *GideView) PasteRect() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return
@@ -223,7 +223,7 @@ func (ge *GideView) RegisterPaste(name gide.RegisterName) bool { //gti:add
 // CommentOut comments-out selected lines in active text view
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
-func (ge *GideView) CommentOut() bool {
+func (ge *GideView) CommentOut() bool { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return false
@@ -243,7 +243,7 @@ func (ge *GideView) CommentOut() bool {
 }
 
 // Indent indents selected lines in active view
-func (ge *GideView) Indent() bool {
+func (ge *GideView) Indent() bool { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return false
@@ -258,7 +258,7 @@ func (ge *GideView) Indent() bool {
 }
 
 // ReCase replaces currently selected text in current active view with given case
-func (ge *GideView) ReCase(c textbuf.Cases) string {
+func (ge *GideView) ReCase(c textbuf.Cases) string { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return ""
@@ -269,7 +269,7 @@ func (ge *GideView) ReCase(c textbuf.Cases) string {
 // JoinParaLines merges sequences of lines with hard returns forming paragraphs,
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
-func (ge *GideView) JoinParaLines() {
+func (ge *GideView) JoinParaLines() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return
@@ -283,7 +283,7 @@ func (ge *GideView) JoinParaLines() {
 
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
-func (ge *GideView) TabsToSpaces() {
+func (ge *GideView) TabsToSpaces() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return
@@ -297,7 +297,7 @@ func (ge *GideView) TabsToSpaces() {
 
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
-func (ge *GideView) SpacesToTabs() {
+func (ge *GideView) SpacesToTabs() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf == nil {
 		return
@@ -312,7 +312,7 @@ func (ge *GideView) SpacesToTabs() {
 // DiffFiles shows the differences between two given files
 // in side-by-side DiffView and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
-func (ge *GideView) DiffFiles(fnmA, fnmB gi.FileName) {
+func (ge *GideView) DiffFiles(fnmA, fnmB gi.FileName) { //gti:add
 	fna := ge.FileNodeForFile(string(fnmA), true)
 	if fna == nil {
 		return
@@ -329,7 +329,7 @@ func (ge *GideView) DiffFiles(fnmA, fnmB gi.FileName) {
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffView and in the console as a context diff.
-func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.FileName) {
+func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.FileName) { //gti:add
 	fnb := ge.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
 		return
@@ -355,7 +355,7 @@ func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.FileName) {
 
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
-func (ge *GideView) CountWords() string {
+func (ge *GideView) CountWords() string { //gti:add
 	av := ge.ActiveTextView()
 	if av.Buf == nil || av.Buf.NLines <= 0 {
 		return "empty"
@@ -370,7 +370,7 @@ func (ge *GideView) CountWords() string {
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
-func (ge *GideView) CountWordsRegion() string {
+func (ge *GideView) CountWordsRegion() string { //gti:add
 	av := ge.ActiveTextView()
 	if av.Buf == nil || av.Buf.NLines <= 0 {
 		return "empty"

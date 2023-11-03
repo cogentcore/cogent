@@ -69,7 +69,7 @@ func (ge *GideView) SaveActiveViewAs(filename gi.FileName) { //gti:add
 }
 
 // RevertActiveView revert active view to saved version
-func (ge *GideView) RevertActiveView() {
+func (ge *GideView) RevertActiveView() { //gti:add
 	tv := ge.ActiveTextView()
 	if tv.Buf != nil {
 		ge.ConfigTextBuf(tv.Buf)
@@ -81,7 +81,7 @@ func (ge *GideView) RevertActiveView() {
 }
 
 // CloseActiveView closes the buffer associated with active view
-func (ge *GideView) CloseActiveView() {
+func (ge *GideView) CloseActiveView() { //gti:add
 	tv := ge.ActiveTextView()
 	ond, _, got := ge.OpenNodeForTextView(tv)
 	if got {
@@ -412,7 +412,7 @@ func (ge *GideView) SaveAllOpenNodes() {
 
 // SaveAll saves all of the open filenodes to their current file names
 // and saves the project state if it has been saved before (i.e., the .gide file exists)
-func (ge *GideView) SaveAll() {
+func (ge *GideView) SaveAll() { //gti:add
 	ge.SaveAllOpenNodes()
 	ge.SaveProjIfExists(false)
 }

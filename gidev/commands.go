@@ -92,12 +92,8 @@ func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool,
 	cmd.Run(ge, cbuf)
 }
 
-// ExecCmds gets list of available commands for current active file, as a submenu-func
-func ExecCmds(it any, sc *gi.Scene) [][]string {
-	ge, ok := it.(*GideView)
-	if !ok {
-		return nil
-	}
+// ExecCmds gets list of available commands for current active file
+func ExecCmds(ge *GideView) [][]string {
 	tv := ge.ActiveTextView()
 	if tv == nil {
 		return nil
@@ -114,7 +110,7 @@ func ExecCmds(it any, sc *gi.Scene) [][]string {
 }
 
 // ExecCmdNameActive calls given command on current active textview
-func (ge *GideView) ExecCmdNameActive(cmdNm string) {
+func (ge *GideView) ExecCmdNameActive(cmdNm string) { //gti:add
 	tv := ge.ActiveTextView()
 	if tv == nil {
 		return
@@ -209,7 +205,7 @@ func (ge *GideView) ExecCmdsFileNode(fn *filetree.Node, cmdNms gide.CmdNames, se
 }
 
 // Build runs the BuildCmds set for this project
-func (ge *GideView) Build() {
+func (ge *GideView) Build() { //gti:add
 	if len(ge.Prefs.BuildCmds) == 0 {
 		gi.NewDialog(ge).Title("No BuildCmds Set").
 			Prompt("You need to set the BuildCmds in the Project Preferences").Modal(true).Ok().Run()
@@ -221,7 +217,7 @@ func (ge *GideView) Build() {
 }
 
 // Run runs the RunCmds set for this project
-func (ge *GideView) Run() {
+func (ge *GideView) Run() { //gti:add
 	if len(ge.Prefs.RunCmds) == 0 {
 		gi.NewDialog(ge).Title("No RunCmds Set").
 			Prompt("You need to set the RunCmds in the Project Preferences").Modal(true).Ok().Run()
@@ -236,7 +232,7 @@ func (ge *GideView) Run() {
 
 // Commit commits the current changes using relevant VCS tool.
 // Checks for VCS setting and for unsaved files.
-func (ge *GideView) Commit() {
+func (ge *GideView) Commit() { //gti:add
 	vc := ge.VersCtrl()
 	if vc == "" {
 		gi.NewDialog(ge).Title("No Version Control System Found").

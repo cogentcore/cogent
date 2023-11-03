@@ -267,7 +267,8 @@ func (ge *GideView) UpdateTextButtons() {
 			updt := mb.UpdateStart()
 			mb.SetText(txnm)
 			mb.SetSelected(sel)
-			mb.UpdateEnd(updt)
+			mb.Update()
+			mb.UpdateEndRender(updt)
 		}
 	}
 }
