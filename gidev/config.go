@@ -200,8 +200,8 @@ func (ge *GideView) ConfigStatusBar() {
 		s.SetMinPrefHeight(units.Em(1.2))
 		s.MaxHeight.Zero()
 		s.Overflow = styles.OverflowHidden // no scrollbars!
-		s.Margin.Set()
-		s.Padding.Set()
+		s.Margin.Zero()
+		s.Padding.Zero()
 	})
 	lbl := gi.NewLabel(sb, "sb-lbl")
 	lbl.Style(func(s *styles.Style) {
@@ -209,8 +209,8 @@ func (ge *GideView) ConfigStatusBar() {
 		s.SetMinPrefHeight(units.Em(1))
 		s.MaxHeight.Zero()
 		s.AlignV = styles.AlignTop
-		s.Margin.Set()
-		s.Padding.Set()
+		s.Margin.Zero()
+		s.Padding.Zero()
 		s.Text.TabSize = 4
 	})
 }
