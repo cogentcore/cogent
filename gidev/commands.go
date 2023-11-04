@@ -227,7 +227,7 @@ func (ge *GideView) Run() { //gti:add
 		return
 	}
 	if ge.Prefs.RunCmds[0] == "Run Proj" && !ge.Prefs.RunExecIsExec() {
-		giv.NewSoloFuncButton(ge, ge.ChooseRunExec).CallFunc()
+		giv.CallFunc(ge, ge.ChooseRunExec)
 		return
 	}
 	ge.ExecCmds(ge.Prefs.RunCmds, true, true)

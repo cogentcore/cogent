@@ -35,7 +35,7 @@ func (ge *GideView) SaveActiveView() { //gti:add
 			ge.Files.UpdateNewFile(fpath) // update everything in dir -- will have removed autosave
 			ge.RunPostCmdsActiveView()
 		} else {
-			giv.NewSoloFuncButton(ge, ge.SaveActiveViewAs).CallFunc()
+			giv.CallFunc(ge, ge.SaveActiveViewAs)
 		}
 	}
 	ge.SaveProjIfExists(false) // no saveall
