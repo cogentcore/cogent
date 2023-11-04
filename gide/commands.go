@@ -390,20 +390,6 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 					cm.RunAfterPrompts(ge, buf)
 				}
 			})
-			// gi.StringPromptDialog(ge.Scene(), curval, "Enter string value here..",
-			// 	gi.DlgOpts{Title: "Gide Command Prompt", Prompt: fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)},
-			// 	ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-			// 		dlg := send.(*gi.Dialog)
-			// 		if sig == int64(gi.DialogAccepted) {
-			// 			val := gi.StringPromptDialogValue(dlg)
-			// 			cmvals[cm.Label()] = val
-			// 			(*avp)[pv] = val
-			// 			cnt++
-			// 			if cnt == sz {
-			// 				cm.RunAfterPrompts(ge, buf)
-			// 			}
-			// 		}
-			// 	})
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
 			fn := ge.ActiveFileNode()
@@ -580,7 +566,7 @@ func (cm *Command) RunStatus(ge Gide, buf *texteditor.Buf, cmdstr string, err er
 	if buf != nil {
 		buf.SetReadOnly(true)
 		if err != nil {
-			ge.SelectTabByName(cm.Label()) // sometimes it isn't
+			ge.SelectTabByLabel(cm.Label()) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)

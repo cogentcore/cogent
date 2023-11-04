@@ -294,7 +294,7 @@ func (ge *GideView) TextViewButtonMenu(idx int, m *gi.Scene) {
 	tv := ge.TextViewByIndex(idx)
 	opn := ge.OpenNodes.Strings()
 	gi.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
-		giv.NewFuncButton(ge, ge.ViewFile).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.ViewFile).CallFunc()
 	})
 	gi.NewSeparator(m, "file-sep")
 	for i, n := range opn {

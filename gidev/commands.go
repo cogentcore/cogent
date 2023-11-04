@@ -137,7 +137,7 @@ func (ge *GideView) CommandFromMenu(lang filecat.Supported) {
 			continue
 		}
 		cmdCat := cc[0]
-		cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonAction)
+		cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonMenu)
 		cb.SetMenu(func(m *gi.Scene) {
 			for ii := 1; ii < n; ii++ {
 				ii := ii
@@ -227,7 +227,7 @@ func (ge *GideView) Run() { //gti:add
 		return
 	}
 	if ge.Prefs.RunCmds[0] == "Run Proj" && !ge.Prefs.RunExecIsExec() {
-		giv.NewFuncButton(ge, ge.ChooseRunExec).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.ChooseRunExec).CallFunc()
 		return
 	}
 	ge.ExecCmds(ge.Prefs.RunCmds, true, true)

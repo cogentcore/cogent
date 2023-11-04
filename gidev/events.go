@@ -81,7 +81,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		if tv != nil && tv.HasSelection() {
 			ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
 		}
-		giv.NewFuncButton(ge, ge.Find).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.Find).CallFunc()
 	}
 	if kt.IsHandled() {
 		return
@@ -95,7 +95,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.FocusPrevPanel()
 	case gide.KeyFunFileOpen:
 		kt.SetHandled()
-		giv.NewFuncButton(ge, ge.ViewFile).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.ViewFile).CallFunc()
 	case gide.KeyFunBufSelect:
 		kt.SetHandled()
 		ge.SelectOpenNode()
@@ -107,13 +107,13 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.SaveActiveView()
 	case gide.KeyFunBufSaveAs:
 		kt.SetHandled()
-		giv.NewFuncButton(ge, ge.SaveActiveViewAs).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.SaveActiveViewAs).CallFunc()
 	case gide.KeyFunBufClose:
 		kt.SetHandled()
 		ge.CloseActiveView()
 	case gide.KeyFunExecCmd:
 		kt.SetHandled()
-		giv.NewFuncButton(ge, ge.ExecCmd).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.ExecCmd).CallFunc()
 	case gide.KeyFunRectCut:
 		kt.SetHandled()
 		ge.CutRect()
@@ -125,10 +125,10 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.PasteRect()
 	case gide.KeyFunRegCopy:
 		kt.SetHandled()
-		giv.NewFuncButton(ge, ge.RegisterCopy).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.RegisterCopy).CallFunc()
 	case gide.KeyFunRegPaste:
 		kt.SetHandled()
-		giv.NewFuncButton(ge, ge.RegisterPaste).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.RegisterPaste).CallFunc()
 	case gide.KeyFunCommentOut:
 		kt.SetHandled()
 		ge.CommentOut()
@@ -144,7 +144,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.Indent()
 	case gide.KeyFunSetSplit:
 		kt.SetHandled()
-		giv.NewFuncButton(ge, ge.SplitsSetView).CallFunc()
+		giv.NewSoloFuncButton(ge, ge.SplitsSetView).CallFunc()
 	case gide.KeyFunBuildProj:
 		kt.SetHandled()
 		ge.Build()

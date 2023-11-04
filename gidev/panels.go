@@ -98,25 +98,25 @@ func (ge *GideView) FocusPrevPanel() {
 	ge.FocusOnPanel(cp)
 }
 
-// TabByName returns a tab with given name, nil if not found.
-func (ge *GideView) TabByName(label string) gi.Widget {
+// TabByLabel returns a tab with given name, nil if not found.
+func (ge *GideView) TabByLabel(label string) gi.Widget {
 	tv := ge.Tabs()
-	return tv.TabByName(label)
+	return tv.TabByLabel(label)
 }
 
-// TabByNameTry returns a tab with given name, error if not found.
-func (ge *GideView) TabByNameTry(label string) (gi.Widget, error) {
+// TabByLabelTry returns a tab with given name, error if not found.
+func (ge *GideView) TabByLabelTry(label string) (gi.Widget, error) {
 	tv := ge.Tabs()
-	return tv.TabByNameTry(label)
+	return tv.TabByLabelTry(label)
 }
 
-// SelectTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *GideView) SelectTabByName(label string) gi.Widget {
+// SelectTabByLabel Selects given main tab, and returns all of its contents as well.
+func (ge *GideView) SelectTabByLabel(label string) gi.Widget {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
 	}
-	return tv.SelectTabByName(label)
+	return tv.SelectTabByLabel(label)
 }
 
 // RecycleTabTextView returns a tab with given
