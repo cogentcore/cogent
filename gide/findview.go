@@ -143,7 +143,7 @@ func (fv *FindView) SaveFindString(find string) {
 	gi.StringsInsertFirstUnique(&fv.Params().FindHist, find, gi.Prefs.Params.SavedPathsMax)
 	ftc := fv.FindText()
 	if ftc != nil {
-		ftc.ItemsFromStringList(fv.Params().FindHist, true, 0)
+		ftc.SetStrings(fv.Params().FindHist, true, 0)
 	}
 }
 
@@ -153,7 +153,7 @@ func (fv *FindView) SaveReplString(repl string) {
 	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, gi.Prefs.Params.SavedPathsMax)
 	rtc := fv.ReplText()
 	if rtc != nil {
-		rtc.ItemsFromStringList(fv.Params().ReplHist, true, 0)
+		rtc.SetStrings(fv.Params().ReplHist, true, 0)
 	}
 }
 
@@ -387,10 +387,10 @@ func (fv *FindView) ConfigFindView(ge Gide) {
 	fp := fv.Params()
 	fv.ConfigToolbar()
 	ft := fv.FindText()
-	ft.ItemsFromStringList(fp.FindHist, true, 0)
+	ft.SetStrings(fp.FindHist, true, 0)
 	ft.SetCurVal(fp.Find)
 	rt := fv.ReplText()
-	rt.ItemsFromStringList(fp.ReplHist, true, 0)
+	rt.SetStrings(fp.ReplHist, true, 0)
 	rt.SetCurVal(fp.Replace)
 	ib := fv.IgnoreBox()
 	ib.SetChecked(fp.IgnoreCase)
@@ -469,7 +469,7 @@ func (fv *FindView) ConfigToolbar() {
 	finds := gi.NewChooser(fb).SetEditable(true).
 		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
 	finds.SetStretchMaxWidth()
-	finds.ItemsFromStringList(fv.Params().FindHist, true, 0)
+	finds.SetStrings(fv.Params().FindHist, true, 0)
 	finds.OnChange(func(e events.Event) {
 		fv.Params().Find = finds.CurVal.(string)
 		if fv.Params().Find == "" {
@@ -500,7 +500,7 @@ func (fv *FindView) ConfigToolbar() {
 		SetTooltip("location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser")
 
 	cf := gi.NewChooser(fb).SetTooltip(locl.Tooltip)
-	cf.ItemsFromEnum(fv.Params().Loc, false, 0)
+	cf.SetEnum(fv.Params().Loc, false, 0)
 	cf.OnClick(func(e events.Event) {
 		eval := cf.CurVal.(FindLoc)
 		fv.Params().Loc = eval
@@ -523,7 +523,7 @@ func (fv *FindView) ConfigToolbar() {
 
 	repls := gi.NewChooser(rb).SetEditable(true).SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
 	repls.SetStretchMaxWidth()
-	repls.ItemsFromStringList(fv.Params().ReplHist, true, 0)
+	repls.SetStrings(fv.Params().ReplHist, true, 0)
 	repls.OnChange(func(e events.Event) {
 		fv.Params().Replace = repls.CurVal.(string)
 	})
