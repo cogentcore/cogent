@@ -142,7 +142,9 @@ func (ge *GideView) ConfigSplits() {
 		i := i
 		txnm := fmt.Sprintf("%d", i)
 		txly := gi.NewLayout(split, "textlay-"+txnm).SetLayout(gi.LayoutVert)
-		txly.SetStretchMax()
+		txly.Style(func(s *styles.Style) {
+			s.SetStretchMax()
+		})
 		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("textview: " + txnm)
 		txbut.Type = gi.ButtonAction
 		txbut.Style(func(s *styles.Style) {
