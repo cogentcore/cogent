@@ -6,6 +6,7 @@
 // interactive parser (pi) system.
 package piv
 
+/*
 import (
 	"fmt"
 	"path/filepath"
@@ -1112,8 +1113,6 @@ func (pv *PiView) Render2D() {
 	pv.Frame.Render2D()
 }
 
-/*
-
 var PiViewProps = ki.Props{
 	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Prefs.Colors.Background,
@@ -1132,7 +1131,7 @@ var PiViewProps = ki.Props{
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 				pv := pvi.(*PiView)
-				act.SetActiveState( /* pv.Changed && */ pv.Prefs.ProjFile != "")
+				act.SetActiveState( pv.Changed && pv.Prefs.ProjFile != "")
 			}),
 		}},
 		{"sep-parse", ki.BlankProp{}},
@@ -1152,7 +1151,7 @@ var PiViewProps = ki.Props{
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 				pv := pvi.(*PiView)
-				act.SetActiveStateUpdt( /* pv.Changed && */ pv.Prefs.ParserFile != "")
+				act.SetActiveStateUpdt( pv.Changed && pv.Prefs.ParserFile != "")
 			}),
 		}},
 		{"SaveParserAs", ki.Props{
@@ -1266,7 +1265,7 @@ var PiViewProps = ki.Props{
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 					pv := pvi.(*PiView)
-					act.SetActiveState( /* pv.Changed && */ pv.Prefs.ProjFile != "")
+					act.SetActiveState( pv.Changed && pv.Prefs.ProjFile != "")
 				}),
 			}},
 			{"SaveProjAs", ki.Props{
@@ -1297,7 +1296,7 @@ var PiViewProps = ki.Props{
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 					pv := pvi.(*PiView)
-					act.SetActiveState( /* pv.Changed && */ pv.Prefs.ParserFile != "")
+					act.SetActiveState( pv.Changed && pv.Prefs.ParserFile != "")
 				}),
 			}},
 			{"SaveParserAs", ki.Props{
@@ -1318,7 +1317,6 @@ var PiViewProps = ki.Props{
 		{"Window", "Windows"},
 	},
 }
-*/
 
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project window
@@ -1454,3 +1452,5 @@ func NewPiView() (*gi.Window, *PiView) {
 	win.GoStartEventLoop()
 	return win, pv
 }
+
+*/
