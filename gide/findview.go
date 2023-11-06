@@ -18,9 +18,11 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/girl/states"
+	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
+	"goki.dev/mat32/v2"
 	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
 )
@@ -376,6 +378,9 @@ func (fv *FindView) ConfigWidget(sc *gi.Scene) {
 func (fv *FindView) ConfigFindView(ge Gide) {
 	fv.Gide = ge
 	fv.Lay = gi.LayoutVert
+	fv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "findbar")
 	config.Add(gi.ToolbarType, "replbar")
@@ -468,7 +473,7 @@ func (fv *FindView) ConfigToolbar() {
 	})
 	finds := gi.NewChooser(fb).SetEditable(true).
 		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
-	finds.SetStretchMaxWidth()
+	finds.Grow.Set(1, 0)
 	finds.SetStrings(fv.Params().FindHist, true, 0)
 	finds.OnChange(func(e events.Event) {
 		fv.Params().Find = finds.CurVal.(string)
@@ -522,7 +527,7 @@ func (fv *FindView) ConfigToolbar() {
 		})
 
 	repls := gi.NewChooser(rb).SetEditable(true).SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
-	repls.SetStretchMaxWidth()
+	repls.Grow.Set(1, 0)
 	repls.SetStrings(fv.Params().ReplHist, true, 0)
 	repls.OnChange(func(e events.Event) {
 		fv.Params().Replace = repls.CurVal.(string)

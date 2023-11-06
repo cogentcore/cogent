@@ -24,13 +24,12 @@ func KeyMapsView(km *KeyMaps) {
 	}
 	sc := gi.NewScene("gide-key-maps")
 	sc.Title = "Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map"
-	sc.Lay = gi.LayoutVert
 	sc.Data = km
 
 	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
 	title.Style(func(s *styles.Style) {
-		s.Width.Ch(30) // need for wrap
-		s.SetStretchMaxWidth()
+		s.Min.X.Ch(30) // need for wrap
+		s.Grow.Set(1, 0)
 		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
 	})
 
@@ -81,13 +80,12 @@ func PrefsView(pf *Preferences) *giv.StructView {
 	}
 	sc := gi.NewScene("gide-prefs")
 	sc.Title = "Gide Preferences"
-	sc.Lay = gi.LayoutVert
 	sc.Data = pf
 
 	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
 	title.Style(func(s *styles.Style) {
-		s.Width.Ch(30) // need for wrap
-		s.SetStretchMaxWidth()
+		s.Min.X.Ch(30) // need for wrap
+		s.Grow.Set(1, 0)
 		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
 	})
 
@@ -132,13 +130,12 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 	}
 	sc := gi.NewScene("gide-proj-prefs")
 	sc.Title = "Gide Project Preferences"
-	sc.Lay = gi.LayoutVert
 	sc.Data = pf
 
 	title := gi.NewLabel(sc, "title").SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.").SetType(gi.LabelHeadlineSmall)
 	title.Style(func(s *styles.Style) {
-		s.Width.Ch(30) // need for wrap
-		s.SetStretchMaxWidth()
+		s.Min.X.Ch(30) // need for wrap
+		s.Grow.Set(1, 0)
 		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
 	})
 
@@ -234,13 +231,12 @@ func LangsView(pt *Langs) {
 	}
 	sc := gi.NewScene("gide-langs")
 	sc.Title = "Available Language Opts: Add or modify entries to customize options for language / file types"
-	sc.Lay = gi.LayoutVert
 	sc.Data = pt
 
 	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
 	title.Style(func(s *styles.Style) {
-		s.Width.Ch(30) // need for wrap
-		s.SetStretchMaxWidth()
+		s.Min.X.Ch(30) // need for wrap
+		s.Grow.Set(1, 0)
 		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
 	})
 
@@ -290,13 +286,12 @@ func CmdsView(pt *Commands) {
 	}
 	sc := gi.NewScene("gide-cmds")
 	sc.Title = "Gide Commands"
-	sc.Lay = gi.LayoutVert
 	sc.Data = pt
 
 	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
 	title.Style(func(s *styles.Style) {
-		s.Width.Ch(30) // need for wrap
-		s.SetStretchMaxWidth()
+		s.Min.X.Ch(30) // need for wrap
+		s.Grow.Set(1, 0)
 		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
 	})
 
@@ -413,13 +408,12 @@ func SplitsView(pt *Splits) {
 	}
 	sc := gi.NewScene("gide-splits")
 	sc.Title = "Guide Splitters"
-	sc.Lay = gi.LayoutVert
 	sc.Data = pt
 
 	title := gi.NewLabel(sc, "title").SetText("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
 	title.Style(func(s *styles.Style) {
-		s.Width.Ch(30) // need for wrap
-		s.SetStretchMaxWidth()
+		s.Min.X.Ch(30) // need for wrap
+		s.Grow.Set(1, 0)
 		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
 	})
 
@@ -539,8 +533,8 @@ func RegistersView(pt *Registers) {
 
 	title := gi.NewLabel(sc, "title").SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
 	title.Style(func(s *styles.Style) {
-		s.Width.Ch(30) // need for wrap
-		s.SetStretchMaxWidth()
+		s.Min.X.Ch(30) // need for wrap
+		s.Grow.Set(1, 0)
 		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
 	})
 

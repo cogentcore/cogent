@@ -547,7 +547,6 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 
 	sc := gi.NewScene(winm)
 	sc.Title = wintitle
-	sc.Lay = gi.LayoutVert
 
 	ge := NewGideView(sc)
 	sc.TopAppBar = ge.TopAppBar

@@ -46,10 +46,12 @@ func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 	updt := ge.UpdateStart()
 	sc.TopAppBar = ge.TopAppBar
 
-	ge.Lay = gi.LayoutVert
+	ge.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	gi.NewSplits(ge, "splitview")
-	gi.NewFrame(ge, "statusbar").SetLayout(gi.LayoutHoriz)
+	gi.NewFrame(ge, "statusbar").SetMainAxis(mat32.X)
 
 	ge.ConfigSplits()
 	ge.ConfigStatusBar()
@@ -116,7 +118,7 @@ func (ge *GideView) ConfigSplits() {
 	split := ge.Splits()
 	split.SetStretchMax()
 	split.Dim = mat32.X
-	ftfr := gi.NewFrame(split, "filetree").SetLayout(gi.LayoutVert)
+	ftfr := gi.NewFrame(split, "filetree").SetMainAxis(mat32.Y)
 	ftfr.SetStretchMax()
 	ft := filetree.NewTree(ftfr, "filetree")
 	ft.OpenDepth = 4
@@ -141,14 +143,14 @@ func (ge *GideView) ConfigSplits() {
 	for i := 0; i < NTextViews; i++ {
 		i := i
 		txnm := fmt.Sprintf("%d", i)
-		txly := gi.NewLayout(split, "textlay-"+txnm).SetLayout(gi.LayoutVert)
+		txly := gi.NewLayout(split, "textlay-"+txnm).SetMainAxis(mat32.Y)
 		txly.Style(func(s *styles.Style) {
-			s.SetStretchMax()
+			s.Grow.Set(1, 1)
 		})
 		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("textview: " + txnm)
 		txbut.Type = gi.ButtonAction
 		txbut.Style(func(s *styles.Style) {
-			s.SetStretchMaxWidth()
+			s.Grow.Set(1, 0)
 		})
 		txbut.Menu = func(m *gi.Scene) {
 			ge.TextViewButtonMenu(i, m)
@@ -159,9 +161,9 @@ func (ge *GideView) ConfigSplits() {
 
 		ted := gide.NewTextView(txly, "textview-"+txnm)
 		ted.Style(func(s *styles.Style) {
-			s.SetStretchMax()
-			s.SetMinPrefWidth(units.Ch(80))
-			s.SetMinPrefHeight(units.Em(40))
+			s.Grow.Set(1, 1)
+			s.Min.X.Ch(80)
+			s.Min.Y.Em(40)
 			if ge.Prefs.Editor.WordWrap {
 				s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 			} else {
@@ -180,7 +182,7 @@ func (ge *GideView) ConfigSplits() {
 
 	mtab := gi.NewTabs(split, "tabs")
 	mtab.Style(func(s *styles.Style) {
-		s.SetStretchMax()
+		s.Grow.Set(1, 1)
 	})
 
 	// mtab.OnChange(func(e events.Event) {
@@ -198,19 +200,17 @@ func (ge *GideView) ConfigSplits() {
 func (ge *GideView) ConfigStatusBar() {
 	sb := ge.StatusBar()
 	sb.Style(func(s *styles.Style) {
-		s.SetStretchMaxWidth()
-		s.SetMinPrefHeight(units.Em(1.2))
-		s.MaxHeight.Zero()
+		s.Grow.Set(1, 0)
+		s.Min.Y.Set(units.Em(1.2))
 		s.Overflow = styles.OverflowHidden // no scrollbars!
 		s.Margin.Zero()
 		s.Padding.Zero()
 	})
 	lbl := gi.NewLabel(sb, "sb-lbl")
 	lbl.Style(func(s *styles.Style) {
-		s.SetStretchMaxWidth()
-		s.SetMinPrefHeight(units.Em(1))
-		s.MaxHeight.Zero()
-		s.AlignV = styles.AlignTop
+		s.Grow.Set(1, 0)
+		s.Min.Y.Set(units.Em(1))
+		s.Align.Y = styles.AlignStart
 		s.Margin.Zero()
 		s.Padding.Zero()
 		s.Text.TabSize = 4

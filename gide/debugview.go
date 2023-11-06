@@ -16,6 +16,7 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/gide/v2/gidebug/gidelve"
+	"goki.dev/girl/styles"
 	"goki.dev/grr"
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
@@ -741,7 +742,9 @@ func (dv *DebugView) ConfigDebugView(ge Gide, sup filecat.Supported, exePath str
 	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
-	dv.Lay = gi.LayoutVert
+	dv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "toolbar")
 	config.Add(gi.TabsType, "tabs")
@@ -960,7 +963,9 @@ func (sv *StackView) DebugVw() *DebugView {
 }
 
 func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
-	sv.Lay = gi.LayoutVert
+	sv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	sv.FindFrames = findFrames
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "stack")
@@ -1032,7 +1037,9 @@ func (sv *BreakView) DebugVw() *DebugView {
 }
 
 func (sv *BreakView) ConfigBreakView(dv *DebugView) {
-	sv.Lay = gi.LayoutVert
+	sv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "breaks")
 	mods, updt := sv.ConfigChildren(config)
@@ -1097,7 +1104,9 @@ func (sv *ThreadView) DebugVw() *DebugView {
 }
 
 func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
-	sv.Lay = gi.LayoutVert
+	sv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "threads")
 	mods, updt := sv.ConfigChildren(config)
@@ -1158,7 +1167,9 @@ func (sv *TaskView) DebugVw() *DebugView {
 }
 
 func (sv *TaskView) ConfigTaskView(dv *DebugView) {
-	sv.Lay = gi.LayoutVert
+	sv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "tasks")
 	mods, updt := sv.ConfigChildren(config)
@@ -1222,7 +1233,9 @@ func (sv *VarsView) DebugVw() *DebugView {
 }
 
 func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
-	sv.Lay = gi.LayoutVert
+	sv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	sv.GlobalVars = globalVars
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "vars")
@@ -1315,7 +1328,9 @@ func (vv *VarView) ConfigVarView() {
 	if vv.Var == nil {
 		return
 	}
-	vv.Lay = gi.LayoutVert
+	sv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	config := ki.Config{}
 	config.Add(gi.LabelType, "frame-info")
 	// config.Add(gi.ToolbarType, "toolbar")
@@ -1376,7 +1391,7 @@ func (vv *VarView) ConfigSplits() {
 	split.Dim = mat32.X
 
 	if len(split.Kids) == 0 {
-		tvfr := gi.NewFrame(split, "tvfr").SetLayout(gi.LayoutHoriz)
+		tvfr := gi.NewFrame(split, "tvfr").SetMainAxis(mat32.X)
 		tv := giv.NewTreeView(tvfr, "tv")
 		giv.NewStructView(split, "sv")
 		_ = tv

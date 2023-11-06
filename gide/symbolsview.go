@@ -12,9 +12,11 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
+	"goki.dev/mat32/v2"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/syms"
 	"goki.dev/pi/v2/token"
@@ -56,7 +58,9 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
 	sv.Gide = ge
 	sv.SymParams = sp
-	sv.Lay = gi.LayoutVert
+	sv.Style(func(s *styles.Style) {
+		s.SetMainAxis(mat32.Y)
+	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "sym-toolbar")
 	config.Add(gi.FrameType, "sym-frame")
