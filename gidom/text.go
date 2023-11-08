@@ -14,7 +14,11 @@ import (
 // adding any appropriate inline markup for formatted text.
 func ExtractText(n *html.Node) string {
 	if n.Type == html.TextNode {
-		return strings.TrimSpace(n.Data)
+		str := strings.TrimSpace(n.Data)
+		if n.NextSibling != nil {
+			str += ExtractText(n.NextSibling)
+		}
+		return str
 	}
 	if n.FirstChild != nil {
 		return ExtractText(n.FirstChild)

@@ -2,4 +2,4 @@
 
 ## Made by GoKi
 
-This is a sample MD (markdown) document displayed using gidom.
+This is a sample _MD_ (markdown) **document** displayed using *gidom*.
