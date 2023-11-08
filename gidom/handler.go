@@ -10,6 +10,7 @@ import (
 	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/texteditor"
 	"goki.dev/grr"
 	"golang.org/x/net/html"
 )
@@ -71,6 +72,10 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		default:
 			gi.NewTextField(par)
 		}
+	case "textarea":
+		buf := texteditor.NewBuf()
+		buf.SetText([]byte(ExtractText(n)))
+		texteditor.NewEditor(par).SetBuf(buf)
 	default:
 		return par
 	}

@@ -21,6 +21,16 @@ This is a [link to the ***GoKi*** website](https://goki.dev), which you can _cli
 2. List item 2
 3. List item 3
 
+```go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, world!")
+}
+```
+
 This is an image of a gopher: 
 
 ![Image of a gopher](gopher.png)
