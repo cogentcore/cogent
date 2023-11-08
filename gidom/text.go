@@ -5,8 +5,6 @@
 package gidom
 
 import (
-	"strings"
-
 	"golang.org/x/net/html"
 )
 
@@ -24,7 +22,7 @@ func ExtractText(n *html.Node) string {
 func extractTextImpl(n *html.Node) string {
 	str := ""
 	if n.Type == html.TextNode {
-		str += strings.TrimSpace(n.Data)
+		str += n.Data
 	}
 	if n.FirstChild != nil {
 		if n.Type == html.ElementNode {
@@ -38,7 +36,7 @@ func extractTextImpl(n *html.Node) string {
 		}
 	}
 	if n.NextSibling != nil {
-		str += " " + extractTextImpl(n.NextSibling)
+		str += extractTextImpl(n.NextSibling)
 	}
 	return str
 }
