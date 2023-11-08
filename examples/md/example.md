@@ -13,6 +13,14 @@ This is a [link to the ***GoKi*** website](https://goki.dev), which you can _cli
 ##### Heading 5
 ###### Heading 6
 
+* List item 1
+* List item 2
+* List item 3
+
+1. List item 1
+2. List item 2
+3. List item 3
+
 This is an image of a gopher: 
 
 ![Image of a gopher](gopher.png)
