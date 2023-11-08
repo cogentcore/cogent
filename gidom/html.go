@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 
 	"goki.dev/gi/v2/gi"
 	"golang.org/x/net/html"
@@ -37,7 +38,10 @@ func ReadHTMLNode(par gi.Widget, n *html.Node) error {
 	newPar := par
 	switch n.Type {
 	case html.TextNode:
-		gi.NewLabel(par).SetText(n.Data)
+		str := strings.TrimSpace(n.Data)
+		if str != "" {
+			gi.NewLabel(par).SetText(str)
+		}
 		newPar = nil
 	case html.ElementNode:
 		newPar = HandleElement(par, n)
