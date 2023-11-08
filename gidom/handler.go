@@ -5,7 +5,11 @@
 package gidom
 
 import (
+	"time"
+
+	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
 	"goki.dev/grr"
 	"golang.org/x/net/html"
 )
@@ -53,15 +57,34 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		gi.NewLabel(par).SetType(gi.LabelBodyLarge).SetText(ExtractText(n))
 		// return fr
 	case "img":
-		src := ""
-		for _, a := range n.Attr {
-			if a.Key == "src" {
-				src = a.Val
-			}
+		src := gi.FileName(GetAttr(n, "src"))
+		grr.Log0(gi.NewImage(par).OpenImage(src, 0, 0))
+	case "input":
+		ityp := GetAttr(n, "type")
+		switch ityp {
+		case "number":
+			gi.NewSpinner(par)
+		case "color":
+			giv.NewValue(par, colors.Black)
+		case "datetime":
+			giv.NewValue(par, time.Now())
+		default:
+			gi.NewTextField(par)
 		}
-		grr.Log0(gi.NewImage(par).OpenImage(gi.FileName(src), 0, 0))
 	default:
 		return par
 	}
 	return nil
+}
+
+// GetAttr gets the given attribute from the given node, returning ""
+// if the attribute is not found.
+func GetAttr(n *html.Node, attr string) string {
+	res := ""
+	for _, a := range n.Attr {
+		if a.Key == attr {
+			res = a.Val
+		}
+	}
+	return res
 }
