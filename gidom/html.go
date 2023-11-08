@@ -34,40 +34,28 @@ func ReadHTMLString(par ki.Ki, s string) error {
 
 // ReadHTMLNode reads HTML from the given [*html.Node] and adds corresponding GoGi
 // widgets to the given [ki.Ki].
-func ReadHTMLNode(k ki.Ki, n *html.Node) error {
-	par := k
+func ReadHTMLNode(par ki.Ki, n *html.Node) error {
+	var newPar gi.Widget
 	switch n.Type {
 	case html.TextNode:
-		par = gi.NewLabel(k).SetText(n.Data)
+		gi.NewLabel(par).SetText(n.Data)
 	case html.ElementNode:
 		typ := n.DataAtom.String()
 		switch typ {
 		case "button":
-			bt := gi.NewButton(k)
-			if n.FirstChild != nil {
-				bt.SetText(n.FirstChild.Data)
-				n.FirstChild = nil
-			}
+			gi.NewButton(par).SetText(ExtractText(n))
 		case "h1":
-			lb := gi.NewLabel(k).SetType(gi.LabelHeadlineLarge)
-			if n.FirstChild != nil {
-				lb.SetText(n.FirstChild.Data)
-				n.FirstChild = nil
-			}
+			gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(n))
 		case "p":
-			lb := gi.NewLabel(k).SetType(gi.LabelBodyLarge)
-			if n.FirstChild != nil {
-				lb.SetText(n.FirstChild.Data)
-				n.FirstChild = nil
-			}
+			gi.NewLabel(par).SetType(gi.LabelBodyLarge).SetText(ExtractText(n))
 		}
 	}
 
-	if n.FirstChild != nil {
-		ReadHTMLNode(par, n.FirstChild)
+	if newPar != nil && n.FirstChild != nil {
+		ReadHTMLNode(newPar, n.FirstChild)
 	}
 	if n.NextSibling != nil {
-		ReadHTMLNode(k, n.NextSibling)
+		ReadHTMLNode(par, n.NextSibling)
 	}
 	return nil
 }
