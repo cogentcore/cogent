@@ -17,19 +17,19 @@ import (
 
 // ReadHTML reads HTML from the given [io.Reader] and adds corresponding GoGi
 // widgets to the given [ki.Ki].
-func ReadHTML(k ki.Ki, r io.Reader) error {
+func ReadHTML(par ki.Ki, r io.Reader) error {
 	n, err := html.Parse(r)
 	if err != nil {
 		return fmt.Errorf("error parsing HTML: %w", err)
 	}
-	return ReadHTMLNode(k, n)
+	return ReadHTMLNode(par, n)
 }
 
 // ReadHTMLString reads HTML from the given string and adds corresponding GoGi
 // widgets to the given [ki.Ki].
-func ReadHTMLString(k ki.Ki, s string) error {
+func ReadHTMLString(par ki.Ki, s string) error {
 	b := bytes.NewBufferString(s)
-	return ReadHTML(k, b)
+	return ReadHTML(par, b)
 }
 
 // ReadHTMLNode reads HTML from the given [*html.Node] and adds corresponding GoGi
