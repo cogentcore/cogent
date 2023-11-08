@@ -23,4 +23,9 @@ type Handler func(par ki.Ki, n *html.Node) gi.Widget
 // type (eg: "button", "input", "p"). It is initialized to contain appropriate
 // handlers for all of the standard HTML elements, but can be extended or
 // modified for anyone in need of different behavior.
-var ElementHandlers = map[string]Handler{}
+var ElementHandlers = map[string]Handler{
+	"button": func(par ki.Ki, n *html.Node) gi.Widget {
+		gi.NewButton(par).SetText(ExtractText(n))
+		return nil
+	},
+}
