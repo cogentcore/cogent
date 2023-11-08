@@ -39,6 +39,16 @@ func ReadHTMLNode(k ki.Ki, n *html.Node) error {
 	switch n.Type {
 	case html.TextNode:
 		par = gi.NewLabel(k).SetText(n.Data)
+	case html.ElementNode:
+		typ := n.DataAtom.String()
+		switch typ {
+		case "button":
+			bt := gi.NewButton(k)
+			if n.FirstChild != nil {
+				bt.SetText(n.FirstChild.Data)
+				n.FirstChild = nil
+			}
+		}
 	}
 
 	if n.FirstChild != nil {

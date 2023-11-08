@@ -18,7 +18,7 @@ func TestRenderHTML(t *testing.T) {
 	gimain.Run(func() {
 		sc := gi.NewScene("test-render-html")
 
-		s := `Hello, world!`
+		s := `<button>Hello, world!</button>`
 		err := ReadHTMLString(sc, s)
 		if err != nil {
 			t.Error(err)
