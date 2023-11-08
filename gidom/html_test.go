@@ -18,7 +18,11 @@ func TestRenderHTML(t *testing.T) {
 	gimain.Run(func() {
 		sc := gi.NewScene("test-render-html")
 
-		s := `<button>Hello, world!</button>`
+		s := `
+		<h1>Gidom</h1>
+		<p>This is a demonstration of the various features of gidom</p>
+		<button>Hello, world!</button>
+		`
 		err := ReadHTMLString(sc, s)
 		if err != nil {
 			t.Error(err)

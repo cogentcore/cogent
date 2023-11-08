@@ -48,6 +48,18 @@ func ReadHTMLNode(k ki.Ki, n *html.Node) error {
 				bt.SetText(n.FirstChild.Data)
 				n.FirstChild = nil
 			}
+		case "h1":
+			lb := gi.NewLabel(k).SetType(gi.LabelHeadlineLarge)
+			if n.FirstChild != nil {
+				lb.SetText(n.FirstChild.Data)
+				n.FirstChild = nil
+			}
+		case "p":
+			lb := gi.NewLabel(k).SetType(gi.LabelBodyLarge)
+			if n.FirstChild != nil {
+				lb.SetText(n.FirstChild.Data)
+				n.FirstChild = nil
+			}
 		}
 	}
 
@@ -55,7 +67,7 @@ func ReadHTMLNode(k ki.Ki, n *html.Node) error {
 		ReadHTMLNode(par, n.FirstChild)
 	}
 	if n.NextSibling != nil {
-		ReadHTMLNode(par, n.NextSibling)
+		ReadHTMLNode(k, n.NextSibling)
 	}
 	return nil
 }
