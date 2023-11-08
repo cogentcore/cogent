@@ -27,7 +27,15 @@ func extractTextImpl(n *html.Node) string {
 		str += strings.TrimSpace(n.Data)
 	}
 	if n.FirstChild != nil {
+		if n.Type == html.ElementNode {
+			tag := n.DataAtom.String()
+			str += "<" + tag + ">"
+		}
 		str += extractTextImpl(n.FirstChild)
+		if n.Type == html.ElementNode {
+			tag := n.DataAtom.String()
+			str += "</" + tag + ">"
+		}
 	}
 	if n.NextSibling != nil {
 		str += " " + extractTextImpl(n.NextSibling)
