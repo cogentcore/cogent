@@ -6,26 +6,46 @@ package gidom
 
 import (
 	"goki.dev/gi/v2/gi"
-	"goki.dev/ki/v2"
 	"golang.org/x/net/html"
 )
 
 // Handler is a function that can be used to describe the behavior
 // of gidom parsing for a specific type of element. It takes the
-// parent [ki.Ki] to add widgets to and the [*html.Node] to read from.
+// parent [gi.Widget] to add widgets to and the [*html.Node] to read from.
 // If it returns nil, that indicates that the children of this node have
 // already been handled (or will not be handled), and thus should not
 // be handled further. If it returns a non-nil widget, then the children
 // will be handled, with the returned widget as their parent.
-type Handler func(par ki.Ki, n *html.Node) gi.Widget
+type Handler func(par gi.Widget, n *html.Node) gi.Widget
 
 // ElementHandlers is a map of [Handler] functions for each HTML element
 // type (eg: "button", "input", "p"). It is initialized to contain appropriate
 // handlers for all of the standard HTML elements, but can be extended or
 // modified for anyone in need of different behavior.
 var ElementHandlers = map[string]Handler{
-	"button": func(par ki.Ki, n *html.Node) gi.Widget {
+	"button": func(par gi.Widget, n *html.Node) gi.Widget {
 		gi.NewButton(par).SetText(ExtractText(n))
 		return nil
 	},
+}
+
+// HandleELement calls the [Handler] associated with the given element [*html.Node]
+// in [ElementHandlers] and returns the result.
+func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
+	typ := n.DataAtom.String()
+	h, ok := ElementHandlers[typ]
+	if ok {
+		return h(par, n)
+	}
+	switch typ {
+	case "button":
+		gi.NewButton(par).SetText(ExtractText(n))
+	case "h1":
+		gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(n))
+	case "p":
+		gi.NewLabel(par).SetType(gi.LabelBodyLarge).SetText(ExtractText(n))
+	default:
+		return par
+	}
+	return nil
 }

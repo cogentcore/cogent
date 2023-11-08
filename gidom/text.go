@@ -4,10 +4,18 @@
 
 package gidom
 
-import "golang.org/x/net/html"
+import (
+	"golang.org/x/net/html"
+)
 
 // ExtractText recursively extracts all of the text from the given [*html.Node],
 // adding any appropriate inline markup for formatted text.
 func ExtractText(n *html.Node) string {
+	if n.Type == html.TextNode {
+		return n.Data
+	}
+	if n.FirstChild != nil {
+		return ExtractText(n.FirstChild)
+	}
 	return ""
 }
