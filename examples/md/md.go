@@ -13,14 +13,14 @@ import (
 	"goki.dev/grr"
 )
 
-//go:embed example.md
+//go:embed *.md
 var exampleMD embed.FS
 
 func main() { gimain.Run(app) }
 
 func app() {
 	sc := gi.NewScene("gidom-md")
-	b := grr.Log(exampleMD.ReadFile("example.md"))
+	b := grr.Log(exampleMD.ReadFile("gireadme.md"))
 	grr.Log0(gidom.ReadMD(sc, b))
 	gi.NewWindow(sc).Run().Wait()
 }
