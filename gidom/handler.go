@@ -11,6 +11,7 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
+	"goki.dev/girl/styles"
 	"goki.dev/grr"
 	"golang.org/x/net/html"
 )
@@ -55,8 +56,12 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(n))
 	case "p":
 		// fr := gi.NewFrame(par)
-		gi.NewLabel(par).SetType(gi.LabelBodyLarge).SetText(ExtractText(n))
+		gi.NewLabel(par).SetText(ExtractText(n))
 		// return fr
+	case "pre":
+		gi.NewLabel(par).SetText(ExtractText(n)).Style(func(s *styles.Style) {
+			s.Text.WhiteSpace = styles.WhiteSpacePre
+		})
 	case "img":
 		src := gi.FileName(GetAttr(n, "src"))
 		grr.Log0(gi.NewImage(par).OpenImage(src, 0, 0))
