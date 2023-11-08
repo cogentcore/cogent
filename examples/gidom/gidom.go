@@ -5,23 +5,22 @@
 package main
 
 import (
+	"embed"
+
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/gimain"
 	"goki.dev/glide/gidom"
 	"goki.dev/grr"
 )
 
+//go:embed example.html
+var exampleHTML embed.FS
+
 func main() { gimain.Run(app) }
 
 func app() {
 	sc := gi.NewScene("gidom")
-
-	s := `
-<h1>Gidom</h1>
-<p>This is a demonstration of the various features of gidom</p>
-<button>Hello, world!</button>
-`
-	grr.Log0(gidom.ReadHTMLString(sc, s))
-
+	b := grr.Log(exampleHTML.ReadFile("example.html"))
+	grr.Log0(gidom.ReadHTMLString(sc, string(b)))
 	gi.NewWindow(sc).Run().Wait()
 }
