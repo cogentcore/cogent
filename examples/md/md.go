@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"embed"
 
 	"goki.dev/gi/v2/gi"
@@ -14,14 +13,14 @@ import (
 	"goki.dev/grr"
 )
 
-//go:embed example.html
-var exampleHTML embed.FS
+//go:embed example.md
+var exampleMD embed.FS
 
 func main() { gimain.Run(app) }
 
 func app() {
-	sc := gi.NewScene("gidom")
-	b := grr.Log(exampleHTML.ReadFile("example.html"))
-	grr.Log0(gidom.ReadHTML(sc, bytes.NewBuffer(b)))
+	sc := gi.NewScene("gidom-md")
+	b := grr.Log(exampleMD.ReadFile("example.md"))
+	grr.Log0(gidom.ReadMD(sc, b))
 	gi.NewWindow(sc).Run().Wait()
 }
