@@ -5,6 +5,8 @@
 package gidom
 
 import (
+	"strings"
+
 	"golang.org/x/net/html"
 )
 
@@ -12,7 +14,7 @@ import (
 // adding any appropriate inline markup for formatted text.
 func ExtractText(n *html.Node) string {
 	if n.Type == html.TextNode {
-		return n.Data
+		return strings.TrimSpace(n.Data)
 	}
 	if n.FirstChild != nil {
 		return ExtractText(n.FirstChild)

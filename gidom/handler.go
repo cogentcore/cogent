@@ -22,12 +22,7 @@ type Handler func(par gi.Widget, n *html.Node) gi.Widget
 // type (eg: "button", "input", "p"). It is initialized to contain appropriate
 // handlers for all of the standard HTML elements, but can be extended or
 // modified for anyone in need of different behavior.
-var ElementHandlers = map[string]Handler{
-	"button": func(par gi.Widget, n *html.Node) gi.Widget {
-		gi.NewButton(par).SetText(ExtractText(n))
-		return nil
-	},
-}
+var ElementHandlers = map[string]Handler{}
 
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
 // in [ElementHandlers] and returns the result.
@@ -42,6 +37,16 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		gi.NewButton(par).SetText(ExtractText(n))
 	case "h1":
 		gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(n))
+	case "h2":
+		gi.NewLabel(par).SetType(gi.LabelHeadlineSmall).SetText(ExtractText(n))
+	case "h3":
+		gi.NewLabel(par).SetType(gi.LabelTitleLarge).SetText(ExtractText(n))
+	case "h4":
+		gi.NewLabel(par).SetType(gi.LabelTitleMedium).SetText(ExtractText(n))
+	case "h5":
+		gi.NewLabel(par).SetType(gi.LabelTitleSmall).SetText(ExtractText(n))
+	case "h6":
+		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(n))
 	case "p":
 		gi.NewLabel(par).SetType(gi.LabelBodyLarge).SetText(ExtractText(n))
 	default:
