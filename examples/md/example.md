@@ -12,3 +12,7 @@ This is a [link to the ***GoKi*** website](https://goki.dev), which you can _cli
 #### Heading 4
 ##### Heading 5
 ###### Heading 6
+
+This is an image of a gopher: 
+
+![Image of a gopher](gopher.png)

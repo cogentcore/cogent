@@ -6,6 +6,7 @@ package gidom
 
 import (
 	"goki.dev/gi/v2/gi"
+	"goki.dev/grr"
 	"golang.org/x/net/html"
 )
 
@@ -48,7 +49,17 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 	case "h6":
 		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(n))
 	case "p":
+		// fr := gi.NewFrame(par)
 		gi.NewLabel(par).SetType(gi.LabelBodyLarge).SetText(ExtractText(n))
+		// return fr
+	case "img":
+		src := ""
+		for _, a := range n.Attr {
+			if a.Key == "src" {
+				src = a.Val
+			}
+		}
+		grr.Log0(gi.NewImage(par).OpenImage(gi.FileName(src), 0, 0))
 	default:
 		return par
 	}
