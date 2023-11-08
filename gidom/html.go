@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 
+	"goki.dev/gi/v2/gi"
 	"goki.dev/ki/v2"
 	"golang.org/x/net/html"
 )
@@ -34,5 +35,17 @@ func ReadHTMLString(k ki.Ki, s string) error {
 // ReadHTMLNode reads HTML from the given [*html.Node] and adds corresponding GoGi
 // widgets to the given [ki.Ki].
 func ReadHTMLNode(k ki.Ki, n *html.Node) error {
+	par := k
+	switch n.Type {
+	case html.TextNode:
+		par = gi.NewLabel(k).SetText(n.Data)
+	}
+
+	if n.FirstChild != nil {
+		ReadHTMLNode(par, n.FirstChild)
+	}
+	if n.NextSibling != nil {
+		ReadHTMLNode(par, n.NextSibling)
+	}
 	return nil
 }
