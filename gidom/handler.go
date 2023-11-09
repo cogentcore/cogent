@@ -13,6 +13,7 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/styles"
 	"goki.dev/grr"
+	"goki.dev/icons"
 	"golang.org/x/net/html"
 )
 
@@ -63,7 +64,7 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
-		tv := giv.NewTreeView(par, "list")
+		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None)
 		tv.RootView = tv
 		return tv
 	case "li":
