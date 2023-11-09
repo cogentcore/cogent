@@ -41,25 +41,25 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 	}
 	switch typ {
 	case "button":
-		gi.NewButton(par).SetText(ExtractText(n))
+		gi.NewButton(par).SetText(ExtractText(par, n))
 	case "h1":
-		gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(n))
+		gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(par, n))
 	case "h2":
-		gi.NewLabel(par).SetType(gi.LabelHeadlineSmall).SetText(ExtractText(n))
+		gi.NewLabel(par).SetType(gi.LabelHeadlineSmall).SetText(ExtractText(par, n))
 	case "h3":
-		gi.NewLabel(par).SetType(gi.LabelTitleLarge).SetText(ExtractText(n))
+		gi.NewLabel(par).SetType(gi.LabelTitleLarge).SetText(ExtractText(par, n))
 	case "h4":
-		gi.NewLabel(par).SetType(gi.LabelTitleMedium).SetText(ExtractText(n))
+		gi.NewLabel(par).SetType(gi.LabelTitleMedium).SetText(ExtractText(par, n))
 	case "h5":
-		gi.NewLabel(par).SetType(gi.LabelTitleSmall).SetText(ExtractText(n))
+		gi.NewLabel(par).SetType(gi.LabelTitleSmall).SetText(ExtractText(par, n))
 	case "h6":
-		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(n))
+		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(par, n))
 	case "p":
 		// fr := gi.NewFrame(par)
-		gi.NewLabel(par).SetText(ExtractText(n))
+		gi.NewLabel(par).SetText(ExtractText(par, n))
 		// return fr
 	case "pre":
-		gi.NewLabel(par).SetText(ExtractText(n)).Style(func(s *styles.Style) {
+		gi.NewLabel(par).SetText(ExtractText(par, n)).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "img":
@@ -79,7 +79,7 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
-		buf.SetText([]byte(ExtractText(n)))
+		buf.SetText([]byte(ExtractText(par, n)))
 		texteditor.NewEditor(par).SetBuf(buf)
 	default:
 		return par
