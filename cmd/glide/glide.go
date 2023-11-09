@@ -6,6 +6,7 @@ package main
 
 import (
 	"net/url"
+	"strings"
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/gimain"
@@ -27,7 +28,11 @@ func app() {
 		ch.AllowNew = true
 		ch.OnChange(func(e events.Event) {
 			u, err := url.Parse(ch.CurLabel)
-			if err == nil {
+			// scheme, /, and . indicate a URL
+			if err == nil && (u.Scheme != "" || strings.Contains(ch.CurLabel, "/") || strings.Contains(ch.CurLabel, ".")) {
+				if u.Scheme == "" {
+					u.Scheme = "https"
+				}
 				grr.Log0(pg.OpenURL(u.String()))
 			} else {
 				grr.Log0(pg.OpenURL("https://google.com/search?q=" + ch.CurLabel))
