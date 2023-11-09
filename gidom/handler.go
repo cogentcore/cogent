@@ -13,7 +13,7 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/styles"
 	"goki.dev/grr"
-	"goki.dev/ki/v2"
+	"goki.dev/icons"
 	"golang.org/x/net/html"
 )
 
@@ -58,21 +58,20 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 	case "h6":
 		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(par, n))
 	case "p":
-		// fr := gi.NewFrame(par)
 		gi.NewLabel(par).SetText(ExtractText(par, n))
-		// return fr
 	case "pre":
 		gi.NewLabel(par).SetText(ExtractText(par, n)).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
-		list := ki.NewRoot[*ki.Node]("list")
-		return giv.NewTreeView(par).SyncRootNode(list)
+		tv := giv.NewTreeView(par, "").SetIcon(icons.Blank)
+		tv.RootView = tv
+		return tv
 	case "li":
+		ntv := giv.NewTreeView(par, ExtractText(par, n))
 		ptv := par.(*giv.TreeView)
-		sn := ptv.SyncNode
-		ki.NewNode(sn, ExtractText(par, n))
-		ptv.SyncRootNode(sn)
+		ntv.RootView = ptv.RootView
+		return ntv
 	case "img":
 		src := gi.FileName(GetAttr(n, "src"))
 		grr.Log0(gi.NewImage(par).OpenImage(src, 0, 0))
