@@ -45,7 +45,7 @@ Type = "Library"
   All = "F"
 
 [Release]
-  VersionFile = "version.go"
+  VersionFile = "glide/version.go"
   Package = "glide"
 
 [Generate]
