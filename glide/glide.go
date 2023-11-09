@@ -8,9 +8,13 @@ package glide
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/glide/gidom"
+	"goki.dev/goosi/events"
+	"goki.dev/grr"
 	"goki.dev/ki/v2"
 )
 
@@ -46,4 +50,25 @@ func (pg *Page) OpenURL(url string) error {
 	pg.Update()
 	pg.UpdateEnd(updt)
 	return nil
+}
+
+// TopAppBar is the default [gi.TopAppBar] for a [Page]
+func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
+	gi.DefaultTopAppBarStd(tb)
+	ch := tb.ChildByName("nav-bar").(*gi.Chooser)
+	ch.AllowNew = true
+	ch.OnChange(func(e events.Event) {
+		u, err := url.Parse(ch.CurLabel)
+		// scheme, /, and . indicate a URL
+		if err == nil && (u.Scheme != "" || strings.Contains(ch.CurLabel, "/") || strings.Contains(ch.CurLabel, ".")) {
+			if u.Scheme == "" {
+				u.Scheme = "https"
+			}
+			grr.Log0(pg.OpenURL(u.String()))
+		} else {
+			q := url.QueryEscape(ch.CurLabel)
+			grr.Log0(pg.OpenURL("https://google.com/search?q=" + q))
+		}
+		e.SetHandled()
+	})
 }

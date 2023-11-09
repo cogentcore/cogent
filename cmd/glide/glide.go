@@ -5,13 +5,9 @@
 package main
 
 import (
-	"net/url"
-	"strings"
-
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/gimain"
 	"goki.dev/glide/glide"
-	"goki.dev/goosi/events"
 	"goki.dev/grr"
 )
 
@@ -21,26 +17,6 @@ func app() {
 	sc := gi.NewScene("glide").SetTitle("Glide")
 	pg := glide.NewPage(sc, "page")
 	grr.Log0(pg.OpenURL("https://github.com/goki/gi"))
-
-	gi.DefaultTopAppBar = func(tb *gi.TopAppBar) {
-		gi.DefaultTopAppBarStd(tb)
-		ch := tb.ChildByName("nav-bar").(*gi.Chooser)
-		ch.AllowNew = true
-		ch.OnChange(func(e events.Event) {
-			u, err := url.Parse(ch.CurLabel)
-			// scheme, /, and . indicate a URL
-			if err == nil && (u.Scheme != "" || strings.Contains(ch.CurLabel, "/") || strings.Contains(ch.CurLabel, ".")) {
-				if u.Scheme == "" {
-					u.Scheme = "https"
-				}
-				grr.Log0(pg.OpenURL(u.String()))
-			} else {
-				q := url.QueryEscape(ch.CurLabel)
-				grr.Log0(pg.OpenURL("https://google.com/search?q=" + q))
-			}
-			e.SetHandled()
-		})
-	}
-
+	gi.DefaultTopAppBar = pg.TopAppBar
 	gi.NewWindow(sc).Run().Wait()
 }
