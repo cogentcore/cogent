@@ -15,6 +15,7 @@ This is a [link to the ***GoKi*** website](https://goki.dev), which you can _cli
 
 * List item 1
 * List item 2
+    * Sub list item 1
     * Sub list item 2
 * List item 3
 

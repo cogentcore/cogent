@@ -15,6 +15,7 @@ import (
 	"goki.dev/girl/styles"
 	"goki.dev/grr"
 	"goki.dev/icons"
+	"goki.dev/ki/v2"
 	"golang.org/x/net/html"
 )
 
@@ -65,20 +66,29 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
+		// if we are already in a treeview, we just return in the last item in it,
+		// which fixes the associativity of nested list items
+		if ptv, ok := par.(*giv.TreeView); ok {
+			return ki.LastChild(ptv).(gi.Widget)
+		}
 		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None).SetClass(typ)
 		tv.RootView = tv
 		return tv
 	case "li":
-		ptv := par.(*giv.TreeView)
 		txt := ExtractText(par, n)
 		ntv := giv.NewTreeView(par, txt)
-		if ptv.HasClass("ol") {
-			ip, _ := ntv.IndexInParent()
-			ntv.SetText(strconv.Itoa(ip+1) + ". " + txt) // start at 1
+		ptv, ok := par.(*giv.TreeView)
+		if ok {
+			ntv.RootView = ptv.RootView
+			if ptv.HasClass("ol") {
+				ip, _ := ntv.IndexInParent()
+				ntv.SetText(strconv.Itoa(ip+1) + ". " + txt) // start at 1
+			} else {
+				ntv.SetText("• " + txt)
+			}
 		} else {
-			ntv.SetText("• " + txt)
+			ntv.RootView = ntv
 		}
-		ntv.RootView = ptv.RootView
 	case "img":
 		src := gi.FileName(GetAttr(n, "src"))
 		grr.Log0(gi.NewImage(par).OpenImage(src, 0, 0))
