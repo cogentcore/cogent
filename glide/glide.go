@@ -22,6 +22,11 @@ type Page struct {
 // needed for interface import
 var _ ki.Ki = (*Page)(nil)
 
+func (pg *Page) OnInit() {
+	pg.Frame.OnInit()
+	pg.SetLayout(gi.LayoutVert)
+}
+
 // OpenURL sets the content of the page from the given url.
 func (pg *Page) OpenURL(url string) error {
 	resp, err := http.Get(url)
