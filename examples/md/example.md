@@ -34,6 +34,6 @@ func main() {
 }
 ```
 
-This is an image of a gopher: 
+### This is an image of a gopher: 
 
 ![Image of a gopher](gopher.png)

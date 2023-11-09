@@ -41,6 +41,8 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		return h(par, n)
 	}
 	switch typ {
+	case "head":
+		// we don't render anything in the head
 	case "button":
 		gi.NewButton(par).SetText(ExtractText(par, n))
 	case "h1":
@@ -70,7 +72,7 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		ptv := par.(*giv.TreeView)
 		sn := ptv.SyncNode
 		ki.NewNode(sn, ExtractText(par, n))
-		ptv.ReSync()
+		ptv.SyncRootNode(sn)
 	case "img":
 		src := gi.FileName(GetAttr(n, "src"))
 		grr.Log0(gi.NewImage(par).OpenImage(src, 0, 0))
