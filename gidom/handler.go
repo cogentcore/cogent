@@ -66,10 +66,14 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
-		// if we are already in a treeview, we just return in the last item in it,
-		// which fixes the associativity of nested list items
+		// if we are already in a treeview, we just return in the last item in it
+		// (which is the list item we are contained in), which fixes the associativity
+		// of nested list items and prevents the created of duplicated tree view items.
 		if ptv, ok := par.(*giv.TreeView); ok {
-			return ki.LastChild(ptv).(gi.Widget)
+			w := ki.LastChild(ptv).(gi.Widget)
+			// we also set its class so that the orderedness of nested items works properly
+			w.AsWidget().SetClass(typ)
+			return w
 		}
 		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None).SetClass(typ)
 		tv.RootView = tv
