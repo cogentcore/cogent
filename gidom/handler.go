@@ -88,6 +88,7 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 				ip, _ := ntv.IndexInParent()
 				ftxt = strconv.Itoa(ip+1) + ". " // start at 1
 			} else {
+				// TODO(kai/gidom): have different bullets for different depths
 				ftxt = "• "
 			}
 		} else {
