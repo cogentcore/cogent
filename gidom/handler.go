@@ -75,20 +75,24 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		tv.RootView = tv
 		return tv
 	case "li":
-		txt := ExtractText(par, n)
-		ntv := giv.NewTreeView(par, txt)
+		ntv := giv.NewTreeView(par)
+		ftxt := ""
 		ptv, ok := par.(*giv.TreeView)
 		if ok {
 			ntv.RootView = ptv.RootView
 			if ptv.HasClass("ol") {
 				ip, _ := ntv.IndexInParent()
-				ntv.SetText(strconv.Itoa(ip+1) + ". " + txt) // start at 1
+				ftxt = strconv.Itoa(ip+1) + ". " // start at 1
 			} else {
-				ntv.SetText("• " + txt)
+				ftxt = "• "
 			}
 		} else {
 			ntv.RootView = ntv
 		}
+
+		etxt := ExtractText(par, n)
+		ntv.SetName(etxt)
+		ntv.SetText(ftxt + etxt)
 	case "img":
 		src := gi.FileName(GetAttr(n, "src"))
 		grr.Log0(gi.NewImage(par).OpenImage(src, 0, 0))
