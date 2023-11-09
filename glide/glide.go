@@ -37,11 +37,13 @@ func (pg *Page) OpenURL(url string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("got error status %q", resp.Status)
 	}
+	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
 	err = gidom.ReadHTML(pg, resp.Body)
 	if err != nil {
 		return err
 	}
 	pg.Update()
+	pg.UpdateEnd(updt)
 	return nil
 }
