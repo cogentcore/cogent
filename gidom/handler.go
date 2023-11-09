@@ -5,6 +5,7 @@
 package gidom
 
 import (
+	"strconv"
 	"time"
 
 	"goki.dev/colors"
@@ -64,12 +65,19 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
-		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None)
+		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None).SetClass(typ)
 		tv.RootView = tv
 		return tv
 	case "li":
-		ntv := giv.NewTreeView(par, ExtractText(par, n))
 		ptv := par.(*giv.TreeView)
+		txt := ExtractText(par, n)
+		ntv := giv.NewTreeView(par, txt)
+		if ptv.HasClass("ol") {
+			ip, _ := ntv.IndexInParent()
+			ntv.SetText(strconv.Itoa(ip+1) + ". " + txt) // start at 1
+		} else {
+			ntv.SetText("• " + txt)
+		}
 		ntv.RootView = ptv.RootView
 	case "img":
 		src := gi.FileName(GetAttr(n, "src"))

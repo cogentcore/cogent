@@ -20,7 +20,6 @@ func ReadMD(par gi.Widget, b []byte) error {
 	if err != nil {
 		return fmt.Errorf("error parsing MD (markdown): %w", err)
 	}
-	fmt.Println(buf.String())
 	return ReadHTML(par, &buf)
 }
 
