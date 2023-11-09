@@ -35,7 +35,8 @@ func app() {
 				}
 				grr.Log0(pg.OpenURL(u.String()))
 			} else {
-				grr.Log0(pg.OpenURL("https://google.com/search?q=" + ch.CurLabel))
+				q := url.QueryEscape(ch.CurLabel)
+				grr.Log0(pg.OpenURL("https://google.com/search?q=" + q))
 			}
 			e.SetHandled()
 		})
