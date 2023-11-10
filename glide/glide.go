@@ -48,7 +48,7 @@ func (pg *Page) OpenURL(url string) error {
 		return err
 	}
 	pg.Update()
-	pg.UpdateEnd(updt)
+	pg.UpdateEndLayout(updt)
 	return nil
 }
 
