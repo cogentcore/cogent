@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/glide/gidom"
@@ -58,12 +57,8 @@ func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 	ch := tb.ChildByName("nav-bar").(*gi.Chooser)
 	ch.AllowNew = true
 	ch.OnChange(func(e events.Event) {
-		u, err := url.Parse(ch.CurLabel)
-		// scheme, /, and . indicate a URL
-		if err == nil && (u.Scheme != "" || strings.Contains(ch.CurLabel, "/") || strings.Contains(ch.CurLabel, ".")) {
-			if u.Scheme == "" {
-				u.Scheme = "https"
-			}
+		u, is := gidom.ParseURL(ch.CurLabel)
+		if is {
 			grr.Log0(pg.OpenURL(u.String()))
 		} else {
 			q := url.QueryEscape(ch.CurLabel)
