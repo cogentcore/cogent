@@ -105,7 +105,7 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 	case "img":
 		img := gi.NewImage(par)
 		src := GetAttr(n, "src")
-		u := grr.Log(ParseRelativeURL(src, ""))
+		u := grr.Log(ParseRelativeURL(src, pageURL))
 		resp, err := http.Get(u.String())
 		if grr.Log0(err) != nil {
 			return par
