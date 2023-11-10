@@ -22,6 +22,6 @@ func main() { gimain.Run(app) }
 func app() {
 	sc := gi.NewScene("gidom")
 	b := grr.Log(exampleHTML.ReadFile("example.html"))
-	grr.Log0(gidom.ReadHTML(sc, bytes.NewBuffer(b)))
+	grr.Log0(gidom.ReadHTML(sc, bytes.NewBuffer(b), ""))
 	gi.NewWindow(sc).Run().Wait()
 }

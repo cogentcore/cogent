@@ -42,7 +42,7 @@ func (pg *Page) OpenURL(url string) error {
 	}
 	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
-	err = gidom.ReadHTML(pg, resp.Body)
+	err = gidom.ReadHTML(pg, resp.Body, url)
 	if err != nil {
 		return err
 	}

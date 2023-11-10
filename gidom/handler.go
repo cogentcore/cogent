@@ -38,8 +38,9 @@ type Handler func(par gi.Widget, n *html.Node) gi.Widget
 var ElementHandlers = map[string]Handler{}
 
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
-// in [ElementHandlers] and returns the result.
-func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
+// in [ElementHandlers] and returns the result. It uses the given page URL for context
+// when resolving URLs, but it can be omitted if not available.
+func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 	typ := n.DataAtom.String()
 	h, ok := ElementHandlers[typ]
 	if ok {
@@ -49,23 +50,23 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 	case "head", "script", "style":
 		// we don't render anything in heads, scripts, and styles
 	case "button":
-		gi.NewButton(par).SetText(ExtractText(par, n))
+		gi.NewButton(par).SetText(ExtractText(par, n, pageURL))
 	case "h1":
-		gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(par, n))
+		gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(par, n, pageURL))
 	case "h2":
-		gi.NewLabel(par).SetType(gi.LabelHeadlineSmall).SetText(ExtractText(par, n))
+		gi.NewLabel(par).SetType(gi.LabelHeadlineSmall).SetText(ExtractText(par, n, pageURL))
 	case "h3":
-		gi.NewLabel(par).SetType(gi.LabelTitleLarge).SetText(ExtractText(par, n))
+		gi.NewLabel(par).SetType(gi.LabelTitleLarge).SetText(ExtractText(par, n, pageURL))
 	case "h4":
-		gi.NewLabel(par).SetType(gi.LabelTitleMedium).SetText(ExtractText(par, n))
+		gi.NewLabel(par).SetType(gi.LabelTitleMedium).SetText(ExtractText(par, n, pageURL))
 	case "h5":
-		gi.NewLabel(par).SetType(gi.LabelTitleSmall).SetText(ExtractText(par, n))
+		gi.NewLabel(par).SetType(gi.LabelTitleSmall).SetText(ExtractText(par, n, pageURL))
 	case "h6":
-		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(par, n))
+		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(par, n, pageURL))
 	case "p":
-		gi.NewLabel(par).SetText(ExtractText(par, n))
+		gi.NewLabel(par).SetText(ExtractText(par, n, pageURL))
 	case "pre":
-		gi.NewLabel(par).SetText(ExtractText(par, n)).Style(func(s *styles.Style) {
+		gi.NewLabel(par).SetText(ExtractText(par, n, pageURL)).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
@@ -98,7 +99,7 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 			ntv.RootView = ntv
 		}
 
-		etxt := ExtractText(par, n)
+		etxt := ExtractText(par, n, pageURL)
 		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
 	case "img":
@@ -133,7 +134,7 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
-		buf.SetText([]byte(ExtractText(par, n)))
+		buf.SetText([]byte(ExtractText(par, n, pageURL)))
 		texteditor.NewEditor(par).SetBuf(buf)
 	default:
 		return par

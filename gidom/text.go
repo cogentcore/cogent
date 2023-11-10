@@ -15,36 +15,38 @@ import (
 // of the given [*html.Node], adding any appropriate inline markup for
 // formatted text. It adds any non-text elements to the given [gi.Widget]
 // using [ReadHTMLNode]. It should not be called on text nodes themselves;
-// for that, you can directly access the [html.Node.Data] field.
-func ExtractText(par gi.Widget, n *html.Node) string {
+// for that, you can directly access the [html.Node.Data] field. It uses
+// the given page URL for context when resolving URLs, but it can be
+// omitted if not available.
+func ExtractText(par gi.Widget, n *html.Node, pageURL string) string {
 	if n.FirstChild == nil {
 		return ""
 	}
-	return extractTextImpl(par, n.FirstChild)
+	return extractTextImpl(par, n.FirstChild, pageURL)
 }
 
-func extractTextImpl(par gi.Widget, n *html.Node) string {
+func extractTextImpl(par gi.Widget, n *html.Node, pageURL string) string {
 	str := ""
 	if n.Type == html.TextNode {
 		str += n.Data
 	}
 	it := IsText(n)
 	if !it {
-		ReadHTMLNode(par, n)
+		ReadHTMLNode(par, n, pageURL)
 	}
 	if it && n.FirstChild != nil {
 		if n.Type == html.ElementNode {
 			tag := n.DataAtom.String()
 			str += "<" + tag + ">"
 		}
-		str += extractTextImpl(par, n.FirstChild)
+		str += extractTextImpl(par, n.FirstChild, pageURL)
 		if n.Type == html.ElementNode {
 			tag := n.DataAtom.String()
 			str += "</" + tag + ">"
 		}
 	}
 	if n.NextSibling != nil {
-		str += extractTextImpl(par, n.NextSibling)
+		str += extractTextImpl(par, n.NextSibling, pageURL)
 	}
 	return str
 }

@@ -16,25 +16,28 @@ import (
 )
 
 // ReadHTML reads HTML from the given [io.Reader] and adds corresponding GoGi
-// widgets to the given [gi.Widget].
-func ReadHTML(par gi.Widget, r io.Reader) error {
+// widgets to the given [gi.Widget]. It uses the given page URL for context
+// when resolving URLs, but it can be omitted if not available.
+func ReadHTML(par gi.Widget, r io.Reader, pageURL string) error {
 	n, err := html.Parse(r)
 	if err != nil {
 		return fmt.Errorf("error parsing HTML: %w", err)
 	}
-	return ReadHTMLNode(par, n)
+	return ReadHTMLNode(par, n, pageURL)
 }
 
 // ReadHTMLString reads HTML from the given string and adds corresponding GoGi
-// widgets to the given [gi.Widget].
-func ReadHTMLString(par gi.Widget, s string) error {
+// widgets to the given [gi.Widget]. It uses the given page URL for context
+// when resolving URLs, but it can be omitted if not available.
+func ReadHTMLString(par gi.Widget, s string, pageURL string) error {
 	b := bytes.NewBufferString(s)
-	return ReadHTML(par, b)
+	return ReadHTML(par, b, pageURL)
 }
 
 // ReadHTMLNode reads HTML from the given [*html.Node] and adds corresponding GoGi
-// widgets to the given [gi.Widget].
-func ReadHTMLNode(par gi.Widget, n *html.Node) error {
+// widgets to the given [gi.Widget]. It uses the given page URL for context
+// when resolving URLs, but it can be omitted if not available.
+func ReadHTMLNode(par gi.Widget, n *html.Node, pageURL string) error {
 	newPar := par
 	switch n.Type {
 	case html.TextNode:
@@ -44,14 +47,14 @@ func ReadHTMLNode(par gi.Widget, n *html.Node) error {
 		}
 		newPar = nil
 	case html.ElementNode:
-		newPar = HandleElement(par, n)
+		newPar = HandleElement(par, n, pageURL)
 	}
 
 	if newPar != nil && n.FirstChild != nil {
-		ReadHTMLNode(newPar, n.FirstChild)
+		ReadHTMLNode(newPar, n.FirstChild, pageURL)
 	}
 	if n.NextSibling != nil {
-		ReadHTMLNode(par, n.NextSibling)
+		ReadHTMLNode(par, n.NextSibling, pageURL)
 	}
 	return nil
 }
