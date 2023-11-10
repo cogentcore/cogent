@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"goki.dev/colors"
@@ -103,7 +104,6 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
 	case "img":
-		img := gi.NewImage(par)
 		src := GetAttr(n, "src")
 		u := grr.Log(ParseRelativeURL(src, pageURL))
 		resp, err := http.Get(u.String())
@@ -114,13 +114,18 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 		if resp.StatusCode != http.StatusOK {
 			slog.Error("got error status code", "status", resp.Status)
 		}
-		im, _, err := images.Read(resp.Body)
-		if err != nil {
-			slog.Error("error loading image", "url", u.String(), "err", err)
-			return par
+		if strings.Contains(resp.Header.Get("Content-Type"), "svg") {
+			// TODO(kai/gidom): support svg
+		} else {
+			img := gi.NewImage(par)
+			im, _, err := images.Read(resp.Body)
+			if err != nil {
+				slog.Error("error loading image", "url", u.String(), "err", err)
+				return par
+			}
+			img.Filename = gi.FileName(src)
+			img.SetImage(im, 0, 0)
 		}
-		img.Filename = gi.FileName(src)
-		img.SetImage(im, 0, 0)
 	case "input":
 		ityp := GetAttr(n, "type")
 		switch ityp {
