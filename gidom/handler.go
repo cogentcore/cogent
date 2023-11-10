@@ -115,7 +115,8 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 			slog.Error("got error status code", "status", resp.Status)
 		}
 		im, _, err := images.Read(resp.Body)
-		if grr.Log0(err) != nil {
+		if err != nil {
+			slog.Error("error loading image", "url", u.String(), "err", err)
 			return par
 		}
 		img.Filename = gi.FileName(src)

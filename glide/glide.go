@@ -56,6 +56,7 @@ func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 	gi.DefaultTopAppBarStd(tb)
 	ch := tb.ChildByName("nav-bar").(*gi.Chooser)
 	ch.AllowNew = true
+	ch.ItemsFunc = nil
 	ch.OnChange(func(e events.Event) {
 		u, is := gidom.ParseURL(ch.CurLabel)
 		if is {
