@@ -5,6 +5,8 @@
 package gidom
 
 import (
+	"log/slog"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/styles"
+	"goki.dev/grows/images"
 	"goki.dev/grr"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
@@ -99,8 +102,22 @@ func HandleElement(par gi.Widget, n *html.Node) gi.Widget {
 		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
 	case "img":
-		src := gi.FileName(GetAttr(n, "src"))
-		grr.Log0(gi.NewImage(par).OpenImage(src, 0, 0))
+		img := gi.NewImage(par)
+		src := GetAttr(n, "src")
+		resp, err := http.Get(src)
+		if grr.Log0(err) != nil {
+			return par
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			slog.Error("got error status code", "status", resp.Status)
+		}
+		im, _, err := images.Read(resp.Body)
+		if grr.Log0(err) != nil {
+			return par
+		}
+		img.Filename = gi.FileName(src)
+		img.SetImage(im, 0, 0)
 	case "input":
 		ityp := GetAttr(n, "type")
 		switch ityp {
