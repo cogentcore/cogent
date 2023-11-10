@@ -16,7 +16,7 @@ func main() { gimain.Run(app) }
 func app() {
 	sc := gi.NewScene("glide").SetTitle("Glide")
 	pg := glide.NewPage(sc, "page")
-	grr.Log0(pg.OpenURL("https://github.com/goki/gi"))
+	grr.Log0(pg.OpenURL("https://google.com"))
 	gi.DefaultTopAppBar = pg.TopAppBar
 	gi.NewWindow(sc).Run().Wait()
 }
