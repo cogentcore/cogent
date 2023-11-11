@@ -15,7 +15,9 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
+	"goki.dev/girl/paint"
 	"goki.dev/girl/styles"
+	"goki.dev/goosi"
 	"goki.dev/grows/images"
 	"goki.dev/grr"
 	"goki.dev/icons"
@@ -51,23 +53,23 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 	case "head", "script", "style":
 		// we don't render anything in heads, scripts, and styles
 	case "button":
-		gi.NewButton(par).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL)
 	case "h1":
-		gi.NewLabel(par).SetType(gi.LabelHeadlineLarge).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineLarge)
 	case "h2":
-		gi.NewLabel(par).SetType(gi.LabelHeadlineSmall).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineSmall)
 	case "h3":
-		gi.NewLabel(par).SetType(gi.LabelTitleLarge).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL).SetType(gi.LabelTitleLarge)
 	case "h4":
-		gi.NewLabel(par).SetType(gi.LabelTitleMedium).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL).SetType(gi.LabelTitleMedium)
 	case "h5":
-		gi.NewLabel(par).SetType(gi.LabelTitleSmall).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL).SetType(gi.LabelTitleSmall)
 	case "h6":
-		gi.NewLabel(par).SetType(gi.LabelLabelSmall).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL).SetType(gi.LabelLabelSmall)
 	case "p":
-		gi.NewLabel(par).SetText(ExtractText(par, n, pageURL))
+		HandleLabel(par, n, pageURL)
 	case "pre":
-		gi.NewLabel(par).SetText(ExtractText(par, n, pageURL)).Style(func(s *styles.Style) {
+		HandleLabel(par, n, pageURL).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
@@ -146,6 +148,23 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 		return par
 	}
 	return nil
+}
+
+// OpenURLFunc is the function called to open URLs. Glide sets it
+// to a function that opens URLs in glide.
+var OpenURLFunc = func(url string) {
+	goosi.TheApp.OpenURL(url)
+}
+
+// HandleLabel creates a new label from the given information, setting the text and
+// the label click function so that URLs are opened according to [OpenURLFunc].
+func HandleLabel(par gi.Widget, n *html.Node, pageURL string) *gi.Label {
+	lb := gi.NewLabel(par).SetText(ExtractText(par, n, pageURL))
+	lb.HandleLabelClick(func(tl *paint.TextLink) {
+		url := grr.Log(ParseRelativeURL(tl.URL, pageURL))
+		OpenURLFunc(url.String())
+	})
+	return lb
 }
 
 // GetAttr gets the given attribute from the given node, returning ""
