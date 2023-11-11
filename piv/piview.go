@@ -1377,7 +1377,7 @@ func NewPiView() (*gi.Window, *PiView) {
 	height := 1280
 	sc := goosi.TheApp.Screen(0)
 	if sc != nil {
-		scsz := sc.Geometry.Size()
+		scsz := sc.SceneGeometry.Size()
 		width = int(.9 * float64(scsz.X))
 		height = int(.8 * float64(scsz.Y))
 	}
