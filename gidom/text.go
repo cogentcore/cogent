@@ -35,20 +35,38 @@ func extractTextImpl(par gi.Widget, n *html.Node, pageURL string) string {
 		ReadHTMLNode(par, n, pageURL)
 	}
 	if it && n.FirstChild != nil {
-		if n.Type == html.ElementNode {
-			tag := n.DataAtom.String()
-			str += "<" + tag + ">"
-		}
+		start, end := NodeString(n)
+		str += start
 		str += extractTextImpl(par, n.FirstChild, pageURL)
-		if n.Type == html.ElementNode {
-			tag := n.DataAtom.String()
-			str += "</" + tag + ">"
-		}
+		str += end
 	}
 	if n.NextSibling != nil {
 		str += extractTextImpl(par, n.NextSibling, pageURL)
 	}
 	return str
+}
+
+// NodeString returns the given node as starting and ending strings in the format:
+//
+//	<tag attr0="value0" attr1="value1">
+//
+// and
+//
+//	</tag>
+//
+// It returns "", "" if the given node is not an [html.ElementNode]
+func NodeString(n *html.Node) (start, end string) {
+	if n.Type != html.ElementNode {
+		return
+	}
+	tag := n.DataAtom.String()
+	start = "<" + tag
+	for _, a := range n.Attr {
+		start += " " + a.Key + "=" + `"` + a.Val + `"`
+	}
+	start += ">"
+	end = "</" + tag + ">"
+	return
 }
 
 // TextTags are all of the node tags that result in a true return value for [IsText].
