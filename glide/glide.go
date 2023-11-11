@@ -22,6 +22,9 @@ import (
 // Page represents one web browser page
 type Page struct {
 	gi.Frame
+
+	// The history of URLs that have been visited. The oldest page is first.
+	History []string
 }
 
 // needed for interface import
@@ -47,6 +50,7 @@ func (pg *Page) OpenURL(url string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("got error status %q", resp.Status)
 	}
+	pg.History = append(pg.History, url)
 	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
 	err = gidom.ReadHTML(pg, resp.Body, url)
@@ -63,7 +67,13 @@ func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 	gi.DefaultTopAppBarStd(tb)
 	ch := tb.ChildByName("nav-bar").(*gi.Chooser)
 	ch.AllowNew = true
-	ch.ItemsFunc = nil
+	ch.ItemsFunc = func() {
+		ch.Items = make([]any, len(pg.History))
+		for i, u := range pg.History {
+			// we reverse the order
+			ch.Items[len(pg.History)-i-1] = u
+		}
+	}
 	ch.OnChange(func(e events.Event) {
 		u, is := gidom.ParseURL(ch.CurLabel)
 		if is {
