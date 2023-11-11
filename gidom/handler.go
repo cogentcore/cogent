@@ -7,6 +7,7 @@ package gidom
 import (
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -44,12 +45,16 @@ var ElementHandlers = map[string]Handler{}
 // in [ElementHandlers] and returns the result. It uses the given page URL for context
 // when resolving URLs, but it can be omitted if not available.
 func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
-	typ := n.DataAtom.String()
-	h, ok := ElementHandlers[typ]
+	tag := n.DataAtom.String()
+	h, ok := ElementHandlers[tag]
 	if ok {
 		return h(par, n)
 	}
-	switch typ {
+	if slices.Contains(TextTags, tag) {
+		HandleLabelTag(par, n, pageURL)
+		return nil
+	}
+	switch tag {
 	case "head", "script", "style":
 		// we don't render anything in heads, scripts, and styles
 	case "button":
@@ -79,10 +84,10 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 		if ptv, ok := par.(*giv.TreeView); ok {
 			w := ki.LastChild(ptv).(gi.Widget)
 			// we also set its class so that the orderedness of nested items works properly
-			w.AsWidget().SetClass(typ)
+			w.AsWidget().SetClass(tag)
 			return w
 		}
-		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None).SetClass(typ)
+		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None).SetClass(tag)
 		tv.RootView = tv
 		return tv
 	case "li":
@@ -160,6 +165,22 @@ var OpenURLFunc = func(url string) {
 // the label click function so that URLs are opened according to [OpenURLFunc].
 func HandleLabel(par gi.Widget, n *html.Node, pageURL string) *gi.Label {
 	lb := gi.NewLabel(par).SetText(ExtractText(par, n, pageURL))
+	lb.HandleLabelClick(func(tl *paint.TextLink) {
+		url := grr.Log(ParseRelativeURL(tl.URL, pageURL))
+		OpenURLFunc(url.String())
+	})
+	return lb
+}
+
+// HandleLabelTag creates a new label from the given information, setting the text and
+// the label click function so that URLs are opened according to [OpenURLFunc]. Also,
+// it wraps the label text with the [NodeString] of the given node, meaning that it
+// should be used for standalone elements that are meant to only exist in labels
+// (eg: a, span, b, code, etc).
+func HandleLabelTag(par gi.Widget, n *html.Node, pageURL string) *gi.Label {
+	start, end := NodeString(n)
+	str := start + ExtractText(par, n, pageURL) + end
+	lb := gi.NewLabel(par).SetText(str)
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
 		url := grr.Log(ParseRelativeURL(tl.URL, pageURL))
 		OpenURLFunc(url.String())

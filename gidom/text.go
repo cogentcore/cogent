@@ -36,9 +36,7 @@ func extractTextImpl(par gi.Widget, n *html.Node, pageURL string) string {
 	}
 	if it && n.FirstChild != nil {
 		start, end := NodeString(n)
-		str += start
-		str += extractTextImpl(par, n.FirstChild, pageURL)
-		str += end
+		str = start + extractTextImpl(par, n.FirstChild, pageURL) + end
 	}
 	if n.NextSibling != nil {
 		str += extractTextImpl(par, n.NextSibling, pageURL)
@@ -77,7 +75,7 @@ var TextTags = []string{
 }
 
 // IsText returns true if the given node is a [html.TextNode] or
-// an [html.ElementNode] designed for holding text (p, span, b, code, etc),
+// an [html.ElementNode] designed for holding text (a, span, b, code, etc),
 // and false otherwise.
 func IsText(n *html.Node) bool {
 	if n.Type == html.TextNode {
