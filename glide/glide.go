@@ -11,10 +11,12 @@ import (
 	"net/url"
 
 	"goki.dev/gi/v2/gi"
+	"goki.dev/girl/styles"
 	"goki.dev/glide/gidom"
 	"goki.dev/goosi/events"
 	"goki.dev/grr"
 	"goki.dev/ki/v2"
+	"goki.dev/mat32/v2"
 )
 
 // Page represents one web browser page
@@ -27,7 +29,9 @@ var _ ki.Ki = (*Page)(nil)
 
 func (pg *Page) OnInit() {
 	pg.Frame.OnInit()
-	pg.SetLayout(gi.LayoutVert)
+	pg.Style(func(s *styles.Style) {
+		s.MainAxis = mat32.Y
+	})
 }
 
 // OpenURL sets the content of the page from the given url.

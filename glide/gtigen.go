@@ -60,12 +60,6 @@ func (t *Page) SetCustomContextMenu(v func(m *gi.Scene)) *Page {
 	return t
 }
 
-// SetLayout sets the [Page.Lay]
-func (t *Page) SetLayout(v gi.Layouts) *Page {
-	t.Lay = v
-	return t
-}
-
 // SetStackTop sets the [Page.StackTop]
 func (t *Page) SetStackTop(v int) *Page {
 	t.StackTop = v

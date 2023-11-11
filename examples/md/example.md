@@ -46,6 +46,6 @@ func main() {
 }
 ```
 
-### This is an image of a gopher: 
+### This is an image of the Go Gopher: 
 
-![Image of a gopher](gopher.png)
+![Image of the Go Gopher](https://miro.medium.com/v2/resize:fit:1000/0*YISbBYJg5hkJGcQd.png)
