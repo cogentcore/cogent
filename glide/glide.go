@@ -65,6 +65,14 @@ func (pg *Page) OpenURL(url string) error {
 // TopAppBar is the default [gi.TopAppBar] for a [Page]
 func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 	gi.DefaultTopAppBarStd(tb)
+
+	back := tb.ChildByName("back").(*gi.Button)
+	back.OnClick(func(e events.Event) {
+		if len(pg.History) > 1 {
+			pg.OpenURL(pg.History[len(pg.History)-2])
+		}
+	})
+
 	ch := tb.ChildByName("nav-bar").(*gi.Chooser)
 	ch.AllowNew = true
 	ch.ItemsFunc = func() {
