@@ -4,11 +4,16 @@
 
 package gidom
 
+import "goki.dev/goosi"
+
 // Context contains context information needed for gidom calls.
 type Context interface {
 	// PageURL returns the URL of the current page, and "" if there
 	// is no current page.
 	PageURL() string
+
+	// OpenURL opens the given URL.
+	OpenURL(url string) error
 
 	// SetStyle adds the given CSS style string to the page's styles.
 	SetStyle(style string)
@@ -24,6 +29,10 @@ func NilContext() Context {
 
 type nilContext struct{}
 
-func (nc *nilContext) PageURL() string       { return "" }
+func (nc *nilContext) PageURL() string { return "" }
+func (nc *nilContext) OpenURL(url string) error {
+	goosi.TheApp.OpenURL(url)
+	return nil
+}
 func (nc *nilContext) SetStyle(style string) {}
 func (nc *nilContext) GetStyle() string      { return "" }

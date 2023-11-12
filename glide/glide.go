@@ -41,9 +41,6 @@ func (pg *Page) OnInit() {
 	pg.Style(func(s *styles.Style) {
 		s.MainAxis = mat32.Y
 	})
-	gidom.OpenURLFunc = func(url string) {
-		grr.Log0(pg.OpenURL(url))
-	}
 }
 
 // OpenURL sets the content of the page from the given url.

@@ -18,7 +18,6 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/paint"
 	"goki.dev/girl/styles"
-	"goki.dev/goosi"
 	"goki.dev/grows/images"
 	"goki.dev/grr"
 	"goki.dev/icons"
@@ -181,19 +180,13 @@ func ConfigWidget[T gi.Widget](w T, n *html.Node) T {
 	return w
 }
 
-// OpenURLFunc is the function called to open URLs. Glide sets it
-// to a function that opens URLs in glide.
-var OpenURLFunc = func(url string) {
-	goosi.TheApp.OpenURL(url)
-}
-
 // HandleLabel creates a new label from the given information, setting the text and
 // the label click function so that URLs are opened according to [OpenURLFunc].
 func HandleLabel(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
 	lb := gi.NewLabel(par).SetText(ExtractText(ctx, par, n))
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
 		url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
-		OpenURLFunc(url.String())
+		grr.Log0(ctx.OpenURL(url.String()))
 	})
 	return lb
 }
@@ -209,7 +202,7 @@ func HandleLabelTag(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
 	lb := gi.NewLabel(par).SetText(str)
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
 		url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
-		OpenURLFunc(url.String())
+		grr.Log0(ctx.OpenURL(url.String()))
 	})
 	return lb
 }
