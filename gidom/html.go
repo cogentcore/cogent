@@ -41,13 +41,13 @@ func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 	case html.TextNode:
 		str := strings.TrimSpace(n.Data)
 		if str != "" {
-			newPar = ConfigWidget(gi.NewLabel(par).SetText(str), n)
+			newPar = ConfigWidget(ctx, gi.NewLabel(par).SetText(str), n)
 		}
 		handleChildren = false
 	case html.ElementNode:
 		newPar, handleChildren = HandleElement(ctx, par, n)
 		if newPar != nil {
-			ConfigWidget(newPar, n)
+			ConfigWidget(ctx, newPar, n)
 		}
 	}
 
@@ -58,9 +58,9 @@ func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 		ReadHTMLNode(ctx, par, n.NextSibling)
 	}
 
-	// // nil parent means we are root, so we apply style here
-	// if n.Parent == nil {
-	// 	return ApplyStyle(ctx, par)
-	// }
+	// nil parent means we are root, so we apply style here
+	if n.Parent == nil {
+		return ApplyStyle(ctx, par, n)
+	}
 	return nil
 }

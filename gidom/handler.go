@@ -164,7 +164,7 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
 // ConfigWidget sets the properties of the given widget based on the properties
 // of the given node. It should be called on all widgets in [HandleElement] and
 // [Handler] functions.
-func ConfigWidget[T gi.Widget](w T, n *html.Node) T {
+func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 	wb := w.AsWidget()
 	for _, attr := range n.Attr {
 		switch attr.Key {
