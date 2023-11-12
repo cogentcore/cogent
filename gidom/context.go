@@ -10,3 +10,12 @@ type Context interface {
 	// is no current page.
 	PageURL() string
 }
+
+// NilContext returns a [Context] with placeholder implementations of all functions.
+func NilContext() Context {
+	return &nilContext{}
+}
+
+type nilContext struct{}
+
+func (nc *nilContext) PageURL() string { return "" }
