@@ -29,8 +29,8 @@ type Page struct {
 	// PgURL is the current page URL
 	PgURL string
 
-	// CSS contains the accumulated global CSS styles for the page
-	CSS string
+	// PageStyles contains the accumulated global CSS styles for the page
+	PageStyles string
 }
 
 // needed for interface import
@@ -110,5 +110,5 @@ func (pg *Page) PageURL() string {
 
 // SetStyle adds the given CSS styles to the page's styles.
 func (pg *Page) SetStyle(style string) {
-	pg.CSS += style
+	pg.PageStyles += style
 }
