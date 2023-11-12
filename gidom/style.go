@@ -7,6 +7,7 @@ package gidom
 import (
 	"fmt"
 
+	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/girl/styles"
 	"golang.org/x/net/html"
@@ -26,7 +27,7 @@ func ApplyStyle(ctx Context, par gi.Widget, n *html.Node) error {
 			w.Style(func(s *styles.Style) {
 				for _, decl := range r.Declarations {
 					// TODO(kai/styprops): parent style and context
-					s.StyleFromProp(s, decl.Property, decl.Value, nil)
+					s.StyleFromProp(s, decl.Property, decl.Value, colors.BaseContext(s.Color))
 				}
 			})
 		}
