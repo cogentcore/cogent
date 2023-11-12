@@ -9,6 +9,9 @@ type Context interface {
 	// PageURL returns the URL of the current page, and "" if there
 	// is no current page.
 	PageURL() string
+
+	// SetStyle adds the given CSS style string to the page's styles.
+	SetStyle(style string)
 }
 
 // NilContext returns a [Context] with placeholder implementations of all functions.
@@ -18,4 +21,5 @@ func NilContext() Context {
 
 type nilContext struct{}
 
-func (nc *nilContext) PageURL() string { return "" }
+func (nc *nilContext) PageURL() string       { return "" }
+func (nc *nilContext) SetStyle(style string) {}

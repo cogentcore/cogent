@@ -60,8 +60,10 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
 	}
 
 	switch tag {
-	case "head", "script", "style":
-		// we don't render anything in heads, scripts, and styles
+	case "head", "script":
+		// we don't render anything in heads and scripts
+	case "style":
+		ctx.SetStyle(ExtractText(ctx, par, n))
 	case "button":
 		w = HandleLabel(ctx, par, n)
 	case "h1":

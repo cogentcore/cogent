@@ -28,6 +28,9 @@ type Page struct {
 
 	// PgURL is the current page URL
 	PgURL string
+
+	// CSS contains the accumulated global CSS styles for the page
+	CSS string
 }
 
 // needed for interface import
@@ -98,7 +101,14 @@ func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 	})
 }
 
+/////////////////// Context Interface
+
 // PageURL returns the current page URL
 func (pg *Page) PageURL() string {
 	return pg.PgURL
+}
+
+// SetStyle adds the given CSS styles to the page's styles.
+func (pg *Page) SetStyle(style string) {
+	pg.CSS += style
 }
