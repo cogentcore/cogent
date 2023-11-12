@@ -89,11 +89,9 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 		// of nested list items and prevents the created of duplicated tree view items.
 		if ptv, ok := par.(*giv.TreeView); ok {
 			w := ki.LastChild(ptv).(gi.Widget)
-			// we also set its class so that the orderedness of nested items works properly
-			w.AsWidget().SetClass(tag)
 			return w, true
 		}
-		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None).SetClass(tag)
+		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None)
 		tv.RootView = tv
 		return tv, true
 	case "li":
@@ -102,7 +100,7 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 		ptv, ok := par.(*giv.TreeView)
 		if ok {
 			ntv.RootView = ptv.RootView
-			if ptv.HasClass("ol") {
+			if ptv.Prop("tag") == "ol" {
 				ip, _ := ntv.IndexInParent()
 				ftxt = strconv.Itoa(ip+1) + ". " // start at 1
 			} else {
@@ -172,6 +170,7 @@ func ConfigWidget[T gi.Widget](w T, n *html.Node) T {
 		wb.SetName(id)
 	}
 	wb.SetClass(GetAttr(n, "class"))
+	wb.SetProp("tag", n.DataAtom.String())
 	return w
 }
 
