@@ -112,3 +112,8 @@ func (pg *Page) PageURL() string {
 func (pg *Page) SetStyle(style string) {
 	pg.PageStyles += style
 }
+
+// GetStyle returns the page's styles in CSS.
+func (pg *Page) GetStyle() string {
+	return pg.PageStyles
+}

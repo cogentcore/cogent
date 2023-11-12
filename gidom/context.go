@@ -12,6 +12,9 @@ type Context interface {
 
 	// SetStyle adds the given CSS style string to the page's styles.
 	SetStyle(style string)
+
+	// GetStyle returns the page's styles as a CSS style string.
+	GetStyle() string
 }
 
 // NilContext returns a [Context] with placeholder implementations of all functions.
@@ -23,3 +26,4 @@ type nilContext struct{}
 
 func (nc *nilContext) PageURL() string       { return "" }
 func (nc *nilContext) SetStyle(style string) {}
+func (nc *nilContext) GetStyle() string      { return "" }
