@@ -93,8 +93,14 @@ func (cb *ContextBase) GetStyle() (*css.Stylesheet, []*selcss.Selector) {
 
 	sels := make([]*selcss.Selector, len(ss.Rules))
 	for i, rule := range ss.Rules {
-		sel, err := selcss.Parse(strings.Join(rule.Selectors, ","))
-		if grr.Log0(err) != nil {
+		var sel *selcss.Selector
+		if len(rule.Selectors) > 0 {
+			s, err := selcss.Parse(strings.Join(rule.Selectors, ","))
+			if grr.Log0(err) != nil {
+				s = &selcss.Selector{}
+			}
+			sel = s
+		} else {
 			sel = &selcss.Selector{}
 		}
 		sels[i] = sel
