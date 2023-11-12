@@ -55,6 +55,7 @@ func (pg *Page) OpenURL(url string) error {
 	}
 	pg.PgURL = url
 	pg.History = append(pg.History, url)
+	pg.PageStyles = ""
 	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
 	err = gidom.ReadHTML(pg, pg, resp.Body)

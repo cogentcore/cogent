@@ -3,6 +3,7 @@ module goki.dev/glide
 go 1.21.0
 
 require (
+	github.com/aymerick/douceur v0.2.0
 	github.com/yuin/goldmark v1.6.0
 	goki.dev/colors v0.8.28
 	goki.dev/gi/v2 v2.0.0-dev0.0.10
@@ -29,7 +30,6 @@ require (
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/antonmedv/expr v1.15.3 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20220606134207-859f65c6625b // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
