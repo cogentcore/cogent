@@ -6,8 +6,6 @@
 package glide
 
 import (
-	"fmt"
-	"net/http"
 	"net/url"
 
 	"github.com/aymerick/douceur/css"
@@ -54,14 +52,12 @@ func (pg *Page) OnInit() {
 
 // OpenURL sets the content of the page from the given url.
 func (pg *Page) OpenURL(url string) error {
-	resp, err := http.Get(url)
+	// we do not want our page url interfering
+	resp, err := gidom.Get(gidom.BaseContext(), url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("got error status %q", resp.Status)
-	}
 	pg.PgURL = url
 	pg.History = append(pg.History, url)
 	pg.PageStyles = ""

@@ -5,6 +5,8 @@
 package gidom
 
 import (
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -33,7 +35,7 @@ import (
 // already been handled (or will not be handled), and thus should not
 // be handled further. If it returns a true, then the children
 // will be handled, with the returned widget as their parent.
-type Handler func(par gi.Widget, n *html.Node) (gi.Widget, bool)
+type Handler func(par gi.Widget, n *html.Node) (w gi.Widget, handleChildren bool)
 
 // ElementHandlers is a map of [Handler] functions for each HTML element
 // type (eg: "button", "input", "p"). It is empty by default, but can be
@@ -44,23 +46,40 @@ var ElementHandlers = map[string]Handler{}
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
 // in [ElementHandlers] and returns the result, using the given context. If there
 // is no handler associated with it, it uses default hardcoded configuration code.
-func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
+func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handleChildren bool) {
 	tag := n.DataAtom.String()
 	h, ok := ElementHandlers[tag]
 	if ok {
 		return h(par, n)
 	}
 
-	var w gi.Widget
-	var handleChildren bool
-
 	if slices.Contains(TextTags, tag) {
 		return HandleLabelTag(ctx, par, n), false
 	}
 
 	switch tag {
-	case "script", "title", "meta", "link":
+	case "script", "title", "meta":
 		// we don't render anything
+	case "link":
+		rel := GetAttr(n, "rel")
+		// TODO(kai/gidom): maybe handle preload
+		if rel == "preload" {
+			return
+		}
+		// TODO(kai/gidom): support links other than stylesheets
+		if rel != "stylesheet" {
+			return
+		}
+		resp, err := Get(ctx, GetAttr(n, "href"))
+		if grr.Log0(err) != nil {
+			return
+		}
+		defer resp.Body.Close()
+		b, err := io.ReadAll(resp.Body)
+		if grr.Log0(err) != nil {
+			return
+		}
+		ctx.SetStyle(string(b))
 	case "style":
 		ctx.SetStyle(ExtractText(ctx, par, n))
 	case "div":
@@ -120,22 +139,18 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
 		w = ntv
 	case "img":
 		src := GetAttr(n, "src")
-		u := grr.Log(ParseRelativeURL(src, ctx.PageURL()))
-		resp, err := http.Get(u.String())
+		resp, err := Get(ctx, src)
 		if grr.Log0(err) != nil {
 			return par, true
 		}
 		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			slog.Error("got error status code", "status", resp.Status)
-		}
 		if strings.Contains(resp.Header.Get("Content-Type"), "svg") {
 			// TODO(kai/gidom): support svg
 		} else {
 			img := gi.NewImage(par)
 			im, _, err := images.Read(resp.Body)
 			if err != nil {
-				slog.Error("error loading image", "url", u.String(), "err", err)
+				slog.Error("error loading image", "url", src, "err", err)
 				return par, true
 			}
 			img.Filename = gi.FileName(src)
@@ -161,7 +176,7 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
 	default:
 		return par, true
 	}
-	return w, handleChildren
+	return
 }
 
 // ConfigWidget sets the properties of the given widget based on the properties
@@ -169,6 +184,10 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
 // [Handler] functions.
 func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 	wb := w.AsWidget()
+	// if we already have the tag prop, we have already been configured
+	if _, err := wb.PropTry("tag"); err == nil {
+		return w
+	}
 	for _, attr := range n.Attr {
 		switch attr.Key {
 		case "id":
@@ -221,4 +240,32 @@ func GetAttr(n *html.Node, attr string) string {
 		}
 	}
 	return res
+}
+
+// HasAttr returns whether the given node has the given attribute defined.
+func HasAttr(n *html.Node, attr string) bool {
+	return slices.ContainsFunc(n.Attr, func(a html.Attribute) bool {
+		return a.Key == attr
+	})
+}
+
+// Get is a helper function that calls [http.Get] with the given URL, parsed
+// relative to the page URL of the given context. It also checks the status
+// code of the response and closes the response body and returns an error if
+// it is not [http.StatusOK]. If the error is nil, then the response body is
+// not closed and must be closed by the caller.
+func Get(ctx Context, url string) (*http.Response, error) {
+	u, err := ParseRelativeURL(url, ctx.PageURL())
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return resp, fmt.Errorf("got error status %q (code %d)", resp.Status, resp.StatusCode)
+	}
+	return resp, nil
 }
