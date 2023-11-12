@@ -29,52 +29,57 @@ import (
 // Handler is a function that can be used to describe the behavior
 // of gidom parsing for a specific type of element. It takes the
 // parent [gi.Widget] to add widgets to and the [*html.Node] to read from.
-// If it returns nil, that indicates that the children of this node have
+// It returns the widget, if any, that has been constructed for this node.
+// If it returns false, that indicates that the children of this node have
 // already been handled (or will not be handled), and thus should not
-// be handled further. If it returns a non-nil widget, then the children
+// be handled further. If it returns a true, then the children
 // will be handled, with the returned widget as their parent.
-type Handler func(par gi.Widget, n *html.Node) gi.Widget
+type Handler func(par gi.Widget, n *html.Node) (gi.Widget, bool)
 
 // ElementHandlers is a map of [Handler] functions for each HTML element
-// type (eg: "button", "input", "p"). It is initialized to contain appropriate
-// handlers for all of the standard HTML elements, but can be extended or
-// modified for anyone in need of different behavior.
+// type (eg: "button", "input", "p"). It is empty by default, but can be
+// used by anyone in need of behavior different than the default behavior
+// defined in [HandleElement].
 var ElementHandlers = map[string]Handler{}
 
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
-// in [ElementHandlers] and returns the result. It uses the given page URL for context
+// in [ElementHandlers] and returns the result. If there is no handler associated with
+// it, it uses default hardcoded configuration code. It uses the given page URL for context
 // when resolving URLs, but it can be omitted if not available.
-func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
+func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool) {
 	tag := n.DataAtom.String()
 	h, ok := ElementHandlers[tag]
 	if ok {
 		return h(par, n)
 	}
+
+	var w gi.Widget
+	var handleChildren bool
+
 	if slices.Contains(TextTags, tag) {
-		HandleLabelTag(par, n, pageURL)
-		return nil
+		w = HandleLabelTag(par, n, pageURL)
 	}
 	switch tag {
 	case "head", "script", "style":
 		// we don't render anything in heads, scripts, and styles
 	case "button":
-		HandleLabel(par, n, pageURL)
+		w = HandleLabel(par, n, pageURL)
 	case "h1":
-		HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineLarge)
+		w = HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineLarge)
 	case "h2":
-		HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineSmall)
+		w = HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineSmall)
 	case "h3":
-		HandleLabel(par, n, pageURL).SetType(gi.LabelTitleLarge)
+		w = HandleLabel(par, n, pageURL).SetType(gi.LabelTitleLarge)
 	case "h4":
-		HandleLabel(par, n, pageURL).SetType(gi.LabelTitleMedium)
+		w = HandleLabel(par, n, pageURL).SetType(gi.LabelTitleMedium)
 	case "h5":
-		HandleLabel(par, n, pageURL).SetType(gi.LabelTitleSmall)
+		w = HandleLabel(par, n, pageURL).SetType(gi.LabelTitleSmall)
 	case "h6":
-		HandleLabel(par, n, pageURL).SetType(gi.LabelLabelSmall)
+		w = HandleLabel(par, n, pageURL).SetType(gi.LabelLabelSmall)
 	case "p":
-		HandleLabel(par, n, pageURL)
+		w = HandleLabel(par, n, pageURL)
 	case "pre":
-		HandleLabel(par, n, pageURL).Style(func(s *styles.Style) {
+		w = HandleLabel(par, n, pageURL).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
@@ -85,11 +90,11 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 			w := ki.LastChild(ptv).(gi.Widget)
 			// we also set its class so that the orderedness of nested items works properly
 			w.AsWidget().SetClass(tag)
-			return w
+			return w, true
 		}
 		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None).SetClass(tag)
 		tv.RootView = tv
-		return tv
+		return tv, true
 	case "li":
 		ntv := giv.NewTreeView(par)
 		ftxt := ""
@@ -110,12 +115,13 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 		etxt := ExtractText(par, n, pageURL)
 		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
+		w = ntv
 	case "img":
 		src := GetAttr(n, "src")
 		u := grr.Log(ParseRelativeURL(src, pageURL))
 		resp, err := http.Get(u.String())
 		if grr.Log0(err) != nil {
-			return par
+			return par, true
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
@@ -128,31 +134,44 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) gi.Widget {
 			im, _, err := images.Read(resp.Body)
 			if err != nil {
 				slog.Error("error loading image", "url", u.String(), "err", err)
-				return par
+				return par, true
 			}
 			img.Filename = gi.FileName(src)
 			img.SetImage(im, 0, 0)
+			w = img
 		}
 	case "input":
 		ityp := GetAttr(n, "type")
 		switch ityp {
 		case "number":
-			gi.NewSpinner(par)
+			w = gi.NewSpinner(par)
 		case "color":
-			giv.NewValue(par, colors.Black)
+			w = giv.NewValue(par, colors.Black).AsWidget()
 		case "datetime":
-			giv.NewValue(par, time.Now())
+			w = giv.NewValue(par, time.Now()).AsWidget()
 		default:
-			gi.NewTextField(par)
+			w = gi.NewTextField(par)
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
 		buf.SetText([]byte(ExtractText(par, n, pageURL)))
 		texteditor.NewEditor(par).SetBuf(buf)
 	default:
-		return par
+		return w, true
 	}
-	return nil
+	return w, handleChildren
+}
+
+// ConfigWidget sets the properties of the given widget based on the properties
+// of the given node. It should be called on all widgets in [HandleElement] and
+// [Handler] functions.
+func ConfigWidget[T gi.Widget](w T, n *html.Node) T {
+	wb := w.AsWidget()
+	if id := GetAttr(n, "id"); id != "" {
+		wb.SetName(id)
+	}
+	wb.SetClass(GetAttr(n, "class"))
+	return w
 }
 
 // OpenURLFunc is the function called to open URLs. Glide sets it
