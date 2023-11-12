@@ -63,6 +63,9 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
 		// we don't render anything
 	case "style":
 		ctx.SetStyle(ExtractText(ctx, par, n))
+	case "div":
+		w = gi.NewFrame(par)
+		handleChildren = true
 	case "button":
 		w = HandleLabel(ctx, par, n)
 	case "h1":
