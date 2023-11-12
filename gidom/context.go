@@ -5,9 +5,15 @@
 package gidom
 
 import (
+	"strings"
+
 	"github.com/aymerick/douceur/css"
+	"github.com/aymerick/douceur/parser"
 	selcss "github.com/ericchiang/css"
+	"goki.dev/gi/v2/gi"
 	"goki.dev/goosi"
+	"goki.dev/grr"
+	"golang.org/x/net/html"
 )
 
 // Context contains context information needed for gidom calls.
@@ -19,6 +25,12 @@ type Context interface {
 	// OpenURL opens the given URL.
 	OpenURL(url string) error
 
+	// SetWidgetForNode associates the given widget with the given node.
+	SetWidgetForNode(w gi.Widget, n *html.Node)
+
+	// WidgetForNode returns the widget associated with the given node.
+	WidgetForNode(n *html.Node) gi.Widget
+
 	// SetStyle adds the given CSS style string to the page's styles.
 	SetStyle(style string)
 
@@ -28,19 +40,58 @@ type Context interface {
 	GetStyle() (*css.Stylesheet, []*selcss.Selector)
 }
 
-// NilContext returns a [Context] with placeholder implementations of all functions.
-func NilContext() Context {
-	return &nilContext{}
+// BaseContext returns a [Context] with basic implementations of all functions.
+func BaseContext() Context {
+	return &ContextBase{}
 }
 
-type nilContext struct{}
+// ContextBase contains basic implementations of all [Context] functions.
+type ContextBase struct {
+	CurStyle        string
+	WidgetsForNodes map[*html.Node]gi.Widget
+}
 
-func (nc *nilContext) PageURL() string { return "" }
-func (nc *nilContext) OpenURL(url string) error {
+// PageURL returns the URL of the current page, and "" if there
+// is no current page.
+func (cb *ContextBase) PageURL() string { return "" }
+
+// OpenURL opens the given URL.
+func (cb *ContextBase) OpenURL(url string) error {
 	goosi.TheApp.OpenURL(url)
 	return nil
 }
-func (nc *nilContext) SetStyle(style string) {}
-func (nc *nilContext) GetStyle() (*css.Stylesheet, []*selcss.Selector) {
-	return css.NewStylesheet(), []*selcss.Selector{}
+
+// SetWidgetForNode associates the given widget with the given node.
+func (cb *ContextBase) SetWidgetForNode(w gi.Widget, n *html.Node) {
+	cb.WidgetsForNodes[n] = w
+}
+
+// WidgetForNode returns the widget associated with the given node.
+func (cb *ContextBase) WidgetForNode(n *html.Node) gi.Widget {
+	return cb.WidgetsForNodes[n]
+}
+
+// SetStyle adds the given CSS style string to the page's styles.
+func (cb *ContextBase) SetStyle(style string) {
+	cb.CurStyle += style
+}
+
+// GetStyle returns the page's styles as a CSS style sheet and a slice
+// of selectors with the indices corresponding to those of the rules in
+// the stylesheet.
+func (cb *ContextBase) GetStyle() (*css.Stylesheet, []*selcss.Selector) {
+	ss, err := parser.Parse(cb.CurStyle)
+	if grr.Log0(err) != nil {
+		return css.NewStylesheet(), []*selcss.Selector{}
+	}
+
+	sels := make([]*selcss.Selector, len(ss.Rules))
+	for i, rule := range ss.Rules {
+		sel, err := selcss.Parse(strings.Join(rule.Selectors, ","))
+		if grr.Log0(err) != nil {
+			sel = &selcss.Selector{}
+		}
+		sels[i] = sel
+	}
+	return ss, sels
 }

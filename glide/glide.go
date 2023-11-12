@@ -9,10 +9,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/aymerick/douceur/css"
-	"github.com/aymerick/douceur/parser"
 	selcss "github.com/ericchiang/css"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/girl/styles"
@@ -26,6 +24,7 @@ import (
 // Page represents one web browser page
 type Page struct {
 	gi.Frame
+	gidom.ContextBase
 
 	// The history of URLs that have been visited. The oldest page is first.
 	History []string
@@ -77,6 +76,11 @@ func (pg *Page) OpenURL(url string) error {
 	return nil
 }
 
+// PageURL returns the current page URL
+func (pg *Page) PageURL() string {
+	return pg.PgURL
+}
+
 // TopAppBar is the default [gi.TopAppBar] for a [Page]
 func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 	gi.DefaultTopAppBarStd(tb)
@@ -107,39 +111,4 @@ func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 		}
 		e.SetHandled()
 	})
-}
-
-/////////////////// Context Interface
-
-// PageURL returns the current page URL
-func (pg *Page) PageURL() string {
-	return pg.PgURL
-}
-
-// SetStyle adds the given CSS styles to the page's styles.
-func (pg *Page) SetStyle(style string) {
-	if style == "" {
-		return
-	}
-
-	pg.PageStyles += style
-	ss, err := parser.Parse(pg.PageStyles)
-	if grr.Log0(err) != nil {
-		return
-	}
-	pg.PageStylesheet = ss
-
-	pg.PageStyleSelectors = make([]*selcss.Selector, len(ss.Rules))
-	for i, rule := range ss.Rules {
-		sel, err := selcss.Parse(strings.Join(rule.Selectors, ","))
-		if grr.Log0(err) != nil {
-			sel = &selcss.Selector{}
-		}
-		pg.PageStyleSelectors[i] = sel
-	}
-}
-
-// GetStyle returns the page's styles in CSS.
-func (pg *Page) GetStyle() (*css.Stylesheet, []*selcss.Selector) {
-	return pg.PageStylesheet, pg.PageStyleSelectors
 }
