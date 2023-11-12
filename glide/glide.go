@@ -25,6 +25,9 @@ type Page struct {
 
 	// The history of URLs that have been visited. The oldest page is first.
 	History []string
+
+	// PgURL is the current page URL
+	PgURL string
 }
 
 // needed for interface import
@@ -50,10 +53,11 @@ func (pg *Page) OpenURL(url string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("got error status %q", resp.Status)
 	}
+	pg.PgURL = url
 	pg.History = append(pg.History, url)
 	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
-	err = gidom.ReadHTML(pg, resp.Body, url)
+	err = gidom.ReadHTML(pg, pg, resp.Body)
 	if err != nil {
 		return err
 	}
@@ -92,4 +96,9 @@ func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 		}
 		e.SetHandled()
 	})
+}
+
+// PageURL returns the current page URL
+func (pg *Page) PageURL() string {
+	return pg.PgURL
 }

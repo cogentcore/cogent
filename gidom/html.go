@@ -16,28 +16,25 @@ import (
 )
 
 // ReadHTML reads HTML from the given [io.Reader] and adds corresponding GoGi
-// widgets to the given [gi.Widget]. It uses the given page URL for context
-// when resolving URLs, but it can be omitted if not available.
-func ReadHTML(par gi.Widget, r io.Reader, pageURL string) error {
+// widgets to the given [gi.Widget], using the given context.
+func ReadHTML(ctx Context, par gi.Widget, r io.Reader) error {
 	n, err := html.Parse(r)
 	if err != nil {
 		return fmt.Errorf("error parsing HTML: %w", err)
 	}
-	return ReadHTMLNode(par, n, pageURL)
+	return ReadHTMLNode(ctx, par, n)
 }
 
 // ReadHTMLString reads HTML from the given string and adds corresponding GoGi
-// widgets to the given [gi.Widget]. It uses the given page URL for context
-// when resolving URLs, but it can be omitted if not available.
-func ReadHTMLString(par gi.Widget, s string, pageURL string) error {
+// widgets to the given [gi.Widget], using the given context.
+func ReadHTMLString(ctx Context, par gi.Widget, s string) error {
 	b := bytes.NewBufferString(s)
-	return ReadHTML(par, b, pageURL)
+	return ReadHTML(ctx, par, b)
 }
 
 // ReadHTMLNode reads HTML from the given [*html.Node] and adds corresponding GoGi
-// widgets to the given [gi.Widget]. It uses the given page URL for context
-// when resolving URLs, but it can be omitted if not available.
-func ReadHTMLNode(par gi.Widget, n *html.Node, pageURL string) error {
+// widgets to the given [gi.Widget], using the given context.
+func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 	newPar := par
 	handleChildren := true
 	switch n.Type {
@@ -48,17 +45,17 @@ func ReadHTMLNode(par gi.Widget, n *html.Node, pageURL string) error {
 		}
 		handleChildren = false
 	case html.ElementNode:
-		newPar, handleChildren = HandleElement(par, n, pageURL)
+		newPar, handleChildren = HandleElement(ctx, par, n)
 		if newPar != nil {
 			ConfigWidget(newPar, n)
 		}
 	}
 
 	if handleChildren && newPar != nil && n.FirstChild != nil {
-		ReadHTMLNode(newPar, n.FirstChild, pageURL)
+		ReadHTMLNode(ctx, newPar, n.FirstChild)
 	}
 	if n.NextSibling != nil {
-		ReadHTMLNode(par, n.NextSibling, pageURL)
+		ReadHTMLNode(ctx, par, n.NextSibling)
 	}
 	return nil
 }

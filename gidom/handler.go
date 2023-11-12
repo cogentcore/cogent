@@ -43,10 +43,9 @@ type Handler func(par gi.Widget, n *html.Node) (gi.Widget, bool)
 var ElementHandlers = map[string]Handler{}
 
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
-// in [ElementHandlers] and returns the result. If there is no handler associated with
-// it, it uses default hardcoded configuration code. It uses the given page URL for context
-// when resolving URLs, but it can be omitted if not available.
-func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool) {
+// in [ElementHandlers] and returns the result, using the given context. If there
+// is no handler associated with it, it uses default hardcoded configuration code.
+func HandleElement(ctx Context, par gi.Widget, n *html.Node) (gi.Widget, bool) {
 	tag := n.DataAtom.String()
 	h, ok := ElementHandlers[tag]
 	if ok {
@@ -57,30 +56,30 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 	var handleChildren bool
 
 	if slices.Contains(TextTags, tag) {
-		return HandleLabelTag(par, n, pageURL), false
+		return HandleLabelTag(ctx, par, n), false
 	}
 
 	switch tag {
 	case "head", "script", "style":
 		// we don't render anything in heads, scripts, and styles
 	case "button":
-		w = HandleLabel(par, n, pageURL)
+		w = HandleLabel(ctx, par, n)
 	case "h1":
-		w = HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineLarge)
+		w = HandleLabel(ctx, par, n).SetType(gi.LabelHeadlineLarge)
 	case "h2":
-		w = HandleLabel(par, n, pageURL).SetType(gi.LabelHeadlineSmall)
+		w = HandleLabel(ctx, par, n).SetType(gi.LabelHeadlineSmall)
 	case "h3":
-		w = HandleLabel(par, n, pageURL).SetType(gi.LabelTitleLarge)
+		w = HandleLabel(ctx, par, n).SetType(gi.LabelTitleLarge)
 	case "h4":
-		w = HandleLabel(par, n, pageURL).SetType(gi.LabelTitleMedium)
+		w = HandleLabel(ctx, par, n).SetType(gi.LabelTitleMedium)
 	case "h5":
-		w = HandleLabel(par, n, pageURL).SetType(gi.LabelTitleSmall)
+		w = HandleLabel(ctx, par, n).SetType(gi.LabelTitleSmall)
 	case "h6":
-		w = HandleLabel(par, n, pageURL).SetType(gi.LabelLabelSmall)
+		w = HandleLabel(ctx, par, n).SetType(gi.LabelLabelSmall)
 	case "p":
-		w = HandleLabel(par, n, pageURL)
+		w = HandleLabel(ctx, par, n)
 	case "pre":
-		w = HandleLabel(par, n, pageURL).Style(func(s *styles.Style) {
+		w = HandleLabel(ctx, par, n).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
@@ -111,13 +110,13 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 			ntv.RootView = ntv
 		}
 
-		etxt := ExtractText(par, n, pageURL)
+		etxt := ExtractText(ctx, par, n)
 		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
 		w = ntv
 	case "img":
 		src := GetAttr(n, "src")
-		u := grr.Log(ParseRelativeURL(src, pageURL))
+		u := grr.Log(ParseRelativeURL(src, ctx.PageURL()))
 		resp, err := http.Get(u.String())
 		if grr.Log0(err) != nil {
 			return par, true
@@ -153,7 +152,7 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
-		buf.SetText([]byte(ExtractText(par, n, pageURL)))
+		buf.SetText([]byte(ExtractText(ctx, par, n)))
 		w = texteditor.NewEditor(par).SetBuf(buf)
 	default:
 		return par, true
@@ -188,10 +187,10 @@ var OpenURLFunc = func(url string) {
 
 // HandleLabel creates a new label from the given information, setting the text and
 // the label click function so that URLs are opened according to [OpenURLFunc].
-func HandleLabel(par gi.Widget, n *html.Node, pageURL string) *gi.Label {
-	lb := gi.NewLabel(par).SetText(ExtractText(par, n, pageURL))
+func HandleLabel(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
+	lb := gi.NewLabel(par).SetText(ExtractText(ctx, par, n))
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
-		url := grr.Log(ParseRelativeURL(tl.URL, pageURL))
+		url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
 		OpenURLFunc(url.String())
 	})
 	return lb
@@ -202,12 +201,12 @@ func HandleLabel(par gi.Widget, n *html.Node, pageURL string) *gi.Label {
 // it wraps the label text with the [NodeString] of the given node, meaning that it
 // should be used for standalone elements that are meant to only exist in labels
 // (eg: a, span, b, code, etc).
-func HandleLabelTag(par gi.Widget, n *html.Node, pageURL string) *gi.Label {
+func HandleLabelTag(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
 	start, end := NodeString(n)
-	str := start + ExtractText(par, n, pageURL) + end
+	str := start + ExtractText(ctx, par, n) + end
 	lb := gi.NewLabel(par).SetText(str)
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
-		url := grr.Log(ParseRelativeURL(tl.URL, pageURL))
+		url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
 		OpenURLFunc(url.String())
 	})
 	return lb

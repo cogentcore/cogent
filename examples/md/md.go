@@ -21,6 +21,6 @@ func main() { gimain.Run(app) }
 func app() {
 	sc := gi.NewScene("gidom-md")
 	b := grr.Log(exampleMD.ReadFile("example.md"))
-	grr.Log0(gidom.ReadMD(sc, b, ""))
+	grr.Log0(gidom.ReadMD(nil, sc, b))
 	gi.NewWindow(sc).Run().Wait()
 }

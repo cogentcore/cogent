@@ -18,28 +18,28 @@ import (
 // for that, you can directly access the [html.Node.Data] field. It uses
 // the given page URL for context when resolving URLs, but it can be
 // omitted if not available.
-func ExtractText(par gi.Widget, n *html.Node, pageURL string) string {
+func ExtractText(ctx Context, par gi.Widget, n *html.Node) string {
 	if n.FirstChild == nil {
 		return ""
 	}
-	return extractTextImpl(par, n.FirstChild, pageURL)
+	return extractTextImpl(ctx, par, n.FirstChild)
 }
 
-func extractTextImpl(par gi.Widget, n *html.Node, pageURL string) string {
+func extractTextImpl(ctx Context, par gi.Widget, n *html.Node) string {
 	str := ""
 	if n.Type == html.TextNode {
 		str += n.Data
 	}
 	it := IsText(n)
 	if !it {
-		ReadHTMLNode(par, n, pageURL)
+		ReadHTMLNode(ctx, par, n)
 	}
 	if it && n.FirstChild != nil {
 		start, end := NodeString(n)
-		str = start + extractTextImpl(par, n.FirstChild, pageURL) + end
+		str = start + extractTextImpl(ctx, par, n.FirstChild) + end
 	}
 	if n.NextSibling != nil {
-		str += extractTextImpl(par, n.NextSibling, pageURL)
+		str += extractTextImpl(ctx, par, n.NextSibling)
 	}
 	return str
 }
