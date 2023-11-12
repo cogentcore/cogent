@@ -5,7 +5,7 @@
 package gidom
 
 import (
-	"fmt"
+	"log/slog"
 
 	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
@@ -23,7 +23,12 @@ func ApplyStyle(ctx Context, par gi.Widget, n *html.Node) error {
 		matches := sel.Select(n)
 		for _, match := range matches {
 			w := ctx.WidgetForNode(match)
-			fmt.Println("STYLE", w, ":\n", r)
+			// TODO(kai/styprops): need to go into text pseudo elements to stop these errors
+			if w == nil {
+				slog.Error("did not find widget for node", "type", match.DataAtom.String(), "id", GetAttr(match, "id"))
+				continue
+			}
+			// fmt.Println("STYLE", w, ":\n", r)
 			w.Style(func(s *styles.Style) {
 				for _, decl := range r.Declarations {
 					// TODO(kai/styprops): parent style and context
