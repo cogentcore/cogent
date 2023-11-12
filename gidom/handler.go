@@ -166,10 +166,16 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 // [Handler] functions.
 func ConfigWidget[T gi.Widget](w T, n *html.Node) T {
 	wb := w.AsWidget()
-	if id := GetAttr(n, "id"); id != "" {
-		wb.SetName(id)
+	for _, attr := range n.Attr {
+		switch attr.Key {
+		case "id":
+			wb.SetName(attr.Val)
+		case "class":
+			wb.SetClass(attr.Val)
+		default:
+			wb.SetProp(attr.Key, attr.Val)
+		}
 	}
-	wb.SetClass(GetAttr(n, "class"))
 	wb.SetProp("tag", n.DataAtom.String())
 	return w
 }
