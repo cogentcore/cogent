@@ -39,19 +39,22 @@ func ReadHTMLString(par gi.Widget, s string, pageURL string) error {
 // when resolving URLs, but it can be omitted if not available.
 func ReadHTMLNode(par gi.Widget, n *html.Node, pageURL string) error {
 	newPar := par
-	var handleChildren bool
+	handleChildren := true
 	switch n.Type {
 	case html.TextNode:
 		str := strings.TrimSpace(n.Data)
 		if str != "" {
 			newPar = ConfigWidget(gi.NewLabel(par).SetText(str), n)
 		}
+		handleChildren = false
 	case html.ElementNode:
 		newPar, handleChildren = HandleElement(par, n, pageURL)
-		ConfigWidget(newPar, n)
+		if newPar != nil {
+			ConfigWidget(newPar, n)
+		}
 	}
 
-	if handleChildren && n.FirstChild != nil {
+	if handleChildren && newPar != nil && n.FirstChild != nil {
 		ReadHTMLNode(newPar, n.FirstChild, pageURL)
 	}
 	if n.NextSibling != nil {
