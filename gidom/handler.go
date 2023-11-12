@@ -157,7 +157,7 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 		buf.SetText([]byte(ExtractText(par, n, pageURL)))
 		texteditor.NewEditor(par).SetBuf(buf)
 	default:
-		return w, true
+		return par, true
 	}
 	return w, handleChildren
 }
