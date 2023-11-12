@@ -24,6 +24,7 @@ import (
 	"goki.dev/grr"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
+	"goki.dev/mat32/v2"
 	"golang.org/x/net/html"
 )
 
@@ -82,9 +83,15 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 		ctx.SetStyle(string(b))
 	case "style":
 		ctx.SetStyle(ExtractText(ctx, par, n))
-	case "div", "body", "main", "section", "nav", "footer", "header":
+	case "div", "section", "nav", "footer", "header":
 		w = gi.NewFrame(par)
 		handleChildren = true
+	case "body", "main":
+		w = gi.NewFrame(par)
+		handleChildren = true
+		w.Style(func(s *styles.Style) {
+			s.MainAxis = mat32.Y
+		})
 	case "button":
 		w = HandleLabel(ctx, par, n)
 	case "h1":
