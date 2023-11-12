@@ -4,7 +4,11 @@
 
 package gidom
 
-import "goki.dev/goosi"
+import (
+	"github.com/aymerick/douceur/css"
+	selcss "github.com/ericchiang/css"
+	"goki.dev/goosi"
+)
 
 // Context contains context information needed for gidom calls.
 type Context interface {
@@ -18,8 +22,10 @@ type Context interface {
 	// SetStyle adds the given CSS style string to the page's styles.
 	SetStyle(style string)
 
-	// GetStyle returns the page's styles as a CSS style string.
-	GetStyle() string
+	// GetStyle returns the page's styles as a CSS style sheet and a slice
+	// of selectors with the indices corresponding to those of the rules in
+	// the stylesheet.
+	GetStyle() (*css.Stylesheet, []*selcss.Selector)
 }
 
 // NilContext returns a [Context] with placeholder implementations of all functions.
@@ -35,4 +41,6 @@ func (nc *nilContext) OpenURL(url string) error {
 	return nil
 }
 func (nc *nilContext) SetStyle(style string) {}
-func (nc *nilContext) GetStyle() string      { return "" }
+func (nc *nilContext) GetStyle() (*css.Stylesheet, []*selcss.Selector) {
+	return css.NewStylesheet(), []*selcss.Selector{}
+}

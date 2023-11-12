@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/aymerick/douceur v0.2.0
+	github.com/ericchiang/css v1.3.0
 	github.com/yuin/goldmark v1.6.0
 	goki.dev/colors v0.8.28
 	goki.dev/gi/v2 v2.0.0-dev0.0.10

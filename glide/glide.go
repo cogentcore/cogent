@@ -9,7 +9,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
+	"github.com/aymerick/douceur/css"
+	"github.com/aymerick/douceur/parser"
+	selcss "github.com/ericchiang/css"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/girl/styles"
 	"goki.dev/glide/gidom"
@@ -31,6 +35,12 @@ type Page struct {
 
 	// PageStyles contains the accumulated global CSS styles for the page
 	PageStyles string
+
+	// PageStylesheet is the stylesheet compiled from PageStyles
+	PageStylesheet *css.Stylesheet
+
+	// PageStyleSelectors are the style selectors compiled from PageStyleSelectors
+	PageStyleSelectors []*selcss.Selector
 }
 
 // needed for interface import
@@ -108,10 +118,28 @@ func (pg *Page) PageURL() string {
 
 // SetStyle adds the given CSS styles to the page's styles.
 func (pg *Page) SetStyle(style string) {
+	if style == "" {
+		return
+	}
+
 	pg.PageStyles += style
+	ss, err := parser.Parse(pg.PageStyles)
+	if grr.Log0(err) != nil {
+		return
+	}
+	pg.PageStylesheet = ss
+
+	pg.PageStyleSelectors = make([]*selcss.Selector, len(ss.Rules))
+	for i, rule := range ss.Rules {
+		sel, err := selcss.Parse(strings.Join(rule.Selectors, ","))
+		if grr.Log0(err) != nil {
+			sel = &selcss.Selector{}
+		}
+		pg.PageStyleSelectors[i] = sel
+	}
 }
 
 // GetStyle returns the page's styles in CSS.
-func (pg *Page) GetStyle() string {
-	return pg.PageStyles
+func (pg *Page) GetStyle() (*css.Stylesheet, []*selcss.Selector) {
+	return pg.PageStylesheet, pg.PageStyleSelectors
 }
