@@ -47,10 +47,23 @@ func MatchesRule(w *gi.WidgetBase, rule *css.Rule) bool {
 
 // MatchesSelector returns whether the given widget matches the given CSS selector.
 func MatchesSelector(w *gi.WidgetBase, sel string) bool {
-	fields := strings.FieldsFunc(sel, func(r rune) bool {
-		return r == ' ' || r == '#' || r == '.'
-	})
+	var fields []string
+	for {
+		i := strings.IndexFunc(sel, func(r rune) bool {
+			return r == ' ' || r == '#' || r == '.'
+		})
+		if i == -1 {
+			if len(sel) > 0 {
+				fields = append(fields, sel)
+			}
+			break
+		}
+		fields = append(fields, strings.TrimSpace(sel[:i+1]))
+		sel = strings.TrimSpace(sel[i+1:])
+	}
+
 	for _, field := range fields {
+		fmt.Println(field)
 		switch {
 		case strings.HasPrefix(field, "#"):
 			if w.Name() != strings.TrimPrefix(field, "#") {
