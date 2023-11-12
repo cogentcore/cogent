@@ -177,6 +177,7 @@ func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 		}
 	}
 	wb.SetProp("tag", n.DataAtom.String())
+	ctx.SetWidgetForNode(w, n)
 	return w
 }
 

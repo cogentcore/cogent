@@ -63,11 +63,17 @@ func (cb *ContextBase) OpenURL(url string) error {
 
 // SetWidgetForNode associates the given widget with the given node.
 func (cb *ContextBase) SetWidgetForNode(w gi.Widget, n *html.Node) {
+	if cb.WidgetsForNodes == nil {
+		cb.WidgetsForNodes = make(map[*html.Node]gi.Widget)
+	}
 	cb.WidgetsForNodes[n] = w
 }
 
 // WidgetForNode returns the widget associated with the given node.
 func (cb *ContextBase) WidgetForNode(n *html.Node) gi.Widget {
+	if cb.WidgetsForNodes == nil {
+		cb.WidgetsForNodes = make(map[*html.Node]gi.Widget)
+	}
 	return cb.WidgetsForNodes[n]
 }
 

@@ -19,7 +19,10 @@ func ApplyStyle(ctx Context, par gi.Widget, n *html.Node) error {
 	for i, r := range ss.Rules {
 		sel := sels[i]
 		matches := sel.Select(n)
-		fmt.Println(matches, r)
+		for _, match := range matches {
+			w := ctx.WidgetForNode(match)
+			fmt.Println("STYLE", w, ":\n", r)
+		}
 	}
 	return nil
 }
