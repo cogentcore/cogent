@@ -57,8 +57,9 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 	var handleChildren bool
 
 	if slices.Contains(TextTags, tag) {
-		w = HandleLabelTag(par, n, pageURL)
+		return HandleLabelTag(par, n, pageURL), false
 	}
+
 	switch tag {
 	case "head", "script", "style":
 		// we don't render anything in heads, scripts, and styles
@@ -155,7 +156,7 @@ func HandleElement(par gi.Widget, n *html.Node, pageURL string) (gi.Widget, bool
 	case "textarea":
 		buf := texteditor.NewBuf()
 		buf.SetText([]byte(ExtractText(par, n, pageURL)))
-		texteditor.NewEditor(par).SetBuf(buf)
+		w = texteditor.NewEditor(par).SetBuf(buf)
 	default:
 		return par, true
 	}
