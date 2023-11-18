@@ -11,7 +11,6 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/styles"
-	"goki.dev/girl/units"
 	"goki.dev/goosi/events"
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
@@ -41,8 +40,6 @@ func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 		return
 	}
 
-	ge.SetStretchMax()
-
 	updt := ge.UpdateStart()
 	sc.TopAppBar = ge.TopAppBar
 
@@ -51,7 +48,7 @@ func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 	})
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	gi.NewSplits(ge, "splitview")
-	gi.NewFrame(ge, "statusbar").SetMainAxis(mat32.X)
+	gi.NewFrame(ge, "statusbar")
 
 	ge.ConfigSplits()
 	ge.ConfigStatusBar()
@@ -116,10 +113,12 @@ func (ge *GideView) SelectedFileNode() *filetree.Node {
 func (ge *GideView) ConfigSplits() {
 	// note: covered by global update
 	split := ge.Splits()
-	split.SetStretchMax()
 	split.Dim = mat32.X
-	ftfr := gi.NewFrame(split, "filetree").SetMainAxis(mat32.Y)
-	ftfr.SetStretchMax()
+	ftfr := gi.NewFrame(split, "filetree")
+	ftfr.Style(func(s *styles.Style) {
+		s.MainAxis = mat32.Y
+		s.Overflow.Set(styles.OverflowAuto)
+	})
 	ft := filetree.NewTree(ftfr, "filetree")
 	ft.OpenDepth = 4
 	ge.Files = ft
@@ -143,8 +142,9 @@ func (ge *GideView) ConfigSplits() {
 	for i := 0; i < NTextViews; i++ {
 		i := i
 		txnm := fmt.Sprintf("%d", i)
-		txly := gi.NewLayout(split, "textlay-"+txnm).SetMainAxis(mat32.Y)
+		txly := gi.NewLayout(split, "textlay-"+txnm)
 		txly.Style(func(s *styles.Style) {
+			s.MainAxis = mat32.Y
 			s.Grow.Set(1, 1)
 		})
 		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("textview: " + txnm)
@@ -201,15 +201,14 @@ func (ge *GideView) ConfigStatusBar() {
 	sb := ge.StatusBar()
 	sb.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
-		s.Min.Y.Set(units.Em(1.2))
-		s.Overflow = styles.OverflowHidden // no scrollbars!
+		s.Min.Y.Em(1.2)
 		s.Margin.Zero()
 		s.Padding.Zero()
 	})
 	lbl := gi.NewLabel(sb, "sb-lbl")
 	lbl.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
-		s.Min.Y.Set(units.Em(1))
+		s.Min.Y.Em(1)
 		s.Align.Y = styles.AlignStart
 		s.Margin.Zero()
 		s.Padding.Zero()

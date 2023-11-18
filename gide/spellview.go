@@ -152,19 +152,16 @@ func (sv *SpellView) ConfigToolbar() {
 	if spbar.HasChildren() {
 		return
 	}
-	spbar.SetStretchMaxWidth()
 
 	unknbar := sv.UnknownBar()
 	if unknbar.HasChildren() {
 		return
 	}
-	unknbar.SetStretchMaxWidth()
 
 	chgbar := sv.ChangeBar()
 	if chgbar.HasChildren() {
 		return
 	}
-	chgbar.SetStretchMaxWidth()
 
 	// spell toolbar
 	gi.NewButton(spbar).SetText("Check Current File").SetTooltip("spell check the current file").
@@ -181,8 +178,7 @@ func (sv *SpellView) ConfigToolbar() {
 
 	// unknown toolbar
 
-	unknown := gi.NewTextField(unknbar, "unknown-str").SetTooltip("Unknown word")
-	unknown.SetStretchMaxWidth()
+	gi.NewTextField(unknbar, "unknown-str").SetTooltip("Unknown word")
 	tf := sv.UnknownText()
 	if tf != nil {
 		tf.SetReadOnly(true)
@@ -204,8 +200,7 @@ func (sv *SpellView) ConfigToolbar() {
 		})
 
 	// change toolbar
-	changestr := gi.NewTextField(chgbar, "change-str").SetTooltip("This string will replace the unknown word in text")
-	changestr.SetStretchMaxWidth()
+	gi.NewTextField(chgbar, "change-str").SetTooltip("This string will replace the unknown word in text")
 
 	gi.NewButton(chgbar).SetText("Change").SetTooltip("change the unknown word to the selected suggestion").
 		OnClick(func(e events.Event) {
@@ -223,7 +218,6 @@ func (sv *SpellView) ConfigToolbar() {
 	suggest.SetReadOnly(true)
 	suggest.SetProp("index", false)
 	suggest.SetSlice(&sv.Suggest)
-	suggest.SetStretchMax()
 	// suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data any) {
 	// 	svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
 	// 	idx := svv.SelectedIdx

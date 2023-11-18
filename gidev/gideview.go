@@ -21,7 +21,6 @@ import (
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gide"
-	"goki.dev/girl/paint"
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
 	"goki.dev/ki/v2"
@@ -96,7 +95,7 @@ type GideView struct {
 
 func init() {
 	// gi.URLHandler = URLHandler
-	paint.TextLinkHandler = TextLinkHandler
+	// paint.TextLinkHandler = TextLinkHandler
 }
 
 func (ge *GideView) OnInit() {

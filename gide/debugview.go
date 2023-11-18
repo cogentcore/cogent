@@ -860,7 +860,6 @@ func (dv *DebugView) ConfigToolbar() {
 	if tb.HasChildren() {
 		return
 	}
-	tb.SetStretchMaxWidth()
 
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
@@ -988,7 +987,6 @@ func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 	} else {
 		updt = sv.UpdateStart()
 	}
-	tv.SetStretchMax()
 	tv.SetReadOnly(true)
 	if sv.FindFrames {
 		tv.SetSlice(&dv.State.FindFrames)
@@ -1057,7 +1055,6 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	} else {
 		updt = sv.UpdateStart()
 	}
-	tv.SetStretchMax()
 	tv.SetFlag(true, giv.SliceViewNoAdd)
 	tv.SetSlice(&dv.State.Breaks)
 	sv.UpdateEnd(updt)
@@ -1123,7 +1120,6 @@ func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 	} else {
 		updt = sv.UpdateStart()
 	}
-	tv.SetStretchMax()
 	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Threads)
 	sv.UpdateEnd(updt)
@@ -1186,7 +1182,6 @@ func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 	} else {
 		updt = sv.UpdateStart()
 	}
-	tv.SetStretchMax()
 	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Tasks)
 	sv.UpdateEnd(updt)
@@ -1257,7 +1252,6 @@ func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 	} else {
 		updt = sv.UpdateStart()
 	}
-	tv.SetStretchMax()
 	tv.SetReadOnly(true)
 	if sv.GlobalVars {
 		tv.SetSlice(&dv.State.GlobalVars)
@@ -1328,7 +1322,7 @@ func (vv *VarView) ConfigVarView() {
 	if vv.Var == nil {
 		return
 	}
-	sv.Style(func(s *styles.Style) {
+	vv.Style(func(s *styles.Style) {
 		s.SetMainAxis(mat32.Y)
 	})
 	config := ki.Config{}
@@ -1391,7 +1385,7 @@ func (vv *VarView) ConfigSplits() {
 	split.Dim = mat32.X
 
 	if len(split.Kids) == 0 {
-		tvfr := gi.NewFrame(split, "tvfr").SetMainAxis(mat32.X)
+		tvfr := gi.NewFrame(split, "tvfr")
 		tv := giv.NewTreeView(tvfr, "tv")
 		giv.NewStructView(split, "sv")
 		_ = tv

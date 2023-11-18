@@ -101,7 +101,6 @@ func (sv *SymbolsView) ConfigToolbar() {
 	if svbar.HasChildren() {
 		return
 	}
-	svbar.SetStretchMaxWidth()
 
 	gi.NewButton(svbar).SetText("Refresh").SetIcon(icons.Update).SetTooltip("refresh symbols for current file and scope").
 		OnClick(func(e events.Event) {
@@ -119,7 +118,6 @@ func (sv *SymbolsView) ConfigToolbar() {
 
 	gi.NewLabel(svbar).SetText("Search:").SetTooltip("narrow symbols list to symbols containing text you enter here")
 	stxt := gi.NewTextField(svbar, "search-str").SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
-	stxt.SetStretchMaxWidth()
 	stxt.OnChange(func(e events.Event) {
 		sv.Match = stxt.Text()
 		sv.ConfigTree(sv.Params().Scope)
@@ -141,7 +139,6 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	var tv *SymTreeView
 	if sv.Syms == nil {
 		// sfr.SetProp("height", units.NewEm(5)) // enables scrolling
-		sfr.SetStretchMax()
 
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")

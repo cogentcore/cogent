@@ -377,7 +377,6 @@ func (fv *FindView) ConfigWidget(sc *gi.Scene) {
 // Config configures the view
 func (fv *FindView) ConfigFindView(ge Gide) {
 	fv.Gide = ge
-	fv.Lay = gi.LayoutVert
 	fv.Style(func(s *styles.Style) {
 		s.SetMainAxis(mat32.Y)
 	})
@@ -463,17 +462,14 @@ func (fv *FindView) ConfigToolbar() {
 	if fb.HasChildren() {
 		return
 	}
-	fb.SetStretchMaxWidth()
 
 	rb := fv.ReplBar()
-	rb.SetStretchMaxWidth()
 
 	gi.NewButton(fb).SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").OnClick(func(e events.Event) {
 		fv.FindAction()
 	})
 	finds := gi.NewChooser(fb).SetEditable(true).
 		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
-	finds.Grow.Set(1, 0)
 	finds.SetStrings(fv.Params().FindHist, true, 0)
 	finds.OnChange(func(e events.Event) {
 		fv.Params().Find = finds.CurVal.(string)
@@ -527,7 +523,6 @@ func (fv *FindView) ConfigToolbar() {
 		})
 
 	repls := gi.NewChooser(rb).SetEditable(true).SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
-	repls.Grow.Set(1, 0)
 	repls.SetStrings(fv.Params().ReplHist, true, 0)
 	repls.OnChange(func(e events.Event) {
 		fv.Params().Replace = repls.CurVal.(string)

@@ -11,7 +11,6 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/styles"
-	"goki.dev/girl/units"
 	"goki.dev/grr"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/token"
@@ -273,13 +272,13 @@ func (tv *TextView) TextViewEvents() {
 
 // ConfigOutputTextView configures a command-output textview within given parent layout
 func ConfigOutputTextView(tv *texteditor.Editor) {
-	tv.SetMinPrefWidth(units.Ch(20))
-	tv.SetMinPrefHeight(units.Ch(10))
 	tv.SetFlag(false, texteditor.EditorHasLineNos)
 	tv.Style(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
 		s.Font.Family = string(gi.Prefs.MonoFont)
+		s.Min.X.Ch(20)
+		s.Min.Y.Ch(10)
 	})
 	tv.SetReadOnly(true)
 

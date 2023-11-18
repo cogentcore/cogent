@@ -15,6 +15,7 @@ import (
 	"goki.dev/gti"
 	"goki.dev/icons"
 	"goki.dev/laser"
+	"goki.dev/mat32/v2"
 )
 
 // KeyMapsView opens a view of a key maps table
@@ -34,7 +35,6 @@ func KeyMapsView(km *KeyMaps) {
 	})
 
 	tv := giv.NewTableView(sc).SetSlice(km)
-	tv.SetStretchMax()
 
 	AvailKeyMapsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -90,7 +90,6 @@ func PrefsView(pf *Preferences) *giv.StructView {
 	})
 
 	tv := giv.NewStructView(sc).SetStruct(pf)
-	tv.SetStretchMax()
 	tv.OnChange(func(e events.Event) {
 		pf.Changed = true
 	})
@@ -140,7 +139,6 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 	})
 
 	tv := giv.NewStructView(sc).SetStruct(pf)
-	tv.SetStretchMax()
 	tv.OnChange(func(e events.Event) {
 		pf.Changed = true
 	})
@@ -241,7 +239,6 @@ func LangsView(pt *Langs) {
 	})
 
 	tv := giv.NewMapView(sc).SetMap(pt)
-	tv.SetStretchMax()
 
 	AvailLangsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -296,7 +293,6 @@ func CmdsView(pt *Commands) {
 	})
 
 	tv := giv.NewTableView(sc).SetSlice(pt)
-	tv.SetStretchMax()
 
 	CustomCmdsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -418,7 +414,6 @@ func SplitsView(pt *Splits) {
 	})
 
 	tv := giv.NewTableView(sc).SetSlice(pt)
-	tv.SetStretchMax()
 
 	AvailSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -526,20 +521,15 @@ func RegistersView(pt *Registers) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	sc := gi.NewScene("gide-registers")
-	sc.Title = "Guide Registers"
-	sc.Lay = gi.LayoutVert
+	sc := gi.NewScene("gide-registers").SetTitle("Guide Registers")
+	sc.Style(func(s *styles.Style) {
+		s.MainAxis = mat32.Y
+	})
 	sc.Data = pt
 
-	title := gi.NewLabel(sc, "title").SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
-	title.Style(func(s *styles.Style) {
-		s.Min.X.Ch(30) // need for wrap
-		s.Grow.Set(1, 0)
-		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
-	})
+	gi.NewLabel(sc).SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
 
 	tv := giv.NewTableView(sc).SetSlice(pt)
-	tv.SetStretchMax()
 
 	AvailRegistersChanged = false
 	tv.OnChange(func(e events.Event) {
