@@ -15,7 +15,6 @@ require (
 	goki.dev/gti v0.1.16
 	goki.dev/icons v0.0.9
 	goki.dev/ki/v2 v2.0.0-dev0.0.19
-	goki.dev/mat32/v2 v2.0.0-dev0.0.13
 	goki.dev/ordmap v0.5.7
 	golang.org/x/net v0.18.0
 )
@@ -57,6 +56,7 @@ require (
 	goki.dev/glop v0.1.4 // indirect
 	goki.dev/grog v0.0.13 // indirect
 	goki.dev/laser v0.1.18 // indirect
+	goki.dev/mat32/v2 v2.0.0-dev0.0.13 // indirect
 	goki.dev/pi/v2 v2.0.0-dev0.0.12 // indirect
 	goki.dev/prof/v2 v2.0.0-dev0.0.4 // indirect
 	goki.dev/svg v0.1.14 // indirect

@@ -8,15 +8,12 @@ package glide
 import (
 	"net/url"
 
-	"github.com/aymerick/douceur/css"
-	selcss "github.com/ericchiang/css"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/girl/styles"
 	"goki.dev/glide/gidom"
 	"goki.dev/goosi/events"
 	"goki.dev/grr"
 	"goki.dev/ki/v2"
-	"goki.dev/mat32/v2"
 )
 
 // Page represents one web browser page
@@ -29,15 +26,6 @@ type Page struct {
 
 	// PgURL is the current page URL
 	PgURL string
-
-	// PageStyles contains the accumulated global CSS styles for the page
-	PageStyles string
-
-	// PageStylesheet is the stylesheet compiled from PageStyles
-	PageStylesheet *css.Stylesheet
-
-	// PageStyleSelectors are the style selectors compiled from PageStyleSelectors
-	PageStyleSelectors []*selcss.Selector
 }
 
 // needed for interface import
@@ -46,7 +34,7 @@ var _ ki.Ki = (*Page)(nil)
 func (pg *Page) OnInit() {
 	pg.Frame.OnInit()
 	pg.Style(func(s *styles.Style) {
-		s.MainAxis = mat32.Y
+		s.Direction = styles.Col
 	})
 }
 
@@ -60,7 +48,6 @@ func (pg *Page) OpenURL(url string) error {
 	defer resp.Body.Close()
 	pg.PgURL = url
 	pg.History = append(pg.History, url)
-	pg.PageStyles = ""
 	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
 	err = gidom.ReadHTML(pg, pg, resp.Body)
