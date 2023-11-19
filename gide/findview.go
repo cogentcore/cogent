@@ -377,7 +377,7 @@ func (fv *FindView) ConfigWidget(sc *gi.Scene) {
 func (fv *FindView) ConfigFindView(ge Gide) {
 	fv.Gide = ge
 	fv.Style(func(s *styles.Style) {
-		s.Direction = styles.Col
+		s.Direction = styles.Column
 	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "findbar")

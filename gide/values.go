@@ -522,7 +522,7 @@ func RegistersView(pt *Registers) {
 	}
 	sc := gi.NewScene("gide-registers").SetTitle("Guide Registers")
 	sc.Style(func(s *styles.Style) {
-		s.Direction = styles.Col
+		s.Direction = styles.Column
 	})
 	sc.Data = pt
 

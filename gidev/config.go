@@ -44,7 +44,7 @@ func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 	sc.TopAppBar = ge.TopAppBar
 
 	ge.Style(func(s *styles.Style) {
-		s.Direction = styles.Col
+		s.Direction = styles.Column
 	})
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	gi.NewSplits(ge, "splitview")
@@ -116,7 +116,7 @@ func (ge *GideView) ConfigSplits() {
 	split.Dim = mat32.X
 	ftfr := gi.NewFrame(split, "filetree")
 	ftfr.Style(func(s *styles.Style) {
-		s.Direction = styles.Col
+		s.Direction = styles.Column
 		s.Overflow.Set(styles.OverflowAuto)
 	})
 	ft := filetree.NewTree(ftfr, "filetree")
@@ -144,7 +144,7 @@ func (ge *GideView) ConfigSplits() {
 		txnm := fmt.Sprintf("%d", i)
 		txly := gi.NewLayout(split, "textlay-"+txnm)
 		txly.Style(func(s *styles.Style) {
-			s.Direction = styles.Col
+			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
 		})
 		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("textview: " + txnm)

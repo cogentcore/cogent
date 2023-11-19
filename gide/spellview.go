@@ -73,7 +73,7 @@ func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextView) {
 	sv.CurIdx = 0
 	sv.Errs = nil
 	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Col
+		s.Direction = styles.Column
 	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "spellbar")

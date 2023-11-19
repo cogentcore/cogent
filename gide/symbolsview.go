@@ -58,7 +58,7 @@ func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
 	sv.Gide = ge
 	sv.SymParams = sp
 	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Col
+		s.Direction = styles.Column
 	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "sym-toolbar")
