@@ -18,12 +18,13 @@ func (ge *GideView) HandleGideViewEvents() {
 	// if ge.HasAnyScroll() {
 	// 	ge.LayoutScrollEvents()
 	// }
-	ge.HandleLayoutEvents()
+	// ge.HandleLayoutEvents()
 	ge.HandleGideKeyEvent()
 	ge.HandleOSFileEvent()
 }
 
 func (ge *GideView) HandleGideKeyEvent() {
+	ge.PriorityEvents = []events.Types{events.KeyChord}
 	ge.OnKeyChord(func(e events.Event) {
 		ge.GideViewKeys(e)
 	})

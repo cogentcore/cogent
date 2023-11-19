@@ -22,7 +22,6 @@ import (
 	"goki.dev/goosi/events"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
-	"goki.dev/mat32/v2"
 	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
 )
@@ -378,7 +377,7 @@ func (fv *FindView) ConfigWidget(sc *gi.Scene) {
 func (fv *FindView) ConfigFindView(ge Gide) {
 	fv.Gide = ge
 	fv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "findbar")

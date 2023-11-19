@@ -743,7 +743,7 @@ func (dv *DebugView) ConfigDebugView(ge Gide, sup filecat.Supported, exePath str
 	dv.Sup = sup
 	dv.ExePath = exePath
 	dv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "toolbar")
@@ -963,7 +963,7 @@ func (sv *StackView) DebugVw() *DebugView {
 
 func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 	sv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	sv.FindFrames = findFrames
 	config := ki.Config{}
@@ -1036,7 +1036,7 @@ func (sv *BreakView) DebugVw() *DebugView {
 
 func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	sv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "breaks")
@@ -1102,7 +1102,7 @@ func (sv *ThreadView) DebugVw() *DebugView {
 
 func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 	sv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "threads")
@@ -1164,7 +1164,7 @@ func (sv *TaskView) DebugVw() *DebugView {
 
 func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 	sv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(giv.TableViewType, "tasks")
@@ -1229,7 +1229,7 @@ func (sv *VarsView) DebugVw() *DebugView {
 
 func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 	sv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	sv.GlobalVars = globalVars
 	config := ki.Config{}
@@ -1323,7 +1323,7 @@ func (vv *VarView) ConfigVarView() {
 		return
 	}
 	vv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(gi.LabelType, "frame-info")

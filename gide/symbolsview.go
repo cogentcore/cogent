@@ -16,7 +16,6 @@ import (
 	"goki.dev/goosi/events"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
-	"goki.dev/mat32/v2"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/syms"
 	"goki.dev/pi/v2/token"
@@ -59,7 +58,7 @@ func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
 	sv.Gide = ge
 	sv.SymParams = sp
 	sv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "sym-toolbar")

@@ -15,7 +15,6 @@ import (
 	"goki.dev/gti"
 	"goki.dev/icons"
 	"goki.dev/laser"
-	"goki.dev/mat32/v2"
 )
 
 // KeyMapsView opens a view of a key maps table
@@ -523,7 +522,7 @@ func RegistersView(pt *Registers) {
 	}
 	sc := gi.NewScene("gide-registers").SetTitle("Guide Registers")
 	sc.Style(func(s *styles.Style) {
-		s.MainAxis = mat32.Y
+		s.Direction = styles.Col
 	})
 	sc.Data = pt
 

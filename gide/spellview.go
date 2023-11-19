@@ -11,7 +11,6 @@ import (
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
-	"goki.dev/mat32/v2"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/spell"
 
@@ -74,7 +73,7 @@ func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextView) {
 	sv.CurIdx = 0
 	sv.Errs = nil
 	sv.Style(func(s *styles.Style) {
-		s.SetMainAxis(mat32.Y)
+		s.Direction = styles.Col
 	})
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "spellbar")
