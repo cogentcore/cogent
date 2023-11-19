@@ -28,7 +28,6 @@ type Page struct {
 	PgURL string
 }
 
-// needed for interface import
 var _ ki.Ki = (*Page)(nil)
 
 func (pg *Page) OnInit() {
