@@ -258,8 +258,8 @@ func (sv *SpellView) CheckNext() {
 	}
 	if done {
 		tv.ClearHighlights()
-		gi.NewDialog(sv).Title("Spelling Check Complete").
-			Prompt("End of file, spelling check complete").Modal(true).Ok().Run()
+		gi.NewBody(sv).AddTitle("Spelling Check Complete").
+			AddText("End of file, spelling check complete").Modal(true).Ok().Run()
 		return
 	}
 	sv.UnkLex = sv.Errs[sv.CurIdx]
@@ -334,7 +334,7 @@ func (sv *SpellView) ChangeAllAction() {
 // TrainAction allows you to train on additional text files and also to rebuild the spell model
 func (sv *SpellView) TrainAction() {
 	cur := ""
-	d := gi.NewDialog(sv).Title("Select a Text File to Add to Corpus").FullWindow(true)
+	d := gi.NewBody(sv).AddTitle("Select a Text File to Add to Corpus").FullWindow(true)
 	fv := giv.NewFileView(d).SetFilename(cur, ".txt")
 	fv.OnSelect(func(e events.Event) {
 		cur = fv.SelectedFile()

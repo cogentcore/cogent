@@ -140,7 +140,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		kt.SetHandled()
 		tv := ge.ActiveTextView()
 		if tv != nil {
-			tv.JumpToLinePrompt()
+			tv.JumpToLineAddText()
 		}
 		ge.Indent()
 	case gide.KeyFunSetSplit:

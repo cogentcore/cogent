@@ -144,7 +144,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 // ReplaceInActive does query-replace in active file only
 func (ge *GideView) ReplaceInActive() { //gti:add
 	tv := ge.ActiveTextView()
-	tv.QReplacePrompt()
+	tv.QReplaceAddText()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -446,8 +446,8 @@ func (ge *GideView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		_, fnm := filepath.Split(fpath)
 		tv, _, ok = ge.LinkViewFile(gi.FileName(fnm))
 		if !ok {
-			gi.NewDialog(ge).Title("Couldn't Open File at Link").
-				Prompt(fmt.Sprintf("Could not find or open file path in project: %v", fpath)).Modal(true).Ok().Run()
+			gi.NewBody(ge).AddTitle("Couldn't Open File at Link").
+				AddText(fmt.Sprintf("Could not find or open file path in project: %v", fpath)).Modal(true).Ok().Run()
 			return false
 		}
 	}

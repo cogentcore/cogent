@@ -178,8 +178,8 @@ func (ge *GideView) EditRecents() {
 	tmp := make([]string, len(gide.SavedPaths))
 	copy(tmp, gide.SavedPaths)
 	gi.StringsRemoveExtras((*[]string)(&tmp), gide.SavedPathsExtras)
-	d := gi.NewDialog(ge).Title("Recent Project Paths").
-		Prompt("Delete paths you no longer use").
+	d := gi.NewBody(ge).AddTitle("Recent Project Paths").
+		AddText("Delete paths you no longer use").
 		Modal(true)
 	giv.NewSliceView(d).SetSlice(tmp)
 	d.Run()
@@ -292,8 +292,8 @@ func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Su
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
-		gi.NewDialog(ge).Title("Could not Make Folder").
-			Prompt(fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err)).Modal(true).Ok().Run()
+		gi.NewBody(ge).AddTitle("Could not Make Folder").
+			AddText(fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err)).Modal(true).Ok().Run()
 		return nil
 	}
 	nge := ge.OpenPath(gi.FileName(np))
@@ -309,8 +309,8 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) { //gti:add
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
-		gi.NewDialog(ge).Title("Could not Make File").
-			Prompt(fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)).Modal(true).Ok().Run()
+		gi.NewBody(ge).AddTitle("Could not Make File").
+			AddText(fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)).Modal(true).Ok().Run()
 		return
 	}
 	ge.Files.UpdateNewFile(np)
@@ -378,20 +378,20 @@ func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		}
 		return false
 	}
-	d := gi.NewDialog(ge).Title("There are Unsaved Files").
-		Prompt(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch))
+	d := gi.NewBody(ge).AddTitle("There are Unsaved Files").
+		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch))
 	if cancelOpt {
-		gi.NewButton(d.Buttons()).SetText("Cancel Command").OnClick(func(e events.Event) {
+		d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Cancel Command").OnClick(func(e events.Event) {
 			d.CancelDialog()
 		})
 	}
-	gi.NewButton(d.Buttons()).SetText("Don't Save").OnClick(func(e events.Event) {
+	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Don't Save").OnClick(func(e events.Event) {
 		d.AcceptDialog()
 		if fun != nil {
 			fun()
 		}
 	})
-	gi.NewButton(d.Buttons()).SetText("Save All").OnClick(func(e events.Event) {
+	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Save All").OnClick(func(e events.Event) {
 		d.AcceptDialog()
 		ge.SaveAllOpenNodes()
 		if fun != nil {
@@ -467,16 +467,16 @@ func (ge *GideView) CloseWindowReq() bool {
 	if nch == 0 {
 		return true
 	}
-	d := gi.NewDialog(ge).Title("Close Project: There are Unsaved Files").
-		Prompt(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", ge.Nm, nch))
-	gi.NewButton(d.Buttons()).SetText("Cancel").OnClick(func(e events.Event) {
+	d := gi.NewBody(ge).AddTitle("Close Project: There are Unsaved Files").
+		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", ge.Nm, nch))
+	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Cancel").OnClick(func(e events.Event) {
 		d.CancelDialog()
 	})
-	gi.NewButton(d.Buttons()).SetText("Close without saving").OnClick(func(e events.Event) {
+	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Close without saving").OnClick(func(e events.Event) {
 		d.AcceptDialog()
 		ge.CloseWindow()
 	})
-	gi.NewButton(d.Buttons()).SetText("Save all").OnClick(func(e events.Event) {
+	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Save all").OnClick(func(e events.Event) {
 		d.AcceptDialog()
 		ge.SaveAllOpenNodes()
 	})

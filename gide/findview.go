@@ -255,8 +255,8 @@ func (fv *FindView) ReplaceAction() bool {
 
 // ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindView) ReplaceAllAction() {
-	d := gi.NewDialog(fv).Title("Confirm Replace All").
-		Prompt("Are you sure you want to Replace All?").
+	d := gi.NewBody(fv).AddTitle("Confirm Replace All").
+		AddText("Are you sure you want to Replace All?").
 		Modal(true).Cancel().Ok("Replace All")
 	d.Run()
 	d.OnAccept(func(e events.Event) {
@@ -274,8 +274,8 @@ func (fv *FindView) CompileRegexp() bool {
 	var err error
 	fv.Re, err = regexp.Compile(fp.Find)
 	if err != nil {
-		gi.NewDialog(fv).Title("Regexp is Invalid").
-			Prompt(fmt.Sprintf("The regular expression was invalid: %v", err)).Modal(true).Ok().Run()
+		gi.NewBody(fv).AddTitle("Regexp is Invalid").
+			AddText(fmt.Sprintf("The regular expression was invalid: %v", err)).Modal(true).Ok().Run()
 		return false
 	}
 	return true

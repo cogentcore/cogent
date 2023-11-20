@@ -197,14 +197,14 @@ func (vv *KeyMapValue) HasDialog() bool {
 	return true
 }
 
-func (vv *KeyMapValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *KeyMapValue) OpenDialog(ctx gi.Widget) {
 	if vv.IsReadOnly() {
 		return
 	}
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
-	d := gi.NewDialog(ctx).Title("Select a key map").Prompt(vv.Doc()).FullWindow(true)
+	d := gi.NewBody(ctx).AddTitle("Select a key map").AddText(vv.Doc()).FullWindow(true)
 	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(d, &si)
 	d.OnAccept(func(e events.Event) {
 		if si >= 0 {
@@ -372,14 +372,14 @@ func (vv *CmdValue) HasDialog() bool {
 	return true
 }
 
-func (vv *CmdValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *CmdValue) OpenDialog(ctx gi.Widget) {
 	if vv.IsReadOnly() {
 		return
 	}
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
-	d := gi.NewDialog(ctx).Title("Select a command").Prompt(vv.Doc()).FullWindow(true)
+	d := gi.NewBody(ctx).AddTitle("Select a command").AddText(vv.Doc()).FullWindow(true)
 	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(d, &si)
 	d.OnAccept(func(e events.Event) {
 		if si >= 0 {
@@ -488,7 +488,7 @@ func (vv *SplitValue) HasDialog() bool {
 	return true
 }
 
-func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *SplitValue) OpenDialog(ctx gi.Widget) {
 	if vv.IsReadOnly() {
 		return
 	}
@@ -498,7 +498,7 @@ func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
 	if cur != "" {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
-	d := gi.NewDialog(ctx).Title("Select a Named Splitter Config").Prompt(vv.Doc()).FullWindow(true)
+	d := gi.NewBody(ctx).AddTitle("Select a Named Splitter Config").AddText(vv.Doc()).FullWindow(true)
 	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(d, &si)
 	d.OnAccept(func(e events.Event) {
 		if si >= 0 {
@@ -604,7 +604,7 @@ func (vv *RegisterValue) HasDialog() bool {
 	return true
 }
 
-func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func(d *gi.Dialog)) {
+func (vv *RegisterValue) OpenDialog(ctx gi.Widget) {
 	if vv.IsReadOnly() {
 		return
 	}

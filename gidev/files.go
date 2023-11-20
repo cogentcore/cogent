@@ -135,14 +135,14 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextView, vidx int, fn *filetree.Node
 		return false
 	}
 	ge.DiffFileNode(fn, gi.FileName(fn.Buf.AutoSaveFilename()))
-	d := gi.NewDialog(ge).Title("Autosave file Exists").
-		Prompt(fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
-	gi.NewButton(d.Buttons()).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
+	d := gi.NewBody(ge).AddTitle("Autosave file Exists").
+		AddText(fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
+	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 		d.AcceptDialog()
 		fn.Buf.AutoSaveDelete()
 		ge.Files.UpdateNewFile(fn.Buf.AutoSaveFilename()) // will update dir
 	})
-	gi.NewButton(d.Buttons()).SetText("Open autosave file").OnClick(func(e events.Event) {
+	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Open autosave file").OnClick(func(e events.Event) {
 		d.AcceptDialog()
 		ge.NextViewFile(gi.FileName(fn.Buf.AutoSaveFilename()))
 	})
@@ -482,12 +482,12 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 	}
 	// program, document, data
 	if int(fn.Info.Size) > gi.Prefs.Params.BigFileSize {
-		d := gi.NewDialog(ge).Title("File is relatively large").
-			Prompt(fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size))
-		gi.NewButton(d.Buttons()).SetText("Cancel").OnClick(func(e events.Event) {
+		d := gi.NewBody(ge).AddTitle("File is relatively large").
+			AddText(fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size))
+		d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Cancel").OnClick(func(e events.Event) {
 			d.CancelDialog()
 		})
-		gi.NewButton(d.Buttons()).SetText("Open").OnClick(func(e events.Event) {
+		d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Open").OnClick(func(e events.Event) {
 			d.AcceptDialog()
 			ge.NextViewFileNode(fn)
 		})

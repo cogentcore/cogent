@@ -377,8 +377,8 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			d := gi.NewDialog(ge.Scene()).Title("Gide Command Prompt").
-				Prompt(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)).Modal(true)
+			d := gi.NewBody(ge.Scene()).AddTitle("Gide Command Prompt").
+				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)).Modal(true)
 			tf := gi.NewTextField(d).SetText(curval)
 			d.Cancel().Ok().Run()
 			d.OnAccept(func(e events.Event) {
@@ -421,8 +421,8 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
 	if cm.Confirm {
-		d := gi.NewDialog(ge.Scene()).Title("Confirm Command").
-			Prompt(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)).
+		d := gi.NewBody(ge.Scene()).AddTitle("Confirm Command").
+			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)).
 			Modal(true).Cancel().Ok("Run")
 		d.Run()
 		d.OnAccept(func(e events.Event) {
