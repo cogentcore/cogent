@@ -5,6 +5,7 @@
 package gidom
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/aymerick/douceur/css"
@@ -18,6 +19,25 @@ import (
 
 // Context contains context information needed for gidom calls.
 type Context interface {
+	Node() *html.Node
+	SetNode(node *html.Node)
+
+	// ParentFor returns the current parent widget that a widget
+	// associated with the given node should be added to.
+	Parent() gi.Widget
+
+	// Parent returns the current parent widget that non-inline elements
+	// should be added to.
+	BlockParent() gi.Widget
+
+	// InlineParent returns the current parent widget that inline
+	// elements should be added to.
+	InlineParent() gi.Widget
+
+	// SetParent sets the current parent widget that non-inline elements
+	// should be added to.
+	SetParent(pw gi.Widget)
+
 	// PageURL returns the URL of the current page, and "" if there
 	// is no current page.
 	PageURL() string
@@ -47,8 +67,40 @@ func BaseContext() Context {
 
 // ContextBase contains basic implementations of all [Context] functions.
 type ContextBase struct {
+	Nd              *html.Node
 	CurStyle        string
 	WidgetsForNodes map[*html.Node]gi.Widget
+	BlockPw         gi.Widget
+	InlinePw        gi.Widget
+}
+
+func (cb *ContextBase) Node() *html.Node {
+	return cb.Nd
+}
+
+func (cb *ContextBase) SetNode(node *html.Node) {
+	cb.Nd = node
+}
+
+func (cb *ContextBase) Parent() gi.Widget {
+	return cb.BlockParent()
+}
+
+func (cb *ContextBase) BlockParent() gi.Widget {
+	return cb.BlockPw
+}
+
+func (cb *ContextBase) InlineParent() gi.Widget {
+	if cb.InlinePw != nil {
+		return cb.InlinePw
+	}
+	cb.InlinePw = gi.NewLayout(cb.BlockPw, fmt.Sprintf("inline-container-%d", cb.BlockPw.NumLifetimeChildren()))
+	return cb.InlinePw
+}
+
+func (cb *ContextBase) SetParent(pw gi.Widget) {
+	cb.BlockPw = pw
+	cb.InlinePw = nil // gets reset
 }
 
 // PageURL returns the URL of the current page, and "" if there

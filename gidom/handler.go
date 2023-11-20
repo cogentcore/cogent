@@ -35,7 +35,7 @@ import (
 // already been handled (or will not be handled), and thus should not
 // be handled further. If it returns a true, then the children
 // will be handled, with the returned widget as their parent.
-type Handler func(par gi.Widget, n *html.Node) (w gi.Widget, handleChildren bool)
+type Handler func(ctx Context) (w gi.Widget, handleChildren bool)
 
 // ElementHandlers is a map of [Handler] functions for each HTML element
 // type (eg: "button", "input", "p"). It is empty by default, but can be
@@ -46,22 +46,22 @@ var ElementHandlers = map[string]Handler{}
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
 // in [ElementHandlers] and returns the result, using the given context. If there
 // is no handler associated with it, it uses default hardcoded configuration code.
-func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handleChildren bool) {
-	tag := n.Data
+func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
+	tag := ctx.Node().Data
 	h, ok := ElementHandlers[tag]
 	if ok {
-		return h(par, n)
+		return h(ctx)
 	}
 
 	if slices.Contains(TextTags, tag) {
-		return HandleLabelTag(ctx, par, n), false
+		return HandleLabelTag(ctx), false
 	}
 
 	switch tag {
 	case "script", "title", "meta":
 		// we don't render anything
 	case "link":
-		rel := GetAttr(n, "rel")
+		rel := GetAttr(ctx.Node(), "rel")
 		// TODO(kai/gidom): maybe handle preload
 		if rel == "preload" {
 			return
@@ -81,51 +81,51 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 		}
 		ctx.SetStyle(string(b))
 	case "style":
-		ctx.SetStyle(ExtractText(ctx, par, n))
+		ctx.SetStyle(ExtractText(ctx))
 	case "div", "section", "nav", "footer", "header":
-		w = gi.NewFrame(par)
+		w = gi.NewFrame(ctx.Parent())
 		handleChildren = true
 	case "body", "main":
-		w = gi.NewFrame(par)
+		w = gi.NewFrame(ctx.Parent())
 		handleChildren = true
 		w.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
 	case "button":
-		w = gi.NewButton(par).SetText(ExtractText(ctx, par, n))
+		w = gi.NewButton(ctx.Parent()).SetText(ExtractText(ctx))
 	case "h1":
-		w = HandleLabel(ctx, par, n).SetType(gi.LabelHeadlineLarge)
+		w = HandleLabel(ctx).SetType(gi.LabelHeadlineLarge)
 	case "h2":
-		w = HandleLabel(ctx, par, n).SetType(gi.LabelHeadlineSmall)
+		w = HandleLabel(ctx).SetType(gi.LabelHeadlineSmall)
 	case "h3":
-		w = HandleLabel(ctx, par, n).SetType(gi.LabelTitleLarge)
+		w = HandleLabel(ctx).SetType(gi.LabelTitleLarge)
 	case "h4":
-		w = HandleLabel(ctx, par, n).SetType(gi.LabelTitleMedium)
+		w = HandleLabel(ctx).SetType(gi.LabelTitleMedium)
 	case "h5":
-		w = HandleLabel(ctx, par, n).SetType(gi.LabelTitleSmall)
+		w = HandleLabel(ctx).SetType(gi.LabelTitleSmall)
 	case "h6":
-		w = HandleLabel(ctx, par, n).SetType(gi.LabelLabelSmall)
+		w = HandleLabel(ctx).SetType(gi.LabelLabelSmall)
 	case "p":
-		w = HandleLabel(ctx, par, n)
+		w = HandleLabel(ctx)
 	case "pre":
-		w = HandleLabel(ctx, par, n).Style(func(s *styles.Style) {
+		w = HandleLabel(ctx).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
 		// if we are already in a treeview, we just return in the last item in it
 		// (which is the list item we are contained in), which fixes the associativity
 		// of nested list items and prevents the created of duplicated tree view items.
-		if ptv, ok := par.(*giv.TreeView); ok {
+		if ptv, ok := ctx.Parent().(*giv.TreeView); ok {
 			w := ki.LastChild(ptv).(gi.Widget)
 			return w, true
 		}
-		tv := giv.NewTreeView(par).SetText("").SetIcon(icons.None)
+		tv := giv.NewTreeView(ctx.Parent()).SetText("").SetIcon(icons.None)
 		tv.RootView = tv
 		return tv, true
 	case "li":
-		ntv := giv.NewTreeView(par)
+		ntv := giv.NewTreeView(ctx.Parent())
 		ftxt := ""
-		ptv, ok := par.(*giv.TreeView)
+		ptv, ok := ctx.Parent().(*giv.TreeView)
 		if ok {
 			ntv.RootView = ptv.RootView
 			if ptv.Prop("tag") == "ol" {
@@ -139,7 +139,7 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 			ntv.RootView = ntv
 		}
 
-		etxt := ExtractText(ctx, par, n)
+		etxt := ExtractText(ctx)
 		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
 		ntv.OnWidgetAdded(func(w gi.Widget) {
@@ -152,43 +152,43 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 		})
 		w = ntv
 	case "img":
-		src := GetAttr(n, "src")
+		src := GetAttr(ctx.Node(), "src")
 		resp, err := Get(ctx, src)
 		if grr.Log0(err) != nil {
-			return par, true
+			return ctx.Parent(), true
 		}
 		defer resp.Body.Close()
 		if strings.Contains(resp.Header.Get("Content-Type"), "svg") {
 			// TODO(kai/gidom): support svg
 		} else {
-			img := gi.NewImage(par)
+			img := gi.NewImage(ctx.Parent())
 			im, _, err := images.Read(resp.Body)
 			if err != nil {
 				slog.Error("error loading image", "url", src, "err", err)
-				return par, true
+				return ctx.Parent(), true
 			}
 			img.Filename = gi.FileName(src)
 			img.SetImage(im, 0, 0)
 			w = img
 		}
 	case "input":
-		ityp := GetAttr(n, "type")
+		ityp := GetAttr(ctx.Node(), "type")
 		switch ityp {
 		case "number":
-			w = gi.NewSpinner(par)
+			w = gi.NewSpinner(ctx.Parent())
 		case "color":
-			w = giv.NewValue(par, colors.Black).AsWidget()
+			w = giv.NewValue(ctx.Parent(), colors.Black).AsWidget()
 		case "datetime":
-			w = giv.NewValue(par, time.Now()).AsWidget()
+			w = giv.NewValue(ctx.Parent(), time.Now()).AsWidget()
 		default:
-			w = gi.NewTextField(par)
+			w = gi.NewTextField(ctx.Parent())
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
-		buf.SetText([]byte(ExtractText(ctx, par, n)))
-		w = texteditor.NewEditor(par).SetBuf(buf)
+		buf.SetText([]byte(ExtractText(ctx)))
+		w = texteditor.NewEditor(ctx.Parent()).SetBuf(buf)
 	default:
-		return par, true
+		return ctx.Parent(), true
 	}
 	return
 }
@@ -219,8 +219,8 @@ func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 
 // HandleLabel creates a new label from the given information, setting the text and
 // the label click function so that URLs are opened according to [Context.OpenURL].
-func HandleLabel(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
-	lb := gi.NewLabel(par).SetText(ExtractText(ctx, par, n))
+func HandleLabel(ctx Context) *gi.Label {
+	lb := gi.NewLabel(ctx.Parent()).SetText(ExtractText(ctx))
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
 		grr.Log0(ctx.OpenURL(tl.URL))
 	})
@@ -232,10 +232,10 @@ func HandleLabel(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
 // it wraps the label text with the [NodeString] of the given node, meaning that it
 // should be used for standalone elements that are meant to only exist in labels
 // (eg: a, span, b, code, etc).
-func HandleLabelTag(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
-	start, end := NodeString(n)
-	str := start + ExtractText(ctx, par, n) + end
-	lb := gi.NewLabel(par).SetText(str)
+func HandleLabelTag(ctx Context) *gi.Label {
+	start, end := NodeString(ctx.Node())
+	str := start + ExtractText(ctx) + end
+	lb := gi.NewLabel(ctx.Parent()).SetText(str)
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
 		grr.Log0(ctx.OpenURL(tl.URL))
 	})
