@@ -39,12 +39,12 @@ func (pg *Page) OnInit() {
 
 // OpenURL sets the content of the page from the given url.
 func (pg *Page) OpenURL(url string) error {
-	// we do not want our page url interfering
-	resp, err := gidom.Get(gidom.BaseContext(), url)
+	resp, err := gidom.Get(pg, url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+	url = resp.Request.URL.String()
 	pg.PgURL = url
 	pg.History = append(pg.History, url)
 	updt := pg.UpdateStart()

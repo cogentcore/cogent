@@ -146,8 +146,7 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 			switch w := w.(type) {
 			case *gi.Label:
 				w.HandleLabelClick(func(tl *paint.TextLink) {
-					url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
-					grr.Log0(ctx.OpenURL(url.String()))
+					grr.Log0(ctx.OpenURL(tl.URL))
 				})
 			}
 		})
@@ -219,18 +218,17 @@ func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 }
 
 // HandleLabel creates a new label from the given information, setting the text and
-// the label click function so that URLs are opened according to [OpenURLFunc].
+// the label click function so that URLs are opened according to [Context.OpenURL].
 func HandleLabel(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
 	lb := gi.NewLabel(par).SetText(ExtractText(ctx, par, n))
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
-		url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
-		grr.Log0(ctx.OpenURL(url.String()))
+		grr.Log0(ctx.OpenURL(tl.URL))
 	})
 	return lb
 }
 
 // HandleLabelTag creates a new label from the given information, setting the text and
-// the label click function so that URLs are opened according to [OpenURLFunc]. Also,
+// the label click function so that URLs are opened according to [Context.OpenURL]. Also,
 // it wraps the label text with the [NodeString] of the given node, meaning that it
 // should be used for standalone elements that are meant to only exist in labels
 // (eg: a, span, b, code, etc).
@@ -239,8 +237,7 @@ func HandleLabelTag(ctx Context, par gi.Widget, n *html.Node) *gi.Label {
 	str := start + ExtractText(ctx, par, n) + end
 	lb := gi.NewLabel(par).SetText(str)
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
-		url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
-		grr.Log0(ctx.OpenURL(url.String()))
+		grr.Log0(ctx.OpenURL(tl.URL))
 	})
 	return lb
 }
