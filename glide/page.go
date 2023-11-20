@@ -19,13 +19,12 @@ import (
 // Page represents one web browser page
 type Page struct {
 	gi.Frame
-	gidom.ContextBase
 
 	// The history of URLs that have been visited. The oldest page is first.
 	History []string
 
-	// PgURL is the current page URL
-	PgURL string
+	// PageURL is the current page URL
+	PageURL string
 }
 
 var _ ki.Ki = (*Page)(nil)
@@ -39,28 +38,23 @@ func (pg *Page) OnInit() {
 
 // OpenURL sets the content of the page from the given url.
 func (pg *Page) OpenURL(url string) error {
-	resp, err := gidom.Get(pg, url)
+	resp, err := gidom.Get(pg.Context(), url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	url = resp.Request.URL.String()
-	pg.PgURL = url
+	pg.PageURL = url
 	pg.History = append(pg.History, url)
 	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
-	err = gidom.ReadHTML(pg, pg, resp.Body)
+	err = gidom.ReadHTML(pg.Context(), pg, resp.Body)
 	if err != nil {
 		return err
 	}
 	pg.Update()
 	pg.UpdateEndLayout(updt)
 	return nil
-}
-
-// PageURL returns the current page URL
-func (pg *Page) PageURL() string {
-	return pg.PgURL
 }
 
 // TopAppBar is the default [gi.TopAppBar] for a [Page]
