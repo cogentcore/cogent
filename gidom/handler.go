@@ -92,7 +92,7 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 			s.Direction = styles.Column
 		})
 	case "button":
-		w = HandleLabel(ctx, par, n)
+		w = gi.NewButton(par).SetText(ExtractText(ctx, par, n))
 	case "h1":
 		w = HandleLabel(ctx, par, n).SetType(gi.LabelHeadlineLarge)
 	case "h2":
