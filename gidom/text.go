@@ -57,7 +57,7 @@ func NodeString(n *html.Node) (start, end string) {
 	if n.Type != html.ElementNode {
 		return
 	}
-	tag := n.DataAtom.String()
+	tag := n.Data
 	start = "<" + tag
 	for _, a := range n.Attr {
 		start += " " + a.Key + "=" + `"` + a.Val + `"`
@@ -82,7 +82,7 @@ func IsText(n *html.Node) bool {
 		return true
 	}
 	if n.Type == html.ElementNode {
-		tag := n.DataAtom.String()
+		tag := n.Data
 		return slices.Contains(TextTags, tag)
 	}
 	return false

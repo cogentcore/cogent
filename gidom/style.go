@@ -25,7 +25,7 @@ func ApplyStyle(ctx Context, par gi.Widget, n *html.Node) error {
 			w := ctx.WidgetForNode(match)
 			// TODO(kai/styprops): need to go into text pseudo elements to stop these errors
 			if w == nil {
-				slog.Error("did not find widget for node", "type", match.DataAtom.String(), "id", GetAttr(match, "id"))
+				slog.Error("did not find widget for node", "type", match.Data, "id", GetAttr(match, "id"))
 				continue
 			}
 			// fmt.Println("STYLE", w, ":\n", r)

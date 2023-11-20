@@ -47,7 +47,7 @@ var ElementHandlers = map[string]Handler{}
 // in [ElementHandlers] and returns the result, using the given context. If there
 // is no handler associated with it, it uses default hardcoded configuration code.
 func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handleChildren bool) {
-	tag := n.DataAtom.String()
+	tag := n.Data
 	h, ok := ElementHandlers[tag]
 	if ok {
 		return h(par, n)
@@ -212,7 +212,7 @@ func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 			wb.SetProp(attr.Key, attr.Val)
 		}
 	}
-	wb.SetProp("tag", n.DataAtom.String())
+	wb.SetProp("tag", n.Data)
 	ctx.SetWidgetForNode(w, n)
 	return w
 }
