@@ -20,8 +20,8 @@ var exampleHTML embed.FS
 func main() { gimain.Run(app) }
 
 func app() {
-	sc := gi.NewScene("gidom")
-	b := grr.Log(exampleHTML.ReadFile("example.html"))
-	grr.Log0(gidom.ReadHTML(gidom.BaseContext(), sc, bytes.NewBuffer(b)))
-	gi.NewWindow(sc).Run().Wait()
+	b := gi.NewBody("gidom")
+	h := grr.Log(exampleHTML.ReadFile("example.html"))
+	grr.Log0(gidom.ReadHTML(gidom.BaseContext(), b, bytes.NewBuffer(h)))
+	gi.NewWindow(gi.NewScene(b)).Run().Wait()
 }

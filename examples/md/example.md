@@ -49,3 +49,7 @@ func main() {
 ### This is an image of the Go Gopher: 
 
 ![Image of the Go Gopher](https://miro.medium.com/v2/resize:fit:1000/0*YISbBYJg5hkJGcQd.png)
+
+<h3 style="color:red">This is some HTML:</h3>
+
+<button>Click me!</button>

@@ -9,14 +9,22 @@ import (
 	"fmt"
 
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
 	"goki.dev/gi/v2/gi"
 )
 
 // ReadMD reads MD (markdown) from the given bytes and adds corresponding
 // GoGi widgets to the given [gi.Widget], using the given context.
 func ReadMD(ctx Context, par gi.Widget, b []byte) error {
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithRendererOptions(
+			html.WithUnsafe(),
+		),
+	)
 	var buf bytes.Buffer
-	err := goldmark.Convert(b, &buf)
+	err := md.Convert(b, &buf)
 	if err != nil {
 		return fmt.Errorf("error parsing MD (markdown): %w", err)
 	}
