@@ -79,9 +79,9 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		if grr.Log0(err) != nil {
 			return
 		}
-		ctx.SetStyle(string(b))
+		ctx.AddStyle(string(b))
 	case "style":
-		ctx.SetStyle(ExtractText(ctx))
+		ctx.AddStyle(ExtractText(ctx))
 	case "div", "section", "nav", "footer", "header":
 		w = gi.NewFrame(ctx.Parent())
 		handleChildren = true
