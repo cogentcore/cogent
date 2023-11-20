@@ -89,7 +89,7 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 		w = gi.NewFrame(par)
 		handleChildren = true
 		w.Style(func(s *styles.Style) {
-			s.Direction = styles.Col
+			s.Direction = styles.Column
 		})
 	case "button":
 		w = HandleLabel(ctx, par, n)
