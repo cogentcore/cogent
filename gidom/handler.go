@@ -70,7 +70,7 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		if rel != "stylesheet" {
 			return
 		}
-		resp, err := Get(ctx, GetAttr(n, "href"))
+		resp, err := Get(ctx, GetAttr(ctx.Node(), "href"))
 		if grr.Log0(err) != nil {
 			return
 		}
