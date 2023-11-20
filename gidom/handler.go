@@ -142,6 +142,15 @@ func HandleElement(ctx Context, par gi.Widget, n *html.Node) (w gi.Widget, handl
 		etxt := ExtractText(ctx, par, n)
 		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
+		ntv.OnWidgetAdded(func(w gi.Widget) {
+			switch w := w.(type) {
+			case *gi.Label:
+				w.HandleLabelClick(func(tl *paint.TextLink) {
+					url := grr.Log(ParseRelativeURL(tl.URL, ctx.PageURL()))
+					grr.Log0(ctx.OpenURL(url.String()))
+				})
+			}
+		})
 		w = ntv
 	case "img":
 		src := GetAttr(n, "src")
