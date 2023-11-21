@@ -99,7 +99,34 @@ func (cb *ContextBase) InlineParent() gi.Widget {
 
 func (cb *ContextBase) SetParent(pw gi.Widget) {
 	cb.BlockPw = pw
-	cb.InlinePw = nil // gets reset
+	if cb.InlinePw != nil {
+		// ipDepth := 0
+		// cb.InlinePw.WalkUpParent(func(k ki.Ki) bool {
+		// 	ipDepth++
+		// 	return ki.Continue
+		// })
+		// pwDepth := 0
+		// pw.WalkUpParent(func(k ki.Ki) bool {
+		// 	pwDepth++
+		// 	return ki.Continue
+		// })
+		// fmt.Println(cb.InlinePw, pw)
+		// if ipDepth <= pwDepth {
+		cb.InlinePw = nil // gets reset
+		// }
+		// // isChild := false
+		// fmt.Println(ki.Depth(pw), ki.Depth(cb.InlinePw))
+		// // cb.InlinePw.WalkPre(func(k ki.Ki) bool {
+		// // 	if pw == k {
+		// // 		isChild = true
+		// // 		return ki.Break
+		// // 	}
+		// // 	return ki.Continue
+		// // })
+		// if !isChild {
+		// 	cb.InlinePw = nil // gets reset
+		// }
+	}
 }
 
 // PageURL returns the URL of the current page, and "" if there
