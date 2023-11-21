@@ -56,7 +56,7 @@ func New[T gi.Widget](ctx Context) T {
 	}
 	var par gi.Widget
 	switch display {
-	case "inline", "inline-block":
+	case "inline", "inline-block", "":
 		par = ctx.InlineParent()
 	default:
 		par = ctx.BlockParent()
@@ -125,10 +125,7 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		ctx.AddStyle(string(b))
 	case "style":
 		ctx.AddStyle(ExtractText(ctx))
-	case "div", "section", "nav", "footer", "header":
-		w = New[*gi.Frame](ctx)
-		handleChildren = true
-	case "body", "main":
+	case "body", "main", "div", "section", "nav", "footer", "header":
 		w = New[*gi.Frame](ctx)
 		handleChildren = true
 		w.Style(func(s *styles.Style) {

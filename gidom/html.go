@@ -35,6 +35,11 @@ func ReadHTMLString(ctx Context, par gi.Widget, s string) error {
 // ReadHTMLNode reads HTML from the given [*html.Node] and adds corresponding GoGi
 // widgets to the given [gi.Widget], using the given context.
 func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
+	// nil parent means we are root, so we add user agent styles here
+	if n.Parent == nil {
+		ctx.AddStyle(UserAgentStyles)
+	}
+
 	newPar := par
 	handleChildren := true
 	switch n.Type {
@@ -59,11 +64,6 @@ func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 	if n.NextSibling != nil {
 		ReadHTMLNode(ctx, par, n.NextSibling)
 	}
-
-	// // nil parent means we are root, so we apply style here
-	// if n.Parent == nil {
-	// 	return ApplyStyle(ctx, par, n)
-	// }
 	return nil
 }
 

@@ -4,6 +4,16 @@
 
 package gidom
 
+import (
+	_ "embed"
+)
+
+// UserAgentStyles contains the default user agent styles, as defined
+// at https://chromium.googlesource.com/chromium/blink/+/refs/heads/main/Source/core/css/html.css.
+//
+//go:embed html.css
+var UserAgentStyles string
+
 // // ApplyStyle applies styling information to the given parent widget,
 // // using the given context. This should only be called in [ReadHTMLNode]
 // // after the widget has already been populated by the node tree.
