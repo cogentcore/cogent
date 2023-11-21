@@ -43,6 +43,49 @@ type Handler func(ctx Context) (w gi.Widget, handleChildren bool)
 // defined in [HandleElement].
 var ElementHandlers = map[string]Handler{}
 
+// New adds a new widget of the given type to the context parent.
+func New[T gi.Widget](ctx Context) T {
+	rules := ctx.Style()
+	display := ""
+	for _, rule := range rules {
+		for _, decl := range rule.Declarations {
+			if decl.Property == "display" {
+				display = decl.Value
+			}
+		}
+	}
+	var par gi.Widget
+	switch display {
+	case "inline", "inline-block":
+		par = ctx.InlineParent()
+	default:
+		par = ctx.BlockParent()
+	}
+	w := ki.New[T](par)
+	wb := w.AsWidget()
+
+	for _, attr := range ctx.Node().Attr {
+		switch attr.Key {
+		case "id":
+			wb.SetName(attr.Val)
+		case "class":
+			wb.SetClass(attr.Val)
+		default:
+			wb.SetProp(attr.Key, attr.Val)
+		}
+	}
+	wb.SetProp("tag", ctx.Node().Data)
+	w.Style(func(s *styles.Style) {
+		for _, rule := range rules {
+			for _, decl := range rule.Declarations {
+				// TODO(kai/styprops): parent style and context
+				s.StyleFromProp(s, decl.Property, decl.Value, colors.BaseContext(s.Color))
+			}
+		}
+	})
+	return w
+}
+
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
 // in [ElementHandlers] and returns the result, using the given context. If there
 // is no handler associated with it, it uses default hardcoded configuration code.
@@ -83,16 +126,16 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 	case "style":
 		ctx.AddStyle(ExtractText(ctx))
 	case "div", "section", "nav", "footer", "header":
-		w = gi.NewFrame(ctx.Parent())
+		w = New[*gi.Frame](ctx)
 		handleChildren = true
 	case "body", "main":
-		w = gi.NewFrame(ctx.Parent())
+		w = New[*gi.Frame](ctx)
 		handleChildren = true
 		w.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
 	case "button":
-		w = gi.NewButton(ctx.Parent()).SetText(ExtractText(ctx))
+		w = New[*gi.Button](ctx).SetText(ExtractText(ctx))
 	case "h1":
 		w = HandleLabel(ctx).SetType(gi.LabelHeadlineLarge)
 	case "h2":
@@ -119,11 +162,11 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 			w := ki.LastChild(ptv).(gi.Widget)
 			return w, true
 		}
-		tv := giv.NewTreeView(ctx.Parent()).SetText("").SetIcon(icons.None)
+		tv := New[*giv.TreeView](ctx).SetText("").SetIcon(icons.None)
 		tv.RootView = tv
 		return tv, true
 	case "li":
-		ntv := giv.NewTreeView(ctx.Parent())
+		ntv := New[*giv.TreeView](ctx)
 		ftxt := ""
 		ptv, ok := ctx.Parent().(*giv.TreeView)
 		if ok {
@@ -161,7 +204,7 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		if strings.Contains(resp.Header.Get("Content-Type"), "svg") {
 			// TODO(kai/gidom): support svg
 		} else {
-			img := gi.NewImage(ctx.Parent())
+			img := New[*gi.Image](ctx)
 			im, _, err := images.Read(resp.Body)
 			if err != nil {
 				slog.Error("error loading image", "url", src, "err", err)
@@ -175,18 +218,18 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		ityp := GetAttr(ctx.Node(), "type")
 		switch ityp {
 		case "number":
-			w = gi.NewSpinner(ctx.Parent())
+			w = New[*gi.Spinner](ctx)
 		case "color":
 			w = giv.NewValue(ctx.Parent(), colors.Black).AsWidget()
 		case "datetime":
 			w = giv.NewValue(ctx.Parent(), time.Now()).AsWidget()
 		default:
-			w = gi.NewTextField(ctx.Parent())
+			w = New[*gi.TextField](ctx)
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
 		buf.SetText([]byte(ExtractText(ctx)))
-		w = texteditor.NewEditor(ctx.Parent()).SetBuf(buf)
+		w = New[*texteditor.Editor](ctx).SetBuf(buf)
 	default:
 		return ctx.Parent(), true
 	}
@@ -229,7 +272,7 @@ func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 // HandleLabel creates a new label from the given information, setting the text and
 // the label click function so that URLs are opened according to [Context.OpenURL].
 func HandleLabel(ctx Context) *gi.Label {
-	lb := gi.NewLabel(ctx.Parent()).SetText(ExtractText(ctx))
+	lb := New[*gi.Label](ctx).SetText(ExtractText(ctx))
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
 		grr.Log0(ctx.OpenURL(tl.URL))
 	})
@@ -244,7 +287,7 @@ func HandleLabel(ctx Context) *gi.Label {
 func HandleLabelTag(ctx Context) *gi.Label {
 	start, end := NodeString(ctx.Node())
 	str := start + ExtractText(ctx) + end
-	lb := gi.NewLabel(ctx.Parent()).SetText(str)
+	lb := New[*gi.Label](ctx).SetText(str)
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
 		grr.Log0(ctx.OpenURL(tl.URL))
 	})
