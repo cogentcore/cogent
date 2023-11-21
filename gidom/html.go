@@ -41,27 +41,26 @@ func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 		ctx.AddStyle(UserAgentStyles)
 	}
 
-	newPar := par
-	handleChildren := true
 	switch n.Type {
 	case html.TextNode:
 		str := strings.TrimSpace(n.Data)
 		if str != "" {
-			newPar = ConfigWidget(ctx, gi.NewLabel(par).SetText(str), n)
+			New[*gi.Label](ctx).SetText(str)
 		}
-		handleChildren = false
 	case html.ElementNode:
 		ctx.SetNode(n)
 		ctx.SetBlockParent(par)
-		newPar, handleChildren = HandleElement(ctx)
-		// if newPar != nil {
-		// 	ConfigWidget(ctx, newPar, n)
-		// }
+		ctx.SetNewParent(nil)
+
+		HandleElement(ctx)
+	default:
+		ctx.SetNewParent(par)
 	}
 
-	if handleChildren && newPar != nil && n.FirstChild != nil {
-		ReadHTMLNode(ctx, newPar, n.FirstChild)
+	if ctx.NewParent() != nil && n.FirstChild != nil {
+		ReadHTMLNode(ctx, ctx.NewParent(), n.FirstChild)
 	}
+
 	if n.NextSibling != nil {
 		ReadHTMLNode(ctx, par, n.NextSibling)
 	}

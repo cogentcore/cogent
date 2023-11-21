@@ -43,6 +43,9 @@ type Context interface {
 	// should be added to.
 	SetInlineParent(pw gi.Widget)
 
+	NewParent() gi.Widget
+	SetNewParent(pw gi.Widget)
+
 	// PageURL returns the URL of the current page, and "" if there
 	// is no current page.
 	PageURL() string
@@ -76,6 +79,7 @@ type ContextBase struct {
 	WidgetsForNodes map[*html.Node]gi.Widget
 	BlockPw         gi.Widget
 	InlinePw        gi.Widget
+	NewPw           gi.Widget
 }
 
 func (cb *ContextBase) Node() *html.Node {
@@ -111,6 +115,14 @@ func (cb *ContextBase) InlineParent() gi.Widget {
 
 func (cb *ContextBase) SetInlineParent(pw gi.Widget) {
 	cb.InlinePw = pw
+}
+
+func (cb *ContextBase) NewParent() gi.Widget {
+	return cb.NewPw
+}
+
+func (cb *ContextBase) SetNewParent(pw gi.Widget) {
+	cb.NewPw = pw
 }
 
 // PageURL returns the URL of the current page, and "" if there

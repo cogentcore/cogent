@@ -35,7 +35,7 @@ import (
 // already been handled (or will not be handled), and thus should not
 // be handled further. If it returns a true, then the children
 // will be handled, with the returned widget as their parent.
-type Handler func(ctx Context) (w gi.Widget, handleChildren bool)
+type Handler func(ctx Context)
 
 // ElementHandlers is a map of [Handler] functions for each HTML element
 // type (eg: "button", "input", "p"). It is empty by default, but can be
@@ -90,15 +90,17 @@ func New[T gi.Widget](ctx Context) T {
 // HandleELement calls the [Handler] associated with the given element [*html.Node]
 // in [ElementHandlers] and returns the result, using the given context. If there
 // is no handler associated with it, it uses default hardcoded configuration code.
-func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
+func HandleElement(ctx Context) {
 	tag := ctx.Node().Data
 	h, ok := ElementHandlers[tag]
 	if ok {
-		return h(ctx)
+		h(ctx)
+		return
 	}
 
 	if slices.Contains(TextTags, tag) {
-		return HandleLabelTag(ctx), false
+		HandleLabelTag(ctx)
+		return
 	}
 
 	switch tag {
@@ -127,29 +129,29 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 	case "style":
 		ctx.AddStyle(ExtractText(ctx))
 	case "body", "main", "div", "section", "nav", "footer", "header":
-		w = New[*gi.Frame](ctx)
-		handleChildren = true
-		w.Style(func(s *styles.Style) {
+		f := New[*gi.Frame](ctx)
+		f.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
+		ctx.SetNewParent(f)
 	case "button":
-		w = New[*gi.Button](ctx).SetText(ExtractText(ctx))
+		New[*gi.Button](ctx).SetText(ExtractText(ctx))
 	case "h1":
-		w = HandleLabel(ctx).SetType(gi.LabelHeadlineLarge)
+		HandleLabel(ctx).SetType(gi.LabelHeadlineLarge)
 	case "h2":
-		w = HandleLabel(ctx).SetType(gi.LabelHeadlineSmall)
+		HandleLabel(ctx).SetType(gi.LabelHeadlineSmall)
 	case "h3":
-		w = HandleLabel(ctx).SetType(gi.LabelTitleLarge)
+		HandleLabel(ctx).SetType(gi.LabelTitleLarge)
 	case "h4":
-		w = HandleLabel(ctx).SetType(gi.LabelTitleMedium)
+		HandleLabel(ctx).SetType(gi.LabelTitleMedium)
 	case "h5":
-		w = HandleLabel(ctx).SetType(gi.LabelTitleSmall)
+		HandleLabel(ctx).SetType(gi.LabelTitleSmall)
 	case "h6":
-		w = HandleLabel(ctx).SetType(gi.LabelLabelSmall)
+		HandleLabel(ctx).SetType(gi.LabelLabelSmall)
 	case "p":
-		w = HandleLabel(ctx)
+		HandleLabel(ctx)
 	case "pre":
-		w = HandleLabel(ctx).Style(func(s *styles.Style) {
+		HandleLabel(ctx).Style(func(s *styles.Style) {
 			s.Text.WhiteSpace = styles.WhiteSpacePre
 		})
 	case "ol", "ul":
@@ -158,11 +160,13 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		// of nested list items and prevents the created of duplicated tree view items.
 		if ptv, ok := ctx.Parent().(*giv.TreeView); ok {
 			w := ki.LastChild(ptv).(gi.Widget)
-			return w, true
+			ctx.SetNewParent(w)
+			return
 		}
 		tv := New[*giv.TreeView](ctx).SetText("").SetIcon(icons.None)
 		tv.RootView = tv
-		return tv, true
+		ctx.SetNewParent(tv)
+		return
 	case "li":
 		ntv := New[*giv.TreeView](ctx)
 		ftxt := ""
@@ -191,10 +195,8 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 				})
 			}
 		})
-		w = ntv
 	case "img":
 		img := New[*gi.Image](ctx)
-		w = img
 		n := ctx.Node()
 		go func() {
 			src := GetAttr(n, "src")
@@ -220,22 +222,22 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		ityp := GetAttr(ctx.Node(), "type")
 		switch ityp {
 		case "number":
-			w = New[*gi.Spinner](ctx)
+			New[*gi.Spinner](ctx)
 		case "color":
-			w = giv.NewValue(ctx.Parent(), colors.Black).AsWidget()
+			// TODO(kai/gidom): handle giv values with New structure correctly
+			giv.NewValue(ctx.Parent(), colors.Black).AsWidget()
 		case "datetime":
-			w = giv.NewValue(ctx.Parent(), time.Now()).AsWidget()
+			giv.NewValue(ctx.Parent(), time.Now()).AsWidget()
 		default:
-			w = New[*gi.TextField](ctx)
+			New[*gi.TextField](ctx)
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
 		buf.SetText([]byte(ExtractText(ctx)))
-		w = New[*texteditor.Editor](ctx).SetBuf(buf)
+		New[*texteditor.Editor](ctx).SetBuf(buf)
 	default:
-		return ctx.Parent(), true
+		ctx.SetNewParent(ctx.Parent())
 	}
-	return
 }
 
 // ConfigWidget sets the properties of the given widget based on the properties
