@@ -4,7 +4,10 @@
 
 package glide
 
-import "goki.dev/glide/gidom"
+import (
+	"goki.dev/glide/gidom"
+	"goki.dev/grr"
+)
 
 // Context implements [gidom.Context]
 type Context struct {
@@ -25,6 +28,6 @@ func (c *Context) PageURL() string {
 	return c.Page.PageURL
 }
 
-func (c *Context) OpenURL(url string) error {
-	return c.Page.OpenURL(url)
+func (c *Context) OpenURL(url string) {
+	grr.Log0(c.Page.OpenURL(url))
 }

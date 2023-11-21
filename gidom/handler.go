@@ -27,10 +27,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-// ElementHandlers is a map of [Handler] functions for each HTML element
+// ElementHandlers is a map of handler functions for each HTML element
 // type (eg: "button", "input", "p"). It is empty by default, but can be
 // used by anyone in need of behavior different than the default behavior
-// defined in [HandleElement].
+// defined in [HandleElement] (for example, for custom elements).
 var ElementHandlers = map[string]func(ctx Context){}
 
 // New adds a new widget of the given type to the context parent.
@@ -77,9 +77,9 @@ func New[T gi.Widget](ctx Context) T {
 	return w
 }
 
-// HandleELement calls the [Handler] associated with the given element [*html.Node]
-// in [ElementHandlers] and returns the result, using the given context. If there
-// is no handler associated with it, it uses default hardcoded configuration code.
+// HandleELement calls the handler in [ElementHandlers] associated with the current node
+// using the given context. If there is no handler associated with it, it uses default
+// hardcoded configuration code.
 func HandleElement(ctx Context) {
 	tag := ctx.Node().Data
 	h, ok := ElementHandlers[tag]
@@ -181,7 +181,7 @@ func HandleElement(ctx Context) {
 			switch w := w.(type) {
 			case *gi.Label:
 				w.HandleLabelClick(func(tl *paint.TextLink) {
-					grr.Log0(ctx.OpenURL(tl.URL))
+					ctx.OpenURL(tl.URL)
 				})
 			}
 		})
@@ -235,7 +235,7 @@ func HandleElement(ctx Context) {
 func HandleLabel(ctx Context) *gi.Label {
 	lb := New[*gi.Label](ctx).SetText(ExtractText(ctx))
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
-		grr.Log0(ctx.OpenURL(tl.URL))
+		ctx.OpenURL(tl.URL)
 	})
 	return lb
 }
@@ -250,7 +250,7 @@ func HandleLabelTag(ctx Context) *gi.Label {
 	str := start + ExtractText(ctx) + end
 	lb := New[*gi.Label](ctx).SetText(str)
 	lb.HandleLabelClick(func(tl *paint.TextLink) {
-		grr.Log0(ctx.OpenURL(tl.URL))
+		ctx.OpenURL(tl.URL)
 	})
 	return lb
 }

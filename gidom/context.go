@@ -18,20 +18,32 @@ import (
 	"golang.org/x/net/html"
 )
 
-// Context contains context information needed for gidom calls.
+// Context contains context information about the current state of a gidom
+// reader and its surrounding context.
 type Context interface {
+	// Node returns the node that is currently being read.
 	Node() *html.Node
+
+	// SetNode sets the node that is currently being read.
 	SetNode(node *html.Node)
 
-	// ParentFor returns the current parent widget that a widget
-	// associated with the given node should be added to.
+	// Parent returns the current parent widget that a widget
+	// associated with the current node should be added to.
 	Parent() gi.Widget
 
-	// Parent returns the current parent widget that non-inline elements
+	// NewParent returns the current parent widget that children of
+	// the previously read element should be added to, if any.
+	NewParent() gi.Widget
+
+	// SetNewParent sets the current parent widget that children of
+	// the previous read element should be added to, if any.
+	SetNewParent(pw gi.Widget)
+
+	// BlockParent returns the current parent widget that non-inline elements
 	// should be added to.
 	BlockParent() gi.Widget
 
-	// SetParent sets the current parent widget that non-inline elements
+	// SetBlockParent sets the current parent widget that non-inline elements
 	// should be added to.
 	SetBlockParent(pw gi.Widget)
 
@@ -43,20 +55,18 @@ type Context interface {
 	// should be added to.
 	SetInlineParent(pw gi.Widget)
 
-	NewParent() gi.Widget
-	SetNewParent(pw gi.Widget)
-
 	// PageURL returns the URL of the current page, and "" if there
 	// is no current page.
 	PageURL() string
 
 	// OpenURL opens the given URL.
-	OpenURL(url string) error
+	OpenURL(url string)
 
-	// AddStyle adds the given CSS style string to the page's styles.
-	AddStyle(style string)
-
+	// Style returns the styling rules for the node that is currently being read.
 	Style() []*css.Rule
+
+	// AddStyle adds the given CSS style string to the page's compiled styles.
+	AddStyle(style string)
 }
 
 // BaseContext returns a [Context] with basic implementations of all functions.
@@ -88,6 +98,14 @@ func (cb *ContextBase) Parent() gi.Widget {
 	return cb.BlockParent()
 }
 
+func (cb *ContextBase) NewParent() gi.Widget {
+	return cb.NewPw
+}
+
+func (cb *ContextBase) SetNewParent(pw gi.Widget) {
+	cb.NewPw = pw
+}
+
 func (cb *ContextBase) BlockParent() gi.Widget {
 	return cb.BlockPw
 }
@@ -111,25 +129,19 @@ func (cb *ContextBase) SetInlineParent(pw gi.Widget) {
 	cb.InlinePw = pw
 }
 
-func (cb *ContextBase) NewParent() gi.Widget {
-	return cb.NewPw
-}
-
-func (cb *ContextBase) SetNewParent(pw gi.Widget) {
-	cb.NewPw = pw
-}
-
-// PageURL returns the URL of the current page, and "" if there
-// is no current page.
 func (cb *ContextBase) PageURL() string { return "" }
 
-// OpenURL opens the given URL.
-func (cb *ContextBase) OpenURL(url string) error {
+func (cb *ContextBase) OpenURL(url string) {
 	goosi.TheApp.OpenURL(url)
-	return nil
 }
 
-// AddStyle adds the given CSS style string to the page's styles.
+func (cb *ContextBase) Style() []*css.Rule {
+	if cb.Rules == nil {
+		return nil
+	}
+	return cb.Rules[cb.Node()]
+}
+
 func (cb *ContextBase) AddStyle(style string) {
 	ss, err := parser.Parse(style)
 	if grr.Log0(err) != nil {
@@ -159,12 +171,4 @@ func (cb *ContextBase) AddStyle(style string) {
 			cb.Rules[match] = append(cb.Rules[match], rule)
 		}
 	}
-}
-
-// Style returns the styles for the current node.
-func (cb *ContextBase) Style() []*css.Rule {
-	if cb.Rules == nil {
-		return nil
-	}
-	return cb.Rules[cb.Node()]
 }
