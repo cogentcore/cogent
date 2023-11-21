@@ -573,7 +573,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	//
 	// win.MainMenuUpdated()
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 
 	if doPath {
 		ge.OpenPath(gi.FileName(path))

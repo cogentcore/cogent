@@ -65,7 +65,7 @@ func KeyMapsView(km *KeyMaps) {
 		})
 	}
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +113,7 @@ func PrefsView(pf *Preferences) *giv.StructView {
 		})
 	}
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 	return tv
 }
 
@@ -142,7 +142,7 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 		pf.Changed = true
 	})
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 	return tv
 }
 
@@ -205,7 +205,7 @@ func (vv *KeyMapValue) OpenDialog(ctx gi.Widget) {
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
 	d := gi.NewBody(ctx).AddTitle("Select a key map").AddText(vv.Doc()).FullWindow(true)
-	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(d, &si)
+	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
 	d.OnAccept(func(e events.Event) {
 		if si >= 0 {
 			km := AvailKeyMaps[si]
@@ -269,7 +269,7 @@ func LangsView(pt *Langs) {
 		})
 	}
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -319,7 +319,7 @@ func CmdsView(pt *Commands) {
 		})
 	}
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -380,7 +380,7 @@ func (vv *CmdValue) OpenDialog(ctx gi.Widget) {
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
 	d := gi.NewBody(ctx).AddTitle("Select a command").AddText(vv.Doc()).FullWindow(true)
-	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(d, &si)
+	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
 	d.OnAccept(func(e events.Event) {
 		if si >= 0 {
 			pt := AvailCmds[si]
@@ -435,7 +435,7 @@ func SplitsView(pt *Splits) {
 		})
 	}
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -499,7 +499,7 @@ func (vv *SplitValue) OpenDialog(ctx gi.Widget) {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
 	d := gi.NewBody(ctx).AddTitle("Select a Named Splitter Config").AddText(vv.Doc()).FullWindow(true)
-	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(d, &si)
+	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
 	d.OnAccept(func(e events.Event) {
 		if si >= 0 {
 			pt := AvailSplits[si]
@@ -551,7 +551,7 @@ func RegistersView(pt *Registers) {
 		})
 	}
 
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////

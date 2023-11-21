@@ -1444,6 +1444,6 @@ func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarVi
 
 	// tb := vv.Toolbar()
 	// tb.UpdateActions()
-	gi.NewWindow(sc).Run()
+	sc.NewWindow().Run()
 	return vv
 }
