@@ -14,12 +14,12 @@ import (
 func main() { gimain.Run(app) }
 
 func app() {
-	b := gi.NewBody("glide").SetTitle("Glide")
+	gi.SetAppName("glide")
+	b := gi.NewBody().SetTitle("Glide")
 	pg := glide.NewPage(b, "page")
 	grr.Log0(pg.OpenURL("https://google.com"))
-	sc := gi.NewScene(b)
-	sc.Header.Add(func(par gi.Widget) {
-		pg.TopAppBar(sc.TopAppBar(par))
+	b.AddTopBar(func(par gi.Widget) {
+		pg.TopAppBar(b.TopAppBar(par))
 	})
-	gi.NewWindow(sc).Run().Wait()
+	b.NewWindow().Run().Wait()
 }
