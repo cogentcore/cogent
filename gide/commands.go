@@ -377,19 +377,23 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			d := gi.NewBody(ge.Scene()).AddTitle("Gide Command Prompt").
-				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc)).Modal(true)
+			d := gi.NewBody().AddTitle("Gide Command Prompt").
+				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := gi.NewTextField(d).SetText(curval)
-			d.Cancel().Ok().Run()
-			d.OnAccept(func(e events.Event) {
-				val := tf.Text()
-				cmvals[cm.Label()] = val
-				(*avp)[pv] = val
-				cnt++
-				if cnt == sz {
-					cm.RunAfterPrompts(ge, buf)
-				}
+			d.AddBottomBar(func(pw gi.Widget) {
+				d.AddCancel(pw)
+				d.AddOk(pw).OnClick(func(e events.Event) {
+					val := tf.Text()
+					cmvals[cm.Label()] = val
+					(*avp)[pv] = val
+					cnt++
+					if cnt == sz {
+						cm.RunAfterPrompts(ge, buf)
+					}
+				})
 			})
+			d.NewDialog(ge.Scene()).Run()
+
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
 			fn := ge.ActiveFileNode()
@@ -421,13 +425,15 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
 	if cm.Confirm {
-		d := gi.NewBody(ge.Scene()).AddTitle("Confirm Command").
-			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc)).
-			Modal(true).Cancel().Ok("Run")
-		d.Run()
-		d.OnAccept(func(e events.Event) {
-			cm.RunAfterPrompts(ge, buf)
+		d := gi.NewBody().AddTitle("Confirm Command").
+			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddCancel(pw)
+			d.AddOk(pw).SetText("Run").OnClick(func(e events.Event) {
+				cm.RunAfterPrompts(ge, buf)
+			})
 		})
+		d.NewDialog(ge.Scene()).Run()
 		return
 	}
 	pvals, hasp := cm.HasPrompts()

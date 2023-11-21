@@ -258,8 +258,12 @@ func (sv *SpellView) CheckNext() {
 	}
 	if done {
 		tv.ClearHighlights()
-		gi.NewBody(sv).AddTitle("Spelling Check Complete").
-			AddText("End of file, spelling check complete").Modal(true).Ok().Run()
+		d := gi.NewBody().AddTitle("Spelling Check Complete").
+			AddText("End of file, spelling check complete")
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw)
+		})
+		d.NewDialog(sv).Run()
 		return
 	}
 	sv.UnkLex = sv.Errs[sv.CurIdx]
@@ -334,17 +338,21 @@ func (sv *SpellView) ChangeAllAction() {
 // TrainAction allows you to train on additional text files and also to rebuild the spell model
 func (sv *SpellView) TrainAction() {
 	cur := ""
-	d := gi.NewBody(sv).AddTitle("Select a Text File to Add to Corpus").FullWindow(true)
+	d := gi.NewBody().AddTitle("Select a Text File to Add to Corpus")
 	fv := giv.NewFileView(d).SetFilename(cur, ".txt")
 	fv.OnSelect(func(e events.Event) {
 		cur = fv.SelectedFile()
 	}).OnDoubleClick(func(e events.Event) {
 		cur = fv.SelectedFile()
-		d.AcceptDialog()
+		d.Close()
 	})
-	d.Cancel().Ok().OnAccept(func(e events.Event) {
-		gi.AddToSpellModel(cur)
-	}).Run()
+	d.AddBottomBar(func(pw gi.Widget) {
+		d.AddCancel(pw)
+		d.AddOk(pw).OnClick(func(e events.Event) {
+			gi.AddToSpellModel(cur)
+		})
+	})
+	d.NewFullDialog(sv).Run()
 }
 
 // UnkStartPos returns the start position of the current unknown word

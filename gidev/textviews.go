@@ -220,8 +220,12 @@ func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gid
 	pos := up.Fragment
 	tv, _, ok = ge.LinkViewFile(gi.FileName(fpath))
 	if !ok {
-		gi.NewBody(ge).AddTitle("Could not open file at link").
-			AddText(fmt.Sprintf("Could not find or open file path in project: %v", fpath)).Modal(true).Ok().Run()
+		d := gi.NewBody().AddTitle("Could not open file at link").
+			AddText(fmt.Sprintf("Could not find or open file path in project: %v", fpath))
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw)
+		})
+		d.NewDialog(ge).Run()
 		return
 	}
 	if pos == "" {

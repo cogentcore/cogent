@@ -41,7 +41,7 @@ func (ge *GideView) ConfigGideView(sc *gi.Scene) {
 	}
 
 	updt := ge.UpdateStart()
-	sc.TopAppBar = ge.TopAppBar
+	// sc.TopAppBar = ge.TopAppBar
 
 	ge.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -209,7 +209,6 @@ func (ge *GideView) ConfigStatusBar() {
 	lbl.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
 		s.Min.Y.Em(1)
-		s.Align.Y = styles.AlignStart
 		s.Margin.Zero()
 		s.Padding.Zero()
 		s.Text.TabSize = 4

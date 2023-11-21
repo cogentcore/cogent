@@ -27,8 +27,6 @@ func DefaultTopAppBar(tb *gi.TopAppBar) {
 }
 
 func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
-	gi.DefaultTopAppBar(tb)
-
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.SetChecked(ge.Prefs.GoMod)

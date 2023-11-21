@@ -202,8 +202,12 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) {
 		if ge.Files.DirRepo != nil {
 			return ge.Files.LogVcs(true, since)
 		}
-		gi.NewBody(ge).AddTitle("No Version Control Repository").
-			AddText("No VCS Repository found in current active file or Root path: Open a file in a repository and try again").Modal(true).Ok().Run()
+		d := gi.NewBody().AddTitle("No Version Control Repository").
+			AddText("No VCS Repository found in current active file or Root path: Open a file in a repository and try again")
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw)
+		})
+		d.NewDialog(ge).Run()
 		return nil, errors.New("No VCS Repository found in current active file or Root path")
 	}
 	return ond.LogVcs(true, since)
@@ -231,8 +235,12 @@ func (ge *GideView) ChooseRunExec(exePath gi.FileName) { //gti:add
 		ge.Prefs.RunExec = exePath
 		ge.Prefs.BuildDir = gi.FileName(filepath.Dir(string(exePath)))
 		if !ge.Prefs.RunExecIsExec() {
-			gi.NewBody(ge).AddTitle("Not Executable").
-				AddText(fmt.Sprintf("RunExec file: %v is not exectable", exePath)).Modal(true).Ok().Run()
+			d := gi.NewBody().AddTitle("Not Executable").
+				AddText(fmt.Sprintf("RunExec file: %v is not exectable", exePath))
+			d.AddBottomBar(func(pw gi.Widget) {
+				d.AddOk(pw)
+			})
+			d.NewDialog(ge).Run()
 		}
 	}
 }

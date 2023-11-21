@@ -528,8 +528,12 @@ func (dv *DebugView) FindFrames(fpath string, line int) {
 	}
 	fr, err := dv.Dbg.FindFrames(&dv.State, fpath, line)
 	if fr == nil || err != nil {
-		gi.NewBody(dv).AddTitle("No frames found").
-			AddText(fmt.Sprintf("Could not find any stack frames for file name: %v, err: %v", fpath, err)).Modal(true).Ok().Run()
+		d := gi.NewBody().AddTitle("No frames found").
+			AddText(fmt.Sprintf("Could not find any stack frames for file name: %v, err: %v", fpath, err))
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw)
+		})
+		d.NewDialog(dv).Run()
 	}
 	dv.State.FindFrames = fr
 	dv.ShowFindFrames(true)
@@ -1436,14 +1440,13 @@ func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarVi
 		wnm += "-" + vr.Name()
 		wti += ": " + vr.Name()
 	}
-	sc := gi.NewScene(wnm)
-	sc.Title = wti
-	vv := NewVarView(sc, "view")
+	b := gi.NewBody() // wnm)
+	b.Title = wti
+	vv := NewVarView(b, "view")
 	vv.DbgView = dbgVw
 	vv.SetVar(vr, frinfo)
-
 	// tb := vv.Toolbar()
 	// tb.UpdateActions()
-	sc.NewWindow().Run()
+	b.NewWindow().Run()
 	return vv
 }

@@ -22,27 +22,15 @@ func KeyMapsView(km *KeyMaps) {
 	if gi.ActivateExistingMainWindow(km) {
 		return
 	}
-	sc := gi.NewScene("gide-key-maps")
-	sc.Title = "Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map"
-	sc.Data = km
-
-	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
-	title.Style(func(s *styles.Style) {
-		s.Min.X.Ch(30) // need for wrap
-		s.Grow.Set(1, 0)
-		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
-	})
-
-	tv := giv.NewTableView(sc).SetSlice(km)
-
+	d := gi.NewBody().SetTitle("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
+	d.Sc.Data = km
+	tv := giv.NewTableView(d).SetSlice(km)
 	AvailKeyMapsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailKeyMapsChanged = true
 	})
-
-	sc.TopAppBar = func(tb *gi.TopAppBar) {
-		gi.DefaultTopAppBar(tb)
-
+	d.AddTopBar(func(pw gi.Widget) {
+		tb := d.DefaultTopAppBar(pw)
 		sp := giv.NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps)
@@ -63,9 +51,8 @@ func KeyMapsView(km *KeyMaps) {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-	}
-
-	sc.NewWindow().Run()
+	})
+	d.NewWindow().Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -77,25 +64,15 @@ func PrefsView(pf *Preferences) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	sc := gi.NewScene("gide-prefs")
-	sc.Title = "Gide Preferences"
-	sc.Data = pf
-
-	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
-	title.Style(func(s *styles.Style) {
-		s.Min.X.Ch(30) // need for wrap
-		s.Grow.Set(1, 0)
-		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
-	})
-
-	tv := giv.NewStructView(sc).SetStruct(pf)
+	d := gi.NewBody().SetTitle("Gide Preferences")
+	tv := giv.NewStructView(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
 		pf.Changed = true
 	})
+	d.Sc.Data = pf
 
-	sc.TopAppBar = func(tb *gi.TopAppBar) {
-		gi.DefaultTopAppBar(tb)
-
+	d.AddTopBar(func(pw gi.Widget) {
+		tb := d.DefaultTopAppBar(pw)
 		giv.NewFuncButton(tb, pf.Apply).SetIcon(icons.Done)
 		sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
@@ -111,9 +88,9 @@ func PrefsView(pf *Preferences) *giv.StructView {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pf.Open).SetText("Open prefs").SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-	}
+	})
 
-	sc.NewWindow().Run()
+	d.NewWindow().Run()
 	return tv
 }
 
@@ -126,23 +103,13 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	sc := gi.NewScene("gide-proj-prefs")
-	sc.Title = "Gide Project Preferences"
-	sc.Data = pf
-
-	title := gi.NewLabel(sc, "title").SetText("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.").SetType(gi.LabelHeadlineSmall)
-	title.Style(func(s *styles.Style) {
-		s.Min.X.Ch(30) // need for wrap
-		s.Grow.Set(1, 0)
-		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
-	})
-
-	tv := giv.NewStructView(sc).SetStruct(pf)
+	d := gi.NewBody().SetTitle("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
+	d.Sc.Data = pf
+	tv := giv.NewStructView(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
 		pf.Changed = true
 	})
-
-	sc.NewWindow().Run()
+	d.NewWindow().Run()
 	return tv
 }
 
@@ -188,7 +155,7 @@ func (vv *KeyMapValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt, nil)
+		vv.OpenDialog(bt)
 	})
 	vv.UpdateWidget()
 }
@@ -204,18 +171,19 @@ func (vv *KeyMapValue) OpenDialog(ctx gi.Widget) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
-	d := gi.NewBody(ctx).AddTitle("Select a key map").AddText(vv.Doc()).FullWindow(true)
+	d := gi.NewBody().AddTitle("Select a key map").AddText(vv.Doc())
 	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
-	d.OnAccept(func(e events.Event) {
-		if si >= 0 {
-			km := AvailKeyMaps[si]
-			vv.SetValue(km.Name)
-			vv.UpdateWidget()
-		}
-		if fun != nil {
-			fun(d)
-		}
-	}).Run()
+	d.AddBottomBar(func(pw gi.Widget) {
+		d.AddCancel(pw)
+		d.AddOk(pw).OnClick(func(e events.Event) {
+			if si >= 0 {
+				km := AvailKeyMaps[si]
+				vv.SetValue(km.Name)
+				vv.UpdateWidget()
+			}
+		})
+	})
+	d.NewFullDialog(ctx).Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -226,27 +194,16 @@ func LangsView(pt *Langs) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	sc := gi.NewScene("gide-langs")
-	sc.Title = "Available Language Opts: Add or modify entries to customize options for language / file types"
-	sc.Data = pt
-
-	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
-	title.Style(func(s *styles.Style) {
-		s.Min.X.Ch(30) // need for wrap
-		s.Grow.Set(1, 0)
-		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
-	})
-
-	tv := giv.NewMapView(sc).SetMap(pt)
-
+	d := gi.NewBody().SetTitle("Available Language Opts: Add or modify entries to customize options for language / file types")
+	tv := giv.NewMapView(d).SetMap(pt)
+	d.Sc.Data = pt
 	AvailLangsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailLangsChanged = true
 	})
 
-	sc.TopAppBar = func(tb *gi.TopAppBar) {
-		gi.DefaultTopAppBar(tb)
-
+	d.AddTopBar(func(pw gi.Widget) {
+		tb := d.DefaultTopAppBar(pw)
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailLangsChanged && pt == &AvailLangs)
@@ -267,9 +224,8 @@ func LangsView(pt *Langs) {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-	}
-
-	sc.NewWindow().Run()
+	})
+	d.NewWindow().Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -280,27 +236,15 @@ func CmdsView(pt *Commands) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	sc := gi.NewScene("gide-cmds")
-	sc.Title = "Gide Commands"
-	sc.Data = pt
-
-	title := gi.NewLabel(sc, "title").SetText(sc.Title).SetType(gi.LabelHeadlineSmall)
-	title.Style(func(s *styles.Style) {
-		s.Min.X.Ch(30) // need for wrap
-		s.Grow.Set(1, 0)
-		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
-	})
-
-	tv := giv.NewTableView(sc).SetSlice(pt)
-
+	d := gi.NewBody().SetTitle("Gide Commands")
+	tv := giv.NewTableView(d).SetSlice(pt)
+	d.Sc.Data = pt
 	CustomCmdsChanged = false
 	tv.OnChange(func(e events.Event) {
 		CustomCmdsChanged = true
 	})
-
-	sc.TopAppBar = func(tb *gi.TopAppBar) {
-		gi.DefaultTopAppBar(tb)
-
+	d.AddTopBar(func(pw gi.Widget) {
+		tb := d.DefaultTopAppBar(pw)
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(CustomCmdsChanged && pt == &CustomCmds)
@@ -317,9 +261,8 @@ func CmdsView(pt *Commands) {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-	}
-
-	sc.NewWindow().Run()
+	})
+	d.NewWindow().Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -363,7 +306,7 @@ func (vv *CmdValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt, nil)
+		vv.OpenDialog(bt)
 	})
 	vv.UpdateWidget()
 }
@@ -379,18 +322,19 @@ func (vv *CmdValue) OpenDialog(ctx gi.Widget) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
-	d := gi.NewBody(ctx).AddTitle("Select a command").AddText(vv.Doc()).FullWindow(true)
+	d := gi.NewBody().AddTitle("Select a command").AddText(vv.Doc())
 	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
-	d.OnAccept(func(e events.Event) {
-		if si >= 0 {
-			pt := AvailCmds[si]
-			vv.SetValue(CommandName(pt.Cat, pt.Name))
-			vv.UpdateWidget()
-		}
-		if fun != nil {
-			fun(d)
-		}
-	}).Run()
+	d.AddBottomBar(func(pw gi.Widget) {
+		d.AddCancel(pw)
+		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
+			if si >= 0 {
+				pt := AvailCmds[si]
+				vv.SetValue(CommandName(pt.Cat, pt.Name))
+				vv.UpdateWidget()
+			}
+		})
+	})
+	d.NewFullDialog(ctx).Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -401,27 +345,16 @@ func SplitsView(pt *Splits) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	sc := gi.NewScene("gide-splits")
-	sc.Title = "Guide Splitters"
-	sc.Data = pt
-
-	title := gi.NewLabel(sc, "title").SetText("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
-	title.Style(func(s *styles.Style) {
-		s.Min.X.Ch(30) // need for wrap
-		s.Grow.Set(1, 0)
-		s.Text.WhiteSpace = styles.WhiteSpaceNormal // wrap
-	})
-
-	tv := giv.NewTableView(sc).SetSlice(pt)
-
+	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
+	d.Sc.Data = pt
+	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailSplitsChanged = true
 	})
 
-	sc.TopAppBar = func(tb *gi.TopAppBar) {
-		gi.DefaultTopAppBar(tb)
-
+	d.AddTopBar(func(pw gi.Widget) {
+		tb := d.DefaultTopAppBar(pw)
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailSplitsChanged && pt == &StdSplits)
@@ -433,9 +366,8 @@ func SplitsView(pt *Splits) {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-	}
-
-	sc.NewWindow().Run()
+	})
+	d.NewWindow().Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -479,7 +411,7 @@ func (vv *SplitValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt, nil)
+		vv.OpenDialog(bt)
 	})
 	vv.UpdateWidget()
 }
@@ -498,18 +430,19 @@ func (vv *SplitValue) OpenDialog(ctx gi.Widget) {
 	if cur != "" {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
-	d := gi.NewBody(ctx).AddTitle("Select a Named Splitter Config").AddText(vv.Doc()).FullWindow(true)
+	d := gi.NewBody().AddTitle("Select a Named Splitter Config").AddText(vv.Doc())
 	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
-	d.OnAccept(func(e events.Event) {
-		if si >= 0 {
-			pt := AvailSplits[si]
-			vv.SetValue(pt.Name)
-			vv.UpdateWidget()
-		}
-		if fun != nil {
-			fun(d)
-		}
-	}).Run()
+	d.AddBottomBar(func(pw gi.Widget) {
+		d.AddCancel(pw)
+		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
+			if si >= 0 {
+				pt := AvailSplits[si]
+				vv.SetValue(pt.Name)
+				vv.UpdateWidget()
+			}
+		})
+	})
+	d.NewFullDialog(ctx).Run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -520,24 +453,23 @@ func RegistersView(pt *Registers) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	sc := gi.NewScene("gide-registers").SetTitle("Guide Registers")
-	sc.Style(func(s *styles.Style) {
+	d := gi.NewBody().SetTitle("Guide Registers")
+	d.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	sc.Data = pt
+	d.Sc.Data = pt
 
-	gi.NewLabel(sc).SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
+	gi.NewLabel(d).SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
 
-	tv := giv.NewTableView(sc).SetSlice(pt)
+	tv := giv.NewTableView(d).SetSlice(pt)
 
 	AvailRegistersChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailRegistersChanged = true
 	})
 
-	sc.TopAppBar = func(tb *gi.TopAppBar) {
-		gi.DefaultTopAppBar(tb)
-
+	d.AddTopBar(func(pw gi.Widget) {
+		tb := d.DefaultTopAppBar(pw)
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters)
@@ -549,9 +481,9 @@ func RegistersView(pt *Registers) {
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
-	}
+	})
 
-	sc.NewWindow().Run()
+	d.NewWindow().Run()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -595,7 +527,7 @@ func (vv *RegisterValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt, nil)
+		vv.OpenDialog(bt)
 	})
 	vv.UpdateWidget()
 }

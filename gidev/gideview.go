@@ -178,15 +178,16 @@ func (ge *GideView) EditRecents() {
 	tmp := make([]string, len(gide.SavedPaths))
 	copy(tmp, gide.SavedPaths)
 	gi.StringsRemoveExtras((*[]string)(&tmp), gide.SavedPathsExtras)
-	d := gi.NewBody(ge).AddTitle("Recent Project Paths").
-		AddText("Delete paths you no longer use").
-		Modal(true)
+	d := gi.NewBody().AddTitle("Recent Project Paths").
+		AddText("Delete paths you no longer use")
 	giv.NewSliceView(d).SetSlice(tmp)
-	d.Run()
-	d.OnAccept(func(e events.Event) {
-		gide.SavedPaths = tmp
-		gi.StringsAddExtras((*[]string)(&gide.SavedPaths), gide.SavedPathsExtras)
+	d.AddBottomBar(func(pw gi.Widget) {
+		d.AddOk(pw).OnClick(func(e events.Event) {
+			gide.SavedPaths = tmp
+			gi.StringsAddExtras((*[]string)(&gide.SavedPaths), gide.SavedPathsExtras)
+		})
 	})
+	d.NewDialog(ge).Run()
 }
 
 // OpenFile opens file in an open project if it has the same path as the file
@@ -292,8 +293,12 @@ func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Su
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
-		gi.NewBody(ge).AddTitle("Could not Make Folder").
-			AddText(fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err)).Modal(true).Ok().Run()
+		d := gi.NewBody().AddTitle("Could not Make Folder").
+			AddText(fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err))
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw)
+		})
+		d.NewDialog(ge).Run()
 		return nil
 	}
 	nge := ge.OpenPath(gi.FileName(np))
@@ -309,8 +314,12 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) { //gti:add
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
-		gi.NewBody(ge).AddTitle("Could not Make File").
-			AddText(fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)).Modal(true).Ok().Run()
+		d := gi.NewBody().AddTitle("Could not Make File").
+			AddText(fmt.Sprintf("Could not make new file at: %v, err: %v", np, err))
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw)
+		})
+		d.NewDialog(ge).Run()
 		return
 	}
 	ge.Files.UpdateNewFile(np)
@@ -378,27 +387,27 @@ func (ge *GideView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		}
 		return false
 	}
-	d := gi.NewBody(ge).AddTitle("There are Unsaved Files").
+	d := gi.NewBody().AddTitle("There are Unsaved Files").
 		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch))
-	if cancelOpt {
-		d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Cancel Command").OnClick(func(e events.Event) {
-			d.CancelDialog()
+	d.AddBottomBar(func(pw gi.Widget) {
+		if cancelOpt {
+			d.AddCancel(pw).SetText("Cancel Command")
+		}
+		gi.NewButton(pw).SetText("Don't Save").OnClick(func(e events.Event) {
+			d.Close()
+			if fun != nil {
+				fun()
+			}
 		})
-	}
-	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Don't Save").OnClick(func(e events.Event) {
-		d.AcceptDialog()
-		if fun != nil {
-			fun()
-		}
+		gi.NewButton(pw).SetText("Save All").OnClick(func(e events.Event) {
+			d.Close()
+			ge.SaveAllOpenNodes()
+			if fun != nil {
+				fun()
+			}
+		})
 	})
-	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Save All").OnClick(func(e events.Event) {
-		d.AcceptDialog()
-		ge.SaveAllOpenNodes()
-		if fun != nil {
-			fun()
-		}
-	})
-	d.Run()
+	d.NewDialog(ge).Run()
 	return true
 }
 
@@ -467,19 +476,20 @@ func (ge *GideView) CloseWindowReq() bool {
 	if nch == 0 {
 		return true
 	}
-	d := gi.NewBody(ge).AddTitle("Close Project: There are Unsaved Files").
+	d := gi.NewBody().AddTitle("Close Project: There are Unsaved Files").
 		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", ge.Nm, nch))
-	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Cancel").OnClick(func(e events.Event) {
-		d.CancelDialog()
+	d.AddBottomBar(func(pw gi.Widget) {
+		d.AddCancel(pw)
+		gi.NewButton(pw).SetText("Close without saving").OnClick(func(e events.Event) {
+			d.Close()
+			ge.CloseWindow()
+		})
+		gi.NewButton(pw).SetText("Save all").OnClick(func(e events.Event) {
+			d.Close()
+			ge.SaveAllOpenNodes()
+		})
 	})
-	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Close without saving").OnClick(func(e events.Event) {
-		d.AcceptDialog()
-		ge.CloseWindow()
-	})
-	d.Footer.Add(func(par Widget) { gi.NewButton(par).SetText("Save all").OnClick(func(e events.Event) {
-		d.AcceptDialog()
-		ge.SaveAllOpenNodes()
-	})
+	d.NewDialog(ge).Run()
 	return false // not yet
 }
 
@@ -544,11 +554,14 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 		}
 	}
 
-	sc := gi.NewScene(winm)
-	sc.Title = wintitle
+	b := gi.NewBody() // winm)
+	b.Title = wintitle
 
-	ge := NewGideView(sc)
-	sc.TopAppBar = ge.TopAppBar
+	ge := NewGideView(b)
+	b.AddTopBar(func(pw gi.Widget) {
+		tb := b.DefaultTopAppBar(pw)
+		ge.TopAppBar(tb)
+	})
 
 	// mmen := win.MainMenu
 	// giv.MainMenuView(ge, win, mmen)
@@ -573,7 +586,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	//
 	// win.MainMenuUpdated()
 
-	sc.NewWindow().Run()
+	b.NewWindow().Run()
 
 	if doPath {
 		ge.OpenPath(gi.FileName(path))
