@@ -193,25 +193,29 @@ func HandleElement(ctx Context) (w gi.Widget, handleChildren bool) {
 		})
 		w = ntv
 	case "img":
-		src := GetAttr(ctx.Node(), "src")
-		resp, err := Get(ctx, src)
-		if grr.Log0(err) != nil {
-			return ctx.Parent(), true
-		}
-		defer resp.Body.Close()
-		if strings.Contains(resp.Header.Get("Content-Type"), "svg") {
-			// TODO(kai/gidom): support svg
-		} else {
-			img := New[*gi.Image](ctx)
-			im, _, err := images.Read(resp.Body)
-			if err != nil {
-				slog.Error("error loading image", "url", src, "err", err)
-				return ctx.Parent(), true
+		img := New[*gi.Image](ctx)
+		w = img
+		n := ctx.Node()
+		go func() {
+			src := GetAttr(n, "src")
+			resp, err := Get(ctx, src)
+			if grr.Log0(err) != nil {
+				return
 			}
-			img.Filename = gi.FileName(src)
-			img.SetImage(im, 0, 0)
-			w = img
-		}
+			defer resp.Body.Close()
+			if strings.Contains(resp.Header.Get("Content-Type"), "svg") {
+				// TODO(kai/gidom): support svg
+			} else {
+				im, _, err := images.Read(resp.Body)
+				if err != nil {
+					slog.Error("error loading image", "url", src, "err", err)
+					return
+				}
+				img.Filename = gi.FileName(src)
+				img.SetImage(im, 0, 0)
+				img.Update()
+			}
+		}()
 	case "input":
 		ityp := GetAttr(ctx.Node(), "type")
 		switch ityp {
