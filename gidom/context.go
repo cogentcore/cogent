@@ -53,12 +53,6 @@ type Context interface {
 	// OpenURL opens the given URL.
 	OpenURL(url string) error
 
-	// SetWidgetForNode associates the given widget with the given node.
-	SetWidgetForNode(w gi.Widget, n *html.Node)
-
-	// WidgetForNode returns the widget associated with the given node.
-	WidgetForNode(n *html.Node) gi.Widget
-
 	// AddStyle adds the given CSS style string to the page's styles.
 	AddStyle(style string)
 
@@ -135,22 +129,6 @@ func (cb *ContextBase) OpenURL(url string) error {
 	return nil
 }
 
-// SetWidgetForNode associates the given widget with the given node.
-func (cb *ContextBase) SetWidgetForNode(w gi.Widget, n *html.Node) {
-	if cb.WidgetsForNodes == nil {
-		cb.WidgetsForNodes = make(map[*html.Node]gi.Widget)
-	}
-	cb.WidgetsForNodes[n] = w
-}
-
-// WidgetForNode returns the widget associated with the given node.
-func (cb *ContextBase) WidgetForNode(n *html.Node) gi.Widget {
-	if cb.WidgetsForNodes == nil {
-		cb.WidgetsForNodes = make(map[*html.Node]gi.Widget)
-	}
-	return cb.WidgetsForNodes[n]
-}
-
 // AddStyle adds the given CSS style string to the page's styles.
 func (cb *ContextBase) AddStyle(style string) {
 	ss, err := parser.Parse(style)
@@ -190,32 +168,3 @@ func (cb *ContextBase) Style() []*css.Rule {
 	}
 	return cb.Rules[cb.Node()]
 }
-
-// // ParseStyle returns the page's styles as a CSS style sheet and a slice
-// // of selectors with the indices corresponding to those of the rules in
-// // the stylesheet.
-// func (cb *ContextBase) ParseStyle() {
-// 	ss, err := parser.Parse(cb.CurStyle)
-// 	if grr.Log0(err) != nil {
-// 		return
-// 	}
-// 	cb.Ss = ss
-
-// 	sels := make([]*selcss.Selector, len(ss.Rules))
-// 	for i, rule := range ss.Rules {
-// 		var sel *selcss.Selector
-// 		if len(rule.Selectors) > 0 {
-// 			s, err := selcss.Parse(strings.Join(rule.Selectors, ","))
-// 			if grr.Log0(err) != nil {
-// 				s = &selcss.Selector{}
-// 			}
-// 			sel = s
-// 		} else {
-// 			sel = &selcss.Selector{}
-// 		}
-// 		sels[i] = sel
-// 	}
-// 	cb.Sels = sels
-// 	cb.StyleValid = true
-// 	return
-// }

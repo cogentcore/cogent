@@ -27,21 +27,11 @@ import (
 	"golang.org/x/net/html"
 )
 
-// Handler is a function that can be used to describe the behavior
-// of gidom parsing for a specific type of element. It takes the
-// parent [gi.Widget] to add widgets to and the [*html.Node] to read from.
-// It returns the widget, if any, that has been constructed for this node.
-// If it returns false, that indicates that the children of this node have
-// already been handled (or will not be handled), and thus should not
-// be handled further. If it returns a true, then the children
-// will be handled, with the returned widget as their parent.
-type Handler func(ctx Context)
-
 // ElementHandlers is a map of [Handler] functions for each HTML element
 // type (eg: "button", "input", "p"). It is empty by default, but can be
 // used by anyone in need of behavior different than the default behavior
 // defined in [HandleElement].
-var ElementHandlers = map[string]Handler{}
+var ElementHandlers = map[string]func(ctx Context){}
 
 // New adds a new widget of the given type to the context parent.
 func New[T gi.Widget](ctx Context) T {
@@ -238,39 +228,6 @@ func HandleElement(ctx Context) {
 	default:
 		ctx.SetNewParent(ctx.Parent())
 	}
-}
-
-// ConfigWidget sets the properties of the given widget based on the properties
-// of the given node. It should be called on all widgets in [HandleElement] and
-// [Handler] functions.
-func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
-	wb := w.AsWidget()
-	// if we already have the tag prop, we have already been configured
-	if _, err := wb.PropTry("tag"); err == nil {
-		return w
-	}
-	for _, attr := range n.Attr {
-		switch attr.Key {
-		case "id":
-			wb.SetName(attr.Val)
-		case "class":
-			wb.SetClass(attr.Val)
-		default:
-			wb.SetProp(attr.Key, attr.Val)
-		}
-	}
-	wb.SetProp("tag", n.Data)
-	ctx.SetWidgetForNode(w, n)
-	rules := ctx.Style()
-	w.Style(func(s *styles.Style) {
-		for _, rule := range rules {
-			for _, decl := range rule.Declarations {
-				// TODO(kai/styprops): parent style and context
-				s.StyleFromProp(s, decl.Property, decl.Value, colors.BaseContext(s.Color))
-			}
-		}
-	})
-	return w
 }
 
 // HandleLabel creates a new label from the given information, setting the text and
