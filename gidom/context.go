@@ -139,6 +139,8 @@ func (cb *ContextBase) AddStyle(style string) {
 		cb.Rules = map[*html.Node][]*css.Rule{}
 	}
 
+	root := RootNode(cb.Node())
+
 	for _, rule := range ss.Rules {
 		var sel *selcss.Selector
 		if len(rule.Selectors) > 0 {
@@ -151,7 +153,7 @@ func (cb *ContextBase) AddStyle(style string) {
 			sel = &selcss.Selector{}
 		}
 
-		matches := sel.Select(cb.Node())
+		matches := sel.Select(root)
 		for _, match := range matches {
 			cb.Rules[match] = append(cb.Rules[match], rule)
 		}

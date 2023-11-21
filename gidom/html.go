@@ -66,3 +66,11 @@ func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 	// }
 	return nil
 }
+
+// RootNode returns the root node of the given node.
+func RootNode(n *html.Node) *html.Node {
+	for n.Parent != nil {
+		n = n.Parent
+	}
+	return n
+}
