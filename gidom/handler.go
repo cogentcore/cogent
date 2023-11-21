@@ -60,6 +60,7 @@ func New[T gi.Widget](ctx Context) T {
 		par = ctx.InlineParent()
 	default:
 		par = ctx.BlockParent()
+		ctx.SetInlineParent(nil)
 	}
 	w := ki.New[T](par)
 	wb := w.AsWidget()

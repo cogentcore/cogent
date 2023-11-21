@@ -12,6 +12,7 @@ import (
 	"github.com/aymerick/douceur/parser"
 	selcss "github.com/ericchiang/css"
 	"goki.dev/gi/v2/gi"
+	"goki.dev/girl/styles"
 	"goki.dev/goosi"
 	"goki.dev/grr"
 	"golang.org/x/net/html"
@@ -30,13 +31,17 @@ type Context interface {
 	// should be added to.
 	BlockParent() gi.Widget
 
+	// SetParent sets the current parent widget that non-inline elements
+	// should be added to.
+	SetBlockParent(pw gi.Widget)
+
 	// InlineParent returns the current parent widget that inline
 	// elements should be added to.
 	InlineParent() gi.Widget
 
-	// SetParent sets the current parent widget that non-inline elements
+	// SetInlineParent sets the current parent widget that inline elements
 	// should be added to.
-	SetParent(pw gi.Widget)
+	SetInlineParent(pw gi.Widget)
 
 	// PageURL returns the URL of the current page, and "" if there
 	// is no current page.
@@ -89,44 +94,23 @@ func (cb *ContextBase) BlockParent() gi.Widget {
 	return cb.BlockPw
 }
 
+func (cb *ContextBase) SetBlockParent(pw gi.Widget) {
+	cb.BlockPw = pw
+}
+
 func (cb *ContextBase) InlineParent() gi.Widget {
 	if cb.InlinePw != nil {
 		return cb.InlinePw
 	}
 	cb.InlinePw = gi.NewLayout(cb.BlockPw, fmt.Sprintf("inline-container-%d", cb.BlockPw.NumLifetimeChildren()))
+	cb.InlinePw.Style(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
+	})
 	return cb.InlinePw
 }
 
-func (cb *ContextBase) SetParent(pw gi.Widget) {
-	cb.BlockPw = pw
-	if cb.InlinePw != nil {
-		// ipDepth := 0
-		// cb.InlinePw.WalkUpParent(func(k ki.Ki) bool {
-		// 	ipDepth++
-		// 	return ki.Continue
-		// })
-		// pwDepth := 0
-		// pw.WalkUpParent(func(k ki.Ki) bool {
-		// 	pwDepth++
-		// 	return ki.Continue
-		// })
-		// fmt.Println(cb.InlinePw, pw)
-		// if ipDepth <= pwDepth {
-		cb.InlinePw = nil // gets reset
-		// }
-		// // isChild := false
-		// fmt.Println(ki.Depth(pw), ki.Depth(cb.InlinePw))
-		// // cb.InlinePw.WalkPre(func(k ki.Ki) bool {
-		// // 	if pw == k {
-		// // 		isChild = true
-		// // 		return ki.Break
-		// // 	}
-		// // 	return ki.Continue
-		// // })
-		// if !isChild {
-		// 	cb.InlinePw = nil // gets reset
-		// }
-	}
+func (cb *ContextBase) SetInlineParent(pw gi.Widget) {
+	cb.InlinePw = pw
 }
 
 // PageURL returns the URL of the current page, and "" if there

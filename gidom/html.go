@@ -51,7 +51,7 @@ func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 		handleChildren = false
 	case html.ElementNode:
 		ctx.SetNode(n)
-		ctx.SetParent(par)
+		ctx.SetBlockParent(par)
 		newPar, handleChildren = HandleElement(ctx)
 		// if newPar != nil {
 		// 	ConfigWidget(ctx, newPar, n)
