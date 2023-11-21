@@ -148,7 +148,6 @@ func (ge *GideView) FocusOnTabs() bool {
 func (ge *GideView) UpdateFiles() { //gti:add
 	if ge.Files != nil {
 		ge.Files.OpenPath(string(ge.ProjRoot))
-		ge.Files.UpdateAll()
 	}
 }
 
@@ -263,7 +262,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 	}
 	ge.Defaults()
 	if err := ge.Prefs.OpenJSON(filename); err != nil {
-		slog.Debug("Project Prefs had a loading error", "error", err)
+		slog.Error("Project Prefs had a loading error", "error", err)
 	}
 	ge.Prefs.ProjFilename = filename // should already be set but..
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))

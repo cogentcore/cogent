@@ -5,6 +5,7 @@ package gidev
 import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gide"
+	"goki.dev/goosi/events"
 	"goki.dev/gti"
 	"goki.dev/ki/v2"
 	"goki.dev/ordmap"
@@ -342,6 +343,12 @@ func (t *GideView) SetTooltip(v string) *GideView {
 // SetClass sets the [GideView.Class]
 func (t *GideView) SetClass(v string) *GideView {
 	t.Class = v
+	return t
+}
+
+// SetPriorityEvents sets the [GideView.PriorityEvents]
+func (t *GideView) SetPriorityEvents(v []events.Types) *GideView {
+	t.PriorityEvents = v
 	return t
 }
 
