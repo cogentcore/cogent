@@ -37,6 +37,7 @@ func ReadHTMLString(ctx Context, par gi.Widget, s string) error {
 func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 	// nil parent means we are root, so we add user agent styles here
 	if n.Parent == nil {
+		ctx.SetNode(n)
 		ctx.AddStyle(UserAgentStyles)
 	}
 

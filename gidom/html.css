@@ -669,9 +669,9 @@
      white-space: pre;
      min-height: 1.2em;
  }
- select:-internal-list-box optgroup option:before {
+ /* select:-internal-list-box optgroup option:before {
      content: "\00a0\00a0\00a0\00a0";;
- }
+ } */
  select:-internal-list-box option,
  select:-internal-list-box optgroup {
      line-height: initial !important;
