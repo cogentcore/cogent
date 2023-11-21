@@ -53,6 +53,8 @@ type Context interface {
 
 	// AddStyle adds the given CSS style string to the page's styles.
 	AddStyle(style string)
+
+	Style() []*css.Rule
 }
 
 // BaseContext returns a [Context] with basic implementations of all functions.
@@ -64,10 +66,7 @@ func BaseContext() Context {
 type ContextBase struct {
 	Nd *html.Node
 
-	CurStyle   string
-	StyleValid bool
-	Ss         *css.Stylesheet
-	Sels       []*selcss.Selector
+	Rules map[*html.Node][]*css.Rule
 
 	WidgetsForNodes map[*html.Node]gi.Widget
 	BlockPw         gi.Widget
@@ -131,40 +130,16 @@ func (cb *ContextBase) WidgetForNode(n *html.Node) gi.Widget {
 
 // AddStyle adds the given CSS style string to the page's styles.
 func (cb *ContextBase) AddStyle(style string) {
-	cb.CurStyle += style
-	if style != "" {
-		cb.StyleValid = false
-	}
-}
-
-// Style returns the styles for the current node.
-func (cb *ContextBase) Style() []*css.Rule {
-	if !cb.StyleValid {
-		cb.ParseStyle()
-	}
-	if cb.Ss == nil {
-		return nil
-	}
-	res := []*css.Rule{}
-	for i, r := range cb.Ss.Rules {
-		sel := cb.Sels[i]
-		matches := sel.Select(cb.Node())
-
-	}
-}
-
-// ParseStyle returns the page's styles as a CSS style sheet and a slice
-// of selectors with the indices corresponding to those of the rules in
-// the stylesheet.
-func (cb *ContextBase) ParseStyle() {
-	ss, err := parser.Parse(cb.CurStyle)
+	ss, err := parser.Parse(style)
 	if grr.Log0(err) != nil {
 		return
 	}
-	cb.Ss = ss
 
-	sels := make([]*selcss.Selector, len(ss.Rules))
-	for i, rule := range ss.Rules {
+	if cb.Rules == nil {
+		cb.Rules = map[*html.Node][]*css.Rule{}
+	}
+
+	for _, rule := range ss.Rules {
 		var sel *selcss.Selector
 		if len(rule.Selectors) > 0 {
 			s, err := selcss.Parse(strings.Join(rule.Selectors, ","))
@@ -175,9 +150,47 @@ func (cb *ContextBase) ParseStyle() {
 		} else {
 			sel = &selcss.Selector{}
 		}
-		sels[i] = sel
+
+		matches := sel.Select(cb.Node())
+		for _, match := range matches {
+			cb.Rules[match] = append(cb.Rules[match], rule)
+		}
 	}
-	cb.Sels = sels
-	cb.StyleValid = true
-	return
 }
+
+// Style returns the styles for the current node.
+func (cb *ContextBase) Style() []*css.Rule {
+	if cb.Rules == nil {
+		return nil
+	}
+	return cb.Rules[cb.Node()]
+}
+
+// // ParseStyle returns the page's styles as a CSS style sheet and a slice
+// // of selectors with the indices corresponding to those of the rules in
+// // the stylesheet.
+// func (cb *ContextBase) ParseStyle() {
+// 	ss, err := parser.Parse(cb.CurStyle)
+// 	if grr.Log0(err) != nil {
+// 		return
+// 	}
+// 	cb.Ss = ss
+
+// 	sels := make([]*selcss.Selector, len(ss.Rules))
+// 	for i, rule := range ss.Rules {
+// 		var sel *selcss.Selector
+// 		if len(rule.Selectors) > 0 {
+// 			s, err := selcss.Parse(strings.Join(rule.Selectors, ","))
+// 			if grr.Log0(err) != nil {
+// 				s = &selcss.Selector{}
+// 			}
+// 			sel = s
+// 		} else {
+// 			sel = &selcss.Selector{}
+// 		}
+// 		sels[i] = sel
+// 	}
+// 	cb.Sels = sels
+// 	cb.StyleValid = true
+// 	return
+// }

@@ -214,6 +214,15 @@ func ConfigWidget[T gi.Widget](ctx Context, w T, n *html.Node) T {
 	}
 	wb.SetProp("tag", n.Data)
 	ctx.SetWidgetForNode(w, n)
+	rules := ctx.Style()
+	w.Style(func(s *styles.Style) {
+		for _, rule := range rules {
+			for _, decl := range rule.Declarations {
+				// TODO(kai/styprops): parent style and context
+				s.StyleFromProp(s, decl.Property, decl.Value, colors.BaseContext(s.Color))
+			}
+		}
+	})
 	return w
 }
 

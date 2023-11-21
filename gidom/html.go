@@ -60,9 +60,9 @@ func ReadHTMLNode(ctx Context, par gi.Widget, n *html.Node) error {
 		ReadHTMLNode(ctx, par, n.NextSibling)
 	}
 
-	// nil parent means we are root, so we apply style here
-	if n.Parent == nil {
-		return ApplyStyle(ctx, par, n)
-	}
+	// // nil parent means we are root, so we apply style here
+	// if n.Parent == nil {
+	// 	return ApplyStyle(ctx, par, n)
+	// }
 	return nil
 }
