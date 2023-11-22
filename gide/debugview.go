@@ -1409,7 +1409,6 @@ func (vv *VarView) ConfigSplits() {
 	tv := vv.TreeView()
 	tv.SyncRootNode(vv.Var)
 	sv := vv.StructView()
-	sv.Sc = vv.Sc
 	sv.SetStruct(vv.Var)
 }
 
