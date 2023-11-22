@@ -184,7 +184,6 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *filetree.Node)
 	if err == nil {
 		// tv.StyleTextView() // make sure
 		tv.SetBuf(fn.Buf)
-		fmt.Println("setbuf:", tv)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
 		}

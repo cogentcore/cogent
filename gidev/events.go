@@ -82,7 +82,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		if tv != nil && tv.HasSelection() {
 			ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
 		}
-		giv.CallFunc(ge, ge.Find)
+		giv.CallFunc(tv, ge.Find)
 	}
 	if kt.IsHandled() {
 		return
