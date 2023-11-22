@@ -14,6 +14,7 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/goosi"
@@ -22,6 +23,19 @@ import (
 	"goki.dev/vci/v2"
 )
 
+// ConfigFindButton configures the Find FuncButton with current params
+func (ge *GideView) ConfigFindButton(fb *giv.FuncButton) *giv.FuncButton {
+	fb.Args[0].SetValue(ge.Prefs.Find.Find)
+	fb.Args[0].SetTag("width", "80")
+	fb.Args[1].SetValue(ge.Prefs.Find.Replace)
+	fb.Args[1].SetTag("width", "80")
+	fb.Args[2].SetValue(ge.Prefs.Find.IgnoreCase)
+	fb.Args[3].SetValue(ge.Prefs.Find.Regexp)
+	fb.Args[4].SetValue(ge.Prefs.Find.Loc)
+	fb.Args[5].SetValue(ge.Prefs.Find.Langs)
+	return fb
+}
+
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
 func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool, loc gide.FindLoc, langs []filecat.Supported) { //gti:add
@@ -29,6 +43,7 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 		return
 	}
 	ge.Prefs.Find.IgnoreCase = ignoreCase
+	ge.Prefs.Find.Regexp = regExp
 	ge.Prefs.Find.Langs = langs
 	ge.Prefs.Find.Loc = loc
 
@@ -46,6 +61,7 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 
 	fv.SaveFindString(find)
 	fv.SaveReplString(repl)
+	fv.UpdateFromParams()
 
 	root := filetree.AsNode(ge.Files)
 

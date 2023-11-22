@@ -58,11 +58,11 @@ type FindParams struct {
 	// use regexp regular expression search and replace
 	Regexp bool
 
-	// languages for files to search
-	Langs []filecat.Supported
-
 	// locations to search in
 	Loc FindLoc
+
+	// languages for files to search
+	Langs []filecat.Supported
 
 	// history of finds
 	FindHist []string
@@ -133,6 +133,7 @@ func (fv *FindView) ShowResults(res []FileSearchResults) {
 	fbuf.SetReadOnly(true)
 	fbuf.AppendTextMarkup(ltxt, mtxt, texteditor.EditSignal)
 	ftv.CursorStartDoc()
+
 	fv.Update()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -424,6 +425,16 @@ func (fv *FindView) ReplText() *gi.Chooser {
 	return fv.ReplBar().ChildByName("repl-str", 1).(*gi.Chooser)
 }
 
+// IgnoreBox returns the ignore case checkbox in toolbar
+func (fv *FindView) IgnoreBox() *gi.Switch {
+	return fv.FindBar().ChildByName("ignore-case", 2).(*gi.Switch)
+}
+
+// RegexpBox returns the regexp checkbox in toolbar
+func (fv *FindView) RegexpBox() *gi.Switch {
+	return fv.FindBar().ChildByName("regexp", 3).(*gi.Switch)
+}
+
 // LocCombo returns the loc combobox
 func (fv *FindView) LocCombo() *gi.Chooser {
 	return fv.FindBar().ChildByName("loc", 5).(*gi.Chooser)
@@ -439,16 +450,31 @@ func (fv *FindView) TextView() *texteditor.Editor {
 	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
 }
 
+// UpdateFromParams is called in Find function with new params
+func (fv *FindView) UpdateFromParams() {
+	fp := fv.Params()
+	ft := fv.FindText()
+	ft.SetCurVal(fp.Find)
+	rt := fv.ReplText()
+	rt.SetCurVal(fp.Replace)
+	ib := fv.IgnoreBox()
+	ib.SetChecked(fp.IgnoreCase)
+	rb := fv.RegexpBox()
+	rb.SetChecked(fp.Regexp)
+	cf := fv.LocCombo()
+	cf.SetCurVal(fp.Loc)
+	// langs auto-updates from param
+}
+
 // ConfigToolbar adds toolbar.
 func (fv *FindView) ConfigToolbars(fb, rb *gi.Toolbar) {
 	gi.NewButton(fb).SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").OnClick(func(e events.Event) {
 		fv.FindAction()
 	})
-	finds := gi.NewChooser(fb, "find-str").SetEditable(true).
+	finds := gi.NewChooser(fb, "find-str").SetEditable(true).SetAllowNew(true).
 		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
 	finds.Style(func(s *styles.Style) {
-		finds.SetStrings(fv.Params().FindHist, true, 0)
-		finds.SetCurVal(fv.Params().Find)
+		s.Grow.Set(1, 0)
 	})
 	finds.OnChange(func(e events.Event) {
 		fv.Params().Find = finds.CurVal.(string)
@@ -467,18 +493,12 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.Toolbar) {
 	})
 
 	ic := gi.NewSwitch(fb, "ignore-case").SetText("Ignore Case")
-	ic.Style(func(s *styles.Style) {
-		ic.SetChecked(fv.Params().IgnoreCase)
-	})
-	ic.OnClick(func(e events.Event) {
+	ic.OnChange(func(e events.Event) {
 		fv.Params().IgnoreCase = ic.StateIs(states.Checked)
 	})
 	rx := gi.NewSwitch(fb, "regexp").SetText("Regexp").
 		SetTooltip("use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax")
-	rx.Style(func(s *styles.Style) {
-		rx.SetChecked(fv.Params().Regexp)
-	})
-	rx.OnClick(func(e events.Event) {
+	rx.OnChange(func(e events.Event) {
 		fv.Params().Regexp = rx.StateIs(states.Checked)
 	})
 
@@ -487,11 +507,8 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.Toolbar) {
 
 	cf := gi.NewChooser(fb, "loc").SetTooltip(locl.Tooltip)
 	cf.SetEnum(fv.Params().Loc, false, 0)
-	cf.Style(func(s *styles.Style) {
-		cf.SetEnum(fv.Params().Loc, false, 0)
-		cf.SetCurIndex(int(fv.Params().Loc))
-	})
-	cf.OnClick(func(e events.Event) {
+	cf.SetCurVal(fv.Params().Loc)
+	cf.OnChange(func(e events.Event) {
 		if eval, ok := cf.CurVal.(FindLoc); ok {
 			fv.Params().Loc = eval
 		}
@@ -512,10 +529,10 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.Toolbar) {
 			fv.ReplaceAction()
 		})
 
-	repls := gi.NewChooser(rb, "repl-str").SetEditable(true).SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
+	repls := gi.NewChooser(rb, "repl-str").SetEditable(true).SetAllowNew(true).
+		SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
 	repls.Style(func(s *styles.Style) {
-		repls.SetStrings(fv.Params().ReplHist, true, 0)
-		repls.SetCurVal(fv.Params().Replace)
+		s.Grow.Set(1, 0)
 	})
 	repls.OnChange(func(e events.Event) {
 		fv.Params().Replace = repls.CurVal.(string)

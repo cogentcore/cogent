@@ -61,7 +61,7 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 
 	gi.NewSeparator(tb)
 
-	giv.NewFuncButton(tb, ge.Find).SetIcon(icons.FindReplace)
+	ge.ConfigFindButton(giv.NewFuncButton(tb, ge.Find).SetIcon(icons.FindReplace))
 
 	gi.NewSeparator(tb)
 
