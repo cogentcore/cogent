@@ -39,7 +39,7 @@ func (ge *GideView) CurPanel() int {
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
 func (ge *GideView) FocusOnPanel(panel int) bool {
 	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
+	defer ge.UpdateEndRender(wupdt)
 
 	sv := ge.Splits()
 	switch panel {

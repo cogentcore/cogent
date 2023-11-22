@@ -120,7 +120,7 @@ func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 // SetActiveTextView sets the given textview as the active one, and returns its index
 func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
 	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
+	defer ge.UpdateEndRender(wupdt)
 
 	idx := ge.TextViewIndex(av)
 	if idx < 0 {
@@ -141,7 +141,7 @@ func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
 // TextView -- returns that textview
 func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
 	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
+	defer ge.UpdateEndLayout(wupdt)
 
 	if idx < 0 || idx >= NTextViews {
 		log.Printf("GideView SetActiveTextViewIdx: text view index out of range: %v\n", idx)
@@ -154,7 +154,9 @@ func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
 		av.Buf.FileModCheck()
 	}
 	ge.SetStatus("")
-	av.GrabFocus()
+	av.GrabFocus() // todo: this is failing
+	av.ApplyStyle(av.Sc)
+	av.SetNeedsLayout()
 	return av
 }
 
@@ -180,7 +182,7 @@ func (ge *GideView) SwapTextViews() bool {
 		return false
 	}
 	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
+	defer ge.UpdateEndRender(wupdt)
 
 	tva := ge.TextViewByIndex(0)
 	tvb := ge.TextViewByIndex(1)
@@ -220,12 +222,9 @@ func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gid
 	pos := up.Fragment
 	tv, _, ok = ge.LinkViewFile(gi.FileName(fpath))
 	if !ok {
-		d := gi.NewBody().AddTitle("Could not open file at link").
-			AddText(fmt.Sprintf("Could not find or open file path in project: %v", fpath))
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOk(pw)
-		})
-		d.NewDialog(ge).Run()
+		gi.NewBody().AddTitle("Could not open file at link").
+			AddText(fmt.Sprintf("Could not find or open file path in project: %v", fpath)).
+			AddOkOnly().NewDialog(ge).Run()
 		return
 	}
 	if pos == "" {

@@ -292,12 +292,9 @@ func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Su
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
-		d := gi.NewBody().AddTitle("Could not Make Folder").
-			AddText(fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err))
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOk(pw)
-		})
-		d.NewDialog(ge).Run()
+		gi.NewBody().AddTitle("Could not Make Folder").
+			AddText(fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err)).
+			AddOkOnly().NewDialog(ge).Run()
 		return nil
 	}
 	nge := ge.OpenPath(gi.FileName(np))
@@ -313,12 +310,9 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) { //gti:add
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
-		d := gi.NewBody().AddTitle("Could not Make File").
-			AddText(fmt.Sprintf("Could not make new file at: %v, err: %v", np, err))
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOk(pw)
-		})
-		d.NewDialog(ge).Run()
+		gi.NewBody().AddTitle("Could not Make File").
+			AddText(fmt.Sprintf("Could not make new file at: %v, err: %v", np, err)).
+			AddOkOnly().NewDialog(ge).Run()
 		return
 	}
 	ge.Files.UpdateNewFile(np)

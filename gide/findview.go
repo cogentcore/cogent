@@ -276,12 +276,9 @@ func (fv *FindView) CompileRegexp() bool {
 	var err error
 	fv.Re, err = regexp.Compile(fp.Find)
 	if err != nil {
-		d := gi.NewBody().AddTitle("Regexp is Invalid").
-			AddText(fmt.Sprintf("The regular expression was invalid: %v", err))
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOk(pw)
-		})
-		d.NewDialog(fv).Run()
+		gi.NewBody().AddTitle("Regexp is Invalid").
+			AddText(fmt.Sprintf("The regular expression was invalid: %v", err)).
+			AddOkOnly().NewDialog(fv).Run()
 		return false
 	}
 	return true

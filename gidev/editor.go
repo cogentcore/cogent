@@ -446,12 +446,9 @@ func (ge *GideView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		_, fnm := filepath.Split(fpath)
 		tv, _, ok = ge.LinkViewFile(gi.FileName(fnm))
 		if !ok {
-			d := gi.NewBody().AddTitle("Couldn't Open File at Link").
-				AddText(fmt.Sprintf("Could not find or open file path in project: %v", fpath))
-			d.AddBottomBar(func(pw gi.Widget) {
-				d.AddOk(pw)
-			})
-			d.NewDialog(ge).Run()
+			gi.NewBody().AddTitle("Couldn't Open File at Link").
+				AddText(fmt.Sprintf("Could not find or open file path in project: %v", fpath)).
+				AddOkOnly().NewDialog(ge).Run()
 			return false
 		}
 	}

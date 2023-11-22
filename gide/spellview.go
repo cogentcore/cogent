@@ -258,12 +258,9 @@ func (sv *SpellView) CheckNext() {
 	}
 	if done {
 		tv.ClearHighlights()
-		d := gi.NewBody().AddTitle("Spelling Check Complete").
-			AddText("End of file, spelling check complete")
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOk(pw)
-		})
-		d.NewDialog(sv).Run()
+		gi.NewBody().AddTitle("Spelling Check Complete").
+			AddText("End of file, spelling check complete").
+			AddOkOnly().NewDialog(sv).Run()
 		return
 	}
 	sv.UnkLex = sv.Errs[sv.CurIdx]

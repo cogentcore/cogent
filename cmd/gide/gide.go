@@ -43,6 +43,7 @@ Version: ` + gide.Prefs.VersionInfo())
 	pdir := goosi.TheApp.AppPrefsDir()
 	lfnm := filepath.Join(pdir, "gide.log")
 	crnm := filepath.Join(pdir, "crash.log")
+	_ = crnm
 
 	gide.TheConsole.Init(lfnm)
 
