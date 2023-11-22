@@ -24,7 +24,7 @@ import (
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *GideView) Find(find, repl string, ignoreCase, regExp bool, loc gide.FindLoc, langs []filecat.Supported) { //gti:add
+func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool, loc gide.FindLoc, langs []filecat.Supported) { //gti:add
 	if find == "" {
 		return
 	}
@@ -76,7 +76,7 @@ func (ge *GideView) Find(find, repl string, ignoreCase, regExp bool, loc gide.Fi
 		res = gide.FileTreeSearch(root, find, ignoreCase, regExp, loc, adir, langs)
 	}
 	fv.ShowResults(res)
-	tv.UpdateEnd(updt)
+	tv.UpdateEndLayout(updt)
 	ge.FocusOnPanel(TabsIdx)
 }
 

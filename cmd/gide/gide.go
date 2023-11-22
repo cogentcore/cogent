@@ -34,6 +34,7 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	gi.DefaultTopAppBar = gidev.DefaultTopAppBar
 
+	// gi.LayoutTrace = true
 	// gi.KeyEventTrace = true
 
 	// goosi.TheApp.SetQuitCleanFunc(func() {

@@ -119,8 +119,8 @@ func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 
 // SetActiveTextView sets the given textview as the active one, and returns its index
 func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEndRender(wupdt)
+	updt := ge.UpdateStart()
+	defer ge.UpdateEndLayout(updt)
 
 	idx := ge.TextViewIndex(av)
 	if idx < 0 {
@@ -181,8 +181,8 @@ func (ge *GideView) SwapTextViews() bool {
 	if !ge.PanelIsOpen(TextView1Idx) || !ge.PanelIsOpen(TextView1Idx+1) {
 		return false
 	}
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEndRender(wupdt)
+	updt := ge.UpdateStart()
+	defer ge.UpdateEndLayout(updt)
 
 	tva := ge.TextViewByIndex(0)
 	tvb := ge.TextViewByIndex(1)

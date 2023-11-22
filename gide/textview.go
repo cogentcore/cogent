@@ -272,13 +272,13 @@ func (tv *TextView) TextViewEvents() {
 
 // ConfigOutputTextView configures a command-output textview within given parent layout
 func ConfigOutputTextView(tv *texteditor.Editor) {
-	tv.SetFlag(false, texteditor.EditorHasLineNos)
 	tv.Style(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
 		s.Font.Family = string(gi.Prefs.MonoFont)
 		s.Min.X.Ch(20)
-		s.Min.Y.Ch(10)
+		s.Min.Y.Em(20)
+		s.Grow.Set(1, 1)
 	})
 	tv.SetReadOnly(true)
 

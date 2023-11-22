@@ -174,8 +174,8 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *filetree.Node)
 	if fn.IsDir() {
 		return
 	}
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
+	updt := ge.UpdateStart()
+	defer ge.UpdateEndLayout(updt)
 
 	if tv.IsChanged() {
 		ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
@@ -184,6 +184,7 @@ func (ge *GideView) ViewFileNode(tv *gide.TextView, vidx int, fn *filetree.Node)
 	if err == nil {
 		// tv.StyleTextView() // make sure
 		tv.SetBuf(fn.Buf)
+		fmt.Println("setbuf:", tv)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
 		}

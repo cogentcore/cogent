@@ -15,6 +15,8 @@ import (
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/ki/v2"
+	"goki.dev/laser"
 	"goki.dev/pi/v2/complete"
 	"goki.dev/pi/v2/filecat"
 )
@@ -145,3 +147,19 @@ type Gide interface {
 
 // GideType is a Gide reflect.Type, suitable for checking for Type.Implements.
 var GideType = reflect.TypeOf((*Gide)(nil)).Elem()
+
+// ParentGide returns the Gide parent of given node
+func ParentGide(kn ki.Ki) (Gide, bool) {
+	if ki.IsRoot(kn) {
+		return nil, false
+	}
+	var ge Gide
+	kn.WalkUp(func(k ki.Ki) bool {
+		if laser.EmbedImplements(reflect.TypeOf(k.This()), GideType) {
+			ge = k.(Gide)
+			return false
+		}
+		return true
+	})
+	return ge, ge != nil
+}

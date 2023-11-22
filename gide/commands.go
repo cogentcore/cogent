@@ -409,6 +409,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 								cm.RunAfterPrompts(ge, buf)
 							}
 						})
+						fmt.Println(fn.ContextMenuPos(nil))
 						gi.NewMenuFromScene(m, fn, fn.ContextMenuPos(nil)).Run()
 					} else {
 						fmt.Println(err)

@@ -152,7 +152,7 @@ func (pf *Preferences) Open() error { //gti:add
 func (pf *Preferences) Save() error { //gti:add
 	pdir := goosi.TheApp.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
-	err := grr.Log0(jsons.Save(pf, pnm))
+	err := grr.Log0(jsons.SaveIndent(pf, pnm))
 	if err != nil {
 		return err
 	}
@@ -309,7 +309,7 @@ func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error { //gti:add
 
 // SaveJSON save to JSON file
 func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log0(jsons.Save(pf, string(filename)))
+	return grr.Log0(jsons.SaveIndent(pf, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable

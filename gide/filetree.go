@@ -7,7 +7,6 @@ package gide
 import (
 	"log"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -16,29 +15,12 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/ki/v2"
-	"goki.dev/laser"
 	"goki.dev/pi/v2/filecat"
 )
 
 // FileNode is Gide version of FileNode for FileTree view
 type FileNode struct {
 	filetree.Node
-}
-
-// ParentGide returns the Gide parent of given node
-func ParentGide(kn ki.Ki) (Gide, bool) {
-	if ki.IsRoot(kn) {
-		return nil, false
-	}
-	var ge Gide
-	kn.WalkUp(func(k ki.Ki) bool {
-		if laser.EmbedImplements(reflect.TypeOf(k.This()), GideType) {
-			ge = k.(Gide)
-			return false
-		}
-		return true
-	})
-	return ge, ge != nil
 }
 
 // EditFile pulls up this file in Gide
@@ -234,6 +216,9 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 	mls := make([]FileSearchResults, 0)
 	start.WalkPre(func(k ki.Ki) bool {
 		sfn := filetree.AsNode(k)
+		if sfn == nil {
+			return ki.Continue
+		}
 		if sfn.IsDir() && !sfn.IsOpen() {
 			// fmt.Printf("dir: %v closed\n", sfn.FPath)
 			return ki.Break // don't go down into closed directories!
