@@ -7,6 +7,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -17,6 +18,7 @@ import (
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidev"
 	"goki.dev/goosi"
+	"goki.dev/grr"
 )
 
 func main() { gimain.Run(app) }
@@ -43,23 +45,30 @@ Version: ` + gide.Prefs.VersionInfo())
 	pdir := goosi.TheApp.AppPrefsDir()
 	lfnm := filepath.Join(pdir, "gide.log")
 	crnm := filepath.Join(pdir, "crash.log")
-	_ = crnm
 
 	gide.TheConsole.Init(lfnm)
 
 	defer func() {
-		r := recover()
-		stack := string(debug.Stack())
-		if r != nil {
-			fmt.Printf("stacktrace from panic:\n%v\n%s\n", r, stack)
-			fmt.Fprintf(gide.TheConsole.LogWrite, "stacktrace from panic:\n%s\n%s\n", r, stack)
-		}
-		cf, _ := os.Create(crnm)
-		fmt.Fprintf(cf, "stacktrace from panic:\n%v\n%s\n", r, stack)
-		cf.Close()
-		gide.TheConsole.Close()
-		if r != nil {
-			os.Exit(1)
+		if r := recover(); r != nil {
+
+			stack := string(debug.Stack())
+
+			print := func(w io.Writer) {
+				fmt.Fprintln(w, "panic:", r)
+				fmt.Fprintln(w, "")
+				fmt.Fprintln(w, "----- START OF STACK TRACE: -----")
+				fmt.Fprintln(w, stack)
+				fmt.Fprintln(w, "----- END OF STACK TRACE -----")
+			}
+
+			print(os.Stdout)
+			print(gide.TheConsole.LogWrite)
+
+			cf, err := os.Create(crnm)
+			if grr.Log0(err) == nil {
+				print(cf)
+				cf.Close()
+			}
 		}
 	}()
 
@@ -111,5 +120,5 @@ Version: ` + gide.Prefs.VersionInfo())
 		gidev.NewGideProjPath(path)
 	}
 	// above NewGideProj calls will have added to WinWait..
-	gi.WinWait.Wait()
+	gi.Wait()
 }
