@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/goosi"
 	"goki.dev/grows/jsons"
 	"goki.dev/pi/v2/filecat"
 )
@@ -66,7 +65,7 @@ func (lt *Langs) SaveJSON(filename gi.FileName) error { //gti:add
 
 // OpenPrefs opens Langs from App standard prefs directory, using PrefsLangsFileName
 func (lt *Langs) OpenPrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
 	return lt.OpenJSON(gi.FileName(pnm))
@@ -74,7 +73,7 @@ func (lt *Langs) OpenPrefs() error { //gti:add
 
 // SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFileName
 func (lt *Langs) SavePrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
 	return lt.SaveJSON(gi.FileName(pnm))

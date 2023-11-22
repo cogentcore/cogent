@@ -20,7 +20,6 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
-	"goki.dev/goosi"
 	"goki.dev/goosi/events"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
@@ -715,7 +714,7 @@ func (cm *Commands) SaveJSON(filename gi.FileName) error { //gti:add
 // OpenPrefs opens custom Commands from App standard prefs directory, using
 // PrefsCmdsFileName
 func (cm *Commands) OpenPrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
 	err := cm.OpenJSON(gi.FileName(pnm))
@@ -730,7 +729,7 @@ func (cm *Commands) OpenPrefs() error { //gti:add
 // SavePrefs saves custom Commands to App standard prefs directory, using
 // PrefsCmdsFileName
 func (cm *Commands) SavePrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
 	err := cm.SaveJSON(gi.FileName(pnm))

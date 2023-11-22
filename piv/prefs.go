@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/goosi"
 	"goki.dev/pi/v2/parse"
 )
 
@@ -75,14 +74,14 @@ var SavedPathsFileName = "gopi_saved_paths.json"
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.SaveJSON(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
 }

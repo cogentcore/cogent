@@ -15,7 +15,6 @@ import (
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/keyfun"
-	"goki.dev/goosi"
 	"goki.dev/goosi/events/key"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
@@ -340,7 +339,7 @@ func (km *KeyMaps) SaveJSON(filename gi.FileName) error { //gti:add
 
 // OpenPrefs opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFileName
 func (km *KeyMaps) OpenPrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
 	return km.OpenJSON(gi.FileName(pnm))
@@ -348,7 +347,7 @@ func (km *KeyMaps) OpenPrefs() error { //gti:add
 
 // SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFileName
 func (km *KeyMaps) SavePrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
 	return km.SaveJSON(gi.FileName(pnm))

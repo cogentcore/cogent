@@ -13,7 +13,6 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gidebug"
-	"goki.dev/goosi"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
 	"goki.dev/pi/v2/filecat"
@@ -126,7 +125,7 @@ func (pf *Preferences) ApplyEnvVars() {
 
 // Open preferences from GoGi standard prefs directory, and applies them
 func (pf *Preferences) Open() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log0(jsons.Open(pf, pnm))
 	if err != nil {
@@ -150,7 +149,7 @@ func (pf *Preferences) Open() error { //gti:add
 
 // Save Preferences to GoGi standard prefs directory
 func (pf *Preferences) Save() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log0(jsons.SaveIndent(pf, pnm))
 	if err != nil {
@@ -344,7 +343,7 @@ var (
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.SaveJSON(pnm)
 	// add back after save
@@ -355,7 +354,7 @@ func SavePaths() {
 func OpenPaths() {
 	// remove to be sure we don't have duplicate extras
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)

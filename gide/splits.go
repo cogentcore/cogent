@@ -11,7 +11,6 @@ import (
 	"slices"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/goosi"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
 )
@@ -124,7 +123,7 @@ func (lt *Splits) SaveJSON(filename gi.FileName) error { //gti:add
 
 // OpenPrefs opens Splits from App standard prefs directory, using PrefSplitsFileName
 func (lt *Splits) OpenPrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
 	err := lt.OpenJSON(gi.FileName(pnm))
@@ -137,7 +136,7 @@ func (lt *Splits) OpenPrefs() error { //gti:add
 // SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFileName
 func (lt *Splits) SavePrefs() error { //gti:add
 	lt.FixLen()
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
 	AvailSplitNames = lt.Names()

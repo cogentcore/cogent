@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/goosi"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
 )
@@ -62,7 +61,7 @@ func (lt *Registers) SaveJSON(filename gi.FileName) error { //gti:add
 
 // OpenPrefs opens Registers from App standard prefs directory, using PrefRegistersFileName
 func (lt *Registers) OpenPrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
 	err := lt.OpenJSON(gi.FileName(pnm))
@@ -74,7 +73,7 @@ func (lt *Registers) OpenPrefs() error { //gti:add
 
 // SavePrefs saves Registers to App standard prefs directory, using PrefRegistersFileName
 func (lt *Registers) SavePrefs() error { //gti:add
-	pdir := goosi.TheApp.AppPrefsDir()
+	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
 	AvailRegisterNames = lt.Names()
