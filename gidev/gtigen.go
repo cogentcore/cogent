@@ -212,7 +212,7 @@ var GideViewType = gti.AddType(&gti.Type{
 			{"path", &gti.Field{Name: "path", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"folder", &gti.Field{Name: "folder", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"mainLang", &gti.Field{Name: "mainLang", Type: "goki.dev/pi/v2/filecat.Supported", LocalType: "filecat.Supported", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-			{"versCtrl", &gti.Field{Name: "versCtrl", Type: "goki.dev/gi/v2/giv.VersCtrlName", LocalType: "giv.VersCtrlName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"versCtrl", &gti.Field{Name: "versCtrl", Type: "goki.dev/gi/v2/filetree.VersCtrlName", LocalType: "filetree.VersCtrlName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"GideView", &gti.Field{Name: "GideView", Type: "*goki.dev/gide/v2/gidev.GideView", LocalType: "*GideView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},

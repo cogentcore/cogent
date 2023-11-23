@@ -18,7 +18,6 @@ import (
 	"github.com/mattn/go-shellwords"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/goosi/events"
 	"goki.dev/grows/jsons"
@@ -655,7 +654,7 @@ var CustomCmds = Commands{}
 
 // FilterCmdNames returns a slice of commands organized by category
 // that are compatible with given language and version control system.
-func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm giv.VersCtrlName) [][]string {
+func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm filetree.VersCtrlName) [][]string {
 	vnm := strings.ToLower(string(vcnm))
 	var cmds [][]string
 	cat := ""
@@ -664,7 +663,7 @@ func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm giv.VersCtrlName
 		if cmd.LangMatch(lang) {
 			if cmd.Cat != cat {
 				lcat := strings.ToLower(cmd.Cat)
-				if giv.IsVersCtrlSystem(lcat) && lcat != vnm {
+				if filetree.IsVersCtrlSystem(lcat) && lcat != vnm {
 					continue
 				}
 				cat = cmd.Cat

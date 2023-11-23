@@ -155,35 +155,28 @@ func (vv *KeyMapValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt)
+		if !vv.IsReadOnly() {
+			vv.OpenDialog(bt, nil)
+		}
 	})
 	vv.UpdateWidget()
 }
 
-func (vv *KeyMapValue) HasDialog() bool {
-	return true
-}
+func (vv *KeyMapValue) HasDialog() bool                      { return true }
+func (vv *KeyMapValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
 
-func (vv *KeyMapValue) OpenDialog(ctx gi.Widget) {
-	if vv.IsReadOnly() {
-		return
-	}
+func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
-	d := gi.NewBody().AddTitle("Select a key map").AddText(vv.Doc())
 	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddCancel(pw)
-		d.AddOk(pw).OnClick(func(e events.Event) {
-			if si >= 0 {
-				km := AvailKeyMaps[si]
-				vv.SetValue(km.Name)
-				vv.UpdateWidget()
-			}
-		})
-	})
-	d.NewFullDialog(ctx).Run()
+	return true, func() {
+		if si >= 0 {
+			km := AvailKeyMaps[si]
+			vv.SetValue(km.Name)
+			vv.UpdateWidget()
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -306,35 +299,28 @@ func (vv *CmdValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt)
+		if !vv.IsReadOnly() {
+			vv.OpenDialog(bt, nil)
+		}
 	})
 	vv.UpdateWidget()
 }
 
-func (vv *CmdValue) HasDialog() bool {
-	return true
-}
+func (vv *CmdValue) HasDialog() bool                      { return true }
+func (vv *CmdValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
 
-func (vv *CmdValue) OpenDialog(ctx gi.Widget) {
-	if vv.IsReadOnly() {
-		return
-	}
+func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
-	d := gi.NewBody().AddTitle("Select a command").AddText(vv.Doc())
 	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddCancel(pw)
-		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
-			if si >= 0 {
-				pt := AvailCmds[si]
-				vv.SetValue(CommandName(pt.Cat, pt.Name))
-				vv.UpdateWidget()
-			}
-		})
-	})
-	d.NewFullDialog(ctx).Run()
+	return true, func() {
+		if si >= 0 {
+			pt := AvailCmds[si]
+			vv.SetValue(CommandName(pt.Cat, pt.Name))
+			vv.UpdateWidget()
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -411,38 +397,31 @@ func (vv *SplitValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt)
+		if !vv.IsReadOnly() {
+			vv.OpenDialog(bt, nil)
+		}
 	})
 	vv.UpdateWidget()
 }
 
-func (vv *SplitValue) HasDialog() bool {
-	return true
-}
+func (vv *SplitValue) HasDialog() bool                      { return true }
+func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
 
-func (vv *SplitValue) OpenDialog(ctx gi.Widget) {
-	if vv.IsReadOnly() {
-		return
-	}
+func (vv *SplitValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	curRow := -1
 	if cur != "" {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
-	d := gi.NewBody().AddTitle("Select a Named Splitter Config").AddText(vv.Doc())
 	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddCancel(pw)
-		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
-			if si >= 0 {
-				pt := AvailSplits[si]
-				vv.SetValue(pt.Name)
-				vv.UpdateWidget()
-			}
-		})
-	})
-	d.NewFullDialog(ctx).Run()
+	return true, func() {
+		if si >= 0 {
+			pt := AvailSplits[si]
+			vv.SetValue(pt.Name)
+			vv.UpdateWidget()
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -527,19 +506,16 @@ func (vv *RegisterValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	bt.SetType(gi.ButtonTonal)
 	bt.Config(sc)
 	bt.OnClick(func(e events.Event) {
-		vv.OpenDialog(bt)
+		if !vv.IsReadOnly() {
+			vv.OpenDialog(bt, nil)
+		}
 	})
 	vv.UpdateWidget()
 }
 
-func (vv *RegisterValue) HasDialog() bool {
-	return true
-}
+func (vv *RegisterValue) HasDialog() bool { return true }
 
-func (vv *RegisterValue) OpenDialog(ctx gi.Widget) {
-	if vv.IsReadOnly() {
-		return
-	}
+func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 	cur := laser.ToString(vv.Value.Interface())
 	m := gi.NewMenuFromStrings(AvailRegisterNames, cur, func(idx int) {
 		rnm := AvailRegisterNames[idx]

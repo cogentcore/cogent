@@ -259,7 +259,7 @@ func (ge *GideView) CommitNoChecks() {
 		if len(ct) < 2 {
 			continue
 		}
-		if !giv.IsVersCtrlSystem(ct[0]) {
+		if !filetree.IsVersCtrlSystem(ct[0]) {
 			continue
 		}
 		for _, cm := range ct {

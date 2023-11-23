@@ -279,6 +279,9 @@ func ConfigOutputTextView(tv *texteditor.Editor) {
 		s.Min.X.Ch(20)
 		s.Min.Y.Em(20)
 		s.Grow.Set(1, 1)
+		if tv.Buf != nil {
+			tv.Buf.Opts.LineNos = false
+		}
 	})
 	tv.SetReadOnly(true)
 

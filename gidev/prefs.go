@@ -9,7 +9,6 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/goosi/events"
@@ -133,7 +132,7 @@ func (ge *GideView) LangDefaults() {
 	if ge.Prefs.VersCtrl == "" {
 		repo, _ := ge.Files.FirstVCS()
 		if repo != nil {
-			ge.Prefs.VersCtrl = giv.VersCtrlName(repo.Vcs())
+			ge.Prefs.VersCtrl = filetree.VersCtrlName(repo.Vcs())
 		}
 	}
 }

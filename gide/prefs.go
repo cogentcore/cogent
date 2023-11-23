@@ -11,7 +11,6 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
@@ -239,7 +238,7 @@ type ProjPrefs struct {
 	MainLang filecat.Supported
 
 	// the type of version control system used in this project (git, svn, etc) -- filters commands available
-	VersCtrl giv.VersCtrlName
+	VersCtrl filetree.VersCtrlName
 
 	// current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
 	ProjFilename gi.FileName `ext:".gide"`
@@ -301,7 +300,7 @@ func (pf *ProjPrefs) Update() {
 // OpenJSON open from JSON file
 func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error { //gti:add
 	err := grr.Log0(jsons.Open(pf, string(filename)))
-	pf.VersCtrl = giv.VersCtrlName(strings.ToLower(string(pf.VersCtrl))) // official names are lowercase now
+	pf.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(pf.VersCtrl))) // official names are lowercase now
 	pf.Changed = false
 	return err
 }

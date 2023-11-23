@@ -12,7 +12,6 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/ki/v2"
@@ -42,7 +41,7 @@ type Gide interface {
 
 	// VersCtrl returns the version control system in effect, using the file tree detected
 	// version or whatever is set in project preferences
-	VersCtrl() giv.VersCtrlName
+	VersCtrl() filetree.VersCtrlName
 
 	// CmdRuns returns the CmdRuns manager of running commands, used extensively
 	// in commands.go

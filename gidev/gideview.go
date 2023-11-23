@@ -124,7 +124,7 @@ func (ge *GideView) LastSaveTime() time.Time {
 
 // VersCtrl returns the version control system in effect, using the file tree detected
 // version or whatever is set in project preferences
-func (ge *GideView) VersCtrl() giv.VersCtrlName {
+func (ge *GideView) VersCtrl() filetree.VersCtrlName {
 	vc := ge.Prefs.VersCtrl
 	return vc
 }
@@ -288,7 +288,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 // path -- all GideView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl giv.VersCtrlName) *GideView { //gti:add
+func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl filetree.VersCtrlName) *GideView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
