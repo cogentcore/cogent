@@ -464,6 +464,7 @@ func (ge *GideView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		txpos = reg.Start
 		tv.HighlightRegion(reg)
 		tv.SetCursorShow(txpos)
+		tv.SetNeedsLayout()
 	}
 	return true
 }

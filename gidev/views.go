@@ -259,21 +259,24 @@ func (ge *GideView) ChooseRunExec(exePath gi.FileName) { //gti:add
 //////////////////////////////////////////////////////////////////////////////////////
 //    StatusBar
 
-// SetStatus updates the statusbar label with given message, along with other status info
+// SetStatus sets the current status update message for the StatusBar next time it renders
 func (ge *GideView) SetStatus(msg string) {
+	ge.StatusMessage = msg
+	ge.UpdateTextButtons()
+}
+
+// UpdateStatusLabel updates the statusbar label, called for each render!
+func (ge *GideView) UpdateStatusLabel() {
 	sb := ge.StatusBar()
 	if sb == nil {
 		return
 	}
-	// ge.UpdtMu.Lock()
-	// defer ge.UpdtMu.Unlock()
-
-	updt := sb.UpdateStart()
 	lbl := ge.StatusLabel()
 	fnm := ""
 	ln := 0
 	ch := 0
 	tv := ge.ActiveTextView()
+	msg := ""
 	if tv != nil {
 		ln = tv.CursorPos.Ln + 1
 		ch = tv.CursorPos.Ch
@@ -287,17 +290,15 @@ func (ge *GideView) SetStatus(msg string) {
 			}
 		}
 		if tv.ISearch.On {
-			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearch.Find, len(tv.ISearch.Matches), msg)
+			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearch.Find, len(tv.ISearch.Matches), ge.StatusMessage)
 		}
 		if tv.QReplace.On {
-			msg = fmt.Sprintf("\tQReplace: %v -> %v (n=%v)\t%v", tv.QReplace.Find, tv.QReplace.Replace, len(tv.QReplace.Matches), msg)
+			msg = fmt.Sprintf("\tQReplace: %v -> %v (n=%v)\t%v", tv.QReplace.Find, tv.QReplace.Replace, len(tv.QReplace.Matches), ge.StatusMessage)
 		}
 	}
 
 	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", ge.Nm, ge.ActiveVCSInfo, fnm, ln, ch, msg)
-	lbl.SetText(str)
-	sb.UpdateEnd(updt)
-	ge.UpdateTextButtons()
+	lbl.SetTextUpdate(str)
 }
 
 // HelpWiki opens wiki page for gide on github

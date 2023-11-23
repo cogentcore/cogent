@@ -56,6 +56,9 @@ type GideView struct {
 	// has the root changed?  we receive update signals from root for changes
 	Changed bool `set:"-" json:"-"`
 
+	// the last status update message
+	StatusMessage string
+
 	// timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger
 	LastSaveTStamp time.Time `set:"-" json:"-"`
 
@@ -197,22 +200,14 @@ func (ge *GideView) OpenFile(fnm string) { //gti:add
 		ge.ViewFile(gi.FileName(abfn))
 		return
 	}
-	// todo: scene-based opens
-	// for _, w := range gi.MainWindows {
-	// 	mfr, err := w.MainFrame()
-	// 	if err != nil || mfr.NumChildren() == 0 {
-	// 		continue
-	// 	}
-	// 	gevi := mfr.Child(0).Embed(KiT_GideView)
-	// 	if gevi == nil {
-	// 		continue
-	// 	}
-	// 	geo := gevi.(*GideView)
-	// 	if strings.HasPrefix(abfn, string(geo.ProjRoot)) {
-	// 		geo.ViewFile(gi.FileName(abfn))
-	// 		return
-	// 	}
-	// }
+	for _, win := range gi.MainRenderWins {
+		msc := win.MainScene()
+		geo := GideInScene(msc)
+		if strings.HasPrefix(abfn, string(geo.ProjRoot)) {
+			geo.ViewFile(gi.FileName(abfn))
+			return
+		}
+	}
 	// fmt.Printf("open path: %s\n", ge.ProjRoot)
 	ge.OpenPath(gi.FileName(abfn))
 }
@@ -273,7 +268,9 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.ApplyPrefs()
+		// ge.OnShow(func(e events.Event) { // todo: not working
 		ge.UpdateFiles()
+		// })
 		win := ge.Sc.RenderWin()
 		if win != nil {
 			winm := "gide-" + pnm
@@ -490,24 +487,16 @@ func (ge *GideView) CloseWindowReq() bool {
 // main windows and look for gide windows and call their CloseWindowReq
 // functions!
 func QuitReq() bool {
-	// todo:
-	// for _, win := range gi.MainWindows {
-	// 	if !strings.HasPrefix(win.Nm, "gide-") {
-	// 		continue
-	// 	}
-	// 	mfr, err := win.MainWidget()
-	// 	if err != nil {
-	// 		continue
-	// 	}
-	// 	gek := mfr.ChildByName("gide", 0)
-	// 	if gek == nil {
-	// 		continue
-	// 	}
-	// 	ge := gek.Embed(KiT_GideView).(*GideView)
-	// 	if !ge.CloseWindowReq() {
-	// 		return false
-	// 	}
-	// }
+	for _, win := range gi.MainRenderWins {
+		if !strings.HasPrefix(win.Name, "gide-") {
+			continue
+		}
+		msc := win.MainScene()
+		ge := GideInScene(msc)
+		if !ge.CloseWindowReq() {
+			return false
+		}
+	}
 	return true
 }
 
@@ -533,6 +522,10 @@ func OpenGideProj(projfile string) *GideView {
 	return NewGideWindow(projfile, projnm, root, false)
 }
 
+func GideInScene(sc *gi.Scene) *GideView {
+	return sc.Body.ChildByType(GideViewType, ki.Embeds).(*GideView)
+}
+
 // NewGideWindow is common code for Open GideWindow from Proj or Path
 func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	winm := "gide-" + projnm
@@ -540,7 +533,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 
 	if win, found := gi.AllRenderWins.FindName(winm); found {
 		sc := win.MainScene()
-		ge := sc.ChildByType(GideViewType, ki.Embeds).(*GideView)
+		ge := GideInScene(sc)
 		if string(ge.ProjRoot) == root {
 			win.Raise()
 			return ge
@@ -556,28 +549,25 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 		ge.TopAppBar(tb)
 	})
 
-	// mmen := win.MainMenu
-	// giv.MainMenuView(ge, win, mmen)
-
-	// inClosePrompt := false
-	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {
-	// 	if !inClosePrompt {
-	// 		inClosePrompt = true
-	// 		if ge.CloseWindowReq() {
-	// 			win.Close()
-	// 		} else {
-	// 			inClosePrompt = false
-	// 		}
-	// 	}
-	// })
-	//
-	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
-	// 	if gi.MainWindows.Len() <= 1 {
-	// 		go goosi.TheApp.Quit() // once main window is closed, quit
-	// 	}
-	// })
-	//
-	// win.MainMenuUpdated()
+	/* todo: window doesn't exist yet -- need a delayed soln
+	inClosePrompt := false
+	win := ge.Sc.RenderWin()
+	win.GoosiWin.SetCloseReqFunc(func(w goosi.Window) {
+		if !inClosePrompt {
+			inClosePrompt = true
+			if ge.CloseWindowReq() {
+				win.Close()
+			} else {
+				inClosePrompt = false
+			}
+		}
+	})
+	win.GoosiWin.SetCloseCleanFunc(func(w goosi.Window) {
+		if gi.MainRenderWins.Len() <= 1 {
+			go goosi.TheApp.Quit() // once main window is closed, quit
+		}
+	})
+	*/
 
 	b.NewWindow().Run()
 

@@ -20,6 +20,8 @@ import (
 // setting / clearing breakpoints, etc
 type TextView struct {
 	texteditor.Editor
+
+	Gide Gide
 }
 
 /*

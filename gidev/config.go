@@ -11,6 +11,7 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/styles"
+	"goki.dev/girl/units"
 	"goki.dev/goosi/events"
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
@@ -160,6 +161,7 @@ func (ge *GideView) ConfigSplits() {
 		})
 
 		ted := gide.NewTextView(txly, "textview-"+txnm)
+		ted.Gide = ge
 		ted.Style(func(s *styles.Style) {
 			s.Grow.Set(1, 1)
 			s.Min.X.Ch(80)
@@ -172,10 +174,13 @@ func (ge *GideView) ConfigSplits() {
 			s.Text.TabSize = ge.Prefs.Editor.TabSize
 			s.Font.Family = string(gi.Prefs.MonoFont)
 		})
-		// todo: need to get updates on cursor movement and qreplace
-		// ted.TextViewSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	gee.TextViewSig(tee, texteditor.EditorSignals(sig))
-		// })
+		ted.OnFocus(func(e events.Event) {
+			ge.SetActiveTextViewIdx(i)
+		})
+		// get updates on cursor movement and qreplace
+		ted.OnInput(func(e events.Event) {
+			ge.UpdateStatusLabel()
+		})
 	}
 
 	ge.UpdateTextButtons()
@@ -208,9 +213,10 @@ func (ge *GideView) ConfigStatusBar() {
 	lbl := gi.NewLabel(sb, "sb-lbl")
 	lbl.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
-		s.Min.Y.Em(1)
+		s.Min.X.Ch(100)
+		s.Min.Y.Em(1.1)
 		s.Margin.Zero()
-		s.Padding.Zero()
+		s.Padding.Set(units.Dp(4))
 		s.Text.TabSize = 4
 	})
 }

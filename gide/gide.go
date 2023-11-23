@@ -50,8 +50,11 @@ type Gide interface {
 	// ArgVarVals returns the ArgVarVals argument variable values
 	ArgVarVals() *ArgVarVals
 
-	// SetStatus updates the statusbar label with given message, along with other status info
+	// SetStatus updates the statusbar label with given message, to be rendered next time
 	SetStatus(msg string)
+
+	// UpdateStatusLabel updates the statusbar label with current data
+	UpdateStatusLabel()
 
 	// SelectTabByLabel Selects given main tab, and returns all of its contents as well.
 	SelectTabByLabel(label string) gi.Widget
