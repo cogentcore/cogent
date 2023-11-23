@@ -362,6 +362,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 	sz := len(pvals)
 	avp := ge.ArgVarVals()
 	cnt := 0
+	tv := ge.ActiveTextView()
 	var cmvals map[string]string
 	for pv := range pvals {
 		switch pv {
@@ -394,7 +395,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 					}
 				})
 			})
-			d.NewDialog(ge.Scene()).Run()
+			d.NewDialog(tv).Run()
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
@@ -411,8 +412,8 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 								cm.RunAfterPrompts(ge, buf)
 							}
 						})
-						fmt.Println(fn.ContextMenuPos(nil))
-						gi.NewMenuFromScene(m, fn, fn.ContextMenuPos(nil)).Run()
+						m.Nm = "prompt-branch"
+						gi.NewMenuFromScene(m, tv, tv.ContextMenuPos(nil)).Run()
 					} else {
 						fmt.Println(err)
 					}

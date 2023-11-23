@@ -97,6 +97,7 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 					for i := 1; i < nc; i++ {
 						cm := cc[i]
 						gi.NewButton(mm).SetText(cm).OnClick(func(e events.Event) {
+							e.SetHandled()
 							ge.ExecCmdNameActive(gide.CommandName(cat, cm))
 						})
 					}

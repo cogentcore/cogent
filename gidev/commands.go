@@ -149,6 +149,7 @@ func (ge *GideView) CommandFromMenu(lang filecat.Supported) {
 				it := cc[ii]
 				cmdNm := gide.CommandName(cmdCat, it)
 				b := gi.NewButton(m).SetText(it).OnClick(func(e events.Event) {
+					e.SetHandled()
 					cmd := gide.CmdName(cmdNm)
 					ge.CmdHistory.Add(cmd)         // only save commands executed via chooser
 					ge.SaveAllCheck(true, func() { // true = cancel option
