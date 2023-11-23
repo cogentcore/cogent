@@ -228,6 +228,7 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) {
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *GideView) OpenConsoleTab() {
+	return
 	ctv := ge.RecycleTabTextView("Console", true)
 	if ctv == nil {
 		return

@@ -19,6 +19,7 @@ import (
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
+	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
@@ -378,6 +379,9 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 			d := gi.NewBody().AddTitle("Gide Command Prompt").
 				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := gi.NewTextField(d).SetText(curval)
+			tf.Style(func(s *styles.Style) {
+				s.Min.X.Ch(100)
+			})
 			d.AddBottomBar(func(pw gi.Widget) {
 				d.AddCancel(pw)
 				d.AddOk(pw).OnClick(func(e events.Event) {

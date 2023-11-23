@@ -47,7 +47,8 @@ Version: ` + gide.Prefs.VersionInfo())
 	lfnm := filepath.Join(pdir, "gide.log")
 	crnm := filepath.Join(pdir, "crash.log")
 
-	gide.TheConsole.Init(lfnm)
+	_ = lfnm
+	// gide.TheConsole.Init(lfnm)
 
 	defer func() {
 		if r := recover(); r != nil {

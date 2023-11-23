@@ -13,6 +13,8 @@ import (
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gide"
+	"goki.dev/girl/paint"
+	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/pi/v2/filecat"
 )
@@ -49,6 +51,9 @@ func (ge *GideView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texte
 	}
 	ctv.SetReadOnly(true)
 	ctv.SetBuf(buf)
+	ctv.LinkHandler = func(tl *paint.TextLink) {
+		ge.OpenFileURL(tl.URL, ctv)
+	}
 	return buf, ctv, nw
 }
 
@@ -280,6 +285,9 @@ func (ge *GideView) CommitNoChecks() {
 	d := gi.NewBody().AddTitle("Commit message").
 		AddText("Please enter your commit message here -- remember this is essential front-line documentation.  Author information comes from User settings in GoGi Preferences.")
 	tf := gi.NewTextField(d).SetText("").SetPlaceholder("Enter commit message here..")
+	tf.Style(func(s *styles.Style) {
+		s.Min.X.Ch(100)
+	})
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddCancel(pw)
 		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
