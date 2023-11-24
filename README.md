@@ -43,3 +43,20 @@ In addition to Issues shown on github, some important features to be added longe
 ![Screenshot](screenshot.png?raw=true "Screenshot")
 
 ![Screenshot, darker](screenshot_dark.png?raw=true "Screenshot, dark mode")
+
+# TODO
+
+* initial view of buffer not scrolling 
+* jump still not scrolling reliably
+* editor rendering overflow
+* lineno horiz scrolling issues
+* open file goes in wrong directory; crashing or not working
+
+# DONE
+
+* new command output needs to trigger layout update -- maybe fixed?
+* click select is not updating on render
+* register insert not working
+* focus first!
+* completer: no space, yes arrow keys
+

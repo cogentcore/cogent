@@ -140,8 +140,8 @@ func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
 // SetActiveTextViewIdx sets the given view index as the currently-active
 // TextView -- returns that textview
 func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEndLayout(wupdt)
+	updt := ge.UpdateStart()
+	defer ge.UpdateEndLayout(updt)
 
 	if idx < 0 || idx >= NTextViews {
 		log.Printf("GideView SetActiveTextViewIdx: text view index out of range: %v\n", idx)
@@ -156,7 +156,8 @@ func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
 	ge.SetStatus("")
 	av.GrabFocus() // todo: this is failing
 	av.ApplyStyle(av.Sc)
-	av.SetNeedsLayout()
+	av.SetNeedsRender()
+	// fmt.Println(av, "set active text")
 	return av
 }
 

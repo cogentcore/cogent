@@ -268,9 +268,10 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.ApplyPrefs()
-		// ge.OnShow(func(e events.Event) { // todo: not working
 		ge.UpdateFiles()
-		// })
+		ge.OnShow(func(e events.Event) { // todo: not working
+			ge.UpdateFiles()
+		})
 		win := ge.Sc.RenderWin()
 		if win != nil {
 			winm := "gide-" + pnm

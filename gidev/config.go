@@ -206,17 +206,16 @@ func (ge *GideView) ConfigStatusBar() {
 	sb := ge.StatusBar()
 	sb.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
-		s.Min.Y.Em(1.2)
-		s.Margin.Zero()
-		s.Padding.Zero()
-	})
-	lbl := gi.NewLabel(sb, "sb-lbl")
-	lbl.Style(func(s *styles.Style) {
-		s.Grow.Set(1, 0)
-		s.Min.X.Ch(100)
-		s.Min.Y.Em(1.1)
+		s.Min.Y.Em(1.0)
 		s.Margin.Zero()
 		s.Padding.Set(units.Dp(4))
+	})
+	lbl := gi.NewLabel(sb, "sb-lbl").SetText("This is the status bar initial configuration.  Welcome to gide!")
+	lbl.Style(func(s *styles.Style) {
+		s.Min.X.Ch(100)
+		s.Min.Y.Em(1.0)
+		s.Margin.Zero()
+		s.Padding.Zero()
 		s.Text.TabSize = 4
 	})
 }
