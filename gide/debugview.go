@@ -733,7 +733,7 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (dv *DebugView) ConfigWidget(sc *gi.Scene) {
+func (dv *DebugView) ConfigWidget() {
 	// dv.ConfigDebugView()
 }
 

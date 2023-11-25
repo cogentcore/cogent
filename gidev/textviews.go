@@ -155,8 +155,7 @@ func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
 	}
 	ge.SetStatus("")
 	av.GrabFocus() // todo: this is failing
-	av.ApplyStyle(av.Sc)
-	av.SetNeedsRender()
+	av.SetNeedsLayout(true)
 	// fmt.Println(av, "set active text")
 	return av
 }

@@ -144,7 +144,7 @@ func (vv *KeyMapValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *KeyMapValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *KeyMapValue) ConfigWidget(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -153,7 +153,7 @@ func (vv *KeyMapValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config(sc)
+	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
 			vv.OpenDialog(bt, nil)
@@ -169,7 +169,7 @@ func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
-	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
+	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(&si)
 	return true, func() {
 		if si >= 0 {
 			km := AvailKeyMaps[si]
@@ -288,7 +288,7 @@ func (vv *CmdValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *CmdValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *CmdValue) ConfigWidget(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -297,7 +297,7 @@ func (vv *CmdValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config(sc)
+	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
 			vv.OpenDialog(bt, nil)
@@ -313,7 +313,7 @@ func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
-	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
+	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(&si)
 	return true, func() {
 		if si >= 0 {
 			pt := AvailCmds[si]
@@ -386,7 +386,7 @@ func (vv *SplitValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *SplitValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *SplitValue) ConfigWidget(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -395,7 +395,7 @@ func (vv *SplitValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config(sc)
+	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
 			vv.OpenDialog(bt, nil)
@@ -414,7 +414,7 @@ func (vv *SplitValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	if cur != "" {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
-	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(d.Sc, &si)
+	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(&si)
 	return true, func() {
 		if si >= 0 {
 			pt := AvailSplits[si]
@@ -495,7 +495,7 @@ func (vv *RegisterValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *RegisterValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
+func (vv *RegisterValue) ConfigWidget(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
@@ -504,7 +504,7 @@ func (vv *RegisterValue) ConfigWidget(w gi.Widget, sc *gi.Scene) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config(sc)
+	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
 			vv.OpenDialog(bt, nil)

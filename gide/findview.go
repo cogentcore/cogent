@@ -331,8 +331,8 @@ func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	texteditor.PrevISearchString = find
 	tve := texteditor.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
-	tv.SetNeedsRender()
 	tv.SetCursorShow(reg.Start)
+	tv.SetNeedsLayout(true)
 	return true
 }
 
@@ -375,7 +375,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (fv *FindView) ConfigWidget(sc *gi.Scene) {
+func (fv *FindView) ConfigWidget() {
 	fv.ConfigFindView()
 }
 

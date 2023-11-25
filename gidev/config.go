@@ -31,12 +31,12 @@ const (
 	TabsIdx
 )
 
-func (ge *GideView) ConfigWidget(sc *gi.Scene) {
-	ge.ConfigGideView(sc)
+func (ge *GideView) ConfigWidget() {
+	ge.ConfigGideView()
 }
 
 // Config configures the view
-func (ge *GideView) ConfigGideView(sc *gi.Scene) {
+func (ge *GideView) ConfigGideView() {
 	if ge.HasChildren() {
 		return
 	}

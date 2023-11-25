@@ -46,14 +46,15 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* initial view of buffer not scrolling 
-* jump still not scrolling reliably
+* lookup
+* jump still not scrolling reliably -- same with links -- very random -- print in scroll code!
 * editor rendering overflow
 * lineno horiz scrolling issues
 * open file goes in wrong directory; crashing or not working
 
 # DONE
 
+* initial view of buffer not scrolling 
 * new command output needs to trigger layout update -- maybe fixed?
 * click select is not updating on render
 * register insert not working
