@@ -154,15 +154,12 @@ func HandleElement(ctx Context) {
 			return
 		}
 		tv := New[*giv.TreeView](ctx).SetText("").SetIcon(icons.None)
-		tv.RootView = tv
 		ctx.SetNewParent(tv)
 		return
 	case "li":
 		ntv := New[*giv.TreeView](ctx)
 		ftxt := ""
-		ptv, ok := ctx.Parent().(*giv.TreeView)
-		if ok {
-			ntv.RootView = ptv.RootView
+		if ptv := giv.AsTreeView(ctx.Parent()); ptv != nil {
 			if ptv.Prop("tag") == "ol" {
 				ip, _ := ntv.IndexInParent()
 				ftxt = strconv.Itoa(ip+1) + ". " // start at 1
@@ -170,8 +167,6 @@ func HandleElement(ctx Context) {
 				// TODO(kai/gidom): have different bullets for different depths
 				ftxt = "• "
 			}
-		} else {
-			ntv.RootView = ntv
 		}
 
 		etxt := ExtractText(ctx)
