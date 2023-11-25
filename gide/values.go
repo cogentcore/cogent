@@ -5,7 +5,6 @@
 package gide
 
 import (
-	"fmt"
 	"strings"
 
 	"goki.dev/gi/v2/gi"
@@ -523,7 +522,6 @@ func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 		if ci := strings.Index(rnm, ":"); ci > 0 {
 			rnm = rnm[:ci]
 		}
-		fmt.Println(rnm)
 		vv.SetValue(rnm)
 		vv.UpdateWidget()
 		if fun != nil {
