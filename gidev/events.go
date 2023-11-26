@@ -75,14 +75,14 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		}
 	}
 
+	atv := ge.ActiveTextView()
 	switch gkf {
 	case keyfun.Find:
 		kt.SetHandled()
-		tv := ge.ActiveTextView()
-		if tv != nil && tv.HasSelection() {
-			ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
+		if atv != nil && atv.HasSelection() {
+			ge.Prefs.Find.Find = string(atv.Selection().ToBytes())
 		}
-		ge.ConfigFindButton(giv.NewSoloFuncButton(tv, ge.Find)).CallFunc()
+		ge.ConfigFindButton(giv.NewSoloFuncButton(atv, ge.Find)).CallFunc()
 	}
 	if kt.IsHandled() {
 		return
@@ -96,7 +96,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.FocusPrevPanel()
 	case gide.KeyFunFileOpen:
 		kt.SetHandled()
-		giv.CallFunc(ge, ge.ViewFile)
+		ge.ConfigViewFile(giv.NewSoloFuncButton(atv, ge.ViewFile)).CallFunc()
 	case gide.KeyFunBufSelect:
 		kt.SetHandled()
 		ge.SelectOpenNode()

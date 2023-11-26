@@ -262,6 +262,12 @@ func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextView, int, bool) { 
 	return nv, nidx, true
 }
 
+// ConfigViewFile configures the ViewFile FuncButton
+func (ge *GideView) ConfigViewFile(fb *giv.FuncButton) *giv.FuncButton {
+	fb.Args[0].SetValue(ge.ActiveFilename)
+	return fb
+}
+
 // ViewFile views file in an existing TextView if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
 func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextView, int, bool) { //gti:add

@@ -47,10 +47,10 @@ In addition to Issues shown on github, some important features to be added longe
 # TODO
 
 * lookup
-* jump still not scrolling reliably -- same with links -- very random -- print in scroll code!
 * editor rendering overflow
-* lineno horiz scrolling issues
-* open file goes in wrong directory; crashing or not working
+* lineno horiz scrolling issues -- this is in V1 too!
+
+* open file not applying textfield sel on keyfun.Accept
 
 # DONE
 
@@ -60,4 +60,5 @@ In addition to Issues shown on github, some important features to be added longe
 * register insert not working
 * focus first!
 * completer: no space, yes arrow keys
+* jump still not scrolling reliably -- same with links -- very random -- print in scroll code!
 
