@@ -62,9 +62,9 @@ type Gide interface {
 	// FocusOnTabs moves keyboard focus to Tabs panel -- returns false if nothing at that tab
 	FocusOnTabs() bool
 
-	// ShowFile shows given file name at given line, returning TextView showing it
+	// ShowFile shows given file name at given line, returning TextEditor showing it
 	// or error if not found.
-	ShowFile(fname string, ln int) (*TextView, error)
+	ShowFile(fname string, ln int) (*TextEditor, error)
 
 	// FileNodeForFile returns file node for given file path.
 	// add: if not found in existing tree and external files, then if add is true,
@@ -79,13 +79,13 @@ type Gide interface {
 	// NextViewFileNode sets the next text view to view file in given node (opens
 	// buffer if not already opened) -- if already being viewed, that is
 	// activated, returns text view and index
-	NextViewFileNode(fn *filetree.Node) (*TextView, int)
+	NextViewFileNode(fn *filetree.Node) (*TextEditor, int)
 
-	// ActiveTextView returns the currently-active TextView
-	ActiveTextView() *TextView
+	// ActiveTextEditor returns the currently-active TextEditor
+	ActiveTextEditor() *TextEditor
 
-	// SetActiveTextView sets the given textview as the active one, and returns its index
-	SetActiveTextView(av *TextView) int
+	// SetActiveTextEditor sets the given textview as the active one, and returns its index
+	SetActiveTextEditor(av *TextEditor) int
 
 	// ActiveFileNode returns the file node for the active file -- nil if none
 	ActiveFileNode() *filetree.Node
@@ -107,10 +107,10 @@ type Gide interface {
 	// ParseOpenFindURL parses and opens given find:/// url from Find, return text
 	// region encoded in url, and starting line of results in find buffer, and
 	// number of results returned -- for parsing all the find results
-	ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextView, reg textbuf.Region, findBufStLn, findCount int, ok bool)
+	ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool)
 
 	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
-	OpenFileAtRegion(filename gi.FileName, reg textbuf.Region) (tv *TextView, ok bool)
+	OpenFileAtRegion(filename gi.FileName, reg textbuf.Region) (tv *TextEditor, ok bool)
 
 	// SaveAllCheck checks if any files have not been saved, and prompt to save them.
 	// returns true if there were unsaved files, false otherwise.

@@ -29,7 +29,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"LastSaveTStamp", &gti.Field{Name: "LastSaveTStamp", Type: "time.Time", LocalType: "time.Time", Doc: "timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"Files", &gti.Field{Name: "Files", Type: "*goki.dev/gi/v2/filetree.Tree", LocalType: "*filetree.Tree", Doc: "all the files in the project directory and subdirectories", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
-		{"ActiveTextViewIdx", &gti.Field{Name: "ActiveTextViewIdx", Type: "int", LocalType: "int", Doc: "index of the currently-active textview -- new files will be viewed in other views if available", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
+		{"ActiveTextEditorIdx", &gti.Field{Name: "ActiveTextEditorIdx", Type: "int", LocalType: "int", Doc: "index of the currently-active textview -- new files will be viewed in other views if available", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"OpenNodes", &gti.Field{Name: "OpenNodes", Type: "goki.dev/gide/v2/gide.OpenNodes", LocalType: "gide.OpenNodes", Doc: "list of open nodes, most recent first", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"CmdBufs", &gti.Field{Name: "CmdBufs", Type: "map[string]*goki.dev/gi/v2/texteditor.Buf", LocalType: "map[string]*texteditor.Buf", Doc: "the command buffers for commands run in this project", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"CmdHistory", &gti.Field{Name: "CmdHistory", Type: "goki.dev/gide/v2/gide.CmdNames", LocalType: "gide.CmdNames", Doc: "history of commands executed in this session", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
@@ -163,16 +163,16 @@ var GideViewType = gti.AddType(&gti.Type{
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"fnm", &gti.Field{Name: "fnm", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"TextView", &gti.Field{Name: "TextView", Type: "*goki.dev/gide/v2/gide.TextView", LocalType: "*gide.TextView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"TextEditor", &gti.Field{Name: "TextEditor", Type: "*goki.dev/gide/v2/gide.TextEditor", LocalType: "*gide.TextEditor", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"int", &gti.Field{Name: "int", Type: "int", LocalType: "int", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
-		{"ViewFile", &gti.Method{Name: "ViewFile", Doc: "ViewFile views file in an existing TextView if it is already viewing that\nfile, otherwise opens ViewFileNode in active buffer", Directives: gti.Directives{
+		{"ViewFile", &gti.Method{Name: "ViewFile", Doc: "ViewFile views file in an existing TextEditor if it is already viewing that\nfile, otherwise opens ViewFileNode in active buffer", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"fnm", &gti.Field{Name: "fnm", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"TextView", &gti.Field{Name: "TextView", Type: "*goki.dev/gide/v2/gide.TextView", LocalType: "*gide.TextView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"TextEditor", &gti.Field{Name: "TextEditor", Type: "*goki.dev/gide/v2/gide.TextEditor", LocalType: "*gide.TextEditor", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"int", &gti.Field{Name: "int", Type: "int", LocalType: "int", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},

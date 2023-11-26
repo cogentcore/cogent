@@ -36,10 +36,10 @@ func (ge *GideView) ConfigTextBuf(tb *texteditor.Buf) {
 	// tb.SetCompleter(&tb.PiState, pi.CompletePi, giv.CompleteGoEdit) // todo: need pi edit too..
 }
 
-// ActiveTextView returns the currently-active TextView
-func (ge *GideView) ActiveTextView() *gide.TextView {
-	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextViewIdx)
-	return ge.TextViewByIndex(ge.ActiveTextViewIdx)
+// ActiveTextEditor returns the currently-active TextEditor
+func (ge *GideView) ActiveTextEditor() *gide.TextEditor {
+	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIdx)
+	return ge.TextEditorByIndex(ge.ActiveTextEditorIdx)
 }
 
 // ActiveFileNode returns the file node for the active file -- nil if none
@@ -47,10 +47,10 @@ func (ge *GideView) ActiveFileNode() *filetree.Node {
 	return ge.FileNodeForFile(string(ge.ActiveFilename), false)
 }
 
-// TextViewIndex finds index of given textview (0 or 1)
-func (ge *GideView) TextViewIndex(av *gide.TextView) int {
-	for i := 0; i < NTextViews; i++ {
-		tv := ge.TextViewByIndex(i)
+// TextEditorIndex finds index of given textview (0 or 1)
+func (ge *GideView) TextEditorIndex(av *gide.TextEditor) int {
+	for i := 0; i < NTextEditors; i++ {
+		tv := ge.TextEditorByIndex(i)
 		if tv.This() == av.This() {
 			return i
 		}
@@ -58,25 +58,25 @@ func (ge *GideView) TextViewIndex(av *gide.TextView) int {
 	return -1 // shouldn't happen
 }
 
-// TextViewForFileNode finds a TextView that is viewing given FileNode,
+// TextEditorForFileNode finds a TextEditor that is viewing given FileNode,
 // and its index, or false if none is
-func (ge *GideView) TextViewForFileNode(fn *filetree.Node) (*gide.TextView, int, bool) {
+func (ge *GideView) TextEditorForFileNode(fn *filetree.Node) (*gide.TextEditor, int, bool) {
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
 	ge.ConfigTextBuf(fn.Buf)
-	for i := 0; i < NTextViews; i++ {
-		tv := ge.TextViewByIndex(i)
-		if tv != nil && tv.Buf != nil && tv.Buf == fn.Buf && ge.PanelIsOpen(i+TextView1Idx) {
+	for i := 0; i < NTextEditors; i++ {
+		tv := ge.TextEditorByIndex(i)
+		if tv != nil && tv.Buf != nil && tv.Buf == fn.Buf && ge.PanelIsOpen(i+TextEditor1Idx) {
 			return tv, i, true
 		}
 	}
 	return nil, -1, false
 }
 
-// OpenNodeForTextView finds the FileNode that a given TextView is
+// OpenNodeForTextEditor finds the FileNode that a given TextEditor is
 // viewing, returning its index within OpenNodes list, or false if not found
-func (ge *GideView) OpenNodeForTextView(tv *gide.TextView) (*filetree.Node, int, bool) {
+func (ge *GideView) OpenNodeForTextEditor(tv *gide.TextEditor) (*filetree.Node, int, bool) {
 	if tv.Buf == nil {
 		return nil, -1, false
 	}
@@ -88,14 +88,14 @@ func (ge *GideView) OpenNodeForTextView(tv *gide.TextView) (*filetree.Node, int,
 	return nil, -1, false
 }
 
-// TextViewForFile finds FileNode for file, and returns TextView and index
+// TextEditorForFile finds FileNode for file, and returns TextEditor and index
 // that is viewing that FileNode, or false if none is
-func (ge *GideView) TextViewForFile(fnm gi.FileName) (*gide.TextView, int, bool) {
+func (ge *GideView) TextEditorForFile(fnm gi.FileName) (*gide.TextEditor, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
 	}
-	return ge.TextViewForFileNode(fn)
+	return ge.TextEditorForFileNode(fn)
 }
 
 // SetActiveFileInfo sets the active file info from textbuf
@@ -117,19 +117,19 @@ func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 	}
 }
 
-// SetActiveTextView sets the given textview as the active one, and returns its index
-func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
+// SetActiveTextEditor sets the given textview as the active one, and returns its index
+func (ge *GideView) SetActiveTextEditor(av *gide.TextEditor) int {
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
 
-	idx := ge.TextViewIndex(av)
+	idx := ge.TextEditorIndex(av)
 	if idx < 0 {
 		return -1
 	}
-	if ge.ActiveTextViewIdx == idx {
+	if ge.ActiveTextEditorIdx == idx {
 		return idx
 	}
-	ge.ActiveTextViewIdx = idx
+	ge.ActiveTextEditorIdx = idx
 	if av.Buf != nil {
 		ge.SetActiveFileInfo(av.Buf)
 	}
@@ -137,18 +137,18 @@ func (ge *GideView) SetActiveTextView(av *gide.TextView) int {
 	return idx
 }
 
-// SetActiveTextViewIdx sets the given view index as the currently-active
-// TextView -- returns that textview
-func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
+// SetActiveTextEditorIdx sets the given view index as the currently-active
+// TextEditor -- returns that textview
+func (ge *GideView) SetActiveTextEditorIdx(idx int) *gide.TextEditor {
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
 
-	if idx < 0 || idx >= NTextViews {
-		log.Printf("GideView SetActiveTextViewIdx: text view index out of range: %v\n", idx)
+	if idx < 0 || idx >= NTextEditors {
+		log.Printf("GideView SetActiveTextEditorIdx: text view index out of range: %v\n", idx)
 		return nil
 	}
-	ge.ActiveTextViewIdx = idx
-	av := ge.ActiveTextView()
+	ge.ActiveTextEditorIdx = idx
+	av := ge.ActiveTextEditor()
 	if av.Buf != nil {
 		ge.SetActiveFileInfo(av.Buf)
 		av.Buf.FileModCheck()
@@ -160,32 +160,32 @@ func (ge *GideView) SetActiveTextViewIdx(idx int) *gide.TextView {
 	return av
 }
 
-// NextTextView returns the next text view available for viewing a file and
+// NextTextEditor returns the next text view available for viewing a file and
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
-func (ge *GideView) NextTextView() (*gide.TextView, int) {
-	av := ge.TextViewByIndex(ge.ActiveTextViewIdx)
+func (ge *GideView) NextTextEditor() (*gide.TextEditor, int) {
+	av := ge.TextEditorByIndex(ge.ActiveTextEditorIdx)
 	if av.Buf == nil {
-		return av, ge.ActiveTextViewIdx
+		return av, ge.ActiveTextEditorIdx
 	}
-	nxt := (ge.ActiveTextViewIdx + 1) % NTextViews
-	if !ge.PanelIsOpen(nxt + TextView1Idx) {
-		return av, ge.ActiveTextViewIdx
+	nxt := (ge.ActiveTextEditorIdx + 1) % NTextEditors
+	if !ge.PanelIsOpen(nxt + TextEditor1Idx) {
+		return av, ge.ActiveTextEditorIdx
 	}
-	return ge.TextViewByIndex(nxt), nxt
+	return ge.TextEditorByIndex(nxt), nxt
 }
 
-// SwapTextViews switches the buffers for the two open textviews
+// SwapTextEditors switches the buffers for the two open textviews
 // only operates if both panels are open
-func (ge *GideView) SwapTextViews() bool {
-	if !ge.PanelIsOpen(TextView1Idx) || !ge.PanelIsOpen(TextView1Idx+1) {
+func (ge *GideView) SwapTextEditors() bool {
+	if !ge.PanelIsOpen(TextEditor1Idx) || !ge.PanelIsOpen(TextEditor1Idx+1) {
 		return false
 	}
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
 
-	tva := ge.TextViewByIndex(0)
-	tvb := ge.TextViewByIndex(1)
+	tva := ge.TextEditorByIndex(0)
+	tvb := ge.TextEditorByIndex(1)
 	bufa := tva.Buf
 	bufb := tvb.Buf
 	tva.SetBuf(bufb)
@@ -194,7 +194,7 @@ func (ge *GideView) SwapTextViews() bool {
 	return true
 }
 
-func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (tv *gide.TextView, ok bool) {
+func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (tv *gide.TextEditor, ok bool) {
 	tv, _, ok = ge.LinkViewFile(filename)
 	if tv != nil {
 		tv.UpdateStart()
@@ -212,7 +212,7 @@ func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (t
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gide.TextView, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
+func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gide.TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindView OpenFindURL parse err: %v\n", err)
@@ -254,10 +254,10 @@ func (ge *GideView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 // is called by SetStatus and is generally under cover of TopUpdateStart / End
 // doesn't do anything unless a change is required -- safe to call frequently.
 func (ge *GideView) UpdateTextButtons() {
-	ati := ge.ActiveTextViewIdx
-	for i := 0; i < NTextViews; i++ {
-		tv := ge.TextViewByIndex(i)
-		mb := ge.TextViewButtonByIndex(i)
+	ati := ge.ActiveTextEditorIdx
+	for i := 0; i < NTextEditors; i++ {
+		tv := ge.TextEditorByIndex(i)
+		mb := ge.TextEditorButtonByIndex(i)
 		txnm := "<no file>"
 		if tv.Buf != nil {
 			txnm = dirs.DirAndFile(string(tv.Buf.Filename))
@@ -277,9 +277,9 @@ func (ge *GideView) UpdateTextButtons() {
 }
 
 // todo:
-// TextViewSig handles all signals from the textviews
-// func (ge *GideView) TextViewSig(tv *gide.TextView, sig texteditor.EditorSignals) {
-// 	ge.SetActiveTextView(tv) // if we're sending signals, we're the active one!
+// TextEditorSig handles all signals from the textviews
+// func (ge *GideView) TextEditorSig(tv *gide.TextEditor, sig texteditor.EditorSignals) {
+// 	ge.SetActiveTextEditor(tv) // if we're sending signals, we're the active one!
 // 	switch sig {
 // 	case texteditor.EditorCursorMoved:
 // 		ge.SetStatus("") // this really doesn't make any noticeable diff in perf
@@ -293,8 +293,8 @@ func (ge *GideView) FileNodeSelected(fn *filetree.Node) {
 	// not doing anything with this actually
 }
 
-func (ge *GideView) TextViewButtonMenu(idx int, m *gi.Scene) {
-	tv := ge.TextViewByIndex(idx)
+func (ge *GideView) TextEditorButtonMenu(idx int, m *gi.Scene) {
+	tv := ge.TextEditorByIndex(idx)
 	opn := ge.OpenNodes.Strings()
 	gi.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
 		giv.CallFunc(ge, ge.ViewFile)

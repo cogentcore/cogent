@@ -639,7 +639,7 @@ var FindViewType = gti.AddType(&gti.Type{
 	Name:       "goki.dev/gide/v2/gide.FindView",
 	ShortName:  "gide.FindView",
 	IDName:     "find-view",
-	Doc:        "FindView is a find / replace widget that displays results in a TextView\nand has a toolbar for controlling find / replace process.",
+	Doc:        "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.",
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Gide", &gti.Field{Name: "Gide", Type: "goki.dev/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
@@ -739,7 +739,7 @@ var SpellViewType = gti.AddType(&gti.Type{
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Gide", &gti.Field{Name: "Gide", Type: "goki.dev/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\" copy:\"-\""}},
-		{"Text", &gti.Field{Name: "Text", Type: "*goki.dev/gide/v2/gide.TextView", LocalType: "*TextView", Doc: "textview that we're spell-checking", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\" copy:\"-\""}},
+		{"Text", &gti.Field{Name: "Text", Type: "*goki.dev/gide/v2/gide.TextEditor", LocalType: "*TextEditor", Doc: "textview that we're spell-checking", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\" copy:\"-\""}},
 		{"Errs", &gti.Field{Name: "Errs", Type: "goki.dev/pi/v2/lex.Line", LocalType: "lex.Line", Doc: "current spelling errors", Directives: gti.Directives{}, Tag: ""}},
 		{"CurLn", &gti.Field{Name: "CurLn", Type: "int", LocalType: "int", Doc: "current line in text we're on", Directives: gti.Directives{}, Tag: ""}},
 		{"CurIdx", &gti.Field{Name: "CurIdx", Type: "int", LocalType: "int", Doc: "current index in Errs we're on", Directives: gti.Directives{}, Tag: ""}},
@@ -782,7 +782,7 @@ func (t *SpellView) SetGide(v Gide) *SpellView {
 
 // SetText sets the [SpellView.Text]:
 // textview that we're spell-checking
-func (t *SpellView) SetText(v *TextView) *SpellView {
+func (t *SpellView) SetText(v *TextEditor) *SpellView {
 	t.Text = v
 	return t
 }
@@ -1109,107 +1109,107 @@ func (t *SymTreeView) SetSelectedNodes(v []*giv.TreeView) *SymTreeView {
 	return t
 }
 
-// TextViewType is the [gti.Type] for [TextView]
-var TextViewType = gti.AddType(&gti.Type{
-	Name:       "goki.dev/gide/v2/gide.TextView",
-	ShortName:  "gide.TextView",
+// TextEditorType is the [gti.Type] for [TextEditor]
+var TextEditorType = gti.AddType(&gti.Type{
+	Name:       "goki.dev/gide/v2/gide.TextEditor",
+	ShortName:  "gide.TextEditor",
 	IDName:     "text-view",
-	Doc:        "TextView is the Gide-specific version of the TextView, with support for\nsetting / clearing breakpoints, etc",
+	Doc:        "TextEditor is the Gide-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc",
 	Directives: gti.Directives{},
 	Fields:     ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Editor", &gti.Field{Name: "Editor", Type: "goki.dev/gi/v2/texteditor.Editor", LocalType: "texteditor.Editor", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
 	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &TextView{},
+	Instance: &TextEditor{},
 })
 
-// NewTextView adds a new [TextView] with the given name
+// NewTextEditor adds a new [TextEditor] with the given name
 // to the given parent. If the name is unspecified, it defaults
 // to the ID (kebab-case) name of the type, plus the
 // [ki.Ki.NumLifetimeChildren] of the given parent.
-func NewTextView(par ki.Ki, name ...string) *TextView {
-	return par.NewChild(TextViewType, name...).(*TextView)
+func NewTextEditor(par ki.Ki, name ...string) *TextEditor {
+	return par.NewChild(TextEditorType, name...).(*TextEditor)
 }
 
-// KiType returns the [*gti.Type] of [TextView]
-func (t *TextView) KiType() *gti.Type {
-	return TextViewType
+// KiType returns the [*gti.Type] of [TextEditor]
+func (t *TextEditor) KiType() *gti.Type {
+	return TextEditorType
 }
 
-// New returns a new [*TextView] value
-func (t *TextView) New() ki.Ki {
-	return &TextView{}
+// New returns a new [*TextEditor] value
+func (t *TextEditor) New() ki.Ki {
+	return &TextEditor{}
 }
 
-// SetTooltip sets the [TextView.Tooltip]
-func (t *TextView) SetTooltip(v string) *TextView {
+// SetTooltip sets the [TextEditor.Tooltip]
+func (t *TextEditor) SetTooltip(v string) *TextEditor {
 	t.Tooltip = v
 	return t
 }
 
-// SetClass sets the [TextView.Class]
-func (t *TextView) SetClass(v string) *TextView {
+// SetClass sets the [TextEditor.Class]
+func (t *TextEditor) SetClass(v string) *TextEditor {
 	t.Class = v
 	return t
 }
 
-// SetPriorityEvents sets the [TextView.PriorityEvents]
-func (t *TextView) SetPriorityEvents(v []events.Types) *TextView {
+// SetPriorityEvents sets the [TextEditor.PriorityEvents]
+func (t *TextEditor) SetPriorityEvents(v []events.Types) *TextEditor {
 	t.PriorityEvents = v
 	return t
 }
 
-// SetCustomContextMenu sets the [TextView.CustomContextMenu]
-func (t *TextView) SetCustomContextMenu(v func(m *gi.Scene)) *TextView {
+// SetCustomContextMenu sets the [TextEditor.CustomContextMenu]
+func (t *TextEditor) SetCustomContextMenu(v func(m *gi.Scene)) *TextEditor {
 	t.CustomContextMenu = v
 	return t
 }
 
-// SetStackTop sets the [TextView.StackTop]
-func (t *TextView) SetStackTop(v int) *TextView {
+// SetStackTop sets the [TextEditor.StackTop]
+func (t *TextEditor) SetStackTop(v int) *TextEditor {
 	t.StackTop = v
 	return t
 }
 
-// SetPlaceholder sets the [TextView.Placeholder]
-func (t *TextView) SetPlaceholder(v string) *TextView {
+// SetPlaceholder sets the [TextEditor.Placeholder]
+func (t *TextEditor) SetPlaceholder(v string) *TextEditor {
 	t.Placeholder = v
 	return t
 }
 
-// SetCursorWidth sets the [TextView.CursorWidth]
-func (t *TextView) SetCursorWidth(v units.Value) *TextView {
+// SetCursorWidth sets the [TextEditor.CursorWidth]
+func (t *TextEditor) SetCursorWidth(v units.Value) *TextEditor {
 	t.CursorWidth = v
 	return t
 }
 
-// SetLineNumberColor sets the [TextView.LineNumberColor]
-func (t *TextView) SetLineNumberColor(v colors.Full) *TextView {
+// SetLineNumberColor sets the [TextEditor.LineNumberColor]
+func (t *TextEditor) SetLineNumberColor(v colors.Full) *TextEditor {
 	t.LineNumberColor = v
 	return t
 }
 
-// SetSelectColor sets the [TextView.SelectColor]
-func (t *TextView) SetSelectColor(v colors.Full) *TextView {
+// SetSelectColor sets the [TextEditor.SelectColor]
+func (t *TextEditor) SetSelectColor(v colors.Full) *TextEditor {
 	t.SelectColor = v
 	return t
 }
 
-// SetHighlightColor sets the [TextView.HighlightColor]
-func (t *TextView) SetHighlightColor(v colors.Full) *TextView {
+// SetHighlightColor sets the [TextEditor.HighlightColor]
+func (t *TextEditor) SetHighlightColor(v colors.Full) *TextEditor {
 	t.HighlightColor = v
 	return t
 }
 
-// SetCursorColor sets the [TextView.CursorColor]
-func (t *TextView) SetCursorColor(v colors.Full) *TextView {
+// SetCursorColor sets the [TextEditor.CursorColor]
+func (t *TextEditor) SetCursorColor(v colors.Full) *TextEditor {
 	t.CursorColor = v
 	return t
 }
 
-// SetLinkHandler sets the [TextView.LinkHandler]
-func (t *TextView) SetLinkHandler(v func(tl *paint.TextLink)) *TextView {
+// SetLinkHandler sets the [TextEditor.LinkHandler]
+func (t *TextEditor) SetLinkHandler(v func(tl *paint.TextLink)) *TextEditor {
 	t.LinkHandler = v
 	return t
 }

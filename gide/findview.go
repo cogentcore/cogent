@@ -71,7 +71,7 @@ type FindParams struct {
 	ReplHist []string
 }
 
-// FindView is a find / replace widget that displays results in a TextView
+// FindView is a find / replace widget that displays results in a TextEditor
 // and has a toolbar for controlling find / replace process.
 type FindView struct {
 	gi.Layout
@@ -96,7 +96,7 @@ func (fv *FindView) Params() *FindParams {
 
 // ShowResults shows the results in the buffer
 func (fv *FindView) ShowResults(res []FileSearchResults) {
-	ftv := fv.TextView()
+	ftv := fv.TextEditor()
 	fbuf := ftv.Buf
 	fbuf.Opts.LineNos = false
 	outlns := make([][]byte, 0, 100)
@@ -195,7 +195,7 @@ func (fv *FindView) ReplaceAction() bool {
 	fv.SaveReplString(fp.Replace)
 	gi.StringsInsertFirstUnique(&fp.ReplHist, fp.Replace, gi.Prefs.Params.SavedPathsMax)
 
-	ftv := fv.TextView()
+	ftv := fv.TextEditor()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
 	if !ok {
 		ok = ftv.CursorNextLink(false) // no wrap
@@ -302,7 +302,7 @@ func (fv *FindView) ReplaceAll() {
 
 // NextFind shows next find result
 func (fv *FindView) NextFind() {
-	ftv := fv.TextView()
+	ftv := fv.TextEditor()
 	ok := ftv.CursorNextLink(true) // wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
@@ -311,7 +311,7 @@ func (fv *FindView) NextFind() {
 
 // PrevFind shows previous find result
 func (fv *FindView) PrevFind() {
-	ftv := fv.TextView()
+	ftv := fv.TextEditor()
 	ok := ftv.CursorPrevLink(true) // wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
@@ -394,7 +394,7 @@ func (fv *FindView) ConfigFindView() {
 	fb := gi.NewToolbar(fv, "findbar")
 	rb := gi.NewToolbar(fv, "replbar")
 	tv := texteditor.NewEditor(fv, "findtext")
-	ConfigOutputTextView(tv)
+	ConfigOutputTextEditor(tv)
 	tv.LinkHandler = func(tl *paint.TextLink) {
 		fv.OpenFindURL(tl.URL, tv)
 	}
@@ -445,8 +445,8 @@ func (fv *FindView) FindNextAct() *gi.Button {
 	return fv.ReplBar().ChildByName("next", 3).(*gi.Button)
 }
 
-// TextViewLay returns the find results TextView
-func (fv *FindView) TextView() *texteditor.Editor {
+// TextEditorLay returns the find results TextEditor
+func (fv *FindView) TextEditor() *texteditor.Editor {
 	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
 }
 
@@ -479,11 +479,11 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.Toolbar) {
 	finds.OnChange(func(e events.Event) {
 		fv.Params().Find = finds.CurVal.(string)
 		if fv.Params().Find == "" {
-			tv := fv.Gide.ActiveTextView()
+			tv := fv.Gide.ActiveTextEditor()
 			if tv != nil {
 				tv.ClearHighlights()
 			}
-			fvtv := fv.TextView()
+			fvtv := fv.TextEditor()
 			if fvtv != nil {
 				fvtv.Buf.NewBuf(0)
 			}

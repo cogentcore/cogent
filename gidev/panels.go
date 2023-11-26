@@ -43,10 +43,10 @@ func (ge *GideView) FocusOnPanel(panel int) bool {
 
 	sv := ge.Splits()
 	switch panel {
-	case TextView1Idx:
-		ge.SetActiveTextViewIdx(0)
-	case TextView2Idx:
-		ge.SetActiveTextViewIdx(1)
+	case TextEditor1Idx:
+		ge.SetActiveTextEditorIdx(0)
+	case TextEditor2Idx:
+		ge.SetActiveTextEditorIdx(1)
 	case TabsIdx:
 		tv := ge.Tabs()
 		ct, _, has := tv.CurTab()
@@ -119,11 +119,11 @@ func (ge *GideView) SelectTabByLabel(label string) gi.Widget {
 	return tv.SelectTabByLabel(label)
 }
 
-// RecycleTabTextView returns a tab with given
+// RecycleTabTextEditor returns a tab with given
 // name, first by looking for an existing one, and if not found, making a new
-// one with a TextView in it.  if sel, then select it.
+// one with a TextEditor in it.  if sel, then select it.
 // returns widget
-func (ge *GideView) RecycleTabTextView(label string, sel bool) *texteditor.Editor {
+func (ge *GideView) RecycleTabTextEditor(label string, sel bool) *texteditor.Editor {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
@@ -134,7 +134,7 @@ func (ge *GideView) RecycleTabTextView(label string, sel bool) *texteditor.Edito
 		return fr.Child(0).(*texteditor.Editor)
 	}
 	txv := texteditor.NewEditor(fr, fr.Nm)
-	gide.ConfigOutputTextView(txv)
+	gide.ConfigOutputTextEditor(txv)
 	tv.Update()
 	tv.UpdateEndLayout(updt)
 	return txv

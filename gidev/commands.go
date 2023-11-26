@@ -45,7 +45,7 @@ func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buf, bo
 // existing buffer is cleared.  Also returns index of tab.
 func (ge *GideView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buf, *texteditor.Editor, bool) {
 	buf, nw := ge.RecycleCmdBuf(cmdNm, clearBuf)
-	ctv := ge.RecycleTabTextView(cmdNm, sel)
+	ctv := ge.RecycleTabTextEditor(cmdNm, sel)
 	if ctv == nil {
 		return nil, nil, false
 	}
@@ -99,7 +99,7 @@ func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool,
 
 // ExecCmds gets list of available commands for current active file
 func ExecCmds(ge *GideView) [][]string {
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return nil
 	}
@@ -116,7 +116,7 @@ func ExecCmds(ge *GideView) [][]string {
 
 // ExecCmdNameActive calls given command on current active textview
 func (ge *GideView) ExecCmdNameActive(cmdNm string) { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return
 	}
@@ -162,14 +162,14 @@ func (ge *GideView) CommandFromMenu(lang filecat.Supported) {
 			}
 		})
 	}
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	gi.NewMenuFromScene(mm, tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
 func (ge *GideView) ExecCmd() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		fmt.Printf("no Active view for ExecCmd\n")
 		return
@@ -190,7 +190,7 @@ func (ge *GideView) ExecCmdFileNode(fn *filetree.Node) {
 
 // SetArgVarVals sets the ArgVar values for commands, from GideView values
 func (ge *GideView) SetArgVarVals() {
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	tve := texteditor.AsEditor(tv)
 	if tv == nil || tv.Buf == nil {
 		ge.ArgVals.Set("", &ge.Prefs, tve)

@@ -46,14 +46,18 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* lookup
+* output buffs very unreliable in updating
+* replace is not interactive
+* external files not quite working
+* filetree context menu
+* textview context menu
 * editor rendering overflow
 * lineno horiz scrolling issues -- this is in V1 too!
 
-* open file not applying textfield sel on keyfun.Accept
-
 # DONE
 
+* open file not applying textfield sel on keyfun.Accept
+* lookup
 * initial view of buffer not scrolling 
 * new command output needs to trigger layout update -- maybe fixed?
 * click select is not updating on render

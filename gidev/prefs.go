@@ -41,8 +41,8 @@ func (ge *GideView) ApplyPrefs() {
 		ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
 	}
 	if len(ge.Kids) > 0 {
-		for i := 0; i < NTextViews; i++ {
-			tv := ge.TextViewByIndex(i)
+		for i := 0; i < NTextEditors; i++ {
+			tv := ge.TextEditorByIndex(i)
 			if tv.Buf != nil {
 				ge.ConfigTextBuf(tv.Buf)
 			}
@@ -82,8 +82,8 @@ func (ge *GideView) SplitsSetView(split gide.SplitName) { //gti:add
 	if ok {
 		sv.SetSplitsAction(sp.Splits...)
 		ge.Prefs.SplitName = split
-		if !ge.PanelIsOpen(ge.ActiveTextViewIdx + TextView1Idx) {
-			ge.SetActiveTextViewIdx((ge.ActiveTextViewIdx + 1) % 2)
+		if !ge.PanelIsOpen(ge.ActiveTextEditorIdx + TextEditor1Idx) {
+			ge.SetActiveTextEditorIdx((ge.ActiveTextEditorIdx + 1) % 2)
 		}
 	}
 }

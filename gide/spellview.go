@@ -27,7 +27,7 @@ type SpellView struct {
 	Gide Gide `json:"-" xml:"-" copy:"-"`
 
 	// textview that we're spell-checking
-	Text *TextView `json:"-" xml:"-" copy:"-"`
+	Text *TextEditor `json:"-" xml:"-" copy:"-"`
 
 	// current spelling errors
 	Errs lex.Line
@@ -66,7 +66,7 @@ func (sv *SpellView) SpellAction() {
 //    GUI config
 
 // Config configures the view
-func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextView) {
+func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextEditor) {
 	sv.Gide = ge
 	sv.Text = atv
 	sv.CurLn = 0

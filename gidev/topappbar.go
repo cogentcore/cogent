@@ -244,13 +244,13 @@ var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Butto
 	act.SetInactiveState(ge.IsEmpty())
 })
 
-// GideViewInactiveTextViewFunc is an ActionUpdateFunc that inactivates action there is no active text view
-var GideViewInactiveTextViewFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
+// GideViewInactiveTextEditorFunc is an ActionUpdateFunc that inactivates action there is no active text view
+var GideViewInactiveTextEditorFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
 	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
 	if !ge.IsConfiged() {
 		return
 	}
-	act.SetInactiveState(ge.ActiveTextView().Buf == nil)
+	act.SetInactiveState(ge.ActiveTextEditor().Buf == nil)
 })
 
 // GideViewInactiveTextSelectionFunc is an ActionUpdateFunc that inactivates action there is no active text view
@@ -259,8 +259,8 @@ var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei any, act *
 	if !ge.IsConfiged() {
 		return
 	}
-	if ge.ActiveTextView() != nil && ge.ActiveTextView().Buf != nil {
-		act.SetActiveState(ge.ActiveTextView().HasSelection())
+	if ge.ActiveTextEditor() != nil && ge.ActiveTextEditor().Buf != nil {
+		act.SetActiveState(ge.ActiveTextEditor().HasSelection())
 	} else {
 		act.SetActiveState(false)
 	}

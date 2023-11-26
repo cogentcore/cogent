@@ -17,17 +17,17 @@ import (
 	"goki.dev/mat32/v2"
 )
 
-// NTextViews is the number of text views to create -- to keep things simple
+// NTextEditors is the number of text views to create -- to keep things simple
 // and consistent (e.g., splitter settings always have the same number of
 // values), we fix this degree of freedom, and have flexibility in the
 // splitter settings for what to actually show.
-const NTextViews = 2
+const NTextEditors = 2
 
 // These are then the fixed indices of the different elements in the splitview
 const (
 	FileTreeIdx = iota
-	TextView1Idx
-	TextView2Idx
+	TextEditor1Idx
+	TextEditor2Idx
 	TabsIdx
 )
 
@@ -72,14 +72,14 @@ func (ge *GideView) Splits() *gi.Splits {
 	return ge.ChildByName("splitview", 2).(*gi.Splits)
 }
 
-// TextViewButtonByIndex returns the top textview menu button by index (0 or 1)
-func (ge *GideView) TextViewButtonByIndex(idx int) *gi.Button {
-	return ge.Splits().Child(TextView1Idx + idx).Child(0).(*gi.Button)
+// TextEditorButtonByIndex returns the top textview menu button by index (0 or 1)
+func (ge *GideView) TextEditorButtonByIndex(idx int) *gi.Button {
+	return ge.Splits().Child(TextEditor1Idx + idx).Child(0).(*gi.Button)
 }
 
-// TextViewByIndex returns the TextView by index (0 or 1), nil if not found
-func (ge *GideView) TextViewByIndex(idx int) *gide.TextView {
-	return ge.Splits().Child(TextView1Idx + idx).Child(1).(*gide.TextView)
+// TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
+func (ge *GideView) TextEditorByIndex(idx int) *gide.TextEditor {
+	return ge.Splits().Child(TextEditor1Idx + idx).Child(1).(*gide.TextEditor)
 }
 
 // Tabs returns the main TabView
@@ -140,7 +140,7 @@ func (ge *GideView) ConfigSplits() {
 		}
 	})
 
-	for i := 0; i < NTextViews; i++ {
+	for i := 0; i < NTextEditors; i++ {
 		i := i
 		txnm := fmt.Sprintf("%d", i)
 		txly := gi.NewLayout(split, "textlay-"+txnm)
@@ -154,28 +154,17 @@ func (ge *GideView) ConfigSplits() {
 			s.Grow.Set(1, 0)
 		})
 		txbut.Menu = func(m *gi.Scene) {
-			ge.TextViewButtonMenu(i, m)
+			ge.TextEditorButtonMenu(i, m)
 		}
 		txbut.OnClick(func(e events.Event) {
-			ge.SetActiveTextViewIdx(i)
+			ge.SetActiveTextEditorIdx(i)
 		})
 
-		ted := gide.NewTextView(txly, "textview-"+txnm)
+		ted := gide.NewTextEditor(txly, "textview-"+txnm)
 		ted.Gide = ge
-		ted.Style(func(s *styles.Style) {
-			s.Grow.Set(1, 1)
-			s.Min.X.Ch(80)
-			s.Min.Y.Em(40)
-			if ge.Prefs.Editor.WordWrap {
-				s.Text.WhiteSpace = styles.WhiteSpacePreWrap
-			} else {
-				s.Text.WhiteSpace = styles.WhiteSpacePre
-			}
-			s.Text.TabSize = ge.Prefs.Editor.TabSize
-			s.Font.Family = string(gi.Prefs.MonoFont)
-		})
+		gide.ConfigEditorTextEditor(&ted.Editor)
 		ted.OnFocus(func(e events.Event) {
-			ge.SetActiveTextViewIdx(i)
+			ge.SetActiveTextEditorIdx(i)
 		})
 		// get updates on cursor movement and qreplace
 		ted.OnInput(func(e events.Event) {
@@ -194,7 +183,7 @@ func (ge *GideView) ConfigSplits() {
 	// todo: need to monitor deleted
 	// gee.TabDeleted(data.(string))
 	// if data == "Find" {
-	// 	ge.ActiveTextView().ClearHighlights()
+	// 	ge.ActiveTextEditor().ClearHighlights()
 	// }
 	// })
 

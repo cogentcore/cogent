@@ -10,140 +10,122 @@ import (
 	"log"
 	"net/url"
 	"path/filepath"
+	"reflect"
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/paint"
 	"goki.dev/glop/dirs"
+	"goki.dev/goosi/events"
+	"goki.dev/goosi/mimedata"
+	"goki.dev/icons"
 	"goki.dev/pi/v2/complete"
 	"goki.dev/pi/v2/lex"
+	"goki.dev/pi/v2/parse"
+	"goki.dev/pi/v2/pi"
 )
 
 // CursorToHistPrev moves cursor to previous position on history list --
 // returns true if moved
 func (ge *GideView) CursorToHistPrev() bool { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistPrev()
 }
 
 // CursorToHistNext moves cursor to next position on history list --
 // returns true if moved
 func (ge *GideView) CursorToHistNext() bool { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistNext()
 }
 
 // LookupFun is the completion system Lookup function that makes a custom
 // textview dialog that has option to edit resulting file.
 func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
-	/*
-		sfs := data.(*pi.FileStates)
-		if sfs == nil {
-			log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
-			return ld
-		}
-		lp, err := pi.LangSupport.Props(sfs.Sup)
-		if err != nil {
-			log.Printf("LookupFun: %v\n", err)
-			return ld
-		}
-		if lp.Lang == nil {
-			return ld
-		}
+	sfs := data.(*pi.FileStates)
+	if sfs == nil {
+		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
+		return ld
+	}
+	lp, err := pi.LangSupport.Props(sfs.Sup)
+	if err != nil {
+		log.Printf("LookupFun: %v\n", err)
+		return ld
+	}
+	if lp.Lang == nil {
+		return ld
+	}
 
-		// note: must have this set to ture to allow viewing of AST
-		// must set it in pi/parse directly -- so it is changed in the fileparse too
-		parse.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
+	// note: must have this set to true to allow viewing of AST
+	// must set it in pi/parse directly -- so it is changed in the fileparse too
+	parse.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-		ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
-		if len(ld.Text) > 0 {
-			texteditor.EditorDialog(nil, ld.Text, giv.DlgOpts{Title: "Lookup: " + text, Data: text})
-			return ld
-		}
-		if ld.Filename == "" {
-			return ld
-		}
+	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
+	if len(ld.Text) > 0 {
+		tev := giv.TextEditorValue{}
+		tev.SetSoloValue(reflect.ValueOf(ld.Text))
+		tev.OpenDialog(ge, nil)
+		// todo: title: "Lookup: " + text
+		return ld
+	}
+	if ld.Filename == "" {
+		return ld
+	}
 
-		txt, err := textbuf.FileBytes(ld.Filename)
-		if err != nil {
-			return ld
-		}
-		if ld.StLine > 0 {
-			lns := bytes.Split(txt, []byte("\n"))
-			comLn, comSt, comEd := textbuf.SupportedComments(ld.Filename)
-			ld.StLine = textbuf.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
-		}
+	if gi.RecycleDialog(ld) {
+		return
+	}
 
-		prmpt := ""
-		if ld.EdLine > ld.StLine {
-			prmpt = fmt.Sprintf("%v [%d -- %d]", ld.Filename, ld.StLine, ld.EdLine)
-		} else {
-			prmpt = fmt.Sprintf("%v:%d", ld.Filename, ld.StLine)
-		}
-		opts := giv.DlgOpts{Title: "Lookup: " + text, Prompt: prmpt}
+	txt, err := textbuf.FileBytes(ld.Filename)
+	if err != nil {
+		return ld
+	}
+	if ld.StLine > 0 {
+		lns := bytes.Split(txt, []byte("\n"))
+		comLn, comSt, comEd := textbuf.SupportedComments(ld.Filename)
+		ld.StLine = textbuf.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
+	}
 
-		dlg, recyc := gi.RecycleStdDialog(prmpt, opts.ToGiOpts(), gi.NoOk, gi.NoCancel)
-		if recyc {
-			return ld
-		}
-		frame := dlg.Frame()
-		_, prIdx := dlg.PromptWidget(frame)
+	prmpt := ""
+	if ld.EdLine > ld.StLine {
+		prmpt = fmt.Sprintf("%v [%d -- %d]", ld.Filename, ld.StLine, ld.EdLine)
+	} else {
+		prmpt = fmt.Sprintf("%v:%d", ld.Filename, ld.StLine)
+	}
+	title := "Lookup: " + text
 
-		tb := &texteditor.Buf{}
-		tb.InitName(tb, "text-view-dialog-buf")
-		tb.Filename = gi.FileName(ld.Filename)
-		tb.Hi.Style = gi.Prefs.HiStyle
-		tb.Opts.LineNos = ge.Prefs.Editor.LineNos
-		tb.Stat() // update markup
+	tb := texteditor.NewBuf().SetText(txt).SetFilename(ld.Filename)
+	tb.Hi.Style = gi.Prefs.HiStyle
+	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
+	tb.Stat() // update markup
 
-		tlv := frame.InsertNewChild(gi.LayoutType, prIdx+1, "text-lay").(*gi.Layout)
-		tlv.SetProp("width", units.NewCh(80))
-		tlv.SetProp("height", units.NewEm(40))
-		tlv.SetStretchMax()
-		tv := giv.NewTextView(tlv, "text-view")
-		tv.Viewport = dlg.Embed(gi.KiT_Viewport2D).(*gi.Scene)
-		tv.SetReadOnly(true)
-		tv.SetProp("font-family", gi.Prefs.MonoFont)
-		tv.SetBuf(tb)
-		tv.ScrollToCursorPos = lex.Pos{Ln: ld.StLine}
-		tv.ScrollToCursorOnRender = true
-
-		tb.SetText(txt) // calls remarkup
-
-		bbox, _ := dlg.ButtonBox(frame)
-		if bbox == nil {
-			bbox = dlg.AddButtonBox(frame)
-		}
-		ofb := gi.NewButton(bbox, "open-file")
-		ofb.SetText("Open File")
-		ofb.SetIcon("file-open")
-		ofb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(gi.ButtonClicked) {
-				ge.ViewFile(gi.FileName(ld.Filename))
-				dlg.Close()
-			}
+	d := gi.NewBody().AddTitle(title).AddText(prmpt)
+	tv := texteditor.NewEditor(d).SetBuf(tb)
+	tv.SetReadOnly(true)
+	tv.ScrollToCursorPos = lex.Pos{Ln: ld.StLine}
+	tv.ScrollToCursorOnRender = true
+	tv.Styles.Font.Family = string(gi.Prefs.MonoFont)
+	d.AddBottomBar(func(pw gi.Widget) {
+		gi.NewButton(pw).SetText("Open File").SetIcon(icons.Open).OnClick(func(e events.Event) {
+			ge.ViewFile(gi.FileName(ld.Filename))
+			d.Close()
 		})
-		cpb := gi.NewButton(bbox, "copy-to-clip")
-		cpb.SetText("Copy To Clipboard")
-		cpb.SetIcon("copy")
-		cpb.ButtonSig.Connect(dlg.This(), func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(gi.ButtonClicked) {
-				ddlg := recv.Embed(gi.KiT_Dialog).(*gi.Dialog)
-				goosi.TheApp.ClipBoard(ddlg.Win.OSWin).Write(mimedata.NewTextBytes(txt))
-			}
-		})
-		dlg.UpdateEndNoSig(true) // going to be shown
-		dlg.Open(0, 0, ge.Viewport, nil)
-	*/
+		gi.NewButton(pw).SetText("Copy To Clipboard").SetIcon("copy").
+			OnClick(func(e events.Event) {
+				d.EventMgr().ClipBoard().Write(mimedata.NewTextBytes(txt))
+			})
+	})
+	d.NewFullDialog(ge.ActiveTextEditor()).SetNewWindow(true).Run()
 	return
 }
 
 // ReplaceInActive does query-replace in active file only
 func (ge *GideView) ReplaceInActive() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	tv.QReplaceAddText()
 }
 
@@ -152,7 +134,7 @@ func (ge *GideView) ReplaceInActive() { //gti:add
 
 // CutRect cuts rectangle in active text view
 func (ge *GideView) CutRect() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
 	}
@@ -161,7 +143,7 @@ func (ge *GideView) CutRect() { //gti:add
 
 // CopyRect copies rectangle in active text view
 func (ge *GideView) CopyRect() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
 	}
@@ -170,7 +152,7 @@ func (ge *GideView) CopyRect() { //gti:add
 
 // PasteRect cuts rectangle in active text view
 func (ge *GideView) PasteRect() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
 	}
@@ -183,7 +165,7 @@ func (ge *GideView) RegisterCopy(name string) bool { //gti:add
 	if name == "" {
 		return false
 	}
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return false
 	}
@@ -211,7 +193,7 @@ func (ge *GideView) RegisterPaste(name gide.RegisterName) bool { //gti:add
 	if !ok {
 		return false
 	}
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return false
 	}
@@ -224,7 +206,7 @@ func (ge *GideView) RegisterPaste(name gide.RegisterName) bool { //gti:add
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
 func (ge *GideView) CommentOut() bool { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return false
 	}
@@ -244,7 +226,7 @@ func (ge *GideView) CommentOut() bool { //gti:add
 
 // Indent indents selected lines in active view
 func (ge *GideView) Indent() bool { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return false
 	}
@@ -259,7 +241,7 @@ func (ge *GideView) Indent() bool { //gti:add
 
 // ReCase replaces currently selected text in current active view with given case
 func (ge *GideView) ReCase(c textbuf.Cases) string { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return ""
 	}
@@ -270,7 +252,7 @@ func (ge *GideView) ReCase(c textbuf.Cases) string { //gti:add
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
 func (ge *GideView) JoinParaLines() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
 	}
@@ -284,7 +266,7 @@ func (ge *GideView) JoinParaLines() { //gti:add
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
 func (ge *GideView) TabsToSpaces() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
 	}
@@ -298,7 +280,7 @@ func (ge *GideView) TabsToSpaces() { //gti:add
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
 func (ge *GideView) SpacesToTabs() { //gti:add
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
 	}
@@ -356,7 +338,7 @@ func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.FileName) { //gti:a
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
 func (ge *GideView) CountWords() string { //gti:add
-	av := ge.ActiveTextView()
+	av := ge.ActiveTextEditor()
 	if av.Buf == nil || av.Buf.NLines <= 0 {
 		return "empty"
 	}
@@ -371,7 +353,7 @@ func (ge *GideView) CountWords() string { //gti:add
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
 func (ge *GideView) CountWordsRegion() string { //gti:add
-	av := ge.ActiveTextView()
+	av := ge.ActiveTextEditor()
 	if av.Buf == nil || av.Buf.NLines <= 0 {
 		return "empty"
 	}
@@ -393,7 +375,7 @@ func (ge *GideView) CountWordsRegion() string { //gti:add
 func TextLinkHandler(tl paint.TextLink) bool {
 	// todo:
 	// tve := texteditor.AsEditor(tl.Widget)
-	// ftv, _ := tl.Widget.Embed(giv.KiT_TextView).(*texteditor.Editor)
+	// ftv, _ := tl.Widget.Embed(giv.KiT_TextEditor).(*texteditor.Editor)
 	// gek := tl.Widget.ParentByType(KiT_GideView, true)
 	// if gek != nil {
 	// 	ge := gek.Embed(KiT_GideView).(*GideView)

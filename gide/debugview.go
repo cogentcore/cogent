@@ -816,7 +816,7 @@ func (dv DebugView) AllVarVw() *VarsView {
 	return tv.TabByLabel("Global Vars").Child(0).(*VarsView)
 }
 
-// ConsoleText returns the console TextView
+// ConsoleText returns the console TextEditor
 func (dv DebugView) ConsoleText() *texteditor.Editor {
 	tv := dv.Tabs()
 	cv := tv.TabByLabel("Console").Child(0).(*texteditor.Editor)
@@ -831,7 +831,7 @@ func (dv *DebugView) ConfigTabs() {
 		return
 	}
 	ctv := texteditor.NewEditor(tb.NewTab("Console"), "dbg-console")
-	ConfigOutputTextView(ctv)
+	ConfigOutputTextEditor(ctv)
 	dv.OutBuf.Opts.LineNos = false
 	ctv.SetBuf(dv.OutBuf)
 	NewBreakView(tb.NewTab("Breaks")).ConfigBreakView(dv)

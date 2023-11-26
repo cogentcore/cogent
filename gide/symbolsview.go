@@ -168,7 +168,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 
 func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 	ge := sv.Gide
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if tv == nil || string(tv.Buf.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
@@ -190,7 +190,7 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 // OpenPackage opens package-level symbols for current active textview
 func (sv *SymbolsView) OpenPackage() {
 	ge := sv.Gide
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
 		return
 	}
@@ -208,7 +208,7 @@ func (sv *SymbolsView) OpenPackage() {
 // OpenFile opens file-level symbols for current active textview
 func (sv *SymbolsView) OpenFile() {
 	ge := sv.Gide
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
 		return
 	}

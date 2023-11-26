@@ -66,7 +66,7 @@ type GideView struct {
 	Files *filetree.Tree `set:"-" json:"-"`
 
 	// index of the currently-active textview -- new files will be viewed in other views if available
-	ActiveTextViewIdx int `set:"-" json:"-"`
+	ActiveTextEditorIdx int `set:"-" json:"-"`
 
 	// list of open nodes, most recent first
 	OpenNodes gide.OpenNodes `json:"-"`

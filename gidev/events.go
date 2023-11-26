@@ -57,7 +57,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		kf = gide.KeyFun(kc, "")
 		if kf == gide.KeyFunNeeds2 {
 			kt.SetHandled()
-			tv := ge.ActiveTextView()
+			tv := ge.ActiveTextEditor()
 			if tv != nil {
 				tv.CancelComplete()
 			}
@@ -75,7 +75,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		}
 	}
 
-	atv := ge.ActiveTextView()
+	atv := ge.ActiveTextEditor()
 	switch gkf {
 	case keyfun.Find:
 		kt.SetHandled()
@@ -138,7 +138,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.Indent()
 	case gide.KeyFunJump:
 		kt.SetHandled()
-		tv := ge.ActiveTextView()
+		tv := ge.ActiveTextEditor()
 		if tv != nil {
 			tv.JumpToLineAddText()
 		}

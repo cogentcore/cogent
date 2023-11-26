@@ -362,7 +362,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 	sz := len(pvals)
 	avp := ge.ArgVarVals()
 	cnt := 0
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	var cmvals map[string]string
 	for pv := range pvals {
 		switch pv {

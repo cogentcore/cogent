@@ -55,7 +55,7 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	fbuf, _ := ge.RecycleCmdBuf("Find", true)
 	fv := tv.RecycleTabWidget("Find", true, gide.FindViewType).(*gide.FindView)
 	fv.Time = time.Now()
-	ftv := fv.TextView()
+	ftv := fv.TextEditor()
 	ftv.SetReadOnly(true)
 	ftv.SetBuf(fbuf)
 
@@ -65,8 +65,8 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 
 	root := filetree.AsNode(ge.Files)
 
-	atv := ge.ActiveTextView()
-	ond, _, got := ge.OpenNodeForTextView(atv)
+	atv := ge.ActiveTextEditor()
+	ond, _, got := ge.OpenNodeForTextEditor(atv)
 	adir := ""
 	if got {
 		adir, _ = filepath.Split(string(ond.FPath))
@@ -98,7 +98,7 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 
 // Spell checks spelling in active text view
 func (ge *GideView) Spell() { //gti:add
-	txv := ge.ActiveTextView()
+	txv := ge.ActiveTextEditor()
 	if txv == nil || txv.Buf == nil {
 		return
 	}
@@ -115,7 +115,7 @@ func (ge *GideView) Spell() { //gti:add
 
 // Symbols displays the Symbols of a file or package
 func (ge *GideView) Symbols() { //gti:add
-	txv := ge.ActiveTextView()
+	txv := ge.ActiveTextEditor()
 	if txv == nil || txv.Buf == nil {
 		return
 	}
@@ -148,7 +148,7 @@ func (ge *GideView) Debug() { //gti:add
 
 // DebugTest runs the debugger using testing mode in current active textview path
 func (ge *GideView) DebugTest() { //gti:add
-	txv := ge.ActiveTextView()
+	txv := ge.ActiveTextEditor()
 	if txv == nil || txv.Buf == nil {
 		return
 	}
@@ -212,8 +212,8 @@ func (ge *GideView) VCSUpdateAll() {
 // this one.
 // Returns the Log and also shows it in a VCSLogView which supports further actions.
 func (ge *GideView) VCSLog(since string) (vci.Log, error) {
-	atv := ge.ActiveTextView()
-	ond, _, got := ge.OpenNodeForTextView(atv)
+	atv := ge.ActiveTextEditor()
+	ond, _, got := ge.OpenNodeForTextEditor(atv)
 	if !got {
 		if ge.Files.DirRepo != nil {
 			return ge.Files.LogVcs(true, since)
@@ -229,7 +229,7 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) {
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *GideView) OpenConsoleTab() {
 	return
-	ctv := ge.RecycleTabTextView("Console", true)
+	ctv := ge.RecycleTabTextEditor("Console", true)
 	if ctv == nil {
 		return
 	}
@@ -275,7 +275,7 @@ func (ge *GideView) UpdateStatusLabel() {
 	fnm := ""
 	ln := 0
 	ch := 0
-	tv := ge.ActiveTextView()
+	tv := ge.ActiveTextEditor()
 	msg := ""
 	if tv != nil {
 		ln = tv.CursorPos.Ln + 1
