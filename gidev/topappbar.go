@@ -160,15 +160,16 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 			giv.NewFuncButton(mm, ge.SaveProj).SetText("Save Project").
 				SetIcon(icons.Save)
 
-			giv.NewFuncButton(mm, ge.SaveProjAs).SetText("Save Project As").
+			sa := giv.NewFuncButton(mm, ge.SaveProjAs).SetText("Save Project As").
 				SetIcon(icons.SaveAs)
+			sa.Args[0].SetValue(ge.Prefs.ProjFilename)
 
 			gi.NewSeparator(mm)
 
 			giv.NewFuncButton(mm, ge.RevertActiveView).SetText("Revert File").
 				SetIcon(icons.Undo)
 
-			sa := giv.NewFuncButton(mm, ge.SaveActiveViewAs).SetText("Save File As").
+			sa = giv.NewFuncButton(mm, ge.SaveActiveViewAs).SetText("Save File As").
 				SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 			sa.Args[0].SetValue(ge.ActiveFilename)
 

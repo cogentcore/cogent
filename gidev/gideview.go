@@ -328,7 +328,8 @@ func (ge *GideView) SaveProj() { //gti:add
 	if ge.Prefs.ProjFilename == "" {
 		return
 	}
-	ge.SaveProjAs(ge.Prefs.ProjFilename, true) // save all files
+	ge.SaveProjAs(ge.Prefs.ProjFilename)
+	ge.SaveAllCheck(false, nil) // false = no cancel option
 }
 
 // SaveProjIfExists saves project file containing custom project settings, in a
@@ -342,7 +343,10 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 	if _, err := os.Stat(string(ge.Prefs.ProjFilename)); os.IsNotExist(err) {
 		return false // does not exist
 	}
-	ge.SaveProjAs(ge.Prefs.ProjFilename, saveAllFiles)
+	ge.SaveProjAs(ge.Prefs.ProjFilename)
+	if saveAllFiles {
+		ge.SaveAllCheck(false, nil)
+	}
 	return true
 }
 
@@ -350,7 +354,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 // JSON-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool { //gti:add
+func (ge *GideView) SaveProjAs(filename gi.FileName) bool { //gti:add
 	spell.SaveIfLearn()
 	gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	gide.SavePaths()
@@ -360,9 +364,6 @@ func (ge *GideView) SaveProjAs(filename gi.FileName, saveAllFiles bool) bool { /
 	ge.GrabPrefs()
 	ge.Prefs.SaveJSON(filename)
 	ge.Changed = false
-	if saveAllFiles {
-		return ge.SaveAllCheck(false, nil) // false = no cancel option
-	}
 	return false
 }
 

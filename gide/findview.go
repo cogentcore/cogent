@@ -188,8 +188,8 @@ func (fv *FindView) ReplaceAction() bool {
 	if !fv.CheckValidRegexp() {
 		return false
 	}
-	wupdt := fv.UpdateStart()
-	defer fv.UpdateEnd(wupdt)
+	updt := fv.UpdateStart()
+	defer fv.UpdateEnd(updt)
 
 	fp := fv.Params()
 	fv.SaveReplString(fp.Replace)
@@ -292,12 +292,16 @@ func (fv *FindView) ReplaceAll() {
 	if !fv.CheckValidRegexp() {
 		return
 	}
-	for {
-		ok := fv.ReplaceAction()
-		if !ok {
-			break
+	go func() {
+		for {
+			updt := fv.Gide.Scene().UpdateStartAsync()
+			ok := fv.ReplaceAction()
+			fv.Gide.Scene().UpdateEndAsyncLayout(updt)
+			if !ok {
+				break
+			}
 		}
-	}
+	}()
 }
 
 // NextFind shows next find result

@@ -27,6 +27,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"ActiveVCS", &gti.Field{Name: "ActiveVCS", Type: "goki.dev/vci/v2.Repo", LocalType: "vci.Repo", Doc: "VCS repo for current active filename", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"ActiveVCSInfo", &gti.Field{Name: "ActiveVCSInfo", Type: "string", LocalType: "string", Doc: "VCS info for current active filename (typically branch or revision) -- for status", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
+		{"StatusMessage", &gti.Field{Name: "StatusMessage", Type: "string", LocalType: "string", Doc: "the last status update message", Directives: gti.Directives{}, Tag: ""}},
 		{"LastSaveTStamp", &gti.Field{Name: "LastSaveTStamp", Type: "time.Time", LocalType: "time.Time", Doc: "timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"Files", &gti.Field{Name: "Files", Type: "*goki.dev/gi/v2/filetree.Tree", LocalType: "*filetree.Tree", Doc: "all the files in the project directory and subdirectories", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"ActiveTextEditorIdx", &gti.Field{Name: "ActiveTextEditorIdx", Type: "int", LocalType: "int", Doc: "index of the currently-active textview -- new files will be viewed in other views if available", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
@@ -229,7 +230,6 @@ var GideViewType = gti.AddType(&gti.Type{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-			{"saveAllFiles", &gti.Field{Name: "saveAllFiles", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
@@ -326,6 +326,13 @@ func (t *GideView) SetProjFilename(v gi.FileName) *GideView {
 // language for current active filename
 func (t *GideView) SetActiveLang(v filecat.Supported) *GideView {
 	t.ActiveLang = v
+	return t
+}
+
+// SetStatusMessage sets the [GideView.StatusMessage]:
+// the last status update message
+func (t *GideView) SetStatusMessage(v string) *GideView {
+	t.StatusMessage = v
 	return t
 }
 
