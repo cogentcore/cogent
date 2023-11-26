@@ -34,46 +34,11 @@ import (
 var ElementHandlers = map[string]func(ctx Context){}
 
 // New adds a new widget of the given type to the context parent.
+// It automatically calls [Context.Config] on the resulting widget.
 func New[T gi.Widget](ctx Context) T {
-	rules := ctx.Style()
-	display := ""
-	for _, rule := range rules {
-		for _, decl := range rule.Declarations {
-			if decl.Property == "display" {
-				display = decl.Value
-			}
-		}
-	}
-	var par gi.Widget
-	switch display {
-	case "inline", "inline-block", "":
-		par = ctx.InlineParent()
-	default:
-		par = ctx.BlockParent()
-		ctx.SetInlineParent(nil)
-	}
+	par := ctx.Parent()
 	w := ki.New[T](par)
-	wb := w.AsWidget()
-
-	for _, attr := range ctx.Node().Attr {
-		switch attr.Key {
-		case "id":
-			wb.SetName(attr.Val)
-		case "class":
-			wb.SetClass(attr.Val)
-		default:
-			wb.SetProp(attr.Key, attr.Val)
-		}
-	}
-	wb.SetProp("tag", ctx.Node().Data)
-	w.Style(func(s *styles.Style) {
-		for _, rule := range rules {
-			for _, decl := range rule.Declarations {
-				// TODO(kai/styprops): parent style and context
-				s.StyleFromProp(s, decl.Property, decl.Value, colors.BaseContext(s.Color))
-			}
-		}
-	})
+	ctx.Config(w)
 	return w
 }
 

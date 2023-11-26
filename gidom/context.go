@@ -11,6 +11,7 @@ import (
 	"github.com/aymerick/douceur/css"
 	"github.com/aymerick/douceur/parser"
 	selcss "github.com/ericchiang/css"
+	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/girl/styles"
 	"goki.dev/goosi"
@@ -29,7 +30,14 @@ type Context interface {
 
 	// Parent returns the current parent widget that a widget
 	// associated with the current node should be added to.
+	// It may make changes to the widget tree, so the widget
+	// must be added to the resulting parent immediately.
 	Parent() gi.Widget
+
+	// Config configures the given widget. It needs to be called
+	// on all widgets that are not configured through the [New]
+	// pathway.
+	Config(w gi.Widget)
 
 	// NewParent returns the current parent widget that children of
 	// the previously read element should be added to, if any.
@@ -95,7 +103,48 @@ func (cb *ContextBase) SetNode(node *html.Node) {
 }
 
 func (cb *ContextBase) Parent() gi.Widget {
-	return cb.BlockParent()
+	rules := cb.Style()
+	display := ""
+	for _, rule := range rules {
+		for _, decl := range rule.Declarations {
+			if decl.Property == "display" {
+				display = decl.Value
+			}
+		}
+	}
+	var par gi.Widget
+	switch display {
+	case "inline", "inline-block", "":
+		par = cb.InlineParent()
+	default:
+		par = cb.BlockParent()
+		cb.SetInlineParent(nil)
+	}
+	return par
+}
+
+func (cb *ContextBase) Config(w gi.Widget) {
+	wb := w.AsWidget()
+	for _, attr := range cb.Node().Attr {
+		switch attr.Key {
+		case "id":
+			wb.SetName(attr.Val)
+		case "class":
+			wb.SetClass(attr.Val)
+		default:
+			wb.SetProp(attr.Key, attr.Val)
+		}
+	}
+	wb.SetProp("tag", cb.Node().Data)
+	rules := cb.Style()
+	w.Style(func(s *styles.Style) {
+		for _, rule := range rules {
+			for _, decl := range rule.Declarations {
+				// TODO(kai/styprops): parent style and context
+				s.StyleFromProp(s, decl.Property, decl.Value, colors.BaseContext(s.Color))
+			}
+		}
+	})
 }
 
 func (cb *ContextBase) NewParent() gi.Widget {
