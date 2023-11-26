@@ -9,25 +9,20 @@ import (
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/gimain"
-	"goki.dev/goosi"
 )
 
 func TestRenderHTML(t *testing.T) {
 	gimain.Run(func() {
 		sc := gi.NewScene("test-render-html")
-
 		s := `
 		<h1>Gidom</h1>
 		<p>This is a demonstration of the various features of gidom</p>
 		<button>Hello, world!</button>
 		`
-		err := ReadHTMLString(sc, s)
+		err := ReadHTMLString(BaseContext(), sc, s)
 		if err != nil {
 			t.Error(err)
 		}
-
-		gi.NewWindow(sc).Run()
-
-		goosi.CaptureAs("test-render-html.png")
+		sc.AssertPixelsOnShow(t, "test-render-html.png")
 	})
 }
