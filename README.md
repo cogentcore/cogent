@@ -46,7 +46,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* output buffs very unreliable in updating: not switching tab
+* recycle tab not working
 * replace is not interactive
 * external files not quite working
 * filetree context menu
