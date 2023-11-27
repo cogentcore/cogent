@@ -8,8 +8,7 @@ import (
 	_ "embed"
 )
 
-// UserAgentStyles contains the default user agent styles, as defined
-// at https://chromium.googlesource.com/chromium/blink/+/refs/heads/main/Source/core/css/html.css.
+// UserAgentStyles contains the default user agent styles.
 //
 //go:embed html.css
 var UserAgentStyles string

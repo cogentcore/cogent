@@ -131,6 +131,21 @@ func (cb *ContextBase) Config(w gi.Widget) {
 			wb.SetName(attr.Val)
 		case "class":
 			wb.SetClass(attr.Val)
+		case "style":
+			// our CSS parser is strict about semicolons, but
+			// they aren't needed in normal inline styles in HTML
+			if !strings.HasSuffix(attr.Val, ";") {
+				attr.Val += ";"
+			}
+			decls, err := parser.ParseDeclarations(attr.Val)
+			if grr.Log0(err) != nil {
+				continue
+			}
+			rule := &css.Rule{Declarations: decls}
+			if cb.Rules == nil {
+				cb.Rules = map[*html.Node][]*css.Rule{}
+			}
+			cb.Rules[cb.Node()] = append(cb.Rules[cb.Node()], rule)
 		default:
 			wb.SetProp(attr.Key, attr.Val)
 		}
