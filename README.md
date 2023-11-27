@@ -46,8 +46,10 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* recycle tab not working
-* replace is not interactive
+* recycle tab not working: getting stuck with Updating
+* start select on menu (buff menu etc) not working
+* sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode
+* dialog closing causes old window to show up -- need to update render images
 * external files not quite working
 * filetree context menu
 * textview context menu
@@ -56,6 +58,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE
 
+* replace is not interactive
 * open file not applying textfield sel on keyfun.Accept
 * lookup
 * initial view of buffer not scrolling 

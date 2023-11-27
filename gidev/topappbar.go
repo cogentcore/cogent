@@ -45,10 +45,11 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 		}
 	})
 
-	op := giv.NewFuncButton(tb, ge.NextViewFile).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
-	op.Args[0].SetValue(ge.ActiveFilename)
+	ge.ConfigActiveFilename(giv.NewFuncButton(tb, ge.NextViewFile).
+		SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open))
 
-	giv.NewFuncButton(tb, ge.SaveActiveView).SetText("Save").SetIcon(icons.Save).SetKey(keyfun.Save)
+	giv.NewFuncButton(tb, ge.SaveActiveView).SetText("Save").
+		SetIcon(icons.Save).SetKey(keyfun.Save)
 
 	giv.NewFuncButton(tb, ge.SaveAll).SetIcon(icons.Save)
 
@@ -160,18 +161,16 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 			giv.NewFuncButton(mm, ge.SaveProj).SetText("Save Project").
 				SetIcon(icons.Save)
 
-			sa := giv.NewFuncButton(mm, ge.SaveProjAs).SetText("Save Project As").
-				SetIcon(icons.SaveAs)
-			sa.Args[0].SetValue(ge.Prefs.ProjFilename)
+			ge.ConfigActiveFilename(giv.NewFuncButton(mm, ge.SaveProjAs).
+				SetText("Save Project As").SetIcon(icons.SaveAs))
 
 			gi.NewSeparator(mm)
 
 			giv.NewFuncButton(mm, ge.RevertActiveView).SetText("Revert File").
 				SetIcon(icons.Undo)
 
-			sa = giv.NewFuncButton(mm, ge.SaveActiveViewAs).SetText("Save File As").
-				SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-			sa.Args[0].SetValue(ge.ActiveFilename)
+			ge.ConfigActiveFilename(giv.NewFuncButton(mm, ge.SaveActiveViewAs).
+				SetText("Save File As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs))
 
 		})
 

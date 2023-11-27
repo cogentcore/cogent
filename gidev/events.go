@@ -96,7 +96,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.FocusPrevPanel()
 	case gide.KeyFunFileOpen:
 		kt.SetHandled()
-		ge.ConfigViewFile(giv.NewSoloFuncButton(atv, ge.ViewFile)).CallFunc()
+		ge.CallViewFile(atv)
 	case gide.KeyFunBufSelect:
 		kt.SetHandled()
 		ge.SelectOpenNode()
@@ -108,7 +108,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.SaveActiveView()
 	case gide.KeyFunBufSaveAs:
 		kt.SetHandled()
-		giv.CallFunc(ge, ge.SaveActiveViewAs)
+		ge.CallSaveActiveViewAs(atv)
 	case gide.KeyFunBufClose:
 		kt.SetHandled()
 		ge.CloseActiveView()

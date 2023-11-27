@@ -155,7 +155,7 @@ func (on *OpenNodes) Strings() []string {
 		} else {
 			sl[i] = fn.Nm
 		}
-		if fn.IsChanged() {
+		if fn.IsNotSaved() {
 			sl[i] += " *"
 		}
 	}
@@ -177,7 +177,7 @@ func (on *OpenNodes) ByStringName(name string) *filetree.Node {
 func (on *OpenNodes) NChanged() int {
 	cnt := 0
 	for _, fn := range *on {
-		if fn.IsChanged() {
+		if fn.IsNotSaved() {
 			cnt++
 		}
 	}

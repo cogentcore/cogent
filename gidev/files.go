@@ -41,6 +41,17 @@ func (ge *GideView) SaveActiveView() { //gti:add
 	ge.SaveProjIfExists(false) // no saveall
 }
 
+// ConfigActiveFilename configures the first arg of given FuncButton to
+// use the ActiveFilename
+func (ge *GideView) ConfigActiveFilename(fb *giv.FuncButton) *giv.FuncButton {
+	fb.Args[0].SetValue(ge.ActiveFilename)
+	return fb
+}
+
+func (ge *GideView) CallSaveActiveViewAs(ctx gi.Widget) {
+	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.SaveActiveViewAs)).CallFunc()
+}
+
 // SaveActiveViewAs save with specified filename the contents of the
 // currently-active textview
 func (ge *GideView) SaveActiveViewAs(filename gi.FileName) { //gti:add
@@ -131,7 +142,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextEditor, vidx int, fn *filetree.No
 		return false // we are the autosave file
 	}
 	fn.Buf.Autosave = true
-	if tv.IsChanged() || !fn.Buf.AutoSaveCheck() {
+	if tv.IsNotSaved() || !fn.Buf.AutoSaveCheck() {
 		return false
 	}
 	ge.DiffFileNode(fn, gi.FileName(fn.Buf.AutoSaveFilename()))
@@ -177,7 +188,7 @@ func (ge *GideView) ViewFileNode(tv *gide.TextEditor, vidx int, fn *filetree.Nod
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
 
-	if tv.IsChanged() {
+	if tv.IsNotSaved() {
 		ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
 	}
 	nw, err := ge.OpenFileNode(fn)
@@ -262,10 +273,9 @@ func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) 
 	return nv, nidx, true
 }
 
-// ConfigViewFile configures the ViewFile FuncButton
-func (ge *GideView) ConfigViewFile(fb *giv.FuncButton) *giv.FuncButton {
-	fb.Args[0].SetValue(ge.ActiveFilename)
-	return fb
+// CallViewFile calls ViewFile with ActiveFilename set as arg
+func (ge *GideView) CallViewFile(ctx gi.Widget) {
+	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.ViewFile)).CallFunc()
 }
 
 // ViewFile views file in an existing TextEditor if it is already viewing that
@@ -412,7 +422,7 @@ func (ge *GideView) SaveAllOpenNodes() {
 		if ond.Buf == nil {
 			continue
 		}
-		if ond.Buf.IsChanged() {
+		if ond.Buf.IsNotSaved() {
 			ond.Buf.Save()
 			ge.RunPostCmdsFileNode(ond)
 		}

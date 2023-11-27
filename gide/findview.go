@@ -404,7 +404,7 @@ func (fv *FindView) ConfigFindView() {
 	}
 	fv.ConfigToolbars(fb, rb)
 	na := fv.FindNextAct()
-	na.GrabFocus()
+	na.SetFocusEvent()
 	fv.Update()
 	fv.UpdateEndLayout(updt)
 }

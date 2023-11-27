@@ -113,7 +113,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 	scb.OnChange(func(e events.Event) {
 		sv.Params().Scope = scb.CurVal.(SymScopes)
 		sv.ConfigTree(sv.Params().Scope)
-		sv.SearchText().GrabFocus()
+		sv.SearchText().SetFocusEvent()
 	})
 
 	gi.NewLabel(svbar).SetText("Search:").SetTooltip("narrow symbols list to symbols containing text you enter here")
@@ -122,14 +122,14 @@ func (sv *SymbolsView) ConfigToolbar() {
 		sv.Match = stxt.Text()
 		sv.ConfigTree(sv.Params().Scope)
 		stxt.CursorEnd()
-		stxt.GrabFocus()
+		stxt.SetFocusEvent()
 	})
 }
 
 // RefreshAction loads symbols for current file and scope
 func (sv *SymbolsView) RefreshAction() {
 	sv.ConfigTree(SymScopes(sv.Params().Scope))
-	sv.SearchText().GrabFocus()
+	sv.SearchText().SetFocusEvent()
 }
 
 // ConfigTree adds a treeview to the symbolsview
@@ -183,7 +183,7 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 		tv.Highlights = append(tv.Highlights, tr)
 		tv.UpdateEnd(true)
 		tv.SetCursorShow(tr.Start)
-		tv.GrabFocus()
+		tv.SetFocusEvent()
 	}
 }
 

@@ -292,9 +292,9 @@ func (sv *SpellView) CheckNext() {
 	tv.Highlights = append(tv.Highlights, hr)
 	tv.UpdateEnd(true)
 	if sv.LastAction == nil {
-		sv.GrabFocus()
+		sv.SetFocusEvent()
 	} else {
-		sv.LastAction.GrabFocus()
+		sv.LastAction.SetFocusEvent()
 	}
 }
 

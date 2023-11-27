@@ -12,7 +12,6 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/gide/v2/gide"
@@ -154,7 +153,7 @@ func (ge *GideView) SetActiveTextEditorIdx(idx int) *gide.TextEditor {
 		av.Buf.FileModCheck()
 	}
 	ge.SetStatus("")
-	av.GrabFocus() // todo: this is failing
+	av.SetFocusEvent()
 	av.SetNeedsLayout(true)
 	// fmt.Println(av, "set active text")
 	return av
@@ -202,7 +201,7 @@ func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (t
 		tv.Highlights = append(tv.Highlights, tr)
 		tv.UpdateEndRender(true)
 		tv.SetCursorShow(tr.Start)
-		tv.GrabFocus()
+		tv.SetFocusEvent()
 		return tv, true
 
 	}
@@ -261,7 +260,7 @@ func (ge *GideView) UpdateTextButtons() {
 		txnm := "<no file>"
 		if tv.Buf != nil {
 			txnm = dirs.DirAndFile(string(tv.Buf.Filename))
-			if tv.Buf.IsChanged() {
+			if tv.Buf.IsNotSaved() {
 				txnm += " <b>*</b>"
 			}
 		}
@@ -297,7 +296,7 @@ func (ge *GideView) TextEditorButtonMenu(idx int, m *gi.Scene) {
 	tv := ge.TextEditorByIndex(idx)
 	opn := ge.OpenNodes.Strings()
 	gi.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
-		giv.CallFunc(ge, ge.ViewFile)
+		ge.CallViewFile(tv)
 	})
 	gi.NewSeparator(m, "file-sep")
 	for i, n := range opn {

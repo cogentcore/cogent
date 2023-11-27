@@ -282,7 +282,7 @@ func (ge *GideView) UpdateStatusLabel() {
 		ch = tv.CursorPos.Ch
 		if tv.Buf != nil {
 			fnm = ge.Files.RelPath(tv.Buf.Filename)
-			if tv.Buf.IsChanged() {
+			if tv.Buf.IsNotSaved() {
 				fnm += "*"
 			}
 			if tv.Buf.Info.Sup != filecat.NoSupport {
