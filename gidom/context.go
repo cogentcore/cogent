@@ -138,7 +138,7 @@ func (cb *ContextBase) Config(w gi.Widget) {
 				attr.Val += ";"
 			}
 			decls, err := parser.ParseDeclarations(attr.Val)
-			if grr.Log0(err) != nil {
+			if grr.Log(err) != nil {
 				continue
 			}
 			rule := &css.Rule{Declarations: decls}
@@ -208,7 +208,7 @@ func (cb *ContextBase) Style() []*css.Rule {
 
 func (cb *ContextBase) AddStyle(style string) {
 	ss, err := parser.Parse(style)
-	if grr.Log0(err) != nil {
+	if grr.Log(err) != nil {
 		return
 	}
 
@@ -222,7 +222,7 @@ func (cb *ContextBase) AddStyle(style string) {
 		var sel *selcss.Selector
 		if len(rule.Selectors) > 0 {
 			s, err := selcss.Parse(strings.Join(rule.Selectors, ","))
-			if grr.Log0(err) != nil {
+			if grr.Log(err) != nil {
 				s = &selcss.Selector{}
 			}
 			sel = s

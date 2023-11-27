@@ -22,7 +22,7 @@ func main() { gimain.Run(app) }
 func app() {
 	gi.SetAppName("gidom-html")
 	b := gi.NewBody()
-	h := grr.Log(exampleHTML.ReadFile("example.html"))
-	grr.Log0(gidom.ReadHTML(gidom.BaseContext(), b, bytes.NewBuffer(h)))
+	h := grr.Log1(exampleHTML.ReadFile("example.html"))
+	grr.Log(gidom.ReadHTML(gidom.BaseContext(), b, bytes.NewBuffer(h)))
 	b.NewWindow().Run().Wait()
 }

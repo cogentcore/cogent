@@ -80,10 +80,10 @@ func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
 	ch.OnChange(func(e events.Event) {
 		u, is := gidom.ParseURL(ch.CurLabel)
 		if is {
-			grr.Log0(pg.OpenURL(u.String()))
+			grr.Log(pg.OpenURL(u.String()))
 		} else {
 			q := url.QueryEscape(ch.CurLabel)
-			grr.Log0(pg.OpenURL("https://google.com/search?q=" + q))
+			grr.Log(pg.OpenURL("https://google.com/search?q=" + q))
 		}
 		e.SetHandled()
 	})

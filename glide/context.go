@@ -29,5 +29,5 @@ func (c *Context) PageURL() string {
 }
 
 func (c *Context) OpenURL(url string) {
-	grr.Log0(c.Page.OpenURL(url))
+	grr.Log(c.Page.OpenURL(url))
 }

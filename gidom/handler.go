@@ -72,12 +72,12 @@ func HandleElement(ctx Context) {
 			return
 		}
 		resp, err := Get(ctx, GetAttr(ctx.Node(), "href"))
-		if grr.Log0(err) != nil {
+		if grr.Log(err) != nil {
 			return
 		}
 		defer resp.Body.Close()
 		b, err := io.ReadAll(resp.Body)
-		if grr.Log0(err) != nil {
+		if grr.Log(err) != nil {
 			return
 		}
 		ctx.AddStyle(string(b))
@@ -151,7 +151,7 @@ func HandleElement(ctx Context) {
 		go func() {
 			src := GetAttr(n, "src")
 			resp, err := Get(ctx, src)
-			if grr.Log0(err) != nil {
+			if grr.Log(err) != nil {
 				return
 			}
 			defer resp.Body.Close()
