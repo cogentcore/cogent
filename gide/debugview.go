@@ -16,8 +16,11 @@ import (
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/gide/v2/gidebug/gidelve"
+	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
+	"goki.dev/goosi/events"
 	"goki.dev/grr"
+	"goki.dev/icons"
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
 	"goki.dev/pi/v2/filecat"
@@ -133,6 +136,7 @@ func (dv *DebugView) DbgCanStep() bool {
 }
 
 func (dv *DebugView) Destroy() {
+	fmt.Println("debug destroy")
 	dv.Detach()
 	dv.DeleteAllBreaks()
 	dv.DeleteCurPCInBuf()
@@ -229,9 +233,7 @@ func (dv *DebugView) Continue() {
 		}
 	}
 	if ds != nil {
-		updt := dv.UpdateStart()
 		dv.InitState(ds)
-		dv.UpdateEnd(updt)
 	} else {
 		dv.State.State.Running = false
 		dv.SetStatus(gidebug.Finished)
@@ -473,6 +475,7 @@ func (dv *DebugView) UpdateFmState() {
 		dv.ShowTasks(false)
 	}
 	dv.UpdateToolbar()
+	dv.Update()
 }
 
 // SetFrame sets the given frame depth level as active
@@ -722,13 +725,11 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 	dv.State.Status = stat
 	tb := dv.Toolbar()
 	stl := tb.ChildByName("status", 1).(*gi.Label)
-	// clr := grr.Log(colors.FromName(DebugStatusColors[stat]))
-	// stl.BackgroundColor.SetSolid(clr)
 	lbl := stat.String()
 	if stat == gidebug.Breakpoint {
 		lbl = fmt.Sprintf("Break: %d", dv.State.CurBreak)
 	}
-	stl.SetText(lbl)
+	stl.SetTextUpdate(lbl)
 	// tb.UpdateActions()
 }
 
@@ -739,31 +740,28 @@ func (dv *DebugView) ConfigWidget() {
 	// dv.ConfigDebugView()
 }
 
-// Config configures the view -- parameters for the job must have
+// ConfigDebugView configures the view -- parameters for the job must have
 // already been set in ge.ProjParams.Debug.
-func (dv *DebugView) ConfigDebugView(ge Gide, sup filecat.Supported, exePath string) {
-	dv.Gide = ge
+func (dv *DebugView) ConfigDebugView(sup filecat.Supported, exePath string) {
 	dv.Sup = sup
 	dv.ExePath = exePath
+	if dv.HasChildren() {
+		return
+	}
+	dv.Gide, _ = ParentGide(dv)
 	dv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
-	config := ki.Config{}
-	config.Add(gi.ToolbarType, "toolbar")
-	config.Add(gi.TabsType, "tabs")
-	mods, updt := dv.ConfigChildren(config)
-	if mods {
-		dv.State.BlankState()
-		dv.OutBuf = texteditor.NewBuf()
-		dv.OutBuf.Filename = gi.FileName("debug-outbuf")
-		dv.ConfigToolbar()
-		dv.ConfigTabs()
-		dv.State.Breaks = nil // get rid of dummy
-	} else {
-		updt = dv.UpdateStart()
-	}
-	dv.Start()
-	dv.UpdateEndLayout(updt)
+	gi.NewToolbar(dv, "toolbar")
+	gi.NewTabs(dv, "tabs")
+	dv.State.BlankState()
+	dv.OutBuf = texteditor.NewBuf()
+	dv.OutBuf.Filename = gi.FileName("debug-outbuf")
+	dv.ConfigToolbar()
+	dv.ConfigTabs()
+	dv.State.Breaks = nil // get rid of dummy
+	// dv.Start()
 }
 
 // Toolbar returns the find toolbar
@@ -837,11 +835,11 @@ func (dv *DebugView) ConfigTabs() {
 	dv.OutBuf.Opts.LineNos = false
 	ctv.SetBuf(dv.OutBuf)
 	NewBreakView(tb.NewTab("Breaks")).ConfigBreakView(dv)
-	NewStackView(tb.NewTab("Stack")).ConfigStackView(dv, false) // reg stack
-	NewVarsView(tb.NewTab("Vars")).ConfigVarsView(dv, false)
+	NewStackView(tb.NewTab("Stack")).ConfigStackView(dv, false)
 	if dv.Sup == filecat.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		NewTaskView(tb.NewTab("Tasks")).ConfigTaskView(dv)
 	}
+	NewVarsView(tb.NewTab("Vars")).ConfigVarsView(dv, false)
 	NewThreadView(tb.NewTab("Threads")).ConfigThreadView(dv)
 	NewStackView(tb.NewTab("Find Frames")).ConfigStackView(dv, true) // find frames
 	NewVarsView(tb.NewTab("Global Vars")).ConfigVarsView(dv, true)   // all vars
@@ -867,86 +865,75 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
 
-	// cb.AddAction(gi.ActOpts{Label: "Updt", Icon: "update", Tooltip: "update current state"}, dv.This(),
-	// 	func(recv, send ki.Ki, sig int64, data interface{}) {
-	// 		dvv := recv.Embed(KiT_DebugView).(*DebugView)
-	// 		dvv.UpdateView()
-	// 		cb.UpdateActions()
-	// 	})
-	/*
-		stl := gi.NewLabel(tb, "status", "Building..   ")
-		stl.Redrawable = true
-		// stl.BackgroundColor.SetString("yellow", nil)
-		tb.AddAction(gi.ActOpts{Label: "Restart", Icon: "update", Tooltip: "(re)start the debugger on exe:" + dv.ExePath + " -- automatically rebuilds exe if any source files have changed"}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				dvv.Start()
-				tb.UpdateActions()
-			})
-		tb.AddAction(gi.ActOpts{Label: "Cont", Icon: "play", Tooltip: "continue execution from current point", Shortcut: "Control+Alt+R", UpdateFunc: dv.ActionActivate}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				go dvv.Continue()
-				tb.UpdateActions()
-			})
-		gi.NewLabel(tb, "step", "Step: ")
-		tb.AddAction(gi.ActOpts{Label: "Over", Icon: "step-over", Tooltip: "continues to the next source line, not entering function calls", Shortcut: "F6", UpdateFunc: dv.ActionActivate}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				dvv.StepOver()
-				tb.UpdateActions()
-			})
-		tb.AddAction(gi.ActOpts{Label: "Into", Icon: "step-into", Tooltip: "continues to the next source line, entering into function calls", Shortcut: "F7", UpdateFunc: dv.ActionActivate}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				dvv.StepInto()
-				tb.UpdateActions()
-			})
-		tb.AddAction(gi.ActOpts{Label: "Out", Icon: "step-out", Tooltip: "continues to the return point of the current function", Shortcut: "F8", UpdateFunc: dv.ActionActivate}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				dvv.StepOut()
-				tb.UpdateActions()
-			})
-		tb.AddAction(gi.ActOpts{Label: "Single", Icon: "step-fwd", Tooltip: "steps a single CPU instruction", UpdateFunc: dv.ActionActivate}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				dvv.StepOut()
-				tb.UpdateActions()
-			})
-		tb.AddAction(gi.ActOpts{Label: "Stop", Icon: "stop", Tooltip: "stop execution"}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				dvv.Stop()
-				tb.UpdateActions()
-			})
-		gi.NewSeparator(tb, "sep-av")
-		tb.AddAction(gi.ActOpts{Label: "Global Vars", Icon: "search", Tooltip: "list variables at global scope, subject to filter (name contains)"}, dv.This(),
-			func(recv, send ki.Ki, sig int64, data any) {
-				dvv := recv.Embed(KiT_DebugView).(*DebugView)
-				giv.CallMethod(dvv, "ListGlobalVars", dvv.Viewport)
-				tb.UpdateActions()
-			})
-	*/
-}
+	gi.NewLabel(tb, "status").SetText("Building..   ").Style(func(s *styles.Style) {
+		clr := grr.Log(colors.FromString(DebugStatusColors[dv.State.Status], nil))
+		s.BackgroundColor.SetSolid(clr)
+	})
 
-/*
-// DebugViewProps are style properties for DebugView
-var DebugViewProps = ki.Props{
-	"EnumType:Flag": gi.KiT_NodeFlags,
-	"max-width":     -1,
-	"max-height":    -1,
-	"CallMethods": ki.PropSlice{
-		{"ListGlobalVars", ki.Props{
-			"Args": ki.PropSlice{
-				{"Filter", ki.Props{
-					"width": 40,
-				}},
-			},
-		}},
-	},
+	gi.NewButton(tb).SetIcon(icons.Refresh).
+		SetTooltip("(re)start the debugger on exe:" + dv.ExePath + " -- automatically rebuilds exe if any source files have changed").
+		OnClick(func(e events.Event) {
+			dv.Start()
+		})
+
+	gi.NewButton(tb).SetText("Cont").SetIcon(icons.PlayArrow).
+		SetTooltip("continue execution from current point").
+		SetShortcut("Control+Alt+R").Style(func(s *styles.Style) {
+		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+	}).OnClick(func(e events.Event) {
+		go dv.Continue()
+	})
+
+	gi.NewLabel(tb).SetText("Step: ")
+
+	gi.NewButton(tb).SetText("Over").SetIcon(icons.StepOver).
+		SetTooltip("continues to the next source line, not entering function calls").
+		SetShortcut("F6").Style(func(s *styles.Style) {
+		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+	}).OnClick(func(e events.Event) {
+		dv.StepOver()
+	})
+
+	gi.NewButton(tb).SetText("Into").SetIcon(icons.StepInto).
+		SetTooltip("continues to the next source line, entering into function calls").
+		SetShortcut("F7").Style(func(s *styles.Style) {
+		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+	}).OnClick(func(e events.Event) {
+		dv.StepInto()
+	})
+
+	gi.NewButton(tb).SetText("Out").SetIcon(icons.StepOut).
+		SetTooltip("continues to the return point of the current function").
+		SetShortcut("F8").Style(func(s *styles.Style) {
+		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+	}).OnClick(func(e events.Event) {
+		dv.StepOut()
+	})
+
+	gi.NewButton(tb).SetText("Single").SetIcon(icons.Step).
+		SetTooltip("steps a single CPU instruction").Style(func(s *styles.Style) {
+		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+	}).OnClick(func(e events.Event) {
+		dv.StepOut()
+	})
+
+	gi.NewButton(tb).SetText("Stop").SetIcon(icons.Stop).
+		SetTooltip("stop execution").Style(func(s *styles.Style) {
+		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+	}).OnClick(func(e events.Event) {
+		dv.Stop()
+	})
+
+	gi.NewSeparator(tb, "sep-av")
+
+	gi.NewButton(tb).SetText("Global Vars").SetIcon(icons.Search).
+		SetTooltip("list variables at global scope, subject to filter (name contains)").
+		Style(func(s *styles.Style) {
+			dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+		}).OnClick(func(e events.Event) {
+		giv.CallFunc(dv, dv.ListGlobalVars)
+	})
 }
-*/
 
 //////////////////////////////////////////////////////////////////////////////////////
 //  StackView
@@ -967,36 +954,28 @@ func (sv *StackView) DebugVw() *DebugView {
 func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
 	sv.FindFrames = findFrames
-	config := ki.Config{}
-	config.Add(giv.TableViewType, "stack")
-	mods, updt := sv.ConfigChildren(config)
-	tv := sv.TableView()
-	if mods {
-		// tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	if sig == int64(giv.SliceViewDoubleClicked) {
-		// 		idx := data.(int)
-		// 		if sv.FindFrames {
-		// 			if idx >= 0 && idx < len(dv.State.FindFrames) {
-		// 				fr := dv.State.FindFrames[idx]
-		// 				dv.SetThread(fr.ThreadID)
-		// 			}
-		// 		} else {
-		// 			dv.SetFrame(idx)
-		// 		}
-		// 	}
-		// })
-	} else {
-		updt = sv.UpdateStart()
-	}
+	tv := giv.NewTableView(sv, "stack")
+	tv.OnDoubleClick(func(e events.Event) {
+		idx := tv.SelIdx
+		if sv.FindFrames {
+			if idx >= 0 && idx < len(dv.State.FindFrames) {
+				fr := dv.State.FindFrames[idx]
+				dv.SetThread(fr.ThreadID)
+			}
+		} else {
+			dv.SetFrame(idx)
+		}
+	})
+	tv.SetFlag(false, giv.SliceViewShowIndex)
 	tv.SetReadOnly(true)
 	if sv.FindFrames {
 		tv.SetSlice(&dv.State.FindFrames)
 	} else {
 		tv.SetSlice(&dv.State.Stack)
 	}
-	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview
@@ -1017,13 +996,6 @@ func (sv *StackView) ShowStack() {
 	}
 }
 
-// // StackViewProps are style properties for DebugView
-// var StackViewProps = ki.Props{
-// 	"EnumType:Flag": gi.KiT_NodeFlags,
-// 	"max-width":     -1,
-// 	"max-height":    -1,
-// }
-
 //////////////////////////////////////////////////////////////////////////////////////
 //  BreakView
 
@@ -1040,27 +1012,21 @@ func (sv *BreakView) DebugVw() *DebugView {
 func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
-	config := ki.Config{}
-	config.Add(giv.TableViewType, "breaks")
-	mods, updt := sv.ConfigChildren(config)
-	tv := sv.TableView()
-	if mods {
-		// tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	if sig == int64(giv.SliceViewDoubleClicked) {
-		// 		idx := data.(int)
-		// 		dv.ShowBreakFile(idx)
-		// 	} else if sig == int64(giv.SliceViewDeleted) {
-		// 		idx := data.(int)
-		// 		dv.DeleteBreakIdx(idx)
-		// 	}
-		// })
-	} else {
-		updt = sv.UpdateStart()
-	}
+	tv := giv.NewTableView(sv, "breaks")
+	tv.OnDoubleClick(func(e events.Event) {
+		idx := tv.SelIdx
+		dv.ShowBreakFile(idx)
+	})
+	// todo:
+	// 	} else if sig == int64(giv.SliceViewDeleted) {
+	// 		idx := data.(int)
+	// 		dv.DeleteBreakIdx(idx)
+	// 	}
+	tv.SetFlag(false, giv.SliceViewShowIndex)
 	tv.SetFlag(true, giv.SliceViewNoAdd)
 	tv.SetSlice(&dv.State.Breaks)
-	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview
@@ -1082,14 +1048,6 @@ func (sv *BreakView) ShowBreaks() {
 	dv.BackupBreaks()
 }
 
-//
-// // BreakViewProps are style properties for DebugView
-// var BreakViewProps = ki.Props{
-// 	"EnumType:Flag": gi.KiT_NodeFlags,
-// 	"max-width":     -1,
-// 	"max-height":    -1,
-// }
-
 //////////////////////////////////////////////////////////////////////////////////////
 //  ThreadView
 
@@ -1106,26 +1064,18 @@ func (sv *ThreadView) DebugVw() *DebugView {
 func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
-	config := ki.Config{}
-	config.Add(giv.TableViewType, "threads")
-	mods, updt := sv.ConfigChildren(config)
-	tv := sv.TableView()
-	if mods {
-		// tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	if sig == int64(giv.SliceViewDoubleClicked) {
-		// 		idx := data.(int)
-		// 		if dv.Dbg != nil && !dv.Dbg.HasTasks() {
-		// 			dv.SetThreadIdx(idx)
-		// 		}
-		// 	}
-		// })
-	} else {
-		updt = sv.UpdateStart()
-	}
+	tv := giv.NewTableView(sv, "threads")
+	tv.OnDoubleClick(func(e events.Event) {
+		idx := tv.SelIdx
+		if dv.Dbg != nil && !dv.Dbg.HasTasks() {
+			dv.SetThreadIdx(idx)
+		}
+	})
 	tv.SetReadOnly(true)
+	tv.SetFlag(false, giv.SliceViewShowIndex)
 	tv.SetSlice(&dv.State.Threads)
-	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview
@@ -1145,13 +1095,6 @@ func (sv *ThreadView) ShowThreads() {
 	tv.SetSlice(&dv.State.Threads)
 }
 
-// // ThreadViewProps are style properties for DebugView
-// var ThreadViewProps = ki.Props{
-// 	"EnumType:Flag": gi.KiT_NodeFlags,
-// 	"max-width":     -1,
-// 	"max-height":    -1,
-// }
-
 //////////////////////////////////////////////////////////////////////////////////////
 //  TaskView
 
@@ -1168,26 +1111,18 @@ func (sv *TaskView) DebugVw() *DebugView {
 func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
-	config := ki.Config{}
-	config.Add(giv.TableViewType, "tasks")
-	mods, updt := sv.ConfigChildren(config)
-	tv := sv.TableView()
-	if mods {
-		// tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	if sig == int64(giv.SliceViewDoubleClicked) {
-		// 		idx := data.(int)
-		// 		if dv.Dbg != nil && dv.Dbg.HasTasks() {
-		// 			dv.SetThreadIdx(idx)
-		// 		}
-		// 	}
-		// })
-	} else {
-		updt = sv.UpdateStart()
-	}
+	tv := giv.NewTableView(sv, "tasks")
+	tv.OnDoubleClick(func(e events.Event) {
+		idx := tv.SelIdx
+		if dv.Dbg != nil && dv.Dbg.HasTasks() {
+			dv.SetThreadIdx(idx)
+		}
+	})
+	tv.SetFlag(false, giv.SliceViewShowIndex)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Tasks)
-	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview
@@ -1206,13 +1141,6 @@ func (sv *TaskView) ShowTasks() {
 	}
 	tv.SetSlice(&dv.State.Tasks)
 }
-
-// // TaskViewProps are style properties for DebugView
-// var TaskViewProps = ki.Props{
-// 	"EnumType:Flag": gi.KiT_NodeFlags,
-// 	"max-width":     -1,
-// 	"max-height":    -1,
-// }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //  VarsView
@@ -1233,35 +1161,27 @@ func (sv *VarsView) DebugVw() *DebugView {
 func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
 	sv.GlobalVars = globalVars
-	config := ki.Config{}
-	config.Add(giv.TableViewType, "vars")
-	mods, updt := sv.ConfigChildren(config)
-	tv := sv.TableView()
-	if mods {
-		// tv.SliceViewSig.Connect(sv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	if sig == int64(giv.SliceViewDoubleClicked) {
-		// 		idx := data.(int)
-		// 		if sv.GlobalVars {
-		// 			vr := dv.State.GlobalVars[idx]
-		// 			dv.ShowVar(vr.Nm)
-		// 		} else {
-		// 			vr := dv.State.Vars[idx]
-		// 			dv.ShowVar(vr.Nm)
-		// 		}
-		// 	}
-		// })
-	} else {
-		updt = sv.UpdateStart()
-	}
+	tv := giv.NewTableView(sv, "vars")
+	tv.OnDoubleClick(func(e events.Event) {
+		idx := tv.SelIdx
+		if sv.GlobalVars {
+			vr := dv.State.GlobalVars[idx]
+			dv.ShowVar(vr.Nm)
+		} else {
+			vr := dv.State.Vars[idx]
+			dv.ShowVar(vr.Nm)
+		}
+	})
+	tv.SetFlag(false, giv.SliceViewShowIndex)
 	tv.SetReadOnly(true)
 	if sv.GlobalVars {
 		tv.SetSlice(&dv.State.GlobalVars)
 	} else {
 		tv.SetSlice(&dv.State.Vars)
 	}
-	sv.UpdateEnd(updt)
 }
 
 // TableView returns the tableview
@@ -1280,13 +1200,6 @@ func (sv *VarsView) ShowVars() {
 		tv.SetSlice(&dv.State.Vars)
 	}
 }
-
-// // VarsViewProps are style properties for DebugView
-// var VarsViewProps = ki.Props{
-// 	"EnumType:Flag": gi.KiT_NodeFlags,
-// 	"max-width":     -1,
-// 	"max-height":    -1,
-// }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //  VarView
@@ -1325,20 +1238,17 @@ func (vv *VarView) ConfigVarView() {
 	if vv.Var == nil {
 		return
 	}
+	if vv.HasChildren() {
+		return
+	}
 	vv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
-	config := ki.Config{}
-	config.Add(gi.LabelType, "frame-info")
-	// config.Add(gi.ToolbarType, "toolbar")
-	config.Add(gi.SplitsType, "splitview")
-	mods, updt := vv.ConfigChildren(config)
+	gi.NewLabel(vv, "frame-info")
+	gi.NewSplits(vv, "splitview")
 	vv.SetFrameInfo(vv.FrameInfo)
 	vv.ConfigSplits()
-	// vv.ConfigToolbar()
-	if mods {
-		vv.UpdateEnd(updt)
-	}
 	return
 }
 
@@ -1390,19 +1300,10 @@ func (vv *VarView) ConfigSplits() {
 	if len(split.Kids) == 0 {
 		tvfr := gi.NewFrame(split, "tvfr")
 		tv := giv.NewTreeView(tvfr, "tv")
-		giv.NewStructView(split, "sv")
-		_ = tv
-		// tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	if data == nil {
-		// 		return
-		// 	}
-		// 	vve, _ := recv.Embed(KiT_VarView).(*VarView)
-		// 	svr := vve.StructView()
-		// 	tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
-		// 	if sig == int64(giv.TreeViewSelected) {
-		// 		svr.SetStruct(tvn.SrcNode)
-		// 	}
-		// })
+		sv := giv.NewStructView(split, "sv")
+		tv.OnSelect(func(e events.Event) {
+			sv.SetStruct(tv.SyncNode)
+		})
 		split.SetSplits(.3, .7)
 	}
 	tv := vv.TreeView()
@@ -1411,27 +1312,12 @@ func (vv *VarView) ConfigSplits() {
 	sv.SetStruct(vv.Var)
 }
 
-// func (ge *VarView) Render2D() {
-// 	// ge.Toolbar().UpdateActions()
-// 	ge.Frame.Render2D()
-// }
-
-// var VarViewProps = ki.Props{
-// 	"EnumType:Flag":    gi.KiT_NodeFlags,
-// 	"background-color": &gi.Prefs.Colors.Background,
-// 	"color":            &gi.Prefs.Colors.Font,
-// 	"max-width":        -1,
-// 	"max-height":       -1,
-// }
-
 // VarViewDialog opens an interactive editor of the given Ki tree, at its
 // root, returns VarView and window
 func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarView {
-	if gi.ActivateExistingMainWindow(vr) {
+	if gi.RecycleDialog(vr) {
 		return nil
 	}
-	// width := 1280
-	// height := 920
 	wnm := "var-view"
 	wti := "Var View"
 	if vr != nil {

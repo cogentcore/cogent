@@ -13,7 +13,9 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/icons"
 	"goki.dev/ki/v2"
 	"goki.dev/pi/v2/filecat"
 )
@@ -21,6 +23,12 @@ import (
 // FileNode is Gide version of FileNode for FileTree view
 type FileNode struct {
 	filetree.Node
+}
+
+func (fn *FileNode) OnInit() {
+	fn.HandleFileNodeEvents()
+	fn.FileNodeStyles()
+	fn.CustomContextMenu = fn.GideContextMenu
 }
 
 // EditFile pulls up this file in Gide
@@ -63,6 +71,13 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	if ok {
 		ge.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm), true, true)
 	}
+}
+
+func (fn *FileNode) GideContextMenu(m *gi.Scene) {
+	gi.NewButton(m).SetText("Exec Cmd")
+	giv.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit)
+	giv.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow)
+	gi.NewSeparator(m)
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -269,86 +284,25 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 	return mls
 }
 
-/////////////////////////////////////////////////////////////////////////
-// FileTreeView is the Gide version of the FileTreeView
+// EditFiles calls EditFile on selected files
+func (fn *FileNode) EditFiles() { //gti:add
+	sels := fn.SelectedViews()
+	for i := len(sels) - 1; i >= 0; i-- {
+		sn := sels[i].This().(*FileNode)
+		sn.EditFile()
+	}
+}
+
+// SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons
+func (fn *FileNode) SetRunExecs() { //gti:add
+	sels := fn.SelectedViews()
+	for i := len(sels) - 1; i >= 0; i-- {
+		sn := sels[i].This().(*FileNode)
+		sn.SetRunExec()
+	}
+}
 
 /*
-// FileTreeView is a TreeView that knows how to operate on FileNode nodes
-type FileTreeView struct {
-	giv.FileTreeView
-}
-
-var FileTreeViewProps map[string]any
-var FileNodeProps map[string]any
-
-var KiT_FileTreeView = kit.Types.AddType(&FileTreeView{}, nil)
-
-func init() {
-	FileNodeProps = make(ki.Props, len(filetree.NodeProps))
-	ki.CopyProps(&FileNodeProps, filetree.NodeProps, true)
-	kit.Types.SetProps(KiT_FileNode, FileNodeProps)
-
-	FileTreeViewProps = make(ki.Props, len(giv.FileTreeViewProps))
-	ki.CopyProps(&FileTreeViewProps, giv.FileTreeViewProps, ki.DeepCopy)
-	cm := FileTreeViewProps["CtxtMenuActive"].(ki.PropSlice)
-	cm = append(ki.PropSlice{
-		{"ExecCmdFiles", ki.Props{
-			"label":           "Exec Cmd",
-			"subsubmenu-func": giv.SubSubMenuFunc(FileTreeViewExecCmds),
-			"Args": ki.PropSlice{
-				{"Cmd Name", ki.Props{}},
-			},
-		}},
-		{"EditFiles", ki.Props{
-			"label":    "Edit",
-			"updtfunc": FileTreeInactiveDirFunc,
-		}},
-		{"SetRunExec", ki.Props{
-			"label":    "Set Run Exec",
-			"updtfunc": FileTreeActiveExecFunc,
-		}},
-		{"sep-view", ki.BlankProp{}},
-	}, cm...)
-	FileTreeViewProps["CtxtMenuActive"] = cm
-	kit.Types.SetProps(KiT_FileTreeView, FileTreeViewProps)
-}
-
-// FileNode returns the SrcNode as a *gide* FileNode
-func (ft *FileTreeView) FileNode() *FileNode {
-	fn := ft.SrcNode.Embed(KiT_FileNode)
-	if fn == nil {
-		return nil
-	}
-	return fn.(*FileNode)
-}
-
-// EditFiles calls EditFile on selected files
-func (ft *FileTreeView) EditFiles() {
-	sels := ft.SelectedViews()
-	for i := len(sels) - 1; i >= 0; i-- {
-		sn := sels[i]
-		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
-		fn := ftv.FileNode()
-		if fn != nil {
-			fn.EditFile()
-		}
-	}
-}
-
-// SetRunExec sets executable as the RunExec executable that will be run with Run / Debug buttons
-func (ft *FileTreeView) SetRunExec() {
-	sels := ft.SelectedViews()
-	for i := len(sels) - 1; i >= 0; i-- {
-		sn := sels[i]
-		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
-		fn := ftv.FileNode()
-		if fn != nil {
-			fn.SetRunExec()
-			break
-		}
-	}
-}
-
 // RenameFiles calls RenameFile on any selected nodes
 func (ftv *FileTreeView) RenameFiles() {
 	fn := ftv.FileNode()
@@ -376,7 +330,9 @@ func (ftv *FileTreeView) RenameFiles() {
 		}
 	})
 }
+*/
 
+/*
 // FileTreeViewExecCmds gets list of available commands for given file node, as a submenu-func
 func FileTreeViewExecCmds(it any, vp *gi.Scene) [][]string {
 	ft, ok := it.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
@@ -435,32 +391,4 @@ func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
 		CmdWaitOverride = false
 	}
 }
-
-// FileTreeInactiveDirFunc is an ActionUpdateFunc that inactivates action if node is a dir
-var FileTreeInactiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
-	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-	fn := ft.FileNode()
-	if fn != nil {
-		act.SetInactiveState(fn.IsDir())
-	}
-})
-
-// FileTreeActiveDirFunc is an ActionUpdateFunc that activates action if node is a dir
-var FileTreeActiveDirFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
-	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-	fn := ft.FileNode()
-	if fn != nil {
-		act.SetActiveState(fn.IsDir())
-	}
-})
-
-// FileTreeActiveExecFunc is an ActionUpdateFunc that activates action if node is executable
-var FileTreeActiveExecFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
-	ft := fni.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-	fn := ft.FileNode()
-	if fn != nil {
-		act.SetActiveState(fn.IsExec())
-	}
-})
-
 */

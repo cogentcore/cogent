@@ -145,7 +145,8 @@ func (ge *GideView) Debug() { //gti:add
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, gide.DebugViewType).(*gide.DebugView)
-	// dv.SetGide(ge, ge.Prefs.MainLang, exePath)
+	dv.ConfigDebugView(filecat.Go, exePath)
+	dv.Update()
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }

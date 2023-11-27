@@ -304,13 +304,13 @@ type AllState struct {
 // having a single entry -- for GUI initialization.
 func (as *AllState) BlankState() {
 	as.Status = NotInit
-	as.Breaks = []*Break{{}}
-	as.Threads = []*Thread{{}}
-	as.Tasks = []*Task{{}}
-	as.Stack = []*Frame{{}}
-	as.Vars = []*Variable{{}}
-	as.GlobalVars = []*Variable{{}}
-	as.FindFrames = []*Frame{{}}
+	as.Breaks = []*Break{}
+	as.Threads = []*Thread{}
+	as.Tasks = []*Task{}
+	as.Stack = []*Frame{}
+	as.Vars = []*Variable{}
+	as.GlobalVars = []*Variable{}
+	as.FindFrames = []*Frame{}
 }
 
 // StackFrame safely returns the given stack frame -- nil if out of range

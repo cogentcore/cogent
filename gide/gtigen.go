@@ -540,7 +540,14 @@ var FileNodeType = gti.AddType(&gti.Type{
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Node", &gti.Field{Name: "Node", Type: "goki.dev/gi/v2/filetree.Node", LocalType: "filetree.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
+	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
+		{"EditFiles", &gti.Method{Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"SetRunExecs", &gti.Method{Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+	}),
 	Instance: &FileNode{},
 })
 
@@ -1113,10 +1120,12 @@ func (t *SymTreeView) SetSelectedNodes(v []*giv.TreeView) *SymTreeView {
 var TextEditorType = gti.AddType(&gti.Type{
 	Name:       "goki.dev/gide/v2/gide.TextEditor",
 	ShortName:  "gide.TextEditor",
-	IDName:     "text-view",
+	IDName:     "text-editor",
 	Doc:        "TextEditor is the Gide-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc",
 	Directives: gti.Directives{},
-	Fields:     ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
+	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+		{"Gide", &gti.Field{Name: "Gide", Type: "goki.dev/gide/v2/gide.Gide", LocalType: "Gide", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+	}),
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Editor", &gti.Field{Name: "Editor", Type: "goki.dev/gi/v2/texteditor.Editor", LocalType: "texteditor.Editor", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
@@ -1140,6 +1149,12 @@ func (t *TextEditor) KiType() *gti.Type {
 // New returns a new [*TextEditor] value
 func (t *TextEditor) New() ki.Ki {
 	return &TextEditor{}
+}
+
+// SetGide sets the [TextEditor.Gide]
+func (t *TextEditor) SetGide(v Gide) *TextEditor {
+	t.Gide = v
+	return t
 }
 
 // SetTooltip sets the [TextEditor.Tooltip]

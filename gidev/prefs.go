@@ -9,6 +9,7 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/goosi/events"
@@ -73,6 +74,12 @@ func (ge *GideView) EditProjPrefs() { //gti:add
 			ge.ApplyPrefsAction()
 		})
 	}
+}
+
+func (ge *GideView) CallSplitsSetView(ctx gi.Widget) {
+	fb := giv.NewSoloFuncButton(ctx, ge.SplitsSetView)
+	fb.Args[0].SetValue(ge.Prefs.SplitName)
+	fb.CallFunc()
 }
 
 // SplitsSetView sets split view splitters to given named setting

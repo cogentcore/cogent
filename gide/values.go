@@ -414,7 +414,7 @@ func (vv *SplitValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	if cur != "" {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
-	giv.NewTableView(d).SetSlice(&AvailSplits).SetSelIdx(curRow).BindSelectDialog(&si)
+	giv.NewTableView(d).SetSlice(&AvailSplits).SetInitSelIdx(curRow).BindSelectDialog(&si)
 	return true, func() {
 		if si >= 0 {
 			pt := AvailSplits[si]
@@ -527,6 +527,7 @@ func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 		if fun != nil {
 			fun()
 		}
+		// m.Close() // todo: need to support this
 	})
 	gi.NewMenuFromScene(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }

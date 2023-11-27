@@ -145,7 +145,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.Indent()
 	case gide.KeyFunSetSplit:
 		kt.SetHandled()
-		giv.CallFunc(ge, ge.SplitsSetView)
+		ge.CallSplitsSetView(atv)
 	case gide.KeyFunBuildProj:
 		kt.SetHandled()
 		ge.Build()
