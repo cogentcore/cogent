@@ -33,9 +33,9 @@ func (ed *TextEditor) OnInit() {
 
 // TextEditorEvents sets connections between mouse and key events and actions
 func (ed *TextEditor) HandleGideEvents() {
+	ed.HandleEditorEvents()
 	ed.HandleGideDoubleClick()
 	ed.HandleGideDebugHover()
-	ed.HandleEditorEvents()
 }
 
 // func (tv *TextEditor) FocusChanged2D(change gi.FocusChanges) {
@@ -69,7 +69,7 @@ func (ed *TextEditor) SetBreakpoint(ln int) {
 		return
 	}
 	// tv.Buf.SetLineIcon(ln, "stop")
-	ed.Buf.SetLineColor(ln, grr.Log(colors.FromName(DebugBreakColors[DebugBreakInactive])))
+	ed.Buf.SetLineColor(ln, grr.Log1(colors.FromName(DebugBreakColors[DebugBreakInactive])))
 	dbg.AddBreak(string(ed.Buf.Filename), ln+1)
 }
 

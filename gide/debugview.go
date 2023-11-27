@@ -866,7 +866,7 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb.SetStretchMaxWidth()
 
 	gi.NewLabel(tb, "status").SetText("Building..   ").Style(func(s *styles.Style) {
-		clr := grr.Log(colors.FromString(DebugStatusColors[dv.State.Status], nil))
+		clr := grr.Log1(colors.FromString(DebugStatusColors[dv.State.Status], nil))
 		s.BackgroundColor.SetSolid(clr)
 	})
 
