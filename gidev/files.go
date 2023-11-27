@@ -180,7 +180,7 @@ func (ge *GideView) OpenFileNode(fn *filetree.Node) (bool, error) {
 }
 
 // ViewFileNode sets the given text view to view file in given node (opens
-// buffer if not already opened)
+// buffer if not already opened).  This is the main method for viewing a file.
 func (ge *GideView) ViewFileNode(tv *gide.TextEditor, vidx int, fn *filetree.Node) {
 	if fn.IsDir() {
 		return
@@ -193,7 +193,6 @@ func (ge *GideView) ViewFileNode(tv *gide.TextEditor, vidx int, fn *filetree.Nod
 	}
 	nw, err := ge.OpenFileNode(fn)
 	if err == nil {
-		// tv.StyleTextEditor() // make sure
 		tv.SetBuf(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
@@ -206,9 +205,6 @@ func (ge *GideView) ViewFileNode(tv *gide.TextEditor, vidx int, fn *filetree.Nod
 // buffer if not already opened) -- if already being viewed, that is
 // activated, returns text view and index
 func (ge *GideView) NextViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) {
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
-
 	tv, idx, ok := ge.TextEditorForFileNode(fn)
 	if ok {
 		ge.SetActiveTextEditorIdx(idx)
@@ -281,9 +277,6 @@ func (ge *GideView) CallViewFile(ctx gi.Widget) {
 // ViewFile views file in an existing TextEditor if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
 func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) { //gti:add
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
-
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -301,9 +294,6 @@ func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) { //
 
 // ViewFileInIdx views file in given text view index
 func (ge *GideView) ViewFileInIdx(fnm gi.FileName, idx int) (*gide.TextEditor, int, bool) {
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
-
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -316,8 +306,8 @@ func (ge *GideView) ViewFileInIdx(fnm gi.FileName, idx int) (*gide.TextEditor, i
 // LinkViewFileNode opens the file node in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (ge *GideView) LinkViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) {
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEnd(wupdt)
+	updt := ge.UpdateStart()
+	defer ge.UpdateEndLayout(updt)
 
 	if ge.PanelIsOpen(TextEditor2Idx) {
 		ge.SetActiveTextEditorIdx(1)

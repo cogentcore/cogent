@@ -52,6 +52,8 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 		return
 	}
 	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
 	fbuf, _ := ge.RecycleCmdBuf("Find", true)
 	fv := tv.RecycleTabWidget("Find", true, gide.FindViewType).(*gide.FindView)
 	fv.Time = time.Now()
@@ -92,7 +94,6 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 		res = gide.FileTreeSearch(root, find, ignoreCase, regExp, loc, adir, langs)
 	}
 	fv.ShowResults(res)
-	tv.UpdateEndLayout(updt)
 	ge.FocusOnPanel(TabsIdx)
 }
 
@@ -108,8 +109,9 @@ func (ge *GideView) Spell() { //gti:add
 		return
 	}
 	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
 	tv.RecycleTabWidget("Spell", true, gide.SpellViewType)
-	tv.UpdateEndLayout(updt)
 	ge.FocusOnPanel(TabsIdx)
 }
 
@@ -124,8 +126,9 @@ func (ge *GideView) Symbols() { //gti:add
 		return
 	}
 	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
 	tv.RecycleTabWidget("Symbols", true, gide.SymbolsViewType)
-	tv.UpdateEndLayout(updt)
 	ge.FocusOnPanel(TabsIdx)
 }
 
@@ -136,12 +139,13 @@ func (ge *GideView) Debug() { //gti:add
 		return
 	}
 	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
 	ge.Prefs.Debug.Mode = gidebug.Exec
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, gide.DebugViewType).(*gide.DebugView)
 	// dv.SetGide(ge, ge.Prefs.MainLang, exePath)
-	tv.UpdateEndLayout(updt)
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }
@@ -157,12 +161,13 @@ func (ge *GideView) DebugTest() { //gti:add
 		return
 	}
 	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
 	ge.Prefs.Debug.Mode = gidebug.Test
 	tstPath := string(txv.Buf.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, gide.DebugViewType).(*gide.DebugView)
 	// dv.SetGide(ge, ge.Prefs.MainLang, tstPath)
-	tv.UpdateEndLayout(updt)
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }
@@ -175,13 +180,14 @@ func (ge *GideView) DebugAttach(pid uint64) {
 		return
 	}
 	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
 	ge.Prefs.Debug.Mode = gidebug.Attach
 	ge.Prefs.Debug.PID = pid
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, gide.DebugViewType).(*gide.DebugView)
 	// dv.SetGide(ge, ge.Prefs.MainLang, exePath)
-	tv.UpdateEndLayout(updt)
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }

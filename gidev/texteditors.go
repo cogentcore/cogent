@@ -137,7 +137,8 @@ func (ge *GideView) SetActiveTextEditor(av *gide.TextEditor) int {
 }
 
 // SetActiveTextEditorIdx sets the given view index as the currently-active
-// TextEditor -- returns that textview
+// TextEditor -- returns that textview.  This is the main method for
+// activating a text editor.
 func (ge *GideView) SetActiveTextEditorIdx(idx int) *gide.TextEditor {
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
@@ -195,17 +196,17 @@ func (ge *GideView) SwapTextEditors() bool {
 
 func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (tv *gide.TextEditor, ok bool) {
 	tv, _, ok = ge.LinkViewFile(filename)
-	if tv != nil {
-		tv.UpdateStart()
-		tv.Highlights = tv.Highlights[:0]
-		tv.Highlights = append(tv.Highlights, tr)
-		tv.UpdateEndRender(true)
-		tv.SetCursorShow(tr.Start)
-		tv.SetFocusEvent()
-		return tv, true
-
+	if tv == nil {
+		return nil, false
 	}
-	return nil, false
+	updt := tv.UpdateStart()
+	defer tv.UpdateEndRender(updt)
+
+	tv.Highlights = tv.Highlights[:0]
+	tv.Highlights = append(tv.Highlights, tr)
+	tv.SetCursorShow(tr.Start)
+	tv.SetFocusEvent()
+	return tv, true
 }
 
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text

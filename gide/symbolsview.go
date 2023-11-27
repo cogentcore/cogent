@@ -71,7 +71,7 @@ func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
 	sb := sv.ScopeCombo()
 	sb.SetCurIndex(int(sv.Params().Scope))
 	sv.ConfigTree(sp.Scope)
-	sv.UpdateEnd(updt)
+	sv.UpdateEndLayout(updt)
 }
 
 // Toolbar returns the symbols toolbar
@@ -163,7 +163,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	tv.ReSync()
 
 	tv.OpenAll()
-	sfr.UpdateEnd(updt)
+	sfr.UpdateEndLayout(updt)
 }
 
 func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
@@ -176,15 +176,16 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 		if ok == false {
 			log.Printf("GideView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
-	} else {
-		tv.UpdateStart()
-		tv.Highlights = tv.Highlights[:0]
-		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
-		tv.Highlights = append(tv.Highlights, tr)
-		tv.UpdateEnd(true)
-		tv.SetCursorShow(tr.Start)
-		tv.SetFocusEvent()
+		return
 	}
+	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
+	tv.Highlights = tv.Highlights[:0]
+	tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+	tv.Highlights = append(tv.Highlights, tr)
+	tv.SetCursorShow(tr.Start)
+	tv.SetFocusEvent()
 }
 
 // OpenPackage opens package-level symbols for current active textview

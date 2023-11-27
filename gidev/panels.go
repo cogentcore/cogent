@@ -38,8 +38,8 @@ func (ge *GideView) CurPanel() int {
 
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
 func (ge *GideView) FocusOnPanel(panel int) bool {
-	wupdt := ge.UpdateStart()
-	defer ge.UpdateEndRender(wupdt)
+	updt := ge.UpdateStart()
+	defer ge.UpdateEndRender(updt)
 
 	sv := ge.Splits()
 	switch panel {
@@ -129,6 +129,8 @@ func (ge *GideView) RecycleTabTextEditor(label string, sel bool) *texteditor.Edi
 		return nil
 	}
 	updt := tv.UpdateStart()
+	defer tv.UpdateEndLayout(updt)
+
 	fr := tv.RecycleTab(label, sel)
 	if fr.HasChildren() {
 		return fr.Child(0).(*texteditor.Editor)
@@ -136,6 +138,5 @@ func (ge *GideView) RecycleTabTextEditor(label string, sel bool) *texteditor.Edi
 	txv := texteditor.NewEditor(fr, fr.Nm)
 	gide.ConfigOutputTextEditor(txv)
 	tv.Update()
-	tv.UpdateEndLayout(updt)
 	return txv
 }

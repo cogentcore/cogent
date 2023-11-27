@@ -85,7 +85,7 @@ func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextEditor) {
 		updt = sv.UpdateStart()
 	}
 	sv.ConfigToolbar()
-	sv.UpdateEnd(updt)
+	sv.UpdateEndLayout(updt)
 	gi.InitSpell()
 	sv.CheckNext()
 }
@@ -284,13 +284,14 @@ func (sv *SpellView) CheckNext() {
 
 	st := sv.UnkStartPos()
 	en := sv.UnkEndPos()
-	tv.UpdateStart()
+	updt := tv.UpdateStart()
+	defer tv.UpdateEndRender(updt)
+
 	tv.Highlights = tv.Highlights[:0]
 	tv.SetCursorShow(st)
 	hr := textbuf.Region{Start: st, End: en}
 	hr.TimeNow()
 	tv.Highlights = append(tv.Highlights, hr)
-	tv.UpdateEnd(true)
 	if sv.LastAction == nil {
 		sv.SetFocusEvent()
 	} else {

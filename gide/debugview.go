@@ -403,7 +403,8 @@ func (dv *DebugView) UpdateAllBreaks() {
 	if dv.Gide == nil || dv.Gide.Is(ki.Deleted) {
 		return
 	}
-	wupdt := dv.UpdateStart()
+	updt := dv.UpdateStart()
+	dv.UpdateEndRender(updt)
 	for _, bk := range dv.State.Breaks {
 		if bk.ID == dv.State.CurBreak {
 			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakCurrent)
@@ -413,7 +414,6 @@ func (dv *DebugView) UpdateAllBreaks() {
 			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakInactive)
 		}
 	}
-	dv.UpdateEnd(wupdt)
 }
 
 // BackupBreaks makes a backup copy of current breaks
@@ -449,8 +449,9 @@ func (dv *DebugView) UpdateFmState() {
 	if dv == nil || dv.This() == nil || dv.Is(ki.Deleted) || dv.Dbg == nil {
 		return
 	}
-	wupdt := dv.UpdateStart()
-	defer dv.UpdateEnd(wupdt)
+	updt := dv.UpdateStart()
+	defer dv.UpdateEndLayout(updt)
+
 	cb, err := dv.Dbg.ListBreaks()
 	if err == nil {
 		dv.State.CurBreaks = cb
@@ -555,11 +556,12 @@ func (dv *DebugView) ShowFile(fpath string, line int) {
 		return
 	}
 	// fmt.Printf("File: %s:%d\n", fpath, ln)
-	wupdt := dv.UpdateStart()
+	updt := dv.UpdateStart()
+	dv.UpdateEndRender(updt)
+
 	dv.DeleteCurPCInBuf()
 	dv.Gide.ShowFile(fpath, line)
 	dv.SetCurPCInBuf(fpath, line)
-	dv.UpdateEnd(wupdt)
 }
 
 // SetCurPCInBuf sets the current PC location in given file
@@ -994,7 +996,7 @@ func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 	} else {
 		tv.SetSlice(&dv.State.Stack)
 	}
-	sv.UpdateEnd(updt)
+	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview
@@ -1058,7 +1060,7 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	}
 	tv.SetFlag(true, giv.SliceViewNoAdd)
 	tv.SetSlice(&dv.State.Breaks)
-	sv.UpdateEnd(updt)
+	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview
@@ -1123,7 +1125,7 @@ func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 	}
 	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Threads)
-	sv.UpdateEnd(updt)
+	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview
@@ -1185,7 +1187,7 @@ func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 	}
 	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Tasks)
-	sv.UpdateEnd(updt)
+	sv.UpdateEndLayout(updt)
 }
 
 // TableView returns the tableview

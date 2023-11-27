@@ -189,7 +189,7 @@ func (fv *FindView) ReplaceAction() bool {
 		return false
 	}
 	updt := fv.UpdateStart()
-	defer fv.UpdateEnd(updt)
+	defer fv.UpdateEndRender(updt)
 
 	fp := fv.Params()
 	fv.SaveReplString(fp.Replace)
@@ -395,6 +395,8 @@ func (fv *FindView) ConfigFindView() {
 		s.Grow.Set(1, 1)
 	})
 	updt := fv.UpdateStart()
+	defer fv.UpdateEndLayout(updt)
+
 	fb := gi.NewToolbar(fv, "findbar")
 	rb := gi.NewToolbar(fv, "replbar")
 	tv := texteditor.NewEditor(fv, "findtext")
@@ -406,7 +408,6 @@ func (fv *FindView) ConfigFindView() {
 	na := fv.FindNextAct()
 	na.SetFocusEvent()
 	fv.Update()
-	fv.UpdateEndLayout(updt)
 }
 
 // FindBar returns the find toolbar

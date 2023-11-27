@@ -46,8 +46,10 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* recycle tab not working: getting stuck with Updating
-* start select on menu (buff menu etc) not working
+* gomod not updated
+* filetree root name fix to project -- and get rid of empty upper level or not?
+* filetree not updating on open -- show already happening? -- works on new window but not existing.. duh.
+* start select on menu (buff menu etc) not working -- so flakey 
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode
 * dialog closing causes old window to show up -- need to update render images
 * external files not quite working
@@ -58,6 +60,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE
 
+* recycle tab not working: getting stuck with Updating
 * replace is not interactive
 * open file not applying textfield sel on keyfun.Accept
 * lookup

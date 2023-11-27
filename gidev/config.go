@@ -42,7 +42,7 @@ func (ge *GideView) ConfigGideView() {
 	}
 
 	updt := ge.UpdateStart()
-	// sc.TopAppBar = ge.TopAppBar
+	defer ge.UpdateEndLayout(updt)
 
 	ge.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -58,8 +58,6 @@ func (ge *GideView) ConfigGideView() {
 
 	ge.OpenConsoleTab()
 	ge.UpdateFiles()
-
-	ge.UpdateEndLayout(updt)
 }
 
 // IsConfiged returns true if the view is configured
