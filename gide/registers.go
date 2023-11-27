@@ -51,12 +51,12 @@ var PrefsRegistersFileName = "registers_prefs.json"
 // OpenJSON opens named registers from a JSON-formatted file.
 func (lt *Registers) OpenJSON(filename gi.FileName) error { //gti:add
 	*lt = make(Registers) // reset
-	return grr.Log0(jsons.Open(lt, string(filename)))
+	return grr.Log(jsons.Open(lt, string(filename)))
 }
 
 // SaveJSON saves named registers to a JSON-formatted file.
 func (lt *Registers) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log0(jsons.Save(lt, string(filename)))
+	return grr.Log(jsons.Save(lt, string(filename)))
 }
 
 // OpenPrefs opens Registers from App standard prefs directory, using PrefRegistersFileName

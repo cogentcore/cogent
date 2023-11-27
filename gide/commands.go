@@ -707,12 +707,12 @@ var PrefsCmdsFileName = "command_prefs.json"
 // OpenJSON opens commands from a JSON-formatted file.
 func (cm *Commands) OpenJSON(filename gi.FileName) error { //gti:add
 	*cm = make(Commands, 0, 10) // reset
-	return grr.Log0(jsons.Open(cm, string(filename)))
+	return grr.Log(jsons.Open(cm, string(filename)))
 }
 
 // SaveJSON saves commands to a JSON-formatted file.
 func (cm *Commands) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log0(jsons.Save(cm, string(filename)))
+	return grr.Log(jsons.Save(cm, string(filename)))
 }
 
 // OpenPrefs opens custom Commands from App standard prefs directory, using

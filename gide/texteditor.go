@@ -121,7 +121,7 @@ func (tv *TextEditor) SetBreakpoint(ln int) {
 		return
 	}
 	// tv.Buf.SetLineIcon(ln, "stop")
-	tv.Buf.SetLineColor(ln, grr.Log(colors.FromName(DebugBreakColors[DebugBreakInactive])))
+	tv.Buf.SetLineColor(ln, grr.Log1(colors.FromName(DebugBreakColors[DebugBreakInactive])))
 	dbg.AddBreak(string(tv.Buf.Filename), ln+1)
 }
 

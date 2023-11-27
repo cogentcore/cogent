@@ -393,7 +393,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 	}
 	tb := dv.Gide.TextBufForFile(fpath, false)
 	if tb != nil {
-		tb.SetLineColor(line-1, grr.Log(colors.FromName(DebugBreakColors[stat])))
+		tb.SetLineColor(line-1, grr.Log1(colors.FromName(DebugBreakColors[stat])))
 		tb.Update()
 	}
 }
@@ -570,7 +570,7 @@ func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
 	tb := dv.Gide.TextBufForFile(fpath, false)
 	if tb != nil {
 		if !tb.HasLineColor(line - 1) {
-			tb.SetLineColor(line-1, grr.Log(colors.FromName(DebugBreakColors[DebugPCCurrent])))
+			tb.SetLineColor(line-1, grr.Log1(colors.FromName(DebugBreakColors[DebugPCCurrent])))
 			tb.Update()
 			dv.CurFileLoc.FPath = fpath
 			dv.CurFileLoc.Line = line

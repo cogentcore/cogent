@@ -126,7 +126,7 @@ func (pf *Preferences) ApplyEnvVars() {
 func (pf *Preferences) Open() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
-	err := grr.Log0(jsons.Open(pf, pnm))
+	err := grr.Log(jsons.Open(pf, pnm))
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (pf *Preferences) Open() error { //gti:add
 func (pf *Preferences) Save() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
-	err := grr.Log0(jsons.SaveIndent(pf, pnm))
+	err := grr.Log(jsons.SaveIndent(pf, pnm))
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func (pf *ProjPrefs) Update() {
 
 // OpenJSON open from JSON file
 func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error { //gti:add
-	err := grr.Log0(jsons.Open(pf, string(filename)))
+	err := grr.Log(jsons.Open(pf, string(filename)))
 	pf.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(pf.VersCtrl))) // official names are lowercase now
 	pf.Changed = false
 	return err
@@ -307,7 +307,7 @@ func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error { //gti:add
 
 // SaveJSON save to JSON file
 func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log0(jsons.SaveIndent(pf, string(filename)))
+	return grr.Log(jsons.SaveIndent(pf, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable

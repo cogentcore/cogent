@@ -111,14 +111,14 @@ func (lt *Splits) FixLen() {
 // OpenJSON opens named splits from a JSON-formatted file.
 func (lt *Splits) OpenJSON(filename gi.FileName) error { //gti:add
 	*lt = make(Splits, 0, 10) // reset
-	err := grr.Log0(jsons.Open(lt, string(filename)))
+	err := grr.Log(jsons.Open(lt, string(filename)))
 	lt.FixLen()
 	return err
 }
 
 // SaveJSON saves named splits to a JSON-formatted file.
 func (lt *Splits) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log0(jsons.Save(lt, string(filename)))
+	return grr.Log(jsons.Save(lt, string(filename)))
 }
 
 // OpenPrefs opens Splits from App standard prefs directory, using PrefSplitsFileName

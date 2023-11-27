@@ -68,7 +68,7 @@ Version: ` + gide.Prefs.VersionInfo())
 			print(gide.TheConsole.LogWrite)
 
 			cf, err := os.Create(crnm)
-			if grr.Log0(err) == nil {
+			if grr.Log(err) == nil {
 				print(cf)
 				cf.Close()
 			}

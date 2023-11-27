@@ -329,12 +329,12 @@ var PrefsKeyMapsFileName = "key_maps_prefs.json"
 // OpenJSON opens keymaps from a JSON-formatted file.
 func (km *KeyMaps) OpenJSON(filename gi.FileName) error { //gti:add
 	*km = make(KeyMaps, 0, 10) // reset
-	return grr.Log0(jsons.Open(km, string(filename)))
+	return grr.Log(jsons.Open(km, string(filename)))
 }
 
 // SaveJSON saves keymaps to a JSON-formatted file.
 func (km *KeyMaps) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log0(jsons.Save(km, string(filename)))
+	return grr.Log(jsons.Save(km, string(filename)))
 }
 
 // OpenPrefs opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFileName
