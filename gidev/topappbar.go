@@ -10,6 +10,7 @@ import (
 	"goki.dev/gi/v2/keyfun"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/states"
+	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
 	"goki.dev/icons"
@@ -29,8 +30,10 @@ func DefaultTopAppBar(tb *gi.TopAppBar) {
 func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
-	sm.SetChecked(ge.Prefs.GoMod)
-	sm.OnClick(func(e events.Event) {
+	sm.Style(func(s *styles.Style) {
+		sm.SetChecked(ge.Prefs.GoMod)
+	})
+	sm.OnChange(func(e events.Event) {
 		ge.Prefs.GoMod = sm.StateIs(states.Checked)
 		gide.SetGoMod(ge.Prefs.GoMod)
 	})

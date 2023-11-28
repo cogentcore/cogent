@@ -5,12 +5,12 @@
 package gide
 
 import (
-	"fmt"
 	"image"
 
 	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
+	"goki.dev/girl/abilities"
 	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/grr"
@@ -28,7 +28,14 @@ type TextEditor struct {
 
 func (ed *TextEditor) OnInit() {
 	ed.HandleGideEvents()
+	ed.GideEditorStyles()
+}
+
+func (ed *TextEditor) GideEditorStyles() {
 	ed.EditorStyles()
+	ed.Style(func(s *styles.Style) {
+		s.SetAbilities(true, abilities.LongHoverable)
+	})
 }
 
 // TextEditorEvents sets connections between mouse and key events and actions
@@ -158,11 +165,9 @@ func (ed *TextEditor) LineNoDoubleClick(tpos lex.Pos) {
 }
 
 func (ed *TextEditor) HandleGideDoubleClick() {
-	fmt.Println("setting double click")
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.LocalPos())
 		tpos := ed.PixelToCursor(pt)
-		fmt.Println("in double click", tpos)
 		if pt.X >= 0 && ed.Buf.IsValidLine(tpos.Ln) {
 			if pt.X < int(ed.LineNoOff) {
 				e.SetHandled()
@@ -186,7 +191,7 @@ func (ed *TextEditor) HandleGideDebugHover() {
 			pos := e.LocalPos()
 			pos.X += 20
 			pos.Y += 20
-			gi.NewTooltipText(ed, tt, ed.WinBBox().Min).Run()
+			gi.NewTooltipText(ed, tt, ed.WinBBox().Min).Run() // todo: set position?
 		}
 	})
 }

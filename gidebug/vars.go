@@ -80,27 +80,6 @@ func (vr *Variable) CopyFieldsFrom(frm any) {
 	vr.Dbg = fr.Dbg
 }
 
-/*
-var VariableProps = ki.Props{
-	"StructViewFields": ki.Props{ // hide in view
-		"UniqueNm": `view:"-"`,
-		"Flag":     `view:"-"`,
-		"Kids":     `view:"-"`,
-		"Props":    `view:"-"`,
-	},
-	"Toolbar": ki.PropSlice{
-		{"FollowPtr", ki.Props{
-			"desc": "retrieve the contents of this pointer -- child nodes will contain further data",
-			"icon": "update",
-			"updtfunc": func(vri any, act *gi.Button) {
-				vr := vri.(ki.Ki).Embed(KiT_Variable).(*Variable)
-				act.SetActiveState(!vr.HasChildren())
-			},
-		}},
-	},
-}
-*/
-
 // SortVars sorts vars by name
 func SortVars(vrs []*Variable) {
 	sort.Slice(vrs, func(i, j int) bool {

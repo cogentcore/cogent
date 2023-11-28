@@ -101,10 +101,11 @@ func (ge *GideView) TextEditorForFile(fnm gi.FileName) (*gide.TextEditor, int, b
 func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 	ge.ActiveFilename = buf.Filename
 	ge.ActiveLang = buf.Info.Sup
-	fn := ge.FileNodeForFile(string(ge.ActiveFilename), false)
 	ge.ActiveVCSInfo = ""
 	ge.ActiveVCS = nil
+	fn := ge.FileNodeForFile(string(ge.ActiveFilename), false)
 	if fn != nil {
+		return
 		repo, _ := fn.Repo()
 		if repo != nil {
 			ge.ActiveVCS = repo
@@ -113,6 +114,7 @@ func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 				ge.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", repo.Vcs(), cur)
 			}
 		}
+		fn.ScrollToMe()
 	}
 }
 

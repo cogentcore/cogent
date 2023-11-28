@@ -46,22 +46,25 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* var view needs same treeview select logic as inspector
-* tab select does Update on new tab -- often needed
-* menu choice selector close e.g., insert register -- callback circular
-* gomod not updated
-* Editable Chooser tabs twice -- outer & inner
-* filetree root name fix to project -- and get rid of empty upper level or not?
-* filetree not updating on open -- show already happening? -- works on new window but not existing.. duh.
+* paste history not working at all
+* popup has position method override to set position specifically
+* menu choice selector close not working: is a This problem -- rewrite stages finally.
+* tableview / sliceview need extra layout loops within one layout pass -- doesn't work inside tabs
+* Editable Chooser tabs twice -- outer & inner -- requires focus prev fix to work properly!
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode
 * dialog closing causes old window to show up -- need to update render images
-* filetree context menu
+* fileview global priority key shortcuts and fileview menu
+* filetree context menu -- just commands now
 * textview context menu
 * editor rendering overflow
 * lineno horiz scrolling issues -- this is in V1 too!
+* filetree --get rid of empty upper level or not?
 
 # DONE
 
+* filetree not updating on open -- show already happening? -- works on new window but not existing.. duh.
+* var view needs same treeview select logic as inspector
+* gomod not updated
 * start select on menu (buff menu etc) not working -- so flakey 
 * external files not quite working
 * recycle tab not working: getting stuck with Updating

@@ -381,7 +381,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := gi.NewTextField(d).SetText(curval)
 			tf.Style(func(s *styles.Style) {
-				s.Min.X.Ch(100)
+				s.Min.X.Ch(200)
 			})
 			d.AddBottomBar(func(pw gi.Widget) {
 				d.AddCancel(pw)
@@ -395,7 +395,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 					}
 				})
 			})
-			d.NewDialog(tv).Run()
+			d.NewDialog(tv).SetModal(false).Run()
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":

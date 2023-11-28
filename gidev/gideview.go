@@ -149,8 +149,9 @@ func (ge *GideView) FocusOnTabs() bool {
 
 // UpdateFiles updates the list of files saved in project
 func (ge *GideView) UpdateFiles() { //gti:add
-	if ge.Files != nil {
+	if ge.Files != nil && ge.ProjRoot != "" {
 		ge.Files.OpenPath(string(ge.ProjRoot))
+		ge.Files.Open()
 	}
 }
 
@@ -264,13 +265,15 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 	if ok {
 		gide.SetGoMod(ge.Prefs.GoMod)
 		os.Chdir(string(ge.Prefs.ProjRoot))
+		ge.ProjRoot = gi.FileName(ge.Prefs.ProjRoot)
 		gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.ApplyPrefs()
 		ge.UpdateFiles()
 		ge.OnShow(func(e events.Event) { // todo: not working
-			ge.UpdateFiles()
+			fmt.Println("on show")
+			// ge.UpdateFiles()
 		})
 		win := ge.Sc.RenderWin()
 		if win != nil {

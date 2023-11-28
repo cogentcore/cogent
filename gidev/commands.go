@@ -287,7 +287,7 @@ func (ge *GideView) CommitNoChecks() {
 		AddText("Please enter your commit message here -- remember this is essential front-line documentation.  Author information comes from User settings in GoGi Preferences.")
 	tf := gi.NewTextField(d).SetText("").SetPlaceholder("Enter commit message here..")
 	tf.Style(func(s *styles.Style) {
-		s.Min.X.Ch(100)
+		s.Min.X.Ch(200)
 	})
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddCancel(pw)
@@ -300,5 +300,5 @@ func (ge *GideView) CommitNoChecks() {
 			ge.UpdateFiles()
 		})
 	})
-	d.NewDialog(ge).Run()
+	d.NewDialog(ge).SetModal(false).Run()
 }

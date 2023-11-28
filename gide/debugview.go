@@ -136,7 +136,6 @@ func (dv *DebugView) DbgCanStep() bool {
 }
 
 func (dv *DebugView) Destroy() {
-	fmt.Println("debug destroy")
 	dv.Detach()
 	dv.DeleteAllBreaks()
 	dv.DeleteCurPCInBuf()
@@ -180,6 +179,9 @@ func (dv *DebugView) Start() {
 		pars := &dv.Gide.ProjPrefs().Debug
 		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat gidebug.Status) {
+			updt := dv.UpdateStartAsync()
+			defer dv.UpdateEndAsyncLayout(updt)
+
 			if stat == gidebug.Ready && dv.State.Mode == gidebug.Attach {
 				dv.UpdateFmState()
 			}
@@ -722,6 +724,9 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 	if dv == nil || dv.This() == nil || dv.Is(ki.Deleted) {
 		return
 	}
+	updt := dv.UpdateStart()
+	defer dv.UpdateEndLayout(updt)
+
 	dv.State.Status = stat
 	tb := dv.Toolbar()
 	stl := tb.ChildByName("status", 1).(*gi.Label)
@@ -730,7 +735,7 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 		lbl = fmt.Sprintf("Break: %d", dv.State.CurBreak)
 	}
 	stl.SetTextUpdate(lbl)
-	// tb.UpdateActions()
+	tb.ApplyStyleTree() // state change
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -761,7 +766,7 @@ func (dv *DebugView) ConfigDebugView(sup filecat.Supported, exePath string) {
 	dv.ConfigToolbar()
 	dv.ConfigTabs()
 	dv.State.Breaks = nil // get rid of dummy
-	// dv.Start()
+	dv.Start()
 }
 
 // Toolbar returns the find toolbar
@@ -879,7 +884,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Cont").SetIcon(icons.PlayArrow).
 		SetTooltip("continue execution from current point").
 		SetShortcut("Control+Alt+R").Style(func(s *styles.Style) {
-		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		go dv.Continue()
 	})
@@ -889,7 +894,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Over").SetIcon(icons.StepOver).
 		SetTooltip("continues to the next source line, not entering function calls").
 		SetShortcut("F6").Style(func(s *styles.Style) {
-		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepOver()
 	})
@@ -897,7 +902,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Into").SetIcon(icons.StepInto).
 		SetTooltip("continues to the next source line, entering into function calls").
 		SetShortcut("F7").Style(func(s *styles.Style) {
-		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepInto()
 	})
@@ -905,21 +910,21 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Out").SetIcon(icons.StepOut).
 		SetTooltip("continues to the return point of the current function").
 		SetShortcut("F8").Style(func(s *styles.Style) {
-		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepOut()
 	})
 
 	gi.NewButton(tb).SetText("Single").SetIcon(icons.Step).
 		SetTooltip("steps a single CPU instruction").Style(func(s *styles.Style) {
-		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepOut()
 	})
 
 	gi.NewButton(tb).SetText("Stop").SetIcon(icons.Stop).
 		SetTooltip("stop execution").Style(func(s *styles.Style) {
-		dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+		s.State.SetFlag(dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.Stop()
 	})
@@ -929,7 +934,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Global Vars").SetIcon(icons.Search).
 		SetTooltip("list variables at global scope, subject to filter (name contains)").
 		Style(func(s *styles.Style) {
-			dv.SetState(!dv.DbgIsAvail(), states.Disabled)
+			s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
 		}).OnClick(func(e events.Event) {
 		giv.CallFunc(dv, dv.ListGlobalVars)
 	})
@@ -1204,15 +1209,15 @@ func (sv *VarsView) ShowVars() {
 //////////////////////////////////////////////////////////////////////////////////////
 //  VarView
 
-// VarView represents a struct, creating a property editor of the fields --
-// constructs Children widgets to show the field names and editor fields for
-// each field, within an overall frame with an optional title, and a button
-// box at the bottom where methods can be invoked
+// VarView shows a debug variable in an inspector-like framework,
+// with sub-variables in a tree.
 type VarView struct {
 	gi.Frame
 
 	// variable being edited
 	Var *gidebug.Variable `set:"-"`
+
+	SelVar *gidebug.Variable `set:"-"`
 
 	// frame info
 	FrameInfo string `set:"-"`
@@ -1228,6 +1233,7 @@ func (vv *VarView) SetVar(vr *gidebug.Variable, frinfo string) {
 	if vv.Var != vr {
 		updt = vv.UpdateStart()
 		vv.Var = vr
+		vv.SelVar = vr
 	}
 	vv.ConfigVarView()
 	vv.UpdateEnd(updt)
@@ -1267,10 +1273,17 @@ func (vv *VarView) StructView() *giv.StructView {
 	return vv.SplitView().Child(1).(*giv.StructView)
 }
 
-// // Toolbar returns the toolbar widget
-// func (vv *VarView) Toolbar() *gi.Toolbar {
-// 	return vv.ChildByName("toolbar", 0).(*gi.Toolbar)
-// }
+func (vv *VarView) VarTopAppBar(tb *gi.TopAppBar) {
+	gi.NewButton(tb).SetText("Follow pointer").SetIcon(icons.ArrowForward).
+		SetTooltip("FollowPtr loads additional debug state information for pointer variables, so you can continue clicking through the tree to see what it points to.").
+		OnClick(func(e events.Event) {
+			if vv.SelVar != nil {
+				vv.SelVar.FollowPtr()
+				tv := vv.TreeView()
+				tv.SyncRootNode(vv.Var)
+			}
+		})
+}
 
 // SetFrameInfo sets the frame info
 func (vv *VarView) SetFrameInfo(finfo string) {
@@ -1278,23 +1291,12 @@ func (vv *VarView) SetFrameInfo(finfo string) {
 	lab.Text = finfo
 }
 
-// // ConfigToolbar adds a VarView toolbar.
-// func (vv *VarView) ConfigToolbar() {
-// 	tb := vv.Toolbar()
-// 	if tb != nil && tb.HasChildren() {
-// 		return
-// 	}
-// 	tb.SetStretchMaxWidth()
-// 	giv.ToolbarView(vv, vv.Viewport, tb)
-// }
-
 // ConfigSplits configures the SplitView.
 func (vv *VarView) ConfigSplits() {
 	if vv.Var == nil {
 		return
 	}
 	split := vv.SplitView()
-	// split.Dim = mat32.Y
 	split.Dim = mat32.X
 
 	if len(split.Kids) == 0 {
@@ -1302,7 +1304,14 @@ func (vv *VarView) ConfigSplits() {
 		tv := giv.NewTreeView(tvfr, "tv")
 		sv := giv.NewStructView(split, "sv")
 		tv.OnSelect(func(e events.Event) {
-			sv.SetStruct(tv.SyncNode)
+			if len(tv.SelectedNodes) > 0 {
+				sn := tv.SelectedNodes[0].SyncNode
+				vr, ok := sn.(*gidebug.Variable)
+				if ok {
+					vv.SelVar = vr
+				}
+				sv.SetStruct(sn)
+			}
 		})
 		split.SetSplits(.3, .7)
 	}
@@ -1329,6 +1338,8 @@ func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarVi
 	vv := NewVarView(b, "view")
 	vv.DbgView = dbgVw
 	vv.SetVar(vr, frinfo)
+	b.AddDefaultTopAppBar()
+	b.AddTopAppBar(vv.VarTopAppBar)
 	// tb := vv.Toolbar()
 	// tb.UpdateActions()
 	b.NewWindow().Run()

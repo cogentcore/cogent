@@ -101,7 +101,6 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	tb := texteditor.NewBuf().SetText(txt).SetFilename(ld.Filename)
 	tb.Hi.Style = gi.Prefs.HiStyle
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
-	tb.Stat() // update markup
 
 	d := gi.NewBody().AddTitle(title).AddText(prmpt)
 	tv := texteditor.NewEditor(d).SetBuf(tb)
@@ -120,6 +119,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 			})
 	})
 	d.NewFullDialog(ge.ActiveTextEditor()).SetNewWindow(true).Run()
+	tb.StartDelayedReMarkup() // update markup
 	return
 }
 
