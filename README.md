@@ -46,8 +46,6 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* toml config files and cleanup prefs a bit
-
 * menu choice selector close not working: is a This problem -- rewrite stages finally.
 * Editable Chooser tabs twice -- outer & inner -- requires focus prev fix to work properly!
 
@@ -66,6 +64,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE
 
+* toml config files and cleanup prefs a bit
 * tableview / sliceview need extra layout loops within one layout pass -- doesn't work inside tabs
 * paste history not working at all
 * filetree not updating on open -- show already happening? -- works on new window but not existing.. duh.
