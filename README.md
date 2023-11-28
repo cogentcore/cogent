@@ -46,14 +46,14 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* tableview / sliceview need extra layout loops within one layout pass -- doesn't work inside tabs
+* menu choice selector close not working: is a This problem -- rewrite stages finally.
 * Editable Chooser tabs twice -- outer & inner -- requires focus prev fix to work properly!
+
 * dialog closing causes old window to show up -- need to update render images
-* gide filetree context menu -- just commands now
+* gide filetree context menu -- just commands needed now
 * textview context menu
 * symbols, spell
 
-* menu choice selector close not working: is a This problem -- rewrite stages finally.
 * fileview global priority key shortcuts and fileview menu
 * editor rendering overflow
 * lineno horiz scrolling issues -- this is in V1 too!
@@ -64,6 +64,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE
 
+* tableview / sliceview need extra layout loops within one layout pass -- doesn't work inside tabs
 * paste history not working at all
 * filetree not updating on open -- show already happening? -- works on new window but not existing.. duh.
 * var view needs same treeview select logic as inspector
