@@ -19,6 +19,7 @@ import (
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/paint"
+	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
 	"goki.dev/grows/images"
 	"goki.dev/grr"
@@ -187,15 +188,30 @@ func HandleElement(ctx Context) {
 		}()
 	case "input":
 		ityp := GetAttr(ctx.Node(), "type")
+		val := GetAttr(ctx.Node(), "value")
 		switch ityp {
 		case "number":
-			New[*gi.Spinner](ctx)
+			fval := float32(grr.Log1(strconv.ParseFloat(val, 32)))
+			New[*gi.Spinner](ctx).SetValue(fval)
+		case "checkbox":
+			New[*gi.Switch](ctx).SetType(gi.SwitchCheckbox).
+				SetState(HasAttr(ctx.Node(), "checked"), states.Checked)
+		case "radio":
+			New[*gi.Switch](ctx).SetType(gi.SwitchRadioButton).
+				SetState(HasAttr(ctx.Node(), "checked"), states.Checked)
+		case "range":
+			fval := float32(grr.Log1(strconv.ParseFloat(val, 32)))
+			New[*gi.Slider](ctx).SetValue(fval)
+		case "button", "submit":
+			New[*gi.Button](ctx).SetText(val)
 		case "color":
-			NewValue(ctx, colors.Black)
+			NewValue(ctx, colors.Black).SetValue(val)
 		case "datetime":
-			NewValue(ctx, time.Now())
+			NewValue(ctx, time.Now()).SetValue(val)
+		case "file":
+			NewValue(ctx, gi.FileName("")).SetValue(val)
 		default:
-			New[*gi.TextField](ctx)
+			New[*gi.TextField](ctx).SetText(val)
 		}
 	case "textarea":
 		buf := texteditor.NewBuf()
