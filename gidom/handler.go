@@ -164,7 +164,7 @@ func HandleElement(ctx Context) {
 					return
 				}
 				img.Filename = gi.FileName(src)
-				img.SetImage(im, 0, 0)
+				img.SetImage(im)
 				img.Update()
 			}
 		}()
