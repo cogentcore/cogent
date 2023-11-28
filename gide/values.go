@@ -527,7 +527,6 @@ func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 		if fun != nil {
 			fun()
 		}
-		// m.Close() // todo: need to support this
 	})
 	gi.NewMenuFromScene(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }

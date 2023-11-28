@@ -46,22 +46,25 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* paste history not working at all
-* popup has position method override to set position specifically
-* menu choice selector close not working: is a This problem -- rewrite stages finally.
 * tableview / sliceview need extra layout loops within one layout pass -- doesn't work inside tabs
 * Editable Chooser tabs twice -- outer & inner -- requires focus prev fix to work properly!
-* sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode
 * dialog closing causes old window to show up -- need to update render images
-* fileview global priority key shortcuts and fileview menu
-* filetree context menu -- just commands now
+* gide filetree context menu -- just commands now
 * textview context menu
+* symbols, spell
+
+* menu choice selector close not working: is a This problem -- rewrite stages finally.
+* fileview global priority key shortcuts and fileview menu
 * editor rendering overflow
 * lineno horiz scrolling issues -- this is in V1 too!
 * filetree --get rid of empty upper level or not?
+* treeview label color getting reset on doubleclick in filetree
+* popup add position method override to set position specifically
+* sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
 
 # DONE
 
+* paste history not working at all
 * filetree not updating on open -- show already happening? -- works on new window but not existing.. duh.
 * var view needs same treeview select logic as inspector
 * gomod not updated
