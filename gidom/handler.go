@@ -42,6 +42,16 @@ func New[T gi.Widget](ctx Context) T {
 	return w
 }
 
+// NewValue adds a new [giv.Value] with the given value to the
+// context parent. It automatically calls [Context.Config] on
+// the resulting value widget.
+func NewValue(ctx Context, val any) giv.Value {
+	par := ctx.Parent()
+	v := giv.NewValue(par, val)
+	ctx.Config(v.AsWidget())
+	return v
+}
+
 // HandleELement calls the handler in [ElementHandlers] associated with the current node
 // using the given context. If there is no handler associated with it, it uses default
 // hardcoded configuration code.
@@ -181,10 +191,9 @@ func HandleElement(ctx Context) {
 		case "number":
 			New[*gi.Spinner](ctx)
 		case "color":
-			// TODO(kai/gidom): handle giv values with New structure correctly
-			giv.NewValue(ctx.Parent(), colors.Black).AsWidget()
+			NewValue(ctx, colors.Black)
 		case "datetime":
-			giv.NewValue(ctx.Parent(), time.Now()).AsWidget()
+			NewValue(ctx, time.Now())
 		default:
 			New[*gi.TextField](ctx)
 		}
