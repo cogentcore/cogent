@@ -134,15 +134,25 @@ func HandleElement(ctx Context) {
 			}
 		}
 
+		// if we have a p as our first or second child, which is typical
+		// for markdown-generated HTML, we use it directly for data extraction
+		// to prevent double elements and unnecessary line breaks.
+		if ctx.Node().FirstChild != nil && ctx.Node().FirstChild.Data == "p" {
+			ctx.SetNode(ctx.Node().FirstChild)
+		} else if ctx.Node().FirstChild != nil && ctx.Node().FirstChild.NextSibling != nil && ctx.Node().FirstChild.NextSibling.Data == "p" {
+			ctx.SetNode(ctx.Node().FirstChild.NextSibling)
+		}
+
 		etxt := ExtractText(ctx)
-		ntv.SetName(etxt)
 		ntv.SetText(ftxt + etxt)
 		ntv.OnWidgetAdded(func(w gi.Widget) {
 			switch w := w.(type) {
 			case *gi.Label:
-				w.HandleLabelClick(func(tl *paint.TextLink) {
-					ctx.OpenURL(tl.URL)
-				})
+				if w.PathFrom(ntv) == "parts/label" {
+					w.HandleLabelClick(func(tl *paint.TextLink) {
+						ctx.OpenURL(tl.URL)
+					})
+				}
 			}
 		})
 	case "img":
