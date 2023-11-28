@@ -108,16 +108,16 @@ func (lt *Splits) FixLen() {
 	}
 }
 
-// OpenJSON opens named splits from a JSON-formatted file.
-func (lt *Splits) OpenJSON(filename gi.FileName) error { //gti:add
+// Open opens named splits from a json-formatted file.
+func (lt *Splits) Open(filename gi.FileName) error { //gti:add
 	*lt = make(Splits, 0, 10) // reset
 	err := grr.Log(jsons.Open(lt, string(filename)))
 	lt.FixLen()
 	return err
 }
 
-// SaveJSON saves named splits to a JSON-formatted file.
-func (lt *Splits) SaveJSON(filename gi.FileName) error { //gti:add
+// Save saves named splits to a json-formatted file.
+func (lt *Splits) Save(filename gi.FileName) error { //gti:add
 	return grr.Log(jsons.Save(lt, string(filename)))
 }
 
@@ -126,7 +126,7 @@ func (lt *Splits) OpenPrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
-	err := lt.OpenJSON(gi.FileName(pnm))
+	err := lt.Open(gi.FileName(pnm))
 	if err == nil {
 		AvailSplitNames = lt.Names()
 	}
@@ -140,7 +140,7 @@ func (lt *Splits) SavePrefs() error { //gti:add
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
 	AvailSplitNames = lt.Names()
-	return lt.SaveJSON(gi.FileName(pnm))
+	return lt.Save(gi.FileName(pnm))
 }
 
 // CopyFrom copies named splits from given other map

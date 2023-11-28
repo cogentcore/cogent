@@ -234,16 +234,16 @@ type VarParams struct {
 type Params struct {
 
 	// mode for running the debugger
-	Mode Modes `xml:"-" json:"-" view:"-"`
+	Mode Modes `xml:"-" toml:"-" json:"-" view:"-"`
 
 	// process id number to attach to, for Attach mode
-	PID uint64 `xml:"-" json:"-" view:"-"`
+	PID uint64 `xml:"-" toml:"-" json:"-" view:"-"`
 
 	// optional extra args to pass to the debugger.  Use double-dash -- and then add args to pass args to the executable (double-dash is by itself as a separate arg first)
 	Args []string
 
 	// status function for debugger updating status
-	StatFunc func(stat Status) `xml:"-" json:"-" view:"-"`
+	StatFunc func(stat Status) `xml:"-" toml:"-" json:"-" view:"-"`
 
 	// parameters for level of detail on overall list of variables
 	VarList VarParams

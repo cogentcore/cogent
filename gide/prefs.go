@@ -12,7 +12,7 @@ import (
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gidebug"
-	"goki.dev/grows/jsons"
+	"goki.dev/grows/tomls"
 	"goki.dev/grr"
 	"goki.dev/pi/v2/filecat"
 )
@@ -46,7 +46,7 @@ type Preferences struct {
 	SaveCmds bool
 
 	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
+	Changed bool `view:"-" changeflag:"+" json:"-" toml:"-" xml:"-"`
 }
 
 // Prefs are the overall Gide preferences
@@ -94,7 +94,7 @@ func (pf *Preferences) Defaults() {
 }
 
 // PrefsFileName is the name of the preferences file in GoGi prefs directory
-var PrefsFileName = "gide_prefs.json"
+var PrefsFileName = "gide_prefs.toml"
 
 // Apply preferences updates things according with settings
 func (pf *Preferences) Apply() { //gti:add
@@ -126,7 +126,7 @@ func (pf *Preferences) ApplyEnvVars() {
 func (pf *Preferences) Open() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
-	err := grr.Log(jsons.Open(pf, pnm))
+	err := grr.Log(tomls.Open(pf, pnm))
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (pf *Preferences) Open() error { //gti:add
 func (pf *Preferences) Save() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
-	err := grr.Log(jsons.SaveIndent(pf, pnm))
+	err := grr.Log(tomls.Save(pf, pnm))
 	if err != nil {
 		return err
 	}
@@ -283,7 +283,7 @@ type ProjPrefs struct {
 	Splits []float32 `view:"-"`
 
 	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
+	Changed bool `view:"-" changeflag:"+" json:"-" toml:"-" xml:"-"`
 }
 
 func (pf *ProjPrefs) Update() {
@@ -297,17 +297,17 @@ func (pf *ProjPrefs) Update() {
 	}
 }
 
-// OpenJSON open from JSON file
-func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error { //gti:add
-	err := grr.Log(jsons.Open(pf, string(filename)))
+// Open open from  file
+func (pf *ProjPrefs) Open(filename gi.FileName) error { //gti:add
+	err := grr.Log(tomls.Open(pf, string(filename)))
 	pf.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(pf.VersCtrl))) // official names are lowercase now
 	pf.Changed = false
 	return err
 }
 
-// SaveJSON save to JSON file
-func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log(jsons.SaveIndent(pf, string(filename)))
+// Save save to  file
+func (pf *ProjPrefs) Save(filename gi.FileName) error { //gti:add
+	return grr.Log(tomls.Save(pf, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable
@@ -344,7 +344,7 @@ func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
-	SavedPaths.SaveJSON(pnm)
+	SavedPaths.Save(pnm)
 	// add back after save
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 }
@@ -355,6 +355,6 @@ func OpenPaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
-	SavedPaths.OpenJSON(pnm)
+	SavedPaths.Open(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 }

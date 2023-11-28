@@ -71,7 +71,7 @@ func (kf KeySeq) Label() string {
 	return string(kf.Key1 + " " + kf.Key2)
 }
 
-// MarshalText is required for JSON encoding of struct keys
+// MarshalText is required for encoding of struct keys
 func (kf KeySeq) MarshalText() ([]byte, error) {
 	bs := make([][]byte, 2)
 	bs[0] = []byte(kf.Key1)
@@ -80,7 +80,7 @@ func (kf KeySeq) MarshalText() ([]byte, error) {
 	return b, nil
 }
 
-// UnmarshalText is required for JSON decoding of struct keys
+// UnmarshalText is required for decoding of struct keys
 func (kf *KeySeq) UnmarshalText(b []byte) error {
 	bs := bytes.Split(b, []byte(";"))
 	kf.Key1 = key.Chord(string(bs[0]))
@@ -326,14 +326,14 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 // directory for saving / loading the default AvailKeyMaps key maps list
 var PrefsKeyMapsFileName = "key_maps_prefs.json"
 
-// OpenJSON opens keymaps from a JSON-formatted file.
-func (km *KeyMaps) OpenJSON(filename gi.FileName) error { //gti:add
+// Open opens keymaps from a json-formatted file.
+func (km *KeyMaps) Open(filename gi.FileName) error { //gti:add
 	*km = make(KeyMaps, 0, 10) // reset
 	return grr.Log(jsons.Open(km, string(filename)))
 }
 
-// SaveJSON saves keymaps to a JSON-formatted file.
-func (km *KeyMaps) SaveJSON(filename gi.FileName) error { //gti:add
+// Save saves keymaps to a json-formatted file.
+func (km *KeyMaps) Save(filename gi.FileName) error { //gti:add
 	return grr.Log(jsons.Save(km, string(filename)))
 }
 
@@ -342,7 +342,7 @@ func (km *KeyMaps) OpenPrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
-	return km.OpenJSON(gi.FileName(pnm))
+	return km.Open(gi.FileName(pnm))
 }
 
 // SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFileName
@@ -350,7 +350,7 @@ func (km *KeyMaps) SavePrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false
-	return km.SaveJSON(gi.FileName(pnm))
+	return km.Save(gi.FileName(pnm))
 }
 
 // CopyFrom copies keymaps from given other map

@@ -46,6 +46,8 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* toml config files and cleanup prefs a bit
+
 * menu choice selector close not working: is a This problem -- rewrite stages finally.
 * Editable Chooser tabs twice -- outer & inner -- requires focus prev fix to work properly!
 

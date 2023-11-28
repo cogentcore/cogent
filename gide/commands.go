@@ -702,16 +702,16 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 
 // PrefsCmdsFileName is the name of the preferences file in App prefs
 // directory for saving / loading your CustomCmds commands list
-var PrefsCmdsFileName = "command_prefs.json"
+var PrefsCmdsFileName = "command_prefs.toml"
 
-// OpenJSON opens commands from a JSON-formatted file.
-func (cm *Commands) OpenJSON(filename gi.FileName) error { //gti:add
+// Open opens commands from a toml-formatted file.
+func (cm *Commands) Open(filename gi.FileName) error { //gti:add
 	*cm = make(Commands, 0, 10) // reset
 	return grr.Log(jsons.Open(cm, string(filename)))
 }
 
-// SaveJSON saves commands to a JSON-formatted file.
-func (cm *Commands) SaveJSON(filename gi.FileName) error { //gti:add
+// Save saves commands to a toml-formatted file.
+func (cm *Commands) Save(filename gi.FileName) error { //gti:add
 	return grr.Log(jsons.Save(cm, string(filename)))
 }
 
@@ -721,7 +721,7 @@ func (cm *Commands) OpenPrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
-	err := cm.OpenJSON(gi.FileName(pnm))
+	err := cm.Open(gi.FileName(pnm))
 	if err == nil {
 		MergeAvailCmds()
 	} else {
@@ -736,7 +736,7 @@ func (cm *Commands) SavePrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
-	err := cm.SaveJSON(gi.FileName(pnm))
+	err := cm.Save(gi.FileName(pnm))
 	if err == nil {
 		MergeAvailCmds()
 	}

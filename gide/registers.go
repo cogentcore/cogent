@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/grows/jsons"
+	"goki.dev/grows/tomls"
 	"goki.dev/grr"
 )
 
@@ -46,17 +46,17 @@ func (lt *Registers) Names() []string {
 
 // PrefsRegistersFileName is the name of the preferences file in App prefs
 // directory for saving / loading the default AvailRegisters
-var PrefsRegistersFileName = "registers_prefs.json"
+var PrefsRegistersFileName = "registers_prefs.toml"
 
-// OpenJSON opens named registers from a JSON-formatted file.
-func (lt *Registers) OpenJSON(filename gi.FileName) error { //gti:add
+// Open opens named registers from a toml-formatted file.
+func (lt *Registers) Open(filename gi.FileName) error { //gti:add
 	*lt = make(Registers) // reset
-	return grr.Log(jsons.Open(lt, string(filename)))
+	return grr.Log(tomls.Open(lt, string(filename)))
 }
 
-// SaveJSON saves named registers to a JSON-formatted file.
-func (lt *Registers) SaveJSON(filename gi.FileName) error { //gti:add
-	return grr.Log(jsons.Save(lt, string(filename)))
+// Save saves named registers to a toml-formatted file.
+func (lt *Registers) Save(filename gi.FileName) error { //gti:add
+	return grr.Log(tomls.Save(lt, string(filename)))
 }
 
 // OpenPrefs opens Registers from App standard prefs directory, using PrefRegistersFileName
@@ -64,7 +64,7 @@ func (lt *Registers) OpenPrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
-	err := lt.OpenJSON(gi.FileName(pnm))
+	err := lt.Open(gi.FileName(pnm))
 	if err == nil {
 		AvailRegisterNames = lt.Names()
 	}
@@ -77,7 +77,7 @@ func (lt *Registers) SavePrefs() error { //gti:add
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false
 	AvailRegisterNames = lt.Names()
-	return lt.SaveJSON(gi.FileName(pnm))
+	return lt.Save(gi.FileName(pnm))
 }
 
 // AvailRegistersChanged is used to update toolbars via following menu, toolbar

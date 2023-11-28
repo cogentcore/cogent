@@ -200,7 +200,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"GideView", &gti.Field{Name: "GideView", Type: "*goki.dev/gide/v2/gidev.GideView", LocalType: "*GideView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
-		{"OpenProj", &gti.Method{Name: "OpenProj", Doc: "OpenProj opens .gide project file and its settings from given filename, in a standard\nJSON-formatted file", Directives: gti.Directives{
+		{"OpenProj", &gti.Method{Name: "OpenProj", Doc: "OpenProj opens .gide project file and its settings from given filename, in a standard\ntoml-formatted file", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
@@ -223,10 +223,10 @@ var GideViewType = gti.AddType(&gti.Type{
 			{"filename", &gti.Field{Name: "filename", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"addToVcs", &gti.Field{Name: "addToVcs", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"SaveProj", &gti.Method{Name: "SaveProj", Doc: "SaveProj saves project file containing custom project settings, in a\nstandard JSON-formatted file", Directives: gti.Directives{
+		{"SaveProj", &gti.Method{Name: "SaveProj", Doc: "SaveProj saves project file containing custom project settings, in a\nstandard toml-formatted file", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"SaveProjAs", &gti.Method{Name: "SaveProjAs", Doc: "SaveProjAs saves project custom settings to given filename, in a standard\nJSON-formatted file\nsaveAllFiles indicates if user should be prompted for saving all files\nreturns true if the user was prompted, false otherwise", Directives: gti.Directives{
+		{"SaveProjAs", &gti.Method{Name: "SaveProjAs", Doc: "SaveProjAs saves project custom settings to given filename, in a standard\ntoml-formatted file\nsaveAllFiles indicates if user should be prompted for saving all files\nreturns true if the user was prompted, false otherwise", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},

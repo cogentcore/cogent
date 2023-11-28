@@ -454,10 +454,11 @@ var VarViewType = gti.AddType(&gti.Type{
 	Name:       "goki.dev/gide/v2/gide.VarView",
 	ShortName:  "gide.VarView",
 	IDName:     "var-view",
-	Doc:        "VarView represents a struct, creating a property editor of the fields --\nconstructs Children widgets to show the field names and editor fields for\neach field, within an overall frame with an optional title, and a button\nbox at the bottom where methods can be invoked",
+	Doc:        "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.",
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Var", &gti.Field{Name: "Var", Type: "*goki.dev/gide/v2/gidebug.Variable", LocalType: "*gidebug.Variable", Doc: "variable being edited", Directives: gti.Directives{}, Tag: "set:\"-\""}},
+		{"SelVar", &gti.Field{Name: "SelVar", Type: "*goki.dev/gide/v2/gidebug.Variable", LocalType: "*gidebug.Variable", Doc: "", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"FrameInfo", &gti.Field{Name: "FrameInfo", Type: "string", LocalType: "string", Doc: "frame info", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"DbgView", &gti.Field{Name: "DbgView", Type: "*goki.dev/gide/v2/gide.DebugView", LocalType: "*DebugView", Doc: "parent DebugView", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
 	}),

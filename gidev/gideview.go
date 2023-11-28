@@ -251,14 +251,19 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 }
 
 // OpenProj opens .gide project file and its settings from given filename, in a standard
-// JSON-formatted file
+// toml-formatted file
 func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 	if !ge.IsEmpty() {
 		return OpenGideProj(string(filename))
 	}
 	ge.Defaults()
-	if err := ge.Prefs.OpenJSON(filename); err != nil {
+	if err := ge.Prefs.Open(filename); err != nil {
 		slog.Error("Project Prefs had a loading error", "error", err)
+		if ge.Prefs.ProjRoot == "" {
+			root, _, _, _ := ProjPathParse(string(filename))
+			ge.Prefs.ProjRoot = gi.FileName(root)
+			ge.GuessMainLang()
+		}
 	}
 	ge.Prefs.ProjFilename = filename // should already be set but..
 	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
@@ -326,7 +331,7 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) { //gti:add
 }
 
 // SaveProj saves project file containing custom project settings, in a
-// standard JSON-formatted file
+// standard toml-formatted file
 func (ge *GideView) SaveProj() { //gti:add
 	if ge.Prefs.ProjFilename == "" {
 		return
@@ -336,7 +341,7 @@ func (ge *GideView) SaveProj() { //gti:add
 }
 
 // SaveProjIfExists saves project file containing custom project settings, in a
-// standard JSON-formatted file, only if it already exists -- returns true if saved
+// standard toml-formatted file, only if it already exists -- returns true if saved
 // saveAllFiles indicates if user should be prompted for saving all files
 func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 	spell.SaveIfLearn()
@@ -354,7 +359,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 }
 
 // SaveProjAs saves project custom settings to given filename, in a standard
-// JSON-formatted file
+// toml-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
 func (ge *GideView) SaveProjAs(filename gi.FileName) bool { //gti:add
@@ -365,7 +370,7 @@ func (ge *GideView) SaveProjAs(filename gi.FileName) bool { //gti:add
 	ge.Prefs.ProjFilename = filename
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
-	ge.Prefs.SaveJSON(filename)
+	ge.Prefs.Save(filename)
 	ge.Changed = false
 	return false
 }
@@ -519,7 +524,7 @@ func NewGideProjPath(path string) *GideView {
 // returning the window and the path
 func OpenGideProj(projfile string) *GideView {
 	pp := &gide.ProjPrefs{}
-	if err := pp.OpenJSON(gi.FileName(projfile)); err != nil {
+	if err := pp.Open(gi.FileName(projfile)); err != nil {
 		slog.Debug("Project Prefs had a loading error", "error", err)
 	}
 	path := string(pp.ProjRoot)

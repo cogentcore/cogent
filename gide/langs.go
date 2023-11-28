@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/grows/jsons"
+	"goki.dev/grows/tomls"
 	"goki.dev/pi/v2/filecat"
 )
 
@@ -50,17 +50,17 @@ func (lt Langs) Validate() bool {
 
 // PrefsLangsFileName is the name of the preferences file in App prefs
 // directory for saving / loading the default AvailLangs languages list
-var PrefsLangsFileName = "lang_prefs.json"
+var PrefsLangsFileName = "lang_prefs.toml"
 
-// OpenJSON opens languages from a JSON-formatted file.
-func (lt *Langs) OpenJSON(filename gi.FileName) error {
+// Open opens languages from a toml-formatted file.
+func (lt *Langs) Open(filename gi.FileName) error {
 	*lt = make(Langs) // reset
-	return jsons.Open(lt, string(filename))
+	return tomls.Open(lt, string(filename))
 }
 
-// SaveJSON saves languages to a JSON-formatted file.
-func (lt *Langs) SaveJSON(filename gi.FileName) error { //gti:add
-	return jsons.Save(lt, string(filename))
+// Save saves languages to a toml-formatted file.
+func (lt *Langs) Save(filename gi.FileName) error { //gti:add
+	return tomls.Save(lt, string(filename))
 }
 
 // OpenPrefs opens Langs from App standard prefs directory, using PrefsLangsFileName
@@ -68,7 +68,7 @@ func (lt *Langs) OpenPrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
-	return lt.OpenJSON(gi.FileName(pnm))
+	return lt.Open(gi.FileName(pnm))
 }
 
 // SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFileName
@@ -76,7 +76,7 @@ func (lt *Langs) SavePrefs() error { //gti:add
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
-	return lt.SaveJSON(gi.FileName(pnm))
+	return lt.Save(gi.FileName(pnm))
 }
 
 // CopyFrom copies languages from given other map
@@ -104,95 +104,6 @@ func (lt *Langs) ViewStd() { //gti:add
 // following menu, toolbar props update methods -- not accurate if editing any
 // other map but works for now..
 var AvailLangsChanged = false
-
-/*
-// LangsProps define the Toolbar and MenuBar for TableView of Langs, e.g., giv.LangsView
-var LangsProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"OpenPrefs", ki.Props{}},
-			{"SavePrefs", ki.Props{
-				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(lti any, act *gi.Button) {
-					act.SetActiveState(AvailLangsChanged && lti.(*Langs) == &AvailLangs)
-				}),
-			}},
-			{"sep-file", ki.BlankProp{}},
-			{"OpenJSON", ki.Props{
-				"label":    "Open from file",
-				"desc":     "You can save and open language options to / from files to share, experiment, transfer, etc",
-				"shortcut": "Command+O",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-			{"SaveJSON", ki.Props{
-				"label": "Save to file",
-				"desc":  "You can save and open language options to / from files to share, experiment, transfer, etc",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".json",
-					}},
-				},
-			}},
-			{"RevertToStd", ki.Props{
-				"desc":    "This reverts the language options to using the StdLangs that are compiled into the program and have all the lastest standards. <b>Your current edits will be lost if you proceed!</b>  Continue?",
-				"confirm": true,
-			}},
-		}},
-		{"Edit", "Copy Cut Paste Dupe"},
-		{"Window", "Windows"},
-	},
-	"Toolbar": ki.PropSlice{
-		{"SavePrefs", ki.Props{
-			"desc": "saves Langs to App standard prefs directory, in file lang_prefs.json, which will be loaded automatically at startup if prefs SaveLangs is checked (should be if you're using custom language options)",
-			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(lti any, act *gi.Button) {
-				act.SetActiveState(AvailLangsChanged && lti.(*Langs) == &AvailLangs)
-			}),
-		}},
-		{"sep-file", ki.BlankProp{}},
-		{"OpenJSON", ki.Props{
-			"label": "Open from file",
-			"icon":  "file-open",
-			"desc":  "You can save and open language options to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"SaveJSON", ki.Props{
-			"label": "Save to file",
-			"icon":  "file-save",
-			"desc":  "You can save and open language options to / from files to share, experiment, transfer, etc",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
-					"ext": ".json",
-				}},
-			},
-		}},
-		{"sep-std", ki.BlankProp{}},
-		{"ViewStd", ki.Props{
-			"desc": "Shows the standard language options that are compiled into the program and have all the latest changes.  Useful for comparing against custom langs.",
-			"updtfunc": giv.ActionUpdateFunc(func(lti any, act *gi.Button) {
-				act.SetActiveState(lti.(*Langs) != &StdLangs)
-			}),
-		}},
-		{"RevertToStd", ki.Props{
-			"icon":    "update",
-			"desc":    "This reverts the language options to using the StdLangs that are compiled into the program and have all the lastest standards.  <b>Your current edits will be lost if you proceed!</b>  Continue?",
-			"confirm": true,
-			"updtfunc": giv.ActionUpdateFunc(func(lti any, act *gi.Button) {
-				act.SetActiveState(lti.(*Langs) != &StdLangs)
-			}),
-		}},
-	},
-}
-*/
 
 // StdLangs is the original compiled-in set of standard language options.
 var StdLangs = Langs{

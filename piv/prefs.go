@@ -30,8 +30,8 @@ type ProjPrefs struct {
 	TraceOpts parse.TraceOpts
 }
 
-// OpenJSON open from JSON file
-func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error {
+// Open open from  file
+func (pf *ProjPrefs) Open(filename gi.FileName) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
 		return err
@@ -43,8 +43,8 @@ func (pf *ProjPrefs) OpenJSON(filename gi.FileName) error {
 	return err
 }
 
-// SaveJSON save to JSON file
-func (pf *ProjPrefs) SaveJSON(filename gi.FileName) error {
+// Save save to  file
+func (pf *ProjPrefs) Save(filename gi.FileName) error {
 	pf.ProjFile = filename
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
@@ -70,18 +70,18 @@ func InitPrefs() {
 var SavedPaths gi.FilePaths
 
 // SavedPathsFileName is the name of the saved file paths file in GoPi prefs directory
-var SavedPathsFileName = "gopi_saved_paths.json"
+var SavedPathsFileName = "gopi_saved_paths.toml"
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
-	SavedPaths.SaveJSON(pnm)
+	SavedPaths.Save(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
 	pdir := gi.AppPrefsDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
-	SavedPaths.OpenJSON(pnm)
+	SavedPaths.Open(pnm)
 }

@@ -35,10 +35,10 @@ func KeyMapsView(km *KeyMaps) {
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps)
 		})
-		oj := giv.NewFuncButton(tb, km.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
-		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, km.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-		sj.Args[0].SetTag("ext", ".json")
+		oj := giv.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".toml")
+		sj := giv.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
 		vs := giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
 		vs.SetUpdateFunc(func() {
@@ -201,10 +201,10 @@ func LangsView(pt *Langs) {
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailLangsChanged && pt == &AvailLangs)
 		})
-		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
-		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-		sj.Args[0].SetTag("ext", ".json")
+		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".toml")
+		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
 		vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
 		vs.SetUpdateFunc(func() {
@@ -242,10 +242,10 @@ func CmdsView(pt *Commands) {
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(CustomCmdsChanged && pt == &CustomCmds)
 		})
-		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
-		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-		sj.Args[0].SetTag("ext", ".json")
+		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".toml")
+		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
 		vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
 		vs.SetUpdateFunc(func() {
@@ -345,10 +345,10 @@ func SplitsView(pt *Splits) {
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailSplitsChanged && pt == &StdSplits)
 		})
-		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
-		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-		sj.Args[0].SetTag("ext", ".json")
+		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".toml")
+		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
@@ -453,10 +453,10 @@ func RegistersView(pt *Registers) {
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters)
 		})
-		oj := giv.NewFuncButton(tb, pt.OpenJSON).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
-		oj.Args[0].SetTag("ext", ".json")
-		sj := giv.NewFuncButton(tb, pt.SaveJSON).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
-		sj.Args[0].SetTag("ext", ".json")
+		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj.Args[0].SetTag("ext", ".toml")
+		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
