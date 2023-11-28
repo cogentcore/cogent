@@ -19,6 +19,10 @@ datalist, param, noframes, template {
     display: none
 }
 
+body, main, div, section, nav, footer, header {
+    flex-direction: column;
+}
+
 area {
     cursor: pointer;
 }

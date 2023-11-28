@@ -85,9 +85,6 @@ func HandleElement(ctx Context) {
 		ctx.AddStyle(ExtractText(ctx))
 	case "body", "main", "div", "section", "nav", "footer", "header":
 		f := New[*gi.Frame](ctx)
-		f.Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
 		ctx.SetNewParent(f)
 	case "button":
 		New[*gi.Button](ctx).SetText(ExtractText(ctx))
