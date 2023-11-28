@@ -105,7 +105,6 @@ func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 	ge.ActiveVCS = nil
 	fn := ge.FileNodeForFile(string(ge.ActiveFilename), false)
 	if fn != nil {
-		return
 		repo, _ := fn.Repo()
 		if repo != nil {
 			ge.ActiveVCS = repo
