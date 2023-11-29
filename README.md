@@ -47,7 +47,7 @@ In addition to Issues shown on github, some important features to be added longe
 # TODO
 
 * add icons for symbols and get the merge thing to work
-* symbolsview click not working
+* symbolsview: textview still not jumping to line correctly
 
 * Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
 

@@ -147,11 +147,13 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	if sv.Syms == nil {
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")
-
 		tv = NewSymTreeView(sfr)
 		tv.SyncRootNode(sv.Syms)
 		tv.OnSelect(func(e events.Event) {
-			sn := tv.SymNode()
+			if len(tv.SelectedNodes) == 0 {
+				return
+			}
+			sn := tv.SelectedNodes[0].SyncNode.(*SymNode)
 			if sn != nil {
 				sv.SelectSymbol(sn.Symbol)
 			}
@@ -178,7 +180,7 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv, ok = ge.OpenFileAtRegion(gi.FileName(ssym.Filename), tr)
-		if ok == false {
+		if !ok {
 			log.Printf("GideView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
 		return
@@ -339,6 +341,10 @@ type SymTreeView struct {
 // SymNode returns the SrcNode as a *gide* SymNode
 func (st *SymTreeView) SymNode() *SymNode {
 	return st.SyncNode.(*SymNode)
+}
+
+func (st *SymTreeView) OnInit() {
+	st.TreeView.OnInit()
 }
 
 func (st *SymTreeView) UpdateBranchIcons() {
