@@ -57,21 +57,22 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
 	sv.Gide = ge
 	sv.SymParams = sp
+	if sv.HasChildren() {
+		return
+	}
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
-	config := ki.Config{}
-	config.Add(gi.ToolbarType, "sym-toolbar")
-	config.Add(gi.FrameType, "sym-frame")
-	mods, updt := sv.ConfigChildren(config)
-	if !mods {
-		updt = sv.UpdateStart()
-	}
+	gi.NewToolbar(sv, "sym-toolbar")
+	svfr := gi.NewFrame(sv, "sym-frame")
+	svfr.Style(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
+	})
 	sv.ConfigToolbar()
-	sb := sv.ScopeCombo()
+	sb := sv.ScopeChooser()
 	sb.SetCurIndex(int(sv.Params().Scope))
 	sv.ConfigTree(sp.Scope)
-	sv.UpdateEndLayout(updt)
 }
 
 // Toolbar returns the symbols toolbar
@@ -84,9 +85,9 @@ func (sv *SymbolsView) Frame() *gi.Frame {
 	return sv.ChildByName("sym-frame", 0).(*gi.Frame)
 }
 
-// ScopeCombo returns the scope ComboBox
-func (sv *SymbolsView) ScopeCombo() *gi.Chooser {
-	return sv.Toolbar().ChildByName("scope-combo", 5).(*gi.Chooser)
+// ScopeChooser returns the scope Chooser
+func (sv *SymbolsView) ScopeChooser() *gi.Chooser {
+	return sv.Toolbar().ChildByName("scope-chooser", 5).(*gi.Chooser)
 }
 
 // SearchText returns the unknown word textfield from toolbar
@@ -96,33 +97,38 @@ func (sv *SymbolsView) SearchText() *gi.TextField {
 
 // ConfigToolbar adds toolbar.
 func (sv *SymbolsView) ConfigToolbar() {
-	svbar := sv.Toolbar()
-	if svbar.HasChildren() {
+	tb := sv.Toolbar()
+	if tb.HasChildren() {
 		return
 	}
 
-	gi.NewButton(svbar).SetText("Refresh").SetIcon(icons.Update).SetTooltip("refresh symbols for current file and scope").
+	gi.NewButton(tb).SetText("Refresh").SetIcon(icons.Update).
+		SetTooltip("refresh symbols for current file and scope").
 		OnClick(func(e events.Event) {
 			sv.RefreshAction()
 		})
 
-	sl := gi.NewLabel(svbar).SetText("Scope:").SetTooltip("scope symbols to:")
-	scb := gi.NewChooser(svbar).SetTooltip(sl.Tooltip)
-	scb.SetEnum(sv.Params().Scope, false, 0)
-	scb.SetCurVal(sv.Params().Scope)
-	scb.OnChange(func(e events.Event) {
-		sv.Params().Scope = scb.CurVal.(SymScopes)
+	sl := gi.NewLabel(tb).SetText("Scope:").SetTooltip("scope symbols to:")
+
+	ch := gi.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope, false, 0)
+	ch.SetTooltip(sl.Tooltip)
+	ch.OnChange(func(e events.Event) {
+		sv.Params().Scope = ch.CurVal.(SymScopes)
 		sv.ConfigTree(sv.Params().Scope)
 		sv.SearchText().SetFocusEvent()
 	})
+	ch.SetCurVal(sv.Params().Scope)
 
-	gi.NewLabel(svbar).SetText("Search:").SetTooltip("narrow symbols list to symbols containing text you enter here")
-	stxt := gi.NewTextField(svbar, "search-str").SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
-	stxt.OnChange(func(e events.Event) {
-		sv.Match = stxt.Text()
+	gi.NewLabel(tb).SetText("Search:").
+		SetTooltip("narrow symbols list to symbols containing text you enter here")
+
+	tf := gi.NewTextField(tb, "search-str")
+	tf.SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
+	tf.OnChange(func(e events.Event) {
+		sv.Match = tf.Text()
 		sv.ConfigTree(sv.Params().Scope)
-		stxt.CursorEnd()
-		stxt.SetFocusEvent()
+		tf.CursorEnd()
+		tf.SetFocusEvent()
 	})
 }
 
@@ -132,14 +138,13 @@ func (sv *SymbolsView) RefreshAction() {
 	sv.SearchText().SetFocusEvent()
 }
 
-// ConfigTree adds a treeview to the symbolsview
+// ConfigTree adds a treeview to the symbolsview.
+// This is called for refresh action.
 func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	sfr := sv.Frame()
 	updt := sfr.UpdateStart()
 	var tv *SymTreeView
 	if sv.Syms == nil {
-		// sfr.SetProp("height", units.NewEm(5)) // enables scrolling
-
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")
 
@@ -169,7 +174,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 	ge := sv.Gide
 	tv := ge.ActiveTextEditor()
-	if tv == nil || string(tv.Buf.Filename) != ssym.Filename {
+	if tv == nil || tv.Buf == nil || string(tv.Buf.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv, ok = ge.OpenFileAtRegion(gi.FileName(ssym.Filename), tr)
@@ -300,15 +305,6 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 	}
 }
 
-// SymbolsViewProps are style properties for SymbolsView
-// var SymbolsViewProps = ki.Props{
-// 	"EnumType:Flag":    gi.KiT_NodeFlags,
-// 	"background-color": &gi.Prefs.Colors.Background,
-// 	"color":            &gi.Prefs.Colors.Font,
-// 	"max-width":        -1,
-// 	"max-height":       -1,
-// }
-
 /////////////////////////////////////////////////////////////////////////////
 // SymNode
 
@@ -345,80 +341,33 @@ func (st *SymTreeView) SymNode() *SymNode {
 	return st.SyncNode.(*SymNode)
 }
 
-/*
-var SymTreeViewProps = ki.Props{
-	"EnumType:Flag":    giv.KiT_TreeViewFlags,
-	"indent":           units.NewValue(2, units.Ch),
-	"spacing":          units.NewValue(.5, units.Ch),
-	"border-width":     units.NewValue(0, units.Px),
-	"border-radius":    units.NewValue(0, units.Px),
-	"padding":          units.NewValue(0, units.Px),
-	"margin":           units.NewValue(1, units.Px),
-	"text-align":       gist.AlignLeft,
-	"vertical-align":   gist.AlignTop,
-	"color":            &gi.Prefs.Colors.Font,
-	"background-color": "inherit",
-	".exec": ki.Props{
-		"font-weight": gist.WeightBold,
-	},
-	".open": ki.Props{
-		"font-style": gist.FontItalic,
-	},
-	"#icon": ki.Props{
-		"width":   units.NewValue(1, units.Em),
-		"height":  units.NewValue(1, units.Em),
-		"margin":  units.NewValue(0, units.Px),
-		"padding": units.NewValue(0, units.Px),
-		"fill":    &gi.Prefs.Colors.Icon,
-		"stroke":  &gi.Prefs.Colors.Font,
-	},
-	"#branch": ki.Props{
-		"icon":             "wedge-down",
-		"icon-off":         "wedge-right",
-		"margin":           units.NewValue(0, units.Px),
-		"padding":          units.NewValue(0, units.Px),
-		"background-color": color.Transparent,
-		"max-width":        units.NewValue(.8, units.Em),
-		"max-height":       units.NewValue(.8, units.Em),
-	},
-	"#space": ki.Props{
-		"width": units.NewValue(.5, units.Em),
-	},
-	"#label": ki.Props{
-		"margin":    units.NewValue(0, units.Px),
-		"padding":   units.NewValue(0, units.Px),
-		"min-width": units.NewValue(16, units.Ch),
-	},
-	"#menu": ki.Props{
-		"indicator": "none",
-	},
-	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Props{},
-	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Select,
-	},
-	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Control,
-	},
-	"CtxtMenuActive": ki.PropSlice{},
+func (st *SymTreeView) OnInit() {
+	st.HandleTreeViewEvents()
+	st.TreeViewStyles()
+	st.SymNodeStyles()
 }
 
-func (st *SymTreeView) Style2D() {
-	sn := st.SymNode()
-	st.Class = ""
-	if sn != nil {
-		if sn.Symbol.Kind == token.NameType {
-			st.Icon = gi.IconName("type")
-		} else if sn.Symbol.Kind == token.NameVar || sn.Symbol.Kind == token.NameVarGlobal {
-			st.Icon = gi.IconName("var")
-		} else if sn.Symbol.Kind == token.NameMethod {
-			st.Icon = gi.IconName("method")
-		} else if sn.Symbol.Kind == token.NameFunction {
-			st.Icon = gi.IconName("function")
-		} else if sn.Symbol.Kind == token.NameField {
-			st.Icon = gi.IconName("field")
+func (st *SymTreeView) SymNodeStyles() {
+	st.OnWidgetAdded(func(w gi.Widget) {
+		// fmt.Println(w.PathFrom(tv))
+		switch w.PathFrom(st) {
+		case "parts/branch":
+			sw := w.(*gi.Switch)
+			sw.IconOn = icons.KeyboardArrowDown   // icons.FolderOpen
+			sw.IconOff = icons.KeyboardArrowRight // icons.Folder
+			sym := st.SymNode()
+			switch sym.Symbol.Kind {
+			case token.NameType:
+				sw.IconDisab = icons.Title
+			case token.NameVar, token.NameVarGlobal:
+				sw.IconDisab = icons.Variables
+			case token.NameMethod:
+				sw.IconDisab = icons.Target
+			case token.NameFunction:
+				sw.IconDisab = icons.Function
+			case token.NameField:
+				sw.IconDisab = icons.Label
+			}
 		}
-	}
-	st.StyleTreeView()
-	st.LayState.SetFromStyle(&st.Sty.Layout) // also does reset
+	})
 }
-*/

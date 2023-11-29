@@ -72,20 +72,18 @@ func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextEditor) {
 	sv.CurLn = 0
 	sv.CurIdx = 0
 	sv.Errs = nil
+	if sv.HasChildren() {
+		return
+	}
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
-	config := ki.Config{}
-	config.Add(gi.ToolbarType, "spellbar")
-	config.Add(gi.ToolbarType, "unknownbar")
-	config.Add(gi.ToolbarType, "changebar")
-	config.Add(giv.SliceViewType, "suggest")
-	mods, updt := sv.ConfigChildren(config)
-	if !mods {
-		updt = sv.UpdateStart()
-	}
+	gi.NewToolbar(sv, "spellbar")
+	gi.NewToolbar(sv, "unknownbar")
+	gi.NewToolbar(sv, "changebar")
+	giv.NewSliceView(sv, "suggest")
 	sv.ConfigToolbar()
-	sv.UpdateEndLayout(updt)
 	gi.InitSpell()
 	sv.CheckNext()
 }
@@ -148,27 +146,18 @@ func (sv *SpellView) SuggestView() *giv.SliceView {
 // ConfigToolbar adds toolbar.
 func (sv *SpellView) ConfigToolbar() {
 	spbar := sv.SpellBar()
-	if spbar.HasChildren() {
-		return
-	}
-
 	unknbar := sv.UnknownBar()
-	if unknbar.HasChildren() {
-		return
-	}
-
 	chgbar := sv.ChangeBar()
-	if chgbar.HasChildren() {
-		return
-	}
 
 	// spell toolbar
-	gi.NewButton(spbar).SetText("Check Current File").SetTooltip("spell check the current file").
+	gi.NewButton(spbar).SetText("Check Current File").
+		SetTooltip("spell check the current file").
 		OnClick(func(e events.Event) {
 			sv.SpellAction()
 		})
 
-	gi.NewButton(spbar).SetText("Train").SetTooltip("add additional text to the training corpus").
+	gi.NewButton(spbar).SetText("Train").
+		SetTooltip("add additional text to the training corpus").
 		OnClick(func(e events.Event) {
 			sv.TrainAction()
 		})
@@ -183,30 +172,33 @@ func (sv *SpellView) ConfigToolbar() {
 		tf.SetReadOnly(true)
 	}
 
-	gi.NewButton(unknbar).SetText("Skip").
+	gi.NewButton(unknbar, "skip").SetText("Skip").
 		OnClick(func(e events.Event) {
 			sv.SkipAction()
 		})
 
-	gi.NewButton(unknbar).SetText("Ignore").
+	gi.NewButton(unknbar, "ignore").SetText("Ignore").
 		OnClick(func(e events.Event) {
 			sv.IgnoreAction()
 		})
 
-	gi.NewButton(unknbar).SetText("Learn").
+	gi.NewButton(unknbar, "learn").SetText("Learn").
 		OnClick(func(e events.Event) {
 			sv.LearnAction()
 		})
 
 	// change toolbar
-	gi.NewTextField(chgbar, "change-str").SetTooltip("This string will replace the unknown word in text")
+	gi.NewTextField(chgbar, "change-str").
+		SetTooltip("This string will replace the unknown word in text")
 
-	gi.NewButton(chgbar).SetText("Change").SetTooltip("change the unknown word to the selected suggestion").
+	gi.NewButton(chgbar, "change").SetText("Change").
+		SetTooltip("change the unknown word to the selected suggestion").
 		OnClick(func(e events.Event) {
 			sv.ChangeAction()
 		})
 
-	gi.NewButton(chgbar).SetText("Change All").SetTooltip("change all instances of the unknown word in this document").
+	gi.NewButton(chgbar, "change-all").SetText("Change All").
+		SetTooltip("change all instances of the unknown word in this document").
 		OnClick(func(e events.Event) {
 			sv.ChangeAllAction()
 		})

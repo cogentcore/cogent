@@ -115,7 +115,9 @@ func (ge *GideView) Spell() { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	tv.RecycleTabWidget("Spell", true, gide.SpellViewType)
+	sv := tv.RecycleTabWidget("Spell", true, gide.SpellViewType).(*gide.SpellView)
+	sv.ConfigSpellView(ge, txv)
+	sv.Update()
 	ge.FocusOnPanel(TabsIdx)
 }
 
@@ -132,7 +134,9 @@ func (ge *GideView) Symbols() { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	tv.RecycleTabWidget("Symbols", true, gide.SymbolsViewType)
+	sv := tv.RecycleTabWidget("Symbols", true, gide.SymbolsViewType).(*gide.SymbolsView)
+	sv.ConfigSymbolsView(ge, ge.ProjPrefs().Symbols)
+	sv.Update()
 	ge.FocusOnPanel(TabsIdx)
 }
 
@@ -149,7 +153,7 @@ func (ge *GideView) Debug() { //gti:add
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, gide.DebugViewType).(*gide.DebugView)
-	dv.ConfigDebugView(filecat.Go, exePath)
+	dv.ConfigDebugView(ge, filecat.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv

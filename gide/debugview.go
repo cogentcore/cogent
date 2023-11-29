@@ -742,18 +742,18 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 //    GUI config
 
 func (dv *DebugView) ConfigWidget() {
-	// dv.ConfigDebugView()
+	// dv.ConfigDebugView() // needs specific config args
 }
 
 // ConfigDebugView configures the view -- parameters for the job must have
 // already been set in ge.ProjParams.Debug.
-func (dv *DebugView) ConfigDebugView(sup filecat.Supported, exePath string) {
+func (dv *DebugView) ConfigDebugView(ge Gide, sup filecat.Supported, exePath string) {
+	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
 	if dv.HasChildren() {
 		return
 	}
-	dv.Gide, _ = ParentGide(dv)
 	dv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
