@@ -12,7 +12,7 @@ There are many existing, excellent choices for text editors and IDEs, but *Gide*
 
 Some of the main features of *Gide* include:
 
-* Designed to function as both a general-purpose text editor *and* an IDE.  It comes configured with command support for LaTeX, Markdown, and Makefiles, in addition to Go, and the command system is fully extensible to support any command-line tools.
+* Designed to function as both a general-purpose text editor *and* an IDE.  It comes configured with command support for LaTeX, Markdown, and Makefiles, in addition to Go,a and the command system is fully extensible to support any command-line tools.
 
 * Provides a tree-based file browser on the left, with builtin support for version control (git, svn, etc) and standard file management functionality through drag-and-drop, etc.  You can look at git logs, diffs, etc through this interface.
 
@@ -46,13 +46,16 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* add icons for symbols and get the merge thing to work
+* symbolsview click not working
+
 * Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
 
 * Find not selecting first item (sometimes?)
 
 * dialog closing causes old window to show up -- need to update render images
 * textview context menu
-* symbols, spell, diff
+* diff views
 
 * fileview global priority key shortcuts and fileview menu
 * editor rendering overflow
@@ -62,6 +65,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE
 
+* spell, 
 * menu choice selector close STILL not working! -- it is about the function being called!!!
 * open recent not making new window if gide already open
 * depth bg color not showing texteditor

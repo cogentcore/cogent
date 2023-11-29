@@ -341,33 +341,32 @@ func (st *SymTreeView) SymNode() *SymNode {
 	return st.SyncNode.(*SymNode)
 }
 
-func (st *SymTreeView) OnInit() {
-	st.HandleTreeViewEvents()
-	st.TreeViewStyles()
-	st.SymNodeStyles()
+func (st *SymTreeView) UpdateBranchIcons() {
+	st.SetSymIcon()
 }
 
-func (st *SymTreeView) SymNodeStyles() {
-	st.OnWidgetAdded(func(w gi.Widget) {
-		// fmt.Println(w.PathFrom(tv))
-		switch w.PathFrom(st) {
-		case "parts/branch":
-			sw := w.(*gi.Switch)
-			sw.IconOn = icons.KeyboardArrowDown   // icons.FolderOpen
-			sw.IconOff = icons.KeyboardArrowRight // icons.Folder
-			sym := st.SymNode()
-			switch sym.Symbol.Kind {
-			case token.NameType:
-				sw.IconDisab = icons.Title
-			case token.NameVar, token.NameVarGlobal:
-				sw.IconDisab = icons.Variables
-			case token.NameMethod:
-				sw.IconDisab = icons.Target
-			case token.NameFunction:
-				sw.IconDisab = icons.Function
-			case token.NameField:
-				sw.IconDisab = icons.Label
-			}
+func (st *SymTreeView) SetSymIcon() {
+	ic := icons.Blank
+	sym := st.SymNode()
+	switch sym.Symbol.Kind {
+	case token.NameType:
+		ic = icons.Title
+	case token.NameVar, token.NameVarGlobal:
+		ic = icons.Variables
+	case token.NameMethod:
+		ic = icons.Target
+	case token.NameFunction:
+		ic = icons.Function
+	case token.NameField:
+		ic = icons.Label
+	case token.NameConstant:
+		// todo:
+	}
+	if bp, ok := st.BranchPart(); ok {
+		if bp.IconDisab != ic {
+			bp.IconDisab = ic
+			bp.Update()
+			st.SetNeedsRender(true)
 		}
-	})
+	}
 }
