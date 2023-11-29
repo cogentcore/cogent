@@ -185,21 +185,20 @@ func (ge *GideView) RegisterCopy(name string) bool { //gti:add
 
 // RegisterPaste pastes register of given name into active text view
 // returns true if pasted
-func (ge *GideView) RegisterPaste(name gide.RegisterName) bool { //gti:add
+func (ge *GideView) RegisterPaste(name gide.RegisterName) { //gti:add
 	if name == "" {
-		return false
+		return
 	}
 	str, ok := gide.AvailRegisters[string(name)]
 	if !ok {
-		return false
+		return
 	}
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
-		return false
+		return
 	}
 	tv.InsertAtCursor([]byte(str))
 	ge.Prefs.Register = name
-	return true
 }
 
 // CommentOut comments-out selected lines in active text view

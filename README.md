@@ -46,12 +46,6 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* depth bg color not showing texteditor
-
-* open recent not making new window if gide already open
-
-* menu choice selector close STILL not working! -- it is about the function being called!!!
-
 * Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
 
 * Find not selecting first item (sometimes?)
@@ -66,11 +60,13 @@ In addition to Issues shown on github, some important features to be added longe
 * filetree --get rid of empty upper level or not?
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
 
-* filenode bold font not showing for isexe -- is set at treeview level
-* treeview label color getting reset on doubleclick in filetree
-
 # DONE
 
+* menu choice selector close STILL not working! -- it is about the function being called!!!
+* open recent not making new window if gide already open
+* depth bg color not showing texteditor
+* filenode bold font not showing for isexe -- is set at treeview level
+* treeview label color getting reset on doubleclick in filetree
 * popup add position method override to set position specifically
 * gide filetree context menu -- just commands needed now
 * Completer is async and needs protection!

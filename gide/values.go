@@ -543,9 +543,9 @@ func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 		}
 		vv.SetValue(rnm)
 		vv.UpdateWidget()
-		// if fun != nil {
-		// 	fun()
-		// }
+		if fun != nil {
+			fun()
+		}
 	})
 	gi.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }
