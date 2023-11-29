@@ -47,6 +47,9 @@ type Gide interface {
 	// in commands.go
 	CmdRuns() *CmdRuns
 
+	// history of commands executed in this session
+	CmdHist() *CmdNames
+
 	// ArgVarVals returns the ArgVarVals argument variable values
 	ArgVarVals() *ArgVarVals
 

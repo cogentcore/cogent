@@ -136,6 +136,10 @@ func (ge *GideView) CmdRuns() *gide.CmdRuns {
 	return &ge.RunningCmds
 }
 
+func (ge *GideView) CmdHist() *gide.CmdNames {
+	return &ge.CmdHistory
+}
+
 func (ge *GideView) ArgVarVals() *gide.ArgVarVals {
 	return &ge.ArgVals
 }

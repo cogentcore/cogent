@@ -5,6 +5,7 @@
 package gide
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"regexp"
@@ -15,6 +16,8 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/girl/states"
+	"goki.dev/girl/styles"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
 	"goki.dev/pi/v2/filecat"
@@ -58,11 +61,14 @@ func (fn *FileNode) SetRunExec() {
 
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
-func (fn *FileNode) ExecCmdFile() {
+func (fn *FileNode) ExecCmdFile() { //gti:add
 	ge, ok := ParentGide(fn.This())
 	if ok {
 		ge.ExecCmdFileNode(&fn.Node)
+	} else {
+		fmt.Println("no gide!")
 	}
+
 }
 
 // ExecCmdNameFile executes given command name on node
@@ -74,9 +80,18 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 }
 
 func (fn *FileNode) GideContextMenu(m *gi.Scene) {
-	gi.NewButton(m).SetText("Exec Cmd")
-	giv.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit)
-	giv.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow)
+	gi.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
+		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
+		s.State.SetFlag(!fn.HasSelection(), states.Disabled)
+	})
+	giv.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
+		Style(func(s *styles.Style) {
+			s.State.SetFlag(!fn.HasSelection(), states.Disabled)
+		})
+	giv.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
+		Style(func(s *styles.Style) {
+			s.State.SetFlag(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
+		})
 	gi.NewSeparator(m)
 }
 
@@ -329,66 +344,5 @@ func (ftv *FileTreeView) RenameFiles() {
 			giv.CallMethod(fn, "RenameFile", ftv.Viewport)
 		}
 	})
-}
-*/
-
-/*
-// FileTreeViewExecCmds gets list of available commands for given file node, as a submenu-func
-func FileTreeViewExecCmds(it any, vp *gi.Scene) [][]string {
-	ft, ok := it.(ki.Ki).Embed(KiT_FileTreeView).(*FileTreeView)
-	if !ok {
-		return nil
-	}
-	if ft.This() == ft.RootView.This() {
-		ge, ok := ParentGide(ft.SrcNode)
-		if !ok {
-			return nil
-		}
-		return AvailCmds.FilterCmdNames(filecat.NoSupport, ge.VersCtrl())
-	}
-	fn := ft.FileNode()
-	if fn == nil {
-		return nil
-	}
-	ge, ok := ParentGide(fn.This())
-	if !ok {
-		return nil
-	}
-	lang := filecat.NoSupport
-	if fn != nil {
-		lang = fn.Info.Sup
-	}
-	cmds := AvailCmds.FilterCmdNames(lang, ge.VersCtrl())
-	return cmds
-}
-
-// ExecCmdFiles calls given command on selected files
-func (ft *FileTreeView) ExecCmdFiles(cmdNm string) {
-	sels := ft.SelectedViews()
-	if len(sels) > 1 {
-		CmdWaitOverride = true // force wait mode
-	}
-	for i := len(sels) - 1; i >= 0; i-- {
-		sn := sels[i]
-		ftv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
-		if ftv.This() == ft.RootView.This() {
-			if ft.SrcNode == nil {
-				continue
-			}
-			ftr := ft.SrcNode.(*giv.FileTree)
-			ge, ok := ParentGide(ftr)
-			if ok {
-				ge.ExecCmdNameFileName(string(ftr.FPath), CmdName(cmdNm), true, true)
-			}
-		} else {
-			fn := ftv.FileNode()
-			if fn != nil {
-				fn.ExecCmdNameFile(cmdNm)
-			}
-		}
-	}
-	if CmdWaitOverride {
-		CmdWaitOverride = false
-	}
 }
 */

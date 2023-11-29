@@ -542,6 +542,9 @@ var FileNodeType = gti.AddType(&gti.Type{
 		{"Node", &gti.Field{Name: "Node", Type: "goki.dev/gi/v2/filetree.Node", LocalType: "filetree.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
 	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
+		{"ExecCmdFile", &gti.Method{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"EditFiles", &gti.Method{Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},

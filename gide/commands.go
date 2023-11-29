@@ -413,7 +413,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 							}
 						})
 						m.Nm = "prompt-branch"
-						gi.NewMenuFromScene(m, tv, tv.ContextMenuPos(nil)).Run()
+						gi.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
 					} else {
 						fmt.Println(err)
 					}
@@ -802,4 +802,53 @@ func CompleteArg(data any, text string, posLn, posCh int) (md complete.Matches) 
 func CompleteArgEdit(data any, text string, cursorPos int, c complete.Completion, seed string) (ed complete.Edit) {
 	ed = complete.EditWord(text, cursorPos, c.Text, seed)
 	return ed
+}
+
+// CommandMenu returns a menu function for commands for given language and vcs name
+func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
+	ge, ok := ParentGide(fn.This())
+	if !ok {
+		return nil
+	}
+	lang := fn.Info.Sup
+	vcnm := ge.VersCtrl()
+	if repo, _ := fn.Repo(); repo != nil {
+		vcnm = filetree.VersCtrlName(repo.Vcs())
+	}
+	cmds := AvailCmds.FilterCmdNames(lang, vcnm)
+	lastCmd := ""
+	chist := ge.CmdHist()
+	hsz := len(*chist)
+	if hsz > 0 {
+		lastCmd = string((*chist)[hsz-1])
+	}
+	return func(mm *gi.Scene) {
+		for _, cc := range cmds {
+			cc := cc
+			n := len(cc)
+			if n < 2 {
+				continue
+			}
+			cmdCat := cc[0]
+			cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonMenu)
+			cb.SetMenu(func(m *gi.Scene) {
+				for ii := 1; ii < n; ii++ {
+					ii := ii
+					it := cc[ii]
+					cmdNm := CommandName(cmdCat, it)
+					b := gi.NewButton(m).SetText(it).OnClick(func(e events.Event) {
+						e.SetHandled()
+						cmd := CmdName(cmdNm)
+						chist.Add(cmd)                 // only save commands executed via chooser
+						ge.SaveAllCheck(true, func() { // true = cancel option
+							ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+						})
+					})
+					if cmdNm == lastCmd {
+						b.SetSelected(true)
+					}
+				}
+			})
+		}
+	}
 }

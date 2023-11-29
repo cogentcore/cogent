@@ -127,65 +127,26 @@ func (ge *GideView) ExecCmdNameActive(cmdNm string) { //gti:add
 
 // CommandFromMenu pops up a menu of commands for given language, with given last command
 // selected by default, and runs selected command.
-func (ge *GideView) CommandFromMenu(lang filecat.Supported) {
-	lastCmd := ""
-	hsz := len(ge.CmdHistory)
-	if hsz > 0 {
-		lastCmd = string(ge.CmdHistory[hsz-1])
-	}
-	mm := gi.NewScene()
-	cmds := gide.AvailCmds.FilterCmdNames(lang, ge.VersCtrl())
-	for _, cc := range cmds {
-		cc := cc
-		n := len(cc)
-		if n < 2 {
-			continue
-		}
-		cmdCat := cc[0]
-		cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonMenu)
-		cb.SetMenu(func(m *gi.Scene) {
-			for ii := 1; ii < n; ii++ {
-				ii := ii
-				it := cc[ii]
-				cmdNm := gide.CommandName(cmdCat, it)
-				b := gi.NewButton(m).SetText(it).OnClick(func(e events.Event) {
-					e.SetHandled()
-					cmd := gide.CmdName(cmdNm)
-					ge.CmdHistory.Add(cmd)         // only save commands executed via chooser
-					ge.SaveAllCheck(true, func() { // true = cancel option
-						ge.ExecCmdName(cmd, true, true) // sel, clear
-					})
-				})
-				if cmdNm == lastCmd {
-					b.SetSelected(true)
-				}
-			}
-		})
-	}
+func (ge *GideView) CommandFromMenu(fn *filetree.Node) {
 	tv := ge.ActiveTextEditor()
-	gi.NewMenuFromScene(mm, tv, tv.ContextMenuPos(nil)).Run()
+	gi.NewMenu(gide.CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
 func (ge *GideView) ExecCmd() { //gti:add
-	tv := ge.ActiveTextEditor()
-	if tv == nil {
-		fmt.Printf("no Active view for ExecCmd\n")
+	fn := ge.ActiveFileNode()
+	if fn == nil {
+		fmt.Printf("no Active File for ExecCmd\n")
 		return
 	}
-	lang := ge.ActiveLang
-	if lang == filecat.NoSupport {
-		lang = ge.Prefs.MainLang
-	}
-	ge.CommandFromMenu(lang)
+	ge.CommandFromMenu(fn)
 }
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in Tab with name of command
 func (ge *GideView) ExecCmdFileNode(fn *filetree.Node) {
-	lang := fn.Info.Sup
-	ge.CommandFromMenu(lang)
+	ge.CommandFromMenu(fn)
 }
 
 // SetArgVarVals sets the ArgVar values for commands, from GideView values

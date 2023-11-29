@@ -46,24 +46,35 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* menu choice selector close not working: is a This problem -- rewrite stages finally.
-* Editable Chooser tabs twice -- outer & inner -- requires focus prev fix to work properly!
+* depth bg color not showing texteditor
+
+* open recent not making new window if gide already open
+
+* menu choice selector close STILL not working! -- it is about the function being called!!!
+
+* Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
+
+* Find not selecting first item (sometimes?)
 
 * dialog closing causes old window to show up -- need to update render images
-* gide filetree context menu -- just commands needed now
 * textview context menu
-* symbols, spell
+* symbols, spell, diff
 
 * fileview global priority key shortcuts and fileview menu
 * editor rendering overflow
 * lineno horiz scrolling issues -- this is in V1 too!
 * filetree --get rid of empty upper level or not?
-* treeview label color getting reset on doubleclick in filetree
-* popup add position method override to set position specifically
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
+
+* filenode bold font not showing for isexe -- is set at treeview level
+* treeview label color getting reset on doubleclick in filetree
 
 # DONE
 
+* popup add position method override to set position specifically
+* gide filetree context menu -- just commands needed now
+* Completer is async and needs protection!
+* commands popup is not getting menu styles shadows
 * toml config files and cleanup prefs a bit
 * tableview / sliceview need extra layout loops within one layout pass -- doesn't work inside tabs
 * paste history not working at all

@@ -82,7 +82,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		if atv != nil && atv.HasSelection() {
 			ge.Prefs.Find.Find = string(atv.Selection().ToBytes())
 		}
-		ge.ConfigFindButton(giv.NewSoloFuncButton(atv, ge.Find)).CallFunc()
+		ge.CallFind(atv)
 	}
 	if kt.IsHandled() {
 		return
@@ -114,7 +114,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.CloseActiveView()
 	case gide.KeyFunExecCmd:
 		kt.SetHandled()
-		giv.CallFunc(ge, ge.ExecCmd)
+		giv.CallFunc(atv, ge.ExecCmd)
 	case gide.KeyFunRectCut:
 		kt.SetHandled()
 		ge.CutRect()
@@ -126,10 +126,10 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.PasteRect()
 	case gide.KeyFunRegCopy:
 		kt.SetHandled()
-		giv.CallFunc(ge, ge.RegisterCopy)
+		giv.CallFunc(atv, ge.RegisterCopy)
 	case gide.KeyFunRegPaste:
 		kt.SetHandled()
-		giv.CallFunc(ge, ge.RegisterPaste)
+		giv.CallFunc(atv, ge.RegisterPaste)
 	case gide.KeyFunCommentOut:
 		kt.SetHandled()
 		ge.CommentOut()

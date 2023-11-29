@@ -36,6 +36,10 @@ func (ge *GideView) ConfigFindButton(fb *giv.FuncButton) *giv.FuncButton {
 	return fb
 }
 
+func (ge *GideView) CallFind(ctx gi.Widget) {
+	ge.ConfigFindButton(giv.NewSoloFuncButton(ctx, ge.Find)).CallFunc()
+}
+
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
 func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool, loc gide.FindLoc, langs []filecat.Supported) { //gti:add

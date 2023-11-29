@@ -191,7 +191,7 @@ func (ed *TextEditor) HandleGideDebugHover() {
 			pos := e.LocalPos()
 			pos.X += 20
 			pos.Y += 20
-			gi.NewTooltipText(ed, tt, ed.WinBBox().Min).Run() // todo: set position?
+			gi.NewTooltipText(ed, tt, ed.WinBBox().Min).SetPos(pos).Run()
 		}
 	})
 }

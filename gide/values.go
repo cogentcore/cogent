@@ -404,9 +404,23 @@ func (vv *SplitValue) ConfigWidget(w gi.Widget) {
 	vv.UpdateWidget()
 }
 
-func (vv *SplitValue) HasDialog() bool                      { return true }
-func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
+func (vv *SplitValue) HasDialog() bool { return true }
 
+func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
+	cur := laser.ToString(vv.Value.Interface())
+	m := gi.NewMenuFromStrings(AvailSplitNames, cur, func(idx int) {
+		nm := AvailSplitNames[idx]
+		vv.SetValue(nm)
+		vv.UpdateWidget()
+		if fun != nil {
+			fun()
+		}
+	})
+	gi.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
+}
+
+/*
+func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
 func (vv *SplitValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
@@ -423,6 +437,7 @@ func (vv *SplitValue) ConfigDialog(d *gi.Body) (bool, func()) {
 		}
 	}
 }
+*/
 
 //////////////////////////////////////////////////////////////////////////////////////
 //  RegistersView
@@ -516,6 +531,10 @@ func (vv *RegisterValue) ConfigWidget(w gi.Widget) {
 func (vv *RegisterValue) HasDialog() bool { return true }
 
 func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
+	if len(AvailRegisterNames) == 0 {
+		gi.NewSnackbar(ctx, "noregs").AddSnackbarText("No registers available").Stage.Run()
+		return
+	}
 	cur := laser.ToString(vv.Value.Interface())
 	m := gi.NewMenuFromStrings(AvailRegisterNames, cur, func(idx int) {
 		rnm := AvailRegisterNames[idx]
@@ -524,9 +543,9 @@ func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 		}
 		vv.SetValue(rnm)
 		vv.UpdateWidget()
-		if fun != nil {
-			fun()
-		}
+		// if fun != nil {
+		// 	fun()
+		// }
 	})
-	gi.NewMenuFromScene(m, ctx, ctx.ContextMenuPos(nil)).Run()
+	gi.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }

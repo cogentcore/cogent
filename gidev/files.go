@@ -387,7 +387,7 @@ func (ge *GideView) SelectOpenNode() {
 		nb := ge.OpenNodes[idx]
 		ge.ViewFileNode(tv, ge.ActiveTextEditorIdx, nb)
 	})
-	gi.NewMenuFromScene(m, tv, tv.ContextMenuPos(nil)).Run()
+	gi.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // CloneActiveView sets the next text view to view the same file currently being vieweds
