@@ -952,7 +952,7 @@ type StackView struct {
 }
 
 func (sv *StackView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.Embeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1010,7 +1010,7 @@ type BreakView struct {
 }
 
 func (sv *BreakView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.Embeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1062,7 +1062,7 @@ type ThreadView struct {
 }
 
 func (sv *ThreadView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.Embeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1109,7 +1109,7 @@ type TaskView struct {
 }
 
 func (sv *TaskView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.Embeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1159,7 +1159,7 @@ type VarsView struct {
 }
 
 func (sv *VarsView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.Embeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
 	return dv
 }
 

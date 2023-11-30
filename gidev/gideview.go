@@ -533,7 +533,7 @@ func OpenGideProj(projfile string) *GideView {
 }
 
 func GideInScene(sc *gi.Scene) *GideView {
-	return sc.Body.ChildByType(GideViewType, ki.Embeds).(*GideView)
+	return sc.Body.ChildByType(GideViewType, ki.NoEmbeds).(*GideView)
 }
 
 // NewGideWindow is common code for Open GideWindow from Proj or Path

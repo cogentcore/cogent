@@ -243,7 +243,7 @@ func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gid
 
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
 func (ge *GideView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
-	fvk := ftv.ParentByType(gide.FindViewType, ki.Embeds)
+	fvk := ftv.ParentByType(gide.FindViewType, ki.NoEmbeds)
 	if fvk == nil {
 		return false
 	}
