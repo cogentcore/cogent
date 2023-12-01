@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"goki.dev/colors"
+	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/girl/paint"
@@ -17,7 +18,6 @@ import (
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
 	"goki.dev/ordmap"
-	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/syms"
 )
@@ -30,7 +30,7 @@ var DebugViewType = gti.AddType(&gti.Type{
 	Doc:        "DebugView is the debugger",
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/pi/v2/filecat.Supported", LocalType: "filecat.Supported", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
+		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/pi/v2/fi.Supported", LocalType: "fi.Supported", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
 		{"ExePath", &gti.Field{Name: "ExePath", Type: "string", LocalType: "string", Doc: "path to executable / dir to debug", Directives: gti.Directives{}, Tag: ""}},
 		{"DbgTime", &gti.Field{Name: "DbgTime", Type: "time.Time", LocalType: "time.Time", Doc: "time when dbg was last restarted", Directives: gti.Directives{}, Tag: ""}},
 		{"Dbg", &gti.Field{Name: "Dbg", Type: "goki.dev/gide/v2/gidebug.GiDebug", LocalType: "gidebug.GiDebug", Doc: "the debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
@@ -67,7 +67,7 @@ func (t *DebugView) New() ki.Ki {
 
 // SetSup sets the [DebugView.Sup]:
 // supported file type to determine debugger
-func (t *DebugView) SetSup(v filecat.Supported) *DebugView {
+func (t *DebugView) SetSup(v fi.Supported) *DebugView {
 	t.Sup = v
 	return t
 }
@@ -640,7 +640,7 @@ func (t *FileNode) SetRootView(v *giv.TreeView) *FileNode {
 }
 
 // SetSelectedNodes sets the [FileNode.SelectedNodes]
-func (t *FileNode) SetSelectedNodes(v []*giv.TreeView) *FileNode {
+func (t *FileNode) SetSelectedNodes(v []giv.TreeViewer) *FileNode {
 	t.SelectedNodes = v
 	return t
 }
@@ -1115,7 +1115,7 @@ func (t *SymTreeView) SetRootView(v *giv.TreeView) *SymTreeView {
 }
 
 // SetSelectedNodes sets the [SymTreeView.SelectedNodes]
-func (t *SymTreeView) SetSelectedNodes(v []*giv.TreeView) *SymTreeView {
+func (t *SymTreeView) SetSelectedNodes(v []giv.TreeViewer) *SymTreeView {
 	t.SelectedNodes = v
 	return t
 }

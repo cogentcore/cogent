@@ -8,13 +8,13 @@ import (
 	"log"
 	"path/filepath"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/grows/tomls"
-	"goki.dev/pi/v2/filecat"
 )
 
 // LangOpts defines options associated with a given language / file format
-// only languages in filecat.Supported list are supported..
+// only languages in fi.Supported list are supported..
 type LangOpts struct {
 
 	// command(s) to run after a file of this type is saved
@@ -22,7 +22,7 @@ type LangOpts struct {
 }
 
 // Langs is a map of language options
-type Langs map[filecat.Supported]*LangOpts
+type Langs map[fi.Supported]*LangOpts
 
 // AvailLangs is the current set of language options -- can be
 // loaded / saved / edited with preferences.  This is set to StdLangs at
@@ -107,5 +107,5 @@ var AvailLangsChanged = false
 
 // StdLangs is the original compiled-in set of standard language options.
 var StdLangs = Langs{
-	filecat.Go: {CmdNames{"Go: Imports File"}},
+	fi.Go: {CmdNames{"Go: Imports File"}},
 }

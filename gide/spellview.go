@@ -12,7 +12,7 @@ import (
 	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/pi/v2/lex"
-	"goki.dev/pi/v2/spell"
+	"goki.dev/spell"
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"

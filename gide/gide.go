@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"time"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
@@ -17,7 +18,6 @@ import (
 	"goki.dev/ki/v2"
 	"goki.dev/laser"
 	"goki.dev/pi/v2/complete"
-	"goki.dev/pi/v2/filecat"
 )
 
 // Gide provides the interface for the GideView functionality that is needed
@@ -105,7 +105,7 @@ type Gide interface {
 
 	// Find does Find / Replace in files, using given options and filters -- opens up a
 	// main tab with the results and further controls.
-	Find(find, repl string, ignoreCase, regExp bool, loc FindLoc, langs []filecat.Supported)
+	Find(find, repl string, ignoreCase, regExp bool, loc FindLoc, langs []fi.Supported)
 
 	// ParseOpenFindURL parses and opens given find:/// url from Find, return text
 	// region encoded in url, and starting line of results in find buffer, and

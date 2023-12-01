@@ -7,13 +7,13 @@ package gidev
 import (
 	"path/filepath"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/goosi/events"
-	"goki.dev/pi/v2/filecat"
 )
 
 // Defaults sets new project defaults based on overall preferences
@@ -127,9 +127,9 @@ func (ge *GideView) LangDefaults() {
 	ge.Prefs.RunExec = gi.FileName(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
 	if len(ge.Prefs.BuildCmds) == 0 {
 		switch ge.Prefs.MainLang {
-		case filecat.Go:
+		case fi.Go:
 			ge.Prefs.BuildCmds = gide.CmdNames{"Go: Build Proj"}
-		case filecat.TeX:
+		case fi.TeX:
 			ge.Prefs.BuildCmds = gide.CmdNames{"LaTeX: LaTeX PDF"}
 			ge.Prefs.RunCmds = gide.CmdNames{"File: Open Target"}
 		default:
@@ -146,13 +146,13 @@ func (ge *GideView) LangDefaults() {
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
 func (ge *GideView) GuessMainLang() bool {
-	ecsc := ge.Files.FileExtCounts(filecat.Code)
-	ecsd := ge.Files.FileExtCounts(filecat.Doc)
+	ecsc := ge.Files.FileExtCounts(fi.Code)
+	ecsd := ge.Files.FileExtCounts(fi.Doc)
 	ecs := append(ecsc, ecsd...)
 	filetree.NodeNameCountSort(ecs)
 	for _, ec := range ecs {
-		ls := filecat.ExtSupported(ec.Name)
-		if ls != filecat.NoSupport {
+		ls := fi.ExtSupported(ec.Name)
+		if ls != fi.NoSupport {
 			ge.Prefs.MainLang = ls
 			return true
 		}

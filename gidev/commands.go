@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
@@ -16,7 +17,6 @@ import (
 	"goki.dev/girl/paint"
 	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
-	"goki.dev/pi/v2/filecat"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
@@ -106,7 +106,7 @@ func ExecCmds(ge *GideView) [][]string {
 	var cmds [][]string
 
 	vc := ge.VersCtrl()
-	if ge.ActiveLang == filecat.NoSupport {
+	if ge.ActiveLang == fi.NoSupport {
 		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
 	} else {
 		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)

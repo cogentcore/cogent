@@ -153,7 +153,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 			if len(tv.SelectedNodes) == 0 {
 				return
 			}
-			sn := tv.SelectedNodes[0].SyncNode.(*SymNode)
+			sn := tv.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
 			if sn != nil {
 				sv.SelectSymbol(sn.Symbol)
 			}

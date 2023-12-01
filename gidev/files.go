@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
@@ -18,7 +19,6 @@ import (
 	"goki.dev/gide/v2/gide"
 	"goki.dev/goosi/events"
 	"goki.dev/ki/v2"
-	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
 )
 
@@ -455,8 +455,8 @@ func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
 func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 	// todo: could add all these options in LangOpts
 	switch fn.Info.Cat {
-	case filecat.Folder:
-	case filecat.Exe:
+	case fi.Folder:
+	case fi.Exe:
 		// this uses exe path for cd to this path!
 		ge.SetArgVarVals()
 		ge.ArgVals["{PromptString1}"] = string(fn.FPath)
@@ -468,17 +468,17 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 			cmd.Run(ge, cbuf)
 		}
 		return
-	case filecat.Font, filecat.Video, filecat.Model, filecat.Audio, filecat.Sheet, filecat.Bin,
-		filecat.Archive, filecat.Image:
+	case fi.Font, fi.Video, fi.Model, fi.Audio, fi.Sheet, fi.Bin,
+		fi.Archive, fi.Image:
 		ge.ExecCmdNameFileNode(fn, gide.CmdName("File: Open"), true, true) // sel, clear
 		return
 	}
 
 	edit := true
 	switch fn.Info.Cat {
-	case filecat.Code:
+	case fi.Code:
 		edit = true
-	case filecat.Text:
+	case fi.Text:
 		edit = true
 	default:
 		if _, noed := CatNoEdit[fn.Info.Sup]; noed {
@@ -508,12 +508,12 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 }
 
 // CatNoEdit are the files to NOT edit from categories: Doc, Data
-var CatNoEdit = map[filecat.Supported]bool{
-	filecat.Rtf:          true,
-	filecat.MSWord:       true,
-	filecat.OpenText:     true,
-	filecat.OpenPres:     true,
-	filecat.MSPowerpoint: true,
-	filecat.EBook:        true,
-	filecat.EPub:         true,
+var CatNoEdit = map[fi.Supported]bool{
+	fi.Rtf:          true,
+	fi.MSWord:       true,
+	fi.OpenText:     true,
+	fi.OpenPres:     true,
+	fi.MSPowerpoint: true,
+	fi.EBook:        true,
+	fi.EPub:         true,
 }

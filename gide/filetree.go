@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
@@ -20,7 +21,6 @@ import (
 	"goki.dev/girl/styles"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
-	"goki.dev/pi/v2/filecat"
 )
 
 // FileNode is Gide version of FileNode for FileTree view
@@ -228,7 +228,7 @@ type FileSearchResults struct {
 // language(s) that contain the given string (non regexp version), sorted in
 // descending order by number of occurrences -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []filecat.Supported) []FileSearchResults {
+func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Supported) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -260,7 +260,7 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 		if strings.HasSuffix(sfn.Nm, ".gide") { // exclude self
 			return ki.Continue
 		}
-		if !filecat.IsMatchList(langs, sfn.Info.Sup) {
+		if !fi.IsMatchList(langs, sfn.Info.Sup) {
 			return ki.Continue
 		}
 		if loc == FindLocDir {

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/mattn/go-shellwords"
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/texteditor"
@@ -24,7 +25,6 @@ import (
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
 	"goki.dev/pi/v2/complete"
-	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/vci/v2"
 )
@@ -261,7 +261,7 @@ type Command struct {
 	Desc string `width:"40"`
 
 	// supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type
-	Lang filecat.Supported
+	Lang fi.Supported
 
 	// sequence of commands to run for this overall command.
 	Cmds []CmdAndArgs `tableview-select:"-"`
@@ -593,8 +593,8 @@ func (cm *Command) RunStatus(ge Gide, buf *texteditor.Buf, cmdstr string, err er
 }
 
 // LangMatch returns true if the given language matches the command Lang constraints
-func (cm *Command) LangMatch(lang filecat.Supported) bool {
-	return filecat.IsMatch(cm.Lang, lang)
+func (cm *Command) LangMatch(lang fi.Supported) bool {
+	return fi.IsMatch(cm.Lang, lang)
 }
 
 // MarkupCmdOutput applies links to the first element in command output line
@@ -659,7 +659,7 @@ var CustomCmds = Commands{}
 
 // FilterCmdNames returns a slice of commands organized by category
 // that are compatible with given language and version control system.
-func (cm *Commands) FilterCmdNames(lang filecat.Supported, vcnm filetree.VersCtrlName) [][]string {
+func (cm *Commands) FilterCmdNames(lang fi.Supported, vcnm filetree.VersCtrlName) [][]string {
 	vnm := strings.ToLower(string(vcnm))
 	var cmds [][]string
 	cat := ""

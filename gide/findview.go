@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
@@ -22,7 +23,6 @@ import (
 	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/icons"
-	"goki.dev/pi/v2/filecat"
 	"goki.dev/pi/v2/lex"
 )
 
@@ -62,7 +62,7 @@ type FindParams struct {
 	Loc FindLoc
 
 	// languages for files to search
-	Langs []filecat.Supported
+	Langs []fi.Supported
 
 	// history of finds
 	FindHist []string

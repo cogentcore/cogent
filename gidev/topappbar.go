@@ -5,6 +5,8 @@
 package gidev
 
 import (
+	"goki.dev/fi/uri"
+	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/keyfun"
@@ -14,6 +16,7 @@ import (
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
 	"goki.dev/icons"
+	"goki.dev/ki/v2"
 )
 
 // DefaultTopAppBar is the default top app bar for gide
@@ -28,6 +31,8 @@ func DefaultTopAppBar(tb *gi.TopAppBar) {
 }
 
 func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
+	tb.Resources.Add(ge.FilesResource)
+
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.Style(func(s *styles.Style) {
@@ -235,6 +240,27 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 		gi.NewSeparator(m)
 	})
 
+}
+
+func (ge *GideView) FilesResource() uri.URIs {
+	if ge.Files == nil {
+		return nil
+	}
+	var ul uri.URIs
+	ge.Files.WidgetWalkPre(func(wi gi.Widget, wb *gi.WidgetBase) bool {
+		fn := filetree.AsNode(wi)
+		if fn == nil {
+			return ki.Continue
+		}
+		ur := uri.URI{Label: fn.Nm, Icon: fn.Info.Ic}
+		ur.SetURL("file", "", string(fn.FPath))
+		ur.Func = func() {
+			ge.NextViewFileNode(fn)
+		}
+		ul = append(ul, ur)
+		return ki.Continue
+	})
+	return ul
 }
 
 /*

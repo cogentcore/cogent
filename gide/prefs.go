@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/grows/tomls"
 	"goki.dev/grr"
-	"goki.dev/pi/v2/filecat"
 )
 
 // FilePrefs contains file view preferences
@@ -199,7 +199,7 @@ func (pf *Preferences) EditCmds() { //gti:add
 	if len(CustomCmds) == 0 {
 		exc := &Command{Name: "Example Cmd",
 			Desc: "list current dir",
-			Lang: filecat.Any,
+			Lang: fi.Any,
 			Cmds: []CmdAndArgs{{Cmd: "ls", Args: []string{"-la"}}},
 			Dir:  "{FileDirPath}",
 			Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}
@@ -235,7 +235,7 @@ type ProjPrefs struct {
 	SplitName SplitName
 
 	// the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well
-	MainLang filecat.Supported
+	MainLang fi.Supported
 
 	// the type of version control system used in this project (git, svn, etc) -- filters commands available
 	VersCtrl filetree.VersCtrlName
@@ -312,7 +312,7 @@ func (pf *ProjPrefs) Save(filename gi.FileName) error { //gti:add
 
 // RunExecIsExec returns true if the RunExec is actually executable
 func (pf *ProjPrefs) RunExecIsExec() bool {
-	fi, err := filecat.NewFileInfo(string(pf.RunExec))
+	fi, err := fi.NewFileInfo(string(pf.RunExec))
 	if err != nil {
 		return false
 	}

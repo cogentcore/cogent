@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"goki.dev/colors"
+	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
@@ -23,7 +24,6 @@ import (
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
 	"goki.dev/mat32/v2"
-	"goki.dev/pi/v2/filecat"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
@@ -50,14 +50,14 @@ const (
 var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[filecat.Supported]func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error){
-	filecat.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+var Debuggers = map[fi.Supported]func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error){
+	fi.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 		return gidelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup filecat.Supported, path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+func NewDebugger(sup fi.Supported, path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Prefs.. to a supported language (Go only option so far)", sup)
@@ -76,7 +76,7 @@ type DebugView struct {
 	gi.Layout
 
 	// supported file type to determine debugger
-	Sup filecat.Supported
+	Sup fi.Supported
 
 	// path to executable / dir to debug
 	ExePath string
@@ -167,7 +167,7 @@ func (dv *DebugView) Start() {
 	console.Clear()
 	rebuild := false
 	if dv.Dbg != nil && dv.State.Mode != gidebug.Attach {
-		lmod := dv.Gide.FileTree().LatestFileMod(filecat.Code)
+		lmod := dv.Gide.FileTree().LatestFileMod(fi.Code)
 		rebuild = lmod.After(dv.DbgTime) || dv.Gide.LastSaveTime().After(dv.DbgTime)
 	}
 	if dv.Dbg == nil || rebuild {
@@ -747,7 +747,7 @@ func (dv *DebugView) ConfigWidget() {
 
 // ConfigDebugView configures the view -- parameters for the job must have
 // already been set in ge.ProjParams.Debug.
-func (dv *DebugView) ConfigDebugView(ge Gide, sup filecat.Supported, exePath string) {
+func (dv *DebugView) ConfigDebugView(ge Gide, sup fi.Supported, exePath string) {
 	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
@@ -841,7 +841,7 @@ func (dv *DebugView) ConfigTabs() {
 	ctv.SetBuf(dv.OutBuf)
 	NewBreakView(tb.NewTab("Breaks")).ConfigBreakView(dv)
 	NewStackView(tb.NewTab("Stack")).ConfigStackView(dv, false)
-	if dv.Sup == filecat.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
+	if dv.Sup == fi.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		NewTaskView(tb.NewTab("Tasks")).ConfigTaskView(dv)
 	}
 	NewVarsView(tb.NewTab("Vars")).ConfigVarsView(dv, false)
@@ -1305,7 +1305,7 @@ func (vv *VarView) ConfigSplits() {
 		sv := giv.NewStructView(split, "sv")
 		tv.OnSelect(func(e events.Event) {
 			if len(tv.SelectedNodes) > 0 {
-				sn := tv.SelectedNodes[0].SyncNode
+				sn := tv.SelectedNodes[0].AsTreeView().SyncNode
 				vr, ok := sn.(*gidebug.Variable)
 				if ok {
 					vv.SelVar = vr

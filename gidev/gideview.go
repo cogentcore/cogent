@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
@@ -24,8 +25,7 @@ import (
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
 	"goki.dev/ki/v2"
-	"goki.dev/pi/v2/filecat"
-	"goki.dev/pi/v2/spell"
+	"goki.dev/spell"
 	"goki.dev/vci/v2"
 )
 
@@ -45,7 +45,7 @@ type GideView struct {
 	ActiveFilename gi.FileName `set:"-"`
 
 	// language for current active filename
-	ActiveLang filecat.Supported
+	ActiveLang fi.Supported
 
 	// VCS repo for current active filename
 	ActiveVCS vci.Repo `set:"-"`
@@ -294,7 +294,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 // path -- all GideView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang filecat.Supported, versCtrl filetree.VersCtrlName) *GideView { //gti:add
+func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang fi.Supported, versCtrl filetree.VersCtrlName) *GideView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {

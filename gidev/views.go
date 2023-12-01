@@ -12,14 +12,14 @@ import (
 	"regexp"
 	"time"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/goosi"
-	"goki.dev/pi/v2/filecat"
-	"goki.dev/pi/v2/spell"
+	"goki.dev/spell"
 	"goki.dev/vci/v2"
 )
 
@@ -42,7 +42,7 @@ func (ge *GideView) CallFind(ctx gi.Widget) {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool, loc gide.FindLoc, langs []filecat.Supported) { //gti:add
+func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool, loc gide.FindLoc, langs []fi.Supported) { //gti:add
 	if find == "" {
 		return
 	}
@@ -153,7 +153,7 @@ func (ge *GideView) Debug() { //gti:add
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, gide.DebugViewType).(*gide.DebugView)
-	dv.ConfigDebugView(ge, filecat.Go, exePath)
+	dv.ConfigDebugView(ge, fi.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
@@ -300,7 +300,7 @@ func (ge *GideView) UpdateStatusLabel() {
 			if tv.Buf.IsNotSaved() {
 				fnm += "*"
 			}
-			if tv.Buf.Info.Sup != filecat.NoSupport {
+			if tv.Buf.Info.Sup != fi.NoSupport {
 				fnm += " (" + tv.Buf.Info.Sup.String() + ")"
 			}
 		}

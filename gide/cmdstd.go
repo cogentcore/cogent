@@ -4,7 +4,7 @@
 
 package gide
 
-import "goki.dev/pi/v2/filecat"
+import "goki.dev/fi"
 
 // Use these for more obvious command options
 const (
@@ -20,27 +20,27 @@ const (
 var StdCmds = Commands{
 	{Cat: "Build", Name: "Run Proj",
 		Desc: "run RunExec executable set in project",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "{RunExecPath}"}},
 		Dir:  "{RunExecDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 	{Cat: "Build", Name: "Run Prompt",
 		Desc: "run any command you enter at the prompt",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "{PromptString1}"}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 	// Make
 	{Cat: "Build", Name: "Make",
 		Desc: "run make with no args",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "make"}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Build", Name: "Make Prompt",
 		Desc: "run make with prompted make target",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "make",
 			Args: []string{"{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
@@ -48,7 +48,7 @@ var StdCmds = Commands{
 
 	{Cat: "File", Name: "Grep",
 		Desc: "recursive grep of all files for prompted value",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "grep",
 			Args: []string{"-R", "-e", "{PromptString1}", "{FileDirPath}"}}},
 		Dir:  "{FileDirPath}",
@@ -56,7 +56,7 @@ var StdCmds = Commands{
 
 	{Cat: "File", Name: "Open",
 		Desc: "open file using OS 'open' command",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "open",
 			Args: []string{"{FilePath}"}}},
 		Dir:  "{FileDirPath}",
@@ -64,7 +64,7 @@ var StdCmds = Commands{
 
 	{Cat: "File", Name: "Open Target",
 		Desc: "open project target file using OS 'open' command",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "open",
 			Args: []string{"{RunExecPath}"}}},
 		Dir:  "{FileDirPath}",
@@ -73,7 +73,7 @@ var StdCmds = Commands{
 	// Go
 	{Cat: "Go", Name: "Imports File",
 		Desc: "run goimports on file",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "goimports",
 			Args: []string{"-w", "{FilePath}"}}},
 		Dir:  "{FileDirPath}",
@@ -81,7 +81,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Fmt File",
 		Desc: "run go fmt on file",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "gofmt",
 			Args: []string{"-w", "{FilePath}"}}},
 		Dir:  "{FileDirPath}",
@@ -89,7 +89,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Build Dir",
 		Desc: "run go build to build in current dir",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"build", "-v"}}},
 		Dir:  "{FileDirPath}",
@@ -97,7 +97,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Build Proj",
 		Desc: "run go build for project BuildDir",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"build", "-v"}}},
 		Dir:  "{BuildDir}",
@@ -105,7 +105,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Install Dir",
 		Desc: "run go install in current dir",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"install", "-v"}}},
 		Dir:  "{FileDirPath}",
@@ -113,7 +113,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Generate",
 		Desc: "run go generate in current dir",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"generate"}}},
 		Dir:  "{FileDirPath}",
@@ -121,7 +121,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Test",
 		Desc: "run go test in current dir.  Options include: -run TestName or -bench",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"test", "-v", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
@@ -129,7 +129,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Vet",
 		Desc: "run go vet in current dir",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"vet"}}},
 		Dir:  "{FileDirPath}",
@@ -137,7 +137,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Mod Tidy",
 		Desc: "run go mod tidy in current dir",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"mod", "tidy"}}},
 		Dir:  "{FileDirPath}",
@@ -145,7 +145,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Mod Init",
 		Desc: "run go mod init in current dir with module path from prompt",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"mod", "init", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
@@ -153,7 +153,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Get",
 		Desc: "run go get on package(s) you enter at prompt",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args: []string{"get", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
@@ -161,7 +161,7 @@ var StdCmds = Commands{
 
 	{Cat: "Go", Name: "Get Updt",
 		Desc: "run go get -u (updt) on package(s) you enter at prompt.  use ./... for all.",
-		Lang: filecat.Go,
+		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args:    []string{"get", "-u", "{PromptString1}"},
 			Default: "./..."}},
@@ -171,7 +171,7 @@ var StdCmds = Commands{
 	// Git
 	{Cat: "Git", Name: "Add",
 		Desc: "git add file",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"add", "{FilePath}"}}},
 		Dir:  "{FileDirPath}",
@@ -179,7 +179,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Switch To Branch",
 		Desc: "git switch to an existing branch",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"switch", "{PromptBranch}"}}},
 		Dir:  "{FileDirPath}",
@@ -187,7 +187,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Switch",
 		Desc: "git switch to new branch or existing commit: -c or -C (force) <branch> to create new; --detatch <commit> to switch to older (non-HEAD) commit; --orphan to abandon history",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"switch", "{PromptString1}"},
 			Default: "-c "}},
@@ -196,7 +196,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Restore",
 		Desc: "git restore: file, directory -- undoes any current changes and restores from last commit; -s option specifies source -- also available as revert in file view",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"restore", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
@@ -204,7 +204,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Checkout",
 		Desc: "git checkout: file, directory, branch; -b <branch> creates a new branch",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"checkout", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
@@ -212,7 +212,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Status",
 		Desc: "git status",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"status"}}},
 		Dir:  "{FileDirPath}",
@@ -220,7 +220,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Diff",
 		Desc: "git diff -- see changes since last checkin",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"diff"}}},
 		Dir:  "{FileDirPath}",
@@ -228,7 +228,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Log",
 		Desc: "git log",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"log"}}},
 		Dir:  "{FileDirPath}",
@@ -236,7 +236,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Commit",
 		Desc: "git commit",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"commit", "-am", "{PromptString1}"}, PromptIsString: true}},
 		Dir:  "{FileDirPath}",
@@ -244,7 +244,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Pull Branch",
 		Desc: "git pull from existing branch",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"pull", "origin", "{PromptBranch}"}}},
 		Dir:  "{FileDirPath}",
@@ -252,7 +252,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Pull",
 		Desc: "git pull",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"pull", "{PromptString1}"},
 			Default: "origin"}},
@@ -261,7 +261,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Push",
 		Desc: "git push to update remote (origin) for given branch",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"push", "origin", "{PromptBranch}"},
 			Default: "origin"}},
@@ -270,7 +270,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Push Force",
 		Desc: "git push to update remote (origin) for given branch -- force -- needed for example after rebase or merge with conflicts",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"push", "--force", "origin", "{PromptBranch}"},
 			Default: "origin"}},
@@ -279,7 +279,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Stash",
 		Desc: "git stash: push / pop local changes for later without committing, resetting to HEAD: also list, show, drop, clear",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"stash", "{PromptString1}"},
 			Default: "push"}},
@@ -288,7 +288,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Branch",
 		Desc: "git branch: -a shows all; --list shows local; <branchname> makes a new one, optionally given sha; -d to delete; -r delete remote; -D force delete",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"branch", "{PromptString1}"},
 			Default: "-a"}},
@@ -297,7 +297,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Branch Delete",
 		Desc: "git branch -d -r selected branch name",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"branch", "-d", "-r", "{PromptBranch}"}}},
 		Dir:  "{FileDirPath}",
@@ -305,7 +305,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Rebase",
 		Desc: "git rebase: updates current branch to given branch, often master",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"rebase", "{PromptBranch}"},
 			Default: "master"}},
@@ -314,7 +314,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Rebase Continue",
 		Desc: "git rebase: updates current branch to given branch, often master -- does --continue to continue process",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"rebase", "--continue"}}},
 		Dir:  "{FileDirPath}",
@@ -322,7 +322,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Reset",
 		Desc: "git reset: resets current state to given source -- use --hard to override -- CAN RESULT IN LOSS OF CHANGES -- make sure everything is committed",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"reset", "{PromptString1}"},
 			Default: "--hard origin/master"}},
@@ -331,7 +331,7 @@ var StdCmds = Commands{
 
 	{Cat: "Git", Name: "Remote",
 		Desc: "git remote: prune origin = remove stale branches; show; add <name> <URL>; remove <name>; get-url / set-url <name>",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args:    []string{"remote", "{PromptString1}"},
 			Default: "prune origin"}},
@@ -341,7 +341,7 @@ var StdCmds = Commands{
 	// SVN
 	{Cat: "SVN", Name: "Add",
 		Desc: "svn add file",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"add", "{FilePath}"}}},
 		Dir:  "{FileDirPath}",
@@ -349,7 +349,7 @@ var StdCmds = Commands{
 
 	{Cat: "SVN", Name: "Status",
 		Desc: "svn status",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"status"}}},
 		Dir:  "{FileDirPath}",
@@ -357,7 +357,7 @@ var StdCmds = Commands{
 
 	{Cat: "SVN", Name: "Info",
 		Desc: "svn info",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"info"}}},
 		Dir:  "{FileDirPath}",
@@ -365,7 +365,7 @@ var StdCmds = Commands{
 
 	{Cat: "SVN", Name: "Log",
 		Desc: "svn log",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"log", "-v"}}},
 		Dir:  "{FileDirPath}",
@@ -373,7 +373,7 @@ var StdCmds = Commands{
 
 	{Cat: "SVN", Name: "Commit Proj",
 		Desc: "svn commit for entire project directory",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"commit", "-m", "{PromptString1}"}, PromptIsString: true}},
 		Dir:  "{ProjPath}",
@@ -381,7 +381,7 @@ var StdCmds = Commands{
 
 	{Cat: "SVN", Name: "Commit Dir",
 		Desc: "svn commit in directory of current file",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"commit", "-m", "{PromptString1}"}, PromptIsString: true}},
 		Dir:  "{FileDirPath}",
@@ -389,7 +389,7 @@ var StdCmds = Commands{
 
 	{Cat: "SVN", Name: "Update",
 		Desc: "svn update",
-		Lang: filecat.Any,
+		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"update"}}},
 		Dir:  "{FileDirPath}",
@@ -398,7 +398,7 @@ var StdCmds = Commands{
 	// LaTeX
 	{Cat: "LaTeX", Name: "LaTeX PDF",
 		Desc: "run PDFLaTeX on file",
-		Lang: filecat.TeX,
+		Lang: fi.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "pdflatex",
 			Args: []string{"-file-line-error", "-interaction=nonstopmode", "{FilePath}"}}},
 		Dir:  "{FileDirPath}",
@@ -406,7 +406,7 @@ var StdCmds = Commands{
 
 	{Cat: "LaTeX", Name: "BibTeX",
 		Desc: "run BibTeX on file",
-		Lang: filecat.TeX,
+		Lang: fi.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "bibtex",
 			Args: []string{"{FileNameNoExt}"}}},
 		Dir:  "{FileDirPath}",
@@ -414,7 +414,7 @@ var StdCmds = Commands{
 
 	{Cat: "LaTeX", Name: "Biber",
 		Desc: "run Biber on file",
-		Lang: filecat.TeX,
+		Lang: fi.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "biber",
 			Args: []string{"{FileNameNoExt}"}}},
 		Dir:  "{FileDirPath}",
@@ -422,7 +422,7 @@ var StdCmds = Commands{
 
 	{Cat: "LaTeX", Name: "CleanTeX",
 		Desc: "remove aux LaTeX files",
-		Lang: filecat.TeX,
+		Lang: fi.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "rm",
 			Args: []string{"*.aux", "*.log", "*.blg", "*.bbl", "*.fff", "*.lof", "*.ttt", "*.toc", "*.spl"}}},
 		Dir:  "{FileDirPath}",
