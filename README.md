@@ -46,6 +46,44 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* keyboard command for top bar chooser
+* chooser needs special support for URI with icons
+* more gide resources: commands!
+* crash still happening -- see terminal
+* more helpers for URI api
+* filter function for chooser for URI case
+
+
+* goki.dev/gi/v2/gi.(*RenderWin).EventLoop.func1()
+	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:598 +0x158
+panic({0x102aa0600?, 0x1038807e0?})
+	/opt/homebrew/Cellar/go/1.21.4/libexec/src/runtime/panic.go:914 +0x218
+goki.dev/gi/v2/texteditor.(*Editor).PixelToCursor(0x140006a1000, {0x100843ab8?, 0x1400e843ab8?})
+	/Users/oreilly/goki.dev/gi/v2/texteditor/render.go:676 +0x114
+goki.dev/gi/v2/texteditor.(*Editor).HandleEditorEvents.(*Editor).HandleEditorLinkCursor.func1({0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/texteditor/events.go:652 +0x60
+goki.dev/gi/v2/texteditor.(*Editor).HandleEditorEvents.(*Editor).HandleEditorLinkCursor.(*WidgetBase).On.func2({0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/gi/events.go:35 +0x7c
+goki.dev/goosi/events.(*Listeners).Call(0x140006a1700, {0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/goosi/events/listeners.go:58 +0xa4
+goki.dev/gi/v2/gi.(*WidgetBase).HandleEvent(0x140006a1000, {0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/gi/events.go:196 +0x1a0
+goki.dev/gi/v2/gi.(*EventMgr).HandlePosEvent(0x14000234140, {0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/gi/eventmgr.go:315 +0x43c
+goki.dev/gi/v2/gi.(*EventMgr).HandleEvent(0x140002e1260?, {0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/gi/eventmgr.go:198 +0x58
+goki.dev/gi/v2/gi.(*Stage).MainHandleEvent(0x1400074b200, {0x102c4fb68?, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/gi/mainstage.go:309 +0x144
+goki.dev/gi/v2/gi.(*StageMgr).MainHandleEvent(0x14000440038, {0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/gi/mainstage.go:317 +0x78
+goki.dev/gi/v2/gi.(*RenderWin).HandleEvent(0x14000440000, {0x102c4fb68, 0x14022413ce0})
+	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:652 +0x128
+goki.dev/gi/v2/gi.(*RenderWin).EventLoop(0x14000440000)
+	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:618 +0x50
+created by goki.dev/gi/v2/gi.(*RenderWin).GoStartEventLoop in goroutine 50
+	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:544 +0xa4
+
+
 * add icons for symbols and get the merge thing to work
 * symbolsview: textview still not jumping to line correctly
 
@@ -55,7 +93,6 @@ In addition to Issues shown on github, some important features to be added longe
 
 * dialog closing causes old window to show up -- need to update render images
 * textview context menu
-* diff views
 
 * fileview global priority key shortcuts and fileview menu
 * editor rendering overflow
@@ -63,35 +100,5 @@ In addition to Issues shown on github, some important features to be added longe
 * filetree --get rid of empty upper level or not?
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
 
-# DONE
 
-* spell, 
-* menu choice selector close STILL not working! -- it is about the function being called!!!
-* open recent not making new window if gide already open
-* depth bg color not showing texteditor
-* filenode bold font not showing for isexe -- is set at treeview level
-* treeview label color getting reset on doubleclick in filetree
-* popup add position method override to set position specifically
-* gide filetree context menu -- just commands needed now
-* Completer is async and needs protection!
-* commands popup is not getting menu styles shadows
-* toml config files and cleanup prefs a bit
-* tableview / sliceview need extra layout loops within one layout pass -- doesn't work inside tabs
-* paste history not working at all
-* filetree not updating on open -- show already happening? -- works on new window but not existing.. duh.
-* var view needs same treeview select logic as inspector
-* gomod not updated
-* start select on menu (buff menu etc) not working -- so flakey 
-* external files not quite working
-* recycle tab not working: getting stuck with Updating
-* replace is not interactive
-* open file not applying textfield sel on keyfun.Accept
-* lookup
-* initial view of buffer not scrolling 
-* new command output needs to trigger layout update -- maybe fixed?
-* click select is not updating on render
-* register insert not working
-* focus first!
-* completer: no space, yes arrow keys
-* jump still not scrolling reliably -- same with links -- very random -- print in scroll code!
 

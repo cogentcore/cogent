@@ -331,8 +331,7 @@ func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.FileName) { //gti:a
 	bstr := fnb.Buf.Strings(false)
 	_, _ = astr, bstr
 
-	// todo!
-	// giv.DiffViewDialog(ge.Viewport, astr, bstr, string(fna.Buf.Filename), string(fnb.Buf.Filename), "", "", giv.DlgOpts{Title: "Diff File View:"})
+	texteditor.DiffViewDialog(ge, "Diff File View:", astr, bstr, string(fna.Buf.Filename), string(fnb.Buf.Filename), "", "")
 }
 
 // CountWords counts number of words (and lines) in active file
