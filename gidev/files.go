@@ -452,22 +452,27 @@ func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
 	}
 }
 
+// FileNodeRunExe runs the given executable file node
+func (ge *GideView) FileNodeRunExe(fn *filetree.Node) {
+	ge.SetArgVarVals()
+	ge.ArgVals["{PromptString1}"] = string(fn.FPath)
+	gide.CmdNoUserPrompt = true // don't re-prompt!
+	cmd, _, ok := gide.AvailCmds.CmdByName(gide.CmdName("Build: Run Prompt"), true)
+	if ok {
+		ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
+		cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)
+		cmd.Run(ge, cbuf)
+	}
+}
+
 // FileNodeOpened is called whenever file node is double-clicked in file tree
 func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 	// todo: could add all these options in LangOpts
 	switch fn.Info.Cat {
 	case fi.Folder:
 	case fi.Exe:
+		ge.FileNodeRunExe(fn)
 		// this uses exe path for cd to this path!
-		ge.SetArgVarVals()
-		ge.ArgVals["{PromptString1}"] = string(fn.FPath)
-		gide.CmdNoUserPrompt = true // don't re-prompt!
-		cmd, _, ok := gide.AvailCmds.CmdByName(gide.CmdName("Build: Run Prompt"), true)
-		if ok {
-			ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
-			cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)
-			cmd.Run(ge, cbuf)
-		}
 		return
 	case fi.Font, fi.Video, fi.Model, fi.Audio, fi.Sheet, fi.Bin,
 		fi.Archive, fi.Image:

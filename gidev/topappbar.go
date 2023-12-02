@@ -5,6 +5,8 @@
 package gidev
 
 import (
+	"strings"
+
 	"goki.dev/fi/uri"
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
@@ -252,16 +254,33 @@ func (ge *GideView) ResourceFiles() uri.URIs {
 	var ul uri.URIs
 	ge.Files.WidgetWalkPre(func(wi gi.Widget, wb *gi.WidgetBase) bool {
 		fn := filetree.AsNode(wi)
-		if fn == nil || fn.IsDir() {
+		if fn == nil || fn.IsIrregular() {
 			return ki.Continue
 		}
-		ur := uri.URI{Label: fn.Nm, Icon: fn.Info.Ic}
-		ur.SetURL("file", "", fn.MyRelPath())
-		ur.Func = func() {
-			_, idx := ge.NextViewFileNode(fn)
-			_ = idx
+		switch {
+		case fn.IsDir():
+			ur := uri.URI{Label: fn.Nm, Icon: icons.Folder}
+			ur.SetURL("dir", "", fn.MyRelPath())
+			ur.Func = func() {
+				fn.OpenDir()
+				fn.ScrollToMe()
+			}
+			ul = append(ul, ur)
+		case fn.IsExec():
+			ur := uri.URI{Label: fn.Nm, Icon: icons.FileExe}
+			ur.SetURL("exe", "", fn.MyRelPath())
+			ur.Func = func() {
+				ge.FileNodeRunExe(fn)
+			}
+			ul = append(ul, ur)
+		default:
+			ur := uri.URI{Label: fn.Nm, Icon: fn.Info.Ic}
+			ur.SetURL("file", "", fn.MyRelPath())
+			ur.Func = func() {
+				ge.NextViewFileNode(fn)
+			}
+			ul = append(ul, ur)
 		}
-		ul = append(ul, ur)
 		return ki.Continue
 	})
 	return ul
@@ -291,7 +310,7 @@ func (ge *GideView) ResourceCommands() uri.URIs {
 			ii := ii
 			it := cc[ii]
 			cmdNm := gide.CommandName(cmdCat, it)
-			ur := uri.URI{Label: cmdNm} // todo: icon?
+			ur := uri.URI{Label: cmdNm, Icon: icons.Icon(strings.ToLower(cmdCat))}
 			ur.SetURL("cmd", "", cmdNm)
 			ur.Func = func() {
 				cmd := gide.CmdName(cmdNm)

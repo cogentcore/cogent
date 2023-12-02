@@ -24,6 +24,7 @@ import (
 	"goki.dev/goosi/events"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
+	"goki.dev/icons"
 	"goki.dev/pi/v2/complete"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/vci/v2"
@@ -830,20 +831,22 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 				continue
 			}
 			cmdCat := cc[0]
-			cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonMenu)
+			ic := icons.Icon(strings.ToLower(cmdCat))
+			cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonMenu).SetIcon(ic)
 			cb.SetMenu(func(m *gi.Scene) {
 				for ii := 1; ii < n; ii++ {
 					ii := ii
 					it := cc[ii]
 					cmdNm := CommandName(cmdCat, it)
-					b := gi.NewButton(m).SetText(it).OnClick(func(e events.Event) {
-						e.SetHandled()
-						cmd := CmdName(cmdNm)
-						chist.Add(cmd)                 // only save commands executed via chooser
-						ge.SaveAllCheck(true, func() { // true = cancel option
-							ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+					b := gi.NewButton(m).SetText(it).SetIcon(ic).
+						OnClick(func(e events.Event) {
+							e.SetHandled()
+							cmd := CmdName(cmdNm)
+							chist.Add(cmd)                 // only save commands executed via chooser
+							ge.SaveAllCheck(true, func() { // true = cancel option
+								ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+							})
 						})
-					})
 					if cmdNm == lastCmd {
 						b.SetSelected(true)
 					}
