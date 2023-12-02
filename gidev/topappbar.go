@@ -31,7 +31,9 @@ func DefaultTopAppBar(tb *gi.TopAppBar) {
 }
 
 func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
-	tb.Resources.Add(ge.FilesResource)
+	tb.Resources.Add(ge.ResourceCommands)
+	tb.Resources.Add(ge.ResourceFiles)
+	tb.Resources.Add(ge.ResourceSymbols)
 
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
@@ -242,20 +244,89 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 
 }
 
-func (ge *GideView) FilesResource() uri.URIs {
+// ResourceFiles adds the files
+func (ge *GideView) ResourceFiles() uri.URIs {
 	if ge.Files == nil {
 		return nil
 	}
 	var ul uri.URIs
 	ge.Files.WidgetWalkPre(func(wi gi.Widget, wb *gi.WidgetBase) bool {
 		fn := filetree.AsNode(wi)
-		if fn == nil {
+		if fn == nil || fn.IsDir() {
 			return ki.Continue
 		}
 		ur := uri.URI{Label: fn.Nm, Icon: fn.Info.Ic}
-		ur.SetURL("file", "", string(fn.FPath))
+		ur.SetURL("file", "", fn.MyRelPath())
 		ur.Func = func() {
-			ge.NextViewFileNode(fn)
+			_, idx := ge.NextViewFileNode(fn)
+			ge.FocusOnPanel(TextEditor1Idx + idx) // already called but we want to make it happen
+		}
+		ul = append(ul, ur)
+		return ki.Continue
+	})
+	return ul
+}
+
+// ResourceCommands adds the commands
+func (ge *GideView) ResourceCommands() uri.URIs {
+	lang := ge.Prefs.MainLang
+	vcnm := ge.VersCtrl()
+	fn := ge.ActiveFileNode()
+	if fn != nil {
+		lang = fn.Info.Sup
+		if repo, _ := fn.Repo(); repo != nil {
+			vcnm = filetree.VersCtrlName(repo.Vcs())
+		}
+	}
+	var ul uri.URIs
+	cmds := gide.AvailCmds.FilterCmdNames(lang, vcnm)
+	for _, cc := range cmds {
+		cc := cc
+		n := len(cc)
+		if n < 2 {
+			continue
+		}
+		cmdCat := cc[0]
+		for ii := 1; ii < n; ii++ {
+			ii := ii
+			it := cc[ii]
+			cmdNm := gide.CommandName(cmdCat, it)
+			ur := uri.URI{Label: cmdNm} // todo: icon?
+			ur.SetURL("cmd", "", cmdNm)
+			ur.Func = func() {
+				cmd := gide.CmdName(cmdNm)
+				ge.CmdHist().Add(cmd)          // only save commands executed via chooser
+				ge.SaveAllCheck(true, func() { // true = cancel option
+					ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+				})
+			}
+			ul = append(ul, ur)
+		}
+	}
+	return ul
+}
+
+// ResourceSymbols adds the symbols
+func (ge *GideView) ResourceSymbols() uri.URIs {
+	tv := ge.ActiveTextEditor()
+	if tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
+		return nil
+	}
+	pfs := tv.Buf.PiState.Done()
+	if len(pfs.ParseState.Scopes) == 0 {
+		return nil
+	}
+	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
+	syms := &gide.SymNode{}
+	syms.InitName(syms, "syms")
+	syms.OpenSyms(pkg, "", "")
+	var ul uri.URIs
+	syms.WalkPre(func(k ki.Ki) bool {
+		sn := k.(*gide.SymNode)
+		ur := uri.URI{Label: sn.Symbol.Label(), Icon: sn.GetIcon()}
+		ur.SetURL("sym", "", sn.PathFrom(syms))
+		ur.Func = func() {
+			gide.SelectSymbol(ge, sn.Symbol)
 		}
 		ul = append(ul, ur)
 		return ki.Continue
@@ -319,40 +390,6 @@ var GideViewProps = ki.Props{
 			}),
 			"Args": ki.PropSlice{
 				{"Node Name", ki.Props{}},
-			},
-		}},
-		{"sep-find", ki.BlankProp{}},
-		{"Find", ki.Props{
-			"label":    "Find...",
-			"icon":     "search",
-			"desc":     "Find / replace in all open folders in file browser",
-			"shortcut": keyfun.Find,
-			"Args": ki.PropSlice{
-				{"Search For", ki.Props{
-					"default-field": "Prefs.Find.Find",
-					"history-field": "Prefs.Find.FindHist",
-					"width":         80,
-				}},
-				{"Replace With", ki.Props{
-					"desc":          "Optional replace string -- replace will be controlled interactively in Find panel, including replace all",
-					"default-field": "Prefs.Find.Replace",
-					"history-field": "Prefs.Find.ReplHist",
-					"width":         80,
-				}},
-				{"Ignore Case", ki.Props{
-					"default-field": "Prefs.Find.IgnoreCase",
-				}},
-				{"Regexp", ki.Props{
-					"default-field": "Prefs.Find.Regexp",
-				}},
-				{"Location", ki.Props{
-					"desc":          "location to find in",
-					"default-field": "Prefs.Find.Loc",
-				}},
-				{"Languages", ki.Props{
-					"desc":          "restrict find to files associated with these languages -- leave empty for all files",
-					"default-field": "Prefs.Find.Langs",
-				}},
 			},
 		}},
 	},

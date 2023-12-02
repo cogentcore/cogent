@@ -155,7 +155,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 			}
 			sn := tv.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
 			if sn != nil {
-				sv.SelectSymbol(sn.Symbol)
+				SelectSymbol(sv.Gide, sn.Symbol)
 			}
 		})
 	} else {
@@ -173,8 +173,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	sfr.UpdateEndLayout(updt)
 }
 
-func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
-	ge := sv.Gide
+func SelectSymbol(ge Gide, ssym syms.Symbol) {
 	tv := ge.ActiveTextEditor()
 	if tv == nil || tv.Buf == nil || string(tv.Buf.Filename) != ssym.Filename {
 		var ok = false
@@ -193,6 +192,7 @@ func (sv *SymbolsView) SelectSymbol(ssym syms.Symbol) {
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorShow(tr.Start)
 	tv.SetFocusEvent()
+	ge.FocusOnTabs()
 }
 
 // OpenPackage opens package-level symbols for current active textview
@@ -330,6 +330,26 @@ type SymNode struct {
 	Symbol syms.Symbol
 }
 
+// GetIcon returns the appropriate Icon for this symbol type
+func (sy *SymNode) GetIcon() icons.Icon {
+	ic := icons.Blank
+	switch sy.Symbol.Kind {
+	case token.NameType:
+		ic = icons.Title
+	case token.NameVar, token.NameVarGlobal:
+		ic = icons.Variables
+	case token.NameMethod:
+		ic = icons.Target
+	case token.NameFunction:
+		ic = icons.Function
+	case token.NameField:
+		ic = icons.Label
+	case token.NameConstant:
+		// todo:
+	}
+	return ic
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // SymTreeView
 
@@ -352,22 +372,7 @@ func (st *SymTreeView) UpdateBranchIcons() {
 }
 
 func (st *SymTreeView) SetSymIcon() {
-	ic := icons.Blank
-	sym := st.SymNode()
-	switch sym.Symbol.Kind {
-	case token.NameType:
-		ic = icons.Title
-	case token.NameVar, token.NameVarGlobal:
-		ic = icons.Variables
-	case token.NameMethod:
-		ic = icons.Target
-	case token.NameFunction:
-		ic = icons.Function
-	case token.NameField:
-		ic = icons.Label
-	case token.NameConstant:
-		// todo:
-	}
+	ic := st.SymNode().GetIcon()
 	if bp, ok := st.BranchPart(); ok {
 		if bp.IconDisab != ic {
 			bp.IconDisab = ic

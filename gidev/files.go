@@ -211,6 +211,7 @@ func (ge *GideView) NextViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) 
 		return tv, idx
 	}
 	nv, nidx := ge.NextTextEditor()
+	// fmt.Println("next idx:", nidx)
 	ge.ViewFileNode(nv, nidx, fn)
 	return nv, nidx
 }

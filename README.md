@@ -46,13 +46,30 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* keyboard command for top bar chooser
+* focus in topappbar returning to TAB not going to where command goes.
+
 * chooser needs special support for URI with icons
-* more gide resources: commands!
-* crash still happening -- see terminal
 * more helpers for URI api
 * filter function for chooser for URI case
+* rename Supported -> Enum or something?
 
+* add icons for symbols and get the merge thing to work
+* symbolsview: textview still not jumping to line correctly
+
+* Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
+
+* Find not selecting first item (sometimes?)
+
+* dialog closing causes old window to show up -- need to update render images
+* textview context menu
+
+* fileview global priority key shortcuts and fileview menu
+* editor rendering overflow
+* lineno horiz scrolling issues -- this is in V1 too!
+* filetree --get rid of empty upper level or not?
+* sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
+
+# DONE:
 
 * goki.dev/gi/v2/gi.(*RenderWin).EventLoop.func1()
 	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:598 +0x158
@@ -82,23 +99,4 @@ goki.dev/gi/v2/gi.(*RenderWin).EventLoop(0x14000440000)
 	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:618 +0x50
 created by goki.dev/gi/v2/gi.(*RenderWin).GoStartEventLoop in goroutine 50
 	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:544 +0xa4
-
-
-* add icons for symbols and get the merge thing to work
-* symbolsview: textview still not jumping to line correctly
-
-* Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
-
-* Find not selecting first item (sometimes?)
-
-* dialog closing causes old window to show up -- need to update render images
-* textview context menu
-
-* fileview global priority key shortcuts and fileview menu
-* editor rendering overflow
-* lineno horiz scrolling issues -- this is in V1 too!
-* filetree --get rid of empty upper level or not?
-* sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
-
-
 
