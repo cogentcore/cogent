@@ -4,9 +4,9 @@ package glide
 
 const (
 	// Version is the version of this package being used
-	Version = "v0.0.2"
+	Version = "v0.0.3"
 	// GitCommit is the commit just before the latest version commit
-	GitCommit = "88c9fe7"
+	GitCommit = "0f58788"
 	// VersionDate is the date-time of the latest version commit in UTC (in the format 'YYYY-MM-DD HH:MM', which is the Go format '2006-01-02 15:04')
-	VersionDate = "2023-12-02 01:27"
+	VersionDate = "2023-12-02 01:43"
 )
