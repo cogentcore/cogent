@@ -35,6 +35,7 @@ Version: ` + gide.Prefs.VersionInfo())
 
 	gi.DefaultTopAppBar = gidev.DefaultTopAppBar
 
+	// gi.FocusTrace = true
 	// gi.LayoutTrace = true
 	// gi.KeyEventTrace = true
 

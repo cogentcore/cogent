@@ -190,7 +190,7 @@ func SelectSymbol(ge Gide, ssym syms.Symbol) {
 	tv.Highlights = tv.Highlights[:0]
 	tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 	tv.Highlights = append(tv.Highlights, tr)
-	tv.SetCursorShow(tr.Start)
+	tv.SetCursorTarget(tr.Start)
 	tv.SetFocusEvent()
 	ge.FocusOnTabs()
 }

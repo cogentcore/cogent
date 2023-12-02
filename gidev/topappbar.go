@@ -259,7 +259,7 @@ func (ge *GideView) ResourceFiles() uri.URIs {
 		ur.SetURL("file", "", fn.MyRelPath())
 		ur.Func = func() {
 			_, idx := ge.NextViewFileNode(fn)
-			ge.FocusOnPanel(TextEditor1Idx + idx) // already called but we want to make it happen
+			_ = idx
 		}
 		ul = append(ul, ur)
 		return ki.Continue

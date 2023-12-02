@@ -335,7 +335,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	texteditor.PrevISearchString = find
 	tve := texteditor.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
-	tv.SetCursorShow(reg.Start)
+	tv.SetCursorTarget(reg.Start)
 	tv.SetNeedsLayout(true)
 	return true
 }

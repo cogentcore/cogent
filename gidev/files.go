@@ -346,7 +346,7 @@ func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) 
 func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextEditor, error) {
 	tv, _, ok := ge.LinkViewFile(gi.FileName(fname))
 	if ok {
-		tv.SetCursorShow(lex.Pos{Ln: ln - 1})
+		tv.SetCursorTarget(lex.Pos{Ln: ln - 1})
 		return tv, nil
 	}
 	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fname)

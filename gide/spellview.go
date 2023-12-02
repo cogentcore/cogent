@@ -280,7 +280,7 @@ func (sv *SpellView) CheckNext() {
 	defer tv.UpdateEndRender(updt)
 
 	tv.Highlights = tv.Highlights[:0]
-	tv.SetCursorShow(st)
+	tv.SetCursorTarget(st)
 	hr := textbuf.Region{Start: st, End: en}
 	hr.TimeNow()
 	tv.Highlights = append(tv.Highlights, hr)

@@ -162,7 +162,7 @@ func (ge *GideView) ConfigSplits() {
 		ted.Gide = ge
 		gide.ConfigEditorTextEditor(&ted.Editor)
 		ted.OnFocus(func(e events.Event) {
-			ge.SetActiveTextEditorIdx(i)
+			ge.ActiveTextEditorIdx = i
 		})
 		// get updates on cursor movement and qreplace
 		ted.OnInput(func(e events.Event) {

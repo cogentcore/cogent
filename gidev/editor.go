@@ -105,8 +105,8 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	d := gi.NewBody().AddTitle(title).AddText(prmpt)
 	tv := texteditor.NewEditor(d).SetBuf(tb)
 	tv.SetReadOnly(true)
-	tv.ScrollToCursorPos = lex.Pos{Ln: ld.StLine}
-	tv.ScrollToCursorOnRender = true
+
+	tv.SetCursorTarget(lex.Pos{Ln: ld.StLine})
 	tv.Styles.Font.Family = string(gi.Prefs.MonoFont)
 	d.AddBottomBar(func(pw gi.Widget) {
 		gi.NewButton(pw).SetText("Open File").SetIcon(icons.Open).OnClick(func(e events.Event) {
@@ -444,7 +444,7 @@ func (ge *GideView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start
 		tv.HighlightRegion(reg)
-		tv.SetCursorShow(txpos)
+		tv.SetCursorTarget(txpos)
 		tv.SetNeedsLayout(true)
 	}
 	return true

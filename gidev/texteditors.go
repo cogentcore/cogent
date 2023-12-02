@@ -205,7 +205,7 @@ func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (t
 
 	tv.Highlights = tv.Highlights[:0]
 	tv.Highlights = append(tv.Highlights, tr)
-	tv.SetCursorShow(tr.Start)
+	tv.SetCursorTarget(tr.Start)
 	tv.SetFocusEvent()
 	return tv, true
 }
