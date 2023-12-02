@@ -46,15 +46,12 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* focus in topappbar returning to TAB not going to where command goes.
-
-* chooser needs special support for URI with icons
+* chooser needs special support for URI with icons -- for completion now
 * more helpers for URI api
 * filter function for chooser for URI case
 * rename Supported -> Enum or something?
 
 * add icons for symbols and get the merge thing to work
-* symbolsview: textview still not jumping to line correctly
 
 * Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
 
@@ -71,6 +68,10 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE:
 
+* focus in topappbar returning to TAB not going to where command goes.
+
+* symbolsview: textview still not jumping to line correctly
+
 * goki.dev/gi/v2/gi.(*RenderWin).EventLoop.func1()
 	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:598 +0x158
 panic({0x102aa0600?, 0x1038807e0?})
@@ -80,23 +81,4 @@ goki.dev/gi/v2/texteditor.(*Editor).PixelToCursor(0x140006a1000, {0x100843ab8?, 
 goki.dev/gi/v2/texteditor.(*Editor).HandleEditorEvents.(*Editor).HandleEditorLinkCursor.func1({0x102c4fb68, 0x14022413ce0})
 	/Users/oreilly/goki.dev/gi/v2/texteditor/events.go:652 +0x60
 goki.dev/gi/v2/texteditor.(*Editor).HandleEditorEvents.(*Editor).HandleEditorLinkCursor.(*WidgetBase).On.func2({0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/gi/events.go:35 +0x7c
-goki.dev/goosi/events.(*Listeners).Call(0x140006a1700, {0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/goosi/events/listeners.go:58 +0xa4
-goki.dev/gi/v2/gi.(*WidgetBase).HandleEvent(0x140006a1000, {0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/gi/events.go:196 +0x1a0
-goki.dev/gi/v2/gi.(*EventMgr).HandlePosEvent(0x14000234140, {0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/gi/eventmgr.go:315 +0x43c
-goki.dev/gi/v2/gi.(*EventMgr).HandleEvent(0x140002e1260?, {0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/gi/eventmgr.go:198 +0x58
-goki.dev/gi/v2/gi.(*Stage).MainHandleEvent(0x1400074b200, {0x102c4fb68?, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/gi/mainstage.go:309 +0x144
-goki.dev/gi/v2/gi.(*StageMgr).MainHandleEvent(0x14000440038, {0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/gi/mainstage.go:317 +0x78
-goki.dev/gi/v2/gi.(*RenderWin).HandleEvent(0x14000440000, {0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:652 +0x128
-goki.dev/gi/v2/gi.(*RenderWin).EventLoop(0x14000440000)
-	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:618 +0x50
-created by goki.dev/gi/v2/gi.(*RenderWin).GoStartEventLoop in goroutine 50
-	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:544 +0xa4
 

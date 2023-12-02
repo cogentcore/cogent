@@ -68,6 +68,7 @@ func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
 	svfr := gi.NewFrame(sv, "sym-frame")
 	svfr.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
+		s.Overflow.Set(styles.OverflowAuto)
 	})
 	sv.ConfigToolbar()
 	sb := sv.ScopeChooser()
@@ -337,15 +338,15 @@ func (sy *SymNode) GetIcon() icons.Icon {
 	case token.NameType:
 		ic = icons.Title
 	case token.NameVar, token.NameVarGlobal:
-		ic = icons.Variables
+		ic = icons.Variable
 	case token.NameMethod:
-		ic = icons.Target
+		ic = icons.Method
 	case token.NameFunction:
 		ic = icons.Function
 	case token.NameField:
-		ic = icons.Label
+		ic = icons.Field
 	case token.NameConstant:
-		// todo:
+		ic = icons.Constant
 	}
 	return ic
 }
