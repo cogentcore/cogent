@@ -36,6 +36,9 @@ func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buf, bo
 	buf.NewBuf(0)
 	ge.CmdBufs[cmdNm] = buf
 	buf.Autosave = false
+	// buf.Info.Known = fi.Bash
+	// buf.Info.Mime = fi.MimeString(fi.Bash)
+	// buf.Hi.Lang = "Bash"
 	return buf, true
 }
 

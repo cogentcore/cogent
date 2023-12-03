@@ -224,7 +224,7 @@ var StdCmds = Commands{
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"diff"}}},
 		Dir:  "{FileDirPath}",
-		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm, Hilight: fi.Diff},
 
 	{Cat: "Git", Name: "Log",
 		Desc: "git log",

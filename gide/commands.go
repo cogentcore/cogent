@@ -278,6 +278,9 @@ type Command struct {
 
 	// if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands
 	Confirm bool
+
+	//	what type of file to use for syntax highlighting.  Bash is the default.
+	Hilight fi.Known
 }
 
 // CommandName returns a qualified command name as cat: cmd
@@ -429,6 +432,13 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
+	// if cm.Hilight != fi.Unknown {
+	// 	buf.Info.Known = cm.Hilight
+	// 	buf.Info.Mime = fi.MimeString(fi.Bash)
+	// 	buf.Hi.Lang = cm.Hilight.String()
+	// }
+	// todo: trying to use native highlighting
+	// buf.Hi.Init(&buf.Info, nil)
 	if cm.Confirm {
 		d := gi.NewBody().AddTitle("Confirm Command").
 			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
@@ -509,7 +519,7 @@ func (cm *Command) RunBuf(ge Gide, buf *texteditor.Buf, cma *CmdAndArgs) bool {
 		err = cmd.Start()
 		if err == nil {
 			obuf := texteditor.OutBuf{}
-			obuf.Init(stdout, buf, 0, MarkupCmdOutput)
+			obuf.Init(stdout, buf, 0, cm.MarkupCmdOutput)
 			obuf.MonOut()
 		}
 		err = cmd.Wait()
@@ -539,7 +549,7 @@ func (cm *Command) AppendCmdOut(ge Gide, buf *texteditor.Buf, out []byte) {
 	sz := len(lns)
 	outmus := make([][]byte, sz)
 	for i, txt := range lns {
-		outmus[i] = MarkupCmdOutput(txt)
+		outmus[i] = cm.MarkupCmdOutput(txt)
 	}
 	lfb := []byte("\n")
 	mlns := bytes.Join(outmus, lfb)
@@ -581,9 +591,10 @@ func (cm *Command) RunStatus(ge Gide, buf *texteditor.Buf, cmdstr string, err er
 		}
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)
-		buf.AppendTextLineMarkup(fsb, MarkupCmdOutput(fsb), texteditor.EditSignal)
-		// todo: add this
-		// buf.RefreshViews()
+		buf.AppendTextLineMarkup(fsb, cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
+		// todo: attempt to support syntax highlighting using builtin texteditor formatting
+		// buf.AppendTextLine([]byte(""), texteditor.EditSignal)
+		// buf.AppendTextLine(cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
 		buf.AutoScrollViews()
 		if cm.Focus {
 			ge.FocusOnTabs()
@@ -600,17 +611,32 @@ func (cm *Command) LangMatch(lang fi.Known) bool {
 
 // MarkupCmdOutput applies links to the first element in command output line
 // if it looks like a file name / position
+func (cm *Command) MarkupCmdOutput(out []byte) []byte {
+	flds := strings.Fields(string(out))
+	if len(flds) == 0 {
+		return out
+	}
+	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	nt := out
+	if len(link) > 0 {
+		nt = bytes.Replace(out, orig, link, -1)
+	}
+	return nt
+}
+
+// MarkupCmdOutput applies links to the first element in command output line
+// if it looks like a file name / position
 func MarkupCmdOutput(out []byte) []byte {
 	flds := strings.Fields(string(out))
 	if len(flds) == 0 {
 		return out
 	}
 	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	nt := out
 	if len(link) > 0 {
-		nt := bytes.Replace(out, orig, link, -1)
-		return nt
+		nt = bytes.Replace(out, orig, link, -1)
 	}
-	return out
+	return nt
 }
 
 ////////////////////////////////////////////////////////////////////////////////

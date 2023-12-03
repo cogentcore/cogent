@@ -51,6 +51,8 @@ In addition to Issues shown on github, some important features to be added longe
 * drag-n-drop
 * color highlighting for diffs!
 
+* 
+
 * texteditor vert alloc not subtracting scrollbar?
 
 * more helpers for URI api
@@ -69,6 +71,8 @@ In addition to Issues shown on github, some important features to be added longe
 * lineno horiz scrolling issues -- this is in V1 too!
 * filetree --get rid of empty upper level or not?
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
+
+* outbuf use textview markup in addition to link formatting and other formatting.  tried but failed
 
 # DONE:
 
