@@ -228,7 +228,7 @@ type FileSearchResults struct {
 // language(s) that contain the given string (non regexp version), sorted in
 // descending order by number of occurrences -- ignoreCase transforms
 // everything into lowercase
-func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Supported) []FileSearchResults {
+func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -257,10 +257,13 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 			// fmt.Printf("dir: %v opened\n", sfn.Nm)
 			return ki.Continue
 		}
+		if int(sfn.Info.Size) > gi.Prefs.Params.BigFileSize {
+			return ki.Continue
+		}
 		if strings.HasSuffix(sfn.Nm, ".gide") { // exclude self
 			return ki.Continue
 		}
-		if !fi.IsMatchList(langs, sfn.Info.Sup) {
+		if !fi.IsMatchList(langs, sfn.Info.Known) {
 			return ki.Continue
 		}
 		if loc == FindLocDir {

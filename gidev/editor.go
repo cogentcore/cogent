@@ -86,7 +86,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	}
 	if ld.StLine > 0 {
 		lns := bytes.Split(txt, []byte("\n"))
-		comLn, comSt, comEd := textbuf.SupportedComments(ld.Filename)
+		comLn, comSt, comEd := textbuf.KnownComments(ld.Filename)
 		ld.StLine = textbuf.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
 	}
 

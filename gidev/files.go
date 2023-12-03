@@ -122,7 +122,7 @@ func (ge *GideView) RunPostCmdsActiveView() bool {
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
 func (ge *GideView) RunPostCmdsFileNode(fn *filetree.Node) bool {
-	lang := fn.Info.Sup
+	lang := fn.Info.Known
 	if lopt, has := gide.AvailLangs[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
 			ge.ExecCmdsFileNode(fn, lopt.PostSaveCmds, false, true) // no select, yes clear
@@ -487,7 +487,7 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 	case fi.Text:
 		edit = true
 	default:
-		if _, noed := CatNoEdit[fn.Info.Sup]; noed {
+		if _, noed := CatNoEdit[fn.Info.Known]; noed {
 			edit = false
 		}
 	}
@@ -514,7 +514,7 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 }
 
 // CatNoEdit are the files to NOT edit from categories: Doc, Data
-var CatNoEdit = map[fi.Supported]bool{
+var CatNoEdit = map[fi.Known]bool{
 	fi.Rtf:          true,
 	fi.MSWord:       true,
 	fi.OpenText:     true,

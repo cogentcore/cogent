@@ -25,7 +25,7 @@ import (
 func (ge *GideView) ConfigTextBuf(tb *texteditor.Buf) {
 	tb.SetHiStyle(gi.Prefs.HiStyle)
 	tb.Opts.EditorPrefs = ge.Prefs.Editor
-	tb.ConfigSupported()
+	tb.ConfigKnown()
 	if tb.Complete != nil {
 		tb.Complete.LookupFunc = ge.LookupFun
 	}
@@ -100,7 +100,7 @@ func (ge *GideView) TextEditorForFile(fnm gi.FileName) (*gide.TextEditor, int, b
 // SetActiveFileInfo sets the active file info from textbuf
 func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 	ge.ActiveFilename = buf.Filename
-	ge.ActiveLang = buf.Info.Sup
+	ge.ActiveLang = buf.Info.Known
 	ge.ActiveVCSInfo = ""
 	ge.ActiveVCS = nil
 	fn := ge.FileNodeForFile(string(ge.ActiveFilename), false)
@@ -156,6 +156,8 @@ func (ge *GideView) SetActiveTextEditorIdx(idx int) *gide.TextEditor {
 	}
 	ge.SetStatus("")
 	av.SetFocusEvent()
+	fmt.Println("active txedit target:", av.CursorPos)
+	av.SetCursorTarget(av.CursorPos)
 	av.SetNeedsLayout(true)
 	// fmt.Println(av, "set active text")
 	return av

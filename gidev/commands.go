@@ -106,7 +106,7 @@ func ExecCmds(ge *GideView) [][]string {
 	var cmds [][]string
 
 	vc := ge.VersCtrl()
-	if ge.ActiveLang == fi.NoSupport {
+	if ge.ActiveLang == fi.Unknown {
 		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
 	} else {
 		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)

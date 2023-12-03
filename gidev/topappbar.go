@@ -292,7 +292,7 @@ func (ge *GideView) ResourceCommands() uri.URIs {
 	vcnm := ge.VersCtrl()
 	fn := ge.ActiveFileNode()
 	if fn != nil {
-		lang = fn.Info.Sup
+		lang = fn.Info.Known
 		if repo, _ := fn.Repo(); repo != nil {
 			vcnm = filetree.VersCtrlName(repo.Vcs())
 		}

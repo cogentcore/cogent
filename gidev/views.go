@@ -42,7 +42,7 @@ func (ge *GideView) CallFind(ctx gi.Widget) {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool, loc gide.FindLoc, langs []fi.Supported) { //gti:add
+func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool, loc gide.FindLoc, langs []fi.Known) { //gti:add
 	if find == "" {
 		return
 	}
@@ -300,8 +300,8 @@ func (ge *GideView) UpdateStatusLabel() {
 			if tv.Buf.IsNotSaved() {
 				fnm += "*"
 			}
-			if tv.Buf.Info.Sup != fi.NoSupport {
-				fnm += " (" + tv.Buf.Info.Sup.String() + ")"
+			if tv.Buf.Info.Known != fi.Unknown {
+				fnm += " (" + tv.Buf.Info.Known.String() + ")"
 			}
 		}
 		if tv.ISearch.On {

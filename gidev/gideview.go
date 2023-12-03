@@ -45,7 +45,7 @@ type GideView struct {
 	ActiveFilename gi.FileName `set:"-"`
 
 	// language for current active filename
-	ActiveLang fi.Supported
+	ActiveLang fi.Known
 
 	// VCS repo for current active filename
 	ActiveVCS vci.Repo `set:"-"`
@@ -294,7 +294,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 // path -- all GideView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang fi.Supported, versCtrl filetree.VersCtrlName) *GideView { //gti:add
+func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang fi.Known, versCtrl filetree.VersCtrlName) *GideView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {

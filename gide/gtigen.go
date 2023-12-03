@@ -30,7 +30,7 @@ var DebugViewType = gti.AddType(&gti.Type{
 	Doc:        "DebugView is the debugger",
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/pi/v2/fi.Supported", LocalType: "fi.Supported", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
+		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/pi/v2/fi.Known", LocalType: "fi.Known", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
 		{"ExePath", &gti.Field{Name: "ExePath", Type: "string", LocalType: "string", Doc: "path to executable / dir to debug", Directives: gti.Directives{}, Tag: ""}},
 		{"DbgTime", &gti.Field{Name: "DbgTime", Type: "time.Time", LocalType: "time.Time", Doc: "time when dbg was last restarted", Directives: gti.Directives{}, Tag: ""}},
 		{"Dbg", &gti.Field{Name: "Dbg", Type: "goki.dev/gide/v2/gidebug.GiDebug", LocalType: "gidebug.GiDebug", Doc: "the debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
@@ -67,7 +67,7 @@ func (t *DebugView) New() ki.Ki {
 
 // SetSup sets the [DebugView.Sup]:
 // supported file type to determine debugger
-func (t *DebugView) SetSup(v fi.Supported) *DebugView {
+func (t *DebugView) SetSup(v fi.Known) *DebugView {
 	t.Sup = v
 	return t
 }

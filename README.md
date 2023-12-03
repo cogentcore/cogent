@@ -46,19 +46,23 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* chooser needs special support for URI with icons -- for completion now
+* rename -- needs to close buffs before doing -- code is in gide somewhere (filetree?)
+
+* drag-n-drop
+* color highlighting for diffs!
+
+* texteditor vert alloc not subtracting scrollbar?
+
 * more helpers for URI api
 * filter function for chooser for URI case
-* rename Supported -> Enum or something?
-
-* add icons for symbols and get the merge thing to work
+* rename Known -> Enum or something?
 
 * Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
 
 * Find not selecting first item (sometimes?)
 
 * dialog closing causes old window to show up -- need to update render images
-* textview context menu
+* textview context menu: add diff, vcs log
 
 * fileview global priority key shortcuts and fileview menu
 * editor rendering overflow

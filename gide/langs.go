@@ -14,7 +14,7 @@ import (
 )
 
 // LangOpts defines options associated with a given language / file format
-// only languages in fi.Supported list are supported..
+// only languages in fi.Known list are supported..
 type LangOpts struct {
 
 	// command(s) to run after a file of this type is saved
@@ -22,7 +22,7 @@ type LangOpts struct {
 }
 
 // Langs is a map of language options
-type Langs map[fi.Supported]*LangOpts
+type Langs map[fi.Known]*LangOpts
 
 // AvailLangs is the current set of language options -- can be
 // loaded / saved / edited with preferences.  This is set to StdLangs at

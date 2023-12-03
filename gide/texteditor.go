@@ -161,7 +161,7 @@ func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lex.Pos) {
 func (ed *TextEditor) LineNoDoubleClick(tpos lex.Pos) {
 	ln := tpos.Ln
 	ed.ToggleBreakpoint(ln)
-	ed.RenderLines(ln, ln)
+	ed.SetNeedsRender(true)
 }
 
 func (ed *TextEditor) HandleGideDoubleClick() {

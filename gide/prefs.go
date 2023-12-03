@@ -235,7 +235,7 @@ type ProjPrefs struct {
 	SplitName SplitName
 
 	// the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well
-	MainLang fi.Supported
+	MainLang fi.Known
 
 	// the type of version control system used in this project (git, svn, etc) -- filters commands available
 	VersCtrl filetree.VersCtrlName

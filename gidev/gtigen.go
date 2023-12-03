@@ -23,7 +23,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"ProjRoot", &gti.Field{Name: "ProjRoot", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename", Directives: gti.Directives{}, Tag: ""}},
 		{"ProjFilename", &gti.Field{Name: "ProjFilename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "current project filename for saving / loading specific Gide configuration information in a .gide file (optional)", Directives: gti.Directives{}, Tag: "ext:\".gide\""}},
 		{"ActiveFilename", &gti.Field{Name: "ActiveFilename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "filename of the currently-active textview", Directives: gti.Directives{}, Tag: "set:\"-\""}},
-		{"ActiveLang", &gti.Field{Name: "ActiveLang", Type: "goki.dev/pi/v2/fi.Supported", LocalType: "fi.Supported", Doc: "language for current active filename", Directives: gti.Directives{}, Tag: ""}},
+		{"ActiveLang", &gti.Field{Name: "ActiveLang", Type: "goki.dev/pi/v2/fi.Known", LocalType: "fi.Known", Doc: "language for current active filename", Directives: gti.Directives{}, Tag: ""}},
 		{"ActiveVCS", &gti.Field{Name: "ActiveVCS", Type: "goki.dev/vci/v2.Repo", LocalType: "vci.Repo", Doc: "VCS repo for current active filename", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"ActiveVCSInfo", &gti.Field{Name: "ActiveVCSInfo", Type: "string", LocalType: "string", Doc: "VCS info for current active filename (typically branch or revision) -- for status", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
@@ -212,7 +212,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"path", &gti.Field{Name: "path", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"folder", &gti.Field{Name: "folder", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-			{"mainLang", &gti.Field{Name: "mainLang", Type: "goki.dev/pi/v2/fi.Supported", LocalType: "fi.Supported", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"mainLang", &gti.Field{Name: "mainLang", Type: "goki.dev/pi/v2/fi.Known", LocalType: "fi.Known", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"versCtrl", &gti.Field{Name: "versCtrl", Type: "goki.dev/gi/v2/filetree.VersCtrlName", LocalType: "filetree.VersCtrlName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"GideView", &gti.Field{Name: "GideView", Type: "*goki.dev/gide/v2/gidev.GideView", LocalType: "*GideView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
@@ -267,7 +267,7 @@ var GideViewType = gti.AddType(&gti.Type{
 			{"ignoreCase", &gti.Field{Name: "ignoreCase", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"regExp", &gti.Field{Name: "regExp", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"loc", &gti.Field{Name: "loc", Type: "goki.dev/gide/v2/gide.FindLoc", LocalType: "gide.FindLoc", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-			{"langs", &gti.Field{Name: "langs", Type: "[]goki.dev/pi/v2/fi.Supported", LocalType: "[]fi.Supported", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"langs", &gti.Field{Name: "langs", Type: "[]goki.dev/pi/v2/fi.Known", LocalType: "[]fi.Known", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"Spell", &gti.Method{Name: "Spell", Doc: "Spell checks spelling in active text view", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
@@ -324,7 +324,7 @@ func (t *GideView) SetProjFilename(v gi.FileName) *GideView {
 
 // SetActiveLang sets the [GideView.ActiveLang]:
 // language for current active filename
-func (t *GideView) SetActiveLang(v fi.Supported) *GideView {
+func (t *GideView) SetActiveLang(v fi.Known) *GideView {
 	t.ActiveLang = v
 	return t
 }

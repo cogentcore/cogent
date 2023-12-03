@@ -50,14 +50,14 @@ const (
 var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[fi.Supported]func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error){
+var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error){
 	fi.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 		return gidelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup fi.Supported, path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+func NewDebugger(sup fi.Known, path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Prefs.. to a supported language (Go only option so far)", sup)
@@ -76,7 +76,7 @@ type DebugView struct {
 	gi.Layout
 
 	// supported file type to determine debugger
-	Sup fi.Supported
+	Sup fi.Known
 
 	// path to executable / dir to debug
 	ExePath string
@@ -747,7 +747,7 @@ func (dv *DebugView) ConfigWidget() {
 
 // ConfigDebugView configures the view -- parameters for the job must have
 // already been set in ge.ProjParams.Debug.
-func (dv *DebugView) ConfigDebugView(ge Gide, sup fi.Supported, exePath string) {
+func (dv *DebugView) ConfigDebugView(ge Gide, sup fi.Known, exePath string) {
 	dv.Gide = ge
 	dv.Sup = sup
 	dv.ExePath = exePath

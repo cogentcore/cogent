@@ -262,7 +262,7 @@ type Command struct {
 	Desc string `width:"40"`
 
 	// supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type
-	Lang fi.Supported
+	Lang fi.Known
 
 	// sequence of commands to run for this overall command.
 	Cmds []CmdAndArgs `tableview-select:"-"`
@@ -594,7 +594,7 @@ func (cm *Command) RunStatus(ge Gide, buf *texteditor.Buf, cmdstr string, err er
 }
 
 // LangMatch returns true if the given language matches the command Lang constraints
-func (cm *Command) LangMatch(lang fi.Supported) bool {
+func (cm *Command) LangMatch(lang fi.Known) bool {
 	return fi.IsMatch(cm.Lang, lang)
 }
 
@@ -660,7 +660,7 @@ var CustomCmds = Commands{}
 
 // FilterCmdNames returns a slice of commands organized by category
 // that are compatible with given language and version control system.
-func (cm *Commands) FilterCmdNames(lang fi.Supported, vcnm filetree.VersCtrlName) [][]string {
+func (cm *Commands) FilterCmdNames(lang fi.Known, vcnm filetree.VersCtrlName) [][]string {
 	vnm := strings.ToLower(string(vcnm))
 	var cmds [][]string
 	cat := ""
@@ -811,7 +811,7 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 	if !ok {
 		return nil
 	}
-	lang := fn.Info.Sup
+	lang := fn.Info.Known
 	vcnm := ge.VersCtrl()
 	if repo, _ := fn.Repo(); repo != nil {
 		vcnm = filetree.VersCtrlName(repo.Vcs())

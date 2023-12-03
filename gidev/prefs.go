@@ -151,8 +151,8 @@ func (ge *GideView) GuessMainLang() bool {
 	ecs := append(ecsc, ecsd...)
 	filetree.NodeNameCountSort(ecs)
 	for _, ec := range ecs {
-		ls := fi.ExtSupported(ec.Name)
-		if ls != fi.NoSupport {
+		ls := fi.ExtKnown(ec.Name)
+		if ls != fi.Unknown {
 			ge.Prefs.MainLang = ls
 			return true
 		}

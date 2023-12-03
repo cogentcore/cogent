@@ -62,7 +62,7 @@ type FindParams struct {
 	Loc FindLoc
 
 	// languages for files to search
-	Langs []fi.Supported
+	Langs []fi.Known
 
 	// history of finds
 	FindHist []string
@@ -135,6 +135,7 @@ func (fv *FindView) ShowResults(res []FileSearchResults) {
 	ftv.CursorStartDoc()
 
 	fv.Update()
+	ftv.SetCursorShow(lex.Pos{Ln: 0})
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
