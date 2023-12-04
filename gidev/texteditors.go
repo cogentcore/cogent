@@ -156,10 +156,8 @@ func (ge *GideView) SetActiveTextEditorIdx(idx int) *gide.TextEditor {
 	}
 	ge.SetStatus("")
 	av.SetFocusEvent()
-	fmt.Println("active txedit target:", av.CursorPos)
 	av.SetCursorTarget(av.CursorPos)
 	av.SetNeedsLayout(true)
-	// fmt.Println(av, "set active text")
 	return av
 }
 

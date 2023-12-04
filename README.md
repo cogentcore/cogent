@@ -46,14 +46,11 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* ctrl-X+K kill buffer not fully closing
 * rename -- needs to close buffs before doing -- code is in gide somewhere (filetree?)
 
 * drag-n-drop
-* color highlighting for diffs!
-
-* 
-
-* texteditor vert alloc not subtracting scrollbar?
+* color highlighting for diff output in commandshell!
 
 * more helpers for URI api
 * filter function for chooser for URI case
@@ -68,7 +65,6 @@ In addition to Issues shown on github, some important features to be added longe
 
 * fileview global priority key shortcuts and fileview menu
 * editor rendering overflow
-* lineno horiz scrolling issues -- this is in V1 too!
 * filetree --get rid of empty upper level or not?
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
 
@@ -76,6 +72,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE:
 
+* lineno horiz scrolling issues -- this is in V1 too!
 * focus in topappbar returning to TAB not going to where command goes.
 
 * symbolsview: textview still not jumping to line correctly
