@@ -102,6 +102,7 @@ func (ge *GideView) CloseActiveView() { //gti:add
 				return
 			}
 			ge.SetStatus(fmt.Sprintf("File %v closed", ond.FPath))
+			ge.OpenNodes.Delete(ond)
 		})
 	}
 }

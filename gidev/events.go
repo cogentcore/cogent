@@ -15,10 +15,6 @@ import (
 )
 
 func (ge *GideView) HandleGideViewEvents() {
-	// if ge.HasAnyScroll() {
-	// 	ge.LayoutScrollEvents()
-	// }
-	// ge.HandleLayoutEvents()
 	ge.HandleGideKeyEvent()
 	ge.HandleOSFileEvent()
 }

@@ -320,32 +320,22 @@ func (fn *FileNode) SetRunExecs() { //gti:add
 	}
 }
 
-/*
 // RenameFiles calls RenameFile on any selected nodes
-func (ftv *FileTreeView) RenameFiles() {
-	fn := ftv.FileNode()
-	if fn == nil {
-		return
-	}
+func (fn *FileNode) RenameFiles() {
 	ge, ok := ParentGide(fn.This())
 	if !ok {
 		return
 	}
 	ge.SaveAllCheck(true, func() {
 		var nodes []*FileNode
-		sels := ftv.SelectedViews()
+		sels := fn.SelectedViews()
 		for i := len(sels) - 1; i >= 0; i-- {
-			sn := sels[i]
-			ftvv := sn.Embed(KiT_FileTreeView).(*FileTreeView)
-			fn := ftvv.FileNode()
-			if fn != nil {
-				nodes = append(nodes, fn)
-			}
+			sn := sels[i].This().(*FileNode)
+			nodes = append(nodes, sn)
 		}
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
-		for _, fn := range nodes {
-			giv.CallMethod(fn, "RenameFile", ftv.Viewport)
+		for _, sn := range nodes {
+			giv.CallFunc(sn, sn.RenameFile)
 		}
 	})
 }
-*/
