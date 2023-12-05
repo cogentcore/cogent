@@ -394,7 +394,7 @@ func (ge *GideView) SelectOpenNode() {
 
 // CloneActiveView sets the next text view to view the same file currently being vieweds
 // in the active view. returns text view and index
-func (ge *GideView) CloneActiveView() (*gide.TextEditor, int) {
+func (ge *GideView) CloneActiveView() (*gide.TextEditor, int) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return nil, -1

@@ -184,7 +184,7 @@ func (ge *GideView) DebugTest() { //gti:add
 
 // DebugAttach runs the debugger by attaching to an already-running process.
 // pid is the process id to attach to.
-func (ge *GideView) DebugAttach(pid uint64) {
+func (ge *GideView) DebugAttach(pid uint64) { //gti:add
 	tv := ge.Tabs()
 	if tv == nil {
 		return
@@ -214,7 +214,7 @@ func (ge *GideView) ClearDebug() {
 
 // VCSUpdateAll does an Update (e.g., Pull) on all VCS repositories within
 // the open tree nodes in FileTree.
-func (ge *GideView) VCSUpdateAll() {
+func (ge *GideView) VCSUpdateAll() { //gti:add
 	ge.Files.UpdateAllVcs()
 	ge.Files.UpdateAll()
 }
@@ -227,7 +227,7 @@ func (ge *GideView) VCSUpdateAll() {
 // If allFiles is true, then the log will show revisions for all files, not just
 // this one.
 // Returns the Log and also shows it in a VCSLogView which supports further actions.
-func (ge *GideView) VCSLog(since string) (vci.Log, error) {
+func (ge *GideView) VCSLog(since string) (vci.Log, error) { //gti:add
 	atv := ge.ActiveTextEditor()
 	ond, _, got := ge.OpenNodeForTextEditor(atv)
 	if !got {
@@ -241,7 +241,7 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) {
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
-func (ge *GideView) OpenConsoleTab() {
+func (ge *GideView) OpenConsoleTab() { //gti:add
 	ctv := ge.RecycleTabTextEditor("Console", true)
 	if ctv == nil {
 		return
@@ -312,6 +312,6 @@ func (ge *GideView) UpdateStatusLabel() {
 }
 
 // HelpWiki opens wiki page for gide on github
-func (ge *GideView) HelpWiki() {
-	goosi.TheApp.OpenURL("https://goki.dev/gide/v2/wiki")
+func (ge *GideView) HelpWiki() { //gti:add
+	goosi.TheApp.OpenURL("https://goki.dev/gide/")
 }

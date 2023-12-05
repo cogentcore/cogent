@@ -241,6 +241,30 @@ func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
 			giv.NewFuncButton(mm, ge.SpacesToTabs).SetIcon(icons.TabMove)
 		})
 
+		gi.NewButton(m).SetText("View").SetMenu(func(mm *gi.Scene) {
+			giv.NewFuncButton(mm, ge.FocusPrevPanel).SetText("Focus prev").SetIcon(icons.KeyboardArrowLeft).
+				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunPrevPanel).String()))
+			giv.NewFuncButton(mm, ge.FocusNextPanel).SetText("Focus next").SetIcon(icons.KeyboardArrowRight).
+				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunNextPanel).String()))
+			giv.NewFuncButton(mm, ge.CloneActiveView).SetText("Clone active").SetIcon(icons.Copy).
+				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunBufClone).String()))
+			gi.NewSeparator(m)
+			giv.NewFuncButton(mm, ge.CloseActiveView).SetText("Close file").SetIcon(icons.Close).
+				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunBufClose).String()))
+			giv.NewFuncButton(mm, ge.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
+		})
+
+		gi.NewButton(m).SetText("Command").SetMenu(func(mm *gi.Scene) {
+			giv.NewFuncButton(mm, ge.DebugAttach).SetText("Debug attach").SetIcon(icons.Debug)
+			giv.NewFuncButton(mm, ge.VCSLog).SetText("VCS Log").SetIcon(icons.List)
+			giv.NewFuncButton(mm, ge.VCSUpdateAll).SetText("VCS update all").SetIcon(icons.Update)
+			gi.NewSeparator(m)
+			giv.NewFuncButton(mm, ge.CountWords).SetText("Count words all").SetIcon(icons.Counter5)
+			giv.NewFuncButton(mm, ge.CountWordsRegion).SetText("Count words region").SetIcon(icons.Counter3)
+			gi.NewSeparator(m)
+			giv.NewFuncButton(mm, ge.HelpWiki).SetText("Help").SetIcon(icons.Help)
+		})
+
 		gi.NewSeparator(m)
 	})
 
@@ -352,162 +376,3 @@ func (ge *GideView) ResourceSymbols() uri.URIs {
 	})
 	return ul
 }
-
-/*
-// GideViewInactiveEmptyFunc is an ActionUpdateFunc that inactivates action if project is empty
-var GideViewInactiveEmptyFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
-	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
-	if !ge.IsConfiged() {
-		return
-	}
-	act.SetInactiveState(ge.IsEmpty())
-})
-
-// GideViewInactiveTextEditorFunc is an ActionUpdateFunc that inactivates action there is no active text view
-var GideViewInactiveTextEditorFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
-	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
-	if !ge.IsConfiged() {
-		return
-	}
-	act.SetInactiveState(ge.ActiveTextEditor().Buf == nil)
-})
-
-// GideViewInactiveTextSelectionFunc is an ActionUpdateFunc that inactivates action there is no active text view
-var GideViewInactiveTextSelectionFunc = giv.ActionUpdateFunc(func(gei any, act *gi.Button) {
-	ge := gei.(ki.Ki).Embed(KiT_GideView).(*GideView)
-	if !ge.IsConfiged() {
-		return
-	}
-	if ge.ActiveTextEditor() != nil && ge.ActiveTextEditor().Buf != nil {
-		act.SetActiveState(ge.ActiveTextEditor().HasSelection())
-	} else {
-		act.SetActiveState(false)
-	}
-})
-*/
-
-/*
-var GideViewProps = ki.Props{
-	"background-color": &gi.Prefs.Colors.Background,
-	"color":            &gi.Prefs.Colors.Font,
-	"max-width":        -1,
-	"max-height":       -1,
-	"#title": ki.Props{
-		"max-width":        -1,
-		"horizontal-align": styles.AlignCenter,
-		"vertical-align":   styles.AlignTop,
-	},
-	"MethodViewNoUpdateAfter": true, // no update after is default for everything
-	"Toolbar": ki.PropSlice{
-		{"ViewOpenNodeName", ki.Props{
-			"icon":         "file-text",
-			"label":        "Edit",
-			"desc":         "select an open file to view in active text view",
-			"submenu-func": giv.SubMenuFunc(GideViewOpenNodes),
-			"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
-				return key.Chord(gide.ChordForFun(gide.KeyFunBufSelect).String())
-			}),
-			"Args": ki.PropSlice{
-				{"Node Name", ki.Props{}},
-			},
-		}},
-	},
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"CloseActiveView", ki.Props{
-				"label":    "Close File",
-				"updtfunc": GideViewInactiveEmptyFunc,
-				"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
-					return key.Chord(gide.ChordForFun(gide.KeyFunBufClose).String())
-				}),
-			}},
-		}},
-		{"View", ki.PropSlice{
-			{"Panels", ki.PropSlice{
-				{"FocusNextPanel", ki.Props{
-					"label": "Focus Next",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
-						return key.Chord(gide.ChordForFun(gide.KeyFunNextPanel).String())
-					}),
-					"updtfunc": GideViewInactiveEmptyFunc,
-				}},
-				{"FocusPrevPanel", ki.Props{
-					"label": "Focus Prev",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
-						return key.Chord(gide.ChordForFun(gide.KeyFunPrevPanel).String())
-					}),
-					"updtfunc": GideViewInactiveEmptyFunc,
-				}},
-				{"CloneActiveView", ki.Props{
-					"label": "Clone Active",
-					"shortcut-func": giv.ShortcutFunc(func(gei any, act *gi.Button) key.Chord {
-						return key.Chord(gide.ChordForFun(gide.KeyFunBufClone).String())
-					}),
-					"updtfunc": GideViewInactiveEmptyFunc,
-				}},
-			}},
-			{"OpenConsoleTab", ki.Props{
-				"updtfunc": GideViewInactiveEmptyFunc,
-			}},
-		}},
-		{"Command", ki.PropSlice{
-			{"DebugAttach", ki.Props{
-				"desc": "attach to an already running process: enter the process PID",
-				"Args": ki.PropSlice{
-					{"Process PID", ki.Props{}},
-				},
-			}},
-			{"ChooseRunExec", ki.Props{
-				"desc": "choose the executable to run for this project using the Run button",
-				"Args": ki.PropSlice{
-					{"RunExec", ki.Props{
-						"default-field": "Prefs.RunExec",
-					}},
-				},
-			}},
-			{"sep-run", ki.BlankProp{}},
-			{"VCSLog", ki.Props{
-				"label":    "VCS Log View",
-				"desc":     "shows the VCS log of commits to repository associated with active file, optionally with a since date qualifier: If since is non-empty, it should be a date-like expression that the VCS will understand, such as 1/1/2020, yesterday, last year, etc (SVN only supports a max number of entries).",
-				"updtfunc": GideViewInactiveEmptyFunc,
-				"Args": ki.PropSlice{
-					{"Since Date", ki.Props{}},
-				},
-			}},
-			{"VCSUpdateAll", ki.Props{
-				"label":    "VCS Update All",
-				"updtfunc": GideViewInactiveEmptyFunc,
-			}},
-			{"sep-cmd", ki.BlankProp{}},
-			{"ExecCmdNameActive", ki.Props{
-				"label":           "Exec Cmd",
-				"subsubmenu-func": giv.SubSubMenuFunc(ExecCmds),
-				"updtfunc":        GideViewInactiveEmptyFunc,
-				"Args": ki.PropSlice{
-					{"Cmd Name", ki.Props{}},
-				},
-			}},
-			{"DiffFiles", ki.Props{
-				"updtfunc": GideViewInactiveEmptyFunc,
-				"Args": ki.PropSlice{
-					{"File Name 1", ki.Props{}},
-					{"File Name 2", ki.Props{}},
-				},
-			}},
-			{"sep-cmd", ki.BlankProp{}},
-			{"CountWords", ki.Props{
-				"updtfunc":    GideViewInactiveEmptyFunc,
-				"show-return": true,
-			}},
-			{"CountWordsRegion", ki.Props{
-				"updtfunc":    GideViewInactiveEmptyFunc,
-				"show-return": true,
-			}},
-		}},
-		{"Help", ki.PropSlice{
-			{"HelpWiki", ki.Props{}},
-		}},
-	},
-}
-*/

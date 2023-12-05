@@ -23,7 +23,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"ProjRoot", &gti.Field{Name: "ProjRoot", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename", Directives: gti.Directives{}, Tag: ""}},
 		{"ProjFilename", &gti.Field{Name: "ProjFilename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "current project filename for saving / loading specific Gide configuration information in a .gide file (optional)", Directives: gti.Directives{}, Tag: "ext:\".gide\""}},
 		{"ActiveFilename", &gti.Field{Name: "ActiveFilename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "filename of the currently-active textview", Directives: gti.Directives{}, Tag: "set:\"-\""}},
-		{"ActiveLang", &gti.Field{Name: "ActiveLang", Type: "goki.dev/pi/v2/fi.Known", LocalType: "fi.Known", Doc: "language for current active filename", Directives: gti.Directives{}, Tag: ""}},
+		{"ActiveLang", &gti.Field{Name: "ActiveLang", Type: "goki.dev/fi.Known", LocalType: "fi.Known", Doc: "language for current active filename", Directives: gti.Directives{}, Tag: ""}},
 		{"ActiveVCS", &gti.Field{Name: "ActiveVCS", Type: "goki.dev/vci/v2.Repo", LocalType: "vci.Repo", Doc: "VCS repo for current active filename", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"ActiveVCSInfo", &gti.Field{Name: "ActiveVCSInfo", Type: "string", LocalType: "string", Doc: "VCS info for current active filename (typically branch or revision) -- for status", Directives: gti.Directives{}, Tag: "set:\"-\""}},
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
@@ -177,6 +177,12 @@ var GideViewType = gti.AddType(&gti.Type{
 			{"int", &gti.Field{Name: "int", Type: "int", LocalType: "int", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"bool", &gti.Field{Name: "bool", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
+		{"CloneActiveView", &gti.Method{Name: "CloneActiveView", Doc: "CloneActiveView sets the next text view to view the same file currently being vieweds\nin the active view. returns text view and index", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"TextEditor", &gti.Field{Name: "TextEditor", Type: "*goki.dev/gide/v2/gide.TextEditor", LocalType: "*gide.TextEditor", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"int", &gti.Field{Name: "int", Type: "int", LocalType: "int", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
 		{"SaveAll", &gti.Method{Name: "SaveAll", Doc: "SaveAll saves all of the open filenodes to their current file names\nand saves the project state if it has been saved before (i.e., the .gide file exists)", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
@@ -212,7 +218,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"path", &gti.Field{Name: "path", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"folder", &gti.Field{Name: "folder", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-			{"mainLang", &gti.Field{Name: "mainLang", Type: "goki.dev/pi/v2/fi.Known", LocalType: "fi.Known", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"mainLang", &gti.Field{Name: "mainLang", Type: "goki.dev/fi.Known", LocalType: "fi.Known", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"versCtrl", &gti.Field{Name: "versCtrl", Type: "goki.dev/gi/v2/filetree.VersCtrlName", LocalType: "filetree.VersCtrlName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"GideView", &gti.Field{Name: "GideView", Type: "*goki.dev/gide/v2/gidev.GideView", LocalType: "*GideView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
@@ -267,7 +273,7 @@ var GideViewType = gti.AddType(&gti.Type{
 			{"ignoreCase", &gti.Field{Name: "ignoreCase", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"regExp", &gti.Field{Name: "regExp", Type: "bool", LocalType: "bool", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"loc", &gti.Field{Name: "loc", Type: "goki.dev/gide/v2/gide.FindLoc", LocalType: "gide.FindLoc", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-			{"langs", &gti.Field{Name: "langs", Type: "[]goki.dev/pi/v2/fi.Known", LocalType: "[]fi.Known", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"langs", &gti.Field{Name: "langs", Type: "[]goki.dev/fi.Known", LocalType: "[]fi.Known", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"Spell", &gti.Method{Name: "Spell", Doc: "Spell checks spelling in active text view", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
@@ -281,11 +287,33 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"DebugTest", &gti.Method{Name: "DebugTest", Doc: "DebugTest runs the debugger using testing mode in current active textview path", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"DebugAttach", &gti.Method{Name: "DebugAttach", Doc: "DebugAttach runs the debugger by attaching to an already-running process.\npid is the process id to attach to.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"pid", &gti.Field{Name: "pid", Type: "uint64", LocalType: "uint64", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"VCSUpdateAll", &gti.Method{Name: "VCSUpdateAll", Doc: "VCSUpdateAll does an Update (e.g., Pull) on all VCS repositories within\nthe open tree nodes in FileTree.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"VCSLog", &gti.Method{Name: "VCSLog", Doc: "VCSLog shows the VCS log of commits for this file, optionally with a\nsince date qualifier: If since is non-empty, it should be\na date-like expression that the VCS will understand, such as\n1/1/2020, yesterday, last year, etc.  SVN only understands a\nnumber as a maximum number of items to return.\nIf allFiles is true, then the log will show revisions for all files, not just\nthis one.\nReturns the Log and also shows it in a VCSLogView which supports further actions.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"since", &gti.Field{Name: "since", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"Log", &gti.Field{Name: "Log", Type: "goki.dev/vci/v2.Log", LocalType: "vci.Log", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"error", &gti.Field{Name: "error", Type: "error", LocalType: "error", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"OpenConsoleTab", &gti.Method{Name: "OpenConsoleTab", Doc: "OpenConsoleTab opens a main tab displaying console output (stdout, stderr)", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"ChooseRunExec", &gti.Method{Name: "ChooseRunExec", Doc: "ChooseRunExec selects the executable to run for the project", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"exePath", &gti.Field{Name: "exePath", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"HelpWiki", &gti.Method{Name: "HelpWiki", Doc: "HelpWiki opens wiki page for gide on github", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 	}),
 	Instance: &GideView{},
 })
