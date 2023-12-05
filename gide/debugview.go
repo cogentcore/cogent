@@ -534,9 +534,8 @@ func (dv *DebugView) FindFrames(fpath string, line int) {
 	}
 	fr, err := dv.Dbg.FindFrames(&dv.State, fpath, line)
 	if fr == nil || err != nil {
-		gi.NewBody().AddTitle("No frames found").
-			AddText(fmt.Sprintf("Could not find any stack frames for file name: %v, err: %v", fpath, err)).
-			AddOkOnly().NewDialog(dv).Run()
+		gi.MessageSnackbar(dv, fmt.Sprintf("Could not find any stack frames for file name: %v, err: %v", fpath, err))
+		return
 	}
 	dv.State.FindFrames = fr
 	dv.ShowFindFrames(true)

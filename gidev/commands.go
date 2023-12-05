@@ -180,9 +180,7 @@ func (ge *GideView) ExecCmdsFileNode(fn *filetree.Node, cmdNms gide.CmdNames, se
 // Build runs the BuildCmds set for this project
 func (ge *GideView) Build() { //gti:add
 	if len(ge.Prefs.BuildCmds) == 0 {
-		gi.NewBody().AddTitle("No BuildCmds Set").
-			AddText("You need to set the BuildCmds in the Project Preferences").
-			AddOkOnly().NewDialog(ge).Run()
+		gi.MessageDialog(ge, "You need to set the BuildCmds in the Project Preferences", "No BuildCmds Set")
 		return
 	}
 	ge.SaveAllCheck(true, func() { // true = cancel option
@@ -193,9 +191,7 @@ func (ge *GideView) Build() { //gti:add
 // Run runs the RunCmds set for this project
 func (ge *GideView) Run() { //gti:add
 	if len(ge.Prefs.RunCmds) == 0 {
-		gi.NewBody().AddTitle("No RunCmds Set").
-			AddText("You need to set the RunCmds in the Project Preferences").
-			AddOkOnly().NewDialog(ge).Run()
+		gi.MessageDialog(ge, "You need to set the RunCmds in the Project Preferences", "No RunCmds Set")
 		return
 	}
 	if ge.Prefs.RunCmds[0] == "Run Proj" && !ge.Prefs.RunExecIsExec() {
@@ -210,9 +206,7 @@ func (ge *GideView) Run() { //gti:add
 func (ge *GideView) Commit() { //gti:add
 	vc := ge.VersCtrl()
 	if vc == "" {
-		gi.NewBody().AddTitle("No Version Control System Found").
-			AddText("No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository").
-			AddOkOnly().NewDialog(ge).Run()
+		gi.MessageDialog(ge, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
 		return
 	}
 	ge.SaveAllCheck(true, func() { // true = cancel option
@@ -240,9 +234,7 @@ func (ge *GideView) CommitNoChecks() {
 		}
 	}
 	if cmdnm == "" {
-		gi.NewBody().AddTitle("No Commit command found").
-			AddText("Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc").
-			AddOkOnly().NewDialog(ge).Run()
+		gi.MessageDialog(ge, "Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc", "No Commit command found")
 		return
 	}
 	ge.SetArgVarVals() // need to set before setting prompt string below..

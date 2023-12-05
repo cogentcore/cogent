@@ -205,9 +205,7 @@ func (sv *SymbolsView) OpenPackage() {
 	}
 	pfs := tv.Buf.PiState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
-		gi.NewBody().AddTitle("Symbols not yet parsed").
-			AddText("Symbols not yet parsed -- try again in a few moments").
-			AddOkOnly().NewDialog(sv).Run()
+		gi.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
@@ -223,9 +221,7 @@ func (sv *SymbolsView) OpenFile() {
 	}
 	pfs := tv.Buf.PiState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
-		gi.NewBody().AddTitle("Symbols not yet parsed").
-			AddText("Symbols not yet parsed -- try again in a few moments").
-			AddOkOnly().NewDialog(sv).Run()
+		gi.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols

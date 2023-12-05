@@ -19,6 +19,7 @@ import (
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/goosi"
+	"goki.dev/goosi/events"
 	"goki.dev/spell"
 	"goki.dev/vci/v2"
 )
@@ -233,9 +234,7 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) {
 		if ge.Files.DirRepo != nil {
 			return ge.Files.LogVcs(true, since)
 		}
-		gi.NewBody().AddTitle("No Version Control Repository").
-			AddText("No VCS Repository found in current active file or Root path: Open a file in a repository and try again").
-			AddOkOnly().NewDialog(ge).Run()
+		gi.MessageDialog(atv, "No VCS Repository found in current active file or Root path: Open a file in a repository and try again", "No Version Control Repository")
 		return nil, errors.New("No VCS Repository found in current active file or Root path")
 	}
 	return ond.LogVcs(true, since)
@@ -243,7 +242,6 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) {
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *GideView) OpenConsoleTab() {
-	return
 	ctv := ge.RecycleTabTextEditor("Console", true)
 	if ctv == nil {
 		return
@@ -251,10 +249,9 @@ func (ge *GideView) OpenConsoleTab() {
 	ctv.SetReadOnly(true)
 	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
 		ctv.SetBuf(gide.TheConsole.Buf)
-		// todo:
-		// gide.TheConsole.Buf.TextBufSig.Connect(ge.This(), func(recv, send ki.Ki, sig int64, data any) {
-		// 	ge.SelectTabByName("Console")
-		// })
+		ctv.OnChange(func(e events.Event) {
+			ge.SelectTabByLabel("Console")
+		})
 	}
 }
 
@@ -264,9 +261,7 @@ func (ge *GideView) ChooseRunExec(exePath gi.FileName) { //gti:add
 		ge.Prefs.RunExec = exePath
 		ge.Prefs.BuildDir = gi.FileName(filepath.Dir(string(exePath)))
 		if !ge.Prefs.RunExecIsExec() {
-			gi.NewBody().AddTitle("Not Executable").
-				AddText(fmt.Sprintf("RunExec file: %v is not exectable", exePath)).
-				AddOkOnly().NewDialog(ge).Run()
+			gi.MessageDialog(ge, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
 		}
 	}
 }

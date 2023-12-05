@@ -280,9 +280,7 @@ func (fv *FindView) CompileRegexp() bool {
 	var err error
 	fv.Re, err = regexp.Compile(fp.Find)
 	if err != nil {
-		gi.NewBody().AddTitle("Regexp is Invalid").
-			AddText(fmt.Sprintf("The regular expression was invalid: %v", err)).
-			AddOkOnly().NewDialog(fv).Run()
+		gi.MessageSnackbar(fv, fmt.Sprintf("The regular expression was invalid: %v", err))
 		return false
 	}
 	return true
