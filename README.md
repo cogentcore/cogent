@@ -46,9 +46,6 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* ctrl-X+K kill buffer not fully closing
-* rename -- needs to close buffs before doing -- code is in gide somewhere (filetree?)
-
 * drag-n-drop tableview
 * rest of the top app bar items: debug attach etc
 
@@ -73,6 +70,8 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE:
 
+* ctrl-X+K kill buffer not fully closing
+* rename -- needs to close buffs before doing -- code is in gide somewhere (filetree?)
 * rename Known -> Enum or something?
 * lineno horiz scrolling issues -- this is in V1 too!
 * focus in topappbar returning to TAB not going to where command goes.
