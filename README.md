@@ -48,7 +48,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 * inline completer spell check not working
 * drag-n-drop tableview
-* rest of the top app bar items: debug attach etc
+* OpenAll, CloseAll not working.
 
 * color highlighting for diff output in commandshell!
 
@@ -71,6 +71,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE:
 
+* rest of the top app bar items: debug attach etc
 * ctrl-X+K kill buffer not fully closing
 * rename -- needs to close buffs before doing -- code is in gide somewhere (filetree?)
 * rename Known -> Enum or something?
