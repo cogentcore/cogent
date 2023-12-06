@@ -46,6 +46,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* inline completer spell check not working
 * drag-n-drop tableview
 * rest of the top app bar items: debug attach etc
 
