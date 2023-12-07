@@ -43,17 +43,14 @@ func (ed *TextEditor) HandleGideEvents() {
 	ed.HandleEditorEvents()
 	ed.HandleGideDoubleClick()
 	ed.HandleGideDebugHover()
+	ed.HandleGideFocus()
 }
 
-// func (tv *TextEditor) FocusChanged2D(change gi.FocusChanges) {
-// 	tv.TextEditor.FocusChanged2D(change)
-// 	ge, ok := ParentGide(tv)
-// 	if ok {
-// 		if change == gi.FocusGot || change == gi.FocusActive {
-// 			ge.SetActiveTextEditor(tv)
-// 		}
-// 	}
-// }
+func (ed *TextEditor) HandleGideFocus() {
+	ed.On(events.Focus, func(e events.Event) {
+		ed.Gide.SetActiveTextEditor(ed)
+	})
+}
 
 // CurDebug returns the current debugger, true if it is present
 func (ed *TextEditor) CurDebug() (*DebugView, bool) {

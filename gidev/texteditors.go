@@ -124,10 +124,8 @@ func (ge *GideView) SetActiveTextEditor(av *gide.TextEditor) int {
 
 	idx := ge.TextEditorIndex(av)
 	if idx < 0 {
+		fmt.Println("te not found")
 		return -1
-	}
-	if ge.ActiveTextEditorIdx == idx {
-		return idx
 	}
 	ge.ActiveTextEditorIdx = idx
 	if av.Buf != nil {
@@ -274,18 +272,6 @@ func (ge *GideView) UpdateTextButtons() {
 		}
 	}
 }
-
-// todo:
-// TextEditorSig handles all signals from the textviews
-// func (ge *GideView) TextEditorSig(tv *gide.TextEditor, sig texteditor.EditorSignals) {
-// 	ge.SetActiveTextEditor(tv) // if we're sending signals, we're the active one!
-// 	switch sig {
-// 	case texteditor.EditorCursorMoved:
-// 		ge.SetStatus("") // this really doesn't make any noticeable diff in perf
-// 	case texteditor.EditorISearch, texteditor.EditorQReplace:
-// 		ge.SetStatus("")
-// 	}
-// }
 
 // FileNodeSelected is called whenever tree browser has file node selected
 func (ge *GideView) FileNodeSelected(fn *filetree.Node) {

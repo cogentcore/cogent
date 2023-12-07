@@ -46,6 +46,9 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* lineno too conservative in not rendering bottom
+* don't render top text, lineno if out of range
+* always display cursor when typing!
 * inline completer spell check not working
 * drag-n-drop tableview
 * OpenAll, CloseAll not working.
@@ -71,6 +74,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # DONE:
 
+* click on texteditor not updating all of current filenode -- commands not working for that
 * rest of the top app bar items: debug attach etc
 * ctrl-X+K kill buffer not fully closing
 * rename -- needs to close buffs before doing -- code is in gide somewhere (filetree?)
@@ -80,13 +84,5 @@ In addition to Issues shown on github, some important features to be added longe
 
 * symbolsview: textview still not jumping to line correctly
 
-* goki.dev/gi/v2/gi.(*RenderWin).EventLoop.func1()
-	/Users/oreilly/goki.dev/gi/v2/gi/renderwin.go:598 +0x158
-panic({0x102aa0600?, 0x1038807e0?})
-	/opt/homebrew/Cellar/go/1.21.4/libexec/src/runtime/panic.go:914 +0x218
-goki.dev/gi/v2/texteditor.(*Editor).PixelToCursor(0x140006a1000, {0x100843ab8?, 0x1400e843ab8?})
-	/Users/oreilly/goki.dev/gi/v2/texteditor/render.go:676 +0x114
-goki.dev/gi/v2/texteditor.(*Editor).HandleEditorEvents.(*Editor).HandleEditorLinkCursor.func1({0x102c4fb68, 0x14022413ce0})
-	/Users/oreilly/goki.dev/gi/v2/texteditor/events.go:652 +0x60
-goki.dev/gi/v2/texteditor.(*Editor).HandleEditorEvents.(*Editor).HandleEditorLinkCursor.(*WidgetBase).On.func2({0x102c4fb68, 0x14022413ce0})
+
 
