@@ -396,8 +396,8 @@ func (fv *FindView) ConfigFindView() {
 	updt := fv.UpdateStart()
 	defer fv.UpdateEndLayout(updt)
 
-	fb := gi.NewToolbar(fv, "findbar")
-	rb := gi.NewToolbar(fv, "replbar")
+	fb := gi.NewBasicBar(fv, "findbar")
+	rb := gi.NewBasicBar(fv, "replbar")
 	tv := texteditor.NewEditor(fv, "findtext")
 	ConfigOutputTextEditor(tv)
 	tv.LinkHandler = func(tl *paint.TextLink) {
@@ -410,13 +410,13 @@ func (fv *FindView) ConfigFindView() {
 }
 
 // FindBar returns the find toolbar
-func (fv *FindView) FindBar() *gi.Toolbar {
-	return fv.ChildByName("findbar", 0).(*gi.Toolbar)
+func (fv *FindView) FindBar() *gi.BasicBar {
+	return fv.ChildByName("findbar", 0).(*gi.BasicBar)
 }
 
 // ReplBar returns the replace toolbar
-func (fv *FindView) ReplBar() *gi.Toolbar {
-	return fv.ChildByName("replbar", 1).(*gi.Toolbar)
+func (fv *FindView) ReplBar() *gi.BasicBar {
+	return fv.ChildByName("replbar", 1).(*gi.BasicBar)
 }
 
 // FindText returns the find textfield in toolbar
@@ -470,8 +470,8 @@ func (fv *FindView) UpdateFromParams() {
 	// langs auto-updates from param
 }
 
-// ConfigToolbar adds toolbar.
-func (fv *FindView) ConfigToolbars(fb, rb *gi.Toolbar) {
+// ConfigToolbars
+func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 	gi.NewButton(fb).SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").OnClick(func(e events.Event) {
 		fv.FindAction()
 	})

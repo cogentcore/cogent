@@ -63,13 +63,12 @@ func (ge *GideView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	fv := tv.RecycleTabWidget("Find", true, gide.FindViewType).(*gide.FindView)
 	fv.Time = time.Now()
 	ftv := fv.TextEditor()
-	ftv.SetReadOnly(true)
 	ftv.SetBuf(fbuf)
 
 	fv.SaveFindString(find)
 	fv.SaveReplString(repl)
 	fv.UpdateFromParams()
-
+	fv.Update()
 	root := filetree.AsNode(ge.Files)
 
 	atv := ge.ActiveTextEditor()
@@ -177,7 +176,8 @@ func (ge *GideView) DebugTest() { //gti:add
 	tstPath := string(txv.Buf.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, gide.DebugViewType).(*gide.DebugView)
-	// dv.SetGide(ge, ge.Prefs.MainLang, tstPath)
+	dv.ConfigDebugView(ge, fi.Go, tstPath)
+	dv.Update()
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }
@@ -197,7 +197,8 @@ func (ge *GideView) DebugAttach(pid uint64) { //gti:add
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, gide.DebugViewType).(*gide.DebugView)
-	// dv.SetGide(ge, ge.Prefs.MainLang, exePath)
+	dv.ConfigDebugView(ge, fi.Go, exePath)
+	dv.Update()
 	ge.FocusOnPanel(TabsIdx)
 	ge.CurDbg = dv
 }
