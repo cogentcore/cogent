@@ -29,8 +29,7 @@ func KeyMapsView(km *KeyMaps) {
 	tv.OnChange(func(e events.Event) {
 		AvailKeyMapsChanged = true
 	})
-	d.AddTopBar(func(pw gi.Widget) {
-		tb := d.DefaultTopAppBar(pw)
+	d.AddAppBar(func(tb *gi.Toolbar) {
 		sp := giv.NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps)
@@ -71,8 +70,7 @@ func PrefsView(pf *Preferences) *giv.StructView {
 	})
 	d.Sc.Data = pf
 
-	d.AddTopBar(func(pw gi.Widget) {
-		tb := d.DefaultTopAppBar(pw)
+	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pf.Apply).SetIcon(icons.Done)
 		sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
@@ -195,8 +193,7 @@ func LangsView(pt *Langs) {
 		AvailLangsChanged = true
 	})
 
-	d.AddTopBar(func(pw gi.Widget) {
-		tb := d.DefaultTopAppBar(pw)
+	d.AddAppBar(func(tb *gi.Toolbar) {
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailLangsChanged && pt == &AvailLangs)
@@ -236,8 +233,7 @@ func CmdsView(pt *Commands) {
 	tv.OnChange(func(e events.Event) {
 		CustomCmdsChanged = true
 	})
-	d.AddTopBar(func(pw gi.Widget) {
-		tb := d.DefaultTopAppBar(pw)
+	d.AddAppBar(func(tb *gi.Toolbar) {
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(CustomCmdsChanged && pt == &CustomCmds)
@@ -339,8 +335,7 @@ func SplitsView(pt *Splits) {
 		AvailSplitsChanged = true
 	})
 
-	d.AddTopBar(func(pw gi.Widget) {
-		tb := d.DefaultTopAppBar(pw)
+	d.AddAppBar(func(tb *gi.Toolbar) {
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailSplitsChanged && pt == &StdSplits)
@@ -462,8 +457,7 @@ func RegistersView(pt *Registers) {
 		AvailRegistersChanged = true
 	})
 
-	d.AddTopBar(func(pw gi.Widget) {
-		tb := d.DefaultTopAppBar(pw)
+	d.AddAppBar(func(tb *gi.Toolbar) {
 		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
 		sp.SetUpdateFunc(func() {
 			sp.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters)

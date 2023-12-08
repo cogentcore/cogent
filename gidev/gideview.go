@@ -546,14 +546,14 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 		}
 	}
 
-	b := gi.NewBody() // winm)
-	b.Title = wintitle
+	b := gi.NewAppBody("gide").SetTitle(wintitle)
+	b.Sc.Nm = winm
 
 	ge := NewGideView(b)
-	b.AddTopBar(func(pw gi.Widget) {
-		tb := b.DefaultTopAppBar(pw)
-		ge.TopAppBar(tb)
-	})
+	b.App().AppBarConfig = ge.AppBarConfig
+	b.AddAppBar(ge.ConfigToolbar)
+
+	b.App().About = `<code>Gide</code> is a graphical-interface (gi) integrated-development-environment (ide) written in the <b>GoGi</b> graphical interface system, within the <b>GoKi</b> tree framework.  See <a href="https://goki.dev/gide/v2/gide">Gide on GitHub</a> and <a href="https://goki.dev/gide/v2/wiki">Gide wiki</a> for documentation.<br>Gide is based on "projects" which are just directories containing files<br>* Use <code>File/Open Path...</code> to open an existing directory.<br>* Or <code>File/New Project...</code> to create a new directory for a new project<br><br>Version: ` + gide.Prefs.VersionInfo()
 
 	/* todo: window doesn't exist yet -- need a delayed soln
 	inClosePrompt := false

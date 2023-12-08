@@ -65,7 +65,7 @@ func (lt *Langs) Save(filename gi.FileName) error { //gti:add
 
 // OpenPrefs opens Langs from App standard prefs directory, using PrefsLangsFileName
 func (lt *Langs) OpenPrefs() error { //gti:add
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
 	return lt.Open(gi.FileName(pnm))
@@ -73,7 +73,7 @@ func (lt *Langs) OpenPrefs() error { //gti:add
 
 // SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFileName
 func (lt *Langs) SavePrefs() error { //gti:add
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false
 	return lt.Save(gi.FileName(pnm))

@@ -18,14 +18,14 @@ import (
 )
 
 // FilePrefs contains file view preferences
-type FilePrefs struct {
+type FilePrefs struct { //gti:add
 
 	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
 	DirsOnTop bool
 }
 
 // Preferences are the overall user preferences for Gide.
-type Preferences struct {
+type Preferences struct { //gti:add
 
 	// file view preferences
 	Files FilePrefs
@@ -124,7 +124,7 @@ func (pf *Preferences) ApplyEnvVars() {
 
 // Open preferences from GoGi standard prefs directory, and applies them
 func (pf *Preferences) Open() error { //gti:add
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log(tomls.Open(pf, pnm))
 	if err != nil {
@@ -148,7 +148,7 @@ func (pf *Preferences) Open() error { //gti:add
 
 // Save Preferences to GoGi standard prefs directory
 func (pf *Preferences) Save() error { //gti:add
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log(tomls.Save(pf, pnm))
 	if err != nil {
@@ -223,7 +223,7 @@ func (pf *Preferences) EditRegisters() { //gti:add
 //   Project Prefs
 
 // ProjPrefs are the preferences for saving for a project -- this IS the project file
-type ProjPrefs struct {
+type ProjPrefs struct { //gti:add
 
 	// file view preferences
 	Files FilePrefs
@@ -342,7 +342,7 @@ var (
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.Save(pnm)
 	// add back after save
@@ -353,7 +353,7 @@ func SavePaths() {
 func OpenPaths() {
 	// remove to be sure we don't have duplicate extras
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.Open(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)

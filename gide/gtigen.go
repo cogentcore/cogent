@@ -30,7 +30,7 @@ var DebugViewType = gti.AddType(&gti.Type{
 	Doc:        "DebugView is the debugger",
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/pi/v2/fi.Known", LocalType: "fi.Known", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
+		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/fi.Known", LocalType: "fi.Known", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
 		{"ExePath", &gti.Field{Name: "ExePath", Type: "string", LocalType: "string", Doc: "path to executable / dir to debug", Directives: gti.Directives{}, Tag: ""}},
 		{"DbgTime", &gti.Field{Name: "DbgTime", Type: "time.Time", LocalType: "time.Time", Doc: "time when dbg was last restarted", Directives: gti.Directives{}, Tag: ""}},
 		{"Dbg", &gti.Field{Name: "Dbg", Type: "goki.dev/gide/v2/gidebug.GiDebug", LocalType: "gidebug.GiDebug", Doc: "the debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
@@ -740,6 +740,125 @@ func (t *FindView) SetStackTop(v int) *FindView {
 	t.StackTop = v
 	return t
 }
+
+var _ = gti.AddType(&gti.Type{
+	Name:      "goki.dev/gide/v2/gide.FilePrefs",
+	ShortName: "gide.FilePrefs",
+	IDName:    "file-prefs",
+	Doc:       "FilePrefs contains file view preferences",
+	Directives: gti.Directives{
+		&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+	},
+	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+		{"DirsOnTop", &gti.Field{Name: "DirsOnTop", Type: "bool", LocalType: "bool", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted", Directives: gti.Directives{}, Tag: ""}},
+	}),
+	Embeds:  ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
+	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
+})
+
+var _ = gti.AddType(&gti.Type{
+	Name:      "goki.dev/gide/v2/gide.Preferences",
+	ShortName: "gide.Preferences",
+	IDName:    "preferences",
+	Doc:       "Preferences are the overall user preferences for Gide.",
+	Directives: gti.Directives{
+		&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+	},
+	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+		{"Files", &gti.Field{Name: "Files", Type: "goki.dev/gide/v2/gide.FilePrefs", LocalType: "FilePrefs", Doc: "file view preferences", Directives: gti.Directives{}, Tag: ""}},
+		{"EnvVars", &gti.Field{Name: "EnvVars", Type: "map[string]string", LocalType: "map[string]string", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app", Directives: gti.Directives{}, Tag: ""}},
+		{"KeyMap", &gti.Field{Name: "KeyMap", Type: "goki.dev/gide/v2/gide.KeyMapName", LocalType: "KeyMapName", Doc: "key map for gide-specific keyboard sequences", Directives: gti.Directives{}, Tag: ""}},
+		{"SaveKeyMaps", &gti.Field{Name: "SaveKeyMaps", Type: "bool", LocalType: "bool", Doc: "if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords", Directives: gti.Directives{}, Tag: ""}},
+		{"SaveLangOpts", &gti.Field{Name: "SaveLangOpts", Type: "bool", LocalType: "bool", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)", Directives: gti.Directives{}, Tag: ""}},
+		{"SaveCmds", &gti.Field{Name: "SaveCmds", Type: "bool", LocalType: "bool", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)", Directives: gti.Directives{}, Tag: ""}},
+		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.", Directives: gti.Directives{}, Tag: "view:\"-\" changeflag:\"+\" json:\"-\" toml:\"-\" xml:\"-\""}},
+	}),
+	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
+	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
+		{"Apply", &gti.Method{Name: "Apply", Doc: "Apply preferences updates things according with settings", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"Open", &gti.Method{Name: "Open", Doc: "Open preferences from GoGi standard prefs directory, and applies them", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"error", &gti.Field{Name: "error", Type: "error", LocalType: "error", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"Save", &gti.Method{Name: "Save", Doc: "Save Preferences to GoGi standard prefs directory", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"error", &gti.Field{Name: "error", Type: "error", LocalType: "error", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"VersionInfo", &gti.Method{Name: "VersionInfo", Doc: "VersionInfo returns Gide version information", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"string", &gti.Field{Name: "string", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"EditKeyMaps", &gti.Method{Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith preferences automatically.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"EditLangOpts", &gti.Method{Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"EditCmds", &gti.Method{Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"EditSplits", &gti.Method{Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+		{"EditRegisters", &gti.Method{Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
+	}),
+})
+
+var _ = gti.AddType(&gti.Type{
+	Name:      "goki.dev/gide/v2/gide.ProjPrefs",
+	ShortName: "gide.ProjPrefs",
+	IDName:    "proj-prefs",
+	Doc:       "ProjPrefs are the preferences for saving for a project -- this IS the project file",
+	Directives: gti.Directives{
+		&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+	},
+	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+		{"Files", &gti.Field{Name: "Files", Type: "goki.dev/gide/v2/gide.FilePrefs", LocalType: "FilePrefs", Doc: "file view preferences", Directives: gti.Directives{}, Tag: ""}},
+		{"Editor", &gti.Field{Name: "Editor", Type: "goki.dev/gi/v2/gi.EditorPrefs", LocalType: "gi.EditorPrefs", Doc: "editor preferences", Directives: gti.Directives{}, Tag: "view:\"inline\""}},
+		{"SplitName", &gti.Field{Name: "SplitName", Type: "goki.dev/gide/v2/gide.SplitName", LocalType: "SplitName", Doc: "current named-split config in use for configuring the splitters", Directives: gti.Directives{}, Tag: ""}},
+		{"MainLang", &gti.Field{Name: "MainLang", Type: "goki.dev/fi.Known", LocalType: "fi.Known", Doc: "the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well", Directives: gti.Directives{}, Tag: ""}},
+		{"VersCtrl", &gti.Field{Name: "VersCtrl", Type: "goki.dev/gi/v2/filetree.VersCtrlName", LocalType: "filetree.VersCtrlName", Doc: "the type of version control system used in this project (git, svn, etc) -- filters commands available", Directives: gti.Directives{}, Tag: ""}},
+		{"ProjFilename", &gti.Field{Name: "ProjFilename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "current project filename for saving / loading specific Gide configuration information in a .gide file (optional)", Directives: gti.Directives{}, Tag: "ext:\".gide\""}},
+		{"ProjRoot", &gti.Field{Name: "ProjRoot", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename", Directives: gti.Directives{}, Tag: ""}},
+		{"GoMod", &gti.Field{Name: "GoMod", Type: "bool", LocalType: "bool", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically", Directives: gti.Directives{}, Tag: ""}},
+		{"BuildCmds", &gti.Field{Name: "BuildCmds", Type: "goki.dev/gide/v2/gide.CmdNames", LocalType: "CmdNames", Doc: "command(s) to run for main Build button", Directives: gti.Directives{}, Tag: ""}},
+		{"BuildDir", &gti.Field{Name: "BuildDir", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands", Directives: gti.Directives{}, Tag: ""}},
+		{"BuildTarg", &gti.Field{Name: "BuildTarg", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "build target for main Build button, if relevant for your  BuildCmds", Directives: gti.Directives{}, Tag: ""}},
+		{"RunExec", &gti.Field{Name: "RunExec", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "executable to run for this project via main Run button -- called by standard Run Proj command", Directives: gti.Directives{}, Tag: ""}},
+		{"RunCmds", &gti.Field{Name: "RunCmds", Type: "goki.dev/gide/v2/gide.CmdNames", LocalType: "CmdNames", Doc: "command(s) to run for main Run button (typically Run Proj)", Directives: gti.Directives{}, Tag: ""}},
+		{"Debug", &gti.Field{Name: "Debug", Type: "goki.dev/gide/v2/gidebug.Params", LocalType: "gidebug.Params", Doc: "custom debugger parameters for this project", Directives: gti.Directives{}, Tag: ""}},
+		{"Find", &gti.Field{Name: "Find", Type: "goki.dev/gide/v2/gide.FindParams", LocalType: "FindParams", Doc: "saved find params", Directives: gti.Directives{}, Tag: "view:\"-\""}},
+		{"Symbols", &gti.Field{Name: "Symbols", Type: "goki.dev/gide/v2/gide.SymbolsParams", LocalType: "SymbolsParams", Doc: "saved structure params", Directives: gti.Directives{}, Tag: "view:\"-\""}},
+		{"Dirs", &gti.Field{Name: "Dirs", Type: "goki.dev/gi/v2/filetree.DirFlagMap", LocalType: "filetree.DirFlagMap", Doc: "directory properties", Directives: gti.Directives{}, Tag: "view:\"-\""}},
+		{"Register", &gti.Field{Name: "Register", Type: "goki.dev/gide/v2/gide.RegisterName", LocalType: "RegisterName", Doc: "last register used", Directives: gti.Directives{}, Tag: "view:\"-\""}},
+		{"Splits", &gti.Field{Name: "Splits", Type: "[]float32", LocalType: "[]float32", Doc: "current splitter splits", Directives: gti.Directives{}, Tag: "view:\"-\""}},
+		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.", Directives: gti.Directives{}, Tag: "view:\"-\" changeflag:\"+\" json:\"-\" toml:\"-\" xml:\"-\""}},
+	}),
+	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
+	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
+		{"Open", &gti.Method{Name: "Open", Doc: "Open open from  file", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"error", &gti.Field{Name: "error", Type: "error", LocalType: "error", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+		{"Save", &gti.Method{Name: "Save", Doc: "Save save to  file", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"error", &gti.Field{Name: "error", Type: "error", LocalType: "error", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		})}},
+	}),
+})
 
 // SpellViewType is the [gti.Type] for [SpellView]
 var SpellViewType = gti.AddType(&gti.Type{

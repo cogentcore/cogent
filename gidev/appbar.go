@@ -21,22 +21,27 @@ import (
 	"goki.dev/ki/v2"
 )
 
-// DefaultTopAppBar is the default top app bar for gide
-func DefaultTopAppBar(tb *gi.TopAppBar) {
-	gi.DefaultTopAppBarStd(tb)
+func (ge *GideView) AppBarConfig(pw gi.Widget) {
+	tb := gi.RecycleToolbar(pw)
+	// StdAppBarStart(tb)
+	gi.StdAppBarBack(tb)
+	ac := gi.StdAppBarChooser(tb)
+	ac.Resources.Add(ge.ResourceCommands)
+	ac.Resources.Add(ge.ResourceFiles)
+	ac.Resources.Add(ge.ResourceSymbols)
+
+	gi.StdOverflowMenu(tb)
 	tb.AddOverflowMenu(func(m *gi.Scene) {
 		gi.NewButton(m).SetText("Gide Prefs").SetIcon(icons.Settings).
 			OnClick(func(e events.Event) {
 				gide.PrefsView(&gide.Prefs)
 			})
 	})
+	gi.CurrentWindowAppBar(tb)
+	// apps should add their own app-general functions here
 }
 
-func (ge *GideView) TopAppBar(tb *gi.TopAppBar) { //gti:add
-	tb.Resources.Add(ge.ResourceCommands)
-	tb.Resources.Add(ge.ResourceFiles)
-	tb.Resources.Add(ge.ResourceSymbols)
-
+func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.Style(func(s *styles.Style) {

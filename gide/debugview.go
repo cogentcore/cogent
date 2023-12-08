@@ -768,7 +768,7 @@ func (dv *DebugView) ConfigDebugView(ge Gide, sup fi.Known, exePath string) {
 	dv.Start()
 }
 
-// Toolbar returns the find toolbar
+// Toolbar returns the debug toolbar
 func (dv *DebugView) Toolbar() *gi.Toolbar {
 	return dv.ChildByName("toolbar", 0).(*gi.Toolbar)
 }
@@ -1272,7 +1272,7 @@ func (vv *VarView) StructView() *giv.StructView {
 	return vv.SplitView().Child(1).(*giv.StructView)
 }
 
-func (vv *VarView) VarTopAppBar(tb *gi.TopAppBar) {
+func (vv *VarView) ConfigToolbar(tb *gi.Toolbar) {
 	gi.NewButton(tb).SetText("Follow pointer").SetIcon(icons.ArrowForward).
 		SetTooltip("FollowPtr loads additional debug state information for pointer variables, so you can continue clicking through the tree to see what it points to.").
 		OnClick(func(e events.Event) {
@@ -1337,10 +1337,7 @@ func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarVi
 	vv := NewVarView(b, "view")
 	vv.DbgView = dbgVw
 	vv.SetVar(vr, frinfo)
-	b.AddDefaultTopAppBar()
-	b.AddTopAppBar(vv.VarTopAppBar)
-	// tb := vv.Toolbar()
-	// tb.UpdateActions()
+	b.AddAppBar(vv.ConfigToolbar)
 	b.NewWindow().Run()
 	return vv
 }
