@@ -156,7 +156,7 @@ type PathNode struct {
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
 func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
-	pxf := path.ParXForm(true) // include self
+	pxf := path.ParTransform(true) // include self
 
 	lstCmdIdx := 0
 	lstCmd := svg.PcErr
@@ -262,8 +262,8 @@ func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int
 		pn := pts[i]
 		wbmin := mat32.NewVec2FmPoint(path.WinBBox.Min)
 		pt := wbmin.Sub(svoff)
-		xf, lpt := path.DeltaXForm(dv, mat32.Vec2{1, 1}, 0, pt, true) // include self
-		npt := xf.MulVec2AsPtCtr(pn.Cp, lpt)                          // transform point to new abs coords
+		xf, lpt := path.DeltaTransform(dv, mat32.Vec2{1, 1}, 0, pt, true) // include self
+		npt := xf.MulVec2AsPtCtr(pn.Cp, lpt)                              // transform point to new abs coords
 		sv.PathNodeSetPoint(path, pn, npt)
 		if i == pidx {
 			dv = dv.MulScalar(-1)

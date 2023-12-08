@@ -26,6 +26,7 @@ import (
 	"github.com/goki/ki/kit"
 	"github.com/goki/ki/walki"
 	"github.com/goki/mat32"
+	"goki.dev/gi/v2/keyfun"
 )
 
 // SVGView is the element for viewing, interacting with the SVG
@@ -416,9 +417,9 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 	return bbox
 }
 
-// XFormAllLeaves transforms all the leaf items in the drawing (not groups)
-// uses ApplyDeltaXForm manipulation.
-func (sv *SVGView) XFormAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
+// TransformAllLeaves transforms all the leaf items in the drawing (not groups)
+// uses ApplyDeltaTransform manipulation.
+func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
 	sv.FuncDownMeFirst(0, nil, func(k ki.Ki, level int, d any) bool {
 		if k.This() == sv.This() {
 			return ki.Continue
@@ -441,7 +442,7 @@ func (sv *SVGView) XFormAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float3
 				return ki.Break
 			}
 		}
-		sni.ApplyDeltaXForm(trans, scale, rot, pt)
+		sni.ApplyDeltaTransform(trans, scale, rot, pt)
 		return ki.Continue
 	})
 }
@@ -514,7 +515,7 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 
 	bsz = bsz.DivScalar(sv.Scale)
 
-	sv.XFormAllLeaves(treff, mat32.Vec2{1, 1}, 0, mat32.Vec2{0, 0})
+	sv.TransformAllLeaves(treff, mat32.Vec2{1, 1}, 0, mat32.Vec2{0, 0})
 	sv.ViewBox.Size = bsz
 	sv.PhysWidth.Val = bsz.X
 	sv.PhysHeight.Val = bsz.Y
@@ -865,7 +866,7 @@ func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.NodeS
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	nr := sv.NewEl(typ)
-	xfi := sv.Pnt.XForm.Inverse()
+	xfi := sv.Pnt.Transform.Inverse()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
 	nr.SetPos(xfi.MulVec2AsPt(pos))
@@ -890,7 +891,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.NodeSVG {
 	tspan := nr.AddNewChild(svg.KiT_Text, tsnm).(*svg.Text)
 	tspan.Text = "Text"
 	tspan.Width = 200
-	xfi := sv.Pnt.XForm.Inverse()
+	xfi := sv.Pnt.Transform.Inverse()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
 	// minsz := float32(20)
@@ -922,7 +923,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	updt := sv.UpdateStart()
 	sv.SetFullReRender()
 	nr := sv.NewEl(svg.KiT_Path).(*svg.Path)
-	xfi := sv.Pnt.XForm.Inverse()
+	xfi := sv.Pnt.Transform.Inverse()
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pos := mat32.NewVec2FmPoint(start).Sub(svoff)
 	pos = xfi.MulVec2AsPt(pos)
@@ -1007,10 +1008,10 @@ func (sv *SVGView) Render2D() {
 		sv.This().(gi.Node2D).ConnectEvents2D()
 		sv.FillViewportWithBg()
 		rs := &sv.Render
-		rs.PushXForm(sv.Pnt.XForm)
+		rs.PushTransform(sv.Pnt.Transform)
 		sv.Render2DChildren() // we must do children first, then us!
 		sv.PopBounds()
-		rs.PopXForm()
+		rs.PopTransform()
 		sv.RenderViewport2D() // update our parent image
 		sv.ClearFlag(int(svg.Rendering))
 	}
@@ -1069,7 +1070,7 @@ func (sv *SVGView) RenderBg() {
 	draw.Draw(sv.BgPixels, bb, &image.Uniform{Prefs.Colors.Background}, image.ZP, draw.Src)
 
 	rs.PushBounds(bb)
-	rs.PushXForm(sv.Pnt.XForm)
+	rs.PushTransform(sv.Pnt.Transform)
 
 	pc.StrokeStyle.SetColor(&Prefs.Colors.Border)
 
@@ -1100,6 +1101,6 @@ func (sv *SVGView) RenderBg() {
 	sv.bgScale = sv.Scale
 	sv.bgGridEff = sv.GridEff
 
-	rs.PopXForm()
+	rs.PopTransform()
 	rs.PopBounds()
 }

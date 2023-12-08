@@ -408,8 +408,8 @@ func (gv *GridView) SelUnGroup() {
 			gp.DeleteChild(k, false) // no destroy
 			np.InsertChild(k, gidx+i)
 			se := k.(svg.NodeSVG)
-			if !gp.Pnt.XForm.IsIdentity() {
-				se.ApplyXForm(gp.Pnt.XForm) // group no longer there!
+			if !gp.Pnt.Transform.IsIdentity() {
+				se.ApplyTransform(gp.Pnt.Transform) // group no longer there!
 			}
 		}
 		gp.Delete(ki.DestroyKids)
@@ -436,7 +436,7 @@ func (gv *GridView) SelRotate(deg float32) {
 		sz := mat32.NewVec2FmPoint(sng.WinBBox.Size())
 		mn := mat32.NewVec2FmPoint(sng.WinBBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaXForm(del, sc, rot, ctr)
+		sn.ApplyDeltaTransform(del, sc, rot, ctr)
 	}
 	sv.UpdateView(true)
 	gv.ChangeMade()
@@ -458,7 +458,7 @@ func (gv *GridView) SelScale(scx, scy float32) {
 		sz := mat32.NewVec2FmPoint(sng.WinBBox.Size())
 		mn := mat32.NewVec2FmPoint(sng.WinBBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaXForm(del, sc, 0, ctr)
+		sn.ApplyDeltaTransform(del, sc, 0, ctr)
 	}
 	sv.UpdateView(true)
 	gv.ChangeMade()

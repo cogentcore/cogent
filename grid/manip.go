@@ -75,7 +75,7 @@ func (sv *SVGView) GridDots() (float32, mat32.Vec2) {
 	incr := grid * sv.Scale // our zoom factor
 
 	org := mat32.Vec2{}
-	org = sv.Pnt.XForm.MulVec2AsPt(org)
+	org = sv.Pnt.Transform.MulVec2AsPt(org)
 
 	// fmt.Printf("org: %v\n", org)
 
@@ -338,7 +338,7 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 	tdel := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaXForm(tdel, mat32.Vec2{1, 1}, 0, pt)
+		itm.ApplyDeltaTransform(tdel, mat32.Vec2{1, 1}, 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
 	sv.SetSelSpritePos()
@@ -455,7 +455,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	// fmt.Printf("del: %v   sc:  %v\n", del, sc)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaXForm(del, sc, 0, pt)
+		itm.ApplyDeltaTransform(del, sc, 0, pt)
 		if strings.HasPrefix(es.Action, "New") {
 			svg.UpdateNodeGradientPoints(itm, "fill")
 			svg.UpdateNodeGradientPoints(itm, "stroke")
@@ -534,7 +534,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 	sc := mat32.Vec2{1, 1}
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaXForm(del, sc, ang, pt)
+		itm.ApplyDeltaTransform(del, sc, ang, pt)
 		if strings.HasPrefix(es.Action, "New") {
 			svg.UpdateNodeGradientPoints(itm, "fill")
 			svg.UpdateNodeGradientPoints(itm, "stroke")
