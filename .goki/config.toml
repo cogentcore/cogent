@@ -1,6 +1,6 @@
 Name = "gide"
 Desc = ""
-Version = "v2.0.0-dev0.0.5"
+Version = "v2.0.0-dev0.0.6"
 Type = "App"
 
 [Build]
@@ -17,6 +17,22 @@ Type = "App"
   IOSVersion = "13.0"
   AndroidMinSDK = 23
   AndroidTargetSDK = 29
+
+[Web]
+  Port = "8080"
+  RandomVersion = false
+  Gzip = false
+  BackgroundColor = "#2d2c2c"
+  ThemeColor = "#2d2c2c"
+  LoadingLabel = ""
+  Lang = "en"
+  Title = ""
+  Description = ""
+  Author = ""
+  Image = ""
+  AutoUpdateInterval = "10s"
+  WasmContentLengthHeader = ""
+  ServiceWorkerTemplate = ""
 
 [Setup]
   [Setup.Platform]
@@ -35,7 +51,6 @@ Type = "App"
 [Generate]
   Dir = "."
   Output = "gokigen.go"
-  AddKiTypes = true
   [Generate.Enumgen]
     Dir = "."
     Output = "enumgen.go"
@@ -57,3 +72,4 @@ Type = "App"
     AddFuncs = false
     Instance = false
     TypeVar = false
+    Setters = false
