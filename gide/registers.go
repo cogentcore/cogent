@@ -19,10 +19,6 @@ type Registers map[string]string
 // available named registers
 type RegisterName string
 
-func (rn RegisterName) String() string {
-	return string(rn)
-}
-
 // AvailRegisters are available named registers.  can be loaded / saved /
 // edited with preferences.
 var AvailRegisters Registers

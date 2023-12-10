@@ -45,10 +45,6 @@ type Splits []*Split
 // available named splits
 type SplitName string
 
-func (sn SplitName) String() string {
-	return string(sn)
-}
-
 // AvailSplits are available named splitter settings.  can be loaded / saved /
 // edited with preferences.  This is set to StdSplits at startup.
 var AvailSplits Splits

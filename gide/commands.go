@@ -650,10 +650,6 @@ type Commands []*Command
 // Formatted as Cat: Name as in Command.Label()
 type CmdName string
 
-func (cn CmdName) String() string {
-	return string(cn)
-}
-
 // IsValid checks if command name exists on AvailCmds list
 func (cn CmdName) IsValid() bool {
 	_, _, ok := AvailCmds.CmdByName(cn, false)
