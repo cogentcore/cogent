@@ -57,10 +57,8 @@ func (pg *Page) OpenURL(url string) error {
 	return nil
 }
 
-// TopAppBar is the default [gi.TopAppBar] for a [Page]
-func (pg *Page) TopAppBar(tb *gi.TopAppBar) {
-	gi.DefaultTopAppBarStd(tb)
-
+// AppBar is the default app bar for a [Page]
+func (pg *Page) AppBar(tb *gi.Toolbar) {
 	back := tb.ChildByName("back").(*gi.Button)
 	back.OnClick(func(e events.Event) {
 		if len(pg.History) > 1 {

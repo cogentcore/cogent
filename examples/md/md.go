@@ -19,8 +19,7 @@ var exampleMD embed.FS
 func main() { gimain.Run(app) }
 
 func app() {
-	gi.SetAppName("gidom-md")
-	b := gi.NewBody()
+	b := gi.NewBody("gidom-md")
 	h := grr.Log1(exampleMD.ReadFile("example.md"))
 	grr.Log(gidom.ReadMD(gidom.BaseContext(), b, h))
 	b.NewWindow().Run().Wait()
