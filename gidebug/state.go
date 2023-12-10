@@ -162,25 +162,25 @@ type Frame struct {
 type Break struct {
 
 	// unique numerical ID of the breakpoint
-	ID int `inactive:"+"`
+	ID int `edit:"-"`
 
 	// whether the breakpoint is currently enabled
 	On bool `width:"4"`
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `inactive:"+" format:"%#X"`
+	PC uint64 `edit:"-" format:"%#X"`
 
 	// file name (trimmed up to point of project base path)
-	File string `inactive:"+"`
+	File string `edit:"-"`
 
 	// line within file
-	Line int `inactive:"+"`
+	Line int `edit:"-"`
 
 	// full path to file
-	FPath string `inactive:"+" view:"-" tableview:"-"`
+	FPath string `edit:"-" view:"-" tableview:"-"`
 
 	// the name of the function
-	Func string `inactive:"+"`
+	Func string `edit:"-"`
 
 	// condition for conditional breakbpoint
 	Cond string
