@@ -447,10 +447,10 @@ type GradStop struct {
 type Gradient struct {
 
 	// icon of gradient -- generated to display each gradient
-	Ic gi.IconName `inactive:"+" tableview:"no-header" width:"5"`
+	Ic gi.IconName `edit:"-" tableview:"no-header" width:"5"`
 
 	// name of gradient (id)
-	Id string `inactive:"+" width:"6"`
+	Id string `edit:"-" width:"6"`
 
 	// full name of gradient as SVG element
 	Name string `view:"-"`
