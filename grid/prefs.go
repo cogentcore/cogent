@@ -136,7 +136,7 @@ var PrefsFileName = "grid_prefs.json"
 
 // Open preferences from GoGi standard prefs directory, and applies them
 func (pf *Preferences) Open() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := oswin.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	b, err := ioutil.ReadFile(pnm)
 	if err != nil {
@@ -151,7 +151,7 @@ func (pf *Preferences) Open() error {
 
 // Save Preferences to GoGi standard prefs directory
 func (pf *Preferences) Save() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := oswin.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
@@ -306,7 +306,7 @@ var SavedPathsExtras = []string{gi.MenuTextSeparator, GridViewResetRecents, Grid
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := oswin.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.SaveJSON(pnm)
 	// add back after save
@@ -317,7 +317,7 @@ func SavePaths() {
 func OpenPaths() {
 	// remove to be sure we don't have duplicate extras
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := oswin.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.OpenJSON(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)

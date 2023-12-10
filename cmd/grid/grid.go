@@ -31,7 +31,7 @@ Version: ` + grid.Prefs.VersionInfo())
 	grid.InitPrefs()
 
 	/*
-			pdir := oswin.TheApp.AppPrefsDir()
+			pdir := oswin.TheApp.AppDataDir()
 			pnm := filepath.Join(pdir, "grid.log")
 
 			lf, err := os.Create(pnm)

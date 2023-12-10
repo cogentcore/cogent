@@ -144,7 +144,7 @@ func (lt *Splits) SaveJSON(filename gi.FileName) error {
 
 // OpenPrefs opens Splits from App standard prefs directory, using PrefSplitsFileName
 func (lt *Splits) OpenPrefs() error {
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := oswin.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
 	err := lt.OpenJSON(gi.FileName(pnm))
@@ -157,7 +157,7 @@ func (lt *Splits) OpenPrefs() error {
 // SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFileName
 func (lt *Splits) SavePrefs() error {
 	lt.FixLen()
-	pdir := oswin.TheApp.AppPrefsDir()
+	pdir := oswin.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false
 	AvailSplitNames = lt.Names()
