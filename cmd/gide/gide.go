@@ -24,19 +24,9 @@ import (
 func main() { gimain.Run(app) }
 
 func app() {
-	// gi.FocusTrace = true
-	// gi.LayoutTrace = true
-	// gi.KeyEventTrace = true
-
-	// goosi.TheApp.SetQuitCleanFunc(func() {
-	// 	fmt.Printf("Doing final Quit cleanup here..\n")
-	// })
-
-	goosi.TheApp.SetName("gide") // needs to happen before prefs
-
 	gide.InitPrefs()
 
-	pdir := gi.AppDataDir()
+	pdir := gide.AppDataDir()
 	lfnm := filepath.Join(pdir, "gide.log")
 	crnm := filepath.Join(pdir, "crash.log")
 

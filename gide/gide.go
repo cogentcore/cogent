@@ -168,3 +168,12 @@ func ParentGide(kn ki.Ki) (Gide, bool) {
 	})
 	return ge, ge != nil
 }
+
+// AppDataDir returns the application-specific data directory for gide.
+// It wraps [gi.App.DataDir], and must be a separate function because
+// the [gi.App] for gide may not exist yet at certain points. It ensures
+// that the directory exists before returning it.
+func AppDataDir() string {
+	// TODO: is there a better way to do this?
+	return (&gi.App{Name: "gide"}).DataDir()
+}

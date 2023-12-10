@@ -124,7 +124,7 @@ func (pf *Preferences) ApplyEnvVars() {
 
 // Open preferences from GoGi standard prefs directory, and applies them
 func (pf *Preferences) Open() error { //gti:add
-	pdir := gi.AppDataDir()
+	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log(tomls.Open(pf, pnm))
 	if err != nil {
@@ -148,7 +148,7 @@ func (pf *Preferences) Open() error { //gti:add
 
 // Save Preferences to GoGi standard prefs directory
 func (pf *Preferences) Save() error { //gti:add
-	pdir := gi.AppDataDir()
+	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log(tomls.Save(pf, pnm))
 	if err != nil {
@@ -342,7 +342,7 @@ var (
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := gi.AppDataDir()
+	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.Save(pnm)
 	// add back after save
@@ -353,7 +353,7 @@ func SavePaths() {
 func OpenPaths() {
 	// remove to be sure we don't have duplicate extras
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := gi.AppDataDir()
+	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.Open(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)

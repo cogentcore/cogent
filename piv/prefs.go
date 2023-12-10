@@ -6,8 +6,8 @@ package piv
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"goki.dev/gi/v2/gi"
@@ -32,7 +32,7 @@ type ProjPrefs struct {
 
 // Open open from  file
 func (pf *ProjPrefs) Open(filename gi.FileName) error {
-	b, err := ioutil.ReadFile(string(filename))
+	b, err := os.ReadFile(string(filename))
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (pf *ProjPrefs) Save(filename gi.FileName) error {
 		log.Println(err)
 		return err
 	}
-	err = ioutil.WriteFile(string(filename), b, 0644)
+	err = os.WriteFile(string(filename), b, 0644)
 	if err != nil {
 		log.Println(err)
 	}
