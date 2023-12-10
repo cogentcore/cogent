@@ -74,14 +74,14 @@ var SavedPathsFileName = "gopi_saved_paths.toml"
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.Save(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
-	pdir := gi.AppPrefsDir()
+	pdir := gi.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.Open(pnm)
 }
