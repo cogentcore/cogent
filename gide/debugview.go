@@ -883,7 +883,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Cont").SetIcon(icons.PlayArrow).
 		SetTooltip("continue execution from current point").
 		SetShortcut("Control+Alt+R").Style(func(s *styles.Style) {
-		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
+		s.SetState(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		go dv.Continue()
 	})
@@ -893,7 +893,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Over").SetIcon(icons.StepOver).
 		SetTooltip("continues to the next source line, not entering function calls").
 		SetShortcut("F6").Style(func(s *styles.Style) {
-		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
+		s.SetState(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepOver()
 	})
@@ -901,7 +901,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Into").SetIcon(icons.StepInto).
 		SetTooltip("continues to the next source line, entering into function calls").
 		SetShortcut("F7").Style(func(s *styles.Style) {
-		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
+		s.SetState(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepInto()
 	})
@@ -909,21 +909,21 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Out").SetIcon(icons.StepOut).
 		SetTooltip("continues to the return point of the current function").
 		SetShortcut("F8").Style(func(s *styles.Style) {
-		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
+		s.SetState(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepOut()
 	})
 
 	gi.NewButton(tb).SetText("Single").SetIcon(icons.Step).
 		SetTooltip("steps a single CPU instruction").Style(func(s *styles.Style) {
-		s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
+		s.SetState(!dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.StepOut()
 	})
 
 	gi.NewButton(tb).SetText("Stop").SetIcon(icons.Stop).
 		SetTooltip("stop execution").Style(func(s *styles.Style) {
-		s.State.SetFlag(dv.DbgIsAvail(), states.Disabled)
+		s.SetState(dv.DbgIsAvail(), states.Disabled)
 	}).OnClick(func(e events.Event) {
 		dv.Stop()
 	})
@@ -933,7 +933,7 @@ func (dv *DebugView) ConfigToolbar() {
 	gi.NewButton(tb).SetText("Global Vars").SetIcon(icons.Search).
 		SetTooltip("list variables at global scope, subject to filter (name contains)").
 		Style(func(s *styles.Style) {
-			s.State.SetFlag(!dv.DbgIsAvail(), states.Disabled)
+			s.SetState(!dv.DbgIsAvail(), states.Disabled)
 		}).OnClick(func(e events.Event) {
 		giv.CallFunc(dv, dv.ListGlobalVars)
 	})

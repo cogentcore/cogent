@@ -82,15 +82,15 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 func (fn *FileNode) GideContextMenu(m *gi.Scene) {
 	gi.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
 		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
-		s.State.SetFlag(!fn.HasSelection(), states.Disabled)
+		s.SetState(!fn.HasSelection(), states.Disabled)
 	})
 	giv.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Style(func(s *styles.Style) {
-			s.State.SetFlag(!fn.HasSelection(), states.Disabled)
+			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
 	giv.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
 		Style(func(s *styles.Style) {
-			s.State.SetFlag(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
+			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
 	gi.NewSeparator(m)
 }
