@@ -321,7 +321,7 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) { //gti:add
 	if addToVcs {
 		nfn, ok := ge.Files.FindFile(np)
 		if ok {
-			nfn.AddToVcs()
+			nfn.AddToVCS()
 		}
 	}
 }

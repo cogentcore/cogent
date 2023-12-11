@@ -62,7 +62,7 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 		}
 	})
 
-	ge.ConfigActiveFilename(giv.NewFuncButton(tb, ge.NextViewFile).
+	ge.ConfigActiveFilename(giv.NewFuncButton(tb, ge.OpenPath).
 		SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open))
 
 	giv.NewFuncButton(tb, ge.SaveActiveView).SetText("Save").
@@ -165,9 +165,6 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 			gi.NewSeparator(mm)
 
 			giv.NewFuncButton(mm, ge.OpenProj).SetText("Open Project").
-				SetIcon(icons.Open)
-
-			giv.NewFuncButton(mm, ge.OpenPath).SetText("Open Path").
 				SetIcon(icons.Open)
 
 			gi.NewSeparator(mm)

@@ -46,14 +46,17 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* appchooser icon not updating
+* etable toolbar where relevant
+
 * lineno too conservative in not rendering bottom
 * don't render top text, lineno if out of range
 * always display cursor when typing!
-* inline completer spell check not working
 * drag-n-drop tableview
-* OpenAll, CloseAll not working.
+* OpenAll, CloseAll not working. -- always using cached opendir value!
 
 * color highlighting for diff output in commandshell!
+* outbuf use textview markup in addition to link formatting and other formatting.  tried but failed
 
 * more helpers for URI api
 * filter function for chooser for URI case
@@ -63,26 +66,15 @@ In addition to Issues shown on github, some important features to be added longe
 * Find not selecting first item (sometimes?)
 
 * dialog closing causes old window to show up -- need to update render images
-* textview context menu: add diff, vcs log
 
 * fileview global priority key shortcuts and fileview menu
 * editor rendering overflow
 * filetree --get rid of empty upper level or not?
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
 
-* outbuf use textview markup in addition to link formatting and other formatting.  tried but failed
 
 # DONE:
 
-* click on texteditor not updating all of current filenode -- commands not working for that
-* rest of the top app bar items: debug attach etc
-* ctrl-X+K kill buffer not fully closing
-* rename -- needs to close buffs before doing -- code is in gide somewhere (filetree?)
-* rename Known -> Enum or something?
-* lineno horiz scrolling issues -- this is in V1 too!
-* focus in topappbar returning to TAB not going to where command goes.
-
-* symbolsview: textview still not jumping to line correctly
 
 
 

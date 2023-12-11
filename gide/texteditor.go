@@ -9,11 +9,15 @@ import (
 
 	"goki.dev/colors"
 	"goki.dev/gi/v2/gi"
+	"goki.dev/gi/v2/giv"
+	"goki.dev/gi/v2/keyfun"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/abilities"
+	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
 	"goki.dev/goosi/events"
 	"goki.dev/grr"
+	"goki.dev/icons"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/pi/v2/token"
 )
@@ -220,68 +224,57 @@ func ConfigEditorTextEditor(ed *texteditor.Editor) {
 	})
 }
 
-/*
-// MakeContextMenu builds the textview context menu
-func (tv *TextEditor) MakeContextMenu(m *gi.Scene) {
-	ac := m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: keyfun.Copy},
-		tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-			txf.Copy(true)
+// ContextMenu builds the text editor context menu
+func (ed *TextEditor) ContextMenu(m *gi.Scene) {
+	gi.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
+		SetKey(keyfun.Copy).SetState(!ed.HasSelection(), states.Disabled).
+		OnClick(func(e events.Event) {
+			ed.Copy(true)
 		})
-	ac.SetActiveState(tv.HasSelection())
-	if !tv.IsInactive() {
-		ac = m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: keyfun.Cut},
-			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-				txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-				txf.Cut()
+	if ed.IsReadOnly() {
+		gi.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
+			OnClick(func(e events.Event) {
+				ed.Clear()
 			})
-		ac.SetActiveState(tv.HasSelection())
-		ac = m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: keyfun.Paste},
-			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-				txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-				txf.Paste()
-			})
-		ac.SetActiveState(tv.HasSelection() && !tv.Buf.InComment(tv.CursorPos))
+		return
+	}
 
-		m.AddSeparator("sep-clip")
+	gi.NewButton(m).SetText("Cut").SetIcon(icons.ContentCopy).
+		SetKey(keyfun.Cut).SetState(!ed.HasSelection(), states.Disabled).
+		OnClick(func(e events.Event) {
+			ed.Cut()
+		})
+	gi.NewButton(m).SetText("Paste").SetIcon(icons.ContentPaste).
+		SetKey(keyfun.Paste).SetState(ed.EventMgr().ClipBoard().IsEmpty(), states.Disabled).
+		OnClick(func(e events.Event) {
+			ed.Paste()
+		})
 
-		ac = m.AddAction(gi.ActOpts{Label: "Lookup", ShortcutKey: keyfun.Lookup},
-			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-				txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-				txf.Lookup()
-			})
+	gi.NewSeparator(m)
+	giv.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
 
-		m.AddSeparator("sep-dbg")
-		hasDbg := false
-		if ge, ok := ParentGide(tv); ok {
-			if ge.CurDebug() != nil {
-				hasDbg = true
-			}
+	fn := ed.Gide.ActiveFileNode()
+	if fn != nil {
+		fn.FileNodeVCSContextMenu(m)
+	}
+
+	if ed.Gide.CurDebug() != nil {
+		gi.NewSeparator(m)
+
+		gi.NewButton(m).SetText("Set breakpoint").SetIcon(icons.StopCircle).
+			SetTooltip("debugger will stop here").OnClick(func(e events.Event) {
+			ed.SetBreakpoint(ed.CursorPos.Ln)
+		})
+		if ed.HasBreakpoint(ed.CursorPos.Ln) {
+			gi.NewButton(m).SetText("Clear breakpoint").SetIcon(icons.Cancel).
+				OnClick(func(e events.Event) {
+					ed.ClearBreakpoint(ed.CursorPos.Ln)
+				})
 		}
-		ac = m.AddAction(gi.ActOpts{Label: "SetBreakpoint"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-				txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-				txf.SetBreakpoint(tv.CursorPos.Ln)
-			})
-		ac.SetActiveState(hasDbg)
-		ac = m.AddAction(gi.ActOpts{Label: "ClearBreakpoint"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-				txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-				txf.ClearBreakpoint(tv.CursorPos.Ln)
-			})
-		ac.SetActiveState(hasDbg && tv.HasBreakpoint(tv.CursorPos.Ln))
-		ac = m.AddAction(gi.ActOpts{Label: "Debug: Find Frames"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-				txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-				txf.FindFrames(tv.CursorPos.Ln)
-			})
-		ac.SetActiveState(hasDbg)
-	} else {
-		ac = m.AddAction(gi.ActOpts{Label: "Clear"},
-			tv.This(), func(recv, send ki.Ki, sig int64, data any) {
-				txf := recv.Embed(KiT_TextEditor).(*TextEditor)
-				txf.Clear()
+		gi.NewButton(m).SetText("Debug: Find frames").SetIcon(icons.Cancel).
+			SetTooltip("Finds stack frames in the debugger containing this file and line").
+			OnClick(func(e events.Event) {
+				ed.FindFrames(ed.CursorPos.Ln)
 			})
 	}
 }
-*/

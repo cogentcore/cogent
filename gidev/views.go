@@ -216,7 +216,7 @@ func (ge *GideView) ClearDebug() {
 // VCSUpdateAll does an Update (e.g., Pull) on all VCS repositories within
 // the open tree nodes in FileTree.
 func (ge *GideView) VCSUpdateAll() { //gti:add
-	ge.Files.UpdateAllVcs()
+	ge.Files.UpdateAllVCS()
 	ge.Files.UpdateAll()
 }
 
@@ -233,12 +233,12 @@ func (ge *GideView) VCSLog(since string) (vci.Log, error) { //gti:add
 	ond, _, got := ge.OpenNodeForTextEditor(atv)
 	if !got {
 		if ge.Files.DirRepo != nil {
-			return ge.Files.LogVcs(true, since)
+			return ge.Files.LogVCS(true, since)
 		}
 		gi.MessageDialog(atv, "No VCS Repository found in current active file or Root path: Open a file in a repository and try again", "No Version Control Repository")
 		return nil, errors.New("No VCS Repository found in current active file or Root path")
 	}
-	return ond.LogVcs(true, since)
+	return ond.LogVCS(true, since)
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
