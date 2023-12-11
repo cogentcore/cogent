@@ -24,6 +24,7 @@ import (
 	"goki.dev/gide/v2/gide"
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
+	"goki.dev/grr"
 	"goki.dev/ki/v2"
 	"goki.dev/spell"
 	"goki.dev/vci/v2"
@@ -217,6 +218,27 @@ func (ge *GideView) OpenFile(fnm string) { //gti:add
 	ge.OpenPath(gi.FileName(abfn))
 }
 
+// SetWindowNameTitle sets the window name and title based on current project name
+func (ge *GideView) SetWindowNameTitle() {
+	win := ge.Sc.RenderWin()
+	if win == nil {
+		return
+	}
+	pnm := ge.Name()
+	winm := "gide-" + pnm
+	win.SetName(winm)
+	win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
+	tab := ge.Sc.GetTopAppBar()
+	if tab != nil {
+		aci := tab.ChildByName("app-chooser", 1)
+		if aci != nil {
+			ac := aci.(*gi.AppChooser)
+			ac.ItemsFunc()
+			ac.SetCurIndex(0)
+		}
+	}
+}
+
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
 // current GideView object if it is empty, or otherwise opens a new window.
@@ -235,18 +257,13 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 		gide.SavePaths()
 		ge.ProjRoot = gi.FileName(root)
 		ge.SetName(pnm)
+		ge.Sc.SetName(pnm)
 		ge.Prefs.ProjFilename = gi.FileName(filepath.Join(root, pnm+".gide"))
 		ge.ProjFilename = ge.Prefs.ProjFilename
 		ge.Prefs.ProjRoot = ge.ProjRoot
-		// ge.Config()
 		ge.GuessMainLang()
 		ge.LangDefaults()
-		// win := ge.ParentWindow()
-		// if win != nil {
-		// 	winm := "gide-" + pnm
-		// 	win.SetName(winm)
-		// 	win.SetTitle(winm + ": " + root)
-		// }
+		ge.SetWindowNameTitle()
 		if fnm != "" {
 			ge.NextViewFile(gi.FileName(fnm))
 		}
@@ -278,14 +295,10 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 		gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 		gide.SavePaths()
 		ge.SetName(pnm)
+		ge.Sc.SetName(pnm)
 		ge.ApplyPrefs()
 		ge.UpdateFiles()
-		win := ge.Sc.RenderWin()
-		if win != nil {
-			winm := "gide-" + pnm
-			win.SetName(winm)
-			win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
-		}
+		ge.SetWindowNameTitle()
 	}
 	return ge
 }
@@ -415,9 +428,10 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 	if path == "" {
 		return "", "blank", "", false
 	}
-	info, err := os.Lstat(path)
+	effpath := grr.Log1(filepath.EvalSymlinks(path))
+	info, err := os.Lstat(effpath)
 	if err != nil {
-		emsg := fmt.Errorf("gide.ProjPathParse: Cannot open at given path: %q: Error: %v", path, err)
+		emsg := fmt.Errorf("gide.ProjPathParse: Cannot open at given path: %q: Error: %v", effpath, err)
 		log.Println(emsg)
 		return
 	}
@@ -426,11 +440,12 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 	pathIsDir := info.IsDir()
 	if pathIsDir {
 		root = path
+		projnm = fn
 	} else {
 		root = filepath.Clean(dir)
+		_, projnm = filepath.Split(root)
 		fnm = fn
 	}
-	_, projnm = filepath.Split(root)
 	ok = true
 	return
 }
