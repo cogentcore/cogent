@@ -286,25 +286,27 @@ func (ge *GideView) ResourceFiles() uri.URIs {
 		if fn == nil || fn.IsIrregular() {
 			return ki.Continue
 		}
+		rpath := fn.MyRelPath()
+		nmpath := fn.Nm + ":" + rpath
 		switch {
 		case fn.IsDir():
-			ur := uri.URI{Label: fn.Nm, Icon: icons.Folder}
-			ur.SetURL("dir", "", fn.MyRelPath())
+			ur := uri.URI{Label: nmpath, Icon: icons.Folder}
+			ur.SetURL("dir", "", rpath)
 			ur.Func = func() {
 				fn.OpenDir()
 				fn.ScrollToMe()
 			}
 			ul = append(ul, ur)
 		case fn.IsExec():
-			ur := uri.URI{Label: fn.Nm, Icon: icons.FileExe}
-			ur.SetURL("exe", "", fn.MyRelPath())
+			ur := uri.URI{Label: nmpath, Icon: icons.FileExe}
+			ur.SetURL("exe", "", rpath)
 			ur.Func = func() {
 				ge.FileNodeRunExe(fn)
 			}
 			ul = append(ul, ur)
 		default:
-			ur := uri.URI{Label: fn.Nm, Icon: fn.Info.Ic}
-			ur.SetURL("file", "", fn.MyRelPath())
+			ur := uri.URI{Label: nmpath, Icon: fn.Info.Ic}
+			ur.SetURL("file", "", rpath)
 			ur.Func = func() {
 				ge.NextViewFileNode(fn)
 			}
