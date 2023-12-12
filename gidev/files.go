@@ -32,7 +32,7 @@ func (ge *GideView) SaveActiveView() { //gti:add
 			ge.SetStatus("File Saved")
 			fnm := string(tv.Buf.Filename)
 			fpath, _ := filepath.Split(fnm)
-			ge.Files.UpdateNewFile(fpath) // update everything in dir -- will have removed autosave
+			ge.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 			ge.RunPostCmdsActiveView()
 		} else {
 			giv.CallFunc(ge, ge.SaveActiveViewAs)
@@ -66,7 +66,7 @@ func (ge *GideView) SaveActiveViewAs(filename gi.FileName) { //gti:add
 			}
 			ge.SetStatus(fmt.Sprintf("File %v Saved As: %v", ofn, filename))
 			// ge.RunPostCmdsActiveView() // doesn't make sense..
-			ge.Files.UpdateNewFile(string(filename)) // update everything in dir -- will have removed autosave
+			ge.Files.UpdatePath(string(filename)) // update everything in dir -- will have removed autosave
 			fn, ok := ge.Files.FindFile(string(filename))
 			if ok {
 				if fn.Buf != nil {
@@ -87,7 +87,7 @@ func (ge *GideView) RevertActiveView() { //gti:add
 		tv.Buf.Revert()
 		tv.Buf.Undos.Reset() // key implication of revert
 		fpath, _ := filepath.Split(string(tv.Buf.Filename))
-		ge.Files.UpdateNewFile(fpath) // update everything in dir -- will have removed autosave
+		ge.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 	}
 }
 
@@ -153,7 +153,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextEditor, vidx int, fn *filetree.No
 		gi.NewButton(pw).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 			d.Close()
 			fn.Buf.AutoSaveDelete()
-			ge.Files.UpdateNewFile(fn.Buf.AutoSaveFilename()) // will update dir
+			ge.Files.UpdatePath(fn.Buf.AutoSaveFilename()) // will update dir
 		})
 		gi.NewButton(pw).SetText("Open autosave file").OnClick(func(e events.Event) {
 			d.Close()

@@ -330,7 +330,7 @@ func (ge *GideView) NewFile(filename string, addToVcs bool) { //gti:add
 		gi.MessageDialog(ge, fmt.Sprintf("Could not make new file at: %v, err: %v", np, err), "Could not Make File")
 		return
 	}
-	ge.Files.UpdateNewFile(np)
+	ge.Files.UpdatePath(np)
 	if addToVcs {
 		nfn, ok := ge.Files.FindFile(np)
 		if ok {
@@ -375,11 +375,11 @@ func (ge *GideView) SaveProjAs(filename gi.FileName) bool { //gti:add
 	spell.SaveIfLearn()
 	gide.SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	gide.SavePaths()
-	// ge.Files.UpdateNewFile(string(filename))
 	ge.Prefs.ProjFilename = filename
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.GrabPrefs()
 	ge.Prefs.Save(filename)
+	ge.Files.UpdatePath(string(filename))
 	ge.Changed = false
 	return false
 }

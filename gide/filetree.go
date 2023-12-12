@@ -93,6 +93,7 @@ func (fn *FileNode) GideContextMenu(m *gi.Scene) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
 	gi.NewSeparator(m)
+	fn.FileNodeContextMenu(m)
 }
 
 /////////////////////////////////////////////////////////////////////
