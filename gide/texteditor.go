@@ -253,8 +253,9 @@ func (ed *TextEditor) ContextMenu(m *gi.Scene) {
 	gi.NewSeparator(m)
 	giv.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
 
-	fn := ed.Gide.ActiveFileNode()
+	fn := ed.Gide.FileNodeForFile(string(ed.Buf.Filename), false)
 	if fn != nil {
+		fn.SelectAction(events.SelectOne)
 		fn.FileNodeVCSContextMenu(m)
 	}
 

@@ -46,7 +46,6 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* appchooser icon not updating
 * etable toolbar where relevant
 
 * lineno too conservative in not rendering bottom
@@ -67,7 +66,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 * dialog closing causes old window to show up -- need to update render images
 
-* fileview global priority key shortcuts and fileview menu
+* fileview global priority key shortcuts
 * editor rendering overflow
 * filetree --get rid of empty upper level or not?
 * sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
