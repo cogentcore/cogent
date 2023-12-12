@@ -67,7 +67,7 @@ require (
 	goki.dev/prof/v2 v2.0.0-dev0.0.4 // indirect
 	goki.dev/svg v0.1.21 // indirect
 	goki.dev/vgpu/v2 v2.0.0-dev0.0.22 // indirect
-	golang.org/x/arch v0.6.0 // indirect
+	golang.org/x/arch v0.0.0-20190927153633-4e8777c89be4 // indirect
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
 	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
