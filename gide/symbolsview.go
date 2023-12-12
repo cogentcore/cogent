@@ -371,8 +371,8 @@ func (st *SymTreeView) UpdateBranchIcons() {
 func (st *SymTreeView) SetSymIcon() {
 	ic := st.SymNode().GetIcon()
 	if bp, ok := st.BranchPart(); ok {
-		if bp.IconDisab != ic {
-			bp.IconDisab = ic
+		if bp.IconUnk != ic {
+			bp.IconUnk = ic
 			bp.Update()
 			st.SetNeedsRender(true)
 		}
