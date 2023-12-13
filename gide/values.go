@@ -30,23 +30,20 @@ func KeyMapsView(km *KeyMaps) {
 		AvailKeyMapsChanged = true
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		sp := giv.NewFuncButton(tb, km.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
-		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps)
-		})
+		giv.NewFuncButton(tb, km.SavePrefs).
+			SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps) })
 		oj := giv.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
-		vs := giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
-		vs.SetUpdateFunc(func() {
-			vs.SetEnabledUpdt(km != &StdKeyMaps)
-		})
-		rs := giv.NewFuncButton(tb, km.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
-		rs.SetUpdateFunc(func() {
-			rs.SetEnabledUpdt(km != &StdKeyMaps)
-		})
+		giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).
+			SetText("View standard").SetIcon(icons.Visibility).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StdKeyMaps) })
+		giv.NewFuncButton(tb, km.RevertToStd).SetConfirm(true).
+			SetText("Revert to standard").SetIcon(icons.DeviceReset).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StdKeyMaps) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
@@ -72,10 +69,9 @@ func PrefsView(pf *Preferences) *giv.StructView {
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pf.Apply).SetIcon(icons.Done)
-		sp := giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
-		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(pf.Changed)
-		})
+		giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").
+			SetIcon(icons.Save).SetKey(keyfun.Save).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(pf.Changed) })
 		giv.NewFuncButton(tb, pf.VersionInfo).SetShowReturn(true).SetIcon(icons.Info)
 		giv.NewFuncButton(tb, pf.EditKeyMaps).SetIcon(icons.Keyboard)
 		giv.NewFuncButton(tb, pf.EditLangOpts).SetIcon(icons.Subtitles)
@@ -194,23 +190,20 @@ func LangsView(pt *Langs) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save)
-		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(AvailLangsChanged && pt == &AvailLangs)
-		})
+		giv.NewFuncButton(tb, pt.SavePrefs).
+			SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailLangsChanged && pt == &AvailLangs) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
-		vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
-		vs.SetUpdateFunc(func() {
-			vs.SetEnabledUpdt(pt != &StdLangs)
-		})
-		rs := giv.NewFuncButton(tb, pt.RevertToStd).SetConfirm(true).SetText("Revert to standard").SetIcon(icons.DeviceReset)
-		rs.SetUpdateFunc(func() {
-			rs.SetEnabledUpdt(pt != &StdLangs)
-		})
+		giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).
+			SetText("View standard").SetIcon(icons.Visibility).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdLangs) })
+		giv.NewFuncButton(tb, pt.RevertToStd).SetConfirm(true).
+			SetText("Revert to standard").SetIcon(icons.DeviceReset).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdLangs) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
@@ -234,19 +227,17 @@ func CmdsView(pt *Commands) {
 		CustomCmdsChanged = true
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
-		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(CustomCmdsChanged && pt == &CustomCmds)
-		})
+		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").
+			SetIcon(icons.Save).SetKey(keyfun.Save).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCmdsChanged && pt == &CustomCmds) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
-		vs := giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).SetText("View standard").SetIcon(icons.Visibility)
-		vs.SetUpdateFunc(func() {
-			vs.SetEnabledUpdt(pt != &StdCmds)
-		})
+		giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).
+			SetText("View standard").SetIcon(icons.Visibility).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdCmds) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
@@ -336,10 +327,9 @@ func SplitsView(pt *Splits) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
-		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(AvailSplitsChanged && pt == &StdSplits)
-		})
+		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").
+			SetIcon(icons.Save).SetKey(keyfun.Save).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailSplitsChanged && pt == &StdSplits) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
@@ -458,10 +448,9 @@ func RegistersView(pt *Registers) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		sp := giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").SetIcon(icons.Save).SetKey(keyfun.Save)
-		sp.SetUpdateFunc(func() {
-			sp.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters)
-		})
+		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").
+			SetIcon(icons.Save).SetKey(keyfun.Save).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)

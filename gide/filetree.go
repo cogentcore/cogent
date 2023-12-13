@@ -29,8 +29,7 @@ type FileNode struct {
 }
 
 func (fn *FileNode) OnInit() {
-	fn.HandleFileNodeEvents()
-	fn.FileNodeStyles()
+	fn.Node.OnInit()
 	fn.CustomContextMenu = fn.GideContextMenu
 }
 

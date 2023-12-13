@@ -46,7 +46,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* etable toolbar where relevant
+* esc to cancel dialog not working
 
 * lineno too conservative in not rendering bottom
 * don't render top text, lineno if out of range

@@ -14,15 +14,16 @@ import (
 	"goki.dev/goosi/events"
 )
 
-func (ge *GideView) HandleGideViewEvents() {
-	ge.HandleGideKeyEvent()
-	ge.HandleOSFileEvent()
-}
-
-func (ge *GideView) HandleGideKeyEvent() {
+func (ge *GideView) HandleEvents() {
 	ge.PriorityEvents = []events.Types{events.KeyChord}
 	ge.OnKeyChord(func(e events.Event) {
 		ge.GideViewKeys(e)
+	})
+	ge.On(events.OSOpenFiles, func(e events.Event) {
+		ofe := e.(*events.OSFiles)
+		for _, fn := range ofe.Files {
+			ge.OpenFile(fn)
+		}
 	})
 }
 
@@ -150,22 +151,3 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.Run()
 	}
 }
-
-func (ge *GideView) HandleOSFileEvent() {
-	ge.On(events.OSOpenFiles, func(e events.Event) {
-		ofe := e.(*events.OSFiles)
-		for _, fn := range ofe.Files {
-			ge.OpenFile(fn)
-		}
-	})
-}
-
-/*
-
-func (ge *GideView) MouseEvent() {
-	ge.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-		gee := recv.Embed(KiT_GideView).(*GideView)
-		gide.SetGoMod(gee.Prefs.GoMod)
-	})
-}
-*/

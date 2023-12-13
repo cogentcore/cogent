@@ -103,8 +103,9 @@ func init() {
 }
 
 func (ge *GideView) OnInit() {
-	ge.FrameStyles()
-	ge.HandleGideViewEvents()
+	ge.WidgetBase.OnInit()
+	ge.Frame.SetStyles()
+	ge.HandleEvents()
 }
 
 ////////////////////////////////////////////////////////

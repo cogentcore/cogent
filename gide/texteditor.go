@@ -31,28 +31,49 @@ type TextEditor struct {
 }
 
 func (ed *TextEditor) OnInit() {
-	ed.HandleGideEvents()
-	ed.GideEditorStyles()
+	ed.Editor.OnInit()
+	ed.HandleEvents()
+	ed.SetStyles()
 }
 
-func (ed *TextEditor) GideEditorStyles() {
-	ed.EditorStyles()
+func (ed *TextEditor) SetStyles() {
 	ed.Style(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.LongHoverable)
 	})
 }
 
 // TextEditorEvents sets connections between mouse and key events and actions
-func (ed *TextEditor) HandleGideEvents() {
-	ed.HandleEditorEvents()
-	ed.HandleGideDoubleClick()
-	ed.HandleGideDebugHover()
-	ed.HandleGideFocus()
-}
-
-func (ed *TextEditor) HandleGideFocus() {
+func (ed *TextEditor) HandleEvents() {
 	ed.On(events.Focus, func(e events.Event) {
 		ed.Gide.SetActiveTextEditor(ed)
+	})
+	ed.OnDoubleClick(func(e events.Event) {
+		pt := ed.PointToRelPos(e.LocalPos())
+		tpos := ed.PixelToCursor(pt)
+		if pt.X >= 0 && ed.Buf.IsValidLine(tpos.Ln) {
+			if pt.X < int(ed.LineNoOff) {
+				e.SetHandled()
+				ed.LineNoDoubleClick(tpos)
+				return
+			}
+			ed.HandleDebugDoubleClick(e, tpos)
+		}
+	})
+	ed.On(events.LongHoverStart, func(e events.Event) {
+		tt := ""
+		vv := ed.DebugVarValueAtPos(e.LocalPos())
+		if vv != "" {
+			tt = vv
+		}
+		// todo: look for documentation on symbols here -- we don't actually have this
+		// in pi so we need lsp to make this work
+		if tt != "" {
+			e.SetHandled()
+			pos := e.LocalPos()
+			pos.X += 20
+			pos.Y += 20
+			gi.NewTooltipText(ed, tt).SetPos(pos).Run()
+		}
 	})
 }
 
@@ -163,40 +184,6 @@ func (ed *TextEditor) LineNoDoubleClick(tpos lex.Pos) {
 	ln := tpos.Ln
 	ed.ToggleBreakpoint(ln)
 	ed.SetNeedsRender(true)
-}
-
-func (ed *TextEditor) HandleGideDoubleClick() {
-	ed.OnDoubleClick(func(e events.Event) {
-		pt := ed.PointToRelPos(e.LocalPos())
-		tpos := ed.PixelToCursor(pt)
-		if pt.X >= 0 && ed.Buf.IsValidLine(tpos.Ln) {
-			if pt.X < int(ed.LineNoOff) {
-				e.SetHandled()
-				ed.LineNoDoubleClick(tpos)
-				return
-			}
-			ed.HandleDebugDoubleClick(e, tpos)
-		}
-	})
-}
-
-func (ed *TextEditor) HandleGideDebugHover() {
-	ed.On(events.LongHoverStart, func(e events.Event) {
-		tt := ""
-		vv := ed.DebugVarValueAtPos(e.LocalPos())
-		if vv != "" {
-			tt = vv
-		}
-		// todo: look for documentation on symbols here -- we don't actually have this
-		// in pi so we need lsp to make this work
-		if tt != "" {
-			e.SetHandled()
-			pos := e.LocalPos()
-			pos.X += 20
-			pos.Y += 20
-			gi.NewTooltipText(ed, tt, ed.WinBBox().Min).SetPos(pos).Run()
-		}
-	})
 }
 
 // ConfigOutputTextEditor configures a command-output textview within given parent layout
