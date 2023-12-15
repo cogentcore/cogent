@@ -290,7 +290,10 @@ func (ge *GideView) ResourceFiles() uri.URIs {
 			ur := uri.URI{Label: nmpath, Icon: icons.Folder}
 			ur.SetURL("dir", "", rpath)
 			ur.Func = func() {
-				fn.OpenDir()
+				if !fn.HasChildren() {
+					fn.OpenEmptyDir()
+				}
+				fn.Open()
 				fn.ScrollToMe()
 			}
 			ul = append(ul, ur)

@@ -46,6 +46,11 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* click on layer name to edit layer params
+* gosl slbool not showing in sims
+* update gosl!
+* axon enums
+
 * esc to cancel dialog not working
 
 * lineno too conservative in not rendering bottom
