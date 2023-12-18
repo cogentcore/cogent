@@ -31,28 +31,49 @@ import (
 type KeyFuns int32 //enums:enum -trim-prefix KeyFun
 
 const (
-	KeyFunNil        KeyFuns = iota
-	KeyFunNeeds2             // special internal signal returned by KeyFun indicating need for second key
-	KeyFunNextPanel          // move to next panel to the right
-	KeyFunPrevPanel          // move to prev panel to the left
-	KeyFunFileOpen           // open a new file in active textview
-	KeyFunBufSelect          // select an open buffer to edit in active textview
-	KeyFunBufClone           // open active file in other view
-	KeyFunBufSave            // save active textview buffer to its file
-	KeyFunBufSaveAs          // save as active textview buffer to its file
-	KeyFunBufClose           // close active textview buffer
-	KeyFunExecCmd            // execute a command on active textview buffer
-	KeyFunRectCopy           // copy rectangle
-	KeyFunRectCut            // cut rectangle
-	KeyFunRectPaste          // paste rectangle
-	KeyFunRegCopy            // copy selection to named register
-	KeyFunRegPaste           // paste selection from named register
-	KeyFunCommentOut         // comment out region
-	KeyFunIndent             // indent region
-	KeyFunJump               // jump to line (same as keyfun.Jump)
-	KeyFunSetSplit           // set named splitter config
-	KeyFunBuildProj          // build overall project
-	KeyFunRunProj            // run overall project
+	KeyFunNil KeyFuns = iota
+	// special internal signal returned by KeyFun indicating need for second key
+	KeyFunNeeds2
+	// move to next panel to the right
+	KeyFunNextPanel
+	// move to prev panel to the left
+	KeyFunPrevPanel
+	// open a new file in active textview
+	KeyFunFileOpen
+	// select an open buffer to edit in active textview
+	KeyFunBufSelect
+	// open active file in other view
+	KeyFunBufClone
+	// save active textview buffer to its file
+	KeyFunBufSave
+	// save as active textview buffer to its file
+	KeyFunBufSaveAs
+	// close active textview buffer
+	KeyFunBufClose
+	// execute a command on active textview buffer
+	KeyFunExecCmd
+	// copy rectangle
+	KeyFunRectCopy
+	// cut rectangle
+	KeyFunRectCut
+	// paste rectangle
+	KeyFunRectPaste
+	// copy selection to named register
+	KeyFunRegCopy
+	// paste selection from named register
+	KeyFunRegPaste
+	// comment out region
+	KeyFunCommentOut
+	// indent region
+	KeyFunIndent
+	// jump to line (same as keyfun.Jump)
+	KeyFunJump
+	// set named splitter config
+	KeyFunSetSplit
+	// build overall project
+	KeyFunBuildProj
+	// run overall project
+	KeyFunRunProj
 )
 
 // KeySeq defines a multiple-key sequence to initiate a key function

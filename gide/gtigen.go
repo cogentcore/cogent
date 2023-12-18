@@ -3,16 +3,15 @@
 package gide
 
 import (
+	"image"
 	"regexp"
 	"time"
 
-	"goki.dev/colors"
 	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/girl/paint"
 	"goki.dev/girl/units"
-	"goki.dev/goosi/events"
 	"goki.dev/gti"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
@@ -98,12 +97,6 @@ func (t *DebugView) SetClass(v string) *DebugView {
 	return t
 }
 
-// SetPriorityEvents sets the [DebugView.PriorityEvents]
-func (t *DebugView) SetPriorityEvents(v []events.Types) *DebugView {
-	t.PriorityEvents = v
-	return t
-}
-
 // SetCustomContextMenu sets the [DebugView.CustomContextMenu]
 func (t *DebugView) SetCustomContextMenu(v func(m *gi.Scene)) *DebugView {
 	t.CustomContextMenu = v
@@ -170,12 +163,6 @@ func (t *StackView) SetClass(v string) *StackView {
 	return t
 }
 
-// SetPriorityEvents sets the [StackView.PriorityEvents]
-func (t *StackView) SetPriorityEvents(v []events.Types) *StackView {
-	t.PriorityEvents = v
-	return t
-}
-
 // SetCustomContextMenu sets the [StackView.CustomContextMenu]
 func (t *StackView) SetCustomContextMenu(v func(m *gi.Scene)) *StackView {
 	t.CustomContextMenu = v
@@ -230,12 +217,6 @@ func (t *BreakView) SetTooltip(v string) *BreakView {
 // SetClass sets the [BreakView.Class]
 func (t *BreakView) SetClass(v string) *BreakView {
 	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [BreakView.PriorityEvents]
-func (t *BreakView) SetPriorityEvents(v []events.Types) *BreakView {
-	t.PriorityEvents = v
 	return t
 }
 
@@ -296,12 +277,6 @@ func (t *ThreadView) SetClass(v string) *ThreadView {
 	return t
 }
 
-// SetPriorityEvents sets the [ThreadView.PriorityEvents]
-func (t *ThreadView) SetPriorityEvents(v []events.Types) *ThreadView {
-	t.PriorityEvents = v
-	return t
-}
-
 // SetCustomContextMenu sets the [ThreadView.CustomContextMenu]
 func (t *ThreadView) SetCustomContextMenu(v func(m *gi.Scene)) *ThreadView {
 	t.CustomContextMenu = v
@@ -356,12 +331,6 @@ func (t *TaskView) SetTooltip(v string) *TaskView {
 // SetClass sets the [TaskView.Class]
 func (t *TaskView) SetClass(v string) *TaskView {
 	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [TaskView.PriorityEvents]
-func (t *TaskView) SetPriorityEvents(v []events.Types) *TaskView {
-	t.PriorityEvents = v
 	return t
 }
 
@@ -431,12 +400,6 @@ func (t *VarsView) SetClass(v string) *VarsView {
 	return t
 }
 
-// SetPriorityEvents sets the [VarsView.PriorityEvents]
-func (t *VarsView) SetPriorityEvents(v []events.Types) *VarsView {
-	t.PriorityEvents = v
-	return t
-}
-
 // SetCustomContextMenu sets the [VarsView.CustomContextMenu]
 func (t *VarsView) SetCustomContextMenu(v func(m *gi.Scene)) *VarsView {
 	t.CustomContextMenu = v
@@ -503,12 +466,6 @@ func (t *VarView) SetTooltip(v string) *VarView {
 // SetClass sets the [VarView.Class]
 func (t *VarView) SetClass(v string) *VarView {
 	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [VarView.PriorityEvents]
-func (t *VarView) SetPriorityEvents(v []events.Types) *VarView {
-	t.PriorityEvents = v
 	return t
 }
 
@@ -582,12 +539,6 @@ func (t *FileNode) SetTooltip(v string) *FileNode {
 // SetClass sets the [FileNode.Class]
 func (t *FileNode) SetClass(v string) *FileNode {
 	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [FileNode.PriorityEvents]
-func (t *FileNode) SetPriorityEvents(v []events.Types) *FileNode {
-	t.PriorityEvents = v
 	return t
 }
 
@@ -720,12 +671,6 @@ func (t *FindView) SetTooltip(v string) *FindView {
 // SetClass sets the [FindView.Class]
 func (t *FindView) SetClass(v string) *FindView {
 	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [FindView.PriorityEvents]
-func (t *FindView) SetPriorityEvents(v []events.Types) *FindView {
-	t.PriorityEvents = v
 	return t
 }
 
@@ -978,12 +923,6 @@ func (t *SpellView) SetClass(v string) *SpellView {
 	return t
 }
 
-// SetPriorityEvents sets the [SpellView.PriorityEvents]
-func (t *SpellView) SetPriorityEvents(v []events.Types) *SpellView {
-	t.PriorityEvents = v
-	return t
-}
-
 // SetCustomContextMenu sets the [SpellView.CustomContextMenu]
 func (t *SpellView) SetCustomContextMenu(v func(m *gi.Scene)) *SpellView {
 	t.CustomContextMenu = v
@@ -1071,12 +1010,6 @@ func (t *SymbolsView) SetTooltip(v string) *SymbolsView {
 // SetClass sets the [SymbolsView.Class]
 func (t *SymbolsView) SetClass(v string) *SymbolsView {
 	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [SymbolsView.PriorityEvents]
-func (t *SymbolsView) SetPriorityEvents(v []events.Types) *SymbolsView {
-	t.PriorityEvents = v
 	return t
 }
 
@@ -1176,12 +1109,6 @@ func (t *SymTreeView) SetTooltip(v string) *SymTreeView {
 // SetClass sets the [SymTreeView.Class]
 func (t *SymTreeView) SetClass(v string) *SymTreeView {
 	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [SymTreeView.PriorityEvents]
-func (t *SymTreeView) SetPriorityEvents(v []events.Types) *SymTreeView {
-	t.PriorityEvents = v
 	return t
 }
 
@@ -1292,12 +1219,6 @@ func (t *TextEditor) SetClass(v string) *TextEditor {
 	return t
 }
 
-// SetPriorityEvents sets the [TextEditor.PriorityEvents]
-func (t *TextEditor) SetPriorityEvents(v []events.Types) *TextEditor {
-	t.PriorityEvents = v
-	return t
-}
-
 // SetCustomContextMenu sets the [TextEditor.CustomContextMenu]
 func (t *TextEditor) SetCustomContextMenu(v func(m *gi.Scene)) *TextEditor {
 	t.CustomContextMenu = v
@@ -1323,25 +1244,25 @@ func (t *TextEditor) SetCursorWidth(v units.Value) *TextEditor {
 }
 
 // SetLineNumberColor sets the [TextEditor.LineNumberColor]
-func (t *TextEditor) SetLineNumberColor(v colors.Full) *TextEditor {
+func (t *TextEditor) SetLineNumberColor(v image.Image) *TextEditor {
 	t.LineNumberColor = v
 	return t
 }
 
 // SetSelectColor sets the [TextEditor.SelectColor]
-func (t *TextEditor) SetSelectColor(v colors.Full) *TextEditor {
+func (t *TextEditor) SetSelectColor(v image.Image) *TextEditor {
 	t.SelectColor = v
 	return t
 }
 
 // SetHighlightColor sets the [TextEditor.HighlightColor]
-func (t *TextEditor) SetHighlightColor(v colors.Full) *TextEditor {
+func (t *TextEditor) SetHighlightColor(v image.Image) *TextEditor {
 	t.HighlightColor = v
 	return t
 }
 
 // SetCursorColor sets the [TextEditor.CursorColor]
-func (t *TextEditor) SetCursorColor(v colors.Full) *TextEditor {
+func (t *TextEditor) SetCursorColor(v image.Image) *TextEditor {
 	t.CursorColor = v
 	return t
 }
