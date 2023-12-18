@@ -870,7 +870,7 @@ func (dv *DebugView) ConfigToolbar() {
 
 	gi.NewLabel(tb, "status").SetText("Building..   ").Style(func(s *styles.Style) {
 		clr := grr.Log1(colors.FromString(DebugStatusColors[dv.State.Status], nil))
-		s.BackgroundColor.SetSolid(clr)
+		s.Background = colors.Uniform(clr)
 	})
 
 	gi.NewButton(tb).SetIcon(icons.Refresh).
