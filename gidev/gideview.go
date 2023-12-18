@@ -265,6 +265,8 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 		ge.GuessMainLang()
 		ge.LangDefaults()
 		ge.SetWindowNameTitle()
+		ge.UpdateFiles()
+		ge.SplitsSetView(gide.SplitName(gide.AvailSplitNames[0]))
 		if fnm != "" {
 			ge.NextViewFile(gi.FileName(fnm))
 		}

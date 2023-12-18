@@ -150,6 +150,7 @@ func (vv *KeyMapValue) ConfigWidget(w gi.Widget) {
 	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
+			vv.SetDialogType(e)
 			vv.OpenDialog(bt, nil)
 		}
 	})
@@ -287,6 +288,7 @@ func (vv *CmdValue) ConfigWidget(w gi.Widget) {
 	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
+			vv.SetDialogType(e)
 			vv.OpenDialog(bt, nil)
 		}
 	})
