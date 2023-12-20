@@ -47,17 +47,11 @@ In addition to Issues shown on github, some important features to be added longe
 # TODO
 
 * click on layer name to edit layer params
-* gosl slbool not showing in sims
-* update gosl!
-* axon enums
-
-* esc to cancel dialog not working
 
 * lineno too conservative in not rendering bottom
 * don't render top text, lineno if out of range
 * always display cursor when typing!
 * drag-n-drop tableview
-* OpenAll, CloseAll not working. -- always using cached opendir value!
 
 * color highlighting for diff output in commandshell!
 * outbuf use textview markup in addition to link formatting and other formatting.  tried but failed
@@ -68,8 +62,6 @@ In addition to Issues shown on github, some important features to be added longe
 * Editable Chooser doesn't work with shift-tab -- requires focus prev fix to work properly!
 
 * Find not selecting first item (sometimes?)
-
-* dialog closing causes old window to show up -- need to update render images
 
 * fileview global priority key shortcuts
 * editor rendering overflow
