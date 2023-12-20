@@ -515,7 +515,7 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 
 	bsz = bsz.DivScalar(sv.Scale)
 
-	sv.TransformAllLeaves(treff, mat32.Vec2{1, 1}, 0, mat32.Vec2{0, 0})
+	sv.TransformAllLeaves(treff, mat32.V2(1, 1), 0, mat32.V2(0, 0))
 	sv.ViewBox.Size = bsz
 	sv.PhysWidth.Val = bsz.X
 	sv.PhysHeight.Val = bsz.Y

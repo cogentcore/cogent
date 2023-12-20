@@ -338,7 +338,7 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 	tdel := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaTransform(tdel, mat32.Vec2{1, 1}, 0, pt)
+		itm.ApplyDeltaTransform(tdel, mat32.V2(1, 1), 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
 	sv.SetSelSpritePos()
@@ -531,7 +531,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point, win *gi.Windo
 	svoff := mat32.NewVec2FmPoint(sv.WinBBox.Min)
 	pt = pt.Sub(svoff)
 	del := mat32.Vec2{}
-	sc := mat32.Vec2{1, 1}
+	sc := mat32.V2(1, 1)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(ss.InitGeom)
 		itm.ApplyDeltaTransform(del, sc, ang, pt)

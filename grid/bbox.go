@@ -131,9 +131,9 @@ func (ev BBoxPoints) PointRect(bb image.Rectangle) mat32.Vec2 {
 	val := ev.ValRect(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
-		return mat32.Vec2{val, 0.5 * float32(bb.Min.Y+bb.Max.Y)}
+		return mat32.V2(val, 0.5*float32(bb.Min.Y+bb.Max.Y))
 	default:
-		return mat32.Vec2{0.5 * float32(bb.Min.X+bb.Max.X), val}
+		return mat32.V2(0.5*float32(bb.Min.X+bb.Max.X), val)
 	}
 }
 
@@ -144,9 +144,9 @@ func (ev BBoxPoints) PointBox(bb mat32.Box2) mat32.Vec2 {
 	val := ev.ValBox(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
-		return mat32.Vec2{val, 0.5 * (bb.Min.Y + bb.Max.Y)}
+		return mat32.V2(val, 0.5*(bb.Min.Y+bb.Max.Y))
 	default:
-		return mat32.Vec2{0.5 * (bb.Min.X + bb.Max.X), val}
+		return mat32.V2(0.5*(bb.Min.X+bb.Max.X), val)
 	}
 }
 

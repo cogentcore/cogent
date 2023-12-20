@@ -558,7 +558,7 @@ func (gr *Gradient) UpdateIcon() {
 	if err != nil {
 		ic = &svg.Icon{}
 		ic.InitName(ic, nm)
-		ic.ViewBox.Size = mat32.Vec2{1, 1}
+		ic.ViewBox.Size = mat32.V2(1, 1)
 		ic.SetProp("width", units.NewCh(5))
 		svg.CurIconSet[nm] = ic
 	} else {

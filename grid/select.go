@@ -429,7 +429,7 @@ func (gv *GridView) SelRotate(deg float32) {
 
 	svoff := sv.WinBBox.Min
 	del := mat32.Vec2{}
-	sc := mat32.Vec2{1, 1}
+	sc := mat32.V2(1, 1)
 	rot := mat32.DegToRad(deg)
 	for sn := range es.Selected {
 		sng := sn.AsSVGNode()
@@ -452,7 +452,7 @@ func (gv *GridView) SelScale(scx, scy float32) {
 
 	svoff := sv.WinBBox.Min
 	del := mat32.Vec2{}
-	sc := mat32.Vec2{scx, scy}
+	sc := mat32.V2(scx, scy)
 	for sn := range es.Selected {
 		sng := sn.AsSVGNode()
 		sz := mat32.NewVec2FmPoint(sng.WinBBox.Size())

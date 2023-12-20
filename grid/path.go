@@ -262,8 +262,8 @@ func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int
 		pn := pts[i]
 		wbmin := mat32.NewVec2FmPoint(path.WinBBox.Min)
 		pt := wbmin.Sub(svoff)
-		xf, lpt := path.DeltaTransform(dv, mat32.Vec2{1, 1}, 0, pt, true) // include self
-		npt := xf.MulVec2AsPtCtr(pn.Cp, lpt)                              // transform point to new abs coords
+		xf, lpt := path.DeltaTransform(dv, mat32.V2(1, 1), 0, pt, true) // include self
+		npt := xf.MulVec2AsPtCtr(pn.Cp, lpt)                            // transform point to new abs coords
 		sv.PathNodeSetPoint(path, pn, npt)
 		if i == pidx {
 			dv = dv.MulScalar(-1)

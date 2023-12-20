@@ -62,7 +62,7 @@ func (gv *GridView) AlignMin(aa AlignAnchors, dim mat32.Dims, act string) {
 	svoff := sv.WinBBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := gv.AlignAnchorBBox(aa)
-	sc := mat32.Vec2{1, 1}
+	sc := mat32.V2(1, 1)
 	odim := mat32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -87,7 +87,7 @@ func (gv *GridView) AlignMinAnchor(aa AlignAnchors, dim mat32.Dims, act string) 
 	svoff := sv.WinBBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := gv.AlignAnchorBBox(aa)
-	sc := mat32.Vec2{1, 1}
+	sc := mat32.V2(1, 1)
 	odim := mat32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -112,7 +112,7 @@ func (gv *GridView) AlignMax(aa AlignAnchors, dim mat32.Dims, act string) {
 	svoff := sv.WinBBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := gv.AlignAnchorBBox(aa)
-	sc := mat32.Vec2{1, 1}
+	sc := mat32.V2(1, 1)
 	odim := mat32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -137,7 +137,7 @@ func (gv *GridView) AlignMaxAnchor(aa AlignAnchors, dim mat32.Dims, act string) 
 	svoff := sv.WinBBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := gv.AlignAnchorBBox(aa)
-	sc := mat32.Vec2{1, 1}
+	sc := mat32.V2(1, 1)
 	odim := mat32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -163,7 +163,7 @@ func (gv *GridView) AlignCenter(aa AlignAnchors, dim mat32.Dims, act string) {
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := gv.AlignAnchorBBox(aa)
 	ctr := mat32.NewVec2FmPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
-	sc := mat32.Vec2{1, 1}
+	sc := mat32.V2(1, 1)
 	odim := mat32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
