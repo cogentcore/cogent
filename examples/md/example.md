@@ -1,10 +1,10 @@
 # Gidom in Markdown
 
-### Made with ***GoKi***
+### Made with ***Goki***
 
 This is a sample _MD_ (markdown) **document** displayed using `gidom`.
 
-This is a [link to the ***GoKi*** website](https://goki.dev), which you can _click_ on to see helpful **documentation** and examples for the *GoKi* framework.
+This is a [link to the ***Goki*** website](https://goki.dev), which you can _click_ on to see helpful **documentation** and examples for the *Goki* framework.
 
 # Heading 1
 ## Heading 2
