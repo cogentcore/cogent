@@ -46,8 +46,6 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
-* click on layer name to edit layer params
-
 * lineno too conservative in not rendering bottom
 * don't render top text, lineno if out of range
 * always display cursor when typing!

@@ -338,6 +338,15 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
+	{Cat: "Git", Name: "Count LOC",
+		Desc: "runs git ls-files with command sequence that counts lines of code in git repository -- edit with extra | grep steps to filter accordingly",
+		Lang: fi.Any,
+		Cmds: []CmdAndArgs{{Cmd: "git",
+			Args:    []string{"ls-files", "{PromptString1}"},
+			Default: "| xargs wc -l"}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
 	// SVN
 	{Cat: "SVN", Name: "Add",
 		Desc: "svn add file",
