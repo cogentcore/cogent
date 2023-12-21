@@ -4,6 +4,8 @@
 
 package main
 
+//go:generate goki generate
+
 import (
 	"time"
 
@@ -17,11 +19,19 @@ import (
 
 func main() { gimain.Run(app) }
 
-type Task struct {
+type Task struct { //gti:add
+
+	// The name of this task
 	Name string
-	CPU  float64 `label:"CPU %"`
-	RAM  float32 `label:"RAM %"`
-	PID  int32
+
+	// The percentage of the CPU time this task uses
+	CPU float64
+
+	// The percentage of total RAM this task uses
+	RAM float32
+
+	// The Process ID (PID) of this task
+	PID int32
 }
 
 func app() {
