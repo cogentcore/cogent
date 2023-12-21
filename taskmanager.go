@@ -52,6 +52,13 @@ func app() {
 	tv.SortSliceAction(1)
 	tv.SortSliceAction(1)
 
+	tv.OnDoubleClick(func(e events.Event) {
+		t := ts[tv.SelIdx]
+		d := gi.NewBody().AddTitle("Task info")
+		giv.NewStructView(d).SetStruct(&t).SetReadOnly(true)
+		d.AddOkOnly().NewDialog(b).Run()
+	})
+
 	tick := time.NewTicker(time.Second)
 	paused := false
 
