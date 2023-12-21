@@ -52,9 +52,14 @@ func app() {
 	tv.SortSliceAction(1)
 	tv.SortSliceAction(1)
 
-	t := time.NewTicker(time.Second)
+	tick := time.NewTicker(time.Second)
+	paused := false
+
 	go func() {
-		for range t.C {
+		for range tick.C {
+			if paused {
+				continue
+			}
 			ts = getTasks(b)
 			tv.SortSliceAction(1)
 			tv.SortSliceAction(1)
@@ -63,10 +68,24 @@ func app() {
 
 	b.AddAppBar(func(tb *gi.Toolbar) {
 		gi.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
+			SetTooltip("Stop the currently selected task").
 			OnClick(func(e events.Event) {
 				t := ts[tv.SelIdx]
 				gi.ErrorSnackbar(tv, t.Kill(), "Error ending task")
 			})
+		pause := gi.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
+			SetTooltip("Stop updating the list of tasks")
+		pause.OnClick(func(e events.Event) {
+			paused = !paused
+			if paused {
+				pause.SetText("Resume").SetIcon(icons.Resume).
+					SetTooltip("Resume updating the list of tasks")
+			} else {
+				pause.SetText("Pause").SetIcon(icons.Pause).
+					SetTooltip("Stop updating the list of tasks")
+			}
+			pause.Update()
+		})
 	})
 
 	b.NewWindow().Run().Wait()
