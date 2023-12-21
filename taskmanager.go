@@ -68,8 +68,10 @@ func app() {
 				continue
 			}
 			ts = getTasks(b)
-			tv.SortSliceAction(1)
-			tv.SortSliceAction(1)
+			updt := tv.UpdateStartAsync()
+			tv.SortSlice()
+			tv.UpdateWidgets()
+			tv.UpdateEndAsyncRender(updt)
 		}
 	}()
 
