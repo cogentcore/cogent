@@ -12,7 +12,9 @@ import (
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/gimain"
 	"goki.dev/gi/v2/giv"
+	"goki.dev/goosi/events"
 	"goki.dev/grr"
+	"goki.dev/icons"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -20,6 +22,7 @@ import (
 func main() { gimain.Run(app) }
 
 type Task struct { //gti:add
+	*process.Process `view:"-"`
 
 	// The name of this task
 	Name string
@@ -58,6 +61,14 @@ func app() {
 		}
 	}()
 
+	b.AddAppBar(func(tb *gi.Toolbar) {
+		gi.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
+			OnClick(func(e events.Event) {
+				t := ts[tv.SelIdx]
+				gi.ErrorSnackbar(tv, t.Kill(), "Error ending task")
+			})
+	})
+
 	b.NewWindow().Run().Wait()
 }
 
@@ -68,6 +79,7 @@ func getTasks(b *gi.Body) []*Task {
 	ts := make([]*Task, len(ps))
 	for i, p := range ps {
 		t := &Task{
+			Process: p,
 			Name:    grr.Log1(p.Name()),
 			CPU:     grr.Log1(p.CPUPercent()),
 			RAM:     grr.Log1(p.MemoryPercent()),
