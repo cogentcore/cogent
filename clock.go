@@ -17,8 +17,17 @@ func main() { gimain.Run(app) }
 
 func app() {
 	b := gi.NewAppBody("goki-clock")
-	ts := gi.NewTabs(b).SetDeleteTabButtons(false)
 
+	ts := gi.NewTabs(b).SetDeleteTabButtons(false)
+	clock(ts)
+	timers(ts)
+	stopwatches(ts)
+	alarms(ts)
+
+	b.NewWindow().Run().Wait()
+}
+
+func clock(ts *gi.Tabs) {
 	cl := ts.NewTab("Clock").Style(func(s *styles.Style) {
 		s.Justify.Content = styles.Center
 		s.Align.Content = styles.Center
@@ -28,10 +37,21 @@ func app() {
 		SetText(time.Now().Format("Monday, January 2"))
 	gi.NewLabel(cl).SetType(gi.LabelDisplayLarge).
 		SetText(time.Now().Format("3:04 PM"))
+}
 
-	tr := ts.NewTab("Timer")
+func timers(ts *gi.Tabs) {
+	tr := ts.NewTab("Timers")
 	trd := 15 * time.Minute
 	giv.NewValue(tr, &trd)
+	gi.NewButton(tr).SetText("Start")
+}
 
-	b.NewWindow().Run().Wait()
+func stopwatches(ts *gi.Tabs) {
+	sw := ts.NewTab("Stopwatches")
+	gi.NewButton(sw).SetText("Start")
+}
+
+func alarms(ts *gi.Tabs) {
+	al := ts.NewTab("Alarms")
+	gi.NewButton(al).SetText("Create")
 }
