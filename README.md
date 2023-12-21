@@ -18,7 +18,7 @@ The simple Go install command should work, for modules mode:
 $ go get goki.dev/grid/cmd/grid
 ```
 
-See [GoKi Install](https://github.com/goki/gi/wiki/Install) for more information and prereqs for different platforms -- if you encounter any difficulties, ensure that GoKi works first.
+See [Goki Install](https://github.com/goki/gi/wiki/Install) for more information and prereqs for different platforms -- if you encounter any difficulties, ensure that Goki works first.
 
 Exporting PNG and PDF depends on https://inkscape.org -- on the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:
 
