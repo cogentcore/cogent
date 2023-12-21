@@ -39,6 +39,10 @@ func clock(ts *gi.Tabs) {
 		SetText(time.Now().Format("3:04 PM"))
 }
 
+type timer struct {
+	left time.Time
+}
+
 func timers(ts *gi.Tabs) {
 	tr := ts.NewTab("Timers")
 	trd := 15 * time.Minute

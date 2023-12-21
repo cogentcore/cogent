@@ -2,7 +2,10 @@ module goki.dev/clock
 
 go 1.21.4
 
-require goki.dev/gi/v2 v2.0.0-dev0.0.27
+require (
+	goki.dev/gi/v2 v2.0.0-dev0.0.27
+	goki.dev/girl v0.0.35
+)
 
 require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
@@ -37,7 +40,6 @@ require (
 	goki.dev/cursors v0.0.31 // indirect
 	goki.dev/enums v0.9.55 // indirect
 	goki.dev/fi v0.1.18 // indirect
-	goki.dev/girl v0.0.35 // indirect
 	goki.dev/glop v0.1.9 // indirect
 	goki.dev/goosi v0.0.24 // indirect
 	goki.dev/grog v0.0.26 // indirect
