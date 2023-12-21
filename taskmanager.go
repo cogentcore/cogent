@@ -30,6 +30,12 @@ type Task struct { //gti:add
 	// The percentage of total RAM this task uses
 	RAM float32
 
+	// The number of threads this task uses
+	Threads int32
+
+	// The user that started this task
+	User string
+
 	// The Process ID (PID) of this task
 	PID int32
 }
@@ -62,10 +68,12 @@ func getTasks(b *gi.Body) []*Task {
 	ts := make([]*Task, len(ps))
 	for i, p := range ps {
 		t := &Task{
-			Name: grr.Log1(p.Name()),
-			CPU:  grr.Log1(p.CPUPercent()),
-			RAM:  grr.Log1(p.MemoryPercent()),
-			PID:  p.Pid,
+			Name:    grr.Log1(p.Name()),
+			CPU:     grr.Log1(p.CPUPercent()),
+			RAM:     grr.Log1(p.MemoryPercent()),
+			Threads: grr.Log1(p.NumThreads()),
+			User:    grr.Log1(p.Username()),
+			PID:     p.Pid,
 		}
 		ts[i] = t
 	}
