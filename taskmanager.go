@@ -15,21 +15,30 @@ import (
 
 func main() { gimain.Run(app) }
 
-type Process struct {
+type Task struct {
 	Name string
+	CPU  float64 `label:"CPU %"`
+	RAM  float32 `label:"RAM %"`
 	PID  int32
 }
 
 func app() {
 	b := gi.NewAppBody("goki-task-manager")
 
-	procs := grr.Log1(process.Processes())
-	ps := make([]*Process, len(procs))
-	for i, proc := range procs {
-		p := &Process{grr.Log1(proc.Name()), proc.Pid}
-		ps[i] = p
+	ps, err := process.Processes()
+	gi.ErrorDialog(b, err, "Error getting system processes")
+
+	ts := make([]*Task, len(ps))
+	for i, p := range ps {
+		t := &Task{
+			Name: grr.Log1(p.Name()),
+			CPU:  grr.Log1(p.CPUPercent()),
+			RAM:  grr.Log1(p.MemoryPercent()),
+			PID:  p.Pid,
+		}
+		ts[i] = t
 	}
-	giv.NewTableView(b).SetSlice(&ps)
+	giv.NewTableView(b).SetSlice(&ts).SetReadOnly(true)
 
 	b.NewWindow().Run().Wait()
 }
