@@ -5,6 +5,8 @@
 package main
 
 import (
+	"time"
+
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/gimain"
 	"goki.dev/gi/v2/giv"
@@ -25,6 +27,21 @@ type Task struct {
 func app() {
 	b := gi.NewAppBody("goki-task-manager")
 
+	ts := getTasks(b)
+	tv := giv.NewTableView(b).SetSlice(&ts).SetReadOnly(true)
+
+	t := time.NewTicker(time.Second)
+	go func() {
+		for range t.C {
+			ts = getTasks(b)
+			tv.Update()
+		}
+	}()
+
+	b.NewWindow().Run().Wait()
+}
+
+func getTasks(b *gi.Body) []*Task {
 	ps, err := process.Processes()
 	gi.ErrorDialog(b, err, "Error getting system processes")
 
@@ -38,7 +55,5 @@ func app() {
 		}
 		ts[i] = t
 	}
-	giv.NewTableView(b).SetSlice(&ts).SetReadOnly(true)
-
-	b.NewWindow().Run().Wait()
+	return ts
 }
