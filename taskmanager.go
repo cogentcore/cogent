@@ -28,13 +28,17 @@ func app() {
 	b := gi.NewAppBody("goki-task-manager")
 
 	ts := getTasks(b)
-	tv := giv.NewTableView(b).SetSlice(&ts).SetReadOnly(true)
+	tv := giv.NewTableView(b).SetSlice(&ts)
+	tv.SetReadOnly(true)
+	tv.SortSliceAction(1)
+	tv.SortSliceAction(1)
 
 	t := time.NewTicker(time.Second)
 	go func() {
 		for range t.C {
 			ts = getTasks(b)
-			tv.Update()
+			tv.SortSliceAction(1)
+			tv.SortSliceAction(1)
 		}
 	}()
 
