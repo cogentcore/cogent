@@ -16,6 +16,7 @@ import (
 	"goki.dev/grr"
 	"goki.dev/icons"
 
+	"github.com/c2h5oh/datasize"
 	"github.com/shirou/gopsutil/v3/process"
 )
 
@@ -30,8 +31,11 @@ type Task struct { //gti:add
 	// The percentage of the CPU time this task uses
 	CPU float64 `format:"%.3g%%"`
 
+	// The actual number of bytes of RAM this task uses (RSS)
+	RAM string // todo: add a format for (datasize.ByteSize)(mi.RSS).HumanReadable() or a type of this type
+
 	// The percentage of total RAM this task uses
-	RAM float32 `format:"%.3g%%"`
+	RAMPct float32 `format:"%.3g%%"`
 
 	// The number of threads this task uses
 	Threads int32
@@ -47,8 +51,9 @@ func app() {
 	b := gi.NewAppBody("goki-task-manager")
 
 	ts := getTasks(b)
-	tv := giv.NewTableView(b).SetSlice(&ts)
+	tv := giv.NewTableView(b)
 	tv.SetReadOnly(true)
+	tv.SetSlice(&ts)
 	tv.SortSliceAction(1)
 	tv.SortSliceAction(1)
 
@@ -112,10 +117,14 @@ func getTasks(b *gi.Body) []*Task {
 			Process: p,
 			Name:    grr.Log1(p.Name()),
 			CPU:     grr.Log1(p.CPUPercent()),
-			RAM:     grr.Log1(p.MemoryPercent()),
+			RAMPct:  grr.Log1(p.MemoryPercent()),
 			Threads: grr.Log1(p.NumThreads()),
 			User:    grr.Log1(p.Username()),
 			PID:     p.Pid,
+		}
+		mi := grr.Log1(p.MemoryInfo())
+		if mi != nil {
+			t.RAM = (datasize.ByteSize)(mi.RSS).HumanReadable()
 		}
 		ts[i] = t
 	}
