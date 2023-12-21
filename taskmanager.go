@@ -28,10 +28,10 @@ type Task struct { //gti:add
 	Name string
 
 	// The percentage of the CPU time this task uses
-	CPU float64
+	CPU float64 `format:"%.3g%%"`
 
 	// The percentage of total RAM this task uses
-	RAM float32
+	RAM float32 `format:"%.3g%%"`
 
 	// The number of threads this task uses
 	Threads int32
@@ -76,6 +76,7 @@ func app() {
 		pause := gi.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
 			SetTooltip("Stop updating the list of tasks")
 		pause.OnClick(func(e events.Event) {
+			updt := pause.UpdateStart()
 			paused = !paused
 			if paused {
 				pause.SetText("Resume").SetIcon(icons.Resume).
@@ -85,6 +86,7 @@ func app() {
 					SetTooltip("Stop updating the list of tasks")
 			}
 			pause.Update()
+			pause.UpdateEndLayout(updt)
 		})
 	})
 
