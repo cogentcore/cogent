@@ -829,7 +829,6 @@ func (dv DebugView) ConsoleText() *texteditor.Editor {
 // ConfigTabs configures the tabs
 func (dv *DebugView) ConfigTabs() {
 	tb := dv.Tabs()
-	tb.DeleteTabButtons = false
 	if tb.NTabs() > 0 {
 		return
 	}
