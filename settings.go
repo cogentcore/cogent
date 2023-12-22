@@ -14,6 +14,6 @@ func main() { gimain.Run(app) }
 
 func app() {
 	// b := gi.NewAppBody("goki-settings")
-	giv.PrefsView(&gi.BasicSettings)
+	giv.PrefsView(gi.AppearanceSettings)
 	gi.Wait()
 }
