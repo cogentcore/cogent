@@ -483,7 +483,7 @@ var StdCmds = Commands{
 		Desc: "pull all packages at the root project level",
 		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "gsm",
-			Args: []string{"changed"}}},
+			Args: []string{"pull"}}},
 		Dir:  "{ProjPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 }
