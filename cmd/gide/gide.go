@@ -6,11 +6,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 
 	"goki.dev/gi/v2/gi"
@@ -18,7 +15,6 @@ import (
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidev"
 	"goki.dev/goosi"
-	"goki.dev/grr"
 )
 
 func main() { gimain.Run(app) }
@@ -28,34 +24,8 @@ func app() {
 
 	pdir := gide.AppDataDir()
 	lfnm := filepath.Join(pdir, "gide.log")
-	crnm := filepath.Join(pdir, "crash.log")
 
-	_ = lfnm
 	gide.TheConsole.Init(lfnm)
-
-	defer func() {
-		if r := recover(); r != nil {
-
-			stack := string(debug.Stack())
-
-			print := func(w io.Writer) {
-				fmt.Fprintln(w, "panic:", r)
-				fmt.Fprintln(w, "")
-				fmt.Fprintln(w, "----- START OF STACK TRACE: -----")
-				fmt.Fprintln(w, stack)
-				fmt.Fprintln(w, "----- END OF STACK TRACE -----")
-			}
-
-			print(os.Stdout)
-			print(gide.TheConsole.LogWrite)
-
-			cf, err := os.Create(crnm)
-			if grr.Log(err) == nil {
-				print(cf)
-				cf.Close()
-			}
-		}
-	}()
 
 	var path string
 	var proj string
