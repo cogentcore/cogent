@@ -1,11 +1,16 @@
 module goki.dev/taskmanager
 
-go 1.21.4
+go 1.21
 
 require (
+	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/shirou/gopsutil/v3 v3.23.11
 	goki.dev/gi/v2 v2.0.0-dev0.0.27
+	goki.dev/goosi v0.0.24
 	goki.dev/grr v0.0.11
+	goki.dev/gti v0.1.31
+	goki.dev/icons v0.0.16
+	goki.dev/ordmap v0.5.9
 )
 
 require (
@@ -16,7 +21,6 @@ require (
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/chewxy/math32 v1.10.1 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/expr-lang/expr v1.15.7 // indirect
@@ -50,15 +54,11 @@ require (
 	goki.dev/fi v0.1.18 // indirect
 	goki.dev/girl v0.0.35 // indirect
 	goki.dev/glop v0.1.9 // indirect
-	goki.dev/goosi v0.0.24 // indirect
 	goki.dev/grog v0.0.26 // indirect
 	goki.dev/grows v0.3.30 // indirect
-	goki.dev/gti v0.1.31 // indirect
-	goki.dev/icons v0.0.16 // indirect
 	goki.dev/ki/v2 v2.0.0-dev0.0.32 // indirect
 	goki.dev/laser v0.1.33 // indirect
 	goki.dev/mat32/v2 v2.0.0-dev0.0.27 // indirect
-	goki.dev/ordmap v0.5.9 // indirect
 	goki.dev/pi/v2 v2.0.0-dev0.0.25 // indirect
 	goki.dev/prof/v2 v2.0.0-dev0.0.4 // indirect
 	goki.dev/spell v0.1.14 // indirect
