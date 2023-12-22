@@ -18,7 +18,7 @@ func main() { gimain.Run(app) }
 func app() {
 	b := gi.NewAppBody("goki-clock")
 
-	ts := gi.NewTabs(b).SetDeleteTabButtons(false)
+	ts := gi.NewTabs(b)
 	clock(ts)
 	timers(ts)
 	stopwatches(ts)
