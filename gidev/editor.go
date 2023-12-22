@@ -99,7 +99,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	title := "Lookup: " + text
 
 	tb := texteditor.NewBuf().SetText(txt).SetFilename(ld.Filename)
-	tb.Hi.Style = gi.BasicSettings.HiStyle
+	tb.Hi.Style = gi.AppearanceSettings.HiStyle
 	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
 
 	d := gi.NewBody().AddTitle(title).AddText(prmpt)
@@ -107,7 +107,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	tv.SetReadOnly(true)
 
 	tv.SetCursorTarget(lex.Pos{Ln: ld.StLine})
-	tv.Styles.Font.Family = string(gi.BasicSettings.MonoFont)
+	tv.Styles.Font.Family = string(gi.AppearanceSettings.MonoFont)
 	d.AddBottomBar(func(pw gi.Widget) {
 		gi.NewButton(pw).SetText("Open File").SetIcon(icons.Open).OnClick(func(e events.Event) {
 			ge.ViewFile(gi.FileName(ld.Filename))

@@ -257,7 +257,7 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 			// fmt.Printf("dir: %v opened\n", sfn.Nm)
 			return ki.Continue
 		}
-		if int(sfn.Info.Size) > gi.BasicSettings.Params.BigFileSize {
+		if int(sfn.Info.Size) > gi.AppearanceSettings.Params.BigFileSize {
 			return ki.Continue
 		}
 		if strings.HasSuffix(sfn.Nm, ".gide") { // exclude self

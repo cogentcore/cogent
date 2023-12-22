@@ -191,7 +191,7 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 	ed.Style(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
-		s.Font.Family = string(gi.BasicSettings.MonoFont)
+		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
 		s.Min.X.Ch(20)
 		s.Min.Y.Em(20)
 		s.Grow.Set(1, 1)
@@ -207,7 +207,7 @@ func ConfigEditorTextEditor(ed *texteditor.Editor) {
 	ed.Style(func(s *styles.Style) {
 		s.Min.X.Ch(80)
 		s.Min.Y.Em(40)
-		s.Font.Family = string(gi.BasicSettings.MonoFont)
+		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
 	})
 }
 

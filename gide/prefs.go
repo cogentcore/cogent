@@ -82,7 +82,7 @@ func (pf *FilePrefs) Defaults() {
 func (pf *Preferences) Defaults() {
 	pf.Files.Defaults()
 	pf.KeyMap = DefaultKeyMap
-	home := gi.BasicSettings.User.HomeDir
+	home := gi.AppearanceSettings.User.HomeDir
 	texPath := ".:" + home + "/texmf/tex/latex:/Library/TeX/Root/texmf-dist/tex/latex:"
 	pf.EnvVars = map[string]string{
 		"TEXINPUTS":       texPath,
