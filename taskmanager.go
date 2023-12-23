@@ -26,19 +26,19 @@ type Task struct { //gti:add
 	*process.Process `view:"-"`
 
 	// The name of this task
-	Name string
+	Name string `width:"60"`
 
 	// The percentage of the CPU time this task uses
-	CPU float64 `format:"%.3g%%"`
+	CPU float64 `format:"%.3g%%" max-width:"0"`
 
 	// The actual number of bytes of RAM this task uses (RSS)
 	RAM string // todo: add a format for (datasize.ByteSize)(mi.RSS).HumanReadable() or a type of this type
 
 	// The percentage of total RAM this task uses
-	RAMPct float32 `format:"%.3g%%"`
+	RAMPct float32 `format:"%.3g%%" max-width:"0"`
 
 	// The number of threads this task uses
-	Threads int32
+	Threads int32 `max-width:"0"`
 
 	// The user that started this task
 	User string
