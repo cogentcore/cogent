@@ -46,6 +46,8 @@ In addition to Issues shown on github, some important features to be added longe
 
 # TODO
 
+* symbolsview icons not updating immediately -- fix from filenodedid not fix here
+
 * lineno too conservative in not rendering bottom
 * don't render top text, lineno if out of range
 * always display cursor when typing!
