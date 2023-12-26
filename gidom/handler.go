@@ -134,8 +134,7 @@ func HandleElement(ctx Context) {
 		ftxt := ""
 		if ptv := giv.AsTreeView(ctx.Parent()); ptv != nil {
 			if ptv.Prop("tag") == "ol" {
-				ip, _ := ntv.IndexInParent()
-				ftxt = strconv.Itoa(ip+1) + ". " // start at 1
+				ftxt = strconv.Itoa(ntv.IndexInParent()+1) + ". " // start at 1
 			} else {
 				// TODO(kai/gidom): have different bullets for different depths
 				ftxt = "• "
