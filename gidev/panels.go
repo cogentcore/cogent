@@ -104,12 +104,6 @@ func (ge *GideView) TabByLabel(label string) gi.Widget {
 	return tv.TabByLabel(label)
 }
 
-// TabByLabelTry returns a tab with given name, error if not found.
-func (ge *GideView) TabByLabelTry(label string) (gi.Widget, error) {
-	tv := ge.Tabs()
-	return tv.TabByLabelTry(label)
-}
-
 // SelectTabByLabel Selects given main tab, and returns all of its contents as well.
 func (ge *GideView) SelectTabByLabel(label string) gi.Widget {
 	tv := ge.Tabs()
