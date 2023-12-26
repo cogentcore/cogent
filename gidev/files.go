@@ -169,7 +169,7 @@ func (ge *GideView) OpenFileNode(fn *filetree.Node) (bool, error) {
 	if fn.IsDir() {
 		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
 	}
-	filetree.NodeHiStyle = gi.AppearanceSettings.HiStyle // must be set prior to OpenBuf
+	filetree.NodeHiStyle = gi.GeneralSettings.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
 		ge.ConfigTextBuf(fn.Buf)
@@ -497,7 +497,7 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 		return
 	}
 	// program, document, data
-	if int(fn.Info.Size) > gi.AppearanceSettings.Params.BigFileSize {
+	if int(fn.Info.Size) > gi.GeneralSettings.Params.BigFileSize {
 		d := gi.NewBody().AddTitle("File is relatively large").
 			AddText(fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size))
 		d.AddBottomBar(func(pw gi.Widget) {

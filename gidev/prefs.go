@@ -19,7 +19,7 @@ import (
 // Defaults sets new project defaults based on overall preferences
 func (ge *GideView) Defaults() {
 	ge.Prefs.Files = gide.Prefs.Files
-	ge.Prefs.Editor = gi.AppearanceSettings.Editor
+	ge.Prefs.Editor = gi.GeneralSettings.Editor
 	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
 	ge.Prefs.Debug = gidebug.DefaultParams
 }
@@ -56,7 +56,7 @@ func (ge *GideView) ApplyPrefs() {
 		split := ge.Splits()
 		split.SetSplits(ge.Prefs.Splits...)
 	}
-	gi.AppearanceSettings.UpdateAll() // drives full rebuild
+	gi.GeneralSettings.UpdateAll() // drives full rebuild
 }
 
 // ApplyPrefsAction applies current preferences to the project, and updates the project
