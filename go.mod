@@ -3,8 +3,8 @@ module goki.dev/taskmanager
 go 1.21
 
 require (
-	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/shirou/gopsutil/v3 v3.23.11
+	goki.dev/fi v0.1.19
 	goki.dev/gi/v2 v2.0.0-dev0.0.28
 	goki.dev/goosi v0.0.25
 	goki.dev/grr v0.0.12
@@ -21,6 +21,7 @@ require (
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/chewxy/math32 v1.10.1 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/expr-lang/expr v1.15.7 // indirect
@@ -55,7 +56,6 @@ require (
 	goki.dev/colors v0.8.44 // indirect
 	goki.dev/cursors v0.0.32 // indirect
 	goki.dev/enums v0.9.56 // indirect
-	goki.dev/fi v0.1.19 // indirect
 	goki.dev/girl v0.0.36 // indirect
 	goki.dev/glop v0.1.10 // indirect
 	goki.dev/grog v0.0.27 // indirect

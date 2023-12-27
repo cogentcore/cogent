@@ -9,6 +9,7 @@ package main
 import (
 	"time"
 
+	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/gimain"
 	"goki.dev/gi/v2/giv"
@@ -16,7 +17,6 @@ import (
 	"goki.dev/grr"
 	"goki.dev/icons"
 
-	"github.com/c2h5oh/datasize"
 	"github.com/shirou/gopsutil/v3/process"
 )
 
@@ -32,10 +32,10 @@ type Task struct { //gti:add
 	CPU float64 `format:"%.3g%%"`
 
 	// The actual number of bytes of RAM this task uses (RSS)
-	RAM string // todo: add a format for (datasize.ByteSize)(mi.RSS).HumanReadable() or a type of this type
+	RAM fi.FileSize
 
 	// The percentage of total RAM this task uses
-	RAMPct float32 `format:"%.3g%%"`
+	RAMPct float32 `label:"RAM %" format:"%.3g%%"`
 
 	// The number of threads this task uses
 	Threads int32
@@ -124,7 +124,7 @@ func getTasks(b *gi.Body) []*Task {
 		}
 		mi := grr.Log1(p.MemoryInfo())
 		if mi != nil {
-			t.RAM = (datasize.ByteSize)(mi.RSS).HumanReadable()
+			t.RAM = fi.FileSize(mi.RSS)
 		}
 		ts[i] = t
 	}
