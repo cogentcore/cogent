@@ -13,7 +13,7 @@ import (
 func main() { gimain.Run(app) }
 
 func app() {
-	// b := gi.NewAppBody("goki-settings")
-	giv.PrefsView(gi.GeneralSettings)
-	gi.Wait()
+	b := gi.NewAppBody("goki-settings")
+	giv.SettingsView(b)
+	b.NewWindow().Run().Wait()
 }
