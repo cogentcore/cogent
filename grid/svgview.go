@@ -119,7 +119,7 @@ func (sv *SVGView) UpdateView(full bool) {
 
 func (sv *SVGView) SVGViewKeys(kt *key.ChordEvent) {
 	kc := kt.Chord()
-	if gi.KeyEventTrace {
+	if gi.DebugSettings.KeyEventTrace {
 		fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
 	}
 	kf := keyfun.(kc)
