@@ -229,7 +229,7 @@ type ProjPrefs struct { //gti:add
 	Files FilePrefs
 
 	// editor preferences
-	Editor gi.EditorPrefs `view:"inline"`
+	Editor gi.EditorSettings `view:"inline"`
 
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
