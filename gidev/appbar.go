@@ -34,7 +34,7 @@ func (ge *GideView) AppBarConfig(pw gi.Widget) {
 	tb.AddOverflowMenu(func(m *gi.Scene) {
 		gi.NewButton(m).SetText("Gide Prefs").SetIcon(icons.Settings).
 			OnClick(func(e events.Event) {
-				gide.PrefsView(&gide.Prefs)
+				gide.PrefsView(gide.Settings)
 			})
 	})
 	gi.CurrentWindowAppBar(tb)

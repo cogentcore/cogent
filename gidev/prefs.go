@@ -18,7 +18,7 @@ import (
 
 // Defaults sets new project defaults based on overall preferences
 func (ge *GideView) Defaults() {
-	ge.Prefs.Files = gide.Prefs.Files
+	ge.Prefs.Files = gide.Settings.Files
 	ge.Prefs.Editor = gi.SystemSettings.Editor
 	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
 	ge.Prefs.Debug = gidebug.DefaultParams

@@ -20,7 +20,7 @@ import (
 func main() { gimain.Run(app) }
 
 func app() {
-	gide.InitPrefs()
+	gide.InitSettings()
 
 	pdir := gide.AppDataDir()
 	lfnm := filepath.Join(pdir, "gide.log")

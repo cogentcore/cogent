@@ -56,7 +56,7 @@ func KeyMapsView(km *KeyMaps) {
 
 // PrefsView opens a view of user preferences,
 // returns structview if new (nil if recycled)
-func PrefsView(pf *Preferences) *giv.StructView {
+func PrefsView(pf *SettingsData) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}

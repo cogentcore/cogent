@@ -17,18 +17,21 @@ import (
 	"goki.dev/grr"
 )
 
-// FilePrefs contains file view preferences
-type FilePrefs struct { //gti:add
+// FileSettings contains file view settings
+type FileSettings struct { //gti:add
 
 	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
 	DirsOnTop bool
 }
 
-// Preferences are the overall user preferences for Gide.
-type Preferences struct { //gti:add
+// Settings are the overall Gide settings
+var Settings = &SettingsData{}
 
-	// file view preferences
-	Files FilePrefs
+// SettingsData is the data type for the overall user settings for Gide.
+type SettingsData struct { //gti:add
+
+	// file view settings
+	Files FileSettings
 
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
 	EnvVars map[string]string
@@ -49,9 +52,6 @@ type Preferences struct { //gti:add
 	Changed bool `view:"-" changeflag:"+" json:"-" toml:"-" xml:"-"`
 }
 
-// Prefs are the overall Gide preferences
-var Prefs = Preferences{}
-
 // todo:
 // OpenIcons loads the gide icons into the current icon set
 // func OpenIcons() error {
@@ -63,23 +63,23 @@ var Prefs = Preferences{}
 // 	return nil
 // }
 
-// InitPrefs must be called at startup in mainrun()
-func InitPrefs() {
+// InitSettings must be called at startup in mainrun()
+func InitSettings() {
 	DefaultKeyMap = "MacEmacs" // todo
 	SetActiveKeyMapName(DefaultKeyMap)
-	Prefs.Defaults()
-	Prefs.Open()
+	Settings.Defaults()
+	Settings.Open()
 	OpenPaths()
 	// OpenIcons()
 }
 
 // Defaults are the defaults for FilePrefs
-func (pf *FilePrefs) Defaults() {
+func (pf *FileSettings) Defaults() {
 	pf.DirsOnTop = true
 }
 
 // Defaults are the defaults for Preferences
-func (pf *Preferences) Defaults() {
+func (pf *SettingsData) Defaults() {
 	pf.Files.Defaults()
 	pf.KeyMap = DefaultKeyMap
 	home := gi.SystemSettings.User.HomeDir
@@ -97,7 +97,7 @@ func (pf *Preferences) Defaults() {
 var PrefsFileName = "gide_prefs.toml"
 
 // Apply preferences updates things according with settings
-func (pf *Preferences) Apply() { //gti:add
+func (pf *SettingsData) Apply() { //gti:add
 	if pf.KeyMap != "" {
 		SetActiveKeyMapName(pf.KeyMap) // fills in missing pieces
 	}
@@ -116,14 +116,14 @@ func SetGoMod(gomod bool) {
 }
 
 // ApplyEnvVars applies environment variables set in EnvVars
-func (pf *Preferences) ApplyEnvVars() {
+func (pf *SettingsData) ApplyEnvVars() {
 	for k, v := range pf.EnvVars {
 		os.Setenv(k, v)
 	}
 }
 
 // Open preferences from GoGi standard prefs directory, and applies them
-func (pf *Preferences) Open() error { //gti:add
+func (pf *SettingsData) Open() error { //gti:add
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log(tomls.Open(pf, pnm))
@@ -147,7 +147,7 @@ func (pf *Preferences) Open() error { //gti:add
 }
 
 // Save Preferences to GoGi standard prefs directory
-func (pf *Preferences) Save() error { //gti:add
+func (pf *SettingsData) Save() error { //gti:add
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsFileName)
 	err := grr.Log(tomls.Save(pf, pnm))
@@ -170,7 +170,7 @@ func (pf *Preferences) Save() error { //gti:add
 }
 
 // VersionInfo returns Gide version information
-func (pf *Preferences) VersionInfo() string { //gti:add
+func (pf *SettingsData) VersionInfo() string { //gti:add
 	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
 	return vinfo
 }
@@ -178,7 +178,7 @@ func (pf *Preferences) VersionInfo() string { //gti:add
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
 // load from other files, etc.  Current avail keymaps are saved and loaded
 // with preferences automatically.
-func (pf *Preferences) EditKeyMaps() { //gti:add
+func (pf *SettingsData) EditKeyMaps() { //gti:add
 	pf.SaveKeyMaps = true
 	pf.Changed = true
 	KeyMapsView(&AvailKeyMaps)
@@ -186,14 +186,14 @@ func (pf *Preferences) EditKeyMaps() { //gti:add
 
 // EditLangOpts opens the LangsView editor to customize options for each type of
 // language / data / file type.
-func (pf *Preferences) EditLangOpts() { //gti:add
+func (pf *SettingsData) EditLangOpts() { //gti:add
 	pf.SaveLangOpts = true
 	pf.Changed = true
 	LangsView(&AvailLangs)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.
-func (pf *Preferences) EditCmds() { //gti:add
+func (pf *SettingsData) EditCmds() { //gti:add
 	pf.SaveCmds = true
 	pf.Changed = true
 	if len(CustomCmds) == 0 {
@@ -210,12 +210,12 @@ func (pf *Preferences) EditCmds() { //gti:add
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
-func (pf *Preferences) EditSplits() { //gti:add
+func (pf *SettingsData) EditSplits() { //gti:add
 	SplitsView(&AvailSplits)
 }
 
 // EditRegisters opens the RegistersView editor to customize saved registers
-func (pf *Preferences) EditRegisters() { //gti:add
+func (pf *SettingsData) EditRegisters() { //gti:add
 	RegistersView(&AvailRegisters)
 }
 
@@ -226,7 +226,7 @@ func (pf *Preferences) EditRegisters() { //gti:add
 type ProjPrefs struct { //gti:add
 
 	// file view preferences
-	Files FilePrefs
+	Files FileSettings
 
 	// editor preferences
 	Editor gi.EditorSettings `view:"inline"`
