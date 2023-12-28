@@ -1,4 +1,5 @@
-Name = "gide"
+Name = "Gide"
+ID = "com.goki.gide"
 Desc = ""
 Version = "v2.0.0-dev0.0.14"
 Type = "App"
@@ -6,7 +7,6 @@ Type = "App"
 [Build]
   Package = "."
   Output = ""
-  ID = "dev.goki.gide"
   Debug = false
   Rebuild = false
   Install = false
