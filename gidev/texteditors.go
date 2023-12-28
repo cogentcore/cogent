@@ -23,7 +23,7 @@ import (
 
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *GideView) ConfigTextBuf(tb *texteditor.Buf) {
-	tb.SetHiStyle(gi.GeneralSettings.HiStyle)
+	tb.SetHiStyle(gi.AppearanceSettings.HiStyle)
 	tb.Opts.EditorSettings = ge.Prefs.Editor
 	tb.ConfigKnown()
 	if tb.Complete != nil {

@@ -254,7 +254,7 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
-		gide.SavedPaths.AddPath(root, gi.GeneralSettings.Params.SavedPathsMax)
+		gide.SavedPaths.AddPath(root, gi.SystemSettings.Behavior.SavedPathsMax)
 		gide.SavePaths()
 		ge.ProjRoot = gi.FileName(root)
 		ge.SetName(pnm)
@@ -295,7 +295,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 		gide.SetGoMod(ge.Prefs.GoMod)
 		os.Chdir(string(ge.Prefs.ProjRoot))
 		ge.ProjRoot = gi.FileName(ge.Prefs.ProjRoot)
-		gide.SavedPaths.AddPath(string(filename), gi.GeneralSettings.Params.SavedPathsMax)
+		gide.SavedPaths.AddPath(string(filename), gi.SystemSettings.Behavior.SavedPathsMax)
 		gide.SavePaths()
 		ge.SetName(pnm)
 		ge.Sc.SetName(pnm)
@@ -376,7 +376,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 // returns true if the user was prompted, false otherwise
 func (ge *GideView) SaveProjAs(filename gi.FileName) bool { //gti:add
 	spell.SaveIfLearn()
-	gide.SavedPaths.AddPath(string(filename), gi.GeneralSettings.Params.SavedPathsMax)
+	gide.SavedPaths.AddPath(string(filename), gi.SystemSettings.Behavior.SavedPathsMax)
 	gide.SavePaths()
 	ge.Prefs.ProjFilename = filename
 	ge.ProjFilename = ge.Prefs.ProjFilename
