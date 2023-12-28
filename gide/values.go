@@ -67,22 +67,24 @@ func PrefsView(pf *SettingsData) *giv.StructView {
 	})
 	d.Sc.Data = pf
 
-	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pf.Apply).SetIcon(icons.Done)
-		giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").
-			SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(pf.Changed) })
-		giv.NewFuncButton(tb, pf.VersionInfo).SetShowReturn(true).SetIcon(icons.Info)
-		giv.NewFuncButton(tb, pf.EditKeyMaps).SetIcon(icons.Keyboard)
-		giv.NewFuncButton(tb, pf.EditLangOpts).SetIcon(icons.Subtitles)
-		giv.NewFuncButton(tb, pf.EditCmds).SetIcon(icons.KeyboardCommandKey)
-		giv.NewFuncButton(tb, pf.EditSplits).SetIcon(icons.VerticalSplit)
-		giv.NewFuncButton(tb, pf.EditRegisters).SetIcon(icons.Variables)
+	/*
+		d.AddAppBar(func(tb *gi.Toolbar) {
+			giv.NewFuncButton(tb, pf.Apply).SetIcon(icons.Done)
+			giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").
+				SetIcon(icons.Save).SetKey(keyfun.Save).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(pf.Changed) })
+			giv.NewFuncButton(tb, pf.VersionInfo).SetShowReturn(true).SetIcon(icons.Info)
+			giv.NewFuncButton(tb, pf.EditKeyMaps).SetIcon(icons.Keyboard)
+			giv.NewFuncButton(tb, pf.EditLangOpts).SetIcon(icons.Subtitles)
+			giv.NewFuncButton(tb, pf.EditCmds).SetIcon(icons.KeyboardCommandKey)
+			giv.NewFuncButton(tb, pf.EditSplits).SetIcon(icons.VerticalSplit)
+			giv.NewFuncButton(tb, pf.EditRegisters).SetIcon(icons.Variables)
 
-		tb.AddOverflowMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, pf.Open).SetText("Open prefs").SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			tb.AddOverflowMenu(func(m *gi.Scene) {
+				giv.NewFuncButton(m, pf.Open).SetText("Open prefs").SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			})
 		})
-	})
+	*/
 
 	d.NewWindow().Run()
 	return tv

@@ -17,18 +17,16 @@ import (
 	"goki.dev/grr"
 )
 
-// FileSettings contains file view settings
-type FileSettings struct { //gti:add
-
-	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
-	DirsOnTop bool
-}
-
 // Settings are the overall Gide settings
-var Settings = &SettingsData{}
+var Settings = &SettingsData{
+	SettingsBase: gi.SettingsBase{
+		File: filepath.Join("gide", "settings.toml"),
+	},
+}
 
 // SettingsData is the data type for the overall user settings for Gide.
 type SettingsData struct { //gti:add
+	gi.SettingsBase
 
 	// file view settings
 	Files FileSettings
@@ -52,6 +50,13 @@ type SettingsData struct { //gti:add
 	Changed bool `view:"-" changeflag:"+" json:"-" toml:"-" xml:"-"`
 }
 
+// FileSettings contains file view settings
+type FileSettings struct { //gti:add
+
+	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
+	DirsOnTop bool
+}
+
 // todo:
 // OpenIcons loads the gide icons into the current icon set
 // func OpenIcons() error {
@@ -65,17 +70,11 @@ type SettingsData struct { //gti:add
 
 // InitSettings must be called at startup in mainrun()
 func InitSettings() {
+	gi.AllSettings.InsertAtIdx(1, "Gide", Settings)
 	DefaultKeyMap = "MacEmacs" // todo
 	SetActiveKeyMapName(DefaultKeyMap)
-	Settings.Defaults()
-	Settings.Open()
 	OpenPaths()
 	// OpenIcons()
-}
-
-// Defaults are the defaults for FilePrefs
-func (pf *FileSettings) Defaults() {
-	pf.DirsOnTop = true
 }
 
 // Defaults are the defaults for Preferences
@@ -93,8 +92,10 @@ func (pf *SettingsData) Defaults() {
 	}
 }
 
-// PrefsFileName is the name of the preferences file in GoGi prefs directory
-var PrefsFileName = "gide_prefs.toml"
+// Defaults are the defaults for FilePrefs
+func (pf *FileSettings) Defaults() {
+	pf.DirsOnTop = true
+}
 
 // Apply preferences updates things according with settings
 func (pf *SettingsData) Apply() { //gti:add
@@ -122,6 +123,7 @@ func (pf *SettingsData) ApplyEnvVars() {
 	}
 }
 
+/*
 // Open preferences from GoGi standard prefs directory, and applies them
 func (pf *SettingsData) Open() error { //gti:add
 	pdir := AppDataDir()
@@ -168,6 +170,7 @@ func (pf *SettingsData) Save() error { //gti:add
 	pf.Changed = false
 	return err
 }
+*/
 
 // VersionInfo returns Gide version information
 func (pf *SettingsData) VersionInfo() string { //gti:add
