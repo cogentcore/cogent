@@ -163,20 +163,20 @@ func KeyFun(key1, key2 key.Chord) KeyFuns {
 	ks := KeySeq{key1, key2}
 	if key1 != "" && key2 != "" {
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun 2 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg
 		}
 	} else if key1 != "" {
 		if _, need2 := Needs2KeyMap[key1]; need2 {
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun 1st key in 2key seq: %v\n", key1)
 			}
 			return KeyFunNeeds2
 		}
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun 1 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg

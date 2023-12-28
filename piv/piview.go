@@ -990,7 +990,7 @@ func (pv *PiView) FileNodeClosed(fn *filetree.Node) {
 func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	var kf gide.KeyFuns
 	kc := kt.Chord()
-	if gi.KeyEventTrace {
+	if gi.DebugSettings.KeyEventTrace {
 		fmt.Printf("PiView KeyInput: %v\n", ge.Path())
 	}
 	// gkf := keyfun.(kc)
@@ -998,7 +998,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 		kf = gide.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
 		if kf == gide.KeyFunNil || kc == "Escape" {
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
@@ -1015,12 +1015,12 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 			kt.SetProcessed()
 			ge.KeySeq1 = kt.Chord()
 			ge.SetStatus(string(ge.KeySeq1))
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
 			}
 			return
 		} else if kf != gide.KeyFunNil {
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
 			// gkf = keyfun.Nil // override!

@@ -31,7 +31,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 	gide.SetGoMod(ge.Prefs.GoMod)
 	var kf gide.KeyFuns
 	kc := kt.KeyChord()
-	if gi.KeyEventTrace {
+	if gi.DebugSettings.KeyEventTrace {
 		fmt.Printf("GideView KeyInput: %v\n", ge.Path())
 	}
 	gkf := keyfun.Of(kc)
@@ -39,7 +39,7 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		kf = gide.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
 		if kf == gide.KeyFunNil || kc == "Escape" {
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
@@ -60,12 +60,12 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 			}
 			ge.KeySeq1 = kt.KeyChord()
 			ge.SetStatus(string(ge.KeySeq1))
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
 			}
 			return
 		} else if kf != gide.KeyFunNil {
-			if gi.KeyEventTrace {
+			if gi.DebugSettings.KeyEventTrace {
 				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
 			gkf = keyfun.Nil // override!
