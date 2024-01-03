@@ -14,7 +14,6 @@ import (
 
 	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/gide/v2/gide"
@@ -66,7 +65,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 
 	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
 	if len(ld.Text) > 0 {
-		tev := giv.TextEditorValue{}
+		tev := texteditor.Value{}
 		tev.SetSoloValue(reflect.ValueOf(ld.Text))
 		tev.OpenDialog(ge, nil)
 		// todo: title: "Lookup: " + text
