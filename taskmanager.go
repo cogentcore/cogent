@@ -9,18 +9,15 @@ package main
 import (
 	"time"
 
-	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/gimain"
 	"goki.dev/gi/v2/giv"
+	"goki.dev/glop/datasize"
 	"goki.dev/goosi/events"
 	"goki.dev/grr"
 	"goki.dev/icons"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
-
-func main() { gimain.Run(app) }
 
 type Task struct { //gti:add
 	*process.Process `view:"-"`
@@ -32,7 +29,7 @@ type Task struct { //gti:add
 	CPU float64 `format:"%.3g%%"`
 
 	// The actual number of bytes of RAM this task uses (RSS)
-	RAM fi.FileSize
+	RAM datasize.Size
 
 	// The percentage of total RAM this task uses
 	RAMPct float32 `label:"RAM %" format:"%.3g%%"`
@@ -124,7 +121,7 @@ func getTasks(b *gi.Body) []*Task {
 		}
 		mi := grr.Log1(p.MemoryInfo())
 		if mi != nil {
-			t.RAM = fi.FileSize(mi.RSS)
+			t.RAM = datasize.Size(mi.RSS)
 		}
 		ts[i] = t
 	}
