@@ -232,7 +232,7 @@ func (ed *TextEditor) ContextMenu(m *gi.Scene) {
 			ed.Cut()
 		})
 	gi.NewButton(m).SetText("Paste").SetIcon(icons.ContentPaste).
-		SetKey(keyfun.Paste).SetState(ed.EventMgr().ClipBoard().IsEmpty(), states.Disabled).
+		SetKey(keyfun.Paste).SetState(ed.Clipboard().IsEmpty(), states.Disabled).
 		OnClick(func(e events.Event) {
 			ed.Paste()
 		})

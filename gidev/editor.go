@@ -114,7 +114,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 		})
 		gi.NewButton(pw).SetText("Copy To Clipboard").SetIcon("copy").
 			OnClick(func(e events.Event) {
-				d.EventMgr().ClipBoard().Write(mimedata.NewTextBytes(txt))
+				d.Clipboard().Write(mimedata.NewTextBytes(txt))
 			})
 	})
 	d.NewFullDialog(ge.ActiveTextEditor()).SetNewWindow(true).Run()
