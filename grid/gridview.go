@@ -490,7 +490,7 @@ func (gv *GridView) RedoAvailFunc(act *gi.Button) {
 
 // PasteAvailFunc is an ActionUpdateFunc that inactivates action if no paste avail
 func (gv *GridView) PasteAvailFunc(act *gi.Button) {
-	empty := oswin.TheApp.ClipBoard(gv.ParentWindow().OSWin).IsEmpty()
+	empty := oswin.TheApp.Clipboard(gv.ParentWindow().OSWin).IsEmpty()
 	act.SetInactiveState(empty)
 }
 

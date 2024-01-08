@@ -18,6 +18,7 @@ import (
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 	"github.com/goki/pi/filecat"
+	"goki.dev/gi/v2/keyfun"
 )
 
 // TreeView is a TreeView that knows how to operate on FileNode nodes
@@ -134,7 +135,7 @@ func (gv *GridView) CutSelected() {
 
 // PasteClip pastes clipboard, using cur layer etc
 func (gv *GridView) PasteClip() {
-	md := oswin.TheApp.ClipBoard(gv.ParentWindow().OSWin).Read([]string{filecat.DataJson})
+	md := oswin.TheApp.Clipboard(gv.ParentWindow().OSWin).Read([]string{filecat.DataJson})
 	if md == nil {
 		return
 	}
