@@ -6,15 +6,12 @@ package main
 
 import (
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/gimain"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/goosi/events"
 )
 
-func main() { gimain.Run(app) }
-
-func app() {
-	b := gi.NewAppBody("goki-files")
+func main() {
+	b := gi.NewAppBody("Goki Files")
 
 	fv := giv.NewFileView(b)
 	fv.OnDoubleClick(func(e events.Event) {
