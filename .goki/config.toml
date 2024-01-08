@@ -1,4 +1,5 @@
-Name = "files"
+Name = "Goki Files"
+ID = "com.goki.files"
 Desc = ""
 Version = "v0.0.5"
 Type = "App"
@@ -6,7 +7,6 @@ Type = "App"
 [Build]
   Package = "."
   Output = ""
-  ID = "com.org.todo.files"
   Debug = false
   Rebuild = false
   Install = false
@@ -18,6 +18,9 @@ Type = "App"
   AndroidMinSDK = 23
   AndroidTargetSDK = 29
 
+[Pack]
+  DMG = true
+
 [Web]
   Port = "8080"
   RandomVersion = false
@@ -26,13 +29,10 @@ Type = "App"
   ThemeColor = "#2d2c2c"
   LoadingLabel = ""
   Lang = "en"
-  Title = ""
-  Description = ""
   Author = ""
   Image = ""
   AutoUpdateInterval = "10s"
   WasmContentLengthHeader = ""
-  ServiceWorkerTemplate = ""
 
 [Setup]
   [Setup.Platform]
