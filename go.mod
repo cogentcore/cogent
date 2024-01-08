@@ -4,8 +4,8 @@ go 1.21
 
 require (
 	github.com/shirou/gopsutil/v3 v3.23.11
-	goki.dev/fi v0.1.19
 	goki.dev/gi/v2 v2.0.0-dev0.0.28
+	goki.dev/glop v0.1.11
 	goki.dev/goosi v0.0.25
 	goki.dev/grr v0.0.12
 	goki.dev/gti v0.1.32
@@ -19,7 +19,6 @@ require (
 	github.com/akutz/sortfold v0.2.1 // indirect
 	github.com/alecthomas/chroma/v2 v2.12.0 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
-	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/chewxy/math32 v1.10.1 // indirect
@@ -39,15 +38,10 @@ require (
 	github.com/hack-pad/hackpadfs v0.2.1 // indirect
 	github.com/hack-pad/safejs v0.1.1 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
-	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20231016141302-07b5767bb0ed // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
@@ -56,9 +50,8 @@ require (
 	goki.dev/colors v0.8.44 // indirect
 	goki.dev/cursors v0.0.32 // indirect
 	goki.dev/enums v0.9.56 // indirect
+	goki.dev/fi v0.1.19 // indirect
 	goki.dev/girl v0.0.36 // indirect
-	goki.dev/glop v0.1.10 // indirect
-	goki.dev/grog v0.0.27 // indirect
 	goki.dev/grows v0.3.31 // indirect
 	goki.dev/jsfs v0.0.2 // indirect
 	goki.dev/ki/v2 v2.0.0-dev0.0.33 // indirect
