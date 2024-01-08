@@ -44,8 +44,8 @@ type Task struct { //gti:add
 	PID int32
 }
 
-func app() {
-	b := gi.NewAppBody("goki-task-manager")
+func main() {
+	b := gi.NewAppBody("Goki Task Manager")
 
 	ts := getTasks(b)
 	tv := giv.NewTableView(b)
