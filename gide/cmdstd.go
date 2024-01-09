@@ -438,6 +438,14 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	// Goki
+	{Cat: "Goki", Name: "Run",
+		Desc: "Builds and runs go executable in current directory: goki run -t [ios | android | js | darwin | windows | linux]",
+		Lang: fi.Any,
+		Cmds: []CmdAndArgs{{Cmd: "goki",
+			Args: []string{"run", "-t", "{PromptString1}"}}},
+		Dir:  "{FileDirPath}",
+		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
+
 	{Cat: "Goki", Name: "Version-Release",
 		Desc: "increments the patch-level version number and pushes a release tag at this new version",
 		Lang: fi.Any,

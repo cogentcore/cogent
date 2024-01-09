@@ -45,7 +45,7 @@ func KeyMapsView(km *KeyMaps) {
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StdKeyMaps) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, km.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			giv.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -208,7 +208,7 @@ func LangsView(pt *Langs) {
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdLangs) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -242,7 +242,7 @@ func CmdsView(pt *Commands) {
 			SetText("View standard").SetIcon(icons.Visibility).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdCmds) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -339,7 +339,7 @@ func SplitsView(pt *Splits) {
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -460,7 +460,7 @@ func RegistersView(pt *Registers) {
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *gi.Scene) {
-			giv.NewFuncButton(m, pt.OpenPrefs).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
 

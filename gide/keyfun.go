@@ -354,8 +354,8 @@ func (km *KeyMaps) Save(filename gi.FileName) error { //gti:add
 	return grr.Log(jsons.Save(km, string(filename)))
 }
 
-// OpenPrefs opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFileName
-func (km *KeyMaps) OpenPrefs() error { //gti:add
+// OpenSettings opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFileName
+func (km *KeyMaps) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
 	AvailKeyMapsChanged = false

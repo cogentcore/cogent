@@ -55,8 +55,8 @@ func (lt *Registers) Save(filename gi.FileName) error { //gti:add
 	return grr.Log(tomls.Save(lt, string(filename)))
 }
 
-// OpenPrefs opens Registers from App standard prefs directory, using PrefRegistersFileName
-func (lt *Registers) OpenPrefs() error { //gti:add
+// OpenSettings opens Registers from App standard prefs directory, using PrefRegistersFileName
+func (lt *Registers) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFileName)
 	AvailRegistersChanged = false

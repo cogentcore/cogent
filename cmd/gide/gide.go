@@ -20,7 +20,6 @@ func main() {
 	pdir := gide.AppDataDir()
 	lfnm := filepath.Join(pdir, "gide.log")
 
-	gide.Settings.OpenOtherSettings()
 	gide.TheConsole.Init(lfnm)
 
 	var path string

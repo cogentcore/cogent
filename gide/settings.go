@@ -98,6 +98,44 @@ func (se *FileSettings) Defaults() {
 	se.DirsOnTop = true
 }
 
+func (se *SettingsData) Save() error {
+	err := gi.SaveSettings(se)
+	if err != nil {
+		return err
+	}
+	if se.SaveKeyMaps {
+		AvailKeyMaps.SavePrefs()
+	}
+	if se.SaveLangOpts {
+		AvailLangs.SavePrefs()
+	}
+	if se.SaveCmds {
+		CustomCmds.SavePrefs()
+	}
+	AvailSplits.SavePrefs()
+	AvailRegisters.SavePrefs()
+	return err
+}
+
+func (se *SettingsData) Open() error {
+	err := gi.OpenSettings(se)
+	if err != nil {
+		return err
+	}
+	if se.SaveKeyMaps {
+		AvailKeyMaps.OpenSettings()
+	}
+	if se.SaveLangOpts {
+		AvailLangs.OpenSettings()
+	}
+	if se.SaveCmds {
+		CustomCmds.OpenSettings()
+	}
+	AvailSplits.OpenSettings()
+	AvailRegisters.OpenSettings()
+	return err
+}
+
 // Apply preferences updates things according with settings
 func (se *SettingsData) Apply() { //gti:add
 	if se.KeyMap != "" {
@@ -123,61 +161,6 @@ func (se *SettingsData) ApplyEnvVars() {
 		os.Setenv(k, v)
 	}
 }
-
-func (se *SettingsData) OpenOtherSettings() {
-	if se.SaveKeyMaps {
-		AvailKeyMaps.OpenPrefs()
-	}
-	if se.SaveLangOpts {
-		AvailLangs.OpenPrefs()
-	}
-	if se.SaveCmds {
-		CustomCmds.OpenPrefs()
-	}
-	AvailSplits.OpenPrefs()
-	AvailRegisters.OpenPrefs()
-	se.Apply()
-}
-
-func (se *SettingsData) SaveOtherSettings() {
-	if se.SaveKeyMaps {
-		AvailKeyMaps.SavePrefs()
-	}
-	if se.SaveLangOpts {
-		AvailLangs.SavePrefs()
-	}
-	if se.SaveCmds {
-		CustomCmds.SavePrefs()
-	}
-	AvailSplits.SavePrefs()
-	AvailRegisters.SavePrefs()
-}
-
-/*
-// Open preferences from GoGi standard prefs directory, and applies them
-func (pf *SettingsData) Open() error { //gti:add
-	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsFileName)
-	err := grr.Log(tomls.Open(pf, pnm))
-	if err != nil {
-		return err
-	}
-	pf.Changed = false
-	return err
-}
-
-// Save Preferences to GoGi standard prefs directory
-func (pf *SettingsData) Save() error { //gti:add
-	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsFileName)
-	err := grr.Log(tomls.Save(pf, pnm))
-	if err != nil {
-		return err
-	}
-	pf.Changed = false
-	return err
-}
-*/
 
 // VersionInfo returns Gide version information
 func (se *SettingsData) VersionInfo() string { //gti:add

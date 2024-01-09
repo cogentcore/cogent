@@ -117,8 +117,8 @@ func (lt *Splits) Save(filename gi.FileName) error { //gti:add
 	return grr.Log(jsons.Save(lt, string(filename)))
 }
 
-// OpenPrefs opens Splits from App standard prefs directory, using PrefSplitsFileName
-func (lt *Splits) OpenPrefs() error { //gti:add
+// OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFileName
+func (lt *Splits) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFileName)
 	AvailSplitsChanged = false

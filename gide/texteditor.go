@@ -244,7 +244,7 @@ func (ed *TextEditor) ContextMenu(m *gi.Scene) {
 	fn := ed.Gide.FileNodeForFile(string(ed.Buf.Filename), false)
 	if fn != nil {
 		fn.SelectAction(events.SelectOne)
-		fn.FileNodeVCSContextMenu(m)
+		fn.VCSContextMenu(m)
 	}
 
 	if ed.Gide.CurDebug() != nil {

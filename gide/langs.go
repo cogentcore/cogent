@@ -63,8 +63,8 @@ func (lt *Langs) Save(filename gi.FileName) error { //gti:add
 	return tomls.Save(lt, string(filename))
 }
 
-// OpenPrefs opens Langs from App standard prefs directory, using PrefsLangsFileName
-func (lt *Langs) OpenPrefs() error { //gti:add
+// OpenSettings opens Langs from App standard prefs directory, using PrefsLangsFileName
+func (lt *Langs) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsLangsFileName)
 	AvailLangsChanged = false

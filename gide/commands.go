@@ -738,9 +738,9 @@ func (cm *Commands) Save(filename gi.FileName) error { //gti:add
 	return grr.Log(jsons.Save(cm, string(filename)))
 }
 
-// OpenPrefs opens custom Commands from App standard prefs directory, using
+// OpenSettings opens custom Commands from App standard prefs directory, using
 // PrefsCmdsFileName
-func (cm *Commands) OpenPrefs() error { //gti:add
+func (cm *Commands) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFileName)
 	CustomCmdsChanged = false
