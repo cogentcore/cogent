@@ -8,14 +8,11 @@ import (
 	"time"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/gimain"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/girl/styles"
 )
 
-func main() { gimain.Run(app) }
-
-func app() {
+func main() {
 	b := gi.NewAppBody("goki-clock")
 
 	ts := gi.NewTabs(b)
