@@ -547,7 +547,11 @@ func OpenGideProj(projfile string) *GideView {
 }
 
 func GideInScene(sc *gi.Scene) *GideView {
-	return sc.Body.ChildByType(GideViewType, ki.NoEmbeds).(*GideView)
+	gv := sc.Body.ChildByType(GideViewType, ki.NoEmbeds)
+	if gv != nil {
+		return gv.(*GideView)
+	}
+	return nil
 }
 
 // NewGideWindow is common code for Open GideWindow from Proj or Path
@@ -558,7 +562,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	if win, found := gi.AllRenderWins.FindName(winm); found {
 		sc := win.MainScene()
 		ge := GideInScene(sc)
-		if string(ge.ProjRoot) == root {
+		if ge != nil && string(ge.ProjRoot) == root {
 			win.Raise()
 			return ge
 		}
