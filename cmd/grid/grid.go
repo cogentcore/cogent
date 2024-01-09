@@ -10,19 +10,11 @@ import (
 	"path/filepath"
 
 	"github.com/goki/gi/gi"
-	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/oswin"
 	"goki.dev/grid/grid"
 )
 
 func main() {
-	// vgpu.Debug = true
-	gimain.Main(func() {
-		mainrun()
-	})
-}
-
-func mainrun() {
 	gi.SetAppName("grid")
 	gi.SetAppAbout(`Grid is a Go-rendered interactive drawing program for SVG vector dawings.  See <a href="https://goki.dev/grid">Grid on GitHub</a><br>
 <br>
