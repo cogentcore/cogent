@@ -4,13 +4,7 @@
 
 package main
 
-import (
-	"goki.dev/gi/v2/gimain"
-)
-
-func main() { gimain.Run(app) }
-
-func app() {
+func main() {
 	/*
 			goosi.TheApp.SetName("pie")
 			goosi.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://goki.dev/pi">Gide on GitHub</a> and <a href="https://goki.dev/pi/wiki">Gide wiki</a> for documentation.<br>
