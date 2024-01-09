@@ -34,6 +34,7 @@ func (ed *TextEditor) OnInit() {
 	ed.Editor.OnInit()
 	ed.HandleEvents()
 	ed.SetStyles()
+	ed.AddContextMenu(ed.ContextMenu)
 }
 
 func (ed *TextEditor) SetStyles() {

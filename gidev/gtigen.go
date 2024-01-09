@@ -378,12 +378,6 @@ func (t *GideView) SetTooltip(v string) *GideView {
 	return t
 }
 
-// SetCustomContextMenu sets the [GideView.CustomContextMenu]
-func (t *GideView) SetCustomContextMenu(v func(m *gi.Scene)) *GideView {
-	t.CustomContextMenu = v
-	return t
-}
-
 // SetStackTop sets the [GideView.StackTop]
 func (t *GideView) SetStackTop(v int) *GideView {
 	t.StackTop = v

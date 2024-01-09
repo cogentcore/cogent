@@ -30,7 +30,7 @@ type FileNode struct {
 
 func (fn *FileNode) OnInit() {
 	fn.Node.OnInit()
-	fn.CustomContextMenu = fn.GideContextMenu
+	fn.AddContextMenu(fn.ContextMenu)
 }
 
 // EditFile pulls up this file in Gide
@@ -78,7 +78,7 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	}
 }
 
-func (fn *FileNode) GideContextMenu(m *gi.Scene) {
+func (fn *FileNode) ContextMenu(m *gi.Scene) {
 	gi.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
 		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
 		s.SetState(!fn.HasSelection(), states.Disabled)
@@ -92,7 +92,6 @@ func (fn *FileNode) GideContextMenu(m *gi.Scene) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
 	gi.NewSeparator(m)
-	fn.FileNodeContextMenu(m)
 }
 
 /////////////////////////////////////////////////////////////////////

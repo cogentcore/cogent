@@ -777,49 +777,49 @@ func (dv *DebugView) Tabs() *gi.Tabs {
 }
 
 // BreakVw returns the break view from tabs
-func (dv DebugView) BreakVw() *BreakView {
+func (dv *DebugView) BreakVw() *BreakView {
 	tv := dv.Tabs()
 	return tv.TabByLabel("Breaks").Child(0).(*BreakView)
 }
 
 // StackVw returns the stack view from tabs
-func (dv DebugView) StackVw() *StackView {
+func (dv *DebugView) StackVw() *StackView {
 	tv := dv.Tabs()
 	return tv.TabByLabel("Stack").Child(0).(*StackView)
 }
 
 // VarVw returns the vars view from tabs
-func (dv DebugView) VarVw() *VarsView {
+func (dv *DebugView) VarVw() *VarsView {
 	tv := dv.Tabs()
 	return tv.TabByLabel("Vars").Child(0).(*VarsView)
 }
 
 // TaskVw returns the task view from tabs
-func (dv DebugView) TaskVw() *TaskView {
+func (dv *DebugView) TaskVw() *TaskView {
 	tv := dv.Tabs()
 	return tv.TabByLabel("Tasks").Child(0).(*TaskView)
 }
 
 // ThreadVw returns the thread view from tabs
-func (dv DebugView) ThreadVw() *ThreadView {
+func (dv *DebugView) ThreadVw() *ThreadView {
 	tv := dv.Tabs()
 	return tv.TabByLabel("Threads").Child(0).(*ThreadView)
 }
 
 // FindFramesVw returns the find frames view from tabs
-func (dv DebugView) FindFramesVw() *StackView {
+func (dv *DebugView) FindFramesVw() *StackView {
 	tv := dv.Tabs()
 	return tv.TabByLabel("Find Frames").Child(0).(*StackView)
 }
 
 // AllVarVw returns the all vars view from tabs
-func (dv DebugView) AllVarVw() *VarsView {
+func (dv *DebugView) AllVarVw() *VarsView {
 	tv := dv.Tabs()
 	return tv.TabByLabel("Global Vars").Child(0).(*VarsView)
 }
 
 // ConsoleText returns the console TextEditor
-func (dv DebugView) ConsoleText() *texteditor.Editor {
+func (dv *DebugView) ConsoleText() *texteditor.Editor {
 	tv := dv.Tabs()
 	cv := tv.TabByLabel("Console").Child(0).(*texteditor.Editor)
 	return cv

@@ -91,12 +91,6 @@ func (t *DebugView) SetTooltip(v string) *DebugView {
 	return t
 }
 
-// SetCustomContextMenu sets the [DebugView.CustomContextMenu]
-func (t *DebugView) SetCustomContextMenu(v func(m *gi.Scene)) *DebugView {
-	t.CustomContextMenu = v
-	return t
-}
-
 // SetStackTop sets the [DebugView.StackTop]
 func (t *DebugView) SetStackTop(v int) *DebugView {
 	t.StackTop = v
@@ -151,12 +145,6 @@ func (t *StackView) SetTooltip(v string) *StackView {
 	return t
 }
 
-// SetCustomContextMenu sets the [StackView.CustomContextMenu]
-func (t *StackView) SetCustomContextMenu(v func(m *gi.Scene)) *StackView {
-	t.CustomContextMenu = v
-	return t
-}
-
 // SetStackTop sets the [StackView.StackTop]
 func (t *StackView) SetStackTop(v int) *StackView {
 	t.StackTop = v
@@ -199,12 +187,6 @@ func (t *BreakView) New() ki.Ki {
 // SetTooltip sets the [BreakView.Tooltip]
 func (t *BreakView) SetTooltip(v string) *BreakView {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [BreakView.CustomContextMenu]
-func (t *BreakView) SetCustomContextMenu(v func(m *gi.Scene)) *BreakView {
-	t.CustomContextMenu = v
 	return t
 }
 
@@ -253,12 +235,6 @@ func (t *ThreadView) SetTooltip(v string) *ThreadView {
 	return t
 }
 
-// SetCustomContextMenu sets the [ThreadView.CustomContextMenu]
-func (t *ThreadView) SetCustomContextMenu(v func(m *gi.Scene)) *ThreadView {
-	t.CustomContextMenu = v
-	return t
-}
-
 // SetStackTop sets the [ThreadView.StackTop]
 func (t *ThreadView) SetStackTop(v int) *ThreadView {
 	t.StackTop = v
@@ -301,12 +277,6 @@ func (t *TaskView) New() ki.Ki {
 // SetTooltip sets the [TaskView.Tooltip]
 func (t *TaskView) SetTooltip(v string) *TaskView {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [TaskView.CustomContextMenu]
-func (t *TaskView) SetCustomContextMenu(v func(m *gi.Scene)) *TaskView {
-	t.CustomContextMenu = v
 	return t
 }
 
@@ -364,12 +334,6 @@ func (t *VarsView) SetTooltip(v string) *VarsView {
 	return t
 }
 
-// SetCustomContextMenu sets the [VarsView.CustomContextMenu]
-func (t *VarsView) SetCustomContextMenu(v func(m *gi.Scene)) *VarsView {
-	t.CustomContextMenu = v
-	return t
-}
-
 // SetStackTop sets the [VarsView.StackTop]
 func (t *VarsView) SetStackTop(v int) *VarsView {
 	t.StackTop = v
@@ -424,12 +388,6 @@ func (t *VarView) SetDbgView(v *DebugView) *VarView {
 // SetTooltip sets the [VarView.Tooltip]
 func (t *VarView) SetTooltip(v string) *VarView {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [VarView.CustomContextMenu]
-func (t *VarView) SetCustomContextMenu(v func(m *gi.Scene)) *VarView {
-	t.CustomContextMenu = v
 	return t
 }
 
@@ -491,12 +449,6 @@ func (t *FileNode) New() ki.Ki {
 // SetTooltip sets the [FileNode.Tooltip]
 func (t *FileNode) SetTooltip(v string) *FileNode {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [FileNode.CustomContextMenu]
-func (t *FileNode) SetCustomContextMenu(v func(m *gi.Scene)) *FileNode {
-	t.CustomContextMenu = v
 	return t
 }
 
@@ -617,12 +569,6 @@ func (t *FindView) SetRe(v *regexp.Regexp) *FindView {
 // SetTooltip sets the [FindView.Tooltip]
 func (t *FindView) SetTooltip(v string) *FindView {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [FindView.CustomContextMenu]
-func (t *FindView) SetCustomContextMenu(v func(m *gi.Scene)) *FindView {
-	t.CustomContextMenu = v
 	return t
 }
 
@@ -855,12 +801,6 @@ func (t *SpellView) SetTooltip(v string) *SpellView {
 	return t
 }
 
-// SetCustomContextMenu sets the [SpellView.CustomContextMenu]
-func (t *SpellView) SetCustomContextMenu(v func(m *gi.Scene)) *SpellView {
-	t.CustomContextMenu = v
-	return t
-}
-
 // SetStackTop sets the [SpellView.StackTop]
 func (t *SpellView) SetStackTop(v int) *SpellView {
 	t.StackTop = v
@@ -936,12 +876,6 @@ func (t *SymbolsView) SetMatch(v string) *SymbolsView {
 // SetTooltip sets the [SymbolsView.Tooltip]
 func (t *SymbolsView) SetTooltip(v string) *SymbolsView {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [SymbolsView.CustomContextMenu]
-func (t *SymbolsView) SetCustomContextMenu(v func(m *gi.Scene)) *SymbolsView {
-	t.CustomContextMenu = v
 	return t
 }
 
@@ -1029,12 +963,6 @@ func (t *SymTreeView) New() ki.Ki {
 // SetTooltip sets the [SymTreeView.Tooltip]
 func (t *SymTreeView) SetTooltip(v string) *SymTreeView {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [SymTreeView.CustomContextMenu]
-func (t *SymTreeView) SetCustomContextMenu(v func(m *gi.Scene)) *SymTreeView {
-	t.CustomContextMenu = v
 	return t
 }
 
@@ -1130,12 +1058,6 @@ func (t *TextEditor) SetGide(v Gide) *TextEditor {
 // SetTooltip sets the [TextEditor.Tooltip]
 func (t *TextEditor) SetTooltip(v string) *TextEditor {
 	t.Tooltip = v
-	return t
-}
-
-// SetCustomContextMenu sets the [TextEditor.CustomContextMenu]
-func (t *TextEditor) SetCustomContextMenu(v func(m *gi.Scene)) *TextEditor {
-	t.CustomContextMenu = v
 	return t
 }
 
