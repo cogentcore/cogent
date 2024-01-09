@@ -6,14 +6,11 @@ package main
 
 import (
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/gimain"
 	"goki.dev/glide/glide"
 	"goki.dev/grr"
 )
 
-func main() { gimain.Run(app) }
-
-func app() {
+func main() {
 	b := gi.NewAppBody("glide").SetTitle("Glide")
 	pg := glide.NewPage(b, "page")
 	grr.Log(pg.OpenURL("https://google.com"))

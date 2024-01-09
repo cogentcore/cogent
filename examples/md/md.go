@@ -8,7 +8,6 @@ import (
 	"embed"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/gimain"
 	"goki.dev/glide/gidom"
 	"goki.dev/grr"
 )
@@ -16,9 +15,7 @@ import (
 //go:embed *.md
 var exampleMD embed.FS
 
-func main() { gimain.Run(app) }
-
-func app() {
+func main() {
 	b := gi.NewBody("gidom-md")
 	h := grr.Log1(exampleMD.ReadFile("example.md"))
 	grr.Log(gidom.ReadMD(gidom.BaseContext(), b, h))

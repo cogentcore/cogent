@@ -9,7 +9,6 @@ import (
 	"embed"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/gimain"
 	"goki.dev/glide/gidom"
 	"goki.dev/grr"
 )
@@ -17,9 +16,7 @@ import (
 //go:embed example.html
 var exampleHTML embed.FS
 
-func main() { gimain.Run(app) }
-
-func app() {
+func main() {
 	b := gi.NewAppBody("gidom-html")
 	h := grr.Log1(exampleHTML.ReadFile("example.html"))
 	grr.Log(gidom.ReadHTML(gidom.BaseContext(), b, bytes.NewBuffer(h)))
