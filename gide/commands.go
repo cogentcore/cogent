@@ -17,10 +17,10 @@ import (
 
 	"github.com/mattn/go-shellwords"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/texteditor"
 	"goki.dev/girl/styles"
+	"goki.dev/gix/filetree"
+	"goki.dev/gix/texteditor"
 	"goki.dev/goosi/events"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"

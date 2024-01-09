@@ -7,14 +7,13 @@ package gidev
 import (
 	"fmt"
 
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/styles"
 	"goki.dev/girl/units"
+	"goki.dev/gix/filetree"
 	"goki.dev/goosi/events"
 	"goki.dev/ki/v2"
-	"goki.dev/mat32/v2"
 )
 
 // NTextEditors is the number of text views to create -- to keep things simple
@@ -112,7 +111,6 @@ func (ge *GideView) SelectedFileNode() *filetree.Node {
 func (ge *GideView) ConfigSplits() {
 	// note: covered by global update
 	split := ge.Splits()
-	split.Dim = mat32.X
 	ftfr := gi.NewFrame(split, "filetree")
 	ftfr.Style(func(s *styles.Style) {
 		s.Direction = styles.Column

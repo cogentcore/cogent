@@ -16,8 +16,8 @@ import (
 
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
-	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gidebug"
+	"goki.dev/gix/texteditor"
 	"goki.dev/glop/num"
 	"goki.dev/pi/v2/lex"
 )

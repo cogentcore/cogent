@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	"goki.dev/fi/uri"
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gi/v2/keyfun"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
+	"goki.dev/gix/filetree"
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
 	"goki.dev/icons"
@@ -31,12 +31,6 @@ func (ge *GideView) AppBarConfig(pw gi.Widget) {
 	ac.Resources.Add(ge.ResourceSymbols)
 
 	gi.StdOverflowMenu(tb)
-	tb.AddOverflowMenu(func(m *gi.Scene) {
-		gi.NewButton(m).SetText("Gide Prefs").SetIcon(icons.Settings).
-			OnClick(func(e events.Event) {
-				gide.PrefsView(gide.Settings)
-			})
-	})
 	gi.CurrentWindowAppBar(tb)
 	// apps should add their own app-general functions here
 }

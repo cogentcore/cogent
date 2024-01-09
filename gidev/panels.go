@@ -6,9 +6,9 @@ package gidev
 
 import (
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/girl/states"
+	"goki.dev/gix/texteditor"
 )
 
 // PanelIsOpen returns true if the given panel has not been collapsed and is avail

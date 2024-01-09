@@ -11,20 +11,16 @@ import (
 	"strings"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/gimain"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidev"
 	"goki.dev/goosi"
 )
 
-func main() { gimain.Run(app) }
-
-func app() {
-	gide.InitSettings()
-
+func main() {
 	pdir := gide.AppDataDir()
 	lfnm := filepath.Join(pdir, "gide.log")
 
+	gide.Settings.OpenOtherSettings()
 	gide.TheConsole.Init(lfnm)
 
 	var path string

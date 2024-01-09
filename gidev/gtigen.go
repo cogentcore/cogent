@@ -6,7 +6,6 @@ import (
 	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gide"
-	"goki.dev/goosi/events"
 	"goki.dev/gti"
 	"goki.dev/ki/v2"
 	"goki.dev/ordmap"
@@ -29,10 +28,10 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"StatusMessage", &gti.Field{Name: "StatusMessage", Type: "string", LocalType: "string", Doc: "the last status update message", Directives: gti.Directives{}, Tag: ""}},
 		{"LastSaveTStamp", &gti.Field{Name: "LastSaveTStamp", Type: "time.Time", LocalType: "time.Time", Doc: "timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
-		{"Files", &gti.Field{Name: "Files", Type: "*goki.dev/gi/v2/filetree.Tree", LocalType: "*filetree.Tree", Doc: "all the files in the project directory and subdirectories", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
+		{"Files", &gti.Field{Name: "Files", Type: "*goki.dev/gix/filetree.Tree", LocalType: "*filetree.Tree", Doc: "all the files in the project directory and subdirectories", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"ActiveTextEditorIdx", &gti.Field{Name: "ActiveTextEditorIdx", Type: "int", LocalType: "int", Doc: "index of the currently-active textview -- new files will be viewed in other views if available", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"OpenNodes", &gti.Field{Name: "OpenNodes", Type: "goki.dev/gide/v2/gide.OpenNodes", LocalType: "gide.OpenNodes", Doc: "list of open nodes, most recent first", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"CmdBufs", &gti.Field{Name: "CmdBufs", Type: "map[string]*goki.dev/gi/v2/texteditor.Buf", LocalType: "map[string]*texteditor.Buf", Doc: "the command buffers for commands run in this project", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
+		{"CmdBufs", &gti.Field{Name: "CmdBufs", Type: "map[string]*goki.dev/gix/texteditor.Buf", LocalType: "map[string]*texteditor.Buf", Doc: "the command buffers for commands run in this project", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"CmdHistory", &gti.Field{Name: "CmdHistory", Type: "goki.dev/gide/v2/gide.CmdNames", LocalType: "gide.CmdNames", Doc: "history of commands executed in this session", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\""}},
 		{"RunningCmds", &gti.Field{Name: "RunningCmds", Type: "goki.dev/gide/v2/gide.CmdRuns", LocalType: "gide.CmdRuns", Doc: "currently running commands in this project", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
 		{"ArgVals", &gti.Field{Name: "ArgVals", Type: "goki.dev/gide/v2/gide.ArgVarVals", LocalType: "gide.ArgVarVals", Doc: "current arg var vals", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
@@ -45,6 +44,11 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"Frame", &gti.Field{Name: "Frame", Type: "goki.dev/gi/v2/gi.Frame", LocalType: "gi.Frame", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
 	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
+		{"ConfigToolbar", &gti.Method{Name: "ConfigToolbar", Doc: "", Directives: gti.Directives{
+			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
+		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
+			{"tb", &gti.Field{Name: "tb", Type: "*goki.dev/gi/v2/gi.Toolbar", LocalType: "*gi.Toolbar", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"ExecCmdNameActive", &gti.Method{Name: "ExecCmdNameActive", Doc: "ExecCmdNameActive calls given command on current active textview", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
@@ -111,7 +115,7 @@ var GideViewType = gti.AddType(&gti.Type{
 		{"ReCase", &gti.Method{Name: "ReCase", Doc: "ReCase replaces currently selected text in current active view with given case", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"c", &gti.Field{Name: "c", Type: "goki.dev/gi/v2/texteditor/textbuf.Cases", LocalType: "textbuf.Cases", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"c", &gti.Field{Name: "c", Type: "goki.dev/gix/texteditor/textbuf.Cases", LocalType: "textbuf.Cases", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"string", &gti.Field{Name: "string", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
@@ -128,11 +132,12 @@ var GideViewType = gti.AddType(&gti.Type{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"fnmA", &gti.Field{Name: "fnmA", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"fnmB", &gti.Field{Name: "fnmB", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"DiffFileNode", &gti.Method{Name: "DiffFileNode", Doc: "DiffFileNode shows the differences between given file node as the A file,\nand another given file as the B file,\nin side-by-side DiffView and in the console as a context diff.", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"fna", &gti.Field{Name: "fna", Type: "*goki.dev/gi/v2/filetree.Node", LocalType: "*filetree.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"fna", &gti.Field{Name: "fna", Type: "*goki.dev/gix/filetree.Node", LocalType: "*filetree.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"fnmB", &gti.Field{Name: "fnmB", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"CountWords", &gti.Method{Name: "CountWords", Doc: "CountWords counts number of words (and lines) in active file\nreturns a string report thereof.", Directives: gti.Directives{
@@ -219,7 +224,7 @@ var GideViewType = gti.AddType(&gti.Type{
 			{"path", &gti.Field{Name: "path", Type: "goki.dev/gi/v2/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"folder", &gti.Field{Name: "folder", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 			{"mainLang", &gti.Field{Name: "mainLang", Type: "goki.dev/fi.Known", LocalType: "fi.Known", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-			{"versCtrl", &gti.Field{Name: "versCtrl", Type: "goki.dev/gi/v2/filetree.VersCtrlName", LocalType: "filetree.VersCtrlName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"versCtrl", &gti.Field{Name: "versCtrl", Type: "goki.dev/gix/filetree.VersCtrlName", LocalType: "filetree.VersCtrlName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"GideView", &gti.Field{Name: "GideView", Type: "*goki.dev/gide/v2/gidev.GideView", LocalType: "*GideView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		})}},
@@ -256,15 +261,11 @@ var GideViewType = gti.AddType(&gti.Type{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 			{"name", &gti.Field{Name: "name", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+			{"desc", &gti.Field{Name: "desc", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"SplitsEdit", &gti.Method{Name: "SplitsEdit", Doc: "SplitsEdit opens the SplitsView editor to customize saved splitter settings", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"TopAppBar", &gti.Method{Name: "TopAppBar", Doc: "", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"tb", &gti.Field{Name: "tb", Type: "*goki.dev/gi/v2/gi.TopAppBar", LocalType: "*gi.TopAppBar", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
 		{"Find", &gti.Method{Name: "Find", Doc: "Find does Find / Replace in files, using given options and filters -- opens up a\nmain tab with the results and further controls.", Directives: gti.Directives{
 			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
 		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
@@ -374,18 +375,6 @@ func (t *GideView) SetOpenNodes(v gide.OpenNodes) *GideView {
 // SetTooltip sets the [GideView.Tooltip]
 func (t *GideView) SetTooltip(v string) *GideView {
 	t.Tooltip = v
-	return t
-}
-
-// SetClass sets the [GideView.Class]
-func (t *GideView) SetClass(v string) *GideView {
-	t.Class = v
-	return t
-}
-
-// SetPriorityEvents sets the [GideView.PriorityEvents]
-func (t *GideView) SetPriorityEvents(v []events.Types) *GideView {
-	t.PriorityEvents = v
 	return t
 }
 

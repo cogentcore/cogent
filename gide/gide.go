@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/texteditor"
-	"goki.dev/gi/v2/texteditor/textbuf"
+	"goki.dev/gix/filetree"
+	"goki.dev/gix/texteditor"
+	"goki.dev/gix/texteditor/textbuf"
 	"goki.dev/ki/v2"
 	"goki.dev/laser"
 	"goki.dev/pi/v2/complete"

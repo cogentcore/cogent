@@ -7,9 +7,9 @@ package gide
 import (
 	"strings"
 
-	"goki.dev/gi/v2/texteditor"
-	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/girl/styles"
+	"goki.dev/gix/texteditor"
+	"goki.dev/gix/texteditor/textbuf"
 	"goki.dev/goosi/events"
 	"goki.dev/pi/v2/lex"
 	"goki.dev/spell"

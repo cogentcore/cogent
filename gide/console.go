@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/texteditor"
+	"goki.dev/gix/texteditor"
 )
 
 // Console redirects our os.Stdout and os.Stderr to a buffer for display within app

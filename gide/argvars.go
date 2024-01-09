@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"goki.dev/gi/v2/texteditor"
+	"goki.dev/gix/texteditor"
 	"goki.dev/goosi"
 )
 

@@ -17,11 +17,11 @@ import (
 	"time"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gide"
+	"goki.dev/gix/filetree"
+	"goki.dev/gix/texteditor"
 	"goki.dev/goosi/events"
 	"goki.dev/goosi/events/key"
 	"goki.dev/grr"

@@ -14,15 +14,14 @@ import (
 	"goki.dev/fi"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/texteditor"
 	"goki.dev/gide/v2/gidebug"
 	"goki.dev/gide/v2/gidebug/gidelve"
 	"goki.dev/girl/styles"
+	"goki.dev/gix/texteditor"
 	"goki.dev/goosi/events"
 	"goki.dev/grr"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
-	"goki.dev/mat32/v2"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
@@ -1293,7 +1292,6 @@ func (vv *VarView) ConfigSplits() {
 		return
 	}
 	split := vv.SplitView()
-	split.Dim = mat32.X
 
 	if len(split.Kids) == 0 {
 		tvfr := gi.NewFrame(split, "tvfr")

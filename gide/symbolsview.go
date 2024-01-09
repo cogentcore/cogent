@@ -11,8 +11,8 @@ import (
 
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/girl/styles"
+	"goki.dev/gix/texteditor/textbuf"
 	"goki.dev/goosi/events"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"

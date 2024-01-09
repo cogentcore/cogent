@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/texteditor"
+	"goki.dev/gix/texteditor"
 	"goki.dev/pi/v2/lex"
 )
 

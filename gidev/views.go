@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
 	"goki.dev/gide/v2/gide"
 	"goki.dev/gide/v2/gidebug"
+	"goki.dev/gix/filetree"
 	"goki.dev/goosi"
 	"goki.dev/goosi/events"
 	"goki.dev/spell"

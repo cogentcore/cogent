@@ -10,7 +10,7 @@ import (
 	"errors"
 	"time"
 
-	"goki.dev/gi/v2/texteditor"
+	"goki.dev/gix/texteditor"
 )
 
 var (

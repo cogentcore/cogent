@@ -7,20 +7,30 @@ package gide
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gide/v2/gidebug"
+	"goki.dev/gix/filetree"
 	"goki.dev/grows/tomls"
 	"goki.dev/grr"
 )
 
+func init() {
+	gi.AllSettings = slices.Insert(gi.AllSettings, 1, gi.Settings(Settings))
+	DefaultKeyMap = "MacEmacs" // todo
+	SetActiveKeyMapName(DefaultKeyMap)
+	OpenPaths()
+	// OpenIcons()
+}
+
 // Settings are the overall Gide settings
 var Settings = &SettingsData{
 	SettingsBase: gi.SettingsBase{
-		File: filepath.Join("gide", "settings.toml"),
+		Name: "Gide",
+		File: filepath.Join("Gide", "settings.toml"),
 	},
 }
 
@@ -68,22 +78,13 @@ type FileSettings struct { //gti:add
 // 	return nil
 // }
 
-// InitSettings must be called at startup in mainrun()
-func InitSettings() {
-	gi.AllSettings.InsertAtIdx(1, "Gide", Settings)
-	DefaultKeyMap = "MacEmacs" // todo
-	SetActiveKeyMapName(DefaultKeyMap)
-	OpenPaths()
-	// OpenIcons()
-}
-
 // Defaults are the defaults for Preferences
-func (pf *SettingsData) Defaults() {
-	pf.Files.Defaults()
-	pf.KeyMap = DefaultKeyMap
+func (se *SettingsData) Defaults() {
+	se.Files.Defaults()
+	se.KeyMap = DefaultKeyMap
 	home := gi.SystemSettings.User.HomeDir
 	texPath := ".:" + home + "/texmf/tex/latex:/Library/TeX/Root/texmf-dist/tex/latex:"
-	pf.EnvVars = map[string]string{
+	se.EnvVars = map[string]string{
 		"TEXINPUTS":       texPath,
 		"BIBINPUTS":       texPath,
 		"BSTINPUTS":       texPath,
@@ -93,18 +94,18 @@ func (pf *SettingsData) Defaults() {
 }
 
 // Defaults are the defaults for FilePrefs
-func (pf *FileSettings) Defaults() {
-	pf.DirsOnTop = true
+func (se *FileSettings) Defaults() {
+	se.DirsOnTop = true
 }
 
 // Apply preferences updates things according with settings
-func (pf *SettingsData) Apply() { //gti:add
-	if pf.KeyMap != "" {
-		SetActiveKeyMapName(pf.KeyMap) // fills in missing pieces
+func (se *SettingsData) Apply() { //gti:add
+	if se.KeyMap != "" {
+		SetActiveKeyMapName(se.KeyMap) // fills in missing pieces
 	}
 	MergeAvailCmds()
 	AvailLangs.Validate()
-	pf.ApplyEnvVars()
+	se.ApplyEnvVars()
 }
 
 // ApplyGoMod applies the given gomod setting, setting the GO111MODULE env var
@@ -117,10 +118,39 @@ func SetGoMod(gomod bool) {
 }
 
 // ApplyEnvVars applies environment variables set in EnvVars
-func (pf *SettingsData) ApplyEnvVars() {
-	for k, v := range pf.EnvVars {
+func (se *SettingsData) ApplyEnvVars() {
+	for k, v := range se.EnvVars {
 		os.Setenv(k, v)
 	}
+}
+
+func (se *SettingsData) OpenOtherSettings() {
+	if se.SaveKeyMaps {
+		AvailKeyMaps.OpenPrefs()
+	}
+	if se.SaveLangOpts {
+		AvailLangs.OpenPrefs()
+	}
+	if se.SaveCmds {
+		CustomCmds.OpenPrefs()
+	}
+	AvailSplits.OpenPrefs()
+	AvailRegisters.OpenPrefs()
+	se.Apply()
+}
+
+func (se *SettingsData) SaveOtherSettings() {
+	if se.SaveKeyMaps {
+		AvailKeyMaps.SavePrefs()
+	}
+	if se.SaveLangOpts {
+		AvailLangs.SavePrefs()
+	}
+	if se.SaveCmds {
+		CustomCmds.SavePrefs()
+	}
+	AvailSplits.SavePrefs()
+	AvailRegisters.SavePrefs()
 }
 
 /*
@@ -132,18 +162,6 @@ func (pf *SettingsData) Open() error { //gti:add
 	if err != nil {
 		return err
 	}
-	if pf.SaveKeyMaps {
-		AvailKeyMaps.OpenPrefs()
-	}
-	if pf.SaveLangOpts {
-		AvailLangs.OpenPrefs()
-	}
-	if pf.SaveCmds {
-		CustomCmds.OpenPrefs()
-	}
-	AvailSplits.OpenPrefs()
-	AvailRegisters.OpenPrefs()
-	pf.Apply()
 	pf.Changed = false
 	return err
 }
@@ -156,24 +174,13 @@ func (pf *SettingsData) Save() error { //gti:add
 	if err != nil {
 		return err
 	}
-	if pf.SaveKeyMaps {
-		AvailKeyMaps.SavePrefs()
-	}
-	if pf.SaveLangOpts {
-		AvailLangs.SavePrefs()
-	}
-	if pf.SaveCmds {
-		CustomCmds.SavePrefs()
-	}
-	AvailSplits.SavePrefs()
-	AvailRegisters.SavePrefs()
 	pf.Changed = false
 	return err
 }
 */
 
 // VersionInfo returns Gide version information
-func (pf *SettingsData) VersionInfo() string { //gti:add
+func (se *SettingsData) VersionInfo() string { //gti:add
 	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
 	return vinfo
 }
@@ -181,24 +188,24 @@ func (pf *SettingsData) VersionInfo() string { //gti:add
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
 // load from other files, etc.  Current avail keymaps are saved and loaded
 // with preferences automatically.
-func (pf *SettingsData) EditKeyMaps() { //gti:add
-	pf.SaveKeyMaps = true
-	pf.Changed = true
+func (se *SettingsData) EditKeyMaps() { //gti:add
+	se.SaveKeyMaps = true
+	se.Changed = true
 	KeyMapsView(&AvailKeyMaps)
 }
 
 // EditLangOpts opens the LangsView editor to customize options for each type of
 // language / data / file type.
-func (pf *SettingsData) EditLangOpts() { //gti:add
-	pf.SaveLangOpts = true
-	pf.Changed = true
+func (se *SettingsData) EditLangOpts() { //gti:add
+	se.SaveLangOpts = true
+	se.Changed = true
 	LangsView(&AvailLangs)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.
-func (pf *SettingsData) EditCmds() { //gti:add
-	pf.SaveCmds = true
-	pf.Changed = true
+func (se *SettingsData) EditCmds() { //gti:add
+	se.SaveCmds = true
+	se.Changed = true
 	if len(CustomCmds) == 0 {
 		exc := &Command{Name: "Example Cmd",
 			Desc: "list current dir",
@@ -213,12 +220,12 @@ func (pf *SettingsData) EditCmds() { //gti:add
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
-func (pf *SettingsData) EditSplits() { //gti:add
+func (se *SettingsData) EditSplits() { //gti:add
 	SplitsView(&AvailSplits)
 }
 
 // EditRegisters opens the RegistersView editor to customize saved registers
-func (pf *SettingsData) EditRegisters() { //gti:add
+func (se *SettingsData) EditRegisters() { //gti:add
 	RegistersView(&AvailRegisters)
 }
 
@@ -289,33 +296,33 @@ type ProjPrefs struct { //gti:add
 	Changed bool `view:"-" changeflag:"+" json:"-" toml:"-" xml:"-"`
 }
 
-func (pf *ProjPrefs) Update() {
-	if pf.BuildDir != pf.ProjRoot {
-		if pf.BuildTarg == pf.ProjRoot {
-			pf.BuildTarg = pf.BuildDir
+func (se *ProjPrefs) Update() {
+	if se.BuildDir != se.ProjRoot {
+		if se.BuildTarg == se.ProjRoot {
+			se.BuildTarg = se.BuildDir
 		}
-		if pf.RunExec == pf.ProjRoot {
-			pf.RunExec = pf.BuildDir
+		if se.RunExec == se.ProjRoot {
+			se.RunExec = se.BuildDir
 		}
 	}
 }
 
 // Open open from  file
-func (pf *ProjPrefs) Open(filename gi.FileName) error { //gti:add
-	err := grr.Log(tomls.Open(pf, string(filename)))
-	pf.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(pf.VersCtrl))) // official names are lowercase now
-	pf.Changed = false
+func (se *ProjPrefs) Open(filename gi.FileName) error { //gti:add
+	err := grr.Log(tomls.Open(se, string(filename)))
+	se.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(se.VersCtrl))) // official names are lowercase now
+	se.Changed = false
 	return err
 }
 
 // Save save to  file
-func (pf *ProjPrefs) Save(filename gi.FileName) error { //gti:add
-	return grr.Log(tomls.Save(pf, string(filename)))
+func (se *ProjPrefs) Save(filename gi.FileName) error { //gti:add
+	return grr.Log(tomls.Save(se, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable
-func (pf *ProjPrefs) RunExecIsExec() bool {
-	fi, err := fi.NewFileInfo(string(pf.RunExec))
+func (se *ProjPrefs) RunExecIsExec() bool {
+	fi, err := fi.NewFileInfo(string(se.RunExec))
 	if err != nil {
 		return false
 	}

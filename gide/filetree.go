@@ -13,12 +13,12 @@ import (
 	"strings"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/filetree"
 	"goki.dev/gi/v2/gi"
 	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/texteditor/textbuf"
 	"goki.dev/girl/states"
 	"goki.dev/girl/styles"
+	"goki.dev/gix/filetree"
+	"goki.dev/gix/texteditor/textbuf"
 	"goki.dev/icons"
 	"goki.dev/ki/v2"
 )
