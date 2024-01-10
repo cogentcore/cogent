@@ -112,14 +112,14 @@ func getTasks(b *gi.Body) []*Task {
 	for i, p := range ps {
 		t := &Task{
 			Process: p,
-			Name:    grr.Log1(p.Name()),
-			CPU:     grr.Log1(p.CPUPercent()),
-			RAMPct:  grr.Log1(p.MemoryPercent()),
-			Threads: grr.Log1(p.NumThreads()),
-			User:    grr.Log1(p.Username()),
+			Name:    grr.Ignore1(p.Name()),
+			CPU:     grr.Ignore1(p.CPUPercent()),
+			RAMPct:  grr.Ignore1(p.MemoryPercent()),
+			Threads: grr.Ignore1(p.NumThreads()),
+			User:    grr.Ignore1(p.Username()),
 			PID:     p.Pid,
 		}
-		mi := grr.Log1(p.MemoryInfo())
+		mi := grr.Ignore1(p.MemoryInfo())
 		if mi != nil {
 			t.RAM = datasize.Size(mi.RSS)
 		}
