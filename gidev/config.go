@@ -170,8 +170,7 @@ func (ge *GideView) ConfigSplits() {
 
 	ge.UpdateTextButtons()
 
-	mtab := gi.NewTabs(split, "tabs")
-	mtab.DeleteButtons = true
+	mtab := gi.NewTabs(split, "tabs").SetType(gi.FunctionalTabs)
 	mtab.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
