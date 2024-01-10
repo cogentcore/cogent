@@ -99,7 +99,7 @@ func (se *FileSettings) Defaults() {
 }
 
 func (se *SettingsData) Save() error {
-	err := gi.SaveSettings(se)
+	err := tomls.Save(se, se.Filename())
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (se *SettingsData) Save() error {
 }
 
 func (se *SettingsData) Open() error {
-	err := gi.OpenSettings(se)
+	err := tomls.Open(se, se.Filename())
 	if err != nil {
 		return err
 	}
