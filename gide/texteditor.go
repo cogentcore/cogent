@@ -43,7 +43,7 @@ func (ed *TextEditor) SetStyles() {
 	})
 }
 
-// TextEditorEvents sets connections between mouse and key events and actions
+// HandleEvents sets connections between mouse and key events and actions
 func (ed *TextEditor) HandleEvents() {
 	ed.On(events.Focus, func(e events.Event) {
 		ed.Gide.SetActiveTextEditor(ed)
@@ -51,7 +51,7 @@ func (ed *TextEditor) HandleEvents() {
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.LocalPos())
 		tpos := ed.PixelToCursor(pt)
-		if pt.X >= 0 && ed.Buf.IsValidLine(tpos.Ln) {
+		if ed.Buf != nil && pt.X >= 0 && ed.Buf.IsValidLine(tpos.Ln) {
 			if pt.X < int(ed.LineNoOff) {
 				e.SetHandled()
 				ed.LineNoDoubleClick(tpos)
