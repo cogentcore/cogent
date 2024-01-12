@@ -2,6 +2,8 @@
 
 package piv
 
+/*
+
 import (
 	"sync"
 
@@ -170,3 +172,5 @@ func (t *PiView) SetStripes(v gi.Stripes) *PiView {
 	t.Stripes = v
 	return t
 }
+
+*/
