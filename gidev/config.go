@@ -7,13 +7,13 @@ package gidev
 import (
 	"fmt"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/girl/styles"
-	"goki.dev/girl/units"
-	"goki.dev/gix/filetree"
-	"goki.dev/goosi/events"
-	"goki.dev/ki/v2"
+	"github.com/goki/gide/v2/gide"
+	"goki.dev/events"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/ki"
+	"goki.dev/styles"
+	"goki.dev/units"
 )
 
 // NTextEditors is the number of text views to create -- to keep things simple

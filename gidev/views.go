@@ -12,16 +12,16 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/goki/gide/v2/gide"
+	"github.com/goki/gide/v2/gidebug"
+	"goki.dev/events"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/gide/v2/gidebug"
-	"goki.dev/gix/filetree"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/goosi"
-	"goki.dev/goosi/events"
 	"goki.dev/spell"
-	"goki.dev/vci/v2"
+	"goki.dev/vci"
 )
 
 // ConfigFindButton configures the Find FuncButton with current params

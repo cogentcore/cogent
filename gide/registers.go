@@ -7,7 +7,7 @@ package gide
 import (
 	"path/filepath"
 
-	"goki.dev/gi/v2/gi"
+	"goki.dev/gi"
 	"goki.dev/grows/tomls"
 	"goki.dev/grr"
 )

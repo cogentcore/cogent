@@ -10,10 +10,10 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/goki/gide/v2/gidebug"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gide/v2/gidebug"
-	"goki.dev/gix/filetree"
+	"goki.dev/filetree"
+	"goki.dev/gi"
 	"goki.dev/grows/tomls"
 	"goki.dev/grr"
 )

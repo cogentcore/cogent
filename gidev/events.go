@@ -7,11 +7,11 @@ package gidev
 import (
 	"fmt"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/keyfun"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/goosi/events"
+	"github.com/goki/gide/v2/gide"
+	"goki.dev/events"
+	"goki.dev/gi"
+	"goki.dev/giv"
+	"goki.dev/keyfun"
 )
 
 func (ge *GideView) HandleEvents() {

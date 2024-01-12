@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
+	"goki.dev/gi"
 	"goki.dev/grows/tomls"
 )
 

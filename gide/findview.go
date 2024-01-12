@@ -13,17 +13,17 @@ import (
 	"strings"
 	"time"
 
+	"goki.dev/events"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/girl/paint"
-	"goki.dev/girl/states"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/texteditor"
-	"goki.dev/gix/texteditor/textbuf"
-	"goki.dev/goosi/events"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/icons"
-	"goki.dev/pi/v2/lex"
+	"goki.dev/paint"
+	"goki.dev/pi/lex"
+	"goki.dev/states"
+	"goki.dev/styles"
+	"goki.dev/texteditor"
+	"goki.dev/texteditor/textbuf"
 )
 
 // FindLoc corresponds to the search scope

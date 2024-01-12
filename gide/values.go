@@ -7,14 +7,14 @@ package gide
 import (
 	"strings"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/keyfun"
-	"goki.dev/girl/styles"
-	"goki.dev/goosi/events"
+	"goki.dev/events"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/gti"
 	"goki.dev/icons"
+	"goki.dev/keyfun"
 	"goki.dev/laser"
+	"goki.dev/styles"
 )
 
 // KeyMapsView opens a view of a key maps table

@@ -13,11 +13,11 @@ import (
 	"sort"
 	"strings"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/keyfun"
-	"goki.dev/goosi/events/key"
+	"goki.dev/events/key"
+	"goki.dev/gi"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
+	"goki.dev/keyfun"
 )
 
 // https://www.eclipse.org/pdt/help/html/keymap.htm

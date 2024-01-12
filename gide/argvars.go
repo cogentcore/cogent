@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"goki.dev/gix/texteditor"
 	"goki.dev/goosi"
+	"goki.dev/texteditor"
 )
 
 // ArgVarInfo has info about argument variables that fill in relevant values

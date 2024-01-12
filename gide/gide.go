@@ -11,13 +11,13 @@ import (
 	"time"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gix/filetree"
-	"goki.dev/gix/texteditor"
-	"goki.dev/gix/texteditor/textbuf"
-	"goki.dev/ki/v2"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/ki"
 	"goki.dev/laser"
-	"goki.dev/pi/v2/complete"
+	"goki.dev/pi/complete"
+	"goki.dev/texteditor"
+	"goki.dev/texteditor/textbuf"
 )
 
 // Gide provides the interface for the GideView functionality that is needed

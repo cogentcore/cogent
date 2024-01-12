@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"goki.dev/gi/v2/gi"
+	"goki.dev/gi"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
 )

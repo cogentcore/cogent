@@ -1,4 +1,4 @@
-module goki.dev/gide/v2
+module github.com/goki/gide/v2
 
 go 1.21
 
@@ -8,7 +8,7 @@ require (
 	goki.dev/colors v0.8.44
 	goki.dev/enums v0.9.56
 	goki.dev/fi v0.1.19
-	goki.dev/gi/v2 v2.0.0-dev0.0.28
+	goki.dev/gi v2.0.0-dev0.0.28
 	goki.dev/girl v0.0.36
 	goki.dev/glop v0.1.9
 	goki.dev/goosi v0.0.25
@@ -16,13 +16,13 @@ require (
 	goki.dev/grr v0.0.12
 	goki.dev/gti v0.1.32
 	goki.dev/icons v0.0.17
-	goki.dev/ki/v2 v2.0.0-dev0.0.33
+	goki.dev/ki v2.0.0-dev0.0.33
 	goki.dev/laser v0.1.34
-	goki.dev/mat32/v2 v2.0.0-dev0.0.28
+	goki.dev/mat32 v2.0.0-dev0.0.28
 	goki.dev/ordmap v0.5.10
-	goki.dev/pi/v2 v2.0.0-dev0.0.26
+	goki.dev/pi v2.0.0-dev0.0.26
 	goki.dev/spell v0.1.15
-	goki.dev/vci/v2 v2.0.0-dev0.0.32
+	goki.dev/vci v2.0.0-dev0.0.32
 )
 
 require (

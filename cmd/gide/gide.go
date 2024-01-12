@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/gide/v2/gidev"
+	"github.com/goki/gide/v2/gide"
+	"github.com/goki/gide/v2/gidev"
+	"goki.dev/gi"
 	"goki.dev/goosi"
 )
 

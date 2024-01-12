@@ -4,14 +4,14 @@ package gidebug
 
 import (
 	"goki.dev/gti"
-	"goki.dev/ki/v2"
+	"goki.dev/ki"
 	"goki.dev/ordmap"
-	"goki.dev/pi/v2/syms"
+	"goki.dev/pi/syms"
 )
 
 // VariableType is the [gti.Type] for [Variable]
 var VariableType = gti.AddType(&gti.Type{
-	Name:       "goki.dev/gide/v2/gidebug.Variable",
+	Name:       "github.com/goki/gide/v2/gidebug.Variable",
 	ShortName:  "gidebug.Variable",
 	IDName:     "variable",
 	Doc:        "Variable describes a variable.  It is a Ki tree type so that full tree\ncan be visualized.",
@@ -20,20 +20,20 @@ var VariableType = gti.AddType(&gti.Type{
 		{"Value", &gti.Field{Name: "Value", Type: "string", LocalType: "string", Doc: "value of variable -- may be truncated if long", Directives: gti.Directives{}, Tag: "inactive:\"-\" width:\"60\""}},
 		{"TypeStr", &gti.Field{Name: "TypeStr", Type: "string", LocalType: "string", Doc: "type of variable as a string expression (shortened for display)", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
 		{"FullTypeStr", &gti.Field{Name: "FullTypeStr", Type: "string", LocalType: "string", Doc: "type of variable as a string expression (full length)", Directives: gti.Directives{}, Tag: "view:\"-\" inactive:\"-\""}},
-		{"Kind", &gti.Field{Name: "Kind", Type: "goki.dev/pi/v2/syms.Kinds", LocalType: "syms.Kinds", Doc: "kind of element", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
+		{"Kind", &gti.Field{Name: "Kind", Type: "goki.dev/pi/syms.Kinds", LocalType: "syms.Kinds", Doc: "kind of element", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
 		{"ElValue", &gti.Field{Name: "ElValue", Type: "string", LocalType: "string", Doc: "own elemental value of variable (blank for composite types)", Directives: gti.Directives{}, Tag: "inactive:\"-\" view:\"-\""}},
 		{"Len", &gti.Field{Name: "Len", Type: "int64", LocalType: "int64", Doc: "length of variable (slices, maps, strings etc)", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
 		{"Cap", &gti.Field{Name: "Cap", Type: "int64", LocalType: "int64", Doc: "capacity of vaiable", Directives: gti.Directives{}, Tag: "inactive:\"-\" tableview:\"-\""}},
 		{"Addr", &gti.Field{Name: "Addr", Type: "uintptr", LocalType: "uintptr", Doc: "address where variable is located in memory", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
 		{"Heap", &gti.Field{Name: "Heap", Type: "bool", LocalType: "bool", Doc: "if true, the variable is stored in the main memory heap, not the stack", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
-		{"Loc", &gti.Field{Name: "Loc", Type: "goki.dev/gide/v2/gidebug.Location", LocalType: "Location", Doc: "location where the variable was defined in source", Directives: gti.Directives{}, Tag: "inactive:\"-\" tableview:\"-\""}},
+		{"Loc", &gti.Field{Name: "Loc", Type: "github.com/goki/gide/v2/gidebug.Location", LocalType: "Location", Doc: "location where the variable was defined in source", Directives: gti.Directives{}, Tag: "inactive:\"-\" tableview:\"-\""}},
 		{"List", &gti.Field{Name: "List", Type: "[]string", LocalType: "[]string", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents", Directives: gti.Directives{}, Tag: "tableview:\"-\""}},
 		{"Map", &gti.Field{Name: "Map", Type: "map[string]string", LocalType: "map[string]string", Doc: "if kind is a map, and elements are primitive types, this is the contents", Directives: gti.Directives{}, Tag: "tableview:\"-\""}},
-		{"MapVar", &gti.Field{Name: "MapVar", Type: "map[string]*goki.dev/gide/v2/gidebug.Variable", LocalType: "map[string]*Variable", Doc: "if kind is a map, and elements are not primitive types, this is the contents", Directives: gti.Directives{}, Tag: "tableview:\"-\""}},
-		{"Dbg", &gti.Field{Name: "Dbg", Type: "goki.dev/gide/v2/gidebug.GiDebug", LocalType: "GiDebug", Doc: "our debugger -- for getting further variable data", Directives: gti.Directives{}, Tag: "view:\"-\""}},
+		{"MapVar", &gti.Field{Name: "MapVar", Type: "map[string]*github.com/goki/gide/v2/gidebug.Variable", LocalType: "map[string]*Variable", Doc: "if kind is a map, and elements are not primitive types, this is the contents", Directives: gti.Directives{}, Tag: "tableview:\"-\""}},
+		{"Dbg", &gti.Field{Name: "Dbg", Type: "github.com/goki/gide/v2/gidebug.GiDebug", LocalType: "GiDebug", Doc: "our debugger -- for getting further variable data", Directives: gti.Directives{}, Tag: "view:\"-\""}},
 	}),
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Node", &gti.Field{Name: "Node", Type: "goki.dev/ki/v2.Node", LocalType: "ki.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		{"Node", &gti.Field{Name: "Node", Type: "goki.dev/ki.Node", LocalType: "ki.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
 	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
 	Instance: &Variable{},

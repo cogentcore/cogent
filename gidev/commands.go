@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goki/gide/v2/gide"
+	"goki.dev/events"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/girl/paint"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/filetree"
-	"goki.dev/gix/texteditor"
-	"goki.dev/goosi/events"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/giv"
+	"goki.dev/paint"
+	"goki.dev/styles"
+	"goki.dev/texteditor"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns

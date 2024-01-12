@@ -7,16 +7,16 @@ package gide
 import (
 	"strings"
 
-	"goki.dev/girl/styles"
-	"goki.dev/gix/texteditor"
-	"goki.dev/gix/texteditor/textbuf"
-	"goki.dev/goosi/events"
-	"goki.dev/pi/v2/lex"
+	"goki.dev/events"
+	"goki.dev/pi/lex"
 	"goki.dev/spell"
+	"goki.dev/styles"
+	"goki.dev/texteditor"
+	"goki.dev/texteditor/textbuf"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/ki/v2"
+	"goki.dev/gi"
+	"goki.dev/giv"
+	"goki.dev/ki"
 )
 
 // SpellView is a widget that displays results of spell check

@@ -7,13 +7,13 @@ package gidev
 import (
 	"path/filepath"
 
+	"github.com/goki/gide/v2/gide"
+	"github.com/goki/gide/v2/gidebug"
+	"goki.dev/events"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/gide/v2/gidebug"
-	"goki.dev/gix/filetree"
-	"goki.dev/goosi/events"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/giv"
 )
 
 // Defaults sets new project defaults based on overall preferences

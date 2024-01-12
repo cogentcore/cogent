@@ -3,32 +3,38 @@
 package piv
 
 import (
+	"sync"
+
+	"github.com/goki/gi/oswin/key"
+	"github.com/goki/ki/ki"
+	"github.com/goki/pi/pi"
 	"goki.dev/gti"
 	"goki.dev/ordmap"
+	"goki.dev/texteditor"
 )
 
 // PiViewType is the [gti.Type] for [PiView]
 var PiViewType = gti.AddType(&gti.Type{
-	Name:       "goki.dev/gide/v2/piv.PiView",
+	Name:       "github.com/goki/gide/v2/piv.PiView",
 	ShortName:  "piv.PiView",
 	IDName:     "pi-view",
 	Doc:        "PiView provides the interactive GUI view for constructing and testing the\nlexer and parser",
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Parser", &gti.Field{Name: "Parser", Type: "goki.dev/pi/v2/pi.Parser", LocalType: "pi.Parser", Doc: "the parser we are viewing", Directives: gti.Directives{}, Tag: ""}},
-		{"Prefs", &gti.Field{Name: "Prefs", Type: "goki.dev/gide/v2/piv.ProjPrefs", LocalType: "ProjPrefs", Doc: "project preferences -- this IS the project file", Directives: gti.Directives{}, Tag: ""}},
+		{"Parser", &gti.Field{Name: "Parser", Type: "goki.dev/pi.Parser", LocalType: "pi.Parser", Doc: "the parser we are viewing", Directives: gti.Directives{}, Tag: ""}},
+		{"Prefs", &gti.Field{Name: "Prefs", Type: "github.com/goki/gide/v2/piv.ProjPrefs", LocalType: "ProjPrefs", Doc: "project preferences -- this IS the project file", Directives: gti.Directives{}, Tag: ""}},
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"FileState", &gti.Field{Name: "FileState", Type: "goki.dev/pi/v2/pi.FileState", LocalType: "pi.FileState", Doc: "our own dedicated filestate for controlled parsing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"TestBuf", &gti.Field{Name: "TestBuf", Type: "goki.dev/gi/v2/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "test file buffer", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"OutBuf", &gti.Field{Name: "OutBuf", Type: "goki.dev/gi/v2/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "output buffer -- shows all errors, tracing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"LexBuf", &gti.Field{Name: "LexBuf", Type: "goki.dev/gi/v2/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "buffer of lexified tokens", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"ParseBuf", &gti.Field{Name: "ParseBuf", Type: "goki.dev/gi/v2/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "buffer of parse info", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"KeySeq1", &gti.Field{Name: "KeySeq1", Type: "goki.dev/goosi/events/key.Chord", LocalType: "key.Chord", Doc: "first key in sequence if needs2 key pressed", Directives: gti.Directives{}, Tag: ""}},
+		{"FileState", &gti.Field{Name: "FileState", Type: "goki.dev/pi.FileState", LocalType: "pi.FileState", Doc: "our own dedicated filestate for controlled parsing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
+		{"TestBuf", &gti.Field{Name: "TestBuf", Type: "goki.dev/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "test file buffer", Directives: gti.Directives{}, Tag: "json:\"-\""}},
+		{"OutBuf", &gti.Field{Name: "OutBuf", Type: "goki.dev/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "output buffer -- shows all errors, tracing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
+		{"LexBuf", &gti.Field{Name: "LexBuf", Type: "goki.dev/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "buffer of lexified tokens", Directives: gti.Directives{}, Tag: "json:\"-\""}},
+		{"ParseBuf", &gti.Field{Name: "ParseBuf", Type: "goki.dev/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "buffer of parse info", Directives: gti.Directives{}, Tag: "json:\"-\""}},
+		{"KeySeq1", &gti.Field{Name: "KeySeq1", Type: "goki.dev/events/key.Chord", LocalType: "key.Chord", Doc: "first key in sequence if needs2 key pressed", Directives: gti.Directives{}, Tag: ""}},
 		{"OutMonRunning", &gti.Field{Name: "OutMonRunning", Type: "bool", LocalType: "bool", Doc: "is the output monitor running?", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"OutMonMu", &gti.Field{Name: "OutMonMu", Type: "sync.Mutex", LocalType: "sync.Mutex", Doc: "mutex for updating, checking output monitor run status", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 	}),
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Frame", &gti.Field{Name: "Frame", Type: "goki.dev/gi/v2/gi.Frame", LocalType: "gi.Frame", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		{"Frame", &gti.Field{Name: "Frame", Type: "goki.dev/gi.Frame", LocalType: "gi.Frame", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
 	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
 	Instance: &PiView{},

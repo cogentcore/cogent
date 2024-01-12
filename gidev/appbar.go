@@ -7,18 +7,18 @@ package gidev
 import (
 	"strings"
 
+	"github.com/goki/gide/v2/gide"
+	"goki.dev/events"
+	"goki.dev/events/key"
 	"goki.dev/fi/uri"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/keyfun"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/girl/states"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/filetree"
-	"goki.dev/goosi/events"
-	"goki.dev/goosi/events/key"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/icons"
-	"goki.dev/ki/v2"
+	"goki.dev/keyfun"
+	"goki.dev/ki"
+	"goki.dev/states"
+	"goki.dev/styles"
 )
 
 func (ge *GideView) AppBarConfig(pw gi.Widget) {

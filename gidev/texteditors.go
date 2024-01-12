@@ -10,15 +10,15 @@ import (
 	"net/url"
 	"strings"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/girl/states"
-	"goki.dev/gix/filetree"
-	"goki.dev/gix/texteditor"
-	"goki.dev/gix/texteditor/textbuf"
+	"github.com/goki/gide/v2/gide"
+	"goki.dev/events"
+	"goki.dev/filetree"
+	"goki.dev/gi"
 	"goki.dev/glop/dirs"
-	"goki.dev/goosi/events"
-	"goki.dev/ki/v2"
+	"goki.dev/ki"
+	"goki.dev/states"
+	"goki.dev/texteditor"
+	"goki.dev/texteditor/textbuf"
 )
 
 // ConfigTextBuf configures the text buf according to prefs

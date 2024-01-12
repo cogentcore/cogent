@@ -13,14 +13,14 @@ import (
 	"strings"
 
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/girl/states"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/filetree"
-	"goki.dev/gix/texteditor/textbuf"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/icons"
-	"goki.dev/ki/v2"
+	"goki.dev/ki"
+	"goki.dev/states"
+	"goki.dev/styles"
+	"goki.dev/texteditor/textbuf"
 )
 
 // FileNode is Gide version of FileNode for FileTree view

@@ -9,16 +9,16 @@ import (
 	"sort"
 	"strings"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/texteditor/textbuf"
-	"goki.dev/goosi/events"
+	"goki.dev/events"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/icons"
-	"goki.dev/ki/v2"
-	"goki.dev/pi/v2/lex"
-	"goki.dev/pi/v2/syms"
-	"goki.dev/pi/v2/token"
+	"goki.dev/ki"
+	"goki.dev/pi/lex"
+	"goki.dev/pi/syms"
+	"goki.dev/pi/token"
+	"goki.dev/styles"
+	"goki.dev/texteditor/textbuf"
 )
 
 // SymbolsParams are parameters for structure view of file or package

@@ -16,18 +16,18 @@ import (
 	"time"
 
 	"github.com/mattn/go-shellwords"
+	"goki.dev/events"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/filetree"
-	"goki.dev/gix/texteditor"
-	"goki.dev/goosi/events"
+	"goki.dev/filetree"
+	"goki.dev/gi"
 	"goki.dev/grows/jsons"
 	"goki.dev/grr"
 	"goki.dev/icons"
-	"goki.dev/pi/v2/complete"
-	"goki.dev/pi/v2/lex"
-	"goki.dev/vci/v2"
+	"goki.dev/pi/complete"
+	"goki.dev/pi/lex"
+	"goki.dev/styles"
+	"goki.dev/texteditor"
+	"goki.dev/vci"
 )
 
 // CmdAndArgs contains the name of an external program to execute and args to

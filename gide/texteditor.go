@@ -7,19 +7,19 @@ package gide
 import (
 	"image"
 
+	"goki.dev/abilities"
 	"goki.dev/colors"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/keyfun"
-	"goki.dev/girl/abilities"
-	"goki.dev/girl/states"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/texteditor"
-	"goki.dev/goosi/events"
+	"goki.dev/events"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/grr"
 	"goki.dev/icons"
-	"goki.dev/pi/v2/lex"
-	"goki.dev/pi/v2/token"
+	"goki.dev/keyfun"
+	"goki.dev/pi/lex"
+	"goki.dev/pi/token"
+	"goki.dev/states"
+	"goki.dev/styles"
+	"goki.dev/texteditor"
 )
 
 // TextEditor is the Gide-specific version of the TextEditor, with support for

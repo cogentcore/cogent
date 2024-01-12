@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"goki.dev/glop/indent"
-	"goki.dev/ki/v2"
-	"goki.dev/pi/v2/syms"
+	"goki.dev/ki"
+	"goki.dev/pi/syms"
 )
 
 // Variable describes a variable.  It is a Ki tree type so that full tree

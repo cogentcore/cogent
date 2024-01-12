@@ -11,10 +11,10 @@ import (
 	"unicode"
 
 	"github.com/go-delve/delve/service/api"
-	"goki.dev/gide/v2/gidebug"
+	"github.com/goki/gide/v2/gidebug"
 	"goki.dev/glop/dirs"
-	"goki.dev/pi/v2/lex"
-	"goki.dev/pi/v2/syms"
+	"goki.dev/pi/lex"
+	"goki.dev/pi/syms"
 )
 
 func (gd *GiDelve) cvtState(ds *api.DebuggerState) *gidebug.State {

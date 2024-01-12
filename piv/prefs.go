@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/pi/v2/parse"
+	"goki.dev/gi"
+	"goki.dev/pi/parse"
 )
 
 // ProjPrefs are the preferences for saving for a project -- this IS the project file

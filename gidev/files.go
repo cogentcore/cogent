@@ -11,15 +11,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goki/gide/v2/gide"
+	"goki.dev/events"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gide/v2/gide"
-	"goki.dev/gix/filetree"
-	"goki.dev/gix/texteditor"
-	"goki.dev/goosi/events"
-	"goki.dev/ki/v2"
-	"goki.dev/pi/v2/lex"
+	"goki.dev/filetree"
+	"goki.dev/gi"
+	"goki.dev/giv"
+	"goki.dev/ki"
+	"goki.dev/pi/lex"
+	"goki.dev/texteditor"
 )
 
 // SaveActiveView saves the contents of the currently-active textview

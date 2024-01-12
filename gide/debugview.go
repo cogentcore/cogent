@@ -10,18 +10,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goki/gide/v2/gidebug"
+	"github.com/goki/gide/v2/gidebug/gidelve"
 	"goki.dev/colors"
+	"goki.dev/events"
 	"goki.dev/fi"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gide/v2/gidebug"
-	"goki.dev/gide/v2/gidebug/gidelve"
-	"goki.dev/girl/styles"
-	"goki.dev/gix/texteditor"
-	"goki.dev/goosi/events"
+	"goki.dev/gi"
+	"goki.dev/giv"
 	"goki.dev/grr"
 	"goki.dev/icons"
-	"goki.dev/ki/v2"
+	"goki.dev/ki"
+	"goki.dev/styles"
+	"goki.dev/texteditor"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
