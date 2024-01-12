@@ -91,7 +91,6 @@ func (fn *FileNode) ContextMenu(m *gi.Scene) {
 		Style(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
-	gi.NewSeparator(m)
 }
 
 /////////////////////////////////////////////////////////////////////
