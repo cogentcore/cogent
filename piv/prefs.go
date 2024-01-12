@@ -4,6 +4,8 @@
 
 package piv
 
+/*
+
 import (
 	"encoding/json"
 	"log"
@@ -85,3 +87,5 @@ func OpenPaths() {
 	pnm := filepath.Join(pdir, SavedPathsFileName)
 	SavedPaths.Open(pnm)
 }
+
+*/

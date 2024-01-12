@@ -49,7 +49,7 @@ func (ed *TextEditor) HandleEvents() {
 		ed.Gide.SetActiveTextEditor(ed)
 	})
 	ed.OnDoubleClick(func(e events.Event) {
-		pt := ed.PointToRelPos(e.LocalPos())
+		pt := ed.PointToRelPos(e.Pos())
 		tpos := ed.PixelToCursor(pt)
 		if ed.Buf != nil && pt.X >= 0 && ed.Buf.IsValidLine(tpos.Ln) {
 			if pt.X < int(ed.LineNoOff) {
@@ -62,7 +62,7 @@ func (ed *TextEditor) HandleEvents() {
 	})
 	ed.On(events.LongHoverStart, func(e events.Event) {
 		tt := ""
-		vv := ed.DebugVarValueAtPos(e.LocalPos())
+		vv := ed.DebugVarValueAtPos(e.Pos())
 		if vv != "" {
 			tt = vv
 		}
@@ -70,7 +70,7 @@ func (ed *TextEditor) HandleEvents() {
 		// in pi so we need lsp to make this work
 		if tt != "" {
 			e.SetHandled()
-			pos := e.LocalPos()
+			pos := e.Pos()
 			pos.X += 20
 			pos.Y += 20
 			gi.NewTooltipText(ed, tt).SetPos(pos).Run()
