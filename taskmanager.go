@@ -7,6 +7,7 @@ package main
 //go:generate goki generate
 
 import (
+	"github.com/shirou/gopsutil/v3/process"
 	"goki.dev/events"
 	"goki.dev/gi"
 	"goki.dev/giv"
@@ -14,8 +15,6 @@ import (
 	"goki.dev/grr"
 	"goki.dev/icons"
 	"time"
-
-	"github.com/shirou/gopsutil/v3/process"
 )
 
 type Task struct { //gti:add
