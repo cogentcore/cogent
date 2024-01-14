@@ -7,13 +7,14 @@ package main
 //go:generate goki generate
 
 import (
+	"time"
+
 	"goki.dev/events"
 	"goki.dev/gi"
 	"goki.dev/giv"
 	"goki.dev/glop/datasize"
 	"goki.dev/grr"
 	"goki.dev/icons"
-	"time"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
