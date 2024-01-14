@@ -5,44 +5,15 @@ package gidebug
 import (
 	"goki.dev/gti"
 	"goki.dev/ki"
-	"goki.dev/ordmap"
 	"goki.dev/pi/syms"
 )
 
 // VariableType is the [gti.Type] for [Variable]
-var VariableType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gidebug.Variable",
-	ShortName:  "gidebug.Variable",
-	IDName:     "variable",
-	Doc:        "Variable describes a variable.  It is a Ki tree type so that full tree\ncan be visualized.",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Value", &gti.Field{Name: "Value", Type: "string", LocalType: "string", Doc: "value of variable -- may be truncated if long", Directives: gti.Directives{}, Tag: "inactive:\"-\" width:\"60\""}},
-		{"TypeStr", &gti.Field{Name: "TypeStr", Type: "string", LocalType: "string", Doc: "type of variable as a string expression (shortened for display)", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
-		{"FullTypeStr", &gti.Field{Name: "FullTypeStr", Type: "string", LocalType: "string", Doc: "type of variable as a string expression (full length)", Directives: gti.Directives{}, Tag: "view:\"-\" inactive:\"-\""}},
-		{"Kind", &gti.Field{Name: "Kind", Type: "goki.dev/pi/syms.Kinds", LocalType: "syms.Kinds", Doc: "kind of element", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
-		{"ElValue", &gti.Field{Name: "ElValue", Type: "string", LocalType: "string", Doc: "own elemental value of variable (blank for composite types)", Directives: gti.Directives{}, Tag: "inactive:\"-\" view:\"-\""}},
-		{"Len", &gti.Field{Name: "Len", Type: "int64", LocalType: "int64", Doc: "length of variable (slices, maps, strings etc)", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
-		{"Cap", &gti.Field{Name: "Cap", Type: "int64", LocalType: "int64", Doc: "capacity of vaiable", Directives: gti.Directives{}, Tag: "inactive:\"-\" tableview:\"-\""}},
-		{"Addr", &gti.Field{Name: "Addr", Type: "uintptr", LocalType: "uintptr", Doc: "address where variable is located in memory", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
-		{"Heap", &gti.Field{Name: "Heap", Type: "bool", LocalType: "bool", Doc: "if true, the variable is stored in the main memory heap, not the stack", Directives: gti.Directives{}, Tag: "inactive:\"-\""}},
-		{"Loc", &gti.Field{Name: "Loc", Type: "github.com/goki/gide/v2/gidebug.Location", LocalType: "Location", Doc: "location where the variable was defined in source", Directives: gti.Directives{}, Tag: "inactive:\"-\" tableview:\"-\""}},
-		{"List", &gti.Field{Name: "List", Type: "[]string", LocalType: "[]string", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents", Directives: gti.Directives{}, Tag: "tableview:\"-\""}},
-		{"Map", &gti.Field{Name: "Map", Type: "map[string]string", LocalType: "map[string]string", Doc: "if kind is a map, and elements are primitive types, this is the contents", Directives: gti.Directives{}, Tag: "tableview:\"-\""}},
-		{"MapVar", &gti.Field{Name: "MapVar", Type: "map[string]*github.com/goki/gide/v2/gidebug.Variable", LocalType: "map[string]*Variable", Doc: "if kind is a map, and elements are not primitive types, this is the contents", Directives: gti.Directives{}, Tag: "tableview:\"-\""}},
-		{"Dbg", &gti.Field{Name: "Dbg", Type: "github.com/goki/gide/v2/gidebug.GiDebug", LocalType: "GiDebug", Doc: "our debugger -- for getting further variable data", Directives: gti.Directives{}, Tag: "view:\"-\""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Node", &gti.Field{Name: "Node", Type: "goki.dev/ki.Node", LocalType: "ki.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &Variable{},
-})
+var VariableType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gidebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a Ki tree type so that full tree\ncan be visualized.", Embeds: []gti.Field{{Name: "Node"}}, Fields: []gti.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
 
-// NewVariable adds a new [Variable] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewVariable adds a new [Variable] with the given name to the given parent:
+// Variable describes a variable.  It is a Ki tree type so that full tree
+// can be visualized.
 func NewVariable(par ki.Ki, name ...string) *Variable {
 	return par.NewChild(VariableType, name...).(*Variable)
 }
@@ -59,98 +30,56 @@ func (t *Variable) New() ki.Ki {
 
 // SetValue sets the [Variable.Value]:
 // value of variable -- may be truncated if long
-func (t *Variable) SetValue(v string) *Variable {
-	t.Value = v
-	return t
-}
+func (t *Variable) SetValue(v string) *Variable { t.Value = v; return t }
 
 // SetTypeStr sets the [Variable.TypeStr]:
 // type of variable as a string expression (shortened for display)
-func (t *Variable) SetTypeStr(v string) *Variable {
-	t.TypeStr = v
-	return t
-}
+func (t *Variable) SetTypeStr(v string) *Variable { t.TypeStr = v; return t }
 
 // SetFullTypeStr sets the [Variable.FullTypeStr]:
 // type of variable as a string expression (full length)
-func (t *Variable) SetFullTypeStr(v string) *Variable {
-	t.FullTypeStr = v
-	return t
-}
+func (t *Variable) SetFullTypeStr(v string) *Variable { t.FullTypeStr = v; return t }
 
 // SetKind sets the [Variable.Kind]:
 // kind of element
-func (t *Variable) SetKind(v syms.Kinds) *Variable {
-	t.Kind = v
-	return t
-}
+func (t *Variable) SetKind(v syms.Kinds) *Variable { t.Kind = v; return t }
 
 // SetElValue sets the [Variable.ElValue]:
 // own elemental value of variable (blank for composite types)
-func (t *Variable) SetElValue(v string) *Variable {
-	t.ElValue = v
-	return t
-}
+func (t *Variable) SetElValue(v string) *Variable { t.ElValue = v; return t }
 
 // SetLen sets the [Variable.Len]:
 // length of variable (slices, maps, strings etc)
-func (t *Variable) SetLen(v int64) *Variable {
-	t.Len = v
-	return t
-}
+func (t *Variable) SetLen(v int64) *Variable { t.Len = v; return t }
 
 // SetCap sets the [Variable.Cap]:
 // capacity of vaiable
-func (t *Variable) SetCap(v int64) *Variable {
-	t.Cap = v
-	return t
-}
+func (t *Variable) SetCap(v int64) *Variable { t.Cap = v; return t }
 
 // SetAddr sets the [Variable.Addr]:
 // address where variable is located in memory
-func (t *Variable) SetAddr(v uintptr) *Variable {
-	t.Addr = v
-	return t
-}
+func (t *Variable) SetAddr(v uintptr) *Variable { t.Addr = v; return t }
 
 // SetHeap sets the [Variable.Heap]:
 // if true, the variable is stored in the main memory heap, not the stack
-func (t *Variable) SetHeap(v bool) *Variable {
-	t.Heap = v
-	return t
-}
+func (t *Variable) SetHeap(v bool) *Variable { t.Heap = v; return t }
 
 // SetLoc sets the [Variable.Loc]:
 // location where the variable was defined in source
-func (t *Variable) SetLoc(v Location) *Variable {
-	t.Loc = v
-	return t
-}
+func (t *Variable) SetLoc(v Location) *Variable { t.Loc = v; return t }
 
 // SetList sets the [Variable.List]:
 // if kind is a list type (array, slice), and elements are primitive types, this is the contents
-func (t *Variable) SetList(v []string) *Variable {
-	t.List = v
-	return t
-}
+func (t *Variable) SetList(v ...string) *Variable { t.List = v; return t }
 
 // SetMap sets the [Variable.Map]:
 // if kind is a map, and elements are primitive types, this is the contents
-func (t *Variable) SetMap(v map[string]string) *Variable {
-	t.Map = v
-	return t
-}
+func (t *Variable) SetMap(v map[string]string) *Variable { t.Map = v; return t }
 
 // SetMapVar sets the [Variable.MapVar]:
 // if kind is a map, and elements are not primitive types, this is the contents
-func (t *Variable) SetMapVar(v map[string]*Variable) *Variable {
-	t.MapVar = v
-	return t
-}
+func (t *Variable) SetMapVar(v map[string]*Variable) *Variable { t.MapVar = v; return t }
 
 // SetDbg sets the [Variable.Dbg]:
 // our debugger -- for getting further variable data
-func (t *Variable) SetDbg(v GiDebug) *Variable {
-	t.Dbg = v
-	return t
-}
+func (t *Variable) SetDbg(v GiDebug) *Variable { t.Dbg = v; return t }

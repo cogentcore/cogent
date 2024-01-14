@@ -14,7 +14,6 @@ import (
 	"goki.dev/icons"
 	"goki.dev/ki"
 	"goki.dev/mat32"
-	"goki.dev/ordmap"
 	"goki.dev/paint"
 	"goki.dev/pi/lex"
 	"goki.dev/pi/syms"
@@ -22,34 +21,10 @@ import (
 )
 
 // DebugViewType is the [gti.Type] for [DebugView]
-var DebugViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.DebugView",
-	ShortName:  "gide.DebugView",
-	IDName:     "debug-view",
-	Doc:        "DebugView is the debugger",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Sup", &gti.Field{Name: "Sup", Type: "goki.dev/fi.Known", LocalType: "fi.Known", Doc: "supported file type to determine debugger", Directives: gti.Directives{}, Tag: ""}},
-		{"ExePath", &gti.Field{Name: "ExePath", Type: "string", LocalType: "string", Doc: "path to executable / dir to debug", Directives: gti.Directives{}, Tag: ""}},
-		{"DbgTime", &gti.Field{Name: "DbgTime", Type: "time.Time", LocalType: "time.Time", Doc: "time when dbg was last restarted", Directives: gti.Directives{}, Tag: ""}},
-		{"Dbg", &gti.Field{Name: "Dbg", Type: "github.com/goki/gide/v2/gidebug.GiDebug", LocalType: "gidebug.GiDebug", Doc: "the debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
-		{"State", &gti.Field{Name: "State", Type: "github.com/goki/gide/v2/gidebug.AllState", LocalType: "gidebug.AllState", Doc: "all relevant debug state info", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
-		{"CurFileLoc", &gti.Field{Name: "CurFileLoc", Type: "github.com/goki/gide/v2/gidebug.Location", LocalType: "gidebug.Location", Doc: "current ShowFile location -- cleared before next one or run", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
-		{"BBreaks", &gti.Field{Name: "BBreaks", Type: "[]*github.com/goki/gide/v2/gidebug.Break", LocalType: "[]*gidebug.Break", Doc: "backup breakpoints list -- to track deletes", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
-		{"OutBuf", &gti.Field{Name: "OutBuf", Type: "*goki.dev/texteditor.Buf", LocalType: "*texteditor.Buf", Doc: "output from the debugger", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
-		{"Gide", &gti.Field{Name: "Gide", Type: "github.com/goki/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "set:\"-\" json:\"-\" xml:\"-\""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &DebugView{},
-})
+var DebugViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutBuf", Doc: "output from the debugger"}, {Name: "Gide", Doc: "parent gide project"}}, Instance: &DebugView{}})
 
-// NewDebugView adds a new [DebugView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewDebugView adds a new [DebugView] with the given name to the given parent:
+// DebugView is the debugger
 func NewDebugView(par ki.Ki, name ...string) *DebugView {
 	return par.NewChild(DebugViewType, name...).(*DebugView)
 }
@@ -66,58 +41,27 @@ func (t *DebugView) New() ki.Ki {
 
 // SetSup sets the [DebugView.Sup]:
 // supported file type to determine debugger
-func (t *DebugView) SetSup(v fi.Known) *DebugView {
-	t.Sup = v
-	return t
-}
+func (t *DebugView) SetSup(v fi.Known) *DebugView { t.Sup = v; return t }
 
 // SetExePath sets the [DebugView.ExePath]:
 // path to executable / dir to debug
-func (t *DebugView) SetExePath(v string) *DebugView {
-	t.ExePath = v
-	return t
-}
+func (t *DebugView) SetExePath(v string) *DebugView { t.ExePath = v; return t }
 
 // SetDbgTime sets the [DebugView.DbgTime]:
 // time when dbg was last restarted
-func (t *DebugView) SetDbgTime(v time.Time) *DebugView {
-	t.DbgTime = v
-	return t
-}
+func (t *DebugView) SetDbgTime(v time.Time) *DebugView { t.DbgTime = v; return t }
 
 // SetTooltip sets the [DebugView.Tooltip]
-func (t *DebugView) SetTooltip(v string) *DebugView {
-	t.Tooltip = v
-	return t
-}
+func (t *DebugView) SetTooltip(v string) *DebugView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [DebugView.StackTop]
-func (t *DebugView) SetStackTop(v int) *DebugView {
-	t.StackTop = v
-	return t
-}
+func (t *DebugView) SetStackTop(v int) *DebugView { t.StackTop = v; return t }
 
 // StackViewType is the [gti.Type] for [StackView]
-var StackViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.StackView",
-	ShortName:  "gide.StackView",
-	IDName:     "stack-view",
-	Doc:        "StackView is a view of the stack trace",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"FindFrames", &gti.Field{Name: "FindFrames", Type: "bool", LocalType: "bool", Doc: "if true, this is a find frames, not a regular stack", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &StackView{},
-})
+var StackViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
 
-// NewStackView adds a new [StackView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewStackView adds a new [StackView] with the given name to the given parent:
+// StackView is a view of the stack trace
 func NewStackView(par ki.Ki, name ...string) *StackView {
 	return par.NewChild(StackViewType, name...).(*StackView)
 }
@@ -134,42 +78,19 @@ func (t *StackView) New() ki.Ki {
 
 // SetFindFrames sets the [StackView.FindFrames]:
 // if true, this is a find frames, not a regular stack
-func (t *StackView) SetFindFrames(v bool) *StackView {
-	t.FindFrames = v
-	return t
-}
+func (t *StackView) SetFindFrames(v bool) *StackView { t.FindFrames = v; return t }
 
 // SetTooltip sets the [StackView.Tooltip]
-func (t *StackView) SetTooltip(v string) *StackView {
-	t.Tooltip = v
-	return t
-}
+func (t *StackView) SetTooltip(v string) *StackView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [StackView.StackTop]
-func (t *StackView) SetStackTop(v int) *StackView {
-	t.StackTop = v
-	return t
-}
+func (t *StackView) SetStackTop(v int) *StackView { t.StackTop = v; return t }
 
 // BreakViewType is the [gti.Type] for [BreakView]
-var BreakViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.BreakView",
-	ShortName:  "gide.BreakView",
-	IDName:     "break-view",
-	Doc:        "BreakView is a view of the breakpoints",
-	Directives: gti.Directives{},
-	Fields:     ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &BreakView{},
-})
+var BreakViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &BreakView{}})
 
-// NewBreakView adds a new [BreakView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewBreakView adds a new [BreakView] with the given name to the given parent:
+// BreakView is a view of the breakpoints
 func NewBreakView(par ki.Ki, name ...string) *BreakView {
 	return par.NewChild(BreakViewType, name...).(*BreakView)
 }
@@ -185,36 +106,16 @@ func (t *BreakView) New() ki.Ki {
 }
 
 // SetTooltip sets the [BreakView.Tooltip]
-func (t *BreakView) SetTooltip(v string) *BreakView {
-	t.Tooltip = v
-	return t
-}
+func (t *BreakView) SetTooltip(v string) *BreakView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [BreakView.StackTop]
-func (t *BreakView) SetStackTop(v int) *BreakView {
-	t.StackTop = v
-	return t
-}
+func (t *BreakView) SetStackTop(v int) *BreakView { t.StackTop = v; return t }
 
 // ThreadViewType is the [gti.Type] for [ThreadView]
-var ThreadViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.ThreadView",
-	ShortName:  "gide.ThreadView",
-	IDName:     "thread-view",
-	Doc:        "ThreadView is a view of the threads",
-	Directives: gti.Directives{},
-	Fields:     ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &ThreadView{},
-})
+var ThreadViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &ThreadView{}})
 
-// NewThreadView adds a new [ThreadView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewThreadView adds a new [ThreadView] with the given name to the given parent:
+// ThreadView is a view of the threads
 func NewThreadView(par ki.Ki, name ...string) *ThreadView {
 	return par.NewChild(ThreadViewType, name...).(*ThreadView)
 }
@@ -230,36 +131,16 @@ func (t *ThreadView) New() ki.Ki {
 }
 
 // SetTooltip sets the [ThreadView.Tooltip]
-func (t *ThreadView) SetTooltip(v string) *ThreadView {
-	t.Tooltip = v
-	return t
-}
+func (t *ThreadView) SetTooltip(v string) *ThreadView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [ThreadView.StackTop]
-func (t *ThreadView) SetStackTop(v int) *ThreadView {
-	t.StackTop = v
-	return t
-}
+func (t *ThreadView) SetStackTop(v int) *ThreadView { t.StackTop = v; return t }
 
 // TaskViewType is the [gti.Type] for [TaskView]
-var TaskViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.TaskView",
-	ShortName:  "gide.TaskView",
-	IDName:     "task-view",
-	Doc:        "TaskView is a view of the threads",
-	Directives: gti.Directives{},
-	Fields:     ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &TaskView{},
-})
+var TaskViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &TaskView{}})
 
-// NewTaskView adds a new [TaskView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewTaskView adds a new [TaskView] with the given name to the given parent:
+// TaskView is a view of the threads
 func NewTaskView(par ki.Ki, name ...string) *TaskView {
 	return par.NewChild(TaskViewType, name...).(*TaskView)
 }
@@ -275,38 +156,16 @@ func (t *TaskView) New() ki.Ki {
 }
 
 // SetTooltip sets the [TaskView.Tooltip]
-func (t *TaskView) SetTooltip(v string) *TaskView {
-	t.Tooltip = v
-	return t
-}
+func (t *TaskView) SetTooltip(v string) *TaskView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [TaskView.StackTop]
-func (t *TaskView) SetStackTop(v int) *TaskView {
-	t.StackTop = v
-	return t
-}
+func (t *TaskView) SetStackTop(v int) *TaskView { t.StackTop = v; return t }
 
 // VarsViewType is the [gti.Type] for [VarsView]
-var VarsViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.VarsView",
-	ShortName:  "gide.VarsView",
-	IDName:     "vars-view",
-	Doc:        "VarsView is a view of the variables",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"GlobalVars", &gti.Field{Name: "GlobalVars", Type: "bool", LocalType: "bool", Doc: "if true, this is global vars, not local ones", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &VarsView{},
-})
+var VarsViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
 
-// NewVarsView adds a new [VarsView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewVarsView adds a new [VarsView] with the given name to the given parent:
+// VarsView is a view of the variables
 func NewVarsView(par ki.Ki, name ...string) *VarsView {
 	return par.NewChild(VarsViewType, name...).(*VarsView)
 }
@@ -323,47 +182,20 @@ func (t *VarsView) New() ki.Ki {
 
 // SetGlobalVars sets the [VarsView.GlobalVars]:
 // if true, this is global vars, not local ones
-func (t *VarsView) SetGlobalVars(v bool) *VarsView {
-	t.GlobalVars = v
-	return t
-}
+func (t *VarsView) SetGlobalVars(v bool) *VarsView { t.GlobalVars = v; return t }
 
 // SetTooltip sets the [VarsView.Tooltip]
-func (t *VarsView) SetTooltip(v string) *VarsView {
-	t.Tooltip = v
-	return t
-}
+func (t *VarsView) SetTooltip(v string) *VarsView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [VarsView.StackTop]
-func (t *VarsView) SetStackTop(v int) *VarsView {
-	t.StackTop = v
-	return t
-}
+func (t *VarsView) SetStackTop(v int) *VarsView { t.StackTop = v; return t }
 
 // VarViewType is the [gti.Type] for [VarView]
-var VarViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.VarView",
-	ShortName:  "gide.VarView",
-	IDName:     "var-view",
-	Doc:        "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Var", &gti.Field{Name: "Var", Type: "*github.com/goki/gide/v2/gidebug.Variable", LocalType: "*gidebug.Variable", Doc: "variable being edited", Directives: gti.Directives{}, Tag: "set:\"-\""}},
-		{"SelVar", &gti.Field{Name: "SelVar", Type: "*github.com/goki/gide/v2/gidebug.Variable", LocalType: "*gidebug.Variable", Doc: "", Directives: gti.Directives{}, Tag: "set:\"-\""}},
-		{"FrameInfo", &gti.Field{Name: "FrameInfo", Type: "string", LocalType: "string", Doc: "frame info", Directives: gti.Directives{}, Tag: "set:\"-\""}},
-		{"DbgView", &gti.Field{Name: "DbgView", Type: "*github.com/goki/gide/v2/gide.DebugView", LocalType: "*DebugView", Doc: "parent DebugView", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Frame", &gti.Field{Name: "Frame", Type: "goki.dev/gi.Frame", LocalType: "gi.Frame", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &VarView{},
-})
+var VarViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
 
-// NewVarView adds a new [VarView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewVarView adds a new [VarView] with the given name to the given parent:
+// VarView shows a debug variable in an inspector-like framework,
+// with sub-variables in a tree.
 func NewVarView(par ki.Ki, name ...string) *VarView {
 	return par.NewChild(VarViewType, name...).(*VarView)
 }
@@ -380,58 +212,22 @@ func (t *VarView) New() ki.Ki {
 
 // SetDbgView sets the [VarView.DbgView]:
 // parent DebugView
-func (t *VarView) SetDbgView(v *DebugView) *VarView {
-	t.DbgView = v
-	return t
-}
+func (t *VarView) SetDbgView(v *DebugView) *VarView { t.DbgView = v; return t }
 
 // SetTooltip sets the [VarView.Tooltip]
-func (t *VarView) SetTooltip(v string) *VarView {
-	t.Tooltip = v
-	return t
-}
+func (t *VarView) SetTooltip(v string) *VarView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [VarView.StackTop]
-func (t *VarView) SetStackTop(v int) *VarView {
-	t.StackTop = v
-	return t
-}
+func (t *VarView) SetStackTop(v int) *VarView { t.StackTop = v; return t }
 
 // SetStripes sets the [VarView.Stripes]
-func (t *VarView) SetStripes(v gi.Stripes) *VarView {
-	t.Stripes = v
-	return t
-}
+func (t *VarView) SetStripes(v gi.Stripes) *VarView { t.Stripes = v; return t }
 
 // FileNodeType is the [gti.Type] for [FileNode]
-var FileNodeType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.FileNode",
-	ShortName:  "gide.FileNode",
-	IDName:     "file-node",
-	Doc:        "FileNode is Gide version of FileNode for FileTree view",
-	Directives: gti.Directives{},
-	Fields:     ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Node", &gti.Field{Name: "Node", Type: "goki.dev/filetree.Node", LocalType: "filetree.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
-		{"ExecCmdFile", &gti.Method{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"EditFiles", &gti.Method{Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"SetRunExecs", &gti.Method{Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-	}),
-	Instance: &FileNode{},
-})
+var FileNodeType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.FileNode", IDName: "file-node", Doc: "FileNode is Gide version of FileNode for FileTree view", Methods: []gti.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
-// NewFileNode adds a new [FileNode] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewFileNode adds a new [FileNode] with the given name to the given parent:
+// FileNode is Gide version of FileNode for FileTree view
 func NewFileNode(par ki.Ki, name ...string) *FileNode {
 	return par.NewChild(FileNodeType, name...).(*FileNode)
 }
@@ -447,83 +243,38 @@ func (t *FileNode) New() ki.Ki {
 }
 
 // SetTooltip sets the [FileNode.Tooltip]
-func (t *FileNode) SetTooltip(v string) *FileNode {
-	t.Tooltip = v
-	return t
-}
+func (t *FileNode) SetTooltip(v string) *FileNode { t.Tooltip = v; return t }
 
 // SetText sets the [FileNode.Text]
-func (t *FileNode) SetText(v string) *FileNode {
-	t.Text = v
-	return t
-}
+func (t *FileNode) SetText(v string) *FileNode { t.Text = v; return t }
 
 // SetIcon sets the [FileNode.Icon]
-func (t *FileNode) SetIcon(v icons.Icon) *FileNode {
-	t.Icon = v
-	return t
-}
+func (t *FileNode) SetIcon(v icons.Icon) *FileNode { t.Icon = v; return t }
 
 // SetIndent sets the [FileNode.Indent]
-func (t *FileNode) SetIndent(v units.Value) *FileNode {
-	t.Indent = v
-	return t
-}
+func (t *FileNode) SetIndent(v units.Value) *FileNode { t.Indent = v; return t }
 
 // SetOpenDepth sets the [FileNode.OpenDepth]
-func (t *FileNode) SetOpenDepth(v int) *FileNode {
-	t.OpenDepth = v
-	return t
-}
+func (t *FileNode) SetOpenDepth(v int) *FileNode { t.OpenDepth = v; return t }
 
 // SetViewIdx sets the [FileNode.ViewIdx]
-func (t *FileNode) SetViewIdx(v int) *FileNode {
-	t.ViewIdx = v
-	return t
-}
+func (t *FileNode) SetViewIdx(v int) *FileNode { t.ViewIdx = v; return t }
 
 // SetWidgetSize sets the [FileNode.WidgetSize]
-func (t *FileNode) SetWidgetSize(v mat32.Vec2) *FileNode {
-	t.WidgetSize = v
-	return t
-}
+func (t *FileNode) SetWidgetSize(v mat32.Vec2) *FileNode { t.WidgetSize = v; return t }
 
 // SetRootView sets the [FileNode.RootView]
-func (t *FileNode) SetRootView(v *giv.TreeView) *FileNode {
-	t.RootView = v
-	return t
-}
+func (t *FileNode) SetRootView(v *giv.TreeView) *FileNode { t.RootView = v; return t }
 
 // SetSelectedNodes sets the [FileNode.SelectedNodes]
-func (t *FileNode) SetSelectedNodes(v []giv.TreeViewer) *FileNode {
-	t.SelectedNodes = v
-	return t
-}
+func (t *FileNode) SetSelectedNodes(v ...giv.TreeViewer) *FileNode { t.SelectedNodes = v; return t }
 
 // FindViewType is the [gti.Type] for [FindView]
-var FindViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.FindView",
-	ShortName:  "gide.FindView",
-	IDName:     "find-view",
-	Doc:        "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Gide", &gti.Field{Name: "Gide", Type: "github.com/goki/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"LangVV", &gti.Field{Name: "LangVV", Type: "goki.dev/giv.Value", LocalType: "giv.Value", Doc: "langs value view", Directives: gti.Directives{}, Tag: ""}},
-		{"Time", &gti.Field{Name: "Time", Type: "time.Time", LocalType: "time.Time", Doc: "time of last find", Directives: gti.Directives{}, Tag: ""}},
-		{"Re", &gti.Field{Name: "Re", Type: "*regexp.Regexp", LocalType: "*regexp.Regexp", Doc: "compiled regexp", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &FindView{},
-})
+var FindViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Gide", Doc: "parent gide project"}, {Name: "LangVV", Doc: "langs value view"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
 
-// NewFindView adds a new [FindView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewFindView adds a new [FindView] with the given name to the given parent:
+// FindView is a find / replace widget that displays results in a TextEditor
+// and has a toolbar for controlling find / replace process.
 func NewFindView(par ki.Ki, name ...string) *FindView {
 	return par.NewChild(FindViewType, name...).(*FindView)
 }
@@ -540,184 +291,37 @@ func (t *FindView) New() ki.Ki {
 
 // SetGide sets the [FindView.Gide]:
 // parent gide project
-func (t *FindView) SetGide(v Gide) *FindView {
-	t.Gide = v
-	return t
-}
+func (t *FindView) SetGide(v Gide) *FindView { t.Gide = v; return t }
 
 // SetLangVv sets the [FindView.LangVV]:
 // langs value view
-func (t *FindView) SetLangVv(v giv.Value) *FindView {
-	t.LangVV = v
-	return t
-}
+func (t *FindView) SetLangVv(v giv.Value) *FindView { t.LangVV = v; return t }
 
 // SetTime sets the [FindView.Time]:
 // time of last find
-func (t *FindView) SetTime(v time.Time) *FindView {
-	t.Time = v
-	return t
-}
+func (t *FindView) SetTime(v time.Time) *FindView { t.Time = v; return t }
 
 // SetRe sets the [FindView.Re]:
 // compiled regexp
-func (t *FindView) SetRe(v *regexp.Regexp) *FindView {
-	t.Re = v
-	return t
-}
+func (t *FindView) SetRe(v *regexp.Regexp) *FindView { t.Re = v; return t }
 
 // SetTooltip sets the [FindView.Tooltip]
-func (t *FindView) SetTooltip(v string) *FindView {
-	t.Tooltip = v
-	return t
-}
+func (t *FindView) SetTooltip(v string) *FindView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [FindView.StackTop]
-func (t *FindView) SetStackTop(v int) *FindView {
-	t.StackTop = v
-	return t
-}
+func (t *FindView) SetStackTop(v int) *FindView { t.StackTop = v; return t }
 
-var _ = gti.AddType(&gti.Type{
-	Name:      "github.com/goki/gide/v2/gide.SettingsData",
-	ShortName: "gide.SettingsData",
-	IDName:    "settings-data",
-	Doc:       "SettingsData is the data type for the overall user settings for Gide.",
-	Directives: gti.Directives{
-		&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-	},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Files", &gti.Field{Name: "Files", Type: "github.com/goki/gide/v2/gide.FileSettings", LocalType: "FileSettings", Doc: "file view settings", Directives: gti.Directives{}, Tag: ""}},
-		{"EnvVars", &gti.Field{Name: "EnvVars", Type: "map[string]string", LocalType: "map[string]string", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app", Directives: gti.Directives{}, Tag: ""}},
-		{"KeyMap", &gti.Field{Name: "KeyMap", Type: "github.com/goki/gide/v2/gide.KeyMapName", LocalType: "KeyMapName", Doc: "key map for gide-specific keyboard sequences", Directives: gti.Directives{}, Tag: ""}},
-		{"SaveKeyMaps", &gti.Field{Name: "SaveKeyMaps", Type: "bool", LocalType: "bool", Doc: "if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords", Directives: gti.Directives{}, Tag: ""}},
-		{"SaveLangOpts", &gti.Field{Name: "SaveLangOpts", Type: "bool", LocalType: "bool", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)", Directives: gti.Directives{}, Tag: ""}},
-		{"SaveCmds", &gti.Field{Name: "SaveCmds", Type: "bool", LocalType: "bool", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)", Directives: gti.Directives{}, Tag: ""}},
-		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.", Directives: gti.Directives{}, Tag: "view:\"-\" changeflag:\"+\" json:\"-\" toml:\"-\" xml:\"-\""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"SettingsBase", &gti.Field{Name: "SettingsBase", Type: "goki.dev/gi.SettingsBase", LocalType: "gi.SettingsBase", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
-		{"Apply", &gti.Method{Name: "Apply", Doc: "Apply preferences updates things according with settings", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"VersionInfo", &gti.Method{Name: "VersionInfo", Doc: "VersionInfo returns Gide version information", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"string", &gti.Field{Name: "string", Type: "string", LocalType: "string", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-		})}},
-		{"EditKeyMaps", &gti.Method{Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith preferences automatically.", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"EditLangOpts", &gti.Method{Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"EditCmds", &gti.Method{Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"EditSplits", &gti.Method{Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-		{"EditRegisters", &gti.Method{Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{})}},
-	}),
-})
+var _ = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Gide.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Apply", Doc: "Apply preferences updates things according with settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "VersionInfo", Doc: "VersionInfo returns Gide version information", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Returns: []string{"string"}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith preferences automatically.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "SettingsBase"}}, Fields: []gti.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "KeyMap", Doc: "key map for gide-specific keyboard sequences"}, {Name: "SaveKeyMaps", Doc: "if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "Changed", Doc: "flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."}}})
 
-var _ = gti.AddType(&gti.Type{
-	Name:      "github.com/goki/gide/v2/gide.FileSettings",
-	ShortName: "gide.FileSettings",
-	IDName:    "file-settings",
-	Doc:       "FileSettings contains file view settings",
-	Directives: gti.Directives{
-		&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-	},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"DirsOnTop", &gti.Field{Name: "DirsOnTop", Type: "bool", LocalType: "bool", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds:  ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
-	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-})
+var _ = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file view settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"}}})
 
-var _ = gti.AddType(&gti.Type{
-	Name:      "github.com/goki/gide/v2/gide.ProjPrefs",
-	ShortName: "gide.ProjPrefs",
-	IDName:    "proj-prefs",
-	Doc:       "ProjPrefs are the preferences for saving for a project -- this IS the project file",
-	Directives: gti.Directives{
-		&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-	},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Files", &gti.Field{Name: "Files", Type: "github.com/goki/gide/v2/gide.FileSettings", LocalType: "FileSettings", Doc: "file view preferences", Directives: gti.Directives{}, Tag: ""}},
-		{"Editor", &gti.Field{Name: "Editor", Type: "goki.dev/gi.EditorSettings", LocalType: "gi.EditorSettings", Doc: "editor preferences", Directives: gti.Directives{}, Tag: "view:\"inline\""}},
-		{"SplitName", &gti.Field{Name: "SplitName", Type: "github.com/goki/gide/v2/gide.SplitName", LocalType: "SplitName", Doc: "current named-split config in use for configuring the splitters", Directives: gti.Directives{}, Tag: ""}},
-		{"MainLang", &gti.Field{Name: "MainLang", Type: "goki.dev/fi.Known", LocalType: "fi.Known", Doc: "the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well", Directives: gti.Directives{}, Tag: ""}},
-		{"VersCtrl", &gti.Field{Name: "VersCtrl", Type: "goki.dev/filetree.VersCtrlName", LocalType: "filetree.VersCtrlName", Doc: "the type of version control system used in this project (git, svn, etc) -- filters commands available", Directives: gti.Directives{}, Tag: ""}},
-		{"ProjFilename", &gti.Field{Name: "ProjFilename", Type: "goki.dev/gi.FileName", LocalType: "gi.FileName", Doc: "current project filename for saving / loading specific Gide configuration information in a .gide file (optional)", Directives: gti.Directives{}, Tag: "ext:\".gide\""}},
-		{"ProjRoot", &gti.Field{Name: "ProjRoot", Type: "goki.dev/gi.FileName", LocalType: "gi.FileName", Doc: "root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename", Directives: gti.Directives{}, Tag: ""}},
-		{"GoMod", &gti.Field{Name: "GoMod", Type: "bool", LocalType: "bool", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically", Directives: gti.Directives{}, Tag: ""}},
-		{"BuildCmds", &gti.Field{Name: "BuildCmds", Type: "github.com/goki/gide/v2/gide.CmdNames", LocalType: "CmdNames", Doc: "command(s) to run for main Build button", Directives: gti.Directives{}, Tag: ""}},
-		{"BuildDir", &gti.Field{Name: "BuildDir", Type: "goki.dev/gi.FileName", LocalType: "gi.FileName", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands", Directives: gti.Directives{}, Tag: ""}},
-		{"BuildTarg", &gti.Field{Name: "BuildTarg", Type: "goki.dev/gi.FileName", LocalType: "gi.FileName", Doc: "build target for main Build button, if relevant for your  BuildCmds", Directives: gti.Directives{}, Tag: ""}},
-		{"RunExec", &gti.Field{Name: "RunExec", Type: "goki.dev/gi.FileName", LocalType: "gi.FileName", Doc: "executable to run for this project via main Run button -- called by standard Run Proj command", Directives: gti.Directives{}, Tag: ""}},
-		{"RunCmds", &gti.Field{Name: "RunCmds", Type: "github.com/goki/gide/v2/gide.CmdNames", LocalType: "CmdNames", Doc: "command(s) to run for main Run button (typically Run Proj)", Directives: gti.Directives{}, Tag: ""}},
-		{"Debug", &gti.Field{Name: "Debug", Type: "github.com/goki/gide/v2/gidebug.Params", LocalType: "gidebug.Params", Doc: "custom debugger parameters for this project", Directives: gti.Directives{}, Tag: ""}},
-		{"Find", &gti.Field{Name: "Find", Type: "github.com/goki/gide/v2/gide.FindParams", LocalType: "FindParams", Doc: "saved find params", Directives: gti.Directives{}, Tag: "view:\"-\""}},
-		{"Symbols", &gti.Field{Name: "Symbols", Type: "github.com/goki/gide/v2/gide.SymbolsParams", LocalType: "SymbolsParams", Doc: "saved structure params", Directives: gti.Directives{}, Tag: "view:\"-\""}},
-		{"Dirs", &gti.Field{Name: "Dirs", Type: "goki.dev/filetree.DirFlagMap", LocalType: "filetree.DirFlagMap", Doc: "directory properties", Directives: gti.Directives{}, Tag: "view:\"-\""}},
-		{"Register", &gti.Field{Name: "Register", Type: "github.com/goki/gide/v2/gide.RegisterName", LocalType: "RegisterName", Doc: "last register used", Directives: gti.Directives{}, Tag: "view:\"-\""}},
-		{"Splits", &gti.Field{Name: "Splits", Type: "[]float32", LocalType: "[]float32", Doc: "current splitter splits", Directives: gti.Directives{}, Tag: "view:\"-\""}},
-		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.", Directives: gti.Directives{}, Tag: "view:\"-\" changeflag:\"+\" json:\"-\" toml:\"-\" xml:\"-\""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
-	Methods: ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{
-		{"Open", &gti.Method{Name: "Open", Doc: "Open open from  file", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"error", &gti.Field{Name: "error", Type: "error", LocalType: "error", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-		})}},
-		{"Save", &gti.Method{Name: "Save", Doc: "Save save to  file", Directives: gti.Directives{
-			&gti.Directive{Tool: "gti", Directive: "add", Args: []string{}},
-		}, Args: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"filename", &gti.Field{Name: "filename", Type: "goki.dev/gi.FileName", LocalType: "gi.FileName", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-		}), Returns: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-			{"error", &gti.Field{Name: "error", Type: "error", LocalType: "error", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-		})}},
-	}),
-})
+var _ = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.ProjPrefs", IDName: "proj-prefs", Doc: "ProjPrefs are the preferences for saving for a project -- this IS the project file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Open", Doc: "Open open from  file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save save to  file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}}, Fields: []gti.Field{{Name: "Files", Doc: "file view preferences"}, {Name: "Editor", Doc: "editor preferences"}, {Name: "SplitName", Doc: "current named-split config in use for configuring the splitters"}, {Name: "MainLang", Doc: "the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well"}, {Name: "VersCtrl", Doc: "the type of version control system used in this project (git, svn, etc) -- filters commands available"}, {Name: "ProjFilename", Doc: "current project filename for saving / loading specific Gide configuration information in a .gide file (optional)"}, {Name: "ProjRoot", Doc: "root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename"}, {Name: "GoMod", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"}, {Name: "BuildCmds", Doc: "command(s) to run for main Build button"}, {Name: "BuildDir", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"}, {Name: "BuildTarg", Doc: "build target for main Build button, if relevant for your  BuildCmds"}, {Name: "RunExec", Doc: "executable to run for this project via main Run button -- called by standard Run Proj command"}, {Name: "RunCmds", Doc: "command(s) to run for main Run button (typically Run Proj)"}, {Name: "Debug", Doc: "custom debugger parameters for this project"}, {Name: "Find", Doc: "saved find params"}, {Name: "Symbols", Doc: "saved structure params"}, {Name: "Dirs", Doc: "directory properties"}, {Name: "Register", Doc: "last register used"}, {Name: "Splits", Doc: "current splitter splits"}, {Name: "Changed", Doc: "flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."}}})
 
 // SpellViewType is the [gti.Type] for [SpellView]
-var SpellViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.SpellView",
-	ShortName:  "gide.SpellView",
-	IDName:     "spell-view",
-	Doc:        "SpellView is a widget that displays results of spell check",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Gide", &gti.Field{Name: "Gide", Type: "github.com/goki/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\" copy:\"-\""}},
-		{"Text", &gti.Field{Name: "Text", Type: "*github.com/goki/gide/v2/gide.TextEditor", LocalType: "*TextEditor", Doc: "textview that we're spell-checking", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\" copy:\"-\""}},
-		{"Errs", &gti.Field{Name: "Errs", Type: "goki.dev/pi/lex.Line", LocalType: "lex.Line", Doc: "current spelling errors", Directives: gti.Directives{}, Tag: ""}},
-		{"CurLn", &gti.Field{Name: "CurLn", Type: "int", LocalType: "int", Doc: "current line in text we're on", Directives: gti.Directives{}, Tag: ""}},
-		{"CurIdx", &gti.Field{Name: "CurIdx", Type: "int", LocalType: "int", Doc: "current index in Errs we're on", Directives: gti.Directives{}, Tag: ""}},
-		{"UnkLex", &gti.Field{Name: "UnkLex", Type: "goki.dev/pi/lex.Lex", LocalType: "lex.Lex", Doc: "current unknown lex token", Directives: gti.Directives{}, Tag: ""}},
-		{"UnkWord", &gti.Field{Name: "UnkWord", Type: "string", LocalType: "string", Doc: "current unknown word", Directives: gti.Directives{}, Tag: ""}},
-		{"Suggest", &gti.Field{Name: "Suggest", Type: "[]string", LocalType: "[]string", Doc: "a list of suggestions from spell checker", Directives: gti.Directives{}, Tag: ""}},
-		{"LastAction", &gti.Field{Name: "LastAction", Type: "*goki.dev/gi.Button", LocalType: "*gi.Button", Doc: "last user action (ignore, change, learn)", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &SpellView{},
-})
+var SpellViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Gide", Doc: "parent gide project"}, {Name: "Text", Doc: "textview that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIdx", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
 
-// NewSpellView adds a new [SpellView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewSpellView adds a new [SpellView] with the given name to the given parent:
+// SpellView is a widget that displays results of spell check
 func NewSpellView(par ki.Ki, name ...string) *SpellView {
 	return par.NewChild(SpellViewType, name...).(*SpellView)
 }
@@ -734,103 +338,51 @@ func (t *SpellView) New() ki.Ki {
 
 // SetGide sets the [SpellView.Gide]:
 // parent gide project
-func (t *SpellView) SetGide(v Gide) *SpellView {
-	t.Gide = v
-	return t
-}
+func (t *SpellView) SetGide(v Gide) *SpellView { t.Gide = v; return t }
 
 // SetText sets the [SpellView.Text]:
 // textview that we're spell-checking
-func (t *SpellView) SetText(v *TextEditor) *SpellView {
-	t.Text = v
-	return t
-}
+func (t *SpellView) SetText(v *TextEditor) *SpellView { t.Text = v; return t }
 
 // SetErrs sets the [SpellView.Errs]:
 // current spelling errors
-func (t *SpellView) SetErrs(v lex.Line) *SpellView {
-	t.Errs = v
-	return t
-}
+func (t *SpellView) SetErrs(v lex.Line) *SpellView { t.Errs = v; return t }
 
 // SetCurLn sets the [SpellView.CurLn]:
 // current line in text we're on
-func (t *SpellView) SetCurLn(v int) *SpellView {
-	t.CurLn = v
-	return t
-}
+func (t *SpellView) SetCurLn(v int) *SpellView { t.CurLn = v; return t }
 
 // SetCurIdx sets the [SpellView.CurIdx]:
 // current index in Errs we're on
-func (t *SpellView) SetCurIdx(v int) *SpellView {
-	t.CurIdx = v
-	return t
-}
+func (t *SpellView) SetCurIdx(v int) *SpellView { t.CurIdx = v; return t }
 
 // SetUnkLex sets the [SpellView.UnkLex]:
 // current unknown lex token
-func (t *SpellView) SetUnkLex(v lex.Lex) *SpellView {
-	t.UnkLex = v
-	return t
-}
+func (t *SpellView) SetUnkLex(v lex.Lex) *SpellView { t.UnkLex = v; return t }
 
 // SetUnkWord sets the [SpellView.UnkWord]:
 // current unknown word
-func (t *SpellView) SetUnkWord(v string) *SpellView {
-	t.UnkWord = v
-	return t
-}
+func (t *SpellView) SetUnkWord(v string) *SpellView { t.UnkWord = v; return t }
 
 // SetSuggest sets the [SpellView.Suggest]:
 // a list of suggestions from spell checker
-func (t *SpellView) SetSuggest(v []string) *SpellView {
-	t.Suggest = v
-	return t
-}
+func (t *SpellView) SetSuggest(v ...string) *SpellView { t.Suggest = v; return t }
 
 // SetLastAction sets the [SpellView.LastAction]:
 // last user action (ignore, change, learn)
-func (t *SpellView) SetLastAction(v *gi.Button) *SpellView {
-	t.LastAction = v
-	return t
-}
+func (t *SpellView) SetLastAction(v *gi.Button) *SpellView { t.LastAction = v; return t }
 
 // SetTooltip sets the [SpellView.Tooltip]
-func (t *SpellView) SetTooltip(v string) *SpellView {
-	t.Tooltip = v
-	return t
-}
+func (t *SpellView) SetTooltip(v string) *SpellView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [SpellView.StackTop]
-func (t *SpellView) SetStackTop(v int) *SpellView {
-	t.StackTop = v
-	return t
-}
+func (t *SpellView) SetStackTop(v int) *SpellView { t.StackTop = v; return t }
 
 // SymbolsViewType is the [gti.Type] for [SymbolsView]
-var SymbolsViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.SymbolsView",
-	ShortName:  "gide.SymbolsView",
-	IDName:     "symbols-view",
-	Doc:        "SymbolsView is a widget that displays results of a file or package parse",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Gide", &gti.Field{Name: "Gide", Type: "github.com/goki/gide/v2/gide.Gide", LocalType: "Gide", Doc: "parent gide project", Directives: gti.Directives{}, Tag: "json:\"-\" xml:\"-\""}},
-		{"SymParams", &gti.Field{Name: "SymParams", Type: "github.com/goki/gide/v2/gide.SymbolsParams", LocalType: "SymbolsParams", Doc: "params for structure display", Directives: gti.Directives{}, Tag: ""}},
-		{"Syms", &gti.Field{Name: "Syms", Type: "*github.com/goki/gide/v2/gide.SymNode", LocalType: "*SymNode", Doc: "all the symbols for the file or package in a tree", Directives: gti.Directives{}, Tag: ""}},
-		{"Match", &gti.Field{Name: "Match", Type: "string", LocalType: "string", Doc: "only show symbols that match this string", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Layout", &gti.Field{Name: "Layout", Type: "goki.dev/gi.Layout", LocalType: "gi.Layout", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &SymbolsView{},
-})
+var SymbolsViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Gide", Doc: "parent gide project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
 
-// NewSymbolsView adds a new [SymbolsView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewSymbolsView adds a new [SymbolsView] with the given name to the given parent:
+// SymbolsView is a widget that displays results of a file or package parse
 func NewSymbolsView(par ki.Ki, name ...string) *SymbolsView {
 	return par.NewChild(SymbolsViewType, name...).(*SymbolsView)
 }
@@ -847,65 +399,32 @@ func (t *SymbolsView) New() ki.Ki {
 
 // SetGide sets the [SymbolsView.Gide]:
 // parent gide project
-func (t *SymbolsView) SetGide(v Gide) *SymbolsView {
-	t.Gide = v
-	return t
-}
+func (t *SymbolsView) SetGide(v Gide) *SymbolsView { t.Gide = v; return t }
 
 // SetSymParams sets the [SymbolsView.SymParams]:
 // params for structure display
-func (t *SymbolsView) SetSymParams(v SymbolsParams) *SymbolsView {
-	t.SymParams = v
-	return t
-}
+func (t *SymbolsView) SetSymParams(v SymbolsParams) *SymbolsView { t.SymParams = v; return t }
 
 // SetSyms sets the [SymbolsView.Syms]:
 // all the symbols for the file or package in a tree
-func (t *SymbolsView) SetSyms(v *SymNode) *SymbolsView {
-	t.Syms = v
-	return t
-}
+func (t *SymbolsView) SetSyms(v *SymNode) *SymbolsView { t.Syms = v; return t }
 
 // SetMatch sets the [SymbolsView.Match]:
 // only show symbols that match this string
-func (t *SymbolsView) SetMatch(v string) *SymbolsView {
-	t.Match = v
-	return t
-}
+func (t *SymbolsView) SetMatch(v string) *SymbolsView { t.Match = v; return t }
 
 // SetTooltip sets the [SymbolsView.Tooltip]
-func (t *SymbolsView) SetTooltip(v string) *SymbolsView {
-	t.Tooltip = v
-	return t
-}
+func (t *SymbolsView) SetTooltip(v string) *SymbolsView { t.Tooltip = v; return t }
 
 // SetStackTop sets the [SymbolsView.StackTop]
-func (t *SymbolsView) SetStackTop(v int) *SymbolsView {
-	t.StackTop = v
-	return t
-}
+func (t *SymbolsView) SetStackTop(v int) *SymbolsView { t.StackTop = v; return t }
 
 // SymNodeType is the [gti.Type] for [SymNode]
-var SymNodeType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.SymNode",
-	ShortName:  "gide.SymNode",
-	IDName:     "sym-node",
-	Doc:        "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Symbol", &gti.Field{Name: "Symbol", Type: "goki.dev/pi/syms.Symbol", LocalType: "syms.Symbol", Doc: "the symbol", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Node", &gti.Field{Name: "Node", Type: "goki.dev/ki.Node", LocalType: "ki.Node", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &SymNode{},
-})
+var SymNodeType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []gti.Field{{Name: "Node"}}, Fields: []gti.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
 
-// NewSymNode adds a new [SymNode] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewSymNode adds a new [SymNode] with the given name to the given parent:
+// SymNode represents a language symbol -- the name of the node is
+// the name of the symbol. Some symbols, e.g. type have children
 func NewSymNode(par ki.Ki, name ...string) *SymNode {
 	return par.NewChild(SymNodeType, name...).(*SymNode)
 }
@@ -922,30 +441,13 @@ func (t *SymNode) New() ki.Ki {
 
 // SetSymbol sets the [SymNode.Symbol]:
 // the symbol
-func (t *SymNode) SetSymbol(v syms.Symbol) *SymNode {
-	t.Symbol = v
-	return t
-}
+func (t *SymNode) SetSymbol(v syms.Symbol) *SymNode { t.Symbol = v; return t }
 
 // SymTreeViewType is the [gti.Type] for [SymTreeView]
-var SymTreeViewType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.SymTreeView",
-	ShortName:  "gide.SymTreeView",
-	IDName:     "sym-tree-view",
-	Doc:        "SymTreeView is a TreeView that knows how to operate on FileNode nodes",
-	Directives: gti.Directives{},
-	Fields:     ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"TreeView", &gti.Field{Name: "TreeView", Type: "goki.dev/giv.TreeView", LocalType: "giv.TreeView", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &SymTreeView{},
-})
+var SymTreeViewType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.SymTreeView", IDName: "sym-tree-view", Doc: "SymTreeView is a TreeView that knows how to operate on FileNode nodes", Embeds: []gti.Field{{Name: "TreeView"}}, Instance: &SymTreeView{}})
 
-// NewSymTreeView adds a new [SymTreeView] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewSymTreeView adds a new [SymTreeView] with the given name to the given parent:
+// SymTreeView is a TreeView that knows how to operate on FileNode nodes
 func NewSymTreeView(par ki.Ki, name ...string) *SymTreeView {
 	return par.NewChild(SymTreeViewType, name...).(*SymTreeView)
 }
@@ -961,80 +463,41 @@ func (t *SymTreeView) New() ki.Ki {
 }
 
 // SetTooltip sets the [SymTreeView.Tooltip]
-func (t *SymTreeView) SetTooltip(v string) *SymTreeView {
-	t.Tooltip = v
-	return t
-}
+func (t *SymTreeView) SetTooltip(v string) *SymTreeView { t.Tooltip = v; return t }
 
 // SetText sets the [SymTreeView.Text]
-func (t *SymTreeView) SetText(v string) *SymTreeView {
-	t.Text = v
-	return t
-}
+func (t *SymTreeView) SetText(v string) *SymTreeView { t.Text = v; return t }
 
 // SetIcon sets the [SymTreeView.Icon]
-func (t *SymTreeView) SetIcon(v icons.Icon) *SymTreeView {
-	t.Icon = v
-	return t
-}
+func (t *SymTreeView) SetIcon(v icons.Icon) *SymTreeView { t.Icon = v; return t }
 
 // SetIndent sets the [SymTreeView.Indent]
-func (t *SymTreeView) SetIndent(v units.Value) *SymTreeView {
-	t.Indent = v
-	return t
-}
+func (t *SymTreeView) SetIndent(v units.Value) *SymTreeView { t.Indent = v; return t }
 
 // SetOpenDepth sets the [SymTreeView.OpenDepth]
-func (t *SymTreeView) SetOpenDepth(v int) *SymTreeView {
-	t.OpenDepth = v
-	return t
-}
+func (t *SymTreeView) SetOpenDepth(v int) *SymTreeView { t.OpenDepth = v; return t }
 
 // SetViewIdx sets the [SymTreeView.ViewIdx]
-func (t *SymTreeView) SetViewIdx(v int) *SymTreeView {
-	t.ViewIdx = v
-	return t
-}
+func (t *SymTreeView) SetViewIdx(v int) *SymTreeView { t.ViewIdx = v; return t }
 
 // SetWidgetSize sets the [SymTreeView.WidgetSize]
-func (t *SymTreeView) SetWidgetSize(v mat32.Vec2) *SymTreeView {
-	t.WidgetSize = v
-	return t
-}
+func (t *SymTreeView) SetWidgetSize(v mat32.Vec2) *SymTreeView { t.WidgetSize = v; return t }
 
 // SetRootView sets the [SymTreeView.RootView]
-func (t *SymTreeView) SetRootView(v *giv.TreeView) *SymTreeView {
-	t.RootView = v
-	return t
-}
+func (t *SymTreeView) SetRootView(v *giv.TreeView) *SymTreeView { t.RootView = v; return t }
 
 // SetSelectedNodes sets the [SymTreeView.SelectedNodes]
-func (t *SymTreeView) SetSelectedNodes(v []giv.TreeViewer) *SymTreeView {
+func (t *SymTreeView) SetSelectedNodes(v ...giv.TreeViewer) *SymTreeView {
 	t.SelectedNodes = v
 	return t
 }
 
 // TextEditorType is the [gti.Type] for [TextEditor]
-var TextEditorType = gti.AddType(&gti.Type{
-	Name:       "github.com/goki/gide/v2/gide.TextEditor",
-	ShortName:  "gide.TextEditor",
-	IDName:     "text-editor",
-	Doc:        "TextEditor is the Gide-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc",
-	Directives: gti.Directives{},
-	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Gide", &gti.Field{Name: "Gide", Type: "github.com/goki/gide/v2/gide.Gide", LocalType: "Gide", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Editor", &gti.Field{Name: "Editor", Type: "goki.dev/texteditor.Editor", LocalType: "texteditor.Editor", Doc: "", Directives: gti.Directives{}, Tag: ""}},
-	}),
-	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
-	Instance: &TextEditor{},
-})
+var TextEditorType = gti.AddType(&gti.Type{Name: "github.com/goki/gide/v2/gide.TextEditor", IDName: "text-editor", Doc: "TextEditor is the Gide-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc", Embeds: []gti.Field{{Name: "Editor"}}, Fields: []gti.Field{{Name: "Gide"}}, Instance: &TextEditor{}})
 
-// NewTextEditor adds a new [TextEditor] with the given name
-// to the given parent. If the name is unspecified, it defaults
-// to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
+// NewTextEditor adds a new [TextEditor] with the given name to the given parent:
+// TextEditor is the Gide-specific version of the TextEditor, with support for
+// setting / clearing breakpoints, etc
 func NewTextEditor(par ki.Ki, name ...string) *TextEditor {
 	return par.NewChild(TextEditorType, name...).(*TextEditor)
 }
@@ -1050,58 +513,31 @@ func (t *TextEditor) New() ki.Ki {
 }
 
 // SetGide sets the [TextEditor.Gide]
-func (t *TextEditor) SetGide(v Gide) *TextEditor {
-	t.Gide = v
-	return t
-}
+func (t *TextEditor) SetGide(v Gide) *TextEditor { t.Gide = v; return t }
 
 // SetTooltip sets the [TextEditor.Tooltip]
-func (t *TextEditor) SetTooltip(v string) *TextEditor {
-	t.Tooltip = v
-	return t
-}
+func (t *TextEditor) SetTooltip(v string) *TextEditor { t.Tooltip = v; return t }
 
 // SetStackTop sets the [TextEditor.StackTop]
-func (t *TextEditor) SetStackTop(v int) *TextEditor {
-	t.StackTop = v
-	return t
-}
+func (t *TextEditor) SetStackTop(v int) *TextEditor { t.StackTop = v; return t }
 
 // SetPlaceholder sets the [TextEditor.Placeholder]
-func (t *TextEditor) SetPlaceholder(v string) *TextEditor {
-	t.Placeholder = v
-	return t
-}
+func (t *TextEditor) SetPlaceholder(v string) *TextEditor { t.Placeholder = v; return t }
 
 // SetCursorWidth sets the [TextEditor.CursorWidth]
-func (t *TextEditor) SetCursorWidth(v units.Value) *TextEditor {
-	t.CursorWidth = v
-	return t
-}
+func (t *TextEditor) SetCursorWidth(v units.Value) *TextEditor { t.CursorWidth = v; return t }
 
 // SetLineNumberColor sets the [TextEditor.LineNumberColor]
-func (t *TextEditor) SetLineNumberColor(v image.Image) *TextEditor {
-	t.LineNumberColor = v
-	return t
-}
+func (t *TextEditor) SetLineNumberColor(v image.Image) *TextEditor { t.LineNumberColor = v; return t }
 
 // SetSelectColor sets the [TextEditor.SelectColor]
-func (t *TextEditor) SetSelectColor(v image.Image) *TextEditor {
-	t.SelectColor = v
-	return t
-}
+func (t *TextEditor) SetSelectColor(v image.Image) *TextEditor { t.SelectColor = v; return t }
 
 // SetHighlightColor sets the [TextEditor.HighlightColor]
-func (t *TextEditor) SetHighlightColor(v image.Image) *TextEditor {
-	t.HighlightColor = v
-	return t
-}
+func (t *TextEditor) SetHighlightColor(v image.Image) *TextEditor { t.HighlightColor = v; return t }
 
 // SetCursorColor sets the [TextEditor.CursorColor]
-func (t *TextEditor) SetCursorColor(v image.Image) *TextEditor {
-	t.CursorColor = v
-	return t
-}
+func (t *TextEditor) SetCursorColor(v image.Image) *TextEditor { t.CursorColor = v; return t }
 
 // SetLinkHandler sets the [TextEditor.LinkHandler]
 func (t *TextEditor) SetLinkHandler(v func(tl *paint.TextLink)) *TextEditor {
