@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/shirou/gopsutil/v3 v3.23.12
-	goki.dev v0.0.2-0.20240113175759-bdd41a80adc2
+	goki.dev v0.0.1
 )
 
 require (
