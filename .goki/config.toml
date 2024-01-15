@@ -30,7 +30,6 @@ Type = "App"
   Description = ""
   Author = ""
   Image = ""
-  AutoUpdateInterval = "10s"
   WasmContentLengthHeader = ""
   ServiceWorkerTemplate = ""
 
