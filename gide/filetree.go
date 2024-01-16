@@ -32,22 +32,29 @@ type FileNode struct {
 func (fn *FileNode) OnInit() {
 	fn.Node.OnInit()
 	fn.AddContextMenu(fn.ContextMenu)
-	fn.OnWidgetAdded(func(w gi.Widget) {
-		if w.PathFrom(fn) == "parts" {
-			w.On(events.DoubleClick, func(e events.Event) {
-				e.SetHandled()
-				sels := fn.SelectedViews()
-				if len(sels) > 0 {
-					sn := filetree.AsNode(sels[len(sels)-1])
-					if sn != nil {
-						if ge, ok := ParentGide(fn.This()); ok {
-							ge.FileNodeOpened(sn)
-						}
-					}
+}
+
+func (fn *FileNode) OnDoubleClick(e events.Event) {
+	e.SetHandled()
+	ge, ok := ParentGide(fn.This())
+	if !ok {
+		return
+	}
+	sels := fn.SelectedViews()
+	if len(sels) > 0 {
+		sn := filetree.AsNode(sels[len(sels)-1])
+		if sn != nil {
+			if sn.IsDir() {
+				if !sn.HasChildren() {
+					sn.OpenEmptyDir()
+				} else {
+					sn.ToggleClose()
 				}
-			})
+			} else {
+				ge.FileNodeOpened(sn)
+			}
 		}
-	})
+	}
 }
 
 // EditFile pulls up this file in Gide
