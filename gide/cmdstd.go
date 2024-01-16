@@ -417,7 +417,7 @@ var StdCmds = Commands{
 		Desc: "run BibTeX on file",
 		Lang: fi.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "bibtex",
-			Args: []string{"{FileNameNoExt}"}}},
+			Args: []string{"{FilenameNoExt}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
@@ -425,7 +425,7 @@ var StdCmds = Commands{
 		Desc: "run Biber on file",
 		Lang: fi.TeX,
 		Cmds: []CmdAndArgs{{Cmd: "biber",
-			Args: []string{"{FileNameNoExt}"}}},
+			Args: []string{"{FilenameNoExt}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 

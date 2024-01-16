@@ -339,35 +339,35 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 	return nil, -1, false
 }
 
-// PrefsKeyMapsFileName is the name of the preferences file in App prefs
+// PrefsKeyMapsFilename is the name of the preferences file in App prefs
 // directory for saving / loading the default AvailKeyMaps key maps list
-var PrefsKeyMapsFileName = "key_maps_prefs.json"
+var PrefsKeyMapsFilename = "key_maps_prefs.json"
 
 // Open opens keymaps from a json-formatted file.
-func (km *KeyMaps) Open(filename gi.FileName) error { //gti:add
+func (km *KeyMaps) Open(filename gi.Filename) error { //gti:add
 	*km = make(KeyMaps, 0, 10) // reset
 	return grr.Log(jsons.Open(km, string(filename)))
 }
 
 // Save saves keymaps to a json-formatted file.
-func (km *KeyMaps) Save(filename gi.FileName) error { //gti:add
+func (km *KeyMaps) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(jsons.Save(km, string(filename)))
 }
 
-// OpenSettings opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFileName
+// OpenSettings opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFilename
 func (km *KeyMaps) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
+	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
 	AvailKeyMapsChanged = false
-	return km.Open(gi.FileName(pnm))
+	return km.Open(gi.Filename(pnm))
 }
 
-// SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFileName
+// SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFilename
 func (km *KeyMaps) SavePrefs() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsKeyMapsFileName)
+	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
 	AvailKeyMapsChanged = false
-	return km.Save(gi.FileName(pnm))
+	return km.Save(gi.Filename(pnm))
 }
 
 // CopyFrom copies keymaps from given other map

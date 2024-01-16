@@ -69,6 +69,9 @@ type Gide interface {
 	// or error if not found.
 	ShowFile(fname string, ln int) (*TextEditor, error)
 
+	// FileNodeOpened is called whenever file node is double-clicked in file tree
+	FileNodeOpened(fn *filetree.Node)
+
 	// FileNodeForFile returns file node for given file path.
 	// add: if not found in existing tree and external files, then if add is true,
 	// it is added to the ExtFiles list.
@@ -100,8 +103,8 @@ type Gide interface {
 	// ExecCmdNameFileNode executes command of given name on given node
 	ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, clearBuf bool)
 
-	// ExecCmdNameFileName executes command of given name on given file name
-	ExecCmdNameFileName(fn string, cmdNm CmdName, sel bool, clearBuf bool)
+	// ExecCmdNameFilename executes command of given name on given file name
+	ExecCmdNameFilename(fn string, cmdNm CmdName, sel bool, clearBuf bool)
 
 	// Find does Find / Replace in files, using given options and filters -- opens up a
 	// main tab with the results and further controls.
@@ -113,7 +116,7 @@ type Gide interface {
 	ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool)
 
 	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
-	OpenFileAtRegion(filename gi.FileName, reg textbuf.Region) (tv *TextEditor, ok bool)
+	OpenFileAtRegion(filename gi.Filename, reg textbuf.Region) (tv *TextEditor, ok bool)
 
 	// SaveAllCheck checks if any files have not been saved, and prompt to save them.
 	// returns true if there were unsaved files, false otherwise.

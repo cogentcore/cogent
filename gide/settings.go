@@ -234,10 +234,10 @@ type ProjPrefs struct { //gti:add
 	VersCtrl filetree.VersCtrlName
 
 	// current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
-	ProjFilename gi.FileName `ext:".gide"`
+	ProjFilename gi.Filename `ext:".gide"`
 
 	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
-	ProjRoot gi.FileName
+	ProjRoot gi.Filename
 
 	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
 	GoMod bool
@@ -246,13 +246,13 @@ type ProjPrefs struct { //gti:add
 	BuildCmds CmdNames
 
 	// build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands
-	BuildDir gi.FileName
+	BuildDir gi.Filename
 
 	// build target for main Build button, if relevant for your  BuildCmds
-	BuildTarg gi.FileName
+	BuildTarg gi.Filename
 
 	// executable to run for this project via main Run button -- called by standard Run Proj command
-	RunExec gi.FileName
+	RunExec gi.Filename
 
 	// command(s) to run for main Run button (typically Run Proj)
 	RunCmds CmdNames
@@ -291,7 +291,7 @@ func (se *ProjPrefs) Update() {
 }
 
 // Open open from  file
-func (se *ProjPrefs) Open(filename gi.FileName) error { //gti:add
+func (se *ProjPrefs) Open(filename gi.Filename) error { //gti:add
 	err := grr.Log(tomls.Open(se, string(filename)))
 	se.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(se.VersCtrl))) // official names are lowercase now
 	se.Changed = false
@@ -299,7 +299,7 @@ func (se *ProjPrefs) Open(filename gi.FileName) error { //gti:add
 }
 
 // Save save to  file
-func (se *ProjPrefs) Save(filename gi.FileName) error { //gti:add
+func (se *ProjPrefs) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(tomls.Save(se, string(filename)))
 }
 
@@ -319,8 +319,8 @@ var (
 	// SavedPaths is a slice of strings that are file paths
 	SavedPaths gi.FilePaths
 
-	// SavedPathsFileName is the name of the saved file paths file in GoGi prefs directory
-	SavedPathsFileName = "gide_saved_paths.json"
+	// SavedPathsFilename is the name of the saved file paths file in GoGi prefs directory
+	SavedPathsFilename = "gide_saved_paths.json"
 
 	// GideViewResetRecents defines a string that is added as an item to the recents menu
 	GideViewResetRecents = "<i>Reset Recents</i>"
@@ -336,7 +336,7 @@ var (
 func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, SavedPathsFileName)
+	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Save(pnm)
 	// add back after save
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
@@ -347,7 +347,7 @@ func OpenPaths() {
 	// remove to be sure we don't have duplicate extras
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, SavedPathsFileName)
+	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Open(pnm)
 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 }

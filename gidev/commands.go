@@ -89,8 +89,8 @@ func (ge *GideView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm gide.CmdName, s
 	cmd.Run(ge, cbuf)
 }
 
-// ExecCmdNameFileName executes command of given name on given file name
-func (ge *GideView) ExecCmdNameFileName(fn string, cmdNm gide.CmdName, sel bool, clearBuf bool) {
+// ExecCmdNameFilename executes command of given name on given file name
+func (ge *GideView) ExecCmdNameFilename(fn string, cmdNm gide.CmdName, sel bool, clearBuf bool) {
 	cmd, _, ok := gide.AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return

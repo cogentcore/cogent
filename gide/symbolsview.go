@@ -179,7 +179,7 @@ func SelectSymbol(ge Gide, ssym syms.Symbol) {
 	if tv == nil || tv.Buf == nil || string(tv.Buf.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
-		tv, ok = ge.OpenFileAtRegion(gi.FileName(ssym.Filename), tr)
+		tv, ok = ge.OpenFileAtRegion(gi.Filename(ssym.Filename), tr)
 		if !ok {
 			log.Printf("GideView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}

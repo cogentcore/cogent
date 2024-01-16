@@ -150,12 +150,7 @@ func (vv *KeyMapValue) ConfigWidget(w gi.Widget) {
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
 	bt.Config()
-	bt.OnClick(func(e events.Event) {
-		if !vv.IsReadOnly() {
-			vv.SetDialogType(e)
-			vv.OpenDialog(bt, nil)
-		}
-	})
+	giv.ConfigDialogWidget(vv, bt, false)
 	vv.UpdateWidget()
 }
 
@@ -288,12 +283,7 @@ func (vv *CmdValue) ConfigWidget(w gi.Widget) {
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
 	bt.Config()
-	bt.OnClick(func(e events.Event) {
-		if !vv.IsReadOnly() {
-			vv.SetDialogType(e)
-			vv.OpenDialog(bt, nil)
-		}
-	})
+	giv.ConfigDialogWidget(vv, bt, false)
 	vv.UpdateWidget()
 }
 

@@ -29,10 +29,10 @@ type ArgVarInfo struct {
 var ArgVars = map[string]ArgVarInfo{
 	/// Current Filename
 	"{FilePath}":       {"Current file name with full path.", ArgVarFile},
-	"{FileName}":       {"Current file name only, without path.", ArgVarFile},
+	"{Filename}":       {"Current file name only, without path.", ArgVarFile},
 	"{FileExt}":        {"Extension of current file name.", ArgVarExt},
 	"{FileExtLC}":      {"Extension of current file name, lowercase.", ArgVarExt},
-	"{FileNameNoExt}":  {"Current file name without path and extension.", ArgVarFile},
+	"{FilenameNoExt}":  {"Current file name without path and extension.", ArgVarFile},
 	"{FileDir}":        {"Name only of current file's directory.", ArgVarDir},
 	"{FileDirPath}":    {"Full path to current file's directory.", ArgVarDir},
 	"{FileDirProjRel}": {"Path to current file's directory relative to project root.", ArgVarDir},
@@ -70,7 +70,7 @@ var ArgVars = map[string]ArgVarInfo{
 	"{CurWord}":     {"Current word under cursor.", ArgVarText},
 
 	"{PromptFilePath}":       {"Prompt user for a file, and this is the full path to that file.", ArgVarPrompt},
-	"{PromptFileName}":       {"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
+	"{PromptFilename}":       {"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
 	"{PromptFileDir}":        {"Prompt user for a file, and this is the directory name (only) of that file.", ArgVarPrompt},
 	"{PromptFileDirPath}":    {"Prompt user for a file, and this is the full path to that directory.", ArgVarPrompt},
 	"{PromptFileDirProjRel}": {"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
@@ -127,10 +127,10 @@ func (avp *ArgVarVals) Set(fpath string, ppref *ProjPrefs, tv *texteditor.Editor
 	exerel, _ := filepath.Rel(projpath, exepath)
 
 	av["{FilePath}"] = fpath
-	av["{FileName}"] = fnm
+	av["{Filename}"] = fnm
 	av["{FileExt}"] = ext
 	av["{FileExtLC}"] = extlc
-	av["{FileNameNoExt}"] = fnmnoext
+	av["{FilenameNoExt}"] = fnmnoext
 	av["{FileDir}"] = dir
 	av["{FileDirPath}"] = dirpath
 	av["{FileDirProjRel}"] = dirrel
@@ -249,7 +249,7 @@ func ArgVarPrompts(arg string) (map[string]struct{}, bool) {
 				ps = make(map[string]struct{})
 			}
 			if strings.HasPrefix(vnm, "{PromptFile") {
-				ps["{PromptFileName}"] = struct{}{}
+				ps["{PromptFilename}"] = struct{}{}
 			} else {
 				ps[vnm] = struct{}{}
 			}

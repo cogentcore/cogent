@@ -124,7 +124,7 @@ func (ge *GideView) LangDefaults() {
 	ge.Prefs.RunCmds = gide.CmdNames{"Build: Run Proj"}
 	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
 	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
-	ge.Prefs.RunExec = gi.FileName(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
+	ge.Prefs.RunExec = gi.Filename(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
 	if len(ge.Prefs.BuildCmds) == 0 {
 		switch ge.Prefs.MainLang {
 		case fi.Go:

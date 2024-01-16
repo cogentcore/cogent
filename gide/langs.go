@@ -48,35 +48,35 @@ func (lt Langs) Validate() bool {
 	return ok
 }
 
-// PrefsLangsFileName is the name of the preferences file in App prefs
+// PrefsLangsFilename is the name of the preferences file in App prefs
 // directory for saving / loading the default AvailLangs languages list
-var PrefsLangsFileName = "lang_prefs.toml"
+var PrefsLangsFilename = "lang_prefs.toml"
 
 // Open opens languages from a toml-formatted file.
-func (lt *Langs) Open(filename gi.FileName) error {
+func (lt *Langs) Open(filename gi.Filename) error {
 	*lt = make(Langs) // reset
 	return tomls.Open(lt, string(filename))
 }
 
 // Save saves languages to a toml-formatted file.
-func (lt *Langs) Save(filename gi.FileName) error { //gti:add
+func (lt *Langs) Save(filename gi.Filename) error { //gti:add
 	return tomls.Save(lt, string(filename))
 }
 
-// OpenSettings opens Langs from App standard prefs directory, using PrefsLangsFileName
+// OpenSettings opens Langs from App standard prefs directory, using PrefsLangsFilename
 func (lt *Langs) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsLangsFileName)
+	pnm := filepath.Join(pdir, PrefsLangsFilename)
 	AvailLangsChanged = false
-	return lt.Open(gi.FileName(pnm))
+	return lt.Open(gi.Filename(pnm))
 }
 
-// SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFileName
+// SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFilename
 func (lt *Langs) SavePrefs() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsLangsFileName)
+	pnm := filepath.Join(pdir, PrefsLangsFilename)
 	AvailLangsChanged = false
-	return lt.Save(gi.FileName(pnm))
+	return lt.Save(gi.Filename(pnm))
 }
 
 // CopyFrom copies languages from given other map

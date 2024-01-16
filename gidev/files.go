@@ -54,7 +54,7 @@ func (ge *GideView) CallSaveActiveViewAs(ctx gi.Widget) {
 
 // SaveActiveViewAs save with specified filename the contents of the
 // currently-active textview
-func (ge *GideView) SaveActiveViewAs(filename gi.FileName) { //gti:add
+func (ge *GideView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf != nil {
 		ge.LastSaveTStamp = time.Now()
@@ -146,7 +146,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextEditor, vidx int, fn *filetree.No
 	if tv.IsNotSaved() || !fn.Buf.AutoSaveCheck() {
 		return false
 	}
-	ge.DiffFileNode(fn, gi.FileName(fn.Buf.AutoSaveFilename()))
+	ge.DiffFileNode(fn, gi.Filename(fn.Buf.AutoSaveFilename()))
 	d := gi.NewBody().AddTitle("Autosave file Exists").
 		AddText(fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
 	d.AddBottomBar(func(pw gi.Widget) {
@@ -157,7 +157,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextEditor, vidx int, fn *filetree.No
 		})
 		gi.NewButton(pw).SetText("Open autosave file").OnClick(func(e events.Event) {
 			d.Close()
-			ge.NextViewFile(gi.FileName(fn.Buf.AutoSaveFilename()))
+			ge.NextViewFile(gi.Filename(fn.Buf.AutoSaveFilename()))
 		})
 	})
 	d.NewDialog(ge).Run()
@@ -262,7 +262,7 @@ func (ge *GideView) TextBufForFile(fpath string, add bool) *texteditor.Buf {
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns textview and its
 // index, false if not found
-func (ge *GideView) NextViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) { //gti:add
+func (ge *GideView) NextViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -278,7 +278,7 @@ func (ge *GideView) CallViewFile(ctx gi.Widget) {
 
 // ViewFile views file in an existing TextEditor if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
-func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) { //gti:add
+func (ge *GideView) ViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -295,7 +295,7 @@ func (ge *GideView) ViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) { //
 }
 
 // ViewFileInIdx views file in given text view index
-func (ge *GideView) ViewFileInIdx(fnm gi.FileName, idx int) (*gide.TextEditor, int, bool) {
+func (ge *GideView) ViewFileInIdx(fnm gi.Filename, idx int) (*gide.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -324,7 +324,7 @@ func (ge *GideView) LinkViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) 
 
 // LinkViewFile opens the file in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) {
+func (ge *GideView) LinkViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -345,7 +345,7 @@ func (ge *GideView) LinkViewFile(fnm gi.FileName) (*gide.TextEditor, int, bool) 
 // ShowFile shows given file name at given line, returning TextEditor showing it
 // or error if not found.
 func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextEditor, error) {
-	tv, _, ok := ge.LinkViewFile(gi.FileName(fname))
+	tv, _, ok := ge.LinkViewFile(gi.Filename(fname))
 	if ok {
 		tv.SetCursorTarget(lex.Pos{Ln: ln - 1})
 		return tv, nil

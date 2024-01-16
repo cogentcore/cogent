@@ -33,11 +33,11 @@ func (t *GideView) New() ki.Ki {
 
 // SetProjRoot sets the [GideView.ProjRoot]:
 // root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
-func (t *GideView) SetProjRoot(v gi.FileName) *GideView { t.ProjRoot = v; return t }
+func (t *GideView) SetProjRoot(v gi.Filename) *GideView { t.ProjRoot = v; return t }
 
 // SetProjFilename sets the [GideView.ProjFilename]:
 // current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
-func (t *GideView) SetProjFilename(v gi.FileName) *GideView { t.ProjFilename = v; return t }
+func (t *GideView) SetProjFilename(v gi.Filename) *GideView { t.ProjFilename = v; return t }
 
 // SetActiveLang sets the [GideView.ActiveLang]:
 // language for current active filename

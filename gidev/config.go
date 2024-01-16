@@ -128,13 +128,6 @@ func (ge *GideView) ConfigSplits() {
 			ge.FileNodeSelected(sn)
 		}
 	})
-	ge.Files.OnDoubleClick(func(e events.Event) {
-		e.SetHandled()
-		sn := ge.SelectedFileNode()
-		if sn != nil {
-			ge.FileNodeOpened(sn)
-		}
-	})
 
 	for i := 0; i < NTextEditors; i++ {
 		i := i

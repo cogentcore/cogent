@@ -22,7 +22,7 @@ func TestBind(t *testing.T) {
 	projpath := "/Users/oreilly/go/src/github.com"
 
 	pp := ProjPrefs{}
-	pp.ProjRoot = gi.FileName(projpath)
+	pp.ProjRoot = gi.Filename(projpath)
 
 	var avp ArgVarVals
 	avp.Set(fpath, &pp, &tv)
@@ -51,13 +51,13 @@ func TestBind(t *testing.T) {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = avp.Bind("{FileDir}/{FileName}")
+	bv = avp.Bind("{FileDir}/{Filename}")
 	cv = "gide/argvars_test.go"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = avp.Bind("{FileDirProjRel}/{FileNameNoExt}")
+	bv = avp.Bind("{FileDirProjRel}/{FilenameNoExt}")
 	cv = "goki/gide/argvars_test"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)

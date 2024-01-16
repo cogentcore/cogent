@@ -37,13 +37,13 @@ type GideView struct {
 	gi.Frame
 
 	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
-	ProjRoot gi.FileName
+	ProjRoot gi.Filename
 
 	// current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
-	ProjFilename gi.FileName `ext:".gide"`
+	ProjFilename gi.Filename `ext:".gide"`
 
 	// filename of the currently-active textview
-	ActiveFilename gi.FileName `set:"-"`
+	ActiveFilename gi.Filename `set:"-"`
 
 	// language for current active filename
 	ActiveLang fi.Known
@@ -166,7 +166,7 @@ func (ge *GideView) IsEmpty() bool {
 }
 
 // OpenRecent opens a recently-used file
-func (ge *GideView) OpenRecent(filename gi.FileName) { //gti:add
+func (ge *GideView) OpenRecent(filename gi.Filename) { //gti:add
 	if string(filename) == gide.GideViewResetRecents {
 		gide.SavedPaths = nil
 		gi.StringsAddExtras((*[]string)(&gide.SavedPaths), gide.SavedPathsExtras)
@@ -204,19 +204,19 @@ func (ge *GideView) EditRecents() {
 func (ge *GideView) OpenFile(fnm string) { //gti:add
 	abfn, _ := filepath.Abs(fnm)
 	if strings.HasPrefix(abfn, string(ge.ProjRoot)) {
-		ge.ViewFile(gi.FileName(abfn))
+		ge.ViewFile(gi.Filename(abfn))
 		return
 	}
 	for _, win := range gi.MainRenderWins {
 		msc := win.MainScene()
 		geo := GideInScene(msc)
 		if strings.HasPrefix(abfn, string(geo.ProjRoot)) {
-			geo.ViewFile(gi.FileName(abfn))
+			geo.ViewFile(gi.Filename(abfn))
 			return
 		}
 	}
 	// fmt.Printf("open path: %s\n", ge.ProjRoot)
-	ge.OpenPath(gi.FileName(abfn))
+	ge.OpenPath(gi.Filename(abfn))
 }
 
 // SetWindowNameTitle sets the window name and title based on current project name
@@ -243,9 +243,9 @@ func (ge *GideView) SetWindowNameTitle() {
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
 // current GideView object if it is empty, or otherwise opens a new window.
-func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
+func (ge *GideView) OpenPath(path gi.Filename) *GideView { //gti:add
 	if gproj, has := CheckForProjAtPath(string(path)); has {
-		return ge.OpenProj(gi.FileName(gproj))
+		return ge.OpenProj(gi.Filename(gproj))
 	}
 	if !ge.IsEmpty() {
 		return NewGideProjPath(string(path))
@@ -256,10 +256,10 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 		os.Chdir(root)
 		gide.SavedPaths.AddPath(root, gi.SystemSettings.Behavior.SavedPathsMax)
 		gide.SavePaths()
-		ge.ProjRoot = gi.FileName(root)
+		ge.ProjRoot = gi.Filename(root)
 		ge.SetName(pnm)
 		ge.Sc.SetName(pnm)
-		ge.Prefs.ProjFilename = gi.FileName(filepath.Join(root, pnm+".gide"))
+		ge.Prefs.ProjFilename = gi.Filename(filepath.Join(root, pnm+".gide"))
 		ge.ProjFilename = ge.Prefs.ProjFilename
 		ge.Prefs.ProjRoot = ge.ProjRoot
 		ge.GuessMainLang()
@@ -268,7 +268,7 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 		ge.UpdateFiles()
 		ge.SplitsSetView(gide.SplitName(gide.AvailSplitNames[0]))
 		if fnm != "" {
-			ge.NextViewFile(gi.FileName(fnm))
+			ge.NextViewFile(gi.Filename(fnm))
 		}
 	}
 	return ge
@@ -276,7 +276,7 @@ func (ge *GideView) OpenPath(path gi.FileName) *GideView { //gti:add
 
 // OpenProj opens .gide project file and its settings from given filename, in a standard
 // toml-formatted file
-func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
+func (ge *GideView) OpenProj(filename gi.Filename) *GideView { //gti:add
 	if !ge.IsEmpty() {
 		return OpenGideProj(string(filename))
 	}
@@ -285,7 +285,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 		slog.Error("Project Prefs had a loading error", "error", err)
 		if ge.Prefs.ProjRoot == "" {
 			root, _, _, _ := ProjPathParse(string(filename))
-			ge.Prefs.ProjRoot = gi.FileName(root)
+			ge.Prefs.ProjRoot = gi.Filename(root)
 			ge.GuessMainLang()
 		}
 	}
@@ -294,7 +294,7 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 	if ok {
 		gide.SetGoMod(ge.Prefs.GoMod)
 		os.Chdir(string(ge.Prefs.ProjRoot))
-		ge.ProjRoot = gi.FileName(ge.Prefs.ProjRoot)
+		ge.ProjRoot = gi.Filename(ge.Prefs.ProjRoot)
 		gide.SavedPaths.AddPath(string(filename), gi.SystemSettings.Behavior.SavedPathsMax)
 		gide.SavePaths()
 		ge.SetName(pnm)
@@ -310,14 +310,14 @@ func (ge *GideView) OpenProj(filename gi.FileName) *GideView { //gti:add
 // path -- all GideView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *GideView) NewProj(path gi.FileName, folder string, mainLang fi.Known, versCtrl filetree.VersCtrlName) *GideView { //gti:add
+func (ge *GideView) NewProj(path gi.Filename, folder string, mainLang fi.Known, versCtrl filetree.VersCtrlName) *GideView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
 		gi.MessageDialog(ge, fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err), "Could not Make Folder")
 		return nil
 	}
-	nge := ge.OpenPath(gi.FileName(np))
+	nge := ge.OpenPath(gi.Filename(np))
 	nge.Prefs.MainLang = mainLang
 	if versCtrl != "" {
 		nge.Prefs.VersCtrl = versCtrl
@@ -374,7 +374,7 @@ func (ge *GideView) SaveProjIfExists(saveAllFiles bool) bool {
 // toml-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (ge *GideView) SaveProjAs(filename gi.FileName) bool { //gti:add
+func (ge *GideView) SaveProjAs(filename gi.Filename) bool { //gti:add
 	spell.SaveIfLearn()
 	gide.SavedPaths.AddPath(string(filename), gi.SystemSettings.Behavior.SavedPathsMax)
 	gide.SavePaths()
@@ -538,7 +538,7 @@ func NewGideProjPath(path string) *GideView {
 // returning the window and the path
 func OpenGideProj(projfile string) *GideView {
 	pp := &gide.ProjPrefs{}
-	if err := pp.Open(gi.FileName(projfile)); err != nil {
+	if err := pp.Open(gi.Filename(projfile)); err != nil {
 		slog.Debug("Project Prefs had a loading error", "error", err)
 	}
 	path := string(pp.ProjRoot)
@@ -600,9 +600,9 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	b.NewWindow().Run()
 
 	if doPath {
-		ge.OpenPath(gi.FileName(path))
+		ge.OpenPath(gi.Filename(path))
 	} else {
-		ge.OpenProj(gi.FileName(path))
+		ge.OpenProj(gi.Filename(path))
 	}
 
 	return ge

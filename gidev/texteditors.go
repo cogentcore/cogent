@@ -89,7 +89,7 @@ func (ge *GideView) OpenNodeForTextEditor(tv *gide.TextEditor) (*filetree.Node, 
 
 // TextEditorForFile finds FileNode for file, and returns TextEditor and index
 // that is viewing that FileNode, or false if none is
-func (ge *GideView) TextEditorForFile(fnm gi.FileName) (*gide.TextEditor, int, bool) {
+func (ge *GideView) TextEditorForFile(fnm gi.Filename) (*gide.TextEditor, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -193,7 +193,7 @@ func (ge *GideView) SwapTextEditors() bool {
 	return true
 }
 
-func (ge *GideView) OpenFileAtRegion(filename gi.FileName, tr textbuf.Region) (tv *gide.TextEditor, ok bool) {
+func (ge *GideView) OpenFileAtRegion(filename gi.Filename, tr textbuf.Region) (tv *gide.TextEditor, ok bool) {
 	tv, _, ok = ge.LinkViewFile(filename)
 	if tv == nil {
 		return nil, false
@@ -219,7 +219,7 @@ func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gid
 	}
 	fpath := up.Path[1:] // has double //
 	pos := up.Fragment
-	tv, _, ok = ge.LinkViewFile(gi.FileName(fpath))
+	tv, _, ok = ge.LinkViewFile(gi.Filename(fpath))
 	if !ok {
 		gi.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 		return

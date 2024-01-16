@@ -37,7 +37,7 @@ type CmdAndArgs struct {
 	// external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable.
 	Cmd string `width:"25"`
 
-	// args to pass to the program, one string per arg -- use {FileName} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows).
+	// args to pass to the program, one string per arg -- use {Filename} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows).
 	Args CmdArgs `complete:"arg" width:"25"`
 
 	// default value for prompt string, for first use -- thereafter it uses last value provided for given command
@@ -723,28 +723,28 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 	return nil, -1, false
 }
 
-// PrefsCmdsFileName is the name of the preferences file in App prefs
+// PrefsCmdsFilename is the name of the preferences file in App prefs
 // directory for saving / loading your CustomCmds commands list
-var PrefsCmdsFileName = "command_prefs.toml"
+var PrefsCmdsFilename = "command_prefs.toml"
 
 // Open opens commands from a toml-formatted file.
-func (cm *Commands) Open(filename gi.FileName) error { //gti:add
+func (cm *Commands) Open(filename gi.Filename) error { //gti:add
 	*cm = make(Commands, 0, 10) // reset
 	return grr.Log(jsons.Open(cm, string(filename)))
 }
 
 // Save saves commands to a toml-formatted file.
-func (cm *Commands) Save(filename gi.FileName) error { //gti:add
+func (cm *Commands) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(jsons.Save(cm, string(filename)))
 }
 
 // OpenSettings opens custom Commands from App standard prefs directory, using
-// PrefsCmdsFileName
+// PrefsCmdsFilename
 func (cm *Commands) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsCmdsFileName)
+	pnm := filepath.Join(pdir, PrefsCmdsFilename)
 	CustomCmdsChanged = false
-	err := cm.Open(gi.FileName(pnm))
+	err := cm.Open(gi.Filename(pnm))
 	if err == nil {
 		MergeAvailCmds()
 	} else {
@@ -754,12 +754,12 @@ func (cm *Commands) OpenSettings() error { //gti:add
 }
 
 // SavePrefs saves custom Commands to App standard prefs directory, using
-// PrefsCmdsFileName
+// PrefsCmdsFilename
 func (cm *Commands) SavePrefs() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsCmdsFileName)
+	pnm := filepath.Join(pdir, PrefsCmdsFilename)
 	CustomCmdsChanged = false
-	err := cm.Save(gi.FileName(pnm))
+	err := cm.Save(gi.Filename(pnm))
 	if err == nil {
 		MergeAvailCmds()
 	}

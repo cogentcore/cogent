@@ -86,13 +86,13 @@ func (pv *PiView) IsEmpty() bool {
 }
 
 // OpenRecent opens a recently-used project
-func (pv *PiView) OpenRecent(filename gi.FileName) { //gti:add
+func (pv *PiView) OpenRecent(filename gi.Filename) { //gti:add
 	pv.OpenProj(filename)
 }
 
 // OpenProj opens lexer and parser rules to current filename, in a standard JSON-formatted file
 // if current is not empty, opens in a new window
-func (pv *PiView) OpenProj(filename gi.FileName) *PiView { //gti:add
+func (pv *PiView) OpenProj(filename gi.Filename) *PiView { //gti:add
 	if !pv.IsEmpty() {
 		_, nprj := NewPiView()
 		nprj.OpenProj(filename)
@@ -127,7 +127,7 @@ func (pv *PiView) SaveProj() { //gti:add
 
 // SaveProjAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
 // also saves the current parser
-func (pv *PiView) SaveProjAs(filename gi.FileName) { //gti:add
+func (pv *PiView) SaveProjAs(filename gi.Filename) { //gti:add
 	SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
 	SavePaths()
 	pv.SaveParser()
@@ -160,7 +160,7 @@ func (pv *PiView) GetPrefs() {
 //  other IO
 
 // OpenParser opens lexer and parser rules to current filename, in a standard JSON-formatted file
-func (pv *PiView) OpenParser(filename gi.FileName) { //gti:add
+func (pv *PiView) OpenParser(filename gi.Filename) { //gti:add
 	pv.Parser.OpenJSON(string(filename))
 	pv.Prefs.ParserFile = filename
 	pv.Config()
@@ -183,7 +183,7 @@ func (pv *PiView) SaveParser() { //gti:add
 }
 
 // SaveParserAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
-func (pv *PiView) SaveParserAs(filename gi.FileName) { //gti:add
+func (pv *PiView) SaveParserAs(filename gi.Filename) { //gti:add
 	pv.Parser.SaveJSON(string(filename))
 
 	ext := filepath.Ext(string(pv.Prefs.ParserFile))
@@ -197,13 +197,13 @@ func (pv *PiView) SaveParserAs(filename gi.FileName) { //gti:add
 }
 
 // OpenTest opens test file
-func (pv *PiView) OpenTest(filename gi.FileName) { //gti:add
+func (pv *PiView) OpenTest(filename gi.Filename) { //gti:add
 	pv.TestBuf.OpenFile(filename)
 	pv.Prefs.TestFile = filename
 }
 
 // SaveTestAs saves the test file as..
-func (pv *PiView) SaveTestAs(filename gi.FileName) {
+func (pv *PiView) SaveTestAs(filename gi.Filename) {
 	pv.TestBuf.EditDone()
 	pv.TestBuf.SaveFile(filename)
 	pv.Prefs.TestFile = filename

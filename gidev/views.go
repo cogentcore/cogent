@@ -257,10 +257,10 @@ func (ge *GideView) OpenConsoleTab() { //gti:add
 }
 
 // ChooseRunExec selects the executable to run for the project
-func (ge *GideView) ChooseRunExec(exePath gi.FileName) { //gti:add
+func (ge *GideView) ChooseRunExec(exePath gi.Filename) { //gti:add
 	if exePath != "" {
 		ge.Prefs.RunExec = exePath
-		ge.Prefs.BuildDir = gi.FileName(filepath.Dir(string(exePath)))
+		ge.Prefs.BuildDir = gi.Filename(filepath.Dir(string(exePath)))
 		if !ge.Prefs.RunExecIsExec() {
 			gi.MessageDialog(ge, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
 		}

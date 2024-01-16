@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"goki.dev/events"
 	"goki.dev/fi"
 	"goki.dev/filetree"
 	"goki.dev/gi"
@@ -31,6 +32,22 @@ type FileNode struct {
 func (fn *FileNode) OnInit() {
 	fn.Node.OnInit()
 	fn.AddContextMenu(fn.ContextMenu)
+	fn.OnWidgetAdded(func(w gi.Widget) {
+		if w.PathFrom(fn) == "parts" {
+			w.On(events.DoubleClick, func(e events.Event) {
+				e.SetHandled()
+				sels := fn.SelectedViews()
+				if len(sels) > 0 {
+					sn := filetree.AsNode(sels[len(sels)-1])
+					if sn != nil {
+						if ge, ok := ParentGide(fn.This()); ok {
+							ge.FileNodeOpened(sn)
+						}
+					}
+				}
+			})
+		}
+	})
 }
 
 // EditFile pulls up this file in Gide
@@ -54,7 +71,7 @@ func (fn *FileNode) SetRunExec() {
 	ge, ok := ParentGide(fn.This())
 	if ok {
 		ge.ProjPrefs().RunExec = fn.FPath
-		ge.ProjPrefs().BuildDir = gi.FileName(filepath.Dir(string(fn.FPath)))
+		ge.ProjPrefs().BuildDir = gi.Filename(filepath.Dir(string(fn.FPath)))
 	}
 }
 

@@ -40,40 +40,40 @@ func (lt *Registers) Names() []string {
 	return nms
 }
 
-// PrefsRegistersFileName is the name of the preferences file in App prefs
+// PrefsRegistersFilename is the name of the preferences file in App prefs
 // directory for saving / loading the default AvailRegisters
-var PrefsRegistersFileName = "registers_prefs.toml"
+var PrefsRegistersFilename = "registers_prefs.toml"
 
 // Open opens named registers from a toml-formatted file.
-func (lt *Registers) Open(filename gi.FileName) error { //gti:add
+func (lt *Registers) Open(filename gi.Filename) error { //gti:add
 	*lt = make(Registers) // reset
 	return grr.Log(tomls.Open(lt, string(filename)))
 }
 
 // Save saves named registers to a toml-formatted file.
-func (lt *Registers) Save(filename gi.FileName) error { //gti:add
+func (lt *Registers) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(tomls.Save(lt, string(filename)))
 }
 
-// OpenSettings opens Registers from App standard prefs directory, using PrefRegistersFileName
+// OpenSettings opens Registers from App standard prefs directory, using PrefRegistersFilename
 func (lt *Registers) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsRegistersFileName)
+	pnm := filepath.Join(pdir, PrefsRegistersFilename)
 	AvailRegistersChanged = false
-	err := lt.Open(gi.FileName(pnm))
+	err := lt.Open(gi.Filename(pnm))
 	if err == nil {
 		AvailRegisterNames = lt.Names()
 	}
 	return err
 }
 
-// SavePrefs saves Registers to App standard prefs directory, using PrefRegistersFileName
+// SavePrefs saves Registers to App standard prefs directory, using PrefRegistersFilename
 func (lt *Registers) SavePrefs() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsRegistersFileName)
+	pnm := filepath.Join(pdir, PrefsRegistersFilename)
 	AvailRegistersChanged = false
 	AvailRegisterNames = lt.Names()
-	return lt.Save(gi.FileName(pnm))
+	return lt.Save(gi.Filename(pnm))
 }
 
 // AvailRegistersChanged is used to update toolbars via following menu, toolbar

@@ -51,7 +51,7 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 		for _, sp := range gide.SavedPaths {
 			sp := sp
 			gi.NewButton(m).SetText(sp).OnClick(func(e events.Event) {
-				ge.OpenRecent(gi.FileName(sp))
+				ge.OpenRecent(gi.Filename(sp))
 			})
 		}
 	})

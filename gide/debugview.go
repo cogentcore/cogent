@@ -759,7 +759,7 @@ func (dv *DebugView) ConfigDebugView(ge Gide, sup fi.Known, exePath string) {
 	gi.NewTabs(dv, "tabs")
 	dv.State.BlankState()
 	dv.OutBuf = texteditor.NewBuf()
-	dv.OutBuf.Filename = gi.FileName("debug-outbuf")
+	dv.OutBuf.Filename = gi.Filename("debug-outbuf")
 	dv.ConfigToolbar()
 	dv.ConfigTabs()
 	dv.State.Breaks = nil // get rid of dummy

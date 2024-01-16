@@ -109,7 +109,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	tv.Styles.Font.Family = string(gi.AppearanceSettings.MonoFont)
 	d.AddBottomBar(func(pw gi.Widget) {
 		gi.NewButton(pw).SetText("Open File").SetIcon(icons.Open).OnClick(func(e events.Event) {
-			ge.ViewFile(gi.FileName(ld.Filename))
+			ge.ViewFile(gi.Filename(ld.Filename))
 			d.Close()
 		})
 		gi.NewButton(pw).SetText("Copy To Clipboard").SetIcon("copy").
@@ -293,7 +293,7 @@ func (ge *GideView) SpacesToTabs() { //gti:add
 // DiffFiles shows the differences between two given files
 // in side-by-side DiffView and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
-func (ge *GideView) DiffFiles(fnmA, fnmB gi.FileName) { //gti:add
+func (ge *GideView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
 	fna := ge.FileNodeForFile(string(fnmA), true)
 	if fna == nil {
 		return
@@ -310,7 +310,7 @@ func (ge *GideView) DiffFiles(fnmA, fnmB gi.FileName) { //gti:add
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffView and in the console as a context diff.
-func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.FileName) { //gti:add
+func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:add
 	fnb := ge.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
 		return
@@ -421,10 +421,10 @@ func (ge *GideView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		}
 	}
 	pos := up.Fragment
-	tv, _, ok := ge.LinkViewFile(gi.FileName(fpath))
+	tv, _, ok := ge.LinkViewFile(gi.Filename(fpath))
 	if !ok {
 		_, fnm := filepath.Split(fpath)
-		tv, _, ok = ge.LinkViewFile(gi.FileName(fnm))
+		tv, _, ok = ge.LinkViewFile(gi.Filename(fnm))
 		if !ok {
 			gi.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 			return false

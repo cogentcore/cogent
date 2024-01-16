@@ -88,9 +88,9 @@ func (lt *Splits) Names() []string {
 	return nms
 }
 
-// PrefsSplitsFileName is the name of the preferences file in App prefs
+// PrefsSplitsFilename is the name of the preferences file in App prefs
 // directory for saving / loading the default AvailSplits
-var PrefsSplitsFileName = "splits_prefs.json"
+var PrefsSplitsFilename = "splits_prefs.json"
 
 // FixLen ensures that there are exactly 4 splits in each
 func (lt *Splits) FixLen() {
@@ -105,7 +105,7 @@ func (lt *Splits) FixLen() {
 }
 
 // Open opens named splits from a json-formatted file.
-func (lt *Splits) Open(filename gi.FileName) error { //gti:add
+func (lt *Splits) Open(filename gi.Filename) error { //gti:add
 	*lt = make(Splits, 0, 10) // reset
 	err := grr.Log(jsons.Open(lt, string(filename)))
 	lt.FixLen()
@@ -113,30 +113,30 @@ func (lt *Splits) Open(filename gi.FileName) error { //gti:add
 }
 
 // Save saves named splits to a json-formatted file.
-func (lt *Splits) Save(filename gi.FileName) error { //gti:add
+func (lt *Splits) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(jsons.Save(lt, string(filename)))
 }
 
-// OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFileName
+// OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) OpenSettings() error { //gti:add
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsSplitsFileName)
+	pnm := filepath.Join(pdir, PrefsSplitsFilename)
 	AvailSplitsChanged = false
-	err := lt.Open(gi.FileName(pnm))
+	err := lt.Open(gi.Filename(pnm))
 	if err == nil {
 		AvailSplitNames = lt.Names()
 	}
 	return err
 }
 
-// SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFileName
+// SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) SavePrefs() error { //gti:add
 	lt.FixLen()
 	pdir := AppDataDir()
-	pnm := filepath.Join(pdir, PrefsSplitsFileName)
+	pnm := filepath.Join(pdir, PrefsSplitsFilename)
 	AvailSplitsChanged = false
 	AvailSplitNames = lt.Names()
-	return lt.Save(gi.FileName(pnm))
+	return lt.Save(gi.Filename(pnm))
 }
 
 // CopyFrom copies named splits from given other map

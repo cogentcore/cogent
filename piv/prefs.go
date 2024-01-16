@@ -20,20 +20,20 @@ import (
 type ProjPrefs struct {
 
 	// filename for project (i.e, these preference)
-	ProjFile gi.FileName
+	ProjFile gi.Filename
 
 	// filename for parser
-	ParserFile gi.FileName
+	ParserFile gi.Filename
 
 	// the file for testing
-	TestFile gi.FileName
+	TestFile gi.Filename
 
 	// the options for tracing parsing
 	TraceOpts parse.TraceOpts
 }
 
 // Open open from  file
-func (pf *ProjPrefs) Open(filename gi.FileName) error {
+func (pf *ProjPrefs) Open(filename gi.Filename) error {
 	b, err := os.ReadFile(string(filename))
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func (pf *ProjPrefs) Open(filename gi.FileName) error {
 }
 
 // Save save to  file
-func (pf *ProjPrefs) Save(filename gi.FileName) error {
+func (pf *ProjPrefs) Save(filename gi.Filename) error {
 	pf.ProjFile = filename
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
@@ -71,20 +71,20 @@ func InitPrefs() {
 // SavedPaths is a slice of strings that are file paths
 var SavedPaths gi.FilePaths
 
-// SavedPathsFileName is the name of the saved file paths file in GoPi prefs directory
-var SavedPathsFileName = "gopi_saved_paths.toml"
+// SavedPathsFilename is the name of the saved file paths file in GoPi prefs directory
+var SavedPathsFilename = "gopi_saved_paths.toml"
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	pdir := gi.AppDataDir()
-	pnm := filepath.Join(pdir, SavedPathsFileName)
+	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Save(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
 	pdir := gi.AppDataDir()
-	pnm := filepath.Join(pdir, SavedPathsFileName)
+	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Open(pnm)
 }
 
