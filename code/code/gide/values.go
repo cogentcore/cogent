@@ -7,14 +7,14 @@ package gide
 import (
 	"strings"
 
-	"goki.dev/events"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/gti"
-	"goki.dev/icons"
-	"goki.dev/keyfun"
-	"goki.dev/laser"
-	"goki.dev/styles"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/gti"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/laser"
+	"cogentcore.org/core/styles"
 )
 
 // KeyMapsView opens a view of a key maps table

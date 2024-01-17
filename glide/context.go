@@ -5,8 +5,8 @@
 package glide
 
 import (
-	"goki.dev/glide/gidom"
-	"goki.dev/grr"
+	"cogentcore.org/core/glide/gidom"
+	"cogentcore.org/core/grr"
 )
 
 // Context implements [gidom.Context]

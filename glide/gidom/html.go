@@ -11,7 +11,7 @@ import (
 	"io"
 	"strings"
 
-	"goki.dev/gi/v2/gi"
+	"cogentcore.org/core/gi/v2/gi"
 	"golang.org/x/net/html"
 )
 

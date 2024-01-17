@@ -4,12 +4,12 @@
 
 package main
 
-//go:generate goki generate
+//go:generate core generate
 
 import (
-	"goki.dev/gear/gear"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/grease"
+	"cogentcore.org/core/gear/gear"
+	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/grease"
 )
 
 type config struct { //gti:add

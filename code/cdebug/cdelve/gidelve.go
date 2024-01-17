@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidelve
+package cdelve
 
 import (
 	"bytes"
@@ -14,32 +14,32 @@ import (
 	"strings"
 	"time"
 
+	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/glop/num"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/texteditor"
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
-	"github.com/goki/gide/v2/gidebug"
-	"goki.dev/glop/num"
-	"goki.dev/pi/lex"
-	"goki.dev/texteditor"
 )
 
 // GiDelve is the Delve implementation of the GiDebug interface
 type GiDelve struct {
-	path          string                    // path to exe
-	rootPath      string                    // root path for project
-	conn          string                    // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
-	dlv           *rpc2.RPCClient           // the delve rpc2 client interface
-	cmd           *exec.Cmd                 // command running delve
-	obuf          *texteditor.OutBuf        // output buffer
-	lastEvalScope *api.EvalScope            // last used EvalScope
-	statFunc      func(stat gidebug.Status) // status function
-	params        gidebug.Params            // local copy of initial params
+	path          string                   // path to exe
+	rootPath      string                   // root path for project
+	conn          string                   // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
+	dlv           *rpc2.RPCClient          // the delve rpc2 client interface
+	cmd           *exec.Cmd                // command running delve
+	obuf          *texteditor.OutBuf       // output buffer
+	lastEvalScope *api.EvalScope           // last used EvalScope
+	statFunc      func(stat cdebug.Status) // status function
+	params        cdebug.Params            // local copy of initial params
 }
 
 // NewGiDelve creates a new debugger exe and client
 // for given path, and project root path
 // test = run in test mode, and args are optional additional args to pass
 // to the debugger.
-func NewGiDelve(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (*GiDelve, error) {
+func NewGiDelve(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (*GiDelve, error) {
 	gd := &GiDelve{}
 	err := gd.Start(path, rootPath, outbuf, pars)
 	return gd, err
@@ -67,7 +67,7 @@ func (gd *GiDelve) LogErr(err error) error {
 	return err
 }
 
-func (gd *GiDelve) SetParams(params *gidebug.Params) {
+func (gd *GiDelve) SetParams(params *cdebug.Params) {
 	gd.params = *params
 	if err := gd.StartedCheck(); err != nil {
 		return
@@ -79,28 +79,28 @@ func (gd *GiDelve) SetParams(params *gidebug.Params) {
 // StartedCheck checks that delve client is running properly
 func (gd *GiDelve) StartedCheck() error {
 	if gd.cmd == nil || gd.dlv == nil {
-		err := gidebug.NotStartedErr
+		err := cdebug.NotStartedErr
 		return gd.LogErr(err)
 	}
 	return nil
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) error {
+func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) error {
 	gd.path = path
 	gd.rootPath = rootPath
 	gd.params = *pars
 	gd.statFunc = pars.StatFunc
 	switch pars.Mode {
-	case gidebug.Exec:
+	case cdebug.Exec:
 		targs := []string{"debug", "--headless", "--api-version=2"}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
-	case gidebug.Test:
+	case cdebug.Test:
 		targs := []string{"test", "--headless", "--api-version=2"}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
-	case gidebug.Attach:
+	case cdebug.Attach:
 		// note: --log here creates huge amounts of messages and doesn't work..
 		targs := []string{"attach", fmt.Sprintf("%d", gd.params.PID), "--headless", "--api-version=2"}
 		targs = append(targs, gd.params.Args...)
@@ -118,7 +118,7 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buf, pars *gi
 		}
 	}
 	if err != nil {
-		gd.statFunc(gidebug.Error)
+		gd.statFunc(cdebug.Error)
 		return gd.LogErr(err)
 	}
 	return nil
@@ -137,13 +137,13 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		gd.dlv = rpc2.NewClient(gd.conn)
 		gd.SetParams(&gd.params)
 		if gd.statFunc != nil {
-			gd.statFunc(gidebug.Ready)
+			gd.statFunc(cdebug.Ready)
 		}
 		return out
 	}
 	if flds[0] == "exit" && flds[1] == "status" {
 		if gd.statFunc != nil {
-			gd.statFunc(gidebug.Error)
+			gd.statFunc(cdebug.Error)
 		}
 		return out
 	}
@@ -163,7 +163,7 @@ func (gd *GiDelve) IsActive() bool {
 // Returns the pid of the process we are debugging.
 func (gd *GiDelve) ProcessPid() int {
 	if err := gd.StartedCheck(); err != nil {
-		log.Println(gidebug.NotStartedErr)
+		log.Println(cdebug.NotStartedErr)
 		return -1
 	}
 	return gd.dlv.ProcessPid()
@@ -172,7 +172,7 @@ func (gd *GiDelve) ProcessPid() int {
 // LastModified returns the time that the process' executable was modified.
 func (gd *GiDelve) LastModified() time.Time {
 	if err := gd.StartedCheck(); err != nil {
-		log.Println(gidebug.NotStartedErr)
+		log.Println(cdebug.NotStartedErr)
 		return time.Time{}
 	}
 	return gd.dlv.LastModified()
@@ -225,7 +225,7 @@ func (gd *GiDelve) RestartFrom(pos string, resetArgs bool, newArgs []string) err
 // This will return immediately -- if the target is running then
 // the Running flag will be set and a Stop bus be called to
 // get any further information about the target.
-func (gd *GiDelve) GetState() (*gidebug.State, error) {
+func (gd *GiDelve) GetState() (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -235,12 +235,12 @@ func (gd *GiDelve) GetState() (*gidebug.State, error) {
 }
 
 // Continue resumes process execution.
-func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
+func (gd *GiDelve) Continue(all *cdebug.AllState) <-chan *cdebug.State {
 	if err := gd.StartedCheck(); err != nil {
 		return nil
 	}
 	dsc := gd.dlv.Continue()
-	sc := make(chan *gidebug.State)
+	sc := make(chan *cdebug.State)
 	go func() {
 		for nv := range dsc {
 			if nv.Err != nil {
@@ -248,7 +248,7 @@ func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 			}
 			ds := gd.cvtState(nv)
 			if !ds.Exited {
-				bk, _ := gidebug.BreakByFile(all.Breaks, ds.Task.FPath, ds.Task.Line)
+				bk, _ := cdebug.BreakByFile(all.Breaks, ds.Task.FPath, ds.Task.Line)
 				if bk != nil && bk.Trace {
 					ds.CurTrace = bk.ID
 					gd.WriteToConsole(fmt.Sprintf("Trace: %d File: %s:%d\n", bk.ID, ds.Task.File, ds.Task.Line))
@@ -264,7 +264,7 @@ func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 }
 
 // // Rewind resumes process execution backwards.
-// func (gd *GiDelve) Rewind() <-chan *gidebug.State {
+// func (gd *GiDelve) Rewind() <-chan *cdebug.State {
 // 	if err := gd.StartedCheck(); err != nil {
 // 		return nil
 // 	}
@@ -273,7 +273,7 @@ func (gd *GiDelve) Continue(all *gidebug.AllState) <-chan *gidebug.State {
 // }
 
 // StepOver continues to the next source line, not entering function calls.
-func (gd *GiDelve) StepOver() (*gidebug.State, error) {
+func (gd *GiDelve) StepOver() (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -283,7 +283,7 @@ func (gd *GiDelve) StepOver() (*gidebug.State, error) {
 }
 
 // StepInto continues to the next source line, entering function calls.
-func (gd *GiDelve) StepInto() (*gidebug.State, error) {
+func (gd *GiDelve) StepInto() (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -293,7 +293,7 @@ func (gd *GiDelve) StepInto() (*gidebug.State, error) {
 }
 
 // StepOut continues to the return address of the current function
-func (gd *GiDelve) StepOut() (*gidebug.State, error) {
+func (gd *GiDelve) StepOut() (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -303,7 +303,7 @@ func (gd *GiDelve) StepOut() (*gidebug.State, error) {
 }
 
 // StepSingle steps a single cpu instruction.
-func (gd *GiDelve) StepSingle() (*gidebug.State, error) {
+func (gd *GiDelve) StepSingle() (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (gd *GiDelve) StepSingle() (*gidebug.State, error) {
 }
 
 // Call resumes process execution while making a function call.
-func (gd *GiDelve) Call(goroutineID int, expr string, unsafe bool) (*gidebug.State, error) {
+func (gd *GiDelve) Call(goroutineID int, expr string, unsafe bool) (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -323,7 +323,7 @@ func (gd *GiDelve) Call(goroutineID int, expr string, unsafe bool) (*gidebug.Sta
 }
 
 // SwitchThread switches the current thread context.
-func (gd *GiDelve) SwitchThread(threadID int) (*gidebug.State, error) {
+func (gd *GiDelve) SwitchThread(threadID int) (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (gd *GiDelve) SwitchThread(threadID int) (*gidebug.State, error) {
 }
 
 // SwitchTask switches the current goroutine (and the current thread as well)
-func (gd *GiDelve) SwitchTask(goroutineID int) (*gidebug.State, error) {
+func (gd *GiDelve) SwitchTask(goroutineID int) (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -343,7 +343,7 @@ func (gd *GiDelve) SwitchTask(goroutineID int) (*gidebug.State, error) {
 }
 
 // Stop suspends the process.
-func (gd *GiDelve) Stop() (*gidebug.State, error) {
+func (gd *GiDelve) Stop() (*cdebug.State, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -353,7 +353,7 @@ func (gd *GiDelve) Stop() (*gidebug.State, error) {
 }
 
 // GetBreak gets a breakpoint by ID.
-func (gd *GiDelve) GetBreak(id int) (*gidebug.Break, error) {
+func (gd *GiDelve) GetBreak(id int) (*cdebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -363,7 +363,7 @@ func (gd *GiDelve) GetBreak(id int) (*gidebug.Break, error) {
 }
 
 // GetBreakByName gets a breakpoint by name.
-func (gd *GiDelve) GetBreakByName(name string) (*gidebug.Break, error) {
+func (gd *GiDelve) GetBreakByName(name string) (*cdebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func (gd *GiDelve) GetBreakByName(name string) (*gidebug.Break, error) {
 }
 
 // SetBreak sets a new breakpoint at given file and line number
-func (gd *GiDelve) SetBreak(fname string, line int) (*gidebug.Break, error) {
+func (gd *GiDelve) SetBreak(fname string, line int) (*cdebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -386,7 +386,7 @@ func (gd *GiDelve) SetBreak(fname string, line int) (*gidebug.Break, error) {
 }
 
 // ListBreaks gets all breakpoints.
-func (gd *GiDelve) ListBreaks() ([]*gidebug.Break, error) {
+func (gd *GiDelve) ListBreaks() ([]*cdebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -405,7 +405,7 @@ func (gd *GiDelve) ClearBreak(id int) error {
 }
 
 // ClearBreakByName deletes a breakpoint by name
-func (gd *GiDelve) ClearBreakByName(name string) (*gidebug.Break, error) {
+func (gd *GiDelve) ClearBreakByName(name string) (*cdebug.Break, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -433,7 +433,7 @@ func (gd *GiDelve) AmendBreak(id int, fname string, line int, cond string, trace
 
 // UpdateBreaks updates current breakpoints based on given list of breakpoints.
 // first gets the current list, and does actions to ensure that the list is set.
-func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
+func (gd *GiDelve) UpdateBreaks(brk *[]*cdebug.Break) error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}
@@ -444,7 +444,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
 	for itr := 0; itr < 2; itr++ {
 		updt := false
 		for _, b := range *brk {
-			c, ci := gidebug.BreakByFile(cb, b.FPath, b.Line)
+			c, ci := cdebug.BreakByFile(cb, b.FPath, b.Line)
 			if c != nil && c.ID > 0 {
 				if !b.On {
 					cb = append(cb[:ci], cb[ci+1:]...) // remove from cb
@@ -479,7 +479,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*gidebug.Break) error {
 			break
 		}
 	}
-	gidebug.SortBreaks(*brk)
+	cdebug.SortBreaks(*brk)
 	return nil
 }
 
@@ -494,7 +494,7 @@ func (gd *GiDelve) CancelNext() error {
 
 // InitAllState initializes the given AllState with relevant info for
 // current state of things.  Does Not get AllVars
-func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
+func (gd *GiDelve) InitAllState(all *cdebug.AllState) error {
 	all.CurThread = all.State.Thread.ID
 	all.CurTask = all.State.Task.ID
 	all.CurFrame = 0
@@ -513,7 +513,7 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 		return err
 	}
 	all.Stack = sf
-	tsk, _ := gidebug.TaskByID(all.Tasks, all.CurTask)
+	tsk, _ := cdebug.TaskByID(all.Tasks, all.CurTask)
 	if tsk != nil && tsk.Func != "" {
 		vr, err := gd.ListVars(all.CurTask, 0)
 		if err != nil {
@@ -525,7 +525,7 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 	all.CurBreak = 0
 	cf := all.StackFrame(0)
 	if cf != nil {
-		bk, _ := gidebug.BreakByFile(all.Breaks, cf.FPath, cf.Line)
+		bk, _ := cdebug.BreakByFile(all.Breaks, cf.FPath, cf.Line)
 		if bk != nil {
 			all.CurBreak = bk.ID
 		}
@@ -538,7 +538,7 @@ func (gd *GiDelve) InitAllState(all *gidebug.AllState) error {
 // frame number (only info different from current results is updated).
 // For given thread (lowest-level supported by language,
 // e.g., Task if supported, else Thread), and frame number.
-func (gd *GiDelve) UpdateAllState(all *gidebug.AllState, threadID int, frame int) error {
+func (gd *GiDelve) UpdateAllState(all *cdebug.AllState, threadID int, frame int) error {
 	updt := false
 	if threadID != all.CurTask {
 		updt = true
@@ -551,7 +551,7 @@ func (gd *GiDelve) UpdateAllState(all *gidebug.AllState, threadID int, frame int
 	}
 	if updt || all.CurFrame != frame {
 		all.CurFrame = frame
-		tsk, _ := gidebug.TaskByID(all.Tasks, all.CurTask)
+		tsk, _ := cdebug.TaskByID(all.Tasks, all.CurTask)
 		if tsk != nil && tsk.Func != "" {
 			vr, err := gd.ListVars(all.CurTask, all.CurFrame)
 			if err != nil {
@@ -567,9 +567,9 @@ func (gd *GiDelve) UpdateAllState(all *gidebug.AllState, threadID int, frame int
 // FindFrames looks through the Stacks of all Tasks / Threads
 // for the closest Stack Frame to given file and line number.
 // Results are sorted by line number proximity to given line.
-func (gd *GiDelve) FindFrames(all *gidebug.AllState, fname string, line int) ([]*gidebug.Frame, error) {
+func (gd *GiDelve) FindFrames(all *cdebug.AllState, fname string, line int) ([]*cdebug.Frame, error) {
 	var err error
-	var fr []*gidebug.Frame
+	var fr []*cdebug.Frame
 	for _, tsk := range all.Tasks {
 		sf, err := gd.Stack(tsk.ID, 100)
 		if err != nil {
@@ -593,12 +593,12 @@ func (gd *GiDelve) FindFrames(all *gidebug.AllState, fname string, line int) ([]
 
 // CurThreadID returns the proper current threadID (task or thread)
 // based on debugger, from given state.
-func (gd *GiDelve) CurThreadID(all *gidebug.AllState) int {
+func (gd *GiDelve) CurThreadID(all *cdebug.AllState) int {
 	return all.CurTask
 }
 
 // ListThreads lists all threads.
-func (gd *GiDelve) ListThreads() ([]*gidebug.Thread, error) {
+func (gd *GiDelve) ListThreads() ([]*cdebug.Thread, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -608,7 +608,7 @@ func (gd *GiDelve) ListThreads() ([]*gidebug.Thread, error) {
 }
 
 // GetThread gets a thread by its ID.
-func (gd *GiDelve) GetThread(id int) (*gidebug.Thread, error) {
+func (gd *GiDelve) GetThread(id int) (*cdebug.Thread, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -618,7 +618,7 @@ func (gd *GiDelve) GetThread(id int) (*gidebug.Thread, error) {
 }
 
 // ListTasks lists all goroutines.
-func (gd *GiDelve) ListTasks() ([]*gidebug.Task, error) {
+func (gd *GiDelve) ListTasks() ([]*cdebug.Task, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -628,7 +628,7 @@ func (gd *GiDelve) ListTasks() ([]*gidebug.Task, error) {
 }
 
 // Stack returns stacktrace
-func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*gidebug.Frame, error) {
+func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*cdebug.Frame, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -638,7 +638,7 @@ func (gd *GiDelve) Stack(goroutineID int, depth int) ([]*gidebug.Frame, error) {
 }
 
 // ListGlobalVars lists all package variables in the context of the current thread.
-func (gd *GiDelve) ListGlobalVars(filter string) ([]*gidebug.Variable, error) {
+func (gd *GiDelve) ListGlobalVars(filter string) ([]*cdebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -653,7 +653,7 @@ func (gd *GiDelve) ListGlobalVars(filter string) ([]*gidebug.Variable, error) {
 }
 
 // ListVars lists all local variables in scope, including args
-func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error) {
+func (gd *GiDelve) ListVars(threadID int, frame int) ([]*cdebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -667,7 +667,7 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 	cv := gd.cvtVars(vs)
 	ca := gd.cvtVars(as)
 	cv = append(cv, ca...)
-	gidebug.SortVars(cv)
+	cdebug.SortVars(cv)
 	// now we have to fill in the pointers here
 	gd.fixVarList(cv, ec, lc)
 	gd.LogErr(err)
@@ -675,7 +675,7 @@ func (gd *GiDelve) ListVars(threadID int, frame int) ([]*gidebug.Variable, error
 }
 
 // GetVariable returns a variable based on expression in the context of the current thread.
-func (gd *GiDelve) GetVar(expr string, threadID int, frame int) (*gidebug.Variable, error) {
+func (gd *GiDelve) GetVar(expr string, threadID int, frame int) (*cdebug.Variable, error) {
 	if err := gd.StartedCheck(); err != nil {
 		return nil, err
 	}
@@ -695,7 +695,7 @@ func (gd *GiDelve) GetVar(expr string, threadID int, frame int) (*gidebug.Variab
 
 // FollowPtr fills in the Child of given Variable
 // with retrieved value.
-func (gd *GiDelve) FollowPtr(vr *gidebug.Variable) error {
+func (gd *GiDelve) FollowPtr(vr *cdebug.Variable) error {
 	if err := gd.StartedCheck(); err != nil {
 		return err
 	}

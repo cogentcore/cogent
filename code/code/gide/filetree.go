@@ -12,16 +12,16 @@ import (
 	"sort"
 	"strings"
 
-	"goki.dev/events"
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/icons"
-	"goki.dev/ki"
-	"goki.dev/states"
-	"goki.dev/styles"
-	"goki.dev/texteditor/textbuf"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/states"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor/textbuf"
 )
 
 // FileNode is Gide version of FileNode for FileTree view

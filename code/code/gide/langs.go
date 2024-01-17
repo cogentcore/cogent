@@ -8,9 +8,9 @@ import (
 	"log"
 	"path/filepath"
 
-	"goki.dev/fi"
-	"goki.dev/gi"
-	"goki.dev/grows/tomls"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/grows/tomls"
 )
 
 // LangOpts defines options associated with a given language / file format

@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"slices"
 
-	"goki.dev/gi"
-	"goki.dev/grows/jsons"
-	"goki.dev/grr"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/grows/jsons"
+	"cogentcore.org/core/grr"
 )
 
 // Split is a named splitter configuration

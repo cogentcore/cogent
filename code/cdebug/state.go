@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidebug
+package cdebug
 
 import (
 	"fmt"
 	"sort"
 	"strings"
 
-	"goki.dev/glop/dirs"
+	"cogentcore.org/core/glop/dirs"
 )
 
 // This file contains all the state structs used in communciating with the

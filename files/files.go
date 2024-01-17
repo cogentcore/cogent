@@ -5,9 +5,9 @@
 package main
 
 import (
-	"goki.dev/events"
-	"goki.dev/gi"
-	"goki.dev/giv"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
 )
 
 func main() {

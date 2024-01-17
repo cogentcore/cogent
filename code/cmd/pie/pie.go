@@ -7,7 +7,7 @@ package main
 func main() {
 	/*
 			goosi.TheApp.SetName("pie")
-			goosi.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://goki.dev/pi">Gide on GitHub</a> and <a href="https://goki.dev/pi/wiki">Gide wiki</a> for documentation.<br>
+			goosi.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/core/pi">Gide on GitHub</a> and <a href="https://cogentcore.org/core/pi/wiki">Gide wiki</a> for documentation.<br>
 		<br>
 		Version: ` + pi.VersionInfo())
 

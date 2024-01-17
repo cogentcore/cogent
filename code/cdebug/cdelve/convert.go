@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidelve
+package cdelve
 
 import (
 	"fmt"
@@ -10,18 +10,18 @@ import (
 	"strings"
 	"unicode"
 
+	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/glop/dirs"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/syms"
 	"github.com/go-delve/delve/service/api"
-	"github.com/goki/gide/v2/gidebug"
-	"goki.dev/glop/dirs"
-	"goki.dev/pi/lex"
-	"goki.dev/pi/syms"
 )
 
-func (gd *GiDelve) cvtState(ds *api.DebuggerState) *gidebug.State {
+func (gd *GiDelve) cvtState(ds *api.DebuggerState) *cdebug.State {
 	if ds == nil {
 		return nil
 	}
-	st := &gidebug.State{}
+	st := &cdebug.State{}
 	st.Running = ds.Running
 	th := gd.cvtThread(ds.CurrentThread)
 	if th != nil {
@@ -38,11 +38,11 @@ func (gd *GiDelve) cvtState(ds *api.DebuggerState) *gidebug.State {
 	return st
 }
 
-func (gd *GiDelve) cvtThread(ds *api.Thread) *gidebug.Thread {
+func (gd *GiDelve) cvtThread(ds *api.Thread) *cdebug.Thread {
 	if ds == nil {
 		return nil
 	}
-	th := &gidebug.Thread{}
+	th := &cdebug.Thread{}
 	th.ID = ds.ID
 	th.PC = ds.PC
 	th.File = dirs.RelFilePath(ds.File, gd.rootPath)
@@ -55,23 +55,23 @@ func (gd *GiDelve) cvtThread(ds *api.Thread) *gidebug.Thread {
 	return th
 }
 
-func (gd *GiDelve) cvtThreads(ds []*api.Thread) []*gidebug.Thread {
+func (gd *GiDelve) cvtThreads(ds []*api.Thread) []*cdebug.Thread {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	th := make([]*gidebug.Thread, nd)
+	th := make([]*cdebug.Thread, nd)
 	for i, dt := range ds {
 		th[i] = gd.cvtThread(dt)
 	}
 	return th
 }
 
-func (gd *GiDelve) cvtTask(ds *api.Goroutine) *gidebug.Task {
+func (gd *GiDelve) cvtTask(ds *api.Goroutine) *cdebug.Task {
 	if ds == nil {
 		return nil
 	}
-	gr := &gidebug.Task{}
+	gr := &cdebug.Task{}
 	gr.ID = int(ds.ID)
 	gr.PC = ds.UserCurrentLoc.PC
 	gr.File = dirs.RelFilePath(ds.UserCurrentLoc.File, gd.rootPath)
@@ -86,23 +86,23 @@ func (gd *GiDelve) cvtTask(ds *api.Goroutine) *gidebug.Task {
 	return gr
 }
 
-func (gd *GiDelve) cvtTasks(ds []*api.Goroutine) []*gidebug.Task {
+func (gd *GiDelve) cvtTasks(ds []*api.Goroutine) []*cdebug.Task {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	th := make([]*gidebug.Task, nd)
+	th := make([]*cdebug.Task, nd)
 	for i, dt := range ds {
 		th[i] = gd.cvtTask(dt)
 	}
 	return th
 }
 
-func (gd *GiDelve) cvtLocation(ds *api.Location) *gidebug.Location {
+func (gd *GiDelve) cvtLocation(ds *api.Location) *cdebug.Location {
 	if ds == nil {
 		return nil
 	}
-	lc := &gidebug.Location{}
+	lc := &cdebug.Location{}
 	lc.PC = ds.PC
 	lc.File = dirs.RelFilePath(ds.File, gd.rootPath)
 	lc.Line = ds.Line
@@ -113,11 +113,11 @@ func (gd *GiDelve) cvtLocation(ds *api.Location) *gidebug.Location {
 	return lc
 }
 
-func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *gidebug.Break {
+func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *cdebug.Break {
 	if ds == nil {
 		return nil
 	}
-	bp := &gidebug.Break{}
+	bp := &cdebug.Break{}
 	bp.On = true // if we're converting, it is on..
 	bp.ID = ds.ID
 	bp.PC = ds.Addr
@@ -130,23 +130,23 @@ func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *gidebug.Break {
 	return bp
 }
 
-func (gd *GiDelve) cvtBreaks(ds []*api.Breakpoint) []*gidebug.Break {
+func (gd *GiDelve) cvtBreaks(ds []*api.Breakpoint) []*cdebug.Break {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	vr := make([]*gidebug.Break, nd)
+	vr := make([]*cdebug.Break, nd)
 	for i := range ds {
 		vr[i] = gd.cvtBreak(ds[i])
 	}
 	return vr
 }
 
-func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *gidebug.Frame {
+func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *cdebug.Frame {
 	if ds == nil {
 		return nil
 	}
-	fr := &gidebug.Frame{}
+	fr := &cdebug.Frame{}
 	fr.ThreadID = taskID
 	fr.PC = ds.Location.PC
 	fr.File = dirs.RelFilePath(ds.Location.File, gd.rootPath)
@@ -160,12 +160,12 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *gidebug.Frame {
 	return fr
 }
 
-func (gd *GiDelve) cvtStack(ds []api.Stackframe, taskID int) []*gidebug.Frame {
+func (gd *GiDelve) cvtStack(ds []api.Stackframe, taskID int) []*cdebug.Frame {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	vr := make([]*gidebug.Frame, nd)
+	vr := make([]*cdebug.Frame, nd)
 	for i := range ds {
 		vr[i] = gd.cvtFrame(&ds[i], taskID)
 		vr[i].Depth = i
@@ -185,11 +185,11 @@ func ShortType(typ string) string {
 	return typ[:tsi] + fdd + "/" + fnm
 }
 
-func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
+func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 	if ds == nil {
 		return nil
 	}
-	vr := &gidebug.Variable{}
+	vr := &cdebug.Variable{}
 	vr.InitName(vr, ds.Name)
 	vr.Addr = uintptr(ds.Addr)
 	vr.FullTypeStr = ds.RealType
@@ -236,7 +236,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 			return vr
 		}
 		// object map
-		vr.MapVar = make(map[string]*gidebug.Variable, mapn)
+		vr.MapVar = make(map[string]*cdebug.Variable, mapn)
 		for i := 0; i < mapn; i++ {
 			k := &ds.Children[2*i]
 			el = &ds.Children[2*i+1]
@@ -278,19 +278,19 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *gidebug.Variable {
 	return vr
 }
 
-func (gd *GiDelve) cvtVars(ds []api.Variable) []*gidebug.Variable {
+func (gd *GiDelve) cvtVars(ds []api.Variable) []*cdebug.Variable {
 	if ds == nil || len(ds) == 0 {
 		return nil
 	}
 	nd := len(ds)
-	vr := make([]*gidebug.Variable, nd)
+	vr := make([]*cdebug.Variable, nd)
 	for i := range ds {
 		vr[i] = gd.cvtVar(&ds[i])
 	}
 	return vr
 }
 
-func (gd *GiDelve) fixVarList(cv []*gidebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
+func (gd *GiDelve) fixVarList(cv []*cdebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
 	for _, vr := range cv {
 		gd.fixVar(vr, ec, lc)
 	}
@@ -323,9 +323,9 @@ func quotePkgPaths(vnm string) string {
 	return vnm
 }
 
-func (gd *GiDelve) fixVar(vr *gidebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
+func (gd *GiDelve) fixVar(vr *cdebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
 	if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Nm != "" {
-		vrk := vr.Child(0).(*gidebug.Variable)
+		vrk := vr.Child(0).(*cdebug.Variable)
 		if vrk.NumChildren() == 0 && !vrk.Kind.IsPrimitiveNonPtr() {
 			vnm := "*" + vr.Nm
 			dss, err := gd.dlv.EvalVariable(*ec, vnm, *lc)
@@ -342,7 +342,7 @@ func (gd *GiDelve) fixVar(vr *gidebug.Variable, ec *api.EvalScope, lc *api.LoadC
 	vr.Value = vr.ValueString(false, 0, gd.params.VarList.MaxRecurse, 256, false) // max depth, max len -- short for summary -- no type
 }
 
-func (gd *GiDelve) toLoadConfig(ds *gidebug.VarParams) *api.LoadConfig {
+func (gd *GiDelve) toLoadConfig(ds *cdebug.VarParams) *api.LoadConfig {
 	if ds == nil {
 		return nil
 	}

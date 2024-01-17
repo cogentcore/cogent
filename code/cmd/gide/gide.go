@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goki/gide/v2/gide"
-	"github.com/goki/gide/v2/gidev"
-	"goki.dev/gi"
-	"goki.dev/goosi"
+	"cogentcore.org/cogent/code/code/gide"
+	gidev "cogentcore.org/cogent/code/codev"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/goosi"
 )
 
 func main() {

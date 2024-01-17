@@ -5,10 +5,10 @@
 package gidev
 
 import (
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/gi"
-	"goki.dev/states"
-	"goki.dev/texteditor"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/states"
+	"cogentcore.org/core/texteditor"
 )
 
 // PanelIsOpen returns true if the given panel has not been collapsed and is avail

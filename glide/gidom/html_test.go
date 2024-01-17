@@ -7,7 +7,7 @@ package gidom
 import (
 	"testing"
 
-	"goki.dev/gi/v2/gi"
+	"cogentcore.org/core/gi/v2/gi"
 )
 
 func TestRenderHTML(t *testing.T) {

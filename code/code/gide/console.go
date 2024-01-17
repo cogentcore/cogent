@@ -10,8 +10,8 @@ import (
 	"os"
 	"sync"
 
-	"goki.dev/gi"
-	"goki.dev/texteditor"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/texteditor"
 )
 
 // Console redirects our os.Stdout and os.Stderr to a buffer for display within app

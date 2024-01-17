@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"strings"
 
+	"cogentcore.org/core/colors"
+	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/girl/styles"
+	"cogentcore.org/core/goosi"
+	"cogentcore.org/core/grr"
 	"github.com/aymerick/douceur/css"
 	"github.com/aymerick/douceur/parser"
 	selcss "github.com/ericchiang/css"
-	"goki.dev/colors"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/girl/styles"
-	"goki.dev/goosi"
-	"goki.dev/grr"
 	"golang.org/x/net/html"
 )
 

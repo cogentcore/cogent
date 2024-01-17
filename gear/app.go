@@ -4,7 +4,7 @@
 
 package gear
 
-//go:generate goki generate
+//go:generate core generate
 
 import (
 	"context"
@@ -18,22 +18,22 @@ import (
 	"strconv"
 	"strings"
 
+	"cogentcore.org/core/colors"
+	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/gi/v2/giv"
+	"cogentcore.org/core/gi/v2/keyfun"
+	"cogentcore.org/core/girl/styles"
+	"cogentcore.org/core/girl/units"
+	"cogentcore.org/core/gix/texteditor"
+	"cogentcore.org/core/glop/sentence"
+	"cogentcore.org/core/goosi/events"
+	"cogentcore.org/core/grr"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/ki/v2"
+	"cogentcore.org/core/xe"
 	"github.com/iancoleman/strcase"
 	"github.com/mattn/go-shellwords"
 	"github.com/robert-nix/ansihtml"
-	"goki.dev/colors"
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/gi/v2/keyfun"
-	"goki.dev/girl/styles"
-	"goki.dev/girl/units"
-	"goki.dev/gix/texteditor"
-	"goki.dev/glop/sentence"
-	"goki.dev/goosi/events"
-	"goki.dev/grr"
-	"goki.dev/icons"
-	"goki.dev/ki/v2"
-	"goki.dev/xe"
 )
 
 // App is a GUI view of a gear command.

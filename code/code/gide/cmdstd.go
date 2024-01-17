@@ -4,7 +4,7 @@
 
 package gide
 
-import "goki.dev/fi"
+import "cogentcore.org/core/fi"
 
 // Use these for more obvious command options
 const (
@@ -479,7 +479,7 @@ var StdCmds = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Goki", Name: "Generate All",
-		Desc: "runs goki generate ./... to update all generated files in current dir and below",
+		Desc: "runs core generate ./... to update all generated files in current dir and below",
 		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "goki",
 			Args: []string{"generate", "./..."}}},

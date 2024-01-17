@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"goki.dev/goosi"
-	"goki.dev/texteditor"
+	"cogentcore.org/core/goosi"
+	"cogentcore.org/core/texteditor"
 )
 
 // ArgVarInfo has info about argument variables that fill in relevant values

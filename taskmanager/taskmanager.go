@@ -4,17 +4,17 @@
 
 package main
 
-//go:generate goki generate
+//go:generate core generate
 
 import (
 	"time"
 
-	"goki.dev/events"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/glop/datasize"
-	"goki.dev/grr"
-	"goki.dev/icons"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/glop/datasize"
+	"cogentcore.org/core/grr"
+	"cogentcore.org/core/icons"
 
 	"github.com/shirou/gopsutil/v3/process"
 )

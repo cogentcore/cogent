@@ -12,16 +12,16 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/goki/gide/v2/gide"
-	"github.com/goki/gide/v2/gidebug"
-	"goki.dev/events"
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/goosi"
-	"goki.dev/spell"
-	"goki.dev/vci"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/goosi"
+	"cogentcore.org/core/spell"
+	"cogentcore.org/core/vci"
+	"github.com/goki/gide_v1/cdebug"
 )
 
 // ConfigFindButton configures the Find FuncButton with current params
@@ -149,7 +149,7 @@ func (ge *GideView) Debug() { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	ge.Prefs.Debug.Mode = gidebug.Exec
+	ge.Prefs.Debug.Mode = cdebug.Exec
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, gide.DebugViewType).(*gide.DebugView)
@@ -172,7 +172,7 @@ func (ge *GideView) DebugTest() { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	ge.Prefs.Debug.Mode = gidebug.Test
+	ge.Prefs.Debug.Mode = cdebug.Test
 	tstPath := string(txv.Buf.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, gide.DebugViewType).(*gide.DebugView)
@@ -192,7 +192,7 @@ func (ge *GideView) DebugAttach(pid uint64) { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	ge.Prefs.Debug.Mode = gidebug.Attach
+	ge.Prefs.Debug.Mode = cdebug.Attach
 	ge.Prefs.Debug.PID = pid
 	exePath := string(ge.Prefs.RunExec)
 	exe := filepath.Base(exePath)
@@ -314,5 +314,5 @@ func (ge *GideView) UpdateStatusLabel() {
 
 // HelpWiki opens wiki page for gide on github
 func (ge *GideView) HelpWiki() { //gti:add
-	goosi.TheApp.OpenURL("https://goki.dev/gide/")
+	goosi.TheApp.OpenURL("https://cogentcore.org/core/gide/")
 }

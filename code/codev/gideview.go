@@ -4,7 +4,7 @@
 
 package gidev
 
-//go:generate goki generate
+//go:generate core generate
 
 import (
 	"fmt"
@@ -16,18 +16,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/events"
-	"goki.dev/events/key"
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/grr"
-	"goki.dev/ki"
-	"goki.dev/spell"
-	"goki.dev/texteditor"
-	"goki.dev/vci"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/grr"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/spell"
+	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/vci"
 )
 
 // GideView is the core editor and tab viewer framework for the Gide system.  The
@@ -575,7 +575,7 @@ func NewGideWindow(path, projnm, root string, doPath bool) *GideView {
 	b.App().AppBarConfig = ge.AppBarConfig
 	b.AddAppBar(ge.ConfigToolbar)
 
-	b.App().About = `<code>Gide</code> is a graphical-interface (gi) integrated-development-environment (ide) written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://github.com/goki/gide/v2/gide">Gide on GitHub</a> and <a href="https://github.com/goki/gide/v2/wiki">Gide wiki</a> for documentation.<br>Gide is based on "projects" which are just directories containing files<br>* Use <code>File/Open Path...</code> to open an existing directory.<br>* Or <code>File/New Project...</code> to create a new directory for a new project<br><br>Version: ` + gide.Settings.VersionInfo()
+	b.App().About = `<code>Gide</code> is a graphical-interface (gi) integrated-development-environment (ide) written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/cogent/code/code">Gide on GitHub</a> and <a href="https://cogentcore.org/cogent/code/wiki">Gide wiki</a> for documentation.<br>Gide is based on "projects" which are just directories containing files<br>* Use <code>File/Open Path...</code> to open an existing directory.<br>* Or <code>File/New Project...</code> to create a new directory for a new project<br><br>Version: ` + gide.Settings.VersionInfo()
 
 	/* todo: window doesn't exist yet -- need a delayed soln
 	inClosePrompt := false

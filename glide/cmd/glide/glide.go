@@ -5,9 +5,9 @@
 package main
 
 import (
-	"goki.dev/gi/v2/gi"
-	"goki.dev/glide/glide"
-	"goki.dev/grr"
+	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/glide/glide"
+	"cogentcore.org/core/grr"
 )
 
 func main() {

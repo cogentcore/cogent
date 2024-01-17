@@ -10,18 +10,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goki/gide/v2/gidebug"
-	"github.com/goki/gide/v2/gidebug/gidelve"
-	"goki.dev/colors"
-	"goki.dev/events"
-	"goki.dev/fi"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/grr"
-	"goki.dev/icons"
-	"goki.dev/ki"
-	"goki.dev/styles"
-	"goki.dev/texteditor"
+	"cogentcore.org/cogent/code/codebug/gidelve"
+	"cogentcore.org/core/colors"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/grr"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor"
+	"github.com/goki/gide_v1/cdebug"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
@@ -48,14 +48,14 @@ const (
 var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error){
-	fi.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error){
+	fi.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error) {
 		return gidelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup fi.Known, path, rootPath string, outbuf *texteditor.Buf, pars *gidebug.Params) (gidebug.GiDebug, error) {
+func NewDebugger(sup fi.Known, path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Prefs.. to a supported language (Go only option so far)", sup)
@@ -83,16 +83,16 @@ type DebugView struct {
 	DbgTime time.Time
 
 	// the debugger
-	Dbg gidebug.GiDebug `set:"-" json:"-" xml:"-"`
+	Dbg cdebug.GiDebug `set:"-" json:"-" xml:"-"`
 
 	// all relevant debug state info
-	State gidebug.AllState `set:"-" json:"-" xml:"-"`
+	State cdebug.AllState `set:"-" json:"-" xml:"-"`
 
 	// current ShowFile location -- cleared before next one or run
-	CurFileLoc gidebug.Location `set:"-" json:"-" xml:"-"`
+	CurFileLoc cdebug.Location `set:"-" json:"-" xml:"-"`
 
 	// backup breakpoints list -- to track deletes
-	BBreaks []*gidebug.Break `set:"-" json:"-" xml:"-"`
+	BBreaks []*cdebug.Break `set:"-" json:"-" xml:"-"`
 
 	// output from the debugger
 	OutBuf *texteditor.Buf `set:"-" json:"-" xml:"-"`
@@ -144,7 +144,7 @@ func (dv *DebugView) Destroy() {
 // Detach from debugger
 func (dv *DebugView) Detach() {
 	killProc := true
-	if dv.State.Mode == gidebug.Attach {
+	if dv.State.Mode == cdebug.Attach {
 		killProc = false
 	}
 	if dv.DbgIsAvail() {
@@ -164,27 +164,27 @@ func (dv *DebugView) Start() {
 	console := dv.ConsoleText()
 	console.Clear()
 	rebuild := false
-	if dv.Dbg != nil && dv.State.Mode != gidebug.Attach {
+	if dv.Dbg != nil && dv.State.Mode != cdebug.Attach {
 		lmod := dv.Gide.FileTree().LatestFileMod(fi.Code)
 		rebuild = lmod.After(dv.DbgTime) || dv.Gide.LastSaveTime().After(dv.DbgTime)
 	}
 	if dv.Dbg == nil || rebuild {
-		dv.SetStatus(gidebug.Building)
+		dv.SetStatus(cdebug.Building)
 		if dv.Dbg != nil {
 			dv.Detach()
 		}
 		rootPath := string(dv.Gide.ProjPrefs().ProjRoot)
 		pars := &dv.Gide.ProjPrefs().Debug
 		dv.State.Mode = pars.Mode
-		pars.StatFunc = func(stat gidebug.Status) {
+		pars.StatFunc = func(stat cdebug.Status) {
 			updt := dv.UpdateStartAsync()
 			defer dv.UpdateEndAsyncLayout(updt)
 
-			if stat == gidebug.Ready && dv.State.Mode == gidebug.Attach {
+			if stat == cdebug.Ready && dv.State.Mode == cdebug.Attach {
 				dv.UpdateFmState()
 			}
 			dv.SetStatus(stat)
-			if stat == gidebug.Error {
+			if stat == cdebug.Error {
 				dv.Dbg = nil
 			}
 		}
@@ -193,11 +193,11 @@ func (dv *DebugView) Start() {
 			dv.Dbg = dbg
 			dv.DbgTime = time.Now()
 		} else {
-			dv.SetStatus(gidebug.Error)
+			dv.SetStatus(cdebug.Error)
 		}
 	} else {
 		dv.Dbg.Restart()
-		dv.SetStatus(gidebug.Ready)
+		dv.SetStatus(cdebug.Ready)
 	}
 }
 
@@ -218,9 +218,9 @@ func (dv *DebugView) Continue() {
 	}
 	dv.SetBreaks()
 	dv.State.State.Running = true
-	dv.SetStatus(gidebug.Running)
+	dv.SetStatus(cdebug.Running)
 	dsc := dv.Dbg.Continue(&dv.State)
-	var ds *gidebug.State
+	var ds *cdebug.State
 	for ds = range dsc { // get everything
 		if dv.This() == nil || dv.Is(ki.Deleted) {
 			return
@@ -236,7 +236,7 @@ func (dv *DebugView) Continue() {
 		dv.InitState(ds)
 	} else {
 		dv.State.State.Running = false
-		dv.SetStatus(gidebug.Finished)
+		dv.SetStatus(cdebug.Finished)
 	}
 }
 
@@ -420,7 +420,7 @@ func (dv *DebugView) UpdateAllBreaks() {
 
 // BackupBreaks makes a backup copy of current breaks
 func (dv *DebugView) BackupBreaks() {
-	dv.BBreaks = make([]*gidebug.Break, len(dv.State.Breaks))
+	dv.BBreaks = make([]*cdebug.Break, len(dv.State.Breaks))
 	for i, b := range dv.State.Breaks {
 		dv.BBreaks[i] = b
 	}
@@ -428,19 +428,19 @@ func (dv *DebugView) BackupBreaks() {
 
 // InitState updates the State and View from given debug state
 // Call this when debugger returns from any action update
-func (dv *DebugView) InitState(ds *gidebug.State) {
+func (dv *DebugView) InitState(ds *cdebug.State) {
 	dv.State.State = *ds
 	if ds.Running {
 		return
 	}
 	if ds.Exited {
-		dv.SetStatus(gidebug.Finished)
+		dv.SetStatus(cdebug.Finished)
 	} else {
-		dv.SetStatus(gidebug.Stopped)
+		dv.SetStatus(cdebug.Stopped)
 	}
 	err := dv.Dbg.InitAllState(&dv.State)
-	if err == gidebug.IsRunningErr {
-		dv.SetStatus(gidebug.Running)
+	if err == cdebug.IsRunningErr {
+		dv.SetStatus(cdebug.Running)
 		return
 	}
 	dv.UpdateFmState()
@@ -463,7 +463,7 @@ func (dv *DebugView) UpdateFmState() {
 	if cf != nil {
 		dv.ShowFile(cf.FPath, cf.Line)
 		if dv.State.CurBreak > 0 {
-			dv.SetStatus(gidebug.Breakpoint)
+			dv.SetStatus(cdebug.Breakpoint)
 		}
 	}
 	dv.UpdateAllBreaks()
@@ -706,18 +706,18 @@ func (dv *DebugView) VarValue(varNm string) string {
 	return ""
 }
 
-var DebugStatusColors = map[gidebug.Status]string{
-	gidebug.NotInit:    "grey",
-	gidebug.Error:      "#FF8080",
-	gidebug.Building:   "yellow",
-	gidebug.Ready:      "#80FF80",
-	gidebug.Running:    "#FF80FF",
-	gidebug.Stopped:    "#8080FF",
-	gidebug.Breakpoint: "#8080FF",
-	gidebug.Finished:   "tan",
+var DebugStatusColors = map[cdebug.Status]string{
+	cdebug.NotInit:    "grey",
+	cdebug.Error:      "#FF8080",
+	cdebug.Building:   "yellow",
+	cdebug.Ready:      "#80FF80",
+	cdebug.Running:    "#FF80FF",
+	cdebug.Stopped:    "#8080FF",
+	cdebug.Breakpoint: "#8080FF",
+	cdebug.Finished:   "tan",
 }
 
-func (dv *DebugView) SetStatus(stat gidebug.Status) {
+func (dv *DebugView) SetStatus(stat cdebug.Status) {
 	if dv == nil || dv.This() == nil || dv.Is(ki.Deleted) {
 		return
 	}
@@ -728,7 +728,7 @@ func (dv *DebugView) SetStatus(stat gidebug.Status) {
 	tb := dv.Toolbar()
 	stl := tb.ChildByName("status", 1).(*gi.Label)
 	lbl := stat.String()
-	if stat == gidebug.Breakpoint {
+	if stat == cdebug.Breakpoint {
 		lbl = fmt.Sprintf("Break: %d", dv.State.CurBreak)
 	}
 	stl.SetTextUpdate(lbl)
@@ -1039,7 +1039,7 @@ func (sv *BreakView) ShowBreaks() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
 	if dv.State.CurBreak > 0 {
-		_, idx := gidebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
+		_, idx := cdebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
 		if idx >= 0 {
 			tv.SelIdx = idx
 		}
@@ -1088,7 +1088,7 @@ func (sv *ThreadView) ShowThreads() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
 	tv.SetReadOnly(true)
-	_, idx := gidebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
+	_, idx := cdebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
 	if idx >= 0 {
 		tv.SelIdx = idx
 	}
@@ -1135,7 +1135,7 @@ func (sv *TaskView) ShowTasks() {
 	tv := sv.TableView()
 	dv := sv.DebugVw()
 	tv.SetReadOnly(true)
-	_, idx := gidebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
+	_, idx := cdebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
 	if idx >= 0 {
 		tv.SelIdx = idx
 	}
@@ -1210,9 +1210,9 @@ type VarView struct {
 	gi.Frame
 
 	// variable being edited
-	Var *gidebug.Variable `set:"-"`
+	Var *cdebug.Variable `set:"-"`
 
-	SelVar *gidebug.Variable `set:"-"`
+	SelVar *cdebug.Variable `set:"-"`
 
 	// frame info
 	FrameInfo string `set:"-"`
@@ -1222,7 +1222,7 @@ type VarView struct {
 }
 
 // SetVar sets the source variable and ensures configuration
-func (vv *VarView) SetVar(vr *gidebug.Variable, frinfo string) {
+func (vv *VarView) SetVar(vr *cdebug.Variable, frinfo string) {
 	vv.FrameInfo = frinfo
 	updt := false
 	if vv.Var != vr {
@@ -1300,7 +1300,7 @@ func (vv *VarView) ConfigSplits() {
 		tv.OnSelect(func(e events.Event) {
 			if len(tv.SelectedNodes) > 0 {
 				sn := tv.SelectedNodes[0].AsTreeView().SyncNode
-				vr, ok := sn.(*gidebug.Variable)
+				vr, ok := sn.(*cdebug.Variable)
 				if ok {
 					vv.SelVar = vr
 				}
@@ -1317,7 +1317,7 @@ func (vv *VarView) ConfigSplits() {
 
 // VarViewDialog opens an interactive editor of the given Ki tree, at its
 // root, returns VarView and window
-func VarViewDialog(vr *gidebug.Variable, frinfo string, dbgVw *DebugView) *VarView {
+func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugView) *VarView {
 	if gi.RecycleDialog(vr) {
 		return nil
 	}

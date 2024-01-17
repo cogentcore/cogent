@@ -7,11 +7,11 @@ package gidev
 import (
 	"fmt"
 
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/events"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/keyfun"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/keyfun"
 )
 
 func (ge *GideView) HandleEvents() {

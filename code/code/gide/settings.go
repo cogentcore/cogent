@@ -10,12 +10,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/goki/gide/v2/gidebug"
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/grows/tomls"
-	"goki.dev/grr"
+	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/grows/tomls"
+	"cogentcore.org/core/grr"
 )
 
 func init() {
@@ -258,7 +258,7 @@ type ProjPrefs struct { //gti:add
 	RunCmds CmdNames
 
 	// custom debugger parameters for this project
-	Debug gidebug.Params
+	Debug cdebug.Params
 
 	// saved find params
 	Find FindParams `view:"-"`

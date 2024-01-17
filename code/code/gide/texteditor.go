@@ -7,19 +7,19 @@ package gide
 import (
 	"image"
 
-	"goki.dev/abilities"
-	"goki.dev/colors"
-	"goki.dev/events"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/grr"
-	"goki.dev/icons"
-	"goki.dev/keyfun"
-	"goki.dev/pi/lex"
-	"goki.dev/pi/token"
-	"goki.dev/states"
-	"goki.dev/styles"
-	"goki.dev/texteditor"
+	"cogentcore.org/core/abilities"
+	"cogentcore.org/core/colors"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/grr"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/token"
+	"cogentcore.org/core/states"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor"
 )
 
 // TextEditor is the Gide-specific version of the TextEditor, with support for

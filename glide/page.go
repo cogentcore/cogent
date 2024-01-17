@@ -8,12 +8,12 @@ package glide
 import (
 	"net/url"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/girl/styles"
-	"goki.dev/glide/gidom"
-	"goki.dev/goosi/events"
-	"goki.dev/grr"
-	"goki.dev/ki/v2"
+	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/girl/styles"
+	"cogentcore.org/core/glide/gidom"
+	"cogentcore.org/core/goosi/events"
+	"cogentcore.org/core/grr"
+	"cogentcore.org/core/ki/v2"
 )
 
 // Page represents one web browser page

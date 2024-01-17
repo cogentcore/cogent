@@ -12,8 +12,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"goki.dev/gi"
-	"goki.dev/pi/parse"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/pi/parse"
 )
 
 // ProjPrefs are the preferences for saving for a project -- this IS the project file

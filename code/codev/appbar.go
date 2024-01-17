@@ -7,18 +7,18 @@ package gidev
 import (
 	"strings"
 
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/events"
-	"goki.dev/events/key"
-	"goki.dev/fi/uri"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/icons"
-	"goki.dev/keyfun"
-	"goki.dev/ki"
-	"goki.dev/states"
-	"goki.dev/styles"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/fi/uri"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/states"
+	"cogentcore.org/core/styles"
 )
 
 func (ge *GideView) AppBarConfig(pw gi.Widget) {

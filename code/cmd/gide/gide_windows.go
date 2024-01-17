@@ -7,7 +7,7 @@
 
 package main
 
-import "github.com/goki/gide/v2/gide"
+import "cogentcore.org/cogent/code/gide"
 
 func init() {
 	gide.DefaultKeyMap = gide.KeyMapName("WindowsStd")

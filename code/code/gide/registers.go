@@ -7,9 +7,9 @@ package gide
 import (
 	"path/filepath"
 
-	"goki.dev/gi"
-	"goki.dev/grows/tomls"
-	"goki.dev/grr"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/grows/tomls"
+	"cogentcore.org/core/grr"
 )
 
 // Registers is a list of named strings

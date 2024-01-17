@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"embed"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/glide/gidom"
-	"goki.dev/grr"
+	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/glide/gidom"
+	"cogentcore.org/core/grr"
 )
 
 //go:embed example.html

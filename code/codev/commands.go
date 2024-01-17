@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/events"
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/paint"
-	"goki.dev/styles"
-	"goki.dev/texteditor"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/paint"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns

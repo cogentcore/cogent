@@ -7,9 +7,9 @@ package gide
 import (
 	"testing"
 
-	"goki.dev/gi"
-	"goki.dev/pi/lex"
-	"goki.dev/texteditor"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/texteditor"
 )
 
 func TestBind(t *testing.T) {
@@ -18,7 +18,7 @@ func TestBind(t *testing.T) {
 	tv.SelectReg.Start = lex.Pos{11, 14}
 	tv.SelectReg.End = lex.Pos{55, 0}
 
-	fpath := "/Users/oreilly/go/src/github.com/goki/gide/v2/argvars_test.go"
+	fpath := "/Users/oreilly/go/src/cogentcore.org/cogent/code/argvars_test.go"
 	projpath := "/Users/oreilly/go/src/github.com"
 
 	pp := ProjPrefs{}

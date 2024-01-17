@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidebug
+package cdebug
 
 import (
 	"fmt"
 	"sort"
 	"strings"
 
-	"goki.dev/glop/indent"
-	"goki.dev/ki"
-	"goki.dev/pi/syms"
+	"cogentcore.org/core/glop/indent"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/pi/syms"
 )
 
 // Variable describes a variable.  It is a Ki tree type so that full tree

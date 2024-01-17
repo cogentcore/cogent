@@ -13,17 +13,17 @@ import (
 	"strings"
 	"time"
 
-	"goki.dev/events"
-	"goki.dev/fi"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/icons"
-	"goki.dev/paint"
-	"goki.dev/pi/lex"
-	"goki.dev/states"
-	"goki.dev/styles"
-	"goki.dev/texteditor"
-	"goki.dev/texteditor/textbuf"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/paint"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/states"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/texteditor/textbuf"
 )
 
 // FindLoc corresponds to the search scope

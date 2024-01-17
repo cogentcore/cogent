@@ -7,13 +7,13 @@ package gidev
 import (
 	"fmt"
 
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/events"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/ki"
-	"goki.dev/styles"
-	"goki.dev/units"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/units"
 )
 
 // NTextEditors is the number of text views to create -- to keep things simple

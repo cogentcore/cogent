@@ -11,15 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/events"
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/ki"
-	"goki.dev/pi/lex"
-	"goki.dev/texteditor"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/texteditor"
 )
 
 // SaveActiveView saves the contents of the currently-active textview

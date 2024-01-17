@@ -8,10 +8,10 @@ import (
 	"bytes"
 	"fmt"
 
+	"cogentcore.org/core/gi/v2/gi"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/renderer/html"
-	"goki.dev/gi/v2/gi"
 )
 
 // ReadMD reads MD (markdown) from the given bytes and adds corresponding

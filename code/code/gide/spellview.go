@@ -7,16 +7,16 @@ package gide
 import (
 	"strings"
 
-	"goki.dev/events"
-	"goki.dev/pi/lex"
-	"goki.dev/spell"
-	"goki.dev/styles"
-	"goki.dev/texteditor"
-	"goki.dev/texteditor/textbuf"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/spell"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/texteditor/textbuf"
 
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/ki"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/ki"
 )
 
 // SpellView is a widget that displays results of spell check

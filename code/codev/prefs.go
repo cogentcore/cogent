@@ -7,13 +7,13 @@ package gidev
 import (
 	"path/filepath"
 
-	"github.com/goki/gide/v2/gide"
-	"github.com/goki/gide/v2/gidebug"
-	"goki.dev/events"
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/giv"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"github.com/goki/gide_v1/cdebug"
 )
 
 // Defaults sets new project defaults based on overall preferences
@@ -21,7 +21,7 @@ func (ge *GideView) Defaults() {
 	ge.Prefs.Files = gide.Settings.Files
 	ge.Prefs.Editor = gi.SystemSettings.Editor
 	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
-	ge.Prefs.Debug = gidebug.DefaultParams
+	ge.Prefs.Debug = cdebug.DefaultParams
 }
 
 // GrabPrefs grabs the current project preference settings from various

@@ -10,15 +10,15 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/goki/gide/v2/gide"
-	"goki.dev/events"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/glop/dirs"
-	"goki.dev/ki"
-	"goki.dev/states"
-	"goki.dev/texteditor"
-	"goki.dev/texteditor/textbuf"
+	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/glop/dirs"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/states"
+	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/texteditor/textbuf"
 )
 
 // ConfigTextBuf configures the text buf according to prefs

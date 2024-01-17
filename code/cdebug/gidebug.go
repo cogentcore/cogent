@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidebug
+package cdebug
 
-//go:generate goki generate
+//go:generate core generate
 
 import (
 	"errors"
 	"time"
 
-	"goki.dev/texteditor"
+	"cogentcore.org/core/texteditor"
 )
 
 var (

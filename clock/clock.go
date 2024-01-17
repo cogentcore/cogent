@@ -7,9 +7,9 @@ package main
 import (
 	"time"
 
-	"goki.dev/gi/v2/gi"
-	"goki.dev/gi/v2/giv"
-	"goki.dev/girl/styles"
+	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/gi/v2/giv"
+	"cogentcore.org/core/girl/styles"
 )
 
 func main() {

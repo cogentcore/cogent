@@ -4,20 +4,20 @@
 
 package gide
 
-//go:generate goki generate
+//go:generate core generate
 
 import (
 	"reflect"
 	"time"
 
-	"goki.dev/fi"
-	"goki.dev/filetree"
-	"goki.dev/gi"
-	"goki.dev/ki"
-	"goki.dev/laser"
-	"goki.dev/pi/complete"
-	"goki.dev/texteditor"
-	"goki.dev/texteditor/textbuf"
+	"cogentcore.org/core/fi"
+	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/laser"
+	"cogentcore.org/core/pi/complete"
+	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/texteditor/textbuf"
 )
 
 // Gide provides the interface for the GideView functionality that is needed

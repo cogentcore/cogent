@@ -9,16 +9,16 @@ import (
 	"sort"
 	"strings"
 
-	"goki.dev/events"
-	"goki.dev/gi"
-	"goki.dev/giv"
-	"goki.dev/icons"
-	"goki.dev/ki"
-	"goki.dev/pi/lex"
-	"goki.dev/pi/syms"
-	"goki.dev/pi/token"
-	"goki.dev/styles"
-	"goki.dev/texteditor/textbuf"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/pi/token"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor/textbuf"
 )
 
 // SymbolsParams are parameters for structure view of file or package
