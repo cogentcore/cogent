@@ -1,4 +1,4 @@
-// Copyright (c) 2023, The Goki Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -7,7 +7,7 @@ package gidom
 import (
 	"testing"
 
-	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/core/gi"
 )
 
 func TestRenderHTML(t *testing.T) {

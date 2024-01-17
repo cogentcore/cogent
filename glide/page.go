@@ -1,19 +1,21 @@
-// Copyright (c) 2023, The Goki Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 // Package glide provides a web browser
 package glide
 
+//go:generate core generate -add-types
+
 import (
 	"net/url"
 
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/girl/styles"
-	"cogentcore.org/core/glide/gidom"
-	"cogentcore.org/core/goosi/events"
+	"cogentcore.org/cogent/glide/gidom"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grr"
-	"cogentcore.org/core/ki/v2"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/styles"
 )
 
 // Page represents one web browser page

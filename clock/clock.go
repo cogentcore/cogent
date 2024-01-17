@@ -7,13 +7,13 @@ package main
 import (
 	"time"
 
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/gi/v2/giv"
-	"cogentcore.org/core/girl/styles"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
+	"cogentcore.org/core/styles"
 )
 
 func main() {
-	b := gi.NewAppBody("goki-clock")
+	b := gi.NewAppBody("Cogent Clock")
 
 	ts := gi.NewTabs(b)
 	clock(ts)

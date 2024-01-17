@@ -7,8 +7,8 @@ package main
 //go:generate core generate
 
 import (
-	"cogentcore.org/core/gear/gear"
-	"cogentcore.org/core/gi/v2/gi"
+	"cogentcore.org/cogent/gear"
+	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grease"
 )
 
@@ -27,7 +27,7 @@ func main() {
 }
 
 func run(c *config) error {
-	b := gi.NewAppBody("Gear")
+	b := gi.NewAppBody("Cogent Gear")
 	cmd := gear.NewCmd(c.Command)
 	err := cmd.Parse()
 	if err != nil {

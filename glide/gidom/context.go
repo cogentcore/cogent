@@ -1,4 +1,4 @@
-// Copyright (c) 2023, The Goki Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/girl/styles"
+	"cogentcore.org/core/gi"
 	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/grr"
+	"cogentcore.org/core/styles"
 	"github.com/aymerick/douceur/css"
 	"github.com/aymerick/douceur/parser"
 	selcss "github.com/ericchiang/css"
@@ -130,7 +130,7 @@ func (cb *ContextBase) Config(w gi.Widget) {
 		case "id":
 			wb.SetName(attr.Val)
 		case "class":
-			wb.SetClass(attr.Val)
+			// wb.SetClass(attr.Val)
 		case "style":
 			// our CSS parser is strict about semicolons, but
 			// they aren't needed in normal inline styles in HTML

@@ -1,16 +1,16 @@
-// Copyright (c) 2023, The Goki Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package main
 
 import (
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/gi/v2/giv"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
 )
 
 func main() {
-	b := gi.NewAppBody("goki-settings")
+	b := gi.NewAppBody("Cogent Settings")
 	giv.SettingsView(b)
 	b.NewWindow().Run().Wait()
 }

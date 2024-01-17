@@ -1,4 +1,4 @@
-// Copyright (c) 2023, The Goki Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -15,16 +15,16 @@ import (
 	"time"
 
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/gi/v2/giv"
-	"cogentcore.org/core/gi/v2/texteditor"
-	"cogentcore.org/core/girl/paint"
-	"cogentcore.org/core/girl/states"
-	"cogentcore.org/core/girl/styles"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/images"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki/v2"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/paint"
+	"cogentcore.org/core/states"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor"
 	"golang.org/x/net/html"
 )
 
@@ -180,7 +180,7 @@ func HandleElement(ctx Context) {
 					slog.Error("error loading image", "url", src, "err", err)
 					return
 				}
-				img.Filename = gi.FileName(src)
+				img.Filename = gi.Filename(src)
 				img.SetImage(im)
 				img.Update()
 			}
@@ -208,7 +208,7 @@ func HandleElement(ctx Context) {
 		case "datetime":
 			NewValue(ctx, time.Now()).SetValue(val)
 		case "file":
-			NewValue(ctx, gi.FileName("")).SetValue(val)
+			NewValue(ctx, gi.Filename("")).SetValue(val)
 		default:
 			New[*gi.TextField](ctx).SetText(val)
 		}

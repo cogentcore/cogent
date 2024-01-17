@@ -5,8 +5,8 @@
 package main
 
 import (
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/glide/glide"
+	"cogentcore.org/cogent/glide"
+	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grr"
 )
 

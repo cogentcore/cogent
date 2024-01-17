@@ -1,10 +1,10 @@
-// Copyright (c) 2023, The Goki Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package gear
 
-//go:generate core generate
+//go:generate core generate -add-types
 
 import (
 	"context"
@@ -19,17 +19,17 @@ import (
 	"strings"
 
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/gi/v2/giv"
-	"cogentcore.org/core/gi/v2/keyfun"
-	"cogentcore.org/core/girl/styles"
-	"cogentcore.org/core/girl/units"
-	"cogentcore.org/core/gix/texteditor"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
 	"cogentcore.org/core/glop/sentence"
-	"cogentcore.org/core/goosi/events"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki/v2"
+	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/ki"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/units"
 	"cogentcore.org/core/xe"
 	"github.com/iancoleman/strcase"
 	"github.com/mattn/go-shellwords"

@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"embed"
 
-	"cogentcore.org/core/gi/v2/gi"
-	"cogentcore.org/core/glide/gidom"
+	"cogentcore.org/cogent/glide/gidom"
+	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grr"
 )
 
