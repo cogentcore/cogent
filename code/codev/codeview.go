@@ -556,7 +556,7 @@ func CodeInScene(sc *gi.Scene) *CodeView {
 
 // NewCodeWindow is common code for Open CodeWindow from Proj or Path
 func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
-	winm := "CogentCode-" + projnm
+	winm := "Cogent Code: " + projnm
 	wintitle := winm + ": " + path
 
 	if win, found := gi.AllRenderWins.FindName(winm); found {
