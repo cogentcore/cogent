@@ -45,9 +45,6 @@ func main() {
 		}
 	}
 
-	recv := gi.WidgetBase{}
-	recv.InitName(&recv, "code_dummy")
-
 	inQuitPrompt := false
 	goosi.TheApp.SetQuitReqFunc(func() {
 		if !inQuitPrompt {
