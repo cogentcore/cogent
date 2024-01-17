@@ -1,14 +1,14 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"fmt"
 	"strings"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
@@ -22,7 +22,7 @@ import (
 // RecycleCmdBuf creates the buffer for command output, or returns
 // existing. If clear is true, then any existing buffer is cleared.
 // Returns true if new buffer created.
-func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buf, bool) {
+func (ge *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buf, bool) {
 	if ge.CmdBufs == nil {
 		ge.CmdBufs = make(map[string]*texteditor.Buf, 20)
 	}
@@ -46,7 +46,7 @@ func (ge *GideView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buf, bo
 // buffer object to save output from the command. returns true if a new buffer
 // was created, false if one already existed. if sel, select tab.  if clearBuf, then any
 // existing buffer is cleared.  Also returns index of tab.
-func (ge *GideView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buf, *texteditor.Editor, bool) {
+func (ge *CodeView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buf, *texteditor.Editor, bool) {
 	buf, nw := ge.RecycleCmdBuf(cmdNm, clearBuf)
 	ctv := ge.RecycleTabTextEditor(cmdNm, sel)
 	if ctv == nil {
@@ -61,15 +61,15 @@ func (ge *GideView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texte
 }
 
 // TabDeleted is called when a main tab is deleted -- we cancel any running commmands
-func (ge *GideView) TabDeleted(tabnm string) {
+func (ge *CodeView) TabDeleted(tabnm string) {
 	ge.RunningCmds.KillByName(tabnm)
 }
 
 // ExecCmdName executes command of given name -- this is the final common
 // pathway for all command invokation except on a node.  if sel, select tab.
 // if clearBuf, clear the buffer prior to command
-func (ge *GideView) ExecCmdName(cmdNm gide.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := gide.AvailCmds.CmdByName(cmdNm, true)
+func (ge *CodeView) ExecCmdName(cmdNm code.CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := code.AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
@@ -79,8 +79,8 @@ func (ge *GideView) ExecCmdName(cmdNm gide.CmdName, sel bool, clearBuf bool) {
 }
 
 // ExecCmdNameFileNode executes command of given name on given node
-func (ge *GideView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm gide.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := gide.AvailCmds.CmdByName(cmdNm, true)
+func (ge *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm code.CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := code.AvailCmds.CmdByName(cmdNm, true)
 	if !ok || fn == nil || fn.This() == nil {
 		return
 	}
@@ -90,8 +90,8 @@ func (ge *GideView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm gide.CmdName, s
 }
 
 // ExecCmdNameFilename executes command of given name on given file name
-func (ge *GideView) ExecCmdNameFilename(fn string, cmdNm gide.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := gide.AvailCmds.CmdByName(cmdNm, true)
+func (ge *CodeView) ExecCmdNameFilename(fn string, cmdNm code.CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := code.AvailCmds.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
@@ -101,7 +101,7 @@ func (ge *GideView) ExecCmdNameFilename(fn string, cmdNm gide.CmdName, sel bool,
 }
 
 // ExecCmds gets list of available commands for current active file
-func ExecCmds(ge *GideView) [][]string {
+func ExecCmds(ge *CodeView) [][]string {
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return nil
@@ -110,34 +110,34 @@ func ExecCmds(ge *GideView) [][]string {
 
 	vc := ge.VersCtrl()
 	if ge.ActiveLang == fi.Unknown {
-		cmds = gide.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
+		cmds = code.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
 	} else {
-		cmds = gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
+		cmds = code.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	}
 	return cmds
 }
 
 // ExecCmdNameActive calls given command on current active textview
-func (ge *GideView) ExecCmdNameActive(cmdNm string) { //gti:add
+func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return
 	}
 	ge.SaveAllCheck(true, func() { // true = cancel option
-		ge.ExecCmdName(gide.CmdName(cmdNm), true, true)
+		ge.ExecCmdName(code.CmdName(cmdNm), true, true)
 	})
 }
 
 // CommandFromMenu pops up a menu of commands for given language, with given last command
 // selected by default, and runs selected command.
-func (ge *GideView) CommandFromMenu(fn *filetree.Node) {
+func (ge *CodeView) CommandFromMenu(fn *filetree.Node) {
 	tv := ge.ActiveTextEditor()
-	gi.NewMenu(gide.CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
+	gi.NewMenu(code.CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
-func (ge *GideView) ExecCmd() { //gti:add
+func (ge *CodeView) ExecCmd() { //gti:add
 	fn := ge.ActiveFileNode()
 	if fn == nil {
 		fmt.Printf("no Active File for ExecCmd\n")
@@ -148,12 +148,12 @@ func (ge *GideView) ExecCmd() { //gti:add
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in Tab with name of command
-func (ge *GideView) ExecCmdFileNode(fn *filetree.Node) {
+func (ge *CodeView) ExecCmdFileNode(fn *filetree.Node) {
 	ge.CommandFromMenu(fn)
 }
 
-// SetArgVarVals sets the ArgVar values for commands, from GideView values
-func (ge *GideView) SetArgVarVals() {
+// SetArgVarVals sets the ArgVar values for commands, from CodeView values
+func (ge *CodeView) SetArgVarVals() {
 	tv := ge.ActiveTextEditor()
 	tve := texteditor.AsEditor(tv)
 	if tv == nil || tv.Buf == nil {
@@ -164,21 +164,21 @@ func (ge *GideView) SetArgVarVals() {
 }
 
 // ExecCmds executes a sequence of commands, sel = select tab, clearBuf = clear buffer
-func (ge *GideView) ExecCmds(cmdNms gide.CmdNames, sel bool, clearBuf bool) {
+func (ge *CodeView) ExecCmds(cmdNms code.CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdName(cmdNm, sel, clearBuf)
 	}
 }
 
 // ExecCmdsFileNode executes a sequence of commands on file node, sel = select tab, clearBuf = clear buffer
-func (ge *GideView) ExecCmdsFileNode(fn *filetree.Node, cmdNms gide.CmdNames, sel bool, clearBuf bool) {
+func (ge *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms code.CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdNameFileNode(fn, cmdNm, sel, clearBuf)
 	}
 }
 
 // Build runs the BuildCmds set for this project
-func (ge *GideView) Build() { //gti:add
+func (ge *CodeView) Build() { //gti:add
 	if len(ge.Prefs.BuildCmds) == 0 {
 		gi.MessageDialog(ge, "You need to set the BuildCmds in the Project Preferences", "No BuildCmds Set")
 		return
@@ -189,7 +189,7 @@ func (ge *GideView) Build() { //gti:add
 }
 
 // Run runs the RunCmds set for this project
-func (ge *GideView) Run() { //gti:add
+func (ge *CodeView) Run() { //gti:add
 	if len(ge.Prefs.RunCmds) == 0 {
 		gi.MessageDialog(ge, "You need to set the RunCmds in the Project Preferences", "No RunCmds Set")
 		return
@@ -203,7 +203,7 @@ func (ge *GideView) Run() { //gti:add
 
 // Commit commits the current changes using relevant VCS tool.
 // Checks for VCS setting and for unsaved files.
-func (ge *GideView) Commit() { //gti:add
+func (ge *CodeView) Commit() { //gti:add
 	vc := ge.VersCtrl()
 	if vc == "" {
 		gi.MessageDialog(ge, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
@@ -215,9 +215,9 @@ func (ge *GideView) Commit() { //gti:add
 }
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
-func (ge *GideView) CommitNoChecks() {
+func (ge *CodeView) CommitNoChecks() {
 	vc := ge.VersCtrl()
-	cmds := gide.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
+	cmds := code.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	cmdnm := ""
 	for _, ct := range cmds {
 		if len(ct) < 2 {
@@ -228,7 +228,7 @@ func (ge *GideView) CommitNoChecks() {
 		}
 		for _, cm := range ct {
 			if strings.Contains(cm, "Commit") {
-				cmdnm = gide.CommandName(ct[0], cm)
+				cmdnm = code.CommandName(ct[0], cm)
 				break
 			}
 		}
@@ -250,8 +250,8 @@ func (ge *GideView) CommitNoChecks() {
 		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
 			val := tf.Text()
 			ge.ArgVals["{PromptString1}"] = val
-			gide.CmdNoUserPrompt = true                     // don't re-prompt!
-			ge.ExecCmdName(gide.CmdName(cmdnm), true, true) // must be wait
+			code.CmdNoUserPrompt = true                     // don't re-prompt!
+			ge.ExecCmdName(code.CmdName(cmdnm), true, true) // must be wait
 			ge.SaveProjIfExists(true)                       // saveall
 			ge.UpdateFiles()
 		})

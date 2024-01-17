@@ -683,9 +683,9 @@ func (pv *PiView) OpenConsoleTab() {
 	ctv := pv.RecycleMainTabTextView("Console", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
-	if ctv.Buf == nil || ctv.Buf != gide.TheConsole.Buf {
-		ctv.SetBuf(gide.TheConsole.Buf)
-		gide.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	if ctv.Buf == nil || ctv.Buf != code.TheConsole.Buf {
+		ctv.SetBuf(code.TheConsole.Buf)
+		code.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			pve, _ := recv.Embed(KiT_PiView).(*PiView)
 			pve.SelectMainTabByName("Console")
 		})
@@ -860,7 +860,7 @@ func (pv *PiView) MonitorOut() {
 	pv.OutMonMu.Unlock()
 	obuf := texteditor.OutBuf{}
 	fs := &pv.FileState
-	obuf.Init(fs.ParseState.Trace.OutRead, &pv.OutBuf, 0, gide.MarkupCmdOutput)
+	obuf.Init(fs.ParseState.Trace.OutRead, &pv.OutBuf, 0, code.MarkupCmdOutput)
 	obuf.MonOut()
 	pv.OutMonMu.Lock()
 	pv.OutMonRunning = false
@@ -990,18 +990,18 @@ func (pv *PiView) FileNodeClosed(fn *filetree.Node) {
 }
 
 func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
-	var kf gide.KeyFuns
+	var kf code.KeyFuns
 	kc := kt.Chord()
 	if gi.DebugSettings.KeyEventTrace {
 		fmt.Printf("PiView KeyInput: %v\n", ge.Path())
 	}
 	// gkf := keyfun.(kc)
 	if ge.KeySeq1 != "" {
-		kf = gide.KeyFun(ge.KeySeq1, kc)
+		kf = code.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
-		if kf == gide.KeyFunNil || kc == "Escape" {
+		if kf == code.KeyFunNil || kc == "Escape" {
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
+				fmt.Printf("code.KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
 			kt.SetProcessed() // abort key sequence, don't send esc to anyone else
@@ -1012,18 +1012,18 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 		ge.KeySeq1 = ""
 		// gkf = keyfun.Nil // override!
 	} else {
-		kf = gide.KeyFun(kc, "")
-		if kf == gide.KeyFunNeeds2 {
+		kf = code.KeyFun(kc, "")
+		if kf == code.KeyFunNeeds2 {
 			kt.SetProcessed()
 			ge.KeySeq1 = kt.Chord()
 			ge.SetStatus(string(ge.KeySeq1))
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
+				fmt.Printf("code.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
 			}
 			return
-		} else if kf != gide.KeyFunNil {
+		} else if kf != code.KeyFunNil {
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
+				fmt.Printf("code.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
 			// gkf = keyfun.Nil // override!
 		}
@@ -1042,46 +1042,46 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	// 	return
 	// }
 	switch kf {
-	case gide.KeyFunNextPanel:
+	case code.KeyFunNextPanel:
 		kt.SetProcessed()
 		ge.FocusNextPanel()
-	case gide.KeyFunPrevPanel:
+	case code.KeyFunPrevPanel:
 		kt.SetProcessed()
 		ge.FocusPrevPanel()
-	case gide.KeyFunFileOpen:
+	case code.KeyFunFileOpen:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "OpenTest", ge.Viewport)
-	// case gide.KeyFunBufSelect:
+	// case code.KeyFunBufSelect:
 	// 	kt.SetProcessed()
 	// 	ge.SelectOpenNode()
-	// case gide.KeyFunBufClone:
+	// case code.KeyFunBufClone:
 	// 	kt.SetProcessed()
 	// 	ge.CloneActiveView()
-	case gide.KeyFunBufSave:
+	case code.KeyFunBufSave:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "SaveTestAs", ge.Viewport)
-	case gide.KeyFunBufSaveAs:
+	case code.KeyFunBufSaveAs:
 		kt.SetProcessed()
 		giv.CallMethod(ge, "SaveActiveViewAs", ge.Viewport)
-		// case gide.KeyFunBufClose:
+		// case code.KeyFunBufClose:
 		// 	kt.SetProcessed()
 		// 	ge.CloseActiveView()
-		// case gide.KeyFunExecCmd:
+		// case code.KeyFunExecCmd:
 		// 	kt.SetProcessed()
 		// 	giv.CallMethod(ge, "ExecCmd", ge.Viewport)
-		// case gide.KeyFunCommentOut:
+		// case code.KeyFunCommentOut:
 		// 	kt.SetProcessed()
 		// 	ge.CommentOut()
-		// case gide.KeyFunIndent:
+		// case code.KeyFunIndent:
 		// 	kt.SetProcessed()
 		// 	ge.Indent()
-		// case gide.KeyFunSetSplit:
+		// case code.KeyFunSetSplit:
 		// 	kt.SetProcessed()
 		// 	giv.CallMethod(ge, "SplitsSetView", ge.Viewport)
-		// case gide.KeyFunBuildProj:
+		// case code.KeyFunBuildProj:
 		// 	kt.SetProcessed()
 		// 	ge.Build()
-		// case gide.KeyFunRunProj:
+		// case code.KeyFunRunProj:
 		// 	kt.SetProcessed()
 		// 	ge.Run()
 	}
@@ -1348,7 +1348,7 @@ func (pv *PiView) CloseWindowReq() bool {
 }
 
 // QuitReq is called when user tries to quit the app -- we go through all open
-// main windows and look for gide windows and call their CloseWindowReq
+// main windows and look for code windows and call their CloseWindowReq
 // functions!
 func QuitReq() bool {
 	for _, win := range gi.MainWindows {

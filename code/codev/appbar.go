@@ -1,13 +1,13 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"strings"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/fi/uri"
@@ -21,7 +21,7 @@ import (
 	"cogentcore.org/core/styles"
 )
 
-func (ge *GideView) AppBarConfig(pw gi.Widget) {
+func (ge *CodeView) AppBarConfig(pw gi.Widget) {
 	tb := gi.RecycleToolbar(pw)
 	// StdAppBarStart(tb)
 	gi.StdAppBarBack(tb)
@@ -35,7 +35,7 @@ func (ge *GideView) AppBarConfig(pw gi.Widget) {
 	// apps should add their own app-general functions here
 }
 
-func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
+func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.Style(func(s *styles.Style) {
@@ -43,12 +43,12 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	})
 	sm.OnChange(func(e events.Event) {
 		ge.Prefs.GoMod = sm.StateIs(states.Checked)
-		gide.SetGoMod(ge.Prefs.GoMod)
+		code.SetGoMod(ge.Prefs.GoMod)
 	})
 
 	gi.NewSeparator(tb)
 	gi.NewButton(tb).SetText("Open Recent").SetMenu(func(m *gi.Scene) {
-		for _, sp := range gide.SavedPaths {
+		for _, sp := range code.SavedPaths {
 			sp := sp
 			gi.NewButton(m).SetText(sp).OnClick(func(e events.Event) {
 				ge.OpenRecent(gi.Filename(sp))
@@ -84,10 +84,10 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	gi.NewSeparator(tb)
 
 	giv.NewFuncButton(tb, ge.Build).SetIcon(icons.Build).
-		SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunBuildProj).String()))
+		SetShortcut(key.Chord(code.ChordForFun(code.KeyFunBuildProj).String()))
 
 	giv.NewFuncButton(tb, ge.Run).SetIcon(icons.PlayArrow).
-		SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunRunProj).String()))
+		SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRunProj).String()))
 
 	giv.NewFuncButton(tb, ge.Debug).SetIcon(icons.Debug)
 
@@ -98,7 +98,7 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	giv.NewFuncButton(tb, ge.Commit).SetIcon(icons.Star)
 
 	gi.NewButton(tb).SetText("Command").
-		SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunExecCmd).String())).
+		SetShortcut(key.Chord(code.ChordForFun(code.KeyFunExecCmd).String())).
 		SetMenu(func(m *gi.Scene) {
 			ec := ExecCmds(ge)
 			for _, cc := range ec {
@@ -110,7 +110,7 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 						cm := cc[i]
 						gi.NewButton(mm).SetText(cm).OnClick(func(e events.Event) {
 							e.SetHandled()
-							ge.ExecCmdNameActive(gide.CommandName(cat, cm))
+							ge.ExecCmdNameActive(code.CommandName(cat, cm))
 						})
 					}
 				})
@@ -122,8 +122,8 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	gi.NewButton(tb).SetText("Splits").SetMenu(func(m *gi.Scene) {
 		gi.NewButton(m).SetText("Set View").
 			SetMenu(func(mm *gi.Scene) {
-				for _, sp := range gide.AvailSplitNames {
-					sn := gide.SplitName(sp)
+				for _, sp := range code.AvailSplitNames {
+					sn := code.SplitName(sp)
 					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSetView(sn)
 					})
@@ -135,8 +135,8 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 		giv.NewFuncButton(m, ge.SplitsSaveAs).SetText("Save As")
 		gi.NewButton(m).SetText("Save").
 			SetMenu(func(mm *gi.Scene) {
-				for _, sp := range gide.AvailSplitNames {
-					sn := gide.SplitName(sp)
+				for _, sp := range code.AvailSplitNames {
+					sn := code.SplitName(sp)
 					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSave(sn)
 					})
@@ -187,21 +187,21 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 				SetKey(keyfun.PasteHist)
 
 			giv.NewFuncButton(mm, ge.RegisterPaste).SetIcon(icons.Paste).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunRegCopy).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRegCopy).String()))
 
 			giv.NewFuncButton(mm, ge.RegisterCopy).SetIcon(icons.Copy).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunRegPaste).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRegPaste).String()))
 
 			gi.NewSeparator(mm)
 
 			giv.NewFuncButton(mm, ge.CopyRect).SetIcon(icons.Copy).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunRectCopy).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRectCopy).String()))
 
 			giv.NewFuncButton(mm, ge.CutRect).SetIcon(icons.Cut).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunRectCut).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRectCut).String()))
 
 			giv.NewFuncButton(mm, ge.PasteRect).SetIcon(icons.Paste).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunRectPaste).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRectPaste).String()))
 
 			gi.NewSeparator(mm)
 
@@ -223,10 +223,10 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 			gi.NewSeparator(mm)
 
 			giv.NewFuncButton(mm, ge.CommentOut).SetText("Comment region").
-				SetIcon(icons.Comment).SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunCommentOut).String()))
+				SetIcon(icons.Comment).SetShortcut(key.Chord(code.ChordForFun(code.KeyFunCommentOut).String()))
 
 			giv.NewFuncButton(mm, ge.Indent).SetIcon(icons.FormatIndentIncrease).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunIndent).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunIndent).String()))
 
 			giv.NewFuncButton(mm, ge.ReCase).SetIcon(icons.MatchCase)
 
@@ -239,14 +239,14 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 
 		gi.NewButton(m).SetText("View").SetMenu(func(mm *gi.Scene) {
 			giv.NewFuncButton(mm, ge.FocusPrevPanel).SetText("Focus prev").SetIcon(icons.KeyboardArrowLeft).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunPrevPanel).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunPrevPanel).String()))
 			giv.NewFuncButton(mm, ge.FocusNextPanel).SetText("Focus next").SetIcon(icons.KeyboardArrowRight).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunNextPanel).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunNextPanel).String()))
 			giv.NewFuncButton(mm, ge.CloneActiveView).SetText("Clone active").SetIcon(icons.Copy).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunBufClone).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunBufClone).String()))
 			gi.NewSeparator(m)
 			giv.NewFuncButton(mm, ge.CloseActiveView).SetText("Close file").SetIcon(icons.Close).
-				SetShortcut(key.Chord(gide.ChordForFun(gide.KeyFunBufClose).String()))
+				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunBufClose).String()))
 			giv.NewFuncButton(mm, ge.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
 		})
 
@@ -267,7 +267,7 @@ func (ge *GideView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 }
 
 // ResourceFiles adds the files
-func (ge *GideView) ResourceFiles() uri.URIs {
+func (ge *CodeView) ResourceFiles() uri.URIs {
 	if ge.Files == nil {
 		return nil
 	}
@@ -312,7 +312,7 @@ func (ge *GideView) ResourceFiles() uri.URIs {
 }
 
 // ResourceCommands adds the commands
-func (ge *GideView) ResourceCommands() uri.URIs {
+func (ge *CodeView) ResourceCommands() uri.URIs {
 	lang := ge.Prefs.MainLang
 	vcnm := ge.VersCtrl()
 	fn := ge.ActiveFileNode()
@@ -323,7 +323,7 @@ func (ge *GideView) ResourceCommands() uri.URIs {
 		}
 	}
 	var ul uri.URIs
-	cmds := gide.AvailCmds.FilterCmdNames(lang, vcnm)
+	cmds := code.AvailCmds.FilterCmdNames(lang, vcnm)
 	for _, cc := range cmds {
 		cc := cc
 		n := len(cc)
@@ -334,11 +334,11 @@ func (ge *GideView) ResourceCommands() uri.URIs {
 		for ii := 1; ii < n; ii++ {
 			ii := ii
 			it := cc[ii]
-			cmdNm := gide.CommandName(cmdCat, it)
+			cmdNm := code.CommandName(cmdCat, it)
 			ur := uri.URI{Label: cmdNm, Icon: icons.Icon(strings.ToLower(cmdCat))}
 			ur.SetURL("cmd", "", cmdNm)
 			ur.Func = func() {
-				cmd := gide.CmdName(cmdNm)
+				cmd := code.CmdName(cmdNm)
 				ge.CmdHist().Add(cmd)          // only save commands executed via chooser
 				ge.SaveAllCheck(true, func() { // true = cancel option
 					ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
@@ -351,7 +351,7 @@ func (ge *GideView) ResourceCommands() uri.URIs {
 }
 
 // ResourceSymbols adds the symbols
-func (ge *GideView) ResourceSymbols() uri.URIs {
+func (ge *CodeView) ResourceSymbols() uri.URIs {
 	tv := ge.ActiveTextEditor()
 	if tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
 		return nil
@@ -361,16 +361,16 @@ func (ge *GideView) ResourceSymbols() uri.URIs {
 		return nil
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
-	syms := &gide.SymNode{}
+	syms := &code.SymNode{}
 	syms.InitName(syms, "syms")
 	syms.OpenSyms(pkg, "", "")
 	var ul uri.URIs
 	syms.WalkPre(func(k ki.Ki) bool {
-		sn := k.(*gide.SymNode)
+		sn := k.(*code.SymNode)
 		ur := uri.URI{Label: sn.Symbol.Label(), Icon: sn.GetIcon()}
 		ur.SetURL("sym", "", sn.PathFrom(syms))
 		ur.Func = func() {
-			gide.SelectSymbol(ge, sn.Symbol)
+			code.SelectSymbol(ge, sn.Symbol)
 		}
 		ul = append(ul, ur)
 		return ki.Continue

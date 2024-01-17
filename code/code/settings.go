@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"os"
@@ -26,15 +26,15 @@ func init() {
 	// OpenIcons()
 }
 
-// Settings are the overall Gide settings
+// Settings are the overall Code settings
 var Settings = &SettingsData{
 	SettingsBase: gi.SettingsBase{
-		Name: "Gide",
-		File: filepath.Join("Gide", "settings.toml"),
+		Name: "Code",
+		File: filepath.Join("Code", "settings.toml"),
 	},
 }
 
-// SettingsData is the data type for the overall user settings for Gide.
+// SettingsData is the data type for the overall user settings for Code.
 type SettingsData struct { //gti:add
 	gi.SettingsBase
 
@@ -44,7 +44,7 @@ type SettingsData struct { //gti:add
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
 	EnvVars map[string]string
 
-	// key map for gide-specific keyboard sequences
+	// key map for code-specific keyboard sequences
 	KeyMap KeyMapName
 
 	// if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords
@@ -68,7 +68,7 @@ type FileSettings struct { //gti:add
 }
 
 // todo:
-// OpenIcons loads the gide icons into the current icon set
+// OpenIcons loads the code icons into the current icon set
 // func OpenIcons() error {
 // 	err := svg.CurIconSet.OpenIconsFromEmbedDir(icons.Icons, ".")
 // 	if err != nil {
@@ -162,7 +162,7 @@ func (se *SettingsData) ApplyEnvVars() {
 	}
 }
 
-// VersionInfo returns Gide version information
+// VersionInfo returns Code version information
 func (se *SettingsData) VersionInfo() string { //gti:add
 	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
 	return vinfo
@@ -233,8 +233,8 @@ type ProjPrefs struct { //gti:add
 	// the type of version control system used in this project (git, svn, etc) -- filters commands available
 	VersCtrl filetree.VersCtrlName
 
-	// current project filename for saving / loading specific Gide configuration information in a .gide file (optional)
-	ProjFilename gi.Filename `ext:".gide"`
+	// current project filename for saving / loading specific Code configuration information in a .code file (optional)
+	ProjFilename gi.Filename `ext:".code"`
 
 	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
 	ProjRoot gi.Filename
@@ -320,16 +320,16 @@ var (
 	SavedPaths gi.FilePaths
 
 	// SavedPathsFilename is the name of the saved file paths file in GoGi prefs directory
-	SavedPathsFilename = "gide_saved_paths.json"
+	SavedPathsFilename = "code_saved_paths.json"
 
-	// GideViewResetRecents defines a string that is added as an item to the recents menu
-	GideViewResetRecents = "<i>Reset Recents</i>"
+	// CodeViewResetRecents defines a string that is added as an item to the recents menu
+	CodeViewResetRecents = "<i>Reset Recents</i>"
 
-	// GideViewEditRecents defines a string that is added as an item to the recents menu
-	GideViewEditRecents = "<i>Edit Recents...</i>"
+	// CodeViewEditRecents defines a string that is added as an item to the recents menu
+	CodeViewEditRecents = "<i>Edit Recents...</i>"
 
 	// SavedPathsExtras are the reset and edit items we add to the recents menu
-	SavedPathsExtras = []string{gi.MenuTextSeparator, GideViewResetRecents, GideViewEditRecents}
+	SavedPathsExtras = []string{gi.MenuTextSeparator, CodeViewResetRecents, CodeViewEditRecents}
 )
 
 // SavePaths saves the active SavedPaths to prefs dir

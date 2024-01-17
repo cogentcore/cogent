@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The gide / Goki Authors. All rights reserved.
+// Copyright (c) 2018, The code / Goki Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -7,7 +7,7 @@ package main
 func main() {
 	/*
 			goosi.TheApp.SetName("pie")
-			goosi.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/core/pi">Gide on GitHub</a> and <a href="https://cogentcore.org/core/pi/wiki">Gide wiki</a> for documentation.<br>
+			goosi.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/core/pi">Code on GitHub</a> and <a href="https://cogentcore.org/core/pi/wiki">Code wiki</a> for documentation.<br>
 		<br>
 		Version: ` + pi.VersionInfo())
 
@@ -15,10 +15,10 @@ func main() {
 			// 	fmt.Printf("Doing final Quit cleanup here..\n")
 			// })
 
-			gide.InitPrefs()
+			code.InitPrefs()
 			piv.InitPrefs()
 
-			gide.TheConsole.Init("") // must do this after changing stdout
+			code.TheConsole.Init("") // must do this after changing stdout
 
 			// var path string
 			// var proj string
@@ -26,13 +26,13 @@ func main() {
 			// // process command args
 			// if len(os.Args) > 1 {
 			// 	flag.StringVar(&path, "path", "", "path to open -- can be to a directory or a filename within the directory")
-			// 	flag.StringVar(&proj, "proj", "", "project file to open -- typically has .gide extension")
+			// 	flag.StringVar(&proj, "proj", "", "project file to open -- typically has .code extension")
 			// 	// todo: other args?
 			// 	flag.Parse()
 			// 	if path == "" && proj == "" {
 			// 		if flag.NArg() > 0 {
 			// 			ext := strings.ToLower(filepath.Ext(flag.Arg(0)))
-			// 			if ext == ".gide" {
+			// 			if ext == ".code" {
 			// 				proj = flag.Arg(0)
 			// 			} else {
 			// 				path = flag.Arg(0)
@@ -58,17 +58,17 @@ func main() {
 
 			// if proj != "" {
 			// 	proj, _ = filepath.Abs(proj)
-			// 	gide.OpenGideProj(proj)
+			// 	code.OpenCodeProj(proj)
 			// } else {
 			// 	if path != "" {
 			// 		path, _ = filepath.Abs(path)
 			// 	}
-			// 	gide.NewGideProjPath(path)
+			// 	code.NewCodeProjPath(path)
 			// }
 
 			piv.NewPiView()
 
-			// above NewGideProj calls will have added to WinWait..
+			// above NewCodeProj calls will have added to WinWait..
 			gi.WinWait.Wait()
 	*/
 }

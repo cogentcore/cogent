@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"bytes"
@@ -76,8 +76,8 @@ type FindParams struct {
 type FindView struct {
 	gi.Layout
 
-	// parent gide project
-	Gide Gide `json:"-" xml:"-"`
+	// parent code project
+	Code Code `json:"-" xml:"-"`
 
 	// langs value view
 	LangVV giv.Value
@@ -91,7 +91,7 @@ type FindView struct {
 
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
-	return &fv.Gide.ProjPrefs().Find
+	return &fv.Code.ProjPrefs().Find
 }
 
 // ShowResults shows the results in the buffer
@@ -169,7 +169,7 @@ func (fv *FindView) FindAction() {
 	if !fv.CompileRegexp() {
 		return
 	}
-	fv.Gide.Find(fp.Find, fp.Replace, fp.IgnoreCase, fp.Regexp, fp.Loc, fp.Langs)
+	fv.Code.Find(fp.Find, fp.Replace, fp.IgnoreCase, fp.Regexp, fp.Loc, fp.Langs)
 }
 
 // CheckValidRegexp returns false if using regexp and it is not valid
@@ -208,7 +208,7 @@ func (fv *FindView) ReplaceAction() bool {
 			return false
 		}
 	}
-	ge := fv.Gide
+	ge := fv.Code
 	tv, reg, _, _, ok := ge.ParseOpenFindURL(tl.URL, ftv)
 	if !ok {
 		return false
@@ -293,9 +293,9 @@ func (fv *FindView) ReplaceAll() {
 	}
 	go func() {
 		for {
-			updt := fv.Gide.Scene().UpdateStartAsync()
+			updt := fv.Code.Scene().UpdateStartAsync()
 			ok := fv.ReplaceAction()
-			fv.Gide.Scene().UpdateEndAsyncLayout(updt)
+			fv.Code.Scene().UpdateEndAsyncLayout(updt)
 			if !ok {
 				break
 			}
@@ -323,7 +323,7 @@ func (fv *FindView) PrevFind() {
 
 // OpenFindURL opens given find:/// url from Find
 func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
-	ge := fv.Gide
+	ge := fv.Code
 	tv, reg, fbBufStLn, fCount, ok := ge.ParseOpenFindURL(ur, ftv)
 	if !ok {
 		return false
@@ -387,7 +387,7 @@ func (fv *FindView) ConfigFindView() {
 	if fv.HasChildren() {
 		return
 	}
-	fv.Gide, _ = ParentGide(fv)
+	fv.Code, _ = ParentCode(fv)
 
 	fv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -483,7 +483,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 	finds.OnChange(func(e events.Event) {
 		fv.Params().Find = finds.CurVal.(string)
 		if fv.Params().Find == "" {
-			tv := fv.Gide.ActiveTextEditor()
+			tv := fv.Code.ActiveTextEditor()
 			if tv != nil {
 				tv.ClearHighlights()
 			}

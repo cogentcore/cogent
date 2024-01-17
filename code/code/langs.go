@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"log"
@@ -40,7 +40,7 @@ func (lt Langs) Validate() bool {
 	for _, lr := range lt {
 		for _, cmdnm := range lr.PostSaveCmds {
 			if !cmdnm.IsValid() {
-				log.Printf("gide.Langs Validate: post-save command: %v not found on current AvailCmds list\n", cmdnm)
+				log.Printf("code.Langs Validate: post-save command: %v not found on current AvailCmds list\n", cmdnm)
 				ok = false
 			}
 		}

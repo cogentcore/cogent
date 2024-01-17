@@ -1,8 +1,8 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
@@ -30,21 +30,21 @@ import (
 
 // CursorToHistPrev moves cursor to previous position on history list --
 // returns true if moved
-func (ge *GideView) CursorToHistPrev() bool { //gti:add
+func (ge *CodeView) CursorToHistPrev() bool { //gti:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistPrev()
 }
 
 // CursorToHistNext moves cursor to next position on history list --
 // returns true if moved
-func (ge *GideView) CursorToHistNext() bool { //gti:add
+func (ge *CodeView) CursorToHistNext() bool { //gti:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistNext()
 }
 
 // LookupFun is the completion system Lookup function that makes a custom
 // textview dialog that has option to edit resulting file.
-func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
+func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
 	sfs := data.(*pi.FileStates)
 	if sfs == nil {
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
@@ -123,7 +123,7 @@ func (ge *GideView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 }
 
 // ReplaceInActive does query-replace in active file only
-func (ge *GideView) ReplaceInActive() { //gti:add
+func (ge *CodeView) ReplaceInActive() { //gti:add
 	tv := ge.ActiveTextEditor()
 	tv.QReplaceAddText()
 }
@@ -132,7 +132,7 @@ func (ge *GideView) ReplaceInActive() { //gti:add
 //    Rects, Registers
 
 // CutRect cuts rectangle in active text view
-func (ge *GideView) CutRect() { //gti:add
+func (ge *CodeView) CutRect() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
@@ -141,7 +141,7 @@ func (ge *GideView) CutRect() { //gti:add
 }
 
 // CopyRect copies rectangle in active text view
-func (ge *GideView) CopyRect() { //gti:add
+func (ge *CodeView) CopyRect() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
@@ -150,7 +150,7 @@ func (ge *GideView) CopyRect() { //gti:add
 }
 
 // PasteRect cuts rectangle in active text view
-func (ge *GideView) PasteRect() { //gti:add
+func (ge *CodeView) PasteRect() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
@@ -160,7 +160,7 @@ func (ge *GideView) PasteRect() { //gti:add
 
 // RegisterCopy saves current selection in active text view to register of given name
 // returns true if saved
-func (ge *GideView) RegisterCopy(name string) bool { //gti:add
+func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
 	if name == "" {
 		return false
 	}
@@ -172,23 +172,23 @@ func (ge *GideView) RegisterCopy(name string) bool { //gti:add
 	if sel == nil {
 		return false
 	}
-	if gide.AvailRegisters == nil {
-		gide.AvailRegisters = make(gide.Registers, 100)
+	if code.AvailRegisters == nil {
+		code.AvailRegisters = make(code.Registers, 100)
 	}
-	gide.AvailRegisters[name] = string(sel.ToBytes())
-	gide.AvailRegisters.SavePrefs()
-	ge.Prefs.Register = gide.RegisterName(name)
+	code.AvailRegisters[name] = string(sel.ToBytes())
+	code.AvailRegisters.SavePrefs()
+	ge.Prefs.Register = code.RegisterName(name)
 	tv.SelectReset()
 	return true
 }
 
 // RegisterPaste pastes register of given name into active text view
 // returns true if pasted
-func (ge *GideView) RegisterPaste(name gide.RegisterName) bool { //gti:add
+func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
 	if name == "" {
 		return false
 	}
-	str, ok := gide.AvailRegisters[string(name)]
+	str, ok := code.AvailRegisters[string(name)]
 	if !ok {
 		return false
 	}
@@ -204,7 +204,7 @@ func (ge *GideView) RegisterPaste(name gide.RegisterName) bool { //gti:add
 // CommentOut comments-out selected lines in active text view
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
-func (ge *GideView) CommentOut() bool { //gti:add
+func (ge *CodeView) CommentOut() bool { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return false
@@ -224,7 +224,7 @@ func (ge *GideView) CommentOut() bool { //gti:add
 }
 
 // Indent indents selected lines in active view
-func (ge *GideView) Indent() bool { //gti:add
+func (ge *CodeView) Indent() bool { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return false
@@ -239,7 +239,7 @@ func (ge *GideView) Indent() bool { //gti:add
 }
 
 // ReCase replaces currently selected text in current active view with given case
-func (ge *GideView) ReCase(c textbuf.Cases) string { //gti:add
+func (ge *CodeView) ReCase(c textbuf.Cases) string { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return ""
@@ -250,7 +250,7 @@ func (ge *GideView) ReCase(c textbuf.Cases) string { //gti:add
 // JoinParaLines merges sequences of lines with hard returns forming paragraphs,
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
-func (ge *GideView) JoinParaLines() { //gti:add
+func (ge *CodeView) JoinParaLines() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
@@ -264,7 +264,7 @@ func (ge *GideView) JoinParaLines() { //gti:add
 
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
-func (ge *GideView) TabsToSpaces() { //gti:add
+func (ge *CodeView) TabsToSpaces() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
@@ -278,7 +278,7 @@ func (ge *GideView) TabsToSpaces() { //gti:add
 
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
-func (ge *GideView) SpacesToTabs() { //gti:add
+func (ge *CodeView) SpacesToTabs() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return
@@ -293,7 +293,7 @@ func (ge *GideView) SpacesToTabs() { //gti:add
 // DiffFiles shows the differences between two given files
 // in side-by-side DiffView and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
-func (ge *GideView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
+func (ge *CodeView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
 	fna := ge.FileNodeForFile(string(fnmA), true)
 	if fna == nil {
 		return
@@ -310,7 +310,7 @@ func (ge *GideView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffView and in the console as a context diff.
-func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:add
+func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:add
 	fnb := ge.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
 		return
@@ -335,7 +335,7 @@ func (ge *GideView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:a
 
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
-func (ge *GideView) CountWords() string { //gti:add
+func (ge *CodeView) CountWords() string { //gti:add
 	av := ge.ActiveTextEditor()
 	if av.Buf == nil || av.Buf.NLines <= 0 {
 		return "empty"
@@ -350,7 +350,7 @@ func (ge *GideView) CountWords() string { //gti:add
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
-func (ge *GideView) CountWordsRegion() string { //gti:add
+func (ge *CodeView) CountWordsRegion() string { //gti:add
 	av := ge.ActiveTextEditor()
 	if av.Buf == nil || av.Buf.NLines <= 0 {
 		return "empty"
@@ -368,15 +368,15 @@ func (ge *GideView) CountWordsRegion() string { //gti:add
 //////////////////////////////////////////////////////////////////////////////////////
 //   Links
 
-// TextLinkHandler is the GideView handler for text links -- preferred one b/c
-// directly connects to correct GideView project
+// TextLinkHandler is the CodeView handler for text links -- preferred one b/c
+// directly connects to correct CodeView project
 func TextLinkHandler(tl paint.TextLink) bool {
 	// todo:
 	// tve := texteditor.AsEditor(tl.Widget)
 	// ftv, _ := tl.Widget.Embed(giv.KiT_TextEditor).(*texteditor.Editor)
-	// gek := tl.Widget.ParentByType(KiT_GideView, true)
+	// gek := tl.Widget.ParentByType(KiT_CodeView, true)
 	// if gek != nil {
-	// 	ge := gek.Embed(KiT_GideView).(*GideView)
+	// 	ge := gek.Embed(KiT_CodeView).(*CodeView)
 	// 	ur := tl.URL
 	// 	// todo: use net/url package for more systematic parsing
 	// 	switch {
@@ -393,16 +393,16 @@ func TextLinkHandler(tl paint.TextLink) bool {
 	return true
 }
 
-// // URLHandler is the GideView handler for urls --
+// // URLHandler is the CodeView handler for urls --
 // func URLHandler(url string) bool {
 // 	return true
 // }
 
 // OpenFileURL opens given file:/// url
-func (ge *GideView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
+func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 	up, err := url.Parse(ur)
 	if err != nil {
-		log.Printf("GideView OpenFileURL parse err: %v\n", err)
+		log.Printf("CodeView OpenFileURL parse err: %v\n", err)
 		return false
 	}
 	fpath := up.Path[1:] // has double //

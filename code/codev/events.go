@@ -1,23 +1,23 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"fmt"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/keyfun"
 )
 
-func (ge *GideView) HandleEvents() {
+func (ge *CodeView) HandleEvents() {
 	ge.PriorityEvents = []events.Types{events.KeyChord}
 	ge.OnKeyChord(func(e events.Event) {
-		ge.GideViewKeys(e)
+		ge.CodeViewKeys(e)
 	})
 	ge.On(events.OSOpenFiles, func(e events.Event) {
 		ofe := e.(*events.OSFiles)
@@ -27,20 +27,20 @@ func (ge *GideView) HandleEvents() {
 	})
 }
 
-func (ge *GideView) GideViewKeys(kt events.Event) {
-	gide.SetGoMod(ge.Prefs.GoMod)
-	var kf gide.KeyFuns
+func (ge *CodeView) CodeViewKeys(kt events.Event) {
+	code.SetGoMod(ge.Prefs.GoMod)
+	var kf code.KeyFuns
 	kc := kt.KeyChord()
 	if gi.DebugSettings.KeyEventTrace {
-		fmt.Printf("GideView KeyInput: %v\n", ge.Path())
+		fmt.Printf("CodeView KeyInput: %v\n", ge.Path())
 	}
 	gkf := keyfun.Of(kc)
 	if ge.KeySeq1 != "" {
-		kf = gide.KeyFun(ge.KeySeq1, kc)
+		kf = code.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
-		if kf == gide.KeyFunNil || kc == "Escape" {
+		if kf == code.KeyFunNil || kc == "Escape" {
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun sequence: %v aborted\n", seqstr)
+				fmt.Printf("code.KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
 			kt.SetHandled() // abort key sequence, don't send esc to anyone else
@@ -51,8 +51,8 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		ge.KeySeq1 = ""
 		gkf = keyfun.Nil // override!
 	} else {
-		kf = gide.KeyFun(kc, "")
-		if kf == gide.KeyFunNeeds2 {
+		kf = code.KeyFun(kc, "")
+		if kf == code.KeyFunNeeds2 {
 			kt.SetHandled()
 			tv := ge.ActiveTextEditor()
 			if tv != nil {
@@ -61,12 +61,12 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 			ge.KeySeq1 = kt.KeyChord()
 			ge.SetStatus(string(ge.KeySeq1))
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
+				fmt.Printf("code.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
 			}
 			return
-		} else if kf != gide.KeyFunNil {
+		} else if kf != code.KeyFunNil {
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
+				fmt.Printf("code.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
 			gkf = keyfun.Nil // override!
 		}
@@ -85,68 +85,68 @@ func (ge *GideView) GideViewKeys(kt events.Event) {
 		return
 	}
 	switch kf {
-	case gide.KeyFunNextPanel:
+	case code.KeyFunNextPanel:
 		kt.SetHandled()
 		ge.FocusNextPanel()
-	case gide.KeyFunPrevPanel:
+	case code.KeyFunPrevPanel:
 		kt.SetHandled()
 		ge.FocusPrevPanel()
-	case gide.KeyFunFileOpen:
+	case code.KeyFunFileOpen:
 		kt.SetHandled()
 		ge.CallViewFile(atv)
-	case gide.KeyFunBufSelect:
+	case code.KeyFunBufSelect:
 		kt.SetHandled()
 		ge.SelectOpenNode()
-	case gide.KeyFunBufClone:
+	case code.KeyFunBufClone:
 		kt.SetHandled()
 		ge.CloneActiveView()
-	case gide.KeyFunBufSave:
+	case code.KeyFunBufSave:
 		kt.SetHandled()
 		ge.SaveActiveView()
-	case gide.KeyFunBufSaveAs:
+	case code.KeyFunBufSaveAs:
 		kt.SetHandled()
 		ge.CallSaveActiveViewAs(atv)
-	case gide.KeyFunBufClose:
+	case code.KeyFunBufClose:
 		kt.SetHandled()
 		ge.CloseActiveView()
-	case gide.KeyFunExecCmd:
+	case code.KeyFunExecCmd:
 		kt.SetHandled()
 		giv.CallFunc(atv, ge.ExecCmd)
-	case gide.KeyFunRectCut:
+	case code.KeyFunRectCut:
 		kt.SetHandled()
 		ge.CutRect()
-	case gide.KeyFunRectCopy:
+	case code.KeyFunRectCopy:
 		kt.SetHandled()
 		ge.CopyRect()
-	case gide.KeyFunRectPaste:
+	case code.KeyFunRectPaste:
 		kt.SetHandled()
 		ge.PasteRect()
-	case gide.KeyFunRegCopy:
+	case code.KeyFunRegCopy:
 		kt.SetHandled()
 		giv.CallFunc(atv, ge.RegisterCopy)
-	case gide.KeyFunRegPaste:
+	case code.KeyFunRegPaste:
 		kt.SetHandled()
 		giv.CallFunc(atv, ge.RegisterPaste)
-	case gide.KeyFunCommentOut:
+	case code.KeyFunCommentOut:
 		kt.SetHandled()
 		ge.CommentOut()
-	case gide.KeyFunIndent:
+	case code.KeyFunIndent:
 		kt.SetHandled()
 		ge.Indent()
-	case gide.KeyFunJump:
+	case code.KeyFunJump:
 		kt.SetHandled()
 		tv := ge.ActiveTextEditor()
 		if tv != nil {
 			tv.JumpToLineAddText()
 		}
 		ge.Indent()
-	case gide.KeyFunSetSplit:
+	case code.KeyFunSetSplit:
 		kt.SetHandled()
 		ge.CallSplitsSetView(atv)
-	case gide.KeyFunBuildProj:
+	case code.KeyFunBuildProj:
 		kt.SetHandled()
 		ge.Build()
-	case gide.KeyFunRunProj:
+	case code.KeyFunRunProj:
 		kt.SetHandled()
 		ge.Run()
 	}

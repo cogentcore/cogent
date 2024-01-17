@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"strings"
@@ -23,8 +23,8 @@ import (
 type SpellView struct {
 	gi.Layout
 
-	// parent gide project
-	Gide Gide `json:"-" xml:"-" copy:"-"`
+	// parent code project
+	Code Code `json:"-" xml:"-" copy:"-"`
 
 	// textview that we're spell-checking
 	Text *TextEditor `json:"-" xml:"-" copy:"-"`
@@ -59,15 +59,15 @@ func (sv *SpellView) SpellAction() {
 	sf := sv.ChangeText()
 	sf.SetText("")
 
-	sv.Gide.Spell()
+	sv.Code.Spell()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
 // Config configures the view
-func (sv *SpellView) ConfigSpellView(ge Gide, atv *TextEditor) {
-	sv.Gide = ge
+func (sv *SpellView) ConfigSpellView(ge Code, atv *TextEditor) {
+	sv.Code = ge
 	sv.Text = atv
 	sv.CurLn = 0
 	sv.CurIdx = 0

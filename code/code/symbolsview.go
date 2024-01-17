@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"log"
@@ -32,8 +32,8 @@ type SymbolsParams struct {
 type SymbolsView struct {
 	gi.Layout
 
-	// parent gide project
-	Gide Gide `json:"-" xml:"-"`
+	// parent code project
+	Code Code `json:"-" xml:"-"`
 
 	// params for structure display
 	SymParams SymbolsParams
@@ -47,15 +47,15 @@ type SymbolsView struct {
 
 // Params returns the symbols params
 func (sv *SymbolsView) Params() *SymbolsParams {
-	return &sv.Gide.ProjPrefs().Symbols
+	return &sv.Code.ProjPrefs().Symbols
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
 // Config configures the view
-func (sv *SymbolsView) ConfigSymbolsView(ge Gide, sp SymbolsParams) {
-	sv.Gide = ge
+func (sv *SymbolsView) ConfigSymbolsView(ge Code, sp SymbolsParams) {
+	sv.Code = ge
 	sv.SymParams = sp
 	if sv.HasChildren() {
 		return
@@ -156,7 +156,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 			}
 			sn := tv.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
 			if sn != nil {
-				SelectSymbol(sv.Gide, sn.Symbol)
+				SelectSymbol(sv.Code, sn.Symbol)
 			}
 		})
 	} else {
@@ -174,14 +174,14 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	sfr.UpdateEndLayout(updt)
 }
 
-func SelectSymbol(ge Gide, ssym syms.Symbol) {
+func SelectSymbol(ge Code, ssym syms.Symbol) {
 	tv := ge.ActiveTextEditor()
 	if tv == nil || tv.Buf == nil || string(tv.Buf.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv, ok = ge.OpenFileAtRegion(gi.Filename(ssym.Filename), tr)
 		if !ok {
-			log.Printf("GideView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
+			log.Printf("CodeView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
 		return
 	}
@@ -198,7 +198,7 @@ func SelectSymbol(ge Gide, ssym syms.Symbol) {
 
 // OpenPackage opens package-level symbols for current active textview
 func (sv *SymbolsView) OpenPackage() {
-	ge := sv.Gide
+	ge := sv.Code
 	tv := ge.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
 		return
@@ -214,7 +214,7 @@ func (sv *SymbolsView) OpenPackage() {
 
 // OpenFile opens file-level symbols for current active textview
 func (sv *SymbolsView) OpenFile() {
-	ge := sv.Gide
+	ge := sv.Code
 	tv := ge.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
 		return
@@ -355,7 +355,7 @@ type SymTreeView struct {
 	giv.TreeView
 }
 
-// SymNode returns the SrcNode as a *gide* SymNode
+// SymNode returns the SrcNode as a *code* SymNode
 func (st *SymTreeView) SymNode() *SymNode {
 	return st.SyncNode.(*SymNode)
 }

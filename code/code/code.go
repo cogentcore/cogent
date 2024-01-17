@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 //go:generate core generate
 
@@ -20,19 +20,19 @@ import (
 	"cogentcore.org/core/texteditor/textbuf"
 )
 
-// Gide provides the interface for the GideView functionality that is needed
-// by the core gide infrastructure, to allow GideView to be in a separate package.
-// It is not intended to be the full functionality of the GideView.
-type Gide interface {
+// Code provides the interface for the CodeView functionality that is needed
+// by the core code infrastructure, to allow CodeView to be in a separate package.
+// It is not intended to be the full functionality of the CodeView.
+type Code interface {
 	gi.Widget
 
 	// Scene returns the scene for the view
 	Scene() *gi.Scene
 
-	// ProjPrefs returns the gide.ProjPrefs
+	// ProjPrefs returns the code.ProjPrefs
 	ProjPrefs() *ProjPrefs
 
-	// FileTree returns the gide.Files file tree
+	// FileTree returns the code.Files file tree
 	FileTree() *filetree.Tree
 
 	// LastSaveTime returns the time stamp when a file was last saved within project --
@@ -153,18 +153,18 @@ type Gide interface {
 	ClearDebug()
 }
 
-// GideType is a Gide reflect.Type, suitable for checking for Type.Implements.
-var GideType = reflect.TypeOf((*Gide)(nil)).Elem()
+// CodeType is a Code reflect.Type, suitable for checking for Type.Implements.
+var CodeType = reflect.TypeOf((*Code)(nil)).Elem()
 
-// ParentGide returns the Gide parent of given node
-func ParentGide(kn ki.Ki) (Gide, bool) {
+// ParentCode returns the Code parent of given node
+func ParentCode(kn ki.Ki) (Code, bool) {
 	if ki.IsRoot(kn) {
 		return nil, false
 	}
-	var ge Gide
+	var ge Code
 	kn.WalkUp(func(k ki.Ki) bool {
-		if laser.EmbedImplements(reflect.TypeOf(k.This()), GideType) {
-			ge = k.(Gide)
+		if laser.EmbedImplements(reflect.TypeOf(k.This()), CodeType) {
+			ge = k.(Code)
 			return false
 		}
 		return true
@@ -172,11 +172,11 @@ func ParentGide(kn ki.Ki) (Gide, bool) {
 	return ge, ge != nil
 }
 
-// AppDataDir returns the application-specific data directory for gide.
+// AppDataDir returns the application-specific data directory for code.
 // It wraps [gi.App.DataDir], and must be a separate function because
-// the [gi.App] for gide may not exist yet at certain points. It ensures
+// the [gi.App] for code may not exist yet at certain points. It ensures
 // that the directory exists before returning it.
 func AppDataDir() string {
 	// TODO: is there a better way to do this?
-	return (&gi.App{Name: "gide"}).DataDir()
+	return (&gi.App{Name: "CogentCode"}).DataDir()
 }

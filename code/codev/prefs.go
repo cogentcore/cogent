@@ -1,24 +1,24 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"path/filepath"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"github.com/goki/gide_v1/cdebug"
 )
 
 // Defaults sets new project defaults based on overall preferences
-func (ge *GideView) Defaults() {
-	ge.Prefs.Files = gide.Settings.Files
+func (ge *CodeView) Defaults() {
+	ge.Prefs.Files = code.Settings.Files
 	ge.Prefs.Editor = gi.SystemSettings.Editor
 	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
 	ge.Prefs.Debug = cdebug.DefaultParams
@@ -26,7 +26,7 @@ func (ge *GideView) Defaults() {
 
 // GrabPrefs grabs the current project preference settings from various
 // places, e.g., prior to saving or editing.
-func (ge *GideView) GrabPrefs() {
+func (ge *CodeView) GrabPrefs() {
 	sv := ge.Splits()
 	ge.Prefs.Splits = sv.Splits
 	ge.Prefs.Dirs = ge.Files.Dirs
@@ -34,7 +34,7 @@ func (ge *GideView) GrabPrefs() {
 
 // ApplyPrefs applies current project preference settings into places where
 // they are used -- only for those done prior to loading
-func (ge *GideView) ApplyPrefs() {
+func (ge *CodeView) ApplyPrefs() {
 	ge.ProjFilename = ge.Prefs.ProjFilename
 	ge.ProjRoot = ge.Prefs.ProjRoot
 	if ge.Files != nil {
@@ -60,15 +60,15 @@ func (ge *GideView) ApplyPrefs() {
 }
 
 // ApplyPrefsAction applies current preferences to the project, and updates the project
-func (ge *GideView) ApplyPrefsAction() {
+func (ge *CodeView) ApplyPrefsAction() {
 	ge.ApplyPrefs()
 	ge.SplitsSetView(ge.Prefs.SplitName)
 	ge.SetStatus("Applied prefs")
 }
 
 // EditProjPrefs allows editing of project preferences (settings specific to this project)
-func (ge *GideView) EditProjPrefs() { //gti:add
-	sv := gide.ProjPrefsView(&ge.Prefs)
+func (ge *CodeView) EditProjPrefs() { //gti:add
+	sv := code.ProjPrefsView(&ge.Prefs)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
 			ge.ApplyPrefsAction()
@@ -76,16 +76,16 @@ func (ge *GideView) EditProjPrefs() { //gti:add
 	}
 }
 
-func (ge *GideView) CallSplitsSetView(ctx gi.Widget) {
+func (ge *CodeView) CallSplitsSetView(ctx gi.Widget) {
 	fb := giv.NewSoloFuncButton(ctx, ge.SplitsSetView)
 	fb.Args[0].SetValue(ge.Prefs.SplitName)
 	fb.CallFunc()
 }
 
 // SplitsSetView sets split view splitters to given named setting
-func (ge *GideView) SplitsSetView(split gide.SplitName) { //gti:add
+func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 	sv := ge.Splits()
-	sp, _, ok := gide.AvailSplits.SplitByName(split)
+	sp, _, ok := code.AvailSplits.SplitByName(split)
 	if ok {
 		sv.SetSplitsAction(sp.Splits...)
 		ge.Prefs.SplitName = split
@@ -97,43 +97,43 @@ func (ge *GideView) SplitsSetView(split gide.SplitName) { //gti:add
 
 // SplitsSave saves current splitter settings to named splitter settings under
 // existing name, and saves to prefs file
-func (ge *GideView) SplitsSave(split gide.SplitName) { //gti:add
+func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
 	sv := ge.Splits()
-	sp, _, ok := gide.AvailSplits.SplitByName(split)
+	sp, _, ok := code.AvailSplits.SplitByName(split)
 	if ok {
 		sp.SaveSplits(sv.Splits)
-		gide.AvailSplits.SavePrefs()
+		code.AvailSplits.SavePrefs()
 	}
 }
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (ge *GideView) SplitsSaveAs(name, desc string) { //gti:add
+func (ge *CodeView) SplitsSaveAs(name, desc string) { //gti:add
 	sv := ge.Splits()
-	gide.AvailSplits.Add(name, desc, sv.Splits)
-	gide.AvailSplits.SavePrefs()
+	code.AvailSplits.Add(name, desc, sv.Splits)
+	code.AvailSplits.SavePrefs()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (ge *GideView) SplitsEdit() { //gti:add
-	gide.SplitsView(&gide.AvailSplits)
+func (ge *CodeView) SplitsEdit() { //gti:add
+	code.SplitsView(&code.AvailSplits)
 }
 
 // LangDefaults applies default language settings based on MainLang
-func (ge *GideView) LangDefaults() {
-	ge.Prefs.RunCmds = gide.CmdNames{"Build: Run Proj"}
+func (ge *CodeView) LangDefaults() {
+	ge.Prefs.RunCmds = code.CmdNames{"Build: Run Proj"}
 	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
 	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
 	ge.Prefs.RunExec = gi.Filename(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
 	if len(ge.Prefs.BuildCmds) == 0 {
 		switch ge.Prefs.MainLang {
 		case fi.Go:
-			ge.Prefs.BuildCmds = gide.CmdNames{"Go: Build Proj"}
+			ge.Prefs.BuildCmds = code.CmdNames{"Go: Build Proj"}
 		case fi.TeX:
-			ge.Prefs.BuildCmds = gide.CmdNames{"LaTeX: LaTeX PDF"}
-			ge.Prefs.RunCmds = gide.CmdNames{"File: Open Target"}
+			ge.Prefs.BuildCmds = code.CmdNames{"LaTeX: LaTeX PDF"}
+			ge.Prefs.RunCmds = code.CmdNames{"File: Open Target"}
 		default:
-			ge.Prefs.BuildCmds = gide.CmdNames{"Build: Make"}
+			ge.Prefs.BuildCmds = code.CmdNames{"Build: Make"}
 		}
 	}
 	if ge.Prefs.VersCtrl == "" {
@@ -145,7 +145,7 @@ func (ge *GideView) LangDefaults() {
 }
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
-func (ge *GideView) GuessMainLang() bool {
+func (ge *CodeView) GuessMainLang() bool {
 	ecsc := ge.Files.FileExtCounts(fi.Code)
 	ecsd := ge.Files.FileExtCounts(fi.Doc)
 	ecs := append(ecsc, ecsd...)

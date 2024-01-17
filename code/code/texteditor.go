@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"image"
@@ -22,12 +22,12 @@ import (
 	"cogentcore.org/core/texteditor"
 )
 
-// TextEditor is the Gide-specific version of the TextEditor, with support for
+// TextEditor is the Code-specific version of the TextEditor, with support for
 // setting / clearing breakpoints, etc
 type TextEditor struct {
 	texteditor.Editor
 
-	Gide Gide
+	Code Code
 }
 
 func (ed *TextEditor) OnInit() {
@@ -46,7 +46,7 @@ func (ed *TextEditor) SetStyles() {
 // HandleEvents sets connections between mouse and key events and actions
 func (ed *TextEditor) HandleEvents() {
 	ed.On(events.Focus, func(e events.Event) {
-		ed.Gide.SetActiveTextEditor(ed)
+		ed.Code.SetActiveTextEditor(ed)
 	})
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.Pos())
@@ -83,7 +83,7 @@ func (ed *TextEditor) CurDebug() (*DebugView, bool) {
 	if ed.Buf == nil {
 		return nil, false
 	}
-	if ge, ok := ParentGide(ed); ok {
+	if ge, ok := ParentCode(ed); ok {
 		dbg := ge.CurDebug()
 		if dbg != nil {
 			return dbg, true
@@ -241,13 +241,13 @@ func (ed *TextEditor) ContextMenu(m *gi.Scene) {
 	gi.NewSeparator(m)
 	giv.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
 
-	fn := ed.Gide.FileNodeForFile(string(ed.Buf.Filename), false)
+	fn := ed.Code.FileNodeForFile(string(ed.Buf.Filename), false)
 	if fn != nil {
 		fn.SelectAction(events.SelectOne)
 		fn.VCSContextMenu(m)
 	}
 
-	if ed.Gide.CurDebug() != nil {
+	if ed.Code.CurDebug() != nil {
 		gi.NewSeparator(m)
 
 		gi.NewButton(m).SetText("Set breakpoint").SetIcon(icons.StopCircle).

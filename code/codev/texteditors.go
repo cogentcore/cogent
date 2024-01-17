@@ -1,8 +1,8 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
@@ -22,7 +22,7 @@ import (
 )
 
 // ConfigTextBuf configures the text buf according to prefs
-func (ge *GideView) ConfigTextBuf(tb *texteditor.Buf) {
+func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buf) {
 	tb.SetHiStyle(gi.AppearanceSettings.HiStyle)
 	tb.Opts.EditorSettings = ge.Prefs.Editor
 	tb.ConfigKnown()
@@ -36,18 +36,18 @@ func (ge *GideView) ConfigTextBuf(tb *texteditor.Buf) {
 }
 
 // ActiveTextEditor returns the currently-active TextEditor
-func (ge *GideView) ActiveTextEditor() *gide.TextEditor {
+func (ge *CodeView) ActiveTextEditor() *code.TextEditor {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIdx)
 	return ge.TextEditorByIndex(ge.ActiveTextEditorIdx)
 }
 
 // ActiveFileNode returns the file node for the active file -- nil if none
-func (ge *GideView) ActiveFileNode() *filetree.Node {
+func (ge *CodeView) ActiveFileNode() *filetree.Node {
 	return ge.FileNodeForFile(string(ge.ActiveFilename), false)
 }
 
 // TextEditorIndex finds index of given textview (0 or 1)
-func (ge *GideView) TextEditorIndex(av *gide.TextEditor) int {
+func (ge *CodeView) TextEditorIndex(av *code.TextEditor) int {
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
 		if tv.This() == av.This() {
@@ -59,7 +59,7 @@ func (ge *GideView) TextEditorIndex(av *gide.TextEditor) int {
 
 // TextEditorForFileNode finds a TextEditor that is viewing given FileNode,
 // and its index, or false if none is
-func (ge *GideView) TextEditorForFileNode(fn *filetree.Node) (*gide.TextEditor, int, bool) {
+func (ge *CodeView) TextEditorForFileNode(fn *filetree.Node) (*code.TextEditor, int, bool) {
 	if fn.Buf == nil {
 		return nil, -1, false
 	}
@@ -75,7 +75,7 @@ func (ge *GideView) TextEditorForFileNode(fn *filetree.Node) (*gide.TextEditor, 
 
 // OpenNodeForTextEditor finds the FileNode that a given TextEditor is
 // viewing, returning its index within OpenNodes list, or false if not found
-func (ge *GideView) OpenNodeForTextEditor(tv *gide.TextEditor) (*filetree.Node, int, bool) {
+func (ge *CodeView) OpenNodeForTextEditor(tv *code.TextEditor) (*filetree.Node, int, bool) {
 	if tv.Buf == nil {
 		return nil, -1, false
 	}
@@ -89,7 +89,7 @@ func (ge *GideView) OpenNodeForTextEditor(tv *gide.TextEditor) (*filetree.Node, 
 
 // TextEditorForFile finds FileNode for file, and returns TextEditor and index
 // that is viewing that FileNode, or false if none is
-func (ge *GideView) TextEditorForFile(fnm gi.Filename) (*gide.TextEditor, int, bool) {
+func (ge *CodeView) TextEditorForFile(fnm gi.Filename) (*code.TextEditor, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -98,7 +98,7 @@ func (ge *GideView) TextEditorForFile(fnm gi.Filename) (*gide.TextEditor, int, b
 }
 
 // SetActiveFileInfo sets the active file info from textbuf
-func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
+func (ge *CodeView) SetActiveFileInfo(buf *texteditor.Buf) {
 	ge.ActiveFilename = buf.Filename
 	ge.ActiveLang = buf.Info.Known
 	ge.ActiveVCSInfo = ""
@@ -118,7 +118,7 @@ func (ge *GideView) SetActiveFileInfo(buf *texteditor.Buf) {
 }
 
 // SetActiveTextEditor sets the given textview as the active one, and returns its index
-func (ge *GideView) SetActiveTextEditor(av *gide.TextEditor) int {
+func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
 
@@ -138,12 +138,12 @@ func (ge *GideView) SetActiveTextEditor(av *gide.TextEditor) int {
 // SetActiveTextEditorIdx sets the given view index as the currently-active
 // TextEditor -- returns that textview.  This is the main method for
 // activating a text editor.
-func (ge *GideView) SetActiveTextEditorIdx(idx int) *gide.TextEditor {
+func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
 
 	if idx < 0 || idx >= NTextEditors {
-		log.Printf("GideView SetActiveTextEditorIdx: text view index out of range: %v\n", idx)
+		log.Printf("CodeView SetActiveTextEditorIdx: text view index out of range: %v\n", idx)
 		return nil
 	}
 	ge.ActiveTextEditorIdx = idx
@@ -162,7 +162,7 @@ func (ge *GideView) SetActiveTextEditorIdx(idx int) *gide.TextEditor {
 // NextTextEditor returns the next text view available for viewing a file and
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
-func (ge *GideView) NextTextEditor() (*gide.TextEditor, int) {
+func (ge *CodeView) NextTextEditor() (*code.TextEditor, int) {
 	av := ge.TextEditorByIndex(ge.ActiveTextEditorIdx)
 	if av.Buf == nil {
 		return av, ge.ActiveTextEditorIdx
@@ -176,7 +176,7 @@ func (ge *GideView) NextTextEditor() (*gide.TextEditor, int) {
 
 // SwapTextEditors switches the buffers for the two open textviews
 // only operates if both panels are open
-func (ge *GideView) SwapTextEditors() bool {
+func (ge *CodeView) SwapTextEditors() bool {
 	if !ge.PanelIsOpen(TextEditor1Idx) || !ge.PanelIsOpen(TextEditor1Idx+1) {
 		return false
 	}
@@ -193,7 +193,7 @@ func (ge *GideView) SwapTextEditors() bool {
 	return true
 }
 
-func (ge *GideView) OpenFileAtRegion(filename gi.Filename, tr textbuf.Region) (tv *gide.TextEditor, ok bool) {
+func (ge *CodeView) OpenFileAtRegion(filename gi.Filename, tr textbuf.Region) (tv *code.TextEditor, ok bool) {
 	tv, _, ok = ge.LinkViewFile(filename)
 	if tv == nil {
 		return nil, false
@@ -211,7 +211,7 @@ func (ge *GideView) OpenFileAtRegion(filename gi.Filename, tr textbuf.Region) (t
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gide.TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
+func (ge *CodeView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *code.TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindView OpenFindURL parse err: %v\n", err)
@@ -238,19 +238,19 @@ func (ge *GideView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *gid
 }
 
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
-func (ge *GideView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
-	fvk := ftv.ParentByType(gide.FindViewType, ki.NoEmbeds)
+func (ge *CodeView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
+	fvk := ftv.ParentByType(code.FindViewType, ki.NoEmbeds)
 	if fvk == nil {
 		return false
 	}
-	fv := fvk.(*gide.FindView)
+	fv := fvk.(*code.FindView)
 	return fv.OpenFindURL(ur, ftv)
 }
 
 // UpdateTextButtons updates textview menu buttons
 // is called by SetStatus and is generally under cover of TopUpdateStart / End
 // doesn't do anything unless a change is required -- safe to call frequently.
-func (ge *GideView) UpdateTextButtons() {
+func (ge *CodeView) UpdateTextButtons() {
 	ati := ge.ActiveTextEditorIdx
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
@@ -274,11 +274,11 @@ func (ge *GideView) UpdateTextButtons() {
 }
 
 // FileNodeSelected is called whenever tree browser has file node selected
-func (ge *GideView) FileNodeSelected(fn *filetree.Node) {
+func (ge *CodeView) FileNodeSelected(fn *filetree.Node) {
 	// not doing anything with this actually
 }
 
-func (ge *GideView) TextEditorButtonMenu(idx int, m *gi.Scene) {
+func (ge *CodeView) TextEditorButtonMenu(idx int, m *gi.Scene) {
 	tv := ge.TextEditorByIndex(idx)
 	opn := ge.OpenNodes.Strings()
 	gi.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {

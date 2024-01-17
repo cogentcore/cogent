@@ -1,8 +1,8 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
@@ -23,7 +23,7 @@ import (
 )
 
 // SaveActiveView saves the contents of the currently-active textview
-func (ge *GideView) SaveActiveView() { //gti:add
+func (ge *CodeView) SaveActiveView() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf != nil {
 		ge.LastSaveTStamp = time.Now()
@@ -43,18 +43,18 @@ func (ge *GideView) SaveActiveView() { //gti:add
 
 // ConfigActiveFilename configures the first arg of given FuncButton to
 // use the ActiveFilename
-func (ge *GideView) ConfigActiveFilename(fb *giv.FuncButton) *giv.FuncButton {
+func (ge *CodeView) ConfigActiveFilename(fb *giv.FuncButton) *giv.FuncButton {
 	fb.Args[0].SetValue(ge.ActiveFilename)
 	return fb
 }
 
-func (ge *GideView) CallSaveActiveViewAs(ctx gi.Widget) {
+func (ge *CodeView) CallSaveActiveViewAs(ctx gi.Widget) {
 	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.SaveActiveViewAs)).CallFunc()
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
 // currently-active textview
-func (ge *GideView) SaveActiveViewAs(filename gi.Filename) { //gti:add
+func (ge *CodeView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf != nil {
 		ge.LastSaveTStamp = time.Now()
@@ -80,7 +80,7 @@ func (ge *GideView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 }
 
 // RevertActiveView revert active view to saved version
-func (ge *GideView) RevertActiveView() { //gti:add
+func (ge *CodeView) RevertActiveView() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf != nil {
 		ge.ConfigTextBuf(tv.Buf)
@@ -92,7 +92,7 @@ func (ge *GideView) RevertActiveView() { //gti:add
 }
 
 // CloseActiveView closes the buffer associated with active view
-func (ge *GideView) CloseActiveView() { //gti:add
+func (ge *CodeView) CloseActiveView() { //gti:add
 	tv := ge.ActiveTextEditor()
 	ond, _, got := ge.OpenNodeForTextEditor(tv)
 	if got {
@@ -110,7 +110,7 @@ func (ge *GideView) CloseActiveView() { //gti:add
 // RunPostCmdsActiveView runs any registered post commands on the active view
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
-func (ge *GideView) RunPostCmdsActiveView() bool {
+func (ge *CodeView) RunPostCmdsActiveView() bool {
 	tv := ge.ActiveTextEditor()
 	ond, _, got := ge.OpenNodeForTextEditor(tv)
 	if got {
@@ -122,9 +122,9 @@ func (ge *GideView) RunPostCmdsActiveView() bool {
 // RunPostCmdsFileNode runs any registered post commands on the given file node
 // -- returns true if commands were run and file was reverted after that --
 // uses MainLang to disambiguate if multiple languages associated with extension.
-func (ge *GideView) RunPostCmdsFileNode(fn *filetree.Node) bool {
+func (ge *CodeView) RunPostCmdsFileNode(fn *filetree.Node) bool {
 	lang := fn.Info.Known
-	if lopt, has := gide.AvailLangs[lang]; has {
+	if lopt, has := code.AvailLangs[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
 			ge.ExecCmdsFileNode(fn, lopt.PostSaveCmds, false, true) // no select, yes clear
 			fn.Buf.Revert()
@@ -137,7 +137,7 @@ func (ge *GideView) RunPostCmdsFileNode(fn *filetree.Node) bool {
 // AutoSaveCheck checks for an autosave file and prompts user about opening it
 // -- returns true if autosave file does exist for a file that currently
 // unchanged (means just opened)
-func (ge *GideView) AutoSaveCheck(tv *gide.TextEditor, vidx int, fn *filetree.Node) bool {
+func (ge *CodeView) AutoSaveCheck(tv *code.TextEditor, vidx int, fn *filetree.Node) bool {
 	if strings.HasPrefix(fn.Nm, "#") && strings.HasSuffix(fn.Nm, "#") {
 		fn.Buf.Autosave = false
 		return false // we are the autosave file
@@ -165,7 +165,7 @@ func (ge *GideView) AutoSaveCheck(tv *gide.TextEditor, vidx int, fn *filetree.No
 }
 
 // OpenFileNode opens file for file node -- returns new bool and error
-func (ge *GideView) OpenFileNode(fn *filetree.Node) (bool, error) {
+func (ge *CodeView) OpenFileNode(fn *filetree.Node) (bool, error) {
 	if fn.IsDir() {
 		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
 	}
@@ -182,7 +182,7 @@ func (ge *GideView) OpenFileNode(fn *filetree.Node) (bool, error) {
 
 // ViewFileNode sets the given text view to view file in given node (opens
 // buffer if not already opened).  This is the main method for viewing a file.
-func (ge *GideView) ViewFileNode(tv *gide.TextEditor, vidx int, fn *filetree.Node) {
+func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Node) {
 	if fn.IsDir() {
 		return
 	}
@@ -205,7 +205,7 @@ func (ge *GideView) ViewFileNode(tv *gide.TextEditor, vidx int, fn *filetree.Nod
 // NextViewFileNode sets the next text view to view file in given node (opens
 // buffer if not already opened) -- if already being viewed, that is
 // activated, returns text view and index
-func (ge *GideView) NextViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) {
+func (ge *CodeView) NextViewFileNode(fn *filetree.Node) (*code.TextEditor, int) {
 	tv, idx, ok := ge.TextEditorForFileNode(fn)
 	if ok {
 		ge.SetActiveTextEditorIdx(idx)
@@ -220,19 +220,19 @@ func (ge *GideView) NextViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) 
 // FileNodeForFile returns file node for given file path
 // add: if not found in existing tree and external files, then if add is true,
 // it is added to the ExtFiles list.
-func (ge *GideView) FileNodeForFile(fpath string, add bool) *filetree.Node {
+func (ge *CodeView) FileNodeForFile(fpath string, add bool) *filetree.Node {
 	fn, ok := ge.Files.FindFile(fpath)
 	if !ok {
 		if !add {
 			return nil
 		}
 		if strings.HasSuffix(fpath, "/") {
-			log.Printf("GideView: attempt to add dir to external files: %v\n", fpath)
+			log.Printf("CodeView: attempt to add dir to external files: %v\n", fpath)
 			return nil
 		}
 		efn, err := ge.Files.AddExtFile(fpath)
 		if err != nil {
-			log.Printf("GideView: cannot add external file: %v\n", err)
+			log.Printf("CodeView: cannot add external file: %v\n", err)
 			return nil
 		}
 		return efn
@@ -246,7 +246,7 @@ func (ge *GideView) FileNodeForFile(fpath string, add bool) *filetree.Node {
 // TextBufForFile returns TextBuf for given file path.
 // add: if not found in existing tree and external files, then if add is true,
 // it is added to the ExtFiles list.
-func (ge *GideView) TextBufForFile(fpath string, add bool) *texteditor.Buf {
+func (ge *CodeView) TextBufForFile(fpath string, add bool) *texteditor.Buf {
 	fn := ge.FileNodeForFile(fpath, add)
 	if fn == nil {
 		return nil
@@ -262,7 +262,7 @@ func (ge *GideView) TextBufForFile(fpath string, add bool) *texteditor.Buf {
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns textview and its
 // index, false if not found
-func (ge *GideView) NextViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) { //gti:add
+func (ge *CodeView) NextViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -272,13 +272,13 @@ func (ge *GideView) NextViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) 
 }
 
 // CallViewFile calls ViewFile with ActiveFilename set as arg
-func (ge *GideView) CallViewFile(ctx gi.Widget) {
+func (ge *CodeView) CallViewFile(ctx gi.Widget) {
 	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.ViewFile)).CallFunc()
 }
 
 // ViewFile views file in an existing TextEditor if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
-func (ge *GideView) ViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) { //gti:add
+func (ge *CodeView) ViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -295,7 +295,7 @@ func (ge *GideView) ViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) { //
 }
 
 // ViewFileInIdx views file in given text view index
-func (ge *GideView) ViewFileInIdx(fnm gi.Filename, idx int) (*gide.TextEditor, int, bool) {
+func (ge *CodeView) ViewFileInIdx(fnm gi.Filename, idx int) (*code.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -307,7 +307,7 @@ func (ge *GideView) ViewFileInIdx(fnm gi.Filename, idx int) (*gide.TextEditor, i
 
 // LinkViewFileNode opens the file node in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *GideView) LinkViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) {
+func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) {
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
 
@@ -324,7 +324,7 @@ func (ge *GideView) LinkViewFileNode(fn *filetree.Node) (*gide.TextEditor, int) 
 
 // LinkViewFile opens the file in the 2nd textview, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *GideView) LinkViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) {
+func (ge *CodeView) LinkViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -344,7 +344,7 @@ func (ge *GideView) LinkViewFile(fnm gi.Filename) (*gide.TextEditor, int, bool) 
 
 // ShowFile shows given file name at given line, returning TextEditor showing it
 // or error if not found.
-func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextEditor, error) {
+func (ge *CodeView) ShowFile(fname string, ln int) (*code.TextEditor, error) {
 	tv, _, ok := ge.LinkViewFile(gi.Filename(fname))
 	if ok {
 		tv.SetCursorTarget(lex.Pos{Ln: ln - 1})
@@ -353,9 +353,9 @@ func (ge *GideView) ShowFile(fname string, ln int) (*gide.TextEditor, error) {
 	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fname)
 }
 
-// GideViewOpenNodes gets list of open nodes for submenu-func
-func GideViewOpenNodes(it any, sc *gi.Scene) []string {
-	ge, ok := it.(ki.Ki).(*GideView)
+// CodeViewOpenNodes gets list of open nodes for submenu-func
+func CodeViewOpenNodes(it any, sc *gi.Scene) []string {
+	ge, ok := it.(ki.Ki).(*CodeView)
 	if !ok {
 		return nil
 	}
@@ -363,7 +363,7 @@ func GideViewOpenNodes(it any, sc *gi.Scene) []string {
 }
 
 // ViewOpenNodeName views given open node (by name) in active view
-func (ge *GideView) ViewOpenNodeName(name string) {
+func (ge *CodeView) ViewOpenNodeName(name string) {
 	nb := ge.OpenNodes.ByStringName(name)
 	if nb == nil {
 		return
@@ -374,7 +374,7 @@ func (ge *GideView) ViewOpenNodeName(name string) {
 
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
 // in current active textview
-func (ge *GideView) SelectOpenNode() {
+func (ge *CodeView) SelectOpenNode() {
 	if len(ge.OpenNodes) == 0 {
 		ge.SetStatus("No open nodes to choose from")
 		return
@@ -394,7 +394,7 @@ func (ge *GideView) SelectOpenNode() {
 
 // CloneActiveView sets the next text view to view the same file currently being vieweds
 // in the active view. returns text view and index
-func (ge *GideView) CloneActiveView() (*gide.TextEditor, int) { //gti:add
+func (ge *CodeView) CloneActiveView() (*code.TextEditor, int) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return nil, -1
@@ -409,7 +409,7 @@ func (ge *GideView) CloneActiveView() (*gide.TextEditor, int) { //gti:add
 }
 
 // SaveAllOpenNodes saves all of the open filenodes to their current file names
-func (ge *GideView) SaveAllOpenNodes() {
+func (ge *CodeView) SaveAllOpenNodes() {
 	for _, ond := range ge.OpenNodes {
 		if ond.Buf == nil {
 			continue
@@ -422,15 +422,15 @@ func (ge *GideView) SaveAllOpenNodes() {
 }
 
 // SaveAll saves all of the open filenodes to their current file names
-// and saves the project state if it has been saved before (i.e., the .gide file exists)
-func (ge *GideView) SaveAll() { //gti:add
+// and saves the project state if it has been saved before (i.e., the .code file exists)
+func (ge *CodeView) SaveAll() { //gti:add
 	ge.SaveAllOpenNodes()
 	ge.SaveProjIfExists(false)
 }
 
 // CloseOpenNodes closes any nodes with open views (including those in directories under nodes).
 // called prior to rename.
-func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
+func (ge *CodeView) CloseOpenNodes(nodes []*code.FileNode) {
 	nn := len(ge.OpenNodes)
 	for ni := nn - 1; ni >= 0; ni-- {
 		ond := ge.OpenNodes[ni]
@@ -454,11 +454,11 @@ func (ge *GideView) CloseOpenNodes(nodes []*gide.FileNode) {
 }
 
 // FileNodeRunExe runs the given executable file node
-func (ge *GideView) FileNodeRunExe(fn *filetree.Node) {
+func (ge *CodeView) FileNodeRunExe(fn *filetree.Node) {
 	ge.SetArgVarVals()
 	ge.ArgVals["{PromptString1}"] = string(fn.FPath)
-	gide.CmdNoUserPrompt = true // don't re-prompt!
-	cmd, _, ok := gide.AvailCmds.CmdByName(gide.CmdName("Build: Run Prompt"), true)
+	code.CmdNoUserPrompt = true // don't re-prompt!
+	cmd, _, ok := code.AvailCmds.CmdByName(code.CmdName("Build: Run Prompt"), true)
 	if ok {
 		ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
 		cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)
@@ -467,7 +467,7 @@ func (ge *GideView) FileNodeRunExe(fn *filetree.Node) {
 }
 
 // FileNodeOpened is called whenever file node is double-clicked in file tree
-func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
+func (ge *CodeView) FileNodeOpened(fn *filetree.Node) {
 	// todo: could add all these options in LangOpts
 	switch fn.Info.Cat {
 	case fi.Folder:
@@ -477,7 +477,7 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 		return
 	case fi.Font, fi.Video, fi.Model, fi.Audio, fi.Sheet, fi.Bin,
 		fi.Archive, fi.Image:
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("File: Open"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, code.CmdName("File: Open"), true, true) // sel, clear
 		return
 	}
 
@@ -493,7 +493,7 @@ func (ge *GideView) FileNodeOpened(fn *filetree.Node) {
 		}
 	}
 	if !edit {
-		ge.ExecCmdNameFileNode(fn, gide.CmdName("File: Open"), true, true) // sel, clear
+		ge.ExecCmdNameFileNode(fn, code.CmdName("File: Open"), true, true) // sel, clear
 		return
 	}
 	// program, document, data

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -7,9 +7,9 @@
 
 package main
 
-import "cogentcore.org/cogent/code/gide"
+import "cogentcore.org/cogent/code/code"
 
 func init() {
-	gide.DefaultKeyMap = gide.KeyMapName("LinuxStd")
-	gide.SetActiveKeyMapName(gide.DefaultKeyMap)
+	code.DefaultKeyMap = code.KeyMapName("LinuxStd")
+	code.SetActiveKeyMapName(code.DefaultKeyMap)
 }

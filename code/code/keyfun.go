@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ import (
 // https://swifteducation.github.io/assets/pdfs/XcodeKeyboardShortcuts.pdf
 // https://en.wikipedia.org/wiki/Table_of_keyboard_shortcuts <- great!
 
-// KeyFuns (i.e. gide.KeytFuns) are special functions for the overall control of the system --
+// KeyFuns (i.e. code.KeytFuns) are special functions for the overall control of the system --
 // moving between windows, running commands, etc.  Multi-key sequences can be used.
 type KeyFuns int32 //enums:enum -trim-prefix KeyFun
 
@@ -141,12 +141,12 @@ func SetActiveKeyMapName(mapnm KeyMapName) {
 	if ok {
 		SetActiveKeyMap(km, mapnm)
 	} else {
-		log.Printf("gide.SetActiveKeyMapName: key map named: %v not found, using default: %v\n", mapnm, DefaultKeyMap)
+		log.Printf("code.SetActiveKeyMapName: key map named: %v not found, using default: %v\n", mapnm, DefaultKeyMap)
 		km, _, ok = AvailKeyMaps.MapByName(DefaultKeyMap)
 		if ok {
 			SetActiveKeyMap(km, DefaultKeyMap)
 		} else {
-			log.Printf("gide.SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailKeyMaps))
+			log.Printf("code.SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailKeyMaps))
 			if len(AvailKeyMaps) > 0 {
 				skm := AvailKeyMaps[0]
 				SetActiveKeyMap(&skm.Map, KeyMapName(skm.Name))
@@ -164,20 +164,20 @@ func KeyFun(key1, key2 key.Chord) KeyFuns {
 	if key1 != "" && key2 != "" {
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun 2 key seq: %v = %v\n", ks, kfg)
+				fmt.Printf("code.KeyFun 2 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg
 		}
 	} else if key1 != "" {
 		if _, need2 := Needs2KeyMap[key1]; need2 {
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun 1st key in 2key seq: %v\n", key1)
+				fmt.Printf("code.KeyFun 1st key in 2key seq: %v\n", key1)
 			}
 			return KeyFunNeeds2
 		}
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
 			if gi.DebugSettings.KeyEventTrace {
-				fmt.Printf("gide.KeyFun 1 key seq: %v = %v\n", ks, kfg)
+				fmt.Printf("code.KeyFun 1 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg
 		}
@@ -230,7 +230,7 @@ func ChordForFun(kf KeyFuns) KeySeq {
 func (km *KeySeqMap) Update(kmName KeyMapName) {
 	for key, val := range *km {
 		if val == KeyFunNil {
-			log.Printf("gide.KeySeqMap: key function is nil -- probably renamed, for key: %v\n", key)
+			log.Printf("code.KeySeqMap: key function is nil -- probably renamed, for key: %v\n", key)
 			delete(*km, key)
 		}
 	}
@@ -248,7 +248,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 			del := fun - lfun
 			if del > 1 {
 				for mi := lfun + 1; mi < fun; mi++ {
-					fmt.Printf("gide.KeyMap: %v is missing a key for function: %v\n", kmName, mi)
+					fmt.Printf("code.KeyMap: %v is missing a key for function: %v\n", kmName, mi)
 					s := mi.String()
 					s = strings.TrimPrefix(s, "KeyFun")
 					s = "- Not Set - " + s
@@ -278,7 +278,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 	for key, val := range *km {
 		if key.Key2 == "" {
 			if _, need2 := Needs2KeyMap[key.Key1]; need2 {
-				log.Printf("gide.KeySeqMap: single-key case starts with key chord that is used in key sequence (2 keys in a row) in other mappings -- this is not valid and won't be used: Key: %v  Fun: %v\n",
+				log.Printf("code.KeySeqMap: single-key case starts with key chord that is used in key sequence (2 keys in a row) in other mappings -- this is not valid and won't be used: Key: %v  Fun: %v\n",
 					key, val)
 			}
 		}

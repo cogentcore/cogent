@@ -1,13 +1,13 @@
-// Copyright (c) 2023, The Gide Authors. All rights reserved.
+// Copyright (c) 2023, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gidev
+package codev
 
 import (
 	"fmt"
 
-	"cogentcore.org/cogent/code/code/gide"
+	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
@@ -30,12 +30,12 @@ const (
 	TabsIdx
 )
 
-func (ge *GideView) ConfigWidget() {
-	ge.ConfigGideView()
+func (ge *CodeView) ConfigWidget() {
+	ge.ConfigCodeView()
 }
 
 // Config configures the view
-func (ge *GideView) ConfigGideView() {
+func (ge *CodeView) ConfigCodeView() {
 	if ge.HasChildren() {
 		return
 	}
@@ -60,32 +60,32 @@ func (ge *GideView) ConfigGideView() {
 }
 
 // IsConfiged returns true if the view is configured
-func (ge *GideView) IsConfiged() bool {
+func (ge *CodeView) IsConfiged() bool {
 	return ge.HasChildren()
 }
 
 // Splits returns the main Splits
-func (ge *GideView) Splits() *gi.Splits {
+func (ge *CodeView) Splits() *gi.Splits {
 	return ge.ChildByName("splitview", 2).(*gi.Splits)
 }
 
 // TextEditorButtonByIndex returns the top textview menu button by index (0 or 1)
-func (ge *GideView) TextEditorButtonByIndex(idx int) *gi.Button {
+func (ge *CodeView) TextEditorButtonByIndex(idx int) *gi.Button {
 	return ge.Splits().Child(TextEditor1Idx + idx).Child(0).(*gi.Button)
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
-func (ge *GideView) TextEditorByIndex(idx int) *gide.TextEditor {
-	return ge.Splits().Child(TextEditor1Idx + idx).Child(1).(*gide.TextEditor)
+func (ge *CodeView) TextEditorByIndex(idx int) *code.TextEditor {
+	return ge.Splits().Child(TextEditor1Idx + idx).Child(1).(*code.TextEditor)
 }
 
 // Tabs returns the main TabView
-func (ge *GideView) Tabs() *gi.Tabs {
+func (ge *CodeView) Tabs() *gi.Tabs {
 	return ge.Splits().Child(TabsIdx).(*gi.Tabs)
 }
 
 // StatusBar returns the statusbar widget
-func (ge *GideView) StatusBar() *gi.Frame {
+func (ge *CodeView) StatusBar() *gi.Frame {
 	if ge.This() == nil || ge.Is(ki.Deleted) || !ge.HasChildren() {
 		return nil
 	}
@@ -93,13 +93,13 @@ func (ge *GideView) StatusBar() *gi.Frame {
 }
 
 // StatusLabel returns the statusbar label widget
-func (ge *GideView) StatusLabel() *gi.Label {
+func (ge *CodeView) StatusLabel() *gi.Label {
 	return ge.StatusBar().Child(0).(*gi.Label)
 }
 
 // SelectedFileNode returns currently selected file tree node as a *filetree.Node
 // could be nil.
-func (ge *GideView) SelectedFileNode() *filetree.Node {
+func (ge *CodeView) SelectedFileNode() *filetree.Node {
 	n := len(ge.Files.SelectedNodes)
 	if n == 0 {
 		return nil
@@ -108,7 +108,7 @@ func (ge *GideView) SelectedFileNode() *filetree.Node {
 }
 
 // ConfigSplits configures the Splits.
-func (ge *GideView) ConfigSplits() {
+func (ge *CodeView) ConfigSplits() {
 	// note: covered by global update
 	split := ge.Splits()
 	ftfr := gi.NewFrame(split, "filetree")
@@ -119,7 +119,7 @@ func (ge *GideView) ConfigSplits() {
 	ft := filetree.NewTree(ftfr, "filetree")
 	ft.OpenDepth = 4
 	ge.Files = ft
-	ft.NodeType = gide.FileNodeType
+	ft.NodeType = code.FileNodeType
 
 	ge.Files.OnSelect(func(e events.Event) {
 		e.SetHandled()
@@ -149,9 +149,9 @@ func (ge *GideView) ConfigSplits() {
 			ge.SetActiveTextEditorIdx(i)
 		})
 
-		ted := gide.NewTextEditor(txly, "textview-"+txnm)
-		ted.Gide = ge
-		gide.ConfigEditorTextEditor(&ted.Editor)
+		ted := code.NewTextEditor(txly, "textview-"+txnm)
+		ted.Code = ge
+		code.ConfigEditorTextEditor(&ted.Editor)
 		ted.OnFocus(func(e events.Event) {
 			ge.ActiveTextEditorIdx = i
 		})
@@ -180,7 +180,7 @@ func (ge *GideView) ConfigSplits() {
 }
 
 // ConfigStatusBar configures statusbar with label
-func (ge *GideView) ConfigStatusBar() {
+func (ge *CodeView) ConfigStatusBar() {
 	sb := ge.StatusBar()
 	sb.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
@@ -188,7 +188,7 @@ func (ge *GideView) ConfigStatusBar() {
 		s.Margin.Zero()
 		s.Padding.Set(units.Dp(4))
 	})
-	lbl := gi.NewLabel(sb, "sb-lbl").SetText("This is the status bar initial configuration.  Welcome to gide!")
+	lbl := gi.NewLabel(sb, "sb-lbl").SetText("This is the status bar initial configuration.  Welcome to code!")
 	lbl.Style(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 		s.Min.Y.Em(1.0)

@@ -1,8 +1,8 @@
-// Copyright (c) 2020, The Gide Authors. All rights reserved.
+// Copyright (c) 2020, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"fmt"
@@ -10,7 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"cogentcore.org/cogent/code/codebug/gidelve"
+	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/cogent/code/cdebug/cdelve"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
@@ -21,7 +22,6 @@ import (
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"github.com/goki/gide_v1/cdebug"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
@@ -50,7 +50,7 @@ var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "light
 // Debuggers is the list of supported debuggers
 var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error){
 	fi.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error) {
-		return gidelve.NewGiDelve(path, rootPath, outbuf, pars)
+		return cdelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
@@ -97,8 +97,8 @@ type DebugView struct {
 	// output from the debugger
 	OutBuf *texteditor.Buf `set:"-" json:"-" xml:"-"`
 
-	// parent gide project
-	Gide Gide `set:"-" json:"-" xml:"-"`
+	// parent code project
+	Code Code `set:"-" json:"-" xml:"-"`
 }
 
 // DbgIsActive means debugger is started.
@@ -137,7 +137,7 @@ func (dv *DebugView) Destroy() {
 	dv.Detach()
 	dv.DeleteAllBreaks()
 	dv.DeleteCurPCInBuf()
-	dv.Gide.ClearDebug()
+	dv.Code.ClearDebug()
 	dv.Layout.Destroy()
 }
 
@@ -158,23 +158,23 @@ func (dv *DebugView) Detach() {
 
 // Start starts the debuger
 func (dv *DebugView) Start() {
-	if dv.Gide == nil {
+	if dv.Code == nil {
 		return
 	}
 	console := dv.ConsoleText()
 	console.Clear()
 	rebuild := false
 	if dv.Dbg != nil && dv.State.Mode != cdebug.Attach {
-		lmod := dv.Gide.FileTree().LatestFileMod(fi.Code)
-		rebuild = lmod.After(dv.DbgTime) || dv.Gide.LastSaveTime().After(dv.DbgTime)
+		lmod := dv.Code.FileTree().LatestFileMod(fi.Code)
+		rebuild = lmod.After(dv.DbgTime) || dv.Code.LastSaveTime().After(dv.DbgTime)
 	}
 	if dv.Dbg == nil || rebuild {
 		dv.SetStatus(cdebug.Building)
 		if dv.Dbg != nil {
 			dv.Detach()
 		}
-		rootPath := string(dv.Gide.ProjPrefs().ProjRoot)
-		pars := &dv.Gide.ProjPrefs().Debug
+		rootPath := string(dv.Code.ProjPrefs().ProjRoot)
+		pars := &dv.Code.ProjPrefs().Debug
 		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat cdebug.Status) {
 			updt := dv.UpdateStartAsync()
@@ -226,8 +226,8 @@ func (dv *DebugView) Continue() {
 			return
 		}
 	}
-	if dv.Gide != nil {
-		sc := dv.Gide.Scene()
+	if dv.Code != nil {
+		sc := dv.Code.Scene()
 		if sc != nil && sc.MainStageMgr() != nil {
 			sc.MainStageMgr().RenderWin.Raise()
 		}
@@ -367,10 +367,10 @@ func (dv *DebugView) DeleteBreakIdx(bidx int) {
 // DeleteBreakInBuf delete breakpoint in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
-	if dv.Gide == nil || dv.Gide.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
 		return
 	}
-	tb := dv.Gide.TextBufForFile(fpath, false)
+	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		tb.DeleteLineColor(line - 1)
 		tb.Update()
@@ -379,7 +379,7 @@ func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
 
 // DeleteAllBreaks deletes all breakpoints
 func (dv *DebugView) DeleteAllBreaks() {
-	if dv.Gide == nil || dv.Gide.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -390,10 +390,10 @@ func (dv *DebugView) DeleteAllBreaks() {
 // UpdateBreakInBuf updates break status in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
-	if dv.Gide == nil || dv.Gide.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
 		return
 	}
-	tb := dv.Gide.TextBufForFile(fpath, false)
+	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		tb.SetLineColor(line-1, grr.Log1(colors.FromName(DebugBreakColors[stat])))
 		tb.Update()
@@ -402,7 +402,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 
 // UpdateAllBreaks updates all breakpoints
 func (dv *DebugView) UpdateAllBreaks() {
-	if dv.Gide == nil || dv.Gide.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
 		return
 	}
 	updt := dv.UpdateStart()
@@ -552,7 +552,7 @@ func (dv *DebugView) ListGlobalVars(filter string) {
 	dv.ShowGlobalVars(true)
 }
 
-// ShowFile shows the file name in gide
+// ShowFile shows the file name in code
 func (dv *DebugView) ShowFile(fpath string, line int) {
 	if fpath == "" || fpath == "?" {
 		return
@@ -562,14 +562,14 @@ func (dv *DebugView) ShowFile(fpath string, line int) {
 	dv.UpdateEndRender(updt)
 
 	dv.DeleteCurPCInBuf()
-	dv.Gide.ShowFile(fpath, line)
+	dv.Code.ShowFile(fpath, line)
 	dv.SetCurPCInBuf(fpath, line)
 }
 
 // SetCurPCInBuf sets the current PC location in given file
 // line is 1-based line number
 func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
-	tb := dv.Gide.TextBufForFile(fpath, false)
+	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		if !tb.HasLineColor(line - 1) {
 			tb.SetLineColor(line-1, grr.Log1(colors.FromName(DebugBreakColors[DebugPCCurrent])))
@@ -586,7 +586,7 @@ func (dv *DebugView) DeleteCurPCInBuf() {
 	fpath := dv.CurFileLoc.FPath
 	line := dv.CurFileLoc.Line
 	if fpath != "" && line > 0 {
-		tb := dv.Gide.TextBufForFile(fpath, false)
+		tb := dv.Code.TextBufForFile(fpath, false)
 		if tb != nil {
 			tb.DeleteLineColor(line - 1)
 			tb.Update()
@@ -744,8 +744,8 @@ func (dv *DebugView) ConfigWidget() {
 
 // ConfigDebugView configures the view -- parameters for the job must have
 // already been set in ge.ProjParams.Debug.
-func (dv *DebugView) ConfigDebugView(ge Gide, sup fi.Known, exePath string) {
-	dv.Gide = ge
+func (dv *DebugView) ConfigDebugView(ge Code, sup fi.Known, exePath string) {
+	dv.Code = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
 	if dv.HasChildren() {

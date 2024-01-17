@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The gide / Goki Authors. All rights reserved.
+// Copyright (c) 2018, The code / Goki Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -10,17 +10,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cogentcore.org/cogent/code/code/gide"
-	gidev "cogentcore.org/cogent/code/codev"
+	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/cogent/code/codev"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/goosi"
 )
 
 func main() {
-	pdir := gide.AppDataDir()
-	lfnm := filepath.Join(pdir, "gide.log")
+	pdir := code.AppDataDir()
+	lfnm := filepath.Join(pdir, "code.log")
 
-	gide.TheConsole.Init(lfnm)
+	code.TheConsole.Init(lfnm)
 
 	var path string
 	var proj string
@@ -30,13 +30,13 @@ func main() {
 		path = ofs[0]
 	} else if len(os.Args) > 1 {
 		flag.StringVar(&path, "path", "", "path to open -- can be to a directory or a filename within the directory ")
-		flag.StringVar(&proj, "proj", "", "project file to open -- typically has .gide extension")
+		flag.StringVar(&proj, "proj", "", "project file to open -- typically has .code extension")
 		// todo: other args?
 		flag.Parse()
 		if path == "" && proj == "" {
 			if flag.NArg() > 0 {
 				ext := strings.ToLower(filepath.Ext(flag.Arg(0)))
-				if ext == ".gide" {
+				if ext == ".code" {
 					proj = flag.Arg(0)
 				} else {
 					path = flag.Arg(0)
@@ -46,13 +46,13 @@ func main() {
 	}
 
 	recv := gi.WidgetBase{}
-	recv.InitName(&recv, "gide_dummy")
+	recv.InitName(&recv, "code_dummy")
 
 	inQuitPrompt := false
 	goosi.TheApp.SetQuitReqFunc(func() {
 		if !inQuitPrompt {
 			inQuitPrompt = true
-			if gidev.QuitReq() {
+			if codev.QuitReq() {
 				goosi.TheApp.Quit()
 			} else {
 				inQuitPrompt = false
@@ -62,13 +62,13 @@ func main() {
 
 	if proj != "" {
 		proj, _ = filepath.Abs(proj)
-		gidev.OpenGideProj(proj)
+		codev.OpenCodeProj(proj)
 	} else {
 		if path != "" {
 			path, _ = filepath.Abs(path)
 		}
-		gidev.NewGideProjPath(path)
+		codev.NewCodeProjPath(path)
 	}
-	// above NewGideProj calls will have added to WinWait..
+	// above NewCodeProj calls will have added to WinWait..
 	gi.Wait()
 }

@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ import (
 	"cogentcore.org/core/texteditor/textbuf"
 )
 
-// FileNode is Gide version of FileNode for FileTree view
+// FileNode is Code version of FileNode for FileTree view
 type FileNode struct {
 	filetree.Node
 }
@@ -36,7 +36,7 @@ func (fn *FileNode) OnInit() {
 
 func (fn *FileNode) OnDoubleClick(e events.Event) {
 	e.SetHandled()
-	ge, ok := ParentGide(fn.This())
+	ge, ok := ParentCode(fn.This())
 	if !ok {
 		return
 	}
@@ -57,13 +57,13 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 	}
 }
 
-// EditFile pulls up this file in Gide
+// EditFile pulls up this file in Code
 func (fn *FileNode) EditFile() {
 	if fn.IsDir() {
 		log.Printf("FileNode Edit -- cannot view (edit) directories!\n")
 		return
 	}
-	ge, ok := ParentGide(fn.This())
+	ge, ok := ParentCode(fn.This())
 	if ok {
 		ge.NextViewFileNode(&fn.Node)
 	}
@@ -75,7 +75,7 @@ func (fn *FileNode) SetRunExec() {
 		log.Printf("FileNode SetRunExec -- only works for executable files!\n")
 		return
 	}
-	ge, ok := ParentGide(fn.This())
+	ge, ok := ParentCode(fn.This())
 	if ok {
 		ge.ProjPrefs().RunExec = fn.FPath
 		ge.ProjPrefs().BuildDir = gi.Filename(filepath.Dir(string(fn.FPath)))
@@ -85,18 +85,18 @@ func (fn *FileNode) SetRunExec() {
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() { //gti:add
-	ge, ok := ParentGide(fn.This())
+	ge, ok := ParentCode(fn.This())
 	if ok {
 		ge.ExecCmdFileNode(&fn.Node)
 	} else {
-		fmt.Println("no gide!")
+		fmt.Println("no code!")
 	}
 
 }
 
 // ExecCmdNameFile executes given command name on node
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	ge, ok := ParentGide(fn.This())
+	ge, ok := ParentCode(fn.This())
 	if ok {
 		ge.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm), true, true)
 	}
@@ -282,7 +282,7 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 		if int(sfn.Info.Size) > gi.SystemSettings.Behavior.BigFileSize {
 			return ki.Continue
 		}
-		if strings.HasSuffix(sfn.Nm, ".gide") { // exclude self
+		if strings.HasSuffix(sfn.Nm, ".code") { // exclude self
 			return ki.Continue
 		}
 		if !fi.IsMatchList(langs, sfn.Info.Known) {
@@ -344,7 +344,7 @@ func (fn *FileNode) SetRunExecs() { //gti:add
 
 // RenameFiles calls RenameFile on any selected nodes
 func (fn *FileNode) RenameFiles() {
-	ge, ok := ParentGide(fn.This())
+	ge, ok := ParentCode(fn.This())
 	if !ok {
 		return
 	}

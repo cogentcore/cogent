@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"bytes"
@@ -362,7 +362,7 @@ func RepoCurBranches(repo vci.Repo) (string, []string, error) {
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(ge Code, buf *texteditor.Buf, pvals map[string]struct{}) {
 	sz := len(pvals)
 	avp := ge.ArgVarVals()
 	cnt := 0
@@ -381,7 +381,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			d := gi.NewBody().AddTitle("Gide Command Prompt").
+			d := gi.NewBody().AddTitle("Code Command Prompt").
 				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := gi.NewTextField(d).SetText(curval)
 			tf.Style(func(s *styles.Style) {
@@ -431,7 +431,7 @@ func (cm *Command) PromptUser(ge Gide, buf *texteditor.Buf, pvals map[string]str
 // which can be displayed -- if !wait, then Buf is updated online as output
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
+func (cm *Command) Run(ge Code, buf *texteditor.Buf) {
 	// if cm.Hilight != fi.Unknown {
 	// 	buf.Info.Known = cm.Hilight
 	// 	buf.Info.Mime = fi.MimeString(fi.Bash)
@@ -460,7 +460,7 @@ func (cm *Command) Run(ge Gide, buf *texteditor.Buf) {
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(ge Gide, buf *texteditor.Buf) {
+func (cm *Command) RunAfterPrompts(ge Code, buf *texteditor.Buf) {
 	// ge.CmdRuns().KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
@@ -499,8 +499,8 @@ func (cm *Command) RunAfterPrompts(ge Gide, buf *texteditor.Buf) {
 
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
-// line of the command output to gide statusbar
-func (cm *Command) RunBufWait(ge Gide, buf *texteditor.Buf, cma *CmdAndArgs) bool {
+// line of the command output to code statusbar
+func (cm *Command) RunBufWait(ge Code, buf *texteditor.Buf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
 	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
@@ -510,7 +510,7 @@ func (cm *Command) RunBufWait(ge Gide, buf *texteditor.Buf, cma *CmdAndArgs) boo
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(ge Gide, buf *texteditor.Buf, cma *CmdAndArgs) bool {
+func (cm *Command) RunBuf(ge Code, buf *texteditor.Buf, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
 	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
@@ -529,8 +529,8 @@ func (cm *Command) RunBuf(ge Gide, buf *texteditor.Buf, cma *CmdAndArgs) bool {
 
 // RunNoBuf runs a command without any output to the buffer -- can call using
 // go as a goroutine for no-wait case -- returns overall command success, and
-// logs one line of the command output to gide statusbar
-func (cm *Command) RunNoBuf(ge Gide, cma *CmdAndArgs) bool {
+// logs one line of the command output to code statusbar
+func (cm *Command) RunNoBuf(ge Code, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
 	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
@@ -538,7 +538,7 @@ func (cm *Command) RunNoBuf(ge Gide, cma *CmdAndArgs) bool {
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(ge Gide, buf *texteditor.Buf, out []byte) {
+func (cm *Command) AppendCmdOut(ge Code, buf *texteditor.Buf, out []byte) {
 	if buf == nil {
 		return
 	}
@@ -565,7 +565,7 @@ var CmdOutStatusLen = 80
 // RunStatus reports the status of the command run (given in cmdstr) to
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
-func (cm *Command) RunStatus(ge Gide, buf *texteditor.Buf, cmdstr string, err error, out []byte) bool {
+func (cm *Command) RunStatus(ge Code, buf *texteditor.Buf, cmdstr string, err error, out []byte) bool {
 	ge.CmdRuns().DeleteByName(cm.Label())
 	var rval bool
 	outstr := ""
@@ -677,7 +677,7 @@ func (cn *CmdNames) Add(cmd CmdName) {
 var AvailCmds Commands
 
 // CustomCmds is user-specific list of commands saved in preferences available
-// for all Gide projects.  These will override StdCmds with the same names.
+// for all Code projects.  These will override StdCmds with the same names.
 var CustomCmds = Commands{}
 
 // FilterCmdNames returns a slice of commands organized by category
@@ -829,7 +829,7 @@ func CompleteArgEdit(data any, text string, cursorPos int, c complete.Completion
 
 // CommandMenu returns a menu function for commands for given language and vcs name
 func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
-	ge, ok := ParentGide(fn.This())
+	ge, ok := ParentCode(fn.This())
 	if !ok {
 		return nil
 	}

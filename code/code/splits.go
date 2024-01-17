@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"slices"
 
 	"cogentcore.org/core/gi"
+	"cogentcore.org/core/glop/dirs"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 )
@@ -68,7 +69,7 @@ func (lt *Splits) SplitByName(name SplitName) (*Split, int, bool) {
 			return sp, i, true
 		}
 	}
-	fmt.Printf("gide.SplitByName: split named: %v not found\n", name)
+	fmt.Printf("code.SplitByName: split named: %v not found\n", name)
 	return nil, -1, false
 }
 
@@ -106,10 +107,13 @@ func (lt *Splits) FixLen() {
 
 // Open opens named splits from a json-formatted file.
 func (lt *Splits) Open(filename gi.Filename) error { //gti:add
-	*lt = make(Splits, 0, 10) // reset
-	err := grr.Log(jsons.Open(lt, string(filename)))
-	lt.FixLen()
-	return err
+	if grr.Ignore1(dirs.FileExists(string(filename))) {
+		*lt = make(Splits, 0, 10) // reset
+		err := grr.Log(jsons.Open(lt, string(filename)))
+		lt.FixLen()
+		return err
+	}
+	return nil
 }
 
 // Save saves named splits to a json-formatted file.
@@ -160,4 +164,5 @@ var StdSplits = Splits{
 	{"Code", "2 text views, tabs", []float32{.1, .325, .325, .25}},
 	{"Small", "1 text view, tabs", []float32{.1, .5, 0, .4}},
 	{"BigTabs", "1 text view, big tabs", []float32{.1, .3, 0, .6}},
+	{"Debug", "big command panel for debugging", []float32{0.1, 0.29539588, 0.2949658, 0.30963832}},
 }

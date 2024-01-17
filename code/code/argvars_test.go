@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"testing"
@@ -52,13 +52,13 @@ func TestBind(t *testing.T) {
 	}
 
 	bv = avp.Bind("{FileDir}/{Filename}")
-	cv = "gide/argvars_test.go"
+	cv = "code/argvars_test.go"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
 	bv = avp.Bind("{FileDirProjRel}/{FilenameNoExt}")
-	cv = "goki/gide/argvars_test"
+	cv = "goki/code/argvars_test"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}

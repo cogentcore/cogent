@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"strconv"
-	"strings"
 
 	"cogentcore.org/core/enums"
 )
@@ -33,21 +32,13 @@ func _StatusNoOp() {
 
 var _StatusNameToValueMap = map[string]Status{
 	`NotInit`:    0,
-	`notinit`:    0,
 	`Error`:      1,
-	`error`:      1,
 	`Building`:   2,
-	`building`:   2,
 	`Ready`:      3,
-	`ready`:      3,
 	`Running`:    4,
-	`running`:    4,
 	`Stopped`:    5,
-	`stopped`:    5,
 	`Breakpoint`: 6,
-	`breakpoint`: 6,
 	`Finished`:   7,
-	`finished`:   7,
 }
 
 var _StatusDescMap = map[Status]string{
@@ -86,10 +77,6 @@ func (i Status) String() string {
 // error if the string is invalid.
 func (i *Status) SetString(s string) error {
 	if val, ok := _StatusNameToValueMap[s]; ok {
-		*i = val
-		return nil
-	}
-	if val, ok := _StatusNameToValueMap[strings.ToLower(s)]; ok {
 		*i = val
 		return nil
 	}
@@ -145,7 +132,7 @@ func (i Status) MarshalText() ([]byte, error) {
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *Status) UnmarshalText(text []byte) error {
 	if err := i.SetString(string(text)); err != nil {
-		log.Println(err)
+		log.Println("Status.UnmarshalText:", err)
 	}
 	return nil
 }

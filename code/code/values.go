@@ -1,8 +1,8 @@
-// Copyright (c) 2018, The Gide Authors. All rights reserved.
+// Copyright (c) 2018, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gide
+package code
 
 import (
 	"strings"
@@ -60,7 +60,7 @@ func PrefsView(pf *SettingsData) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Gide Preferences")
+	d := gi.NewBody().SetTitle("Code Preferences")
 	tv := giv.NewStructView(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
 		pf.Changed = true
@@ -99,7 +99,7 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Project preferences are saved in the project .gide file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
+	d := gi.NewBody().SetTitle("Project preferences are saved in the project .code file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
 	d.Sc.Data = pf
 	tv := giv.NewStructView(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
@@ -217,7 +217,7 @@ func CmdsView(pt *Commands) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Gide Commands")
+	d := gi.NewBody().SetTitle("Code Commands")
 	tv := giv.NewTableView(d).SetSlice(pt)
 	d.Sc.Data = pt
 	CustomCmdsChanged = false

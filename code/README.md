@@ -1,16 +1,16 @@
-![alt tag](logo/gide_icon.png)
+![alt tag](logo/code_icon.png)
 
-**Gide** is a flexible IDE (integrated development environment) framework in pure Go, using the [GoGi](https://github.com/goki/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://github.com/goki/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
+**Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [GoGi](https://cogentcore.org/core/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://cogentcore.org/core/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
 
-See the [Wiki](https://cogentcore.org/cogent/code/wiki) for more docs,   [Install](https://cogentcore.org/cogent/code/wiki/Install) instructions (`go install cogentcore.org/cogent/code/cmd/gide@latest` should work if GoGi system libraries are in place), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
+See the [Wiki](https://cogentcore.org/cogent/code/wiki) for more docs,   [Install](https://cogentcore.org/cogent/code/wiki/Install) instructions (`go install cogentcore.org/cogent/code/cmd/code@latest` should work if GoGi system libraries are in place), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/goki/gide/v2)](https://goreportcard.com/report/github.com/goki/gide/v2)
-[![GoDoc](https://godoc.org/github.com/goki/gide/v2?status.svg)](https://godoc.org/github.com/goki/gide/v2)
-[![Travis](https://travis-ci.com/goki/gide.svg?branch=master)](https://travis-ci.com/goki/gide)
+[![Go Report Card](https://goreportcard.com/badge/cogentcore.org/cogent/code/v2)](https://goreportcard.com/report/cogentcore.org/cogent/code/v2)
+[![GoDoc](https://godoc.org/cogentcore.org/cogent/code/v2?status.svg)](https://godoc.org/cogentcore.org/cogent/code/v2)
+[![Travis](https://travis-ci.com/goki/code.svg?branch=master)](https://travis-ci.com/goki/code)
 
-There are many existing, excellent choices for text editors and IDEs, but *Gide* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Gide.  Our ambition is to capture some of those Go attributes in an IDE.
+There are many existing, excellent choices for text editors and IDEs, but *Code* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Code.  Our ambition is to capture some of those Go attributes in an IDE.
 
-Some of the main features of *Gide* include:
+Some of the main features of *Code* include:
 
 * Designed to function as both a general-purpose text editor *and* an IDE.  It comes configured with command support for LaTeX, Markdown, and Makefiles, in addition to Go,a and the command system is fully extensible to support any command-line tools.
 
@@ -36,7 +36,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 * More coding automation, refactoring, etc.  We don't want to go too crazy here, preferring the more general-purpose and simple approach, but probably some more could be done.
 
-* Full support for Python, including extending the [GoPi](https://github.com/goki/pi) interactive parser to handle Python, so it will have been worth writing instead of just using the native Go parser.
+* Full support for Python, including extending the [GoPi](https://cogentcore.org/core/pi) interactive parser to handle Python, so it will have been worth writing instead of just using the native Go parser.
 
 # Screenshots
 
