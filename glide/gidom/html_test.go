@@ -21,5 +21,5 @@ func TestRenderHTML(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	sc.AssertPixelsOnShow(t, "test-render-html.png")
+	sc.AssertRender(t, "test-render-html")
 }
