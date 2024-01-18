@@ -18,7 +18,7 @@ import (
 
 func main() {
 	pdir := code.AppDataDir()
-	lfnm := filepath.Join(pdir, "code.log")
+	lfnm := filepath.Join(pdir, "cocode.log")
 
 	code.TheConsole.Init(lfnm)
 

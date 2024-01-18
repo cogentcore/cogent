@@ -226,7 +226,7 @@ func (ge *CodeView) SetWindowNameTitle() {
 		return
 	}
 	pnm := ge.Name()
-	winm := "code-" + pnm
+	winm := "cocode-" + pnm
 	win.SetName(winm)
 	win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
 	tab := ge.Sc.GetTopAppBar()
@@ -512,7 +512,7 @@ func (ge *CodeView) CloseWindowReq() bool {
 // functions!
 func QuitReq() bool {
 	for _, win := range gi.MainRenderWins {
-		if !strings.HasPrefix(win.Name, "code-") {
+		if !strings.HasPrefix(win.Name, "cocode-") {
 			continue
 		}
 		msc := win.MainScene()
@@ -556,7 +556,7 @@ func CodeInScene(sc *gi.Scene) *CodeView {
 
 // NewCodeWindow is common code for Open CodeWindow from Proj or Path
 func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
-	winm := "Cogent Code: " + projnm
+	winm := "cocode-" + projnm
 	wintitle := winm + ": " + path
 
 	if win, found := gi.AllRenderWins.FindName(winm); found {
