@@ -439,18 +439,18 @@ var StdCmds = Commands{
 
 	// Core
 	{Cat: "Core", Name: "Run",
-		Desc: "Builds and runs go executable in current directory: core run -t [ios | android | js | darwin | windows | linux]",
+		Desc: "Builds and runs go executable in current directory: core run [ios | android | web | darwin | windows | linux]",
 		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "core",
-			Args: []string{"run", "-t", "{PromptString1}"}}},
+			Args: []string{"run", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Core", Name: "Install",
-		Desc: "Installs go executable in current directory: core install -t [ios | android | js | darwin | windows | linux]",
+		Desc: "Installs go executable in current directory: core install -t [ios | android | web | darwin | windows | linux]",
 		Lang: fi.Any,
 		Cmds: []CmdAndArgs{{Cmd: "core",
-			Args: []string{"install", "-t", "{PromptString1}"}}},
+			Args: []string{"install", "{PromptString1}"}}},
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
@@ -486,19 +486,18 @@ var StdCmds = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	// Gsm
-	{Cat: "GSM", Name: "Changed",
+	{Cat: "Core", Name: "Changed",
 		Desc: "show which packages are changed, at the root project level",
 		Lang: fi.Any,
-		Cmds: []CmdAndArgs{{Cmd: "gsm",
+		Cmds: []CmdAndArgs{{Cmd: "core",
 			Args: []string{"changed"}}},
 		Dir:  "{ProjPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "GSM", Name: "Pull",
+	{Cat: "Core", Name: "Pull",
 		Desc: "pull all packages at the root project level",
 		Lang: fi.Any,
-		Cmds: []CmdAndArgs{{Cmd: "gsm",
+		Cmds: []CmdAndArgs{{Cmd: "core",
 			Args: []string{"pull"}}},
 		Dir:  "{ProjPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
