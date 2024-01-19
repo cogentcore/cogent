@@ -129,7 +129,7 @@ func (vv *KeyMapValue) UpdateWidget() {
 	bt := vv.Widget.(*gi.Button)
 	txt := laser.ToString(vv.Value.Interface())
 	if txt == "" {
-		txt = "(none -- click to set)"
+		txt = "(none; click to set)"
 	}
 	bt.SetText(txt)
 }
