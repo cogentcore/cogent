@@ -55,9 +55,6 @@ type SettingsData struct { //gti:add
 
 	// if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveCmds bool
-
-	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" toml:"-" xml:"-"`
 }
 
 // FileSettings contains file view settings
@@ -173,7 +170,6 @@ func (se *SettingsData) VersionInfo() string { //gti:add
 // with preferences automatically.
 func (se *SettingsData) EditKeyMaps() { //gti:add
 	se.SaveKeyMaps = true
-	se.Changed = true
 	KeyMapsView(&AvailKeyMaps)
 }
 
@@ -181,14 +177,12 @@ func (se *SettingsData) EditKeyMaps() { //gti:add
 // language / data / file type.
 func (se *SettingsData) EditLangOpts() { //gti:add
 	se.SaveLangOpts = true
-	se.Changed = true
 	LangsView(&AvailLangs)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.
 func (se *SettingsData) EditCmds() { //gti:add
 	se.SaveCmds = true
-	se.Changed = true
 	if len(CustomCmds) == 0 {
 		exc := &Command{Name: "Example Cmd",
 			Desc: "list current dir",
@@ -274,9 +268,6 @@ type ProjPrefs struct { //gti:add
 
 	// current splitter splits
 	Splits []float32 `view:"-"`
-
-	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" toml:"-" xml:"-"`
 }
 
 func (se *ProjPrefs) Update() {
@@ -294,7 +285,6 @@ func (se *ProjPrefs) Update() {
 func (se *ProjPrefs) Open(filename gi.Filename) error { //gti:add
 	err := grr.Log(tomls.Open(se, string(filename)))
 	se.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(se.VersCtrl))) // official names are lowercase now
-	se.Changed = false
 	return err
 }
 

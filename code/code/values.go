@@ -62,9 +62,6 @@ func PrefsView(pf *SettingsData) *giv.StructView {
 	}
 	d := gi.NewBody().SetTitle("Code Preferences")
 	tv := giv.NewStructView(d).SetStruct(pf)
-	tv.OnChange(func(e events.Event) {
-		pf.Changed = true
-	})
 	d.Sc.Data = pf
 
 	/*
@@ -102,9 +99,6 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 	d := gi.NewBody().SetTitle("Project preferences are saved in the project .code file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
 	d.Sc.Data = pf
 	tv := giv.NewStructView(d).SetStruct(pf)
-	tv.OnChange(func(e events.Event) {
-		pf.Changed = true
-	})
 	d.NewWindow().Run()
 	return tv
 }
