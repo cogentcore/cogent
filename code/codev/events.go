@@ -15,8 +15,7 @@ import (
 )
 
 func (ge *CodeView) HandleEvents() {
-	ge.PriorityEvents = []events.Types{events.KeyChord}
-	ge.OnKeyChord(func(e events.Event) {
+	ge.OnFirst(events.KeyChord, func(e events.Event) {
 		ge.CodeViewKeys(e)
 	})
 	ge.On(events.OSOpenFiles, func(e events.Event) {

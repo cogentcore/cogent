@@ -24,10 +24,10 @@ type SpellView struct {
 	gi.Layout
 
 	// parent code project
-	Code Code `json:"-" xml:"-" copy:"-"`
+	Code Code `json:"-" xml:"-" copier:"-"`
 
 	// textview that we're spell-checking
-	Text *TextEditor `json:"-" xml:"-" copy:"-"`
+	Text *TextEditor `json:"-" xml:"-" copier:"-"`
 
 	// current spelling errors
 	Errs lex.Line

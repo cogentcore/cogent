@@ -62,24 +62,6 @@ type Variable struct {
 	Dbg GiDebug `view:"-"`
 }
 
-func (vr *Variable) CopyFieldsFrom(frm any) {
-	fr := frm.(*Variable)
-	vr.Value = fr.Value
-	vr.TypeStr = fr.TypeStr
-	vr.FullTypeStr = fr.FullTypeStr
-	vr.Kind = fr.Kind
-	vr.ElValue = fr.ElValue
-	vr.Len = fr.Len
-	vr.Cap = fr.Cap
-	vr.Addr = fr.Addr
-	vr.Heap = fr.Heap
-	vr.Loc = fr.Loc
-	vr.List = fr.List
-	vr.Map = fr.Map
-	vr.MapVar = fr.MapVar
-	vr.Dbg = fr.Dbg
-}
-
 // SortVars sorts vars by name
 func SortVars(vrs []*Variable) {
 	sort.Slice(vrs, func(i, j int) bool {
