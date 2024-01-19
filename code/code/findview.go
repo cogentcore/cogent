@@ -148,7 +148,7 @@ func (fv *FindView) SaveFindString(find string) {
 	gi.StringsInsertFirstUnique(&fv.Params().FindHist, find, gi.SystemSettings.Behavior.SavedPathsMax)
 	ftc := fv.FindText()
 	if ftc != nil {
-		ftc.SetStrings(fv.Params().FindHist, true, 0)
+		ftc.SetStrings(fv.Params().FindHist, true)
 	}
 }
 
@@ -158,7 +158,7 @@ func (fv *FindView) SaveReplString(repl string) {
 	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, gi.SystemSettings.Behavior.SavedPathsMax)
 	rtc := fv.ReplText()
 	if rtc != nil {
-		rtc.SetStrings(fv.Params().ReplHist, true, 0)
+		rtc.SetStrings(fv.Params().ReplHist, true)
 	}
 }
 
@@ -510,7 +510,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 		SetTooltip("location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser")
 
 	cf := gi.NewChooser(fb, "loc").SetTooltip(locl.Tooltip)
-	cf.SetEnum(fv.Params().Loc, false, 0)
+	cf.SetEnum(fv.Params().Loc, false)
 	cf.SetCurVal(fv.Params().Loc)
 	cf.OnChange(func(e events.Event) {
 		if eval, ok := cf.CurVal.(FindLoc); ok {

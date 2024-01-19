@@ -111,7 +111,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 
 	sl := gi.NewLabel(tb).SetText("Scope:").SetTooltip("scope symbols to:")
 
-	ch := gi.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope, false, 0)
+	ch := gi.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope, false)
 	ch.SetTooltip(sl.Tooltip)
 	ch.OnChange(func(e events.Event) {
 		sv.Params().Scope = ch.CurVal.(SymScopes)
