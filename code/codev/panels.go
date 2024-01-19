@@ -51,13 +51,13 @@ func (ge *CodeView) FocusOnPanel(panel int) bool {
 		tv := ge.Tabs()
 		ct, _, has := tv.CurTab()
 		if has {
-			ge.Sc.EventMgr.FocusNextFrom(ct)
+			ge.Scene.EventMgr.FocusNextFrom(ct)
 		} else {
 			return false
 		}
 	default:
 		ski, _ := gi.AsWidget(sv.Kids[panel])
-		ge.Sc.EventMgr.FocusNextFrom(ski)
+		ge.Scene.EventMgr.FocusNextFrom(ski)
 	}
 	return true
 }

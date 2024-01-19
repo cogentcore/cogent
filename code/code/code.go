@@ -26,9 +26,6 @@ import (
 type Code interface {
 	gi.Widget
 
-	// Scene returns the scene for the view
-	Scene() *gi.Scene
-
 	// ProjPrefs returns the code.ProjPrefs
 	ProjPrefs() *ProjPrefs
 

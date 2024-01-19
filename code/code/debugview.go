@@ -227,7 +227,7 @@ func (dv *DebugView) Continue() {
 		}
 	}
 	if dv.Code != nil {
-		sc := dv.Code.Scene()
+		sc := dv.Code.AsWidget().Scene
 		if sc != nil && sc.MainStageMgr() != nil {
 			sc.MainStageMgr().RenderWin.Raise()
 		}

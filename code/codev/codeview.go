@@ -111,10 +111,6 @@ func (ge *CodeView) OnInit() {
 ////////////////////////////////////////////////////////
 // Code interface
 
-func (ge *CodeView) Scene() *gi.Scene {
-	return ge.Sc
-}
-
 func (ge *CodeView) ProjPrefs() *code.ProjPrefs {
 	return &ge.Prefs
 }
@@ -221,7 +217,7 @@ func (ge *CodeView) OpenFile(fnm string) { //gti:add
 
 // SetWindowNameTitle sets the window name and title based on current project name
 func (ge *CodeView) SetWindowNameTitle() {
-	win := ge.Sc.RenderWin()
+	win := ge.Scene.RenderWin()
 	if win == nil {
 		return
 	}
@@ -229,7 +225,7 @@ func (ge *CodeView) SetWindowNameTitle() {
 	winm := "cocode-" + pnm
 	win.SetName(winm)
 	win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
-	tab := ge.Sc.GetTopAppBar()
+	tab := ge.Scene.GetTopAppBar()
 	if tab != nil {
 		aci := tab.ChildByName("app-chooser", 1)
 		if aci != nil {
@@ -258,7 +254,7 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 		code.SavePaths()
 		ge.ProjRoot = gi.Filename(root)
 		ge.SetName(pnm)
-		ge.Sc.SetName(pnm)
+		ge.Scene.SetName(pnm)
 		ge.Prefs.ProjFilename = gi.Filename(filepath.Join(root, pnm+".code"))
 		ge.ProjFilename = ge.Prefs.ProjFilename
 		ge.Prefs.ProjRoot = ge.ProjRoot
@@ -298,7 +294,7 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 		code.SavedPaths.AddPath(string(filename), gi.SystemSettings.Behavior.SavedPathsMax)
 		code.SavePaths()
 		ge.SetName(pnm)
-		ge.Sc.SetName(pnm)
+		ge.Scene.SetName(pnm)
 		ge.ApplyPrefs()
 		ge.UpdateFiles()
 		ge.SetWindowNameTitle()
@@ -569,7 +565,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 	}
 
 	b := gi.NewAppBody("Cogent Code").SetTitle(wintitle)
-	b.Sc.Nm = winm
+	b.Scene.Nm = winm
 
 	ge := NewCodeView(b)
 	b.App().AppBarConfig = ge.AppBarConfig

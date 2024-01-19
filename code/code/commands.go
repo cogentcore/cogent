@@ -448,7 +448,7 @@ func (cm *Command) Run(ge Code, buf *texteditor.Buf) {
 				cm.RunAfterPrompts(ge, buf)
 			})
 		})
-		d.NewDialog(ge.Scene()).Run()
+		d.NewDialog(ge.AsWidget().Scene).Run()
 		return
 	}
 	pvals, hasp := cm.HasPrompts()

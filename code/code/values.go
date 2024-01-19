@@ -23,7 +23,7 @@ func KeyMapsView(km *KeyMaps) {
 		return
 	}
 	d := gi.NewBody().SetTitle("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
-	d.Sc.Data = km
+	d.Scene.Data = km
 	tv := giv.NewTableView(d).SetSlice(km)
 	AvailKeyMapsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -62,7 +62,7 @@ func PrefsView(pf *SettingsData) *giv.StructView {
 	}
 	d := gi.NewBody().SetTitle("Code Preferences")
 	tv := giv.NewStructView(d).SetStruct(pf)
-	d.Sc.Data = pf
+	d.Scene.Data = pf
 
 	/*
 		d.AddAppBar(func(tb *gi.Toolbar) {
@@ -97,7 +97,7 @@ func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
 		return nil
 	}
 	d := gi.NewBody().SetTitle("Project preferences are saved in the project .code file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
-	d.Sc.Data = pf
+	d.Scene.Data = pf
 	tv := giv.NewStructView(d).SetStruct(pf)
 	d.NewWindow().Run()
 	return tv
@@ -175,7 +175,7 @@ func LangsView(pt *Langs) {
 	}
 	d := gi.NewBody().SetTitle("Available Language Opts: Add or modify entries to customize options for language / file types")
 	tv := giv.NewMapView(d).SetMap(pt)
-	d.Sc.Data = pt
+	d.Scene.Data = pt
 	AvailLangsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailLangsChanged = true
@@ -213,7 +213,7 @@ func CmdsView(pt *Commands) {
 	}
 	d := gi.NewBody().SetTitle("Code Commands")
 	tv := giv.NewTableView(d).SetSlice(pt)
-	d.Sc.Data = pt
+	d.Scene.Data = pt
 	CustomCmdsChanged = false
 	tv.OnChange(func(e events.Event) {
 		CustomCmdsChanged = true
@@ -307,7 +307,7 @@ func SplitsView(pt *Splits) {
 		return
 	}
 	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
-	d.Sc.Data = pt
+	d.Scene.Data = pt
 	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -424,7 +424,7 @@ func RegistersView(pt *Registers) {
 	d.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	d.Sc.Data = pt
+	d.Scene.Data = pt
 
 	gi.NewLabel(d).SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
 
