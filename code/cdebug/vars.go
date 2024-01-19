@@ -197,7 +197,7 @@ func (vr *Variable) FollowPtr() {
 type VarParams struct {
 
 	// requests pointers to be automatically dereferenced -- this can be very dangerous in terms of size of variable data returned and is not recommended.
-	FollowPointers bool `def:"false"`
+	FollowPointers bool `default:"false"`
 
 	// how far to recurse when evaluating nested types.
 	MaxRecurse int

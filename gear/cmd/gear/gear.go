@@ -14,7 +14,7 @@ import (
 
 type config struct { //gti:add
 	// Command is the command to run gear on
-	Command string `posarg:"0" required:"-" def:"ls"`
+	Command string `posarg:"0" required:"-" default:"ls"`
 }
 
 func main() {
