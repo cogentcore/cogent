@@ -1,0 +1,5 @@
+ID = 'com.cogentcore.cogent'
+Name = 'Cogent Core'
+
+[Release]
+  Package = 'cogent'
