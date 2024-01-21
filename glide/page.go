@@ -10,10 +10,9 @@ package glide
 import (
 	"net/url"
 
-	"cogentcore.org/cogent/glide/gidom"
+	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
 )
@@ -23,40 +22,43 @@ type Page struct {
 	gi.Frame
 
 	// The history of URLs that have been visited. The oldest page is first.
-	History []string
+	History []string `set:"-"`
 
-	// PageURL is the current page URL
-	PageURL string
+	// Context is the page's [coredom.Context].
+	Context *coredom.Context `set:"-"`
 }
 
 var _ ki.Ki = (*Page)(nil)
 
 func (pg *Page) OnInit() {
 	pg.Frame.OnInit()
+	pg.Context = coredom.NewContext()
+	pg.Context.OpenURL = pg.OpenURL
 	pg.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 }
 
 // OpenURL sets the content of the page from the given url.
-func (pg *Page) OpenURL(url string) error {
-	resp, err := gidom.Get(pg.Context(), url)
+func (pg *Page) OpenURL(url string) {
+	resp, err := coredom.Get(pg.Context, url)
 	if err != nil {
-		return err
+		gi.ErrorSnackbar(pg, err, "Error opening page")
+		return
 	}
 	defer resp.Body.Close()
 	url = resp.Request.URL.String()
-	pg.PageURL = url
+	pg.Context.PageURL = url
 	pg.History = append(pg.History, url)
 	updt := pg.UpdateStart()
 	pg.DeleteChildren(true)
-	err = gidom.ReadHTML(pg.Context(), pg, resp.Body)
+	err = coredom.ReadHTML(pg.Context, pg, resp.Body)
 	if err != nil {
-		return err
+		gi.ErrorSnackbar(pg, err, "Error opening page")
+		return
 	}
 	pg.Update()
 	pg.UpdateEndLayout(updt)
-	return nil
 }
 
 // AppBar is the default app bar for a [Page]
@@ -78,12 +80,12 @@ func (pg *Page) AppBar(tb *gi.Toolbar) {
 		}
 	}
 	ch.OnChange(func(e events.Event) {
-		u, is := gidom.ParseURL(ch.CurLabel)
+		u, is := coredom.ParseURL(ch.CurLabel)
 		if is {
-			grr.Log(pg.OpenURL(u.String()))
+			pg.OpenURL(u.String())
 		} else {
 			q := url.QueryEscape(ch.CurLabel)
-			grr.Log(pg.OpenURL("https://google.com/search?q=" + q))
+			pg.OpenURL("https://google.com/search?q=" + q)
 		}
 		e.SetHandled()
 	})

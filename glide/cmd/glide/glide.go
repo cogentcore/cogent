@@ -7,13 +7,12 @@ package main
 import (
 	"cogentcore.org/cogent/glide"
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/grr"
 )
 
 func main() {
 	b := gi.NewAppBody("glide").SetTitle("Glide")
 	pg := glide.NewPage(b, "page")
-	grr.Log(pg.OpenURL("https://google.com"))
+	pg.OpenURL("https://google.com")
 	b.AddAppBar(pg.AppBar)
 	b.NewWindow().Run().Wait()
 }
