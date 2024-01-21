@@ -68,7 +68,7 @@ func (pg *Page) AppBar(tb *gi.Toolbar) {
 		}
 	})
 
-	ch := tb.ChildByName("nav-bar").(*gi.Chooser)
+	ch := tb.ChildByName("app-chooser").(*gi.AppChooser)
 	ch.AllowNew = true
 	ch.ItemsFunc = func() {
 		ch.Items = make([]any, len(pg.History))
