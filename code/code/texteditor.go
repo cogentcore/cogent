@@ -189,6 +189,7 @@ func (ed *TextEditor) LineNoDoubleClick(tpos lex.Pos) {
 
 // ConfigOutputTextEditor configures a command-output textview within given parent layout
 func ConfigOutputTextEditor(ed *texteditor.Editor) {
+	ed.SetReadOnly(true)
 	ed.Style(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
@@ -200,7 +201,17 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 			ed.Buf.Opts.LineNos = false
 		}
 	})
-	ed.SetReadOnly(true)
+	ed.AddContextMenu(func(m *gi.Scene) {
+		gi.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
+			SetKey(keyfun.Copy).SetState(!ed.HasSelection(), states.Disabled).
+			OnClick(func(e events.Event) {
+				ed.Copy(true)
+			})
+		gi.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
+			OnClick(func(e events.Event) {
+				ed.Clear()
+			})
+	})
 }
 
 // ConfigEditorTextEditor configures an editor texteditor
