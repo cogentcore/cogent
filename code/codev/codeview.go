@@ -165,7 +165,7 @@ func (ge *CodeView) IsEmpty() bool {
 func (ge *CodeView) OpenRecent(filename gi.Filename) { //gti:add
 	if string(filename) == code.CodeViewResetRecents {
 		code.SavedPaths = nil
-		gi.StringsAddExtras((*[]string)(&code.SavedPaths), code.SavedPathsExtras)
+		code.SavedPaths = append(code.SavedPaths, code.SavedPathsExtras...)
 	} else if string(filename) == code.CodeViewEditRecents {
 		ge.EditRecents()
 	} else {
@@ -189,7 +189,7 @@ func (ge *CodeView) EditRecents() {
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddOk(pw).OnClick(func(e events.Event) {
 			code.SavedPaths = tmp
-			gi.StringsAddExtras((*[]string)(&code.SavedPaths), code.SavedPathsExtras)
+			code.SavedPaths = append(code.SavedPaths, code.SavedPathsExtras...)
 		})
 	})
 	d.NewDialog(ge).Run()

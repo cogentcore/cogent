@@ -50,6 +50,9 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	gi.NewButton(tb).SetText("Open Recent").SetMenu(func(m *gi.Scene) {
 		for _, sp := range code.SavedPaths {
 			sp := sp
+			if sp == code.SavedPathsExtras[0] {
+				gi.NewSeparator(m)
+			}
 			gi.NewButton(m).SetText(sp).OnClick(func(e events.Event) {
 				ge.OpenRecent(gi.Filename(sp))
 			})

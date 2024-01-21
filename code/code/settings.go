@@ -319,7 +319,7 @@ var (
 	CodeViewEditRecents = "<i>Edit Recents...</i>"
 
 	// SavedPathsExtras are the reset and edit items we add to the recents menu
-	SavedPathsExtras = []string{gi.MenuTextSeparator, CodeViewResetRecents, CodeViewEditRecents}
+	SavedPathsExtras = []string{CodeViewResetRecents, CodeViewEditRecents}
 )
 
 // SavePaths saves the active SavedPaths to prefs dir
@@ -329,7 +329,7 @@ func SavePaths() {
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Save(pnm)
 	// add back after save
-	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+	SavedPaths = append(SavedPaths, SavedPathsExtras...)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
@@ -339,5 +339,5 @@ func OpenPaths() {
 	pdir := AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Open(pnm)
-	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+	gi.SavedPaths = append(gi.SavedPaths, gi.SavedPathsExtras...)
 }
