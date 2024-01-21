@@ -11,15 +11,15 @@ import (
 )
 
 func TestRenderHTML(t *testing.T) {
-	sc := gi.NewScene("test-render-html")
+	b := gi.NewBody("test-render-html")
 	s := `
 		<h1>Gidom</h1>
 		<p>This is a demonstration of the various features of gidom</p>
 		<button>Hello, world!</button>
 		`
-	err := ReadHTMLString(BaseContext(), sc, s)
+	err := ReadHTMLString(BaseContext(), b, s)
 	if err != nil {
 		t.Error(err)
 	}
-	sc.AssertRender(t, "test-render-html")
+	b.AssertRender(t, "test-render-html")
 }
