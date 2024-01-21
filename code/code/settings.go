@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"cogentcore.org/cogent"
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
@@ -161,7 +162,7 @@ func (se *SettingsData) ApplyEnvVars() {
 
 // VersionInfo returns Code version information
 func (se *SettingsData) VersionInfo() string { //gti:add
-	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
+	vinfo := cogent.Version + " date: " + cogent.VersionDate + " UTC; git commit-1: " + cogent.GitCommit
 	return vinfo
 }
 
