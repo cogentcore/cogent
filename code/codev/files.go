@@ -497,7 +497,7 @@ func (ge *CodeView) FileNodeOpened(fn *filetree.Node) {
 		return
 	}
 	// program, document, data
-	if int(fn.Info.Size) > gi.SystemSettings.Behavior.BigFileSize {
+	if int(fn.Info.Size) > gi.SystemSettings.BigFileSize {
 		d := gi.NewBody().AddTitle("File is relatively large").
 			AddText(fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size))
 		d.AddBottomBar(func(pw gi.Widget) {

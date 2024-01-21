@@ -503,7 +503,7 @@ func (vv *RegisterValue) HasDialog() bool { return true }
 
 func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 	if len(AvailRegisterNames) == 0 {
-		gi.NewSnackbar(ctx, "noregs").AddSnackbarText("No registers available").Stage.Run()
+		gi.MessageSnackbar(ctx, "No registers available")
 		return
 	}
 	cur := laser.ToString(vv.Value.Interface())

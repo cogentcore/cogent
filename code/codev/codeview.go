@@ -250,7 +250,7 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
-		code.SavedPaths.AddPath(root, gi.SystemSettings.Behavior.SavedPathsMax)
+		code.SavedPaths.AddPath(root, gi.SystemSettings.SavedPathsMax)
 		code.SavePaths()
 		ge.ProjRoot = gi.Filename(root)
 		ge.SetName(pnm)
@@ -291,7 +291,7 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 		code.SetGoMod(ge.Prefs.GoMod)
 		os.Chdir(string(ge.Prefs.ProjRoot))
 		ge.ProjRoot = gi.Filename(ge.Prefs.ProjRoot)
-		code.SavedPaths.AddPath(string(filename), gi.SystemSettings.Behavior.SavedPathsMax)
+		code.SavedPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
 		code.SavePaths()
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
@@ -372,7 +372,7 @@ func (ge *CodeView) SaveProjIfExists(saveAllFiles bool) bool {
 // returns true if the user was prompted, false otherwise
 func (ge *CodeView) SaveProjAs(filename gi.Filename) bool { //gti:add
 	spell.SaveIfLearn()
-	code.SavedPaths.AddPath(string(filename), gi.SystemSettings.Behavior.SavedPathsMax)
+	code.SavedPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
 	code.SavePaths()
 	ge.Prefs.ProjFilename = filename
 	ge.ProjFilename = ge.Prefs.ProjFilename
