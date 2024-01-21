@@ -129,41 +129,45 @@ func (i *ArgVarTypes) UnmarshalText(text []byte) error {
 	return nil
 }
 
-var _FindLocValues = []FindLoc{0, 1, 2, 3}
+var _FindLocValues = []FindLoc{0, 1, 2, 3, 4}
 
 // FindLocN is the highest valid value
 // for type FindLoc, plus one.
-const FindLocN FindLoc = 4
+const FindLocN FindLoc = 5
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
 func _FindLocNoOp() {
 	var x [1]struct{}
 	_ = x[FindLocAll-(0)]
-	_ = x[FindLocFile-(1)]
-	_ = x[FindLocDir-(2)]
-	_ = x[FindLocNotTop-(3)]
+	_ = x[FindLocOpen-(1)]
+	_ = x[FindLocFile-(2)]
+	_ = x[FindLocDir-(3)]
+	_ = x[FindLocNotTop-(4)]
 }
 
 var _FindLocNameToValueMap = map[string]FindLoc{
 	`All`:    0,
-	`File`:   1,
-	`Dir`:    2,
-	`NotTop`: 3,
+	`Open`:   1,
+	`File`:   2,
+	`Dir`:    3,
+	`NotTop`: 4,
 }
 
 var _FindLocDescMap = map[FindLoc]string{
-	0: `FindLocAll finds in all open folders in the left file browser`,
-	1: `FindLocFile only finds in the current active file`,
-	2: `FindLocDir only finds in the directory of the current active file`,
-	3: `FindLocNotTop finds in all open folders *except* the top-level folder`,
+	0: `FindLocAll finds in all directories under the root path`,
+	1: `FindOpen finds in all open folders in the left file browser`,
+	2: `FindLocFile only finds in the current active file`,
+	3: `FindLocDir only finds in the directory of the current active file`,
+	4: `FindLocNotTop finds in all open folders *except* the top-level folder`,
 }
 
 var _FindLocMap = map[FindLoc]string{
 	0: `All`,
-	1: `File`,
-	2: `Dir`,
-	3: `NotTop`,
+	1: `Open`,
+	2: `File`,
+	3: `Dir`,
+	4: `NotTop`,
 }
 
 // String returns the string representation

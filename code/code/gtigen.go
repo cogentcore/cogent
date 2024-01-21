@@ -219,6 +219,15 @@ func (t *FileNode) SetText(v string) *FileNode { t.Text = v; return t }
 // SetIcon sets the [FileNode.Icon]
 func (t *FileNode) SetIcon(v icons.Icon) *FileNode { t.Icon = v; return t }
 
+// SetIconOpen sets the [FileNode.IconOpen]
+func (t *FileNode) SetIconOpen(v icons.Icon) *FileNode { t.IconOpen = v; return t }
+
+// SetIconClosed sets the [FileNode.IconClosed]
+func (t *FileNode) SetIconClosed(v icons.Icon) *FileNode { t.IconClosed = v; return t }
+
+// SetIconLeaf sets the [FileNode.IconLeaf]
+func (t *FileNode) SetIconLeaf(v icons.Icon) *FileNode { t.IconLeaf = v; return t }
+
 // SetIndent sets the [FileNode.Indent]
 func (t *FileNode) SetIndent(v units.Value) *FileNode { t.Indent = v; return t }
 
@@ -418,6 +427,15 @@ func (t *SymTreeView) SetText(v string) *SymTreeView { t.Text = v; return t }
 
 // SetIcon sets the [SymTreeView.Icon]
 func (t *SymTreeView) SetIcon(v icons.Icon) *SymTreeView { t.Icon = v; return t }
+
+// SetIconOpen sets the [SymTreeView.IconOpen]
+func (t *SymTreeView) SetIconOpen(v icons.Icon) *SymTreeView { t.IconOpen = v; return t }
+
+// SetIconClosed sets the [SymTreeView.IconClosed]
+func (t *SymTreeView) SetIconClosed(v icons.Icon) *SymTreeView { t.IconClosed = v; return t }
+
+// SetIconLeaf sets the [SymTreeView.IconLeaf]
+func (t *SymTreeView) SetIconLeaf(v icons.Icon) *SymTreeView { t.IconLeaf = v; return t }
 
 // SetIndent sets the [SymTreeView.Indent]
 func (t *SymTreeView) SetIndent(v units.Value) *SymTreeView { t.Indent = v; return t }

@@ -6,6 +6,7 @@ package code
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"path/filepath"
 	"regexp"
@@ -247,14 +248,16 @@ type FileSearchResults struct {
 }
 
 // FileTreeSearch returns list of all nodes starting at given node of given
-// language(s) that contain the given string (non regexp version), sorted in
-// descending order by number of occurrences -- ignoreCase transforms
-// everything into lowercase
+// language(s) that contain the given string, sorted in descending order by number
+// of occurrences -- ignoreCase transforms everything into lowercase
 func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
 		return nil
+	}
+	if loc == FindLocAll {
+		return FindAll(start, find, ignoreCase, regExp, langs)
 	}
 	var re *regexp.Regexp
 	var err error
@@ -317,6 +320,84 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 			mls = append(mls, FileSearchResults{sfn, cnt, matches})
 		}
 		return ki.Continue
+	})
+	sort.Slice(mls, func(i, j int) bool {
+		return mls[i].Count > mls[j].Count
+	})
+	return mls
+}
+
+// FindAll returns list of all files (regardless of what is currently open)
+// starting at given node of given language(s) that contain the given string,
+// sorted in descending order by number of occurrences. ignoreCase transforms
+// everything into lowercase.
+func FindAll(start *filetree.Node, find string, ignoreCase, regExp bool, langs []fi.Known) []FileSearchResults {
+	fb := []byte(find)
+	fsz := len(find)
+	if fsz == 0 {
+		return nil
+	}
+	var re *regexp.Regexp
+	var err error
+	if regExp {
+		re, err = regexp.Compile(find)
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+	}
+	mls := make([]FileSearchResults, 0)
+	spath := string(start.FPath) // note: is already Abs
+	filepath.Walk(spath, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.Name() == ".git" {
+			return filepath.SkipDir
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if int(info.Size()) > gi.SystemSettings.BigFileSize {
+			return nil
+		}
+		if strings.HasSuffix(info.Name(), ".code") { // exclude self
+			return nil
+		}
+		if len(langs) > 0 {
+			mtyp, _, err := fi.MimeFromFile(path)
+			if err != nil {
+				return nil
+			}
+			known := fi.MimeKnown(mtyp)
+			if !fi.IsMatchList(langs, known) {
+				return nil
+			}
+		}
+		sfn, found := start.FindFile(path)
+		var cnt int
+		var matches []textbuf.Match
+		if found && sfn.IsOpen() && sfn.Buf != nil {
+			if regExp {
+				cnt, matches = sfn.Buf.SearchRegexp(re)
+			} else {
+				cnt, matches = sfn.Buf.Search(fb, ignoreCase, false)
+			}
+		} else {
+			if regExp {
+				cnt, matches = textbuf.SearchFileRegexp(path, re)
+			} else {
+				cnt, matches = textbuf.SearchFile(path, fb, ignoreCase)
+			}
+		}
+		if cnt > 0 {
+			if found {
+				mls = append(mls, FileSearchResults{sfn, cnt, matches})
+			} else {
+				fmt.Println("file not found in FindFile:", path)
+			}
+		}
+		return nil
 	})
 	sort.Slice(mls, func(i, j int) bool {
 		return mls[i].Count > mls[j].Count

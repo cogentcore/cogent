@@ -301,10 +301,10 @@ func (ge *CodeView) UpdateStatusLabel() {
 			}
 		}
 		if tv.ISearch.On {
-			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearch.Find, len(tv.ISearch.Matches), ge.StatusMessage)
+			msg = fmt.Sprintf("\tISearch: %v (n=%v)", tv.ISearch.Find, len(tv.ISearch.Matches))
 		}
 		if tv.QReplace.On {
-			msg = fmt.Sprintf("\tQReplace: %v -> %v (n=%v)\t%v", tv.QReplace.Find, tv.QReplace.Replace, len(tv.QReplace.Matches), ge.StatusMessage)
+			msg = fmt.Sprintf("\tQReplace: %v -> %v (n=%v)", tv.QReplace.Find, tv.QReplace.Replace, len(tv.QReplace.Matches))
 		}
 	}
 
