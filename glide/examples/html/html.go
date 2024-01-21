@@ -17,7 +17,7 @@ import (
 var exampleHTML embed.FS
 
 func main() {
-	b := gi.NewAppBody("gidom-html")
+	b := gi.NewAppBody("Gidom HTML")
 	h := grr.Log1(exampleHTML.ReadFile("example.html"))
 	grr.Log(gidom.ReadHTML(gidom.BaseContext(), b, bytes.NewBuffer(h)))
 	b.NewWindow().Run().Wait()
