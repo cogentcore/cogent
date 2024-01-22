@@ -27,7 +27,7 @@ func (ge *CodeView) HandleEvents() {
 }
 
 func (ge *CodeView) CodeViewKeys(kt events.Event) {
-	code.SetGoMod(ge.Prefs.GoMod)
+	code.SetGoMod(ge.Settings.GoMod)
 	var kf code.KeyFuns
 	kc := kt.KeyChord()
 	if gi.DebugSettings.KeyEventTrace {
@@ -76,7 +76,7 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 	case keyfun.Find:
 		kt.SetHandled()
 		if atv != nil && atv.HasSelection() {
-			ge.Prefs.Find.Find = string(atv.Selection().ToBytes())
+			ge.Settings.Find.Find = string(atv.Selection().ToBytes())
 		}
 		ge.CallFind(atv)
 	}

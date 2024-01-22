@@ -47,7 +47,7 @@ type SymbolsView struct {
 
 // Params returns the symbols params
 func (sv *SymbolsView) Params() *SymbolsParams {
-	return &sv.Code.ProjPrefs().Symbols
+	return &sv.Code.ProjSettings().Symbols
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 	ge.FocusOnTabs()
 }
 
-// OpenPackage opens package-level symbols for current active textview
+// OpenPackage opens package-level symbols for current active texteditor
 func (sv *SymbolsView) OpenPackage() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()
@@ -212,7 +212,7 @@ func (sv *SymbolsView) OpenPackage() {
 	sv.Syms.OpenSyms(pkg, "", sv.Match)
 }
 
-// OpenFile opens file-level symbols for current active textview
+// OpenFile opens file-level symbols for current active texteditor
 func (sv *SymbolsView) OpenFile() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()

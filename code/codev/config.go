@@ -69,7 +69,7 @@ func (ge *CodeView) Splits() *gi.Splits {
 	return ge.ChildByName("splitview", 2).(*gi.Splits)
 }
 
-// TextEditorButtonByIndex returns the top textview menu button by index (0 or 1)
+// TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
 func (ge *CodeView) TextEditorButtonByIndex(idx int) *gi.Button {
 	return ge.Splits().Child(TextEditor1Idx + idx).Child(0).(*gi.Button)
 }
@@ -137,7 +137,7 @@ func (ge *CodeView) ConfigSplits() {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
 		})
-		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("textview: " + txnm)
+		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("texteditor: " + txnm)
 		txbut.Type = gi.ButtonAction
 		txbut.Style(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
@@ -149,7 +149,7 @@ func (ge *CodeView) ConfigSplits() {
 			ge.SetActiveTextEditorIdx(i)
 		})
 
-		ted := code.NewTextEditor(txly, "textview-"+txnm)
+		ted := code.NewTextEditor(txly, "texteditor-"+txnm)
 		ted.Code = ge
 		code.ConfigEditorTextEditor(&ted.Editor)
 		ted.OnFocus(func(e events.Event) {
@@ -176,7 +176,7 @@ func (ge *CodeView) ConfigSplits() {
 	// }
 	// })
 
-	split.SetSplits(ge.Prefs.Splits...)
+	split.SetSplits(ge.Settings.Splits...)
 }
 
 // ConfigStatusBar configures statusbar with label

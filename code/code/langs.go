@@ -25,7 +25,7 @@ type LangOpts struct {
 type Langs map[fi.Known]*LangOpts
 
 // AvailLangs is the current set of language options -- can be
-// loaded / saved / edited with preferences.  This is set to StdLangs at
+// loaded / saved / edited with settings.  This is set to StdLangs at
 // startup.
 var AvailLangs Langs
 
@@ -48,7 +48,7 @@ func (lt Langs) Validate() bool {
 	return ok
 }
 
-// PrefsLangsFilename is the name of the preferences file in App prefs
+// PrefsLangsFilename is the name of the settings file in App prefs
 // directory for saving / loading the default AvailLangs languages list
 var PrefsLangsFilename = "lang_prefs.toml"
 

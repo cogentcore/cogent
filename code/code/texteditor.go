@@ -187,7 +187,7 @@ func (ed *TextEditor) LineNoDoubleClick(tpos lex.Pos) {
 	ed.SetNeedsRender(true)
 }
 
-// ConfigOutputTextEditor configures a command-output textview within given parent layout
+// ConfigOutputTextEditor configures a command-output texteditor within given parent layout
 func ConfigOutputTextEditor(ed *texteditor.Editor) {
 	ed.SetReadOnly(true)
 	ed.Style(func(s *styles.Style) {

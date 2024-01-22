@@ -22,7 +22,7 @@ import (
 	"cogentcore.org/core/texteditor"
 )
 
-// SaveActiveView saves the contents of the currently-active textview
+// SaveActiveView saves the contents of the currently-active texteditor
 func (ge *CodeView) SaveActiveView() { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf != nil {
@@ -53,7 +53,7 @@ func (ge *CodeView) CallSaveActiveViewAs(ctx gi.Widget) {
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
-// currently-active textview
+// currently-active texteditor
 func (ge *CodeView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf != nil {
@@ -260,7 +260,7 @@ func (ge *CodeView) TextBufForFile(fpath string, add bool) *texteditor.Buf {
 
 // NextViewFile sets the next text view to view given file name -- include as
 // much of name as possible to disambiguate -- will use the first matching --
-// if already being viewed, that is activated -- returns textview and its
+// if already being viewed, that is activated -- returns texteditor and its
 // index, false if not found
 func (ge *CodeView) NextViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
@@ -305,7 +305,7 @@ func (ge *CodeView) ViewFileInIdx(fnm gi.Filename, idx int) (*code.TextEditor, i
 	return tv, idx, true
 }
 
-// LinkViewFileNode opens the file node in the 2nd textview, which is next to
+// LinkViewFileNode opens the file node in the 2nd texteditor, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) {
 	updt := ge.UpdateStart()
@@ -322,7 +322,7 @@ func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) 
 	return tv, idx
 }
 
-// LinkViewFile opens the file in the 2nd textview, which is next to
+// LinkViewFile opens the file in the 2nd texteditor, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (ge *CodeView) LinkViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
@@ -373,7 +373,7 @@ func (ge *CodeView) ViewOpenNodeName(name string) {
 }
 
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
-// in current active textview
+// in current active texteditor
 func (ge *CodeView) SelectOpenNode() {
 	if len(ge.OpenNodes) == 0 {
 		ge.SetStatus("No open nodes to choose from")
@@ -460,7 +460,7 @@ func (ge *CodeView) FileNodeRunExe(fn *filetree.Node) {
 	code.CmdNoUserPrompt = true // don't re-prompt!
 	cmd, _, ok := code.AvailCmds.CmdByName(code.CmdName("Build: Run Prompt"), true)
 	if ok {
-		ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
+		ge.ArgVals.Set(string(fn.FPath), &ge.Settings, nil)
 		cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)
 		cmd.Run(ge, cbuf)
 	}

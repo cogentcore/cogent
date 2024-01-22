@@ -646,7 +646,7 @@ func MarkupCmdOutput(out []byte) []byte {
 type Commands []*Command
 
 // CmdName has an associated ValueView for selecting from the list of
-// available command names, for use in preferences etc.
+// available command names, for use in settings etc.
 // Formatted as Cat: Name as in Command.Label()
 type CmdName string
 
@@ -676,7 +676,7 @@ func (cn *CmdNames) Add(cmd CmdName) {
 // the same names.
 var AvailCmds Commands
 
-// CustomCmds is user-specific list of commands saved in preferences available
+// CustomCmds is user-specific list of commands saved in settings available
 // for all Code projects.  These will override StdCmds with the same names.
 var CustomCmds = Commands{}
 
@@ -723,7 +723,7 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 	return nil, -1, false
 }
 
-// PrefsCmdsFilename is the name of the preferences file in App prefs
+// PrefsCmdsFilename is the name of the settings file in App prefs
 // directory for saving / loading your CustomCmds commands list
 var PrefsCmdsFilename = "command_prefs.toml"
 

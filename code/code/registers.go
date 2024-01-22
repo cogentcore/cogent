@@ -20,7 +20,7 @@ type Registers map[string]string
 type RegisterName string
 
 // AvailRegisters are available named registers.  can be loaded / saved /
-// edited with preferences.
+// edited with settings.
 var AvailRegisters Registers
 
 // AvailRegisterNames are the names of the current AvailRegisters -- used for some choosers
@@ -40,7 +40,7 @@ func (lt *Registers) Names() []string {
 	return nms
 }
 
-// PrefsRegistersFilename is the name of the preferences file in App prefs
+// PrefsRegistersFilename is the name of the settings file in App prefs
 // directory for saving / loading the default AvailRegisters
 var PrefsRegistersFilename = "registers_prefs.toml"
 

@@ -26,14 +26,14 @@ import (
 
 // ConfigFindButton configures the Find FuncButton with current params
 func (ge *CodeView) ConfigFindButton(fb *giv.FuncButton) *giv.FuncButton {
-	fb.Args[0].SetValue(ge.Prefs.Find.Find)
+	fb.Args[0].SetValue(ge.Settings.Find.Find)
 	fb.Args[0].SetTag("width", "80")
-	fb.Args[1].SetValue(ge.Prefs.Find.Replace)
+	fb.Args[1].SetValue(ge.Settings.Find.Replace)
 	fb.Args[1].SetTag("width", "80")
-	fb.Args[2].SetValue(ge.Prefs.Find.IgnoreCase)
-	fb.Args[3].SetValue(ge.Prefs.Find.Regexp)
-	fb.Args[4].SetValue(ge.Prefs.Find.Loc)
-	fb.Args[5].SetValue(ge.Prefs.Find.Langs)
+	fb.Args[2].SetValue(ge.Settings.Find.IgnoreCase)
+	fb.Args[3].SetValue(ge.Settings.Find.Regexp)
+	fb.Args[4].SetValue(ge.Settings.Find.Loc)
+	fb.Args[5].SetValue(ge.Settings.Find.Langs)
 	return fb
 }
 
@@ -47,10 +47,10 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	if find == "" {
 		return
 	}
-	ge.Prefs.Find.IgnoreCase = ignoreCase
-	ge.Prefs.Find.Regexp = regExp
-	ge.Prefs.Find.Langs = langs
-	ge.Prefs.Find.Loc = loc
+	ge.Settings.Find.IgnoreCase = ignoreCase
+	ge.Settings.Find.Regexp = regExp
+	ge.Settings.Find.Langs = langs
+	ge.Settings.Find.Loc = loc
 
 	tv := ge.Tabs()
 	if tv == nil {
@@ -95,7 +95,7 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 			}
 		}
 	} else {
-		res = code.FileTreeSearch(root, find, ignoreCase, regExp, loc, adir, langs)
+		res = code.FileTreeSearch(ge, root, find, ignoreCase, regExp, loc, adir, langs)
 	}
 	fv.ShowResults(res)
 	ge.FocusOnPanel(TabsIdx)
@@ -135,7 +135,7 @@ func (ge *CodeView) Symbols() { //gti:add
 	defer tv.UpdateEndLayout(updt)
 
 	sv := tv.RecycleTabWidget("Symbols", true, code.SymbolsViewType).(*code.SymbolsView)
-	sv.ConfigSymbolsView(ge, ge.ProjPrefs().Symbols)
+	sv.ConfigSymbolsView(ge, ge.ProjSettings().Symbols)
 	sv.Update()
 	ge.FocusOnPanel(TabsIdx)
 }
@@ -149,8 +149,8 @@ func (ge *CodeView) Debug() { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	ge.Prefs.Debug.Mode = cdebug.Exec
-	exePath := string(ge.Prefs.RunExec)
+	ge.Settings.Debug.Mode = cdebug.Exec
+	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
 	dv.ConfigDebugView(ge, fi.Go, exePath)
@@ -159,7 +159,7 @@ func (ge *CodeView) Debug() { //gti:add
 	ge.CurDbg = dv
 }
 
-// DebugTest runs the debugger using testing mode in current active textview path
+// DebugTest runs the debugger using testing mode in current active texteditor path
 func (ge *CodeView) DebugTest() { //gti:add
 	txv := ge.ActiveTextEditor()
 	if txv == nil || txv.Buf == nil {
@@ -172,7 +172,7 @@ func (ge *CodeView) DebugTest() { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	ge.Prefs.Debug.Mode = cdebug.Test
+	ge.Settings.Debug.Mode = cdebug.Test
 	tstPath := string(txv.Buf.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, code.DebugViewType).(*code.DebugView)
@@ -192,9 +192,9 @@ func (ge *CodeView) DebugAttach(pid uint64) { //gti:add
 	updt := tv.UpdateStart()
 	defer tv.UpdateEndLayout(updt)
 
-	ge.Prefs.Debug.Mode = cdebug.Attach
-	ge.Prefs.Debug.PID = pid
-	exePath := string(ge.Prefs.RunExec)
+	ge.Settings.Debug.Mode = cdebug.Attach
+	ge.Settings.Debug.PID = pid
+	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
 	dv.ConfigDebugView(ge, fi.Go, exePath)
@@ -259,9 +259,9 @@ func (ge *CodeView) OpenConsoleTab() { //gti:add
 // ChooseRunExec selects the executable to run for the project
 func (ge *CodeView) ChooseRunExec(exePath gi.Filename) { //gti:add
 	if exePath != "" {
-		ge.Prefs.RunExec = exePath
-		ge.Prefs.BuildDir = gi.Filename(filepath.Dir(string(exePath)))
-		if !ge.Prefs.RunExecIsExec() {
+		ge.Settings.RunExec = exePath
+		ge.Settings.BuildDir = gi.Filename(filepath.Dir(string(exePath)))
+		if !ge.Settings.RunExecIsExec() {
 			gi.MessageDialog(ge, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
 		}
 	}

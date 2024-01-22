@@ -78,8 +78,8 @@ func (fn *FileNode) SetRunExec() {
 	}
 	ge, ok := ParentCode(fn.This())
 	if ok {
-		ge.ProjPrefs().RunExec = fn.FPath
-		ge.ProjPrefs().BuildDir = gi.Filename(filepath.Dir(string(fn.FPath)))
+		ge.ProjSettings().RunExec = fn.FPath
+		ge.ProjSettings().BuildDir = gi.Filename(filepath.Dir(string(fn.FPath)))
 	}
 }
 
@@ -237,6 +237,16 @@ func (on *OpenNodes) NChanged() int {
 	return cnt
 }
 
+// FindPath finds node for given path, nil if not found
+func (on *OpenNodes) FindPath(path string) *filetree.Node {
+	for _, f := range *on {
+		if f.FPath == gi.Filename(path) {
+			return f
+		}
+	}
+	return nil
+}
+
 //////////////////////////////////////////////////////////////////////////
 //  Search
 
@@ -250,14 +260,14 @@ type FileSearchResults struct {
 // FileTreeSearch returns list of all nodes starting at given node of given
 // language(s) that contain the given string, sorted in descending order by number
 // of occurrences -- ignoreCase transforms everything into lowercase
-func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Known) []FileSearchResults {
+func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
 		return nil
 	}
 	if loc == FindLocAll {
-		return FindAll(start, find, ignoreCase, regExp, langs)
+		return FindAll(ge, start, find, ignoreCase, regExp, langs)
 	}
 	var re *regexp.Regexp
 	var err error
@@ -331,7 +341,7 @@ func FileTreeSearch(start *filetree.Node, find string, ignoreCase, regExp bool, 
 // starting at given node of given language(s) that contain the given string,
 // sorted in descending order by number of occurrences. ignoreCase transforms
 // everything into lowercase.
-func FindAll(start *filetree.Node, find string, ignoreCase, regExp bool, langs []fi.Known) []FileSearchResults {
+func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, langs []fi.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -374,14 +384,14 @@ func FindAll(start *filetree.Node, find string, ignoreCase, regExp bool, langs [
 				return nil
 			}
 		}
-		sfn, found := start.FindFile(path)
+		ofn := ge.CurOpenNodes().FindPath(path)
 		var cnt int
 		var matches []textbuf.Match
-		if found && sfn.IsOpen() && sfn.Buf != nil {
+		if ofn != nil && ofn.Buf != nil {
 			if regExp {
-				cnt, matches = sfn.Buf.SearchRegexp(re)
+				cnt, matches = ofn.Buf.SearchRegexp(re)
 			} else {
-				cnt, matches = sfn.Buf.Search(fb, ignoreCase, false)
+				cnt, matches = ofn.Buf.Search(fb, ignoreCase, false)
 			}
 		} else {
 			if regExp {
@@ -391,10 +401,15 @@ func FindAll(start *filetree.Node, find string, ignoreCase, regExp bool, langs [
 			}
 		}
 		if cnt > 0 {
-			if found {
-				mls = append(mls, FileSearchResults{sfn, cnt, matches})
+			if ofn != nil {
+				mls = append(mls, FileSearchResults{ofn, cnt, matches})
 			} else {
-				fmt.Println("file not found in FindFile:", path)
+				sfn, found := start.FindFile(path)
+				if found {
+					mls = append(mls, FileSearchResults{sfn, cnt, matches})
+				} else {
+					fmt.Println("file not found in FindFile:", path)
+				}
 			}
 		}
 		return nil

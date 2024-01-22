@@ -84,7 +84,7 @@ var ArgVars = map[string]ArgVarInfo{
 type ArgVarVals map[string]string
 
 // Set sets the current values for arg variables -- prompts must be already set!
-func (avp *ArgVarVals) Set(fpath string, ppref *ProjPrefs, tv *texteditor.Editor) {
+func (avp *ArgVarVals) Set(fpath string, ppref *ProjSettings, tv *texteditor.Editor) {
 	if *avp == nil {
 		*avp = make(ArgVarVals, len(ArgVars))
 	}

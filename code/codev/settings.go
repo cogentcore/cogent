@@ -16,30 +16,30 @@ import (
 	"cogentcore.org/core/giv"
 )
 
-// Defaults sets new project defaults based on overall preferences
+// Defaults sets new project defaults based on overall settings
 func (ge *CodeView) Defaults() {
-	ge.Prefs.Files = code.Settings.Files
-	ge.Prefs.Editor = gi.SystemSettings.Editor
-	ge.Prefs.Splits = []float32{.1, .325, .325, .25}
-	ge.Prefs.Debug = cdebug.DefaultParams
+	ge.Settings.Files = code.Settings.Files
+	ge.Settings.Editor = gi.SystemSettings.Editor
+	ge.Settings.Splits = []float32{.1, .325, .325, .25}
+	ge.Settings.Debug = cdebug.DefaultParams
 }
 
 // GrabPrefs grabs the current project preference settings from various
 // places, e.g., prior to saving or editing.
 func (ge *CodeView) GrabPrefs() {
 	sv := ge.Splits()
-	ge.Prefs.Splits = sv.Splits
-	ge.Prefs.Dirs = ge.Files.Dirs
+	ge.Settings.Splits = sv.Splits
+	ge.Settings.Dirs = ge.Files.Dirs
 }
 
 // ApplyPrefs applies current project preference settings into places where
 // they are used -- only for those done prior to loading
 func (ge *CodeView) ApplyPrefs() {
-	ge.ProjFilename = ge.Prefs.ProjFilename
-	ge.ProjRoot = ge.Prefs.ProjRoot
+	ge.ProjFilename = ge.Settings.ProjFilename
+	ge.ProjRoot = ge.Settings.ProjRoot
 	if ge.Files != nil {
-		ge.Files.Dirs = ge.Prefs.Dirs
-		ge.Files.DirsOnTop = ge.Prefs.Files.DirsOnTop
+		ge.Files.Dirs = ge.Settings.Dirs
+		ge.Files.DirsOnTop = ge.Settings.Files.DirsOnTop
 	}
 	if len(ge.Kids) > 0 {
 		for i := 0; i < NTextEditors; i++ {
@@ -54,21 +54,21 @@ func (ge *CodeView) ApplyPrefs() {
 			}
 		}
 		split := ge.Splits()
-		split.SetSplits(ge.Prefs.Splits...)
+		split.SetSplits(ge.Settings.Splits...)
 	}
 	gi.UpdateAll() // drives full rebuild
 }
 
-// ApplyPrefsAction applies current preferences to the project, and updates the project
+// ApplyPrefsAction applies current settings to the project, and updates the project
 func (ge *CodeView) ApplyPrefsAction() {
 	ge.ApplyPrefs()
-	ge.SplitsSetView(ge.Prefs.SplitName)
+	ge.SplitsSetView(ge.Settings.SplitName)
 	ge.SetStatus("Applied prefs")
 }
 
-// EditProjPrefs allows editing of project preferences (settings specific to this project)
-func (ge *CodeView) EditProjPrefs() { //gti:add
-	sv := code.ProjPrefsView(&ge.Prefs)
+// EditProjSettings allows editing of project settings (settings specific to this project)
+func (ge *CodeView) EditProjSettings() { //gti:add
+	sv := code.ProjSettingsView(&ge.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
 			ge.ApplyPrefsAction()
@@ -78,7 +78,7 @@ func (ge *CodeView) EditProjPrefs() { //gti:add
 
 func (ge *CodeView) CallSplitsSetView(ctx gi.Widget) {
 	fb := giv.NewSoloFuncButton(ctx, ge.SplitsSetView)
-	fb.Args[0].SetValue(ge.Prefs.SplitName)
+	fb.Args[0].SetValue(ge.Settings.SplitName)
 	fb.CallFunc()
 }
 
@@ -88,7 +88,7 @@ func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 	sp, _, ok := code.AvailSplits.SplitByName(split)
 	if ok {
 		sv.SetSplitsAction(sp.Splits...)
-		ge.Prefs.SplitName = split
+		ge.Settings.SplitName = split
 		if !ge.PanelIsOpen(ge.ActiveTextEditorIdx + TextEditor1Idx) {
 			ge.SetActiveTextEditorIdx((ge.ActiveTextEditorIdx + 1) % 2)
 		}
@@ -121,25 +121,25 @@ func (ge *CodeView) SplitsEdit() { //gti:add
 
 // LangDefaults applies default language settings based on MainLang
 func (ge *CodeView) LangDefaults() {
-	ge.Prefs.RunCmds = code.CmdNames{"Build: Run Proj"}
-	ge.Prefs.BuildDir = ge.Prefs.ProjRoot
-	ge.Prefs.BuildTarg = ge.Prefs.ProjRoot
-	ge.Prefs.RunExec = gi.Filename(filepath.Join(string(ge.Prefs.ProjRoot), ge.Nm))
-	if len(ge.Prefs.BuildCmds) == 0 {
-		switch ge.Prefs.MainLang {
+	ge.Settings.RunCmds = code.CmdNames{"Build: Run Proj"}
+	ge.Settings.BuildDir = ge.Settings.ProjRoot
+	ge.Settings.BuildTarg = ge.Settings.ProjRoot
+	ge.Settings.RunExec = gi.Filename(filepath.Join(string(ge.Settings.ProjRoot), ge.Nm))
+	if len(ge.Settings.BuildCmds) == 0 {
+		switch ge.Settings.MainLang {
 		case fi.Go:
-			ge.Prefs.BuildCmds = code.CmdNames{"Go: Build Proj"}
+			ge.Settings.BuildCmds = code.CmdNames{"Go: Build Proj"}
 		case fi.TeX:
-			ge.Prefs.BuildCmds = code.CmdNames{"LaTeX: LaTeX PDF"}
-			ge.Prefs.RunCmds = code.CmdNames{"File: Open Target"}
+			ge.Settings.BuildCmds = code.CmdNames{"LaTeX: LaTeX PDF"}
+			ge.Settings.RunCmds = code.CmdNames{"File: Open Target"}
 		default:
-			ge.Prefs.BuildCmds = code.CmdNames{"Build: Make"}
+			ge.Settings.BuildCmds = code.CmdNames{"Build: Make"}
 		}
 	}
-	if ge.Prefs.VersCtrl == "" {
+	if ge.Settings.VersCtrl == "" {
 		repo, _ := ge.Files.FirstVCS()
 		if repo != nil {
-			ge.Prefs.VersCtrl = filetree.VersCtrlName(repo.Vcs())
+			ge.Settings.VersCtrl = filetree.VersCtrlName(repo.Vcs())
 		}
 	}
 }
@@ -153,7 +153,7 @@ func (ge *CodeView) GuessMainLang() bool {
 	for _, ec := range ecs {
 		ls := fi.ExtKnown(ec.Name)
 		if ls != fi.Unknown {
-			ge.Prefs.MainLang = ls
+			ge.Settings.MainLang = ls
 			return true
 		}
 	}

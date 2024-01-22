@@ -24,7 +24,7 @@ import (
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buf) {
 	tb.SetHiStyle(gi.AppearanceSettings.HiStyle)
-	tb.Opts.EditorSettings = ge.Prefs.Editor
+	tb.Opts.EditorSettings = ge.Settings.Editor
 	tb.ConfigKnown()
 	if tb.Complete != nil {
 		tb.Complete.LookupFunc = ge.LookupFun
@@ -46,7 +46,7 @@ func (ge *CodeView) ActiveFileNode() *filetree.Node {
 	return ge.FileNodeForFile(string(ge.ActiveFilename), false)
 }
 
-// TextEditorIndex finds index of given textview (0 or 1)
+// TextEditorIndex finds index of given texteditor (0 or 1)
 func (ge *CodeView) TextEditorIndex(av *code.TextEditor) int {
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
@@ -117,7 +117,7 @@ func (ge *CodeView) SetActiveFileInfo(buf *texteditor.Buf) {
 	}
 }
 
-// SetActiveTextEditor sets the given textview as the active one, and returns its index
+// SetActiveTextEditor sets the given texteditor as the active one, and returns its index
 func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 	updt := ge.UpdateStart()
 	defer ge.UpdateEndLayout(updt)
@@ -136,7 +136,7 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 }
 
 // SetActiveTextEditorIdx sets the given view index as the currently-active
-// TextEditor -- returns that textview.  This is the main method for
+// TextEditor -- returns that texteditor.  This is the main method for
 // activating a text editor.
 func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
 	updt := ge.UpdateStart()
@@ -174,7 +174,7 @@ func (ge *CodeView) NextTextEditor() (*code.TextEditor, int) {
 	return ge.TextEditorByIndex(nxt), nxt
 }
 
-// SwapTextEditors switches the buffers for the two open textviews
+// SwapTextEditors switches the buffers for the two open texteditors
 // only operates if both panels are open
 func (ge *CodeView) SwapTextEditors() bool {
 	if !ge.PanelIsOpen(TextEditor1Idx) || !ge.PanelIsOpen(TextEditor1Idx+1) {
@@ -247,7 +247,7 @@ func (ge *CodeView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	return fv.OpenFindURL(ur, ftv)
 }
 
-// UpdateTextButtons updates textview menu buttons
+// UpdateTextButtons updates texteditor menu buttons
 // is called by SetStatus and is generally under cover of TopUpdateStart / End
 // doesn't do anything unless a change is required -- safe to call frequently.
 func (ge *CodeView) UpdateTextButtons() {

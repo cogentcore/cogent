@@ -84,7 +84,7 @@ func (ge *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm code.CmdName, s
 	if !ok || fn == nil || fn.This() == nil {
 		return
 	}
-	ge.ArgVals.Set(string(fn.FPath), &ge.Prefs, nil)
+	ge.ArgVals.Set(string(fn.FPath), &ge.Settings, nil)
 	cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
@@ -95,7 +95,7 @@ func (ge *CodeView) ExecCmdNameFilename(fn string, cmdNm code.CmdName, sel bool,
 	if !ok {
 		return
 	}
-	ge.ArgVals.Set(fn, &ge.Prefs, nil)
+	ge.ArgVals.Set(fn, &ge.Settings, nil)
 	cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(ge, cbuf)
 }
@@ -110,14 +110,14 @@ func ExecCmds(ge *CodeView) [][]string {
 
 	vc := ge.VersCtrl()
 	if ge.ActiveLang == fi.Unknown {
-		cmds = code.AvailCmds.FilterCmdNames(ge.Prefs.MainLang, vc)
+		cmds = code.AvailCmds.FilterCmdNames(ge.Settings.MainLang, vc)
 	} else {
 		cmds = code.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	}
 	return cmds
 }
 
-// ExecCmdNameActive calls given command on current active textview
+// ExecCmdNameActive calls given command on current active texteditor
 func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
@@ -157,9 +157,9 @@ func (ge *CodeView) SetArgVarVals() {
 	tv := ge.ActiveTextEditor()
 	tve := texteditor.AsEditor(tv)
 	if tv == nil || tv.Buf == nil {
-		ge.ArgVals.Set("", &ge.Prefs, tve)
+		ge.ArgVals.Set("", &ge.Settings, tve)
 	} else {
-		ge.ArgVals.Set(string(tv.Buf.Filename), &ge.Prefs, tve)
+		ge.ArgVals.Set(string(tv.Buf.Filename), &ge.Settings, tve)
 	}
 }
 
@@ -179,26 +179,26 @@ func (ge *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms code.CmdNames, se
 
 // Build runs the BuildCmds set for this project
 func (ge *CodeView) Build() { //gti:add
-	if len(ge.Prefs.BuildCmds) == 0 {
-		gi.MessageDialog(ge, "You need to set the BuildCmds in the Project Preferences", "No BuildCmds Set")
+	if len(ge.Settings.BuildCmds) == 0 {
+		gi.MessageDialog(ge, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
 		return
 	}
 	ge.SaveAllCheck(true, func() { // true = cancel option
-		ge.ExecCmds(ge.Prefs.BuildCmds, true, true)
+		ge.ExecCmds(ge.Settings.BuildCmds, true, true)
 	})
 }
 
 // Run runs the RunCmds set for this project
 func (ge *CodeView) Run() { //gti:add
-	if len(ge.Prefs.RunCmds) == 0 {
-		gi.MessageDialog(ge, "You need to set the RunCmds in the Project Preferences", "No RunCmds Set")
+	if len(ge.Settings.RunCmds) == 0 {
+		gi.MessageDialog(ge, "You need to set the RunCmds in the Project Settings", "No RunCmds Set")
 		return
 	}
-	if ge.Prefs.RunCmds[0] == "Run Proj" && !ge.Prefs.RunExecIsExec() {
+	if ge.Settings.RunCmds[0] == "Run Proj" && !ge.Settings.RunExecIsExec() {
 		giv.CallFunc(ge, ge.ChooseRunExec)
 		return
 	}
-	ge.ExecCmds(ge.Prefs.RunCmds, true, true)
+	ge.ExecCmds(ge.Settings.RunCmds, true, true)
 }
 
 // Commit commits the current changes using relevant VCS tool.
@@ -234,13 +234,13 @@ func (ge *CodeView) CommitNoChecks() {
 		}
 	}
 	if cmdnm == "" {
-		gi.MessageDialog(ge, "Could not find Commit command in list of avail commands -- this is usually a programmer error -- check preferences settings etc", "No Commit command found")
+		gi.MessageDialog(ge, "Could not find Commit command in list of avail commands -- this is usually a programmer error -- check settings settings etc", "No Commit command found")
 		return
 	}
 	ge.SetArgVarVals() // need to set before setting prompt string below..
 
 	d := gi.NewBody().AddTitle("Commit message").
-		AddText("Please enter your commit message here -- remember this is essential front-line documentation.  Author information comes from User settings in GoGi Preferences.")
+		AddText("Please enter your commit message here -- remember this is essential front-line documentation.  Author information comes from User settings in Core Settings.")
 	tf := gi.NewTextField(d).SetText("").SetPlaceholder("Enter commit message here..")
 	tf.Style(func(s *styles.Style) {
 		s.Min.X.Ch(200)

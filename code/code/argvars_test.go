@@ -21,7 +21,7 @@ func TestBind(t *testing.T) {
 	fpath := "/Users/oreilly/go/src/cogentcore.org/cogent/code/argvars_test.go"
 	projpath := "/Users/oreilly/go/src/github.com"
 
-	pp := ProjPrefs{}
+	pp := ProjSettings{}
 	pp.ProjRoot = gi.Filename(projpath)
 
 	var avp ArgVarVals

@@ -7,6 +7,7 @@ package code
 import (
 	"strings"
 
+	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
@@ -31,7 +32,7 @@ func KeyMapsView(km *KeyMaps) {
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, km.SavePrefs).
-			SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps) })
 		oj := giv.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
@@ -54,50 +55,53 @@ func KeyMapsView(km *KeyMaps) {
 //////////////////////////////////////////////////////////////////////////////////////
 //  PrefsView
 
-// PrefsView opens a view of user preferences,
+// PrefsView opens a view of user settings,
 // returns structview if new (nil if recycled)
 func PrefsView(pf *SettingsData) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Code Preferences")
+	d := gi.NewBody().SetTitle("Code Settings")
 	tv := giv.NewStructView(d).SetStruct(pf)
 	d.Scene.Data = pf
 
 	/*
-		d.AddAppBar(func(tb *gi.Toolbar) {
-			giv.NewFuncButton(tb, pf.Apply).SetIcon(icons.Done)
-			giv.NewFuncButton(tb, pf.Save).SetText("Save to prefs").
-				SetIcon(icons.Save).SetKey(keyfun.Save).
-				StyleFirst(func(s *styles.Style) { s.SetEnabled(pf.Changed) })
-			giv.NewFuncButton(tb, pf.VersionInfo).SetShowReturn(true).SetIcon(icons.Info)
-			giv.NewFuncButton(tb, pf.EditKeyMaps).SetIcon(icons.Keyboard)
-			giv.NewFuncButton(tb, pf.EditLangOpts).SetIcon(icons.Subtitles)
-			giv.NewFuncButton(tb, pf.EditCmds).SetIcon(icons.KeyboardCommandKey)
-			giv.NewFuncButton(tb, pf.EditSplits).SetIcon(icons.VerticalSplit)
-			giv.NewFuncButton(tb, pf.EditRegisters).SetIcon(icons.Variables)
-
-			tb.AddOverflowMenu(func(m *gi.Scene) {
-				giv.NewFuncButton(m, pf.Open).SetText("Open prefs").SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
-			})
-		})
-	*/
+	 */
 
 	d.NewWindow().Run()
 	return tv
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-//  ProjPrefsView
+//  ProjSettingsView
 
-// ProjPrefsView opens a view of project preferences (settings),
+// ProjSettingsView opens a view of project settings,
 // returns structview if not already open
-func ProjPrefsView(pf *ProjPrefs) *giv.StructView {
+func ProjSettingsView(pf *ProjSettings) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Project preferences are saved in the project .code file, along with other current state (open directories, splitter settings, etc) -- do Save Project to save.")
+	d := gi.NewBody().SetTitle("Code project settings")
 	d.Scene.Data = pf
+	gi.NewLabel(d).SetText("Settings are saved in the project .code file, along with other current state (open directories, splitter settings, etc). Do Save All or Save Project to save.")
+	tv := giv.NewStructView(d).SetStruct(pf)
+	tv.OnChange(func(e events.Event) {
+		pf.Update()
+		gi.ErrorSnackbar(d, pf.Save(pf.ProjFilename), "Error saving "+string(pf.ProjFilename)+" settings")
+	})
+	d.NewWindow().Run()
+	return tv
+}
+
+// DebugSettingsView opens a view of project Debug settings,
+// returns structview if not already open
+func DebugSettingsView(pf *cdebug.Params) *giv.StructView {
+	if gi.ActivateExistingMainWindow(pf) {
+		return nil
+	}
+	d := gi.NewBody().SetTitle("Project debug settings")
+	d.Scene.Data = pf
+	gi.NewLabel(d).SetText("For args: Use -- double-dash and then add args to pass args to the executable (double-dash is by itself as a separate arg first).  For Debug test, must use -test.run instead of plain -run to specify tests to run")
 	tv := giv.NewStructView(d).SetStruct(pf)
 	d.NewWindow().Run()
 	return tv
@@ -183,7 +187,7 @@ func LangsView(pt *Langs) {
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pt.SavePrefs).
-			SetText("Save to preferences").SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailLangsChanged && pt == &AvailLangs) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")

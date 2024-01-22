@@ -139,32 +139,32 @@ const FindLocN FindLoc = 5
 // Re-run the enumgen command to generate them again.
 func _FindLocNoOp() {
 	var x [1]struct{}
-	_ = x[FindLocAll-(0)]
-	_ = x[FindLocOpen-(1)]
+	_ = x[FindLocOpen-(0)]
+	_ = x[FindLocAll-(1)]
 	_ = x[FindLocFile-(2)]
 	_ = x[FindLocDir-(3)]
 	_ = x[FindLocNotTop-(4)]
 }
 
 var _FindLocNameToValueMap = map[string]FindLoc{
-	`All`:    0,
-	`Open`:   1,
+	`Open`:   0,
+	`All`:    1,
 	`File`:   2,
 	`Dir`:    3,
 	`NotTop`: 4,
 }
 
 var _FindLocDescMap = map[FindLoc]string{
-	0: `FindLocAll finds in all directories under the root path`,
-	1: `FindOpen finds in all open folders in the left file browser`,
+	0: `FindOpen finds in all open folders in the left file browser`,
+	1: `FindLocAll finds in all directories under the root path. can be slow for large file trees`,
 	2: `FindLocFile only finds in the current active file`,
 	3: `FindLocDir only finds in the directory of the current active file`,
 	4: `FindLocNotTop finds in all open folders *except* the top-level folder`,
 }
 
 var _FindLocMap = map[FindLoc]string{
-	0: `All`,
-	1: `Open`,
+	0: `Open`,
+	1: `All`,
 	2: `File`,
 	3: `Dir`,
 	4: `NotTop`,
@@ -308,13 +308,13 @@ var _KeyFunsDescMap = map[KeyFuns]string{
 	1:  `special internal signal returned by KeyFun indicating need for second key`,
 	2:  `move to next panel to the right`,
 	3:  `move to prev panel to the left`,
-	4:  `open a new file in active textview`,
-	5:  `select an open buffer to edit in active textview`,
+	4:  `open a new file in active texteditor`,
+	5:  `select an open buffer to edit in active texteditor`,
 	6:  `open active file in other view`,
-	7:  `save active textview buffer to its file`,
-	8:  `save as active textview buffer to its file`,
-	9:  `close active textview buffer`,
-	10: `execute a command on active textview buffer`,
+	7:  `save active texteditor buffer to its file`,
+	8:  `save as active texteditor buffer to its file`,
+	9:  `close active texteditor buffer`,
+	10: `execute a command on active texteditor buffer`,
 	11: `copy rectangle`,
 	12: `cut rectangle`,
 	13: `paste rectangle`,

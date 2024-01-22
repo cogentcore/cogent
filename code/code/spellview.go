@@ -26,7 +26,7 @@ type SpellView struct {
 	// parent code project
 	Code Code `json:"-" xml:"-" copier:"-"`
 
-	// textview that we're spell-checking
+	// texteditor that we're spell-checking
 	Text *TextEditor `json:"-" xml:"-" copier:"-"`
 
 	// current spelling errors

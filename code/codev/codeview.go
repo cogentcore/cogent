@@ -42,7 +42,7 @@ type CodeView struct {
 	// current project filename for saving / loading specific Code configuration information in a .code file (optional)
 	ProjFilename gi.Filename `ext:".code"`
 
-	// filename of the currently-active textview
+	// filename of the currently-active texteditor
 	ActiveFilename gi.Filename `set:"-"`
 
 	// language for current active filename
@@ -66,7 +66,7 @@ type CodeView struct {
 	// all the files in the project directory and subdirectories
 	Files *filetree.Tree `set:"-" json:"-"`
 
-	// index of the currently-active textview -- new files will be viewed in other views if available
+	// index of the currently-active texteditor -- new files will be viewed in other views if available
 	ActiveTextEditorIdx int `set:"-" json:"-"`
 
 	// list of open nodes, most recent first
@@ -84,8 +84,8 @@ type CodeView struct {
 	// current arg var vals
 	ArgVals code.ArgVarVals `set:"-" json:"-" xml:"-"`
 
-	// preferences for this project -- this is what is saved in a .code project file
-	Prefs code.ProjPrefs `set:"-"`
+	// settings for this project -- this is what is saved in a .code project file
+	Settings code.ProjSettings `set:"-"`
 
 	// current debug view
 	CurDbg *code.DebugView `set:"-"`
@@ -111,8 +111,8 @@ func (ge *CodeView) OnInit() {
 ////////////////////////////////////////////////////////
 // Code interface
 
-func (ge *CodeView) ProjPrefs() *code.ProjPrefs {
-	return &ge.Prefs
+func (ge *CodeView) ProjSettings() *code.ProjSettings {
+	return &ge.Settings
 }
 
 func (ge *CodeView) FileTree() *filetree.Tree {
@@ -124,9 +124,9 @@ func (ge *CodeView) LastSaveTime() time.Time {
 }
 
 // VersCtrl returns the version control system in effect, using the file tree detected
-// version or whatever is set in project preferences
+// version or whatever is set in project settings
 func (ge *CodeView) VersCtrl() filetree.VersCtrlName {
-	vc := ge.Prefs.VersCtrl
+	vc := ge.Settings.VersCtrl
 	return vc
 }
 
@@ -140,6 +140,10 @@ func (ge *CodeView) CmdHist() *code.CmdNames {
 
 func (ge *CodeView) ArgVarVals() *code.ArgVarVals {
 	return &ge.ArgVals
+}
+
+func (ge *CodeView) CurOpenNodes() *code.OpenNodes {
+	return &ge.OpenNodes
 }
 
 func (ge *CodeView) FocusOnTabs() bool {
@@ -224,7 +228,7 @@ func (ge *CodeView) SetWindowNameTitle() {
 	pnm := ge.Name()
 	winm := "cocode-" + pnm
 	win.SetName(winm)
-	win.SetTitle(winm + ": " + string(ge.Prefs.ProjRoot))
+	win.SetTitle(winm + ": " + string(ge.Settings.ProjRoot))
 	tab := ge.Scene.GetTopAppBar()
 	if tab != nil {
 		aci := tab.ChildByName("app-chooser", 1)
@@ -255,9 +259,9 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 		ge.ProjRoot = gi.Filename(root)
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
-		ge.Prefs.ProjFilename = gi.Filename(filepath.Join(root, pnm+".code"))
-		ge.ProjFilename = ge.Prefs.ProjFilename
-		ge.Prefs.ProjRoot = ge.ProjRoot
+		ge.Settings.ProjFilename = gi.Filename(filepath.Join(root, pnm+".code"))
+		ge.ProjFilename = ge.Settings.ProjFilename
+		ge.Settings.ProjRoot = ge.ProjRoot
 		ge.GuessMainLang()
 		ge.LangDefaults()
 		ge.SetWindowNameTitle()
@@ -277,20 +281,20 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 		return OpenCodeProj(string(filename))
 	}
 	ge.Defaults()
-	if err := ge.Prefs.Open(filename); err != nil {
-		slog.Error("Project Prefs had a loading error", "error", err)
-		if ge.Prefs.ProjRoot == "" {
+	if err := ge.Settings.Open(filename); err != nil {
+		slog.Error("Project Settings had a loading error", "error", err)
+		if ge.Settings.ProjRoot == "" {
 			root, _, _, _ := ProjPathParse(string(filename))
-			ge.Prefs.ProjRoot = gi.Filename(root)
+			ge.Settings.ProjRoot = gi.Filename(root)
 			ge.GuessMainLang()
 		}
 	}
-	ge.Prefs.ProjFilename = filename // should already be set but..
-	_, pnm, _, ok := ProjPathParse(string(ge.Prefs.ProjRoot))
+	ge.Settings.ProjFilename = filename // should already be set but..
+	_, pnm, _, ok := ProjPathParse(string(ge.Settings.ProjRoot))
 	if ok {
-		code.SetGoMod(ge.Prefs.GoMod)
-		os.Chdir(string(ge.Prefs.ProjRoot))
-		ge.ProjRoot = gi.Filename(ge.Prefs.ProjRoot)
+		code.SetGoMod(ge.Settings.GoMod)
+		os.Chdir(string(ge.Settings.ProjRoot))
+		ge.ProjRoot = gi.Filename(ge.Settings.ProjRoot)
 		code.SavedPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
 		code.SavePaths()
 		ge.SetName(pnm)
@@ -314,9 +318,9 @@ func (ge *CodeView) NewProj(path gi.Filename, folder string, mainLang fi.Known, 
 		return nil
 	}
 	nge := ge.OpenPath(gi.Filename(np))
-	nge.Prefs.MainLang = mainLang
+	nge.Settings.MainLang = mainLang
 	if versCtrl != "" {
-		nge.Prefs.VersCtrl = versCtrl
+		nge.Settings.VersCtrl = versCtrl
 	}
 	return nge
 }
@@ -341,10 +345,10 @@ func (ge *CodeView) NewFile(filename string, addToVcs bool) { //gti:add
 // SaveProj saves project file containing custom project settings, in a
 // standard toml-formatted file
 func (ge *CodeView) SaveProj() { //gti:add
-	if ge.Prefs.ProjFilename == "" {
+	if ge.Settings.ProjFilename == "" {
 		return
 	}
-	ge.SaveProjAs(ge.Prefs.ProjFilename)
+	ge.SaveProjAs(ge.Settings.ProjFilename)
 	ge.SaveAllCheck(false, nil) // false = no cancel option
 }
 
@@ -353,13 +357,13 @@ func (ge *CodeView) SaveProj() { //gti:add
 // saveAllFiles indicates if user should be prompted for saving all files
 func (ge *CodeView) SaveProjIfExists(saveAllFiles bool) bool {
 	spell.SaveIfLearn()
-	if ge.Prefs.ProjFilename == "" {
+	if ge.Settings.ProjFilename == "" {
 		return false
 	}
-	if _, err := os.Stat(string(ge.Prefs.ProjFilename)); os.IsNotExist(err) {
+	if _, err := os.Stat(string(ge.Settings.ProjFilename)); os.IsNotExist(err) {
 		return false // does not exist
 	}
-	ge.SaveProjAs(ge.Prefs.ProjFilename)
+	ge.SaveProjAs(ge.Settings.ProjFilename)
 	if saveAllFiles {
 		ge.SaveAllCheck(false, nil)
 	}
@@ -374,10 +378,10 @@ func (ge *CodeView) SaveProjAs(filename gi.Filename) bool { //gti:add
 	spell.SaveIfLearn()
 	code.SavedPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
 	code.SavePaths()
-	ge.Prefs.ProjFilename = filename
-	ge.ProjFilename = ge.Prefs.ProjFilename
+	ge.Settings.ProjFilename = filename
+	ge.ProjFilename = ge.Settings.ProjFilename
 	ge.GrabPrefs()
-	ge.Prefs.Save(filename)
+	ge.Settings.Save(filename)
 	ge.Files.UpdatePath(string(filename))
 	ge.Changed = false
 	return false
@@ -533,9 +537,9 @@ func NewCodeProjPath(path string) *CodeView {
 // OpenCodeProj creates a new CodeView window opened to given CodeView project,
 // returning the window and the path
 func OpenCodeProj(projfile string) *CodeView {
-	pp := &code.ProjPrefs{}
+	pp := &code.ProjSettings{}
 	if err := pp.Open(gi.Filename(projfile)); err != nil {
-		slog.Debug("Project Prefs had a loading error", "error", err)
+		slog.Debug("Project Settings had a loading error", "error", err)
 	}
 	path := string(pp.ProjRoot)
 	root, projnm, _, _ := ProjPathParse(path)
@@ -571,7 +575,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 	b.App().AppBarConfig = ge.AppBarConfig
 	b.AddAppBar(ge.ConfigToolbar)
 
-	b.App().About = `<code>Cogent Code</code> is a graphical-interface (gi) integrated-development-environment (ide) written in the <b>GoGi</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/cogent/code/code">Code on GitHub</a> and <a href="https://cogentcore.org/cogent/code/wiki">Code wiki</a> for documentation.<br>Code is based on "projects" which are just directories containing files<br>* Use <code>File/Open Path...</code> to open an existing directory.<br>* Or <code>File/New Project...</code> to create a new directory for a new project<br><br>Version: ` + code.Settings.VersionInfo()
+	b.App().About = `<code>Cogent Code</code> is a graphical-interface (gi) integrated-development-environment (ide) written in the <b>Cogent Core</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/cogent/code/code">Code on GitHub</a> and <a href="https://cogentcore.org/cogent/code/wiki">Code wiki</a> for documentation.<br>Code is based on "projects" which are just directories containing files<br>* Use <code>File/Open Path...</code> to open an existing directory.<br>* Or <code>File/New Project...</code> to create a new directory for a new project<br><br>Version: ` + code.Settings.VersionInfo()
 
 	/* todo: window doesn't exist yet -- need a delayed soln
 	inClosePrompt := false

@@ -47,7 +47,7 @@ type Splits []*Split
 type SplitName string
 
 // AvailSplits are available named splitter settings.  can be loaded / saved /
-// edited with preferences.  This is set to StdSplits at startup.
+// edited with settings.  This is set to StdSplits at startup.
 var AvailSplits Splits
 
 // AvailSplitNames are the names of the current AvailSplits -- used for some choosers
@@ -89,7 +89,7 @@ func (lt *Splits) Names() []string {
 	return nms
 }
 
-// PrefsSplitsFilename is the name of the preferences file in App prefs
+// PrefsSplitsFilename is the name of the settings file in App prefs
 // directory for saving / loading the default AvailSplits
 var PrefsSplitsFilename = "splits_prefs.json"
 

@@ -1,8 +1,8 @@
 ![alt tag](logo/code_icon.png)
 
-**Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [GoGi](https://cogentcore.org/core/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://cogentcore.org/core/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
+**Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [Cogent Core](https://cogentcore.org/core/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://cogentcore.org/core/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
 
-See the [Wiki](https://cogentcore.org/cogent/code/wiki) for more docs,   [Install](https://cogentcore.org/cogent/code/wiki/Install) instructions (`go install cogentcore.org/cogent/code/cmd/code@latest` should work if GoGi system libraries are in place), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
+See the [Wiki](https://cogentcore.org/cogent/code/wiki) for more docs,   [Install](https://cogentcore.org/cogent/code/wiki/Install) instructions (`go install cogentcore.org/cogent/code/cmd/code@latest` should work if Cogent Core system libraries are in place), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
 
 [![Go Report Card](https://goreportcard.com/badge/cogentcore.org/cogent/code/v2)](https://goreportcard.com/report/cogentcore.org/cogent/code/v2)
 [![GoDoc](https://godoc.org/cogentcore.org/cogent/code/v2?status.svg)](https://godoc.org/cogentcore.org/cogent/code/v2)

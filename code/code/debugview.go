@@ -58,7 +58,7 @@ var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buf,
 func NewDebugger(sup fi.Known, path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
-		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Prefs.. to a supported language (Go only option so far)", sup)
+		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
 		log.Println(err)
 		return nil, err
 	}
@@ -173,8 +173,8 @@ func (dv *DebugView) Start() {
 		if dv.Dbg != nil {
 			dv.Detach()
 		}
-		rootPath := string(dv.Code.ProjPrefs().ProjRoot)
-		pars := &dv.Code.ProjPrefs().Debug
+		rootPath := string(dv.Code.ProjSettings().ProjRoot)
+		pars := &dv.Code.ProjSettings().Debug
 		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat cdebug.Status) {
 			updt := dv.UpdateStartAsync()
@@ -933,6 +933,14 @@ func (dv *DebugView) ConfigToolbar() {
 		OnClick(func(e events.Event) {
 			giv.CallFunc(dv, dv.ListGlobalVars)
 		})
+
+	gi.NewButton(tb).SetText("Params").SetIcon(icons.Edit).
+		SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
+		StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+		OnClick(func(e events.Event) {
+			DebugSettingsView(&dv.Code.ProjSettings().Debug)
+		})
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

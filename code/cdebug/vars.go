@@ -213,7 +213,7 @@ type VarParams struct {
 }
 
 // Params are overall debugger parameters
-type Params struct {
+type Params struct { //gti:add
 
 	// mode for running the debugger
 	Mode Modes `xml:"-" toml:"-" json:"-" view:"-"`
@@ -221,7 +221,10 @@ type Params struct {
 	// process id number to attach to, for Attach mode
 	PID uint64 `xml:"-" toml:"-" json:"-" view:"-"`
 
-	// optional extra args to pass to the debugger.  Use double-dash -- and then add args to pass args to the executable (double-dash is by itself as a separate arg first)
+	// optional extra args to pass to the debugger.
+	// Use -- double-dash and then add args to pass args to the executable
+	// (double-dash is by itself as a separate arg first).
+	// For Debug test, must use -test.run instead of plain -run to specify tests to run.
 	Args []string
 
 	// status function for debugger updating status

@@ -26,8 +26,8 @@ import (
 type Code interface {
 	gi.Widget
 
-	// ProjPrefs returns the code.ProjPrefs
-	ProjPrefs() *ProjPrefs
+	// ProjSettings returns the code.ProjSettings
+	ProjSettings() *ProjSettings
 
 	// FileTree returns the code.Files file tree
 	FileTree() *filetree.Tree
@@ -37,7 +37,7 @@ type Code interface {
 	LastSaveTime() time.Time
 
 	// VersCtrl returns the version control system in effect, using the file tree detected
-	// version or whatever is set in project preferences
+	// version or whatever is set in project settings
 	VersCtrl() filetree.VersCtrlName
 
 	// CmdRuns returns the CmdRuns manager of running commands, used extensively
@@ -87,7 +87,7 @@ type Code interface {
 	// ActiveTextEditor returns the currently-active TextEditor
 	ActiveTextEditor() *TextEditor
 
-	// SetActiveTextEditor sets the given textview as the active one, and returns its index
+	// SetActiveTextEditor sets the given texteditor as the active one, and returns its index
 	SetActiveTextEditor(av *TextEditor) int
 
 	// ActiveFileNode returns the file node for the active file -- nil if none
@@ -130,8 +130,11 @@ type Code interface {
 	// called prior to rename.
 	CloseOpenNodes(nodes []*FileNode)
 
+	// CurOpenNodes returns the current open nodes list
+	CurOpenNodes() *OpenNodes
+
 	// LookupFun is the completion system Lookup function that makes a custom
-	// textview dialog that has option to edit resulting file.
+	// texteditor dialog that has option to edit resulting file.
 	LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup)
 
 	// Spell checks spelling in active text view

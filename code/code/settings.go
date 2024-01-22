@@ -15,8 +15,10 @@ import (
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/tomls"
 	"cogentcore.org/core/grr"
+	"cogentcore.org/core/icons"
 )
 
 func init() {
@@ -48,13 +50,13 @@ type SettingsData struct { //gti:add
 	// key map for code-specific keyboard sequences
 	KeyMap KeyMapName
 
-	// if set, the current available set of key maps is saved to your preferences directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords
+	// if set, the current available set of key maps is saved to your settings directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords
 	SaveKeyMaps bool
 
-	// if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)
+	// if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveLangOpts bool
 
-	// if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other preferences -- if not set, then you always are using the default compiled-in standard set (which will be updated)
+	// if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveCmds bool
 }
 
@@ -76,7 +78,7 @@ type FileSettings struct { //gti:add
 // 	return nil
 // }
 
-// Defaults are the defaults for Preferences
+// Defaults are the defaults for Settings
 func (se *SettingsData) Defaults() {
 	se.Files.Defaults()
 	se.KeyMap = DefaultKeyMap
@@ -134,7 +136,7 @@ func (se *SettingsData) Open() error {
 	return err
 }
 
-// Apply preferences updates things according with settings
+// Apply settings updates things according with settings
 func (se *SettingsData) Apply() { //gti:add
 	if se.KeyMap != "" {
 		SetActiveKeyMapName(se.KeyMap) // fills in missing pieces
@@ -166,9 +168,18 @@ func (se *SettingsData) VersionInfo() string { //gti:add
 	return vinfo
 }
 
+func (se *SettingsData) ConfigToolbar(tb *gi.Toolbar) {
+	giv.NewFuncButton(tb, se.VersionInfo).SetShowReturn(true).SetIcon(icons.Info)
+	giv.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
+	giv.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
+	giv.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
+	giv.NewFuncButton(tb, se.EditSplits).SetIcon(icons.VerticalSplit)
+	giv.NewFuncButton(tb, se.EditRegisters).SetIcon(icons.Variables)
+}
+
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
 // load from other files, etc.  Current avail keymaps are saved and loaded
-// with preferences automatically.
+// with settings automatically.
 func (se *SettingsData) EditKeyMaps() { //gti:add
 	se.SaveKeyMaps = true
 	KeyMapsView(&AvailKeyMaps)
@@ -208,30 +219,35 @@ func (se *SettingsData) EditRegisters() { //gti:add
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-//   Project Prefs
+//   Project Settings
 
-// ProjPrefs are the preferences for saving for a project -- this IS the project file
-type ProjPrefs struct { //gti:add
+// ProjSettings are the settings for saving for a project. This IS the project file
+type ProjSettings struct { //gti:add
 
-	// file view preferences
+	// file view settings
 	Files FileSettings
 
-	// editor preferences
+	// editor settings
 	Editor gi.EditorSettings `view:"inline"`
 
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
 
-	// the language associated with the most frequently-encountered file extension in the file tree -- can be manually set here as well
+	// the language associated with the most frequently-encountered file
+	// extension in the file tree -- can be manually set here as well
 	MainLang fi.Known
 
-	// the type of version control system used in this project (git, svn, etc) -- filters commands available
+	// the type of version control system used in this project (git, svn, etc).
+	// filters commands available
 	VersCtrl filetree.VersCtrlName
 
-	// current project filename for saving / loading specific Code configuration information in a .code file (optional)
+	// current project filename for saving / loading specific Code
+	// configuration information in a .code file (optional)
 	ProjFilename gi.Filename `ext:".code"`
 
-	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
+	// root directory for the project. all projects must be organized within
+	// a top-level root directory, with all the files therein constituting
+	// the scope of the project. By default it is the path for ProjFilename
 	ProjRoot gi.Filename
 
 	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
@@ -271,7 +287,7 @@ type ProjPrefs struct { //gti:add
 	Splits []float32 `view:"-"`
 }
 
-func (se *ProjPrefs) Update() {
+func (se *ProjSettings) Update() {
 	if se.BuildDir != se.ProjRoot {
 		if se.BuildTarg == se.ProjRoot {
 			se.BuildTarg = se.BuildDir
@@ -282,20 +298,20 @@ func (se *ProjPrefs) Update() {
 	}
 }
 
-// Open open from  file
-func (se *ProjPrefs) Open(filename gi.Filename) error { //gti:add
+// Open open from file
+func (se *ProjSettings) Open(filename gi.Filename) error { //gti:add
 	err := grr.Log(tomls.Open(se, string(filename)))
 	se.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(se.VersCtrl))) // official names are lowercase now
 	return err
 }
 
-// Save save to  file
-func (se *ProjPrefs) Save(filename gi.Filename) error { //gti:add
+// Save save to file
+func (se *ProjSettings) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(tomls.Save(se, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable
-func (se *ProjPrefs) RunExecIsExec() bool {
+func (se *ProjSettings) RunExecIsExec() bool {
 	fi, err := fi.NewFileInfo(string(se.RunExec))
 	if err != nil {
 		return false
@@ -310,7 +326,7 @@ var (
 	// SavedPaths is a slice of strings that are file paths
 	SavedPaths gi.FilePaths
 
-	// SavedPathsFilename is the name of the saved file paths file in GoGi prefs directory
+	// SavedPathsFilename is the name of the saved file paths file in Cogent Core prefs directory
 	SavedPathsFilename = "code_saved_paths.json"
 
 	// CodeViewResetRecents defines a string that is added as an item to the recents menu

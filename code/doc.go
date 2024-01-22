@@ -4,7 +4,7 @@
 
 /*
 Package code is the top-level repository for the Code Go-IDE based on
-the GoGi GUI framework.
+the Cogent Core GUI framework.
 
 The following sub-packages provide all the code:
 

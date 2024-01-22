@@ -43,7 +43,7 @@ func (ge *CodeView) CursorToHistNext() bool { //gti:add
 }
 
 // LookupFun is the completion system Lookup function that makes a custom
-// textview dialog that has option to edit resulting file.
+// texteditor dialog that has option to edit resulting file.
 func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
 	sfs := data.(*pi.FileStates)
 	if sfs == nil {
@@ -99,7 +99,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 
 	tb := texteditor.NewBuf().SetText(txt).SetFilename(ld.Filename)
 	tb.Hi.Style = gi.AppearanceSettings.HiStyle
-	tb.Opts.LineNos = ge.Prefs.Editor.LineNos
+	tb.Opts.LineNos = ge.Settings.Editor.LineNos
 
 	d := gi.NewBody().AddTitle(title).AddText(prmpt)
 	tv := texteditor.NewEditor(d).SetBuf(tb)
@@ -177,7 +177,7 @@ func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
 	}
 	code.AvailRegisters[name] = string(sel.ToBytes())
 	code.AvailRegisters.SavePrefs()
-	ge.Prefs.Register = code.RegisterName(name)
+	ge.Settings.Register = code.RegisterName(name)
 	tv.SelectReset()
 	return true
 }
@@ -197,7 +197,7 @@ func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
 		return false
 	}
 	tv.InsertAtCursor([]byte(str))
-	ge.Prefs.Register = name
+	ge.Settings.Register = name
 	return true
 }
 

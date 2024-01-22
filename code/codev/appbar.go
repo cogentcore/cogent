@@ -39,11 +39,11 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.Style(func(s *styles.Style) {
-		sm.SetChecked(ge.Prefs.GoMod)
+		sm.SetChecked(ge.Settings.GoMod)
 	})
 	sm.OnChange(func(e events.Event) {
-		ge.Prefs.GoMod = sm.StateIs(states.Checked)
-		code.SetGoMod(ge.Prefs.GoMod)
+		ge.Settings.GoMod = sm.StateIs(states.Checked)
+		code.SetGoMod(ge.Settings.GoMod)
 	})
 
 	gi.NewSeparator(tb)
@@ -130,7 +130,7 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSetView(sn)
 					})
-					if sn == ge.Prefs.SplitName {
+					if sn == ge.Settings.SplitName {
 						mb.SetSelected(true)
 					}
 				}
@@ -143,7 +143,7 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSave(sn)
 					})
-					if sn == ge.Prefs.SplitName {
+					if sn == ge.Settings.SplitName {
 						mb.SetSelected(true)
 					}
 				}
@@ -166,7 +166,7 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 
 			gi.NewSeparator(mm)
 
-			giv.NewFuncButton(mm, ge.EditProjPrefs).SetText("Project Prefs").
+			giv.NewFuncButton(mm, ge.EditProjSettings).SetText("Project Settings").
 				SetIcon(icons.Edit)
 
 			giv.NewFuncButton(mm, ge.SaveProj).SetText("Save Project").
@@ -316,7 +316,7 @@ func (ge *CodeView) ResourceFiles() uri.URIs {
 
 // ResourceCommands adds the commands
 func (ge *CodeView) ResourceCommands() uri.URIs {
-	lang := ge.Prefs.MainLang
+	lang := ge.Settings.MainLang
 	vcnm := ge.VersCtrl()
 	fn := ge.ActiveFileNode()
 	if fn != nil {

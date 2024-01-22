@@ -16,8 +16,8 @@ import (
 	"cogentcore.org/core/pi/parse"
 )
 
-// ProjPrefs are the preferences for saving for a project -- this IS the project file
-type ProjPrefs struct {
+// ProjSettings are the settings for saving for a project -- this IS the project file
+type ProjSettings struct {
 
 	// filename for project (i.e, these preference)
 	ProjFile gi.Filename
@@ -33,7 +33,7 @@ type ProjPrefs struct {
 }
 
 // Open open from  file
-func (pf *ProjPrefs) Open(filename gi.Filename) error {
+func (pf *ProjSettings) Open(filename gi.Filename) error {
 	b, err := os.ReadFile(string(filename))
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func (pf *ProjPrefs) Open(filename gi.Filename) error {
 }
 
 // Save save to  file
-func (pf *ProjPrefs) Save(filename gi.Filename) error {
+func (pf *ProjSettings) Save(filename gi.Filename) error {
 	pf.ProjFile = filename
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {

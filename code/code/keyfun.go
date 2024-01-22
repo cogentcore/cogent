@@ -38,19 +38,19 @@ const (
 	KeyFunNextPanel
 	// move to prev panel to the left
 	KeyFunPrevPanel
-	// open a new file in active textview
+	// open a new file in active texteditor
 	KeyFunFileOpen
-	// select an open buffer to edit in active textview
+	// select an open buffer to edit in active texteditor
 	KeyFunBufSelect
 	// open active file in other view
 	KeyFunBufClone
-	// save active textview buffer to its file
+	// save active texteditor buffer to its file
 	KeyFunBufSave
-	// save as active textview buffer to its file
+	// save as active texteditor buffer to its file
 	KeyFunBufSaveAs
-	// close active textview buffer
+	// close active texteditor buffer
 	KeyFunBufClose
-	// execute a command on active textview buffer
+	// execute a command on active texteditor buffer
 	KeyFunExecCmd
 	// copy rectangle
 	KeyFunRectCopy
@@ -289,7 +289,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 // KeyMaps -- list of KeyMap's
 
 // KeyMapName has an associated ValueView for selecting from the list of
-// available key map names, for use in preferences etc.
+// available key map names, for use in settings etc.
 type KeyMapName string
 
 // DefaultKeyMap is the overall default keymap -- reinitialized in gimain init()
@@ -316,10 +316,10 @@ func (km KeyMapsItem) Label() string {
 
 // KeyMaps is a list of KeyMap's -- users can edit these in Prefs -- to create
 // a custom one, just duplicate an existing map, rename, and customize
-type KeyMaps []KeyMapsItem
+type KeyMaps []KeyMapsItem //gti:add
 
 // AvailKeyMaps is the current list of available keymaps for use -- can be
-// loaded / saved / edited with preferences.  This is set to StdKeyMaps at
+// loaded / saved / edited with settings.  This is set to StdKeyMaps at
 // startup.
 var AvailKeyMaps KeyMaps
 
@@ -339,7 +339,7 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 	return nil, -1, false
 }
 
-// PrefsKeyMapsFilename is the name of the preferences file in App prefs
+// PrefsKeyMapsFilename is the name of the settings file in App prefs
 // directory for saving / loading the default AvailKeyMaps key maps list
 var PrefsKeyMapsFilename = "key_maps_prefs.json"
 

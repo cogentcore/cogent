@@ -49,8 +49,8 @@ type PiView struct {
 	// the parser we are viewing
 	Parser pi.Parser
 
-	// project preferences -- this IS the project file
-	Prefs ProjPrefs
+	// project settings -- this IS the project file
+	Prefs ProjSettings
 
 	// has the root changed?  we receive update signals from root for changes
 	Changed bool `json:"-"`
@@ -98,10 +98,10 @@ func (pv *PiView) OpenProj(filename gi.Filename) *PiView { //gti:add
 		nprj.OpenProj(filename)
 		return nprj
 	}
-	pv.Prefs.OpenJSON(filename)
+	pv.Settings.OpenJSON(filename)
 	pv.Config()
 	pv.ApplyPrefs()
-	SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
+	SavedPaths.AddPath(string(filename), gi.Settings.Params.SavedPathsMax)
 	SavePaths()
 	return pv
 }
@@ -114,46 +114,46 @@ func (pv *PiView) NewProj() (*gi.Window, *PiView) { //gti:add
 // SaveProj saves project prefs to current filename, in a standard JSON-formatted file
 // also saves the current parser
 func (pv *PiView) SaveProj() { //gti:add
-	if pv.Prefs.ProjFile == "" {
+	if pv.Settings.ProjFile == "" {
 		return
 	}
 	pv.SaveParser()
 	pv.GetPrefs()
-	pv.Prefs.SaveJSON(pv.Prefs.ProjFile)
+	pv.Settings.SaveJSON(pv.Settings.ProjFile)
 	pv.Changed = false
-	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Prefs.ProjFile))
+	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjFile))
 	pv.UpdateSig() // notify our editor
 }
 
 // SaveProjAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
 // also saves the current parser
 func (pv *PiView) SaveProjAs(filename gi.Filename) { //gti:add
-	SavedPaths.AddPath(string(filename), gi.Prefs.Params.SavedPathsMax)
+	SavedPaths.AddPath(string(filename), gi.Settings.Params.SavedPathsMax)
 	SavePaths()
 	pv.SaveParser()
 	pv.GetPrefs()
-	pv.Prefs.SaveJSON(filename)
+	pv.Settings.SaveJSON(filename)
 	pv.Changed = false
-	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Prefs.ProjFile))
+	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjFile))
 	pv.UpdateSig() // notify our editor
 }
 
 // ApplyPrefs applies project-level prefs (e.g., after opening)
 func (pv *PiView) ApplyPrefs() { //gti:add
 	fs := &pv.FileState
-	fs.ParseState.Trace.CopyOpts(&pv.Prefs.TraceOpts)
-	if pv.Prefs.ParserFile != "" {
-		pv.OpenParser(pv.Prefs.ParserFile)
+	fs.ParseState.Trace.CopyOpts(&pv.Settings.TraceOpts)
+	if pv.Settings.ParserFile != "" {
+		pv.OpenParser(pv.Settings.ParserFile)
 	}
-	if pv.Prefs.TestFile != "" {
-		pv.OpenTest(pv.Prefs.TestFile)
+	if pv.Settings.TestFile != "" {
+		pv.OpenTest(pv.Settings.TestFile)
 	}
 }
 
 // GetPrefs gets the current values of things for prefs
 func (pv *PiView) GetPrefs() {
 	fs := &pv.FileState
-	pv.Prefs.TraceOpts.CopyOpts(&fs.ParseState.Trace)
+	pv.Settings.TraceOpts.CopyOpts(&fs.ParseState.Trace)
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -162,23 +162,23 @@ func (pv *PiView) GetPrefs() {
 // OpenParser opens lexer and parser rules to current filename, in a standard JSON-formatted file
 func (pv *PiView) OpenParser(filename gi.Filename) { //gti:add
 	pv.Parser.OpenJSON(string(filename))
-	pv.Prefs.ParserFile = filename
+	pv.Settings.ParserFile = filename
 	pv.Config()
 }
 
 // SaveParser saves lexer and parser rules to current filename, in a standard JSON-formatted file
 func (pv *PiView) SaveParser() { //gti:add
-	if pv.Prefs.ParserFile == "" {
+	if pv.Settings.ParserFile == "" {
 		return
 	}
-	pv.Parser.SaveJSON(string(pv.Prefs.ParserFile))
+	pv.Parser.SaveJSON(string(pv.Settings.ParserFile))
 
-	ext := filepath.Ext(string(pv.Prefs.ParserFile))
-	pigfn := strings.TrimSuffix(string(pv.Prefs.ParserFile), ext) + ".pig"
+	ext := filepath.Ext(string(pv.Settings.ParserFile))
+	pigfn := strings.TrimSuffix(string(pv.Settings.ParserFile), ext) + ".pig"
 	pv.Parser.SaveGrammar(pigfn)
 
 	pv.Changed = false
-	pv.SetStatus(fmt.Sprintf("Parser Saved to: %v", pv.Prefs.ParserFile))
+	pv.SetStatus(fmt.Sprintf("Parser Saved to: %v", pv.Settings.ParserFile))
 	pv.UpdateSig() // notify our editor
 }
 
@@ -186,28 +186,28 @@ func (pv *PiView) SaveParser() { //gti:add
 func (pv *PiView) SaveParserAs(filename gi.Filename) { //gti:add
 	pv.Parser.SaveJSON(string(filename))
 
-	ext := filepath.Ext(string(pv.Prefs.ParserFile))
-	pigfn := strings.TrimSuffix(string(pv.Prefs.ParserFile), ext) + ".pig"
+	ext := filepath.Ext(string(pv.Settings.ParserFile))
+	pigfn := strings.TrimSuffix(string(pv.Settings.ParserFile), ext) + ".pig"
 	pv.Parser.SaveGrammar(pigfn)
 
 	pv.Changed = false
-	pv.Prefs.ParserFile = filename
-	pv.SetStatus(fmt.Sprintf("Parser Saved to: %v", pv.Prefs.ParserFile))
+	pv.Settings.ParserFile = filename
+	pv.SetStatus(fmt.Sprintf("Parser Saved to: %v", pv.Settings.ParserFile))
 	pv.UpdateSig() // notify our editor
 }
 
 // OpenTest opens test file
 func (pv *PiView) OpenTest(filename gi.Filename) { //gti:add
 	pv.TestBuf.OpenFile(filename)
-	pv.Prefs.TestFile = filename
+	pv.Settings.TestFile = filename
 }
 
 // SaveTestAs saves the test file as..
 func (pv *PiView) SaveTestAs(filename gi.Filename) {
 	pv.TestBuf.EditDone()
 	pv.TestBuf.SaveFile(filename)
-	pv.Prefs.TestFile = filename
-	pv.SetStatus(fmt.Sprintf("TestFile Saved to: %v", pv.Prefs.TestFile))
+	pv.Settings.TestFile = filename
+	pv.SetStatus(fmt.Sprintf("TestFile Saved to: %v", pv.Settings.TestFile))
 }
 
 // SetStatus updates the statusbar label with given message, along with other status info
@@ -224,7 +224,7 @@ func (pv *PiView) SetStatus(msg string) {
 	fnm := ""
 	ln := 0
 	ch := 0
-	if tv, ok := pv.TestTextView(); ok {
+	if tv, ok := pv.TestTextEditor(); ok {
 		ln = tv.CursorPos.Ln + 1
 		ch = tv.CursorPos.Ch
 		if tv.ISearch.On {
@@ -622,8 +622,8 @@ func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Wi
 	return widg
 }
 
-// ConfigTextView configures text view
-func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *texteditor.Editor {
+// ConfigTextEditor configures text view
+func (pv *PiView) ConfigTextEditor(ly *gi.Layout, out bool) *texteditor.Editor {
 	ly.Lay = gi.LayoutVert
 	ly.SetStretchMaxWidth()
 	ly.SetStretchMaxHeight()
@@ -632,20 +632,20 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *texteditor.Editor {
 	var tv *texteditor.Editor
 	updt := false
 	if ly.HasChildren() {
-		tv = ly.Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
+		tv = ly.Child(0).Embed(giv.KiT_TextEditor).(*texteditor.Editor)
 	} else {
 		updt = ly.UpdateStart()
 		ly.SetChildAdded()
-		tv = ly.NewChild(giv.KiT_TextView, ly.Nm).(*texteditor.Editor)
+		tv = ly.NewChild(giv.KiT_TextEditor, ly.Nm).(*texteditor.Editor)
 	}
 
-	if gi.Prefs.Editor.WordWrap {
+	if gi.Settings.Editor.WordWrap {
 		tv.SetProp("white-space", styles.WhiteSpacePreWrap)
 	} else {
 		tv.SetProp("white-space", styles.WhiteSpacePre)
 	}
 	tv.SetProp("tab-size", 4)
-	tv.SetProp("font-family", gi.Prefs.MonoFont)
+	tv.SetProp("font-family", gi.Settings.MonoFont)
 	if out {
 		tv.SetInactive()
 	}
@@ -653,34 +653,34 @@ func (pv *PiView) ConfigTextView(ly *gi.Layout, out bool) *texteditor.Editor {
 	return tv
 }
 
-// RecycleMainTabTextView returns a MainTabs (first set of tabs) tab with given
+// RecycleMainTabTextEditor returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
-// one with a Layout and then a TextView in it.  if sel, then select it.
+// one with a Layout and then a TextEditor in it.  if sel, then select it.
 // returns widget
-func (pv *PiView) RecycleMainTabTextView(label string, sel bool, out bool) *texteditor.Editor {
+func (pv *PiView) RecycleMainTabTextEditor(label string, sel bool, out bool) *texteditor.Editor {
 	ly := pv.RecycleMainTab(label, gi.LayoutType, sel).Embed(gi.LayoutType).(*gi.Layout)
-	tv := pv.ConfigTextView(ly, out)
+	tv := pv.ConfigTextEditor(ly, out)
 	return tv
 }
 
-// MainTabTextViewByName returns the textview for given main tab, if it exists
-func (pv *PiView) MainTabTextViewByName(tabnm string) (*texteditor.Editor, bool) {
+// MainTabTextEditorByName returns the texteditor for given main tab, if it exists
+func (pv *PiView) MainTabTextEditorByName(tabnm string) (*texteditor.Editor, bool) {
 	lyk, err := pv.MainTabByNameTry(tabnm)
 	if err != nil {
 		return nil, false
 	}
-	ctv := lyk.Child(0).Embed(giv.KiT_TextView).(*texteditor.Editor)
+	ctv := lyk.Child(0).Embed(giv.KiT_TextEditor).(*texteditor.Editor)
 	return ctv, true
 }
 
-// TextTextView returns the textview for TestBuf TextView
-func (pv *PiView) TestTextView() (*texteditor.Editor, bool) {
-	return pv.MainTabTextViewByName("TestText")
+// TextTextEditor returns the texteditor for TestBuf TextEditor
+func (pv *PiView) TestTextEditor() (*texteditor.Editor, bool) {
+	return pv.MainTabTextEditorByName("TestText")
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (pv *PiView) OpenConsoleTab() {
-	ctv := pv.RecycleMainTabTextView("Console", true, true)
+	ctv := pv.RecycleMainTabTextEditor("Console", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != code.TheConsole.Buf {
@@ -694,7 +694,7 @@ func (pv *PiView) OpenConsoleTab() {
 
 // OpenTestTextTab opens a main tab displaying test text
 func (pv *PiView) OpenTestTextTab() {
-	ctv := pv.RecycleMainTabTextView("TestText", true, false)
+	ctv := pv.RecycleMainTabTextEditor("TestText", true, false)
 	if ctv.Buf == nil || ctv.Buf != &pv.TestBuf {
 		ctv.SetBuf(&pv.TestBuf)
 	}
@@ -702,7 +702,7 @@ func (pv *PiView) OpenTestTextTab() {
 
 // OpenOutTab opens a main tab displaying all output
 func (pv *PiView) OpenOutTab() {
-	ctv := pv.RecycleMainTabTextView("Output", true, true)
+	ctv := pv.RecycleMainTabTextEditor("Output", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != &pv.OutBuf {
@@ -712,7 +712,7 @@ func (pv *PiView) OpenOutTab() {
 
 // OpenLexTab opens a main tab displaying lexer output
 func (pv *PiView) OpenLexTab() {
-	ctv := pv.RecycleMainTabTextView("LexOut", true, true)
+	ctv := pv.RecycleMainTabTextEditor("LexOut", true, true)
 	if ctv.Buf == nil || ctv.Buf != &pv.LexBuf {
 		ctv.SetBuf(&pv.LexBuf)
 	}
@@ -720,7 +720,7 @@ func (pv *PiView) OpenLexTab() {
 
 // OpenParseTab opens a main tab displaying parser output
 func (pv *PiView) OpenParseTab() {
-	ctv := pv.RecycleMainTabTextView("ParseOut", true, true)
+	ctv := pv.RecycleMainTabTextEditor("ParseOut", true, true)
 	if ctv.Buf == nil || ctv.Buf != &pv.ParseBuf {
 		ctv.SetBuf(&pv.ParseBuf)
 	}
@@ -894,18 +894,18 @@ func (pv *PiView) ConfigSplitView() {
 		astt := astfr.NewChild(giv.KiT_TreeView, "ast-tree").(*giv.TreeView)
 		astt.SetRootNode(&fs.Ast)
 
-		pv.TestBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
+		pv.TestBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
 		pv.TestBuf.Hi.Off = true // prevent auto-hi
 
-		pv.OutBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
+		pv.OutBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
 		pv.OutBuf.Opts.LineNos = false
 
 		fs.ParseState.Trace.Init()
 		fs.ParseState.Trace.PipeOut()
 		go pv.MonitorOut()
 
-		pv.LexBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
-		pv.ParseBuf.SetHiStyle(gi.Prefs.Colors.HiStyle)
+		pv.LexBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
+		pv.ParseBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
 
 		split.SetSplits(.15, .15, .2, .15, .35)
 		split.UpdateEnd(updt)
@@ -1032,9 +1032,9 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	// switch gkf {
 	// case keyfun.Find:
 	// 	kt.SetProcessed()
-	// 	tv := ge.ActiveTextView()
+	// 	tv := ge.ActiveTextEditor()
 	// 	if tv.HasSelection() {
-	// 		ge.Prefs.Find.Find = string(tv.Selection().ToBytes())
+	// 		ge.Settings.Find.Find = string(tv.Selection().ToBytes())
 	// 	}
 	// 	giv.CallMethod(ge, "Find", ge.Viewport)
 	// }
@@ -1117,8 +1117,8 @@ func (pv *PiView) Render2D() {
 
 var PiViewProps = ki.Props{
 	"EnumType:Flag":    gi.KiT_NodeFlags,
-	"background-color": &gi.Prefs.Colors.Background,
-	"color":            &gi.Prefs.Colors.Font,
+	"background-color": &gi.Settings.Colors.Background,
+	"color":            &gi.Settings.Colors.Font,
 	"max-width":        -1,
 	"max-height":       -1,
 	"#title": ki.Props{
@@ -1133,7 +1133,7 @@ var PiViewProps = ki.Props{
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 				pv := pvi.(*PiView)
-				act.SetActiveState( pv.Changed && pv.Prefs.ProjFile != "")
+				act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
 			}),
 		}},
 		{"sep-parse", ki.BlankProp{}},
@@ -1153,7 +1153,7 @@ var PiViewProps = ki.Props{
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 				pv := pvi.(*PiView)
-				act.SetActiveStateUpdt( pv.Changed && pv.Prefs.ParserFile != "")
+				act.SetActiveStateUpdt( pv.Changed && pv.Settings.ParserFile != "")
 			}),
 		}},
 		{"SaveParserAs", ki.Props{
@@ -1267,7 +1267,7 @@ var PiViewProps = ki.Props{
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 					pv := pvi.(*PiView)
-					act.SetActiveState( pv.Changed && pv.Prefs.ProjFile != "")
+					act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
 				}),
 			}},
 			{"SaveProjAs", ki.Props{
@@ -1298,7 +1298,7 @@ var PiViewProps = ki.Props{
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 					pv := pvi.(*PiView)
-					act.SetActiveState( pv.Changed && pv.Prefs.ParserFile != "")
+					act.SetActiveState( pv.Changed && pv.Settings.ParserFile != "")
 				}),
 			}},
 			{"SaveParserAs", ki.Props{

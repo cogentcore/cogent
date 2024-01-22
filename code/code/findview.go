@@ -30,11 +30,11 @@ import (
 type FindLoc int32 //enums:enum -trim-prefix FindLoc
 
 const (
-	// FindLocAll finds in all directories under the root path
-	FindLocAll FindLoc = iota
-
 	// FindOpen finds in all open folders in the left file browser
-	FindLocOpen
+	FindLocOpen FindLoc = iota
+
+	// FindLocAll finds in all directories under the root path. can be slow for large file trees
+	FindLocAll
 
 	// FindLocFile only finds in the current active file
 	FindLocFile
@@ -94,7 +94,7 @@ type FindView struct {
 
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
-	return &fv.Code.ProjPrefs().Find
+	return &fv.Code.ProjSettings().Find
 }
 
 // ShowResults shows the results in the buffer
