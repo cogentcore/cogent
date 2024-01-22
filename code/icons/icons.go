@@ -6,7 +6,13 @@ package icons
 
 import (
 	"embed"
+
+	"cogentcore.org/core/icons"
 )
 
 //go:embed *.svg
 var Icons embed.FS
+
+func init() {
+	icons.AddFS(Icons)
+}

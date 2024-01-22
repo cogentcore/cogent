@@ -12,6 +12,7 @@ import (
 
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/cogent/code/codev"
+	_ "cogentcore.org/cogent/code/icons"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/goosi"
 )

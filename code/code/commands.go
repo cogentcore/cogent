@@ -854,6 +854,9 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 			}
 			cmdCat := cc[0]
 			ic := icons.Icon(strings.ToLower(cmdCat))
+			if !ic.IsValid() {
+				fmt.Println("icon not found", cmdCat)
+			}
 			cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonMenu).SetIcon(ic)
 			cb.SetMenu(func(m *gi.Scene) {
 				for ii := 1; ii < n; ii++ {
