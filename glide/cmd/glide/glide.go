@@ -14,5 +14,5 @@ func main() {
 	pg := glide.NewPage(b, "page")
 	pg.OpenURL("https://google.com")
 	b.AddAppBar(pg.AppBar)
-	b.NewWindow().Run().Wait()
+	b.StartMainWindow()
 }

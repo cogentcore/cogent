@@ -21,7 +21,7 @@ func main() {
 	stopwatches(ts)
 	alarms(ts)
 
-	b.NewWindow().Run().Wait()
+	b.StartMainWindow()
 }
 
 func clock(ts *gi.Tabs) {

@@ -101,7 +101,7 @@ func main() {
 		})
 	})
 
-	b.NewWindow().Run().Wait()
+	b.StartMainWindow()
 }
 
 func getTasks(b *gi.Body) []*Task {

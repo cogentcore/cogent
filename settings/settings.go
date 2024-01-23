@@ -12,5 +12,5 @@ import (
 func main() {
 	b := gi.NewAppBody("Cogent Settings")
 	giv.SettingsView(b)
-	b.NewWindow().Run().Wait()
+	b.StartMainWindow()
 }

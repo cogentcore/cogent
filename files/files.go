@@ -18,5 +18,5 @@ func main() {
 		gi.OpenURL(fv.SelectedFile())
 	})
 
-	b.NewWindow().Run().Wait()
+	b.StartMainWindow()
 }

@@ -35,6 +35,6 @@ func run(c *config) error {
 	}
 	app := gear.NewApp(b).SetCmd(cmd)
 	b.AddAppBar(app.AppBar)
-	b.NewWindow().Run().Wait()
+	b.StartMainWindow()
 	return nil
 }
