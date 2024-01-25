@@ -201,17 +201,6 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 			ed.Buf.Opts.LineNos = false
 		}
 	})
-	ed.AddContextMenu(func(m *gi.Scene) {
-		gi.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
-			SetKey(keyfun.Copy).SetState(!ed.HasSelection(), states.Disabled).
-			OnClick(func(e events.Event) {
-				ed.Copy(true)
-			})
-		gi.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
-			OnClick(func(e events.Event) {
-				ed.Clear()
-			})
-	})
 }
 
 // ConfigEditorTextEditor configures an editor texteditor
