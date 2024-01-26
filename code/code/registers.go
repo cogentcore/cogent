@@ -57,7 +57,7 @@ func (lt *Registers) Save(filename gi.Filename) error { //gti:add
 
 // OpenSettings opens Registers from App standard prefs directory, using PrefRegistersFilename
 func (lt *Registers) OpenSettings() error { //gti:add
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFilename)
 	AvailRegistersChanged = false
 	err := lt.Open(gi.Filename(pnm))
@@ -69,7 +69,7 @@ func (lt *Registers) OpenSettings() error { //gti:add
 
 // SavePrefs saves Registers to App standard prefs directory, using PrefRegistersFilename
 func (lt *Registers) SavePrefs() error { //gti:add
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsRegistersFilename)
 	AvailRegistersChanged = false
 	AvailRegisterNames = lt.Names()

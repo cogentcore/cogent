@@ -342,7 +342,7 @@ var (
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Save(pnm)
 	// add back after save
@@ -353,7 +353,7 @@ func SavePaths() {
 func OpenPaths() {
 	// remove to be sure we don't have duplicate extras
 	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Open(pnm)
 	gi.SavedPaths = append(gi.SavedPaths, gi.SavedPathsExtras...)

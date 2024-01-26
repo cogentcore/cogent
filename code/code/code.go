@@ -171,12 +171,3 @@ func ParentCode(kn ki.Ki) (Code, bool) {
 	})
 	return ge, ge != nil
 }
-
-// AppDataDir returns the application-specific data directory for code.
-// It wraps [gi.App.DataDir], and must be a separate function because
-// the [gi.App] for code may not exist yet at certain points. It ensures
-// that the directory exists before returning it.
-func AppDataDir() string {
-	// TODO: is there a better way to do this?
-	return (&gi.App{Name: "CogentCode"}).DataDir()
-}

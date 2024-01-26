@@ -741,7 +741,7 @@ func (cm *Commands) Save(filename gi.Filename) error { //gti:add
 // OpenSettings opens custom Commands from App standard prefs directory, using
 // PrefsCmdsFilename
 func (cm *Commands) OpenSettings() error { //gti:add
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFilename)
 	CustomCmdsChanged = false
 	err := cm.Open(gi.Filename(pnm))
@@ -756,7 +756,7 @@ func (cm *Commands) OpenSettings() error { //gti:add
 // SavePrefs saves custom Commands to App standard prefs directory, using
 // PrefsCmdsFilename
 func (cm *Commands) SavePrefs() error { //gti:add
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFilename)
 	CustomCmdsChanged = false
 	err := cm.Save(gi.Filename(pnm))

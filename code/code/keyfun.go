@@ -356,7 +356,7 @@ func (km *KeyMaps) Save(filename gi.Filename) error { //gti:add
 
 // OpenSettings opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFilename
 func (km *KeyMaps) OpenSettings() error { //gti:add
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
 	AvailKeyMapsChanged = false
 	return km.Open(gi.Filename(pnm))
@@ -364,7 +364,7 @@ func (km *KeyMaps) OpenSettings() error { //gti:add
 
 // SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFilename
 func (km *KeyMaps) SavePrefs() error { //gti:add
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
 	AvailKeyMapsChanged = false
 	return km.Save(gi.Filename(pnm))

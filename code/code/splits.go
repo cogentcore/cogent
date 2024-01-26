@@ -123,7 +123,7 @@ func (lt *Splits) Save(filename gi.Filename) error { //gti:add
 
 // OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) OpenSettings() error { //gti:add
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFilename)
 	AvailSplitsChanged = false
 	err := lt.Open(gi.Filename(pnm))
@@ -136,7 +136,7 @@ func (lt *Splits) OpenSettings() error { //gti:add
 // SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) SavePrefs() error { //gti:add
 	lt.FixLen()
-	pdir := AppDataDir()
+	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFilename)
 	AvailSplitsChanged = false
 	AvailSplitNames = lt.Names()

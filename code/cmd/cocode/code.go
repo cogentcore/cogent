@@ -18,7 +18,8 @@ import (
 )
 
 func main() {
-	pdir := code.AppDataDir()
+	gi.TheApp.SetName("CogentCode")
+	pdir := gi.TheApp.AppDataDir()
 	lfnm := filepath.Join(pdir, "cocode.log")
 
 	code.TheConsole.Init(lfnm)
