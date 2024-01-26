@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	b := gi.NewAppBody("Cogent Clock")
+	b := gi.NewBody("Cogent Clock")
 
 	ts := gi.NewTabs(b)
 	clock(ts)

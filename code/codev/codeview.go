@@ -568,7 +568,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 		}
 	}
 
-	b := gi.NewAppBody("Cogent Code").SetTitle(wintitle)
+	b := gi.NewBody("Cogent Code").SetTitle(wintitle)
 	b.Scene.Nm = winm
 
 	ge := NewCodeView(b)

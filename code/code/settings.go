@@ -33,7 +33,7 @@ func init() {
 var Settings = &SettingsData{
 	SettingsBase: gi.SettingsBase{
 		Name: "Code",
-		File: filepath.Join("CogentCode", "settings.toml"),
+		File: filepath.Join(gi.TheApp.DataDir(), "CogentCode", "settings.toml"),
 	},
 }
 

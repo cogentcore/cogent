@@ -11,11 +11,11 @@ import (
 )
 
 func main() {
-	b := gi.NewAppBody("Cogent Files")
+	b := gi.NewBody("Cogent Files")
 
 	fv := giv.NewFileView(b)
 	fv.OnDoubleClick(func(e events.Event) {
-		gi.OpenURL(fv.SelectedFile())
+		gi.TheApp.OpenURL(fv.SelectedFile())
 	})
 
 	b.RunMainWindow()

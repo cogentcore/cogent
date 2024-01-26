@@ -45,7 +45,7 @@ type Task struct { //gti:add
 }
 
 func main() {
-	b := gi.NewAppBody("Cogent Task Manager")
+	b := gi.NewBody("Cogent Task Manager")
 
 	ts := getTasks(b)
 	tv := giv.NewTableView(b)

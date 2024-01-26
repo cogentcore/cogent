@@ -27,7 +27,7 @@ func main() {
 }
 
 func run(c *config) error {
-	b := gi.NewAppBody("Cogent Gear")
+	b := gi.NewBody("Cogent Gear")
 	cmd := gear.NewCmd(c.Command)
 	err := cmd.Parse()
 	if err != nil {

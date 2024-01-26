@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	b := gi.NewAppBody("Cogent Settings")
+	b := gi.NewBody("Cogent Settings")
 	giv.SettingsView(b)
 	b.RunMainWindow()
 }
