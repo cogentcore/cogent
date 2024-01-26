@@ -22,6 +22,7 @@ import (
 )
 
 func init() {
+	gi.TheApp.SetName("CogentCode")
 	gi.AllSettings = slices.Insert(gi.AllSettings, 1, gi.Settings(Settings))
 	DefaultKeyMap = "MacEmacs" // todo
 	SetActiveKeyMapName(DefaultKeyMap)
