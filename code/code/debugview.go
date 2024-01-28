@@ -102,7 +102,9 @@ type DebugView struct {
 }
 
 // DbgIsActive means debugger is started.
-func (dv *DebugView) DbgIsActive() bool { return dv.Dbg != nil && dv.Dbg.IsActive() }
+func (dv *DebugView) DbgIsActive() bool {
+	return dv.Dbg != nil && dv.Dbg.IsActive()
+}
 
 // DbgIsAvail means the debugger is started AND process is not currently running --
 // it is available for command input.
