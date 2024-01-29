@@ -114,7 +114,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 	ch := gi.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope, false)
 	ch.SetTooltip(sl.Tooltip)
 	ch.OnChange(func(e events.Event) {
-		sv.Params().Scope = ch.CurVal.(SymScopes)
+		sv.Params().Scope = ch.CurrentItem.Value.(SymScopes)
 		sv.ConfigTree(sv.Params().Scope)
 		sv.SearchText().SetFocusEvent()
 	})

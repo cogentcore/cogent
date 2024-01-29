@@ -484,7 +484,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 		s.Grow.Set(1, 0)
 	})
 	finds.OnChange(func(e events.Event) {
-		fv.Params().Find = finds.CurVal.(string)
+		fv.Params().Find = finds.CurrentItem.Value.(string)
 		if fv.Params().Find == "" {
 			tv := fv.Code.ActiveTextEditor()
 			if tv != nil {
@@ -516,7 +516,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 	cf.SetEnum(fv.Params().Loc, false)
 	cf.SetCurVal(fv.Params().Loc)
 	cf.OnChange(func(e events.Event) {
-		if eval, ok := cf.CurVal.(FindLoc); ok {
+		if eval, ok := cf.CurrentItem.Value.(FindLoc); ok {
 			fv.Params().Loc = eval
 		}
 	})
@@ -542,7 +542,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 		s.Grow.Set(1, 0)
 	})
 	repls.OnChange(func(e events.Event) {
-		fv.Params().Replace = repls.CurVal.(string)
+		fv.Params().Replace = repls.CurrentItem.Value.(string)
 	})
 
 	gi.NewButton(rb).SetText("All").SetTooltip("replace all find strings with replace string").
