@@ -151,7 +151,7 @@ func (fv *FindView) SaveFindString(find string) {
 	gi.StringsInsertFirstUnique(&fv.Params().FindHist, find, gi.SystemSettings.SavedPathsMax)
 	ftc := fv.FindText()
 	if ftc != nil {
-		ftc.SetStrings(fv.Params().FindHist, true)
+		ftc.SetStrings(fv.Params().FindHist).SetCurrentIndex(0)
 	}
 }
 
@@ -161,7 +161,7 @@ func (fv *FindView) SaveReplString(repl string) {
 	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, gi.SystemSettings.SavedPathsMax)
 	rtc := fv.ReplText()
 	if rtc != nil {
-		rtc.SetStrings(fv.Params().ReplHist, true)
+		rtc.SetStrings(fv.Params().ReplHist).SetCurrentIndex(0)
 	}
 }
 
@@ -461,15 +461,15 @@ func (fv *FindView) TextEditor() *texteditor.Editor {
 func (fv *FindView) UpdateFromParams() {
 	fp := fv.Params()
 	ft := fv.FindText()
-	ft.SetCurVal(fp.Find)
+	ft.SetCurrentValue(fp.Find)
 	rt := fv.ReplText()
-	rt.SetCurVal(fp.Replace)
+	rt.SetCurrentValue(fp.Replace)
 	ib := fv.IgnoreBox()
 	ib.SetChecked(fp.IgnoreCase)
 	rb := fv.RegexpBox()
 	rb.SetChecked(fp.Regexp)
 	cf := fv.LocCombo()
-	cf.SetCurVal(fp.Loc)
+	cf.SetCurrentValue(fp.Loc)
 	// langs auto-updates from param
 }
 
@@ -513,8 +513,8 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 		SetTooltip("location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser")
 
 	cf := gi.NewChooser(fb, "loc").SetTooltip(locl.Tooltip)
-	cf.SetEnum(fv.Params().Loc, false)
-	cf.SetCurVal(fv.Params().Loc)
+	cf.SetEnum(fv.Params().Loc)
+	cf.SetCurrentValue(fv.Params().Loc)
 	cf.OnChange(func(e events.Event) {
 		if eval, ok := cf.CurrentItem.Value.(FindLoc); ok {
 			fv.Params().Loc = eval

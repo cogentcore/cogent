@@ -72,7 +72,7 @@ func (sv *SymbolsView) ConfigSymbolsView(ge Code, sp SymbolsParams) {
 	})
 	sv.ConfigToolbar()
 	sb := sv.ScopeChooser()
-	sb.SetCurIndex(int(sv.Params().Scope))
+	sb.SetCurrentIndex(int(sv.Params().Scope))
 	sv.ConfigTree(sp.Scope)
 }
 
@@ -111,14 +111,14 @@ func (sv *SymbolsView) ConfigToolbar() {
 
 	sl := gi.NewLabel(tb).SetText("Scope:").SetTooltip("scope symbols to:")
 
-	ch := gi.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope, false)
+	ch := gi.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope)
 	ch.SetTooltip(sl.Tooltip)
 	ch.OnChange(func(e events.Event) {
 		sv.Params().Scope = ch.CurrentItem.Value.(SymScopes)
 		sv.ConfigTree(sv.Params().Scope)
 		sv.SearchText().SetFocusEvent()
 	})
-	ch.SetCurVal(sv.Params().Scope)
+	ch.SetCurrentValue(sv.Params().Scope)
 
 	gi.NewLabel(tb).SetText("Search:").
 		SetTooltip("narrow symbols list to symbols containing text you enter here")

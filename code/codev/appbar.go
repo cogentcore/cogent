@@ -5,30 +5,26 @@
 package codev
 
 import (
-	"strings"
-
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/fi/uri"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
 )
 
 func (ge *CodeView) AppBarConfig(pw gi.Widget) {
+	// TODO(kai/abc)
 	tb := gi.RecycleToolbar(pw)
 	// StdAppBarStart(tb)
 	gi.StdAppBarBack(tb)
-	ac := gi.StdAppBarChooser(tb)
-	ac.Resources.Add(ge.ResourceCommands)
-	ac.Resources.Add(ge.ResourceFiles)
-	ac.Resources.Add(ge.ResourceSymbols)
+	// ac := gi.StdAppBarChooser(tb)
+	// ac.Resources.Add(ge.ResourceCommands)
+	// ac.Resources.Add(ge.ResourceFiles)
+	// ac.Resources.Add(ge.ResourceSymbols)
 
 	gi.StdOverflowMenu(tb)
 	gi.CurrentWindowAppBar(tb)
@@ -269,6 +265,7 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 
 }
 
+/*
 // ResourceFiles adds the files
 func (ge *CodeView) ResourceFiles() uri.URIs {
 	if ge.Files == nil {
@@ -380,3 +377,4 @@ func (ge *CodeView) ResourceSymbols() uri.URIs {
 	})
 	return ul
 }
+*/

@@ -8,8 +8,6 @@ package glide
 //go:generate core generate -add-types
 
 import (
-	"net/url"
-
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
@@ -70,23 +68,24 @@ func (pg *Page) AppBar(tb *gi.Toolbar) {
 		}
 	})
 
-	ch := tb.ChildByName("app-chooser").(*gi.AppChooser)
-	ch.AllowNew = true
-	ch.ItemsFunc = func() {
-		ch.Items = make([]any, len(pg.History))
-		for i, u := range pg.History {
-			// we reverse the order
-			ch.Items[len(pg.History)-i-1] = u
-		}
-	}
-	ch.OnChange(func(e events.Event) {
-		u, is := coredom.ParseURL(ch.CurLabel)
-		if is {
-			pg.OpenURL(u.String())
-		} else {
-			q := url.QueryEscape(ch.CurLabel)
-			pg.OpenURL("https://google.com/search?q=" + q)
-		}
-		e.SetHandled()
-	})
+	// TODO(kai/abc)
+	// ch := tb.ChildByName("app-chooser").(*gi.AppChooser)
+	// ch.AllowNew = true
+	// ch.ItemsFunc = func() {
+	// 	ch.Items = make([]any, len(pg.History))
+	// 	for i, u := range pg.History {
+	// 		// we reverse the order
+	// 		ch.Items[len(pg.History)-i-1] = u
+	// 	}
+	// }
+	// ch.OnChange(func(e events.Event) {
+	// 	u, is := coredom.ParseURL(ch.CurLabel)
+	// 	if is {
+	// 		pg.OpenURL(u.String())
+	// 	} else {
+	// 		q := url.QueryEscape(ch.CurLabel)
+	// 		pg.OpenURL("https://google.com/search?q=" + q)
+	// 	}
+	// 	e.SetHandled()
+	// })
 }

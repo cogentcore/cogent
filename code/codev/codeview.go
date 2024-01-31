@@ -229,15 +229,6 @@ func (ge *CodeView) SetWindowNameTitle() {
 	winm := "Cogent Code: " + pnm
 	win.SetName(winm)
 	win.SetTitle(winm + ": " + string(ge.Settings.ProjRoot))
-	tab := ge.Scene.GetTopAppBar()
-	if tab != nil {
-		aci := tab.ChildByName("app-chooser", 1)
-		if aci != nil {
-			ac := aci.(*gi.AppChooser)
-			ac.ItemsFunc()
-			ac.SetCurIndex(0)
-		}
-	}
 }
 
 // OpenPath creates a new project by opening given path, which can either be a
