@@ -5,26 +5,28 @@
 package codev
 
 import (
+	"strings"
+
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
+	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/ki"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
 )
 
 func (ge *CodeView) AppBarConfig(pw gi.Widget) {
-	// TODO(kai/abc)
 	tb := gi.RecycleToolbar(pw)
-	// StdAppBarStart(tb)
 	gi.StdAppBarBack(tb)
-	// ac := gi.StdAppBarChooser(tb)
-	// ac.Resources.Add(ge.ResourceCommands)
-	// ac.Resources.Add(ge.ResourceFiles)
-	// ac.Resources.Add(ge.ResourceSymbols)
+	ac := gi.StdAppBarChooser(tb)
+	ge.AddChooserCommands(ac)
+	ge.AddChooserFiles(ac)
+	ge.AddChooserSymbols(ac)
 
 	gi.StdOverflowMenu(tb)
 	gi.CurrentWindowAppBar(tb)
@@ -265,116 +267,119 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 
 }
 
-/*
-// ResourceFiles adds the files
-func (ge *CodeView) ResourceFiles() uri.URIs {
-	if ge.Files == nil {
-		return nil
-	}
-	var ul uri.URIs
-	ge.Files.WidgetWalkPre(func(wi gi.Widget, wb *gi.WidgetBase) bool {
-		fn := filetree.AsNode(wi)
-		if fn == nil || fn.IsIrregular() {
-			return ki.Continue
+// AddChooserFiles adds the files to the app chooser.
+func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
+	ac.AddItemsFunc(func() {
+		if ge.Files == nil {
+			return
 		}
-		rpath := fn.MyRelPath()
-		nmpath := fn.Nm + ":" + rpath
-		switch {
-		case fn.IsDir():
-			ur := uri.URI{Label: nmpath, Icon: icons.Folder}
-			ur.SetURL("dir", "", rpath)
-			ur.Func = func() {
-				if !fn.HasChildren() {
-					fn.OpenEmptyDir()
-				}
-				fn.Open()
-				fn.ScrollToMe()
+		ge.Files.WidgetWalkPre(func(wi gi.Widget, wb *gi.WidgetBase) bool {
+			fn := filetree.AsNode(wi)
+			if fn == nil || fn.IsIrregular() {
+				return ki.Continue
 			}
-			ul = append(ul, ur)
-		case fn.IsExec():
-			ur := uri.URI{Label: nmpath, Icon: icons.FileExe}
-			ur.SetURL("exe", "", rpath)
-			ur.Func = func() {
-				ge.FileNodeRunExe(fn)
-			}
-			ul = append(ul, ur)
-		default:
-			ur := uri.URI{Label: nmpath, Icon: fn.Info.Ic}
-			ur.SetURL("file", "", rpath)
-			ur.Func = func() {
-				ge.NextViewFileNode(fn)
-			}
-			ul = append(ul, ur)
-		}
-		return ki.Continue
-	})
-	return ul
-}
-
-// ResourceCommands adds the commands
-func (ge *CodeView) ResourceCommands() uri.URIs {
-	lang := ge.Settings.MainLang
-	vcnm := ge.VersCtrl()
-	fn := ge.ActiveFileNode()
-	if fn != nil {
-		lang = fn.Info.Known
-		if repo, _ := fn.Repo(); repo != nil {
-			vcnm = filetree.VersCtrlName(repo.Vcs())
-		}
-	}
-	var ul uri.URIs
-	cmds := code.AvailCmds.FilterCmdNames(lang, vcnm)
-	for _, cc := range cmds {
-		cc := cc
-		n := len(cc)
-		if n < 2 {
-			continue
-		}
-		cmdCat := cc[0]
-		for ii := 1; ii < n; ii++ {
-			ii := ii
-			it := cc[ii]
-			cmdNm := code.CommandName(cmdCat, it)
-			ur := uri.URI{Label: cmdNm, Icon: icons.Icon(strings.ToLower(cmdCat))}
-			ur.SetURL("cmd", "", cmdNm)
-			ur.Func = func() {
-				cmd := code.CmdName(cmdNm)
-				ge.CmdHist().Add(cmd)          // only save commands executed via chooser
-				ge.SaveAllCheck(true, func() { // true = cancel option
-					ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+			rpath := fn.MyRelPath()
+			nmpath := fn.Nm + ":" + rpath
+			switch {
+			case fn.IsDir():
+				ac.Items = append(ac.Items, gi.ChooserItem{
+					Label: nmpath,
+					Icon:  icons.Folder,
+					Func: func() {
+						if !fn.HasChildren() {
+							fn.OpenEmptyDir()
+						}
+						fn.Open()
+						fn.ScrollToMe()
+					},
+				})
+			case fn.IsExec():
+				ac.Items = append(ac.Items, gi.ChooserItem{
+					Label: nmpath,
+					Icon:  icons.FileExe,
+					Func: func() {
+						ge.FileNodeRunExe(fn)
+					},
+				})
+			default:
+				ac.Items = append(ac.Items, gi.ChooserItem{
+					Label: nmpath,
+					Icon:  fn.Info.Ic,
+					Func: func() {
+						ge.NextViewFileNode(fn)
+					},
 				})
 			}
-			ul = append(ul, ur)
-		}
-	}
-	return ul
+			return ki.Continue
+		})
+	})
 }
 
-// ResourceSymbols adds the symbols
-func (ge *CodeView) ResourceSymbols() uri.URIs {
-	tv := ge.ActiveTextEditor()
-	if tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
-		return nil
-	}
-	pfs := tv.Buf.PiState.Done()
-	if len(pfs.ParseState.Scopes) == 0 {
-		return nil
-	}
-	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
-	syms := &code.SymNode{}
-	syms.InitName(syms, "syms")
-	syms.OpenSyms(pkg, "", "")
-	var ul uri.URIs
-	syms.WalkPre(func(k ki.Ki) bool {
-		sn := k.(*code.SymNode)
-		ur := uri.URI{Label: sn.Symbol.Label(), Icon: sn.GetIcon()}
-		ur.SetURL("sym", "", sn.PathFrom(syms))
-		ur.Func = func() {
-			code.SelectSymbol(ge, sn.Symbol)
+// AddChooserCommands adds the commands to the app chooser.
+func (ge *CodeView) AddChooserCommands(ac *gi.Chooser) {
+	ac.AddItemsFunc(func() {
+		lang := ge.Settings.MainLang
+		vcnm := ge.VersCtrl()
+		fn := ge.ActiveFileNode()
+		if fn != nil {
+			lang = fn.Info.Known
+			if repo, _ := fn.Repo(); repo != nil {
+				vcnm = filetree.VersCtrlName(repo.Vcs())
+			}
 		}
-		ul = append(ul, ur)
-		return ki.Continue
+		cmds := code.AvailCmds.FilterCmdNames(lang, vcnm)
+		for _, cc := range cmds {
+			cc := cc
+			n := len(cc)
+			if n < 2 {
+				continue
+			}
+			cmdCat := cc[0]
+			for ii := 1; ii < n; ii++ {
+				ii := ii
+				it := cc[ii]
+				cmdNm := code.CommandName(cmdCat, it)
+				ac.Items = append(ac.Items, gi.ChooserItem{
+					Label: cmdNm,
+					Icon:  icons.Icon(strings.ToLower(cmdCat)),
+					Func: func() {
+						cmd := code.CmdName(cmdNm)
+						ge.CmdHist().Add(cmd)          // only save commands executed via chooser
+						ge.SaveAllCheck(true, func() { // true = cancel option
+							ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+						})
+					},
+				})
+			}
+		}
 	})
-	return ul
 }
-*/
+
+// AddChooserSymbols adds the symbols to the app chooser.
+func (ge *CodeView) AddChooserSymbols(ac *gi.Chooser) {
+	ac.AddItemsFunc(func() {
+		tv := ge.ActiveTextEditor()
+		if tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
+			return
+		}
+		pfs := tv.Buf.PiState.Done()
+		if len(pfs.ParseState.Scopes) == 0 {
+			return
+		}
+		pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
+		syms := &code.SymNode{}
+		syms.InitName(syms, "syms")
+		syms.OpenSyms(pkg, "", "")
+		syms.WalkPre(func(k ki.Ki) bool {
+			sn := k.(*code.SymNode)
+			ac.Items = append(ac.Items, gi.ChooserItem{
+				Label: sn.Symbol.Label(),
+				Icon:  sn.GetIcon(),
+				Func: func() {
+					code.SelectSymbol(ge, sn.Symbol)
+				},
+			})
+			return ki.Continue
+		})
+	})
+}
