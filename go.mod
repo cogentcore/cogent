@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.21
 
 require (
-	cogentcore.org/core v0.0.3
+	cogentcore.org/core v0.0.4-0.20240203070202-15916fcfb0f7
 	github.com/go-delve/delve v1.22.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mattn/go-shellwords v1.0.12
@@ -13,7 +13,6 @@ require (
 
 require (
 	github.com/Masterminds/vcs v1.13.3 // indirect
-	github.com/akutz/sortfold v0.2.1 // indirect
 	github.com/alecthomas/chroma/v2 v2.12.0 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
@@ -29,7 +28,7 @@ require (
 	github.com/go-delve/gore v0.11.7 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/goki/freetype v1.0.2 // indirect
+	github.com/goki/freetype v1.0.4 // indirect
 	github.com/goki/vulkan v1.0.7 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
@@ -45,10 +44,8 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
@@ -64,7 +61,6 @@ require (
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
