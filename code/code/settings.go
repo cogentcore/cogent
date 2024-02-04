@@ -357,5 +357,5 @@ func OpenPaths() {
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Open(pnm)
-	gi.SavedPaths = append(gi.SavedPaths, gi.SavedPathsExtras...)
+	// gi.SavedPaths = append(gi.SavedPaths, gi.SavedPathsExtras...)
 }

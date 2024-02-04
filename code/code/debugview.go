@@ -1030,7 +1030,6 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	// 		dv.DeleteBreakIdx(idx)
 	// 	}
 	tv.SetFlag(false, giv.SliceViewShowIndex)
-	tv.SetFlag(true, giv.SliceViewNoAdd)
 	tv.SetSlice(&dv.State.Breaks)
 }
 

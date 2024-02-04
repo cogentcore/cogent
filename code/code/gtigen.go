@@ -192,9 +192,6 @@ func (t *VarView) SetTooltip(v string) *VarView { t.Tooltip = v; return t }
 // SetStackTop sets the [VarView.StackTop]
 func (t *VarView) SetStackTop(v int) *VarView { t.StackTop = v; return t }
 
-// SetStripes sets the [VarView.Stripes]
-func (t *VarView) SetStripes(v gi.Stripes) *VarView { t.Stripes = v; return t }
-
 // FileNodeType is the [gti.Type] for [FileNode]
 var FileNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []gti.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
