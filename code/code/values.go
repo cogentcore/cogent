@@ -159,7 +159,7 @@ func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
-	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelectDialog(&si)
+	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelect(&si)
 	return true, func() {
 		if si >= 0 {
 			km := AvailKeyMaps[si]
@@ -292,7 +292,7 @@ func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
-	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelectDialog(&si)
+	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelect(&si)
 	return true, func() {
 		if si >= 0 {
 			pt := AvailCmds[si]
