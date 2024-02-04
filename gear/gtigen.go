@@ -3,7 +3,6 @@
 package gear
 
 import (
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/ki"
 )
@@ -40,9 +39,6 @@ func (t *App) SetTooltip(v string) *App { t.Tooltip = v; return t }
 
 // SetStackTop sets the [App.StackTop]
 func (t *App) SetStackTop(v int) *App { t.StackTop = v; return t }
-
-// SetStripes sets the [App.Stripes]
-func (t *App) SetStripes(v gi.Stripes) *App { t.Stripes = v; return t }
 
 var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/gear.Cmd", IDName: "cmd", Doc: "Cmd contains all of the data for a parsed command line command.", Fields: []gti.Field{{Name: "Cmd", Doc: "Cmd is the actual name of the command (eg: \"git\", \"go build\")"}, {Name: "Name", Doc: "Name is the formatted name of the command (eg: \"Git\", \"Go build\")"}, {Name: "Doc", Doc: "Doc is the documentation for the command (eg: \"compile packages and dependencies\")"}, {Name: "Flags", Doc: "Flags contains the flags for the command"}, {Name: "Cmds", Doc: "Cmds contains the subcommands of the command"}}})
 

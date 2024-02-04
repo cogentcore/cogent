@@ -3,7 +3,6 @@
 package glide
 
 import (
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/ki"
 )
@@ -28,6 +27,3 @@ func (t *Page) SetTooltip(v string) *Page { t.Tooltip = v; return t }
 
 // SetStackTop sets the [Page.StackTop]
 func (t *Page) SetStackTop(v int) *Page { t.StackTop = v; return t }
-
-// SetStripes sets the [Page.Stripes]
-func (t *Page) SetStripes(v gi.Stripes) *Page { t.Stripes = v; return t }
