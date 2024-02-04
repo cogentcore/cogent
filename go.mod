@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.21
 
 require (
-	cogentcore.org/core v0.0.4-0.20240203070202-15916fcfb0f7
+	cogentcore.org/core v0.0.4-0.20240204092027-5f7890b19e8a
 	github.com/go-delve/delve v1.22.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mattn/go-shellwords v1.0.12
@@ -21,10 +21,8 @@ require (
 	github.com/cilium/ebpf v0.12.3 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
-	github.com/expr-lang/expr v1.16.0 // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-delve/gore v0.11.7 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
