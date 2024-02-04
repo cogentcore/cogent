@@ -28,15 +28,13 @@ import (
 	"cogentcore.org/core/texteditor/textbuf"
 )
 
-// CursorToHistPrev moves cursor to previous position on history list --
-// returns true if moved
+// CursorToHistPrev moves back to the previous history item.
 func (ge *CodeView) CursorToHistPrev() bool { //gti:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistPrev()
 }
 
-// CursorToHistNext moves cursor to next position on history list --
-// returns true if moved
+// CursorToHistNext moves forward to the next history item.
 func (ge *CodeView) CursorToHistNext() bool { //gti:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistNext()

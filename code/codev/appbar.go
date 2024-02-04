@@ -35,7 +35,7 @@ func (ge *CodeView) AppBarConfig(pw gi.Widget) {
 
 func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
-	sm := gi.NewSwitch(tb, "go-mod").SetText("Go Mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
+	sm := gi.NewSwitch(tb, "go-mod").SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.Style(func(s *styles.Style) {
 		sm.SetChecked(ge.Settings.GoMod)
 	})
@@ -45,7 +45,7 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	})
 
 	gi.NewSeparator(tb)
-	gi.NewButton(tb).SetText("Open Recent").SetMenu(func(m *gi.Scene) {
+	gi.NewButton(tb).SetText("Open recent").SetMenu(func(m *gi.Scene) {
 		for _, sp := range code.SavedPaths {
 			sp := sp
 			if sp == code.SavedPathsExtras[0] {
