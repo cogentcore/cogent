@@ -24,7 +24,6 @@ func (ge *CodeView) AppBarConfig(pw gi.Widget) {
 	tb := gi.RecycleToolbar(pw)
 	gi.StdAppBarBack(tb)
 	ac := gi.StdAppBarChooser(tb)
-	ge.AddChooserCommands(ac)
 	ge.AddChooserFiles(ac)
 	ge.AddChooserSymbols(ac)
 
@@ -105,11 +104,12 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 			for _, cc := range ec {
 				cc := cc
 				cat := cc[0]
-				gi.NewButton(m).SetText(cat).SetMenu(func(mm *gi.Scene) {
+				ic := icons.Icon(strings.ToLower(cat))
+				gi.NewButton(m).SetText(cat).SetIcon(ic).SetMenu(func(mm *gi.Scene) {
 					nc := len(cc)
 					for i := 1; i < nc; i++ {
 						cm := cc[i]
-						gi.NewButton(mm).SetText(cm).OnClick(func(e events.Event) {
+						gi.NewButton(mm).SetText(cm).SetIcon(ic).OnClick(func(e events.Event) {
 							e.SetHandled()
 							ge.ExecCmdNameActive(code.CommandName(cat, cm))
 						})
@@ -312,46 +312,6 @@ func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
 			}
 			return ki.Continue
 		})
-	})
-}
-
-// AddChooserCommands adds the commands to the app chooser.
-func (ge *CodeView) AddChooserCommands(ac *gi.Chooser) {
-	ac.AddItemsFunc(func() {
-		lang := ge.Settings.MainLang
-		vcnm := ge.VersCtrl()
-		fn := ge.ActiveFileNode()
-		if fn != nil {
-			lang = fn.Info.Known
-			if repo, _ := fn.Repo(); repo != nil {
-				vcnm = filetree.VersCtrlName(repo.Vcs())
-			}
-		}
-		cmds := code.AvailCmds.FilterCmdNames(lang, vcnm)
-		for _, cc := range cmds {
-			cc := cc
-			n := len(cc)
-			if n < 2 {
-				continue
-			}
-			cmdCat := cc[0]
-			for ii := 1; ii < n; ii++ {
-				ii := ii
-				it := cc[ii]
-				cmdNm := code.CommandName(cmdCat, it)
-				ac.Items = append(ac.Items, gi.ChooserItem{
-					Label: cmdNm,
-					Icon:  icons.Icon(strings.ToLower(cmdCat)),
-					Func: func() {
-						cmd := code.CmdName(cmdNm)
-						ge.CmdHist().Add(cmd)          // only save commands executed via chooser
-						ge.SaveAllCheck(true, func() { // true = cancel option
-							ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
-						})
-					},
-				})
-			}
-		}
 	})
 }
 
