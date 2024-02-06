@@ -251,7 +251,7 @@ func (ge *CodeView) OpenConsoleTab() { //gti:add
 	if ctv.Buf == nil || ctv.Buf != code.TheConsole.Buf {
 		ctv.SetBuf(code.TheConsole.Buf)
 		ctv.OnChange(func(e events.Event) {
-			ge.SelectTabByLabel("Console")
+			ge.SelectTabByName("Console")
 		})
 	}
 }

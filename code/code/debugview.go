@@ -605,7 +605,7 @@ func (dv *DebugView) ShowBreakFile(bidx int) {
 // ShowBreaks shows the current breaks
 func (dv *DebugView) ShowBreaks(selTab bool) {
 	if selTab {
-		dv.Tabs().SelectTabByLabel("Breaks")
+		dv.Tabs().SelectTabByName("Breaks")
 	}
 	sv := dv.BreakVw()
 	sv.ShowBreaks()
@@ -614,7 +614,7 @@ func (dv *DebugView) ShowBreaks(selTab bool) {
 // ShowStack shows the current stack
 func (dv *DebugView) ShowStack(selTab bool) {
 	if selTab {
-		dv.Tabs().SelectTabByLabel("Stack")
+		dv.Tabs().SelectTabByName("Stack")
 	}
 	sv := dv.StackVw()
 	sv.ShowStack()
@@ -623,7 +623,7 @@ func (dv *DebugView) ShowStack(selTab bool) {
 // ShowVars shows the current vars
 func (dv *DebugView) ShowVars(selTab bool) {
 	if selTab {
-		dv.Tabs().SelectTabByLabel("Vars")
+		dv.Tabs().SelectTabByName("Vars")
 	}
 	sv := dv.VarVw()
 	sv.ShowVars()
@@ -632,7 +632,7 @@ func (dv *DebugView) ShowVars(selTab bool) {
 // ShowTasks shows the current tasks
 func (dv *DebugView) ShowTasks(selTab bool) {
 	if selTab {
-		dv.Tabs().SelectTabByLabel("Tasks")
+		dv.Tabs().SelectTabByName("Tasks")
 	}
 	sv := dv.TaskVw()
 	sv.ShowTasks()
@@ -641,7 +641,7 @@ func (dv *DebugView) ShowTasks(selTab bool) {
 // ShowThreads shows the current threads
 func (dv *DebugView) ShowThreads(selTab bool) {
 	if selTab {
-		dv.Tabs().SelectTabByLabel("Threads")
+		dv.Tabs().SelectTabByName("Threads")
 	}
 	sv := dv.ThreadVw()
 	sv.ShowThreads()
@@ -650,7 +650,7 @@ func (dv *DebugView) ShowThreads(selTab bool) {
 // ShowFindFrames shows the current find frames
 func (dv *DebugView) ShowFindFrames(selTab bool) {
 	if selTab {
-		dv.Tabs().SelectTabByLabel("Find Frames")
+		dv.Tabs().SelectTabByName("Find Frames")
 	}
 	sv := dv.FindFramesVw()
 	sv.ShowStack()
@@ -659,7 +659,7 @@ func (dv *DebugView) ShowFindFrames(selTab bool) {
 // ShowGlobalVars shows the current allvars
 func (dv *DebugView) ShowGlobalVars(selTab bool) {
 	if selTab {
-		dv.Tabs().SelectTabByLabel("Global Vars")
+		dv.Tabs().SelectTabByName("Global Vars")
 	}
 	sv := dv.AllVarVw()
 	sv.ShowVars()
@@ -776,49 +776,49 @@ func (dv *DebugView) Tabs() *gi.Tabs {
 // BreakVw returns the break view from tabs
 func (dv *DebugView) BreakVw() *BreakView {
 	tv := dv.Tabs()
-	return tv.TabByLabel("Breaks").Child(0).(*BreakView)
+	return tv.TabByName("Breaks").Child(0).(*BreakView)
 }
 
 // StackVw returns the stack view from tabs
 func (dv *DebugView) StackVw() *StackView {
 	tv := dv.Tabs()
-	return tv.TabByLabel("Stack").Child(0).(*StackView)
+	return tv.TabByName("Stack").Child(0).(*StackView)
 }
 
 // VarVw returns the vars view from tabs
 func (dv *DebugView) VarVw() *VarsView {
 	tv := dv.Tabs()
-	return tv.TabByLabel("Vars").Child(0).(*VarsView)
+	return tv.TabByName("Vars").Child(0).(*VarsView)
 }
 
 // TaskVw returns the task view from tabs
 func (dv *DebugView) TaskVw() *TaskView {
 	tv := dv.Tabs()
-	return tv.TabByLabel("Tasks").Child(0).(*TaskView)
+	return tv.TabByName("Tasks").Child(0).(*TaskView)
 }
 
 // ThreadVw returns the thread view from tabs
 func (dv *DebugView) ThreadVw() *ThreadView {
 	tv := dv.Tabs()
-	return tv.TabByLabel("Threads").Child(0).(*ThreadView)
+	return tv.TabByName("Threads").Child(0).(*ThreadView)
 }
 
 // FindFramesVw returns the find frames view from tabs
 func (dv *DebugView) FindFramesVw() *StackView {
 	tv := dv.Tabs()
-	return tv.TabByLabel("Find Frames").Child(0).(*StackView)
+	return tv.TabByName("Find Frames").Child(0).(*StackView)
 }
 
 // AllVarVw returns the all vars view from tabs
 func (dv *DebugView) AllVarVw() *VarsView {
 	tv := dv.Tabs()
-	return tv.TabByLabel("Global Vars").Child(0).(*VarsView)
+	return tv.TabByName("Global Vars").Child(0).(*VarsView)
 }
 
 // ConsoleText returns the console TextEditor
 func (dv *DebugView) ConsoleText() *texteditor.Editor {
 	tv := dv.Tabs()
-	cv := tv.TabByLabel("Console").Child(0).(*texteditor.Editor)
+	cv := tv.TabByName("Console").Child(0).(*texteditor.Editor)
 	return cv
 }
 

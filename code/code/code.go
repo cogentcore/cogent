@@ -56,8 +56,8 @@ type Code interface {
 	// UpdateStatusLabel updates the statusbar label with current data
 	UpdateStatusLabel()
 
-	// SelectTabByLabel Selects given main tab, and returns all of its contents as well.
-	SelectTabByLabel(label string) gi.Widget
+	// SelectTabByName Selects given main tab, and returns all of its contents as well.
+	SelectTabByName(label string) gi.Widget
 
 	// FocusOnTabs moves keyboard focus to Tabs panel -- returns false if nothing at that tab
 	FocusOnTabs() bool

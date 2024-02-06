@@ -587,7 +587,7 @@ func (cm *Command) RunStatus(ge Code, buf *texteditor.Buf, cmdstr string, err er
 	if buf != nil {
 		buf.SetReadOnly(true)
 		if err != nil {
-			ge.SelectTabByLabel(cm.Label()) // sometimes it isn't
+			ge.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)

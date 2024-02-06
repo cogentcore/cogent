@@ -98,19 +98,19 @@ func (ge *CodeView) FocusPrevPanel() { //gti:add
 	ge.FocusOnPanel(cp)
 }
 
-// TabByLabel returns a tab with given name, nil if not found.
-func (ge *CodeView) TabByLabel(label string) gi.Widget {
+// TabByName returns a tab with given name, nil if not found.
+func (ge *CodeView) TabByName(label string) gi.Widget {
 	tv := ge.Tabs()
-	return tv.TabByLabel(label)
+	return tv.TabByName(label)
 }
 
-// SelectTabByLabel Selects given main tab, and returns all of its contents as well.
-func (ge *CodeView) SelectTabByLabel(label string) gi.Widget {
+// SelectTabByName Selects given main tab, and returns all of its contents as well.
+func (ge *CodeView) SelectTabByName(label string) gi.Widget {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
 	}
-	return tv.SelectTabByLabel(label)
+	return tv.SelectTabByName(label)
 }
 
 // RecycleTabTextEditor returns a tab with given
