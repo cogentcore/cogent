@@ -324,38 +324,23 @@ func (se *ProjSettings) RunExecIsExec() bool {
 //   Saved Projects / Paths
 
 var (
-	// SavedPaths is a slice of strings that are file paths
-	SavedPaths gi.FilePaths
+	// RecentPaths is a slice of recent file paths
+	RecentPaths gi.FilePaths
 
 	// SavedPathsFilename is the name of the saved file paths file in Cogent Core prefs directory
 	SavedPathsFilename = "code_saved_paths.json"
-
-	// CodeViewResetRecents defines a string that is added as an item to the recents menu
-	CodeViewResetRecents = "<i>Reset Recents</i>"
-
-	// CodeViewEditRecents defines a string that is added as an item to the recents menu
-	CodeViewEditRecents = "<i>Edit Recents...</i>"
-
-	// SavedPathsExtras are the reset and edit items we add to the recents menu
-	SavedPathsExtras = []string{CodeViewResetRecents, CodeViewEditRecents}
 )
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
-	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
-	SavedPaths.Save(pnm)
-	// add back after save
-	SavedPaths = append(SavedPaths, SavedPathsExtras...)
+	RecentPaths.Save(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
-	// remove to be sure we don't have duplicate extras
-	gi.StringsRemoveExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
-	SavedPaths.Open(pnm)
-	// gi.SavedPaths = append(gi.SavedPaths, gi.SavedPathsExtras...)
+	RecentPaths.Open(pnm)
 }

@@ -167,36 +167,20 @@ func (ge *CodeView) IsEmpty() bool {
 
 // OpenRecent opens a recently-used file
 func (ge *CodeView) OpenRecent(filename gi.Filename) { //gti:add
-	if string(filename) == code.CodeViewResetRecents {
-		code.SavedPaths = nil
-		code.SavedPaths = append(code.SavedPaths, code.SavedPathsExtras...)
-	} else if string(filename) == code.CodeViewEditRecents {
-		ge.EditRecents()
+	ext := strings.ToLower(filepath.Ext(string(filename)))
+	if ext == ".code" {
+		ge.OpenProj(filename)
 	} else {
-		ext := strings.ToLower(filepath.Ext(string(filename)))
-		if ext == ".code" {
-			ge.OpenProj(filename)
-		} else {
-			ge.OpenPath(filename)
-		}
+		ge.OpenPath(filename)
 	}
 }
 
-// RecentsEdit opens a dialog editor for deleting from the recents project list
-func (ge *CodeView) EditRecents() {
-	tmp := make([]string, len(code.SavedPaths))
-	copy(tmp, code.SavedPaths)
-	gi.StringsRemoveExtras((*[]string)(&tmp), code.SavedPathsExtras)
-	d := gi.NewBody().AddTitle("Recent Project Paths").
-		AddText("Delete paths you no longer use")
-	giv.NewSliceView(d).SetSlice(tmp)
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddOk(pw).OnClick(func(e events.Event) {
-			code.SavedPaths = tmp
-			code.SavedPaths = append(code.SavedPaths, code.SavedPathsExtras...)
-		})
-	})
-	d.NewDialog(ge).Run()
+// EditRecentPaths opens a dialog editor for editing the recent project paths list
+func (ge *CodeView) EditRecentPaths() {
+	d := gi.NewBody().AddTitle("Recent project paths").
+		AddText("You can delete paths you no longer use")
+	giv.NewSliceView(d).SetSlice(&code.RecentPaths)
+	d.AddOkOnly().NewDialog(ge).Run()
 }
 
 // OpenFile opens file in an open project if it has the same path as the file
@@ -245,7 +229,7 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
-		code.SavedPaths.AddPath(root, gi.SystemSettings.SavedPathsMax)
+		code.RecentPaths.AddPath(root, gi.SystemSettings.SavedPathsMax)
 		code.SavePaths()
 		ge.ProjRoot = gi.Filename(root)
 		ge.SetName(pnm)
@@ -286,7 +270,7 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 		code.SetGoMod(ge.Settings.GoMod)
 		os.Chdir(string(ge.Settings.ProjRoot))
 		ge.ProjRoot = gi.Filename(ge.Settings.ProjRoot)
-		code.SavedPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
+		code.RecentPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
 		code.SavePaths()
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
@@ -367,7 +351,7 @@ func (ge *CodeView) SaveProjIfExists(saveAllFiles bool) bool {
 // returns true if the user was prompted, false otherwise
 func (ge *CodeView) SaveProjAs(filename gi.Filename) bool { //gti:add
 	spell.SaveIfLearn()
-	code.SavedPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
+	code.RecentPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
 	code.SavePaths()
 	ge.Settings.ProjFilename = filename
 	ge.ProjFilename = ge.Settings.ProjFilename

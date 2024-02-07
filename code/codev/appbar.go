@@ -45,15 +45,19 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 
 	gi.NewSeparator(tb)
 	gi.NewButton(tb).SetText("Open recent").SetMenu(func(m *gi.Scene) {
-		for _, sp := range code.SavedPaths {
-			sp := sp
-			if sp == code.SavedPathsExtras[0] {
-				gi.NewSeparator(m)
-			}
-			gi.NewButton(m).SetText(sp).OnClick(func(e events.Event) {
-				ge.OpenRecent(gi.Filename(sp))
+		for _, rp := range code.RecentPaths {
+			rp := rp
+			gi.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
+				ge.OpenRecent(gi.Filename(rp))
 			})
 		}
+		gi.NewSeparator(m)
+		gi.NewButton(m).SetText("Recent recent paths").OnClick(func(e events.Event) {
+			code.RecentPaths = nil
+		})
+		gi.NewButton(m).SetText("Edit recent paths").OnClick(func(e events.Event) {
+			ge.EditRecentPaths()
+		})
 	})
 
 	ge.ConfigActiveFilename(giv.NewFuncButton(tb, ge.OpenPath).
