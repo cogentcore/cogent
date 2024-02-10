@@ -15,11 +15,15 @@ import (
 	_ "cogentcore.org/cogent/code/icons"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/goosi"
+	"cogentcore.org/core/grr"
 )
 
 func main() {
 	pdir := gi.TheApp.AppDataDir()
 	lfnm := filepath.Join(pdir, "cogentcode.log")
+
+	// we must load the settings before initializing the console
+	grr.Log(gi.LoadAllSettings())
 
 	code.TheConsole.Init(lfnm)
 
