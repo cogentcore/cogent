@@ -1,0 +1,38 @@
+<svg
+  width="16.000021mm"
+  height="16.0001mm"
+  viewBox="0 0 16.000021 16.0001">
+  <defs
+    id="Defs" />
+  <g
+    id="object_flip_hor"
+    transform="translate(-503.99998,-391.9999)">
+    <rect
+      id="rect20761"
+      style="fill:#ffffff;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;display:inline;fill-opacity:0;stroke:none;stroke-width:1;stroke-linejoin:miter;stroke-dashoffset:0;"
+      x="504"
+      y="392"
+      width="16"
+      height="16" />
+    <path
+      id="path18543"
+      style="display:inline;visibility:visible;fill:#729fcf;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;marker-end:none;nodetypes:cccc;stroke:#204a87;marker:none;marker-start:none;marker-mid:none;enable-background:accumulate;connector-curvature:0;overflow:visible;fill-opacity:1;stroke-linecap:square;stroke-dashoffset:0;fill-rule:evenodd;stroke-width:1.0000875;"
+      d="m 513.5,393.5 v 13 h 5 z " />
+    <path
+      id="path18595"
+      style="overflow:visible;stroke:#ffffff;marker-mid:none;stroke-linejoin:miter;stroke-dashoffset:0;stroke-opacity:0.4;nodetypes:cccc;display:inline;visibility:visible;fill-opacity:1;stroke-linecap:square;marker:none;enable-background:accumulate;connector-curvature:0;fill-rule:evenodd;stroke-width:1.00008762;marker-start:none;marker-end:none;fill:none;stroke-miterlimit:10;stroke-dasharray:none;"
+      d="m 514.5001,398.8718 v 6.6281 h 2.6013 z " />
+    <path
+      id="path18541"
+      style="marker-mid:none;display:inline;visibility:visible;fill-rule:evenodd;stroke-dasharray:none;marker-start:none;marker-end:none;nodetypes:cccc;overflow:visible;fill:#dfdfdb;fill-opacity:1;stroke-linejoin:round;stroke-miterlimit:0;stroke-dashoffset:0;stroke-opacity:1;marker:none;connector-curvature:0;stroke:#555753;stroke-width:1.0000875;stroke-linecap:square;enable-background:accumulate;"
+      d="M 509.4999,393.5001 V 406.5 H 504.5 Z " />
+    <path
+      id="path18597"
+      style="marker-mid:none;nodetypes:cccc;visibility:visible;stroke-dasharray:none;stroke-opacity:1;stroke-linecap:square;stroke-miterlimit:10;stroke-dashoffset:0;connector-curvature:0;overflow:visible;fill-opacity:1;stroke-width:1.00008762;fill:none;fill-rule:evenodd;marker:none;marker-start:none;enable-background:accumulate;display:inline;stroke:#ffffff;stroke-linejoin:miter;marker-end:none;"
+      d="M 508.5,398.8718 V 405.5 h -2.6014 z " />
+    <path
+      id="path18718"
+      style="stroke-linecap:round;stroke-dashoffset:0;connector-curvature:0;nodetypes:cccccccccccccccccccc;fill:#000000FF;stroke:none;stroke-width:1.00000012;display:inline;fill-opacity:1;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;"
+      d="M 510.9999,396.9999 H 512 v 2 h -1.0001 z m 0,4 H 512 v 2 h -1.0001 z m 0,4.0001 H 512 v 3 h -1.0001 z m 0,-13.0001 H 512 V 395 h -1.0001 z " />
+  </g>
+</svg>

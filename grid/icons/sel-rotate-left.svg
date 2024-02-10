@@ -1,0 +1,50 @@
+<svg
+  width="16.000044mm"
+  height="16.000044mm"
+  viewBox="0 0 16.000044 16.000044">
+  <defs
+    id="Defs" />
+  <g
+    id="object_rotate_90_CCW"
+    transform="translate(-504,-368)">
+    <rect
+      id="rect20781"
+      style="fill-opacity:0;stroke-width:1;stroke-dasharray:none;fill:#ffffff;stroke:none;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;display:inline;"
+      x="504"
+      y="368"
+      width="16"
+      height="16" />
+    <g
+      id="g18647"
+      transform="matrix(-1,0,0,1,1023,-3)">
+      <path
+        id="path18643"
+        style="stroke-dashoffset:0;marker:none;marker-mid:none;enable-background:accumulate;display:inline;stroke-linecap:square;stroke-dasharray:none;overflow:visible;fill:#dfdfdb;fill-opacity:1;marker-end:none;fill-rule:evenodd;stroke:#555753;stroke-width:1.0000875;stroke-linejoin:round;stroke-miterlimit:0;connector-curvature:0;nodetypes:cccc;visibility:visible;stroke-opacity:1;marker-start:none;"
+        d="M 510.4999,371.5001 V 386.5 H 504.5 Z " />
+      <path
+        id="path18645"
+        style="marker-start:none;overflow:visible;fill:none;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;enable-background:accumulate;stroke:#ffffff;stroke-width:1.00008762;stroke-linecap:square;stroke-dashoffset:0;marker-end:none;connector-curvature:0;fill-opacity:1;visibility:visible;fill-rule:evenodd;stroke-dasharray:none;marker:none;marker-mid:none;nodetypes:cccc;display:inline;"
+        d="m 509.5,376.695 v 8.805 h -3.513 z " />
+    </g>
+    <g
+      id="g18651"
+      transform="rotate(-90,514,381)">
+      <path
+        id="path18639"
+        style="stroke-opacity:1;marker:none;marker-end:none;connector-curvature:0;stroke-width:1.0000875;stroke-linecap:square;stroke-dasharray:none;display:inline;stroke:#204a87;stroke-linejoin:round;enable-background:accumulate;fill-opacity:1;fill-rule:evenodd;nodetypes:cccc;overflow:visible;visibility:visible;fill:#729fcf;stroke-miterlimit:0;stroke-dashoffset:0;marker-start:none;marker-mid:none;"
+        d="m 513.5,371.5 v 15 h 6 z " />
+      <path
+        id="path18641"
+        style="nodetypes:cccc;stroke-dasharray:none;stroke-width:1.00008762;stroke-miterlimit:10;stroke-opacity:0.4;marker:none;marker-mid:none;connector-curvature:0;display:inline;fill-opacity:1;marker-end:none;overflow:visible;stroke:#ffffff;stroke-linecap:square;stroke-linejoin:miter;stroke-dashoffset:0;marker-start:none;enable-background:accumulate;visibility:visible;fill:none;fill-rule:evenodd;"
+        d="m 514.5,376.695 v 8.8049 h 3.513 z " />
+    </g>
+    <path
+      id="path18655"
+      style="enable-background:accumulate;overflow:visible;fill-opacity:1;stroke:none;stroke-miterlimit:0;stroke-opacity:1;display:inline;visibility:visible;stroke-linejoin:round;stroke-dashoffset:0;marker:none;connector-curvature:0;nodetypes:ccccccccscc;stroke-linecap:square;marker-mid:none;marker-end:none;fill:#ce5c00;fill-rule:evenodd;stroke-width:0.5;stroke-dasharray:none;marker-start:none;"
+      d="m 504,374 3.4861,4 3.5139,-4 h -2 v -1 h 2 v -3 h -2 c 0,0 -2.9558,-0.0165 -3,3 -0.0289,1.9998 0,1 0,1 z " />
+    <path
+      id="path18657"
+      style="stroke:none;stroke-linecap:square;marker-start:none;enable-background:accumulate;overflow:visible;visibility:visible;fill-opacity:1;fill-rule:evenodd;stroke-dasharray:none;stroke-dashoffset:0;marker:none;connector-curvature:0;nodetypes:ccccccccsccc;display:inline;fill:#fcaf3e;stroke-width:0.5;stroke-miterlimit:0;stroke-opacity:1;marker-mid:none;marker-end:none;stroke-linejoin:round;"
+      d="M 507.5,376.5625 509,375 h -1 v -1.9643 c 0,0 0.0277,-0.9915 1,-1.0357 h 1 v -1 h -1.6906 c 0,0 -1.3094,0.5303 -1.3094,1.5303 0,2 0,2.4697 0,2.4697 h -1 z " />
+  </g>
+</svg>

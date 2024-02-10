@@ -1,0 +1,43 @@
+<svg
+  width="16mm"
+  height="16mm"
+  viewBox="0 0 16 16">
+  <defs
+    id="Defs" />
+  <g
+    id="align-horizontal-right"
+    transform="matrix(0.666667,0,0,0.666666,-772,-396.90779)">
+    <g
+      id="g22329"
+      transform="matrix(-1,0,0,1,2264,0)">
+      <g
+        id="g22331">
+        <path
+          id="path22333"
+          style="fill:none;connector-curvature:0;opacity:0;"
+          transform="scale(-1,1)"
+          d="m -1106,595.3622 h 24 v 24 h -24 z " />
+        <path
+          id="path22335"
+          style="opacity:1;fill:#009909;fill-opacity:1;stroke-width:1.15469;connector-curvature:0;"
+          d="m 1085.0005,595.3622 h -1.9999 v 23.99993 h 1.9999 z " />
+        <path
+          id="path22337"
+          style="opacity:1;stroke-width:0.894425;connector-curvature:0;"
+          d="m 1103.0005,595.3624 h -15.9999 v 4 h 15.9999 z " />
+        <path
+          id="path22339"
+          style="opacity:1;stroke-width:1.03682;connector-curvature:0;nodetypes:ccccc;"
+          d="m 1098.0002,601.3623 h -10.9997 v 3 h 10.9997 z " />
+        <path
+          id="path22341"
+          style="connector-curvature:0;opacity:1;stroke-width:0.963615;"
+          d="m 1100.0004,606.3623 h -12.9998 v 3.99991 h 12.9998 z " />
+        <path
+          id="path22343"
+          style="connector-curvature:0;opacity:1;fill-opacity:0.501961;stroke-width:1.5;nodetypes:cccccccc;"
+          d="m 1091.0004,612.36224 v 2.00001 h 5.9999 v 2 h -5.9999 v 2.0009 l -3.9999,-3.0009 z " />
+      </g>
+    </g>
+  </g>
+</svg>

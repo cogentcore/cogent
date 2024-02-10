@@ -1,0 +1,70 @@
+<svg
+  width="1280px"
+  height="720px"
+  viewBox="0 0 1280 720"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs
+    id="Defs" />
+  <sodipodi:namedview
+    id="namedview81"
+    inkscape:current-layer=""
+    inkscape:cy="0"
+    inkscape:cx="0"
+    inkscape:zoom="1.1203125"
+    inkscape:document-units="px">
+    <inkscape:grid
+      id="grid887"
+      spacingy="12"
+      type="xygrid"
+      units="px"
+      spacingx="12" />
+  </sodipodi:namedview>
+  <rect
+    id="rect847"
+    style="stroke-opacity:1;stroke-width:1px;fill:#000000;fill-opacity:1;stroke:#000000;"
+    x="274"
+    y="219"
+    width="141.82858"
+    height="152.5143" />
+  <rect
+    id="rect59"
+    style="stroke-opacity:1;stroke-width:1px;fill:#FF00FF;fill-opacity:1;stroke:#000000;"
+    x="343.5"
+    y="244"
+    width="125"
+    height="102.1875" />
+  <rect
+    id="rect318"
+    style="stroke-opacity:1;stroke-width:1px;fill:#98FB98;fill-opacity:1;stroke:#000000;"
+    x="373"
+    y="289"
+    width="66.44444"
+    height="116.12903" />
+  <path
+    id="path81"
+    style="stroke:#000000;stroke-opacity:1;stroke-width:1px;fill:#0000FF;fill-opacity:1;"
+    d="m 527.5314,295.45328 204.4686,0 " />
+  <text
+    id="text425"
+    style="fill:#000000;fill-opacity:1;text-align:AlignLeft;font-family:Arial;font-size:36px;stroke:none;stroke-opacity:1;stroke-width:1px;"
+    x="521.28314"
+    y="211.54813">
+    <tspan
+      id="tspan456"
+      x="521.28314"
+      y="211.54813">Text</tspan>
+  </text>
+  <text
+    id="text511"
+    style="fill:#0000CD;fill-opacity:1;font-family:Arial;font-size:36px;text-align:AlignLeft;stroke:none;"
+    x="765.8577"
+    y="182.09206">
+    <tspan
+      id="tspan162"
+      x="765.8577"
+      y="182.09206">Text</tspan>
+  </text>
+</svg>

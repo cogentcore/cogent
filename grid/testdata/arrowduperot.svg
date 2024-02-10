@@ -1,0 +1,44 @@
+<svg
+  width="1280px"
+  height="720px"
+  viewBox="0 0 1280 720"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs
+    id="Defs">
+    <marker
+      id="Arrow1Mstart"
+      style="overflow:visible"
+      inkscape:stockid="Arrow1Mstart"
+      refX="0"
+      refY="0"
+      orient="auto">
+      <path
+        id="path"
+        style="fill-rule:evenodd;stroke-width:1.0pt;"
+        transform="scale(0.4) translate(10,0)"
+        d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z " />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+    id="namedview81"
+    inkscape:cy="0"
+    inkscape:zoom="1"
+    inkscape:document-units="px"
+    inkscape:current-layer=""
+    inkscape:cx="0">
+    <inkscape:grid
+      id="grid887"
+      spacingx="12"
+      spacingy="12"
+      type="xygrid"
+      units="px" />
+  </sodipodi:namedview>
+  <path
+    id="path318"
+    style="fill-opacity:1;marker-start:url(#Arrow1Mstart);stroke:#000000;stroke-opacity:1;stroke-width:2px;fill:#000000;"
+    transform="matrix(0.49999997,0.86602545,-0.86602545,0.49999997,1072.237,-517.16907)"
+    d="m 644.5462,735.1832 249.33334,67.5 " />
+</svg>
