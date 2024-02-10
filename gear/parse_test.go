@@ -9,7 +9,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	cmds := []string{"git", "go", "goki"}
+	cmds := []string{"git", "go"}
 	for _, cmd := range cmds {
 		a := NewCmd(cmd)
 		err := a.Parse()
@@ -20,7 +20,7 @@ func TestParse(t *testing.T) {
 }
 
 func TestGetHelp(t *testing.T) {
-	cmds := []string{"git", "go", "goki", "ls", "mv", "cp"}
+	cmds := []string{"git", "go", "ls", "mv", "cp"}
 	for _, cmd := range cmds {
 		a := NewCmd(cmd)
 		h, err := a.GetHelp()
