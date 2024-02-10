@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.21
 
 require (
-	cogentcore.org/core v0.0.4-0.20240204092027-5f7890b19e8a
+	cogentcore.org/core v0.0.5-0.20240210183506-8a1ba081dd41
 	github.com/go-delve/delve v1.22.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/mattn/go-shellwords v1.0.12
