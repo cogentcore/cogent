@@ -5,9 +5,11 @@
 package code
 
 import (
+	"path/filepath"
 	"testing"
 
 	"cogentcore.org/core/gi"
+	"cogentcore.org/core/grr"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/texteditor"
 )
@@ -19,7 +21,10 @@ func TestBind(t *testing.T) {
 	tv.SelectReg.End = lex.Pos{55, 0}
 
 	fpath := "/Users/oreilly/go/src/cogentcore.org/cogent/code/argvars_test.go"
-	projpath := "/Users/oreilly/go/src/github.com"
+	projpath := "/Users/oreilly/go/src/cogentcore.org"
+
+	afpath, err := filepath.Abs(fpath)
+	grr.Test(t, err)
 
 	pp := ProjSettings{}
 	pp.ProjRoot = gi.Filename(projpath)
@@ -34,8 +39,8 @@ func TestBind(t *testing.T) {
 	}
 
 	bv = avp.Bind("{FilePath}")
-	cv = fpath
-	if bv != fpath {
+	cv = afpath
+	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
@@ -46,7 +51,7 @@ func TestBind(t *testing.T) {
 	}
 
 	bv = avp.Bind("This is the: {FilePath} and so on")
-	cv = "This is the: " + fpath + " and so on"
+	cv = "This is the: " + afpath + " and so on"
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
@@ -58,7 +63,7 @@ func TestBind(t *testing.T) {
 	}
 
 	bv = avp.Bind("{FileDirProjRel}/{FilenameNoExt}")
-	cv = "goki/code/argvars_test"
+	cv = filepath.Join("cogent", "code", "argvars_test")
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
