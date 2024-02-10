@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"strings"
 
-	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -213,10 +213,8 @@ func (avp *ArgVarVals) Bind(arg string) string {
 		bs = bytes.Replace(bs, []byte("\\{"), []byte("{"), -1)
 	}
 
-	if goosi.TheApp != nil {
-		if goosi.TheApp.Platform() == goosi.Windows {
-			bs = bytes.Replace(bs, []byte("}/{"), []byte("}\\{"), -1)
-		}
+	if runtime.GOOS == "windows" {
+		bs = bytes.ReplaceAll(bs, []byte("/"), []byte("\\"))
 	}
 	return string(bs)
 }

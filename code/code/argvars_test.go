@@ -57,7 +57,7 @@ func TestBind(t *testing.T) {
 	}
 
 	bv = avp.Bind("{FileDir}/{Filename}")
-	cv = "code/argvars_test.go"
+	cv = filepath.Join("code", "argvars_test.go")
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
