@@ -24,6 +24,7 @@ import (
 	"cogentcore.org/core/pi/complete"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/pi/parse"
+	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 )
@@ -237,7 +238,7 @@ func (ge *CodeView) Indent() bool { //gti:add
 }
 
 // ReCase replaces currently selected text in current active view with given case
-func (ge *CodeView) ReCase(c textbuf.Cases) string { //gti:add
+func (ge *CodeView) ReCase(c strcase.Cases) string { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buf == nil {
 		return ""
