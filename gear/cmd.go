@@ -5,10 +5,7 @@
 // Package gear provides the generation of GUIs and interactive CLIs for any existing command line tools.
 package gear
 
-import (
-	"cogentcore.org/core/glop/sentence"
-	"cogentcore.org/core/strcase"
-)
+import "cogentcore.org/core/strcase"
 
 // Cmd contains all of the data for a parsed command line command.
 type Cmd struct {
@@ -29,7 +26,7 @@ type Cmd struct {
 func NewCmd(cmd string) *Cmd {
 	return &Cmd{
 		Cmd:  cmd,
-		Name: sentence.Case(strcase.ToCamel(cmd)),
+		Name: strcase.ToSentence(cmd),
 	}
 }
 

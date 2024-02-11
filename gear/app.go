@@ -22,7 +22,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/glop/sentence"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
@@ -61,7 +60,7 @@ func (a *App) AppBar(tb *gi.Toolbar) {
 	for _, cmd := range a.Cmd.Cmds {
 		cmd := cmd
 		fields := strings.Fields(cmd.Cmd)
-		text := sentence.Case(strcase.ToCamel(strings.Join(fields[1:], " ")))
+		text := strcase.ToSentence(strings.Join(fields[1:], " "))
 		bt := gi.NewButton(tb).SetText(text).SetTooltip(cmd.Doc)
 		bt.OnClick(func(e events.Event) {
 			d := gi.NewBody().AddTitle(text).AddText(cmd.Doc)
