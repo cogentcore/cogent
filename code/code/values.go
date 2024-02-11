@@ -53,26 +53,6 @@ func KeyMapsView(km *KeyMaps) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-//  PrefsView
-
-// PrefsView opens a view of user settings,
-// returns structview if new (nil if recycled)
-func PrefsView(pf *SettingsData) *giv.StructView {
-	if gi.ActivateExistingMainWindow(pf) {
-		return nil
-	}
-	d := gi.NewBody().SetTitle("Code Settings")
-	tv := giv.NewStructView(d).SetStruct(pf)
-	d.Scene.Data = pf
-
-	/*
-	 */
-
-	d.NewWindow().Run()
-	return tv
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
 //  ProjSettingsView
 
 // ProjSettingsView opens a view of project settings,

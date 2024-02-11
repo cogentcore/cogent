@@ -511,7 +511,7 @@ func (pv *PiView) ViewParseState() {
 
 // CurPanel returns the splitter panel that currently has keyboard focus
 func (pv *PiView) CurPanel() int {
-	sv := pv.SplitView()
+	sv := pv.Splits()
 	if sv == nil {
 		return -1
 	}
@@ -526,7 +526,7 @@ func (pv *PiView) CurPanel() int {
 
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
 func (pv *PiView) FocusOnPanel(panel int) bool {
-	sv := pv.SplitView()
+	sv := pv.Splits()
 	if sv == nil {
 		return false
 	}
@@ -538,7 +538,7 @@ func (pv *PiView) FocusOnPanel(panel int) bool {
 
 // FocusNextPanel moves the keyboard focus to the next panel to the right
 func (pv *PiView) FocusNextPanel() {
-	sv := pv.SplitView()
+	sv := pv.Splits()
 	if sv == nil {
 		return
 	}
@@ -559,7 +559,7 @@ func (pv *PiView) FocusNextPanel() {
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
 func (pv *PiView) FocusPrevPanel() {
-	sv := pv.SplitView()
+	sv := pv.Splits()
 	if sv == nil {
 		return
 	}
@@ -738,13 +738,13 @@ func (pv *PiView) Config() {
 	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
 	config := ki.Config{}
 	config.Add(gi.ToolbarType, "toolbar")
-	config.Add(gi.SplitViewType, "splitview")
+	config.Add(gi.SplitsType, "splitview")
 	config.Add(gi.FrameType, "statusbar")
 	mods, updt := pv.ConfigChildren(config)
 	if !mods {
 		updt = pv.UpdateStart()
 	}
-	pv.ConfigSplitView()
+	pv.ConfigSplits()
 	pv.ConfigStatusBar()
 	pv.ConfigToolbar()
 	pv.UpdateEnd(updt)
@@ -756,41 +756,41 @@ func (pv *PiView) IsConfiged() bool {
 	if len(pv.Kids) == 0 {
 		return false
 	}
-	sv := pv.SplitView()
+	sv := pv.Splits()
 	if len(sv.Kids) == 0 {
 		return false
 	}
 	return true
 }
 
-// SplitView returns the main SplitView
-func (pv *PiView) SplitView() *gi.SplitView {
-	return pv.ChildByName("splitview", 4).(*gi.SplitView)
+// Splits returns the main Splits
+func (pv *PiView) Splits() *gi.Splits {
+	return pv.ChildByName("splitview", 4).(*gi.Splits)
 }
 
 // LexTree returns the lex rules tree view
 func (pv *PiView) LexTree() *giv.TreeView {
-	return pv.SplitView().Child(LexRulesIdx).Child(0).(*giv.TreeView)
+	return pv.Splits().Child(LexRulesIdx).Child(0).(*giv.TreeView)
 }
 
 // ParseTree returns the parse rules tree view
 func (pv *PiView) ParseTree() *giv.TreeView {
-	return pv.SplitView().Child(ParseRulesIdx).Child(0).(*giv.TreeView)
+	return pv.Splits().Child(ParseRulesIdx).Child(0).(*giv.TreeView)
 }
 
 // AstTree returns the Ast output tree view
 func (pv *PiView) AstTree() *giv.TreeView {
-	return pv.SplitView().Child(AstOutIdx).Child(0).(*giv.TreeView)
+	return pv.Splits().Child(AstOutIdx).Child(0).(*giv.TreeView)
 }
 
 // StructView returns the StructView for editing rules
 func (pv *PiView) StructView() *giv.StructView {
-	return pv.SplitView().Child(StructViewIdx).(*giv.StructView)
+	return pv.Splits().Child(StructViewIdx).(*giv.StructView)
 }
 
 // MainTabs returns the main TabView
 func (pv *PiView) MainTabs() *gi.TabView {
-	return pv.SplitView().Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+	return pv.Splits().Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
 }
 
 // StatusBar returns the statusbar widget
@@ -838,8 +838,8 @@ func (pv *PiView) ConfigToolbar() {
 	giv.ToolbarView(pv, pv.Viewport, tb)
 }
 
-// SplitViewConfig returns a TypeAndNameList for configuring the SplitView
-func (pv *PiView) SplitViewConfig() ki.Config {
+// SplitsConfig returns a TypeAndNameList for configuring the Splits
+func (pv *PiView) SplitsConfig() ki.Config {
 	config := ki.Config{}
 	config.Add(gi.FrameType, "lex-tree-fr")
 	config.Add(gi.FrameType, "parse-tree-fr")
@@ -867,10 +867,10 @@ func (pv *PiView) MonitorOut() {
 	pv.OutMonMu.Unlock()
 }
 
-// ConfigSplitView configures the SplitView.
-func (pv *PiView) ConfigSplitView() {
+// ConfigSplits configures the Splits.
+func (pv *PiView) ConfigSplits() {
 	fs := &pv.FileState
-	split := pv.SplitView()
+	split := pv.Splits()
 	if split == nil {
 		return
 	}
@@ -879,7 +879,7 @@ func (pv *PiView) ConfigSplitView() {
 	split.SetProp("white-space", styles.WhiteSpacePreWrap)
 	split.SetProp("tab-size", 4)
 
-	config := pv.SplitViewConfig()
+	config := pv.SplitsConfig()
 	mods, updt := split.ConfigChildren(config)
 	if mods {
 		lxfr := split.Child(LexRulesIdx).(*gi.Frame)

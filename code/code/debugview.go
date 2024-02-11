@@ -1257,19 +1257,19 @@ func (vv *VarView) ConfigVarView() {
 	return
 }
 
-// SplitView returns the main SplitView
-func (vv *VarView) SplitView() *gi.Splits {
+// Splits returns the main Splits
+func (vv *VarView) Splits() *gi.Splits {
 	return vv.ChildByName("splitview", 1).(*gi.Splits)
 }
 
 // TreeView returns the main TreeView
 func (vv *VarView) TreeView() *giv.TreeView {
-	return vv.SplitView().Child(0).Child(0).(*giv.TreeView)
+	return vv.Splits().Child(0).Child(0).(*giv.TreeView)
 }
 
 // StructView returns the main StructView
 func (vv *VarView) StructView() *giv.StructView {
-	return vv.SplitView().Child(1).(*giv.StructView)
+	return vv.Splits().Child(1).(*giv.StructView)
 }
 
 func (vv *VarView) ConfigToolbar(tb *gi.Toolbar) {
@@ -1290,12 +1290,12 @@ func (vv *VarView) SetFrameInfo(finfo string) {
 	lab.Text = finfo
 }
 
-// ConfigSplits configures the SplitView.
+// ConfigSplits configures the Splits.
 func (vv *VarView) ConfigSplits() {
 	if vv.Var == nil {
 		return
 	}
-	split := vv.SplitView()
+	split := vv.Splits()
 
 	if len(split.Kids) == 0 {
 		tvfr := gi.NewFrame(split, "tvfr")
