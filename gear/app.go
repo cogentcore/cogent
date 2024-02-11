@@ -27,11 +27,11 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/ki"
+	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/units"
 	"cogentcore.org/core/xe"
-	"github.com/iancoleman/strcase"
 	"github.com/mattn/go-shellwords"
 	"github.com/robert-nix/ansihtml"
 )

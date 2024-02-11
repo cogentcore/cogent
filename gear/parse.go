@@ -12,8 +12,8 @@ import (
 	"unicode"
 
 	"cogentcore.org/core/grr"
+	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/xe"
-	"github.com/iancoleman/strcase"
 )
 
 // Parse uses the help messages of the app to fill in its data fields.
