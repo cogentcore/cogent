@@ -10,6 +10,7 @@ import (
 	"log"
 	"strings"
 
+	"cogentcore.org/core/gi"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
@@ -37,9 +38,9 @@ func MarkerFromNodeProp(kn ki.Ki, prop string) (string, int, MarkerColors) {
 	if id > 0 {
 		_, sid := svg.SplitNameIdDig(kn.Name())
 		if id == sid { // if match, then copy
-			mc = MarkerCopyColor
+			mc = MarkerCopy
 		} else { // then custom
-			mc = MarkerCustomColor
+			mc = MarkerCust
 		}
 	}
 	return nm, id, mc
@@ -66,9 +67,9 @@ func RecycleMarker(sg *svg.SVG, sii svg.Node, name string, id int, mc MarkerColo
 		if newmk {
 			MarkerDeleteCtxtColors(mmk) // get rid of those context-stroke etc
 		}
-	case MarkerCopyColor:
+	case MarkerCopy:
 		MarkerSetColors(mmk, fc, sc)
-	case MarkerCustomColor:
+	case MarkerCust:
 		if newmk {
 			MarkerSetColors(mmk, "blue", "red")
 		}
@@ -123,7 +124,6 @@ func MarkerDeleteCtxtColors(mk *svg.Marker) {
 // NewMarkerFromXML makes a new marker from given XML source.
 func NewMarkerFromXML(name, xml string) *svg.Marker {
 	tmpsvg := &svg.SVG{}
-	tmpsvg.InitName(tmpsvg, "tmpsvg")
 	b := bytes.NewBufferString(xml)
 	err := tmpsvg.ReadXML(b)
 	if err != nil && err != io.EOF {
@@ -131,11 +131,11 @@ func NewMarkerFromXML(name, xml string) *svg.Marker {
 		log.Println(err)
 		return nil
 	}
-	if tmpsvg.NumChildren() != 1 {
-		log.Printf("NewMarkerFromXML: kids != 1 (%d) after loading marker XML for %s", tmpsvg.NumChildren(), name)
+	if tmpsvg.Root.NumChildren() != 1 {
+		log.Printf("NewMarkerFromXML: kids != 1 (%d) after loading marker XML for %s", tmpsvg.Root.NumChildren(), name)
 		return nil
 	}
-	mk := tmpsvg.Child(0).(*svg.Marker)
+	mk := tmpsvg.Root.Child(0).(*svg.Marker)
 	mk.SetName(name)
 	ki.UniquifyNamesAll(mk) // critical b/c doing copy!
 	return mk
@@ -149,15 +149,15 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 		log.Printf("NewMarker: marker named %s not found in AllMarkersSVGMap -- will likely crash!\n")
 		return nil
 	}
-	updt := sg.UpdateStart()
+	// updt := sg.UpdateStart()
 	nmk := &svg.Marker{}
 	fnm := svg.NameId(name, id)
 	nmk.InitName(nmk, fnm)
 	nmk.CopyFrom(mk)
 	mk.SetName(fnm) // double check
-	sg.SetChildAdded()
+	sg.Root.SetChildAdded()
 	sg.Defs.AddChild(nmk)
-	sg.UpdateEnd(updt)
+	// sg.UpdateEnd(updt)
 	return nmk
 }
 
@@ -169,13 +169,13 @@ func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors
 		return
 	}
 	if name == "" || name == "-" {
-		if onm != "" && omc == MarkerCopyColor {
+		if onm != "" && omc == MarkerCopy {
 			sg.Defs.DeleteChildByName(svg.NameId(onm, oid), ki.DestroyKids)
 		}
 		sii.DeleteProp(prop)
 		return
 	}
-	if omc == MarkerCopyColor && omc != mc { // implies onm != ""
+	if omc == MarkerCopy && omc != mc { // implies onm != ""
 		sg.Defs.DeleteChildByName(svg.NameId(onm, oid), ki.DestroyKids)
 	}
 
@@ -189,9 +189,9 @@ func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors
 	switch mc {
 	case MarkerDef:
 		nmk = RecycleMarker(sg, sii, name, 0, mc)
-	case MarkerCopyColor:
+	case MarkerCopy:
 		nmk = RecycleMarker(sg, sii, name, nid, mc)
-	case MarkerCustomColor:
+	case MarkerCust:
 		id := oid
 		if onm != name || id == 0 {
 			id = sg.NewUniqueId()
@@ -204,7 +204,7 @@ func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors
 // MarkerUpdateColorProp updates marker color for given marker property
 func MarkerUpdateColorProp(sg *svg.SVG, sii svg.Node, prop string) {
 	nm, id, mc := MarkerFromNodeProp(sii, prop)
-	if nm == "" || mc != MarkerCopyColor {
+	if nm == "" || mc != MarkerCopy {
 		return
 	}
 	RecycleMarker(sg, sii, nm, id, mc)
@@ -297,26 +297,26 @@ func MarkerIconsInit() {
 			empty = false
 			AllMarkersSVGMap[k] = mk
 		}
-		ic := &svg.Icon{}
+		ic := &gi.Icon{}
 		ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
-		ic.SetProp("width", units.NewCh(6))
-		ic.SetProp("height", units.NewEm(2))
-		ic.ViewBox.Size = mat32.V2(1, 1)
+		ic.Styles.Min.X.Ch(6)
+		ic.Styles.Min.Y.Em(2)
+		ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)
 		var p *svg.Path
 		lk := strings.ToLower(k)
 		start := true
 		switch {
 		case empty:
-			p = svg.AddNewPath(ic, "p", "M 0.1 0.5 0.9 0.5 Z")
+			p = svg.NewPath(ic, "p", "M 0.1 0.5 0.9 0.5 Z")
 		case strings.Contains(lk, "end"):
 			start = false
-			p = svg.AddNewPath(ic, "p", "M 0.8 0.5 0.9 0.5 Z")
+			p = svg.NewPath(ic, "p", "M 0.8 0.5 0.9 0.5 Z")
 		case strings.Contains(lk, "start"):
-			p = svg.AddNewPath(ic, "p", "M 0.1 0.5 0.2 0.5 Z")
+			p = svg.NewPath(ic, "p", "M 0.1 0.5 0.2 0.5 Z")
 		default:
-			p = svg.AddNewPath(ic, "p", "M 0.4 0.5 0.5 0.5 Z")
+			p = svg.NewPath(ic, "p", "M 0.4 0.5 0.5 0.5 Z")
 		}
-		p.SetProp("stroke-width", units.NewPct(5))
+		p.SetProp("stroke-width", units.Pw(5))
 		if !empty {
 			mk := NewMarker(&ic.SVG, k, 0)
 			MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
@@ -326,7 +326,7 @@ func MarkerIconsInit() {
 				p.SetProp("marker-end", svg.NameToURL(k))
 			}
 		}
-		svg.CurIconSet[ic.Nm] = ic
+		// svg.CurIconSet[ic.Nm] = ic
 	}
 	MarkerIconsInited = true
 }

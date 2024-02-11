@@ -196,12 +196,12 @@ func DashIconsInit() {
 	for k, v := range AllDashesMap {
 		ic := &gi.SVG{}
 		ic.InitName(ic, k)
-		ic.SetProp("width", units.NewCh(20))
-		ic.ViewBox.Size = mat32.V2(1, 1)
-		p := svg.AddNewPath(ic, "p", "M 0.05 0.5 .95 0.5 Z")
-		p.SetProp("stroke-width", units.NewPct(2))
+		ic.SetProp("width", units.Ch(20))
+		ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)
+		p := svg.NewPath(ic, "p", "M 0.05 0.5 .95 0.5 Z")
+		p.SetProp("stroke-width", units.Pw(2))
 		p.SetProp("stroke-dasharray", DashString(DashMulWidth(.05, v)))
-		svg.CurIconSet[ic.Nm] = ic
+		// svg.CurIconSet[ic.Nm] = ic
 	}
 	DashIconsInited = true
 }

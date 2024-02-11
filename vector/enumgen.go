@@ -267,11 +267,11 @@ func (i *Aligns) UnmarshalText(text []byte) error {
 	return nil
 }
 
-var _BBoxPointsValues = []BBoxPoints{0, 1, 2, 3, 4, 5, 6}
+var _BBoxPointsValues = []BBoxPoints{0, 1, 2, 3, 4, 5}
 
 // BBoxPointsN is the highest valid value
 // for type BBoxPoints, plus one.
-const BBoxPointsN BBoxPoints = 7
+const BBoxPointsN BBoxPoints = 6
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
@@ -283,17 +283,15 @@ func _BBoxPointsNoOp() {
 	_ = x[BBTop-(3)]
 	_ = x[BBMiddle-(4)]
 	_ = x[BBBottom-(5)]
-	_ = x[BBoxPointsN-(6)]
 }
 
 var _BBoxPointsNameToValueMap = map[string]BBoxPoints{
-	`BBLeft`:      0,
-	`BBCenter`:    1,
-	`BBRight`:     2,
-	`BBTop`:       3,
-	`BBMiddle`:    4,
-	`BBBottom`:    5,
-	`BBoxPointsN`: 6,
+	`BBLeft`:   0,
+	`BBCenter`: 1,
+	`BBRight`:  2,
+	`BBTop`:    3,
+	`BBMiddle`: 4,
+	`BBBottom`: 5,
 }
 
 var _BBoxPointsDescMap = map[BBoxPoints]string{
@@ -303,7 +301,6 @@ var _BBoxPointsDescMap = map[BBoxPoints]string{
 	3: ``,
 	4: ``,
 	5: ``,
-	6: ``,
 }
 
 var _BBoxPointsMap = map[BBoxPoints]string{
@@ -313,7 +310,6 @@ var _BBoxPointsMap = map[BBoxPoints]string{
 	3: `BBTop`,
 	4: `BBMiddle`,
 	5: `BBBottom`,
-	6: `BBoxPointsN`,
 }
 
 // String returns the string representation
@@ -497,11 +493,11 @@ func (i *MarkerColors) UnmarshalText(text []byte) error {
 	return nil
 }
 
-var _PaintTypesValues = []PaintTypes{0, 1, 2, 3, 4, 5}
+var _PaintTypesValues = []PaintTypes{0, 1, 2, 3, 4}
 
 // PaintTypesN is the highest valid value
 // for type PaintTypes, plus one.
-const PaintTypesN PaintTypes = 6
+const PaintTypesN PaintTypes = 5
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
@@ -512,7 +508,6 @@ func _PaintTypesNoOp() {
 	_ = x[PaintLinear-(2)]
 	_ = x[PaintRadial-(3)]
 	_ = x[PaintInherit-(4)]
-	_ = x[PaintTypesN-(5)]
 }
 
 var _PaintTypesNameToValueMap = map[string]PaintTypes{
@@ -521,7 +516,6 @@ var _PaintTypesNameToValueMap = map[string]PaintTypes{
 	`Linear`:  2,
 	`Radial`:  3,
 	`Inherit`: 4,
-	`TypesN`:  5,
 }
 
 var _PaintTypesDescMap = map[PaintTypes]string{
@@ -530,7 +524,6 @@ var _PaintTypesDescMap = map[PaintTypes]string{
 	2: ``,
 	3: ``,
 	4: ``,
-	5: ``,
 }
 
 var _PaintTypesMap = map[PaintTypes]string{
@@ -539,7 +532,6 @@ var _PaintTypesMap = map[PaintTypes]string{
 	2: `Linear`,
 	3: `Radial`,
 	4: `Inherit`,
-	5: `TypesN`,
 }
 
 // String returns the string representation
@@ -616,11 +608,11 @@ func (i *PaintTypes) UnmarshalText(text []byte) error {
 	return nil
 }
 
-var _StdSizesValues = []StdSizes{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22}
+var _StdSizesValues = []StdSizes{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}
 
 // StdSizesN is the highest valid value
 // for type StdSizes, plus one.
-const StdSizesN StdSizes = 23
+const StdSizesN StdSizes = 22
 
 // An "invalid array index" compiler error signifies that the constant values have changed.
 // Re-run the enumgen command to generate them again.
@@ -648,7 +640,6 @@ func _StdSizesNoOp() {
 	_ = x[A8-(19)]
 	_ = x[A9-(20)]
 	_ = x[A10-(21)]
-	_ = x[StdSizesN-(22)]
 }
 
 var _StdSizesNameToValueMap = map[string]StdSizes{
@@ -674,7 +665,6 @@ var _StdSizesNameToValueMap = map[string]StdSizes{
 	`A8`:           19,
 	`A9`:           20,
 	`A10`:          21,
-	`StdSizesN`:    22,
 }
 
 var _StdSizesDescMap = map[StdSizes]string{
@@ -700,7 +690,6 @@ var _StdSizesDescMap = map[StdSizes]string{
 	19: `A8 = 52 x 74 mm`,
 	20: `A9 = 37 x 52`,
 	21: `A10 = 26 x 37`,
-	22: ``,
 }
 
 var _StdSizesMap = map[StdSizes]string{
@@ -726,7 +715,6 @@ var _StdSizesMap = map[StdSizes]string{
 	19: `A8`,
 	20: `A9`,
 	21: `A10`,
-	22: `StdSizesN`,
 }
 
 // String returns the string representation

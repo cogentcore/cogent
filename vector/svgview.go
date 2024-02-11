@@ -535,7 +535,7 @@ func (sv *SVGView) SetTransform() {
 // if mknew is true, it will create new ones if not found.
 func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	if sv.NumChildren() > 0 {
-		kd := sv.Kids[0]
+		kd := sv.SVG.Root.Kids[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
 			main = md
 		}

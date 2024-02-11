@@ -32,7 +32,7 @@ type PhysSize struct {
 
 func (ps *PhysSize) Defaults() {
 	ps.StdSize = Img1280x720
-	ps.Units = units.Px
+	ps.Units = units.UnitPx
 	ps.Size.Set(1280, 720)
 	ps.Vector = 12
 }
@@ -74,7 +74,7 @@ func (ps *PhysSize) SetFromSVG(sv *SVGView) {
 func (ps *PhysSize) SetToSVG(sv *SVGView) {
 	sv.PhysWidth.Set(ps.Size.X, ps.Units)
 	sv.PhysHeight.Set(ps.Size.Y, ps.Units)
-	sv.ViewBox.Size = ps.Size
+	sv.Root.ViewBox.Size = ps.Size
 	sv.Vector = ps.Vector
 }
 

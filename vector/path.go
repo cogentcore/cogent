@@ -6,40 +6,34 @@ package vector
 
 import (
 	"fmt"
-	"image"
 
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
-	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 )
 
-func (gv *VectorView) NodeToolbar() *gi.Toolbar {
-	tbs := gv.ModalToolbarStack()
+func (vv *VectorView) NodeToolbar() *gi.Toolbar {
+	tbs := vv.ModalToolbarStack()
 	tb := tbs.ChildByName("node-tb", 0).(*gi.Toolbar)
 	return tb
 }
 
 // ConfigNodeToolbar configures the node modal toolbar (default tooblar)
-func (gv *VectorView) ConfigNodeToolbar() {
-	tb := gv.NodeToolbar()
+func (vv *VectorView) ConfigNodeToolbar() {
+	tb := vv.NodeToolbar()
 	if tb.HasChildren() {
 		return
 	}
-	tb.SetStretchMaxWidth()
 
-	grs := gi.NewSwitch(tb, "snap-node")
-	grs.SetText("Snap Node")
-	grs.Tooltip = "snap movement and sizing of nodes, using overall snap settings"
-	grs.SetChecked(Prefs.SnapNodes)
-	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.ButtonToggled) {
-			Prefs.SnapNodes = grs.IsChecked()
-		}
+	grs := gi.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Prefs.SnapNodes).
+		SetTooltip("snap movement and sizing of nodes, using overall snap settings")
+	grs.OnChange(func(e events.Event) {
+		Prefs.SnapNodes = grs.IsChecked()
 	})
 
-	gi.NewSeparator(tb, "sep-snap")
+	gi.NewSeparator(tb)
 
 	// tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
 	// 	gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
@@ -49,39 +43,34 @@ func (gv *VectorView) ConfigNodeToolbar() {
 	//
 	// gi.NewSeparator(tb, "sep-group")
 
-	gi.NewLabel(tb, "posx-lab", "X: ").SetProp("vertical-align", styles.AlignMiddle)
-	px := gi.NewSpinner(tb, "posx")
-	px.SetProp("step", 1)
-	px.SetValue(0)
-	px.Tooltip = "horizontal coordinate of node, in document units"
-	px.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		grr := recv.Embed(KiT_VectorView).(*VectorView)
-		grr.NodeSetXPos(px.Value)
+	gi.NewLabel(tb).SetText("X: ")
+
+	px := gi.NewSpinner(tb, "posx").SetStep(1).SetValue(0).
+		SetTooltip("horizontal coordinate of node, in document units")
+	px.OnChange(func(e events.Event) {
+		vv.NodeSetXPos(px.Value)
 	})
 
-	gi.NewLabel(tb, "posy-lab", "Y: ").SetProp("vertical-align", styles.AlignMiddle)
-	py := gi.NewSpinner(tb, "posy")
-	py.SetProp("step", 1)
-	py.SetValue(0)
-	py.Tooltip = "vertical coordinate of node, in document units"
-	py.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		grr := recv.Embed(KiT_VectorView).(*VectorView)
-		grr.NodeSetYPos(py.Value)
+	gi.NewLabel(tb).SetText("Y: ")
+
+	py := gi.NewSpinner(tb, "posy").SetStep(1).SetValue(0).
+		SetTooltip("vertical coordinate of node, in document units")
+	py.OnChange(func(e events.Event) {
+		vv.NodeSetYPos(py.Value)
 	})
 
 }
 
 // NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
-func (gv *VectorView) NodeEnableFunc(act *gi.Button) {
+func (vv *VectorView) NodeEnableFunc(act *gi.Button) {
 	// es := &gv.EditState
 	// act.SetInactiveState(!es.HasNodeed())
 }
 
 // UpdateNodeToolbar updates the node toolbar based on current nodeion
-func (gv *VectorView) UpdateNodeToolbar() {
-	tb := gv.NodeToolbar()
-	tb.UpdateActions()
-	es := &gv.EditState
+func (vv *VectorView) UpdateNodeToolbar() {
+	tb := vv.NodeToolbar()
+	es := &vv.EditState
 	if es.Tool != NodeTool {
 		return
 	}
@@ -94,26 +83,26 @@ func (gv *VectorView) UpdateNodeToolbar() {
 ///////////////////////////////////////////////////////////////////////
 //   Actions
 
-func (gv *VectorView) NodeSetXPos(xp float32) {
-	es := &gv.EditState
+func (vv *VectorView) NodeSetXPos(xp float32) {
+	es := &vv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := vv.SVG()
 	sv.UndoSave("NodeToX", fmt.Sprintf("%g", xp))
 	// todo
-	gv.ChangeMade()
+	vv.ChangeMade()
 }
 
-func (gv *VectorView) NodeSetYPos(yp float32) {
-	es := &gv.EditState
+func (vv *VectorView) NodeSetYPos(yp float32) {
+	es := &vv.EditState
 	if !es.HasSelected() {
 		return
 	}
-	sv := gv.SVG()
+	sv := vv.SVG()
 	sv.UndoSave("NodeToY", fmt.Sprintf("%g", yp))
 	// todo
-	gv.ChangeMade()
+	vv.ChangeMade()
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -152,7 +141,7 @@ type PathNode struct {
 
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
 func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Root.BBox.Min)
 	pxf := path.ParTransform(true) // include self
 
 	lstCmdIdx := 0
@@ -177,43 +166,39 @@ func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 }
 
 func (sv *SVGView) UpdateNodeSprites() {
-	win := sv.VectorView.ParentWindow()
-	updt := win.UpdateStart()
-	defer win.UpdateEnd(updt)
+	/*
+		es := sv.EditState()
+		prvn := es.NNodeSprites
 
-	es := sv.EditState()
-	prvn := es.NNodeSprites
+		path := es.FirstSelectedPath()
 
-	path := es.FirstSelectedPath()
+		if path == nil {
+			sv.RemoveNodeSprites(win)
+			win.UpdateSig()
+			return
+		}
 
-	if path == nil {
-		sv.RemoveNodeSprites(win)
-		win.UpdateSig()
-		return
-	}
+		es.PathNodes, es.PathCmds = sv.PathNodes(path)
+		es.NNodeSprites = len(es.PathNodes)
+		es.ActivePath = path
 
-	es.PathNodes, es.PathCmds = sv.PathNodes(path)
-	es.NNodeSprites = len(es.PathNodes)
-	es.ActivePath = path
+		for i, pn := range es.PathNodes {
+			idx := i // key to get local var
+			sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+				ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+				ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
+			})
+			SetSpritePos(sp, image.Point{int(pn.WinPt.X), int(pn.WinPt.Y)})
+		}
 
-	for i, pn := range es.PathNodes {
-		idx := i // key to get local var
-		sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
-			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			// ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
-		})
-		SetSpritePos(sp, image.Point{int(pn.WinPt.X), int(pn.WinPt.Y)})
-	}
+		// remove extra
+		for i := es.NNodeSprites; i < prvn; i++ {
+			spnm := SpriteName(SpNodePoint, SpUnk, i)
+			win.InactivateSprite(spnm)
+		}
 
-	// remove extra
-	for i := es.NNodeSprites; i < prvn; i++ {
-		spnm := SpriteName(SpNodePoint, SpUnk, i)
-		win.InactivateSprite(spnm)
-	}
-
-	sv.VectorView.UpdateNodeToolbar()
-
-	win.UpdateSig()
+		sv.VectorView.UpdateNodeToolbar()
+	*/
 }
 
 func (sv *SVGView) RemoveNodeSprites() {

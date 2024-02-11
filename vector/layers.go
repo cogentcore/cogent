@@ -7,9 +7,9 @@ package vector
 import (
 	"fmt"
 
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/ki"
+	"cogentcore.org/core/laser"
 	"cogentcore.org/core/svg"
 )
 
@@ -47,7 +47,7 @@ type Layers []*Layer
 
 func (ly *Layers) SyncLayers(sv *SVGView) {
 	*ly = make(Layers, 0)
-	for _, kc := range sv.Kids {
+	for _, kc := range sv.Root.Kids {
 		if NodeIsLayer(kc) {
 			l := &Layer{Name: kc.Name()}
 			l.FromNode(kc)
@@ -56,10 +56,10 @@ func (ly *Layers) SyncLayers(sv *SVGView) {
 	}
 }
 
-func (ly *Layers) LayersUpdated(svg *SVGView) {
+func (ly *Layers) LayersUpdated(sv *SVGView) {
 	si := 1 // starting index -- assuming namedview
 	for i, l := range *ly {
-		kc := svg.ChildByName(l.Name, si+i)
+		kc := sv.Root.ChildByName(l.Name, si+i)
 		if kc != nil {
 			l.ToNode(kc)
 		}
@@ -79,17 +79,17 @@ func (ly *Layers) LayerIdxByName(nm string) int {
 //  VectorView
 
 // FirstLayerIndex returns index of first layer group in svg
-func (gv *VectorView) FirstLayerIndex() int {
-	sv := gv.SVG()
-	for i, kc := range sv.Kids {
+func (vv *VectorView) FirstLayerIndex() int {
+	sv := vv.SVG()
+	for i, kc := range sv.Root.Kids {
 		if NodeIsLayer(kc) {
 			return i
 		}
 	}
-	return min(1, len(sv.Kids))
+	return min(1, len(sv.Root.Kids))
 }
 
-func (gv *VectorView) LayerViewSigs(lyv *giv.TableView) {
+func (vv *VectorView) LayerViewSigs(lyv *giv.TableView) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
 	// lyv.ViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
@@ -129,16 +129,16 @@ func (gv *VectorView) LayerViewSigs(lyv *giv.TableView) {
 	// })
 }
 
-func (gv *VectorView) SyncLayers() {
-	sv := gv.SVG()
-	gv.EditState.Layers.SyncLayers(sv)
+func (vv *VectorView) SyncLayers() {
+	sv := vv.SVG()
+	vv.EditState.Layers.SyncLayers(sv)
 }
 
-func (gv *VectorView) UpdateLayerView() {
-	gv.SyncLayers()
-	es := &gv.EditState
+func (vv *VectorView) UpdateLayerView() {
+	vv.SyncLayers()
+	es := &vv.EditState
 	lys := &es.Layers
-	lyv := gv.LayerView()
+	lyv := vv.LayerView()
 	lyv.SetSlice(lys)
 	nl := len(*lys)
 	if nl == 0 {
@@ -149,38 +149,37 @@ func (gv *VectorView) UpdateLayerView() {
 		ci = nl - 1
 		es.CurLayer = (*lys)[ci].Name
 	}
-	lyv.ClearSelected()
+	// lyv.ClearSelected() // todo
 	lyv.SelectIdx(ci)
 }
 
-func (gv *VectorView) AddLayer() {
-	sv := gv.SVG()
-	updt := sv.UpdateStart()
-	defer sv.UpdateEnd(updt)
+func (vv *VectorView) AddLayer() {
+	sv := vv.SVG()
+	svr := &vv.SVG().Root
 
-	lys := &gv.EditState.Layers
+	lys := &vv.EditState.Layers
 	lys.SyncLayers(sv)
 	nl := len(*lys)
 	si := 1 // starting index -- assuming namedview
 	if nl == 0 {
-		bg := sv.InsertNewChild(svg.KiT_Group, si, "LayerBG")
+		bg := svr.InsertNewChild(svg.GroupType, si, "LayerBG")
 		bg.SetProp("groupmode", "layer")
-		l1 := sv.InsertNewChild(svg.KiT_Group, si+1, "Layer1")
+		l1 := svr.InsertNewChild(svg.GroupType, si+1, "Layer1")
 		l1.SetProp("groupmode", "layer")
-		sv.SetChildAdded()
-		nk := len(sv.Kids)
+		svr.SetChildAdded()
+		nk := len(sv.Root.Kids)
 		for i := nk - 1; i >= 3; i-- {
-			kc := sv.Child(i)
+			kc := svr.Child(i)
 			ki.MoveToParent(kc, l1)
 		}
-		gv.SetCurLayer(l1.Name())
+		vv.SetCurLayer(l1.Name())
 	} else {
-		l1 := sv.InsertNewChild(svg.KiT_Group, si+nl, fmt.Sprintf("Layer%d", nl))
-		sv.SetChildAdded()
+		l1 := svr.InsertNewChild(svg.GroupType, si+nl, fmt.Sprintf("Layer%d", nl))
+		svr.SetChildAdded()
 		l1.SetProp("groupmode", "layer")
-		gv.SetCurLayer(l1.Name())
+		vv.SetCurLayer(l1.Name())
 	}
-	gv.UpdateLayerView()
+	vv.UpdateLayerView()
 }
 
 /////////////////////////////////////////////////////////////////
@@ -194,7 +193,8 @@ func NodeIsLayer(kn ki.Ki) bool {
 
 // LayerIsLocked returns true if layer is locked (insensitive = true)
 func LayerIsLocked(kn ki.Ki) bool {
-	return laser.ToBool(kn.Prop("insensitive"))
+	b, _ := laser.ToBool(kn.Prop("insensitive"))
+	return b
 }
 
 // LayerIsVisible returns true if layer is visible
@@ -218,21 +218,21 @@ func NodeParentLayer(kn ki.Ki) ki.Ki {
 
 // IsCurLayer returns true if given layer is the current layer
 // for creating items
-func (gv *VectorView) IsCurLayer(lay string) bool {
-	return gv.EditState.CurLayer == lay
+func (vv *VectorView) IsCurLayer(lay string) bool {
+	return vv.EditState.CurLayer == lay
 }
 
 // SetCurLayer sets the current layer for creating items to given one
-func (gv *VectorView) SetCurLayer(lay string) {
-	gv.EditState.CurLayer = lay
-	gv.SetStatus("set current layer to: " + lay)
+func (vv *VectorView) SetCurLayer(lay string) {
+	vv.EditState.CurLayer = lay
+	vv.SetStatus("set current layer to: " + lay)
 }
 
 // ClearCurLayer clears the current layer for creating items if it
 // was set to the given layer name
-func (gv *VectorView) ClearCurLayer(lay string) {
-	if gv.EditState.CurLayer == lay {
-		gv.EditState.CurLayer = ""
-		gv.SetStatus("clear current layer from: " + lay)
+func (vv *VectorView) ClearCurLayer(lay string) {
+	if vv.EditState.CurLayer == lay {
+		vv.EditState.CurLayer = ""
+		vv.SetStatus("clear current layer from: " + lay)
 	}
 }

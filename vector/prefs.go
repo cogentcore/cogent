@@ -15,11 +15,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/goosi"
-	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/svg"
-	"cogentcore.org/core/units"
 )
 
 // Preferences is the overall Vector preferences
@@ -77,31 +73,31 @@ func (pf *Preferences) Defaults() {
 	pf.ColorSchemes = DefaultColorSchemes()
 	pf.ShapeStyle.Defaults()
 	pf.ShapeStyle.FontStyle.Family = "Arial"
-	pf.ShapeStyle.FontStyle.Size.Set(12, units.Px)
-	pf.ShapeStyle.FillStyle.Color.SetName("blue")
-	pf.ShapeStyle.StrokeStyle.On = true
-	pf.ShapeStyle.FillStyle.On = true
+	pf.ShapeStyle.FontStyle.Size.Px(12)
+	// pf.ShapeStyle.FillStyle.Color.SetName("blue")
+	// pf.ShapeStyle.StrokeStyle.On = true // todo: image
+	// pf.ShapeStyle.FillStyle.On = true
 	pf.TextStyle.Defaults()
 	pf.TextStyle.FontStyle.Family = "Arial"
-	pf.TextStyle.FontStyle.Size.Set(12, units.Px)
-	pf.TextStyle.StrokeStyle.On = false
-	pf.TextStyle.FillStyle.On = true
+	pf.TextStyle.FontStyle.Size.Px(12)
+	// pf.TextStyle.StrokeStyle.On = false
+	// pf.TextStyle.FillStyle.On = true
 	pf.PathStyle.Defaults()
 	pf.PathStyle.FontStyle.Family = "Arial"
-	pf.PathStyle.FontStyle.Size.Set(12, units.Px)
-	pf.PathStyle.StrokeStyle.On = true
-	pf.PathStyle.FillStyle.On = false
+	pf.PathStyle.FontStyle.Size.Px(12)
+	// pf.PathStyle.StrokeStyle.On = true
+	// pf.PathStyle.FillStyle.On = false
 	pf.LineStyle.Defaults()
 	pf.LineStyle.FontStyle.Family = "Arial"
-	pf.LineStyle.FontStyle.Size.Set(12, units.Px)
-	pf.LineStyle.StrokeStyle.On = true
-	pf.LineStyle.FillStyle.On = false
+	pf.LineStyle.FontStyle.Size.Px(12)
+	// pf.LineStyle.StrokeStyle.On = true
+	// pf.LineStyle.FillStyle.On = false
 	pf.VectorDisp = true
 	pf.SnapTol = 3
 	pf.SnapVector = true
 	pf.SnapGuide = true
 	pf.SnapNodes = true
-	home := gi.Prefs.User.HomeDir
+	home := gi.SystemSettings.User.HomeDir
 	pf.EnvVars = map[string]string{
 		"PATH": home + "/bin:" + home + "/go/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/shbin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
 	}
@@ -118,14 +114,14 @@ var Prefs = Preferences{}
 func InitPrefs() {
 	Prefs.Defaults()
 	Prefs.Open()
-	OpenPaths()
-	svg.CurIconSet.OpenIconsFromEmbedDir(icons.Icons, ".")
-	gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
-		m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Vector Preferences..."},
-			win, func(recv, send ki.Ki, sig int64, data any) {
-				PrefsView(&Prefs)
-			})
-	}
+	// OpenPaths() // todo
+	// svg.CurIconSet.OpenIconsFromEmbedDir(icons.Icons, ".")
+	// gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
+	// 	m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Vector Preferences..."},
+	// 		win, func(recv, send ki.Ki, sig int64, data any) {
+	// 			PrefsView(&Prefs)
+	// 		})
+	// }
 }
 
 // PrefsFileName is the name of the preferences file in GoGi prefs directory
@@ -140,7 +136,7 @@ func (pf *Preferences) Open() error {
 		return err
 	}
 	err = json.Unmarshal(b, pf)
-	AvailSplits.OpenPrefs()
+	// AvailSplits.OpenPrefs() // todo
 	pf.ApplyEnvVars()
 	pf.Changed = false
 	return err
@@ -303,13 +299,13 @@ type ColorPrefs struct { //gti:add
 func (pf *ColorPrefs) Defaults() {
 	pf.Background = colors.White
 	pf.Border = colors.Black
-	pf.Vector.SetUInt8(220, 220, 220, 255)
+	pf.Vector = color.RGBA{220, 220, 220, 255}
 }
 
 func (pf *ColorPrefs) DarkDefaults() {
 	pf.Background = colors.Black
-	pf.Border.SetUInt8(102, 102, 102, 255)
-	pf.Vector.SetUInt8(40, 40, 40, 255)
+	pf.Border = color.RGBA{102, 102, 102, 255}
+	pf.Vector = color.RGBA{40, 40, 40, 255}
 }
 
 func DefaultColorSchemes() map[string]*ColorPrefs {
@@ -327,7 +323,7 @@ func DefaultColorSchemes() map[string]*ColorPrefs {
 func (pf *ColorPrefs) OpenJSON(filename gi.Filename) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "File Not Found", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.ErrorDialog(nil, err, "File Not Found")
 		log.Println(err)
 		return err
 	}
@@ -343,7 +339,7 @@ func (pf *ColorPrefs) SaveJSON(filename gi.Filename) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.PromptDialog(nil, gi.DlgOpts{Title: "Could not Save to File", Prompt: err.Error()}, gi.AddOk, gi.NoCancel, nil, nil)
+		gi.ErrorDialog(nil, err, "Could not Save to File")
 		log.Println(err)
 	}
 	return err

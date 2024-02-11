@@ -5,7 +5,6 @@
 package vector
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"sort"
@@ -105,16 +104,20 @@ type EditState struct {
 
 	// current path command indexes within PathNodes -- where the commands start
 	PathCmds []int
+
+	// the parent vectorview
+	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
-func (es *EditState) Init() {
+func (es *EditState) Init(vv *VectorView) {
 	es.Action = ""
 	es.ActData = ""
 	es.CurLayer = ""
 	es.Gradients = nil
 	es.UndoMgr.Reset()
 	es.Changed = false
+	es.VectorView = vv
 }
 
 // InAction reports whether we currently doing an action
@@ -251,7 +254,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
 	ss := &SelState{Order: idx}
-	itm.WriteGeom(&ss.InitGeom)
+	itm.WriteGeom(&es.VectorView.SVG().SVG, &ss.InitGeom)
 	if es.Selected == nil {
 		es.NewSelected()
 	}
@@ -406,7 +409,7 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	es.DragSelCurBBox = es.SelBBox
 	es.DragSelEffBBox = es.SelBBox
 	for itm, ss := range es.Selected {
-		itm.WriteGeom(&ss.InitGeom)
+		itm.WriteGeom(&es.VectorView.SVG().SVG, &ss.InitGeom)
 	}
 }
 
@@ -458,6 +461,7 @@ type Gradient struct {
 	Stops []*GradStop
 }
 
+/*
 // Updates our gradient from svg gradient
 func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
 	_, id := svg.SplitNameIdDig(g.Nm)
@@ -484,6 +488,7 @@ func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
 	}
 	gr.UpdateIcon()
 }
+*/
 
 // todo: update grad to sane vals for offs etc
 
@@ -536,10 +541,11 @@ func (es *EditState) ConfigDefaultGradient() {
 	es.Gradients = make([]*Gradient, 1)
 	gr := &Gradient{}
 	es.Gradients[0] = gr
-	gr.ConfigDefaultGradientStops()
+	// gr.ConfigDefaultGradientStops()
 	gr.UpdateIcon()
 }
 
+/*
 // ConfigDefaultGradientStops configures a new default gradient stops
 func (gr *Gradient) ConfigDefaultGradientStops() {
 	gr.Stops = make([]*GradStop, 2)
@@ -550,6 +556,7 @@ func (gr *Gradient) ConfigDefaultGradientStops() {
 	gr.Stops[0] = st1
 	gr.Stops[1] = st2
 }
+*/
 
 // UpdateIcon updates icon
 func (gr *Gradient) UpdateIcon() {

@@ -27,7 +27,6 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	if tb.HasChildren() {
 		return
 	}
-	tb.SetStretchMaxWidth()
 
 	grs := gi.NewSwitch(tb, "snap-grid")
 	grs.SetText("Snap Vector")

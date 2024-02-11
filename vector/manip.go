@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"cogentcore.org/core/mat32"
-	"cogentcore.org/core/svg"
 )
 
 // ManipStart is called at the start of a manipulation, saving the state prior to the action
@@ -26,15 +25,15 @@ func (sv *SVGView) ManipStart(act, data string) {
 
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVGView) ManipDone() {
-	win := sv.VectorView.ParentWindow()
-	InactivateSprites(win, SpAlignMatch)
+	// win := sv.VectorView.ParentWindow()
+	// InactivateSprites(win, SpAlignMatch)
 	es := sv.EditState()
 	switch {
 	case es.Action == "BoxSelect":
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
 		bbox = bbox.Canon()
-		InactivateSprites(win, SpRubberBand)
-		win.UpdateSig()
+		// InactivateSprites(win, SpRubberBand)
+		// win.UpdateSig()
 		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
 			es.ResetSelected() // todo: extend select -- need mouse mod
@@ -55,15 +54,15 @@ func (sv *SVGView) ManipDone() {
 // current display while manipulating.  It checks if already rendering and if so,
 // just returns immediately, so that updates are not stacked up and laggy.
 func (sv *SVGView) ManipUpdate() {
-	if sv.IsRendering() {
+	if sv.IsRendering {
 		return
 	}
-	sv.UpdateSig()
+	sv.Render()
 }
 
 // VectorDots is the current grid spacing and offsets in dots
 func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Root.BBox.Min)
 	grid := sv.VectorEff
 	if grid <= 0 {
 		grid = 12
@@ -71,7 +70,7 @@ func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
 	incr := grid * sv.Scale // our zoom factor
 
 	org := mat32.Vec2{}
-	org = sv.Pnt.Transform.MulVec2AsPt(org)
+	org = sv.Root.Paint.Transform.MulVec2AsPt(org)
 
 	// fmt.Printf("org: %v\n", org)
 
@@ -528,16 +527,16 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ang := mat32.Atan2(dy, dx)
 	ang, _ = SnapToIncr(mat32.RadToDeg(ang), 0, 15)
 	ang = mat32.DegToRad(ang)
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Root.BBox.Min)
 	pt = pt.Sub(svoff)
 	del := mat32.Vec2{}
 	sc := mat32.V2(1, 1)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaTransform(del, sc, ang, pt)
+		itm.ReadGeom(&sv.SVG, ss.InitGeom)
+		itm.ApplyDeltaTransform(&sv.SVG, del, sc, ang, pt)
 		if strings.HasPrefix(es.Action, "New") {
-			svg.UpdateNodeGradientPoints(itm, "fill")
-			svg.UpdateNodeGradientPoints(itm, "stroke")
+			// sv.UpdateNodeGradientPoints(itm, "fill")
+			// sv.UpdateNodeGradientPoints(itm, "stroke")
 		}
 	}
 
