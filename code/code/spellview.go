@@ -84,7 +84,7 @@ func (sv *SpellView) ConfigSpellView(ge Code, atv *TextEditor) {
 	gi.NewToolbar(sv, "changebar")
 	giv.NewSliceView(sv, "suggest")
 	sv.ConfigToolbar()
-	gi.InitSpell()
+	texteditor.InitSpell()
 	sv.CheckNext()
 }
 
@@ -337,7 +337,7 @@ func (sv *SpellView) TrainAction() {
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddCancel(pw)
 		d.AddOk(pw).OnClick(func(e events.Event) {
-			gi.AddToSpellModel(cur)
+			texteditor.AddToSpellModel(cur)
 		})
 	})
 	d.NewFullDialog(sv).Run()
