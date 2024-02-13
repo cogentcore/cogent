@@ -85,7 +85,7 @@ func (ts *TextStyle) SetFromFontStyle(fs *styles.Font) {
 	ts.Weight = fs.Weight
 	ts.Stretch = fs.Stretch
 	ts.Variant = fs.Variant
-	ts.Deco = fs.Deco
+	ts.Deco = fs.Decoration
 	ts.Shift = fs.Shift
 }
 
