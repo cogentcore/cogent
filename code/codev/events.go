@@ -6,6 +6,7 @@ package codev
 
 import (
 	"fmt"
+	"log/slog"
 
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
@@ -30,10 +31,10 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 	code.SetGoMod(ge.Settings.GoMod)
 	var kf code.KeyFuns
 	kc := kt.KeyChord()
-	if gi.DebugSettings.KeyEventTrace {
-		fmt.Printf("CodeView KeyInput: %v\n", ge.Path())
-	}
 	gkf := keyfun.Of(kc)
+	if gi.DebugSettings.KeyEventTrace {
+		slog.Info("CodeView KeyInput", "widget", ge, "keyfun", gkf)
+	}
 	if ge.KeySeq1 != "" {
 		kf = code.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)

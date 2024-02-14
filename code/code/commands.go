@@ -385,7 +385,8 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buf, pvals map[string]str
 				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := gi.NewTextField(d).SetText(curval)
 			tf.Style(func(s *styles.Style) {
-				s.Min.X.Ch(200)
+				s.Min.X.Ch(100)
+				s.Max.X.Ch(100)
 			})
 			d.AddBottomBar(func(pw gi.Widget) {
 				d.AddCancel(pw)
@@ -865,7 +866,7 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 					cmdNm := CommandName(cmdCat, it)
 					b := gi.NewButton(m).SetText(it).SetIcon(ic).
 						OnClick(func(e events.Event) {
-							e.SetHandled()
+							// e.SetHandled() // note: this allows menu to stay open :)
 							cmd := CmdName(cmdNm)
 							chist.Add(cmd)                 // only save commands executed via chooser
 							ge.SaveAllCheck(true, func() { // true = cancel option
