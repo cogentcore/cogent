@@ -10,7 +10,6 @@ import (
 	"slices"
 	"strings"
 
-	"cogentcore.org/cogent"
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
@@ -163,14 +162,7 @@ func (se *SettingsData) ApplyEnvVars() {
 	}
 }
 
-// VersionInfo returns Code version information
-func (se *SettingsData) VersionInfo() string { //gti:add
-	vinfo := cogent.Version + " date: " + cogent.VersionDate + " UTC; git commit-1: " + cogent.GitCommit
-	return vinfo
-}
-
 func (se *SettingsData) ConfigToolbar(tb *gi.Toolbar) {
-	giv.NewFuncButton(tb, se.VersionInfo).SetShowReturn(true).SetIcon(icons.Info)
 	giv.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
 	giv.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
 	giv.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
