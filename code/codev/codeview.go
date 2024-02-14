@@ -210,7 +210,7 @@ func (ge *CodeView) SetWindowNameTitle() {
 		return
 	}
 	pnm := ge.Name()
-	winm := "Cogent Code: " + pnm
+	winm := "Cogent Code " + pnm
 	win.SetName(winm)
 	win.SetTitle(winm + ": " + string(ge.Settings.ProjRoot))
 }

@@ -26,6 +26,12 @@ func (ge *CodeView) AppBarConfig(pw gi.Widget) {
 	ac := gi.StdAppBarChooser(tb)
 	ge.AddChooserFiles(ac)
 	ge.AddChooserSymbols(ac)
+	ac.OnFirst(events.KeyChord, func(e events.Event) {
+		kf := keyfun.Of(e.KeyChord())
+		if kf == keyfun.Abort {
+			ge.FocusActiveTextEditor()
+		}
+	})
 
 	gi.StdOverflowMenu(tb)
 	gi.CurrentWindowAppBar(tb)

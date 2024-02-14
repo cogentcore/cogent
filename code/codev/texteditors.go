@@ -41,6 +41,11 @@ func (ge *CodeView) ActiveTextEditor() *code.TextEditor {
 	return ge.TextEditorByIndex(ge.ActiveTextEditorIdx)
 }
 
+// FocusActiveTextEditor sets focus to active text editor
+func (ge *CodeView) FocusActiveTextEditor() *code.TextEditor {
+	return ge.SetActiveTextEditorIdx(ge.ActiveTextEditorIdx)
+}
+
 // ActiveFileNode returns the file node for the active file -- nil if none
 func (ge *CodeView) ActiveFileNode() *filetree.Node {
 	return ge.FileNodeForFile(string(ge.ActiveFilename), false)
