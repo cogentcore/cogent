@@ -69,7 +69,7 @@ func (pg *Page) AppBar(tb *gi.Toolbar) {
 	})
 
 	// TODO(kai/abc)
-	// ch := tb.ChildByName("app-chooser").(*gi.AppChooser)
+	// ch := tb.AppChooser()
 	// ch.AllowNew = true
 	// ch.ItemsFunc = func() {
 	// 	ch.Items = make([]any, len(pg.History))
