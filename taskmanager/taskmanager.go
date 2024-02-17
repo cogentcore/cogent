@@ -64,18 +64,20 @@ func main() {
 	tick := time.NewTicker(time.Second)
 	paused := false
 
-	go func() {
-		for range tick.C {
-			if paused {
-				continue
+	b.OnShow(func(e events.Event) {
+		go func() {
+			for range tick.C {
+				if paused {
+					continue
+				}
+				ts = getTasks(b)
+				updt := tv.UpdateStartAsync()
+				tv.SortSlice()
+				tv.UpdateWidgets()
+				tv.UpdateEndAsyncRender(updt)
 			}
-			ts = getTasks(b)
-			updt := tv.UpdateStartAsync()
-			tv.SortSlice()
-			tv.UpdateWidgets()
-			tv.UpdateEndAsyncRender(updt)
-		}
-	}()
+		}()
+	})
 
 	b.AddAppBar(func(tb *gi.Toolbar) {
 		gi.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
