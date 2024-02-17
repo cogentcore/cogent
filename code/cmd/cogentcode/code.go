@@ -50,18 +50,6 @@ func main() {
 		}
 	}
 
-	inQuitPrompt := false
-	goosi.TheApp.SetQuitReqFunc(func() {
-		if !inQuitPrompt {
-			inQuitPrompt = true
-			if codev.QuitReq() {
-				goosi.TheApp.Quit()
-			} else {
-				inQuitPrompt = false
-			}
-		}
-	})
-
 	if proj != "" {
 		proj, _ = filepath.Abs(proj)
 		codev.OpenCodeProj(proj)

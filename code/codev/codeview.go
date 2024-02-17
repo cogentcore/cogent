@@ -108,6 +108,11 @@ func (ge *CodeView) OnInit() {
 	ge.HandleEvents()
 }
 
+func (ge *CodeView) OnAdd() {
+	ge.WidgetBase.OnAdd()
+	ge.AddCloseDialog()
+}
+
 ////////////////////////////////////////////////////////
 // Code interface
 
@@ -450,53 +455,29 @@ func (ge *CodeView) NChangedFiles() int {
 	return ge.OpenNodes.NChanged()
 }
 
-// CloseWindow actually closes the window
-func (ge *CodeView) CloseWindow() {
-	// todo:
-}
-
-// CloseWindowReq is called when user tries to close window -- we
-// automatically save the project if it already exists (no harm), and prompt
-// to save open files -- if this returns true, then it is OK to close --
-// otherwise not
-func (ge *CodeView) CloseWindowReq() bool {
-	ge.SaveProjIfExists(false) // don't prompt here, as we will do it now..
-	nch := ge.NChangedFiles()
-	if nch == 0 {
-		return true
-	}
-	d := gi.NewBody().AddTitle("Close Project: There are Unsaved Files").
-		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all or cancel closing this project and review  / save those files first?", ge.Nm, nch))
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddCancel(pw)
-		gi.NewButton(pw).SetText("Close without saving").OnClick(func(e events.Event) {
-			d.Close()
-			ge.CloseWindow()
-		})
-		gi.NewButton(pw).SetText("Save all").OnClick(func(e events.Event) {
-			d.Close()
-			ge.SaveAllOpenNodes()
-		})
-	})
-	d.NewDialog(ge).Run()
-	return false // not yet
-}
-
-// QuitReq is called when user tries to quit the app -- we go through all open
-// main windows and look for code windows and call their CloseWindowReq
-// functions!
-func QuitReq() bool {
-	for _, win := range gi.MainRenderWins {
-		if !strings.HasPrefix(win.Name, "Cogent Code:") {
-			continue
-		}
-		msc := win.MainScene()
-		ge := CodeInScene(msc)
-		if !ge.CloseWindowReq() {
+// AddCloseDialog adds the close dialog that automatically saves the project
+// and prompts the user to save open files when they try to close the scene
+// containing this code view.
+func (ge *CodeView) AddCloseDialog() {
+	ge.WidgetBase.AddCloseDialog(func(d *gi.Body) bool {
+		ge.SaveProjIfExists(false) // don't prompt here, as we will do it now..
+		nch := ge.NChangedFiles()
+		if nch == 0 {
 			return false
 		}
-	}
-	return true
+		d.AddTitle("Unsaved files").
+			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, ge.Nm))
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
+				ge.Scene.Close()
+			})
+			gi.NewButton(pw, "sa").SetText("Save and close").OnClick(func(e events.Event) {
+				ge.SaveAllOpenNodes()
+				ge.Scene.Close()
+			})
+		})
+		return true
+	})
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
