@@ -39,7 +39,7 @@ type Thread struct {
 	FPath string `tableview:"-"`
 
 	// the name of the function
-	Func string
+	Func string `width:"80"`
 
 	// id of the current Task within this system thread (if relevant)
 	Task int
@@ -81,7 +81,7 @@ type Task struct {
 	FPath string `tableview:"-" tableview:"-"`
 
 	// the name of the function
-	Func string
+	Func string `width:"80"`
 
 	// id of the current Thread this task is running on
 	Thread int `format:"%#X"`
@@ -124,7 +124,7 @@ type Location struct {
 	FPath string `view:"-" tableview:"-"`
 
 	// the name of the function
-	Func string
+	Func string `width:"80"`
 }
 
 // Frame describes one frame in a stack trace.
@@ -149,7 +149,7 @@ type Frame struct {
 	FPath string `tableview:"-" tableview:"-"`
 
 	// the name of the function
-	Func string
+	Func string `width:"80"`
 
 	// values of the local variables at this frame
 	Vars []*Variable `tableview:"-"`
@@ -180,7 +180,7 @@ type Break struct {
 	FPath string `edit:"-" view:"-" tableview:"-"`
 
 	// the name of the function
-	Func string `edit:"-"`
+	Func string `edit:"-" width:"80"`
 
 	// condition for conditional breakbpoint
 	Cond string

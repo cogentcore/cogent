@@ -296,9 +296,10 @@ func (fv *FindView) ReplaceAll() {
 	}
 	go func() {
 		for {
-			updt := fv.Code.AsWidget().Scene.UpdateStartAsync()
+			sc := fv.Code.AsWidget().Scene
+			updt := sc.UpdateStartAsync()
 			ok := fv.ReplaceAction()
-			fv.Code.AsWidget().Scene.UpdateEndAsyncLayout(updt)
+			sc.UpdateEndAsyncLayout(updt)
 			if !ok {
 				break
 			}
