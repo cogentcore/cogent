@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/url"
 	"path/filepath"
-	"reflect"
 
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/events"
@@ -64,10 +63,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 
 	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
 	if len(ld.Text) > 0 {
-		tev := texteditor.Value{}
-		tev.SetSoloValue(reflect.ValueOf(ld.Text))
-		tev.OpenDialog(ge, nil)
-		// todo: title: "Lookup: " + text
+		texteditor.TextDialog(nil, "Lookup: "+text, string(ld.Text))
 		return ld
 	}
 	if ld.Filename == "" {

@@ -483,6 +483,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
 	finds.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
+		s.Max.X.Zero()
 	})
 	finds.OnChange(func(e events.Event) {
 		fv.Params().Find = finds.CurrentItem.Value.(string)
@@ -541,6 +542,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 		SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
 	repls.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
+		s.Max.X.Zero()
 	})
 	repls.OnChange(func(e events.Event) {
 		fv.Params().Replace = repls.CurrentItem.Value.(string)
