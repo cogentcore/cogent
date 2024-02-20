@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/cogent/code/cdebug/cdelve"
 	"cogentcore.org/core/colors"
+	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/gi"
@@ -392,7 +393,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
-		tb.SetLineColor(line-1, grr.Log1(colors.FromName(DebugBreakColors[stat])))
+		tb.SetLineColor(line-1, grr.Log1(gradient.FromString(DebugBreakColors[stat])))
 		tb.Update()
 	}
 }
@@ -569,7 +570,7 @@ func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		if !tb.HasLineColor(line - 1) {
-			tb.SetLineColor(line-1, grr.Log1(colors.FromName(DebugBreakColors[DebugPCCurrent])))
+			tb.SetLineColor(line-1, grr.Log1(gradient.FromString(DebugBreakColors[DebugPCCurrent])))
 			tb.Update()
 			dv.CurFileLoc.FPath = fpath
 			dv.CurFileLoc.Line = line

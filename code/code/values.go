@@ -23,8 +23,7 @@ func KeyMapsView(km *KeyMaps) {
 	if gi.ActivateExistingMainWindow(km) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map")
-	d.Scene.Data = km
+	d := gi.NewBody().SetTitle("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map").SetData(km)
 	tv := giv.NewTableView(d).SetSlice(km)
 	AvailKeyMapsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -61,8 +60,7 @@ func ProjSettingsView(pf *ProjSettings) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Code project settings")
-	d.Scene.Data = pf
+	d := gi.NewBody().SetTitle("Code project settings").SetData(pf)
 	gi.NewLabel(d).SetText("Settings are saved in the project .code file, along with other current state (open directories, splitter settings, etc). Do Save All or Save Project to save.")
 	tv := giv.NewStructView(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
@@ -79,8 +77,7 @@ func DebugSettingsView(pf *cdebug.Params) *giv.StructView {
 	if gi.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Project debug settings")
-	d.Scene.Data = pf
+	d := gi.NewBody().SetTitle("Project debug settings").SetData(pf)
 	gi.NewLabel(d).SetText("For args: Use -- double-dash and then add args to pass args to the executable (double-dash is by itself as a separate arg first).  For Debug test, must use -test.run instead of plain -run to specify tests to run")
 	tv := giv.NewStructView(d).SetStruct(pf)
 	d.NewWindow().Run()
@@ -157,9 +154,8 @@ func LangsView(pt *Langs) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Language Opts: Add or modify entries to customize options for language / file types")
+	d := gi.NewBody().SetTitle("Available Language Opts: Add or modify entries to customize options for language / file types").SetData(pt)
 	tv := giv.NewMapView(d).SetMap(pt)
-	d.Scene.Data = pt
 	AvailLangsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailLangsChanged = true
@@ -195,9 +191,8 @@ func CmdsView(pt *Commands) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Code Commands")
+	d := gi.NewBody().SetTitle("Code Commands").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
-	d.Scene.Data = pt
 	CustomCmdsChanged = false
 	tv.OnChange(func(e events.Event) {
 		CustomCmdsChanged = true
@@ -290,8 +285,7 @@ func SplitsView(pt *Splits) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
-	d.Scene.Data = pt
+	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -404,11 +398,10 @@ func RegistersView(pt *Registers) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Guide Registers")
+	d := gi.NewBody().SetTitle("Guide Registers").SetData(pt)
 	d.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	d.Scene.Data = pt
 
 	gi.NewLabel(d).SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
 

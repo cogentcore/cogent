@@ -23,8 +23,7 @@ func SplitsView(pt *Splits) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one")
-	d.Scene.Data = pt
+	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
