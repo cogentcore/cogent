@@ -8,14 +8,17 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
+	"cogentcore.org/core/keyfun"
 )
 
 func main() {
 	b := gi.NewBody("Cogent Files")
 
 	fv := giv.NewFileView(b)
-	fv.OnDoubleClick(func(e events.Event) {
-		gi.TheApp.OpenURL(fv.SelectedFile())
+	fv.Scene.OnKeyChord(func(e events.Event) {
+		if keyfun.Of(e.KeyChord()) == keyfun.Accept {
+			gi.TheApp.OpenURL(fv.SelectedFile())
+		}
 	})
 
 	b.RunMainWindow()
