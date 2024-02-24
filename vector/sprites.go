@@ -126,39 +126,39 @@ func SpriteProps(sp *gi.Sprite) (typ, subtyp Sprites, idx int) {
 // Sprite returns given sprite -- renders to window if not yet made.
 // trgsz is the target size (e.g., for rubber band boxes)
 func Sprite(typ, subtyp Sprites, idx int, trgsz image.Point) *gi.Sprite {
-	spnm := SpriteName(typ, subtyp, idx)
-	sp, ok := win.SpriteByName(spnm)
-	if !ok {
-		sp = gi.NewSprite(spnm, image.ZP, image.ZP)
-		SetSpriteProps(sp, typ, subtyp, idx)
-		win.AddSprite(sp)
-	}
-	switch typ {
-	case SpReshapeBBox:
-		DrawSpriteReshape(sp, subtyp)
-	case SpSelBBox:
-		DrawSpriteSel(sp, subtyp)
-	case SpNodePoint:
-		DrawSpriteNodePoint(sp, subtyp)
-	case SpNodeCtrl:
-		DrawSpriteNodeCtrl(sp, subtyp)
-	case SpRubberBand:
-		switch subtyp {
-		case SpBBoxUpC, SpBBoxDnC:
-			DrawRubberBandHoriz(sp, trgsz)
-		case SpBBoxLfM, SpBBoxRtM:
-			DrawRubberBandVert(sp, trgsz)
-		}
-	case SpAlignMatch:
-		switch {
-		case trgsz.X > trgsz.Y:
-			DrawAlignMatchHoriz(sp, trgsz)
-		default:
-			DrawAlignMatchVert(sp, trgsz)
-		}
-	}
-	win.ActivateSprite(sp.Name)
-	return sp
+	// spnm := SpriteName(typ, subtyp, idx)
+	// sp, ok := win.SpriteByName(spnm)
+	// if !ok {
+	// 	sp = gi.NewSprite(spnm, image.ZP, image.ZP)
+	// 	SetSpriteProps(sp, typ, subtyp, idx)
+	// 	win.AddSprite(sp)
+	// }
+	// switch typ {
+	// case SpReshapeBBox:
+	// 	DrawSpriteReshape(sp, subtyp)
+	// case SpSelBBox:
+	// 	DrawSpriteSel(sp, subtyp)
+	// case SpNodePoint:
+	// 	DrawSpriteNodePoint(sp, subtyp)
+	// case SpNodeCtrl:
+	// 	DrawSpriteNodeCtrl(sp, subtyp)
+	// case SpRubberBand:
+	// 	switch subtyp {
+	// 	case SpBBoxUpC, SpBBoxDnC:
+	// 		DrawRubberBandHoriz(sp, trgsz)
+	// 	case SpBBoxLfM, SpBBoxRtM:
+	// 		DrawRubberBandVert(sp, trgsz)
+	// 	}
+	// case SpAlignMatch:
+	// 	switch {
+	// 	case trgsz.X > trgsz.Y:
+	// 		DrawAlignMatchHoriz(sp, trgsz)
+	// 	default:
+	// 		DrawAlignMatchVert(sp, trgsz)
+	// 	}
+	// }
+	// win.ActivateSprite(sp.Name)
+	return nil
 }
 
 /*
@@ -220,13 +220,13 @@ func SetSpritePos(sp *gi.Sprite, pos image.Point) {
 
 // InactivateSprites inactivates sprites of given type
 func InactivateSprites(typ Sprites) {
-	for _, spkv := range win.Sprites.Names.Order {
-		sp := spkv.Val
-		st, _, _ := SpriteProps(sp)
-		if st == typ {
-			win.InactivateSprite(sp.Name)
-		}
-	}
+	// for _, spkv := range win.Sprites.Names.Order {
+	// 	sp := spkv.Val
+	// 	st, _, _ := SpriteProps(sp)
+	// 	if st == typ {
+	// 		win.InactivateSprite(sp.Name)
+	// 	}
+	// }
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -241,7 +241,7 @@ var (
 // HandleSpriteSize returns the border size and overall size
 // of handle-type sprites, with given scaling factor
 func HandleSpriteSize(scale float32) (int, image.Point) {
-	sz := int(mat32.Ceil(scale * gi.Prefs.LogicalDPIScale * HandleSpriteScale))
+	sz := int(mat32.Ceil(scale * gi.AppearanceSettings.Zoom * HandleSpriteScale / 100))
 	sz = max(sz, HandleSizeMin)
 	bsz := max(sz/6, HandleBorderMin)
 	bbsz := image.Point{sz, sz}
@@ -320,7 +320,7 @@ var (
 
 // LineSpriteSize returns the border size and overall size of line-type sprites
 func LineSpriteSize() (int, int) {
-	sz := int(mat32.Ceil(gi.Prefs.LogicalDPIScale * LineSpriteScale))
+	sz := int(mat32.Ceil(gi.AppearanceSettings.Zoom * LineSpriteScale / 100))
 	sz = max(sz, LineSizeMin)
 	bsz := max(sz/6, LineBorderMin)
 	return bsz, sz
@@ -375,7 +375,7 @@ func DrawAlignMatchHoriz(sp *gi.Sprite, trgsz image.Point) {
 	bbd := ibd
 	bbd.Min.Y += bsz
 	bbd.Max.Y -= bsz
-	clr := color.Color{0, 200, 200, 255}
+	clr := color.RGBA{0, 200, 200, 255}
 	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
 	draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
 }
@@ -391,7 +391,7 @@ func DrawAlignMatchVert(sp *gi.Sprite, trgsz image.Point) {
 	bbd := ibd
 	bbd.Min.X += bsz
 	bbd.Max.X -= bsz
-	clr := color.Color{0, 200, 200, 255}
+	clr := color.RGBA{0, 200, 200, 255}
 	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
 	draw.Draw(sp.Pixels, bbd, &image.Uniform{clr}, image.ZP, draw.Src)
 }
