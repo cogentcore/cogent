@@ -196,12 +196,6 @@ func (pf *Preferences) EditSplits() {
 	SplitsView(&AvailSplits)
 }
 
-// VersionInfo returns Vector version information
-func (pf *Preferences) VersionInfo() string {
-	vinfo := Version + " date: " + VersionDate + " UTC; git commit-1: " + GitCommit
-	return vinfo
-}
-
 // UpdateAll updates all open windows with current preferences -- triggers
 // rebuild of default styles.
 func (pf *Preferences) UpdateAll() {

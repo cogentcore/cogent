@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
@@ -28,84 +29,91 @@ func (gv *VectorView) ConfigSelectToolbar() {
 		return
 	}
 
-	grs := gi.NewSwitch(tb, "snap-grid")
-	grs.SetText("Snap Vector")
-	grs.Tooltip = "snap movement and sizing of selection to grid"
-	grs.SetChecked(Prefs.SnapVector)
-	grs.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.ButtonToggled) {
-			Prefs.SnapVector = grs.IsChecked()
-		}
+	grs := gi.NewSwitch(tb).SetText("Snap grid").
+		SetTooltip("snap movement and sizing of selection to grid").
+		SetChecked(Prefs.SnapVector)
+	grs.OnChange(func(e events.Event) {
+		Prefs.SnapVector = grs.IsChecked()
 	})
 
-	gis := gi.NewSwitch(tb, "snap-guide")
-	gis.SetText("Guide")
-	gis.Tooltip = "snap movement and sizing of selection to align with other elements in the scene"
-	gis.SetChecked(Prefs.SnapGuide)
-	gis.ButtonSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.ButtonToggled) {
-			Prefs.SnapGuide = gis.IsChecked()
-		}
+	gis := gi.NewSwitch(tb).SetText("Snap guide").
+		SetTooltip("snap movement and sizing of selection to align with other elements in the scene").
+		SetChecked(Prefs.SnapGuide)
+	gis.OnChange(func(e events.Event) {
+		Prefs.SnapGuide = gis.IsChecked()
 	})
-	gi.NewSeparator(tb, "sep-snap")
 
-	tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelGroup()
-		})
+	gi.NewSeparator(tb)
 
-	tb.AddAction(gi.ActOpts{Icon: "sel-ungroup", Tooltip: "Shift+Ctrl+G: ungroup items", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelUnGroup()
+	gv.NewSelectButton(tb).SetText("Group").
+		SetIcon("sel-group").SetShortcut("Command+G").
+		SetTooltip("Group items together").
+		OnClick(func(e events.Event) {
+			gv.SelGroup()
 		})
 
-	gi.NewSeparator(tb, "sep-group")
-
-	tb.AddAction(gi.ActOpts{Icon: "sel-rotate-left", Tooltip: "Ctrl-[: rotate selection 90deg counter-clockwise", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelRotateLeft()
-		})
-	tb.AddAction(gi.ActOpts{Icon: "sel-rotate-right", Tooltip: "Ctrl-]: rotate selection 90deg clockwise", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelRotateRight()
-		})
-	tb.AddAction(gi.ActOpts{Icon: "sel-flip-horiz", Tooltip: "H: flip selection horizontally", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelFlipHoriz()
-		})
-	tb.AddAction(gi.ActOpts{Icon: "sel-flip-vert", Tooltip: "V: flip selection vertically", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelFlipVert()
+	gv.NewSelectButton(tb).SetText("Ungroup").
+		SetIcon("sel-ungroup").SetShortcut("Shift+Command+G").
+		SetTooltip("Ungroup items").
+		OnClick(func(e events.Event) {
+			gv.SelUnGroup()
 		})
 
-	gi.NewSeparator(tb, "sep-rot")
-	tb.AddAction(gi.ActOpts{Icon: "sel-raise-top", Tooltip: "Raise selection to top (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelRaiseTop()
+	gi.NewSeparator(tb)
+
+	gv.NewSelectButton(tb).SetIcon("sel-rotate-left").
+		SetShortcut("Command+[").
+		SetTooltip("Rotate selection 90 degrees counter-clockwise").
+		OnClick(func(e events.Event) {
+			gv.SelRotateLeft()
 		})
-	tb.AddAction(gi.ActOpts{Icon: "sel-raise", Tooltip: "Raise selection one level (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelRaise()
+
+	gv.NewSelectButton(tb).SetIcon("sel-rotate-right").
+		SetShortcut("Command+]").
+		SetTooltip("Rotate selection 90 degrees clockwise").
+		OnClick(func(e events.Event) {
+			gv.SelRotateRight()
 		})
-	tb.AddAction(gi.ActOpts{Icon: "sel-lower-bottom", Tooltip: "Lower selection to bottom (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelLowerBot()
+
+	gv.NewSelectButton(tb).SetIcon("sel-flip-horiz").
+		SetTooltip("Flip selection horizontally").
+		OnClick(func(e events.Event) {
+			gv.SelFlipHoriz()
 		})
-	tb.AddAction(gi.ActOpts{Icon: "sel-lower", Tooltip: "Lower selection one level (within layer)", UpdateFunc: gv.SelectedEnableFunc},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SelLower()
+
+	gv.NewSelectButton(tb).SetIcon("sel-flip-vert").
+		SetTooltip("Flip selection vertically").
+		OnClick(func(e events.Event) {
+			gv.SelFlipVert()
 		})
-	gi.NewSeparator(tb, "sep-size")
+
+	gi.NewSeparator(tb)
+
+	gv.NewSelectButton(tb).SetIcon("sel-raise-top").
+		SetTooltip("Raise selection to top (within layer)").
+		OnClick(func(e events.Event) {
+			gv.SelRaiseTop()
+		})
+
+	gv.NewSelectButton(tb).SetIcon("sel-raise").
+		SetTooltip("Raise selection one level (within layer)").
+		OnClick(func(e events.Event) {
+			gv.SelRaise()
+		})
+
+	gv.NewSelectButton(tb).SetIcon("sel-lower-bottom").
+		SetTooltip("Lower selection to bottom (within layer)").
+		OnClick(func(e events.Event) {
+			gv.SelLowerBot()
+		})
+
+	gv.NewSelectButton(tb).SetIcon("sel-lower").
+		SetTooltip("Lower selection one level (within layer)").
+		OnClick(func(e events.Event) {
+			gv.SelLower()
+		})
+
+	gi.NewSeparator(tb)
 
 	gi.NewLabel(tb, "posx-lab", "X: ").SetProp("vertical-align", styles.AlignMiddle)
 	px := gi.NewSpinner(tb, "posx")
@@ -148,10 +156,14 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	})
 }
 
-// SelectedEnableFunc is an ActionUpdateFunc that inactivates action if no selected items
-func (gv *VectorView) SelectedEnableFunc(act *gi.Button) {
-	es := &gv.EditState
-	act.SetInactiveState(!es.HasSelected())
+// NewSelectButton returns a new button that is only enabled when
+// there is an item selected.
+func (gv *VectorView) NewSelectButton(par ki.Ki) *gi.Button {
+	bt := gi.NewButton(par)
+	bt.StyleFirst(func(s *styles.Style) {
+		s.SetEnabled(gv.EditState.HasSelected())
+	})
+	return bt
 }
 
 // UpdateSelectToolbar updates the select toolbar based on current selection
