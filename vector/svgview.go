@@ -795,31 +795,32 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 
 // NewElDrag makes a new SVG element during the drag operation
 func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.Node {
-	minsz := float32(10)
-	es := sv.EditState()
-	dv := mat32.V2FromPoint(end.Sub(start))
-	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
-		return nil
-	}
-	win := sv.VectorView.ParentWindow()
-	tn := typ.Name()
-	sv.ManipStart("New"+tn, "")
-	updt := sv.UpdateStart()
-	sv.SetFullReRender()
-	nr := sv.NewEl(typ)
-	xfi := sv.Pnt.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
-	pos := mat32.V2FromPoint(start).Sub(svoff)
-	nr.SetPos(xfi.MulVec2AsPt(pos))
-	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
-	sz := dv
-	nr.SetSize(xfi.MulVec2AsVec(sz))
-	es.SelectAction(nr, events.SelectOne, end)
-	sv.UpdateEnd(updt)
-	sv.UpdateSelSprites()
-	es.DragSelStart(start)
-	win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
-	return nr
+	// minsz := float32(10)
+	// es := sv.EditState()
+	// dv := mat32.V2FromPoint(end.Sub(start))
+	// if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+	// 	return nil
+	// }
+	// win := sv.VectorView.ParentWindow()
+	// tn := typ.Name()
+	// sv.ManipStart("New"+tn, "")
+	// updt := sv.UpdateStart()
+	// sv.SetFullReRender()
+	// nr := sv.NewEl(typ)
+	// xfi := sv.Pnt.Transform.Inverse()
+	// svoff := mat32.V2FromPoint(sv.BBox.Min)
+	// pos := mat32.V2FromPoint(start).Sub(svoff)
+	// nr.SetPos(xfi.MulVec2AsPt(pos))
+	// // sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	// sz := dv
+	// nr.SetSize(xfi.MulVec2AsVec(sz))
+	// es.SelectAction(nr, events.SelectOne, end)
+	// sv.UpdateEnd(updt)
+	// sv.UpdateSelSprites()
+	// es.DragSelStart(start)
+	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
+	// return nr
+	return nil
 }
 
 // NewText makes a new Text element with embedded tspan
@@ -827,26 +828,26 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	es := sv.EditState()
 	sv.ManipStart("NewText", "")
 	nr := sv.NewEl(svg.TextType)
-	tsnm := fmt.Sprintf("tspan%d", sv.NewUniqueID())
+	tsnm := fmt.Sprintf("tspan%d", sv.SSVG().NewUniqueID())
 	tspan := svg.NewText(nr, tsnm)
 	tspan.Text = "Text"
 	tspan.Width = 200
-	xfi := sv.Pnt.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
+	xfi := sv.Root().Paint.Transform.Inverse()
+	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
 	pos := mat32.V2FromPoint(start).Sub(svoff)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVec2AsPt(pos)
 	sv.VectorView.SetTextPropsNode(nr, es.Text.TextProps())
-	nr.Pos = pos
-	tspan.Pos = pos
-	// dv := mat32.V2FromPoint(end.Sub(start))
-	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
-	nr.Width = 100
-	tspan.Width = 100
-	es.SelectAction(nr, events.SelectOne, end)
-	sv.UpdateView(true)
-	sv.UpdateSelect()
+	// nr.Pos = pos
+	// tspan.Pos = pos
+	// // dv := mat32.V2FromPoint(end.Sub(start))
+	// // sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	// nr.Width = 100
+	// tspan.Width = 100
+	// es.SelectAction(nr, events.SelectOne, end)
+	// sv.UpdateView(true)
+	// sv.UpdateSelect()
 	return nr
 }
 
@@ -858,13 +859,13 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
 		return nil
 	}
-	win := sv.VectorView.ParentWindow()
+	// win := sv.VectorView.ParentWindow()
 	sv.ManipStart("NewPath", "")
 	updt := sv.UpdateStart()
-	sv.SetFullReRender()
+	// sv.SetFullReRender()
 	nr := sv.NewEl(svg.PathType).(*svg.Path)
-	xfi := sv.Pnt.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
+	xfi := sv.Root().Paint.Transform.Inverse()
+	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
 	pos := mat32.V2FromPoint(start).Sub(svoff)
 	pos = xfi.MulVec2AsPt(pos)
 	sz := dv
@@ -873,7 +874,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 
-	es.SelectAction(nr, events.SelectOne, end)
+	// es.SelectAction(nr, events.SelectOne, end)
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
@@ -884,7 +885,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	es.DragSelCurBBox = es.SelBBox
 	es.DragSelEffBBox = es.SelBBox
 
-	win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
+	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
 	return nr
 }
 
@@ -895,8 +896,8 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 // that are shared among obj-specific ones
 func (sv *SVGView) Gradients() []*Gradient {
 	gl := make([]*Gradient, 0)
-	for _, gii := range sv.Defs.Kids {
-		g, ok := gii.(*gi.Gradient)
+	for _, gii := range sv.SSVG().Defs.Kids {
+		g, ok := gii.(*svg.Gradient)
 		if !ok {
 			continue
 		}
@@ -904,7 +905,7 @@ func (sv *SVGView) Gradients() []*Gradient {
 			continue
 		}
 		gr := &Gradient{}
-		gr.UpdateFromGrad(g)
+		// gr.UpdateFromGrad(g)
 		gl = append(gl, gr)
 	}
 	return gl
@@ -915,47 +916,46 @@ func (sv *SVGView) UpdateGradients(gl []*Gradient) {
 	nms := make(map[string]bool)
 	for _, gr := range gl {
 		if _, has := nms[gr.Name]; has {
-			id := sv.NewUniqueID()
+			id := sv.SSVG().NewUniqueID()
 			gr.Name = fmt.Sprintf("%d", id)
 		}
 		nms[gr.Name] = true
 	}
 
-	for _, gr := range gl {
-		radial := false
-		if strings.HasPrefix(gr.Name, "radial") {
-			radial = true
-		}
-		var g *gi.Gradient
-		gg := sv.FindDefByName(gr.Name)
-		if gg == nil {
-			g, _ = sv.AddNewGradient(radial)
-		} else {
-			g = gg.(*gi.Gradient)
-		}
+	// for _, gr := range gl {
+	// 	radial := false
+	// 	if strings.HasPrefix(gr.Name, "radial") {
+	// 		radial = true
+	// 	}
+	// 	var g *svg.Gradient
+	// 	gg := sv.SSVG().FindDefByName(gr.Name)
+	// 	if gg == nil {
+	// 		g, _ = svg.NewGradient(radial)
+	// 	} else {
+	// 		g = gg.(*svg.Gradient)
+	// 	}
 
-		gr.UpdateGrad(g)
-	}
-	sv.UpdateAllGradientStops()
+	// 	gr.UpdateGrad(g)
+	// }
+	// sv.UpdateAllGradientStops()
 }
 
 ///////////////////////////////////////////////////////////////////////
 //  Bg render
 
-func (sv *SVGView) Render2D() {
-	if sv.PushBounds() {
-		sv.SetFlag(int(svg.Rendering))
-		sv.This().(gi.Node2D).ConnectEvents2D()
-		sv.FillViewportWithBg()
-		rs := &sv.Render
-		rs.PushTransform(sv.Pnt.Transform)
-		sv.Render2DChildren() // we must do children first, then us!
-		sv.PopBounds()
-		rs.PopTransform()
-		sv.RenderViewport2D() // update our parent image
-		sv.ClearFlag(int(svg.Rendering))
-	}
-}
+// func (sv *SVGView) Render() {
+// 	if sv.PushBounds() {
+// 		sv.SSVG().IsRendering = true
+// 		sv.FillViewportWithBg()
+// 		rs := &sv.Render
+// 		rs.PushTransform(sv.Pnt.Transform)
+// 		sv.Render2DChildren() // we must do children first, then us!
+// 		sv.PopBounds()
+// 		rs.PopTransform()
+// 		sv.RenderViewport2D() // update our parent image
+// 		sv.ClearFlag(int(svg.Rendering))
+// 	}
+// }
 
 func (sv *SVGView) BgNeedsUpdate() bool {
 	updt := sv.EnsureBgSize() || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.VectorEff != sv.bgVectorEff)
@@ -967,12 +967,12 @@ func (sv *SVGView) FillViewportWithBg() {
 	if sv.BgNeedsUpdate() {
 		sv.RenderBg()
 	}
-	draw.Draw(sv.Pixels, sv.Pixels.Bounds(), sv.BgPixels, image.ZP, draw.Over) // draw the bg first
+	draw.Draw(sv.Scene.Pixels, sv.Geom.ContentBBox, sv.BgPixels, sv.Geom.ScrollOffset(), draw.Over) // draw the bg first
 }
 
 // EnsureBgSize ensures Bg is set to the right size -- returns true if resized
 func (sv *SVGView) EnsureBgSize() bool {
-	sz := sv.Pixels.Bounds().Size()
+	sz := sv.Geom.ContentBBox.Size()
 	if sv.BgPixels != nil {
 		ib := sv.BgPixels.Bounds().Size()
 		if ib == sz {
