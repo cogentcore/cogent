@@ -254,7 +254,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
 	ss := &SelState{Order: idx}
-	itm.WriteGeom(&es.VectorView.SVG().SVG, &ss.InitGeom)
+	itm.WriteGeom(es.VectorView.SSVG(), &ss.InitGeom)
 	if es.Selected == nil {
 		es.NewSelected()
 	}
@@ -409,7 +409,7 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	es.DragSelCurBBox = es.SelBBox
 	es.DragSelEffBBox = es.SelBBox
 	for itm, ss := range es.Selected {
-		itm.WriteGeom(&es.VectorView.SVG().SVG, &ss.InitGeom)
+		itm.WriteGeom(es.VectorView.SSVG(), &ss.InitGeom)
 	}
 }
 

@@ -66,7 +66,7 @@ func (vv *VectorView) Align(aa AlignAnchors, al Aligns) {
 func (vv *VectorView) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	svoff := sv.Root.BBox.Min
+	svoff := sv.Root().BBox.Min
 	var an svg.Node
 	var bb image.Rectangle
 	switch aa {
@@ -92,7 +92,7 @@ func (vv *VectorView) AlignMin(aa AlignAnchors, dim mat32.Dims, act string) {
 		return
 	}
 	sv := vv.SVG()
-	svoff := sv.Root.BBox.Min
+	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
 	sc := mat32.V2(1, 1)
@@ -105,7 +105,7 @@ func (vv *VectorView) AlignMin(aa AlignAnchors, dim mat32.Dims, act string) {
 		bb := sng.BBox.Sub(svoff)
 		del := mat32.V2FromPoint(abb.Min.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(&vv.SVG().SVG, del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -117,7 +117,7 @@ func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim mat32.Dims, act string
 		return
 	}
 	sv := vv.SVG()
-	svoff := sv.Root.BBox.Min
+	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
 	sc := mat32.V2(1, 1)
@@ -130,7 +130,7 @@ func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim mat32.Dims, act string
 		bb := sng.BBox.Sub(svoff)
 		del := mat32.V2FromPoint(abb.Max.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(&vv.SVG().SVG, del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -142,7 +142,7 @@ func (vv *VectorView) AlignMax(aa AlignAnchors, dim mat32.Dims, act string) {
 		return
 	}
 	sv := vv.SVG()
-	svoff := sv.Root.BBox.Min
+	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
 	sc := mat32.V2(1, 1)
@@ -155,7 +155,7 @@ func (vv *VectorView) AlignMax(aa AlignAnchors, dim mat32.Dims, act string) {
 		bb := sng.BBox.Sub(svoff)
 		del := mat32.V2FromPoint(abb.Max.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(&vv.SVG().SVG, del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -167,7 +167,7 @@ func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim mat32.Dims, act string
 		return
 	}
 	sv := vv.SVG()
-	svoff := sv.Root.BBox.Min
+	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
 	sc := mat32.V2(1, 1)
@@ -180,7 +180,7 @@ func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim mat32.Dims, act string
 		bb := sng.BBox.Sub(svoff)
 		del := mat32.V2FromPoint(abb.Min.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(&vv.SVG().SVG, del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -192,7 +192,7 @@ func (vv *VectorView) AlignCenter(aa AlignAnchors, dim mat32.Dims, act string) {
 		return
 	}
 	sv := vv.SVG()
-	svoff := sv.Root.BBox.Min
+	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
 	ctr := mat32.V2FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
@@ -207,7 +207,7 @@ func (vv *VectorView) AlignCenter(aa AlignAnchors, dim mat32.Dims, act string) {
 		nctr := mat32.V2FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
 		del := ctr.Sub(nctr)
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(&vv.SVG().SVG, del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -225,8 +225,8 @@ func (sv *SVGView) GatherAlignPoints() {
 		es.AlignPts[ap] = make([]mat32.Vec2, 0)
 	}
 
-	svg.SVGWalkPreNoDefs(&sv.Root, func(kni svg.Node, knb *svg.NodeBase) bool {
-		if kni.This() == sv.Root.This() {
+	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
+		if kni.This() == sv.Root().This() {
 			return ki.Continue
 		}
 		if NodeIsLayer(kni) {

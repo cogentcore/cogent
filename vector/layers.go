@@ -47,7 +47,7 @@ type Layers []*Layer
 
 func (ly *Layers) SyncLayers(sv *SVGView) {
 	*ly = make(Layers, 0)
-	for _, kc := range sv.Root.Kids {
+	for _, kc := range sv.Root().Kids {
 		if NodeIsLayer(kc) {
 			l := &Layer{Name: kc.Name()}
 			l.FromNode(kc)
@@ -59,7 +59,7 @@ func (ly *Layers) SyncLayers(sv *SVGView) {
 func (ly *Layers) LayersUpdated(sv *SVGView) {
 	si := 1 // starting index -- assuming namedview
 	for i, l := range *ly {
-		kc := sv.Root.ChildByName(l.Name, si+i)
+		kc := sv.Root().ChildByName(l.Name, si+i)
 		if kc != nil {
 			l.ToNode(kc)
 		}
@@ -81,12 +81,12 @@ func (ly *Layers) LayerIdxByName(nm string) int {
 // FirstLayerIndex returns index of first layer group in svg
 func (vv *VectorView) FirstLayerIndex() int {
 	sv := vv.SVG()
-	for i, kc := range sv.Root.Kids {
+	for i, kc := range sv.Root().Kids {
 		if NodeIsLayer(kc) {
 			return i
 		}
 	}
-	return min(1, len(sv.Root.Kids))
+	return min(1, len(sv.Root().Kids))
 }
 
 func (vv *VectorView) LayerViewSigs(lyv *giv.TableView) {
@@ -155,7 +155,7 @@ func (vv *VectorView) UpdateLayerView() {
 
 func (vv *VectorView) AddLayer() {
 	sv := vv.SVG()
-	svr := &vv.SVG().Root
+	svr := sv.Root()
 
 	lys := &vv.EditState.Layers
 	lys.SyncLayers(sv)
@@ -167,7 +167,7 @@ func (vv *VectorView) AddLayer() {
 		l1 := svr.InsertNewChild(svg.GroupType, si+1, "Layer1")
 		l1.SetProp("groupmode", "layer")
 		svr.SetChildAdded()
-		nk := len(sv.Root.Kids)
+		nk := len(svr.Kids)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
 			ki.MoveToParent(kc, l1)

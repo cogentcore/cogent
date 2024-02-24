@@ -344,8 +344,14 @@ func (vv *VectorView) TreeView() *TreeView {
 	return vv.LayerTree().ChildByName("tree-frame", 1).Child(0).(*TreeView)
 }
 
+// SVG returns the [SVGView].
 func (vv *VectorView) SVG() *SVGView {
 	return vv.Splits().Child(1).(*SVGView)
+}
+
+// SSVG returns the underlying [svg.SVG].
+func (vv *VectorView) SSVG() *svg.SVG {
+	return vv.SVG().SSVG()
 }
 
 func (vv *VectorView) Tabs() *gi.Tabs {

@@ -185,9 +185,9 @@ func (vv *VectorView) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc
 		return
 	}
 	sv := vv.SVG()
-	MarkerSetProp(&sv.SVG, sii, "marker-start", start, sc)
-	MarkerSetProp(&sv.SVG, sii, "marker-mid", mid, mc)
-	MarkerSetProp(&sv.SVG, sii, "marker-end", end, ec)
+	MarkerSetProp(sv.SSVG(), sii, "marker-start", start, sc)
+	MarkerSetProp(sv.SSVG(), sii, "marker-mid", mid, mc)
+	MarkerSetProp(sv.SSVG(), sii, "marker-end", end, ec)
 }
 
 // SetMarkerProps sets the marker props
@@ -210,9 +210,9 @@ func (vv *VectorView) UpdateMarkerColors(sii svg.Node) {
 		return
 	}
 	sv := vv.SVG()
-	MarkerUpdateColorProp(&sv.SVG, sii, "marker-start")
-	MarkerUpdateColorProp(&sv.SVG, sii, "marker-mid")
-	MarkerUpdateColorProp(&sv.SVG, sii, "marker-end")
+	MarkerUpdateColorProp(sv.SSVG(), sii, "marker-start")
+	MarkerUpdateColorProp(sv.SSVG(), sii, "marker-mid")
+	MarkerUpdateColorProp(sv.SSVG(), sii, "marker-end")
 }
 
 // SetDashNode sets the stroke-dasharray property of Node.

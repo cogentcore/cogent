@@ -54,7 +54,7 @@ func (sv *SVGView) ManipDone() {
 // current display while manipulating.  It checks if already rendering and if so,
 // just returns immediately, so that updates are not stacked up and laggy.
 func (sv *SVGView) ManipUpdate() {
-	if sv.IsRendering {
+	if sv.SSVG().IsRendering {
 		return
 	}
 	sv.Render()
@@ -62,7 +62,7 @@ func (sv *SVGView) ManipUpdate() {
 
 // VectorDots is the current grid spacing and offsets in dots
 func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
-	svoff := mat32.V2FromPoint(sv.Root.BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
 	grid := sv.VectorEff
 	if grid <= 0 {
 		grid = 12
@@ -70,7 +70,7 @@ func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
 	incr := grid * sv.Scale // our zoom factor
 
 	org := mat32.Vec2{}
-	org = sv.Root.Paint.Transform.MulVec2AsPt(org)
+	org = sv.Root().Paint.Transform.MulVec2AsPt(org)
 
 	// fmt.Printf("org: %v\n", org)
 
@@ -527,13 +527,13 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ang := mat32.Atan2(dy, dx)
 	ang, _ = SnapToIncr(mat32.RadToDeg(ang), 0, 15)
 	ang = mat32.DegToRad(ang)
-	svoff := mat32.V2FromPoint(sv.Root.BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
 	pt = pt.Sub(svoff)
 	del := mat32.Vec2{}
 	sc := mat32.V2(1, 1)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(&sv.SVG, ss.InitGeom)
-		itm.ApplyDeltaTransform(&sv.SVG, del, sc, ang, pt)
+		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
+		itm.ApplyDeltaTransform(sv.SSVG(), del, sc, ang, pt)
 		if strings.HasPrefix(es.Action, "New") {
 			// sv.UpdateNodeGradientPoints(itm, "fill")
 			// sv.UpdateNodeGradientPoints(itm, "stroke")
