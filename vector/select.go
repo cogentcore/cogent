@@ -10,6 +10,7 @@ import (
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
+	"cogentcore.org/core/giv"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
@@ -45,35 +46,19 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 	gi.NewSeparator(tb)
 
-	gv.NewSelectButton(tb).SetText("Group").
-		SetIcon("sel-group").SetShortcut("Command+G").
-		SetTooltip("Group items together").
-		OnClick(func(e events.Event) {
-			gv.SelGroup()
-		})
+	gv.NewSelectFuncButton(tb, gv.SelGroup).SetText("Group").
+		SetIcon("sel-group").SetShortcut("Command+G")
 
-	gv.NewSelectButton(tb).SetText("Ungroup").
-		SetIcon("sel-ungroup").SetShortcut("Shift+Command+G").
-		SetTooltip("Ungroup items").
-		OnClick(func(e events.Event) {
-			gv.SelUnGroup()
-		})
+	gv.NewSelectFuncButton(tb, gv.SelUnGroup).SetText("Ungroup").
+		SetIcon("sel-ungroup").SetShortcut("Shift+Command+G")
 
 	gi.NewSeparator(tb)
 
-	gv.NewSelectButton(tb).SetIcon("sel-rotate-left").
-		SetShortcut("Command+[").
-		SetTooltip("Rotate selection 90 degrees counter-clockwise").
-		OnClick(func(e events.Event) {
-			gv.SelRotateLeft()
-		})
+	gv.NewSelectFuncButton(tb, gv.SelRotateLeft).SetText("").
+		SetIcon("sel-rotate-left").SetShortcut("Command+[")
 
-	gv.NewSelectButton(tb).SetIcon("sel-rotate-right").
-		SetShortcut("Command+]").
-		SetTooltip("Rotate selection 90 degrees clockwise").
-		OnClick(func(e events.Event) {
-			gv.SelRotateRight()
-		})
+	gv.NewSelectFuncButton(tb, gv.SelRotateRight).SetText("").
+		SetIcon("sel-rotate-right").SetShortcut("Command+]")
 
 	gv.NewSelectButton(tb).SetIcon("sel-flip-horiz").
 		SetTooltip("Flip selection horizontally").
@@ -144,6 +129,16 @@ func (gv *VectorView) ConfigSelectToolbar() {
 // there is an item selected.
 func (gv *VectorView) NewSelectButton(par ki.Ki) *gi.Button {
 	bt := gi.NewButton(par)
+	bt.StyleFirst(func(s *styles.Style) {
+		s.SetEnabled(gv.EditState.HasSelected())
+	})
+	return bt
+}
+
+// NewSelectFuncButton returns a new func button that is only enabled when
+// there is an item selected.
+func (gv *VectorView) NewSelectFuncButton(par ki.Ki, fun any) *giv.FuncButton {
+	bt := giv.NewFuncButton(par, fun)
 	bt.StyleFirst(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
 	})
@@ -339,7 +334,8 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 ///////////////////////////////////////////////////////////////////////
 //   Actions
 
-func (gv *VectorView) SelGroup() {
+// SelGroup groups items together
+func (gv *VectorView) SelGroup() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -369,7 +365,8 @@ func (gv *VectorView) SelGroup() {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelUnGroup() {
+// SelUnGroup ungroups items from each other
+func (gv *VectorView) SelUnGroup() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -452,11 +449,13 @@ func (gv *VectorView) SelScale(scx, scy float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelRotateLeft() {
+// SelRotateLeft rotates the selection 90 degrees counter-clockwise
+func (gv *VectorView) SelRotateLeft() { //gti:add
 	gv.SelRotate(-90)
 }
 
-func (gv *VectorView) SelRotateRight() {
+// SelRotateRight rotates the selection 90 degrees clockwise
+func (gv *VectorView) SelRotateRight() { //gti:add
 	gv.SelRotate(90)
 }
 

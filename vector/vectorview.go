@@ -23,6 +23,7 @@ import (
 	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
@@ -486,26 +487,11 @@ func (vv *VectorView) ConfigToolbar(tb *gi.Toolbar) {
 
 	gi.NewSeparator(tb)
 
-	tb.AddAction(gi.ActOpts{Label: "Duplicate", Icon: "documents", Tooltip: "Duplicate current selection -- original items will remain selected", UpdateFunc: vv.SelectedEnableFunc},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.DuplicateSelected()
-		})
-	tb.AddAction(gi.ActOpts{Label: "Copy", Icon: "copy", Tooltip: "Copy current selection to clipboard", UpdateFunc: vv.SelectedEnableFunc},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.CopySelected()
-		})
-	tb.AddAction(gi.ActOpts{Label: "Cut", Icon: "cut", Tooltip: "Cut current selection -- delete and copy to clipboard", UpdateFunc: vv.SelectedEnableFunc},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.CutSelected()
-		})
-	tb.AddAction(gi.ActOpts{Label: "Paste", Icon: "paste", Tooltip: "Paste clipboard contents", UpdateFunc: vv.PasteAvailFunc},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.PasteClip()
-		})
+	giv.NewFuncButton(tb, vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
+	giv.NewFuncButton(tb, vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
+	giv.NewFuncButton(tb, vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
+	giv.NewFuncButton(tb, vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
+
 	gi.NewSeparator(tb, "sep-import")
 	tb.AddAction(gi.ActOpts{Label: "Add Image...", Icon: "file-image", Tooltip: "add an image from a file"},
 		vv.This(), func(recv, send ki.Ki, sig int64, data any) {

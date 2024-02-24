@@ -58,7 +58,7 @@ func (gv *VectorView) SelectedAsTreeViews() []*giv.TreeView {
 }
 
 // DuplicateSelected duplicates selected items in SVG view, using TreeView methods
-func (gv *VectorView) DuplicateSelected() {
+func (gv *VectorView) DuplicateSelected() { //gti:add
 	tvl := gv.SelectedAsTreeViews()
 	if len(tvl) == 0 {
 		gv.SetStatus("Duplicate: no tree items found")
@@ -82,7 +82,7 @@ func (gv *VectorView) DuplicateSelected() {
 }
 
 // CopySelected copies selected items in SVG view, using TreeView methods
-func (gv *VectorView) CopySelected() {
+func (gv *VectorView) CopySelected() { //gti:add
 	tvl := gv.SelectedAsTreeViews()
 	if len(tvl) == 0 {
 		gv.SetStatus("Copy: no tree items found")
@@ -95,7 +95,7 @@ func (gv *VectorView) CopySelected() {
 }
 
 // CutSelected cuts selected items in SVG view, using TreeView methods
-func (gv *VectorView) CutSelected() {
+func (gv *VectorView) CutSelected() { //gti:add
 	tvl := gv.SelectedAsTreeViews()
 	if len(tvl) == 0 {
 		gv.SetStatus("Cut: no tree items found")
@@ -120,7 +120,7 @@ func (gv *VectorView) CutSelected() {
 }
 
 // PasteClip pastes clipboard, using cur layer etc
-func (gv *VectorView) PasteClip() {
+func (gv *VectorView) PasteClip() { //gti:add
 	md := goosi.TheApp.Clipboard().Read([]string{fi.DataJson})
 	if md == nil {
 		return

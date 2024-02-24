@@ -639,22 +639,13 @@ func (sv *SVGView) MakeNodeContextMenu(m *gi.Scene, kn ki.Ki) {
 	gi.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
 		sv.VectorView.SelectNodeInTree(kn, events.SelectOne)
 	})
+
 	gi.NewSeparator(m)
-	gi.NewButton(m).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate).OnClick(func(e events.Event) {
-		sv.VectorView.DuplicateSelected()
-	})
-	gi.NewButton(m).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy).OnClick(func(e events.Event) {
-		sv.VectorView.CopySelected()
-	})
-	gi.NewButton(m).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut).OnClick(func(e events.Event) {
-		sv.VectorView.CutSelected()
-	})
-	gi.NewButton(m).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut).OnClick(func(e events.Event) {
-		sv.VectorView.CutSelected()
-	})
-	gi.NewButton(m).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste).OnClick(func(e events.Event) {
-		sv.VectorView.PasteClip()
-	})
+
+	giv.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
+	giv.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
+	giv.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
+	giv.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position
