@@ -22,6 +22,7 @@ import (
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/grr"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
@@ -422,7 +423,6 @@ func (vv *VectorView) Config() {
 	sp.SetSplits(0.15, 0.60, 0.25)
 
 	vv.ConfigStatusBar()
-	vv.ConfigMainToolbar()
 	vv.ConfigModalToolbar()
 	vv.ConfigTools()
 	vv.ConfigTabs()
@@ -447,43 +447,35 @@ func (vv *VectorView) IsConfiged() bool {
 }
 
 // UndoAvailFunc is an ActionUpdateFunc that inactivates action if no more undos
-func (vv *VectorView) UndoAvailFunc(act *gi.Button) {
+func (vv *VectorView) UndoAvailFunc(bt *gi.Button) {
 	es := &vv.EditState
-	act.SetInactiveState(!es.UndoMgr.HasUndoAvail())
+	bt.SetEnabled(es.UndoMgr.HasUndoAvail())
 }
 
 // RedoAvailFunc is an ActionUpdateFunc that inactivates action if no more redos
-func (vv *VectorView) RedoAvailFunc(act *gi.Button) {
+func (vv *VectorView) RedoAvailFunc(bt *gi.Button) {
 	es := &vv.EditState
-	act.SetInactiveState(!es.UndoMgr.HasRedoAvail())
+	bt.SetEnabled(es.UndoMgr.HasRedoAvail())
 }
 
 // PasteAvailFunc is an ActionUpdateFunc that inactivates action if no paste avail
-func (vv *VectorView) PasteAvailFunc(act *gi.Button) {
-	empty := goosi.TheApp.Clipboard(vv.ParentWindow().OSWin).IsEmpty()
-	act.SetInactiveState(empty)
+func (vv *VectorView) PasteAvailFunc(bt *gi.Button) {
+	bt.SetEnabled(!vv.Clipboard().IsEmpty())
 }
 
-func (vv *VectorView) ConfigMainToolbar() {
-	tb := vv.MainToolbar()
-	tb.SetStretchMaxWidth()
-	tb.AddAction(gi.ActOpts{Label: "Updt", Icon: "update", Tooltip: "update display -- should not be needed but sometimes, while still under development..."},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.UpdateAll()
-		})
-	tb.AddAction(gi.ActOpts{Label: "New", Icon: "new", Tooltip: "create new drawing of specified size"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			ndr := grr.NewDrawing(Prefs.Size)
+func (vv *VectorView) ConfigToolbar(tb *gi.Toolbar) {
+	// TODO(kai): remove Update
+	giv.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update).SetTooltip("Update the display")
+	gi.NewButton(tb).SetText("New").SetIcon(icons.Add).
+		SetTooltip("Create a new drawing of the specified size").
+		OnClick(func(e events.Event) {
+			ndr := vv.NewDrawing(Prefs.Size)
 			ndr.PromptPhysSize()
 		})
-	szmen := tb.AddAction(gi.ActOpts{Label: "Size", Icon: "gear"}, nil, nil)
-	szmen.Menu.AddAction(gi.ActOpts{Label: "Set Size...", Icon: "gear", Tooltip: "set size and grid spacing of drawing"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.PromptPhysSize()
-		})
+	gi.NewButton(tb).SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *gi.Scene) {
+		giv.NewFuncButton(m, vv.PromptPhysSize).SetText("Set size").
+			SetIcon(icons.Settings).SetTooltip("Set the size and grid spacing of the drawing")
+	})
 	szmen.Menu.AddAction(gi.ActOpts{Label: "Resize To Contents", Icon: "gear", Tooltip: "resizes the drawing to fit the current contents, moving everything to upper-left corner while preserving grid alignment"},
 		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_VectorView).(*VectorView)
