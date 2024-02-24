@@ -66,14 +66,14 @@ func (ts *TextStyle) Update() {
 func (ts *TextStyle) Defaults() {
 	ts.Text = ""
 	ts.Font = "Arial"
-	ts.Size.SetPx(12)
-	ts.Style = styles.FontStyles(0)
-	ts.Weight = styles.FontWeights(0)
-	ts.Stretch = styles.FontStretch(0)
-	ts.Variant = styles.FontVariants(0)
-	ts.Deco = styles.TextDecorations(0)
-	ts.Shift = styles.BaselineShifts(0)
-	ts.Align = styles.Start
+	ts.Size.Dp(16)
+	ts.Style = 0
+	ts.Weight = 0
+	ts.Stretch = 0
+	ts.Variant = 0
+	ts.Deco = 0
+	ts.Shift = 0
+	ts.Align = 0
 
 	ts.SetFromFontStyle(&Prefs.TextStyle.FontStyle)
 }
