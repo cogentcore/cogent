@@ -89,67 +89,61 @@ func (sv *SVGView) UpdateView(full bool) {
 	sv.UpdateSelSprites()
 }
 
-func (sv *SVGView) SVGViewKeys(kt *events.Event) {
-	kc := kt.Chord()
+func (sv *SVGView) SVGViewKeys(e events.Event) {
+	kc := e.KeyChord()
 	if gi.DebugSettings.KeyEventTrace {
 		fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
 	}
-	kf := keyfun.(kc)
+	kf := keyfun.Of(kc)
 	switch kf {
 	case keyfun.Abort:
 		// todo: maybe something else
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.SetTool(SelectTool)
 	case keyfun.Undo:
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.Undo()
 	case keyfun.Redo:
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.Redo()
 	case keyfun.Duplicate:
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.DuplicateSelected()
 	case keyfun.Copy:
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.CopySelected()
 	case keyfun.Cut:
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.CutSelected()
 	case keyfun.Paste:
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.PasteClip()
 	case keyfun.Delete, keyfun.Backspace:
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.DeleteSelected()
 	}
-	if kt.IsProcessed() {
+	if e.IsHandled() {
 		return
 	}
-	// fmt.Println(kc)
 	switch kc {
-	case "Control+G", "Meta+G":
-		kt.SetHandled()
-		sv.VectorView.SelGroup()
-	case "Shift+Control+G", "Shift+Meta+G":
-		kt.SetHandled()
-		sv.VectorView.SelUnGroup()
+	// TODO(kai: should these be handled automatically?)
 	case "s", "Shift+S", " ":
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.SetTool(SelectTool)
 	case "n", "Shift+N":
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.SetTool(NodeTool)
 	case "r", "Shift+R":
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.SetTool(RectTool)
 	case "e", "Shift+E":
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.SetTool(EllipseTool)
 	case "b", "Shift+B":
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.SetTool(BezierTool)
 	case "t", "Shift+T":
-		kt.SetHandled()
+		e.SetHandled()
 		sv.VectorView.SetTool(TextTool)
 	}
 }
@@ -357,11 +351,11 @@ func (sv *SVGView) ConnectEvents2D() {
 func (sv *SVGView) ContentsBBox() mat32.Box2 {
 	bbox := mat32.Box2{}
 	bbox.SetEmpty()
-	sv.WalkPre(0, nil, func(k ki.Ki, level int, d any) bool {
+	sv.WalkPre(func(k ki.Ki) bool {
 		if k.This() == sv.This() {
 			return ki.Continue
 		}
-		if k.This() == sv.Defs.This() {
+		if k.This() == sv.SSVG().Defs.This() {
 			return ki.Break
 		}
 		sni, issv := k.(svg.Node)
@@ -394,11 +388,11 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
 func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
-	sv.WalkPre(0, nil, func(k ki.Ki, level int, d any) bool {
+	sv.WalkPre(func(k ki.Ki) bool {
 		if k.This() == sv.This() {
 			return ki.Continue
 		}
-		if k.This() == sv.Defs.This() {
+		if k.This() == sv.SSVG().Defs.This() {
 			return ki.Break
 		}
 		sni, issv := k.(svg.Node)
@@ -416,18 +410,18 @@ func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot fl
 				return ki.Break
 			}
 		}
-		sni.ApplyDeltaTransform(trans, scale, rot, pt)
+		sni.ApplyDeltaTransform(sv.SSVG(), trans, scale, rot, pt)
 		return ki.Continue
 	})
 }
 
 // ZoomToPage sets the scale to fit the current viewbox
 func (sv *SVGView) ZoomToPage(width bool) {
-	vb := mat32.V2FromPoint(sv.BBox.Size())
-	if vb.IsNil() {
+	vb := mat32.V2FromPoint(sv.Root().BBox.Size())
+	if vb == (mat32.Vec2{}) {
 		return
 	}
-	bsz := sv.ViewBox.Size
+	bsz := sv.Root().ViewBox.Size
 	if bsz.X <= 0 || bsz.Y <= 0 {
 		return
 	}
@@ -443,8 +437,8 @@ func (sv *SVGView) ZoomToPage(width bool) {
 
 // ZoomToContents sets the scale to fit the current contents into view
 func (sv *SVGView) ZoomToContents(width bool) {
-	vb := mat32.V2FromPoint(sv.BBox.Size())
-	if vb.IsNil() {
+	vb := mat32.V2FromPoint(sv.Root().BBox.Size())
+	if vb == (mat32.Vec2{}) {
 		return
 	}
 	sv.ZoomToPage(width)
@@ -490,9 +484,9 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 	bsz = bsz.DivScalar(sv.Scale)
 
 	sv.TransformAllLeaves(treff, mat32.V2(1, 1), 0, mat32.V2(0, 0))
-	sv.ViewBox.Size = bsz
-	sv.PhysWidth.Val = bsz.X
-	sv.PhysHeight.Val = bsz.Y
+	sv.Root().ViewBox.Size = bsz
+	sv.SSVG().PhysWidth.Val = bsz.X
+	sv.SSVG().PhysHeight.Val = bsz.Y
 	sv.ZoomToPage(false)
 	sv.VectorView.ChangeMade()
 }
@@ -510,7 +504,7 @@ func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
 
 	nsc := sv.Scale * sc
 
-	mpt := mat32.V2FromPoint(pt.Sub(sv.BBox.Min))
+	mpt := mat32.V2FromPoint(pt.Sub(sv.Root().BBox.Min))
 	lpt := mpt.DivScalar(sv.Scale).Sub(sv.Trans) // point in drawing coords
 
 	dt := lpt.Add(sv.Trans).MulScalar((nsc - sv.Scale) / nsc) // delta from zooming
@@ -529,14 +523,14 @@ func (sv *SVGView) SetTransform() {
 // if mknew is true, it will create new ones if not found.
 func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	if sv.NumChildren() > 0 {
-		kd := sv.SVG.Root.Kids[0]
+		kd := sv.Root().Kids[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
 			main = md
 		}
 	}
 	if main == nil && mknew {
-		id := sv.NewUniqueId()
-		main = sv.InsertNewChild(gi.KiT_MetaData2D, 0, svg.NameId("namedview", id)).(*svg.MetaData)
+		id := sv.SSVG().NewUniqueID()
+		main = sv.InsertNewChild(svg.MetaDataType, 0, svg.NameID("namedview", id)).(*svg.MetaData)
 	}
 	if main == nil {
 		return
@@ -548,8 +542,8 @@ func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 		}
 	}
 	if grid == nil && mknew {
-		id := sv.NewUniqueId()
-		grid = main.InsertNewChild(gi.KiT_MetaData2D, 0, svg.NameId("grid", id)).(*svg.MetaData)
+		id := sv.SSVG().NewUniqueID()
+		grid = main.InsertNewChild(svg.MetaDataType, 0, svg.NameID("grid", id)).(*svg.MetaData)
 	}
 	return
 }
@@ -559,7 +553,7 @@ func (sv *SVGView) SetMetaData() {
 	es := sv.EditState()
 	nv, gr := sv.MetaData(true)
 
-	uts := strings.ToLower(sv.PhysWidth.Un.String())
+	uts := strings.ToLower(sv.SSVG().PhysWidth.Un.String())
 
 	nv.SetProp("inkscape:current-layer", es.CurLayer)
 	nv.SetProp("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
@@ -630,7 +624,7 @@ func (sv *SVGView) ReadMetaData() {
 
 // EditNode opens a structview editor on node
 func (sv *SVGView) EditNode(kn ki.Ki) {
-	giv.StructViewDialog(sv.Viewport, kn, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
+	giv.StructViewDialog(sv, kn, "SVG Element View", true)
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
@@ -801,7 +795,7 @@ func (sv *SVGView) DepthMap() map[ki.Ki]int {
 
 // SetSVGName sets the name of the element to standard type + id name
 func (sv *SVGView) SetSVGName(el svg.Node) {
-	nwid := sv.NewUniqueId()
+	nwid := sv.NewUniqueID()
 	nwnm := fmt.Sprintf("%s%d", el.SVGName(), nwid)
 	el.SetName(nwnm)
 }
@@ -860,7 +854,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	es := sv.EditState()
 	sv.ManipStart("NewText", "")
 	nr := sv.NewEl(svg.TextType)
-	tsnm := fmt.Sprintf("tspan%d", sv.NewUniqueId())
+	tsnm := fmt.Sprintf("tspan%d", sv.NewUniqueID())
 	tspan := svg.NewText(nr, tsnm)
 	tspan.Text = "Text"
 	tspan.Width = 200
@@ -948,7 +942,7 @@ func (sv *SVGView) UpdateGradients(gl []*Gradient) {
 	nms := make(map[string]bool)
 	for _, gr := range gl {
 		if _, has := nms[gr.Name]; has {
-			id := sv.NewUniqueId()
+			id := sv.NewUniqueID()
 			gr.Name = fmt.Sprintf("%d", id)
 		}
 		nms[gr.Name] = true

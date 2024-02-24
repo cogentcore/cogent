@@ -464,7 +464,7 @@ type Gradient struct {
 /*
 // Updates our gradient from svg gradient
 func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
-	_, id := svg.SplitNameIdDig(g.Nm)
+	_, id := svg.SplitNameIDDig(g.Nm)
 	gr.Id = fmt.Sprintf("%d", id)
 	gr.Name = g.Nm
 	if g.Grad.Gradient == nil {
@@ -495,7 +495,7 @@ func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
 /*
 // Updates svg gradient from our gradient
 func (gr *Gradient) UpdateGrad(g *gi.Gradient) {
-	_, id := svg.SplitNameIdDig(g.Nm) // we always need to sync to id & name though
+	_, id := svg.SplitNameIDDig(g.Nm) // we always need to sync to id & name though
 	gr.Id = fmt.Sprintf("%d", id)
 	gr.Name = g.Nm
 	gr.Ic = "stop" // todo manage separate list of gradient icons -- update

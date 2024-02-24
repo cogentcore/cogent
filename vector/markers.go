@@ -34,9 +34,9 @@ func MarkerFromNodeProp(kn ki.Ki, prop string) (string, int, MarkerColors) {
 		return "", 0, MarkerDef
 	}
 	mc := MarkerDef
-	nm, id := svg.SplitNameIdDig(svg.NameFromURL(ms))
+	nm, id := svg.SplitNameIDDig(svg.NameFromURL(ms))
 	if id > 0 {
-		_, sid := svg.SplitNameIdDig(kn.Name())
+		_, sid := svg.SplitNameIDDig(kn.Name())
 		if id == sid { // if match, then copy
 			mc = MarkerCopy
 		} else { // then custom
@@ -50,7 +50,7 @@ func MarkerFromNodeProp(kn ki.Ki, prop string) (string, int, MarkerColors) {
 // making a new one, copying from standard markers if not.
 // if mc is MarkerCopyColor then sets marker colors to node colors.
 func RecycleMarker(sg *svg.SVG, sii svg.Node, name string, id int, mc MarkerColors) *svg.Marker {
-	nmeff := svg.NameId(name, id)
+	nmeff := svg.NameID(name, id)
 	mk := sg.FindDefByName(nmeff)
 	fc := laser.ToString(sii.Prop("fill"))
 	sc := laser.ToString(sii.Prop("stroke"))
@@ -151,7 +151,7 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 	}
 	// updt := sg.UpdateStart()
 	nmk := &svg.Marker{}
-	fnm := svg.NameId(name, id)
+	fnm := svg.NameID(name, id)
 	nmk.InitName(nmk, fnm)
 	nmk.CopyFrom(mk)
 	mk.SetName(fnm) // double check
@@ -164,19 +164,19 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 // MarkerSetProp sets marker property for given node to given marker name (canonical)
 func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors) {
 	onm, oid, omc := MarkerFromNodeProp(sii, prop)
-	_, nid := svg.SplitNameIdDig(sii.Name())
+	_, nid := svg.SplitNameIDDig(sii.Name())
 	if onm == name && oid == nid && omc == mc {
 		return
 	}
 	if name == "" || name == "-" {
 		if onm != "" && omc == MarkerCopy {
-			sg.Defs.DeleteChildByName(svg.NameId(onm, oid), ki.DestroyKids)
+			sg.Defs.DeleteChildByName(svg.NameID(onm, oid), ki.DestroyKids)
 		}
 		sii.DeleteProp(prop)
 		return
 	}
 	if omc == MarkerCopy && omc != mc { // implies onm != ""
-		sg.Defs.DeleteChildByName(svg.NameId(onm, oid), ki.DestroyKids)
+		sg.Defs.DeleteChildByName(svg.NameID(onm, oid), ki.DestroyKids)
 	}
 
 	_, ok := AllMarkersXMLMap[name]
@@ -194,7 +194,7 @@ func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors
 	case MarkerCust:
 		id := oid
 		if onm != name || id == 0 {
-			id = sg.NewUniqueId()
+			id = sg.NewUniqueID()
 		}
 		nmk = RecycleMarker(sg, sii, name, id, mc)
 	}
