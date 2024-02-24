@@ -15,7 +15,10 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
+	"cogentcore.org/core/grows/jsons"
+	"cogentcore.org/core/grr"
 	"cogentcore.org/core/gti"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
@@ -629,23 +632,26 @@ func (sv *SVGView) EditNode(kn ki.Ki) {
 
 // MakeNodeContextMenu makes the menu of options for context right click
 func (sv *SVGView) MakeNodeContextMenu(m *gi.Scene, kn ki.Ki) {
-	m.AddAction(gi.ActOpts{Label: "Edit"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	gi.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 		sv.EditNode(kn)
 	})
-	m.AddAction(gi.ActOpts{Label: "Select in Tree"}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	gi.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
 		sv.VectorView.SelectNodeInTree(kn, events.SelectOne)
 	})
-	m.AddSeparator("sep-clip")
-	m.AddAction(gi.ActOpts{Label: "Duplicate", ShortcutKey: keyfun.Duplicate}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	gi.NewSeparator(m)
+	gi.NewButton(m).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate).OnClick(func(e events.Event) {
 		sv.VectorView.DuplicateSelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Copy", ShortcutKey: keyfun.Copy}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	gi.NewButton(m).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy).OnClick(func(e events.Event) {
 		sv.VectorView.CopySelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Cut", ShortcutKey: keyfun.Cut}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	gi.NewButton(m).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut).OnClick(func(e events.Event) {
 		sv.VectorView.CutSelected()
 	})
-	m.AddAction(gi.ActOpts{Label: "Paste", ShortcutKey: keyfun.Paste}, sv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	gi.NewButton(m).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut).OnClick(func(e events.Event) {
+		sv.VectorView.CutSelected()
+	})
+	gi.NewButton(m).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste).OnClick(func(e events.Event) {
 		sv.VectorView.PasteClip()
 	})
 }
@@ -655,17 +661,10 @@ func (sv *SVGView) NodeContextMenuPos(pos image.Point) image.Point {
 	if pos != image.ZP {
 		return pos
 	}
-	pos.X = (sv.BBox.Min.X + sv.BBox.Max.X) / 2
-	pos.Y = (sv.BBox.Min.Y + sv.BBox.Max.Y) / 2
+	bbox := sv.Root().BBox
+	pos.X = (bbox.Min.X + bbox.Max.X) / 2
+	pos.Y = (bbox.Min.Y + bbox.Max.Y) / 2
 	return pos
-}
-
-// NodeContextMenu pops up the right-click context menu for given node
-func (sv *SVGView) NodeContextMenu(kn ki.Ki, pos image.Point) {
-	var men gi.Menu
-	sv.MakeNodeContextMenu(&men, kn)
-	pos = sv.NodeContextMenuPos(pos)
-	gi.PopupMenu(men, pos.X, pos.Y, sv.Viewport, "svNodeContextMenu")
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -679,29 +678,18 @@ func (sv *SVGView) UndoSave(action, data string) {
 	}
 	es.Changed = true
 	b := &bytes.Buffer{}
-	// sv.WriteXML(b, false)
-	err := sv.WriteJSON(b, true) // should be false
-	if err != nil {
-		fmt.Printf("SaveUndo Error: %s\n", err)
-	}
-	// fmt.Printf("%s\n", string(b.Bytes()))
+	grr.Log(jsons.Write(sv.Root(), b))
 	bs := strings.Split(string(b.Bytes()), "\n")
 	es.UndoMgr.Save(action, data, bs)
-	// fmt.Println(es.UndoMgr.MemStats(true))
 }
 
 // UndoSaveReplace save current state to replace current
 func (sv *SVGView) UndoSaveReplace(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
-	// sv.WriteXML(b, false)
-	err := sv.WriteJSON(b, true) // should be false
-	if err != nil {
-		fmt.Printf("SaveUndo Error: %s\n", err)
-	}
+	grr.Log(jsons.Write(sv.Root(), b))
 	bs := strings.Split(string(b.Bytes()), "\n")
 	es.UndoMgr.SaveReplace(action, data, bs)
-	// fmt.Println(es.UndoMgr.MemStats(true))
 }
 
 // Undo undoes one step, returning the action that was undone
@@ -710,15 +698,10 @@ func (sv *SVGView) Undo() string {
 	es.ResetSelected()
 	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
-		// sv.WriteXML(b, false)
-		err := sv.WriteJSON(b, false)
-		if err != nil {
-			fmt.Printf("SaveUndo Error: %s\n", err)
-		}
+		grr.Log(jsons.Write(sv.Root(), b))
 		bs := strings.Split(string(b.Bytes()), "\n")
 		es.UndoMgr.SaveUndoStart(bs)
 	}
-	// fmt.Printf("undo idx: %d\n", es.UndoMgr.Idx)
 	act, _, state := es.UndoMgr.Undo()
 	if state == nil {
 		return act
@@ -726,11 +709,7 @@ func (sv *SVGView) Undo() string {
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
 	updt := sv.UpdateStart()
-	err := sv.ReadJSON(b)
-	_ = err
-	// if err != nil {
-	// 	fmt.Printf("Undo load Error: %s\n", err)
-	// }
+	grr.Log(jsons.Read(sv.Root(), b))
 	sv.UpdateEnd(updt)
 	sv.UpdateSelect()
 	return act
@@ -740,20 +719,14 @@ func (sv *SVGView) Undo() string {
 func (sv *SVGView) Redo() string {
 	es := sv.EditState()
 	es.ResetSelected()
-	// fmt.Printf("redo idx: %d\n", es.UndoMgr.Idx)
 	act, _, state := es.UndoMgr.Redo()
 	if state == nil {
 		return act
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	// sv.ReadXML(b)
 	updt := sv.UpdateStart()
-	err := sv.ReadJSON(b) // json preserves all objects
-	_ = err
-	// if err != nil {
-	// 	fmt.Printf("Redo load Error: %s\n", err)
-	// }
+	grr.Log(jsons.Read(sv.Root(), b))
 	sv.UpdateEnd(updt)
 	sv.UpdateSelect()
 	return act
@@ -765,15 +738,15 @@ func (sv *SVGView) Redo() string {
 // ShowAlignMatches draws the align matches as given
 // between BBox Min - Max.  typs are corresponding bounding box sources.
 func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
-	win := sv.VectorView.ParentWindow()
+	// win := sv.VectorView.ParentWindow()
 
-	sz := min(len(pts), 8)
-	for i := 0; i < sz; i++ {
-		pt := pts[i].Canon()
-		lsz := pt.Max.Sub(pt.Min)
-		sp := Sprite(win, SpAlignMatch, Sprites(typs[i]), i, lsz)
-		SetSpritePos(sp, pt.Min)
-	}
+	// sz := min(len(pts), 8)
+	// for i := 0; i < sz; i++ {
+	// 	pt := pts[i].Canon()
+	// 	lsz := pt.Max.Sub(pt.Min)
+	// 	sp := Sprite(win, SpAlignMatch, Sprites(typs[i]), i, lsz)
+	// 	SetSpritePos(sp, pt.Min)
+	// }
 }
 
 // DepthMap returns a map of all nodes and their associated depth count
@@ -795,7 +768,7 @@ func (sv *SVGView) DepthMap() map[ki.Ki]int {
 
 // SetSVGName sets the name of the element to standard type + id name
 func (sv *SVGView) SetSVGName(el svg.Node) {
-	nwid := sv.NewUniqueID()
+	nwid := sv.SSVG().NewUniqueID()
 	nwnm := fmt.Sprintf("%s%d", el.SVGName(), nwid)
 	el.SetName(nwnm)
 }
@@ -811,7 +784,7 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 			par = ly
 		}
 	}
-	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name())
+	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
 	par.SetChildAdded()
 	nw := par.NewChild(typ, nwnm).(svg.Node)
 	sv.SetSVGName(nw)
