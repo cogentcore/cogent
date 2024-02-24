@@ -22,7 +22,7 @@ func (gv *VectorView) SelectToolbar() *gi.Toolbar {
 	return tb
 }
 
-// ConfigSelectToolbar configures the selection modal toolbar (default tooblar)
+// ConfigSelectToolbar configures the selection modal toolbar (default toolbar)
 func (gv *VectorView) ConfigSelectToolbar() {
 	tb := gv.SelectToolbar()
 	if tb.HasChildren() {
@@ -115,44 +115,28 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 	gi.NewSeparator(tb)
 
-	gi.NewLabel(tb, "posx-lab", "X: ").SetProp("vertical-align", styles.AlignMiddle)
-	px := gi.NewSpinner(tb, "posx")
-	px.SetProp("step", 1)
-	px.SetValue(0)
-	px.Tooltip = "horizontal coordinate of selection, in document units"
-	px.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		grr := recv.Embed(KiT_VectorView).(*VectorView)
-		grr.SelSetXPos(px.Value)
+	gi.NewLabel(tb).SetText("X: ")
+	px := gi.NewSpinner(tb, "posx").SetStep(1).SetTooltip("Horizontal coordinate of selection, in document units")
+	px.OnChange(func(e events.Event) {
+		gv.SelSetXPos(px.Value)
 	})
 
-	gi.NewLabel(tb, "posy-lab", "Y: ").SetProp("vertical-align", styles.AlignMiddle)
-	py := gi.NewSpinner(tb, "posy")
-	py.SetProp("step", 1)
-	py.SetValue(0)
-	py.Tooltip = "vertical coordinate of selection, in document units"
-	py.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		grr := recv.Embed(KiT_VectorView).(*VectorView)
-		grr.SelSetYPos(py.Value)
+	gi.NewLabel(tb).SetText("Y: ")
+	py := gi.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
+	py.OnChange(func(e events.Event) {
+		gv.SelSetYPos(py.Value)
 	})
 
-	gi.NewLabel(tb, "width-lab", "W: ").SetProp("vertical-align", styles.AlignMiddle)
-	wd := gi.NewSpinner(tb, "width")
-	wd.SetProp("step", 1)
-	wd.SetValue(0)
-	wd.Tooltip = "width of selection, in document units"
-	wd.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		grr := recv.Embed(KiT_VectorView).(*VectorView)
-		grr.SelSetWidth(wd.Value)
+	gi.NewLabel(tb).SetText("W: ")
+	wd := gi.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
+	wd.OnChange(func(e events.Event) {
+		gv.SelSetWidth(wd.Value)
 	})
 
-	gi.NewLabel(tb, "height-lab", "H: ").SetProp("vertical-align", styles.AlignMiddle)
-	ht := gi.NewSpinner(tb, "height")
-	ht.SetProp("step", 1)
-	ht.SetValue(0)
-	ht.Tooltip = "height of selection, in document units"
-	ht.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		grr := recv.Embed(KiT_VectorView).(*VectorView)
-		grr.SelSetHeight(ht.Value)
+	gi.NewLabel(tb).SetText("H: ")
+	ht := gi.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
+	ht.OnChange(func(e events.Event) {
+		gv.SelSetHeight(ht.Value)
 	})
 }
 
@@ -169,132 +153,124 @@ func (gv *VectorView) NewSelectButton(par ki.Ki) *gi.Button {
 // UpdateSelectToolbar updates the select toolbar based on current selection
 func (gv *VectorView) UpdateSelectToolbar() {
 	tb := gv.SelectToolbar()
-	tb.UpdateActions()
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
 	}
 	sz := es.DragSelEffBBox.Size()
-	px := tb.ChildByName("posx", 8).(*gi.Spinner)
-	px.SetValue(es.DragSelEffBBox.Min.X)
-	py := tb.ChildByName("posy", 9).(*gi.Spinner)
-	py.SetValue(es.DragSelEffBBox.Min.Y)
-	wd := tb.ChildByName("width", 10).(*gi.Spinner)
-	wd.SetValue(sz.X)
-	ht := tb.ChildByName("height", 11).(*gi.Spinner)
-	ht.SetValue(sz.Y)
+	tb.ChildByName("posx", 8).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.X)
+	tb.ChildByName("posy", 9).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
+	tb.ChildByName("width", 10).(*gi.Spinner).SetValue(sz.X)
+	tb.ChildByName("height", 11).(*gi.Spinner).SetValue(sz.Y)
 }
 
 // UpdateSelect should be called whenever selection changes
 func (sv *SVGView) UpdateSelect() {
-	wupdt := sv.TopUpdateStart()
-	defer sv.TopUpdateEnd(wupdt)
-	win := sv.VectorView.ParentWindow()
+	updt := sv.UpdateStart()
+	defer sv.UpdateEndRender(updt)
 	es := sv.EditState()
 	sv.VectorView.UpdateTabs()
 	sv.VectorView.UpdateSelectToolbar()
 	if es.Tool == NodeTool {
 		sv.UpdateNodeSprites()
-		sv.RemoveSelSprites(win)
+		sv.RemoveSelSprites()
 	} else {
-		sv.RemoveNodeSprites(win)
+		sv.RemoveNodeSprites()
 		sv.UpdateSelSprites()
 	}
 }
 
-/*
-func (sv *SVGView) RemoveSelSprites(win *gi.Window) {
-	InactivateSprites(win, SpReshapeBBox)
-	InactivateSprites(win, SpSelBBox)
-	es := sv.EditState()
-	es.NSelSprites = 0
-	win.UpdateSig()
+func (sv *SVGView) RemoveSelSprites() {
+	// InactivateSprites(win, SpReshapeBBox)
+	// InactivateSprites(win, SpSelBBox)
+	// es := sv.EditState()
+	// es.NSelSprites = 0
+	// win.UpdateSig()
 }
-*/
 
 func (sv *SVGView) UpdateSelSprites() {
-	win := sv.VectorView.ParentWindow()
-	updt := win.UpdateStart()
-	defer win.UpdateEnd(updt)
+	// win := sv.VectorView.ParentWindow()
+	// updt := win.UpdateStart()
+	// defer win.UpdateEnd(updt)
 
-	es := sv.EditState()
-	es.UpdateSelBBox()
-	if !es.HasSelected() {
-		sv.RemoveSelSprites(win)
-		return
-	}
+	// es := sv.EditState()
+	// es.UpdateSelBBox()
+	// if !es.HasSelected() {
+	// 	sv.RemoveSelSprites(win)
+	// 	return
+	// }
 
-	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		spi := i // key to get a unique local var
-		SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
-			ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-			ssvg.SelSpriteEvent(spi, events.EventType(sig), d)
-		})
-	}
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
-	sv.SetSelSpritePos()
+	// for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+	// 	spi := i // key to get a unique local var
+	// 	SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+	// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+	// 		ssvg.SelSpriteEvent(spi, events.EventType(sig), d)
+	// 	})
+	// }
+	// sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
+	// sv.SetSelSpritePos()
 
-	win.UpdateSig()
+	// win.UpdateSig()
 }
 
 func (sv *SVGView) SetSelSpritePos() {
-	win := sv.VectorView.ParentWindow()
-	es := sv.EditState()
-	nsel := es.NSelSprites
+	// win := sv.VectorView.ParentWindow()
+	// es := sv.EditState()
+	// nsel := es.NSelSprites
 
-	es.NSelSprites = 0
-	if len(es.Selected) > 1 {
-		nbox := 0
-		sl := es.SelectedList(false)
-		for si, sii := range sl {
-			sn := sii.AsNodeBase()
-			if sn.BBox.Size() == image.ZP {
-				continue
-			}
-			bb := mat32.Box2{}
-			bb.SetFromRect(sn.BBox)
-			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
-			nbox++
-		}
-		es.NSelSprites = nbox
-	}
+	// es.NSelSprites = 0
+	// if len(es.Selected) > 1 {
+	// 	nbox := 0
+	// 	sl := es.SelectedList(false)
+	// 	for si, sii := range sl {
+	// 		sn := sii.AsNodeBase()
+	// 		if sn.BBox.Size() == image.ZP {
+	// 			continue
+	// 		}
+	// 		bb := mat32.Box2{}
+	// 		bb.SetFromRect(sn.BBox)
+	// 		sv.SetBBoxSpritePos(SpSelBBox, si, bb)
+	// 		nbox++
+	// 	}
+	// 	es.NSelSprites = nbox
+	// }
 
-	for si := es.NSelSprites; si < nsel; si++ {
-		for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-			spnm := SpriteName(SpSelBBox, i, si)
-			win.InactivateSprite(spnm)
-		}
-	}
+	// for si := es.NSelSprites; si < nsel; si++ {
+	// 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+	// 		spnm := SpriteName(SpSelBBox, i, si)
+	// 		win.InactivateSprite(spnm)
+	// 	}
+	// }
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites
 func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox mat32.Box2) {
-	win := sv.VectorView.ParentWindow()
-	_, spsz := HandleSpriteSize(1)
-	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
-	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
-	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		spi := i // key to get a unique local var
-		sp := Sprite(win, typ, spi, idx, image.ZP)
-		switch spi {
-		case SpBBoxUpL:
-			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
-		case SpBBoxUpC:
-			SetSpritePos(sp, image.Point{midX, int(bbox.Min.Y)})
-		case SpBBoxUpR:
-			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
-		case SpBBoxDnL:
-			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
-		case SpBBoxDnC:
-			SetSpritePos(sp, image.Point{midX, int(bbox.Max.Y)})
-		case SpBBoxDnR:
-			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
-		case SpBBoxLfM:
-			SetSpritePos(sp, image.Point{int(bbox.Min.X), midY})
-		case SpBBoxRtM:
-			SetSpritePos(sp, image.Point{int(bbox.Max.X), midY})
-		}
-	}
+	// win := sv.VectorView.ParentWindow()
+	// _, spsz := HandleSpriteSize(1)
+	// midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
+	// midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
+	// for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+	// 	spi := i // key to get a unique local var
+	// 	sp := Sprite(win, typ, spi, idx, image.ZP)
+	// 	switch spi {
+	// 	case SpBBoxUpL:
+	// 		SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
+	// 	case SpBBoxUpC:
+	// 		SetSpritePos(sp, image.Point{midX, int(bbox.Min.Y)})
+	// 	case SpBBoxUpR:
+	// 		SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
+	// 	case SpBBoxDnL:
+	// 		SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
+	// 	case SpBBoxDnC:
+	// 		SetSpritePos(sp, image.Point{midX, int(bbox.Max.Y)})
+	// 	case SpBBoxDnR:
+	// 		SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
+	// 	case SpBBoxLfM:
+	// 		SetSpritePos(sp, image.Point{int(bbox.Min.X), midY})
+	// 	case SpBBoxRtM:
+	// 		SetSpritePos(sp, image.Point{int(bbox.Max.X), midY})
+	// 	}
+	// }
 }
 
 /*
@@ -329,35 +305,35 @@ func (sv *SVGView) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
 
 // SetRubberBand updates the rubber band postion
 func (sv *SVGView) SetRubberBand(cur image.Point) {
-	win := sv.VectorView.ParentWindow()
-	es := sv.EditState()
+	// win := sv.VectorView.ParentWindow()
+	// es := sv.EditState()
 
-	if !es.InAction() {
-		es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
-		es.ActUnlock()
-	}
-	es.DragCurPos = cur
+	// if !es.InAction() {
+	// 	es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
+	// 	es.ActUnlock()
+	// }
+	// es.DragCurPos = cur
 
-	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
-	bbox = bbox.Canon()
+	// bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+	// bbox = bbox.Canon()
 
-	sz := bbox.Size()
-	if sz.X < 4 {
-		sz.X = 4
-	}
-	if sz.Y < 4 {
-		sz.Y = 4
-	}
-	rt := Sprite(win, SpRubberBand, SpBBoxUpC, 0, sz)
-	rb := Sprite(win, SpRubberBand, SpBBoxDnC, 0, sz)
-	rr := Sprite(win, SpRubberBand, SpBBoxRtM, 0, sz)
-	rl := Sprite(win, SpRubberBand, SpBBoxLfM, 0, sz)
-	SetSpritePos(rt, bbox.Min)
-	SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
-	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
-	SetSpritePos(rl, bbox.Min)
+	// sz := bbox.Size()
+	// if sz.X < 4 {
+	// 	sz.X = 4
+	// }
+	// if sz.Y < 4 {
+	// 	sz.Y = 4
+	// }
+	// rt := Sprite(win, SpRubberBand, SpBBoxUpC, 0, sz)
+	// rb := Sprite(win, SpRubberBand, SpBBoxDnC, 0, sz)
+	// rr := Sprite(win, SpRubberBand, SpBBoxRtM, 0, sz)
+	// rl := Sprite(win, SpRubberBand, SpBBoxLfM, 0, sz)
+	// SetSpritePos(rt, bbox.Min)
+	// SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
+	// SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
+	// SetSpritePos(rl, bbox.Min)
 
-	win.UpdateSig()
+	// win.UpdateSig()
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -376,9 +352,9 @@ func (gv *VectorView) SelGroup() {
 
 	fsel := sl[len(sl)-1] // first selected -- use parent of this for new group
 
-	fidx, _ := fsel.IndexInParent()
+	fidx := fsel.IndexInParent()
 
-	ng := fsel.Parent().InsertNewChild(svg.KiT_Group, fidx, "newgp").(svg.Node)
+	ng := fsel.Parent().InsertNewChild(svg.GroupType, fidx).(svg.Node)
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {
@@ -410,7 +386,7 @@ func (gv *VectorView) SelUnGroup() {
 			continue
 		}
 		np := gp.Par
-		gidx, _ := gp.IndexInParent()
+		gidx := gp.IndexInParent()
 		klist := make(ki.Slice, len(gp.Kids)) // make a temp copy of list of kids
 		for i, k := range gp.Kids {
 			klist[i] = k
@@ -420,8 +396,8 @@ func (gv *VectorView) SelUnGroup() {
 			gp.DeleteChild(k, false) // no destroy
 			np.InsertChild(k, gidx+i)
 			se := k.(svg.Node)
-			if !gp.Pnt.Transform.IsIdentity() {
-				se.ApplyTransform(gp.Pnt.Transform) // group no longer there!
+			if !gp.Paint.Transform.IsIdentity() {
+				se.ApplyTransform(sv.SVG.SVG, gp.Paint.Transform) // group no longer there!
 			}
 		}
 		gp.Delete(ki.DestroyKids)
@@ -439,7 +415,7 @@ func (gv *VectorView) SelRotate(deg float32) {
 	sv := gv.SVG()
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
-	svoff := sv.BBox.Min
+	svoff := sv.Geom.ContentBBox.Min
 	del := mat32.Vec2{}
 	sc := mat32.V2(1, 1)
 	rot := mat32.DegToRad(deg)
@@ -448,7 +424,7 @@ func (gv *VectorView) SelRotate(deg float32) {
 		sz := mat32.V2FromPoint(sng.BBox.Size())
 		mn := mat32.V2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(del, sc, rot, ctr)
+		sn.ApplyDeltaTransform(sv.SVG.SVG, del, sc, rot, ctr)
 	}
 	sv.UpdateView(true)
 	gv.ChangeMade()

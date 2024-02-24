@@ -25,7 +25,7 @@ import (
 
 // SVGView is the element for viewing, interacting with the SVG
 type SVGView struct {
-	svg.SVG
+	gi.SVG
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
@@ -61,24 +61,9 @@ type SVGView struct {
 	bgVectorEff float32 `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
-// NewSVGView adds a new editor to given parent node, with given name.
-func NewSVGView(parent ki.Ki, gv *VectorView) *SVGView {
-	sv := parent.AddNewChild(KiT_SVGView, name).(*SVGView)
-	sv.VectorView = gv
+func (sv *SVGView) OnInit() {
 	sv.Vector = Prefs.Size.Vector
 	sv.Scale = 1
-	sv.Fill = false // managed separately
-	sv.Norm = false
-	sv.SetStretchMax()
-	return sv
-}
-
-func (g *SVGView) CopyFieldsFrom(frm any) {
-	fr := frm.(*SVGView)
-	g.SVG.CopyFieldsFrom(&fr.SVG)
-	g.Trans = fr.Trans
-	g.Scale = fr.Scale
-	g.SetDragCursor = fr.SetDragCursor
 }
 
 // EditState returns the EditState for this view
@@ -91,7 +76,6 @@ func (sv *SVGView) EditState() *EditState {
 
 // UpdateView updates the view, optionally with a full re-render
 func (sv *SVGView) UpdateView(full bool) {
-	//
 	sv.UpdateSelSprites()
 }
 
