@@ -31,40 +31,41 @@ type SVGView struct {
 	gi.SVG
 
 	// the parent vectorview
-	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
+	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// view translation offset (from dragging)
-	Trans mat32.Vec2
+	Trans mat32.Vec2 `set:"-"`
 
 	// view scaling (from zooming)
-	Scale float32
+	Scale float32 `set:"-"`
 
 	// grid spacing, in native ViewBox units
-	Vector float32
+	Vector float32 ` set:"-"`
 
 	// effective grid spacing given Scale level
-	VectorEff float32 `view:"inactive"`
+	VectorEff float32 `edit:"-" set:"-"`
 
 	// has dragging cursor been set yet?
-	SetDragCursor bool `view:"-"`
+	SetDragCursor bool `view:"-" set:"-"`
 
 	// background pixels, includes page outline and grid
-	BgPixels *image.RGBA `copier:"-" json:"-" xml:"-" view:"-"`
+	BgPixels *image.RGBA `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// render state for background rendering
-	// BgRender girl.State `copier:"-" json:"-" xml:"-" view:"-"`
+	// BgRender girl.State `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered translation
-	bgTrans mat32.Vec2 `copier:"-" json:"-" xml:"-" view:"-"`
+	bgTrans mat32.Vec2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered scale
-	bgScale float32 `copier:"-" json:"-" xml:"-" view:"-"`
+	bgScale float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered grid
-	bgVectorEff float32 `copier:"-" json:"-" xml:"-" view:"-"`
+	bgVectorEff float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 }
 
 func (sv *SVGView) OnInit() {
+	sv.SVG.OnInit()
 	sv.Vector = Prefs.Size.Vector
 	sv.Scale = 1
 }

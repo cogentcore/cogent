@@ -21,6 +21,7 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/goosi"
+	"cogentcore.org/core/grr"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
@@ -28,35 +29,27 @@ import (
 	"cogentcore.org/core/units"
 )
 
-// VectorView is the Vector SVG vector drawing program: Go-rendered interactive drawing
-//
-//core:no-new
+// VectorView is the Vector SVG vector drawing program
 type VectorView struct {
 	gi.Frame
 
 	// full path to current drawing filename
-	Filename gi.Filename `ext:".svg"`
+	Filename gi.Filename `ext:".svg" set:"-"`
 
 	// current edit state
-	EditState EditState
+	EditState EditState `set:"-"`
 }
 
-// AddNewVectorView adds a new editor to given parent node, with given name.
-func AddNewVectorView(parent ki.Ki, name string) *VectorView {
-	vv := parent.AddNewChild(KiT_VectorView, name).(*VectorView)
-	vv.Defaults()
-	return vv
+func (vv *VectorView) OnInit() {
+	vv.Frame.OnInit()
+	vv.SetStyles()
+	vv.EditState.ConfigDefaultGradient()
 }
 
-func (g *VectorView) CopyFieldsFrom(frm any) {
-	fr := frm.(*VectorView)
-	g.Frame.CopyFieldsFrom(&fr.Frame)
-	// todo: fill out
-}
-
-func (vv *VectorView) Defaults() {
-	es := &vv.EditState
-	es.ConfigDefaultGradient()
+func (vv *VectorView) SetStyles() {
+	vv.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
 }
 
 // OpenDrawingFile opens a new .svg drawing file -- just the basic opening
@@ -64,20 +57,16 @@ func (vv *VectorView) OpenDrawingFile(fnm gi.Filename) error {
 	path, _ := filepath.Abs(string(fnm))
 	vv.Filename = gi.Filename(path)
 	sv := vv.SVG()
-	err := sv.OpenXML(gi.Filename(path))
-	if err != nil && err != io.EOF {
-		log.Println(err)
-		// return err
-	}
-	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
-	SavePaths()
+	err := grr.Log(sv.SSVG().OpenXML(path))
+	// SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
+	// SavePaths()
 	fdir, _ := filepath.Split(path)
-	os.Chdir(fdir)
-	vv.EditState.Init()
+	grr.Log(os.Chdir(fdir))
+	vv.EditState.Init(vv)
 	vv.UpdateLayerView()
 
 	vv.EditState.Gradients = sv.Gradients()
-	sv.GatherIds() // also ensures uniqueness, key for json saving
+	sv.SSVG().GatherIDs() // also ensures uniqueness, key for json saving
 	sv.ZoomToContents(false)
 	sv.ReadMetaData()
 	sv.SetTransform()
@@ -86,12 +75,9 @@ func (vv *VectorView) OpenDrawingFile(fnm gi.Filename) error {
 
 // OpenDrawing opens a new .svg drawing
 func (vv *VectorView) OpenDrawing(fnm gi.Filename) error {
-	wupdt := vv.TopUpdateStart()
-	defer vv.TopUpdateEnd(wupdt)
 	updt := vv.UpdateStart()
-	vv.SetFullReRender()
+	defer vv.UpdateEndRender(updt)
 
-	vv.Defaults()
 	err := vv.OpenDrawingFile(fnm)
 
 	sv := vv.SVG()
@@ -118,14 +104,17 @@ func (vv *VectorView) PromptPhysSize() {
 	sv := vv.SVG()
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
-	giv.StructViewDialog(vv.Viewport, sz, giv.DlgOpts{Title: "SVG Physical Size", Ok: true, Cancel: true}, vv.This(),
-		func(recv, send ki.Ki, sig int64, d any) {
-			if sig == int64(gi.DialogAccepted) {
-				vv.SetPhysSize(sz)
-				sv.bgVectorEff = -1
-				sv.UpdateView(true)
-			}
+	d := gi.NewBody().AddTitle("SVG physical size")
+	giv.NewStructView(d).SetStruct(sz)
+	d.AddBottomBar(func(pw gi.Widget) {
+		d.AddCancel(pw)
+		d.AddOk(pw).OnClick(func(e events.Event) {
+			vv.SetPhysSize(sz)
+			sv.bgVectorEff = -1
+			sv.UpdateView(true)
 		})
+	})
+	d.NewDialog(vv).Run()
 }
 
 // SetPhysSize sets physical size of drawing
@@ -133,7 +122,7 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 	if sz == nil {
 		return
 	}
-	if sz.Size.IsNil() {
+	if sz.Size == (mat32.Vec2{}) {
 		sz.SetStdSize(Prefs.Size.StdSize)
 	}
 	sv := vv.SVG()
@@ -144,22 +133,11 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 
 // SaveDrawing saves .svg drawing to current filename
 func (vv *VectorView) SaveDrawing() error {
-	if vv.Filename == "" {
-		giv.CallMethod(vv, "SaveDrawingAs", vv.ViewportSafe())
-		return nil
+	if vv.Filename != "" {
+		return vv.SaveDrawingAs(vv.Filename)
 	}
-	sv := vv.SVG()
-	sv.RemoveOrphanedDefs()
-	sv.SetMetaData()
-	err := sv.SaveXML(vv.Filename)
-	if err != nil && err != io.EOF {
-		log.Println(err)
-	} else {
-		vv.AutoSaveDelete()
-	}
-	vv.SetStatus("Saved: " + string(vv.Filename))
-	vv.EditState.Changed = false
-	return err
+	giv.CallFunc(vv, vv.SaveDrawingAs)
+	return nil
 }
 
 // SaveDrawingAs saves .svg drawing to given filename
@@ -169,15 +147,13 @@ func (vv *VectorView) SaveDrawingAs(fname gi.Filename) error {
 	}
 	path, _ := filepath.Abs(string(fname))
 	vv.Filename = gi.Filename(path)
-	SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
-	SavePaths()
+	// SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
+	// SavePaths()
 	sv := vv.SVG()
-	sv.RemoveOrphanedDefs()
+	sv.SSVG().RemoveOrphanedDefs()
 	sv.SetMetaData()
-	err := sv.SaveXML(gi.Filename(path))
-	if err != nil && err != io.EOF {
-		log.Println(err)
-	} else {
+	err := sv.SSVG().SaveXML(path)
+	if grr.Log(err) == nil {
 		vv.AutoSaveDelete()
 	}
 	vv.SetTitle()
@@ -185,6 +161,8 @@ func (vv *VectorView) SaveDrawingAs(fname gi.Filename) error {
 	vv.EditState.Changed = false
 	return err
 }
+
+// TODO(kai): don't use inkscape for exporting
 
 // ExportPNG exports drawing to a PNG image (auto-names to same name
 // with .png suffix).  Calls inkscape -- needs to be on the PATH.
@@ -195,9 +173,8 @@ func (vv *VectorView) ExportPNG(width, height float32) error {
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_png.svg")
 	sv := vv.SVG()
-	err := sv.SaveXML(gi.Filename(fnm))
-	if err != nil && err != io.EOF {
-		log.Println(err)
+	err := sv.SSVG().SaveXML(fnm)
+	if grr.Log(err) != nil {
 		return err
 	}
 	fext := filepath.Ext(string(vv.Filename))
@@ -230,9 +207,8 @@ func (vv *VectorView) ExportPDF(dpi float32) error {
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_pdf.svg")
 	sv := vv.SVG()
-	err := sv.SaveXML(gi.Filename(fnm))
-	if err != nil && err != io.EOF {
-		log.Println(err)
+	err := sv.SSVG().SaveXML(fnm)
+	if grr.Log(err) != nil {
 		return err
 	}
 	fext := filepath.Ext(string(vv.Filename))
@@ -267,10 +243,10 @@ func (vv *VectorView) ResizeToContents() {
 func (vv *VectorView) AddImage(fname gi.Filename, width, height float32) error {
 	sv := vv.SVG()
 	sv.UndoSave("AddImage", string(fname))
-	ind := sv.NewEl(svg.KiT_Image).(*svg.Image)
+	ind := sv.NewEl(svg.ImageType).(*svg.Image)
 	ind.Pos.X = 100 // todo: default pos
 	ind.Pos.Y = 100 // todo: default pos
-	err := ind.OpenImage(fname, width, height)
+	err := ind.OpenImage(string(fname), width, height)
 	sv.UpdateView(true)
 	vv.ChangeMade()
 	return err
@@ -291,33 +267,30 @@ func (vv *VectorView) ModalToolbarStack() *gi.Layout {
 func (vv *VectorView) SetModalSelect() {
 	tbs := vv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
-	tbs.SetFullReRender()
 	vv.UpdateSelectToolbar()
 	idx, _ := tbs.Kids.IndexByName("select-tb", 0)
 	tbs.StackTop = idx
-	tbs.UpdateEnd(updt)
+	tbs.UpdateEndLayout(updt)
 }
 
 // SetModalNode sets the modal toolbar to be the node editing one
 func (vv *VectorView) SetModalNode() {
 	tbs := vv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
-	tbs.SetFullReRender()
 	vv.UpdateNodeToolbar()
 	idx, _ := tbs.Kids.IndexByName("node-tb", 1)
 	tbs.StackTop = idx
-	tbs.UpdateEnd(updt)
+	tbs.UpdateEndLayout(updt)
 }
 
 // SetModalText sets the modal toolbar to be the text editing one
 func (vv *VectorView) SetModalText() {
 	tbs := vv.ModalToolbarStack()
 	updt := tbs.UpdateStart()
-	tbs.SetFullReRender()
 	vv.UpdateTextToolbar()
 	idx, _ := tbs.Kids.IndexByName("text-tb", 2)
 	tbs.StackTop = idx
-	tbs.UpdateEnd(updt)
+	tbs.UpdateEndLayout(updt)
 }
 
 func (vv *VectorView) HBox() *gi.Layout {
@@ -365,7 +338,7 @@ func (vv *VectorView) StatusBar() *gi.Frame {
 
 // StatusLabel returns the statusbar label widget
 func (vv *VectorView) StatusLabel() *gi.Label {
-	return vv.StatusBar().Child(0).Embed(gi.KiT_Label).(*gi.Label)
+	return vv.StatusBar().Child(0).(*gi.Label)
 }
 
 // Config configures entire view -- only runs if no children yet
@@ -374,87 +347,79 @@ func (vv *VectorView) Config() {
 		return
 	}
 	updt := vv.UpdateStart()
-	vv.Lay = gi.LayoutVert
-	// gv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	gi.NewToolbar(vv, "main-tb")
-	gi.NewLayout(vv, "modal-tb", gi.LayoutStacked)
-	hb := gi.NewLayout(vv, "hbox", gi.LayoutHoriz)
-	hb.SetStretchMax()
-	gi.NewFrame(vv, "statusbar", gi.LayoutHoriz)
+	gi.NewLayout(vv, "modal-tb").Style(func(s *styles.Style) {
+		s.Display = styles.Stacked
+	})
+	hb := gi.NewLayout(vv, "hbox")
+	gi.NewFrame(vv, "statusbar")
 
-	tb := gi.NewToolbar(hb, "tools")
-	tb.Lay = gi.LayoutVert
-	spv := gi.NewSplits(hb, "splitview")
-	spv.Dim = mat32.X
+	gi.NewToolbar(hb, "tools").Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
+	sp := gi.NewSplits(hb, "splits")
 
-	tly := gi.NewLayout(spv, "layer-tree", gi.LayoutVert)
-	tly.SetStretchMax()
-
-	nly := gi.NewButton(tly, "add-layer")
-	nly.SetText("Add Layer")
-	nly.OnClicked(func() {
-		vv.AddLayer()
+	tly := gi.NewLayout(sp, "layer-tree").Style(func(s *styles.Style) {
+		s.Direction = styles.Column
 	})
 
-	lyv := giv.AddNewTableView(tly, "layers")
-	lyv.SetMinPrefHeight(units.NewEm(6))
-	lyv.SetStretchMax()
+	giv.NewFuncButton(tly, vv.AddLayer)
 
-	tvfr := gi.NewFrame(tly, "tree-frame", gi.LayoutVert)
-	tvfr.SetMinPrefHeight(units.NewEm(12))
-	tvfr.SetStretchMax()
-	tvfr.SetReRenderAnchor()
-	tv := AddNewTreeView(tvfr, "treeview")
+	lyv := giv.NewTableView(tly, "layers")
+
+	tvfr := gi.NewFrame(tly, "tree-frame").Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
+	tv := NewTreeView(tvfr, "treeview")
 	tv.VectorView = vv
 	tv.OpenDepth = 4
 
-	sv := AddNewSVGView(spv, "svg", vv)
+	sv := NewSVGView(sp, "svg")
+	sv.VectorView = vv
 
-	tab := gi.NewTabView(spv, "tabs")
-	tab.SetStretchMaxWidth()
+	gi.NewTabs(sp, "tabs")
 
-	tv.SetRootNode(sv)
+	tv.SyncRootNode(sv)
 
-	tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		gvv := recv.Embed(KiT_VectorView).(*VectorView)
-		if data == nil {
-			return
-		}
-		if sig == int64(giv.TreeViewInserted) {
-			sn, ok := data.(svg.Node)
-			if ok {
-				gvv.SVG().NodeEnsureUniqueId(sn)
-				svg.CloneNodeGradientProp(sn, "fill")
-				svg.CloneNodeGradientProp(sn, "stroke")
-			}
-			return
-		}
-		if sig == int64(giv.TreeViewDeleted) {
-			sn, ok := data.(svg.Node)
-			if ok {
-				svg.DeleteNodeGradientProp(sn, "fill")
-				svg.DeleteNodeGradientProp(sn, "stroke")
-			}
-			return
-		}
-		if sig != int64(giv.TreeViewOpened) {
-			return
-		}
-		tvn, _ := data.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
-		_, issvg := tvn.SrcNode.(svg.Node)
-		if !issvg {
-			return
-		}
-		if tvn.SrcNode.HasChildren() {
-			return
-		}
-		giv.StructViewDialog(gvv.Viewport, tvn.SrcNode, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
-		// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
-		// 		stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
-		// 		stv.SetStruct(tvn.SrcNode)
-	})
+	// tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
+	// 	if data == nil {
+	// 		return
+	// 	}
+	// 	if sig == int64(giv.TreeViewInserted) {
+	// 		sn, ok := data.(svg.Node)
+	// 		if ok {
+	// 			gvv.SVG().NodeEnsureUniqueId(sn)
+	// 			svg.CloneNodeGradientProp(sn, "fill")
+	// 			svg.CloneNodeGradientProp(sn, "stroke")
+	// 		}
+	// 		return
+	// 	}
+	// 	if sig == int64(giv.TreeViewDeleted) {
+	// 		sn, ok := data.(svg.Node)
+	// 		if ok {
+	// 			svg.DeleteNodeGradientProp(sn, "fill")
+	// 			svg.DeleteNodeGradientProp(sn, "stroke")
+	// 		}
+	// 		return
+	// 	}
+	// 	if sig != int64(giv.TreeViewOpened) {
+	// 		return
+	// 	}
+	// 	tvn, _ := data.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
+	// 	_, issvg := tvn.SrcNode.(svg.Node)
+	// 	if !issvg {
+	// 		return
+	// 	}
+	// 	if tvn.SrcNode.HasChildren() {
+	// 		return
+	// 	}
+	// 	giv.StructViewDialog(gvv.Viewport, tvn.SrcNode, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
+	// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
+	// 	// 		stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
+	// 	// 		stv.SetStruct(tvn.SrcNode)
+	// })
 
-	spv.SetSplits(0.15, 0.60, 0.25)
+	sp.SetSplits(0.15, 0.60, 0.25)
 
 	vv.ConfigStatusBar()
 	vv.ConfigMainToolbar()

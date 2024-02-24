@@ -85,6 +85,24 @@ var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Preferences", 
 
 var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.ColorPrefs", IDName: "color-prefs", Doc: "ColorPrefs for", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "Background", Doc: "drawing background color"}, {Name: "Border", Doc: "border color of the drawing"}, {Name: "Vector", Doc: "grid line color"}}})
 
+// SVGViewType is the [gti.Type] for [SVGView]
+var SVGViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.SVGView", IDName: "svg-view", Doc: "SVGView is the element for viewing, interacting with the SVG", Embeds: []gti.Field{{Name: "SVG"}}, Fields: []gti.Field{{Name: "VectorView", Doc: "the parent vectorview"}, {Name: "Trans", Doc: "view translation offset (from dragging)"}, {Name: "Scale", Doc: "view scaling (from zooming)"}, {Name: "Vector", Doc: "grid spacing, in native ViewBox units"}, {Name: "VectorEff", Doc: "effective grid spacing given Scale level"}, {Name: "SetDragCursor", Doc: "has dragging cursor been set yet?"}, {Name: "BgPixels", Doc: "background pixels, includes page outline and grid"}, {Name: "bgTrans", Doc: "bg rendered translation"}, {Name: "bgScale", Doc: "bg rendered scale"}, {Name: "bgVectorEff", Doc: "bg rendered grid"}}, Instance: &SVGView{}})
+
+// NewSVGView adds a new [SVGView] with the given name to the given parent:
+// SVGView is the element for viewing, interacting with the SVG
+func NewSVGView(par ki.Ki, name ...string) *SVGView {
+	return par.NewChild(SVGViewType, name...).(*SVGView)
+}
+
+// KiType returns the [*gti.Type] of [SVGView]
+func (t *SVGView) KiType() *gti.Type { return SVGViewType }
+
+// New returns a new [*SVGView] value
+func (t *SVGView) New() ki.Ki { return &SVGView{} }
+
+// SetTooltip sets the [SVGView.Tooltip]
+func (t *SVGView) SetTooltip(v string) *SVGView { t.Tooltip = v; return t }
+
 // TreeViewType is the [gti.Type] for [TreeView]
 var TreeViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.TreeView", IDName: "tree-view", Doc: "TreeView is a TreeView that knows how to operate on FileNode nodes", Embeds: []gti.Field{{Name: "TreeView"}}, Fields: []gti.Field{{Name: "VectorView", Doc: "the parent vectorview"}}, Instance: &TreeView{}})
 
@@ -139,3 +157,24 @@ func (t *TreeView) SetRootView(v *giv.TreeView) *TreeView { t.RootView = v; retu
 
 // SetSelectedNodes sets the [TreeView.SelectedNodes]
 func (t *TreeView) SetSelectedNodes(v ...giv.TreeViewer) *TreeView { t.SelectedNodes = v; return t }
+
+// VectorViewType is the [gti.Type] for [VectorView]
+var VectorViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.VectorView", IDName: "vector-view", Doc: "VectorView is the Vector SVG vector drawing program", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "Filename", Doc: "full path to current drawing filename"}, {Name: "EditState", Doc: "current edit state"}}, Instance: &VectorView{}})
+
+// NewVectorView adds a new [VectorView] with the given name to the given parent:
+// VectorView is the Vector SVG vector drawing program
+func NewVectorView(par ki.Ki, name ...string) *VectorView {
+	return par.NewChild(VectorViewType, name...).(*VectorView)
+}
+
+// KiType returns the [*gti.Type] of [VectorView]
+func (t *VectorView) KiType() *gti.Type { return VectorViewType }
+
+// New returns a new [*VectorView] value
+func (t *VectorView) New() ki.Ki { return &VectorView{} }
+
+// SetTooltip sets the [VectorView.Tooltip]
+func (t *VectorView) SetTooltip(v string) *VectorView { t.Tooltip = v; return t }
+
+// SetStackTop sets the [VectorView.StackTop]
+func (t *VectorView) SetStackTop(v int) *VectorView { t.StackTop = v; return t }
