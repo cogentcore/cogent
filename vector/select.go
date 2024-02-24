@@ -397,7 +397,7 @@ func (gv *VectorView) SelUnGroup() {
 			np.InsertChild(k, gidx+i)
 			se := k.(svg.Node)
 			if !gp.Paint.Transform.IsIdentity() {
-				se.ApplyTransform(sv.SVG.SVG, gp.Paint.Transform) // group no longer there!
+				se.ApplyTransform(sv.SSVG(), gp.Paint.Transform) // group no longer there!
 			}
 		}
 		gp.Delete(ki.DestroyKids)
@@ -424,7 +424,7 @@ func (gv *VectorView) SelRotate(deg float32) {
 		sz := mat32.V2FromPoint(sng.BBox.Size())
 		mn := mat32.V2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(sv.SVG.SVG, del, sc, rot, ctr)
+		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, rot, ctr)
 	}
 	sv.UpdateView(true)
 	gv.ChangeMade()
@@ -438,7 +438,7 @@ func (gv *VectorView) SelScale(scx, scy float32) {
 	sv := gv.SVG()
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
-	svoff := sv.BBox.Min
+	svoff := sv.Geom.ContentBBox.Min
 	del := mat32.Vec2{}
 	sc := mat32.V2(scx, scy)
 	for sn := range es.Selected {
@@ -446,7 +446,7 @@ func (gv *VectorView) SelScale(scx, scy float32) {
 		sz := mat32.V2FromPoint(sng.BBox.Size())
 		mn := mat32.V2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(del, sc, 0, ctr)
+		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, 0, ctr)
 	}
 	sv.UpdateView(true)
 	gv.ChangeMade()
@@ -482,7 +482,7 @@ func (gv *VectorView) SelRaiseTop() {
 		if !(NodeIsLayer(par) || par == sv.This()) {
 			continue
 		}
-		ci, _ := se.IndexInParent()
+		ci := se.IndexInParent()
 		par.Children().Move(ci, par.NumChildren()-1)
 	}
 	gv.UpdateDisp()
@@ -503,7 +503,7 @@ func (gv *VectorView) SelRaise() {
 		if !(NodeIsLayer(par) || par == sv.This()) {
 			continue
 		}
-		ci, _ := se.IndexInParent()
+		ci := se.IndexInParent()
 		if ci < par.NumChildren()-1 {
 			par.Children().Move(ci, ci+1)
 		}
@@ -526,7 +526,7 @@ func (gv *VectorView) SelLowerBot() {
 		if !(NodeIsLayer(par) || par == sv.This()) {
 			continue
 		}
-		ci, _ := se.IndexInParent()
+		ci := se.IndexInParent()
 		par.Children().Move(ci, 0)
 	}
 	gv.UpdateDisp()
@@ -547,7 +547,7 @@ func (gv *VectorView) SelLower() {
 		if !(NodeIsLayer(par) || par == sv.This()) {
 			continue
 		}
-		ci, _ := se.IndexInParent()
+		ci := se.IndexInParent()
 		if ci > 0 {
 			par.Children().Move(ci, ci-1)
 		}
@@ -608,14 +608,14 @@ func (gv *VectorView) SelSetHeight(ht float32) {
 func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
 	var curlay ki.Ki
-	svg.SVGWalkPreNoDefs(sv, func(kni svg.Node, knb *svg.NodeBase) bool {
+	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.This() {
 			return ki.Continue
 		}
-		if leavesOnly && k.HasChildren() {
+		if leavesOnly && kni.HasChildren() {
 			return ki.Continue
 		}
-		if NodeIsLayer(k) {
+		if NodeIsLayer(kni) {
 			return ki.Continue
 		}
 		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
@@ -625,17 +625,16 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 				}
 			}
 		}
-		if knb.Pnt.Off {
+		if knb.Paint.Off {
 			return ki.Break
 		}
-		nl := NodeParentLayer(k)
+		nl := NodeParentLayer(kni)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return ki.Break
 			}
 		}
-		if knb.BBoxInBBox(bbox) {
-			// fmt.Printf("%s sel bb: %v in: %v\n", knb.Name(), knb.BBox, bbox)
+		if knb.BBox.In(bbox) {
 			rval = append(rval, kni)
 			if curlay == nil && nl != nil {
 				curlay = nl
@@ -661,14 +660,14 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		curlay = NodeParentLayer(fn)
 	}
 	var rval svg.Node
-	svg.SVGWalkPreNoDefs(sv, func(kni svg.Node, knb *svg.NodeBase) bool {
+	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.This() {
 			return ki.Continue
 		}
-		if leavesOnly && k.HasChildren() {
+		if leavesOnly && kni.HasChildren() {
 			return ki.Continue
 		}
-		if NodeIsLayer(k) {
+		if NodeIsLayer(kni) {
 			return ki.Continue
 		}
 		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
@@ -686,16 +685,16 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 				return ki.Continue
 			}
 		}
-		if knb.Pnt.Off {
+		if knb.Paint.Off {
 			return ki.Break
 		}
-		nl := NodeParentLayer(k)
+		nl := NodeParentLayer(kni)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return ki.Break
 			}
 		}
-		if knb.PosInBBox(pt) {
+		if pt.In(knb.BBox) {
 			rval = kni
 			return ki.Break
 		}

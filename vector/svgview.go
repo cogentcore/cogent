@@ -66,6 +66,16 @@ func (sv *SVGView) OnInit() {
 	sv.Scale = 1
 }
 
+// SSVG returns the underlying [svg.SVG].
+func (sv *SVGView) SSVG() *svg.SVG {
+	return sv.SVG.SVG
+}
+
+// Root returns the root [svg.SVGNode].
+func (sv *SVGView) Root() *svg.SVGNode {
+	return &sv.SVG.SVG.Root
+}
+
 // EditState returns the EditState for this view
 func (sv *SVGView) EditState() *EditState {
 	if sv.VectorView == nil {
