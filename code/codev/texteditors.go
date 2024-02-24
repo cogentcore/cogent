@@ -265,6 +265,8 @@ func (ge *CodeView) UpdateTextButtons() {
 			txnm = dirs.DirAndFile(string(tv.Buf.Filename))
 			if tv.Buf.IsNotSaved() {
 				txnm += " <b>*</b>"
+			} else {
+				txnm += "   "
 			}
 		}
 		sel := ati == i
