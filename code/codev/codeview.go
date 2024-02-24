@@ -215,9 +215,10 @@ func (ge *CodeView) SetWindowNameTitle() {
 		return
 	}
 	pnm := ge.Name()
-	winm := "Cogent Code " + pnm
+	winm := "Cogent Code • " + pnm
 	win.SetName(winm)
-	win.SetTitle(winm + ": " + string(ge.Settings.ProjRoot))
+	win.SetTitle(winm)
+	ge.Scene.Body.Title = winm
 }
 
 // OpenPath creates a new project by opening given path, which can either be a
@@ -512,8 +513,7 @@ func CodeInScene(sc *gi.Scene) *CodeView {
 
 // NewCodeWindow is common code for Open CodeWindow from Proj or Path
 func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
-	winm := "Cogent Code: " + projnm
-	wintitle := winm + ": " + path
+	winm := "Cogent Code • " + projnm
 
 	if win, found := gi.AllRenderWins.FindName(winm); found {
 		sc := win.MainScene()
@@ -524,32 +524,12 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 		}
 	}
 
-	b := gi.NewBody("Cogent Code").SetTitle(wintitle)
+	b := gi.NewBody("Cogent Code").SetTitle(winm)
 	b.Scene.Nm = winm
 
 	ge := NewCodeView(b)
 	gi.TheApp.AppBarConfig = ge.AppBarConfig
 	b.AddAppBar(ge.ConfigToolbar)
-
-	/* todo: window doesn't exist yet -- need a delayed soln
-	inClosePrompt := false
-	win := ge.Sc.RenderWin()
-	win.GoosiWin.SetCloseReqFunc(func(w goosi.Window) {
-		if !inClosePrompt {
-			inClosePrompt = true
-			if ge.CloseWindowReq() {
-				win.Close()
-			} else {
-				inClosePrompt = false
-			}
-		}
-	})
-	win.GoosiWin.SetCloseCleanFunc(func(w goosi.Window) {
-		if gi.MainRenderWins.Len() <= 1 {
-			go goosi.TheApp.Quit() // once main window is closed, quit
-		}
-	})
-	*/
 
 	b.NewWindow().Run()
 
