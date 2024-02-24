@@ -75,7 +75,7 @@ func (vv *VectorView) OpenDrawingFile(fnm gi.Filename) error {
 }
 
 // OpenDrawing opens a new .svg drawing
-func (vv *VectorView) OpenDrawing(fnm gi.Filename) error {
+func (vv *VectorView) OpenDrawing(fnm gi.Filename) error { //gti:add
 	updt := vv.UpdateStart()
 	defer vv.UpdateEndRender(updt)
 
@@ -94,14 +94,14 @@ func (vv *VectorView) OpenDrawing(fnm gi.Filename) error {
 	return err
 }
 
-// NewDrawing opens a new drawing window
+// NewDrawing creates a new drawing of the given size
 func (vv *VectorView) NewDrawing(sz PhysSize) *VectorView {
 	ngr := NewDrawing(sz)
 	return ngr
 }
 
-// PromptPhysSize prompts for physical size of drawing and sets it
-func (vv *VectorView) PromptPhysSize() {
+// PromptPhysSize prompts for the physical size of the drawing and sets it
+func (vv *VectorView) PromptPhysSize() { //gti:add
 	sv := vv.SVG()
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
@@ -133,7 +133,7 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 }
 
 // SaveDrawing saves .svg drawing to current filename
-func (vv *VectorView) SaveDrawing() error {
+func (vv *VectorView) SaveDrawing() error { //gti:add
 	if vv.Filename != "" {
 		return vv.SaveDrawingAs(vv.Filename)
 	}
@@ -142,7 +142,7 @@ func (vv *VectorView) SaveDrawing() error {
 }
 
 // SaveDrawingAs saves .svg drawing to given filename
-func (vv *VectorView) SaveDrawingAs(fname gi.Filename) error {
+func (vv *VectorView) SaveDrawingAs(fname gi.Filename) error { //gti:add
 	if fname == "" {
 		return errors.New("SaveDrawingAs: filename is empty")
 	}
@@ -170,7 +170,7 @@ func (vv *VectorView) SaveDrawingAs(fname gi.Filename) error {
 // specify either width or height of resulting image, or nothing for
 // physical size as set.  Renders full current page -- do ResizeToContents
 // to render just current contents.
-func (vv *VectorView) ExportPNG(width, height float32) error {
+func (vv *VectorView) ExportPNG(width, height float32) error { //gti:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_png.svg")
 	sv := vv.SVG()
@@ -204,7 +204,7 @@ func (vv *VectorView) ExportPNG(width, height float32) error {
 // specify DPI of resulting image for effects rendering.
 // Renders full current page -- do ResizeToContents
 // to render just current contents.
-func (vv *VectorView) ExportPDF(dpi float32) error {
+func (vv *VectorView) ExportPDF(dpi float32) error { //gti:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_pdf.svg")
 	sv := vv.SVG()
@@ -446,18 +446,6 @@ func (vv *VectorView) IsConfiged() bool {
 	return true
 }
 
-// UndoAvailFunc is an ActionUpdateFunc that inactivates action if no more undos
-func (vv *VectorView) UndoAvailFunc(bt *gi.Button) {
-	es := &vv.EditState
-	bt.SetEnabled(es.UndoMgr.HasUndoAvail())
-}
-
-// RedoAvailFunc is an ActionUpdateFunc that inactivates action if no more redos
-func (vv *VectorView) RedoAvailFunc(bt *gi.Button) {
-	es := &vv.EditState
-	bt.SetEnabled(es.UndoMgr.HasRedoAvail())
-}
-
 // PasteAvailFunc is an ActionUpdateFunc that inactivates action if no paste avail
 func (vv *VectorView) PasteAvailFunc(bt *gi.Button) {
 	bt.SetEnabled(!vv.Clipboard().IsEmpty())
@@ -465,61 +453,39 @@ func (vv *VectorView) PasteAvailFunc(bt *gi.Button) {
 
 func (vv *VectorView) ConfigToolbar(tb *gi.Toolbar) {
 	// TODO(kai): remove Update
-	giv.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update).SetTooltip("Update the display")
+	giv.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	gi.NewButton(tb).SetText("New").SetIcon(icons.Add).
-		SetTooltip("Create a new drawing of the specified size").
 		OnClick(func(e events.Event) {
 			ndr := vv.NewDrawing(Prefs.Size)
 			ndr.PromptPhysSize()
 		})
+
 	gi.NewButton(tb).SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *gi.Scene) {
 		giv.NewFuncButton(m, vv.PromptPhysSize).SetText("Set size").
-			SetIcon(icons.Settings).SetTooltip("Set the size and grid spacing of the drawing")
+			SetIcon(icons.FormatSize)
+		giv.NewFuncButton(m, vv.ResizeToContents).SetIcon(icons.Resize)
 	})
-	szmen.Menu.AddAction(gi.ActOpts{Label: "Resize To Contents", Icon: "gear", Tooltip: "resizes the drawing to fit the current contents, moving everything to upper-left corner while preserving grid alignment"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.ResizeToContents()
-		})
-	tb.AddAction(gi.ActOpts{Label: "Open...", Icon: "file-open", Tooltip: "Open a drawing from .svg file"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			giv.CallMethod(grr, "OpenDrawing", grr.ViewportSafe())
-		})
-	tb.AddAction(gi.ActOpts{Label: "Save", Icon: "file-save", Tooltip: "Save drawing to .svg file, using current filename (if empty, prompts)"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SaveDrawing()
-		})
-	tb.AddAction(gi.ActOpts{Label: "Save As...", Icon: "file-save", Tooltip: "Save drawing to a new .svg file"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			giv.CallMethod(grr, "SaveDrawingAs", grr.ViewportSafe())
-		})
-	expmen := tb.AddAction(gi.ActOpts{Label: "Export", Icon: "file-save"}, nil, nil)
-	expmen.Menu.AddAction(gi.ActOpts{Label: "Export PNG", Icon: "file-image", Tooltip: "Export drawing to a .png file -- requires cairosvg.org to be installed"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			giv.CallMethod(grr, "ExportPNG", grr.ViewportSafe())
-		})
-	expmen.Menu.AddAction(gi.ActOpts{Label: "Export PDF", Icon: "file-pdf", Tooltip: "Export drawing to a .pdf  file -- requires cairosvg.org to be installed"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			giv.CallMethod(grr, "ExportPDF", grr.ViewportSafe())
-		})
 
-	gi.NewSeparator(tb, "sep-undo")
-	tb.AddAction(gi.ActOpts{Label: "Undo", Icon: "rotate-left", Tooltip: "Undo last action", UpdateFunc: vv.UndoAvailFunc},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.Undo()
-		})
-	tb.AddAction(gi.ActOpts{Label: "Redo", Icon: "rotate-right", Tooltip: "Redo last undo action", UpdateFunc: vv.RedoAvailFunc},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.Redo()
-		})
-	gi.NewSeparator(tb, "sep-edit")
+	giv.NewFuncButton(tb, vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
+	giv.NewFuncButton(tb, vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
+	giv.NewFuncButton(tb, vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
+
+	gi.NewButton(tb).SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *gi.Scene) {
+		giv.NewFuncButton(m, vv.ExportPNG).SetIcon(icons.Image)
+		giv.NewFuncButton(m, vv.ExportPDF).SetIcon(icons.PictureAsPdf)
+	})
+
+	gi.NewSeparator(tb)
+
+	giv.NewFuncButton(tb, vv.Undo).StyleFirst(func(s *styles.Style) {
+		s.SetEnabled(vv.EditState.UndoMgr.HasUndoAvail())
+	})
+	giv.NewFuncButton(tb, vv.Redo).StyleFirst(func(s *styles.Style) {
+		s.SetEnabled(vv.EditState.UndoMgr.HasRedoAvail())
+	})
+
+	gi.NewSeparator(tb)
+
 	tb.AddAction(gi.ActOpts{Label: "Duplicate", Icon: "documents", Tooltip: "Duplicate current selection -- original items will remain selected", UpdateFunc: vv.SelectedEnableFunc},
 		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 			grr := recv.Embed(KiT_VectorView).(*VectorView)
@@ -772,7 +738,8 @@ func (vv *VectorView) PaintView() *PaintView {
 	return vv.Tab("Paint").(*PaintView)
 }
 
-func (vv *VectorView) UpdateAll() {
+// UpdateAll updates the display
+func (vv *VectorView) UpdateAll() { //gti:add
 	vv.UpdateTabs()
 	vv.UpdateTreeView()
 	vv.UpdateDisp()
@@ -835,8 +802,8 @@ func (vv *VectorView) SelectNodeInSVG(kn ki.Ki, mode events.SelectModes) {
 	sv.UpdateView(false)
 }
 
-// Undo undoes one step, returning name of action that was undone
-func (vv *VectorView) Undo() string {
+// Undo undoes the last action
+func (vv *VectorView) Undo() string { //gti:add
 	sv := vv.SVG()
 	act := sv.Undo()
 	if act != "" {
@@ -848,8 +815,8 @@ func (vv *VectorView) Undo() string {
 	return act
 }
 
-// Redo redoes one step, returning name of action that was redone
-func (vv *VectorView) Redo() string {
+// Redo redoes the previously undone action
+func (vv *VectorView) Redo() string { //gti:add
 	sv := vv.SVG()
 	act := sv.Redo()
 	if act != "" {
