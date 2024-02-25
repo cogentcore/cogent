@@ -56,47 +56,18 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 	gv.NewSelectFuncButton(tb, gv.SelRotateLeft).SetText("").
 		SetIcon("sel-rotate-left").SetShortcut("Command+[")
-
 	gv.NewSelectFuncButton(tb, gv.SelRotateRight).SetText("").
 		SetIcon("sel-rotate-right").SetShortcut("Command+]")
 
-	gv.NewSelectButton(tb).SetIcon("sel-flip-horiz").
-		SetTooltip("Flip selection horizontally").
-		OnClick(func(e events.Event) {
-			gv.SelFlipHoriz()
-		})
-
-	gv.NewSelectButton(tb).SetIcon("sel-flip-vert").
-		SetTooltip("Flip selection vertically").
-		OnClick(func(e events.Event) {
-			gv.SelFlipVert()
-		})
+	gv.NewSelectFuncButton(tb, gv.SelFlipHoriz).SetText("").SetIcon("sel-flip-horiz")
+	gv.NewSelectFuncButton(tb, gv.SelFlipVert).SetText("").SetIcon("sel-flip-vert")
 
 	gi.NewSeparator(tb)
 
-	gv.NewSelectButton(tb).SetIcon("sel-raise-top").
-		SetTooltip("Raise selection to top (within layer)").
-		OnClick(func(e events.Event) {
-			gv.SelRaiseTop()
-		})
-
-	gv.NewSelectButton(tb).SetIcon("sel-raise").
-		SetTooltip("Raise selection one level (within layer)").
-		OnClick(func(e events.Event) {
-			gv.SelRaise()
-		})
-
-	gv.NewSelectButton(tb).SetIcon("sel-lower-bottom").
-		SetTooltip("Lower selection to bottom (within layer)").
-		OnClick(func(e events.Event) {
-			gv.SelLowerBot()
-		})
-
-	gv.NewSelectButton(tb).SetIcon("sel-lower").
-		SetTooltip("Lower selection one level (within layer)").
-		OnClick(func(e events.Event) {
-			gv.SelLower()
-		})
+	gv.NewSelectFuncButton(tb, gv.SelRaiseTop).SetText("").SetIcon("sel-raise-top")
+	gv.NewSelectFuncButton(tb, gv.SelRaise).SetText("").SetIcon("sel-raise")
+	gv.NewSelectFuncButton(tb, gv.SelLowerBottom).SetText("").SetIcon("sel-lower-bottom")
+	gv.NewSelectFuncButton(tb, gv.SelLower).SetText("").SetIcon("sel-lower")
 
 	gi.NewSeparator(tb)
 
@@ -123,16 +94,6 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	ht.OnChange(func(e events.Event) {
 		gv.SelSetHeight(ht.Value)
 	})
-}
-
-// NewSelectButton returns a new button that is only enabled when
-// there is an item selected.
-func (gv *VectorView) NewSelectButton(par ki.Ki) *gi.Button {
-	bt := gi.NewButton(par)
-	bt.StyleFirst(func(s *styles.Style) {
-		s.SetEnabled(gv.EditState.HasSelected())
-	})
-	return bt
 }
 
 // NewSelectFuncButton returns a new func button that is only enabled when
@@ -459,15 +420,18 @@ func (gv *VectorView) SelRotateRight() { //gti:add
 	gv.SelRotate(90)
 }
 
-func (gv *VectorView) SelFlipHoriz() {
+// SelFlipHoriz flips the selection horizontally
+func (gv *VectorView) SelFlipHoriz() { //gti:add
 	gv.SelScale(-1, 1)
 }
 
-func (gv *VectorView) SelFlipVert() {
+// SelFlipVert flips the selection vertically
+func (gv *VectorView) SelFlipVert() { //gti:add
 	gv.SelScale(1, -1)
 }
 
-func (gv *VectorView) SelRaiseTop() {
+// SelRaiseTop raises the selection to the top of the layer
+func (gv *VectorView) SelRaiseTop() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -488,7 +452,8 @@ func (gv *VectorView) SelRaiseTop() {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelRaise() {
+// SelRaise raises the selection by one level in the layer
+func (gv *VectorView) SelRaise() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -511,7 +476,8 @@ func (gv *VectorView) SelRaise() {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelLowerBot() {
+// SelLowerBottom lowers the selection to the bottom of the layer
+func (gv *VectorView) SelLowerBottom() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -532,7 +498,8 @@ func (gv *VectorView) SelLowerBot() {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelLower() {
+// SelLower lowers the selection by one level in the layer
+func (gv *VectorView) SelLower() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
