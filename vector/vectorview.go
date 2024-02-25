@@ -264,10 +264,6 @@ func (vv *VectorView) AddImage(fname gi.Filename, width, height float32) error {
 //////////////////////////////////////////////////////////////////////////
 //  GUI Config
 
-func (vv *VectorView) MainToolbar() *gi.Toolbar {
-	return vv.ChildByName("main-tb", 0).(*gi.Toolbar)
-}
-
 func (vv *VectorView) ModalToolbarStack() *gi.Layout {
 	return vv.ChildByName("modal-tb", 1).(*gi.Layout)
 }

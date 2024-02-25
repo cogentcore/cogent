@@ -8,7 +8,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 )
 
@@ -84,9 +83,6 @@ func (gv *VectorView) ConfigTools() {
 		return
 	}
 
-	tb.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
 	gi.NewButton(tb).SetIcon(icons.ArrowSelectorTool).SetShortcut("S").
 		SetTooltip("Select, move, and resize objects").
 		OnClick(func(e events.Event) {
