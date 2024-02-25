@@ -265,11 +265,11 @@ func (gv *VectorView) UpdateTextToolbar() {
 	txt.SetText(ts.Text)
 
 	// fw := tb.ChildByName("font", 0).(gi.Node2D)
-	ts.FontVal.UpdateWidget()
+	// ts.FontVal.UpdateWidget()
 
-	fsz := tb.ChildByName("size", 0).(*gi.Spinner)
-	fsz.SetValue(ts.Size.Val)
+	// fsz := tb.ChildByName("size", 0).(*gi.Spinner)
+	// fsz.SetValue(ts.Size.Val)
 
-	fzu := tb.ChildByName("size-units", 0).(*gi.Chooser)
-	fzu.SetCurrentIndex(int(ts.Size.Un))
+	// fzu := tb.ChildByName("size-units", 0).(*gi.Chooser)
+	// fzu.SetCurrentIndex(int(ts.Size.Un))
 }

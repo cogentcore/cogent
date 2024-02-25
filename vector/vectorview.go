@@ -385,7 +385,7 @@ func (vv *VectorView) Config() {
 
 	gi.NewTabs(sp, "tabs")
 
-	tv.SyncRootNode(sv)
+	tv.SyncRootNode(sv.Root())
 
 	// tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
 	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
