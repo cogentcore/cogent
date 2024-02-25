@@ -8,7 +8,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/svg"
 )
@@ -21,18 +20,10 @@ type TreeView struct {
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
-// AddNewTreeView adds a new filetreeview to given parent node, with given name.
-func AddNewTreeView(parent ki.Ki, name string) *TreeView {
-	tv := parent.AddNewChild(KiT_TreeView, name).(*TreeView)
-	// tv.SetFlag(int(giv.TreeViewFlagUpdtRoot))
-	tv.OpenDepth = 4
-	return tv
-}
-
 // SelectNodeInTree selects given node in TreeView
 func (gv *VectorView) SelectNodeInTree(kn ki.Ki, mode events.SelectModes) {
 	tv := gv.TreeView()
-	tvn := tv.FindSrcNode(kn)
+	tvn := tv.FindSyncNode(kn)
 	if tvn != nil {
 		tvn.OpenParents()
 		tvn.SelectAction(mode)
@@ -40,16 +31,16 @@ func (gv *VectorView) SelectNodeInTree(kn ki.Ki, mode events.SelectModes) {
 }
 
 // SelectedAsTreeViews returns the currently-selected items from SVG as TreeView nodes
-func (gv *VectorView) SelectedAsTreeViews() []*giv.TreeView {
+func (gv *VectorView) SelectedAsTreeViews() []giv.TreeViewer {
 	es := &gv.EditState
 	sl := es.SelectedList(false)
 	if len(sl) == 0 {
 		return nil
 	}
 	tv := gv.TreeView()
-	var tvl []*giv.TreeView
+	var tvl []giv.TreeViewer
 	for _, si := range sl {
-		tvn := tv.FindSrcNode(si.This())
+		tvn := tv.FindSyncNode(si.This())
 		if tvn != nil {
 			tvl = append(tvl, tvn)
 		}
@@ -67,12 +58,12 @@ func (gv *VectorView) DuplicateSelected() { //gti:add
 	sv := gv.SVG()
 	sv.UndoSave("DuplicateSelected", "")
 	updt := sv.UpdateStart()
-	sv.SetFullReRender()
+	// sv.SetFullReRender()
 	tv := gv.TreeView()
 	tvupdt := tv.UpdateStart()
-	tv.SetFullReRender()
+	// tv.SetFullReRender()
 	for _, tvi := range tvl {
-		tvi.SrcDuplicate()
+		tvi.AsTreeView().DuplicateSync()
 	}
 	gv.SetStatus("Duplicated selected items")
 	tv.ReSync() // todo: should not be needed
@@ -104,11 +95,11 @@ func (gv *VectorView) CutSelected() { //gti:add
 	sv := gv.SVG()
 	sv.UndoSave("CutSelected", "")
 	updt := sv.UpdateStart()
-	sv.SetFullReRender()
+	// sv.SetFullReRender()
 	sv.EditState().ResetSelected()
 	tv := gv.TreeView()
 	tvupdt := tv.UpdateStart()
-	tv.SetFullReRender()
+	// tv.SetFullReRender()
 	tv.SetSelectedViews(tvl)
 	tvl[0].Cut() // operates on first element in selection
 	gv.SetStatus("Cut selected items")
@@ -121,25 +112,25 @@ func (gv *VectorView) CutSelected() { //gti:add
 
 // PasteClip pastes clipboard, using cur layer etc
 func (gv *VectorView) PasteClip() { //gti:add
-	md := goosi.TheApp.Clipboard().Read([]string{fi.DataJson})
+	md := gv.Clipboard().Read([]string{fi.DataJson})
 	if md == nil {
 		return
 	}
-	es := &gv.EditState
+	// es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("Paste", "")
 	updt := sv.UpdateStart()
-	sv.SetFullReRender()
+	// sv.SetFullReRender()
 	tv := gv.TreeView()
 	tvupdt := tv.UpdateStart()
-	tv.SetFullReRender()
-	par := tv
-	if es.CurLayer != "" {
-		ly := tv.ChildByName("tv_"+es.CurLayer, 1)
-		if ly != nil {
-			par = ly.Embed(KiT_TreeView).(*TreeView)
-		}
-	}
+	// tv.SetFullReRender()
+	// par := tv
+	// if es.CurLayer != "" {
+	// 	ly := tv.ChildByName("tv_"+es.CurLayer, 1)
+	// 	if ly != nil {
+	// 		par = ly.Embed(KiT_TreeView).(*TreeView)
+	// 	}
+	// }
 	// par.PasteChildren(md, dnd.DropCopy)
 	gv.SetStatus("Pasted items from clipboard")
 	tv.ReSync() // todo: should not be needed
@@ -159,13 +150,13 @@ func (gv *VectorView) DeleteSelected() {
 	sv.UndoSave("DeleteSelected", "")
 	updt := sv.UpdateStart()
 	sv.EditState().ResetSelected()
-	sv.SetFullReRender()
+	// sv.SetFullReRender()
 	tv := gv.TreeView()
 	tvupdt := tv.UpdateStart()
-	tv.SetFullReRender()
-	for _, tvi := range tvl {
-		tvi.SrcDelete()
-	}
+	// tv.SetFullReRender()
+	// for _, tvi := range tvl {
+	// 	tvi.SrcDelete()
+	// }
 	gv.SetStatus("Deleted selected items")
 	tv.ReSync() // todo: should not be needed
 	tv.UpdateEnd(tvupdt)
@@ -196,31 +187,31 @@ func (tv *TreeView) ParVectorView() *VectorView {
 
 // SelectSVG
 func (tv *TreeView) SelectSVG() {
-	gv := tv.ParVectorView()
+	gv := tv.VectorView
 	if gv != nil {
-		gv.SelectNodeInSVG(tv.SrcNode, events.SelectOne)
+		gv.SelectNodeInSVG(tv.SyncNode, events.SelectOne)
 	}
 }
 
 // LayerIsCurrent returns true if layer is the current active one for creating
 func (tv *TreeView) LayerIsCurrent() bool {
-	gv := tv.ParVectorView()
+	gv := tv.VectorView
 	if gv != nil {
-		return gv.IsCurLayer(tv.SrcNode.Name())
+		return gv.IsCurLayer(tv.SyncNode.Name())
 	}
 	return false
 }
 
 // LayerSetCurrent sets this layer as the current layer name
 func (tv *TreeView) LayerSetCurrent() {
-	sn := tv.SrcNode
-	gv := tv.ParVectorView()
+	sn := tv.SyncNode
+	gv := tv.VectorView
 	if gv != nil {
 		cur := gv.EditState.CurLayer
 		if cur != "" {
 			cli := tv.Par.ChildByName("tv_"+cur, 0)
 			if cli != nil {
-				cl := cli.Embed(KiT_TreeView).(*TreeView)
+				cl := cli.(*TreeView)
 				cl.LayerClearCurrent()
 			}
 		}
@@ -231,18 +222,18 @@ func (tv *TreeView) LayerSetCurrent() {
 			tv.LayerToggleVis()
 		}
 		gv.SetCurLayer(sn.Name())
-		tv.SetFullReRender() // needed for icon updating
-		tv.UpdateSig()
+		// tv.SetFullReRender() // needed for icon updating
+		// tv.UpdateSig()
 	}
 }
 
 // LayerClearCurrent clears this layer as the current layer if it was set as such.
 func (tv *TreeView) LayerClearCurrent() {
-	gv := tv.ParVectorView()
+	gv := tv.VectorView
 	if gv != nil {
-		gv.ClearCurLayer(tv.SrcNode.Name())
-		tv.SetFullReRender() // needed for icon updating
-		tv.UpdateSig()
+		gv.ClearCurLayer(tv.SyncNode.Name())
+		// tv.SetFullReRender() // needed for icon updating
+		// tv.UpdateSig()
 	}
 }
 
@@ -254,7 +245,7 @@ func NodeIsMetaData(kn ki.Ki) bool {
 
 // LayerToggleLock toggles whether layer is locked or not
 func (tv *TreeView) LayerToggleLock() {
-	sn := tv.SrcNode
+	sn := tv.SyncNode
 	np := ""
 	if LayerIsLocked(sn) {
 		np = "false"
@@ -263,13 +254,13 @@ func (tv *TreeView) LayerToggleLock() {
 		np = "true"
 	}
 	sn.SetProp("insensitive", np)
-	tv.SetFullReRenderIconLabel()
-	tv.UpdateSig()
+	// tv.SetFullReRenderIconLabel()
+	// tv.UpdateSig()
 }
 
 // LayerToggleVis toggles visibility of the layer
 func (tv *TreeView) LayerToggleVis() {
-	sn := tv.SrcNode
+	sn := tv.SyncNode
 	np := ""
 	if LayerIsVisible(sn) {
 		np = "display:none"
@@ -278,7 +269,7 @@ func (tv *TreeView) LayerToggleVis() {
 		np = "display:inline"
 	}
 	sn.SetProp("style", np)
-	tv.UpdateSig()
+	// tv.UpdateSig()
 }
 
 /*
