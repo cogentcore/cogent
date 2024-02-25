@@ -245,11 +245,10 @@ func (sv *SVGView) GatherAlignPoints() {
 ///////////////////////////////////////////////////////////////
 //  AlignView
 
-func (av *AlignView) Config(vv *VectorView) {
+func (av *AlignView) Config() {
 	if av.HasChildren() {
 		return
 	}
-	av.VectorView = vv
 	av.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})

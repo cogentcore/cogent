@@ -6,15 +6,12 @@ package vector
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
 
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/mat32"
-	"cogentcore.org/core/svg"
-	"cogentcore.org/core/units"
 )
 
 // DashMulWidth returns the dash array multiplied by the line width -- what is actually set
@@ -193,26 +190,22 @@ func DashIconsInit() {
 		AllDashIconNames[i] = icons.Icon(v)
 	}
 
-	for k, v := range AllDashesMap {
-		ic := &gi.SVG{}
-		ic.InitName(ic, k)
-		ic.SetProp("width", units.Ch(20))
-		ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)
-		p := svg.NewPath(ic, "p", "M 0.05 0.5 .95 0.5 Z")
-		p.SetProp("stroke-width", units.Pw(2))
-		p.SetProp("stroke-dasharray", DashString(DashMulWidth(.05, v)))
-		// svg.CurIconSet[ic.Nm] = ic
-	}
+	// for k, v := range AllDashesMap {
+	// 	ic := &gi.SVG{}
+	// 	ic.InitName(ic, k)
+	// 	ic.SetProp("width", units.Ch(20))
+	// 	ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)
+	// 	p := svg.NewPath(ic, "p", "M 0.05 0.5 .95 0.5 Z")
+	// 	p.SetProp("stroke-width", units.Pw(2))
+	// 	p.SetProp("stroke-dasharray", DashString(DashMulWidth(.05, v)))
+	// 	// svg.CurIconSet[ic.Nm] = ic
+	// }
 	DashIconsInited = true
 }
 
 func init() {
 	AllDashesMap = make(map[string][]float64, len(StdDashesMap))
 	AllDashNames = make([]string, len(StdDashNames))
-	for k, v := range StdDashesMap {
-		AllDashesMap[k] = v
-	}
-	for i, v := range StdDashNames {
-		AllDashNames[i] = v
-	}
+	maps.Copy(AllDashesMap, StdDashesMap)
+	copy(AllDashNames, StdDashNames)
 }

@@ -657,9 +657,9 @@ func (gv *VectorView) Tab(label string) *gi.Frame {
 
 func (vv *VectorView) ConfigTabs() {
 	pt := vv.RecycleTab("Paint", false)
-	NewPaintView(pt)
+	NewPaintView(pt).SetVectorView(vv)
 	at := vv.RecycleTab("Align", false)
-	NewAlignView(at)
+	NewAlignView(at).SetVectorView(vv)
 	vv.EditState.Text.Defaults()
 	tt := vv.RecycleTab("Text", false)
 	giv.NewStructView(tt).SetStruct(&vv.EditState.Text)

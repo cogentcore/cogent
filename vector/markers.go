@@ -11,13 +11,10 @@ import (
 	"maps"
 	"strings"
 
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
-	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
-	"cogentcore.org/core/units"
 )
 
 // MarkerFromNodeProp returns the marker name (canonicalized -- no id)
@@ -124,7 +121,7 @@ func MarkerDeleteCtxtColors(mk *svg.Marker) {
 
 // NewMarkerFromXML makes a new marker from given XML source.
 func NewMarkerFromXML(name, xml string) *svg.Marker {
-	tmpsvg := &svg.SVG{}
+	tmpsvg := svg.NewSVG(0, 0)
 	b := bytes.NewBufferString(xml)
 	err := tmpsvg.ReadXML(b)
 	if err != nil && err != io.EOF {
@@ -284,47 +281,47 @@ func MarkerIconsInit() {
 
 	AllMarkersSVGMap = make(map[string]*svg.Marker, len(AllMarkersXMLMap))
 
-	for k, v := range AllMarkersXMLMap {
-		empty := true
-		if v != "" {
-			mk := NewMarkerFromXML(k, v)
-			if mk == nil { // badness
-				continue
-			}
-			empty = false
-			AllMarkersSVGMap[k] = mk
-		}
-		ic := &gi.Icon{}
-		ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
-		ic.Styles.Min.X.Ch(6)
-		ic.Styles.Min.Y.Em(2)
-		ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)
-		var p *svg.Path
-		lk := strings.ToLower(k)
-		start := true
-		switch {
-		case empty:
-			p = svg.NewPath(ic, "p", "M 0.1 0.5 0.9 0.5 Z")
-		case strings.Contains(lk, "end"):
-			start = false
-			p = svg.NewPath(ic, "p", "M 0.8 0.5 0.9 0.5 Z")
-		case strings.Contains(lk, "start"):
-			p = svg.NewPath(ic, "p", "M 0.1 0.5 0.2 0.5 Z")
-		default:
-			p = svg.NewPath(ic, "p", "M 0.4 0.5 0.5 0.5 Z")
-		}
-		p.SetProp("stroke-width", units.Pw(5))
-		if !empty {
-			mk := NewMarker(&ic.SVG, k, 0)
-			MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
-			if start {
-				p.SetProp("marker-start", svg.NameToURL(k))
-			} else {
-				p.SetProp("marker-end", svg.NameToURL(k))
-			}
-		}
-		// svg.CurIconSet[ic.Nm] = ic
-	}
+	// for k, v := range AllMarkersXMLMap {
+	// 	empty := true
+	// 	if v != "" {
+	// 		mk := NewMarkerFromXML(k, v)
+	// 		if mk == nil { // badness
+	// 			continue
+	// 		}
+	// 		empty = false
+	// 		AllMarkersSVGMap[k] = mk
+	// 	}
+	// 	ic := &gi.Icon{}
+	// 	ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
+	// 	ic.Styles.Min.X.Ch(6)
+	// 	ic.Styles.Min.Y.Em(2)
+	// 	ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)
+	// 	var p *svg.Path
+	// 	lk := strings.ToLower(k)
+	// 	start := true
+	// 	switch {
+	// 	case empty:
+	// 		p = svg.NewPath(ic, "p", "M 0.1 0.5 0.9 0.5 Z")
+	// 	case strings.Contains(lk, "end"):
+	// 		start = false
+	// 		p = svg.NewPath(ic, "p", "M 0.8 0.5 0.9 0.5 Z")
+	// 	case strings.Contains(lk, "start"):
+	// 		p = svg.NewPath(ic, "p", "M 0.1 0.5 0.2 0.5 Z")
+	// 	default:
+	// 		p = svg.NewPath(ic, "p", "M 0.4 0.5 0.5 0.5 Z")
+	// 	}
+	// 	p.SetProp("stroke-width", units.Pw(5))
+	// 	if !empty {
+	// 		mk := NewMarker(&ic.SVG, k, 0)
+	// 		MarkerDeleteCtxtColors(mk) // get rid of those context-stroke etc
+	// 		if start {
+	// 			p.SetProp("marker-start", svg.NameToURL(k))
+	// 		} else {
+	// 			p.SetProp("marker-end", svg.NameToURL(k))
+	// 		}
+	// 	}
+	// 	// svg.CurIconSet[ic.Nm] = ic
+	// }
 	MarkerIconsInited = true
 }
 
