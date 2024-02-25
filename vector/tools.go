@@ -5,8 +5,11 @@
 package vector
 
 import (
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/ki"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 )
 
@@ -35,23 +38,22 @@ func (gv *VectorView) SetTool(tl Tools) {
 	}
 	tls := gv.Tools()
 	updt := tls.UpdateStart()
-	for i, ti := range tls.Kids {
-		t := ti.(gi.Node2D).AsNode2D()
-		t.SetSelectedState(i == int(tl))
+	for i, t := range tls.Kids {
+		t.(gi.Widget).AsWidget().SetSelected(i == int(tl))
 	}
 	tls.UpdateEnd(updt)
 	fs := es.FirstSelectedNode()
 	if fs != nil {
 		switch v := fs.(type) {
 		case *svg.Text:
-			Prefs.TextStyle.CopyStyleFrom(&v.Pnt.Paint)
+			Prefs.TextStyle.CopyStyleFrom(&v.Paint)
 		case *svg.Line:
-			Prefs.LineStyle.CopyStyleFrom(&v.Pnt.Paint)
+			Prefs.LineStyle.CopyStyleFrom(&v.Paint)
 		case *svg.Path:
-			Prefs.PathStyle.CopyStyleFrom(&v.Pnt.Paint)
+			Prefs.PathStyle.CopyStyleFrom(&v.Paint)
 		default:
 			gg := fs.AsNodeBase()
-			Prefs.ShapeStyle.CopyStyleFrom(&gg.Pnt.Paint)
+			Prefs.ShapeStyle.CopyStyleFrom(&gg.Paint)
 		}
 	}
 	es.ResetSelected()
@@ -83,12 +85,13 @@ func (gv *VectorView) ConfigTools() {
 		return
 	}
 
-	tb.Lay = gi.LayoutVert
-	tb.SetStretchMaxHeight()
-	tb.AddAction(gi.ActOpts{Label: "S", Icon: "arrow", Tooltip: "S, Space: select, move, resize objects"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SetTool(SelectTool)
+	tb.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
+	gi.NewButton(tb).SetIcon(icons.ArrowSelectorTool).SetShortcut("S").
+		SetTooltip("select, move, and resize objects").
+		OnClick(func(e events.Event) {
+			gv.SetTool(SelectTool)
 		})
 	tb.AddAction(gi.ActOpts{Label: "N", Icon: "tool-node", Tooltip: "N: select, move node points within paths"},
 		gv.This(), func(recv, send ki.Ki, sig int64, data any) {

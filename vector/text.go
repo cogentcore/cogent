@@ -5,11 +5,8 @@
 package vector
 
 import (
-	"reflect"
-
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/units"
@@ -75,7 +72,7 @@ func (ts *TextStyle) Defaults() {
 	ts.Shift = 0
 	ts.Align = 0
 
-	ts.SetFromFontStyle(&Prefs.TextStyle.FontStyle)
+	// ts.SetFromFontStyle(&Prefs.TextStyle.FontStyle)
 }
 
 // SetFromFontStyle sets from standard styles.Font style
@@ -96,8 +93,8 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 		tspan := txt.Kids[0].(*svg.Text)
 		ts.Text = tspan.Text
 	}
-	ts.SetFromFontStyle(&txt.Pnt.FontStyle)
-	ts.Align = txt.Pnt.TextStyle.Align
+	// ts.SetFromFontStyle(&txt.Paint.FontStyle)
+	ts.Align = txt.Paint.TextStyle.Align
 }
 
 // SetTextPropsNode sets the text properties of given Text node
@@ -128,11 +125,11 @@ func (gv *VectorView) SetTextProps(tps map[string]string) {
 	sv := gv.SVG()
 	sv.UndoSave("SetTextProps", "")
 	updt := sv.UpdateStart()
-	sv.SetFullReRender()
+	// sv.SetFullReRender()
 	for itm := range es.Selected {
 		gv.SetTextPropsNode(itm.(svg.Node), tps)
 	}
-	sv.UpdateEnd(updt)
+	sv.UpdateEndRender(updt)
 	gv.ChangeMade()
 }
 
@@ -196,7 +193,7 @@ func (gv *VectorView) SetText(txt string) {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("SetText", "")
-	sv.SetFullReRender()
+	// sv.SetFullReRender()
 	for itm := range es.Selected {
 		if gv.SetTextNode(itm.(svg.Node), txt) {
 			break // only set first..
@@ -221,7 +218,6 @@ func (gv *VectorView) ConfigTextToolbar() {
 	if tb.HasChildren() {
 		return
 	}
-	tb.SetStretchMaxWidth()
 	es := &gv.EditState
 	ts := &es.Text
 	ts.VectorView = gv
@@ -229,40 +225,39 @@ func (gv *VectorView) ConfigTextToolbar() {
 	txt := gi.NewTextField(tb, "text")
 	txt.Tooltip = "current text string"
 	txt.SetText(ts.Text)
-	txt.SetProp("width", units.NewCh(50))
-	txt.TextFieldSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		if sig == int64(gi.TextFieldDone) {
-			ts.Text = txt.Text()
-			ts.Update()
-		}
-	})
+	// txt.SetProp("width", units.NewCh(50))
+	// txt.TextFieldSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 	if sig == int64(gi.TextFieldDone) {
+	// 		ts.Text = txt.Text()
+	// 		ts.Update()
+	// 	}
+	// })
 
-	ki.InitNode(&ts.FontVal)
-	ts.FontVal.SetSoloValue(reflect.ValueOf(&ts.Font))
-	fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(gi.Node2D)
-	ts.FontVal.ConfigWidget(fw)
+	// ki.InitNode(&ts.FontVal)
+	// ts.FontVal.SetSoloValue(reflect.ValueOf(&ts.Font))
+	// fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(gi.Node2D)
+	// ts.FontVal.ConfigWidget(fw)
 
-	fsz := gi.NewSpinner(tb, "size")
-	fsz.SetValue(ts.Size.Val)
-	fsz.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		ts.Size.Val = fsz.Value
-		ts.Update()
-	})
+	// fsz := gi.NewSpinner(tb, "size")
+	// fsz.SetValue(ts.Size.Val)
+	// fsz.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 	ts.Size.Val = fsz.Value
+	// 	ts.Update()
+	// })
 
-	fzu := gi.NewChooser(tb, "size-units")
-	fzu.ItemsFromEnum(units.KiT_Units, true, 0)
-	fzu.SetCurIndex(int(ts.Size.Un))
-	fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-		ts.Size.Un = units.Units(fzu.CurIndex)
-		ts.Update()
-	})
+	// fzu := gi.NewChooser(tb, "size-units")
+	// fzu.ItemsFromEnum(units.KiT_Units, true, 0)
+	// fzu.SetCurIndex(int(ts.Size.Un))
+	// fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 	ts.Size.Un = units.Units(fzu.CurIndex)
+	// 	ts.Update()
+	// })
 
 }
 
 // UpdateTextToolbar updates the select toolbar based on current selection
 func (gv *VectorView) UpdateTextToolbar() {
 	tb := gv.TextToolbar()
-	tb.UpdateActions()
 	es := &gv.EditState
 	ts := &es.Text
 
@@ -276,5 +271,5 @@ func (gv *VectorView) UpdateTextToolbar() {
 	fsz.SetValue(ts.Size.Val)
 
 	fzu := tb.ChildByName("size-units", 0).(*gi.Chooser)
-	fzu.SetCurIndex(int(ts.Size.Un))
+	fzu.SetCurrentIndex(int(ts.Size.Un))
 }
