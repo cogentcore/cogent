@@ -298,8 +298,8 @@ func (vv *VectorView) SetModalText() {
 	tbs.UpdateEndLayout(updt)
 }
 
-func (vv *VectorView) HBox() *gi.Layout {
-	return vv.ChildByName("hbox", 2).(*gi.Layout)
+func (vv *VectorView) HBox() *gi.Frame {
+	return vv.ChildByName("hbox", 2).(*gi.Frame)
 }
 
 func (vv *VectorView) Tools() *gi.Toolbar {
@@ -355,8 +355,10 @@ func (vv *VectorView) Config() {
 	gi.NewLayout(vv, "modal-tb").Style(func(s *styles.Style) {
 		s.Display = styles.Stacked
 	})
-	hb := gi.NewLayout(vv, "hbox")
-	gi.NewFrame(vv, "statusbar")
+	hb := gi.NewFrame(vv, "hbox")
+	gi.NewFrame(vv, "statusbar").Style(func(s *styles.Style) {
+		s.Grow.Set(1, 0)
+	})
 
 	gi.NewToolbar(hb, "tools").Style(func(s *styles.Style) {
 		s.Direction = styles.Column
