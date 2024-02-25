@@ -634,6 +634,8 @@ func NewVectorWindow(fnm string) *VectorView {
 		vv.OpenDrawingFile(gi.Filename(path))
 	}
 
+	b.NewWindow().Run()
+
 	return vv
 }
 

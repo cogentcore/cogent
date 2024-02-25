@@ -153,7 +153,8 @@ func (vv *VectorView) UpdateLayerView() {
 	lyv.SelectIdx(ci)
 }
 
-func (vv *VectorView) AddLayer() {
+// AddLayer adds a new layer
+func (vv *VectorView) AddLayer() { //gti:add
 	sv := vv.SVG()
 	svr := sv.Root()
 

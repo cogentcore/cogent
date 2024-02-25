@@ -502,7 +502,7 @@ func (pv *PaintView) SelectFillGrad() {
 	}
 }
 
-func (pv *PaintView) Config(vv *VectorView) {
+func (pv *PaintView) Config() {
 	if pv.HasChildren() {
 		return
 	}
@@ -513,7 +513,6 @@ func (pv *PaintView) Config(vv *VectorView) {
 	DashIconsInit()
 	MarkerIconsInit()
 
-	pv.VectorView = vv
 	pv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
