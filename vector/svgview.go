@@ -178,7 +178,31 @@ func (sv *SVGView) HandleEvents() {
 					sv.UpdateSelect()
 				}
 			}
-			return
+			if !es.InAction() {
+				switch es.Tool {
+				case SelectTool:
+					sv.SetRubberBand(e.PrevPos())
+				case RectTool:
+					sv.NewElDrag(svg.RectType, es.DragStartPos, e.Pos())
+					es.SelBBox.Min.X += 1
+					es.SelBBox.Min.Y += 1
+					es.DragSelStartBBox = es.SelBBox
+					es.DragSelCurBBox = es.SelBBox
+					es.DragSelEffBBox = es.SelBBox
+				case EllipseTool:
+					sv.NewElDrag(svg.EllipseType, es.DragStartPos, e.Pos())
+				case TextTool:
+					sv.NewText(es.DragStartPos, e.Pos())
+					es.NewTextMade = true
+				case BezierTool:
+					sv.NewPath(es.DragStartPos, e.Pos())
+				}
+			} else {
+				switch {
+				case es.Action == "BoxSelect":
+					sv.SetRubberBand(e.Pos())
+				}
+			}
 		}
 		// if e.MouseButton() == events.Right {
 		// 	e.SetHandled()
@@ -204,32 +228,6 @@ func (sv *SVGView) HandleEvents() {
 		if es.HasSelected() {
 			if !es.NewTextMade {
 				// sv.DragMove(win, me) // in manip
-			}
-		} else {
-			if !es.InAction() {
-				switch es.Tool {
-				case SelectTool:
-					sv.SetRubberBand(e.PrevPos())
-				case RectTool:
-					sv.NewElDrag(svg.RectType, es.DragStartPos, e.Pos())
-					es.SelBBox.Min.X += 1
-					es.SelBBox.Min.Y += 1
-					es.DragSelStartBBox = es.SelBBox
-					es.DragSelCurBBox = es.SelBBox
-					es.DragSelEffBBox = es.SelBBox
-				case EllipseTool:
-					sv.NewElDrag(svg.EllipseType, es.DragStartPos, e.Pos())
-				case TextTool:
-					sv.NewText(es.DragStartPos, e.Pos())
-					es.NewTextMade = true
-				case BezierTool:
-					sv.NewPath(es.DragStartPos, e.Pos())
-				}
-			} else {
-				switch {
-				case es.Action == "BoxSelect":
-					sv.SetRubberBand(e.Pos())
-				}
 			}
 		}
 	})
@@ -701,7 +699,7 @@ func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 	nr := sv.NewEl(typ)
 	if rect, ok := nr.(*svg.Rect); ok {
 		xfi := sv.Root().Paint.Transform.Inverse()
-		svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
+		svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 		pos := mat32.V2FromPoint(start).Sub(svoff)
 		rect.SetPos(xfi.MulVec2AsPt(pos))
 		sz := dv.Abs().Max(mat32.V2Scalar(minsz / 2))
