@@ -3,15 +3,15 @@ module cogentcore.org/cogent
 go 1.21
 
 require (
-	cogentcore.org/core v0.0.5-0.20240210183506-8a1ba081dd41
+	cogentcore.org/core v0.0.7-0.20240225063146-aa65c4939898
 	github.com/go-delve/delve v1.22.0
-	github.com/iancoleman/strcase v0.3.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
 	github.com/shirou/gopsutil/v3 v3.23.12
 )
 
 require (
+	github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4 // indirect
 	github.com/Masterminds/vcs v1.13.3 // indirect
 	github.com/alecthomas/chroma/v2 v2.12.0 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
@@ -21,7 +21,6 @@ require (
 	github.com/cilium/ebpf v0.12.3 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
-	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-delve/gore v0.11.7 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3 // indirect
