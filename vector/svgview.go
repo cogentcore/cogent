@@ -706,6 +706,7 @@ func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 		rect.SetSize(xfi.MulVec2AsVec(sz))
 	}
 	// es.SelectAction(nr, events.SelectOne, end)
+	sv.ManipDone()
 	sv.UpdateEndRender(updt)
 	sv.UpdateSelSprites()
 	es.DragSelStart(start)
