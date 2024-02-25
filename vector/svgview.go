@@ -669,7 +669,7 @@ func (sv *SVGView) SetSVGName(el svg.Node) {
 // Uses currently active layer if set.
 func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 	es := sv.EditState()
-	par := sv.This()
+	par := ki.Ki(sv.Root())
 	if es.CurLayer != "" {
 		ly := sv.ChildByName(es.CurLayer, 1)
 		if ly != nil {
