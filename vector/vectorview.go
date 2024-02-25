@@ -241,8 +241,8 @@ func (vv *VectorView) ResizeToContents() {
 	sv.UpdateView(true)
 }
 
-// AddImage adds a new image node set to given image
-func (vv *VectorView) AddImage(fname gi.Filename, width, height float32) error {
+// AddImage adds a new image node set to the given image
+func (vv *VectorView) AddImage(fname gi.Filename, width, height float32) error { //gti:add
 	sv := vv.SVG()
 	sv.UndoSave("AddImage", string(fname))
 	ind := sv.NewEl(svg.ImageType).(*svg.Image)
@@ -492,26 +492,24 @@ func (vv *VectorView) ConfigToolbar(tb *gi.Toolbar) {
 	giv.NewFuncButton(tb, vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
 	giv.NewFuncButton(tb, vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
 
-	gi.NewSeparator(tb, "sep-import")
-	tb.AddAction(gi.ActOpts{Label: "Add Image...", Icon: "file-image", Tooltip: "add an image from a file"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			giv.CallMethod(grr, "AddImage", grr.ViewportSafe())
+	gi.NewSeparator(tb)
+	giv.NewFuncButton(tb, vv.AddImage).SetIcon(icons.Image)
+	gi.NewSeparator(tb)
+
+	gi.NewButton(tb).SetText("Zoom page").SetIcon(icons.ZoomOut).
+		SetTooltip("Zoom to see the entire page size for drawing").
+		OnClick(func(e events.Event) {
+			sv := vv.SVG()
+			sv.ZoomToPage(false)
+			sv.UpdateView(true)
 		})
-	gi.NewSeparator(tb, "sep-view")
-	tb.AddAction(gi.ActOpts{Label: "Zoom Page", Icon: "zoom-out", Tooltip: "zoom to see entire page size for drawing"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			svvv := grr.SVG()
-			svvv.ZoomToPage(false)
-			svvv.UpdateView(true)
-		})
-	tb.AddAction(gi.ActOpts{Label: "Zoom All", Icon: "zoom-out", Tooltip: "zoom to see entire contents"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			svvv := grr.SVG()
-			svvv.ZoomToContents(false)
-			svvv.UpdateView(true)
+
+	gi.NewButton(tb).SetText("Zoom all").SetIcon(icons.ZoomOut).
+		SetTooltip("Zoom to see all elements").
+		OnClick(func(e events.Event) {
+			sv := vv.SVG()
+			sv.ZoomToContents(false)
+			sv.UpdateView(true)
 		})
 }
 
@@ -520,7 +518,6 @@ func (vv *VectorView) ConfigModalToolbar() {
 	if tb == nil || tb.HasChildren() {
 		return
 	}
-	tb.SetStretchMaxWidth()
 	gi.NewToolbar(tb, "select-tb")
 	gi.NewToolbar(tb, "node-tb")
 	gi.NewToolbar(tb, "text-tb")
@@ -536,8 +533,6 @@ func (vv *VectorView) ConfigStatusBar() {
 	if sb == nil || sb.HasChildren() {
 		return
 	}
-	sb.SetStretchMaxWidth()
-	sb.SetMinPrefHeight(units.NewValue(1.2, units.Em))
 	sb.SetProp("overflow", "hidden") // no scrollbars!
 	sb.SetProp("margin", 0)
 	sb.SetProp("padding", 0)
