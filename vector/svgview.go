@@ -687,32 +687,32 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 
 // NewElDrag makes a new SVG element during the drag operation
 func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
-	// minsz := float32(10)
-	// es := sv.EditState()
-	// dv := mat32.V2FromPoint(end.Sub(start))
-	// if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
-	// 	return nil
-	// }
+	minsz := float32(10)
+	es := sv.EditState()
+	dv := mat32.V2FromPoint(end.Sub(start))
+	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+		return nil
+	}
 	// win := sv.VectorView.ParentWindow()
-	// tn := typ.Name()
-	// sv.ManipStart("New"+tn, "")
-	// updt := sv.UpdateStart()
+	tn := typ.Name
+	sv.ManipStart("New"+tn, "")
+	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
-	// nr := sv.NewEl(typ)
-	// xfi := sv.Pnt.Transform.Inverse()
-	// svoff := mat32.V2FromPoint(sv.BBox.Min)
-	// pos := mat32.V2FromPoint(start).Sub(svoff)
-	// nr.SetPos(xfi.MulVec2AsPt(pos))
-	// // sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
-	// sz := dv
-	// nr.SetSize(xfi.MulVec2AsVec(sz))
+	nr := sv.NewEl(typ)
+	if rect, ok := nr.(*svg.Rect); ok {
+		xfi := sv.Root().Paint.Transform.Inverse()
+		svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
+		pos := mat32.V2FromPoint(start).Sub(svoff)
+		rect.SetPos(xfi.MulVec2AsPt(pos))
+		sz := dv.Abs().Max(mat32.V2Scalar(minsz / 2))
+		rect.SetSize(xfi.MulVec2AsVec(sz))
+	}
 	// es.SelectAction(nr, events.SelectOne, end)
-	// sv.UpdateEnd(updt)
-	// sv.UpdateSelSprites()
-	// es.DragSelStart(start)
+	sv.UpdateEndRender(updt)
+	sv.UpdateSelSprites()
+	es.DragSelStart(start)
 	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
-	// return nr
-	return nil
+	return nr
 }
 
 // NewText makes a new Text element with embedded tspan
