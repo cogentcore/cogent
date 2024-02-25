@@ -28,7 +28,6 @@ import (
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
-	"cogentcore.org/core/units"
 )
 
 // VectorView is the Vector SVG vector drawing program
@@ -533,16 +532,7 @@ func (vv *VectorView) ConfigStatusBar() {
 	if sb == nil || sb.HasChildren() {
 		return
 	}
-	sb.SetProp("overflow", "hidden") // no scrollbars!
-	sb.SetProp("margin", 0)
-	sb.SetProp("padding", 0)
-	lbl := sb.AddNewChild(gi.KiT_Label, "sb-lbl").(*gi.Label)
-	lbl.SetStretchMaxWidth()
-	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
-	lbl.SetProp("vertical-align", styles.AlignTop)
-	lbl.SetProp("margin", 0)
-	lbl.SetProp("padding", 0)
-	lbl.SetProp("tab-size", 4)
+	gi.NewLabel(sb, "sb-lbl")
 }
 
 // SetStatus updates the statusbar label with given message, along with other status info
