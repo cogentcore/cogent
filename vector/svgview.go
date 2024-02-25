@@ -45,9 +45,6 @@ type SVGView struct {
 	// effective grid spacing given Scale level
 	VectorEff float32 `edit:"-" set:"-"`
 
-	// has dragging cursor been set yet?
-	SetDragCursor bool `view:"-" set:"-"`
-
 	// background pixels, includes page outline and grid
 	BgPixels *image.RGBA `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
@@ -66,6 +63,8 @@ type SVGView struct {
 
 func (sv *SVGView) OnInit() {
 	sv.SVG.OnInit()
+	sv.HandleEvents()
+	sv.SetReadOnly(false)
 	sv.Grid = Prefs.Size.Grid
 	sv.Scale = 1
 }
@@ -93,185 +92,109 @@ func (sv *SVGView) UpdateView(full bool) {
 	sv.UpdateSelSprites()
 }
 
-func (sv *SVGView) SVGViewKeys(e events.Event) {
-	kc := e.KeyChord()
-	if gi.DebugSettings.KeyEventTrace {
-		fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
-	}
-	kf := keyfun.Of(kc)
-	switch kf {
-	case keyfun.Abort:
-		// todo: maybe something else
-		e.SetHandled()
-		sv.VectorView.SetTool(SelectTool)
-	case keyfun.Undo:
-		e.SetHandled()
-		sv.VectorView.Undo()
-	case keyfun.Redo:
-		e.SetHandled()
-		sv.VectorView.Redo()
-	case keyfun.Duplicate:
-		e.SetHandled()
-		sv.VectorView.DuplicateSelected()
-	case keyfun.Copy:
-		e.SetHandled()
-		sv.VectorView.CopySelected()
-	case keyfun.Cut:
-		e.SetHandled()
-		sv.VectorView.CutSelected()
-	case keyfun.Paste:
-		e.SetHandled()
-		sv.VectorView.PasteClip()
-	case keyfun.Delete, keyfun.Backspace:
-		e.SetHandled()
-		sv.VectorView.DeleteSelected()
-	}
-	if e.IsHandled() {
-		return
-	}
-	switch kc {
-	// TODO(kai: should these be handled automatically?)
-	case "s", "Shift+S", " ":
-		e.SetHandled()
-		sv.VectorView.SetTool(SelectTool)
-	case "n", "Shift+N":
-		e.SetHandled()
-		sv.VectorView.SetTool(NodeTool)
-	case "r", "Shift+R":
-		e.SetHandled()
-		sv.VectorView.SetTool(RectTool)
-	case "e", "Shift+E":
-		e.SetHandled()
-		sv.VectorView.SetTool(EllipseTool)
-	case "b", "Shift+B":
-		e.SetHandled()
-		sv.VectorView.SetTool(BezierTool)
-	case "t", "Shift+T":
-		e.SetHandled()
-		sv.VectorView.SetTool(TextTool)
-	}
-}
-
-/*
-func (sv *SVGView) KeyChordEvent() {
-	// need hipri to prevent 2-seq guys from being captured by others
-	sv.ConnectEvent(oswin.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
-		svv := recv.Embed(KiT_SVGView).(*SVGView)
-		kt := d.(*key.ChordEvent)
-		svv.SVGViewKeys(kt)
+func (sv *SVGView) HandleEvents() {
+	sv.OnKeyChord(func(e events.Event) {
+		kc := e.KeyChord()
+		if gi.DebugSettings.KeyEventTrace {
+			fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
+		}
+		kf := keyfun.Of(kc)
+		switch kf {
+		case keyfun.Abort:
+			// todo: maybe something else
+			e.SetHandled()
+			sv.VectorView.SetTool(SelectTool)
+		case keyfun.Undo:
+			e.SetHandled()
+			sv.VectorView.Undo()
+		case keyfun.Redo:
+			e.SetHandled()
+			sv.VectorView.Redo()
+		case keyfun.Duplicate:
+			e.SetHandled()
+			sv.VectorView.DuplicateSelected()
+		case keyfun.Copy:
+			e.SetHandled()
+			sv.VectorView.CopySelected()
+		case keyfun.Cut:
+			e.SetHandled()
+			sv.VectorView.CutSelected()
+		case keyfun.Paste:
+			e.SetHandled()
+			sv.VectorView.PasteClip()
+		case keyfun.Delete, keyfun.Backspace:
+			e.SetHandled()
+			sv.VectorView.DeleteSelected()
+		}
 	})
-}
-
-func (sv *SVGView) MouseDrag() {
-	sv.ConnectEvent(oswin.MouseDragEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-		me := d.(*mouse.DragEvent)
-		me.SetHandled()
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		if ssvg.IsDragging() {
-			ssvg.DragEvent(me) // for both scene drag and
-		} else {
-			if ssvg.SetDragCursor {
-				oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
-				ssvg.SetDragCursor = false
-			}
-		}
-
-	})
-}
-
-func (sv *SVGView) MouseScroll() {
-	sv.ConnectEvent(oswin.MouseScrollEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-		me := d.(*mouse.ScrollEvent)
-		me.SetHandled()
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		if ssvg.SetDragCursor {
-			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
-			ssvg.SetDragCursor = false
-		}
-		delta := float32(me.NonZeroDelta(false)) / 50
-		sv.ZoomAt(me.Where, delta)
-		// ssvg.InitScale()
-		// ssvg.Scale +=
-		// if ssvg.Scale <= 0 {
-		// 	ssvg.Scale = 0.01
-		// }
-		ssvg.UpdateView(true)
-	})
-}
-
-func (sv *SVGView) MouseEvent() {
-	sv.ConnectEvent(oswin.MouseEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
-		me := d.(*mouse.Event)
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		ssvg.GrabFocus()
-		es := ssvg.EditState()
-		if ssvg.SetDragCursor {
-			oswin.TheApp.Cursor(ssvg.ParentWindow().OSWin).Pop()
-			ssvg.SetDragCursor = false
-		}
-		sob := ssvg.SelectContainsPoint(me.Where, false, true) // not leavesonly, yes exclude existing sels
-		if me.Action == mouse.Press && me.Button == mouse.Left {
-			me.SetHandled()
-			es.SelNoDrag = false
-			switch {
-			case es.HasSelected() && es.SelBBox.ContainsPoint(mat32.V2FromPoint(me.Where)):
-				// note: this absorbs potential secondary selections within selection -- handled
-				// on release below, if nothing else happened
-				es.SelNoDrag = true
-				ssvg.EditState().DragSelStart(me.Where)
-			case sob != nil && es.Tool == SelectTool:
-				es.SelectAction(sob, me.SelectMode(), me.Where)
-				ssvg.EditState().DragSelStart(me.Where)
-				ssvg.UpdateSelect()
-			case sob != nil && es.Tool == NodeTool:
-				es.SelectAction(sob, mouse.SelectOne, me.Where)
-				ssvg.EditState().DragSelStart(me.Where)
-				ssvg.UpdateNodeSprites()
-			case sob == nil:
-				es.ResetSelected()
-				ssvg.UpdateSelect()
-			}
-		}
-		if me.Action != mouse.Release {
+	sv.On(events.MouseDown, func(e events.Event) {
+		if e.MouseButton() != events.Left {
 			return
 		}
+		e.SetHandled()
+		es := sv.EditState()
+		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
+
+		es.SelNoDrag = false
+		switch {
+		case es.HasSelected() && es.SelBBox.ContainsPoint(mat32.V2FromPoint(e.Pos())):
+			// note: this absorbs potential secondary selections within selection -- handled
+			// on release below, if nothing else happened
+			es.SelNoDrag = true
+			es.DragSelStart(e.Pos())
+		case sob != nil && es.Tool == SelectTool:
+			// es.SelectAction(sob, me.SelectMode(), me.Where)
+			sv.EditState().DragSelStart(e.Pos())
+			sv.UpdateSelect()
+		case sob != nil && es.Tool == NodeTool:
+			// es.SelectAction(sob, mouse.SelectOne, me.Where)
+			sv.EditState().DragSelStart(e.Pos())
+			sv.UpdateNodeSprites()
+		case sob == nil:
+			es.ResetSelected()
+			sv.UpdateSelect()
+		}
+	})
+	sv.On(events.MouseUp, func(e events.Event) {
+		es := sv.EditState()
+		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
+
 		if es.InAction() {
 			es.SelNoDrag = false
 			es.NewTextMade = false
-			ssvg.ManipDone()
+			sv.ManipDone()
 			return
 		}
-		if me.Button == mouse.Left {
+		if e.MouseButton() == events.Left {
 			// release on select -- do extended selection processing
-
 			if (es.SelNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
 				es.SelNoDrag = false
-				me.SetHandled()
+				e.SetHandled()
 				if sob == nil {
-					sob = ssvg.SelectContainsPoint(me.Where, false, false) // don't exclude existing sel
+					sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
 				}
 				if sob != nil {
-					es.SelectAction(sob, me.SelectMode(), me.Where)
-					ssvg.UpdateSelect()
+					// es.SelectAction(sob, me.SelectMode(), me.Where)
+					sv.UpdateSelect()
 				}
 			}
 			return
 		}
-		if me.Button == mouse.Right {
-			me.SetHandled()
-			if es.HasSelected() {
-				fobj := es.FirstSelectedNode()
-				if fobj != nil {
-					ssvg.NodeContextMenu(fobj, me.Where)
-				}
-			} else if sob != nil {
-				ssvg.NodeContextMenu(sob, me.Where)
-			}
-			return
-		}
+		// if e.MouseButton() == events.Right {
+		// 	e.SetHandled()
+		// 	if es.HasSelected() {
+		// 		fobj := es.FirstSelectedNode()
+		// 		if fobj != nil {
+		// 			sv.NodeContextMenu(fobj, me.Where)
+		// 		}
+		// 	} else if sob != nil {
+		// 		ssvg.NodeContextMenu(sob, me.Where)
+		// 	}
+		// }
 	})
 }
 
+/*
 func (sv *SVGView) MouseHover() {
 	sv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
 		me := d.(*mouse.HoverEvent)
