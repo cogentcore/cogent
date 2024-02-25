@@ -9,9 +9,6 @@ package vector
 import (
 	"errors"
 	"fmt"
-	"image"
-	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,7 +18,6 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/glop/dirs"
-	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
@@ -56,6 +52,12 @@ func (vv *VectorView) OnAdd() {
 func (vv *VectorView) SetStyles() {
 	vv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+	})
+	vv.OnWidgetAdded(func(w gi.Widget) {
+		switch w.PathFrom(vv) {
+		case "splits/tabs":
+			w.(*gi.Tabs).SetType(gi.FunctionalTabs)
+		}
 	})
 }
 
@@ -638,34 +640,31 @@ func NewVectorWindow(fnm string) *VectorView {
 /////////////////////////////////////////////////////////////////////////
 //   Controls
 
-// RecycleTab returns a tab with given name, first by looking for an existing one,
-// and if not found, making a new one with widget of given type.
-// If sel, then select it.  returns widget for tab.
-// func (gv *VectorView) RecycleTab(label string, typ reflect.Type, sel bool) gi.Node2D {
-// 	tv := gv.Tabs()
-// 	return tv.RecycleTab(label, typ, sel)
-// }
+// RecycleTab returns the tab with given the name, first by looking for
+// an existing one, and if not found, making a new one.
+// If sel, then select it.
+func (gv *VectorView) RecycleTab(label string, sel bool) *gi.Frame {
+	tv := gv.Tabs()
+	return tv.RecycleTab(label, sel)
+}
 
-// Tab returns tab with given label
-// func (gv *VectorView) Tab(label string) gi.Node2D {
-// 	tv := gv.Tabs()
-// 	return tv.TabByName(label)
-// }
+// Tab returns the tab with the given label
+func (gv *VectorView) Tab(label string) *gi.Frame {
+	return gv.Tabs().TabByName(label)
+}
 
 func (vv *VectorView) ConfigTabs() {
-	tv := vv.Tabs()
-	tv.NoDeleteTabs = true
-	pv := vv.RecycleTab("Paint", KiT_PaintView, false).(*PaintView)
-	pv.Config(vv)
-	av := vv.RecycleTab("Align", KiT_AlignView, false).(*AlignView)
-	av.Config(vv)
+	pt := vv.RecycleTab("Paint", false)
+	NewPaintView(pt)
+	at := vv.RecycleTab("Align", false)
+	NewAlignView(at)
 	vv.EditState.Text.Defaults()
-	txv := vv.RecycleTab("Text", giv.KiT_StructView, false).(*giv.StructView)
-	txv.SetStruct(&vv.EditState.Text)
+	tt := vv.RecycleTab("Text", false)
+	giv.NewStructView(tt).SetStruct(&vv.EditState.Text)
 }
 
 func (vv *VectorView) PaintView() *PaintView {
-	return vv.Tab("Paint").(*PaintView)
+	return vv.Tab("Paint").Child(0).(*PaintView)
 }
 
 // UpdateAll updates the display
@@ -686,50 +685,49 @@ func (vv *VectorView) UpdateTreeView() {
 }
 
 func (vv *VectorView) SetDefaultStyle() {
-	pv := vv.Tab("Paint").(*PaintView)
-	es := &vv.EditState
-	switch es.Tool {
-	case TextTool:
-		pv.Update(&Prefs.TextStyle, nil)
-	case BezierTool:
-		pv.Update(&Prefs.PathStyle, nil)
-	default:
-		pv.Update(&Prefs.ShapeStyle, nil)
-	}
+	// pv := vv.PaintView()
+	// es := &vv.EditState
+	// switch es.Tool {
+	// case TextTool:
+	// 	pv.Update(&Prefs.TextStyle, nil)
+	// case BezierTool:
+	// 	pv.Update(&Prefs.PathStyle, nil)
+	// default:
+	// 	pv.Update(&Prefs.ShapeStyle, nil)
+	// }
 }
 
 func (vv *VectorView) UpdateTabs() {
-	// fmt.Printf("updt-tabs\n")
-	es := &vv.EditState
-	fsel := es.FirstSelectedNode()
-	if fsel != nil {
-		sel := fsel.AsNodeBase()
-		pv := vv.Tab("Paint").(*PaintView)
-		pv.Update(&sel.Pnt, sel.This())
-		txt, istxt := fsel.(*svg.Text)
-		if istxt {
-			es.Text.SetFromNode(txt)
-			txv := vv.Tab("Text").(*giv.StructView)
-			txv.UpdateFields()
-			// todo: only show text toolbar on double-click
-			// gv.SetModalText()
-			// gv.UpdateTextToolbar()
-		} else {
-			vv.SetModalToolbar()
-		}
-	}
+	// es := &vv.EditState
+	// fsel := es.FirstSelectedNode()
+	// if fsel != nil {
+	// 	sel := fsel.AsNodeBase()
+	// 	pv := vv.PaintView()
+	// 	pv.Update(&sel.Paint, sel.This())
+	// 	txt, istxt := fsel.(*svg.Text)
+	// 	if istxt {
+	// 		es.Text.SetFromNode(txt)
+	// 		txv := vv.Tab("Text").(*giv.StructView)
+	// 		txv.UpdateFields()
+	// 		// todo: only show text toolbar on double-click
+	// 		// gv.SetModalText()
+	// 		// gv.UpdateTextToolbar()
+	// 	} else {
+	// 		vv.SetModalToolbar()
+	// 	}
+	// }
 }
 
 // SelectNodeInSVG selects given svg node in SVG drawing
 func (vv *VectorView) SelectNodeInSVG(kn ki.Ki, mode events.SelectModes) {
-	sii, ok := kn.(svg.Node)
-	if !ok {
-		return
-	}
-	sv := vv.SVG()
-	es := &vv.EditState
-	es.SelectAction(sii, mode, image.ZP)
-	sv.UpdateView(false)
+	// sii, ok := kn.(svg.Node)
+	// if !ok {
+	// 	return
+	// }
+	// sv := vv.SVG()
+	// es := &vv.EditState
+	// es.SelectAction(sii, mode, image.ZP)
+	// sv.UpdateView(false)
 }
 
 // Undo undoes the last action
@@ -767,10 +765,6 @@ func (vv *VectorView) ChangeMade() {
 /////////////////////////////////////////////////////////////////////////
 //   Basic infrastructure
 
-func (vv *VectorView) ConnectEvents2D() {
-	vv.OSFileEvent()
-}
-
 /*
 func (gv *VectorView) OSFileEvent() {
 	gv.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
@@ -784,30 +778,30 @@ func (gv *VectorView) OSFileEvent() {
 
 // OpenRecent opens a recently-used file
 func (vv *VectorView) OpenRecent(filename gi.Filename) {
-	if string(filename) == VectorViewResetRecents {
-		SavedPaths = nil
-		gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	} else if string(filename) == VectorViewEditRecents {
-		vv.EditRecents()
-	} else {
-		vv.OpenDrawing(filename)
-	}
+	// if string(filename) == VectorViewResetRecents {
+	// 	SavedPaths = nil
+	// 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+	// } else if string(filename) == VectorViewEditRecents {
+	// 	vv.EditRecents()
+	// } else {
+	// 	vv.OpenDrawing(filename)
+	// }
 }
 
 // RecentsEdit opens a dialog editor for deleting from the recents project list
 func (vv *VectorView) EditRecents() {
-	tmp := make([]string, len(SavedPaths))
-	copy(tmp, SavedPaths)
-	gi.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
-	opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
-	giv.SliceViewDialog(vv.Viewport, &tmp, opts,
-		nil, vv, func(recv, send ki.Ki, sig int64, data any) {
-			if sig == int64(gi.DialogAccepted) {
-				SavedPaths = nil
-				SavedPaths = append(SavedPaths, tmp...)
-				gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-			}
-		})
+	// tmp := make([]string, len(SavedPaths))
+	// copy(tmp, SavedPaths)
+	// gi.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
+	// opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
+	// giv.SliceViewDialog(vv.Viewport, &tmp, opts,
+	// 	nil, vv, func(recv, send ki.Ki, sig int64, data any) {
+	// 		if sig == int64(gi.DialogAccepted) {
+	// 			SavedPaths = nil
+	// 			SavedPaths = append(SavedPaths, tmp...)
+	// 			gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+	// 		}
+	// 	})
 }
 
 // SplitsSetView sets split view splitters to given named setting
@@ -846,7 +840,7 @@ func (vv *VectorView) SplitsEdit() {
 
 // HelpWiki opens wiki page for grid on github
 func (vv *VectorView) HelpWiki() {
-	goosi.TheApp.OpenURL("https://goki.dev/grid/wiki")
+	gi.TheApp.OpenURL("https://vector.cogentcore.org")
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -864,18 +858,19 @@ func (vv *VectorView) AutoSaveFilename() string {
 
 // AutoSave does the autosave -- safe to call in a separate goroutine
 func (vv *VectorView) AutoSave() error {
-	if vv.HasFlag(int(VectorViewAutoSaving)) {
-		return nil
-	}
-	vv.SetFlag(int(VectorViewAutoSaving))
-	asfn := vv.AutoSaveFilename()
-	sv := vv.SVG()
-	err := sv.SaveXML(gi.Filename(asfn))
-	if err != nil && err != io.EOF {
-		log.Println(err)
-	}
-	vv.ClearFlag(int(VectorViewAutoSaving))
-	return err
+	// if vv.HasFlag(int(VectorViewAutoSaving)) {
+	// 	return nil
+	// }
+	// vv.SetFlag(int(VectorViewAutoSaving))
+	// asfn := vv.AutoSaveFilename()
+	// sv := vv.SVG()
+	// err := sv.SaveXML(gi.Filename(asfn))
+	// if err != nil && err != io.EOF {
+	// 	log.Println(err)
+	// }
+	// vv.ClearFlag(int(VectorViewAutoSaving))
+	// return err
+	return nil
 }
 
 // AutoSaveDelete deletes any existing autosave file
@@ -901,162 +896,3 @@ const (
 	// VectorViewAutoSaving means
 	VectorViewAutoSaving VectorViewFlags = VectorViewFlags(gi.WidgetFlagsN) + iota
 )
-
-/////////////////////////////////////////////////////////////////////////
-//   Props, MainMenu
-
-/*
-var VectorViewProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"OpenRecent", ki.Props{
-				"submenu": &SavedPaths,
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{}},
-				},
-			}},
-			{"OpenDrawing", ki.Props{
-				"shortcut": keyfun.MenuOpen,
-				"label":    "Open SVG...",
-				"desc":     "open an SVG drawing",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".svg",
-					}},
-				},
-			}},
-			{"NewDrawing", ki.Props{
-				"shortcut": keyfun.MenuNew,
-				"label":    "New",
-				"desc":     "Create a new drawing of given physical size (size units are used for ViewBox).",
-				"Args": ki.PropSlice{
-					{"Physical Size", ki.Props{
-						"default": Prefs.Size,
-					}},
-				},
-			}},
-			{"SaveDrawing", ki.Props{
-				"shortcut": keyfun.MenuSave,
-				"label":    "Save Drawing",
-			}},
-			{"SaveDrawingAs", ki.Props{
-				"shortcut": keyfun.MenuSaveAs,
-				"label":    "Save As...",
-				"desc":     "Save drawing to given svg file name",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"ext": ".svg",
-					}},
-				},
-			}},
-			{"sep-file", ki.BlankProp{}},
-			{"PromptPhysSize", ki.Props{
-				"label": "Set Size",
-				"desc":  "sets the physical size (size units are used for ViewBox)",
-			}},
-			{"ResizeToContents", ki.Props{
-				"label": "Resize To Contents",
-				"desc":  "resizes the drawing to fit the current contents, moving everything to upper-left corner while preserving grid alignment",
-			}},
-			{"sep-exp", ki.BlankProp{}},
-			{"ExportPNG", ki.Props{
-				"desc": "Export drawing as a PNG image file (uses cairosvg -- must install!) -- specify either width or height in pixels as non-zero, or both 0 to use physical size.  Renders full page -- do Resize To Contents to only render contents.",
-				"Args": ki.PropSlice{
-					{"Width", ki.Props{
-						"default": 1280,
-					}},
-					{"Height", ki.Props{
-						"default": 0,
-					}},
-				},
-			}},
-			{"ExportPDF", ki.Props{
-				"desc": "Export drawing as a PDF file (uses cairosvg -- must install!), at given specified DPI (only relevant for rendered effects).  Renders full page -- do Resize To Contents to only render contents.",
-				"Args": ki.PropSlice{
-					{"DPI", ki.Props{
-						"default": 300,
-					}},
-				},
-			}},
-			{"sep-imp", ki.BlankProp{}},
-			{"AddImage", ki.Props{
-				"label": "Add Image...",
-				"desc":  "Add a new Image node with given image file for this image node, rescaling to given size -- use 0, 0 to use native image size.",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
-						"default-field": "Filename",
-						"ext":           ".png,.jpg,.jpeg",
-					}},
-					{"Width", ki.Props{}},
-					{"Height", ki.Props{}},
-				},
-			}},
-			{"sep-af", ki.BlankProp{}},
-			{"Close Window", ki.BlankProp{}},
-		}},
-		{"Edit", ki.PropSlice{
-			{"Duplicate", ki.Props{
-				"keyfun": keyfun.Duplicate,
-				// "updtfunc": VectorViewInactiveTextSelectionFunc,
-			}},
-			{"Copy", ki.Props{
-				"keyfun": keyfun.Copy,
-				// "updtfunc": VectorViewInactiveTextSelectionFunc,
-			}},
-			{"Cut", ki.Props{
-				"keyfun": keyfun.Cut,
-				// "updtfunc": VectorViewInactiveTextSelectionFunc,
-			}},
-			{"Paste", ki.Props{
-				"keyfun": keyfun.Paste,
-			}},
-			{"sep-undo", ki.BlankProp{}},
-			{"Undo", ki.Props{
-				"keyfun": keyfun.Undo,
-			}},
-			{"Redo", ki.Props{
-				"keyfun": keyfun.Redo,
-			}},
-		}},
-		{"View", ki.PropSlice{
-			{"Splits", ki.PropSlice{
-				{"SplitsSetView", ki.Props{
-					"label":   "Set View",
-					"submenu": &AvailSplitNames,
-					"Args": ki.PropSlice{
-						{"Split Name", ki.Props{}},
-					},
-				}},
-				{"SplitsSaveAs", ki.Props{
-					"label": "Save As...",
-					"desc":  "save current splitter values to a new named split configuration",
-					"Args": ki.PropSlice{
-						{"Name", ki.Props{
-							"width": 60,
-						}},
-						{"Desc", ki.Props{
-							"width": 60,
-						}},
-					},
-				}},
-				{"SplitsSave", ki.Props{
-					"label":   "Save",
-					"submenu": &AvailSplitNames,
-					"Args": ki.PropSlice{
-						{"Split Name", ki.Props{}},
-					},
-				}},
-				{"SplitsEdit", ki.Props{
-					"label": "Edit...",
-				}},
-			}},
-		}},
-		{"Window", "Windows"},
-		{"Help", ki.PropSlice{
-			{"HelpWiki", ki.Props{}},
-		}},
-	},
-}
-
-*/
