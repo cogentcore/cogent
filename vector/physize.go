@@ -12,7 +12,7 @@ import (
 )
 
 // PhysSize specifies the physical size of the drawing, when making a new one
-type PhysSize struct {
+type PhysSize struct { //gti:add
 
 	// select a standard size -- this will set units and size
 	StdSize StdSizes
@@ -27,14 +27,14 @@ type PhysSize struct {
 	Size mat32.Vec2
 
 	// grid spacing, in units of ViewBox size
-	Vector float32
+	Grid float32
 }
 
 func (ps *PhysSize) Defaults() {
 	ps.StdSize = Img1280x720
 	ps.Units = units.UnitPx
 	ps.Size.Set(1280, 720)
-	ps.Vector = 12
+	ps.Grid = 12
 }
 
 func (ps *PhysSize) Update() {
@@ -66,7 +66,7 @@ func (ps *PhysSize) SetFromSVG(sv *SVGView) {
 	ps.Size.X = sv.SSVG().PhysWidth.Val
 	ps.Units = sv.SSVG().PhysWidth.Un
 	ps.Size.Y = sv.SSVG().PhysHeight.Val
-	ps.Vector = sv.Vector
+	ps.Grid = sv.Grid
 	ps.StdSize = MatchStdSize(ps.Size.X, ps.Size.Y, ps.Units)
 }
 
@@ -75,7 +75,7 @@ func (ps *PhysSize) SetToSVG(sv *SVGView) {
 	sv.SSVG().PhysWidth.Set(ps.Size.X, ps.Units)
 	sv.SSVG().PhysHeight.Set(ps.Size.Y, ps.Units)
 	sv.Root().ViewBox.Size = ps.Size
-	sv.Vector = ps.Vector
+	sv.Grid = ps.Grid
 }
 
 // StdSizes are standard physical drawing sizes

@@ -40,7 +40,7 @@ type SVGView struct {
 	Scale float32 `set:"-"`
 
 	// grid spacing, in native ViewBox units
-	Vector float32 ` set:"-"`
+	Grid float32 ` set:"-"`
 
 	// effective grid spacing given Scale level
 	VectorEff float32 `edit:"-" set:"-"`
@@ -66,7 +66,7 @@ type SVGView struct {
 
 func (sv *SVGView) OnInit() {
 	sv.SVG.OnInit()
-	sv.Vector = Prefs.Size.Vector
+	sv.Grid = Prefs.Size.Grid
 	sv.Scale = 1
 }
 
@@ -476,7 +476,7 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 		return
 	}
 	trans := bb.Min
-	incr := sv.Vector * sv.Scale // our zoom factor
+	incr := sv.Grid * sv.Scale // our zoom factor
 	treff := trans
 	if grid_off {
 		treff.X = mat32.Floor(trans.X/incr) * incr
@@ -582,7 +582,7 @@ func (sv *SVGView) SetMetaData() {
 	nv.DeleteProp("pagecheckerboard")
 	nv.DeleteProp("showgrid")
 
-	spc := fmt.Sprintf("%g", sv.Vector)
+	spc := fmt.Sprintf("%g", sv.Grid)
 	gr.SetProp("spacingx", spc)
 	gr.SetProp("spacingy", spc)
 	gr.SetProp("type", "xygrid")
@@ -618,7 +618,7 @@ func (sv *SVGView) ReadMetaData() {
 	if gs := gr.Prop("spacingx"); gs != nil {
 		gv, _ := laser.ToFloat32(gs)
 		if gv > 0 {
-			sv.Vector = gv
+			sv.Grid = gv
 		}
 	}
 }
@@ -671,7 +671,7 @@ func (sv *SVGView) UndoSave(action, data string) {
 	es.Changed = true
 	b := &bytes.Buffer{}
 	grr.Log(jsons.Write(sv.Root(), b))
-	bs := strings.Split(string(b.Bytes()), "\n")
+	bs := strings.Split(b.String(), "\n")
 	es.UndoMgr.Save(action, data, bs)
 }
 
@@ -680,7 +680,7 @@ func (sv *SVGView) UndoSaveReplace(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
 	grr.Log(jsons.Write(sv.Root(), b))
-	bs := strings.Split(string(b.Bytes()), "\n")
+	bs := strings.Split(b.String(), "\n")
 	es.UndoMgr.SaveReplace(action, data, bs)
 }
 
@@ -691,7 +691,7 @@ func (sv *SVGView) Undo() string {
 	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
 		grr.Log(jsons.Write(sv.Root(), b))
-		bs := strings.Split(string(b.Bytes()), "\n")
+		bs := strings.Split(b.String(), "\n")
 		es.UndoMgr.SaveUndoStart(bs)
 	}
 	act, _, state := es.UndoMgr.Undo()
@@ -981,7 +981,7 @@ func (sv *SVGView) EnsureBgSize() bool {
 
 // UpdateVectorEff updates the GirdEff value based on current scale
 func (sv *SVGView) UpdateVectorEff() {
-	sv.VectorEff = sv.Vector
+	sv.VectorEff = sv.Grid
 	sp := sv.VectorEff * sv.Scale
 	for sp <= 2*(float32(Prefs.SnapTol)+1) {
 		sv.VectorEff *= 2
