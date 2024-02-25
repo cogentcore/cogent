@@ -14,7 +14,6 @@ import (
 	"cogentcore.org/cogent/code/codev"
 	_ "cogentcore.org/cogent/code/icons"
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/grr"
 )
 
@@ -30,7 +29,7 @@ func main() {
 	var path string
 	var proj string
 
-	ofs := goosi.TheApp.OpenFiles()
+	ofs := gi.TheApp.OpenFiles()
 	if len(ofs) > 0 {
 		path = ofs[0]
 	} else if len(os.Args) > 1 {
@@ -59,6 +58,5 @@ func main() {
 		}
 		codev.NewCodeProjPath(path)
 	}
-	// above NewCodeProj calls will have added to WinWait..
 	gi.Wait()
 }
