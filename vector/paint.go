@@ -718,7 +718,7 @@ func (pv *PaintView) Config() {
 	// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
 	// })
 
-	giv.NewColorView(fs, "fill-clr")
+	giv.NewColorView(fs, "fill-clr").SetColor(colors.Scheme.Primary.Base)
 	// fc.SetProp("vertical-align", styles.AlignTop)
 	// fc.Config()
 	// fc.SetColor(sty.FillStyle.Color.Color)
