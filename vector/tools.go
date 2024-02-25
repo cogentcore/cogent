@@ -8,7 +8,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 )
@@ -89,34 +88,34 @@ func (gv *VectorView) ConfigTools() {
 		s.Direction = styles.Column
 	})
 	gi.NewButton(tb).SetIcon(icons.ArrowSelectorTool).SetShortcut("S").
-		SetTooltip("select, move, and resize objects").
+		SetTooltip("Select, move, and resize objects").
 		OnClick(func(e events.Event) {
 			gv.SetTool(SelectTool)
 		})
-	tb.AddAction(gi.ActOpts{Label: "N", Icon: "tool-node", Tooltip: "N: select, move node points within paths"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SetTool(NodeTool)
+	gi.NewButton(tb).SetIcon("tool-node").SetShortcut("N").
+		SetTooltip("Select and move node points within paths").
+		OnClick(func(e events.Event) {
+			gv.SetTool(NodeTool)
 		})
-	tb.AddAction(gi.ActOpts{Label: "R", Icon: "stop", Tooltip: "R: create rectangles and squares"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SetTool(RectTool)
+	gi.NewButton(tb).SetIcon(icons.Rectangle).SetShortcut("R").
+		SetTooltip("Create rectangles and squares").
+		OnClick(func(e events.Event) {
+			gv.SetTool(RectTool)
 		})
-	tb.AddAction(gi.ActOpts{Label: "E", Icon: "circlebutton-off", Tooltip: "E: create circles, ellipses, and arcs"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SetTool(EllipseTool)
+	gi.NewButton(tb).SetIcon(icons.Circle).SetShortcut("E").
+		SetTooltip("Create circles, ellipses, and arcs").
+		OnClick(func(e events.Event) {
+			gv.SetTool(EllipseTool)
 		})
-	tb.AddAction(gi.ActOpts{Label: "B", Icon: "color", Tooltip: "B: create bezier curves (straight lines, curves with control points)"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SetTool(BezierTool)
+	gi.NewButton(tb).SetIcon(icons.LineCurve).SetShortcut("B").
+		SetTooltip("Create bezier curves (straight lines and curves with control points)").
+		OnClick(func(e events.Event) {
+			gv.SetTool(BezierTool)
 		})
-	tb.AddAction(gi.ActOpts{Label: "T", Icon: "tool-text", Tooltip: "T: add / edit text"},
-		gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			grr := recv.Embed(KiT_VectorView).(*VectorView)
-			grr.SetTool(TextTool)
+	gi.NewButton(tb).SetIcon("tool-text").SetShortcut("T").
+		SetTooltip("Add and edit text").
+		OnClick(func(e events.Event) {
+			gv.SetTool(TextTool)
 		})
 
 	gv.SetTool(SelectTool)
