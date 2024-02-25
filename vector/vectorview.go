@@ -242,7 +242,7 @@ func (vv *VectorView) ExportPDF(dpi float32) error { //gti:add
 // including moving everything to start at upper-left corner,
 // preserving the current grid offset, so grid snapping
 // is preserved.
-func (vv *VectorView) ResizeToContents() {
+func (vv *VectorView) ResizeToContents() { //gti:add
 	sv := vv.SVG()
 	sv.ResizeToContents(true)
 	sv.UpdateView(true)
