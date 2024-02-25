@@ -7,6 +7,7 @@ package vector
 import (
 	"fmt"
 
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
@@ -861,13 +862,13 @@ func (pv *PaintView) IsFillOn() bool {
 
 // FillProp returns the fill property string according to current settings
 func (pv *PaintView) FillProp() string {
-	// fs := pv.FillStack()
+	fs := pv.FillStack()
 	switch pv.FillType {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		// sc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
-		// return sc.Color.HexString()
+		sc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
+		return colors.AsHex(sc.Color)
 	case PaintLinear:
 		return pv.FillStops
 	case PaintRadial:
