@@ -149,18 +149,18 @@ func _AlignsNoOp() {
 }
 
 var _AlignsNameToValueMap = map[string]Aligns{
-	`AlignRightAnchor`:   0,
-	`AlignLeft`:          1,
-	`AlignCenter`:        2,
-	`AlignRight`:         3,
-	`AlignLeftAnchor`:    4,
-	`AlignBaselineHoriz`: 5,
-	`AlignBottomAnchor`:  6,
-	`AlignTop`:           7,
-	`AlignMiddle`:        8,
-	`AlignBottom`:        9,
-	`AlignTopAnchor`:     10,
-	`AlignBaselineVert`:  11,
+	`align-right-anchor`:   0,
+	`align-left`:           1,
+	`align-center`:         2,
+	`align-right`:          3,
+	`align-left-anchor`:    4,
+	`align-baseline-horiz`: 5,
+	`align-bottom-anchor`:  6,
+	`align-top`:            7,
+	`align-middle`:         8,
+	`align-bottom`:         9,
+	`align-top-anchor`:     10,
+	`align-baseline-vert`:  11,
 }
 
 var _AlignsDescMap = map[Aligns]string{
@@ -179,18 +179,18 @@ var _AlignsDescMap = map[Aligns]string{
 }
 
 var _AlignsMap = map[Aligns]string{
-	0:  `AlignRightAnchor`,
-	1:  `AlignLeft`,
-	2:  `AlignCenter`,
-	3:  `AlignRight`,
-	4:  `AlignLeftAnchor`,
-	5:  `AlignBaselineHoriz`,
-	6:  `AlignBottomAnchor`,
-	7:  `AlignTop`,
-	8:  `AlignMiddle`,
-	9:  `AlignBottom`,
-	10: `AlignTopAnchor`,
-	11: `AlignBaselineVert`,
+	0:  `align-right-anchor`,
+	1:  `align-left`,
+	2:  `align-center`,
+	3:  `align-right`,
+	4:  `align-left-anchor`,
+	5:  `align-baseline-horiz`,
+	6:  `align-bottom-anchor`,
+	7:  `align-top`,
+	8:  `align-middle`,
+	9:  `align-bottom`,
+	10: `align-top-anchor`,
+	11: `align-baseline-vert`,
 }
 
 // String returns the string representation

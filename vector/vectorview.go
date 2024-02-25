@@ -606,7 +606,7 @@ func NewDrawing(sz PhysSize) *VectorView {
 // NewVectorWindow returns a new VectorWindow loading given file if non-empty
 func NewVectorWindow(fnm string) *VectorView {
 	path := ""
-	dfnm := ""
+	dfnm := "blank"
 	if fnm != "" {
 		path, _ = filepath.Abs(fnm)
 		dfnm = dirs.DirAndFile(path)

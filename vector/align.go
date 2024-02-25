@@ -265,12 +265,10 @@ func (av *AlignView) Config() {
 	for _, al := range AlignsValues() {
 		al := al
 		gi.NewButton(agrid, al.String()).SetIcon(icons.Icon(al.String())).
-			SetTooltip(al.Desc()).OnClick(func(e events.Event) {
-			av.VectorView.Align(av.AlignAnchor(), al)
-		}).Style(func(s *styles.Style) {
-			s.Min.X.Em(2)
-			s.Min.Y.Em(2)
-		})
+			SetTooltip(al.Desc()).SetType(gi.ButtonTonal).
+			OnClick(func(e events.Event) {
+				av.VectorView.Align(av.AlignAnchor(), al)
+			})
 	}
 }
 
@@ -290,7 +288,7 @@ const (
 )
 
 // Aligns are ways of aligning items
-type Aligns int32 //enums:enum
+type Aligns int32 //enums:enum -transform kebab
 
 const (
 	// align right edges to left edge of anchor item
