@@ -247,7 +247,7 @@ func (ge *CodeView) CommitNoChecks() {
 	})
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddCancel(pw)
-		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
+		d.AddOk(pw).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()
 			ge.ArgVals["{PromptString1}"] = val
 			code.CmdNoUserPrompt = true                     // don't re-prompt!
