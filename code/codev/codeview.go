@@ -103,13 +103,12 @@ func init() {
 }
 
 func (ge *CodeView) OnInit() {
-	ge.WidgetBase.OnInit()
-	ge.Frame.SetStyles()
+	ge.Frame.OnInit()
 	ge.HandleEvents()
 }
 
 func (ge *CodeView) OnAdd() {
-	ge.WidgetBase.OnAdd()
+	ge.Frame.OnAdd()
 	ge.AddCloseDialog()
 }
 
@@ -524,8 +523,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 		}
 	}
 
-	b := gi.NewBody("Cogent Code").SetTitle(winm)
-	b.Scene.Nm = winm
+	b := gi.NewBody(winm).SetTitle(winm)
 
 	ge := NewCodeView(b)
 	gi.TheApp.AppBarConfig = ge.AppBarConfig

@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
+	"cogentcore.org/core/glop/dirs"
 	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
@@ -45,6 +46,11 @@ func (vv *VectorView) OnInit() {
 	vv.Frame.OnInit()
 	vv.SetStyles()
 	vv.EditState.ConfigDefaultGradient()
+}
+
+func (vv *VectorView) OnAdd() {
+	vv.Frame.OnAdd()
+	vv.AddCloseDialog()
 }
 
 func (vv *VectorView) SetStyles() {
@@ -553,69 +559,46 @@ func (vv *VectorView) SetStatus(msg string) {
 	sb.UpdateEnd(updt)
 }
 
-// CloseWindowReq is called when user tries to close window -- we
-// automatically save the project if it already exists (no harm), and prompt
-// to save open files -- if this returns true, then it is OK to close --
-// otherwise not
-func (vv *VectorView) CloseWindowReq() bool {
-	if !vv.EditState.Changed {
-		return true
-	}
-	gi.ChoiceDialog(vv.Viewport, gi.DlgOpts{Title: "Close Drawing: There are Unsaved Changes",
-		Prompt: fmt.Sprintf("In Drawing: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this drawing?", giv.DirAndFile(string(vv.Filename)))},
-		[]string{"Cancel", "Save", "Close Without Saving"},
-		vv.This(), func(recv, send ki.Ki, sig int64, data any) {
-			switch sig {
-			case 0:
-				// do nothing, will have returned false already
-			case 1:
-				vv.SaveDrawing()
-			case 2:
-				vv.ParentWindow().OSWin.Close() // will not be prompted again!
-			}
-		})
-	return false // not yet
-}
-
-// QuitReq is called when user tries to quit the app -- we go through all open
-// main windows and look for grid windows and call their CloseWindowReq
-// functions!
-func QuitReq() bool {
-	for _, win := range gi.MainWindows {
-		if !strings.HasPrefix(win.Nm, "grid-") {
-			continue
-		}
-		mfr, err := win.MainWidget()
-		if err != nil {
-			continue
-		}
-		gek := mfr.ChildByName("grid", 0)
-		if gek == nil {
-			continue
-		}
-		vv := gek.Embed(KiT_VectorView).(*VectorView)
-		if !vv.CloseWindowReq() {
+// AddCloseDialog adds the close dialog that prompts the user to save the
+// file when they try to close the scene containing this vector view.
+func (vv *VectorView) AddCloseDialog() {
+	vv.WidgetBase.AddCloseDialog(func(d *gi.Body) bool {
+		if !vv.EditState.Changed {
 			return false
 		}
-	}
-	return true
+		d.AddTitle("Unsaved changes").
+			AddText(fmt.Sprintf("There are unsaved changes in %s", dirs.DirAndFile(string(vv.Filename))))
+		d.AddBottomBar(func(pw gi.Widget) {
+			d.AddOk(pw, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
+				vv.Scene.Close()
+			})
+			d.AddOk(pw, "sa").SetText("Save and close").OnClick(func(e events.Event) {
+				vv.SaveDrawing()
+				vv.Scene.Close()
+			})
+		})
+		return true
+	})
 }
 
 func (vv *VectorView) SetTitle() {
 	if vv.Filename == "" {
 		return
 	}
-	dfnm := giv.DirAndFile(string(vv.Filename))
-	winm := "grid-" + dfnm
-	wintitle := "grid: " + dfnm
-	win := vv.ParentWindow()
+	win := vv.Scene.RenderWin()
+	if win == nil {
+		return
+	}
+	dfnm := dirs.DirAndFile(string(vv.Filename))
+	winm := "Cogent Vector • " + dfnm
 	win.SetName(winm)
-	win.SetTitle(wintitle)
+	win.SetTitle(winm)
+	vv.Scene.Body.Title = winm
 }
 
 // NewDrawing opens a new drawing window
 func NewDrawing(sz PhysSize) *VectorView {
-	_, ngr := NewVectorWindow("")
+	ngr := NewVectorWindow("")
 	ngr.SetPhysSize(&sz)
 	return ngr
 }
@@ -626,54 +609,30 @@ func NewVectorWindow(fnm string) *VectorView {
 	dfnm := ""
 	if fnm != "" {
 		path, _ = filepath.Abs(fnm)
-		dfnm = giv.DirAndFile(path)
+		dfnm = dirs.DirAndFile(path)
 	}
-	winm := "grid-" + dfnm
-	wintitle := "grid: " + dfnm
+	winm := "Cogent Vector • " + dfnm
 
-	if win, found := gi.AllWindows.FindName(winm); found {
-		mfr := win.SetMainFrame()
-		vv := mfr.Child(0).Embed(KiT_VectorView).(*VectorView)
-		if string(vv.Filename) == path {
-			win.OSWin.Raise()
-			return win, vv
+	if win, found := gi.AllRenderWins.FindName(winm); found {
+		sc := win.MainScene()
+		if vv, ok := sc.Body.ChildByType(VectorViewType, ki.NoEmbeds).(*VectorView); ok {
+			if string(vv.Filename) == path {
+				win.Raise()
+				return vv
+			}
 		}
 	}
 
-	width := 1600
-	height := 1280
-	sc := goosi.TheApp.Screen(0)
-	if sc != nil {
-		scsz := sc.Geometry.Size()
-		width = int(.9 * float64(scsz.X))
-		height = int(.8 * float64(scsz.Y))
-	}
+	b := gi.NewBody(winm).SetTitle(winm)
 
-	win := gi.NewMainWindow(winm, wintitle, width, height)
-
-	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
-
-	mfr := win.SetMainFrame()
-	vv := AddNewVectorView(mfr, "vectorview")
-	vv.Viewport = vp
-	vv.Defaults()
-	vv.Config()
-
-	mmen := win.MainMenu
-	giv.MainMenuView(vv, win, mmen)
-
-	win.MainMenuUpdated()
-
-	vp.UpdateEndNoSig(updt)
-
-	win.GoStartEventLoop()
+	vv := NewVectorView(b)
+	b.AddAppBar(vv.ConfigToolbar)
 
 	if fnm != "" {
 		vv.OpenDrawingFile(gi.Filename(path))
 	}
 
-	return win, vv
+	return vv
 }
 
 /////////////////////////////////////////////////////////////////////////
