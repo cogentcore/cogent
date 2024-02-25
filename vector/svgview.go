@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
-	"reflect"
 	"strings"
 
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/jsons"
@@ -192,6 +192,47 @@ func (sv *SVGView) HandleEvents() {
 		// 	}
 		// }
 	})
+	sv.On(events.SlideMove, func(e events.Event) {
+		es := sv.EditState()
+		es.SelNoDrag = false
+		e.SetHandled()
+		es.DragStartPos = e.StartPos()
+		if e.HasAnyModifier(key.Shift) {
+			e.ClearHandled() // base gi.SVG handles it
+			return
+		}
+		if es.HasSelected() {
+			if !es.NewTextMade {
+				// sv.DragMove(win, me) // in manip
+			}
+		} else {
+			if !es.InAction() {
+				switch es.Tool {
+				case SelectTool:
+					sv.SetRubberBand(e.PrevPos())
+				case RectTool:
+					sv.NewElDrag(svg.RectType, es.DragStartPos, e.Pos())
+					es.SelBBox.Min.X += 1
+					es.SelBBox.Min.Y += 1
+					es.DragSelStartBBox = es.SelBBox
+					es.DragSelCurBBox = es.SelBBox
+					es.DragSelEffBBox = es.SelBBox
+				case EllipseTool:
+					sv.NewElDrag(svg.EllipseType, es.DragStartPos, e.Pos())
+				case TextTool:
+					sv.NewText(es.DragStartPos, e.Pos())
+					es.NewTextMade = true
+				case BezierTool:
+					sv.NewPath(es.DragStartPos, e.Pos())
+				}
+			} else {
+				switch {
+				case es.Action == "BoxSelect":
+					sv.SetRubberBand(e.Pos())
+				}
+			}
+		}
+	})
 }
 
 /*
@@ -207,70 +248,6 @@ func (sv *SVGView) MouseHover() {
 			gi.PopupTooltip(obj.Name(), pos.X, pos.Y, sv.ViewportSafe(), ttxt)
 		}
 	})
-}
-
-// DragEvent processes a mouse drag event on the SVG canvas
-func (sv *SVGView) DragEvent(me *mouse.DragEvent) {
-	win := sv.VectorView.ParentWindow()
-	delta := me.Where.Sub(me.From)
-	es := sv.EditState()
-	es.SelNoDrag = false
-	me.SetHandled()
-	es.DragStartPos = me.Start
-	if me.HasAnyModifier(key.Shift) {
-		if !sv.SetDragCursor {
-			oswin.TheApp.Cursor(win.OSWin).Push(cursor.HandOpen)
-			sv.SetDragCursor = true
-		}
-		sv.Trans.SetAdd(mat32.V2FromPoint(delta).DivScalar(sv.Scale))
-		sv.SetTransform()
-		sv.UpdateView(true)
-		return
-	}
-	if es.HasSelected() {
-		if !es.NewTextMade {
-			sv.DragMove(win, me) // in manip
-		}
-	} else {
-		if !es.InAction() {
-			switch es.Tool {
-			case SelectTool:
-				sv.SetRubberBand(me.From)
-			case RectTool:
-				sv.NewElDrag(svg.KiT_Rect, es.DragStartPos, me.Where)
-				es.SelBBox.Min.X += 1
-				es.SelBBox.Min.Y += 1
-				es.DragSelStartBBox = es.SelBBox
-				es.DragSelCurBBox = es.SelBBox
-				es.DragSelEffBBox = es.SelBBox
-			case EllipseTool:
-				sv.NewElDrag(svg.KiT_Ellipse, es.DragStartPos, me.Where)
-			case TextTool:
-				sv.NewText(es.DragStartPos, me.Where)
-				es.NewTextMade = true
-			case BezierTool:
-				sv.NewPath(es.DragStartPos, me.Where)
-			}
-		} else {
-			switch {
-			case es.Action == "BoxSelect":
-				sv.SetRubberBand(me.Where)
-			}
-		}
-	}
-}
-
-func (sv *SVGView) SVGViewEvents() {
-	sv.SetCanFocus()
-	sv.MouseDrag()
-	sv.MouseScroll()
-	sv.MouseEvent()
-	sv.MouseHover()
-	sv.KeyChordEvent()
-}
-
-func (sv *SVGView) ConnectEvents2D() {
-	sv.SVGViewEvents()
 }
 */
 
@@ -709,7 +686,7 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 }
 
 // NewElDrag makes a new SVG element during the drag operation
-func (sv *SVGView) NewElDrag(typ reflect.Type, start, end image.Point) svg.Node {
+func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 	// minsz := float32(10)
 	// es := sv.EditState()
 	// dv := mat32.V2FromPoint(end.Sub(start))
