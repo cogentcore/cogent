@@ -53,7 +53,7 @@ func (ps *PhysSize) SetStdSize(std StdSizes) error {
 func (ps *PhysSize) SetToStdSize() error {
 	ssv, has := StdSizesMap[ps.StdSize]
 	if !has {
-		return fmt.Errorf("StdSize: %v not found in StdSizesMap")
+		return fmt.Errorf("StdSize: %v not found in StdSizesMap", ps.StdSize)
 	}
 	ps.Units = ssv.Units
 	ps.Size.X = ssv.X
@@ -169,25 +169,25 @@ type StdSizeVals struct {
 
 // StdSizesMap is the map of size values for each standard size
 var StdSizesMap = map[StdSizes]*StdSizeVals{
-	Img1280x720:  &StdSizeVals{units.UnitPx, 1280, 720},
-	Img1920x1080: &StdSizeVals{units.UnitPx, 1920, 1080},
-	Img3840x2160: &StdSizeVals{units.UnitPx, 3840, 2160},
-	Img7680x4320: &StdSizeVals{units.UnitPx, 7680, 4320},
-	Img1024x768:  &StdSizeVals{units.UnitPx, 1024, 768},
-	Img720x480:   &StdSizeVals{units.UnitPx, 720, 480},
-	Img640x480:   &StdSizeVals{units.UnitPx, 640, 480},
-	Img320x240:   &StdSizeVals{units.UnitPx, 320, 240},
-	A4:           &StdSizeVals{units.UnitMm, 210, 297},
-	USLetter:     &StdSizeVals{units.UnitPt, 612, 792},
-	USLegal:      &StdSizeVals{units.UnitPt, 612, 1008},
-	A0:           &StdSizeVals{units.UnitMm, 841, 1189},
-	A1:           &StdSizeVals{units.UnitMm, 594, 841},
-	A2:           &StdSizeVals{units.UnitMm, 420, 594},
-	A3:           &StdSizeVals{units.UnitMm, 297, 420},
-	A5:           &StdSizeVals{units.UnitMm, 148, 210},
-	A6:           &StdSizeVals{units.UnitMm, 105, 148},
-	A7:           &StdSizeVals{units.UnitMm, 74, 105},
-	A8:           &StdSizeVals{units.UnitMm, 52, 74},
-	A9:           &StdSizeVals{units.UnitMm, 37, 52},
-	A10:          &StdSizeVals{units.UnitMm, 26, 37},
+	Img1280x720:  {units.UnitPx, 1280, 720},
+	Img1920x1080: {units.UnitPx, 1920, 1080},
+	Img3840x2160: {units.UnitPx, 3840, 2160},
+	Img7680x4320: {units.UnitPx, 7680, 4320},
+	Img1024x768:  {units.UnitPx, 1024, 768},
+	Img720x480:   {units.UnitPx, 720, 480},
+	Img640x480:   {units.UnitPx, 640, 480},
+	Img320x240:   {units.UnitPx, 320, 240},
+	A4:           {units.UnitMm, 210, 297},
+	USLetter:     {units.UnitPt, 612, 792},
+	USLegal:      {units.UnitPt, 612, 1008},
+	A0:           {units.UnitMm, 841, 1189},
+	A1:           {units.UnitMm, 594, 841},
+	A2:           {units.UnitMm, 420, 594},
+	A3:           {units.UnitMm, 297, 420},
+	A5:           {units.UnitMm, 148, 210},
+	A6:           {units.UnitMm, 105, 148},
+	A7:           {units.UnitMm, 74, 105},
+	A8:           {units.UnitMm, 52, 74},
+	A9:           {units.UnitMm, 37, 52},
+	A10:          {units.UnitMm, 26, 37},
 }

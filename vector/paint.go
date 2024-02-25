@@ -153,7 +153,7 @@ func (vv *VectorView) SetStrokeWidth(wp string, manip bool) {
 		// sv.SetFullReRender()
 	}
 	for itm := range es.Selected {
-		vv.SetStrokeWidthNode(itm.(svg.Node), wp)
+		vv.SetStrokeWidthNode(itm, wp)
 	}
 	if !manip {
 		// sv.UpdateEnd(updt)

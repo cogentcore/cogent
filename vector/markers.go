@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"io"
 	"log"
+	"maps"
 	"strings"
 
 	"cogentcore.org/core/gi"
@@ -146,7 +147,7 @@ func NewMarkerFromXML(name, xml string) *svg.Marker {
 func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 	mk, ok := AllMarkersSVGMap[name]
 	if !ok {
-		log.Printf("NewMarker: marker named %s not found in AllMarkersSVGMap -- will likely crash!\n")
+		log.Printf("NewMarker: marker named %s not found in AllMarkersSVGMap; will likely crash!\n", name)
 		return nil
 	}
 	// updt := sg.UpdateStart()
@@ -248,12 +249,8 @@ var AllMarkerIconNames []icons.Icon
 func init() {
 	AllMarkersXMLMap = make(map[string]string, len(StdMarkersMap))
 	AllMarkerNames = make([]string, len(StdMarkerNames))
-	for k, v := range StdMarkersMap {
-		AllMarkersXMLMap[k] = v
-	}
-	for i, v := range StdMarkerNames {
-		AllMarkerNames[i] = v
-	}
+	maps.Copy(AllMarkersXMLMap, StdMarkersMap)
+	copy(AllMarkerNames, StdMarkerNames)
 }
 
 // IconToMarkerName converts a icons.Icon (as an interface{})
