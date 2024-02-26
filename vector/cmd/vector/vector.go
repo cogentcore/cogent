@@ -5,6 +5,8 @@
 package main
 
 import (
+	"os"
+
 	"cogentcore.org/cogent/vector"
 	"cogentcore.org/core/gi"
 )
@@ -12,24 +14,21 @@ import (
 func main() {
 	vector.InitPrefs()
 
-	// ofs := gi.TheApp.OpenFiles()
+	ofs := gi.TheApp.OpenFiles()
 
-	// var fnms []string
-	// if len(ofs) > 0 {
-	// 	fnms = ofs
-	// } else if len(os.Args) > 1 {
-	// 	fnms = os.Args[1:]
-	// }
+	var fnms []string
+	if len(ofs) > 0 {
+		fnms = ofs
+	} else if len(os.Args) > 1 {
+		fnms = os.Args[1:]
+	}
 
-	// if len(fnms) == 0 {
-	// 	vector.NewDrawing(vector.Prefs.Size)
-	// } else {
-	// 	fdir, _ := filepath.Split(fnms[0])
-	// 	os.Chdir(fdir)
-	// 	for _, fnm := range fnms {
-	// 		vector.NewVectorWindow(fnm)
-	// 	}
-	// }
-	vector.NewVectorWindow("")
+	if len(fnms) == 0 {
+		vector.NewVectorWindow("")
+	} else {
+		for _, fnm := range fnms {
+			vector.NewVectorWindow(fnm)
+		}
+	}
 	gi.Wait()
 }

@@ -629,11 +629,13 @@ func NewVectorWindow(fnm string) *VectorView {
 	vv := NewVectorView(b)
 	b.AddAppBar(vv.ConfigToolbar)
 
-	if fnm != "" {
-		vv.OpenDrawingFile(gi.Filename(path))
-	} else {
-		vv.EditState.Init(vv)
-	}
+	b.OnShow(func(e events.Event) {
+		if fnm != "" {
+			vv.OpenDrawingFile(gi.Filename(path))
+		} else {
+			vv.EditState.Init(vv)
+		}
+	})
 
 	b.NewWindow().Run()
 
