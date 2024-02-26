@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
@@ -310,43 +311,41 @@ func (es *EditState) SelectedNamesString() string {
 	return sl
 }
 
-/*
 // SelectAction is called when a select action has been received (e.g., a
 // mouse click) -- translates into selection updates -- gets selection mode
 // from mouse event (ExtendContinuous, ExtendOne)
-func (es *EditState) SelectAction(itm svg.Node, mode mouse.SelectModes, pos image.Point) {
-	if mode == mouse.NoSelect {
+func (es *EditState) SelectAction(n svg.Node, mode events.SelectModes, pos image.Point) {
+	if mode == events.NoSelect {
 		return
 	}
 	if !es.HasSelected() || !es.PosInLastSel(pos) {
 		es.StartRecents(pos)
 	}
 	switch mode {
-	case mouse.SelectOne:
-		if es.IsSelected(itm) {
+	case events.SelectOne:
+		if es.IsSelected(n) {
 			if len(es.Selected) > 1 {
 				es.SelectedToRecents()
 			}
-			es.Select(itm)
+			es.Select(n)
 		} else {
 			es.SelectedToRecents()
-			es.Select(itm)
+			es.Select(n)
 		}
-	case mouse.ExtendContinuous, mouse.ExtendOne:
-		if es.IsSelected(itm) {
-			es.Unselect(itm)
+	case events.ExtendContinuous, events.ExtendOne:
+		if es.IsSelected(n) {
+			es.Unselect(n)
 		} else {
-			es.Select(itm)
+			es.Select(n)
 		}
-	case mouse.Unselect:
-		es.Unselect(itm)
-	case mouse.SelectQuiet:
-		es.Select(itm)
-	case mouse.UnselectQuiet:
-		es.Unselect(itm)
+	case events.Unselect:
+		es.Unselect(n)
+	case events.SelectQuiet:
+		es.Select(n)
+	case events.UnselectQuiet:
+		es.Unselect(n)
 	}
 }
-*/
 
 func (es *EditState) SelectedToRecents() {
 	for k, v := range es.Selected {

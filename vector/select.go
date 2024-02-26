@@ -108,16 +108,16 @@ func (gv *VectorView) NewSelectFuncButton(par ki.Ki, fun any) *giv.FuncButton {
 
 // UpdateSelectToolbar updates the select toolbar based on current selection
 func (gv *VectorView) UpdateSelectToolbar() {
-	tb := gv.SelectToolbar()
-	es := &gv.EditState
-	if !es.HasSelected() {
-		return
-	}
-	sz := es.DragSelEffBBox.Size()
-	tb.ChildByName("posx", 8).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.X)
-	tb.ChildByName("posy", 9).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
-	tb.ChildByName("width", 10).(*gi.Spinner).SetValue(sz.X)
-	tb.ChildByName("height", 11).(*gi.Spinner).SetValue(sz.Y)
+	// tb := gv.SelectToolbar()
+	// es := &gv.EditState
+	// if !es.HasSelected() {
+	// 	return
+	// }
+	// sz := es.DragSelEffBBox.Size()
+	// tb.ChildByName("posx", 8).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.X)
+	// tb.ChildByName("posy", 9).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
+	// tb.ChildByName("width", 10).(*gi.Spinner).SetValue(sz.X)
+	// tb.ChildByName("height", 11).(*gi.Spinner).SetValue(sz.Y)
 }
 
 // UpdateSelect should be called whenever selection changes

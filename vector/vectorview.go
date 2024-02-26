@@ -9,6 +9,7 @@ package vector
 import (
 	"errors"
 	"fmt"
+	"image"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -630,6 +631,8 @@ func NewVectorWindow(fnm string) *VectorView {
 
 	if fnm != "" {
 		vv.OpenDrawingFile(gi.Filename(path))
+	} else {
+		vv.EditState.Init(vv)
 	}
 
 	b.NewWindow().Run()
@@ -720,14 +723,14 @@ func (vv *VectorView) UpdateTabs() {
 
 // SelectNodeInSVG selects given svg node in SVG drawing
 func (vv *VectorView) SelectNodeInSVG(kn ki.Ki, mode events.SelectModes) {
-	// sii, ok := kn.(svg.Node)
-	// if !ok {
-	// 	return
-	// }
-	// sv := vv.SVG()
-	// es := &vv.EditState
-	// es.SelectAction(sii, mode, image.ZP)
-	// sv.UpdateView(false)
+	sii, ok := kn.(svg.Node)
+	if !ok {
+		return
+	}
+	sv := vv.SVG()
+	es := &vv.EditState
+	es.SelectAction(sii, mode, image.Point{})
+	sv.UpdateView(false)
 }
 
 // Undo undoes the last action

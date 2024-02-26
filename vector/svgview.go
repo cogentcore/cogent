@@ -143,11 +143,11 @@ func (sv *SVGView) HandleEvents() {
 			es.SelNoDrag = true
 			es.DragSelStart(e.Pos())
 		case sob != nil && es.Tool == SelectTool:
-			// es.SelectAction(sob, me.SelectMode(), me.Where)
+			es.SelectAction(sob, e.SelectMode(), e.Pos())
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateSelect()
 		case sob != nil && es.Tool == NodeTool:
-			// es.SelectAction(sob, mouse.SelectOne, me.Where)
+			es.SelectAction(sob, events.SelectOne, e.Pos())
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateNodeSprites()
 		case sob == nil:
@@ -174,7 +174,7 @@ func (sv *SVGView) HandleEvents() {
 					sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
 				}
 				if sob != nil {
-					// es.SelectAction(sob, me.SelectMode(), me.Where)
+					es.SelectAction(sob, e.SelectMode(), e.Pos())
 					sv.UpdateSelect()
 				}
 			}
@@ -703,7 +703,7 @@ func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 	nr.SetNodePos(xfi.MulVec2AsPt(pos))
 	sz := dv.Abs().Max(mat32.V2Scalar(minsz / 2))
 	nr.SetNodeSize(xfi.MulVec2AsVec(sz))
-	// es.SelectAction(nr, events.SelectOne, end)
+	es.SelectAction(nr, events.SelectOne, end)
 	sv.ManipDone()
 	sv.UpdateEndRender(updt)
 	sv.UpdateSelSprites()
@@ -734,7 +734,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	// // sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
 	// nr.Width = 100
 	// tspan.Width = 100
-	// es.SelectAction(nr, events.SelectOne, end)
+	es.SelectAction(nr, events.SelectOne, end)
 	// sv.UpdateView(true)
 	// sv.UpdateSelect()
 	return nr
@@ -763,7 +763,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 
-	// es.SelectAction(nr, events.SelectOne, end)
+	es.SelectAction(nr, events.SelectOne, end)
 	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
