@@ -137,9 +137,8 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 		kt.SetHandled()
 		tv := ge.ActiveTextEditor()
 		if tv != nil {
-			tv.JumpToLineAddText()
+			tv.JumpToLinePrompt()
 		}
-		ge.Indent()
 	case code.KeyFunSetSplit:
 		kt.SetHandled()
 		ge.CallSplitsSetView(atv)

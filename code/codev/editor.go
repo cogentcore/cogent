@@ -120,7 +120,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 // ReplaceInActive does query-replace in active file only
 func (ge *CodeView) ReplaceInActive() { //gti:add
 	tv := ge.ActiveTextEditor()
-	tv.QReplaceAddText()
+	tv.QReplacePrompt()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
