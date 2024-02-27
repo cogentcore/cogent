@@ -72,9 +72,8 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	gi.NewSeparator(tb)
 
 	gi.NewLabel(tb).SetText("X: ")
-	px := gi.NewSpinner(tb, "posx").SetStep(1).SetTooltip("Horizontal coordinate of selection, in document units")
-	px.OnChange(func(e events.Event) {
-		gv.SelSetXPos(px.Value)
+	giv.NewValue(tb, &gv.EditState.DragSelEffBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
+		gv.SelSetXPos(gv.EditState.DragSelEffBBox.Min.X)
 	})
 
 	gi.NewLabel(tb).SetText("Y: ")
