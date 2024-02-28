@@ -62,7 +62,7 @@ func (sv *SVGView) ManipUpdate() {
 
 // VectorDots is the current grid spacing and offsets in dots
 func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
-	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.VectorEff
 	if grid <= 0 {
 		grid = 12
@@ -312,7 +312,7 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 		sv.GatherAlignPoints()
 	}
 
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	spt := mat32.V2FromPoint(es.DragStartPos)
 	mpt := mat32.V2FromPoint(me.Where)
 	if me.HasAnyModifier(key.Control) {
@@ -446,7 +446,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 
 	npos := es.DragSelEffBBox.Min
 	nsz := es.DragSelEffBBox.Size()
-	svoff := mat32.V2FromPoint(sv.BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
@@ -527,7 +527,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ang := mat32.Atan2(dy, dx)
 	ang, _ = SnapToIncr(mat32.RadToDeg(ang), 0, 15)
 	ang = mat32.DegToRad(ang)
-	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pt = pt.Sub(svoff)
 	del := mat32.Vec2{}
 	sc := mat32.V2(1, 1)

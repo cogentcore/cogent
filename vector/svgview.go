@@ -722,7 +722,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	tspan.Text = "Text"
 	tspan.Width = 200
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := mat32.V2FromPoint(start).Sub(svoff)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
@@ -754,7 +754,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	// sv.SetFullReRender()
 	nr := sv.NewEl(svg.PathType).(*svg.Path)
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Root().BBox.Min)
+	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := mat32.V2FromPoint(start).Sub(svoff)
 	pos = xfi.MulVec2AsPt(pos)
 	sz := dv

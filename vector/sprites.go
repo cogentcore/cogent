@@ -10,6 +10,7 @@ import (
 	"image/color"
 	"image/draw"
 
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/mat32"
 )
@@ -263,8 +264,8 @@ func DrawSpriteReshape(sp *gi.Sprite, bbtyp Sprites) {
 	bbd.Min.Y += bsz
 	bbd.Max.X -= bsz
 	bbd.Max.Y -= bsz
-	draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
-	draw.Draw(sp.Pixels, bbd, &image.Uniform{color.Black}, image.ZP, draw.Src)
+	// draw.Draw(sp.Pixels, ibd, &image.Uniform{color.White}, image.ZP, draw.Src)
+	draw.Draw(sp.Pixels, bbd, colors.C(colors.Scheme.Primary.Base), image.Point{}, draw.Src)
 }
 
 // DrawSpriteSel renders a Select sprite handle -- smaller
