@@ -116,13 +116,6 @@ func InitPrefs() {
 	Prefs.Defaults()
 	Prefs.Open()
 	// OpenPaths() // todo
-	// svg.CurIconSet.OpenIconsFromEmbedDir(icons.Icons, ".")
-	// gi.CustomAppMenuFunc = func(m *gi.Menu, win *gi.Window) {
-	// 	m.InsertActionAfter("GoGi Preferences...", gi.ActOpts{Label: "Vector Preferences..."},
-	// 		win, func(recv, send ki.Ki, sig int64, data any) {
-	// 			PrefsView(&Prefs)
-	// 		})
-	// }
 }
 
 // PrefsFileName is the name of the preferences file in GoGi prefs directory

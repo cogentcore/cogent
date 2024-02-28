@@ -178,24 +178,6 @@ func (sv *SVGView) HandleEvents() {
 					sv.UpdateSelect()
 				}
 			}
-			if !es.InAction() {
-				switch es.Tool {
-				case RectTool:
-					sv.NewElDrag(svg.RectType, es.DragStartPos, e.Pos())
-					es.SelBBox.Min.X += 1
-					es.SelBBox.Min.Y += 1
-					es.DragSelStartBBox = es.SelBBox
-					es.DragSelCurBBox = es.SelBBox
-					es.DragSelEffBBox = es.SelBBox
-				case EllipseTool:
-					sv.NewElDrag(svg.EllipseType, es.DragStartPos, e.Pos())
-				case TextTool:
-					sv.NewText(es.DragStartPos, e.Pos())
-					es.NewTextMade = true
-				case BezierTool:
-					sv.NewPath(es.DragStartPos, e.Pos())
-				}
-			}
 		}
 		// if e.MouseButton() == events.Right {
 		// 	e.SetHandled()
@@ -221,10 +203,29 @@ func (sv *SVGView) HandleEvents() {
 		if es.HasSelected() {
 			if !es.NewTextMade {
 				sv.DragMove(e)
-				return
 			}
+			return
 		}
-		if es.Action == "BoxSelect" || (!es.InAction() && es.Tool == SelectTool) {
+		if !es.InAction() {
+			switch es.Tool {
+			case SelectTool:
+				sv.SetRubberBand(e.Pos())
+			case RectTool:
+				sv.NewElDrag(svg.RectType, es.DragStartPos, e.Pos())
+				es.SelBBox.Min.X += 1
+				es.SelBBox.Min.Y += 1
+				es.DragSelStartBBox = es.SelBBox
+				es.DragSelCurBBox = es.SelBBox
+				es.DragSelEffBBox = es.SelBBox
+			case EllipseTool:
+				sv.NewElDrag(svg.EllipseType, es.DragStartPos, e.Pos())
+			case TextTool:
+				sv.NewText(es.DragStartPos, e.Pos())
+				es.NewTextMade = true
+			case BezierTool:
+				sv.NewPath(es.DragStartPos, e.Pos())
+			}
+		} else if es.Action == "BoxSelect" {
 			sv.SetRubberBand(e.Pos())
 		}
 	})
