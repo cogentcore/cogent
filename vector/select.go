@@ -107,7 +107,9 @@ func (gv *VectorView) NewSelectFuncButton(par ki.Ki, fun any) *giv.FuncButton {
 
 // UpdateSelectToolbar updates the select toolbar based on current selection
 func (gv *VectorView) UpdateSelectToolbar() {
-	// tb := gv.SelectToolbar()
+	tb := gv.SelectToolbar()
+	tb.SetNeedsRender(true)
+	// tb.Update()
 	// es := &gv.EditState
 	// if !es.HasSelected() {
 	// 	return
