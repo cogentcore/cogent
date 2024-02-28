@@ -203,6 +203,9 @@ func (sv *SVGView) SetSelSpritePos() {
 
 // SetBBoxSpritePos sets positions of given type of sprites
 func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox mat32.Box2) {
+	bbox.Min.SetAdd(mat32.V2FromPoint(sv.Geom.ContentBBox.Min))
+	bbox.Max.SetAdd(mat32.V2FromPoint(sv.Geom.ContentBBox.Min))
+
 	_, spsz := HandleSpriteSize(1)
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
@@ -612,12 +615,13 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 }
 
 // SelectContainsPoint finds the first node whose BBox contains the given
-// point -- nil if none.  If leavesOnly is set then only nodes that have no
+// point in scene coordinates; nil if none.  If leavesOnly is set then only nodes that have no
 // nodes (leaves, terminal nodes) will be considered.
 // if leavesOnly, only terminal leaves (no children) are included
 // if excludeSel, any leaf nodes that are within the current edit selection are
 // excluded,
 func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
+	pt = pt.Sub(sv.Geom.ContentBBox.Min)
 	es := sv.EditState()
 	var curlay ki.Ki
 	fn := es.FirstSelectedNode()

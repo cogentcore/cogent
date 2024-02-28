@@ -188,7 +188,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
 		// 	})
 		sp := Sprite(sv, SpNodePoint, SpUnk, i, image.Point{})
-		SetSpritePos(sp, image.Point{int(pn.WinPt.X), int(pn.WinPt.Y)})
+		SetSpritePos(sp, pn.WinPt.ToPoint())
 	}
 
 	// remove extra
