@@ -578,7 +578,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 	var rval []svg.Node
 	var curlay ki.Ki
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
-		if kni.This() == sv.This() {
+		if kni.This() == sv.Root().This() {
 			return ki.Continue
 		}
 		if leavesOnly && kni.HasChildren() {
@@ -631,7 +631,7 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 	}
 	var rval svg.Node
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
-		if kni.This() == sv.This() {
+		if kni.This() == sv.Root().This() {
 			return ki.Continue
 		}
 		if leavesOnly && kni.HasChildren() {
