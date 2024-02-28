@@ -127,13 +127,13 @@ func SpriteProps(sp *gi.Sprite) (typ, subtyp Sprites, idx int) {
 // making it if not yet made. trgsz is the target size (e.g., for rubber
 // band boxes)
 func Sprite(ctx gi.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.Sprite {
-	sps := &ctx.AsWidget().Scene.Stage.Sprites
+	sprites := &ctx.AsWidget().Scene.Stage.Sprites
 	spnm := SpriteName(typ, subtyp, idx)
-	sp, ok := sps.SpriteByName(spnm)
+	sp, ok := sprites.SpriteByName(spnm)
 	if !ok {
-		sp = gi.NewSprite(spnm, image.ZP, image.ZP)
+		sp = gi.NewSprite(spnm, image.Point{}, image.Point{})
 		SetSpriteProps(sp, typ, subtyp, idx)
-		sps.Add(sp)
+		sprites.Add(sp)
 	}
 	switch typ {
 	case SpReshapeBBox:
@@ -159,8 +159,8 @@ func Sprite(ctx gi.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.
 			DrawAlignMatchVert(sp, trgsz)
 		}
 	}
-	sps.ActivateSprite(sp.Name)
-	return nil
+	sprites.ActivateSprite(sp.Name)
+	return sp
 }
 
 /*
@@ -221,14 +221,15 @@ func SetSpritePos(sp *gi.Sprite, pos image.Point) {
 }
 
 // InactivateSprites inactivates sprites of given type
-func InactivateSprites(typ Sprites) {
-	// for _, spkv := range win.Sprites.Names.Order {
-	// 	sp := spkv.Val
-	// 	st, _, _ := SpriteProps(sp)
-	// 	if st == typ {
-	// 		win.InactivateSprite(sp.Name)
-	// 	}
-	// }
+func InactivateSprites(ctx gi.Widget, typ Sprites) {
+	sprites := &ctx.AsWidget().Scene.Stage.Sprites
+	for _, spkv := range sprites.Names.Order {
+		sp := spkv.Value
+		st, _, _ := SpriteProps(sp)
+		if st == typ {
+			sprites.InactivateSprite(sp.Name)
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////////////

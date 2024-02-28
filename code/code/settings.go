@@ -21,7 +21,7 @@ import (
 )
 
 func init() {
-	gi.TheApp.SetName("CogentCode")
+	gi.TheApp.SetName("Cogent Code")
 	gi.AllSettings = slices.Insert(gi.AllSettings, 1, gi.Settings(Settings))
 	DefaultKeyMap = "MacEmacs" // todo
 	SetActiveKeyMapName(DefaultKeyMap)
@@ -33,7 +33,7 @@ func init() {
 var Settings = &SettingsData{
 	SettingsBase: gi.SettingsBase{
 		Name: "Code",
-		File: filepath.Join(gi.TheApp.DataDir(), "CogentCode", "settings.toml"),
+		File: filepath.Join(gi.TheApp.DataDir(), "Cogent Code", "settings.toml"),
 	},
 }
 

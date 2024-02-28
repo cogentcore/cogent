@@ -6,6 +6,7 @@ package vector
 
 import (
 	"fmt"
+	"image"
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
@@ -166,53 +167,51 @@ func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 }
 
 func (sv *SVGView) UpdateNodeSprites() {
-	/*
-		es := sv.EditState()
-		prvn := es.NNodeSprites
+	es := sv.EditState()
+	prvn := es.NNodeSprites
 
-		path := es.FirstSelectedPath()
+	path := es.FirstSelectedPath()
 
-		if path == nil {
-			sv.RemoveNodeSprites(win)
-			win.UpdateSig()
-			return
-		}
+	if path == nil {
+		sv.RemoveNodeSprites()
+		// win.UpdateSig()
+		return
+	}
 
-		es.PathNodes, es.PathCmds = sv.PathNodes(path)
-		es.NNodeSprites = len(es.PathNodes)
-		es.ActivePath = path
+	es.PathNodes, es.PathCmds = sv.PathNodes(path)
+	es.NNodeSprites = len(es.PathNodes)
+	es.ActivePath = path
 
-		for i, pn := range es.PathNodes {
-			idx := i // key to get local var
-			sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
-				ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-				ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
-			})
-			SetSpritePos(sp, image.Point{int(pn.WinPt.X), int(pn.WinPt.Y)})
-		}
+	for i, pn := range es.PathNodes {
+		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+		// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
+		// 	})
+		sp := Sprite(sv, SpNodePoint, SpUnk, i, image.Point{})
+		SetSpritePos(sp, image.Point{int(pn.WinPt.X), int(pn.WinPt.Y)})
+	}
 
-		// remove extra
-		for i := es.NNodeSprites; i < prvn; i++ {
-			spnm := SpriteName(SpNodePoint, SpUnk, i)
-			win.InactivateSprite(spnm)
-		}
+	// remove extra
+	sprites := &sv.Scene.Stage.Sprites
+	for i := es.NNodeSprites; i < prvn; i++ {
+		spnm := SpriteName(SpNodePoint, SpUnk, i)
+		sprites.InactivateSprite(spnm)
+	}
 
-		sv.VectorView.UpdateNodeToolbar()
-	*/
+	sv.VectorView.UpdateNodeToolbar()
 }
 
 func (sv *SVGView) RemoveNodeSprites() {
-	/*
-		es := sv.EditState()
-		for i := 0; i < es.NNodeSprites; i++ {
-			spnm := SpriteName(SpNodePoint, SpUnk, i)
-			win.InactivateSprite(spnm)
-		}
-		es.NNodeSprites = 0
-		es.PathNodes = nil
-		es.PathCmds = nil
-		es.ActivePath = nil
-	*/
+	es := sv.EditState()
+	sprites := &sv.Scene.Stage.Sprites
+	for i := 0; i < es.NNodeSprites; i++ {
+		spnm := SpriteName(SpNodePoint, SpUnk, i)
+		sprites.InactivateSprite(spnm)
+	}
+	es.NNodeSprites = 0
+	es.PathNodes = nil
+	es.PathCmds = nil
+	es.ActivePath = nil
 }
 
 /*

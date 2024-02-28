@@ -136,10 +136,10 @@ func (sv *SVGView) UpdateSelect() {
 }
 
 func (sv *SVGView) RemoveSelSprites() {
-	// InactivateSprites(win, SpReshapeBBox)
-	// InactivateSprites(win, SpSelBBox)
-	// es := sv.EditState()
-	// es.NSelSprites = 0
+	InactivateSprites(sv, SpReshapeBBox)
+	InactivateSprites(sv, SpSelBBox)
+	es := sv.EditState()
+	es.NSelSprites = 0
 	// win.UpdateSig()
 }
 
@@ -148,84 +148,85 @@ func (sv *SVGView) UpdateSelSprites() {
 	// updt := win.UpdateStart()
 	// defer win.UpdateEnd(updt)
 
-	// es := sv.EditState()
-	// es.UpdateSelBBox()
-	// if !es.HasSelected() {
-	// 	sv.RemoveSelSprites(win)
-	// 	return
-	// }
+	updt := sv.UpdateStart()
+	defer sv.UpdateEnd(updt)
 
-	// for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-	// 	spi := i // key to get a unique local var
-	// 	SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
-	// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-	// 		ssvg.SelSpriteEvent(spi, events.EventType(sig), d)
-	// 	})
-	// }
-	// sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
-	// sv.SetSelSpritePos()
+	es := sv.EditState()
+	es.UpdateSelBBox()
+	if !es.HasSelected() {
+		sv.RemoveSelSprites()
+		return
+	}
+
+	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+		// SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+		// 	ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		// 	ssvg.SelSpriteEvent(spi, events.EventType(sig), d)
+		// })
+		Sprite(sv, SpReshapeBBox, i, 0, image.Point{})
+	}
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
+	sv.SetSelSpritePos()
 
 	// win.UpdateSig()
 }
 
 func (sv *SVGView) SetSelSpritePos() {
-	// win := sv.VectorView.ParentWindow()
-	// es := sv.EditState()
-	// nsel := es.NSelSprites
+	es := sv.EditState()
+	nsel := es.NSelSprites
 
-	// es.NSelSprites = 0
-	// if len(es.Selected) > 1 {
-	// 	nbox := 0
-	// 	sl := es.SelectedList(false)
-	// 	for si, sii := range sl {
-	// 		sn := sii.AsNodeBase()
-	// 		if sn.BBox.Size() == image.ZP {
-	// 			continue
-	// 		}
-	// 		bb := mat32.Box2{}
-	// 		bb.SetFromRect(sn.BBox)
-	// 		sv.SetBBoxSpritePos(SpSelBBox, si, bb)
-	// 		nbox++
-	// 	}
-	// 	es.NSelSprites = nbox
-	// }
+	es.NSelSprites = 0
+	if len(es.Selected) > 1 {
+		nbox := 0
+		sl := es.SelectedList(false)
+		for si, sii := range sl {
+			sn := sii.AsNodeBase()
+			if sn.BBox.Size() == image.ZP {
+				continue
+			}
+			bb := mat32.Box2{}
+			bb.SetFromRect(sn.BBox)
+			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
+			nbox++
+		}
+		es.NSelSprites = nbox
+	}
 
-	// for si := es.NSelSprites; si < nsel; si++ {
-	// 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-	// 		spnm := SpriteName(SpSelBBox, i, si)
-	// 		win.InactivateSprite(spnm)
-	// 	}
-	// }
+	sprites := &sv.Scene.Stage.Sprites
+	for si := es.NSelSprites; si < nsel; si++ {
+		for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+			spnm := SpriteName(SpSelBBox, i, si)
+			sprites.InactivateSprite(spnm)
+		}
+	}
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites
 func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox mat32.Box2) {
-	// win := sv.VectorView.ParentWindow()
-	// _, spsz := HandleSpriteSize(1)
-	// midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
-	// midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
-	// for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-	// 	spi := i // key to get a unique local var
-	// 	sp := Sprite(win, typ, spi, idx, image.ZP)
-	// 	switch spi {
-	// 	case SpBBoxUpL:
-	// 		SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
-	// 	case SpBBoxUpC:
-	// 		SetSpritePos(sp, image.Point{midX, int(bbox.Min.Y)})
-	// 	case SpBBoxUpR:
-	// 		SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
-	// 	case SpBBoxDnL:
-	// 		SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
-	// 	case SpBBoxDnC:
-	// 		SetSpritePos(sp, image.Point{midX, int(bbox.Max.Y)})
-	// 	case SpBBoxDnR:
-	// 		SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
-	// 	case SpBBoxLfM:
-	// 		SetSpritePos(sp, image.Point{int(bbox.Min.X), midY})
-	// 	case SpBBoxRtM:
-	// 		SetSpritePos(sp, image.Point{int(bbox.Max.X), midY})
-	// 	}
-	// }
+	_, spsz := HandleSpriteSize(1)
+	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
+	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
+	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
+		sp := Sprite(sv, typ, i, idx, image.ZP)
+		switch i {
+		case SpBBoxUpL:
+			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
+		case SpBBoxUpC:
+			SetSpritePos(sp, image.Point{midX, int(bbox.Min.Y)})
+		case SpBBoxUpR:
+			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Min.Y)})
+		case SpBBoxDnL:
+			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Max.Y)})
+		case SpBBoxDnC:
+			SetSpritePos(sp, image.Point{midX, int(bbox.Max.Y)})
+		case SpBBoxDnR:
+			SetSpritePos(sp, image.Point{int(bbox.Max.X), int(bbox.Max.Y)})
+		case SpBBoxLfM:
+			SetSpritePos(sp, image.Point{int(bbox.Min.X), midY})
+		case SpBBoxRtM:
+			SetSpritePos(sp, image.Point{int(bbox.Max.X), midY})
+		}
+	}
 }
 
 /*
@@ -260,33 +261,32 @@ func (sv *SVGView) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
 
 // SetRubberBand updates the rubber band postion
 func (sv *SVGView) SetRubberBand(cur image.Point) {
-	// win := sv.VectorView.ParentWindow()
-	// es := sv.EditState()
+	es := sv.EditState()
 
-	// if !es.InAction() {
-	// 	es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
-	// 	es.ActUnlock()
-	// }
-	// es.DragCurPos = cur
+	if !es.InAction() {
+		es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
+		es.ActUnlock()
+	}
+	es.DragCurPos = cur
 
-	// bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
-	// bbox = bbox.Canon()
+	bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
+	bbox = bbox.Canon()
 
-	// sz := bbox.Size()
-	// if sz.X < 4 {
-	// 	sz.X = 4
-	// }
-	// if sz.Y < 4 {
-	// 	sz.Y = 4
-	// }
-	// rt := Sprite(win, SpRubberBand, SpBBoxUpC, 0, sz)
-	// rb := Sprite(win, SpRubberBand, SpBBoxDnC, 0, sz)
-	// rr := Sprite(win, SpRubberBand, SpBBoxRtM, 0, sz)
-	// rl := Sprite(win, SpRubberBand, SpBBoxLfM, 0, sz)
-	// SetSpritePos(rt, bbox.Min)
-	// SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
-	// SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
-	// SetSpritePos(rl, bbox.Min)
+	sz := bbox.Size()
+	if sz.X < 4 {
+		sz.X = 4
+	}
+	if sz.Y < 4 {
+		sz.Y = 4
+	}
+	rt := Sprite(sv, SpRubberBand, SpBBoxUpC, 0, sz)
+	rb := Sprite(sv, SpRubberBand, SpBBoxDnC, 0, sz)
+	rr := Sprite(sv, SpRubberBand, SpBBoxRtM, 0, sz)
+	rl := Sprite(sv, SpRubberBand, SpBBoxLfM, 0, sz)
+	SetSpritePos(rt, bbox.Min)
+	SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
+	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
+	SetSpritePos(rl, bbox.Min)
 
 	// win.UpdateSig()
 }

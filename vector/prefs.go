@@ -112,6 +112,7 @@ var Prefs = Preferences{}
 
 // InitPrefs must be called at startup in mainrun()
 func InitPrefs() {
+	gi.TheApp.SetName("Cogent Vector")
 	Prefs.Defaults()
 	Prefs.Open()
 	// OpenPaths() // todo
