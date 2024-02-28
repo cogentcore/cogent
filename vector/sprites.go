@@ -123,41 +123,43 @@ func SpriteProps(sp *gi.Sprite) (typ, subtyp Sprites, idx int) {
 	return
 }
 
-// Sprite returns given sprite -- renders to window if not yet made.
-// trgsz is the target size (e.g., for rubber band boxes)
-func Sprite(typ, subtyp Sprites, idx int, trgsz image.Point) *gi.Sprite {
-	// spnm := SpriteName(typ, subtyp, idx)
-	// sp, ok := win.SpriteByName(spnm)
-	// if !ok {
-	// 	sp = gi.NewSprite(spnm, image.ZP, image.ZP)
-	// 	SetSpriteProps(sp, typ, subtyp, idx)
-	// 	win.AddSprite(sp)
-	// }
-	// switch typ {
-	// case SpReshapeBBox:
-	// 	DrawSpriteReshape(sp, subtyp)
-	// case SpSelBBox:
-	// 	DrawSpriteSel(sp, subtyp)
-	// case SpNodePoint:
-	// 	DrawSpriteNodePoint(sp, subtyp)
-	// case SpNodeCtrl:
-	// 	DrawSpriteNodeCtrl(sp, subtyp)
-	// case SpRubberBand:
-	// 	switch subtyp {
-	// 	case SpBBoxUpC, SpBBoxDnC:
-	// 		DrawRubberBandHoriz(sp, trgsz)
-	// 	case SpBBoxLfM, SpBBoxRtM:
-	// 		DrawRubberBandVert(sp, trgsz)
-	// 	}
-	// case SpAlignMatch:
-	// 	switch {
-	// 	case trgsz.X > trgsz.Y:
-	// 		DrawAlignMatchHoriz(sp, trgsz)
-	// 	default:
-	// 		DrawAlignMatchVert(sp, trgsz)
-	// 	}
-	// }
-	// win.ActivateSprite(sp.Name)
+// Sprite returns the given sprite in the context of the given widget,
+// making it if not yet made. trgsz is the target size (e.g., for rubber
+// band boxes)
+func Sprite(ctx gi.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.Sprite {
+	sps := &ctx.AsWidget().Scene.Stage.Sprites
+	spnm := SpriteName(typ, subtyp, idx)
+	sp, ok := sps.SpriteByName(spnm)
+	if !ok {
+		sp = gi.NewSprite(spnm, image.ZP, image.ZP)
+		SetSpriteProps(sp, typ, subtyp, idx)
+		sps.Add(sp)
+	}
+	switch typ {
+	case SpReshapeBBox:
+		DrawSpriteReshape(sp, subtyp)
+	case SpSelBBox:
+		DrawSpriteSel(sp, subtyp)
+	case SpNodePoint:
+		DrawSpriteNodePoint(sp, subtyp)
+	case SpNodeCtrl:
+		DrawSpriteNodeCtrl(sp, subtyp)
+	case SpRubberBand:
+		switch subtyp {
+		case SpBBoxUpC, SpBBoxDnC:
+			DrawRubberBandHoriz(sp, trgsz)
+		case SpBBoxLfM, SpBBoxRtM:
+			DrawRubberBandVert(sp, trgsz)
+		}
+	case SpAlignMatch:
+		switch {
+		case trgsz.X > trgsz.Y:
+			DrawAlignMatchHoriz(sp, trgsz)
+		default:
+			DrawAlignMatchVert(sp, trgsz)
+		}
+	}
+	sps.ActivateSprite(sp.Name)
 	return nil
 }
 
