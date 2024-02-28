@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.21
 
 require (
-	cogentcore.org/core v0.0.7-0.20240225063146-aa65c4939898
+	cogentcore.org/core v0.0.7-0.20240227232743-0b8d06177e00
 	github.com/go-delve/delve v1.22.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
@@ -40,7 +40,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.1.2-0.20240227203013-2b69615b5d55 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect

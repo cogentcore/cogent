@@ -1,5 +1,5 @@
-cogentcore.org/core v0.0.7-0.20240225063146-aa65c4939898 h1:2VORbzcQge3as8O4TaNWkmmhDLQFKTazpTmZNhnjZAU=
-cogentcore.org/core v0.0.7-0.20240225063146-aa65c4939898/go.mod h1:q2sMuu0eWdsvhO04FfKs90VcptWoVjK/HuvO3TpaRFc=
+cogentcore.org/core v0.0.7-0.20240227232743-0b8d06177e00 h1:TlsEX0MZWx8cm3Byk7lcWPWvl5bd9QwMRHDZRA8vrFk=
+cogentcore.org/core v0.0.7-0.20240227232743-0b8d06177e00/go.mod h1:jouy/IcTFAy8Bk+qn8ZZBY3q/boc6FxI79VxmXOkDHQ=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4 h1:6lx9xzJAhdjq0LvVfbITeC3IH9Fzvo1aBahyPu2FuG8=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4/go.mod h1:FChzXi1izqzdPb6BiNZmcZLGyTYiT61iGx9Rxx9GNeI=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -98,8 +98,8 @@ github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh
 github.com/muesli/termenv v0.15.2 h1:GohcuySI0QmI3wN8Ok9PtKGkgkFIk7y6Vpb5PvrY+Wo=
 github.com/muesli/termenv v0.15.2/go.mod h1:Epx+iuz8sNs7mNKhxzH4fWXGNpZwUaJKRS1noLXviQ8=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
-github.com/pelletier/go-toml/v2 v2.1.1 h1:LWAJwfNvjQZCFIDKWYQaM62NcYeYViCmWIwmOStowAI=
-github.com/pelletier/go-toml/v2 v2.1.1/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
+github.com/pelletier/go-toml/v2 v2.1.2-0.20240227203013-2b69615b5d55 h1:CJwoX/v1ZWNj0Ofn62jvQDRuH3/hIHMqCQxbkzq2m5Y=
+github.com/pelletier/go-toml/v2 v2.1.2-0.20240227203013-2b69615b5d55/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
