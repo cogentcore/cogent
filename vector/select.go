@@ -264,6 +264,7 @@ func (sv *SVGView) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
 
 // SetRubberBand updates the rubber band postion
 func (sv *SVGView) SetRubberBand(cur image.Point) {
+	updt := sv.UpdateStart()
 	es := sv.EditState()
 
 	if !es.InAction() {
@@ -291,7 +292,7 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
 	SetSpritePos(rl, bbox.Min)
 
-	// win.UpdateSig()
+	sv.UpdateEndRender(updt)
 }
 
 ///////////////////////////////////////////////////////////////////////

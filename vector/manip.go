@@ -10,6 +10,8 @@ import (
 	"math"
 	"strings"
 
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/mat32"
 )
 
@@ -300,12 +302,11 @@ func (sv *SVGView) ConstrainPoint(st, rawpt mat32.Vec2) (mat32.Vec2, bool) {
 	return cp, diag
 }
 
-/*
 // DragMove is when dragging a selection for moving
-func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
+func (sv *SVGView) DragMove(e events.Event) {
 	es := sv.EditState()
 
-	InactivateSprites(win, SpAlignMatch)
+	InactivateSprites(sv, SpAlignMatch)
 
 	if !es.InAction() {
 		sv.ManipStart("Move", es.SelectedNamesString())
@@ -314,8 +315,8 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 
 	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	spt := mat32.V2FromPoint(es.DragStartPos)
-	mpt := mat32.V2FromPoint(me.Where)
-	if me.HasAnyModifier(key.Control) {
+	mpt := mat32.V2FromPoint(e.Pos())
+	if e.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
 	}
 	dv := mpt.Sub(spt)
@@ -333,16 +334,14 @@ func (sv *SVGView) DragMove(win *gi.Window, me *mouse.DragEvent) {
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	tdel := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaTransform(tdel, mat32.V2(1, 1), 0, pt)
+		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
+		itm.ApplyDeltaTransform(sv.SSVG(), tdel, mat32.V2(1, 1), 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
-	win.UpdateSig()
-
+	// win.UpdateSig()
 }
-*/
 
 func SquareBBox(bb mat32.Box2) mat32.Box2 {
 	del := bb.Size()

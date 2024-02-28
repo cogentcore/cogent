@@ -180,8 +180,6 @@ func (sv *SVGView) HandleEvents() {
 			}
 			if !es.InAction() {
 				switch es.Tool {
-				case SelectTool:
-					sv.SetRubberBand(e.PrevPos())
 				case RectTool:
 					sv.NewElDrag(svg.RectType, es.DragStartPos, e.Pos())
 					es.SelBBox.Min.X += 1
@@ -196,11 +194,6 @@ func (sv *SVGView) HandleEvents() {
 					es.NewTextMade = true
 				case BezierTool:
 					sv.NewPath(es.DragStartPos, e.Pos())
-				}
-			} else {
-				switch {
-				case es.Action == "BoxSelect":
-					sv.SetRubberBand(e.Pos())
 				}
 			}
 		}
@@ -227,8 +220,12 @@ func (sv *SVGView) HandleEvents() {
 		}
 		if es.HasSelected() {
 			if !es.NewTextMade {
-				// sv.DragMove(win, me) // in manip
+				sv.DragMove(e)
+				return
 			}
+		}
+		if es.Action == "BoxSelect" || (!es.InAction() && es.Tool == SelectTool) {
+			sv.SetRubberBand(e.Pos())
 		}
 	})
 }
