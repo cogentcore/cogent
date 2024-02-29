@@ -209,15 +209,9 @@ func (ge *CodeView) OpenFile(fnm string) { //gti:add
 
 // SetWindowNameTitle sets the window name and title based on current project name
 func (ge *CodeView) SetWindowNameTitle() {
-	win := ge.Scene.RenderWin()
-	if win == nil {
-		return
-	}
 	pnm := ge.Name()
-	winm := "Cogent Code • " + pnm
-	win.SetName(winm)
-	win.SetTitle(winm)
-	ge.Scene.Body.Title = winm
+	title := "Cogent Code • " + pnm
+	ge.Scene.Body.SetTitle(title)
 }
 
 // OpenPath creates a new project by opening given path, which can either be a
