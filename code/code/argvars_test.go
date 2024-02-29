@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/texteditor"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBind(t *testing.T) {
@@ -24,7 +24,7 @@ func TestBind(t *testing.T) {
 	projpath := "/Users/oreilly/go/src/cogentcore.org"
 
 	afpath, err := filepath.Abs(fpath)
-	grr.Test(t, err)
+	assert.NoError(t, err)
 
 	pp := ProjSettings{}
 	pp.ProjRoot = gi.Filename(projpath)
