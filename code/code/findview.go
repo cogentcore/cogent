@@ -479,7 +479,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 	gi.NewButton(fb).SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").OnClick(func(e events.Event) {
 		fv.FindAction()
 	})
-	finds := gi.NewChooser(fb, "find-str").SetEditable(true).SetAllowNew(true).
+	finds := gi.NewChooser(fb, "find-str").SetEditable(true).SetDefaultNew(true).
 		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
 	finds.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
@@ -538,7 +538,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 			fv.ReplaceAction()
 		})
 
-	repls := gi.NewChooser(rb, "repl-str").SetEditable(true).SetAllowNew(true).
+	repls := gi.NewChooser(rb, "repl-str").SetEditable(true).SetDefaultNew(true).
 		SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
 	repls.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
