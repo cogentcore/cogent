@@ -1,6 +1,6 @@
 module cogentcore.org/cogent
 
-go 1.21
+go 1.22
 
 require (
 	cogentcore.org/core v0.0.7-0.20240227232743-0b8d06177e00
