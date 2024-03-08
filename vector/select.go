@@ -108,7 +108,7 @@ func (gv *VectorView) NewSelectFuncButton(par ki.Ki, fun any) *giv.FuncButton {
 // UpdateSelectToolbar updates the select toolbar based on current selection
 func (gv *VectorView) UpdateSelectToolbar() {
 	tb := gv.SelectToolbar()
-	tb.SetNeedsRender(true)
+	tb.NeedsRender(true)
 	// tb.Update()
 	// es := &gv.EditState
 	// if !es.HasSelected() {
@@ -349,21 +349,17 @@ func (gv *VectorView) SelUnGroup() { //gti:add
 			continue
 		}
 		np := gp.Par
-		gidx := gp.IndexInParent()
 		klist := make(ki.Slice, len(gp.Kids)) // make a temp copy of list of kids
 		for i, k := range gp.Kids {
 			klist[i] = k
 		}
-		for i, k := range klist {
-			ki.SetParent(k, nil)
-			gp.DeleteChild(k, false) // no destroy
-			np.InsertChild(k, gidx+i)
+		for _, k := range klist {
+			ki.MoveToParent(k, np)
 			se := k.(svg.Node)
 			if !gp.Paint.Transform.IsIdentity() {
 				se.ApplyTransform(sv.SSVG(), gp.Paint.Transform) // group no longer there!
 			}
 		}
-		gp.Delete(ki.DestroyKids)
 	}
 	sv.UpdateEnd(updt)
 	gv.UpdateAll()

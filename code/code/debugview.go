@@ -175,8 +175,8 @@ func (dv *DebugView) Start() {
 		pars := &dv.Code.ProjSettings().Debug
 		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat cdebug.Status) {
-			updt := dv.UpdateStartAsync()
-			defer dv.UpdateEndAsyncLayout(updt)
+			updt := dv.AsyncLock()
+			defer dv.AsyncUnlockLayout(updt)
 
 			if stat == cdebug.Ready && dv.State.Mode == cdebug.Attach {
 				dv.UpdateFmState()

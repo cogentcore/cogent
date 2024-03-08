@@ -49,7 +49,7 @@ func (pg *Page) OpenURL(url string) {
 	pg.Context.PageURL = url
 	pg.History = append(pg.History, url)
 	updt := pg.UpdateStart()
-	pg.DeleteChildren(true)
+	pg.DeleteChildren()
 	err = coredom.ReadHTML(pg.Context, pg, resp.Body)
 	if err != nil {
 		gi.ErrorSnackbar(pg, err, "Error opening page")

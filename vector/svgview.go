@@ -673,7 +673,6 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 		}
 	}
 	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
-	par.SetChildAdded()
 	nw := par.NewChild(typ, nwnm).(svg.Node)
 	sv.SetSVGName(nw)
 	sv.VectorView.PaintView().SetProps(nw)

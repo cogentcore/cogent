@@ -160,7 +160,7 @@ func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
 	ge.SetStatus("")
 	av.SetFocusEvent()
 	av.SetCursorTarget(av.CursorPos)
-	av.SetNeedsLayout(true)
+	av.NeedsLayout(true)
 	return av
 }
 

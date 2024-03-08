@@ -184,7 +184,7 @@ func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lex.Pos) {
 func (ed *TextEditor) LineNoDoubleClick(tpos lex.Pos) {
 	ln := tpos.Ln
 	ed.ToggleBreakpoint(ln)
-	ed.SetNeedsRender(true)
+	ed.NeedsRender(true)
 }
 
 // ConfigOutputTextEditor configures a command-output texteditor within given parent layout

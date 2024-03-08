@@ -241,7 +241,7 @@ func symMatch(str, match string, ignoreCase bool) bool {
 // OpenSyms opens symbols from given symbol map (assumed to be package-level symbols)
 // filtered by filename and match -- called on root node of tree.
 func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
-	sn.DeleteChildren(ki.DestroyKids)
+	sn.DeleteChildren()
 
 	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
@@ -377,7 +377,7 @@ func (st *SymTreeView) SetSymIcon() {
 		if bp.IconIndeterminate != ic {
 			bp.IconIndeterminate = ic
 			bp.Update()
-			st.SetNeedsRender(true)
+			st.NeedsRender(true)
 		}
 	}
 }

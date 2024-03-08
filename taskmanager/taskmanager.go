@@ -71,10 +71,10 @@ func main() {
 					continue
 				}
 				ts = getTasks(b)
-				updt := tv.UpdateStartAsync()
+				updt := tv.AsyncLock()
 				tv.SortSlice()
 				tv.UpdateWidgets()
-				tv.UpdateEndAsyncRender(updt)
+				tv.AsyncUnlockRender(updt)
 			}
 		}()
 	})

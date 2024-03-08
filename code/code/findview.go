@@ -297,9 +297,9 @@ func (fv *FindView) ReplaceAll() {
 	go func() {
 		for {
 			sc := fv.Code.AsWidget().Scene
-			updt := sc.UpdateStartAsync()
+			updt := sc.AsyncLock()
 			ok := fv.ReplaceAction()
-			sc.UpdateEndAsyncLayout(updt)
+			sc.AsyncUnlockLayout(updt)
 			if !ok {
 				break
 			}
@@ -339,7 +339,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	tve := texteditor.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
 	tv.SetCursorTarget(reg.Start)
-	tv.SetNeedsLayout(true)
+	tv.NeedsLayout(true)
 	return true
 }
 
