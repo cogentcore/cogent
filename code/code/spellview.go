@@ -16,7 +16,6 @@ import (
 
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
 )
 
 // SpellView is a widget that displays results of spell check
@@ -274,8 +273,6 @@ func (sv *SpellView) CheckNext() {
 
 	st := sv.UnkStartPos()
 	en := sv.UnkEndPos()
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndRender(updt)
 
 	tv.Highlights = tv.Highlights[:0]
 	tv.SetCursorTarget(st)
@@ -287,6 +284,7 @@ func (sv *SpellView) CheckNext() {
 	} else {
 		sv.LastAction.SetFocusEvent()
 	}
+	tv.NeedsRender()
 }
 
 // ChangeAction replaces the known word with the selected suggested word
@@ -388,17 +386,8 @@ func (sv *SpellView) AcceptSuggestion(s string) {
 
 func (sv *SpellView) Destroy() {
 	tv := sv.Text
-	if tv == nil || tv.Buf == nil || tv.Is(ki.Deleted) {
+	if tv == nil || tv.Buf == nil || tv.This() == nil {
 		return
 	}
 	tv.ClearHighlights()
 }
-
-// SpellViewProps are style properties for SpellView
-// var SpellViewProps = ki.Props{
-// 	"EnumType:Flag":    gi.KiT_NodeFlags,
-// 	"background-color": &gi.Prefs.Colors.Background,
-// 	"color":            &gi.Prefs.Colors.Font,
-// 	"max-width":        -1,
-// 	"max-height":       -1,
-// }

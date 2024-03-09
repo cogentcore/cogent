@@ -124,7 +124,6 @@ func (vv *KeyMapValue) ConfigWidget(w gi.Widget) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config()
 	giv.ConfigDialogWidget(vv, bt, false)
 	vv.UpdateWidget()
 }
@@ -255,7 +254,6 @@ func (vv *CmdValue) ConfigWidget(w gi.Widget) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config()
 	giv.ConfigDialogWidget(vv, bt, false)
 	vv.UpdateWidget()
 }
@@ -346,7 +344,6 @@ func (vv *SplitValue) ConfigWidget(w gi.Widget) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
 			vv.OpenDialog(bt, nil)
@@ -467,7 +464,6 @@ func (vv *RegisterValue) ConfigWidget(w gi.Widget) {
 	vv.StdConfigWidget(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
-	bt.Config()
 	bt.OnClick(func(e events.Event) {
 		if !vv.IsReadOnly() {
 			vv.OpenDialog(bt, nil)

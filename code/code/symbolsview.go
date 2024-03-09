@@ -143,7 +143,6 @@ func (sv *SymbolsView) RefreshAction() {
 // This is called for refresh action.
 func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	sfr := sv.Frame()
-	updt := sfr.UpdateStart()
 	var tv *SymTreeView
 	if sv.Syms == nil {
 		sv.Syms = &SymNode{}
@@ -171,7 +170,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	tv.ReSync()
 
 	tv.OpenAll()
-	sfr.UpdateEndLayout(updt)
+	sfr.NeedsLayout()
 }
 
 func SelectSymbol(ge Code, ssym syms.Symbol) {
@@ -185,8 +184,6 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 		}
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	tv.Highlights = tv.Highlights[:0]
 	tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
@@ -194,6 +191,7 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocusEvent()
 	ge.FocusOnTabs()
+	tv.NeedsLayout()
 }
 
 // OpenPackage opens package-level symbols for current active texteditor
@@ -377,7 +375,7 @@ func (st *SymTreeView) SetSymIcon() {
 		if bp.IconIndeterminate != ic {
 			bp.IconIndeterminate = ic
 			bp.Update()
-			st.NeedsRender(true)
+			st.NeedsRender()
 		}
 	}
 }

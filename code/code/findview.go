@@ -192,8 +192,6 @@ func (fv *FindView) ReplaceAction() bool {
 	if !fv.CheckValidRegexp() {
 		return false
 	}
-	updt := fv.UpdateStart()
-	defer fv.UpdateEndRender(updt)
 
 	fp := fv.Params()
 	fv.SaveReplString(fp.Replace)
@@ -257,6 +255,7 @@ func (fv *FindView) ReplaceAction() bool {
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos) // move to next
 	}
+	fv.NeedsRender()
 	return ok
 }
 
@@ -297,9 +296,10 @@ func (fv *FindView) ReplaceAll() {
 	go func() {
 		for {
 			sc := fv.Code.AsWidget().Scene
-			updt := sc.AsyncLock()
+			sc.AsyncLock()
 			ok := fv.ReplaceAction()
-			sc.AsyncUnlockLayout(updt)
+			sc.NeedsLayout()
+			sc.AsyncUnlock()
 			if !ok {
 				break
 			}
@@ -339,7 +339,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	tve := texteditor.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
 	tv.SetCursorTarget(reg.Start)
-	tv.NeedsLayout(true)
+	tv.NeedsLayout()
 	return true
 }
 
@@ -397,8 +397,6 @@ func (fv *FindView) ConfigFindView() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	updt := fv.UpdateStart()
-	defer fv.UpdateEndLayout(updt)
 
 	fb := gi.NewBasicBar(fv, "findbar")
 	rb := gi.NewBasicBar(fv, "replbar")
