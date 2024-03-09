@@ -382,7 +382,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (fv *FindView) ConfigWidget() {
+func (fv *FindView) Config() {
 	fv.ConfigFindView()
 }
 

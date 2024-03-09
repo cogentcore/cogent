@@ -115,13 +115,13 @@ func (vv *KeyMapValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *KeyMapValue) ConfigWidget(w gi.Widget) {
+func (vv *KeyMapValue) Config(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
 	}
 	vv.Widget = w
-	vv.StdConfigWidget(w)
+	vv.StdConfig(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
 	giv.ConfigDialogWidget(vv, bt, false)
@@ -245,13 +245,13 @@ func (vv *CmdValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *CmdValue) ConfigWidget(w gi.Widget) {
+func (vv *CmdValue) Config(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
 	}
 	vv.Widget = w
-	vv.StdConfigWidget(w)
+	vv.StdConfig(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
 	giv.ConfigDialogWidget(vv, bt, false)
@@ -335,13 +335,13 @@ func (vv *SplitValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *SplitValue) ConfigWidget(w gi.Widget) {
+func (vv *SplitValue) Config(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
 	}
 	vv.Widget = w
-	vv.StdConfigWidget(w)
+	vv.StdConfig(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
 	bt.OnClick(func(e events.Event) {
@@ -455,13 +455,13 @@ func (vv *RegisterValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *RegisterValue) ConfigWidget(w gi.Widget) {
+func (vv *RegisterValue) Config(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
 	}
 	vv.Widget = w
-	vv.StdConfigWidget(w)
+	vv.StdConfig(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
 	bt.OnClick(func(e events.Event) {

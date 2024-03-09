@@ -29,7 +29,7 @@ const (
 	TabsIdx
 )
 
-func (ge *CodeView) ConfigWidget() {
+func (ge *CodeView) Config() {
 	ge.ConfigCodeView()
 }
 

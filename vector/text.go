@@ -235,7 +235,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 	// ki.InitNode(&ts.FontVal)
 	// ts.FontVal.SetSoloValue(reflect.ValueOf(&ts.Font))
 	// fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(gi.Node2D)
-	// ts.FontVal.ConfigWidget(fw)
+	// ts.FontVal.Config(fw)
 
 	// fsz := gi.NewSpinner(tb, "size")
 	// fsz.SetValue(ts.Size.Val)

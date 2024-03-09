@@ -77,7 +77,7 @@ func (a *App) AppBar(tb *gi.Toolbar) {
 	}
 }
 
-func (a *App) ConfigWidget() {
+func (a *App) Config() {
 	if a.HasChildren() {
 		return
 	}

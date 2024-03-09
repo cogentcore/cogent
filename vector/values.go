@@ -75,13 +75,13 @@ func (vv *SplitValue) UpdateWidget() {
 	bt.SetText(txt)
 }
 
-func (vv *SplitValue) ConfigWidget(w gi.Widget) {
+func (vv *SplitValue) Config(w gi.Widget) {
 	if vv.Widget == w {
 		vv.UpdateWidget()
 		return
 	}
 	vv.Widget = w
-	vv.StdConfigWidget(w)
+	vv.StdConfig(w)
 	bt := vv.Widget.(*gi.Button)
 	bt.SetType(gi.ButtonTonal)
 	bt.OnClick(func(e events.Event) {
