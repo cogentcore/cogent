@@ -65,13 +65,13 @@ func main() {
 		}()
 	})
 
-	downframe := gi.NewFrame(frame)
-	downframe.Style(func(s *styles.Style) { s.Direction = styles.Row })
-	gi.NewTextField(downframe).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here").Style(func(s *styles.Style) {
+	downFrame := gi.NewFrame(rightSplits)
+	downFrame.Style(func(s *styles.Style) { s.Direction = styles.Row })
+	gi.NewTextField(downFrame).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here").Style(func(s *styles.Style) {
 		s.Max.X.Zero()
 	})
 
-	newFrame := gi.NewFrame(downframe)
+	newFrame := gi.NewFrame(downFrame)
 	newFrame.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Align.Self = styles.End
@@ -84,7 +84,7 @@ func main() {
 		s.Min.Set(units.Dp(33))
 	})
 
-	rightSplits.SetSplits(.6, .4) //todo not working
+	rightSplits.SetSplits(.6, .4)
 
 	b.RunMainWindow()
 }
