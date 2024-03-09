@@ -190,7 +190,7 @@ func (on *OpenNodes) DeleteDeleted() {
 	sz := len(*on)
 	for i := sz - 1; i >= 0; i-- {
 		fn := (*on)[i]
-		if fn.This() == nil || fn.FRoot == nil || fn.Is(ki.Deleted) {
+		if fn.This() == nil || fn.FRoot == nil {
 			on.DeleteIdx(i)
 		}
 	}

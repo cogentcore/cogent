@@ -635,7 +635,6 @@ func (pv *PiView) ConfigTextEditor(ly *gi.Layout, out bool) *texteditor.Editor {
 		tv = ly.Child(0).Embed(giv.KiT_TextEditor).(*texteditor.Editor)
 	} else {
 		updt = ly.UpdateStart()
-		ly.SetChildAdded()
 		tv = ly.NewChild(giv.KiT_TextEditor, ly.Nm).(*texteditor.Editor)
 	}
 

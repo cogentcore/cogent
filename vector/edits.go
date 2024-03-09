@@ -13,7 +13,6 @@ import (
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/undo"
@@ -177,7 +176,7 @@ func (es *EditState) NewSelected() {
 func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
 	sls := make([]svg.Node, 0, len(es.Selected))
 	for it := range es.Selected {
-		if it == nil || it.This() == nil || it.Is(ki.Deleted) || it.Is(ki.Destroyed) {
+		if it == nil || it.This() == nil {
 			delete(es.Selected, it)
 			continue
 		}
@@ -202,7 +201,7 @@ func (es *EditState) SelectedListDepth(sv *SVGView, descendingSort bool) []svg.N
 	dm := sv.DepthMap()
 	sls := make([]svg.Node, 0, len(es.Selected))
 	for it := range es.Selected {
-		if it == nil || it.This() == nil || it.Is(ki.Deleted) || it.Is(ki.Destroyed) {
+		if it == nil || it.This() == nil {
 			delete(es.Selected, it)
 			continue
 		}

@@ -6,12 +6,14 @@ package code
 
 import (
 	"fmt"
+	"image/color"
 	"log"
 	"strings"
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/cogent/code/cdebug/cdelve"
+	"cogentcore.org/core/cam/hct"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/events"
@@ -175,8 +177,7 @@ func (dv *DebugView) Start() {
 		pars := &dv.Code.ProjSettings().Debug
 		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat cdebug.Status) {
-			updt := dv.UpdateStartAsync()
-			defer dv.UpdateEndAsyncLayout(updt)
+			dv.AsyncLock()
 
 			if stat == cdebug.Ready && dv.State.Mode == cdebug.Attach {
 				dv.UpdateFmState()
@@ -185,6 +186,8 @@ func (dv *DebugView) Start() {
 			if stat == cdebug.Error {
 				dv.Dbg = nil
 			}
+			dv.NeedsLayout()
+			dv.AsyncUnlock()
 		}
 		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, pars)
 		if err == nil {
@@ -220,7 +223,7 @@ func (dv *DebugView) Continue() {
 	dsc := dv.Dbg.Continue(&dv.State)
 	var ds *cdebug.State
 	for ds = range dsc { // get everything
-		if dv.This() == nil || dv.Is(ki.Deleted) {
+		if dv.This() == nil {
 			return
 		}
 	}
@@ -326,7 +329,7 @@ func (dv *DebugView) AddBreak(fpath string, line int) {
 // activated then it just deletes from master list.
 // Note that breakpoints can be turned on and off directly using On flag.
 func (dv *DebugView) DeleteBreak(fpath string, line int) {
-	if dv.Is(ki.Deleted) {
+	if dv.This() == nil {
 		return
 	}
 	dv.DeleteBreakImpl(fpath, line)
@@ -365,7 +368,7 @@ func (dv *DebugView) DeleteBreakIdx(bidx int) {
 // DeleteBreakInBuf delete breakpoint in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
-	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.This() == nil {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -377,7 +380,7 @@ func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
 
 // DeleteAllBreaks deletes all breakpoints
 func (dv *DebugView) DeleteAllBreaks() {
-	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.This() == nil {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -388,7 +391,7 @@ func (dv *DebugView) DeleteAllBreaks() {
 // UpdateBreakInBuf updates break status in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
-	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.This() == nil {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -400,11 +403,9 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 
 // UpdateAllBreaks updates all breakpoints
 func (dv *DebugView) UpdateAllBreaks() {
-	if dv.Code == nil || dv.Code.Is(ki.Deleted) {
+	if dv.Code == nil || dv.Code.This() == nil {
 		return
 	}
-	updt := dv.UpdateStart()
-	dv.UpdateEndRender(updt)
 	for _, bk := range dv.State.Breaks {
 		if bk.ID == dv.State.CurBreak {
 			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakCurrent)
@@ -414,6 +415,7 @@ func (dv *DebugView) UpdateAllBreaks() {
 			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakInactive)
 		}
 	}
+	dv.NeedsRender()
 }
 
 // BackupBreaks makes a backup copy of current breaks
@@ -446,11 +448,9 @@ func (dv *DebugView) InitState(ds *cdebug.State) {
 
 // UpdateFmState updates the view from current debugger state
 func (dv *DebugView) UpdateFmState() {
-	if dv == nil || dv.This() == nil || dv.Is(ki.Deleted) || dv.Dbg == nil {
+	if dv == nil || dv.This() == nil || dv.Dbg == nil {
 		return
 	}
-	updt := dv.UpdateStart()
-	defer dv.UpdateEndLayout(updt)
 
 	cb, err := dv.Dbg.ListBreaks()
 	if err == nil {
@@ -555,13 +555,11 @@ func (dv *DebugView) ShowFile(fpath string, line int) {
 	if fpath == "" || fpath == "?" {
 		return
 	}
-	// fmt.Printf("File: %s:%d\n", fpath, ln)
-	updt := dv.UpdateStart()
-	dv.UpdateEndRender(updt)
 
 	dv.DeleteCurPCInBuf()
 	dv.Code.ShowFile(fpath, line)
 	dv.SetCurPCInBuf(fpath, line)
+	dv.NeedsRender()
 }
 
 // SetCurPCInBuf sets the current PC location in given file
@@ -704,23 +702,21 @@ func (dv *DebugView) VarValue(varNm string) string {
 	return ""
 }
 
-var DebugStatusColors = map[cdebug.Status]string{
-	cdebug.NotInit:    "grey",
-	cdebug.Error:      "#FF8080",
-	cdebug.Building:   "yellow",
-	cdebug.Ready:      "#80FF80",
-	cdebug.Running:    "#FF80FF",
-	cdebug.Stopped:    "#8080FF",
-	cdebug.Breakpoint: "#8080FF",
-	cdebug.Finished:   "tan",
+var DebugStatusColors = map[cdebug.Status]color.RGBA{
+	cdebug.NotInit:    colors.Scheme.SurfaceContainerHighest,
+	cdebug.Error:      colors.Scheme.Error.Container,
+	cdebug.Building:   colors.Scheme.Warn.Container,
+	cdebug.Ready:      colors.Scheme.Success.Container,
+	cdebug.Running:    colors.Scheme.Tertiary.Container,
+	cdebug.Stopped:    colors.Scheme.Warn.Container,
+	cdebug.Breakpoint: colors.Scheme.Warn.Container,
+	cdebug.Finished:   colors.Scheme.SurfaceContainerHighest,
 }
 
 func (dv *DebugView) SetStatus(stat cdebug.Status) {
-	if dv == nil || dv.This() == nil || dv.Is(ki.Deleted) {
+	if dv == nil || dv.This() == nil {
 		return
 	}
-	updt := dv.UpdateStart()
-	defer dv.UpdateEndLayout(updt)
 
 	dv.State.Status = stat
 	tb := dv.Toolbar()
@@ -729,14 +725,14 @@ func (dv *DebugView) SetStatus(stat cdebug.Status) {
 	if stat == cdebug.Breakpoint {
 		lbl = fmt.Sprintf("Break: %d", dv.State.CurBreak)
 	}
-	stl.SetTextUpdate(lbl)
-	tb.ApplyStyleTree() // state change
+	stl.SetText(lbl)
+	tb.Update() // state change
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (dv *DebugView) ConfigWidget() {
+func (dv *DebugView) Config() {
 	// dv.ConfigDebugView() // needs specific config args
 }
 
@@ -865,8 +861,9 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb.SetStretchMaxWidth()
 
 	gi.NewLabel(tb, "status").SetText("Building..   ").Style(func(s *styles.Style) {
-		clr := grr.Log1(colors.FromString(DebugStatusColors[dv.State.Status], nil))
+		clr := DebugStatusColors[dv.State.Status]
 		s.Background = colors.C(clr)
+		s.Color = colors.C(hct.ContrastColor(clr, hct.ContrastAA))
 	})
 
 	gi.NewButton(tb).SetIcon(icons.Refresh).
@@ -1229,14 +1226,11 @@ type VarView struct {
 // SetVar sets the source variable and ensures configuration
 func (vv *VarView) SetVar(vr *cdebug.Variable, frinfo string) {
 	vv.FrameInfo = frinfo
-	updt := false
 	if vv.Var != vr {
-		updt = vv.UpdateStart()
 		vv.Var = vr
 		vv.SelVar = vr
 	}
 	vv.ConfigVarView()
-	vv.UpdateEnd(updt)
 }
 
 // Config configures the widget

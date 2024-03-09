@@ -71,10 +71,10 @@ func main() {
 					continue
 				}
 				ts = getTasks(b)
-				updt := tv.UpdateStartAsync()
+				tv.AsyncLock()
 				tv.SortSlice()
-				tv.UpdateWidgets()
-				tv.UpdateEndAsyncRender(updt)
+				tv.Update()
+				tv.AsyncUnlock()
 			}
 		}()
 	})
@@ -89,7 +89,6 @@ func main() {
 		pause := gi.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
 			SetTooltip("Stop updating the list of tasks")
 		pause.OnClick(func(e events.Event) {
-			updt := pause.UpdateStart()
 			paused = !paused
 			if paused {
 				pause.SetText("Resume").SetIcon(icons.Resume).
@@ -99,7 +98,6 @@ func main() {
 					SetTooltip("Stop updating the list of tasks")
 			}
 			pause.Update()
-			pause.UpdateEndLayout(updt)
 		})
 	})
 

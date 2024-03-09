@@ -153,7 +153,6 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 	nmk.InitName(nmk, fnm)
 	nmk.CopyFrom(mk)
 	mk.SetName(fnm) // double check
-	sg.Root.SetChildAdded()
 	sg.Defs.AddChild(nmk)
 	// sg.UpdateEnd(updt)
 	return nmk
@@ -168,13 +167,13 @@ func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors
 	}
 	if name == "" || name == "-" {
 		if onm != "" && omc == MarkerCopy {
-			sg.Defs.DeleteChildByName(svg.NameID(onm, oid), ki.DestroyKids)
+			sg.Defs.DeleteChildByName(svg.NameID(onm, oid))
 		}
 		sii.DeleteProp(prop)
 		return
 	}
 	if omc == MarkerCopy && omc != mc { // implies onm != ""
-		sg.Defs.DeleteChildByName(svg.NameID(onm, oid), ki.DestroyKids)
+		sg.Defs.DeleteChildByName(svg.NameID(onm, oid))
 	}
 
 	_, ok := AllMarkersXMLMap[name]

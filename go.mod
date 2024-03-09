@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.0.7-0.20240227232743-0b8d06177e00
+	cogentcore.org/core v0.0.8-0.20240309010543-9eb35d11ca28
 	github.com/go-delve/delve v1.22.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1

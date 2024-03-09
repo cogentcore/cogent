@@ -19,7 +19,6 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/vci"
 )
@@ -56,8 +55,6 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	if tv == nil {
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	fbuf, _ := ge.RecycleCmdBuf("Find", true)
 	fv := tv.RecycleTabWidget("Find", true, code.FindViewType).(*code.FindView)
@@ -112,8 +109,6 @@ func (ge *CodeView) Spell() { //gti:add
 	if tv == nil {
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	sv := tv.RecycleTabWidget("Spell", true, code.SpellViewType).(*code.SpellView)
 	sv.ConfigSpellView(ge, txv)
@@ -131,8 +126,6 @@ func (ge *CodeView) Symbols() { //gti:add
 	if tv == nil {
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	sv := tv.RecycleTabWidget("Symbols", true, code.SymbolsViewType).(*code.SymbolsView)
 	sv.ConfigSymbolsView(ge, ge.ProjSettings().Symbols)
@@ -146,8 +139,6 @@ func (ge *CodeView) Debug() { //gti:add
 	if tv == nil {
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	ge.Settings.Debug.Mode = cdebug.Exec
 	exePath := string(ge.Settings.RunExec)
@@ -169,8 +160,6 @@ func (ge *CodeView) DebugTest() { //gti:add
 	if tv == nil {
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	ge.Settings.Debug.Mode = cdebug.Test
 	tstPath := string(txv.Buf.Filename)
@@ -189,8 +178,6 @@ func (ge *CodeView) DebugAttach(pid uint64) { //gti:add
 	if tv == nil {
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	ge.Settings.Debug.Mode = cdebug.Attach
 	ge.Settings.Debug.PID = pid
@@ -309,10 +296,10 @@ func (ge *CodeView) UpdateStatusLabel() {
 	}
 
 	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", ge.Nm, ge.ActiveVCSInfo, fnm, ln, ch, msg)
-	lbl.SetTextUpdate(str)
+	lbl.SetText(str).Update()
 }
 
 // HelpWiki opens wiki page for code on github
 func (ge *CodeView) HelpWiki() { //gti:add
-	goosi.TheApp.OpenURL("https://cogentcore.org/core/code/")
+	gi.TheApp.OpenURL("https://cogentcore.org/code")
 }

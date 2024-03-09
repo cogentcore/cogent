@@ -77,12 +77,10 @@ func (a *App) AppBar(tb *gi.Toolbar) {
 	}
 }
 
-func (a *App) ConfigWidget() {
+func (a *App) Config() {
 	if a.HasChildren() {
 		return
 	}
-
-	updt := a.UpdateStart()
 
 	// st := StructForFlags(a.Cmd.Flags)
 	// giv.NewStructView(a).SetStruct(st)
@@ -135,15 +133,11 @@ func (a *App) ConfigWidget() {
 	})
 
 	sp.SetSplits(0.8, 0.2)
-
-	a.UpdateEnd(updt)
 }
 
 // RunCmd runs the given command in the context of the given commands frame
 // and current directory label.
 func (a *App) RunCmd(cmd string, cmds *gi.Frame, dir *gi.Label) error {
-	updt := cmds.UpdateStart()
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	cfr := gi.NewFrame(cmds).Style(func(s *styles.Style) {
@@ -210,7 +204,6 @@ func (a *App) RunCmd(cmd string, cmds *gi.Frame, dir *gi.Label) error {
 	}()
 
 	cmds.Update()
-	cmds.UpdateEndLayout(updt)
 
 	words, err := shellwords.Parse(cmd)
 	if err != nil {
@@ -231,7 +224,7 @@ func (a *App) RunCmd(cmd string, cmds *gi.Frame, dir *gi.Label) error {
 			}
 		}
 		a.Dir = d
-		dir.SetTextUpdate(a.Dir)
+		dir.SetText(a.Dir).Update()
 		return nil
 	}
 

@@ -124,12 +124,11 @@ func (gv *VectorView) SetTextProps(tps map[string]string) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("SetTextProps", "")
-	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
 		gv.SetTextPropsNode(itm.(svg.Node), tps)
 	}
-	sv.UpdateEndRender(updt)
+	sv.NeedsRender()
 	gv.ChangeMade()
 }
 
@@ -236,7 +235,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 	// ki.InitNode(&ts.FontVal)
 	// ts.FontVal.SetSoloValue(reflect.ValueOf(&ts.Font))
 	// fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(gi.Node2D)
-	// ts.FontVal.ConfigWidget(fw)
+	// ts.FontVal.Config(fw)
 
 	// fsz := gi.NewSpinner(tb, "size")
 	// fsz.SetValue(ts.Size.Val)

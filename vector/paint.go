@@ -507,7 +507,6 @@ func (pv *PaintView) Config() {
 	if pv.HasChildren() {
 		return
 	}
-	updt := pv.UpdateStart()
 	pv.StrokeType = PaintSolid
 	pv.FillType = PaintSolid
 
@@ -647,9 +646,8 @@ func (pv *PaintView) Config() {
 	// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
 	// })
 
-	sc := giv.NewColorView(ss, "stroke-clr")
+	giv.NewColorView(ss, "stroke-clr")
 	// sc.SetProp("vertical-align", styles.AlignTop)
-	sc.Config()
 	// sc.SetColor(sty.StrokeStyle.Color)
 	// sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 	// 	if pv.StrokeType == PaintSolid {
@@ -762,8 +760,6 @@ func (pv *PaintView) Config() {
 	// })
 
 	gi.NewStretch(pv)
-
-	pv.UpdateEnd(updt)
 }
 
 // StrokeStack returns the stroke stack frame

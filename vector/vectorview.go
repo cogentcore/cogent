@@ -85,9 +85,6 @@ func (vv *VectorView) OpenDrawingFile(fnm gi.Filename) error {
 
 // OpenDrawing opens a new .svg drawing
 func (vv *VectorView) OpenDrawing(fnm gi.Filename) error { //gti:add
-	updt := vv.UpdateStart()
-	defer vv.UpdateEndRender(updt)
-
 	err := vv.OpenDrawingFile(fnm)
 
 	sv := vv.SVG()
@@ -96,10 +93,10 @@ func (vv *VectorView) OpenDrawing(fnm gi.Filename) error { //gti:add
 	tv.CloseAll()
 	tv.ReSync()
 	vv.SetStatus("Opened: " + string(vv.Filename))
-	vv.UpdateEnd(updt)
 	tv.CloseAll()
 	sv.bgVectorEff = 0
 	sv.UpdateView(true)
+	vv.NeedsRender()
 	return err
 }
 
@@ -272,31 +269,28 @@ func (vv *VectorView) ModalToolbarStack() *gi.Layout {
 // SetModalSelect sets the modal toolbar to be the select one
 func (vv *VectorView) SetModalSelect() {
 	tbs := vv.ModalToolbarStack()
-	updt := tbs.UpdateStart()
 	vv.UpdateSelectToolbar()
 	idx, _ := tbs.Kids.IndexByName("select-tb", 0)
 	tbs.StackTop = idx
-	tbs.UpdateEndLayout(updt)
+	tbs.NeedsLayout()
 }
 
 // SetModalNode sets the modal toolbar to be the node editing one
 func (vv *VectorView) SetModalNode() {
 	tbs := vv.ModalToolbarStack()
-	updt := tbs.UpdateStart()
 	vv.UpdateNodeToolbar()
 	idx, _ := tbs.Kids.IndexByName("node-tb", 1)
 	tbs.StackTop = idx
-	tbs.UpdateEndLayout(updt)
+	tbs.NeedsLayout()
 }
 
 // SetModalText sets the modal toolbar to be the text editing one
 func (vv *VectorView) SetModalText() {
 	tbs := vv.ModalToolbarStack()
-	updt := tbs.UpdateStart()
 	vv.UpdateTextToolbar()
 	idx, _ := tbs.Kids.IndexByName("text-tb", 2)
 	tbs.StackTop = idx
-	tbs.UpdateEndLayout(updt)
+	tbs.NeedsLayout()
 }
 
 func (vv *VectorView) HBox() *gi.Frame {
@@ -352,7 +346,6 @@ func (vv *VectorView) Config() {
 	if vv.HasChildren() {
 		return
 	}
-	updt := vv.UpdateStart()
 	gi.NewLayout(vv, "modal-tb").Style(func(s *styles.Style) {
 		s.Display = styles.Stacked
 	})
@@ -441,8 +434,6 @@ func (vv *VectorView) Config() {
 	vv.LayerViewSigs(lyv)
 
 	sv.UpdateGradients(vv.EditState.Gradients)
-
-	vv.UpdateEnd(updt)
 }
 
 // IsConfiged returns true if the view is fully configured
@@ -548,7 +539,6 @@ func (vv *VectorView) SetStatus(msg string) {
 	if sb == nil {
 		return
 	}
-	updt := sb.UpdateStart()
 	lbl := vv.StatusLabel()
 	es := &vv.EditState
 	str := "<b>" + strings.TrimSuffix(es.Tool.String(), "Tool") + "</b>\t"
@@ -557,7 +547,6 @@ func (vv *VectorView) SetStatus(msg string) {
 	}
 	str += msg
 	lbl.SetText(str)
-	sb.UpdateEnd(updt)
 }
 
 // AddCloseDialog adds the close dialog that prompts the user to save the

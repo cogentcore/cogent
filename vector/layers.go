@@ -167,7 +167,6 @@ func (vv *VectorView) AddLayer() { //gti:add
 		bg.SetProp("groupmode", "layer")
 		l1 := svr.InsertNewChild(svg.GroupType, si+1, "Layer1")
 		l1.SetProp("groupmode", "layer")
-		svr.SetChildAdded()
 		nk := len(svr.Kids)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
@@ -176,7 +175,6 @@ func (vv *VectorView) AddLayer() { //gti:add
 		vv.SetCurLayer(l1.Name())
 	} else {
 		l1 := svr.InsertNewChild(svg.GroupType, si+nl, fmt.Sprintf("Layer%d", nl))
-		svr.SetChildAdded()
 		l1.SetProp("groupmode", "layer")
 		vv.SetCurLayer(l1.Name())
 	}

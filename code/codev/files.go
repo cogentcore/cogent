@@ -186,8 +186,6 @@ func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Nod
 	if fn.IsDir() {
 		return
 	}
-	updt := ge.UpdateStart()
-	defer ge.UpdateEndLayout(updt)
 
 	if tv.IsNotSaved() {
 		ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
@@ -200,6 +198,7 @@ func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Nod
 		}
 		ge.SetActiveTextEditorIdx(vidx) // this calls FileModCheck
 	}
+	ge.NeedsLayout()
 }
 
 // NextViewFileNode sets the next text view to view file in given node (opens
@@ -308,9 +307,6 @@ func (ge *CodeView) ViewFileInIdx(fnm gi.Filename, idx int) (*code.TextEditor, i
 // LinkViewFileNode opens the file node in the 2nd texteditor, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) {
-	updt := ge.UpdateStart()
-	defer ge.UpdateEndLayout(updt)
-
 	if ge.PanelIsOpen(TextEditor2Idx) {
 		ge.SetActiveTextEditorIdx(1)
 	} else {
@@ -319,6 +315,7 @@ func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) 
 	tv := ge.ActiveTextEditor()
 	idx := ge.ActiveTextEditorIdx
 	ge.ViewFileNode(tv, idx, fn)
+	ge.NeedsLayout()
 	return tv, idx
 }
 

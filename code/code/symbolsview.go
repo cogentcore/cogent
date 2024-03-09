@@ -143,7 +143,6 @@ func (sv *SymbolsView) RefreshAction() {
 // This is called for refresh action.
 func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	sfr := sv.Frame()
-	updt := sfr.UpdateStart()
 	var tv *SymTreeView
 	if sv.Syms == nil {
 		sv.Syms = &SymNode{}
@@ -171,7 +170,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	tv.ReSync()
 
 	tv.OpenAll()
-	sfr.UpdateEndLayout(updt)
+	sfr.NeedsLayout()
 }
 
 func SelectSymbol(ge Code, ssym syms.Symbol) {
@@ -185,8 +184,6 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 		}
 		return
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	tv.Highlights = tv.Highlights[:0]
 	tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
@@ -194,6 +191,7 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocusEvent()
 	ge.FocusOnTabs()
+	tv.NeedsLayout()
 }
 
 // OpenPackage opens package-level symbols for current active texteditor
@@ -241,7 +239,7 @@ func symMatch(str, match string, ignoreCase bool) bool {
 // OpenSyms opens symbols from given symbol map (assumed to be package-level symbols)
 // filtered by filename and match -- called on root node of tree.
 func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
-	sn.DeleteChildren(ki.DestroyKids)
+	sn.DeleteChildren()
 
 	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
@@ -377,7 +375,7 @@ func (st *SymTreeView) SetSymIcon() {
 		if bp.IconIndeterminate != ic {
 			bp.IconIndeterminate = ic
 			bp.Update()
-			st.SetNeedsRender(true)
+			st.NeedsRender()
 		}
 	}
 }

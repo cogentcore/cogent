@@ -38,9 +38,6 @@ func (ge *CodeView) CurPanel() int {
 
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
 func (ge *CodeView) FocusOnPanel(panel int) bool {
-	updt := ge.UpdateStart()
-	defer ge.UpdateEndRender(updt)
-
 	sv := ge.Splits()
 	switch panel {
 	case TextEditor1Idx:
@@ -59,6 +56,7 @@ func (ge *CodeView) FocusOnPanel(panel int) bool {
 		ski, _ := gi.AsWidget(sv.Kids[panel])
 		ge.Scene.EventMgr.FocusNextFrom(ski)
 	}
+	ge.NeedsRender()
 	return true
 }
 
@@ -122,8 +120,6 @@ func (ge *CodeView) RecycleTabTextEditor(label string, sel bool) *texteditor.Edi
 	if tv == nil {
 		return nil
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndLayout(updt)
 
 	fr := tv.RecycleTab(label, sel)
 	if fr.HasChildren() {

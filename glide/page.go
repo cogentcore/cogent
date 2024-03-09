@@ -48,15 +48,13 @@ func (pg *Page) OpenURL(url string) {
 	url = resp.Request.URL.String()
 	pg.Context.PageURL = url
 	pg.History = append(pg.History, url)
-	updt := pg.UpdateStart()
-	pg.DeleteChildren(true)
+	pg.DeleteChildren()
 	err = coredom.ReadHTML(pg.Context, pg, resp.Body)
 	if err != nil {
 		gi.ErrorSnackbar(pg, err, "Error opening page")
 		return
 	}
 	pg.Update()
-	pg.UpdateEndLayout(updt)
 }
 
 // AppBar is the default app bar for a [Page]
