@@ -108,7 +108,7 @@ func (gv *VectorView) NewSelectFuncButton(par ki.Ki, fun any) *giv.FuncButton {
 // UpdateSelectToolbar updates the select toolbar based on current selection
 func (gv *VectorView) UpdateSelectToolbar() {
 	tb := gv.SelectToolbar()
-	tb.NeedsRender(true)
+	tb.NeedsRender()
 	// tb.Update()
 	// es := &gv.EditState
 	// if !es.HasSelected() {
@@ -123,8 +123,6 @@ func (gv *VectorView) UpdateSelectToolbar() {
 
 // UpdateSelect should be called whenever selection changes
 func (sv *SVGView) UpdateSelect() {
-	updt := sv.UpdateStart()
-	defer sv.UpdateEndRender(updt)
 	es := sv.EditState()
 	sv.VectorView.UpdateTabs()
 	sv.VectorView.UpdateSelectToolbar()
@@ -135,6 +133,7 @@ func (sv *SVGView) UpdateSelect() {
 		sv.RemoveNodeSprites()
 		sv.UpdateSelSprites()
 	}
+	sv.NeedsRender()
 }
 
 func (sv *SVGView) RemoveSelSprites() {
@@ -149,9 +148,6 @@ func (sv *SVGView) UpdateSelSprites() {
 	// win := sv.VectorView.ParentWindow()
 	// updt := win.UpdateStart()
 	// defer win.UpdateEnd(updt)
-
-	updt := sv.UpdateStart()
-	defer sv.UpdateEnd(updt)
 
 	es := sv.EditState()
 	es.UpdateSelBBox()
@@ -266,7 +262,6 @@ func (sv *SVGView) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
 
 // SetRubberBand updates the rubber band postion
 func (sv *SVGView) SetRubberBand(cur image.Point) {
-	updt := sv.UpdateStart()
 	es := sv.EditState()
 
 	if !es.InAction() {
@@ -294,7 +289,7 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
 	SetSpritePos(rl, bbox.Min)
 
-	sv.UpdateEndRender(updt)
+	sv.NeedsRender()
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -309,7 +304,6 @@ func (gv *VectorView) SelGroup() { //gti:add
 	sv := gv.SVG()
 	sv.UndoSave("Group", es.SelectedNamesString())
 
-	updt := sv.UpdateStart()
 	sl := es.SelectedListDepth(sv, false) // ascending depth order
 
 	fsel := sl[len(sl)-1] // first selected -- use parent of this for new group
@@ -326,7 +320,6 @@ func (gv *VectorView) SelGroup() { //gti:add
 	es.ResetSelected()
 	es.Select(ng)
 
-	sv.UpdateEnd(updt)
 	gv.UpdateAll()
 	gv.ChangeMade()
 }
@@ -339,8 +332,6 @@ func (gv *VectorView) SelUnGroup() { //gti:add
 	}
 	sv := gv.SVG()
 	sv.UndoSave("UnGroup", es.SelectedNamesString())
-
-	updt := sv.UpdateStart()
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
@@ -361,7 +352,6 @@ func (gv *VectorView) SelUnGroup() { //gti:add
 			}
 		}
 	}
-	sv.UpdateEnd(updt)
 	gv.UpdateAll()
 	gv.ChangeMade()
 }

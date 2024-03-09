@@ -124,12 +124,11 @@ func (gv *VectorView) SetTextProps(tps map[string]string) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("SetTextProps", "")
-	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
 		gv.SetTextPropsNode(itm.(svg.Node), tps)
 	}
-	sv.UpdateEndRender(updt)
+	sv.NeedsRender()
 	gv.ChangeMade()
 }
 

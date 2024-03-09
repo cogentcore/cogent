@@ -35,11 +35,9 @@ func (gv *VectorView) SetTool(tl Tools) {
 		return
 	}
 	tls := gv.Tools()
-	updt := tls.UpdateStart()
 	for i, t := range tls.Kids {
 		t.(gi.Widget).AsWidget().SetSelected(i == int(tl))
 	}
-	tls.UpdateEnd(updt)
 	fs := es.FirstSelectedNode()
 	if fs != nil {
 		switch v := fs.(type) {

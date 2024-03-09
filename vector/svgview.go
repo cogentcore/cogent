@@ -596,9 +596,7 @@ func (sv *SVGView) Undo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	updt := sv.UpdateStart()
 	grr.Log(jsons.Read(sv.Root(), b))
-	sv.UpdateEnd(updt)
 	sv.UpdateSelect()
 	return act
 }
@@ -613,9 +611,7 @@ func (sv *SVGView) Redo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	updt := sv.UpdateStart()
 	grr.Log(jsons.Read(sv.Root(), b))
-	sv.UpdateEnd(updt)
 	sv.UpdateSelect()
 	return act
 }
@@ -691,7 +687,6 @@ func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 	// win := sv.VectorView.ParentWindow()
 	tn := typ.Name
 	sv.ManipStart("New"+tn, "")
-	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	nr := sv.NewEl(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
@@ -702,7 +697,7 @@ func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 	nr.SetNodeSize(xfi.MulVec2AsVec(sz))
 	es.SelectAction(nr, events.SelectOne, end)
 	sv.ManipDone()
-	sv.UpdateEndRender(updt)
+	sv.NeedsRender()
 	sv.UpdateSelSprites()
 	es.DragSelStart(start)
 	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
@@ -747,7 +742,6 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	}
 	// win := sv.VectorView.ParentWindow()
 	sv.ManipStart("NewPath", "")
-	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	nr := sv.NewEl(svg.PathType).(*svg.Path)
 	xfi := sv.Root().Paint.Transform.Inverse()
@@ -761,7 +755,6 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 
 	es.SelectAction(nr, events.SelectOne, end)
-	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
 

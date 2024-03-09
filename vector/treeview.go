@@ -57,18 +57,14 @@ func (gv *VectorView) DuplicateSelected() { //gti:add
 	}
 	sv := gv.SVG()
 	sv.UndoSave("DuplicateSelected", "")
-	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	tv := gv.TreeView()
-	tvupdt := tv.UpdateStart()
 	// tv.SetFullReRender()
 	for _, tvi := range tvl {
 		tvi.AsTreeView().DuplicateSync()
 	}
 	gv.SetStatus("Duplicated selected items")
 	tv.ReSync() // todo: should not be needed
-	tv.UpdateEnd(tvupdt)
-	sv.UpdateEnd(updt)
 	gv.ChangeMade()
 }
 
@@ -94,18 +90,14 @@ func (gv *VectorView) CutSelected() { //gti:add
 	}
 	sv := gv.SVG()
 	sv.UndoSave("CutSelected", "")
-	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	sv.EditState().ResetSelected()
 	tv := gv.TreeView()
-	tvupdt := tv.UpdateStart()
 	// tv.SetFullReRender()
 	tv.SetSelectedViews(tvl)
 	tvl[0].Cut() // operates on first element in selection
 	gv.SetStatus("Cut selected items")
 	tv.ReSync() // todo: should not be needed
-	tv.UpdateEnd(tvupdt)
-	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	gv.ChangeMade()
 }
@@ -119,10 +111,8 @@ func (gv *VectorView) PasteClip() { //gti:add
 	// es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("Paste", "")
-	updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	tv := gv.TreeView()
-	tvupdt := tv.UpdateStart()
 	// tv.SetFullReRender()
 	// par := tv
 	// if es.CurLayer != "" {
@@ -134,8 +124,6 @@ func (gv *VectorView) PasteClip() { //gti:add
 	// par.PasteChildren(md, dnd.DropCopy)
 	gv.SetStatus("Pasted items from clipboard")
 	tv.ReSync() // todo: should not be needed
-	tv.UpdateEnd(tvupdt)
-	sv.UpdateEnd(updt)
 	gv.ChangeMade()
 }
 
@@ -148,19 +136,15 @@ func (gv *VectorView) DeleteSelected() {
 	}
 	sv := gv.SVG()
 	sv.UndoSave("DeleteSelected", "")
-	updt := sv.UpdateStart()
 	sv.EditState().ResetSelected()
 	// sv.SetFullReRender()
 	tv := gv.TreeView()
-	tvupdt := tv.UpdateStart()
 	// tv.SetFullReRender()
 	// for _, tvi := range tvl {
 	// 	tvi.SrcDelete()
 	// }
 	gv.SetStatus("Deleted selected items")
 	tv.ReSync() // todo: should not be needed
-	tv.UpdateEnd(tvupdt)
-	sv.UpdateEnd(updt)
 	sv.UpdateSelSprites()
 	gv.ChangeMade()
 }
