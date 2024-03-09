@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"log"
+	"net/http"
 	"time"
 
 	"cogentcore.org/core/coredom"
@@ -19,6 +23,8 @@ var (
 )
 
 func main() {
+	queryModelList()
+	return
 	b := gi.NewBody("Cogent AI")
 	b.AddAppBar(func(tb *gi.Toolbar) {
 		gi.NewButton(tb).SetText("Install") //todo set icon and merge ollama doc md files into s dom tree view
@@ -88,4 +94,28 @@ func main() {
 	rightSplits.SetSplits(.6, .4)
 
 	b.RunMainWindow()
+}
+
+func queryModelList() {
+	res, err := http.Get("https://ollama.com/library")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	// Load the HTML document
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Find the review items
+	doc.Find(".left-content article .post-title").Each(func(i int, s *goquery.Selection) {
+		// For each item found, get the title
+		title := s.Find("a").Text()
+		fmt.Printf("Review %d: %s\n", i, title)
+	})
 }
