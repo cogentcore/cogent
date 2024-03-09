@@ -187,9 +187,7 @@ func (vr *Variable) FollowPtr() {
 	if vr.Dbg == nil {
 		return
 	}
-	updt := vr.UpdateStart()
 	vr.Dbg.FollowPtr(vr)
-	vr.UpdateEnd(updt)
 }
 
 // VarParams are parameters controlling how much detail the debugger reports
