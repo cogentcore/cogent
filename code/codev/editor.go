@@ -437,7 +437,7 @@ func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		txpos = reg.Start
 		tv.HighlightRegion(reg)
 		tv.SetCursorTarget(txpos)
-		tv.NeedsLayout(true)
+		tv.NeedsLayout()
 	}
 	return true
 }

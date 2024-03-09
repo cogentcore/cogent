@@ -124,9 +124,6 @@ func (ge *CodeView) SetActiveFileInfo(buf *texteditor.Buf) {
 
 // SetActiveTextEditor sets the given texteditor as the active one, and returns its index
 func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
-	updt := ge.UpdateStart()
-	defer ge.UpdateEndLayout(updt)
-
 	idx := ge.TextEditorIndex(av)
 	if idx < 0 {
 		fmt.Println("te not found")
@@ -137,6 +134,7 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 		ge.SetActiveFileInfo(av.Buf)
 	}
 	ge.SetStatus("")
+	ge.NeedsLayout()
 	return idx
 }
 
@@ -144,9 +142,6 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 // TextEditor -- returns that texteditor.  This is the main method for
 // activating a text editor.
 func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
-	updt := ge.UpdateStart()
-	defer ge.UpdateEndLayout(updt)
-
 	if idx < 0 || idx >= NTextEditors {
 		log.Printf("CodeView SetActiveTextEditorIdx: text view index out of range: %v\n", idx)
 		return nil
@@ -160,7 +155,8 @@ func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
 	ge.SetStatus("")
 	av.SetFocusEvent()
 	av.SetCursorTarget(av.CursorPos)
-	av.NeedsLayout(true)
+	av.NeedsLayout()
+	ge.NeedsLayout()
 	return av
 }
 
@@ -185,8 +181,6 @@ func (ge *CodeView) SwapTextEditors() bool {
 	if !ge.PanelIsOpen(TextEditor1Idx) || !ge.PanelIsOpen(TextEditor1Idx+1) {
 		return false
 	}
-	updt := ge.UpdateStart()
-	defer ge.UpdateEndLayout(updt)
 
 	tva := ge.TextEditorByIndex(0)
 	tvb := ge.TextEditorByIndex(1)
@@ -195,6 +189,7 @@ func (ge *CodeView) SwapTextEditors() bool {
 	tva.SetBuf(bufb)
 	tvb.SetBuf(bufa)
 	ge.SetStatus("swapped buffers")
+	ge.NeedsLayout()
 	return true
 }
 
@@ -203,13 +198,12 @@ func (ge *CodeView) OpenFileAtRegion(filename gi.Filename, tr textbuf.Region) (t
 	if tv == nil {
 		return nil, false
 	}
-	updt := tv.UpdateStart()
-	defer tv.UpdateEndRender(updt)
 
 	tv.Highlights = tv.Highlights[:0]
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocusEvent()
+	tv.NeedsRender()
 	return tv, true
 }
 
@@ -271,11 +265,9 @@ func (ge *CodeView) UpdateTextButtons() {
 		}
 		sel := ati == i
 		if mb.Text != txnm || sel != mb.StateIs(states.Selected) {
-			updt := mb.UpdateStart()
 			mb.SetText(txnm)
 			mb.SetSelected(sel)
 			mb.Update()
-			mb.UpdateEndRender(updt)
 		}
 	}
 }

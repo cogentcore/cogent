@@ -11,7 +11,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/units"
 )
@@ -40,9 +39,6 @@ func (ge *CodeView) ConfigCodeView() {
 		return
 	}
 
-	updt := ge.UpdateStart()
-	defer ge.UpdateEndLayout(updt)
-
 	ge.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
@@ -57,6 +53,7 @@ func (ge *CodeView) ConfigCodeView() {
 
 	ge.OpenConsoleTab()
 	ge.UpdateFiles()
+	ge.NeedsLayout()
 }
 
 // IsConfiged returns true if the view is configured
@@ -86,7 +83,7 @@ func (ge *CodeView) Tabs() *gi.Tabs {
 
 // StatusBar returns the statusbar widget
 func (ge *CodeView) StatusBar() *gi.Frame {
-	if ge.This() == nil || ge.Is(ki.Deleted) || !ge.HasChildren() {
+	if ge.This() == nil || !ge.HasChildren() {
 		return nil
 	}
 	return ge.ChildByName("statusbar", 2).(*gi.Frame)
