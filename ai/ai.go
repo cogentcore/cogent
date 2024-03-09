@@ -65,23 +65,24 @@ func main() {
 		}()
 	})
 
-	downFrame := gi.NewFrame(rightSplits)
+	downFrame := gi.NewFrame(frame)
 	downFrame.Style(func(s *styles.Style) { s.Direction = styles.Row })
+	topic := gi.NewButton(downFrame).SetText("New topic").SetIcon(icons.ClearAll)
+	topic.Style(func(s *styles.Style) {
+		//s.Min.Set(units.Dp(33))
+	})
 	gi.NewTextField(downFrame).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here").Style(func(s *styles.Style) {
 		s.Max.X.Zero()
 	})
 
-	newFrame := gi.NewFrame(downFrame)
-	newFrame.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Align.Self = styles.End
-	})
-	topic := gi.NewButton(newFrame).SetText("New topic").SetIcon(icons.ClearAll)
-	topic.Style(func(s *styles.Style) {
-		s.Min.Set(units.Dp(33))
-	})
-	gi.NewButton(newFrame).SetText("Send").Style(func(s *styles.Style) {
-		s.Min.Set(units.Dp(33))
+	//newFrame := gi.NewFrame(downFrame)
+	//newFrame.Style(func(s *styles.Style) {
+	//	s.Direction = styles.Column
+	//	s.Align.Self = styles.End
+	//})
+
+	gi.NewButton(downFrame).SetText("Send").Style(func(s *styles.Style) {
+		//s.Min.Set(units.Dp(33))
 	})
 
 	rightSplits.SetSplits(.6, .4)
