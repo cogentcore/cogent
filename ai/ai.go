@@ -12,7 +12,6 @@ import (
 	"cogentcore.org/core/xe"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -95,38 +94,48 @@ func main() {
 			//ss := stream.New("")
 			scanner := bufio.NewScanner(resp.Body)
 
-			token := make([]string, 0)
+			//token := make([]string, 0)
 			// Handling each part
 			previousText := ""
-			for scanner.Scan() { //感觉没有 ollama 实现的快，研究一下
+			total := ""
+
+			for scanner.Scan() {
 				newText := GetMainText(scanner.Text())
 				if len(newText) < 1 {
 					continue
 				}
-				mainText := strings.Replace(newText, previousText, "", -1)
+				token := strings.Replace(newText, previousText, "", -1)
 				previousText = newText
-				println(mainText)
-				//ss.WriteString(mainText)
-				token = append(token, mainText)
+
+				answer.AsyncLock()
+				answer.DeleteChildren()
+				total += token
+				grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, total))
+				answer.Update()
+				answer.AsyncUnlock()
+
+				//println(token)
+				//ss.WriteString(token)
+				//token = append(token, token)
 			}
 			//mylog.Error(scanner.Err())
 			//todo close body ?
 
-			tokens := make([]string, 0) //todo remove
-			answer.OnShow(func(e events.Event) {
-				go func() {
-					total := ""
-					for _, token := range tokens {
-						answer.AsyncLock()
-						answer.DeleteChildren()
-						total += token
-						grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, total))
-						answer.Update()
-						answer.AsyncUnlock()
-						time.Sleep(100 * time.Millisecond)
-					}
-				}()
-			})
+			//tokens := make([]string, 0) //todo remove
+			//answer.OnShow(func(e events.Event) {
+			//	go func() {
+			//		total := ""
+			//		for _, token := range tokens {
+			//			answer.AsyncLock()
+			//			answer.DeleteChildren()
+			//			total += token
+			//			grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, total))
+			//			answer.Update()
+			//			answer.AsyncUnlock()
+			//			time.Sleep(100 * time.Millisecond)
+			//		}
+			//	}()
+			//})
 		}
 	})
 
