@@ -34,7 +34,7 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	giv.NewSliceView(leftFrame).SetSlice(Models).SetReadOnly(true)
+	giv.NewTableView(leftFrame).SetSlice(&Models).SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {
