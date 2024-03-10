@@ -87,6 +87,7 @@ func main() {
 				token = append(token, mainText)
 			}
 			//mylog.Error(scanner.Err())
+			//todo close body ?
 		}
 
 	}).Style(func(s *styles.Style) {

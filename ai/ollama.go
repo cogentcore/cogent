@@ -3,12 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
-	http "github.com/bogdanfinn/fhttp"
-
 	"github.com/aandrew-me/tgpt/v2/client"
 	"github.com/aandrew-me/tgpt/v2/structs"
+	http "github.com/bogdanfinn/fhttp"
+	"strings"
 )
 
 type Response struct {
