@@ -73,8 +73,8 @@ func main() {
 
 	gi.NewButton(prompt).SetIcon(icons.Send).OnClick(func(e events.Event) {
 		if textField.Text() != "" {
-			resp, err := NewRequest("go1.22 Generic type constraints", structs.Params{
-				ApiModel:    "gemma:2b",
+			resp, err := NewRequest(textField.Text(), structs.Params{ //"go1.22 Generic type constraints"
+				ApiModel:    "gemma:2b", //todo get from left view
 				ApiKey:      "",
 				Provider:    "",
 				Temperature: "",
