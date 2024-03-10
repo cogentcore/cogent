@@ -34,6 +34,9 @@ func main() {
 
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
+
+	giv.NewSliceView(leftFrame).SetSlice(&Models).SetReadOnly(true)
+
 	giv.NewFileView(leftFrame)
 	gi.NewButton(leftFrame).SetText("Update module").Style(func(s *styles.Style) {
 		s.Align.Self = styles.End
