@@ -49,46 +49,8 @@ func main() {
 		//s.Min.Set(units.Dp(33))
 	})
 
-	message := ""
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
-		if message != "" {
-			resp, err := NewRequest("go1.22 Generic type constraints", structs.Params{
-				ApiModel:    "gemma:2b",
-				ApiKey:      "",
-				Provider:    "",
-				Temperature: "",
-				Top_p:       "",
-				Max_length:  "1111111",
-				Preprompt:   "",
-				ThreadID:    "",
-			}, "")
-			if err != nil {
-				return
-			}
-			//if !mylog.Error(err) {
-			//	return
-			//}
-			//ss := stream.New("")
-			scanner := bufio.NewScanner(resp.Body)
-
-			token := make([]string, 0)
-			// Handling each part
-			previousText := ""
-			for scanner.Scan() { //感觉没有 ollama 实现的快，研究一下
-				newText := GetMainText(scanner.Text())
-				if len(newText) < 1 {
-					continue
-				}
-				mainText := strings.Replace(newText, previousText, "", -1)
-				previousText = newText
-				println(mainText)
-				//codeText.Print(mainText) //todo 颜色不生效
-				//ss.WriteString(mainText)
-				token = append(token, mainText)
-			}
-			//mylog.Error(scanner.Err())
-			//todo close body ?
-		}
+		xe.Run("") //todo
 
 	}).Style(func(s *styles.Style) {
 		s.Align.Self = styles.End
@@ -132,7 +94,43 @@ func main() {
 		s.Max.X.Zero()
 	})
 	textField.OnInput(func(e events.Event) {
-		message = textField.Text()
+		if textField.Text() != "" {
+			resp, err := NewRequest("go1.22 Generic type constraints", structs.Params{
+				ApiModel:    "gemma:2b",
+				ApiKey:      "",
+				Provider:    "",
+				Temperature: "",
+				Top_p:       "",
+				Max_length:  "1111111",
+				Preprompt:   "",
+				ThreadID:    "",
+			}, "")
+			if err != nil {
+				return
+			}
+			//if !mylog.Error(err) {
+			//	return
+			//}
+			//ss := stream.New("")
+			scanner := bufio.NewScanner(resp.Body)
+
+			token := make([]string, 0)
+			// Handling each part
+			previousText := ""
+			for scanner.Scan() { //感觉没有 ollama 实现的快，研究一下
+				newText := GetMainText(scanner.Text())
+				if len(newText) < 1 {
+					continue
+				}
+				mainText := strings.Replace(newText, previousText, "", -1)
+				previousText = newText
+				println(mainText)
+				//ss.WriteString(mainText)
+				token = append(token, mainText)
+			}
+			//mylog.Error(scanner.Err())
+			//todo close body ?
+		}
 	})
 
 	//newFrame := gi.NewFrame(downFrame)
