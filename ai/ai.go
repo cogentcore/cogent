@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"github.com/aandrew-me/tgpt/v2/structs"
 	"strings"
 	"time"
 
@@ -40,12 +42,53 @@ func main() {
 	newFrame.Style(func(s *styles.Style) {
 		s.Direction = styles.Row
 	})
-	gi.NewButton(newFrame).SetText("Update all module").Style(func(s *styles.Style) {
+	gi.NewButton(newFrame).SetText("Update all module").OnClick(func(e events.Event) {
+		queryModelList()
+	}).Style(func(s *styles.Style) {
 		s.Align.Self = styles.End
 		//s.Min.Set(units.Dp(33))
 	})
+
+	message := ""
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
-		queryModelList()
+		if message != "" {
+			resp, err := NewRequest("go1.22 Generic type constraints", structs.Params{
+				ApiModel:    "gemma:2b",
+				ApiKey:      "",
+				Provider:    "",
+				Temperature: "",
+				Top_p:       "",
+				Max_length:  "1111111",
+				Preprompt:   "",
+				ThreadID:    "",
+			}, "")
+			if err != nil {
+				return
+			}
+			//if !mylog.Error(err) {
+			//	return
+			//}
+			//ss := stream.New("")
+			scanner := bufio.NewScanner(resp.Body)
+
+			token := make([]string, 0)
+			// Handling each part
+			previousText := ""
+			for scanner.Scan() { //感觉没有 ollama 实现的快，研究一下
+				newText := GetMainText(scanner.Text())
+				if len(newText) < 1 {
+					continue
+				}
+				mainText := strings.Replace(newText, previousText, "", -1)
+				previousText = newText
+				println(mainText)
+				//codeText.Print(mainText) //todo 颜色不生效
+				//ss.WriteString(mainText)
+				token = append(token, mainText)
+			}
+			//mylog.Error(scanner.Err())
+		}
+
 	}).Style(func(s *styles.Style) {
 		s.Align.Self = styles.End
 		//s.Min.Set(units.Dp(33))
@@ -64,7 +107,7 @@ func main() {
 	answer.OnShow(func(e events.Event) {
 		go func() {
 			total := ""
-			for _, token := range tokens {
+			for _, token := range tokens { //todo this need replace by "Run selected module").OnClick event
 				answer.AsyncLock()
 				answer.DeleteChildren()
 				total += token
@@ -83,8 +126,12 @@ func main() {
 		s.Align.Items = styles.Center
 	})
 	gi.NewButton(prompt).SetIcon(icons.Add)
-	gi.NewTextField(prompt).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here").Style(func(s *styles.Style) {
+	textField := gi.NewTextField(prompt).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here")
+	textField.Style(func(s *styles.Style) {
 		s.Max.X.Zero()
+	})
+	textField.OnInput(func(e events.Event) {
+		message = textField.Text()
 	})
 
 	//newFrame := gi.NewFrame(downFrame)
