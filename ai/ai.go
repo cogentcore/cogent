@@ -58,6 +58,9 @@ func main() {
 	frame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
 	answer := gi.NewFrame(frame)
+	answer.Style(func(s *styles.Style) {
+		s.Overflow.Set(styles.OverflowAuto)
+	})
 	answer.OnShow(func(e events.Event) {
 		go func() {
 			total := ""
@@ -73,13 +76,14 @@ func main() {
 		}()
 	})
 
-	downFrame := gi.NewFrame(frame)
-	downFrame.Style(func(s *styles.Style) { s.Direction = styles.Row })
-	topic := gi.NewButton(downFrame).SetText("New topic").SetIcon(icons.ClearAll)
-	topic.Style(func(s *styles.Style) {
-		//s.Min.Set(units.Dp(33))
+	prompt := gi.NewFrame(frame)
+	prompt.Style(func(s *styles.Style) {
+		s.Direction = styles.Row
+		s.Grow.Set(1, 0)
+		s.Align.Items = styles.Center
 	})
-	gi.NewTextField(downFrame).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here").Style(func(s *styles.Style) {
+	gi.NewButton(prompt).SetIcon(icons.Add)
+	gi.NewTextField(prompt).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here").Style(func(s *styles.Style) {
 		s.Max.X.Zero()
 	})
 
@@ -89,9 +93,7 @@ func main() {
 	//	s.Align.Self = styles.End
 	//})
 
-	gi.NewButton(downFrame).SetText("Send").Style(func(s *styles.Style) {
-		//s.Min.Set(units.Dp(33))
-	})
+	gi.NewButton(prompt).SetIcon(icons.Send)
 
 	rightSplits.SetSplits(.6, .4)
 
