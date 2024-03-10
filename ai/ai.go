@@ -10,6 +10,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/xe"
+	"fmt"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	"strings"
 )
@@ -19,7 +20,7 @@ func main() {
 	b.AddAppBar(func(tb *gi.Toolbar) {
 		gi.NewButton(tb).SetText("Install") //todo set icon and merge ollama doc md files into s dom tree view
 		gi.NewButton(tb).SetText("Start server").OnClick(func(e events.Event) {
-			xe.Run("ollama", "serve")
+			xe.Run("ollama", "serve") //todo bug this is not have log output.... not working,unknown reason
 		})
 		gi.NewButton(tb).SetText("Stop server").OnClick(func(e events.Event) {
 			//todo kill thread ?
@@ -34,18 +35,26 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	giv.NewTableView(leftFrame).SetSlice(&Models).SetReadOnly(true)
+	tableView := giv.NewTableView(leftFrame).SetSlice(&Models)
+	tableView.SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {
-		s.Direction = styles.Row
+		s.Direction = styles.Column
 	})
-	gi.NewButton(newFrame).SetText("Update all module").OnClick(func(e events.Event) {
+	gi.NewButton(newFrame).SetText("Update module list").OnClick(func(e events.Event) {
 		queryModelList()
 	})
 
-	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
-		xe.Run("ollama", " ") //todo get left model name
+	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) { //android click pop menu is not well, so wo need some button
+		SelectedRow := tableView.SelVal //todo rename to SelectedRow
+		fmt.Println(SelectedRow)        // why it is nil ?
+		//xe.Run("ollama", " ")
+	})
+	gi.NewButton(newFrame).SetText("Stop selected module").OnClick(func(e events.Event) { //android click pop menu is not well, so wo need some button
+		SelectedRow := tableView.SelVal
+		fmt.Println(SelectedRow)
+		//xe.Run("ollama", " ")
 	})
 
 	rightSplits := gi.NewSplits(splits)
@@ -109,7 +118,7 @@ func main() {
 				answer.AsyncUnlock()
 			}
 			//mylog.Error(scanner.Err())
-			//todo close body ? do not close, it should be do when close serve
+			resp.Body.Close()
 		}
 	})
 
