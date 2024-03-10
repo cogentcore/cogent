@@ -20,14 +20,14 @@ func main() {
 	b.AddAppBar(func(tb *gi.Toolbar) {
 		gi.NewButton(tb).SetText("Install") //todo set icon and merge ollama doc md files into s dom tree view
 		gi.NewButton(tb).SetText("Start server").OnClick(func(e events.Event) {
-			xe.Run("ollama", "serve") //todo bug this is not have log output.... not working,unknown reason
+			xe.Run("ollama", "serve") //todo bug this is not have log output.... not working,unknown reason,why can't use  my library ???
 		})
 		gi.NewButton(tb).SetText("Stop server").OnClick(func(e events.Event) {
 			//todo kill thread ?
 			//netstat -aon|findstr 11434
 		})
-		gi.NewButton(tb).SetText("Logs")
-		gi.NewButton(tb).SetText("About").SetIcon(icons.Info)
+		gi.NewButton(tb).SetText("Logs")                      //todo add a new windows show log and set ico
+		gi.NewButton(tb).SetText("About").SetIcon(icons.Info) //todo add a new windows show some info
 	})
 
 	splits := gi.NewSplits(b)
@@ -47,9 +47,9 @@ func main() {
 	})
 
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) { //android click pop menu is not well, so wo need some button
-		SelectedRow := tableView.SelVal //todo rename to SelectedRow
+		SelectedRow := tableView.SelVal //todo could you rename SelVal as SelectedRow ?
 		fmt.Println(SelectedRow)        // why it is nil ?
-		//xe.Run("ollama", " ")
+		//xe.Run("ollama", " ")//todo could you rename xe as commandLine or cmd ?
 	})
 	gi.NewButton(newFrame).SetText("Stop selected module").OnClick(func(e events.Event) { //android click pop menu is not well, so wo need some button
 		SelectedRow := tableView.SelVal
@@ -107,7 +107,7 @@ func main() {
 				if len(newText) < 1 {
 					continue
 				}
-				token := strings.Replace(newText, previousText, "", -1)
+				token := strings.ReplaceAll(newText, previousText, "")
 				previousText = newText
 
 				answer.AsyncLock()
