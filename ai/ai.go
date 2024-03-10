@@ -42,9 +42,6 @@ func main() {
 	})
 	gi.NewButton(newFrame).SetText("Update all module").OnClick(func(e events.Event) {
 		queryModelList()
-	}).Style(func(s *styles.Style) {
-		s.Align.Self = styles.End
-		//s.Min.Set(units.Dp(33))
 	})
 
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
@@ -73,7 +70,8 @@ func main() {
 	textField.Style(func(s *styles.Style) {
 		s.Max.X.Zero()
 	})
-	textField.OnInput(func(e events.Event) {
+
+	gi.NewButton(prompt).SetIcon(icons.Send).OnClick(func(e events.Event) {
 		if textField.Text() != "" {
 			resp, err := NewRequest("go1.22 Generic type constraints", structs.Params{
 				ApiModel:    "gemma:2b",
@@ -91,11 +89,7 @@ func main() {
 			//if !mylog.Error(err) {
 			//	return
 			//}
-			//ss := stream.New("")
 			scanner := bufio.NewScanner(resp.Body)
-
-			//token := make([]string, 0)
-			// Handling each part
 			previousText := ""
 			total := ""
 
@@ -113,39 +107,11 @@ func main() {
 				grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, total))
 				answer.Update()
 				answer.AsyncUnlock()
-
-				//println(token)
-				//ss.WriteString(token)
-				//token = append(token, token)
 			}
 			//mylog.Error(scanner.Err())
-			//todo close body ?
-
-			//tokens := make([]string, 0) //todo remove
-			//answer.OnShow(func(e events.Event) {
-			//	go func() {
-			//		total := ""
-			//		for _, token := range tokens {
-			//			answer.AsyncLock()
-			//			answer.DeleteChildren()
-			//			total += token
-			//			grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, total))
-			//			answer.Update()
-			//			answer.AsyncUnlock()
-			//			time.Sleep(100 * time.Millisecond)
-			//		}
-			//	}()
-			//})
+			//todo close body ? do not close, it should be do when close serve
 		}
 	})
-
-	//newFrame := gi.NewFrame(downFrame)
-	//newFrame.Style(func(s *styles.Style) {
-	//	s.Direction = styles.Column
-	//	s.Align.Self = styles.End
-	//})
-
-	gi.NewButton(prompt).SetIcon(icons.Send)
 
 	rightSplits.SetSplits(.6, .4)
 
