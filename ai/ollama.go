@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	http "github.com/bogdanfinn/fhttp"
@@ -25,7 +24,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (*http
 	client, err := client.NewClient()
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(0)
+		return nil, err
 	}
 
 	model := "mistral"
@@ -66,7 +65,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (*http
 	if err != nil {
 		fmt.Println("\nSome error has occurred.")
 		fmt.Println("Error:", err)
-		os.Exit(0)
+		return nil, err
 	}
 	// Setting all the required headers
 	req.Header.Set("Content-Type", "application/json")
