@@ -50,11 +50,7 @@ func main() {
 	})
 
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
-		xe.Run("") //todo
-
-	}).Style(func(s *styles.Style) {
-		s.Align.Self = styles.End
-		//s.Min.Set(units.Dp(33))
+		xe.Run("ollama", " ") //todo get left model name
 	})
 
 	rightSplits := gi.NewSplits(splits)
