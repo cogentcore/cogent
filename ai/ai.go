@@ -11,7 +11,6 @@ import (
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/units"
 	"cogentcore.org/core/xe"
 )
 
@@ -37,15 +36,19 @@ func main() {
 
 	giv.NewSliceView(leftFrame).SetSlice(Models).SetReadOnly(true)
 
-	gi.NewButton(leftFrame).SetText("Update module").Style(func(s *styles.Style) {
-		s.Align.Self = styles.End
-		s.Min.Set(units.Dp(33))
+	newFrame := gi.NewFrame(leftFrame)
+	newFrame.Style(func(s *styles.Style) {
+		s.Direction = styles.Row
 	})
-	gi.NewButton(leftFrame).SetText("Run module").OnClick(func(e events.Event) {
+	gi.NewButton(newFrame).SetText("Update all module").Style(func(s *styles.Style) {
+		s.Align.Self = styles.End
+		//s.Min.Set(units.Dp(33))
+	})
+	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
 		queryModelList()
 	}).Style(func(s *styles.Style) {
 		s.Align.Self = styles.End
-		s.Min.Set(units.Dp(33))
+		//s.Min.Set(units.Dp(33))
 	})
 
 	rightSplits := gi.NewSplits(splits)
