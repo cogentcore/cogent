@@ -2,6 +2,9 @@ package main
 
 import (
 	"bufio"
+	"fmt"
+	"strings"
+
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
@@ -10,9 +13,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/xe"
-	"fmt"
 	"github.com/aandrew-me/tgpt/v2/structs"
-	"strings"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 	b.AddAppBar(func(tb *gi.Toolbar) {
 		gi.NewButton(tb).SetText("Install") //todo set icon and merge ollama doc md files into s dom tree view
 		gi.NewButton(tb).SetText("Start server").OnClick(func(e events.Event) {
-			xe.Run("ollama", "serve") //todo bug this is not have log output.... not working,unknown reason,why can't use  my library ???
+			gi.ErrorSnackbar(b, xe.Verbose().Run("ollama", "serve"))
 		})
 		gi.NewButton(tb).SetText("Stop server").OnClick(func(e events.Event) {
 			//todo kill thread ?
@@ -81,7 +82,10 @@ func main() {
 	})
 
 	gi.NewButton(prompt).SetIcon(icons.Send).OnClick(func(e events.Event) {
-		if textField.Text() != "" {
+		if textField.Text() == "" {
+			return
+		}
+		go func() {
 			resp, err := NewRequest(textField.Text(), structs.Params{ //"go1.22 Generic type constraints"
 				ApiModel:    "gemma:2b", //todo get from left view
 				ApiKey:      "",
@@ -93,11 +97,10 @@ func main() {
 				ThreadID:    "",
 			}, "")
 			if err != nil {
+				gi.ErrorSnackbar(prompt, err)
 				return
 			}
-			//if !mylog.Error(err) {
-			//	return
-			//}
+			defer resp.Body.Close()
 			scanner := bufio.NewScanner(resp.Body)
 			previousText := ""
 			total := ""
@@ -117,9 +120,8 @@ func main() {
 				answer.Update()
 				answer.AsyncUnlock()
 			}
-			//mylog.Error(scanner.Err())
-			resp.Body.Close()
-		}
+			gi.ErrorSnackbar(prompt, scanner.Err())
+		}()
 	})
 
 	rightSplits.SetSplits(.6, .4)
