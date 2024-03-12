@@ -178,7 +178,8 @@ func queryModelTags(name string) (tags []string) {
 	if !mylog.Error(err) {
 		return
 	}
-	mylog.Trace("tags html body", string(all))
+	//mylog.Trace("tags html body", string(all))
+	WriteTruncate("tags.html", all)
 	return
 }
 
