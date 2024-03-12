@@ -1,22 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ddkwork/golibrary/mylog"
-	"os"
+	"github.com/ddkwork/golibrary/stream"
 	"strings"
 	"testing"
 )
 
 func Test_queryModelTags(t *testing.T) {
 	//queryModelTags("gemma")
-	file, err := os.ReadFile("tags.html")
-	if !mylog.Error(err) {
-		return
-	}
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(file))
+	doc, err := goquery.NewDocumentFromReader(stream.NewReadFile("tags.html"))
 	if !mylog.Error(err) {
 		return
 	}
