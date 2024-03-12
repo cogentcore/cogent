@@ -141,7 +141,7 @@ func queryModelList() {
 	if !mylog.Error(err) {
 		return
 	}
-	defer res.Body.Close()
+	defer mylog.Error(res.Body.Close())
 	if res.StatusCode != 200 {
 		mylog.Error(fmt.Sprintf("status code error: %d %s", res.StatusCode, res.Status))
 		return
