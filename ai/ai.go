@@ -142,7 +142,7 @@ func queryModelList() {
 	if !mylog.Error(err) {
 		return
 	}
-	defer mylog.Error(resp.Body.Close())
+	defer func() { mylog.Error(resp.Body.Close()) }()
 	if resp.StatusCode != 200 {
 		mylog.Error(fmt.Sprintf("status code error: %d %s", resp.StatusCode, resp.Status))
 		return
@@ -173,7 +173,7 @@ func queryModelTags(name string) (tags []string) {
 	if !mylog.Error(err) {
 		return
 	}
-	defer mylog.Error(resp.Body.Close())
+	defer func() { mylog.Error(resp.Body.Close()) }()
 	all, err := io.ReadAll(resp.Body)
 	if !mylog.Error(err) {
 		return
