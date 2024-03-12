@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"cogentcore.org/core/xe"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -137,16 +138,16 @@ func main() {
 }
 
 func queryModelList() {
-	res, err := http.Get("https://ollama.com/library")
+	resp, err := http.Get("https://ollama.com/library")
 	if !mylog.Error(err) {
 		return
 	}
-	defer mylog.Error(res.Body.Close())
-	if res.StatusCode != 200 {
-		mylog.Error(fmt.Sprintf("status code error: %d %s", res.StatusCode, res.Status))
+	defer mylog.Error(resp.Body.Close())
+	if resp.StatusCode != 200 {
+		mylog.Error(fmt.Sprintf("status code error: %d %s", resp.StatusCode, resp.Status))
 		return
 	}
-	doc, err := goquery.NewDocumentFromReader(res.Body) // todo get tags and make a treeView
+	doc, err := goquery.NewDocumentFromReader(resp.Body) // todo get tags and make a treeView
 	if !mylog.Error(err) {
 		return
 	}
@@ -164,6 +165,21 @@ func queryModelList() {
 		})
 	})
 	mylog.Struct(Models)
+}
+
+func queryModelTags(name string) (tags []string) {
+	tags = make([]string, 0)
+	resp, err := http.Get("https://ollama.com/library/" + name + "/tags")
+	if !mylog.Error(err) {
+		return
+	}
+	defer mylog.Error(resp.Body.Close())
+	all, err := io.ReadAll(resp.Body)
+	if !mylog.Error(err) {
+		return
+	}
+	mylog.Trace("tags html body", string(all))
+	return
 }
 
 func unescape(s string) string {
