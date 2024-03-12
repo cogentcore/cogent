@@ -7,7 +7,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/aandrew-me/tgpt/v2 v2.7.2-0.20240302111058-ac8336bfc4d9
 	github.com/bogdanfinn/fhttp v0.5.27
-	github.com/ddkwork/golibrary v0.0.0-20240312064312-8e47990a38cf
+	github.com/ddkwork/golibrary v0.0.0-20240312075350-c8c18023c799
 	github.com/go-delve/delve v1.22.1
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
@@ -22,6 +22,7 @@ require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
+	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bogdanfinn/tls-client v1.7.2 // indirect
@@ -30,6 +31,7 @@ require (
 	github.com/cilium/ebpf v0.13.2 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dc0d/caseconv v0.5.0 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -66,6 +68,7 @@ require (
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/yuin/goldmark v1.7.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+	github.com/zzl/go-win32api/v2 v2.1.0 // indirect
 	go.abhg.dev/goldmark/wikilink v0.5.0 // indirect
 	golang.org/x/arch v0.7.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect

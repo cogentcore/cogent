@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ddkwork/golibrary/mylog"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -18,17 +20,17 @@ func Test_queryModelTags(t *testing.T) {
 	if !mylog.Error(err) {
 		return
 	}
-	Models := make([]Model, 0)
-	doc.Find("a").Each(func(i int, s *goquery.Selection) {
-		title := s.Find("h2").Text()
-		if title == "" {
-			return
-		}
-		title = unescape(title)
-		description := s.Find("p").First().Text()
-		Models = append(Models, Model{
-			Name:        title,
-			Description: description,
-		})
+	doc.Find(".flex.px-4.py-3").Each(func(i int, s *goquery.Selection) {
+		modelName := s.Find("href").Text()
+		modelInfo := s.Find("span").Text()
+		modelInfoSplit := strings.Split(modelInfo, " • ")
+		modelHash := modelInfoSplit[0]
+		modelSize := modelInfoSplit[1]
+		modelUpdateTime := modelInfoSplit[2]
+
+		fmt.Printf("Model Name: %s\n", modelName)
+		fmt.Printf("Model Hash: %s\n", modelHash)
+		fmt.Printf("Model Size: %s\n", modelSize)
+		fmt.Printf("Model Update Time: %s\n", modelUpdateTime)
 	})
 }

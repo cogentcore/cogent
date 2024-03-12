@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"cogentcore.org/core/xe"
 	"fmt"
+	"github.com/ddkwork/golibrary/stream"
 	"io"
 	"net/http"
 	"strconv"
@@ -179,7 +180,7 @@ func queryModelTags(name string) (tags []string) {
 		return
 	}
 	//mylog.Trace("tags html body", string(all))
-	WriteTruncate("tags.html", all)
+	stream.WriteTruncate("tags.html", all)
 	return
 }
 
