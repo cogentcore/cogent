@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/aandrew-me/tgpt/v2/client"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	http "github.com/bogdanfinn/fhttp"
-	"strings"
+	"github.com/ddkwork/golibrary/mylog"
 )
 
 type Response struct {
@@ -18,11 +20,10 @@ type Response struct {
 	} `json:"choices"`
 }
 
-func NewRequest(input string, params structs.Params, prevMessages string) (*http.Response, error) {
+func NewRequest(input string, params structs.Params, prevMessages string) (r *http.Response, err error) {
 	client, err := client.NewClient()
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+	if !mylog.Error(err) {
+		return
 	}
 
 	model := "mistral"
@@ -35,14 +36,17 @@ func NewRequest(input string, params structs.Params, prevMessages string) (*http
 		temperature = params.Temperature
 	}
 
-	top_p := "0.5"
+	topP := "0.5"
 	if params.Top_p != "" {
-		top_p = params.Top_p
+		topP = params.Top_p
 	}
 
-	safeInput, _ := json.Marshal(input)
+	safeInput, err := json.Marshal(input)
+	if !mylog.Error(err) {
+		return
+	}
 
-	var data = strings.NewReader(fmt.Sprintf(`{
+	data := strings.NewReader(fmt.Sprintf(`{
 		"frequency_penalty": 0,
 		"messages": [
 			%v
@@ -57,24 +61,29 @@ func NewRequest(input string, params structs.Params, prevMessages string) (*http
 		"temperature": %v,
 		"top_p": %v
 	}
-	`, prevMessages, string(safeInput), model, temperature, top_p))
+	`, prevMessages, string(safeInput), model, temperature, topP))
 
 	req, err := http.NewRequest("POST", "http://localhost:11434/v1/chat/completions", data)
-	if err != nil {
-		fmt.Println("\nSome error has occurred.")
-		fmt.Println("Error:", err)
-		return nil, err
+	if !mylog.Error(err) {
+		return
 	}
-	// Setting all the required headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+params.ApiKey)
 
-	// Return response
 	return client.Do(req)
 }
 
-func GetMainText(line string) (mainText string) {
-	var obj = "{}"
+func HandleToken(line string) (mainText string) {
+	//https://521github.com/ollama/ollama/blob/main/openai/op#262
+	//_, err = w.ResponseWriter.Write([]byte(fmt.Sprintf("data: %s\n\n", d)))
+	//_, err = w.ResponseWriter.Write([]byte("data: [DONE]\n\n"))
+	if strings.Contains(line, "data: [DONE]") {
+		println()
+		mylog.Success("done", "finished")
+		return
+	}
+
+	obj := "{}"
 	if len(line) > 1 {
 		split := strings.Split(line, "data: ")
 		if len(split) > 1 {
@@ -85,13 +94,13 @@ func GetMainText(line string) (mainText string) {
 	}
 
 	var d Response
-	if err := json.Unmarshal([]byte(obj), &d); err != nil {
-		return ""
+	if !mylog.Error(json.Unmarshal([]byte(obj), &d)) {
+		return
 	}
 
 	if d.Choices != nil {
 		mainText = d.Choices[0].Delta.Content
 		return mainText
 	}
-	return ""
+	return
 }

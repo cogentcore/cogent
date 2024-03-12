@@ -3,9 +3,11 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.0.8-0.20240309213453-422cbc2cd1f1
+	cogentcore.org/core v0.0.8-0.20240312043521-bdafc24c3306
+	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/aandrew-me/tgpt/v2 v2.7.2-0.20240302111058-ac8336bfc4d9
 	github.com/bogdanfinn/fhttp v0.5.27
+	github.com/ddkwork/golibrary/mylog v0.0.0-20240312044711-c971815f0c61
 	github.com/go-delve/delve v1.22.1
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
@@ -18,6 +20,7 @@ require (
 	github.com/Masterminds/vcs v1.13.3 // indirect
 	github.com/alecthomas/chroma/v2 v2.12.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -29,11 +32,13 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240307211618-a69d953ea142 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/goki/freetype v1.0.5 // indirect
 	github.com/goki/vulkan v1.0.7 // indirect
+	github.com/google/pprof v0.0.0-20231101202521-4ca4178f5c7a // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
@@ -44,6 +49,7 @@ require (
 	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240226150601-1dcf7310316a // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
