@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
@@ -15,17 +14,24 @@ func Test_queryModelTags(t *testing.T) {
 	if !mylog.Error(err) {
 		return
 	}
-	doc.Find(".flex.px-4.py-3").Each(func(i int, s *goquery.Selection) {
-		modelName := s.Find("href").Text()
-		modelInfo := s.Find("span").Text()
-		modelInfoSplit := strings.Split(modelInfo, " • ")
-		modelHash := modelInfoSplit[0]
-		modelSize := modelInfoSplit[1]
-		modelUpdateTime := modelInfoSplit[2]
 
-		fmt.Printf("Model Name: %s\n", modelName)
-		fmt.Printf("Model Hash: %s\n", modelHash)
-		fmt.Printf("Model Size: %s\n", modelSize)
-		fmt.Printf("Model Update Time: %s\n", modelUpdateTime)
+	Models = make([]Model, 0)
+
+	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
+		Name := s.Find(".break-all").Text()
+		modelInfo := s.Find("span").Text()
+		lines, ok := stream.New(modelInfo).ToLines()
+		if !ok {
+			return
+		}
+		modelInfoSplit := strings.Split(lines[1], " • ")
+		Models = append(Models, Model{
+			Name:        Name,
+			Description: "", //todo merge description
+			UpdateTime:  strings.TrimSpace(lines[2]),
+			Hash:        strings.TrimSpace(modelInfoSplit[0]),
+			Size:        modelInfoSplit[1],
+		})
 	})
+	println()
 }
