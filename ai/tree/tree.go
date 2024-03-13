@@ -204,7 +204,8 @@ func FormatDataForEdit(rowObjectStruct any) (rowData []string) {
 	}
 	fields := reflect.VisibleFields(typeOf.Type())
 	for i, field := range fields {
-		mylog.Struct(field)
+		field = field
+		//mylog.Struct(field)
 		v := valueOf.Field(i).Interface()
 		switch t := v.(type) {
 		case string:

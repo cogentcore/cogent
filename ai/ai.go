@@ -200,39 +200,44 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 	if !mylog.Error(err) {
 		return
 	}
-	modelName := ""
-	doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) {
-		href, exists := s.Attr("href")
-		if exists {
-			parts := strings.Split(href, "/")
-			modelName = parts[2] //we need put this in request params,this is right model name,however parent.name is current model's short name,it's need not used in http request
-		}
-	})
-	if modelName == "" {
-		mylog.Error("not find model name in tags")
-		return
-	}
-	mylog.Success("model name with tag", modelName)
-
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		//tag := s.Find(".break-all").Text() //not need
+		modelName := ""
+		fnFindModelName := func() { //this not right working
+			doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) {
+				href, exists := s.Attr("href")
+				if exists {
+					parts := strings.Split(href, "/")
+					modelName = parts[2] //we need put this in request params,this is right model name,however parent.name is current model's short name,it's need not used in http request
+				}
+			})
+			if modelName == "" {
+				mylog.Error("not find model name in tags")
+				return
+			}
+			mylog.Success("model name with tag", modelName)
+		}
+
+		fnFindModelName()
+
 		modelInfo := s.Find("span").Text()
 		lines, ok := stream.New(modelInfo).ToLines()
 		if !ok {
+			mylog.Error("modelInfo ToLines not ok")
 			return
 		}
-		mylog.Warning("i", i)
 		modelInfoSplit := strings.Split(lines[1], " • ")
 		//parent.BreadthFirstTraversal(func(node *tree.Node[Model]) {//we BreadthFirstTraversal in top func, so here do not do it again
 		if strings.Contains(modelName, parent.Data.Name) {
-			parent.AddChild(tree.NewTreeNode(Model{
-				Name:        modelName,
+			model := Model{
+				Name:        modelName, //todo bud
 				Description: parent.Data.Description,
 				UpdateTime:  strings.TrimSpace(lines[2]),
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
 				Size:        modelInfoSplit[1],
-			}))
-			return
+			}
+			mylog.Struct(model)
+			parent.AddChild(tree.NewTreeNode(model))
 		}
 		//})
 	})
