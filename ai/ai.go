@@ -148,19 +148,22 @@ func QueryModelList() {
 		mylog.Error(fmt.Sprintf("status code error: %d %s", resp.StatusCode, resp.Status))
 		return
 	}
-	queryModelList(resp.Body)
+	root := queryModelList(resp.Body)
+	root.BreadthFirstTraversal(func(node *Node[Model]) {
+		QueryModelTags(node.Data.Name, node) //todo test
+	})
+	//todo last need save to json file when the test passed
 }
 
-var root = NewTreeNode(Model{
-	Name:        "root",
-	Description: "",
-	UpdateTime:  "",
-	Hash:        "",
-	Size:        "",
-	Children:    nil,
-})
-
-func queryModelList(r io.Reader) {
+func queryModelList(r io.Reader) (root *Node[Model]) {
+	root = NewTreeNode(Model{
+		Name:        "root",
+		Description: "",
+		UpdateTime:  "",
+		Hash:        "",
+		Size:        "",
+		Children:    nil,
+	})
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
@@ -169,27 +172,29 @@ func queryModelList(r io.Reader) {
 		name := s.Find("h2.mb-3").Text()
 		name = unescape(name)
 		description := s.Find("p.mb-4").First().Text()
-		root.AddChild(NewTreeNode(Model{
+		parent := NewTreeNode(Model{
 			Name:        name,
 			Description: description,
 			UpdateTime:  "",
 			Hash:        "",
 			Size:        "",
 			Children:    make([]Model, 0),
-		}))
+		})
+		root.AddChild(parent)
 	})
+	return
 }
 
-func QueryModelTags(name string) {
+func QueryModelTags(name string, parent *Node[Model]) {
 	resp, err := http.Get("https://ollama.com/library/" + name + "/tags")
 	if !mylog.Error(err) {
 		return
 	}
 	defer func() { mylog.Error(resp.Body.Close()) }()
-	queryModelTags(resp.Body)
+	queryModelTags(resp.Body, parent)
 }
 
-func queryModelTags(r io.Reader) {
+func queryModelTags(r io.Reader, parent *Node[Model]) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
@@ -203,9 +208,9 @@ func queryModelTags(r io.Reader) {
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
 
-		root.BreadthFirstTraversal(func(node *Node[Model]) {
+		parent.BreadthFirstTraversal(func(node *Node[Model]) {
 			if node.Data.Name == Name {
-				node.AddChild(NewTreeNode(Model{
+				parent.AddChild(NewTreeNode(Model{ //todo this node is parent ?? need test
 					Name:        Name,
 					Description: "",
 					UpdateTime:  strings.TrimSpace(lines[2]),
