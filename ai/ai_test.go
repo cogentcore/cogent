@@ -8,8 +8,9 @@ import (
 
 func Test_queryModelList(t *testing.T) {
 	queryModelList(stream.NewReadFile("library.html"))
-	queryModelTags(stream.NewReadFile("tags.html"))
-	println(root.Format(root)) //todo this need a treeTableView for show all tags in every model
+	queryModelTags(stream.NewReadFile("tags.html")) //todo for the test we need add another tag html file
+	println(root.Format(root))                      //todo this need a treeTableView for show all tags in every model
+	//todo save n-nar model tree to json, and when need update we should read from json file
 
 	return
 	resetModels()
