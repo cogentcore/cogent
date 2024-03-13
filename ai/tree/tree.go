@@ -4,14 +4,15 @@ package tree
 
 import (
 	"fmt"
-	"github.com/ddkwork/golibrary/mylog"
-	"github.com/ddkwork/golibrary/stream"
-	"github.com/google/uuid"
 	"reflect"
 	"slices"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/ddkwork/golibrary/mylog"
+	"github.com/ddkwork/golibrary/stream"
+	"github.com/google/uuid"
 )
 
 type Node[T any] struct {

@@ -2,13 +2,14 @@ package main
 
 import (
 	"bufio"
-	"cogentcore.org/cogent/ai/tree"
 	"fmt"
-	"github.com/ddkwork/golibrary/stream"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"cogentcore.org/cogent/ai/tree"
+	"github.com/ddkwork/golibrary/stream"
 
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"

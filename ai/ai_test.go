@@ -1,12 +1,13 @@
 package main
 
 import (
+	"strings"
+	"testing"
+
 	"cogentcore.org/cogent/ai/tree"
 	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
 	"github.com/stretchr/testify/assert"
-	"strings"
-	"testing"
 )
 
 func Test_queryModelList(t *testing.T) {
