@@ -1,4 +1,4 @@
-package main
+package tree
 
 import (
 	"fmt"
@@ -59,7 +59,7 @@ func Test_mock(t *testing.T) {
 	fmt.Println("tree after removing child2:")
 	root.Format(root)
 
-	root.UpdateNode(grandchild1.ID, o)
+	root.Update(grandchild1.ID, o)
 
 	fmt.Println("tree after updating grandchild1:")
 	root.Format(root)
@@ -107,7 +107,7 @@ func Test_main(t *testing.T) {
 	fmt.Println("tree after removing child2:")
 	root.Format(root)
 
-	root.UpdateNode(grandchild1.ID, "updated_grandchild1")
+	root.Update(grandchild1.ID, "updated_grandchild1")
 
 	fmt.Println("tree after updating grandchild1:")
 	println(root.Format(root))

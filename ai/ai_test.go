@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cogentcore.org/cogent/ai/tree"
 	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +12,7 @@ import (
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 
-	gemmaNode := NewTreeNode(Model{
+	gemmaNode := tree.NewTreeNode(Model{
 		Name:        "gemma",
 		Description: "",
 		UpdateTime:  "",

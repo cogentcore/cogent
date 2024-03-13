@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"cogentcore.org/cogent/ai/tree"
 	"fmt"
 	"github.com/ddkwork/golibrary/stream"
 	"io"
@@ -149,14 +150,14 @@ func QueryModelList() {
 		return
 	}
 	root := queryModelList(resp.Body)
-	root.BreadthFirstTraversal(func(node *Node[Model]) {
-		QueryModelTags(node.Data.Name, node) //todo test node is every parent ?
+	root.BreadthFirstTraversal(func(node *tree.Node[Model]) {
+		QueryModelTags(node.Data.Name, node)
 	})
 	//todo last need save to json file when the test passed
 }
 
-func queryModelList(r io.Reader) (root *Node[Model]) {
-	root = NewTreeNode(Model{
+func queryModelList(r io.Reader) (root *tree.Node[Model]) {
+	root = tree.NewTreeNode(Model{
 		Name:        "root",
 		Description: "",
 		UpdateTime:  "",
@@ -172,7 +173,7 @@ func queryModelList(r io.Reader) (root *Node[Model]) {
 		name := s.Find("h2.mb-3").Text()
 		name = unescape(name)
 		description := s.Find("p.mb-4").First().Text()
-		parent := NewTreeNode(Model{
+		parent := tree.NewTreeNode(Model{
 			Name:        name,
 			Description: description,
 			UpdateTime:  "",
@@ -185,7 +186,7 @@ func queryModelList(r io.Reader) (root *Node[Model]) {
 	return
 }
 
-func QueryModelTags(name string, parent *Node[Model]) {
+func QueryModelTags(name string, parent *tree.Node[Model]) {
 	resp, err := http.Get("https://ollama.com/library/" + name + "/tags")
 	if !mylog.Error(err) {
 		return
@@ -194,7 +195,7 @@ func QueryModelTags(name string, parent *Node[Model]) {
 	queryModelTags(resp.Body, parent)
 }
 
-func queryModelTags(r io.Reader, parent *Node[Model]) {
+func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
@@ -214,18 +215,19 @@ func queryModelTags(r io.Reader, parent *Node[Model]) {
 	mylog.Success("model name with tag", modelName)
 
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
-		//tag := s.Find(".break-all").Text()//not need
+		//tag := s.Find(".break-all").Text() //not need
 		modelInfo := s.Find("span").Text()
 		lines, ok := stream.New(modelInfo).ToLines()
 		if !ok {
 			return
 		}
+		mylog.Warning("i", i)
 		modelInfoSplit := strings.Split(lines[1], " • ")
-		parent.BreadthFirstTraversal(func(node *Node[Model]) {
+		parent.BreadthFirstTraversal(func(node *tree.Node[Model]) {
 			if strings.Contains(modelName, node.Data.Name) {
-				node.AddChild(NewTreeNode(Model{
+				node.AddChild(tree.NewTreeNode(Model{
 					Name:        modelName,
-					Description: "",
+					Description: node.Data.Description,
 					UpdateTime:  strings.TrimSpace(lines[2]),
 					Hash:        strings.TrimSpace(modelInfoSplit[0]),
 					Size:        modelInfoSplit[1],

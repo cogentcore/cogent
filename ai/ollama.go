@@ -73,7 +73,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	return client.Do(req)
 }
 
-func HandleToken(line string) (mainText string) {
+func HandleToken(line string) (token string) {
 	//https://521github.com/ollama/ollama/blob/main/openai/op#262
 	//_, err = w.ResponseWriter.Write([]byte(fmt.Sprintf("data: %s\n\n", d)))
 	//_, err = w.ResponseWriter.Write([]byte("data: [DONE]\n\n"))
@@ -99,8 +99,8 @@ func HandleToken(line string) (mainText string) {
 	}
 
 	if d.Choices != nil {
-		mainText = d.Choices[0].Delta.Content
-		return mainText
+		token = d.Choices[0].Delta.Content
+		return token
 	}
 	return
 }
