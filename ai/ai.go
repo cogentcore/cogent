@@ -214,7 +214,7 @@ func queryModelTags(r io.Reader, parent *Node[Model]) {
 	mylog.Success("model name with tag", modelName)
 
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
-		tagName := s.Find(".break-all").Text()
+		//tag := s.Find(".break-all").Text()//not need
 		modelInfo := s.Find("span").Text()
 		lines, ok := stream.New(modelInfo).ToLines()
 		if !ok {
@@ -222,9 +222,9 @@ func queryModelTags(r io.Reader, parent *Node[Model]) {
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
 		parent.BreadthFirstTraversal(func(node *Node[Model]) {
-			if strings.Contains(modelName, node.Data.Name) { //todo test more
+			if strings.Contains(modelName, node.Data.Name) {
 				node.AddChild(NewTreeNode(Model{
-					Name:        modelName + ":" + tagName, //todo need get,not merge it ?
+					Name:        modelName,
 					Description: "",
 					UpdateTime:  strings.TrimSpace(lines[2]),
 					Hash:        strings.TrimSpace(modelInfoSplit[0]),
