@@ -160,7 +160,7 @@ func queryModelList(r io.Reader) {
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		name := s.Find("h2.mb-3").Text()
 		name = unescape(name)
-		description := s.Find("p.mb-4").Text()
+		description := s.Find("p.mb-4").First().Text()
 		Models = append(Models, Model{
 			Name:        name,
 			Description: description,

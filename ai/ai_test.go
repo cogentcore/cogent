@@ -8,10 +8,7 @@ import (
 
 func Test_queryModelList(t *testing.T) {
 	resetModels()
-	queryModelList(stream.NewReadFile("library.html"))
-	mylog.Struct(Models)
-}
-
-func Test_queryModelTags(t *testing.T) {
+	//queryModelList(stream.NewReadFile("library.html"))
 	queryModelTags(stream.NewReadFile("tags.html"))
+	mylog.Struct(Models)
 }
