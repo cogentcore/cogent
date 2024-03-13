@@ -9,6 +9,7 @@ require (
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/ddkwork/golibrary v0.0.0-20240312075350-c8c18023c799
 	github.com/go-delve/delve v1.22.1
+	github.com/google/uuid v1.6.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
 	github.com/shirou/gopsutil/v3 v3.24.2

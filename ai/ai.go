@@ -151,20 +151,32 @@ func QueryModelList() {
 	queryModelList(resp.Body)
 }
 
+var root = NewTreeNode(Model{
+	Name:        "root",
+	Description: "",
+	UpdateTime:  "",
+	Hash:        "",
+	Size:        "",
+	Children:    nil,
+})
+
 func queryModelList(r io.Reader) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
 	}
-	Models = make([]Model, 0)
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		name := s.Find("h2.mb-3").Text()
 		name = unescape(name)
 		description := s.Find("p.mb-4").First().Text()
-		Models = append(Models, Model{
+		root.AddChild(NewTreeNode(Model{
 			Name:        name,
 			Description: description,
-		})
+			UpdateTime:  "",
+			Hash:        "",
+			Size:        "",
+			Children:    make([]Model, 0),
+		}))
 	})
 }
 
@@ -190,12 +202,17 @@ func queryModelTags(r io.Reader) {
 			return
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
-		Models = append(Models, Model{
-			Name:        Name,
-			Description: "", //todo merge description
-			UpdateTime:  strings.TrimSpace(lines[2]),
-			Hash:        strings.TrimSpace(modelInfoSplit[0]),
-			Size:        modelInfoSplit[1],
+
+		root.BreadthFirstTraversal(func(node *Node[Model]) {
+			if node.Data.Name == Name {
+				node.AddChild(NewTreeNode(Model{
+					Name:        Name,
+					Description: "",
+					UpdateTime:  strings.TrimSpace(lines[2]),
+					Hash:        strings.TrimSpace(modelInfoSplit[0]),
+					Size:        modelInfoSplit[1],
+				}))
+			}
 		})
 	})
 }
@@ -216,13 +233,16 @@ func unescape(s string) string {
 	).Replace(s)
 }
 
-type Model struct {
-	Name        string
-	Description string
-	UpdateTime  string
-	Hash        string
-	Size        string
-}
+type (
+	Model struct {
+		Name        string
+		Description string
+		UpdateTime  string
+		Hash        string
+		Size        string
+		Children    []Model //tags
+	}
+)
 
 func resetModels() {
 	Models = Models[:0]

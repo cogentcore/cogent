@@ -7,8 +7,11 @@ import (
 )
 
 func Test_queryModelList(t *testing.T) {
-	resetModels()
-	//queryModelList(stream.NewReadFile("library.html"))
+	queryModelList(stream.NewReadFile("library.html"))
 	queryModelTags(stream.NewReadFile("tags.html"))
+	println(root.Format(root)) //todo this need a treeTableView for show all tags in every model
+
+	return
+	resetModels()
 	mylog.Struct(Models)
 }
