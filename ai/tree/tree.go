@@ -81,18 +81,18 @@ func (n *Node[T]) RemoveChild(id uuid.UUID) {
 }
 
 func (n *Node[T]) Update(id uuid.UUID, data T) {
-	node := n.Filter(id)
+	node := n.Find(id)
 	if node != nil {
 		node.Data = data
 	}
 }
 
-func (n *Node[T]) Filter(id uuid.UUID) *Node[T] {
+func (n *Node[T]) Find(id uuid.UUID) *Node[T] {
 	if n.ID == id {
 		return n
 	}
 	for _, child := range n.Children {
-		found := child.Filter(id) //this is safe
+		found := child.Find(id) //this is safe
 		if found != nil {
 			return found
 		}
@@ -178,7 +178,7 @@ func (n *Node[T]) formatData(rowObjectStruct any) (rowData string) {
 }
 
 func (n *Node[T]) InsertItem(parentID uuid.UUID, data T) *Node[T] {
-	parent := n.Filter(parentID)
+	parent := n.Find(parentID)
 	if parent == nil {
 		mylog.Error("parent id node not found")
 		return n
