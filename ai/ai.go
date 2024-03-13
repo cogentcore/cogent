@@ -151,7 +151,7 @@ func QueryModelList() {
 	}
 	root := queryModelList(resp.Body)
 	root.BreadthFirstTraversal(func(node *tree.Node[Model]) {
-		QueryModelTags(node.Data.Name, node)
+		QueryModelTags(node.Data.Name, node) //node is every container of model node
 	})
 	//todo last need save to json file when the test passed
 }
@@ -223,18 +223,18 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 		}
 		mylog.Warning("i", i)
 		modelInfoSplit := strings.Split(lines[1], " • ")
-		parent.BreadthFirstTraversal(func(node *tree.Node[Model]) {
-			if strings.Contains(modelName, node.Data.Name) {
-				parent.AddChild(tree.NewTreeNode(Model{
-					Name:        modelName,
-					Description: parent.Data.Description,
-					UpdateTime:  strings.TrimSpace(lines[2]),
-					Hash:        strings.TrimSpace(modelInfoSplit[0]),
-					Size:        modelInfoSplit[1],
-				}))
-				return
-			}
-		})
+		//parent.BreadthFirstTraversal(func(node *tree.Node[Model]) {//we BreadthFirstTraversal in top func, so here do not do it again
+		if strings.Contains(modelName, parent.Data.Name) {
+			parent.AddChild(tree.NewTreeNode(Model{
+				Name:        modelName,
+				Description: parent.Data.Description,
+				UpdateTime:  strings.TrimSpace(lines[2]),
+				Hash:        strings.TrimSpace(modelInfoSplit[0]),
+				Size:        modelInfoSplit[1],
+			}))
+			return
+		}
+		//})
 	})
 }
 

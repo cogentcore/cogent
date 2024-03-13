@@ -114,7 +114,7 @@ func (n *Node[T]) Sort(cmp func(a, b T) bool) {
 	}
 }
 
-func (n *Node[T]) DepthFirstTraversal(callback func(node *Node[T])) {
+func (n *Node[T]) DepthFirstTraversal(callback func(node *Node[T])) { //this method can not be call reaped
 	callback(n)
 	for _, child := range n.Children {
 		if child == nil {
@@ -125,7 +125,7 @@ func (n *Node[T]) DepthFirstTraversal(callback func(node *Node[T])) {
 	}
 }
 
-func (n *Node[T]) BreadthFirstTraversal(callback func(node *Node[T])) {
+func (n *Node[T]) BreadthFirstTraversal(callback func(node *Node[T])) { //this method can not be call reaped
 	queue := []*Node[T]{n}
 	for len(queue) > 0 {
 		node := queue[0]
