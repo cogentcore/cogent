@@ -203,9 +203,7 @@ func queryModelTags(r io.Reader, parent *Node[Model]) {
 	doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
 		if exists {
-			//mylog.Warning("model name with tag", href)
 			parts := strings.Split(href, "/")
-			mylog.Trace("model name with tag", parts)
 			modelName = parts[2] //we need put this in request params,this is right model name,however parent.name is current model's short name,it's need not used in http request
 		}
 	})
@@ -213,7 +211,7 @@ func queryModelTags(r io.Reader, parent *Node[Model]) {
 		mylog.Error("not find model name in tags")
 		return
 	}
-	mylog.Success("model name in tags", modelName)
+	mylog.Success("model name with tag", modelName)
 
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		tagName := s.Find(".break-all").Text()
