@@ -73,19 +73,19 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	return client.Do(req)
 }
 
-func HandleToken(line string) (token string) {
+func HandleToken(respBody string) (token string) {
 	//https://521github.com/ollama/ollama/blob/main/openai/op#262
 	//_, err = w.ResponseWriter.Write([]byte(fmt.Sprintf("data: %s\n\n", d)))
 	//_, err = w.ResponseWriter.Write([]byte("data: [DONE]\n\n"))
-	if strings.Contains(line, "data: [DONE]") {
+	if strings.Contains(respBody, "data: [DONE]") {
 		println()
 		mylog.Success("done", "finished")
 		return
 	}
 
 	obj := "{}"
-	if len(line) > 1 {
-		split := strings.Split(line, "data: ")
+	if len(respBody) > 1 {
+		split := strings.Split(respBody, "data: ")
 		if len(split) > 1 {
 			obj = split[1]
 		} else {
