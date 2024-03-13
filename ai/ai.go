@@ -225,13 +225,14 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 		modelInfoSplit := strings.Split(lines[1], " • ")
 		parent.BreadthFirstTraversal(func(node *tree.Node[Model]) {
 			if strings.Contains(modelName, node.Data.Name) {
-				node.AddChild(tree.NewTreeNode(Model{
+				parent.AddChild(tree.NewTreeNode(Model{
 					Name:        modelName,
-					Description: node.Data.Description,
+					Description: parent.Data.Description,
 					UpdateTime:  strings.TrimSpace(lines[2]),
 					Hash:        strings.TrimSpace(modelInfoSplit[0]),
 					Size:        modelInfoSplit[1],
 				}))
+				return
 			}
 		})
 	})
