@@ -150,7 +150,7 @@ func QueryModelList() {
 	}
 	root := queryModelList(resp.Body)
 	root.BreadthFirstTraversal(func(node *Node[Model]) {
-		QueryModelTags(node.Data.Name, node) //todo test
+		QueryModelTags(node.Data.Name, node) //todo test node is every parent ?
 	})
 	//todo last need save to json file when the test passed
 }
@@ -199,19 +199,34 @@ func queryModelTags(r io.Reader, parent *Node[Model]) {
 	if !mylog.Error(err) {
 		return
 	}
+	modelName := ""
+	doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if exists {
+			//mylog.Warning("model name with tag", href)
+			parts := strings.Split(href, "/")
+			mylog.Trace("model name with tag", parts)
+			modelName = parts[2] //we need put this in request params,this is right model name,however parent.name is current model's short name,it's need not used in http request
+		}
+	})
+	if modelName == "" {
+		mylog.Error("not find model name in tags")
+		return
+	}
+	mylog.Success("model name in tags", modelName)
+
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
-		Name := s.Find(".break-all").Text()
+		tagName := s.Find(".break-all").Text()
 		modelInfo := s.Find("span").Text()
 		lines, ok := stream.New(modelInfo).ToLines()
 		if !ok {
 			return
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
-
 		parent.BreadthFirstTraversal(func(node *Node[Model]) {
-			if node.Data.Name == Name {
-				parent.AddChild(NewTreeNode(Model{ //todo this node is parent ?? need test
-					Name:        Name,
+			if strings.Contains(modelName, node.Data.Name) { //todo test more
+				node.AddChild(NewTreeNode(Model{
+					Name:        modelName + ":" + tagName, //todo need get,not merge it ?
 					Description: "",
 					UpdateTime:  strings.TrimSpace(lines[2]),
 					Hash:        strings.TrimSpace(modelInfoSplit[0]),

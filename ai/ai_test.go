@@ -10,7 +10,7 @@ func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 
 	gemmaNode := NewTreeNode(Model{
-		Name:        "",
+		Name:        "gemma",
 		Description: "",
 		UpdateTime:  "",
 		Hash:        "",
@@ -21,7 +21,7 @@ func Test_queryModelList(t *testing.T) {
 	queryModelTags(stream.NewReadFile("tags.html"), gemmaNode) //gemma bug
 
 	llama2Node := NewTreeNode(Model{
-		Name:        "",
+		Name:        "llama2",
 		Description: "",
 		UpdateTime:  "",
 		Hash:        "",
