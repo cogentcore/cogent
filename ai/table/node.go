@@ -84,36 +84,6 @@ func (n *Node[T]) Sort(cmp func(a, b T) bool) {
 	}
 }
 
-func (n *Node[T]) Format(root *Node[T]) string {
-	s := stream.New("")
-	n.format(root, "", true, s)
-	return s.String()
-}
-
-func (n *Node[T]) format(root *Node[T], prefix string, isLast bool, s *stream.Stream) {
-	s.WriteString(fmt.Sprintf("%s", prefix))
-	if isLast {
-		s.WriteString("└───")
-		prefix += "    "
-		s.WriteString(prefix)
-	} else {
-		s.WriteString("├───")
-		prefix += "│   "
-		s.WriteString(prefix)
-	}
-	//switch data := any(root.Data).(type) {
-	//case EncodingFieldEditData:
-	//	sprintf := fmt.Sprintf("%d. %s (%s): %v", data.Number, data.Name, data.Kind.String(), data.Value)
-	//	s.WriteStringLn(sprintf)
-	//}
-	//sprintf := fmt.Sprintf("%d. %s (%s): %v", root.Data.Number, root.Data.Name, root.Data.Kind.String(), root.Data.Value)
-	s.WriteStringLn(n.formatData(root.Data))
-
-	for i := 0; i < len(root.children); i++ {
-		n.format(root.children[i], prefix, i == len(root.children)-1, s)
-	}
-}
-
 func (n *Node[T]) InsertItem(parentID uuid.UUID, data T) *Node[T] {
 	parent := n.Find(parentID)
 	if parent == nil {
@@ -175,6 +145,36 @@ func (n *Node[T]) WalkContainer(callback func(node *Node[T])) { //this method ca
 		for _, child := range node.children {
 			queue = append(queue, child)
 		}
+	}
+}
+
+func (n *Node[T]) Format(root *Node[T]) string {
+	s := stream.New("")
+	n.format(root, "", true, s)
+	return s.String()
+}
+
+func (n *Node[T]) format(root *Node[T], prefix string, isLast bool, s *stream.Stream) { //todo add callback for format data
+	s.WriteString(fmt.Sprintf("%s", prefix))
+	if isLast {
+		s.WriteString("└───")
+		prefix += "    "
+		s.WriteString(prefix)
+	} else {
+		s.WriteString("├───")
+		prefix += "│   "
+		s.WriteString(prefix)
+	}
+	//switch data := any(root.Data).(type) {
+	//case EncodingFieldEditData:
+	//	sprintf := fmt.Sprintf("%d. %s (%s): %v", data.Number, data.Name, data.Kind.String(), data.Value)
+	//	s.WriteStringLn(sprintf)
+	//}
+	//sprintf := fmt.Sprintf("%d. %s (%s): %v", root.Data.Number, root.Data.Name, root.Data.Kind.String(), root.Data.Value)
+	s.WriteStringLn(n.formatData(root.Data))
+
+	for i := 0; i < len(root.children); i++ {
+		n.format(root.children[i], prefix, i == len(root.children)-1, s)
 	}
 }
 
