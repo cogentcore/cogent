@@ -1,4 +1,4 @@
-package tree
+package table
 
 import (
 	"fmt"
@@ -18,18 +18,18 @@ func Test_mock(t *testing.T) {
 		Index: 9,
 		Name:  "ppp",
 	}
-	root := NewTreeNode(o)
+	root := NewNode("", true, o)
 
-	child1 := NewTreeNode(o)
-	child2 := NewTreeNode(o)
-	child3 := NewTreeNode(o)
+	child1 := NewNode("", false, o)
+	child2 := NewNode("", false, o)
+	child3 := NewNode("", false, o)
 
 	root.AddChild(child1)
 	root.AddChild(child2)
 	root.AddChild(child3)
 
-	grandchild1 := NewTreeNode(o)
-	grandchild2 := NewTreeNode(o)
+	grandchild1 := NewNode("", false, o)
+	grandchild2 := NewNode("", false, o)
 
 	child1.AddChild(grandchild1)
 	child1.AddChild(grandchild2)
@@ -38,12 +38,12 @@ func Test_mock(t *testing.T) {
 	root.Format(root)
 
 	fmt.Println("Depth First Traversal:")
-	root.WalkDepth(func(node *Node[obj]) { //深度遍历
+	root.Walk(func(node *Node[obj]) { //深度遍历
 		fmt.Println(node.Data)
 	})
 
 	fmt.Println("Breadth First Traversal:")
-	root.WalkBranch(func(node *Node[obj]) { //广度遍历
+	root.WalkContainer(func(node *Node[obj]) { //广度遍历
 		fmt.Println(node.Data)
 	})
 
@@ -66,18 +66,18 @@ func Test_mock(t *testing.T) {
 }
 
 func Test_main(t *testing.T) {
-	root := NewTreeNode("root")
+	root := NewNode("root", true, "root")
 
-	child1 := NewTreeNode("child1")
-	child2 := NewTreeNode("child2")
-	child3 := NewTreeNode("child3")
+	child1 := NewNode("", false, "child1")
+	child2 := NewNode("", false, "child2")
+	child3 := NewNode("", false, "child3")
 
 	root.AddChild(child1)
 	root.AddChild(child2)
 	root.AddChild(child3)
 
-	grandchild1 := NewTreeNode("grandchild1")
-	grandchild2 := NewTreeNode("grandchild2")
+	grandchild1 := NewNode("", false, "grandchild1")
+	grandchild2 := NewNode("", false, "grandchild2")
 
 	child1.AddChild(grandchild1)
 	child1.AddChild(grandchild2)
@@ -86,12 +86,12 @@ func Test_main(t *testing.T) {
 	root.Format(root)
 
 	fmt.Println("Depth First Traversal:")
-	root.WalkDepth(func(node *Node[string]) {
+	root.Walk(func(node *Node[string]) {
 		fmt.Println(node.Data)
 	})
 
 	fmt.Println("Breadth First Traversal:")
-	root.WalkBranch(func(node *Node[string]) {
+	root.WalkContainer(func(node *Node[string]) {
 		fmt.Println(node.Data)
 	})
 
@@ -123,14 +123,14 @@ func Test_mock2(t *testing.T) {
 		K      reflect.Kind
 		Value  any
 	}
-	root := NewTreeNode(field{
+	root := NewNode("", true, field{
 		Name:   "x",
 		Number: 0,
 		Depth:  0,
 		K:      0,
 		Value:  nil,
 	})
-	Binary1 := NewTreeNode(field{
+	Binary1 := NewNode("", false, field{
 		Name:   "y",
 		Number: 0,
 		Depth:  0,

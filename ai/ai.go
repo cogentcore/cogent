@@ -10,8 +10,6 @@ import (
 
 	"github.com/ddkwork/golibrary/stream"
 
-	"cogentcore.org/cogent/ai/tree"
-
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
@@ -23,6 +21,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	"github.com/ddkwork/golibrary/mylog"
+
+	"cogentcore.org/cogent/ai/table"
 )
 
 //go:generate go install .
@@ -152,14 +152,14 @@ func QueryModelList() {
 		return
 	}
 	root := queryModelList(resp.Body)
-	root.WalkBranch(func(node *tree.Node[Model]) {
+	root.WalkContainer(func(node *table.Node[Model]) {
 		QueryModelTags(node.Data.Name, node) //node is every container of model node
 	})
 	//todo last need save to json file when the test passed
 }
 
-func queryModelList(r io.Reader) (root *tree.Node[Model]) {
-	root = tree.NewTreeNode(Model{
+func queryModelList(r io.Reader) (root *table.Node[Model]) {
+	root = table.NewNode("aiModel", true, Model{
 		Name:        "root",
 		Description: "",
 		UpdateTime:  "",
@@ -175,7 +175,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 		name := s.Find("h2.mb-3").Text()
 		name = unescape(name)
 		description := s.Find("p.mb-4").First().Text()
-		parent := tree.NewTreeNode(Model{
+		parent := table.NewNode(name, false, Model{
 			Name:        name,
 			Description: description,
 			UpdateTime:  "",
@@ -188,7 +188,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 	return
 }
 
-func QueryModelTags(name string, parent *tree.Node[Model]) {
+func QueryModelTags(name string, parent *table.Node[Model]) {
 	resp, err := http.Get("https://ollama.com/library/" + name + "/tags")
 	if !mylog.Error(err) {
 		return
@@ -197,7 +197,7 @@ func QueryModelTags(name string, parent *tree.Node[Model]) {
 	queryModelTags(resp.Body, parent)
 }
 
-func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
+func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
@@ -239,7 +239,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 				Size:        modelInfoSplit[1],
 			}
 			mylog.Struct(model)
-			parent.AddChild(tree.NewTreeNode(model))
+			parent.AddChild(table.NewNode(modelName, false, model))
 		}
 		//})
 	})
