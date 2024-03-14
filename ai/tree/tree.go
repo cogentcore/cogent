@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
 	"github.com/google/uuid"
 )
@@ -72,12 +71,9 @@ func (n *Node[T]) AddChild(child *Node[T]) {
 func (n *Node[T]) RemoveChild(id uuid.UUID) {
 	for i, child := range n.Children {
 		if child.ID == id {
-			n.Children = append(n.Children[:i], n.Children[i+1:]...) //重新申请内存空间将杜绝nil pointer，但是会浪费内存和gc
-
-			//Children := append(n.Children[:i], n.Children[i+1:]...)
-			//n.Children = Children
-
-			mylog.Warning("remove child,the child is nil pointer in memory")
+			//重新申请内存空间将杜绝nil pointer，但是会浪费内存和gc
+			//但是为了减少后续代码频繁的判断node是nil影响可读性，我宁愿使用更多的内存和让gc更加繁忙
+			n.Children = append(n.Children[:i], n.Children[i+1:]...)
 			//slices.Delete(n.Children, i, i+1) //core style is nil maybe is this reason,we need check ki node's children is nil pointer
 			break
 		}
@@ -96,12 +92,11 @@ func (n *Node[T]) Find(id uuid.UUID) *Node[T] {
 		return n
 	}
 	for _, child := range n.Children {
-		found := child.Find(id) //this is safe
+		found := child.Find(id)
 		if found != nil {
 			return found
 		}
 	}
-	mylog.Error("node not found " + id.String())
 	return nil
 }
 
@@ -110,10 +105,6 @@ func (n *Node[T]) Sort(cmp func(a, b T) bool) {
 		return cmp(n.Children[i].Data, n.Children[j].Data)
 	})
 	for _, child := range n.Children {
-		if child == nil {
-			mylog.Error("child == nil,maybe by RemoveChild method")
-			continue
-		}
 		child.Sort(cmp)
 	}
 }
@@ -121,10 +112,6 @@ func (n *Node[T]) Sort(cmp func(a, b T) bool) {
 func (n *Node[T]) WalkDepth(callback func(node *Node[T])) { //this method can not be call reaped
 	callback(n)
 	for _, child := range n.Children {
-		if child == nil {
-			mylog.Error("child == nil,maybe by RemoveChild method")
-			continue
-		}
 		child.WalkDepth(callback)
 	}
 }
@@ -167,11 +154,6 @@ func (n *Node[T]) format(root *Node[T], prefix string, isLast bool, s *stream.St
 	s.WriteStringLn(n.formatData(root.Data))
 
 	for i := 0; i < len(root.Children); i++ {
-		if root.Children[i] == nil {
-			mylog.Error("root.Children[i] == nil,maybe by RemoveChild method")
-			panic(111)
-			continue
-		}
 		n.format(root.Children[i], prefix, i == len(root.Children)-1, s)
 	}
 }
@@ -185,7 +167,6 @@ func (n *Node[T]) formatData(rowObjectStruct any) (rowData string) {
 func (n *Node[T]) InsertItem(parentID uuid.UUID, data T) *Node[T] {
 	parent := n.Find(parentID)
 	if parent == nil {
-		mylog.Error("parent node id not found")
 		return n
 	}
 	child := NewTreeNode(data)
