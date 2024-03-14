@@ -38,12 +38,12 @@ func Test_mock(t *testing.T) {
 	root.Format(root)
 
 	fmt.Println("Depth First Traversal:")
-	root.DepthFirstTraversal(func(node *Node[obj]) { //深度遍历
+	root.WalkDepth(func(node *Node[obj]) { //深度遍历
 		fmt.Println(node.Data)
 	})
 
 	fmt.Println("Breadth First Traversal:")
-	root.BreadthFirstTraversal(func(node *Node[obj]) { //广度遍历
+	root.WalkBreadth(func(node *Node[obj]) { //广度遍历
 		fmt.Println(node.Data)
 	})
 
@@ -86,12 +86,12 @@ func Test_main(t *testing.T) {
 	root.Format(root)
 
 	fmt.Println("Depth First Traversal:")
-	root.DepthFirstTraversal(func(node *Node[string]) {
+	root.WalkDepth(func(node *Node[string]) {
 		fmt.Println(node.Data)
 	})
 
 	fmt.Println("Breadth First Traversal:")
-	root.BreadthFirstTraversal(func(node *Node[string]) {
+	root.WalkBreadth(func(node *Node[string]) {
 		fmt.Println(node.Data)
 	})
 
