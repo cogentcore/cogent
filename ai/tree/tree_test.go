@@ -43,7 +43,7 @@ func Test_mock(t *testing.T) {
 	})
 
 	fmt.Println("Breadth First Traversal:")
-	root.WalkBreadth(func(node *Node[obj]) { //广度遍历
+	root.WalkBranch(func(node *Node[obj]) { //广度遍历
 		fmt.Println(node.Data)
 	})
 
@@ -91,7 +91,7 @@ func Test_main(t *testing.T) {
 	})
 
 	fmt.Println("Breadth First Traversal:")
-	root.WalkBreadth(func(node *Node[string]) {
+	root.WalkBranch(func(node *Node[string]) {
 		fmt.Println(node.Data)
 	})
 

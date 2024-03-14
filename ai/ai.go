@@ -152,7 +152,7 @@ func QueryModelList() {
 		return
 	}
 	root := queryModelList(resp.Body)
-	root.WalkBreadth(func(node *tree.Node[Model]) {
+	root.WalkBranch(func(node *tree.Node[Model]) {
 		QueryModelTags(node.Data.Name, node) //node is every container of model node
 	})
 	//todo last need save to json file when the test passed
@@ -229,7 +229,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 			return
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
-		//parent.WalkBreadth(func(node *tree.Node[Model]) {//we WalkBreadth in top func, so here do not do it again
+		//parent.WalkBranch(func(node *tree.Node[Model]) {//we WalkBranch in top func, so here do not do it again
 		if strings.Contains(modelName, parent.Data.Name) {
 			model := Model{
 				Name:        modelName, //todo bug

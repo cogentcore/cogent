@@ -125,7 +125,8 @@ func (n *Node[T]) WalkDepth(callback func(node *Node[T])) { //this method can no
 	}
 }
 
-func (n *Node[T]) WalkBreadth(callback func(node *Node[T])) { //this method can not be call reaped
+// WalkBranch Breadth is branching in the context of data structures.
+func (n *Node[T]) WalkBranch(callback func(node *Node[T])) { //this method can not be call reaped
 	queue := []*Node[T]{n}
 	for len(queue) > 0 {
 		node := queue[0]
