@@ -73,8 +73,8 @@ func (n *Node[T]) RemoveChild(id uuid.UUID) {
 		if child.ID == id {
 			//重新申请内存空间将杜绝nil pointer，但是会浪费内存和gc
 			//但是为了减少后续代码频繁的判断node是nil影响可读性，我宁愿使用更多的内存和让gc更加繁忙
-			n.Children = append(n.Children[:i], n.Children[i+1:]...)
-			//slices.Delete(n.Children, i, i+1) //core style is nil maybe is this reason,we need check ki node's children is nil pointer
+			n.Children = append(n.Children[:i], n.Children[i+1:]...) //maybe has memory leaks
+			//slices.Delete(n.Children, i, i+1) //no memory leaks
 			break
 		}
 	}
