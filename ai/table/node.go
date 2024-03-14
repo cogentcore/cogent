@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//var _ RowConstraint  = (*Node[any])(nil)//todo check
+
 const ContainerKeyPostfix = "_container"
 
 type Node[T any] struct {
@@ -21,38 +23,6 @@ type Node[T any] struct {
 	children []*Node[T] `json:"children,omitempty"` // Container only
 	parent   *Node[T]
 }
-
-func (n *Node[T]) Clone(newParent *Node[T], preserveID bool) *Node[T] {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (n *Node[T]) CellData(columnID int, data any) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (n *Node[T]) String() string {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (n *Node[T]) Enabled() bool {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (n *Node[T]) CopyFrom(from *Node[T]) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (n *Node[T]) ApplyTo(to *Node[T]) {
-	//TODO implement me
-	panic("implement me")
-}
-
-//var _ RowConstraint  = (*Node[any])(nil)//todo check
 
 func NewNode[T any](typeKey string, isContainer bool, data T) *Node[T] {
 	if isContainer {
@@ -212,4 +182,34 @@ func (n *Node[T]) formatData(rowObjectStruct any) (rowData string) {
 	data := FormatDataForEdit(rowObjectStruct)
 	data[0] += "."
 	return strings.Join(data, "")
+}
+
+func (n *Node[T]) Clone(newParent *Node[T], preserveID bool) *Node[T] {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node[T]) CellData(columnID int, data any) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node[T]) String() string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node[T]) Enabled() bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node[T]) CopyFrom(from *Node[T]) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node[T]) ApplyTo(to *Node[T]) {
+	//TODO implement me
+	panic("implement me")
 }
