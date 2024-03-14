@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// RowData todo add depth method
 type RowData[T any] interface {
 	Clone(newParent *Node[T], preserveID bool) *Node[T]
 	CellData(columnID int, data any)
