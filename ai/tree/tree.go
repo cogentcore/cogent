@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/ddkwork/golibrary/stream"
 	"github.com/google/uuid"
@@ -73,17 +72,7 @@ func (n *Node[T]) AddChild(child *Node[T]) {
 func (n *Node[T]) RemoveChild(id uuid.UUID) {
 	for i, child := range n.Children {
 		if child.ID == id {
-			//重新申请内存空间将杜绝nil pointer，但是会浪费内存和gc
-			//但是为了减少后续代码频繁的判断node是nil影响可读性，我宁愿使用更多的内存和让gc更加繁忙
-			//n.Children = append(n.Children[:i], n.Children[i+1:]...) //maybe has memory leaks,we need a unsafe method change Children'len
-
-			origLen := len(n.Children)
-			slices.Delete(n.Children, i, i+1) //clear for gc
-			//no memory leaks,but gc has not been triggered
-			//But gc's execution frequency doesn't immediately recall it,
-			//so you need to make Len decremented so that subsequent code doesn't trigger the already-nil sliced member.
-			sh := (*reflect.SliceHeader)(unsafe.Pointer(&n.Children)) //无法封装，返回后len没改变，只能所有地方都这样重复的写
-			sh.Len = origLen - 1
+			n.Children = slices.Delete(n.Children, i, i+1)
 			break
 		}
 	}
