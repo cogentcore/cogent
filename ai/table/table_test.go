@@ -8,6 +8,7 @@ import (
 
 	"github.com/ddkwork/golibrary/mylog"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTable3(t *testing.T) {
@@ -155,50 +156,56 @@ func TestTable(t *testing.T) { //第三个就是更改抓包程序的数据存�
 	//https://521github.com/protocolbuffers/protobuf-go
 	type (
 		Field struct {
-			Kind  reflect.Kind
-			Value reflect.Value
-			child []Field
+			Kind   reflect.Kind
+			Value  reflect.Value
+			number int
+			child  []Field
 		}
 	)
 
-	Group1Node := NewNode("protobuf", true, Field{
-		Kind:  reflect.String,
+	Group1Node := NewNode("Group1", true, Field{
+		Kind:  reflect.Struct,
 		Value: reflect.ValueOf(Message),
 		child: make([]Field, 0),
 	})
-	for i, n := range Group1Node.Children() {
+	fields := reflect.VisibleFields(reflect.TypeOf(Message))
+	assert.Equal(t, 5, len(fields))
+	for i := range len(fields) {
 		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  0,
+			Kind:  reflect.String,
+			Value: reflect.ValueOf("game/system/session/info"),
+			child: nil,
+		}))
+		node := NewNode("", true, Field{
+			Kind:  reflect.Struct,
+			Value: reflect.ValueOf(0),
+			child: nil,
+		})
+		for i := range 2 { //todo assert it
+			node.AddChild()
+		}
+
+		Group1Node.AddChild(NewNode("Group1", false, Field{
+			Kind:  reflect.Int,
+			Value: reflect.ValueOf(""),
+			child: nil,
+		}))
+		Group1Node.AddChild(NewNode("Group1", false, Field{
+			Kind:  reflect.String,
 			Value: reflect.Value{},
 			child: nil,
 		}))
 		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  0,
-			Value: reflect.Value{},
-			child: nil,
-		}))
-		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  0,
-			Value: reflect.Value{},
-			child: nil,
-		}))
-		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  0,
-			Value: reflect.Value{},
+			Kind:  reflect.Int,
+			Value: reflect.ValueOf(0),
 			child: nil,
 		}))
 	}
 
-	Message2Node := NewNode("protobuf", true, Field{
-		Kind:  0,
-		Value: reflect.Value{},
-		child: nil,
-	})
-
-	Packed2Node := NewNode("protobuf", true, Field{
-		Kind:  0,
-		Value: reflect.Value{},
-		child: nil,
+	Group1NodeEnd := NewNode("Group1End", true, Field{
+		Kind:  reflect.Struct,
+		Value: reflect.ValueOf(Message),
+		child: make([]Field, 0),
 	})
 
 	mylog.Struct(Message)
