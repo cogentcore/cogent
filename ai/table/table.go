@@ -29,7 +29,7 @@ type RowData[T any] interface {
 	Parent() *Node[T]
 	SetParent(parent *Node[T])
 	HasChildren() bool
-	Children() []*Node[T] //todo add calc sum method
+	Children() []*Node[T] //todo add calc sum method from CellData
 	SetChildren(children []*Node[T])
 	clearUnusedFields()
 	AddChild(child *Node[T])
