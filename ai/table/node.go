@@ -13,7 +13,8 @@ import (
 	"github.com/google/uuid"
 )
 
-//var _ RowData[Node[any]] = (*Node)(nil)
+//var _ RowData[*Node] = &Node{}
+//var _ unison.TableRowData[*demoRow] = &demoRow{}
 
 const ContainerKeyPostfix = "_container"
 
@@ -65,15 +66,23 @@ func (n *Node[T]) Depth() int {
 	}
 	return count
 }
-func (n *Node[T]) GetType() string                 { return n.Type }
-func (n *Node[T]) SetType(t string)                { n.Type = t }
-func (n *Node[T]) Open() bool                      { return n.IsOpen && n.Container() }
-func (n *Node[T]) SetOpen(open bool)               { n.IsOpen = open && n.Container() }
-func (n *Node[T]) Parent() *Node[T]                { return n.parent }
-func (n *Node[T]) SetParent(parent *Node[T])       { n.parent = parent }
-func (n *Node[T]) HasChildren() bool               { return n.Container() && len(n.children) > 0 }
-func (n *Node[T]) Children() []*Node[T]            { return n.children }
-func (n *Node[T]) SetChildren(children []*Node[T]) { n.children = children }
+func (n *Node[T]) GetType() string           { return n.Type }
+func (n *Node[T]) SetType(t string)          { n.Type = t }
+func (n *Node[T]) Open() bool                { return n.IsOpen && n.Container() }
+func (n *Node[T]) SetOpen(open bool)         { n.IsOpen = open && n.Container() }
+func (n *Node[T]) Parent() *Node[T]          { return n.parent }
+func (n *Node[T]) SetParent(parent *Node[T]) { n.parent = parent }
+func (n *Node[T]) HasChildren() bool         { return n.Container() && len(n.children) > 0 }
+func (n *Node[T]) Children() []*Node[T]      { return n.children }
+func (n *Node[T]) SetChildren(children []*Node[T]) {
+
+	n.children = children
+	//if n.dataAsNode.Container() {
+	//	n.dataAsNode.SetChildren(ExtractNodeDataFromList(children))
+	//	n.children = nil
+	//}
+
+}
 func (n *Node[T]) clearUnusedFields() {
 	if !n.Container() {
 		n.children = nil
@@ -157,6 +166,39 @@ func (n *Node[T]) Sum(parent *Node[T]) *Node[T] {
 	}
 	return n
 }
+
+func (n *Node[T]) CellFromCellData(id uuid.UUID) *Node[T] { //todo
+
+	return n
+}
+func (n *Node[T]) Match(text string) bool {
+	if text != "" {
+		//for i := range n.table.Columns {
+		//	if strings.Contains(strings.ToLower(n.CellDataForSort(i)), text) {
+		//		return true
+		//	}
+		//}
+	}
+	return false
+}
+
+// ColumnCell implements RowData.
+//func (n *Node[T]) ColumnCell(row, col int, foreground, background unison.Ink, _, _, _ bool) unison.Paneler {
+//	var cellData gurps.CellData
+//	n.dataAsNode.CellData(n.table.Columns[col].ID, &cellData)
+//	width := n.table.CellWidth(row, col)
+//	if n.cellCache[col].Matches(width, &cellData) {
+//		applyInkRecursively(n.cellCache[col].Panel.AsPanel(), foreground, background)
+//		return n.cellCache[col].Panel
+//	}
+//	c := n.CellFromCellData(&cellData, width, foreground, background)
+//	n.cellCache[col] = &CellCache{
+//		Panel: c,
+//		Data:  cellData,
+//		Width: width,
+//	}
+//	return c
+//}
 
 func (n *Node[T]) Find(id uuid.UUID) *Node[T] {
 	if n.ID == id {
