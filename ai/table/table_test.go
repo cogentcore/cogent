@@ -201,13 +201,13 @@ func TestTable(t *testing.T) { //第三个就是更改抓包程序的数据存�
 	//		child: nil,
 	//	}))
 	//}
-	//
+
 	//Group1NodeEnd := NewNode("Group1End", true, Field{
 	//	Kind:  reflect.Struct,
 	//	Value: reflect.ValueOf(Message),
 	//	child: make([]Field, 0),
 	//})
-	//
+
 	//mylog.Struct(Message)
 
 }

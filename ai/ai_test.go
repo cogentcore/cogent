@@ -5,6 +5,7 @@ import (
 
 	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
+	"github.com/stretchr/testify/assert"
 
 	"cogentcore.org/cogent/ai/table"
 )
@@ -37,7 +38,9 @@ func Test_queryModelList(t *testing.T) {
 			queryModelTags(stream.NewReadFile("Tags · llama2.html"), llama2Node)
 		}
 	})
-
+	out, err := ModelMap.MarshalJSON()
+	assert.NoError(t, err)
+	stream.WriteTruncate("models.json", out)
 	println(root.Format(root)) //todo this need a treeTableView for show all tags in every model
 	//todo save n-nar model tree to json, and when need update we should read from json file
 

@@ -10,6 +10,7 @@ require (
 	github.com/ddkwork/golibrary v0.0.0-20240314012741-de4758c6256c
 	github.com/go-delve/delve v1.22.1
 	github.com/google/uuid v1.6.0
+	github.com/goradd/maps v0.1.5
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
 	github.com/shirou/gopsutil/v3 v3.24.2
