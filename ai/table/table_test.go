@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+func TestTable(t *testing.T) {
+	//todo: add more test cases
+}
+
 func Test_mock(t *testing.T) {
 	type (
 		obj struct {
