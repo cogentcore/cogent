@@ -125,10 +125,10 @@ func TestTable(t *testing.T) { //第三个就是更改抓包程序的数据存�
 		} // 1
 	)
 
-	var Message = Group1{
+	var Message = Group1{ //root container node
 		Binary1: "game/system/session/info",
-		Message2: Message2{
-			Packed2: []Packed2{
+		Message2: Message2{ //container node,one child
+			Packed2: []Packed2{ //container node two child
 				{
 					Varint1: 0,
 					Binary2: "d3048a459417e6c0b7d39c971b99a58029f2720f7b2a70c992c826ce48184069",
@@ -148,6 +148,13 @@ func TestTable(t *testing.T) { //第三个就是更改抓包程序的数据存�
 		Binary4: "",
 		Varint5: 0,
 	}
+	NewNode("pb", true, Group1{
+		Binary1:  "",
+		Message2: Message2{},
+		Varint3:  0,
+		Binary4:  "",
+		Varint5:  0,
+	})
 
 	mylog.Struct(Message)
 
