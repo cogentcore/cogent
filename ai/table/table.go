@@ -57,12 +57,12 @@ type (
 		RootRows() []T
 		SetRootRows(rows []T)
 	}
-	SimpleTableModel[T RowConstraint[T]] struct{ roots []T }
+	SimpleModel[T RowConstraint[T]] struct{ roots []T }
 )
 
-func (m *SimpleTableModel[T]) RootRowCount() int    { return len(m.roots) }
-func (m *SimpleTableModel[T]) RootRows() []T        { return m.roots }
-func (m *SimpleTableModel[T]) SetRootRows(rows []T) { m.roots = rows }
+func (m *SimpleModel[T]) RootRowCount() int    { return len(m.roots) }
+func (m *SimpleModel[T]) RootRows() []T        { return m.roots }
+func (m *SimpleModel[T]) SetRootRows(rows []T) { m.roots = rows }
 
 //func CollectUUIDsFromRow[T RowConstraint[T]](node T, ids map[uuid.UUID]bool) {
 //	ids[node.UUID()] = true
