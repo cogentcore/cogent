@@ -11,6 +11,7 @@ import (
 )
 
 func TestTable3(t *testing.T) {
+	//github.com/richardwilkes/gcs/v5
 	type demoRow struct {
 		parent       *demoRow
 		data         string
