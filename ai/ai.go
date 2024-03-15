@@ -206,7 +206,7 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 		tag := s.Find(".break-all").Text() //not need
 		modelName := ""
 		fnFindModelName := func() {
-			doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) {
+			doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) { //bug is here
 				href, exists := s.Attr("href")
 				if exists {
 					parts := strings.Split(href, "/")

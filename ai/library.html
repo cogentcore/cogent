@@ -1,0 +1,3040 @@
+<!DOCTYPE html>
+<!-- saved from url=(0026)https://ollama.com/library -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>library</title>
+    
+
+<meta name="description" content="Get up and running with large language models, locally.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:image" content="https://ollama.com/public/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="628">
+<meta property="og:type" content="website">
+
+<meta property="twitter:card" content="summary">
+<meta property="twitter:site" content="ollama">
+
+<meta property="twitter:image:src" content="https://ollama.com/public/og-twitter.png">
+<meta property="twitter:image:width" content="1200">
+<meta property="twitter:image:height" content="628">
+
+<link rel="icon" type="image/png" sizes="16x16" href="https://ollama.com/public/icon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://ollama.com/public/icon-32x32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="https://ollama.com/public/icon-48x48.png">
+<link rel="icon" type="image/png" sizes="64x64" href="https://ollama.com/public/icon-64x64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://ollama.com/public/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://ollama.com/public/android-chrome-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="https://ollama.com/public/android-chrome-icon-512x512.png">
+
+  <link href="./library_files/tailwind.css" rel="stylesheet">
+
+<style>
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+</style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Ollama",
+    "url": "https://ollama.com"
+  }
+</script>
+<script src="./library_files/bundle.js.download"></script>
+<script>
+  function copyToClipboard(element) {
+    const commandElement = element.closest('.language-none').querySelector('.command')
+    const copyText = commandElement.value === undefined ? commandElement.textContent.trim() : commandElement.value
+    const textArea = document.createElement("textarea")
+
+    textArea.value = copyText
+    document.body.appendChild(textArea)
+
+    textArea.select()
+    document.execCommand("copy")
+    document.body.removeChild(textArea)
+
+    const copyIcon = element.querySelector(".copy-icon")
+    const checkIcon = element.querySelector(".check-icon")
+
+    copyIcon.classList.add('hidden')
+    checkIcon.classList.remove('hidden')
+
+    setTimeout(() => {
+        copyIcon.classList.remove('hidden')
+        checkIcon.classList.add('hidden')
+    }, 2000)
+  }
+</script>
+
+    <meta property="og:title" content="library">
+    <meta property="og:url" content="https://ollama.com/library">
+    <meta property="og:description" content="Get up and running with large language models, locally.">
+  <style>                      .htmx-indicator{opacity:0;transition: opacity 200ms ease-in;}                      .htmx-request .htmx-indicator{opacity:1}                      .htmx-request.htmx-indicator{opacity:1}                    </style></head>
+  <body>
+  
+<header class="sticky top-0 md:static bg-white underline-offset-4 z-40">
+  
+  <nav class="flex w-full px-6 py-4 items-center justify-between md:hidden">
+    <a href="https://ollama.com/" class="z-50">
+      <img src="./library_files/ollama.png" class="w-6" alt="Ollama">
+    </a>
+    <input type="checkbox" id="menu" class="hidden peer">
+    <label for="menu" class="peer-checked:hidden cursor-pointer z-50">
+      <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+      </svg>
+    </label>
+    <label for="menu" class="hidden peer-checked:block cursor-pointer z-50">
+      <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </label>
+    <div class="peer-checked:flex fixed bg-white hidden top-0 pt-24 h-screen right-0 w-full sm:hidden flex-col px-6 py-4 text-3xl space-y-6 tracking-tight">
+      <a href="https://ollama.com/library">Models</a>
+      <a href="https://ollama.com/search">Search</a>
+      <a href="https://ollama.com/blog">Blog</a>
+      <a href="https://discord.com/invite/ollama">Discord</a>
+      <a href="https://github.com/ollama/ollama">GitHub</a>
+      <a href="https://ollama.com/download">Download</a>
+      
+        <a class="block" href="https://ollama.com/login">Sign in</a>
+      
+    </div>
+  </nav>
+  <nav class="hidden select-none mx-auto md:flex justify-between items-center px-6 py-3.5 text-md md:text-lg">
+    <div class="flex items-center space-x-8">
+      <a class="mr-2" href="https://ollama.com/"><img src="./library_files/ollama.png" class="w-8" alt="Ollama"></a>
+      <a class="hover:underline" href="https://ollama.com/blog">Blog</a>
+      <a class="hover:underline" target="_blank" href="https://discord.com/invite/ollama">
+        Discord
+      </a>
+      <a class="hover:underline" target="_blank" href="https://github.com/ollama/ollama">
+        GitHub
+      </a>
+    </div>
+    <div class="flex space-x-8 items-center">
+      
+      <div class="hidden lg:flex items-center flex-grow relative w-full max-w-[500px] pl-8">
+        <div id="searchContainer" class="relative flex items-center rounded-lg border border-neutral-200">
+          <span id="searchIcon" class="pl-2 text-2xl text-neutral-500">
+            <svg class="w-4 h-4 ml-1 mt-0.25 fill-current" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="m8.5 3c3.0375661 0 5.5 2.46243388 5.5 5.5 0 1.24832096-.4158777 2.3995085-1.1166416 3.3225711l4.1469717 4.1470988c.2928932.2928932.2928932.767767 0 1.0606602-.2662666.2662665-.6829303.2904726-.9765418.0726181l-.0841184-.0726181-4.1470988-4.1469717c-.9230626.7007639-2.07425014 1.1166416-3.3225711 1.1166416-3.03756612 0-5.5-2.4624339-5.5-5.5 0-3.03756612 2.46243388-5.5 5.5-5.5zm0 1.5c-2.209139 0-4 1.790861-4 4s1.790861 4 4 4 4-1.790861 4-4-1.790861-4-4-4z"></path></svg>
+            
+          </span>
+          <input id="search" hx-get="/search-preview" hx-trigger="keyup changed delay:800ms, focus" hx-target="#popup" name="q" class="w-full resize-none overflow-y-hidden rounded-lg border-0 py-1.5 pr-10 text-sm
+                            focus:outline-none focus:ring-0" placeholder="Search models" autocomplete="off" value="" onkeypress="handleKeyPress(event)">
+          <div id="popup" class="absolute hidden left-0 right-0 top-full z-50">
+            
+          </div>
+        </div>
+      </div>
+      
+      <a class="hover:underline" href="https://ollama.com/library">Models</a>
+      
+        <a class="hover:underline min-w-fit" href="https://ollama.com/login">Sign in</a>
+      
+      <a class="flex cursor-pointer items-center rounded-lg bg-neutral-800 px-4 py-1 text-white hover:bg-black focus:outline-none" href="https://ollama.com/download">
+        Download
+      </a>
+    </div>
+  </nav>
+</header>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('searchIcon').addEventListener('click', function() {
+      document.getElementById('search').focus();
+    });
+
+    var searchInput = document.getElementById('search');
+    var popup = document.getElementById('popup');
+
+    searchInput.addEventListener('focus', function () {
+      document.getElementById('searchContainer').classList.add('border-blue-400', 'outline-none', 'ring', 'ring-blue-300', 'ring-opacity-75');
+      popup.classList.remove('hidden');
+    });
+
+    searchInput.addEventListener('focusout', function (event) {
+      
+      setTimeout(function () {
+        
+        if (!popup.contains(event.relatedTarget)) {
+          document.getElementById('searchContainer').classList.remove('border-blue-400', 'outline-none', 'ring', 'ring-blue-300', 'ring-opacity-75');
+          popup.classList.add('hidden');
+        }
+      }, 150);
+    });
+  });
+  function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      var query = document.getElementById('search').value;
+      window.location.href = '/search?q=' + encodeURIComponent(query) + '&p=1';
+    }
+  }
+</script>
+
+    <main class="mx-auto flex max-w-[50rem] flex-col px-6 py-10 md:py-24 lg:px-8">
+      <h1 class="flex-1 truncate text-[28px] font-medium tracking-tight pb-12">
+        <div class="flex flex-row space-x-3 items-center">
+          <img id="profileImg" src="./library_files/42f6b28d-9117-48cd-ac0d-44baaf5c178e.png" alt="Profile" class="h-12 w-12 flex-none border border-neutral-300 rounded-full bg-white object-contain">           
+          <div>
+          
+          Models
+          
+          </div>
+        </div>
+      </h1>
+      <div class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-x-3 sm:space-y-0">
+        <div class="flex-1">
+          <input id="filter" name="q" type="text" value="" hx-get="/library" hx-trigger="keyup changed delay:250ms" hx-target="#repo" class="relative w-full resize-none overflow-y-hidden rounded-md border border-neutral-200 py-2 pl-4 pr-8 text-sm focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-75" placeholder="Filter by name..." hx-include="#filter, #sort" hx-sync="this:replace">
+        </div>
+        <div class="flex flex-row space-x-1 sm:flex-shrink-0 sm:space-x-3">
+          <select name="sort" id="sort" class="w-full flex-1 items-center justify-between gap-x-4 text-ellipsis rounded-lg border-neutral-200 bg-white py-2 pl-4 pr-8 text-left text-sm font-medium text-neutral-900 hover:bg-neutral-50 sm:flex sm:w-48" hx-get="/library" hx-trigger="change" hx-target="#repo" hx-include="#filter, #sort">
+            <option disabled="" value="">Sort By</option>
+            
+              <option value="featured" selected="">Featured</option>
+              <option value="popular">Most popular</option>
+            
+            <option value="newest">Newest</option>  
+          </select>
+          
+        </div>
+      </div>
+      
+<div id="repo">
+  
+  <ul role="list" class="grid grid-cols-1 gap-y-3">
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/gemma" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          gemma
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        168.2K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        69&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      6 days ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/llama2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          llama2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        675.5K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        102&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/mistral" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          mistral
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">The 7B model released by Mistral AI, updated to version 0.2.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        312.6K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        53&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/mixtral" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          mixtral
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A high-quality Mixture of Experts (MoE) model with open weights by Mistral AI.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        95.2K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        34&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      5 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/llava" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          llava
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">🌋 LLaVA is a novel end-to-end trained large multimodal model that combines a vision encoder and Vicuna for general-purpose visual and language understanding. Updated to version 1.6.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        72.7K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        98&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      5 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/neural-chat" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          neural-chat
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A fine-tuned model based on Mistral with good coverage of domain and language.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        15.4K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        50&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/codellama" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          codellama
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A large language model that can use text prompts to generate and discuss code.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        218.5K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        199&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      6 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/dolphin-mixtral" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          dolphin-mixtral
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">An uncensored, fine-tuned model based on the Mixtral mixture of experts model that excels at coding tasks. Created by Eric Hartford.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        157.6K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        70&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/mistral-openorca" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          mistral-openorca
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Mistral OpenOrca is a 7 billion parameter model, fine-tuned on top of the Mistral 7B model using the OpenOrca dataset.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        102.4K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      5 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/qwen" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          qwen
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Qwen 1.5 is a series of large language models by Alibaba Cloud spanning from 0.5B to 72B parameters</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        97.2K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        319&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/llama2-uncensored" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          llama2-uncensored
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Uncensored Llama 2 model by George Sung and Jarrad Hope.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        89.3K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        34&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/nous-hermes2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          nous-hermes2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">The powerful family of models by Nous Research that excels at scientific discussion and coding tasks.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        65.4K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        33&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/phi" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          phi
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Phi-2: a 2.7B language model by Microsoft Research that demonstrates outstanding reasoning and language understanding capabilities.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        58.9K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      5 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/deepseek-coder" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          deepseek-coder
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">DeepSeek Coder is a capable coding model trained on two trillion code and natural language tokens.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        58.3K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        102&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/orca-mini" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          orca-mini
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A general-purpose model ranging from 3 billion parameters to 70 billion, suitable for entry-level hardware.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        54.7K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        119&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/dolphin-mistral" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          dolphin-mistral
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">The uncensored Dolphin model based on Mistral that excels at coding tasks. Updated to version 2.6.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        46.9K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        103&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/wizard-vicuna-uncensored" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          wizard-vicuna-uncensored
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Wizard Vicuna Uncensored is a 7B, 13B, and 30B parameter model based on Llama 2 uncensored by Eric Hartford.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        32.6K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        49&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/vicuna" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          vicuna
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">General use chat model based on Llama and Llama 2 with 2K to 16K context sizes.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        30.9K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        111&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/zephyr" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          zephyr
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Zephyr beta is a fine-tuned 7B version of mistral that was trained on on a mix of publicly available, synthetic datasets.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        23.8K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        34&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/openhermes" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          openhermes
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">OpenHermes 2.5 is a 7B model fine-tuned by Teknium on Mistral with fully open datasets.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        23.5K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        35&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/llama2-chinese" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          llama2-chinese
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Llama 2 based model fine tuned to improve Chinese dialogue ability.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        22.4K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        35&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/tinyllama" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          tinyllama
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">The TinyLlama project is an open endeavor to train a compact 1.1B Llama model on 3 trillion tokens.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        20.2K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        36&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/wizardcoder" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          wizardcoder
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">State-of-the-art code generation model</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        19.8K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        67&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/openchat" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          openchat
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A family of open-source models trained on a wide variety of data, surpassing ChatGPT on various benchmarks. Updated to version 3.5-0106.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        18.6K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        50&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/phind-codellama" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          phind-codellama
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Code generation model based on Code Llama.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        17.1K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        49&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/tinydolphin" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          tinydolphin
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">An experimental 1.1B parameter model trained on the new Dolphin 2.8 dataset by Eric Hartford and based on TinyLlama.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        15.2K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      6 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/orca2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          orca2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Orca 2 is built by Microsoft research, and are a fine-tuned version of Meta's Llama 2 models.  The model is designed to excel particularly in reasoning.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        14.3K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        33&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/falcon" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          falcon
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A large language model built by the Technology Innovation Institute (TII) for use in summarization, text generation, and chat bots.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        13.8K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        38&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/starcoder" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          starcoder
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">StarCoder is a code generation model trained on 80+ programming languages.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        13.5K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        100&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/yi" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          yi
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A high-performing, bilingual language model.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        13.2K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        78&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/wizard-math" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          wizard-math
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Model focused on math and logic problems</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        13.1K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        64&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/dolphin-phi" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          dolphin-phi
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">2.7B uncensored Dolphin model by Eric Hartford, based on the Phi language model by Microsoft Research.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        12.4K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        15&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/nous-hermes" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          nous-hermes
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">General use models based on Llama and Llama 2 from Nous Research.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        12.0K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        63&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/nomic-embed-text" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          nomic-embed-text
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A high-performing open embedding model with a large token context window.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        11.5K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        3&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      12 days ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/starling-lm" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          starling-lm
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Starling is a large language model trained by reinforcement learning from AI feedback focused on improving chatbot helpfulness.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        10.7K
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/starcoder2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          starcoder2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">StarCoder2 is the next generation of transparently trained open code LLMs that comes in three sizes: 3B, 7B and 15B parameters. </p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        9,893
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        49&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      7 days ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/stable-code" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          stable-code
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Stable Code 3B is a model offering accurate and responsive code completion at a level on par with models such as CodeLLaMA 7B that are 2.5x larger.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        9,853
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      7 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/medllama2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          medllama2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Fine-tuned Llama 2 model to answer medical questions based on an open source medical dataset. </p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        9,322
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/codeup" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          codeup
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Great code generation model based on Llama2.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        9,312
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        19&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/bakllava" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          bakllava
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">BakLLaVA is a multimodal model consisting of the Mistral 7B base model augmented with the LLaVA  architecture.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        9,025
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/wizardlm-uncensored" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          wizardlm-uncensored
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Uncensored version of Wizard LM model </p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        8,579
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/solar" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          solar
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A compact, yet powerful 10.7B large language model designed for single-turn conversation.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        8,515
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        32&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/everythinglm" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          everythinglm
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Uncensored Llama2 based model with support for a 16K context window.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        8,500
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/sqlcoder" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          sqlcoder
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">SQLCoder is a code completion model fined-tuned on StarCoder for SQL generation tasks</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        7,294
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        48&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      5 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/stable-beluga" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          stable-beluga
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Llama 2 based model fine tuned on an Orca-style dataset. Originally called Free Willy.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        7,221
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        49&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/nous-hermes2-mixtral" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          nous-hermes2-mixtral
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">The Nous Hermes 2 model from Nous Research, now trained over Mixtral.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        6,997
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      8 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/yarn-mistral" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          yarn-mistral
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">An extension of Mistral to support context windows of 64K or 128K.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        6,352
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        33&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/samantha-mistral" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          samantha-mistral
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A companion assistant trained in philosophy, psychology, and personal relationships. Based on Mistral.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        5,948
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        49&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/meditron" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          meditron
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Open-source medical large language model adapted from Llama 2 to the medical domain.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        5,821
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        22&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/stablelm2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          stablelm2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Stable LM 2 1.6B is a state-of-the-art 1.6 billion parameter small language model trained on multilingual data in English, Spanish, German, Italian, French, Portuguese, and Dutch.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        5,778
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        34&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      6 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/stablelm-zephyr" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          stablelm-zephyr
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A lightweight chat model allowing accurate, and responsive output without requiring high-end hardware.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        5,526
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/magicoder" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          magicoder
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">🎩 Magicoder is a family of 7B parameter models trained on 75K synthetic instruction data using OSS-Instruct, a novel approach to enlightening LLMs with open-source code snippets.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        5,279
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/yarn-llama2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          yarn-llama2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">An extension of Llama 2 that supports a context of up to 128k tokens.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        5,082
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        67&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/wizard-vicuna" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          wizard-vicuna
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Wizard Vicuna is a 13B parameter model based on Llama 2 trained by MelodysDreamj.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        5,038
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/deepseek-llm" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          deepseek-llm
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">An advanced language model crafted with 2 trillion bilingual tokens.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        4,788
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        64&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/llama-pro" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          llama-pro
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">An expansion of Llama 2 that specializes in integrating both general language understanding and domain-specific knowledge, particularly in programming and mathematics.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        4,694
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        33&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/mistrallite" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          mistrallite
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">MistralLite is a fine-tuned model based on Mistral with enhanced capabilities of processing long contexts.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        4,617
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/codebooga" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          codebooga
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A high-performing code instruct model created by merging two existing code models.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        4,194
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        16&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/nexusraven" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          nexusraven
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Nexus Raven is a 13B instruction tuned model for function calling tasks. </p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        3,862
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        32&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      7 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/open-orca-platypus2" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          open-orca-platypus2
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Merge of the Open Orca OpenChat model and the Garage-bAInd Platypus 2 model. Designed for chat and code generation.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        3,831
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/goliath" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          goliath
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A language model created by combining two fine-tuned Llama 2 70B models into one.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,973
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        16&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/notux" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          notux
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A top-performing mixture of experts model, fine-tuned with high-quality data.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,854
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/dolphincoder" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          dolphincoder
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">An uncensored variant of the Dolphin model family that excels at coding, based on StarCoder2.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,449
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      7 days ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/alfred" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          alfred
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A robust conversational model designed to be used for both chat and instruct use cases.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,427
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        7&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      3 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/megadolphin" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          megadolphin
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">MegaDolphin-2.2-120b is a transformation of Dolphin-2.2-70b created by interleaving the model with itself.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,363
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        19&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/xwinlm" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          xwinlm
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Conversational model based on Llama 2 that performs competitively on various benchmarks.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,211
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        80&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/wizardlm" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          wizardlm
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">General use 70 billion parameter model based on Llama 2.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,166
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        73&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      4 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/all-minilm" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          all-minilm
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">Embedding models on very large sentence level datasets.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        2,097
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        8&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/duckdb-nsql" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          duckdb-nsql
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">7B parameter text-to-SQL model made by MotherDuck and Numbers Station.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        1,858
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        17&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      6 weeks ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+    <li class="flex items-baseline border-b border-neutral-200 py-6">
+      <a href="https://ollama.com/library/notus" class="group w-full">
+        <h2 class="mb-3 truncate text-lg font-medium underline-offset-2 group-hover:underline md:text-2xl">
+          notus
+        </h2>
+        
+  
+    <p class="mb-4 max-w-md break-words">A 7B chat model fine-tuned with high-quality data and based on Zephyr.</p>
+  
+  <p class="my-2 flex space-x-5 text-[13px] font-medium text-neutral-500">
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        1,856
+        Pulls
+      </span>
+    
+    
+      <span class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"></path>
+        </svg>
+        18&nbsp;Tags
+      </span>
+    
+    <span class="flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-1.5 h-4 w-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+      </svg>
+      Updated
+      2 months ago
+    </span>
+  </p>
+
+      </a>
+    </li>
+    
+  </ul>
+  
+  
+</div>
+
+    </main>
+    <script>
+      document.body.addEventListener('htmx:afterRequest', function (event) {
+        const currentUrl = new URL(window.location)
+
+        if (event.target.id === 'filter') {
+          if (event.target.value !== '') {
+            currentUrl.searchParams.set('q', event.target.value)
+          } else {
+            currentUrl.searchParams.delete('q')
+          }
+        } else if (event.target.id === 'sort') {
+          if (event.target.value !== '') {
+            currentUrl.searchParams.set('sort', event.target.value)
+          } else {
+            currentUrl.searchParams.delete('sort')
+          }
+        }
+
+        history.pushState({}, '', currentUrl.toString())
+      })
+    </script>
+  
+
+</body></html>
