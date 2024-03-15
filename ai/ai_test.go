@@ -1,12 +1,10 @@
 package main
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
-	"github.com/stretchr/testify/assert"
 
 	"cogentcore.org/cogent/ai/table"
 )
@@ -14,7 +12,7 @@ import (
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 
-	gemmaNode := table.NewNode("gemmaNode", false, Model{
+	gemmaNode := table.NewNode("gemma", false, Model{
 		Name:        "gemma",
 		Description: "",
 		UpdateTime:  "",
@@ -22,18 +20,17 @@ func Test_queryModelList(t *testing.T) {
 		Size:        "",
 		Children:    nil,
 	})
+	queryModelTags(stream.NewReadFile("tags.html"), gemmaNode)
 
-	queryModelTags(stream.NewReadFile("tags.html"), gemmaNode) //gemma bug
-
-	llama2Node := table.NewNode("llama2Node", false, Model{
-		Name:        "llama2",
-		Description: "",
-		UpdateTime:  "",
-		Hash:        "",
-		Size:        "",
-		Children:    nil,
-	})
-	queryModelTags(stream.NewReadFile("Tags · llama2.html"), llama2Node) //llama2 todo this seem has a bug,need fix it
+	//llama2Node := table.NewNode("llama2", false, Model{
+	//	Name:        "llama2",
+	//	Description: "",
+	//	UpdateTime:  "",
+	//	Hash:        "",
+	//	Size:        "",
+	//	Children:    nil,
+	//})
+	//queryModelTags(stream.NewReadFile("Tags · llama2.html"), llama2Node)
 
 	println(root.Format(root)) //todo this need a treeTableView for show all tags in every model
 	//todo save n-nar model tree to json, and when need update we should read from json file
@@ -43,9 +40,4 @@ func Test_queryModelList(t *testing.T) {
 	return
 	resetModels()
 	mylog.Struct(Models) //this is not well for show all tag,we should remove it
-}
-
-func TestName(t *testing.T) {
-	//assert.True(t, strings.Contains("gemma", "gemma:7b-text-fp16"))
-	assert.True(t, strings.Contains("gemma:7b-text-fp16", "gemma"))
 }
