@@ -242,6 +242,8 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 				Size:        modelInfoSplit[1],
 			}
 			mylog.Struct(model)
+			c := table.NewNode(modelWithTag, false, model)
+			c = c
 			parent.AddChild(table.NewNode(modelWithTag, false, model))
 		}
 	})
