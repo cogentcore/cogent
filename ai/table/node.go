@@ -2,9 +2,11 @@ package table
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
@@ -126,9 +128,32 @@ func (n *Node[T]) Update(id uuid.UUID, data T) {
 }
 
 func (n *Node[T]) Sum(parent *Node[T]) *Node[T] {
+	rowData := make([]string, 0) //todo return it for show Container node in table row
 	if parent.Container() {
-		//todo we need to calc all children comparable col and fill Container node row cellData
-
+		typeOf := reflect.TypeOf(parent.children[0])
+		valueOf := reflect.ValueOf(parent.children[0])
+		fields := reflect.VisibleFields(typeOf)
+		for i := range fields {
+			v := valueOf.Field(i).Interface()
+			switch t := v.(type) { //todo add callback for format data
+			case string:
+				rowData = append(rowData, t)
+			case int64:
+				rowData = append(rowData, fmt.Sprint(t))
+			case int:
+				rowData = append(rowData, fmt.Sprint(t))
+			case time.Time:
+				rowData = append(rowData, stream.FormatTime(t))
+			case time.Duration:
+				rowData = append(rowData, fmt.Sprint(t))
+			case reflect.Kind:
+				rowData = append(rowData, t.String())
+			case bool: // todo 不应该支持？数据库是否会有这种情况？
+				rowData = append(rowData, fmt.Sprint(t))
+			default: // any
+				rowData = append(rowData, fmt.Sprint(t))
+			}
+		}
 	}
 	return n
 }
