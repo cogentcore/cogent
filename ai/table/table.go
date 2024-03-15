@@ -66,14 +66,15 @@ func (m *SimpleModel[T]) SetRootRows(rows []T) { m.roots = rows }
 
 //func CollectUUIDsFromRow[T RowConstraint[T]](node T, ids map[uuid.UUID]bool) {
 //	ids[node.UUID()] = true
-//	for _, child := range node.NodeChildren() {
-//		CollectUUIDsFromRow(child, ids)
+//	for _, child := range node.Children() {
+//
+//		CollectUUIDsFromRow(AsNode(child), ids)
 //	}
 //}
+//
+//func AsNode[T any](in T) Node[T] { return any(in).(Node[T]) }//not need
 
-func AsNode[T any](in T) Node[T] { return any(in).(Node[T]) }
-
-func FormatDataForEdit(rowObjectStruct any) (rowData []string) {
+func FormatDataForEdit(rowObjectStruct any) (rowData []string) { //todo need merge into formatData method
 	rowData = make([]string, 0)
 	valueOf := reflect.ValueOf(rowObjectStruct)
 	typeOf := reflect.Indirect(valueOf)
@@ -107,30 +108,3 @@ func FormatDataForEdit(rowObjectStruct any) (rowData []string) {
 	}
 	return
 }
-
-//func (t *Tree[T]) CreateItem(data T) *Node[T] {
-//	node := NewTreeNode(data)
-//	if reflect.TypeOf(data).Kind() == reflect.Slice {
-//		slice := reflect.ValueOf(data)
-//		for i := 0; i < slice.Len(); i++ {
-//			child := t.CreateItem(slice.Index(i).Interface().(T))
-//			node.AddChild(child)
-//		}
-//	}
-//	t.Root.AddChild(node)
-//	return node
-//}
-//
-//func (t *Tree[T]) NodeSlice() []*Node[T] {
-//	var nodes []*Node[T]
-//	queue := []*Node[T]{t.Root}
-//	for len(queue) > 0 {
-//		node := queue[0]
-//		queue = queue[1:]
-//		nodes = append(nodes, node)
-//		for _, child := range node.children {
-//			queue = append(queue, child)
-//		}
-//	}
-//	return nodes
-//}
