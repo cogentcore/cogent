@@ -125,6 +125,14 @@ func (n *Node[T]) Update(id uuid.UUID, data T) {
 	}
 }
 
+func (n *Node[T]) Sum(parent *Node[T]) *Node[T] {
+	if parent.Container() {
+		//todo we need to calc all children comparable col and fill Container node row cellData
+
+	}
+	return n
+}
+
 func (n *Node[T]) Find(id uuid.UUID) *Node[T] {
 	if n.ID == id {
 		return n
