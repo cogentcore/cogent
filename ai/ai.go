@@ -203,18 +203,19 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 		return
 	}
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
-		tag := s.Find(".break-all").Text() //not need
+		//tag := s.Find(".break-all").Text() //not need
 		modelName := ""
 		fnFindModelName := func() {
 			href, exists := s.Attr("href")
 			if exists {
 				// https://ollama.com/library/llama2:latest
 				// /library/gemma:latest
-				//
-				//
-				//todo add another html file check this identifier
-				parts := strings.Split(href, "/")
-				modelName = parts[2]
+				_, after, found := strings.Cut(href, "/library/")
+				if !found {
+					return
+				}
+				modelName = after
+
 			}
 			if modelName == "" {
 				mylog.Error("not find model name in tags")
@@ -233,8 +234,8 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 		modelInfoSplit := strings.Split(lines[1], " • ")
 		if strings.Contains(modelName, parent.Data.Name) {
 			model := Model{
-				Name: parent.Data.Name + ":" + tag,
-				//Name:        modelName,
+				//Name: parent.Data.Name + ":" + tag,
+				Name:        modelName,
 				Description: parent.Data.Description,
 				UpdateTime:  strings.TrimSpace(lines[2]),
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),

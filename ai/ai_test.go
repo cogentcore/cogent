@@ -21,7 +21,6 @@ func Test_queryModelList(t *testing.T) {
 		Children:    nil,
 	})
 	queryModelTags(stream.NewReadFile("tags.html"), gemmaNode)
-	return
 
 	llama2Node := table.NewNode("llama2", false, Model{
 		Name:        "llama2",
