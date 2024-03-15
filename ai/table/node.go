@@ -174,7 +174,7 @@ func (n *Node[T]) CellFromCellData(id uuid.UUID) *Node[T] { //todo
 func (n *Node[T]) Match(text string) bool {
 	if text != "" {
 		//for i := range n.table.Columns {
-		//	if strings.Contains(strings.ToLower(n.CellDataForSort(i)), text) {
+		//	if strings.Contains(strings.ToLower(n.CellDataForSort(i)), data) {
 		//		return true
 		//	}
 		//}

@@ -53,7 +53,7 @@ func (enum Type) EnsureValid() Type {
 func (enum Type) Key() string {
 	switch enum {
 	case Text:
-		return "text"
+		return "data"
 	case Tags:
 		return "tags"
 	case Toggle:

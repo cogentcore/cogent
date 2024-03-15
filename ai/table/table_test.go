@@ -10,6 +10,47 @@ import (
 	"github.com/google/uuid"
 )
 
+func TestTable3(t *testing.T) {
+	type demoRow struct {
+		parent       *demoRow
+		data         string
+		children     []*demoRow
+		doubleHeight bool
+	}
+
+	root := NewNode("tableDemo", true, &demoRow{
+		parent:       nil,
+		data:         fmt.Sprintf("Row %d", 1),
+		children:     make([]*demoRow, 0),
+		doubleHeight: false,
+	})
+
+	for i := range 100 {
+		if i%10 == 3 {
+			for j := range 5 {
+				child := NewNode("root", false, &demoRow{
+					parent:       nil,
+					data:         fmt.Sprintf("Sub Row %d", j+1),
+					children:     make([]*demoRow, 0),
+					doubleHeight: false,
+				})
+				root.AddChild(child)
+
+				if j < 2 {
+					child.SetOpen(true)
+					for k := range child.children {
+						child.AddChild(NewNode("", false, &demoRow{
+							parent: nil,
+							data:   fmt.Sprintf("Sub Sub Row %d", k+1),
+						}))
+					}
+				}
+			}
+		}
+	}
+	mylog.Struct(root.Children())
+}
+
 func TestTable2(t *testing.T) {
 	const topLevelRowsToMake = 100
 	type demoRow struct {
@@ -59,10 +100,11 @@ func TestTable2(t *testing.T) {
 		rows[i] = row
 	}
 	//table.SetRootRows(rows)
+	mylog.Struct(rows)
 
 }
 
-func TestTable(t *testing.T) {
+func TestTable(t *testing.T) { //第三个就是更改抓包程序的数据存储格式为table
 	type (
 		Packed2 struct { // 1 2 ...
 			Varint1 uint64 // 1
