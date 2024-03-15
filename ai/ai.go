@@ -229,7 +229,6 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 			return
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
-		//parent.WalkBranch(func(node *tree.Node[Model]) {//we WalkBranch in top func, so here do not do it again
 		if strings.Contains(modelName, parent.Data.Name) {
 			model := Model{
 				Name:        modelName, //todo bug
@@ -241,7 +240,6 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 			mylog.Struct(model)
 			parent.AddChild(table.NewNode(modelName, false, model))
 		}
-		//})
 	})
 }
 

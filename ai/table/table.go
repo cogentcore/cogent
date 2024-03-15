@@ -9,7 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// RowData todo add depth method
+// RowData T 是内部node类型和其他所有外部的node类型，然而为避免样板代码，不需要将接口的类型约束为N个node的实现类型，
+// 只需要在每个自定义node类型只需要实例化内部node类型并操作它的方法即可，这种情况下，自定义node没有没有嵌套内部node类型实现RowData接口，
+// 所以不需要为node是否实现RowData接口进行签名实现检查
 type RowData[T any] interface {
 	Clone(newParent *Node[T], preserveID bool) *Node[T]
 	CellData(columnID int, data any)
@@ -32,8 +34,7 @@ type RowData[T any] interface {
 	clearUnusedFields()
 	AddChild(child *Node[T])
 	Sort(cmp func(a T, b T) bool)
-	Format(root *Node[T]) string
-	format(root *Node[T], prefix string, isLast bool, s *stream.Stream)
+	Depth() int //todo
 	InsertItem(parentID uuid.UUID, data T) *Node[T]
 	CreateItem(parent *Node[T], data T) *Node[T]
 	RemoveChild(id uuid.UUID)
@@ -41,21 +42,23 @@ type RowData[T any] interface {
 	Find(id uuid.UUID) *Node[T]
 	Walk(callback func(node *Node[T]))
 	WalkContainer(callback func(node *Node[T]))
+	Format(root *Node[T]) string
+	format(root *Node[T], prefix string, isLast bool, s *stream.Stream)
 	formatData(rowObjectStruct any) (rowData string)
 }
 
-type Model[T RowConstraint[T]] interface {
-	RootRowCount() int
-	RootRows() []T
-	SetRootRows(rows []T)
-}
-
-type RowConstraint[T any] interface {
-	comparable
-	RowData[T]
-}
-
-type SimpleTableModel[T RowConstraint[T]] struct{ roots []T }
+type (
+	RowConstraint[T any] interface {
+		comparable
+		RowData[T]
+	}
+	Model[T RowConstraint[T]] interface {
+		RootRowCount() int
+		RootRows() []T
+		SetRootRows(rows []T)
+	}
+	SimpleTableModel[T RowConstraint[T]] struct{ roots []T }
+)
 
 func (m *SimpleTableModel[T]) RootRowCount() int    { return len(m.roots) }
 func (m *SimpleTableModel[T]) RootRows() []T        { return m.roots }

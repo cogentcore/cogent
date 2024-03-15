@@ -54,6 +54,15 @@ func (n *Node[T]) kind(base string) string {
 	}
 	return base
 }
+func (n *Node[T]) Depth() int {
+	count := 0
+	p := n.parent
+	for p != nil {
+		count++
+		p = p.parent
+	}
+	return count
+}
 func (n *Node[T]) GetType() string                 { return n.Type }
 func (n *Node[T]) SetType(t string)                { n.Type = t }
 func (n *Node[T]) Open() bool                      { return n.IsOpen && n.Container() }
