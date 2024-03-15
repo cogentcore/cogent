@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 
-	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
 	"github.com/stretchr/testify/assert"
 
@@ -40,13 +39,6 @@ func Test_queryModelList(t *testing.T) {
 	})
 	out, err := ModelMap.MarshalJSON()
 	assert.NoError(t, err)
-	stream.WriteTruncate("models.json", out)
-	println(root.Format(root)) //todo this need a treeTableView for show all tags in every model
-	//todo save n-nar model tree to json, and when need update we should read from json file
-
-	//todo need implement right format
-
-	return
-	resetModels()
-	mylog.Struct(Models) //this is not well for show all tag,we should remove it
+	stream.WriteTruncate("models.json", out) //todo test save all models to json file
+	println(root.Format(root))
 }
