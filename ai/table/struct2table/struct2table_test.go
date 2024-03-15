@@ -1,0 +1,1 @@
+package struct2table

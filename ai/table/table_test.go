@@ -163,52 +163,52 @@ func TestTable(t *testing.T) { //第三个就是更改抓包程序的数据存�
 		}
 	)
 
-	Group1Node := NewNode("Group1", true, Field{
-		Kind:  reflect.Struct,
-		Value: reflect.ValueOf(Message),
-		child: make([]Field, 0),
-	})
+	//Group1Node := NewNode("Group1", true, Field{
+	//	Kind:  reflect.Struct,
+	//	Value: reflect.ValueOf(Message),
+	//	child: make([]Field, 0),
+	//})
 	fields := reflect.VisibleFields(reflect.TypeOf(Message))
 	assert.Equal(t, 5, len(fields))
-	for i := range len(fields) {
-		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  reflect.String,
-			Value: reflect.ValueOf("game/system/session/info"),
-			child: nil,
-		}))
-		node := NewNode("", true, Field{
-			Kind:  reflect.Struct,
-			Value: reflect.ValueOf(0),
-			child: nil,
-		})
-		for i := range 2 { //todo assert it
-			node.AddChild()
-		}
-
-		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  reflect.Int,
-			Value: reflect.ValueOf(""),
-			child: nil,
-		}))
-		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  reflect.String,
-			Value: reflect.Value{},
-			child: nil,
-		}))
-		Group1Node.AddChild(NewNode("Group1", false, Field{
-			Kind:  reflect.Int,
-			Value: reflect.ValueOf(0),
-			child: nil,
-		}))
-	}
-
-	Group1NodeEnd := NewNode("Group1End", true, Field{
-		Kind:  reflect.Struct,
-		Value: reflect.ValueOf(Message),
-		child: make([]Field, 0),
-	})
-
-	mylog.Struct(Message)
+	//for i := range len(fields) {
+	//	Group1Node.AddChild(NewNode("Group1", false, Field{
+	//		Kind:  reflect.String,
+	//		Value: reflect.ValueOf("game/system/session/info"),
+	//		child: nil,
+	//	}))
+	//	node := NewNode("", true, Field{
+	//		Kind:  reflect.Struct,
+	//		Value: reflect.ValueOf(0),
+	//		child: nil,
+	//	})
+	//	for i := range 2 { //todo assert it
+	//		node.AddChild()
+	//	}
+	//
+	//	Group1Node.AddChild(NewNode("Group1", false, Field{
+	//		Kind:  reflect.Int,
+	//		Value: reflect.ValueOf(""),
+	//		child: nil,
+	//	}))
+	//	Group1Node.AddChild(NewNode("Group1", false, Field{
+	//		Kind:  reflect.String,
+	//		Value: reflect.Value{},
+	//		child: nil,
+	//	}))
+	//	Group1Node.AddChild(NewNode("Group1", false, Field{
+	//		Kind:  reflect.Int,
+	//		Value: reflect.ValueOf(0),
+	//		child: nil,
+	//	}))
+	//}
+	//
+	//Group1NodeEnd := NewNode("Group1End", true, Field{
+	//	Kind:  reflect.Struct,
+	//	Value: reflect.ValueOf(Message),
+	//	child: make([]Field, 0),
+	//})
+	//
+	//mylog.Struct(Message)
 
 }
 
