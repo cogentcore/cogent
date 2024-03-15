@@ -204,7 +204,7 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 	}
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		//tag := s.Find(".break-all").Text() //not need
-		modelName := ""
+		modelWithTag := ""
 		fnFindModelName := func() {
 			href, exists := s.Attr("href")
 			if exists {
@@ -214,10 +214,10 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 				if !found {
 					return
 				}
-				modelName = after
+				modelWithTag = after
 
 			}
-			if modelName == "" {
+			if modelWithTag == "" {
 				mylog.Error("not find model name in tags")
 				return
 			}
@@ -232,17 +232,17 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 			return
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
-		if strings.Contains(modelName, parent.Data.Name) {
+		if strings.Contains(modelWithTag, parent.Data.Name) {
 			model := Model{
 				//Name: parent.Data.Name + ":" + tag,
-				Name:        modelName,
+				Name:        modelWithTag,
 				Description: parent.Data.Description,
 				UpdateTime:  strings.TrimSpace(lines[2]),
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
 				Size:        modelInfoSplit[1],
 			}
 			mylog.Struct(model)
-			parent.AddChild(table.NewNode(modelName, false, model))
+			parent.AddChild(table.NewNode(modelWithTag, false, model))
 		}
 	})
 }
