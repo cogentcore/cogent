@@ -204,7 +204,6 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 	}
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		tag := s.Find(".break-all").Text() //not need
-		mylog.Trace("tag", tag)
 		modelName := ""
 		fnFindModelName := func() {
 			doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) {
@@ -218,7 +217,6 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 				mylog.Error("not find model name in tags")
 				return
 			}
-			mylog.Success("model name with tag", modelName)
 		}
 
 		fnFindModelName()
