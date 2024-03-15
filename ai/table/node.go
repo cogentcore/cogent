@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-//var _ RowData[Node[any]] = (*Node)(nil) //todo why not pass any type here?
+//var _ RowData[Node[any]] = (*Node)(nil)
 
 const ContainerKeyPostfix = "_container"
 
