@@ -12,15 +12,16 @@ import (
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 
-	//gemmaNode := table.NewNode("gemma", false, Model{
-	//	Name:        "gemma",
-	//	Description: "",
-	//	UpdateTime:  "",
-	//	Hash:        "",
-	//	Size:        "",
-	//	Children:    nil,
-	//})
-	//queryModelTags(stream.NewReadFile("tags.html"), gemmaNode)
+	gemmaNode := table.NewNode("gemma", false, Model{
+		Name:        "gemma",
+		Description: "",
+		UpdateTime:  "",
+		Hash:        "",
+		Size:        "",
+		Children:    nil,
+	})
+	queryModelTags(stream.NewReadFile("tags.html"), gemmaNode)
+	return
 
 	llama2Node := table.NewNode("llama2", false, Model{
 		Name:        "llama2",

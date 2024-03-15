@@ -206,14 +206,16 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 		tag := s.Find(".break-all").Text() //not need
 		modelName := ""
 		fnFindModelName := func() {
-			//todo add another html file check this identifier
-			doc.Find("a[href^='/library/']").Each(func(i int, s *goquery.Selection) { //bug is here
-				href, exists := s.Attr("href")
-				if exists {
-					parts := strings.Split(href, "/")
-					modelName = parts[2]
-				}
-			})
+			href, exists := s.Attr("href")
+			if exists {
+				// https://ollama.com/library/llama2:latest
+				// /library/gemma:latest
+				//
+				//
+				//todo add another html file check this identifier
+				parts := strings.Split(href, "/")
+				modelName = parts[2]
+			}
 			if modelName == "" {
 				mylog.Error("not find model name in tags")
 				return
