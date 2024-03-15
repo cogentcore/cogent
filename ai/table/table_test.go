@@ -148,12 +148,56 @@ func TestTable(t *testing.T) { //第三个就是更改抓包程序的数据存�
 		Binary4: "",
 		Varint5: 0,
 	}
-	NewNode("pb", true, Group1{
-		Binary1:  "",
-		Message2: Message2{},
-		Varint3:  0,
-		Binary4:  "",
-		Varint5:  0,
+
+	//https://521github.com/segmentio/encoding
+	//https://github.com/golang/protobuf
+	//https://521github.com/protocolbuffers/protobuf-go
+	type (
+		Field struct {
+			Kind  reflect.Kind
+			Value reflect.Value
+			child []Field
+		}
+	)
+
+	Group1Node := NewNode("protobuf", true, Field{
+		Kind:  reflect.String,
+		Value: reflect.ValueOf(Message),
+		child: make([]Field, 0),
+	})
+	for i, n := range Group1Node.Children() {
+		Group1Node.AddChild(NewNode("Group1", false, Field{
+			Kind:  0,
+			Value: reflect.Value{},
+			child: nil,
+		}))
+		Group1Node.AddChild(NewNode("Group1", false, Field{
+			Kind:  0,
+			Value: reflect.Value{},
+			child: nil,
+		}))
+		Group1Node.AddChild(NewNode("Group1", false, Field{
+			Kind:  0,
+			Value: reflect.Value{},
+			child: nil,
+		}))
+		Group1Node.AddChild(NewNode("Group1", false, Field{
+			Kind:  0,
+			Value: reflect.Value{},
+			child: nil,
+		}))
+	}
+
+	Message2Node := NewNode("protobuf", true, Field{
+		Kind:  0,
+		Value: reflect.Value{},
+		child: nil,
+	})
+
+	Packed2Node := NewNode("protobuf", true, Field{
+		Kind:  0,
+		Value: reflect.Value{},
+		child: nil,
 	})
 
 	mylog.Struct(Message)
