@@ -122,28 +122,43 @@ func main() {
 				answer.AsyncLock()
 				answer.DeleteChildren() //todo can not save chat history
 
+				//reset answer style
+				answer.Style(func(s *styles.Style) {
+					s.Direction = styles.Column
+				})
+
 				// todo textField.Text() 为用户输入增加到右试图布局的第一行，使用md渲染md，并增加标签：“用户”，下面的增加标签：“ai回复”
 				//  need save chat list layout for show chat history
 				you := gi.NewFrame(answer)
+				you.Style(func(s *styles.Style) {
+					s.Direction = styles.Row
+				})
 				gi.NewLabel(you).SetText("yuo:").Style(func(s *styles.Style) {
 					s.Align.Self = styles.Start
 				})
 				youSend := gi.NewTextField(you)
+				youSend.SetText(textField.Text()) //todo if we send code block or md need highlight it
 				youSend.Style(func(s *styles.Style) {
 					s.Align.Self = styles.End
 				})
 
 				ai := gi.NewFrame(answer)
+				ai.Style(func(s *styles.Style) {
+					s.Direction = styles.Row
+				})
 				gi.NewLabel(ai).SetText("ai:").Style(func(s *styles.Style) {
 					s.Align.Self = styles.Start
 				})
 
 				//now need given ReadMDString a NewFrame? and set s.Align.Self = styles.End ?
-				gi.NewFrame(answer) //todo rename answer as chatPair
+				mdFrame := gi.NewFrame(answer) //todo rename answer as chatPair
+				mdFrame.Style(func(s *styles.Style) {
+					s.Align.Self = styles.End
+				})
 
 				allToken += token
 
-				if !mylog.Error(coredom.ReadMDString(coredom.NewContext(), answer, allToken)) {
+				if !mylog.Error(coredom.ReadMDString(coredom.NewContext(), mdFrame, allToken)) {
 					return
 				}
 				answer.Update()
