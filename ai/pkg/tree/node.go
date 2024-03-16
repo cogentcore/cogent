@@ -83,6 +83,11 @@ type (
 
 		String() string
 		Enabled() bool
+
+		// MarshalXML todo when other ptoject passed unit test,reset this signature
+		//Marshaller[T]
+		//Unmarshaler[T]
+
 		MarshalXML(e *xml.Encoder, start xml.StartElement) bool
 		MarshalJSON() (b []byte, ok bool)
 		MarshalText() (text []byte, ok bool)
