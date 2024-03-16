@@ -127,7 +127,6 @@ func main() {
 					s.Direction = styles.Column
 				})
 
-				// todo textField.Text() 为用户输入增加到右试图布局的第一行，使用md渲染md，并增加标签：“用户”，下面的增加标签：“ai回复”
 				//  need save chat list layout for show chat history
 				you := gi.NewFrame(answer)
 				you.Style(func(s *styles.Style) {
