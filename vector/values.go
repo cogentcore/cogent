@@ -8,7 +8,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/laser"
@@ -23,7 +22,7 @@ func SplitsView(pt *Splits) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetData(pt)
+	d := gi.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing ß(using context menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -31,7 +30,7 @@ func SplitsView(pt *Splits) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").
+		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailSplitsChanged && pt == &StdSplits) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
@@ -45,61 +44,35 @@ func SplitsView(pt *Splits) {
 	d.NewWindow().Run()
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//  SplitValue
-
-// Value registers SplitValue as the viewer of SplitName
-func (kn SplitName) Value() giv.Value {
+// Value registers [SplitValue] as the [giv.Value] for [SplitName].
+func (sn SplitName) Value() giv.Value {
 	return &SplitValue{}
 }
 
-// SplitValue presents an action for displaying an SplitName and selecting
+// SplitValue represents a [SplitName] value with a button.
 type SplitValue struct {
-	giv.ValueBase
+	giv.ValueBase[*gi.Button]
 }
 
-func (vv *SplitValue) WidgetType() *gti.Type {
-	vv.WidgetTyp = gi.ButtonType
-	return vv.WidgetTyp
+func (v *SplitValue) Config() {
+	v.Widget.SetType(gi.ButtonTonal)
+	giv.ConfigDialogWidget(v, false)
 }
 
-func (vv *SplitValue) UpdateWidget() {
-	if vv.Widget == nil {
-		return
-	}
-	bt := vv.Widget.(*gi.Button)
-	txt := laser.ToString(vv.Value.Interface())
+func (v *SplitValue) Update() {
+	txt := laser.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
-	bt.SetText(txt)
+	v.Widget.SetText(txt).Update()
 }
 
-func (vv *SplitValue) Config(w gi.Widget) {
-	if vv.Widget == w {
-		vv.UpdateWidget()
-		return
-	}
-	vv.Widget = w
-	vv.StdConfig(w)
-	bt := vv.Widget.(*gi.Button)
-	bt.SetType(gi.ButtonTonal)
-	bt.OnClick(func(e events.Event) {
-		if !vv.IsReadOnly() {
-			vv.OpenDialog(bt, nil)
-		}
-	})
-	vv.UpdateWidget()
-}
-
-func (vv *SplitValue) HasDialog() bool { return true }
-
-func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
-	cur := laser.ToString(vv.Value.Interface())
+func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
+	cur := laser.ToString(v.Value.Interface())
 	m := gi.NewMenuFromStrings(AvailSplitNames, cur, func(idx int) {
 		nm := AvailSplitNames[idx]
-		vv.SetValue(nm)
-		vv.UpdateWidget()
+		v.SetValue(nm)
+		v.Update()
 		if fun != nil {
 			fun()
 		}
