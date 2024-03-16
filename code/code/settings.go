@@ -232,7 +232,7 @@ type ProjSettings struct { //gti:add
 
 	// the type of version control system used in this project (git, svn, etc).
 	// filters commands available
-	VersCtrl filetree.VersCtrlName
+	VersionControl filetree.VersionControlName
 
 	// current project filename for saving / loading specific Code
 	// configuration information in a .code file (optional)
@@ -294,7 +294,7 @@ func (se *ProjSettings) Update() {
 // Open open from file
 func (se *ProjSettings) Open(filename gi.Filename) error { //gti:add
 	err := grr.Log(tomls.Open(se, string(filename)))
-	se.VersCtrl = filetree.VersCtrlName(strings.ToLower(string(se.VersCtrl))) // official names are lowercase now
+	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 

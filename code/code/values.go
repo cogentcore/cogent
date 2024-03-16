@@ -135,7 +135,7 @@ func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
-	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelIdx(curRow).BindSelect(&si)
+	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelectedIndex(curRow).BindSelect(&si)
 	return true, func() {
 		if si >= 0 {
 			km := AvailKeyMaps[si]
@@ -265,7 +265,7 @@ func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
-	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelIdx(curRow).BindSelect(&si)
+	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelectedIndex(curRow).BindSelect(&si)
 	return true, func() {
 		if si >= 0 {
 			pt := AvailCmds[si]
@@ -376,7 +376,7 @@ func (vv *SplitValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	if cur != "" {
 		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
 	}
-	giv.NewTableView(d).SetSlice(&AvailSplits).SetInitSelIdx(curRow).BindSelectDialog(&si)
+	giv.NewTableView(d).SetSlice(&AvailSplits).SetInitSelectedIndex(curRow).BindSelectDialog(&si)
 	return true, func() {
 		if si >= 0 {
 			pt := AvailSplits[si]

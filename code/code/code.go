@@ -36,9 +36,9 @@ type Code interface {
 	// can be used for dirty flag state relative to other time stamps.
 	LastSaveTime() time.Time
 
-	// VersCtrl returns the version control system in effect, using the file tree detected
+	// VersionControl returns the version control system in effect, using the file tree detected
 	// version or whatever is set in project settings
-	VersCtrl() filetree.VersCtrlName
+	VersionControl() filetree.VersionControlName
 
 	// CmdRuns returns the CmdRuns manager of running commands, used extensively
 	// in commands.go

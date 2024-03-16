@@ -127,10 +127,10 @@ func (ge *CodeView) LastSaveTime() time.Time {
 	return ge.LastSaveTStamp
 }
 
-// VersCtrl returns the version control system in effect, using the file tree detected
+// VersionControl returns the version control system in effect, using the file tree detected
 // version or whatever is set in project settings
-func (ge *CodeView) VersCtrl() filetree.VersCtrlName {
-	vc := ge.Settings.VersCtrl
+func (ge *CodeView) VersionControl() filetree.VersionControlName {
+	vc := ge.Settings.VersionControl
 	return vc
 }
 
@@ -284,7 +284,7 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 // path -- all CodeView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *CodeView) NewProj(path gi.Filename, folder string, mainLang fi.Known, versCtrl filetree.VersCtrlName) *CodeView { //gti:add
+func (ge *CodeView) NewProj(path gi.Filename, folder string, mainLang fi.Known, VersionControl filetree.VersionControlName) *CodeView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
@@ -293,8 +293,8 @@ func (ge *CodeView) NewProj(path gi.Filename, folder string, mainLang fi.Known, 
 	}
 	nge := ge.OpenPath(gi.Filename(np))
 	nge.Settings.MainLang = mainLang
-	if versCtrl != "" {
-		nge.Settings.VersCtrl = versCtrl
+	if VersionControl != "" {
+		nge.Settings.VersionControl = VersionControl
 	}
 	return nge
 }

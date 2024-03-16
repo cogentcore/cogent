@@ -962,7 +962,7 @@ func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 	sv.FindFrames = findFrames
 	tv := giv.NewTableView(sv, "stack")
 	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelIdx
+		idx := tv.SelectedIndex
 		if sv.FindFrames {
 			if idx >= 0 && idx < len(dv.State.FindFrames) {
 				fr := dv.State.FindFrames[idx]
@@ -994,7 +994,7 @@ func (sv *StackView) ShowStack() {
 	if sv.FindFrames {
 		tv.SetSlice(&dv.State.FindFrames)
 	} else {
-		tv.SelIdx = dv.State.CurFrame
+		tv.SelectedIndex = dv.State.CurFrame
 		tv.SetSlice(&dv.State.Stack)
 	}
 }
@@ -1019,7 +1019,7 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	})
 	tv := giv.NewTableView(sv, "breaks")
 	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelIdx
+		idx := tv.SelectedIndex
 		dv.ShowBreakFile(idx)
 	})
 	// todo:
@@ -1043,7 +1043,7 @@ func (sv *BreakView) ShowBreaks() {
 	if dv.State.CurBreak > 0 {
 		_, idx := cdebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
 		if idx >= 0 {
-			tv.SelIdx = idx
+			tv.SelectedIndex = idx
 		}
 	}
 	tv.SetSlice(&dv.State.Breaks)
@@ -1070,7 +1070,7 @@ func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 	})
 	tv := giv.NewTableView(sv, "threads")
 	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelIdx
+		idx := tv.SelectedIndex
 		if dv.Dbg != nil && !dv.Dbg.HasTasks() {
 			dv.SetThreadIdx(idx)
 		}
@@ -1092,7 +1092,7 @@ func (sv *ThreadView) ShowThreads() {
 	tv.SetReadOnly(true)
 	_, idx := cdebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
 	if idx >= 0 {
-		tv.SelIdx = idx
+		tv.SelectedIndex = idx
 	}
 	tv.SetSlice(&dv.State.Threads)
 }
@@ -1117,7 +1117,7 @@ func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 	})
 	tv := giv.NewTableView(sv, "tasks")
 	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelIdx
+		idx := tv.SelectedIndex
 		if dv.Dbg != nil && dv.Dbg.HasTasks() {
 			dv.SetThreadIdx(idx)
 		}
@@ -1139,7 +1139,7 @@ func (sv *TaskView) ShowTasks() {
 	tv.SetReadOnly(true)
 	_, idx := cdebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
 	if idx >= 0 {
-		tv.SelIdx = idx
+		tv.SelectedIndex = idx
 	}
 	tv.SetSlice(&dv.State.Tasks)
 }
@@ -1168,7 +1168,7 @@ func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 	sv.GlobalVars = globalVars
 	tv := giv.NewTableView(sv, "vars")
 	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelIdx
+		idx := tv.SelectedIndex
 		if sv.GlobalVars {
 			vr := dv.State.GlobalVars[idx]
 			dv.ShowVar(vr.Nm)

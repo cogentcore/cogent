@@ -108,7 +108,7 @@ func ExecCmds(ge *CodeView) [][]string {
 	}
 	var cmds [][]string
 
-	vc := ge.VersCtrl()
+	vc := ge.VersionControl()
 	if ge.ActiveLang == fi.Unknown {
 		cmds = code.AvailCmds.FilterCmdNames(ge.Settings.MainLang, vc)
 	} else {
@@ -204,7 +204,7 @@ func (ge *CodeView) Run() { //gti:add
 // Commit commits the current changes using relevant VCS tool.
 // Checks for VCS setting and for unsaved files.
 func (ge *CodeView) Commit() { //gti:add
-	vc := ge.VersCtrl()
+	vc := ge.VersionControl()
 	if vc == "" {
 		gi.MessageDialog(ge, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
 		return
@@ -216,14 +216,14 @@ func (ge *CodeView) Commit() { //gti:add
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
 func (ge *CodeView) CommitNoChecks() {
-	vc := ge.VersCtrl()
+	vc := ge.VersionControl()
 	cmds := code.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
 	cmdnm := ""
 	for _, ct := range cmds {
 		if len(ct) < 2 {
 			continue
 		}
-		if !filetree.IsVersCtrlSystem(ct[0]) {
+		if !filetree.IsVersionControlSystem(ct[0]) {
 			continue
 		}
 		for _, cm := range ct {

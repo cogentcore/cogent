@@ -683,7 +683,7 @@ var CustomCmds = Commands{}
 
 // FilterCmdNames returns a slice of commands organized by category
 // that are compatible with given language and version control system.
-func (cm *Commands) FilterCmdNames(lang fi.Known, vcnm filetree.VersCtrlName) [][]string {
+func (cm *Commands) FilterCmdNames(lang fi.Known, vcnm filetree.VersionControlName) [][]string {
 	vnm := strings.ToLower(string(vcnm))
 	var cmds [][]string
 	cat := ""
@@ -692,7 +692,7 @@ func (cm *Commands) FilterCmdNames(lang fi.Known, vcnm filetree.VersCtrlName) []
 		if cmd.LangMatch(lang) {
 			if cmd.Cat != cat {
 				lcat := strings.ToLower(cmd.Cat)
-				if filetree.IsVersCtrlSystem(lcat) && lcat != vnm {
+				if filetree.IsVersionControlSystem(lcat) && lcat != vnm {
 					continue
 				}
 				cat = cmd.Cat
@@ -835,9 +835,9 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 		return nil
 	}
 	lang := fn.Info.Known
-	vcnm := ge.VersCtrl()
+	vcnm := ge.VersionControl()
 	if repo, _ := fn.Repo(); repo != nil {
-		vcnm = filetree.VersCtrlName(repo.Vcs())
+		vcnm = filetree.VersionControlName(repo.Vcs())
 	}
 	cmds := AvailCmds.FilterCmdNames(lang, vcnm)
 	lastCmd := ""

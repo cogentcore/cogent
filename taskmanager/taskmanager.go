@@ -55,7 +55,7 @@ func main() {
 	tv.SortSliceAction(1)
 
 	tv.OnDoubleClick(func(e events.Event) {
-		t := ts[tv.SelIdx]
+		t := ts[tv.SelectedIndex]
 		d := gi.NewBody().AddTitle("Task info")
 		giv.NewStructView(d).SetStruct(&t).SetReadOnly(true)
 		d.AddOkOnly().NewDialog(b).Run()
@@ -83,7 +83,7 @@ func main() {
 		gi.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
 			SetTooltip("Stop the currently selected task").
 			OnClick(func(e events.Event) {
-				t := ts[tv.SelIdx]
+				t := ts[tv.SelectedIndex]
 				gi.ErrorSnackbar(tv, t.Kill(), "Error ending task")
 			})
 		pause := gi.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).

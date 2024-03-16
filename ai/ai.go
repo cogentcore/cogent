@@ -59,11 +59,11 @@ func main() {
 	})
 
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
-		// model := Models[tableView.SelIdx]
+		// model := Models[tableView.SelectedIndex]
 		// cmd.RunArgs("ollama", "run", model.Name)//not need
 	})
 	gi.NewButton(newFrame).SetText("Stop selected module").OnClick(func(e events.Event) {
-		// model := Models[tableView.SelIdx]
+		// model := Models[tableView.SelectedIndex]
 		// cmd.RunArgs("ollama", "stop",model.Name)//not need
 	})
 
@@ -95,7 +95,7 @@ func main() {
 		}
 		go func() {
 			mylog.Warning("connect serve", "Send "+strconv.Quote(textField.Text())+" to the serve,please wait a while")
-			// model := Models[tableView.SelIdx]
+			// model := Models[tableView.SelectedIndex]
 			resp, err := NewRequest(textField.Text(), structs.Params{ // go1.22 Generic type constraints
 				// ApiModel: model.Name,
 				ApiModel:    "gemma:2b",

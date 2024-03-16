@@ -136,10 +136,10 @@ func (ge *CodeView) LangDefaults() {
 			ge.Settings.BuildCmds = code.CmdNames{"Build: Make"}
 		}
 	}
-	if ge.Settings.VersCtrl == "" {
+	if ge.Settings.VersionControl == "" {
 		repo, _ := ge.Files.FirstVCS()
 		if repo != nil {
-			ge.Settings.VersCtrl = filetree.VersCtrlName(repo.Vcs())
+			ge.Settings.VersionControl = filetree.VersionControlName(repo.Vcs())
 		}
 	}
 }
