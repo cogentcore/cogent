@@ -22,7 +22,7 @@ import (
 	"github.com/ddkwork/golibrary/stream"
 	"github.com/goradd/maps"
 
-	"cogentcore.org/cogent/ai/table"
+	"cogentcore.org/cogent/ai/pkg/tree"
 )
 
 //go:generate go install .
@@ -152,14 +152,14 @@ func QueryModelList() {
 		return
 	}
 	root := queryModelList(resp.Body)
-	root.WalkContainer(func(node *table.Node[Model]) {
+	root.WalkContainer(func(node *tree.Node[Model]) {
 		QueryModelTags(node.Data.Name, node) //node is every container of model node
 	})
 	//todo last need save to json file when the test passed
 }
 
-func queryModelList(r io.Reader) (root *table.Node[Model]) {
-	root = table.NewNode("aiModel", true, Model{
+func queryModelList(r io.Reader) (root *tree.Node[Model]) {
+	root = tree.NewNode("aiModel", true, Model{
 		Name:        "root",
 		Description: "",
 		UpdateTime:  "",
@@ -183,13 +183,13 @@ func queryModelList(r io.Reader) (root *table.Node[Model]) {
 			Size:        "",
 			Children:    make([]Model, 0),
 		}
-		parent := table.NewNode(name, false, model)
+		parent := tree.NewNode(name, false, model)
 		root.AddChild(parent)
 	})
 	return
 }
 
-func QueryModelTags(name string, parent *table.Node[Model]) {
+func QueryModelTags(name string, parent *tree.Node[Model]) {
 	resp, err := http.Get("https://ollama.com/library/" + name + "/tags")
 	if !mylog.Error(err) {
 		return
@@ -198,7 +198,7 @@ func QueryModelTags(name string, parent *table.Node[Model]) {
 	queryModelTags(resp.Body, parent)
 }
 
-func queryModelTags(r io.Reader, parent *table.Node[Model]) {
+func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
@@ -241,13 +241,17 @@ func queryModelTags(r io.Reader, parent *table.Node[Model]) {
 				UpdateTime:  strings.TrimSpace(lines[2]),
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
 				Size:        modelInfoSplit[1],
+				Children:    nil,
+				Node:        nil,
 			}
+			model.Node = tree.NewNode[*Model]("", false, &model)
 			ModelMap.Set(modelWithTag, model)
 
 			mylog.Struct(model)
-			c := table.NewNode(modelWithTag, false, model)
+
+			c := tree.NewNode(modelWithTag, false, model)
 			c = c
-			parent.AddChild(table.NewNode(modelWithTag, false, model))
+			parent.AddChild(tree.NewNode(modelWithTag, false, model))
 		}
 	})
 }
@@ -270,12 +274,13 @@ func unescape(s string) string {
 
 type (
 	Model struct {
-		Name        string
-		Description string
-		UpdateTime  string
-		Hash        string
-		Size        string
-		Children    []Model //tags
+		Name               string
+		Description        string
+		UpdateTime         string
+		Hash               string
+		Size               string
+		Children           []Model `json:"_"` //tags
+		*tree.Node[*Model] `json:"_"`
 	}
 )
 

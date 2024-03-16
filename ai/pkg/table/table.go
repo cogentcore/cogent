@@ -6,49 +6,13 @@ import (
 	"time"
 
 	"github.com/ddkwork/golibrary/stream"
-	"github.com/google/uuid"
+
+	"cogentcore.org/cogent/ai/pkg/tree"
 )
 
-// RowData T 是内部node类型和其他所有外部的node类型，然而为避免样板代码，不需要将接口的类型约束为N个node的实现类型，
-// 只需要在每个自定义node类型只需要实例化内部node类型并操作它的方法即可，这种情况下，自定义node没有没有嵌套内部node类型实现RowData接口，
-// 所以不需要为node是否实现RowData接口进行签名实现检查
-type RowData[T any] interface {
-	Clone(newParent *Node[T], preserveID bool) *Node[T]
-	CellData(columnID int, data any)
-	String() string
-	Enabled() bool
-	CopyFrom(from *Node[T])
-	ApplyTo(to *Node[T])
-	UUID() uuid.UUID
-	Container() bool
-	kind(base string) string
-	GetType() string
-	SetType(t string)
-	Open() bool
-	SetOpen(open bool)
-	Parent() *Node[T]
-	SetParent(parent *Node[T])
-	HasChildren() bool
-	Children() []*Node[T] //todo add calc sum method from CellData
-	SetChildren(children []*Node[T])
-	clearUnusedFields()
-	AddChild(child *Node[T])
-	Sort(cmp func(a T, b T) bool)
-	Depth() int //todo
-	InsertItem(parentID uuid.UUID, data T) *Node[T]
-	CreateItem(parent *Node[T], data T) *Node[T]
-	RemoveChild(id uuid.UUID)
-	Update(id uuid.UUID, data T)
-	Find(id uuid.UUID) *Node[T]
-	Walk(callback func(node *Node[T]))
-	WalkContainer(callback func(node *Node[T]))
-	Format(root *Node[T]) string
-	format(root *Node[T], prefix string, isLast bool, s *stream.Stream)
-	formatData(rowObjectStruct any) (rowData string)
-}
 type Provider[T any] interface {
 	//Model[*Node[T]]
-	SetTable(table *Node[T]) //todo
+	//SetTable(table *tree.Node[T]) //todo
 	RootData() []T
 	SetRootData(data []T)
 	DragKey() string
@@ -65,8 +29,7 @@ type Provider[T any] interface {
 	//ContextMenuItems() []ContextMenuItem
 	//OpenEditor(owner Rebuildable, table *unison.Table[*Node[T]])
 	//CreateItem(owner Rebuildable, table *unison.Table[*Node[T]], variant ItemVariant)
-	Serialize() ([]byte, error)
-	Deserialize(data []byte) error
+
 	RefKey() string
 	AllTags() []string
 	CellFromCellData()
@@ -75,7 +38,6 @@ type Provider[T any] interface {
 type (
 	RowConstraint[T any] interface {
 		comparable
-		RowData[T]
 	}
 	Model[T RowConstraint[T]] interface {
 		RootRowCount() int
@@ -88,6 +50,32 @@ type (
 func (m *SimpleModel[T]) RootRowCount() int    { return len(m.roots) }
 func (m *SimpleModel[T]) RootRows() []T        { return m.roots }
 func (m *SimpleModel[T]) SetRootRows(rows []T) { m.roots = rows }
+
+type RowData struct {
+	*tree.Node[*RowData]
+}
+
+func NewRowData() tree.Provider[*RowData] {
+	return &RowData{}
+}
+
+//
+//func (n *RowData[T]) ColumnCell(row, col int, foreground, background unison.Ink, _, _, _ bool) unison.Paneler {
+//	var cellData gurps.CellData
+//	n.dataAsNode.CellData(n.table.Columns[col].ID, &cellData)
+//	width := n.table.CellWidth(row, col)
+//	if n.cellCache[col].Matches(width, &cellData) {
+//		applyInkRecursively(n.cellCache[col].Panel.AsPanel(), foreground, background)
+//		return n.cellCache[col].Panel
+//	}
+//	c := n.CellFromCellData(&cellData, width, foreground, background)
+//	n.cellCache[col] = &CellCache{
+//		Panel: c,
+//		Data:  cellData,
+//		Width: width,
+//	}
+//	return c
+//}
 
 //func CollectUUIDsFromRow[T RowConstraint[T]](node T, ids map[uuid.UUID]bool) {
 //	ids[node.UUID()] = true
@@ -457,15 +445,6 @@ func DisableSorting[T unison.TableRowConstraint[T]](headers []unison.TableColumn
 //		AsNode(item).SetParent(parent)
 //	}
 //}
-
-// ExtractNodeDataFromList returns the underlying node data.
-func ExtractNodeDataFromList[T *Node[T]](list []*Node[T]) []T {
-	dataList := make([]T, 0, len(list))
-	for _, child := range list {
-		dataList = append(dataList, child.Data)
-	}
-	return dataList
-}
 
 //// CountTableRows returns the number of table rows, including all descendants, whether open or not.
 //func CountTableRows[T RowConstraint[T]](rows []T) int {
