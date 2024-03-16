@@ -133,7 +133,7 @@ func main() {
 				you.Style(func(s *styles.Style) {
 					s.Direction = styles.Row
 				})
-				gi.NewLabel(you).SetText("yuo:").Style(func(s *styles.Style) {
+				gi.NewLabel(you).SetText("yuo:").Style(func(s *styles.Style) { //todo NewLabel seems can not set svg icon
 					s.Align.Self = styles.Start
 				})
 				youSend := gi.NewTextField(you)
