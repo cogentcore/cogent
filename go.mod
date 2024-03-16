@@ -3,10 +3,11 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.0.8-0.20240313183652-97397a76cc05
+	cogentcore.org/core v0.0.8-0.20240316230754-fa4707c7ddcd
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/aandrew-me/tgpt/v2 v2.7.2-0.20240302111058-ac8336bfc4d9
 	github.com/bogdanfinn/fhttp v0.5.27
+	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/ddkwork/golibrary v0.0.0-20240314012741-de4758c6256c
 	github.com/go-delve/delve v1.22.1
 	github.com/google/uuid v1.6.0
@@ -28,7 +29,6 @@ require (
 	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/bogdanfinn/tls-client v1.7.2 // indirect
 	github.com/bogdanfinn/utls v1.6.1 // indirect
 	github.com/chewxy/math32 v1.10.1 // indirect
 	github.com/cilium/ebpf v0.13.2 // indirect
