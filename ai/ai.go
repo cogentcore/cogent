@@ -135,8 +135,8 @@ func main() {
 				gi.NewLabel(you).SetText("yuo:").Style(func(s *styles.Style) { //todo NewLabel seems can not set svg icon
 					s.Align.Self = styles.Start
 				})
-				youSend := gi.NewTextField(you)
-				youSend.SetText(textField.Text()) //todo if we send code block or md need highlight it
+				youSend := gi.NewTextField(you).SetType(gi.TextFieldOutlined) //todo need more type
+				youSend.SetText(textField.Text())                             //todo if we send code block or md need highlight it
 				youSend.Style(func(s *styles.Style) {
 					s.Align.Self = styles.End
 				})
