@@ -140,6 +140,7 @@ func main() {
 				youSend.Style(func(s *styles.Style) {
 					s.Align.Self = styles.End
 				})
+				//todo need support emoji  😅 😁 😍 🤥 https://www.emojiall.com/zh-hans/categories/A
 
 				ai := gi.NewFrame(answer)
 				ai.Style(func(s *styles.Style) {

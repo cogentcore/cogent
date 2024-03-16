@@ -117,6 +117,7 @@ func NewClient() (tls_client.HttpClient, error) {
 		// tls_client.WithInsecureSkipVerify(),
 	}
 
+	//todo clean logic
 	proxyAddress := os.Getenv("HTTP_PROXY")
 	if proxyAddress == "" {
 		proxyAddress = os.Getenv("http_proxy")
