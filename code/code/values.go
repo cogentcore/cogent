@@ -23,7 +23,7 @@ func KeyMapsView(km *KeyMaps) {
 	if gi.ActivateExistingMainWindow(km) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Key Maps: Duplicate an existing map (using Ctxt Menu) as starting point for creating a custom map").SetData(km)
+	d := gi.NewBody().SetTitle("Available Key Maps: duplicate an existing map (using context menu) as starting point for creating a custom map").SetData(km)
 	tv := giv.NewTableView(d).SetSlice(km)
 	AvailKeyMapsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -84,52 +84,28 @@ func DebugSettingsView(pf *cdebug.Params) *giv.StructView {
 	return tv
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//  KeyMapValue
-
-// Value registers KeyMapValue as the viewer of KeyMapName
+// Value registers [KeyMapValue] as the [giv.Value] for [KeyMapName].
 func (kn KeyMapName) Value() giv.Value {
 	return &KeyMapValue{}
 }
 
-// KeyMapValue presents an action for displaying an KeyMapName and selecting
-// from KeyMapChooserDialog
+// KeyMapValue represents a [KeyMapName] with a button.
 type KeyMapValue struct {
-	giv.ValueBase
+	giv.ValueBase[*gi.Button]
 }
 
-func (vv *KeyMapValue) WidgetType() *gti.Type {
-	vv.WidgetTyp = gi.ButtonType
-	return vv.WidgetTyp
+func (v *KeyMapValue) Config() {
+	v.Widget.SetType(gi.ButtonTonal)
+	giv.ConfigDialogWidget(v, false)
 }
 
-func (vv *KeyMapValue) UpdateWidget() {
-	if vv.Widget == nil {
-		return
-	}
-	bt := vv.Widget.(*gi.Button)
-	txt := laser.ToString(vv.Value.Interface())
+func (v *KeyMapValue) Update() {
+	txt := laser.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none; click to set)"
 	}
-	bt.SetText(txt)
+	v.Widget.SetText(txt).Update()
 }
-
-func (vv *KeyMapValue) Config(w gi.Widget) {
-	if vv.Widget == w {
-		vv.UpdateWidget()
-		return
-	}
-	vv.Widget = w
-	vv.StdConfig(w)
-	bt := vv.Widget.(*gi.Button)
-	bt.SetType(gi.ButtonTonal)
-	giv.ConfigDialogWidget(vv, bt, false)
-	vv.UpdateWidget()
-}
-
-func (vv *KeyMapValue) HasDialog() bool                      { return true }
-func (vv *KeyMapValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
 
 func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
@@ -140,20 +116,17 @@ func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 		if si >= 0 {
 			km := AvailKeyMaps[si]
 			vv.SetValue(km.Name)
-			vv.UpdateWidget()
+			vv.Update()
 		}
 	}
 }
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  LangsView
 
 // LangsView opens a view of a languages options map
 func LangsView(pt *Langs) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Language Opts: Add or modify entries to customize options for language / file types").SetData(pt)
+	d := gi.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
 	tv := giv.NewMapView(d).SetMap(pt)
 	AvailLangsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -182,9 +155,6 @@ func LangsView(pt *Langs) {
 	d.NewWindow().Run()
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//  CmdsView
-
 // CmdsView opens a view of a commands table
 func CmdsView(pt *Commands) {
 	if gi.ActivateExistingMainWindow(pt) {
@@ -197,7 +167,7 @@ func CmdsView(pt *Commands) {
 		CustomCmdsChanged = true
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").
+		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCmdsChanged && pt == &CustomCmds) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
@@ -215,51 +185,28 @@ func CmdsView(pt *Commands) {
 	d.NewWindow().Run()
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//  CmdValue
-
-// Value registers CmdValue as the viewer of CmdName
-func (kn CmdName) Value() giv.Value {
+// Value registers [CmdValue] as the [giv.Value] for [CmdName].
+func (cn CmdName) Value() giv.Value {
 	return &CmdValue{}
 }
 
-// CmdValue presents an action for displaying an CmdName and selecting
+// CmdValue represents a [CmdName] with a button.
 type CmdValue struct {
-	giv.ValueBase
+	giv.ValueBase[*gi.Button]
 }
 
-func (vv *CmdValue) WidgetType() *gti.Type {
-	vv.WidgetTyp = gi.ButtonType
-	return vv.WidgetTyp
+func (v *CmdValue) Config() {
+	v.Widget.SetType(gi.ButtonTonal)
+	giv.ConfigDialogWidget(v, false)
 }
 
-func (vv *CmdValue) UpdateWidget() {
-	if vv.Widget == nil {
-		return
-	}
-	bt := vv.Widget.(*gi.Button)
-	txt := laser.ToString(vv.Value.Interface())
+func (v *CmdValue) Update() {
+	txt := laser.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
-	bt.SetText(txt)
+	v.Widget.SetText(txt).Update()
 }
-
-func (vv *CmdValue) Config(w gi.Widget) {
-	if vv.Widget == w {
-		vv.UpdateWidget()
-		return
-	}
-	vv.Widget = w
-	vv.StdConfig(w)
-	bt := vv.Widget.(*gi.Button)
-	bt.SetType(gi.ButtonTonal)
-	giv.ConfigDialogWidget(vv, bt, false)
-	vv.UpdateWidget()
-}
-
-func (vv *CmdValue) HasDialog() bool                      { return true }
-func (vv *CmdValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
 
 func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
@@ -270,20 +217,17 @@ func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 		if si >= 0 {
 			pt := AvailCmds[si]
 			vv.SetValue(CommandName(pt.Cat, pt.Name))
-			vv.UpdateWidget()
+			vv.Update()
 		}
 	}
 }
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  SplitsView
 
 // SplitsView opens a view of a splits table
 func SplitsView(pt *Splits) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Splitter Settings: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetData(pt)
+	d := gi.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -291,7 +235,7 @@ func SplitsView(pt *Splits) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").
+		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailSplitsChanged && pt == &StdSplits) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
