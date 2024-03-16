@@ -198,7 +198,6 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 		UpdateTime:  "",
 		Hash:        "",
 		Size:        "",
-		Children:    nil,
 	})
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
@@ -214,7 +213,6 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 			UpdateTime:  "",
 			Hash:        "",
 			Size:        "",
-			Children:    make([]Model, 0),
 		}
 		parent := tree.NewNode(name, false, model)
 		root.AddChild(parent)
@@ -274,10 +272,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 				UpdateTime:  strings.TrimSpace(lines[2]),
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
 				Size:        modelInfoSplit[1],
-				Children:    nil,
-				Node:        nil,
 			}
-			model.Node = tree.NewNode[*Model]("", false, &model)
 			ModelMap.Set(modelWithTag, model)
 
 			mylog.Struct(model)
@@ -307,13 +302,11 @@ func unescape(s string) string {
 
 type (
 	Model struct {
-		Name               string
-		Description        string
-		UpdateTime         string
-		Hash               string
-		Size               string
-		Children           []Model `json:"_"` //tags
-		*tree.Node[*Model] `json:"_"`
+		Name        string
+		Description string
+		UpdateTime  string
+		Hash        string
+		Size        string
 	}
 )
 
