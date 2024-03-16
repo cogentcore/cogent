@@ -95,8 +95,6 @@ func main() {
 		}
 		go func() {
 			mylog.Warning("connect serve", "Send "+strconv.Quote(textField.Text())+" to the serve,please wait a while")
-			// todo textField.Text() 为用户输入增加到右试图布局的第一行，使用md渲染md，并增加标签：“用户”，下面的增加标签：“ai回复”
-
 			// model := Models[tableView.SelIdx]
 			resp, err := NewRequest(textField.Text(), structs.Params{ // go1.22 Generic type constraints
 				// ApiModel: model.Name,
@@ -122,7 +120,27 @@ func main() {
 				print(token)
 
 				answer.AsyncLock()
-				answer.DeleteChildren()
+				answer.DeleteChildren() //todo can not save chat history
+
+				// todo textField.Text() 为用户输入增加到右试图布局的第一行，使用md渲染md，并增加标签：“用户”，下面的增加标签：“ai回复”
+				//  need save chat list layout for show chat history
+				you := gi.NewFrame(answer)
+				gi.NewLabel(you).SetText("yuo:").Style(func(s *styles.Style) {
+					s.Align.Self = styles.Start
+				})
+				youSend := gi.NewTextField(you)
+				youSend.Style(func(s *styles.Style) {
+					s.Align.Self = styles.End
+				})
+
+				ai := gi.NewFrame(answer)
+				gi.NewLabel(ai).SetText("ai:").Style(func(s *styles.Style) {
+					s.Align.Self = styles.Start
+				})
+
+				//now need given ReadMDString a NewFrame? and set s.Align.Self = styles.End ?
+				gi.NewFrame(answer) //todo rename answer as chatPair
+
 				allToken += token
 
 				if !mylog.Error(coredom.ReadMDString(coredom.NewContext(), answer, allToken)) {
@@ -132,7 +150,7 @@ func main() {
 				answer.AsyncUnlock()
 			}
 			mylog.Error(scanner.Err())
-			// mylog.Error(resp.Body.Close()) //not do
+			// mylog.Error(resp.Body.Close()) //not do,unknown reason
 		}()
 	})
 
@@ -250,7 +268,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 			mylog.Struct(model)
 
 			c := tree.NewNode(modelWithTag, false, model)
-			c = c
+			c = c //todo debug
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
 		}
 	})
