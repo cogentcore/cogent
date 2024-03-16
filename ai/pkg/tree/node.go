@@ -450,6 +450,10 @@ func (n *Node[T]) ChildrenRemoveByPath() {
 }
 
 func (n *Node[T]) ChildrenSum(parent *Node[T]) *Node[T] {
+	//range   all children node
+	//sum    every elem  node data
+	//make container rowData and return
+
 	rowData := make([]string, 0) //todo return it for show Container node in table row
 	if parent.Container() {
 		typeOf := reflect.TypeOf(parent.children[0])
