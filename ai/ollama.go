@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
-	"github.com/aandrew-me/tgpt/v2/client"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	http "github.com/bogdanfinn/fhttp"
+	tls_client "github.com/bogdanfinn/tls-client"
+	"github.com/bogdanfinn/tls-client/profiles"
 	"github.com/ddkwork/golibrary/mylog"
 )
 
@@ -21,7 +23,7 @@ type Response struct {
 }
 
 func NewRequest(input string, params structs.Params, prevMessages string) (r *http.Response, err error) {
-	client, err := client.NewClient()
+	client, err := NewClient()
 	if !mylog.Error(err) {
 		return
 	}
@@ -103,4 +105,47 @@ func HandleToken(respBody string) (token string) {
 		return token
 	}
 	return
+}
+
+func NewClient() (tls_client.HttpClient, error) {
+	jar := tls_client.NewCookieJar()
+	options := []tls_client.HttpClientOption{
+		tls_client.WithTimeoutSeconds(1200),
+		tls_client.WithClientProfile(profiles.Firefox_110),
+		tls_client.WithNotFollowRedirects(),
+		tls_client.WithCookieJar(jar),
+		// tls_client.WithInsecureSkipVerify(),
+	}
+
+	proxyAddress := os.Getenv("HTTP_PROXY")
+	if proxyAddress == "" {
+		proxyAddress = os.Getenv("http_proxy")
+	} else {
+	}
+
+	if proxyAddress != "" {
+		if strings.HasPrefix(proxyAddress, "http://") || strings.HasPrefix(proxyAddress, "socks5://") {
+			proxyOption := tls_client.WithProxyUrl(proxyAddress)
+			options = append(options, proxyOption)
+		}
+	} else {
+		_, err := os.Stat("proxy.txt")
+		if err == nil {
+			proxyConfig, readErr := os.ReadFile("proxy.txt")
+			if readErr != nil {
+				fmt.Fprintln(os.Stderr, "Error reading file proxy.txt:", readErr)
+				return nil, readErr
+			}
+
+			proxyAddress := strings.TrimSpace(string(proxyConfig))
+			if proxyAddress != "" {
+				if strings.HasPrefix(proxyAddress, "http://") || strings.HasPrefix(proxyAddress, "socks5://") {
+					proxyOption := tls_client.WithProxyUrl(proxyAddress)
+					options = append(options, proxyOption)
+				}
+			}
+		}
+	}
+
+	return tls_client.NewHttpClient(tls_client.NewNoopLogger(), options...)
 }
