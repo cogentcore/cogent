@@ -11,7 +11,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/laser"
@@ -89,7 +88,7 @@ func (kn KeyMapName) Value() giv.Value {
 	return &KeyMapValue{}
 }
 
-// KeyMapValue represents a [KeyMapName] with a button.
+// KeyMapValue represents a [KeyMapName] value with a button.
 type KeyMapValue struct {
 	giv.ValueBase[*gi.Button]
 }
@@ -190,7 +189,7 @@ func (cn CmdName) Value() giv.Value {
 	return &CmdValue{}
 }
 
-// CmdValue represents a [CmdName] with a button.
+// CmdValue represents a [CmdName] value with a button.
 type CmdValue struct {
 	giv.ValueBase[*gi.Button]
 }
@@ -249,61 +248,35 @@ func SplitsView(pt *Splits) {
 	d.NewWindow().Run()
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//  SplitValue
-
-// Value registers SplitValue as the viewer of SplitName
-func (kn SplitName) Value() giv.Value {
+// Value registers [SplitValue] as the [giv.Value] for [SplitName].
+func (sn SplitName) Value() giv.Value {
 	return &SplitValue{}
 }
 
-// SplitValue presents an action for displaying an SplitName and selecting
+// SplitValue represents a [SplitName] value with a button.
 type SplitValue struct {
-	giv.ValueBase
+	giv.ValueBase[*gi.Button]
 }
 
-func (vv *SplitValue) WidgetType() *gti.Type {
-	vv.WidgetTyp = gi.ButtonType
-	return vv.WidgetTyp
+func (v *SplitValue) Config() {
+	v.Widget.SetType(gi.ButtonTonal)
+	giv.ConfigDialogWidget(v, false)
 }
 
-func (vv *SplitValue) UpdateWidget() {
-	if vv.Widget == nil {
-		return
-	}
-	bt := vv.Widget.(*gi.Button)
-	txt := laser.ToString(vv.Value.Interface())
+func (v *SplitValue) Update() {
+	txt := laser.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
-	bt.SetText(txt)
+	v.Widget.SetText(txt).Update()
 }
 
-func (vv *SplitValue) Config(w gi.Widget) {
-	if vv.Widget == w {
-		vv.UpdateWidget()
-		return
-	}
-	vv.Widget = w
-	vv.StdConfig(w)
-	bt := vv.Widget.(*gi.Button)
-	bt.SetType(gi.ButtonTonal)
-	bt.OnClick(func(e events.Event) {
-		if !vv.IsReadOnly() {
-			vv.OpenDialog(bt, nil)
-		}
-	})
-	vv.UpdateWidget()
-}
-
-func (vv *SplitValue) HasDialog() bool { return true }
-
-func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
-	cur := laser.ToString(vv.Value.Interface())
+func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
+	cur := laser.ToString(v.Value.Interface())
 	m := gi.NewMenuFromStrings(AvailSplitNames, cur, func(idx int) {
 		nm := AvailSplitNames[idx]
-		vv.SetValue(nm)
-		vv.UpdateWidget()
+		v.SetValue(nm)
+		v.Update()
 		if fun != nil {
 			fun()
 		}
@@ -311,40 +284,17 @@ func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
 	gi.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }
 
-/*
-func (vv *SplitValue) OpenDialog(ctx gi.Widget, fun func()) { giv.OpenValueDialog(vv, ctx, fun) }
-func (vv *SplitValue) ConfigDialog(d *gi.Body) (bool, func()) {
-	si := 0
-	cur := laser.ToString(vv.Value.Interface())
-	curRow := -1
-	if cur != "" {
-		_, curRow, _ = AvailSplits.SplitByName(SplitName(cur))
-	}
-	giv.NewTableView(d).SetSlice(&AvailSplits).SetInitSelectedIndex(curRow).BindSelectDialog(&si)
-	return true, func() {
-		if si >= 0 {
-			pt := AvailSplits[si]
-			vv.SetValue(pt.Name)
-			vv.UpdateWidget()
-		}
-	}
-}
-*/
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  RegistersView
-
 // RegistersView opens a view of a commands table
 func RegistersView(pt *Registers) {
 	if gi.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Guide Registers").SetData(pt)
+	d := gi.NewBody().SetTitle("Cogent Code Registers").SetData(pt)
 	d.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 
-	gi.NewLabel(d).SetText("Available Registers: Can duplicate an existing (using Ctxt Menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
+	gi.NewLabel(d).SetText("Available Registers: can duplicate an existing (using context menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
 
 	tv := giv.NewTableView(d).SetSlice(pt)
 
@@ -354,7 +304,7 @@ func RegistersView(pt *Registers) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to prefs").
+		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
@@ -369,68 +319,42 @@ func RegistersView(pt *Registers) {
 	d.NewWindow().Run()
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//  RegisterValue
-
-// Value registers RegisterValue as the viewer of RegisterName
-func (kn RegisterName) Value() giv.Value {
+// Value registers [RegisterValue] as the [giv.Value] for [RegisterName].
+func (rn RegisterName) Value() giv.Value {
 	return &RegisterValue{}
 }
 
-// RegisterValue presents an action for displaying an RegisterName and selecting
+// RegisterValue represents a [RegisterName] value with a button.
 type RegisterValue struct {
-	giv.ValueBase
+	giv.ValueBase[*gi.Button]
 }
 
-func (vv *RegisterValue) WidgetType() *gti.Type {
-	vv.WidgetTyp = gi.ButtonType
-	return vv.WidgetTyp
+func (v *RegisterValue) Config() {
+	v.Widget.SetType(gi.ButtonTonal)
+	giv.ConfigDialogWidget(v, false)
 }
 
-func (vv *RegisterValue) UpdateWidget() {
-	if vv.Widget == nil {
-		return
-	}
-	bt := vv.Widget.(*gi.Button)
-	txt := laser.ToString(vv.Value.Interface())
+func (v *RegisterValue) Update() {
+	txt := laser.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
-	bt.SetText(txt)
+	v.Widget.SetText(txt).Update()
 }
 
-func (vv *RegisterValue) Config(w gi.Widget) {
-	if vv.Widget == w {
-		vv.UpdateWidget()
-		return
-	}
-	vv.Widget = w
-	vv.StdConfig(w)
-	bt := vv.Widget.(*gi.Button)
-	bt.SetType(gi.ButtonTonal)
-	bt.OnClick(func(e events.Event) {
-		if !vv.IsReadOnly() {
-			vv.OpenDialog(bt, nil)
-		}
-	})
-	vv.UpdateWidget()
-}
-
-func (vv *RegisterValue) HasDialog() bool { return true }
-
-func (vv *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
+func (v *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 	if len(AvailRegisterNames) == 0 {
 		gi.MessageSnackbar(ctx, "No registers available")
 		return
 	}
-	cur := laser.ToString(vv.Value.Interface())
+	cur := laser.ToString(v.Value.Interface())
 	m := gi.NewMenuFromStrings(AvailRegisterNames, cur, func(idx int) {
 		rnm := AvailRegisterNames[idx]
 		if ci := strings.Index(rnm, ":"); ci > 0 {
 			rnm = rnm[:ci]
 		}
-		vv.SetValue(rnm)
-		vv.UpdateWidget()
+		v.SetValue(rnm)
+		v.Update()
 		if fun != nil {
 			fun()
 		}
