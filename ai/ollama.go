@@ -120,23 +120,18 @@ func NewClient() (tls_client.HttpClient, error) {
 	proxyAddress := os.Getenv("HTTP_PROXY")
 	if proxyAddress == "" {
 		proxyAddress = os.Getenv("http_proxy")
-	} else {
 	}
-
 	if proxyAddress != "" {
 		if strings.HasPrefix(proxyAddress, "http://") || strings.HasPrefix(proxyAddress, "socks5://") {
 			proxyOption := tls_client.WithProxyUrl(proxyAddress)
 			options = append(options, proxyOption)
 		}
 	} else {
-		_, err := os.Stat("proxy.txt")
-		if err == nil {
-			proxyConfig, readErr := os.ReadFile("proxy.txt")
-			if readErr != nil {
-				fmt.Fprintln(os.Stderr, "Error reading file proxy.txt:", readErr)
-				return nil, readErr
+		if !mylog.Error2(os.Stat("proxy.txt")) {
+			proxyConfig, err := os.ReadFile("proxy.txt")
+			if !mylog.Error(err) {
+				return nil, err
 			}
-
 			proxyAddress := strings.TrimSpace(string(proxyConfig))
 			if proxyAddress != "" {
 				if strings.HasPrefix(proxyAddress, "http://") || strings.HasPrefix(proxyAddress, "socks5://") {
@@ -146,6 +141,5 @@ func NewClient() (tls_client.HttpClient, error) {
 			}
 		}
 	}
-
 	return tls_client.NewHttpClient(tls_client.NewNoopLogger(), options...)
 }
