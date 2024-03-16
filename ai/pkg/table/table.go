@@ -1,12 +1,6 @@
 package table
 
 import (
-	"fmt"
-	"reflect"
-	"time"
-
-	"github.com/ddkwork/golibrary/stream"
-
 	"cogentcore.org/cogent/ai/pkg/tree"
 )
 
@@ -33,6 +27,9 @@ type Provider[T any] interface {
 	RefKey() string
 	AllTags() []string
 	CellFromCellData()
+
+	Match(text string) bool
+	CellData(columnID int, data any)
 }
 
 type (
@@ -58,6 +55,28 @@ type RowData struct {
 func NewRowData() tree.Provider[*RowData] {
 	return &RowData{}
 }
+
+//func (n *Node[T]) CellFromCellData(id uuid.UUID) *Node[T] {
+//	//TODO implement me
+//	panic("implement me")
+//}
+//
+//func (n *Node[T]) Match(text string) bool {
+//	if text != "" {
+//		//for i := range n.table.Columns {
+//		//	if strings.Contains(strings.ToLower(n.CellDataForSort(i)), data) {
+//		//		return true
+//		//	}
+//		//}
+//	}
+//	return false
+//}
+//
+//func (n *Node[T]) CellData(columnID int, data any) {
+//	//TODO implement me
+//	panic("implement me")
+//}
+//
 
 //
 //func (n *RowData[T]) ColumnCell(row, col int, foreground, background unison.Ink, _, _, _ bool) unison.Paneler {
@@ -86,41 +105,6 @@ func NewRowData() tree.Provider[*RowData] {
 //}
 //
 //func AsNode[T any](in T) Node[T] { return any(in).(Node[T]) }//not need
-
-func FormatDataForEdit(rowObjectStruct any) (rowData []string) { //todo need merge into formatData method
-	rowData = make([]string, 0)
-	valueOf := reflect.ValueOf(rowObjectStruct)
-	typeOf := reflect.Indirect(valueOf)
-	if typeOf.Kind() != reflect.Struct {
-		rowData = append(rowData, fmt.Sprint(rowObjectStruct))
-		return
-	}
-	fields := reflect.VisibleFields(typeOf.Type())
-	for i, field := range fields {
-		field = field
-		//mylog.Struct(field)
-		v := valueOf.Field(i).Interface()
-		switch t := v.(type) {
-		case string:
-			rowData = append(rowData, t)
-		case int64:
-			rowData = append(rowData, fmt.Sprint(t))
-		case int:
-			rowData = append(rowData, fmt.Sprint(t))
-		case time.Time:
-			rowData = append(rowData, stream.FormatTime(t))
-		case time.Duration:
-			rowData = append(rowData, fmt.Sprint(t))
-		case reflect.Kind:
-			rowData = append(rowData, t.String())
-		case bool: // todo 不应该支持？数据库是否会有这种情况？
-			rowData = append(rowData, fmt.Sprint(t))
-		default: // any
-			rowData = append(rowData, fmt.Sprint(t))
-		}
-	}
-	return
-}
 
 const containerMarker = "\000"
 

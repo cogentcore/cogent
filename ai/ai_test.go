@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ddkwork/golibrary/stream"
@@ -11,6 +12,16 @@ import (
 
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
+	root.SetFormatRowCallback(func(n *tree.Node[Model]) string {
+		sprintf := fmt.Sprintf("%s. %s %s %s %s",
+			n.Data.Name,
+			n.Data.Description,
+			n.Data.UpdateTime,
+			n.Data.Hash,
+			n.Data.Size,
+		)
+		return sprintf
+	})
 	root.WalkContainer(func(node *tree.Node[Model]) {
 		switch node.Data.Name {
 		case "gemma":
@@ -20,7 +31,6 @@ func Test_queryModelList(t *testing.T) {
 				UpdateTime:  "",
 				Hash:        "",
 				Size:        "",
-				Children:    nil,
 			})
 			gemmaNode.SetParent(root)
 			queryModelTags(stream.NewReadFile("tags.html"), gemmaNode)
@@ -31,7 +41,6 @@ func Test_queryModelList(t *testing.T) {
 				UpdateTime:  "",
 				Hash:        "",
 				Size:        "",
-				Children:    nil,
 			})
 			llama2Node.SetParent(root)
 			queryModelTags(stream.NewReadFile("Tags · llama2.html"), llama2Node)

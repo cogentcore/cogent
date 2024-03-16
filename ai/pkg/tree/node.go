@@ -76,12 +76,11 @@ type (
 		ChildrenRemoveByIndex()
 		ChildrenRemoveByPath()
 		ChildrenSum(parent *Node[T]) *Node[T]
+
+		SetFormatRowCallback(formatRowCallback func(*Node[T]) string)
 		Format(root *Node[T]) string
 		format(root *Node[T], prefix string, isLast bool, s *stream.Stream)
-		formatData(rowObjectStruct any) (rowData string)
-		CellFromCellData(id uuid.UUID) *Node[T]
-		Match(text string) bool
-		CellData(columnID int, data any)
+
 		String() string
 		Enabled() bool
 		MarshalXML(e *xml.Encoder, start xml.StartElement) bool
@@ -110,12 +109,13 @@ type (
 		Unmarshal(tree Provider[T]) (objectPtr any, err error)
 	}
 	Node[T any] struct {
-		ID       uuid.UUID `json:"id"`
-		Data     T
-		Type     string     `json:"type"`
-		IsOpen   bool       `json:"open,omitempty"`     // Container only
-		children []*Node[T] `json:"children,omitempty"` // Container only
-		parent   *Node[T]
+		ID                uuid.UUID `json:"id"`
+		Data              T
+		Type              string     `json:"type"`
+		IsOpen            bool       `json:"open,omitempty"`     // Container only
+		children          []*Node[T] `json:"children,omitempty"` // Container only
+		parent            *Node[T]
+		formatRowCallback func(root *Node[T]) string
 	}
 )
 
@@ -528,13 +528,17 @@ func (n *Node[T]) Unmarshal(tree Provider[T]) (objectPtr any, ok bool) {
 	panic("implement me")
 }
 
+func (n *Node[T]) SetFormatRowCallback(formatRowCallback func(*Node[T]) string) {
+	n.formatRowCallback = formatRowCallback
+}
+
 func (n *Node[T]) Format(root *Node[T]) string {
 	s := stream.New("")
 	n.format(root, "", true, s)
 	return s.String()
 }
 
-func (n *Node[T]) format(root *Node[T], prefix string, isLast bool, s *stream.Stream) { //todo add callback for format data
+func (n *Node[T]) format(root *Node[T], prefix string, isLast bool, s *stream.Stream) {
 	s.WriteString(fmt.Sprintf("%s", prefix))
 	if isLast {
 		s.WriteString("└───")
@@ -545,45 +549,12 @@ func (n *Node[T]) format(root *Node[T], prefix string, isLast bool, s *stream.St
 		prefix += "│   "
 		s.WriteString(prefix)
 	}
-	//switch data := any(root.Data).(type) {
-	//case EncodingFieldEditData:
-	//	sprintf := fmt.Sprintf("%d. %s (%s): %v", data.Number, data.Name, data.Kind.String(), data.Value)
-	//	s.WriteStringLn(sprintf)
-	//}
-	//sprintf := fmt.Sprintf("%d. %s (%s): %v", root.Data.Number, root.Data.Name, root.Data.Kind.String(), root.Data.Value)
-	s.WriteStringLn(n.formatData(root.Data))
-
+	if n.formatRowCallback != nil {
+		s.WriteStringLn(n.formatRowCallback(root))
+	}
 	for i := 0; i < len(root.children); i++ {
 		n.format(root.children[i], prefix, i == len(root.children)-1, s)
 	}
-}
-
-func (n *Node[T]) formatData(rowObjectStruct any) (rowData string) {
-	return ""
-	//data := FormatDataForEdit(rowObjectStruct)
-	//data[0] += "."
-	//return strings.Join(data, "")
-}
-
-func (n *Node[T]) CellFromCellData(id uuid.UUID) *Node[T] {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (n *Node[T]) Match(text string) bool {
-	if text != "" {
-		//for i := range n.table.Columns {
-		//	if strings.Contains(strings.ToLower(n.CellDataForSort(i)), data) {
-		//		return true
-		//	}
-		//}
-	}
-	return false
-}
-
-func (n *Node[T]) CellData(columnID int, data any) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (n *Node[T]) String() string {
@@ -596,7 +567,6 @@ func (n *Node[T]) Enabled() bool {
 	panic("implement me")
 }
 
-// ExtractNodeDataFromList returns the underlying node data.
 func ExtractNodeDataFromList[T *Node[T]](list []*Node[T]) []T {
 	dataList := make([]T, 0, len(list))
 	for _, child := range list {
