@@ -47,11 +47,11 @@ func Test_queryModelList(t *testing.T) {
 	root.WalkContainer(func(node *tree.Node[Model]) {
 		switch node.Data.Name {
 		case "gemma":
-			children := queryModelTags(stream.NewReadFile("tags.html"), node)
+			children := queryModelTags(stream.NewReadFile("tags_gemma.html"), node)
 			ModelJson.Children[0].Children = children
 
 		case "llama2":
-			children := queryModelTags(stream.NewReadFile("Tags · llama2.html"), node)
+			children := queryModelTags(stream.NewReadFile("Tags_llama2.html"), node)
 			ModelJson.Children[1].Children = children
 		}
 	})
