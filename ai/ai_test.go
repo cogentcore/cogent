@@ -12,7 +12,7 @@ import (
 
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
-	root.SetFormatRowCallback(func(n *tree.Node[Model]) string {
+	root.SetFormatRowCallback(func(n *tree.Node[Model]) string { //table row need all field set left align,and set too long filed as cut+...
 		fmtCommand := "%-25s. %s %s %-18s |%s" //todo do not show Description and name,is it Container node only
 		if n.Container() {
 			fmtCommand = "%-25s. %s %s %s |%s" //todo change field type and calculate children elem Size field sum show in container node
