@@ -148,9 +148,9 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
 				Size:        size,
 			}
-			children = append(children, model)
-			//mylog.Struct(model)
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
+			//model.Description = ""//why not , we only need show description in container node
+			children = append(children, model)
 		}
 	})
 	return
