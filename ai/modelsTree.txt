@@ -1,243 +1,243 @@
                          Name              Size(GB)              Hash              UpdateTime              Description              
-└───    root_container           . 2392.5   
-    ├───    │   gemma_container          . 290.9   Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind.
-    │   ├───    │   │   gemma:latest             . 5.2        430ed3535049 Updated 5 days ago           
-    │   ├───    │   │   gemma:2b                 . 1.7        b50d6c999e59 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b                 . 5.2        430ed3535049 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:instruct           . 5.2        430ed3535049 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:text               . 5.2        af57093b878e Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct        . 1.7        b50d6c999e59 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text            . 1.7        4003359bdf67 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct        . 5.2        430ed3535049 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text            . 5.2        af57093b878e Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q4_0   . 1.7        b50d6c999e59 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q4_1   . 1.8        79f47baf629d Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q5_0   . 1.9        f2e0978e20a7 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q5_1   . 2.1        2005cd5b9f9a Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q8_0   . 2.7        233b6c11a9a9 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q2_K   . 1.3        462aa639add9 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q3_K_S . 1.4        1147ae8910c1 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q3_K_M . 1.5        0bb5a6a99256 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q3_K_L . 1.6        a5e1a96f2947 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q4_K_S . 1.7        1f62e695daaf Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q4_K_M . 1.8        073d0876d678 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q5_K_S . 1.9        466d55f10b72 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q5_K_M . 2.0        79fe7a4a6e26 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-q6_K   . 2.2        2934d89f4873 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-instruct-fp16   . 4.5        1cca4a1914b8 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q4_0       . 1.7        4003359bdf67 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q4_1       . 1.8        2336b3481fc2 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q5_0       . 1.9        b82a85f35c76 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q5_1       . 2.1        af9d160f687e Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q8_0       . 2.7        40e5082de8d9 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q2_K       . 1.3        fa08f447fb74 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q3_K_S     . 1.4        30edc7975a67 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q3_K_M     . 1.5        3755aa666a62 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q3_K_L     . 1.6        fb3cb86ed3a0 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q4_K_S     . 1.7        e1f170c66fed Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q4_K_M     . 1.8        14b9181dd33c Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q5_K_S     . 1.9        dbbce6ea20a0 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q5_K_M     . 2.0        75095004592a Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-q6_K       . 2.2        5bd4a449bdbe Updated 2 weeks ago           
-    │   ├───    │   │   gemma:2b-text-fp16       . 4.5        bced1b198253 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q4_0   . 5.2        430ed3535049 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q4_1   . 5.7        e1e4a2e0c8ee Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q5_0   . 6.2        de923fde2f26 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q5_1   . 6.7        2e51588baf45 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q8_0   . 9.1        61d0f0df3637 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q2_K   . 3.7        831e95226882 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q3_K_S . 4.2        e4aea70c287e Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q3_K_M . 4.6        92dd270cb673 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q3_K_L . 4.9        1fa1f8e1a003 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q4_K_S . 5.2        bb7b8325814d Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q4_K_M . 5.5        d9c26a968eb4 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q5_K_S . 6.2        42630cbe71a2 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q5_K_M . 6.3        556abeb39bfd Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-q6_K   . 7.2        5c7aded0b8bd Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-instruct-fp16   . 17.0       f689ad351c8d Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q4_0       . 5.2        af57093b878e Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q4_1       . 5.7        a7adb7322d8b Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q5_0       . 6.2        fd6dc849a9f8 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q5_1       . 6.7        938308342124 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q8_0       . 9.1        1b7b1e5e2f98 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q2_K       . 3.7        e43e18a484ed Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q3_K_S     . 4.2        f40e21d459ff Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q3_K_M     . 4.6        ffd8ea66cf1f Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q3_K_L     . 4.9        1676d1f86165 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q4_K_S     . 5.2        51854f1241b3 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q4_K_M     . 5.5        5ec372e05241 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q5_K_S     . 6.2        df449b30e2e1 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q5_K_M     . 6.3        dc8f812e49c7 Updated 2 weeks ago           
-    │   ├───    │   │   gemma:7b-text-q6_K       . 7.2        9e7cfd3fab5b Updated 2 weeks ago           
-    │   └───    │       gemma:7b-text-fp16       . 16.0       1f1e9df10872 Updated 2 weeks ago           
-    ├───    │   llama2_container         . 2101.6   Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters.
-    │   ├───    │   │   llama2:latest            . 3.8        78e26419b446 Updated 2 months ago           
-    │   ├───    │   │   llama2:text              . 3.8        53b394a404fd Updated 2 months ago           
-    │   ├───    │   │   llama2:7b                . 3.8        78e26419b446 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b               . 39.0       e7f6c06ffef4 Updated 2 months ago           
-    │   ├───    │   │   llama2:chat              . 3.8        78e26419b446 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b               . 7.4        d475bf4c50bc Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text           . 3.8        53b394a404fd Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat           . 3.8        78e26419b446 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat          . 7.4        d475bf4c50bc Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text          . 7.4        d9ecf5544188 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat          . 39.0       e7f6c06ffef4 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text          . 39.0       b9b52e6b61c5 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q4_0      . 3.8        78e26419b446 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q4_1      . 4.2        85eb4bc10598 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q5_0      . 4.7        68cf22a36a37 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q5_1      . 5.1        ae646aad1ac9 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q8_0      . 7.2        fc35dd6c8370 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q2_K      . 2.8        56baf05e3e67 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q3_K_S    . 2.9        3af967e4a825 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q3_K_M    . 3.3        63ebc93e095e Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q3_K_L    . 3.6        c04042faafd0 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q4_K_S    . 3.9        bec61ac554e8 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q4_K_M    . 4.1        fe3834f64df5 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q5_K_S    . 4.7        4f771b179264 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q5_K_M    . 4.8        5918a2e3bb37 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-q6_K      . 5.5        7eabddae7b75 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-chat-fp16      . 13.0       50a12b7ddb9d Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q4_0      . 3.8        53b394a404fd Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q4_1      . 4.2        189a0d0904e4 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q5_0      . 4.7        7377932417e0 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q5_1      . 5.1        1a5e521c1e5c Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q8_0      . 7.2        fd701415200a Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q2_K      . 2.8        c581571a4e90 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q3_K_S    . 2.9        2f3ee65fe92a Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q3_K_M    . 3.3        c1ddf19ff6db Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q3_K_L    . 3.6        df57d4d53dac Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q4_K_S    . 3.9        1c2571d89f3b Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q4_K_M    . 4.1        b50304b988e8 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q5_K_S    . 4.7        6dd64259f527 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q5_K_M    . 4.8        eaa320e04479 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-q6_K      . 5.5        7e54061a4751 Updated 2 months ago           
-    │   ├───    │   │   llama2:7b-text-fp16      . 13.0       f69718db483a Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q4_0     . 7.4        d475bf4c50bc Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q4_1     . 8.2        8da45bab53a7 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q5_0     . 9.0        2ceaa73b479a Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q5_1     . 9.8        76c91147b201 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q8_0     . 14.0       303a83449a06 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q2_K     . 5.4        14d3396d4e1b Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q3_K_S   . 5.7        224005fe00d3 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q3_K_M   . 6.3        7a39765cf206 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q3_K_L   . 6.9        d0a4d669c0b5 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q4_K_S   . 7.4        c9bc1759c3b8 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q4_K_M   . 7.9        87727269f62c Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q5_K_S   . 9.0        25324e6a6e04 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q5_K_M   . 9.2        34471ad29e7c Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-q6_K     . 11.0       df2e3c78030b Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-chat-fp16     . 26.0       83b0fe8fee34 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q4_0     . 7.4        d9ecf5544188 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q4_1     . 8.2        ff9b7e23cab5 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q5_0     . 9.0        8f3886efc72d Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q5_1     . 9.8        2afbee63a3f1 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q8_0     . 14.0       604d6e23f647 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q2_K     . 5.4        64ace2ba0375 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q3_K_S   . 5.7        959925e1415d Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q3_K_M   . 6.3        ff280395c1b4 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q3_K_L   . 6.9        cc161efc495b Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q4_K_S   . 7.4        2fadc16207a6 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q4_K_M   . 7.9        74b8a493a98e Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q5_K_S   . 9.0        1025495b5ee3 Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q5_K_M   . 9.2        4be0a0bc5acb Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-q6_K     . 11.0       376544bcd2db Updated 2 months ago           
-    │   ├───    │   │   llama2:13b-text-fp16     . 26.0       d19bbe682374 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q4_0     . 39.0       e7f6c06ffef4 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q4_1     . 43.0       8618469361ea Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q5_0     . 47.0       6cb5828911b8 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q5_1     . 52.0       9d1fbb3c4074 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q8_0     . 73.0       d91d0643f080 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q2_K     . 29.0       3cac2828f2b8 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q3_K_S   . 30.0       051b27c23c3f Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q3_K_M   . 33.0       f11f61dc9832 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q3_K_L   . 36.0       e2275953b0b3 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q4_K_S   . 39.0       e202e9dd13cc Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q4_K_M   . 41.0       8f88029f07f8 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q5_K_S   . 47.0       eb071689d8e5 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q5_K_M   . 49.0       2e12d2211dd5 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-q6_K     . 57.0       b8bbc9a59804 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-chat-fp16     . 138.0      18d69cd1de10 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q4_0     . 39.0       b9b52e6b61c5 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q4_1     . 43.0       92c3da1574b4 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q5_0     . 47.0       4ec9f6c43f82 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q5_1     . 52.0       9cafaca2d2fe Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q8_0     . 73.0       2aa27df56a63 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q2_K     . 29.0       b45d7449cc92 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q3_K_S   . 30.0       2227129bfc8a Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q3_K_M   . 33.0       fbd62f5dcf16 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q3_K_L   . 36.0       b5bdb4982992 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q4_K_S   . 39.0       1197a01c76e7 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q4_K_M   . 41.0       bc70b8e5b4e5 Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q5_K_S   . 47.0       eab38b764b5b Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q5_K_M   . 49.0       b365053e53fc Updated 2 months ago           
-    │   ├───    │   │   llama2:70b-text-q6_K     . 57.0       78e480a0450b Updated 2 months ago           
-    │   └───    │       llama2:70b-text-fp16     . 138.0      dc03bc3a16cf Updated 2 months ago           
-    ├───    │   mistral_container        . 0.0   The 7B model released by Mistral AI, updated to version 0.2.
-    ├───    │   mixtral_container        . 0.0   A high-quality Mixture of Experts (MoE) model with open weights by Mistral AI.
-    ├───    │   llava_container          . 0.0   🌋 LLaVA is a novel end-to-end trained large multimodal model that combines a vision encoder and Vicuna for general-purpose visual and language understanding. Updated to version 1.6.
-    ├───    │   neural-chat_container    . 0.0   A fine-tuned model based on Mistral with good coverage of domain and language.
-    ├───    │   codellama_container      . 0.0   A large language model that can use text prompts to generate and discuss code.
-    ├───    │   dolphin-mixtral_container. 0.0   An uncensored, fine-tuned model based on the Mixtral mixture of experts model that excels at coding tasks. Created by Eric Hartford.
-    ├───    │   mistral-openorca_container. 0.0   Mistral OpenOrca is a 7 billion parameter model, fine-tuned on top of the Mistral 7B model using the OpenOrca dataset.
-    ├───    │   qwen_container           . 0.0   Qwen 1.5 is a series of large language models by Alibaba Cloud spanning from 0.5B to 72B parameters
-    ├───    │   llama2-uncensored_container. 0.0   Uncensored Llama 2 model by George Sung and Jarrad Hope.
-    ├───    │   nous-hermes2_container   . 0.0   The powerful family of models by Nous Research that excels at scientific discussion and coding tasks.
-    ├───    │   phi_container            . 0.0   Phi-2: a 2.7B language model by Microsoft Research that demonstrates outstanding reasoning and language understanding capabilities.
-    ├───    │   deepseek-coder_container . 0.0   DeepSeek Coder is a capable coding model trained on two trillion code and natural language tokens.
-    ├───    │   orca-mini_container      . 0.0   A general-purpose model ranging from 3 billion parameters to 70 billion, suitable for entry-level hardware.
-    ├───    │   dolphin-mistral_container. 0.0   The uncensored Dolphin model based on Mistral that excels at coding tasks. Updated to version 2.6.
-    ├───    │   wizard-vicuna-uncensored_container. 0.0   Wizard Vicuna Uncensored is a 7B, 13B, and 30B parameter model based on Llama 2 uncensored by Eric Hartford.
-    ├───    │   vicuna_container         . 0.0   General use chat model based on Llama and Llama 2 with 2K to 16K context sizes.
-    ├───    │   zephyr_container         . 0.0   Zephyr beta is a fine-tuned 7B version of mistral that was trained on on a mix of publicly available, synthetic datasets.
-    ├───    │   openhermes_container     . 0.0   OpenHermes 2.5 is a 7B model fine-tuned by Teknium on Mistral with fully open datasets.
-    ├───    │   llama2-chinese_container . 0.0   Llama 2 based model fine tuned to improve Chinese dialogue ability.
-    ├───    │   tinyllama_container      . 0.0   The TinyLlama project is an open endeavor to train a compact 1.1B Llama model on 3 trillion tokens.
-    ├───    │   wizardcoder_container    . 0.0   State-of-the-art code generation model
-    ├───    │   openchat_container       . 0.0   A family of open-source models trained on a wide variety of data, surpassing ChatGPT on various benchmarks. Updated to version 3.5-0106.
-    ├───    │   phind-codellama_container. 0.0   Code generation model based on Code Llama.
-    ├───    │   tinydolphin_container    . 0.0   An experimental 1.1B parameter model trained on the new Dolphin 2.8 dataset by Eric Hartford and based on TinyLlama.
-    ├───    │   orca2_container          . 0.0   Orca 2 is built by Microsoft research, and are a fine-tuned version of Meta's Llama 2 models.  The model is designed to excel particularly in reasoning.
-    ├───    │   falcon_container         . 0.0   A large language model built by the Technology Innovation Institute (TII) for use in summarization, text generation, and chat bots.
-    ├───    │   starcoder_container      . 0.0   StarCoder is a code generation model trained on 80+ programming languages.
-    ├───    │   yi_container             . 0.0   A high-performing, bilingual language model.
-    ├───    │   wizard-math_container    . 0.0   Model focused on math and logic problems
-    ├───    │   dolphin-phi_container    . 0.0   2.7B uncensored Dolphin model by Eric Hartford, based on the Phi language model by Microsoft Research.
-    ├───    │   nous-hermes_container    . 0.0   General use models based on Llama and Llama 2 from Nous Research.
-    ├───    │   nomic-embed-text_container. 0.0   A high-performing open embedding model with a large token context window.
-    ├───    │   starling-lm_container    . 0.0   Starling is a large language model trained by reinforcement learning from AI feedback focused on improving chatbot helpfulness.
-    ├───    │   starcoder2_container     . 0.0   StarCoder2 is the next generation of transparently trained open code LLMs that comes in three sizes: 3B, 7B and 15B parameters. 
-    ├───    │   stable-code_container    . 0.0   Stable Code 3B is a model offering accurate and responsive code completion at a level on par with models such as CodeLLaMA 7B that are 2.5x larger.
-    ├───    │   medllama2_container      . 0.0   Fine-tuned Llama 2 model to answer medical questions based on an open source medical dataset. 
-    ├───    │   codeup_container         . 0.0   Great code generation model based on Llama2.
-    ├───    │   bakllava_container       . 0.0   BakLLaVA is a multimodal model consisting of the Mistral 7B base model augmented with the LLaVA  architecture.
-    ├───    │   wizardlm-uncensored_container. 0.0   Uncensored version of Wizard LM model 
-    ├───    │   solar_container          . 0.0   A compact, yet powerful 10.7B large language model designed for single-turn conversation.
-    ├───    │   everythinglm_container   . 0.0   Uncensored Llama2 based model with support for a 16K context window.
-    ├───    │   sqlcoder_container       . 0.0   SQLCoder is a code completion model fined-tuned on StarCoder for SQL generation tasks
-    ├───    │   stable-beluga_container  . 0.0   Llama 2 based model fine tuned on an Orca-style dataset. Originally called Free Willy.
-    ├───    │   nous-hermes2-mixtral_container. 0.0   The Nous Hermes 2 model from Nous Research, now trained over Mixtral.
-    ├───    │   yarn-mistral_container   . 0.0   An extension of Mistral to support context windows of 64K or 128K.
-    ├───    │   samantha-mistral_container. 0.0   A companion assistant trained in philosophy, psychology, and personal relationships. Based on Mistral.
-    ├───    │   meditron_container       . 0.0   Open-source medical large language model adapted from Llama 2 to the medical domain.
-    ├───    │   stablelm2_container      . 0.0   Stable LM 2 1.6B is a state-of-the-art 1.6 billion parameter small language model trained on multilingual data in English, Spanish, German, Italian, French, Portuguese, and Dutch.
-    ├───    │   stablelm-zephyr_container. 0.0   A lightweight chat model allowing accurate, and responsive output without requiring high-end hardware.
-    ├───    │   magicoder_container      . 0.0   🎩 Magicoder is a family of 7B parameter models trained on 75K synthetic instruction data using OSS-Instruct, a novel approach to enlightening LLMs with open-source code snippets.
-    ├───    │   yarn-llama2_container    . 0.0   An extension of Llama 2 that supports a context of up to 128k tokens.
-    ├───    │   wizard-vicuna_container  . 0.0   Wizard Vicuna is a 13B parameter model based on Llama 2 trained by MelodysDreamj.
-    ├───    │   deepseek-llm_container   . 0.0   An advanced language model crafted with 2 trillion bilingual tokens.
-    ├───    │   llama-pro_container      . 0.0   An expansion of Llama 2 that specializes in integrating both general language understanding and domain-specific knowledge, particularly in programming and mathematics.
-    ├───    │   mistrallite_container    . 0.0   MistralLite is a fine-tuned model based on Mistral with enhanced capabilities of processing long contexts.
-    ├───    │   codebooga_container      . 0.0   A high-performing code instruct model created by merging two existing code models.
-    ├───    │   nexusraven_container     . 0.0   Nexus Raven is a 13B instruction tuned model for function calling tasks. 
-    ├───    │   open-orca-platypus2_container. 0.0   Merge of the Open Orca OpenChat model and the Garage-bAInd Platypus 2 model. Designed for chat and code generation.
-    ├───    │   goliath_container        . 0.0   A language model created by combining two fine-tuned Llama 2 70B models into one.
-    ├───    │   notux_container          . 0.0   A top-performing mixture of experts model, fine-tuned with high-quality data.
-    ├───    │   dolphincoder_container   . 0.0   An uncensored variant of the Dolphin model family that excels at coding, based on StarCoder2.
-    ├───    │   alfred_container         . 0.0   A robust conversational model designed to be used for both chat and instruct use cases.
-    ├───    │   megadolphin_container    . 0.0   MegaDolphin-2.2-120b is a transformation of Dolphin-2.2-70b created by interleaving the model with itself.
-    ├───    │   xwinlm_container         . 0.0   Conversational model based on Llama 2 that performs competitively on various benchmarks.
-    ├───    │   wizardlm_container       . 0.0   General use 70 billion parameter model based on Llama 2.
-    ├───    │   all-minilm_container     . 0.0   Embedding models on very large sentence level datasets.
-    ├───    │   duckdb-nsql_container    . 0.0   7B parameter text-to-SQL model made by MotherDuck and Numbers Station.
-    └───        notus_container          . 0.0   A 7B chat model fine-tuned with high-quality data and based on Zephyr.
+└───    root_container            2392.5   
+    ├───    │   gemma_container           290.9   Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind.
+    │   ├───    │   │   gemma:latest              5.2        430ed3535049 Updated 5 days ago           
+    │   ├───    │   │   gemma:2b                  1.7        b50d6c999e59 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b                  5.2        430ed3535049 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:instruct            5.2        430ed3535049 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:text                5.2        af57093b878e Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct         1.7        b50d6c999e59 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text             1.7        4003359bdf67 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct         5.2        430ed3535049 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text             5.2        af57093b878e Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q4_0    1.7        b50d6c999e59 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q4_1    1.8        79f47baf629d Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q5_0    1.9        f2e0978e20a7 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q5_1    2.1        2005cd5b9f9a Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q8_0    2.7        233b6c11a9a9 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q2_K    1.3        462aa639add9 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q3_K_S  1.4        1147ae8910c1 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q3_K_M  1.5        0bb5a6a99256 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q3_K_L  1.6        a5e1a96f2947 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q4_K_S  1.7        1f62e695daaf Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q4_K_M  1.8        073d0876d678 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q5_K_S  1.9        466d55f10b72 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q5_K_M  2.0        79fe7a4a6e26 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-q6_K    2.2        2934d89f4873 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-instruct-fp16    4.5        1cca4a1914b8 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q4_0        1.7        4003359bdf67 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q4_1        1.8        2336b3481fc2 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q5_0        1.9        b82a85f35c76 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q5_1        2.1        af9d160f687e Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q8_0        2.7        40e5082de8d9 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q2_K        1.3        fa08f447fb74 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q3_K_S      1.4        30edc7975a67 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q3_K_M      1.5        3755aa666a62 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q3_K_L      1.6        fb3cb86ed3a0 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q4_K_S      1.7        e1f170c66fed Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q4_K_M      1.8        14b9181dd33c Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q5_K_S      1.9        dbbce6ea20a0 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q5_K_M      2.0        75095004592a Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-q6_K        2.2        5bd4a449bdbe Updated 2 weeks ago           
+    │   ├───    │   │   gemma:2b-text-fp16        4.5        bced1b198253 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q4_0    5.2        430ed3535049 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q4_1    5.7        e1e4a2e0c8ee Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q5_0    6.2        de923fde2f26 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q5_1    6.7        2e51588baf45 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q8_0    9.1        61d0f0df3637 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q2_K    3.7        831e95226882 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q3_K_S  4.2        e4aea70c287e Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q3_K_M  4.6        92dd270cb673 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q3_K_L  4.9        1fa1f8e1a003 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q4_K_S  5.2        bb7b8325814d Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q4_K_M  5.5        d9c26a968eb4 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q5_K_S  6.2        42630cbe71a2 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q5_K_M  6.3        556abeb39bfd Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-q6_K    7.2        5c7aded0b8bd Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-instruct-fp16    17.0       f689ad351c8d Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q4_0        5.2        af57093b878e Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q4_1        5.7        a7adb7322d8b Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q5_0        6.2        fd6dc849a9f8 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q5_1        6.7        938308342124 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q8_0        9.1        1b7b1e5e2f98 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q2_K        3.7        e43e18a484ed Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q3_K_S      4.2        f40e21d459ff Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q3_K_M      4.6        ffd8ea66cf1f Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q3_K_L      4.9        1676d1f86165 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q4_K_S      5.2        51854f1241b3 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q4_K_M      5.5        5ec372e05241 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q5_K_S      6.2        df449b30e2e1 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q5_K_M      6.3        dc8f812e49c7 Updated 2 weeks ago           
+    │   ├───    │   │   gemma:7b-text-q6_K        7.2        9e7cfd3fab5b Updated 2 weeks ago           
+    │   └───    │       gemma:7b-text-fp16        16.0       1f1e9df10872 Updated 2 weeks ago           
+    ├───    │   llama2_container          2101.6   Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters.
+    │   ├───    │   │   llama2:latest             3.8        78e26419b446 Updated 2 months ago           
+    │   ├───    │   │   llama2:text               3.8        53b394a404fd Updated 2 months ago           
+    │   ├───    │   │   llama2:7b                 3.8        78e26419b446 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b                39.0       e7f6c06ffef4 Updated 2 months ago           
+    │   ├───    │   │   llama2:chat               3.8        78e26419b446 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b                7.4        d475bf4c50bc Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text            3.8        53b394a404fd Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat            3.8        78e26419b446 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat           7.4        d475bf4c50bc Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text           7.4        d9ecf5544188 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat           39.0       e7f6c06ffef4 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text           39.0       b9b52e6b61c5 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q4_0       3.8        78e26419b446 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q4_1       4.2        85eb4bc10598 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q5_0       4.7        68cf22a36a37 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q5_1       5.1        ae646aad1ac9 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q8_0       7.2        fc35dd6c8370 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q2_K       2.8        56baf05e3e67 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q3_K_S     2.9        3af967e4a825 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q3_K_M     3.3        63ebc93e095e Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q3_K_L     3.6        c04042faafd0 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q4_K_S     3.9        bec61ac554e8 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q4_K_M     4.1        fe3834f64df5 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q5_K_S     4.7        4f771b179264 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q5_K_M     4.8        5918a2e3bb37 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-q6_K       5.5        7eabddae7b75 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-chat-fp16       13.0       50a12b7ddb9d Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q4_0       3.8        53b394a404fd Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q4_1       4.2        189a0d0904e4 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q5_0       4.7        7377932417e0 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q5_1       5.1        1a5e521c1e5c Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q8_0       7.2        fd701415200a Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q2_K       2.8        c581571a4e90 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q3_K_S     2.9        2f3ee65fe92a Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q3_K_M     3.3        c1ddf19ff6db Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q3_K_L     3.6        df57d4d53dac Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q4_K_S     3.9        1c2571d89f3b Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q4_K_M     4.1        b50304b988e8 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q5_K_S     4.7        6dd64259f527 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q5_K_M     4.8        eaa320e04479 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-q6_K       5.5        7e54061a4751 Updated 2 months ago           
+    │   ├───    │   │   llama2:7b-text-fp16       13.0       f69718db483a Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q4_0      7.4        d475bf4c50bc Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q4_1      8.2        8da45bab53a7 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q5_0      9.0        2ceaa73b479a Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q5_1      9.8        76c91147b201 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q8_0      14.0       303a83449a06 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q2_K      5.4        14d3396d4e1b Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q3_K_S    5.7        224005fe00d3 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q3_K_M    6.3        7a39765cf206 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q3_K_L    6.9        d0a4d669c0b5 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q4_K_S    7.4        c9bc1759c3b8 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q4_K_M    7.9        87727269f62c Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q5_K_S    9.0        25324e6a6e04 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q5_K_M    9.2        34471ad29e7c Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-q6_K      11.0       df2e3c78030b Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-chat-fp16      26.0       83b0fe8fee34 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q4_0      7.4        d9ecf5544188 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q4_1      8.2        ff9b7e23cab5 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q5_0      9.0        8f3886efc72d Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q5_1      9.8        2afbee63a3f1 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q8_0      14.0       604d6e23f647 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q2_K      5.4        64ace2ba0375 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q3_K_S    5.7        959925e1415d Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q3_K_M    6.3        ff280395c1b4 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q3_K_L    6.9        cc161efc495b Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q4_K_S    7.4        2fadc16207a6 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q4_K_M    7.9        74b8a493a98e Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q5_K_S    9.0        1025495b5ee3 Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q5_K_M    9.2        4be0a0bc5acb Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-q6_K      11.0       376544bcd2db Updated 2 months ago           
+    │   ├───    │   │   llama2:13b-text-fp16      26.0       d19bbe682374 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q4_0      39.0       e7f6c06ffef4 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q4_1      43.0       8618469361ea Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q5_0      47.0       6cb5828911b8 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q5_1      52.0       9d1fbb3c4074 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q8_0      73.0       d91d0643f080 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q2_K      29.0       3cac2828f2b8 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q3_K_S    30.0       051b27c23c3f Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q3_K_M    33.0       f11f61dc9832 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q3_K_L    36.0       e2275953b0b3 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q4_K_S    39.0       e202e9dd13cc Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q4_K_M    41.0       8f88029f07f8 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q5_K_S    47.0       eb071689d8e5 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q5_K_M    49.0       2e12d2211dd5 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-q6_K      57.0       b8bbc9a59804 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-chat-fp16      138.0      18d69cd1de10 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q4_0      39.0       b9b52e6b61c5 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q4_1      43.0       92c3da1574b4 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q5_0      47.0       4ec9f6c43f82 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q5_1      52.0       9cafaca2d2fe Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q8_0      73.0       2aa27df56a63 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q2_K      29.0       b45d7449cc92 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q3_K_S    30.0       2227129bfc8a Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q3_K_M    33.0       fbd62f5dcf16 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q3_K_L    36.0       b5bdb4982992 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q4_K_S    39.0       1197a01c76e7 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q4_K_M    41.0       bc70b8e5b4e5 Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q5_K_S    47.0       eab38b764b5b Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q5_K_M    49.0       b365053e53fc Updated 2 months ago           
+    │   ├───    │   │   llama2:70b-text-q6_K      57.0       78e480a0450b Updated 2 months ago           
+    │   └───    │       llama2:70b-text-fp16      138.0      dc03bc3a16cf Updated 2 months ago           
+    ├───    │   mistral_container         0.0   The 7B model released by Mistral AI, updated to version 0.2.
+    ├───    │   mixtral_container         0.0   A high-quality Mixture of Experts (MoE) model with open weights by Mistral AI.
+    ├───    │   llava_container           0.0   🌋 LLaVA is a novel end-to-end trained large multimodal model that combines a vision encoder and Vicuna for general-purpose visual and language understanding. Updated to version 1.6.
+    ├───    │   neural-chat_container     0.0   A fine-tuned model based on Mistral with good coverage of domain and language.
+    ├───    │   codellama_container       0.0   A large language model that can use text prompts to generate and discuss code.
+    ├───    │   dolphin-mixtral_container 0.0   An uncensored, fine-tuned model based on the Mixtral mixture of experts model that excels at coding tasks. Created by Eric Hartford.
+    ├───    │   mistral-openorca_container 0.0   Mistral OpenOrca is a 7 billion parameter model, fine-tuned on top of the Mistral 7B model using the OpenOrca dataset.
+    ├───    │   qwen_container            0.0   Qwen 1.5 is a series of large language models by Alibaba Cloud spanning from 0.5B to 72B parameters
+    ├───    │   llama2-uncensored_container 0.0   Uncensored Llama 2 model by George Sung and Jarrad Hope.
+    ├───    │   nous-hermes2_container    0.0   The powerful family of models by Nous Research that excels at scientific discussion and coding tasks.
+    ├───    │   phi_container             0.0   Phi-2: a 2.7B language model by Microsoft Research that demonstrates outstanding reasoning and language understanding capabilities.
+    ├───    │   deepseek-coder_container  0.0   DeepSeek Coder is a capable coding model trained on two trillion code and natural language tokens.
+    ├───    │   orca-mini_container       0.0   A general-purpose model ranging from 3 billion parameters to 70 billion, suitable for entry-level hardware.
+    ├───    │   dolphin-mistral_container 0.0   The uncensored Dolphin model based on Mistral that excels at coding tasks. Updated to version 2.6.
+    ├───    │   wizard-vicuna-uncensored_container 0.0   Wizard Vicuna Uncensored is a 7B, 13B, and 30B parameter model based on Llama 2 uncensored by Eric Hartford.
+    ├───    │   vicuna_container          0.0   General use chat model based on Llama and Llama 2 with 2K to 16K context sizes.
+    ├───    │   zephyr_container          0.0   Zephyr beta is a fine-tuned 7B version of mistral that was trained on on a mix of publicly available, synthetic datasets.
+    ├───    │   openhermes_container      0.0   OpenHermes 2.5 is a 7B model fine-tuned by Teknium on Mistral with fully open datasets.
+    ├───    │   llama2-chinese_container  0.0   Llama 2 based model fine tuned to improve Chinese dialogue ability.
+    ├───    │   tinyllama_container       0.0   The TinyLlama project is an open endeavor to train a compact 1.1B Llama model on 3 trillion tokens.
+    ├───    │   wizardcoder_container     0.0   State-of-the-art code generation model
+    ├───    │   openchat_container        0.0   A family of open-source models trained on a wide variety of data, surpassing ChatGPT on various benchmarks. Updated to version 3.5-0106.
+    ├───    │   phind-codellama_container 0.0   Code generation model based on Code Llama.
+    ├───    │   tinydolphin_container     0.0   An experimental 1.1B parameter model trained on the new Dolphin 2.8 dataset by Eric Hartford and based on TinyLlama.
+    ├───    │   orca2_container           0.0   Orca 2 is built by Microsoft research, and are a fine-tuned version of Meta's Llama 2 models.  The model is designed to excel particularly in reasoning.
+    ├───    │   falcon_container          0.0   A large language model built by the Technology Innovation Institute (TII) for use in summarization, text generation, and chat bots.
+    ├───    │   starcoder_container       0.0   StarCoder is a code generation model trained on 80+ programming languages.
+    ├───    │   yi_container              0.0   A high-performing, bilingual language model.
+    ├───    │   wizard-math_container     0.0   Model focused on math and logic problems
+    ├───    │   dolphin-phi_container     0.0   2.7B uncensored Dolphin model by Eric Hartford, based on the Phi language model by Microsoft Research.
+    ├───    │   nous-hermes_container     0.0   General use models based on Llama and Llama 2 from Nous Research.
+    ├───    │   nomic-embed-text_container 0.0   A high-performing open embedding model with a large token context window.
+    ├───    │   starling-lm_container     0.0   Starling is a large language model trained by reinforcement learning from AI feedback focused on improving chatbot helpfulness.
+    ├───    │   starcoder2_container      0.0   StarCoder2 is the next generation of transparently trained open code LLMs that comes in three sizes: 3B, 7B and 15B parameters. 
+    ├───    │   stable-code_container     0.0   Stable Code 3B is a model offering accurate and responsive code completion at a level on par with models such as CodeLLaMA 7B that are 2.5x larger.
+    ├───    │   medllama2_container       0.0   Fine-tuned Llama 2 model to answer medical questions based on an open source medical dataset. 
+    ├───    │   codeup_container          0.0   Great code generation model based on Llama2.
+    ├───    │   bakllava_container        0.0   BakLLaVA is a multimodal model consisting of the Mistral 7B base model augmented with the LLaVA  architecture.
+    ├───    │   wizardlm-uncensored_container 0.0   Uncensored version of Wizard LM model 
+    ├───    │   solar_container           0.0   A compact, yet powerful 10.7B large language model designed for single-turn conversation.
+    ├───    │   everythinglm_container    0.0   Uncensored Llama2 based model with support for a 16K context window.
+    ├───    │   sqlcoder_container        0.0   SQLCoder is a code completion model fined-tuned on StarCoder for SQL generation tasks
+    ├───    │   stable-beluga_container   0.0   Llama 2 based model fine tuned on an Orca-style dataset. Originally called Free Willy.
+    ├───    │   nous-hermes2-mixtral_container 0.0   The Nous Hermes 2 model from Nous Research, now trained over Mixtral.
+    ├───    │   yarn-mistral_container    0.0   An extension of Mistral to support context windows of 64K or 128K.
+    ├───    │   samantha-mistral_container 0.0   A companion assistant trained in philosophy, psychology, and personal relationships. Based on Mistral.
+    ├───    │   meditron_container        0.0   Open-source medical large language model adapted from Llama 2 to the medical domain.
+    ├───    │   stablelm2_container       0.0   Stable LM 2 1.6B is a state-of-the-art 1.6 billion parameter small language model trained on multilingual data in English, Spanish, German, Italian, French, Portuguese, and Dutch.
+    ├───    │   stablelm-zephyr_container 0.0   A lightweight chat model allowing accurate, and responsive output without requiring high-end hardware.
+    ├───    │   magicoder_container       0.0   🎩 Magicoder is a family of 7B parameter models trained on 75K synthetic instruction data using OSS-Instruct, a novel approach to enlightening LLMs with open-source code snippets.
+    ├───    │   yarn-llama2_container     0.0   An extension of Llama 2 that supports a context of up to 128k tokens.
+    ├───    │   wizard-vicuna_container   0.0   Wizard Vicuna is a 13B parameter model based on Llama 2 trained by MelodysDreamj.
+    ├───    │   deepseek-llm_container    0.0   An advanced language model crafted with 2 trillion bilingual tokens.
+    ├───    │   llama-pro_container       0.0   An expansion of Llama 2 that specializes in integrating both general language understanding and domain-specific knowledge, particularly in programming and mathematics.
+    ├───    │   mistrallite_container     0.0   MistralLite is a fine-tuned model based on Mistral with enhanced capabilities of processing long contexts.
+    ├───    │   codebooga_container       0.0   A high-performing code instruct model created by merging two existing code models.
+    ├───    │   nexusraven_container      0.0   Nexus Raven is a 13B instruction tuned model for function calling tasks. 
+    ├───    │   open-orca-platypus2_container 0.0   Merge of the Open Orca OpenChat model and the Garage-bAInd Platypus 2 model. Designed for chat and code generation.
+    ├───    │   goliath_container         0.0   A language model created by combining two fine-tuned Llama 2 70B models into one.
+    ├───    │   notux_container           0.0   A top-performing mixture of experts model, fine-tuned with high-quality data.
+    ├───    │   dolphincoder_container    0.0   An uncensored variant of the Dolphin model family that excels at coding, based on StarCoder2.
+    ├───    │   alfred_container          0.0   A robust conversational model designed to be used for both chat and instruct use cases.
+    ├───    │   megadolphin_container     0.0   MegaDolphin-2.2-120b is a transformation of Dolphin-2.2-70b created by interleaving the model with itself.
+    ├───    │   xwinlm_container          0.0   Conversational model based on Llama 2 that performs competitively on various benchmarks.
+    ├───    │   wizardlm_container        0.0   General use 70 billion parameter model based on Llama 2.
+    ├───    │   all-minilm_container      0.0   Embedding models on very large sentence level datasets.
+    ├───    │   duckdb-nsql_container     0.0   7B parameter text-to-SQL model made by MotherDuck and Numbers Station.
+    └───        notus_container           0.0   A 7B chat model fine-tuned with high-quality data and based on Zephyr.
