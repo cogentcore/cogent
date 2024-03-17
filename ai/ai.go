@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
@@ -45,12 +46,9 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	if !mylog.Error(jsons.OpenFS(ModelJSON, modelsJSON, "models.json")) {
-		return
-	}
+	grr.Log(jsons.OpenFS(ModelJSON, modelsJSON, "models.json"))
 	models := []*Model{ModelJSON}
-	tableView := giv.NewTableView(leftFrame).SetSlice(&models)
-	tableView.SetReadOnly(true)
+	giv.NewTableView(leftFrame).SetSlice(&models).SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {
@@ -71,18 +69,16 @@ func main() {
 		// cmd.RunArgs("ollama", "stop",model.Name)//not need
 	})
 
-	rightSplits := gi.NewSplits(splits)
+	rightFrame := gi.NewFrame(splits)
+	rightFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 	splits.SetSplits(.2, .8)
 
-	frame := gi.NewFrame(rightSplits)
-	frame.Style(func(s *styles.Style) { s.Direction = styles.Column })
-
-	answer := gi.NewFrame(frame)
-	answer.Style(func(s *styles.Style) {
-		s.Overflow.Set(styles.OverflowAuto)
+	history := gi.NewFrame(rightFrame)
+	history.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
 	})
 
-	prompt := gi.NewFrame(frame)
+	prompt := gi.NewFrame(rightFrame)
 	prompt.Style(func(s *styles.Style) {
 		s.Direction = styles.Row
 		s.Grow.Set(1, 0)
@@ -93,14 +89,15 @@ func main() {
 	textField.Style(func(s *styles.Style) { s.Max.X.Zero() })
 
 	gi.NewButton(prompt).SetIcon(icons.Send).OnClick(func(e events.Event) {
-		if textField.Text() == "" {
-			mylog.Error("textField.Text() == \"\"")
+		promptString := textField.Text()
+		if promptString == "" {
+			gi.MessageSnackbar(b, "Please enter a prompt")
 			return
 		}
 		go func() {
 			mylog.Warning("connect serve", "Send "+strconv.Quote(textField.Text())+" to the serve,please wait a while")
 			// model := Models[tableView.SelectedIndex]
-			resp, err := NewRequest(textField.Text(), structs.Params{ // go1.22 Generic type constraints
+			resp, err := NewRequest(promptString, structs.Params{ // go1.22 Generic type constraints
 				// ApiModel: model.Name,
 				ApiModel:    "gemma:2b",
 				ApiKey:      "",
@@ -115,70 +112,52 @@ func main() {
 				return
 			}
 			if resp.StatusCode != http.StatusOK {
-				b := grr.Log1(io.ReadAll(resp.Body))
-				gi.MessageSnackbar(prompt, fmt.Sprintf("Error getting response (%s): %s", resp.Status, b))
+				body := grr.Log1(io.ReadAll(resp.Body))
+				gi.MessageSnackbar(b, fmt.Sprintf("Error getting response (%s): %s", resp.Status, body))
 				return
 			}
 			scanner := bufio.NewScanner(resp.Body)
 			allToken := ""
+
+			b.AsyncLock()
+
+			yourPrompt := gi.NewFrame(history)
+			yourPrompt.Style(func(s *styles.Style) {
+				s.Direction = styles.Column
+				s.Overflow.Set(styles.OverflowAuto)
+				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
+				s.Border.Radius = styles.BorderRadiusLarge
+				s.Align.Self = styles.End
+			})
+			grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, promptString))
+
+			answer := gi.NewFrame(history)
+			answer.Style(func(s *styles.Style) {
+				s.Direction = styles.Column
+				s.Overflow.Set(styles.OverflowAuto)
+				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
+				s.Border.Radius = styles.BorderRadiusLarge
+			})
+
+			b.AsyncUnlock()
+
 			for scanner.Scan() {
 				token := HandleToken(scanner.Text())
 				if token == "" {
 					continue
 				}
-				print(token)
-
-				answer.AsyncLock()
-				answer.DeleteChildren() //todo can not save chat history
-
-				//reset answer style
-				answer.Style(func(s *styles.Style) {
-					s.Direction = styles.Column
-				})
-
-				//  need save chat list layout for show chat history
-				you := gi.NewFrame(answer)
-				you.Style(func(s *styles.Style) {
-					s.Direction = styles.Row
-				})
-				gi.NewLabel(you).SetText("you:").Style(func(s *styles.Style) { //todo NewLabel seems can not set svg icon
-					s.Align.Self = styles.Start
-				})
-				youSend := gi.NewTextField(you).SetType(gi.TextFieldOutlined) //todo need more type
-				youSend.SetText(textField.Text())                             //todo if we send code block or md need highlight it
-				youSend.Style(func(s *styles.Style) {
-					s.Align.Self = styles.End
-				})
-				//todo need support emoji  😅 😁 😍 🤥 https://www.emojiall.com/zh-hans/categories/A
-
-				ai := gi.NewFrame(answer)
-				ai.Style(func(s *styles.Style) {
-					s.Direction = styles.Row
-				})
-				gi.NewLabel(ai).SetText("ai:").Style(func(s *styles.Style) {
-					s.Align.Self = styles.Start
-				})
-
-				//now need given ReadMDString a NewFrame? and set s.Align.Self = styles.End ?
-				mdFrame := gi.NewFrame(answer) //todo rename answer as chatPair
-				mdFrame.Style(func(s *styles.Style) {
-					s.Align.Self = styles.End
-				})
-
 				allToken += token
 
-				if !mylog.Error(coredom.ReadMDString(coredom.NewContext(), mdFrame, allToken)) {
-					return
-				}
+				answer.AsyncLock()
+				answer.DeleteChildren()
+				grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, allToken))
 				answer.Update()
 				answer.AsyncUnlock()
 			}
-			mylog.Error(scanner.Err())
-			// mylog.Error(resp.Body.Close()) //not do,unknown reason
+			grr.Log(scanner.Err())
+			grr.Log(resp.Body.Close())
 		}()
 	})
-
-	rightSplits.SetSplits(.6, .4)
 
 	b.RunMainWindow()
 }
