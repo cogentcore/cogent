@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/xe"
 
@@ -84,16 +85,24 @@ func main() {
 		s.Grow.Set(1, 0)
 		s.Align.Items = styles.Center
 	})
-	gi.NewButton(prompt).SetIcon(icons.Add)
+
+	var send gi.Widget
+
 	textField := gi.NewTextField(prompt).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here")
 	textField.Style(func(s *styles.Style) { s.Max.X.Zero() })
+	textField.OnKeyChord(func(e events.Event) {
+		if keyfun.Of(e.KeyChord()) == keyfun.Enter {
+			send.Send(events.Click, e)
+		}
+	})
 
-	gi.NewButton(prompt).SetIcon(icons.Send).OnClick(func(e events.Event) {
+	send = gi.NewButton(prompt).SetIcon(icons.Send).OnClick(func(e events.Event) {
 		promptString := textField.Text()
 		if promptString == "" {
 			gi.MessageSnackbar(b, "Please enter a prompt")
 			return
 		}
+		textField.SetText("")
 		go func() {
 			mylog.Warning("connect serve", "Send "+strconv.Quote(textField.Text())+" to the serve,please wait a while")
 			// model := Models[tableView.SelectedIndex]
