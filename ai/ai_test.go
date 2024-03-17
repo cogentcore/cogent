@@ -59,9 +59,5 @@ func Test_queryModelList(t *testing.T) {
 
 	indent, err := json.MarshalIndent(ModelJson, "", "  ")
 	assert.NoError(t, err)
-	stream.WriteTruncate("root.json", indent)
-
-	out, err := ModelMap.MarshalJSON()
-	assert.NoError(t, err)
-	stream.WriteTruncate("models.json", out)
+	stream.WriteTruncate("models.json", indent)
 }
