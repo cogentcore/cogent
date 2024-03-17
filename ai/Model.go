@@ -149,7 +149,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 				Size:        size,
 			}
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
-			//model.Description = ""//why not , we only need show description in container node
+			//model.Description = ""//why not done?, we only need show description in container node
 			children = append(children, model)
 		}
 	})
