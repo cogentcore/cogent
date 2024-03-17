@@ -43,9 +43,8 @@ func main() {
 	if !mylog.Error(json.Unmarshal(stream.NewReadFile("ai/models.json").Bytes(), ModelJson)) {
 		return
 	}
-	//mylog.Struct(ModelJson)
 	models := []*Model{ModelJson}
-	tableView := giv.NewTableView(leftFrame).SetSlice(models)
+	tableView := giv.NewTableView(leftFrame).SetSlice(&models)
 	tableView.SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
