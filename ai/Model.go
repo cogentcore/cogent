@@ -21,8 +21,8 @@ type (
 		Size        float64
 		Hash        string
 		UpdateTime  string
-		Description string
 		Children    []Model
+		Description string
 	}
 )
 
