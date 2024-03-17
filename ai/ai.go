@@ -76,6 +76,7 @@ func main() {
 	history := gi.NewFrame(rightFrame)
 	history.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Overflow.Set(styles.OverflowAuto)
 	})
 
 	prompt := gi.NewFrame(rightFrame)
@@ -117,29 +118,30 @@ func main() {
 				return
 			}
 			scanner := bufio.NewScanner(resp.Body)
-			allToken := ""
+			allToken := "Cogent AI: "
 
-			b.AsyncLock()
+			history.AsyncLock()
 
 			yourPrompt := gi.NewFrame(history)
 			yourPrompt.Style(func(s *styles.Style) {
 				s.Direction = styles.Column
-				s.Overflow.Set(styles.OverflowAuto)
 				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
 				s.Border.Radius = styles.BorderRadiusLarge
+				s.Grow.Set(0, 0)
 				s.Align.Self = styles.End
 			})
-			grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, promptString))
+			grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, "You: "+promptString))
 
 			answer := gi.NewFrame(history)
 			answer.Style(func(s *styles.Style) {
 				s.Direction = styles.Column
-				s.Overflow.Set(styles.OverflowAuto)
 				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
 				s.Border.Radius = styles.BorderRadiusLarge
+				s.Grow.Set(0, 0)
 			})
 
-			b.AsyncUnlock()
+			history.Update()
+			history.AsyncUnlock()
 
 			for scanner.Scan() {
 				token := HandleToken(scanner.Text())
