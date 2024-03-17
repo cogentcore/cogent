@@ -13,12 +13,16 @@ import (
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string {
-		sprintf := fmt.Sprintf("%s. %s %s %s %s",
-			n.Data.Name,
-			n.Data.Description,
-			n.Data.UpdateTime,
-			n.Data.Hash,
+		fmtCommand := "%-25s. %s %s %-18s |%s"
+		if n.Container() {
+			fmtCommand = "%-25s. %s %s %s |%s"
+		}
+		sprintf := fmt.Sprintf(fmtCommand,
+			n.Data.Name, //todo swap struct field location
 			n.Data.Size,
+			n.Data.Hash,
+			n.Data.UpdateTime,
+			n.Data.Description,
 		)
 		return sprintf
 	})
