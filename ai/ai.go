@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/coredom"
@@ -103,8 +102,28 @@ func main() {
 			return
 		}
 		textField.SetText("")
+
+		yourPrompt := gi.NewFrame(history)
+		yourPrompt.Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
+			s.Border.Radius = styles.BorderRadiusLarge
+			s.Grow.Set(1, 0)
+		})
+		grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, "**You:** "+promptString))
+
+		answer := gi.NewFrame(history)
+		answer.Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
+			s.Border.Radius = styles.BorderRadiusLarge
+			s.Grow.Set(1, 0)
+		})
+		gi.NewLabel(answer).SetText("<b>Cogent AI:</b> Loading...")
+
+		history.Update()
+
 		go func() {
-			mylog.Warning("connect serve", "Send "+strconv.Quote(textField.Text())+" to the serve,please wait a while")
 			// model := Models[tableView.SelectedIndex]
 			resp, err := NewRequest(promptString, structs.Params{ // go1.22 Generic type constraints
 				// ApiModel: model.Name,
@@ -128,28 +147,6 @@ func main() {
 			}
 			scanner := bufio.NewScanner(resp.Body)
 			allTokens := "**Cogent AI:** "
-
-			history.AsyncLock()
-
-			yourPrompt := gi.NewFrame(history)
-			yourPrompt.Style(func(s *styles.Style) {
-				s.Direction = styles.Column
-				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
-				s.Border.Radius = styles.BorderRadiusLarge
-				s.Grow.Set(1, 0)
-			})
-			grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, "**You:** "+promptString))
-
-			answer := gi.NewFrame(history)
-			answer.Style(func(s *styles.Style) {
-				s.Direction = styles.Column
-				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
-				s.Border.Radius = styles.BorderRadiusLarge
-				s.Grow.Set(1, 0)
-			})
-
-			history.Update()
-			history.AsyncUnlock()
 
 			for scanner.Scan() {
 				token := HandleToken(scanner.Text())
