@@ -15,7 +15,7 @@ func Test_queryModelList(t *testing.T) {
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string {
 		fmtCommand := "%-25s. %s %s %-18s |%s" //todo do not show Description and name,is it Container node only
 		if n.Container() {
-			fmtCommand = "%-25s. %s %s %s |%s" //todo change field type and calculate children size sum
+			fmtCommand = "%-25s. %s %s %s |%s" //todo change field type and calculate children elem Size field sum show in container node
 		}
 		sprintf := fmt.Sprintf(fmtCommand,
 			n.Data.Name, //todo swap struct field location
