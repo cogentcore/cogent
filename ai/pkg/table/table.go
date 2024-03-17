@@ -1,9 +1,5 @@
 package table
 
-import (
-	"cogentcore.org/cogent/ai/pkg/tree"
-)
-
 type Provider[T any] interface {
 	//Model[*Node[T]]
 	//SetTable(table *tree.Node[T]) //todo
@@ -41,20 +37,20 @@ type (
 		RootRows() []T
 		SetRootRows(rows []T)
 	}
-	SimpleModel[T RowConstraint[T]] struct{ roots []T }
+	RowData[T RowConstraint[T]] struct{ roots []T }
 )
 
-func (m *SimpleModel[T]) RootRowCount() int    { return len(m.roots) }
-func (m *SimpleModel[T]) RootRows() []T        { return m.roots }
-func (m *SimpleModel[T]) SetRootRows(rows []T) { m.roots = rows }
+func (m *RowData[T]) RootRowCount() int    { return len(m.roots) }
+func (m *RowData[T]) RootRows() []T        { return m.roots }
+func (m *RowData[T]) SetRootRows(rows []T) { m.roots = rows }
 
-type RowData struct {
-	*tree.Node[*RowData]
-}
+//type RowData struct {
+//	*tree.Node[*RowData]
+//}
 
-func NewRowData() tree.Provider[*RowData] {
-	return &RowData{}
-}
+//func NewRowData() tree.Provider[*RowData] {
+//	return &RowData{}
+//}
 
 //func (n *Node[T]) CellFromCellData(id uuid.UUID) *Node[T] {
 //	//TODO implement me
@@ -480,10 +476,6 @@ func (t *Table[T]) applyFilter(row T, filter func(row T) bool) {
 		}
 	}
 }
-
-
-
-
 
 
 var zeroUUID = uuid.UUID{}

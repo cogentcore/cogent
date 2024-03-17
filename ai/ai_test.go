@@ -13,13 +13,24 @@ import (
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 
-	//todo this need rename columnCellData callback
-	//  add table header,columnIDs and cell width logic
+	root.SetHeader([]string{ //todo need calc max column depth and indent left
+		"Name",
+		"Size(GB)",
+		"Hash",
+		"UpdateTime",
+		"Description",
+	})
+
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string { //table row need all field set left align,and set too long filed as cut+...
-		fmtCommand := "%-25s. %-10.1f %-10s %-10s %-10s" //todo do not show Description and name,is it Container node only
-		if n.Container() {                               //todo if show sum, should skip Container size column when sort action
+		fmtCommand := "%-25s. %-10.1f %-10s %-10s %-10s"
+		if n.Container() {
+			sum := 0.0
+			n.WalkContainer(func(node *tree.Node[Model]) {
+				sum += node.Data.Size
+			})
+			n.Data.Size = sum
 			n.Data.Name = n.Type
-			fmtCommand = "%-25s. %.1f %s %s %s" //todo change field type and calculate children elem Size field sum show in container node
+			fmtCommand = "%-25s. %.1f %s %s %s"
 		} else {
 			n.Data.Description = ""
 		}

@@ -1,5 +1,6 @@
-└───    root_container           . 0.0   
-    ├───    │   gemma_container          . 0.0   Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind.
+                         Name              Size(GB)              Hash              UpdateTime              Description              
+└───    root_container           . 2392.5   
+    ├───    │   gemma_container          . 290.9   Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind.
     │   ├───    │   │   gemma:latest             . 5.2        430ed3535049 Updated 5 days ago           
     │   ├───    │   │   gemma:2b                 . 1.7        b50d6c999e59 Updated 2 weeks ago           
     │   ├───    │   │   gemma:7b                 . 5.2        430ed3535049 Updated 2 weeks ago           
@@ -69,7 +70,7 @@
     │   ├───    │   │   gemma:7b-text-q5_K_M     . 6.3        dc8f812e49c7 Updated 2 weeks ago           
     │   ├───    │   │   gemma:7b-text-q6_K       . 7.2        9e7cfd3fab5b Updated 2 weeks ago           
     │   └───    │       gemma:7b-text-fp16       . 16.0       1f1e9df10872 Updated 2 weeks ago           
-    ├───    │   llama2_container         . 0.0   Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters.
+    ├───    │   llama2_container         . 2101.6   Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters.
     │   ├───    │   │   llama2:latest            . 3.8        78e26419b446 Updated 2 months ago           
     │   ├───    │   │   llama2:text              . 3.8        53b394a404fd Updated 2 months ago           
     │   ├───    │   │   llama2:7b                . 3.8        78e26419b446 Updated 2 months ago           

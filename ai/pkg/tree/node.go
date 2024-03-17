@@ -76,6 +76,7 @@ type (
 		ChildrenRemoveByIndex()
 		ChildrenRemoveByPath()
 		ChildrenSum(parent *Node[T]) *Node[T]
+		SetHeader(header []string)
 		SetFormatRowCallback(formatRowCallback func(*Node[T]) string)
 		Format(root *Node[T]) string
 		format(root *Node[T], prefix string, isLast bool, s *stream.Stream)
@@ -106,6 +107,7 @@ type (
 		children          []*Node[T] `json:"children,omitempty"` // Container only
 		parent            *Node[T]
 		formatRowCallback func(root *Node[T]) string
+		header            []string
 	}
 )
 
@@ -518,13 +520,27 @@ func (n *Node[T]) Unmarshal(tree Provider[T]) (objectPtr any, err error) {
 	//TODO implement me
 	panic("implement me")
 }
-
+func (n *Node[T]) SetHeader(header []string) {
+	n.header = header
+}
 func (n *Node[T]) SetFormatRowCallback(formatRowCallback func(*Node[T]) string) {
 	n.formatRowCallback = formatRowCallback
 }
 
 func (n *Node[T]) Format(root *Node[T]) string {
 	s := stream.New("")
+
+	if n.header != nil {
+		for i, head := range n.header {
+			if i == 0 {
+				s.Indent(25) //todo indent lest from max container depth
+			}
+			s.WriteString(head)
+			s.Indent(14) //todo max column width
+		}
+		s.NewLine()
+	}
+
 	n.format(root, "", true, s)
 	return s.String()
 }
