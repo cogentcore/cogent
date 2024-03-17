@@ -47,8 +47,7 @@ func main() {
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
 	grr.Log(jsons.OpenFS(ModelJSON, modelsJSON, "models.json"))
-	models := []*Model{ModelJSON}
-	giv.NewTableView(leftFrame).SetSlice(&models).SetReadOnly(true)
+	giv.NewTableView(leftFrame).SetSlice(&ModelJSON.Children).SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {
@@ -109,7 +108,8 @@ func main() {
 				Preprompt:   "",
 				ThreadID:    "",
 			}, "")
-			if !mylog.Error(err) { // todo  timeout ? need set it
+			if err != nil {
+				gi.ErrorSnackbar(b, err)
 				return
 			}
 			if resp.StatusCode != http.StatusOK {
@@ -118,7 +118,7 @@ func main() {
 				return
 			}
 			scanner := bufio.NewScanner(resp.Body)
-			allToken := "Cogent AI: "
+			allTokens := "**Cogent AI:** "
 
 			history.AsyncLock()
 
@@ -127,17 +127,16 @@ func main() {
 				s.Direction = styles.Column
 				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
 				s.Border.Radius = styles.BorderRadiusLarge
-				s.Grow.Set(0, 0)
-				s.Align.Self = styles.End
+				s.Grow.Set(1, 0)
 			})
-			grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, "You: "+promptString))
+			grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, "**You:** "+promptString))
 
 			answer := gi.NewFrame(history)
 			answer.Style(func(s *styles.Style) {
 				s.Direction = styles.Column
 				s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
 				s.Border.Radius = styles.BorderRadiusLarge
-				s.Grow.Set(0, 0)
+				s.Grow.Set(1, 0)
 			})
 
 			history.Update()
@@ -148,11 +147,11 @@ func main() {
 				if token == "" {
 					continue
 				}
-				allToken += token
+				allTokens += token
 
 				answer.AsyncLock()
 				answer.DeleteChildren()
-				grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, allToken))
+				grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, allTokens))
 				answer.Update()
 				answer.AsyncUnlock()
 			}
