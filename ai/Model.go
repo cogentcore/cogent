@@ -135,9 +135,11 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 		modelInfoSplit := strings.Split(lines[1], " • ")
 
 		if strings.Contains(modelWithTag, parent.Data.Name) {
-			mylog.Trace("modelInfoSplit[1]", modelInfoSplit[1])
-			sizeValue := strings.TrimSuffix(modelInfoSplit[1], "GB") //todo bug, not all size is GB,it may be MB
-			mylog.Trace("sizeValue", sizeValue)
+			//mylog.Trace("modelInfoSplit[1]", modelInfoSplit[1])
+			//sizeValue := strings.TrimSuffix(modelInfoSplit[1], "GB") //todo bug, not all size is GB,it may be MB,need add unit to colum
+			LenSizeStr := len(modelInfoSplit[1])
+			sizeValue := modelInfoSplit[1][:LenSizeStr-2] //2 is len gb or mb
+			//mylog.Trace("sizeValue", sizeValue)
 			size, err := strconv.ParseFloat(sizeValue, 64)
 			if !mylog.Error(err) {
 				return

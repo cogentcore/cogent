@@ -16,7 +16,7 @@ func Test_queryModelList(t *testing.T) {
 
 	root.SetHeader([]string{ //todo need calc max column depth and indent left
 		"Name",
-		"Size(GB)",
+		"Size(GB)", //this is not well,it maybe is mb, we need add a column to show unit
 		"Hash",
 		"UpdateTime",
 		"Description",
@@ -27,7 +27,7 @@ func Test_queryModelList(t *testing.T) {
 		if n.Container() {
 			sum := 0.0
 			n.WalkContainer(func(node *tree.Node[Model]) {
-				sum += node.Data.Size
+				sum += node.Data.Size //so this is not right in all model,need get unit is gb or mb
 			})
 			n.Data.Size = sum
 			n.Data.Name = n.Type
