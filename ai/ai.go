@@ -186,7 +186,8 @@ func QueryModelList() {
 	}
 	root := queryModelList(resp.Body)
 	root.WalkContainer(func(node *tree.Node[Model]) {
-		QueryModelTags(node.Data.Name, node) //node is every container of model node
+		children := QueryModelTags(node.Data.Name, node) //node is every container of model node
+		ModelJson.Children = children
 	})
 	//todo last need save to json file when the test passed
 }
@@ -209,31 +210,34 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 		description := s.Find("p.mb-4").First().Text()
 		model := Model{
 			Name:        name,
-			Description: description,
-			UpdateTime:  "",
-			Hash:        "",
 			Size:        0,
+			Hash:        "",
+			UpdateTime:  "",
+			Description: description,
+			Children:    make([]Model, 0),
 		}
+		ModelJson.Children = append(ModelJson.Children, model)
 		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
 	})
 	return
 }
 
-func QueryModelTags(name string, parent *tree.Node[Model]) {
+func QueryModelTags(name string, parent *tree.Node[Model]) (children []Model) {
 	resp, err := http.Get("https://ollama.com/library/" + name + "/tags")
 	if !mylog.Error(err) {
 		return
 	}
 	defer func() { mylog.Error(resp.Body.Close()) }()
-	queryModelTags(resp.Body, parent)
+	return queryModelTags(resp.Body, parent)
 }
 
-func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
+func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
 	}
+	children = make([]Model, 0)
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		//tag := s.Find(".break-all").Text() //not need
 		modelWithTag := ""
@@ -264,6 +268,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 			return
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
+
 		if strings.Contains(modelWithTag, parent.Data.Name) {
 			sizeValue := strings.TrimSuffix(modelInfoSplit[1], "GB")
 			size, err := strconv.ParseFloat(sizeValue, 64)
@@ -278,12 +283,13 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
 				Size:        size,
 			}
-			ModelJson.Children = append(ModelJson.Children, model)
+			children = append(children, model)
 			ModelMap.Set(modelWithTag, model)
-			mylog.Struct(model)
+			//mylog.Struct(model)
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
 		}
 	})
+	return
 }
 
 func unescape(s string) string {
