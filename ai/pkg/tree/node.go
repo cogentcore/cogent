@@ -102,11 +102,11 @@ type (
 	Node[T any] struct {
 		ID                uuid.UUID `json:"id"`
 		Data              T
-		Type              string     `json:"type"`
-		IsOpen            bool       `json:"open,omitempty"`     // Container only
-		children          []*Node[T] `json:"children,omitempty"` // Container only
-		parent            *Node[T]
-		formatRowCallback func(root *Node[T]) string
+		Type              string                     `json:"type"`
+		IsOpen            bool                       `json:"open,omitempty"` // Container only
+		children          []*Node[T]                 `json:"_"`              // Container only
+		parent            *Node[T]                   `json:"_"`
+		formatRowCallback func(root *Node[T]) string `json:"_"`
 		header            []string
 	}
 )
@@ -477,8 +477,8 @@ func (n *Node[T]) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 func (n *Node[T]) MarshalJSON() ([]byte, error) {
-	//TODO implement me
-	panic("implement me")
+	mylog.Error("you need implement Tree.MarshalJSON() by yourself")
+	return nil, nil
 }
 
 func (n *Node[T]) MarshalText() (text []byte, err error) {
@@ -502,8 +502,8 @@ func (n *Node[T]) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 }
 
 func (n *Node[T]) UnmarshalJSON(bytes []byte) error {
-	//TODO implement me
-	panic("implement me")
+	mylog.Error("you need implement Tree.MarshalJSON() by yourself")
+	return nil
 }
 
 func (n *Node[T]) UnmarshalText(text []byte) error {

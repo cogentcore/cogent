@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -52,6 +53,11 @@ func Test_queryModelList(t *testing.T) {
 		}
 	})
 	stream.WriteTruncate("modelsTree.txt", root.Format(root))
+
+	indent, err := json.MarshalIndent(ModelJson, "", "  ")
+	assert.NoError(t, err)
+	stream.WriteTruncate("root.json", indent)
+
 	out, err := ModelMap.MarshalJSON()
 	assert.NoError(t, err)
 	stream.WriteTruncate("models.json", out)
