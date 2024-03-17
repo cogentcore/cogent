@@ -549,8 +549,8 @@ func (n *Node[T]) format(root *Node[T], prefix string, isLast bool, s *stream.St
 }
 
 func (n *Node[T]) String() string {
-	//TODO implement me
-	panic("implement me")
+	return n.Type
+	return fmt.Sprintf("%s Container", n.Type)
 }
 
 func (n *Node[T]) Enabled() bool {

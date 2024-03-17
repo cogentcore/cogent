@@ -14,11 +14,12 @@ func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 
 	//todo this need rename columnCellData callback
-	//  add table header,columnIDs
+	//  add table header,columnIDs and cell width logic
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string { //table row need all field set left align,and set too long filed as cut+...
 		fmtCommand := "%-25s. %s %s %-18s %s" //todo do not show Description and name,is it Container node only
 		if n.Container() {
-			fmtCommand = "%-25s. %s %s %s |%s" //todo change field type and calculate children elem Size field sum show in container node
+			n.Data.Name = n.Type
+			fmtCommand = "%-25s. %s %s %s %s" //todo change field type and calculate children elem Size field sum show in container node
 		} else {
 			n.Data.Description = ""
 		}
@@ -34,32 +35,12 @@ func Test_queryModelList(t *testing.T) {
 	root.WalkContainer(func(node *tree.Node[Model]) {
 		switch node.Data.Name {
 		case "gemma":
-			gemmaNode := tree.NewNode(node.Data.Name, true, Model{
-				Name:        node.Data.Name,
-				Description: node.Data.Description,
-				UpdateTime:  "",
-				Hash:        "",
-				Size:        "",
-			})
-			queryModelTags(stream.NewReadFile("tags.html"), gemmaNode) //root children[0] gemmaNode not append child
-			//json, err := gemmaNode.MarshalJSON()
-			//assert.NoError(t, err)
-			//mylog.Json("", string(json))
-			root.AddChild(gemmaNode)
+			queryModelTags(stream.NewReadFile("tags.html"), node)
 		case "llama2":
-			llama2Node := tree.NewNode(node.Data.Name, true, Model{
-				Name:        node.Data.Name,
-				Description: node.Data.Description,
-				UpdateTime:  "",
-				Hash:        "",
-				Size:        "",
-			})
-			queryModelTags(stream.NewReadFile("Tags · llama2.html"), llama2Node)
-			root.AddChild(llama2Node)
+			queryModelTags(stream.NewReadFile("Tags · llama2.html"), node)
 		}
 	})
 	stream.WriteTruncate("modelsTree.txt", root.Format(root))
-
 	out, err := ModelMap.MarshalJSON()
 	assert.NoError(t, err)
 	stream.WriteTruncate("models.json", out)

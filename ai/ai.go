@@ -192,7 +192,7 @@ func QueryModelList() {
 }
 
 func queryModelList(r io.Reader) (root *tree.Node[Model]) {
-	root = tree.NewNode("aiModel", true, Model{
+	root = tree.NewNode("root", true, Model{
 		Name:        "root",
 		Description: "",
 		UpdateTime:  "",
@@ -214,7 +214,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 			Hash:        "",
 			Size:        "",
 		}
-		parent := tree.NewNode(name, false, model)
+		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
 	})
 	return
@@ -274,11 +274,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 				Size:        modelInfoSplit[1],
 			}
 			ModelMap.Set(modelWithTag, model)
-
 			mylog.Struct(model)
-
-			c := tree.NewNode(modelWithTag, false, model)
-			c = c //todo debug
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
 		}
 	})
