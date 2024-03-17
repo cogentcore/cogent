@@ -89,7 +89,10 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 }
 
 func QueryModelTags(name string, parent *tree.Node[Model]) (children []Model) {
-	resp, err := http.Get("https://ollama.com/library/" + name + "/tags")
+	url := "https://ollama.com/library/" + name + "/tags"
+	mylog.Warning("update model tags", url)
+	defer func() { mylog.Success("update model tags done", url) }()
+	resp, err := http.Get(url)
 	if !mylog.Error(err) {
 		return
 	}
