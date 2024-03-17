@@ -52,7 +52,9 @@ func main() {
 		s.Direction = styles.Column
 	})
 	gi.NewButton(newFrame).SetText("Update module list").OnClick(func(e events.Event) {
+		mylog.Trace("start Update module list")
 		QueryModelList()
+		mylog.Success("Update module list finished")
 	})
 
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
