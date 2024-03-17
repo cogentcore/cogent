@@ -2,23 +2,28 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
+	"embed"
+	"fmt"
+	"io"
+	"net/http"
 	"strconv"
 
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
+	"cogentcore.org/core/grows/jsons"
+	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/xe"
 
 	"github.com/aandrew-me/tgpt/v2/structs"
 	"github.com/ddkwork/golibrary/mylog"
-	"github.com/ddkwork/golibrary/stream"
 )
 
-//go:generate go install .
+//go:embed models.json
+var modelsJSON embed.FS
 
 func main() {
 	b := gi.NewBody("Cogent AI")
@@ -40,10 +45,10 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	if !mylog.Error(json.Unmarshal(stream.NewReadFile("ai/models.json").Bytes(), ModelJson)) {
+	if !mylog.Error(jsons.OpenFS(ModelJSON, modelsJSON, "models.json")) {
 		return
 	}
-	models := []*Model{ModelJson}
+	models := []*Model{ModelJSON}
 	tableView := giv.NewTableView(leftFrame).SetSlice(&models)
 	tableView.SetReadOnly(true)
 
@@ -107,6 +112,11 @@ func main() {
 				ThreadID:    "",
 			}, "")
 			if !mylog.Error(err) { // todo  timeout ? need set it
+				return
+			}
+			if resp.StatusCode != http.StatusOK {
+				b := grr.Log1(io.ReadAll(resp.Body))
+				gi.MessageSnackbar(prompt, fmt.Sprintf("Error getting response (%s): %s", resp.Status, b))
 				return
 			}
 			scanner := bufio.NewScanner(resp.Body)

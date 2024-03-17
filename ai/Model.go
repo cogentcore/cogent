@@ -15,18 +15,16 @@ import (
 	"cogentcore.org/cogent/ai/pkg/tree"
 )
 
-type (
-	Model struct {
-		Name        string
-		Size        float64
-		Hash        string
-		UpdateTime  string
-		Children    []Model
-		Description string
-	}
-)
+type Model struct {
+	Name        string
+	Size        float64
+	Hash        string
+	UpdateTime  string
+	Children    []Model
+	Description string
+}
 
-var ModelJson = &Model{
+var ModelJSON = &Model{
 	Name:        "root",
 	Size:        0,
 	Hash:        "",
@@ -48,9 +46,9 @@ func QueryModelList() {
 	root := queryModelList(resp.Body)
 	root.WalkContainer(func(node *tree.Node[Model]) {
 		children := QueryModelTags(node.Data.Name, node) //node is every container of model node
-		ModelJson.Children = children
+		ModelJSON.Children = children
 	})
-	indent, err := json.MarshalIndent(ModelJson, "", "  ")
+	indent, err := json.MarshalIndent(ModelJSON, "", "  ")
 	if !mylog.Error(err) {
 		return
 	}
@@ -81,7 +79,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 			Description: description,
 			Children:    make([]Model, 0),
 		}
-		ModelJson.Children = append(ModelJson.Children, model)
+		ModelJSON.Children = append(ModelJSON.Children, model)
 		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
 	})

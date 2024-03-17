@@ -128,7 +128,7 @@ func NewClient() (tls_client.HttpClient, error) {
 			options = append(options, proxyOption)
 		}
 	} else {
-		if !mylog.Error2(os.Stat("proxy.txt")) {
+		if mylog.Error2(os.Stat("proxy.txt")) {
 			proxyConfig, err := os.ReadFile("proxy.txt")
 			if !mylog.Error(err) {
 				return nil, err
