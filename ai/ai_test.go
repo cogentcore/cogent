@@ -13,7 +13,7 @@ import (
 func Test_queryModelList(t *testing.T) {
 	root := queryModelList(stream.NewReadFile("library.html"))
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string {
-		fmtCommand := "%-25s. %s %s %-18s |%s" //todo do not show Description,is it Container node only
+		fmtCommand := "%-25s. %s %s %-18s |%s" //todo do not show Description and name,is it Container node only
 		if n.Container() {
 			fmtCommand = "%-25s. %s %s %s |%s" //todo change field type and calculate children size sum
 		}
