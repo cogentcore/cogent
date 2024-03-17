@@ -43,8 +43,9 @@ func main() {
 	if !mylog.Error(json.Unmarshal(stream.NewReadFile("ai/models.json").Bytes(), ModelJson)) {
 		return
 	}
-	mylog.Struct(ModelJson)
-	tableView := giv.NewTableView(leftFrame).SetSlice(&ModelJson) //todo bug: NewTableView can not set struct
+	//mylog.Struct(ModelJson)
+	models := []*Model{ModelJson}
+	tableView := giv.NewTableView(leftFrame).SetSlice(models)
 	tableView.SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
