@@ -76,28 +76,13 @@ type (
 		ChildrenRemoveByIndex()
 		ChildrenRemoveByPath()
 		ChildrenSum(parent *Node[T]) *Node[T]
-
 		SetFormatRowCallback(formatRowCallback func(*Node[T]) string)
 		Format(root *Node[T]) string
 		format(root *Node[T], prefix string, isLast bool, s *stream.Stream)
-
 		String() string
 		Enabled() bool
-
-		// MarshalXML todo when other ptoject passed unit test,reset this signature
-		//Marshaller[T]
-		//Unmarshaler[T]
-
-		MarshalXML(e *xml.Encoder, start xml.StartElement) bool
-		MarshalJSON() (b []byte, ok bool)
-		MarshalText() (text []byte, ok bool)
-		MarshalBinary() (data []byte, ok bool)
-		Marshal(objectPtr any) (Provider[T], bool)
-		UnmarshalXML(d *xml.Decoder, start xml.StartElement) bool
-		UnmarshalJSON(bytes []byte) bool
-		UnmarshalText(text []byte) bool
-		UnmarshalBinary(data []byte) bool
-		Unmarshal(tree Provider[T]) (objectPtr any, ok bool)
+		Marshaller[T]
+		Unmarshaler[T]
 	}
 	Marshaller[T any] interface {
 		xml.Marshaler
@@ -484,55 +469,52 @@ func (n *Node[T]) ChildrenSum(parent *Node[T]) *Node[T] {
 	return n
 }
 
-func (n *Node[T]) MarshalXML(e *xml.Encoder, start xml.StartElement) bool {
+func (n *Node[T]) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) MarshalJSON() (b []byte, ok bool) {
-	marshal, err := json.Marshal(n)
-	if !mylog.Error(err) {
-		return
-	}
-	return marshal, true
-}
-
-func (n *Node[T]) MarshalText() (text []byte, ok bool) {
+func (n *Node[T]) MarshalJSON() ([]byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) MarshalBinary() (data []byte, ok bool) {
+func (n *Node[T]) MarshalText() (text []byte, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) Marshal(objectPtr any) (Provider[T], bool) {
+func (n *Node[T]) MarshalBinary() (data []byte, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) UnmarshalXML(d *xml.Decoder, start xml.StartElement) bool {
+func (n *Node[T]) Marshal(objectPtr any) (Provider[T], error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) UnmarshalJSON(bytes []byte) bool {
+func (n *Node[T]) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) UnmarshalText(text []byte) bool {
+func (n *Node[T]) UnmarshalJSON(bytes []byte) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) UnmarshalBinary(data []byte) bool {
+func (n *Node[T]) UnmarshalText(text []byte) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (n *Node[T]) Unmarshal(tree Provider[T]) (objectPtr any, ok bool) {
+func (n *Node[T]) UnmarshalBinary(data []byte) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node[T]) Unmarshal(tree Provider[T]) (objectPtr any, err error) {
 	//TODO implement me
 	panic("implement me")
 }

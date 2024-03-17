@@ -32,8 +32,11 @@ func Test_queryModelList(t *testing.T) {
 				Hash:        "",
 				Size:        "",
 			})
-			gemmaNode.SetParent(root)
-			queryModelTags(stream.NewReadFile("tags.html"), gemmaNode)
+			queryModelTags(stream.NewReadFile("tags.html"), gemmaNode) //root children[0] gemmaNode not append child
+			//json, err := gemmaNode.MarshalJSON()
+			//assert.NoError(t, err)
+			//mylog.Json("", string(json))
+			root.AddChild(gemmaNode)
 		case "llama2":
 			llama2Node := tree.NewNode(node.Data.Name, true, Model{
 				Name:        node.Data.Name,
@@ -42,12 +45,13 @@ func Test_queryModelList(t *testing.T) {
 				Hash:        "",
 				Size:        "",
 			})
-			llama2Node.SetParent(root)
 			queryModelTags(stream.NewReadFile("Tags · llama2.html"), llama2Node)
+			root.AddChild(llama2Node)
 		}
 	})
+	stream.WriteTruncate("modelsTree.txt", root.Format(root))
+
 	out, err := ModelMap.MarshalJSON()
 	assert.NoError(t, err)
-	stream.WriteTruncate("models.json", out) //todo test save all models to json file
-	println(root.Format(root))
+	stream.WriteTruncate("models.json", out)
 }
