@@ -197,7 +197,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 		Description: "",
 		UpdateTime:  "",
 		Hash:        "",
-		Size:        "",
+		Size:        0,
 	})
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
@@ -212,7 +212,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 			Description: description,
 			UpdateTime:  "",
 			Hash:        "",
-			Size:        "",
+			Size:        0,
 		}
 		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
@@ -265,13 +265,18 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
 		if strings.Contains(modelWithTag, parent.Data.Name) {
+			sizeValue := strings.TrimSuffix(modelInfoSplit[1], "GB")
+			size, err := strconv.ParseFloat(sizeValue, 64)
+			if !mylog.Error(err) {
+				return
+			}
 			model := Model{
 				//Name: parent.Data.Name + ":" + tag,
 				Name:        modelWithTag,
 				Description: parent.Data.Description,
 				UpdateTime:  strings.TrimSpace(lines[2]),
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
-				Size:        modelInfoSplit[1],
+				Size:        size,
 			}
 			ModelMap.Set(modelWithTag, model)
 			mylog.Struct(model)
@@ -299,10 +304,10 @@ func unescape(s string) string {
 type (
 	Model struct {
 		Name        string
-		Description string
-		UpdateTime  string
+		Size        float64
 		Hash        string
-		Size        string
+		UpdateTime  string
+		Description string
 	}
 )
 

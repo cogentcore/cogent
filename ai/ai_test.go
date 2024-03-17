@@ -16,15 +16,15 @@ func Test_queryModelList(t *testing.T) {
 	//todo this need rename columnCellData callback
 	//  add table header,columnIDs and cell width logic
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string { //table row need all field set left align,and set too long filed as cut+...
-		fmtCommand := "%-25s. %s %s %-18s %s" //todo do not show Description and name,is it Container node only
-		if n.Container() {
+		fmtCommand := "%-25s. %-10.1f %-10s %-10s %-10s" //todo do not show Description and name,is it Container node only
+		if n.Container() {                               //todo if show sum, should skip Container size column when sort action
 			n.Data.Name = n.Type
-			fmtCommand = "%-25s. %s %s %s %s" //todo change field type and calculate children elem Size field sum show in container node
+			fmtCommand = "%-25s. %.1f %s %s %s" //todo change field type and calculate children elem Size field sum show in container node
 		} else {
 			n.Data.Description = ""
 		}
 		sprintf := fmt.Sprintf(fmtCommand,
-			n.Data.Name, //todo swap struct field location
+			n.Data.Name,
 			n.Data.Size,
 			n.Data.Hash,
 			n.Data.UpdateTime,
