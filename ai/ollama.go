@@ -6,11 +6,12 @@ import (
 	"os"
 	"strings"
 
+	"cogentcore.org/core/glop/dirs"
+	"cogentcore.org/core/grr"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	http "github.com/bogdanfinn/fhttp"
 	tls_client "github.com/bogdanfinn/tls-client"
 	"github.com/bogdanfinn/tls-client/profiles"
-	"github.com/ddkwork/golibrary/mylog"
 )
 
 type Response struct {
@@ -24,7 +25,7 @@ type Response struct {
 
 func NewRequest(input string, params structs.Params, prevMessages string) (r *http.Response, err error) {
 	client, err := NewClient()
-	if !mylog.Error(err) {
+	if grr.Log(err) != nil {
 		return
 	}
 
@@ -44,7 +45,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	}
 
 	safeInput, err := json.Marshal(input)
-	if !mylog.Error(err) {
+	if grr.Log(err) != nil {
 		return
 	}
 
@@ -66,7 +67,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	`, prevMessages, string(safeInput), model, temperature, topP))
 
 	req, err := http.NewRequest("POST", "http://localhost:11434/v1/chat/completions", data)
-	if !mylog.Error(err) {
+	if grr.Log(err) != nil {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -94,7 +95,7 @@ func HandleToken(respBody string) (token string) {
 	}
 
 	var d Response
-	if !mylog.Error(json.Unmarshal([]byte(obj), &d)) {
+	if grr.Log(json.Unmarshal([]byte(obj), &d)) != nil {
 		return
 	}
 
@@ -126,9 +127,9 @@ func NewClient() (tls_client.HttpClient, error) {
 			options = append(options, proxyOption)
 		}
 	} else {
-		if mylog.Error2(os.Stat("proxy.txt")) {
+		if ok := grr.Log1(dirs.FileExists("proxy.txt")); ok {
 			proxyConfig, err := os.ReadFile("proxy.txt")
-			if !mylog.Error(err) {
+			if grr.Log(err) != nil {
 				return nil, err
 			}
 			proxyAddress := strings.TrimSpace(string(proxyConfig))
