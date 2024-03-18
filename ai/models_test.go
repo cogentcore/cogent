@@ -33,7 +33,9 @@ func Test_queryModelList(t *testing.T) {
 			//and we will abandon the traditional outdated data statistics model.
 			sum := 0.0
 			n.WalkContainer(func(node *tree.Node[Model]) {
-				sum += ParseUnitStr2GB(node.Data.Size) //i finally understand the method what is CellDataForSort
+				//i finally understand the method what is CellDataForSort
+				//also,we need add a method as CellDataForSum for table widget to display sum value
+				sum += ParseUnitStr2GB(node.Data.Size)
 			})
 			n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64) + "GB"
 			n.Data.Name = n.Type
