@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/stream"
 	"github.com/stretchr/testify/assert"
 
@@ -26,23 +27,27 @@ func Test_queryModelList(t *testing.T) {
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string { //table row need all field set left align,and set too long filed as cut+...
 		fmtCommand := "%-25s %-10s %-10s %-10s %-10s"
 		if n.Container() {
+			//In addition, in the case of ERP financial software or bookkeeping system, purchase,
+			//sale and inventory, and Excel summation, we will display SUM in the container node,
+			//which automatically calculates today's turnover, workers' wages, total number of days of attendance, etc.,
+			//and we will abandon the traditional outdated data statistics model.
 			sum := 0.0
 			n.WalkContainer(func(node *tree.Node[Model]) {
-				/*
-					//mylog.Trace("modelInfoSplit[1]", modelInfoSplit[1])
-					//sizeValue := strings.TrimSuffix(modelInfoSplit[1], "GB") //todo bug, not all size is GB,it may be MB,need add unit to colum
-					LenSizeStr := len(modelInfoSplit[1])
-					sizeValue := modelInfoSplit[1][:LenSizeStr-2] //2 is len gb or mb
-					//mylog.Trace("sizeValue", sizeValue)
-					size, err := strconv.ParseFloat(sizeValue, 64)
-					if !mylog.Error(err) {
-						return
-					}
-				*/
-
-				//sum += node.Data.Size //so this is not right in all model,need get unit is gb or mb
+				unitStr := node.Data.Size[len(node.Data.Size)-2:] //2 is len gb or mb
+				switch unitStr {
+				case "GB":
+				case "MB":
+				default:
+					mylog.Error("unit is not GB or MB")
+					return
+				}
+				sizeValue := node.Data.Size[:len(node.Data.Size)-2]
+				size, err := strconv.ParseFloat(sizeValue, 64)
+				if !mylog.Error(err) {
+					return
+				}
+				sum += size
 			})
-
 			n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64)
 			n.Data.Name = n.Type
 			fmtCommand = "%-25s %s %s %s %s"
