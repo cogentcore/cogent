@@ -75,7 +75,7 @@ func queryModelList(r io.Reader) {
 	return
 }
 
-func QueryModelTags(name string, parent *tree.Node[Model]) (children []Model) {
+func QueryModelTags(name string, parent *tree.Node[Model]) {
 	url := "https://ollama.com/library/" + name + "/tags" //todo bug skip root? why every model has run twice?
 	mylog.Warning("update model tags", url)
 	defer func() { mylog.Success("update model tags done", url) }()
@@ -84,15 +84,14 @@ func QueryModelTags(name string, parent *tree.Node[Model]) (children []Model) {
 		return
 	}
 	defer func() { mylog.Error(resp.Body.Close()) }()
-	return queryModelTags(resp.Body, parent)
+	queryModelTags(resp.Body, parent)
 }
 
-func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
+func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
 	}
-	children = make([]Model, 0)
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		//tag := s.Find(".break-all").Text() //not need
 		modelWithTag := ""
@@ -134,10 +133,6 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 				Size:        modelInfoSplit[1],
 			}
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
-			//model.Description = ""//todo why not done? we only need show description in container node
-			clone := model
-			clone.Description = ""             //not working,why? this is every child here
-			children = append(children, clone) //todo test more times
 		}
 	})
 	return
