@@ -16,11 +16,15 @@ import (
 )
 
 type Model struct {
-	Name        string
-	Size        float64
-	Hash        string
-	UpdateTime  string
-	Children    []Model //json need only
+	Name       string
+	Size       float64
+	Hash       string
+	UpdateTime string
+
+	//json only,when the treeTableView widget implemented,it will be removed,
+	//and we need implement treeTableView's json marshal and unmarshal method
+	Children []Model //json need only
+
 	Description string
 }
 
@@ -79,7 +83,11 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 			Description: description,
 			Children:    make([]Model, 0),
 		}
+
+		//json only,when the treeTableView widget implemented,it will be removed,
+		//and we need implement treeTableView's json marshal and unmarshal method
 		ModelJson.Children = append(ModelJson.Children, model)
+
 		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
 	})
@@ -154,8 +162,12 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 				Size:        size,
 			}
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
-			//model.Description = ""//why not done? we only need show description in container node
-			children = append(children, model)
+			//model.Description = ""//todo why not done? we only need show description in container node
+			clone := model
+			clone.Description = "" //not working,why? this is every child here
+			//json only,when the treeTableView widget implemented,it will be removed,
+			//and we need implement treeTableView's json marshal and unmarshal method
+			children = append(children, clone)
 		}
 	})
 	return
