@@ -3,12 +3,12 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.0.8-0.20240318011029-85bb78435c47
+	cogentcore.org/core v0.0.8-0.20240318022224-1554c82803de
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
-	github.com/ddkwork/golibrary v0.0.0-20240314012741-de4758c6256c
+	github.com/ddkwork/golibrary v0.0.0-20240318020713-f2cd3da77ecb
 	github.com/go-delve/delve v1.22.1
 	github.com/google/uuid v1.6.0
 	github.com/mattn/go-shellwords v1.0.12
