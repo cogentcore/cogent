@@ -127,6 +127,7 @@ func main() {
 
 	send = gi.NewButton(prompt).SetIcon(icons.Send)
 	send.OnClick(func(e events.Event) {
+		//todo prompt list and let ai support access local file service and access network
 		//seems model unknown what is NPU computer
 		//Which laptop has better battery life, LPU or NPU? Faster to reply to tokens? Also, whether they have VMX characteristics or not
 		//go1.22 Generic type constraints
