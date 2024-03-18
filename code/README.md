@@ -2,11 +2,7 @@
 
 **Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [Cogent Core](https://cogentcore.org/core/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://cogentcore.org/core/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
 
-See the [Wiki](https://cogentcore.org/cogent/code/wiki) for more docs,   [Install](https://cogentcore.org/cogent/code/wiki/Install) instructions (`go install cogentcore.org/cogent/code/cmd/code@latest` should work if Cogent Core system libraries are in place), and [Google Groups goki-gi](https://groups.google.com/forum/#!forum/goki-gi) emailing list.
-
-[![Go Report Card](https://goreportcard.com/badge/cogentcore.org/cogent/code/v2)](https://goreportcard.com/report/cogentcore.org/cogent/code/v2)
-[![GoDoc](https://godoc.org/cogentcore.org/cogent/code/v2?status.svg)](https://godoc.org/cogentcore.org/cogent/code/v2)
-[![Travis](https://travis-ci.com/goki/code.svg?branch=master)](https://travis-ci.com/goki/code)
+[![Go Reference](https://pkg.go.dev/badge/cogentcore.org/cogent/code.svg)](https://pkg.go.dev/cogentcore.org/cogent/code.svg)
 
 There are many existing, excellent choices for text editors and IDEs, but *Code* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Code.  Our ambition is to capture some of those Go attributes in an IDE.
 

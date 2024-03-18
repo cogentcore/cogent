@@ -15,10 +15,8 @@ If an acronym is required, how about: "Go-rendered interactive drawing" program.
 The simple Go install command should work, for modules mode: 
 
 ```bash
-$ go get goki.dev/grid/cmd/grid
+$ go install cogentcore.org/cogent/vector/cmd/vector@main
 ```
-
-See [Goki Install](https://github.com/goki/gi/wiki/Install) for more information and prereqs for different platforms -- if you encounter any difficulties, ensure that Goki works first.
 
 Exporting PNG and PDF depends on https://inkscape.org -- on the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:
 
