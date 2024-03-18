@@ -129,8 +129,12 @@ func main() {
 	send.OnClick(func(e events.Event) {
 		//todo prompt list and let ai support access local file service and access network
 		//seems model unknown what is NPU computer
+
 		//Which laptop has better battery life, LPU or NPU? Faster to reply to tokens? Also, whether they have VMX characteristics or not
 		//go1.22 Generic type constraints
+
+		//todo implement function with return d:/app app list and send to ai,let he tell us which app is we need choose
+		//please help me find some app in d:/app and they has feature seems like set env
 		promptString := textField.Text()
 		if promptString == "" {
 			gi.MessageSnackbar(b, "Please enter a prompt")
