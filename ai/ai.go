@@ -127,6 +127,9 @@ func main() {
 
 	send = gi.NewButton(prompt).SetIcon(icons.Send)
 	send.OnClick(func(e events.Event) {
+		//seems model unknown what is NPU computer
+		//Which laptop has better battery life, LPU or NPU? Faster to reply to tokens? Also, whether they have VMX characteristics or not
+		//go1.22 Generic type constraints
 		promptString := textField.Text()
 		if promptString == "" {
 			gi.MessageSnackbar(b, "Please enter a prompt")
@@ -161,7 +164,7 @@ func main() {
 
 		go func() {
 			// model := Models[tableView.SelectedIndex]
-			resp, err := NewRequest(promptString, structs.Params{ // go1.22 Generic type constraints
+			resp, err := NewRequest(promptString, structs.Params{
 				// ApiModel: model.Name,
 				ApiModel:    "gemma:2b",
 				ApiKey:      "",
