@@ -72,6 +72,36 @@ func main() {
 	rightFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 	splits.SetSplits(.2, .8)
 
+	header := gi.NewFrame(rightFrame)
+	header.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+		s.Justify.Content = styles.Center
+		s.Align.Content = styles.Center
+		s.Align.Items = styles.Center
+		s.Text.Align = styles.Center
+	})
+
+	gi.NewLabel(header).SetType(gi.LabelDisplayLarge).SetText("Cogent AI")
+	gi.NewLabel(header).SetType(gi.LabelTitleLarge).SetText("Run powerful AI models locally")
+
+	var send *gi.Button
+	var textField *gi.TextField
+
+	suggestionsFrame := gi.NewFrame(header)
+	suggestionsFrame.Style(func(s *styles.Style) {
+		s.Justify.Content = styles.Center
+		s.Grow.Set(0, 0)
+	})
+
+	suggestions := []string{"How do you call a function in Go?", "What is a partial derivative?", "Are apples healthy?"}
+
+	for _, suggestion := range suggestions {
+		gi.NewButton(suggestionsFrame).SetText(suggestion).SetType(gi.ButtonTonal).OnClick(func(e events.Event) {
+			textField.SetText(suggestion)
+			send.Send(events.Click, e)
+		})
+	}
+
 	history := gi.NewFrame(rightFrame)
 	history.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -87,9 +117,7 @@ func main() {
 
 	//todo we need change back "new topic" button
 
-	var send gi.Widget
-
-	textField := gi.NewTextField(prompt).SetType(gi.TextFieldOutlined).SetPlaceholder("Enter a prompt here")
+	textField = gi.NewTextField(prompt).SetType(gi.TextFieldOutlined).SetPlaceholder("Ask me anything")
 	textField.Style(func(s *styles.Style) { s.Max.X.Zero() })
 	textField.OnKeyChord(func(e events.Event) {
 		if keyfun.Of(e.KeyChord()) == keyfun.Enter {
@@ -97,13 +125,19 @@ func main() {
 		}
 	})
 
-	send = gi.NewButton(prompt).SetIcon(icons.Send).OnClick(func(e events.Event) {
+	send = gi.NewButton(prompt).SetIcon(icons.Send)
+	send.OnClick(func(e events.Event) {
 		promptString := textField.Text()
 		if promptString == "" {
 			gi.MessageSnackbar(b, "Please enter a prompt")
 			return
 		}
 		textField.SetText("")
+
+		if header.This() != nil {
+			rightFrame.DeleteChild(header)
+			rightFrame.Update()
+		}
 
 		yourPrompt := gi.NewFrame(history)
 		yourPrompt.Style(func(s *styles.Style) {
