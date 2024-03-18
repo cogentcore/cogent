@@ -406,7 +406,7 @@ var AvailKeyMapsChanged = false
 // StdKeyMaps is the original compiled-in set of standard keymaps that have
 // the lastest key functions bound to standard key chords.
 var StdKeyMaps = KeyMaps{
-	{"MacStd", "Standard Mac KeyMap", KeySeqMap{
+	{"MacStandard", "Standard Mac KeyMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
 		KeySeq{"Shift+Control+Tab", ""}:  KeyFunPrevPanel,
 		KeySeq{"Control+M", "o"}:         KeyFunNextPanel,
@@ -531,7 +531,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "r"}:         KeyFunRunProj,
 		KeySeq{"Control+M", "Control+R"}: KeyFunRunProj,
 	}},
-	{"LinuxStd", "Standard Linux KeySeqMap", KeySeqMap{
+	{"LinuxStandard", "Standard Linux KeySeqMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
 		KeySeq{"Shift+Control+Tab", ""}:  KeyFunPrevPanel,
 		KeySeq{"Control+M", "o"}:         KeyFunNextPanel,
@@ -574,7 +574,7 @@ var StdKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "r"}:         KeyFunRunProj,
 		KeySeq{"Control+M", "Control+R"}: KeyFunRunProj,
 	}},
-	{"WindowsStd", "Standard Windows KeySeqMap", KeySeqMap{
+	{"WindowsStandard", "Standard Windows KeySeqMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
 		KeySeq{"Shift+Control+Tab", ""}:  KeyFunPrevPanel,
 		KeySeq{"Control+M", "o"}:         KeyFunNextPanel,

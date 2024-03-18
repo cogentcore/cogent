@@ -10,6 +10,6 @@ package main
 import "cogentcore.org/cogent/code/code"
 
 func init() {
-	code.DefaultKeyMap = code.KeyMapName("WindowsStd")
+	code.DefaultKeyMap = code.KeyMapName("WindowsStandard")
 	code.SetActiveKeyMapName(code.DefaultKeyMap)
 }
