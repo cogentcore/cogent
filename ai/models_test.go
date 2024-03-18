@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/ddkwork/golibrary/stream"
@@ -25,7 +26,7 @@ func Test_queryModelList(t *testing.T) {
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string { //table row need all field set left align,and set too long filed as cut+...
 		fmtCommand := "%-25s %-10s %-10s %-10s %-10s"
 		if n.Container() {
-			//sum := 0.0
+			sum := 0.0
 			n.WalkContainer(func(node *tree.Node[Model]) {
 				/*
 					//mylog.Trace("modelInfoSplit[1]", modelInfoSplit[1])
@@ -41,7 +42,8 @@ func Test_queryModelList(t *testing.T) {
 
 				//sum += node.Data.Size //so this is not right in all model,need get unit is gb or mb
 			})
-			//n.Data.Size = sum
+
+			n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64)
 			n.Data.Name = n.Type
 			fmtCommand = "%-25s %s %s %s %s"
 		} else {
