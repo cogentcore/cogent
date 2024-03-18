@@ -65,7 +65,7 @@ func Test_queryModelList(t *testing.T) {
 
 	indent, err := json.MarshalIndent(root, "", "  ")
 	assert.NoError(t, err)
-	stream.WriteTruncate("models.json", indent)
+	stream.WriteTruncate(jsonName, indent)
 }
 
 func ParseUnitStr2GB(data string) (value float64) {

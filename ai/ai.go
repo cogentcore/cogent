@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/xe"
+	"github.com/ddkwork/golibrary/pkg/tree"
 
 	"github.com/aandrew-me/tgpt/v2/structs"
 
@@ -26,6 +27,16 @@ import (
 
 //go:embed models.json
 var rootChildrenJson embed.FS
+
+var root = tree.NewNode("root", true, Model{
+	Name:        "root",
+	Description: "",
+	UpdateTime:  "",
+	Hash:        "",
+	Size:        "",
+})
+
+const jsonName = "models.json"
 
 func main() {
 	b := gi.NewBody("Cogent AI")
@@ -47,7 +58,7 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	grr.Log(jsons.OpenFS(root, rootChildrenJson, "models.json"))
+	grr.Log(jsons.OpenFS(root, rootChildrenJson, jsonName))
 	giv.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)

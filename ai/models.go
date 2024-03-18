@@ -41,19 +41,10 @@ func QueryModelList() {
 	if !mylog.Error(err) {
 		return
 	}
-	stream.WriteTruncate("models.json", indent)
+	stream.WriteTruncate(jsonName, indent)
 }
 
-var root = tree.NewNode("root", true, Model{
-	Name:        "root",
-	Description: "",
-	UpdateTime:  "",
-	Hash:        "",
-	Size:        "",
-})
-
 func queryModelList(r io.Reader) {
-
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
