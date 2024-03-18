@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.0.8-0.20240316230754-fa4707c7ddcd
+	cogentcore.org/core v0.0.8-0.20240318011029-85bb78435c47
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/aandrew-me/tgpt/v2 v2.7.2-0.20240302111058-ac8336bfc4d9
 	github.com/bogdanfinn/fhttp v0.5.27
@@ -69,6 +69,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/yuin/goldmark v1.7.0 // indirect
+	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zzl/go-win32api/v2 v2.1.0 // indirect
 	go.abhg.dev/goldmark/wikilink v0.5.0 // indirect
