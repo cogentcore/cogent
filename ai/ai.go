@@ -26,7 +26,7 @@ import (
 )
 
 //go:embed models.json
-var rootChildrenJson embed.FS
+var rootJson embed.FS
 
 var root = tree.NewNode("root", true, Model{
 	Name:        "root",
@@ -58,7 +58,7 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	grr.Log(jsons.OpenFS(root, rootChildrenJson, jsonName))
+	grr.Log(jsons.OpenFS(root, rootJson, jsonName))
 	giv.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
