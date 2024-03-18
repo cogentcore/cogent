@@ -8,14 +8,12 @@ require (
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
-	github.com/ddkwork/golibrary v0.0.0-20240318022921-6afbd8560298
+	github.com/ddkwork/golibrary v0.0.0-20240318180617-560253e467a2
 	github.com/go-delve/delve v1.22.1
-	github.com/google/uuid v1.6.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.9.0
-	google.golang.org/protobuf v1.33.0
 )
 
 require (
@@ -43,6 +41,7 @@ require (
 	github.com/goki/freetype v1.0.5 // indirect
 	github.com/goki/vulkan v1.0.7 // indirect
 	github.com/google/pprof v0.0.0-20240227163752-401108e1b7e7 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
