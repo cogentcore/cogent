@@ -20,7 +20,7 @@ type Model struct {
 	Size        float64
 	Hash        string
 	UpdateTime  string
-	Children    []Model
+	Children    []Model //json need only
 	Description string
 }
 
