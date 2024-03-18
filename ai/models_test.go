@@ -56,18 +56,12 @@ func Test_queryModelList(t *testing.T) {
 		switch node.Data.Name {
 		case "gemma":
 			queryModelTags(stream.NewReadFile("testdata/tags_gemma.html"), node)
-			//ModelJson.Children[0].Children = children
 
 		case "llama2":
 			queryModelTags(stream.NewReadFile("testdata/Tags_llama2.html"), node)
-			//ModelJson.Children[1].Children = children
 		}
 	})
 	stream.WriteTruncate("modelsTree.txt", root.Format(root))
-
-	//marshalJSON, err := root.MarshalJSON()
-	//assert.NoError(t, err)
-	//mylog.Json("root.MarshalJSON()", string(marshalJSON))
 
 	indent, err := json.MarshalIndent(root, "", "  ")
 	assert.NoError(t, err)

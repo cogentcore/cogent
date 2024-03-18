@@ -136,9 +136,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
 			//model.Description = ""//todo why not done? we only need show description in container node
 			clone := model
-			clone.Description = "" //not working,why? this is every child here
-			//json only,when the treeTableView widget implemented,it will be removed,
-			//and we need implement treeTableView's json marshal and unmarshal method
+			clone.Description = ""             //not working,why? this is every child here
 			children = append(children, clone) //todo test more times
 		}
 	})
