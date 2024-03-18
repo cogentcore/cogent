@@ -1,1398 +1,1398 @@
 {
   "Name": "root",
-  "Size": 0,
+  "Size": "",
   "Hash": "",
   "UpdateTime": "",
   "Children": [
     {
       "Name": "gemma",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [
         {
           "Name": "gemma:latest",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "430ed3535049",
           "UpdateTime": "Updated 5 days ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b",
-          "Size": 1.7,
+          "Size": "1.7GB",
           "Hash": "b50d6c999e59",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "430ed3535049",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:instruct",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "430ed3535049",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:text",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "af57093b878e",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct",
-          "Size": 1.7,
+          "Size": "1.7GB",
           "Hash": "b50d6c999e59",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text",
-          "Size": 1.7,
+          "Size": "1.7GB",
           "Hash": "4003359bdf67",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "430ed3535049",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "af57093b878e",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q4_0",
-          "Size": 1.7,
+          "Size": "1.7GB",
           "Hash": "b50d6c999e59",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q4_1",
-          "Size": 1.8,
+          "Size": "1.8GB",
           "Hash": "79f47baf629d",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q5_0",
-          "Size": 1.9,
+          "Size": "1.9GB",
           "Hash": "f2e0978e20a7",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q5_1",
-          "Size": 2.1,
+          "Size": "2.1GB",
           "Hash": "2005cd5b9f9a",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q8_0",
-          "Size": 2.7,
+          "Size": "2.7GB",
           "Hash": "233b6c11a9a9",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q2_K",
-          "Size": 1.3,
+          "Size": "1.3GB",
           "Hash": "462aa639add9",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q3_K_S",
-          "Size": 1.4,
+          "Size": "1.4GB",
           "Hash": "1147ae8910c1",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q3_K_M",
-          "Size": 1.5,
+          "Size": "1.5GB",
           "Hash": "0bb5a6a99256",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q3_K_L",
-          "Size": 1.6,
+          "Size": "1.6GB",
           "Hash": "a5e1a96f2947",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q4_K_S",
-          "Size": 1.7,
+          "Size": "1.7GB",
           "Hash": "1f62e695daaf",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q4_K_M",
-          "Size": 1.8,
+          "Size": "1.8GB",
           "Hash": "073d0876d678",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q5_K_S",
-          "Size": 1.9,
+          "Size": "1.9GB",
           "Hash": "466d55f10b72",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q5_K_M",
-          "Size": 2,
+          "Size": "2.0GB",
           "Hash": "79fe7a4a6e26",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-q6_K",
-          "Size": 2.2,
+          "Size": "2.2GB",
           "Hash": "2934d89f4873",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-instruct-fp16",
-          "Size": 4.5,
+          "Size": "4.5GB",
           "Hash": "1cca4a1914b8",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q4_0",
-          "Size": 1.7,
+          "Size": "1.7GB",
           "Hash": "4003359bdf67",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q4_1",
-          "Size": 1.8,
+          "Size": "1.8GB",
           "Hash": "2336b3481fc2",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q5_0",
-          "Size": 1.9,
+          "Size": "1.9GB",
           "Hash": "b82a85f35c76",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q5_1",
-          "Size": 2.1,
+          "Size": "2.1GB",
           "Hash": "af9d160f687e",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q8_0",
-          "Size": 2.7,
+          "Size": "2.7GB",
           "Hash": "40e5082de8d9",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q2_K",
-          "Size": 1.3,
+          "Size": "1.3GB",
           "Hash": "fa08f447fb74",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q3_K_S",
-          "Size": 1.4,
+          "Size": "1.4GB",
           "Hash": "30edc7975a67",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q3_K_M",
-          "Size": 1.5,
+          "Size": "1.5GB",
           "Hash": "3755aa666a62",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q3_K_L",
-          "Size": 1.6,
+          "Size": "1.6GB",
           "Hash": "fb3cb86ed3a0",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q4_K_S",
-          "Size": 1.7,
+          "Size": "1.7GB",
           "Hash": "e1f170c66fed",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q4_K_M",
-          "Size": 1.8,
+          "Size": "1.8GB",
           "Hash": "14b9181dd33c",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q5_K_S",
-          "Size": 1.9,
+          "Size": "1.9GB",
           "Hash": "dbbce6ea20a0",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q5_K_M",
-          "Size": 2,
+          "Size": "2.0GB",
           "Hash": "75095004592a",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-q6_K",
-          "Size": 2.2,
+          "Size": "2.2GB",
           "Hash": "5bd4a449bdbe",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:2b-text-fp16",
-          "Size": 4.5,
+          "Size": "4.5GB",
           "Hash": "bced1b198253",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q4_0",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "430ed3535049",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q4_1",
-          "Size": 5.7,
+          "Size": "5.7GB",
           "Hash": "e1e4a2e0c8ee",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q5_0",
-          "Size": 6.2,
+          "Size": "6.2GB",
           "Hash": "de923fde2f26",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q5_1",
-          "Size": 6.7,
+          "Size": "6.7GB",
           "Hash": "2e51588baf45",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q8_0",
-          "Size": 9.1,
+          "Size": "9.1GB",
           "Hash": "61d0f0df3637",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q2_K",
-          "Size": 3.7,
+          "Size": "3.7GB",
           "Hash": "831e95226882",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q3_K_S",
-          "Size": 4.2,
+          "Size": "4.2GB",
           "Hash": "e4aea70c287e",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q3_K_M",
-          "Size": 4.6,
+          "Size": "4.6GB",
           "Hash": "92dd270cb673",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q3_K_L",
-          "Size": 4.9,
+          "Size": "4.9GB",
           "Hash": "1fa1f8e1a003",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q4_K_S",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "bb7b8325814d",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q4_K_M",
-          "Size": 5.5,
+          "Size": "5.5GB",
           "Hash": "d9c26a968eb4",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q5_K_S",
-          "Size": 6.2,
+          "Size": "6.2GB",
           "Hash": "42630cbe71a2",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q5_K_M",
-          "Size": 6.3,
+          "Size": "6.3GB",
           "Hash": "556abeb39bfd",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-q6_K",
-          "Size": 7.2,
+          "Size": "7.2GB",
           "Hash": "5c7aded0b8bd",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-instruct-fp16",
-          "Size": 17,
+          "Size": "17GB",
           "Hash": "f689ad351c8d",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q4_0",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "af57093b878e",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q4_1",
-          "Size": 5.7,
+          "Size": "5.7GB",
           "Hash": "a7adb7322d8b",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q5_0",
-          "Size": 6.2,
+          "Size": "6.2GB",
           "Hash": "fd6dc849a9f8",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q5_1",
-          "Size": 6.7,
+          "Size": "6.7GB",
           "Hash": "938308342124",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q8_0",
-          "Size": 9.1,
+          "Size": "9.1GB",
           "Hash": "1b7b1e5e2f98",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q2_K",
-          "Size": 3.7,
+          "Size": "3.7GB",
           "Hash": "e43e18a484ed",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q3_K_S",
-          "Size": 4.2,
+          "Size": "4.2GB",
           "Hash": "f40e21d459ff",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q3_K_M",
-          "Size": 4.6,
+          "Size": "4.6GB",
           "Hash": "ffd8ea66cf1f",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q3_K_L",
-          "Size": 4.9,
+          "Size": "4.9GB",
           "Hash": "1676d1f86165",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q4_K_S",
-          "Size": 5.2,
+          "Size": "5.2GB",
           "Hash": "51854f1241b3",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q4_K_M",
-          "Size": 5.5,
+          "Size": "5.5GB",
           "Hash": "5ec372e05241",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q5_K_S",
-          "Size": 6.2,
+          "Size": "6.2GB",
           "Hash": "df449b30e2e1",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q5_K_M",
-          "Size": 6.3,
+          "Size": "6.3GB",
           "Hash": "dc8f812e49c7",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-q6_K",
-          "Size": 7.2,
+          "Size": "7.2GB",
           "Hash": "9e7cfd3fab5b",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         },
         {
           "Name": "gemma:7b-text-fp16",
-          "Size": 16,
+          "Size": "16GB",
           "Hash": "1f1e9df10872",
           "UpdateTime": "Updated 2 weeks ago",
           "Children": null,
-          "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+          "Description": ""
         }
       ],
       "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
     },
     {
       "Name": "llama2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [
         {
           "Name": "llama2:latest",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "78e26419b446",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:text",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "53b394a404fd",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "78e26419b446",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b",
-          "Size": 39,
+          "Size": "39GB",
           "Hash": "e7f6c06ffef4",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:chat",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "78e26419b446",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b",
-          "Size": 7.4,
+          "Size": "7.4GB",
           "Hash": "d475bf4c50bc",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "53b394a404fd",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "78e26419b446",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat",
-          "Size": 7.4,
+          "Size": "7.4GB",
           "Hash": "d475bf4c50bc",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text",
-          "Size": 7.4,
+          "Size": "7.4GB",
           "Hash": "d9ecf5544188",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat",
-          "Size": 39,
+          "Size": "39GB",
           "Hash": "e7f6c06ffef4",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text",
-          "Size": 39,
+          "Size": "39GB",
           "Hash": "b9b52e6b61c5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q4_0",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "78e26419b446",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q4_1",
-          "Size": 4.2,
+          "Size": "4.2GB",
           "Hash": "85eb4bc10598",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q5_0",
-          "Size": 4.7,
+          "Size": "4.7GB",
           "Hash": "68cf22a36a37",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q5_1",
-          "Size": 5.1,
+          "Size": "5.1GB",
           "Hash": "ae646aad1ac9",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q8_0",
-          "Size": 7.2,
+          "Size": "7.2GB",
           "Hash": "fc35dd6c8370",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q2_K",
-          "Size": 2.8,
+          "Size": "2.8GB",
           "Hash": "56baf05e3e67",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q3_K_S",
-          "Size": 2.9,
+          "Size": "2.9GB",
           "Hash": "3af967e4a825",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q3_K_M",
-          "Size": 3.3,
+          "Size": "3.3GB",
           "Hash": "63ebc93e095e",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q3_K_L",
-          "Size": 3.6,
+          "Size": "3.6GB",
           "Hash": "c04042faafd0",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q4_K_S",
-          "Size": 3.9,
+          "Size": "3.9GB",
           "Hash": "bec61ac554e8",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q4_K_M",
-          "Size": 4.1,
+          "Size": "4.1GB",
           "Hash": "fe3834f64df5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q5_K_S",
-          "Size": 4.7,
+          "Size": "4.7GB",
           "Hash": "4f771b179264",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q5_K_M",
-          "Size": 4.8,
+          "Size": "4.8GB",
           "Hash": "5918a2e3bb37",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-q6_K",
-          "Size": 5.5,
+          "Size": "5.5GB",
           "Hash": "7eabddae7b75",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-chat-fp16",
-          "Size": 13,
+          "Size": "13GB",
           "Hash": "50a12b7ddb9d",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q4_0",
-          "Size": 3.8,
+          "Size": "3.8GB",
           "Hash": "53b394a404fd",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q4_1",
-          "Size": 4.2,
+          "Size": "4.2GB",
           "Hash": "189a0d0904e4",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q5_0",
-          "Size": 4.7,
+          "Size": "4.7GB",
           "Hash": "7377932417e0",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q5_1",
-          "Size": 5.1,
+          "Size": "5.1GB",
           "Hash": "1a5e521c1e5c",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q8_0",
-          "Size": 7.2,
+          "Size": "7.2GB",
           "Hash": "fd701415200a",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q2_K",
-          "Size": 2.8,
+          "Size": "2.8GB",
           "Hash": "c581571a4e90",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q3_K_S",
-          "Size": 2.9,
+          "Size": "2.9GB",
           "Hash": "2f3ee65fe92a",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q3_K_M",
-          "Size": 3.3,
+          "Size": "3.3GB",
           "Hash": "c1ddf19ff6db",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q3_K_L",
-          "Size": 3.6,
+          "Size": "3.6GB",
           "Hash": "df57d4d53dac",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q4_K_S",
-          "Size": 3.9,
+          "Size": "3.9GB",
           "Hash": "1c2571d89f3b",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q4_K_M",
-          "Size": 4.1,
+          "Size": "4.1GB",
           "Hash": "b50304b988e8",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q5_K_S",
-          "Size": 4.7,
+          "Size": "4.7GB",
           "Hash": "6dd64259f527",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q5_K_M",
-          "Size": 4.8,
+          "Size": "4.8GB",
           "Hash": "eaa320e04479",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-q6_K",
-          "Size": 5.5,
+          "Size": "5.5GB",
           "Hash": "7e54061a4751",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:7b-text-fp16",
-          "Size": 13,
+          "Size": "13GB",
           "Hash": "f69718db483a",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q4_0",
-          "Size": 7.4,
+          "Size": "7.4GB",
           "Hash": "d475bf4c50bc",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q4_1",
-          "Size": 8.2,
+          "Size": "8.2GB",
           "Hash": "8da45bab53a7",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q5_0",
-          "Size": 9,
+          "Size": "9.0GB",
           "Hash": "2ceaa73b479a",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q5_1",
-          "Size": 9.8,
+          "Size": "9.8GB",
           "Hash": "76c91147b201",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q8_0",
-          "Size": 14,
+          "Size": "14GB",
           "Hash": "303a83449a06",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q2_K",
-          "Size": 5.4,
+          "Size": "5.4GB",
           "Hash": "14d3396d4e1b",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q3_K_S",
-          "Size": 5.7,
+          "Size": "5.7GB",
           "Hash": "224005fe00d3",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q3_K_M",
-          "Size": 6.3,
+          "Size": "6.3GB",
           "Hash": "7a39765cf206",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q3_K_L",
-          "Size": 6.9,
+          "Size": "6.9GB",
           "Hash": "d0a4d669c0b5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q4_K_S",
-          "Size": 7.4,
+          "Size": "7.4GB",
           "Hash": "c9bc1759c3b8",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q4_K_M",
-          "Size": 7.9,
+          "Size": "7.9GB",
           "Hash": "87727269f62c",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q5_K_S",
-          "Size": 9,
+          "Size": "9.0GB",
           "Hash": "25324e6a6e04",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q5_K_M",
-          "Size": 9.2,
+          "Size": "9.2GB",
           "Hash": "34471ad29e7c",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-q6_K",
-          "Size": 11,
+          "Size": "11GB",
           "Hash": "df2e3c78030b",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-chat-fp16",
-          "Size": 26,
+          "Size": "26GB",
           "Hash": "83b0fe8fee34",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q4_0",
-          "Size": 7.4,
+          "Size": "7.4GB",
           "Hash": "d9ecf5544188",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q4_1",
-          "Size": 8.2,
+          "Size": "8.2GB",
           "Hash": "ff9b7e23cab5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q5_0",
-          "Size": 9,
+          "Size": "9.0GB",
           "Hash": "8f3886efc72d",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q5_1",
-          "Size": 9.8,
+          "Size": "9.8GB",
           "Hash": "2afbee63a3f1",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q8_0",
-          "Size": 14,
+          "Size": "14GB",
           "Hash": "604d6e23f647",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q2_K",
-          "Size": 5.4,
+          "Size": "5.4GB",
           "Hash": "64ace2ba0375",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q3_K_S",
-          "Size": 5.7,
+          "Size": "5.7GB",
           "Hash": "959925e1415d",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q3_K_M",
-          "Size": 6.3,
+          "Size": "6.3GB",
           "Hash": "ff280395c1b4",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q3_K_L",
-          "Size": 6.9,
+          "Size": "6.9GB",
           "Hash": "cc161efc495b",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q4_K_S",
-          "Size": 7.4,
+          "Size": "7.4GB",
           "Hash": "2fadc16207a6",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q4_K_M",
-          "Size": 7.9,
+          "Size": "7.9GB",
           "Hash": "74b8a493a98e",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q5_K_S",
-          "Size": 9,
+          "Size": "9.0GB",
           "Hash": "1025495b5ee3",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q5_K_M",
-          "Size": 9.2,
+          "Size": "9.2GB",
           "Hash": "4be0a0bc5acb",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-q6_K",
-          "Size": 11,
+          "Size": "11GB",
           "Hash": "376544bcd2db",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:13b-text-fp16",
-          "Size": 26,
+          "Size": "26GB",
           "Hash": "d19bbe682374",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q4_0",
-          "Size": 39,
+          "Size": "39GB",
           "Hash": "e7f6c06ffef4",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q4_1",
-          "Size": 43,
+          "Size": "43GB",
           "Hash": "8618469361ea",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q5_0",
-          "Size": 47,
+          "Size": "47GB",
           "Hash": "6cb5828911b8",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q5_1",
-          "Size": 52,
+          "Size": "52GB",
           "Hash": "9d1fbb3c4074",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q8_0",
-          "Size": 73,
+          "Size": "73GB",
           "Hash": "d91d0643f080",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q2_K",
-          "Size": 29,
+          "Size": "29GB",
           "Hash": "3cac2828f2b8",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q3_K_S",
-          "Size": 30,
+          "Size": "30GB",
           "Hash": "051b27c23c3f",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q3_K_M",
-          "Size": 33,
+          "Size": "33GB",
           "Hash": "f11f61dc9832",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q3_K_L",
-          "Size": 36,
+          "Size": "36GB",
           "Hash": "e2275953b0b3",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q4_K_S",
-          "Size": 39,
+          "Size": "39GB",
           "Hash": "e202e9dd13cc",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q4_K_M",
-          "Size": 41,
+          "Size": "41GB",
           "Hash": "8f88029f07f8",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q5_K_S",
-          "Size": 47,
+          "Size": "47GB",
           "Hash": "eb071689d8e5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q5_K_M",
-          "Size": 49,
+          "Size": "49GB",
           "Hash": "2e12d2211dd5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-q6_K",
-          "Size": 57,
+          "Size": "57GB",
           "Hash": "b8bbc9a59804",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-chat-fp16",
-          "Size": 138,
+          "Size": "138GB",
           "Hash": "18d69cd1de10",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q4_0",
-          "Size": 39,
+          "Size": "39GB",
           "Hash": "b9b52e6b61c5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q4_1",
-          "Size": 43,
+          "Size": "43GB",
           "Hash": "92c3da1574b4",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q5_0",
-          "Size": 47,
+          "Size": "47GB",
           "Hash": "4ec9f6c43f82",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q5_1",
-          "Size": 52,
+          "Size": "52GB",
           "Hash": "9cafaca2d2fe",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q8_0",
-          "Size": 73,
+          "Size": "73GB",
           "Hash": "2aa27df56a63",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q2_K",
-          "Size": 29,
+          "Size": "29GB",
           "Hash": "b45d7449cc92",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q3_K_S",
-          "Size": 30,
+          "Size": "30GB",
           "Hash": "2227129bfc8a",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q3_K_M",
-          "Size": 33,
+          "Size": "33GB",
           "Hash": "fbd62f5dcf16",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q3_K_L",
-          "Size": 36,
+          "Size": "36GB",
           "Hash": "b5bdb4982992",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q4_K_S",
-          "Size": 39,
+          "Size": "39GB",
           "Hash": "1197a01c76e7",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q4_K_M",
-          "Size": 41,
+          "Size": "41GB",
           "Hash": "bc70b8e5b4e5",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q5_K_S",
-          "Size": 47,
+          "Size": "47GB",
           "Hash": "eab38b764b5b",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q5_K_M",
-          "Size": 49,
+          "Size": "49GB",
           "Hash": "b365053e53fc",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-q6_K",
-          "Size": 57,
+          "Size": "57GB",
           "Hash": "78e480a0450b",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         },
         {
           "Name": "llama2:70b-text-fp16",
-          "Size": 138,
+          "Size": "138GB",
           "Hash": "dc03bc3a16cf",
           "UpdateTime": "Updated 2 months ago",
           "Children": null,
-          "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+          "Description": ""
         }
       ],
       "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
     },
     {
       "Name": "mistral",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1400,7 +1400,7 @@
     },
     {
       "Name": "mixtral",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1408,7 +1408,7 @@
     },
     {
       "Name": "llava",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1416,7 +1416,7 @@
     },
     {
       "Name": "neural-chat",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1424,7 +1424,7 @@
     },
     {
       "Name": "codellama",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1432,7 +1432,7 @@
     },
     {
       "Name": "dolphin-mixtral",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1440,7 +1440,7 @@
     },
     {
       "Name": "mistral-openorca",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1448,7 +1448,7 @@
     },
     {
       "Name": "qwen",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1456,7 +1456,7 @@
     },
     {
       "Name": "llama2-uncensored",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1464,7 +1464,7 @@
     },
     {
       "Name": "nous-hermes2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1472,7 +1472,7 @@
     },
     {
       "Name": "phi",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1480,7 +1480,7 @@
     },
     {
       "Name": "deepseek-coder",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1488,7 +1488,7 @@
     },
     {
       "Name": "orca-mini",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1496,7 +1496,7 @@
     },
     {
       "Name": "dolphin-mistral",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1504,7 +1504,7 @@
     },
     {
       "Name": "wizard-vicuna-uncensored",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1512,7 +1512,7 @@
     },
     {
       "Name": "vicuna",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1520,7 +1520,7 @@
     },
     {
       "Name": "zephyr",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1528,7 +1528,7 @@
     },
     {
       "Name": "openhermes",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1536,7 +1536,7 @@
     },
     {
       "Name": "llama2-chinese",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1544,7 +1544,7 @@
     },
     {
       "Name": "tinyllama",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1552,7 +1552,7 @@
     },
     {
       "Name": "wizardcoder",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1560,7 +1560,7 @@
     },
     {
       "Name": "openchat",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1568,7 +1568,7 @@
     },
     {
       "Name": "phind-codellama",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1576,7 +1576,7 @@
     },
     {
       "Name": "tinydolphin",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1584,7 +1584,7 @@
     },
     {
       "Name": "orca2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1592,7 +1592,7 @@
     },
     {
       "Name": "falcon",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1600,7 +1600,7 @@
     },
     {
       "Name": "starcoder",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1608,7 +1608,7 @@
     },
     {
       "Name": "yi",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1616,7 +1616,7 @@
     },
     {
       "Name": "wizard-math",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1624,7 +1624,7 @@
     },
     {
       "Name": "dolphin-phi",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1632,7 +1632,7 @@
     },
     {
       "Name": "nous-hermes",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1640,7 +1640,7 @@
     },
     {
       "Name": "nomic-embed-text",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1648,7 +1648,7 @@
     },
     {
       "Name": "starling-lm",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1656,7 +1656,7 @@
     },
     {
       "Name": "starcoder2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1664,7 +1664,7 @@
     },
     {
       "Name": "stable-code",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1672,7 +1672,7 @@
     },
     {
       "Name": "medllama2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1680,7 +1680,7 @@
     },
     {
       "Name": "codeup",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1688,7 +1688,7 @@
     },
     {
       "Name": "bakllava",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1696,7 +1696,7 @@
     },
     {
       "Name": "wizardlm-uncensored",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1704,7 +1704,7 @@
     },
     {
       "Name": "solar",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1712,7 +1712,7 @@
     },
     {
       "Name": "everythinglm",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1720,7 +1720,7 @@
     },
     {
       "Name": "sqlcoder",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1728,7 +1728,7 @@
     },
     {
       "Name": "stable-beluga",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1736,7 +1736,7 @@
     },
     {
       "Name": "nous-hermes2-mixtral",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1744,7 +1744,7 @@
     },
     {
       "Name": "yarn-mistral",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1752,7 +1752,7 @@
     },
     {
       "Name": "samantha-mistral",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1760,7 +1760,7 @@
     },
     {
       "Name": "meditron",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1768,7 +1768,7 @@
     },
     {
       "Name": "stablelm2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1776,7 +1776,7 @@
     },
     {
       "Name": "stablelm-zephyr",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1784,7 +1784,7 @@
     },
     {
       "Name": "magicoder",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1792,7 +1792,7 @@
     },
     {
       "Name": "yarn-llama2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1800,7 +1800,7 @@
     },
     {
       "Name": "wizard-vicuna",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1808,7 +1808,7 @@
     },
     {
       "Name": "deepseek-llm",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1816,7 +1816,7 @@
     },
     {
       "Name": "llama-pro",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1824,7 +1824,7 @@
     },
     {
       "Name": "mistrallite",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1832,7 +1832,7 @@
     },
     {
       "Name": "codebooga",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1840,7 +1840,7 @@
     },
     {
       "Name": "nexusraven",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1848,7 +1848,7 @@
     },
     {
       "Name": "open-orca-platypus2",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1856,7 +1856,7 @@
     },
     {
       "Name": "goliath",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1864,7 +1864,7 @@
     },
     {
       "Name": "notux",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1872,7 +1872,7 @@
     },
     {
       "Name": "dolphincoder",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1880,7 +1880,7 @@
     },
     {
       "Name": "alfred",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1888,7 +1888,7 @@
     },
     {
       "Name": "megadolphin",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1896,7 +1896,7 @@
     },
     {
       "Name": "xwinlm",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1904,7 +1904,7 @@
     },
     {
       "Name": "wizardlm",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1912,7 +1912,7 @@
     },
     {
       "Name": "all-minilm",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1920,7 +1920,7 @@
     },
     {
       "Name": "duckdb-nsql",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],
@@ -1928,7 +1928,7 @@
     },
     {
       "Name": "notus",
-      "Size": 0,
+      "Size": "",
       "Hash": "",
       "UpdateTime": "",
       "Children": [],

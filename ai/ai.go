@@ -152,7 +152,7 @@ func main() {
 		//Help me translate all java files in the xxoo directory into Go language, and write the translated files in the corresponding directory, note that the suffix should be changed
 		//...
 
-		//todo gen png,also md can be show png canvas?
+		//todo gen png,also md can be show png canvas? and need test save png to local file
 
 		//maybe these should let model do not us
 
