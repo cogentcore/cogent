@@ -80,8 +80,6 @@ func HandleToken(respBody string) (token string) {
 	//_, err = w.ResponseWriter.Write([]byte(fmt.Sprintf("data: %s\n\n", d)))
 	//_, err = w.ResponseWriter.Write([]byte("data: [DONE]\n\n"))
 	if strings.Contains(respBody, "data: [DONE]") {
-		println()
-		mylog.Success("done", "finished")
 		return
 	}
 
