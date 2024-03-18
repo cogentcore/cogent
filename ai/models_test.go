@@ -48,16 +48,16 @@ func Test_queryModelList(t *testing.T) {
 		switch node.Data.Name {
 		case "gemma":
 			children := queryModelTags(stream.NewReadFile("testdata/tags_gemma.html"), node)
-			ModelJSON.Children[0].Children = children
+			ModelJson.Children[0].Children = children
 
 		case "llama2":
 			children := queryModelTags(stream.NewReadFile("testdata/Tags_llama2.html"), node)
-			ModelJSON.Children[1].Children = children
+			ModelJson.Children[1].Children = children
 		}
 	})
 	stream.WriteTruncate("modelsTree.txt", root.Format(root))
 
-	indent, err := json.MarshalIndent(ModelJSON, "", "  ")
+	indent, err := json.MarshalIndent(ModelJson, "", "  ")
 	assert.NoError(t, err)
 	stream.WriteTruncate("models.json", indent)
 }

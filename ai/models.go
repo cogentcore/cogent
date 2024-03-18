@@ -24,7 +24,7 @@ type Model struct {
 	Description string
 }
 
-var ModelJSON = &Model{
+var ModelJson = &Model{
 	Name:        "root",
 	Size:        0,
 	Hash:        "",
@@ -46,9 +46,9 @@ func QueryModelList() {
 	root := queryModelList(resp.Body)
 	root.WalkContainer(func(node *tree.Node[Model]) {
 		children := QueryModelTags(node.Data.Name, node) //node is every container of model node
-		ModelJSON.Children = children
+		ModelJson.Children = children
 	})
-	indent, err := json.MarshalIndent(ModelJSON, "", "  ")
+	indent, err := json.MarshalIndent(ModelJson, "", "  ")
 	if !mylog.Error(err) {
 		return
 	}
@@ -79,7 +79,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 			Description: description,
 			Children:    make([]Model, 0),
 		}
-		ModelJSON.Children = append(ModelJSON.Children, model)
+		ModelJson.Children = append(ModelJson.Children, model)
 		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
 	})

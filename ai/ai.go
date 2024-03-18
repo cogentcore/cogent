@@ -46,8 +46,8 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	grr.Log(jsons.OpenFS(ModelJSON, modelsJSON, "models.json"))
-	giv.NewTableView(leftFrame).SetSlice(&ModelJSON.Children).SetReadOnly(true)
+	grr.Log(jsons.OpenFS(ModelJson, modelsJSON, "models.json"))
+	giv.NewTableView(leftFrame).SetSlice(&ModelJson.Children).SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {
@@ -84,6 +84,8 @@ func main() {
 		s.Grow.Set(1, 0)
 		s.Align.Items = styles.Center
 	})
+
+	//todo we need change back "new topic" button
 
 	var send gi.Widget
 
