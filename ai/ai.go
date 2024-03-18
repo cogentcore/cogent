@@ -135,6 +135,13 @@ func main() {
 
 		//todo implement function with return d:/app app list and send to ai,let he tell us which app is we need choose
 		//please help me find some app in d:/app and they has feature seems like set env
+
+		//language translate
+		//code translate
+		//code comment translate
+		//network access for spider, alse we need a not headless browser and api
+		//maybe these should let model do not us
+
 		promptString := textField.Text()
 		if promptString == "" {
 			gi.MessageSnackbar(b, "Please enter a prompt")
