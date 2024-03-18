@@ -33,23 +33,9 @@ func Test_queryModelList(t *testing.T) {
 			//and we will abandon the traditional outdated data statistics model.
 			sum := 0.0
 			n.WalkContainer(func(node *tree.Node[Model]) {
-				unitStr := node.Data.Size[len(node.Data.Size)-2:] //2 is len gb or mb
-				switch unitStr {
-				case "GB":
-					n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64) + "GB"
-				case "MB":
-					n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64) + "MB"
-				default:
-					mylog.Error("unit is not GB or MB")
-					return
-				}
-				sizeValue := node.Data.Size[:len(node.Data.Size)-2]
-				size, err := strconv.ParseFloat(sizeValue, 64)
-				if !mylog.Error(err) {
-					return
-				}
-				sum += size
+				sum += ParseFloatGB(node.Data.Size)
 			})
+			n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64) + "GB"
 			n.Data.Name = n.Type
 			fmtCommand = "%-25s %s %s %s %s"
 		} else {
@@ -80,4 +66,31 @@ func Test_queryModelList(t *testing.T) {
 	indent, err := json.MarshalIndent(ModelJson, "", "  ")
 	assert.NoError(t, err)
 	stream.WriteTruncate("models.json", indent)
+}
+
+func ParseFloatGB(data string) (value float64) {
+	if data == "" {
+		return
+	}
+	v := data[:len(data)-2] //2 is len gb or mb
+	size, err := strconv.ParseFloat(v, 64)
+	if !mylog.Error(err) {
+		return
+	}
+	unitStr := data[len(data)-2:]
+	switch unitStr {
+	case "GB":
+		return size
+	case "MB":
+		return size / 1024
+	default:
+		mylog.Error("unit is not GB or MB")
+		return
+	}
+}
+
+func TestParseFloatGB(t *testing.T) {
+	assert.Equal(t, 1.5, ParseFloatGB("1.5GB"))
+	assert.Equal(t, 1.5/1024, ParseFloatGB("1.5MB"))
+	assert.Equal(t, 180.0, ParseFloatGB("180GB"))
 }
