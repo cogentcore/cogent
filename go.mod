@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.0.8-0.20240318023746-eb8a71f27a70
+	cogentcore.org/core v0.0.8-0.20240318185130-cf1de0d46065
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
