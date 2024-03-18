@@ -1,5 +1,5 @@
-cogentcore.org/core v0.0.8-0.20240318022224-1554c82803de h1:JqoQC5lHRY+ejUnp7PRUEAhvMMRFcvPoDQSo8BGNKGw=
-cogentcore.org/core v0.0.8-0.20240318022224-1554c82803de/go.mod h1:lxYx0ThHeTK6ssh/jdHwWLGC10Uw+AgxaS5RUvW6pSU=
+cogentcore.org/core v0.0.8-0.20240318023746-eb8a71f27a70 h1:7E5QeGut3k6lrjLdyvAb+zW7jFg19qfo6qlDx9JK/4c=
+cogentcore.org/core v0.0.8-0.20240318023746-eb8a71f27a70/go.mod h1:lxYx0ThHeTK6ssh/jdHwWLGC10Uw+AgxaS5RUvW6pSU=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4 h1:6lx9xzJAhdjq0LvVfbITeC3IH9Fzvo1aBahyPu2FuG8=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4/go.mod h1:FChzXi1izqzdPb6BiNZmcZLGyTYiT61iGx9Rxx9GNeI=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -54,8 +54,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dc0d/caseconv v0.5.0 h1:z3Ki2zszD03beetWyNAGa3NOAbnDJk+bX0tvcx9BKjQ=
 github.com/dc0d/caseconv v0.5.0/go.mod h1:/CrBBNtMoPTPf0INHrwyyhDrDjAJ9PFE+WuxSJHU0ZE=
-github.com/ddkwork/golibrary v0.0.0-20240318020713-f2cd3da77ecb h1:tCZUB8+k7X1u54oso/M+qDPfyT1UuBqPzd8YhjWFKhk=
-github.com/ddkwork/golibrary v0.0.0-20240318020713-f2cd3da77ecb/go.mod h1:f1DXrK0mKtUq6oLYafobw/kIRK1qyaSHa1PiJ7kWnzM=
+github.com/ddkwork/golibrary v0.0.0-20240318022921-6afbd8560298 h1:CT4JjbzHH7TC9v/YJFPa8ms85fkA4Fe1PgxgXEc826k=
+github.com/ddkwork/golibrary v0.0.0-20240318022921-6afbd8560298/go.mod h1:yB7PtcM4Hh5TNabb/8BO3HwySyCF34RSTV8UmMNjTgY=
 github.com/dlclark/regexp2 v1.4.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
 github.com/dlclark/regexp2 v1.7.0/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/dlclark/regexp2 v1.11.0 h1:G/nrcoOa7ZXlpoa/91N3X7mM3r8eIlMBBJZvsz/mxKI=
