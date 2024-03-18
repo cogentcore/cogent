@@ -5,7 +5,7 @@ go 1.22
 require (
 	cogentcore.org/core v0.0.8-0.20240318011029-85bb78435c47
 	github.com/PuerkitoBio/goquery v1.9.1
-	github.com/aandrew-me/tgpt/v2 v2.7.2-0.20240302111058-ac8336bfc4d9
+	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/ddkwork/golibrary v0.0.0-20240314012741-de4758c6256c
