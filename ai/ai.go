@@ -20,11 +20,12 @@ import (
 	"cogentcore.org/core/xe"
 
 	"github.com/aandrew-me/tgpt/v2/structs"
+
 	"github.com/ddkwork/golibrary/mylog"
 )
 
 //go:embed models.json
-var modelsJSON embed.FS
+var rootChildrenJson embed.FS
 
 func main() {
 	b := gi.NewBody("Cogent AI")
@@ -46,8 +47,8 @@ func main() {
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	grr.Log(jsons.OpenFS(ModelJson, modelsJSON, "models.json"))
-	giv.NewTableView(leftFrame).SetSlice(&ModelJson.Children).SetReadOnly(true)
+	grr.Log(jsons.OpenFS(root, rootChildrenJson, "models.json"))
+	giv.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := gi.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {

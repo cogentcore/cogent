@@ -1,1939 +1,3391 @@
 {
-  "Name": "root",
-  "Size": "",
-  "Hash": "",
-  "UpdateTime": "",
+  "Data": {
+    "Name": "root_container",
+    "Size": "2392.50GB",
+    "Hash": "",
+    "UpdateTime": "",
+    "Data": null,
+    "type": "",
+    "Children": null,
+    "Description": ""
+  },
+  "type": "root_container",
   "Children": [
     {
-      "Name": "gemma",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
+      "Data": {
+        "Name": "gemma_container",
+        "Size": "290.90GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+      },
+      "type": "gemma_container",
       "Children": [
         {
-          "Name": "gemma:latest",
-          "Size": "5.2GB",
-          "Hash": "430ed3535049",
-          "UpdateTime": "Updated 5 days ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b",
-          "Size": "1.7GB",
-          "Hash": "b50d6c999e59",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b",
-          "Size": "5.2GB",
-          "Hash": "430ed3535049",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:instruct",
-          "Size": "5.2GB",
-          "Hash": "430ed3535049",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:text",
-          "Size": "5.2GB",
-          "Hash": "af57093b878e",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct",
-          "Size": "1.7GB",
-          "Hash": "b50d6c999e59",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text",
-          "Size": "1.7GB",
-          "Hash": "4003359bdf67",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct",
-          "Size": "5.2GB",
-          "Hash": "430ed3535049",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text",
-          "Size": "5.2GB",
-          "Hash": "af57093b878e",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q4_0",
-          "Size": "1.7GB",
-          "Hash": "b50d6c999e59",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q4_1",
-          "Size": "1.8GB",
-          "Hash": "79f47baf629d",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q5_0",
-          "Size": "1.9GB",
-          "Hash": "f2e0978e20a7",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q5_1",
-          "Size": "2.1GB",
-          "Hash": "2005cd5b9f9a",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q8_0",
-          "Size": "2.7GB",
-          "Hash": "233b6c11a9a9",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q2_K",
-          "Size": "1.3GB",
-          "Hash": "462aa639add9",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q3_K_S",
-          "Size": "1.4GB",
-          "Hash": "1147ae8910c1",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q3_K_M",
-          "Size": "1.5GB",
-          "Hash": "0bb5a6a99256",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q3_K_L",
-          "Size": "1.6GB",
-          "Hash": "a5e1a96f2947",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q4_K_S",
-          "Size": "1.7GB",
-          "Hash": "1f62e695daaf",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q4_K_M",
-          "Size": "1.8GB",
-          "Hash": "073d0876d678",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q5_K_S",
-          "Size": "1.9GB",
-          "Hash": "466d55f10b72",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q5_K_M",
-          "Size": "2.0GB",
-          "Hash": "79fe7a4a6e26",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-q6_K",
-          "Size": "2.2GB",
-          "Hash": "2934d89f4873",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-instruct-fp16",
-          "Size": "4.5GB",
-          "Hash": "1cca4a1914b8",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q4_0",
-          "Size": "1.7GB",
-          "Hash": "4003359bdf67",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q4_1",
-          "Size": "1.8GB",
-          "Hash": "2336b3481fc2",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q5_0",
-          "Size": "1.9GB",
-          "Hash": "b82a85f35c76",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q5_1",
-          "Size": "2.1GB",
-          "Hash": "af9d160f687e",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q8_0",
-          "Size": "2.7GB",
-          "Hash": "40e5082de8d9",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q2_K",
-          "Size": "1.3GB",
-          "Hash": "fa08f447fb74",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q3_K_S",
-          "Size": "1.4GB",
-          "Hash": "30edc7975a67",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q3_K_M",
-          "Size": "1.5GB",
-          "Hash": "3755aa666a62",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q3_K_L",
-          "Size": "1.6GB",
-          "Hash": "fb3cb86ed3a0",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q4_K_S",
-          "Size": "1.7GB",
-          "Hash": "e1f170c66fed",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q4_K_M",
-          "Size": "1.8GB",
-          "Hash": "14b9181dd33c",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q5_K_S",
-          "Size": "1.9GB",
-          "Hash": "dbbce6ea20a0",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q5_K_M",
-          "Size": "2.0GB",
-          "Hash": "75095004592a",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-q6_K",
-          "Size": "2.2GB",
-          "Hash": "5bd4a449bdbe",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:2b-text-fp16",
-          "Size": "4.5GB",
-          "Hash": "bced1b198253",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q4_0",
-          "Size": "5.2GB",
-          "Hash": "430ed3535049",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q4_1",
-          "Size": "5.7GB",
-          "Hash": "e1e4a2e0c8ee",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q5_0",
-          "Size": "6.2GB",
-          "Hash": "de923fde2f26",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q5_1",
-          "Size": "6.7GB",
-          "Hash": "2e51588baf45",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q8_0",
-          "Size": "9.1GB",
-          "Hash": "61d0f0df3637",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q2_K",
-          "Size": "3.7GB",
-          "Hash": "831e95226882",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q3_K_S",
-          "Size": "4.2GB",
-          "Hash": "e4aea70c287e",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q3_K_M",
-          "Size": "4.6GB",
-          "Hash": "92dd270cb673",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q3_K_L",
-          "Size": "4.9GB",
-          "Hash": "1fa1f8e1a003",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q4_K_S",
-          "Size": "5.2GB",
-          "Hash": "bb7b8325814d",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q4_K_M",
-          "Size": "5.5GB",
-          "Hash": "d9c26a968eb4",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q5_K_S",
-          "Size": "6.2GB",
-          "Hash": "42630cbe71a2",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q5_K_M",
-          "Size": "6.3GB",
-          "Hash": "556abeb39bfd",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-q6_K",
-          "Size": "7.2GB",
-          "Hash": "5c7aded0b8bd",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-instruct-fp16",
-          "Size": "17GB",
-          "Hash": "f689ad351c8d",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q4_0",
-          "Size": "5.2GB",
-          "Hash": "af57093b878e",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q4_1",
-          "Size": "5.7GB",
-          "Hash": "a7adb7322d8b",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q5_0",
-          "Size": "6.2GB",
-          "Hash": "fd6dc849a9f8",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q5_1",
-          "Size": "6.7GB",
-          "Hash": "938308342124",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q8_0",
-          "Size": "9.1GB",
-          "Hash": "1b7b1e5e2f98",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q2_K",
-          "Size": "3.7GB",
-          "Hash": "e43e18a484ed",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q3_K_S",
-          "Size": "4.2GB",
-          "Hash": "f40e21d459ff",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q3_K_M",
-          "Size": "4.6GB",
-          "Hash": "ffd8ea66cf1f",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q3_K_L",
-          "Size": "4.9GB",
-          "Hash": "1676d1f86165",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q4_K_S",
-          "Size": "5.2GB",
-          "Hash": "51854f1241b3",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q4_K_M",
-          "Size": "5.5GB",
-          "Hash": "5ec372e05241",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q5_K_S",
-          "Size": "6.2GB",
-          "Hash": "df449b30e2e1",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q5_K_M",
-          "Size": "6.3GB",
-          "Hash": "dc8f812e49c7",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-q6_K",
-          "Size": "7.2GB",
-          "Hash": "9e7cfd3fab5b",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "gemma:7b-text-fp16",
-          "Size": "16GB",
-          "Hash": "1f1e9df10872",
-          "UpdateTime": "Updated 2 weeks ago",
-          "Children": null,
-          "Description": ""
+          "Data": {
+            "Name": "gemma:latest",
+            "Size": "5.2GB",
+            "Hash": "430ed3535049",
+            "UpdateTime": "Updated 5 days ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:latest",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b",
+            "Size": "1.7GB",
+            "Hash": "b50d6c999e59",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b",
+            "Size": "5.2GB",
+            "Hash": "430ed3535049",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:instruct",
+            "Size": "5.2GB",
+            "Hash": "430ed3535049",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:instruct",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:text",
+            "Size": "5.2GB",
+            "Hash": "af57093b878e",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:text",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct",
+            "Size": "1.7GB",
+            "Hash": "b50d6c999e59",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text",
+            "Size": "1.7GB",
+            "Hash": "4003359bdf67",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct",
+            "Size": "5.2GB",
+            "Hash": "430ed3535049",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text",
+            "Size": "5.2GB",
+            "Hash": "af57093b878e",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q4_0",
+            "Size": "1.7GB",
+            "Hash": "b50d6c999e59",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q4_1",
+            "Size": "1.8GB",
+            "Hash": "79f47baf629d",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q5_0",
+            "Size": "1.9GB",
+            "Hash": "f2e0978e20a7",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q5_1",
+            "Size": "2.1GB",
+            "Hash": "2005cd5b9f9a",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q8_0",
+            "Size": "2.7GB",
+            "Hash": "233b6c11a9a9",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q2_K",
+            "Size": "1.3GB",
+            "Hash": "462aa639add9",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q3_K_S",
+            "Size": "1.4GB",
+            "Hash": "1147ae8910c1",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q3_K_M",
+            "Size": "1.5GB",
+            "Hash": "0bb5a6a99256",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q3_K_L",
+            "Size": "1.6GB",
+            "Hash": "a5e1a96f2947",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q4_K_S",
+            "Size": "1.7GB",
+            "Hash": "1f62e695daaf",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q4_K_M",
+            "Size": "1.8GB",
+            "Hash": "073d0876d678",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q5_K_S",
+            "Size": "1.9GB",
+            "Hash": "466d55f10b72",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q5_K_M",
+            "Size": "2.0GB",
+            "Hash": "79fe7a4a6e26",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-q6_K",
+            "Size": "2.2GB",
+            "Hash": "2934d89f4873",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-instruct-fp16",
+            "Size": "4.5GB",
+            "Hash": "1cca4a1914b8",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-instruct-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q4_0",
+            "Size": "1.7GB",
+            "Hash": "4003359bdf67",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q4_1",
+            "Size": "1.8GB",
+            "Hash": "2336b3481fc2",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q5_0",
+            "Size": "1.9GB",
+            "Hash": "b82a85f35c76",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q5_1",
+            "Size": "2.1GB",
+            "Hash": "af9d160f687e",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q8_0",
+            "Size": "2.7GB",
+            "Hash": "40e5082de8d9",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q2_K",
+            "Size": "1.3GB",
+            "Hash": "fa08f447fb74",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q3_K_S",
+            "Size": "1.4GB",
+            "Hash": "30edc7975a67",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q3_K_M",
+            "Size": "1.5GB",
+            "Hash": "3755aa666a62",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q3_K_L",
+            "Size": "1.6GB",
+            "Hash": "fb3cb86ed3a0",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q4_K_S",
+            "Size": "1.7GB",
+            "Hash": "e1f170c66fed",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q4_K_M",
+            "Size": "1.8GB",
+            "Hash": "14b9181dd33c",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q5_K_S",
+            "Size": "1.9GB",
+            "Hash": "dbbce6ea20a0",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q5_K_M",
+            "Size": "2.0GB",
+            "Hash": "75095004592a",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-q6_K",
+            "Size": "2.2GB",
+            "Hash": "5bd4a449bdbe",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:2b-text-fp16",
+            "Size": "4.5GB",
+            "Hash": "bced1b198253",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:2b-text-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q4_0",
+            "Size": "5.2GB",
+            "Hash": "430ed3535049",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q4_1",
+            "Size": "5.7GB",
+            "Hash": "e1e4a2e0c8ee",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q5_0",
+            "Size": "6.2GB",
+            "Hash": "de923fde2f26",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q5_1",
+            "Size": "6.7GB",
+            "Hash": "2e51588baf45",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q8_0",
+            "Size": "9.1GB",
+            "Hash": "61d0f0df3637",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q2_K",
+            "Size": "3.7GB",
+            "Hash": "831e95226882",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q3_K_S",
+            "Size": "4.2GB",
+            "Hash": "e4aea70c287e",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q3_K_M",
+            "Size": "4.6GB",
+            "Hash": "92dd270cb673",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q3_K_L",
+            "Size": "4.9GB",
+            "Hash": "1fa1f8e1a003",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q4_K_S",
+            "Size": "5.2GB",
+            "Hash": "bb7b8325814d",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q4_K_M",
+            "Size": "5.5GB",
+            "Hash": "d9c26a968eb4",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q5_K_S",
+            "Size": "6.2GB",
+            "Hash": "42630cbe71a2",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q5_K_M",
+            "Size": "6.3GB",
+            "Hash": "556abeb39bfd",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-q6_K",
+            "Size": "7.2GB",
+            "Hash": "5c7aded0b8bd",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-instruct-fp16",
+            "Size": "17GB",
+            "Hash": "f689ad351c8d",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-instruct-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q4_0",
+            "Size": "5.2GB",
+            "Hash": "af57093b878e",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q4_1",
+            "Size": "5.7GB",
+            "Hash": "a7adb7322d8b",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q5_0",
+            "Size": "6.2GB",
+            "Hash": "fd6dc849a9f8",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q5_1",
+            "Size": "6.7GB",
+            "Hash": "938308342124",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q8_0",
+            "Size": "9.1GB",
+            "Hash": "1b7b1e5e2f98",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q2_K",
+            "Size": "3.7GB",
+            "Hash": "e43e18a484ed",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q3_K_S",
+            "Size": "4.2GB",
+            "Hash": "f40e21d459ff",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q3_K_M",
+            "Size": "4.6GB",
+            "Hash": "ffd8ea66cf1f",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q3_K_L",
+            "Size": "4.9GB",
+            "Hash": "1676d1f86165",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q4_K_S",
+            "Size": "5.2GB",
+            "Hash": "51854f1241b3",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q4_K_M",
+            "Size": "5.5GB",
+            "Hash": "5ec372e05241",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q5_K_S",
+            "Size": "6.2GB",
+            "Hash": "df449b30e2e1",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q5_K_M",
+            "Size": "6.3GB",
+            "Hash": "dc8f812e49c7",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-q6_K",
+            "Size": "7.2GB",
+            "Hash": "9e7cfd3fab5b",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "gemma:7b-text-fp16",
+            "Size": "16GB",
+            "Hash": "1f1e9df10872",
+            "UpdateTime": "Updated 2 weeks ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "gemma:7b-text-fp16",
+          "Children": []
         }
-      ],
-      "Description": "Gemma is a family of lightweight, state-of-the-art open models built by Google DeepMind."
+      ]
     },
     {
-      "Name": "llama2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
+      "Data": {
+        "Name": "llama2_container",
+        "Size": "2101.60GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
+      },
+      "type": "llama2_container",
       "Children": [
         {
-          "Name": "llama2:latest",
-          "Size": "3.8GB",
-          "Hash": "78e26419b446",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:text",
-          "Size": "3.8GB",
-          "Hash": "53b394a404fd",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b",
-          "Size": "3.8GB",
-          "Hash": "78e26419b446",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b",
-          "Size": "39GB",
-          "Hash": "e7f6c06ffef4",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:chat",
-          "Size": "3.8GB",
-          "Hash": "78e26419b446",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b",
-          "Size": "7.4GB",
-          "Hash": "d475bf4c50bc",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text",
-          "Size": "3.8GB",
-          "Hash": "53b394a404fd",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat",
-          "Size": "3.8GB",
-          "Hash": "78e26419b446",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat",
-          "Size": "7.4GB",
-          "Hash": "d475bf4c50bc",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text",
-          "Size": "7.4GB",
-          "Hash": "d9ecf5544188",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat",
-          "Size": "39GB",
-          "Hash": "e7f6c06ffef4",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text",
-          "Size": "39GB",
-          "Hash": "b9b52e6b61c5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q4_0",
-          "Size": "3.8GB",
-          "Hash": "78e26419b446",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q4_1",
-          "Size": "4.2GB",
-          "Hash": "85eb4bc10598",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q5_0",
-          "Size": "4.7GB",
-          "Hash": "68cf22a36a37",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q5_1",
-          "Size": "5.1GB",
-          "Hash": "ae646aad1ac9",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q8_0",
-          "Size": "7.2GB",
-          "Hash": "fc35dd6c8370",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q2_K",
-          "Size": "2.8GB",
-          "Hash": "56baf05e3e67",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q3_K_S",
-          "Size": "2.9GB",
-          "Hash": "3af967e4a825",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q3_K_M",
-          "Size": "3.3GB",
-          "Hash": "63ebc93e095e",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q3_K_L",
-          "Size": "3.6GB",
-          "Hash": "c04042faafd0",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q4_K_S",
-          "Size": "3.9GB",
-          "Hash": "bec61ac554e8",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q4_K_M",
-          "Size": "4.1GB",
-          "Hash": "fe3834f64df5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q5_K_S",
-          "Size": "4.7GB",
-          "Hash": "4f771b179264",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q5_K_M",
-          "Size": "4.8GB",
-          "Hash": "5918a2e3bb37",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-q6_K",
-          "Size": "5.5GB",
-          "Hash": "7eabddae7b75",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-chat-fp16",
-          "Size": "13GB",
-          "Hash": "50a12b7ddb9d",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q4_0",
-          "Size": "3.8GB",
-          "Hash": "53b394a404fd",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q4_1",
-          "Size": "4.2GB",
-          "Hash": "189a0d0904e4",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q5_0",
-          "Size": "4.7GB",
-          "Hash": "7377932417e0",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q5_1",
-          "Size": "5.1GB",
-          "Hash": "1a5e521c1e5c",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q8_0",
-          "Size": "7.2GB",
-          "Hash": "fd701415200a",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q2_K",
-          "Size": "2.8GB",
-          "Hash": "c581571a4e90",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q3_K_S",
-          "Size": "2.9GB",
-          "Hash": "2f3ee65fe92a",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q3_K_M",
-          "Size": "3.3GB",
-          "Hash": "c1ddf19ff6db",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q3_K_L",
-          "Size": "3.6GB",
-          "Hash": "df57d4d53dac",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q4_K_S",
-          "Size": "3.9GB",
-          "Hash": "1c2571d89f3b",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q4_K_M",
-          "Size": "4.1GB",
-          "Hash": "b50304b988e8",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q5_K_S",
-          "Size": "4.7GB",
-          "Hash": "6dd64259f527",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q5_K_M",
-          "Size": "4.8GB",
-          "Hash": "eaa320e04479",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-q6_K",
-          "Size": "5.5GB",
-          "Hash": "7e54061a4751",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:7b-text-fp16",
-          "Size": "13GB",
-          "Hash": "f69718db483a",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q4_0",
-          "Size": "7.4GB",
-          "Hash": "d475bf4c50bc",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q4_1",
-          "Size": "8.2GB",
-          "Hash": "8da45bab53a7",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q5_0",
-          "Size": "9.0GB",
-          "Hash": "2ceaa73b479a",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q5_1",
-          "Size": "9.8GB",
-          "Hash": "76c91147b201",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q8_0",
-          "Size": "14GB",
-          "Hash": "303a83449a06",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q2_K",
-          "Size": "5.4GB",
-          "Hash": "14d3396d4e1b",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q3_K_S",
-          "Size": "5.7GB",
-          "Hash": "224005fe00d3",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q3_K_M",
-          "Size": "6.3GB",
-          "Hash": "7a39765cf206",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q3_K_L",
-          "Size": "6.9GB",
-          "Hash": "d0a4d669c0b5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q4_K_S",
-          "Size": "7.4GB",
-          "Hash": "c9bc1759c3b8",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q4_K_M",
-          "Size": "7.9GB",
-          "Hash": "87727269f62c",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q5_K_S",
-          "Size": "9.0GB",
-          "Hash": "25324e6a6e04",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q5_K_M",
-          "Size": "9.2GB",
-          "Hash": "34471ad29e7c",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-q6_K",
-          "Size": "11GB",
-          "Hash": "df2e3c78030b",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-chat-fp16",
-          "Size": "26GB",
-          "Hash": "83b0fe8fee34",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q4_0",
-          "Size": "7.4GB",
-          "Hash": "d9ecf5544188",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q4_1",
-          "Size": "8.2GB",
-          "Hash": "ff9b7e23cab5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q5_0",
-          "Size": "9.0GB",
-          "Hash": "8f3886efc72d",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q5_1",
-          "Size": "9.8GB",
-          "Hash": "2afbee63a3f1",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q8_0",
-          "Size": "14GB",
-          "Hash": "604d6e23f647",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q2_K",
-          "Size": "5.4GB",
-          "Hash": "64ace2ba0375",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q3_K_S",
-          "Size": "5.7GB",
-          "Hash": "959925e1415d",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q3_K_M",
-          "Size": "6.3GB",
-          "Hash": "ff280395c1b4",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q3_K_L",
-          "Size": "6.9GB",
-          "Hash": "cc161efc495b",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q4_K_S",
-          "Size": "7.4GB",
-          "Hash": "2fadc16207a6",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q4_K_M",
-          "Size": "7.9GB",
-          "Hash": "74b8a493a98e",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q5_K_S",
-          "Size": "9.0GB",
-          "Hash": "1025495b5ee3",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q5_K_M",
-          "Size": "9.2GB",
-          "Hash": "4be0a0bc5acb",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-q6_K",
-          "Size": "11GB",
-          "Hash": "376544bcd2db",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:13b-text-fp16",
-          "Size": "26GB",
-          "Hash": "d19bbe682374",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q4_0",
-          "Size": "39GB",
-          "Hash": "e7f6c06ffef4",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q4_1",
-          "Size": "43GB",
-          "Hash": "8618469361ea",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q5_0",
-          "Size": "47GB",
-          "Hash": "6cb5828911b8",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q5_1",
-          "Size": "52GB",
-          "Hash": "9d1fbb3c4074",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q8_0",
-          "Size": "73GB",
-          "Hash": "d91d0643f080",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q2_K",
-          "Size": "29GB",
-          "Hash": "3cac2828f2b8",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q3_K_S",
-          "Size": "30GB",
-          "Hash": "051b27c23c3f",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q3_K_M",
-          "Size": "33GB",
-          "Hash": "f11f61dc9832",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q3_K_L",
-          "Size": "36GB",
-          "Hash": "e2275953b0b3",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q4_K_S",
-          "Size": "39GB",
-          "Hash": "e202e9dd13cc",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q4_K_M",
-          "Size": "41GB",
-          "Hash": "8f88029f07f8",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q5_K_S",
-          "Size": "47GB",
-          "Hash": "eb071689d8e5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q5_K_M",
-          "Size": "49GB",
-          "Hash": "2e12d2211dd5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-q6_K",
-          "Size": "57GB",
-          "Hash": "b8bbc9a59804",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-chat-fp16",
-          "Size": "138GB",
-          "Hash": "18d69cd1de10",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q4_0",
-          "Size": "39GB",
-          "Hash": "b9b52e6b61c5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q4_1",
-          "Size": "43GB",
-          "Hash": "92c3da1574b4",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q5_0",
-          "Size": "47GB",
-          "Hash": "4ec9f6c43f82",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q5_1",
-          "Size": "52GB",
-          "Hash": "9cafaca2d2fe",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q8_0",
-          "Size": "73GB",
-          "Hash": "2aa27df56a63",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q2_K",
-          "Size": "29GB",
-          "Hash": "b45d7449cc92",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q3_K_S",
-          "Size": "30GB",
-          "Hash": "2227129bfc8a",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q3_K_M",
-          "Size": "33GB",
-          "Hash": "fbd62f5dcf16",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q3_K_L",
-          "Size": "36GB",
-          "Hash": "b5bdb4982992",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q4_K_S",
-          "Size": "39GB",
-          "Hash": "1197a01c76e7",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q4_K_M",
-          "Size": "41GB",
-          "Hash": "bc70b8e5b4e5",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q5_K_S",
-          "Size": "47GB",
-          "Hash": "eab38b764b5b",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q5_K_M",
-          "Size": "49GB",
-          "Hash": "b365053e53fc",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-q6_K",
-          "Size": "57GB",
-          "Hash": "78e480a0450b",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
-        },
-        {
-          "Name": "llama2:70b-text-fp16",
-          "Size": "138GB",
-          "Hash": "dc03bc3a16cf",
-          "UpdateTime": "Updated 2 months ago",
-          "Children": null,
-          "Description": ""
+          "Data": {
+            "Name": "llama2:latest",
+            "Size": "3.8GB",
+            "Hash": "78e26419b446",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:latest",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:text",
+            "Size": "3.8GB",
+            "Hash": "53b394a404fd",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:text",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b",
+            "Size": "3.8GB",
+            "Hash": "78e26419b446",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b",
+            "Size": "39GB",
+            "Hash": "e7f6c06ffef4",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:chat",
+            "Size": "3.8GB",
+            "Hash": "78e26419b446",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:chat",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b",
+            "Size": "7.4GB",
+            "Hash": "d475bf4c50bc",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text",
+            "Size": "3.8GB",
+            "Hash": "53b394a404fd",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat",
+            "Size": "3.8GB",
+            "Hash": "78e26419b446",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat",
+            "Size": "7.4GB",
+            "Hash": "d475bf4c50bc",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text",
+            "Size": "7.4GB",
+            "Hash": "d9ecf5544188",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat",
+            "Size": "39GB",
+            "Hash": "e7f6c06ffef4",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text",
+            "Size": "39GB",
+            "Hash": "b9b52e6b61c5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q4_0",
+            "Size": "3.8GB",
+            "Hash": "78e26419b446",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q4_1",
+            "Size": "4.2GB",
+            "Hash": "85eb4bc10598",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q5_0",
+            "Size": "4.7GB",
+            "Hash": "68cf22a36a37",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q5_1",
+            "Size": "5.1GB",
+            "Hash": "ae646aad1ac9",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q8_0",
+            "Size": "7.2GB",
+            "Hash": "fc35dd6c8370",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q2_K",
+            "Size": "2.8GB",
+            "Hash": "56baf05e3e67",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q3_K_S",
+            "Size": "2.9GB",
+            "Hash": "3af967e4a825",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q3_K_M",
+            "Size": "3.3GB",
+            "Hash": "63ebc93e095e",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q3_K_L",
+            "Size": "3.6GB",
+            "Hash": "c04042faafd0",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q4_K_S",
+            "Size": "3.9GB",
+            "Hash": "bec61ac554e8",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q4_K_M",
+            "Size": "4.1GB",
+            "Hash": "fe3834f64df5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q5_K_S",
+            "Size": "4.7GB",
+            "Hash": "4f771b179264",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q5_K_M",
+            "Size": "4.8GB",
+            "Hash": "5918a2e3bb37",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-q6_K",
+            "Size": "5.5GB",
+            "Hash": "7eabddae7b75",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-chat-fp16",
+            "Size": "13GB",
+            "Hash": "50a12b7ddb9d",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-chat-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q4_0",
+            "Size": "3.8GB",
+            "Hash": "53b394a404fd",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q4_1",
+            "Size": "4.2GB",
+            "Hash": "189a0d0904e4",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q5_0",
+            "Size": "4.7GB",
+            "Hash": "7377932417e0",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q5_1",
+            "Size": "5.1GB",
+            "Hash": "1a5e521c1e5c",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q8_0",
+            "Size": "7.2GB",
+            "Hash": "fd701415200a",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q2_K",
+            "Size": "2.8GB",
+            "Hash": "c581571a4e90",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q3_K_S",
+            "Size": "2.9GB",
+            "Hash": "2f3ee65fe92a",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q3_K_M",
+            "Size": "3.3GB",
+            "Hash": "c1ddf19ff6db",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q3_K_L",
+            "Size": "3.6GB",
+            "Hash": "df57d4d53dac",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q4_K_S",
+            "Size": "3.9GB",
+            "Hash": "1c2571d89f3b",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q4_K_M",
+            "Size": "4.1GB",
+            "Hash": "b50304b988e8",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q5_K_S",
+            "Size": "4.7GB",
+            "Hash": "6dd64259f527",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q5_K_M",
+            "Size": "4.8GB",
+            "Hash": "eaa320e04479",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-q6_K",
+            "Size": "5.5GB",
+            "Hash": "7e54061a4751",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:7b-text-fp16",
+            "Size": "13GB",
+            "Hash": "f69718db483a",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:7b-text-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q4_0",
+            "Size": "7.4GB",
+            "Hash": "d475bf4c50bc",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q4_1",
+            "Size": "8.2GB",
+            "Hash": "8da45bab53a7",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q5_0",
+            "Size": "9.0GB",
+            "Hash": "2ceaa73b479a",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q5_1",
+            "Size": "9.8GB",
+            "Hash": "76c91147b201",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q8_0",
+            "Size": "14GB",
+            "Hash": "303a83449a06",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q2_K",
+            "Size": "5.4GB",
+            "Hash": "14d3396d4e1b",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q3_K_S",
+            "Size": "5.7GB",
+            "Hash": "224005fe00d3",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q3_K_M",
+            "Size": "6.3GB",
+            "Hash": "7a39765cf206",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q3_K_L",
+            "Size": "6.9GB",
+            "Hash": "d0a4d669c0b5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q4_K_S",
+            "Size": "7.4GB",
+            "Hash": "c9bc1759c3b8",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q4_K_M",
+            "Size": "7.9GB",
+            "Hash": "87727269f62c",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q5_K_S",
+            "Size": "9.0GB",
+            "Hash": "25324e6a6e04",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q5_K_M",
+            "Size": "9.2GB",
+            "Hash": "34471ad29e7c",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-q6_K",
+            "Size": "11GB",
+            "Hash": "df2e3c78030b",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-chat-fp16",
+            "Size": "26GB",
+            "Hash": "83b0fe8fee34",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-chat-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q4_0",
+            "Size": "7.4GB",
+            "Hash": "d9ecf5544188",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q4_1",
+            "Size": "8.2GB",
+            "Hash": "ff9b7e23cab5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q5_0",
+            "Size": "9.0GB",
+            "Hash": "8f3886efc72d",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q5_1",
+            "Size": "9.8GB",
+            "Hash": "2afbee63a3f1",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q8_0",
+            "Size": "14GB",
+            "Hash": "604d6e23f647",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q2_K",
+            "Size": "5.4GB",
+            "Hash": "64ace2ba0375",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q3_K_S",
+            "Size": "5.7GB",
+            "Hash": "959925e1415d",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q3_K_M",
+            "Size": "6.3GB",
+            "Hash": "ff280395c1b4",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q3_K_L",
+            "Size": "6.9GB",
+            "Hash": "cc161efc495b",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q4_K_S",
+            "Size": "7.4GB",
+            "Hash": "2fadc16207a6",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q4_K_M",
+            "Size": "7.9GB",
+            "Hash": "74b8a493a98e",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q5_K_S",
+            "Size": "9.0GB",
+            "Hash": "1025495b5ee3",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q5_K_M",
+            "Size": "9.2GB",
+            "Hash": "4be0a0bc5acb",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-q6_K",
+            "Size": "11GB",
+            "Hash": "376544bcd2db",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:13b-text-fp16",
+            "Size": "26GB",
+            "Hash": "d19bbe682374",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:13b-text-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q4_0",
+            "Size": "39GB",
+            "Hash": "e7f6c06ffef4",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q4_1",
+            "Size": "43GB",
+            "Hash": "8618469361ea",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q5_0",
+            "Size": "47GB",
+            "Hash": "6cb5828911b8",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q5_1",
+            "Size": "52GB",
+            "Hash": "9d1fbb3c4074",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q8_0",
+            "Size": "73GB",
+            "Hash": "d91d0643f080",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q2_K",
+            "Size": "29GB",
+            "Hash": "3cac2828f2b8",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q3_K_S",
+            "Size": "30GB",
+            "Hash": "051b27c23c3f",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q3_K_M",
+            "Size": "33GB",
+            "Hash": "f11f61dc9832",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q3_K_L",
+            "Size": "36GB",
+            "Hash": "e2275953b0b3",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q4_K_S",
+            "Size": "39GB",
+            "Hash": "e202e9dd13cc",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q4_K_M",
+            "Size": "41GB",
+            "Hash": "8f88029f07f8",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q5_K_S",
+            "Size": "47GB",
+            "Hash": "eb071689d8e5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q5_K_M",
+            "Size": "49GB",
+            "Hash": "2e12d2211dd5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-q6_K",
+            "Size": "57GB",
+            "Hash": "b8bbc9a59804",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-chat-fp16",
+            "Size": "138GB",
+            "Hash": "18d69cd1de10",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-chat-fp16",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q4_0",
+            "Size": "39GB",
+            "Hash": "b9b52e6b61c5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q4_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q4_1",
+            "Size": "43GB",
+            "Hash": "92c3da1574b4",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q4_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q5_0",
+            "Size": "47GB",
+            "Hash": "4ec9f6c43f82",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q5_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q5_1",
+            "Size": "52GB",
+            "Hash": "9cafaca2d2fe",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q5_1",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q8_0",
+            "Size": "73GB",
+            "Hash": "2aa27df56a63",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q8_0",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q2_K",
+            "Size": "29GB",
+            "Hash": "b45d7449cc92",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q2_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q3_K_S",
+            "Size": "30GB",
+            "Hash": "2227129bfc8a",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q3_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q3_K_M",
+            "Size": "33GB",
+            "Hash": "fbd62f5dcf16",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q3_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q3_K_L",
+            "Size": "36GB",
+            "Hash": "b5bdb4982992",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q3_K_L",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q4_K_S",
+            "Size": "39GB",
+            "Hash": "1197a01c76e7",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q4_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q4_K_M",
+            "Size": "41GB",
+            "Hash": "bc70b8e5b4e5",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q4_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q5_K_S",
+            "Size": "47GB",
+            "Hash": "eab38b764b5b",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q5_K_S",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q5_K_M",
+            "Size": "49GB",
+            "Hash": "b365053e53fc",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q5_K_M",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-q6_K",
+            "Size": "57GB",
+            "Hash": "78e480a0450b",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-q6_K",
+          "Children": []
+        },
+        {
+          "Data": {
+            "Name": "llama2:70b-text-fp16",
+            "Size": "138GB",
+            "Hash": "dc03bc3a16cf",
+            "UpdateTime": "Updated 2 months ago",
+            "Data": null,
+            "type": "",
+            "Children": null,
+            "Description": ""
+          },
+          "type": "llama2:70b-text-fp16",
+          "Children": []
         }
-      ],
-      "Description": "Llama 2 is a collection of foundation language models ranging from 7B to 70B parameters."
-    },
-    {
-      "Name": "mistral",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "The 7B model released by Mistral AI, updated to version 0.2."
-    },
-    {
-      "Name": "mixtral",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A high-quality Mixture of Experts (MoE) model with open weights by Mistral AI."
-    },
-    {
-      "Name": "llava",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "🌋 LLaVA is a novel end-to-end trained large multimodal model that combines a vision encoder and Vicuna for general-purpose visual and language understanding. Updated to version 1.6."
-    },
-    {
-      "Name": "neural-chat",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A fine-tuned model based on Mistral with good coverage of domain and language."
-    },
-    {
-      "Name": "codellama",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A large language model that can use text prompts to generate and discuss code."
-    },
-    {
-      "Name": "dolphin-mixtral",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "An uncensored, fine-tuned model based on the Mixtral mixture of experts model that excels at coding tasks. Created by Eric Hartford."
-    },
-    {
-      "Name": "mistral-openorca",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Mistral OpenOrca is a 7 billion parameter model, fine-tuned on top of the Mistral 7B model using the OpenOrca dataset."
-    },
-    {
-      "Name": "qwen",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Qwen 1.5 is a series of large language models by Alibaba Cloud spanning from 0.5B to 72B parameters"
-    },
-    {
-      "Name": "llama2-uncensored",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Uncensored Llama 2 model by George Sung and Jarrad Hope."
-    },
-    {
-      "Name": "nous-hermes2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "The powerful family of models by Nous Research that excels at scientific discussion and coding tasks."
-    },
-    {
-      "Name": "phi",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Phi-2: a 2.7B language model by Microsoft Research that demonstrates outstanding reasoning and language understanding capabilities."
-    },
-    {
-      "Name": "deepseek-coder",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "DeepSeek Coder is a capable coding model trained on two trillion code and natural language tokens."
-    },
-    {
-      "Name": "orca-mini",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A general-purpose model ranging from 3 billion parameters to 70 billion, suitable for entry-level hardware."
-    },
-    {
-      "Name": "dolphin-mistral",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "The uncensored Dolphin model based on Mistral that excels at coding tasks. Updated to version 2.6."
-    },
-    {
-      "Name": "wizard-vicuna-uncensored",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Wizard Vicuna Uncensored is a 7B, 13B, and 30B parameter model based on Llama 2 uncensored by Eric Hartford."
-    },
-    {
-      "Name": "vicuna",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "General use chat model based on Llama and Llama 2 with 2K to 16K context sizes."
-    },
-    {
-      "Name": "zephyr",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Zephyr beta is a fine-tuned 7B version of mistral that was trained on on a mix of publicly available, synthetic datasets."
-    },
-    {
-      "Name": "openhermes",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "OpenHermes 2.5 is a 7B model fine-tuned by Teknium on Mistral with fully open datasets."
-    },
-    {
-      "Name": "llama2-chinese",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Llama 2 based model fine tuned to improve Chinese dialogue ability."
-    },
-    {
-      "Name": "tinyllama",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "The TinyLlama project is an open endeavor to train a compact 1.1B Llama model on 3 trillion tokens."
-    },
-    {
-      "Name": "wizardcoder",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "State-of-the-art code generation model"
-    },
-    {
-      "Name": "openchat",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A family of open-source models trained on a wide variety of data, surpassing ChatGPT on various benchmarks. Updated to version 3.5-0106."
-    },
-    {
-      "Name": "phind-codellama",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Code generation model based on Code Llama."
-    },
-    {
-      "Name": "tinydolphin",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "An experimental 1.1B parameter model trained on the new Dolphin 2.8 dataset by Eric Hartford and based on TinyLlama."
-    },
-    {
-      "Name": "orca2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Orca 2 is built by Microsoft research, and are a fine-tuned version of Meta's Llama 2 models.  The model is designed to excel particularly in reasoning."
-    },
-    {
-      "Name": "falcon",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A large language model built by the Technology Innovation Institute (TII) for use in summarization, text generation, and chat bots."
-    },
-    {
-      "Name": "starcoder",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "StarCoder is a code generation model trained on 80+ programming languages."
-    },
-    {
-      "Name": "yi",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A high-performing, bilingual language model."
-    },
-    {
-      "Name": "wizard-math",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Model focused on math and logic problems"
-    },
-    {
-      "Name": "dolphin-phi",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "2.7B uncensored Dolphin model by Eric Hartford, based on the Phi language model by Microsoft Research."
-    },
-    {
-      "Name": "nous-hermes",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "General use models based on Llama and Llama 2 from Nous Research."
-    },
-    {
-      "Name": "nomic-embed-text",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A high-performing open embedding model with a large token context window."
-    },
-    {
-      "Name": "starling-lm",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Starling is a large language model trained by reinforcement learning from AI feedback focused on improving chatbot helpfulness."
-    },
-    {
-      "Name": "starcoder2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "StarCoder2 is the next generation of transparently trained open code LLMs that comes in three sizes: 3B, 7B and 15B parameters. "
-    },
-    {
-      "Name": "stable-code",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Stable Code 3B is a model offering accurate and responsive code completion at a level on par with models such as CodeLLaMA 7B that are 2.5x larger."
-    },
-    {
-      "Name": "medllama2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Fine-tuned Llama 2 model to answer medical questions based on an open source medical dataset. "
-    },
-    {
-      "Name": "codeup",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Great code generation model based on Llama2."
-    },
-    {
-      "Name": "bakllava",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "BakLLaVA is a multimodal model consisting of the Mistral 7B base model augmented with the LLaVA  architecture."
-    },
-    {
-      "Name": "wizardlm-uncensored",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Uncensored version of Wizard LM model "
-    },
-    {
-      "Name": "solar",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A compact, yet powerful 10.7B large language model designed for single-turn conversation."
-    },
-    {
-      "Name": "everythinglm",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Uncensored Llama2 based model with support for a 16K context window."
-    },
-    {
-      "Name": "sqlcoder",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "SQLCoder is a code completion model fined-tuned on StarCoder for SQL generation tasks"
-    },
-    {
-      "Name": "stable-beluga",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Llama 2 based model fine tuned on an Orca-style dataset. Originally called Free Willy."
-    },
-    {
-      "Name": "nous-hermes2-mixtral",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "The Nous Hermes 2 model from Nous Research, now trained over Mixtral."
-    },
-    {
-      "Name": "yarn-mistral",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "An extension of Mistral to support context windows of 64K or 128K."
-    },
-    {
-      "Name": "samantha-mistral",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A companion assistant trained in philosophy, psychology, and personal relationships. Based on Mistral."
-    },
-    {
-      "Name": "meditron",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Open-source medical large language model adapted from Llama 2 to the medical domain."
-    },
-    {
-      "Name": "stablelm2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Stable LM 2 1.6B is a state-of-the-art 1.6 billion parameter small language model trained on multilingual data in English, Spanish, German, Italian, French, Portuguese, and Dutch."
-    },
-    {
-      "Name": "stablelm-zephyr",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A lightweight chat model allowing accurate, and responsive output without requiring high-end hardware."
-    },
-    {
-      "Name": "magicoder",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "🎩 Magicoder is a family of 7B parameter models trained on 75K synthetic instruction data using OSS-Instruct, a novel approach to enlightening LLMs with open-source code snippets."
-    },
-    {
-      "Name": "yarn-llama2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "An extension of Llama 2 that supports a context of up to 128k tokens."
-    },
-    {
-      "Name": "wizard-vicuna",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Wizard Vicuna is a 13B parameter model based on Llama 2 trained by MelodysDreamj."
-    },
-    {
-      "Name": "deepseek-llm",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "An advanced language model crafted with 2 trillion bilingual tokens."
-    },
-    {
-      "Name": "llama-pro",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "An expansion of Llama 2 that specializes in integrating both general language understanding and domain-specific knowledge, particularly in programming and mathematics."
-    },
-    {
-      "Name": "mistrallite",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "MistralLite is a fine-tuned model based on Mistral with enhanced capabilities of processing long contexts."
-    },
-    {
-      "Name": "codebooga",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A high-performing code instruct model created by merging two existing code models."
-    },
-    {
-      "Name": "nexusraven",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Nexus Raven is a 13B instruction tuned model for function calling tasks. "
-    },
-    {
-      "Name": "open-orca-platypus2",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Merge of the Open Orca OpenChat model and the Garage-bAInd Platypus 2 model. Designed for chat and code generation."
-    },
-    {
-      "Name": "goliath",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A language model created by combining two fine-tuned Llama 2 70B models into one."
-    },
-    {
-      "Name": "notux",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A top-performing mixture of experts model, fine-tuned with high-quality data."
-    },
-    {
-      "Name": "dolphincoder",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "An uncensored variant of the Dolphin model family that excels at coding, based on StarCoder2."
-    },
-    {
-      "Name": "alfred",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A robust conversational model designed to be used for both chat and instruct use cases."
-    },
-    {
-      "Name": "megadolphin",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "MegaDolphin-2.2-120b is a transformation of Dolphin-2.2-70b created by interleaving the model with itself."
-    },
-    {
-      "Name": "xwinlm",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Conversational model based on Llama 2 that performs competitively on various benchmarks."
-    },
-    {
-      "Name": "wizardlm",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "General use 70 billion parameter model based on Llama 2."
-    },
-    {
-      "Name": "all-minilm",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "Embedding models on very large sentence level datasets."
-    },
-    {
-      "Name": "duckdb-nsql",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "7B parameter text-to-SQL model made by MotherDuck and Numbers Station."
-    },
-    {
-      "Name": "notus",
-      "Size": "",
-      "Hash": "",
-      "UpdateTime": "",
-      "Children": [],
-      "Description": "A 7B chat model fine-tuned with high-quality data and based on Zephyr."
+      ]
+    },
+    {
+      "Data": {
+        "Name": "mistral_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "The 7B model released by Mistral AI, updated to version 0.2."
+      },
+      "type": "mistral_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "mixtral_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A high-quality Mixture of Experts (MoE) model with open weights by Mistral AI."
+      },
+      "type": "mixtral_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "llava_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "🌋 LLaVA is a novel end-to-end trained large multimodal model that combines a vision encoder and Vicuna for general-purpose visual and language understanding. Updated to version 1.6."
+      },
+      "type": "llava_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "neural-chat_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A fine-tuned model based on Mistral with good coverage of domain and language."
+      },
+      "type": "neural-chat_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "codellama_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A large language model that can use text prompts to generate and discuss code."
+      },
+      "type": "codellama_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "dolphin-mixtral_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "An uncensored, fine-tuned model based on the Mixtral mixture of experts model that excels at coding tasks. Created by Eric Hartford."
+      },
+      "type": "dolphin-mixtral_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "mistral-openorca_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Mistral OpenOrca is a 7 billion parameter model, fine-tuned on top of the Mistral 7B model using the OpenOrca dataset."
+      },
+      "type": "mistral-openorca_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "qwen_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Qwen 1.5 is a series of large language models by Alibaba Cloud spanning from 0.5B to 72B parameters"
+      },
+      "type": "qwen_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "llama2-uncensored_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Uncensored Llama 2 model by George Sung and Jarrad Hope."
+      },
+      "type": "llama2-uncensored_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "nous-hermes2_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "The powerful family of models by Nous Research that excels at scientific discussion and coding tasks."
+      },
+      "type": "nous-hermes2_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "phi_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Phi-2: a 2.7B language model by Microsoft Research that demonstrates outstanding reasoning and language understanding capabilities."
+      },
+      "type": "phi_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "deepseek-coder_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "DeepSeek Coder is a capable coding model trained on two trillion code and natural language tokens."
+      },
+      "type": "deepseek-coder_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "orca-mini_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A general-purpose model ranging from 3 billion parameters to 70 billion, suitable for entry-level hardware."
+      },
+      "type": "orca-mini_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "dolphin-mistral_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "The uncensored Dolphin model based on Mistral that excels at coding tasks. Updated to version 2.6."
+      },
+      "type": "dolphin-mistral_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "wizard-vicuna-uncensored_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Wizard Vicuna Uncensored is a 7B, 13B, and 30B parameter model based on Llama 2 uncensored by Eric Hartford."
+      },
+      "type": "wizard-vicuna-uncensored_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "vicuna_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "General use chat model based on Llama and Llama 2 with 2K to 16K context sizes."
+      },
+      "type": "vicuna_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "zephyr_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Zephyr beta is a fine-tuned 7B version of mistral that was trained on on a mix of publicly available, synthetic datasets."
+      },
+      "type": "zephyr_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "openhermes_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "OpenHermes 2.5 is a 7B model fine-tuned by Teknium on Mistral with fully open datasets."
+      },
+      "type": "openhermes_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "llama2-chinese_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Llama 2 based model fine tuned to improve Chinese dialogue ability."
+      },
+      "type": "llama2-chinese_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "tinyllama_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "The TinyLlama project is an open endeavor to train a compact 1.1B Llama model on 3 trillion tokens."
+      },
+      "type": "tinyllama_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "wizardcoder_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "State-of-the-art code generation model"
+      },
+      "type": "wizardcoder_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "openchat_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A family of open-source models trained on a wide variety of data, surpassing ChatGPT on various benchmarks. Updated to version 3.5-0106."
+      },
+      "type": "openchat_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "phind-codellama_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Code generation model based on Code Llama."
+      },
+      "type": "phind-codellama_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "tinydolphin_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "An experimental 1.1B parameter model trained on the new Dolphin 2.8 dataset by Eric Hartford and based on TinyLlama."
+      },
+      "type": "tinydolphin_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "orca2_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Orca 2 is built by Microsoft research, and are a fine-tuned version of Meta's Llama 2 models.  The model is designed to excel particularly in reasoning."
+      },
+      "type": "orca2_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "falcon_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A large language model built by the Technology Innovation Institute (TII) for use in summarization, text generation, and chat bots."
+      },
+      "type": "falcon_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "starcoder_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "StarCoder is a code generation model trained on 80+ programming languages."
+      },
+      "type": "starcoder_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "yi_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A high-performing, bilingual language model."
+      },
+      "type": "yi_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "wizard-math_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Model focused on math and logic problems"
+      },
+      "type": "wizard-math_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "dolphin-phi_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "2.7B uncensored Dolphin model by Eric Hartford, based on the Phi language model by Microsoft Research."
+      },
+      "type": "dolphin-phi_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "nous-hermes_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "General use models based on Llama and Llama 2 from Nous Research."
+      },
+      "type": "nous-hermes_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "nomic-embed-text_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A high-performing open embedding model with a large token context window."
+      },
+      "type": "nomic-embed-text_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "starling-lm_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Starling is a large language model trained by reinforcement learning from AI feedback focused on improving chatbot helpfulness."
+      },
+      "type": "starling-lm_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "starcoder2_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "StarCoder2 is the next generation of transparently trained open code LLMs that comes in three sizes: 3B, 7B and 15B parameters. "
+      },
+      "type": "starcoder2_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "stable-code_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Stable Code 3B is a model offering accurate and responsive code completion at a level on par with models such as CodeLLaMA 7B that are 2.5x larger."
+      },
+      "type": "stable-code_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "medllama2_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Fine-tuned Llama 2 model to answer medical questions based on an open source medical dataset. "
+      },
+      "type": "medllama2_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "codeup_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Great code generation model based on Llama2."
+      },
+      "type": "codeup_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "bakllava_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "BakLLaVA is a multimodal model consisting of the Mistral 7B base model augmented with the LLaVA  architecture."
+      },
+      "type": "bakllava_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "wizardlm-uncensored_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Uncensored version of Wizard LM model "
+      },
+      "type": "wizardlm-uncensored_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "solar_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A compact, yet powerful 10.7B large language model designed for single-turn conversation."
+      },
+      "type": "solar_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "everythinglm_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Uncensored Llama2 based model with support for a 16K context window."
+      },
+      "type": "everythinglm_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "sqlcoder_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "SQLCoder is a code completion model fined-tuned on StarCoder for SQL generation tasks"
+      },
+      "type": "sqlcoder_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "stable-beluga_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Llama 2 based model fine tuned on an Orca-style dataset. Originally called Free Willy."
+      },
+      "type": "stable-beluga_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "nous-hermes2-mixtral_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "The Nous Hermes 2 model from Nous Research, now trained over Mixtral."
+      },
+      "type": "nous-hermes2-mixtral_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "yarn-mistral_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "An extension of Mistral to support context windows of 64K or 128K."
+      },
+      "type": "yarn-mistral_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "samantha-mistral_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A companion assistant trained in philosophy, psychology, and personal relationships. Based on Mistral."
+      },
+      "type": "samantha-mistral_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "meditron_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Open-source medical large language model adapted from Llama 2 to the medical domain."
+      },
+      "type": "meditron_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "stablelm2_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Stable LM 2 1.6B is a state-of-the-art 1.6 billion parameter small language model trained on multilingual data in English, Spanish, German, Italian, French, Portuguese, and Dutch."
+      },
+      "type": "stablelm2_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "stablelm-zephyr_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A lightweight chat model allowing accurate, and responsive output without requiring high-end hardware."
+      },
+      "type": "stablelm-zephyr_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "magicoder_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "🎩 Magicoder is a family of 7B parameter models trained on 75K synthetic instruction data using OSS-Instruct, a novel approach to enlightening LLMs with open-source code snippets."
+      },
+      "type": "magicoder_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "yarn-llama2_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "An extension of Llama 2 that supports a context of up to 128k tokens."
+      },
+      "type": "yarn-llama2_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "wizard-vicuna_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Wizard Vicuna is a 13B parameter model based on Llama 2 trained by MelodysDreamj."
+      },
+      "type": "wizard-vicuna_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "deepseek-llm_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "An advanced language model crafted with 2 trillion bilingual tokens."
+      },
+      "type": "deepseek-llm_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "llama-pro_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "An expansion of Llama 2 that specializes in integrating both general language understanding and domain-specific knowledge, particularly in programming and mathematics."
+      },
+      "type": "llama-pro_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "mistrallite_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "MistralLite is a fine-tuned model based on Mistral with enhanced capabilities of processing long contexts."
+      },
+      "type": "mistrallite_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "codebooga_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A high-performing code instruct model created by merging two existing code models."
+      },
+      "type": "codebooga_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "nexusraven_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Nexus Raven is a 13B instruction tuned model for function calling tasks. "
+      },
+      "type": "nexusraven_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "open-orca-platypus2_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Merge of the Open Orca OpenChat model and the Garage-bAInd Platypus 2 model. Designed for chat and code generation."
+      },
+      "type": "open-orca-platypus2_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "goliath_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A language model created by combining two fine-tuned Llama 2 70B models into one."
+      },
+      "type": "goliath_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "notux_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A top-performing mixture of experts model, fine-tuned with high-quality data."
+      },
+      "type": "notux_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "dolphincoder_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "An uncensored variant of the Dolphin model family that excels at coding, based on StarCoder2."
+      },
+      "type": "dolphincoder_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "alfred_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A robust conversational model designed to be used for both chat and instruct use cases."
+      },
+      "type": "alfred_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "megadolphin_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "MegaDolphin-2.2-120b is a transformation of Dolphin-2.2-70b created by interleaving the model with itself."
+      },
+      "type": "megadolphin_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "xwinlm_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Conversational model based on Llama 2 that performs competitively on various benchmarks."
+      },
+      "type": "xwinlm_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "wizardlm_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "General use 70 billion parameter model based on Llama 2."
+      },
+      "type": "wizardlm_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "all-minilm_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "Embedding models on very large sentence level datasets."
+      },
+      "type": "all-minilm_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "duckdb-nsql_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "7B parameter text-to-SQL model made by MotherDuck and Numbers Station."
+      },
+      "type": "duckdb-nsql_container",
+      "Children": []
+    },
+    {
+      "Data": {
+        "Name": "notus_container",
+        "Size": "0.00GB",
+        "Hash": "",
+        "UpdateTime": "",
+        "Data": null,
+        "type": "",
+        "Children": null,
+        "Description": "A 7B chat model fine-tuned with high-quality data and based on Zephyr."
+      },
+      "type": "notus_container",
+      "Children": []
     }
-  ],
-  "Description": ""
+  ]
 }

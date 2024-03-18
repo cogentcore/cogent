@@ -8,32 +8,19 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/ddkwork/golibrary/mylog"
-	"github.com/ddkwork/golibrary/stream"
 
-	"cogentcore.org/cogent/ai/pkg/tree"
+	"github.com/ddkwork/golibrary/mylog"
+	"github.com/ddkwork/golibrary/pkg/tree"
+	"github.com/ddkwork/golibrary/stream"
 )
 
 type Model struct {
-	Name       string
-	Size       string
-	Hash       string
-	UpdateTime string
-
-	//json only,when the treeTableView widget implemented,it will be removed,
-	//and we need implement treeTableView's json marshal and unmarshal method
-	Children []Model //json need only
-
-	Description string
-}
-
-var ModelJson = &Model{
-	Name:        "root",
-	Size:        "",
-	Hash:        "",
-	UpdateTime:  "",
-	Description: "",
-	Children:    make([]Model, 0),
+	Name              string
+	Size              string
+	Hash              string
+	UpdateTime        string
+	tree.Node[*Model] //ContainerBase
+	Description       string
 }
 
 func QueryModelList() {
@@ -46,26 +33,27 @@ func QueryModelList() {
 		mylog.Error(fmt.Sprintf("status code error: %d %s", resp.StatusCode, resp.Status))
 		return
 	}
-	root := queryModelList(resp.Body)
+	queryModelList(resp.Body)
 	root.WalkContainer(func(node *tree.Node[Model]) {
-		children := QueryModelTags(node.Data.Name, node) //node is every container of model node
-		ModelJson.Children = children
+		QueryModelTags(node.Data.Name, node) //node is every container of model node
 	})
-	indent, err := json.MarshalIndent(ModelJson, "", "  ")
+	indent, err := json.MarshalIndent(root, "", "  ")
 	if !mylog.Error(err) {
 		return
 	}
 	stream.WriteTruncate("models.json", indent)
 }
 
-func queryModelList(r io.Reader) (root *tree.Node[Model]) {
-	root = tree.NewNode("root", true, Model{
-		Name:        "root",
-		Description: "",
-		UpdateTime:  "",
-		Hash:        "",
-		Size:        "",
-	})
+var root = tree.NewNode("root", true, Model{
+	Name:        "root",
+	Description: "",
+	UpdateTime:  "",
+	Hash:        "",
+	Size:        "",
+})
+
+func queryModelList(r io.Reader) {
+
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
 		return
@@ -80,13 +68,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 			Hash:        "",
 			UpdateTime:  "",
 			Description: description,
-			Children:    make([]Model, 0),
 		}
-
-		//json only,when the treeTableView widget implemented,it will be removed,
-		//and we need implement treeTableView's json marshal and unmarshal method
-		ModelJson.Children = append(ModelJson.Children, model)
-
 		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
 	})

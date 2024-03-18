@@ -6,15 +6,15 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ddkwork/golibrary/mylog"
-	"github.com/ddkwork/golibrary/stream"
 	"github.com/stretchr/testify/assert"
 
-	"cogentcore.org/cogent/ai/pkg/tree"
+	"github.com/ddkwork/golibrary/mylog"
+	"github.com/ddkwork/golibrary/pkg/tree"
+	"github.com/ddkwork/golibrary/stream"
 )
 
 func Test_queryModelList(t *testing.T) {
-	root := queryModelList(stream.NewReadFile("testdata/library.html"))
+	queryModelList(stream.NewReadFile("testdata/library.html"))
 
 	root.SetHeader([]string{ //todo need calc max column depth and indent left
 		"Name",
@@ -55,17 +55,21 @@ func Test_queryModelList(t *testing.T) {
 	root.WalkContainer(func(node *tree.Node[Model]) {
 		switch node.Data.Name {
 		case "gemma":
-			children := queryModelTags(stream.NewReadFile("testdata/tags_gemma.html"), node)
-			ModelJson.Children[0].Children = children
+			queryModelTags(stream.NewReadFile("testdata/tags_gemma.html"), node)
+			//ModelJson.Children[0].Children = children
 
 		case "llama2":
-			children := queryModelTags(stream.NewReadFile("testdata/Tags_llama2.html"), node)
-			ModelJson.Children[1].Children = children
+			queryModelTags(stream.NewReadFile("testdata/Tags_llama2.html"), node)
+			//ModelJson.Children[1].Children = children
 		}
 	})
 	stream.WriteTruncate("modelsTree.txt", root.Format(root))
 
-	indent, err := json.MarshalIndent(ModelJson, "", "  ")
+	//marshalJSON, err := root.MarshalJSON()
+	//assert.NoError(t, err)
+	//mylog.Json("root.MarshalJSON()", string(marshalJSON))
+
+	indent, err := json.MarshalIndent(root, "", "  ")
 	assert.NoError(t, err)
 	stream.WriteTruncate("models.json", indent)
 }
