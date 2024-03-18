@@ -256,5 +256,5 @@ func (ge *CodeView) CommitNoChecks() {
 			ge.UpdateFiles()
 		})
 	})
-	d.NewDialog(ge).SetModal(false).Run()
+	d.NewDialog(ge).Run() // SetModal(false)
 }

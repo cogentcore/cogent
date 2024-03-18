@@ -400,7 +400,7 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buf, pvals map[string]str
 					}
 				})
 			})
-			d.NewDialog(tv).SetModal(false).Run()
+			d.NewDialog(tv).Run() // SetModal(false).
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
