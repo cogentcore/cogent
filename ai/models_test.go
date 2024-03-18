@@ -36,7 +36,9 @@ func Test_queryModelList(t *testing.T) {
 				unitStr := node.Data.Size[len(node.Data.Size)-2:] //2 is len gb or mb
 				switch unitStr {
 				case "GB":
+					n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64) + "GB"
 				case "MB":
+					n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64) + "MB"
 				default:
 					mylog.Error("unit is not GB or MB")
 					return
@@ -48,7 +50,6 @@ func Test_queryModelList(t *testing.T) {
 				}
 				sum += size
 			})
-			n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64)
 			n.Data.Name = n.Type
 			fmtCommand = "%-25s %s %s %s %s"
 		} else {
