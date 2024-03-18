@@ -33,7 +33,7 @@ func Test_queryModelList(t *testing.T) {
 			//and we will abandon the traditional outdated data statistics model.
 			sum := 0.0
 			n.WalkContainer(func(node *tree.Node[Model]) {
-				sum += ParseFloatGB(node.Data.Size) //i finally understand the method what is CellDataForSort
+				sum += ParseUnitStr2GB(node.Data.Size) //i finally understand the method what is CellDataForSort
 			})
 			n.Data.Size = strconv.FormatFloat(sum, 'f', 2, 64) + "GB"
 			n.Data.Name = n.Type
@@ -68,7 +68,7 @@ func Test_queryModelList(t *testing.T) {
 	stream.WriteTruncate("models.json", indent)
 }
 
-func ParseFloatGB(data string) (value float64) {
+func ParseUnitStr2GB(data string) (value float64) {
 	if data == "" {
 		return
 	}
@@ -90,7 +90,7 @@ func ParseFloatGB(data string) (value float64) {
 }
 
 func TestParseFloatGB(t *testing.T) {
-	assert.Equal(t, 1.5, ParseFloatGB("1.5GB"))
-	assert.Equal(t, 1.5/1024, ParseFloatGB("1.5MB"))
-	assert.Equal(t, 180.0, ParseFloatGB("180GB"))
+	assert.Equal(t, 1.5, ParseUnitStr2GB("1.5GB"))
+	assert.Equal(t, 1.5/1024, ParseUnitStr2GB("1.5MB"))
+	assert.Equal(t, 180.0, ParseUnitStr2GB("180GB"))
 }
