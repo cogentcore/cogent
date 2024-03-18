@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/xe"
 	"github.com/ddkwork/golibrary/pkg/tree"
@@ -236,6 +237,7 @@ func main() {
 				answer.DeleteChildren()
 				grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, allTokens))
 				answer.Update()
+				history.ScrollDimToContentEnd(mat32.Y)
 				answer.AsyncUnlock()
 			}
 			grr.Log(scanner.Err())
