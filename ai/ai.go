@@ -140,6 +140,17 @@ func main() {
 		//code translate
 		//code comment translate
 		//network access for spider, alse we need a not headless browser and api
+
+		//Help me clean up the junk files on the C drive. The AI should let the user confirm whether to delete the junk files found or not
+		//Help me remove all code comments in the xxx directory and remove blank lines
+		//Help me find the download address of xxoo music or video
+		//Tell me the code snippets that I use a lot
+		//What is the lunar and new calendar today
+		//XX days to oo days apart by a few days
+		//Find out the cause of the memory leak and thread blocking caused by this code and suggest a solution to fix it
+		//How to make the buttons in this GUI library have a CSS 3D button-like animation effect, please improve the button source code in the xx position
+		//...
+
 		//maybe these should let model do not us
 
 		promptString := textField.Text()
