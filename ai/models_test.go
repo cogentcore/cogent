@@ -25,11 +25,23 @@ func Test_queryModelList(t *testing.T) {
 	root.SetFormatRowCallback(func(n *tree.Node[Model]) string { //table row need all field set left align,and set too long filed as cut+...
 		fmtCommand := "%-25s %-10.1f %-10s %-10s %-10s"
 		if n.Container() {
-			sum := 0.0
+			//sum := 0.0
 			n.WalkContainer(func(node *tree.Node[Model]) {
-				sum += node.Data.Size //so this is not right in all model,need get unit is gb or mb
+				/*
+					//mylog.Trace("modelInfoSplit[1]", modelInfoSplit[1])
+					//sizeValue := strings.TrimSuffix(modelInfoSplit[1], "GB") //todo bug, not all size is GB,it may be MB,need add unit to colum
+					LenSizeStr := len(modelInfoSplit[1])
+					sizeValue := modelInfoSplit[1][:LenSizeStr-2] //2 is len gb or mb
+					//mylog.Trace("sizeValue", sizeValue)
+					size, err := strconv.ParseFloat(sizeValue, 64)
+					if !mylog.Error(err) {
+						return
+					}
+				*/
+
+				//sum += node.Data.Size //so this is not right in all model,need get unit is gb or mb
 			})
-			n.Data.Size = sum
+			//n.Data.Size = sum
 			n.Data.Name = n.Type
 			fmtCommand = "%-25s %.1f %s %s %s"
 		} else {

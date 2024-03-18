@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -17,7 +16,7 @@ import (
 
 type Model struct {
 	Name       string
-	Size       float64
+	Size       string
 	Hash       string
 	UpdateTime string
 
@@ -30,7 +29,7 @@ type Model struct {
 
 var ModelJson = &Model{
 	Name:        "root",
-	Size:        0,
+	Size:        "",
 	Hash:        "",
 	UpdateTime:  "",
 	Description: "",
@@ -65,7 +64,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 		Description: "",
 		UpdateTime:  "",
 		Hash:        "",
-		Size:        0,
+		Size:        "",
 	})
 	doc, err := goquery.NewDocumentFromReader(r)
 	if !mylog.Error(err) {
@@ -77,7 +76,7 @@ func queryModelList(r io.Reader) (root *tree.Node[Model]) {
 		description := s.Find("p.mb-4").First().Text()
 		model := Model{
 			Name:        name,
-			Size:        0,
+			Size:        "",
 			Hash:        "",
 			UpdateTime:  "",
 			Description: description,
@@ -144,22 +143,13 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) (children []Model) {
 		modelInfoSplit := strings.Split(lines[1], " • ")
 
 		if strings.Contains(modelWithTag, parent.Data.Name) {
-			//mylog.Trace("modelInfoSplit[1]", modelInfoSplit[1])
-			//sizeValue := strings.TrimSuffix(modelInfoSplit[1], "GB") //todo bug, not all size is GB,it may be MB,need add unit to colum
-			LenSizeStr := len(modelInfoSplit[1])
-			sizeValue := modelInfoSplit[1][:LenSizeStr-2] //2 is len gb or mb
-			//mylog.Trace("sizeValue", sizeValue)
-			size, err := strconv.ParseFloat(sizeValue, 64)
-			if !mylog.Error(err) {
-				return
-			}
 			model := Model{
 				//Name: parent.Data.Name + ":" + tag,
 				Name:        modelWithTag,
 				Description: parent.Data.Description,
 				UpdateTime:  strings.TrimSpace(lines[2]),
 				Hash:        strings.TrimSpace(modelInfoSplit[0]),
-				Size:        size,
+				Size:        modelInfoSplit[1],
 			}
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
 			//model.Description = ""//todo why not done? we only need show description in container node
