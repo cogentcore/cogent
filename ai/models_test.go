@@ -16,7 +16,7 @@ func Test_queryModelList(t *testing.T) {
 
 	root.SetHeader([]string{ //todo need calc max column depth and indent left
 		"Name",
-		"Size(GB)", //this is not well,it maybe is mb, we need add a column to show unit
+		"Size", //this is not well,it maybe is mb, we need add a column to show unit
 		"Hash",
 		"UpdateTime",
 		"Description",
