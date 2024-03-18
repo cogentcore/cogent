@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"testing"
 
+	"cogentcore.org/core/grr"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/pkg/tree"
 	"github.com/ddkwork/golibrary/stream"
 )
@@ -74,7 +75,7 @@ func ParseUnitStr2GB(data string) (value float64) {
 	}
 	v := data[:len(data)-2] //2 is len gb or mb
 	size, err := strconv.ParseFloat(v, 64)
-	if !mylog.Error(err) {
+	if grr.Log(err) != nil {
 		return
 	}
 	unitStr := data[len(data)-2:]
@@ -84,7 +85,7 @@ func ParseUnitStr2GB(data string) (value float64) {
 	case "MB":
 		return size / 1024
 	default:
-		mylog.Error("unit is not GB or MB")
+		slog.Error("unit is not GB or MB")
 		return
 	}
 }

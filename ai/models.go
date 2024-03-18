@@ -9,7 +9,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 
-	"github.com/ddkwork/golibrary/mylog"
 	"github.com/ddkwork/golibrary/pkg/tree"
 	"github.com/ddkwork/golibrary/stream"
 )
@@ -23,31 +22,41 @@ type Model struct {
 	Description       string
 }
 
-func QueryModelList() {
+func QueryModelList() error {
 	resp, err := http.Get("https://ollama.com/library")
-	if !mylog.Error(err) {
-		return
+	if err != nil {
+		return err
 	}
-	defer func() { mylog.Error(resp.Body.Close()) }()
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		mylog.Error(fmt.Sprintf("status code error: %d %s", resp.StatusCode, resp.Status))
-		return
+		return fmt.Errorf("error status code: %d (%s)", resp.StatusCode, resp.Status)
 	}
-	queryModelList(resp.Body)
+	err = queryModelList(resp.Body)
+	if err != nil {
+		return err
+	}
 	root.WalkContainer(func(node *tree.Node[Model]) {
-		QueryModelTags(node.Data.Name, node) //node is every container of model node
+		//node is every container of model node
+		e := QueryModelTags(node.Data.Name, node)
+		if e != nil {
+			err = e
+		}
 	})
+	if err != nil {
+		return err
+	}
 	indent, err := json.MarshalIndent(root, "", "  ")
-	if !mylog.Error(err) {
-		return
+	if err != nil {
+		return err
 	}
 	stream.WriteTruncate(jsonName, indent)
+	return nil
 }
 
-func queryModelList(r io.Reader) {
+func queryModelList(r io.Reader) error {
 	doc, err := goquery.NewDocumentFromReader(r)
-	if !mylog.Error(err) {
-		return
+	if err != nil {
+		return err
 	}
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		name := s.Find("h2.mb-3").Text()
@@ -63,25 +72,23 @@ func queryModelList(r io.Reader) {
 		parent := tree.NewNode(name, true, model)
 		root.AddChild(parent)
 	})
-	return
+	return nil
 }
 
-func QueryModelTags(name string, parent *tree.Node[Model]) {
+func QueryModelTags(name string, parent *tree.Node[Model]) error {
 	url := "https://ollama.com/library/" + name + "/tags" //todo bug skip root? why every model has run twice?
-	mylog.Warning("update model tags", url)
-	defer func() { mylog.Success("update model tags done", url) }()
 	resp, err := http.Get(url)
-	if !mylog.Error(err) {
-		return
+	if err != nil {
+		return err
 	}
-	defer func() { mylog.Error(resp.Body.Close()) }()
-	queryModelTags(resp.Body, parent)
+	defer resp.Body.Close()
+	return queryModelTags(resp.Body, parent)
 }
 
-func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
+func queryModelTags(r io.Reader, parent *tree.Node[Model]) error {
 	doc, err := goquery.NewDocumentFromReader(r)
-	if !mylog.Error(err) {
-		return
+	if err != nil {
+		return err
 	}
 	doc.Find("a.group").Each(func(i int, s *goquery.Selection) {
 		//tag := s.Find(".break-all").Text() //not need
@@ -99,7 +106,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 
 			}
 			if modelWithTag == "" {
-				mylog.Error("not find model name in tags")
+				err = fmt.Errorf("did not find model name in tags")
 				return
 			}
 		}
@@ -109,7 +116,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 		modelInfo := s.Find("span").Text()
 		lines, ok := stream.New(modelInfo).ToLines()
 		if !ok {
-			mylog.Error("modelInfo ToLines not ok")
+			err = fmt.Errorf("modelInfo.ToLines not ok")
 			return
 		}
 		modelInfoSplit := strings.Split(lines[1], " • ")
@@ -126,7 +133,7 @@ func queryModelTags(r io.Reader, parent *tree.Node[Model]) {
 			parent.AddChild(tree.NewNode(modelWithTag, false, model))
 		}
 	})
-	return
+	return err
 }
 
 func unescape(s string) string {

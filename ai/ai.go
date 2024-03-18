@@ -22,8 +22,6 @@ import (
 	"github.com/ddkwork/golibrary/pkg/tree"
 
 	"github.com/aandrew-me/tgpt/v2/structs"
-
-	"github.com/ddkwork/golibrary/mylog"
 )
 
 //go:embed models.json
@@ -67,9 +65,7 @@ func main() {
 		s.Direction = styles.Column
 	})
 	gi.NewButton(newFrame).SetText("Update module list").OnClick(func(e events.Event) {
-		mylog.Trace("start Update module list")
-		QueryModelList()
-		mylog.Success("Update module list finished")
+		gi.ErrorSnackbar(b, QueryModelList())
 	})
 
 	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
@@ -227,7 +223,11 @@ func main() {
 			allTokens := "**Cogent AI:** "
 
 			for scanner.Scan() {
-				token := HandleToken(scanner.Text())
+				token, err := HandleToken(scanner.Text())
+				if err != nil {
+					gi.ErrorSnackbar(b, err)
+					continue
+				}
 				if token == "" {
 					continue
 				}

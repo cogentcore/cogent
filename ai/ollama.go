@@ -76,12 +76,12 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	return client.Do(req)
 }
 
-func HandleToken(respBody string) (token string) {
+func HandleToken(respBody string) (string, error) {
 	//https://521github.com/ollama/ollama/blob/main/openai/op#262
 	//_, err = w.ResponseWriter.Write([]byte(fmt.Sprintf("data: %s\n\n", d)))
 	//_, err = w.ResponseWriter.Write([]byte("data: [DONE]\n\n"))
 	if strings.Contains(respBody, "data: [DONE]") {
-		return
+		return "", nil
 	}
 
 	obj := "{}"
@@ -95,15 +95,15 @@ func HandleToken(respBody string) (token string) {
 	}
 
 	var d Response
-	if grr.Log(json.Unmarshal([]byte(obj), &d)) != nil {
-		return
+	if err := json.Unmarshal([]byte(obj), &d); err != nil {
+		return "", err
 	}
 
 	if d.Choices != nil {
-		token = d.Choices[0].Delta.Content
-		return token
+		token := d.Choices[0].Delta.Content
+		return token, nil
 	}
-	return
+	return "", nil
 }
 
 func NewClient() (tls_client.HttpClient, error) {
@@ -129,7 +129,7 @@ func NewClient() (tls_client.HttpClient, error) {
 	} else {
 		if ok := grr.Log1(dirs.FileExists("proxy.txt")); ok {
 			proxyConfig, err := os.ReadFile("proxy.txt")
-			if grr.Log(err) != nil {
+			if err != nil {
 				return nil, err
 			}
 			proxyAddress := strings.TrimSpace(string(proxyConfig))
