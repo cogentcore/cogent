@@ -151,7 +151,7 @@ func (fv *FindView) SaveFindString(find string) {
 	gi.StringsInsertFirstUnique(&fv.Params().FindHist, find, gi.SystemSettings.SavedPathsMax)
 	ftc := fv.FindText()
 	if ftc != nil {
-		ftc.SetStrings(fv.Params().FindHist).SetCurrentIndex(0)
+		ftc.SetStrings(fv.Params().FindHist...).SetCurrentIndex(0)
 	}
 }
 
@@ -161,7 +161,7 @@ func (fv *FindView) SaveReplString(repl string) {
 	gi.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, gi.SystemSettings.SavedPathsMax)
 	rtc := fv.ReplText()
 	if rtc != nil {
-		rtc.SetStrings(fv.Params().ReplHist).SetCurrentIndex(0)
+		rtc.SetStrings(fv.Params().ReplHist...).SetCurrentIndex(0)
 	}
 }
 
