@@ -7,12 +7,16 @@ package code
 //go:generate core generate
 
 import (
+	"embed"
+	"io/fs"
 	"reflect"
 	"time"
 
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
+	"cogentcore.org/core/grr"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/pi/complete"
@@ -170,4 +174,11 @@ func ParentCode(kn ki.Ki) (Code, bool) {
 		return true
 	})
 	return ge, ge != nil
+}
+
+//go:embed icons/*.svg
+var Icons embed.FS
+
+func init() {
+	icons.AddFS(grr.Log1(fs.Sub(Icons, "icons")))
 }
