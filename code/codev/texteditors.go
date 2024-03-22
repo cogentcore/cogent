@@ -134,7 +134,6 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 		ge.SetActiveFileInfo(av.Buf)
 	}
 	ge.SetStatus("")
-	ge.NeedsLayout()
 	return idx
 }
 
@@ -154,9 +153,6 @@ func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
 	}
 	ge.SetStatus("")
 	av.SetFocusEvent()
-	av.SetCursorTarget(av.CursorPos)
-	av.NeedsLayout()
-	ge.NeedsLayout()
 	return av
 }
 
@@ -189,7 +185,6 @@ func (ge *CodeView) SwapTextEditors() bool {
 	tva.SetBuf(bufb)
 	tvb.SetBuf(bufa)
 	ge.SetStatus("swapped buffers")
-	ge.NeedsLayout()
 	return true
 }
 
@@ -203,7 +198,7 @@ func (ge *CodeView) OpenFileAtRegion(filename gi.Filename, tr textbuf.Region) (t
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocusEvent()
-	tv.NeedsRender()
+	tv.NeedsLayout()
 	return tv, true
 }
 

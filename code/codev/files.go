@@ -198,7 +198,6 @@ func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Nod
 		}
 		ge.SetActiveTextEditorIdx(vidx) // this calls FileModCheck
 	}
-	ge.NeedsLayout()
 }
 
 // NextViewFileNode sets the next text view to view file in given node (opens
@@ -315,7 +314,6 @@ func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) 
 	tv := ge.ActiveTextEditor()
 	idx := ge.ActiveTextEditorIdx
 	ge.ViewFileNode(tv, idx, fn)
-	ge.NeedsLayout()
 	return tv, idx
 }
 

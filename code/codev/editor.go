@@ -70,7 +70,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 		return ld
 	}
 
-	if gi.RecycleDialog(ld) {
+	if gi.RecycleDialog(&ld) {
 		return
 	}
 
@@ -96,7 +96,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	tb.Hi.Style = gi.AppearanceSettings.HiStyle
 	tb.Opts.LineNos = ge.Settings.Editor.LineNos
 
-	d := gi.NewBody().AddTitle(title).AddText(prmpt)
+	d := gi.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
 	tv := texteditor.NewEditor(d).SetBuf(tb)
 	tv.SetReadOnly(true)
 

@@ -139,6 +139,7 @@ func (fv *FindView) ShowResults(res []FileSearchResults) {
 
 	fv.Update()
 	ftv.SetCursorShow(lex.Pos{Ln: 0})
+	ftv.NeedsLayout()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
