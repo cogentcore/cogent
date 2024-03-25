@@ -85,7 +85,7 @@ func (a *App) Config() {
 	// st := StructForFlags(a.Cmd.Flags)
 	// giv.NewStructView(a).SetStruct(st)
 
-	sp := gi.NewSplits(a, "splits")
+	sp := gi.NewSplits(a, "splits").SetSplits(0.8, 0.2)
 	sp.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
@@ -131,8 +131,6 @@ func (a *App) Config() {
 		}
 		_ = envs
 	})
-
-	sp.SetSplits(0.8, 0.2)
 }
 
 // RunCmd runs the given command in the context of the given commands frame

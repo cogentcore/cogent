@@ -357,7 +357,7 @@ func (vv *VectorView) Config() {
 	gi.NewToolbar(hb, "tools").Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	sp := gi.NewSplits(hb, "splits")
+	sp := gi.NewSplits(hb, "splits").SetSplits(0.15, 0.60, 0.25)
 
 	tly := gi.NewLayout(sp, "layer-tree").Style(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -419,8 +419,6 @@ func (vv *VectorView) Config() {
 	// 	// 		stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
 	// 	// 		stv.SetStruct(tvn.SrcNode)
 	// })
-
-	sp.SetSplits(0.15, 0.60, 0.25)
 
 	vv.ConfigStatusBar()
 	vv.ConfigModalToolbar()
@@ -803,7 +801,7 @@ func (vv *VectorView) SplitsSetView(split SplitName) {
 	sv := vv.Splits()
 	sp, _, ok := AvailSplits.SplitByName(split)
 	if ok {
-		sv.SetSplitsAction(sp.Splits...)
+		sv.SetSplits(sp.Splits...).NeedsLayout()
 		Prefs.SplitName = split
 	}
 }

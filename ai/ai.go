@@ -52,7 +52,7 @@ func main() {
 		gi.NewButton(tb).SetText("About").SetIcon(icons.Info) // todo add a new windows show some info
 	})
 
-	splits := gi.NewSplits(b)
+	splits := gi.NewSplits(b).SetSplits(0.2, 0.8)
 
 	leftFrame := gi.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
@@ -79,7 +79,6 @@ func main() {
 
 	rightFrame := gi.NewFrame(splits)
 	rightFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
-	splits.SetSplits(.2, .8)
 
 	header := gi.NewFrame(rightFrame)
 	header.Style(func(s *styles.Style) {

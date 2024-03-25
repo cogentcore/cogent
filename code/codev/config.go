@@ -107,7 +107,7 @@ func (ge *CodeView) SelectedFileNode() *filetree.Node {
 // ConfigSplits configures the Splits.
 func (ge *CodeView) ConfigSplits() {
 	// note: covered by global update
-	split := ge.Splits()
+	split := ge.Splits().SetSplits(ge.Settings.Splits...)
 	ftfr := gi.NewFrame(split, "filetree")
 	ftfr.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -172,8 +172,6 @@ func (ge *CodeView) ConfigSplits() {
 	// 	ge.ActiveTextEditor().ClearHighlights()
 	// }
 	// })
-
-	split.SetSplits(ge.Settings.Splits...)
 }
 
 // ConfigStatusBar configures statusbar with label

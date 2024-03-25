@@ -53,8 +53,7 @@ func (ge *CodeView) ApplyPrefs() {
 				ge.ConfigTextBuf(ond.Buf)
 			}
 		}
-		split := ge.Splits()
-		split.SetSplits(ge.Settings.Splits...)
+		ge.Splits().SetSplits(ge.Settings.Splits...)
 	}
 	gi.UpdateAll() // drives full rebuild
 }
@@ -87,7 +86,7 @@ func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 	sv := ge.Splits()
 	sp, _, ok := code.AvailSplits.SplitByName(split)
 	if ok {
-		sv.SetSplitsAction(sp.Splits...)
+		sv.SetSplits(sp.Splits...).NeedsLayout()
 		ge.Settings.SplitName = split
 		if !ge.PanelIsOpen(ge.ActiveTextEditorIdx + TextEditor1Idx) {
 			ge.SetActiveTextEditorIdx((ge.ActiveTextEditorIdx + 1) % 2)

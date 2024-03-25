@@ -1290,7 +1290,7 @@ func (vv *VarView) ConfigSplits() {
 	if vv.Var == nil {
 		return
 	}
-	split := vv.Splits()
+	split := vv.Splits().SetSplits(0.3, 0.7)
 
 	if len(split.Kids) == 0 {
 		tvfr := gi.NewFrame(split, "tvfr")
@@ -1306,7 +1306,6 @@ func (vv *VarView) ConfigSplits() {
 				sv.SetStruct(sn)
 			}
 		})
-		split.SetSplits(.3, .7)
 	}
 	tv := vv.TreeView()
 	tv.SyncTree(vv.Var)
