@@ -148,7 +148,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 		sv.Syms = &SymNode{}
 		sv.Syms.InitName(sv.Syms, "syms")
 		tv = NewSymTreeView(sfr)
-		tv.SyncRootNode(sv.Syms)
+		tv.SyncTree(sv.Syms)
 		tv.OnSelect(func(e events.Event) {
 			if len(tv.SelectedNodes) == 0 {
 				return

@@ -1274,7 +1274,7 @@ func (vv *VarView) ConfigToolbar(tb *gi.Toolbar) {
 			if vv.SelVar != nil {
 				vv.SelVar.FollowPtr()
 				tv := vv.TreeView()
-				tv.SyncRootNode(vv.Var)
+				tv.SyncTree(vv.Var)
 			}
 		})
 }
@@ -1309,7 +1309,7 @@ func (vv *VarView) ConfigSplits() {
 		split.SetSplits(.3, .7)
 	}
 	tv := vv.TreeView()
-	tv.SyncRootNode(vv.Var)
+	tv.SyncTree(vv.Var)
 	sv := vv.StructView()
 	sv.SetStruct(vv.Var)
 }
