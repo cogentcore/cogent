@@ -151,7 +151,7 @@ func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 	cidxs := make([]int, 0)
 	var pcp mat32.Vec2
 	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIdx int, cp mat32.Vec2, ctrl []mat32.Vec2) bool {
-		cw := pxf.MulVec2AsPt(cp).Add(svoff)
+		cw := pxf.MulVec2AsPoint(cp).Add(svoff)
 
 		if ptIdx == 0 {
 			lstCmdIdx = idx - 1
@@ -248,7 +248,7 @@ func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int
 		wbmin := mat32.V2FromPoint(path.BBox.Min)
 		pt := wbmin.Sub(svoff)
 		xf, lpt := path.DeltaTransform(dv, mat32.V2(1, 1), 0, pt, true) // include self
-		npt := xf.MulVec2AsPtCtr(pn.Cp, lpt)                            // transform point to new abs coords
+		npt := xf.MulVec2AsPointCenter(pn.Cp, lpt)                      // transform point to new abs coords
 		sv.PathNodeSetPoint(path, pn, npt)
 		if i == pidx {
 			dv = dv.MulScalar(-1)

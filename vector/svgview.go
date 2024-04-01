@@ -692,7 +692,7 @@ func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := mat32.V2FromPoint(start).Sub(svoff)
-	nr.SetNodePos(xfi.MulVec2AsPt(pos))
+	nr.SetNodePos(xfi.MulVec2AsPoint(pos))
 	sz := dv.Abs().Max(mat32.V2Scalar(minsz / 2))
 	nr.SetNodeSize(xfi.MulVec2AsVec(sz))
 	es.SelectAction(nr, events.SelectOne, end)
@@ -718,7 +718,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	pos := mat32.V2FromPoint(start).Sub(svoff)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
-	pos = xfi.MulVec2AsPt(pos)
+	pos = xfi.MulVec2AsPoint(pos)
 	sv.VectorView.SetTextPropsNode(nr, es.Text.TextProps())
 	// nr.Pos = pos
 	// tspan.Pos = pos
@@ -747,7 +747,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := mat32.V2FromPoint(start).Sub(svoff)
-	pos = xfi.MulVec2AsPt(pos)
+	pos = xfi.MulVec2AsPoint(pos)
 	sz := dv
 	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
 	sz = xfi.MulVec2AsVec(sz)

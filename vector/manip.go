@@ -72,7 +72,7 @@ func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
 	incr := grid * sv.Scale // our zoom factor
 
 	org := mat32.Vec2{}
-	org = sv.Root().Paint.Transform.MulVec2AsPt(org)
+	org = sv.Root().Paint.Transform.MulVec2AsPoint(org)
 
 	// fmt.Printf("org: %v\n", org)
 
