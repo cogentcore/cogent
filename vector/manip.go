@@ -59,7 +59,7 @@ func (sv *SVGView) ManipUpdate() {
 	if sv.SSVG().IsRendering {
 		return
 	}
-	sv.Render()
+	sv.RenderWidget()
 }
 
 // VectorDots is the current grid spacing and offsets in dots
