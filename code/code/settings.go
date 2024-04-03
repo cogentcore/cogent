@@ -104,13 +104,13 @@ func (se *SettingsData) Save() error {
 		return err
 	}
 	if se.SaveKeyMaps {
-		AvailKeyMaps.SavePrefs()
+		AvailableKeyMaps.SaveSettings()
 	}
 	if se.SaveLangOpts {
-		AvailLangs.SavePrefs()
+		AvailableLangs.SaveSettings()
 	}
 	if se.SaveCmds {
-		CustomCmds.SavePrefs()
+		CustomCommands.SavePrefs()
 	}
 	AvailSplits.SavePrefs()
 	AvailRegisters.SavePrefs()
@@ -123,13 +123,13 @@ func (se *SettingsData) Open() error {
 		return err
 	}
 	if se.SaveKeyMaps {
-		AvailKeyMaps.OpenSettings()
+		AvailableKeyMaps.OpenSettings()
 	}
 	if se.SaveLangOpts {
-		AvailLangs.OpenSettings()
+		AvailableLangs.OpenSettings()
 	}
 	if se.SaveCmds {
-		CustomCmds.OpenSettings()
+		CustomCommands.OpenSettings()
 	}
 	AvailSplits.OpenSettings()
 	AvailRegisters.OpenSettings()
@@ -141,8 +141,8 @@ func (se *SettingsData) Apply() { //gti:add
 	if se.KeyMap != "" {
 		SetActiveKeyMapName(se.KeyMap) // fills in missing pieces
 	}
-	MergeAvailCmds()
-	AvailLangs.Validate()
+	MergeAvailableCmds()
+	AvailableLangs.Validate()
 	se.ApplyEnvVars()
 }
 
@@ -175,20 +175,20 @@ func (se *SettingsData) ConfigToolbar(tb *gi.Toolbar) {
 // with settings automatically.
 func (se *SettingsData) EditKeyMaps() { //gti:add
 	se.SaveKeyMaps = true
-	KeyMapsView(&AvailKeyMaps)
+	KeyMapsView(&AvailableKeyMaps)
 }
 
 // EditLangOpts opens the LangsView editor to customize options for each type of
 // language / data / file type.
 func (se *SettingsData) EditLangOpts() { //gti:add
 	se.SaveLangOpts = true
-	LangsView(&AvailLangs)
+	LangsView(&AvailableLangs)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.
 func (se *SettingsData) EditCmds() { //gti:add
 	se.SaveCmds = true
-	if len(CustomCmds) == 0 {
+	if len(CustomCommands) == 0 {
 		exc := &Command{Name: "Example Cmd",
 			Desc: "list current dir",
 			Lang: fi.Any,
@@ -196,9 +196,9 @@ func (se *SettingsData) EditCmds() { //gti:add
 			Dir:  "{FileDirPath}",
 			Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}
 
-		CustomCmds = append(CustomCmds, exc)
+		CustomCommands = append(CustomCommands, exc)
 	}
-	CmdsView(&CustomCmds)
+	CmdsView(&CustomCommands)
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings

@@ -24,13 +24,13 @@ type LangOpts struct {
 // Langs is a map of language options
 type Langs map[fi.Known]*LangOpts
 
-// AvailLangs is the current set of language options -- can be
-// loaded / saved / edited with settings.  This is set to StdLangs at
+// AvailableLangs is the current set of language options -- can be
+// loaded / saved / edited with settings.  This is set to StandardLangs at
 // startup.
-var AvailLangs Langs
+var AvailableLangs Langs
 
 func init() {
-	AvailLangs.CopyFrom(StandardLangs)
+	AvailableLangs.CopyFrom(StandardLangs)
 }
 
 // Validate checks to make sure post save command names exist, issuing
@@ -48,9 +48,9 @@ func (lt Langs) Validate() bool {
 	return ok
 }
 
-// PrefsLangsFilename is the name of the settings file in App prefs
-// directory for saving / loading the default AvailLangs languages list
-var PrefsLangsFilename = "lang_prefs.toml"
+// LangSettingsFilename is the name of the settings file in the app settings
+// directory for saving / loading the default AvailableLangs languages list
+var LangSettingsFilename = "lang-settings.toml"
 
 // Open opens languages from a toml-formatted file.
 func (lt *Langs) Open(filename gi.Filename) error {
@@ -63,18 +63,20 @@ func (lt *Langs) Save(filename gi.Filename) error { //gti:add
 	return tomls.Save(lt, string(filename))
 }
 
-// OpenSettings opens Langs from App standard prefs directory, using PrefsLangsFilename
+// OpenSettings opens the Langs from the app settings directory,
+// using LangSettingsFilename.
 func (lt *Langs) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsLangsFilename)
+	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
 	return lt.Open(gi.Filename(pnm))
 }
 
-// SavePrefs saves Langs to App standard prefs directory, using PrefsLangsFilename
-func (lt *Langs) SavePrefs() error { //gti:add
+// SaveSettings saves the Langs to the app settings directory,
+// using LangSettingsFilename.
+func (lt *Langs) SaveSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsLangsFilename)
+	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
 	return lt.Save(gi.Filename(pnm))
 }

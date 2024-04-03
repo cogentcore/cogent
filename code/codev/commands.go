@@ -69,7 +69,7 @@ func (ge *CodeView) TabDeleted(tabnm string) {
 // pathway for all command invokation except on a node.  if sel, select tab.
 // if clearBuf, clear the buffer prior to command
 func (ge *CodeView) ExecCmdName(cmdNm code.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := code.AvailCmds.CmdByName(cmdNm, true)
+	cmd, _, ok := code.AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
@@ -80,7 +80,7 @@ func (ge *CodeView) ExecCmdName(cmdNm code.CmdName, sel bool, clearBuf bool) {
 
 // ExecCmdNameFileNode executes command of given name on given node
 func (ge *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm code.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := code.AvailCmds.CmdByName(cmdNm, true)
+	cmd, _, ok := code.AvailableCommands.CmdByName(cmdNm, true)
 	if !ok || fn == nil || fn.This() == nil {
 		return
 	}
@@ -91,7 +91,7 @@ func (ge *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm code.CmdName, s
 
 // ExecCmdNameFilename executes command of given name on given file name
 func (ge *CodeView) ExecCmdNameFilename(fn string, cmdNm code.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := code.AvailCmds.CmdByName(cmdNm, true)
+	cmd, _, ok := code.AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
@@ -110,9 +110,9 @@ func ExecCmds(ge *CodeView) [][]string {
 
 	vc := ge.VersionControl()
 	if ge.ActiveLang == fi.Unknown {
-		cmds = code.AvailCmds.FilterCmdNames(ge.Settings.MainLang, vc)
+		cmds = code.AvailableCommands.FilterCmdNames(ge.Settings.MainLang, vc)
 	} else {
-		cmds = code.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
+		cmds = code.AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)
 	}
 	return cmds
 }
@@ -217,7 +217,7 @@ func (ge *CodeView) Commit() { //gti:add
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
 func (ge *CodeView) CommitNoChecks() {
 	vc := ge.VersionControl()
-	cmds := code.AvailCmds.FilterCmdNames(ge.ActiveLang, vc)
+	cmds := code.AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)
 	cmdnm := ""
 	for _, ct := range cmds {
 		if len(ct) < 2 {

@@ -124,7 +124,7 @@ func (ge *CodeView) RunPostCmdsActiveView() bool {
 // uses MainLang to disambiguate if multiple languages associated with extension.
 func (ge *CodeView) RunPostCmdsFileNode(fn *filetree.Node) bool {
 	lang := fn.Info.Known
-	if lopt, has := code.AvailLangs[lang]; has {
+	if lopt, has := code.AvailableLangs[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
 			ge.ExecCmdsFileNode(fn, lopt.PostSaveCmds, false, true) // no select, yes clear
 			fn.Buf.Revert()
@@ -453,7 +453,7 @@ func (ge *CodeView) FileNodeRunExe(fn *filetree.Node) {
 	ge.SetArgVarVals()
 	ge.ArgVals["{PromptString1}"] = string(fn.FPath)
 	code.CmdNoUserPrompt = true // don't re-prompt!
-	cmd, _, ok := code.AvailCmds.CmdByName(code.CmdName("Build: Run Prompt"), true)
+	cmd, _, ok := code.AvailableCommands.CmdByName(code.CmdName("Build: Run Prompt"), true)
 	if ok {
 		ge.ArgVals.Set(string(fn.FPath), &ge.Settings, nil)
 		cbuf, _, _ := ge.RecycleCmdTab(cmd.Name, true, true)

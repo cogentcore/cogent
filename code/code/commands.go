@@ -653,14 +653,14 @@ type CmdName string
 
 // IsValid checks if command name exists on AvailCmds list
 func (cn CmdName) IsValid() bool {
-	_, _, ok := AvailCmds.CmdByName(cn, false)
+	_, _, ok := AvailableCommands.CmdByName(cn, false)
 	return ok
 }
 
 // Command returns command associated with command name in AvailCmds, and
 // false if it doesn't exist
 func (cn CmdName) Command() (*Command, bool) {
-	cmd, _, ok := AvailCmds.CmdByName(cn, true)
+	cmd, _, ok := AvailableCommands.CmdByName(cn, true)
 	return cmd, ok
 }
 
@@ -672,14 +672,14 @@ func (cn *CmdNames) Add(cmd CmdName) {
 	*cn = append(*cn, cmd)
 }
 
-// AvailCmds is the current list of ALL available commands for use -- it
+// AvailableCommands is the current list of ALL available commands for use -- it
 // combines StdCmds and CustomCmds.  Custom overrides Std items with
 // the same names.
-var AvailCmds Commands
+var AvailableCommands Commands
 
-// CustomCmds is user-specific list of commands saved in settings available
+// CustomCommands is user-specific list of commands saved in settings available
 // for all Code projects.  These will override StdCmds with the same names.
-var CustomCmds = Commands{}
+var CustomCommands = Commands{}
 
 // FilterCmdNames returns a slice of commands organized by category
 // that are compatible with given language and version control system.
@@ -707,7 +707,7 @@ func (cm *Commands) FilterCmdNames(lang fi.Known, vcnm filetree.VersionControlNa
 }
 
 func init() {
-	AvailCmds.CopyFrom(StandardCommands)
+	AvailableCommands.CopyFrom(StandardCommands)
 }
 
 // CmdByName returns a command and index by name -- returns false and emits a
@@ -724,9 +724,9 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 	return nil, -1, false
 }
 
-// PrefsCmdsFilename is the name of the settings file in App prefs
-// directory for saving / loading your CustomCmds commands list
-var PrefsCmdsFilename = "command_prefs.toml"
+// CommandSettingsFilename is the name of the settings file in the app settings
+// directory for saving / loading your CustomCommands commands list
+var CommandSettingsFilename = "command-settings.toml"
 
 // Open opens commands from a toml-formatted file.
 func (cm *Commands) Open(filename gi.Filename) error { //gti:add
@@ -739,30 +739,30 @@ func (cm *Commands) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(jsons.Save(cm, string(filename)))
 }
 
-// OpenSettings opens custom Commands from App standard prefs directory, using
-// PrefsCmdsFilename
+// OpenSettings opens custom Commands from the app settings directory, using
+// CommandSettingsFilename.
 func (cm *Commands) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsCmdsFilename)
+	pnm := filepath.Join(pdir, CommandSettingsFilename)
 	CustomCommandsChanged = false
 	err := cm.Open(gi.Filename(pnm))
 	if err == nil {
-		MergeAvailCmds()
+		MergeAvailableCmds()
 	} else {
 		cm = &Commands{} // restore a blank
 	}
 	return err
 }
 
-// SavePrefs saves custom Commands to App standard prefs directory, using
-// PrefsCmdsFilename
+// SaveSettings saves custom Commands to the app settings directory, using
+// CommandSettingsFilename.
 func (cm *Commands) SavePrefs() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsCmdsFilename)
+	pnm := filepath.Join(pdir, CommandSettingsFilename)
 	CustomCommandsChanged = false
 	err := cm.Save(gi.Filename(pnm))
 	if err == nil {
-		MergeAvailCmds()
+		MergeAvailableCmds()
 	}
 	return err
 }
@@ -777,15 +777,15 @@ func (cm *Commands) CopyFrom(cp Commands) {
 	json.Unmarshal(b, cm)
 }
 
-// MergeAvailCmds updates the AvailCmds list from CustomCmds and StdCmds
-func MergeAvailCmds() {
-	AvailCmds.CopyFrom(StandardCommands)
-	for _, cmd := range CustomCmds {
-		_, idx, has := AvailCmds.CmdByName(CmdName(cmd.Label()), false)
+// MergeAvailableCmds updates the AvailCmds list from CustomCmds and StdCmds
+func MergeAvailableCmds() {
+	AvailableCommands.CopyFrom(StandardCommands)
+	for _, cmd := range CustomCommands {
+		_, idx, has := AvailableCommands.CmdByName(CmdName(cmd.Label()), false)
 		if has {
-			AvailCmds[idx] = cmd // replace
+			AvailableCommands[idx] = cmd // replace
 		} else {
-			AvailCmds = append(AvailCmds, cmd)
+			AvailableCommands = append(AvailableCommands, cmd)
 		}
 	}
 }
@@ -839,7 +839,7 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 	if repo, _ := fn.Repo(); repo != nil {
 		vcnm = filetree.VersionControlName(repo.Vcs())
 	}
-	cmds := AvailCmds.FilterCmdNames(lang, vcnm)
+	cmds := AvailableCommands.FilterCmdNames(lang, vcnm)
 	lastCmd := ""
 	chist := ge.CmdHist()
 	hsz := len(*chist)

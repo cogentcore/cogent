@@ -137,18 +137,18 @@ func SetActiveKeyMap(km *KeySeqMap, kmName KeyMapName) {
 // defined in AvailKeyMaps, calling Update on the map prior to setting it to
 // ensure that it is a valid, complete map
 func SetActiveKeyMapName(mapnm KeyMapName) {
-	km, _, ok := AvailKeyMaps.MapByName(mapnm)
+	km, _, ok := AvailableKeyMaps.MapByName(mapnm)
 	if ok {
 		SetActiveKeyMap(km, mapnm)
 	} else {
 		log.Printf("code.SetActiveKeyMapName: key map named: %v not found, using default: %v\n", mapnm, DefaultKeyMap)
-		km, _, ok = AvailKeyMaps.MapByName(DefaultKeyMap)
+		km, _, ok = AvailableKeyMaps.MapByName(DefaultKeyMap)
 		if ok {
 			SetActiveKeyMap(km, DefaultKeyMap)
 		} else {
-			log.Printf("code.SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailKeyMaps))
-			if len(AvailKeyMaps) > 0 {
-				skm := AvailKeyMaps[0]
+			log.Printf("code.SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailableKeyMaps))
+			if len(AvailableKeyMaps) > 0 {
+				skm := AvailableKeyMaps[0]
 				SetActiveKeyMap(&skm.Map, KeyMapName(skm.Name))
 			}
 		}
@@ -318,13 +318,13 @@ func (km KeyMapsItem) Label() string {
 // a custom one, just duplicate an existing map, rename, and customize
 type KeyMaps []KeyMapsItem //gti:add
 
-// AvailKeyMaps is the current list of available keymaps for use -- can be
+// AvailableKeyMaps is the current list of available keymaps for use -- can be
 // loaded / saved / edited with settings.  This is set to StdKeyMaps at
 // startup.
-var AvailKeyMaps KeyMaps
+var AvailableKeyMaps KeyMaps
 
 func init() {
-	AvailKeyMaps.CopyFrom(StandardKeyMaps)
+	AvailableKeyMaps.CopyFrom(StandardKeyMaps)
 }
 
 // MapByName returns a keymap and index by name -- returns false and emits a
@@ -339,9 +339,9 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 	return nil, -1, false
 }
 
-// PrefsKeyMapsFilename is the name of the settings file in App prefs
-// directory for saving / loading the default AvailKeyMaps key maps list
-var PrefsKeyMapsFilename = "key_maps_prefs.json"
+// KeyMapSettingsFilename is the name of the settings file in the app settings
+// directory for saving / loading the default AvailableKeyMaps key maps list
+var KeyMapSettingsFilename = "key-map-settings.json"
 
 // Open opens keymaps from a json-formatted file.
 func (km *KeyMaps) Open(filename gi.Filename) error { //gti:add
@@ -354,18 +354,20 @@ func (km *KeyMaps) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(jsons.Save(km, string(filename)))
 }
 
-// OpenSettings opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFilename
+// OpenSettings opens the KeyMaps from the app settings directory,
+// using KeyMapSettingsFilename.
 func (km *KeyMaps) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
+	pnm := filepath.Join(pdir, KeyMapSettingsFilename)
 	AvailableKeyMapsChanged = false
 	return km.Open(gi.Filename(pnm))
 }
 
-// SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFilename
-func (km *KeyMaps) SavePrefs() error { //gti:add
+// SaveSettings saves the KeyMaps to the app setttings directory, using
+// KeyMapSettingsFilename.
+func (km *KeyMaps) SaveSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
+	pnm := filepath.Join(pdir, KeyMapSettingsFilename)
 	AvailableKeyMapsChanged = false
 	return km.Save(gi.Filename(pnm))
 }

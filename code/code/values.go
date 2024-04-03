@@ -29,9 +29,9 @@ func KeyMapsView(km *KeyMaps) {
 		AvailableKeyMapsChanged = true
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, km.SavePrefs).
+		giv.NewFuncButton(tb, km.SaveSettings).
 			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableKeyMapsChanged && km == &AvailKeyMaps) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableKeyMapsChanged && km == &AvailableKeyMaps) })
 		oj := giv.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
@@ -109,11 +109,11 @@ func (v *KeyMapValue) Update() {
 func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
-	_, curRow, _ := AvailKeyMaps.MapByName(KeyMapName(cur))
-	giv.NewTableView(d).SetSlice(&AvailKeyMaps).SetSelectedIndex(curRow).BindSelect(&si)
+	_, curRow, _ := AvailableKeyMaps.MapByName(KeyMapName(cur))
+	giv.NewTableView(d).SetSlice(&AvailableKeyMaps).SetSelectedIndex(curRow).BindSelect(&si)
 	return true, func() {
 		if si >= 0 {
-			km := AvailKeyMaps[si]
+			km := AvailableKeyMaps[si]
 			vv.SetValue(km.Name)
 			vv.Update()
 		}
@@ -133,9 +133,9 @@ func LangsView(pt *Langs) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).
+		giv.NewFuncButton(tb, pt.SaveSettings).
 			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailLangs) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
@@ -168,7 +168,7 @@ func CmdsView(pt *Commands) {
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCmds) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
@@ -210,11 +210,11 @@ func (v *CmdValue) Update() {
 func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
-	_, curRow, _ := AvailCmds.CmdByName(CmdName(cur), false)
-	giv.NewTableView(d).SetSlice(&AvailCmds).SetSelectedIndex(curRow).BindSelect(&si)
+	_, curRow, _ := AvailableCommands.CmdByName(CmdName(cur), false)
+	giv.NewTableView(d).SetSlice(&AvailableCommands).SetSelectedIndex(curRow).BindSelect(&si)
 	return true, func() {
 		if si >= 0 {
-			pt := AvailCmds[si]
+			pt := AvailableCommands[si]
 			vv.SetValue(CommandName(pt.Cat, pt.Name))
 			vv.Update()
 		}
