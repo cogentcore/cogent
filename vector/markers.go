@@ -243,10 +243,10 @@ var AllMarkerNames []string
 var AllMarkerIconNames []icons.Icon
 
 func init() {
-	AllMarkersXMLMap = make(map[string]string, len(StdMarkersMap))
-	AllMarkerNames = make([]string, len(StdMarkerNames))
-	maps.Copy(AllMarkersXMLMap, StdMarkersMap)
-	copy(AllMarkerNames, StdMarkerNames)
+	AllMarkersXMLMap = make(map[string]string, len(StandardMarkersMap))
+	AllMarkerNames = make([]string, len(StandardMarkerNames))
+	maps.Copy(AllMarkersXMLMap, StandardMarkersMap)
+	copy(AllMarkerNames, StandardMarkerNames)
 }
 
 // IconToMarkerName converts a icons.Icon (as an interface{})
@@ -326,8 +326,8 @@ func MarkerIconsInit() {
 
 //////////////////////////////////////////////////
 
-// StdMarkerNames is an ordered list of marker names
-var StdMarkerNames = []string{
+// StandardMarkerNames is an ordered list of marker names
+var StandardMarkerNames = []string{
 	"-",
 
 	"Arrow1Sstart",
@@ -416,8 +416,8 @@ var StdMarkerNames = []string{
 	"InfiniteLineEnd",
 }
 
-// StdMarkersMap is a map of the standard markers
-var StdMarkersMap = map[string]string{
+// StandardMarkersMap is a map of the standard markers
+var StandardMarkersMap = map[string]string{
 	"-": "",
 	"Arrow1Lstart": `<marker style="overflow:visible" id="Arrow1Lstart" refX="0.0" refY="0.0" orient="auto" inkscape:stockid="Arrow1Lstart">
       <path transform="scale(0.8) translate(12.5,0)" style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt" d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "/>

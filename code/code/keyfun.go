@@ -324,7 +324,7 @@ type KeyMaps []KeyMapsItem //gti:add
 var AvailKeyMaps KeyMaps
 
 func init() {
-	AvailKeyMaps.CopyFrom(StdKeyMaps)
+	AvailKeyMaps.CopyFrom(StandardKeyMaps)
 }
 
 // MapByName returns a keymap and index by name -- returns false and emits a
@@ -358,7 +358,7 @@ func (km *KeyMaps) Save(filename gi.Filename) error { //gti:add
 func (km *KeyMaps) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
-	AvailKeyMapsChanged = false
+	AvailableKeyMapsChanged = false
 	return km.Open(gi.Filename(pnm))
 }
 
@@ -366,7 +366,7 @@ func (km *KeyMaps) OpenSettings() error { //gti:add
 func (km *KeyMaps) SavePrefs() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsKeyMapsFilename)
-	AvailKeyMapsChanged = false
+	AvailableKeyMapsChanged = false
 	return km.Save(gi.Filename(pnm))
 }
 
@@ -380,32 +380,32 @@ func (km *KeyMaps) CopyFrom(cp KeyMaps) {
 	json.Unmarshal(b, km)
 }
 
-// RevertToStd reverts this map to using the StdKeyMaps that are compiled into
+// RevertToStandard reverts this map to using the StdKeyMaps that are compiled into
 // the program and have all the lastest key functions bound to standard
 // values.  If you have edited your maps, and are finding things not working,
 // it is a good idea to save your current maps and try this,
 // or at least do ViewStdMaps to see the current standards.
 // <b>Your current map edits will be lost if you proceed!</b>
-func (km *KeyMaps) RevertToStd() { //gti:add
-	km.CopyFrom(StdKeyMaps)
-	AvailKeyMapsChanged = true
+func (km *KeyMaps) RevertToStandard() { //gti:add
+	km.CopyFrom(StandardKeyMaps)
+	AvailableKeyMapsChanged = true
 }
 
-// ViewStd shows the standard maps that are compiled into the program and have
+// ViewStandard shows the standard maps that are compiled into the program and have
 // all the lastest key functions bound to standard values.  Useful for
 // comparing against custom maps.
-func (km *KeyMaps) ViewStd() { //gti:add
-	KeyMapsView(&StdKeyMaps)
+func (km *KeyMaps) ViewStandard() { //gti:add
+	KeyMapsView(&StandardKeyMaps)
 }
 
-// AvailKeyMapsChanged is used to update giv.KeyMapsView toolbars via
+// AvailableKeyMapsChanged is used to update giv.KeyMapsView toolbars via
 // following menu, toolbar props update methods -- not accurate if editing any
 // other map but works for now..
-var AvailKeyMapsChanged = false
+var AvailableKeyMapsChanged = false
 
-// StdKeyMaps is the original compiled-in set of standard keymaps that have
+// StandardKeyMaps is the original compiled-in set of standard keymaps that have
 // the lastest key functions bound to standard key chords.
-var StdKeyMaps = KeyMaps{
+var StandardKeyMaps = KeyMaps{
 	{"MacStandard", "Standard Mac KeyMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyFunNextPanel,
 		KeySeq{"Shift+Control+Tab", ""}:  KeyFunPrevPanel,

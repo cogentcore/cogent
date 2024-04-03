@@ -707,7 +707,7 @@ func (cm *Commands) FilterCmdNames(lang fi.Known, vcnm filetree.VersionControlNa
 }
 
 func init() {
-	AvailCmds.CopyFrom(StdCmds)
+	AvailCmds.CopyFrom(StandardCommands)
 }
 
 // CmdByName returns a command and index by name -- returns false and emits a
@@ -744,7 +744,7 @@ func (cm *Commands) Save(filename gi.Filename) error { //gti:add
 func (cm *Commands) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFilename)
-	CustomCmdsChanged = false
+	CustomCommandsChanged = false
 	err := cm.Open(gi.Filename(pnm))
 	if err == nil {
 		MergeAvailCmds()
@@ -759,7 +759,7 @@ func (cm *Commands) OpenSettings() error { //gti:add
 func (cm *Commands) SavePrefs() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsCmdsFilename)
-	CustomCmdsChanged = false
+	CustomCommandsChanged = false
 	err := cm.Save(gi.Filename(pnm))
 	if err == nil {
 		MergeAvailCmds()
@@ -779,7 +779,7 @@ func (cm *Commands) CopyFrom(cp Commands) {
 
 // MergeAvailCmds updates the AvailCmds list from CustomCmds and StdCmds
 func MergeAvailCmds() {
-	AvailCmds.CopyFrom(StdCmds)
+	AvailCmds.CopyFrom(StandardCommands)
 	for _, cmd := range CustomCmds {
 		_, idx, has := AvailCmds.CmdByName(CmdName(cmd.Label()), false)
 		if has {
@@ -790,15 +790,15 @@ func MergeAvailCmds() {
 	}
 }
 
-// ViewStd shows the standard types that are compiled into the program and have
+// ViewStandard shows the standard types that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (cm *Commands) ViewStd() { //gti:add
-	CmdsView(&StdCmds)
+func (cm *Commands) ViewStandard() { //gti:add
+	CmdsView(&StandardCommands)
 }
 
-// CustomCmdsChanged is used to update giv.CmdsView toolbars via following
+// CustomCommandsChanged is used to update giv.CmdsView toolbars via following
 // menu, toolbar props update methods.
-var CustomCmdsChanged = false
+var CustomCommandsChanged = false
 
 // SetCompleter adds a completer to the textfield - each field
 // can have its own match and edit functions

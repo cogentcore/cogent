@@ -24,25 +24,25 @@ func KeyMapsView(km *KeyMaps) {
 	}
 	d := gi.NewBody().SetTitle("Available Key Maps: duplicate an existing map (using context menu) as starting point for creating a custom map").SetData(km)
 	tv := giv.NewTableView(d).SetSlice(km)
-	AvailKeyMapsChanged = false
+	AvailableKeyMapsChanged = false
 	tv.OnChange(func(e events.Event) {
-		AvailKeyMapsChanged = true
+		AvailableKeyMapsChanged = true
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, km.SavePrefs).
 			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailKeyMapsChanged && km == &AvailKeyMaps) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableKeyMapsChanged && km == &AvailKeyMaps) })
 		oj := giv.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
-		giv.NewFuncButton(tb, km.ViewStd).SetConfirm(true).
+		giv.NewFuncButton(tb, km.ViewStandard).SetConfirm(true).
 			SetText("View standard").SetIcon(icons.Visibility).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StdKeyMaps) })
-		giv.NewFuncButton(tb, km.RevertToStd).SetConfirm(true).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
+		giv.NewFuncButton(tb, km.RevertToStandard).SetConfirm(true).
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StdKeyMaps) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
@@ -127,26 +127,26 @@ func LangsView(pt *Langs) {
 	}
 	d := gi.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
 	tv := giv.NewMapView(d).SetMap(pt)
-	AvailLangsChanged = false
+	AvailableLangsChanged = false
 	tv.OnChange(func(e events.Event) {
-		AvailLangsChanged = true
+		AvailableLangsChanged = true
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pt.SavePrefs).
 			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailLangsChanged && pt == &AvailLangs) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailLangs) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
-		giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).
+		giv.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
 			SetText("View standard").SetIcon(icons.Visibility).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdLangs) })
-		giv.NewFuncButton(tb, pt.RevertToStd).SetConfirm(true).
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
+		giv.NewFuncButton(tb, pt.RevertToStandard).SetConfirm(true).
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdLangs) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
@@ -161,22 +161,22 @@ func CmdsView(pt *Commands) {
 	}
 	d := gi.NewBody().SetTitle("Code Commands").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
-	CustomCmdsChanged = false
+	CustomCommandsChanged = false
 	tv.OnChange(func(e events.Event) {
-		CustomCmdsChanged = true
+		CustomCommandsChanged = true
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCmdsChanged && pt == &CustomCmds) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCmds) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		gi.NewSeparator(tb)
-		giv.NewFuncButton(tb, pt.ViewStd).SetConfirm(true).
+		giv.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
 			SetText("View standard").SetIcon(icons.Visibility).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StdCmds) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
 		tb.AddOverflowMenu(func(m *gi.Scene) {
 			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
@@ -228,15 +228,15 @@ func SplitsView(pt *Splits) {
 	}
 	d := gi.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
-	AvailSplitsChanged = false
+	AvailableSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
-		AvailSplitsChanged = true
+		AvailableSplitsChanged = true
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailSplitsChanged && pt == &StdSplits) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)

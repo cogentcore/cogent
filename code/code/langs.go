@@ -30,7 +30,7 @@ type Langs map[fi.Known]*LangOpts
 var AvailLangs Langs
 
 func init() {
-	AvailLangs.CopyFrom(StdLangs)
+	AvailLangs.CopyFrom(StandardLangs)
 }
 
 // Validate checks to make sure post save command names exist, issuing
@@ -67,7 +67,7 @@ func (lt *Langs) Save(filename gi.Filename) error { //gti:add
 func (lt *Langs) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsLangsFilename)
-	AvailLangsChanged = false
+	AvailableLangsChanged = false
 	return lt.Open(gi.Filename(pnm))
 }
 
@@ -75,7 +75,7 @@ func (lt *Langs) OpenSettings() error { //gti:add
 func (lt *Langs) SavePrefs() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsLangsFilename)
-	AvailLangsChanged = false
+	AvailableLangsChanged = false
 	return lt.Save(gi.Filename(pnm))
 }
 
@@ -87,25 +87,25 @@ func (lt *Langs) CopyFrom(cp Langs) {
 	}
 }
 
-// RevertToStd reverts this map to using the StdLangs that are compiled into
+// RevertToStandard reverts this map to using the StdLangs that are compiled into
 // the program and have all the lastest standards.
-func (lt *Langs) RevertToStd() { //gti:add
-	lt.CopyFrom(StdLangs)
-	AvailLangsChanged = true
+func (lt *Langs) RevertToStandard() { //gti:add
+	lt.CopyFrom(StandardLangs)
+	AvailableLangsChanged = true
 }
 
-// ViewStd shows the standard langs that are compiled into the program and have
+// ViewStandard shows the standard langs that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (lt *Langs) ViewStd() { //gti:add
-	LangsView(&StdLangs)
+func (lt *Langs) ViewStandard() { //gti:add
+	LangsView(&StandardLangs)
 }
 
-// AvailLangsChanged is used to update giv.LangsView toolbars via
+// AvailableLangsChanged is used to update giv.LangsView toolbars via
 // following menu, toolbar props update methods -- not accurate if editing any
 // other map but works for now..
-var AvailLangsChanged = false
+var AvailableLangsChanged = false
 
-// StdLangs is the original compiled-in set of standard language options.
-var StdLangs = Langs{
+// StandardLangs is the original compiled-in set of standard language options.
+var StandardLangs = Langs{
 	fi.Go: {CmdNames{"Go: Imports File"}},
 }

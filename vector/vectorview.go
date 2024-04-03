@@ -130,7 +130,7 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 		return
 	}
 	if sz.Size == (mat32.Vec2{}) {
-		sz.SetStdSize(Prefs.Size.StdSize)
+		sz.SetStandardSize(Prefs.Size.StandardSize)
 	}
 	sv := vv.SVG()
 	sz.SetToSVG(sv)

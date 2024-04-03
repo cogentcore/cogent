@@ -15,7 +15,7 @@ import (
 type PhysSize struct { //gti:add
 
 	// select a standard size -- this will set units and size
-	StdSize StdSizes
+	StandardSize StandardSizes
 
 	// for standard size, use first number as width, second as height
 	Portrait bool
@@ -31,29 +31,29 @@ type PhysSize struct { //gti:add
 }
 
 func (ps *PhysSize) Defaults() {
-	ps.StdSize = Img1280x720
+	ps.StandardSize = Img1280x720
 	ps.Units = units.UnitPx
 	ps.Size.Set(1280, 720)
 	ps.Grid = 12
 }
 
 func (ps *PhysSize) Update() {
-	if ps.StdSize != CustomSize {
-		ps.SetToStdSize()
+	if ps.StandardSize != CustomSize {
+		ps.SetToStandardSize()
 	}
 }
 
-// SetStdSize sets drawing to a standard size
-func (ps *PhysSize) SetStdSize(std StdSizes) error {
-	ps.StdSize = std
-	return ps.SetToStdSize()
+// SetStandardSize sets drawing to a standard size
+func (ps *PhysSize) SetStandardSize(std StandardSizes) error {
+	ps.StandardSize = std
+	return ps.SetToStandardSize()
 }
 
-// SetToStdSize sets drawing to the current standard size value
-func (ps *PhysSize) SetToStdSize() error {
-	ssv, has := StdSizesMap[ps.StdSize]
+// SetToStandardSize sets drawing to the current standard size value
+func (ps *PhysSize) SetToStandardSize() error {
+	ssv, has := StandardSizesMap[ps.StandardSize]
 	if !has {
-		return fmt.Errorf("StdSize: %v not found in StdSizesMap", ps.StdSize)
+		return fmt.Errorf("StdSize: %v not found in StdSizesMap", ps.StandardSize)
 	}
 	ps.Units = ssv.Units
 	ps.Size.X = ssv.X
@@ -67,7 +67,7 @@ func (ps *PhysSize) SetFromSVG(sv *SVGView) {
 	ps.Units = sv.SSVG().PhysWidth.Un
 	ps.Size.Y = sv.SSVG().PhysHeight.Val
 	ps.Grid = sv.Grid
-	ps.StdSize = MatchStdSize(ps.Size.X, ps.Size.Y, ps.Units)
+	ps.StandardSize = MatchStandardSize(ps.Size.X, ps.Size.Y, ps.Units)
 }
 
 // SetToSVG sets svg from us
@@ -78,13 +78,13 @@ func (ps *PhysSize) SetToSVG(sv *SVGView) {
 	sv.Grid = ps.Grid
 }
 
-// StdSizes are standard physical drawing sizes
-type StdSizes int32 //enums:enum
+// StandardSizes are standard physical drawing sizes
+type StandardSizes int32 //enums:enum
 
-func MatchStdSize(wd, ht float32, un units.Units) StdSizes {
-	trgl := StdSizeVals{Units: un, X: wd, Y: ht}
-	trgp := StdSizeVals{Units: un, X: ht, Y: wd}
-	for k, v := range StdSizesMap {
+func MatchStandardSize(wd, ht float32, un units.Units) StandardSizes {
+	trgl := StandardSizeValues{Units: un, X: wd, Y: ht}
+	trgp := StandardSizeValues{Units: un, X: ht, Y: wd}
+	for k, v := range StandardSizesMap {
 		if *v == trgl || *v == trgp {
 			return k
 		}
@@ -94,7 +94,7 @@ func MatchStdSize(wd, ht float32, un units.Units) StdSizes {
 
 const (
 	// CustomSize =  nonstandard
-	CustomSize StdSizes = iota
+	CustomSize StandardSizes = iota
 
 	// Image 1280x720 Px = 720p
 	Img1280x720
@@ -160,15 +160,15 @@ const (
 	A10
 )
 
-// StdSizeVals are values for standard sizes
-type StdSizeVals struct {
+// StandardSizeValues are values for standard sizes
+type StandardSizeValues struct {
 	Units units.Units
 	X     float32
 	Y     float32
 }
 
-// StdSizesMap is the map of size values for each standard size
-var StdSizesMap = map[StdSizes]*StdSizeVals{
+// StandardSizesMap is the map of size values for each standard size
+var StandardSizesMap = map[StandardSizes]*StandardSizeValues{
 	Img1280x720:  {units.UnitPx, 1280, 720},
 	Img1920x1080: {units.UnitPx, 1920, 1080},
 	Img3840x2160: {units.UnitPx, 3840, 2160},

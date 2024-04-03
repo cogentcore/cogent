@@ -24,15 +24,15 @@ func SplitsView(pt *Splits) {
 	}
 	d := gi.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing ß(using context menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
-	AvailSplitsChanged = false
+	AvailableSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
-		AvailSplitsChanged = true
+		AvailableSplitsChanged = true
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
 		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailSplitsChanged && pt == &StdSplits) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)

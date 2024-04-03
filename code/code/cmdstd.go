@@ -16,8 +16,8 @@ const (
 	CmdNoConfirm = false
 )
 
-// StdCmds is the original compiled-in set of standard commands.
-var StdCmds = Commands{
+// StandardCommands is the original compiled-in set of standard commands.
+var StandardCommands = Commands{
 	{Cat: "Build", Name: "Run Proj",
 		Desc: "run RunExec executable set in project",
 		Lang: fi.Any,

@@ -22,8 +22,8 @@ import (
 
 func (ge *CodeView) AppBarConfig(pw gi.Widget) {
 	tb := gi.RecycleToolbar(pw)
-	gi.StdAppBarBack(tb)
-	ac := gi.StdAppBarChooser(tb)
+	gi.StandardAppBarBack(tb)
+	ac := gi.StandardAppBarChooser(tb)
 	ge.AddChooserFiles(ac)
 	ge.AddChooserSymbols(ac)
 	ac.OnFirst(events.KeyChord, func(e events.Event) {
@@ -33,7 +33,7 @@ func (ge *CodeView) AppBarConfig(pw gi.Widget) {
 		}
 	})
 
-	gi.StdOverflowMenu(tb)
+	gi.StandardOverflowMenu(tb)
 	gi.CurrentWindowAppBar(tb)
 	// apps should add their own app-general functions here
 }

@@ -79,8 +79,8 @@ func AddNewDash(dary []float64) string {
 	return nm
 }
 
-// StdDashNames are standard dash patterns
-var StdDashNames = []string{
+// StandardDashNames are standard dash patterns
+var StandardDashNames = []string{
 	"dash-solid",
 	"dash-1-1",
 	"dash-1-2",
@@ -120,8 +120,8 @@ var StdDashNames = []string{
 	"dash-0110-0110",
 }
 
-// StdDashesMap are standard dash patterns
-var StdDashesMap = map[string][]float64{
+// StandardDashesMap are standard dash patterns
+var StandardDashesMap = map[string][]float64{
 	"dash-solid":     {},
 	"dash-1-1":       {1, 1},
 	"dash-1-2":       {1, 2},
@@ -204,8 +204,8 @@ func DashIconsInit() {
 }
 
 func init() {
-	AllDashesMap = make(map[string][]float64, len(StdDashesMap))
-	AllDashNames = make([]string, len(StdDashNames))
-	maps.Copy(AllDashesMap, StdDashesMap)
-	copy(AllDashNames, StdDashNames)
+	AllDashesMap = make(map[string][]float64, len(StandardDashesMap))
+	AllDashNames = make([]string, len(StandardDashNames))
+	maps.Copy(AllDashesMap, StandardDashesMap)
+	copy(AllDashNames, StandardDashNames)
 }

@@ -54,7 +54,7 @@ var AvailSplits Splits
 var AvailSplitNames []string
 
 func init() {
-	AvailSplits.CopyFrom(StdSplits)
+	AvailSplits.CopyFrom(StandardSplits)
 	AvailSplitNames = AvailSplits.Names()
 }
 
@@ -125,7 +125,7 @@ func (lt *Splits) Save(filename gi.Filename) error { //gti:add
 func (lt *Splits) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFilename)
-	AvailSplitsChanged = false
+	AvailableSplitsChanged = false
 	err := lt.Open(gi.Filename(pnm))
 	if err == nil {
 		AvailSplitNames = lt.Names()
@@ -138,7 +138,7 @@ func (lt *Splits) SavePrefs() error { //gti:add
 	lt.FixLen()
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFilename)
-	AvailSplitsChanged = false
+	AvailableSplitsChanged = false
 	AvailSplitNames = lt.Names()
 	return lt.Save(gi.Filename(pnm))
 }
@@ -154,13 +154,13 @@ func (lt *Splits) CopyFrom(cp Splits) {
 	lt.FixLen()
 }
 
-// AvailSplitsChanged is used to update toolbars via following menu, toolbar
+// AvailableSplitsChanged is used to update toolbars via following menu, toolbar
 // props update methods -- not accurate if editing any other map but works for
 // now..
-var AvailSplitsChanged = false
+var AvailableSplitsChanged = false
 
-// StdSplits is the original compiled-in set of standard named splits.
-var StdSplits = Splits{
+// StandardSplits is the original compiled-in set of standard named splits.
+var StandardSplits = Splits{
 	{"Code", "2 text views, tabs", []float32{.1, .325, .325, .25}},
 	{"Small", "1 text view, tabs", []float32{.1, .5, 0, .4}},
 	{"BigTabs", "1 text view, big tabs", []float32{.1, .3, 0, .6}},

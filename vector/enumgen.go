@@ -3,10 +3,6 @@
 package vector
 
 import (
-	"log"
-	"strings"
-	"sync/atomic"
-
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/gi"
 )
@@ -38,36 +34,20 @@ func (i AlignAnchors) Int64() int64 { return int64(i) }
 func (i *AlignAnchors) SetInt64(in int64) { *i = AlignAnchors(in) }
 
 // Desc returns the description of the AlignAnchors value.
-func (i AlignAnchors) Desc() string {
-	if str, ok := _AlignAnchorsDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+func (i AlignAnchors) Desc() string { return enums.Desc(i, _AlignAnchorsDescMap) }
 
 // AlignAnchorsValues returns all possible values for the type AlignAnchors.
 func AlignAnchorsValues() []AlignAnchors { return _AlignAnchorsValues }
 
 // Values returns all possible values for the type AlignAnchors.
-func (i AlignAnchors) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_AlignAnchorsValues))
-	for i, d := range _AlignAnchorsValues {
-		res[i] = d
-	}
-	return res
-}
+func (i AlignAnchors) Values() []enums.Enum { return enums.Values(_AlignAnchorsValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i AlignAnchors) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i AlignAnchors) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *AlignAnchors) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("AlignAnchors.UnmarshalText:", err)
-	}
-	return nil
+	return enums.UnmarshalText(i, text, "AlignAnchors")
 }
 
 var _AlignsValues = []Aligns{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
@@ -95,37 +75,19 @@ func (i Aligns) Int64() int64 { return int64(i) }
 func (i *Aligns) SetInt64(in int64) { *i = Aligns(in) }
 
 // Desc returns the description of the Aligns value.
-func (i Aligns) Desc() string {
-	if str, ok := _AlignsDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+func (i Aligns) Desc() string { return enums.Desc(i, _AlignsDescMap) }
 
 // AlignsValues returns all possible values for the type Aligns.
 func AlignsValues() []Aligns { return _AlignsValues }
 
 // Values returns all possible values for the type Aligns.
-func (i Aligns) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_AlignsValues))
-	for i, d := range _AlignsValues {
-		res[i] = d
-	}
-	return res
-}
+func (i Aligns) Values() []enums.Enum { return enums.Values(_AlignsValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i Aligns) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i Aligns) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *Aligns) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("Aligns.UnmarshalText:", err)
-	}
-	return nil
-}
+func (i *Aligns) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Aligns") }
 
 var _BBoxPointsValues = []BBoxPoints{0, 1, 2, 3, 4, 5}
 
@@ -154,36 +116,20 @@ func (i BBoxPoints) Int64() int64 { return int64(i) }
 func (i *BBoxPoints) SetInt64(in int64) { *i = BBoxPoints(in) }
 
 // Desc returns the description of the BBoxPoints value.
-func (i BBoxPoints) Desc() string {
-	if str, ok := _BBoxPointsDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+func (i BBoxPoints) Desc() string { return enums.Desc(i, _BBoxPointsDescMap) }
 
 // BBoxPointsValues returns all possible values for the type BBoxPoints.
 func BBoxPointsValues() []BBoxPoints { return _BBoxPointsValues }
 
 // Values returns all possible values for the type BBoxPoints.
-func (i BBoxPoints) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_BBoxPointsValues))
-	for i, d := range _BBoxPointsValues {
-		res[i] = d
-	}
-	return res
-}
+func (i BBoxPoints) Values() []enums.Enum { return enums.Values(_BBoxPointsValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i BBoxPoints) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i BBoxPoints) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *BBoxPoints) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("BBoxPoints.UnmarshalText:", err)
-	}
-	return nil
+	return enums.UnmarshalText(i, text, "BBoxPoints")
 }
 
 var _MarkerColorsValues = []MarkerColors{0, 1, 2}
@@ -213,36 +159,20 @@ func (i MarkerColors) Int64() int64 { return int64(i) }
 func (i *MarkerColors) SetInt64(in int64) { *i = MarkerColors(in) }
 
 // Desc returns the description of the MarkerColors value.
-func (i MarkerColors) Desc() string {
-	if str, ok := _MarkerColorsDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+func (i MarkerColors) Desc() string { return enums.Desc(i, _MarkerColorsDescMap) }
 
 // MarkerColorsValues returns all possible values for the type MarkerColors.
 func MarkerColorsValues() []MarkerColors { return _MarkerColorsValues }
 
 // Values returns all possible values for the type MarkerColors.
-func (i MarkerColors) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_MarkerColorsValues))
-	for i, d := range _MarkerColorsValues {
-		res[i] = d
-	}
-	return res
-}
+func (i MarkerColors) Values() []enums.Enum { return enums.Values(_MarkerColorsValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i MarkerColors) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i MarkerColors) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *MarkerColors) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("MarkerColors.UnmarshalText:", err)
-	}
-	return nil
+	return enums.UnmarshalText(i, text, "MarkerColors")
 }
 
 var _PaintTypesValues = []PaintTypes{0, 1, 2, 3, 4}
@@ -272,95 +202,63 @@ func (i PaintTypes) Int64() int64 { return int64(i) }
 func (i *PaintTypes) SetInt64(in int64) { *i = PaintTypes(in) }
 
 // Desc returns the description of the PaintTypes value.
-func (i PaintTypes) Desc() string {
-	if str, ok := _PaintTypesDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+func (i PaintTypes) Desc() string { return enums.Desc(i, _PaintTypesDescMap) }
 
 // PaintTypesValues returns all possible values for the type PaintTypes.
 func PaintTypesValues() []PaintTypes { return _PaintTypesValues }
 
 // Values returns all possible values for the type PaintTypes.
-func (i PaintTypes) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_PaintTypesValues))
-	for i, d := range _PaintTypesValues {
-		res[i] = d
-	}
-	return res
-}
+func (i PaintTypes) Values() []enums.Enum { return enums.Values(_PaintTypesValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i PaintTypes) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i PaintTypes) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *PaintTypes) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("PaintTypes.UnmarshalText:", err)
-	}
-	return nil
+	return enums.UnmarshalText(i, text, "PaintTypes")
 }
 
-var _StdSizesValues = []StdSizes{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}
+var _StandardSizesValues = []StandardSizes{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}
 
-// StdSizesN is the highest valid value for type StdSizes, plus one.
-const StdSizesN StdSizes = 22
+// StandardSizesN is the highest valid value for type StandardSizes, plus one.
+const StandardSizesN StandardSizes = 22
 
-var _StdSizesValueMap = map[string]StdSizes{`CustomSize`: 0, `Img1280x720`: 1, `Img1920x1080`: 2, `Img3840x2160`: 3, `Img7680x4320`: 4, `Img1024x768`: 5, `Img720x480`: 6, `Img640x480`: 7, `Img320x240`: 8, `A4`: 9, `USLetter`: 10, `USLegal`: 11, `A0`: 12, `A1`: 13, `A2`: 14, `A3`: 15, `A5`: 16, `A6`: 17, `A7`: 18, `A8`: 19, `A9`: 20, `A10`: 21}
+var _StandardSizesValueMap = map[string]StandardSizes{`CustomSize`: 0, `Img1280x720`: 1, `Img1920x1080`: 2, `Img3840x2160`: 3, `Img7680x4320`: 4, `Img1024x768`: 5, `Img720x480`: 6, `Img640x480`: 7, `Img320x240`: 8, `A4`: 9, `USLetter`: 10, `USLegal`: 11, `A0`: 12, `A1`: 13, `A2`: 14, `A3`: 15, `A5`: 16, `A6`: 17, `A7`: 18, `A8`: 19, `A9`: 20, `A10`: 21}
 
-var _StdSizesDescMap = map[StdSizes]string{0: `CustomSize = nonstandard`, 1: `Image 1280x720 Px = 720p`, 2: `Image 1920x1080 Px = 1080p HD`, 3: `Image 3840x2160 Px = 4K`, 4: `Image 7680x4320 Px = 8K`, 5: `Image 1024x768 Px = XGA`, 6: `Image 720x480 Px = DVD`, 7: `Image 640x480 Px = VGA`, 8: `Image 320x240 Px = old CRT`, 9: `A4 = 210 x 297 mm`, 10: `USLetter = 8.5 x 11 in = 612 x 792 pt`, 11: `USLegal = 8.5 x 14 in = 612 x 1008 pt`, 12: `A0 = 841 x 1189 mm`, 13: `A1 = 594 x 841 mm`, 14: `A2 = 420 x 594 mm`, 15: `A3 = 297 x 420 mm`, 16: `A5 = 148 x 210 mm`, 17: `A6 = 105 x 148 mm`, 18: `A7 = 74 x 105`, 19: `A8 = 52 x 74 mm`, 20: `A9 = 37 x 52`, 21: `A10 = 26 x 37`}
+var _StandardSizesDescMap = map[StandardSizes]string{0: `CustomSize = nonstandard`, 1: `Image 1280x720 Px = 720p`, 2: `Image 1920x1080 Px = 1080p HD`, 3: `Image 3840x2160 Px = 4K`, 4: `Image 7680x4320 Px = 8K`, 5: `Image 1024x768 Px = XGA`, 6: `Image 720x480 Px = DVD`, 7: `Image 640x480 Px = VGA`, 8: `Image 320x240 Px = old CRT`, 9: `A4 = 210 x 297 mm`, 10: `USLetter = 8.5 x 11 in = 612 x 792 pt`, 11: `USLegal = 8.5 x 14 in = 612 x 1008 pt`, 12: `A0 = 841 x 1189 mm`, 13: `A1 = 594 x 841 mm`, 14: `A2 = 420 x 594 mm`, 15: `A3 = 297 x 420 mm`, 16: `A5 = 148 x 210 mm`, 17: `A6 = 105 x 148 mm`, 18: `A7 = 74 x 105`, 19: `A8 = 52 x 74 mm`, 20: `A9 = 37 x 52`, 21: `A10 = 26 x 37`}
 
-var _StdSizesMap = map[StdSizes]string{0: `CustomSize`, 1: `Img1280x720`, 2: `Img1920x1080`, 3: `Img3840x2160`, 4: `Img7680x4320`, 5: `Img1024x768`, 6: `Img720x480`, 7: `Img640x480`, 8: `Img320x240`, 9: `A4`, 10: `USLetter`, 11: `USLegal`, 12: `A0`, 13: `A1`, 14: `A2`, 15: `A3`, 16: `A5`, 17: `A6`, 18: `A7`, 19: `A8`, 20: `A9`, 21: `A10`}
+var _StandardSizesMap = map[StandardSizes]string{0: `CustomSize`, 1: `Img1280x720`, 2: `Img1920x1080`, 3: `Img3840x2160`, 4: `Img7680x4320`, 5: `Img1024x768`, 6: `Img720x480`, 7: `Img640x480`, 8: `Img320x240`, 9: `A4`, 10: `USLetter`, 11: `USLegal`, 12: `A0`, 13: `A1`, 14: `A2`, 15: `A3`, 16: `A5`, 17: `A6`, 18: `A7`, 19: `A8`, 20: `A9`, 21: `A10`}
 
-// String returns the string representation of this StdSizes value.
-func (i StdSizes) String() string { return enums.String(i, _StdSizesMap) }
+// String returns the string representation of this StandardSizes value.
+func (i StandardSizes) String() string { return enums.String(i, _StandardSizesMap) }
 
-// SetString sets the StdSizes value from its string representation,
+// SetString sets the StandardSizes value from its string representation,
 // and returns an error if the string is invalid.
-func (i *StdSizes) SetString(s string) error {
-	return enums.SetString(i, s, _StdSizesValueMap, "StdSizes")
+func (i *StandardSizes) SetString(s string) error {
+	return enums.SetString(i, s, _StandardSizesValueMap, "StandardSizes")
 }
 
-// Int64 returns the StdSizes value as an int64.
-func (i StdSizes) Int64() int64 { return int64(i) }
+// Int64 returns the StandardSizes value as an int64.
+func (i StandardSizes) Int64() int64 { return int64(i) }
 
-// SetInt64 sets the StdSizes value from an int64.
-func (i *StdSizes) SetInt64(in int64) { *i = StdSizes(in) }
+// SetInt64 sets the StandardSizes value from an int64.
+func (i *StandardSizes) SetInt64(in int64) { *i = StandardSizes(in) }
 
-// Desc returns the description of the StdSizes value.
-func (i StdSizes) Desc() string {
-	if str, ok := _StdSizesDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+// Desc returns the description of the StandardSizes value.
+func (i StandardSizes) Desc() string { return enums.Desc(i, _StandardSizesDescMap) }
 
-// StdSizesValues returns all possible values for the type StdSizes.
-func StdSizesValues() []StdSizes { return _StdSizesValues }
+// StandardSizesValues returns all possible values for the type StandardSizes.
+func StandardSizesValues() []StandardSizes { return _StandardSizesValues }
 
-// Values returns all possible values for the type StdSizes.
-func (i StdSizes) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_StdSizesValues))
-	for i, d := range _StdSizesValues {
-		res[i] = d
-	}
-	return res
-}
+// Values returns all possible values for the type StandardSizes.
+func (i StandardSizes) Values() []enums.Enum { return enums.Values(_StandardSizesValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i StdSizes) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i StandardSizes) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *StdSizes) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("StdSizes.UnmarshalText:", err)
-	}
-	return nil
+func (i *StandardSizes) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "StandardSizes")
 }
 
 var _SpritesValues = []Sprites{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
@@ -390,37 +288,19 @@ func (i Sprites) Int64() int64 { return int64(i) }
 func (i *Sprites) SetInt64(in int64) { *i = Sprites(in) }
 
 // Desc returns the description of the Sprites value.
-func (i Sprites) Desc() string {
-	if str, ok := _SpritesDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+func (i Sprites) Desc() string { return enums.Desc(i, _SpritesDescMap) }
 
 // SpritesValues returns all possible values for the type Sprites.
 func SpritesValues() []Sprites { return _SpritesValues }
 
 // Values returns all possible values for the type Sprites.
-func (i Sprites) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_SpritesValues))
-	for i, d := range _SpritesValues {
-		res[i] = d
-	}
-	return res
-}
+func (i Sprites) Values() []enums.Enum { return enums.Values(_SpritesValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i Sprites) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i Sprites) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *Sprites) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("Sprites.UnmarshalText:", err)
-	}
-	return nil
-}
+func (i *Sprites) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Sprites") }
 
 var _ToolsValues = []Tools{0, 1, 2, 3, 4, 5}
 
@@ -447,37 +327,19 @@ func (i Tools) Int64() int64 { return int64(i) }
 func (i *Tools) SetInt64(in int64) { *i = Tools(in) }
 
 // Desc returns the description of the Tools value.
-func (i Tools) Desc() string {
-	if str, ok := _ToolsDescMap[i]; ok {
-		return str
-	}
-	return i.String()
-}
+func (i Tools) Desc() string { return enums.Desc(i, _ToolsDescMap) }
 
 // ToolsValues returns all possible values for the type Tools.
 func ToolsValues() []Tools { return _ToolsValues }
 
 // Values returns all possible values for the type Tools.
-func (i Tools) Values() []enums.Enum {
-	res := make([]enums.Enum, len(_ToolsValues))
-	for i, d := range _ToolsValues {
-		res[i] = d
-	}
-	return res
-}
+func (i Tools) Values() []enums.Enum { return enums.Values(_ToolsValues) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i Tools) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i Tools) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *Tools) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("Tools.UnmarshalText:", err)
-	}
-	return nil
-}
+func (i *Tools) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Tools") }
 
 var _VectorViewFlagsValues = []VectorViewFlags{2}
 
@@ -510,20 +372,7 @@ func (i *VectorViewFlags) SetString(s string) error { *i = 0; return i.SetString
 // while preserving any bit flags already set, and returns an
 // error if the string is invalid.
 func (i *VectorViewFlags) SetStringOr(s string) error {
-	flgs := strings.Split(s, "|")
-	for _, flg := range flgs {
-		if val, ok := _VectorViewFlagsValueMap[flg]; ok {
-			i.SetFlag(true, &val)
-		} else if flg == "" {
-			continue
-		} else {
-			err := (*gi.WidgetFlags)(i).SetStringOr(flg)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return enums.SetStringOrExtended(i, (*gi.WidgetFlags)(i), s, _VectorViewFlagsValueMap)
 }
 
 // Int64 returns the VectorViewFlags value as an int64.
@@ -534,67 +383,29 @@ func (i *VectorViewFlags) SetInt64(in int64) { *i = VectorViewFlags(in) }
 
 // Desc returns the description of the VectorViewFlags value.
 func (i VectorViewFlags) Desc() string {
-	if str, ok := _VectorViewFlagsDescMap[i]; ok {
-		return str
-	}
-	return gi.WidgetFlags(i).Desc()
+	return enums.DescExtended[VectorViewFlags, gi.WidgetFlags](i, _VectorViewFlagsDescMap)
 }
 
 // VectorViewFlagsValues returns all possible values for the type VectorViewFlags.
 func VectorViewFlagsValues() []VectorViewFlags {
-	es := gi.WidgetFlagsValues()
-	res := make([]VectorViewFlags, len(es))
-	for i, e := range es {
-		res[i] = VectorViewFlags(e)
-	}
-	res = append(res, _VectorViewFlagsValues...)
-	return res
+	return enums.ValuesGlobalExtended(_VectorViewFlagsValues, gi.WidgetFlagsValues())
 }
 
 // Values returns all possible values for the type VectorViewFlags.
 func (i VectorViewFlags) Values() []enums.Enum {
-	es := gi.WidgetFlagsValues()
-	les := len(es)
-	res := make([]enums.Enum, les+len(_VectorViewFlagsValues))
-	for i, d := range es {
-		res[i] = d
-	}
-	for i, d := range _VectorViewFlagsValues {
-		res[i+les] = d
-	}
-	return res
+	return enums.ValuesExtended(_VectorViewFlagsValues, gi.WidgetFlagsValues())
 }
 
 // HasFlag returns whether these bit flags have the given bit flag set.
-func (i VectorViewFlags) HasFlag(f enums.BitFlag) bool {
-	return atomic.LoadInt64((*int64)(&i))&(1<<uint32(f.Int64())) != 0
-}
+func (i VectorViewFlags) HasFlag(f enums.BitFlag) bool { return enums.HasFlag((*int64)(&i), f) }
 
 // SetFlag sets the value of the given flags in these flags to the given value.
-func (i *VectorViewFlags) SetFlag(on bool, f ...enums.BitFlag) {
-	var mask int64
-	for _, v := range f {
-		mask |= 1 << v.Int64()
-	}
-	in := int64(*i)
-	if on {
-		in |= mask
-		atomic.StoreInt64((*int64)(i), in)
-	} else {
-		in &^= mask
-		atomic.StoreInt64((*int64)(i), in)
-	}
-}
+func (i *VectorViewFlags) SetFlag(on bool, f ...enums.BitFlag) { enums.SetFlag((*int64)(i), on, f...) }
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
-func (i VectorViewFlags) MarshalText() ([]byte, error) {
-	return []byte(i.String()), nil
-}
+func (i VectorViewFlags) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *VectorViewFlags) UnmarshalText(text []byte) error {
-	if err := i.SetString(string(text)); err != nil {
-		log.Println("VectorViewFlags.UnmarshalText:", err)
-	}
-	return nil
+	return enums.UnmarshalText(i, text, "VectorViewFlags")
 }
