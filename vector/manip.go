@@ -321,23 +321,23 @@ func (sv *SVGView) DragMove(e events.Event) {
 	}
 	dv := mpt.Sub(spt)
 
-	es.DragSelCurBBox = es.DragSelStartBBox
-	es.DragSelCurBBox.Min.SetAdd(dv)
-	es.DragSelCurBBox.Max.SetAdd(dv)
+	es.DragSelectCurrentBBox = es.DragSelectStartBBox
+	es.DragSelectCurrentBBox.Min.SetAdd(dv)
+	es.DragSelectCurrentBBox.Max.SetAdd(dv)
 
-	es.DragSelEffBBox.Min = sv.SnapPointToVector(es.DragSelCurBBox.Min)
-	ndv := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
-	es.DragSelEffBBox.Max = es.DragSelStartBBox.Max.Add(ndv)
+	es.DragSelectEffectiveBBox.Min = sv.SnapPointToVector(es.DragSelectCurrentBBox.Min)
+	ndv := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
+	es.DragSelectEffectiveBBox.Max = es.DragSelectStartBBox.Max.Add(ndv)
 
-	es.DragSelEffBBox = sv.SnapBBox(es.DragSelEffBBox)
+	es.DragSelectEffectiveBBox = sv.SnapBBox(es.DragSelectEffectiveBBox)
 
-	pt := es.DragSelStartBBox.Min.Sub(svoff)
-	tdel := es.DragSelEffBBox.Min.Sub(es.DragSelStartBBox.Min)
+	pt := es.DragSelectStartBBox.Min.Sub(svoff)
+	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
 		itm.ApplyDeltaTransform(sv.SSVG(), tdel, mat32.V2(1, 1), 0, pt)
 	}
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
 	// win.UpdateSig()
@@ -473,54 +473,54 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 		sv.ManipStart("Rotate", es.SelectedNamesString())
 	}
 	dv := mat32.V2FromPoint(delta)
-	pt := es.DragSelStartBBox.Min
-	ctr := es.DragSelStartBBox.Min.Add(es.DragSelStartBBox.Max).MulScalar(.5)
+	pt := es.DragSelectStartBBox.Min
+	ctr := es.DragSelectStartBBox.Min.Add(es.DragSelectStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
 	switch sp {
 	case SpBBoxUpL:
-		es.DragSelCurBBox.Min.SetAdd(dv)
-		dy = es.DragSelStartBBox.Min.Y - es.DragSelCurBBox.Min.Y
-		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
-		pt.X = es.DragSelStartBBox.Max.X
+		es.DragSelectCurrentBBox.Min.SetAdd(dv)
+		dy = es.DragSelectStartBBox.Min.Y - es.DragSelectCurrentBBox.Min.Y
+		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
+		pt.X = es.DragSelectStartBBox.Max.X
 	case SpBBoxUpC:
-		es.DragSelCurBBox.Min.Y += dv.Y
-		es.DragSelCurBBox.Max.X += dv.X
-		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
-		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		es.DragSelectCurrentBBox.Min.Y += dv.Y
+		es.DragSelectCurrentBBox.Max.X += dv.X
+		dy = es.DragSelectCurrentBBox.Min.Y - es.DragSelectStartBBox.Min.Y
+		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt = ctr
 	case SpBBoxUpR:
-		es.DragSelCurBBox.Min.Y += dv.Y
-		es.DragSelCurBBox.Max.X += dv.X
-		dy = es.DragSelCurBBox.Min.Y - es.DragSelStartBBox.Min.Y
-		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
-		pt = es.DragSelStartBBox.Min
+		es.DragSelectCurrentBBox.Min.Y += dv.Y
+		es.DragSelectCurrentBBox.Max.X += dv.X
+		dy = es.DragSelectCurrentBBox.Min.Y - es.DragSelectStartBBox.Min.Y
+		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
+		pt = es.DragSelectStartBBox.Min
 	case SpBBoxDnL:
-		es.DragSelCurBBox.Min.X += dv.X
-		es.DragSelCurBBox.Max.Y += dv.Y
-		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
-		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
-		pt = es.DragSelStartBBox.Max
+		es.DragSelectCurrentBBox.Min.X += dv.X
+		es.DragSelectCurrentBBox.Max.Y += dv.Y
+		dy = es.DragSelectStartBBox.Max.Y - es.DragSelectCurrentBBox.Max.Y
+		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
+		pt = es.DragSelectStartBBox.Max
 	case SpBBoxDnC:
-		es.DragSelCurBBox.Max.SetAdd(dv)
-		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
-		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		es.DragSelectCurrentBBox.Max.SetAdd(dv)
+		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
+		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt = ctr
 	case SpBBoxDnR:
-		es.DragSelCurBBox.Max.SetAdd(dv)
-		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
-		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
-		pt.X = es.DragSelStartBBox.Min.X
-		pt.Y = es.DragSelStartBBox.Max.Y
+		es.DragSelectCurrentBBox.Max.SetAdd(dv)
+		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
+		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
+		pt.X = es.DragSelectStartBBox.Min.X
+		pt.Y = es.DragSelectStartBBox.Max.Y
 	case SpBBoxLfM:
-		es.DragSelCurBBox.Min.X += dv.X
-		es.DragSelCurBBox.Max.Y += dv.Y
-		dy = es.DragSelStartBBox.Max.Y - es.DragSelCurBBox.Max.Y
-		dx = es.DragSelStartBBox.Max.X - es.DragSelCurBBox.Min.X
+		es.DragSelectCurrentBBox.Min.X += dv.X
+		es.DragSelectCurrentBBox.Max.Y += dv.Y
+		dy = es.DragSelectStartBBox.Max.Y - es.DragSelectCurrentBBox.Max.Y
+		dx = es.DragSelectStartBBox.Max.X - es.DragSelectCurrentBBox.Min.X
 		pt = ctr
 	case SpBBoxRtM:
-		es.DragSelCurBBox.Max.SetAdd(dv)
-		dy = es.DragSelCurBBox.Max.Y - es.DragSelStartBBox.Max.Y
-		dx = es.DragSelCurBBox.Max.X - es.DragSelStartBBox.Min.X
+		es.DragSelectCurrentBBox.Max.SetAdd(dv)
+		dy = es.DragSelectCurrentBBox.Max.Y - es.DragSelectStartBBox.Max.Y
+		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt = ctr
 	}
 	ang := mat32.Atan2(dy, dx)
@@ -539,7 +539,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 		}
 	}
 
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelCurBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
 }

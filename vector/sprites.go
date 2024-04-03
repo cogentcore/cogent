@@ -140,7 +140,7 @@ func Sprite(ctx gi.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.
 	case SpReshapeBBox:
 		DrawSpriteReshape(sp, subtyp)
 	case SpSelBBox:
-		DrawSpriteSel(sp, subtyp)
+		DrawSpriteSelect(sp, subtyp)
 	case SpNodePoint:
 		DrawSpriteNodePoint(sp, subtyp)
 	case SpNodeCtrl:
@@ -267,8 +267,8 @@ func DrawSpriteReshape(sp *gi.Sprite, bbtyp Sprites) {
 	draw.Draw(sp.Pixels, bbd, colors.C(colors.Scheme.Primary.Base), image.Point{}, draw.Src)
 }
 
-// DrawSpriteSel renders a Select sprite handle -- smaller
-func DrawSpriteSel(sp *gi.Sprite, bbtyp Sprites) {
+// DrawSpriteSelect renders a Select sprite handle -- smaller
+func DrawSpriteSelect(sp *gi.Sprite, bbtyp Sprites) {
 	bsz, bbsz := HandleSpriteSize(.8)
 	if !sp.SetSize(bbsz) { // already set
 		return

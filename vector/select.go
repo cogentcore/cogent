@@ -46,52 +46,52 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 	gi.NewSeparator(tb)
 
-	gv.NewSelectFuncButton(tb, gv.SelGroup).SetText("Group").
+	gv.NewSelectFuncButton(tb, gv.SelectGroup).SetText("Group").
 		SetIcon("sel-group").SetShortcut("Command+G")
 
-	gv.NewSelectFuncButton(tb, gv.SelUnGroup).SetText("Ungroup").
+	gv.NewSelectFuncButton(tb, gv.SelectUnGroup).SetText("Ungroup").
 		SetIcon("sel-ungroup").SetShortcut("Shift+Command+G")
 
 	gi.NewSeparator(tb)
 
-	gv.NewSelectFuncButton(tb, gv.SelRotateLeft).SetText("").
+	gv.NewSelectFuncButton(tb, gv.SelectRotateLeft).SetText("").
 		SetIcon("sel-rotate-left").SetShortcut("Command+[")
-	gv.NewSelectFuncButton(tb, gv.SelRotateRight).SetText("").
+	gv.NewSelectFuncButton(tb, gv.SelectRotateRight).SetText("").
 		SetIcon("sel-rotate-right").SetShortcut("Command+]")
 
-	gv.NewSelectFuncButton(tb, gv.SelFlipHoriz).SetText("").SetIcon("sel-flip-horiz")
-	gv.NewSelectFuncButton(tb, gv.SelFlipVert).SetText("").SetIcon("sel-flip-vert")
+	gv.NewSelectFuncButton(tb, gv.SelectFlipHorizontal).SetText("").SetIcon("sel-flip-horiz")
+	gv.NewSelectFuncButton(tb, gv.SelectFlipVertical).SetText("").SetIcon("sel-flip-vert")
 
 	gi.NewSeparator(tb)
 
-	gv.NewSelectFuncButton(tb, gv.SelRaiseTop).SetText("").SetIcon("sel-raise-top")
-	gv.NewSelectFuncButton(tb, gv.SelRaise).SetText("").SetIcon("sel-raise")
-	gv.NewSelectFuncButton(tb, gv.SelLowerBottom).SetText("").SetIcon("sel-lower-bottom")
-	gv.NewSelectFuncButton(tb, gv.SelLower).SetText("").SetIcon("sel-lower")
+	gv.NewSelectFuncButton(tb, gv.SelectRaiseTop).SetText("").SetIcon("sel-raise-top")
+	gv.NewSelectFuncButton(tb, gv.SelectRaise).SetText("").SetIcon("sel-raise")
+	gv.NewSelectFuncButton(tb, gv.SelectLowerBottom).SetText("").SetIcon("sel-lower-bottom")
+	gv.NewSelectFuncButton(tb, gv.SelectLower).SetText("").SetIcon("sel-lower")
 
 	gi.NewSeparator(tb)
 
 	gi.NewLabel(tb).SetText("X: ")
-	giv.NewValue(tb, &gv.EditState.DragSelEffBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
-		gv.SelSetXPos(gv.EditState.DragSelEffBBox.Min.X)
+	giv.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
+		gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
 	})
 
 	gi.NewLabel(tb).SetText("Y: ")
 	py := gi.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
 	py.OnChange(func(e events.Event) {
-		gv.SelSetYPos(py.Value)
+		gv.SelectSetYPos(py.Value)
 	})
 
 	gi.NewLabel(tb).SetText("W: ")
 	wd := gi.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
 	wd.OnChange(func(e events.Event) {
-		gv.SelSetWidth(wd.Value)
+		gv.SelectSetWidth(wd.Value)
 	})
 
 	gi.NewLabel(tb).SetText("H: ")
 	ht := gi.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
 	ht.OnChange(func(e events.Event) {
-		gv.SelSetHeight(ht.Value)
+		gv.SelectSetHeight(ht.Value)
 	})
 }
 
@@ -140,7 +140,7 @@ func (sv *SVGView) RemoveSelSprites() {
 	InactivateSprites(sv, SpReshapeBBox)
 	InactivateSprites(sv, SpSelBBox)
 	es := sv.EditState()
-	es.NSelSprites = 0
+	es.NSelectSprites = 0
 	// win.UpdateSig()
 }
 
@@ -150,7 +150,7 @@ func (sv *SVGView) UpdateSelSprites() {
 	// defer win.UpdateEnd(updt)
 
 	es := sv.EditState()
-	es.UpdateSelBBox()
+	es.UpdateSelectBBox()
 	if !es.HasSelected() {
 		sv.RemoveSelSprites()
 		return
@@ -163,7 +163,7 @@ func (sv *SVGView) UpdateSelSprites() {
 		// })
 		Sprite(sv, SpReshapeBBox, i, 0, image.Point{})
 	}
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
 	sv.SetSelSpritePos()
 
 	// win.UpdateSig()
@@ -171,9 +171,9 @@ func (sv *SVGView) UpdateSelSprites() {
 
 func (sv *SVGView) SetSelSpritePos() {
 	es := sv.EditState()
-	nsel := es.NSelSprites
+	nsel := es.NSelectSprites
 
-	es.NSelSprites = 0
+	es.NSelectSprites = 0
 	if len(es.Selected) > 1 {
 		nbox := 0
 		sl := es.SelectedList(false)
@@ -187,11 +187,11 @@ func (sv *SVGView) SetSelSpritePos() {
 			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
 			nbox++
 		}
-		es.NSelSprites = nbox
+		es.NSelectSprites = nbox
 	}
 
 	sprites := &sv.Scene.Stage.Sprites
-	for si := es.NSelSprites; si < nsel; si++ {
+	for si := es.NSelectSprites; si < nsel; si++ {
 		for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
 			spnm := SpriteName(SpSelBBox, i, si)
 			sprites.InactivateSprite(spnm)
@@ -295,8 +295,8 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 ///////////////////////////////////////////////////////////////////////
 //   Actions
 
-// SelGroup groups items together
-func (gv *VectorView) SelGroup() { //gti:add
+// SelectGroup groups items together
+func (gv *VectorView) SelectGroup() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -324,8 +324,8 @@ func (gv *VectorView) SelGroup() { //gti:add
 	gv.ChangeMade()
 }
 
-// SelUnGroup ungroups items from each other
-func (gv *VectorView) SelUnGroup() { //gti:add
+// SelectUnGroup ungroups items from each other
+func (gv *VectorView) SelectUnGroup() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -356,7 +356,7 @@ func (gv *VectorView) SelUnGroup() { //gti:add
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelRotate(deg float32) {
+func (gv *VectorView) SelectRotate(deg float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -379,7 +379,7 @@ func (gv *VectorView) SelRotate(deg float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelScale(scx, scy float32) {
+func (gv *VectorView) SelectScale(scx, scy float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -401,28 +401,28 @@ func (gv *VectorView) SelScale(scx, scy float32) {
 	gv.ChangeMade()
 }
 
-// SelRotateLeft rotates the selection 90 degrees counter-clockwise
-func (gv *VectorView) SelRotateLeft() { //gti:add
-	gv.SelRotate(-90)
+// SelectRotateLeft rotates the selection 90 degrees counter-clockwise
+func (gv *VectorView) SelectRotateLeft() { //gti:add
+	gv.SelectRotate(-90)
 }
 
-// SelRotateRight rotates the selection 90 degrees clockwise
-func (gv *VectorView) SelRotateRight() { //gti:add
-	gv.SelRotate(90)
+// SelectRotateRight rotates the selection 90 degrees clockwise
+func (gv *VectorView) SelectRotateRight() { //gti:add
+	gv.SelectRotate(90)
 }
 
-// SelFlipHoriz flips the selection horizontally
-func (gv *VectorView) SelFlipHoriz() { //gti:add
-	gv.SelScale(-1, 1)
+// SelectFlipHorizontal flips the selection horizontally
+func (gv *VectorView) SelectFlipHorizontal() { //gti:add
+	gv.SelectScale(-1, 1)
 }
 
-// SelFlipVert flips the selection vertically
-func (gv *VectorView) SelFlipVert() { //gti:add
-	gv.SelScale(1, -1)
+// SelectFlipVertical flips the selection vertically
+func (gv *VectorView) SelectFlipVertical() { //gti:add
+	gv.SelectScale(1, -1)
 }
 
-// SelRaiseTop raises the selection to the top of the layer
-func (gv *VectorView) SelRaiseTop() { //gti:add
+// SelectRaiseTop raises the selection to the top of the layer
+func (gv *VectorView) SelectRaiseTop() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -443,8 +443,8 @@ func (gv *VectorView) SelRaiseTop() { //gti:add
 	gv.ChangeMade()
 }
 
-// SelRaise raises the selection by one level in the layer
-func (gv *VectorView) SelRaise() { //gti:add
+// SelectRaise raises the selection by one level in the layer
+func (gv *VectorView) SelectRaise() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -467,8 +467,8 @@ func (gv *VectorView) SelRaise() { //gti:add
 	gv.ChangeMade()
 }
 
-// SelLowerBottom lowers the selection to the bottom of the layer
-func (gv *VectorView) SelLowerBottom() { //gti:add
+// SelectLowerBottom lowers the selection to the bottom of the layer
+func (gv *VectorView) SelectLowerBottom() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -489,8 +489,8 @@ func (gv *VectorView) SelLowerBottom() { //gti:add
 	gv.ChangeMade()
 }
 
-// SelLower lowers the selection by one level in the layer
-func (gv *VectorView) SelLower() { //gti:add
+// SelectLower lowers the selection by one level in the layer
+func (gv *VectorView) SelectLower() { //gti:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -513,7 +513,7 @@ func (gv *VectorView) SelLower() { //gti:add
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelSetXPos(xp float32) {
+func (gv *VectorView) SelectSetXPos(xp float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -524,7 +524,7 @@ func (gv *VectorView) SelSetXPos(xp float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelSetYPos(yp float32) {
+func (gv *VectorView) SelectSetYPos(yp float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -535,7 +535,7 @@ func (gv *VectorView) SelSetYPos(yp float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelSetWidth(wd float32) {
+func (gv *VectorView) SelectSetWidth(wd float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -546,7 +546,7 @@ func (gv *VectorView) SelSetWidth(wd float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelSetHeight(ht float32) {
+func (gv *VectorView) SelectSetHeight(ht float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return

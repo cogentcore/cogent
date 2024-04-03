@@ -52,10 +52,10 @@ type EditState struct {
 	ActMu sync.Mutex `copier:"-" json:"-" xml:"-" view:"-"`
 
 	// selected item(s)
-	Selected map[svg.Node]*SelState `copier:"-" json:"-" xml:"-" view:"-"`
+	Selected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" view:"-"`
 
 	// selection just happened on press, and no drag happened in between
-	SelNoDrag bool
+	SelectNoDrag bool
 
 	// true if a new text item was made while dragging
 	NewTextMade bool
@@ -67,25 +67,25 @@ type EditState struct {
 	DragCurPos image.Point
 
 	// current selection bounding box
-	SelBBox mat32.Box2
+	SelectBBox mat32.Box2
 
 	// number of current selectbox sprites
-	NSelSprites int
+	NSelectSprites int
 
 	// last select action position -- continued clicks in same area lead to deeper selection
-	LastSelPos image.Point
+	LastSelectPos image.Point
 
 	// recently selected item(s) -- within the same selection position
-	RecentlySelected map[svg.Node]*SelState `copier:"-" json:"-" xml:"-" view:"-"`
+	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" view:"-"`
 
 	// bbox at start of dragging
-	DragSelStartBBox mat32.Box2
+	DragSelectStartBBox mat32.Box2
 
 	// current bbox during dragging -- non-snapped version
-	DragSelCurBBox mat32.Box2
+	DragSelectCurrentBBox mat32.Box2
 
 	// current effective bbox during dragging -- snapped version
-	DragSelEffBBox mat32.Box2
+	DragSelectEffectiveBBox mat32.Box2
 
 	// potential points of alignment for dragging
 	AlignPts [BBoxPointsN][]mat32.Vec2
@@ -100,10 +100,10 @@ type EditState struct {
 	PathNodes []*PathNode
 
 	// selected path nodes
-	PathSel map[int]struct{}
+	PathSelect map[int]struct{}
 
 	// current path command indexes within PathNodes -- where the commands start
-	PathCmds []int
+	PathCommands []int
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
@@ -168,7 +168,7 @@ func (es *EditState) ResetSelected() {
 
 // NewSelected makes a new Selected list
 func (es *EditState) NewSelected() {
-	es.Selected = make(map[svg.Node]*SelState)
+	es.Selected = make(map[svg.Node]*SelectedState)
 }
 
 // SelectedList returns list of selected items, sorted either ascending or descending
@@ -253,7 +253,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 // status of index label
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
-	ss := &SelState{Order: idx}
+	ss := &SelectedState{Order: idx}
 	itm.WriteGeom(es.VectorView.SSVG(), &ss.InitGeom)
 	if es.Selected == nil {
 		es.NewSelected()
@@ -317,7 +317,7 @@ func (es *EditState) SelectAction(n svg.Node, mode events.SelectModes, pos image
 	if mode == events.NoSelect {
 		return
 	}
-	if !es.HasSelected() || !es.PosInLastSel(pos) {
+	if !es.HasSelected() || !es.PosInLastSelect(pos) {
 		es.StartRecents(pos)
 	}
 	switch mode {
@@ -354,28 +354,28 @@ func (es *EditState) SelectedToRecents() {
 }
 
 func (es *EditState) NewRecents() {
-	es.RecentlySelected = make(map[svg.Node]*SelState)
+	es.RecentlySelected = make(map[svg.Node]*SelectedState)
 }
 
 // StartRecents starts a new list of recently-selected items
 func (es *EditState) StartRecents(pos image.Point) {
 	es.NewRecents()
-	es.LastSelPos = pos
+	es.LastSelectPos = pos
 }
 
-// PosInLastSel returns true if position is within tolerance of
+// PosInLastSelect returns true if position is within tolerance of
 // last selection point
-func (es *EditState) PosInLastSel(pos image.Point) bool {
+func (es *EditState) PosInLastSelect(pos image.Point) bool {
 	tol := image.Point{Prefs.SnapTol, Prefs.SnapTol}
-	bb := image.Rectangle{Min: es.LastSelPos.Sub(tol), Max: es.LastSelPos.Add(tol)}
+	bb := image.Rectangle{Min: es.LastSelectPos.Sub(tol), Max: es.LastSelectPos.Add(tol)}
 	return pos.In(bb)
 }
 
 ////////////////////////////////////////////////////////////////
 
-// UpdateSelBBox updates the current selection bbox surrounding all selected items
-func (es *EditState) UpdateSelBBox() {
-	es.SelBBox.SetEmpty()
+// UpdateSelectBBox updates the current selection bbox surrounding all selected items
+func (es *EditState) UpdateSelectBBox() {
+	es.SelectBBox.SetEmpty()
 	if len(es.Selected) == 0 {
 		return
 	}
@@ -387,7 +387,7 @@ func (es *EditState) UpdateSelBBox() {
 		bb.SetFromRect(g.BBox)
 		bbox.ExpandByBox(bb)
 	}
-	es.SelBBox = bbox
+	es.SelectBBox = bbox
 }
 
 // DragReset resets drag state information
@@ -402,10 +402,10 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	if len(es.Selected) == 0 {
 		return
 	}
-	es.UpdateSelBBox()
-	es.DragSelStartBBox = es.SelBBox
-	es.DragSelCurBBox = es.SelBBox
-	es.DragSelEffBBox = es.SelBBox
+	es.UpdateSelectBBox()
+	es.DragSelectStartBBox = es.SelectBBox
+	es.DragSelectCurrentBBox = es.SelectBBox
+	es.DragSelectEffectiveBBox = es.SelectBBox
 	for itm, ss := range es.Selected {
 		itm.WriteGeom(es.VectorView.SSVG(), &ss.InitGeom)
 	}
@@ -420,8 +420,8 @@ func (es *EditState) DragNodeStart(pos image.Point) {
 //////////////////////////////////////////////////////
 //  Other Types
 
-// SelState is state for selected nodes
-type SelState struct {
+// SelectedState is state for selected nodes
+type SelectedState struct {
 
 	// order item was selected
 	Order int

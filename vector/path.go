@@ -76,9 +76,9 @@ func (vv *VectorView) UpdateNodeToolbar() {
 		return
 	}
 	px := tb.ChildByName("posx", 8).(*gi.Spinner)
-	px.SetValue(es.DragSelCurBBox.Min.X)
+	px.SetValue(es.DragSelectCurrentBBox.Min.X)
 	py := tb.ChildByName("posy", 9).(*gi.Spinner)
-	py.SetValue(es.DragSelCurBBox.Min.Y)
+	py.SetValue(es.DragSelectCurrentBBox.Min.Y)
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -178,7 +178,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 		return
 	}
 
-	es.PathNodes, es.PathCmds = sv.PathNodes(path)
+	es.PathNodes, es.PathCommands = sv.PathNodes(path)
 	es.NNodeSprites = len(es.PathNodes)
 	es.ActivePath = path
 
@@ -210,7 +210,7 @@ func (sv *SVGView) RemoveNodeSprites() {
 	}
 	es.NNodeSprites = 0
 	es.PathNodes = nil
-	es.PathCmds = nil
+	es.PathCommands = nil
 	es.ActivePath = nil
 }
 

@@ -135,12 +135,12 @@ func (sv *SVGView) HandleEvents() {
 		es := sv.EditState()
 		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
 
-		es.SelNoDrag = false
+		es.SelectNoDrag = false
 		switch {
-		case es.HasSelected() && es.SelBBox.ContainsPoint(mat32.V2FromPoint(e.Pos())):
+		case es.HasSelected() && es.SelectBBox.ContainsPoint(mat32.V2FromPoint(e.Pos())):
 			// note: this absorbs potential secondary selections within selection -- handled
 			// on release below, if nothing else happened
-			es.SelNoDrag = true
+			es.SelectNoDrag = true
 			es.DragSelStart(e.Pos())
 		case sob != nil && es.Tool == SelectTool:
 			es.SelectAction(sob, e.SelectMode(), e.Pos())
@@ -160,15 +160,15 @@ func (sv *SVGView) HandleEvents() {
 		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
 
 		if es.InAction() {
-			es.SelNoDrag = false
+			es.SelectNoDrag = false
 			es.NewTextMade = false
 			sv.ManipDone()
 			return
 		}
 		if e.MouseButton() == events.Left {
 			// release on select -- do extended selection processing
-			if (es.SelNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
-				es.SelNoDrag = false
+			if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
+				es.SelectNoDrag = false
 				e.SetHandled()
 				if sob == nil {
 					sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
@@ -193,7 +193,7 @@ func (sv *SVGView) HandleEvents() {
 	})
 	sv.On(events.SlideMove, func(e events.Event) {
 		es := sv.EditState()
-		es.SelNoDrag = false
+		es.SelectNoDrag = false
 		e.SetHandled()
 		es.DragStartPos = e.StartPos()
 		if e.HasAnyModifier(key.Shift) {
@@ -212,11 +212,11 @@ func (sv *SVGView) HandleEvents() {
 				sv.SetRubberBand(e.Pos())
 			case RectTool:
 				sv.NewElDrag(svg.RectType, es.DragStartPos, e.Pos())
-				es.SelBBox.Min.X += 1
-				es.SelBBox.Min.Y += 1
-				es.DragSelStartBBox = es.SelBBox
-				es.DragSelCurBBox = es.SelBBox
-				es.DragSelEffBBox = es.SelBBox
+				es.SelectBBox.Min.X += 1
+				es.SelectBBox.Min.Y += 1
+				es.DragSelectStartBBox = es.SelectBBox
+				es.DragSelectCurrentBBox = es.SelectBBox
+				es.DragSelectEffectiveBBox = es.SelectBBox
 			case EllipseTool:
 				sv.NewElDrag(svg.EllipseType, es.DragStartPos, e.Pos())
 			case TextTool:
@@ -758,11 +758,11 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
 
-	es.SelBBox.Min.X += 1
-	es.SelBBox.Min.Y += 1
-	es.DragSelStartBBox = es.SelBBox
-	es.DragSelCurBBox = es.SelBBox
-	es.DragSelEffBBox = es.SelBBox
+	es.SelectBBox.Min.X += 1
+	es.SelectBBox.Min.Y += 1
+	es.DragSelectStartBBox = es.SelectBBox
+	es.DragSelectCurrentBBox = es.SelectBBox
+	es.DragSelectEffectiveBBox = es.SelectBBox
 
 	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
 	return nr

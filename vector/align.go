@@ -79,7 +79,7 @@ func (vv *VectorView) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Nod
 		an = sl[0]
 		bb = an.AsNodeBase().BBox
 	case AlignSelectBox:
-		bb = image.Rectangle{Min: es.DragSelCurBBox.Min.ToPointFloor(), Max: es.DragSelCurBBox.Max.ToPointCeil()}
+		bb = image.Rectangle{Min: es.DragSelectCurrentBBox.Min.ToPointFloor(), Max: es.DragSelectCurrentBBox.Max.ToPointCeil()}
 	}
 	bb = bb.Sub(svoff)
 	return bb, an

@@ -1214,7 +1214,7 @@ type VarView struct {
 	// variable being edited
 	Var *cdebug.Variable `set:"-"`
 
-	SelVar *cdebug.Variable `set:"-"`
+	SelectVar *cdebug.Variable `set:"-"`
 
 	// frame info
 	FrameInfo string `set:"-"`
@@ -1228,7 +1228,7 @@ func (vv *VarView) SetVar(vr *cdebug.Variable, frinfo string) {
 	vv.FrameInfo = frinfo
 	if vv.Var != vr {
 		vv.Var = vr
-		vv.SelVar = vr
+		vv.SelectVar = vr
 	}
 	vv.ConfigVarView()
 }
@@ -1249,7 +1249,6 @@ func (vv *VarView) ConfigVarView() {
 	gi.NewSplits(vv, "splitview")
 	vv.SetFrameInfo(vv.FrameInfo)
 	vv.ConfigSplits()
-	return
 }
 
 // Splits returns the main Splits
@@ -1271,8 +1270,8 @@ func (vv *VarView) ConfigToolbar(tb *gi.Toolbar) {
 	gi.NewButton(tb).SetText("Follow pointer").SetIcon(icons.ArrowForward).
 		SetTooltip("FollowPtr loads additional debug state information for pointer variables, so you can continue clicking through the tree to see what it points to.").
 		OnClick(func(e events.Event) {
-			if vv.SelVar != nil {
-				vv.SelVar.FollowPtr()
+			if vv.SelectVar != nil {
+				vv.SelectVar.FollowPtr()
 				tv := vv.TreeView()
 				tv.SyncTree(vv.Var)
 			}
@@ -1301,7 +1300,7 @@ func (vv *VarView) ConfigSplits() {
 				sn := tv.SelectedNodes[0].AsTreeView().SyncNode
 				vr, ok := sn.(*cdebug.Variable)
 				if ok {
-					vv.SelVar = vr
+					vv.SelectVar = vr
 				}
 				sv.SetStruct(sn)
 			}
