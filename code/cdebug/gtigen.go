@@ -79,3 +79,5 @@ func (t *Variable) SetMapVar(v map[string]*Variable) *Variable { t.MapVar = v; r
 // SetDbg sets the [Variable.Dbg]:
 // our debugger -- for getting further variable data
 func (t *Variable) SetDbg(v GiDebug) *Variable { t.Dbg = v; return t }
+
+var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cdebug.Params", IDName: "params", Doc: "Params are overall debugger parameters", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "Mode", Doc: "mode for running the debugger"}, {Name: "PID", Doc: "process id number to attach to, for Attach mode"}, {Name: "Args", Doc: "optional extra args to pass to the debugger.\nUse -- double-dash and then add args to pass args to the executable\n(double-dash is by itself as a separate arg first).\nFor Debug test, must use -test.run instead of plain -run to specify tests to run."}, {Name: "StatFunc", Doc: "status function for debugger updating status"}, {Name: "VarList", Doc: "parameters for level of detail on overall list of variables"}, {Name: "GetVar", Doc: "parameters for level of detail retrieving a specific variable"}}})

@@ -49,6 +49,3 @@ func (t *CodeView) SetOpenNodes(v code.OpenNodes) *CodeView { t.OpenNodes = v; r
 
 // SetTooltip sets the [CodeView.Tooltip]
 func (t *CodeView) SetTooltip(v string) *CodeView { t.Tooltip = v; return t }
-
-// SetStackTop sets the [CodeView.StackTop]
-func (t *CodeView) SetStackTop(v int) *CodeView { t.StackTop = v; return t }

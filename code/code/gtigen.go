@@ -50,9 +50,6 @@ func (t *DebugView) SetDbgTime(v time.Time) *DebugView { t.DbgTime = v; return t
 // SetTooltip sets the [DebugView.Tooltip]
 func (t *DebugView) SetTooltip(v string) *DebugView { t.Tooltip = v; return t }
 
-// SetStackTop sets the [DebugView.StackTop]
-func (t *DebugView) SetStackTop(v int) *DebugView { t.StackTop = v; return t }
-
 // StackViewType is the [gti.Type] for [StackView]
 var StackViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
 
@@ -75,9 +72,6 @@ func (t *StackView) SetFindFrames(v bool) *StackView { t.FindFrames = v; return 
 // SetTooltip sets the [StackView.Tooltip]
 func (t *StackView) SetTooltip(v string) *StackView { t.Tooltip = v; return t }
 
-// SetStackTop sets the [StackView.StackTop]
-func (t *StackView) SetStackTop(v int) *StackView { t.StackTop = v; return t }
-
 // BreakViewType is the [gti.Type] for [BreakView]
 var BreakViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &BreakView{}})
 
@@ -95,9 +89,6 @@ func (t *BreakView) New() ki.Ki { return &BreakView{} }
 
 // SetTooltip sets the [BreakView.Tooltip]
 func (t *BreakView) SetTooltip(v string) *BreakView { t.Tooltip = v; return t }
-
-// SetStackTop sets the [BreakView.StackTop]
-func (t *BreakView) SetStackTop(v int) *BreakView { t.StackTop = v; return t }
 
 // ThreadViewType is the [gti.Type] for [ThreadView]
 var ThreadViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &ThreadView{}})
@@ -117,9 +108,6 @@ func (t *ThreadView) New() ki.Ki { return &ThreadView{} }
 // SetTooltip sets the [ThreadView.Tooltip]
 func (t *ThreadView) SetTooltip(v string) *ThreadView { t.Tooltip = v; return t }
 
-// SetStackTop sets the [ThreadView.StackTop]
-func (t *ThreadView) SetStackTop(v int) *ThreadView { t.StackTop = v; return t }
-
 // TaskViewType is the [gti.Type] for [TaskView]
 var TaskViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &TaskView{}})
 
@@ -137,9 +125,6 @@ func (t *TaskView) New() ki.Ki { return &TaskView{} }
 
 // SetTooltip sets the [TaskView.Tooltip]
 func (t *TaskView) SetTooltip(v string) *TaskView { t.Tooltip = v; return t }
-
-// SetStackTop sets the [TaskView.StackTop]
-func (t *TaskView) SetStackTop(v int) *TaskView { t.StackTop = v; return t }
 
 // VarsViewType is the [gti.Type] for [VarsView]
 var VarsViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
@@ -163,11 +148,8 @@ func (t *VarsView) SetGlobalVars(v bool) *VarsView { t.GlobalVars = v; return t 
 // SetTooltip sets the [VarsView.Tooltip]
 func (t *VarsView) SetTooltip(v string) *VarsView { t.Tooltip = v; return t }
 
-// SetStackTop sets the [VarsView.StackTop]
-func (t *VarsView) SetStackTop(v int) *VarsView { t.StackTop = v; return t }
-
 // VarViewType is the [gti.Type] for [VarView]
-var VarViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
+var VarViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
 
 // NewVarView adds a new [VarView] with the given name to the given parent:
 // VarView shows a debug variable in an inspector-like framework,
@@ -188,9 +170,6 @@ func (t *VarView) SetDbgView(v *DebugView) *VarView { t.DbgView = v; return t }
 
 // SetTooltip sets the [VarView.Tooltip]
 func (t *VarView) SetTooltip(v string) *VarView { t.Tooltip = v; return t }
-
-// SetStackTop sets the [VarView.StackTop]
-func (t *VarView) SetStackTop(v int) *VarView { t.StackTop = v; return t }
 
 // FileNodeType is the [gti.Type] for [FileNode]
 var FileNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []gti.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "Node"}}, Instance: &FileNode{}})
@@ -263,9 +242,9 @@ func (t *FindView) New() ki.Ki { return &FindView{} }
 // parent code project
 func (t *FindView) SetCode(v Code) *FindView { t.Code = v; return t }
 
-// SetLangVv sets the [FindView.LangVV]:
+// SetLangVV sets the [FindView.LangVV]:
 // langs value view
-func (t *FindView) SetLangVv(v giv.Value) *FindView { t.LangVV = v; return t }
+func (t *FindView) SetLangVV(v giv.Value) *FindView { t.LangVV = v; return t }
 
 // SetTime sets the [FindView.Time]:
 // time of last find
@@ -278,12 +257,7 @@ func (t *FindView) SetRe(v *regexp.Regexp) *FindView { t.Re = v; return t }
 // SetTooltip sets the [FindView.Tooltip]
 func (t *FindView) SetTooltip(v string) *FindView { t.Tooltip = v; return t }
 
-// SetStackTop sets the [FindView.StackTop]
-func (t *FindView) SetStackTop(v int) *FindView { t.StackTop = v; return t }
-
-var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.KeyMaps", IDName: "key-maps", Doc: "KeyMaps is a list of KeyMap's -- users can edit these in Prefs -- to create\na custom one, just duplicate an existing map, rename, and customize", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Open", Doc: "Open opens keymaps from a json-formatted file.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save saves keymaps to a json-formatted file.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "OpenSettings", Doc: "OpenSettings opens KeyMaps from App standard prefs directory, using PrefsKeyMapsFilename", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Returns: []string{"error"}}, {Name: "SavePrefs", Doc: "SavePrefs saves KeyMaps to App standard prefs directory, using PrefsKeyMapsFilename", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Returns: []string{"error"}}, {Name: "RevertToStd", Doc: "RevertToStd reverts this map to using the StdKeyMaps that are compiled into\nthe program and have all the lastest key functions bound to standard\nvalues.  If you have edited your maps, and are finding things not working,\nit is a good idea to save your current maps and try this,\nor at least do ViewStdMaps to see the current standards.\n<b>Your current map edits will be lost if you proceed!</b>", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "ViewStd", Doc: "ViewStd shows the standard maps that are compiled into the program and have\nall the lastest key functions bound to standard values.  Useful for\ncomparing against custom maps.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}})
-
-var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "VersionInfo", Doc: "VersionInfo returns Code version information", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Returns: []string{"string"}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith settings automatically.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "SettingsBase"}}, Fields: []gti.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "KeyMap", Doc: "key map for code-specific keyboard sequences"}, {Name: "SaveKeyMaps", Doc: "if set, the current available set of key maps is saved to your settings directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
+var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith settings automatically.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "SettingsBase"}}, Fields: []gti.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "KeyMap", Doc: "key map for code-specific keyboard sequences"}, {Name: "SaveKeyMaps", Doc: "if set, the current available set of key maps is saved to your settings directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
 
 var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file view settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"}}})
 
@@ -343,9 +317,6 @@ func (t *SpellView) SetLastAction(v *gi.Button) *SpellView { t.LastAction = v; r
 // SetTooltip sets the [SpellView.Tooltip]
 func (t *SpellView) SetTooltip(v string) *SpellView { t.Tooltip = v; return t }
 
-// SetStackTop sets the [SpellView.StackTop]
-func (t *SpellView) SetStackTop(v int) *SpellView { t.StackTop = v; return t }
-
 // SymbolsViewType is the [gti.Type] for [SymbolsView]
 var SymbolsViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
 
@@ -379,9 +350,6 @@ func (t *SymbolsView) SetMatch(v string) *SymbolsView { t.Match = v; return t }
 
 // SetTooltip sets the [SymbolsView.Tooltip]
 func (t *SymbolsView) SetTooltip(v string) *SymbolsView { t.Tooltip = v; return t }
-
-// SetStackTop sets the [SymbolsView.StackTop]
-func (t *SymbolsView) SetStackTop(v int) *SymbolsView { t.StackTop = v; return t }
 
 // SymNodeType is the [gti.Type] for [SymNode]
 var SymNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []gti.Field{{Name: "Node"}}, Fields: []gti.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
@@ -478,9 +446,6 @@ func (t *TextEditor) SetCode(v Code) *TextEditor { t.Code = v; return t }
 
 // SetTooltip sets the [TextEditor.Tooltip]
 func (t *TextEditor) SetTooltip(v string) *TextEditor { t.Tooltip = v; return t }
-
-// SetStackTop sets the [TextEditor.StackTop]
-func (t *TextEditor) SetStackTop(v int) *TextEditor { t.StackTop = v; return t }
 
 // SetPlaceholder sets the [TextEditor.Placeholder]
 func (t *TextEditor) SetPlaceholder(v string) *TextEditor { t.Placeholder = v; return t }

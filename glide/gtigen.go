@@ -24,6 +24,3 @@ func (t *Page) New() ki.Ki { return &Page{} }
 
 // SetTooltip sets the [Page.Tooltip]
 func (t *Page) SetTooltip(v string) *Page { t.Tooltip = v; return t }
-
-// SetStackTop sets the [Page.StackTop]
-func (t *Page) SetStackTop(v int) *Page { t.StackTop = v; return t }
