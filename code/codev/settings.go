@@ -84,7 +84,7 @@ func (ge *CodeView) CallSplitsSetView(ctx gi.Widget) {
 // SplitsSetView sets split view splitters to given named setting
 func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 	sv := ge.Splits()
-	sp, _, ok := code.AvailSplits.SplitByName(split)
+	sp, _, ok := code.AvailableSplits.SplitByName(split)
 	if ok {
 		sv.SetSplits(sp.Splits...).NeedsLayout()
 		ge.Settings.SplitName = split
@@ -98,10 +98,10 @@ func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 // existing name, and saves to prefs file
 func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
 	sv := ge.Splits()
-	sp, _, ok := code.AvailSplits.SplitByName(split)
+	sp, _, ok := code.AvailableSplits.SplitByName(split)
 	if ok {
 		sp.SaveSplits(sv.Splits)
-		code.AvailSplits.SavePrefs()
+		code.AvailableSplits.SavePrefs()
 	}
 }
 
@@ -109,13 +109,13 @@ func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
 // saves to prefs file
 func (ge *CodeView) SplitsSaveAs(name, desc string) { //gti:add
 	sv := ge.Splits()
-	code.AvailSplits.Add(name, desc, sv.Splits)
-	code.AvailSplits.SavePrefs()
+	code.AvailableSplits.Add(name, desc, sv.Splits)
+	code.AvailableSplits.SavePrefs()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
 func (ge *CodeView) SplitsEdit() { //gti:add
-	code.SplitsView(&code.AvailSplits)
+	code.SplitsView(&code.AvailableSplits)
 }
 
 // LangDefaults applies default language settings based on MainLang

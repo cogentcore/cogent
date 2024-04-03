@@ -46,16 +46,16 @@ type Splits []*Split
 // available named splits
 type SplitName string
 
-// AvailSplits are available named splitter settings.  can be loaded / saved /
-// edited with settings.  This is set to StdSplits at startup.
-var AvailSplits Splits
+// AvailableSplits are available named splitter settings.  can be loaded / saved /
+// edited with settings.  This is set to StandardSplits at startup.
+var AvailableSplits Splits
 
-// AvailSplitNames are the names of the current AvailSplits -- used for some choosers
-var AvailSplitNames []string
+// AvailableSplitNames are the names of the current AvailableSplits -- used for some choosers
+var AvailableSplitNames []string
 
 func init() {
-	AvailSplits.CopyFrom(StandardSplits)
-	AvailSplitNames = AvailSplits.Names()
+	AvailableSplits.CopyFrom(StandardSplits)
+	AvailableSplitNames = AvailableSplits.Names()
 }
 
 // SplitByName returns a named split and index by name -- returns false and emits a
@@ -128,7 +128,7 @@ func (lt *Splits) OpenSettings() error { //gti:add
 	AvailableSplitsChanged = false
 	err := lt.Open(gi.Filename(pnm))
 	if err == nil {
-		AvailSplitNames = lt.Names()
+		AvailableSplitNames = lt.Names()
 	}
 	return err
 }
@@ -139,7 +139,7 @@ func (lt *Splits) SavePrefs() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, PrefsSplitsFilename)
 	AvailableSplitsChanged = false
-	AvailSplitNames = lt.Names()
+	AvailableSplitNames = lt.Names()
 	return lt.Save(gi.Filename(pnm))
 }
 

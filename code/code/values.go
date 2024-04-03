@@ -273,8 +273,8 @@ func (v *SplitValue) Update() {
 
 func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
 	cur := laser.ToString(v.Value.Interface())
-	m := gi.NewMenuFromStrings(AvailSplitNames, cur, func(idx int) {
-		nm := AvailSplitNames[idx]
+	m := gi.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
+		nm := AvailableSplitNames[idx]
 		v.SetValue(nm)
 		v.Update()
 		if fun != nil {
@@ -298,15 +298,15 @@ func RegistersView(pt *Registers) {
 
 	tv := giv.NewTableView(d).SetSlice(pt)
 
-	AvailRegistersChanged = false
+	AvailableRegistersChanged = false
 	tv.OnChange(func(e events.Event) {
-		AvailRegistersChanged = true
+		AvailableRegistersChanged = true
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
+		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailRegistersChanged && pt == &AvailRegisters) })
+			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
@@ -343,13 +343,13 @@ func (v *RegisterValue) Update() {
 }
 
 func (v *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
-	if len(AvailRegisterNames) == 0 {
+	if len(AvailableRegisterNames) == 0 {
 		gi.MessageSnackbar(ctx, "No registers available")
 		return
 	}
 	cur := laser.ToString(v.Value.Interface())
-	m := gi.NewMenuFromStrings(AvailRegisterNames, cur, func(idx int) {
-		rnm := AvailRegisterNames[idx]
+	m := gi.NewMenuFromStrings(AvailableRegisterNames, cur, func(idx int) {
+		rnm := AvailableRegisterNames[idx]
 		if ci := strings.Index(rnm, ":"); ci > 0 {
 			rnm = rnm[:ci]
 		}

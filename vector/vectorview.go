@@ -799,7 +799,7 @@ func (vv *VectorView) EditRecents() {
 // SplitsSetView sets split view splitters to given named setting
 func (vv *VectorView) SplitsSetView(split SplitName) {
 	sv := vv.Splits()
-	sp, _, ok := AvailSplits.SplitByName(split)
+	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
 		sv.SetSplits(sp.Splits...).NeedsLayout()
 		Prefs.SplitName = split
@@ -810,10 +810,10 @@ func (vv *VectorView) SplitsSetView(split SplitName) {
 // existing name, and saves to prefs file
 func (vv *VectorView) SplitsSave(split SplitName) {
 	sv := vv.Splits()
-	sp, _, ok := AvailSplits.SplitByName(split)
+	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
 		sp.SaveSplits(sv.Splits)
-		AvailSplits.SavePrefs()
+		AvailableSplits.SavePrefs()
 	}
 }
 
@@ -821,13 +821,13 @@ func (vv *VectorView) SplitsSave(split SplitName) {
 // saves to prefs file
 func (vv *VectorView) SplitsSaveAs(name, desc string) {
 	spv := vv.Splits()
-	AvailSplits.Add(name, desc, spv.Splits)
-	AvailSplits.SavePrefs()
+	AvailableSplits.Add(name, desc, spv.Splits)
+	AvailableSplits.SavePrefs()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
 func (vv *VectorView) SplitsEdit() {
-	SplitsView(&AvailSplits)
+	SplitsView(&AvailableSplits)
 }
 
 // HelpWiki opens wiki page for grid on github

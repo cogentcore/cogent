@@ -149,7 +149,7 @@ func (pf *Preferences) Save() error {
 	if err != nil {
 		log.Println(err)
 	}
-	AvailSplits.SavePrefs()
+	AvailableSplits.SavePrefs()
 	pf.Changed = false
 	return err
 }
@@ -187,7 +187,7 @@ func (pf *Preferences) DarkMode() {
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
 func (pf *Preferences) EditSplits() {
-	SplitsView(&AvailSplits)
+	SplitsView(&AvailableSplits)
 }
 
 // UpdateAll updates all open windows with current preferences -- triggers

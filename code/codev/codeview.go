@@ -240,7 +240,7 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 		ge.LangDefaults()
 		ge.SetWindowNameTitle()
 		ge.UpdateFiles()
-		ge.SplitsSetView(code.SplitName(code.AvailSplitNames[0]))
+		ge.SplitsSetView(code.SplitName(code.AvailableSplitNames[0]))
 		if fnm != "" {
 			ge.NextViewFile(gi.Filename(fnm))
 		}

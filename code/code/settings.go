@@ -112,8 +112,8 @@ func (se *SettingsData) Save() error {
 	if se.SaveCmds {
 		CustomCommands.SavePrefs()
 	}
-	AvailSplits.SavePrefs()
-	AvailRegisters.SavePrefs()
+	AvailableSplits.SavePrefs()
+	AvailableRegisters.SaveSettings()
 	return err
 }
 
@@ -131,8 +131,8 @@ func (se *SettingsData) Open() error {
 	if se.SaveCmds {
 		CustomCommands.OpenSettings()
 	}
-	AvailSplits.OpenSettings()
-	AvailRegisters.OpenSettings()
+	AvailableSplits.OpenSettings()
+	AvailableRegisters.OpenSettings()
 	return err
 }
 
@@ -203,12 +203,12 @@ func (se *SettingsData) EditCmds() { //gti:add
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
 func (se *SettingsData) EditSplits() { //gti:add
-	SplitsView(&AvailSplits)
+	SplitsView(&AvailableSplits)
 }
 
 // EditRegisters opens the RegistersView editor to customize saved registers
 func (se *SettingsData) EditRegisters() { //gti:add
-	RegistersView(&AvailRegisters)
+	RegistersView(&AvailableRegisters)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

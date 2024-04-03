@@ -167,11 +167,11 @@ func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
 	if sel == nil {
 		return false
 	}
-	if code.AvailRegisters == nil {
-		code.AvailRegisters = make(code.Registers, 100)
+	if code.AvailableRegisters == nil {
+		code.AvailableRegisters = make(code.Registers, 100)
 	}
-	code.AvailRegisters[name] = string(sel.ToBytes())
-	code.AvailRegisters.SavePrefs()
+	code.AvailableRegisters[name] = string(sel.ToBytes())
+	code.AvailableRegisters.SaveSettings()
 	ge.Settings.Register = code.RegisterName(name)
 	tv.SelectReset()
 	return true
@@ -183,7 +183,7 @@ func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
 	if name == "" {
 		return false
 	}
-	str, ok := code.AvailRegisters[string(name)]
+	str, ok := code.AvailableRegisters[string(name)]
 	if !ok {
 		return false
 	}

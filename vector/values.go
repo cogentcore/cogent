@@ -69,8 +69,8 @@ func (v *SplitValue) Update() {
 
 func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
 	cur := laser.ToString(v.Value.Interface())
-	m := gi.NewMenuFromStrings(AvailSplitNames, cur, func(idx int) {
-		nm := AvailSplitNames[idx]
+	m := gi.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
+		nm := AvailableSplitNames[idx]
 		v.SetValue(nm)
 		v.Update()
 		if fun != nil {

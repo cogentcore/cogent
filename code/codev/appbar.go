@@ -133,7 +133,7 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 	gi.NewButton(tb).SetText("Splits").SetMenu(func(m *gi.Scene) {
 		gi.NewButton(m).SetText("Set View").
 			SetMenu(func(mm *gi.Scene) {
-				for _, sp := range code.AvailSplitNames {
+				for _, sp := range code.AvailableSplitNames {
 					sn := code.SplitName(sp)
 					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSetView(sn)
@@ -146,7 +146,7 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 		giv.NewFuncButton(m, ge.SplitsSaveAs).SetText("Save As")
 		gi.NewButton(m).SetText("Save").
 			SetMenu(func(mm *gi.Scene) {
-				for _, sp := range code.AvailSplitNames {
+				for _, sp := range code.AvailableSplitNames {
 					sn := code.SplitName(sp)
 					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSave(sn)

@@ -19,12 +19,12 @@ type Registers map[string]string
 // available named registers
 type RegisterName string
 
-// AvailRegisters are available named registers.  can be loaded / saved /
+// AvailableRegisters are available named registers.  can be loaded / saved /
 // edited with settings.
-var AvailRegisters Registers
+var AvailableRegisters Registers
 
-// AvailRegisterNames are the names of the current AvailRegisters -- used for some choosers
-var AvailRegisterNames []string
+// AvailableRegisterNames are the names of the current AvailRegisters -- used for some choosers
+var AvailableRegisterNames []string
 
 // Names returns a slice of current register names
 func (lt *Registers) Names() []string {
@@ -40,9 +40,9 @@ func (lt *Registers) Names() []string {
 	return nms
 }
 
-// PrefsRegistersFilename is the name of the settings file in App prefs
-// directory for saving / loading the default AvailRegisters
-var PrefsRegistersFilename = "registers_prefs.toml"
+// RegisterSettingsFilename is the name of the settings file in the app settings
+// directory for saving / loading the default AvailableRegisters
+var RegisterSettingsFilename = "register-settings.toml"
 
 // Open opens named registers from a toml-formatted file.
 func (lt *Registers) Open(filename gi.Filename) error { //gti:add
@@ -55,28 +55,30 @@ func (lt *Registers) Save(filename gi.Filename) error { //gti:add
 	return grr.Log(tomls.Save(lt, string(filename)))
 }
 
-// OpenSettings opens Registers from App standard prefs directory, using PrefRegistersFilename
+// OpenSettings opens the Registers from the app settings directory,
+// using RegisterSettingsFilename.
 func (lt *Registers) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsRegistersFilename)
-	AvailRegistersChanged = false
+	pnm := filepath.Join(pdir, RegisterSettingsFilename)
+	AvailableRegistersChanged = false
 	err := lt.Open(gi.Filename(pnm))
 	if err == nil {
-		AvailRegisterNames = lt.Names()
+		AvailableRegisterNames = lt.Names()
 	}
 	return err
 }
 
-// SavePrefs saves Registers to App standard prefs directory, using PrefRegistersFilename
-func (lt *Registers) SavePrefs() error { //gti:add
+// SaveSettings saves the Registers to the app settings directory,
+// using RegisterSettingsFilename.
+func (lt *Registers) SaveSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsRegistersFilename)
-	AvailRegistersChanged = false
-	AvailRegisterNames = lt.Names()
+	pnm := filepath.Join(pdir, RegisterSettingsFilename)
+	AvailableRegistersChanged = false
+	AvailableRegisterNames = lt.Names()
 	return lt.Save(gi.Filename(pnm))
 }
 
-// AvailRegistersChanged is used to update toolbars via following menu, toolbar
+// AvailableRegistersChanged is used to update toolbars via following menu, toolbar
 // props update methods -- not accurate if editing any other map but works for
 // now..
-var AvailRegistersChanged = false
+var AvailableRegistersChanged = false
