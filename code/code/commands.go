@@ -208,8 +208,8 @@ func (rc *CmdRuns) AddCmd(name, cmdstr string, cmdargs *CmdAndArgs, ex *exec.Cmd
 	rc.Add(cm)
 }
 
-// DeleteIdx delete command at given index
-func (rc *CmdRuns) DeleteIdx(idx int) {
+// DeleteIndex delete command at given index
+func (rc *CmdRuns) DeleteIndex(idx int) {
 	*rc = append((*rc)[:idx], (*rc)[idx+1:]...)
 }
 
@@ -227,7 +227,7 @@ func (rc *CmdRuns) ByName(name string) (*CmdRun, int) {
 func (rc *CmdRuns) DeleteByName(name string) bool {
 	_, idx := rc.ByName(name)
 	if idx >= 0 {
-		rc.DeleteIdx(idx)
+		rc.DeleteIndex(idx)
 		return true
 	}
 	return false
@@ -239,7 +239,7 @@ func (rc *CmdRuns) KillByName(name string) bool {
 	cm, idx := rc.ByName(name)
 	if idx >= 0 {
 		cm.Kill()
-		rc.DeleteIdx(idx)
+		rc.DeleteIndex(idx)
 		return true
 	}
 	return false

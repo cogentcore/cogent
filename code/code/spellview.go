@@ -35,7 +35,7 @@ type SpellView struct {
 	CurLn int
 
 	// current index in Errs we're on
-	CurIdx int
+	CurIndex int
 
 	// current unknown lex token
 	UnkLex lex.Lex
@@ -69,7 +69,7 @@ func (sv *SpellView) ConfigSpellView(ge Code, atv *TextEditor) {
 	sv.Code = ge
 	sv.Text = atv
 	sv.CurLn = 0
-	sv.CurIdx = 0
+	sv.CurIndex = 0
 	sv.Errs = nil
 	if sv.HasChildren() {
 		return
@@ -210,9 +210,9 @@ func (sv *SpellView) ConfigToolbar() {
 	suggest.SetSlice(&sv.Suggest)
 	// suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data any) {
 	// 	svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
-	// 	idx := svv.SelectedIdx
+	// 	idx := svv.SelectedIndex
 	// 	if idx >= 0 && idx < len(sv.Suggest) {
-	// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIdx])
+	// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIndex])
 	// 	}
 	// })
 }
@@ -228,12 +228,12 @@ func (sv *SpellView) CheckNext() {
 	}
 	done := false
 	for {
-		if sv.CurIdx < len(sv.Errs) {
-			lx := sv.Errs[sv.CurIdx]
+		if sv.CurIndex < len(sv.Errs) {
+			lx := sv.Errs[sv.CurIndex]
 			word := string(lx.Src(tv.Buf.Lines[sv.CurLn]))
 			_, known := spell.CheckWord(word) // could have been fixed by now..
 			if known {
-				sv.CurIdx++
+				sv.CurIndex++
 				continue
 			}
 			break
@@ -243,7 +243,7 @@ func (sv *SpellView) CheckNext() {
 				done = true
 				break
 			}
-			sv.CurIdx = 0
+			sv.CurIndex = 0
 			sv.Errs = tv.Buf.SpellCheckLineErrs(sv.CurLn)
 		}
 	}
@@ -252,8 +252,8 @@ func (sv *SpellView) CheckNext() {
 		gi.MessageSnackbar(sv, "End of file, spelling check complete")
 		return
 	}
-	sv.UnkLex = sv.Errs[sv.CurIdx]
-	sv.CurIdx++
+	sv.UnkLex = sv.Errs[sv.CurIndex]
+	sv.CurIndex++
 	sv.UnkWord = string(sv.UnkLex.Src(tv.Buf.Lines[sv.CurLn]))
 	sv.Suggest, _ = spell.CheckWord(sv.UnkWord)
 
@@ -298,9 +298,9 @@ func (sv *SpellView) ChangeAction() {
 	en := sv.UnkEndPos()
 	ct := sv.ChangeText()
 	tv.Buf.ReplaceText(st, en, st, ct.Text(), texteditor.EditSignal, texteditor.ReplaceNoMatchCase)
-	nwrs := tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
-	if len(nwrs) == len(sv.Errs)-1 && sv.CurIdx > 0 {  // Adjust got rid of changed one..
-		sv.CurIdx--
+	nwrs := tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn)  // update tags
+	if len(nwrs) == len(sv.Errs)-1 && sv.CurIndex > 0 { // Adjust got rid of changed one..
+		sv.CurIndex--
 	}
 	sv.Errs = nwrs
 	sv.LastAction = sv.ChangeAct()

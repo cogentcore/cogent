@@ -231,8 +231,8 @@ func (t *FileNode) SetIndent(v units.Value) *FileNode { t.Indent = v; return t }
 // SetOpenDepth sets the [FileNode.OpenDepth]
 func (t *FileNode) SetOpenDepth(v int) *FileNode { t.OpenDepth = v; return t }
 
-// SetViewIdx sets the [FileNode.ViewIdx]
-func (t *FileNode) SetViewIdx(v int) *FileNode { t.ViewIdx = v; return t }
+// SetViewIndex sets the [FileNode.ViewIndex]
+func (t *FileNode) SetViewIndex(v int) *FileNode { t.ViewIndex = v; return t }
 
 // SetWidgetSize sets the [FileNode.WidgetSize]
 func (t *FileNode) SetWidgetSize(v mat32.Vec2) *FileNode { t.WidgetSize = v; return t }
@@ -290,7 +290,7 @@ var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FileSetting
 var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.ProjSettings", IDName: "proj-settings", Doc: "ProjSettings are the settings for saving for a project. This IS the project file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Open", Doc: "Open open from file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save save to file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}}, Fields: []gti.Field{{Name: "Files", Doc: "file view settings"}, {Name: "Editor", Doc: "editor settings"}, {Name: "SplitName", Doc: "current named-split config in use for configuring the splitters"}, {Name: "MainLang", Doc: "the language associated with the most frequently-encountered file\nextension in the file tree -- can be manually set here as well"}, {Name: "VersionControl", Doc: "the type of version control system used in this project (git, svn, etc).\nfilters commands available"}, {Name: "ProjFilename", Doc: "current project filename for saving / loading specific Code\nconfiguration information in a .code file (optional)"}, {Name: "ProjRoot", Doc: "root directory for the project. all projects must be organized within\na top-level root directory, with all the files therein constituting\nthe scope of the project. By default it is the path for ProjFilename"}, {Name: "GoMod", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"}, {Name: "BuildCmds", Doc: "command(s) to run for main Build button"}, {Name: "BuildDir", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"}, {Name: "BuildTarg", Doc: "build target for main Build button, if relevant for your  BuildCmds"}, {Name: "RunExec", Doc: "executable to run for this project via main Run button -- called by standard Run Proj command"}, {Name: "RunCmds", Doc: "command(s) to run for main Run button (typically Run Proj)"}, {Name: "Debug", Doc: "custom debugger parameters for this project"}, {Name: "Find", Doc: "saved find params"}, {Name: "Symbols", Doc: "saved structure params"}, {Name: "Dirs", Doc: "directory properties"}, {Name: "Register", Doc: "last register used"}, {Name: "Splits", Doc: "current splitter splits"}}})
 
 // SpellViewType is the [gti.Type] for [SpellView]
-var SpellViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIdx", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
+var SpellViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIndex", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
 
 // NewSpellView adds a new [SpellView] with the given name to the given parent:
 // SpellView is a widget that displays results of spell check
@@ -320,9 +320,9 @@ func (t *SpellView) SetErrs(v lex.Line) *SpellView { t.Errs = v; return t }
 // current line in text we're on
 func (t *SpellView) SetCurLn(v int) *SpellView { t.CurLn = v; return t }
 
-// SetCurIdx sets the [SpellView.CurIdx]:
+// SetCurIndex sets the [SpellView.CurIndex]:
 // current index in Errs we're on
-func (t *SpellView) SetCurIdx(v int) *SpellView { t.CurIdx = v; return t }
+func (t *SpellView) SetCurIndex(v int) *SpellView { t.CurIndex = v; return t }
 
 // SetUnkLex sets the [SpellView.UnkLex]:
 // current unknown lex token
@@ -442,8 +442,8 @@ func (t *SymTreeView) SetIndent(v units.Value) *SymTreeView { t.Indent = v; retu
 // SetOpenDepth sets the [SymTreeView.OpenDepth]
 func (t *SymTreeView) SetOpenDepth(v int) *SymTreeView { t.OpenDepth = v; return t }
 
-// SetViewIdx sets the [SymTreeView.ViewIdx]
-func (t *SymTreeView) SetViewIdx(v int) *SymTreeView { t.ViewIdx = v; return t }
+// SetViewIndex sets the [SymTreeView.ViewIndex]
+func (t *SymTreeView) SetViewIndex(v int) *SymTreeView { t.ViewIndex = v; return t }
 
 // SetWidgetSize sets the [SymTreeView.WidgetSize]
 func (t *SymTreeView) SetWidgetSize(v mat32.Vec2) *SymTreeView { t.WidgetSize = v; return t }

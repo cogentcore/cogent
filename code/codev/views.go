@@ -95,7 +95,7 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 		res = code.FileTreeSearch(ge, root, find, ignoreCase, regExp, loc, adir, langs)
 	}
 	fv.ShowResults(res)
-	ge.FocusOnPanel(TabsIdx)
+	ge.FocusOnPanel(TabsIndex)
 }
 
 // Spell checks spelling in active text view
@@ -113,7 +113,7 @@ func (ge *CodeView) Spell() { //gti:add
 	sv := tv.RecycleTabWidget("Spell", true, code.SpellViewType).(*code.SpellView)
 	sv.ConfigSpellView(ge, txv)
 	sv.Update()
-	ge.FocusOnPanel(TabsIdx)
+	ge.FocusOnPanel(TabsIndex)
 }
 
 // Symbols displays the Symbols of a file or package
@@ -130,7 +130,7 @@ func (ge *CodeView) Symbols() { //gti:add
 	sv := tv.RecycleTabWidget("Symbols", true, code.SymbolsViewType).(*code.SymbolsView)
 	sv.ConfigSymbolsView(ge, ge.ProjSettings().Symbols)
 	sv.Update()
-	ge.FocusOnPanel(TabsIdx)
+	ge.FocusOnPanel(TabsIndex)
 }
 
 // Debug starts the debugger on the RunExec executable.
@@ -146,7 +146,7 @@ func (ge *CodeView) Debug() { //gti:add
 	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
 	dv.ConfigDebugView(ge, fi.Go, exePath)
 	dv.Update()
-	ge.FocusOnPanel(TabsIdx)
+	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
 }
 
@@ -167,7 +167,7 @@ func (ge *CodeView) DebugTest() { //gti:add
 	dv := tv.RecycleTabWidget("Debug "+dir, true, code.DebugViewType).(*code.DebugView)
 	dv.ConfigDebugView(ge, fi.Go, tstPath)
 	dv.Update()
-	ge.FocusOnPanel(TabsIdx)
+	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
 }
 
@@ -186,7 +186,7 @@ func (ge *CodeView) DebugAttach(pid uint64) { //gti:add
 	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
 	dv.ConfigDebugView(ge, fi.Go, exePath)
 	dv.Update()
-	ge.FocusOnPanel(TabsIdx)
+	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
 }
 

@@ -66,7 +66,7 @@ func (ly *Layers) LayersUpdated(sv *SVGView) {
 	}
 }
 
-func (ly *Layers) LayerIdxByName(nm string) int {
+func (ly *Layers) LayerIndexByName(nm string) int {
 	for i, l := range *ly {
 		if l.Name == nm {
 			return i
@@ -144,13 +144,13 @@ func (vv *VectorView) UpdateLayerView() {
 	if nl == 0 {
 		return
 	}
-	ci := lys.LayerIdxByName(es.CurLayer)
+	ci := lys.LayerIndexByName(es.CurLayer)
 	if ci < 0 {
 		ci = nl - 1
 		es.CurLayer = (*lys)[ci].Name
 	}
 	// lyv.ClearSelected() // todo
-	lyv.SelectIdx(ci)
+	lyv.SelectIndex(ci)
 }
 
 // AddLayer adds a new layer

@@ -34,11 +34,11 @@ import (
 
 // These are then the fixed indices of the different elements in the splitview
 const (
-	LexRulesIdx = iota
-	ParseRulesIdx
-	StructViewIdx
-	AstOutIdx
-	MainTabsIdx
+	LexRulesIndex = iota
+	ParseRulesIndex
+	StructViewIndex
+	AstOutIndex
+	MainTabsIndex
 )
 
 // PiView provides the interactive GUI view for constructing and testing the
@@ -769,27 +769,27 @@ func (pv *PiView) Splits() *gi.Splits {
 
 // LexTree returns the lex rules tree view
 func (pv *PiView) LexTree() *giv.TreeView {
-	return pv.Splits().Child(LexRulesIdx).Child(0).(*giv.TreeView)
+	return pv.Splits().Child(LexRulesIndex).Child(0).(*giv.TreeView)
 }
 
 // ParseTree returns the parse rules tree view
 func (pv *PiView) ParseTree() *giv.TreeView {
-	return pv.Splits().Child(ParseRulesIdx).Child(0).(*giv.TreeView)
+	return pv.Splits().Child(ParseRulesIndex).Child(0).(*giv.TreeView)
 }
 
 // AstTree returns the Ast output tree view
 func (pv *PiView) AstTree() *giv.TreeView {
-	return pv.Splits().Child(AstOutIdx).Child(0).(*giv.TreeView)
+	return pv.Splits().Child(AstOutIndex).Child(0).(*giv.TreeView)
 }
 
 // StructView returns the StructView for editing rules
 func (pv *PiView) StructView() *giv.StructView {
-	return pv.Splits().Child(StructViewIdx).(*giv.StructView)
+	return pv.Splits().Child(StructViewIndex).(*giv.StructView)
 }
 
 // MainTabs returns the main TabView
 func (pv *PiView) MainTabs() *gi.TabView {
-	return pv.Splits().Child(MainTabsIdx).Embed(gi.KiT_TabView).(*gi.TabView)
+	return pv.Splits().Child(MainTabsIndex).Embed(gi.KiT_TabView).(*gi.TabView)
 }
 
 // StatusBar returns the statusbar widget
@@ -881,15 +881,15 @@ func (pv *PiView) ConfigSplits() {
 	config := pv.SplitsConfig()
 	mods, updt := split.ConfigChildren(config)
 	if mods {
-		lxfr := split.Child(LexRulesIdx).(*gi.Frame)
+		lxfr := split.Child(LexRulesIndex).(*gi.Frame)
 		lxt := lxfr.NewChild(giv.KiT_TreeView, "lex-tree").(*giv.TreeView)
 		lxt.SetRootNode(&pv.Parser.Lexer)
 
-		prfr := split.Child(ParseRulesIdx).(*gi.Frame)
+		prfr := split.Child(ParseRulesIndex).(*gi.Frame)
 		prt := prfr.NewChild(giv.KiT_TreeView, "parse-tree").(*giv.TreeView)
 		prt.SetRootNode(&pv.Parser.Parser)
 
-		astfr := split.Child(AstOutIdx).(*gi.Frame)
+		astfr := split.Child(AstOutIndex).(*gi.Frame)
 		astt := astfr.NewChild(giv.KiT_TreeView, "ast-tree").(*giv.TreeView)
 		astt.SetRootNode(&fs.Ast)
 

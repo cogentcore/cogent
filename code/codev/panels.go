@@ -40,11 +40,11 @@ func (ge *CodeView) CurPanel() int {
 func (ge *CodeView) FocusOnPanel(panel int) bool {
 	sv := ge.Splits()
 	switch panel {
-	case TextEditor1Idx:
-		ge.SetActiveTextEditorIdx(0)
-	case TextEditor2Idx:
-		ge.SetActiveTextEditorIdx(1)
-	case TabsIdx:
+	case TextEditor1Index:
+		ge.SetActiveTextEditorIndex(0)
+	case TextEditor2Index:
+		ge.SetActiveTextEditorIndex(1)
+	case TabsIndex:
 		tv := ge.Tabs()
 		ct, _, has := tv.CurTab()
 		if has {

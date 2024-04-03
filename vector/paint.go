@@ -480,10 +480,10 @@ func (pv *PaintView) SelectStrokeGrad() {
 	grl := &es.Gradients
 	ss := pv.StrokeStack()
 	sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
-	sg.UnselectAllIdxs()
+	sg.UnselectAllIndexs()
 	for i, g := range *grl {
 		if g.Name == pv.StrokeStops {
-			sg.SelectIdx(i)
+			sg.SelectIndex(i)
 			break
 		}
 	}
@@ -494,10 +494,10 @@ func (pv *PaintView) SelectFillGrad() {
 	grl := &es.Gradients
 	fs := pv.FillStack()
 	fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
-	fg.UnselectAllIdxs()
+	fg.UnselectAllIndexs()
 	for i, g := range *grl {
 		if g.Name == pv.FillStops {
-			fg.SelectIdx(i)
+			fg.SelectIndex(i)
 			break
 		}
 	}
@@ -663,13 +663,13 @@ func (pv *PaintView) Config() {
 	sg := giv.NewTableView(ss, "stroke-grad")
 	// sg.SetProp("index", true)
 	// sg.SetProp("toolbar", true)
-	// sg.SelectedIdx = -1
+	// sg.SelectedIndex = -1
 	sg.SetSlice(&pv.VectorView.EditState.Gradients)
 	// sg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 	// 	if sig == int64(gi.WidgetSelected) {
 	// 		svv, _ := send.(*giv.TableView)
-	// 		if svv.SelectedIdx >= 0 {
-	// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIdx].Name
+	// 		if svv.SelectedIndex >= 0 {
+	// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 	// 			pv.VectorView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
 	// 		}
 	// 	}
@@ -734,13 +734,13 @@ func (pv *PaintView) Config() {
 	fg := giv.NewTableView(fs, "fill-grad")
 	// fg.SetProp("index", true)
 	// fg.SetProp("toolbar", true)
-	// fg.SelectedIdx = -1
+	// fg.SelectedIndex = -1
 	fg.SetSlice(&pv.VectorView.EditState.Gradients)
 	// fg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
 	// 	if sig == int64(gi.WidgetSelected) {
 	// 		svv, _ := send.(*giv.TableView)
-	// 		if svv.SelectedIdx >= 0 {
-	// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIdx].Name
+	// 		if svv.SelectedIndex >= 0 {
+	// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 	// 			pv.VectorView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
 	// 		}
 	// 	}

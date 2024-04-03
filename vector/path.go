@@ -119,13 +119,13 @@ type PathNode struct {
 	PrevCmd svg.PathCmds
 
 	// starting index of command
-	CmdIdx int
+	CmdIndex int
 
 	// index of points in data stream
-	Idx int
+	Index int
 
 	// logical index of point within current command (0 = first point, etc)
-	PtIdx int
+	PtIndex int
 
 	// local coords abs previous current point that is starting point for this command
 	PCp mat32.Vec2
@@ -145,19 +145,19 @@ func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pxf := path.ParTransform(true) // include self
 
-	lstCmdIdx := 0
+	lstCmdIndex := 0
 	lstCmd := svg.PcErr
 	nc := make([]*PathNode, 0)
 	cidxs := make([]int, 0)
 	var pcp mat32.Vec2
-	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIdx int, cp mat32.Vec2, ctrl []mat32.Vec2) bool {
+	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIndex int, cp mat32.Vec2, ctrl []mat32.Vec2) bool {
 		cw := pxf.MulVec2AsPoint(cp).Add(svoff)
 
-		if ptIdx == 0 {
-			lstCmdIdx = idx - 1
-			cidxs = append(cidxs, lstCmdIdx)
+		if ptIndex == 0 {
+			lstCmdIndex = idx - 1
+			cidxs = append(cidxs, lstCmdIndex)
 		}
-		pn := &PathNode{Cmd: cmd, PrevCmd: lstCmd, CmdIdx: lstCmdIdx, Idx: idx, PtIdx: ptIdx, PCp: pcp, Cp: cp, WinPt: cw, WinCtrls: ctrl}
+		pn := &PathNode{Cmd: cmd, PrevCmd: lstCmd, CmdIndex: lstCmdIndex, Index: idx, PtIndex: ptIndex, PCp: pcp, Cp: cp, WinPt: cw, WinCtrls: ctrl}
 		nc = append(nc, pn)
 		pcp = cp
 		lstCmd = cmd
@@ -264,25 +264,25 @@ func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int
 // which is in *absolute* (but local) coordinates -- translates into
 // relative coordinates as needed.
 func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt mat32.Vec2) {
-	if pn.Idx == 1 || !svg.PathCmdIsRel(pn.Cmd) { // abs
+	if pn.Index == 1 || !svg.PathCmdIsRel(pn.Cmd) { // abs
 		switch pn.Cmd {
 		case svg.PcH:
-			path.Data[pn.Idx] = svg.PathData(npt.X)
+			path.Data[pn.Index] = svg.PathData(npt.X)
 		case svg.PcV:
-			path.Data[pn.Idx] = svg.PathData(npt.Y)
+			path.Data[pn.Index] = svg.PathData(npt.Y)
 		default:
-			path.Data[pn.Idx] = svg.PathData(npt.X)
-			path.Data[pn.Idx+1] = svg.PathData(npt.Y)
+			path.Data[pn.Index] = svg.PathData(npt.X)
+			path.Data[pn.Index+1] = svg.PathData(npt.Y)
 		}
 	} else {
 		switch pn.Cmd {
 		case svg.Pch:
-			path.Data[pn.Idx] = svg.PathData(npt.X - pn.PCp.X)
+			path.Data[pn.Index] = svg.PathData(npt.X - pn.PCp.X)
 		case svg.Pcv:
-			path.Data[pn.Idx] = svg.PathData(npt.Y - pn.PCp.Y)
+			path.Data[pn.Index] = svg.PathData(npt.Y - pn.PCp.Y)
 		default:
-			path.Data[pn.Idx] = svg.PathData(npt.X - pn.PCp.X)
-			path.Data[pn.Idx+1] = svg.PathData(npt.Y - pn.PCp.Y)
+			path.Data[pn.Index] = svg.PathData(npt.X - pn.PCp.X)
+			path.Data[pn.Index+1] = svg.PathData(npt.Y - pn.PCp.Y)
 		}
 	}
 }

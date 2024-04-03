@@ -173,15 +173,15 @@ func (on *OpenNodes) AddImpl(fn *filetree.Node) bool {
 func (on *OpenNodes) Delete(fn *filetree.Node) bool {
 	for i, f := range *on {
 		if f == fn {
-			on.DeleteIdx(i)
+			on.DeleteIndex(i)
 			return true
 		}
 	}
 	return false
 }
 
-// DeleteIdx deletes at given index
-func (on *OpenNodes) DeleteIdx(idx int) {
+// DeleteIndex deletes at given index
+func (on *OpenNodes) DeleteIndex(idx int) {
 	*on = append((*on)[:idx], (*on)[idx+1:]...)
 }
 
@@ -191,7 +191,7 @@ func (on *OpenNodes) DeleteDeleted() {
 	for i := sz - 1; i >= 0; i-- {
 		fn := (*on)[i]
 		if fn.This() == nil || fn.FRoot == nil {
-			on.DeleteIdx(i)
+			on.DeleteIndex(i)
 		}
 	}
 }

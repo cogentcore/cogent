@@ -67,7 +67,7 @@ type CodeView struct {
 	Files *filetree.Tree `set:"-" json:"-"`
 
 	// index of the currently-active texteditor -- new files will be viewed in other views if available
-	ActiveTextEditorIdx int `set:"-" json:"-"`
+	ActiveTextEditorIndex int `set:"-" json:"-"`
 
 	// list of open nodes, most recent first
 	OpenNodes code.OpenNodes `json:"-"`
@@ -151,7 +151,7 @@ func (ge *CodeView) CurOpenNodes() *code.OpenNodes {
 }
 
 func (ge *CodeView) FocusOnTabs() bool {
-	return ge.FocusOnPanel(TabsIdx)
+	return ge.FocusOnPanel(TabsIndex)
 }
 
 ////////////////////////////////////////////////////////

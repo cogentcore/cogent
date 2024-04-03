@@ -148,8 +148,8 @@ func (t *TreeView) SetIndent(v units.Value) *TreeView { t.Indent = v; return t }
 // SetOpenDepth sets the [TreeView.OpenDepth]
 func (t *TreeView) SetOpenDepth(v int) *TreeView { t.OpenDepth = v; return t }
 
-// SetViewIdx sets the [TreeView.ViewIdx]
-func (t *TreeView) SetViewIdx(v int) *TreeView { t.ViewIdx = v; return t }
+// SetViewIndex sets the [TreeView.ViewIndex]
+func (t *TreeView) SetViewIndex(v int) *TreeView { t.ViewIndex = v; return t }
 
 // SetWidgetSize sets the [TreeView.WidgetSize]
 func (t *TreeView) SetWidgetSize(v mat32.Vec2) *TreeView { t.WidgetSize = v; return t }

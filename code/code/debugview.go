@@ -349,8 +349,8 @@ func (dv *DebugView) DeleteBreakImpl(fpath string, line int) {
 	}
 }
 
-// DeleteBreakIdx deletes break at given index in list of breaks
-func (dv *DebugView) DeleteBreakIdx(bidx int) {
+// DeleteBreakIndex deletes break at given index in list of breaks
+func (dv *DebugView) DeleteBreakIndex(bidx int) {
 	if bidx < 0 || bidx >= len(dv.BBreaks) {
 		return
 	}
@@ -498,9 +498,9 @@ func (dv *DebugView) SetThread(threadID int) {
 	dv.UpdateFmState()
 }
 
-// SetThreadIdx sets the given thread by index in threads list as active
+// SetThreadIndex sets the given thread by index in threads list as active
 // this must be TaskID if HasTasks and ThreadID if not.
-func (dv *DebugView) SetThreadIdx(thridx int) {
+func (dv *DebugView) SetThreadIndex(thridx int) {
 	if !dv.DbgIsAvail() || thridx < 0 {
 		return
 	}
@@ -1025,7 +1025,7 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	// todo:
 	// 	} else if sig == int64(giv.SliceViewDeleted) {
 	// 		idx := data.(int)
-	// 		dv.DeleteBreakIdx(idx)
+	// 		dv.DeleteBreakIndex(idx)
 	// 	}
 	tv.SetFlag(false, giv.SliceViewShowIndex)
 	tv.SetSlice(&dv.State.Breaks)
@@ -1072,7 +1072,7 @@ func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 	tv.OnDoubleClick(func(e events.Event) {
 		idx := tv.SelectedIndex
 		if dv.Dbg != nil && !dv.Dbg.HasTasks() {
-			dv.SetThreadIdx(idx)
+			dv.SetThreadIndex(idx)
 		}
 	})
 	tv.SetReadOnly(true)
@@ -1119,7 +1119,7 @@ func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 	tv.OnDoubleClick(func(e events.Event) {
 		idx := tv.SelectedIndex
 		if dv.Dbg != nil && dv.Dbg.HasTasks() {
-			dv.SetThreadIdx(idx)
+			dv.SetThreadIndex(idx)
 		}
 	})
 	tv.SetFlag(false, giv.SliceViewShowIndex)

@@ -23,10 +23,10 @@ const NTextEditors = 2
 
 // These are then the fixed indices of the different elements in the splitview
 const (
-	FileTreeIdx = iota
-	TextEditor1Idx
-	TextEditor2Idx
-	TabsIdx
+	FileTreeIndex = iota
+	TextEditor1Index
+	TextEditor2Index
+	TabsIndex
 )
 
 func (ge *CodeView) Config() {
@@ -68,17 +68,17 @@ func (ge *CodeView) Splits() *gi.Splits {
 
 // TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
 func (ge *CodeView) TextEditorButtonByIndex(idx int) *gi.Button {
-	return ge.Splits().Child(TextEditor1Idx + idx).Child(0).(*gi.Button)
+	return ge.Splits().Child(TextEditor1Index + idx).Child(0).(*gi.Button)
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
 func (ge *CodeView) TextEditorByIndex(idx int) *code.TextEditor {
-	return ge.Splits().Child(TextEditor1Idx + idx).Child(1).(*code.TextEditor)
+	return ge.Splits().Child(TextEditor1Index + idx).Child(1).(*code.TextEditor)
 }
 
 // Tabs returns the main TabView
 func (ge *CodeView) Tabs() *gi.Tabs {
-	return ge.Splits().Child(TabsIdx).(*gi.Tabs)
+	return ge.Splits().Child(TabsIndex).(*gi.Tabs)
 }
 
 // StatusBar returns the statusbar widget
@@ -143,14 +143,14 @@ func (ge *CodeView) ConfigSplits() {
 			ge.TextEditorButtonMenu(i, m)
 		}
 		txbut.OnClick(func(e events.Event) {
-			ge.SetActiveTextEditorIdx(i)
+			ge.SetActiveTextEditorIndex(i)
 		})
 
 		ted := code.NewTextEditor(txly, "texteditor-"+txnm)
 		ted.Code = ge
 		code.ConfigEditorTextEditor(&ted.Editor)
 		ted.OnFocus(func(e events.Event) {
-			ge.ActiveTextEditorIdx = i
+			ge.ActiveTextEditorIndex = i
 		})
 		// get updates on cursor movement and qreplace
 		ted.OnInput(func(e events.Event) {

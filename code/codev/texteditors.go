@@ -37,13 +37,13 @@ func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buf) {
 
 // ActiveTextEditor returns the currently-active TextEditor
 func (ge *CodeView) ActiveTextEditor() *code.TextEditor {
-	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIdx)
-	return ge.TextEditorByIndex(ge.ActiveTextEditorIdx)
+	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIndex)
+	return ge.TextEditorByIndex(ge.ActiveTextEditorIndex)
 }
 
 // FocusActiveTextEditor sets focus to active text editor
 func (ge *CodeView) FocusActiveTextEditor() *code.TextEditor {
-	return ge.SetActiveTextEditorIdx(ge.ActiveTextEditorIdx)
+	return ge.SetActiveTextEditorIndex(ge.ActiveTextEditorIndex)
 }
 
 // ActiveFileNode returns the file node for the active file -- nil if none
@@ -71,7 +71,7 @@ func (ge *CodeView) TextEditorForFileNode(fn *filetree.Node) (*code.TextEditor, 
 	ge.ConfigTextBuf(fn.Buf)
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
-		if tv != nil && tv.Buf != nil && tv.Buf == fn.Buf && ge.PanelIsOpen(i+TextEditor1Idx) {
+		if tv != nil && tv.Buf != nil && tv.Buf == fn.Buf && ge.PanelIsOpen(i+TextEditor1Index) {
 			return tv, i, true
 		}
 	}
@@ -129,7 +129,7 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 		fmt.Println("te not found")
 		return -1
 	}
-	ge.ActiveTextEditorIdx = idx
+	ge.ActiveTextEditorIndex = idx
 	if av.Buf != nil {
 		ge.SetActiveFileInfo(av.Buf)
 	}
@@ -137,15 +137,15 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 	return idx
 }
 
-// SetActiveTextEditorIdx sets the given view index as the currently-active
+// SetActiveTextEditorIndex sets the given view index as the currently-active
 // TextEditor -- returns that texteditor.  This is the main method for
 // activating a text editor.
-func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
+func (ge *CodeView) SetActiveTextEditorIndex(idx int) *code.TextEditor {
 	if idx < 0 || idx >= NTextEditors {
-		log.Printf("CodeView SetActiveTextEditorIdx: text view index out of range: %v\n", idx)
+		log.Printf("CodeView SetActiveTextEditorIndex: text view index out of range: %v\n", idx)
 		return nil
 	}
-	ge.ActiveTextEditorIdx = idx
+	ge.ActiveTextEditorIndex = idx
 	av := ge.ActiveTextEditor()
 	if av.Buf != nil {
 		ge.SetActiveFileInfo(av.Buf)
@@ -160,13 +160,13 @@ func (ge *CodeView) SetActiveTextEditorIdx(idx int) *code.TextEditor {
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
 func (ge *CodeView) NextTextEditor() (*code.TextEditor, int) {
-	av := ge.TextEditorByIndex(ge.ActiveTextEditorIdx)
+	av := ge.TextEditorByIndex(ge.ActiveTextEditorIndex)
 	if av.Buf == nil {
-		return av, ge.ActiveTextEditorIdx
+		return av, ge.ActiveTextEditorIndex
 	}
-	nxt := (ge.ActiveTextEditorIdx + 1) % NTextEditors
-	if !ge.PanelIsOpen(nxt + TextEditor1Idx) {
-		return av, ge.ActiveTextEditorIdx
+	nxt := (ge.ActiveTextEditorIndex + 1) % NTextEditors
+	if !ge.PanelIsOpen(nxt + TextEditor1Index) {
+		return av, ge.ActiveTextEditorIndex
 	}
 	return ge.TextEditorByIndex(nxt), nxt
 }
@@ -174,7 +174,7 @@ func (ge *CodeView) NextTextEditor() (*code.TextEditor, int) {
 // SwapTextEditors switches the buffers for the two open texteditors
 // only operates if both panels are open
 func (ge *CodeView) SwapTextEditors() bool {
-	if !ge.PanelIsOpen(TextEditor1Idx) || !ge.PanelIsOpen(TextEditor1Idx+1) {
+	if !ge.PanelIsOpen(TextEditor1Index) || !ge.PanelIsOpen(TextEditor1Index+1) {
 		return false
 	}
 
@@ -245,7 +245,7 @@ func (ge *CodeView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 // is called by SetStatus and is generally under cover of TopUpdateStart / End
 // doesn't do anything unless a change is required -- safe to call frequently.
 func (ge *CodeView) UpdateTextButtons() {
-	ati := ge.ActiveTextEditorIdx
+	ati := ge.ActiveTextEditorIndex
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
 		mb := ge.TextEditorButtonByIndex(i)

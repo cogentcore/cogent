@@ -88,8 +88,8 @@ func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 	if ok {
 		sv.SetSplits(sp.Splits...).NeedsLayout()
 		ge.Settings.SplitName = split
-		if !ge.PanelIsOpen(ge.ActiveTextEditorIdx + TextEditor1Idx) {
-			ge.SetActiveTextEditorIdx((ge.ActiveTextEditorIdx + 1) % 2)
+		if !ge.PanelIsOpen(ge.ActiveTextEditorIndex + TextEditor1Index) {
+			ge.SetActiveTextEditorIndex((ge.ActiveTextEditorIndex + 1) % 2)
 		}
 	}
 }

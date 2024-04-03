@@ -72,7 +72,7 @@ func (ge *CodeView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 				if fn.Buf != nil {
 					fn.Buf.Revert()
 				}
-				ge.ViewFileNode(tv, ge.ActiveTextEditorIdx, fn)
+				ge.ViewFileNode(tv, ge.ActiveTextEditorIndex, fn)
 			}
 		})
 	}
@@ -196,7 +196,7 @@ func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Nod
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
 		}
-		ge.SetActiveTextEditorIdx(vidx) // this calls FileModCheck
+		ge.SetActiveTextEditorIndex(vidx) // this calls FileModCheck
 	}
 }
 
@@ -206,7 +206,7 @@ func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Nod
 func (ge *CodeView) NextViewFileNode(fn *filetree.Node) (*code.TextEditor, int) {
 	tv, idx, ok := ge.TextEditorForFileNode(fn)
 	if ok {
-		ge.SetActiveTextEditorIdx(idx)
+		ge.SetActiveTextEditorIndex(idx)
 		return tv, idx
 	}
 	nv, nidx := ge.NextTextEditor()
@@ -283,17 +283,17 @@ func (ge *CodeView) ViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) { //
 	}
 	tv, idx, ok := ge.TextEditorForFileNode(fn)
 	if ok {
-		ge.SetActiveTextEditorIdx(idx)
+		ge.SetActiveTextEditorIndex(idx)
 		return tv, idx, ok
 	}
 	tv = ge.ActiveTextEditor()
-	idx = ge.ActiveTextEditorIdx
+	idx = ge.ActiveTextEditorIndex
 	ge.ViewFileNode(tv, idx, fn)
 	return tv, idx, true
 }
 
-// ViewFileInIdx views file in given text view index
-func (ge *CodeView) ViewFileInIdx(fnm gi.Filename, idx int) (*code.TextEditor, int, bool) {
+// ViewFileInIndex views file in given text view index
+func (ge *CodeView) ViewFileInIndex(fnm gi.Filename, idx int) (*code.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -306,13 +306,13 @@ func (ge *CodeView) ViewFileInIdx(fnm gi.Filename, idx int) (*code.TextEditor, i
 // LinkViewFileNode opens the file node in the 2nd texteditor, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) {
-	if ge.PanelIsOpen(TextEditor2Idx) {
-		ge.SetActiveTextEditorIdx(1)
+	if ge.PanelIsOpen(TextEditor2Index) {
+		ge.SetActiveTextEditorIndex(1)
 	} else {
-		ge.SetActiveTextEditorIdx(0)
+		ge.SetActiveTextEditorIndex(0)
 	}
 	tv := ge.ActiveTextEditor()
-	idx := ge.ActiveTextEditorIdx
+	idx := ge.ActiveTextEditorIndex
 	ge.ViewFileNode(tv, idx, fn)
 	return tv, idx
 }
@@ -364,7 +364,7 @@ func (ge *CodeView) ViewOpenNodeName(name string) {
 		return
 	}
 	tv := ge.ActiveTextEditor()
-	ge.ViewFileNode(tv, ge.ActiveTextEditorIdx, nb)
+	ge.ViewFileNode(tv, ge.ActiveTextEditorIndex, nb)
 }
 
 // SelectOpenNode pops up a menu to select an open node (aka buffer) to view
@@ -382,7 +382,7 @@ func (ge *CodeView) SelectOpenNode() {
 	}
 	m := gi.NewMenuFromStrings(nl, def, func(idx int) {
 		nb := ge.OpenNodes[idx]
-		ge.ViewFileNode(tv, ge.ActiveTextEditorIdx, nb)
+		ge.ViewFileNode(tv, ge.ActiveTextEditorIndex, nb)
 	})
 	gi.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
 }
