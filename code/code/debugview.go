@@ -374,7 +374,7 @@ func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		tb.DeleteLineColor(line - 1)
-		tb.Update()
+		tb.UpdateBuffer()
 	}
 }
 
@@ -397,7 +397,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		tb.SetLineColor(line-1, grr.Log1(gradient.FromString(DebugBreakColors[stat])))
-		tb.Update()
+		tb.UpdateBuffer()
 	}
 }
 
@@ -569,7 +569,7 @@ func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
 	if tb != nil {
 		if !tb.HasLineColor(line - 1) {
 			tb.SetLineColor(line-1, grr.Log1(gradient.FromString(DebugBreakColors[DebugPCCurrent])))
-			tb.Update()
+			tb.UpdateBuffer()
 			dv.CurFileLoc.FPath = fpath
 			dv.CurFileLoc.Line = line
 		}
@@ -585,7 +585,7 @@ func (dv *DebugView) DeleteCurPCInBuf() {
 		tb := dv.Code.TextBufForFile(fpath, false)
 		if tb != nil {
 			tb.DeleteLineColor(line - 1)
-			tb.Update()
+			tb.UpdateBuffer()
 		}
 	}
 	dv.CurFileLoc.FPath = ""
