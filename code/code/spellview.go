@@ -220,7 +220,7 @@ func (sv *SpellView) ConfigToolbar() {
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it
 func (sv *SpellView) CheckNext() {
 	tv := sv.Text
-	if tv == nil || tv.Buf == nil {
+	if tv == nil || tv.Buffer == nil {
 		return
 	}
 	if sv.CurLn == 0 && sv.Errs == nil {
@@ -230,7 +230,7 @@ func (sv *SpellView) CheckNext() {
 	for {
 		if sv.CurIndex < len(sv.Errs) {
 			lx := sv.Errs[sv.CurIndex]
-			word := string(lx.Src(tv.Buf.Lines[sv.CurLn]))
+			word := string(lx.Src(tv.Buffer.Lines[sv.CurLn]))
 			_, known := spell.CheckWord(word) // could have been fixed by now..
 			if known {
 				sv.CurIndex++
@@ -244,7 +244,7 @@ func (sv *SpellView) CheckNext() {
 				break
 			}
 			sv.CurIndex = 0
-			sv.Errs = tv.Buf.SpellCheckLineErrs(sv.CurLn)
+			sv.Errs = tv.Buffer.SpellCheckLineErrs(sv.CurLn)
 		}
 	}
 	if done {
@@ -254,7 +254,7 @@ func (sv *SpellView) CheckNext() {
 	}
 	sv.UnkLex = sv.Errs[sv.CurIndex]
 	sv.CurIndex++
-	sv.UnkWord = string(sv.UnkLex.Src(tv.Buf.Lines[sv.CurLn]))
+	sv.UnkWord = string(sv.UnkLex.Src(tv.Buffer.Lines[sv.CurLn]))
 	sv.Suggest, _ = spell.CheckWord(sv.UnkWord)
 
 	uf := sv.UnknownText()
@@ -291,15 +291,15 @@ func (sv *SpellView) CheckNext() {
 // and call CheckNextAction
 func (sv *SpellView) ChangeAction() {
 	tv := sv.Text
-	if tv == nil || tv.Buf == nil {
+	if tv == nil || tv.Buffer == nil {
 		return
 	}
 	st := sv.UnkStartPos()
 	en := sv.UnkEndPos()
 	ct := sv.ChangeText()
-	tv.Buf.ReplaceText(st, en, st, ct.Text(), texteditor.EditSignal, texteditor.ReplaceNoMatchCase)
-	nwrs := tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn)  // update tags
-	if len(nwrs) == len(sv.Errs)-1 && sv.CurIndex > 0 { // Adjust got rid of changed one..
+	tv.Buffer.ReplaceText(st, en, st, ct.Text(), texteditor.EditSignal, texteditor.ReplaceNoMatchCase)
+	nwrs := tv.Buffer.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
+	if len(nwrs) == len(sv.Errs)-1 && sv.CurIndex > 0 {   // Adjust got rid of changed one..
 		sv.CurIndex--
 	}
 	sv.Errs = nwrs
@@ -311,13 +311,13 @@ func (sv *SpellView) ChangeAction() {
 // and call CheckNextAction
 func (sv *SpellView) ChangeAllAction() {
 	tv := sv.Text
-	if tv == nil || tv.Buf == nil {
+	if tv == nil || tv.Buffer == nil {
 		return
 	}
 	tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Txt, false)
 	tv.QReplaceReplaceAll(0)
 	sv.LastAction = sv.ChangeAllAct()
-	sv.Errs = tv.Buf.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
+	sv.Errs = tv.Buffer.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
 	sv.CheckNext()
 }
 
@@ -386,7 +386,7 @@ func (sv *SpellView) AcceptSuggestion(s string) {
 
 func (sv *SpellView) Destroy() {
 	tv := sv.Text
-	if tv == nil || tv.Buf == nil || tv.This() == nil {
+	if tv == nil || tv.Buffer == nil || tv.This() == nil {
 		return
 	}
 	tv.ClearHighlights()

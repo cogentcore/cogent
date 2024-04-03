@@ -101,12 +101,12 @@ func (a *App) Config() {
 	})
 	dir := gi.NewLabel(ef, "dir").SetText(a.Dir)
 
-	tb := texteditor.NewBuf()
-	tb.NewBuf(0)
+	tb := texteditor.NewBuffer()
+	tb.NewBuffer(0)
 	tb.Hi.Lang = "Bash"
 	tb.Opts.LineNos = false
 	grr.Log(tb.Stat())
-	te := texteditor.NewEditor(ef, "editor").SetBuf(tb)
+	te := texteditor.NewEditor(ef, "editor").SetBuffer(tb)
 	te.Style(func(s *styles.Style) {
 		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
 	})
@@ -117,7 +117,7 @@ func (a *App) Config() {
 		kf := keyfun.Of(e.KeyChord())
 		if kf == keyfun.Enter && e.Modifiers() == 0 {
 			e.SetHandled()
-			tb.NewBuf(0)
+			tb.NewBuffer(0)
 
 			grr.Log(a.RunCmd(txt, cmds, dir))
 			return
@@ -162,11 +162,11 @@ func (a *App) RunCmd(cmd string, cmds *gi.Frame, dir *gi.Label) error {
 	ir, iw := io.Pipe()
 	var ib []byte
 
-	buf := texteditor.NewBuf()
-	buf.NewBuf(0)
+	buf := texteditor.NewBuffer()
+	buf.NewBuffer(0)
 	buf.Opts.LineNos = false
 
-	te := texteditor.NewEditor(cfr).SetBuf(buf)
+	te := texteditor.NewEditor(cfr).SetBuffer(buf)
 	te.Style(func(s *styles.Style) {
 		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
 		s.Min.Set(units.Em(30), units.Em(10))

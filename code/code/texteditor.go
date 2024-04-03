@@ -51,7 +51,7 @@ func (ed *TextEditor) HandleEvents() {
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.Pos())
 		tpos := ed.PixelToCursor(pt)
-		if ed.Buf != nil && pt.X >= 0 && ed.Buf.IsValidLine(tpos.Ln) {
+		if ed.Buffer != nil && pt.X >= 0 && ed.Buffer.IsValidLine(tpos.Ln) {
 			if pt.X < int(ed.LineNoOff) {
 				e.SetHandled()
 				ed.LineNoDoubleClick(tpos)
@@ -80,7 +80,7 @@ func (ed *TextEditor) HandleEvents() {
 
 // CurDebug returns the current debugger, true if it is present
 func (ed *TextEditor) CurDebug() (*DebugView, bool) {
-	if ed.Buf == nil {
+	if ed.Buffer == nil {
 		return nil, false
 	}
 	if ge, ok := ParentCode(ed); ok {
@@ -99,29 +99,29 @@ func (ed *TextEditor) SetBreakpoint(ln int) {
 		return
 	}
 	// tv.Buf.SetLineIcon(ln, "stop")
-	ed.Buf.SetLineColor(ln, grr.Log1(gradient.FromString(DebugBreakColors[DebugBreakInactive])))
-	dbg.AddBreak(string(ed.Buf.Filename), ln+1)
+	ed.Buffer.SetLineColor(ln, grr.Log1(gradient.FromString(DebugBreakColors[DebugBreakInactive])))
+	dbg.AddBreak(string(ed.Buffer.Filename), ln+1)
 }
 
 func (ed *TextEditor) ClearBreakpoint(ln int) {
-	if ed.Buf == nil {
+	if ed.Buffer == nil {
 		return
 	}
 	// tv.Buf.DeleteLineIcon(ln)
-	ed.Buf.DeleteLineColor(ln)
+	ed.Buffer.DeleteLineColor(ln)
 	dbg, has := ed.CurDebug()
 	if !has {
 		return
 	}
-	dbg.DeleteBreak(string(ed.Buf.Filename), ln+1)
+	dbg.DeleteBreak(string(ed.Buffer.Filename), ln+1)
 }
 
 // HasBreakpoint checks if line has a breakpoint
 func (ed *TextEditor) HasBreakpoint(ln int) bool {
-	if ed.Buf == nil {
+	if ed.Buffer == nil {
 		return false
 	}
-	_, has := ed.Buf.LineColors[ln]
+	_, has := ed.Buffer.LineColors[ln]
 	return has
 }
 
@@ -141,14 +141,14 @@ func (ed *TextEditor) DebugVarValueAtPos(pos image.Point) string {
 	}
 	pt := ed.PointToRelPos(pos)
 	tpos := ed.PixelToCursor(pt)
-	lx, _ := ed.Buf.HiTagAtPos(tpos)
+	lx, _ := ed.Buffer.HiTagAtPos(tpos)
 	if lx == nil {
 		return ""
 	}
 	if !lx.Tok.Tok.InCat(token.Name) {
 		return ""
 	}
-	varNm := ed.Buf.LexObjPathString(tpos.Ln, lx) // get full path
+	varNm := ed.Buffer.LexObjPathString(tpos.Ln, lx) // get full path
 	val := dbg.VarValue(varNm)
 	if val != "" {
 		return varNm + " = " + val
@@ -162,15 +162,15 @@ func (ed *TextEditor) FindFrames(ln int) {
 	if !has {
 		return
 	}
-	dbg.FindFrames(string(ed.Buf.Filename), ln+1)
+	dbg.FindFrames(string(ed.Buffer.Filename), ln+1)
 }
 
 // DoubleClickEvent processes double-clicks NOT on the line-number section
 func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lex.Pos) {
 	dbg, has := ed.CurDebug()
-	lx, _ := ed.Buf.HiTagAtPos(tpos)
+	lx, _ := ed.Buffer.HiTagAtPos(tpos)
 	if has && lx != nil && lx.Tok.Tok.InCat(token.Name) {
-		varNm := ed.Buf.LexObjPathString(tpos.Ln, lx)
+		varNm := ed.Buffer.LexObjPathString(tpos.Ln, lx)
 		err := dbg.ShowVar(varNm)
 		if err == nil {
 			e.SetHandled()
@@ -197,8 +197,8 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 		s.Min.X.Ch(20)
 		s.Min.Y.Em(20)
 		s.Grow.Set(1, 1)
-		if ed.Buf != nil {
-			ed.Buf.Opts.LineNos = false
+		if ed.Buffer != nil {
+			ed.Buffer.Opts.LineNos = false
 		}
 	})
 }
@@ -241,7 +241,7 @@ func (ed *TextEditor) ContextMenu(m *gi.Scene) {
 	gi.NewSeparator(m)
 	giv.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
 
-	fn := ed.Code.FileNodeForFile(string(ed.Buf.Filename), false)
+	fn := ed.Code.FileNodeForFile(string(ed.Buffer.Filename), false)
 	if fn != nil {
 		fn.SelectAction(events.SelectOne)
 		fn.VCSContextMenu(m)

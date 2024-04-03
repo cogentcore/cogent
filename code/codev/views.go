@@ -60,7 +60,7 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	fv := tv.RecycleTabWidget("Find", true, code.FindViewType).(*code.FindView)
 	fv.Time = time.Now()
 	ftv := fv.TextEditor()
-	ftv.SetBuf(fbuf)
+	ftv.SetBuffer(fbuf)
 
 	fv.SaveFindString(find)
 	fv.SaveReplString(repl)
@@ -83,11 +83,11 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 				if err != nil {
 					log.Println(err)
 				} else {
-					cnt, matches := atv.Buf.SearchRegexp(re)
+					cnt, matches := atv.Buffer.SearchRegexp(re)
 					res = append(res, code.FileSearchResults{ond, cnt, matches})
 				}
 			} else {
-				cnt, matches := atv.Buf.Search([]byte(find), ignoreCase, false)
+				cnt, matches := atv.Buffer.Search([]byte(find), ignoreCase, false)
 				res = append(res, code.FileSearchResults{ond, cnt, matches})
 			}
 		}
@@ -101,7 +101,7 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 // Spell checks spelling in active text view
 func (ge *CodeView) Spell() { //gti:add
 	txv := ge.ActiveTextEditor()
-	if txv == nil || txv.Buf == nil {
+	if txv == nil || txv.Buffer == nil {
 		return
 	}
 	spell.OpenCheck() // make sure latest file opened
@@ -119,7 +119,7 @@ func (ge *CodeView) Spell() { //gti:add
 // Symbols displays the Symbols of a file or package
 func (ge *CodeView) Symbols() { //gti:add
 	txv := ge.ActiveTextEditor()
-	if txv == nil || txv.Buf == nil {
+	if txv == nil || txv.Buffer == nil {
 		return
 	}
 	tv := ge.Tabs()
@@ -153,7 +153,7 @@ func (ge *CodeView) Debug() { //gti:add
 // DebugTest runs the debugger using testing mode in current active texteditor path
 func (ge *CodeView) DebugTest() { //gti:add
 	txv := ge.ActiveTextEditor()
-	if txv == nil || txv.Buf == nil {
+	if txv == nil || txv.Buffer == nil {
 		return
 	}
 	tv := ge.Tabs()
@@ -162,7 +162,7 @@ func (ge *CodeView) DebugTest() { //gti:add
 	}
 
 	ge.Settings.Debug.Mode = cdebug.Test
-	tstPath := string(txv.Buf.Filename)
+	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, code.DebugViewType).(*code.DebugView)
 	dv.ConfigDebugView(ge, fi.Go, tstPath)
@@ -235,8 +235,8 @@ func (ge *CodeView) OpenConsoleTab() { //gti:add
 		return
 	}
 	ctv.SetReadOnly(true)
-	if ctv.Buf == nil || ctv.Buf != code.TheConsole.Buf {
-		ctv.SetBuf(code.TheConsole.Buf)
+	if ctv.Buffer == nil || ctv.Buffer != code.TheConsole.Buf {
+		ctv.SetBuffer(code.TheConsole.Buf)
 		ctv.OnChange(func(e events.Event) {
 			ge.SelectTabByName("Console")
 		})
@@ -278,13 +278,13 @@ func (ge *CodeView) UpdateStatusLabel() {
 	if tv != nil {
 		ln = tv.CursorPos.Ln + 1
 		ch = tv.CursorPos.Ch
-		if tv.Buf != nil {
-			fnm = ge.Files.RelPath(tv.Buf.Filename)
-			if tv.Buf.IsNotSaved() {
+		if tv.Buffer != nil {
+			fnm = ge.Files.RelPath(tv.Buffer.Filename)
+			if tv.Buffer.IsNotSaved() {
 				fnm += "*"
 			}
-			if tv.Buf.Info.Known != fi.Unknown {
-				fnm += " (" + tv.Buf.Info.Known.String() + ")"
+			if tv.Buffer.Info.Known != fi.Unknown {
+				fnm += " (" + tv.Buffer.Info.Known.String() + ")"
 			}
 		}
 		if tv.ISearch.On {

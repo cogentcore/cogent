@@ -329,10 +329,10 @@ func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
 func (ge *CodeView) AddChooserSymbols(ac *gi.Chooser) {
 	ac.AddItemsFunc(func() {
 		tv := ge.ActiveTextEditor()
-		if tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
+		if tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
 			return
 		}
-		pfs := tv.Buf.PiState.Done()
+		pfs := tv.Buffer.PiState.Done()
 		if len(pfs.ParseState.Scopes) == 0 {
 			return
 		}

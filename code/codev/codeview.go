@@ -73,7 +73,7 @@ type CodeView struct {
 	OpenNodes code.OpenNodes `json:"-"`
 
 	// the command buffers for commands run in this project
-	CmdBufs map[string]*texteditor.Buf `set:"-" json:"-"`
+	CmdBufs map[string]*texteditor.Buffer `set:"-" json:"-"`
 
 	// history of commands executed in this session
 	CmdHistory code.CmdNames `set:"-" json:"-"`

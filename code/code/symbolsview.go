@@ -175,7 +175,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 
 func SelectSymbol(ge Code, ssym syms.Symbol) {
 	tv := ge.ActiveTextEditor()
-	if tv == nil || tv.Buf == nil || string(tv.Buf.Filename) != ssym.Filename {
+	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv, ok = ge.OpenFileAtRegion(gi.Filename(ssym.Filename), tr)
@@ -198,10 +198,10 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 func (sv *SymbolsView) OpenPackage() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
 		return
 	}
-	pfs := tv.Buf.PiState.Done()
+	pfs := tv.Buffer.PiState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
 		gi.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
@@ -214,16 +214,16 @@ func (sv *SymbolsView) OpenPackage() {
 func (sv *SymbolsView) OpenFile() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buf == nil || !tv.Buf.Hi.UsingPi() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
 		return
 	}
-	pfs := tv.Buf.PiState.Done()
+	pfs := tv.Buffer.PiState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
 		gi.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
-	sv.Syms.OpenSyms(pkg, string(tv.Buf.Filename), sv.Match)
+	sv.Syms.OpenSyms(pkg, string(tv.Buffer.Filename), sv.Match)
 }
 
 func symMatch(str, match string, ignoreCase bool) bool {

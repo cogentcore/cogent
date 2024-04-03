@@ -22,7 +22,7 @@ import (
 )
 
 // ConfigTextBuf configures the text buf according to prefs
-func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buf) {
+func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buffer) {
 	tb.SetHiStyle(gi.AppearanceSettings.HiStyle)
 	tb.Opts.EditorSettings = ge.Settings.Editor
 	tb.ConfigKnown()
@@ -71,7 +71,7 @@ func (ge *CodeView) TextEditorForFileNode(fn *filetree.Node) (*code.TextEditor, 
 	ge.ConfigTextBuf(fn.Buf)
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
-		if tv != nil && tv.Buf != nil && tv.Buf == fn.Buf && ge.PanelIsOpen(i+TextEditor1Index) {
+		if tv != nil && tv.Buffer != nil && tv.Buffer == fn.Buf && ge.PanelIsOpen(i+TextEditor1Index) {
 			return tv, i, true
 		}
 	}
@@ -81,11 +81,11 @@ func (ge *CodeView) TextEditorForFileNode(fn *filetree.Node) (*code.TextEditor, 
 // OpenNodeForTextEditor finds the FileNode that a given TextEditor is
 // viewing, returning its index within OpenNodes list, or false if not found
 func (ge *CodeView) OpenNodeForTextEditor(tv *code.TextEditor) (*filetree.Node, int, bool) {
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return nil, -1, false
 	}
 	for i, ond := range ge.OpenNodes {
-		if ond.Buf == tv.Buf {
+		if ond.Buf == tv.Buffer {
 			return ond, i, true
 		}
 	}
@@ -103,7 +103,7 @@ func (ge *CodeView) TextEditorForFile(fnm gi.Filename) (*code.TextEditor, int, b
 }
 
 // SetActiveFileInfo sets the active file info from textbuf
-func (ge *CodeView) SetActiveFileInfo(buf *texteditor.Buf) {
+func (ge *CodeView) SetActiveFileInfo(buf *texteditor.Buffer) {
 	ge.ActiveFilename = buf.Filename
 	ge.ActiveLang = buf.Info.Known
 	ge.ActiveVCSInfo = ""
@@ -130,8 +130,8 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 		return -1
 	}
 	ge.ActiveTextEditorIndex = idx
-	if av.Buf != nil {
-		ge.SetActiveFileInfo(av.Buf)
+	if av.Buffer != nil {
+		ge.SetActiveFileInfo(av.Buffer)
 	}
 	ge.SetStatus("")
 	return idx
@@ -147,9 +147,9 @@ func (ge *CodeView) SetActiveTextEditorIndex(idx int) *code.TextEditor {
 	}
 	ge.ActiveTextEditorIndex = idx
 	av := ge.ActiveTextEditor()
-	if av.Buf != nil {
-		ge.SetActiveFileInfo(av.Buf)
-		av.Buf.FileModCheck()
+	if av.Buffer != nil {
+		ge.SetActiveFileInfo(av.Buffer)
+		av.Buffer.FileModCheck()
 	}
 	ge.SetStatus("")
 	av.SetFocusEvent()
@@ -161,7 +161,7 @@ func (ge *CodeView) SetActiveTextEditorIndex(idx int) *code.TextEditor {
 // it is the next one (if visible)
 func (ge *CodeView) NextTextEditor() (*code.TextEditor, int) {
 	av := ge.TextEditorByIndex(ge.ActiveTextEditorIndex)
-	if av.Buf == nil {
+	if av.Buffer == nil {
 		return av, ge.ActiveTextEditorIndex
 	}
 	nxt := (ge.ActiveTextEditorIndex + 1) % NTextEditors
@@ -180,10 +180,10 @@ func (ge *CodeView) SwapTextEditors() bool {
 
 	tva := ge.TextEditorByIndex(0)
 	tvb := ge.TextEditorByIndex(1)
-	bufa := tva.Buf
-	bufb := tvb.Buf
-	tva.SetBuf(bufb)
-	tvb.SetBuf(bufa)
+	bufa := tva.Buffer
+	bufb := tvb.Buffer
+	tva.SetBuffer(bufb)
+	tvb.SetBuffer(bufa)
 	ge.SetStatus("swapped buffers")
 	return true
 }
@@ -250,9 +250,9 @@ func (ge *CodeView) UpdateTextButtons() {
 		tv := ge.TextEditorByIndex(i)
 		mb := ge.TextEditorButtonByIndex(i)
 		txnm := "<no file>"
-		if tv.Buf != nil {
-			txnm = dirs.DirAndFile(string(tv.Buf.Filename))
-			if tv.Buf.IsNotSaved() {
+		if tv.Buffer != nil {
+			txnm = dirs.DirAndFile(string(tv.Buffer.Filename))
+			if tv.Buffer.IsNotSaved() {
 				txnm += " <b>*</b>"
 			} else {
 				txnm += "   "

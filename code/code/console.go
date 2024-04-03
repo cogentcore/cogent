@@ -30,7 +30,7 @@ type Console struct {
 	StderrRead *os.File `json:"-" xml:"-"`
 
 	// text buffer holding all output
-	Buf *texteditor.Buf `json:"-" xml:"-"`
+	Buf *texteditor.Buffer `json:"-" xml:"-"`
 
 	// set to true to cancel monitoring
 	Cancel bool `json:"-" xml:"-"`
@@ -61,7 +61,7 @@ func (cn *Console) Init(logFile string) {
 	os.Stdout = cn.StdoutWrite
 	os.Stderr = cn.StderrWrite
 	log.SetOutput(cn.StderrWrite)
-	cn.Buf = texteditor.NewBuf()
+	cn.Buf = texteditor.NewBuffer()
 	cn.Buf.Opts.LineNos = false
 	cn.Buf.Filename = gi.Filename("console-buf")
 	if logFile != "" {

@@ -44,8 +44,8 @@ func (ge *CodeView) ApplyPrefs() {
 	if len(ge.Kids) > 0 {
 		for i := 0; i < NTextEditors; i++ {
 			tv := ge.TextEditorByIndex(i)
-			if tv.Buf != nil {
-				ge.ConfigTextBuf(tv.Buf)
+			if tv.Buffer != nil {
+				ge.ConfigTextBuf(tv.Buffer)
 			}
 		}
 		for _, ond := range ge.OpenNodes {

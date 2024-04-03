@@ -92,12 +92,12 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	}
 	title := "Lookup: " + text
 
-	tb := texteditor.NewBuf().SetText(txt).SetFilename(ld.Filename)
+	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
 	tb.Hi.Style = gi.AppearanceSettings.HiStyle
 	tb.Opts.LineNos = ge.Settings.Editor.LineNos
 
 	d := gi.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
-	tv := texteditor.NewEditor(d).SetBuf(tb)
+	tv := texteditor.NewEditor(d).SetBuffer(tb)
 	tv.SetReadOnly(true)
 
 	tv.SetCursorTarget(lex.Pos{Ln: ld.StLine})
@@ -129,7 +129,7 @@ func (ge *CodeView) ReplaceInActive() { //gti:add
 // CutRect cuts rectangle in active text view
 func (ge *CodeView) CutRect() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return
 	}
 	tv.CutRect()
@@ -138,7 +138,7 @@ func (ge *CodeView) CutRect() { //gti:add
 // CopyRect copies rectangle in active text view
 func (ge *CodeView) CopyRect() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return
 	}
 	tv.CopyRect(true)
@@ -147,7 +147,7 @@ func (ge *CodeView) CopyRect() { //gti:add
 // PasteRect cuts rectangle in active text view
 func (ge *CodeView) PasteRect() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return
 	}
 	tv.PasteRect()
@@ -160,7 +160,7 @@ func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
 		return false
 	}
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return false
 	}
 	sel := tv.Selection()
@@ -188,7 +188,7 @@ func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
 		return false
 	}
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return false
 	}
 	tv.InsertAtCursor([]byte(str))
@@ -201,7 +201,7 @@ func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
 // If multiple lines are selected and any line is uncommented all will be commented
 func (ge *CodeView) CommentOut() bool { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return false
 	}
 	sel := tv.Selection()
@@ -213,7 +213,7 @@ func (ge *CodeView) CommentOut() bool { //gti:add
 		stl = sel.Reg.Start.Ln
 		etl = sel.Reg.End.Ln
 	}
-	tv.Buf.CommentRegion(stl, etl)
+	tv.Buffer.CommentRegion(stl, etl)
 	tv.SelectReset()
 	return true
 }
@@ -221,14 +221,14 @@ func (ge *CodeView) CommentOut() bool { //gti:add
 // Indent indents selected lines in active view
 func (ge *CodeView) Indent() bool { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return false
 	}
 	sel := tv.Selection()
 	if sel == nil {
 		return false
 	}
-	tv.Buf.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln)
+	tv.Buffer.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln)
 	tv.SelectReset()
 	return true
 }
@@ -236,7 +236,7 @@ func (ge *CodeView) Indent() bool { //gti:add
 // ReCase replaces currently selected text in current active view with given case
 func (ge *CodeView) ReCase(c strcase.Cases) string { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return ""
 	}
 	return tv.ReCaseSelection(c)
@@ -247,13 +247,13 @@ func (ge *CodeView) ReCase(c strcase.Cases) string { //gti:add
 // for given selected region (full text if no selection)
 func (ge *CodeView) JoinParaLines() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buf.JoinParaLines(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+		tv.Buffer.JoinParaLines(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
 	} else {
-		tv.Buf.JoinParaLines(0, tv.NLines-1)
+		tv.Buffer.JoinParaLines(0, tv.NLines-1)
 	}
 }
 
@@ -261,13 +261,13 @@ func (ge *CodeView) JoinParaLines() { //gti:add
 // for given selected region (full text if no selection)
 func (ge *CodeView) TabsToSpaces() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buf.TabsToSpacesRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+		tv.Buffer.TabsToSpacesRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
 	} else {
-		tv.Buf.TabsToSpacesRegion(0, tv.NLines-1)
+		tv.Buffer.TabsToSpacesRegion(0, tv.NLines-1)
 	}
 }
 
@@ -275,13 +275,13 @@ func (ge *CodeView) TabsToSpaces() { //gti:add
 // for given selected region (full text if no selection)
 func (ge *CodeView) SpacesToTabs() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf == nil {
+	if tv.Buffer == nil {
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buf.SpacesToTabsRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+		tv.Buffer.SpacesToTabsRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
 	} else {
-		tv.Buf.SpacesToTabsRegion(0, tv.NLines-1)
+		tv.Buffer.SpacesToTabsRegion(0, tv.NLines-1)
 	}
 }
 
@@ -316,7 +316,7 @@ func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:a
 	if fnb.Buf == nil {
 		return
 	}
-	dif := fna.Buf.DiffBufsUnified(fnb.Buf, 3)
+	dif := fna.Buf.DiffBuffersUnified(fnb.Buf, 3)
 	cbuf, _, _ := ge.RecycleCmdTab("Diffs", true, true)
 	cbuf.SetText(dif)
 	cbuf.AutoScrollViews()
@@ -332,32 +332,32 @@ func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:a
 // returns a string report thereof.
 func (ge *CodeView) CountWords() string { //gti:add
 	av := ge.ActiveTextEditor()
-	if av.Buf == nil || av.Buf.NLines <= 0 {
+	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"
 	}
-	av.Buf.LinesMu.RLock()
-	defer av.Buf.LinesMu.RUnlock()
-	ll := av.Buf.NLines - 1
-	reg := textbuf.NewRegion(0, 0, ll, len(av.Buf.Lines[ll]))
-	words, lines := textbuf.CountWordsLinesRegion(av.Buf.Lines, reg)
-	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", dirs.DirAndFile(string(av.Buf.Filename)), words, lines)
+	av.Buffer.LinesMu.RLock()
+	defer av.Buffer.LinesMu.RUnlock()
+	ll := av.Buffer.NLines - 1
+	reg := textbuf.NewRegion(0, 0, ll, len(av.Buffer.Lines[ll]))
+	words, lines := textbuf.CountWordsLinesRegion(av.Buffer.Lines, reg)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", dirs.DirAndFile(string(av.Buffer.Filename)), words, lines)
 }
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
 func (ge *CodeView) CountWordsRegion() string { //gti:add
 	av := ge.ActiveTextEditor()
-	if av.Buf == nil || av.Buf.NLines <= 0 {
+	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"
 	}
 	if !av.HasSelection() {
 		return ge.CountWords()
 	}
-	av.Buf.LinesMu.RLock()
-	defer av.Buf.LinesMu.RUnlock()
+	av.Buffer.LinesMu.RLock()
+	defer av.Buffer.LinesMu.RUnlock()
 	sel := av.Selection()
-	words, lines := textbuf.CountWordsLinesRegion(av.Buf.Lines, sel.Reg)
-	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", dirs.DirAndFile(string(av.Buf.Filename)), words, lines)
+	words, lines := textbuf.CountWordsLinesRegion(av.Buffer.Lines, sel.Reg)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", dirs.DirAndFile(string(av.Buffer.Filename)), words, lines)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -402,8 +402,8 @@ func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 	}
 	fpath := up.Path[1:] // has double //
 	cdpath := ""
-	if ftv != nil && ftv.Buf != nil { // get cd path for non-pathed fnames
-		cdln := ftv.Buf.BytesLine(0)
+	if ftv != nil && ftv.Buffer != nil { // get cd path for non-pathed fnames
+		cdln := ftv.Buffer.BytesLine(0)
 		if bytes.HasPrefix(cdln, []byte("cd ")) {
 			fmidx := bytes.Index(cdln, []byte(" (from: "))
 			if fmidx > 0 {

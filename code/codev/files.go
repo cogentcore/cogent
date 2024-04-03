@@ -25,12 +25,12 @@ import (
 // SaveActiveView saves the contents of the currently-active texteditor
 func (ge *CodeView) SaveActiveView() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf != nil {
+	if tv.Buffer != nil {
 		ge.LastSaveTStamp = time.Now()
-		if tv.Buf.Filename != "" {
-			tv.Buf.Save()
+		if tv.Buffer.Filename != "" {
+			tv.Buffer.Save()
 			ge.SetStatus("File Saved")
-			fnm := string(tv.Buf.Filename)
+			fnm := string(tv.Buffer.Filename)
 			fpath, _ := filepath.Split(fnm)
 			ge.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 			ge.RunPostCmdsActiveView()
@@ -56,10 +56,10 @@ func (ge *CodeView) CallSaveActiveViewAs(ctx gi.Widget) {
 // currently-active texteditor
 func (ge *CodeView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf != nil {
+	if tv.Buffer != nil {
 		ge.LastSaveTStamp = time.Now()
-		ofn := tv.Buf.Filename
-		tv.Buf.SaveAsFunc(filename, func(canceled bool) {
+		ofn := tv.Buffer.Filename
+		tv.Buffer.SaveAsFunc(filename, func(canceled bool) {
 			if canceled {
 				ge.SetStatus(fmt.Sprintf("File %v NOT Saved As: %v", ofn, filename))
 				return
@@ -82,11 +82,11 @@ func (ge *CodeView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 // RevertActiveView revert active view to saved version
 func (ge *CodeView) RevertActiveView() { //gti:add
 	tv := ge.ActiveTextEditor()
-	if tv.Buf != nil {
-		ge.ConfigTextBuf(tv.Buf)
-		tv.Buf.Revert()
-		tv.Buf.Undos.Reset() // key implication of revert
-		fpath, _ := filepath.Split(string(tv.Buf.Filename))
+	if tv.Buffer != nil {
+		ge.ConfigTextBuf(tv.Buffer)
+		tv.Buffer.Revert()
+		tv.Buffer.Undos.Reset() // key implication of revert
+		fpath, _ := filepath.Split(string(tv.Buffer.Filename))
 		ge.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 	}
 }
@@ -188,11 +188,11 @@ func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Nod
 	}
 
 	if tv.IsNotSaved() {
-		ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buf.Filename))
+		ge.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buffer.Filename))
 	}
 	nw, err := ge.OpenFileNode(fn)
 	if err == nil {
-		tv.SetBuf(fn.Buf)
+		tv.SetBuffer(fn.Buf)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
 		}
@@ -244,7 +244,7 @@ func (ge *CodeView) FileNodeForFile(fpath string, add bool) *filetree.Node {
 // TextBufForFile returns TextBuf for given file path.
 // add: if not found in existing tree and external files, then if add is true,
 // it is added to the ExtFiles list.
-func (ge *CodeView) TextBufForFile(fpath string, add bool) *texteditor.Buf {
+func (ge *CodeView) TextBufForFile(fpath string, add bool) *texteditor.Buffer {
 	fn := ge.FileNodeForFile(fpath, add)
 	if fn == nil {
 		return nil

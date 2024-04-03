@@ -100,7 +100,7 @@ func (fv *FindView) Params() *FindParams {
 // ShowResults shows the results in the buffer
 func (fv *FindView) ShowResults(res []FileSearchResults) {
 	ftv := fv.TextEditor()
-	fbuf := ftv.Buf
+	fbuf := ftv.Buffer
 	fbuf.Opts.LineNos = false
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100) // markups
@@ -230,24 +230,24 @@ func (fv *FindView) ReplaceAction() bool {
 		}
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buf.AdjustReg(reg)
+	reg = tv.Buffer.AdjustReg(reg)
 	if !reg.IsNil() {
 		if fp.Regexp {
-			rg := tv.Buf.Region(reg.Start, reg.End)
+			rg := tv.Buffer.Region(reg.Start, reg.End)
 			b := rg.ToBytes()
 			rb := fv.Re.ReplaceAll(b, []byte(fp.Replace))
-			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), texteditor.EditSignal, false)
+			tv.Buffer.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), texteditor.EditSignal, false)
 		} else {
 			// MatchCase only if doing IgnoreCase
-			tv.Buf.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, texteditor.EditSignal, fp.IgnoreCase)
+			tv.Buffer.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, texteditor.EditSignal, fp.IgnoreCase)
 		}
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Ln
 		st := lex.Pos{Ln: ftvln, Ch: 0}
-		len := len(ftv.Buf.Lines[ftvln])
+		len := len(ftv.Buffer.Lines[ftvln])
 		en := lex.Pos{Ln: ftvln, Ch: len}
-		ftv.Buf.DeleteText(st, en, texteditor.EditSignal)
+		ftv.Buffer.DeleteText(st, en, texteditor.EditSignal)
 	}
 
 	tv.ClearHighlights()
@@ -334,7 +334,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 		return false
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buf.AdjustReg(reg)
+	reg = tv.Buffer.AdjustReg(reg)
 	find := fv.Params().Find
 	texteditor.PrevISearchString = find
 	tve := texteditor.AsEditor(tv)
@@ -349,7 +349,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 	lnka := []byte(`<a href="`)
 	lnkasz := len(lnka)
 
-	fb := ftv.Buf
+	fb := ftv.Buffer
 
 	if len(tv.Highlights) != fCount { // highlight
 		hi := make([]textbuf.Region, fCount)
@@ -493,7 +493,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *gi.BasicBar) {
 			}
 			fvtv := fv.TextEditor()
 			if fvtv != nil {
-				fvtv.Buf.NewBuf(0)
+				fvtv.Buffer.NewBuffer(0)
 			}
 		} else {
 			fv.FindAction()

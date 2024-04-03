@@ -39,7 +39,7 @@ type GiDelve struct {
 // for given path, and project root path
 // test = run in test mode, and args are optional additional args to pass
 // to the debugger.
-func NewGiDelve(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (*GiDelve, error) {
+func NewGiDelve(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (*GiDelve, error) {
 	gd := &GiDelve{}
 	err := gd.Start(path, rootPath, outbuf, pars)
 	return gd, err
@@ -86,7 +86,7 @@ func (gd *GiDelve) StartedCheck() error {
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) error {
+func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) error {
 	gd.path = path
 	gd.rootPath = rootPath
 	gd.params = *pars

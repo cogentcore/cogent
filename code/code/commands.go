@@ -362,7 +362,7 @@ func RepoCurBranches(repo vci.Repo) (string, []string, error) {
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(ge Code, buf *texteditor.Buf, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]struct{}) {
 	sz := len(pvals)
 	avp := ge.ArgVarVals()
 	cnt := 0
@@ -432,7 +432,7 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buf, pvals map[string]str
 // which can be displayed -- if !wait, then Buf is updated online as output
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(ge Code, buf *texteditor.Buf) {
+func (cm *Command) Run(ge Code, buf *texteditor.Buffer) {
 	// if cm.Hilight != fi.Unknown {
 	// 	buf.Info.Known = cm.Hilight
 	// 	buf.Info.Mime = fi.MimeString(fi.Bash)
@@ -461,7 +461,7 @@ func (cm *Command) Run(ge Code, buf *texteditor.Buf) {
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(ge Code, buf *texteditor.Buf) {
+func (cm *Command) RunAfterPrompts(ge Code, buf *texteditor.Buffer) {
 	// ge.CmdRuns().KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjPath}"
@@ -501,7 +501,7 @@ func (cm *Command) RunAfterPrompts(ge Code, buf *texteditor.Buf) {
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
 // line of the command output to code statusbar
-func (cm *Command) RunBufWait(ge Code, buf *texteditor.Buf, cma *CmdAndArgs) bool {
+func (cm *Command) RunBufWait(ge Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
 	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
@@ -511,7 +511,7 @@ func (cm *Command) RunBufWait(ge Code, buf *texteditor.Buf, cma *CmdAndArgs) boo
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(ge Code, buf *texteditor.Buf, cma *CmdAndArgs) bool {
+func (cm *Command) RunBuf(ge Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(ge.ArgVarVals())
 	ge.CmdRuns().AddCmd(cm.Label(), cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
@@ -539,7 +539,7 @@ func (cm *Command) RunNoBuf(ge Code, cma *CmdAndArgs) bool {
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(ge Code, buf *texteditor.Buf, out []byte) {
+func (cm *Command) AppendCmdOut(ge Code, buf *texteditor.Buffer, out []byte) {
 	if buf == nil {
 		return
 	}
@@ -566,7 +566,7 @@ var CmdOutStatusLen = 80
 // RunStatus reports the status of the command run (given in cmdstr) to
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
-func (cm *Command) RunStatus(ge Code, buf *texteditor.Buf, cmdstr string, err error, out []byte) bool {
+func (cm *Command) RunStatus(ge Code, buf *texteditor.Buffer, cmdstr string, err error, out []byte) bool {
 	ge.CmdRuns().DeleteByName(cm.Label())
 	var rval bool
 	outstr := ""

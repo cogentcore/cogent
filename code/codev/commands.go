@@ -22,18 +22,18 @@ import (
 // RecycleCmdBuf creates the buffer for command output, or returns
 // existing. If clear is true, then any existing buffer is cleared.
 // Returns true if new buffer created.
-func (ge *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buf, bool) {
+func (ge *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer, bool) {
 	if ge.CmdBufs == nil {
-		ge.CmdBufs = make(map[string]*texteditor.Buf, 20)
+		ge.CmdBufs = make(map[string]*texteditor.Buffer, 20)
 	}
 	if buf, has := ge.CmdBufs[cmdNm]; has {
 		if clear {
-			buf.NewBuf(0)
+			buf.NewBuffer(0)
 		}
 		return buf, false
 	}
-	buf := texteditor.NewBuf()
-	buf.NewBuf(0)
+	buf := texteditor.NewBuffer()
+	buf.NewBuffer(0)
 	ge.CmdBufs[cmdNm] = buf
 	buf.Autosave = false
 	// buf.Info.Known = fi.Bash
@@ -46,14 +46,14 @@ func (ge *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buf, bo
 // buffer object to save output from the command. returns true if a new buffer
 // was created, false if one already existed. if sel, select tab.  if clearBuf, then any
 // existing buffer is cleared.  Also returns index of tab.
-func (ge *CodeView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buf, *texteditor.Editor, bool) {
+func (ge *CodeView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buffer, *texteditor.Editor, bool) {
 	buf, nw := ge.RecycleCmdBuf(cmdNm, clearBuf)
 	ctv := ge.RecycleTabTextEditor(cmdNm, sel)
 	if ctv == nil {
 		return nil, nil, false
 	}
 	ctv.SetReadOnly(true)
-	ctv.SetBuf(buf)
+	ctv.SetBuffer(buf)
 	ctv.LinkHandler = func(tl *paint.TextLink) {
 		ge.OpenFileURL(tl.URL, ctv)
 	}
@@ -156,10 +156,10 @@ func (ge *CodeView) ExecCmdFileNode(fn *filetree.Node) {
 func (ge *CodeView) SetArgVarVals() {
 	tv := ge.ActiveTextEditor()
 	tve := texteditor.AsEditor(tv)
-	if tv == nil || tv.Buf == nil {
+	if tv == nil || tv.Buffer == nil {
 		ge.ArgVals.Set("", &ge.Settings, tve)
 	} else {
-		ge.ArgVals.Set(string(tv.Buf.Filename), &ge.Settings, tve)
+		ge.ArgVals.Set(string(tv.Buffer.Filename), &ge.Settings, tve)
 	}
 }
 

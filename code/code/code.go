@@ -81,7 +81,7 @@ type Code interface {
 	// TextBufForFile returns the TextBuf for given file path
 	// add: if not found in existing tree and external files, then if add is true,
 	// it is added to the ExtFiles list.
-	TextBufForFile(fpath string, add bool) *texteditor.Buf
+	TextBufForFile(fpath string, add bool) *texteditor.Buffer
 
 	// NextViewFileNode sets the next text view to view file in given node (opens
 	// buffer if not already opened) -- if already being viewed, that is

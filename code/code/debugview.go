@@ -51,14 +51,14 @@ const (
 var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error){
-	fi.Go: func(path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error) {
+var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error){
+	fi.Go: func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
 		return cdelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup fi.Known, path, rootPath string, outbuf *texteditor.Buf, pars *cdebug.Params) (cdebug.GiDebug, error) {
+func NewDebugger(sup fi.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
@@ -98,7 +98,7 @@ type DebugView struct {
 	BBreaks []*cdebug.Break `set:"-" json:"-" xml:"-"`
 
 	// output from the debugger
-	OutBuf *texteditor.Buf `set:"-" json:"-" xml:"-"`
+	OutBuf *texteditor.Buffer `set:"-" json:"-" xml:"-"`
 
 	// parent code project
 	Code Code `set:"-" json:"-" xml:"-"`
@@ -752,7 +752,7 @@ func (dv *DebugView) ConfigDebugView(ge Code, sup fi.Known, exePath string) {
 	gi.NewToolbar(dv, "toolbar")
 	gi.NewTabs(dv, "tabs")
 	dv.State.BlankState()
-	dv.OutBuf = texteditor.NewBuf()
+	dv.OutBuf = texteditor.NewBuffer()
 	dv.OutBuf.Filename = gi.Filename("debug-outbuf")
 	dv.ConfigToolbar()
 	dv.ConfigTabs()
@@ -828,7 +828,7 @@ func (dv *DebugView) ConfigTabs() {
 	ctv := texteditor.NewEditor(tb.NewTab("Console"), "dbg-console")
 	ConfigOutputTextEditor(ctv)
 	dv.OutBuf.Opts.LineNos = false
-	ctv.SetBuf(dv.OutBuf)
+	ctv.SetBuffer(dv.OutBuf)
 	NewBreakView(tb.NewTab("Breaks")).ConfigBreakView(dv)
 	NewStackView(tb.NewTab("Stack")).ConfigStackView(dv, false)
 	if dv.Sup == fi.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
