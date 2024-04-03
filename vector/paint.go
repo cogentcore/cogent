@@ -531,7 +531,7 @@ func (pv *PaintView) Config() {
 	})
 
 	gi.NewSpinner(wr, "width").SetMin(0).SetStep(0.05).
-		SetValue(sty.StrokeStyle.Width.Val).OnChange(func(e events.Event) {
+		SetValue(sty.StrokeStyle.Width.Value).OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
 			pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)
 		}

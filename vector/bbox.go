@@ -22,9 +22,9 @@ const (
 	BBBottom
 )
 
-// ValRect returns the relevant value for a given bounding box
+// ValueRect returns the relevant value for a given bounding box
 // as an image.Rectangle
-func (ev BBoxPoints) ValRect(bb image.Rectangle) float32 {
+func (ev BBoxPoints) ValueRect(bb image.Rectangle) float32 {
 	switch ev {
 	case BBLeft:
 		return float32(bb.Min.X)
@@ -42,9 +42,9 @@ func (ev BBoxPoints) ValRect(bb image.Rectangle) float32 {
 	return 0
 }
 
-// ValBox returns the relevant value for a given bounding box as a
+// ValueBox returns the relevant value for a given bounding box as a
 // mat32.Box2
-func (ev BBoxPoints) ValBox(bb mat32.Box2) float32 {
+func (ev BBoxPoints) ValueBox(bb mat32.Box2) float32 {
 	switch ev {
 	case BBLeft:
 		return bb.Min.X
@@ -62,9 +62,9 @@ func (ev BBoxPoints) ValBox(bb mat32.Box2) float32 {
 	return 0
 }
 
-// SetValBox sets the relevant value for a given bounding box as a
+// SetValueBox sets the relevant value for a given bounding box as a
 // mat32.Box2
-func (ev BBoxPoints) SetValBox(bb *mat32.Box2, val float32) {
+func (ev BBoxPoints) SetValueBox(bb *mat32.Box2, val float32) {
 	switch ev {
 	case BBLeft:
 		bb.Min.X = val
@@ -119,7 +119,7 @@ func ReshapeBBoxPoints(reshape Sprites) (bbX, bbY BBoxPoints) {
 // relevant dimension is from ValRect and other is midpoint -- for drawing lines.
 // BBox is an image.Rectangle
 func (ev BBoxPoints) PointRect(bb image.Rectangle) mat32.Vec2 {
-	val := ev.ValRect(bb)
+	val := ev.ValueRect(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
 		return mat32.V2(val, 0.5*float32(bb.Min.Y+bb.Max.Y))
@@ -132,7 +132,7 @@ func (ev BBoxPoints) PointRect(bb image.Rectangle) mat32.Vec2 {
 // relevant dimension is from ValRect and other is midpoint -- for drawing lines.
 // BBox is an image.Rectangle
 func (ev BBoxPoints) PointBox(bb mat32.Box2) mat32.Vec2 {
-	val := ev.ValBox(bb)
+	val := ev.ValueBox(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
 		return mat32.V2(val, 0.5*(bb.Min.Y+bb.Max.Y))

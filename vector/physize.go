@@ -63,9 +63,9 @@ func (ps *PhysSize) SetToStandardSize() error {
 
 // SetFromSVG sets from svg
 func (ps *PhysSize) SetFromSVG(sv *SVGView) {
-	ps.Size.X = sv.SSVG().PhysWidth.Val
-	ps.Units = sv.SSVG().PhysWidth.Un
-	ps.Size.Y = sv.SSVG().PhysHeight.Val
+	ps.Size.X = sv.SSVG().PhysWidth.Value
+	ps.Units = sv.SSVG().PhysWidth.Unit
+	ps.Size.Y = sv.SSVG().PhysHeight.Value
 	ps.Grid = sv.Grid
 	ps.StandardSize = MatchStandardSize(ps.Size.X, ps.Size.Y, ps.Units)
 }
