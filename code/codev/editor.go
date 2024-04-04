@@ -251,7 +251,7 @@ func (ge *CodeView) JoinParaLines() { //gti:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.JoinParaLines(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+		tv.Buffer.JoinParaLines(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
 		tv.Buffer.JoinParaLines(0, tv.NLines-1)
 	}
@@ -265,7 +265,7 @@ func (ge *CodeView) TabsToSpaces() { //gti:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.TabsToSpacesRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+		tv.Buffer.TabsToSpacesRegion(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
 		tv.Buffer.TabsToSpacesRegion(0, tv.NLines-1)
 	}
@@ -279,7 +279,7 @@ func (ge *CodeView) SpacesToTabs() { //gti:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.SpacesToTabsRegion(tv.SelectReg.Start.Ln, tv.SelectReg.End.Ln)
+		tv.Buffer.SpacesToTabsRegion(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
 		tv.Buffer.SpacesToTabsRegion(0, tv.NLines-1)
 	}
