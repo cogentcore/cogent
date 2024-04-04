@@ -14,8 +14,8 @@ var VariableType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cdebu
 // NewVariable adds a new [Variable] with the given name to the given parent:
 // Variable describes a variable.  It is a Ki tree type so that full tree
 // can be visualized.
-func NewVariable(par ki.Ki, name ...string) *Variable {
-	return par.NewChild(VariableType, name...).(*Variable)
+func NewVariable(parent ki.Ki, name ...string) *Variable {
+	return parent.NewChild(VariableType, name...).(*Variable)
 }
 
 // KiType returns the [*gti.Type] of [Variable]

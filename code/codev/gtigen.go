@@ -17,8 +17,8 @@ var CodeViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/codev
 // CodeView is the core editor and tab viewer framework for the Code system.  The
 // default view has a tree browser of files on the left, editor panels in the
 // middle, and a tabbed viewer on the right.
-func NewCodeView(par ki.Ki, name ...string) *CodeView {
-	return par.NewChild(CodeViewType, name...).(*CodeView)
+func NewCodeView(parent ki.Ki, name ...string) *CodeView {
+	return parent.NewChild(CodeViewType, name...).(*CodeView)
 }
 
 // KiType returns the [*gti.Type] of [CodeView]

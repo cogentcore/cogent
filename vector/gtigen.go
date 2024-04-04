@@ -16,8 +16,8 @@ var AlignViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Al
 
 // NewAlignView adds a new [AlignView] with the given name to the given parent:
 // AlignView provides a range of alignment actions on selected objects.
-func NewAlignView(par ki.Ki, name ...string) *AlignView {
-	return par.NewChild(AlignViewType, name...).(*AlignView)
+func NewAlignView(parent ki.Ki, name ...string) *AlignView {
+	return parent.NewChild(AlignViewType, name...).(*AlignView)
 }
 
 // KiType returns the [*gti.Type] of [AlignView]
@@ -42,8 +42,8 @@ var PaintViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Pa
 // NewPaintView adds a new [PaintView] with the given name to the given parent:
 // PaintView provides editing of basic Stroke and Fill painting parameters
 // for selected items
-func NewPaintView(par ki.Ki, name ...string) *PaintView {
-	return par.NewChild(PaintViewType, name...).(*PaintView)
+func NewPaintView(parent ki.Ki, name ...string) *PaintView {
+	return parent.NewChild(PaintViewType, name...).(*PaintView)
 }
 
 // KiType returns the [*gti.Type] of [PaintView]
@@ -86,8 +86,8 @@ var SVGViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.SVGV
 
 // NewSVGView adds a new [SVGView] with the given name to the given parent:
 // SVGView is the element for viewing, interacting with the SVG
-func NewSVGView(par ki.Ki, name ...string) *SVGView {
-	return par.NewChild(SVGViewType, name...).(*SVGView)
+func NewSVGView(parent ki.Ki, name ...string) *SVGView {
+	return parent.NewChild(SVGViewType, name...).(*SVGView)
 }
 
 // KiType returns the [*gti.Type] of [SVGView]
@@ -104,8 +104,8 @@ var TreeViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Tre
 
 // NewTreeView adds a new [TreeView] with the given name to the given parent:
 // TreeView is a TreeView that knows how to operate on FileNode nodes
-func NewTreeView(par ki.Ki, name ...string) *TreeView {
-	return par.NewChild(TreeViewType, name...).(*TreeView)
+func NewTreeView(parent ki.Ki, name ...string) *TreeView {
+	return parent.NewChild(TreeViewType, name...).(*TreeView)
 }
 
 // KiType returns the [*gti.Type] of [TreeView]
@@ -159,8 +159,8 @@ var VectorViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.V
 
 // NewVectorView adds a new [VectorView] with the given name to the given parent:
 // VectorView is the Vector SVG vector drawing program
-func NewVectorView(par ki.Ki, name ...string) *VectorView {
-	return par.NewChild(VectorViewType, name...).(*VectorView)
+func NewVectorView(parent ki.Ki, name ...string) *VectorView {
+	return parent.NewChild(VectorViewType, name...).(*VectorView)
 }
 
 // KiType returns the [*gti.Type] of [VectorView]

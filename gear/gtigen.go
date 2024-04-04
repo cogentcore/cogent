@@ -12,8 +12,8 @@ var AppType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/gear.App", IDNa
 
 // NewApp adds a new [App] with the given name to the given parent:
 // App is a GUI view of a gear command.
-func NewApp(par ki.Ki, name ...string) *App {
-	return par.NewChild(AppType, name...).(*App)
+func NewApp(parent ki.Ki, name ...string) *App {
+	return parent.NewChild(AppType, name...).(*App)
 }
 
 // KiType returns the [*gti.Type] of [App]

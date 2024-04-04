@@ -97,8 +97,8 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 // NewSelectFuncButton returns a new func button that is only enabled when
 // there is an item selected.
-func (gv *VectorView) NewSelectFuncButton(par ki.Ki, fun any) *giv.FuncButton {
-	bt := giv.NewFuncButton(par, fun)
+func (gv *VectorView) NewSelectFuncButton(parent ki.Ki, fun any) *giv.FuncButton {
+	bt := giv.NewFuncButton(parent, fun)
 	bt.StyleFirst(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
 	})

@@ -46,8 +46,8 @@ var PiViewType = gti.AddType(&gti.Type{
 // to the given parent. If the name is unspecified, it defaults
 // to the ID (kebab-case) name of the type, plus the
 // [ki.Ki.NumLifetimeChildren] of the given parent.
-func NewPiView(par ki.Ki, name ...string) *PiView {
-	return par.NewChild(PiViewType, name...).(*PiView)
+func NewPiView(parent ki.Ki, name ...string) *PiView {
+	return parent.NewChild(PiViewType, name...).(*PiView)
 }
 
 // KiType returns the [*gti.Type] of [PiView]
