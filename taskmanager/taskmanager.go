@@ -58,7 +58,7 @@ func main() {
 		t := ts[tv.SelectedIndex]
 		d := gi.NewBody().AddTitle("Task info")
 		giv.NewStructView(d).SetStruct(&t).SetReadOnly(true)
-		d.AddOkOnly().NewDialog(b).Run()
+		d.AddOKOnly().NewDialog(b).Run()
 	})
 
 	tick := time.NewTicker(time.Second)

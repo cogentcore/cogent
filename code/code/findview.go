@@ -266,7 +266,7 @@ func (fv *FindView) ReplaceAllAction() {
 		AddText("Are you sure you want to Replace All?")
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddCancel(pw)
-		d.AddOk(pw).SetText("Replace All").OnClick(func(e events.Event) {
+		d.AddOK(pw).SetText("Replace All").OnClick(func(e events.Event) {
 			fv.ReplaceAll()
 		})
 	})

@@ -68,7 +68,7 @@ func (a *App) AppBar(tb *gi.Toolbar) {
 			giv.NewStructView(d).SetStruct(st)
 			d.AddBottomBar(func(pw gi.Widget) {
 				d.AddCancel(pw)
-				d.AddOk(pw).SetText(text).OnClick(func(e events.Event) {
+				d.AddOK(pw).SetText(text).OnClick(func(e events.Event) {
 					grr.Log(xe.Verbose().Run(fields[0], fields[1:]...))
 				})
 			})

@@ -115,7 +115,7 @@ func (vv *VectorView) PromptPhysSize() { //gti:add
 	giv.NewStructView(d).SetStruct(sz)
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddCancel(pw)
-		d.AddOk(pw).OnClick(func(e events.Event) {
+		d.AddOK(pw).OnClick(func(e events.Event) {
 			vv.SetPhysSize(sz)
 			sv.bgVectorEff = -1
 			sv.UpdateView(true)
@@ -557,10 +557,10 @@ func (vv *VectorView) AddCloseDialog() {
 		d.AddTitle("Unsaved changes").
 			AddText(fmt.Sprintf("There are unsaved changes in %s", dirs.DirAndFile(string(vv.Filename))))
 		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOk(pw, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
+			d.AddOK(pw, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
 				vv.Scene.Close()
 			})
-			d.AddOk(pw, "sa").SetText("Save and close").OnClick(func(e events.Event) {
+			d.AddOK(pw, "sa").SetText("Save and close").OnClick(func(e events.Event) {
 				vv.SaveDrawing()
 				vv.Scene.Close()
 			})

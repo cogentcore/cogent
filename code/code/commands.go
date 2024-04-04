@@ -390,7 +390,7 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 			})
 			d.AddBottomBar(func(pw gi.Widget) {
 				d.AddCancel(pw)
-				d.AddOk(pw).OnClick(func(e events.Event) {
+				d.AddOK(pw).OnClick(func(e events.Event) {
 					val := tf.Text()
 					cmvals[cm.Label()] = val
 					(*avp)[pv] = val
@@ -445,7 +445,7 @@ func (cm *Command) Run(ge Code, buf *texteditor.Buffer) {
 			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
 		d.AddBottomBar(func(pw gi.Widget) {
 			d.AddCancel(pw)
-			d.AddOk(pw).SetText("Run").OnClick(func(e events.Event) {
+			d.AddOK(pw).SetText("Run").OnClick(func(e events.Event) {
 				cm.RunAfterPrompts(ge, buf)
 			})
 		})

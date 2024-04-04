@@ -334,7 +334,7 @@ func (sv *SpellView) TrainAction() {
 	})
 	d.AddBottomBar(func(pw gi.Widget) {
 		d.AddCancel(pw)
-		d.AddOk(pw).OnClick(func(e events.Event) {
+		d.AddOK(pw).OnClick(func(e events.Event) {
 			texteditor.AddToSpellModel(cur)
 		})
 	})

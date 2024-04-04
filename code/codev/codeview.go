@@ -184,7 +184,7 @@ func (ge *CodeView) EditRecentPaths() {
 	d := gi.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
 	giv.NewSliceView(d).SetSlice(&code.RecentPaths)
-	d.AddOkOnly().NewDialog(ge).Run()
+	d.AddOKOnly().NewDialog(ge).Run()
 }
 
 // OpenFile opens file in an open project if it has the same path as the file
@@ -462,7 +462,7 @@ func (ge *CodeView) AddCloseDialog() {
 		d.AddTitle("Unsaved files").
 			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, ge.Nm))
 		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOk(pw, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
+			d.AddOK(pw, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
 				ge.Scene.Close()
 			})
 			gi.NewButton(pw, "sa").SetText("Save and close").OnClick(func(e events.Event) {
