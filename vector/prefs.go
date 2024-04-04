@@ -241,7 +241,7 @@ var PreferencesProps = ki.Props{
 			"icon": "file-save",
 			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
 				pf := pfi.(*Preferences)
-				act.SetActiveStateUpdt(pf.Changed)
+				act.SetActiveStateUpdate(pf.Changed)
 			}),
 		}},
 		{"sep-color", ki.BlankProp{}},

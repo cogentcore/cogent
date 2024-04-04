@@ -216,8 +216,8 @@ func (pv *PiView) SetStatus(msg string) {
 	if sb == nil {
 		return
 	}
-	// pv.UpdtMu.Lock()
-	// defer pv.UpdtMu.Unlock()
+	// pv.UpdateMu.Lock()
+	// defer pv.UpdateMu.Unlock()
 
 	updt := sb.UpdateStart()
 	lbl := pv.StatusLabel()
@@ -259,7 +259,7 @@ func (pv *PiView) LexInit() {
 		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Lex Error",
 			Prompt: "The Lexer validation has errors<br>\n" + errs}, gi.AddOK, gi.NoCancel, nil, nil)
 	}
-	pv.UpdtLexBuf()
+	pv.UpdateLexBuf()
 }
 
 // LexStopped tells the user why the lexer stopped
@@ -292,7 +292,7 @@ func (pv *PiView) LexNext() *lex.Rule {
 		pv.SetStatus(mrule.Nm + ": " + fs.LexLineString())
 		pv.SelectLexRule(mrule)
 	}
-	pv.UpdtLexBuf()
+	pv.UpdateLexBuf()
 	return mrule
 }
 
@@ -306,7 +306,7 @@ func (pv *PiView) LexNextLine() *lex.Rule {
 		pv.SetStatus(mrule.Nm + ": " + fs.LexLineString())
 		pv.SelectLexRule(mrule)
 	}
-	pv.UpdtLexBuf()
+	pv.UpdateLexBuf()
 	return mrule
 }
 
@@ -322,7 +322,7 @@ func (pv *PiView) LexAll() {
 			break
 		}
 	}
-	pv.UpdtLexBuf()
+	pv.UpdateLexBuf()
 }
 
 // SelectLexRule selects given lex rule in Lexer
@@ -343,8 +343,8 @@ func (pv *PiView) SelectLexRule(rule *lex.Rule) {
 	})
 }
 
-// UpdtLexBuf sets the LexBuf to current lex content
-func (pv *PiView) UpdtLexBuf() {
+// UpdateLexBuf sets the LexBuf to current lex content
+func (pv *PiView) UpdateLexBuf() {
 	fs := &pv.FileState
 	txt := fs.Src.LexTagSrc()
 	pv.LexBuf.SetText([]byte(txt))
@@ -399,7 +399,7 @@ func (pv *PiView) ParseInit() {
 	pv.Parser.Parser.CompileAll(&fs.ParseState)
 	pv.Parser.Parser.Validate(&fs.ParseState)
 	pv.Parser.ParserInit(fs)
-	pv.UpdtLexBuf()
+	pv.UpdateLexBuf()
 	if fs.ParseHasErrs() {
 		errs := fs.ParseErrReportDetailed()
 		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Parse Error",
@@ -435,8 +435,8 @@ func (pv *PiView) ParseNext() *parse.Rule {
 	at.UpdateEnd(updt)
 	at.OpenAll()
 	pv.AstTreeToEnd()
-	pv.UpdtLexBuf()
-	pv.UpdtParseBuf()
+	pv.UpdateLexBuf()
+	pv.UpdateParseBuf()
 	if mrule == nil {
 		pv.ParseStopped()
 	} else {
@@ -462,8 +462,8 @@ func (pv *PiView) ParseAll() {
 	at.UpdateEnd(updt)
 	// at.OpenAll()
 	// pv.AstTreeToEnd()
-	pv.UpdtLexBuf()
-	pv.UpdtParseBuf()
+	pv.UpdateLexBuf()
+	pv.UpdateParseBuf()
 	pv.ParseStopped()
 }
 
@@ -491,8 +491,8 @@ func (pv *PiView) AstTreeToEnd() {
 	lt.MoveEndAction(events.SelectOne)
 }
 
-// UpdtParseBuf sets the ParseBuf to current parse rule output
-func (pv *PiView) UpdtParseBuf() {
+// UpdateParseBuf sets the ParseBuf to current parse rule output
+func (pv *PiView) UpdateParseBuf() {
 	fs := &pv.FileState
 	txt := fs.ParseRuleString(fs.ParseState.Trace.FullStackOut)
 	pv.ParseBuf.SetText([]byte(txt))
@@ -1152,7 +1152,7 @@ var PiViewProps = ki.Props{
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
 				pv := pvi.(*PiView)
-				act.SetActiveStateUpdt( pv.Changed && pv.Settings.ParserFile != "")
+				act.SetActiveStateUpdate( pv.Changed && pv.Settings.ParserFile != "")
 			}),
 		}},
 		{"SaveParserAs", ki.Props{

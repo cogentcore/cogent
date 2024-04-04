@@ -159,7 +159,7 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "Go", Name: "Get Updt",
+	{Cat: "Go", Name: "Get Update",
 		Desc: "run go get -u (updt) on package(s) you enter at prompt.  use ./... for all.",
 		Lang: fi.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",

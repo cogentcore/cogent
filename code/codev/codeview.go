@@ -94,7 +94,7 @@ type CodeView struct {
 	KeySeq1 key.Chord `set:"-"`
 
 	// mutex for protecting overall updates to CodeView
-	UpdtMu sync.Mutex `set:"-"`
+	UpdateMu sync.Mutex `set:"-"`
 }
 
 func init() {
