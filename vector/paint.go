@@ -480,7 +480,7 @@ func (pv *PaintView) SelectStrokeGrad() {
 	grl := &es.Gradients
 	ss := pv.StrokeStack()
 	sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
-	sg.UnselectAllIndexs()
+	sg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.StrokeStops {
 			sg.SelectIndex(i)
@@ -494,7 +494,7 @@ func (pv *PaintView) SelectFillGrad() {
 	grl := &es.Gradients
 	fs := pv.FillStack()
 	fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
-	fg.UnselectAllIndexs()
+	fg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.FillStops {
 			fg.SelectIndex(i)
