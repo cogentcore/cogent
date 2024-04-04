@@ -180,7 +180,7 @@ func (dv *DebugView) Start() {
 			dv.AsyncLock()
 
 			if stat == cdebug.Ready && dv.State.Mode == cdebug.Attach {
-				dv.UpdateFmState()
+				dv.UpdateFromState()
 			}
 			dv.SetStatus(stat)
 			if stat == cdebug.Error {
@@ -443,11 +443,11 @@ func (dv *DebugView) InitState(ds *cdebug.State) {
 		dv.SetStatus(cdebug.Running)
 		return
 	}
-	dv.UpdateFmState()
+	dv.UpdateFromState()
 }
 
-// UpdateFmState updates the view from current debugger state
-func (dv *DebugView) UpdateFmState() {
+// UpdateFromState updates the view from current debugger state
+func (dv *DebugView) UpdateFromState() {
 	if dv == nil || dv.This() == nil || dv.Dbg == nil {
 		return
 	}
@@ -485,7 +485,7 @@ func (dv *DebugView) SetFrame(depth int) {
 	if cf != nil {
 		dv.Dbg.UpdateAllState(&dv.State, dv.State.CurTask, depth) // todo: CurTask is not general!
 	}
-	dv.UpdateFmState()
+	dv.UpdateFromState()
 }
 
 // SetThread sets the given thread as active -- this must be TaskID if HasTasks
@@ -495,7 +495,7 @@ func (dv *DebugView) SetThread(threadID int) {
 		return
 	}
 	dv.Dbg.UpdateAllState(&dv.State, threadID, 0)
-	dv.UpdateFmState()
+	dv.UpdateFromState()
 }
 
 // SetThreadIndex sets the given thread by index in threads list as active
@@ -519,7 +519,7 @@ func (dv *DebugView) SetThreadIndex(thridx int) {
 		thid = th.ID
 	}
 	dv.Dbg.UpdateAllState(&dv.State, thid, 0)
-	dv.UpdateFmState()
+	dv.UpdateFromState()
 }
 
 // FindFrames finds the frames where given file and line are active
