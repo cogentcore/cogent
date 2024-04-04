@@ -69,8 +69,8 @@ func (ge *CodeView) SaveActiveViewAs(filename gi.Filename) { //gti:add
 			ge.Files.UpdatePath(string(filename)) // update everything in dir -- will have removed autosave
 			fn, ok := ge.Files.FindFile(string(filename))
 			if ok {
-				if fn.Buf != nil {
-					fn.Buf.Revert()
+				if fn.Buffer != nil {
+					fn.Buffer.Revert()
 				}
 				ge.ViewFileNode(tv, ge.ActiveTextEditorIndex, fn)
 			}
@@ -96,7 +96,7 @@ func (ge *CodeView) CloseActiveView() { //gti:add
 	tv := ge.ActiveTextEditor()
 	ond, _, got := ge.OpenNodeForTextEditor(tv)
 	if got {
-		ond.Buf.Close(func(canceled bool) {
+		ond.Buffer.Close(func(canceled bool) {
 			if canceled {
 				ge.SetStatus(fmt.Sprintf("File %v NOT closed", ond.FPath))
 				return
@@ -127,7 +127,7 @@ func (ge *CodeView) RunPostCmdsFileNode(fn *filetree.Node) bool {
 	if lopt, has := code.AvailableLangs[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
 			ge.ExecCmdsFileNode(fn, lopt.PostSaveCmds, false, true) // no select, yes clear
-			fn.Buf.Revert()
+			fn.Buffer.Revert()
 			return true
 		}
 	}
@@ -139,25 +139,25 @@ func (ge *CodeView) RunPostCmdsFileNode(fn *filetree.Node) bool {
 // unchanged (means just opened)
 func (ge *CodeView) AutoSaveCheck(tv *code.TextEditor, vidx int, fn *filetree.Node) bool {
 	if strings.HasPrefix(fn.Nm, "#") && strings.HasSuffix(fn.Nm, "#") {
-		fn.Buf.Autosave = false
+		fn.Buffer.Autosave = false
 		return false // we are the autosave file
 	}
-	fn.Buf.Autosave = true
-	if tv.IsNotSaved() || !fn.Buf.AutoSaveCheck() {
+	fn.Buffer.Autosave = true
+	if tv.IsNotSaved() || !fn.Buffer.AutoSaveCheck() {
 		return false
 	}
-	ge.DiffFileNode(fn, gi.Filename(fn.Buf.AutoSaveFilename()))
+	ge.DiffFileNode(fn, gi.Filename(fn.Buffer.AutoSaveFilename()))
 	d := gi.NewBody().AddTitle("Autosave file Exists").
 		AddText(fmt.Sprintf("An auto-save file for file: %v exists; open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
 	d.AddBottomBar(func(parent gi.Widget) {
 		gi.NewButton(parent).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 			d.Close()
-			fn.Buf.AutoSaveDelete()
-			ge.Files.UpdatePath(fn.Buf.AutoSaveFilename()) // will update dir
+			fn.Buffer.AutoSaveDelete()
+			ge.Files.UpdatePath(fn.Buffer.AutoSaveFilename()) // will update dir
 		})
 		gi.NewButton(parent).SetText("Open autosave file").OnClick(func(e events.Event) {
 			d.Close()
-			ge.NextViewFile(gi.Filename(fn.Buf.AutoSaveFilename()))
+			ge.NextViewFile(gi.Filename(fn.Buffer.AutoSaveFilename()))
 		})
 	})
 	d.NewDialog(ge).Run()
@@ -172,7 +172,7 @@ func (ge *CodeView) OpenFileNode(fn *filetree.Node) (bool, error) {
 	filetree.NodeHiStyle = gi.AppearanceSettings.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
-		ge.ConfigTextBuf(fn.Buf)
+		ge.ConfigTextBuf(fn.Buffer)
 		ge.OpenNodes.Add(fn)
 		fn.Open()
 		fn.UpdateNode()
@@ -192,7 +192,7 @@ func (ge *CodeView) ViewFileNode(tv *code.TextEditor, vidx int, fn *filetree.Nod
 	}
 	nw, err := ge.OpenFileNode(fn)
 	if err == nil {
-		tv.SetBuffer(fn.Buf)
+		tv.SetBuffer(fn.Buffer)
 		if nw {
 			ge.AutoSaveCheck(tv, vidx, fn)
 		}
@@ -251,7 +251,7 @@ func (ge *CodeView) TextBufForFile(fpath string, add bool) *texteditor.Buffer {
 	}
 	_, err := ge.OpenFileNode(fn)
 	if err == nil {
-		return fn.Buf
+		return fn.Buffer
 	}
 	return nil
 }
@@ -406,11 +406,11 @@ func (ge *CodeView) CloneActiveView() (*code.TextEditor, int) { //gti:add
 // SaveAllOpenNodes saves all of the open filenodes to their current file names
 func (ge *CodeView) SaveAllOpenNodes() {
 	for _, ond := range ge.OpenNodes {
-		if ond.Buf == nil {
+		if ond.Buffer == nil {
 			continue
 		}
-		if ond.Buf.IsNotSaved() {
-			ond.Buf.Save()
+		if ond.Buffer.IsNotSaved() {
+			ond.Buffer.Save()
 			ge.RunPostCmdsFileNode(ond)
 		}
 	}
@@ -429,13 +429,13 @@ func (ge *CodeView) CloseOpenNodes(nodes []*code.FileNode) {
 	nn := len(ge.OpenNodes)
 	for ni := nn - 1; ni >= 0; ni-- {
 		ond := ge.OpenNodes[ni]
-		if ond.Buf == nil {
+		if ond.Buffer == nil {
 			continue
 		}
-		path := string(ond.Buf.Filename)
+		path := string(ond.Buffer.Filename)
 		for _, cnd := range nodes {
 			if strings.HasPrefix(path, string(cnd.FPath)) {
-				ond.Buf.Close(func(canceled bool) {
+				ond.Buffer.Close(func(canceled bool) {
 					if canceled {
 						ge.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.FPath))
 						return

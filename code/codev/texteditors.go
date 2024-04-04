@@ -65,13 +65,13 @@ func (ge *CodeView) TextEditorIndex(av *code.TextEditor) int {
 // TextEditorForFileNode finds a TextEditor that is viewing given FileNode,
 // and its index, or false if none is
 func (ge *CodeView) TextEditorForFileNode(fn *filetree.Node) (*code.TextEditor, int, bool) {
-	if fn.Buf == nil {
+	if fn.Buffer == nil {
 		return nil, -1, false
 	}
-	ge.ConfigTextBuf(fn.Buf)
+	ge.ConfigTextBuf(fn.Buffer)
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
-		if tv != nil && tv.Buffer != nil && tv.Buffer == fn.Buf && ge.PanelIsOpen(i+TextEditor1Index) {
+		if tv != nil && tv.Buffer != nil && tv.Buffer == fn.Buffer && ge.PanelIsOpen(i+TextEditor1Index) {
 			return tv, i, true
 		}
 	}
@@ -85,7 +85,7 @@ func (ge *CodeView) OpenNodeForTextEditor(tv *code.TextEditor) (*filetree.Node, 
 		return nil, -1, false
 	}
 	for i, ond := range ge.OpenNodes {
-		if ond.Buf == tv.Buffer {
+		if ond.Buffer == tv.Buffer {
 			return ond, i, true
 		}
 	}

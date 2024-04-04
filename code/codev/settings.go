@@ -49,8 +49,8 @@ func (ge *CodeView) ApplyPrefs() {
 			}
 		}
 		for _, ond := range ge.OpenNodes {
-			if ond.Buf != nil {
-				ge.ConfigTextBuf(ond.Buf)
+			if ond.Buffer != nil {
+				ge.ConfigTextBuf(ond.Buffer)
 			}
 		}
 		ge.Splits().SetSplits(ge.Settings.Splits...)

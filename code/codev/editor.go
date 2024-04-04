@@ -293,10 +293,10 @@ func (ge *CodeView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
 	if fna == nil {
 		return
 	}
-	if fna.Buf == nil {
+	if fna.Buffer == nil {
 		ge.OpenFileNode(fna)
 	}
-	if fna.Buf == nil {
+	if fna.Buffer == nil {
 		return
 	}
 	ge.DiffFileNode(fna, fnmB)
@@ -310,22 +310,22 @@ func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:a
 	if fnb == nil {
 		return
 	}
-	if fnb.Buf == nil {
+	if fnb.Buffer == nil {
 		ge.OpenFileNode(fnb)
 	}
-	if fnb.Buf == nil {
+	if fnb.Buffer == nil {
 		return
 	}
-	dif := fna.Buf.DiffBuffersUnified(fnb.Buf, 3)
+	dif := fna.Buffer.DiffBuffersUnified(fnb.Buffer, 3)
 	cbuf, _, _ := ge.RecycleCmdTab("Diffs", true, true)
 	cbuf.SetText(dif)
 	cbuf.AutoScrollViews()
 
-	astr := fna.Buf.Strings(false)
-	bstr := fnb.Buf.Strings(false)
+	astr := fna.Buffer.Strings(false)
+	bstr := fnb.Buffer.Strings(false)
 	_, _ = astr, bstr
 
-	texteditor.DiffViewDialog(ge, "Diff File View:", astr, bstr, string(fna.Buf.Filename), string(fnb.Buf.Filename), "", "")
+	texteditor.DiffViewDialog(ge, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
 }
 
 // CountWords counts number of words (and lines) in active file

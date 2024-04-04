@@ -134,7 +134,7 @@ func (on *OpenNodes) Add(fn *filetree.Node) bool {
 	if !added {
 		return added
 	}
-	if fn.Buf != nil {
+	if fn.Buffer != nil {
 		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data any) {
 		// 	if sig == int64(texteditor.BufClosed) {
 		// 		fno, _ := recv.Embed(giv.KiT_FileNode).(*filetree.Node)
@@ -313,11 +313,11 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 		}
 		var cnt int
 		var matches []textbuf.Match
-		if sfn.IsOpen() && sfn.Buf != nil {
+		if sfn.IsOpen() && sfn.Buffer != nil {
 			if regExp {
-				cnt, matches = sfn.Buf.SearchRegexp(re)
+				cnt, matches = sfn.Buffer.SearchRegexp(re)
 			} else {
-				cnt, matches = sfn.Buf.Search(fb, ignoreCase, false)
+				cnt, matches = sfn.Buffer.Search(fb, ignoreCase, false)
 			}
 		} else {
 			if regExp {
@@ -387,11 +387,11 @@ func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool
 		ofn := ge.CurOpenNodes().FindPath(path)
 		var cnt int
 		var matches []textbuf.Match
-		if ofn != nil && ofn.Buf != nil {
+		if ofn != nil && ofn.Buffer != nil {
 			if regExp {
-				cnt, matches = ofn.Buf.SearchRegexp(re)
+				cnt, matches = ofn.Buffer.SearchRegexp(re)
 			} else {
-				cnt, matches = ofn.Buf.Search(fb, ignoreCase, false)
+				cnt, matches = ofn.Buffer.Search(fb, ignoreCase, false)
 			}
 		} else {
 			if regExp {

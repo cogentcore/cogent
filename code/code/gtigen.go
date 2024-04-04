@@ -447,9 +447,6 @@ func (t *TextEditor) SetCode(v Code) *TextEditor { t.Code = v; return t }
 // SetTooltip sets the [TextEditor.Tooltip]
 func (t *TextEditor) SetTooltip(v string) *TextEditor { t.Tooltip = v; return t }
 
-// SetPlaceholder sets the [TextEditor.Placeholder]
-func (t *TextEditor) SetPlaceholder(v string) *TextEditor { t.Placeholder = v; return t }
-
 // SetCursorWidth sets the [TextEditor.CursorWidth]
 func (t *TextEditor) SetCursorWidth(v units.Value) *TextEditor { t.CursorWidth = v; return t }
 
