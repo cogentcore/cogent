@@ -432,12 +432,12 @@ func (gv *VectorView) SelectRaiseTop() { //gti:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		par := se.Parent()
-		if !(NodeIsLayer(par) || par == sv.This()) {
+		parent := se.Parent()
+		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
 		ci := se.IndexInParent()
-		par.Children().Move(ci, par.NumChildren()-1)
+		parent.Children().Move(ci, parent.NumChildren()-1)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -454,13 +454,13 @@ func (gv *VectorView) SelectRaise() { //gti:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		par := se.Parent()
-		if !(NodeIsLayer(par) || par == sv.This()) {
+		parent := se.Parent()
+		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
 		ci := se.IndexInParent()
-		if ci < par.NumChildren()-1 {
-			par.Children().Move(ci, ci+1)
+		if ci < parent.NumChildren()-1 {
+			parent.Children().Move(ci, ci+1)
 		}
 	}
 	gv.UpdateDisp()
@@ -478,12 +478,12 @@ func (gv *VectorView) SelectLowerBottom() { //gti:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		par := se.Parent()
-		if !(NodeIsLayer(par) || par == sv.This()) {
+		parent := se.Parent()
+		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
 		ci := se.IndexInParent()
-		par.Children().Move(ci, 0)
+		parent.Children().Move(ci, 0)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -500,13 +500,13 @@ func (gv *VectorView) SelectLower() { //gti:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		par := se.Parent()
-		if !(NodeIsLayer(par) || par == sv.This()) {
+		parent := se.Parent()
+		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
 		ci := se.IndexInParent()
 		if ci > 0 {
-			par.Children().Move(ci, ci-1)
+			parent.Children().Move(ci, ci-1)
 		}
 	}
 	gv.UpdateDisp()

@@ -114,11 +114,11 @@ func (gv *VectorView) PasteClip() { //gti:add
 	// sv.SetFullReRender()
 	tv := gv.TreeView()
 	// tv.SetFullReRender()
-	// par := tv
+	// parent := tv
 	// if es.CurLayer != "" {
 	// 	ly := tv.ChildByName("tv_"+es.CurLayer, 1)
 	// 	if ly != nil {
-	// 		par = ly.Embed(KiT_TreeView).(*TreeView)
+	// 		parent = ly.Embed(KiT_TreeView).(*TreeView)
 	// 	}
 	// }
 	// par.PasteChildren(md, dnd.DropCopy)

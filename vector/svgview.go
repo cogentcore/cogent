@@ -661,15 +661,15 @@ func (sv *SVGView) SetSVGName(el svg.Node) {
 // Uses currently active layer if set.
 func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 	es := sv.EditState()
-	par := ki.Ki(sv.Root())
+	parent := ki.Ki(sv.Root())
 	if es.CurLayer != "" {
 		ly := sv.ChildByName(es.CurLayer, 1)
 		if ly != nil {
-			par = ly
+			parent = ly
 		}
 	}
 	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
-	nw := par.NewChild(typ, nwnm).(svg.Node)
+	nw := parent.NewChild(typ, nwnm).(svg.Node)
 	sv.SetSVGName(nw)
 	sv.VectorView.PaintView().SetProps(nw)
 	sv.VectorView.UpdateTreeView()
