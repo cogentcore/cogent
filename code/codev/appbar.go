@@ -20,8 +20,8 @@ import (
 	"cogentcore.org/core/styles"
 )
 
-func (ge *CodeView) AppBarConfig(pw gi.Widget) {
-	tb := gi.RecycleToolbar(pw)
+func (ge *CodeView) AppBarConfig(parent gi.Widget) {
+	tb := gi.RecycleToolbar(parent)
 	gi.StandardAppBarBack(tb)
 	ac := gi.StandardAppBarChooser(tb)
 	ge.AddChooserFiles(ac)

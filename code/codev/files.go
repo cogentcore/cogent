@@ -148,14 +148,14 @@ func (ge *CodeView) AutoSaveCheck(tv *code.TextEditor, vidx int, fn *filetree.No
 	}
 	ge.DiffFileNode(fn, gi.Filename(fn.Buf.AutoSaveFilename()))
 	d := gi.NewBody().AddTitle("Autosave file Exists").
-		AddText(fmt.Sprintf("An auto-save file for file: %v exists -- open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
-	d.AddBottomBar(func(pw gi.Widget) {
-		gi.NewButton(pw).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
+		AddText(fmt.Sprintf("An auto-save file for file: %v exists; open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
+	d.AddBottomBar(func(parent gi.Widget) {
+		gi.NewButton(parent).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 			d.Close()
 			fn.Buf.AutoSaveDelete()
 			ge.Files.UpdatePath(fn.Buf.AutoSaveFilename()) // will update dir
 		})
-		gi.NewButton(pw).SetText("Open autosave file").OnClick(func(e events.Event) {
+		gi.NewButton(parent).SetText("Open autosave file").OnClick(func(e events.Event) {
 			d.Close()
 			ge.NextViewFile(gi.Filename(fn.Buf.AutoSaveFilename()))
 		})
@@ -494,10 +494,10 @@ func (ge *CodeView) FileNodeOpened(fn *filetree.Node) {
 	// program, document, data
 	if int(fn.Info.Size) > gi.SystemSettings.BigFileSize {
 		d := gi.NewBody().AddTitle("File is relatively large").
-			AddText(fmt.Sprintf("The file: %v is relatively large at: %v -- really open for editing?", fn.Nm, fn.Info.Size))
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddCancel(pw)
-			gi.NewButton(pw).SetText("Open").OnClick(func(e events.Event) {
+			AddText(fmt.Sprintf("The file: %v is relatively large at: %v; really open for editing?", fn.Nm, fn.Info.Size))
+		d.AddBottomBar(func(parent gi.Widget) {
+			d.AddCancel(parent)
+			gi.NewButton(parent).SetText("Open").OnClick(func(e events.Event) {
 				d.Close()
 				ge.NextViewFileNode(fn)
 			})

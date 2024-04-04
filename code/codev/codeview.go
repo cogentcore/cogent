@@ -375,17 +375,17 @@ func (ge *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 	}
 	d := gi.NewBody().AddTitle("There are Unsaved Files").
 		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch))
-	d.AddBottomBar(func(pw gi.Widget) {
+	d.AddBottomBar(func(parent gi.Widget) {
 		if cancelOpt {
-			d.AddCancel(pw).SetText("Cancel Command")
+			d.AddCancel(parent).SetText("Cancel Command")
 		}
-		gi.NewButton(pw).SetText("Don't Save").OnClick(func(e events.Event) {
+		gi.NewButton(parent).SetText("Don't Save").OnClick(func(e events.Event) {
 			d.Close()
 			if fun != nil {
 				fun()
 			}
 		})
-		gi.NewButton(pw).SetText("Save All").OnClick(func(e events.Event) {
+		gi.NewButton(parent).SetText("Save All").OnClick(func(e events.Event) {
 			d.Close()
 			ge.SaveAllOpenNodes()
 			if fun != nil {
@@ -461,11 +461,11 @@ func (ge *CodeView) AddCloseDialog() {
 		}
 		d.AddTitle("Unsaved files").
 			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, ge.Nm))
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddOK(pw, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
+		d.AddBottomBar(func(parent gi.Widget) {
+			d.AddOK(parent, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
 				ge.Scene.Close()
 			})
-			gi.NewButton(pw, "sa").SetText("Save and close").OnClick(func(e events.Event) {
+			gi.NewButton(parent, "sa").SetText("Save and close").OnClick(func(e events.Event) {
 				ge.SaveAllOpenNodes()
 				ge.Scene.Close()
 			})

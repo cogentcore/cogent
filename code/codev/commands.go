@@ -15,7 +15,6 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/paint"
-	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -240,14 +239,11 @@ func (ge *CodeView) CommitNoChecks() {
 	ge.SetArgVarVals() // need to set before setting prompt string below..
 
 	d := gi.NewBody().AddTitle("Commit message").
-		AddText("Please enter your commit message here -- remember this is essential front-line documentation.  Author information comes from User settings in Core Settings.")
-	tf := gi.NewTextField(d).SetText("").SetPlaceholder("Enter commit message here..")
-	tf.Style(func(s *styles.Style) {
-		s.Min.X.Ch(200)
-	})
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddCancel(pw)
-		d.AddOK(pw).SetText("Commit").OnClick(func(e events.Event) {
+		AddText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
+	tf := gi.NewTextField(d)
+	d.AddBottomBar(func(parent gi.Widget) {
+		d.AddCancel(parent)
+		d.AddOK(parent).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()
 			ge.ArgVals["{PromptString1}"] = val
 			code.CmdNoUserPrompt = true                     // don't re-prompt!
@@ -256,5 +252,5 @@ func (ge *CodeView) CommitNoChecks() {
 			ge.UpdateFiles()
 		})
 	})
-	d.NewDialog(ge).Run() // SetModal(false)
+	d.NewDialog(ge).Run()
 }

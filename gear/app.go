@@ -66,9 +66,9 @@ func (a *App) AppBar(tb *gi.Toolbar) {
 			d := gi.NewBody().AddTitle(text).AddText(cmd.Doc)
 			st := StructForFlags(cmd.Flags)
 			giv.NewStructView(d).SetStruct(st)
-			d.AddBottomBar(func(pw gi.Widget) {
-				d.AddCancel(pw)
-				d.AddOK(pw).SetText(text).OnClick(func(e events.Event) {
+			d.AddBottomBar(func(parent gi.Widget) {
+				d.AddCancel(parent)
+				d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {
 					grr.Log(xe.Verbose().Run(fields[0], fields[1:]...))
 				})
 			})

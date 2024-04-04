@@ -102,12 +102,12 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 
 	tv.SetCursorTarget(lex.Pos{Ln: ld.StLine})
 	tv.Styles.Font.Family = string(gi.AppearanceSettings.MonoFont)
-	d.AddBottomBar(func(pw gi.Widget) {
-		gi.NewButton(pw).SetText("Open File").SetIcon(icons.Open).OnClick(func(e events.Event) {
+	d.AddBottomBar(func(parent gi.Widget) {
+		gi.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
 			ge.ViewFile(gi.Filename(ld.Filename))
 			d.Close()
 		})
-		gi.NewButton(pw).SetText("Copy To Clipboard").SetIcon("copy").
+		gi.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
 			OnClick(func(e events.Event) {
 				d.Clipboard().Write(mimedata.NewTextBytes(txt))
 			})

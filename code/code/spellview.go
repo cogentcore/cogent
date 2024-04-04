@@ -332,9 +332,9 @@ func (sv *SpellView) TrainAction() {
 		cur = fv.SelectedFile()
 		d.Close()
 	})
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddCancel(pw)
-		d.AddOK(pw).OnClick(func(e events.Event) {
+	d.AddBottomBar(func(parent gi.Widget) {
+		d.AddCancel(parent)
+		d.AddOK(parent).OnClick(func(e events.Event) {
 			texteditor.AddToSpellModel(cur)
 		})
 	})

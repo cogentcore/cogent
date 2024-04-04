@@ -262,11 +262,11 @@ func (fv *FindView) ReplaceAction() bool {
 
 // ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindView) ReplaceAllAction() {
-	d := gi.NewBody().AddTitle("Confirm Replace All").
-		AddText("Are you sure you want to Replace All?")
-	d.AddBottomBar(func(pw gi.Widget) {
-		d.AddCancel(pw)
-		d.AddOK(pw).SetText("Replace All").OnClick(func(e events.Event) {
+	d := gi.NewBody().AddTitle("Confirm replace all").
+		AddText("Are you sure you want to replace all?")
+	d.AddBottomBar(func(parent gi.Widget) {
+		d.AddCancel(parent)
+		d.AddOK(parent).SetText("Replace all").OnClick(func(e events.Event) {
 			fv.ReplaceAll()
 		})
 	})

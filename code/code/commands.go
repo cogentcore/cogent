@@ -388,9 +388,9 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 				s.Min.X.Ch(100)
 				s.Max.X.Ch(100)
 			})
-			d.AddBottomBar(func(pw gi.Widget) {
-				d.AddCancel(pw)
-				d.AddOK(pw).OnClick(func(e events.Event) {
+			d.AddBottomBar(func(parent gi.Widget) {
+				d.AddCancel(parent)
+				d.AddOK(parent).OnClick(func(e events.Event) {
 					val := tf.Text()
 					cmvals[cm.Label()] = val
 					(*avp)[pv] = val
@@ -441,11 +441,11 @@ func (cm *Command) Run(ge Code, buf *texteditor.Buffer) {
 	// todo: trying to use native highlighting
 	// buf.Hi.Init(&buf.Info, nil)
 	if cm.Confirm {
-		d := gi.NewBody().AddTitle("Confirm Command").
+		d := gi.NewBody().AddTitle("Confirm command").
 			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
-		d.AddBottomBar(func(pw gi.Widget) {
-			d.AddCancel(pw)
-			d.AddOK(pw).SetText("Run").OnClick(func(e events.Event) {
+		d.AddBottomBar(func(parent gi.Widget) {
+			d.AddCancel(parent)
+			d.AddOK(parent).SetText("Run").OnClick(func(e events.Event) {
 				cm.RunAfterPrompts(ge, buf)
 			})
 		})
