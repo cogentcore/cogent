@@ -519,9 +519,9 @@ func (cm *Command) RunBuf(ge Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Start()
 		if err == nil {
-			obuf := texteditor.OutBuf{}
+			obuf := texteditor.OutputBuffer{}
 			obuf.Init(stdout, buf, 0, cm.MarkupCmdOutput)
-			obuf.MonOut()
+			obuf.MonitorOutput()
 		}
 		err = cmd.Wait()
 	}

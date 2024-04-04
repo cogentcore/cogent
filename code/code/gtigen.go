@@ -21,7 +21,7 @@ import (
 )
 
 // DebugViewType is the [gti.Type] for [DebugView]
-var DebugViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutBuf", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
+var DebugViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
 
 // NewDebugView adds a new [DebugView] with the given name to the given parent:
 // DebugView is the debugger

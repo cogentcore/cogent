@@ -29,7 +29,7 @@ type GiDelve struct {
 	conn          string                   // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
 	dlv           *rpc2.RPCClient          // the delve rpc2 client interface
 	cmd           *exec.Cmd                // command running delve
-	obuf          *texteditor.OutBuf       // output buffer
+	obuf          *texteditor.OutputBuffer // output buffer
 	lastEvalScope *api.EvalScope           // last used EvalScope
 	statFunc      func(stat cdebug.Status) // status function
 	params        cdebug.Params            // local copy of initial params
@@ -56,7 +56,7 @@ func (gd *GiDelve) WriteToConsole(msg string) {
 	}
 	tlns := []byte(msg)
 	mlns := tlns
-	gd.obuf.Buf.AppendTextMarkup(tlns, mlns, texteditor.EditSignal)
+	gd.obuf.Buffer.AppendTextMarkup(tlns, mlns, texteditor.EditSignal)
 }
 
 func (gd *GiDelve) LogErr(err error) error {
@@ -112,9 +112,9 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buffer, pars 
 		gd.cmd.Stderr = gd.cmd.Stdout
 		err = gd.cmd.Start()
 		if err == nil {
-			gd.obuf = &texteditor.OutBuf{}
+			gd.obuf = &texteditor.OutputBuffer{}
 			gd.obuf.Init(stdout, outbuf, 0, gd.monitorOutput)
-			go gd.obuf.MonOut()
+			go gd.obuf.MonitorOutput()
 		}
 	}
 	if err != nil {

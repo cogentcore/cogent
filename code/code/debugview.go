@@ -98,7 +98,7 @@ type DebugView struct {
 	BBreaks []*cdebug.Break `set:"-" json:"-" xml:"-"`
 
 	// output from the debugger
-	OutBuf *texteditor.Buffer `set:"-" json:"-" xml:"-"`
+	OutputBuffer *texteditor.Buffer `set:"-" json:"-" xml:"-"`
 
 	// parent code project
 	Code Code `set:"-" json:"-" xml:"-"`
@@ -189,7 +189,7 @@ func (dv *DebugView) Start() {
 			dv.NeedsLayout()
 			dv.AsyncUnlock()
 		}
-		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutBuf, pars)
+		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutputBuffer, pars)
 		if err == nil {
 			dv.Dbg = dbg
 			dv.DbgTime = time.Now()
@@ -752,8 +752,8 @@ func (dv *DebugView) ConfigDebugView(ge Code, sup fi.Known, exePath string) {
 	gi.NewToolbar(dv, "toolbar")
 	gi.NewTabs(dv, "tabs")
 	dv.State.BlankState()
-	dv.OutBuf = texteditor.NewBuffer()
-	dv.OutBuf.Filename = gi.Filename("debug-outbuf")
+	dv.OutputBuffer = texteditor.NewBuffer()
+	dv.OutputBuffer.Filename = gi.Filename("debug-outbuf")
 	dv.ConfigToolbar()
 	dv.ConfigTabs()
 	dv.State.Breaks = nil // get rid of dummy
@@ -827,8 +827,8 @@ func (dv *DebugView) ConfigTabs() {
 	}
 	ctv := texteditor.NewEditor(tb.NewTab("Console"), "dbg-console")
 	ConfigOutputTextEditor(ctv)
-	dv.OutBuf.Opts.LineNos = false
-	ctv.SetBuffer(dv.OutBuf)
+	dv.OutputBuffer.Opts.LineNos = false
+	ctv.SetBuffer(dv.OutputBuffer)
 	NewBreakView(tb.NewTab("Breaks")).ConfigBreakView(dv)
 	NewStackView(tb.NewTab("Stack")).ConfigStackView(dv, false)
 	if dv.Sup == fi.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet

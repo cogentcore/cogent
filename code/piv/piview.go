@@ -62,7 +62,7 @@ type PiView struct {
 	TestBuf texteditor.Buf `json:"-"`
 
 	// output buffer -- shows all errors, tracing
-	OutBuf texteditor.Buf `json:"-"`
+	OutputBuffer texteditor.Buf `json:"-"`
 
 	// buffer of lexified tokens
 	LexBuf texteditor.Buf `json:"-"`
@@ -245,7 +245,7 @@ func (pv *PiView) SetStatus(msg string) {
 
 // LexInit initializes / restarts lexing process for current test file
 func (pv *PiView) LexInit() {
-	pv.OutBuf.New(0)
+	pv.OutputBuffer.New(0)
 	go pv.MonitorOut()
 	fs := &pv.FileState
 	fs.SetSrc(pv.TestBuf.Lines, string(pv.TestBuf.Filename), "", pv.TestBuf.Info.Sup)
@@ -366,7 +366,7 @@ func (pv *PiView) EditPassTwo() {
 
 // PassTwo does the second pass after lexing, per current settings
 func (pv *PiView) PassTwo() {
-	pv.OutBuf.New(0)
+	pv.OutputBuffer.New(0)
 	fs := &pv.FileState
 	pv.Parser.DoPassTwo(fs)
 	if fs.PassTwoHasErrs() {
@@ -392,7 +392,7 @@ func (pv *PiView) EditTrace() {
 // ParseInit initializes / restarts lexing process for current test file
 func (pv *PiView) ParseInit() {
 	fs := &pv.FileState
-	pv.OutBuf.New(0)
+	pv.OutputBuffer.New(0)
 	go pv.MonitorOut()
 	pv.LexInit()
 	pv.Parser.LexAll(fs)
@@ -704,8 +704,8 @@ func (pv *PiView) OpenOutTab() {
 	ctv := pv.RecycleMainTabTextEditor("Output", true, true)
 	ctv.SetInactive()
 	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
-	if ctv.Buf == nil || ctv.Buf != &pv.OutBuf {
-		ctv.SetBuf(&pv.OutBuf)
+	if ctv.Buf == nil || ctv.Buf != &pv.OutputBuffer {
+		ctv.SetBuf(&pv.OutputBuffer)
 	}
 }
 
@@ -848,7 +848,7 @@ func (pv *PiView) SplitsConfig() ki.Config {
 	return config
 }
 
-// MonitorOut sets up the OutBuf monitor -- must call as separate goroutine using go
+// MonitorOut sets up the OutputBuffer monitor -- must call as separate goroutine using go
 func (pv *PiView) MonitorOut() {
 	pv.OutMonMu.Lock()
 	if pv.OutMonRunning {
@@ -857,9 +857,9 @@ func (pv *PiView) MonitorOut() {
 	}
 	pv.OutMonRunning = true
 	pv.OutMonMu.Unlock()
-	obuf := texteditor.OutBuf{}
+	obuf := texteditor.OutputBuffer{}
 	fs := &pv.FileState
-	obuf.Init(fs.ParseState.Trace.OutRead, &pv.OutBuf, 0, code.MarkupCmdOutput)
+	obuf.Init(fs.ParseState.Trace.OutRead, &pv.OutputBuffer, 0, code.MarkupCmdOutput)
 	obuf.MonOut()
 	pv.OutMonMu.Lock()
 	pv.OutMonRunning = false
@@ -896,8 +896,8 @@ func (pv *PiView) ConfigSplits() {
 		pv.TestBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
 		pv.TestBuf.Hi.Off = true // prevent auto-hi
 
-		pv.OutBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
-		pv.OutBuf.Opts.LineNos = false
+		pv.OutputBuffer.SetHiStyle(gi.Settings.Colors.HiStyle)
+		pv.OutputBuffer.Opts.LineNos = false
 
 		fs.ParseState.Trace.Init()
 		fs.ParseState.Trace.PipeOut()

@@ -193,12 +193,12 @@ func (a *App) RunCmd(cmd string, cmds *gi.Frame, dir *gi.Label) error {
 
 	})
 
-	ob := &texteditor.OutBuf{}
+	ob := &texteditor.OutputBuffer{}
 	ob.Init(or, buf, 0, func(line []byte) []byte {
 		return ansihtml.ConvertToHTML(line)
 	})
 	go func() {
-		ob.MonOut()
+		ob.MonitorOutput()
 	}()
 
 	cmds.Update()

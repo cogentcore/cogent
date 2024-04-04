@@ -84,17 +84,17 @@ func (cn *Console) Close() {
 // MonitorOut monitors std output and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorOut() {
-	obuf := texteditor.OutBuf{}
+	obuf := texteditor.OutputBuffer{}
 	obuf.Init(cn.StdoutRead, cn.Buf, 0, MarkupStdout)
-	obuf.MonOut()
+	obuf.MonitorOutput()
 }
 
 // MonitorErr monitors std error and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorErr() {
-	obuf := texteditor.OutBuf{}
+	obuf := texteditor.OutputBuffer{}
 	obuf.Init(cn.StderrRead, cn.Buf, 0, MarkupStderr)
-	obuf.MonOut()
+	obuf.MonitorOutput()
 }
 
 func MarkupStdout(out []byte) []byte {

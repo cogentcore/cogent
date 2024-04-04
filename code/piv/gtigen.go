@@ -28,7 +28,7 @@ var PiViewType = gti.AddType(&gti.Type{
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"FileState", &gti.Field{Name: "FileState", Type: "cogentcore.org/core/pi.FileState", LocalType: "pi.FileState", Doc: "our own dedicated filestate for controlled parsing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"TestBuf", &gti.Field{Name: "TestBuf", Type: "cogentcore.org/core/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "test file buffer", Directives: gti.Directives{}, Tag: "json:\"-\""}},
-		{"OutBuf", &gti.Field{Name: "OutBuf", Type: "cogentcore.org/core/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "output buffer -- shows all errors, tracing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
+		{"OutputBuffer", &gti.Field{Name: "OutputBuffer", Type: "cogentcore.org/core/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "output buffer -- shows all errors, tracing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"LexBuf", &gti.Field{Name: "LexBuf", Type: "cogentcore.org/core/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "buffer of lexified tokens", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"ParseBuf", &gti.Field{Name: "ParseBuf", Type: "cogentcore.org/core/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "buffer of parse info", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"KeySeq1", &gti.Field{Name: "KeySeq1", Type: "cogentcore.org/core/events/key.Chord", LocalType: "key.Chord", Doc: "first key in sequence if needs2 key pressed", Directives: gti.Directives{}, Tag: ""}},
@@ -95,10 +95,10 @@ func (t *PiView) SetTestBuf(v texteditor.Buf) *PiView {
 	return t
 }
 
-// SetOutBuf sets the [PiView.OutBuf]:
+// SetOutputBuffer sets the [PiView.OutputBuffer]:
 // output buffer -- shows all errors, tracing
-func (t *PiView) SetOutBuf(v texteditor.Buf) *PiView {
-	t.OutBuf = v
+func (t *PiView) SetOutputBuffer(v texteditor.Buf) *PiView {
+	t.OutputBuffer = v
 	return t
 }
 
