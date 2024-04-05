@@ -145,7 +145,7 @@ func (ed *TextEditor) DebugVarValueAtPos(pos image.Point) string {
 	if lx == nil {
 		return ""
 	}
-	if !lx.Tok.Tok.InCat(token.Name) {
+	if !lx.Token.Token.InCat(token.Name) {
 		return ""
 	}
 	varNm := ed.Buffer.LexObjPathString(tpos.Ln, lx) // get full path
@@ -169,7 +169,7 @@ func (ed *TextEditor) FindFrames(ln int) {
 func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lex.Pos) {
 	dbg, has := ed.CurDebug()
 	lx, _ := ed.Buffer.HiTagAtPos(tpos)
-	if has && lx != nil && lx.Tok.Tok.InCat(token.Name) {
+	if has && lx != nil && lx.Token.Token.InCat(token.Name) {
 		varNm := ed.Buffer.LexObjPathString(tpos.Ln, lx)
 		err := dbg.ShowVar(varNm)
 		if err == nil {
