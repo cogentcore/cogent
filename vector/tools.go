@@ -42,14 +42,14 @@ func (gv *VectorView) SetTool(tl Tools) {
 	if fs != nil {
 		switch v := fs.(type) {
 		case *svg.Text:
-			Prefs.TextStyle.CopyStyleFrom(&v.Paint)
+			Settings.TextStyle.CopyStyleFrom(&v.Paint)
 		case *svg.Line:
-			Prefs.LineStyle.CopyStyleFrom(&v.Paint)
+			Settings.LineStyle.CopyStyleFrom(&v.Paint)
 		case *svg.Path:
-			Prefs.PathStyle.CopyStyleFrom(&v.Paint)
+			Settings.PathStyle.CopyStyleFrom(&v.Paint)
 		default:
 			gg := fs.AsNodeBase()
-			Prefs.ShapeStyle.CopyStyleFrom(&gg.Paint)
+			Settings.ShapeStyle.CopyStyleFrom(&gg.Paint)
 		}
 	}
 	es.ResetSelected()

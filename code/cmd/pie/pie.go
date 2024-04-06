@@ -15,8 +15,8 @@ func main() {
 			// 	fmt.Printf("Doing final Quit cleanup here..\n")
 			// })
 
-			code.InitPrefs()
-			piv.InitPrefs()
+			code.InitSettings()
+			piv.InitSettings()
 
 			code.TheConsole.Init("") // must do this after changing stdout
 

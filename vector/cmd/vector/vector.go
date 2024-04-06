@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	vector.InitPrefs()
+	vector.InitSettings()
 
 	ofs := gi.TheApp.OpenFiles()
 

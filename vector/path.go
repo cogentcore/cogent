@@ -28,10 +28,10 @@ func (vv *VectorView) ConfigNodeToolbar() {
 		return
 	}
 
-	grs := gi.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Prefs.SnapNodes).
+	grs := gi.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Settings.SnapNodes).
 		SetTooltip("snap movement and sizing of nodes, using overall snap settings")
 	grs.OnChange(func(e events.Event) {
-		Prefs.SnapNodes = grs.IsChecked()
+		Settings.SnapNodes = grs.IsChecked()
 	})
 
 	gi.NewSeparator(tb)
@@ -307,7 +307,7 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *gi.Window, me *mouse.DragEvent) 
 	if me.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
 	}
-	if Prefs.SnapNodes {
+	if Settings.SnapNodes {
 		mpt = sv.SnapPoint(mpt)
 	}
 

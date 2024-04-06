@@ -89,9 +89,9 @@ func (lt *Splits) Names() []string {
 	return nms
 }
 
-// PrefsSplitsFilename is the name of the settings file in App prefs
+// SplitsSettingsFilename is the name of the settings file in App prefs
 // directory for saving / loading the default AvailSplits
-var PrefsSplitsFilename = "splits_prefs.json"
+var SplitsSettingsFilename = "splits-settings.json"
 
 // FixLen ensures that there are exactly 4 splits in each
 func (lt *Splits) FixLen() {
@@ -124,7 +124,7 @@ func (lt *Splits) Save(filename gi.Filename) error { //gti:add
 // OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) OpenSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsSplitsFilename)
+	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
 	err := lt.Open(gi.Filename(pnm))
 	if err == nil {
@@ -133,11 +133,11 @@ func (lt *Splits) OpenSettings() error { //gti:add
 	return err
 }
 
-// SavePrefs saves Splits to App standard prefs directory, using PrefSplitsFilename
-func (lt *Splits) SavePrefs() error { //gti:add
+// SaveSettings saves Splits to App standard prefs directory, using PrefSplitsFilename
+func (lt *Splits) SaveSettings() error { //gti:add
 	lt.FixLen()
 	pdir := gi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsSplitsFilename)
+	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
 	AvailableSplitNames = lt.Names()
 	return lt.Save(gi.Filename(pnm))

@@ -273,10 +273,10 @@ var TreeViewProps = ki.Props{
 	},
 	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Props{},
 	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Select,
+		"background-color": &gi.Settings.Colors.Select,
 	},
 	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Props{
-		"background-color": &gi.Prefs.Colors.Control,
+		"background-color": &gi.Settings.Colors.Control,
 	},
 	"CtxtMenuActive": ki.PropSlice{
 		{"SrcEdit", ki.Props{

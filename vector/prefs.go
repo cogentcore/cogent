@@ -25,10 +25,10 @@ type Preferences struct { //gti:add
 	Size PhysSize
 
 	// active color preferences
-	Colors ColorPrefs
+	Colors ColorSettings
 
 	// named color schemes -- has Light and Dark schemes by default
-	ColorSchemes map[string]*ColorPrefs
+	ColorSchemes map[string]*ColorSettings
 
 	// default shape styles
 	ShapeStyle styles.Paint
@@ -107,30 +107,30 @@ func (pf *Preferences) Update() {
 	pf.Size.Update()
 }
 
-// Prefs are the overall Vector preferences
-var Prefs = Preferences{}
+// Settings are the overall Vector preferences
+var Settings = Preferences{}
 
-// InitPrefs must be called at startup in mainrun()
-func InitPrefs() {
+// InitSettings must be called at startup in mainrun()
+func InitSettings() {
 	gi.TheApp.SetName("Cogent Vector")
-	Prefs.Defaults()
-	Prefs.Open()
+	Settings.Defaults()
+	Settings.Open()
 	// OpenPaths() // todo
 }
 
-// PrefsFileName is the name of the preferences file in GoGi prefs directory
-var PrefsFileName = "grid_prefs.json"
+// SettingsFileName is the name of the preferences file in GoGi prefs directory
+var SettingsFileName = "grid_prefs.json"
 
 // Open preferences from GoGi standard prefs directory, and applies them
 func (pf *Preferences) Open() error {
 	pdir := goosi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsFileName)
+	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := ioutil.ReadFile(pnm)
 	if err != nil {
 		return err
 	}
 	err = json.Unmarshal(b, pf)
-	// AvailSplits.OpenPrefs() // todo
+	// AvailSplits.OpenSettings() // todo
 	pf.ApplyEnvVars()
 	pf.Changed = false
 	return err
@@ -139,7 +139,7 @@ func (pf *Preferences) Open() error {
 // Save Preferences to GoGi standard prefs directory
 func (pf *Preferences) Save() error {
 	pdir := goosi.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, PrefsFileName)
+	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
 		log.Println(err)
@@ -149,7 +149,7 @@ func (pf *Preferences) Save() error {
 	if err != nil {
 		log.Println(err)
 	}
-	AvailableSplits.SavePrefs()
+	AvailableSplits.SaveSettings()
 	pf.Changed = false
 	return err
 }
@@ -211,7 +211,7 @@ func (pf *Preferences) UpdateAll() {
 }
 
 /*
-// PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.PrefsView
+// PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.SettingsView
 var PreferencesProps = ki.Props{
 	"MainMenu": ki.PropSlice{
 		{"AppMenu", ki.BlankProp{}},
@@ -269,10 +269,10 @@ var PreferencesProps = ki.Props{
 */
 
 /////////////////////////////////////////////////////////////////////////////////
-//   ColorPrefs
+//   ColorSettings
 
-// ColorPrefs for
-type ColorPrefs struct { //gti:add
+// ColorSettings for
+type ColorSettings struct { //gti:add
 
 	// drawing background color
 	Background color.Color
@@ -284,31 +284,31 @@ type ColorPrefs struct { //gti:add
 	Vector color.Color
 }
 
-func (pf *ColorPrefs) Defaults() {
+func (pf *ColorSettings) Defaults() {
 	pf.Background = colors.White
 	pf.Border = colors.Black
 	pf.Vector = color.RGBA{220, 220, 220, 255}
 }
 
-func (pf *ColorPrefs) DarkDefaults() {
+func (pf *ColorSettings) DarkDefaults() {
 	pf.Background = colors.Black
 	pf.Border = color.RGBA{102, 102, 102, 255}
 	pf.Vector = color.RGBA{40, 40, 40, 255}
 }
 
-func DefaultColorSchemes() map[string]*ColorPrefs {
-	cs := map[string]*ColorPrefs{}
-	lc := &ColorPrefs{}
+func DefaultColorSchemes() map[string]*ColorSettings {
+	cs := map[string]*ColorSettings{}
+	lc := &ColorSettings{}
 	lc.Defaults()
 	cs["Light"] = lc
-	dc := &ColorPrefs{}
+	dc := &ColorSettings{}
 	dc.DarkDefaults()
 	cs["Dark"] = dc
 	return cs
 }
 
 // OpenJSON opens colors from a JSON-formatted file.
-func (pf *ColorPrefs) OpenJSON(filename gi.Filename) error {
+func (pf *ColorSettings) OpenJSON(filename gi.Filename) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
 		gi.ErrorDialog(nil, err, "File Not Found")
@@ -319,7 +319,7 @@ func (pf *ColorPrefs) OpenJSON(filename gi.Filename) error {
 }
 
 // SaveJSON saves colors to a JSON-formatted file.
-func (pf *ColorPrefs) SaveJSON(filename gi.Filename) error {
+func (pf *ColorSettings) SaveJSON(filename gi.Filename) error {
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
 		log.Println(err) // unlikely
@@ -333,16 +333,16 @@ func (pf *ColorPrefs) SaveJSON(filename gi.Filename) error {
 	return err
 }
 
-// SetToPrefs sets this color scheme as the current active setting in overall
+// SetToSettings sets this color scheme as the current active setting in overall
 // default prefs.
-func (pf *ColorPrefs) SetToPrefs() {
-	Prefs.Colors = *pf
-	Prefs.UpdateAll()
+func (pf *ColorSettings) SetToSettings() {
+	Settings.Colors = *pf
+	Settings.UpdateAll()
 }
 
 /*
-// ColorPrefsProps defines the Toolbar
-var ColorPrefsProps = ki.Props{
+// ColorSettingsProps defines the Toolbar
+var ColorSettingsProps = ki.Props{
 	"Toolbar": ki.PropSlice{
 		{"OpenJSON", ki.Props{
 			"label": "Open...",
@@ -364,8 +364,8 @@ var ColorPrefsProps = ki.Props{
 				}},
 			},
 		}},
-		{"SetToPrefs", ki.Props{
-			"desc": "Sets this color scheme as the current active color scheme in Prefs.",
+		{"SetToSettings", ki.Props{
+			"desc": "Sets this color scheme as the current active color scheme in Settings.",
 			"icon": "reset",
 		}},
 	},

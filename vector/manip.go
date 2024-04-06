@@ -91,7 +91,7 @@ func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
 // Tolerance is determined by preferences.  Returns true if snapped.
 func SnapToPt(val, snap float32) (float32, bool) {
 	d := mat32.Abs(val - snap)
-	if d <= float32(Prefs.SnapTol) {
+	if d <= float32(Settings.SnapTol) {
 		return snap, true
 	}
 	return val, false
@@ -103,14 +103,14 @@ func SnapToPt(val, snap float32) (float32, bool) {
 func SnapToIncr(val, off, incr float32) (float32, bool) {
 	nint := mat32.Round((val-off)/incr)*incr + off
 	dint := mat32.Abs(val - nint)
-	if dint <= float32(Prefs.SnapTol) {
+	if dint <= float32(Settings.SnapTol) {
 		return nint, true
 	}
 	return val, false
 }
 
 func (sv *SVGView) SnapPointToVector(rawpt mat32.Vec2) mat32.Vec2 {
-	if !Prefs.SnapVector {
+	if !Settings.SnapVector {
 		return rawpt
 	}
 	grinc, groff := sv.VectorDots()
@@ -125,7 +125,7 @@ func (sv *SVGView) SnapPointToVector(rawpt mat32.Vec2) mat32.Vec2 {
 func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 	es := sv.EditState()
 	snpt := sv.SnapPointToVector(rawpt)
-	if !Prefs.SnapGuide {
+	if !Settings.SnapGuide {
 		return snpt
 	}
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
@@ -182,7 +182,7 @@ func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 // aligning movement of bbox edges / centers relative to other bboxes..
 // returns snapped bbox.
 func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
-	if !Prefs.SnapGuide {
+	if !Settings.SnapGuide {
 		return rawbb
 	}
 	es := sv.EditState()

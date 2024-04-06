@@ -24,17 +24,17 @@ func (ge *CodeView) Defaults() {
 	ge.Settings.Debug = cdebug.DefaultParams
 }
 
-// GrabPrefs grabs the current project preference settings from various
+// GrabSettings grabs the current project preference settings from various
 // places, e.g., prior to saving or editing.
-func (ge *CodeView) GrabPrefs() {
+func (ge *CodeView) GrabSettings() {
 	sv := ge.Splits()
 	ge.Settings.Splits = sv.Splits
 	ge.Settings.Dirs = ge.Files.Dirs
 }
 
-// ApplyPrefs applies current project preference settings into places where
+// ApplySettings applies current project preference settings into places where
 // they are used -- only for those done prior to loading
-func (ge *CodeView) ApplyPrefs() {
+func (ge *CodeView) ApplySettings() {
 	ge.ProjFilename = ge.Settings.ProjFilename
 	ge.ProjRoot = ge.Settings.ProjRoot
 	if ge.Files != nil {
@@ -58,9 +58,9 @@ func (ge *CodeView) ApplyPrefs() {
 	gi.UpdateAll() // drives full rebuild
 }
 
-// ApplyPrefsAction applies current settings to the project, and updates the project
-func (ge *CodeView) ApplyPrefsAction() {
-	ge.ApplyPrefs()
+// ApplySettingsAction applies current settings to the project, and updates the project
+func (ge *CodeView) ApplySettingsAction() {
+	ge.ApplySettings()
 	ge.SplitsSetView(ge.Settings.SplitName)
 	ge.SetStatus("Applied prefs")
 }
@@ -70,7 +70,7 @@ func (ge *CodeView) EditProjSettings() { //gti:add
 	sv := code.ProjSettingsView(&ge.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
-			ge.ApplyPrefsAction()
+			ge.ApplySettingsAction()
 		})
 	}
 }
@@ -101,7 +101,7 @@ func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
 	sp, _, ok := code.AvailableSplits.SplitByName(split)
 	if ok {
 		sp.SaveSplits(sv.Splits)
-		code.AvailableSplits.SavePrefs()
+		code.AvailableSplits.SaveSettings()
 	}
 }
 
@@ -110,7 +110,7 @@ func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
 func (ge *CodeView) SplitsSaveAs(name, desc string) { //gti:add
 	sv := ge.Splits()
 	code.AvailableSplits.Add(name, desc, sv.Splits)
-	code.AvailableSplits.SavePrefs()
+	code.AvailableSplits.SaveSettings()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings

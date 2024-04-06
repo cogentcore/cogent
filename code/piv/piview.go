@@ -50,7 +50,7 @@ type PiView struct {
 	Parser pi.Parser
 
 	// project settings -- this IS the project file
-	Prefs ProjSettings
+	Settings ProjSettings
 
 	// has the root changed?  we receive update signals from root for changes
 	Changed bool `json:"-"`
@@ -100,7 +100,7 @@ func (pv *PiView) OpenProj(filename gi.Filename) *PiView { //gti:add
 	}
 	pv.Settings.OpenJSON(filename)
 	pv.Config()
-	pv.ApplyPrefs()
+	pv.ApplySettings()
 	SavedPaths.AddPath(string(filename), gi.Settings.Params.SavedPathsMax)
 	SavePaths()
 	return pv
@@ -118,7 +118,7 @@ func (pv *PiView) SaveProj() { //gti:add
 		return
 	}
 	pv.SaveParser()
-	pv.GetPrefs()
+	pv.GetSettings()
 	pv.Settings.SaveJSON(pv.Settings.ProjFile)
 	pv.Changed = false
 	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjFile))
@@ -131,15 +131,15 @@ func (pv *PiView) SaveProjAs(filename gi.Filename) { //gti:add
 	SavedPaths.AddPath(string(filename), gi.Settings.Params.SavedPathsMax)
 	SavePaths()
 	pv.SaveParser()
-	pv.GetPrefs()
+	pv.GetSettings()
 	pv.Settings.SaveJSON(filename)
 	pv.Changed = false
 	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjFile))
 	pv.UpdateSig() // notify our editor
 }
 
-// ApplyPrefs applies project-level prefs (e.g., after opening)
-func (pv *PiView) ApplyPrefs() { //gti:add
+// ApplySettings applies project-level prefs (e.g., after opening)
+func (pv *PiView) ApplySettings() { //gti:add
 	fs := &pv.FileState
 	fs.ParseState.Trace.CopyOpts(&pv.Settings.TraceOpts)
 	if pv.Settings.ParserFile != "" {
@@ -150,8 +150,8 @@ func (pv *PiView) ApplyPrefs() { //gti:add
 	}
 }
 
-// GetPrefs gets the current values of things for prefs
-func (pv *PiView) GetPrefs() {
+// GetSettings gets the current values of things for prefs
+func (pv *PiView) GetSettings() {
 	fs := &pv.FileState
 	pv.Settings.TraceOpts.CopyOpts(&fs.ParseState.Trace)
 }
@@ -1142,7 +1142,7 @@ var PiViewProps = ki.Props{
 			"desc":  "Open lexer and parser rules from standard JSON-formatted file",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
-					"default-field": "Prefs.ParserFile",
+					"default-field": "Settings.ParserFile",
 					"ext":           ".pi",
 				}},
 			},
@@ -1161,7 +1161,7 @@ var PiViewProps = ki.Props{
 			"desc":  "Save As lexer and parser rules from file standard JSON-formatted file",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
-					"default-field": "Prefs.ParserFile",
+					"default-field": "Settings.ParserFile",
 					"ext":           ".pi",
 				}},
 			},
@@ -1173,7 +1173,7 @@ var PiViewProps = ki.Props{
 			"desc":  "Open test file",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
-					"default-field": "Prefs.TestFile",
+					"default-field": "Settings.TestFile",
 				}},
 			},
 		}},
@@ -1183,7 +1183,7 @@ var PiViewProps = ki.Props{
 			"desc":  "Save current test file as",
 			"Args": ki.PropSlice{
 				{"File Name", ki.Props{
-					"default-field": "Prefs.TestFile",
+					"default-field": "Settings.TestFile",
 				}},
 			},
 		}},
@@ -1250,7 +1250,7 @@ var PiViewProps = ki.Props{
 				"desc":     "open a GoPi project that has full settings",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
-						"default-field": "Prefs.ProjFile",
+						"default-field": "Settings.ProjFile",
 						"ext":           ".pip",
 					}},
 				},
@@ -1275,7 +1275,7 @@ var PiViewProps = ki.Props{
 				"desc":     "Save GoPi project to file standard JSON-formatted file",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
-						"default-field": "Prefs.ProjFile",
+						"default-field": "Settings.ProjFile",
 						"ext":           ".pip",
 					}},
 				},
@@ -1287,7 +1287,7 @@ var PiViewProps = ki.Props{
 				"desc":     "Open lexer and parser rules from standard JSON-formatted file",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
-						"default-field": "Prefs.ParserFile",
+						"default-field": "Settings.ParserFile",
 						"ext":           ".pi",
 					}},
 				},
@@ -1305,7 +1305,7 @@ var PiViewProps = ki.Props{
 				"desc":  "Save As lexer and parser rules to file standard JSON-formatted file",
 				"Args": ki.PropSlice{
 					{"File Name", ki.Props{
-						"default-field": "Prefs.ParserFile",
+						"default-field": "Settings.ParserFile",
 						"ext":           ".pi",
 					}},
 				},

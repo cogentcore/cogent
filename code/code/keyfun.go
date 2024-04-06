@@ -115,7 +115,7 @@ func (kf *KeySeq) UnmarshalText(b []byte) error {
 type KeySeqMap map[KeySeq]KeyFuns
 
 // ActiveKeyMap points to the active map -- users can set this to an
-// alternative map in Prefs
+// alternative map in Settings
 var ActiveKeyMap *KeySeqMap
 
 // ActiveKeyMapName is the name of the active keymap
@@ -314,7 +314,7 @@ func (km KeyMapsItem) Label() string {
 	return km.Name
 }
 
-// KeyMaps is a list of KeyMap's -- users can edit these in Prefs -- to create
+// KeyMaps is a list of KeyMap's -- users can edit these in Settings -- to create
 // a custom one, just duplicate an existing map, rename, and customize
 type KeyMaps []KeyMapsItem //gti:add
 

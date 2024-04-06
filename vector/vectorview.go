@@ -68,7 +68,7 @@ func (vv *VectorView) OpenDrawingFile(fnm gi.Filename) error {
 	vv.Filename = gi.Filename(path)
 	sv := vv.SVG()
 	err := grr.Log(sv.SSVG().OpenXML(path))
-	// SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
+	// SavedPaths.AddPath(path, gi.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	fdir, _ := filepath.Split(path)
 	grr.Log(os.Chdir(fdir))
@@ -130,7 +130,7 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 		return
 	}
 	if sz.Size == (mat32.Vec2{}) {
-		sz.SetStandardSize(Prefs.Size.StandardSize)
+		sz.SetStandardSize(Settings.Size.StandardSize)
 	}
 	sv := vv.SVG()
 	sz.SetToSVG(sv)
@@ -154,7 +154,7 @@ func (vv *VectorView) SaveDrawingAs(fname gi.Filename) error { //gti:add
 	}
 	path, _ := filepath.Abs(string(fname))
 	vv.Filename = gi.Filename(path)
-	// SavedPaths.AddPath(path, gi.Prefs.Params.SavedPathsMax)
+	// SavedPaths.AddPath(path, gi.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	sv := vv.SVG()
 	sv.SSVG().RemoveOrphanedDefs()
@@ -425,7 +425,7 @@ func (vv *VectorView) Config() {
 	vv.ConfigTools()
 	vv.ConfigTabs()
 
-	vv.SetPhysSize(&Prefs.Size)
+	vv.SetPhysSize(&Settings.Size)
 
 	vv.SyncLayers()
 	lyv.SetSlice(&vv.EditState.Layers)
@@ -452,7 +452,7 @@ func (vv *VectorView) ConfigToolbar(tb *gi.Toolbar) {
 	giv.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	gi.NewButton(tb).SetText("New").SetIcon(icons.Add).
 		OnClick(func(e events.Event) {
-			ndr := vv.NewDrawing(Prefs.Size)
+			ndr := vv.NewDrawing(Settings.Size)
 			ndr.PromptPhysSize()
 		})
 
@@ -681,11 +681,11 @@ func (vv *VectorView) SetDefaultStyle() {
 	// es := &vv.EditState
 	// switch es.Tool {
 	// case TextTool:
-	// 	pv.Update(&Prefs.TextStyle, nil)
+	// 	pv.Update(&Settings.TextStyle, nil)
 	// case BezierTool:
-	// 	pv.Update(&Prefs.PathStyle, nil)
+	// 	pv.Update(&Settings.PathStyle, nil)
 	// default:
-	// 	pv.Update(&Prefs.ShapeStyle, nil)
+	// 	pv.Update(&Settings.ShapeStyle, nil)
 	// }
 }
 
@@ -802,7 +802,7 @@ func (vv *VectorView) SplitsSetView(split SplitName) {
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
 		sv.SetSplits(sp.Splits...).NeedsLayout()
-		Prefs.SplitName = split
+		Settings.SplitName = split
 	}
 }
 
@@ -813,7 +813,7 @@ func (vv *VectorView) SplitsSave(split SplitName) {
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
 		sp.SaveSplits(sv.Splits)
-		AvailableSplits.SavePrefs()
+		AvailableSplits.SaveSettings()
 	}
 }
 
@@ -822,7 +822,7 @@ func (vv *VectorView) SplitsSave(split SplitName) {
 func (vv *VectorView) SplitsSaveAs(name, desc string) {
 	spv := vv.Splits()
 	AvailableSplits.Add(name, desc, spv.Splits)
-	AvailableSplits.SavePrefs()
+	AvailableSplits.SaveSettings()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings

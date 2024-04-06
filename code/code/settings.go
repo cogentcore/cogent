@@ -93,7 +93,7 @@ func (se *SettingsData) Defaults() {
 	}
 }
 
-// Defaults are the defaults for FilePrefs
+// Defaults are the defaults for FileSettings
 func (se *FileSettings) Defaults() {
 	se.DirsOnTop = true
 }
@@ -110,9 +110,9 @@ func (se *SettingsData) Save() error {
 		AvailableLangs.SaveSettings()
 	}
 	if se.SaveCmds {
-		CustomCommands.SavePrefs()
+		CustomCommands.SaveSettings()
 	}
-	AvailableSplits.SavePrefs()
+	AvailableSplits.SaveSettings()
 	AvailableRegisters.SaveSettings()
 	return err
 }
