@@ -15,6 +15,7 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/paint"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -241,6 +242,9 @@ func (ge *CodeView) CommitNoChecks() {
 	d := gi.NewBody().AddTitle("Commit message").
 		AddText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
 	tf := gi.NewTextField(d)
+	tf.Style(func(s *styles.Style) {
+		s.Min.X.Ch(80)
+	})
 	d.AddBottomBar(func(parent gi.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).SetText("Commit").OnClick(func(e events.Event) {
