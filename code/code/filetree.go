@@ -308,7 +308,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 			}
 		} else if loc == FindLocNotTop {
 			// if level == 1 { // todo
-			// 	return ki.Continue
+			// 	return tree.Continue
 			// }
 		}
 		var cnt int

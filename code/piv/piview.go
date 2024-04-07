@@ -735,7 +735,7 @@ func (pv *PiView) Config() {
 	pv.Parser.Init()
 	pv.Lay = gi.LayoutVert
 	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	config := ki.Config{}
+	config := tree.Config{}
 	config.Add(gi.ToolbarType, "toolbar")
 	config.Add(gi.SplitsType, "splitview")
 	config.Add(gi.FrameType, "statusbar")
@@ -838,8 +838,8 @@ func (pv *PiView) ConfigToolbar() {
 }
 
 // SplitsConfig returns a TypeAndNameList for configuring the Splits
-func (pv *PiView) SplitsConfig() ki.Config {
-	config := ki.Config{}
+func (pv *PiView) SplitsConfig() tree.Config {
+	config := tree.Config{}
 	config.Add(gi.FrameType, "lex-tree-fr")
 	config.Add(gi.FrameType, "parse-tree-fr")
 	config.Add(giv.KiT_StructView, "struct-view")
@@ -1135,7 +1135,7 @@ var PiViewProperties = tree.Properties{
 				act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
 			}),
 		}},
-		{"sep-parse", ki.BlankProp{}},
+		{"sep-parse", tree.BlankProp{}},
 		{"OpenParser", tree.Properties{
 			"label": "Open Parser...",
 			"icon":  "file-open",
@@ -1166,7 +1166,7 @@ var PiViewProperties = tree.Properties{
 				}},
 			},
 		}},
-		{"sep-file", ki.BlankProp{}},
+		{"sep-file", tree.BlankProp{}},
 		{"OpenTest", tree.Properties{
 			"label": "Open Test",
 			"icon":  "file-open",
@@ -1187,7 +1187,7 @@ var PiViewProperties = tree.Properties{
 				}},
 			},
 		}},
-		{"sep-lex", ki.BlankProp{}},
+		{"sep-lex", tree.BlankProp{}},
 		{"LexInit", tree.Properties{
 			"icon": "update",
 			"desc": "Init / restart lexer",
@@ -1204,7 +1204,7 @@ var PiViewProperties = tree.Properties{
 			"icon": "fast-fwd",
 			"desc": "do all remaining lexing",
 		}},
-		{"sep-passtwo", ki.BlankProp{}},
+		{"sep-passtwo", tree.BlankProp{}},
 		{"EditPassTwo", tree.Properties{
 			"icon": "edit",
 			"desc": "edit the settings of the PassTwo -- second pass after lexing",
@@ -1213,7 +1213,7 @@ var PiViewProperties = tree.Properties{
 			"icon": "play",
 			"desc": "perform second pass after lexing -- computes nesting depth globally and finds EOS tokens",
 		}},
-		{"sep-parse", ki.BlankProp{}},
+		{"sep-parse", tree.BlankProp{}},
 		{"EditTrace", tree.Properties{
 			"icon": "edit",
 			"desc": "edit the parse tracing options for seeing how the parsing process is working",
@@ -1236,7 +1236,7 @@ var PiViewProperties = tree.Properties{
 		}},
 	},
 	"MainMenu": tree.Propertieslice{
-		{"AppMenu", ki.BlankProp{}},
+		{"AppMenu", tree.BlankProp{}},
 		{"File", tree.Propertieslice{
 			{"OpenRecent", tree.Properties{
 				"submenu": &SavedPaths,
@@ -1280,7 +1280,7 @@ var PiViewProperties = tree.Properties{
 					}},
 				},
 			}},
-			{"sep-parse", ki.BlankProp{}},
+			{"sep-parse", tree.BlankProp{}},
 			{"OpenParser", tree.Properties{
 				"shortcut": keyfun.MenuOpenAlt1,
 				"label":    "Open Parser...",
@@ -1310,8 +1310,8 @@ var PiViewProperties = tree.Properties{
 					}},
 				},
 			}},
-			{"sep-close", ki.BlankProp{}},
-			{"Close Window", ki.BlankProp{}},
+			{"sep-close", tree.BlankProp{}},
+			{"Close Window", tree.BlankProp{}},
 			{"OpenConsoleTab", tree.Properties{}},
 		}},
 		{"Edit", "Copy Cut Paste"},

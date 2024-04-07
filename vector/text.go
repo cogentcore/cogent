@@ -232,7 +232,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 	// 	}
 	// })
 
-	// ki.InitNode(&ts.FontVal)
+	// tree.InitNode(&ts.FontVal)
 	// ts.FontVal.SetSoloValue(reflect.ValueOf(&ts.Font))
 	// fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(gi.Node2D)
 	// ts.FontVal.Config(fw)

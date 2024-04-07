@@ -214,7 +214,7 @@ func (pf *Preferences) UpdateAll() {
 // PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., giv.SettingsView
 var PreferencesProperties = tree.Properties{
 	"MainMenu": tree.Propertieslice{
-		{"AppMenu", ki.BlankProp{}},
+		{"AppMenu", tree.BlankProp{}},
 		{"File", tree.Propertieslice{
 			{"Open", tree.Properties{
 				"shortcut": "Command+O",
@@ -226,11 +226,11 @@ var PreferencesProperties = tree.Properties{
 					act.SetActiveState(pf.Changed)
 				}),
 			}},
-			{"sep-color", ki.BlankProp{}},
+			{"sep-color", tree.BlankProp{}},
 			{"LightMode", tree.Properties{}},
 			{"DarkMode", tree.Properties{}},
-			{"sep-close", ki.BlankProp{}},
-			{"Close Window", ki.BlankProp{}},
+			{"sep-close", tree.BlankProp{}},
+			{"Close Window", tree.BlankProp{}},
 		}},
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},
@@ -244,7 +244,7 @@ var PreferencesProperties = tree.Properties{
 				act.SetActiveStateUpdate(pf.Changed)
 			}),
 		}},
-		{"sep-color", ki.BlankProp{}},
+		{"sep-color", tree.BlankProp{}},
 		{"LightMode", tree.Properties{
 			"desc": "Set color mode to Light mode as defined in ColorSchemes -- automatically does Save and UpdateAll ",
 			"icon": "color",
@@ -253,13 +253,13 @@ var PreferencesProperties = tree.Properties{
 			"desc": "Set color mode to Dark mode as defined in ColorSchemes -- automatically does Save and UpdateAll",
 			"icon": "color",
 		}},
-		{"sep-misc", ki.BlankProp{}},
+		{"sep-misc", tree.BlankProp{}},
 		{"VersionInfo", tree.Properties{
 			"desc":        "shows current Vector version information",
 			"icon":        "info",
 			"show-return": true,
 		}},
-		{"sep-key", ki.BlankProp{}},
+		{"sep-key", tree.BlankProp{}},
 		{"EditSplits", tree.Properties{
 			"icon": "file-binary",
 			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with preferences automatically.",

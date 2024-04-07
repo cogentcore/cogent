@@ -573,7 +573,7 @@ func (gr *Gradient) UpdateIcon() {
 		}
 		nst := len(gr.Stops)
 		if ic.NumChildren() != nst {
-			config := ki.Config
+			config := tree.Config
 			for i := range gr.Stops {
 				config.Add(svg.RectType, fmt.Sprintf("%d", i))
 			}

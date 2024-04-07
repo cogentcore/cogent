@@ -285,7 +285,7 @@ var TreeViewProperties = tree.Properties{
 		{"SelectSVG", tree.Properties{
 			"label": "Select",
 		}},
-		{"sep-edit", ki.BlankProp{}},
+		{"sep-edit", tree.BlankProp{}},
 		{"SrcDuplicate", tree.Properties{
 			"label":    "Duplicate",
 			"shortcut": keyfun.Duplicate,
@@ -308,7 +308,7 @@ var TreeViewProperties = tree.Properties{
 		{"Paste", tree.Properties{
 			"shortcut": keyfun.Paste,
 		}},
-		{"sep-layer", ki.BlankProp{}},
+		{"sep-layer", tree.BlankProp{}},
 		{"LayerSetCurrent", tree.Properties{
 			"label":    "Layer: Set Current",
 			"updtfunc": TreeViewIsLayerFunc,
@@ -321,7 +321,7 @@ var TreeViewProperties = tree.Properties{
 			"label":    "Layer: Toggle Visible",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"sep-open", ki.BlankProp{}},
+		{"sep-open", tree.BlankProp{}},
 		{"OpenAll", tree.Properties{}},
 		{"CloseAll", tree.Properties{}},
 	},
