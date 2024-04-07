@@ -65,7 +65,7 @@ func (sv *SVGView) OnInit() {
 	sv.SVG.OnInit()
 	sv.HandleEvents()
 	sv.SetReadOnly(false)
-	sv.Grid = Prefs.Size.Grid
+	sv.Grid = Settings.Size.Grid
 	sv.Scale = 1
 }
 
@@ -870,7 +870,7 @@ func (sv *SVGView) EnsureBgSize() bool {
 func (sv *SVGView) UpdateVectorEff() {
 	sv.VectorEff = sv.Grid
 	sp := sv.VectorEff * sv.Scale
-	for sp <= 2*(float32(Prefs.SnapTol)+1) {
+	for sp <= 2*(float32(Settings.SnapTol)+1) {
 		sv.VectorEff *= 2
 		sp = sv.VectorEff * sv.Scale
 	}
@@ -887,12 +887,12 @@ func (sv *SVGView) RenderBg() {
 
 		bb := sv.BgPixels.Bounds()
 
-		draw.Draw(sv.BgPixels, bb, &image.Uniform{Prefs.Colors.Background}, image.ZP, draw.Src)
+		draw.Draw(sv.BgPixels, bb, &image.Uniform{Settings.Colors.Background}, image.ZP, draw.Src)
 
 		rs.PushBounds(bb)
 		rs.PushTransform(sv.Pnt.Transform)
 
-		pc.StrokeStyle.SetColor(&Prefs.Colors.Border)
+		pc.StrokeStyle.SetColor(&Settings.Colors.Border)
 
 		sc := sv.Scale
 
@@ -905,9 +905,9 @@ func (sv *SVGView) RenderBg() {
 		pc.DrawRectangle(rs, pos.X, pos.Y, sz.X, sz.Y)
 		pc.FillStrokeClear(rs)
 
-		if Prefs.VectorDisp {
+		if Settings.VectorDisp {
 			gsz := float32(sv.VectorEff)
-			pc.StrokeStyle.SetColor(&Prefs.Colors.Vector)
+			pc.StrokeStyle.SetColor(&Settings.Colors.Vector)
 			for x := gsz; x < sz.X; x += gsz {
 				pc.DrawLine(rs, x, 0, x, sz.Y)
 			}

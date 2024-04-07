@@ -60,8 +60,8 @@ func (pf *ProjSettings) Save(filename gi.Filename) error {
 	return err
 }
 
-// InitPrefs is the overall init at startup for PiView project
-func InitPrefs() {
+// InitSettings is the overall init at startup for PiView project
+func InitSettings() {
 	OpenPaths()
 }
 

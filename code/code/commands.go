@@ -756,7 +756,7 @@ func (cm *Commands) OpenSettings() error { //gti:add
 
 // SaveSettings saves custom Commands to the app settings directory, using
 // CommandSettingsFilename.
-func (cm *Commands) SavePrefs() error { //gti:add
+func (cm *Commands) SaveSettings() error { //gti:add
 	pdir := gi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, CommandSettingsFilename)
 	CustomCommandsChanged = false

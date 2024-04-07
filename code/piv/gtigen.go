@@ -24,7 +24,7 @@ var PiViewType = gti.AddType(&gti.Type{
 	Directives: gti.Directives{},
 	Fields: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
 		{"Parser", &gti.Field{Name: "Parser", Type: "cogentcore.org/core/pi.Parser", LocalType: "pi.Parser", Doc: "the parser we are viewing", Directives: gti.Directives{}, Tag: ""}},
-		{"Prefs", &gti.Field{Name: "Prefs", Type: "cogentcore.org/cogent/code/piv.ProjSettings", LocalType: "ProjSettings", Doc: "project settings -- this IS the project file", Directives: gti.Directives{}, Tag: ""}},
+		{"Settings", &gti.Field{Name: "Settings", Type: "cogentcore.org/cogent/code/piv.ProjSettings", LocalType: "ProjSettings", Doc: "project settings -- this IS the project file", Directives: gti.Directives{}, Tag: ""}},
 		{"Changed", &gti.Field{Name: "Changed", Type: "bool", LocalType: "bool", Doc: "has the root changed?  we receive update signals from root for changes", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"FileState", &gti.Field{Name: "FileState", Type: "cogentcore.org/core/pi.FileState", LocalType: "pi.FileState", Doc: "our own dedicated filestate for controlled parsing", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 		{"TestBuf", &gti.Field{Name: "TestBuf", Type: "cogentcore.org/core/gi/texteditor.Buf", LocalType: "texteditor.Buf", Doc: "test file buffer", Directives: gti.Directives{}, Tag: "json:\"-\""}},
@@ -67,9 +67,9 @@ func (t *PiView) SetParser(v pi.Parser) *PiView {
 	return t
 }
 
-// SetPrefs sets the [PiView.Settings]:
+// SetSettings sets the [PiView.Settings]:
 // project settings -- this IS the project file
-func (t *PiView) SetPrefs(v ProjSettings) *PiView {
+func (t *PiView) SetSettings(v ProjSettings) *PiView {
 	t.Settings = v
 	return t
 }

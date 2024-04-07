@@ -517,7 +517,7 @@ func (pv *PaintView) Config() {
 		s.Direction = styles.Column
 	})
 
-	sty := &Prefs.ShapeStyle
+	sty := &Settings.ShapeStyle
 
 	spl := gi.NewLayout(pv, "stroke-lab")
 	gi.NewLabel(spl).SetText("<b>Stroke Paint:  </b>")
@@ -537,7 +537,7 @@ func (pv *PaintView) Config() {
 		}
 	})
 
-	// uncb.SetCurrentIndex(int(Prefs.Size.Units))
+	// uncb.SetCurrentIndex(int(Settings.Size.Units))
 	gi.NewChooser(wr, "width-units").SetEnum(units.UnitsN).OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
 			pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)

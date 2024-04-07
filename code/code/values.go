@@ -166,7 +166,7 @@ func CmdsView(pt *Commands) {
 		CustomCommandsChanged = true
 	})
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
+		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
@@ -234,7 +234,7 @@ func SplitsView(pt *Splits) {
 	})
 
 	d.AddAppBar(func(tb *gi.Toolbar) {
-		giv.NewFuncButton(tb, pt.SavePrefs).SetText("Save to settings").
+		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
 		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)

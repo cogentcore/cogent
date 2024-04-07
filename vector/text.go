@@ -72,7 +72,7 @@ func (ts *TextStyle) Defaults() {
 	ts.Shift = 0
 	ts.Align = 0
 
-	// ts.SetFromFontStyle(&Prefs.TextStyle.FontStyle)
+	// ts.SetFromFontStyle(&Settings.TextStyle.FontStyle)
 }
 
 // SetFromFontStyle sets from standard styles.Font style

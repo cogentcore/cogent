@@ -273,7 +273,7 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 		code.SavePaths()
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
-		ge.ApplyPrefs()
+		ge.ApplySettings()
 		ge.UpdateFiles()
 		ge.SetWindowNameTitle()
 	}
@@ -354,7 +354,7 @@ func (ge *CodeView) SaveProjAs(filename gi.Filename) bool { //gti:add
 	code.SavePaths()
 	ge.Settings.ProjFilename = filename
 	ge.ProjFilename = ge.Settings.ProjFilename
-	ge.GrabPrefs()
+	ge.GrabSettings()
 	ge.Settings.Save(filename)
 	ge.Files.UpdatePath(string(filename))
 	ge.Changed = false

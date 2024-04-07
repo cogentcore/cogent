@@ -32,16 +32,16 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 	grs := gi.NewSwitch(tb).SetText("Snap grid").
 		SetTooltip("snap movement and sizing of selection to grid").
-		SetChecked(Prefs.SnapVector)
+		SetChecked(Settings.SnapVector)
 	grs.OnChange(func(e events.Event) {
-		Prefs.SnapVector = grs.IsChecked()
+		Settings.SnapVector = grs.IsChecked()
 	})
 
 	gis := gi.NewSwitch(tb).SetText("Snap guide").
 		SetTooltip("snap movement and sizing of selection to align with other elements in the scene").
-		SetChecked(Prefs.SnapGuide)
+		SetChecked(Settings.SnapGuide)
 	gis.OnChange(func(e events.Event) {
-		Prefs.SnapGuide = gis.IsChecked()
+		Settings.SnapGuide = gis.IsChecked()
 	})
 
 	gi.NewSeparator(tb)
