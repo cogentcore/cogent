@@ -257,73 +257,73 @@ func (tv *TreeView) LayerToggleVis() {
 }
 
 /*
-var TreeViewProperties = ki.Properties{
-	".svgnode": ki.Properties{
+var TreeViewProperties = tree.Properties{
+	".svgnode": tree.Properties{
 		"font-weight": gist.WeightNormal,
 		"font-style":  gist.FontNormal,
 	},
-	".layer": ki.Properties{
+	".layer": tree.Properties{
 		"font-weight": gist.WeightBold,
 	},
-	".invisible": ki.Properties{
+	".invisible": tree.Properties{
 		"font-style": gist.FontItalic,
 	},
-	".locked": ki.Properties{
+	".locked": tree.Properties{
 		"color": "#ff4252",
 	},
-	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Properties{},
-	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Properties{
+	giv.TreeViewSelectors[giv.TreeViewActive]: tree.Properties{},
+	giv.TreeViewSelectors[giv.TreeViewSel]: tree.Properties{
 		"background-color": &gi.Settings.Colors.Select,
 	},
-	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Properties{
+	giv.TreeViewSelectors[giv.TreeViewFocus]: tree.Properties{
 		"background-color": &gi.Settings.Colors.Control,
 	},
-	"CtxtMenuActive": ki.Propertieslice{
-		{"SrcEdit", ki.Properties{
+	"CtxtMenuActive": tree.Propertieslice{
+		{"SrcEdit", tree.Properties{
 			"label": "Edit",
 		}},
-		{"SelectSVG", ki.Properties{
+		{"SelectSVG", tree.Properties{
 			"label": "Select",
 		}},
 		{"sep-edit", ki.BlankProp{}},
-		{"SrcDuplicate", ki.Properties{
+		{"SrcDuplicate", tree.Properties{
 			"label":    "Duplicate",
 			"shortcut": keyfun.Duplicate,
 		}},
-		{"Copy", ki.Properties{
+		{"Copy", tree.Properties{
 			"shortcut": keyfun.Copy,
-			"Args": ki.Propertieslice{
-				{"reset", ki.Properties{
+			"Args": tree.Propertieslice{
+				{"reset", tree.Properties{
 					"value": true,
 				}},
 			},
 		}},
-		{"Cut", ki.Properties{
+		{"Cut", tree.Properties{
 			"shortcut": keyfun.Cut,
 			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Button) {
 				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
 		}},
-		{"Paste", ki.Properties{
+		{"Paste", tree.Properties{
 			"shortcut": keyfun.Paste,
 		}},
 		{"sep-layer", ki.BlankProp{}},
-		{"LayerSetCurrent", ki.Properties{
+		{"LayerSetCurrent", tree.Properties{
 			"label":    "Layer: Set Current",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"LayerToggleLock", ki.Properties{
+		{"LayerToggleLock", tree.Properties{
 			"label":    "Layer: Toggle Lock",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"LayerToggleVis", ki.Properties{
+		{"LayerToggleVis", tree.Properties{
 			"label":    "Layer: Toggle Visible",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
 		{"sep-open", ki.BlankProp{}},
-		{"OpenAll", ki.Properties{}},
-		{"CloseAll", ki.Properties{}},
+		{"OpenAll", tree.Properties{}},
+		{"CloseAll", tree.Properties{}},
 	},
 }
 

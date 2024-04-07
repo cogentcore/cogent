@@ -1114,19 +1114,19 @@ func (pv *PiView) Render2D() {
 	pv.Frame.Render2D()
 }
 
-var PiViewProperties = ki.Properties{
+var PiViewProperties = tree.Properties{
 	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Settings.Colors.Background,
 	"color":            &gi.Settings.Colors.Font,
 	"max-width":        -1,
 	"max-height":       -1,
-	"#title": ki.Properties{
+	"#title": tree.Properties{
 		"max-width":        -1,
 		"horizontal-align": styles.AlignCenter,
 		"vertical-align":   styles.AlignTop,
 	},
-	"Toolbar": ki.Propertieslice{
-		{"SaveProj", ki.Properties{
+	"Toolbar": tree.Propertieslice{
+		{"SaveProj", tree.Properties{
 			"shortcut": keyfun.MenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
@@ -1136,18 +1136,18 @@ var PiViewProperties = ki.Properties{
 			}),
 		}},
 		{"sep-parse", ki.BlankProp{}},
-		{"OpenParser", ki.Properties{
+		{"OpenParser", tree.Properties{
 			"label": "Open Parser...",
 			"icon":  "file-open",
 			"desc":  "Open lexer and parser rules from standard JSON-formatted file",
-			"Args": ki.Propertieslice{
-				{"File Name", ki.Properties{
+			"Args": tree.Propertieslice{
+				{"File Name", tree.Properties{
 					"default-field": "Settings.ParserFile",
 					"ext":           ".pi",
 				}},
 			},
 		}},
-		{"SaveParser", ki.Properties{
+		{"SaveParser", tree.Properties{
 			"icon": "file-save",
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
@@ -1155,112 +1155,112 @@ var PiViewProperties = ki.Properties{
 				act.SetActiveStateUpdate( pv.Changed && pv.Settings.ParserFile != "")
 			}),
 		}},
-		{"SaveParserAs", ki.Properties{
+		{"SaveParserAs", tree.Properties{
 			"label": "Save Parser As...",
 			"icon":  "file-save",
 			"desc":  "Save As lexer and parser rules from file standard JSON-formatted file",
-			"Args": ki.Propertieslice{
-				{"File Name", ki.Properties{
+			"Args": tree.Propertieslice{
+				{"File Name", tree.Properties{
 					"default-field": "Settings.ParserFile",
 					"ext":           ".pi",
 				}},
 			},
 		}},
 		{"sep-file", ki.BlankProp{}},
-		{"OpenTest", ki.Properties{
+		{"OpenTest", tree.Properties{
 			"label": "Open Test",
 			"icon":  "file-open",
 			"desc":  "Open test file",
-			"Args": ki.Propertieslice{
-				{"File Name", ki.Properties{
+			"Args": tree.Propertieslice{
+				{"File Name", tree.Properties{
 					"default-field": "Settings.TestFile",
 				}},
 			},
 		}},
-		{"SaveTestAs", ki.Properties{
+		{"SaveTestAs", tree.Properties{
 			"label": "Save Test As",
 			"icon":  "file-save",
 			"desc":  "Save current test file as",
-			"Args": ki.Propertieslice{
-				{"File Name", ki.Properties{
+			"Args": tree.Propertieslice{
+				{"File Name", tree.Properties{
 					"default-field": "Settings.TestFile",
 				}},
 			},
 		}},
 		{"sep-lex", ki.BlankProp{}},
-		{"LexInit", ki.Properties{
+		{"LexInit", tree.Properties{
 			"icon": "update",
 			"desc": "Init / restart lexer",
 		}},
-		{"LexNext", ki.Properties{
+		{"LexNext", tree.Properties{
 			"icon": "play",
 			"desc": "do next single step of lexing",
 		}},
-		{"LexNextLine", ki.Properties{
+		{"LexNextLine", tree.Properties{
 			"icon": "play",
 			"desc": "do next line of lexing",
 		}},
-		{"LexAll", ki.Properties{
+		{"LexAll", tree.Properties{
 			"icon": "fast-fwd",
 			"desc": "do all remaining lexing",
 		}},
 		{"sep-passtwo", ki.BlankProp{}},
-		{"EditPassTwo", ki.Properties{
+		{"EditPassTwo", tree.Properties{
 			"icon": "edit",
 			"desc": "edit the settings of the PassTwo -- second pass after lexing",
 		}},
-		{"PassTwo", ki.Properties{
+		{"PassTwo", tree.Properties{
 			"icon": "play",
 			"desc": "perform second pass after lexing -- computes nesting depth globally and finds EOS tokens",
 		}},
 		{"sep-parse", ki.BlankProp{}},
-		{"EditTrace", ki.Properties{
+		{"EditTrace", tree.Properties{
 			"icon": "edit",
 			"desc": "edit the parse tracing options for seeing how the parsing process is working",
 		}},
-		{"ParseInit", ki.Properties{
+		{"ParseInit", tree.Properties{
 			"icon": "update",
 			"desc": "initialize parser -- this also performs lexing, PassTwo, assuming that is all working",
 		}},
-		{"ParseNext", ki.Properties{
+		{"ParseNext", tree.Properties{
 			"icon": "play",
 			"desc": "do next step of parsing",
 		}},
-		{"ParseAll", ki.Properties{
+		{"ParseAll", tree.Properties{
 			"icon": "fast-fwd",
 			"desc": "do remaining parsing",
 		}},
-		{"ViewParseState", ki.Properties{
+		{"ViewParseState", tree.Properties{
 			"icon": "edit",
 			"desc": "view the parser state, including symbols recorded etc",
 		}},
 	},
-	"MainMenu": ki.Propertieslice{
+	"MainMenu": tree.Propertieslice{
 		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.Propertieslice{
-			{"OpenRecent", ki.Properties{
+		{"File", tree.Propertieslice{
+			{"OpenRecent", tree.Properties{
 				"submenu": &SavedPaths,
-				"Args": ki.Propertieslice{
-					{"File Name", ki.Properties{}},
+				"Args": tree.Propertieslice{
+					{"File Name", tree.Properties{}},
 				},
 			}},
-			{"OpenProj", ki.Properties{
+			{"OpenProj", tree.Properties{
 				"shortcut": keyfun.MenuOpen,
 				"label":    "Open Project...",
 				"desc":     "open a GoPi project that has full settings",
-				"Args": ki.Propertieslice{
-					{"File Name", ki.Properties{
+				"Args": tree.Propertieslice{
+					{"File Name", tree.Properties{
 						"default-field": "Settings.ProjFile",
 						"ext":           ".pip",
 					}},
 				},
 			}},
-			{"NewProj", ki.Properties{
+			{"NewProj", tree.Properties{
 				"shortcut": keyfun.MenuNew,
 				"label":    "New Project...",
 				"desc":     "create a new project",
 			}},
-			{"SaveProj", ki.Properties{
+			{"SaveProj", tree.Properties{
 				"shortcut": keyfun.MenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
@@ -1269,30 +1269,30 @@ var PiViewProperties = ki.Properties{
 					act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
 				}),
 			}},
-			{"SaveProjAs", ki.Properties{
+			{"SaveProjAs", tree.Properties{
 				"shortcut": keyfun.MenuSaveAs,
 				"label":    "Save Project As...",
 				"desc":     "Save GoPi project to file standard JSON-formatted file",
-				"Args": ki.Propertieslice{
-					{"File Name", ki.Properties{
+				"Args": tree.Propertieslice{
+					{"File Name", tree.Properties{
 						"default-field": "Settings.ProjFile",
 						"ext":           ".pip",
 					}},
 				},
 			}},
 			{"sep-parse", ki.BlankProp{}},
-			{"OpenParser", ki.Properties{
+			{"OpenParser", tree.Properties{
 				"shortcut": keyfun.MenuOpenAlt1,
 				"label":    "Open Parser...",
 				"desc":     "Open lexer and parser rules from standard JSON-formatted file",
-				"Args": ki.Propertieslice{
-					{"File Name", ki.Properties{
+				"Args": tree.Propertieslice{
+					{"File Name", tree.Properties{
 						"default-field": "Settings.ParserFile",
 						"ext":           ".pi",
 					}},
 				},
 			}},
-			{"SaveParser", ki.Properties{
+			{"SaveParser", tree.Properties{
 				"shortcut": keyfun.MenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
@@ -1300,11 +1300,11 @@ var PiViewProperties = ki.Properties{
 					act.SetActiveState( pv.Changed && pv.Settings.ParserFile != "")
 				}),
 			}},
-			{"SaveParserAs", ki.Properties{
+			{"SaveParserAs", tree.Properties{
 				"label": "Save Parser As...",
 				"desc":  "Save As lexer and parser rules to file standard JSON-formatted file",
-				"Args": ki.Propertieslice{
-					{"File Name", ki.Properties{
+				"Args": tree.Propertieslice{
+					{"File Name", tree.Properties{
 						"default-field": "Settings.ParserFile",
 						"ext":           ".pi",
 					}},
@@ -1312,7 +1312,7 @@ var PiViewProperties = ki.Properties{
 			}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
-			{"OpenConsoleTab", ki.Properties{}},
+			{"OpenConsoleTab", tree.Properties{}},
 		}},
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},
