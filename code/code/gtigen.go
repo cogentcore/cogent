@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/pi/lex"
@@ -25,15 +25,15 @@ var DebugViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code
 
 // NewDebugView adds a new [DebugView] with the given name to the given parent:
 // DebugView is the debugger
-func NewDebugView(parent ki.Ki, name ...string) *DebugView {
+func NewDebugView(parent tree.Node, name ...string) *DebugView {
 	return parent.NewChild(DebugViewType, name...).(*DebugView)
 }
 
-// KiType returns the [*gti.Type] of [DebugView]
-func (t *DebugView) KiType() *gti.Type { return DebugViewType }
+// NodeType returns the [*gti.Type] of [DebugView]
+func (t *DebugView) NodeType() *gti.Type { return DebugViewType }
 
 // New returns a new [*DebugView] value
-func (t *DebugView) New() ki.Ki { return &DebugView{} }
+func (t *DebugView) New() tree.Node { return &DebugView{} }
 
 // SetSup sets the [DebugView.Sup]:
 // supported file type to determine debugger
@@ -55,15 +55,15 @@ var StackViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code
 
 // NewStackView adds a new [StackView] with the given name to the given parent:
 // StackView is a view of the stack trace
-func NewStackView(parent ki.Ki, name ...string) *StackView {
+func NewStackView(parent tree.Node, name ...string) *StackView {
 	return parent.NewChild(StackViewType, name...).(*StackView)
 }
 
-// KiType returns the [*gti.Type] of [StackView]
-func (t *StackView) KiType() *gti.Type { return StackViewType }
+// NodeType returns the [*gti.Type] of [StackView]
+func (t *StackView) NodeType() *gti.Type { return StackViewType }
 
 // New returns a new [*StackView] value
-func (t *StackView) New() ki.Ki { return &StackView{} }
+func (t *StackView) New() tree.Node { return &StackView{} }
 
 // SetFindFrames sets the [StackView.FindFrames]:
 // if true, this is a find frames, not a regular stack
@@ -77,15 +77,15 @@ var BreakViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code
 
 // NewBreakView adds a new [BreakView] with the given name to the given parent:
 // BreakView is a view of the breakpoints
-func NewBreakView(parent ki.Ki, name ...string) *BreakView {
+func NewBreakView(parent tree.Node, name ...string) *BreakView {
 	return parent.NewChild(BreakViewType, name...).(*BreakView)
 }
 
-// KiType returns the [*gti.Type] of [BreakView]
-func (t *BreakView) KiType() *gti.Type { return BreakViewType }
+// NodeType returns the [*gti.Type] of [BreakView]
+func (t *BreakView) NodeType() *gti.Type { return BreakViewType }
 
 // New returns a new [*BreakView] value
-func (t *BreakView) New() ki.Ki { return &BreakView{} }
+func (t *BreakView) New() tree.Node { return &BreakView{} }
 
 // SetTooltip sets the [BreakView.Tooltip]
 func (t *BreakView) SetTooltip(v string) *BreakView { t.Tooltip = v; return t }
@@ -95,15 +95,15 @@ var ThreadViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cod
 
 // NewThreadView adds a new [ThreadView] with the given name to the given parent:
 // ThreadView is a view of the threads
-func NewThreadView(parent ki.Ki, name ...string) *ThreadView {
+func NewThreadView(parent tree.Node, name ...string) *ThreadView {
 	return parent.NewChild(ThreadViewType, name...).(*ThreadView)
 }
 
-// KiType returns the [*gti.Type] of [ThreadView]
-func (t *ThreadView) KiType() *gti.Type { return ThreadViewType }
+// NodeType returns the [*gti.Type] of [ThreadView]
+func (t *ThreadView) NodeType() *gti.Type { return ThreadViewType }
 
 // New returns a new [*ThreadView] value
-func (t *ThreadView) New() ki.Ki { return &ThreadView{} }
+func (t *ThreadView) New() tree.Node { return &ThreadView{} }
 
 // SetTooltip sets the [ThreadView.Tooltip]
 func (t *ThreadView) SetTooltip(v string) *ThreadView { t.Tooltip = v; return t }
@@ -113,15 +113,15 @@ var TaskViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.
 
 // NewTaskView adds a new [TaskView] with the given name to the given parent:
 // TaskView is a view of the threads
-func NewTaskView(parent ki.Ki, name ...string) *TaskView {
+func NewTaskView(parent tree.Node, name ...string) *TaskView {
 	return parent.NewChild(TaskViewType, name...).(*TaskView)
 }
 
-// KiType returns the [*gti.Type] of [TaskView]
-func (t *TaskView) KiType() *gti.Type { return TaskViewType }
+// NodeType returns the [*gti.Type] of [TaskView]
+func (t *TaskView) NodeType() *gti.Type { return TaskViewType }
 
 // New returns a new [*TaskView] value
-func (t *TaskView) New() ki.Ki { return &TaskView{} }
+func (t *TaskView) New() tree.Node { return &TaskView{} }
 
 // SetTooltip sets the [TaskView.Tooltip]
 func (t *TaskView) SetTooltip(v string) *TaskView { t.Tooltip = v; return t }
@@ -131,15 +131,15 @@ var VarsViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.
 
 // NewVarsView adds a new [VarsView] with the given name to the given parent:
 // VarsView is a view of the variables
-func NewVarsView(parent ki.Ki, name ...string) *VarsView {
+func NewVarsView(parent tree.Node, name ...string) *VarsView {
 	return parent.NewChild(VarsViewType, name...).(*VarsView)
 }
 
-// KiType returns the [*gti.Type] of [VarsView]
-func (t *VarsView) KiType() *gti.Type { return VarsViewType }
+// NodeType returns the [*gti.Type] of [VarsView]
+func (t *VarsView) NodeType() *gti.Type { return VarsViewType }
 
 // New returns a new [*VarsView] value
-func (t *VarsView) New() ki.Ki { return &VarsView{} }
+func (t *VarsView) New() tree.Node { return &VarsView{} }
 
 // SetGlobalVars sets the [VarsView.GlobalVars]:
 // if true, this is global vars, not local ones
@@ -154,15 +154,15 @@ var VarViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.V
 // NewVarView adds a new [VarView] with the given name to the given parent:
 // VarView shows a debug variable in an inspector-like framework,
 // with sub-variables in a tree.
-func NewVarView(parent ki.Ki, name ...string) *VarView {
+func NewVarView(parent tree.Node, name ...string) *VarView {
 	return parent.NewChild(VarViewType, name...).(*VarView)
 }
 
-// KiType returns the [*gti.Type] of [VarView]
-func (t *VarView) KiType() *gti.Type { return VarViewType }
+// NodeType returns the [*gti.Type] of [VarView]
+func (t *VarView) NodeType() *gti.Type { return VarViewType }
 
 // New returns a new [*VarView] value
-func (t *VarView) New() ki.Ki { return &VarView{} }
+func (t *VarView) New() tree.Node { return &VarView{} }
 
 // SetDbgView sets the [VarView.DbgView]:
 // parent DebugView
@@ -176,15 +176,15 @@ var FileNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.
 
 // NewFileNode adds a new [FileNode] with the given name to the given parent:
 // FileNode is Code version of FileNode for FileTree view
-func NewFileNode(parent ki.Ki, name ...string) *FileNode {
+func NewFileNode(parent tree.Node, name ...string) *FileNode {
 	return parent.NewChild(FileNodeType, name...).(*FileNode)
 }
 
-// KiType returns the [*gti.Type] of [FileNode]
-func (t *FileNode) KiType() *gti.Type { return FileNodeType }
+// NodeType returns the [*gti.Type] of [FileNode]
+func (t *FileNode) NodeType() *gti.Type { return FileNodeType }
 
 // New returns a new [*FileNode] value
-func (t *FileNode) New() ki.Ki { return &FileNode{} }
+func (t *FileNode) New() tree.Node { return &FileNode{} }
 
 // SetTooltip sets the [FileNode.Tooltip]
 func (t *FileNode) SetTooltip(v string) *FileNode { t.Tooltip = v; return t }
@@ -228,15 +228,15 @@ var FindViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.
 // NewFindView adds a new [FindView] with the given name to the given parent:
 // FindView is a find / replace widget that displays results in a TextEditor
 // and has a toolbar for controlling find / replace process.
-func NewFindView(parent ki.Ki, name ...string) *FindView {
+func NewFindView(parent tree.Node, name ...string) *FindView {
 	return parent.NewChild(FindViewType, name...).(*FindView)
 }
 
-// KiType returns the [*gti.Type] of [FindView]
-func (t *FindView) KiType() *gti.Type { return FindViewType }
+// NodeType returns the [*gti.Type] of [FindView]
+func (t *FindView) NodeType() *gti.Type { return FindViewType }
 
 // New returns a new [*FindView] value
-func (t *FindView) New() ki.Ki { return &FindView{} }
+func (t *FindView) New() tree.Node { return &FindView{} }
 
 // SetCode sets the [FindView.Code]:
 // parent code project
@@ -268,15 +268,15 @@ var SpellViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code
 
 // NewSpellView adds a new [SpellView] with the given name to the given parent:
 // SpellView is a widget that displays results of spell check
-func NewSpellView(parent ki.Ki, name ...string) *SpellView {
+func NewSpellView(parent tree.Node, name ...string) *SpellView {
 	return parent.NewChild(SpellViewType, name...).(*SpellView)
 }
 
-// KiType returns the [*gti.Type] of [SpellView]
-func (t *SpellView) KiType() *gti.Type { return SpellViewType }
+// NodeType returns the [*gti.Type] of [SpellView]
+func (t *SpellView) NodeType() *gti.Type { return SpellViewType }
 
 // New returns a new [*SpellView] value
-func (t *SpellView) New() ki.Ki { return &SpellView{} }
+func (t *SpellView) New() tree.Node { return &SpellView{} }
 
 // SetCode sets the [SpellView.Code]:
 // parent code project
@@ -322,15 +322,15 @@ var SymbolsViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/co
 
 // NewSymbolsView adds a new [SymbolsView] with the given name to the given parent:
 // SymbolsView is a widget that displays results of a file or package parse
-func NewSymbolsView(parent ki.Ki, name ...string) *SymbolsView {
+func NewSymbolsView(parent tree.Node, name ...string) *SymbolsView {
 	return parent.NewChild(SymbolsViewType, name...).(*SymbolsView)
 }
 
-// KiType returns the [*gti.Type] of [SymbolsView]
-func (t *SymbolsView) KiType() *gti.Type { return SymbolsViewType }
+// NodeType returns the [*gti.Type] of [SymbolsView]
+func (t *SymbolsView) NodeType() *gti.Type { return SymbolsViewType }
 
 // New returns a new [*SymbolsView] value
-func (t *SymbolsView) New() ki.Ki { return &SymbolsView{} }
+func (t *SymbolsView) New() tree.Node { return &SymbolsView{} }
 
 // SetCode sets the [SymbolsView.Code]:
 // parent code project
@@ -357,15 +357,15 @@ var SymNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.S
 // NewSymNode adds a new [SymNode] with the given name to the given parent:
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
-func NewSymNode(parent ki.Ki, name ...string) *SymNode {
+func NewSymNode(parent tree.Node, name ...string) *SymNode {
 	return parent.NewChild(SymNodeType, name...).(*SymNode)
 }
 
-// KiType returns the [*gti.Type] of [SymNode]
-func (t *SymNode) KiType() *gti.Type { return SymNodeType }
+// NodeType returns the [*gti.Type] of [SymNode]
+func (t *SymNode) NodeType() *gti.Type { return SymNodeType }
 
 // New returns a new [*SymNode] value
-func (t *SymNode) New() ki.Ki { return &SymNode{} }
+func (t *SymNode) New() tree.Node { return &SymNode{} }
 
 // SetSymbol sets the [SymNode.Symbol]:
 // the symbol
@@ -376,15 +376,15 @@ var SymTreeViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/co
 
 // NewSymTreeView adds a new [SymTreeView] with the given name to the given parent:
 // SymTreeView is a TreeView that knows how to operate on FileNode nodes
-func NewSymTreeView(parent ki.Ki, name ...string) *SymTreeView {
+func NewSymTreeView(parent tree.Node, name ...string) *SymTreeView {
 	return parent.NewChild(SymTreeViewType, name...).(*SymTreeView)
 }
 
-// KiType returns the [*gti.Type] of [SymTreeView]
-func (t *SymTreeView) KiType() *gti.Type { return SymTreeViewType }
+// NodeType returns the [*gti.Type] of [SymTreeView]
+func (t *SymTreeView) NodeType() *gti.Type { return SymTreeViewType }
 
 // New returns a new [*SymTreeView] value
-func (t *SymTreeView) New() ki.Ki { return &SymTreeView{} }
+func (t *SymTreeView) New() tree.Node { return &SymTreeView{} }
 
 // SetTooltip sets the [SymTreeView.Tooltip]
 func (t *SymTreeView) SetTooltip(v string) *SymTreeView { t.Tooltip = v; return t }
@@ -431,15 +431,15 @@ var TextEditorType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cod
 // NewTextEditor adds a new [TextEditor] with the given name to the given parent:
 // TextEditor is the Code-specific version of the TextEditor, with support for
 // setting / clearing breakpoints, etc
-func NewTextEditor(parent ki.Ki, name ...string) *TextEditor {
+func NewTextEditor(parent tree.Node, name ...string) *TextEditor {
 	return parent.NewChild(TextEditorType, name...).(*TextEditor)
 }
 
-// KiType returns the [*gti.Type] of [TextEditor]
-func (t *TextEditor) KiType() *gti.Type { return TextEditorType }
+// NodeType returns the [*gti.Type] of [TextEditor]
+func (t *TextEditor) NodeType() *gti.Type { return TextEditorType }
 
 // New returns a new [*TextEditor] value
-func (t *TextEditor) New() ki.Ki { return &TextEditor{} }
+func (t *TextEditor) New() tree.Node { return &TextEditor{} }
 
 // SetCode sets the [TextEditor.Code]
 func (t *TextEditor) SetCode(v Code) *TextEditor { t.Code = v; return t }

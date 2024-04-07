@@ -19,10 +19,10 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
 )
 
 // FileNode is Code version of FileNode for FileTree view
@@ -135,7 +135,7 @@ func (on *OpenNodes) Add(fn *filetree.Node) bool {
 		return added
 	}
 	if fn.Buffer != nil {
-		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data any) {
+		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send tree.Node, sig int64, data any) {
 		// 	if sig == int64(texteditor.BufClosed) {
 		// 		fno, _ := recv.Embed(giv.KiT_FileNode).(*filetree.Node)
 		// 		on.Delete(fno)
@@ -279,32 +279,32 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 		}
 	}
 	mls := make([]FileSearchResults, 0)
-	start.WalkPre(func(k ki.Ki) bool {
+	start.WalkPre(func(k tree.Node) bool {
 		sfn := filetree.AsNode(k)
 		if sfn == nil {
-			return ki.Continue
+			return tree.Continue
 		}
 		if sfn.IsDir() && !sfn.IsOpen() {
 			// fmt.Printf("dir: %v closed\n", sfn.FPath)
-			return ki.Break // don't go down into closed directories!
+			return tree.Break // don't go down into closed directories!
 		}
 		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" || sfn.IsAutoSave() {
 			// fmt.Printf("dir: %v opened\n", sfn.Nm)
-			return ki.Continue
+			return tree.Continue
 		}
 		if int(sfn.Info.Size) > gi.SystemSettings.BigFileSize {
-			return ki.Continue
+			return tree.Continue
 		}
 		if strings.HasSuffix(sfn.Nm, ".code") { // exclude self
-			return ki.Continue
+			return tree.Continue
 		}
 		if !fi.IsMatchList(langs, sfn.Info.Known) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if loc == FindLocDir {
 			cdir, _ := filepath.Split(string(sfn.FPath))
 			if activeDir != cdir {
-				return ki.Continue
+				return tree.Continue
 			}
 		} else if loc == FindLocNotTop {
 			// if level == 1 { // todo
@@ -329,7 +329,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 		if cnt > 0 {
 			mls = append(mls, FileSearchResults{sfn, cnt, matches})
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	sort.Slice(mls, func(i, j int) bool {
 		return mls[i].Count > mls[j].Count

@@ -17,11 +17,11 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/pi/complete"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
 )
 
 // Code provides the interface for the CodeView functionality that is needed
@@ -161,12 +161,12 @@ type Code interface {
 var CodeType = reflect.TypeOf((*Code)(nil)).Elem()
 
 // ParentCode returns the Code parent of given node
-func ParentCode(kn ki.Ki) (Code, bool) {
-	if ki.IsRoot(kn) {
+func ParentCode(kn tree.Node) (Code, bool) {
+	if tree.IsRoot(kn) {
 		return nil, false
 	}
 	var ge Code
-	kn.WalkUp(func(k ki.Ki) bool {
+	kn.WalkUp(func(k tree.Node) bool {
 		if laser.EmbedImplements(reflect.TypeOf(k.This()), CodeType) {
 			ge = k.(Code)
 			return false

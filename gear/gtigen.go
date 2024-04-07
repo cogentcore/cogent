@@ -4,7 +4,7 @@ package gear
 
 import (
 	"cogentcore.org/core/gti"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/tree"
 )
 
 // AppType is the [gti.Type] for [App]
@@ -12,15 +12,15 @@ var AppType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/gear.App", IDNa
 
 // NewApp adds a new [App] with the given name to the given parent:
 // App is a GUI view of a gear command.
-func NewApp(parent ki.Ki, name ...string) *App {
+func NewApp(parent tree.Node, name ...string) *App {
 	return parent.NewChild(AppType, name...).(*App)
 }
 
-// KiType returns the [*gti.Type] of [App]
-func (t *App) KiType() *gti.Type { return AppType }
+// NodeType returns the [*gti.Type] of [App]
+func (t *App) NodeType() *gti.Type { return AppType }
 
 // New returns a new [*App] value
-func (t *App) New() ki.Ki { return &App{} }
+func (t *App) New() tree.Node { return &App{} }
 
 // SetCmd sets the [App.Cmd]:
 // Cmd is the root command associated with this app.

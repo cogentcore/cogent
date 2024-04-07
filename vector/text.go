@@ -53,7 +53,7 @@ type TextStyle struct {
 }
 
 func (ts *TextStyle) Update() {
-	// this is called automatically when edited
+	// this is called augtomatically when edited
 	if ts.VectorView != nil {
 		ts.VectorView.SetTextProps(ts.TextProps())
 		ts.VectorView.SetText(ts.Text)
@@ -225,7 +225,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 	txt.Tooltip = "current text string"
 	txt.SetText(ts.Text)
 	// txt.SetProp("width", units.NewCh(50))
-	// txt.TextFieldSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// txt.TextFieldSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if sig == int64(gi.TextFieldDone) {
 	// 		ts.Text = txt.Text()
 	// 		ts.Update()
@@ -239,7 +239,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 
 	// fsz := gi.NewSpinner(tb, "size")
 	// fsz.SetValue(ts.Size.Val)
-	// fsz.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fsz.SpinnerSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	ts.Size.Val = fsz.Value
 	// 	ts.Update()
 	// })
@@ -247,7 +247,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 	// fzu := gi.NewChooser(tb, "size-units")
 	// fzu.ItemsFromEnum(units.KiT_Units, true, 0)
 	// fzu.SetCurIndex(int(ts.Size.Un))
-	// fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fzu.ComboSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	ts.Size.Un = units.Units(fzu.CurIndex)
 	// 	ts.Update()
 	// })

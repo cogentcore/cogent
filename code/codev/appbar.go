@@ -15,9 +15,9 @@ import (
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 )
 
 func (ge *CodeView) AppBarConfig(parent gi.Widget) {
@@ -286,7 +286,7 @@ func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
 		ge.Files.WidgetWalkPre(func(wi gi.Widget, wb *gi.WidgetBase) bool {
 			fn := filetree.AsNode(wi)
 			if fn == nil || fn.IsIrregular() {
-				return ki.Continue
+				return tree.Continue
 			}
 			rpath := fn.MyRelPath()
 			nmpath := fn.Nm + ":" + rpath
@@ -320,7 +320,7 @@ func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
 					},
 				})
 			}
-			return ki.Continue
+			return tree.Continue
 		})
 	})
 }
@@ -340,7 +340,7 @@ func (ge *CodeView) AddChooserSymbols(ac *gi.Chooser) {
 		syms := &code.SymNode{}
 		syms.InitName(syms, "syms")
 		syms.OpenSyms(pkg, "", "")
-		syms.WalkPre(func(k ki.Ki) bool {
+		syms.WalkPre(func(k tree.Node) bool {
 			sn := k.(*code.SymNode)
 			ac.Items = append(ac.Items, gi.ChooserItem{
 				Label: sn.Symbol.Label(),
@@ -349,7 +349,7 @@ func (ge *CodeView) AddChooserSymbols(ac *gi.Chooser) {
 					code.SelectSymbol(ge, sn.Symbol)
 				},
 			})
-			return ki.Continue
+			return tree.Continue
 		})
 	})
 }

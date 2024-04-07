@@ -22,9 +22,9 @@ import (
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/tree"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
@@ -950,7 +950,7 @@ type StackView struct {
 }
 
 func (sv *StackView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1008,7 +1008,7 @@ type BreakView struct {
 }
 
 func (sv *BreakView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1059,7 +1059,7 @@ type ThreadView struct {
 }
 
 func (sv *ThreadView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1106,7 +1106,7 @@ type TaskView struct {
 }
 
 func (sv *TaskView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
 	return dv
 }
 
@@ -1156,7 +1156,7 @@ type VarsView struct {
 }
 
 func (sv *VarsView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, ki.NoEmbeds).(*DebugView)
+	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
 	return dv
 }
 

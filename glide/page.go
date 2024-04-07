@@ -11,8 +11,8 @@ import (
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 )
 
 // Page represents one web browser page
@@ -26,7 +26,7 @@ type Page struct {
 	Context *coredom.Context `set:"-"`
 }
 
-var _ ki.Ki = (*Page)(nil)
+var _ tree.Node = (*Page)(nil)
 
 func (pg *Page) OnInit() {
 	pg.Frame.OnInit()

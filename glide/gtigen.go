@@ -4,7 +4,7 @@ package glide
 
 import (
 	"cogentcore.org/core/gti"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/tree"
 )
 
 // PageType is the [gti.Type] for [Page]
@@ -12,15 +12,15 @@ var PageType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/glide.Page", I
 
 // NewPage adds a new [Page] with the given name to the given parent:
 // Page represents one web browser page
-func NewPage(parent ki.Ki, name ...string) *Page {
+func NewPage(parent tree.Node, name ...string) *Page {
 	return parent.NewChild(PageType, name...).(*Page)
 }
 
-// KiType returns the [*gti.Type] of [Page]
-func (t *Page) KiType() *gti.Type { return PageType }
+// NodeType returns the [*gti.Type] of [Page]
+func (t *Page) NodeType() *gti.Type { return PageType }
 
 // New returns a new [*Page] value
-func (t *Page) New() ki.Ki { return &Page{} }
+func (t *Page) New() tree.Node { return &Page{} }
 
 // SetTooltip sets the [Page.Tooltip]
 func (t *Page) SetTooltip(v string) *Page { t.Tooltip = v; return t }

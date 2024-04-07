@@ -8,8 +8,8 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // TreeView is a TreeView that knows how to operate on FileNode nodes
@@ -21,7 +21,7 @@ type TreeView struct {
 }
 
 // SelectNodeInTree selects given node in TreeView
-func (gv *VectorView) SelectNodeInTree(kn ki.Ki, mode events.SelectModes) {
+func (gv *VectorView) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 	tv := gv.TreeView()
 	tvn := tv.FindSyncNode(kn)
 	if tvn != nil {
@@ -155,7 +155,7 @@ func (gv *VectorView) DeleteSelected() {
 /*
 // TreeViewIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
 var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
-	tv := fni.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
+	tv := fni.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 	sn := tv.SrcNode
 	if sn != nil {
 		act.SetInactiveState(!NodeIsLayer(sn))
@@ -222,7 +222,7 @@ func (tv *TreeView) LayerClearCurrent() {
 }
 
 // NodeIsMetaData returns true if given node is a MetaData
-func NodeIsMetaData(kn ki.Ki) bool {
+func NodeIsMetaData(kn tree.Node) bool {
 	_, ismd := kn.(*svg.MetaData)
 	return ismd
 }
@@ -301,7 +301,7 @@ var TreeViewProps = ki.Props{
 		{"Cut", ki.Props{
 			"shortcut": keyfun.Cut,
 			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Button) {
-				tv := tvi.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
+				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
 		}},

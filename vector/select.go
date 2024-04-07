@@ -11,10 +11,10 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 func (gv *VectorView) SelectToolbar() *gi.Toolbar {
@@ -97,7 +97,7 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 // NewSelectFuncButton returns a new func button that is only enabled when
 // there is an item selected.
-func (gv *VectorView) NewSelectFuncButton(parent ki.Ki, fun any) *giv.FuncButton {
+func (gv *VectorView) NewSelectFuncButton(parent tree.Node, fun any) *giv.FuncButton {
 	bt := giv.NewFuncButton(parent, fun)
 	bt.StyleFirst(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
@@ -157,7 +157,7 @@ func (sv *SVGView) UpdateSelSprites() {
 	}
 
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		// SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+		// SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send tree.Node, sig int64, d any) {
 		// 	ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		// 	ssvg.SelSpriteEvent(spi, events.EventType(sig), d)
 		// })
@@ -314,7 +314,7 @@ func (gv *VectorView) SelectGroup() { //gti:add
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {
-		ki.MoveToParent(se, ng)
+		tree.MoveToParent(se, ng)
 	}
 
 	es.ResetSelected()
@@ -340,12 +340,12 @@ func (gv *VectorView) SelectUnGroup() { //gti:add
 			continue
 		}
 		np := gp.Par
-		klist := make(ki.Slice, len(gp.Kids)) // make a temp copy of list of kids
+		klist := make(tree.Slice, len(gp.Kids)) // make a temp copy of list of kids
 		for i, k := range gp.Kids {
 			klist[i] = k
 		}
 		for _, k := range klist {
-			ki.MoveToParent(k, np)
+			tree.MoveToParent(k, np)
 			se := k.(svg.Node)
 			if !gp.Paint.Transform.IsIdentity() {
 				se.ApplyTransform(sv.SSVG(), gp.Paint.Transform) // group no longer there!
@@ -564,31 +564,31 @@ func (gv *VectorView) SelectSetHeight(ht float32) {
 // within the given BBox. SVG version excludes layer groups.
 func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
-	var curlay ki.Ki
+	var curlay tree.Node
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if leavesOnly && kni.HasChildren() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if NodeIsLayer(kni) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
 				if _, istxt := txt.Par.(*svg.Text); istxt {
-					return ki.Break
+					return tree.Break
 				}
 			}
 		}
 		if knb.Paint.Off {
-			return ki.Break
+			return tree.Break
 		}
 		nl := NodeParentLayer(kni)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		if knb.BBox.In(bbox) {
@@ -596,9 +596,9 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 			if curlay == nil && nl != nil {
 				curlay = nl
 			}
-			return ki.Break // don't go into groups!
+			return tree.Break // don't go into groups!
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	return rval
 }
@@ -612,7 +612,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
 	pt = pt.Sub(sv.Geom.ContentBBox.Min)
 	es := sv.EditState()
-	var curlay ki.Ki
+	var curlay tree.Node
 	fn := es.FirstSelectedNode()
 	if fn != nil {
 		curlay = NodeParentLayer(fn)
@@ -620,43 +620,43 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 	var rval svg.Node
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if leavesOnly && kni.HasChildren() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if NodeIsLayer(kni) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
 				if _, istxt := txt.Par.(*svg.Text); istxt {
-					return ki.Break
+					return tree.Break
 				}
 			}
 		}
 		if excludeSel {
 			if _, issel := es.Selected[kni]; issel {
-				return ki.Continue
+				return tree.Continue
 			}
 			if _, issel := es.RecentlySelected[kni]; issel {
-				return ki.Continue
+				return tree.Continue
 			}
 		}
 		if knb.Paint.Off {
-			return ki.Break
+			return tree.Break
 		}
 		nl := NodeParentLayer(kni)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		if pt.In(knb.BBox) {
 			rval = kni
-			return ki.Break
+			return tree.Break
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	return rval
 }

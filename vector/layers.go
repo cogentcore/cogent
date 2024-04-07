@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // Layer represents one layer group
@@ -25,13 +25,13 @@ type Layer struct {
 }
 
 // FromNode copies state / prop values from given node
-func (l *Layer) FromNode(k ki.Ki) {
+func (l *Layer) FromNode(k tree.Node) {
 	l.Vis = LayerIsVisible(k)
 	l.Lck = LayerIsLocked(k)
 }
 
 // ToNode copies state / prop values to given node
-func (l *Layer) ToNode(k ki.Ki) {
+func (l *Layer) ToNode(k tree.Node) {
 	if l.Vis {
 		k.SetProp("style", "")
 		k.SetProp("display", "inline")
@@ -92,7 +92,7 @@ func (vv *VectorView) FirstLayerIndex() int {
 func (vv *VectorView) LayerViewSigs(lyv *giv.TableView) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
-	// lyv.ViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// lyv.ViewSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("tv viewsig: %v  data: %v  send: %v\n", sig, data, send.Path())
 	// 	updt := sv.UpdateStart()
 	// 	es.Layers.LayersUpdated(sv)
@@ -100,7 +100,7 @@ func (vv *VectorView) LayerViewSigs(lyv *giv.TableView) {
 	// 	gv.UpdateLayerView()
 	// })
 
-	// lyv.SliceViewSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// lyv.SliceViewSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	svs := giv.SliceViewSignals(sig)
 	// 	idx := data.(int)
 	// 	fmt.Printf("tv sliceviewsig: %v  data: %v\n", svs.String(), idx)
@@ -119,7 +119,7 @@ func (vv *VectorView) LayerViewSigs(lyv *giv.TableView) {
 	// 	}
 	// })
 
-	// lyv.WidgetSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// lyv.WidgetSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	fmt.Printf("tv widgetsig: %v  data: %v\n", gi.WidgetSignals(sig).String(), data)
 	// 	if sig == int64(gi.WidgetSelected) {
 	// 		idx := data.(int)
@@ -170,7 +170,7 @@ func (vv *VectorView) AddLayer() { //gti:add
 		nk := len(svr.Kids)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
-			ki.MoveToParent(kc, l1)
+			tree.MoveToParent(kc, l1)
 		}
 		vv.SetCurLayer(l1.Name())
 	} else {
@@ -185,32 +185,32 @@ func (vv *VectorView) AddLayer() { //gti:add
 //  Node
 
 // NodeIsLayer returns true if given node is a layer
-func NodeIsLayer(kn ki.Ki) bool {
+func NodeIsLayer(kn tree.Node) bool {
 	gm := laser.ToString(kn.Prop("groupmode"))
 	return gm == "layer"
 }
 
 // LayerIsLocked returns true if layer is locked (insensitive = true)
-func LayerIsLocked(kn ki.Ki) bool {
+func LayerIsLocked(kn tree.Node) bool {
 	b, _ := laser.ToBool(kn.Prop("insensitive"))
 	return b
 }
 
 // LayerIsVisible returns true if layer is visible
-func LayerIsVisible(kn ki.Ki) bool {
+func LayerIsVisible(kn tree.Node) bool {
 	cp := laser.ToString(kn.Prop("style"))
 	return cp != "display:none"
 }
 
 // NodeParentLayer returns the parent group that is a layer -- nil if none
-func NodeParentLayer(kn ki.Ki) ki.Ki {
-	var parLay ki.Ki
-	kn.WalkUp(func(k ki.Ki) bool {
+func NodeParentLayer(kn tree.Node) tree.Node {
+	var parLay tree.Node
+	kn.WalkUp(func(k tree.Node) bool {
 		if NodeIsLayer(k) {
 			parLay = k
-			return ki.Break
+			return tree.Break
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	return parLay
 }

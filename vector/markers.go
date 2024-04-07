@@ -12,14 +12,14 @@ import (
 	"strings"
 
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // MarkerFromNodeProp returns the marker name (canonicalized -- no id)
 // and id and color type
-func MarkerFromNodeProp(kn ki.Ki, prop string) (string, int, MarkerColors) {
+func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
 	if kn == nil {
 		return "", 0, MarkerDef
 	}
@@ -77,7 +77,7 @@ func RecycleMarker(sg *svg.SVG, sii svg.Node, name string, id int, mc MarkerColo
 
 // MarkerSetColors sets color properties in each element
 func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
-	mk.WalkPre(func(k ki.Ki) bool {
+	mk.WalkPre(func(k tree.Node) bool {
 		fp := k.Prop("fill")
 		if fp != nil {
 			if strings.HasPrefix(mk.Nm, "Empty") {
@@ -94,13 +94,13 @@ func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
 				k.SetProp("stroke", stroke)
 			}
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 }
 
 // MarkerDeleteCtxtColors deletes context-* color names from standard code
 func MarkerDeleteCtxtColors(mk *svg.Marker) {
-	mk.WalkPre(func(k ki.Ki) bool {
+	mk.WalkPre(func(k tree.Node) bool {
 		fp := k.Prop("fill")
 		if fp != nil {
 			fps := laser.ToString(fp)
@@ -115,7 +115,7 @@ func MarkerDeleteCtxtColors(mk *svg.Marker) {
 				k.DeleteProp("stroke")
 			}
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 }
 
@@ -135,7 +135,7 @@ func NewMarkerFromXML(name, xml string) *svg.Marker {
 	}
 	mk := tmpsvg.Root.Child(0).(*svg.Marker)
 	mk.SetName(name)
-	ki.UniquifyNamesAll(mk) // critical b/c doing copy!
+	tree.UniquifyNamesAll(mk) // critical b/c doing copy!
 	return mk
 }
 

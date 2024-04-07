@@ -4,7 +4,7 @@ package cdebug
 
 import (
 	"cogentcore.org/core/gti"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/pi/syms"
 )
 
@@ -14,15 +14,15 @@ var VariableType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cdebu
 // NewVariable adds a new [Variable] with the given name to the given parent:
 // Variable describes a variable.  It is a Ki tree type so that full tree
 // can be visualized.
-func NewVariable(parent ki.Ki, name ...string) *Variable {
+func NewVariable(parent tree.Node, name ...string) *Variable {
 	return parent.NewChild(VariableType, name...).(*Variable)
 }
 
-// KiType returns the [*gti.Type] of [Variable]
-func (t *Variable) KiType() *gti.Type { return VariableType }
+// NodeType returns the [*gti.Type] of [Variable]
+func (t *Variable) NodeType() *gti.Type { return VariableType }
 
 // New returns a new [*Variable] value
-func (t *Variable) New() ki.Ki { return &Variable{} }
+func (t *Variable) New() tree.Node { return &Variable{} }
 
 // SetValue sets the [Variable.Value]:
 // value of variable -- may be truncated if long

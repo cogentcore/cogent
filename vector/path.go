@@ -10,9 +10,9 @@ import (
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/gi"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 func (vv *VectorView) NodeToolbar() *gi.Toolbar {
@@ -37,7 +37,7 @@ func (vv *VectorView) ConfigNodeToolbar() {
 	gi.NewSeparator(tb)
 
 	// tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
-	// 	gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	// 	gv.This(), func(recv, send tree.Node, sig int64, data interface{}) {
 	// 		grr := recv.Embed(KiT_VectorView).(*VectorView)
 	// 		grr.SelGroup()
 	// 	})
@@ -161,7 +161,7 @@ func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 		nc = append(nc, pn)
 		pcp = cp
 		lstCmd = cmd
-		return ki.Continue
+		return tree.Continue
 	})
 	return nc, cidxs
 }
@@ -183,7 +183,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send tree.Node, sig int64, d any) {
 		// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
 		// 	})

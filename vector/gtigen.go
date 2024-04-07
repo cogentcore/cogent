@@ -6,7 +6,7 @@ import (
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/units"
 )
@@ -16,15 +16,15 @@ var AlignViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Al
 
 // NewAlignView adds a new [AlignView] with the given name to the given parent:
 // AlignView provides a range of alignment actions on selected objects.
-func NewAlignView(parent ki.Ki, name ...string) *AlignView {
+func NewAlignView(parent tree.Node, name ...string) *AlignView {
 	return parent.NewChild(AlignViewType, name...).(*AlignView)
 }
 
-// KiType returns the [*gti.Type] of [AlignView]
-func (t *AlignView) KiType() *gti.Type { return AlignViewType }
+// NodeType returns the [*gti.Type] of [AlignView]
+func (t *AlignView) NodeType() *gti.Type { return AlignViewType }
 
 // New returns a new [*AlignView] value
-func (t *AlignView) New() ki.Ki { return &AlignView{} }
+func (t *AlignView) New() tree.Node { return &AlignView{} }
 
 // SetAlignAnchorView sets the [AlignView.AlignAnchorView]
 func (t *AlignView) SetAlignAnchorView(v giv.EnumValue) *AlignView { t.AlignAnchorView = v; return t }
@@ -42,15 +42,15 @@ var PaintViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Pa
 // NewPaintView adds a new [PaintView] with the given name to the given parent:
 // PaintView provides editing of basic Stroke and Fill painting parameters
 // for selected items
-func NewPaintView(parent ki.Ki, name ...string) *PaintView {
+func NewPaintView(parent tree.Node, name ...string) *PaintView {
 	return parent.NewChild(PaintViewType, name...).(*PaintView)
 }
 
-// KiType returns the [*gti.Type] of [PaintView]
-func (t *PaintView) KiType() *gti.Type { return PaintViewType }
+// NodeType returns the [*gti.Type] of [PaintView]
+func (t *PaintView) NodeType() *gti.Type { return PaintViewType }
 
 // New returns a new [*PaintView] value
-func (t *PaintView) New() ki.Ki { return &PaintView{} }
+func (t *PaintView) New() tree.Node { return &PaintView{} }
 
 // SetStrokeType sets the [PaintView.StrokeType]:
 // paint type for stroke
@@ -86,15 +86,15 @@ var SVGViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.SVGV
 
 // NewSVGView adds a new [SVGView] with the given name to the given parent:
 // SVGView is the element for viewing, interacting with the SVG
-func NewSVGView(parent ki.Ki, name ...string) *SVGView {
+func NewSVGView(parent tree.Node, name ...string) *SVGView {
 	return parent.NewChild(SVGViewType, name...).(*SVGView)
 }
 
-// KiType returns the [*gti.Type] of [SVGView]
-func (t *SVGView) KiType() *gti.Type { return SVGViewType }
+// NodeType returns the [*gti.Type] of [SVGView]
+func (t *SVGView) NodeType() *gti.Type { return SVGViewType }
 
 // New returns a new [*SVGView] value
-func (t *SVGView) New() ki.Ki { return &SVGView{} }
+func (t *SVGView) New() tree.Node { return &SVGView{} }
 
 // SetTooltip sets the [SVGView.Tooltip]
 func (t *SVGView) SetTooltip(v string) *SVGView { t.Tooltip = v; return t }
@@ -104,15 +104,15 @@ var TreeViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Tre
 
 // NewTreeView adds a new [TreeView] with the given name to the given parent:
 // TreeView is a TreeView that knows how to operate on FileNode nodes
-func NewTreeView(parent ki.Ki, name ...string) *TreeView {
+func NewTreeView(parent tree.Node, name ...string) *TreeView {
 	return parent.NewChild(TreeViewType, name...).(*TreeView)
 }
 
-// KiType returns the [*gti.Type] of [TreeView]
-func (t *TreeView) KiType() *gti.Type { return TreeViewType }
+// NodeType returns the [*gti.Type] of [TreeView]
+func (t *TreeView) NodeType() *gti.Type { return TreeViewType }
 
 // New returns a new [*TreeView] value
-func (t *TreeView) New() ki.Ki { return &TreeView{} }
+func (t *TreeView) New() tree.Node { return &TreeView{} }
 
 // SetVectorView sets the [TreeView.VectorView]:
 // the parent vectorview
@@ -159,15 +159,15 @@ var VectorViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.V
 
 // NewVectorView adds a new [VectorView] with the given name to the given parent:
 // VectorView is the Vector SVG vector drawing program
-func NewVectorView(parent ki.Ki, name ...string) *VectorView {
+func NewVectorView(parent tree.Node, name ...string) *VectorView {
 	return parent.NewChild(VectorViewType, name...).(*VectorView)
 }
 
-// KiType returns the [*gti.Type] of [VectorView]
-func (t *VectorView) KiType() *gti.Type { return VectorViewType }
+// NodeType returns the [*gti.Type] of [VectorView]
+func (t *VectorView) NodeType() *gti.Type { return VectorViewType }
 
 // New returns a new [*VectorView] value
-func (t *VectorView) New() ki.Ki { return &VectorView{} }
+func (t *VectorView) New() tree.Node { return &VectorView{} }
 
 // SetTooltip sets the [VectorView.Tooltip]
 func (t *VectorView) SetTooltip(v string) *VectorView { t.Tooltip = v; return t }

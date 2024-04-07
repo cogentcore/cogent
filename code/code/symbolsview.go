@@ -13,12 +13,12 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/pi/syms"
 	"cogentcore.org/core/pi/token"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
 )
 
 // SymbolsParams are parameters for structure view of file or package
@@ -319,7 +319,7 @@ const (
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
 type SymNode struct {
-	ki.Node
+	tree.NodeBase
 
 	// the symbol
 	Symbol syms.Symbol

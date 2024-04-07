@@ -10,14 +10,14 @@ import (
 	"strings"
 
 	"cogentcore.org/core/glop/indent"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/tree"
 )
 
 // Variable describes a variable.  It is a Ki tree type so that full tree
 // can be visualized.
 type Variable struct {
-	ki.Node
+	tree.NodeBase
 
 	// value of variable -- may be truncated if long
 	Value string `inactive:"-" width:"60"`

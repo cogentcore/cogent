@@ -303,7 +303,7 @@ func (vv *VectorView) UpdateGradients() {
 // Update updates the current settings based on the values in the given Paint and
 // props from node (node can be nil)
 /*
-func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
+func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	updt := pv.UpdateStart()
 	defer pv.UpdateEnd(updt)
 
@@ -437,7 +437,7 @@ func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
 /*
 // DecodeType decodes the paint type from paint and props
 // also returns the name of the gradient if using one.
-func (pv *PaintView) DecodeType(kn ki.Ki, cs *style.ColorSpec, prop string) (PaintTypes, string) {
+func (pv *PaintView) DecodeType(kn tree.Node, cs *style.ColorSpec, prop string) (PaintTypes, string) {
 	pstr := ""
 	var gii gi.Node2D
 	if kn != nil {
@@ -621,7 +621,7 @@ func (pv *PaintView) Config() {
 
 	gi.NewFrame(ss, "stroke-blank") // nothing
 
-	// spt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// spt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
 	// 	sss := pvv.StrokeStack()
 	// 	prev := pv.StrokeType
@@ -649,12 +649,12 @@ func (pv *PaintView) Config() {
 	giv.NewColorView(ss, "stroke-clr")
 	// sc.SetProp("vertical-align", styles.AlignTop)
 	// sc.SetColor(sty.StrokeStyle.Color)
-	// sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// sc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.StrokeType == PaintSolid {
 	// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), false) // not manip
 	// 	}
 	// })
-	// sc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// sc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.StrokeType == PaintSolid {
 	// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), true) // manip
 	// 	}
@@ -665,7 +665,7 @@ func (pv *PaintView) Config() {
 	// sg.SetProp("toolbar", true)
 	// sg.SelectedIndex = -1
 	sg.SetSlice(&pv.VectorView.EditState.Gradients)
-	// sg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// sg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if sig == int64(gi.WidgetSelected) {
 	// 		svv, _ := send.(*giv.TableView)
 	// 		if svv.SelectedIndex >= 0 {
@@ -691,7 +691,7 @@ func (pv *PaintView) Config() {
 
 	gi.NewFrame(fs, "fill-blank")
 
-	// fpt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fpt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
 	// 	fss := pvv.FillStack()
 	// 	prev := pvv.FillType
@@ -720,12 +720,12 @@ func (pv *PaintView) Config() {
 	// fc.SetProp("vertical-align", styles.AlignTop)
 	// fc.Config()
 	// fc.SetColor(sty.FillStyle.Color.Color)
-	// fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.FillType == PaintSolid {
 	// 		pv.VectorView.SetFillColor(pv.FillProp(), false)
 	// 	}
 	// })
-	// fc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.FillType == PaintSolid {
 	// 		pv.VectorView.SetFillColor(pv.FillProp(), true) // manip
 	// 	}
@@ -736,7 +736,7 @@ func (pv *PaintView) Config() {
 	// fg.SetProp("toolbar", true)
 	// fg.SelectedIndex = -1
 	fg.SetSlice(&pv.VectorView.EditState.Gradients)
-	// fg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if sig == int64(gi.WidgetSelected) {
 	// 		svv, _ := send.(*giv.TableView)
 	// 		if svv.SelectedIndex >= 0 {
@@ -745,7 +745,7 @@ func (pv *PaintView) Config() {
 	// 		}
 	// 	}
 	// })
-	// fg.SliceViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fg.SliceViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("svs: %v   %v\n", sig, data)
 	// 	// svv, _ := send.(*giv.TableView)
 	// 	if sig == int64(giv.SliceViewDeleted) { // not clear what we can do here
@@ -753,7 +753,7 @@ func (pv *PaintView) Config() {
 	// 		pv.VectorView.UpdateGradients()
 	// 	}
 	// })
-	// fg.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fg.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("vs: %v   %v\n", sig, data)
 	// 	// svv, _ := send.(*giv.TableView)
 	// 	pv.VectorView.UpdateGradients()

@@ -208,7 +208,7 @@ func (sv *SpellView) ConfigToolbar() {
 	suggest.SetReadOnly(true)
 	suggest.SetProp("index", false)
 	suggest.SetSlice(&sv.Suggest)
-	// suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data any) {
+	// suggest.SliceViewSig.Connect(suggest, func(recv, send tree.Node, sig int64, data any) {
 	// 	svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
 	// 	idx := svv.SelectedIndex
 	// 	if idx >= 0 && idx < len(sv.Suggest) {

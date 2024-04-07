@@ -25,10 +25,10 @@ import (
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/units"
 	"cogentcore.org/core/xe"
 	"github.com/mattn/go-shellwords"
@@ -49,7 +49,7 @@ type App struct {
 	Dir string
 }
 
-var _ ki.Ki = (*App)(nil)
+var _ tree.Node = (*App)(nil)
 
 func (a *App) OnInit() {
 	a.Frame.OnInit()

@@ -20,10 +20,10 @@ import (
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // SVGView is the element for viewing, interacting with the SVG
@@ -233,7 +233,7 @@ func (sv *SVGView) HandleEvents() {
 
 /*
 func (sv *SVGView) MouseHover() {
-	sv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+	sv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send tree.Node, sig int64, d any) {
 		me := d.(*mouse.HoverEvent)
 		me.SetHandled()
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -251,23 +251,23 @@ func (sv *SVGView) MouseHover() {
 func (sv *SVGView) ContentsBBox() mat32.Box2 {
 	bbox := mat32.Box2{}
 	bbox.SetEmpty()
-	sv.WalkPre(func(k ki.Ki) bool {
+	sv.WalkPre(func(k tree.Node) bool {
 		if k.This() == sv.This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if k.This() == sv.SSVG().Defs.This() {
-			return ki.Break
+			return tree.Break
 		}
 		sni, issv := k.(svg.Node)
 		if !issv {
-			return ki.Break
+			return tree.Break
 		}
 		if NodeIsLayer(k) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		sn := sni.AsNodeBase()
@@ -275,9 +275,9 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 		bb.SetFromRect(sn.BBox)
 		bbox.ExpandByBox(bb)
 		if _, isgp := sni.(*svg.Group); isgp { // subsumes all
-			return ki.Break
+			return tree.Break
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	if bbox.IsEmpty() {
 		bbox = mat32.Box2{}
@@ -288,30 +288,30 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
 func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
-	sv.WalkPre(func(k ki.Ki) bool {
+	sv.WalkPre(func(k tree.Node) bool {
 		if k.This() == sv.This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if k.This() == sv.SSVG().Defs.This() {
-			return ki.Break
+			return tree.Break
 		}
 		sni, issv := k.(svg.Node)
 		if !issv {
-			return ki.Break
+			return tree.Break
 		}
 		if NodeIsLayer(k) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if _, isgp := sni.(*svg.Group); isgp {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		sni.ApplyDeltaTransform(sv.SSVG(), trans, scale, rot, pt)
-		return ki.Continue
+		return tree.Continue
 	})
 }
 
@@ -523,12 +523,12 @@ func (sv *SVGView) ReadMetaData() {
 //  ContextMenu / Actions
 
 // EditNode opens a structview editor on node
-func (sv *SVGView) EditNode(kn ki.Ki) {
+func (sv *SVGView) EditNode(kn tree.Node) {
 	giv.StructViewDialog(sv, kn, "SVG Element View", true)
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
-func (sv *SVGView) MakeNodeContextMenu(m *gi.Scene, kn ki.Ki) {
+func (sv *SVGView) MakeNodeContextMenu(m *gi.Scene, kn tree.Node) {
 	gi.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 		sv.EditNode(kn)
 	})
@@ -635,14 +635,14 @@ func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 
 // DepthMap returns a map of all nodes and their associated depth count
 // counting up from 0 as the deepest, first drawn node.
-func (sv *SVGView) DepthMap() map[ki.Ki]int {
-	m := make(map[ki.Ki]int)
+func (sv *SVGView) DepthMap() map[tree.Node]int {
+	m := make(map[tree.Node]int)
 	depth := 0
-	n := ki.Next(sv.This())
+	n := tree.Next(sv.This())
 	for n != nil {
 		m[n] = depth
 		depth++
-		n = ki.Next(n)
+		n = tree.Next(n)
 	}
 	return m
 }
@@ -661,7 +661,7 @@ func (sv *SVGView) SetSVGName(el svg.Node) {
 // Uses currently active layer if set.
 func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 	es := sv.EditState()
-	parent := ki.Ki(sv.Root())
+	parent := tree.Node(sv.Root())
 	if es.CurLayer != "" {
 		ly := sv.ChildByName(es.CurLayer, 1)
 		if ly != nil {

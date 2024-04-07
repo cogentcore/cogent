@@ -15,10 +15,10 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/glop/dirs"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
 )
 
 // ConfigTextBuf configures the text buf according to prefs
@@ -233,7 +233,7 @@ func (ge *CodeView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *cod
 
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
 func (ge *CodeView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
-	fvk := ftv.ParentByType(code.FindViewType, ki.NoEmbeds)
+	fvk := ftv.ParentByType(code.FindViewType, tree.NoEmbeds)
 	if fvk == nil {
 		return false
 	}

@@ -45,18 +45,18 @@ var PiViewType = gti.AddType(&gti.Type{
 // NewPiView adds a new [PiView] with the given name
 // to the given parent. If the name is unspecified, it defaults
 // to the ID (kebab-case) name of the type, plus the
-// [ki.Ki.NumLifetimeChildren] of the given parent.
-func NewPiView(parent ki.Ki, name ...string) *PiView {
+// [tree.Node.NumLifetimeChildren] of the given parent.
+func NewPiView(parent tree.Node, name ...string) *PiView {
 	return parent.NewChild(PiViewType, name...).(*PiView)
 }
 
-// KiType returns the [*gti.Type] of [PiView]
-func (t *PiView) KiType() *gti.Type {
+// NodeType returns the [*gti.Type] of [PiView]
+func (t *PiView) NodeType() *gti.Type {
 	return PiViewType
 }
 
 // New returns a new [*PiView] value
-func (t *PiView) New() ki.Ki {
+func (t *PiView) New() tree.Node {
 	return &PiView{}
 }
 

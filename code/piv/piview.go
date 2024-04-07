@@ -329,7 +329,7 @@ func (pv *PiView) LexAll() {
 func (pv *PiView) SelectLexRule(rule *lex.Rule) {
 	lt := pv.LexTree()
 	lt.UnselectAll()
-	lt.FuncDownMeFirst(0, lt.This(), func(k ki.Ki, level int, d any) bool {
+	lt.FuncDownMeFirst(0, lt.This(), func(k tree.Node, level int, d any) bool {
 		lnt := k.Embed(giv.KiT_TreeView)
 		if lnt == nil {
 			return true
@@ -471,7 +471,7 @@ func (pv *PiView) ParseAll() {
 func (pv *PiView) SelectParseRule(rule *parse.Rule) {
 	lt := pv.ParseTree()
 	lt.UnselectAll()
-	lt.FuncDownMeFirst(0, lt.This(), func(k ki.Ki, level int, d any) bool {
+	lt.FuncDownMeFirst(0, lt.This(), func(k tree.Node, level int, d any) bool {
 		lnt := k.Embed(giv.KiT_TreeView)
 		if lnt == nil {
 			return true
@@ -684,7 +684,7 @@ func (pv *PiView) OpenConsoleTab() {
 	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != code.TheConsole.Buf {
 		ctv.SetBuf(code.TheConsole.Buf)
-		code.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+		code.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 			pve, _ := recv.Embed(KiT_PiView).(*PiView)
 			pve.SelectMainTabByName("Console")
 		})
@@ -925,11 +925,11 @@ func (pv *PiView) ConfigSplits() {
 		pv.StructView().SetStruct(&pv.Parser.Lexer)
 	}
 
-	pv.LexTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	pv.LexTree().TreeViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+		tvn, _ := data.(tree.Node).Embed(giv.KiT_TreeView).(*giv.TreeView)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
 		case int64(giv.TreeViewSelected):
@@ -939,11 +939,11 @@ func (pv *PiView) ConfigSplits() {
 		}
 	})
 
-	pv.ParseTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	pv.ParseTree().TreeViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+		tvn, _ := data.(tree.Node).Embed(giv.KiT_TreeView).(*giv.TreeView)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
 		case int64(giv.TreeViewSelected):
@@ -953,11 +953,11 @@ func (pv *PiView) ConfigSplits() {
 		}
 	})
 
-	pv.AstTree().TreeViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	pv.AstTree().TreeViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(ki.Ki).Embed(giv.KiT_TreeView).(*giv.TreeView)
+		tvn, _ := data.(tree.Node).Embed(giv.KiT_TreeView).(*giv.TreeView)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
 		case int64(giv.TreeViewSelected):
@@ -1088,7 +1088,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 
 func (ge *PiView) KeyChordEvent() {
 	// need hipri to prevent 2-seq guys from being captured by others
-	ge.ConnectEvent(events.KeyChordEvent, gi.HiPri, func(recv, send ki.Ki, sig int64, d any) {
+	ge.ConnectEvent(events.KeyChordEvent, gi.HiPri, func(recv, send tree.Node, sig int64, d any) {
 		gee := recv.Embed(KiT_PiView).(*PiView)
 		kt := d.(*key.ChordEvent)
 		gee.PiViewKeys(kt)
@@ -1333,7 +1333,7 @@ func (pv *PiView) CloseWindowReq() bool {
 	gi.ChoiceDialog(pv.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Changes",
 		Prompt: fmt.Sprintf("In Project: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this project and review?", pv.Nm)},
 		[]string{"Cancel", "Save Proj", "Close Without Saving"},
-		pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+		pv.This(), func(recv, send tree.Node, sig int64, data any) {
 			switch sig {
 			case 0:
 				// do nothing, will have returned false already
@@ -1404,7 +1404,7 @@ func NewPiView() (*gi.Window, *PiView) {
 	// 			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
 	// 				Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
 	// 				[]string{"Close Without Saving", "Cancel"},
-	// 				win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 				win.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 					switch sig {
 	// 					case 0:
 	// 						w.Close()
@@ -1424,7 +1424,7 @@ func NewPiView() (*gi.Window, *PiView) {
 	// 		inQuitPrompt = true
 	// 		gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
 	// 			Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
-	// 			win.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// 			win.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 				if sig == int64(gi.DialogAccepted) {
 	// 					goosi.TheApp.Quit()
 	// 				} else {

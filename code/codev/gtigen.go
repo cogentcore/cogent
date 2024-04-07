@@ -7,7 +7,7 @@ import (
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/gti"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/tree"
 )
 
 // CodeViewType is the [gti.Type] for [CodeView]
@@ -17,15 +17,15 @@ var CodeViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/codev
 // CodeView is the core editor and tab viewer framework for the Code system.  The
 // default view has a tree browser of files on the left, editor panels in the
 // middle, and a tabbed viewer on the right.
-func NewCodeView(parent ki.Ki, name ...string) *CodeView {
+func NewCodeView(parent tree.Node, name ...string) *CodeView {
 	return parent.NewChild(CodeViewType, name...).(*CodeView)
 }
 
-// KiType returns the [*gti.Type] of [CodeView]
-func (t *CodeView) KiType() *gti.Type { return CodeViewType }
+// NodeType returns the [*gti.Type] of [CodeView]
+func (t *CodeView) NodeType() *gti.Type { return CodeViewType }
 
 // New returns a new [*CodeView] value
-func (t *CodeView) New() ki.Ki { return &CodeView{} }
+func (t *CodeView) New() tree.Node { return &CodeView{} }
 
 // SetProjRoot sets the [CodeView.ProjRoot]:
 // root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename

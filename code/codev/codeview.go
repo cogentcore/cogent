@@ -24,9 +24,9 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/vci"
 )
 
@@ -497,7 +497,7 @@ func OpenCodeProj(projfile string) *CodeView {
 }
 
 func CodeInScene(sc *gi.Scene) *CodeView {
-	gv := sc.Body.ChildByType(CodeViewType, ki.NoEmbeds)
+	gv := sc.Body.ChildByType(CodeViewType, tree.NoEmbeds)
 	if gv != nil {
 		return gv.(*CodeView)
 	}

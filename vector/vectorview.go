@@ -22,10 +22,10 @@ import (
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // VectorView is the Vector SVG vector drawing program
@@ -381,7 +381,7 @@ func (vv *VectorView) Config() {
 
 	tv.SyncTree(sv.Root())
 
-	// tv.TreeViewSig.Connect(vv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// tv.TreeViewSig.Connect(vv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
 	// 	if data == nil {
 	// 		return
@@ -406,7 +406,7 @@ func (vv *VectorView) Config() {
 	// 	if sig != int64(giv.TreeViewOpened) {
 	// 		return
 	// 	}
-	// 	tvn, _ := data.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
+	// 	tvn, _ := data.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 	// 	_, issvg := tvn.SrcNode.(svg.Node)
 	// 	if !issvg {
 	// 		return
@@ -603,7 +603,7 @@ func NewVectorWindow(fnm string) *VectorView {
 
 	if win, found := gi.AllRenderWins.FindName(winm); found {
 		sc := win.MainScene()
-		if vv, ok := sc.Body.ChildByType(VectorViewType, ki.NoEmbeds).(*VectorView); ok {
+		if vv, ok := sc.Body.ChildByType(VectorViewType, tree.NoEmbeds).(*VectorView); ok {
 			if string(vv.Filename) == path {
 				win.Raise()
 				return vv
@@ -711,7 +711,7 @@ func (vv *VectorView) UpdateTabs() {
 }
 
 // SelectNodeInSVG selects given svg node in SVG drawing
-func (vv *VectorView) SelectNodeInSVG(kn ki.Ki, mode events.SelectModes) {
+func (vv *VectorView) SelectNodeInSVG(kn tree.Node, mode events.SelectModes) {
 	sii, ok := kn.(svg.Node)
 	if !ok {
 		return
@@ -759,7 +759,7 @@ func (vv *VectorView) ChangeMade() {
 
 /*
 func (gv *VectorView) OSFileEvent() {
-	gv.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+	gv.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send tree.Node, sig int64, d any) {
 		ofe := d.(*osevent.OpenFilesEvent)
 		for _, fn := range ofe.Files {
 			NewVectorWindow(fn)
@@ -787,7 +787,7 @@ func (vv *VectorView) EditRecents() {
 	// gi.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
 	// opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
 	// giv.SliceViewDialog(vv.Viewport, &tmp, opts,
-	// 	nil, vv, func(recv, send ki.Ki, sig int64, data any) {
+	// 	nil, vv, func(recv, send tree.Node, sig int64, data any) {
 	// 		if sig == int64(gi.DialogAccepted) {
 	// 			SavedPaths = nil
 	// 			SavedPaths = append(SavedPaths, tmp...)

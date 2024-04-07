@@ -17,9 +17,9 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/tree"
 )
 
 // SaveActiveView saves the contents of the currently-active texteditor
@@ -350,7 +350,7 @@ func (ge *CodeView) ShowFile(fname string, ln int) (*code.TextEditor, error) {
 
 // CodeViewOpenNodes gets list of open nodes for submenu-func
 func CodeViewOpenNodes(it any, sc *gi.Scene) []string {
-	ge, ok := it.(ki.Ki).(*CodeView)
+	ge, ok := it.(tree.Node).(*CodeView)
 	if !ok {
 		return nil
 	}

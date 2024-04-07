@@ -11,10 +11,10 @@ import (
 	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // AlignView provides a range of alignment actions on selected objects.
@@ -227,18 +227,18 @@ func (sv *SVGView) GatherAlignPoints() {
 
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if NodeIsLayer(kni) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if _, issel := es.Selected[kni]; issel {
-			return ki.Break // go no further into kids
+			return tree.Break // go no further into kids
 		}
 		for ap := BBLeft; ap < BBoxPointsN; ap++ {
 			es.AlignPts[ap] = append(es.AlignPts[ap], ap.PointRect(knb.BBox))
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 }
 
