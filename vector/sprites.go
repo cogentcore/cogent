@@ -102,25 +102,25 @@ func SpriteName(typ, subtyp Sprites, idx int) string {
 	return nm
 }
 
-// SetSpriteProps sets sprite properties
-func SetSpriteProps(sp *gi.Sprite, typ, subtyp Sprites, idx int) {
+// SetSpriteProperties sets sprite properties
+func SetSpriteProperties(sp *gi.Sprite, typ, subtyp Sprites, idx int) {
 	sp.Name = SpriteName(typ, subtyp, idx)
-	sp.Props.Set("grid-type", typ)
-	sp.Props.Set("grid-sub", subtyp)
-	sp.Props.Set("grid-idx", idx)
+	sp.Properties["grid-type"] = typ
+	sp.Properties["grid-sub"] = subtyp
+	sp.Properties["grid-idx"] = idx
 }
 
-// SpriteProps reads the sprite properties -- returns SpUnk if
+// SpriteProperties reads the sprite properties -- returns SpUnk if
 // not one of our sprites.
-func SpriteProps(sp *gi.Sprite) (typ, subtyp Sprites, idx int) {
-	typi, has := sp.Props["grid-type"]
+func SpriteProperties(sp *gi.Sprite) (typ, subtyp Sprites, idx int) {
+	typi, has := sp.Properties["grid-type"]
 	if !has {
 		typ = SpUnk
 		return
 	}
 	typ = typi.(Sprites)
-	subtyp = sp.Props["grid-sub"].(Sprites)
-	idx = sp.Props["grid-idx"].(int)
+	subtyp = sp.Properties["grid-sub"].(Sprites)
+	idx = sp.Properties["grid-idx"].(int)
 	return
 }
 
@@ -133,7 +133,7 @@ func Sprite(ctx gi.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.
 	sp, ok := sprites.SpriteByName(spnm)
 	if !ok {
 		sp = gi.NewSprite(spnm, image.Point{}, image.Point{})
-		SetSpriteProps(sp, typ, subtyp, idx)
+		SetSpriteProperties(sp, typ, subtyp, idx)
 		sprites.Add(sp)
 	}
 	switch typ {
@@ -178,7 +178,7 @@ func SpriteConnectEvent(win *gi.Window, typ, subtyp Sprites, idx int, trgsz imag
 
 // SetSpritePos sets sprite position, taking into account relative offsets
 func SetSpritePos(sp *gi.Sprite, pos image.Point) {
-	typ, subtyp, _ := SpriteProps(sp)
+	typ, subtyp, _ := SpriteProperties(sp)
 	switch {
 	case typ == SpRubberBand:
 		_, sz := LineSpriteSize()
@@ -226,7 +226,7 @@ func InactivateSprites(ctx gi.Widget, typ Sprites) {
 	sprites := &ctx.AsWidget().Scene.Stage.Sprites
 	for _, spkv := range sprites.Names.Order {
 		sp := spkv.Value
-		st, _, _ := SpriteProps(sp)
+		st, _, _ := SpriteProperties(sp)
 		if st == typ {
 			sprites.InactivateSprite(sp.Name)
 		}

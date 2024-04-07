@@ -211,15 +211,15 @@ func (pf *Preferences) UpdateAll() {
 }
 
 /*
-// PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.SettingsView
-var PreferencesProps = ki.Props{
-	"MainMenu": ki.PropSlice{
+// PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., giv.SettingsView
+var PreferencesProperties = ki.Properties{
+	"MainMenu": ki.Propertieslice{
 		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"Open", ki.Props{
+		{"File", ki.Propertieslice{
+			{"Open", ki.Properties{
 				"shortcut": "Command+O",
 			}},
-			{"Save", ki.Props{
+			{"Save", ki.Properties{
 				"shortcut": "Command+S",
 				"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
 					pf := pfi.(*Preferences)
@@ -227,16 +227,16 @@ var PreferencesProps = ki.Props{
 				}),
 			}},
 			{"sep-color", ki.BlankProp{}},
-			{"LightMode", ki.Props{}},
-			{"DarkMode", ki.Props{}},
+			{"LightMode", ki.Properties{}},
+			{"DarkMode", ki.Properties{}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
 		}},
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},
 	},
-	"Toolbar": ki.PropSlice{
-		{"Save", ki.Props{
+	"Toolbar": ki.Propertieslice{
+		{"Save", ki.Properties{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
 			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
@@ -245,22 +245,22 @@ var PreferencesProps = ki.Props{
 			}),
 		}},
 		{"sep-color", ki.BlankProp{}},
-		{"LightMode", ki.Props{
+		{"LightMode", ki.Properties{
 			"desc": "Set color mode to Light mode as defined in ColorSchemes -- automatically does Save and UpdateAll ",
 			"icon": "color",
 		}},
-		{"DarkMode", ki.Props{
+		{"DarkMode", ki.Properties{
 			"desc": "Set color mode to Dark mode as defined in ColorSchemes -- automatically does Save and UpdateAll",
 			"icon": "color",
 		}},
 		{"sep-misc", ki.BlankProp{}},
-		{"VersionInfo", ki.Props{
+		{"VersionInfo", ki.Properties{
 			"desc":        "shows current Vector version information",
 			"icon":        "info",
 			"show-return": true,
 		}},
 		{"sep-key", ki.BlankProp{}},
-		{"EditSplits", ki.Props{
+		{"EditSplits", ki.Properties{
 			"icon": "file-binary",
 			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with preferences automatically.",
 		}},
@@ -341,30 +341,30 @@ func (pf *ColorSettings) SetToSettings() {
 }
 
 /*
-// ColorSettingsProps defines the Toolbar
-var ColorSettingsProps = ki.Props{
-	"Toolbar": ki.PropSlice{
-		{"OpenJSON", ki.Props{
+// ColorSettingsProperties defines the Toolbar
+var ColorSettingsProperties = ki.Properties{
+	"Toolbar": ki.Propertieslice{
+		{"OpenJSON", ki.Properties{
 			"label": "Open...",
 			"icon":  "file-open",
 			"desc":  "open set of colors from a json-formatted file",
-			"Args": ki.PropSlice{
-				{"Color File Name", ki.Props{
+			"Args": ki.Propertieslice{
+				{"Color File Name", ki.Properties{
 					"ext": ".json",
 				}},
 			},
 		}},
-		{"SaveJSON", ki.Props{
+		{"SaveJSON", ki.Properties{
 			"label": "Save As...",
 			"desc":  "Saves colors to JSON formatted file.",
 			"icon":  "file-save",
-			"Args": ki.PropSlice{
-				{"Color File Name", ki.Props{
+			"Args": ki.Propertieslice{
+				{"Color File Name", ki.Properties{
 					"ext": ".json",
 				}},
 			},
 		}},
-		{"SetToSettings", ki.Props{
+		{"SetToSettings", ki.Properties{
 			"desc": "Sets this color scheme as the current active color scheme in Settings.",
 			"icon": "reset",
 		}},

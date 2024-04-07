@@ -105,11 +105,11 @@ func (vv *VectorView) SetColorNode(sii svg.Node, prop string, prev, pt PaintType
 	// 	svg.UpdateNodeGradientProp(sii, prop, true, sp)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
-			pstr := laser.ToString(sii.Prop(prop))
+			pstr := laser.ToString(sii.Property(prop))
 			_ = pstr
 			// svg.DeleteNodeGradient(sii, pstr)
 		}
-		sii.AsNodeBase().SetColorProps(prop, sp)
+		sii.AsNodeBase().SetColorProperties(prop, sp)
 	}
 	vv.UpdateMarkerColors(sii)
 }
@@ -138,7 +138,7 @@ func (vv *VectorView) SetStrokeWidthNode(sii svg.Node, wp string) {
 	}
 	g := sii.AsNodeBase()
 	if g.Paint.StrokeStyle.Color != nil {
-		g.SetProp("stroke-width", wp)
+		g.SetProperty("stroke-width", wp)
 	}
 }
 
@@ -169,9 +169,9 @@ func (vv *VectorView) SetStrokeWidth(wp string, manip bool) {
 func (vv *VectorView) SetStrokeColor(sp string, manip bool) {
 	vv.ManipAction("SetStrokeColor", sp, manip,
 		func(itm svg.Node) {
-			p := itm.Prop("stroke")
+			p := itm.Property("stroke")
 			if p != nil {
-				itm.AsNodeBase().SetColorProps("stroke", sp)
+				itm.AsNodeBase().SetColorProperties("stroke", sp)
 				vv.UpdateMarkerColors(itm)
 			}
 		})
@@ -191,11 +191,11 @@ func (vv *VectorView) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc
 	MarkerSetProp(sv.SSVG(), sii, "marker-end", end, ec)
 }
 
-// SetMarkerProps sets the marker props
-func (vv *VectorView) SetMarkerProps(start, mid, end string, sc, mc, ec MarkerColors) {
+// SetMarkerProperties sets the marker properties
+func (vv *VectorView) SetMarkerProperties(start, mid, end string, sc, mc, ec MarkerColors) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	sv.UndoSave("SetMarkerProps", start+" "+mid+" "+end)
+	sv.UndoSave("SetMarkerProperties", start+" "+mid+" "+end)
 	// updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
@@ -226,20 +226,20 @@ func (vv *VectorView) SetDashNode(sii svg.Node, dary []float64) {
 		return
 	}
 	if len(dary) == 0 {
-		sii.DeleteProp("stroke-dasharray")
+		sii.DeleteProperty("stroke-dasharray")
 		return
 	}
 	g := sii.AsNodeBase()
 	mary := DashMulWidth(float64(g.Paint.StrokeStyle.Width.Dots), dary)
 	ds := DashString(mary)
-	sii.SetProp("stroke-dasharray", ds)
+	sii.SetProperty("stroke-dasharray", ds)
 }
 
-// SetDashProps sets the dash props
-func (vv *VectorView) SetDashProps(dary []float64) {
+// SetDashProperties sets the dash properties
+func (vv *VectorView) SetDashProperties(dary []float64) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	sv.UndoSave("SetDashProps", "")
+	sv.UndoSave("SetDashProperties", "")
 	// updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
@@ -249,7 +249,7 @@ func (vv *VectorView) SetDashProps(dary []float64) {
 	vv.ChangeMade()
 }
 
-// SetFill sets the fill props of selected items
+// SetFill sets the fill properties of selected items
 // based on previous and current PaintType
 func (vv *VectorView) SetFill(prev, pt PaintTypes, fp string) {
 	es := &vv.EditState
@@ -269,9 +269,9 @@ func (vv *VectorView) SetFill(prev, pt PaintTypes, fp string) {
 func (vv *VectorView) SetFillColor(fp string, manip bool) {
 	vv.ManipAction("SetFillColor", fp, manip,
 		func(itm svg.Node) {
-			p := itm.Prop("fill")
+			p := itm.Property("fill")
 			if p != nil {
-				itm.AsNodeBase().SetColorProps("fill", fp)
+				itm.AsNodeBase().SetColorProperties("fill", fp)
 				vv.UpdateMarkerColors(itm)
 			}
 		})
@@ -301,7 +301,7 @@ func (vv *VectorView) UpdateGradients() {
 //  PaintView
 
 // Update updates the current settings based on the values in the given Paint and
-// props from node (node can be nil)
+// properties from node (node can be nil)
 /*
 func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	updt := pv.UpdateStart()
@@ -435,7 +435,7 @@ func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
 */
 
 /*
-// DecodeType decodes the paint type from paint and props
+// DecodeType decodes the paint type from paint and properties
 // also returns the name of the gradient if using one.
 func (pv *PaintView) DecodeType(kn tree.Node, cs *style.ColorSpec, prop string) (PaintTypes, string) {
 	pstr := ""
@@ -553,7 +553,7 @@ func (pv *PaintView) Config() {
 	// dshcb.SetProp("width", units.NewCh(15))
 	dshcb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetDashProps(pv.StrokeDashProp())
+			pv.VectorView.SetDashProperties(pv.StrokeDashProp())
 		}
 	})
 
@@ -564,14 +564,14 @@ func (pv *PaintView) Config() {
 	// mscb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mscb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 	mscc := gi.NewChooser(mkr, "marker-start-color").SetEnum(MarkerColorsN)
 	// mscc.SetProp("width", units.NewCh(5))
 	mscc.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 
@@ -582,14 +582,14 @@ func (pv *PaintView) Config() {
 	// mmcb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mmcb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 	mmcc := gi.NewChooser(mkr, "marker-mid-color").SetEnum(MarkerColorsN)
 	// mmcc.SetProp("width", units.NewCh(5))
 	mmcc.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 
@@ -600,14 +600,14 @@ func (pv *PaintView) Config() {
 	// mecb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mecb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 	mecc := gi.NewChooser(mkr, "marker-end-color").SetEnum(MarkerColorsN)
 	// mecc.SetProp("width", units.NewCh(5))
 	mecc.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 
@@ -793,7 +793,7 @@ func (pv *PaintView) StrokeProp() string {
 
 // MarkerProp returns the marker property string according to current settings
 // along with color type to set.
-func (pv *PaintView) MarkerProps() (start, mid, end string, sc, mc, ec MarkerColors) {
+func (pv *PaintView) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
 	// mkr := pv.ChildByName("stroke-markers", 3)
 	//
 	// mscb := mkr.ChildByName("marker-start", 0).(*gi.Chooser)
@@ -875,12 +875,12 @@ func (pv *PaintView) FillProp() string {
 	return "none"
 }
 
-// SetProps sets the props for given node according to current settings
-func (pv *PaintView) SetProps(sii svg.Node) {
+// SetProperties sets the properties for given node according to current settings
+func (pv *PaintView) SetProperties(sii svg.Node) {
 	pv.VectorView.SetColorNode(sii, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
-		sii.SetProp("stroke-width", pv.StrokeWidthProp())
-		start, mid, end, sc, mc, ec := pv.MarkerProps()
+		sii.SetProperty("stroke-width", pv.StrokeWidthProp())
+		start, mid, end, sc, mc, ec := pv.MarkerProperties()
 		pv.VectorView.SetMarkerNode(sii, start, mid, end, sc, mc, ec)
 	}
 	pv.VectorView.SetColorNode(sii, "fill", pv.FillType, pv.FillType, pv.FillProp())

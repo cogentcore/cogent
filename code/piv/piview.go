@@ -1114,19 +1114,19 @@ func (pv *PiView) Render2D() {
 	pv.Frame.Render2D()
 }
 
-var PiViewProps = ki.Props{
+var PiViewProperties = ki.Properties{
 	"EnumType:Flag":    gi.KiT_NodeFlags,
 	"background-color": &gi.Settings.Colors.Background,
 	"color":            &gi.Settings.Colors.Font,
 	"max-width":        -1,
 	"max-height":       -1,
-	"#title": ki.Props{
+	"#title": ki.Properties{
 		"max-width":        -1,
 		"horizontal-align": styles.AlignCenter,
 		"vertical-align":   styles.AlignTop,
 	},
-	"Toolbar": ki.PropSlice{
-		{"SaveProj", ki.Props{
+	"Toolbar": ki.Propertieslice{
+		{"SaveProj", ki.Properties{
 			"shortcut": keyfun.MenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
@@ -1136,18 +1136,18 @@ var PiViewProps = ki.Props{
 			}),
 		}},
 		{"sep-parse", ki.BlankProp{}},
-		{"OpenParser", ki.Props{
+		{"OpenParser", ki.Properties{
 			"label": "Open Parser...",
 			"icon":  "file-open",
 			"desc":  "Open lexer and parser rules from standard JSON-formatted file",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
+			"Args": ki.Propertieslice{
+				{"File Name", ki.Properties{
 					"default-field": "Settings.ParserFile",
 					"ext":           ".pi",
 				}},
 			},
 		}},
-		{"SaveParser", ki.Props{
+		{"SaveParser", ki.Properties{
 			"icon": "file-save",
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
 			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
@@ -1155,112 +1155,112 @@ var PiViewProps = ki.Props{
 				act.SetActiveStateUpdate( pv.Changed && pv.Settings.ParserFile != "")
 			}),
 		}},
-		{"SaveParserAs", ki.Props{
+		{"SaveParserAs", ki.Properties{
 			"label": "Save Parser As...",
 			"icon":  "file-save",
 			"desc":  "Save As lexer and parser rules from file standard JSON-formatted file",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
+			"Args": ki.Propertieslice{
+				{"File Name", ki.Properties{
 					"default-field": "Settings.ParserFile",
 					"ext":           ".pi",
 				}},
 			},
 		}},
 		{"sep-file", ki.BlankProp{}},
-		{"OpenTest", ki.Props{
+		{"OpenTest", ki.Properties{
 			"label": "Open Test",
 			"icon":  "file-open",
 			"desc":  "Open test file",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
+			"Args": ki.Propertieslice{
+				{"File Name", ki.Properties{
 					"default-field": "Settings.TestFile",
 				}},
 			},
 		}},
-		{"SaveTestAs", ki.Props{
+		{"SaveTestAs", ki.Properties{
 			"label": "Save Test As",
 			"icon":  "file-save",
 			"desc":  "Save current test file as",
-			"Args": ki.PropSlice{
-				{"File Name", ki.Props{
+			"Args": ki.Propertieslice{
+				{"File Name", ki.Properties{
 					"default-field": "Settings.TestFile",
 				}},
 			},
 		}},
 		{"sep-lex", ki.BlankProp{}},
-		{"LexInit", ki.Props{
+		{"LexInit", ki.Properties{
 			"icon": "update",
 			"desc": "Init / restart lexer",
 		}},
-		{"LexNext", ki.Props{
+		{"LexNext", ki.Properties{
 			"icon": "play",
 			"desc": "do next single step of lexing",
 		}},
-		{"LexNextLine", ki.Props{
+		{"LexNextLine", ki.Properties{
 			"icon": "play",
 			"desc": "do next line of lexing",
 		}},
-		{"LexAll", ki.Props{
+		{"LexAll", ki.Properties{
 			"icon": "fast-fwd",
 			"desc": "do all remaining lexing",
 		}},
 		{"sep-passtwo", ki.BlankProp{}},
-		{"EditPassTwo", ki.Props{
+		{"EditPassTwo", ki.Properties{
 			"icon": "edit",
 			"desc": "edit the settings of the PassTwo -- second pass after lexing",
 		}},
-		{"PassTwo", ki.Props{
+		{"PassTwo", ki.Properties{
 			"icon": "play",
 			"desc": "perform second pass after lexing -- computes nesting depth globally and finds EOS tokens",
 		}},
 		{"sep-parse", ki.BlankProp{}},
-		{"EditTrace", ki.Props{
+		{"EditTrace", ki.Properties{
 			"icon": "edit",
 			"desc": "edit the parse tracing options for seeing how the parsing process is working",
 		}},
-		{"ParseInit", ki.Props{
+		{"ParseInit", ki.Properties{
 			"icon": "update",
 			"desc": "initialize parser -- this also performs lexing, PassTwo, assuming that is all working",
 		}},
-		{"ParseNext", ki.Props{
+		{"ParseNext", ki.Properties{
 			"icon": "play",
 			"desc": "do next step of parsing",
 		}},
-		{"ParseAll", ki.Props{
+		{"ParseAll", ki.Properties{
 			"icon": "fast-fwd",
 			"desc": "do remaining parsing",
 		}},
-		{"ViewParseState", ki.Props{
+		{"ViewParseState", ki.Properties{
 			"icon": "edit",
 			"desc": "view the parser state, including symbols recorded etc",
 		}},
 	},
-	"MainMenu": ki.PropSlice{
+	"MainMenu": ki.Propertieslice{
 		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"OpenRecent", ki.Props{
+		{"File", ki.Propertieslice{
+			{"OpenRecent", ki.Properties{
 				"submenu": &SavedPaths,
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{}},
+				"Args": ki.Propertieslice{
+					{"File Name", ki.Properties{}},
 				},
 			}},
-			{"OpenProj", ki.Props{
+			{"OpenProj", ki.Properties{
 				"shortcut": keyfun.MenuOpen,
 				"label":    "Open Project...",
 				"desc":     "open a GoPi project that has full settings",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
+				"Args": ki.Propertieslice{
+					{"File Name", ki.Properties{
 						"default-field": "Settings.ProjFile",
 						"ext":           ".pip",
 					}},
 				},
 			}},
-			{"NewProj", ki.Props{
+			{"NewProj", ki.Properties{
 				"shortcut": keyfun.MenuNew,
 				"label":    "New Project...",
 				"desc":     "create a new project",
 			}},
-			{"SaveProj", ki.Props{
+			{"SaveProj", ki.Properties{
 				"shortcut": keyfun.MenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
@@ -1269,30 +1269,30 @@ var PiViewProps = ki.Props{
 					act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
 				}),
 			}},
-			{"SaveProjAs", ki.Props{
+			{"SaveProjAs", ki.Properties{
 				"shortcut": keyfun.MenuSaveAs,
 				"label":    "Save Project As...",
 				"desc":     "Save GoPi project to file standard JSON-formatted file",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
+				"Args": ki.Propertieslice{
+					{"File Name", ki.Properties{
 						"default-field": "Settings.ProjFile",
 						"ext":           ".pip",
 					}},
 				},
 			}},
 			{"sep-parse", ki.BlankProp{}},
-			{"OpenParser", ki.Props{
+			{"OpenParser", ki.Properties{
 				"shortcut": keyfun.MenuOpenAlt1,
 				"label":    "Open Parser...",
 				"desc":     "Open lexer and parser rules from standard JSON-formatted file",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
+				"Args": ki.Propertieslice{
+					{"File Name", ki.Properties{
 						"default-field": "Settings.ParserFile",
 						"ext":           ".pi",
 					}},
 				},
 			}},
-			{"SaveParser", ki.Props{
+			{"SaveParser", ki.Properties{
 				"shortcut": keyfun.MenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
 				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
@@ -1300,11 +1300,11 @@ var PiViewProps = ki.Props{
 					act.SetActiveState( pv.Changed && pv.Settings.ParserFile != "")
 				}),
 			}},
-			{"SaveParserAs", ki.Props{
+			{"SaveParserAs", ki.Properties{
 				"label": "Save Parser As...",
 				"desc":  "Save As lexer and parser rules to file standard JSON-formatted file",
-				"Args": ki.PropSlice{
-					{"File Name", ki.Props{
+				"Args": ki.Propertieslice{
+					{"File Name", ki.Properties{
 						"default-field": "Settings.ParserFile",
 						"ext":           ".pi",
 					}},
@@ -1312,7 +1312,7 @@ var PiViewProps = ki.Props{
 			}},
 			{"sep-close", ki.BlankProp{}},
 			{"Close Window", ki.BlankProp{}},
-			{"OpenConsoleTab", ki.Props{}},
+			{"OpenConsoleTab", ki.Properties{}},
 		}},
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},

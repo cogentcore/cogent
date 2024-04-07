@@ -33,13 +33,13 @@ func (l *Layer) FromNode(k tree.Node) {
 // ToNode copies state / prop values to given node
 func (l *Layer) ToNode(k tree.Node) {
 	if l.Vis {
-		k.SetProp("style", "")
-		k.SetProp("display", "inline")
+		k.SetProperty("style", "")
+		k.SetProperty("display", "inline")
 	} else {
-		k.SetProp("style", "display:none")
-		k.SetProp("display", "none")
+		k.SetProperty("style", "display:none")
+		k.SetProperty("display", "none")
 	}
-	k.SetProp("insensitive", l.Lck)
+	k.SetProperty("insensitive", l.Lck)
 }
 
 // Layers is the list of all layers
@@ -164,9 +164,9 @@ func (vv *VectorView) AddLayer() { //gti:add
 	si := 1 // starting index -- assuming namedview
 	if nl == 0 {
 		bg := svr.InsertNewChild(svg.GroupType, si, "LayerBG")
-		bg.SetProp("groupmode", "layer")
+		bg.SetProperty("groupmode", "layer")
 		l1 := svr.InsertNewChild(svg.GroupType, si+1, "Layer1")
-		l1.SetProp("groupmode", "layer")
+		l1.SetProperty("groupmode", "layer")
 		nk := len(svr.Kids)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
@@ -175,7 +175,7 @@ func (vv *VectorView) AddLayer() { //gti:add
 		vv.SetCurLayer(l1.Name())
 	} else {
 		l1 := svr.InsertNewChild(svg.GroupType, si+nl, fmt.Sprintf("Layer%d", nl))
-		l1.SetProp("groupmode", "layer")
+		l1.SetProperty("groupmode", "layer")
 		vv.SetCurLayer(l1.Name())
 	}
 	vv.UpdateLayerView()
@@ -186,19 +186,19 @@ func (vv *VectorView) AddLayer() { //gti:add
 
 // NodeIsLayer returns true if given node is a layer
 func NodeIsLayer(kn tree.Node) bool {
-	gm := laser.ToString(kn.Prop("groupmode"))
+	gm := laser.ToString(kn.Property("groupmode"))
 	return gm == "layer"
 }
 
 // LayerIsLocked returns true if layer is locked (insensitive = true)
 func LayerIsLocked(kn tree.Node) bool {
-	b, _ := laser.ToBool(kn.Prop("insensitive"))
+	b, _ := laser.ToBool(kn.Property("insensitive"))
 	return b
 }
 
 // LayerIsVisible returns true if layer is visible
 func LayerIsVisible(kn tree.Node) bool {
-	cp := laser.ToString(kn.Prop("style"))
+	cp := laser.ToString(kn.Property("style"))
 	return cp != "display:none"
 }
 

@@ -55,7 +55,7 @@ type TextStyle struct {
 func (ts *TextStyle) Update() {
 	// this is called augtomatically when edited
 	if ts.VectorView != nil {
-		ts.VectorView.SetTextProps(ts.TextProps())
+		ts.VectorView.SetTextProperties(ts.TextProperties())
 		ts.VectorView.SetText(ts.Text)
 	}
 }
@@ -97,11 +97,11 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 	ts.Align = txt.Paint.TextStyle.Align
 }
 
-// SetTextPropsNode sets the text properties of given Text node
-func (gv *VectorView) SetTextPropsNode(sii svg.Node, tps map[string]string) {
+// SetTextPropertiesNode sets the text properties of given Text node
+func (gv *VectorView) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
 		for _, kid := range gp.Kids {
-			gv.SetTextPropsNode(kid.(svg.Node), tps)
+			gv.SetTextPropertiesNode(kid.(svg.Node), tps)
 		}
 		return
 	}
@@ -112,28 +112,28 @@ func (gv *VectorView) SetTextPropsNode(sii svg.Node, tps map[string]string) {
 	g := sii.AsNodeBase()
 	for k, v := range tps {
 		if v == "" {
-			g.DeleteProp(k)
+			g.DeleteProperty(k)
 		} else {
-			g.SetProp(k, v)
+			g.SetProperty(k, v)
 		}
 	}
 }
 
-// SetTextProps sets the text properties of selected Text nodes
-func (gv *VectorView) SetTextProps(tps map[string]string) {
+// SetTextProperties sets the text properties of selected Text nodes
+func (gv *VectorView) SetTextProperties(tps map[string]string) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	sv.UndoSave("SetTextProps", "")
+	sv.UndoSave("SetTextProperties", "")
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
-		gv.SetTextPropsNode(itm.(svg.Node), tps)
+		gv.SetTextPropertiesNode(itm.(svg.Node), tps)
 	}
 	sv.NeedsRender()
 	gv.ChangeMade()
 }
 
-// TextProps returns non-default text properties to set
-func (ts *TextStyle) TextProps() map[string]string {
+// TextProperties returns non-default text properties to set
+func (ts *TextStyle) TextProperties() map[string]string {
 	tps := make(map[string]string)
 	tps["font-family"] = string(ts.Font)
 	tps["font-size"] = ts.Size.String()

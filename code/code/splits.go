@@ -155,7 +155,7 @@ func (lt *Splits) CopyFrom(cp Splits) {
 }
 
 // AvailableSplitsChanged is used to update toolbars via following menu, toolbar
-// props update methods -- not accurate if editing any other map but works for
+// properties update methods -- not accurate if editing any other map but works for
 // now..
 var AvailableSplitsChanged = false
 

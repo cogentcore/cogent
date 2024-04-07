@@ -237,7 +237,7 @@ func (tv *TreeView) LayerToggleLock() {
 		tv.LayerClearCurrent()
 		np = "true"
 	}
-	sn.SetProp("insensitive", np)
+	sn.SetProperty("insensitive", np)
 	// tv.SetFullReRenderIconLabel()
 	// tv.UpdateSig()
 }
@@ -252,78 +252,78 @@ func (tv *TreeView) LayerToggleVis() {
 	} else {
 		np = "display:inline"
 	}
-	sn.SetProp("style", np)
+	sn.SetProperty("style", np)
 	// tv.UpdateSig()
 }
 
 /*
-var TreeViewProps = ki.Props{
-	".svgnode": ki.Props{
+var TreeViewProperties = ki.Properties{
+	".svgnode": ki.Properties{
 		"font-weight": gist.WeightNormal,
 		"font-style":  gist.FontNormal,
 	},
-	".layer": ki.Props{
+	".layer": ki.Properties{
 		"font-weight": gist.WeightBold,
 	},
-	".invisible": ki.Props{
+	".invisible": ki.Properties{
 		"font-style": gist.FontItalic,
 	},
-	".locked": ki.Props{
+	".locked": ki.Properties{
 		"color": "#ff4252",
 	},
-	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Props{},
-	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Props{
+	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Properties{},
+	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Properties{
 		"background-color": &gi.Settings.Colors.Select,
 	},
-	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Props{
+	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Properties{
 		"background-color": &gi.Settings.Colors.Control,
 	},
-	"CtxtMenuActive": ki.PropSlice{
-		{"SrcEdit", ki.Props{
+	"CtxtMenuActive": ki.Propertieslice{
+		{"SrcEdit", ki.Properties{
 			"label": "Edit",
 		}},
-		{"SelectSVG", ki.Props{
+		{"SelectSVG", ki.Properties{
 			"label": "Select",
 		}},
 		{"sep-edit", ki.BlankProp{}},
-		{"SrcDuplicate", ki.Props{
+		{"SrcDuplicate", ki.Properties{
 			"label":    "Duplicate",
 			"shortcut": keyfun.Duplicate,
 		}},
-		{"Copy", ki.Props{
+		{"Copy", ki.Properties{
 			"shortcut": keyfun.Copy,
-			"Args": ki.PropSlice{
-				{"reset", ki.Props{
+			"Args": ki.Propertieslice{
+				{"reset", ki.Properties{
 					"value": true,
 				}},
 			},
 		}},
-		{"Cut", ki.Props{
+		{"Cut", ki.Properties{
 			"shortcut": keyfun.Cut,
 			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Button) {
 				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
 		}},
-		{"Paste", ki.Props{
+		{"Paste", ki.Properties{
 			"shortcut": keyfun.Paste,
 		}},
 		{"sep-layer", ki.BlankProp{}},
-		{"LayerSetCurrent", ki.Props{
+		{"LayerSetCurrent", ki.Properties{
 			"label":    "Layer: Set Current",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"LayerToggleLock", ki.Props{
+		{"LayerToggleLock", ki.Properties{
 			"label":    "Layer: Toggle Lock",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"LayerToggleVis", ki.Props{
+		{"LayerToggleVis", ki.Properties{
 			"label":    "Layer: Toggle Visible",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
 		{"sep-open", ki.BlankProp{}},
-		{"OpenAll", ki.Props{}},
-		{"CloseAll", ki.Props{}},
+		{"OpenAll", ki.Properties{}},
+		{"CloseAll", ki.Properties{}},
 	},
 }
 

@@ -72,7 +72,7 @@ Basic functionality now in place:
 
 * show selected path node in diff color..  red?  node sel map
 
-* rest of line props -- easy
+* rest of line properties -- easy
 
 * dropper = grab style from containsnode, apply to selection -- don't affect selection!
 

@@ -48,7 +48,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
 		return ld
 	}
-	lp, err := pi.LangSupport.Props(sfs.Sup)
+	lp, err := pi.LangSupport.Properties(sfs.Sup)
 	if err != nil {
 		log.Printf("LookupFun: %v\n", err)
 		return ld

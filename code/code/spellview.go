@@ -206,7 +206,7 @@ func (sv *SpellView) ConfigToolbar() {
 	suggest := sv.SuggestView()
 	sv.Suggest = []string{"                                              "}
 	suggest.SetReadOnly(true)
-	suggest.SetProp("index", false)
+	suggest.SetProperty("index", false)
 	suggest.SetSlice(&sv.Suggest)
 	// suggest.SliceViewSig.Connect(suggest, func(recv, send tree.Node, sig int64, data any) {
 	// 	svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)

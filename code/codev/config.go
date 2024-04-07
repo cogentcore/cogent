@@ -116,7 +116,7 @@ func (ge *CodeView) ConfigSplits() {
 	ft := filetree.NewTree(ftfr, "filetree")
 	ft.OpenDepth = 4
 	ge.Files = ft
-	ft.NodeType = code.FileNodeType
+	ft.FileNodeType = code.FileNodeType
 
 	ge.Files.OnSelect(func(e events.Event) {
 		e.SetHandled()

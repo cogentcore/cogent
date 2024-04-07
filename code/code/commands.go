@@ -797,7 +797,7 @@ func (cm *Commands) ViewStandard() { //gti:add
 }
 
 // CustomCommandsChanged is used to update giv.CmdsView toolbars via following
-// menu, toolbar props update methods.
+// menu, toolbar properties update methods.
 var CustomCommandsChanged = false
 
 // SetCompleter adds a completer to the textfield - each field

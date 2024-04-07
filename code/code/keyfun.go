@@ -401,7 +401,7 @@ func (km *KeyMaps) ViewStandard() { //gti:add
 }
 
 // AvailableKeyMapsChanged is used to update giv.KeyMapsView toolbars via
-// following menu, toolbar props update methods -- not accurate if editing any
+// following menu, toolbar properties update methods -- not accurate if editing any
 // other map but works for now..
 var AvailableKeyMapsChanged = false
 

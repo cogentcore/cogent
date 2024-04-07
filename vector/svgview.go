@@ -416,7 +416,7 @@ func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
 
 // SetTransform sets the transform based on Trans and Scale values
 func (sv *SVGView) SetTransform() {
-	sv.SetProp("transform", fmt.Sprintf("scale(%v,%v) translate(%v,%v)", sv.Scale, sv.Scale, sv.Trans.X, sv.Trans.Y))
+	sv.SetProperty("transform", fmt.Sprintf("scale(%v,%v) translate(%v,%v)", sv.Scale, sv.Scale, sv.Trans.X, sv.Trans.Y))
 }
 
 // MetaData returns the overall metadata and grid if present.
@@ -455,34 +455,34 @@ func (sv *SVGView) SetMetaData() {
 
 	uts := strings.ToLower(sv.SSVG().PhysWidth.Unit.String())
 
-	nv.SetProp("inkscape:current-layer", es.CurLayer)
-	nv.SetProp("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
-	nv.SetProp("inkscape:cy", fmt.Sprintf("%g", sv.Trans.Y))
-	nv.SetProp("inkscape:zoom", fmt.Sprintf("%g", sv.Scale))
-	nv.SetProp("inkscape:document-units", uts)
+	nv.SetProperty("inkscape:current-layer", es.CurLayer)
+	nv.SetProperty("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
+	nv.SetProperty("inkscape:cy", fmt.Sprintf("%g", sv.Trans.Y))
+	nv.SetProperty("inkscape:zoom", fmt.Sprintf("%g", sv.Scale))
+	nv.SetProperty("inkscape:document-units", uts)
 
-	//	get rid of inkscape props we don't set
-	nv.DeleteProp("cx")
-	nv.DeleteProp("cy")
-	nv.DeleteProp("zoom")
-	nv.DeleteProp("document-units")
-	nv.DeleteProp("current-layer")
-	nv.DeleteProp("objecttolerance")
-	nv.DeleteProp("guidetolerance")
-	nv.DeleteProp("gridtolerance")
-	nv.DeleteProp("pageopacity")
-	nv.DeleteProp("borderopacity")
-	nv.DeleteProp("bordercolor")
-	nv.DeleteProp("pagecolor")
-	nv.DeleteProp("pageshadow")
-	nv.DeleteProp("pagecheckerboard")
-	nv.DeleteProp("showgrid")
+	//	get rid of inkscape properties we don't set
+	nv.DeleteProperty("cx")
+	nv.DeleteProperty("cy")
+	nv.DeleteProperty("zoom")
+	nv.DeleteProperty("document-units")
+	nv.DeleteProperty("current-layer")
+	nv.DeleteProperty("objecttolerance")
+	nv.DeleteProperty("guidetolerance")
+	nv.DeleteProperty("gridtolerance")
+	nv.DeleteProperty("pageopacity")
+	nv.DeleteProperty("borderopacity")
+	nv.DeleteProperty("bordercolor")
+	nv.DeleteProperty("pagecolor")
+	nv.DeleteProperty("pageshadow")
+	nv.DeleteProperty("pagecheckerboard")
+	nv.DeleteProperty("showgrid")
 
 	spc := fmt.Sprintf("%g", sv.Grid)
-	gr.SetProp("spacingx", spc)
-	gr.SetProp("spacingy", spc)
-	gr.SetProp("type", "xygrid")
-	gr.SetProp("units", uts)
+	gr.SetProperty("spacingx", spc)
+	gr.SetProperty("spacingy", spc)
+	gr.SetProperty("type", "xygrid")
+	gr.SetProperty("units", uts)
 }
 
 // ReadMetaData reads meta data of drawing
@@ -492,26 +492,26 @@ func (sv *SVGView) ReadMetaData() {
 	if nv == nil {
 		return
 	}
-	if cx := nv.Prop("cx"); cx != nil {
+	if cx := nv.Property("cx"); cx != nil {
 		sv.Trans.X, _ = laser.ToFloat32(cx)
 	}
-	if cy := nv.Prop("cy"); cy != nil {
+	if cy := nv.Property("cy"); cy != nil {
 		sv.Trans.Y, _ = laser.ToFloat32(cy)
 	}
-	if zm := nv.Prop("zoom"); zm != nil {
+	if zm := nv.Property("zoom"); zm != nil {
 		sc, _ := laser.ToFloat32(zm)
 		if sc > 0 {
 			sv.Scale = sc
 		}
 	}
-	if cl := nv.Prop("current-layer"); cl != nil {
+	if cl := nv.Property("current-layer"); cl != nil {
 		es.CurLayer = laser.ToString(cl)
 	}
 
 	if gr == nil {
 		return
 	}
-	if gs := gr.Prop("spacingx"); gs != nil {
+	if gs := gr.Property("spacingx"); gs != nil {
 		gv, _ := laser.ToFloat32(gs)
 		if gv > 0 {
 			sv.Grid = gv
@@ -671,7 +671,7 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
 	nw := parent.NewChild(typ, nwnm).(svg.Node)
 	sv.SetSVGName(nw)
-	sv.VectorView.PaintView().SetProps(nw)
+	sv.VectorView.PaintView().SetProperties(nw)
 	sv.VectorView.UpdateTreeView()
 	return nw
 }
@@ -719,7 +719,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVec2AsPoint(pos)
-	sv.VectorView.SetTextPropsNode(nr, es.Text.TextProps())
+	sv.VectorView.SetTextPropertiesNode(nr, es.Text.TextProperties())
 	// nr.Pos = pos
 	// tspan.Pos = pos
 	// // dv := mat32.V2FromPoint(end.Sub(start))
