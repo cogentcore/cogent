@@ -279,7 +279,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 		}
 	}
 	mls := make([]FileSearchResults, 0)
-	start.WalkPre(func(k tree.Node) bool {
+	start.WalkDown(func(k tree.Node) bool {
 		sfn := filetree.AsNode(k)
 		if sfn == nil {
 			return tree.Continue

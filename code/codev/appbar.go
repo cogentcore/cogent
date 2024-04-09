@@ -340,7 +340,7 @@ func (ge *CodeView) AddChooserSymbols(ac *gi.Chooser) {
 		syms := &code.SymNode{}
 		syms.InitName(syms, "syms")
 		syms.OpenSyms(pkg, "", "")
-		syms.WalkPre(func(k tree.Node) bool {
+		syms.WalkDown(func(k tree.Node) bool {
 			sn := k.(*code.SymNode)
 			ac.Items = append(ac.Items, gi.ChooserItem{
 				Label: sn.Symbol.Label(),

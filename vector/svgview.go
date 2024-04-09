@@ -251,7 +251,7 @@ func (sv *SVGView) MouseHover() {
 func (sv *SVGView) ContentsBBox() mat32.Box2 {
 	bbox := mat32.Box2{}
 	bbox.SetEmpty()
-	sv.WalkPre(func(k tree.Node) bool {
+	sv.WalkDown(func(k tree.Node) bool {
 		if k.This() == sv.This() {
 			return tree.Continue
 		}
@@ -288,7 +288,7 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
 func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
-	sv.WalkPre(func(k tree.Node) bool {
+	sv.WalkDown(func(k tree.Node) bool {
 		if k.This() == sv.This() {
 			return tree.Continue
 		}
