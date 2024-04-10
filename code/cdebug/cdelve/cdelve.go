@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/gox/num"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/xgo/num"
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
 )

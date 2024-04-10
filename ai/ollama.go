@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/errors"
-	"cogentcore.org/core/xgo/dirs"
+	"cogentcore.org/core/gox/dirs"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	http "github.com/bogdanfinn/fhttp"
 	tls_client "github.com/bogdanfinn/tls-client"

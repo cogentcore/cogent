@@ -12,9 +12,9 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/gox/datasize"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/views"
-	"cogentcore.org/core/xgo/datasize"
 
 	"github.com/shirou/gopsutil/v3/process"
 )

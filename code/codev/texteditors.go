@@ -14,11 +14,11 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/gox/dirs"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/xgo/dirs"
 )
 
 // ConfigTextBuf configures the text buf according to prefs

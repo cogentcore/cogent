@@ -11,9 +11,9 @@ import (
 	"unicode"
 
 	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/gox/dirs"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/pi/syms"
-	"cogentcore.org/core/xgo/dirs"
 	"github.com/go-delve/delve/service/api"
 )
 

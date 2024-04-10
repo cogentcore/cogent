@@ -12,7 +12,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
-	"cogentcore.org/core/xgo/dirs"
+	"cogentcore.org/core/gox/dirs"
 	"cogentcore.org/core/xio/jsons"
 )
 
