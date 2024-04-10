@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/errors"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ddkwork/golibrary/pkg/tree"
@@ -75,7 +75,7 @@ func ParseUnitStr2GB(data string) (value float64) {
 	}
 	v := data[:len(data)-2] //2 is len gb or mb
 	size, err := strconv.ParseFloat(v, 64)
-	if grr.Log(err) != nil {
+	if errors.Log(err) != nil {
 		return
 	}
 	unitStr := data[len(data)-2:]

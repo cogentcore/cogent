@@ -13,7 +13,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/cogent/code/codev"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/errors"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	lfnm := filepath.Join(pdir, "cogentcode.log")
 
 	// we must load the settings before initializing the console
-	grr.Log(core.LoadAllSettings())
+	errors.Log(core.LoadAllSettings())
 
 	code.TheConsole.Init(lfnm)
 

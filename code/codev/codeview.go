@@ -18,11 +18,11 @@ import (
 
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
@@ -405,7 +405,7 @@ func ProjPathParse(path string) (root, projnm, fnm string, ok bool) {
 	if path == "" {
 		return "", "blank", "", false
 	}
-	effpath := grr.Log1(filepath.EvalSymlinks(path))
+	effpath := errors.Log1(filepath.EvalSymlinks(path))
 	info, err := os.Lstat(effpath)
 	if err != nil {
 		emsg := fmt.Errorf("code.ProjPathParse: Cannot open at given path: %q: Error: %v", effpath, err)

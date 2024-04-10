@@ -20,8 +20,8 @@ import (
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/strcase"
@@ -53,7 +53,7 @@ var _ tree.Node = (*App)(nil)
 
 func (a *App) OnInit() {
 	a.Frame.OnInit()
-	a.Dir = grr.Log1(os.Getwd())
+	a.Dir = errors.Log1(os.Getwd())
 }
 
 func (a *App) AppBar(tb *core.Toolbar) {
@@ -69,7 +69,7 @@ func (a *App) AppBar(tb *core.Toolbar) {
 			d.AddBottomBar(func(parent core.Widget) {
 				d.AddCancel(parent)
 				d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {
-					grr.Log(xe.Verbose().Run(fields[0], fields[1:]...))
+					errors.Log(xe.Verbose().Run(fields[0], fields[1:]...))
 				})
 			})
 			d.NewFullDialog(bt).Run()
@@ -105,7 +105,7 @@ func (a *App) Config() {
 	tb.NewBuffer(0)
 	tb.Hi.Lang = "Bash"
 	tb.Opts.LineNos = false
-	grr.Log(tb.Stat())
+	errors.Log(tb.Stat())
 	te := texteditor.NewEditor(ef, "editor").SetBuffer(tb)
 	te.Style(func(s *styles.Style) {
 		s.Font.Family = string(core.AppearanceSettings.MonoFont)
@@ -119,11 +119,11 @@ func (a *App) Config() {
 			e.SetHandled()
 			tb.NewBuffer(0)
 
-			grr.Log(a.RunCmd(txt, cmds, dir))
+			errors.Log(a.RunCmd(txt, cmds, dir))
 			return
 		}
 
-		envs, words := grr.Log2(shellwords.ParseWithEnvs(txt))
+		envs, words := errors.Log2(shellwords.ParseWithEnvs(txt))
 		if len(words) > 0 {
 			a.CurCmd = words[0]
 		} else {
@@ -233,10 +233,10 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Label) error {
 	c.Dir = a.Dir
 	c.Cancel = func() error {
 		fmt.Println("icf")
-		return grr.Log(xe.Run("bash", "-c", "kill -2 "+strconv.Itoa(c.Process.Pid)))
+		return errors.Log(xe.Run("bash", "-c", "kill -2 "+strconv.Itoa(c.Process.Pid)))
 	}
 	go func() {
-		grr.Log(c.Run())
+		errors.Log(c.Run())
 	}()
 	return nil
 }

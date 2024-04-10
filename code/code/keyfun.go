@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/xio/jsons"
 )
@@ -346,12 +346,12 @@ var KeyMapSettingsFilename = "key-map-settings.json"
 // Open opens keymaps from a json-formatted file.
 func (km *KeyMaps) Open(filename core.Filename) error { //gti:add
 	*km = make(KeyMaps, 0, 10) // reset
-	return grr.Log(jsons.Open(km, string(filename)))
+	return errors.Log(jsons.Open(km, string(filename)))
 }
 
 // Save saves keymaps to a json-formatted file.
 func (km *KeyMaps) Save(filename core.Filename) error { //gti:add
-	return grr.Log(jsons.Save(km, string(filename)))
+	return errors.Log(jsons.Save(km, string(filename)))
 }
 
 // OpenSettings opens the KeyMaps from the app settings directory,

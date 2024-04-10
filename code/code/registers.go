@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/xio/tomls"
 )
 
@@ -47,12 +47,12 @@ var RegisterSettingsFilename = "register-settings.toml"
 // Open opens named registers from a toml-formatted file.
 func (lt *Registers) Open(filename core.Filename) error { //gti:add
 	*lt = make(Registers) // reset
-	return grr.Log(tomls.Open(lt, string(filename)))
+	return errors.Log(tomls.Open(lt, string(filename)))
 }
 
 // Save saves named registers to a toml-formatted file.
 func (lt *Registers) Save(filename core.Filename) error { //gti:add
-	return grr.Log(tomls.Save(lt, string(filename)))
+	return errors.Log(tomls.Save(lt, string(filename)))
 }
 
 // OpenSettings opens the Registers from the app settings directory,

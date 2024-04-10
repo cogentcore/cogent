@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/xgo/dirs"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	http "github.com/bogdanfinn/fhttp"
@@ -25,7 +25,7 @@ type Response struct {
 
 func NewRequest(input string, params structs.Params, prevMessages string) (r *http.Response, err error) {
 	client, err := NewClient()
-	if grr.Log(err) != nil {
+	if errors.Log(err) != nil {
 		return
 	}
 
@@ -45,7 +45,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	}
 
 	safeInput, err := json.Marshal(input)
-	if grr.Log(err) != nil {
+	if errors.Log(err) != nil {
 		return
 	}
 
@@ -67,7 +67,7 @@ func NewRequest(input string, params structs.Params, prevMessages string) (r *ht
 	`, prevMessages, string(safeInput), model, temperature, topP))
 
 	req, err := http.NewRequest("POST", "http://localhost:11434/v1/chat/completions", data)
-	if grr.Log(err) != nil {
+	if errors.Log(err) != nil {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -127,7 +127,7 @@ func NewClient() (tls_client.HttpClient, error) {
 			options = append(options, proxyOption)
 		}
 	} else {
-		if ok := grr.Log1(dirs.FileExists("proxy.txt")); ok {
+		if ok := errors.Log1(dirs.FileExists("proxy.txt")); ok {
 			proxyConfig, err := os.ReadFile("proxy.txt")
 			if err != nil {
 				return nil, err

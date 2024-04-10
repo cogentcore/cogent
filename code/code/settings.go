@@ -12,9 +12,9 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/views"
 	"cogentcore.org/core/xio/tomls"
@@ -293,14 +293,14 @@ func (se *ProjSettings) Update() {
 
 // Open open from file
 func (se *ProjSettings) Open(filename core.Filename) error { //gti:add
-	err := grr.Log(tomls.Open(se, string(filename)))
+	err := errors.Log(tomls.Open(se, string(filename)))
 	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 
 // Save save to file
 func (se *ProjSettings) Save(filename core.Filename) error { //gti:add
-	return grr.Log(tomls.Save(se, string(filename)))
+	return errors.Log(tomls.Save(se, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable

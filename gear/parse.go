@@ -11,7 +11,7 @@ import (
 	"strings"
 	"unicode"
 
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/xe"
 )
@@ -105,7 +105,7 @@ func (cm *Cmd) SetFromBlocks(blocks []ParseBlock) error {
 			// Now we must recursively parse the subcommand and any of its subcommands.
 			// Errors here are not fatal, as various subcommands could be mistakes, so
 			// we just log them and move on.
-			grr.Log(cmd.Parse())
+			errors.Log(cmd.Parse())
 		}
 	}
 	return nil

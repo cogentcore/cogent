@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
+	errors1 "cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/mat32"
@@ -68,11 +68,11 @@ func (vv *VectorView) OpenDrawingFile(fnm core.Filename) error {
 	path, _ := filepath.Abs(string(fnm))
 	vv.Filename = core.Filename(path)
 	sv := vv.SVG()
-	err := grr.Log(sv.SSVG().OpenXML(path))
+	err := errors1.Log(sv.SSVG().OpenXML(path))
 	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	fdir, _ := filepath.Split(path)
-	grr.Log(os.Chdir(fdir))
+	errors1.Log(os.Chdir(fdir))
 	vv.EditState.Init(vv)
 	vv.UpdateLayerView()
 
@@ -161,7 +161,7 @@ func (vv *VectorView) SaveDrawingAs(fname core.Filename) error { //gti:add
 	sv.SSVG().RemoveOrphanedDefs()
 	sv.SetMetaData()
 	err := sv.SSVG().SaveXML(path)
-	if grr.Log(err) == nil {
+	if errors1.Log(err) == nil {
 		vv.AutoSaveDelete()
 	}
 	vv.SetTitle()
@@ -182,7 +182,7 @@ func (vv *VectorView) ExportPNG(width, height float32) error { //gti:add
 	fnm := filepath.Join(path, "export_png.svg")
 	sv := vv.SVG()
 	err := sv.SSVG().SaveXML(fnm)
-	if grr.Log(err) != nil {
+	if errors1.Log(err) != nil {
 		return err
 	}
 	fext := filepath.Ext(string(vv.Filename))
@@ -216,7 +216,7 @@ func (vv *VectorView) ExportPDF(dpi float32) error { //gti:add
 	fnm := filepath.Join(path, "export_pdf.svg")
 	sv := vv.SVG()
 	err := sv.SSVG().SaveXML(fnm)
-	if grr.Log(err) != nil {
+	if errors1.Log(err) != nil {
 		return err
 	}
 	fext := filepath.Ext(string(vv.Filename))

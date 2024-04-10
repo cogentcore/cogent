@@ -9,8 +9,8 @@ import (
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
@@ -57,7 +57,7 @@ func main() {
 	leftFrame := core.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	grr.Log(jsons.OpenFS(root, rootJson, jsonName))
+	errors.Log(jsons.OpenFS(root, rootJson, jsonName))
 	views.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := core.NewFrame(leftFrame)
@@ -183,7 +183,7 @@ func main() {
 			s.Border.Radius = styles.BorderRadiusLarge
 			s.Grow.Set(1, 0)
 		})
-		grr.Log(htmlview.ReadMDString(htmlview.NewContext(), yourPrompt, "**You:** "+promptString))
+		errors.Log(htmlview.ReadMDString(htmlview.NewContext(), yourPrompt, "**You:** "+promptString))
 
 		answer := core.NewFrame(history)
 		answer.Style(func(s *styles.Style) {
@@ -214,7 +214,7 @@ func main() {
 				return
 			}
 			if resp.StatusCode != http.StatusOK {
-				body := grr.Log1(io.ReadAll(resp.Body))
+				body := errors.Log1(io.ReadAll(resp.Body))
 				core.MessageSnackbar(b, fmt.Sprintf("Error getting response (%s): %s", resp.Status, body))
 				return
 			}
@@ -234,13 +234,13 @@ func main() {
 
 				answer.AsyncLock()
 				answer.DeleteChildren()
-				grr.Log(htmlview.ReadMDString(htmlview.NewContext(), answer, allTokens))
+				errors.Log(htmlview.ReadMDString(htmlview.NewContext(), answer, allTokens))
 				answer.Update()
 				history.ScrollDimToContentEnd(mat32.Y)
 				answer.AsyncUnlock()
 			}
-			grr.Log(scanner.Err())
-			grr.Log(resp.Body.Close())
+			errors.Log(scanner.Err())
+			errors.Log(resp.Body.Close())
 		}()
 	})
 

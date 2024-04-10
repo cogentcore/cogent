@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/views"
 	"cogentcore.org/core/xgo/datasize"
@@ -112,14 +112,14 @@ func getTasks(b *core.Body) []*Task {
 	for i, p := range ps {
 		t := &Task{
 			Process: p,
-			Name:    grr.Ignore1(p.Name()),
-			CPU:     grr.Ignore1(p.CPUPercent()),
-			RAMPct:  grr.Ignore1(p.MemoryPercent()),
-			Threads: grr.Ignore1(p.NumThreads()),
-			User:    grr.Ignore1(p.Username()),
+			Name:    errors.Ignore1(p.Name()),
+			CPU:     errors.Ignore1(p.CPUPercent()),
+			RAMPct:  errors.Ignore1(p.MemoryPercent()),
+			Threads: errors.Ignore1(p.NumThreads()),
+			User:    errors.Ignore1(p.Username()),
 			PID:     p.Pid,
 		}
-		mi := grr.Ignore1(p.MemoryInfo())
+		mi := errors.Ignore1(p.MemoryInfo())
 		if mi != nil {
 			t.RAM = datasize.Size(mi.RSS)
 		}

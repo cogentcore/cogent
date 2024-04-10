@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/pi/complete"
@@ -180,5 +180,5 @@ func ParentCode(kn tree.Node) (Code, bool) {
 var Icons embed.FS
 
 func init() {
-	icons.AddFS(grr.Log1(fs.Sub(Icons, "icons")))
+	icons.AddFS(errors.Log1(fs.Sub(Icons, "icons")))
 }

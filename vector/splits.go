@@ -11,7 +11,7 @@ import (
 	"slices"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/xgo/dirs"
 	"cogentcore.org/core/xio/jsons"
 )
@@ -107,9 +107,9 @@ func (lt *Splits) FixLen() {
 
 // Open opens named splits from a json-formatted file.
 func (lt *Splits) Open(filename core.Filename) error { //gti:add
-	if grr.Ignore1(dirs.FileExists(string(filename))) {
+	if errors.Ignore1(dirs.FileExists(string(filename))) {
 		*lt = make(Splits, 0, 10) // reset
-		err := grr.Log(jsons.Open(lt, string(filename)))
+		err := errors.Log(jsons.Open(lt, string(filename)))
 		lt.FixLen()
 		return err
 	}
@@ -118,7 +118,7 @@ func (lt *Splits) Open(filename core.Filename) error { //gti:add
 
 // Save saves named splits to a json-formatted file.
 func (lt *Splits) Save(filename core.Filename) error { //gti:add
-	return grr.Log(jsons.Save(lt, string(filename)))
+	return errors.Log(jsons.Save(lt, string(filename)))
 }
 
 // OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename
