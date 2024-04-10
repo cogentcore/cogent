@@ -17,7 +17,7 @@ import (
 	"sync"
 
 	"cogentcore.org/core/gi/filetree"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/gi/texteditor"
 	"cogentcore.org/cogent/code/code"

@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/pi/parse"
 )
 
