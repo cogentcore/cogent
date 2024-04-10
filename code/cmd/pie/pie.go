@@ -6,12 +6,12 @@ package main
 
 func main() {
 	/*
-			goosi.TheApp.SetName("pie")
-			goosi.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>Cogent Core</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/core/pi">Code on GitHub</a> and <a href="https://cogentcore.org/core/pi/wiki">Code wiki</a> for documentation.<br>
+			system.TheApp.SetName("pie")
+			system.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>Cogent Core</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/core/pi">Code on GitHub</a> and <a href="https://cogentcore.org/core/pi/wiki">Code wiki</a> for documentation.<br>
 		<br>
 		Version: ` + pi.VersionInfo())
 
-			// goosi.TheApp.SetQuitCleanFunc(func() {
+			// system.TheApp.SetQuitCleanFunc(func() {
 			// 	fmt.Printf("Doing final Quit cleanup here..\n")
 			// })
 
@@ -45,11 +45,11 @@ func main() {
 			recv.InitName(&recv, "pie_dummy")
 
 			inQuitPrompt := false
-			goosi.TheApp.SetQuitReqFunc(func() {
+			system.TheApp.SetQuitReqFunc(func() {
 				if !inQuitPrompt {
 					inQuitPrompt = true
 					if piv.QuitReq() {
-						goosi.TheApp.Quit()
+						system.TheApp.Quit()
 					} else {
 						inQuitPrompt = false
 					}

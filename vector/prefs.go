@@ -14,8 +14,8 @@ import (
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/system"
 )
 
 // Preferences is the overall Vector preferences
@@ -123,7 +123,7 @@ var SettingsFileName = "grid_prefs.json"
 
 // Open preferences from app standard prefs directory, and applies them
 func (pf *Preferences) Open() error {
-	pdir := goosi.TheApp.AppDataDir()
+	pdir := system.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := ioutil.ReadFile(pnm)
 	if err != nil {
@@ -138,7 +138,7 @@ func (pf *Preferences) Open() error {
 
 // Save Preferences to app standard prefs directory
 func (pf *Preferences) Save() error {
-	pdir := goosi.TheApp.AppDataDir()
+	pdir := system.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {

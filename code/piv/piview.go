@@ -23,7 +23,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/units"
-	"cogentcore.org/core/goosi"
+	"cogentcore.org/core/system"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/ki"
@@ -1376,7 +1376,7 @@ func NewPiView() (*core.Window, *PiView) {
 
 	width := 1600
 	height := 1280
-	sc := goosi.TheApp.Screen(0)
+	sc := system.TheApp.Screen(0)
 	if sc != nil {
 		scsz := sc.SceneGeometry.Size()
 		width = int(.9 * float64(scsz.X))
@@ -1419,14 +1419,14 @@ func NewPiView() (*core.Window, *PiView) {
 	// })
 	//
 	// inQuitPrompt := false
-	// goosi.TheApp.SetQuitReqFunc(func() {
+	// system.TheApp.SetQuitReqFunc(func() {
 	// 	if !inQuitPrompt {
 	// 		inQuitPrompt = true
 	// 		core.PromptDialog(vp, core.DlgOpts{Title: "Really Quit?",
 	// 			Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
 	// 			win.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 				if sig == int64(core.DialogAccepted) {
-	// 					goosi.TheApp.Quit()
+	// 					system.TheApp.Quit()
 	// 				} else {
 	// 					inQuitPrompt = false
 	// 				}
@@ -1440,7 +1440,7 @@ func NewPiView() (*core.Window, *PiView) {
 
 	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
 	// 	if core.MainWindows.Len() <= 1 {
-	// 		go goosi.TheApp.Quit() // once main window is closed, quit
+	// 		go system.TheApp.Quit() // once main window is closed, quit
 	// 	}
 	// })
 

@@ -380,10 +380,10 @@ func TextLinkHandler(tl paint.TextLink) bool {
 	// 	case strings.HasPrefix(ur, "file:///"):
 	// 		ge.OpenFileURL(ur, ftv)
 	// 	default:
-	// 		goosi.TheApp.OpenURL(ur)
+	// 		system.TheApp.OpenURL(ur)
 	// 	}
 	// } else {
-	// 	goosi.TheApp.OpenURL(tl.URL)
+	// 	system.TheApp.OpenURL(tl.URL)
 	// }
 	return true
 }
