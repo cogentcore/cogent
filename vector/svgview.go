@@ -197,7 +197,7 @@ func (sv *SVGView) HandleEvents() {
 		e.SetHandled()
 		es.DragStartPos = e.StartPos()
 		if e.HasAnyModifier(key.Shift) {
-			e.ClearHandled() // base gi.SVG handles it
+			e.ClearHandled() // base core.SVG handles it
 			return
 		}
 		if es.HasSelected() {
@@ -233,7 +233,7 @@ func (sv *SVGView) HandleEvents() {
 
 /*
 func (sv *SVGView) MouseHover() {
-	sv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send tree.Node, sig int64, d any) {
+	sv.ConnectEvent(oswin.MouseHoverEvent, core.RegPri, func(recv, send tree.Node, sig int64, d any) {
 		me := d.(*mouse.HoverEvent)
 		me.SetHandled()
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -241,7 +241,7 @@ func (sv *SVGView) MouseHover() {
 		if obj != nil {
 			pos := me.Where
 			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name())
-			gi.PopupTooltip(obj.Name(), pos.X, pos.Y, sv.ViewportSafe(), ttxt)
+			core.PopupTooltip(obj.Name(), pos.X, pos.Y, sv.ViewportSafe(), ttxt)
 		}
 	})
 }

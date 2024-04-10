@@ -115,10 +115,10 @@ func (gv *VectorView) UpdateSelectToolbar() {
 	// 	return
 	// }
 	// sz := es.DragSelEffBBox.Size()
-	// tb.ChildByName("posx", 8).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.X)
-	// tb.ChildByName("posy", 9).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
-	// tb.ChildByName("width", 10).(*gi.Spinner).SetValue(sz.X)
-	// tb.ChildByName("height", 11).(*gi.Spinner).SetValue(sz.Y)
+	// tb.ChildByName("posx", 8).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.X)
+	// tb.ChildByName("posy", 9).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
+	// tb.ChildByName("width", 10).(*core.Spinner).SetValue(sz.X)
+	// tb.ChildByName("height", 11).(*core.Spinner).SetValue(sz.Y)
 }
 
 // UpdateSelect should be called whenever selection changes

@@ -68,7 +68,7 @@ func (vv *VectorView) OpenDrawingFile(fnm core.Filename) error {
 	vv.Filename = core.Filename(path)
 	sv := vv.SVG()
 	err := grr.Log(sv.SSVG().OpenXML(path))
-	// SavedPaths.AddPath(path, gi.Settings.Params.SavedPathsMax)
+	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	fdir, _ := filepath.Split(path)
 	grr.Log(os.Chdir(fdir))
@@ -154,7 +154,7 @@ func (vv *VectorView) SaveDrawingAs(fname core.Filename) error { //gti:add
 	}
 	path, _ := filepath.Abs(string(fname))
 	vv.Filename = core.Filename(path)
-	// SavedPaths.AddPath(path, gi.Settings.Params.SavedPathsMax)
+	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	sv := vv.SVG()
 	sv.SSVG().RemoveOrphanedDefs()
@@ -759,7 +759,7 @@ func (vv *VectorView) ChangeMade() {
 
 /*
 func (gv *VectorView) OSFileEvent() {
-	gv.ConnectEvent(oswin.OSOpenFilesEvent, gi.RegPri, func(recv, send tree.Node, sig int64, d any) {
+	gv.ConnectEvent(oswin.OSOpenFilesEvent, core.RegPri, func(recv, send tree.Node, sig int64, d any) {
 		ofe := d.(*osevent.OpenFilesEvent)
 		for _, fn := range ofe.Files {
 			NewVectorWindow(fn)
@@ -772,7 +772,7 @@ func (gv *VectorView) OSFileEvent() {
 func (vv *VectorView) OpenRecent(filename core.Filename) {
 	// if string(filename) == VectorViewResetRecents {
 	// 	SavedPaths = nil
-	// 	gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+	// 	core.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	// } else if string(filename) == VectorViewEditRecents {
 	// 	vv.EditRecents()
 	// } else {
@@ -784,14 +784,14 @@ func (vv *VectorView) OpenRecent(filename core.Filename) {
 func (vv *VectorView) EditRecents() {
 	// tmp := make([]string, len(SavedPaths))
 	// copy(tmp, SavedPaths)
-	// gi.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
+	// core.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
 	// opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
 	// giv.SliceViewDialog(vv.Viewport, &tmp, opts,
 	// 	nil, vv, func(recv, send tree.Node, sig int64, data any) {
-	// 		if sig == int64(gi.DialogAccepted) {
+	// 		if sig == int64(core.DialogAccepted) {
 	// 			SavedPaths = nil
 	// 			SavedPaths = append(SavedPaths, tmp...)
-	// 			gi.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
+	// 			core.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
 	// 		}
 	// 	})
 }
@@ -856,7 +856,7 @@ func (vv *VectorView) AutoSave() error {
 	// vv.SetFlag(int(VectorViewAutoSaving))
 	// asfn := vv.AutoSaveFilename()
 	// sv := vv.SVG()
-	// err := sv.SaveXML(gi.Filename(asfn))
+	// err := sv.SaveXML(core.Filename(asfn))
 	// if err != nil && err != io.EOF {
 	// 	log.Println(err)
 	// }

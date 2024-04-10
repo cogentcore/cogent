@@ -36,13 +36,13 @@ func (vv *VectorView) ConfigNodeToolbar() {
 
 	core.NewSeparator(tb)
 
-	// tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
+	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
 	// 	gv.This(), func(recv, send tree.Node, sig int64, data interface{}) {
 	// 		grr := recv.Embed(KiT_VectorView).(*VectorView)
 	// 		grr.SelGroup()
 	// 	})
 	//
-	// gi.NewSeparator(tb, "sep-group")
+	// core.NewSeparator(tb, "sep-group")
 
 	core.NewLabel(tb).SetText("X: ")
 
@@ -289,7 +289,7 @@ func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt mat32.Vec2
 
 /*
 // SpriteNodeDrag processes a mouse node drag event on a path node sprite
-func (sv *SVGView) SpriteNodeDrag(idx int, win *gi.Window, me *mouse.DragEvent) {
+func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("NodeAdj", es.ActivePath.Nm)

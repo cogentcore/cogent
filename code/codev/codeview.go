@@ -98,7 +98,7 @@ type CodeView struct {
 }
 
 func init() {
-	// gi.URLHandler = URLHandler
+	// core.URLHandler = URLHandler
 	// paint.TextLinkHandler = TextLinkHandler
 }
 

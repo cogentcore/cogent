@@ -154,7 +154,7 @@ func (gv *VectorView) DeleteSelected() {
 
 /*
 // TreeViewIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
-var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
+var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni any, act *core.Button) {
 	tv := fni.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 	sn := tv.SrcNode
 	if sn != nil {
@@ -273,10 +273,10 @@ var TreeViewProperties = tree.Properties{
 	},
 	giv.TreeViewSelectors[giv.TreeViewActive]: tree.Properties{},
 	giv.TreeViewSelectors[giv.TreeViewSel]: tree.Properties{
-		"background-color": &gi.Settings.Colors.Select,
+		"background-color": &core.Settings.Colors.Select,
 	},
 	giv.TreeViewSelectors[giv.TreeViewFocus]: tree.Properties{
-		"background-color": &gi.Settings.Colors.Control,
+		"background-color": &core.Settings.Colors.Control,
 	},
 	"CtxtMenuActive": tree.Propertieslice{
 		{"SrcEdit", tree.Properties{
@@ -300,7 +300,7 @@ var TreeViewProperties = tree.Properties{
 		}},
 		{"Cut", tree.Properties{
 			"shortcut": keyfun.Cut,
-			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Button) {
+			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *core.Button) {
 				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),

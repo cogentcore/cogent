@@ -42,7 +42,7 @@ func (ge *CodeView) ConfigCodeView() {
 	ge.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	// ge.SetProp("spacing", core.StdDialogVSpaceUnits)
 	core.NewSplits(ge, "splitview")
 	core.NewFrame(ge, "statusbar")
 

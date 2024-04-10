@@ -87,7 +87,7 @@ func (kf KeySeq) String() string {
 	return string(kf.Key1 + " " + kf.Key2)
 }
 
-// Label satisfies gi.Labeler interface
+// Label satisfies core.Labeler interface
 func (kf KeySeq) Label() string {
 	return string(kf.Key1 + " " + kf.Key2)
 }
@@ -335,7 +335,7 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 			return &it.Map, i, true
 		}
 	}
-	fmt.Printf("gi.KeyMaps.MapByName: key map named: %v not found\n", name)
+	fmt.Printf("core.KeyMaps.MapByName: key map named: %v not found\n", name)
 	return nil, -1, false
 }
 

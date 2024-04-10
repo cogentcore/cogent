@@ -719,7 +719,7 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 		}
 	}
 	if msg {
-		log.Printf("gi.Commands.CmdByName: command named: %v not found\n", name)
+		log.Printf("core.Commands.CmdByName: command named: %v not found\n", name)
 	}
 	return nil, -1, false
 }

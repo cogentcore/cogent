@@ -191,7 +191,7 @@ func DashIconsInit() {
 	}
 
 	// for k, v := range AllDashesMap {
-	// 	ic := &gi.SVG{}
+	// 	ic := &core.SVG{}
 	// 	ic.InitName(ic, k)
 	// 	ic.SetProp("width", units.Ch(20))
 	// 	ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)

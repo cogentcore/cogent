@@ -41,7 +41,7 @@ func main() {
 			// 	}
 			// }
 
-			recv := gi.WidgetBase{}
+			recv := core.WidgetBase{}
 			recv.InitName(&recv, "pie_dummy")
 
 			inQuitPrompt := false
@@ -69,6 +69,6 @@ func main() {
 			piv.NewPiView()
 
 			// above NewCodeProj calls will have added to WinWait..
-			gi.WinWait.Wait()
+			core.WinWait.Wait()
 	*/
 }

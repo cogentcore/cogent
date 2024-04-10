@@ -69,7 +69,7 @@ func SortVars(vrs []*Variable) {
 	})
 }
 
-// Label satisfies the gi.Labeler interface for showing name = value
+// Label satisfies the core.Labeler interface for showing name = value
 func (vr *Variable) Label() string {
 	val := vr.Value
 	sz := len(vr.Value)

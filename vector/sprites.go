@@ -166,7 +166,7 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *c
 
 /*
 // SpriteConnectEvent activates and sets mouse event functions to given function
-func SpriteConnectEvent(win *gi.Window, typ, subtyp Sprites, idx int, trgsz image.Point, recv tree.Node, fun tree.RecvFunc) *gi.Sprite {
+func SpriteConnectEvent(win *core.Window, typ, subtyp Sprites, idx int, trgsz image.Point, recv tree.Node, fun tree.RecvFunc) *core.Sprite {
 	sp := Sprite(win, typ, subtyp, idx, trgsz)
 	if recv != nil {
 		sp.ConnectEvent(recv, oswin.MouseEvent, fun)

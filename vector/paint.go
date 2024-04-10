@@ -313,7 +313,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 
-	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-type", 1).(*gi.ButtonBox)
+	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-type", 1).(*core.ButtonBox)
 	spt.SelectItem(int(pv.StrokeType))
 
 	ss := pv.StrokeStack()
@@ -342,12 +342,12 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	}
 
 	wr := pv.ChildByName("stroke-width", 2)
-	wsb := wr.ChildByName("width", 1).(*gi.Spinner)
+	wsb := wr.ChildByName("width", 1).(*core.Spinner)
 	wsb.SetValue(pc.StrokeStyle.Width.Val)
-	uncb := wr.ChildByName("width-units", 2).(*gi.Chooser)
+	uncb := wr.ChildByName("width-units", 2).(*core.Chooser)
 	uncb.SetCurrentIndex(int(pc.StrokeStyle.Width.Un))
 
-	dshcb := wr.ChildByName("dashes", 3).(*gi.Chooser)
+	dshcb := wr.ChildByName("dashes", 3).(*core.Chooser)
 	nwdsh, dnm := DashMatchArray(float64(pc.StrokeStyle.Width.Dots), pc.StrokeStyle.Dashes)
 	if nwdsh {
 		dshcb.ItemsFromIconList(AllDashIconNames, false, 0)
@@ -357,8 +357,8 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	mkr := pv.ChildByName("stroke-markers", 3)
 
 	ms, _, mc := MarkerFromNodeProp(kn, "marker-start")
-	mscb := mkr.ChildByName("marker-start", 0).(*gi.Chooser)
-	mscc := mkr.ChildByName("marker-start-color", 1).(*gi.Chooser)
+	mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
+	mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
 	if ms != "" {
 		mscb.SetCurVal(MarkerNameToIcon(ms))
 		mscc.SetCurrentIndex(int(mc))
@@ -367,8 +367,8 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 		mscc.SetCurrentIndex(0)
 	}
 	ms, _, mc = MarkerFromNodeProp(kn, "marker-mid")
-	mmcb := mkr.ChildByName("marker-mid", 2).(*gi.Chooser)
-	mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.Chooser)
+	mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
+	mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
 	if ms != "" {
 		mmcb.SetCurVal(MarkerNameToIcon(ms))
 		mmcc.SetCurrentIndex(int(mc))
@@ -377,8 +377,8 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 		mmcc.SetCurrentIndex(0)
 	}
 	ms, _, mc = MarkerFromNodeProp(kn, "marker-end")
-	mecb := mkr.ChildByName("marker-end", 4).(*gi.Chooser)
-	mecc := mkr.ChildByName("marker-end-color", 5).(*gi.Chooser)
+	mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
+	mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
 	if ms != "" {
 		mecb.SetCurVal(MarkerNameToIcon(ms))
 		mecc.SetCurrentIndex(int(mc))
@@ -387,7 +387,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 		mecc.SetCurrentIndex(0)
 	}
 
-	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*gi.ButtonBox)
+	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*core.ButtonBox)
 	fpt.SelectItem(int(pv.FillType))
 
 	fs := pv.FillStack()
@@ -422,7 +422,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 
 /*
 // GradStopsName returns the stopsname for gradient from url
-func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
+func (pv *PaintView) GradStopsName(gii core.Node2D, url string) string {
 	gr := svg.GradientByName(gii, url)
 	if gr == nil {
 		return ""
@@ -439,10 +439,10 @@ func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
 // also returns the name of the gradient if using one.
 func (pv *PaintView) DecodeType(kn tree.Node, cs *style.ColorSpec, prop string) (PaintTypes, string) {
 	pstr := ""
-	var gii gi.Node2D
+	var gii core.Node2D
 	if kn != nil {
 		pstr = laser.ToString(kn.Prop(prop))
-		gii = kn.(gi.Node2D)
+		gii = kn.(core.Node2D)
 	}
 	ptyp := PaintSolid
 	grnm := ""
@@ -666,7 +666,7 @@ func (pv *PaintView) Config() {
 	// sg.SelectedIndex = -1
 	sg.SetSlice(&pv.VectorView.EditState.Gradients)
 	// sg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if sig == int64(gi.WidgetSelected) {
+	// 	if sig == int64(core.WidgetSelected) {
 	// 		svv, _ := send.(*giv.TableView)
 	// 		if svv.SelectedIndex >= 0 {
 	// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
@@ -737,7 +737,7 @@ func (pv *PaintView) Config() {
 	// fg.SelectedIndex = -1
 	fg.SetSlice(&pv.VectorView.EditState.Gradients)
 	// fg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if sig == int64(gi.WidgetSelected) {
+	// 	if sig == int64(core.WidgetSelected) {
 	// 		svv, _ := send.(*giv.TableView)
 	// 		if svv.SelectedIndex >= 0 {
 	// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
@@ -796,18 +796,18 @@ func (pv *PaintView) StrokeProp() string {
 func (pv *PaintView) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
 	// mkr := pv.ChildByName("stroke-markers", 3)
 	//
-	// mscb := mkr.ChildByName("marker-start", 0).(*gi.Chooser)
-	// mscc := mkr.ChildByName("marker-start-color", 1).(*gi.Chooser)
+	// mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
+	// mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
 	// start = IconToMarkerName(mscb.CurVal)
 	// sc = MarkerColors(mscc.CurrentIndex)
 	//
-	// mmcb := mkr.ChildByName("marker-mid", 2).(*gi.Chooser)
-	// mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.Chooser)
+	// mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
+	// mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
 	// mid = IconToMarkerName(mmcb.CurVal)
 	// mc = MarkerColors(mmcc.CurrentIndex)
 	//
-	// mecb := mkr.ChildByName("marker-end", 4).(*gi.Chooser)
-	// mecc := mkr.ChildByName("marker-end-color", 5).(*gi.Chooser)
+	// mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
+	// mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
 	// end = IconToMarkerName(mecb.CurVal)
 	// ec = MarkerColors(mecc.CurrentIndex)
 

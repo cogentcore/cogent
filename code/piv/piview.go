@@ -44,7 +44,7 @@ const (
 // PiView provides the interactive GUI view for constructing and testing the
 // lexer and parser
 type PiView struct {
-	gi.Frame
+	core.Frame
 
 	// the parser we are viewing
 	Parser pi.Parser
@@ -86,13 +86,13 @@ func (pv *PiView) IsEmpty() bool {
 }
 
 // OpenRecent opens a recently-used project
-func (pv *PiView) OpenRecent(filename gi.Filename) { //gti:add
+func (pv *PiView) OpenRecent(filename core.Filename) { //gti:add
 	pv.OpenProj(filename)
 }
 
 // OpenProj opens lexer and parser rules to current filename, in a standard JSON-formatted file
 // if current is not empty, opens in a new window
-func (pv *PiView) OpenProj(filename gi.Filename) *PiView { //gti:add
+func (pv *PiView) OpenProj(filename core.Filename) *PiView { //gti:add
 	if !pv.IsEmpty() {
 		_, nprj := NewPiView()
 		nprj.OpenProj(filename)
@@ -101,13 +101,13 @@ func (pv *PiView) OpenProj(filename gi.Filename) *PiView { //gti:add
 	pv.Settings.OpenJSON(filename)
 	pv.Config()
 	pv.ApplySettings()
-	SavedPaths.AddPath(string(filename), gi.Settings.Params.SavedPathsMax)
+	SavedPaths.AddPath(string(filename), core.Settings.Params.SavedPathsMax)
 	SavePaths()
 	return pv
 }
 
 // NewProj makes a new project in a new window
-func (pv *PiView) NewProj() (*gi.Window, *PiView) { //gti:add
+func (pv *PiView) NewProj() (*core.Window, *PiView) { //gti:add
 	return NewPiView()
 }
 
@@ -127,8 +127,8 @@ func (pv *PiView) SaveProj() { //gti:add
 
 // SaveProjAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
 // also saves the current parser
-func (pv *PiView) SaveProjAs(filename gi.Filename) { //gti:add
-	SavedPaths.AddPath(string(filename), gi.Settings.Params.SavedPathsMax)
+func (pv *PiView) SaveProjAs(filename core.Filename) { //gti:add
+	SavedPaths.AddPath(string(filename), core.Settings.Params.SavedPathsMax)
 	SavePaths()
 	pv.SaveParser()
 	pv.GetSettings()
@@ -160,7 +160,7 @@ func (pv *PiView) GetSettings() {
 //  other IO
 
 // OpenParser opens lexer and parser rules to current filename, in a standard JSON-formatted file
-func (pv *PiView) OpenParser(filename gi.Filename) { //gti:add
+func (pv *PiView) OpenParser(filename core.Filename) { //gti:add
 	pv.Parser.OpenJSON(string(filename))
 	pv.Settings.ParserFile = filename
 	pv.Config()
@@ -183,7 +183,7 @@ func (pv *PiView) SaveParser() { //gti:add
 }
 
 // SaveParserAs saves lexer and parser rules to current filename, in a standard JSON-formatted file
-func (pv *PiView) SaveParserAs(filename gi.Filename) { //gti:add
+func (pv *PiView) SaveParserAs(filename core.Filename) { //gti:add
 	pv.Parser.SaveJSON(string(filename))
 
 	ext := filepath.Ext(string(pv.Settings.ParserFile))
@@ -197,13 +197,13 @@ func (pv *PiView) SaveParserAs(filename gi.Filename) { //gti:add
 }
 
 // OpenTest opens test file
-func (pv *PiView) OpenTest(filename gi.Filename) { //gti:add
+func (pv *PiView) OpenTest(filename core.Filename) { //gti:add
 	pv.TestBuf.OpenFile(filename)
 	pv.Settings.TestFile = filename
 }
 
 // SaveTestAs saves the test file as..
-func (pv *PiView) SaveTestAs(filename gi.Filename) {
+func (pv *PiView) SaveTestAs(filename core.Filename) {
 	pv.TestBuf.EditDone()
 	pv.TestBuf.SaveFile(filename)
 	pv.Settings.TestFile = filename
@@ -256,8 +256,8 @@ func (pv *PiView) LexInit() {
 	if fs.LexHasErrs() {
 		errs := fs.LexErrReport()
 		fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
-		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Lex Error",
-			Prompt: "The Lexer validation has errors<br>\n" + errs}, gi.AddOK, gi.NoCancel, nil, nil)
+		core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Lex Error",
+			Prompt: "The Lexer validation has errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
 	}
 	pv.UpdateLexBuf()
 }
@@ -272,12 +272,12 @@ func (pv *PiView) LexStopped() {
 		if errs != "" {
 			fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
 			pv.SetStatus("Lexer Errors!")
-			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Lex Error",
-				Prompt: "The Lexer has stopped due to errors<br>\n" + errs}, gi.AddOK, gi.NoCancel, nil, nil)
+			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Lex Error",
+				Prompt: "The Lexer has stopped due to errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
 		} else {
 			pv.SetStatus("Lexer Missing Rules!")
-			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Lex Error",
-				Prompt: "The Lexer has stopped because it cannot process the source at this point:<br>\n" + fs.LexNextSrcLine()}, gi.AddOK, gi.NoCancel, nil, nil)
+			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Lex Error",
+				Prompt: "The Lexer has stopped because it cannot process the source at this point:<br>\n" + fs.LexNextSrcLine()}, core.AddOK, core.NoCancel, nil, nil)
 		}
 	}
 }
@@ -372,8 +372,8 @@ func (pv *PiView) PassTwo() {
 	if fs.PassTwoHasErrs() {
 		errs := fs.PassTwoErrReport()
 		fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
-		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "PassTwo Error",
-			Prompt: "The PassTwo had the following errors<br>\n" + errs}, gi.AddOK, gi.NoCancel, nil, nil)
+		core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "PassTwo Error",
+			Prompt: "The PassTwo had the following errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
 	}
 }
 
@@ -402,8 +402,8 @@ func (pv *PiView) ParseInit() {
 	pv.UpdateLexBuf()
 	if fs.ParseHasErrs() {
 		errs := fs.ParseErrReportDetailed()
-		gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Parse Error",
-			Prompt: "The Parser validation has errors<br>\n" + errs}, gi.AddOK, gi.NoCancel, nil, nil)
+		core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Parse Error",
+			Prompt: "The Parser validation has errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
 	}
 }
 
@@ -416,12 +416,12 @@ func (pv *PiView) ParseStopped() {
 		errs := fs.ParseErrReportDetailed()
 		if errs != "" {
 			pv.SetStatus("Parse Error!")
-			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Parse Error",
-				Prompt: "The Parser has the following errors (see Output tab for full list)<br>\n" + errs}, gi.AddOK, gi.NoCancel, nil, nil)
+			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Parse Error",
+				Prompt: "The Parser has the following errors (see Output tab for full list)<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
 		} else {
 			pv.SetStatus("Parse Missing Rules!")
-			gi.PromptDialog(pv.Viewport, gi.DlgOpts{Title: "Parse Error",
-				Prompt: "The Parser has stopped because it cannot process the source at this point:<br>\n" + fs.ParseNextSrcLine()}, gi.AddOK, gi.NoCancel, nil, nil)
+			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Parse Error",
+				Prompt: "The Parser has stopped because it cannot process the source at this point:<br>\n" + fs.ParseNextSrcLine()}, core.AddOK, core.NoCancel, nil, nil)
 		}
 	}
 }
@@ -516,7 +516,7 @@ func (pv *PiView) CurPanel() int {
 		return -1
 	}
 	for i, ski := range sv.Kids {
-		_, sk := gi.KiToNode2D(ski)
+		_, sk := core.KiToNode2D(ski)
 		if sk.ContainsFocus() {
 			return i
 		}
@@ -582,19 +582,19 @@ func (pv *PiView) FocusPrevPanel() {
 //   Tabs
 
 // MainTabByName returns a MainTabs (first set of tabs) tab with given name
-func (pv *PiView) MainTabByName(label string) gi.Widget {
+func (pv *PiView) MainTabByName(label string) core.Widget {
 	tv := pv.MainTabs()
 	return tv.TabByName(label)
 }
 
 // MainTabByNameTry returns a MainTabs (first set of tabs) tab with given name, err if not found
-func (pv *PiView) MainTabByNameTry(label string) (gi.Widget, error) {
+func (pv *PiView) MainTabByNameTry(label string) (core.Widget, error) {
 	tv := pv.MainTabs()
 	return tv.TabByNameTry(label)
 }
 
 // SelectMainTabByName Selects given main tab, and returns all of its contents as well.
-func (pv *PiView) SelectMainTabByName(label string) gi.Widget {
+func (pv *PiView) SelectMainTabByName(label string) core.Widget {
 	tv := pv.MainTabs()
 	widg, err := pv.MainTabByNameTry(label)
 	if err == nil {
@@ -606,7 +606,7 @@ func (pv *PiView) SelectMainTabByName(label string) gi.Widget {
 // RecycleMainTab returns a MainTabs (first set of tabs) tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with widget of given type.  if sel, then select it.  returns widget
-func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Widget {
+func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) core.Widget {
 	tv := pv.MainTabs()
 	widg, err := pv.MainTabByNameTry(label)
 	if err == nil {
@@ -623,8 +623,8 @@ func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) gi.Wi
 }
 
 // ConfigTextEditor configures text view
-func (pv *PiView) ConfigTextEditor(ly *gi.Layout, out bool) *texteditor.Editor {
-	ly.Lay = gi.LayoutVert
+func (pv *PiView) ConfigTextEditor(ly *core.Layout, out bool) *texteditor.Editor {
+	ly.Lay = core.LayoutVert
 	ly.SetStretchMaxWidth()
 	ly.SetStretchMaxHeight()
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
@@ -638,13 +638,13 @@ func (pv *PiView) ConfigTextEditor(ly *gi.Layout, out bool) *texteditor.Editor {
 		tv = ly.NewChild(giv.KiT_TextEditor, ly.Nm).(*texteditor.Editor)
 	}
 
-	if gi.Settings.Editor.WordWrap {
+	if core.Settings.Editor.WordWrap {
 		tv.SetProp("white-space", styles.WhiteSpacePreWrap)
 	} else {
 		tv.SetProp("white-space", styles.WhiteSpacePre)
 	}
 	tv.SetProp("tab-size", 4)
-	tv.SetProp("font-family", gi.Settings.MonoFont)
+	tv.SetProp("font-family", core.Settings.MonoFont)
 	if out {
 		tv.SetInactive()
 	}
@@ -657,7 +657,7 @@ func (pv *PiView) ConfigTextEditor(ly *gi.Layout, out bool) *texteditor.Editor {
 // one with a Layout and then a TextEditor in it.  if sel, then select it.
 // returns widget
 func (pv *PiView) RecycleMainTabTextEditor(label string, sel bool, out bool) *texteditor.Editor {
-	ly := pv.RecycleMainTab(label, gi.LayoutType, sel).Embed(gi.LayoutType).(*gi.Layout)
+	ly := pv.RecycleMainTab(label, core.LayoutType, sel).Embed(core.LayoutType).(*core.Layout)
 	tv := pv.ConfigTextEditor(ly, out)
 	return tv
 }
@@ -733,12 +733,12 @@ func (pv *PiView) Config() {
 	parse.GuiActive = true
 	fmt.Printf("PiView enabling GoPi parser output\n")
 	pv.Parser.Init()
-	pv.Lay = gi.LayoutVert
-	pv.SetProp("spacing", gi.StdDialogVSpaceUnits)
+	pv.Lay = core.LayoutVert
+	pv.SetProp("spacing", core.StdDialogVSpaceUnits)
 	config := tree.Config{}
-	config.Add(gi.ToolbarType, "toolbar")
-	config.Add(gi.SplitsType, "splitview")
-	config.Add(gi.FrameType, "statusbar")
+	config.Add(core.ToolbarType, "toolbar")
+	config.Add(core.SplitsType, "splitview")
+	config.Add(core.FrameType, "statusbar")
 	mods, updt := pv.ConfigChildren(config)
 	if !mods {
 		updt = pv.UpdateStart()
@@ -763,8 +763,8 @@ func (pv *PiView) IsConfiged() bool {
 }
 
 // Splits returns the main Splits
-func (pv *PiView) Splits() *gi.Splits {
-	return pv.ChildByName("splitview", 4).(*gi.Splits)
+func (pv *PiView) Splits() *core.Splits {
+	return pv.ChildByName("splitview", 4).(*core.Splits)
 }
 
 // LexTree returns the lex rules tree view
@@ -788,23 +788,23 @@ func (pv *PiView) StructView() *giv.StructView {
 }
 
 // MainTabs returns the main TabView
-func (pv *PiView) MainTabs() *gi.TabView {
-	return pv.Splits().Child(MainTabsIndex).Embed(gi.KiT_TabView).(*gi.TabView)
+func (pv *PiView) MainTabs() *core.TabView {
+	return pv.Splits().Child(MainTabsIndex).Embed(core.KiT_TabView).(*core.TabView)
 }
 
 // StatusBar returns the statusbar widget
-func (pv *PiView) StatusBar() *gi.Frame {
-	return pv.ChildByName("statusbar", 2).(*gi.Frame)
+func (pv *PiView) StatusBar() *core.Frame {
+	return pv.ChildByName("statusbar", 2).(*core.Frame)
 }
 
 // StatusLabel returns the statusbar label widget
-func (pv *PiView) StatusLabel() *gi.Label {
-	return pv.StatusBar().Child(0).Embed(gi.LabelType).(*gi.Label)
+func (pv *PiView) StatusLabel() *core.Label {
+	return pv.StatusBar().Child(0).Embed(core.LabelType).(*core.Label)
 }
 
 // Toolbar returns the toolbar widget
-func (pv *PiView) Toolbar() *gi.Toolbar {
-	return pv.ChildByName("toolbar", 0).(*gi.Toolbar)
+func (pv *PiView) Toolbar() *core.Toolbar {
+	return pv.ChildByName("toolbar", 0).(*core.Toolbar)
 }
 
 // ConfigStatusBar configures statusbar with label
@@ -818,7 +818,7 @@ func (pv *PiView) ConfigStatusBar() {
 	sb.SetProp("overflow", "hidden") // no scrollbars!
 	sb.SetProp("margin", 0)
 	sb.SetProp("padding", 0)
-	lbl := sb.NewChild(gi.LabelType, "sb-lbl").(*gi.Label)
+	lbl := sb.NewChild(core.LabelType, "sb-lbl").(*core.Label)
 	lbl.SetStretchMaxWidth()
 	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
 	lbl.SetProp("vertical-align", styles.AlignTop)
@@ -840,11 +840,11 @@ func (pv *PiView) ConfigToolbar() {
 // SplitsConfig returns a TypeAndNameList for configuring the Splits
 func (pv *PiView) SplitsConfig() tree.Config {
 	config := tree.Config{}
-	config.Add(gi.FrameType, "lex-tree-fr")
-	config.Add(gi.FrameType, "parse-tree-fr")
+	config.Add(core.FrameType, "lex-tree-fr")
+	config.Add(core.FrameType, "parse-tree-fr")
 	config.Add(giv.KiT_StructView, "struct-view")
-	config.Add(gi.FrameType, "ast-tree-fr")
-	config.Add(gi.KiT_TabView, "main-tabs")
+	config.Add(core.FrameType, "ast-tree-fr")
+	config.Add(core.KiT_TabView, "main-tabs")
 	return config
 }
 
@@ -873,7 +873,7 @@ func (pv *PiView) ConfigSplits() {
 	if split == nil {
 		return
 	}
-	split.Dim = gi.X
+	split.Dim = core.X
 
 	split.SetProp("white-space", styles.WhiteSpacePreWrap)
 	split.SetProp("tab-size", 4)
@@ -881,30 +881,30 @@ func (pv *PiView) ConfigSplits() {
 	config := pv.SplitsConfig()
 	mods, updt := split.ConfigChildren(config)
 	if mods {
-		lxfr := split.Child(LexRulesIndex).(*gi.Frame)
+		lxfr := split.Child(LexRulesIndex).(*core.Frame)
 		lxt := lxfr.NewChild(giv.KiT_TreeView, "lex-tree").(*giv.TreeView)
 		lxt.SetRootNode(&pv.Parser.Lexer)
 
-		prfr := split.Child(ParseRulesIndex).(*gi.Frame)
+		prfr := split.Child(ParseRulesIndex).(*core.Frame)
 		prt := prfr.NewChild(giv.KiT_TreeView, "parse-tree").(*giv.TreeView)
 		prt.SetRootNode(&pv.Parser.Parser)
 
-		astfr := split.Child(AstOutIndex).(*gi.Frame)
+		astfr := split.Child(AstOutIndex).(*core.Frame)
 		astt := astfr.NewChild(giv.KiT_TreeView, "ast-tree").(*giv.TreeView)
 		astt.SetRootNode(&fs.Ast)
 
-		pv.TestBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
+		pv.TestBuf.SetHiStyle(core.Settings.Colors.HiStyle)
 		pv.TestBuf.Hi.Off = true // prevent auto-hi
 
-		pv.OutputBuffer.SetHiStyle(gi.Settings.Colors.HiStyle)
+		pv.OutputBuffer.SetHiStyle(core.Settings.Colors.HiStyle)
 		pv.OutputBuffer.Opts.LineNos = false
 
 		fs.ParseState.Trace.Init()
 		fs.ParseState.Trace.PipeOut()
 		go pv.MonitorOut()
 
-		pv.LexBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
-		pv.ParseBuf.SetHiStyle(gi.Settings.Colors.HiStyle)
+		pv.LexBuf.SetHiStyle(core.Settings.Colors.HiStyle)
+		pv.ParseBuf.SetHiStyle(core.Settings.Colors.HiStyle)
 
 		split.SetSplits(.15, .15, .2, .15, .35)
 		split.UpdateEnd(updt)
@@ -991,7 +991,7 @@ func (pv *PiView) FileNodeClosed(fn *filetree.Node) {
 func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	var kf code.KeyFuns
 	kc := kt.Chord()
-	if gi.DebugSettings.KeyEventTrace {
+	if core.DebugSettings.KeyEventTrace {
 		fmt.Printf("PiView KeyInput: %v\n", ge.Path())
 	}
 	// gkf := keyfun.(kc)
@@ -999,7 +999,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 		kf = code.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
 		if kf == code.KeyFunNil || kc == "Escape" {
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
@@ -1016,12 +1016,12 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 			kt.SetProcessed()
 			ge.KeySeq1 = kt.Chord()
 			ge.SetStatus(string(ge.KeySeq1))
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
 			}
 			return
 		} else if kf != code.KeyFunNil {
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
 			// gkf = keyfun.Nil // override!
@@ -1088,7 +1088,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 
 func (ge *PiView) KeyChordEvent() {
 	// need hipri to prevent 2-seq guys from being captured by others
-	ge.ConnectEvent(events.KeyChordEvent, gi.HiPri, func(recv, send tree.Node, sig int64, d any) {
+	ge.ConnectEvent(events.KeyChordEvent, core.HiPri, func(recv, send tree.Node, sig int64, d any) {
 		gee := recv.Embed(KiT_PiView).(*PiView)
 		kt := d.(*key.ChordEvent)
 		gee.PiViewKeys(kt)
@@ -1115,9 +1115,9 @@ func (pv *PiView) Render2D() {
 }
 
 var PiViewProperties = tree.Properties{
-	"EnumType:Flag":    gi.KiT_NodeFlags,
-	"background-color": &gi.Settings.Colors.Background,
-	"color":            &gi.Settings.Colors.Font,
+	"EnumType:Flag":    core.KiT_NodeFlags,
+	"background-color": &core.Settings.Colors.Background,
+	"color":            &core.Settings.Colors.Font,
 	"max-width":        -1,
 	"max-height":       -1,
 	"#title": tree.Properties{
@@ -1130,7 +1130,7 @@ var PiViewProperties = tree.Properties{
 			"shortcut": keyfun.MenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
-			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
+			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *core.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
 			}),
@@ -1150,7 +1150,7 @@ var PiViewProperties = tree.Properties{
 		{"SaveParser", tree.Properties{
 			"icon": "file-save",
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
-			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
+			"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *core.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveStateUpdate( pv.Changed && pv.Settings.ParserFile != "")
 			}),
@@ -1264,7 +1264,7 @@ var PiViewProperties = tree.Properties{
 				"shortcut": keyfun.MenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
-				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
+				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *core.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
 				}),
@@ -1295,7 +1295,7 @@ var PiViewProperties = tree.Properties{
 			{"SaveParser", tree.Properties{
 				"shortcut": keyfun.MenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
-				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *gi.Button) {
+				"updtfunc": giv.ActionUpdateFunc(func(pvi any, act *core.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( pv.Changed && pv.Settings.ParserFile != "")
 				}),
@@ -1330,7 +1330,7 @@ func (pv *PiView) CloseWindowReq() bool {
 	if !pv.Changed {
 		return true
 	}
-	gi.ChoiceDialog(pv.Viewport, gi.DlgOpts{Title: "Close Project: There are Unsaved Changes",
+	core.ChoiceDialog(pv.Viewport, core.DlgOpts{Title: "Close Project: There are Unsaved Changes",
 		Prompt: fmt.Sprintf("In Project: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this project and review?", pv.Nm)},
 		[]string{"Cancel", "Save Proj", "Close Without Saving"},
 		pv.This(), func(recv, send tree.Node, sig int64, data any) {
@@ -1350,7 +1350,7 @@ func (pv *PiView) CloseWindowReq() bool {
 // main windows and look for code windows and call their CloseWindowReq
 // functions!
 func QuitReq() bool {
-	for _, win := range gi.MainWindows {
+	for _, win := range core.MainWindows {
 		if !strings.HasPrefix(win.Nm, "Pie") {
 			continue
 		}
@@ -1371,7 +1371,7 @@ func QuitReq() bool {
 }
 
 // NewPiView creates a new PiView window
-func NewPiView() (*gi.Window, *PiView) {
+func NewPiView() (*core.Window, *PiView) {
 	winm := "Pie Interactive Parser Editor"
 
 	width := 1600
@@ -1383,7 +1383,7 @@ func NewPiView() (*gi.Window, *PiView) {
 		height = int(.8 * float64(scsz.Y))
 	}
 
-	win := gi.NewMainWindow(winm, winm, width, height)
+	win := core.NewMainWindow(winm, winm, width, height)
 
 	vp := win.WinViewport2D()
 	updt := vp.UpdateStart()
@@ -1401,7 +1401,7 @@ func NewPiView() (*gi.Window, *PiView) {
 	// 	if !inClosePrompt {
 	// 		inClosePrompt = true
 	// 		if pv.Changed {
-	// 			gi.ChoiceDialog(vp, gi.DlgOpts{Title: "Close Without Saving?",
+	// 			core.ChoiceDialog(vp, core.DlgOpts{Title: "Close Without Saving?",
 	// 				Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
 	// 				[]string{"Close Without Saving", "Cancel"},
 	// 				win.This(), func(recv, send tree.Node, sig int64, data any) {
@@ -1422,10 +1422,10 @@ func NewPiView() (*gi.Window, *PiView) {
 	// goosi.TheApp.SetQuitReqFunc(func() {
 	// 	if !inQuitPrompt {
 	// 		inQuitPrompt = true
-	// 		gi.PromptDialog(vp, gi.DlgOpts{Title: "Really Quit?",
+	// 		core.PromptDialog(vp, core.DlgOpts{Title: "Really Quit?",
 	// 			Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
 	// 			win.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 				if sig == int64(gi.DialogAccepted) {
+	// 				if sig == int64(core.DialogAccepted) {
 	// 					goosi.TheApp.Quit()
 	// 				} else {
 	// 					inQuitPrompt = false
@@ -1439,7 +1439,7 @@ func NewPiView() (*gi.Window, *PiView) {
 	// })
 
 	// win.OSWin.SetCloseCleanFunc(func(w oswin.Window) {
-	// 	if gi.MainWindows.Len() <= 1 {
+	// 	if core.MainWindows.Len() <= 1 {
 	// 		go goosi.TheApp.Quit() // once main window is closed, quit
 	// 	}
 	// })

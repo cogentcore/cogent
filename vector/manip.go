@@ -371,7 +371,7 @@ func ProportionalBBox(bb, orig mat32.Box2) mat32.Box2 {
 
 /*
 // SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
-func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragEvent) {
+func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 
 	InactivateSprites(win, SpAlignMatch)

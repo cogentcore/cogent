@@ -196,16 +196,16 @@ func (pf *Preferences) UpdateAll() {
 	// gist.RebuildDefaultStyles = true
 	// color.ColorSpecCache = nil
 	// gist.StyleTemplates = nil
-	// for _, w := range gi.AllWindows {  // no need and just messes stuff up!
+	// for _, w := range core.AllWindows {  // no need and just messes stuff up!
 	// 	w.SetSize(w.OSWin.Size())
 	// }
 	// // needs another pass through to get it right..
-	// for _, w := range gi.AllWindows {
+	// for _, w := range core.AllWindows {
 	// 	w.FullReRender()
 	// }
 	// gist.RebuildDefaultStyles = false
 	// // and another without rebuilding?  yep all are required
-	// for _, w := range gi.AllWindows {
+	// for _, w := range core.AllWindows {
 	// 	w.FullReRender()
 	// }
 }
@@ -221,7 +221,7 @@ var PreferencesProperties = tree.Properties{
 			}},
 			{"Save", tree.Properties{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
+				"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *core.Button) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
 				}),
@@ -239,7 +239,7 @@ var PreferencesProperties = tree.Properties{
 		{"Save", tree.Properties{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
+			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *core.Button) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdate(pf.Changed)
 			}),

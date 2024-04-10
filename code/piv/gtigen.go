@@ -36,7 +36,7 @@ var PiViewType = gti.AddType(&gti.Type{
 		{"OutMonMu", &gti.Field{Name: "OutMonMu", Type: "sync.Mutex", LocalType: "sync.Mutex", Doc: "mutex for updating, checking output monitor run status", Directives: gti.Directives{}, Tag: "json:\"-\""}},
 	}),
 	Embeds: ordmap.Make([]ordmap.KeyVal[string, *gti.Field]{
-		{"Frame", &gti.Field{Name: "Frame", Type: "cogentcore.org/core/gi.Frame", LocalType: "gi.Frame", Doc: "", Directives: gti.Directives{}, Tag: ""}},
+		{"Frame", &gti.Field{Name: "Frame", Type: "cogentcore.org/core/core.Frame", LocalType: "core.Frame", Doc: "", Directives: gti.Directives{}, Tag: ""}},
 	}),
 	Methods:  ordmap.Make([]ordmap.KeyVal[string, *gti.Method]{}),
 	Instance: &PiView{},
@@ -150,13 +150,13 @@ func (t *PiView) SetClass(v string) *PiView {
 }
 
 // SetCustomContextMenu sets the [PiView.CustomContextMenu]
-func (t *PiView) SetCustomContextMenu(v func(m *gi.Scene)) *PiView {
+func (t *PiView) SetCustomContextMenu(v func(m *core.Scene)) *PiView {
 	t.CustomContextMenu = v
 	return t
 }
 
 // SetLayout sets the [PiView.Lay]
-func (t *PiView) SetLayout(v gi.Layouts) *PiView {
+func (t *PiView) SetLayout(v core.Layouts) *PiView {
 	t.Lay = v
 	return t
 }
@@ -168,7 +168,7 @@ func (t *PiView) SetStackTop(v int) *PiView {
 }
 
 // SetStripes sets the [PiView.Stripes]
-func (t *PiView) SetStripes(v gi.Stripes) *PiView {
+func (t *PiView) SetStripes(v core.Stripes) *PiView {
 	t.Stripes = v
 	return t
 }

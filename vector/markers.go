@@ -289,7 +289,7 @@ func MarkerIconsInit() {
 	// 		empty = false
 	// 		AllMarkersSVGMap[k] = mk
 	// 	}
-	// 	ic := &gi.Icon{}
+	// 	ic := &core.Icon{}
 	// 	ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
 	// 	ic.Styles.Min.X.Ch(6)
 	// 	ic.Styles.Min.Y.Em(2)

@@ -120,8 +120,8 @@ func (vv *VectorView) LayerViewSigs(lyv *giv.TableView) {
 	// })
 
 	// lyv.WidgetSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	fmt.Printf("tv widgetsig: %v  data: %v\n", gi.WidgetSignals(sig).String(), data)
-	// 	if sig == int64(gi.WidgetSelected) {
+	// 	fmt.Printf("tv widgetsig: %v  data: %v\n", core.WidgetSignals(sig).String(), data)
+	// 	if sig == int64(core.WidgetSelected) {
 	// 		idx := data.(int)
 	// 		ly := es.Layers[idx]
 	// 		gv.SetCurLayer(ly.Name)
