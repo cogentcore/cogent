@@ -8,16 +8,16 @@ import (
 	"fmt"
 	"image"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
 
-func (vv *VectorView) NodeToolbar() *gi.Toolbar {
+func (vv *VectorView) NodeToolbar() *core.Toolbar {
 	tbs := vv.ModalToolbarStack()
-	tb := tbs.ChildByName("node-tb", 0).(*gi.Toolbar)
+	tb := tbs.ChildByName("node-tb", 0).(*core.Toolbar)
 	return tb
 }
 
@@ -28,13 +28,13 @@ func (vv *VectorView) ConfigNodeToolbar() {
 		return
 	}
 
-	grs := gi.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Settings.SnapNodes).
+	grs := core.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Settings.SnapNodes).
 		SetTooltip("snap movement and sizing of nodes, using overall snap settings")
 	grs.OnChange(func(e events.Event) {
 		Settings.SnapNodes = grs.IsChecked()
 	})
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
 	// tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
 	// 	gv.This(), func(recv, send tree.Node, sig int64, data interface{}) {
@@ -44,17 +44,17 @@ func (vv *VectorView) ConfigNodeToolbar() {
 	//
 	// gi.NewSeparator(tb, "sep-group")
 
-	gi.NewLabel(tb).SetText("X: ")
+	core.NewLabel(tb).SetText("X: ")
 
-	px := gi.NewSpinner(tb, "posx").SetStep(1).SetValue(0).
+	px := core.NewSpinner(tb, "posx").SetStep(1).SetValue(0).
 		SetTooltip("horizontal coordinate of node, in document units")
 	px.OnChange(func(e events.Event) {
 		vv.NodeSetXPos(px.Value)
 	})
 
-	gi.NewLabel(tb).SetText("Y: ")
+	core.NewLabel(tb).SetText("Y: ")
 
-	py := gi.NewSpinner(tb, "posy").SetStep(1).SetValue(0).
+	py := core.NewSpinner(tb, "posy").SetStep(1).SetValue(0).
 		SetTooltip("vertical coordinate of node, in document units")
 	py.OnChange(func(e events.Event) {
 		vv.NodeSetYPos(py.Value)
@@ -63,7 +63,7 @@ func (vv *VectorView) ConfigNodeToolbar() {
 }
 
 // NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
-func (vv *VectorView) NodeEnableFunc(act *gi.Button) {
+func (vv *VectorView) NodeEnableFunc(act *core.Button) {
 	// es := &gv.EditState
 	// act.SetInactiveState(!es.HasNodeed())
 }
@@ -75,9 +75,9 @@ func (vv *VectorView) UpdateNodeToolbar() {
 	if es.Tool != NodeTool {
 		return
 	}
-	px := tb.ChildByName("posx", 8).(*gi.Spinner)
+	px := tb.ChildByName("posx", 8).(*core.Spinner)
 	px.SetValue(es.DragSelectCurrentBBox.Min.X)
-	py := tb.ChildByName("posy", 9).(*gi.Spinner)
+	py := tb.ChildByName("posy", 9).(*core.Spinner)
 	py.SetValue(es.DragSelectCurrentBBox.Min.Y)
 }
 

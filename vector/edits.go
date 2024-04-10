@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/undo"
@@ -447,7 +447,7 @@ type GradStop struct {
 type Gradient struct {
 
 	// icon of gradient -- generated to display each gradient
-	Ic gi.SVG `edit:"-" tableview:"no-header" width:"5"`
+	Ic core.SVG `edit:"-" tableview:"no-header" width:"5"`
 
 	// name of gradient (id)
 	Id string `edit:"-" width:"6"`

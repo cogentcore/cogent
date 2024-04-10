@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/goosi"
 	"cogentcore.org/core/styles"
 )
@@ -97,7 +97,7 @@ func (pf *Preferences) Defaults() {
 	pf.SnapVector = true
 	pf.SnapGuide = true
 	pf.SnapNodes = true
-	home := gi.SystemSettings.User.HomeDir
+	home := core.SystemSettings.User.HomeDir
 	pf.EnvVars = map[string]string{
 		"PATH": home + "/bin:" + home + "/go/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/shbin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
 	}
@@ -112,7 +112,7 @@ var Settings = Preferences{}
 
 // InitSettings must be called at startup in mainrun()
 func InitSettings() {
-	gi.TheApp.SetName("Cogent Vector")
+	core.TheApp.SetName("Cogent Vector")
 	Settings.Defaults()
 	Settings.Open()
 	// OpenPaths() // todo
@@ -308,10 +308,10 @@ func DefaultColorSchemes() map[string]*ColorSettings {
 }
 
 // OpenJSON opens colors from a JSON-formatted file.
-func (pf *ColorSettings) OpenJSON(filename gi.Filename) error {
+func (pf *ColorSettings) OpenJSON(filename core.Filename) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
-		gi.ErrorDialog(nil, err, "File Not Found")
+		core.ErrorDialog(nil, err, "File Not Found")
 		log.Println(err)
 		return err
 	}
@@ -319,7 +319,7 @@ func (pf *ColorSettings) OpenJSON(filename gi.Filename) error {
 }
 
 // SaveJSON saves colors to a JSON-formatted file.
-func (pf *ColorSettings) SaveJSON(filename gi.Filename) error {
+func (pf *ColorSettings) SaveJSON(filename core.Filename) error {
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
 		log.Println(err) // unlikely
@@ -327,7 +327,7 @@ func (pf *ColorSettings) SaveJSON(filename gi.Filename) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.ErrorDialog(nil, err, "Could not Save to File")
+		core.ErrorDialog(nil, err, "Could not Save to File")
 		log.Println(err)
 	}
 	return err

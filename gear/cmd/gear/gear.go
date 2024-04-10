@@ -8,7 +8,7 @@ package main
 
 import (
 	"cogentcore.org/cogent/gear"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/grease"
 )
 
@@ -27,7 +27,7 @@ func main() {
 }
 
 func run(c *config) error {
-	b := gi.NewBody("Cogent Gear")
+	b := core.NewBody("Cogent Gear")
 	cmd := gear.NewCmd(c.Command)
 	err := cmd.Parse()
 	if err != nil {

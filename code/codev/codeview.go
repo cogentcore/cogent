@@ -17,11 +17,11 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/spell"
@@ -34,16 +34,16 @@ import (
 // default view has a tree browser of files on the left, editor panels in the
 // middle, and a tabbed viewer on the right.
 type CodeView struct {
-	gi.Frame
+	core.Frame
 
 	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
-	ProjRoot gi.Filename
+	ProjRoot core.Filename
 
 	// current project filename for saving / loading specific Code configuration information in a .code file (optional)
-	ProjFilename gi.Filename `ext:".code"`
+	ProjFilename core.Filename `ext:".code"`
 
 	// filename of the currently-active texteditor
-	ActiveFilename gi.Filename `set:"-"`
+	ActiveFilename core.Filename `set:"-"`
 
 	// language for current active filename
 	ActiveLang fi.Known
@@ -170,7 +170,7 @@ func (ge *CodeView) IsEmpty() bool {
 }
 
 // OpenRecent opens a recently-used file
-func (ge *CodeView) OpenRecent(filename gi.Filename) { //gti:add
+func (ge *CodeView) OpenRecent(filename core.Filename) { //gti:add
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".code" {
 		ge.OpenProj(filename)
@@ -181,7 +181,7 @@ func (ge *CodeView) OpenRecent(filename gi.Filename) { //gti:add
 
 // EditRecentPaths opens a dialog editor for editing the recent project paths list
 func (ge *CodeView) EditRecentPaths() {
-	d := gi.NewBody().AddTitle("Recent project paths").
+	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
 	giv.NewSliceView(d).SetSlice(&code.RecentPaths)
 	d.AddOKOnly().NewDialog(ge).Run()
@@ -192,19 +192,19 @@ func (ge *CodeView) EditRecentPaths() {
 func (ge *CodeView) OpenFile(fnm string) { //gti:add
 	abfn, _ := filepath.Abs(fnm)
 	if strings.HasPrefix(abfn, string(ge.ProjRoot)) {
-		ge.ViewFile(gi.Filename(abfn))
+		ge.ViewFile(core.Filename(abfn))
 		return
 	}
-	for _, win := range gi.MainRenderWins {
+	for _, win := range core.MainRenderWins {
 		msc := win.MainScene()
 		geo := CodeInScene(msc)
 		if strings.HasPrefix(abfn, string(geo.ProjRoot)) {
-			geo.ViewFile(gi.Filename(abfn))
+			geo.ViewFile(core.Filename(abfn))
 			return
 		}
 	}
 	// fmt.Printf("open path: %s\n", ge.ProjRoot)
-	ge.OpenPath(gi.Filename(abfn))
+	ge.OpenPath(core.Filename(abfn))
 }
 
 // SetWindowNameTitle sets the window name and title based on current project name
@@ -217,9 +217,9 @@ func (ge *CodeView) SetWindowNameTitle() {
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
 // current CodeView object if it is empty, or otherwise opens a new window.
-func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
+func (ge *CodeView) OpenPath(path core.Filename) *CodeView { //gti:add
 	if gproj, has := CheckForProjAtPath(string(path)); has {
-		return ge.OpenProj(gi.Filename(gproj))
+		return ge.OpenProj(core.Filename(gproj))
 	}
 	if !ge.IsEmpty() {
 		return NewCodeProjPath(string(path))
@@ -228,12 +228,12 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 	root, pnm, fnm, ok := ProjPathParse(string(path))
 	if ok {
 		os.Chdir(root)
-		code.RecentPaths.AddPath(root, gi.SystemSettings.SavedPathsMax)
+		code.RecentPaths.AddPath(root, core.SystemSettings.SavedPathsMax)
 		code.SavePaths()
-		ge.ProjRoot = gi.Filename(root)
+		ge.ProjRoot = core.Filename(root)
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
-		ge.Settings.ProjFilename = gi.Filename(filepath.Join(root, pnm+".code"))
+		ge.Settings.ProjFilename = core.Filename(filepath.Join(root, pnm+".code"))
 		ge.ProjFilename = ge.Settings.ProjFilename
 		ge.Settings.ProjRoot = ge.ProjRoot
 		ge.GuessMainLang()
@@ -242,7 +242,7 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 		ge.UpdateFiles()
 		ge.SplitsSetView(code.SplitName(code.AvailableSplitNames[0]))
 		if fnm != "" {
-			ge.NextViewFile(gi.Filename(fnm))
+			ge.NextViewFile(core.Filename(fnm))
 		}
 	}
 	return ge
@@ -250,7 +250,7 @@ func (ge *CodeView) OpenPath(path gi.Filename) *CodeView { //gti:add
 
 // OpenProj opens .code project file and its settings from given filename, in a standard
 // toml-formatted file
-func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
+func (ge *CodeView) OpenProj(filename core.Filename) *CodeView { //gti:add
 	if !ge.IsEmpty() {
 		return OpenCodeProj(string(filename))
 	}
@@ -259,7 +259,7 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 		slog.Error("Project Settings had a loading error", "error", err)
 		if ge.Settings.ProjRoot == "" {
 			root, _, _, _ := ProjPathParse(string(filename))
-			ge.Settings.ProjRoot = gi.Filename(root)
+			ge.Settings.ProjRoot = core.Filename(root)
 			ge.GuessMainLang()
 		}
 	}
@@ -268,8 +268,8 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 	if ok {
 		code.SetGoMod(ge.Settings.GoMod)
 		os.Chdir(string(ge.Settings.ProjRoot))
-		ge.ProjRoot = gi.Filename(ge.Settings.ProjRoot)
-		code.RecentPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
+		ge.ProjRoot = core.Filename(ge.Settings.ProjRoot)
+		code.RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
 		code.SavePaths()
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
@@ -284,14 +284,14 @@ func (ge *CodeView) OpenProj(filename gi.Filename) *CodeView { //gti:add
 // path -- all CodeView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *CodeView) NewProj(path gi.Filename, folder string, mainLang fi.Known, VersionControl filetree.VersionControlName) *CodeView { //gti:add
+func (ge *CodeView) NewProj(path core.Filename, folder string, mainLang fi.Known, VersionControl filetree.VersionControlName) *CodeView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
-		gi.MessageDialog(ge, fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err), "Could not Make Folder")
+		core.MessageDialog(ge, fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err), "Could not Make Folder")
 		return nil
 	}
-	nge := ge.OpenPath(gi.Filename(np))
+	nge := ge.OpenPath(core.Filename(np))
 	nge.Settings.MainLang = mainLang
 	if VersionControl != "" {
 		nge.Settings.VersionControl = VersionControl
@@ -304,7 +304,7 @@ func (ge *CodeView) NewFile(filename string, addToVcs bool) { //gti:add
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
-		gi.MessageDialog(ge, fmt.Sprintf("Could not make new file at: %v, err: %v", np, err), "Could not Make File")
+		core.MessageDialog(ge, fmt.Sprintf("Could not make new file at: %v, err: %v", np, err), "Could not Make File")
 		return
 	}
 	ge.Files.UpdatePath(np)
@@ -348,9 +348,9 @@ func (ge *CodeView) SaveProjIfExists(saveAllFiles bool) bool {
 // toml-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (ge *CodeView) SaveProjAs(filename gi.Filename) bool { //gti:add
+func (ge *CodeView) SaveProjAs(filename core.Filename) bool { //gti:add
 	spell.SaveIfLearn()
-	code.RecentPaths.AddPath(string(filename), gi.SystemSettings.SavedPathsMax)
+	code.RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
 	code.SavePaths()
 	ge.Settings.ProjFilename = filename
 	ge.ProjFilename = ge.Settings.ProjFilename
@@ -373,19 +373,19 @@ func (ge *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		}
 		return false
 	}
-	d := gi.NewBody().AddTitle("There are Unsaved Files").
+	d := core.NewBody().AddTitle("There are Unsaved Files").
 		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch))
-	d.AddBottomBar(func(parent gi.Widget) {
+	d.AddBottomBar(func(parent core.Widget) {
 		if cancelOpt {
 			d.AddCancel(parent).SetText("Cancel Command")
 		}
-		gi.NewButton(parent).SetText("Don't Save").OnClick(func(e events.Event) {
+		core.NewButton(parent).SetText("Don't Save").OnClick(func(e events.Event) {
 			d.Close()
 			if fun != nil {
 				fun()
 			}
 		})
-		gi.NewButton(parent).SetText("Save All").OnClick(func(e events.Event) {
+		core.NewButton(parent).SetText("Save All").OnClick(func(e events.Event) {
 			d.Close()
 			ge.SaveAllOpenNodes()
 			if fun != nil {
@@ -453,7 +453,7 @@ func (ge *CodeView) NChangedFiles() int {
 // and prompts the user to save open files when they try to close the scene
 // containing this code view.
 func (ge *CodeView) AddCloseDialog() {
-	ge.WidgetBase.AddCloseDialog(func(d *gi.Body) bool {
+	ge.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
 		ge.SaveProjIfExists(false) // don't prompt here, as we will do it now..
 		nch := ge.NChangedFiles()
 		if nch == 0 {
@@ -461,11 +461,11 @@ func (ge *CodeView) AddCloseDialog() {
 		}
 		d.AddTitle("Unsaved files").
 			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, ge.Nm))
-		d.AddBottomBar(func(parent gi.Widget) {
+		d.AddBottomBar(func(parent core.Widget) {
 			d.AddOK(parent, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
 				ge.Scene.Close()
 			})
-			gi.NewButton(parent, "sa").SetText("Save and close").OnClick(func(e events.Event) {
+			core.NewButton(parent, "sa").SetText("Save and close").OnClick(func(e events.Event) {
 				ge.SaveAllOpenNodes()
 				ge.Scene.Close()
 			})
@@ -488,7 +488,7 @@ func NewCodeProjPath(path string) *CodeView {
 // returning the window and the path
 func OpenCodeProj(projfile string) *CodeView {
 	pp := &code.ProjSettings{}
-	if err := pp.Open(gi.Filename(projfile)); err != nil {
+	if err := pp.Open(core.Filename(projfile)); err != nil {
 		slog.Debug("Project Settings had a loading error", "error", err)
 	}
 	path := string(pp.ProjRoot)
@@ -496,7 +496,7 @@ func OpenCodeProj(projfile string) *CodeView {
 	return NewCodeWindow(projfile, projnm, root, false)
 }
 
-func CodeInScene(sc *gi.Scene) *CodeView {
+func CodeInScene(sc *core.Scene) *CodeView {
 	gv := sc.Body.ChildByType(CodeViewType, tree.NoEmbeds)
 	if gv != nil {
 		return gv.(*CodeView)
@@ -508,7 +508,7 @@ func CodeInScene(sc *gi.Scene) *CodeView {
 func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 	winm := "Cogent Code • " + projnm
 
-	if win, found := gi.AllRenderWins.FindName(winm); found {
+	if win, found := core.AllRenderWins.FindName(winm); found {
 		sc := win.MainScene()
 		ge := CodeInScene(sc)
 		if ge != nil && string(ge.ProjRoot) == root {
@@ -517,18 +517,18 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 		}
 	}
 
-	b := gi.NewBody(winm).SetTitle(winm)
+	b := core.NewBody(winm).SetTitle(winm)
 
 	ge := NewCodeView(b)
-	gi.TheApp.AppBarConfig = ge.AppBarConfig
+	core.TheApp.AppBarConfig = ge.AppBarConfig
 	b.AddAppBar(ge.ConfigToolbar)
 
 	b.NewWindow().Run()
 
 	if doPath {
-		ge.OpenPath(gi.Filename(path))
+		ge.OpenPath(core.Filename(path))
 	} else {
-		ge.OpenProj(gi.Filename(path))
+		ge.OpenProj(core.Filename(path))
 	}
 
 	return ge

@@ -13,8 +13,8 @@ import (
 	"sort"
 	"strings"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/keyfun"
@@ -163,20 +163,20 @@ func KeyFun(key1, key2 key.Chord) KeyFuns {
 	ks := KeySeq{key1, key2}
 	if key1 != "" && key2 != "" {
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun 2 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg
 		}
 	} else if key1 != "" {
 		if _, need2 := Needs2KeyMap[key1]; need2 {
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun 1st key in 2key seq: %v\n", key1)
 			}
 			return KeyFunNeeds2
 		}
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun 1 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg
@@ -344,32 +344,32 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 var KeyMapSettingsFilename = "key-map-settings.json"
 
 // Open opens keymaps from a json-formatted file.
-func (km *KeyMaps) Open(filename gi.Filename) error { //gti:add
+func (km *KeyMaps) Open(filename core.Filename) error { //gti:add
 	*km = make(KeyMaps, 0, 10) // reset
 	return grr.Log(jsons.Open(km, string(filename)))
 }
 
 // Save saves keymaps to a json-formatted file.
-func (km *KeyMaps) Save(filename gi.Filename) error { //gti:add
+func (km *KeyMaps) Save(filename core.Filename) error { //gti:add
 	return grr.Log(jsons.Save(km, string(filename)))
 }
 
 // OpenSettings opens the KeyMaps from the app settings directory,
 // using KeyMapSettingsFilename.
 func (km *KeyMaps) OpenSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, KeyMapSettingsFilename)
 	AvailableKeyMapsChanged = false
-	return km.Open(gi.Filename(pnm))
+	return km.Open(core.Filename(pnm))
 }
 
 // SaveSettings saves the KeyMaps to the app setttings directory, using
 // KeyMapSettingsFilename.
 func (km *KeyMaps) SaveSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, KeyMapSettingsFilename)
 	AvailableKeyMapsChanged = false
-	return km.Save(gi.Filename(pnm))
+	return km.Save(core.Filename(pnm))
 }
 
 // CopyFrom copies keymaps from given other map

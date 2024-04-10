@@ -5,7 +5,7 @@
 package vector
 
 import (
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
@@ -19,7 +19,7 @@ type TextStyle struct {
 	Text string
 
 	// font family
-	Font gi.FontName `xml:"font-family"`
+	Font core.FontName `xml:"font-family"`
 
 	// font size
 	Size units.Value `xml:"font-size"`
@@ -77,7 +77,7 @@ func (ts *TextStyle) Defaults() {
 
 // SetFromFontStyle sets from standard styles.Font style
 func (ts *TextStyle) SetFromFontStyle(fs *styles.Font) {
-	ts.Font = gi.FontName(fs.Family)
+	ts.Font = core.FontName(fs.Family)
 	ts.Size = fs.Size
 	ts.Weight = fs.Weight
 	ts.Stretch = fs.Stretch
@@ -205,9 +205,9 @@ func (gv *VectorView) SetText(txt string) {
 ///////////////////////////////////////////////////////////////////////
 // Toolbar
 
-func (gv *VectorView) TextToolbar() *gi.Toolbar {
+func (gv *VectorView) TextToolbar() *core.Toolbar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("text-tb", 2).(*gi.Toolbar)
+	tb := tbs.ChildByName("text-tb", 2).(*core.Toolbar)
 	return tb
 }
 
@@ -221,7 +221,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 	ts := &es.Text
 	ts.VectorView = gv
 
-	txt := gi.NewTextField(tb, "text")
+	txt := core.NewTextField(tb, "text")
 	txt.Tooltip = "current text string"
 	txt.SetText(ts.Text)
 	// txt.SetProp("width", units.NewCh(50))
@@ -260,7 +260,7 @@ func (gv *VectorView) UpdateTextToolbar() {
 	es := &gv.EditState
 	ts := &es.Text
 
-	txt := tb.ChildByName("text", 0).(*gi.TextField)
+	txt := tb.ChildByName("text", 0).(*core.TextField)
 	txt.SetText(ts.Text)
 
 	// fw := tb.ChildByName("font", 0).(gi.Node2D)

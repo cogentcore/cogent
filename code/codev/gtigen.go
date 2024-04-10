@@ -5,7 +5,7 @@ package codev
 import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/fi"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/tree"
 )
@@ -29,11 +29,11 @@ func (t *CodeView) New() tree.Node { return &CodeView{} }
 
 // SetProjRoot sets the [CodeView.ProjRoot]:
 // root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjFilename
-func (t *CodeView) SetProjRoot(v gi.Filename) *CodeView { t.ProjRoot = v; return t }
+func (t *CodeView) SetProjRoot(v core.Filename) *CodeView { t.ProjRoot = v; return t }
 
 // SetProjFilename sets the [CodeView.ProjFilename]:
 // current project filename for saving / loading specific Code configuration information in a .code file (optional)
-func (t *CodeView) SetProjFilename(v gi.Filename) *CodeView { t.ProjFilename = v; return t }
+func (t *CodeView) SetProjFilename(v core.Filename) *CodeView { t.ProjFilename = v; return t }
 
 // SetActiveLang sets the [CodeView.ActiveLang]:
 // language for current active filename

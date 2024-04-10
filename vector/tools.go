@@ -5,8 +5,8 @@
 package vector
 
 import (
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/svg"
 )
@@ -36,7 +36,7 @@ func (gv *VectorView) SetTool(tl Tools) {
 	}
 	tls := gv.Tools()
 	for i, t := range tls.Kids {
-		t.(gi.Widget).AsWidget().SetSelected(i == int(tl))
+		t.(core.Widget).AsWidget().SetSelected(i == int(tl))
 	}
 	fs := es.FirstSelectedNode()
 	if fs != nil {
@@ -81,32 +81,32 @@ func (gv *VectorView) ConfigTools() {
 		return
 	}
 
-	gi.NewButton(tb).SetIcon(icons.ArrowSelectorTool).SetShortcut("S").
+	core.NewButton(tb).SetIcon(icons.ArrowSelectorTool).SetShortcut("S").
 		SetTooltip("Select, move, and resize objects").
 		OnClick(func(e events.Event) {
 			gv.SetTool(SelectTool)
 		})
-	gi.NewButton(tb).SetIcon("tool-node").SetShortcut("N").
+	core.NewButton(tb).SetIcon("tool-node").SetShortcut("N").
 		SetTooltip("Select and move node points within paths").
 		OnClick(func(e events.Event) {
 			gv.SetTool(NodeTool)
 		})
-	gi.NewButton(tb).SetIcon(icons.Rectangle).SetShortcut("R").
+	core.NewButton(tb).SetIcon(icons.Rectangle).SetShortcut("R").
 		SetTooltip("Create rectangles and squares").
 		OnClick(func(e events.Event) {
 			gv.SetTool(RectTool)
 		})
-	gi.NewButton(tb).SetIcon(icons.Circle).SetShortcut("E").
+	core.NewButton(tb).SetIcon(icons.Circle).SetShortcut("E").
 		SetTooltip("Create circles, ellipses, and arcs").
 		OnClick(func(e events.Event) {
 			gv.SetTool(EllipseTool)
 		})
-	gi.NewButton(tb).SetIcon(icons.LineCurve).SetShortcut("B").
+	core.NewButton(tb).SetIcon(icons.LineCurve).SetShortcut("B").
 		SetTooltip("Create bezier curves (straight lines and curves with control points)").
 		OnClick(func(e events.Event) {
 			gv.SetTool(BezierTool)
 		})
-	gi.NewButton(tb).SetIcon("tool-text").SetShortcut("T").
+	core.NewButton(tb).SetIcon("tool-text").SetShortcut("T").
 		SetTooltip("Add and edit text").
 		OnClick(func(e events.Event) {
 			gv.SetTool(TextTool)

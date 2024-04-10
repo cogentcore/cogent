@@ -7,8 +7,8 @@ package vector
 import (
 	"image"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/mat32"
@@ -19,7 +19,7 @@ import (
 
 // AlignView provides a range of alignment actions on selected objects.
 type AlignView struct {
-	gi.Layout
+	core.Layout
 
 	AlignAnchorView giv.EnumValue
 
@@ -253,19 +253,19 @@ func (av *AlignView) Config() {
 		s.Direction = styles.Column
 	})
 
-	all := gi.NewLayout(av)
-	gi.NewLabel(all).SetText("<b>Align:  </b>")
-	gi.NewChooser(all).SetEnum(AlignAnchorsN)
+	all := core.NewLayout(av)
+	core.NewLabel(all).SetText("<b>Align:  </b>")
+	core.NewChooser(all).SetEnum(AlignAnchorsN)
 
-	agrid := gi.NewLayout(av).Style(func(s *styles.Style) {
+	agrid := core.NewLayout(av).Style(func(s *styles.Style) {
 		s.Display = styles.Grid
 		s.Columns = 6
 	})
 
 	for _, al := range AlignsValues() {
 		al := al
-		gi.NewButton(agrid, al.String()).SetIcon(icons.Icon(al.String())).
-			SetTooltip(al.Desc()).SetType(gi.ButtonTonal).
+		core.NewButton(agrid, al.String()).SetIcon(icons.Icon(al.String())).
+			SetTooltip(al.Desc()).SetType(core.ButtonTonal).
 			OnClick(func(e events.Event) {
 				av.VectorView.Align(av.AlignAnchor(), al)
 			})

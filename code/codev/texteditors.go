@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/glop/dirs"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/texteditor"
@@ -23,7 +23,7 @@ import (
 
 // ConfigTextBuf configures the text buf according to prefs
 func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buffer) {
-	tb.SetHiStyle(gi.AppearanceSettings.HiStyle)
+	tb.SetHiStyle(core.AppearanceSettings.HiStyle)
 	tb.Opts.EditorSettings = ge.Settings.Editor
 	tb.ConfigKnown()
 	if tb.Complete != nil {
@@ -94,7 +94,7 @@ func (ge *CodeView) OpenNodeForTextEditor(tv *code.TextEditor) (*filetree.Node, 
 
 // TextEditorForFile finds FileNode for file, and returns TextEditor and index
 // that is viewing that FileNode, or false if none is
-func (ge *CodeView) TextEditorForFile(fnm gi.Filename) (*code.TextEditor, int, bool) {
+func (ge *CodeView) TextEditorForFile(fnm core.Filename) (*code.TextEditor, int, bool) {
 	fn, ok := ge.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -188,7 +188,7 @@ func (ge *CodeView) SwapTextEditors() bool {
 	return true
 }
 
-func (ge *CodeView) OpenFileAtRegion(filename gi.Filename, tr textbuf.Region) (tv *code.TextEditor, ok bool) {
+func (ge *CodeView) OpenFileAtRegion(filename core.Filename, tr textbuf.Region) (tv *code.TextEditor, ok bool) {
 	tv, _, ok = ge.LinkViewFile(filename)
 	if tv == nil {
 		return nil, false
@@ -213,9 +213,9 @@ func (ge *CodeView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *cod
 	}
 	fpath := up.Path[1:] // has double //
 	pos := up.Fragment
-	tv, _, ok = ge.LinkViewFile(gi.Filename(fpath))
+	tv, _, ok = ge.LinkViewFile(core.Filename(fpath))
 	if !ok {
-		gi.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
+		core.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 		return
 	}
 	if pos == "" {
@@ -272,17 +272,17 @@ func (ge *CodeView) FileNodeSelected(fn *filetree.Node) {
 	// not doing anything with this actually
 }
 
-func (ge *CodeView) TextEditorButtonMenu(idx int, m *gi.Scene) {
+func (ge *CodeView) TextEditorButtonMenu(idx int, m *core.Scene) {
 	tv := ge.TextEditorByIndex(idx)
 	opn := ge.OpenNodes.Strings()
-	gi.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
+	core.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
 		ge.CallViewFile(tv)
 	})
-	gi.NewSeparator(m, "file-sep")
+	core.NewSeparator(m, "file-sep")
 	for i, n := range opn {
 		i := i
 		n := n
-		gi.NewButton(m).SetText(n).OnClick(func(e events.Event) {
+		core.NewButton(m).SetText(n).OnClick(func(e events.Event) {
 			ge.ViewFileNode(tv, idx, ge.OpenNodes[i])
 		})
 	}

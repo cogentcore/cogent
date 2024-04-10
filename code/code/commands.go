@@ -15,10 +15,10 @@ import (
 	"strings"
 	"time"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
@@ -57,7 +57,7 @@ type CmdArgs []string
 
 // SetCompleter specifies the functions that do completion and post selection
 // editing when inserting the chosen completion
-func (cm *CmdArgs) SetCompleter(tf *gi.TextField, id string) {
+func (cm *CmdArgs) SetCompleter(tf *core.TextField, id string) {
 	if id == "arg" {
 		tf.SetCompleter(cm, CompleteArg, CompleteArgEdit)
 		return
@@ -381,14 +381,14 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			d := gi.NewBody().AddTitle("Code Command Prompt").
+			d := core.NewBody().AddTitle("Code Command Prompt").
 				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
-			tf := gi.NewTextField(d).SetText(curval)
+			tf := core.NewTextField(d).SetText(curval)
 			tf.Style(func(s *styles.Style) {
 				s.Min.X.Ch(100)
 				s.Max.X.Ch(100)
 			})
-			d.AddBottomBar(func(parent gi.Widget) {
+			d.AddBottomBar(func(parent core.Widget) {
 				d.AddCancel(parent)
 				d.AddOK(parent).OnClick(func(e events.Event) {
 					val := tf.Text()
@@ -410,7 +410,7 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 				if repo != nil {
 					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
-						m := gi.NewMenuFromStrings(br, cur, func(idx int) {
+						m := core.NewMenuFromStrings(br, cur, func(idx int) {
 							(*avp)[pv] = br[idx]
 							cnt++
 							if cnt == sz {
@@ -418,7 +418,7 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 							}
 						})
 						m.Nm = "prompt-branch"
-						gi.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
+						core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
 					} else {
 						fmt.Println(err)
 					}
@@ -441,9 +441,9 @@ func (cm *Command) Run(ge Code, buf *texteditor.Buffer) {
 	// todo: trying to use native highlighting
 	// buf.Hi.Init(&buf.Info, nil)
 	if cm.Confirm {
-		d := gi.NewBody().AddTitle("Confirm command").
+		d := core.NewBody().AddTitle("Confirm command").
 			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
-		d.AddBottomBar(func(parent gi.Widget) {
+		d.AddBottomBar(func(parent core.Widget) {
 			d.AddCancel(parent)
 			d.AddOK(parent).SetText("Run").OnClick(func(e events.Event) {
 				cm.RunAfterPrompts(ge, buf)
@@ -729,23 +729,23 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 var CommandSettingsFilename = "command-settings.toml"
 
 // Open opens commands from a toml-formatted file.
-func (cm *Commands) Open(filename gi.Filename) error { //gti:add
+func (cm *Commands) Open(filename core.Filename) error { //gti:add
 	*cm = make(Commands, 0, 10) // reset
 	return grr.Log(jsons.Open(cm, string(filename)))
 }
 
 // Save saves commands to a toml-formatted file.
-func (cm *Commands) Save(filename gi.Filename) error { //gti:add
+func (cm *Commands) Save(filename core.Filename) error { //gti:add
 	return grr.Log(jsons.Save(cm, string(filename)))
 }
 
 // OpenSettings opens custom Commands from the app settings directory, using
 // CommandSettingsFilename.
 func (cm *Commands) OpenSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, CommandSettingsFilename)
 	CustomCommandsChanged = false
-	err := cm.Open(gi.Filename(pnm))
+	err := cm.Open(core.Filename(pnm))
 	if err == nil {
 		MergeAvailableCmds()
 	} else {
@@ -757,10 +757,10 @@ func (cm *Commands) OpenSettings() error { //gti:add
 // SaveSettings saves custom Commands to the app settings directory, using
 // CommandSettingsFilename.
 func (cm *Commands) SaveSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, CommandSettingsFilename)
 	CustomCommandsChanged = false
-	err := cm.Save(gi.Filename(pnm))
+	err := cm.Save(core.Filename(pnm))
 	if err == nil {
 		MergeAvailableCmds()
 	}
@@ -803,7 +803,7 @@ var CustomCommandsChanged = false
 // SetCompleter adds a completer to the textfield - each field
 // can have its own match and edit functions
 // For this to be called add a "complete" tag to the struct field
-func (cmd *Command) SetCompleter(tf *gi.TextField, id string) {
+func (cmd *Command) SetCompleter(tf *core.TextField, id string) {
 	if id == "arg" {
 		tf.SetCompleter(cmd, CompleteArg, CompleteArgEdit)
 		return
@@ -829,7 +829,7 @@ func CompleteArgEdit(data any, text string, cursorPos int, c complete.Completion
 }
 
 // CommandMenu returns a menu function for commands for given language and vcs name
-func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
+func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 	ge, ok := ParentCode(fn.This())
 	if !ok {
 		return nil
@@ -846,7 +846,7 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 	if hsz > 0 {
 		lastCmd = string((*chist)[hsz-1])
 	}
-	return func(mm *gi.Scene) {
+	return func(mm *core.Scene) {
 		for _, cc := range cmds {
 			cc := cc
 			n := len(cc)
@@ -858,13 +858,13 @@ func CommandMenu(fn *filetree.Node) func(mm *gi.Scene) {
 			if !ic.IsValid() {
 				fmt.Println("icon not found", cmdCat)
 			}
-			cb := gi.NewButton(mm).SetText(cmdCat).SetType(gi.ButtonMenu).SetIcon(ic)
-			cb.SetMenu(func(m *gi.Scene) {
+			cb := core.NewButton(mm).SetText(cmdCat).SetType(core.ButtonMenu).SetIcon(ic)
+			cb.SetMenu(func(m *core.Scene) {
 				for ii := 1; ii < n; ii++ {
 					ii := ii
 					it := cc[ii]
 					cmdNm := CommandName(cmdCat, it)
-					b := gi.NewButton(m).SetText(it).SetIcon(ic).
+					b := core.NewButton(m).SetText(it).SetIcon(ic).
 						OnClick(func(e events.Event) {
 							// e.SetHandled() // note: this allows menu to stay open :)
 							cmd := CmdName(cmdNm)

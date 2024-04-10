@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/units"
 )
@@ -43,8 +43,8 @@ func (ge *CodeView) ConfigCodeView() {
 		s.Direction = styles.Column
 	})
 	// ge.SetProp("spacing", gi.StdDialogVSpaceUnits)
-	gi.NewSplits(ge, "splitview")
-	gi.NewFrame(ge, "statusbar")
+	core.NewSplits(ge, "splitview")
+	core.NewFrame(ge, "statusbar")
 
 	ge.ConfigSplits()
 	ge.ConfigStatusBar()
@@ -62,13 +62,13 @@ func (ge *CodeView) IsConfiged() bool {
 }
 
 // Splits returns the main Splits
-func (ge *CodeView) Splits() *gi.Splits {
-	return ge.ChildByName("splitview", 2).(*gi.Splits)
+func (ge *CodeView) Splits() *core.Splits {
+	return ge.ChildByName("splitview", 2).(*core.Splits)
 }
 
 // TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
-func (ge *CodeView) TextEditorButtonByIndex(idx int) *gi.Button {
-	return ge.Splits().Child(TextEditor1Index + idx).Child(0).(*gi.Button)
+func (ge *CodeView) TextEditorButtonByIndex(idx int) *core.Button {
+	return ge.Splits().Child(TextEditor1Index + idx).Child(0).(*core.Button)
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
@@ -77,21 +77,21 @@ func (ge *CodeView) TextEditorByIndex(idx int) *code.TextEditor {
 }
 
 // Tabs returns the main TabView
-func (ge *CodeView) Tabs() *gi.Tabs {
-	return ge.Splits().Child(TabsIndex).(*gi.Tabs)
+func (ge *CodeView) Tabs() *core.Tabs {
+	return ge.Splits().Child(TabsIndex).(*core.Tabs)
 }
 
 // StatusBar returns the statusbar widget
-func (ge *CodeView) StatusBar() *gi.Frame {
+func (ge *CodeView) StatusBar() *core.Frame {
 	if ge.This() == nil || !ge.HasChildren() {
 		return nil
 	}
-	return ge.ChildByName("statusbar", 2).(*gi.Frame)
+	return ge.ChildByName("statusbar", 2).(*core.Frame)
 }
 
 // StatusLabel returns the statusbar label widget
-func (ge *CodeView) StatusLabel() *gi.Label {
-	return ge.StatusBar().Child(0).(*gi.Label)
+func (ge *CodeView) StatusLabel() *core.Label {
+	return ge.StatusBar().Child(0).(*core.Label)
 }
 
 // SelectedFileNode returns currently selected file tree node as a *filetree.Node
@@ -108,7 +108,7 @@ func (ge *CodeView) SelectedFileNode() *filetree.Node {
 func (ge *CodeView) ConfigSplits() {
 	// note: covered by global update
 	split := ge.Splits().SetSplits(ge.Settings.Splits...)
-	ftfr := gi.NewFrame(split, "filetree")
+	ftfr := core.NewFrame(split, "filetree")
 	ftfr.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Overflow.Set(styles.OverflowAuto)
@@ -129,17 +129,17 @@ func (ge *CodeView) ConfigSplits() {
 	for i := 0; i < NTextEditors; i++ {
 		i := i
 		txnm := fmt.Sprintf("%d", i)
-		txly := gi.NewLayout(split, "textlay-"+txnm)
+		txly := core.NewLayout(split, "textlay-"+txnm)
 		txly.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
 		})
-		txbut := gi.NewButton(txly, "textbut-"+txnm).SetText("texteditor: " + txnm)
-		txbut.Type = gi.ButtonAction
+		txbut := core.NewButton(txly, "textbut-"+txnm).SetText("texteditor: " + txnm)
+		txbut.Type = core.ButtonAction
 		txbut.Style(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 		})
-		txbut.Menu = func(m *gi.Scene) {
+		txbut.Menu = func(m *core.Scene) {
 			ge.TextEditorButtonMenu(i, m)
 		}
 		txbut.OnClick(func(e events.Event) {
@@ -160,7 +160,7 @@ func (ge *CodeView) ConfigSplits() {
 
 	ge.UpdateTextButtons()
 
-	mtab := gi.NewTabs(split, "tabs").SetType(gi.FunctionalTabs)
+	mtab := core.NewTabs(split, "tabs").SetType(core.FunctionalTabs)
 	mtab.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
@@ -183,7 +183,7 @@ func (ge *CodeView) ConfigStatusBar() {
 		s.Margin.Zero()
 		s.Padding.Set(units.Dp(4))
 	})
-	lbl := gi.NewLabel(sb, "sb-lbl").SetText("This is the status bar initial configuration.  Welcome to code!")
+	lbl := core.NewLabel(sb, "sb-lbl").SetText("This is the status bar initial configuration.  Welcome to code!")
 	lbl.Style(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 		s.Min.Y.Em(1.0)

@@ -14,10 +14,10 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/vci"
@@ -36,7 +36,7 @@ func (ge *CodeView) ConfigFindButton(fb *giv.FuncButton) *giv.FuncButton {
 	return fb
 }
 
-func (ge *CodeView) CallFind(ctx gi.Widget) {
+func (ge *CodeView) CallFind(ctx core.Widget) {
 	ge.ConfigFindButton(giv.NewSoloFuncButton(ctx, ge.Find)).CallFunc()
 }
 
@@ -222,7 +222,7 @@ func (ge *CodeView) VCSLog(since string) (vci.Log, error) { //gti:add
 		if ge.Files.DirRepo != nil {
 			return ge.Files.LogVCS(true, since)
 		}
-		gi.MessageDialog(atv, "No VCS Repository found in current active file or Root path: Open a file in a repository and try again", "No Version Control Repository")
+		core.MessageDialog(atv, "No VCS Repository found in current active file or Root path: Open a file in a repository and try again", "No Version Control Repository")
 		return nil, errors.New("No VCS Repository found in current active file or Root path")
 	}
 	return ond.LogVCS(true, since)
@@ -244,12 +244,12 @@ func (ge *CodeView) OpenConsoleTab() { //gti:add
 }
 
 // ChooseRunExec selects the executable to run for the project
-func (ge *CodeView) ChooseRunExec(exePath gi.Filename) { //gti:add
+func (ge *CodeView) ChooseRunExec(exePath core.Filename) { //gti:add
 	if exePath != "" {
 		ge.Settings.RunExec = exePath
-		ge.Settings.BuildDir = gi.Filename(filepath.Dir(string(exePath)))
+		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(exePath)))
 		if !ge.Settings.RunExecIsExec() {
-			gi.MessageDialog(ge, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
+			core.MessageDialog(ge, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
 		}
 	}
 }
@@ -301,5 +301,5 @@ func (ge *CodeView) UpdateStatusLabel() {
 
 // HelpWiki opens wiki page for code on github
 func (ge *CodeView) HelpWiki() { //gti:add
-	gi.TheApp.OpenURL("https://cogentcore.org/code")
+	core.TheApp.OpenURL("https://cogentcore.org/code")
 }

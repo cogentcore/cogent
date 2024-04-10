@@ -8,8 +8,8 @@ import (
 	"log"
 	"path/filepath"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/fi"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grows/tomls"
 )
 
@@ -53,32 +53,32 @@ func (lt Langs) Validate() bool {
 var LangSettingsFilename = "lang-settings.toml"
 
 // Open opens languages from a toml-formatted file.
-func (lt *Langs) Open(filename gi.Filename) error {
+func (lt *Langs) Open(filename core.Filename) error {
 	*lt = make(Langs) // reset
 	return tomls.Open(lt, string(filename))
 }
 
 // Save saves languages to a toml-formatted file.
-func (lt *Langs) Save(filename gi.Filename) error { //gti:add
+func (lt *Langs) Save(filename core.Filename) error { //gti:add
 	return tomls.Save(lt, string(filename))
 }
 
 // OpenSettings opens the Langs from the app settings directory,
 // using LangSettingsFilename.
 func (lt *Langs) OpenSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
-	return lt.Open(gi.Filename(pnm))
+	return lt.Open(core.Filename(pnm))
 }
 
 // SaveSettings saves the Langs to the app settings directory,
 // using LangSettingsFilename.
 func (lt *Langs) SaveSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
-	return lt.Save(gi.Filename(pnm))
+	return lt.Save(core.Filename(pnm))
 }
 
 // CopyFrom copies languages from given other map

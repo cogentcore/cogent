@@ -7,7 +7,7 @@ package code
 import (
 	"path/filepath"
 
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/grows/tomls"
 	"cogentcore.org/core/grr"
 )
@@ -45,23 +45,23 @@ func (lt *Registers) Names() []string {
 var RegisterSettingsFilename = "register-settings.toml"
 
 // Open opens named registers from a toml-formatted file.
-func (lt *Registers) Open(filename gi.Filename) error { //gti:add
+func (lt *Registers) Open(filename core.Filename) error { //gti:add
 	*lt = make(Registers) // reset
 	return grr.Log(tomls.Open(lt, string(filename)))
 }
 
 // Save saves named registers to a toml-formatted file.
-func (lt *Registers) Save(filename gi.Filename) error { //gti:add
+func (lt *Registers) Save(filename core.Filename) error { //gti:add
 	return grr.Log(tomls.Save(lt, string(filename)))
 }
 
 // OpenSettings opens the Registers from the app settings directory,
 // using RegisterSettingsFilename.
 func (lt *Registers) OpenSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, RegisterSettingsFilename)
 	AvailableRegistersChanged = false
-	err := lt.Open(gi.Filename(pnm))
+	err := lt.Open(core.Filename(pnm))
 	if err == nil {
 		AvailableRegisterNames = lt.Names()
 	}
@@ -71,11 +71,11 @@ func (lt *Registers) OpenSettings() error { //gti:add
 // SaveSettings saves the Registers to the app settings directory,
 // using RegisterSettingsFilename.
 func (lt *Registers) SaveSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, RegisterSettingsFilename)
 	AvailableRegistersChanged = false
 	AvailableRegisterNames = lt.Names()
-	return lt.Save(gi.Filename(pnm))
+	return lt.Save(core.Filename(pnm))
 }
 
 // AvailableRegistersChanged is used to update toolbars via following menu, toolbar

@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"cogentcore.org/core/colors"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
@@ -38,49 +38,49 @@ var root = tree.NewNode("root", true, Model{
 const jsonName = "models.json"
 
 func main() {
-	b := gi.NewBody("Cogent AI")
-	b.AddAppBar(func(tb *gi.Toolbar) {
-		gi.NewButton(tb).SetText("Install") // todo set icon and merge ollama doc md files into s dom tree view
-		gi.NewButton(tb).SetText("Start server").OnClick(func(e events.Event) {
-			gi.ErrorSnackbar(b, xe.Verbose().Run("ollama", "serve"))
+	b := core.NewBody("Cogent AI")
+	b.AddAppBar(func(tb *core.Toolbar) {
+		core.NewButton(tb).SetText("Install") // todo set icon and merge ollama doc md files into s dom tree view
+		core.NewButton(tb).SetText("Start server").OnClick(func(e events.Event) {
+			core.ErrorSnackbar(b, xe.Verbose().Run("ollama", "serve"))
 		})
-		gi.NewButton(tb).SetText("Stop server").OnClick(func(e events.Event) {
+		core.NewButton(tb).SetText("Stop server").OnClick(func(e events.Event) {
 			// todo kill thread ?
 			// netstat -aon|findstr 11434
 		})
-		gi.NewButton(tb).SetText("Logs")                      // todo add a new windows show log and set ico
-		gi.NewButton(tb).SetText("About").SetIcon(icons.Info) // todo add a new windows show some info
+		core.NewButton(tb).SetText("Logs")                      // todo add a new windows show log and set ico
+		core.NewButton(tb).SetText("About").SetIcon(icons.Info) // todo add a new windows show some info
 	})
 
-	splits := gi.NewSplits(b).SetSplits(0.2, 0.8)
+	splits := core.NewSplits(b).SetSplits(0.2, 0.8)
 
-	leftFrame := gi.NewFrame(splits)
+	leftFrame := core.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
 	grr.Log(jsons.OpenFS(root, rootJson, jsonName))
 	giv.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
-	newFrame := gi.NewFrame(leftFrame)
+	newFrame := core.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	gi.NewButton(newFrame).SetText("Update module list").OnClick(func(e events.Event) {
-		gi.ErrorSnackbar(b, QueryModelList())
+	core.NewButton(newFrame).SetText("Update module list").OnClick(func(e events.Event) {
+		core.ErrorSnackbar(b, QueryModelList())
 	})
 
-	gi.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
+	core.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
 		// model := Models[tableView.SelectedIndex]
 		// cmd.RunArgs("ollama", "run", model.Name)//not need
 	})
-	gi.NewButton(newFrame).SetText("Stop selected module").OnClick(func(e events.Event) {
+	core.NewButton(newFrame).SetText("Stop selected module").OnClick(func(e events.Event) {
 		// model := Models[tableView.SelectedIndex]
 		// cmd.RunArgs("ollama", "stop",model.Name)//not need
 	})
 
-	rightFrame := gi.NewFrame(splits)
+	rightFrame := core.NewFrame(splits)
 	rightFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	header := gi.NewFrame(rightFrame)
+	header := core.NewFrame(rightFrame)
 	header.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Justify.Content = styles.Center
@@ -89,13 +89,13 @@ func main() {
 		s.Text.Align = styles.Center
 	})
 
-	gi.NewLabel(header).SetType(gi.LabelDisplayLarge).SetText("Cogent AI")
-	gi.NewLabel(header).SetType(gi.LabelTitleLarge).SetText("Run powerful AI models locally")
+	core.NewLabel(header).SetType(core.LabelDisplayLarge).SetText("Cogent AI")
+	core.NewLabel(header).SetType(core.LabelTitleLarge).SetText("Run powerful AI models locally")
 
-	var send *gi.Button
-	var textField *gi.TextField
+	var send *core.Button
+	var textField *core.TextField
 
-	suggestionsFrame := gi.NewFrame(header)
+	suggestionsFrame := core.NewFrame(header)
 	suggestionsFrame.Style(func(s *styles.Style) {
 		s.Justify.Content = styles.Center
 		s.Grow.Set(0, 0)
@@ -104,19 +104,19 @@ func main() {
 	suggestions := []string{"How do you call a function in Go?", "What is a partial derivative?", "Are apples healthy?"}
 
 	for _, suggestion := range suggestions {
-		gi.NewButton(suggestionsFrame).SetText(suggestion).SetType(gi.ButtonTonal).OnClick(func(e events.Event) {
+		core.NewButton(suggestionsFrame).SetText(suggestion).SetType(core.ButtonTonal).OnClick(func(e events.Event) {
 			textField.SetText(suggestion)
 			send.Send(events.Click, e)
 		})
 	}
 
-	history := gi.NewFrame(rightFrame)
+	history := core.NewFrame(rightFrame)
 	history.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Overflow.Set(styles.OverflowAuto)
 	})
 
-	prompt := gi.NewFrame(rightFrame)
+	prompt := core.NewFrame(rightFrame)
 	prompt.Style(func(s *styles.Style) {
 		s.Direction = styles.Row
 		s.Grow.Set(1, 0)
@@ -125,7 +125,7 @@ func main() {
 
 	//todo we need change back "new topic" button
 
-	textField = gi.NewTextField(prompt).SetType(gi.TextFieldOutlined).SetPlaceholder("Ask me anything")
+	textField = core.NewTextField(prompt).SetType(core.TextFieldOutlined).SetPlaceholder("Ask me anything")
 	textField.Style(func(s *styles.Style) { s.Max.X.Zero() })
 	textField.OnKeyChord(func(e events.Event) {
 		if keyfun.Of(e.KeyChord()) == keyfun.Enter {
@@ -133,7 +133,7 @@ func main() {
 		}
 	})
 
-	send = gi.NewButton(prompt).SetIcon(icons.Send)
+	send = core.NewButton(prompt).SetIcon(icons.Send)
 	send.OnClick(func(e events.Event) {
 		//todo prompt list and let ai support access local file service and access network
 		//seems model unknown what is NPU computer
@@ -166,7 +166,7 @@ func main() {
 
 		promptString := textField.Text()
 		if promptString == "" {
-			gi.MessageSnackbar(b, "Please enter a prompt")
+			core.MessageSnackbar(b, "Please enter a prompt")
 			return
 		}
 		textField.SetText("")
@@ -176,7 +176,7 @@ func main() {
 			rightFrame.Update()
 		}
 
-		yourPrompt := gi.NewFrame(history)
+		yourPrompt := core.NewFrame(history)
 		yourPrompt.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
@@ -185,14 +185,14 @@ func main() {
 		})
 		grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, "**You:** "+promptString))
 
-		answer := gi.NewFrame(history)
+		answer := core.NewFrame(history)
 		answer.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
 			s.Border.Radius = styles.BorderRadiusLarge
 			s.Grow.Set(1, 0)
 		})
-		gi.NewLabel(answer).SetText("<b>Cogent AI:</b> Loading...")
+		core.NewLabel(answer).SetText("<b>Cogent AI:</b> Loading...")
 
 		history.Update()
 
@@ -210,12 +210,12 @@ func main() {
 				ThreadID:    "",
 			}, "")
 			if err != nil {
-				gi.ErrorSnackbar(b, err)
+				core.ErrorSnackbar(b, err)
 				return
 			}
 			if resp.StatusCode != http.StatusOK {
 				body := grr.Log1(io.ReadAll(resp.Body))
-				gi.MessageSnackbar(b, fmt.Sprintf("Error getting response (%s): %s", resp.Status, body))
+				core.MessageSnackbar(b, fmt.Sprintf("Error getting response (%s): %s", resp.Status, body))
 				return
 			}
 			scanner := bufio.NewScanner(resp.Body)
@@ -224,7 +224,7 @@ func main() {
 			for scanner.Scan() {
 				token, err := HandleToken(scanner.Text())
 				if err != nil {
-					gi.ErrorSnackbar(b, err)
+					core.ErrorSnackbar(b, err)
 					continue
 				}
 				if token == "" {

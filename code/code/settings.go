@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/tomls"
 	"cogentcore.org/core/grr"
@@ -21,8 +21,8 @@ import (
 )
 
 func init() {
-	gi.TheApp.SetName("Cogent Code")
-	gi.AllSettings = slices.Insert(gi.AllSettings, 1, gi.Settings(Settings))
+	core.TheApp.SetName("Cogent Code")
+	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
 	DefaultKeyMap = "MacEmacs" // todo
 	SetActiveKeyMapName(DefaultKeyMap)
 	OpenPaths()
@@ -31,15 +31,15 @@ func init() {
 
 // Settings are the overall Code settings
 var Settings = &SettingsData{
-	SettingsBase: gi.SettingsBase{
+	SettingsBase: core.SettingsBase{
 		Name: "Code",
-		File: filepath.Join(gi.TheApp.DataDir(), "Cogent Code", "settings.toml"),
+		File: filepath.Join(core.TheApp.DataDir(), "Cogent Code", "settings.toml"),
 	},
 }
 
 // SettingsData is the data type for the overall user settings for Code.
 type SettingsData struct { //gti:add
-	gi.SettingsBase
+	core.SettingsBase
 
 	// file view settings
 	Files FileSettings
@@ -82,7 +82,7 @@ type FileSettings struct { //gti:add
 func (se *SettingsData) Defaults() {
 	se.Files.Defaults()
 	se.KeyMap = DefaultKeyMap
-	home := gi.SystemSettings.User.HomeDir
+	home := core.SystemSettings.User.HomeDir
 	texPath := ".:" + home + "/texmf/tex/latex:/Library/TeX/Root/texmf-dist/tex/latex:"
 	se.EnvVars = map[string]string{
 		"TEXINPUTS":       texPath,
@@ -162,7 +162,7 @@ func (se *SettingsData) ApplyEnvVars() {
 	}
 }
 
-func (se *SettingsData) ConfigToolbar(tb *gi.Toolbar) {
+func (se *SettingsData) ConfigToolbar(tb *core.Toolbar) {
 	giv.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
 	giv.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
 	giv.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
@@ -221,7 +221,7 @@ type ProjSettings struct { //gti:add
 	Files FileSettings
 
 	// editor settings
-	Editor gi.EditorSettings `view:"inline"`
+	Editor core.EditorSettings `view:"inline"`
 
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
@@ -236,12 +236,12 @@ type ProjSettings struct { //gti:add
 
 	// current project filename for saving / loading specific Code
 	// configuration information in a .code file (optional)
-	ProjFilename gi.Filename `ext:".code"`
+	ProjFilename core.Filename `ext:".code"`
 
 	// root directory for the project. all projects must be organized within
 	// a top-level root directory, with all the files therein constituting
 	// the scope of the project. By default it is the path for ProjFilename
-	ProjRoot gi.Filename
+	ProjRoot core.Filename
 
 	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
 	GoMod bool
@@ -250,13 +250,13 @@ type ProjSettings struct { //gti:add
 	BuildCmds CmdNames
 
 	// build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands
-	BuildDir gi.Filename
+	BuildDir core.Filename
 
 	// build target for main Build button, if relevant for your  BuildCmds
-	BuildTarg gi.Filename
+	BuildTarg core.Filename
 
 	// executable to run for this project via main Run button -- called by standard Run Proj command
-	RunExec gi.Filename
+	RunExec core.Filename
 
 	// command(s) to run for main Run button (typically Run Proj)
 	RunCmds CmdNames
@@ -292,14 +292,14 @@ func (se *ProjSettings) Update() {
 }
 
 // Open open from file
-func (se *ProjSettings) Open(filename gi.Filename) error { //gti:add
+func (se *ProjSettings) Open(filename core.Filename) error { //gti:add
 	err := grr.Log(tomls.Open(se, string(filename)))
 	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 
 // Save save to file
-func (se *ProjSettings) Save(filename gi.Filename) error { //gti:add
+func (se *ProjSettings) Save(filename core.Filename) error { //gti:add
 	return grr.Log(tomls.Save(se, string(filename)))
 }
 
@@ -317,7 +317,7 @@ func (se *ProjSettings) RunExecIsExec() bool {
 
 var (
 	// RecentPaths is a slice of recent file paths
-	RecentPaths gi.FilePaths
+	RecentPaths core.FilePaths
 
 	// SavedPathsFilename is the name of the saved file paths file in Cogent Core prefs directory
 	SavedPathsFilename = "code_saved_paths.json"
@@ -325,14 +325,14 @@ var (
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	RecentPaths.Save(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	RecentPaths.Open(pnm)
 }

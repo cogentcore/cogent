@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"image"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
@@ -17,9 +17,9 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (gv *VectorView) SelectToolbar() *gi.Toolbar {
+func (gv *VectorView) SelectToolbar() *core.Toolbar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("select-tb", 0).(*gi.Toolbar)
+	tb := tbs.ChildByName("select-tb", 0).(*core.Toolbar)
 	return tb
 }
 
@@ -30,21 +30,21 @@ func (gv *VectorView) ConfigSelectToolbar() {
 		return
 	}
 
-	grs := gi.NewSwitch(tb).SetText("Snap grid").
+	grs := core.NewSwitch(tb).SetText("Snap grid").
 		SetTooltip("snap movement and sizing of selection to grid").
 		SetChecked(Settings.SnapVector)
 	grs.OnChange(func(e events.Event) {
 		Settings.SnapVector = grs.IsChecked()
 	})
 
-	gis := gi.NewSwitch(tb).SetText("Snap guide").
+	gis := core.NewSwitch(tb).SetText("Snap guide").
 		SetTooltip("snap movement and sizing of selection to align with other elements in the scene").
 		SetChecked(Settings.SnapGuide)
 	gis.OnChange(func(e events.Event) {
 		Settings.SnapGuide = gis.IsChecked()
 	})
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
 	gv.NewSelectFuncButton(tb, gv.SelectGroup).SetText("Group").
 		SetIcon("sel-group").SetShortcut("Command+G")
@@ -52,7 +52,7 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	gv.NewSelectFuncButton(tb, gv.SelectUnGroup).SetText("Ungroup").
 		SetIcon("sel-ungroup").SetShortcut("Shift+Command+G")
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
 	gv.NewSelectFuncButton(tb, gv.SelectRotateLeft).SetText("").
 		SetIcon("sel-rotate-left").SetShortcut("Command+[")
@@ -62,34 +62,34 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	gv.NewSelectFuncButton(tb, gv.SelectFlipHorizontal).SetText("").SetIcon("sel-flip-horiz")
 	gv.NewSelectFuncButton(tb, gv.SelectFlipVertical).SetText("").SetIcon("sel-flip-vert")
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
 	gv.NewSelectFuncButton(tb, gv.SelectRaiseTop).SetText("").SetIcon("sel-raise-top")
 	gv.NewSelectFuncButton(tb, gv.SelectRaise).SetText("").SetIcon("sel-raise")
 	gv.NewSelectFuncButton(tb, gv.SelectLowerBottom).SetText("").SetIcon("sel-lower-bottom")
 	gv.NewSelectFuncButton(tb, gv.SelectLower).SetText("").SetIcon("sel-lower")
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	gi.NewLabel(tb).SetText("X: ")
+	core.NewLabel(tb).SetText("X: ")
 	giv.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
 		gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
 	})
 
-	gi.NewLabel(tb).SetText("Y: ")
-	py := gi.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
+	core.NewLabel(tb).SetText("Y: ")
+	py := core.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
 	py.OnChange(func(e events.Event) {
 		gv.SelectSetYPos(py.Value)
 	})
 
-	gi.NewLabel(tb).SetText("W: ")
-	wd := gi.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
+	core.NewLabel(tb).SetText("W: ")
+	wd := core.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
 	wd.OnChange(func(e events.Event) {
 		gv.SelectSetWidth(wd.Value)
 	})
 
-	gi.NewLabel(tb).SetText("H: ")
-	ht := gi.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
+	core.NewLabel(tb).SetText("H: ")
+	ht := core.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
 	ht.OnChange(func(e events.Event) {
 		gv.SelectSetHeight(ht.Value)
 	})

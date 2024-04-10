@@ -12,9 +12,9 @@ import (
 	"reflect"
 	"time"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/laser"
@@ -28,7 +28,7 @@ import (
 // by the core code infrastructure, to allow CodeView to be in a separate package.
 // It is not intended to be the full functionality of the CodeView.
 type Code interface {
-	gi.Widget
+	core.Widget
 
 	// ProjSettings returns the code.ProjSettings
 	ProjSettings() *ProjSettings
@@ -61,7 +61,7 @@ type Code interface {
 	UpdateStatusLabel()
 
 	// SelectTabByName Selects given main tab, and returns all of its contents as well.
-	SelectTabByName(label string) gi.Widget
+	SelectTabByName(label string) core.Widget
 
 	// FocusOnTabs moves keyboard focus to Tabs panel -- returns false if nothing at that tab
 	FocusOnTabs() bool
@@ -117,7 +117,7 @@ type Code interface {
 	ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool)
 
 	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
-	OpenFileAtRegion(filename gi.Filename, reg textbuf.Region) (tv *TextEditor, ok bool)
+	OpenFileAtRegion(filename core.Filename, reg textbuf.Region) (tv *TextEditor, ok bool)
 
 	// SaveAllCheck checks if any files have not been saved, and prompt to save them.
 	// returns true if there were unsaved files, false otherwise.

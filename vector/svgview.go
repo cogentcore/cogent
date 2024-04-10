@@ -11,9 +11,9 @@ import (
 	"image/draw"
 	"strings"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
@@ -28,7 +28,7 @@ import (
 
 // SVGView is the element for viewing, interacting with the SVG
 type SVGView struct {
-	gi.SVG
+	core.SVG
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
@@ -95,7 +95,7 @@ func (sv *SVGView) UpdateView(full bool) {
 func (sv *SVGView) HandleEvents() {
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
-		if gi.DebugSettings.KeyEventTrace {
+		if core.DebugSettings.KeyEventTrace {
 			fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
 		}
 		kf := keyfun.Of(kc)
@@ -528,15 +528,15 @@ func (sv *SVGView) EditNode(kn tree.Node) {
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
-func (sv *SVGView) MakeNodeContextMenu(m *gi.Scene, kn tree.Node) {
-	gi.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
+func (sv *SVGView) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
+	core.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 		sv.EditNode(kn)
 	})
-	gi.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
+	core.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
 		sv.VectorView.SelectNodeInTree(kn, events.SelectOne)
 	})
 
-	gi.NewSeparator(m)
+	core.NewSeparator(m)
 
 	giv.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
 	giv.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)

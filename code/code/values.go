@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
@@ -19,16 +19,16 @@ import (
 
 // KeyMapsView opens a view of a key maps table
 func KeyMapsView(km *KeyMaps) {
-	if gi.ActivateExistingMainWindow(km) {
+	if core.ActivateExistingMainWindow(km) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Key Maps: duplicate an existing map (using context menu) as starting point for creating a custom map").SetData(km)
+	d := core.NewBody().SetTitle("Available Key Maps: duplicate an existing map (using context menu) as starting point for creating a custom map").SetData(km)
 	tv := giv.NewTableView(d).SetSlice(km)
 	AvailableKeyMapsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableKeyMapsChanged = true
 	})
-	d.AddAppBar(func(tb *gi.Toolbar) {
+	d.AddAppBar(func(tb *core.Toolbar) {
 		giv.NewFuncButton(tb, km.SaveSettings).
 			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableKeyMapsChanged && km == &AvailableKeyMaps) })
@@ -36,14 +36,14 @@ func KeyMapsView(km *KeyMaps) {
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
-		gi.NewSeparator(tb)
+		core.NewSeparator(tb)
 		giv.NewFuncButton(tb, km.ViewStandard).SetConfirm(true).
 			SetText("View standard").SetIcon(icons.Visibility).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
 		giv.NewFuncButton(tb, km.RevertToStandard).SetConfirm(true).
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
-		tb.AddOverflowMenu(func(m *gi.Scene) {
+		tb.AddOverflowMenu(func(m *core.Scene) {
 			giv.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
@@ -56,15 +56,15 @@ func KeyMapsView(km *KeyMaps) {
 // ProjSettingsView opens a view of project settings,
 // returns structview if not already open
 func ProjSettingsView(pf *ProjSettings) *giv.StructView {
-	if gi.ActivateExistingMainWindow(pf) {
+	if core.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Code project settings").SetData(pf)
-	gi.NewLabel(d).SetText("Settings are saved in the project .code file, along with other current state (open directories, splitter settings, etc). Do Save All or Save Project to save.")
+	d := core.NewBody().SetTitle("Code project settings").SetData(pf)
+	core.NewLabel(d).SetText("Settings are saved in the project .code file, along with other current state (open directories, splitter settings, etc). Do Save All or Save Project to save.")
 	tv := giv.NewStructView(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
 		pf.Update()
-		gi.ErrorSnackbar(d, pf.Save(pf.ProjFilename), "Error saving "+string(pf.ProjFilename)+" settings")
+		core.ErrorSnackbar(d, pf.Save(pf.ProjFilename), "Error saving "+string(pf.ProjFilename)+" settings")
 	})
 	d.NewWindow().Run()
 	return tv
@@ -73,11 +73,11 @@ func ProjSettingsView(pf *ProjSettings) *giv.StructView {
 // DebugSettingsView opens a view of project Debug settings,
 // returns structview if not already open
 func DebugSettingsView(pf *cdebug.Params) *giv.StructView {
-	if gi.ActivateExistingMainWindow(pf) {
+	if core.ActivateExistingMainWindow(pf) {
 		return nil
 	}
-	d := gi.NewBody().SetTitle("Project debug settings").SetData(pf)
-	gi.NewLabel(d).SetText("For args: Use -- double-dash and then add args to pass args to the executable (double-dash is by itself as a separate arg first).  For Debug test, must use -test.run instead of plain -run to specify tests to run")
+	d := core.NewBody().SetTitle("Project debug settings").SetData(pf)
+	core.NewLabel(d).SetText("For args: Use -- double-dash and then add args to pass args to the executable (double-dash is by itself as a separate arg first).  For Debug test, must use -test.run instead of plain -run to specify tests to run")
 	tv := giv.NewStructView(d).SetStruct(pf)
 	d.NewWindow().Run()
 	return tv
@@ -90,11 +90,11 @@ func (kn KeyMapName) Value() giv.Value {
 
 // KeyMapValue represents a [KeyMapName] value with a button.
 type KeyMapValue struct {
-	giv.ValueBase[*gi.Button]
+	giv.ValueBase[*core.Button]
 }
 
 func (v *KeyMapValue) Config() {
-	v.Widget.SetType(gi.ButtonTonal)
+	v.Widget.SetType(core.ButtonTonal)
 	giv.ConfigDialogWidget(v, false)
 }
 
@@ -106,7 +106,7 @@ func (v *KeyMapValue) Update() {
 	v.Widget.SetText(txt).Update()
 }
 
-func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
+func (vv *KeyMapValue) ConfigDialog(d *core.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailableKeyMaps.MapByName(KeyMapName(cur))
@@ -122,17 +122,17 @@ func (vv *KeyMapValue) ConfigDialog(d *gi.Body) (bool, func()) {
 
 // LangsView opens a view of a languages options map
 func LangsView(pt *Langs) {
-	if gi.ActivateExistingMainWindow(pt) {
+	if core.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
+	d := core.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
 	tv := giv.NewMapView(d).SetMap(pt)
 	AvailableLangsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableLangsChanged = true
 	})
 
-	d.AddAppBar(func(tb *gi.Toolbar) {
+	d.AddAppBar(func(tb *core.Toolbar) {
 		giv.NewFuncButton(tb, pt.SaveSettings).
 			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
@@ -140,14 +140,14 @@ func LangsView(pt *Langs) {
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
-		gi.NewSeparator(tb)
+		core.NewSeparator(tb)
 		giv.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
 			SetText("View standard").SetIcon(icons.Visibility).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		giv.NewFuncButton(tb, pt.RevertToStandard).SetConfirm(true).
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
-		tb.AddOverflowMenu(func(m *gi.Scene) {
+		tb.AddOverflowMenu(func(m *core.Scene) {
 			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
@@ -156,16 +156,16 @@ func LangsView(pt *Langs) {
 
 // CmdsView opens a view of a commands table
 func CmdsView(pt *Commands) {
-	if gi.ActivateExistingMainWindow(pt) {
+	if core.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Code Commands").SetData(pt)
+	d := core.NewBody().SetTitle("Code Commands").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
 	CustomCommandsChanged = false
 	tv.OnChange(func(e events.Event) {
 		CustomCommandsChanged = true
 	})
-	d.AddAppBar(func(tb *gi.Toolbar) {
+	d.AddAppBar(func(tb *core.Toolbar) {
 		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
@@ -173,11 +173,11 @@ func CmdsView(pt *Commands) {
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
-		gi.NewSeparator(tb)
+		core.NewSeparator(tb)
 		giv.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
 			SetText("View standard").SetIcon(icons.Visibility).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
-		tb.AddOverflowMenu(func(m *gi.Scene) {
+		tb.AddOverflowMenu(func(m *core.Scene) {
 			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
@@ -191,11 +191,11 @@ func (cn CmdName) Value() giv.Value {
 
 // CmdValue represents a [CmdName] value with a button.
 type CmdValue struct {
-	giv.ValueBase[*gi.Button]
+	giv.ValueBase[*core.Button]
 }
 
 func (v *CmdValue) Config() {
-	v.Widget.SetType(gi.ButtonTonal)
+	v.Widget.SetType(core.ButtonTonal)
 	giv.ConfigDialogWidget(v, false)
 }
 
@@ -207,7 +207,7 @@ func (v *CmdValue) Update() {
 	v.Widget.SetText(txt).Update()
 }
 
-func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
+func (vv *CmdValue) ConfigDialog(d *core.Body) (bool, func()) {
 	si := 0
 	cur := laser.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailableCommands.CmdByName(CmdName(cur), false)
@@ -223,17 +223,17 @@ func (vv *CmdValue) ConfigDialog(d *gi.Body) (bool, func()) {
 
 // SplitsView opens a view of a splits table
 func SplitsView(pt *Splits) {
-	if gi.ActivateExistingMainWindow(pt) {
+	if core.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
+	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailableSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableSplitsChanged = true
 	})
 
-	d.AddAppBar(func(tb *gi.Toolbar) {
+	d.AddAppBar(func(tb *core.Toolbar) {
 		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
@@ -241,7 +241,7 @@ func SplitsView(pt *Splits) {
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
-		tb.AddOverflowMenu(func(m *gi.Scene) {
+		tb.AddOverflowMenu(func(m *core.Scene) {
 			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
@@ -255,11 +255,11 @@ func (sn SplitName) Value() giv.Value {
 
 // SplitValue represents a [SplitName] value with a button.
 type SplitValue struct {
-	giv.ValueBase[*gi.Button]
+	giv.ValueBase[*core.Button]
 }
 
 func (v *SplitValue) Config() {
-	v.Widget.SetType(gi.ButtonTonal)
+	v.Widget.SetType(core.ButtonTonal)
 	giv.ConfigDialogWidget(v, false)
 }
 
@@ -271,9 +271,9 @@ func (v *SplitValue) Update() {
 	v.Widget.SetText(txt).Update()
 }
 
-func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
+func (v *SplitValue) OpenDialog(ctx core.Widget, fun func()) {
 	cur := laser.ToString(v.Value.Interface())
-	m := gi.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
+	m := core.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
 		nm := AvailableSplitNames[idx]
 		v.SetValue(nm)
 		v.Update()
@@ -281,20 +281,20 @@ func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
 			fun()
 		}
 	})
-	gi.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
+	core.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }
 
 // RegistersView opens a view of a commands table
 func RegistersView(pt *Registers) {
-	if gi.ActivateExistingMainWindow(pt) {
+	if core.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Cogent Code Registers").SetData(pt)
+	d := core.NewBody().SetTitle("Cogent Code Registers").SetData(pt)
 	d.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 
-	gi.NewLabel(d).SetText("Available Registers: can duplicate an existing (using context menu) as starting point for new one").SetType(gi.LabelHeadlineSmall)
+	core.NewLabel(d).SetText("Available Registers: can duplicate an existing (using context menu) as starting point for new one").SetType(core.LabelHeadlineSmall)
 
 	tv := giv.NewTableView(d).SetSlice(pt)
 
@@ -303,7 +303,7 @@ func RegistersView(pt *Registers) {
 		AvailableRegistersChanged = true
 	})
 
-	d.AddAppBar(func(tb *gi.Toolbar) {
+	d.AddAppBar(func(tb *core.Toolbar) {
 		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters) })
@@ -311,7 +311,7 @@ func RegistersView(pt *Registers) {
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
-		tb.AddOverflowMenu(func(m *gi.Scene) {
+		tb.AddOverflowMenu(func(m *core.Scene) {
 			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
@@ -326,11 +326,11 @@ func (rn RegisterName) Value() giv.Value {
 
 // RegisterValue represents a [RegisterName] value with a button.
 type RegisterValue struct {
-	giv.ValueBase[*gi.Button]
+	giv.ValueBase[*core.Button]
 }
 
 func (v *RegisterValue) Config() {
-	v.Widget.SetType(gi.ButtonTonal)
+	v.Widget.SetType(core.ButtonTonal)
 	giv.ConfigDialogWidget(v, false)
 }
 
@@ -342,13 +342,13 @@ func (v *RegisterValue) Update() {
 	v.Widget.SetText(txt).Update()
 }
 
-func (v *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
+func (v *RegisterValue) OpenDialog(ctx core.Widget, fun func()) {
 	if len(AvailableRegisterNames) == 0 {
-		gi.MessageSnackbar(ctx, "No registers available")
+		core.MessageSnackbar(ctx, "No registers available")
 		return
 	}
 	cur := laser.ToString(v.Value.Interface())
-	m := gi.NewMenuFromStrings(AvailableRegisterNames, cur, func(idx int) {
+	m := core.NewMenuFromStrings(AvailableRegisterNames, cur, func(idx int) {
 		rnm := AvailableRegisterNames[idx]
 		if ci := strings.Index(rnm, ":"); ci > 0 {
 			rnm = rnm[:ci]
@@ -359,5 +359,5 @@ func (v *RegisterValue) OpenDialog(ctx gi.Widget, fun func()) {
 			fun()
 		}
 	})
-	gi.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
+	core.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }

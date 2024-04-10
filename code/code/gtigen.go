@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/fi"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
@@ -312,7 +312,7 @@ func (t *SpellView) SetSuggest(v ...string) *SpellView { t.Suggest = v; return t
 
 // SetLastAction sets the [SpellView.LastAction]:
 // last user action (ignore, change, learn)
-func (t *SpellView) SetLastAction(v *gi.Button) *SpellView { t.LastAction = v; return t }
+func (t *SpellView) SetLastAction(v *core.Button) *SpellView { t.LastAction = v; return t }
 
 // SetTooltip sets the [SpellView.Tooltip]
 func (t *SpellView) SetTooltip(v string) *SpellView { t.Tooltip = v; return t }

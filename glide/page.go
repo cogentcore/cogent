@@ -8,16 +8,16 @@ package glide
 //go:generate core generate -add-types
 
 import (
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 )
 
 // Page represents one web browser page
 type Page struct {
-	gi.Frame
+	core.Frame
 
 	// The history of URLs that have been visited. The oldest page is first.
 	History []string `set:"-"`
@@ -41,7 +41,7 @@ func (pg *Page) OnInit() {
 func (pg *Page) OpenURL(url string) {
 	resp, err := coredom.Get(pg.Context, url)
 	if err != nil {
-		gi.ErrorSnackbar(pg, err, "Error opening page")
+		core.ErrorSnackbar(pg, err, "Error opening page")
 		return
 	}
 	defer resp.Body.Close()
@@ -51,15 +51,15 @@ func (pg *Page) OpenURL(url string) {
 	pg.DeleteChildren()
 	err = coredom.ReadHTML(pg.Context, pg, resp.Body)
 	if err != nil {
-		gi.ErrorSnackbar(pg, err, "Error opening page")
+		core.ErrorSnackbar(pg, err, "Error opening page")
 		return
 	}
 	pg.Update()
 }
 
 // AppBar is the default app bar for a [Page]
-func (pg *Page) AppBar(tb *gi.Toolbar) {
-	back := tb.ChildByName("back").(*gi.Button)
+func (pg *Page) AppBar(tb *core.Toolbar) {
+	back := tb.ChildByName("back").(*core.Button)
 	back.OnClick(func(e events.Event) {
 		if len(pg.History) > 1 {
 			pg.OpenURL(pg.History[len(pg.History)-2])

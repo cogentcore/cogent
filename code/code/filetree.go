@@ -13,10 +13,10 @@ import (
 	"sort"
 	"strings"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/states"
@@ -79,7 +79,7 @@ func (fn *FileNode) SetRunExec() {
 	ge, ok := ParentCode(fn.This())
 	if ok {
 		ge.ProjSettings().RunExec = fn.FPath
-		ge.ProjSettings().BuildDir = gi.Filename(filepath.Dir(string(fn.FPath)))
+		ge.ProjSettings().BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
 	}
 }
 
@@ -103,8 +103,8 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	}
 }
 
-func (fn *FileNode) ContextMenu(m *gi.Scene) {
-	gi.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
+func (fn *FileNode) ContextMenu(m *core.Scene) {
+	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
 		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
 		s.SetState(!fn.HasSelection(), states.Disabled)
 	})
@@ -240,7 +240,7 @@ func (on *OpenNodes) NChanged() int {
 // FindPath finds node for given path, nil if not found
 func (on *OpenNodes) FindPath(path string) *filetree.Node {
 	for _, f := range *on {
-		if f.FPath == gi.Filename(path) {
+		if f.FPath == core.Filename(path) {
 			return f
 		}
 	}
@@ -292,7 +292,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 			// fmt.Printf("dir: %v opened\n", sfn.Nm)
 			return tree.Continue
 		}
-		if int(sfn.Info.Size) > gi.SystemSettings.BigFileSize {
+		if int(sfn.Info.Size) > core.SystemSettings.BigFileSize {
 			return tree.Continue
 		}
 		if strings.HasSuffix(sfn.Nm, ".code") { // exclude self
@@ -368,7 +368,7 @@ func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool
 		if info.IsDir() {
 			return nil
 		}
-		if int(info.Size()) > gi.SystemSettings.BigFileSize {
+		if int(info.Size()) > core.SystemSettings.BigFileSize {
 			return nil
 		}
 		if strings.HasSuffix(info.Name(), ".code") { // exclude self

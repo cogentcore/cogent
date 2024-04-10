@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/glop/dirs"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
@@ -106,7 +106,7 @@ func (lt *Splits) FixLen() {
 }
 
 // Open opens named splits from a json-formatted file.
-func (lt *Splits) Open(filename gi.Filename) error { //gti:add
+func (lt *Splits) Open(filename core.Filename) error { //gti:add
 	if grr.Ignore1(dirs.FileExists(string(filename))) {
 		*lt = make(Splits, 0, 10) // reset
 		err := grr.Log(jsons.Open(lt, string(filename)))
@@ -117,16 +117,16 @@ func (lt *Splits) Open(filename gi.Filename) error { //gti:add
 }
 
 // Save saves named splits to a json-formatted file.
-func (lt *Splits) Save(filename gi.Filename) error { //gti:add
+func (lt *Splits) Save(filename core.Filename) error { //gti:add
 	return grr.Log(jsons.Save(lt, string(filename)))
 }
 
 // OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) OpenSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
-	err := lt.Open(gi.Filename(pnm))
+	err := lt.Open(core.Filename(pnm))
 	if err == nil {
 		AvailableSplitNames = lt.Names()
 	}
@@ -136,11 +136,11 @@ func (lt *Splits) OpenSettings() error { //gti:add
 // SaveSettings saves Splits to App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) SaveSettings() error { //gti:add
 	lt.FixLen()
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
 	AvailableSplitNames = lt.Names()
-	return lt.Save(gi.Filename(pnm))
+	return lt.Save(core.Filename(pnm))
 }
 
 // CopyFrom copies named splits from given other map

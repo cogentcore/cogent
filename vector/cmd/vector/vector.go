@@ -8,13 +8,13 @@ import (
 	"os"
 
 	"cogentcore.org/cogent/vector"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 )
 
 func main() {
 	vector.InitSettings()
 
-	ofs := gi.TheApp.OpenFiles()
+	ofs := core.TheApp.OpenFiles()
 
 	var fnms []string
 	if len(ofs) > 0 {
@@ -30,5 +30,5 @@ func main() {
 			vector.NewVectorWindow(fnm)
 		}
 	}
-	gi.Wait()
+	core.Wait()
 }

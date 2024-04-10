@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/glop/dirs"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/mimedata"
@@ -70,7 +70,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 		return ld
 	}
 
-	if gi.RecycleDialog(&ld) {
+	if core.RecycleDialog(&ld) {
 		return
 	}
 
@@ -93,21 +93,21 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	title := "Lookup: " + text
 
 	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
-	tb.Hi.Style = gi.AppearanceSettings.HiStyle
+	tb.Hi.Style = core.AppearanceSettings.HiStyle
 	tb.Opts.LineNos = ge.Settings.Editor.LineNos
 
-	d := gi.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
+	d := core.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
 	tv := texteditor.NewEditor(d).SetBuffer(tb)
 	tv.SetReadOnly(true)
 
 	tv.SetCursorTarget(lex.Pos{Ln: ld.StLine})
-	tv.Styles.Font.Family = string(gi.AppearanceSettings.MonoFont)
-	d.AddBottomBar(func(parent gi.Widget) {
-		gi.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
-			ge.ViewFile(gi.Filename(ld.Filename))
+	tv.Styles.Font.Family = string(core.AppearanceSettings.MonoFont)
+	d.AddBottomBar(func(parent core.Widget) {
+		core.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
+			ge.ViewFile(core.Filename(ld.Filename))
 			d.Close()
 		})
-		gi.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
+		core.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
 			OnClick(func(e events.Event) {
 				d.Clipboard().Write(mimedata.NewTextBytes(txt))
 			})
@@ -288,7 +288,7 @@ func (ge *CodeView) SpacesToTabs() { //gti:add
 // DiffFiles shows the differences between two given files
 // in side-by-side DiffView and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
-func (ge *CodeView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
+func (ge *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //gti:add
 	fna := ge.FileNodeForFile(string(fnmA), true)
 	if fna == nil {
 		return
@@ -305,7 +305,7 @@ func (ge *CodeView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffView and in the console as a context diff.
-func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:add
+func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //gti:add
 	fnb := ge.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
 		return
@@ -416,12 +416,12 @@ func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		}
 	}
 	pos := up.Fragment
-	tv, _, ok := ge.LinkViewFile(gi.Filename(fpath))
+	tv, _, ok := ge.LinkViewFile(core.Filename(fpath))
 	if !ok {
 		_, fnm := filepath.Split(fpath)
-		tv, _, ok = ge.LinkViewFile(gi.Filename(fnm))
+		tv, _, ok = ge.LinkViewFile(core.Filename(fnm))
 		if !ok {
-			gi.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
+			core.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 			return false
 		}
 	}

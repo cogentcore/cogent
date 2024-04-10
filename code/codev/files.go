@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/texteditor"
@@ -48,13 +48,13 @@ func (ge *CodeView) ConfigActiveFilename(fb *giv.FuncButton) *giv.FuncButton {
 	return fb
 }
 
-func (ge *CodeView) CallSaveActiveViewAs(ctx gi.Widget) {
+func (ge *CodeView) CallSaveActiveViewAs(ctx core.Widget) {
 	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.SaveActiveViewAs)).CallFunc()
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
 // currently-active texteditor
-func (ge *CodeView) SaveActiveViewAs(filename gi.Filename) { //gti:add
+func (ge *CodeView) SaveActiveViewAs(filename core.Filename) { //gti:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer != nil {
 		ge.LastSaveTStamp = time.Now()
@@ -146,18 +146,18 @@ func (ge *CodeView) AutoSaveCheck(tv *code.TextEditor, vidx int, fn *filetree.No
 	if tv.IsNotSaved() || !fn.Buffer.AutoSaveCheck() {
 		return false
 	}
-	ge.DiffFileNode(fn, gi.Filename(fn.Buffer.AutoSaveFilename()))
-	d := gi.NewBody().AddTitle("Autosave file Exists").
+	ge.DiffFileNode(fn, core.Filename(fn.Buffer.AutoSaveFilename()))
+	d := core.NewBody().AddTitle("Autosave file Exists").
 		AddText(fmt.Sprintf("An auto-save file for file: %v exists; open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
-	d.AddBottomBar(func(parent gi.Widget) {
-		gi.NewButton(parent).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
+	d.AddBottomBar(func(parent core.Widget) {
+		core.NewButton(parent).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 			d.Close()
 			fn.Buffer.AutoSaveDelete()
 			ge.Files.UpdatePath(fn.Buffer.AutoSaveFilename()) // will update dir
 		})
-		gi.NewButton(parent).SetText("Open autosave file").OnClick(func(e events.Event) {
+		core.NewButton(parent).SetText("Open autosave file").OnClick(func(e events.Event) {
 			d.Close()
-			ge.NextViewFile(gi.Filename(fn.Buffer.AutoSaveFilename()))
+			ge.NextViewFile(core.Filename(fn.Buffer.AutoSaveFilename()))
 		})
 	})
 	d.NewDialog(ge).Run()
@@ -169,7 +169,7 @@ func (ge *CodeView) OpenFileNode(fn *filetree.Node) (bool, error) {
 	if fn.IsDir() {
 		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
 	}
-	filetree.NodeHiStyle = gi.AppearanceSettings.HiStyle // must be set prior to OpenBuf
+	filetree.NodeHiStyle = core.AppearanceSettings.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
 		ge.ConfigTextBuf(fn.Buffer)
@@ -260,7 +260,7 @@ func (ge *CodeView) TextBufForFile(fpath string, add bool) *texteditor.Buffer {
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns texteditor and its
 // index, false if not found
-func (ge *CodeView) NextViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) { //gti:add
+func (ge *CodeView) NextViewFile(fnm core.Filename) (*code.TextEditor, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -270,13 +270,13 @@ func (ge *CodeView) NextViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) 
 }
 
 // CallViewFile calls ViewFile with ActiveFilename set as arg
-func (ge *CodeView) CallViewFile(ctx gi.Widget) {
+func (ge *CodeView) CallViewFile(ctx core.Widget) {
 	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.ViewFile)).CallFunc()
 }
 
 // ViewFile views file in an existing TextEditor if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
-func (ge *CodeView) ViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) { //gti:add
+func (ge *CodeView) ViewFile(fnm core.Filename) (*code.TextEditor, int, bool) { //gti:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -293,7 +293,7 @@ func (ge *CodeView) ViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) { //
 }
 
 // ViewFileInIndex views file in given text view index
-func (ge *CodeView) ViewFileInIndex(fnm gi.Filename, idx int) (*code.TextEditor, int, bool) {
+func (ge *CodeView) ViewFileInIndex(fnm core.Filename, idx int) (*code.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -319,7 +319,7 @@ func (ge *CodeView) LinkViewFileNode(fn *filetree.Node) (*code.TextEditor, int) 
 
 // LinkViewFile opens the file in the 2nd texteditor, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
-func (ge *CodeView) LinkViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) {
+func (ge *CodeView) LinkViewFile(fnm core.Filename) (*code.TextEditor, int, bool) {
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -340,7 +340,7 @@ func (ge *CodeView) LinkViewFile(fnm gi.Filename) (*code.TextEditor, int, bool) 
 // ShowFile shows given file name at given line, returning TextEditor showing it
 // or error if not found.
 func (ge *CodeView) ShowFile(fname string, ln int) (*code.TextEditor, error) {
-	tv, _, ok := ge.LinkViewFile(gi.Filename(fname))
+	tv, _, ok := ge.LinkViewFile(core.Filename(fname))
 	if ok {
 		tv.SetCursorTarget(lex.Pos{Ln: ln - 1})
 		return tv, nil
@@ -349,7 +349,7 @@ func (ge *CodeView) ShowFile(fname string, ln int) (*code.TextEditor, error) {
 }
 
 // CodeViewOpenNodes gets list of open nodes for submenu-func
-func CodeViewOpenNodes(it any, sc *gi.Scene) []string {
+func CodeViewOpenNodes(it any, sc *core.Scene) []string {
 	ge, ok := it.(tree.Node).(*CodeView)
 	if !ok {
 		return nil
@@ -380,11 +380,11 @@ func (ge *CodeView) SelectOpenNode() {
 	if len(nl) > 1 {
 		def = nl[1]
 	}
-	m := gi.NewMenuFromStrings(nl, def, func(idx int) {
+	m := core.NewMenuFromStrings(nl, def, func(idx int) {
 		nb := ge.OpenNodes[idx]
 		ge.ViewFileNode(tv, ge.ActiveTextEditorIndex, nb)
 	})
-	gi.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
+	core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // CloneActiveView sets the next text view to view the same file currently being vieweds
@@ -492,12 +492,12 @@ func (ge *CodeView) FileNodeOpened(fn *filetree.Node) {
 		return
 	}
 	// program, document, data
-	if int(fn.Info.Size) > gi.SystemSettings.BigFileSize {
-		d := gi.NewBody().AddTitle("File is relatively large").
+	if int(fn.Info.Size) > core.SystemSettings.BigFileSize {
+		d := core.NewBody().AddTitle("File is relatively large").
 			AddText(fmt.Sprintf("The file: %v is relatively large at: %v; really open for editing?", fn.Nm, fn.Info.Size))
-		d.AddBottomBar(func(parent gi.Widget) {
+		d.AddBottomBar(func(parent core.Widget) {
 			d.AddCancel(parent)
-			gi.NewButton(parent).SetText("Open").OnClick(func(e events.Event) {
+			core.NewButton(parent).SetText("Open").OnClick(func(e events.Event) {
 				d.Close()
 				ge.NextViewFileNode(fn)
 			})

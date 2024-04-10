@@ -4,7 +4,7 @@ package vector
 
 import (
 	"cogentcore.org/core/enums"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 )
 
 var _AlignAnchorsValues = []AlignAnchors{0, 1, 2, 3}
@@ -354,14 +354,14 @@ var _VectorViewFlagsMap = map[VectorViewFlags]string{2: `VectorViewAutoSaving`}
 
 // String returns the string representation of this VectorViewFlags value.
 func (i VectorViewFlags) String() string {
-	return enums.BitFlagStringExtended(i, _VectorViewFlagsValues, gi.WidgetFlagsValues())
+	return enums.BitFlagStringExtended(i, _VectorViewFlagsValues, core.WidgetFlagsValues())
 }
 
 // BitIndexString returns the string representation of this VectorViewFlags value
 // if it is a bit index value (typically an enum constant), and
 // not an actual bit flag value.
 func (i VectorViewFlags) BitIndexString() string {
-	return enums.BitIndexStringExtended[VectorViewFlags, gi.WidgetFlags](i, _VectorViewFlagsMap)
+	return enums.BitIndexStringExtended[VectorViewFlags, core.WidgetFlags](i, _VectorViewFlagsMap)
 }
 
 // SetString sets the VectorViewFlags value from its string representation,
@@ -372,7 +372,7 @@ func (i *VectorViewFlags) SetString(s string) error { *i = 0; return i.SetString
 // while preserving any bit flags already set, and returns an
 // error if the string is invalid.
 func (i *VectorViewFlags) SetStringOr(s string) error {
-	return enums.SetStringOrExtended(i, (*gi.WidgetFlags)(i), s, _VectorViewFlagsValueMap)
+	return enums.SetStringOrExtended(i, (*core.WidgetFlags)(i), s, _VectorViewFlagsValueMap)
 }
 
 // Int64 returns the VectorViewFlags value as an int64.
@@ -383,17 +383,17 @@ func (i *VectorViewFlags) SetInt64(in int64) { *i = VectorViewFlags(in) }
 
 // Desc returns the description of the VectorViewFlags value.
 func (i VectorViewFlags) Desc() string {
-	return enums.DescExtended[VectorViewFlags, gi.WidgetFlags](i, _VectorViewFlagsDescMap)
+	return enums.DescExtended[VectorViewFlags, core.WidgetFlags](i, _VectorViewFlagsDescMap)
 }
 
 // VectorViewFlagsValues returns all possible values for the type VectorViewFlags.
 func VectorViewFlagsValues() []VectorViewFlags {
-	return enums.ValuesGlobalExtended(_VectorViewFlagsValues, gi.WidgetFlagsValues())
+	return enums.ValuesGlobalExtended(_VectorViewFlagsValues, core.WidgetFlagsValues())
 }
 
 // Values returns all possible values for the type VectorViewFlags.
 func (i VectorViewFlags) Values() []enums.Enum {
-	return enums.ValuesExtended(_VectorViewFlagsValues, gi.WidgetFlagsValues())
+	return enums.ValuesExtended(_VectorViewFlagsValues, core.WidgetFlagsValues())
 }
 
 // HasFlag returns whether these bit flags have the given bit flag set.

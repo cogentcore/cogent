@@ -9,17 +9,17 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fi"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 )
 
 // Defaults sets new project defaults based on overall settings
 func (ge *CodeView) Defaults() {
 	ge.Settings.Files = code.Settings.Files
-	ge.Settings.Editor = gi.SystemSettings.Editor
+	ge.Settings.Editor = core.SystemSettings.Editor
 	ge.Settings.Splits = []float32{.1, .325, .325, .25}
 	ge.Settings.Debug = cdebug.DefaultParams
 }
@@ -55,7 +55,7 @@ func (ge *CodeView) ApplySettings() {
 		}
 		ge.Splits().SetSplits(ge.Settings.Splits...)
 	}
-	gi.UpdateAll() // drives full rebuild
+	core.UpdateAll() // drives full rebuild
 }
 
 // ApplySettingsAction applies current settings to the project, and updates the project
@@ -75,7 +75,7 @@ func (ge *CodeView) EditProjSettings() { //gti:add
 	}
 }
 
-func (ge *CodeView) CallSplitsSetView(ctx gi.Widget) {
+func (ge *CodeView) CallSplitsSetView(ctx core.Widget) {
 	fb := giv.NewSoloFuncButton(ctx, ge.SplitsSetView)
 	fb.Args[0].SetValue(ge.Settings.SplitName)
 	fb.CallFunc()
@@ -123,7 +123,7 @@ func (ge *CodeView) LangDefaults() {
 	ge.Settings.RunCmds = code.CmdNames{"Build: Run Proj"}
 	ge.Settings.BuildDir = ge.Settings.ProjRoot
 	ge.Settings.BuildTarg = ge.Settings.ProjRoot
-	ge.Settings.RunExec = gi.Filename(filepath.Join(string(ge.Settings.ProjRoot), ge.Nm))
+	ge.Settings.RunExec = core.Filename(filepath.Join(string(ge.Settings.ProjRoot), ge.Nm))
 	if len(ge.Settings.BuildCmds) == 0 {
 		switch ge.Settings.MainLang {
 		case fi.Go:

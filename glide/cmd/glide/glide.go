@@ -6,11 +6,11 @@ package main
 
 import (
 	"cogentcore.org/cogent/glide"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 )
 
 func main() {
-	b := gi.NewBody("glide").SetTitle("Glide")
+	b := core.NewBody("glide").SetTitle("Glide")
 	pg := glide.NewPage(b, "page")
 	pg.OpenURL("https://google.com")
 	b.AddAppBar(pg.AppBar)

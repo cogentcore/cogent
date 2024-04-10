@@ -5,8 +5,8 @@
 package vector
 
 import (
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
@@ -19,17 +19,17 @@ import (
 
 // SplitsView opens a view of a splits table
 func SplitsView(pt *Splits) {
-	if gi.ActivateExistingMainWindow(pt) {
+	if core.ActivateExistingMainWindow(pt) {
 		return
 	}
-	d := gi.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing ß(using context menu) as starting point for new one").SetData(pt)
+	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing ß(using context menu) as starting point for new one").SetData(pt)
 	tv := giv.NewTableView(d).SetSlice(pt)
 	AvailableSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableSplitsChanged = true
 	})
 
-	d.AddAppBar(func(tb *gi.Toolbar) {
+	d.AddAppBar(func(tb *core.Toolbar) {
 		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
@@ -37,7 +37,7 @@ func SplitsView(pt *Splits) {
 		oj.Args[0].SetTag("ext", ".toml")
 		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
-		tb.AddOverflowMenu(func(m *gi.Scene) {
+		tb.AddOverflowMenu(func(m *core.Scene) {
 			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
@@ -51,11 +51,11 @@ func (sn SplitName) Value() giv.Value {
 
 // SplitValue represents a [SplitName] value with a button.
 type SplitValue struct {
-	giv.ValueBase[*gi.Button]
+	giv.ValueBase[*core.Button]
 }
 
 func (v *SplitValue) Config() {
-	v.Widget.SetType(gi.ButtonTonal)
+	v.Widget.SetType(core.ButtonTonal)
 	giv.ConfigDialogWidget(v, false)
 }
 
@@ -67,9 +67,9 @@ func (v *SplitValue) Update() {
 	v.Widget.SetText(txt).Update()
 }
 
-func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
+func (v *SplitValue) OpenDialog(ctx core.Widget, fun func()) {
 	cur := laser.ToString(v.Value.Interface())
-	m := gi.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
+	m := core.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
 		nm := AvailableSplitNames[idx]
 		v.SetValue(nm)
 		v.Update()
@@ -77,5 +77,5 @@ func (v *SplitValue) OpenDialog(ctx gi.Widget, fun func()) {
 			fun()
 		}
 	})
-	gi.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
+	core.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }

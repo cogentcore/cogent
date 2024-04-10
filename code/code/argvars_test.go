@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/texteditor"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +27,7 @@ func TestBind(t *testing.T) {
 	assert.NoError(t, err)
 
 	pp := ProjSettings{}
-	pp.ProjRoot = gi.Filename(projpath)
+	pp.ProjRoot = core.Filename(projpath)
 
 	var avp ArgVarVals
 	avp.Set(fpath, &pp, &tv)

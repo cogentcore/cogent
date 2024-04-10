@@ -9,8 +9,8 @@ import (
 
 	"cogentcore.org/core/abilities"
 	"cogentcore.org/core/colors/gradient"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
@@ -73,7 +73,7 @@ func (ed *TextEditor) HandleEvents() {
 			pos := e.Pos()
 			pos.X += 20
 			pos.Y += 20
-			gi.NewTooltipText(ed, tt).SetPos(pos).Run()
+			core.NewTooltipText(ed, tt).SetPos(pos).Run()
 		}
 	})
 }
@@ -193,7 +193,7 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 	ed.Style(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
-		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
+		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 		s.Min.X.Ch(20)
 		s.Min.Y.Em(20)
 		s.Grow.Set(1, 1)
@@ -208,37 +208,37 @@ func ConfigEditorTextEditor(ed *texteditor.Editor) {
 	ed.Style(func(s *styles.Style) {
 		s.Min.X.Ch(80)
 		s.Min.Y.Em(40)
-		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
+		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 	})
 }
 
 // ContextMenu builds the text editor context menu
-func (ed *TextEditor) ContextMenu(m *gi.Scene) {
-	gi.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
+func (ed *TextEditor) ContextMenu(m *core.Scene) {
+	core.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).
 		SetKey(keyfun.Copy).SetState(!ed.HasSelection(), states.Disabled).
 		OnClick(func(e events.Event) {
 			ed.Copy(true)
 		})
 	if ed.IsReadOnly() {
-		gi.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
+		core.NewButton(m).SetText("Clear").SetIcon(icons.ClearAll).
 			OnClick(func(e events.Event) {
 				ed.Clear()
 			})
 		return
 	}
 
-	gi.NewButton(m).SetText("Cut").SetIcon(icons.ContentCopy).
+	core.NewButton(m).SetText("Cut").SetIcon(icons.ContentCopy).
 		SetKey(keyfun.Cut).SetState(!ed.HasSelection(), states.Disabled).
 		OnClick(func(e events.Event) {
 			ed.Cut()
 		})
-	gi.NewButton(m).SetText("Paste").SetIcon(icons.ContentPaste).
+	core.NewButton(m).SetText("Paste").SetIcon(icons.ContentPaste).
 		SetKey(keyfun.Paste).SetState(ed.Clipboard().IsEmpty(), states.Disabled).
 		OnClick(func(e events.Event) {
 			ed.Paste()
 		})
 
-	gi.NewSeparator(m)
+	core.NewSeparator(m)
 	giv.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
 
 	fn := ed.Code.FileNodeForFile(string(ed.Buffer.Filename), false)
@@ -248,19 +248,19 @@ func (ed *TextEditor) ContextMenu(m *gi.Scene) {
 	}
 
 	if ed.Code.CurDebug() != nil {
-		gi.NewSeparator(m)
+		core.NewSeparator(m)
 
-		gi.NewButton(m).SetText("Set breakpoint").SetIcon(icons.StopCircle).
+		core.NewButton(m).SetText("Set breakpoint").SetIcon(icons.StopCircle).
 			SetTooltip("debugger will stop here").OnClick(func(e events.Event) {
 			ed.SetBreakpoint(ed.CursorPos.Ln)
 		})
 		if ed.HasBreakpoint(ed.CursorPos.Ln) {
-			gi.NewButton(m).SetText("Clear breakpoint").SetIcon(icons.Cancel).
+			core.NewButton(m).SetText("Clear breakpoint").SetIcon(icons.Cancel).
 				OnClick(func(e events.Event) {
 					ed.ClearBreakpoint(ed.CursorPos.Ln)
 				})
 		}
-		gi.NewButton(m).SetText("Debug: Find frames").SetIcon(icons.Cancel).
+		core.NewButton(m).SetText("Debug: Find frames").SetIcon(icons.Cancel).
 			SetTooltip("Finds stack frames in the debugger containing this file and line").
 			OnClick(func(e events.Event) {
 				ed.FindFrames(ed.CursorPos.Ln)

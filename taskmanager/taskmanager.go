@@ -9,8 +9,8 @@ package main
 import (
 	"time"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/glop/datasize"
 	"cogentcore.org/core/grr"
@@ -45,7 +45,7 @@ type Task struct { //gti:add
 }
 
 func main() {
-	b := gi.NewBody("Cogent Task Manager")
+	b := core.NewBody("Cogent Task Manager")
 
 	ts := getTasks(b)
 	tv := giv.NewTableView(b)
@@ -56,7 +56,7 @@ func main() {
 
 	tv.OnDoubleClick(func(e events.Event) {
 		t := ts[tv.SelectedIndex]
-		d := gi.NewBody().AddTitle("Task info")
+		d := core.NewBody().AddTitle("Task info")
 		giv.NewStructView(d).SetStruct(&t).SetReadOnly(true)
 		d.AddOKOnly().NewDialog(b).Run()
 	})
@@ -79,14 +79,14 @@ func main() {
 		}()
 	})
 
-	b.AddAppBar(func(tb *gi.Toolbar) {
-		gi.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
+	b.AddAppBar(func(tb *core.Toolbar) {
+		core.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
 			SetTooltip("Stop the currently selected task").
 			OnClick(func(e events.Event) {
 				t := ts[tv.SelectedIndex]
-				gi.ErrorSnackbar(tv, t.Kill(), "Error ending task")
+				core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
 			})
-		pause := gi.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
+		pause := core.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
 			SetTooltip("Stop updating the list of tasks")
 		pause.OnClick(func(e events.Event) {
 			paused = !paused
@@ -104,9 +104,9 @@ func main() {
 	b.RunMainWindow()
 }
 
-func getTasks(b *gi.Body) []*Task {
+func getTasks(b *core.Body) []*Task {
 	ps, err := process.Processes()
-	gi.ErrorDialog(b, err, "Error getting system processes")
+	core.ErrorDialog(b, err, "Error getting system processes")
 
 	ts := make([]*Task, len(ps))
 	for i, p := range ps {

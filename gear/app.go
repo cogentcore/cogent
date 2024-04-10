@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"cogentcore.org/core/colors"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
@@ -37,7 +37,7 @@ import (
 
 // App is a GUI view of a gear command.
 type App struct {
-	gi.Frame
+	core.Frame
 
 	// Cmd is the root command associated with this app.
 	Cmd *Cmd
@@ -56,17 +56,17 @@ func (a *App) OnInit() {
 	a.Dir = grr.Log1(os.Getwd())
 }
 
-func (a *App) AppBar(tb *gi.Toolbar) {
+func (a *App) AppBar(tb *core.Toolbar) {
 	for _, cmd := range a.Cmd.Cmds {
 		cmd := cmd
 		fields := strings.Fields(cmd.Cmd)
 		text := strcase.ToSentence(strings.Join(fields[1:], " "))
-		bt := gi.NewButton(tb).SetText(text).SetTooltip(cmd.Doc)
+		bt := core.NewButton(tb).SetText(text).SetTooltip(cmd.Doc)
 		bt.OnClick(func(e events.Event) {
-			d := gi.NewBody().AddTitle(text).AddText(cmd.Doc)
+			d := core.NewBody().AddTitle(text).AddText(cmd.Doc)
 			st := StructForFlags(cmd.Flags)
 			giv.NewStructView(d).SetStruct(st)
-			d.AddBottomBar(func(parent gi.Widget) {
+			d.AddBottomBar(func(parent core.Widget) {
 				d.AddCancel(parent)
 				d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {
 					grr.Log(xe.Verbose().Run(fields[0], fields[1:]...))
@@ -85,21 +85,21 @@ func (a *App) Config() {
 	// st := StructForFlags(a.Cmd.Flags)
 	// giv.NewStructView(a).SetStruct(st)
 
-	sp := gi.NewSplits(a, "splits").SetSplits(0.8, 0.2)
+	sp := core.NewSplits(a, "splits").SetSplits(0.8, 0.2)
 	sp.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 
-	cmds := gi.NewFrame(sp, "commands")
+	cmds := core.NewFrame(sp, "commands")
 	cmds.Style(func(s *styles.Style) {
 		s.Wrap = true
 		s.Align.Content = styles.End
 	})
 
-	ef := gi.NewFrame(sp, "editor-frame").Style(func(s *styles.Style) {
+	ef := core.NewFrame(sp, "editor-frame").Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	dir := gi.NewLabel(ef, "dir").SetText(a.Dir)
+	dir := core.NewLabel(ef, "dir").SetText(a.Dir)
 
 	tb := texteditor.NewBuffer()
 	tb.NewBuffer(0)
@@ -108,7 +108,7 @@ func (a *App) Config() {
 	grr.Log(tb.Stat())
 	te := texteditor.NewEditor(ef, "editor").SetBuffer(tb)
 	te.Style(func(s *styles.Style) {
-		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
+		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 	})
 	te.OnKeyChord(func(e events.Event) {
 		txt := string(tb.Text())
@@ -135,24 +135,24 @@ func (a *App) Config() {
 
 // RunCmd runs the given command in the context of the given commands frame
 // and current directory label.
-func (a *App) RunCmd(cmd string, cmds *gi.Frame, dir *gi.Label) error {
+func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Label) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	cfr := gi.NewFrame(cmds).Style(func(s *styles.Style) {
+	cfr := core.NewFrame(cmds).Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
 		s.Direction = styles.Column
 		s.Border.Radius = styles.BorderRadiusLarge
 		s.Background = colors.C(colors.Scheme.SurfaceContainer)
 	})
-	tr := gi.NewLayout(cfr, "tr").Style(func(s *styles.Style) {
+	tr := core.NewLayout(cfr, "tr").Style(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})
-	gi.NewLabel(tr, "cmd").SetType(gi.LabelTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
-		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
+	core.NewLabel(tr, "cmd").SetType(core.LabelTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
+		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 		s.Grow.Set(1, 0)
 	})
-	gi.NewButton(tr, "kill").SetType(gi.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {
+	core.NewButton(tr, "kill").SetType(core.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {
 		cancel()
 		fmt.Println("canceled")
 	})
@@ -168,7 +168,7 @@ func (a *App) RunCmd(cmd string, cmds *gi.Frame, dir *gi.Label) error {
 
 	te := texteditor.NewEditor(cfr).SetBuffer(buf)
 	te.Style(func(s *styles.Style) {
-		s.Font.Family = string(gi.AppearanceSettings.MonoFont)
+		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 		s.Min.Set(units.Em(30), units.Em(10))
 		s.Background = cfr.Styles.Background
 	})

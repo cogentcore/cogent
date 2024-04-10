@@ -9,8 +9,8 @@ import (
 	"log/slog"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/keyfun"
 )
@@ -32,14 +32,14 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 	var kf code.KeyFuns
 	kc := kt.KeyChord()
 	gkf := keyfun.Of(kc)
-	if gi.DebugSettings.KeyEventTrace {
+	if core.DebugSettings.KeyEventTrace {
 		slog.Info("CodeView KeyInput", "widget", ge, "keyfun", gkf)
 	}
 	if ge.KeySeq1 != "" {
 		kf = code.KeyFun(ge.KeySeq1, kc)
 		seqstr := string(ge.KeySeq1) + " " + string(kc)
 		if kf == code.KeyFunNil || kc == "Escape" {
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
@@ -60,12 +60,12 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 			}
 			ge.KeySeq1 = kt.KeyChord()
 			ge.SetStatus(string(ge.KeySeq1))
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
 			}
 			return
 		} else if kf != code.KeyFunNil {
-			if gi.DebugSettings.KeyEventTrace {
+			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("code.KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
 			}
 			gkf = keyfun.Nil // override!
