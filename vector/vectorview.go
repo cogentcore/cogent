@@ -602,7 +602,7 @@ func NewVectorWindow(fnm string) *VectorView {
 	}
 	winm := "Cogent Vector • " + dfnm
 
-	if win, found := core.AllRenderWins.FindName(winm); found {
+	if win, found := core.AllRenderWindows.FindName(winm); found {
 		sc := win.MainScene()
 		if vv, ok := sc.Body.ChildByType(VectorViewType, tree.NoEmbeds).(*VectorView); ok {
 			if string(vv.Filename) == path {

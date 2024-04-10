@@ -195,7 +195,7 @@ func (ge *CodeView) OpenFile(fnm string) { //gti:add
 		ge.ViewFile(core.Filename(abfn))
 		return
 	}
-	for _, win := range core.MainRenderWins {
+	for _, win := range core.MainRenderWindows {
 		msc := win.MainScene()
 		geo := CodeInScene(msc)
 		if strings.HasPrefix(abfn, string(geo.ProjRoot)) {
@@ -508,7 +508,7 @@ func CodeInScene(sc *core.Scene) *CodeView {
 func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 	winm := "Cogent Code • " + projnm
 
-	if win, found := core.AllRenderWins.FindName(winm); found {
+	if win, found := core.AllRenderWindows.FindName(winm); found {
 		sc := win.MainScene()
 		ge := CodeInScene(sc)
 		if ge != nil && string(ge.ProjRoot) == root {

@@ -8,8 +8,8 @@ package main
 
 import (
 	"cogentcore.org/cogent/gear"
+	"cogentcore.org/core/cli"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/grease"
 )
 
 type config struct { //gti:add
@@ -18,9 +18,9 @@ type config struct { //gti:add
 }
 
 func main() {
-	opts := grease.DefaultOptions("gear", "Gear",
+	opts := cli.DefaultOptions("gear", "Gear",
 		"Gear provides the generation of GUIs and interactive CLIs for any existing command line tools.")
-	grease.Run(opts, &config{}, &grease.Cmd[*config]{
+	cli.Run(opts, &config{}, &cli.Cmd[*config]{
 		Func: run,
 		Root: true,
 	})
