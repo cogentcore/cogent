@@ -13,7 +13,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
 	"cogentcore.org/core/gox/dirs"
-	"cogentcore.org/core/xio/jsons"
+	"cogentcore.org/core/iox/jsons"
 )
 
 // Split is a named splitter configuration

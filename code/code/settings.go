@@ -16,8 +16,8 @@ import (
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/iox/tomls"
 	"cogentcore.org/core/views"
-	"cogentcore.org/core/xio/tomls"
 )
 
 func init() {

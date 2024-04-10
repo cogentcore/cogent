@@ -13,12 +13,12 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/iox/jsons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
 	"cogentcore.org/core/xe"
-	"cogentcore.org/core/xio/jsons"
 	"github.com/ddkwork/golibrary/pkg/tree"
 
 	"github.com/aandrew-me/tgpt/v2/structs"

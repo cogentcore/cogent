@@ -10,7 +10,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/fileinfo"
-	"cogentcore.org/core/xio/tomls"
+	"cogentcore.org/core/iox/tomls"
 )
 
 // LangOpts defines options associated with a given language / file format

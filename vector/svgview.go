@@ -17,13 +17,13 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/iox/jsons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
-	"cogentcore.org/core/xio/jsons"
 )
 
 // SVGView is the element for viewing, interacting with the SVG

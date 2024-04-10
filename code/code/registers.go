@@ -9,7 +9,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
-	"cogentcore.org/core/xio/tomls"
+	"cogentcore.org/core/iox/tomls"
 )
 
 // Registers is a list of named strings
