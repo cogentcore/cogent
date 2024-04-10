@@ -15,9 +15,9 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/xio/jsons"
 )
 
 // https://www.eclipse.org/pdt/help/html/keymap.htm

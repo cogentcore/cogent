@@ -11,9 +11,9 @@ import (
 	"slices"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/xgo/dirs"
+	"cogentcore.org/core/xio/jsons"
 )
 
 // Split is a named splitter configuration

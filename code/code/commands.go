@@ -19,7 +19,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/pi/complete"
@@ -27,6 +26,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/vci"
+	"cogentcore.org/core/xio/jsons"
 	"github.com/mattn/go-shellwords"
 )
 

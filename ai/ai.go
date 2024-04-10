@@ -10,7 +10,6 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
@@ -19,6 +18,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
 	"cogentcore.org/core/xe"
+	"cogentcore.org/core/xio/jsons"
 	"github.com/ddkwork/golibrary/pkg/tree"
 
 	"github.com/aandrew-me/tgpt/v2/structs"

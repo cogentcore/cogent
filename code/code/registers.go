@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/grows/tomls"
 	"cogentcore.org/core/grr"
+	"cogentcore.org/core/xio/tomls"
 )
 
 // Registers is a list of named strings

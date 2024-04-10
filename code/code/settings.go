@@ -14,10 +14,10 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/grows/tomls"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/views"
+	"cogentcore.org/core/xio/tomls"
 )
 
 func init() {
