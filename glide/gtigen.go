@@ -8,7 +8,7 @@ import (
 )
 
 // PageType is the [gti.Type] for [Page]
-var PageType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/glide.Page", IDName: "page", Doc: "Page represents one web browser page", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [coredom.Context]."}}, Instance: &Page{}})
+var PageType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/glide.Page", IDName: "page", Doc: "Page represents one web browser page", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [htmlview.Context]."}}, Instance: &Page{}})
 
 // NewPage adds a new [Page] with the given name to the given parent:
 // Page represents one web browser page

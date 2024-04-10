@@ -9,11 +9,11 @@ import (
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/coredom"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
+	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/mat32"
@@ -183,7 +183,7 @@ func main() {
 			s.Border.Radius = styles.BorderRadiusLarge
 			s.Grow.Set(1, 0)
 		})
-		grr.Log(coredom.ReadMDString(coredom.NewContext(), yourPrompt, "**You:** "+promptString))
+		grr.Log(htmlview.ReadMDString(htmlview.NewContext(), yourPrompt, "**You:** "+promptString))
 
 		answer := core.NewFrame(history)
 		answer.Style(func(s *styles.Style) {
@@ -234,7 +234,7 @@ func main() {
 
 				answer.AsyncLock()
 				answer.DeleteChildren()
-				grr.Log(coredom.ReadMDString(coredom.NewContext(), answer, allTokens))
+				grr.Log(htmlview.ReadMDString(htmlview.NewContext(), answer, allTokens))
 				answer.Update()
 				history.ScrollDimToContentEnd(mat32.Y)
 				answer.AsyncUnlock()
