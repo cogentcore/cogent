@@ -14,7 +14,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/pi/lex"
@@ -465,22 +465,22 @@ func (ge *CodeView) FileNodeRunExe(fn *filetree.Node) {
 func (ge *CodeView) FileNodeOpened(fn *filetree.Node) {
 	// todo: could add all these options in LangOpts
 	switch fn.Info.Cat {
-	case fi.Folder:
-	case fi.Exe:
+	case fileinfo.Folder:
+	case fileinfo.Exe:
 		ge.FileNodeRunExe(fn)
 		// this uses exe path for cd to this path!
 		return
-	case fi.Font, fi.Video, fi.Model, fi.Audio, fi.Sheet, fi.Bin,
-		fi.Archive, fi.Image:
+	case fileinfo.Font, fileinfo.Video, fileinfo.Model, fileinfo.Audio, fileinfo.Sheet, fileinfo.Bin,
+		fileinfo.Archive, fileinfo.Image:
 		ge.ExecCmdNameFileNode(fn, code.CmdName("File: Open"), true, true) // sel, clear
 		return
 	}
 
 	edit := true
 	switch fn.Info.Cat {
-	case fi.Code:
+	case fileinfo.Code:
 		edit = true
-	case fi.Text:
+	case fileinfo.Text:
 		edit = true
 	default:
 		if _, noed := CatNoEdit[fn.Info.Known]; noed {
@@ -510,12 +510,12 @@ func (ge *CodeView) FileNodeOpened(fn *filetree.Node) {
 }
 
 // CatNoEdit are the files to NOT edit from categories: Doc, Data
-var CatNoEdit = map[fi.Known]bool{
-	fi.Rtf:          true,
-	fi.MSWord:       true,
-	fi.OpenText:     true,
-	fi.OpenPres:     true,
-	fi.MSPowerpoint: true,
-	fi.EBook:        true,
-	fi.EPub:         true,
+var CatNoEdit = map[fileinfo.Known]bool{
+	fileinfo.Rtf:          true,
+	fileinfo.MSWord:       true,
+	fileinfo.OpenText:     true,
+	fileinfo.OpenPres:     true,
+	fileinfo.MSPowerpoint: true,
+	fileinfo.EBook:        true,
+	fileinfo.EPub:         true,
 }

@@ -6,7 +6,7 @@ package vector
 
 import (
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
@@ -104,7 +104,7 @@ func (gv *VectorView) CutSelected() { //gti:add
 
 // PasteClip pastes clipboard, using cur layer etc
 func (gv *VectorView) PasteClip() { //gti:add
-	md := gv.Clipboard().Read([]string{fi.DataJson})
+	md := gv.Clipboard().Read([]string{fileinfo.DataJson})
 	if md == nil {
 		return
 	}

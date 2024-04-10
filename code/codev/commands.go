@@ -11,7 +11,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/paint"
@@ -36,8 +36,8 @@ func (ge *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer,
 	buf.NewBuffer(0)
 	ge.CmdBufs[cmdNm] = buf
 	buf.Autosave = false
-	// buf.Info.Known = fi.Bash
-	// buf.Info.Mime = fi.MimeString(fi.Bash)
+	// buf.Info.Known = fileinfo.Bash
+	// buf.Info.Mime = fileinfo.MimeString(fileinfo.Bash)
 	// buf.Hi.Lang = "Bash"
 	return buf, true
 }
@@ -109,7 +109,7 @@ func ExecCmds(ge *CodeView) [][]string {
 	var cmds [][]string
 
 	vc := ge.VersionControl()
-	if ge.ActiveLang == fi.Unknown {
+	if ge.ActiveLang == fileinfo.Unknown {
 		cmds = code.AvailableCommands.FilterCmdNames(ge.Settings.MainLang, vc)
 	} else {
 		cmds = code.AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)

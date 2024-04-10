@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
@@ -109,7 +109,7 @@ type Code interface {
 
 	// Find does Find / Replace in files, using given options and filters -- opens up a
 	// main tab with the results and further controls.
-	Find(find, repl string, ignoreCase, regExp bool, loc FindLoc, langs []fi.Known)
+	Find(find, repl string, ignoreCase, regExp bool, loc FindLoc, langs []fileinfo.Known)
 
 	// ParseOpenFindURL parses and opens given find:/// url from Find, return text
 	// region encoded in url, and starting line of results in find buffer, and

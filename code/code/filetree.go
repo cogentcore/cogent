@@ -15,7 +15,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
@@ -260,7 +260,7 @@ type FileSearchResults struct {
 // FileTreeSearch returns list of all nodes starting at given node of given
 // language(s) that contain the given string, sorted in descending order by number
 // of occurrences -- ignoreCase transforms everything into lowercase
-func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Known) []FileSearchResults {
+func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fileinfo.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -298,7 +298,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 		if strings.HasSuffix(sfn.Nm, ".code") { // exclude self
 			return tree.Continue
 		}
-		if !fi.IsMatchList(langs, sfn.Info.Known) {
+		if !fileinfo.IsMatchList(langs, sfn.Info.Known) {
 			return tree.Continue
 		}
 		if loc == FindLocDir {
@@ -341,7 +341,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 // starting at given node of given language(s) that contain the given string,
 // sorted in descending order by number of occurrences. ignoreCase transforms
 // everything into lowercase.
-func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, langs []fi.Known) []FileSearchResults {
+func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, langs []fileinfo.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -375,12 +375,12 @@ func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool
 			return nil
 		}
 		if len(langs) > 0 {
-			mtyp, _, err := fi.MimeFromFile(path)
+			mtyp, _, err := fileinfo.MimeFromFile(path)
 			if err != nil {
 				return nil
 			}
-			known := fi.MimeKnown(mtyp)
-			if !fi.IsMatchList(langs, known) {
+			known := fileinfo.MimeKnown(mtyp)
+			if !fileinfo.IsMatchList(langs, known) {
 				return nil
 			}
 		}

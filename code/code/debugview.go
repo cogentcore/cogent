@@ -18,7 +18,7 @@ import (
 	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
@@ -51,14 +51,14 @@ const (
 var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
 
 // Debuggers is the list of supported debuggers
-var Debuggers = map[fi.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error){
-	fi.Go: func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
+var Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error){
+	fileinfo.Go: func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
 		return cdelve.NewGiDelve(path, rootPath, outbuf, pars)
 	},
 }
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup fi.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
+func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
@@ -77,7 +77,7 @@ type DebugView struct {
 	core.Layout
 
 	// supported file type to determine debugger
-	Sup fi.Known
+	Sup fileinfo.Known
 
 	// path to executable / dir to debug
 	ExePath string
@@ -165,7 +165,7 @@ func (dv *DebugView) Start() {
 	console.Clear()
 	rebuild := false
 	if dv.Dbg != nil && dv.State.Mode != cdebug.Attach {
-		lmod := dv.Code.FileTree().LatestFileMod(fi.Code)
+		lmod := dv.Code.FileTree().LatestFileMod(fileinfo.Code)
 		rebuild = lmod.After(dv.DbgTime) || dv.Code.LastSaveTime().After(dv.DbgTime)
 	}
 	if dv.Dbg == nil || rebuild {
@@ -738,7 +738,7 @@ func (dv *DebugView) Config() {
 
 // ConfigDebugView configures the view -- parameters for the job must have
 // already been set in ge.ProjParams.Debug.
-func (dv *DebugView) ConfigDebugView(ge Code, sup fi.Known, exePath string) {
+func (dv *DebugView) ConfigDebugView(ge Code, sup fileinfo.Known, exePath string) {
 	dv.Code = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
@@ -831,7 +831,7 @@ func (dv *DebugView) ConfigTabs() {
 	ctv.SetBuffer(dv.OutputBuffer)
 	NewBreakView(tb.NewTab("Breaks")).ConfigBreakView(dv)
 	NewStackView(tb.NewTab("Stack")).ConfigStackView(dv, false)
-	if dv.Sup == fi.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
+	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		NewTaskView(tb.NewTab("Tasks")).ConfigTaskView(dv)
 	}
 	NewVarsView(tb.NewTab("Vars")).ConfigVarsView(dv, false)

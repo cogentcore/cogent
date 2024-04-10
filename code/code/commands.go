@@ -17,7 +17,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
@@ -262,7 +262,7 @@ type Command struct {
 	Desc string `width:"40"`
 
 	// supported language / file type that this command applies to -- choose Any or e.g., AnyCode for subtypes -- filters the list of commands shown based on file language type
-	Lang fi.Known
+	Lang fileinfo.Known
 
 	// sequence of commands to run for this overall command.
 	Cmds []CmdAndArgs `tableview-select:"-"`
@@ -280,7 +280,7 @@ type Command struct {
 	Confirm bool
 
 	//	what type of file to use for syntax highlighting.  Bash is the default.
-	Hilight fi.Known
+	Hilight fileinfo.Known
 }
 
 // CommandName returns a qualified command name as cat: cmd
@@ -433,9 +433,9 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
 func (cm *Command) Run(ge Code, buf *texteditor.Buffer) {
-	// if cm.Hilight != fi.Unknown {
+	// if cm.Hilight != fileinfo.Unknown {
 	// 	buf.Info.Known = cm.Hilight
-	// 	buf.Info.Mime = fi.MimeString(fi.Bash)
+	// 	buf.Info.Mime = fileinfo.MimeString(fileinfo.Bash)
 	// 	buf.Hi.Lang = cm.Hilight.String()
 	// }
 	// todo: trying to use native highlighting
@@ -606,8 +606,8 @@ func (cm *Command) RunStatus(ge Code, buf *texteditor.Buffer, cmdstr string, err
 }
 
 // LangMatch returns true if the given language matches the command Lang constraints
-func (cm *Command) LangMatch(lang fi.Known) bool {
-	return fi.IsMatch(cm.Lang, lang)
+func (cm *Command) LangMatch(lang fileinfo.Known) bool {
+	return fileinfo.IsMatch(cm.Lang, lang)
 }
 
 // MarkupCmdOutput applies links to the first element in command output line
@@ -683,7 +683,7 @@ var CustomCommands = Commands{}
 
 // FilterCmdNames returns a slice of commands organized by category
 // that are compatible with given language and version control system.
-func (cm *Commands) FilterCmdNames(lang fi.Known, vcnm filetree.VersionControlName) [][]string {
+func (cm *Commands) FilterCmdNames(lang fileinfo.Known, vcnm filetree.VersionControlName) [][]string {
 	vnm := strings.ToLower(string(vcnm))
 	var cmds [][]string
 	cat := ""

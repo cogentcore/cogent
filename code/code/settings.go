@@ -12,7 +12,7 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/tomls"
@@ -191,7 +191,7 @@ func (se *SettingsData) EditCmds() { //gti:add
 	if len(CustomCommands) == 0 {
 		exc := &Command{Name: "Example Cmd",
 			Desc: "list current dir",
-			Lang: fi.Any,
+			Lang: fileinfo.Any,
 			Cmds: []CmdAndArgs{{Cmd: "ls", Args: []string{"-la"}}},
 			Dir:  "{FileDirPath}",
 			Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}
@@ -228,7 +228,7 @@ type ProjSettings struct { //gti:add
 
 	// the language associated with the most frequently-encountered file
 	// extension in the file tree -- can be manually set here as well
-	MainLang fi.Known
+	MainLang fileinfo.Known
 
 	// the type of version control system used in this project (git, svn, etc).
 	// filters commands available
@@ -305,7 +305,7 @@ func (se *ProjSettings) Save(filename core.Filename) error { //gti:add
 
 // RunExecIsExec returns true if the RunExec is actually executable
 func (se *ProjSettings) RunExecIsExec() bool {
-	fi, err := fi.NewFileInfo(string(se.RunExec))
+	fi, err := fileinfo.NewFileInfo(string(se.RunExec))
 	if err != nil {
 		return false
 	}

@@ -20,7 +20,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
@@ -46,7 +46,7 @@ type CodeView struct {
 	ActiveFilename core.Filename `set:"-"`
 
 	// language for current active filename
-	ActiveLang fi.Known
+	ActiveLang fileinfo.Known
 
 	// VCS repo for current active filename
 	ActiveVCS vci.Repo `set:"-"`
@@ -284,7 +284,7 @@ func (ge *CodeView) OpenProj(filename core.Filename) *CodeView { //gti:add
 // path -- all CodeView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *CodeView) NewProj(path core.Filename, folder string, mainLang fi.Known, VersionControl filetree.VersionControlName) *CodeView { //gti:add
+func (ge *CodeView) NewProj(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *CodeView { //gti:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {

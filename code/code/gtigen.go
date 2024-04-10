@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/gti"
@@ -37,7 +37,7 @@ func (t *DebugView) New() tree.Node { return &DebugView{} }
 
 // SetSup sets the [DebugView.Sup]:
 // supported file type to determine debugger
-func (t *DebugView) SetSup(v fi.Known) *DebugView { t.Sup = v; return t }
+func (t *DebugView) SetSup(v fileinfo.Known) *DebugView { t.Sup = v; return t }
 
 // SetExePath sets the [DebugView.ExePath]:
 // path to executable / dir to debug

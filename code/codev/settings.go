@@ -11,7 +11,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/giv"
 )
@@ -126,9 +126,9 @@ func (ge *CodeView) LangDefaults() {
 	ge.Settings.RunExec = core.Filename(filepath.Join(string(ge.Settings.ProjRoot), ge.Nm))
 	if len(ge.Settings.BuildCmds) == 0 {
 		switch ge.Settings.MainLang {
-		case fi.Go:
+		case fileinfo.Go:
 			ge.Settings.BuildCmds = code.CmdNames{"Go: Build Proj"}
-		case fi.TeX:
+		case fileinfo.TeX:
 			ge.Settings.BuildCmds = code.CmdNames{"LaTeX: LaTeX PDF"}
 			ge.Settings.RunCmds = code.CmdNames{"File: Open Target"}
 		default:
@@ -145,13 +145,13 @@ func (ge *CodeView) LangDefaults() {
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
 func (ge *CodeView) GuessMainLang() bool {
-	ecsc := ge.Files.FileExtCounts(fi.Code)
-	ecsd := ge.Files.FileExtCounts(fi.Doc)
+	ecsc := ge.Files.FileExtCounts(fileinfo.Code)
+	ecsd := ge.Files.FileExtCounts(fileinfo.Doc)
 	ecs := append(ecsc, ecsd...)
 	filetree.NodeNameCountSort(ecs)
 	for _, ec := range ecs {
-		ls := fi.ExtKnown(ec.Name)
-		if ls != fi.Unknown {
+		ls := fileinfo.ExtKnown(ec.Name)
+		if ls != fileinfo.Unknown {
 			ge.Settings.MainLang = ls
 			return true
 		}

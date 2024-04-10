@@ -4,7 +4,7 @@ package codev
 
 import (
 	"cogentcore.org/cogent/code/code"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/tree"
@@ -37,7 +37,7 @@ func (t *CodeView) SetProjFilename(v core.Filename) *CodeView { t.ProjFilename =
 
 // SetActiveLang sets the [CodeView.ActiveLang]:
 // language for current active filename
-func (t *CodeView) SetActiveLang(v fi.Known) *CodeView { t.ActiveLang = v; return t }
+func (t *CodeView) SetActiveLang(v fileinfo.Known) *CodeView { t.ActiveLang = v; return t }
 
 // SetStatusMessage sets the [CodeView.StatusMessage]:
 // the last status update message

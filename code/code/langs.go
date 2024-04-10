@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/grows/tomls"
 )
 
 // LangOpts defines options associated with a given language / file format
-// only languages in fi.Known list are supported..
+// only languages in fileinfo.Known list are supported..
 type LangOpts struct {
 
 	// command(s) to run after a file of this type is saved
@@ -22,7 +22,7 @@ type LangOpts struct {
 }
 
 // Langs is a map of language options
-type Langs map[fi.Known]*LangOpts
+type Langs map[fileinfo.Known]*LangOpts
 
 // AvailableLangs is the current set of language options -- can be
 // loaded / saved / edited with settings.  This is set to StandardLangs at
@@ -109,5 +109,5 @@ var AvailableLangsChanged = false
 
 // StandardLangs is the original compiled-in set of standard language options.
 var StandardLangs = Langs{
-	fi.Go: {CmdNames{"Go: Imports File"}},
+	fileinfo.Go: {CmdNames{"Go: Imports File"}},
 }

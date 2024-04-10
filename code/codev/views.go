@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/spell"
@@ -42,7 +42,7 @@ func (ge *CodeView) CallFind(ctx core.Widget) {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc code.FindLoc, langs []fi.Known) { //gti:add
+func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc code.FindLoc, langs []fileinfo.Known) { //gti:add
 	if find == "" {
 		return
 	}
@@ -144,7 +144,7 @@ func (ge *CodeView) Debug() { //gti:add
 	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
-	dv.ConfigDebugView(ge, fi.Go, exePath)
+	dv.ConfigDebugView(ge, fileinfo.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
@@ -165,7 +165,7 @@ func (ge *CodeView) DebugTest() { //gti:add
 	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, code.DebugViewType).(*code.DebugView)
-	dv.ConfigDebugView(ge, fi.Go, tstPath)
+	dv.ConfigDebugView(ge, fileinfo.Go, tstPath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
@@ -184,7 +184,7 @@ func (ge *CodeView) DebugAttach(pid uint64) { //gti:add
 	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
-	dv.ConfigDebugView(ge, fi.Go, exePath)
+	dv.ConfigDebugView(ge, fileinfo.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
@@ -283,7 +283,7 @@ func (ge *CodeView) UpdateStatusLabel() {
 			if tv.Buffer.IsNotSaved() {
 				fnm += "*"
 			}
-			if tv.Buffer.Info.Known != fi.Unknown {
+			if tv.Buffer.Info.Known != fileinfo.Unknown {
 				fnm += " (" + tv.Buffer.Info.Known.String() + ")"
 			}
 		}

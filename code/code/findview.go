@@ -15,7 +15,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
@@ -65,7 +65,7 @@ type FindParams struct {
 	Loc FindLoc
 
 	// languages for files to search
-	Langs []fi.Known
+	Langs []fileinfo.Known
 
 	// history of finds
 	FindHist []string
