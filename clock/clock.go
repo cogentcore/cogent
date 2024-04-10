@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/views"
 )
 
 func main() {
@@ -43,7 +43,7 @@ type timer struct {
 func timers(ts *core.Tabs) {
 	tr := ts.NewTab("Timers")
 	trd := 15 * time.Minute
-	giv.NewValue(tr, &trd)
+	views.NewValue(tr, &trd)
 	core.NewButton(tr).SetText("Start")
 }
 

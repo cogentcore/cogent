@@ -15,7 +15,7 @@ import (
 	"cogentcore.org/core/texteditor/textbuf"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/giv"
+	"cogentcore.org/core/views"
 )
 
 // SpellView is a widget that displays results of spell check
@@ -81,7 +81,7 @@ func (sv *SpellView) ConfigSpellView(ge Code, atv *TextEditor) {
 	core.NewToolbar(sv, "spellbar")
 	core.NewToolbar(sv, "unknownbar")
 	core.NewToolbar(sv, "changebar")
-	giv.NewSliceView(sv, "suggest")
+	views.NewSliceView(sv, "suggest")
 	sv.ConfigToolbar()
 	texteditor.InitSpell()
 	sv.CheckNext()
@@ -138,8 +138,8 @@ func (sv *SpellView) ChangeText() *core.TextField {
 }
 
 // SuggestView returns the view for the list of suggestions
-func (sv *SpellView) SuggestView() *giv.SliceView {
-	return sv.ChildByName("suggest", 1).(*giv.SliceView)
+func (sv *SpellView) SuggestView() *views.SliceView {
+	return sv.ChildByName("suggest", 1).(*views.SliceView)
 }
 
 // ConfigToolbar adds toolbar.
@@ -325,7 +325,7 @@ func (sv *SpellView) ChangeAllAction() {
 func (sv *SpellView) TrainAction() {
 	cur := ""
 	d := core.NewBody().AddTitle("Select a Text File to Add to Corpus")
-	fv := giv.NewFileView(d).SetFilename(cur, ".txt")
+	fv := views.NewFileView(d).SetFilename(cur, ".txt")
 	fv.OnSelect(func(e events.Event) {
 		cur = fv.SelectedFile()
 	}).OnDoubleClick(func(e events.Event) {

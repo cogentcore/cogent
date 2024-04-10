@@ -16,7 +16,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/pi/lex"
@@ -24,6 +23,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/views"
 )
 
 // FindLoc corresponds to the search scope
@@ -83,7 +83,7 @@ type FindView struct {
 	Code Code `json:"-" xml:"-"`
 
 	// langs value view
-	LangVV giv.Value
+	LangVV views.Value
 
 	// time of last find
 	Time time.Time
@@ -554,6 +554,6 @@ func (fv *FindView) ConfigToolbars(fb, rb *core.BasicBar) {
 
 	langl := core.NewLabel(rb).SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 
-	fv.LangVV = giv.NewValue(rb, &fv.Params().Langs)
+	fv.LangVV = views.NewValue(rb, &fv.Params().Langs)
 	fv.LangVV.AsWidgetBase().SetTooltip(langl.Tooltip)
 }

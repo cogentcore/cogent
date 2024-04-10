@@ -7,10 +7,10 @@ package vector
 import (
 	"fmt"
 
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // Layer represents one layer group
@@ -89,7 +89,7 @@ func (vv *VectorView) FirstLayerIndex() int {
 	return min(1, len(sv.Root().Kids))
 }
 
-func (vv *VectorView) LayerViewSigs(lyv *giv.TableView) {
+func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
 	// lyv.ViewSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {

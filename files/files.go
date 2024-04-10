@@ -7,14 +7,14 @@ package main
 import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/views"
 )
 
 func main() {
 	b := core.NewBody("Cogent Files")
 
-	fv := giv.NewFileView(b)
+	fv := views.NewFileView(b)
 	fv.Scene.OnKeyChord(func(e events.Event) {
 		if keyfun.Of(e.KeyChord()) == keyfun.Accept {
 			core.TheApp.OpenURL(fv.SelectedFile())

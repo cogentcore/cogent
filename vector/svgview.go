@@ -14,7 +14,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/gti"
@@ -24,6 +23,7 @@ import (
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // SVGView is the element for viewing, interacting with the SVG
@@ -524,7 +524,7 @@ func (sv *SVGView) ReadMetaData() {
 
 // EditNode opens a structview editor on node
 func (sv *SVGView) EditNode(kn tree.Node) {
-	giv.StructViewDialog(sv, kn, "SVG Element View", true)
+	views.StructViewDialog(sv, kn, "SVG Element View", true)
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
@@ -538,10 +538,10 @@ func (sv *SVGView) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 
 	core.NewSeparator(m)
 
-	giv.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
-	giv.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
-	giv.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
-	giv.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
+	views.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
+	views.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
+	views.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
+	views.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position

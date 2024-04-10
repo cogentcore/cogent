@@ -13,10 +13,10 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/views"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
@@ -195,7 +195,7 @@ func (ge *CodeView) Run() { //gti:add
 		return
 	}
 	if ge.Settings.RunCmds[0] == "Run Proj" && !ge.Settings.RunExecIsExec() {
-		giv.CallFunc(ge, ge.ChooseRunExec)
+		views.CallFunc(ge, ge.ChooseRunExec)
 		return
 	}
 	ge.ExecCmds(ge.Settings.RunCmds, true, true)

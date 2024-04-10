@@ -6,10 +6,10 @@ package vector
 
 import (
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/units"
+	"cogentcore.org/core/views"
 )
 
 // TextStyle is text styling info -- using StructView to do text editor
@@ -46,7 +46,7 @@ type TextStyle struct {
 	Align styles.Aligns `xml:"text-align" inherit:"true"`
 
 	// font value view for font toolbar
-	FontValue giv.FontValue `view:"-"`
+	FontValue views.FontValue `view:"-"`
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`

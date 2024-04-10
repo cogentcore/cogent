@@ -7,14 +7,14 @@ package vector
 import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // TreeView is a TreeView that knows how to operate on FileNode nodes
 type TreeView struct {
-	giv.TreeView
+	views.TreeView
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
@@ -31,14 +31,14 @@ func (gv *VectorView) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 }
 
 // SelectedAsTreeViews returns the currently-selected items from SVG as TreeView nodes
-func (gv *VectorView) SelectedAsTreeViews() []giv.TreeViewer {
+func (gv *VectorView) SelectedAsTreeViews() []views.TreeViewer {
 	es := &gv.EditState
 	sl := es.SelectedList(false)
 	if len(sl) == 0 {
 		return nil
 	}
 	tv := gv.TreeView()
-	var tvl []giv.TreeViewer
+	var tvl []views.TreeViewer
 	for _, si := range sl {
 		tvn := tv.FindSyncNode(si.This())
 		if tvn != nil {

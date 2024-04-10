@@ -17,7 +17,6 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/glop/dirs"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
@@ -26,6 +25,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // VectorView is the Vector SVG vector drawing program
@@ -112,7 +112,7 @@ func (vv *VectorView) PromptPhysSize() { //gti:add
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
 	d := core.NewBody().AddTitle("SVG physical size")
-	giv.NewStructView(d).SetStruct(sz)
+	views.NewStructView(d).SetStruct(sz)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
@@ -143,7 +143,7 @@ func (vv *VectorView) SaveDrawing() error { //gti:add
 	if vv.Filename != "" {
 		return vv.SaveDrawingAs(vv.Filename)
 	}
-	giv.CallFunc(vv, vv.SaveDrawingAs)
+	views.CallFunc(vv, vv.SaveDrawingAs)
 	return nil
 }
 
@@ -309,8 +309,8 @@ func (vv *VectorView) LayerTree() *core.Layout {
 	return vv.Splits().ChildByName("layer-tree", 0).(*core.Layout)
 }
 
-func (vv *VectorView) LayerView() *giv.TableView {
-	return vv.LayerTree().ChildByName("layers", 0).(*giv.TableView)
+func (vv *VectorView) LayerView() *views.TableView {
+	return vv.LayerTree().ChildByName("layers", 0).(*views.TableView)
 }
 
 func (vv *VectorView) TreeView() *TreeView {
@@ -363,9 +363,9 @@ func (vv *VectorView) Config() {
 		s.Direction = styles.Column
 	})
 
-	giv.NewFuncButton(tly, vv.AddLayer)
+	views.NewFuncButton(tly, vv.AddLayer)
 
-	lyv := giv.NewTableView(tly, "layers")
+	lyv := views.NewTableView(tly, "layers")
 
 	tvfr := core.NewFrame(tly, "tree-frame").Style(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -449,7 +449,7 @@ func (vv *VectorView) PasteAvailFunc(bt *core.Button) {
 
 func (vv *VectorView) ConfigToolbar(tb *core.Toolbar) {
 	// TODO(kai): remove Update
-	giv.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
+	views.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	core.NewButton(tb).SetText("New").SetIcon(icons.Add).
 		OnClick(func(e events.Event) {
 			ndr := vv.NewDrawing(Settings.Size)
@@ -457,38 +457,38 @@ func (vv *VectorView) ConfigToolbar(tb *core.Toolbar) {
 		})
 
 	core.NewButton(tb).SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
-		giv.NewFuncButton(m, vv.PromptPhysSize).SetText("Set size").
+		views.NewFuncButton(m, vv.PromptPhysSize).SetText("Set size").
 			SetIcon(icons.FormatSize)
-		giv.NewFuncButton(m, vv.ResizeToContents).SetIcon(icons.Resize)
+		views.NewFuncButton(m, vv.ResizeToContents).SetIcon(icons.Resize)
 	})
 
-	giv.NewFuncButton(tb, vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
-	giv.NewFuncButton(tb, vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
-	giv.NewFuncButton(tb, vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
+	views.NewFuncButton(tb, vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
+	views.NewFuncButton(tb, vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
+	views.NewFuncButton(tb, vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
 
 	core.NewButton(tb).SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene) {
-		giv.NewFuncButton(m, vv.ExportPNG).SetIcon(icons.Image)
-		giv.NewFuncButton(m, vv.ExportPDF).SetIcon(icons.PictureAsPdf)
+		views.NewFuncButton(m, vv.ExportPNG).SetIcon(icons.Image)
+		views.NewFuncButton(m, vv.ExportPDF).SetIcon(icons.PictureAsPdf)
 	})
 
 	core.NewSeparator(tb)
 
-	giv.NewFuncButton(tb, vv.Undo).StyleFirst(func(s *styles.Style) {
+	views.NewFuncButton(tb, vv.Undo).StyleFirst(func(s *styles.Style) {
 		s.SetEnabled(vv.EditState.UndoMgr.HasUndoAvail())
 	})
-	giv.NewFuncButton(tb, vv.Redo).StyleFirst(func(s *styles.Style) {
+	views.NewFuncButton(tb, vv.Redo).StyleFirst(func(s *styles.Style) {
 		s.SetEnabled(vv.EditState.UndoMgr.HasRedoAvail())
 	})
 
 	core.NewSeparator(tb)
 
-	giv.NewFuncButton(tb, vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
-	giv.NewFuncButton(tb, vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
-	giv.NewFuncButton(tb, vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
-	giv.NewFuncButton(tb, vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
+	views.NewFuncButton(tb, vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
+	views.NewFuncButton(tb, vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
+	views.NewFuncButton(tb, vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
+	views.NewFuncButton(tb, vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
 
 	core.NewSeparator(tb)
-	giv.NewFuncButton(tb, vv.AddImage).SetIcon(icons.Image)
+	views.NewFuncButton(tb, vv.AddImage).SetIcon(icons.Image)
 	core.NewSeparator(tb)
 
 	core.NewButton(tb).SetText("Zoom page").SetIcon(icons.ZoomOut).
@@ -652,7 +652,7 @@ func (vv *VectorView) ConfigTabs() {
 	NewAlignView(at).SetVectorView(vv)
 	vv.EditState.Text.Defaults()
 	tt := vv.RecycleTab("Text", false)
-	giv.NewStructView(tt).SetStruct(&vv.EditState.Text)
+	views.NewStructView(tt).SetStruct(&vv.EditState.Text)
 }
 
 func (vv *VectorView) PaintView() *PaintView {

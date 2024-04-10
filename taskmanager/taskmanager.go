@@ -11,10 +11,10 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/glop/datasize"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/views"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -48,7 +48,7 @@ func main() {
 	b := core.NewBody("Cogent Task Manager")
 
 	ts := getTasks(b)
-	tv := giv.NewTableView(b)
+	tv := views.NewTableView(b)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&ts)
 	tv.SortSliceAction(1)
@@ -57,7 +57,7 @@ func main() {
 	tv.OnDoubleClick(func(e events.Event) {
 		t := ts[tv.SelectedIndex]
 		d := core.NewBody().AddTitle("Task info")
-		giv.NewStructView(d).SetStruct(&t).SetReadOnly(true)
+		views.NewStructView(d).SetStruct(&t).SetReadOnly(true)
 		d.AddOKOnly().NewDialog(b).Run()
 	})
 

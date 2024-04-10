@@ -10,11 +10,11 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/units"
+	"cogentcore.org/core/views"
 )
 
 // PaintView provides editing of basic Stroke and Fill painting parameters
@@ -479,7 +479,7 @@ func (pv *PaintView) SelectStrokeGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	ss := pv.StrokeStack()
-	sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
+	sg := ss.ChildByName("stroke-grad", 1).(*views.TableView)
 	sg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.StrokeStops {
@@ -493,7 +493,7 @@ func (pv *PaintView) SelectFillGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	fs := pv.FillStack()
-	fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
+	fg := fs.ChildByName("fill-grad", 1).(*views.TableView)
 	fg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.FillStops {
@@ -646,7 +646,7 @@ func (pv *PaintView) Config() {
 	// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
 	// })
 
-	giv.NewColorView(ss, "stroke-clr")
+	views.NewColorView(ss, "stroke-clr")
 	// sc.SetProp("vertical-align", styles.AlignTop)
 	// sc.SetColor(sty.StrokeStyle.Color)
 	// sc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
@@ -660,7 +660,7 @@ func (pv *PaintView) Config() {
 	// 	}
 	// })
 
-	sg := giv.NewTableView(ss, "stroke-grad")
+	sg := views.NewTableView(ss, "stroke-grad")
 	// sg.SetProp("index", true)
 	// sg.SetProp("toolbar", true)
 	// sg.SelectedIndex = -1
@@ -716,7 +716,7 @@ func (pv *PaintView) Config() {
 	// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
 	// })
 
-	giv.NewColorView(fs, "fill-clr").SetColor(colors.Scheme.Primary.Base)
+	views.NewColorView(fs, "fill-clr").SetColor(colors.Scheme.Primary.Base)
 	// fc.SetProp("vertical-align", styles.AlignTop)
 	// fc.Config()
 	// fc.SetColor(sty.FillStyle.Color.Color)
@@ -731,7 +731,7 @@ func (pv *PaintView) Config() {
 	// 	}
 	// })
 
-	fg := giv.NewTableView(fs, "fill-grad")
+	fg := views.NewTableView(fs, "fill-grad")
 	// fg.SetProp("index", true)
 	// fg.SetProp("toolbar", true)
 	// fg.SelectedIndex = -1
@@ -863,7 +863,7 @@ func (pv *PaintView) FillProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		sc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
+		sc := fs.ChildByName("fill-clr", 1).(*views.ColorView)
 		return colors.AsHex(sc.Color)
 	case PaintLinear:
 		return pv.FillStops

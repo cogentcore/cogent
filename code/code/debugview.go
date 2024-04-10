@@ -19,12 +19,12 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // DebugBreakStatus is the status of a given breakpoint
@@ -926,7 +926,7 @@ func (dv *DebugView) ConfigToolbar() {
 		SetTooltip("list variables at global scope, subject to filter (name contains)").
 		StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 		OnClick(func(e events.Event) {
-			giv.CallFunc(dv, dv.ListGlobalVars)
+			views.CallFunc(dv, dv.ListGlobalVars)
 		})
 
 	core.NewButton(tb).SetText("Params").SetIcon(icons.Edit).
@@ -960,7 +960,7 @@ func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 		s.Grow.Set(1, 1)
 	})
 	sv.FindFrames = findFrames
-	tv := giv.NewTableView(sv, "stack")
+	tv := views.NewTableView(sv, "stack")
 	tv.OnDoubleClick(func(e events.Event) {
 		idx := tv.SelectedIndex
 		if sv.FindFrames {
@@ -972,7 +972,7 @@ func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 			dv.SetFrame(idx)
 		}
 	})
-	tv.SetFlag(false, giv.SliceViewShowIndex)
+	tv.SetFlag(false, views.SliceViewShowIndex)
 	tv.SetReadOnly(true)
 	if sv.FindFrames {
 		tv.SetSlice(&dv.State.FindFrames)
@@ -982,8 +982,8 @@ func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
 }
 
 // TableView returns the tableview
-func (sv *StackView) TableView() *giv.TableView {
-	return sv.ChildByName("stack", 0).(*giv.TableView)
+func (sv *StackView) TableView() *views.TableView {
+	return sv.ChildByName("stack", 0).(*views.TableView)
 }
 
 // ShowStack triggers update of view of State.Stack
@@ -1017,7 +1017,7 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	tv := giv.NewTableView(sv, "breaks")
+	tv := views.NewTableView(sv, "breaks")
 	tv.OnDoubleClick(func(e events.Event) {
 		idx := tv.SelectedIndex
 		dv.ShowBreakFile(idx)
@@ -1027,13 +1027,13 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 	// 		idx := data.(int)
 	// 		dv.DeleteBreakIndex(idx)
 	// 	}
-	tv.SetFlag(false, giv.SliceViewShowIndex)
+	tv.SetFlag(false, views.SliceViewShowIndex)
 	tv.SetSlice(&dv.State.Breaks)
 }
 
 // TableView returns the tableview
-func (sv *BreakView) TableView() *giv.TableView {
-	return sv.ChildByName("breaks", 0).(*giv.TableView)
+func (sv *BreakView) TableView() *views.TableView {
+	return sv.ChildByName("breaks", 0).(*views.TableView)
 }
 
 // ShowBreaks triggers update of view of State.Breaks
@@ -1068,7 +1068,7 @@ func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	tv := giv.NewTableView(sv, "threads")
+	tv := views.NewTableView(sv, "threads")
 	tv.OnDoubleClick(func(e events.Event) {
 		idx := tv.SelectedIndex
 		if dv.Dbg != nil && !dv.Dbg.HasTasks() {
@@ -1076,13 +1076,13 @@ func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
 		}
 	})
 	tv.SetReadOnly(true)
-	tv.SetFlag(false, giv.SliceViewShowIndex)
+	tv.SetFlag(false, views.SliceViewShowIndex)
 	tv.SetSlice(&dv.State.Threads)
 }
 
 // TableView returns the tableview
-func (sv *ThreadView) TableView() *giv.TableView {
-	return sv.ChildByName("threads", 0).(*giv.TableView)
+func (sv *ThreadView) TableView() *views.TableView {
+	return sv.ChildByName("threads", 0).(*views.TableView)
 }
 
 // ShowThreads triggers update of view of State.Threads
@@ -1115,21 +1115,21 @@ func (sv *TaskView) ConfigTaskView(dv *DebugView) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	tv := giv.NewTableView(sv, "tasks")
+	tv := views.NewTableView(sv, "tasks")
 	tv.OnDoubleClick(func(e events.Event) {
 		idx := tv.SelectedIndex
 		if dv.Dbg != nil && dv.Dbg.HasTasks() {
 			dv.SetThreadIndex(idx)
 		}
 	})
-	tv.SetFlag(false, giv.SliceViewShowIndex)
+	tv.SetFlag(false, views.SliceViewShowIndex)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&dv.State.Tasks)
 }
 
 // TableView returns the tableview
-func (sv *TaskView) TableView() *giv.TableView {
-	return sv.ChildByName("tasks", 0).(*giv.TableView)
+func (sv *TaskView) TableView() *views.TableView {
+	return sv.ChildByName("tasks", 0).(*views.TableView)
 }
 
 // ShowTasks triggers update of view of State.Tasks
@@ -1166,7 +1166,7 @@ func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 		s.Grow.Set(1, 1)
 	})
 	sv.GlobalVars = globalVars
-	tv := giv.NewTableView(sv, "vars")
+	tv := views.NewTableView(sv, "vars")
 	tv.OnDoubleClick(func(e events.Event) {
 		idx := tv.SelectedIndex
 		if sv.GlobalVars {
@@ -1177,7 +1177,7 @@ func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 			dv.ShowVar(vr.Nm)
 		}
 	})
-	tv.SetFlag(false, giv.SliceViewShowIndex)
+	tv.SetFlag(false, views.SliceViewShowIndex)
 	tv.SetReadOnly(true)
 	if sv.GlobalVars {
 		tv.SetSlice(&dv.State.GlobalVars)
@@ -1187,8 +1187,8 @@ func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
 }
 
 // TableView returns the tableview
-func (sv *VarsView) TableView() *giv.TableView {
-	return sv.ChildByName("vars", 0).(*giv.TableView)
+func (sv *VarsView) TableView() *views.TableView {
+	return sv.ChildByName("vars", 0).(*views.TableView)
 }
 
 // ShowVars triggers update of view of State.Vars
@@ -1257,13 +1257,13 @@ func (vv *VarView) Splits() *core.Splits {
 }
 
 // TreeView returns the main TreeView
-func (vv *VarView) TreeView() *giv.TreeView {
-	return vv.Splits().Child(0).Child(0).(*giv.TreeView)
+func (vv *VarView) TreeView() *views.TreeView {
+	return vv.Splits().Child(0).Child(0).(*views.TreeView)
 }
 
 // StructView returns the main StructView
-func (vv *VarView) StructView() *giv.StructView {
-	return vv.Splits().Child(1).(*giv.StructView)
+func (vv *VarView) StructView() *views.StructView {
+	return vv.Splits().Child(1).(*views.StructView)
 }
 
 func (vv *VarView) ConfigToolbar(tb *core.Toolbar) {
@@ -1293,8 +1293,8 @@ func (vv *VarView) ConfigSplits() {
 
 	if len(split.Kids) == 0 {
 		tvfr := core.NewFrame(split, "tvfr")
-		tv := giv.NewTreeView(tvfr, "tv")
-		sv := giv.NewStructView(split, "sv")
+		tv := views.NewTreeView(tvfr, "tv")
+		sv := views.NewStructView(split, "sv")
 		tv.OnSelect(func(e events.Event) {
 			if len(tv.SelectedNodes) > 0 {
 				sn := tv.SelectedNodes[0].AsTreeView().SyncNode

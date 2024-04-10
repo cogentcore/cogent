@@ -14,10 +14,10 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/tomls"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/views"
 )
 
 func init() {
@@ -163,11 +163,11 @@ func (se *SettingsData) ApplyEnvVars() {
 }
 
 func (se *SettingsData) ConfigToolbar(tb *core.Toolbar) {
-	giv.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
-	giv.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
-	giv.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
-	giv.NewFuncButton(tb, se.EditSplits).SetIcon(icons.VerticalSplit)
-	giv.NewFuncButton(tb, se.EditRegisters).SetIcon(icons.Variables)
+	views.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
+	views.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
+	views.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
+	views.NewFuncButton(tb, se.EditSplits).SetIcon(icons.VerticalSplit)
+	views.NewFuncButton(tb, se.EditRegisters).SetIcon(icons.Variables)
 }
 
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /

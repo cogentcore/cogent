@@ -10,11 +10,11 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 func (gv *VectorView) SelectToolbar() *core.Toolbar {
@@ -72,7 +72,7 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	core.NewSeparator(tb)
 
 	core.NewLabel(tb).SetText("X: ")
-	giv.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
+	views.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
 		gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
 	})
 
@@ -97,8 +97,8 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 // NewSelectFuncButton returns a new func button that is only enabled when
 // there is an item selected.
-func (gv *VectorView) NewSelectFuncButton(parent tree.Node, fun any) *giv.FuncButton {
-	bt := giv.NewFuncButton(parent, fun)
+func (gv *VectorView) NewSelectFuncButton(parent tree.Node, fun any) *views.FuncButton {
+	bt := views.NewFuncButton(parent, fun)
 	bt.StyleFirst(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
 	})

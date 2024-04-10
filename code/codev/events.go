@@ -11,8 +11,8 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/views"
 )
 
 func (ge *CodeView) HandleEvents() {
@@ -111,7 +111,7 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 		ge.CloseActiveView()
 	case code.KeyFunExecCmd:
 		kt.SetHandled()
-		giv.CallFunc(atv, ge.ExecCmd)
+		views.CallFunc(atv, ge.ExecCmd)
 	case code.KeyFunRectCut:
 		kt.SetHandled()
 		ge.CutRect()
@@ -123,10 +123,10 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 		ge.PasteRect()
 	case code.KeyFunRegCopy:
 		kt.SetHandled()
-		giv.CallFunc(atv, ge.RegisterCopy)
+		views.CallFunc(atv, ge.RegisterCopy)
 	case code.KeyFunRegPaste:
 		kt.SetHandled()
-		giv.CallFunc(atv, ge.RegisterPaste)
+		views.CallFunc(atv, ge.RegisterPaste)
 	case code.KeyFunCommentOut:
 		kt.SetHandled()
 		ge.CommentOut()

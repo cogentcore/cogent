@@ -10,7 +10,6 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grows/jsons"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/htmlview"
@@ -18,6 +17,7 @@ import (
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/views"
 	"cogentcore.org/core/xe"
 	"github.com/ddkwork/golibrary/pkg/tree"
 
@@ -58,7 +58,7 @@ func main() {
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
 	grr.Log(jsons.OpenFS(root, rootJson, jsonName))
-	giv.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
+	views.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := core.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {

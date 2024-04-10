@@ -9,7 +9,7 @@ import (
 
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/giv"
+	"cogentcore.org/core/views"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/tree"
@@ -217,10 +217,10 @@ func (t *FileNode) SetViewIndex(v int) *FileNode { t.ViewIndex = v; return t }
 func (t *FileNode) SetWidgetSize(v mat32.Vec2) *FileNode { t.WidgetSize = v; return t }
 
 // SetRootView sets the [FileNode.RootView]
-func (t *FileNode) SetRootView(v *giv.TreeView) *FileNode { t.RootView = v; return t }
+func (t *FileNode) SetRootView(v *views.TreeView) *FileNode { t.RootView = v; return t }
 
 // SetSelectedNodes sets the [FileNode.SelectedNodes]
-func (t *FileNode) SetSelectedNodes(v ...giv.TreeViewer) *FileNode { t.SelectedNodes = v; return t }
+func (t *FileNode) SetSelectedNodes(v ...views.TreeViewer) *FileNode { t.SelectedNodes = v; return t }
 
 // FindViewType is the [gti.Type] for [FindView]
 var FindViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Code", Doc: "parent code project"}, {Name: "LangVV", Doc: "langs value view"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
@@ -244,7 +244,7 @@ func (t *FindView) SetCode(v Code) *FindView { t.Code = v; return t }
 
 // SetLangVV sets the [FindView.LangVV]:
 // langs value view
-func (t *FindView) SetLangVV(v giv.Value) *FindView { t.LangVV = v; return t }
+func (t *FindView) SetLangVV(v views.Value) *FindView { t.LangVV = v; return t }
 
 // SetTime sets the [FindView.Time]:
 // time of last find
@@ -417,10 +417,10 @@ func (t *SymTreeView) SetViewIndex(v int) *SymTreeView { t.ViewIndex = v; return
 func (t *SymTreeView) SetWidgetSize(v mat32.Vec2) *SymTreeView { t.WidgetSize = v; return t }
 
 // SetRootView sets the [SymTreeView.RootView]
-func (t *SymTreeView) SetRootView(v *giv.TreeView) *SymTreeView { t.RootView = v; return t }
+func (t *SymTreeView) SetRootView(v *views.TreeView) *SymTreeView { t.RootView = v; return t }
 
 // SetSelectedNodes sets the [SymTreeView.SelectedNodes]
-func (t *SymTreeView) SetSelectedNodes(v ...giv.TreeViewer) *SymTreeView {
+func (t *SymTreeView) SetSelectedNodes(v ...views.TreeViewer) *SymTreeView {
 	t.SelectedNodes = v
 	return t
 }

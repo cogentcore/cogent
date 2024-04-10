@@ -22,12 +22,12 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/vci"
+	"cogentcore.org/core/views"
 )
 
 // CodeView is the core editor and tab viewer framework for the Code system.  The
@@ -183,7 +183,7 @@ func (ge *CodeView) OpenRecent(filename core.Filename) { //gti:add
 func (ge *CodeView) EditRecentPaths() {
 	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
-	giv.NewSliceView(d).SetSlice(&code.RecentPaths)
+	views.NewSliceView(d).SetSlice(&code.RecentPaths)
 	d.AddOKOnly().NewDialog(ge).Run()
 }
 

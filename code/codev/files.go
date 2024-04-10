@@ -16,10 +16,10 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // SaveActiveView saves the contents of the currently-active texteditor
@@ -35,7 +35,7 @@ func (ge *CodeView) SaveActiveView() { //gti:add
 			ge.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 			ge.RunPostCmdsActiveView()
 		} else {
-			giv.CallFunc(ge, ge.SaveActiveViewAs)
+			views.CallFunc(ge, ge.SaveActiveViewAs)
 		}
 	}
 	ge.SaveProjIfExists(false) // no saveall
@@ -43,13 +43,13 @@ func (ge *CodeView) SaveActiveView() { //gti:add
 
 // ConfigActiveFilename configures the first arg of given FuncButton to
 // use the ActiveFilename
-func (ge *CodeView) ConfigActiveFilename(fb *giv.FuncButton) *giv.FuncButton {
+func (ge *CodeView) ConfigActiveFilename(fb *views.FuncButton) *views.FuncButton {
 	fb.Args[0].SetValue(ge.ActiveFilename)
 	return fb
 }
 
 func (ge *CodeView) CallSaveActiveViewAs(ctx core.Widget) {
-	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.SaveActiveViewAs)).CallFunc()
+	ge.ConfigActiveFilename(views.NewSoloFuncButton(ctx, ge.SaveActiveViewAs)).CallFunc()
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
@@ -271,7 +271,7 @@ func (ge *CodeView) NextViewFile(fnm core.Filename) (*code.TextEditor, int, bool
 
 // CallViewFile calls ViewFile with ActiveFilename set as arg
 func (ge *CodeView) CallViewFile(ctx core.Widget) {
-	ge.ConfigActiveFilename(giv.NewSoloFuncButton(ctx, ge.ViewFile)).CallFunc()
+	ge.ConfigActiveFilename(views.NewSoloFuncButton(ctx, ge.ViewFile)).CallFunc()
 }
 
 // ViewFile views file in an existing TextEditor if it is already viewing that

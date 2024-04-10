@@ -7,11 +7,11 @@ package vector
 import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/views"
 )
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -23,40 +23,40 @@ func SplitsView(pt *Splits) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing ß(using context menu) as starting point for new one").SetData(pt)
-	tv := giv.NewTableView(d).SetSlice(pt)
+	tv := views.NewTableView(d).SetSlice(pt)
 	AvailableSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableSplitsChanged = true
 	})
 
 	d.AddAppBar(func(tb *core.Toolbar) {
-		giv.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
+		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
 			SetIcon(icons.Save).SetKey(keyfun.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
-		oj := giv.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
 		oj.Args[0].SetTag("ext", ".toml")
-		sj := giv.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *core.Scene) {
-			giv.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
 }
 
-// Value registers [SplitValue] as the [giv.Value] for [SplitName].
-func (sn SplitName) Value() giv.Value {
+// Value registers [SplitValue] as the [views.Value] for [SplitName].
+func (sn SplitName) Value() views.Value {
 	return &SplitValue{}
 }
 
 // SplitValue represents a [SplitName] value with a button.
 type SplitValue struct {
-	giv.ValueBase[*core.Button]
+	views.ValueBase[*core.Button]
 }
 
 func (v *SplitValue) Config() {
 	v.Widget.SetType(core.ButtonTonal)
-	giv.ConfigDialogWidget(v, false)
+	views.ConfigDialogWidget(v, false)
 }
 
 func (v *SplitValue) Update() {

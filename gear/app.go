@@ -21,7 +21,6 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
@@ -30,6 +29,7 @@ import (
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/units"
+	"cogentcore.org/core/views"
 	"cogentcore.org/core/xe"
 	"github.com/mattn/go-shellwords"
 	"github.com/robert-nix/ansihtml"
@@ -65,7 +65,7 @@ func (a *App) AppBar(tb *core.Toolbar) {
 		bt.OnClick(func(e events.Event) {
 			d := core.NewBody().AddTitle(text).AddText(cmd.Doc)
 			st := StructForFlags(cmd.Flags)
-			giv.NewStructView(d).SetStruct(st)
+			views.NewStructView(d).SetStruct(st)
 			d.AddBottomBar(func(parent core.Widget) {
 				d.AddCancel(parent)
 				d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {

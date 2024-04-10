@@ -13,7 +13,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/giv"
+	"cogentcore.org/core/views"
 )
 
 // Defaults sets new project defaults based on overall settings
@@ -76,7 +76,7 @@ func (ge *CodeView) EditProjSettings() { //gti:add
 }
 
 func (ge *CodeView) CallSplitsSetView(ctx core.Widget) {
-	fb := giv.NewSoloFuncButton(ctx, ge.SplitsSetView)
+	fb := views.NewSoloFuncButton(ctx, ge.SplitsSetView)
 	fb.Args[0].SetValue(ge.Settings.SplitName)
 	fb.CallFunc()
 }
