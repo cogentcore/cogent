@@ -368,7 +368,7 @@ func (ge *CodeView) CountWordsRegion() string { //gti:add
 func TextLinkHandler(tl paint.TextLink) bool {
 	// todo:
 	// tve := texteditor.AsEditor(tl.Widget)
-	// ftv, _ := tl.Widget.Embed(giv.KiT_TextEditor).(*texteditor.Editor)
+	// ftv, _ := tl.Widget.Embed(views.KiT_TextEditor).(*texteditor.Editor)
 	// gek := tl.Widget.ParentByType(KiT_CodeView, true)
 	// if gek != nil {
 	// 	ge := gek.Embed(KiT_CodeView).(*CodeView)

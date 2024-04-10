@@ -101,11 +101,11 @@ func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// })
 
 	// lyv.SliceViewSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	svs := giv.SliceViewSignals(sig)
+	// 	svs := views.SliceViewSignals(sig)
 	// 	idx := data.(int)
 	// 	fmt.Printf("tv sliceviewsig: %v  data: %v\n", svs.String(), idx)
 	// 	switch svs {
-	// 	case giv.SliceViewInserted:
+	// 	case views.SliceViewInserted:
 	// 		si := gv.FirstLayerIndex()
 	// 		li := si + idx
 	// 		l := es.Layers[idx]
@@ -115,7 +115,7 @@ func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// 		sl.SetProp("groupmode", "layer")
 	// 		// todo: move selected into this new group
 	// 		gv.UpdateLayerView()
-	// 	case giv.SliceViewDeleted:
+	// 	case views.SliceViewDeleted:
 	// 	}
 	// })
 

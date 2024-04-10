@@ -324,14 +324,14 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 1
-		sc := ss.ChildByName("stroke-clr", 1).(*giv.ColorView)
+		sc := ss.ChildByName("stroke-clr", 1).(*views.ColorView)
 		sc.SetColor(pc.StrokeStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if ss.StackTop != 2 {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 2
-		sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
+		sg := ss.ChildByName("stroke-grad", 1).(*views.TableView)
 		sg.SetSlice(grl)
 		pv.SelectStrokeGrad()
 	default:
@@ -398,14 +398,14 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 1
-		fc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
+		fc := fs.ChildByName("fill-clr", 1).(*views.ColorView)
 		fc.SetColor(pc.FillStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if fs.StackTop != 2 {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 2
-		fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
+		fg := fs.ChildByName("fill-grad", 1).(*views.TableView)
 		if fg.Slice != grl {
 			pv.SetFullReRender()
 		}
@@ -667,7 +667,7 @@ func (pv *PaintView) Config() {
 	sg.SetSlice(&pv.VectorView.EditState.Gradients)
 	// sg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if sig == int64(core.WidgetSelected) {
-	// 		svv, _ := send.(*giv.TableView)
+	// 		svv, _ := send.(*views.TableView)
 	// 		if svv.SelectedIndex >= 0 {
 	// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 	// 			pv.VectorView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
@@ -738,7 +738,7 @@ func (pv *PaintView) Config() {
 	fg.SetSlice(&pv.VectorView.EditState.Gradients)
 	// fg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if sig == int64(core.WidgetSelected) {
-	// 		svv, _ := send.(*giv.TableView)
+	// 		svv, _ := send.(*views.TableView)
 	// 		if svv.SelectedIndex >= 0 {
 	// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 	// 			pv.VectorView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
@@ -747,15 +747,15 @@ func (pv *PaintView) Config() {
 	// })
 	// fg.SliceViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-	// 	// svv, _ := send.(*giv.TableView)
-	// 	if sig == int64(giv.SliceViewDeleted) { // not clear what we can do here
+	// 	// svv, _ := send.(*views.TableView)
+	// 	if sig == int64(views.SliceViewDeleted) { // not clear what we can do here
 	// 	} else {
 	// 		pv.VectorView.UpdateGradients()
 	// 	}
 	// })
 	// fg.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-	// 	// svv, _ := send.(*giv.TableView)
+	// 	// svv, _ := send.(*views.TableView)
 	// 	pv.VectorView.UpdateGradients()
 	// })
 
@@ -779,7 +779,7 @@ func (pv *PaintView) StrokeProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		// sc := ss.ChildByName("stroke-clr", 1).(*giv.ColorView)
+		// sc := ss.ChildByName("stroke-clr", 1).(*views.ColorView)
 		// return sc.Color.HexString()
 	case PaintLinear:
 		return pv.StrokeStops

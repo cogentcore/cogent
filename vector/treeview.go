@@ -154,7 +154,7 @@ func (gv *VectorView) DeleteSelected() {
 
 /*
 // TreeViewIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
-var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni any, act *core.Button) {
+var TreeViewIsLayerFunc = views.ActionUpdateFunc(func(fni any, act *core.Button) {
 	tv := fni.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 	sn := tv.SrcNode
 	if sn != nil {
@@ -271,11 +271,11 @@ var TreeViewProperties = tree.Properties{
 	".locked": tree.Properties{
 		"color": "#ff4252",
 	},
-	giv.TreeViewSelectors[giv.TreeViewActive]: tree.Properties{},
-	giv.TreeViewSelectors[giv.TreeViewSel]: tree.Properties{
+	views.TreeViewSelectors[views.TreeViewActive]: tree.Properties{},
+	views.TreeViewSelectors[views.TreeViewSel]: tree.Properties{
 		"background-color": &core.Settings.Colors.Select,
 	},
-	giv.TreeViewSelectors[giv.TreeViewFocus]: tree.Properties{
+	views.TreeViewSelectors[views.TreeViewFocus]: tree.Properties{
 		"background-color": &core.Settings.Colors.Control,
 	},
 	"CtxtMenuActive": tree.Propertieslice{
@@ -300,7 +300,7 @@ var TreeViewProperties = tree.Properties{
 		}},
 		{"Cut", tree.Properties{
 			"shortcut": keyfun.Cut,
-			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *core.Button) {
+			"updtfunc": views.ActionUpdateFunc(func(tvi any, act *core.Button) {
 				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),

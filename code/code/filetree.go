@@ -137,7 +137,7 @@ func (on *OpenNodes) Add(fn *filetree.Node) bool {
 	if fn.Buffer != nil {
 		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send tree.Node, sig int64, data any) {
 		// 	if sig == int64(texteditor.BufClosed) {
-		// 		fno, _ := recv.Embed(giv.KiT_FileNode).(*filetree.Node)
+		// 		fno, _ := recv.Embed(views.KiT_FileNode).(*filetree.Node)
 		// 		on.Delete(fno)
 		// 	}
 		// })

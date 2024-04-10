@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package vector implements a 2D vector graphics program.
 package vector
 
 //go:generate core generate
@@ -386,7 +387,7 @@ func (vv *VectorView) Config() {
 	// 	if data == nil {
 	// 		return
 	// 	}
-	// 	if sig == int64(giv.TreeViewInserted) {
+	// 	if sig == int64(views.TreeViewInserted) {
 	// 		sn, ok := data.(svg.Node)
 	// 		if ok {
 	// 			gvv.SVG().NodeEnsureUniqueId(sn)
@@ -395,7 +396,7 @@ func (vv *VectorView) Config() {
 	// 		}
 	// 		return
 	// 	}
-	// 	if sig == int64(giv.TreeViewDeleted) {
+	// 	if sig == int64(views.TreeViewDeleted) {
 	// 		sn, ok := data.(svg.Node)
 	// 		if ok {
 	// 			svg.DeleteNodeGradientProp(sn, "fill")
@@ -403,7 +404,7 @@ func (vv *VectorView) Config() {
 	// 		}
 	// 		return
 	// 	}
-	// 	if sig != int64(giv.TreeViewOpened) {
+	// 	if sig != int64(views.TreeViewOpened) {
 	// 		return
 	// 	}
 	// 	tvn, _ := data.(tree.Node).Embed(KiT_TreeView).(*TreeView)
@@ -414,9 +415,9 @@ func (vv *VectorView) Config() {
 	// 	if tvn.SrcNode.HasChildren() {
 	// 		return
 	// 	}
-	// 	giv.StructViewDialog(gvv.Viewport, tvn.SrcNode, giv.DlgOpts{Title: "SVG Element View"}, nil, nil)
+	// 	views.StructViewDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
 	// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
-	// 	// 		stv := ggv.RecycleTab("Obj", giv.KiT_StructView, true).(*giv.StructView)
+	// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_StructView, true).(*views.StructView)
 	// 	// 		stv.SetStruct(tvn.SrcNode)
 	// })
 
@@ -699,7 +700,7 @@ func (vv *VectorView) UpdateTabs() {
 	// 	txt, istxt := fsel.(*svg.Text)
 	// 	if istxt {
 	// 		es.Text.SetFromNode(txt)
-	// 		txv := vv.Tab("Text").(*giv.StructView)
+	// 		txv := vv.Tab("Text").(*views.StructView)
 	// 		txv.UpdateFields()
 	// 		// todo: only show text toolbar on double-click
 	// 		// gv.SetModalText()
@@ -785,8 +786,8 @@ func (vv *VectorView) EditRecents() {
 	// tmp := make([]string, len(SavedPaths))
 	// copy(tmp, SavedPaths)
 	// core.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
-	// opts := giv.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
-	// giv.SliceViewDialog(vv.Viewport, &tmp, opts,
+	// opts := views.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
+	// views.SliceViewDialog(vv.Viewport, &tmp, opts,
 	// 	nil, vv, func(recv, send tree.Node, sig int64, data any) {
 	// 		if sig == int64(core.DialogAccepted) {
 	// 			SavedPaths = nil

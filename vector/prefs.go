@@ -118,10 +118,10 @@ func InitSettings() {
 	// OpenPaths() // todo
 }
 
-// SettingsFileName is the name of the preferences file in GoGi prefs directory
+// SettingsFileName is the name of the preferences file in app settings directory
 var SettingsFileName = "grid_prefs.json"
 
-// Open preferences from GoGi standard prefs directory, and applies them
+// Open preferences from app standard prefs directory, and applies them
 func (pf *Preferences) Open() error {
 	pdir := goosi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
@@ -136,7 +136,7 @@ func (pf *Preferences) Open() error {
 	return err
 }
 
-// Save Preferences to GoGi standard prefs directory
+// Save Preferences to app standard prefs directory
 func (pf *Preferences) Save() error {
 	pdir := goosi.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
@@ -211,7 +211,7 @@ func (pf *Preferences) UpdateAll() {
 }
 
 /*
-// PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., giv.SettingsView
+// PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., views.SettingsView
 var PreferencesProperties = tree.Properties{
 	"MainMenu": tree.Propertieslice{
 		{"AppMenu", tree.BlankProp{}},
@@ -221,7 +221,7 @@ var PreferencesProperties = tree.Properties{
 			}},
 			{"Save", tree.Properties{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *core.Button) {
+				"updtfunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
 				}),
@@ -239,7 +239,7 @@ var PreferencesProperties = tree.Properties{
 		{"Save", tree.Properties{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *core.Button) {
+			"updtfunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdate(pf.Changed)
 			}),

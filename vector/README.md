@@ -1,6 +1,6 @@
 ![alt tag](logo/grid-icon.png)
 
-Grid is a GoGi-based SVG vector drawing program, with design based on Inkscape.
+Grid is a Cogent Core based SVG vector drawing program, with design based on Inkscape.
 
 If an acronym is required, how about: "Go-rendered interactive drawing" program.
 

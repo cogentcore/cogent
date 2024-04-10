@@ -83,7 +83,7 @@ func (a *App) Config() {
 	}
 
 	// st := StructForFlags(a.Cmd.Flags)
-	// giv.NewStructView(a).SetStruct(st)
+	// views.NewStructView(a).SetStruct(st)
 
 	sp := core.NewSplits(a, "splits").SetSplits(0.8, 0.2)
 	sp.Style(func(s *styles.Style) {

@@ -61,7 +61,7 @@ var Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *textedito
 func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
 	df, ok := Debuggers[sup]
 	if !ok {
-		err := fmt.Errorf("Gi Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
+		err := fmt.Errorf("Code Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
 		log.Println(err)
 		return nil, err
 	}
@@ -1023,7 +1023,7 @@ func (sv *BreakView) ConfigBreakView(dv *DebugView) {
 		dv.ShowBreakFile(idx)
 	})
 	// todo:
-	// 	} else if sig == int64(giv.SliceViewDeleted) {
+	// 	} else if sig == int64(views.SliceViewDeleted) {
 	// 		idx := data.(int)
 	// 		dv.DeleteBreakIndex(idx)
 	// 	}
@@ -1312,8 +1312,7 @@ func (vv *VarView) ConfigSplits() {
 	sv.SetStruct(vv.Var)
 }
 
-// VarViewDialog opens an interactive editor of the given Ki tree, at its
-// root, returns VarView and window
+// VarViewDialog opens an interactive editor of the given variable.
 func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugView) *VarView {
 	if core.RecycleDialog(vr) {
 		return nil

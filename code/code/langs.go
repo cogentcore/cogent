@@ -102,7 +102,7 @@ func (lt *Langs) ViewStandard() { //gti:add
 	LangsView(&StandardLangs)
 }
 
-// AvailableLangsChanged is used to update giv.LangsView toolbars via
+// AvailableLangsChanged is used to update views.LangsView toolbars via
 // following menu, toolbar properties update methods -- not accurate if editing any
 // other map but works for now..
 var AvailableLangsChanged = false

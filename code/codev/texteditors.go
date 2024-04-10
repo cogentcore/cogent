@@ -31,8 +31,8 @@ func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buffer) {
 	}
 
 	// these are now set in std textbuf..
-	// tb.SetSpellCorrect(tb, giv.SpellCorrectEdit)                    // always set -- option can override
-	// tb.SetCompleter(&tb.PiState, pi.CompletePi, giv.CompleteGoEdit) // todo: need pi edit too..
+	// tb.SetSpellCorrect(tb, views.SpellCorrectEdit)                    // always set -- option can override
+	// tb.SetCompleter(&tb.PiState, pi.CompletePi, views.CompleteGoEdit) // todo: need pi edit too..
 }
 
 // ActiveTextEditor returns the currently-active TextEditor

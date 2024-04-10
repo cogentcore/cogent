@@ -796,7 +796,7 @@ func (cm *Commands) ViewStandard() { //gti:add
 	CmdsView(&StandardCommands)
 }
 
-// CustomCommandsChanged is used to update giv.CmdsView toolbars via following
+// CustomCommandsChanged is used to update views.CmdsView toolbars via following
 // menu, toolbar properties update methods.
 var CustomCommandsChanged = false
 

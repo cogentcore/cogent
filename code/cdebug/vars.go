@@ -14,7 +14,7 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// Variable describes a variable.  It is a Ki tree type so that full tree
+// Variable describes a variable.  It is a tree type so that full tree
 // can be visualized.
 type Variable struct {
 	tree.NodeBase
