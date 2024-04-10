@@ -9,9 +9,9 @@ import (
 	"sort"
 	"strings"
 
-	"cogentcore.org/core/glop/indent"
 	"cogentcore.org/core/pi/syms"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/xgo/indent"
 )
 
 // Variable describes a variable.  It is a tree type so that full tree

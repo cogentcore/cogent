@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"cogentcore.org/core/glop/dirs"
+	"cogentcore.org/core/xgo/dirs"
 )
 
 // This file contains all the state structs used in communciating with the

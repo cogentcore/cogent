@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"cogentcore.org/core/glop/dirs"
 	"cogentcore.org/core/grr"
+	"cogentcore.org/core/xgo/dirs"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	http "github.com/bogdanfinn/fhttp"
 	tls_client "github.com/bogdanfinn/tls-client"

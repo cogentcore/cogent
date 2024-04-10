@@ -11,10 +11,10 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/glop/datasize"
 	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/views"
+	"cogentcore.org/core/xgo/datasize"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
