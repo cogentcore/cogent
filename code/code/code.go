@@ -17,8 +17,8 @@ import (
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/laser"
 	"cogentcore.org/core/pi/complete"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 	"cogentcore.org/core/tree"
@@ -167,7 +167,7 @@ func ParentCode(kn tree.Node) (Code, bool) {
 	}
 	var ge Code
 	kn.WalkUp(func(k tree.Node) bool {
-		if laser.EmbedImplements(reflect.TypeOf(k.This()), CodeType) {
+		if reflectx.EmbedImplements(reflect.TypeOf(k.This()), CodeType) {
 			ge = k.(Code)
 			return false
 		}

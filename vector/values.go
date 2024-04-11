@@ -9,7 +9,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/laser"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
 )
@@ -60,7 +60,7 @@ func (v *SplitValue) Config() {
 }
 
 func (v *SplitValue) Update() {
-	txt := laser.ToString(v.Value.Interface())
+	txt := reflectx.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
@@ -68,7 +68,7 @@ func (v *SplitValue) Update() {
 }
 
 func (v *SplitValue) OpenDialog(ctx core.Widget, fun func()) {
-	cur := laser.ToString(v.Value.Interface())
+	cur := reflectx.ToString(v.Value.Interface())
 	m := core.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
 		nm := AvailableSplitNames[idx]
 		v.SetValue(nm)

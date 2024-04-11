@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/laser"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
 )
@@ -99,7 +99,7 @@ func (v *KeyMapValue) Config() {
 }
 
 func (v *KeyMapValue) Update() {
-	txt := laser.ToString(v.Value.Interface())
+	txt := reflectx.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none; click to set)"
 	}
@@ -108,7 +108,7 @@ func (v *KeyMapValue) Update() {
 
 func (vv *KeyMapValue) ConfigDialog(d *core.Body) (bool, func()) {
 	si := 0
-	cur := laser.ToString(vv.Value.Interface())
+	cur := reflectx.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailableKeyMaps.MapByName(KeyMapName(cur))
 	views.NewTableView(d).SetSlice(&AvailableKeyMaps).SetSelectedIndex(curRow).BindSelect(&si)
 	return true, func() {
@@ -200,7 +200,7 @@ func (v *CmdValue) Config() {
 }
 
 func (v *CmdValue) Update() {
-	txt := laser.ToString(v.Value.Interface())
+	txt := reflectx.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
@@ -209,7 +209,7 @@ func (v *CmdValue) Update() {
 
 func (vv *CmdValue) ConfigDialog(d *core.Body) (bool, func()) {
 	si := 0
-	cur := laser.ToString(vv.Value.Interface())
+	cur := reflectx.ToString(vv.Value.Interface())
 	_, curRow, _ := AvailableCommands.CmdByName(CmdName(cur), false)
 	views.NewTableView(d).SetSlice(&AvailableCommands).SetSelectedIndex(curRow).BindSelect(&si)
 	return true, func() {
@@ -264,7 +264,7 @@ func (v *SplitValue) Config() {
 }
 
 func (v *SplitValue) Update() {
-	txt := laser.ToString(v.Value.Interface())
+	txt := reflectx.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
@@ -272,7 +272,7 @@ func (v *SplitValue) Update() {
 }
 
 func (v *SplitValue) OpenDialog(ctx core.Widget, fun func()) {
-	cur := laser.ToString(v.Value.Interface())
+	cur := reflectx.ToString(v.Value.Interface())
 	m := core.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
 		nm := AvailableSplitNames[idx]
 		v.SetValue(nm)
@@ -335,7 +335,7 @@ func (v *RegisterValue) Config() {
 }
 
 func (v *RegisterValue) Update() {
-	txt := laser.ToString(v.Value.Interface())
+	txt := reflectx.ToString(v.Value.Interface())
 	if txt == "" {
 		txt = "(none)"
 	}
@@ -347,7 +347,7 @@ func (v *RegisterValue) OpenDialog(ctx core.Widget, fun func()) {
 		core.MessageSnackbar(ctx, "No registers available")
 		return
 	}
-	cur := laser.ToString(v.Value.Interface())
+	cur := reflectx.ToString(v.Value.Interface())
 	m := core.NewMenuFromStrings(AvailableRegisterNames, cur, func(idx int) {
 		rnm := AvailableRegisterNames[idx]
 		if ci := strings.Index(rnm, ":"); ci > 0 {

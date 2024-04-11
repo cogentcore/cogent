@@ -7,7 +7,7 @@ package vector
 import (
 	"fmt"
 
-	"cogentcore.org/core/laser"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
@@ -186,19 +186,19 @@ func (vv *VectorView) AddLayer() { //types:add
 
 // NodeIsLayer returns true if given node is a layer
 func NodeIsLayer(kn tree.Node) bool {
-	gm := laser.ToString(kn.Property("groupmode"))
+	gm := reflectx.ToString(kn.Property("groupmode"))
 	return gm == "layer"
 }
 
 // LayerIsLocked returns true if layer is locked (insensitive = true)
 func LayerIsLocked(kn tree.Node) bool {
-	b, _ := laser.ToBool(kn.Property("insensitive"))
+	b, _ := reflectx.ToBool(kn.Property("insensitive"))
 	return b
 }
 
 // LayerIsVisible returns true if layer is visible
 func LayerIsVisible(kn tree.Node) bool {
-	cp := laser.ToString(kn.Property("style"))
+	cp := reflectx.ToString(kn.Property("style"))
 	return cp != "display:none"
 }
 

@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/laser"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -27,7 +27,7 @@ func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
 	if p == nil {
 		return "", 0, MarkerDef
 	}
-	ms := laser.ToString(p)
+	ms := reflectx.ToString(p)
 	if ms == "" {
 		return "", 0, MarkerDef
 	}
@@ -50,8 +50,8 @@ func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
 func RecycleMarker(sg *svg.SVG, sii svg.Node, name string, id int, mc MarkerColors) *svg.Marker {
 	nmeff := svg.NameID(name, id)
 	mk := sg.FindDefByName(nmeff)
-	fc := laser.ToString(sii.Property("fill"))
-	sc := laser.ToString(sii.Property("stroke"))
+	fc := reflectx.ToString(sii.Property("fill"))
+	sc := reflectx.ToString(sii.Property("stroke"))
 	var mmk *svg.Marker
 	newmk := false
 	if mk != nil {
@@ -103,14 +103,14 @@ func MarkerDeleteCtxtColors(mk *svg.Marker) {
 	mk.WalkDown(func(k tree.Node) bool {
 		fp := k.Property("fill")
 		if fp != nil {
-			fps := laser.ToString(fp)
+			fps := reflectx.ToString(fp)
 			if strings.HasPrefix(fps, "context-") {
 				k.DeleteProperty("fill")
 			}
 		}
 		sp := k.Property("stroke")
 		if sp != nil {
-			sps := laser.ToString(sp)
+			sps := reflectx.ToString(sp)
 			if strings.HasPrefix(sps, "context-") {
 				k.DeleteProperty("stroke")
 			}
@@ -251,7 +251,7 @@ func init() {
 // IconToMarkerName converts a icons.Icon (as an interface{})
 // to a marker name suitable for use (removes marker- prefix)
 func IconToMarkerName(icnm any) string {
-	return strings.TrimPrefix(laser.ToString(icnm), "marker-")
+	return strings.TrimPrefix(reflectx.ToString(icnm), "marker-")
 }
 
 // MarkerNameToIcon converts a marker name to a icons.Icon

@@ -10,7 +10,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/laser"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/units"
@@ -105,7 +105,7 @@ func (vv *VectorView) SetColorNode(sii svg.Node, prop string, prev, pt PaintType
 	// 	svg.UpdateNodeGradientProp(sii, prop, true, sp)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
-			pstr := laser.ToString(sii.Property(prop))
+			pstr := reflectx.ToString(sii.Property(prop))
 			_ = pstr
 			// svg.DeleteNodeGradient(sii, pstr)
 		}
@@ -840,7 +840,7 @@ func (pv *PaintView) StrokeDashProp() []float64 {
 	if dshcb.CurrentIndex == 0 {
 		return nil
 	}
-	dnm := laser.ToString(dshcb.CurrentItem.Value)
+	dnm := reflectx.ToString(dshcb.CurrentItem.Value)
 	if dnm == "" {
 		return nil
 	}

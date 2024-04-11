@@ -18,8 +18,8 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/laser"
 	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
@@ -493,26 +493,26 @@ func (sv *SVGView) ReadMetaData() {
 		return
 	}
 	if cx := nv.Property("cx"); cx != nil {
-		sv.Trans.X, _ = laser.ToFloat32(cx)
+		sv.Trans.X, _ = reflectx.ToFloat32(cx)
 	}
 	if cy := nv.Property("cy"); cy != nil {
-		sv.Trans.Y, _ = laser.ToFloat32(cy)
+		sv.Trans.Y, _ = reflectx.ToFloat32(cy)
 	}
 	if zm := nv.Property("zoom"); zm != nil {
-		sc, _ := laser.ToFloat32(zm)
+		sc, _ := reflectx.ToFloat32(zm)
 		if sc > 0 {
 			sv.Scale = sc
 		}
 	}
 	if cl := nv.Property("current-layer"); cl != nil {
-		es.CurLayer = laser.ToString(cl)
+		es.CurLayer = reflectx.ToString(cl)
 	}
 
 	if gr == nil {
 		return
 	}
 	if gs := gr.Property("spacingx"); gs != nil {
-		gv, _ := laser.ToFloat32(gs)
+		gv, _ := reflectx.ToFloat32(gs)
 		if gv > 0 {
 			sv.Grid = gv
 		}
