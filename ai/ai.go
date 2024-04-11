@@ -13,7 +13,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/iox/jsons"
+	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
@@ -57,7 +57,7 @@ func main() {
 	leftFrame := core.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	errors.Log(jsons.OpenFS(root, rootJson, jsonName))
+	errors.Log(jsonx.OpenFS(root, rootJson, jsonName))
 	views.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := core.NewFrame(leftFrame)

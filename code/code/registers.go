@@ -9,7 +9,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
-	"cogentcore.org/core/iox/tomls"
+	"cogentcore.org/core/iox/tomlx"
 )
 
 // Registers is a list of named strings
@@ -47,12 +47,12 @@ var RegisterSettingsFilename = "register-settings.toml"
 // Open opens named registers from a toml-formatted file.
 func (lt *Registers) Open(filename core.Filename) error { //gti:add
 	*lt = make(Registers) // reset
-	return errors.Log(tomls.Open(lt, string(filename)))
+	return errors.Log(tomlx.Open(lt, string(filename)))
 }
 
 // Save saves named registers to a toml-formatted file.
 func (lt *Registers) Save(filename core.Filename) error { //gti:add
-	return errors.Log(tomls.Save(lt, string(filename)))
+	return errors.Log(tomlx.Save(lt, string(filename)))
 }
 
 // OpenSettings opens the Registers from the app settings directory,

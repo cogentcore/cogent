@@ -13,7 +13,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
 	"cogentcore.org/core/gox/dirs"
-	"cogentcore.org/core/iox/jsons"
+	"cogentcore.org/core/iox/jsonx"
 )
 
 // Split is a named splitter configuration
@@ -109,7 +109,7 @@ func (lt *Splits) FixLen() {
 func (lt *Splits) Open(filename core.Filename) error { //gti:add
 	if errors.Ignore1(dirs.FileExists(string(filename))) {
 		*lt = make(Splits, 0, 10) // reset
-		err := errors.Log(jsons.Open(lt, string(filename)))
+		err := errors.Log(jsonx.Open(lt, string(filename)))
 		lt.FixLen()
 		return err
 	}
@@ -118,7 +118,7 @@ func (lt *Splits) Open(filename core.Filename) error { //gti:add
 
 // Save saves named splits to a json-formatted file.
 func (lt *Splits) Save(filename core.Filename) error { //gti:add
-	return errors.Log(jsons.Save(lt, string(filename)))
+	return errors.Log(jsonx.Save(lt, string(filename)))
 }
 
 // OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename

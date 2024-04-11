@@ -17,7 +17,7 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/iox/jsons"
+	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/mat32"
@@ -566,7 +566,7 @@ func (sv *SVGView) UndoSave(action, data string) {
 	}
 	es.Changed = true
 	b := &bytes.Buffer{}
-	errors.Log(jsons.Write(sv.Root(), b))
+	errors.Log(jsonx.Write(sv.Root(), b))
 	bs := strings.Split(b.String(), "\n")
 	es.UndoMgr.Save(action, data, bs)
 }
@@ -575,7 +575,7 @@ func (sv *SVGView) UndoSave(action, data string) {
 func (sv *SVGView) UndoSaveReplace(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
-	errors.Log(jsons.Write(sv.Root(), b))
+	errors.Log(jsonx.Write(sv.Root(), b))
 	bs := strings.Split(b.String(), "\n")
 	es.UndoMgr.SaveReplace(action, data, bs)
 }
@@ -586,7 +586,7 @@ func (sv *SVGView) Undo() string {
 	es.ResetSelected()
 	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
-		errors.Log(jsons.Write(sv.Root(), b))
+		errors.Log(jsonx.Write(sv.Root(), b))
 		bs := strings.Split(b.String(), "\n")
 		es.UndoMgr.SaveUndoStart(bs)
 	}
@@ -596,7 +596,7 @@ func (sv *SVGView) Undo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	errors.Log(jsons.Read(sv.Root(), b))
+	errors.Log(jsonx.Read(sv.Root(), b))
 	sv.UpdateSelect()
 	return act
 }
@@ -611,7 +611,7 @@ func (sv *SVGView) Redo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	errors.Log(jsons.Read(sv.Root(), b))
+	errors.Log(jsonx.Read(sv.Root(), b))
 	sv.UpdateSelect()
 	return act
 }

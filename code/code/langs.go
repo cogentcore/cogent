@@ -10,7 +10,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/fileinfo"
-	"cogentcore.org/core/iox/tomls"
+	"cogentcore.org/core/iox/tomlx"
 )
 
 // LangOpts defines options associated with a given language / file format
@@ -55,12 +55,12 @@ var LangSettingsFilename = "lang-settings.toml"
 // Open opens languages from a toml-formatted file.
 func (lt *Langs) Open(filename core.Filename) error {
 	*lt = make(Langs) // reset
-	return tomls.Open(lt, string(filename))
+	return tomlx.Open(lt, string(filename))
 }
 
 // Save saves languages to a toml-formatted file.
 func (lt *Langs) Save(filename core.Filename) error { //gti:add
-	return tomls.Save(lt, string(filename))
+	return tomlx.Save(lt, string(filename))
 }
 
 // OpenSettings opens the Langs from the app settings directory,

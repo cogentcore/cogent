@@ -21,7 +21,7 @@ import (
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/iox/jsons"
+	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/pi/complete"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/styles"
@@ -731,12 +731,12 @@ var CommandSettingsFilename = "command-settings.toml"
 // Open opens commands from a toml-formatted file.
 func (cm *Commands) Open(filename core.Filename) error { //gti:add
 	*cm = make(Commands, 0, 10) // reset
-	return errors.Log(jsons.Open(cm, string(filename)))
+	return errors.Log(jsonx.Open(cm, string(filename)))
 }
 
 // Save saves commands to a toml-formatted file.
 func (cm *Commands) Save(filename core.Filename) error { //gti:add
-	return errors.Log(jsons.Save(cm, string(filename)))
+	return errors.Log(jsonx.Save(cm, string(filename)))
 }
 
 // OpenSettings opens custom Commands from the app settings directory, using

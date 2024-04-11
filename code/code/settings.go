@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/iox/tomls"
+	"cogentcore.org/core/iox/tomlx"
 	"cogentcore.org/core/views"
 )
 
@@ -99,7 +99,7 @@ func (se *FileSettings) Defaults() {
 }
 
 func (se *SettingsData) Save() error {
-	err := tomls.Save(se, se.Filename())
+	err := tomlx.Save(se, se.Filename())
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (se *SettingsData) Save() error {
 }
 
 func (se *SettingsData) Open() error {
-	err := tomls.Open(se, se.Filename())
+	err := tomlx.Open(se, se.Filename())
 	if err != nil {
 		return err
 	}
@@ -293,14 +293,14 @@ func (se *ProjSettings) Update() {
 
 // Open open from file
 func (se *ProjSettings) Open(filename core.Filename) error { //gti:add
-	err := errors.Log(tomls.Open(se, string(filename)))
+	err := errors.Log(tomlx.Open(se, string(filename)))
 	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 
 // Save save to file
 func (se *ProjSettings) Save(filename core.Filename) error { //gti:add
-	return errors.Log(tomls.Save(se, string(filename)))
+	return errors.Log(tomlx.Save(se, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable
