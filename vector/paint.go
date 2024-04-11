@@ -441,7 +441,7 @@ func (pv *PaintView) DecodeType(kn tree.Node, cs *style.ColorSpec, prop string) 
 	pstr := ""
 	var gii core.Node2D
 	if kn != nil {
-		pstr = laser.ToString(kn.Prop(prop))
+		pstr = reflectx.ToString(kn.Prop(prop))
 		gii = kn.(core.Node2D)
 	}
 	ptyp := PaintSolid
