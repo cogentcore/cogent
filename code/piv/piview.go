@@ -8,6 +8,8 @@ package piv
 
 // TODO: piv
 
+//go:generate core generate
+
 /*
 import (
 	"fmt"
