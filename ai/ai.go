@@ -11,6 +11,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/exec"
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
@@ -18,7 +19,6 @@ import (
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
-	"cogentcore.org/core/xe"
 	"github.com/ddkwork/golibrary/pkg/tree"
 
 	"github.com/aandrew-me/tgpt/v2/structs"
@@ -42,7 +42,7 @@ func main() {
 	b.AddAppBar(func(tb *core.Toolbar) {
 		core.NewButton(tb).SetText("Install") // todo set icon and merge ollama doc md files into s dom tree view
 		core.NewButton(tb).SetText("Start server").OnClick(func(e events.Event) {
-			core.ErrorSnackbar(b, xe.Verbose().Run("ollama", "serve"))
+			core.ErrorSnackbar(b, exec.Verbose().Run("ollama", "serve"))
 		})
 		core.NewButton(tb).SetText("Stop server").OnClick(func(e events.Event) {
 			// todo kill thread ?

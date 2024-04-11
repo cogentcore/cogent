@@ -12,8 +12,8 @@ import (
 	"unicode"
 
 	"cogentcore.org/core/errors"
+	"cogentcore.org/core/exec"
 	"cogentcore.org/core/strcase"
-	"cogentcore.org/core/xe"
 )
 
 // Parse uses the help messages of the app to fill in its data fields.
@@ -224,7 +224,7 @@ func (cm *Cmd) GetHelp() (string, error) {
 	root := fields[0]
 
 	// try man first
-	out, err := xe.Silent().Output("man", fields...)
+	out, err := exec.Silent().Output("man", fields...)
 	if err == nil {
 		return out, nil
 	}
@@ -232,14 +232,14 @@ func (cm *Cmd) GetHelp() (string, error) {
 	hcmds := []string{"help", "--help", "-h"}
 	for _, hcmd := range hcmds {
 		args := append([]string{hcmd}, fields[1:]...)
-		out, err := xe.Silent().Output(root, args...)
+		out, err := exec.Silent().Output(root, args...)
 		if err == nil {
 			return out, nil
 		}
 		if len(fields) > 1 {
 			// try both orders
 			args := append(fields[1:], hcmd)
-			out, err = xe.Silent().Output(root, args...)
+			out, err = exec.Silent().Output(root, args...)
 			if err == nil {
 				return out, nil
 			}

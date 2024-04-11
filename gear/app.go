@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
+	osexec "os/exec"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -22,6 +22,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/exec"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keyfun"
 	"cogentcore.org/core/strcase"
@@ -30,7 +31,6 @@ import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/units"
 	"cogentcore.org/core/views"
-	"cogentcore.org/core/xe"
 	"github.com/mattn/go-shellwords"
 	"github.com/robert-nix/ansihtml"
 )
@@ -69,7 +69,7 @@ func (a *App) AppBar(tb *core.Toolbar) {
 			d.AddBottomBar(func(parent core.Widget) {
 				d.AddCancel(parent)
 				d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {
-					errors.Log(xe.Verbose().Run(fields[0], fields[1:]...))
+					errors.Log(exec.Verbose().Run(fields[0], fields[1:]...))
 				})
 			})
 			d.NewFullDialog(bt).Run()
@@ -226,14 +226,14 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Label) error {
 		return nil
 	}
 
-	c := exec.CommandContext(ctx, "bash", "-c", cmd)
+	c := osexec.CommandContext(ctx, "bash", "-c", cmd)
 	c.Stdout = ow
 	c.Stderr = ow
 	c.Stdin = ir
 	c.Dir = a.Dir
 	c.Cancel = func() error {
 		fmt.Println("icf")
-		return errors.Log(xe.Run("bash", "-c", "kill -2 "+strconv.Itoa(c.Process.Pid)))
+		return errors.Log(exec.Run("bash", "-c", "kill -2 "+strconv.Itoa(c.Process.Pid)))
 	}
 	go func() {
 		errors.Log(c.Run())
