@@ -3,8 +3,8 @@
 package vector
 
 import (
-	"cogentcore.org/core/enums"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/enums"
 )
 
 var _AlignAnchorsValues = []AlignAnchors{0, 1, 2, 3}

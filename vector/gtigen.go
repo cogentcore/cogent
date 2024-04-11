@@ -3,12 +3,12 @@
 package vector
 
 import (
-	"cogentcore.org/core/views"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/tree"
 	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/units"
+	"cogentcore.org/core/views"
 )
 
 // AlignViewType is the [gti.Type] for [AlignView]
@@ -79,7 +79,7 @@ var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.PhysSize", IDN
 
 var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.Preferences", IDName: "preferences", Doc: "Preferences is the overall Vector preferences", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "Size", Doc: "default physical size, when app is started without opening a file"}, {Name: "Colors", Doc: "active color preferences"}, {Name: "ColorSchemes", Doc: "named color schemes -- has Light and Dark schemes by default"}, {Name: "ShapeStyle", Doc: "default shape styles"}, {Name: "TextStyle", Doc: "default text styles"}, {Name: "PathStyle", Doc: "default line styles"}, {Name: "LineStyle", Doc: "default line styles"}, {Name: "VectorDisp", Doc: "turns on the grid display"}, {Name: "SnapVector", Doc: "snap positions and sizes to underlying grid"}, {Name: "SnapGuide", Doc: "snap positions and sizes to line up with other elements"}, {Name: "SnapNodes", Doc: "snap node movements to align with guides"}, {Name: "SnapTol", Doc: "number of screen pixels around target point (in either direction) to snap"}, {Name: "SplitName", Doc: "named-split config in use for configuring the splitters"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "Changed", Doc: "flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc."}}})
 
-var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.ColorSettings", IDName: "color-prefs", Doc: "ColorSettings for", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "Background", Doc: "drawing background color"}, {Name: "Border", Doc: "border color of the drawing"}, {Name: "Vector", Doc: "grid line color"}}})
+var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.ColorSettings", IDName: "color-settings", Doc: "ColorSettings for", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "Background", Doc: "drawing background color"}, {Name: "Border", Doc: "border color of the drawing"}, {Name: "Vector", Doc: "grid line color"}}})
 
 // SVGViewType is the [gti.Type] for [SVGView]
 var SVGViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/vector.SVGView", IDName: "svg-view", Doc: "SVGView is the element for viewing, interacting with the SVG", Embeds: []gti.Field{{Name: "SVG"}}, Fields: []gti.Field{{Name: "VectorView", Doc: "the parent vectorview"}, {Name: "Trans", Doc: "view translation offset (from dragging)"}, {Name: "Scale", Doc: "view scaling (from zooming)"}, {Name: "Grid", Doc: "grid spacing, in native ViewBox units"}, {Name: "VectorEff", Doc: "effective grid spacing given Scale level"}, {Name: "BgPixels", Doc: "background pixels, includes page outline and grid"}, {Name: "bgTrans", Doc: "bg rendered translation"}, {Name: "bgScale", Doc: "bg rendered scale"}, {Name: "bgVectorEff", Doc: "bg rendered grid"}}, Instance: &SVGView{}})

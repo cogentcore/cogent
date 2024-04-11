@@ -4,15 +4,15 @@ package cdebug
 
 import (
 	"cogentcore.org/core/gti"
-	"cogentcore.org/core/tree"
 	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/tree"
 )
 
 // VariableType is the [gti.Type] for [Variable]
-var VariableType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cdebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a Ki tree type so that full tree\ncan be visualized.", Embeds: []gti.Field{{Name: "Node"}}, Fields: []gti.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
+var VariableType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cdebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a tree type so that full tree\ncan be visualized.", Embeds: []gti.Field{{Name: "NodeBase"}}, Fields: []gti.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
 
 // NewVariable adds a new [Variable] with the given name to the given parent:
-// Variable describes a variable.  It is a Ki tree type so that full tree
+// Variable describes a variable.  It is a tree type so that full tree
 // can be visualized.
 func NewVariable(parent tree.Node, name ...string) *Variable {
 	return parent.NewChild(VariableType, name...).(*Variable)

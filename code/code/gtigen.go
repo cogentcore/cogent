@@ -7,17 +7,17 @@ import (
 	"regexp"
 	"time"
 
-	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/views"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/tree"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/units"
+	"cogentcore.org/core/views"
 )
 
 // DebugViewType is the [gti.Type] for [DebugView]
@@ -352,7 +352,7 @@ func (t *SymbolsView) SetMatch(v string) *SymbolsView { t.Match = v; return t }
 func (t *SymbolsView) SetTooltip(v string) *SymbolsView { t.Tooltip = v; return t }
 
 // SymNodeType is the [gti.Type] for [SymNode]
-var SymNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []gti.Field{{Name: "Node"}}, Fields: []gti.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
+var SymNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []gti.Field{{Name: "NodeBase"}}, Fields: []gti.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
 
 // NewSymNode adds a new [SymNode] with the given name to the given parent:
 // SymNode represents a language symbol -- the name of the node is
