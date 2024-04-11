@@ -3,8 +3,8 @@
 package gear
 
 import (
-	"cogentcore.org/core/types"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
 )
 
 // AppType is the [types.Type] for [App]

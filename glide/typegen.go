@@ -3,8 +3,8 @@
 package glide
 
 import (
-	"cogentcore.org/core/types"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
 )
 
 // PageType is the [types.Type] for [Page]
