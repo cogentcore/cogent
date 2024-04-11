@@ -3,13 +3,13 @@
 package cdebug
 
 import (
-	"cogentcore.org/core/gti"
+	"cogentcore.org/core/types"
 	"cogentcore.org/core/pi/syms"
 	"cogentcore.org/core/tree"
 )
 
-// VariableType is the [gti.Type] for [Variable]
-var VariableType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cdebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a tree type so that full tree\ncan be visualized.", Embeds: []gti.Field{{Name: "NodeBase"}}, Fields: []gti.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
+// VariableType is the [types.Type] for [Variable]
+var VariableType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/cdebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a tree type so that full tree\ncan be visualized.", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
 
 // NewVariable adds a new [Variable] with the given name to the given parent:
 // Variable describes a variable.  It is a tree type so that full tree
@@ -18,8 +18,8 @@ func NewVariable(parent tree.Node, name ...string) *Variable {
 	return parent.NewChild(VariableType, name...).(*Variable)
 }
 
-// NodeType returns the [*gti.Type] of [Variable]
-func (t *Variable) NodeType() *gti.Type { return VariableType }
+// NodeType returns the [*types.Type] of [Variable]
+func (t *Variable) NodeType() *types.Type { return VariableType }
 
 // New returns a new [*Variable] value
 func (t *Variable) New() tree.Node { return &Variable{} }
@@ -80,4 +80,4 @@ func (t *Variable) SetMapVar(v map[string]*Variable) *Variable { t.MapVar = v; r
 // our debugger -- for getting further variable data
 func (t *Variable) SetDbg(v GiDebug) *Variable { t.Dbg = v; return t }
 
-var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/cdebug.Params", IDName: "params", Doc: "Params are overall debugger parameters", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "Mode", Doc: "mode for running the debugger"}, {Name: "PID", Doc: "process id number to attach to, for Attach mode"}, {Name: "Args", Doc: "optional extra args to pass to the debugger.\nUse -- double-dash and then add args to pass args to the executable\n(double-dash is by itself as a separate arg first).\nFor Debug test, must use -test.run instead of plain -run to specify tests to run."}, {Name: "StatFunc", Doc: "status function for debugger updating status"}, {Name: "VarList", Doc: "parameters for level of detail on overall list of variables"}, {Name: "GetVar", Doc: "parameters for level of detail retrieving a specific variable"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/cdebug.Params", IDName: "params", Doc: "Params are overall debugger parameters", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Fields: []types.Field{{Name: "Mode", Doc: "mode for running the debugger"}, {Name: "PID", Doc: "process id number to attach to, for Attach mode"}, {Name: "Args", Doc: "optional extra args to pass to the debugger.\nUse -- double-dash and then add args to pass args to the executable\n(double-dash is by itself as a separate arg first).\nFor Debug test, must use -test.run instead of plain -run to specify tests to run."}, {Name: "StatFunc", Doc: "status function for debugger updating status"}, {Name: "VarList", Doc: "parameters for level of detail on overall list of variables"}, {Name: "GetVar", Doc: "parameters for level of detail retrieving a specific variable"}}})

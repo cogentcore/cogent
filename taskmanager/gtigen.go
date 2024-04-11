@@ -3,7 +3,7 @@
 package main
 
 import (
-	"cogentcore.org/core/gti"
+	"cogentcore.org/core/types"
 )
 
-var _ = gti.AddType(&gti.Type{Name: "main.Task", IDName: "task", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Embeds: []gti.Field{{Name: "Process"}}, Fields: []gti.Field{{Name: "Name", Doc: "The name of this task"}, {Name: "CPU", Doc: "The percentage of the CPU time this task uses"}, {Name: "RAM", Doc: "The actual number of bytes of RAM this task uses (RSS)"}, {Name: "RAMPct", Doc: "The percentage of total RAM this task uses"}, {Name: "Threads", Doc: "The number of threads this task uses"}, {Name: "User", Doc: "The user that started this task"}, {Name: "PID", Doc: "The Process ID (PID) of this task"}}})
+var _ = types.AddType(&types.Type{Name: "main.Task", IDName: "task", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Embeds: []types.Field{{Name: "Process"}}, Fields: []types.Field{{Name: "Name", Doc: "The name of this task"}, {Name: "CPU", Doc: "The percentage of the CPU time this task uses"}, {Name: "RAM", Doc: "The actual number of bytes of RAM this task uses (RSS)"}, {Name: "RAMPct", Doc: "The percentage of total RAM this task uses"}, {Name: "Threads", Doc: "The number of threads this task uses"}, {Name: "User", Doc: "The user that started this task"}, {Name: "PID", Doc: "The Process ID (PID) of this task"}}})

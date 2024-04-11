@@ -3,7 +3,7 @@
 package main
 
 import (
-	"cogentcore.org/core/gti"
+	"cogentcore.org/core/types"
 )
 
-var _ = gti.AddType(&gti.Type{Name: "main.config", IDName: "config", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "Command", Doc: "Command is the command to run gear on"}}})
+var _ = types.AddType(&types.Type{Name: "main.config", IDName: "config", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Fields: []types.Field{{Name: "Command", Doc: "Command is the command to run gear on"}}})

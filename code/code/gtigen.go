@@ -9,7 +9,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/fileinfo"
-	"cogentcore.org/core/gti"
+	"cogentcore.org/core/types"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/paint"
@@ -20,8 +20,8 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// DebugViewType is the [gti.Type] for [DebugView]
-var DebugViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
+// DebugViewType is the [types.Type] for [DebugView]
+var DebugViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
 
 // NewDebugView adds a new [DebugView] with the given name to the given parent:
 // DebugView is the debugger
@@ -29,8 +29,8 @@ func NewDebugView(parent tree.Node, name ...string) *DebugView {
 	return parent.NewChild(DebugViewType, name...).(*DebugView)
 }
 
-// NodeType returns the [*gti.Type] of [DebugView]
-func (t *DebugView) NodeType() *gti.Type { return DebugViewType }
+// NodeType returns the [*types.Type] of [DebugView]
+func (t *DebugView) NodeType() *types.Type { return DebugViewType }
 
 // New returns a new [*DebugView] value
 func (t *DebugView) New() tree.Node { return &DebugView{} }
@@ -50,8 +50,8 @@ func (t *DebugView) SetDbgTime(v time.Time) *DebugView { t.DbgTime = v; return t
 // SetTooltip sets the [DebugView.Tooltip]
 func (t *DebugView) SetTooltip(v string) *DebugView { t.Tooltip = v; return t }
 
-// StackViewType is the [gti.Type] for [StackView]
-var StackViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
+// StackViewType is the [types.Type] for [StackView]
+var StackViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
 
 // NewStackView adds a new [StackView] with the given name to the given parent:
 // StackView is a view of the stack trace
@@ -59,8 +59,8 @@ func NewStackView(parent tree.Node, name ...string) *StackView {
 	return parent.NewChild(StackViewType, name...).(*StackView)
 }
 
-// NodeType returns the [*gti.Type] of [StackView]
-func (t *StackView) NodeType() *gti.Type { return StackViewType }
+// NodeType returns the [*types.Type] of [StackView]
+func (t *StackView) NodeType() *types.Type { return StackViewType }
 
 // New returns a new [*StackView] value
 func (t *StackView) New() tree.Node { return &StackView{} }
@@ -72,8 +72,8 @@ func (t *StackView) SetFindFrames(v bool) *StackView { t.FindFrames = v; return 
 // SetTooltip sets the [StackView.Tooltip]
 func (t *StackView) SetTooltip(v string) *StackView { t.Tooltip = v; return t }
 
-// BreakViewType is the [gti.Type] for [BreakView]
-var BreakViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &BreakView{}})
+// BreakViewType is the [types.Type] for [BreakView]
+var BreakViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []types.Field{{Name: "Layout"}}, Instance: &BreakView{}})
 
 // NewBreakView adds a new [BreakView] with the given name to the given parent:
 // BreakView is a view of the breakpoints
@@ -81,8 +81,8 @@ func NewBreakView(parent tree.Node, name ...string) *BreakView {
 	return parent.NewChild(BreakViewType, name...).(*BreakView)
 }
 
-// NodeType returns the [*gti.Type] of [BreakView]
-func (t *BreakView) NodeType() *gti.Type { return BreakViewType }
+// NodeType returns the [*types.Type] of [BreakView]
+func (t *BreakView) NodeType() *types.Type { return BreakViewType }
 
 // New returns a new [*BreakView] value
 func (t *BreakView) New() tree.Node { return &BreakView{} }
@@ -90,8 +90,8 @@ func (t *BreakView) New() tree.Node { return &BreakView{} }
 // SetTooltip sets the [BreakView.Tooltip]
 func (t *BreakView) SetTooltip(v string) *BreakView { t.Tooltip = v; return t }
 
-// ThreadViewType is the [gti.Type] for [ThreadView]
-var ThreadViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &ThreadView{}})
+// ThreadViewType is the [types.Type] for [ThreadView]
+var ThreadViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []types.Field{{Name: "Layout"}}, Instance: &ThreadView{}})
 
 // NewThreadView adds a new [ThreadView] with the given name to the given parent:
 // ThreadView is a view of the threads
@@ -99,8 +99,8 @@ func NewThreadView(parent tree.Node, name ...string) *ThreadView {
 	return parent.NewChild(ThreadViewType, name...).(*ThreadView)
 }
 
-// NodeType returns the [*gti.Type] of [ThreadView]
-func (t *ThreadView) NodeType() *gti.Type { return ThreadViewType }
+// NodeType returns the [*types.Type] of [ThreadView]
+func (t *ThreadView) NodeType() *types.Type { return ThreadViewType }
 
 // New returns a new [*ThreadView] value
 func (t *ThreadView) New() tree.Node { return &ThreadView{} }
@@ -108,8 +108,8 @@ func (t *ThreadView) New() tree.Node { return &ThreadView{} }
 // SetTooltip sets the [ThreadView.Tooltip]
 func (t *ThreadView) SetTooltip(v string) *ThreadView { t.Tooltip = v; return t }
 
-// TaskViewType is the [gti.Type] for [TaskView]
-var TaskViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []gti.Field{{Name: "Layout"}}, Instance: &TaskView{}})
+// TaskViewType is the [types.Type] for [TaskView]
+var TaskViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []types.Field{{Name: "Layout"}}, Instance: &TaskView{}})
 
 // NewTaskView adds a new [TaskView] with the given name to the given parent:
 // TaskView is a view of the threads
@@ -117,8 +117,8 @@ func NewTaskView(parent tree.Node, name ...string) *TaskView {
 	return parent.NewChild(TaskViewType, name...).(*TaskView)
 }
 
-// NodeType returns the [*gti.Type] of [TaskView]
-func (t *TaskView) NodeType() *gti.Type { return TaskViewType }
+// NodeType returns the [*types.Type] of [TaskView]
+func (t *TaskView) NodeType() *types.Type { return TaskViewType }
 
 // New returns a new [*TaskView] value
 func (t *TaskView) New() tree.Node { return &TaskView{} }
@@ -126,8 +126,8 @@ func (t *TaskView) New() tree.Node { return &TaskView{} }
 // SetTooltip sets the [TaskView.Tooltip]
 func (t *TaskView) SetTooltip(v string) *TaskView { t.Tooltip = v; return t }
 
-// VarsViewType is the [gti.Type] for [VarsView]
-var VarsViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
+// VarsViewType is the [types.Type] for [VarsView]
+var VarsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
 
 // NewVarsView adds a new [VarsView] with the given name to the given parent:
 // VarsView is a view of the variables
@@ -135,8 +135,8 @@ func NewVarsView(parent tree.Node, name ...string) *VarsView {
 	return parent.NewChild(VarsViewType, name...).(*VarsView)
 }
 
-// NodeType returns the [*gti.Type] of [VarsView]
-func (t *VarsView) NodeType() *gti.Type { return VarsViewType }
+// NodeType returns the [*types.Type] of [VarsView]
+func (t *VarsView) NodeType() *types.Type { return VarsViewType }
 
 // New returns a new [*VarsView] value
 func (t *VarsView) New() tree.Node { return &VarsView{} }
@@ -148,8 +148,8 @@ func (t *VarsView) SetGlobalVars(v bool) *VarsView { t.GlobalVars = v; return t 
 // SetTooltip sets the [VarsView.Tooltip]
 func (t *VarsView) SetTooltip(v string) *VarsView { t.Tooltip = v; return t }
 
-// VarViewType is the [gti.Type] for [VarView]
-var VarViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
+// VarViewType is the [types.Type] for [VarView]
+var VarViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
 
 // NewVarView adds a new [VarView] with the given name to the given parent:
 // VarView shows a debug variable in an inspector-like framework,
@@ -158,8 +158,8 @@ func NewVarView(parent tree.Node, name ...string) *VarView {
 	return parent.NewChild(VarViewType, name...).(*VarView)
 }
 
-// NodeType returns the [*gti.Type] of [VarView]
-func (t *VarView) NodeType() *gti.Type { return VarViewType }
+// NodeType returns the [*types.Type] of [VarView]
+func (t *VarView) NodeType() *types.Type { return VarViewType }
 
 // New returns a new [*VarView] value
 func (t *VarView) New() tree.Node { return &VarView{} }
@@ -171,8 +171,8 @@ func (t *VarView) SetDbgView(v *DebugView) *VarView { t.DbgView = v; return t }
 // SetTooltip sets the [VarView.Tooltip]
 func (t *VarView) SetTooltip(v string) *VarView { t.Tooltip = v; return t }
 
-// FileNodeType is the [gti.Type] for [FileNode]
-var FileNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []gti.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "Node"}}, Instance: &FileNode{}})
+// FileNodeType is the [types.Type] for [FileNode]
+var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []types.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
 // NewFileNode adds a new [FileNode] with the given name to the given parent:
 // FileNode is Code version of FileNode for FileTree view
@@ -180,8 +180,8 @@ func NewFileNode(parent tree.Node, name ...string) *FileNode {
 	return parent.NewChild(FileNodeType, name...).(*FileNode)
 }
 
-// NodeType returns the [*gti.Type] of [FileNode]
-func (t *FileNode) NodeType() *gti.Type { return FileNodeType }
+// NodeType returns the [*types.Type] of [FileNode]
+func (t *FileNode) NodeType() *types.Type { return FileNodeType }
 
 // New returns a new [*FileNode] value
 func (t *FileNode) New() tree.Node { return &FileNode{} }
@@ -222,8 +222,8 @@ func (t *FileNode) SetRootView(v *views.TreeView) *FileNode { t.RootView = v; re
 // SetSelectedNodes sets the [FileNode.SelectedNodes]
 func (t *FileNode) SetSelectedNodes(v ...views.TreeViewer) *FileNode { t.SelectedNodes = v; return t }
 
-// FindViewType is the [gti.Type] for [FindView]
-var FindViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Code", Doc: "parent code project"}, {Name: "LangVV", Doc: "langs value view"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
+// FindViewType is the [types.Type] for [FindView]
+var FindViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "LangVV", Doc: "langs value view"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
 
 // NewFindView adds a new [FindView] with the given name to the given parent:
 // FindView is a find / replace widget that displays results in a TextEditor
@@ -232,8 +232,8 @@ func NewFindView(parent tree.Node, name ...string) *FindView {
 	return parent.NewChild(FindViewType, name...).(*FindView)
 }
 
-// NodeType returns the [*gti.Type] of [FindView]
-func (t *FindView) NodeType() *gti.Type { return FindViewType }
+// NodeType returns the [*types.Type] of [FindView]
+func (t *FindView) NodeType() *types.Type { return FindViewType }
 
 // New returns a new [*FindView] value
 func (t *FindView) New() tree.Node { return &FindView{} }
@@ -257,14 +257,14 @@ func (t *FindView) SetRe(v *regexp.Regexp) *FindView { t.Re = v; return t }
 // SetTooltip sets the [FindView.Tooltip]
 func (t *FindView) SetTooltip(v string) *FindView { t.Tooltip = v; return t }
 
-var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith settings automatically.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []gti.Field{{Name: "SettingsBase"}}, Fields: []gti.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "KeyMap", Doc: "key map for code-specific keyboard sequences"}, {Name: "SaveKeyMaps", Doc: "if set, the current available set of key maps is saved to your settings directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Methods: []types.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith settings automatically.", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "KeyMap", Doc: "key map for code-specific keyboard sequences"}, {Name: "SaveKeyMaps", Doc: "if set, the current available set of key maps is saved to your settings directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
 
-var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file view settings", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Fields: []gti.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file view settings", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Fields: []types.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"}}})
 
-var _ = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.ProjSettings", IDName: "proj-settings", Doc: "ProjSettings are the settings for saving for a project. This IS the project file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Methods: []gti.Method{{Name: "Open", Doc: "Open open from file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save save to file", Directives: []gti.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}}, Fields: []gti.Field{{Name: "Files", Doc: "file view settings"}, {Name: "Editor", Doc: "editor settings"}, {Name: "SplitName", Doc: "current named-split config in use for configuring the splitters"}, {Name: "MainLang", Doc: "the language associated with the most frequently-encountered file\nextension in the file tree -- can be manually set here as well"}, {Name: "VersionControl", Doc: "the type of version control system used in this project (git, svn, etc).\nfilters commands available"}, {Name: "ProjFilename", Doc: "current project filename for saving / loading specific Code\nconfiguration information in a .code file (optional)"}, {Name: "ProjRoot", Doc: "root directory for the project. all projects must be organized within\na top-level root directory, with all the files therein constituting\nthe scope of the project. By default it is the path for ProjFilename"}, {Name: "GoMod", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"}, {Name: "BuildCmds", Doc: "command(s) to run for main Build button"}, {Name: "BuildDir", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"}, {Name: "BuildTarg", Doc: "build target for main Build button, if relevant for your  BuildCmds"}, {Name: "RunExec", Doc: "executable to run for this project via main Run button -- called by standard Run Proj command"}, {Name: "RunCmds", Doc: "command(s) to run for main Run button (typically Run Proj)"}, {Name: "Debug", Doc: "custom debugger parameters for this project"}, {Name: "Find", Doc: "saved find params"}, {Name: "Symbols", Doc: "saved structure params"}, {Name: "Dirs", Doc: "directory properties"}, {Name: "Register", Doc: "last register used"}, {Name: "Splits", Doc: "current splitter splits"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.ProjSettings", IDName: "proj-settings", Doc: "ProjSettings are the settings for saving for a project. This IS the project file", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Methods: []types.Method{{Name: "Open", Doc: "Open open from file", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save save to file", Directives: []types.Directive{{Tool: "gti", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}}, Fields: []types.Field{{Name: "Files", Doc: "file view settings"}, {Name: "Editor", Doc: "editor settings"}, {Name: "SplitName", Doc: "current named-split config in use for configuring the splitters"}, {Name: "MainLang", Doc: "the language associated with the most frequently-encountered file\nextension in the file tree -- can be manually set here as well"}, {Name: "VersionControl", Doc: "the type of version control system used in this project (git, svn, etc).\nfilters commands available"}, {Name: "ProjFilename", Doc: "current project filename for saving / loading specific Code\nconfiguration information in a .code file (optional)"}, {Name: "ProjRoot", Doc: "root directory for the project. all projects must be organized within\na top-level root directory, with all the files therein constituting\nthe scope of the project. By default it is the path for ProjFilename"}, {Name: "GoMod", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"}, {Name: "BuildCmds", Doc: "command(s) to run for main Build button"}, {Name: "BuildDir", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"}, {Name: "BuildTarg", Doc: "build target for main Build button, if relevant for your  BuildCmds"}, {Name: "RunExec", Doc: "executable to run for this project via main Run button -- called by standard Run Proj command"}, {Name: "RunCmds", Doc: "command(s) to run for main Run button (typically Run Proj)"}, {Name: "Debug", Doc: "custom debugger parameters for this project"}, {Name: "Find", Doc: "saved find params"}, {Name: "Symbols", Doc: "saved structure params"}, {Name: "Dirs", Doc: "directory properties"}, {Name: "Register", Doc: "last register used"}, {Name: "Splits", Doc: "current splitter splits"}}})
 
-// SpellViewType is the [gti.Type] for [SpellView]
-var SpellViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIndex", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
+// SpellViewType is the [types.Type] for [SpellView]
+var SpellViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIndex", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
 
 // NewSpellView adds a new [SpellView] with the given name to the given parent:
 // SpellView is a widget that displays results of spell check
@@ -272,8 +272,8 @@ func NewSpellView(parent tree.Node, name ...string) *SpellView {
 	return parent.NewChild(SpellViewType, name...).(*SpellView)
 }
 
-// NodeType returns the [*gti.Type] of [SpellView]
-func (t *SpellView) NodeType() *gti.Type { return SpellViewType }
+// NodeType returns the [*types.Type] of [SpellView]
+func (t *SpellView) NodeType() *types.Type { return SpellViewType }
 
 // New returns a new [*SpellView] value
 func (t *SpellView) New() tree.Node { return &SpellView{} }
@@ -317,8 +317,8 @@ func (t *SpellView) SetLastAction(v *core.Button) *SpellView { t.LastAction = v;
 // SetTooltip sets the [SpellView.Tooltip]
 func (t *SpellView) SetTooltip(v string) *SpellView { t.Tooltip = v; return t }
 
-// SymbolsViewType is the [gti.Type] for [SymbolsView]
-var SymbolsViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []gti.Field{{Name: "Layout"}}, Fields: []gti.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
+// SymbolsViewType is the [types.Type] for [SymbolsView]
+var SymbolsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
 
 // NewSymbolsView adds a new [SymbolsView] with the given name to the given parent:
 // SymbolsView is a widget that displays results of a file or package parse
@@ -326,8 +326,8 @@ func NewSymbolsView(parent tree.Node, name ...string) *SymbolsView {
 	return parent.NewChild(SymbolsViewType, name...).(*SymbolsView)
 }
 
-// NodeType returns the [*gti.Type] of [SymbolsView]
-func (t *SymbolsView) NodeType() *gti.Type { return SymbolsViewType }
+// NodeType returns the [*types.Type] of [SymbolsView]
+func (t *SymbolsView) NodeType() *types.Type { return SymbolsViewType }
 
 // New returns a new [*SymbolsView] value
 func (t *SymbolsView) New() tree.Node { return &SymbolsView{} }
@@ -351,8 +351,8 @@ func (t *SymbolsView) SetMatch(v string) *SymbolsView { t.Match = v; return t }
 // SetTooltip sets the [SymbolsView.Tooltip]
 func (t *SymbolsView) SetTooltip(v string) *SymbolsView { t.Tooltip = v; return t }
 
-// SymNodeType is the [gti.Type] for [SymNode]
-var SymNodeType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []gti.Field{{Name: "NodeBase"}}, Fields: []gti.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
+// SymNodeType is the [types.Type] for [SymNode]
+var SymNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
 
 // NewSymNode adds a new [SymNode] with the given name to the given parent:
 // SymNode represents a language symbol -- the name of the node is
@@ -361,8 +361,8 @@ func NewSymNode(parent tree.Node, name ...string) *SymNode {
 	return parent.NewChild(SymNodeType, name...).(*SymNode)
 }
 
-// NodeType returns the [*gti.Type] of [SymNode]
-func (t *SymNode) NodeType() *gti.Type { return SymNodeType }
+// NodeType returns the [*types.Type] of [SymNode]
+func (t *SymNode) NodeType() *types.Type { return SymNodeType }
 
 // New returns a new [*SymNode] value
 func (t *SymNode) New() tree.Node { return &SymNode{} }
@@ -371,8 +371,8 @@ func (t *SymNode) New() tree.Node { return &SymNode{} }
 // the symbol
 func (t *SymNode) SetSymbol(v syms.Symbol) *SymNode { t.Symbol = v; return t }
 
-// SymTreeViewType is the [gti.Type] for [SymTreeView]
-var SymTreeViewType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.SymTreeView", IDName: "sym-tree-view", Doc: "SymTreeView is a TreeView that knows how to operate on FileNode nodes", Embeds: []gti.Field{{Name: "TreeView"}}, Instance: &SymTreeView{}})
+// SymTreeViewType is the [types.Type] for [SymTreeView]
+var SymTreeViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.SymTreeView", IDName: "sym-tree-view", Doc: "SymTreeView is a TreeView that knows how to operate on FileNode nodes", Embeds: []types.Field{{Name: "TreeView"}}, Instance: &SymTreeView{}})
 
 // NewSymTreeView adds a new [SymTreeView] with the given name to the given parent:
 // SymTreeView is a TreeView that knows how to operate on FileNode nodes
@@ -380,8 +380,8 @@ func NewSymTreeView(parent tree.Node, name ...string) *SymTreeView {
 	return parent.NewChild(SymTreeViewType, name...).(*SymTreeView)
 }
 
-// NodeType returns the [*gti.Type] of [SymTreeView]
-func (t *SymTreeView) NodeType() *gti.Type { return SymTreeViewType }
+// NodeType returns the [*types.Type] of [SymTreeView]
+func (t *SymTreeView) NodeType() *types.Type { return SymTreeViewType }
 
 // New returns a new [*SymTreeView] value
 func (t *SymTreeView) New() tree.Node { return &SymTreeView{} }
@@ -425,8 +425,8 @@ func (t *SymTreeView) SetSelectedNodes(v ...views.TreeViewer) *SymTreeView {
 	return t
 }
 
-// TextEditorType is the [gti.Type] for [TextEditor]
-var TextEditorType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/code/code.TextEditor", IDName: "text-editor", Doc: "TextEditor is the Code-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc", Embeds: []gti.Field{{Name: "Editor"}}, Fields: []gti.Field{{Name: "Code"}}, Instance: &TextEditor{}})
+// TextEditorType is the [types.Type] for [TextEditor]
+var TextEditorType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/code.TextEditor", IDName: "text-editor", Doc: "TextEditor is the Code-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc", Embeds: []types.Field{{Name: "Editor"}}, Fields: []types.Field{{Name: "Code"}}, Instance: &TextEditor{}})
 
 // NewTextEditor adds a new [TextEditor] with the given name to the given parent:
 // TextEditor is the Code-specific version of the TextEditor, with support for
@@ -435,8 +435,8 @@ func NewTextEditor(parent tree.Node, name ...string) *TextEditor {
 	return parent.NewChild(TextEditorType, name...).(*TextEditor)
 }
 
-// NodeType returns the [*gti.Type] of [TextEditor]
-func (t *TextEditor) NodeType() *gti.Type { return TextEditorType }
+// NodeType returns the [*types.Type] of [TextEditor]
+func (t *TextEditor) NodeType() *types.Type { return TextEditorType }
 
 // New returns a new [*TextEditor] value
 func (t *TextEditor) New() tree.Node { return &TextEditor{} }

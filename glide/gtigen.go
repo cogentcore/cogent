@@ -3,12 +3,12 @@
 package glide
 
 import (
-	"cogentcore.org/core/gti"
+	"cogentcore.org/core/types"
 	"cogentcore.org/core/tree"
 )
 
-// PageType is the [gti.Type] for [Page]
-var PageType = gti.AddType(&gti.Type{Name: "cogentcore.org/cogent/glide.Page", IDName: "page", Doc: "Page represents one web browser page", Embeds: []gti.Field{{Name: "Frame"}}, Fields: []gti.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [htmlview.Context]."}}, Instance: &Page{}})
+// PageType is the [types.Type] for [Page]
+var PageType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/glide.Page", IDName: "page", Doc: "Page represents one web browser page", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [htmlview.Context]."}}, Instance: &Page{}})
 
 // NewPage adds a new [Page] with the given name to the given parent:
 // Page represents one web browser page
@@ -16,8 +16,8 @@ func NewPage(parent tree.Node, name ...string) *Page {
 	return parent.NewChild(PageType, name...).(*Page)
 }
 
-// NodeType returns the [*gti.Type] of [Page]
-func (t *Page) NodeType() *gti.Type { return PageType }
+// NodeType returns the [*types.Type] of [Page]
+func (t *Page) NodeType() *types.Type { return PageType }
 
 // New returns a new [*Page] value
 func (t *Page) New() tree.Node { return &Page{} }

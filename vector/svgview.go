@@ -15,7 +15,6 @@ import (
 	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keymap"
@@ -23,6 +22,7 @@ import (
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
 	"cogentcore.org/core/views"
 )
 
@@ -659,7 +659,7 @@ func (sv *SVGView) SetSVGName(el svg.Node) {
 
 // NewEl makes a new SVG element, giving it a new unique name.
 // Uses currently active layer if set.
-func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
+func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 	es := sv.EditState()
 	parent := tree.Node(sv.Root())
 	if es.CurLayer != "" {
@@ -677,7 +677,7 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 }
 
 // NewElDrag makes a new SVG element during the drag operation
-func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
+func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 	minsz := float32(10)
 	es := sv.EditState()
 	dv := mat32.V2FromPoint(end.Sub(start))
