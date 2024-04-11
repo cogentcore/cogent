@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/core"
 )
 
-type config struct { //gti:add
+type config struct { //types:add
 	// Command is the command to run gear on
 	Command string `posarg:"0" required:"-" default:"ls"`
 }

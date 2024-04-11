@@ -316,7 +316,7 @@ func (km KeyMapsItem) Label() string {
 
 // KeyMaps is a list of KeyMap's -- users can edit these in Settings -- to create
 // a custom one, just duplicate an existing map, rename, and customize
-type KeyMaps []KeyMapsItem //gti:add
+type KeyMaps []KeyMapsItem //types:add
 
 // AvailableKeyMaps is the current list of available keymaps for use -- can be
 // loaded / saved / edited with settings.  This is set to StdKeyMaps at
@@ -344,19 +344,19 @@ func (km *KeyMaps) MapByName(name KeyMapName) (*KeySeqMap, int, bool) {
 var KeyMapSettingsFilename = "key-map-settings.json"
 
 // Open opens keymaps from a json-formatted file.
-func (km *KeyMaps) Open(filename core.Filename) error { //gti:add
+func (km *KeyMaps) Open(filename core.Filename) error { //types:add
 	*km = make(KeyMaps, 0, 10) // reset
 	return errors.Log(jsonx.Open(km, string(filename)))
 }
 
 // Save saves keymaps to a json-formatted file.
-func (km *KeyMaps) Save(filename core.Filename) error { //gti:add
+func (km *KeyMaps) Save(filename core.Filename) error { //types:add
 	return errors.Log(jsonx.Save(km, string(filename)))
 }
 
 // OpenSettings opens the KeyMaps from the app settings directory,
 // using KeyMapSettingsFilename.
-func (km *KeyMaps) OpenSettings() error { //gti:add
+func (km *KeyMaps) OpenSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, KeyMapSettingsFilename)
 	AvailableKeyMapsChanged = false
@@ -365,7 +365,7 @@ func (km *KeyMaps) OpenSettings() error { //gti:add
 
 // SaveSettings saves the KeyMaps to the app setttings directory, using
 // KeyMapSettingsFilename.
-func (km *KeyMaps) SaveSettings() error { //gti:add
+func (km *KeyMaps) SaveSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, KeyMapSettingsFilename)
 	AvailableKeyMapsChanged = false
@@ -388,7 +388,7 @@ func (km *KeyMaps) CopyFrom(cp KeyMaps) {
 // it is a good idea to save your current maps and try this,
 // or at least do ViewStdMaps to see the current standards.
 // <b>Your current map edits will be lost if you proceed!</b>
-func (km *KeyMaps) RevertToStandard() { //gti:add
+func (km *KeyMaps) RevertToStandard() { //types:add
 	km.CopyFrom(StandardKeyMaps)
 	AvailableKeyMapsChanged = true
 }
@@ -396,7 +396,7 @@ func (km *KeyMaps) RevertToStandard() { //gti:add
 // ViewStandard shows the standard maps that are compiled into the program and have
 // all the lastest key functions bound to standard values.  Useful for
 // comparing against custom maps.
-func (km *KeyMaps) ViewStandard() { //gti:add
+func (km *KeyMaps) ViewStandard() { //types:add
 	KeyMapsView(&StandardKeyMaps)
 }
 

@@ -729,19 +729,19 @@ func (cm *Commands) CmdByName(name CmdName, msg bool) (*Command, int, bool) {
 var CommandSettingsFilename = "command-settings.toml"
 
 // Open opens commands from a toml-formatted file.
-func (cm *Commands) Open(filename core.Filename) error { //gti:add
+func (cm *Commands) Open(filename core.Filename) error { //types:add
 	*cm = make(Commands, 0, 10) // reset
 	return errors.Log(jsonx.Open(cm, string(filename)))
 }
 
 // Save saves commands to a toml-formatted file.
-func (cm *Commands) Save(filename core.Filename) error { //gti:add
+func (cm *Commands) Save(filename core.Filename) error { //types:add
 	return errors.Log(jsonx.Save(cm, string(filename)))
 }
 
 // OpenSettings opens custom Commands from the app settings directory, using
 // CommandSettingsFilename.
-func (cm *Commands) OpenSettings() error { //gti:add
+func (cm *Commands) OpenSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, CommandSettingsFilename)
 	CustomCommandsChanged = false
@@ -756,7 +756,7 @@ func (cm *Commands) OpenSettings() error { //gti:add
 
 // SaveSettings saves custom Commands to the app settings directory, using
 // CommandSettingsFilename.
-func (cm *Commands) SaveSettings() error { //gti:add
+func (cm *Commands) SaveSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, CommandSettingsFilename)
 	CustomCommandsChanged = false
@@ -792,7 +792,7 @@ func MergeAvailableCmds() {
 
 // ViewStandard shows the standard types that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (cm *Commands) ViewStandard() { //gti:add
+func (cm *Commands) ViewStandard() { //types:add
 	CmdsView(&StandardCommands)
 }
 

@@ -118,7 +118,7 @@ func ExecCmds(ge *CodeView) [][]string {
 }
 
 // ExecCmdNameActive calls given command on current active texteditor
-func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //gti:add
+func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return
@@ -137,7 +137,7 @@ func (ge *CodeView) CommandFromMenu(fn *filetree.Node) {
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
-func (ge *CodeView) ExecCmd() { //gti:add
+func (ge *CodeView) ExecCmd() { //types:add
 	fn := ge.ActiveFileNode()
 	if fn == nil {
 		fmt.Printf("no Active File for ExecCmd\n")
@@ -178,7 +178,7 @@ func (ge *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms code.CmdNames, se
 }
 
 // Build runs the BuildCmds set for this project
-func (ge *CodeView) Build() { //gti:add
+func (ge *CodeView) Build() { //types:add
 	if len(ge.Settings.BuildCmds) == 0 {
 		core.MessageDialog(ge, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
 		return
@@ -189,7 +189,7 @@ func (ge *CodeView) Build() { //gti:add
 }
 
 // Run runs the RunCmds set for this project
-func (ge *CodeView) Run() { //gti:add
+func (ge *CodeView) Run() { //types:add
 	if len(ge.Settings.RunCmds) == 0 {
 		core.MessageDialog(ge, "You need to set the RunCmds in the Project Settings", "No RunCmds Set")
 		return
@@ -203,7 +203,7 @@ func (ge *CodeView) Run() { //gti:add
 
 // Commit commits the current changes using relevant VCS tool.
 // Checks for VCS setting and for unsaved files.
-func (ge *CodeView) Commit() { //gti:add
+func (ge *CodeView) Commit() { //types:add
 	vc := ge.VersionControl()
 	if vc == "" {
 		core.MessageDialog(ge, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")

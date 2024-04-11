@@ -158,7 +158,7 @@ func (ge *CodeView) FocusOnTabs() bool {
 //  Main project API
 
 // UpdateFiles updates the list of files saved in project
-func (ge *CodeView) UpdateFiles() { //gti:add
+func (ge *CodeView) UpdateFiles() { //types:add
 	if ge.Files != nil && ge.ProjRoot != "" {
 		ge.Files.OpenPath(string(ge.ProjRoot))
 		ge.Files.Open()
@@ -170,7 +170,7 @@ func (ge *CodeView) IsEmpty() bool {
 }
 
 // OpenRecent opens a recently-used file
-func (ge *CodeView) OpenRecent(filename core.Filename) { //gti:add
+func (ge *CodeView) OpenRecent(filename core.Filename) { //types:add
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".code" {
 		ge.OpenProj(filename)
@@ -189,7 +189,7 @@ func (ge *CodeView) EditRecentPaths() {
 
 // OpenFile opens file in an open project if it has the same path as the file
 // or in a new window.
-func (ge *CodeView) OpenFile(fnm string) { //gti:add
+func (ge *CodeView) OpenFile(fnm string) { //types:add
 	abfn, _ := filepath.Abs(fnm)
 	if strings.HasPrefix(abfn, string(ge.ProjRoot)) {
 		ge.ViewFile(core.Filename(abfn))
@@ -217,7 +217,7 @@ func (ge *CodeView) SetWindowNameTitle() {
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
 // current CodeView object if it is empty, or otherwise opens a new window.
-func (ge *CodeView) OpenPath(path core.Filename) *CodeView { //gti:add
+func (ge *CodeView) OpenPath(path core.Filename) *CodeView { //types:add
 	if gproj, has := CheckForProjAtPath(string(path)); has {
 		return ge.OpenProj(core.Filename(gproj))
 	}
@@ -250,7 +250,7 @@ func (ge *CodeView) OpenPath(path core.Filename) *CodeView { //gti:add
 
 // OpenProj opens .code project file and its settings from given filename, in a standard
 // toml-formatted file
-func (ge *CodeView) OpenProj(filename core.Filename) *CodeView { //gti:add
+func (ge *CodeView) OpenProj(filename core.Filename) *CodeView { //types:add
 	if !ge.IsEmpty() {
 		return OpenCodeProj(string(filename))
 	}
@@ -284,7 +284,7 @@ func (ge *CodeView) OpenProj(filename core.Filename) *CodeView { //gti:add
 // path -- all CodeView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *CodeView) NewProj(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *CodeView { //gti:add
+func (ge *CodeView) NewProj(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *CodeView { //types:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
@@ -300,7 +300,7 @@ func (ge *CodeView) NewProj(path core.Filename, folder string, mainLang fileinfo
 }
 
 // NewFile creates a new file in the project
-func (ge *CodeView) NewFile(filename string, addToVcs bool) { //gti:add
+func (ge *CodeView) NewFile(filename string, addToVcs bool) { //types:add
 	np := filepath.Join(string(ge.ProjRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
@@ -318,7 +318,7 @@ func (ge *CodeView) NewFile(filename string, addToVcs bool) { //gti:add
 
 // SaveProj saves project file containing custom project settings, in a
 // standard toml-formatted file
-func (ge *CodeView) SaveProj() { //gti:add
+func (ge *CodeView) SaveProj() { //types:add
 	if ge.Settings.ProjFilename == "" {
 		return
 	}
@@ -348,7 +348,7 @@ func (ge *CodeView) SaveProjIfExists(saveAllFiles bool) bool {
 // toml-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (ge *CodeView) SaveProjAs(filename core.Filename) bool { //gti:add
+func (ge *CodeView) SaveProjAs(filename core.Filename) bool { //types:add
 	spell.SaveIfLearn()
 	code.RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
 	code.SavePaths()

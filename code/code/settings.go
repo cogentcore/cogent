@@ -38,7 +38,7 @@ var Settings = &SettingsData{
 }
 
 // SettingsData is the data type for the overall user settings for Code.
-type SettingsData struct { //gti:add
+type SettingsData struct { //types:add
 	core.SettingsBase
 
 	// file view settings
@@ -61,7 +61,7 @@ type SettingsData struct { //gti:add
 }
 
 // FileSettings contains file view settings
-type FileSettings struct { //gti:add
+type FileSettings struct { //types:add
 
 	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
 	DirsOnTop bool
@@ -137,7 +137,7 @@ func (se *SettingsData) Open() error {
 }
 
 // Apply settings updates things according with settings
-func (se *SettingsData) Apply() { //gti:add
+func (se *SettingsData) Apply() { //types:add
 	if se.KeyMap != "" {
 		SetActiveKeyMapName(se.KeyMap) // fills in missing pieces
 	}
@@ -173,20 +173,20 @@ func (se *SettingsData) ConfigToolbar(tb *core.Toolbar) {
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
 // load from other files, etc.  Current avail keymaps are saved and loaded
 // with settings automatically.
-func (se *SettingsData) EditKeyMaps() { //gti:add
+func (se *SettingsData) EditKeyMaps() { //types:add
 	se.SaveKeyMaps = true
 	KeyMapsView(&AvailableKeyMaps)
 }
 
 // EditLangOpts opens the LangsView editor to customize options for each type of
 // language / data / file type.
-func (se *SettingsData) EditLangOpts() { //gti:add
+func (se *SettingsData) EditLangOpts() { //types:add
 	se.SaveLangOpts = true
 	LangsView(&AvailableLangs)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.
-func (se *SettingsData) EditCmds() { //gti:add
+func (se *SettingsData) EditCmds() { //types:add
 	se.SaveCmds = true
 	if len(CustomCommands) == 0 {
 		exc := &Command{Name: "Example Cmd",
@@ -202,12 +202,12 @@ func (se *SettingsData) EditCmds() { //gti:add
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
-func (se *SettingsData) EditSplits() { //gti:add
+func (se *SettingsData) EditSplits() { //types:add
 	SplitsView(&AvailableSplits)
 }
 
 // EditRegisters opens the RegistersView editor to customize saved registers
-func (se *SettingsData) EditRegisters() { //gti:add
+func (se *SettingsData) EditRegisters() { //types:add
 	RegistersView(&AvailableRegisters)
 }
 
@@ -215,7 +215,7 @@ func (se *SettingsData) EditRegisters() { //gti:add
 //   Project Settings
 
 // ProjSettings are the settings for saving for a project. This IS the project file
-type ProjSettings struct { //gti:add
+type ProjSettings struct { //types:add
 
 	// file view settings
 	Files FileSettings
@@ -292,14 +292,14 @@ func (se *ProjSettings) Update() {
 }
 
 // Open open from file
-func (se *ProjSettings) Open(filename core.Filename) error { //gti:add
+func (se *ProjSettings) Open(filename core.Filename) error { //types:add
 	err := errors.Log(tomlx.Open(se, string(filename)))
 	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 
 // Save save to file
-func (se *ProjSettings) Save(filename core.Filename) error { //gti:add
+func (se *ProjSettings) Save(filename core.Filename) error { //types:add
 	return errors.Log(tomlx.Save(se, string(filename)))
 }
 

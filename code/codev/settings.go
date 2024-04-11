@@ -66,7 +66,7 @@ func (ge *CodeView) ApplySettingsAction() {
 }
 
 // EditProjSettings allows editing of project settings (settings specific to this project)
-func (ge *CodeView) EditProjSettings() { //gti:add
+func (ge *CodeView) EditProjSettings() { //types:add
 	sv := code.ProjSettingsView(&ge.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
@@ -82,7 +82,7 @@ func (ge *CodeView) CallSplitsSetView(ctx core.Widget) {
 }
 
 // SplitsSetView sets split view splitters to given named setting
-func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
+func (ge *CodeView) SplitsSetView(split code.SplitName) { //types:add
 	sv := ge.Splits()
 	sp, _, ok := code.AvailableSplits.SplitByName(split)
 	if ok {
@@ -96,7 +96,7 @@ func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 
 // SplitsSave saves current splitter settings to named splitter settings under
 // existing name, and saves to prefs file
-func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
+func (ge *CodeView) SplitsSave(split code.SplitName) { //types:add
 	sv := ge.Splits()
 	sp, _, ok := code.AvailableSplits.SplitByName(split)
 	if ok {
@@ -107,14 +107,14 @@ func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (ge *CodeView) SplitsSaveAs(name, desc string) { //gti:add
+func (ge *CodeView) SplitsSaveAs(name, desc string) { //types:add
 	sv := ge.Splits()
 	code.AvailableSplits.Add(name, desc, sv.Splits)
 	code.AvailableSplits.SaveSettings()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (ge *CodeView) SplitsEdit() { //gti:add
+func (ge *CodeView) SplitsEdit() { //types:add
 	code.SplitsView(&code.AvailableSplits)
 }
 

@@ -45,19 +45,19 @@ func (lt *Registers) Names() []string {
 var RegisterSettingsFilename = "register-settings.toml"
 
 // Open opens named registers from a toml-formatted file.
-func (lt *Registers) Open(filename core.Filename) error { //gti:add
+func (lt *Registers) Open(filename core.Filename) error { //types:add
 	*lt = make(Registers) // reset
 	return errors.Log(tomlx.Open(lt, string(filename)))
 }
 
 // Save saves named registers to a toml-formatted file.
-func (lt *Registers) Save(filename core.Filename) error { //gti:add
+func (lt *Registers) Save(filename core.Filename) error { //types:add
 	return errors.Log(tomlx.Save(lt, string(filename)))
 }
 
 // OpenSettings opens the Registers from the app settings directory,
 // using RegisterSettingsFilename.
-func (lt *Registers) OpenSettings() error { //gti:add
+func (lt *Registers) OpenSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, RegisterSettingsFilename)
 	AvailableRegistersChanged = false
@@ -70,7 +70,7 @@ func (lt *Registers) OpenSettings() error { //gti:add
 
 // SaveSettings saves the Registers to the app settings directory,
 // using RegisterSettingsFilename.
-func (lt *Registers) SaveSettings() error { //gti:add
+func (lt *Registers) SaveSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, RegisterSettingsFilename)
 	AvailableRegistersChanged = false

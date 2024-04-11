@@ -211,7 +211,7 @@ type VarParams struct {
 }
 
 // Params are overall debugger parameters
-type Params struct { //gti:add
+type Params struct { //types:add
 
 	// mode for running the debugger
 	Mode Modes `xml:"-" toml:"-" json:"-" view:"-"`

@@ -23,7 +23,7 @@ import (
 )
 
 // SaveActiveView saves the contents of the currently-active texteditor
-func (ge *CodeView) SaveActiveView() { //gti:add
+func (ge *CodeView) SaveActiveView() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer != nil {
 		ge.LastSaveTStamp = time.Now()
@@ -54,7 +54,7 @@ func (ge *CodeView) CallSaveActiveViewAs(ctx core.Widget) {
 
 // SaveActiveViewAs save with specified filename the contents of the
 // currently-active texteditor
-func (ge *CodeView) SaveActiveViewAs(filename core.Filename) { //gti:add
+func (ge *CodeView) SaveActiveViewAs(filename core.Filename) { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer != nil {
 		ge.LastSaveTStamp = time.Now()
@@ -80,7 +80,7 @@ func (ge *CodeView) SaveActiveViewAs(filename core.Filename) { //gti:add
 }
 
 // RevertActiveView revert active view to saved version
-func (ge *CodeView) RevertActiveView() { //gti:add
+func (ge *CodeView) RevertActiveView() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer != nil {
 		ge.ConfigTextBuf(tv.Buffer)
@@ -92,7 +92,7 @@ func (ge *CodeView) RevertActiveView() { //gti:add
 }
 
 // CloseActiveView closes the buffer associated with active view
-func (ge *CodeView) CloseActiveView() { //gti:add
+func (ge *CodeView) CloseActiveView() { //types:add
 	tv := ge.ActiveTextEditor()
 	ond, _, got := ge.OpenNodeForTextEditor(tv)
 	if got {
@@ -260,7 +260,7 @@ func (ge *CodeView) TextBufForFile(fpath string, add bool) *texteditor.Buffer {
 // much of name as possible to disambiguate -- will use the first matching --
 // if already being viewed, that is activated -- returns texteditor and its
 // index, false if not found
-func (ge *CodeView) NextViewFile(fnm core.Filename) (*code.TextEditor, int, bool) { //gti:add
+func (ge *CodeView) NextViewFile(fnm core.Filename) (*code.TextEditor, int, bool) { //types:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -276,7 +276,7 @@ func (ge *CodeView) CallViewFile(ctx core.Widget) {
 
 // ViewFile views file in an existing TextEditor if it is already viewing that
 // file, otherwise opens ViewFileNode in active buffer
-func (ge *CodeView) ViewFile(fnm core.Filename) (*code.TextEditor, int, bool) { //gti:add
+func (ge *CodeView) ViewFile(fnm core.Filename) (*code.TextEditor, int, bool) { //types:add
 	fn := ge.FileNodeForFile(string(fnm), true)
 	if fn == nil {
 		return nil, -1, false
@@ -389,7 +389,7 @@ func (ge *CodeView) SelectOpenNode() {
 
 // CloneActiveView sets the next text view to view the same file currently being vieweds
 // in the active view. returns text view and index
-func (ge *CodeView) CloneActiveView() (*code.TextEditor, int) { //gti:add
+func (ge *CodeView) CloneActiveView() (*code.TextEditor, int) { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return nil, -1
@@ -418,7 +418,7 @@ func (ge *CodeView) SaveAllOpenNodes() {
 
 // SaveAll saves all of the open filenodes to their current file names
 // and saves the project state if it has been saved before (i.e., the .code file exists)
-func (ge *CodeView) SaveAll() { //gti:add
+func (ge *CodeView) SaveAll() { //types:add
 	ge.SaveAllOpenNodes()
 	ge.SaveProjIfExists(false)
 }

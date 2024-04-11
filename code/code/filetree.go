@@ -85,7 +85,7 @@ func (fn *FileNode) SetRunExec() {
 
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
-func (fn *FileNode) ExecCmdFile() { //gti:add
+func (fn *FileNode) ExecCmdFile() { //types:add
 	ge, ok := ParentCode(fn.This())
 	if ok {
 		ge.ExecCmdFileNode(&fn.Node)
@@ -421,7 +421,7 @@ func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool
 }
 
 // EditFiles calls EditFile on selected files
-func (fn *FileNode) EditFiles() { //gti:add
+func (fn *FileNode) EditFiles() { //types:add
 	sels := fn.SelectedViews()
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i].This().(*FileNode)
@@ -430,7 +430,7 @@ func (fn *FileNode) EditFiles() { //gti:add
 }
 
 // SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons
-func (fn *FileNode) SetRunExecs() { //gti:add
+func (fn *FileNode) SetRunExecs() { //types:add
 	sels := fn.SelectedViews()
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i].This().(*FileNode)

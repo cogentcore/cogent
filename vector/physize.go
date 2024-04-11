@@ -12,7 +12,7 @@ import (
 )
 
 // PhysSize specifies the physical size of the drawing, when making a new one
-type PhysSize struct { //gti:add
+type PhysSize struct { //types:add
 
 	// select a standard size -- this will set units and size
 	StandardSize StandardSizes

@@ -84,7 +84,7 @@ func (vv *VectorView) OpenDrawingFile(fnm core.Filename) error {
 }
 
 // OpenDrawing opens a new .svg drawing
-func (vv *VectorView) OpenDrawing(fnm core.Filename) error { //gti:add
+func (vv *VectorView) OpenDrawing(fnm core.Filename) error { //types:add
 	err := vv.OpenDrawingFile(fnm)
 
 	sv := vv.SVG()
@@ -107,7 +107,7 @@ func (vv *VectorView) NewDrawing(sz PhysSize) *VectorView {
 }
 
 // PromptPhysSize prompts for the physical size of the drawing and sets it
-func (vv *VectorView) PromptPhysSize() { //gti:add
+func (vv *VectorView) PromptPhysSize() { //types:add
 	sv := vv.SVG()
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
@@ -139,7 +139,7 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 }
 
 // SaveDrawing saves .svg drawing to current filename
-func (vv *VectorView) SaveDrawing() error { //gti:add
+func (vv *VectorView) SaveDrawing() error { //types:add
 	if vv.Filename != "" {
 		return vv.SaveDrawingAs(vv.Filename)
 	}
@@ -148,7 +148,7 @@ func (vv *VectorView) SaveDrawing() error { //gti:add
 }
 
 // SaveDrawingAs saves .svg drawing to given filename
-func (vv *VectorView) SaveDrawingAs(fname core.Filename) error { //gti:add
+func (vv *VectorView) SaveDrawingAs(fname core.Filename) error { //types:add
 	if fname == "" {
 		return errors.New("SaveDrawingAs: filename is empty")
 	}
@@ -176,7 +176,7 @@ func (vv *VectorView) SaveDrawingAs(fname core.Filename) error { //gti:add
 // specify either width or height of resulting image, or nothing for
 // physical size as set.  Renders full current page -- do ResizeToContents
 // to render just current contents.
-func (vv *VectorView) ExportPNG(width, height float32) error { //gti:add
+func (vv *VectorView) ExportPNG(width, height float32) error { //types:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_png.svg")
 	sv := vv.SVG()
@@ -210,7 +210,7 @@ func (vv *VectorView) ExportPNG(width, height float32) error { //gti:add
 // specify DPI of resulting image for effects rendering.
 // Renders full current page -- do ResizeToContents
 // to render just current contents.
-func (vv *VectorView) ExportPDF(dpi float32) error { //gti:add
+func (vv *VectorView) ExportPDF(dpi float32) error { //types:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_pdf.svg")
 	sv := vv.SVG()
@@ -240,14 +240,14 @@ func (vv *VectorView) ExportPDF(dpi float32) error { //gti:add
 // including moving everything to start at upper-left corner,
 // preserving the current grid offset, so grid snapping
 // is preserved.
-func (vv *VectorView) ResizeToContents() { //gti:add
+func (vv *VectorView) ResizeToContents() { //types:add
 	sv := vv.SVG()
 	sv.ResizeToContents(true)
 	sv.UpdateView(true)
 }
 
 // AddImage adds a new image node set to the given image
-func (vv *VectorView) AddImage(fname core.Filename, width, height float32) error { //gti:add
+func (vv *VectorView) AddImage(fname core.Filename, width, height float32) error { //types:add
 	sv := vv.SVG()
 	sv.UndoSave("AddImage", string(fname))
 	ind := sv.NewEl(svg.ImageType).(*svg.Image)
@@ -660,7 +660,7 @@ func (vv *VectorView) PaintView() *PaintView {
 }
 
 // UpdateAll updates the display
-func (vv *VectorView) UpdateAll() { //gti:add
+func (vv *VectorView) UpdateAll() { //types:add
 	vv.UpdateTabs()
 	vv.UpdateTreeView()
 	vv.UpdateDisp()
@@ -723,7 +723,7 @@ func (vv *VectorView) SelectNodeInSVG(kn tree.Node, mode events.SelectModes) {
 }
 
 // Undo undoes the last action
-func (vv *VectorView) Undo() string { //gti:add
+func (vv *VectorView) Undo() string { //types:add
 	sv := vv.SVG()
 	act := sv.Undo()
 	if act != "" {
@@ -736,7 +736,7 @@ func (vv *VectorView) Undo() string { //gti:add
 }
 
 // Redo redoes the previously undone action
-func (vv *VectorView) Redo() string { //gti:add
+func (vv *VectorView) Redo() string { //types:add
 	sv := vv.SVG()
 	act := sv.Redo()
 	if act != "" {

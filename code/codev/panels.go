@@ -61,7 +61,7 @@ func (ge *CodeView) FocusOnPanel(panel int) bool {
 }
 
 // FocusNextPanel moves the keyboard focus to the next panel to the right
-func (ge *CodeView) FocusNextPanel() { //gti:add
+func (ge *CodeView) FocusNextPanel() { //types:add
 	sv := ge.Splits()
 	cp := ge.CurPanel()
 	cp++
@@ -79,7 +79,7 @@ func (ge *CodeView) FocusNextPanel() { //gti:add
 }
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
-func (ge *CodeView) FocusPrevPanel() { //gti:add
+func (ge *CodeView) FocusPrevPanel() { //types:add
 	sv := ge.Splits()
 	cp := ge.CurPanel()
 	cp--

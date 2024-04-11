@@ -106,7 +106,7 @@ func (lt *Splits) FixLen() {
 }
 
 // Open opens named splits from a json-formatted file.
-func (lt *Splits) Open(filename core.Filename) error { //gti:add
+func (lt *Splits) Open(filename core.Filename) error { //types:add
 	if errors.Ignore1(dirs.FileExists(string(filename))) {
 		*lt = make(Splits, 0, 10) // reset
 		err := errors.Log(jsonx.Open(lt, string(filename)))
@@ -117,12 +117,12 @@ func (lt *Splits) Open(filename core.Filename) error { //gti:add
 }
 
 // Save saves named splits to a json-formatted file.
-func (lt *Splits) Save(filename core.Filename) error { //gti:add
+func (lt *Splits) Save(filename core.Filename) error { //types:add
 	return errors.Log(jsonx.Save(lt, string(filename)))
 }
 
 // OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename
-func (lt *Splits) OpenSettings() error { //gti:add
+func (lt *Splits) OpenSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
@@ -134,7 +134,7 @@ func (lt *Splits) OpenSettings() error { //gti:add
 }
 
 // SaveSettings saves Splits to App standard prefs directory, using PrefSplitsFilename
-func (lt *Splits) SaveSettings() error { //gti:add
+func (lt *Splits) SaveSettings() error { //types:add
 	lt.FixLen()
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)

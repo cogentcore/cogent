@@ -296,7 +296,7 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 //   Actions
 
 // SelectGroup groups items together
-func (gv *VectorView) SelectGroup() { //gti:add
+func (gv *VectorView) SelectGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -325,7 +325,7 @@ func (gv *VectorView) SelectGroup() { //gti:add
 }
 
 // SelectUnGroup ungroups items from each other
-func (gv *VectorView) SelectUnGroup() { //gti:add
+func (gv *VectorView) SelectUnGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -402,27 +402,27 @@ func (gv *VectorView) SelectScale(scx, scy float32) {
 }
 
 // SelectRotateLeft rotates the selection 90 degrees counter-clockwise
-func (gv *VectorView) SelectRotateLeft() { //gti:add
+func (gv *VectorView) SelectRotateLeft() { //types:add
 	gv.SelectRotate(-90)
 }
 
 // SelectRotateRight rotates the selection 90 degrees clockwise
-func (gv *VectorView) SelectRotateRight() { //gti:add
+func (gv *VectorView) SelectRotateRight() { //types:add
 	gv.SelectRotate(90)
 }
 
 // SelectFlipHorizontal flips the selection horizontally
-func (gv *VectorView) SelectFlipHorizontal() { //gti:add
+func (gv *VectorView) SelectFlipHorizontal() { //types:add
 	gv.SelectScale(-1, 1)
 }
 
 // SelectFlipVertical flips the selection vertically
-func (gv *VectorView) SelectFlipVertical() { //gti:add
+func (gv *VectorView) SelectFlipVertical() { //types:add
 	gv.SelectScale(1, -1)
 }
 
 // SelectRaiseTop raises the selection to the top of the layer
-func (gv *VectorView) SelectRaiseTop() { //gti:add
+func (gv *VectorView) SelectRaiseTop() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -444,7 +444,7 @@ func (gv *VectorView) SelectRaiseTop() { //gti:add
 }
 
 // SelectRaise raises the selection by one level in the layer
-func (gv *VectorView) SelectRaise() { //gti:add
+func (gv *VectorView) SelectRaise() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -468,7 +468,7 @@ func (gv *VectorView) SelectRaise() { //gti:add
 }
 
 // SelectLowerBottom lowers the selection to the bottom of the layer
-func (gv *VectorView) SelectLowerBottom() { //gti:add
+func (gv *VectorView) SelectLowerBottom() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -490,7 +490,7 @@ func (gv *VectorView) SelectLowerBottom() { //gti:add
 }
 
 // SelectLower lowers the selection by one level in the layer
-func (gv *VectorView) SelectLower() { //gti:add
+func (gv *VectorView) SelectLower() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return

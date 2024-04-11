@@ -154,7 +154,7 @@ func (vv *VectorView) UpdateLayerView() {
 }
 
 // AddLayer adds a new layer
-func (vv *VectorView) AddLayer() { //gti:add
+func (vv *VectorView) AddLayer() { //types:add
 	sv := vv.SVG()
 	svr := sv.Root()
 

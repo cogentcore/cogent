@@ -19,7 +19,7 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 )
 
-type Task struct { //gti:add
+type Task struct { //types:add
 	*process.Process `view:"-"`
 
 	// The name of this task

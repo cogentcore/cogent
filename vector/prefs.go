@@ -19,7 +19,7 @@ import (
 )
 
 // Preferences is the overall Vector preferences
-type Preferences struct { //gti:add
+type Preferences struct { //types:add
 
 	// default physical size, when app is started without opening a file
 	Size PhysSize
@@ -272,7 +272,7 @@ var PreferencesProperties = tree.Properties{
 //   ColorSettings
 
 // ColorSettings for
-type ColorSettings struct { //gti:add
+type ColorSettings struct { //types:add
 
 	// drawing background color
 	Background color.Color

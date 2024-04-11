@@ -29,13 +29,13 @@ import (
 )
 
 // CursorToHistPrev moves back to the previous history item.
-func (ge *CodeView) CursorToHistPrev() bool { //gti:add
+func (ge *CodeView) CursorToHistPrev() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistPrev()
 }
 
 // CursorToHistNext moves forward to the next history item.
-func (ge *CodeView) CursorToHistNext() bool { //gti:add
+func (ge *CodeView) CursorToHistNext() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistNext()
 }
@@ -118,7 +118,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 }
 
 // ReplaceInActive does query-replace in active file only
-func (ge *CodeView) ReplaceInActive() { //gti:add
+func (ge *CodeView) ReplaceInActive() { //types:add
 	tv := ge.ActiveTextEditor()
 	tv.QReplacePrompt()
 }
@@ -127,7 +127,7 @@ func (ge *CodeView) ReplaceInActive() { //gti:add
 //    Rects, Registers
 
 // CutRect cuts rectangle in active text view
-func (ge *CodeView) CutRect() { //gti:add
+func (ge *CodeView) CutRect() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -136,7 +136,7 @@ func (ge *CodeView) CutRect() { //gti:add
 }
 
 // CopyRect copies rectangle in active text view
-func (ge *CodeView) CopyRect() { //gti:add
+func (ge *CodeView) CopyRect() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -145,7 +145,7 @@ func (ge *CodeView) CopyRect() { //gti:add
 }
 
 // PasteRect cuts rectangle in active text view
-func (ge *CodeView) PasteRect() { //gti:add
+func (ge *CodeView) PasteRect() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -155,7 +155,7 @@ func (ge *CodeView) PasteRect() { //gti:add
 
 // RegisterCopy saves current selection in active text view to register of given name
 // returns true if saved
-func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
+func (ge *CodeView) RegisterCopy(name string) bool { //types:add
 	if name == "" {
 		return false
 	}
@@ -179,7 +179,7 @@ func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
 
 // RegisterPaste pastes register of given name into active text view
 // returns true if pasted
-func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
+func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //types:add
 	if name == "" {
 		return false
 	}
@@ -199,7 +199,7 @@ func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
 // CommentOut comments-out selected lines in active text view
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
-func (ge *CodeView) CommentOut() bool { //gti:add
+func (ge *CodeView) CommentOut() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
@@ -219,7 +219,7 @@ func (ge *CodeView) CommentOut() bool { //gti:add
 }
 
 // Indent indents selected lines in active view
-func (ge *CodeView) Indent() bool { //gti:add
+func (ge *CodeView) Indent() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
@@ -234,7 +234,7 @@ func (ge *CodeView) Indent() bool { //gti:add
 }
 
 // ReCase replaces currently selected text in current active view with given case
-func (ge *CodeView) ReCase(c strcase.Cases) string { //gti:add
+func (ge *CodeView) ReCase(c strcase.Cases) string { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return ""
@@ -245,7 +245,7 @@ func (ge *CodeView) ReCase(c strcase.Cases) string { //gti:add
 // JoinParaLines merges sequences of lines with hard returns forming paragraphs,
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
-func (ge *CodeView) JoinParaLines() { //gti:add
+func (ge *CodeView) JoinParaLines() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -259,7 +259,7 @@ func (ge *CodeView) JoinParaLines() { //gti:add
 
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
-func (ge *CodeView) TabsToSpaces() { //gti:add
+func (ge *CodeView) TabsToSpaces() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -273,7 +273,7 @@ func (ge *CodeView) TabsToSpaces() { //gti:add
 
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
-func (ge *CodeView) SpacesToTabs() { //gti:add
+func (ge *CodeView) SpacesToTabs() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -288,7 +288,7 @@ func (ge *CodeView) SpacesToTabs() { //gti:add
 // DiffFiles shows the differences between two given files
 // in side-by-side DiffView and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
-func (ge *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //gti:add
+func (ge *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //types:add
 	fna := ge.FileNodeForFile(string(fnmA), true)
 	if fna == nil {
 		return
@@ -305,7 +305,7 @@ func (ge *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //gti:add
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffView and in the console as a context diff.
-func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //gti:add
+func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:add
 	fnb := ge.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
 		return
@@ -330,7 +330,7 @@ func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //gti
 
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
-func (ge *CodeView) CountWords() string { //gti:add
+func (ge *CodeView) CountWords() string { //types:add
 	av := ge.ActiveTextEditor()
 	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"
@@ -345,7 +345,7 @@ func (ge *CodeView) CountWords() string { //gti:add
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
-func (ge *CodeView) CountWordsRegion() string { //gti:add
+func (ge *CodeView) CountWordsRegion() string { //types:add
 	av := ge.ActiveTextEditor()
 	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"

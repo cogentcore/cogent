@@ -59,13 +59,13 @@ func (lt *Langs) Open(filename core.Filename) error {
 }
 
 // Save saves languages to a toml-formatted file.
-func (lt *Langs) Save(filename core.Filename) error { //gti:add
+func (lt *Langs) Save(filename core.Filename) error { //types:add
 	return tomlx.Save(lt, string(filename))
 }
 
 // OpenSettings opens the Langs from the app settings directory,
 // using LangSettingsFilename.
-func (lt *Langs) OpenSettings() error { //gti:add
+func (lt *Langs) OpenSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
@@ -74,7 +74,7 @@ func (lt *Langs) OpenSettings() error { //gti:add
 
 // SaveSettings saves the Langs to the app settings directory,
 // using LangSettingsFilename.
-func (lt *Langs) SaveSettings() error { //gti:add
+func (lt *Langs) SaveSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
@@ -91,14 +91,14 @@ func (lt *Langs) CopyFrom(cp Langs) {
 
 // RevertToStandard reverts this map to using the StdLangs that are compiled into
 // the program and have all the lastest standards.
-func (lt *Langs) RevertToStandard() { //gti:add
+func (lt *Langs) RevertToStandard() { //types:add
 	lt.CopyFrom(StandardLangs)
 	AvailableLangsChanged = true
 }
 
 // ViewStandard shows the standard langs that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (lt *Langs) ViewStandard() { //gti:add
+func (lt *Langs) ViewStandard() { //types:add
 	LangsView(&StandardLangs)
 }
 
