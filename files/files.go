@@ -7,7 +7,7 @@ package main
 import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/views"
 )
 
@@ -16,7 +16,7 @@ func main() {
 
 	fv := views.NewFileView(b)
 	fv.Scene.OnKeyChord(func(e events.Event) {
-		if keyfun.Of(e.KeyChord()) == keyfun.Accept {
+		if keymap.Of(e.KeyChord()) == keymap.Accept {
 			core.TheApp.OpenURL(fv.SelectedFile())
 		}
 	})

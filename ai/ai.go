@@ -15,7 +15,7 @@ import (
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
-	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
@@ -128,7 +128,7 @@ func main() {
 	textField = core.NewTextField(prompt).SetType(core.TextFieldOutlined).SetPlaceholder("Ask me anything")
 	textField.Style(func(s *styles.Style) { s.Max.X.Zero() })
 	textField.OnKeyChord(func(e events.Event) {
-		if keyfun.Of(e.KeyChord()) == keyfun.Enter {
+		if keymap.Of(e.KeyChord()) == keymap.Enter {
 			send.Send(events.Click, e)
 		}
 	})

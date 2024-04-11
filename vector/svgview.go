@@ -18,7 +18,7 @@ import (
 	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
-	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/mat32"
 	"cogentcore.org/core/svg"
@@ -98,31 +98,31 @@ func (sv *SVGView) HandleEvents() {
 		if core.DebugSettings.KeyEventTrace {
 			fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
 		}
-		kf := keyfun.Of(kc)
+		kf := keymap.Of(kc)
 		switch kf {
-		case keyfun.Abort:
+		case keymap.Abort:
 			// todo: maybe something else
 			e.SetHandled()
 			sv.VectorView.SetTool(SelectTool)
-		case keyfun.Undo:
+		case keymap.Undo:
 			e.SetHandled()
 			sv.VectorView.Undo()
-		case keyfun.Redo:
+		case keymap.Redo:
 			e.SetHandled()
 			sv.VectorView.Redo()
-		case keyfun.Duplicate:
+		case keymap.Duplicate:
 			e.SetHandled()
 			sv.VectorView.DuplicateSelected()
-		case keyfun.Copy:
+		case keymap.Copy:
 			e.SetHandled()
 			sv.VectorView.CopySelected()
-		case keyfun.Cut:
+		case keymap.Cut:
 			e.SetHandled()
 			sv.VectorView.CutSelected()
-		case keyfun.Paste:
+		case keymap.Paste:
 			e.SetHandled()
 			sv.VectorView.PasteClip()
-		case keyfun.Delete, keyfun.Backspace:
+		case keymap.Delete, keymap.Backspace:
 			e.SetHandled()
 			sv.VectorView.DeleteSelected()
 		}
@@ -538,10 +538,10 @@ func (sv *SVGView) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 
 	core.NewSeparator(m)
 
-	views.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
-	views.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
-	views.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
-	views.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
+	views.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	views.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	views.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	views.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position

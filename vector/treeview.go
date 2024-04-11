@@ -288,10 +288,10 @@ var TreeViewProperties = tree.Properties{
 		{"sep-edit", tree.BlankProp{}},
 		{"SrcDuplicate", tree.Properties{
 			"label":    "Duplicate",
-			"shortcut": keyfun.Duplicate,
+			"shortcut": keymap.Duplicate,
 		}},
 		{"Copy", tree.Properties{
-			"shortcut": keyfun.Copy,
+			"shortcut": keymap.Copy,
 			"Args": tree.Propertieslice{
 				{"reset", tree.Properties{
 					"value": true,
@@ -299,14 +299,14 @@ var TreeViewProperties = tree.Properties{
 			},
 		}},
 		{"Cut", tree.Properties{
-			"shortcut": keyfun.Cut,
+			"shortcut": keymap.Cut,
 			"updtfunc": views.ActionUpdateFunc(func(tvi any, act *core.Button) {
 				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
 		}},
 		{"Paste", tree.Properties{
-			"shortcut": keyfun.Paste,
+			"shortcut": keymap.Paste,
 		}},
 		{"sep-layer", tree.BlankProp{}},
 		{"LayerSetCurrent", tree.Properties{

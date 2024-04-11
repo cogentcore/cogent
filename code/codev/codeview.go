@@ -26,7 +26,7 @@ import (
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/vci"
+	"cogentcore.org/core/vcs"
 	"cogentcore.org/core/views"
 )
 
@@ -49,7 +49,7 @@ type CodeView struct {
 	ActiveLang fileinfo.Known
 
 	// VCS repo for current active filename
-	ActiveVCS vci.Repo `set:"-"`
+	ActiveVCS vcs.Repo `set:"-"`
 
 	// VCS info for current active filename (typically branch or revision) -- for status
 	ActiveVCSInfo string `set:"-"`

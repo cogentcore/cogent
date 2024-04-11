@@ -24,7 +24,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/exec"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
@@ -114,8 +114,8 @@ func (a *App) Config() {
 		txt := string(tb.Text())
 		txt = strings.TrimSuffix(txt, "\n")
 
-		kf := keyfun.Of(e.KeyChord())
-		if kf == keyfun.Enter && e.Modifiers() == 0 {
+		kf := keymap.Of(e.KeyChord())
+		if kf == keymap.Enter && e.Modifiers() == 0 {
 			e.SetHandled()
 			tb.NewBuffer(0)
 
@@ -174,16 +174,16 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Label) error {
 	})
 	te.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
-		kf := keyfun.Of(kc)
+		kf := keymap.Of(kc)
 
 		fmt.Println(kc, kf)
 
 		switch kf {
-		case keyfun.Enter:
+		case keymap.Enter:
 			iw.Write(ib)
 			iw.Write([]byte{'\n'})
 			ib = nil
-		case keyfun.Backspace:
+		case keymap.Backspace:
 			if len(ib) > 0 {
 				ib = slices.Delete(ib, len(ib)-1, len(ib))
 			}

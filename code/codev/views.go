@@ -19,7 +19,7 @@ import (
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/spell"
-	"cogentcore.org/core/vci"
+	"cogentcore.org/core/vcs"
 	"cogentcore.org/core/views"
 )
 
@@ -215,7 +215,7 @@ func (ge *CodeView) VCSUpdateAll() { //gti:add
 // If allFiles is true, then the log will show revisions for all files, not just
 // this one.
 // Returns the Log and also shows it in a VCSLogView which supports further actions.
-func (ge *CodeView) VCSLog(since string) (vci.Log, error) { //gti:add
+func (ge *CodeView) VCSLog(since string) (vcs.Log, error) { //gti:add
 	atv := ge.ActiveTextEditor()
 	ond, _, got := ge.OpenNodeForTextEditor(atv)
 	if !got {

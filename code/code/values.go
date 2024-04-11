@@ -11,7 +11,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
@@ -30,11 +30,11 @@ func KeyMapsView(km *KeyMaps) {
 	})
 	d.AddAppBar(func(tb *core.Toolbar) {
 		views.NewFuncButton(tb, km.SaveSettings).
-			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableKeyMapsChanged && km == &AvailableKeyMaps) })
-		oj := views.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := views.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := views.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		core.NewSeparator(tb)
 		views.NewFuncButton(tb, km.ViewStandard).SetConfirm(true).
@@ -44,7 +44,7 @@ func KeyMapsView(km *KeyMaps) {
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
 		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			views.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -134,11 +134,11 @@ func LangsView(pt *Langs) {
 
 	d.AddAppBar(func(tb *core.Toolbar) {
 		views.NewFuncButton(tb, pt.SaveSettings).
-			SetText("Save to settings").SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		core.NewSeparator(tb)
 		views.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
@@ -148,7 +148,7 @@ func LangsView(pt *Langs) {
 			SetText("Revert to standard").SetIcon(icons.DeviceReset).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -167,18 +167,18 @@ func CmdsView(pt *Commands) {
 	})
 	d.AddAppBar(func(tb *core.Toolbar) {
 		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
-			SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetIcon(icons.Save).SetKey(keymap.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		core.NewSeparator(tb)
 		views.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
 			SetText("View standard").SetIcon(icons.Visibility).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
 		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -235,14 +235,14 @@ func SplitsView(pt *Splits) {
 
 	d.AddAppBar(func(tb *core.Toolbar) {
 		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
-			SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetIcon(icons.Save).SetKey(keymap.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()
@@ -305,14 +305,14 @@ func RegistersView(pt *Registers) {
 
 	d.AddAppBar(func(tb *core.Toolbar) {
 		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
-			SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetIcon(icons.Save).SetKey(keymap.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
 

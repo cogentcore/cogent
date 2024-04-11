@@ -8,7 +8,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/laser"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
@@ -31,14 +31,14 @@ func SplitsView(pt *Splits) {
 
 	d.AddAppBar(func(tb *core.Toolbar) {
 		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
-			SetIcon(icons.Save).SetKey(keyfun.Save).
+			SetIcon(icons.Save).SetKey(keymap.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open)
+		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs)
+		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 		sj.Args[0].SetTag("ext", ".toml")
 		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keyfun.OpenAlt1)
+			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
 	d.NewWindow().Run()

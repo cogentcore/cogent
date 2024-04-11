@@ -26,7 +26,7 @@ import (
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/vci"
+	"cogentcore.org/core/vcs"
 	"github.com/mattn/go-shellwords"
 )
 
@@ -338,7 +338,7 @@ var CmdPrompt2Vals = map[string]string{}
 // RepoCurBranches returns the current branch and a list of all branches
 // ensuring that the current also appears on the list of all.
 // In git, a new branch may not so appear.
-func RepoCurBranches(repo vci.Repo) (string, []string, error) {
+func RepoCurBranches(repo vcs.Repo) (string, []string, error) {
 	cur, err := repo.Current()
 	if err != nil {
 		return "", nil, err
