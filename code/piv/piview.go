@@ -382,7 +382,7 @@ func (pv *PiView) PassTwo() {
 ////////////////////////////////////////////////////////////////////////////////////////
 //  Parsing
 
-// EditTrace shows the parse.Trace options for detailed tracing output
+// EditTrace shows the parser.Trace options for detailed tracing output
 func (pv *PiView) EditTrace() {
 	sv := pv.StructView()
 	if sv != nil {
@@ -429,7 +429,7 @@ func (pv *PiView) ParseStopped() {
 }
 
 // ParseNext does next step of lexing
-func (pv *PiView) ParseNext() *parse.Rule {
+func (pv *PiView) ParseNext() *parser.Rule {
 	fs := &pv.FileState
 	at := pv.AstTree()
 	updt := at.UpdateStart()
@@ -470,7 +470,7 @@ func (pv *PiView) ParseAll() {
 }
 
 // SelectParseRule selects given lex rule in Parser
-func (pv *PiView) SelectParseRule(rule *parse.Rule) {
+func (pv *PiView) SelectParseRule(rule *parser.Rule) {
 	lt := pv.ParseTree()
 	lt.UnselectAll()
 	lt.FuncDownMeFirst(0, lt.This(), func(k tree.Node, level int, d any) bool {
@@ -732,7 +732,7 @@ func (pv *PiView) OpenParseTab() {
 
 // Config configures the view
 func (pv *PiView) Config() {
-	parse.GuiActive = true
+	parser.GuiActive = true
 	fmt.Printf("PiView enabling GoPi parser output\n")
 	pv.Parser.Init()
 	pv.Lay = core.LayoutVert

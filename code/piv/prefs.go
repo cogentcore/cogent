@@ -29,7 +29,7 @@ type ProjSettings struct {
 	TestFile core.Filename
 
 	// the options for tracing parsing
-	TraceOpts parse.TraceOpts
+	TraceOpts parser.TraceOpts
 }
 
 // Open open from  file
