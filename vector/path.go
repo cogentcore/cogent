@@ -142,7 +142,7 @@ type PathNode struct {
 
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
 func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
-	svoff := math32.Vec2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pxf := path.ParTransform(true) // include self
 
 	lstCmdIndex := 0
@@ -245,7 +245,7 @@ func (sv *SVGView) NodeSpriteEvent(idx int, et events.Type, d any) {
 func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv math32.Vector2, svoff math32.Vector2) {
 	for i := pidx; i < len(pts); i++ {
 		pn := pts[i]
-		wbmin := math32.Vec2FromPoint(path.BBox.Min)
+		wbmin := math32.Vector2FromPoint(path.BBox.Min)
 		pt := wbmin.Sub(svoff)
 		xf, lpt := path.DeltaTransform(dv, math32.Vec2(1, 1), 0, pt, true) // include self
 		npt := xf.MulVector2AsPointCenter(pn.Cp, lpt)                      // transform point to new abs coords
@@ -296,13 +296,13 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent
 		sv.GatherAlignPoints()
 	}
 
-	svoff := math32.Vec2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pn := es.PathNodes[idx]
 
 	InactivateSprites(win, SpAlignMatch)
 
-	spt := math32.Vec2FromPoint(es.DragStartPos)
-	mpt := math32.Vec2FromPoint(me.Where)
+	spt := math32.Vector2FromPoint(es.DragStartPos)
+	mpt := math32.Vector2FromPoint(me.Where)
 
 	if me.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
@@ -313,7 +313,7 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent
 
 	es.DragCurPos = mpt.ToPoint()
 	mdel := es.DragCurPos.Sub(es.DragStartPos)
-	dv := math32.Vec2FromPoint(mdel)
+	dv := math32.Vector2FromPoint(mdel)
 
 	nwc := pn.WinPt.Add(dv) // new window coord
 	sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, idx, dv, svoff)
