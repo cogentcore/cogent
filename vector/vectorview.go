@@ -21,7 +21,7 @@ import (
 	"cogentcore.org/core/gox/dirs"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
@@ -129,7 +129,7 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 	if sz == nil {
 		return
 	}
-	if sz.Size == (mat32.Vec2{}) {
+	if sz.Size == (math32.Vec2{}) {
 		sz.SetStandardSize(Settings.Size.StandardSize)
 	}
 	sv := vv.SVG()

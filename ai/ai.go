@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
 	"github.com/ddkwork/golibrary/pkg/tree"
@@ -236,7 +236,7 @@ func main() {
 				answer.DeleteChildren()
 				errors.Log(htmlview.ReadMDString(htmlview.NewContext(), answer, allTokens))
 				answer.Update()
-				history.ScrollDimToContentEnd(mat32.Y)
+				history.ScrollDimToContentEnd(math32.Y)
 				answer.AsyncUnlock()
 			}
 			errors.Log(scanner.Err())

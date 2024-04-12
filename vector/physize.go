@@ -7,7 +7,7 @@ package vector
 import (
 	"fmt"
 
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/units"
 )
 
@@ -24,7 +24,7 @@ type PhysSize struct { //types:add
 	Units units.Units
 
 	// drawing size, in Units
-	Size mat32.Vec2
+	Size math32.Vec2
 
 	// grid spacing, in units of ViewBox size
 	Grid float32

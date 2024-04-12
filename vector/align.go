@@ -10,7 +10,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
@@ -34,30 +34,30 @@ func (vv *VectorView) Align(aa AlignAnchors, al Aligns) {
 	astr := al.String()
 	switch al {
 	case AlignRightAnchor:
-		vv.AlignMaxAnchor(aa, mat32.X, astr)
+		vv.AlignMaxAnchor(aa, math32.X, astr)
 	case AlignLeft:
-		vv.AlignMin(aa, mat32.X, astr)
+		vv.AlignMin(aa, math32.X, astr)
 	case AlignCenter:
-		vv.AlignCenter(aa, mat32.X, astr)
+		vv.AlignCenter(aa, math32.X, astr)
 	case AlignRight:
-		vv.AlignMax(aa, mat32.X, astr)
+		vv.AlignMax(aa, math32.X, astr)
 	case AlignLeftAnchor:
-		vv.AlignMinAnchor(aa, mat32.X, astr)
+		vv.AlignMinAnchor(aa, math32.X, astr)
 	case AlignBaselineHoriz:
-		vv.AlignMin(aa, mat32.X, astr) // todo: should be baseline, not min
+		vv.AlignMin(aa, math32.X, astr) // todo: should be baseline, not min
 
 	case AlignBottomAnchor:
-		vv.AlignMaxAnchor(aa, mat32.Y, astr)
+		vv.AlignMaxAnchor(aa, math32.Y, astr)
 	case AlignTop:
-		vv.AlignMin(aa, mat32.Y, astr)
+		vv.AlignMin(aa, math32.Y, astr)
 	case AlignMiddle:
-		vv.AlignCenter(aa, mat32.Y, astr)
+		vv.AlignCenter(aa, math32.Y, astr)
 	case AlignBottom:
-		vv.AlignMax(aa, mat32.Y, astr)
+		vv.AlignMax(aa, math32.Y, astr)
 	case AlignTopAnchor:
-		vv.AlignMinAnchor(aa, mat32.Y, astr)
+		vv.AlignMinAnchor(aa, math32.Y, astr)
 	case AlignBaselineVert:
-		vv.AlignMin(aa, mat32.Y, astr) // todo: should be baseline, not min
+		vv.AlignMin(aa, math32.Y, astr) // todo: should be baseline, not min
 	}
 }
 
@@ -86,7 +86,7 @@ func (vv *VectorView) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Nod
 }
 
 // AlignMin aligns to min coordinate (Left, Top) in bbox
-func (vv *VectorView) AlignMin(aa AlignAnchors, dim mat32.Dims, act string) {
+func (vv *VectorView) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -95,23 +95,23 @@ func (vv *VectorView) AlignMin(aa AlignAnchors, dim mat32.Dims, act string) {
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := mat32.V2(1, 1)
-	odim := mat32.OtherDim(dim)
+	sc := math32.V2(1, 1)
+	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
 			continue
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := mat32.V2FromPoint(abb.Min.Sub(bb.Min))
+		del := math32.V2FromPoint(abb.Min.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim mat32.Dims, act string) {
+func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -120,23 +120,23 @@ func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim mat32.Dims, act string
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := mat32.V2(1, 1)
-	odim := mat32.OtherDim(dim)
+	sc := math32.V2(1, 1)
+	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
 			continue
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := mat32.V2FromPoint(abb.Max.Sub(bb.Min))
+		del := math32.V2FromPoint(abb.Max.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignMax(aa AlignAnchors, dim mat32.Dims, act string) {
+func (vv *VectorView) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -145,23 +145,23 @@ func (vv *VectorView) AlignMax(aa AlignAnchors, dim mat32.Dims, act string) {
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := mat32.V2(1, 1)
-	odim := mat32.OtherDim(dim)
+	sc := math32.V2(1, 1)
+	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
 			continue
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := mat32.V2FromPoint(abb.Max.Sub(bb.Max))
+		del := math32.V2FromPoint(abb.Max.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim mat32.Dims, act string) {
+func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -170,23 +170,23 @@ func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim mat32.Dims, act string
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := mat32.V2(1, 1)
-	odim := mat32.OtherDim(dim)
+	sc := math32.V2(1, 1)
+	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
 			continue
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := mat32.V2FromPoint(abb.Min.Sub(bb.Max))
+		del := math32.V2FromPoint(abb.Min.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignCenter(aa AlignAnchors, dim mat32.Dims, act string) {
+func (vv *VectorView) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -195,19 +195,19 @@ func (vv *VectorView) AlignCenter(aa AlignAnchors, dim mat32.Dims, act string) {
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	ctr := mat32.V2FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
-	sc := mat32.V2(1, 1)
-	odim := mat32.OtherDim(dim)
+	ctr := math32.V2FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
+	sc := math32.V2(1, 1)
+	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
 			continue
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		nctr := mat32.V2FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
+		nctr := math32.V2FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
 		del := ctr.Sub(nctr)
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, mat32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -222,7 +222,7 @@ func (sv *SVGView) GatherAlignPoints() {
 	}
 
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
-		es.AlignPts[ap] = make([]mat32.Vec2, 0)
+		es.AlignPts[ap] = make([]math32.Vec2, 0)
 	}
 
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {

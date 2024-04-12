@@ -13,7 +13,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/undo"
 )
@@ -67,7 +67,7 @@ type EditState struct {
 	DragCurPos image.Point
 
 	// current selection bounding box
-	SelectBBox mat32.Box2
+	SelectBBox math32.Box2
 
 	// number of current selectbox sprites
 	NSelectSprites int
@@ -79,16 +79,16 @@ type EditState struct {
 	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" view:"-"`
 
 	// bbox at start of dragging
-	DragSelectStartBBox mat32.Box2
+	DragSelectStartBBox math32.Box2
 
 	// current bbox during dragging -- non-snapped version
-	DragSelectCurrentBBox mat32.Box2
+	DragSelectCurrentBBox math32.Box2
 
 	// current effective bbox during dragging -- snapped version
-	DragSelectEffectiveBBox mat32.Box2
+	DragSelectEffectiveBBox math32.Box2
 
 	// potential points of alignment for dragging
-	AlignPts [BBoxPointsN][]mat32.Vec2
+	AlignPts [BBoxPointsN][]math32.Vec2
 
 	// number of current node sprites in use
 	NNodeSprites int
@@ -379,11 +379,11 @@ func (es *EditState) UpdateSelectBBox() {
 	if len(es.Selected) == 0 {
 		return
 	}
-	bbox := mat32.Box2{}
+	bbox := math32.Box2{}
 	bbox.SetEmpty()
 	for itm := range es.Selected {
 		g := itm.AsNodeBase()
-		bb := mat32.Box2{}
+		bb := math32.Box2{}
 		bb.SetFromRect(g.BBox)
 		bbox.ExpandByBox(bb)
 	}

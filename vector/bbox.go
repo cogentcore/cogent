@@ -7,7 +7,7 @@ package vector
 import (
 	"image"
 
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 )
 
 // BBoxPoints are the different control points within a bounding box
@@ -44,7 +44,7 @@ func (ev BBoxPoints) ValueRect(bb image.Rectangle) float32 {
 
 // ValueBox returns the relevant value for a given bounding box as a
 // mat32.Box2
-func (ev BBoxPoints) ValueBox(bb mat32.Box2) float32 {
+func (ev BBoxPoints) ValueBox(bb math32.Box2) float32 {
 	switch ev {
 	case BBLeft:
 		return bb.Min.X
@@ -64,7 +64,7 @@ func (ev BBoxPoints) ValueBox(bb mat32.Box2) float32 {
 
 // SetValueBox sets the relevant value for a given bounding box as a
 // mat32.Box2
-func (ev BBoxPoints) SetValueBox(bb *mat32.Box2, val float32) {
+func (ev BBoxPoints) SetValueBox(bb *math32.Box2, val float32) {
 	switch ev {
 	case BBLeft:
 		bb.Min.X = val
@@ -82,12 +82,12 @@ func (ev BBoxPoints) SetValueBox(bb *mat32.Box2, val float32) {
 }
 
 // Dim returns the relevant dimension for this point
-func (ev BBoxPoints) Dim() mat32.Dims {
+func (ev BBoxPoints) Dim() math32.Dims {
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
-		return mat32.X
+		return math32.X
 	default:
-		return mat32.Y
+		return math32.Y
 	}
 }
 
@@ -118,31 +118,31 @@ func ReshapeBBoxPoints(reshape Sprites) (bbX, bbY BBoxPoints) {
 // PointRect returns the relevant point for a given bounding box, where
 // relevant dimension is from ValRect and other is midpoint -- for drawing lines.
 // BBox is an image.Rectangle
-func (ev BBoxPoints) PointRect(bb image.Rectangle) mat32.Vec2 {
+func (ev BBoxPoints) PointRect(bb image.Rectangle) math32.Vec2 {
 	val := ev.ValueRect(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
-		return mat32.V2(val, 0.5*float32(bb.Min.Y+bb.Max.Y))
+		return math32.V2(val, 0.5*float32(bb.Min.Y+bb.Max.Y))
 	default:
-		return mat32.V2(0.5*float32(bb.Min.X+bb.Max.X), val)
+		return math32.V2(0.5*float32(bb.Min.X+bb.Max.X), val)
 	}
 }
 
 // PointBox returns the relevant point for a given bounding box, where
 // relevant dimension is from ValRect and other is midpoint -- for drawing lines.
 // BBox is an image.Rectangle
-func (ev BBoxPoints) PointBox(bb mat32.Box2) mat32.Vec2 {
+func (ev BBoxPoints) PointBox(bb math32.Box2) math32.Vec2 {
 	val := ev.ValueBox(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
-		return mat32.V2(val, 0.5*(bb.Min.Y+bb.Max.Y))
+		return math32.V2(val, 0.5*(bb.Min.Y+bb.Max.Y))
 	default:
-		return mat32.V2(0.5*(bb.Min.X+bb.Max.X), val)
+		return math32.V2(0.5*(bb.Min.X+bb.Max.X), val)
 	}
 }
 
 // MoveDelta moves overall bbox (Max and Min) by delta (X or Y depending on pt)
-func (ev BBoxPoints) MoveDelta(bb *mat32.Box2, delta float32) {
+func (ev BBoxPoints) MoveDelta(bb *math32.Box2, delta float32) {
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
 		bb.Min.X += delta
@@ -154,7 +154,7 @@ func (ev BBoxPoints) MoveDelta(bb *mat32.Box2, delta float32) {
 }
 
 // BBoxReshapeDelta moves given target dimensions by delta amounts
-func BBoxReshapeDelta(bb *mat32.Box2, delta float32, bbX, bbY BBoxPoints) {
+func BBoxReshapeDelta(bb *math32.Box2, delta float32, bbX, bbY BBoxPoints) {
 	switch bbX {
 	case BBLeft:
 		bb.Min.X += delta

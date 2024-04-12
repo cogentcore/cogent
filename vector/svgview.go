@@ -18,7 +18,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
@@ -34,7 +34,7 @@ type SVGView struct {
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// view translation offset (from dragging)
-	Trans mat32.Vec2 `set:"-"`
+	Trans math32.Vec2 `set:"-"`
 
 	// view scaling (from zooming)
 	Scale float32 `set:"-"`
@@ -52,7 +52,7 @@ type SVGView struct {
 	// BgRender girl.State `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered translation
-	bgTrans mat32.Vec2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	bgTrans math32.Vec2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered scale
 	bgScale float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
@@ -137,7 +137,7 @@ func (sv *SVGView) HandleEvents() {
 
 		es.SelectNoDrag = false
 		switch {
-		case es.HasSelected() && es.SelectBBox.ContainsPoint(mat32.V2FromPoint(e.Pos())):
+		case es.HasSelected() && es.SelectBBox.ContainsPoint(math32.V2FromPoint(e.Pos())):
 			// note: this absorbs potential secondary selections within selection -- handled
 			// on release below, if nothing else happened
 			es.SelectNoDrag = true
@@ -248,8 +248,8 @@ func (sv *SVGView) MouseHover() {
 */
 
 // ContentsBBox returns the object-level box of the entire contents
-func (sv *SVGView) ContentsBBox() mat32.Box2 {
-	bbox := mat32.Box2{}
+func (sv *SVGView) ContentsBBox() math32.Box2 {
+	bbox := math32.Box2{}
 	bbox.SetEmpty()
 	sv.WalkDown(func(k tree.Node) bool {
 		if k.This() == sv.This() {
@@ -271,7 +271,7 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 			}
 		}
 		sn := sni.AsNodeBase()
-		bb := mat32.Box2{}
+		bb := math32.Box2{}
 		bb.SetFromRect(sn.BBox)
 		bbox.ExpandByBox(bb)
 		if _, isgp := sni.(*svg.Group); isgp { // subsumes all
@@ -280,14 +280,14 @@ func (sv *SVGView) ContentsBBox() mat32.Box2 {
 		return tree.Continue
 	})
 	if bbox.IsEmpty() {
-		bbox = mat32.Box2{}
+		bbox = math32.Box2{}
 	}
 	return bbox
 }
 
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
-func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
+func (sv *SVGView) TransformAllLeaves(trans math32.Vec2, scale math32.Vec2, rot float32, pt math32.Vec2) {
 	sv.WalkDown(func(k tree.Node) bool {
 		if k.This() == sv.This() {
 			return tree.Continue
@@ -317,8 +317,8 @@ func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot fl
 
 // ZoomToPage sets the scale to fit the current viewbox
 func (sv *SVGView) ZoomToPage(width bool) {
-	vb := mat32.V2FromPoint(sv.Root().BBox.Size())
-	if vb == (mat32.Vec2{}) {
+	vb := math32.V2FromPoint(sv.Root().BBox.Size())
+	if vb == (math32.Vec2{}) {
 		return
 	}
 	bsz := sv.Root().ViewBox.Size
@@ -330,15 +330,15 @@ func (sv *SVGView) ZoomToPage(width bool) {
 	if width {
 		sv.Scale = sc.X
 	} else {
-		sv.Scale = mat32.Min(sc.X, sc.Y)
+		sv.Scale = math32.Min(sc.X, sc.Y)
 	}
 	sv.SetTransform()
 }
 
 // ZoomToContents sets the scale to fit the current contents into view
 func (sv *SVGView) ZoomToContents(width bool) {
-	vb := mat32.V2FromPoint(sv.Root().BBox.Size())
-	if vb == (mat32.Vec2{}) {
+	vb := math32.V2FromPoint(sv.Root().BBox.Size())
+	if vb == (math32.Vec2{}) {
 		return
 	}
 	sv.ZoomToPage(width)
@@ -353,7 +353,7 @@ func (sv *SVGView) ZoomToContents(width bool) {
 	if width {
 		sv.Scale *= sc.X
 	} else {
-		sv.Scale *= mat32.Min(sc.X, sc.Y)
+		sv.Scale *= math32.Min(sc.X, sc.Y)
 	}
 	sv.SetTransform()
 }
@@ -375,15 +375,15 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 	incr := sv.Grid * sv.Scale // our zoom factor
 	treff := trans
 	if grid_off {
-		treff.X = mat32.Floor(trans.X/incr) * incr
-		treff.Y = mat32.Floor(trans.Y/incr) * incr
+		treff.X = math32.Floor(trans.X/incr) * incr
+		treff.Y = math32.Floor(trans.Y/incr) * incr
 	}
 	bsz.SetAdd(trans.Sub(treff))
 	treff = treff.Negate()
 
 	bsz = bsz.DivScalar(sv.Scale)
 
-	sv.TransformAllLeaves(treff, mat32.V2(1, 1), 0, mat32.V2(0, 0))
+	sv.TransformAllLeaves(treff, math32.V2(1, 1), 0, math32.V2(0, 0))
 	sv.Root().ViewBox.Size = bsz
 	sv.SSVG().PhysWidth.Value = bsz.X
 	sv.SSVG().PhysHeight.Value = bsz.Y
@@ -399,12 +399,12 @@ func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
 	if delta > 1 {
 		sc += delta
 	} else {
-		sc *= (1 - mat32.Min(-delta, .5))
+		sc *= (1 - math32.Min(-delta, .5))
 	}
 
 	nsc := sv.Scale * sc
 
-	mpt := mat32.V2FromPoint(pt.Sub(sv.Root().BBox.Min))
+	mpt := math32.V2FromPoint(pt.Sub(sv.Root().BBox.Min))
 	lpt := mpt.DivScalar(sv.Scale).Sub(sv.Trans) // point in drawing coords
 
 	dt := lpt.Add(sv.Trans).MulScalar((nsc - sv.Scale) / nsc) // delta from zooming
@@ -680,8 +680,8 @@ func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 	minsz := float32(10)
 	es := sv.EditState()
-	dv := mat32.V2FromPoint(end.Sub(start))
-	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+	dv := math32.V2FromPoint(end.Sub(start))
+	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
 		return nil
 	}
 	// win := sv.VectorView.ParentWindow()
@@ -690,10 +690,10 @@ func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 	// sv.SetFullReRender()
 	nr := sv.NewEl(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	pos := mat32.V2FromPoint(start).Sub(svoff)
+	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	pos := math32.V2FromPoint(start).Sub(svoff)
 	nr.SetNodePos(xfi.MulVec2AsPoint(pos))
-	sz := dv.Abs().Max(mat32.V2Scalar(minsz / 2))
+	sz := dv.Abs().Max(math32.V2Scalar(minsz / 2))
 	nr.SetNodeSize(xfi.MulVec2AsVec(sz))
 	es.SelectAction(nr, events.SelectOne, end)
 	sv.ManipDone()
@@ -714,8 +714,8 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	tspan.Text = "Text"
 	tspan.Width = 200
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	pos := mat32.V2FromPoint(start).Sub(svoff)
+	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	pos := math32.V2FromPoint(start).Sub(svoff)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVec2AsPoint(pos)
@@ -736,8 +736,8 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	minsz := float32(10)
 	es := sv.EditState()
-	dv := mat32.V2FromPoint(end.Sub(start))
-	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+	dv := math32.V2FromPoint(end.Sub(start))
+	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
 		return nil
 	}
 	// win := sv.VectorView.ParentWindow()
@@ -745,8 +745,8 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	// sv.SetFullReRender()
 	nr := sv.NewEl(svg.PathType).(*svg.Path)
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	pos := mat32.V2FromPoint(start).Sub(svoff)
+	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	pos := math32.V2FromPoint(start).Sub(svoff)
 	pos = xfi.MulVec2AsPoint(pos)
 	sz := dv
 	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))

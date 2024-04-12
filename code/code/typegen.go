@@ -10,7 +10,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/pi/lex"
 	"cogentcore.org/core/pi/syms"
@@ -214,7 +214,7 @@ func (t *FileNode) SetOpenDepth(v int) *FileNode { t.OpenDepth = v; return t }
 func (t *FileNode) SetViewIndex(v int) *FileNode { t.ViewIndex = v; return t }
 
 // SetWidgetSize sets the [FileNode.WidgetSize]
-func (t *FileNode) SetWidgetSize(v mat32.Vec2) *FileNode { t.WidgetSize = v; return t }
+func (t *FileNode) SetWidgetSize(v math32.Vec2) *FileNode { t.WidgetSize = v; return t }
 
 // SetRootView sets the [FileNode.RootView]
 func (t *FileNode) SetRootView(v *views.TreeView) *FileNode { t.RootView = v; return t }
@@ -414,7 +414,7 @@ func (t *SymTreeView) SetOpenDepth(v int) *SymTreeView { t.OpenDepth = v; return
 func (t *SymTreeView) SetViewIndex(v int) *SymTreeView { t.ViewIndex = v; return t }
 
 // SetWidgetSize sets the [SymTreeView.WidgetSize]
-func (t *SymTreeView) SetWidgetSize(v mat32.Vec2) *SymTreeView { t.WidgetSize = v; return t }
+func (t *SymTreeView) SetWidgetSize(v math32.Vec2) *SymTreeView { t.WidgetSize = v; return t }
 
 // SetRootView sets the [SymTreeView.RootView]
 func (t *SymTreeView) SetRootView(v *views.TreeView) *SymTreeView { t.RootView = v; return t }

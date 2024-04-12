@@ -10,7 +10,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -128,29 +128,29 @@ type PathNode struct {
 	PtIndex int
 
 	// local coords abs previous current point that is starting point for this command
-	PCp mat32.Vec2
+	PCp math32.Vec2
 
 	// local coords abs current point
-	Cp mat32.Vec2
+	Cp math32.Vec2
 
 	// main point coords in window (dot) coords
-	WinPt mat32.Vec2
+	WinPt math32.Vec2
 
 	// control point coords in window (dot) coords (nil until manipulated)
-	WinCtrls []mat32.Vec2
+	WinCtrls []math32.Vec2
 }
 
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
 func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pxf := path.ParTransform(true) // include self
 
 	lstCmdIndex := 0
 	lstCmd := svg.PcErr
 	nc := make([]*PathNode, 0)
 	cidxs := make([]int, 0)
-	var pcp mat32.Vec2
-	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIndex int, cp mat32.Vec2, ctrl []mat32.Vec2) bool {
+	var pcp math32.Vec2
+	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIndex int, cp math32.Vec2, ctrl []math32.Vec2) bool {
 		cw := pxf.MulVec2AsPoint(cp).Add(svoff)
 
 		if ptIndex == 0 {
@@ -242,13 +242,13 @@ func (sv *SVGView) NodeSpriteEvent(idx int, et events.Type, d any) {
 // and all following points up to cmd = z or m are moved in the opposite
 // direction to compensate, so only the one point is moved in effect.
 // svoff is the window starting vector coordinate for view.
-func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv mat32.Vec2, svoff mat32.Vec2) {
+func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv math32.Vec2, svoff math32.Vec2) {
 	for i := pidx; i < len(pts); i++ {
 		pn := pts[i]
-		wbmin := mat32.V2FromPoint(path.BBox.Min)
+		wbmin := math32.V2FromPoint(path.BBox.Min)
 		pt := wbmin.Sub(svoff)
-		xf, lpt := path.DeltaTransform(dv, mat32.V2(1, 1), 0, pt, true) // include self
-		npt := xf.MulVec2AsPointCenter(pn.Cp, lpt)                      // transform point to new abs coords
+		xf, lpt := path.DeltaTransform(dv, math32.V2(1, 1), 0, pt, true) // include self
+		npt := xf.MulVec2AsPointCenter(pn.Cp, lpt)                       // transform point to new abs coords
 		sv.PathNodeSetPoint(path, pn, npt)
 		if i == pidx {
 			dv = dv.MulScalar(-1)
@@ -263,7 +263,7 @@ func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int
 // PathNodeSetPoint sets data point for path node to given new point value
 // which is in *absolute* (but local) coordinates -- translates into
 // relative coordinates as needed.
-func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt mat32.Vec2) {
+func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt math32.Vec2) {
 	if pn.Index == 1 || !svg.PathCmdIsRel(pn.Cmd) { // abs
 		switch pn.Cmd {
 		case svg.PcH:

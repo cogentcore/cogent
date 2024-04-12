@@ -10,7 +10,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
@@ -182,7 +182,7 @@ func (sv *SVGView) SetSelSpritePos() {
 			if sn.BBox.Size() == image.ZP {
 				continue
 			}
-			bb := mat32.Box2{}
+			bb := math32.Box2{}
 			bb.SetFromRect(sn.BBox)
 			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
 			nbox++
@@ -200,9 +200,9 @@ func (sv *SVGView) SetSelSpritePos() {
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites
-func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox mat32.Box2) {
-	bbox.Min.SetAdd(mat32.V2FromPoint(sv.Geom.ContentBBox.Min))
-	bbox.Max.SetAdd(mat32.V2FromPoint(sv.Geom.ContentBBox.Min))
+func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
+	bbox.Min.SetAdd(math32.V2FromPoint(sv.Geom.ContentBBox.Min))
+	bbox.Max.SetAdd(math32.V2FromPoint(sv.Geom.ContentBBox.Min))
 
 	_, spsz := HandleSpriteSize(1)
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
@@ -365,13 +365,13 @@ func (gv *VectorView) SelectRotate(deg float32) {
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
 	svoff := sv.Geom.ContentBBox.Min
-	del := mat32.Vec2{}
-	sc := mat32.V2(1, 1)
-	rot := mat32.DegToRad(deg)
+	del := math32.Vec2{}
+	sc := math32.V2(1, 1)
+	rot := math32.DegToRad(deg)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := mat32.V2FromPoint(sng.BBox.Size())
-		mn := mat32.V2FromPoint(sng.BBox.Min.Sub(svoff))
+		sz := math32.V2FromPoint(sng.BBox.Size())
+		mn := math32.V2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, rot, ctr)
 	}
@@ -388,12 +388,12 @@ func (gv *VectorView) SelectScale(scx, scy float32) {
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
 	svoff := sv.Geom.ContentBBox.Min
-	del := mat32.Vec2{}
-	sc := mat32.V2(scx, scy)
+	del := math32.Vec2{}
+	sc := math32.V2(scx, scy)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := mat32.V2FromPoint(sng.BBox.Size())
-		mn := mat32.V2FromPoint(sng.BBox.Min.Sub(svoff))
+		sz := math32.V2FromPoint(sng.BBox.Size())
+		mn := math32.V2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, 0, ctr)
 	}

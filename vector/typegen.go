@@ -4,7 +4,7 @@ package vector
 
 import (
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 	"cogentcore.org/core/units"
@@ -146,7 +146,7 @@ func (t *TreeView) SetOpenDepth(v int) *TreeView { t.OpenDepth = v; return t }
 func (t *TreeView) SetViewIndex(v int) *TreeView { t.ViewIndex = v; return t }
 
 // SetWidgetSize sets the [TreeView.WidgetSize]
-func (t *TreeView) SetWidgetSize(v mat32.Vec2) *TreeView { t.WidgetSize = v; return t }
+func (t *TreeView) SetWidgetSize(v math32.Vec2) *TreeView { t.WidgetSize = v; return t }
 
 // SetRootView sets the [TreeView.RootView]
 func (t *TreeView) SetRootView(v *views.TreeView) *TreeView { t.RootView = v; return t }

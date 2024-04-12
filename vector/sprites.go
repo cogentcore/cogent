@@ -12,7 +12,7 @@ import (
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 )
 
 // Sprites are the type of sprite
@@ -245,7 +245,7 @@ var (
 // HandleSpriteSize returns the border size and overall size
 // of handle-type sprites, with given scaling factor
 func HandleSpriteSize(scale float32) (int, image.Point) {
-	sz := int(mat32.Ceil(scale * core.AppearanceSettings.Zoom * HandleSpriteScale / 100))
+	sz := int(math32.Ceil(scale * core.AppearanceSettings.Zoom * HandleSpriteScale / 100))
 	sz = max(sz, HandleSizeMin)
 	bsz := max(sz/6, HandleBorderMin)
 	bbsz := image.Point{sz, sz}
@@ -323,7 +323,7 @@ var (
 
 // LineSpriteSize returns the border size and overall size of line-type sprites
 func LineSpriteSize() (int, int) {
-	sz := int(mat32.Ceil(core.AppearanceSettings.Zoom * LineSpriteScale / 100))
+	sz := int(math32.Ceil(core.AppearanceSettings.Zoom * LineSpriteScale / 100))
 	sz = max(sz, LineSizeMin)
 	bsz := max(sz/6, LineBorderMin)
 	return bsz, sz
