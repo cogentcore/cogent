@@ -34,7 +34,7 @@ type SVGView struct {
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// view translation offset (from dragging)
-	Trans math32.Vec2 `set:"-"`
+	Trans math32.Vector2 `set:"-"`
 
 	// view scaling (from zooming)
 	Scale float32 `set:"-"`
@@ -52,7 +52,7 @@ type SVGView struct {
 	// BgRender girl.State `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered translation
-	bgTrans math32.Vec2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	bgTrans math32.Vector2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered scale
 	bgScale float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
@@ -287,7 +287,7 @@ func (sv *SVGView) ContentsBBox() math32.Box2 {
 
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
-func (sv *SVGView) TransformAllLeaves(trans math32.Vec2, scale math32.Vec2, rot float32, pt math32.Vec2) {
+func (sv *SVGView) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
 	sv.WalkDown(func(k tree.Node) bool {
 		if k.This() == sv.This() {
 			return tree.Continue
@@ -318,7 +318,7 @@ func (sv *SVGView) TransformAllLeaves(trans math32.Vec2, scale math32.Vec2, rot 
 // ZoomToPage sets the scale to fit the current viewbox
 func (sv *SVGView) ZoomToPage(width bool) {
 	vb := math32.V2FromPoint(sv.Root().BBox.Size())
-	if vb == (math32.Vec2{}) {
+	if vb == (math32.Vector2{}) {
 		return
 	}
 	bsz := sv.Root().ViewBox.Size
@@ -338,7 +338,7 @@ func (sv *SVGView) ZoomToPage(width bool) {
 // ZoomToContents sets the scale to fit the current contents into view
 func (sv *SVGView) ZoomToContents(width bool) {
 	vb := math32.V2FromPoint(sv.Root().BBox.Size())
-	if vb == (math32.Vec2{}) {
+	if vb == (math32.Vector2{}) {
 		return
 	}
 	sv.ZoomToPage(width)
@@ -692,9 +692,9 @@ func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.V2FromPoint(start).Sub(svoff)
-	nr.SetNodePos(xfi.MulVec2AsPoint(pos))
+	nr.SetNodePos(xfi.MulVector2AsPoint(pos))
 	sz := dv.Abs().Max(math32.V2Scalar(minsz / 2))
-	nr.SetNodeSize(xfi.MulVec2AsVec(sz))
+	nr.SetNodeSize(xfi.MulVector2AsVec(sz))
 	es.SelectAction(nr, events.SelectOne, end)
 	sv.ManipDone()
 	sv.NeedsRender()
@@ -718,12 +718,12 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	pos := math32.V2FromPoint(start).Sub(svoff)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
-	pos = xfi.MulVec2AsPoint(pos)
+	pos = xfi.MulVector2AsPoint(pos)
 	sv.VectorView.SetTextPropertiesNode(nr, es.Text.TextProperties())
 	// nr.Pos = pos
 	// tspan.Pos = pos
 	// // dv := math32.V2FromPoint(end.Sub(start))
-	// // sz := dv.Abs().Max(math32.NewVec2Scalar(minsz / 2))
+	// // sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
 	// nr.Width = 100
 	// tspan.Width = 100
 	es.SelectAction(nr, events.SelectOne, end)
@@ -747,10 +747,10 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.V2FromPoint(start).Sub(svoff)
-	pos = xfi.MulVec2AsPoint(pos)
+	pos = xfi.MulVector2AsPoint(pos)
 	sz := dv
-	// sz := dv.Abs().Max(math32.NewVec2Scalar(minsz / 2))
-	sz = xfi.MulVec2AsVec(sz)
+	// sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
+	sz = xfi.MulVector2AsVec(sz)
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 

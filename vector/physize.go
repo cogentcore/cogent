@@ -24,7 +24,7 @@ type PhysSize struct { //types:add
 	Units units.Units
 
 	// drawing size, in Units
-	Size math32.Vec2
+	Size math32.Vector2
 
 	// grid spacing, in units of ViewBox size
 	Grid float32

@@ -222,7 +222,7 @@ func (sv *SVGView) GatherAlignPoints() {
 	}
 
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
-		es.AlignPts[ap] = make([]math32.Vec2, 0)
+		es.AlignPts[ap] = make([]math32.Vector2, 0)
 	}
 
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {

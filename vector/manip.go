@@ -63,7 +63,7 @@ func (sv *SVGView) ManipUpdate() {
 }
 
 // VectorDots is the current grid spacing and offsets in dots
-func (sv *SVGView) VectorDots() (float32, math32.Vec2) {
+func (sv *SVGView) VectorDots() (float32, math32.Vector2) {
 	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.VectorEff
 	if grid <= 0 {
@@ -71,8 +71,8 @@ func (sv *SVGView) VectorDots() (float32, math32.Vec2) {
 	}
 	incr := grid * sv.Scale // our zoom factor
 
-	org := math32.Vec2{}
-	org = sv.Root().Paint.Transform.MulVec2AsPoint(org)
+	org := math32.Vector2{}
+	org = sv.Root().Paint.Transform.MulVector2AsPoint(org)
 
 	// fmt.Printf("org: %v\n", org)
 
@@ -109,12 +109,12 @@ func SnapToIncr(val, off, incr float32) (float32, bool) {
 	return val, false
 }
 
-func (sv *SVGView) SnapPointToVector(rawpt math32.Vec2) math32.Vec2 {
+func (sv *SVGView) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
 	if !Settings.SnapVector {
 		return rawpt
 	}
 	grinc, groff := sv.VectorDots()
-	var snpt math32.Vec2
+	var snpt math32.Vector2
 	snpt.X, _ = SnapToIncr(rawpt.X, groff.X, grinc)
 	snpt.Y, _ = SnapToIncr(rawpt.Y, groff.Y, grinc)
 	return snpt
@@ -122,7 +122,7 @@ func (sv *SVGView) SnapPointToVector(rawpt math32.Vec2) math32.Vec2 {
 
 // SnapPoint does snapping on one raw point, given that point,
 // in window coordinates. returns the snapped point.
-func (sv *SVGView) SnapPoint(rawpt math32.Vec2) math32.Vec2 {
+func (sv *SVGView) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	es := sv.EditState()
 	snpt := sv.SnapPointToVector(rawpt)
 	if !Settings.SnapGuide {
@@ -130,7 +130,7 @@ func (sv *SVGView) SnapPoint(rawpt math32.Vec2) math32.Vec2 {
 	}
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
 	var clPts [2][]BBoxPoints
-	var clVals [2][]math32.Vec2
+	var clVals [2][]math32.Vector2
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
 		pts := es.AlignPts[ap]
 		dim := ap.Dim()
@@ -141,7 +141,7 @@ func (sv *SVGView) SnapPoint(rawpt math32.Vec2) math32.Vec2 {
 			if dst < clDst[dim] {
 				clDst[dim] = dst
 				clPts[dim] = []BBoxPoints{ap}
-				clVals[dim] = []math32.Vec2{pt}
+				clVals[dim] = []math32.Vector2{pt}
 			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 {
 				clPts[dim] = append(clPts[dim], ap)
 				clVals[dim] = append(clVals[dim], pt)
@@ -189,8 +189,8 @@ func (sv *SVGView) SnapBBox(rawbb math32.Box2) math32.Box2 {
 	snapbb := rawbb
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
 	var clPts [2][]BBoxPoints
-	var clVals [2][]math32.Vec2
-	var bbval [2]math32.Vec2
+	var clVals [2][]math32.Vector2
+	var bbval [2]math32.Vector2
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
 		bbp := ap.PointBox(rawbb)
 		pts := es.AlignPts[ap]
@@ -202,7 +202,7 @@ func (sv *SVGView) SnapBBox(rawbb math32.Box2) math32.Box2 {
 			if dst < clDst[dim] {
 				clDst[dim] = dst
 				clPts[dim] = []BBoxPoints{ap}
-				clVals[dim] = []math32.Vec2{pt}
+				clVals[dim] = []math32.Vector2{pt}
 				bbval[dim] = bbp
 			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 {
 				clPts[dim] = append(clPts[dim], ap)
@@ -245,13 +245,13 @@ func (sv *SVGView) SnapBBox(rawbb math32.Box2) math32.Box2 {
 // constraint is along the diagonal, which can then trigger reshaping the
 // object to be along the diagonal as well.
 // also adds constraint to AlignMatches.
-func (sv *SVGView) ConstrainPoint(st, rawpt math32.Vec2) (math32.Vec2, bool) {
+func (sv *SVGView) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 	del := rawpt.Sub(st)
 
 	var alpts []image.Rectangle
 	var altyps []BBoxPoints
 
-	var cpts [4]math32.Vec2
+	var cpts [4]math32.Vector2
 
 	cpts[0] = del
 	cpts[0].Y = 0
@@ -528,7 +528,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ang = math32.DegToRad(ang)
 	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pt = pt.Sub(svoff)
-	del := math32.Vec2{}
+	del := math32.Vector2{}
 	sc := math32.V2(1, 1)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SSVG(), ss.InitGeom)

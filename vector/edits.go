@@ -88,7 +88,7 @@ type EditState struct {
 	DragSelectEffectiveBBox math32.Box2
 
 	// potential points of alignment for dragging
-	AlignPts [BBoxPointsN][]math32.Vec2
+	AlignPts [BBoxPointsN][]math32.Vector2
 
 	// number of current node sprites in use
 	NNodeSprites int

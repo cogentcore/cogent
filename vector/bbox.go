@@ -118,7 +118,7 @@ func ReshapeBBoxPoints(reshape Sprites) (bbX, bbY BBoxPoints) {
 // PointRect returns the relevant point for a given bounding box, where
 // relevant dimension is from ValRect and other is midpoint -- for drawing lines.
 // BBox is an image.Rectangle
-func (ev BBoxPoints) PointRect(bb image.Rectangle) math32.Vec2 {
+func (ev BBoxPoints) PointRect(bb image.Rectangle) math32.Vector2 {
 	val := ev.ValueRect(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:
@@ -131,7 +131,7 @@ func (ev BBoxPoints) PointRect(bb image.Rectangle) math32.Vec2 {
 // PointBox returns the relevant point for a given bounding box, where
 // relevant dimension is from ValRect and other is midpoint -- for drawing lines.
 // BBox is an image.Rectangle
-func (ev BBoxPoints) PointBox(bb math32.Box2) math32.Vec2 {
+func (ev BBoxPoints) PointBox(bb math32.Box2) math32.Vector2 {
 	val := ev.ValueBox(bb)
 	switch ev {
 	case BBLeft, BBCenter, BBRight:

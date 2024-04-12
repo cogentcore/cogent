@@ -365,7 +365,7 @@ func (gv *VectorView) SelectRotate(deg float32) {
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
 	svoff := sv.Geom.ContentBBox.Min
-	del := math32.Vec2{}
+	del := math32.Vector2{}
 	sc := math32.V2(1, 1)
 	rot := math32.DegToRad(deg)
 	for sn := range es.Selected {
@@ -388,7 +388,7 @@ func (gv *VectorView) SelectScale(scx, scy float32) {
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
 	svoff := sv.Geom.ContentBBox.Min
-	del := math32.Vec2{}
+	del := math32.Vector2{}
 	sc := math32.V2(scx, scy)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
