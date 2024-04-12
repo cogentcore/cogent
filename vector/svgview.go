@@ -694,7 +694,7 @@ func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 	pos := math32.Vector2FromPoint(start).Sub(svoff)
 	nr.SetNodePos(xfi.MulVector2AsPoint(pos))
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
-	nr.SetNodeSize(xfi.MulVector2AsVec(sz))
+	nr.SetNodeSize(xfi.MulVector2AsVector(sz))
 	es.SelectAction(nr, events.SelectOne, end)
 	sv.ManipDone()
 	sv.NeedsRender()
@@ -750,7 +750,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	pos = xfi.MulVector2AsPoint(pos)
 	sz := dv
 	// sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
-	sz = xfi.MulVector2AsVec(sz)
+	sz = xfi.MulVector2AsVector(sz)
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 
