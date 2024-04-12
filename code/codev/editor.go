@@ -22,7 +22,7 @@ import (
 	"cogentcore.org/core/pi"
 	"cogentcore.org/core/pi/complete"
 	"cogentcore.org/core/pi/lex"
-	"cogentcore.org/core/pi/parse"
+	"cogentcore.org/core/pi/parser"
 	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
@@ -59,7 +59,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 
 	// note: must have this set to true to allow viewing of AST
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
-	parse.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
+	parser.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
 	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
 	if len(ld.Text) > 0 {
