@@ -9,7 +9,6 @@ package code
 import (
 	"embed"
 	"io/fs"
-	"reflect"
 	"time"
 
 	"cogentcore.org/core/core"
@@ -18,7 +17,6 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/pi/complete"
-	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 	"cogentcore.org/core/tree"
@@ -157,23 +155,17 @@ type Code interface {
 	ClearDebug()
 }
 
-// CodeType is a Code reflect.Type, suitable for checking for Type.Implements.
-var CodeType = reflect.TypeOf((*Code)(nil)).Elem()
-
 // ParentCode returns the Code parent of given node
-func ParentCode(kn tree.Node) (Code, bool) {
-	if tree.IsRoot(kn) {
-		return nil, false
-	}
-	var ge Code
-	kn.WalkUp(func(k tree.Node) bool {
-		if reflectx.EmbedImplements(reflect.TypeOf(k.This()), CodeType) {
-			ge = k.(Code)
+func ParentCode(tn tree.Node) (Code, bool) {
+	var res Code
+	tn.WalkUp(func(n tree.Node) bool {
+		if c, ok := n.This().(Code); ok {
+			res = c
 			return false
 		}
 		return true
 	})
-	return ge, ge != nil
+	return res, res != nil
 }
 
 //go:embed icons/*.svg
