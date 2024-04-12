@@ -293,7 +293,7 @@ func MarkerIconsInit() {
 	// 	ic.InitName(ic, "marker-"+k) // keep it distinct with marker- prefix
 	// 	ic.Styles.Min.X.Ch(6)
 	// 	ic.Styles.Min.Y.Em(2)
-	// 	ic.SVG.Root.ViewBox.Size = mat32.V2(1, 1)
+	// 	ic.SVG.Root.ViewBox.Size = math32.V2(1, 1)
 	// 	var p *svg.Path
 	// 	lk := strings.ToLower(k)
 	// 	start := true

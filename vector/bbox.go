@@ -43,7 +43,7 @@ func (ev BBoxPoints) ValueRect(bb image.Rectangle) float32 {
 }
 
 // ValueBox returns the relevant value for a given bounding box as a
-// mat32.Box2
+// math32.Box2
 func (ev BBoxPoints) ValueBox(bb math32.Box2) float32 {
 	switch ev {
 	case BBLeft:
@@ -63,7 +63,7 @@ func (ev BBoxPoints) ValueBox(bb math32.Box2) float32 {
 }
 
 // SetValueBox sets the relevant value for a given bounding box as a
-// mat32.Box2
+// math32.Box2
 func (ev BBoxPoints) SetValueBox(bb *math32.Box2, val float32) {
 	switch ev {
 	case BBLeft:

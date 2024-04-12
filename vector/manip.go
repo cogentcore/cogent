@@ -384,8 +384,8 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.Dra
 	stpos := es.DragSelStartBBox.Min
 	bbX, bbY := ReshapeBBoxPoints(sp)
 
-	spt := mat32.V2FromPoint(es.DragStartPos)
-	mpt := mat32.V2FromPoint(me.Where)
+	spt := math32.V2FromPoint(es.DragStartPos)
+	mpt := math32.V2FromPoint(me.Where)
 	diag := false
 	if me.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
 		mpt, diag = sv.ConstrainPoint(spt, mpt)
@@ -445,7 +445,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.Dra
 
 	npos := es.DragSelEffBBox.Min
 	nsz := es.DragSelEffBBox.Size()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)

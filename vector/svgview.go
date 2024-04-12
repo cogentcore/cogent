@@ -722,8 +722,8 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	sv.VectorView.SetTextPropertiesNode(nr, es.Text.TextProperties())
 	// nr.Pos = pos
 	// tspan.Pos = pos
-	// // dv := mat32.V2FromPoint(end.Sub(start))
-	// // sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	// // dv := math32.V2FromPoint(end.Sub(start))
+	// // sz := dv.Abs().Max(math32.NewVec2Scalar(minsz / 2))
 	// nr.Width = 100
 	// tspan.Width = 100
 	es.SelectAction(nr, events.SelectOne, end)
@@ -749,7 +749,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	pos := math32.V2FromPoint(start).Sub(svoff)
 	pos = xfi.MulVec2AsPoint(pos)
 	sz := dv
-	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	// sz := dv.Abs().Max(math32.NewVec2Scalar(minsz / 2))
 	sz = xfi.MulVec2AsVec(sz)
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))

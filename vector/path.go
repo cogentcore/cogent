@@ -296,13 +296,13 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent
 		sv.GatherAlignPoints()
 	}
 
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
 	pn := es.PathNodes[idx]
 
 	InactivateSprites(win, SpAlignMatch)
 
-	spt := mat32.V2FromPoint(es.DragStartPos)
-	mpt := mat32.V2FromPoint(me.Where)
+	spt := math32.V2FromPoint(es.DragStartPos)
+	mpt := math32.V2FromPoint(me.Where)
 
 	if me.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
@@ -313,7 +313,7 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent
 
 	es.DragCurPos = mpt.ToPoint()
 	mdel := es.DragCurPos.Sub(es.DragStartPos)
-	dv := mat32.V2FromPoint(mdel)
+	dv := math32.V2FromPoint(mdel)
 
 	nwc := pn.WinPt.Add(dv) // new window coord
 	sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, idx, dv, svoff)
