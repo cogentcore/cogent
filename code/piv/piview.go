@@ -285,7 +285,7 @@ func (pv *PiView) LexStopped() {
 }
 
 // LexNext does next step of lexing
-func (pv *PiView) LexNext() *lex.Rule {
+func (pv *PiView) LexNext() *lexer.Rule {
 	fs := &pv.FileState
 	mrule := pv.Parser.LexNext(fs)
 	if mrule == nil {
@@ -299,7 +299,7 @@ func (pv *PiView) LexNext() *lex.Rule {
 }
 
 // LexLine does next line of lexing
-func (pv *PiView) LexNextLine() *lex.Rule {
+func (pv *PiView) LexNextLine() *lexer.Rule {
 	fs := &pv.FileState
 	mrule := pv.Parser.LexNextLine(fs)
 	if mrule == nil && fs.LexHasErrs() {
@@ -328,7 +328,7 @@ func (pv *PiView) LexAll() {
 }
 
 // SelectLexRule selects given lex rule in Lexer
-func (pv *PiView) SelectLexRule(rule *lex.Rule) {
+func (pv *PiView) SelectLexRule(rule *lexer.Rule) {
 	lt := pv.LexTree()
 	lt.UnselectAll()
 	lt.FuncDownMeFirst(0, lt.This(), func(k tree.Node, level int, d any) bool {
