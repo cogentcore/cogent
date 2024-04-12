@@ -194,7 +194,7 @@ func DashIconsInit() {
 	// 	ic := &core.SVG{}
 	// 	ic.InitName(ic, k)
 	// 	ic.SetProp("width", units.Ch(20))
-	// 	ic.SVG.Root.ViewBox.Size = math32.V2(1, 1)
+	// 	ic.SVG.Root.ViewBox.Size = math32.Vec2(1, 1)
 	// 	p := svg.NewPath(ic, "p", "M 0.05 0.5 .95 0.5 Z")
 	// 	p.SetProp("stroke-width", units.Pw(2))
 	// 	p.SetProp("stroke-dasharray", DashString(DashMulWidth(.05, v)))

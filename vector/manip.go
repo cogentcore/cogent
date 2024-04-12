@@ -64,7 +64,7 @@ func (sv *SVGView) ManipUpdate() {
 
 // VectorDots is the current grid spacing and offsets in dots
 func (sv *SVGView) VectorDots() (float32, math32.Vector2) {
-	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vec2FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.VectorEff
 	if grid <= 0 {
 		grid = 12
@@ -313,9 +313,9 @@ func (sv *SVGView) DragMove(e events.Event) {
 		sv.GatherAlignPoints()
 	}
 
-	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	spt := math32.V2FromPoint(es.DragStartPos)
-	mpt := math32.V2FromPoint(e.Pos())
+	svoff := math32.Vec2FromPoint(sv.Geom.ContentBBox.Min)
+	spt := math32.Vec2FromPoint(es.DragStartPos)
+	mpt := math32.Vec2FromPoint(e.Pos())
 	if e.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
 	}
@@ -335,7 +335,7 @@ func (sv *SVGView) DragMove(e events.Event) {
 	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SSVG(), tdel, math32.V2(1, 1), 0, pt)
+		itm.ApplyDeltaTransform(sv.SSVG(), tdel, math32.Vec2(1, 1), 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
@@ -384,8 +384,8 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.Dra
 	stpos := es.DragSelStartBBox.Min
 	bbX, bbY := ReshapeBBoxPoints(sp)
 
-	spt := math32.V2FromPoint(es.DragStartPos)
-	mpt := math32.V2FromPoint(me.Where)
+	spt := math32.Vec2FromPoint(es.DragStartPos)
+	mpt := math32.Vec2FromPoint(me.Where)
 	diag := false
 	if me.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
 		mpt, diag = sv.ConstrainPoint(spt, mpt)
@@ -445,7 +445,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.Dra
 
 	npos := es.DragSelEffBBox.Min
 	nsz := es.DragSelEffBBox.Size()
-	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vec2FromPoint(sv.Geom.ContentBBox.Min)
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
@@ -472,7 +472,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	if !es.InAction() {
 		sv.ManipStart("Rotate", es.SelectedNamesString())
 	}
-	dv := math32.V2FromPoint(delta)
+	dv := math32.Vec2FromPoint(delta)
 	pt := es.DragSelectStartBBox.Min
 	ctr := es.DragSelectStartBBox.Min.Add(es.DragSelectStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
@@ -526,10 +526,10 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ang := math32.Atan2(dy, dx)
 	ang, _ = SnapToIncr(math32.RadToDeg(ang), 0, 15)
 	ang = math32.DegToRad(ang)
-	svoff := math32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vec2FromPoint(sv.Geom.ContentBBox.Min)
 	pt = pt.Sub(svoff)
 	del := math32.Vector2{}
-	sc := math32.V2(1, 1)
+	sc := math32.Vec2(1, 1)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
 		itm.ApplyDeltaTransform(sv.SSVG(), del, sc, ang, pt)

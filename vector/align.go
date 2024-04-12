@@ -95,7 +95,7 @@ func (vv *VectorView) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.V2(1, 1)
+	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -103,9 +103,9 @@ func (vv *VectorView) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.V2FromPoint(abb.Min.Sub(bb.Min))
+		del := math32.Vec2FromPoint(abb.Min.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vec2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -120,7 +120,7 @@ func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act strin
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.V2(1, 1)
+	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -128,9 +128,9 @@ func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act strin
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.V2FromPoint(abb.Max.Sub(bb.Min))
+		del := math32.Vec2FromPoint(abb.Max.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vec2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -145,7 +145,7 @@ func (vv *VectorView) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.V2(1, 1)
+	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -153,9 +153,9 @@ func (vv *VectorView) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.V2FromPoint(abb.Max.Sub(bb.Max))
+		del := math32.Vec2FromPoint(abb.Max.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vec2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -170,7 +170,7 @@ func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act strin
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	sc := math32.V2(1, 1)
+	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -178,9 +178,9 @@ func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act strin
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.V2FromPoint(abb.Min.Sub(bb.Max))
+		del := math32.Vec2FromPoint(abb.Min.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vec2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -195,8 +195,8 @@ func (vv *VectorView) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) 
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	ctr := math32.V2FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
-	sc := math32.V2(1, 1)
+	ctr := math32.Vec2FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
+	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
 		if sn == an {
@@ -204,10 +204,10 @@ func (vv *VectorView) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) 
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		nctr := math32.V2FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
+		nctr := math32.Vec2FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
 		del := ctr.Sub(nctr)
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.V2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vec2FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
