@@ -21,7 +21,7 @@ import (
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/pi"
 	"cogentcore.org/core/pi/complete"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/pi/parser"
 	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/texteditor"
@@ -61,7 +61,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
 	parser.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
+	ld = lp.Lang.Lookup(sfs, text, lexer.Pos{posLn, posCh})
 	if len(ld.Text) > 0 {
 		texteditor.TextDialog(nil, "Lookup: "+text, string(ld.Text))
 		return ld
@@ -100,7 +100,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	tv := texteditor.NewEditor(d).SetBuffer(tb)
 	tv.SetReadOnly(true)
 
-	tv.SetCursorTarget(lex.Pos{Ln: ld.StLine})
+	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
 	tv.Styles.Font.Family = string(core.AppearanceSettings.MonoFont)
 	d.AddBottomBar(func(parent core.Widget) {
 		core.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
@@ -429,9 +429,9 @@ func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		return true
 	}
 	// fmt.Printf("pos: %v\n", pos)
-	txpos := lex.Pos{}
+	txpos := lexer.Pos{}
 	if txpos.FromString(pos) {
-		reg := textbuf.Region{Start: txpos, End: lex.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		reg := textbuf.Region{Start: txpos, End: lexer.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start

@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/pi/syms"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
@@ -288,7 +288,7 @@ func (t *SpellView) SetText(v *TextEditor) *SpellView { t.Text = v; return t }
 
 // SetErrs sets the [SpellView.Errs]:
 // current spelling errors
-func (t *SpellView) SetErrs(v lex.Line) *SpellView { t.Errs = v; return t }
+func (t *SpellView) SetErrs(v lexer.Line) *SpellView { t.Errs = v; return t }
 
 // SetCurLn sets the [SpellView.CurLn]:
 // current line in text we're on
@@ -300,7 +300,7 @@ func (t *SpellView) SetCurIndex(v int) *SpellView { t.CurIndex = v; return t }
 
 // SetUnkLex sets the [SpellView.UnkLex]:
 // current unknown lex token
-func (t *SpellView) SetUnkLex(v lex.Lex) *SpellView { t.UnkLex = v; return t }
+func (t *SpellView) SetUnkLex(v lexer.Lex) *SpellView { t.UnkLex = v; return t }
 
 // SetUnkWord sets the [SpellView.UnkWord]:
 // current unknown word

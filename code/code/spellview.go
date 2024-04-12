@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
@@ -29,7 +29,7 @@ type SpellView struct {
 	Text *TextEditor `json:"-" xml:"-" copier:"-"`
 
 	// current spelling errors
-	Errs lex.Line
+	Errs lexer.Line
 
 	// current line in text we're on
 	CurLn int
@@ -38,7 +38,7 @@ type SpellView struct {
 	CurIndex int
 
 	// current unknown lex token
-	UnkLex lex.Lex
+	UnkLex lexer.Lex
 
 	// current unknown word
 	UnkWord string
@@ -342,14 +342,14 @@ func (sv *SpellView) TrainAction() {
 }
 
 // UnkStartPos returns the start position of the current unknown word
-func (sv *SpellView) UnkStartPos() lex.Pos {
-	pos := lex.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
+func (sv *SpellView) UnkStartPos() lexer.Pos {
+	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
 	return pos
 }
 
 // UnkEndPos returns the end position of the current unknown word
-func (sv *SpellView) UnkEndPos() lex.Pos {
-	pos := lex.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
+func (sv *SpellView) UnkEndPos() lexer.Pos {
+	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
 	return pos
 }
 

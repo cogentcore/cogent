@@ -23,7 +23,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/pi/complete"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/vcs"
@@ -617,7 +617,7 @@ func (cm *Command) MarkupCmdOutput(out []byte) []byte {
 	if len(flds) == 0 {
 		return out
 	}
-	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
 	nt := out
 	if len(link) > 0 {
 		nt = bytes.Replace(out, orig, link, -1)
@@ -632,7 +632,7 @@ func MarkupCmdOutput(out []byte) []byte {
 	if len(flds) == 0 {
 		return out
 	}
-	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
 	nt := out
 	if len(link) > 0 {
 		nt = bytes.Replace(out, orig, link, -1)

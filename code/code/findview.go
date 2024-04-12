@@ -18,7 +18,7 @@ import (
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
@@ -138,7 +138,7 @@ func (fv *FindView) ShowResults(res []FileSearchResults) {
 	ftv.CursorStartDoc()
 
 	fv.Update()
-	ftv.SetCursorShow(lex.Pos{Ln: 0})
+	ftv.SetCursorShow(lexer.Pos{Ln: 0})
 	ftv.NeedsLayout()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -244,9 +244,9 @@ func (fv *FindView) ReplaceAction() bool {
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Ln
-		st := lex.Pos{Ln: ftvln, Ch: 0}
+		st := lexer.Pos{Ln: ftvln, Ch: 0}
 		len := len(ftv.Buffer.Lines[ftvln])
-		en := lex.Pos{Ln: ftvln, Ch: len}
+		en := lexer.Pos{Ln: ftvln, Ch: len}
 		ftv.Buffer.DeleteText(st, en, texteditor.EditSignal)
 	}
 

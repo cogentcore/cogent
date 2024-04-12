@@ -14,7 +14,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/pi/token"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
@@ -166,7 +166,7 @@ func (ed *TextEditor) FindFrames(ln int) {
 }
 
 // DoubleClickEvent processes double-clicks NOT on the line-number section
-func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lex.Pos) {
+func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lexer.Pos) {
 	dbg, has := ed.CurDebug()
 	lx, _ := ed.Buffer.HiTagAtPos(tpos)
 	if has && lx != nil && lx.Token.Token.InCat(token.Name) {
@@ -181,7 +181,7 @@ func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lex.Pos) {
 }
 
 // LineNoDoubleClick processes double-clicks on the line-number section
-func (ed *TextEditor) LineNoDoubleClick(tpos lex.Pos) {
+func (ed *TextEditor) LineNoDoubleClick(tpos lexer.Pos) {
 	ln := tpos.Ln
 	ed.ToggleBreakpoint(ln)
 	ed.NeedsRender()

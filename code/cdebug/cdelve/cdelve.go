@@ -16,7 +16,7 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/gox/num"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/texteditor"
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
@@ -147,7 +147,7 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		}
 		return out
 	}
-	orig, link := lex.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
 	if len(link) > 0 {
 		nt := bytes.Replace(out, orig, link, -1)
 		return nt

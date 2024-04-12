@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/pi/lexer"
 	"cogentcore.org/core/pi/syms"
 	"cogentcore.org/core/pi/token"
 	"cogentcore.org/core/styles"
@@ -244,7 +244,7 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
 
-	ignoreCase := !lex.HasUpperCase(match)
+	ignoreCase := !lexer.HasUpperCase(match)
 
 	sls := pkg.Children.Slice(true)
 	for _, sy := range sls {
