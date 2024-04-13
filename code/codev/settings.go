@@ -45,12 +45,12 @@ func (ge *CodeView) ApplySettings() {
 		for i := 0; i < NTextEditors; i++ {
 			tv := ge.TextEditorByIndex(i)
 			if tv.Buffer != nil {
-				ge.ConfigTextBuf(tv.Buffer)
+				ge.ConfigTextBuffer(tv.Buffer)
 			}
 		}
 		for _, ond := range ge.OpenNodes {
 			if ond.Buffer != nil {
-				ge.ConfigTextBuf(ond.Buffer)
+				ge.ConfigTextBuffer(ond.Buffer)
 			}
 		}
 		ge.Splits().SetSplits(ge.Settings.Splits...)

@@ -67,7 +67,7 @@ func (ed *TextEditor) HandleEvents() {
 			tt = vv
 		}
 		// todo: look for documentation on symbols here -- we don't actually have this
-		// in pi so we need lsp to make this work
+		// in parse so we need lsp to make this work
 		if tt != "" {
 			e.SetHandled()
 			pos := e.Pos()

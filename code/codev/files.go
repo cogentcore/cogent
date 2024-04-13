@@ -83,7 +83,7 @@ func (ge *CodeView) SaveActiveViewAs(filename core.Filename) { //types:add
 func (ge *CodeView) RevertActiveView() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer != nil {
-		ge.ConfigTextBuf(tv.Buffer)
+		ge.ConfigTextBuffer(tv.Buffer)
 		tv.Buffer.Revert()
 		tv.Buffer.Undos.Reset() // key implication of revert
 		fpath, _ := filepath.Split(string(tv.Buffer.Filename))
@@ -172,7 +172,7 @@ func (ge *CodeView) OpenFileNode(fn *filetree.Node) (bool, error) {
 	filetree.NodeHiStyle = core.AppearanceSettings.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
-		ge.ConfigTextBuf(fn.Buffer)
+		ge.ConfigTextBuffer(fn.Buffer)
 		ge.OpenNodes.Add(fn)
 		fn.Open()
 		fn.UpdateNode()

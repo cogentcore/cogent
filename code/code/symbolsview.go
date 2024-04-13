@@ -198,10 +198,10 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 func (sv *SymbolsView) OpenPackage() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 		return
 	}
-	pfs := tv.Buffer.PiState.Done()
+	pfs := tv.Buffer.ParseState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
 		core.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
@@ -214,10 +214,10 @@ func (sv *SymbolsView) OpenPackage() {
 func (sv *SymbolsView) OpenFile() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 		return
 	}
-	pfs := tv.Buffer.PiState.Done()
+	pfs := tv.Buffer.ParseState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
 		core.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return

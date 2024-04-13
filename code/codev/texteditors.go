@@ -21,18 +21,14 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// ConfigTextBuf configures the text buf according to prefs
-func (ge *CodeView) ConfigTextBuf(tb *texteditor.Buffer) {
+// ConfigTextBuffer configures the text buffer according to the settings.
+func (ge *CodeView) ConfigTextBuffer(tb *texteditor.Buffer) {
 	tb.SetHiStyle(core.AppearanceSettings.HiStyle)
 	tb.Opts.EditorSettings = ge.Settings.Editor
 	tb.ConfigKnown()
 	if tb.Complete != nil {
 		tb.Complete.LookupFunc = ge.LookupFun
 	}
-
-	// these are now set in std textbuf..
-	// tb.SetSpellCorrect(tb, views.SpellCorrectEdit)                    // always set -- option can override
-	// tb.SetCompleter(&tb.PiState, pi.CompletePi, views.CompleteGoEdit) // todo: need pi edit too..
 }
 
 // ActiveTextEditor returns the currently-active TextEditor
@@ -68,7 +64,7 @@ func (ge *CodeView) TextEditorForFileNode(fn *filetree.Node) (*code.TextEditor, 
 	if fn.Buffer == nil {
 		return nil, -1, false
 	}
-	ge.ConfigTextBuf(fn.Buffer)
+	ge.ConfigTextBuffer(fn.Buffer)
 	for i := 0; i < NTextEditors; i++ {
 		tv := ge.TextEditorByIndex(i)
 		if tv != nil && tv.Buffer != nil && tv.Buffer == fn.Buffer && ge.PanelIsOpen(i+TextEditor1Index) {
