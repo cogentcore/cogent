@@ -7,7 +7,7 @@ package main
 func main() {
 	/*
 			system.TheApp.SetName("pie")
-			system.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>Cogent Core</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/core/pi">Code on GitHub</a> and <a href="https://cogentcore.org/core/pi/wiki">Code wiki</a> for documentation.<br>
+			system.TheApp.SetAbout(`<code>Pie</code> is the interactive parser (pi) editor written in the <b>Cogent Core</b> graphical interface system, within the <b>Goki</b> tree framework.  See <a href="https://cogentcore.org/core/parse">Code on GitHub</a> and <a href="https://cogentcore.org/core/parse/wiki">Code wiki</a> for documentation.<br>
 		<br>
 		Version: ` + pi.VersionInfo())
 

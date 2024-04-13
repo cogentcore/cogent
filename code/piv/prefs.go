@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/pi/parse"
+	"cogentcore.org/core/parse/parse"
 )
 
 // ProjSettings are the settings for saving for a project -- this IS the project file

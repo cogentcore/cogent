@@ -29,9 +29,9 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/ki"
-	"cogentcore.org/core/pi/lex"
-	"cogentcore.org/core/pi/parse"
-	"cogentcore.org/core/pi"
+	"cogentcore.org/core/parse/lex"
+	"cogentcore.org/core/parse/parse"
+	"cogentcore.org/core/parse"
 )
 
 // These are then the fixed indices of the different elements in the splitview
