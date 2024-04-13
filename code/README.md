@@ -1,8 +1,6 @@
 ![alt tag](logo/code_icon.png)
 
-**Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [Cogent Core](https://cogentcore.org/core/gi) GUI (for which it serves as a continuous testing platform :) and the [GoPi](https://cogentcore.org/core/pi) interactive parser for syntax highlighting and more advanced IDE code processing.
-
-[![Go Reference](https://pkg.go.dev/badge/cogentcore.org/cogent/code.svg)](https://pkg.go.dev/cogentcore.org/cogent/code.svg)
+**Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [Cogent Core](https://cogentcore.org/core) GUI (for which it serves as a continuous testing platform) and the [parse](https://pkg.go.dev/cogentcore.org/core/parse) interactive parser for syntax highlighting and more advanced IDE code processing.
 
 There are many existing, excellent choices for text editors and IDEs, but *Code* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully-supported by Code.  Our ambition is to capture some of those Go attributes in an IDE.
 
@@ -32,7 +30,7 @@ In addition to Issues shown on github, some important features to be added longe
 
 * More coding automation, refactoring, etc.  We don't want to go too crazy here, preferring the more general-purpose and simple approach, but probably some more could be done.
 
-* Full support for Python, including extending the [GoPi](https://cogentcore.org/core/pi) interactive parser to handle Python, so it will have been worth writing instead of just using the native Go parser.
+* Full support for Python, including extending the [parse](https://pkg.go.dev/cogentcore.org/core/parse) interactive parser to handle Python, so it will have been worth writing instead of just using the native Go parser.
 
 # Screenshots
 

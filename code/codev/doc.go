@@ -5,5 +5,5 @@
 // Package codev implements the CodeView editor, using all the elements
 // from the code interface.  Having it in a separate package
 // allows CodeView to also include other packages that tap into
-// the code interface, such as the GoPi interactive parser.
+// the code interface, such as the Cogent Core interactive parser.
 package codev
