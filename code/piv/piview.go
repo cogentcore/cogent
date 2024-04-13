@@ -176,7 +176,7 @@ func (pv *PiView) SaveParser() { //types:add
 	pv.Parser.SaveJSON(string(pv.Settings.ParserFile))
 
 	ext := filepath.Ext(string(pv.Settings.ParserFile))
-	pigfn := strings.TrimSuffix(string(pv.Settings.ParserFile), ext) + ".pig"
+	pigfn := strings.TrimSuffix(string(pv.Settings.ParserFile), ext) + ".parsegrammar"
 	pv.Parser.SaveGrammar(pigfn)
 
 	pv.Changed = false
@@ -189,7 +189,7 @@ func (pv *PiView) SaveParserAs(filename core.Filename) { //types:add
 	pv.Parser.SaveJSON(string(filename))
 
 	ext := filepath.Ext(string(pv.Settings.ParserFile))
-	pigfn := strings.TrimSuffix(string(pv.Settings.ParserFile), ext) + ".pig"
+	pigfn := strings.TrimSuffix(string(pv.Settings.ParserFile), ext) + ".parsegrammar"
 	pv.Parser.SaveGrammar(pigfn)
 
 	pv.Changed = false
