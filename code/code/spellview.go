@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/pi/lexer"
+	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"

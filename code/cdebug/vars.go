@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/gox/indent"
-	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/parse/syms"
 	"cogentcore.org/core/tree"
 )
 

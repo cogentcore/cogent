@@ -19,10 +19,10 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/mimedata"
 	"cogentcore.org/core/paint"
-	"cogentcore.org/core/pi"
-	"cogentcore.org/core/pi/complete"
-	"cogentcore.org/core/pi/lexer"
-	"cogentcore.org/core/pi/parser"
+	"cogentcore.org/core/parse"
+	"cogentcore.org/core/parse/complete"
+	"cogentcore.org/core/parse/lexer"
+	"cogentcore.org/core/parse/parser"
 	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
@@ -43,12 +43,12 @@ func (ge *CodeView) CursorToHistNext() bool { //types:add
 // LookupFun is the completion system Lookup function that makes a custom
 // texteditor dialog that has option to edit resulting file.
 func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
-	sfs := data.(*pi.FileStates)
+	sfs := data.(*parse.FileStates)
 	if sfs == nil {
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
 		return ld
 	}
-	lp, err := pi.LangSupport.Properties(sfs.Sup)
+	lp, err := parse.LangSupport.Properties(sfs.Sup)
 	if err != nil {
 		log.Printf("LookupFun: %v\n", err)
 		return ld

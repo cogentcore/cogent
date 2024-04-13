@@ -3,7 +3,7 @@
 package cdebug
 
 import (
-	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/parse/syms"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )

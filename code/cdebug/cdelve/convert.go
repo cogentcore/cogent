@@ -12,8 +12,8 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/gox/dirs"
-	"cogentcore.org/core/pi/lexer"
-	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/parse/lexer"
+	"cogentcore.org/core/parse/syms"
 	"github.com/go-delve/delve/service/api"
 )
 

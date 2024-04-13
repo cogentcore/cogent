@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/pi/lexer"
+	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"github.com/stretchr/testify/assert"
 )
