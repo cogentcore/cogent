@@ -464,7 +464,7 @@ func (cm *Command) Run(ge Code, buf *texteditor.Buffer) {
 func (cm *Command) RunAfterPrompts(ge Code, buf *texteditor.Buffer) {
 	// ge.CmdRuns().KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
-	cdir := "{ProjPath}"
+	cdir := "{ProjectPath}"
 	if cm.Dir != "" {
 		cdir = cm.Dir
 	}

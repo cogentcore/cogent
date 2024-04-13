@@ -214,8 +214,8 @@ func (se *SettingsData) EditRegisters() { //types:add
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project Settings
 
-// ProjSettings are the settings for saving for a project. This IS the project file
-type ProjSettings struct { //types:add
+// ProjectSettings are the settings for saving for a project. This IS the project file
+type ProjectSettings struct { //types:add
 
 	// file view settings
 	Files FileSettings
@@ -236,12 +236,12 @@ type ProjSettings struct { //types:add
 
 	// current project filename for saving / loading specific Code
 	// configuration information in a .code file (optional)
-	ProjFilename core.Filename `ext:".code"`
+	ProjectFilename core.Filename `ext:".code"`
 
 	// root directory for the project. all projects must be organized within
 	// a top-level root directory, with all the files therein constituting
-	// the scope of the project. By default it is the path for ProjFilename
-	ProjRoot core.Filename
+	// the scope of the project. By default it is the path for ProjectFilename
+	ProjectRoot core.Filename
 
 	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
 	GoMod bool
@@ -255,10 +255,10 @@ type ProjSettings struct { //types:add
 	// build target for main Build button, if relevant for your  BuildCmds
 	BuildTarg core.Filename
 
-	// executable to run for this project via main Run button -- called by standard Run Proj command
+	// executable to run for this project via main Run button -- called by standard Run Project command
 	RunExec core.Filename
 
-	// command(s) to run for main Run button (typically Run Proj)
+	// command(s) to run for main Run button (typically Run Project)
 	RunCmds CmdNames
 
 	// custom debugger parameters for this project
@@ -280,31 +280,31 @@ type ProjSettings struct { //types:add
 	Splits []float32 `view:"-"`
 }
 
-func (se *ProjSettings) Update() {
-	if se.BuildDir != se.ProjRoot {
-		if se.BuildTarg == se.ProjRoot {
+func (se *ProjectSettings) Update() {
+	if se.BuildDir != se.ProjectRoot {
+		if se.BuildTarg == se.ProjectRoot {
 			se.BuildTarg = se.BuildDir
 		}
-		if se.RunExec == se.ProjRoot {
+		if se.RunExec == se.ProjectRoot {
 			se.RunExec = se.BuildDir
 		}
 	}
 }
 
 // Open open from file
-func (se *ProjSettings) Open(filename core.Filename) error { //types:add
+func (se *ProjectSettings) Open(filename core.Filename) error { //types:add
 	err := errors.Log(tomlx.Open(se, string(filename)))
 	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 
 // Save save to file
-func (se *ProjSettings) Save(filename core.Filename) error { //types:add
+func (se *ProjectSettings) Save(filename core.Filename) error { //types:add
 	return errors.Log(tomlx.Save(se, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable
-func (se *ProjSettings) RunExecIsExec() bool {
+func (se *ProjectSettings) RunExecIsExec() bool {
 	fi, err := fileinfo.NewFileInfo(string(se.RunExec))
 	if err != nil {
 		return false
@@ -319,8 +319,8 @@ var (
 	// RecentPaths is a slice of recent file paths
 	RecentPaths core.FilePaths
 
-	// SavedPathsFilename is the name of the saved file paths file in Cogent Core prefs directory
-	SavedPathsFilename = "code_saved_paths.json"
+	// SavedPathsFilename is the name of the saved file paths file in Cogent Code data directory
+	SavedPathsFilename = "saved-paths.json"
 )
 
 // SavePaths saves the active SavedPaths to prefs dir

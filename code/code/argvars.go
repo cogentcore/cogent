@@ -28,18 +28,18 @@ type ArgVarInfo struct {
 // ArgVars are variables that can be used for arguments to commands in CmdAndArgs
 var ArgVars = map[string]ArgVarInfo{
 	/// Current Filename
-	"{FilePath}":       {"Current file name with full path.", ArgVarFile},
-	"{Filename}":       {"Current file name only, without path.", ArgVarFile},
-	"{FileExt}":        {"Extension of current file name.", ArgVarExt},
-	"{FileExtLC}":      {"Extension of current file name, lowercase.", ArgVarExt},
-	"{FilenameNoExt}":  {"Current file name without path and extension.", ArgVarFile},
-	"{FileDir}":        {"Name only of current file's directory.", ArgVarDir},
-	"{FileDirPath}":    {"Full path to current file's directory.", ArgVarDir},
-	"{FileDirProjRel}": {"Path to current file's directory relative to project root.", ArgVarDir},
+	"{FilePath}":          {"Current file name with full path.", ArgVarFile},
+	"{Filename}":          {"Current file name only, without path.", ArgVarFile},
+	"{FileExt}":           {"Extension of current file name.", ArgVarExt},
+	"{FileExtLC}":         {"Extension of current file name, lowercase.", ArgVarExt},
+	"{FilenameNoExt}":     {"Current file name without path and extension.", ArgVarFile},
+	"{FileDir}":           {"Name only of current file's directory.", ArgVarDir},
+	"{FileDirPath}":       {"Full path to current file's directory.", ArgVarDir},
+	"{FileDirProjectRel}": {"Path to current file's directory relative to project root.", ArgVarDir},
 
 	// Project Root dir
-	"{ProjDir}":  {"Current project directory name, without full path.", ArgVarDir},
-	"{ProjPath}": {"Full path to current project directory.", ArgVarDir},
+	"{ProjectDir}":  {"Current project directory name, without full path.", ArgVarDir},
+	"{ProjectPath}": {"Full path to current project directory.", ArgVarDir},
 
 	// BuildDir
 	"{BuildDir}":    {"Full path to BuildDir specified in project prefs -- the default Build.", ArgVarDir},
@@ -69,14 +69,14 @@ var ArgVars = map[string]ArgVarInfo{
 	"{CurLineText}": {"Current line text under cursor.", ArgVarText},
 	"{CurWord}":     {"Current word under cursor.", ArgVarText},
 
-	"{PromptFilePath}":       {"Prompt user for a file, and this is the full path to that file.", ArgVarPrompt},
-	"{PromptFilename}":       {"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
-	"{PromptFileDir}":        {"Prompt user for a file, and this is the directory name (only) of that file.", ArgVarPrompt},
-	"{PromptFileDirPath}":    {"Prompt user for a file, and this is the full path to that directory.", ArgVarPrompt},
-	"{PromptFileDirProjRel}": {"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
-	"{PromptString1}":        {"Prompt user for a string -- this is it.", ArgVarPrompt},
-	"{PromptString2}":        {"Prompt user for another string -- this is it.", ArgVarPrompt},
-	"{PromptBranch}":         {"Prompt user for a VCS branch.", ArgVarPrompt},
+	"{PromptFilePath}":          {"Prompt user for a file, and this is the full path to that file.", ArgVarPrompt},
+	"{PromptFilename}":          {"Prompt user for a file, and this is the filename (only) of that file.", ArgVarPrompt},
+	"{PromptFileDir}":           {"Prompt user for a file, and this is the directory name (only) of that file.", ArgVarPrompt},
+	"{PromptFileDirPath}":       {"Prompt user for a file, and this is the full path to that directory.", ArgVarPrompt},
+	"{PromptFileDirProjectRel}": {"Prompt user for a file, and this is the path of that directory relative to the project root.", ArgVarPrompt},
+	"{PromptString1}":           {"Prompt user for a string -- this is it.", ArgVarPrompt},
+	"{PromptString2}":           {"Prompt user for another string -- this is it.", ArgVarPrompt},
+	"{PromptBranch}":            {"Prompt user for a VCS branch.", ArgVarPrompt},
 }
 
 // ArgVarVals are current values of arg var vals -- updated on demand when a
@@ -84,13 +84,13 @@ var ArgVars = map[string]ArgVarInfo{
 type ArgVarVals map[string]string
 
 // Set sets the current values for arg variables -- prompts must be already set!
-func (avp *ArgVarVals) Set(fpath string, ppref *ProjSettings, tv *texteditor.Editor) {
+func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *texteditor.Editor) {
 	if *avp == nil {
 		*avp = make(ArgVarVals, len(ArgVars))
 	}
 	av := *avp
 
-	projpath, _ := filepath.Abs(string(ppref.ProjRoot))
+	projpath, _ := filepath.Abs(string(ppref.ProjectRoot))
 
 	emptyPath := false
 	if fpath == "" {
@@ -133,10 +133,10 @@ func (avp *ArgVarVals) Set(fpath string, ppref *ProjSettings, tv *texteditor.Edi
 	av["{FilenameNoExt}"] = fnmnoext
 	av["{FileDir}"] = dir
 	av["{FileDirPath}"] = dirpath
-	av["{FileDirProjRel}"] = dirrel
+	av["{FileDirProjectRel}"] = dirrel
 
-	av["{ProjDir}"] = projdir
-	av["{ProjPath}"] = projpath
+	av["{ProjectDir}"] = projdir
+	av["{ProjectPath}"] = projpath
 
 	av["{BuildDir}"] = bdir
 	av["{BuildDirRel}"] = bdirrel

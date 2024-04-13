@@ -38,7 +38,7 @@ func (ge *CodeView) SaveActiveView() { //types:add
 			views.CallFunc(ge, ge.SaveActiveViewAs)
 		}
 	}
-	ge.SaveProjIfExists(false) // no saveall
+	ge.SaveProjectIfExists(false) // no saveall
 }
 
 // ConfigActiveFilename configures the first arg of given FuncButton to
@@ -76,7 +76,7 @@ func (ge *CodeView) SaveActiveViewAs(filename core.Filename) { //types:add
 			}
 		})
 	}
-	ge.SaveProjIfExists(false) // no saveall
+	ge.SaveProjectIfExists(false) // no saveall
 }
 
 // RevertActiveView revert active view to saved version
@@ -420,7 +420,7 @@ func (ge *CodeView) SaveAllOpenNodes() {
 // and saves the project state if it has been saved before (i.e., the .code file exists)
 func (ge *CodeView) SaveAll() { //types:add
 	ge.SaveAllOpenNodes()
-	ge.SaveProjIfExists(false)
+	ge.SaveProjectIfExists(false)
 }
 
 // CloseOpenNodes closes any nodes with open views (including those in directories under nodes).

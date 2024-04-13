@@ -50,12 +50,9 @@ func KeyMapsView(km *KeyMaps) {
 	d.NewWindow().Run()
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//  ProjSettingsView
-
-// ProjSettingsView opens a view of project settings,
+// ProjectSettingsView opens a view of project settings,
 // returns structview if not already open
-func ProjSettingsView(pf *ProjSettings) *views.StructView {
+func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
 	if core.ActivateExistingMainWindow(pf) {
 		return nil
 	}
@@ -64,7 +61,7 @@ func ProjSettingsView(pf *ProjSettings) *views.StructView {
 	tv := views.NewStructView(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
 		pf.Update()
-		core.ErrorSnackbar(d, pf.Save(pf.ProjFilename), "Error saving "+string(pf.ProjFilename)+" settings")
+		core.ErrorSnackbar(d, pf.Save(pf.ProjectFilename), "Error saving "+string(pf.ProjectFilename)+" settings")
 	})
 	d.NewWindow().Run()
 	return tv

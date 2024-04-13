@@ -173,8 +173,8 @@ func (dv *DebugView) Start() {
 		if dv.Dbg != nil {
 			dv.Detach()
 		}
-		rootPath := string(dv.Code.ProjSettings().ProjRoot)
-		pars := &dv.Code.ProjSettings().Debug
+		rootPath := string(dv.Code.ProjectSettings().ProjectRoot)
+		pars := &dv.Code.ProjectSettings().Debug
 		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat cdebug.Status) {
 			dv.AsyncLock()
@@ -737,7 +737,7 @@ func (dv *DebugView) Config() {
 }
 
 // ConfigDebugView configures the view -- parameters for the job must have
-// already been set in ge.ProjParams.Debug.
+// already been set in [ProjectSettings.Debug].
 func (dv *DebugView) ConfigDebugView(ge Code, sup fileinfo.Known, exePath string) {
 	dv.Code = ge
 	dv.Sup = sup
@@ -933,7 +933,7 @@ func (dv *DebugView) ConfigToolbar() {
 		SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
 		StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 		OnClick(func(e events.Event) {
-			DebugSettingsView(&dv.Code.ProjSettings().Debug)
+			DebugSettingsView(&dv.Code.ProjectSettings().Debug)
 		})
 
 }

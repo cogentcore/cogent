@@ -47,7 +47,7 @@ type SymbolsView struct {
 
 // Params returns the symbols params
 func (sv *SymbolsView) Params() *SymbolsParams {
-	return &sv.Code.ProjSettings().Symbols
+	return &sv.Code.ProjectSettings().Symbols
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

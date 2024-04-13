@@ -71,9 +71,9 @@ const (
 	// set named splitter config
 	KeySetSplit
 	// build overall project
-	KeyBuildProj
+	KeyBuildProject
 	// run overall project
-	KeyRunProj
+	KeyRunProject
 )
 
 // KeySeq defines a multiple-key sequence to initiate a key function
@@ -446,10 +446,10 @@ var StandardKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+J"}: KeyJump,
 		KeySeq{"Control+M", "v"}:         KeySetSplit,
 		KeySeq{"Control+M", "Control+V"}: KeySetSplit,
-		KeySeq{"Control+M", "m"}:         KeyBuildProj,
-		KeySeq{"Control+M", "Control+M"}: KeyBuildProj,
-		KeySeq{"Control+M", "r"}:         KeyRunProj,
-		KeySeq{"Control+M", "Control+R"}: KeyRunProj,
+		KeySeq{"Control+M", "m"}:         KeyBuildProject,
+		KeySeq{"Control+M", "Control+M"}: KeyBuildProject,
+		KeySeq{"Control+M", "r"}:         KeyRunProject,
+		KeySeq{"Control+M", "Control+R"}: KeyRunProject,
 	}},
 	{"MacEmacs", "Mac with emacs-style navigation -- emacs wins in conflicts", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyNextPanel,
@@ -487,10 +487,10 @@ var StandardKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+J"}: KeyJump,
 		KeySeq{"Control+X", "v"}:         KeySetSplit,
 		KeySeq{"Control+X", "Control+V"}: KeySetSplit,
-		KeySeq{"Control+X", "m"}:         KeyBuildProj,
-		KeySeq{"Control+X", "Control+M"}: KeyBuildProj,
-		KeySeq{"Control+X", "r"}:         KeyRunProj,
-		KeySeq{"Control+X", "Control+R"}: KeyRunProj,
+		KeySeq{"Control+X", "m"}:         KeyBuildProject,
+		KeySeq{"Control+X", "Control+M"}: KeyBuildProject,
+		KeySeq{"Control+X", "r"}:         KeyRunProject,
+		KeySeq{"Control+X", "Control+R"}: KeyRunProject,
 	}},
 	{"LinuxEmacs", "Linux with emacs-style navigation -- emacs wins in conflicts", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyNextPanel,
@@ -528,10 +528,10 @@ var StandardKeyMaps = KeyMaps{
 		KeySeq{"Control+X", "Control+J"}: KeyJump,
 		KeySeq{"Control+X", "v"}:         KeySetSplit,
 		KeySeq{"Control+X", "Control+V"}: KeySetSplit,
-		KeySeq{"Control+M", "m"}:         KeyBuildProj,
-		KeySeq{"Control+M", "Control+M"}: KeyBuildProj,
-		KeySeq{"Control+M", "r"}:         KeyRunProj,
-		KeySeq{"Control+M", "Control+R"}: KeyRunProj,
+		KeySeq{"Control+M", "m"}:         KeyBuildProject,
+		KeySeq{"Control+M", "Control+M"}: KeyBuildProject,
+		KeySeq{"Control+M", "r"}:         KeyRunProject,
+		KeySeq{"Control+M", "Control+R"}: KeyRunProject,
 	}},
 	{"LinuxStandard", "Standard Linux KeySeqMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyNextPanel,
@@ -571,10 +571,10 @@ var StandardKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+J"}: KeyJump,
 		KeySeq{"Control+M", "v"}:         KeySetSplit,
 		KeySeq{"Control+M", "Control+V"}: KeySetSplit,
-		KeySeq{"Control+M", "m"}:         KeyBuildProj,
-		KeySeq{"Control+M", "Control+M"}: KeyBuildProj,
-		KeySeq{"Control+M", "r"}:         KeyRunProj,
-		KeySeq{"Control+M", "Control+R"}: KeyRunProj,
+		KeySeq{"Control+M", "m"}:         KeyBuildProject,
+		KeySeq{"Control+M", "Control+M"}: KeyBuildProject,
+		KeySeq{"Control+M", "r"}:         KeyRunProject,
+		KeySeq{"Control+M", "Control+R"}: KeyRunProject,
 	}},
 	{"WindowsStandard", "Standard Windows KeySeqMap", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyNextPanel,
@@ -614,10 +614,10 @@ var StandardKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+J"}: KeyJump,
 		KeySeq{"Control+M", "v"}:         KeySetSplit,
 		KeySeq{"Control+M", "Control+V"}: KeySetSplit,
-		KeySeq{"Control+M", "m"}:         KeyBuildProj,
-		KeySeq{"Control+M", "Control+M"}: KeyBuildProj,
-		KeySeq{"Control+M", "r"}:         KeyRunProj,
-		KeySeq{"Control+M", "Control+R"}: KeyRunProj,
+		KeySeq{"Control+M", "m"}:         KeyBuildProject,
+		KeySeq{"Control+M", "Control+M"}: KeyBuildProject,
+		KeySeq{"Control+M", "r"}:         KeyRunProject,
+		KeySeq{"Control+M", "Control+R"}: KeyRunProject,
 	}},
 	{"ChromeStd", "Standard chrome-browser and linux-under-chrome bindings", KeySeqMap{
 		KeySeq{"Control+Tab", ""}:        KeyNextPanel,
@@ -657,9 +657,9 @@ var StandardKeyMaps = KeyMaps{
 		KeySeq{"Control+M", "Control+J"}: KeyJump,
 		KeySeq{"Control+M", "v"}:         KeySetSplit,
 		KeySeq{"Control+M", "Control+V"}: KeySetSplit,
-		KeySeq{"Control+M", "m"}:         KeyBuildProj,
-		KeySeq{"Control+M", "Control+M"}: KeyBuildProj,
-		KeySeq{"Control+M", "r"}:         KeyRunProj,
-		KeySeq{"Control+M", "Control+R"}: KeyRunProj,
+		KeySeq{"Control+M", "m"}:         KeyBuildProject,
+		KeySeq{"Control+M", "Control+M"}: KeyBuildProject,
+		KeySeq{"Control+M", "r"}:         KeyRunProject,
+		KeySeq{"Control+M", "Control+R"}: KeyRunProject,
 	}},
 }

@@ -28,8 +28,8 @@ import (
 type Code interface {
 	core.Widget
 
-	// ProjSettings returns the code.ProjSettings
-	ProjSettings() *ProjSettings
+	// ProjectSettings returns the [ProjectSettings]
+	ProjectSettings() *ProjectSettings
 
 	// FileTree returns the code.Files file tree
 	FileTree() *filetree.Tree

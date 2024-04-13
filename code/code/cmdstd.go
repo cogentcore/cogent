@@ -18,7 +18,7 @@ const (
 
 // StandardCommands is the original compiled-in set of standard commands.
 var StandardCommands = Commands{
-	{Cat: "Build", Name: "Run Proj",
+	{Cat: "Build", Name: "Run Project",
 		Desc: "run RunExec executable set in project",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "{RunExecPath}"}},
@@ -380,12 +380,12 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "SVN", Name: "Commit Proj",
+	{Cat: "SVN", Name: "Commit Project",
 		Desc: "svn commit for entire project directory",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
 			Args: []string{"commit", "-m", "{PromptString1}"}, PromptIsString: true}},
-		Dir:  "{ProjPath}",
+		Dir:  "{ProjectPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}, // promptstring1 provided during normal commit process
 
 	{Cat: "SVN", Name: "Commit Dir",
@@ -483,7 +483,7 @@ var StandardCommands = Commands{
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "core",
 			Args: []string{"changed"}}},
-		Dir:  "{ProjPath}",
+		Dir:  "{ProjectPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Core", Name: "Pull",
@@ -491,6 +491,6 @@ var StandardCommands = Commands{
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "core",
 			Args: []string{"pull"}}},
-		Dir:  "{ProjPath}",
+		Dir:  "{ProjectPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 }

@@ -58,17 +58,17 @@ func main() {
 
 			// if proj != "" {
 			// 	proj, _ = filepath.Abs(proj)
-			// 	code.OpenCodeProj(proj)
+			// 	code.OpenCodeProject(proj)
 			// } else {
 			// 	if path != "" {
 			// 		path, _ = filepath.Abs(path)
 			// 	}
-			// 	code.NewCodeProjPath(path)
+			// 	code.NewCodeProjectPath(path)
 			// }
 
 			piv.NewPiView()
 
-			// above NewCodeProj calls will have added to WinWait..
+			// above NewCodeProject calls will have added to WinWait..
 			core.WinWait.Wait()
 	*/
 }

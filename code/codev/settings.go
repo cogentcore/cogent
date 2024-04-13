@@ -35,8 +35,8 @@ func (ge *CodeView) GrabSettings() {
 // ApplySettings applies current project preference settings into places where
 // they are used -- only for those done prior to loading
 func (ge *CodeView) ApplySettings() {
-	ge.ProjFilename = ge.Settings.ProjFilename
-	ge.ProjRoot = ge.Settings.ProjRoot
+	ge.ProjectFilename = ge.Settings.ProjectFilename
+	ge.ProjectRoot = ge.Settings.ProjectRoot
 	if ge.Files != nil {
 		ge.Files.Dirs = ge.Settings.Dirs
 		ge.Files.DirsOnTop = ge.Settings.Files.DirsOnTop
@@ -65,9 +65,9 @@ func (ge *CodeView) ApplySettingsAction() {
 	ge.SetStatus("Applied prefs")
 }
 
-// EditProjSettings allows editing of project settings (settings specific to this project)
-func (ge *CodeView) EditProjSettings() { //types:add
-	sv := code.ProjSettingsView(&ge.Settings)
+// EditProjectSettings allows editing of project settings (settings specific to this project)
+func (ge *CodeView) EditProjectSettings() { //types:add
+	sv := code.ProjectSettingsView(&ge.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
 			ge.ApplySettingsAction()
@@ -120,14 +120,14 @@ func (ge *CodeView) SplitsEdit() { //types:add
 
 // LangDefaults applies default language settings based on MainLang
 func (ge *CodeView) LangDefaults() {
-	ge.Settings.RunCmds = code.CmdNames{"Build: Run Proj"}
-	ge.Settings.BuildDir = ge.Settings.ProjRoot
-	ge.Settings.BuildTarg = ge.Settings.ProjRoot
-	ge.Settings.RunExec = core.Filename(filepath.Join(string(ge.Settings.ProjRoot), ge.Nm))
+	ge.Settings.RunCmds = code.CmdNames{"Build: Run Project"}
+	ge.Settings.BuildDir = ge.Settings.ProjectRoot
+	ge.Settings.BuildTarg = ge.Settings.ProjectRoot
+	ge.Settings.RunExec = core.Filename(filepath.Join(string(ge.Settings.ProjectRoot), ge.Nm))
 	if len(ge.Settings.BuildCmds) == 0 {
 		switch ge.Settings.MainLang {
 		case fileinfo.Go:
-			ge.Settings.BuildCmds = code.CmdNames{"Go: Build Proj"}
+			ge.Settings.BuildCmds = code.CmdNames{"Go: Build Project"}
 		case fileinfo.TeX:
 			ge.Settings.BuildCmds = code.CmdNames{"LaTeX: LaTeX PDF"}
 			ge.Settings.RunCmds = code.CmdNames{"File: Open Target"}

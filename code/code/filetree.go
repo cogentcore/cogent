@@ -78,8 +78,8 @@ func (fn *FileNode) SetRunExec() {
 	}
 	ge, ok := ParentCode(fn.This())
 	if ok {
-		ge.ProjSettings().RunExec = fn.FPath
-		ge.ProjSettings().BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
+		ge.ProjectSettings().RunExec = fn.FPath
+		ge.ProjectSettings().BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
 	}
 }
 

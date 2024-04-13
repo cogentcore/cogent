@@ -20,7 +20,7 @@ import (
 type ProjSettings struct {
 
 	// filename for project (i.e, these preference)
-	ProjFile core.Filename
+	ProjectFile core.Filename
 
 	// filename for parser
 	ParserFile core.Filename
@@ -40,14 +40,14 @@ func (pf *ProjSettings) Open(filename core.Filename) error {
 	}
 	err = json.Unmarshal(b, pf)
 	if err == nil {
-		pf.ProjFile = filename
+		pf.ProjectFile = filename
 	}
 	return err
 }
 
 // Save save to  file
 func (pf *ProjSettings) Save(filename core.Filename) error {
-	pf.ProjFile = filename
+	pf.ProjectFile = filename
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
 		log.Println(err)

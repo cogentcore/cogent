@@ -94,10 +94,10 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 	core.NewSeparator(tb)
 
 	views.NewFuncButton(tb, ge.Build).SetIcon(icons.Build).
-		SetShortcut(key.Chord(code.ChordForFunction(code.KeyBuildProj).String()))
+		SetShortcut(key.Chord(code.ChordForFunction(code.KeyBuildProject).String()))
 
 	views.NewFuncButton(tb, ge.Run).SetIcon(icons.PlayArrow).
-		SetShortcut(key.Chord(code.ChordForFunction(code.KeyRunProj).String()))
+		SetShortcut(key.Chord(code.ChordForFunction(code.KeyRunProject).String()))
 
 	views.NewFuncButton(tb, ge.Debug).SetIcon(icons.Debug)
 
@@ -161,27 +161,20 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 
 	tb.AddOverflowMenu(func(m *core.Scene) {
 		core.NewButton(m).SetText("File").SetMenu(func(mm *core.Scene) {
-			views.NewFuncButton(mm, ge.NewProj).SetText("New Project").
-				SetIcon(icons.NewWindow).SetKey(keymap.New)
-
-			views.NewFuncButton(mm, ge.NewFile).SetText("New File").
-				SetIcon(icons.NewWindow)
+			views.NewFuncButton(mm, ge.NewProject).SetIcon(icons.NewWindow).SetKey(keymap.New)
+			views.NewFuncButton(mm, ge.NewFile).SetText("New File").SetIcon(icons.NewWindow)
 
 			core.NewSeparator(mm)
 
-			views.NewFuncButton(mm, ge.OpenProj).SetText("Open Project").
-				SetIcon(icons.Open)
+			views.NewFuncButton(mm, ge.OpenProject).SetIcon(icons.Open)
 
 			core.NewSeparator(mm)
 
-			views.NewFuncButton(mm, ge.EditProjSettings).SetText("Project Settings").
-				SetIcon(icons.Edit)
+			views.NewFuncButton(mm, ge.EditProjectSettings).SetText("Project Settings").SetIcon(icons.Edit)
 
-			views.NewFuncButton(mm, ge.SaveProj).SetText("Save Project").
-				SetIcon(icons.Save)
+			views.NewFuncButton(mm, ge.SaveProject).SetIcon(icons.Save)
 
-			ge.ConfigActiveFilename(views.NewFuncButton(mm, ge.SaveProjAs).
-				SetText("Save Project As").SetIcon(icons.SaveAs))
+			ge.ConfigActiveFilename(views.NewFuncButton(mm, ge.SaveProjectAs).SetIcon(icons.SaveAs))
 
 			core.NewSeparator(mm)
 

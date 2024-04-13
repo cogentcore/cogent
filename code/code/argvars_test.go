@@ -26,8 +26,8 @@ func TestBind(t *testing.T) {
 	afpath, err := filepath.Abs(fpath)
 	assert.NoError(t, err)
 
-	pp := ProjSettings{}
-	pp.ProjRoot = core.Filename(projpath)
+	pp := ProjectSettings{}
+	pp.ProjectRoot = core.Filename(projpath)
 
 	var avp ArgVarVals
 	avp.Set(fpath, &pp, &tv)
@@ -62,7 +62,7 @@ func TestBind(t *testing.T) {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)
 	}
 
-	bv = avp.Bind("{FileDirProjRel}/{FilenameNoExt}")
+	bv = avp.Bind("{FileDirProjectRel}/{FilenameNoExt}")
 	cv = filepath.Join("cogent", "code", "argvars_test")
 	if bv != cv {
 		t.Errorf("bind error: should have been: %v  was: %v\n", cv, bv)

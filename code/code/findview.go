@@ -94,7 +94,7 @@ type FindView struct {
 
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
-	return &fv.Code.ProjSettings().Find
+	return &fv.Code.ProjectSettings().Find
 }
 
 // ShowResults shows the results in the buffer

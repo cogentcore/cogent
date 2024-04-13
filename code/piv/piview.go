@@ -116,14 +116,14 @@ func (pv *PiView) NewProj() (*core.Window, *PiView) { //types:add
 // SaveProj saves project prefs to current filename, in a standard JSON-formatted file
 // also saves the current parser
 func (pv *PiView) SaveProj() { //types:add
-	if pv.Settings.ProjFile == "" {
+	if pv.Settings.ProjectFile == "" {
 		return
 	}
 	pv.SaveParser()
 	pv.GetSettings()
-	pv.Settings.SaveJSON(pv.Settings.ProjFile)
+	pv.Settings.SaveJSON(pv.Settings.ProjectFile)
 	pv.Changed = false
-	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjFile))
+	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjectFile))
 	pv.UpdateSig() // notify our editor
 }
 
@@ -136,7 +136,7 @@ func (pv *PiView) SaveProjAs(filename core.Filename) { //types:add
 	pv.GetSettings()
 	pv.Settings.SaveJSON(filename)
 	pv.Changed = false
-	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjFile))
+	pv.SetStatus(fmt.Sprintf("Project Saved to: %v", pv.Settings.ProjectFile))
 	pv.UpdateSig() // notify our editor
 }
 
@@ -1134,7 +1134,7 @@ var PiViewProperties = tree.Properties{
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
 			"updtfunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
 				pv := pvi.(*PiView)
-				act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
+				act.SetActiveState( pv.Changed && pv.Settings.ProjectFile != "")
 			}),
 		}},
 		{"sep-parse", tree.BlankProp{}},
@@ -1252,7 +1252,7 @@ var PiViewProperties = tree.Properties{
 				"desc":     "open a GoPi project that has full settings",
 				"Args": tree.Propertieslice{
 					{"File Name", tree.Properties{
-						"default-field": "Settings.ProjFile",
+						"default-field": "Settings.ProjectFile",
 						"ext":           ".parseproject",
 					}},
 				},
@@ -1268,7 +1268,7 @@ var PiViewProperties = tree.Properties{
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
 				"updtfunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
 					pv := pvi.(*PiView)
-					act.SetActiveState( pv.Changed && pv.Settings.ProjFile != "")
+					act.SetActiveState( pv.Changed && pv.Settings.ProjectFile != "")
 				}),
 			}},
 			{"SaveProjAs", tree.Properties{
@@ -1277,7 +1277,7 @@ var PiViewProperties = tree.Properties{
 				"desc":     "Save GoPi project to file standard JSON-formatted file",
 				"Args": tree.Propertieslice{
 					{"File Name", tree.Properties{
-						"default-field": "Settings.ProjFile",
+						"default-field": "Settings.ProjectFile",
 						"ext":           ".parseproject",
 					}},
 				},

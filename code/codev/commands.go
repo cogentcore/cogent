@@ -194,7 +194,7 @@ func (ge *CodeView) Run() { //types:add
 		core.MessageDialog(ge, "You need to set the RunCmds in the Project Settings", "No RunCmds Set")
 		return
 	}
-	if ge.Settings.RunCmds[0] == "Run Proj" && !ge.Settings.RunExecIsExec() {
+	if ge.Settings.RunCmds[0] == "Run Project" && !ge.Settings.RunExecIsExec() {
 		views.CallFunc(ge, ge.ChooseRunExec)
 		return
 	}
@@ -252,7 +252,7 @@ func (ge *CodeView) CommitNoChecks() {
 			ge.ArgVals["{PromptString1}"] = val
 			code.CmdNoUserPrompt = true                     // don't re-prompt!
 			ge.ExecCmdName(code.CmdName(cmdnm), true, true) // must be wait
-			ge.SaveProjIfExists(true)                       // saveall
+			ge.SaveProjectIfExists(true)                    // saveall
 			ge.UpdateFiles()
 		})
 	})

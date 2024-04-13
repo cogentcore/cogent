@@ -50,12 +50,12 @@ func main() {
 
 	if proj != "" {
 		proj, _ = filepath.Abs(proj)
-		codev.OpenCodeProj(proj)
+		codev.OpenCodeProject(proj)
 	} else {
 		if path != "" {
 			path, _ = filepath.Abs(path)
 		}
-		codev.NewCodeProjPath(path)
+		codev.NewCodeProjectPath(path)
 	}
 	core.Wait()
 }

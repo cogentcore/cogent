@@ -142,10 +142,10 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 	case code.KeySetSplit:
 		kt.SetHandled()
 		ge.CallSplitsSetView(atv)
-	case code.KeyBuildProj:
+	case code.KeyBuildProject:
 		kt.SetHandled()
 		ge.Build()
-	case code.KeyRunProj:
+	case code.KeyRunProject:
 		kt.SetHandled()
 		ge.Run()
 	}

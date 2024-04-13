@@ -128,7 +128,7 @@ func (ge *CodeView) Symbols() { //types:add
 	}
 
 	sv := tv.RecycleTabWidget("Symbols", true, code.SymbolsViewType).(*code.SymbolsView)
-	sv.ConfigSymbolsView(ge, ge.ProjSettings().Symbols)
+	sv.ConfigSymbolsView(ge, ge.ProjectSettings().Symbols)
 	sv.Update()
 	ge.FocusOnPanel(TabsIndex)
 }
