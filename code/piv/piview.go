@@ -1145,7 +1145,7 @@ var PiViewProperties = tree.Properties{
 			"Args": tree.Propertieslice{
 				{"File Name", tree.Properties{
 					"default-field": "Settings.ParserFile",
-					"ext":           ".pi",
+					"ext":           ".parse",
 				}},
 			},
 		}},
@@ -1164,7 +1164,7 @@ var PiViewProperties = tree.Properties{
 			"Args": tree.Propertieslice{
 				{"File Name", tree.Properties{
 					"default-field": "Settings.ParserFile",
-					"ext":           ".pi",
+					"ext":           ".parse",
 				}},
 			},
 		}},
@@ -1290,7 +1290,7 @@ var PiViewProperties = tree.Properties{
 				"Args": tree.Propertieslice{
 					{"File Name", tree.Properties{
 						"default-field": "Settings.ParserFile",
-						"ext":           ".pi",
+						"ext":           ".parse",
 					}},
 				},
 			}},
@@ -1308,7 +1308,7 @@ var PiViewProperties = tree.Properties{
 				"Args": tree.Propertieslice{
 					{"File Name", tree.Properties{
 						"default-field": "Settings.ParserFile",
-						"ext":           ".pi",
+						"ext":           ".parse",
 					}},
 				},
 			}},
