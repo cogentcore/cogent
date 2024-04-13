@@ -1253,7 +1253,7 @@ var PiViewProperties = tree.Properties{
 				"Args": tree.Propertieslice{
 					{"File Name", tree.Properties{
 						"default-field": "Settings.ProjFile",
-						"ext":           ".pip",
+						"ext":           ".parseproject",
 					}},
 				},
 			}},
@@ -1278,7 +1278,7 @@ var PiViewProperties = tree.Properties{
 				"Args": tree.Propertieslice{
 					{"File Name", tree.Properties{
 						"default-field": "Settings.ProjFile",
-						"ext":           ".pip",
+						"ext":           ".parseproject",
 					}},
 				},
 			}},
