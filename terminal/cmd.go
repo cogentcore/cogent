@@ -2,8 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package gear provides the generation of GUIs and interactive CLIs for any existing command line tools.
-package gear
+// Package terminal provides a terminal with support for the
+// generation of GUIs and interactive CLIs for any existing command line tools.
+package terminal
 
 import "cogentcore.org/core/strcase"
 

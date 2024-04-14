@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gear
+package terminal
 
 //go:generate core generate -add-types
 
@@ -35,7 +35,7 @@ import (
 	"github.com/robert-nix/ansihtml"
 )
 
-// App is a GUI view of a gear command.
+// App is a GUI view of a terminal command.
 type App struct {
 	core.Frame
 
@@ -251,7 +251,7 @@ func StructForFlags(flags []*Flag) any {
 		sf.Name = strings.Trim(flag.Name, "-[]")
 		sf.Name = strcase.ToCamel(sf.Name)
 
-		// TODO(kai/gear): better type determination
+		// TODO(kai/terminal): better type determination
 		if flag.Type == "bool" {
 			sf.Type = reflect.TypeOf(false)
 		} else if flag.Type == "int" {
@@ -265,7 +265,7 @@ func StructForFlags(flags []*Flag) any {
 		sf.Tag = reflect.StructTag(`desc:"` + flag.Doc + `"`)
 
 		if used[sf.Name] {
-			// TODO(kai/gear): consider better approach to unique names
+			// TODO(kai/terminal): consider better approach to unique names
 			nm := sf.Name + "1"
 			for i := 2; used[nm]; i++ {
 				nm = sf.Name + strconv.Itoa(i)
