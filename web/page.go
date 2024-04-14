@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package glide provides a web browser
-package glide
+// Package web provides a web browser.
+package web
 
 //go:generate core generate -add-types
 
@@ -15,7 +15,7 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// Page represents one web browser page
+// Page represents one web browser page.
 type Page struct {
 	core.Frame
 
