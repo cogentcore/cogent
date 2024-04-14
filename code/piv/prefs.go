@@ -12,42 +12,42 @@ import (
 	"os"
 	"path/filepath"
 
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/pi/parse"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/parse/parse"
 )
 
 // ProjSettings are the settings for saving for a project -- this IS the project file
 type ProjSettings struct {
 
 	// filename for project (i.e, these preference)
-	ProjFile gi.Filename
+	ProjectFile core.Filename
 
 	// filename for parser
-	ParserFile gi.Filename
+	ParserFile core.Filename
 
 	// the file for testing
-	TestFile gi.Filename
+	TestFile core.Filename
 
 	// the options for tracing parsing
-	TraceOpts parse.TraceOpts
+	TraceOpts parser.TraceOpts
 }
 
 // Open open from  file
-func (pf *ProjSettings) Open(filename gi.Filename) error {
+func (pf *ProjSettings) Open(filename core.Filename) error {
 	b, err := os.ReadFile(string(filename))
 	if err != nil {
 		return err
 	}
 	err = json.Unmarshal(b, pf)
 	if err == nil {
-		pf.ProjFile = filename
+		pf.ProjectFile = filename
 	}
 	return err
 }
 
 // Save save to  file
-func (pf *ProjSettings) Save(filename gi.Filename) error {
-	pf.ProjFile = filename
+func (pf *ProjSettings) Save(filename core.Filename) error {
+	pf.ProjectFile = filename
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
 		log.Println(err)
@@ -69,21 +69,21 @@ func InitSettings() {
 //   Saved Projects / Paths
 
 // SavedPaths is a slice of strings that are file paths
-var SavedPaths gi.FilePaths
+var SavedPaths core.FilePaths
 
 // SavedPathsFilename is the name of the saved file paths file in GoPi prefs directory
 var SavedPathsFilename = "gopi_saved_paths.toml"
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
-	pdir := gi.AppDataDir()
+	pdir := core.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Save(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
-	pdir := gi.AppDataDir()
+	pdir := core.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	SavedPaths.Open(pnm)
 }

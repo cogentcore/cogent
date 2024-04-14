@@ -11,30 +11,30 @@ import (
 	"image/draw"
 	"strings"
 
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
-	"cogentcore.org/core/grows/jsons"
-	"cogentcore.org/core/grr"
-	"cogentcore.org/core/gti"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keyfun"
-	"cogentcore.org/core/ki"
-	"cogentcore.org/core/laser"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/iox/jsonx"
+	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/math32"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
+	"cogentcore.org/core/views"
 )
 
 // SVGView is the element for viewing, interacting with the SVG
 type SVGView struct {
-	gi.SVG
+	core.SVG
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// view translation offset (from dragging)
-	Trans mat32.Vec2 `set:"-"`
+	Trans math32.Vector2 `set:"-"`
 
 	// view scaling (from zooming)
 	Scale float32 `set:"-"`
@@ -52,7 +52,7 @@ type SVGView struct {
 	// BgRender girl.State `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered translation
-	bgTrans mat32.Vec2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	bgTrans math32.Vector2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 
 	// bg rendered scale
 	bgScale float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
@@ -95,34 +95,34 @@ func (sv *SVGView) UpdateView(full bool) {
 func (sv *SVGView) HandleEvents() {
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
-		if gi.DebugSettings.KeyEventTrace {
+		if core.DebugSettings.KeyEventTrace {
 			fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
 		}
-		kf := keyfun.Of(kc)
+		kf := keymap.Of(kc)
 		switch kf {
-		case keyfun.Abort:
+		case keymap.Abort:
 			// todo: maybe something else
 			e.SetHandled()
 			sv.VectorView.SetTool(SelectTool)
-		case keyfun.Undo:
+		case keymap.Undo:
 			e.SetHandled()
 			sv.VectorView.Undo()
-		case keyfun.Redo:
+		case keymap.Redo:
 			e.SetHandled()
 			sv.VectorView.Redo()
-		case keyfun.Duplicate:
+		case keymap.Duplicate:
 			e.SetHandled()
 			sv.VectorView.DuplicateSelected()
-		case keyfun.Copy:
+		case keymap.Copy:
 			e.SetHandled()
 			sv.VectorView.CopySelected()
-		case keyfun.Cut:
+		case keymap.Cut:
 			e.SetHandled()
 			sv.VectorView.CutSelected()
-		case keyfun.Paste:
+		case keymap.Paste:
 			e.SetHandled()
 			sv.VectorView.PasteClip()
-		case keyfun.Delete, keyfun.Backspace:
+		case keymap.Delete, keymap.Backspace:
 			e.SetHandled()
 			sv.VectorView.DeleteSelected()
 		}
@@ -137,7 +137,7 @@ func (sv *SVGView) HandleEvents() {
 
 		es.SelectNoDrag = false
 		switch {
-		case es.HasSelected() && es.SelectBBox.ContainsPoint(mat32.V2FromPoint(e.Pos())):
+		case es.HasSelected() && es.SelectBBox.ContainsPoint(math32.Vector2FromPoint(e.Pos())):
 			// note: this absorbs potential secondary selections within selection -- handled
 			// on release below, if nothing else happened
 			es.SelectNoDrag = true
@@ -197,7 +197,7 @@ func (sv *SVGView) HandleEvents() {
 		e.SetHandled()
 		es.DragStartPos = e.StartPos()
 		if e.HasAnyModifier(key.Shift) {
-			e.ClearHandled() // base gi.SVG handles it
+			e.ClearHandled() // base core.SVG handles it
 			return
 		}
 		if es.HasSelected() {
@@ -233,7 +233,7 @@ func (sv *SVGView) HandleEvents() {
 
 /*
 func (sv *SVGView) MouseHover() {
-	sv.ConnectEvent(oswin.MouseHoverEvent, gi.RegPri, func(recv, send ki.Ki, sig int64, d any) {
+	sv.ConnectEvent(oswin.MouseHoverEvent, core.RegPri, func(recv, send tree.Node, sig int64, d any) {
 		me := d.(*mouse.HoverEvent)
 		me.SetHandled()
 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
@@ -241,84 +241,84 @@ func (sv *SVGView) MouseHover() {
 		if obj != nil {
 			pos := me.Where
 			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name())
-			gi.PopupTooltip(obj.Name(), pos.X, pos.Y, sv.ViewportSafe(), ttxt)
+			core.PopupTooltip(obj.Name(), pos.X, pos.Y, sv.ViewportSafe(), ttxt)
 		}
 	})
 }
 */
 
 // ContentsBBox returns the object-level box of the entire contents
-func (sv *SVGView) ContentsBBox() mat32.Box2 {
-	bbox := mat32.Box2{}
+func (sv *SVGView) ContentsBBox() math32.Box2 {
+	bbox := math32.Box2{}
 	bbox.SetEmpty()
-	sv.WalkPre(func(k ki.Ki) bool {
+	sv.WalkDown(func(k tree.Node) bool {
 		if k.This() == sv.This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if k.This() == sv.SSVG().Defs.This() {
-			return ki.Break
+			return tree.Break
 		}
 		sni, issv := k.(svg.Node)
 		if !issv {
-			return ki.Break
+			return tree.Break
 		}
 		if NodeIsLayer(k) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		sn := sni.AsNodeBase()
-		bb := mat32.Box2{}
+		bb := math32.Box2{}
 		bb.SetFromRect(sn.BBox)
 		bbox.ExpandByBox(bb)
 		if _, isgp := sni.(*svg.Group); isgp { // subsumes all
-			return ki.Break
+			return tree.Break
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	if bbox.IsEmpty() {
-		bbox = mat32.Box2{}
+		bbox = math32.Box2{}
 	}
 	return bbox
 }
 
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
-func (sv *SVGView) TransformAllLeaves(trans mat32.Vec2, scale mat32.Vec2, rot float32, pt mat32.Vec2) {
-	sv.WalkPre(func(k ki.Ki) bool {
+func (sv *SVGView) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
+	sv.WalkDown(func(k tree.Node) bool {
 		if k.This() == sv.This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if k.This() == sv.SSVG().Defs.This() {
-			return ki.Break
+			return tree.Break
 		}
 		sni, issv := k.(svg.Node)
 		if !issv {
-			return ki.Break
+			return tree.Break
 		}
 		if NodeIsLayer(k) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if _, isgp := sni.(*svg.Group); isgp {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		sni.ApplyDeltaTransform(sv.SSVG(), trans, scale, rot, pt)
-		return ki.Continue
+		return tree.Continue
 	})
 }
 
 // ZoomToPage sets the scale to fit the current viewbox
 func (sv *SVGView) ZoomToPage(width bool) {
-	vb := mat32.V2FromPoint(sv.Root().BBox.Size())
-	if vb == (mat32.Vec2{}) {
+	vb := math32.Vector2FromPoint(sv.Root().BBox.Size())
+	if vb == (math32.Vector2{}) {
 		return
 	}
 	bsz := sv.Root().ViewBox.Size
@@ -330,15 +330,15 @@ func (sv *SVGView) ZoomToPage(width bool) {
 	if width {
 		sv.Scale = sc.X
 	} else {
-		sv.Scale = mat32.Min(sc.X, sc.Y)
+		sv.Scale = math32.Min(sc.X, sc.Y)
 	}
 	sv.SetTransform()
 }
 
 // ZoomToContents sets the scale to fit the current contents into view
 func (sv *SVGView) ZoomToContents(width bool) {
-	vb := mat32.V2FromPoint(sv.Root().BBox.Size())
-	if vb == (mat32.Vec2{}) {
+	vb := math32.Vector2FromPoint(sv.Root().BBox.Size())
+	if vb == (math32.Vector2{}) {
 		return
 	}
 	sv.ZoomToPage(width)
@@ -353,7 +353,7 @@ func (sv *SVGView) ZoomToContents(width bool) {
 	if width {
 		sv.Scale *= sc.X
 	} else {
-		sv.Scale *= mat32.Min(sc.X, sc.Y)
+		sv.Scale *= math32.Min(sc.X, sc.Y)
 	}
 	sv.SetTransform()
 }
@@ -375,15 +375,15 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 	incr := sv.Grid * sv.Scale // our zoom factor
 	treff := trans
 	if grid_off {
-		treff.X = mat32.Floor(trans.X/incr) * incr
-		treff.Y = mat32.Floor(trans.Y/incr) * incr
+		treff.X = math32.Floor(trans.X/incr) * incr
+		treff.Y = math32.Floor(trans.Y/incr) * incr
 	}
 	bsz.SetAdd(trans.Sub(treff))
 	treff = treff.Negate()
 
 	bsz = bsz.DivScalar(sv.Scale)
 
-	sv.TransformAllLeaves(treff, mat32.V2(1, 1), 0, mat32.V2(0, 0))
+	sv.TransformAllLeaves(treff, math32.Vec2(1, 1), 0, math32.Vec2(0, 0))
 	sv.Root().ViewBox.Size = bsz
 	sv.SSVG().PhysWidth.Value = bsz.X
 	sv.SSVG().PhysHeight.Value = bsz.Y
@@ -399,12 +399,12 @@ func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
 	if delta > 1 {
 		sc += delta
 	} else {
-		sc *= (1 - mat32.Min(-delta, .5))
+		sc *= (1 - math32.Min(-delta, .5))
 	}
 
 	nsc := sv.Scale * sc
 
-	mpt := mat32.V2FromPoint(pt.Sub(sv.Root().BBox.Min))
+	mpt := math32.Vector2FromPoint(pt.Sub(sv.Root().BBox.Min))
 	lpt := mpt.DivScalar(sv.Scale).Sub(sv.Trans) // point in drawing coords
 
 	dt := lpt.Add(sv.Trans).MulScalar((nsc - sv.Scale) / nsc) // delta from zooming
@@ -416,7 +416,7 @@ func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
 
 // SetTransform sets the transform based on Trans and Scale values
 func (sv *SVGView) SetTransform() {
-	sv.SetProp("transform", fmt.Sprintf("scale(%v,%v) translate(%v,%v)", sv.Scale, sv.Scale, sv.Trans.X, sv.Trans.Y))
+	sv.SetProperty("transform", fmt.Sprintf("scale(%v,%v) translate(%v,%v)", sv.Scale, sv.Scale, sv.Trans.X, sv.Trans.Y))
 }
 
 // MetaData returns the overall metadata and grid if present.
@@ -455,34 +455,34 @@ func (sv *SVGView) SetMetaData() {
 
 	uts := strings.ToLower(sv.SSVG().PhysWidth.Unit.String())
 
-	nv.SetProp("inkscape:current-layer", es.CurLayer)
-	nv.SetProp("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
-	nv.SetProp("inkscape:cy", fmt.Sprintf("%g", sv.Trans.Y))
-	nv.SetProp("inkscape:zoom", fmt.Sprintf("%g", sv.Scale))
-	nv.SetProp("inkscape:document-units", uts)
+	nv.SetProperty("inkscape:current-layer", es.CurLayer)
+	nv.SetProperty("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
+	nv.SetProperty("inkscape:cy", fmt.Sprintf("%g", sv.Trans.Y))
+	nv.SetProperty("inkscape:zoom", fmt.Sprintf("%g", sv.Scale))
+	nv.SetProperty("inkscape:document-units", uts)
 
-	//	get rid of inkscape props we don't set
-	nv.DeleteProp("cx")
-	nv.DeleteProp("cy")
-	nv.DeleteProp("zoom")
-	nv.DeleteProp("document-units")
-	nv.DeleteProp("current-layer")
-	nv.DeleteProp("objecttolerance")
-	nv.DeleteProp("guidetolerance")
-	nv.DeleteProp("gridtolerance")
-	nv.DeleteProp("pageopacity")
-	nv.DeleteProp("borderopacity")
-	nv.DeleteProp("bordercolor")
-	nv.DeleteProp("pagecolor")
-	nv.DeleteProp("pageshadow")
-	nv.DeleteProp("pagecheckerboard")
-	nv.DeleteProp("showgrid")
+	//	get rid of inkscape properties we don't set
+	nv.DeleteProperty("cx")
+	nv.DeleteProperty("cy")
+	nv.DeleteProperty("zoom")
+	nv.DeleteProperty("document-units")
+	nv.DeleteProperty("current-layer")
+	nv.DeleteProperty("objecttolerance")
+	nv.DeleteProperty("guidetolerance")
+	nv.DeleteProperty("gridtolerance")
+	nv.DeleteProperty("pageopacity")
+	nv.DeleteProperty("borderopacity")
+	nv.DeleteProperty("bordercolor")
+	nv.DeleteProperty("pagecolor")
+	nv.DeleteProperty("pageshadow")
+	nv.DeleteProperty("pagecheckerboard")
+	nv.DeleteProperty("showgrid")
 
 	spc := fmt.Sprintf("%g", sv.Grid)
-	gr.SetProp("spacingx", spc)
-	gr.SetProp("spacingy", spc)
-	gr.SetProp("type", "xygrid")
-	gr.SetProp("units", uts)
+	gr.SetProperty("spacingx", spc)
+	gr.SetProperty("spacingy", spc)
+	gr.SetProperty("type", "xygrid")
+	gr.SetProperty("units", uts)
 }
 
 // ReadMetaData reads meta data of drawing
@@ -492,27 +492,27 @@ func (sv *SVGView) ReadMetaData() {
 	if nv == nil {
 		return
 	}
-	if cx := nv.Prop("cx"); cx != nil {
-		sv.Trans.X, _ = laser.ToFloat32(cx)
+	if cx := nv.Property("cx"); cx != nil {
+		sv.Trans.X, _ = reflectx.ToFloat32(cx)
 	}
-	if cy := nv.Prop("cy"); cy != nil {
-		sv.Trans.Y, _ = laser.ToFloat32(cy)
+	if cy := nv.Property("cy"); cy != nil {
+		sv.Trans.Y, _ = reflectx.ToFloat32(cy)
 	}
-	if zm := nv.Prop("zoom"); zm != nil {
-		sc, _ := laser.ToFloat32(zm)
+	if zm := nv.Property("zoom"); zm != nil {
+		sc, _ := reflectx.ToFloat32(zm)
 		if sc > 0 {
 			sv.Scale = sc
 		}
 	}
-	if cl := nv.Prop("current-layer"); cl != nil {
-		es.CurLayer = laser.ToString(cl)
+	if cl := nv.Property("current-layer"); cl != nil {
+		es.CurLayer = reflectx.ToString(cl)
 	}
 
 	if gr == nil {
 		return
 	}
-	if gs := gr.Prop("spacingx"); gs != nil {
-		gv, _ := laser.ToFloat32(gs)
+	if gs := gr.Property("spacingx"); gs != nil {
+		gv, _ := reflectx.ToFloat32(gs)
 		if gv > 0 {
 			sv.Grid = gv
 		}
@@ -523,25 +523,25 @@ func (sv *SVGView) ReadMetaData() {
 //  ContextMenu / Actions
 
 // EditNode opens a structview editor on node
-func (sv *SVGView) EditNode(kn ki.Ki) {
-	giv.StructViewDialog(sv, kn, "SVG Element View", true)
+func (sv *SVGView) EditNode(kn tree.Node) {
+	views.StructViewDialog(sv, kn, "SVG Element View", true)
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
-func (sv *SVGView) MakeNodeContextMenu(m *gi.Scene, kn ki.Ki) {
-	gi.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
+func (sv *SVGView) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
+	core.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 		sv.EditNode(kn)
 	})
-	gi.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
+	core.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
 		sv.VectorView.SelectNodeInTree(kn, events.SelectOne)
 	})
 
-	gi.NewSeparator(m)
+	core.NewSeparator(m)
 
-	giv.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keyfun.Duplicate)
-	giv.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keyfun.Copy)
-	giv.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keyfun.Cut)
-	giv.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keyfun.Paste)
+	views.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	views.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	views.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	views.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position
@@ -566,7 +566,7 @@ func (sv *SVGView) UndoSave(action, data string) {
 	}
 	es.Changed = true
 	b := &bytes.Buffer{}
-	grr.Log(jsons.Write(sv.Root(), b))
+	errors.Log(jsonx.Write(sv.Root(), b))
 	bs := strings.Split(b.String(), "\n")
 	es.UndoMgr.Save(action, data, bs)
 }
@@ -575,7 +575,7 @@ func (sv *SVGView) UndoSave(action, data string) {
 func (sv *SVGView) UndoSaveReplace(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
-	grr.Log(jsons.Write(sv.Root(), b))
+	errors.Log(jsonx.Write(sv.Root(), b))
 	bs := strings.Split(b.String(), "\n")
 	es.UndoMgr.SaveReplace(action, data, bs)
 }
@@ -586,7 +586,7 @@ func (sv *SVGView) Undo() string {
 	es.ResetSelected()
 	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
-		grr.Log(jsons.Write(sv.Root(), b))
+		errors.Log(jsonx.Write(sv.Root(), b))
 		bs := strings.Split(b.String(), "\n")
 		es.UndoMgr.SaveUndoStart(bs)
 	}
@@ -596,7 +596,7 @@ func (sv *SVGView) Undo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	grr.Log(jsons.Read(sv.Root(), b))
+	errors.Log(jsonx.Read(sv.Root(), b))
 	sv.UpdateSelect()
 	return act
 }
@@ -611,7 +611,7 @@ func (sv *SVGView) Redo() string {
 	}
 	sb := strings.Join(state, "\n")
 	b := bytes.NewBufferString(sb)
-	grr.Log(jsons.Read(sv.Root(), b))
+	errors.Log(jsonx.Read(sv.Root(), b))
 	sv.UpdateSelect()
 	return act
 }
@@ -635,14 +635,14 @@ func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 
 // DepthMap returns a map of all nodes and their associated depth count
 // counting up from 0 as the deepest, first drawn node.
-func (sv *SVGView) DepthMap() map[ki.Ki]int {
-	m := make(map[ki.Ki]int)
+func (sv *SVGView) DepthMap() map[tree.Node]int {
+	m := make(map[tree.Node]int)
 	depth := 0
-	n := ki.Next(sv.This())
+	n := tree.Next(sv.This())
 	for n != nil {
 		m[n] = depth
 		depth++
-		n = ki.Next(n)
+		n = tree.Next(n)
 	}
 	return m
 }
@@ -659,9 +659,9 @@ func (sv *SVGView) SetSVGName(el svg.Node) {
 
 // NewEl makes a new SVG element, giving it a new unique name.
 // Uses currently active layer if set.
-func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
+func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 	es := sv.EditState()
-	parent := ki.Ki(sv.Root())
+	parent := tree.Node(sv.Root())
 	if es.CurLayer != "" {
 		ly := sv.ChildByName(es.CurLayer, 1)
 		if ly != nil {
@@ -671,17 +671,17 @@ func (sv *SVGView) NewEl(typ *gti.Type) svg.Node {
 	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
 	nw := parent.NewChild(typ, nwnm).(svg.Node)
 	sv.SetSVGName(nw)
-	sv.VectorView.PaintView().SetProps(nw)
+	sv.VectorView.PaintView().SetProperties(nw)
 	sv.VectorView.UpdateTreeView()
 	return nw
 }
 
 // NewElDrag makes a new SVG element during the drag operation
-func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
+func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 	minsz := float32(10)
 	es := sv.EditState()
-	dv := mat32.V2FromPoint(end.Sub(start))
-	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+	dv := math32.Vector2FromPoint(end.Sub(start))
+	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
 		return nil
 	}
 	// win := sv.VectorView.ParentWindow()
@@ -690,11 +690,11 @@ func (sv *SVGView) NewElDrag(typ *gti.Type, start, end image.Point) svg.Node {
 	// sv.SetFullReRender()
 	nr := sv.NewEl(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	pos := mat32.V2FromPoint(start).Sub(svoff)
-	nr.SetNodePos(xfi.MulVec2AsPoint(pos))
-	sz := dv.Abs().Max(mat32.V2Scalar(minsz / 2))
-	nr.SetNodeSize(xfi.MulVec2AsVec(sz))
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	pos := math32.Vector2FromPoint(start).Sub(svoff)
+	nr.SetNodePos(xfi.MulVector2AsPoint(pos))
+	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
+	nr.SetNodeSize(xfi.MulVector2AsVector(sz))
 	es.SelectAction(nr, events.SelectOne, end)
 	sv.ManipDone()
 	sv.NeedsRender()
@@ -714,16 +714,16 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	tspan.Text = "Text"
 	tspan.Width = 200
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	pos := mat32.V2FromPoint(start).Sub(svoff)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	pos := math32.Vector2FromPoint(start).Sub(svoff)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
-	pos = xfi.MulVec2AsPoint(pos)
-	sv.VectorView.SetTextPropsNode(nr, es.Text.TextProps())
+	pos = xfi.MulVector2AsPoint(pos)
+	sv.VectorView.SetTextPropertiesNode(nr, es.Text.TextProperties())
 	// nr.Pos = pos
 	// tspan.Pos = pos
-	// // dv := mat32.V2FromPoint(end.Sub(start))
-	// // sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
+	// // dv := math32.Vector2FromPoint(end.Sub(start))
+	// // sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
 	// nr.Width = 100
 	// tspan.Width = 100
 	es.SelectAction(nr, events.SelectOne, end)
@@ -736,8 +736,8 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	minsz := float32(10)
 	es := sv.EditState()
-	dv := mat32.V2FromPoint(end.Sub(start))
-	if !es.InAction() && mat32.Abs(dv.X) < minsz && mat32.Abs(dv.Y) < minsz {
+	dv := math32.Vector2FromPoint(end.Sub(start))
+	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
 		return nil
 	}
 	// win := sv.VectorView.ParentWindow()
@@ -745,12 +745,12 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 	// sv.SetFullReRender()
 	nr := sv.NewEl(svg.PathType).(*svg.Path)
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	pos := mat32.V2FromPoint(start).Sub(svoff)
-	pos = xfi.MulVec2AsPoint(pos)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	pos := math32.Vector2FromPoint(start).Sub(svoff)
+	pos = xfi.MulVector2AsPoint(pos)
 	sz := dv
-	// sz := dv.Abs().Max(mat32.NewVec2Scalar(minsz / 2))
-	sz = xfi.MulVec2AsVec(sz)
+	// sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
+	sz = xfi.MulVector2AsVector(sz)
 
 	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 

@@ -8,16 +8,16 @@ import (
 	"fmt"
 	"image"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/ki"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
-func (vv *VectorView) NodeToolbar() *gi.Toolbar {
+func (vv *VectorView) NodeToolbar() *core.Toolbar {
 	tbs := vv.ModalToolbarStack()
-	tb := tbs.ChildByName("node-tb", 0).(*gi.Toolbar)
+	tb := tbs.ChildByName("node-tb", 0).(*core.Toolbar)
 	return tb
 }
 
@@ -28,33 +28,33 @@ func (vv *VectorView) ConfigNodeToolbar() {
 		return
 	}
 
-	grs := gi.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Settings.SnapNodes).
+	grs := core.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Settings.SnapNodes).
 		SetTooltip("snap movement and sizing of nodes, using overall snap settings")
 	grs.OnChange(func(e events.Event) {
 		Settings.SnapNodes = grs.IsChecked()
 	})
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	// tb.AddAction(gi.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
-	// 	gv.This(), func(recv, send ki.Ki, sig int64, data interface{}) {
+	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
+	// 	gv.This(), func(recv, send tree.Node, sig int64, data interface{}) {
 	// 		grr := recv.Embed(KiT_VectorView).(*VectorView)
 	// 		grr.SelGroup()
 	// 	})
 	//
-	// gi.NewSeparator(tb, "sep-group")
+	// core.NewSeparator(tb, "sep-group")
 
-	gi.NewLabel(tb).SetText("X: ")
+	core.NewLabel(tb).SetText("X: ")
 
-	px := gi.NewSpinner(tb, "posx").SetStep(1).SetValue(0).
+	px := core.NewSpinner(tb, "posx").SetStep(1).SetValue(0).
 		SetTooltip("horizontal coordinate of node, in document units")
 	px.OnChange(func(e events.Event) {
 		vv.NodeSetXPos(px.Value)
 	})
 
-	gi.NewLabel(tb).SetText("Y: ")
+	core.NewLabel(tb).SetText("Y: ")
 
-	py := gi.NewSpinner(tb, "posy").SetStep(1).SetValue(0).
+	py := core.NewSpinner(tb, "posy").SetStep(1).SetValue(0).
 		SetTooltip("vertical coordinate of node, in document units")
 	py.OnChange(func(e events.Event) {
 		vv.NodeSetYPos(py.Value)
@@ -63,7 +63,7 @@ func (vv *VectorView) ConfigNodeToolbar() {
 }
 
 // NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
-func (vv *VectorView) NodeEnableFunc(act *gi.Button) {
+func (vv *VectorView) NodeEnableFunc(act *core.Button) {
 	// es := &gv.EditState
 	// act.SetInactiveState(!es.HasNodeed())
 }
@@ -75,9 +75,9 @@ func (vv *VectorView) UpdateNodeToolbar() {
 	if es.Tool != NodeTool {
 		return
 	}
-	px := tb.ChildByName("posx", 8).(*gi.Spinner)
+	px := tb.ChildByName("posx", 8).(*core.Spinner)
 	px.SetValue(es.DragSelectCurrentBBox.Min.X)
-	py := tb.ChildByName("posy", 9).(*gi.Spinner)
+	py := tb.ChildByName("posy", 9).(*core.Spinner)
 	py.SetValue(es.DragSelectCurrentBBox.Min.Y)
 }
 
@@ -128,30 +128,30 @@ type PathNode struct {
 	PtIndex int
 
 	// local coords abs previous current point that is starting point for this command
-	PCp mat32.Vec2
+	PCp math32.Vector2
 
 	// local coords abs current point
-	Cp mat32.Vec2
+	Cp math32.Vector2
 
 	// main point coords in window (dot) coords
-	WinPt mat32.Vec2
+	WinPt math32.Vector2
 
 	// control point coords in window (dot) coords (nil until manipulated)
-	WinCtrls []mat32.Vec2
+	WinCtrls []math32.Vector2
 }
 
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
 func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pxf := path.ParTransform(true) // include self
 
 	lstCmdIndex := 0
 	lstCmd := svg.PcErr
 	nc := make([]*PathNode, 0)
 	cidxs := make([]int, 0)
-	var pcp mat32.Vec2
-	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIndex int, cp mat32.Vec2, ctrl []mat32.Vec2) bool {
-		cw := pxf.MulVec2AsPoint(cp).Add(svoff)
+	var pcp math32.Vector2
+	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIndex int, cp math32.Vector2, ctrl []math32.Vector2) bool {
+		cw := pxf.MulVector2AsPoint(cp).Add(svoff)
 
 		if ptIndex == 0 {
 			lstCmdIndex = idx - 1
@@ -161,7 +161,7 @@ func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 		nc = append(nc, pn)
 		pcp = cp
 		lstCmd = cmd
-		return ki.Continue
+		return tree.Continue
 	})
 	return nc, cidxs
 }
@@ -183,7 +183,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send tree.Node, sig int64, d any) {
 		// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
 		// 	})
@@ -242,13 +242,13 @@ func (sv *SVGView) NodeSpriteEvent(idx int, et events.Type, d any) {
 // and all following points up to cmd = z or m are moved in the opposite
 // direction to compensate, so only the one point is moved in effect.
 // svoff is the window starting vector coordinate for view.
-func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv mat32.Vec2, svoff mat32.Vec2) {
+func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv math32.Vector2, svoff math32.Vector2) {
 	for i := pidx; i < len(pts); i++ {
 		pn := pts[i]
-		wbmin := mat32.V2FromPoint(path.BBox.Min)
+		wbmin := math32.Vector2FromPoint(path.BBox.Min)
 		pt := wbmin.Sub(svoff)
-		xf, lpt := path.DeltaTransform(dv, mat32.V2(1, 1), 0, pt, true) // include self
-		npt := xf.MulVec2AsPointCenter(pn.Cp, lpt)                      // transform point to new abs coords
+		xf, lpt := path.DeltaTransform(dv, math32.Vec2(1, 1), 0, pt, true) // include self
+		npt := xf.MulVector2AsPointCenter(pn.Cp, lpt)                      // transform point to new abs coords
 		sv.PathNodeSetPoint(path, pn, npt)
 		if i == pidx {
 			dv = dv.MulScalar(-1)
@@ -263,7 +263,7 @@ func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int
 // PathNodeSetPoint sets data point for path node to given new point value
 // which is in *absolute* (but local) coordinates -- translates into
 // relative coordinates as needed.
-func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt mat32.Vec2) {
+func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt math32.Vector2) {
 	if pn.Index == 1 || !svg.PathCmdIsRel(pn.Cmd) { // abs
 		switch pn.Cmd {
 		case svg.PcH:
@@ -289,20 +289,20 @@ func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt mat32.Vec2
 
 /*
 // SpriteNodeDrag processes a mouse node drag event on a path node sprite
-func (sv *SVGView) SpriteNodeDrag(idx int, win *gi.Window, me *mouse.DragEvent) {
+func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("NodeAdj", es.ActivePath.Nm)
 		sv.GatherAlignPoints()
 	}
 
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pn := es.PathNodes[idx]
 
 	InactivateSprites(win, SpAlignMatch)
 
-	spt := mat32.V2FromPoint(es.DragStartPos)
-	mpt := mat32.V2FromPoint(me.Where)
+	spt := math32.Vector2FromPoint(es.DragStartPos)
+	mpt := math32.Vector2FromPoint(me.Where)
 
 	if me.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
@@ -313,7 +313,7 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *gi.Window, me *mouse.DragEvent) 
 
 	es.DragCurPos = mpt.ToPoint()
 	mdel := es.DragCurPos.Sub(es.DragStartPos)
-	dv := mat32.V2FromPoint(mdel)
+	dv := math32.Vector2FromPoint(mdel)
 
 	nwc := pn.WinPt.Add(dv) // new window coord
 	sv.PathNodeSetOnePoint(es.ActivePath, es.PathNodes, idx, dv, svoff)

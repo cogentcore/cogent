@@ -9,16 +9,16 @@ import (
 	"sort"
 	"strings"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
-	"cogentcore.org/core/pi/lex"
-	"cogentcore.org/core/pi/syms"
-	"cogentcore.org/core/pi/token"
+	"cogentcore.org/core/parse/lexer"
+	"cogentcore.org/core/parse/syms"
+	"cogentcore.org/core/parse/token"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // SymbolsParams are parameters for structure view of file or package
@@ -30,7 +30,7 @@ type SymbolsParams struct {
 
 // SymbolsView is a widget that displays results of a file or package parse
 type SymbolsView struct {
-	gi.Layout
+	core.Layout
 
 	// parent code project
 	Code Code `json:"-" xml:"-"`
@@ -47,7 +47,7 @@ type SymbolsView struct {
 
 // Params returns the symbols params
 func (sv *SymbolsView) Params() *SymbolsParams {
-	return &sv.Code.ProjSettings().Symbols
+	return &sv.Code.ProjectSettings().Symbols
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -64,8 +64,8 @@ func (sv *SymbolsView) ConfigSymbolsView(ge Code, sp SymbolsParams) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	gi.NewToolbar(sv, "sym-toolbar")
-	svfr := gi.NewFrame(sv, "sym-frame")
+	core.NewToolbar(sv, "sym-toolbar")
+	svfr := core.NewFrame(sv, "sym-frame")
 	svfr.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 		s.Overflow.Set(styles.OverflowAuto)
@@ -77,23 +77,23 @@ func (sv *SymbolsView) ConfigSymbolsView(ge Code, sp SymbolsParams) {
 }
 
 // Toolbar returns the symbols toolbar
-func (sv *SymbolsView) Toolbar() *gi.Toolbar {
-	return sv.ChildByName("sym-toolbar", 0).(*gi.Toolbar)
+func (sv *SymbolsView) Toolbar() *core.Toolbar {
+	return sv.ChildByName("sym-toolbar", 0).(*core.Toolbar)
 }
 
 // Toolbar returns the spell toolbar
-func (sv *SymbolsView) Frame() *gi.Frame {
-	return sv.ChildByName("sym-frame", 0).(*gi.Frame)
+func (sv *SymbolsView) Frame() *core.Frame {
+	return sv.ChildByName("sym-frame", 0).(*core.Frame)
 }
 
 // ScopeChooser returns the scope Chooser
-func (sv *SymbolsView) ScopeChooser() *gi.Chooser {
-	return sv.Toolbar().ChildByName("scope-chooser", 5).(*gi.Chooser)
+func (sv *SymbolsView) ScopeChooser() *core.Chooser {
+	return sv.Toolbar().ChildByName("scope-chooser", 5).(*core.Chooser)
 }
 
 // SearchText returns the unknown word textfield from toolbar
-func (sv *SymbolsView) SearchText() *gi.TextField {
-	return sv.Toolbar().ChildByName("search-str", 1).(*gi.TextField)
+func (sv *SymbolsView) SearchText() *core.TextField {
+	return sv.Toolbar().ChildByName("search-str", 1).(*core.TextField)
 }
 
 // ConfigToolbar adds toolbar.
@@ -103,15 +103,15 @@ func (sv *SymbolsView) ConfigToolbar() {
 		return
 	}
 
-	gi.NewButton(tb).SetText("Refresh").SetIcon(icons.Update).
+	core.NewButton(tb).SetText("Refresh").SetIcon(icons.Update).
 		SetTooltip("refresh symbols for current file and scope").
 		OnClick(func(e events.Event) {
 			sv.RefreshAction()
 		})
 
-	sl := gi.NewLabel(tb).SetText("Scope:").SetTooltip("scope symbols to:")
+	sl := core.NewLabel(tb).SetText("Scope:").SetTooltip("scope symbols to:")
 
-	ch := gi.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope)
+	ch := core.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope)
 	ch.SetTooltip(sl.Tooltip)
 	ch.OnChange(func(e events.Event) {
 		sv.Params().Scope = ch.CurrentItem.Value.(SymScopes)
@@ -120,10 +120,10 @@ func (sv *SymbolsView) ConfigToolbar() {
 	})
 	ch.SetCurrentValue(sv.Params().Scope)
 
-	gi.NewLabel(tb).SetText("Search:").
+	core.NewLabel(tb).SetText("Search:").
 		SetTooltip("narrow symbols list to symbols containing text you enter here")
 
-	tf := gi.NewTextField(tb, "search-str")
+	tf := core.NewTextField(tb, "search-str")
 	tf.SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
 	tf.OnChange(func(e events.Event) {
 		sv.Match = tf.Text()
@@ -178,7 +178,7 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
-		tv, ok = ge.OpenFileAtRegion(gi.Filename(ssym.Filename), tr)
+		tv, ok = ge.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
 		if !ok {
 			log.Printf("CodeView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
@@ -198,12 +198,12 @@ func SelectSymbol(ge Code, ssym syms.Symbol) {
 func (sv *SymbolsView) OpenPackage() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 		return
 	}
-	pfs := tv.Buffer.PiState.Done()
+	pfs := tv.Buffer.ParseState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
-		gi.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
+		core.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
@@ -214,12 +214,12 @@ func (sv *SymbolsView) OpenPackage() {
 func (sv *SymbolsView) OpenFile() {
 	ge := sv.Code
 	tv := ge.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 		return
 	}
-	pfs := tv.Buffer.PiState.Done()
+	pfs := tv.Buffer.ParseState.Done()
 	if len(pfs.ParseState.Scopes) == 0 {
-		gi.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
+		core.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
@@ -244,7 +244,7 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 	gvars := []syms.Symbol{} // collect and list global vars first
 	funcs := []syms.Symbol{} // collect and add functions (no receiver) to end
 
-	ignoreCase := !lex.HasUpperCase(match)
+	ignoreCase := !lexer.HasUpperCase(match)
 
 	sls := pkg.Children.Slice(true)
 	for _, sy := range sls {
@@ -319,7 +319,7 @@ const (
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
 type SymNode struct {
-	ki.Node
+	tree.NodeBase
 
 	// the symbol
 	Symbol syms.Symbol
@@ -350,7 +350,7 @@ func (sy *SymNode) GetIcon() icons.Icon {
 
 // SymTreeView is a TreeView that knows how to operate on FileNode nodes
 type SymTreeView struct {
-	giv.TreeView
+	views.TreeView
 }
 
 // SymNode returns the SrcNode as a *code* SymNode

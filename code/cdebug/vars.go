@@ -9,15 +9,15 @@ import (
 	"sort"
 	"strings"
 
-	"cogentcore.org/core/glop/indent"
-	"cogentcore.org/core/ki"
-	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/gox/indent"
+	"cogentcore.org/core/parse/syms"
+	"cogentcore.org/core/tree"
 )
 
-// Variable describes a variable.  It is a Ki tree type so that full tree
+// Variable describes a variable.  It is a tree type so that full tree
 // can be visualized.
 type Variable struct {
-	ki.Node
+	tree.NodeBase
 
 	// value of variable -- may be truncated if long
 	Value string `inactive:"-" width:"60"`
@@ -69,7 +69,7 @@ func SortVars(vrs []*Variable) {
 	})
 }
 
-// Label satisfies the gi.Labeler interface for showing name = value
+// Label satisfies the core.Labeler interface for showing name = value
 func (vr *Variable) Label() string {
 	val := vr.Value
 	sz := len(vr.Value)
@@ -211,7 +211,7 @@ type VarParams struct {
 }
 
 // Params are overall debugger parameters
-type Params struct { //gti:add
+type Params struct { //types:add
 
 	// mode for running the debugger
 	Mode Modes `xml:"-" toml:"-" json:"-" view:"-"`

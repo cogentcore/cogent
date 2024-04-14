@@ -13,13 +13,13 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/goosi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/system"
 )
 
 // Preferences is the overall Vector preferences
-type Preferences struct { //gti:add
+type Preferences struct { //types:add
 
 	// default physical size, when app is started without opening a file
 	Size PhysSize
@@ -97,7 +97,7 @@ func (pf *Preferences) Defaults() {
 	pf.SnapVector = true
 	pf.SnapGuide = true
 	pf.SnapNodes = true
-	home := gi.SystemSettings.User.HomeDir
+	home := core.SystemSettings.User.HomeDir
 	pf.EnvVars = map[string]string{
 		"PATH": home + "/bin:" + home + "/go/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/shbin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
 	}
@@ -112,18 +112,18 @@ var Settings = Preferences{}
 
 // InitSettings must be called at startup in mainrun()
 func InitSettings() {
-	gi.TheApp.SetName("Cogent Vector")
+	core.TheApp.SetName("Cogent Vector")
 	Settings.Defaults()
 	Settings.Open()
 	// OpenPaths() // todo
 }
 
-// SettingsFileName is the name of the preferences file in GoGi prefs directory
+// SettingsFileName is the name of the preferences file in app settings directory
 var SettingsFileName = "grid_prefs.json"
 
-// Open preferences from GoGi standard prefs directory, and applies them
+// Open preferences from app standard prefs directory, and applies them
 func (pf *Preferences) Open() error {
-	pdir := goosi.TheApp.AppDataDir()
+	pdir := system.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := ioutil.ReadFile(pnm)
 	if err != nil {
@@ -136,9 +136,9 @@ func (pf *Preferences) Open() error {
 	return err
 }
 
-// Save Preferences to GoGi standard prefs directory
+// Save Preferences to app standard prefs directory
 func (pf *Preferences) Save() error {
-	pdir := goosi.TheApp.AppDataDir()
+	pdir := system.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
@@ -196,71 +196,71 @@ func (pf *Preferences) UpdateAll() {
 	// gist.RebuildDefaultStyles = true
 	// color.ColorSpecCache = nil
 	// gist.StyleTemplates = nil
-	// for _, w := range gi.AllWindows {  // no need and just messes stuff up!
+	// for _, w := range core.AllWindows {  // no need and just messes stuff up!
 	// 	w.SetSize(w.OSWin.Size())
 	// }
 	// // needs another pass through to get it right..
-	// for _, w := range gi.AllWindows {
+	// for _, w := range core.AllWindows {
 	// 	w.FullReRender()
 	// }
 	// gist.RebuildDefaultStyles = false
 	// // and another without rebuilding?  yep all are required
-	// for _, w := range gi.AllWindows {
+	// for _, w := range core.AllWindows {
 	// 	w.FullReRender()
 	// }
 }
 
 /*
-// PreferencesProps define the Toolbar and MenuBar for StructView, e.g., giv.SettingsView
-var PreferencesProps = ki.Props{
-	"MainMenu": ki.PropSlice{
-		{"AppMenu", ki.BlankProp{}},
-		{"File", ki.PropSlice{
-			{"Open", ki.Props{
+// PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., views.SettingsView
+var PreferencesProperties = tree.Properties{
+	"MainMenu": tree.Propertieslice{
+		{"AppMenu", tree.BlankProp{}},
+		{"File", tree.Propertieslice{
+			{"Open", tree.Properties{
 				"shortcut": "Command+O",
 			}},
-			{"Save", ki.Props{
+			{"Save", tree.Properties{
 				"shortcut": "Command+S",
-				"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
+				"updtfunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
 				}),
 			}},
-			{"sep-color", ki.BlankProp{}},
-			{"LightMode", ki.Props{}},
-			{"DarkMode", ki.Props{}},
-			{"sep-close", ki.BlankProp{}},
-			{"Close Window", ki.BlankProp{}},
+			{"sep-color", tree.BlankProp{}},
+			{"LightMode", tree.Properties{}},
+			{"DarkMode", tree.Properties{}},
+			{"sep-close", tree.BlankProp{}},
+			{"Close Window", tree.BlankProp{}},
 		}},
 		{"Edit", "Copy Cut Paste"},
 		{"Window", "Windows"},
 	},
-	"Toolbar": ki.PropSlice{
-		{"Save", ki.Props{
+	"Toolbar": tree.Propertieslice{
+		{"Save", tree.Properties{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updtfunc": giv.ActionUpdateFunc(func(pfi any, act *gi.Button) {
+			"updtfunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdate(pf.Changed)
 			}),
 		}},
-		{"sep-color", ki.BlankProp{}},
-		{"LightMode", ki.Props{
+		{"sep-color", tree.BlankProp{}},
+		{"LightMode", tree.Properties{
 			"desc": "Set color mode to Light mode as defined in ColorSchemes -- automatically does Save and UpdateAll ",
 			"icon": "color",
 		}},
-		{"DarkMode", ki.Props{
+		{"DarkMode", tree.Properties{
 			"desc": "Set color mode to Dark mode as defined in ColorSchemes -- automatically does Save and UpdateAll",
 			"icon": "color",
 		}},
-		{"sep-misc", ki.BlankProp{}},
-		{"VersionInfo", ki.Props{
+		{"sep-misc", tree.BlankProp{}},
+		{"VersionInfo", tree.Properties{
 			"desc":        "shows current Vector version information",
 			"icon":        "info",
 			"show-return": true,
 		}},
-		{"sep-key", ki.BlankProp{}},
-		{"EditSplits", ki.Props{
+		{"sep-key", tree.BlankProp{}},
+		{"EditSplits", tree.Properties{
 			"icon": "file-binary",
 			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with preferences automatically.",
 		}},
@@ -272,7 +272,7 @@ var PreferencesProps = ki.Props{
 //   ColorSettings
 
 // ColorSettings for
-type ColorSettings struct { //gti:add
+type ColorSettings struct { //types:add
 
 	// drawing background color
 	Background color.Color
@@ -308,10 +308,10 @@ func DefaultColorSchemes() map[string]*ColorSettings {
 }
 
 // OpenJSON opens colors from a JSON-formatted file.
-func (pf *ColorSettings) OpenJSON(filename gi.Filename) error {
+func (pf *ColorSettings) OpenJSON(filename core.Filename) error {
 	b, err := ioutil.ReadFile(string(filename))
 	if err != nil {
-		gi.ErrorDialog(nil, err, "File Not Found")
+		core.ErrorDialog(nil, err, "File Not Found")
 		log.Println(err)
 		return err
 	}
@@ -319,7 +319,7 @@ func (pf *ColorSettings) OpenJSON(filename gi.Filename) error {
 }
 
 // SaveJSON saves colors to a JSON-formatted file.
-func (pf *ColorSettings) SaveJSON(filename gi.Filename) error {
+func (pf *ColorSettings) SaveJSON(filename core.Filename) error {
 	b, err := json.MarshalIndent(pf, "", "  ")
 	if err != nil {
 		log.Println(err) // unlikely
@@ -327,7 +327,7 @@ func (pf *ColorSettings) SaveJSON(filename gi.Filename) error {
 	}
 	err = ioutil.WriteFile(string(filename), b, 0644)
 	if err != nil {
-		gi.ErrorDialog(nil, err, "Could not Save to File")
+		core.ErrorDialog(nil, err, "Could not Save to File")
 		log.Println(err)
 	}
 	return err
@@ -341,30 +341,30 @@ func (pf *ColorSettings) SetToSettings() {
 }
 
 /*
-// ColorSettingsProps defines the Toolbar
-var ColorSettingsProps = ki.Props{
-	"Toolbar": ki.PropSlice{
-		{"OpenJSON", ki.Props{
+// ColorSettingsProperties defines the Toolbar
+var ColorSettingsProperties = tree.Properties{
+	"Toolbar": tree.Propertieslice{
+		{"OpenJSON", tree.Properties{
 			"label": "Open...",
 			"icon":  "file-open",
 			"desc":  "open set of colors from a json-formatted file",
-			"Args": ki.PropSlice{
-				{"Color File Name", ki.Props{
+			"Args": tree.Propertieslice{
+				{"Color File Name", tree.Properties{
 					"ext": ".json",
 				}},
 			},
 		}},
-		{"SaveJSON", ki.Props{
+		{"SaveJSON", tree.Properties{
 			"label": "Save As...",
 			"desc":  "Saves colors to JSON formatted file.",
 			"icon":  "file-save",
-			"Args": ki.PropSlice{
-				{"Color File Name", ki.Props{
+			"Args": tree.Propertieslice{
+				{"Color File Name", tree.Properties{
 					"ext": ".json",
 				}},
 			},
 		}},
-		{"SetToSettings", ki.Props{
+		{"SetToSettings", tree.Properties{
 			"desc": "Sets this color scheme as the current active color scheme in Settings.",
 			"icon": "reset",
 		}},

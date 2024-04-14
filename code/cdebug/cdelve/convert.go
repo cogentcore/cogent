@@ -11,9 +11,9 @@ import (
 	"unicode"
 
 	"cogentcore.org/cogent/code/cdebug"
-	"cogentcore.org/core/glop/dirs"
-	"cogentcore.org/core/pi/lex"
-	"cogentcore.org/core/pi/syms"
+	"cogentcore.org/core/gox/dirs"
+	"cogentcore.org/core/parse/lexer"
+	"cogentcore.org/core/parse/syms"
 	"github.com/go-delve/delve/service/api"
 )
 
@@ -178,7 +178,7 @@ func ShortType(typ string) string {
 	if si < 0 {
 		return typ
 	}
-	tnm := lex.TrimLeftToAlpha(typ)
+	tnm := lexer.TrimLeftToAlpha(typ)
 	tsi := strings.Index(typ, tnm)
 	fdir, fnm := filepath.Split(tnm)
 	fdd := filepath.Base(fdir)

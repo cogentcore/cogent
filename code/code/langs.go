@@ -8,13 +8,13 @@ import (
 	"log"
 	"path/filepath"
 
-	"cogentcore.org/core/fi"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/grows/tomls"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/fileinfo"
+	"cogentcore.org/core/iox/tomlx"
 )
 
 // LangOpts defines options associated with a given language / file format
-// only languages in fi.Known list are supported..
+// only languages in fileinfo.Known list are supported..
 type LangOpts struct {
 
 	// command(s) to run after a file of this type is saved
@@ -22,7 +22,7 @@ type LangOpts struct {
 }
 
 // Langs is a map of language options
-type Langs map[fi.Known]*LangOpts
+type Langs map[fileinfo.Known]*LangOpts
 
 // AvailableLangs is the current set of language options -- can be
 // loaded / saved / edited with settings.  This is set to StandardLangs at
@@ -53,32 +53,32 @@ func (lt Langs) Validate() bool {
 var LangSettingsFilename = "lang-settings.toml"
 
 // Open opens languages from a toml-formatted file.
-func (lt *Langs) Open(filename gi.Filename) error {
+func (lt *Langs) Open(filename core.Filename) error {
 	*lt = make(Langs) // reset
-	return tomls.Open(lt, string(filename))
+	return tomlx.Open(lt, string(filename))
 }
 
 // Save saves languages to a toml-formatted file.
-func (lt *Langs) Save(filename gi.Filename) error { //gti:add
-	return tomls.Save(lt, string(filename))
+func (lt *Langs) Save(filename core.Filename) error { //types:add
+	return tomlx.Save(lt, string(filename))
 }
 
 // OpenSettings opens the Langs from the app settings directory,
 // using LangSettingsFilename.
-func (lt *Langs) OpenSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+func (lt *Langs) OpenSettings() error { //types:add
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
-	return lt.Open(gi.Filename(pnm))
+	return lt.Open(core.Filename(pnm))
 }
 
 // SaveSettings saves the Langs to the app settings directory,
 // using LangSettingsFilename.
-func (lt *Langs) SaveSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+func (lt *Langs) SaveSettings() error { //types:add
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, LangSettingsFilename)
 	AvailableLangsChanged = false
-	return lt.Save(gi.Filename(pnm))
+	return lt.Save(core.Filename(pnm))
 }
 
 // CopyFrom copies languages from given other map
@@ -91,23 +91,23 @@ func (lt *Langs) CopyFrom(cp Langs) {
 
 // RevertToStandard reverts this map to using the StdLangs that are compiled into
 // the program and have all the lastest standards.
-func (lt *Langs) RevertToStandard() { //gti:add
+func (lt *Langs) RevertToStandard() { //types:add
 	lt.CopyFrom(StandardLangs)
 	AvailableLangsChanged = true
 }
 
 // ViewStandard shows the standard langs that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (lt *Langs) ViewStandard() { //gti:add
+func (lt *Langs) ViewStandard() { //types:add
 	LangsView(&StandardLangs)
 }
 
-// AvailableLangsChanged is used to update giv.LangsView toolbars via
-// following menu, toolbar props update methods -- not accurate if editing any
+// AvailableLangsChanged is used to update views.LangsView toolbars via
+// following menu, toolbar properties update methods -- not accurate if editing any
 // other map but works for now..
 var AvailableLangsChanged = false
 
 // StandardLangs is the original compiled-in set of standard language options.
 var StandardLangs = Langs{
-	fi.Go: {CmdNames{"Go: Imports File"}},
+	fileinfo.Go: {CmdNames{"Go: Imports File"}},
 }

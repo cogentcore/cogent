@@ -11,8 +11,8 @@ import (
 	"image/draw"
 
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/math32"
 )
 
 // Sprites are the type of sprite
@@ -102,38 +102,38 @@ func SpriteName(typ, subtyp Sprites, idx int) string {
 	return nm
 }
 
-// SetSpriteProps sets sprite properties
-func SetSpriteProps(sp *gi.Sprite, typ, subtyp Sprites, idx int) {
+// SetSpriteProperties sets sprite properties
+func SetSpriteProperties(sp *core.Sprite, typ, subtyp Sprites, idx int) {
 	sp.Name = SpriteName(typ, subtyp, idx)
-	sp.Props.Set("grid-type", typ)
-	sp.Props.Set("grid-sub", subtyp)
-	sp.Props.Set("grid-idx", idx)
+	sp.Properties["grid-type"] = typ
+	sp.Properties["grid-sub"] = subtyp
+	sp.Properties["grid-idx"] = idx
 }
 
-// SpriteProps reads the sprite properties -- returns SpUnk if
+// SpriteProperties reads the sprite properties -- returns SpUnk if
 // not one of our sprites.
-func SpriteProps(sp *gi.Sprite) (typ, subtyp Sprites, idx int) {
-	typi, has := sp.Props["grid-type"]
+func SpriteProperties(sp *core.Sprite) (typ, subtyp Sprites, idx int) {
+	typi, has := sp.Properties["grid-type"]
 	if !has {
 		typ = SpUnk
 		return
 	}
 	typ = typi.(Sprites)
-	subtyp = sp.Props["grid-sub"].(Sprites)
-	idx = sp.Props["grid-idx"].(int)
+	subtyp = sp.Properties["grid-sub"].(Sprites)
+	idx = sp.Properties["grid-idx"].(int)
 	return
 }
 
 // Sprite returns the given sprite in the context of the given widget,
 // making it if not yet made. trgsz is the target size (e.g., for rubber
 // band boxes)
-func Sprite(ctx gi.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.Sprite {
+func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *core.Sprite {
 	sprites := &ctx.AsWidget().Scene.Stage.Sprites
 	spnm := SpriteName(typ, subtyp, idx)
 	sp, ok := sprites.SpriteByName(spnm)
 	if !ok {
-		sp = gi.NewSprite(spnm, image.Point{}, image.Point{})
-		SetSpriteProps(sp, typ, subtyp, idx)
+		sp = core.NewSprite(spnm, image.Point{}, image.Point{})
+		SetSpriteProperties(sp, typ, subtyp, idx)
 		sprites.Add(sp)
 	}
 	switch typ {
@@ -166,7 +166,7 @@ func Sprite(ctx gi.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *gi.
 
 /*
 // SpriteConnectEvent activates and sets mouse event functions to given function
-func SpriteConnectEvent(win *gi.Window, typ, subtyp Sprites, idx int, trgsz image.Point, recv ki.Ki, fun ki.RecvFunc) *gi.Sprite {
+func SpriteConnectEvent(win *core.Window, typ, subtyp Sprites, idx int, trgsz image.Point, recv tree.Node, fun tree.RecvFunc) *core.Sprite {
 	sp := Sprite(win, typ, subtyp, idx, trgsz)
 	if recv != nil {
 		sp.ConnectEvent(recv, oswin.MouseEvent, fun)
@@ -177,8 +177,8 @@ func SpriteConnectEvent(win *gi.Window, typ, subtyp Sprites, idx int, trgsz imag
 */
 
 // SetSpritePos sets sprite position, taking into account relative offsets
-func SetSpritePos(sp *gi.Sprite, pos image.Point) {
-	typ, subtyp, _ := SpriteProps(sp)
+func SetSpritePos(sp *core.Sprite, pos image.Point) {
+	typ, subtyp, _ := SpriteProperties(sp)
 	switch {
 	case typ == SpRubberBand:
 		_, sz := LineSpriteSize()
@@ -222,11 +222,11 @@ func SetSpritePos(sp *gi.Sprite, pos image.Point) {
 }
 
 // InactivateSprites inactivates sprites of given type
-func InactivateSprites(ctx gi.Widget, typ Sprites) {
+func InactivateSprites(ctx core.Widget, typ Sprites) {
 	sprites := &ctx.AsWidget().Scene.Stage.Sprites
 	for _, spkv := range sprites.Names.Order {
 		sp := spkv.Value
-		st, _, _ := SpriteProps(sp)
+		st, _, _ := SpriteProperties(sp)
 		if st == typ {
 			sprites.InactivateSprite(sp.Name)
 		}
@@ -245,7 +245,7 @@ var (
 // HandleSpriteSize returns the border size and overall size
 // of handle-type sprites, with given scaling factor
 func HandleSpriteSize(scale float32) (int, image.Point) {
-	sz := int(mat32.Ceil(scale * gi.AppearanceSettings.Zoom * HandleSpriteScale / 100))
+	sz := int(math32.Ceil(scale * core.AppearanceSettings.Zoom * HandleSpriteScale / 100))
 	sz = max(sz, HandleSizeMin)
 	bsz := max(sz/6, HandleBorderMin)
 	bbsz := image.Point{sz, sz}
@@ -253,7 +253,7 @@ func HandleSpriteSize(scale float32) (int, image.Point) {
 }
 
 // DrawSpriteReshape renders a Reshape sprite handle
-func DrawSpriteReshape(sp *gi.Sprite, bbtyp Sprites) {
+func DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) {
 	bsz, bbsz := HandleSpriteSize(1)
 	if !sp.SetSize(bbsz) { // already set
 		return
@@ -268,7 +268,7 @@ func DrawSpriteReshape(sp *gi.Sprite, bbtyp Sprites) {
 }
 
 // DrawSpriteSelect renders a Select sprite handle -- smaller
-func DrawSpriteSelect(sp *gi.Sprite, bbtyp Sprites) {
+func DrawSpriteSelect(sp *core.Sprite, bbtyp Sprites) {
 	bsz, bbsz := HandleSpriteSize(.8)
 	if !sp.SetSize(bbsz) { // already set
 		return
@@ -284,7 +284,7 @@ func DrawSpriteSelect(sp *gi.Sprite, bbtyp Sprites) {
 }
 
 // DrawSpriteNodePoint renders a NodePoint sprite handle
-func DrawSpriteNodePoint(sp *gi.Sprite, bbtyp Sprites) {
+func DrawSpriteNodePoint(sp *core.Sprite, bbtyp Sprites) {
 	bsz, bbsz := HandleSpriteSize(1)
 	if !sp.SetSize(bbsz) { // already set
 		return
@@ -300,7 +300,7 @@ func DrawSpriteNodePoint(sp *gi.Sprite, bbtyp Sprites) {
 }
 
 // DrawSpriteNodeCtrl renders a NodePoint sprite handle
-func DrawSpriteNodeCtrl(sp *gi.Sprite, subtyp Sprites) {
+func DrawSpriteNodeCtrl(sp *core.Sprite, subtyp Sprites) {
 	bsz, bbsz := HandleSpriteSize(1)
 	if !sp.SetSize(bbsz) { // already set
 		return
@@ -323,14 +323,14 @@ var (
 
 // LineSpriteSize returns the border size and overall size of line-type sprites
 func LineSpriteSize() (int, int) {
-	sz := int(mat32.Ceil(gi.AppearanceSettings.Zoom * LineSpriteScale / 100))
+	sz := int(math32.Ceil(core.AppearanceSettings.Zoom * LineSpriteScale / 100))
 	sz = max(sz, LineSizeMin)
 	bsz := max(sz/6, LineBorderMin)
 	return bsz, sz
 }
 
 // DrawRubberBandHoriz renders a horizontal rubber band line
-func DrawRubberBandHoriz(sp *gi.Sprite, trgsz image.Point) {
+func DrawRubberBandHoriz(sp *core.Sprite, trgsz image.Point) {
 	bsz, sz := LineSpriteSize()
 	ssz := image.Point{trgsz.X, sz}
 	if !sp.SetSize(ssz) { // already set
@@ -348,7 +348,7 @@ func DrawRubberBandHoriz(sp *gi.Sprite, trgsz image.Point) {
 }
 
 // DrawRubberBandVert renders a vertical rubber band line
-func DrawRubberBandVert(sp *gi.Sprite, trgsz image.Point) {
+func DrawRubberBandVert(sp *core.Sprite, trgsz image.Point) {
 	bsz, sz := LineSpriteSize()
 	ssz := image.Point{sz, trgsz.Y}
 	if !sp.SetSize(ssz) { // already set
@@ -366,7 +366,7 @@ func DrawRubberBandVert(sp *gi.Sprite, trgsz image.Point) {
 }
 
 // DrawAlignMatchHoriz renders a horizontal alignment line
-func DrawAlignMatchHoriz(sp *gi.Sprite, trgsz image.Point) {
+func DrawAlignMatchHoriz(sp *core.Sprite, trgsz image.Point) {
 	bsz, sz := LineSpriteSize()
 	ssz := image.Point{trgsz.X, sz}
 	if !sp.SetSize(ssz) { // already set
@@ -382,7 +382,7 @@ func DrawAlignMatchHoriz(sp *gi.Sprite, trgsz image.Point) {
 }
 
 // DrawAlignMatchVert renders a vertical alignment line
-func DrawAlignMatchVert(sp *gi.Sprite, trgsz image.Point) {
+func DrawAlignMatchVert(sp *core.Sprite, trgsz image.Point) {
 	bsz, sz := LineSpriteSize()
 	ssz := image.Point{sz, trgsz.Y}
 	if !sp.SetSize(ssz) { // already set

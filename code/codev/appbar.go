@@ -8,39 +8,39 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/keyfun"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
-func (ge *CodeView) AppBarConfig(parent gi.Widget) {
-	tb := gi.RecycleToolbar(parent)
-	gi.StandardAppBarBack(tb)
-	ac := gi.StandardAppBarChooser(tb)
+func (ge *CodeView) AppBarConfig(parent core.Widget) {
+	tb := core.RecycleToolbar(parent)
+	core.StandardAppBarBack(tb)
+	ac := core.StandardAppBarChooser(tb)
 	ge.AddChooserFiles(ac)
 	ge.AddChooserSymbols(ac)
 	ac.OnFirst(events.KeyChord, func(e events.Event) {
-		kf := keyfun.Of(e.KeyChord())
-		if kf == keyfun.Abort {
+		kf := keymap.Of(e.KeyChord())
+		if kf == keymap.Abort {
 			ge.FocusActiveTextEditor()
 		}
 	})
 
-	gi.StandardOverflowMenu(tb)
-	gi.CurrentWindowAppBar(tb)
+	core.StandardOverflowMenu(tb)
+	core.CurrentWindowAppBar(tb)
 	// apps should add their own app-general functions here
 }
 
-func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
-	giv.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
-	sm := gi.NewSwitch(tb, "go-mod").SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
+func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
+	views.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
+	sm := core.NewSwitch(tb, "go-mod").SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.Style(func(s *styles.Style) {
 		sm.SetChecked(ge.Settings.GoMod)
 	})
@@ -49,77 +49,77 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 		code.SetGoMod(ge.Settings.GoMod)
 	})
 
-	gi.NewSeparator(tb)
-	gi.NewButton(tb).SetText("Open recent").SetMenu(func(m *gi.Scene) {
+	core.NewSeparator(tb)
+	core.NewButton(tb).SetText("Open recent").SetMenu(func(m *core.Scene) {
 		for _, rp := range code.RecentPaths {
 			rp := rp
-			gi.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
-				ge.OpenRecent(gi.Filename(rp))
+			core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
+				ge.OpenRecent(core.Filename(rp))
 			})
 		}
-		gi.NewSeparator(m)
-		gi.NewButton(m).SetText("Recent recent paths").OnClick(func(e events.Event) {
+		core.NewSeparator(m)
+		core.NewButton(m).SetText("Recent recent paths").OnClick(func(e events.Event) {
 			code.RecentPaths = nil
 		})
-		gi.NewButton(m).SetText("Edit recent paths").OnClick(func(e events.Event) {
+		core.NewButton(m).SetText("Edit recent paths").OnClick(func(e events.Event) {
 			ge.EditRecentPaths()
 		})
 	})
 
-	ge.ConfigActiveFilename(giv.NewFuncButton(tb, ge.OpenPath).
-		SetText("Open").SetIcon(icons.Open).SetKey(keyfun.Open))
+	ge.ConfigActiveFilename(views.NewFuncButton(tb, ge.OpenPath).
+		SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open))
 
-	giv.NewFuncButton(tb, ge.SaveActiveView).SetText("Save").
-		SetIcon(icons.Save).SetKey(keyfun.Save)
+	views.NewFuncButton(tb, ge.SaveActiveView).SetText("Save").
+		SetIcon(icons.Save).SetKey(keymap.Save)
 
-	giv.NewFuncButton(tb, ge.SaveAll).SetIcon(icons.Save)
+	views.NewFuncButton(tb, ge.SaveAll).SetIcon(icons.Save)
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	giv.NewFuncButton(tb, ge.CursorToHistPrev).SetText("").SetKey(keyfun.HistPrev).
+	views.NewFuncButton(tb, ge.CursorToHistPrev).SetText("").SetKey(keymap.HistPrev).
 		SetIcon(icons.KeyboardArrowLeft).SetShowReturn(false)
-	giv.NewFuncButton(tb, ge.CursorToHistNext).SetText("").SetKey(keyfun.HistNext).
+	views.NewFuncButton(tb, ge.CursorToHistNext).SetText("").SetKey(keymap.HistNext).
 		SetIcon(icons.KeyboardArrowRight).SetShowReturn(false)
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	ge.ConfigFindButton(giv.NewFuncButton(tb, ge.Find).SetIcon(icons.FindReplace))
+	ge.ConfigFindButton(views.NewFuncButton(tb, ge.Find).SetIcon(icons.FindReplace))
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	giv.NewFuncButton(tb, ge.Symbols).SetIcon(icons.List)
+	views.NewFuncButton(tb, ge.Symbols).SetIcon(icons.List)
 
-	giv.NewFuncButton(tb, ge.Spell).SetIcon(icons.Spellcheck)
+	views.NewFuncButton(tb, ge.Spell).SetIcon(icons.Spellcheck)
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	giv.NewFuncButton(tb, ge.Build).SetIcon(icons.Build).
-		SetShortcut(key.Chord(code.ChordForFun(code.KeyFunBuildProj).String()))
+	views.NewFuncButton(tb, ge.Build).SetIcon(icons.Build).
+		SetShortcut(key.Chord(code.ChordForFunction(code.KeyBuildProject).String()))
 
-	giv.NewFuncButton(tb, ge.Run).SetIcon(icons.PlayArrow).
-		SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRunProj).String()))
+	views.NewFuncButton(tb, ge.Run).SetIcon(icons.PlayArrow).
+		SetShortcut(key.Chord(code.ChordForFunction(code.KeyRunProject).String()))
 
-	giv.NewFuncButton(tb, ge.Debug).SetIcon(icons.Debug)
+	views.NewFuncButton(tb, ge.Debug).SetIcon(icons.Debug)
 
-	giv.NewFuncButton(tb, ge.DebugTest).SetIcon(icons.Debug)
+	views.NewFuncButton(tb, ge.DebugTest).SetIcon(icons.Debug)
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	giv.NewFuncButton(tb, ge.Commit).SetIcon(icons.Star)
+	views.NewFuncButton(tb, ge.Commit).SetIcon(icons.Star)
 
-	gi.NewButton(tb).SetText("Command").
-		SetShortcut(key.Chord(code.ChordForFun(code.KeyFunExecCmd).String())).
-		SetMenu(func(m *gi.Scene) {
+	core.NewButton(tb).SetText("Command").
+		SetShortcut(key.Chord(code.ChordForFunction(code.KeyExecCmd).String())).
+		SetMenu(func(m *core.Scene) {
 			ec := ExecCmds(ge)
 			for _, cc := range ec {
 				cc := cc
 				cat := cc[0]
 				ic := icons.Icon(strings.ToLower(cat))
-				gi.NewButton(m).SetText(cat).SetIcon(ic).SetMenu(func(mm *gi.Scene) {
+				core.NewButton(m).SetText(cat).SetIcon(ic).SetMenu(func(mm *core.Scene) {
 					nc := len(cc)
 					for i := 1; i < nc; i++ {
 						cm := cc[i]
-						gi.NewButton(mm).SetText(cm).SetIcon(ic).OnClick(func(e events.Event) {
+						core.NewButton(mm).SetText(cm).SetIcon(ic).OnClick(func(e events.Event) {
 							e.SetHandled()
 							ge.ExecCmdNameActive(code.CommandName(cat, cm))
 						})
@@ -128,14 +128,14 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 			}
 		})
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	gi.NewButton(tb).SetText("Splits").SetMenu(func(m *gi.Scene) {
-		gi.NewButton(m).SetText("Set View").
-			SetMenu(func(mm *gi.Scene) {
+	core.NewButton(tb).SetText("Splits").SetMenu(func(m *core.Scene) {
+		core.NewButton(m).SetText("Set View").
+			SetMenu(func(mm *core.Scene) {
 				for _, sp := range code.AvailableSplitNames {
 					sn := code.SplitName(sp)
-					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
+					mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSetView(sn)
 					})
 					if sn == ge.Settings.SplitName {
@@ -143,12 +143,12 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 					}
 				}
 			})
-		giv.NewFuncButton(m, ge.SplitsSaveAs).SetText("Save As")
-		gi.NewButton(m).SetText("Save").
-			SetMenu(func(mm *gi.Scene) {
+		views.NewFuncButton(m, ge.SplitsSaveAs).SetText("Save As")
+		core.NewButton(m).SetText("Save").
+			SetMenu(func(mm *core.Scene) {
 				for _, sp := range code.AvailableSplitNames {
 					sn := code.SplitName(sp)
-					mb := gi.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
+					mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSave(sn)
 					})
 					if sn == ge.Settings.SplitName {
@@ -156,143 +156,136 @@ func (ge *CodeView) ConfigToolbar(tb *gi.Toolbar) { //gti:add
 					}
 				}
 			})
-		giv.NewFuncButton(m, ge.SplitsEdit).SetText("Edit")
+		views.NewFuncButton(m, ge.SplitsEdit).SetText("Edit")
 	})
 
-	tb.AddOverflowMenu(func(m *gi.Scene) {
-		gi.NewButton(m).SetText("File").SetMenu(func(mm *gi.Scene) {
-			giv.NewFuncButton(mm, ge.NewProj).SetText("New Project").
-				SetIcon(icons.NewWindow).SetKey(keyfun.New)
+	tb.AddOverflowMenu(func(m *core.Scene) {
+		core.NewButton(m).SetText("File").SetMenu(func(mm *core.Scene) {
+			views.NewFuncButton(mm, ge.NewProject).SetIcon(icons.NewWindow).SetKey(keymap.New)
+			views.NewFuncButton(mm, ge.NewFile).SetText("New File").SetIcon(icons.NewWindow)
 
-			giv.NewFuncButton(mm, ge.NewFile).SetText("New File").
-				SetIcon(icons.NewWindow)
+			core.NewSeparator(mm)
 
-			gi.NewSeparator(mm)
+			views.NewFuncButton(mm, ge.OpenProject).SetIcon(icons.Open)
 
-			giv.NewFuncButton(mm, ge.OpenProj).SetText("Open Project").
-				SetIcon(icons.Open)
+			core.NewSeparator(mm)
 
-			gi.NewSeparator(mm)
+			views.NewFuncButton(mm, ge.EditProjectSettings).SetText("Project Settings").SetIcon(icons.Edit)
 
-			giv.NewFuncButton(mm, ge.EditProjSettings).SetText("Project Settings").
-				SetIcon(icons.Edit)
+			views.NewFuncButton(mm, ge.SaveProject).SetIcon(icons.Save)
 
-			giv.NewFuncButton(mm, ge.SaveProj).SetText("Save Project").
-				SetIcon(icons.Save)
+			ge.ConfigActiveFilename(views.NewFuncButton(mm, ge.SaveProjectAs).SetIcon(icons.SaveAs))
 
-			ge.ConfigActiveFilename(giv.NewFuncButton(mm, ge.SaveProjAs).
-				SetText("Save Project As").SetIcon(icons.SaveAs))
+			core.NewSeparator(mm)
 
-			gi.NewSeparator(mm)
-
-			giv.NewFuncButton(mm, ge.RevertActiveView).SetText("Revert File").
+			views.NewFuncButton(mm, ge.RevertActiveView).SetText("Revert File").
 				SetIcon(icons.Undo)
 
-			ge.ConfigActiveFilename(giv.NewFuncButton(mm, ge.SaveActiveViewAs).
-				SetText("Save File As").SetIcon(icons.SaveAs).SetKey(keyfun.SaveAs))
+			ge.ConfigActiveFilename(views.NewFuncButton(mm, ge.SaveActiveViewAs).
+				SetText("Save File As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs))
 
 		})
 
-		gi.NewButton(m).SetText("Edit").SetMenu(func(mm *gi.Scene) {
-			gi.NewButton(mm).SetText("Paste history").SetIcon(icons.Paste).
-				SetKey(keyfun.PasteHist)
+		core.NewButton(m).SetText("Edit").SetMenu(func(mm *core.Scene) {
+			core.NewButton(mm).SetText("Paste history").SetIcon(icons.Paste).
+				SetKey(keymap.PasteHist)
 
-			giv.NewFuncButton(mm, ge.RegisterPaste).SetIcon(icons.Paste).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRegCopy).String()))
+			views.NewFuncButton(mm, ge.RegisterPaste).SetIcon(icons.Paste).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRegCopy).String()))
 
-			giv.NewFuncButton(mm, ge.RegisterCopy).SetIcon(icons.Copy).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRegPaste).String()))
+			views.NewFuncButton(mm, ge.RegisterCopy).SetIcon(icons.Copy).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRegPaste).String()))
 
-			gi.NewSeparator(mm)
+			core.NewSeparator(mm)
 
-			giv.NewFuncButton(mm, ge.CopyRect).SetIcon(icons.Copy).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRectCopy).String()))
+			views.NewFuncButton(mm, ge.CopyRect).SetIcon(icons.Copy).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRectCopy).String()))
 
-			giv.NewFuncButton(mm, ge.CutRect).SetIcon(icons.Cut).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRectCut).String()))
+			views.NewFuncButton(mm, ge.CutRect).SetIcon(icons.Cut).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRectCut).String()))
 
-			giv.NewFuncButton(mm, ge.PasteRect).SetIcon(icons.Paste).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunRectPaste).String()))
+			views.NewFuncButton(mm, ge.PasteRect).SetIcon(icons.Paste).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRectPaste).String()))
 
-			gi.NewSeparator(mm)
+			core.NewSeparator(mm)
 
-			gi.NewButton(mm).SetText("Undo").SetIcon(icons.Undo).SetKey(keyfun.Undo)
+			core.NewButton(mm).SetText("Undo").SetIcon(icons.Undo).SetKey(keymap.Undo)
 
-			gi.NewButton(mm).SetText("Redo").SetIcon(icons.Redo).SetKey(keyfun.Redo)
+			core.NewButton(mm).SetText("Redo").SetIcon(icons.Redo).SetKey(keymap.Redo)
 
-			gi.NewSeparator(mm)
+			core.NewSeparator(mm)
 
-			giv.NewFuncButton(mm, ge.ReplaceInActive).SetText("Replace in File").
+			views.NewFuncButton(mm, ge.ReplaceInActive).SetText("Replace in File").
 				SetIcon(icons.FindReplace)
 
-			gi.NewButton(mm).SetText("Show completions").SetIcon(icons.CheckCircle).SetKey(keyfun.Complete)
+			core.NewButton(mm).SetText("Show completions").SetIcon(icons.CheckCircle).SetKey(keymap.Complete)
 
-			gi.NewButton(mm).SetText("Lookup symbol").SetIcon(icons.Search).SetKey(keyfun.Lookup)
+			core.NewButton(mm).SetText("Lookup symbol").SetIcon(icons.Search).SetKey(keymap.Lookup)
 
-			gi.NewButton(mm).SetText("Jump to line").SetIcon(icons.GoToLine).SetKey(keyfun.Jump)
+			core.NewButton(mm).SetText("Jump to line").SetIcon(icons.GoToLine).SetKey(keymap.Jump)
 
-			gi.NewSeparator(mm)
+			core.NewSeparator(mm)
 
-			giv.NewFuncButton(mm, ge.CommentOut).SetText("Comment region").
-				SetIcon(icons.Comment).SetShortcut(key.Chord(code.ChordForFun(code.KeyFunCommentOut).String()))
+			views.NewFuncButton(mm, ge.CommentOut).SetText("Comment region").
+				SetIcon(icons.Comment).SetShortcut(key.Chord(code.ChordForFunction(code.KeyCommentOut).String()))
 
-			giv.NewFuncButton(mm, ge.Indent).SetIcon(icons.FormatIndentIncrease).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunIndent).String()))
+			views.NewFuncButton(mm, ge.Indent).SetIcon(icons.FormatIndentIncrease).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyIndent).String()))
 
-			giv.NewFuncButton(mm, ge.ReCase).SetIcon(icons.MatchCase)
+			views.NewFuncButton(mm, ge.ReCase).SetIcon(icons.MatchCase)
 
-			giv.NewFuncButton(mm, ge.JoinParaLines).SetIcon(icons.Join)
+			views.NewFuncButton(mm, ge.JoinParaLines).SetIcon(icons.Join)
 
-			giv.NewFuncButton(mm, ge.TabsToSpaces).SetIcon(icons.TabMove)
+			views.NewFuncButton(mm, ge.TabsToSpaces).SetIcon(icons.TabMove)
 
-			giv.NewFuncButton(mm, ge.SpacesToTabs).SetIcon(icons.TabMove)
+			views.NewFuncButton(mm, ge.SpacesToTabs).SetIcon(icons.TabMove)
 		})
 
-		gi.NewButton(m).SetText("View").SetMenu(func(mm *gi.Scene) {
-			giv.NewFuncButton(mm, ge.FocusPrevPanel).SetText("Focus prev").SetIcon(icons.KeyboardArrowLeft).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunPrevPanel).String()))
-			giv.NewFuncButton(mm, ge.FocusNextPanel).SetText("Focus next").SetIcon(icons.KeyboardArrowRight).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunNextPanel).String()))
-			giv.NewFuncButton(mm, ge.CloneActiveView).SetText("Clone active").SetIcon(icons.Copy).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunBufClone).String()))
-			gi.NewSeparator(m)
-			giv.NewFuncButton(mm, ge.CloseActiveView).SetText("Close file").SetIcon(icons.Close).
-				SetShortcut(key.Chord(code.ChordForFun(code.KeyFunBufClose).String()))
-			giv.NewFuncButton(mm, ge.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
+		core.NewButton(m).SetText("View").SetMenu(func(mm *core.Scene) {
+			views.NewFuncButton(mm, ge.FocusPrevPanel).SetText("Focus prev").SetIcon(icons.KeyboardArrowLeft).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyPrevPanel).String()))
+			views.NewFuncButton(mm, ge.FocusNextPanel).SetText("Focus next").SetIcon(icons.KeyboardArrowRight).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyNextPanel).String()))
+			views.NewFuncButton(mm, ge.CloneActiveView).SetText("Clone active").SetIcon(icons.Copy).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyBufClone).String()))
+			core.NewSeparator(m)
+			views.NewFuncButton(mm, ge.CloseActiveView).SetText("Close file").SetIcon(icons.Close).
+				SetShortcut(key.Chord(code.ChordForFunction(code.KeyBufClose).String()))
+			views.NewFuncButton(mm, ge.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
 		})
 
-		gi.NewButton(m).SetText("Command").SetMenu(func(mm *gi.Scene) {
-			giv.NewFuncButton(mm, ge.DebugAttach).SetText("Debug attach").SetIcon(icons.Debug)
-			giv.NewFuncButton(mm, ge.VCSLog).SetText("VCS Log").SetIcon(icons.List)
-			giv.NewFuncButton(mm, ge.VCSUpdateAll).SetText("VCS update all").SetIcon(icons.Update)
-			gi.NewSeparator(m)
-			giv.NewFuncButton(mm, ge.CountWords).SetText("Count words all").SetIcon(icons.Counter5)
-			giv.NewFuncButton(mm, ge.CountWordsRegion).SetText("Count words region").SetIcon(icons.Counter3)
-			gi.NewSeparator(m)
-			giv.NewFuncButton(mm, ge.HelpWiki).SetText("Help").SetIcon(icons.Help)
+		core.NewButton(m).SetText("Command").SetMenu(func(mm *core.Scene) {
+			views.NewFuncButton(mm, ge.DebugAttach).SetText("Debug attach").SetIcon(icons.Debug)
+			views.NewFuncButton(mm, ge.VCSLog).SetText("VCS Log").SetIcon(icons.List)
+			views.NewFuncButton(mm, ge.VCSUpdateAll).SetText("VCS update all").SetIcon(icons.Update)
+			core.NewSeparator(m)
+			views.NewFuncButton(mm, ge.CountWords).SetText("Count words all").SetIcon(icons.Counter5)
+			views.NewFuncButton(mm, ge.CountWordsRegion).SetText("Count words region").SetIcon(icons.Counter3)
+			core.NewSeparator(m)
+			views.NewFuncButton(mm, ge.HelpWiki).SetText("Help").SetIcon(icons.Help)
 		})
 
-		gi.NewSeparator(m)
+		core.NewSeparator(m)
 	})
 
 }
 
 // AddChooserFiles adds the files to the app chooser.
-func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
+func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 	ac.AddItemsFunc(func() {
 		if ge.Files == nil {
 			return
 		}
-		ge.Files.WidgetWalkPre(func(wi gi.Widget, wb *gi.WidgetBase) bool {
+		ge.Files.WidgetWalkPre(func(wi core.Widget, wb *core.WidgetBase) bool {
 			fn := filetree.AsNode(wi)
 			if fn == nil || fn.IsIrregular() {
-				return ki.Continue
+				return tree.Continue
 			}
 			rpath := fn.MyRelPath()
 			nmpath := fn.Nm + ":" + rpath
 			switch {
 			case fn.IsDir():
-				ac.Items = append(ac.Items, gi.ChooserItem{
+				ac.Items = append(ac.Items, core.ChooserItem{
 					Label: nmpath,
 					Icon:  icons.Folder,
 					Func: func() {
@@ -304,7 +297,7 @@ func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
 					},
 				})
 			case fn.IsExec():
-				ac.Items = append(ac.Items, gi.ChooserItem{
+				ac.Items = append(ac.Items, core.ChooserItem{
 					Label: nmpath,
 					Icon:  icons.FileExe,
 					Func: func() {
@@ -312,7 +305,7 @@ func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
 					},
 				})
 			default:
-				ac.Items = append(ac.Items, gi.ChooserItem{
+				ac.Items = append(ac.Items, core.ChooserItem{
 					Label: nmpath,
 					Icon:  fn.Info.Ic,
 					Func: func() {
@@ -320,19 +313,19 @@ func (ge *CodeView) AddChooserFiles(ac *gi.Chooser) {
 					},
 				})
 			}
-			return ki.Continue
+			return tree.Continue
 		})
 	})
 }
 
 // AddChooserSymbols adds the symbols to the app chooser.
-func (ge *CodeView) AddChooserSymbols(ac *gi.Chooser) {
+func (ge *CodeView) AddChooserSymbols(ac *core.Chooser) {
 	ac.AddItemsFunc(func() {
 		tv := ge.ActiveTextEditor()
-		if tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingPi() {
+		if tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 			return
 		}
-		pfs := tv.Buffer.PiState.Done()
+		pfs := tv.Buffer.ParseState.Done()
 		if len(pfs.ParseState.Scopes) == 0 {
 			return
 		}
@@ -340,16 +333,16 @@ func (ge *CodeView) AddChooserSymbols(ac *gi.Chooser) {
 		syms := &code.SymNode{}
 		syms.InitName(syms, "syms")
 		syms.OpenSyms(pkg, "", "")
-		syms.WalkPre(func(k ki.Ki) bool {
+		syms.WalkDown(func(k tree.Node) bool {
 			sn := k.(*code.SymNode)
-			ac.Items = append(ac.Items, gi.ChooserItem{
+			ac.Items = append(ac.Items, core.ChooserItem{
 				Label: sn.Symbol.Label(),
 				Icon:  sn.GetIcon(),
 				Func: func() {
 					code.SelectSymbol(ge, sn.Symbol)
 				},
 			})
-			return ki.Continue
+			return tree.Continue
 		})
 	})
 }

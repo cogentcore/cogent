@@ -11,18 +11,18 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/cdebug"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
-	"cogentcore.org/core/grows/tomls"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/iox/tomlx"
+	"cogentcore.org/core/views"
 )
 
 func init() {
-	gi.TheApp.SetName("Cogent Code")
-	gi.AllSettings = slices.Insert(gi.AllSettings, 1, gi.Settings(Settings))
+	core.TheApp.SetName("Cogent Code")
+	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
 	DefaultKeyMap = "MacEmacs" // todo
 	SetActiveKeyMapName(DefaultKeyMap)
 	OpenPaths()
@@ -31,15 +31,15 @@ func init() {
 
 // Settings are the overall Code settings
 var Settings = &SettingsData{
-	SettingsBase: gi.SettingsBase{
+	SettingsBase: core.SettingsBase{
 		Name: "Code",
-		File: filepath.Join(gi.TheApp.DataDir(), "Cogent Code", "settings.toml"),
+		File: filepath.Join(core.TheApp.DataDir(), "Cogent Code", "settings.toml"),
 	},
 }
 
 // SettingsData is the data type for the overall user settings for Code.
-type SettingsData struct { //gti:add
-	gi.SettingsBase
+type SettingsData struct { //types:add
+	core.SettingsBase
 
 	// file view settings
 	Files FileSettings
@@ -61,7 +61,7 @@ type SettingsData struct { //gti:add
 }
 
 // FileSettings contains file view settings
-type FileSettings struct { //gti:add
+type FileSettings struct { //types:add
 
 	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
 	DirsOnTop bool
@@ -82,7 +82,7 @@ type FileSettings struct { //gti:add
 func (se *SettingsData) Defaults() {
 	se.Files.Defaults()
 	se.KeyMap = DefaultKeyMap
-	home := gi.SystemSettings.User.HomeDir
+	home := core.SystemSettings.User.HomeDir
 	texPath := ".:" + home + "/texmf/tex/latex:/Library/TeX/Root/texmf-dist/tex/latex:"
 	se.EnvVars = map[string]string{
 		"TEXINPUTS":       texPath,
@@ -99,7 +99,7 @@ func (se *FileSettings) Defaults() {
 }
 
 func (se *SettingsData) Save() error {
-	err := tomls.Save(se, se.Filename())
+	err := tomlx.Save(se, se.Filename())
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (se *SettingsData) Save() error {
 }
 
 func (se *SettingsData) Open() error {
-	err := tomls.Open(se, se.Filename())
+	err := tomlx.Open(se, se.Filename())
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (se *SettingsData) Open() error {
 }
 
 // Apply settings updates things according with settings
-func (se *SettingsData) Apply() { //gti:add
+func (se *SettingsData) Apply() { //types:add
 	if se.KeyMap != "" {
 		SetActiveKeyMapName(se.KeyMap) // fills in missing pieces
 	}
@@ -162,36 +162,36 @@ func (se *SettingsData) ApplyEnvVars() {
 	}
 }
 
-func (se *SettingsData) ConfigToolbar(tb *gi.Toolbar) {
-	giv.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
-	giv.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
-	giv.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
-	giv.NewFuncButton(tb, se.EditSplits).SetIcon(icons.VerticalSplit)
-	giv.NewFuncButton(tb, se.EditRegisters).SetIcon(icons.Variables)
+func (se *SettingsData) ConfigToolbar(tb *core.Toolbar) {
+	views.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
+	views.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
+	views.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
+	views.NewFuncButton(tb, se.EditSplits).SetIcon(icons.VerticalSplit)
+	views.NewFuncButton(tb, se.EditRegisters).SetIcon(icons.Variables)
 }
 
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
 // load from other files, etc.  Current avail keymaps are saved and loaded
 // with settings automatically.
-func (se *SettingsData) EditKeyMaps() { //gti:add
+func (se *SettingsData) EditKeyMaps() { //types:add
 	se.SaveKeyMaps = true
 	KeyMapsView(&AvailableKeyMaps)
 }
 
 // EditLangOpts opens the LangsView editor to customize options for each type of
 // language / data / file type.
-func (se *SettingsData) EditLangOpts() { //gti:add
+func (se *SettingsData) EditLangOpts() { //types:add
 	se.SaveLangOpts = true
 	LangsView(&AvailableLangs)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.
-func (se *SettingsData) EditCmds() { //gti:add
+func (se *SettingsData) EditCmds() { //types:add
 	se.SaveCmds = true
 	if len(CustomCommands) == 0 {
 		exc := &Command{Name: "Example Cmd",
 			Desc: "list current dir",
-			Lang: fi.Any,
+			Lang: fileinfo.Any,
 			Cmds: []CmdAndArgs{{Cmd: "ls", Args: []string{"-la"}}},
 			Dir:  "{FileDirPath}",
 			Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}
@@ -202,33 +202,33 @@ func (se *SettingsData) EditCmds() { //gti:add
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
-func (se *SettingsData) EditSplits() { //gti:add
+func (se *SettingsData) EditSplits() { //types:add
 	SplitsView(&AvailableSplits)
 }
 
 // EditRegisters opens the RegistersView editor to customize saved registers
-func (se *SettingsData) EditRegisters() { //gti:add
+func (se *SettingsData) EditRegisters() { //types:add
 	RegistersView(&AvailableRegisters)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project Settings
 
-// ProjSettings are the settings for saving for a project. This IS the project file
-type ProjSettings struct { //gti:add
+// ProjectSettings are the settings for saving for a project. This IS the project file
+type ProjectSettings struct { //types:add
 
 	// file view settings
 	Files FileSettings
 
 	// editor settings
-	Editor gi.EditorSettings `view:"inline"`
+	Editor core.EditorSettings `view:"inline"`
 
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
 
 	// the language associated with the most frequently-encountered file
 	// extension in the file tree -- can be manually set here as well
-	MainLang fi.Known
+	MainLang fileinfo.Known
 
 	// the type of version control system used in this project (git, svn, etc).
 	// filters commands available
@@ -236,12 +236,12 @@ type ProjSettings struct { //gti:add
 
 	// current project filename for saving / loading specific Code
 	// configuration information in a .code file (optional)
-	ProjFilename gi.Filename `ext:".code"`
+	ProjectFilename core.Filename `ext:".code"`
 
 	// root directory for the project. all projects must be organized within
 	// a top-level root directory, with all the files therein constituting
-	// the scope of the project. By default it is the path for ProjFilename
-	ProjRoot gi.Filename
+	// the scope of the project. By default it is the path for ProjectFilename
+	ProjectRoot core.Filename
 
 	// if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically
 	GoMod bool
@@ -250,15 +250,15 @@ type ProjSettings struct { //gti:add
 	BuildCmds CmdNames
 
 	// build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands
-	BuildDir gi.Filename
+	BuildDir core.Filename
 
 	// build target for main Build button, if relevant for your  BuildCmds
-	BuildTarg gi.Filename
+	BuildTarg core.Filename
 
-	// executable to run for this project via main Run button -- called by standard Run Proj command
-	RunExec gi.Filename
+	// executable to run for this project via main Run button -- called by standard Run Project command
+	RunExec core.Filename
 
-	// command(s) to run for main Run button (typically Run Proj)
+	// command(s) to run for main Run button (typically Run Project)
 	RunCmds CmdNames
 
 	// custom debugger parameters for this project
@@ -280,32 +280,32 @@ type ProjSettings struct { //gti:add
 	Splits []float32 `view:"-"`
 }
 
-func (se *ProjSettings) Update() {
-	if se.BuildDir != se.ProjRoot {
-		if se.BuildTarg == se.ProjRoot {
+func (se *ProjectSettings) Update() {
+	if se.BuildDir != se.ProjectRoot {
+		if se.BuildTarg == se.ProjectRoot {
 			se.BuildTarg = se.BuildDir
 		}
-		if se.RunExec == se.ProjRoot {
+		if se.RunExec == se.ProjectRoot {
 			se.RunExec = se.BuildDir
 		}
 	}
 }
 
 // Open open from file
-func (se *ProjSettings) Open(filename gi.Filename) error { //gti:add
-	err := grr.Log(tomls.Open(se, string(filename)))
+func (se *ProjectSettings) Open(filename core.Filename) error { //types:add
+	err := errors.Log(tomlx.Open(se, string(filename)))
 	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 
 // Save save to file
-func (se *ProjSettings) Save(filename gi.Filename) error { //gti:add
-	return grr.Log(tomls.Save(se, string(filename)))
+func (se *ProjectSettings) Save(filename core.Filename) error { //types:add
+	return errors.Log(tomlx.Save(se, string(filename)))
 }
 
 // RunExecIsExec returns true if the RunExec is actually executable
-func (se *ProjSettings) RunExecIsExec() bool {
-	fi, err := fi.NewFileInfo(string(se.RunExec))
+func (se *ProjectSettings) RunExecIsExec() bool {
+	fi, err := fileinfo.NewFileInfo(string(se.RunExec))
 	if err != nil {
 		return false
 	}
@@ -317,22 +317,22 @@ func (se *ProjSettings) RunExecIsExec() bool {
 
 var (
 	// RecentPaths is a slice of recent file paths
-	RecentPaths gi.FilePaths
+	RecentPaths core.FilePaths
 
-	// SavedPathsFilename is the name of the saved file paths file in Cogent Core prefs directory
-	SavedPathsFilename = "code_saved_paths.json"
+	// SavedPathsFilename is the name of the saved file paths file in Cogent Code data directory
+	SavedPathsFilename = "saved-paths.json"
 )
 
 // SavePaths saves the active SavedPaths to prefs dir
 func SavePaths() {
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	RecentPaths.Save(pnm)
 }
 
 // OpenPaths loads the active SavedPaths from prefs dir
 func OpenPaths() {
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SavedPathsFilename)
 	RecentPaths.Open(pnm)
 }

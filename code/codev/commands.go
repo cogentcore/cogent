@@ -9,14 +9,14 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/views"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
@@ -36,8 +36,8 @@ func (ge *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer,
 	buf.NewBuffer(0)
 	ge.CmdBufs[cmdNm] = buf
 	buf.Autosave = false
-	// buf.Info.Known = fi.Bash
-	// buf.Info.Mime = fi.MimeString(fi.Bash)
+	// buf.Info.Known = fileinfo.Bash
+	// buf.Info.Mime = fileinfo.MimeString(fileinfo.Bash)
 	// buf.Hi.Lang = "Bash"
 	return buf, true
 }
@@ -109,7 +109,7 @@ func ExecCmds(ge *CodeView) [][]string {
 	var cmds [][]string
 
 	vc := ge.VersionControl()
-	if ge.ActiveLang == fi.Unknown {
+	if ge.ActiveLang == fileinfo.Unknown {
 		cmds = code.AvailableCommands.FilterCmdNames(ge.Settings.MainLang, vc)
 	} else {
 		cmds = code.AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)
@@ -118,7 +118,7 @@ func ExecCmds(ge *CodeView) [][]string {
 }
 
 // ExecCmdNameActive calls given command on current active texteditor
-func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //gti:add
+func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv == nil {
 		return
@@ -132,12 +132,12 @@ func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //gti:add
 // selected by default, and runs selected command.
 func (ge *CodeView) CommandFromMenu(fn *filetree.Node) {
 	tv := ge.ActiveTextEditor()
-	gi.NewMenu(code.CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
+	core.NewMenu(code.CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
-func (ge *CodeView) ExecCmd() { //gti:add
+func (ge *CodeView) ExecCmd() { //types:add
 	fn := ge.ActiveFileNode()
 	if fn == nil {
 		fmt.Printf("no Active File for ExecCmd\n")
@@ -178,9 +178,9 @@ func (ge *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms code.CmdNames, se
 }
 
 // Build runs the BuildCmds set for this project
-func (ge *CodeView) Build() { //gti:add
+func (ge *CodeView) Build() { //types:add
 	if len(ge.Settings.BuildCmds) == 0 {
-		gi.MessageDialog(ge, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
+		core.MessageDialog(ge, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
 		return
 	}
 	ge.SaveAllCheck(true, func() { // true = cancel option
@@ -189,13 +189,13 @@ func (ge *CodeView) Build() { //gti:add
 }
 
 // Run runs the RunCmds set for this project
-func (ge *CodeView) Run() { //gti:add
+func (ge *CodeView) Run() { //types:add
 	if len(ge.Settings.RunCmds) == 0 {
-		gi.MessageDialog(ge, "You need to set the RunCmds in the Project Settings", "No RunCmds Set")
+		core.MessageDialog(ge, "You need to set the RunCmds in the Project Settings", "No RunCmds Set")
 		return
 	}
-	if ge.Settings.RunCmds[0] == "Run Proj" && !ge.Settings.RunExecIsExec() {
-		giv.CallFunc(ge, ge.ChooseRunExec)
+	if ge.Settings.RunCmds[0] == "Run Project" && !ge.Settings.RunExecIsExec() {
+		views.CallFunc(ge, ge.ChooseRunExec)
 		return
 	}
 	ge.ExecCmds(ge.Settings.RunCmds, true, true)
@@ -203,10 +203,10 @@ func (ge *CodeView) Run() { //gti:add
 
 // Commit commits the current changes using relevant VCS tool.
 // Checks for VCS setting and for unsaved files.
-func (ge *CodeView) Commit() { //gti:add
+func (ge *CodeView) Commit() { //types:add
 	vc := ge.VersionControl()
 	if vc == "" {
-		gi.MessageDialog(ge, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
+		core.MessageDialog(ge, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
 		return
 	}
 	ge.SaveAllCheck(true, func() { // true = cancel option
@@ -234,25 +234,25 @@ func (ge *CodeView) CommitNoChecks() {
 		}
 	}
 	if cmdnm == "" {
-		gi.MessageDialog(ge, "Could not find Commit command in list of avail commands -- this is usually a programmer error -- check settings settings etc", "No Commit command found")
+		core.MessageDialog(ge, "Could not find Commit command in list of avail commands -- this is usually a programmer error -- check settings settings etc", "No Commit command found")
 		return
 	}
 	ge.SetArgVarVals() // need to set before setting prompt string below..
 
-	d := gi.NewBody().AddTitle("Commit message").
+	d := core.NewBody().AddTitle("Commit message").
 		AddText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
-	tf := gi.NewTextField(d)
+	tf := core.NewTextField(d)
 	tf.Style(func(s *styles.Style) {
 		s.Min.X.Ch(80)
 	})
-	d.AddBottomBar(func(parent gi.Widget) {
+	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()
 			ge.ArgVals["{PromptString1}"] = val
 			code.CmdNoUserPrompt = true                     // don't re-prompt!
 			ge.ExecCmdName(code.CmdName(cmdnm), true, true) // must be wait
-			ge.SaveProjIfExists(true)                       // saveall
+			ge.SaveProjectIfExists(true)                    // saveall
 			ge.UpdateFiles()
 		})
 	})

@@ -12,30 +12,30 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/glop/dirs"
+	"cogentcore.org/core/gox/dirs"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/mimedata"
 	"cogentcore.org/core/paint"
-	"cogentcore.org/core/pi"
-	"cogentcore.org/core/pi/complete"
-	"cogentcore.org/core/pi/lex"
-	"cogentcore.org/core/pi/parse"
+	"cogentcore.org/core/parse"
+	"cogentcore.org/core/parse/complete"
+	"cogentcore.org/core/parse/lexer"
+	"cogentcore.org/core/parse/parser"
 	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 )
 
 // CursorToHistPrev moves back to the previous history item.
-func (ge *CodeView) CursorToHistPrev() bool { //gti:add
+func (ge *CodeView) CursorToHistPrev() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistPrev()
 }
 
 // CursorToHistNext moves forward to the next history item.
-func (ge *CodeView) CursorToHistNext() bool { //gti:add
+func (ge *CodeView) CursorToHistNext() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	return tv.CursorToHistNext()
 }
@@ -43,12 +43,12 @@ func (ge *CodeView) CursorToHistNext() bool { //gti:add
 // LookupFun is the completion system Lookup function that makes a custom
 // texteditor dialog that has option to edit resulting file.
 func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
-	sfs := data.(*pi.FileStates)
+	sfs := data.(*parse.FileStates)
 	if sfs == nil {
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
 		return ld
 	}
-	lp, err := pi.LangSupport.Props(sfs.Sup)
+	lp, err := parse.LangSupport.Properties(sfs.Sup)
 	if err != nil {
 		log.Printf("LookupFun: %v\n", err)
 		return ld
@@ -59,9 +59,9 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 
 	// note: must have this set to true to allow viewing of AST
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
-	parse.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
+	parser.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-	ld = lp.Lang.Lookup(sfs, text, lex.Pos{posLn, posCh})
+	ld = lp.Lang.Lookup(sfs, text, lexer.Pos{posLn, posCh})
 	if len(ld.Text) > 0 {
 		texteditor.TextDialog(nil, "Lookup: "+text, string(ld.Text))
 		return ld
@@ -70,7 +70,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 		return ld
 	}
 
-	if gi.RecycleDialog(&ld) {
+	if core.RecycleDialog(&ld) {
 		return
 	}
 
@@ -93,21 +93,21 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	title := "Lookup: " + text
 
 	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
-	tb.Hi.Style = gi.AppearanceSettings.HiStyle
+	tb.Hi.Style = core.AppearanceSettings.HiStyle
 	tb.Opts.LineNos = ge.Settings.Editor.LineNos
 
-	d := gi.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
+	d := core.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
 	tv := texteditor.NewEditor(d).SetBuffer(tb)
 	tv.SetReadOnly(true)
 
-	tv.SetCursorTarget(lex.Pos{Ln: ld.StLine})
-	tv.Styles.Font.Family = string(gi.AppearanceSettings.MonoFont)
-	d.AddBottomBar(func(parent gi.Widget) {
-		gi.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
-			ge.ViewFile(gi.Filename(ld.Filename))
+	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
+	tv.Styles.Font.Family = string(core.AppearanceSettings.MonoFont)
+	d.AddBottomBar(func(parent core.Widget) {
+		core.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
+			ge.ViewFile(core.Filename(ld.Filename))
 			d.Close()
 		})
-		gi.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
+		core.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
 			OnClick(func(e events.Event) {
 				d.Clipboard().Write(mimedata.NewTextBytes(txt))
 			})
@@ -118,7 +118,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 }
 
 // ReplaceInActive does query-replace in active file only
-func (ge *CodeView) ReplaceInActive() { //gti:add
+func (ge *CodeView) ReplaceInActive() { //types:add
 	tv := ge.ActiveTextEditor()
 	tv.QReplacePrompt()
 }
@@ -127,7 +127,7 @@ func (ge *CodeView) ReplaceInActive() { //gti:add
 //    Rects, Registers
 
 // CutRect cuts rectangle in active text view
-func (ge *CodeView) CutRect() { //gti:add
+func (ge *CodeView) CutRect() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -136,7 +136,7 @@ func (ge *CodeView) CutRect() { //gti:add
 }
 
 // CopyRect copies rectangle in active text view
-func (ge *CodeView) CopyRect() { //gti:add
+func (ge *CodeView) CopyRect() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -145,7 +145,7 @@ func (ge *CodeView) CopyRect() { //gti:add
 }
 
 // PasteRect cuts rectangle in active text view
-func (ge *CodeView) PasteRect() { //gti:add
+func (ge *CodeView) PasteRect() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -155,7 +155,7 @@ func (ge *CodeView) PasteRect() { //gti:add
 
 // RegisterCopy saves current selection in active text view to register of given name
 // returns true if saved
-func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
+func (ge *CodeView) RegisterCopy(name string) bool { //types:add
 	if name == "" {
 		return false
 	}
@@ -179,7 +179,7 @@ func (ge *CodeView) RegisterCopy(name string) bool { //gti:add
 
 // RegisterPaste pastes register of given name into active text view
 // returns true if pasted
-func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
+func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //types:add
 	if name == "" {
 		return false
 	}
@@ -199,7 +199,7 @@ func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //gti:add
 // CommentOut comments-out selected lines in active text view
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
-func (ge *CodeView) CommentOut() bool { //gti:add
+func (ge *CodeView) CommentOut() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
@@ -219,7 +219,7 @@ func (ge *CodeView) CommentOut() bool { //gti:add
 }
 
 // Indent indents selected lines in active view
-func (ge *CodeView) Indent() bool { //gti:add
+func (ge *CodeView) Indent() bool { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
@@ -234,7 +234,7 @@ func (ge *CodeView) Indent() bool { //gti:add
 }
 
 // ReCase replaces currently selected text in current active view with given case
-func (ge *CodeView) ReCase(c strcase.Cases) string { //gti:add
+func (ge *CodeView) ReCase(c strcase.Cases) string { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return ""
@@ -245,7 +245,7 @@ func (ge *CodeView) ReCase(c strcase.Cases) string { //gti:add
 // JoinParaLines merges sequences of lines with hard returns forming paragraphs,
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
-func (ge *CodeView) JoinParaLines() { //gti:add
+func (ge *CodeView) JoinParaLines() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -259,7 +259,7 @@ func (ge *CodeView) JoinParaLines() { //gti:add
 
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
-func (ge *CodeView) TabsToSpaces() { //gti:add
+func (ge *CodeView) TabsToSpaces() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -273,7 +273,7 @@ func (ge *CodeView) TabsToSpaces() { //gti:add
 
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
-func (ge *CodeView) SpacesToTabs() { //gti:add
+func (ge *CodeView) SpacesToTabs() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
@@ -288,7 +288,7 @@ func (ge *CodeView) SpacesToTabs() { //gti:add
 // DiffFiles shows the differences between two given files
 // in side-by-side DiffView and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
-func (ge *CodeView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
+func (ge *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //types:add
 	fna := ge.FileNodeForFile(string(fnmA), true)
 	if fna == nil {
 		return
@@ -305,7 +305,7 @@ func (ge *CodeView) DiffFiles(fnmA, fnmB gi.Filename) { //gti:add
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffView and in the console as a context diff.
-func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:add
+func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:add
 	fnb := ge.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
 		return
@@ -330,7 +330,7 @@ func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB gi.Filename) { //gti:a
 
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
-func (ge *CodeView) CountWords() string { //gti:add
+func (ge *CodeView) CountWords() string { //types:add
 	av := ge.ActiveTextEditor()
 	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"
@@ -345,7 +345,7 @@ func (ge *CodeView) CountWords() string { //gti:add
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
-func (ge *CodeView) CountWordsRegion() string { //gti:add
+func (ge *CodeView) CountWordsRegion() string { //types:add
 	av := ge.ActiveTextEditor()
 	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"
@@ -368,7 +368,7 @@ func (ge *CodeView) CountWordsRegion() string { //gti:add
 func TextLinkHandler(tl paint.TextLink) bool {
 	// todo:
 	// tve := texteditor.AsEditor(tl.Widget)
-	// ftv, _ := tl.Widget.Embed(giv.KiT_TextEditor).(*texteditor.Editor)
+	// ftv, _ := tl.Widget.Embed(views.KiT_TextEditor).(*texteditor.Editor)
 	// gek := tl.Widget.ParentByType(KiT_CodeView, true)
 	// if gek != nil {
 	// 	ge := gek.Embed(KiT_CodeView).(*CodeView)
@@ -380,10 +380,10 @@ func TextLinkHandler(tl paint.TextLink) bool {
 	// 	case strings.HasPrefix(ur, "file:///"):
 	// 		ge.OpenFileURL(ur, ftv)
 	// 	default:
-	// 		goosi.TheApp.OpenURL(ur)
+	// 		system.TheApp.OpenURL(ur)
 	// 	}
 	// } else {
-	// 	goosi.TheApp.OpenURL(tl.URL)
+	// 	system.TheApp.OpenURL(tl.URL)
 	// }
 	return true
 }
@@ -416,12 +416,12 @@ func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		}
 	}
 	pos := up.Fragment
-	tv, _, ok := ge.LinkViewFile(gi.Filename(fpath))
+	tv, _, ok := ge.LinkViewFile(core.Filename(fpath))
 	if !ok {
 		_, fnm := filepath.Split(fpath)
-		tv, _, ok = ge.LinkViewFile(gi.Filename(fnm))
+		tv, _, ok = ge.LinkViewFile(core.Filename(fnm))
 		if !ok {
-			gi.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
+			core.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 			return false
 		}
 	}
@@ -429,9 +429,9 @@ func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		return true
 	}
 	// fmt.Printf("pos: %v\n", pos)
-	txpos := lex.Pos{}
+	txpos := lexer.Pos{}
 	if txpos.FromString(pos) {
-		reg := textbuf.Region{Start: txpos, End: lex.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		reg := textbuf.Region{Start: txpos, End: lexer.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start

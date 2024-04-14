@@ -9,17 +9,17 @@ package main
 import (
 	"time"
 
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
-	"cogentcore.org/core/glop/datasize"
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/gox/datasize"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/views"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
 
-type Task struct { //gti:add
+type Task struct { //types:add
 	*process.Process `view:"-"`
 
 	// The name of this task
@@ -45,10 +45,10 @@ type Task struct { //gti:add
 }
 
 func main() {
-	b := gi.NewBody("Cogent Task Manager")
+	b := core.NewBody("Cogent Task Manager")
 
 	ts := getTasks(b)
-	tv := giv.NewTableView(b)
+	tv := views.NewTableView(b)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&ts)
 	tv.SortSliceAction(1)
@@ -56,8 +56,8 @@ func main() {
 
 	tv.OnDoubleClick(func(e events.Event) {
 		t := ts[tv.SelectedIndex]
-		d := gi.NewBody().AddTitle("Task info")
-		giv.NewStructView(d).SetStruct(&t).SetReadOnly(true)
+		d := core.NewBody().AddTitle("Task info")
+		views.NewStructView(d).SetStruct(&t).SetReadOnly(true)
 		d.AddOKOnly().NewDialog(b).Run()
 	})
 
@@ -79,14 +79,14 @@ func main() {
 		}()
 	})
 
-	b.AddAppBar(func(tb *gi.Toolbar) {
-		gi.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
+	b.AddAppBar(func(tb *core.Toolbar) {
+		core.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
 			SetTooltip("Stop the currently selected task").
 			OnClick(func(e events.Event) {
 				t := ts[tv.SelectedIndex]
-				gi.ErrorSnackbar(tv, t.Kill(), "Error ending task")
+				core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
 			})
-		pause := gi.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
+		pause := core.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
 			SetTooltip("Stop updating the list of tasks")
 		pause.OnClick(func(e events.Event) {
 			paused = !paused
@@ -104,22 +104,22 @@ func main() {
 	b.RunMainWindow()
 }
 
-func getTasks(b *gi.Body) []*Task {
+func getTasks(b *core.Body) []*Task {
 	ps, err := process.Processes()
-	gi.ErrorDialog(b, err, "Error getting system processes")
+	core.ErrorDialog(b, err, "Error getting system processes")
 
 	ts := make([]*Task, len(ps))
 	for i, p := range ps {
 		t := &Task{
 			Process: p,
-			Name:    grr.Ignore1(p.Name()),
-			CPU:     grr.Ignore1(p.CPUPercent()),
-			RAMPct:  grr.Ignore1(p.MemoryPercent()),
-			Threads: grr.Ignore1(p.NumThreads()),
-			User:    grr.Ignore1(p.Username()),
+			Name:    errors.Ignore1(p.Name()),
+			CPU:     errors.Ignore1(p.CPUPercent()),
+			RAMPct:  errors.Ignore1(p.MemoryPercent()),
+			Threads: errors.Ignore1(p.NumThreads()),
+			User:    errors.Ignore1(p.Username()),
 			PID:     p.Pid,
 		}
-		mi := grr.Ignore1(p.MemoryInfo())
+		mi := errors.Ignore1(p.MemoryInfo())
 		if mi != nil {
 			t.RAM = datasize.Size(mi.RSS)
 		}

@@ -8,19 +8,19 @@ import (
 	"strings"
 
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/pi/lex"
+	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/views"
 )
 
 // SpellView is a widget that displays results of spell check
 type SpellView struct {
-	gi.Layout
+	core.Layout
 
 	// parent code project
 	Code Code `json:"-" xml:"-" copier:"-"`
@@ -29,7 +29,7 @@ type SpellView struct {
 	Text *TextEditor `json:"-" xml:"-" copier:"-"`
 
 	// current spelling errors
-	Errs lex.Line
+	Errs lexer.Line
 
 	// current line in text we're on
 	CurLn int
@@ -38,7 +38,7 @@ type SpellView struct {
 	CurIndex int
 
 	// current unknown lex token
-	UnkLex lex.Lex
+	UnkLex lexer.Lex
 
 	// current unknown word
 	UnkWord string
@@ -47,7 +47,7 @@ type SpellView struct {
 	Suggest []string
 
 	// last user action (ignore, change, learn)
-	LastAction *gi.Button
+	LastAction *core.Button
 }
 
 // SpellAction runs a new spell check with current params
@@ -78,68 +78,68 @@ func (sv *SpellView) ConfigSpellView(ge Code, atv *TextEditor) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	gi.NewToolbar(sv, "spellbar")
-	gi.NewToolbar(sv, "unknownbar")
-	gi.NewToolbar(sv, "changebar")
-	giv.NewSliceView(sv, "suggest")
+	core.NewToolbar(sv, "spellbar")
+	core.NewToolbar(sv, "unknownbar")
+	core.NewToolbar(sv, "changebar")
+	views.NewSliceView(sv, "suggest")
 	sv.ConfigToolbar()
 	texteditor.InitSpell()
 	sv.CheckNext()
 }
 
 // SpellBar returns the spell toolbar
-func (sv *SpellView) SpellBar() *gi.Toolbar {
-	return sv.ChildByName("spellbar", 0).(*gi.Toolbar)
+func (sv *SpellView) SpellBar() *core.Toolbar {
+	return sv.ChildByName("spellbar", 0).(*core.Toolbar)
 }
 
 // UnknownBar returns the toolbar that displays the unknown word
-func (sv *SpellView) UnknownBar() *gi.Toolbar {
-	return sv.ChildByName("unknownbar", 0).(*gi.Toolbar)
+func (sv *SpellView) UnknownBar() *core.Toolbar {
+	return sv.ChildByName("unknownbar", 0).(*core.Toolbar)
 }
 
 // ChangeBar returns the suggest toolbar
-func (sv *SpellView) ChangeBar() *gi.Toolbar {
-	return sv.ChildByName("changebar", 0).(*gi.Toolbar)
+func (sv *SpellView) ChangeBar() *core.Toolbar {
+	return sv.ChildByName("changebar", 0).(*core.Toolbar)
 }
 
 // ChangeAct returns the spell change action from toolbar
-func (sv *SpellView) ChangeAct() *gi.Button {
-	return sv.ChangeBar().ChildByName("change", 3).(*gi.Button)
+func (sv *SpellView) ChangeAct() *core.Button {
+	return sv.ChangeBar().ChildByName("change", 3).(*core.Button)
 }
 
 // ChangeAllAct returns the spell change action from toolbar
-func (sv *SpellView) ChangeAllAct() *gi.Button {
-	return sv.ChangeBar().ChildByName("change-all", 3).(*gi.Button)
+func (sv *SpellView) ChangeAllAct() *core.Button {
+	return sv.ChangeBar().ChildByName("change-all", 3).(*core.Button)
 }
 
 // SkipAct returns the skip action from toolbar
-func (sv *SpellView) SkipAct() *gi.Button {
-	return sv.UnknownBar().ChildByName("skip", 3).(*gi.Button)
+func (sv *SpellView) SkipAct() *core.Button {
+	return sv.UnknownBar().ChildByName("skip", 3).(*core.Button)
 }
 
 // IgnoreAct returns the ignore action from toolbar
-func (sv *SpellView) IgnoreAct() *gi.Button {
-	return sv.UnknownBar().ChildByName("ignore", 3).(*gi.Button)
+func (sv *SpellView) IgnoreAct() *core.Button {
+	return sv.UnknownBar().ChildByName("ignore", 3).(*core.Button)
 }
 
 // LearnAct returns the learn action from toolbar
-func (sv *SpellView) LearnAct() *gi.Button {
-	return sv.UnknownBar().ChildByName("learn", 3).(*gi.Button)
+func (sv *SpellView) LearnAct() *core.Button {
+	return sv.UnknownBar().ChildByName("learn", 3).(*core.Button)
 }
 
 // UnknownText returns the unknown word textfield from toolbar
-func (sv *SpellView) UnknownText() *gi.TextField {
-	return sv.UnknownBar().ChildByName("unknown-str", 1).(*gi.TextField)
+func (sv *SpellView) UnknownText() *core.TextField {
+	return sv.UnknownBar().ChildByName("unknown-str", 1).(*core.TextField)
 }
 
 // ChangeText returns the unknown word textfield from toolbar
-func (sv *SpellView) ChangeText() *gi.TextField {
-	return sv.ChangeBar().ChildByName("change-str", 1).(*gi.TextField)
+func (sv *SpellView) ChangeText() *core.TextField {
+	return sv.ChangeBar().ChildByName("change-str", 1).(*core.TextField)
 }
 
 // SuggestView returns the view for the list of suggestions
-func (sv *SpellView) SuggestView() *giv.SliceView {
-	return sv.ChildByName("suggest", 1).(*giv.SliceView)
+func (sv *SpellView) SuggestView() *views.SliceView {
+	return sv.ChildByName("suggest", 1).(*views.SliceView)
 }
 
 // ConfigToolbar adds toolbar.
@@ -149,13 +149,13 @@ func (sv *SpellView) ConfigToolbar() {
 	chgbar := sv.ChangeBar()
 
 	// spell toolbar
-	gi.NewButton(spbar).SetText("Check Current File").
+	core.NewButton(spbar).SetText("Check Current File").
 		SetTooltip("spell check the current file").
 		OnClick(func(e events.Event) {
 			sv.SpellAction()
 		})
 
-	gi.NewButton(spbar).SetText("Train").
+	core.NewButton(spbar).SetText("Train").
 		SetTooltip("add additional text to the training corpus").
 		OnClick(func(e events.Event) {
 			sv.TrainAction()
@@ -165,38 +165,38 @@ func (sv *SpellView) ConfigToolbar() {
 
 	// unknown toolbar
 
-	gi.NewTextField(unknbar, "unknown-str").SetTooltip("Unknown word")
+	core.NewTextField(unknbar, "unknown-str").SetTooltip("Unknown word")
 	tf := sv.UnknownText()
 	if tf != nil {
 		tf.SetReadOnly(true)
 	}
 
-	gi.NewButton(unknbar, "skip").SetText("Skip").
+	core.NewButton(unknbar, "skip").SetText("Skip").
 		OnClick(func(e events.Event) {
 			sv.SkipAction()
 		})
 
-	gi.NewButton(unknbar, "ignore").SetText("Ignore").
+	core.NewButton(unknbar, "ignore").SetText("Ignore").
 		OnClick(func(e events.Event) {
 			sv.IgnoreAction()
 		})
 
-	gi.NewButton(unknbar, "learn").SetText("Learn").
+	core.NewButton(unknbar, "learn").SetText("Learn").
 		OnClick(func(e events.Event) {
 			sv.LearnAction()
 		})
 
 	// change toolbar
-	gi.NewTextField(chgbar, "change-str").
+	core.NewTextField(chgbar, "change-str").
 		SetTooltip("This string will replace the unknown word in text")
 
-	gi.NewButton(chgbar, "change").SetText("Change").
+	core.NewButton(chgbar, "change").SetText("Change").
 		SetTooltip("change the unknown word to the selected suggestion").
 		OnClick(func(e events.Event) {
 			sv.ChangeAction()
 		})
 
-	gi.NewButton(chgbar, "change-all").SetText("Change All").
+	core.NewButton(chgbar, "change-all").SetText("Change All").
 		SetTooltip("change all instances of the unknown word in this document").
 		OnClick(func(e events.Event) {
 			sv.ChangeAllAction()
@@ -206,10 +206,10 @@ func (sv *SpellView) ConfigToolbar() {
 	suggest := sv.SuggestView()
 	sv.Suggest = []string{"                                              "}
 	suggest.SetReadOnly(true)
-	suggest.SetProp("index", false)
+	suggest.SetProperty("index", false)
 	suggest.SetSlice(&sv.Suggest)
-	// suggest.SliceViewSig.Connect(suggest, func(recv, send ki.Ki, sig int64, data any) {
-	// 	svv := recv.Embed(giv.KiT_SliceView).(*giv.SliceView)
+	// suggest.SliceViewSig.Connect(suggest, func(recv, send tree.Node, sig int64, data any) {
+	// 	svv := recv.Embed(views.KiT_SliceView).(*views.SliceView)
 	// 	idx := svv.SelectedIndex
 	// 	if idx >= 0 && idx < len(sv.Suggest) {
 	// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIndex])
@@ -249,7 +249,7 @@ func (sv *SpellView) CheckNext() {
 	}
 	if done {
 		tv.ClearHighlights()
-		gi.MessageSnackbar(sv, "End of file, spelling check complete")
+		core.MessageSnackbar(sv, "End of file, spelling check complete")
 		return
 	}
 	sv.UnkLex = sv.Errs[sv.CurIndex]
@@ -324,15 +324,15 @@ func (sv *SpellView) ChangeAllAction() {
 // TrainAction allows you to train on additional text files and also to rebuild the spell model
 func (sv *SpellView) TrainAction() {
 	cur := ""
-	d := gi.NewBody().AddTitle("Select a Text File to Add to Corpus")
-	fv := giv.NewFileView(d).SetFilename(cur, ".txt")
+	d := core.NewBody().AddTitle("Select a Text File to Add to Corpus")
+	fv := views.NewFileView(d).SetFilename(cur, ".txt")
 	fv.OnSelect(func(e events.Event) {
 		cur = fv.SelectedFile()
 	}).OnDoubleClick(func(e events.Event) {
 		cur = fv.SelectedFile()
 		d.Close()
 	})
-	d.AddBottomBar(func(parent gi.Widget) {
+	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
 			texteditor.AddToSpellModel(cur)
@@ -342,14 +342,14 @@ func (sv *SpellView) TrainAction() {
 }
 
 // UnkStartPos returns the start position of the current unknown word
-func (sv *SpellView) UnkStartPos() lex.Pos {
-	pos := lex.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
+func (sv *SpellView) UnkStartPos() lexer.Pos {
+	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
 	return pos
 }
 
 // UnkEndPos returns the end position of the current unknown word
-func (sv *SpellView) UnkEndPos() lex.Pos {
-	pos := lex.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
+func (sv *SpellView) UnkEndPos() lexer.Pos {
+	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
 	return pos
 }
 

@@ -8,19 +8,19 @@ import (
 	"fmt"
 
 	"cogentcore.org/core/colors"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
-	"cogentcore.org/core/laser"
+	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/units"
+	"cogentcore.org/core/views"
 )
 
 // PaintView provides editing of basic Stroke and Fill painting parameters
 // for selected items
 type PaintView struct {
-	gi.Layout
+	core.Layout
 
 	// paint type for stroke
 	StrokeType PaintTypes
@@ -105,11 +105,11 @@ func (vv *VectorView) SetColorNode(sii svg.Node, prop string, prev, pt PaintType
 	// 	svg.UpdateNodeGradientProp(sii, prop, true, sp)
 	default:
 		if prev == PaintLinear || prev == PaintRadial {
-			pstr := laser.ToString(sii.Prop(prop))
+			pstr := reflectx.ToString(sii.Property(prop))
 			_ = pstr
 			// svg.DeleteNodeGradient(sii, pstr)
 		}
-		sii.AsNodeBase().SetColorProps(prop, sp)
+		sii.AsNodeBase().SetColorProperties(prop, sp)
 	}
 	vv.UpdateMarkerColors(sii)
 }
@@ -138,7 +138,7 @@ func (vv *VectorView) SetStrokeWidthNode(sii svg.Node, wp string) {
 	}
 	g := sii.AsNodeBase()
 	if g.Paint.StrokeStyle.Color != nil {
-		g.SetProp("stroke-width", wp)
+		g.SetProperty("stroke-width", wp)
 	}
 }
 
@@ -169,9 +169,9 @@ func (vv *VectorView) SetStrokeWidth(wp string, manip bool) {
 func (vv *VectorView) SetStrokeColor(sp string, manip bool) {
 	vv.ManipAction("SetStrokeColor", sp, manip,
 		func(itm svg.Node) {
-			p := itm.Prop("stroke")
+			p := itm.Property("stroke")
 			if p != nil {
-				itm.AsNodeBase().SetColorProps("stroke", sp)
+				itm.AsNodeBase().SetColorProperties("stroke", sp)
 				vv.UpdateMarkerColors(itm)
 			}
 		})
@@ -191,11 +191,11 @@ func (vv *VectorView) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc
 	MarkerSetProp(sv.SSVG(), sii, "marker-end", end, ec)
 }
 
-// SetMarkerProps sets the marker props
-func (vv *VectorView) SetMarkerProps(start, mid, end string, sc, mc, ec MarkerColors) {
+// SetMarkerProperties sets the marker properties
+func (vv *VectorView) SetMarkerProperties(start, mid, end string, sc, mc, ec MarkerColors) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	sv.UndoSave("SetMarkerProps", start+" "+mid+" "+end)
+	sv.UndoSave("SetMarkerProperties", start+" "+mid+" "+end)
 	// updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
@@ -226,20 +226,20 @@ func (vv *VectorView) SetDashNode(sii svg.Node, dary []float64) {
 		return
 	}
 	if len(dary) == 0 {
-		sii.DeleteProp("stroke-dasharray")
+		sii.DeleteProperty("stroke-dasharray")
 		return
 	}
 	g := sii.AsNodeBase()
 	mary := DashMulWidth(float64(g.Paint.StrokeStyle.Width.Dots), dary)
 	ds := DashString(mary)
-	sii.SetProp("stroke-dasharray", ds)
+	sii.SetProperty("stroke-dasharray", ds)
 }
 
-// SetDashProps sets the dash props
-func (vv *VectorView) SetDashProps(dary []float64) {
+// SetDashProperties sets the dash properties
+func (vv *VectorView) SetDashProperties(dary []float64) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	sv.UndoSave("SetDashProps", "")
+	sv.UndoSave("SetDashProperties", "")
 	// updt := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
@@ -249,7 +249,7 @@ func (vv *VectorView) SetDashProps(dary []float64) {
 	vv.ChangeMade()
 }
 
-// SetFill sets the fill props of selected items
+// SetFill sets the fill properties of selected items
 // based on previous and current PaintType
 func (vv *VectorView) SetFill(prev, pt PaintTypes, fp string) {
 	es := &vv.EditState
@@ -269,9 +269,9 @@ func (vv *VectorView) SetFill(prev, pt PaintTypes, fp string) {
 func (vv *VectorView) SetFillColor(fp string, manip bool) {
 	vv.ManipAction("SetFillColor", fp, manip,
 		func(itm svg.Node) {
-			p := itm.Prop("fill")
+			p := itm.Property("fill")
 			if p != nil {
-				itm.AsNodeBase().SetColorProps("fill", fp)
+				itm.AsNodeBase().SetColorProperties("fill", fp)
 				vv.UpdateMarkerColors(itm)
 			}
 		})
@@ -301,9 +301,9 @@ func (vv *VectorView) UpdateGradients() {
 //  PaintView
 
 // Update updates the current settings based on the values in the given Paint and
-// props from node (node can be nil)
+// properties from node (node can be nil)
 /*
-func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
+func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	updt := pv.UpdateStart()
 	defer pv.UpdateEnd(updt)
 
@@ -313,7 +313,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 
-	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-type", 1).(*gi.ButtonBox)
+	spt := pv.ChildByName("stroke-lab", 0).ChildByName("stroke-type", 1).(*core.ButtonBox)
 	spt.SelectItem(int(pv.StrokeType))
 
 	ss := pv.StrokeStack()
@@ -324,14 +324,14 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 1
-		sc := ss.ChildByName("stroke-clr", 1).(*giv.ColorView)
+		sc := ss.ChildByName("stroke-clr", 1).(*views.ColorView)
 		sc.SetColor(pc.StrokeStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if ss.StackTop != 2 {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 2
-		sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
+		sg := ss.ChildByName("stroke-grad", 1).(*views.TableView)
 		sg.SetSlice(grl)
 		pv.SelectStrokeGrad()
 	default:
@@ -342,12 +342,12 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 	}
 
 	wr := pv.ChildByName("stroke-width", 2)
-	wsb := wr.ChildByName("width", 1).(*gi.Spinner)
+	wsb := wr.ChildByName("width", 1).(*core.Spinner)
 	wsb.SetValue(pc.StrokeStyle.Width.Val)
-	uncb := wr.ChildByName("width-units", 2).(*gi.Chooser)
+	uncb := wr.ChildByName("width-units", 2).(*core.Chooser)
 	uncb.SetCurrentIndex(int(pc.StrokeStyle.Width.Un))
 
-	dshcb := wr.ChildByName("dashes", 3).(*gi.Chooser)
+	dshcb := wr.ChildByName("dashes", 3).(*core.Chooser)
 	nwdsh, dnm := DashMatchArray(float64(pc.StrokeStyle.Width.Dots), pc.StrokeStyle.Dashes)
 	if nwdsh {
 		dshcb.ItemsFromIconList(AllDashIconNames, false, 0)
@@ -357,8 +357,8 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 	mkr := pv.ChildByName("stroke-markers", 3)
 
 	ms, _, mc := MarkerFromNodeProp(kn, "marker-start")
-	mscb := mkr.ChildByName("marker-start", 0).(*gi.Chooser)
-	mscc := mkr.ChildByName("marker-start-color", 1).(*gi.Chooser)
+	mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
+	mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
 	if ms != "" {
 		mscb.SetCurVal(MarkerNameToIcon(ms))
 		mscc.SetCurrentIndex(int(mc))
@@ -367,8 +367,8 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 		mscc.SetCurrentIndex(0)
 	}
 	ms, _, mc = MarkerFromNodeProp(kn, "marker-mid")
-	mmcb := mkr.ChildByName("marker-mid", 2).(*gi.Chooser)
-	mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.Chooser)
+	mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
+	mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
 	if ms != "" {
 		mmcb.SetCurVal(MarkerNameToIcon(ms))
 		mmcc.SetCurrentIndex(int(mc))
@@ -377,8 +377,8 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 		mmcc.SetCurrentIndex(0)
 	}
 	ms, _, mc = MarkerFromNodeProp(kn, "marker-end")
-	mecb := mkr.ChildByName("marker-end", 4).(*gi.Chooser)
-	mecc := mkr.ChildByName("marker-end-color", 5).(*gi.Chooser)
+	mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
+	mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
 	if ms != "" {
 		mecb.SetCurVal(MarkerNameToIcon(ms))
 		mecc.SetCurrentIndex(int(mc))
@@ -387,7 +387,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 		mecc.SetCurrentIndex(0)
 	}
 
-	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*gi.ButtonBox)
+	fpt := pv.ChildByName("fill-lab", 0).ChildByName("fill-type", 1).(*core.ButtonBox)
 	fpt.SelectItem(int(pv.FillType))
 
 	fs := pv.FillStack()
@@ -398,14 +398,14 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 1
-		fc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
+		fc := fs.ChildByName("fill-clr", 1).(*views.ColorView)
 		fc.SetColor(pc.FillStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if fs.StackTop != 2 {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 2
-		fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
+		fg := fs.ChildByName("fill-grad", 1).(*views.TableView)
 		if fg.Slice != grl {
 			pv.SetFullReRender()
 		}
@@ -422,7 +422,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn ki.Ki) {
 
 /*
 // GradStopsName returns the stopsname for gradient from url
-func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
+func (pv *PaintView) GradStopsName(gii core.Node2D, url string) string {
 	gr := svg.GradientByName(gii, url)
 	if gr == nil {
 		return ""
@@ -435,14 +435,14 @@ func (pv *PaintView) GradStopsName(gii gi.Node2D, url string) string {
 */
 
 /*
-// DecodeType decodes the paint type from paint and props
+// DecodeType decodes the paint type from paint and properties
 // also returns the name of the gradient if using one.
-func (pv *PaintView) DecodeType(kn ki.Ki, cs *style.ColorSpec, prop string) (PaintTypes, string) {
+func (pv *PaintView) DecodeType(kn tree.Node, cs *style.ColorSpec, prop string) (PaintTypes, string) {
 	pstr := ""
-	var gii gi.Node2D
+	var gii core.Node2D
 	if kn != nil {
-		pstr = laser.ToString(kn.Prop(prop))
-		gii = kn.(gi.Node2D)
+		pstr = reflectx.ToString(kn.Prop(prop))
+		gii = kn.(core.Node2D)
 	}
 	ptyp := PaintSolid
 	grnm := ""
@@ -479,7 +479,7 @@ func (pv *PaintView) SelectStrokeGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	ss := pv.StrokeStack()
-	sg := ss.ChildByName("stroke-grad", 1).(*giv.TableView)
+	sg := ss.ChildByName("stroke-grad", 1).(*views.TableView)
 	sg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.StrokeStops {
@@ -493,7 +493,7 @@ func (pv *PaintView) SelectFillGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	fs := pv.FillStack()
-	fg := fs.ChildByName("fill-grad", 1).(*giv.TableView)
+	fg := fs.ChildByName("fill-grad", 1).(*views.TableView)
 	fg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.FillStops {
@@ -519,18 +519,18 @@ func (pv *PaintView) Config() {
 
 	sty := &Settings.ShapeStyle
 
-	spl := gi.NewLayout(pv, "stroke-lab")
-	gi.NewLabel(spl).SetText("<b>Stroke Paint:  </b>")
-	spt := gi.NewChooser(spl) // .SetStrings(PaintTypeNames)
+	spl := core.NewLayout(pv, "stroke-lab")
+	core.NewLabel(spl).SetText("<b>Stroke Paint:  </b>")
+	spt := core.NewChooser(spl) // .SetStrings(PaintTypeNames)
 	spt.SelectItem(int(pv.StrokeType))
 	// spt.Mutex = true
 
-	wr := gi.NewLayout(pv, "stroke-width")
-	gi.NewLabel(wr).SetText("Width:  ").Style(func(s *styles.Style) {
+	wr := core.NewLayout(pv, "stroke-width")
+	core.NewLabel(wr).SetText("Width:  ").Style(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 	})
 
-	gi.NewSpinner(wr, "width").SetMin(0).SetStep(0.05).
+	core.NewSpinner(wr, "width").SetMin(0).SetStep(0.05).
 		SetValue(sty.StrokeStyle.Width.Value).OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
 			pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)
@@ -538,90 +538,90 @@ func (pv *PaintView) Config() {
 	})
 
 	// uncb.SetCurrentIndex(int(Settings.Size.Units))
-	gi.NewChooser(wr, "width-units").SetEnum(units.UnitsN).OnChange(func(e events.Event) {
+	core.NewChooser(wr, "width-units").SetEnum(units.UnitsN).OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
 			pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)
 		}
 	})
 
-	gi.NewSpace(wr, "sp1").Style(func(s *styles.Style) {
+	core.NewSpace(wr, "sp1").Style(func(s *styles.Style) {
 		s.Min.X.Ch(5)
 	})
 
-	dshcb := gi.NewChooser(wr, "dashes")
+	dshcb := core.NewChooser(wr, "dashes")
 	// dshcb.ItemsFromIconList(AllDashIconNames, true, 0)
 	// dshcb.SetProp("width", units.NewCh(15))
 	dshcb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetDashProps(pv.StrokeDashProp())
+			pv.VectorView.SetDashProperties(pv.StrokeDashProp())
 		}
 	})
 
-	mkr := gi.NewLayout(pv, "stroke-markers")
+	mkr := core.NewLayout(pv, "stroke-markers")
 
-	mscb := gi.NewChooser(mkr, "marker-start")
+	mscb := core.NewChooser(mkr, "marker-start")
 	// mscb.SetProp("width", units.NewCh(20))
 	// mscb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mscb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
-	mscc := gi.NewChooser(mkr, "marker-start-color").SetEnum(MarkerColorsN)
+	mscc := core.NewChooser(mkr, "marker-start-color").SetEnum(MarkerColorsN)
 	// mscc.SetProp("width", units.NewCh(5))
 	mscc.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 
-	gi.NewSeparator(mkr)
+	core.NewSeparator(mkr)
 
-	mmcb := gi.NewChooser(mkr, "marker-mid")
+	mmcb := core.NewChooser(mkr, "marker-mid")
 	// mmcb.SetProp("width", units.NewCh(20))
 	// mmcb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mmcb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
-	mmcc := gi.NewChooser(mkr, "marker-mid-color").SetEnum(MarkerColorsN)
+	mmcc := core.NewChooser(mkr, "marker-mid-color").SetEnum(MarkerColorsN)
 	// mmcc.SetProp("width", units.NewCh(5))
 	mmcc.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 
-	gi.NewSeparator(mkr)
+	core.NewSeparator(mkr)
 
-	mecb := gi.NewChooser(mkr, "marker-end")
+	mecb := core.NewChooser(mkr, "marker-end")
 	// mecb.SetProp("width", units.NewCh(20))
 	// mecb.ItemsFromIconList(AllMarkerIconNames, true, 0)
 	mecb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
-	mecc := gi.NewChooser(mkr, "marker-end-color").SetEnum(MarkerColorsN)
+	mecc := core.NewChooser(mkr, "marker-end-color").SetEnum(MarkerColorsN)
 	// mecc.SetProp("width", units.NewCh(5))
 	mecc.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProps(pv.MarkerProps())
+			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
 		}
 	})
 
 	////////////////////////////////
 	// stroke stack
 
-	ss := gi.NewFrame(pv, "stroke-stack")
+	ss := core.NewFrame(pv, "stroke-stack")
 	ss.Styles.Display = styles.Stacked
 	ss.StackTop = 1
 	// ss.StackTopOnly = true
 
-	gi.NewFrame(ss, "stroke-blank") // nothing
+	core.NewFrame(ss, "stroke-blank") // nothing
 
-	// spt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// spt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
 	// 	sss := pvv.StrokeStack()
 	// 	prev := pv.StrokeType
@@ -646,28 +646,28 @@ func (pv *PaintView) Config() {
 	// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
 	// })
 
-	giv.NewColorView(ss, "stroke-clr")
+	views.NewColorView(ss, "stroke-clr")
 	// sc.SetProp("vertical-align", styles.AlignTop)
 	// sc.SetColor(sty.StrokeStyle.Color)
-	// sc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// sc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.StrokeType == PaintSolid {
 	// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), false) // not manip
 	// 	}
 	// })
-	// sc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// sc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.StrokeType == PaintSolid {
 	// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), true) // manip
 	// 	}
 	// })
 
-	sg := giv.NewTableView(ss, "stroke-grad")
+	sg := views.NewTableView(ss, "stroke-grad")
 	// sg.SetProp("index", true)
 	// sg.SetProp("toolbar", true)
 	// sg.SelectedIndex = -1
 	sg.SetSlice(&pv.VectorView.EditState.Gradients)
-	// sg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
-	// 	if sig == int64(gi.WidgetSelected) {
-	// 		svv, _ := send.(*giv.TableView)
+	// sg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// 	if sig == int64(core.WidgetSelected) {
+	// 		svv, _ := send.(*views.TableView)
 	// 		if svv.SelectedIndex >= 0 {
 	// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 	// 			pv.VectorView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
@@ -675,23 +675,23 @@ func (pv *PaintView) Config() {
 	// 	}
 	// })
 
-	gi.NewSeparator(pv)
+	core.NewSeparator(pv)
 
-	fpl := gi.NewLayout(pv, "fill-lab")
-	gi.NewLabel(fpl).SetText("<b>Fill Paint:  </b>")
+	fpl := core.NewLayout(pv, "fill-lab")
+	core.NewLabel(fpl).SetText("<b>Fill Paint:  </b>")
 
-	fpt := gi.NewChooser(fpl, "fill-type").SetEnum(PaintTypesN)
+	fpt := core.NewChooser(fpl, "fill-type").SetEnum(PaintTypesN)
 	fpt.SelectItem(int(pv.FillType))
 	// fpt.Mutex = true
 
-	fs := gi.NewFrame(pv, "fill-stack")
+	fs := core.NewFrame(pv, "fill-stack")
 	fs.Styles.Display = styles.Stacked
 	fs.StackTop = 1
 	// fs.StackTopOnly = true
 
-	gi.NewFrame(fs, "fill-blank")
+	core.NewFrame(fs, "fill-blank")
 
-	// fpt.ButtonSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fpt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
 	// 	fss := pvv.FillStack()
 	// 	prev := pvv.FillType
@@ -716,60 +716,60 @@ func (pv *PaintView) Config() {
 	// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
 	// })
 
-	giv.NewColorView(fs, "fill-clr").SetColor(colors.Scheme.Primary.Base)
+	views.NewColorView(fs, "fill-clr").SetColor(colors.Scheme.Primary.Base)
 	// fc.SetProp("vertical-align", styles.AlignTop)
 	// fc.Config()
 	// fc.SetColor(sty.FillStyle.Color.Color)
-	// fc.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.FillType == PaintSolid {
 	// 		pv.VectorView.SetFillColor(pv.FillProp(), false)
 	// 	}
 	// })
-	// fc.ManipSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	if pv.FillType == PaintSolid {
 	// 		pv.VectorView.SetFillColor(pv.FillProp(), true) // manip
 	// 	}
 	// })
 
-	fg := giv.NewTableView(fs, "fill-grad")
+	fg := views.NewTableView(fs, "fill-grad")
 	// fg.SetProp("index", true)
 	// fg.SetProp("toolbar", true)
 	// fg.SelectedIndex = -1
 	fg.SetSlice(&pv.VectorView.EditState.Gradients)
-	// fg.WidgetSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
-	// 	if sig == int64(gi.WidgetSelected) {
-	// 		svv, _ := send.(*giv.TableView)
+	// fg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// 	if sig == int64(core.WidgetSelected) {
+	// 		svv, _ := send.(*views.TableView)
 	// 		if svv.SelectedIndex >= 0 {
 	// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 	// 			pv.VectorView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
 	// 		}
 	// 	}
 	// })
-	// fg.SliceViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fg.SliceViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-	// 	// svv, _ := send.(*giv.TableView)
-	// 	if sig == int64(giv.SliceViewDeleted) { // not clear what we can do here
+	// 	// svv, _ := send.(*views.TableView)
+	// 	if sig == int64(views.SliceViewDeleted) { // not clear what we can do here
 	// 	} else {
 	// 		pv.VectorView.UpdateGradients()
 	// 	}
 	// })
-	// fg.ViewSig.Connect(pv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fg.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-	// 	// svv, _ := send.(*giv.TableView)
+	// 	// svv, _ := send.(*views.TableView)
 	// 	pv.VectorView.UpdateGradients()
 	// })
 
-	gi.NewStretch(pv)
+	core.NewStretch(pv)
 }
 
 // StrokeStack returns the stroke stack frame
-func (pv *PaintView) StrokeStack() *gi.Frame {
-	return pv.ChildByName("stroke-stack", 1).(*gi.Frame)
+func (pv *PaintView) StrokeStack() *core.Frame {
+	return pv.ChildByName("stroke-stack", 1).(*core.Frame)
 }
 
 // FillStack returns the fill stack frame
-func (pv *PaintView) FillStack() *gi.Frame {
-	return pv.ChildByName("fill-stack", 4).(*gi.Frame)
+func (pv *PaintView) FillStack() *core.Frame {
+	return pv.ChildByName("fill-stack", 4).(*core.Frame)
 }
 
 // StrokeProp returns the stroke property string according to current settings
@@ -779,7 +779,7 @@ func (pv *PaintView) StrokeProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		// sc := ss.ChildByName("stroke-clr", 1).(*giv.ColorView)
+		// sc := ss.ChildByName("stroke-clr", 1).(*views.ColorView)
 		// return sc.Color.HexString()
 	case PaintLinear:
 		return pv.StrokeStops
@@ -793,21 +793,21 @@ func (pv *PaintView) StrokeProp() string {
 
 // MarkerProp returns the marker property string according to current settings
 // along with color type to set.
-func (pv *PaintView) MarkerProps() (start, mid, end string, sc, mc, ec MarkerColors) {
+func (pv *PaintView) MarkerProperties() (start, mid, end string, sc, mc, ec MarkerColors) {
 	// mkr := pv.ChildByName("stroke-markers", 3)
 	//
-	// mscb := mkr.ChildByName("marker-start", 0).(*gi.Chooser)
-	// mscc := mkr.ChildByName("marker-start-color", 1).(*gi.Chooser)
+	// mscb := mkr.ChildByName("marker-start", 0).(*core.Chooser)
+	// mscc := mkr.ChildByName("marker-start-color", 1).(*core.Chooser)
 	// start = IconToMarkerName(mscb.CurVal)
 	// sc = MarkerColors(mscc.CurrentIndex)
 	//
-	// mmcb := mkr.ChildByName("marker-mid", 2).(*gi.Chooser)
-	// mmcc := mkr.ChildByName("marker-mid-color", 3).(*gi.Chooser)
+	// mmcb := mkr.ChildByName("marker-mid", 2).(*core.Chooser)
+	// mmcc := mkr.ChildByName("marker-mid-color", 3).(*core.Chooser)
 	// mid = IconToMarkerName(mmcb.CurVal)
 	// mc = MarkerColors(mmcc.CurrentIndex)
 	//
-	// mecb := mkr.ChildByName("marker-end", 4).(*gi.Chooser)
-	// mecc := mkr.ChildByName("marker-end-color", 5).(*gi.Chooser)
+	// mecb := mkr.ChildByName("marker-end", 4).(*core.Chooser)
+	// mecc := mkr.ChildByName("marker-end-color", 5).(*core.Chooser)
 	// end = IconToMarkerName(mecb.CurVal)
 	// ec = MarkerColors(mecc.CurrentIndex)
 
@@ -822,8 +822,8 @@ func (pv *PaintView) IsStrokeOn() bool {
 // StrokeWidthProp returns stroke-width property
 func (pv *PaintView) StrokeWidthProp() string {
 	wr := pv.ChildByName("stroke-width", 2)
-	wsb := wr.ChildByName("width", 1).(*gi.Spinner)
-	uncb := wr.ChildByName("width-units", 2).(*gi.Chooser)
+	wsb := wr.ChildByName("width", 1).(*core.Spinner)
+	uncb := wr.ChildByName("width-units", 2).(*core.Chooser)
 	unnm := "px"
 	if uncb.CurrentIndex > 0 {
 		unvl := units.Units(uncb.CurrentIndex)
@@ -836,11 +836,11 @@ func (pv *PaintView) StrokeWidthProp() string {
 // these values need to be multiplied by line widths for each item.
 func (pv *PaintView) StrokeDashProp() []float64 {
 	wr := pv.ChildByName("stroke-width", 2)
-	dshcb := wr.ChildByName("dashes", 3).(*gi.Chooser)
+	dshcb := wr.ChildByName("dashes", 3).(*core.Chooser)
 	if dshcb.CurrentIndex == 0 {
 		return nil
 	}
-	dnm := laser.ToString(dshcb.CurrentItem.Value)
+	dnm := reflectx.ToString(dshcb.CurrentItem.Value)
 	if dnm == "" {
 		return nil
 	}
@@ -863,7 +863,7 @@ func (pv *PaintView) FillProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		sc := fs.ChildByName("fill-clr", 1).(*giv.ColorView)
+		sc := fs.ChildByName("fill-clr", 1).(*views.ColorView)
 		return colors.AsHex(sc.Color)
 	case PaintLinear:
 		return pv.FillStops
@@ -875,12 +875,12 @@ func (pv *PaintView) FillProp() string {
 	return "none"
 }
 
-// SetProps sets the props for given node according to current settings
-func (pv *PaintView) SetProps(sii svg.Node) {
+// SetProperties sets the properties for given node according to current settings
+func (pv *PaintView) SetProperties(sii svg.Node) {
 	pv.VectorView.SetColorNode(sii, "stroke", pv.StrokeType, pv.StrokeType, pv.StrokeProp())
 	if pv.IsStrokeOn() {
-		sii.SetProp("stroke-width", pv.StrokeWidthProp())
-		start, mid, end, sc, mc, ec := pv.MarkerProps()
+		sii.SetProperty("stroke-width", pv.StrokeWidthProp())
+		start, mid, end, sc, mc, ec := pv.MarkerProperties()
 		pv.VectorView.SetMarkerNode(sii, start, mid, end, sc, mc, ec)
 	}
 	pv.VectorView.SetColorNode(sii, "fill", pv.FillType, pv.FillType, pv.FillProp())

@@ -13,16 +13,16 @@ import (
 	"sort"
 	"strings"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // FileNode is Code version of FileNode for FileTree view
@@ -78,14 +78,14 @@ func (fn *FileNode) SetRunExec() {
 	}
 	ge, ok := ParentCode(fn.This())
 	if ok {
-		ge.ProjSettings().RunExec = fn.FPath
-		ge.ProjSettings().BuildDir = gi.Filename(filepath.Dir(string(fn.FPath)))
+		ge.ProjectSettings().RunExec = fn.FPath
+		ge.ProjectSettings().BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
 	}
 }
 
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
-func (fn *FileNode) ExecCmdFile() { //gti:add
+func (fn *FileNode) ExecCmdFile() { //types:add
 	ge, ok := ParentCode(fn.This())
 	if ok {
 		ge.ExecCmdFileNode(&fn.Node)
@@ -103,16 +103,16 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 	}
 }
 
-func (fn *FileNode) ContextMenu(m *gi.Scene) {
-	gi.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
+func (fn *FileNode) ContextMenu(m *core.Scene) {
+	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
 		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
 		s.SetState(!fn.HasSelection(), states.Disabled)
 	})
-	giv.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
+	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Style(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
-	giv.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
+	views.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
 		Style(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
@@ -135,9 +135,9 @@ func (on *OpenNodes) Add(fn *filetree.Node) bool {
 		return added
 	}
 	if fn.Buffer != nil {
-		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send ki.Ki, sig int64, data any) {
+		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send tree.Node, sig int64, data any) {
 		// 	if sig == int64(texteditor.BufClosed) {
-		// 		fno, _ := recv.Embed(giv.KiT_FileNode).(*filetree.Node)
+		// 		fno, _ := recv.Embed(views.KiT_FileNode).(*filetree.Node)
 		// 		on.Delete(fno)
 		// 	}
 		// })
@@ -240,7 +240,7 @@ func (on *OpenNodes) NChanged() int {
 // FindPath finds node for given path, nil if not found
 func (on *OpenNodes) FindPath(path string) *filetree.Node {
 	for _, f := range *on {
-		if f.FPath == gi.Filename(path) {
+		if f.FPath == core.Filename(path) {
 			return f
 		}
 	}
@@ -260,7 +260,7 @@ type FileSearchResults struct {
 // FileTreeSearch returns list of all nodes starting at given node of given
 // language(s) that contain the given string, sorted in descending order by number
 // of occurrences -- ignoreCase transforms everything into lowercase
-func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fi.Known) []FileSearchResults {
+func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, loc FindLoc, activeDir string, langs []fileinfo.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -279,36 +279,36 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 		}
 	}
 	mls := make([]FileSearchResults, 0)
-	start.WalkPre(func(k ki.Ki) bool {
+	start.WalkDown(func(k tree.Node) bool {
 		sfn := filetree.AsNode(k)
 		if sfn == nil {
-			return ki.Continue
+			return tree.Continue
 		}
 		if sfn.IsDir() && !sfn.IsOpen() {
 			// fmt.Printf("dir: %v closed\n", sfn.FPath)
-			return ki.Break // don't go down into closed directories!
+			return tree.Break // don't go down into closed directories!
 		}
 		if sfn.IsDir() || sfn.IsExec() || sfn.Info.Kind == "octet-stream" || sfn.IsAutoSave() {
 			// fmt.Printf("dir: %v opened\n", sfn.Nm)
-			return ki.Continue
+			return tree.Continue
 		}
-		if int(sfn.Info.Size) > gi.SystemSettings.BigFileSize {
-			return ki.Continue
+		if int(sfn.Info.Size) > core.SystemSettings.BigFileSize {
+			return tree.Continue
 		}
 		if strings.HasSuffix(sfn.Nm, ".code") { // exclude self
-			return ki.Continue
+			return tree.Continue
 		}
-		if !fi.IsMatchList(langs, sfn.Info.Known) {
-			return ki.Continue
+		if !fileinfo.IsMatchList(langs, sfn.Info.Known) {
+			return tree.Continue
 		}
 		if loc == FindLocDir {
 			cdir, _ := filepath.Split(string(sfn.FPath))
 			if activeDir != cdir {
-				return ki.Continue
+				return tree.Continue
 			}
 		} else if loc == FindLocNotTop {
 			// if level == 1 { // todo
-			// 	return ki.Continue
+			// 	return tree.Continue
 			// }
 		}
 		var cnt int
@@ -329,7 +329,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 		if cnt > 0 {
 			mls = append(mls, FileSearchResults{sfn, cnt, matches})
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	sort.Slice(mls, func(i, j int) bool {
 		return mls[i].Count > mls[j].Count
@@ -341,7 +341,7 @@ func FileTreeSearch(ge Code, start *filetree.Node, find string, ignoreCase, regE
 // starting at given node of given language(s) that contain the given string,
 // sorted in descending order by number of occurrences. ignoreCase transforms
 // everything into lowercase.
-func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, langs []fi.Known) []FileSearchResults {
+func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool, langs []fileinfo.Known) []FileSearchResults {
 	fb := []byte(find)
 	fsz := len(find)
 	if fsz == 0 {
@@ -368,19 +368,19 @@ func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool
 		if info.IsDir() {
 			return nil
 		}
-		if int(info.Size()) > gi.SystemSettings.BigFileSize {
+		if int(info.Size()) > core.SystemSettings.BigFileSize {
 			return nil
 		}
 		if strings.HasSuffix(info.Name(), ".code") { // exclude self
 			return nil
 		}
 		if len(langs) > 0 {
-			mtyp, _, err := fi.MimeFromFile(path)
+			mtyp, _, err := fileinfo.MimeFromFile(path)
 			if err != nil {
 				return nil
 			}
-			known := fi.MimeKnown(mtyp)
-			if !fi.IsMatchList(langs, known) {
+			known := fileinfo.MimeKnown(mtyp)
+			if !fileinfo.IsMatchList(langs, known) {
 				return nil
 			}
 		}
@@ -421,7 +421,7 @@ func FindAll(ge Code, start *filetree.Node, find string, ignoreCase, regExp bool
 }
 
 // EditFiles calls EditFile on selected files
-func (fn *FileNode) EditFiles() { //gti:add
+func (fn *FileNode) EditFiles() { //types:add
 	sels := fn.SelectedViews()
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i].This().(*FileNode)
@@ -430,7 +430,7 @@ func (fn *FileNode) EditFiles() { //gti:add
 }
 
 // SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons
-func (fn *FileNode) SetRunExecs() { //gti:add
+func (fn *FileNode) SetRunExecs() { //types:add
 	sels := fn.SelectedViews()
 	for i := len(sels) - 1; i >= 0; i-- {
 		sn := sels[i].This().(*FileNode)
@@ -453,7 +453,7 @@ func (fn *FileNode) RenameFiles() {
 		}
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
 		for _, sn := range nodes {
-			giv.CallFunc(sn, sn.RenameFile)
+			views.CallFunc(sn, sn.RenameFile)
 		}
 	})
 }

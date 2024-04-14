@@ -8,18 +8,18 @@ import (
 	"fmt"
 	"image"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
-func (gv *VectorView) SelectToolbar() *gi.Toolbar {
+func (gv *VectorView) SelectToolbar() *core.Toolbar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("select-tb", 0).(*gi.Toolbar)
+	tb := tbs.ChildByName("select-tb", 0).(*core.Toolbar)
 	return tb
 }
 
@@ -30,21 +30,21 @@ func (gv *VectorView) ConfigSelectToolbar() {
 		return
 	}
 
-	grs := gi.NewSwitch(tb).SetText("Snap grid").
+	grs := core.NewSwitch(tb).SetText("Snap grid").
 		SetTooltip("snap movement and sizing of selection to grid").
 		SetChecked(Settings.SnapVector)
 	grs.OnChange(func(e events.Event) {
 		Settings.SnapVector = grs.IsChecked()
 	})
 
-	gis := gi.NewSwitch(tb).SetText("Snap guide").
+	gis := core.NewSwitch(tb).SetText("Snap guide").
 		SetTooltip("snap movement and sizing of selection to align with other elements in the scene").
 		SetChecked(Settings.SnapGuide)
 	gis.OnChange(func(e events.Event) {
 		Settings.SnapGuide = gis.IsChecked()
 	})
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
 	gv.NewSelectFuncButton(tb, gv.SelectGroup).SetText("Group").
 		SetIcon("sel-group").SetShortcut("Command+G")
@@ -52,7 +52,7 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	gv.NewSelectFuncButton(tb, gv.SelectUnGroup).SetText("Ungroup").
 		SetIcon("sel-ungroup").SetShortcut("Shift+Command+G")
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
 	gv.NewSelectFuncButton(tb, gv.SelectRotateLeft).SetText("").
 		SetIcon("sel-rotate-left").SetShortcut("Command+[")
@@ -62,34 +62,34 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	gv.NewSelectFuncButton(tb, gv.SelectFlipHorizontal).SetText("").SetIcon("sel-flip-horiz")
 	gv.NewSelectFuncButton(tb, gv.SelectFlipVertical).SetText("").SetIcon("sel-flip-vert")
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
 	gv.NewSelectFuncButton(tb, gv.SelectRaiseTop).SetText("").SetIcon("sel-raise-top")
 	gv.NewSelectFuncButton(tb, gv.SelectRaise).SetText("").SetIcon("sel-raise")
 	gv.NewSelectFuncButton(tb, gv.SelectLowerBottom).SetText("").SetIcon("sel-lower-bottom")
 	gv.NewSelectFuncButton(tb, gv.SelectLower).SetText("").SetIcon("sel-lower")
 
-	gi.NewSeparator(tb)
+	core.NewSeparator(tb)
 
-	gi.NewLabel(tb).SetText("X: ")
-	giv.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
+	core.NewLabel(tb).SetText("X: ")
+	views.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
 		gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
 	})
 
-	gi.NewLabel(tb).SetText("Y: ")
-	py := gi.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
+	core.NewLabel(tb).SetText("Y: ")
+	py := core.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
 	py.OnChange(func(e events.Event) {
 		gv.SelectSetYPos(py.Value)
 	})
 
-	gi.NewLabel(tb).SetText("W: ")
-	wd := gi.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
+	core.NewLabel(tb).SetText("W: ")
+	wd := core.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
 	wd.OnChange(func(e events.Event) {
 		gv.SelectSetWidth(wd.Value)
 	})
 
-	gi.NewLabel(tb).SetText("H: ")
-	ht := gi.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
+	core.NewLabel(tb).SetText("H: ")
+	ht := core.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
 	ht.OnChange(func(e events.Event) {
 		gv.SelectSetHeight(ht.Value)
 	})
@@ -97,8 +97,8 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 // NewSelectFuncButton returns a new func button that is only enabled when
 // there is an item selected.
-func (gv *VectorView) NewSelectFuncButton(parent ki.Ki, fun any) *giv.FuncButton {
-	bt := giv.NewFuncButton(parent, fun)
+func (gv *VectorView) NewSelectFuncButton(parent tree.Node, fun any) *views.FuncButton {
+	bt := views.NewFuncButton(parent, fun)
 	bt.StyleFirst(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
 	})
@@ -115,10 +115,10 @@ func (gv *VectorView) UpdateSelectToolbar() {
 	// 	return
 	// }
 	// sz := es.DragSelEffBBox.Size()
-	// tb.ChildByName("posx", 8).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.X)
-	// tb.ChildByName("posy", 9).(*gi.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
-	// tb.ChildByName("width", 10).(*gi.Spinner).SetValue(sz.X)
-	// tb.ChildByName("height", 11).(*gi.Spinner).SetValue(sz.Y)
+	// tb.ChildByName("posx", 8).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.X)
+	// tb.ChildByName("posy", 9).(*core.Spinner).SetValue(es.DragSelEffBBox.Min.Y)
+	// tb.ChildByName("width", 10).(*core.Spinner).SetValue(sz.X)
+	// tb.ChildByName("height", 11).(*core.Spinner).SetValue(sz.Y)
 }
 
 // UpdateSelect should be called whenever selection changes
@@ -157,7 +157,7 @@ func (sv *SVGView) UpdateSelSprites() {
 	}
 
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		// SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send ki.Ki, sig int64, d any) {
+		// SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send tree.Node, sig int64, d any) {
 		// 	ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		// 	ssvg.SelSpriteEvent(spi, events.EventType(sig), d)
 		// })
@@ -182,7 +182,7 @@ func (sv *SVGView) SetSelSpritePos() {
 			if sn.BBox.Size() == image.ZP {
 				continue
 			}
-			bb := mat32.Box2{}
+			bb := math32.Box2{}
 			bb.SetFromRect(sn.BBox)
 			sv.SetBBoxSpritePos(SpSelBBox, si, bb)
 			nbox++
@@ -200,9 +200,9 @@ func (sv *SVGView) SetSelSpritePos() {
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites
-func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox mat32.Box2) {
-	bbox.Min.SetAdd(mat32.V2FromPoint(sv.Geom.ContentBBox.Min))
-	bbox.Max.SetAdd(mat32.V2FromPoint(sv.Geom.ContentBBox.Min))
+func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
+	bbox.Min.SetAdd(math32.Vector2FromPoint(sv.Geom.ContentBBox.Min))
+	bbox.Max.SetAdd(math32.Vector2FromPoint(sv.Geom.ContentBBox.Min))
 
 	_, spsz := HandleSpriteSize(1)
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
@@ -296,7 +296,7 @@ func (sv *SVGView) SetRubberBand(cur image.Point) {
 //   Actions
 
 // SelectGroup groups items together
-func (gv *VectorView) SelectGroup() { //gti:add
+func (gv *VectorView) SelectGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -314,7 +314,7 @@ func (gv *VectorView) SelectGroup() { //gti:add
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {
-		ki.MoveToParent(se, ng)
+		tree.MoveToParent(se, ng)
 	}
 
 	es.ResetSelected()
@@ -325,7 +325,7 @@ func (gv *VectorView) SelectGroup() { //gti:add
 }
 
 // SelectUnGroup ungroups items from each other
-func (gv *VectorView) SelectUnGroup() { //gti:add
+func (gv *VectorView) SelectUnGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -340,12 +340,12 @@ func (gv *VectorView) SelectUnGroup() { //gti:add
 			continue
 		}
 		np := gp.Par
-		klist := make(ki.Slice, len(gp.Kids)) // make a temp copy of list of kids
+		klist := make(tree.Slice, len(gp.Kids)) // make a temp copy of list of kids
 		for i, k := range gp.Kids {
 			klist[i] = k
 		}
 		for _, k := range klist {
-			ki.MoveToParent(k, np)
+			tree.MoveToParent(k, np)
 			se := k.(svg.Node)
 			if !gp.Paint.Transform.IsIdentity() {
 				se.ApplyTransform(sv.SSVG(), gp.Paint.Transform) // group no longer there!
@@ -365,13 +365,13 @@ func (gv *VectorView) SelectRotate(deg float32) {
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
 	svoff := sv.Geom.ContentBBox.Min
-	del := mat32.Vec2{}
-	sc := mat32.V2(1, 1)
-	rot := mat32.DegToRad(deg)
+	del := math32.Vector2{}
+	sc := math32.Vec2(1, 1)
+	rot := math32.DegToRad(deg)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := mat32.V2FromPoint(sng.BBox.Size())
-		mn := mat32.V2FromPoint(sng.BBox.Min.Sub(svoff))
+		sz := math32.Vector2FromPoint(sng.BBox.Size())
+		mn := math32.Vector2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, rot, ctr)
 	}
@@ -388,12 +388,12 @@ func (gv *VectorView) SelectScale(scx, scy float32) {
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
 	svoff := sv.Geom.ContentBBox.Min
-	del := mat32.Vec2{}
-	sc := mat32.V2(scx, scy)
+	del := math32.Vector2{}
+	sc := math32.Vec2(scx, scy)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := mat32.V2FromPoint(sng.BBox.Size())
-		mn := mat32.V2FromPoint(sng.BBox.Min.Sub(svoff))
+		sz := math32.Vector2FromPoint(sng.BBox.Size())
+		mn := math32.Vector2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, 0, ctr)
 	}
@@ -402,27 +402,27 @@ func (gv *VectorView) SelectScale(scx, scy float32) {
 }
 
 // SelectRotateLeft rotates the selection 90 degrees counter-clockwise
-func (gv *VectorView) SelectRotateLeft() { //gti:add
+func (gv *VectorView) SelectRotateLeft() { //types:add
 	gv.SelectRotate(-90)
 }
 
 // SelectRotateRight rotates the selection 90 degrees clockwise
-func (gv *VectorView) SelectRotateRight() { //gti:add
+func (gv *VectorView) SelectRotateRight() { //types:add
 	gv.SelectRotate(90)
 }
 
 // SelectFlipHorizontal flips the selection horizontally
-func (gv *VectorView) SelectFlipHorizontal() { //gti:add
+func (gv *VectorView) SelectFlipHorizontal() { //types:add
 	gv.SelectScale(-1, 1)
 }
 
 // SelectFlipVertical flips the selection vertically
-func (gv *VectorView) SelectFlipVertical() { //gti:add
+func (gv *VectorView) SelectFlipVertical() { //types:add
 	gv.SelectScale(1, -1)
 }
 
 // SelectRaiseTop raises the selection to the top of the layer
-func (gv *VectorView) SelectRaiseTop() { //gti:add
+func (gv *VectorView) SelectRaiseTop() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -444,7 +444,7 @@ func (gv *VectorView) SelectRaiseTop() { //gti:add
 }
 
 // SelectRaise raises the selection by one level in the layer
-func (gv *VectorView) SelectRaise() { //gti:add
+func (gv *VectorView) SelectRaise() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -468,7 +468,7 @@ func (gv *VectorView) SelectRaise() { //gti:add
 }
 
 // SelectLowerBottom lowers the selection to the bottom of the layer
-func (gv *VectorView) SelectLowerBottom() { //gti:add
+func (gv *VectorView) SelectLowerBottom() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -490,7 +490,7 @@ func (gv *VectorView) SelectLowerBottom() { //gti:add
 }
 
 // SelectLower lowers the selection by one level in the layer
-func (gv *VectorView) SelectLower() { //gti:add
+func (gv *VectorView) SelectLower() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -564,31 +564,31 @@ func (gv *VectorView) SelectSetHeight(ht float32) {
 // within the given BBox. SVG version excludes layer groups.
 func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
-	var curlay ki.Ki
+	var curlay tree.Node
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if leavesOnly && kni.HasChildren() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if NodeIsLayer(kni) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
 				if _, istxt := txt.Par.(*svg.Text); istxt {
-					return ki.Break
+					return tree.Break
 				}
 			}
 		}
 		if knb.Paint.Off {
-			return ki.Break
+			return tree.Break
 		}
 		nl := NodeParentLayer(kni)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		if knb.BBox.In(bbox) {
@@ -596,9 +596,9 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 			if curlay == nil && nl != nil {
 				curlay = nl
 			}
-			return ki.Break // don't go into groups!
+			return tree.Break // don't go into groups!
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	return rval
 }
@@ -612,7 +612,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
 	pt = pt.Sub(sv.Geom.ContentBBox.Min)
 	es := sv.EditState()
-	var curlay ki.Ki
+	var curlay tree.Node
 	fn := es.FirstSelectedNode()
 	if fn != nil {
 		curlay = NodeParentLayer(fn)
@@ -620,43 +620,43 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 	var rval svg.Node
 	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if leavesOnly && kni.HasChildren() {
-			return ki.Continue
+			return tree.Continue
 		}
 		if NodeIsLayer(kni) {
-			return ki.Continue
+			return tree.Continue
 		}
 		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
 				if _, istxt := txt.Par.(*svg.Text); istxt {
-					return ki.Break
+					return tree.Break
 				}
 			}
 		}
 		if excludeSel {
 			if _, issel := es.Selected[kni]; issel {
-				return ki.Continue
+				return tree.Continue
 			}
 			if _, issel := es.RecentlySelected[kni]; issel {
-				return ki.Continue
+				return tree.Continue
 			}
 		}
 		if knb.Paint.Off {
-			return ki.Break
+			return tree.Break
 		}
 		nl := NodeParentLayer(kni)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
-				return ki.Break
+				return tree.Break
 			}
 		}
 		if pt.In(knb.BBox) {
 			rval = kni
-			return ki.Break
+			return tree.Break
 		}
-		return ki.Continue
+		return tree.Continue
 	})
 	return rval
 }

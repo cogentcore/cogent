@@ -6,7 +6,7 @@ package codev
 
 import (
 	"cogentcore.org/cogent/code/code"
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/states"
 	"cogentcore.org/core/texteditor"
 )
@@ -28,7 +28,7 @@ func (ge *CodeView) PanelIsOpen(panel int) bool {
 func (ge *CodeView) CurPanel() int {
 	sv := ge.Splits()
 	for i, ski := range sv.Kids {
-		_, sk := gi.AsWidget(ski)
+		_, sk := core.AsWidget(ski)
 		if sk.HasStateWithin(states.Focused) {
 			return i
 		}
@@ -53,7 +53,7 @@ func (ge *CodeView) FocusOnPanel(panel int) bool {
 			return false
 		}
 	default:
-		ski, _ := gi.AsWidget(sv.Kids[panel])
+		ski, _ := core.AsWidget(sv.Kids[panel])
 		ge.Scene.EventMgr.FocusNextFrom(ski)
 	}
 	ge.NeedsRender()
@@ -61,7 +61,7 @@ func (ge *CodeView) FocusOnPanel(panel int) bool {
 }
 
 // FocusNextPanel moves the keyboard focus to the next panel to the right
-func (ge *CodeView) FocusNextPanel() { //gti:add
+func (ge *CodeView) FocusNextPanel() { //types:add
 	sv := ge.Splits()
 	cp := ge.CurPanel()
 	cp++
@@ -79,7 +79,7 @@ func (ge *CodeView) FocusNextPanel() { //gti:add
 }
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
-func (ge *CodeView) FocusPrevPanel() { //gti:add
+func (ge *CodeView) FocusPrevPanel() { //types:add
 	sv := ge.Splits()
 	cp := ge.CurPanel()
 	cp--
@@ -97,13 +97,13 @@ func (ge *CodeView) FocusPrevPanel() { //gti:add
 }
 
 // TabByName returns a tab with given name, nil if not found.
-func (ge *CodeView) TabByName(label string) gi.Widget {
+func (ge *CodeView) TabByName(label string) core.Widget {
 	tv := ge.Tabs()
 	return tv.TabByName(label)
 }
 
 // SelectTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *CodeView) SelectTabByName(label string) gi.Widget {
+func (ge *CodeView) SelectTabByName(label string) core.Widget {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil

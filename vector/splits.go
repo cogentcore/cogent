@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"slices"
 
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/glop/dirs"
-	"cogentcore.org/core/grows/jsons"
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
+	"cogentcore.org/core/gox/dirs"
+	"cogentcore.org/core/iox/jsonx"
 )
 
 // Split is a named splitter configuration
@@ -106,10 +106,10 @@ func (lt *Splits) FixLen() {
 }
 
 // Open opens named splits from a json-formatted file.
-func (lt *Splits) Open(filename gi.Filename) error { //gti:add
-	if grr.Ignore1(dirs.FileExists(string(filename))) {
+func (lt *Splits) Open(filename core.Filename) error { //types:add
+	if errors.Ignore1(dirs.FileExists(string(filename))) {
 		*lt = make(Splits, 0, 10) // reset
-		err := grr.Log(jsons.Open(lt, string(filename)))
+		err := errors.Log(jsonx.Open(lt, string(filename)))
 		lt.FixLen()
 		return err
 	}
@@ -117,16 +117,16 @@ func (lt *Splits) Open(filename gi.Filename) error { //gti:add
 }
 
 // Save saves named splits to a json-formatted file.
-func (lt *Splits) Save(filename gi.Filename) error { //gti:add
-	return grr.Log(jsons.Save(lt, string(filename)))
+func (lt *Splits) Save(filename core.Filename) error { //types:add
+	return errors.Log(jsonx.Save(lt, string(filename)))
 }
 
 // OpenSettings opens Splits from App standard prefs directory, using PrefSplitsFilename
-func (lt *Splits) OpenSettings() error { //gti:add
-	pdir := gi.TheApp.AppDataDir()
+func (lt *Splits) OpenSettings() error { //types:add
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
-	err := lt.Open(gi.Filename(pnm))
+	err := lt.Open(core.Filename(pnm))
 	if err == nil {
 		AvailableSplitNames = lt.Names()
 	}
@@ -134,13 +134,13 @@ func (lt *Splits) OpenSettings() error { //gti:add
 }
 
 // SaveSettings saves Splits to App standard prefs directory, using PrefSplitsFilename
-func (lt *Splits) SaveSettings() error { //gti:add
+func (lt *Splits) SaveSettings() error { //types:add
 	lt.FixLen()
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
 	AvailableSplitNames = lt.Names()
-	return lt.Save(gi.Filename(pnm))
+	return lt.Save(core.Filename(pnm))
 }
 
 // CopyFrom copies named splits from given other map
@@ -155,7 +155,7 @@ func (lt *Splits) CopyFrom(cp Splits) {
 }
 
 // AvailableSplitsChanged is used to update toolbars via following menu, toolbar
-// props update methods -- not accurate if editing any other map but works for
+// properties update methods -- not accurate if editing any other map but works for
 // now..
 var AvailableSplitsChanged = false
 

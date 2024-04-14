@@ -12,7 +12,7 @@ import (
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 )
 
 // ManipStart is called at the start of a manipulation, saving the state prior to the action
@@ -63,24 +63,24 @@ func (sv *SVGView) ManipUpdate() {
 }
 
 // VectorDots is the current grid spacing and offsets in dots
-func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+func (sv *SVGView) VectorDots() (float32, math32.Vector2) {
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.VectorEff
 	if grid <= 0 {
 		grid = 12
 	}
 	incr := grid * sv.Scale // our zoom factor
 
-	org := mat32.Vec2{}
-	org = sv.Root().Paint.Transform.MulVec2AsPoint(org)
+	org := math32.Vector2{}
+	org = sv.Root().Paint.Transform.MulVector2AsPoint(org)
 
 	// fmt.Printf("org: %v\n", org)
 
 	org.SetAdd(svoff)
 	// fmt.Printf("org: %v   svgoff: %v\n", org, svoff)
 
-	org.X = mat32.Mod(org.X, incr)
-	org.Y = mat32.Mod(org.Y, incr)
+	org.X = math32.Mod(org.X, incr)
+	org.Y = math32.Mod(org.Y, incr)
 
 	// fmt.Printf("mod org: %v   incr: %v\n", org, incr)
 
@@ -90,7 +90,7 @@ func (sv *SVGView) VectorDots() (float32, mat32.Vec2) {
 // SnapToPt snaps value to given potential snap point, in screen pixel units.
 // Tolerance is determined by preferences.  Returns true if snapped.
 func SnapToPt(val, snap float32) (float32, bool) {
-	d := mat32.Abs(val - snap)
+	d := math32.Abs(val - snap)
 	if d <= float32(Settings.SnapTol) {
 		return snap, true
 	}
@@ -101,20 +101,20 @@ func SnapToPt(val, snap float32) (float32, bool) {
 // Tolerance is determined by preferences, which is in screen pixels.
 // Returns true if snapped.
 func SnapToIncr(val, off, incr float32) (float32, bool) {
-	nint := mat32.Round((val-off)/incr)*incr + off
-	dint := mat32.Abs(val - nint)
+	nint := math32.Round((val-off)/incr)*incr + off
+	dint := math32.Abs(val - nint)
 	if dint <= float32(Settings.SnapTol) {
 		return nint, true
 	}
 	return val, false
 }
 
-func (sv *SVGView) SnapPointToVector(rawpt mat32.Vec2) mat32.Vec2 {
+func (sv *SVGView) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
 	if !Settings.SnapVector {
 		return rawpt
 	}
 	grinc, groff := sv.VectorDots()
-	var snpt mat32.Vec2
+	var snpt math32.Vector2
 	snpt.X, _ = SnapToIncr(rawpt.X, groff.X, grinc)
 	snpt.Y, _ = SnapToIncr(rawpt.Y, groff.Y, grinc)
 	return snpt
@@ -122,7 +122,7 @@ func (sv *SVGView) SnapPointToVector(rawpt mat32.Vec2) mat32.Vec2 {
 
 // SnapPoint does snapping on one raw point, given that point,
 // in window coordinates. returns the snapped point.
-func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
+func (sv *SVGView) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	es := sv.EditState()
 	snpt := sv.SnapPointToVector(rawpt)
 	if !Settings.SnapGuide {
@@ -130,19 +130,19 @@ func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 	}
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
 	var clPts [2][]BBoxPoints
-	var clVals [2][]mat32.Vec2
+	var clVals [2][]math32.Vector2
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
 		pts := es.AlignPts[ap]
 		dim := ap.Dim()
 		for _, pt := range pts {
 			pv := pt.Dim(dim)
 			bv := rawpt.Dim(dim)
-			dst := mat32.Abs(pv - bv)
+			dst := math32.Abs(pv - bv)
 			if dst < clDst[dim] {
 				clDst[dim] = dst
 				clPts[dim] = []BBoxPoints{ap}
-				clVals[dim] = []mat32.Vec2{pt}
-			} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
+				clVals[dim] = []math32.Vector2{pt}
+			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 {
 				clPts[dim] = append(clPts[dim], ap)
 				clVals[dim] = append(clVals[dim], pt)
 			}
@@ -150,7 +150,7 @@ func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 	}
 	var alpts []image.Rectangle
 	var altyps []BBoxPoints
-	for dim := mat32.X; dim <= mat32.Y; dim++ {
+	for dim := math32.X; dim <= math32.Y; dim++ {
 		if len(clVals[dim]) == 0 {
 			continue
 		}
@@ -164,7 +164,7 @@ func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 				rpt := image.Rectangle{}
 				rpt.Min = rawpt.ToPoint()
 				rpt.Max = pt.ToPoint()
-				if dim == mat32.X {
+				if dim == math32.X {
 					rpt.Min.X = rpt.Max.X
 				} else {
 					rpt.Min.Y = rpt.Max.Y
@@ -181,7 +181,7 @@ func (sv *SVGView) SnapPoint(rawpt mat32.Vec2) mat32.Vec2 {
 // SnapBBox does snapping on given raw bbox according to preferences,
 // aligning movement of bbox edges / centers relative to other bboxes..
 // returns snapped bbox.
-func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
+func (sv *SVGView) SnapBBox(rawbb math32.Box2) math32.Box2 {
 	if !Settings.SnapGuide {
 		return rawbb
 	}
@@ -189,8 +189,8 @@ func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
 	snapbb := rawbb
 	clDst := [2]float32{float32(math.MaxFloat32), float32(math.MaxFloat32)}
 	var clPts [2][]BBoxPoints
-	var clVals [2][]mat32.Vec2
-	var bbval [2]mat32.Vec2
+	var clVals [2][]math32.Vector2
+	var bbval [2]math32.Vector2
 	for ap := BBLeft; ap < BBoxPointsN; ap++ {
 		bbp := ap.PointBox(rawbb)
 		pts := es.AlignPts[ap]
@@ -198,13 +198,13 @@ func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
 		for _, pt := range pts {
 			pv := pt.Dim(dim)
 			bv := bbp.Dim(dim)
-			dst := mat32.Abs(pv - bv)
+			dst := math32.Abs(pv - bv)
 			if dst < clDst[dim] {
 				clDst[dim] = dst
 				clPts[dim] = []BBoxPoints{ap}
-				clVals[dim] = []mat32.Vec2{pt}
+				clVals[dim] = []math32.Vector2{pt}
 				bbval[dim] = bbp
-			} else if mat32.Abs(dst-clDst[dim]) < 1.0e-4 {
+			} else if math32.Abs(dst-clDst[dim]) < 1.0e-4 {
 				clPts[dim] = append(clPts[dim], ap)
 				clVals[dim] = append(clVals[dim], pt)
 			}
@@ -212,7 +212,7 @@ func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
 	}
 	var alpts []image.Rectangle
 	var altyps []BBoxPoints
-	for dim := mat32.X; dim <= mat32.Y; dim++ {
+	for dim := math32.X; dim <= math32.Y; dim++ {
 		if len(clVals[dim]) == 0 {
 			continue
 		}
@@ -226,7 +226,7 @@ func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
 				rpt := image.Rectangle{}
 				rpt.Min = bbval[dim].ToPoint()
 				rpt.Max = pt.ToPoint()
-				if dim == mat32.X {
+				if dim == math32.X {
 					rpt.Min.X = rpt.Max.X
 				} else {
 					rpt.Min.Y = rpt.Max.Y
@@ -245,13 +245,13 @@ func (sv *SVGView) SnapBBox(rawbb mat32.Box2) mat32.Box2 {
 // constraint is along the diagonal, which can then trigger reshaping the
 // object to be along the diagonal as well.
 // also adds constraint to AlignMatches.
-func (sv *SVGView) ConstrainPoint(st, rawpt mat32.Vec2) (mat32.Vec2, bool) {
+func (sv *SVGView) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 	del := rawpt.Sub(st)
 
 	var alpts []image.Rectangle
 	var altyps []BBoxPoints
 
-	var cpts [4]mat32.Vec2
+	var cpts [4]math32.Vector2
 
 	cpts[0] = del
 	cpts[0].Y = 0
@@ -313,9 +313,9 @@ func (sv *SVGView) DragMove(e events.Event) {
 		sv.GatherAlignPoints()
 	}
 
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
-	spt := mat32.V2FromPoint(es.DragStartPos)
-	mpt := mat32.V2FromPoint(e.Pos())
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	spt := math32.Vector2FromPoint(es.DragStartPos)
+	mpt := math32.Vector2FromPoint(e.Pos())
 	if e.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
 	}
@@ -335,7 +335,7 @@ func (sv *SVGView) DragMove(e events.Event) {
 	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SSVG(), tdel, mat32.V2(1, 1), 0, pt)
+		itm.ApplyDeltaTransform(sv.SSVG(), tdel, math32.Vec2(1, 1), 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
@@ -343,7 +343,7 @@ func (sv *SVGView) DragMove(e events.Event) {
 	// win.UpdateSig()
 }
 
-func SquareBBox(bb mat32.Box2) mat32.Box2 {
+func SquareBBox(bb math32.Box2) math32.Box2 {
 	del := bb.Size()
 	if del.X > del.Y {
 		del.Y = del.X
@@ -354,7 +354,7 @@ func SquareBBox(bb mat32.Box2) mat32.Box2 {
 	return bb
 }
 
-func ProportionalBBox(bb, orig mat32.Box2) mat32.Box2 {
+func ProportionalBBox(bb, orig math32.Box2) math32.Box2 {
 	prop := orig.Size()
 	if prop.X == 0 || prop.Y == 0 {
 		return bb
@@ -371,7 +371,7 @@ func ProportionalBBox(bb, orig mat32.Box2) mat32.Box2 {
 
 /*
 // SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
-func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragEvent) {
+func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 
 	InactivateSprites(win, SpAlignMatch)
@@ -384,8 +384,8 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 	stpos := es.DragSelStartBBox.Min
 	bbX, bbY := ReshapeBBoxPoints(sp)
 
-	spt := mat32.V2FromPoint(es.DragStartPos)
-	mpt := mat32.V2FromPoint(me.Where)
+	spt := math32.Vector2FromPoint(es.DragStartPos)
+	mpt := math32.Vector2FromPoint(me.Where)
 	diag := false
 	if me.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
 		mpt, diag = sv.ConstrainPoint(spt, mpt)
@@ -445,7 +445,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *gi.Window, me *mouse.DragE
 
 	npos := es.DragSelEffBBox.Min
 	nsz := es.DragSelEffBBox.Size()
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pt := es.DragSelStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
@@ -472,7 +472,7 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	if !es.InAction() {
 		sv.ManipStart("Rotate", es.SelectedNamesString())
 	}
-	dv := mat32.V2FromPoint(delta)
+	dv := math32.Vector2FromPoint(delta)
 	pt := es.DragSelectStartBBox.Min
 	ctr := es.DragSelectStartBBox.Min.Add(es.DragSelectStartBBox.Max).MulScalar(.5)
 	var dx, dy float32
@@ -523,13 +523,13 @@ func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
 		dx = es.DragSelectCurrentBBox.Max.X - es.DragSelectStartBBox.Min.X
 		pt = ctr
 	}
-	ang := mat32.Atan2(dy, dx)
-	ang, _ = SnapToIncr(mat32.RadToDeg(ang), 0, 15)
-	ang = mat32.DegToRad(ang)
-	svoff := mat32.V2FromPoint(sv.Geom.ContentBBox.Min)
+	ang := math32.Atan2(dy, dx)
+	ang, _ = SnapToIncr(math32.RadToDeg(ang), 0, 15)
+	ang = math32.DegToRad(ang)
+	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pt = pt.Sub(svoff)
-	del := mat32.Vec2{}
-	sc := mat32.V2(1, 1)
+	del := math32.Vector2{}
+	sc := math32.Vec2(1, 1)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
 		itm.ApplyDeltaTransform(sv.SSVG(), del, sc, ang, pt)

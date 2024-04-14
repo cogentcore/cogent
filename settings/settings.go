@@ -5,12 +5,12 @@
 package main
 
 import (
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/views"
 )
 
 func main() {
-	b := gi.NewBody("Cogent Settings")
-	giv.SettingsView(b)
+	b := core.NewBody("Cogent Settings")
+	views.SettingsView(b)
 	b.RunMainWindow()
 }

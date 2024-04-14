@@ -5,11 +5,11 @@
 package vector
 
 import (
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/units"
+	"cogentcore.org/core/views"
 )
 
 // TextStyle is text styling info -- using StructView to do text editor
@@ -19,7 +19,7 @@ type TextStyle struct {
 	Text string
 
 	// font family
-	Font gi.FontName `xml:"font-family"`
+	Font core.FontName `xml:"font-family"`
 
 	// font size
 	Size units.Value `xml:"font-size"`
@@ -46,16 +46,16 @@ type TextStyle struct {
 	Align styles.Aligns `xml:"text-align" inherit:"true"`
 
 	// font value view for font toolbar
-	FontValue giv.FontValue `view:"-"`
+	FontValue views.FontValue `view:"-"`
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
 func (ts *TextStyle) Update() {
-	// this is called automatically when edited
+	// this is called augtomatically when edited
 	if ts.VectorView != nil {
-		ts.VectorView.SetTextProps(ts.TextProps())
+		ts.VectorView.SetTextProperties(ts.TextProperties())
 		ts.VectorView.SetText(ts.Text)
 	}
 }
@@ -77,7 +77,7 @@ func (ts *TextStyle) Defaults() {
 
 // SetFromFontStyle sets from standard styles.Font style
 func (ts *TextStyle) SetFromFontStyle(fs *styles.Font) {
-	ts.Font = gi.FontName(fs.Family)
+	ts.Font = core.FontName(fs.Family)
 	ts.Size = fs.Size
 	ts.Weight = fs.Weight
 	ts.Stretch = fs.Stretch
@@ -97,11 +97,11 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 	ts.Align = txt.Paint.TextStyle.Align
 }
 
-// SetTextPropsNode sets the text properties of given Text node
-func (gv *VectorView) SetTextPropsNode(sii svg.Node, tps map[string]string) {
+// SetTextPropertiesNode sets the text properties of given Text node
+func (gv *VectorView) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
 		for _, kid := range gp.Kids {
-			gv.SetTextPropsNode(kid.(svg.Node), tps)
+			gv.SetTextPropertiesNode(kid.(svg.Node), tps)
 		}
 		return
 	}
@@ -112,28 +112,28 @@ func (gv *VectorView) SetTextPropsNode(sii svg.Node, tps map[string]string) {
 	g := sii.AsNodeBase()
 	for k, v := range tps {
 		if v == "" {
-			g.DeleteProp(k)
+			g.DeleteProperty(k)
 		} else {
-			g.SetProp(k, v)
+			g.SetProperty(k, v)
 		}
 	}
 }
 
-// SetTextProps sets the text properties of selected Text nodes
-func (gv *VectorView) SetTextProps(tps map[string]string) {
+// SetTextProperties sets the text properties of selected Text nodes
+func (gv *VectorView) SetTextProperties(tps map[string]string) {
 	es := &gv.EditState
 	sv := gv.SVG()
-	sv.UndoSave("SetTextProps", "")
+	sv.UndoSave("SetTextProperties", "")
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
-		gv.SetTextPropsNode(itm.(svg.Node), tps)
+		gv.SetTextPropertiesNode(itm.(svg.Node), tps)
 	}
 	sv.NeedsRender()
 	gv.ChangeMade()
 }
 
-// TextProps returns non-default text properties to set
-func (ts *TextStyle) TextProps() map[string]string {
+// TextProperties returns non-default text properties to set
+func (ts *TextStyle) TextProperties() map[string]string {
 	tps := make(map[string]string)
 	tps["font-family"] = string(ts.Font)
 	tps["font-size"] = ts.Size.String()
@@ -205,9 +205,9 @@ func (gv *VectorView) SetText(txt string) {
 ///////////////////////////////////////////////////////////////////////
 // Toolbar
 
-func (gv *VectorView) TextToolbar() *gi.Toolbar {
+func (gv *VectorView) TextToolbar() *core.Toolbar {
 	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("text-tb", 2).(*gi.Toolbar)
+	tb := tbs.ChildByName("text-tb", 2).(*core.Toolbar)
 	return tb
 }
 
@@ -221,33 +221,33 @@ func (gv *VectorView) ConfigTextToolbar() {
 	ts := &es.Text
 	ts.VectorView = gv
 
-	txt := gi.NewTextField(tb, "text")
+	txt := core.NewTextField(tb, "text")
 	txt.Tooltip = "current text string"
 	txt.SetText(ts.Text)
 	// txt.SetProp("width", units.NewCh(50))
-	// txt.TextFieldSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
-	// 	if sig == int64(gi.TextFieldDone) {
+	// txt.TextFieldSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// 	if sig == int64(core.TextFieldDone) {
 	// 		ts.Text = txt.Text()
 	// 		ts.Update()
 	// 	}
 	// })
 
-	// ki.InitNode(&ts.FontVal)
+	// tree.InitNode(&ts.FontVal)
 	// ts.FontVal.SetSoloValue(reflect.ValueOf(&ts.Font))
-	// fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(gi.Node2D)
+	// fw := tb.AddNewChild(ts.FontVal.WidgetType(), "font").(core.Node2D)
 	// ts.FontVal.Config(fw)
 
-	// fsz := gi.NewSpinner(tb, "size")
+	// fsz := core.NewSpinner(tb, "size")
 	// fsz.SetValue(ts.Size.Val)
-	// fsz.SpinnerSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fsz.SpinnerSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	ts.Size.Val = fsz.Value
 	// 	ts.Update()
 	// })
 
-	// fzu := gi.NewChooser(tb, "size-units")
+	// fzu := core.NewChooser(tb, "size-units")
 	// fzu.ItemsFromEnum(units.KiT_Units, true, 0)
 	// fzu.SetCurIndex(int(ts.Size.Un))
-	// fzu.ComboSig.Connect(gv.This(), func(recv, send ki.Ki, sig int64, data any) {
+	// fzu.ComboSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	ts.Size.Un = units.Units(fzu.CurIndex)
 	// 	ts.Update()
 	// })
@@ -260,15 +260,15 @@ func (gv *VectorView) UpdateTextToolbar() {
 	es := &gv.EditState
 	ts := &es.Text
 
-	txt := tb.ChildByName("text", 0).(*gi.TextField)
+	txt := tb.ChildByName("text", 0).(*core.TextField)
 	txt.SetText(ts.Text)
 
-	// fw := tb.ChildByName("font", 0).(gi.Node2D)
+	// fw := tb.ChildByName("font", 0).(core.Node2D)
 	// ts.FontVal.UpdateWidget()
 
-	// fsz := tb.ChildByName("size", 0).(*gi.Spinner)
+	// fsz := tb.ChildByName("size", 0).(*core.Spinner)
 	// fsz.SetValue(ts.Size.Val)
 
-	// fzu := tb.ChildByName("size-units", 0).(*gi.Chooser)
+	// fzu := tb.ChildByName("size-units", 0).(*core.Chooser)
 	// fzu.SetCurrentIndex(int(ts.Size.Un))
 }

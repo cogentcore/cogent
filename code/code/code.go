@@ -9,29 +9,27 @@ package code
 import (
 	"embed"
 	"io/fs"
-	"reflect"
 	"time"
 
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/grr"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/ki"
-	"cogentcore.org/core/laser"
-	"cogentcore.org/core/pi/complete"
+	"cogentcore.org/core/parse/complete"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
 )
 
 // Code provides the interface for the CodeView functionality that is needed
 // by the core code infrastructure, to allow CodeView to be in a separate package.
 // It is not intended to be the full functionality of the CodeView.
 type Code interface {
-	gi.Widget
+	core.Widget
 
-	// ProjSettings returns the code.ProjSettings
-	ProjSettings() *ProjSettings
+	// ProjectSettings returns the [ProjectSettings]
+	ProjectSettings() *ProjectSettings
 
 	// FileTree returns the code.Files file tree
 	FileTree() *filetree.Tree
@@ -61,7 +59,7 @@ type Code interface {
 	UpdateStatusLabel()
 
 	// SelectTabByName Selects given main tab, and returns all of its contents as well.
-	SelectTabByName(label string) gi.Widget
+	SelectTabByName(label string) core.Widget
 
 	// FocusOnTabs moves keyboard focus to Tabs panel -- returns false if nothing at that tab
 	FocusOnTabs() bool
@@ -109,7 +107,7 @@ type Code interface {
 
 	// Find does Find / Replace in files, using given options and filters -- opens up a
 	// main tab with the results and further controls.
-	Find(find, repl string, ignoreCase, regExp bool, loc FindLoc, langs []fi.Known)
+	Find(find, repl string, ignoreCase, regExp bool, loc FindLoc, langs []fileinfo.Known)
 
 	// ParseOpenFindURL parses and opens given find:/// url from Find, return text
 	// region encoded in url, and starting line of results in find buffer, and
@@ -117,7 +115,7 @@ type Code interface {
 	ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool)
 
 	// OpenFileAtRegion opens the specified file, highlights the region and sets the cursor
-	OpenFileAtRegion(filename gi.Filename, reg textbuf.Region) (tv *TextEditor, ok bool)
+	OpenFileAtRegion(filename core.Filename, reg textbuf.Region) (tv *TextEditor, ok bool)
 
 	// SaveAllCheck checks if any files have not been saved, and prompt to save them.
 	// returns true if there were unsaved files, false otherwise.
@@ -157,28 +155,22 @@ type Code interface {
 	ClearDebug()
 }
 
-// CodeType is a Code reflect.Type, suitable for checking for Type.Implements.
-var CodeType = reflect.TypeOf((*Code)(nil)).Elem()
-
 // ParentCode returns the Code parent of given node
-func ParentCode(kn ki.Ki) (Code, bool) {
-	if ki.IsRoot(kn) {
-		return nil, false
-	}
-	var ge Code
-	kn.WalkUp(func(k ki.Ki) bool {
-		if laser.EmbedImplements(reflect.TypeOf(k.This()), CodeType) {
-			ge = k.(Code)
+func ParentCode(tn tree.Node) (Code, bool) {
+	var res Code
+	tn.WalkUp(func(n tree.Node) bool {
+		if c, ok := n.This().(Code); ok {
+			res = c
 			return false
 		}
 		return true
 	})
-	return ge, ge != nil
+	return res, res != nil
 }
 
 //go:embed icons/*.svg
 var Icons embed.FS
 
 func init() {
-	icons.AddFS(grr.Log1(fs.Sub(Icons, "icons")))
+	icons.AddFS(errors.Log1(fs.Sub(Icons, "icons")))
 }

@@ -5,19 +5,19 @@
 package main
 
 import (
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
-	"cogentcore.org/core/keyfun"
+	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/views"
 )
 
 func main() {
-	b := gi.NewBody("Cogent Files")
+	b := core.NewBody("Cogent Files")
 
-	fv := giv.NewFileView(b)
+	fv := views.NewFileView(b)
 	fv.Scene.OnKeyChord(func(e events.Event) {
-		if keyfun.Of(e.KeyChord()) == keyfun.Accept {
-			gi.TheApp.OpenURL(fv.SelectedFile())
+		if keymap.Of(e.KeyChord()) == keymap.Accept {
+			core.TheApp.OpenURL(fv.SelectedFile())
 		}
 	})
 

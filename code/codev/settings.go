@@ -9,17 +9,17 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/giv"
+	"cogentcore.org/core/views"
 )
 
 // Defaults sets new project defaults based on overall settings
 func (ge *CodeView) Defaults() {
 	ge.Settings.Files = code.Settings.Files
-	ge.Settings.Editor = gi.SystemSettings.Editor
+	ge.Settings.Editor = core.SystemSettings.Editor
 	ge.Settings.Splits = []float32{.1, .325, .325, .25}
 	ge.Settings.Debug = cdebug.DefaultParams
 }
@@ -35,8 +35,8 @@ func (ge *CodeView) GrabSettings() {
 // ApplySettings applies current project preference settings into places where
 // they are used -- only for those done prior to loading
 func (ge *CodeView) ApplySettings() {
-	ge.ProjFilename = ge.Settings.ProjFilename
-	ge.ProjRoot = ge.Settings.ProjRoot
+	ge.ProjectFilename = ge.Settings.ProjectFilename
+	ge.ProjectRoot = ge.Settings.ProjectRoot
 	if ge.Files != nil {
 		ge.Files.Dirs = ge.Settings.Dirs
 		ge.Files.DirsOnTop = ge.Settings.Files.DirsOnTop
@@ -45,17 +45,17 @@ func (ge *CodeView) ApplySettings() {
 		for i := 0; i < NTextEditors; i++ {
 			tv := ge.TextEditorByIndex(i)
 			if tv.Buffer != nil {
-				ge.ConfigTextBuf(tv.Buffer)
+				ge.ConfigTextBuffer(tv.Buffer)
 			}
 		}
 		for _, ond := range ge.OpenNodes {
 			if ond.Buffer != nil {
-				ge.ConfigTextBuf(ond.Buffer)
+				ge.ConfigTextBuffer(ond.Buffer)
 			}
 		}
 		ge.Splits().SetSplits(ge.Settings.Splits...)
 	}
-	gi.UpdateAll() // drives full rebuild
+	core.UpdateAll() // drives full rebuild
 }
 
 // ApplySettingsAction applies current settings to the project, and updates the project
@@ -65,9 +65,9 @@ func (ge *CodeView) ApplySettingsAction() {
 	ge.SetStatus("Applied prefs")
 }
 
-// EditProjSettings allows editing of project settings (settings specific to this project)
-func (ge *CodeView) EditProjSettings() { //gti:add
-	sv := code.ProjSettingsView(&ge.Settings)
+// EditProjectSettings allows editing of project settings (settings specific to this project)
+func (ge *CodeView) EditProjectSettings() { //types:add
+	sv := code.ProjectSettingsView(&ge.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
 			ge.ApplySettingsAction()
@@ -75,14 +75,14 @@ func (ge *CodeView) EditProjSettings() { //gti:add
 	}
 }
 
-func (ge *CodeView) CallSplitsSetView(ctx gi.Widget) {
-	fb := giv.NewSoloFuncButton(ctx, ge.SplitsSetView)
+func (ge *CodeView) CallSplitsSetView(ctx core.Widget) {
+	fb := views.NewSoloFuncButton(ctx, ge.SplitsSetView)
 	fb.Args[0].SetValue(ge.Settings.SplitName)
 	fb.CallFunc()
 }
 
 // SplitsSetView sets split view splitters to given named setting
-func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
+func (ge *CodeView) SplitsSetView(split code.SplitName) { //types:add
 	sv := ge.Splits()
 	sp, _, ok := code.AvailableSplits.SplitByName(split)
 	if ok {
@@ -96,7 +96,7 @@ func (ge *CodeView) SplitsSetView(split code.SplitName) { //gti:add
 
 // SplitsSave saves current splitter settings to named splitter settings under
 // existing name, and saves to prefs file
-func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
+func (ge *CodeView) SplitsSave(split code.SplitName) { //types:add
 	sv := ge.Splits()
 	sp, _, ok := code.AvailableSplits.SplitByName(split)
 	if ok {
@@ -107,28 +107,28 @@ func (ge *CodeView) SplitsSave(split code.SplitName) { //gti:add
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (ge *CodeView) SplitsSaveAs(name, desc string) { //gti:add
+func (ge *CodeView) SplitsSaveAs(name, desc string) { //types:add
 	sv := ge.Splits()
 	code.AvailableSplits.Add(name, desc, sv.Splits)
 	code.AvailableSplits.SaveSettings()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (ge *CodeView) SplitsEdit() { //gti:add
+func (ge *CodeView) SplitsEdit() { //types:add
 	code.SplitsView(&code.AvailableSplits)
 }
 
 // LangDefaults applies default language settings based on MainLang
 func (ge *CodeView) LangDefaults() {
-	ge.Settings.RunCmds = code.CmdNames{"Build: Run Proj"}
-	ge.Settings.BuildDir = ge.Settings.ProjRoot
-	ge.Settings.BuildTarg = ge.Settings.ProjRoot
-	ge.Settings.RunExec = gi.Filename(filepath.Join(string(ge.Settings.ProjRoot), ge.Nm))
+	ge.Settings.RunCmds = code.CmdNames{"Build: Run Project"}
+	ge.Settings.BuildDir = ge.Settings.ProjectRoot
+	ge.Settings.BuildTarg = ge.Settings.ProjectRoot
+	ge.Settings.RunExec = core.Filename(filepath.Join(string(ge.Settings.ProjectRoot), ge.Nm))
 	if len(ge.Settings.BuildCmds) == 0 {
 		switch ge.Settings.MainLang {
-		case fi.Go:
-			ge.Settings.BuildCmds = code.CmdNames{"Go: Build Proj"}
-		case fi.TeX:
+		case fileinfo.Go:
+			ge.Settings.BuildCmds = code.CmdNames{"Go: Build Project"}
+		case fileinfo.TeX:
 			ge.Settings.BuildCmds = code.CmdNames{"LaTeX: LaTeX PDF"}
 			ge.Settings.RunCmds = code.CmdNames{"File: Open Target"}
 		default:
@@ -145,13 +145,13 @@ func (ge *CodeView) LangDefaults() {
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
 func (ge *CodeView) GuessMainLang() bool {
-	ecsc := ge.Files.FileExtCounts(fi.Code)
-	ecsd := ge.Files.FileExtCounts(fi.Doc)
+	ecsc := ge.Files.FileExtCounts(fileinfo.Code)
+	ecsd := ge.Files.FileExtCounts(fileinfo.Doc)
 	ecs := append(ecsc, ecsd...)
 	filetree.NodeNameCountSort(ecs)
 	for _, ec := range ecs {
-		ls := fi.ExtKnown(ec.Name)
-		if ls != fi.Unknown {
+		ls := fileinfo.ExtKnown(ec.Name)
+		if ls != fileinfo.Unknown {
 			ge.Settings.MainLang = ls
 			return true
 		}

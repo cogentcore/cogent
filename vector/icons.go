@@ -8,7 +8,7 @@ import (
 	"embed"
 	"io/fs"
 
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/errors"
 	"cogentcore.org/core/icons"
 )
 
@@ -18,5 +18,5 @@ import (
 var Icons embed.FS
 
 func init() {
-	icons.AddFS(grr.Log1(fs.Sub(Icons, "icons")))
+	icons.AddFS(errors.Log1(fs.Sub(Icons, "icons")))
 }

@@ -6,22 +6,22 @@ package vector
 
 import (
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fi"
-	"cogentcore.org/core/giv"
-	"cogentcore.org/core/ki"
+	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
+	"cogentcore.org/core/views"
 )
 
 // TreeView is a TreeView that knows how to operate on FileNode nodes
 type TreeView struct {
-	giv.TreeView
+	views.TreeView
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
 // SelectNodeInTree selects given node in TreeView
-func (gv *VectorView) SelectNodeInTree(kn ki.Ki, mode events.SelectModes) {
+func (gv *VectorView) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 	tv := gv.TreeView()
 	tvn := tv.FindSyncNode(kn)
 	if tvn != nil {
@@ -31,14 +31,14 @@ func (gv *VectorView) SelectNodeInTree(kn ki.Ki, mode events.SelectModes) {
 }
 
 // SelectedAsTreeViews returns the currently-selected items from SVG as TreeView nodes
-func (gv *VectorView) SelectedAsTreeViews() []giv.TreeViewer {
+func (gv *VectorView) SelectedAsTreeViews() []views.TreeViewer {
 	es := &gv.EditState
 	sl := es.SelectedList(false)
 	if len(sl) == 0 {
 		return nil
 	}
 	tv := gv.TreeView()
-	var tvl []giv.TreeViewer
+	var tvl []views.TreeViewer
 	for _, si := range sl {
 		tvn := tv.FindSyncNode(si.This())
 		if tvn != nil {
@@ -49,7 +49,7 @@ func (gv *VectorView) SelectedAsTreeViews() []giv.TreeViewer {
 }
 
 // DuplicateSelected duplicates selected items in SVG view, using TreeView methods
-func (gv *VectorView) DuplicateSelected() { //gti:add
+func (gv *VectorView) DuplicateSelected() { //types:add
 	tvl := gv.SelectedAsTreeViews()
 	if len(tvl) == 0 {
 		gv.SetStatus("Duplicate: no tree items found")
@@ -69,7 +69,7 @@ func (gv *VectorView) DuplicateSelected() { //gti:add
 }
 
 // CopySelected copies selected items in SVG view, using TreeView methods
-func (gv *VectorView) CopySelected() { //gti:add
+func (gv *VectorView) CopySelected() { //types:add
 	tvl := gv.SelectedAsTreeViews()
 	if len(tvl) == 0 {
 		gv.SetStatus("Copy: no tree items found")
@@ -82,7 +82,7 @@ func (gv *VectorView) CopySelected() { //gti:add
 }
 
 // CutSelected cuts selected items in SVG view, using TreeView methods
-func (gv *VectorView) CutSelected() { //gti:add
+func (gv *VectorView) CutSelected() { //types:add
 	tvl := gv.SelectedAsTreeViews()
 	if len(tvl) == 0 {
 		gv.SetStatus("Cut: no tree items found")
@@ -103,8 +103,8 @@ func (gv *VectorView) CutSelected() { //gti:add
 }
 
 // PasteClip pastes clipboard, using cur layer etc
-func (gv *VectorView) PasteClip() { //gti:add
-	md := gv.Clipboard().Read([]string{fi.DataJson})
+func (gv *VectorView) PasteClip() { //types:add
+	md := gv.Clipboard().Read([]string{fileinfo.DataJson})
 	if md == nil {
 		return
 	}
@@ -154,8 +154,8 @@ func (gv *VectorView) DeleteSelected() {
 
 /*
 // TreeViewIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
-var TreeViewIsLayerFunc = giv.ActionUpdateFunc(func(fni any, act *gi.Button) {
-	tv := fni.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
+var TreeViewIsLayerFunc = views.ActionUpdateFunc(func(fni any, act *core.Button) {
+	tv := fni.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 	sn := tv.SrcNode
 	if sn != nil {
 		act.SetInactiveState(!NodeIsLayer(sn))
@@ -222,7 +222,7 @@ func (tv *TreeView) LayerClearCurrent() {
 }
 
 // NodeIsMetaData returns true if given node is a MetaData
-func NodeIsMetaData(kn ki.Ki) bool {
+func NodeIsMetaData(kn tree.Node) bool {
 	_, ismd := kn.(*svg.MetaData)
 	return ismd
 }
@@ -237,7 +237,7 @@ func (tv *TreeView) LayerToggleLock() {
 		tv.LayerClearCurrent()
 		np = "true"
 	}
-	sn.SetProp("insensitive", np)
+	sn.SetProperty("insensitive", np)
 	// tv.SetFullReRenderIconLabel()
 	// tv.UpdateSig()
 }
@@ -252,78 +252,78 @@ func (tv *TreeView) LayerToggleVis() {
 	} else {
 		np = "display:inline"
 	}
-	sn.SetProp("style", np)
+	sn.SetProperty("style", np)
 	// tv.UpdateSig()
 }
 
 /*
-var TreeViewProps = ki.Props{
-	".svgnode": ki.Props{
+var TreeViewProperties = tree.Properties{
+	".svgnode": tree.Properties{
 		"font-weight": gist.WeightNormal,
 		"font-style":  gist.FontNormal,
 	},
-	".layer": ki.Props{
+	".layer": tree.Properties{
 		"font-weight": gist.WeightBold,
 	},
-	".invisible": ki.Props{
+	".invisible": tree.Properties{
 		"font-style": gist.FontItalic,
 	},
-	".locked": ki.Props{
+	".locked": tree.Properties{
 		"color": "#ff4252",
 	},
-	giv.TreeViewSelectors[giv.TreeViewActive]: ki.Props{},
-	giv.TreeViewSelectors[giv.TreeViewSel]: ki.Props{
-		"background-color": &gi.Settings.Colors.Select,
+	views.TreeViewSelectors[views.TreeViewActive]: tree.Properties{},
+	views.TreeViewSelectors[views.TreeViewSel]: tree.Properties{
+		"background-color": &core.Settings.Colors.Select,
 	},
-	giv.TreeViewSelectors[giv.TreeViewFocus]: ki.Props{
-		"background-color": &gi.Settings.Colors.Control,
+	views.TreeViewSelectors[views.TreeViewFocus]: tree.Properties{
+		"background-color": &core.Settings.Colors.Control,
 	},
-	"CtxtMenuActive": ki.PropSlice{
-		{"SrcEdit", ki.Props{
+	"CtxtMenuActive": tree.Propertieslice{
+		{"SrcEdit", tree.Properties{
 			"label": "Edit",
 		}},
-		{"SelectSVG", ki.Props{
+		{"SelectSVG", tree.Properties{
 			"label": "Select",
 		}},
-		{"sep-edit", ki.BlankProp{}},
-		{"SrcDuplicate", ki.Props{
+		{"sep-edit", tree.BlankProp{}},
+		{"SrcDuplicate", tree.Properties{
 			"label":    "Duplicate",
-			"shortcut": keyfun.Duplicate,
+			"shortcut": keymap.Duplicate,
 		}},
-		{"Copy", ki.Props{
-			"shortcut": keyfun.Copy,
-			"Args": ki.PropSlice{
-				{"reset", ki.Props{
+		{"Copy", tree.Properties{
+			"shortcut": keymap.Copy,
+			"Args": tree.Propertieslice{
+				{"reset", tree.Properties{
 					"value": true,
 				}},
 			},
 		}},
-		{"Cut", ki.Props{
-			"shortcut": keyfun.Cut,
-			"updtfunc": giv.ActionUpdateFunc(func(tvi any, act *gi.Button) {
-				tv := tvi.(ki.Ki).Embed(KiT_TreeView).(*TreeView)
+		{"Cut", tree.Properties{
+			"shortcut": keymap.Cut,
+			"updtfunc": views.ActionUpdateFunc(func(tvi any, act *core.Button) {
+				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
 		}},
-		{"Paste", ki.Props{
-			"shortcut": keyfun.Paste,
+		{"Paste", tree.Properties{
+			"shortcut": keymap.Paste,
 		}},
-		{"sep-layer", ki.BlankProp{}},
-		{"LayerSetCurrent", ki.Props{
+		{"sep-layer", tree.BlankProp{}},
+		{"LayerSetCurrent", tree.Properties{
 			"label":    "Layer: Set Current",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"LayerToggleLock", ki.Props{
+		{"LayerToggleLock", tree.Properties{
 			"label":    "Layer: Toggle Lock",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"LayerToggleVis", ki.Props{
+		{"LayerToggleVis", tree.Properties{
 			"label":    "Layer: Toggle Visible",
 			"updtfunc": TreeViewIsLayerFunc,
 		}},
-		{"sep-open", ki.BlankProp{}},
-		{"OpenAll", ki.Props{}},
-		{"CloseAll", ki.Props{}},
+		{"sep-open", tree.BlankProp{}},
+		{"OpenAll", tree.Properties{}},
+		{"CloseAll", tree.Properties{}},
 	},
 }
 

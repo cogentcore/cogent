@@ -12,23 +12,23 @@ import (
 
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/cogent/code/codev"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/grr"
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/errors"
 )
 
 func main() {
-	pdir := gi.TheApp.AppDataDir()
+	pdir := core.TheApp.AppDataDir()
 	lfnm := filepath.Join(pdir, "cogentcode.log")
 
 	// we must load the settings before initializing the console
-	grr.Log(gi.LoadAllSettings())
+	errors.Log(core.LoadAllSettings())
 
 	code.TheConsole.Init(lfnm)
 
 	var path string
 	var proj string
 
-	ofs := gi.TheApp.OpenFiles()
+	ofs := core.TheApp.OpenFiles()
 	if len(ofs) > 0 {
 		path = ofs[0]
 	} else if len(os.Args) > 1 {
@@ -50,12 +50,12 @@ func main() {
 
 	if proj != "" {
 		proj, _ = filepath.Abs(proj)
-		codev.OpenCodeProj(proj)
+		codev.OpenCodeProject(proj)
 	} else {
 		if path != "" {
 			path, _ = filepath.Abs(path)
 		}
-		codev.NewCodeProjPath(path)
+		codev.NewCodeProjectPath(path)
 	}
-	gi.Wait()
+	core.Wait()
 }

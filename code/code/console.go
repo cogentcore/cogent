@@ -10,7 +10,7 @@ import (
 	"os"
 	"sync"
 
-	"cogentcore.org/core/gi"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -63,7 +63,7 @@ func (cn *Console) Init(logFile string) {
 	log.SetOutput(cn.StderrWrite)
 	cn.Buf = texteditor.NewBuffer()
 	cn.Buf.Opts.LineNos = false
-	cn.Buf.Filename = gi.Filename("console-buf")
+	cn.Buf.Filename = core.Filename("console-buf")
 	if logFile != "" {
 		cn.LogWrite, _ = os.Create(logFile)
 	}

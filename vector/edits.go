@@ -11,9 +11,9 @@ import (
 	"strings"
 	"sync"
 
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gi"
-	"cogentcore.org/core/mat32"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/undo"
 )
@@ -67,7 +67,7 @@ type EditState struct {
 	DragCurPos image.Point
 
 	// current selection bounding box
-	SelectBBox mat32.Box2
+	SelectBBox math32.Box2
 
 	// number of current selectbox sprites
 	NSelectSprites int
@@ -79,16 +79,16 @@ type EditState struct {
 	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" view:"-"`
 
 	// bbox at start of dragging
-	DragSelectStartBBox mat32.Box2
+	DragSelectStartBBox math32.Box2
 
 	// current bbox during dragging -- non-snapped version
-	DragSelectCurrentBBox mat32.Box2
+	DragSelectCurrentBBox math32.Box2
 
 	// current effective bbox during dragging -- snapped version
-	DragSelectEffectiveBBox mat32.Box2
+	DragSelectEffectiveBBox math32.Box2
 
 	// potential points of alignment for dragging
-	AlignPts [BBoxPointsN][]mat32.Vec2
+	AlignPts [BBoxPointsN][]math32.Vector2
 
 	// number of current node sprites in use
 	NNodeSprites int
@@ -379,11 +379,11 @@ func (es *EditState) UpdateSelectBBox() {
 	if len(es.Selected) == 0 {
 		return
 	}
-	bbox := mat32.Box2{}
+	bbox := math32.Box2{}
 	bbox.SetEmpty()
 	for itm := range es.Selected {
 		g := itm.AsNodeBase()
-		bb := mat32.Box2{}
+		bb := math32.Box2{}
 		bb.SetFromRect(g.BBox)
 		bbox.ExpandByBox(bb)
 	}
@@ -447,7 +447,7 @@ type GradStop struct {
 type Gradient struct {
 
 	// icon of gradient -- generated to display each gradient
-	Ic gi.SVG `edit:"-" tableview:"no-header" width:"5"`
+	Ic core.SVG `edit:"-" tableview:"no-header" width:"5"`
 
 	// name of gradient (id)
 	Id string `edit:"-" width:"6"`
@@ -461,7 +461,7 @@ type Gradient struct {
 
 /*
 // Updates our gradient from svg gradient
-func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
+func (gr *Gradient) UpdateFromGrad(g *core.Gradient) {
 	_, id := svg.SplitNameIDDig(g.Nm)
 	gr.Id = fmt.Sprintf("%d", id)
 	gr.Name = g.Nm
@@ -492,7 +492,7 @@ func (gr *Gradient) UpdateFromGrad(g *gi.Gradient) {
 
 /*
 // Updates svg gradient from our gradient
-func (gr *Gradient) UpdateGrad(g *gi.Gradient) {
+func (gr *Gradient) UpdateGrad(g *core.Gradient) {
 	_, id := svg.SplitNameIDDig(g.Nm) // we always need to sync to id & name though
 	gr.Id = fmt.Sprintf("%d", id)
 	gr.Name = g.Nm
@@ -560,12 +560,12 @@ func (gr *Gradient) ConfigDefaultGradientStops() {
 func (gr *Gradient) UpdateIcon() {
 	/*
 		nm := fmt.Sprintf("grid_grad_%s", gr.Name)
-		ici, err := gi.TheIconMgr.IconByName(nm)
+		ici, err := core.TheIconMgr.IconByName(nm)
 		var ic *svg.Icon
 		if err != nil {
 			ic = &svg.Icon{}
 			ic.InitName(ic, nm)
-			ic.ViewBox.Size = mat32.V2(1, 1)
+			ic.ViewBox.Size = math32.Vec2(1, 1)
 			ic.SetProp("width", units.NewCh(5))
 			svg.CurIconSet[nm] = ic
 		} else {
@@ -573,7 +573,7 @@ func (gr *Gradient) UpdateIcon() {
 		}
 		nst := len(gr.Stops)
 		if ic.NumChildren() != nst {
-			config := ki.Config
+			config := tree.Config
 			for i := range gr.Stops {
 				config.Add(svg.RectType, fmt.Sprintf("%d", i))
 			}
