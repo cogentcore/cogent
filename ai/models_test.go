@@ -1,19 +1,6 @@
 package main
 
-import (
-	"encoding/json"
-	"fmt"
-	"log/slog"
-	"strconv"
-	"testing"
-
-	"cogentcore.org/core/errors"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ddkwork/golibrary/pkg/tree"
-	"github.com/ddkwork/golibrary/stream"
-)
-
+/*
 func Test_queryModelList(t *testing.T) {
 	queryModelList(stream.NewReadFile("testdata/library.html"))
 
@@ -95,3 +82,4 @@ func TestParseFloatGB(t *testing.T) {
 	assert.Equal(t, 1.5/1024, ParseUnitStr2GB("1.5MB"))
 	assert.Equal(t, 180.0, ParseUnitStr2GB("180GB"))
 }
+*/

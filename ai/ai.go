@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"embed"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,28 +13,25 @@ import (
 	"cogentcore.org/core/exec"
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/views"
-	"github.com/ddkwork/golibrary/pkg/tree"
 
 	"github.com/aandrew-me/tgpt/v2/structs"
 )
 
-//go:embed models.json
-var rootJson embed.FS
+// //go:embed models.json
+// var rootJson embed.FS
 
-var root = tree.NewNode("root", true, Model{
-	Name:        "root",
-	Description: "",
-	UpdateTime:  "",
-	Hash:        "",
-	Size:        "",
-})
+// var root = tree.NewNode("root", true, Model{
+// 	Name:        "root",
+// 	Description: "",
+// 	UpdateTime:  "",
+// 	Hash:        "",
+// 	Size:        "",
+// })
 
-const jsonName = "models.json"
+// const jsonName = "models.json"
 
 func main() {
 	b := core.NewBody("Cogent AI")
@@ -57,15 +53,15 @@ func main() {
 	leftFrame := core.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
 
-	errors.Log(jsonx.OpenFS(root, rootJson, jsonName))
-	views.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
+	// errors.Log(jsonx.OpenFS(root, rootJson, jsonName))
+	// views.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := core.NewFrame(leftFrame)
 	newFrame.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 	core.NewButton(newFrame).SetText("Update module list").OnClick(func(e events.Event) {
-		core.ErrorSnackbar(b, QueryModelList())
+		// core.ErrorSnackbar(b, QueryModelList())
 	})
 
 	core.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
