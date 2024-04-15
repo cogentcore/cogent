@@ -257,14 +257,13 @@ func (ge *CodeView) OpenProject(filename core.Filename) *CodeView { //types:add
 	ge.Defaults()
 	if err := ge.Settings.Open(filename); err != nil {
 		slog.Error("Project Settings had a loading error", "error", err)
-		if ge.Settings.ProjectRoot == "" {
-			root, _, _, _ := ProjectPathParse(string(filename))
-			ge.Settings.ProjectRoot = core.Filename(root)
-			ge.GuessMainLang()
-		}
+	}
+	root, pnm, _, ok := ProjectPathParse(string(filename))
+	ge.Settings.ProjectRoot = core.Filename(root)
+	if ge.Settings.MainLang == fileinfo.Unknown {
+		ge.GuessMainLang()
 	}
 	ge.Settings.ProjectFilename = filename // should already be set but..
-	_, pnm, _, ok := ProjectPathParse(string(ge.Settings.ProjectRoot))
 	if ok {
 		code.SetGoMod(ge.Settings.GoMod)
 		os.Chdir(string(ge.Settings.ProjectRoot))
