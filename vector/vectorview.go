@@ -573,7 +573,7 @@ func (vv *VectorView) SetTitle() {
 	if vv.Filename == "" {
 		return
 	}
-	win := vv.Scene.RenderWin()
+	win := vv.Scene.RenderWindow()
 	if win == nil {
 		return
 	}
