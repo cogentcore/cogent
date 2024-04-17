@@ -568,7 +568,7 @@ func (sv *SVGView) UndoSave(action, data string) {
 	b := &bytes.Buffer{}
 	errors.Log(jsonx.Write(sv.Root(), b))
 	bs := strings.Split(b.String(), "\n")
-	es.UndoMgr.Save(action, data, bs)
+	es.Undos.Save(action, data, bs)
 }
 
 // UndoSaveReplace save current state to replace current
@@ -577,20 +577,20 @@ func (sv *SVGView) UndoSaveReplace(action, data string) {
 	b := &bytes.Buffer{}
 	errors.Log(jsonx.Write(sv.Root(), b))
 	bs := strings.Split(b.String(), "\n")
-	es.UndoMgr.SaveReplace(action, data, bs)
+	es.Undos.SaveReplace(action, data, bs)
 }
 
 // Undo undoes one step, returning the action that was undone
 func (sv *SVGView) Undo() string {
 	es := sv.EditState()
 	es.ResetSelected()
-	if es.UndoMgr.MustSaveUndoStart() { // need to save current state!
+	if es.Undos.MustSaveUndoStart() { // need to save current state!
 		b := &bytes.Buffer{}
 		errors.Log(jsonx.Write(sv.Root(), b))
 		bs := strings.Split(b.String(), "\n")
-		es.UndoMgr.SaveUndoStart(bs)
+		es.Undos.SaveUndoStart(bs)
 	}
-	act, _, state := es.UndoMgr.Undo()
+	act, _, state := es.Undos.Undo()
 	if state == nil {
 		return act
 	}
@@ -605,7 +605,7 @@ func (sv *SVGView) Undo() string {
 func (sv *SVGView) Redo() string {
 	es := sv.EditState()
 	es.ResetSelected()
-	act, _, state := es.UndoMgr.Redo()
+	act, _, state := es.Undos.Redo()
 	if state == nil {
 		return act
 	}

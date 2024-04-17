@@ -474,10 +474,10 @@ func (vv *VectorView) ConfigToolbar(tb *core.Toolbar) {
 	core.NewSeparator(tb)
 
 	views.NewFuncButton(tb, vv.Undo).StyleFirst(func(s *styles.Style) {
-		s.SetEnabled(vv.EditState.UndoMgr.HasUndoAvail())
+		s.SetEnabled(vv.EditState.Undos.HasUndoAvail())
 	})
 	views.NewFuncButton(tb, vv.Redo).StyleFirst(func(s *styles.Style) {
-		s.SetEnabled(vv.EditState.UndoMgr.HasRedoAvail())
+		s.SetEnabled(vv.EditState.Undos.HasRedoAvail())
 	})
 
 	core.NewSeparator(tb)

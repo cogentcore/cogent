@@ -42,8 +42,8 @@ type EditState struct {
 	// current text styling info
 	Text TextStyle
 
-	// undo manager
-	UndoMgr undo.Mgr
+	// the undo manager
+	Undos undo.Stack
 
 	// contents have changed
 	Changed bool `view:"inactive"`
@@ -115,7 +115,7 @@ func (es *EditState) Init(vv *VectorView) {
 	es.ActData = ""
 	es.CurLayer = ""
 	es.Gradients = nil
-	es.UndoMgr.Reset()
+	es.Undos.Reset()
 	es.Changed = false
 	es.VectorView = vv
 }
@@ -560,7 +560,7 @@ func (gr *Gradient) ConfigDefaultGradientStops() {
 func (gr *Gradient) UpdateIcon() {
 	/*
 		nm := fmt.Sprintf("grid_grad_%s", gr.Name)
-		ici, err := core.TheIconMgr.IconByName(nm)
+		ici, err := core.TheIcons.IconByName(nm)
 		var ic *svg.Icon
 		if err != nil {
 			ic = &svg.Icon{}
