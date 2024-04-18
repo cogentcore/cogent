@@ -385,8 +385,8 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 
 	sv.TransformAllLeaves(treff, math32.Vec2(1, 1), 0, math32.Vec2(0, 0))
 	sv.Root().ViewBox.Size = bsz
-	sv.SSVG().PhysWidth.Value = bsz.X
-	sv.SSVG().PhysHeight.Value = bsz.Y
+	sv.SSVG().PhysicalWidth.Value = bsz.X
+	sv.SSVG().PhysicalHeight.Value = bsz.Y
 	sv.ZoomToPage(false)
 	sv.VectorView.ChangeMade()
 }
@@ -453,7 +453,7 @@ func (sv *SVGView) SetMetaData() {
 	es := sv.EditState()
 	nv, gr := sv.MetaData(true)
 
-	uts := strings.ToLower(sv.SSVG().PhysWidth.Unit.String())
+	uts := strings.ToLower(sv.SSVG().PhysicalWidth.Unit.String())
 
 	nv.SetProperty("inkscape:current-layer", es.CurLayer)
 	nv.SetProperty("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
