@@ -848,7 +848,7 @@ func (dv *DebugView) ActionActivate(act *core.Button) {
 
 func (dv *DebugView) UpdateToolbar() {
 	tb := dv.Toolbar()
-	tb.UpdateBar()
+	tb.ApplyStyleUpdate()
 }
 
 func (dv *DebugView) ConfigToolbar() {
