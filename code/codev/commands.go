@@ -252,6 +252,7 @@ func (ge *CodeView) CommitNoChecks() {
 		d.AddOK(parent).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()
 			ge.ArgVals["{PromptString1}"] = val
+			code.CmdPrompt1Vals["Commit"] = val
 			code.CmdNoUserPrompt = true                     // don't re-prompt!
 			ge.ExecCmdName(code.CmdName(cmdnm), true, true) // must be wait
 			ge.SaveProjectIfExists(true)                    // saveall
