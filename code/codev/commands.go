@@ -242,8 +242,10 @@ func (ge *CodeView) CommitNoChecks() {
 	d := core.NewBody().AddTitle("Commit message").
 		AddText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
 	tf := core.NewTextField(d)
+	curval, _ := code.CmdPrompt1Vals["Commit"]
+	tf.SetText(curval)
 	tf.Style(func(s *styles.Style) {
-		s.Min.X.Ch(80)
+		s.Min.X.Ch(100)
 	})
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)

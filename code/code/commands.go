@@ -386,7 +386,6 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 			tf := core.NewTextField(d).SetText(curval)
 			tf.Style(func(s *styles.Style) {
 				s.Min.X.Ch(100)
-				s.Max.X.Ch(100)
 			})
 			d.AddBottomBar(func(parent core.Widget) {
 				d.AddCancel(parent)
