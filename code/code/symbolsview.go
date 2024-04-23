@@ -109,7 +109,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 			sv.RefreshAction()
 		})
 
-	sl := core.NewLabel(tb).SetText("Scope:").SetTooltip("scope symbols to:")
+	sl := core.NewText(tb).SetText("Scope:").SetTooltip("scope symbols to:")
 
 	ch := core.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope)
 	ch.SetTooltip(sl.Tooltip)
@@ -120,7 +120,7 @@ func (sv *SymbolsView) ConfigToolbar() {
 	})
 	ch.SetCurrentValue(sv.Params().Scope)
 
-	core.NewLabel(tb).SetText("Search:").
+	core.NewText(tb).SetText("Search:").
 		SetTooltip("narrow symbols list to symbols containing text you enter here")
 
 	tf := core.NewTextField(tb, "search-str")

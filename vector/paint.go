@@ -520,13 +520,13 @@ func (pv *PaintView) Config() {
 	sty := &Settings.ShapeStyle
 
 	spl := core.NewLayout(pv, "stroke-lab")
-	core.NewLabel(spl).SetText("<b>Stroke Paint:  </b>")
+	core.NewText(spl).SetText("<b>Stroke Paint:  </b>")
 	spt := core.NewChooser(spl) // .SetStrings(PaintTypeNames)
 	spt.SelectItem(int(pv.StrokeType))
 	// spt.Mutex = true
 
 	wr := core.NewLayout(pv, "stroke-width")
-	core.NewLabel(wr).SetText("Width:  ").Style(func(s *styles.Style) {
+	core.NewText(wr).SetText("Width:  ").Style(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 	})
 
@@ -678,7 +678,7 @@ func (pv *PaintView) Config() {
 	core.NewSeparator(pv)
 
 	fpl := core.NewLayout(pv, "fill-lab")
-	core.NewLabel(fpl).SetText("<b>Fill Paint:  </b>")
+	core.NewText(fpl).SetText("<b>Fill Paint:  </b>")
 
 	fpt := core.NewChooser(fpl, "fill-type").SetEnum(PaintTypesN)
 	fpt.SelectItem(int(pv.FillType))

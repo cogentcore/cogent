@@ -44,7 +44,7 @@ func (vv *VectorView) ConfigNodeToolbar() {
 	//
 	// core.NewSeparator(tb, "sep-group")
 
-	core.NewLabel(tb).SetText("X: ")
+	core.NewText(tb).SetText("X: ")
 
 	px := core.NewSpinner(tb, "posx").SetStep(1).SetValue(0).
 		SetTooltip("horizontal coordinate of node, in document units")
@@ -52,7 +52,7 @@ func (vv *VectorView) ConfigNodeToolbar() {
 		vv.NodeSetXPos(px.Value)
 	})
 
-	core.NewLabel(tb).SetText("Y: ")
+	core.NewText(tb).SetText("Y: ")
 
 	py := core.NewSpinner(tb, "posy").SetStep(1).SetValue(0).
 		SetTooltip("vertical coordinate of node, in document units")

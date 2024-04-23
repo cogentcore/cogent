@@ -71,24 +71,24 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 	core.NewSeparator(tb)
 
-	core.NewLabel(tb).SetText("X: ")
+	core.NewText(tb).SetText("X: ")
 	views.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
 		gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
 	})
 
-	core.NewLabel(tb).SetText("Y: ")
+	core.NewText(tb).SetText("Y: ")
 	py := core.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
 	py.OnChange(func(e events.Event) {
 		gv.SelectSetYPos(py.Value)
 	})
 
-	core.NewLabel(tb).SetText("W: ")
+	core.NewText(tb).SetText("W: ")
 	wd := core.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
 	wd.OnChange(func(e events.Event) {
 		gv.SelectSetWidth(wd.Value)
 	})
 
-	core.NewLabel(tb).SetText("H: ")
+	core.NewText(tb).SetText("H: ")
 	ht := core.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
 	ht.OnChange(func(e events.Event) {
 		gv.SelectSetHeight(ht.Value)

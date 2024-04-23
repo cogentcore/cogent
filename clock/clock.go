@@ -30,9 +30,9 @@ func clock(ts *core.Tabs) {
 		s.Align.Content = styles.Center
 		s.Align.Items = styles.Center
 	})
-	core.NewLabel(cl).SetType(core.LabelHeadlineMedium).
+	core.NewText(cl).SetType(core.TextHeadlineMedium).
 		SetText(time.Now().Format("Monday, January 2"))
-	core.NewLabel(cl).SetType(core.LabelDisplayLarge).
+	core.NewText(cl).SetType(core.TextDisplayLarge).
 		SetText(time.Now().Format("3:04 PM"))
 }
 

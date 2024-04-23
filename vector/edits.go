@@ -250,7 +250,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 }
 
 // Select selects given item (if not already selected) -- updates select
-// status of index label
+// status of index text
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
 	ss := &SelectedState{Order: idx}

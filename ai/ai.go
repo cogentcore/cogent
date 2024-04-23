@@ -85,8 +85,8 @@ func main() {
 		s.Text.Align = styles.Center
 	})
 
-	core.NewLabel(header).SetType(core.LabelDisplayLarge).SetText("Cogent AI")
-	core.NewLabel(header).SetType(core.LabelTitleLarge).SetText("Run powerful AI models locally")
+	core.NewText(header).SetType(core.TextDisplayLarge).SetText("Cogent AI")
+	core.NewText(header).SetType(core.TextTitleLarge).SetText("Run powerful AI models locally")
 
 	var send *core.Button
 	var textField *core.TextField
@@ -188,7 +188,7 @@ func main() {
 			s.Border.Radius = styles.BorderRadiusLarge
 			s.Grow.Set(1, 0)
 		})
-		core.NewLabel(answer).SetText("<b>Cogent AI:</b> Loading...")
+		core.NewText(answer).SetText("<b>Cogent AI:</b> Loading...")
 
 		history.Update()
 

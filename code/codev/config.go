@@ -89,9 +89,9 @@ func (ge *CodeView) StatusBar() *core.Frame {
 	return ge.ChildByName("statusbar", 2).(*core.Frame)
 }
 
-// StatusLabel returns the statusbar label widget
-func (ge *CodeView) StatusLabel() *core.Label {
-	return ge.StatusBar().Child(0).(*core.Label)
+// StatusText returns the status bar text widget
+func (ge *CodeView) StatusText() *core.Text {
+	return ge.StatusBar().Child(0).(*core.Text)
 }
 
 // SelectedFileNode returns currently selected file tree node as a *filetree.Node
@@ -154,7 +154,7 @@ func (ge *CodeView) ConfigSplits() {
 		})
 		// get updates on cursor movement and qreplace
 		ted.OnInput(func(e events.Event) {
-			ge.UpdateStatusLabel()
+			ge.UpdateStatusText()
 		})
 	}
 
@@ -183,8 +183,8 @@ func (ge *CodeView) ConfigStatusBar() {
 		s.Margin.Zero()
 		s.Padding.Set(units.Dp(4))
 	})
-	lbl := core.NewLabel(sb, "sb-lbl").SetText("This is the status bar initial configuration.  Welcome to code!")
-	lbl.Style(func(s *styles.Style) {
+	text := core.NewText(sb, "sb-text").SetText("This is the status bar initial configuration.  Welcome to code!")
+	text.Style(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 		s.Min.Y.Em(1.0)
 		s.Margin.Zero()

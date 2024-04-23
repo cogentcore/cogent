@@ -263,13 +263,13 @@ func (ge *CodeView) SetStatus(msg string) {
 	ge.UpdateTextButtons()
 }
 
-// UpdateStatusLabel updates the statusbar label, called for each render!
-func (ge *CodeView) UpdateStatusLabel() {
+// UpdateStatusText updates the status bar text with current data.
+func (ge *CodeView) UpdateStatusText() {
 	sb := ge.StatusBar()
 	if sb == nil {
 		return
 	}
-	lbl := ge.StatusLabel()
+	text := ge.StatusText()
 	fnm := ""
 	ln := 0
 	ch := 0
@@ -296,7 +296,7 @@ func (ge *CodeView) UpdateStatusLabel() {
 	}
 
 	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", ge.Nm, ge.ActiveVCSInfo, fnm, ln, ch, msg)
-	lbl.SetText(str).Update()
+	text.SetText(str).Update()
 }
 
 // HelpWiki opens wiki page for code on github

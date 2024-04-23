@@ -97,31 +97,31 @@ func (ge *CodeView) FocusPrevPanel() { //types:add
 }
 
 // TabByName returns a tab with given name, nil if not found.
-func (ge *CodeView) TabByName(label string) core.Widget {
+func (ge *CodeView) TabByName(name string) core.Widget {
 	tv := ge.Tabs()
-	return tv.TabByName(label)
+	return tv.TabByName(name)
 }
 
 // SelectTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *CodeView) SelectTabByName(label string) core.Widget {
+func (ge *CodeView) SelectTabByName(name string) core.Widget {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
 	}
-	return tv.SelectTabByName(label)
+	return tv.SelectTabByName(name)
 }
 
 // RecycleTabTextEditor returns a tab with given
 // name, first by looking for an existing one, and if not found, making a new
 // one with a TextEditor in it.  if sel, then select it.
 // returns widget
-func (ge *CodeView) RecycleTabTextEditor(label string, sel bool) *texteditor.Editor {
+func (ge *CodeView) RecycleTabTextEditor(name string, sel bool) *texteditor.Editor {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
 	}
 
-	fr := tv.RecycleTab(label, sel)
+	fr := tv.RecycleTab(name, sel)
 	if fr.HasChildren() {
 		return fr.Child(0).(*texteditor.Editor)
 	}

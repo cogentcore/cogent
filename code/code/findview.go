@@ -510,7 +510,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *core.BasicBar) {
 		fv.Params().Regexp = rx.StateIs(states.Checked)
 	})
 
-	locl := core.NewLabel(fb).SetText("Loc:").
+	locl := core.NewText(fb).SetText("Loc:").
 		SetTooltip("location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser")
 
 	cf := core.NewChooser(fb, "loc").SetTooltip(locl.Tooltip)
@@ -552,7 +552,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *core.BasicBar) {
 			fv.ReplaceAllAction()
 		})
 
-	langl := core.NewLabel(rb).SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
+	langl := core.NewText(rb).SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 
 	fv.LangVV = views.NewValue(rb, &fv.Params().Langs)
 	fv.LangVV.AsWidgetBase().SetTooltip(langl.Tooltip)

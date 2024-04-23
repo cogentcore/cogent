@@ -336,9 +336,9 @@ func (vv *VectorView) StatusBar() *core.Frame {
 	return vv.ChildByName("statusbar", 4).(*core.Frame)
 }
 
-// StatusLabel returns the statusbar label widget
-func (vv *VectorView) StatusLabel() *core.Label {
-	return vv.StatusBar().Child(0).(*core.Label)
+// StatusText returns the status bar text widget
+func (vv *VectorView) StatusText() *core.Text {
+	return vv.StatusBar().Child(0).(*core.Text)
 }
 
 // Config configures entire view -- only runs if no children yet
@@ -522,29 +522,29 @@ func (vv *VectorView) ConfigModalToolbar() {
 	vv.ConfigTextToolbar()
 }
 
-// ConfigStatusBar configures statusbar with label
+// ConfigStatusBar configures statusbar with text
 func (vv *VectorView) ConfigStatusBar() {
 	sb := vv.StatusBar()
 	if sb == nil || sb.HasChildren() {
 		return
 	}
-	core.NewLabel(sb, "sb-lbl")
+	core.NewText(sb, "sb-text")
 }
 
-// SetStatus updates the statusbar label with given message, along with other status info
+// SetStatus updates the status bar text with the given message, along with other status info
 func (vv *VectorView) SetStatus(msg string) {
 	sb := vv.StatusBar()
 	if sb == nil {
 		return
 	}
-	lbl := vv.StatusLabel()
+	text := vv.StatusText()
 	es := &vv.EditState
 	str := "<b>" + strings.TrimSuffix(es.Tool.String(), "Tool") + "</b>\t"
 	if es.CurLayer != "" {
 		str += "Layer: " + es.CurLayer + "\t\t"
 	}
 	str += msg
-	lbl.SetText(str)
+	text.SetText(str)
 }
 
 // AddCloseDialog adds the close dialog that prompts the user to save the
@@ -635,14 +635,14 @@ func NewVectorWindow(fnm string) *VectorView {
 // RecycleTab returns the tab with given the name, first by looking for
 // an existing one, and if not found, making a new one.
 // If sel, then select it.
-func (gv *VectorView) RecycleTab(label string, sel bool) *core.Frame {
+func (gv *VectorView) RecycleTab(name string, sel bool) *core.Frame {
 	tv := gv.Tabs()
-	return tv.RecycleTab(label, sel)
+	return tv.RecycleTab(name, sel)
 }
 
-// Tab returns the tab with the given label
-func (gv *VectorView) Tab(label string) *core.Frame {
-	return gv.Tabs().TabByName(label)
+// Tab returns the tab with the given name
+func (gv *VectorView) Tab(name string) *core.Frame {
+	return gv.Tabs().TabByName(name)
 }
 
 func (vv *VectorView) ConfigTabs() {

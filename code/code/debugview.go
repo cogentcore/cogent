@@ -720,12 +720,12 @@ func (dv *DebugView) SetStatus(stat cdebug.Status) {
 
 	dv.State.Status = stat
 	tb := dv.Toolbar()
-	stl := tb.ChildByName("status", 1).(*core.Label)
-	lbl := stat.String()
+	stl := tb.ChildByName("status", 1).(*core.Text)
+	text := stat.String()
 	if stat == cdebug.Breakpoint {
-		lbl = fmt.Sprintf("Break: %d", dv.State.CurBreak)
+		text = fmt.Sprintf("Break: %d", dv.State.CurBreak)
 	}
-	stl.SetText(lbl)
+	stl.SetText(text)
 	tb.Update() // state change
 }
 
@@ -860,7 +860,7 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
 
-	core.NewLabel(tb, "status").SetText("Building..   ").Style(func(s *styles.Style) {
+	core.NewText(tb, "status").SetText("Building..   ").Style(func(s *styles.Style) {
 		clr := DebugStatusColors[dv.State.Status]
 		s.Background = colors.C(clr)
 		s.Color = colors.C(hct.ContrastColor(clr, hct.ContrastAA))
@@ -880,7 +880,7 @@ func (dv *DebugView) ConfigToolbar() {
 			go dv.Continue()
 		})
 
-	core.NewLabel(tb).SetText("Step: ")
+	core.NewText(tb).SetText("Step: ")
 
 	core.NewButton(tb).SetText("Over").SetIcon(icons.StepOver).
 		SetTooltip("continues to the next source line, not entering function calls").
@@ -1245,7 +1245,7 @@ func (vv *VarView) ConfigVarView() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	core.NewLabel(vv, "frame-info")
+	core.NewText(vv, "frame-info")
 	core.NewSplits(vv, "splitview")
 	vv.SetFrameInfo(vv.FrameInfo)
 	vv.ConfigSplits()
@@ -1280,7 +1280,7 @@ func (vv *VarView) ConfigToolbar(tb *core.Toolbar) {
 
 // SetFrameInfo sets the frame info
 func (vv *VarView) SetFrameInfo(finfo string) {
-	lab := vv.ChildByName("frame-info", 0).(*core.Label)
+	lab := vv.ChildByName("frame-info", 0).(*core.Text)
 	lab.Text = finfo
 }
 

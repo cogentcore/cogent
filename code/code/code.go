@@ -55,8 +55,8 @@ type Code interface {
 	// SetStatus updates the statusbar label with given message, to be rendered next time
 	SetStatus(msg string)
 
-	// UpdateStatusLabel updates the statusbar label with current data
-	UpdateStatusLabel()
+	// UpdateStatusText updates the status bar text with current data
+	UpdateStatusText()
 
 	// SelectTabByName Selects given main tab, and returns all of its contents as well.
 	SelectTabByName(label string) core.Widget

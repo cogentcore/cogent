@@ -820,7 +820,7 @@ func (pv *PiView) ConfigStatusBar() {
 	sb.SetProp("overflow", "hidden") // no scrollbars!
 	sb.SetProp("margin", 0)
 	sb.SetProp("padding", 0)
-	lbl := sb.NewChild(core.LabelType, "sb-lbl").(*core.Label)
+	lbl := sb.NewChild(core.LabelType, "sb-text").(*core.Label)
 	lbl.SetStretchMaxWidth()
 	lbl.SetMinPrefHeight(units.NewValue(1, units.Em))
 	lbl.SetProp("vertical-align", styles.AlignTop)

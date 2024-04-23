@@ -254,7 +254,7 @@ func (av *AlignView) Config() {
 	})
 
 	all := core.NewLayout(av)
-	core.NewLabel(all).SetText("<b>Align:  </b>")
+	core.NewText(all).SetText("<b>Align:  </b>")
 	core.NewChooser(all).SetEnum(AlignAnchorsN)
 
 	agrid := core.NewLayout(av).Style(func(s *styles.Style) {

@@ -99,7 +99,7 @@ func (a *App) Config() {
 	ef := core.NewFrame(sp, "editor-frame").Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	dir := core.NewLabel(ef, "dir").SetText(a.Dir)
+	dir := core.NewText(ef, "dir").SetText(a.Dir)
 
 	tb := texteditor.NewBuffer()
 	tb.NewBuffer(0)
@@ -134,8 +134,8 @@ func (a *App) Config() {
 }
 
 // RunCmd runs the given command in the context of the given commands frame
-// and current directory label.
-func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Label) error {
+// and current directory text.
+func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	cfr := core.NewFrame(cmds).Style(func(s *styles.Style) {
@@ -148,7 +148,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Label) error {
 		s.Align.Items = styles.Center
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})
-	core.NewLabel(tr, "cmd").SetType(core.LabelTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
+	core.NewText(tr, "cmd").SetType(core.TextTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
 		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 		s.Grow.Set(1, 0)
 	})
