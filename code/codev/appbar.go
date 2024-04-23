@@ -286,8 +286,8 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 			switch {
 			case fn.IsDir():
 				ac.Items = append(ac.Items, core.ChooserItem{
-					Label: nmpath,
-					Icon:  icons.Folder,
+					Text: nmpath,
+					Icon: icons.Folder,
 					Func: func() {
 						if !fn.HasChildren() {
 							fn.OpenEmptyDir()
@@ -298,16 +298,16 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 				})
 			case fn.IsExec():
 				ac.Items = append(ac.Items, core.ChooserItem{
-					Label: nmpath,
-					Icon:  icons.FileExe,
+					Text: nmpath,
+					Icon: icons.FileExe,
 					Func: func() {
 						ge.FileNodeRunExe(fn)
 					},
 				})
 			default:
 				ac.Items = append(ac.Items, core.ChooserItem{
-					Label: nmpath,
-					Icon:  fn.Info.Ic,
+					Text: nmpath,
+					Icon: fn.Info.Ic,
 					Func: func() {
 						ge.NextViewFileNode(fn)
 					},
@@ -336,8 +336,8 @@ func (ge *CodeView) AddChooserSymbols(ac *core.Chooser) {
 		syms.WalkDown(func(k tree.Node) bool {
 			sn := k.(*code.SymNode)
 			ac.Items = append(ac.Items, core.ChooserItem{
-				Label: sn.Symbol.Label(),
-				Icon:  sn.GetIcon(),
+				Text: sn.Symbol.Label(),
+				Icon: sn.GetIcon(),
 				Func: func() {
 					code.SelectSymbol(ge, sn.Symbol)
 				},
