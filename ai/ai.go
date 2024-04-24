@@ -78,6 +78,7 @@ func main() {
 
 	header := core.NewFrame(rightFrame)
 	header.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
 		s.CenterAll()
 	})
 
