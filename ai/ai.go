@@ -78,11 +78,7 @@ func main() {
 
 	header := core.NewFrame(rightFrame)
 	header.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Justify.Content = styles.Center
-		s.Align.Content = styles.Center
-		s.Align.Items = styles.Center
-		s.Text.Align = styles.Center
+		s.CenterAll()
 	})
 
 	core.NewText(header).SetType(core.TextDisplayLarge).SetText("Cogent AI")

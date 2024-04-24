@@ -26,9 +26,7 @@ func main() {
 
 func clock(ts *core.Tabs) {
 	cl := ts.NewTab("Clock").Style(func(s *styles.Style) {
-		s.Justify.Content = styles.Center
-		s.Align.Content = styles.Center
-		s.Align.Items = styles.Center
+		s.CenterAll()
 	})
 	core.NewText(cl).SetType(core.TextHeadlineMedium).
 		SetText(time.Now().Format("Monday, January 2"))
