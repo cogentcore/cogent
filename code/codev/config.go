@@ -183,7 +183,7 @@ func (ge *CodeView) ConfigStatusBar() {
 		s.Margin.Zero()
 		s.Padding.Set(units.Dp(4))
 	})
-	text := core.NewText(sb, "sb-text").SetText("This is the status bar initial configuration.  Welcome to code!")
+	text := core.NewText(sb, "sb-text").SetText("Welcome to Cogent Code!")
 	text.Style(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 		s.Min.Y.Em(1.0)
