@@ -5,4 +5,4 @@
     </a>
 </h1>
 
-Cogent Core is a powerful, fast, and cogent software ecosystem for all platforms. This repository contains the Cogent apps built with Cogent Core, like Cogent Code, Cogent Vector, and Cogent Mail.
+Cogent Core is a powerful, fast, and elegant software ecosystem for all platforms. This repository contains the Cogent apps built with Cogent Core, like Cogent Code, Cogent Vector, and Cogent Mail.
