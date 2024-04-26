@@ -13,8 +13,8 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/cogent/code/cdebug/cdelve"
-	"cogentcore.org/core/cam/hct"
 	"cogentcore.org/core/colors"
+	"cogentcore.org/core/colors/cam/hct"
 	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
