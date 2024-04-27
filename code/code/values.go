@@ -19,7 +19,7 @@ import (
 
 // KeyMapsView opens a view of a key maps table
 func KeyMapsView(km *KeyMaps) {
-	if core.ActivateExistingMainWindow(km) {
+	if core.RecycleMainWindow(km) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Key Maps: duplicate an existing map (using context menu) as starting point for creating a custom map").SetData(km)
@@ -53,7 +53,7 @@ func KeyMapsView(km *KeyMaps) {
 // ProjectSettingsView opens a view of project settings,
 // returns structview if not already open
 func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
-	if core.ActivateExistingMainWindow(pf) {
+	if core.RecycleMainWindow(pf) {
 		return nil
 	}
 	d := core.NewBody().SetTitle("Code project settings").SetData(pf)
@@ -70,7 +70,7 @@ func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
 // DebugSettingsView opens a view of project Debug settings,
 // returns structview if not already open
 func DebugSettingsView(pf *cdebug.Params) *views.StructView {
-	if core.ActivateExistingMainWindow(pf) {
+	if core.RecycleMainWindow(pf) {
 		return nil
 	}
 	d := core.NewBody().SetTitle("Project debug settings").SetData(pf)
@@ -119,7 +119,7 @@ func (vv *KeyMapValue) ConfigDialog(d *core.Body) (bool, func()) {
 
 // LangsView opens a view of a languages options map
 func LangsView(pt *Langs) {
-	if core.ActivateExistingMainWindow(pt) {
+	if core.RecycleMainWindow(pt) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
@@ -153,7 +153,7 @@ func LangsView(pt *Langs) {
 
 // CmdsView opens a view of a commands table
 func CmdsView(pt *Commands) {
-	if core.ActivateExistingMainWindow(pt) {
+	if core.RecycleMainWindow(pt) {
 		return
 	}
 	d := core.NewBody().SetTitle("Code Commands").SetData(pt)
@@ -220,7 +220,7 @@ func (vv *CmdValue) ConfigDialog(d *core.Body) (bool, func()) {
 
 // SplitsView opens a view of a splits table
 func SplitsView(pt *Splits) {
-	if core.ActivateExistingMainWindow(pt) {
+	if core.RecycleMainWindow(pt) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
@@ -283,7 +283,7 @@ func (v *SplitValue) OpenDialog(ctx core.Widget, fun func()) {
 
 // RegistersView opens a view of a commands table
 func RegistersView(pt *Registers) {
-	if core.ActivateExistingMainWindow(pt) {
+	if core.RecycleMainWindow(pt) {
 		return
 	}
 	d := core.NewBody().SetTitle("Cogent Code Registers").SetData(pt)

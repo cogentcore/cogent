@@ -19,7 +19,7 @@ import (
 
 // SplitsView opens a view of a splits table
 func SplitsView(pt *Splits) {
-	if core.ActivateExistingMainWindow(pt) {
+	if core.RecycleMainWindow(pt) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing ß(using context menu) as starting point for new one").SetData(pt)
