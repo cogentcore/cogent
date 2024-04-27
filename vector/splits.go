@@ -11,8 +11,8 @@ import (
 	"slices"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/errors"
 	"cogentcore.org/core/gox/dirs"
+	"cogentcore.org/core/gox/errors"
 	"cogentcore.org/core/iox/jsonx"
 )
 

@@ -8,7 +8,7 @@ import (
 	"embed"
 	"io/fs"
 
-	"cogentcore.org/core/errors"
+	"cogentcore.org/core/gox/errors"
 	"cogentcore.org/core/icons"
 )
 

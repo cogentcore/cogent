@@ -8,9 +8,9 @@ import (
 
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/errors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/exec"
+	"cogentcore.org/core/gox/errors"
+	"cogentcore.org/core/gox/exec"
 	"cogentcore.org/core/htmlview"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"

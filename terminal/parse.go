@@ -11,8 +11,8 @@ import (
 	"strings"
 	"unicode"
 
-	"cogentcore.org/core/errors"
-	"cogentcore.org/core/exec"
+	"cogentcore.org/core/gox/errors"
+	"cogentcore.org/core/gox/exec"
 	"cogentcore.org/core/strcase"
 )
 

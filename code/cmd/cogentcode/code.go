@@ -13,7 +13,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/cogent/code/codev"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/errors"
+	"cogentcore.org/core/gox/errors"
 )
 
 func main() {
