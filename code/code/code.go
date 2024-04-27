@@ -86,7 +86,7 @@ type Code interface {
 	// activated, returns text view and index
 	NextViewFileNode(fn *filetree.Node) (*TextEditor, int)
 
-	// ActiveTextEditor returns the currently-active TextEditor
+	// ActiveTextEditor returns the currently active TextEditor
 	ActiveTextEditor() *TextEditor
 
 	// SetActiveTextEditor sets the given texteditor as the active one, and returns its index

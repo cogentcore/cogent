@@ -357,7 +357,7 @@ func (es *EditState) NewRecents() {
 	es.RecentlySelected = make(map[svg.Node]*SelectedState)
 }
 
-// StartRecents starts a new list of recently-selected items
+// StartRecents starts a new list of recently selected items
 func (es *EditState) StartRecents(pos image.Point) {
 	es.NewRecents()
 	es.LastSelectPos = pos

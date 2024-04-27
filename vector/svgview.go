@@ -771,7 +771,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 ///////////////////////////////////////////////////////////////////////
 // Gradients
 
-// Gradients returns the currently-defined gradients with stops
+// Gradients returns the currently defined gradients with stops
 // that are shared among obj-specific ones
 func (sv *SVGView) Gradients() []*Gradient {
 	gl := make([]*Gradient, 0)

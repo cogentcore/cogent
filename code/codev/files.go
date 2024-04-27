@@ -22,7 +22,7 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// SaveActiveView saves the contents of the currently-active texteditor
+// SaveActiveView saves the contents of the currently active texteditor
 func (ge *CodeView) SaveActiveView() { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer != nil {
@@ -53,7 +53,7 @@ func (ge *CodeView) CallSaveActiveViewAs(ctx core.Widget) {
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
-// currently-active texteditor
+// currently active texteditor
 func (ge *CodeView) SaveActiveViewAs(filename core.Filename) { //types:add
 	tv := ge.ActiveTextEditor()
 	if tv.Buffer != nil {

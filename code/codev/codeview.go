@@ -42,7 +42,7 @@ type CodeView struct {
 	// current project filename for saving / loading specific Code configuration information in a .code file (optional)
 	ProjectFilename core.Filename `ext:".code"`
 
-	// filename of the currently-active texteditor
+	// filename of the currently active texteditor
 	ActiveFilename core.Filename `set:"-"`
 
 	// language for current active filename
@@ -66,7 +66,7 @@ type CodeView struct {
 	// all the files in the project directory and subdirectories
 	Files *filetree.Tree `set:"-" json:"-"`
 
-	// index of the currently-active texteditor -- new files will be viewed in other views if available
+	// index of the currently active texteditor -- new files will be viewed in other views if available
 	ActiveTextEditorIndex int `set:"-" json:"-"`
 
 	// list of open nodes, most recent first
@@ -169,7 +169,7 @@ func (ge *CodeView) IsEmpty() bool {
 	return ge.ProjectRoot == ""
 }
 
-// OpenRecent opens a recently-used file
+// OpenRecent opens a recently used file
 func (ge *CodeView) OpenRecent(filename core.Filename) { //types:add
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".code" {

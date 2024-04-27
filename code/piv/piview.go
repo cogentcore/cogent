@@ -87,7 +87,7 @@ func (pv *PiView) IsEmpty() bool {
 	return (!pv.Parser.Lexer.HasChildren() && !pv.Parser.Parser.HasChildren())
 }
 
-// OpenRecent opens a recently-used project
+// OpenRecent opens a recently used project
 func (pv *PiView) OpenRecent(filename core.Filename) { //types:add
 	pv.OpenProj(filename)
 }

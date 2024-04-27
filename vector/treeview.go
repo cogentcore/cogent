@@ -30,7 +30,7 @@ func (gv *VectorView) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 	}
 }
 
-// SelectedAsTreeViews returns the currently-selected items from SVG as TreeView nodes
+// SelectedAsTreeViews returns the currently selected items from SVG as TreeView nodes
 func (gv *VectorView) SelectedAsTreeViews() []views.TreeViewer {
 	es := &gv.EditState
 	sl := es.SelectedList(false)

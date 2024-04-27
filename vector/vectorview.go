@@ -768,7 +768,7 @@ func (gv *VectorView) OSFileEvent() {
 }
 */
 
-// OpenRecent opens a recently-used file
+// OpenRecent opens a recently used file
 func (vv *VectorView) OpenRecent(filename core.Filename) {
 	// if string(filename) == VectorViewResetRecents {
 	// 	SavedPaths = nil

@@ -532,7 +532,7 @@ func (fv *FindView) ConfigToolbars(fb, rb *core.BasicBar) {
 		OnClick(func(e events.Event) {
 			fv.NextFind()
 		})
-	core.NewButton(rb).SetText("Replace:").SetTooltip("Replace find string with replace string for currently-selected find result").
+	core.NewButton(rb).SetText("Replace:").SetTooltip("Replace find string with replace string for currently selected find result").
 		OnClick(func(e events.Event) {
 			fv.ReplaceAction()
 		})

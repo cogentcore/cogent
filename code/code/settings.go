@@ -226,7 +226,7 @@ type ProjectSettings struct { //types:add
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
 
-	// the language associated with the most frequently-encountered file
+	// the language associated with the most frequently encountered file
 	// extension in the file tree -- can be manually set here as well
 	MainLang fileinfo.Known
 

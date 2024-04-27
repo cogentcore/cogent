@@ -31,7 +31,7 @@ func (ge *CodeView) ConfigTextBuffer(tb *texteditor.Buffer) {
 	}
 }
 
-// ActiveTextEditor returns the currently-active TextEditor
+// ActiveTextEditor returns the currently active TextEditor
 func (ge *CodeView) ActiveTextEditor() *code.TextEditor {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIndex)
 	return ge.TextEditorByIndex(ge.ActiveTextEditorIndex)
@@ -133,7 +133,7 @@ func (ge *CodeView) SetActiveTextEditor(av *code.TextEditor) int {
 	return idx
 }
 
-// SetActiveTextEditorIndex sets the given view index as the currently-active
+// SetActiveTextEditorIndex sets the given view index as the currently active
 // TextEditor -- returns that texteditor.  This is the main method for
 // activating a text editor.
 func (ge *CodeView) SetActiveTextEditorIndex(idx int) *code.TextEditor {

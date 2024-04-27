@@ -112,7 +112,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 				d.Clipboard().Write(mimedata.NewTextBytes(txt))
 			})
 	})
-	d.RunDialogWindow(ge.ActiveTextEditor())
+	d.RunWindowDialog(ge.ActiveTextEditor())
 	tb.StartDelayedReMarkup() // update markup
 	return
 }
