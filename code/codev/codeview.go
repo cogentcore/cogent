@@ -21,12 +21,12 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/fileinfo"
+	"cogentcore.org/core/fileinfo/vcs"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gox/errors"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/vcs"
 	"cogentcore.org/core/views"
 )
 

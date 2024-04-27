@@ -17,9 +17,9 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
+	"cogentcore.org/core/fileinfo/vcs"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/spell"
-	"cogentcore.org/core/vcs"
 	"cogentcore.org/core/views"
 )
 

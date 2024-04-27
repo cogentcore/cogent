@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo"
+	"cogentcore.org/core/fileinfo/vcs"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/gox/errors"
 	"cogentcore.org/core/icons"
@@ -26,7 +27,6 @@ import (
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/vcs"
 	"github.com/mattn/go-shellwords"
 )
 
