@@ -7,7 +7,7 @@ package codev
 import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/states"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
 )
 

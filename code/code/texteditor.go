@@ -7,7 +7,6 @@ package code
 import (
 	"image"
 
-	"cogentcore.org/core/abilities"
 	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/errors"
@@ -16,8 +15,9 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/parse/token"
-	"cogentcore.org/core/states"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/views"
 )
