@@ -18,11 +18,11 @@ import (
 	"strconv"
 	"strings"
 
+	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/exec"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gox/errors"
-	"cogentcore.org/core/gox/exec"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/strcase"

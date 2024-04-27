@@ -9,10 +9,10 @@ package main
 import (
 	"time"
 
+	"cogentcore.org/core/base/datasize"
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/gox/datasize"
-	"cogentcore.org/core/gox/errors"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/views"
 

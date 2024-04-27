@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"cogentcore.org/core/gox/indent"
+	"cogentcore.org/core/base/indent"
 	"cogentcore.org/core/parse/syms"
 	"cogentcore.org/core/tree"
 )

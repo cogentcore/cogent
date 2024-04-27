@@ -12,11 +12,11 @@ import (
 	"path/filepath"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/fileinfo/mimedata"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gox/dirs"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/parse"

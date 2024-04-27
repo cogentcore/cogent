@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
-	"cogentcore.org/core/gox/num"
+	"cogentcore.org/core/base/num"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"github.com/go-delve/delve/service/api"

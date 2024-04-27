@@ -11,10 +11,10 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/gox/errors"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/iox/tomlx"
 	"cogentcore.org/core/views"
