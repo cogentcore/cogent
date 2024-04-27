@@ -259,5 +259,5 @@ func (ge *CodeView) CommitNoChecks() {
 			ge.UpdateFiles()
 		})
 	})
-	d.NewDialog(ge).Run()
+	d.RunDialog(ge)
 }

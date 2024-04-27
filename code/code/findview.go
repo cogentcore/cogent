@@ -270,7 +270,7 @@ func (fv *FindView) ReplaceAllAction() {
 			fv.ReplaceAll()
 		})
 	})
-	d.NewDialog(fv).Run()
+	d.RunDialog(fv)
 }
 
 // CompileRegexp compiles the regexp if necessary -- returns false if it is invalid

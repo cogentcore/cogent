@@ -338,7 +338,7 @@ func (sv *SpellView) TrainAction() {
 			texteditor.AddToSpellModel(cur)
 		})
 	})
-	d.NewFullDialog(sv).Run()
+	d.RunFullDialog(sv)
 }
 
 // UnkStartPos returns the start position of the current unknown word

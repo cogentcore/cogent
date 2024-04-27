@@ -47,7 +47,7 @@ func KeyMapsView(km *KeyMaps) {
 			views.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
-	d.NewWindow().Run()
+	d.RunWindow()
 }
 
 // ProjectSettingsView opens a view of project settings,
@@ -63,7 +63,7 @@ func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
 		pf.Update()
 		core.ErrorSnackbar(d, pf.Save(pf.ProjectFilename), "Error saving "+string(pf.ProjectFilename)+" settings")
 	})
-	d.NewWindow().Run()
+	d.RunWindow()
 	return tv
 }
 
@@ -76,7 +76,7 @@ func DebugSettingsView(pf *cdebug.Params) *views.StructView {
 	d := core.NewBody().SetTitle("Project debug settings").SetData(pf)
 	core.NewText(d).SetText("For args: Use -- double-dash and then add args to pass args to the executable (double-dash is by itself as a separate arg first).  For Debug test, must use -test.run instead of plain -run to specify tests to run")
 	tv := views.NewStructView(d).SetStruct(pf)
-	d.NewWindow().Run()
+	d.RunWindow()
 	return tv
 }
 
@@ -148,7 +148,7 @@ func LangsView(pt *Langs) {
 			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
-	d.NewWindow().Run()
+	d.RunWindow()
 }
 
 // CmdsView opens a view of a commands table
@@ -178,7 +178,7 @@ func CmdsView(pt *Commands) {
 			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
-	d.NewWindow().Run()
+	d.RunWindow()
 }
 
 // Value registers [CmdValue] as the [views.Value] for [CmdName].
@@ -242,7 +242,7 @@ func SplitsView(pt *Splits) {
 			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
-	d.NewWindow().Run()
+	d.RunWindow()
 }
 
 // Value registers [SplitValue] as the [views.Value] for [SplitName].
@@ -313,7 +313,7 @@ func RegistersView(pt *Registers) {
 		})
 	})
 
-	d.NewWindow().Run()
+	d.RunWindow()
 }
 
 // Value registers [RegisterValue] as the [views.Value] for [RegisterName].

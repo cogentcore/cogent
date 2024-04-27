@@ -184,7 +184,7 @@ func (ge *CodeView) EditRecentPaths() {
 	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
 	views.NewSliceView(d).SetSlice(&code.RecentPaths)
-	d.AddOKOnly().NewDialog(ge).Run()
+	d.AddOKOnly().RunDialog(ge)
 }
 
 // OpenFile opens file in an open project if it has the same path as the file
@@ -392,7 +392,7 @@ func (ge *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 			}
 		})
 	})
-	d.NewDialog(ge).Run()
+	d.RunDialog(ge)
 	return true
 }
 
@@ -522,7 +522,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 	core.TheApp.AppBarConfig = ge.AppBarConfig
 	b.AddAppBar(ge.ConfigToolbar)
 
-	b.NewWindow().Run()
+	b.RunWindow()
 
 	if doPath {
 		ge.OpenPath(core.Filename(path))

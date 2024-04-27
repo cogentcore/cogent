@@ -58,7 +58,7 @@ func main() {
 		t := ts[tv.SelectedIndex]
 		d := core.NewBody().AddTitle("Task info")
 		views.NewStructView(d).SetStruct(&t).SetReadOnly(true)
-		d.AddOKOnly().NewDialog(b).Run()
+		d.AddOKOnly().RunDialog(b)
 	})
 
 	tick := time.NewTicker(time.Second)

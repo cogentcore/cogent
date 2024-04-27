@@ -399,7 +399,7 @@ func (cm *Command) PromptUser(ge Code, buf *texteditor.Buffer, pvals map[string]
 					}
 				})
 			})
-			d.NewDialog(tv).Run() // SetModal(false).
+			d.RunDialog(tv) // SetModal(false).
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
@@ -448,7 +448,7 @@ func (cm *Command) Run(ge Code, buf *texteditor.Buffer) {
 				cm.RunAfterPrompts(ge, buf)
 			})
 		})
-		d.NewDialog(ge.AsWidget().Scene).Run()
+		d.RunDialog(ge.AsWidget().Scene)
 		return
 	}
 	pvals, hasp := cm.HasPrompts()

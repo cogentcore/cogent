@@ -121,7 +121,7 @@ func (vv *VectorView) PromptPhysSize() { //types:add
 			sv.UpdateView(true)
 		})
 	})
-	d.NewDialog(vv).Run()
+	d.RunDialog(vv)
 }
 
 // SetPhysSize sets physical size of drawing
@@ -624,7 +624,7 @@ func NewVectorWindow(fnm string) *VectorView {
 		}
 	})
 
-	b.NewWindow().Run()
+	b.RunWindow()
 
 	return vv
 }

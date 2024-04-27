@@ -1329,6 +1329,6 @@ func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugView) *VarVie
 	vv.DbgView = dbgVw
 	vv.SetVar(vr, frinfo)
 	b.AddAppBar(vv.ConfigToolbar)
-	b.NewWindow().Run()
+	b.RunWindow()
 	return vv
 }

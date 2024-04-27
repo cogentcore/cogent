@@ -72,7 +72,7 @@ func (a *App) AppBar(tb *core.Toolbar) {
 					errors.Log(exec.Verbose().Run(fields[0], fields[1:]...))
 				})
 			})
-			d.NewFullDialog(bt).Run()
+			d.RunFullDialog(bt)
 		})
 	}
 }

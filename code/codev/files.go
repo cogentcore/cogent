@@ -160,7 +160,7 @@ func (ge *CodeView) AutoSaveCheck(tv *code.TextEditor, vidx int, fn *filetree.No
 			ge.NextViewFile(core.Filename(fn.Buffer.AutoSaveFilename()))
 		})
 	})
-	d.NewDialog(ge).Run()
+	d.RunDialog(ge)
 	return true
 }
 
@@ -502,7 +502,7 @@ func (ge *CodeView) FileNodeOpened(fn *filetree.Node) {
 				ge.NextViewFileNode(fn)
 			})
 		})
-		d.NewDialog(ge).Run()
+		d.RunDialog(ge)
 	} else {
 		ge.NextViewFileNode(fn)
 	}

@@ -41,7 +41,7 @@ func SplitsView(pt *Splits) {
 			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
 	})
-	d.NewWindow().Run()
+	d.RunWindow()
 }
 
 // Value registers [SplitValue] as the [views.Value] for [SplitName].
