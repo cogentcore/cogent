@@ -5,7 +5,7 @@ package codev
 import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fileinfo"
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )

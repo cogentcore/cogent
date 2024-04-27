@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/parse/complete"

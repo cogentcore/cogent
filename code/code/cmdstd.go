@@ -4,7 +4,7 @@
 
 package code
 
-import "cogentcore.org/core/fileinfo"
+import "cogentcore.org/core/base/fileinfo"
 
 // Use these for more obvious command options
 const (

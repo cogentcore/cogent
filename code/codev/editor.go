@@ -13,9 +13,9 @@ import (
 
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/base/dirs"
+	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fileinfo/mimedata"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"

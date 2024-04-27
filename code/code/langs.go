@@ -8,9 +8,9 @@ import (
 	"log"
 	"path/filepath"
 
+	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fileinfo"
-	"cogentcore.org/core/iox/tomlx"
 )
 
 // LangOpts defines options associated with a given language / file format

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fileinfo"
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint"

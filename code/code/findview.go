@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/parse/lexer"

@@ -12,8 +12,8 @@ import (
 
 	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/iox/jsonx"
 )
 
 // Split is a named splitter configuration

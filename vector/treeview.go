@@ -5,8 +5,8 @@
 package vector
 
 import (
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"

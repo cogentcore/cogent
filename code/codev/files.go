@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/texteditor"

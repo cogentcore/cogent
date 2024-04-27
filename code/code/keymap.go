@@ -14,9 +14,9 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events/key"
-	"cogentcore.org/core/iox/jsonx"
 	"cogentcore.org/core/keymap"
 )
 

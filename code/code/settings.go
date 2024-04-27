@@ -12,11 +12,11 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/fileinfo"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/iox/tomlx"
 	"cogentcore.org/core/views"
 )
 
