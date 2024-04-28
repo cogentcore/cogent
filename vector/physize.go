@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/units"
+	"cogentcore.org/core/styles/units"
 )
 
 // PhysSize specifies the physical size of the drawing, when making a new one

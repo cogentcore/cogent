@@ -24,7 +24,7 @@ import (
 	"cogentcore.org/core/gi/texteditor"
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/units"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"

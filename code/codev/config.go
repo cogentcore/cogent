@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/units"
+	"cogentcore.org/core/styles/units"
 )
 
 // NTextEditors is the number of text views to create -- to keep things simple

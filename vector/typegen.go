@@ -7,7 +7,7 @@ import (
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"cogentcore.org/core/units"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/views"
 )
 

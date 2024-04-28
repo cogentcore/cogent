@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/parse/syms"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"cogentcore.org/core/units"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/views"
 )
 

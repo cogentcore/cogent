@@ -12,8 +12,8 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
-	"cogentcore.org/core/units"
 	"cogentcore.org/core/views"
 )
 
