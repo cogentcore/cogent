@@ -11,8 +11,8 @@ import (
 	"maps"
 	"strings"
 
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/reflectx"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )

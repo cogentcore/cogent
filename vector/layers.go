@@ -7,7 +7,7 @@ package vector
 import (
 	"fmt"
 
-	"cogentcore.org/core/reflectx"
+	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
