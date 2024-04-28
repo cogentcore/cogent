@@ -6,7 +6,7 @@
 // generation of GUIs and interactive CLIs for any existing command line tools.
 package terminal
 
-import "cogentcore.org/core/strcase"
+import "cogentcore.org/core/base/strcase"
 
 // Cmd contains all of the data for a parsed command line command.
 type Cmd struct {

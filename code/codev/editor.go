@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/fileinfo/mimedata"
+	"cogentcore.org/core/base/strcase"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -23,7 +24,6 @@ import (
 	"cogentcore.org/core/parse/complete"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/parse/parser"
-	"cogentcore.org/core/strcase"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 )

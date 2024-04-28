@@ -13,7 +13,7 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/exec"
-	"cogentcore.org/core/strcase"
+	"cogentcore.org/core/base/strcase"
 )
 
 // Parse uses the help messages of the app to fill in its data fields.
