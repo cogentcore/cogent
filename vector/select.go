@@ -50,7 +50,7 @@ func (gv *VectorView) ConfigSelectToolbar() {
 		SetIcon("sel-group").SetShortcut("Command+G")
 
 	gv.NewSelectFuncButton(tb, gv.SelectUnGroup).SetText("Ungroup").
-		SetIcon("sel-ungroup").SetShortcut("Shift+Command+G")
+		SetIcon("sel-ungroup").SetShortcut("Command+Shift+G")
 
 	core.NewSeparator(tb)
 
