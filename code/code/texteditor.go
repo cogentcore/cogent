@@ -61,21 +61,15 @@ func (ed *TextEditor) HandleEvents() {
 		}
 	})
 	ed.On(events.LongHoverStart, func(e events.Event) {
-		tt := ""
-		vv := ed.DebugVarValueAtPos(e.Pos())
-		if vv != "" {
-			tt = vv
-		}
+		tt := ed.DebugVarValueAtPos(e.Pos())
 		// todo: look for documentation on symbols here -- we don't actually have this
 		// in parse so we need lsp to make this work
-		if tt != "" {
-			e.SetHandled()
-			pos := e.Pos()
-			pos.X += 20
-			pos.Y += 20
-			core.NewTooltipText(ed, tt).SetPos(pos).Run()
-		}
+		ed.Tooltip = tt
 	})
+}
+
+func (ed *TextEditor) WidgetTooltip() (string, image.Point) {
+	return ed.Tooltip, ed.Events().LastMouseWindowPos
 }
 
 // CurDebug returns the current debugger, true if it is present
