@@ -294,6 +294,8 @@ func (fv *FindView) ReplaceAll() {
 	if !fv.CheckValidRegexp() {
 		return
 	}
+	wasGoMod := fv.Code.ProjectSettings().GoMod
+	SetGoMod(false) // much faster without
 	go func() {
 		for {
 			sc := fv.Code.AsWidget().Scene
@@ -304,6 +306,9 @@ func (fv *FindView) ReplaceAll() {
 			if !ok {
 				break
 			}
+		}
+		if wasGoMod {
+			SetGoMod(true)
 		}
 	}()
 }
