@@ -275,7 +275,7 @@ func (sv *SVGView) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, boo
 	mind := float32(math.MaxFloat32)
 	mini := 0
 	for i := 0; i < 4; i++ {
-		d := del.DistTo(cpts[i])
+		d := del.DistanceTo(cpts[i])
 		if d < mind {
 			mini = i
 			mind = d
