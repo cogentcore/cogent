@@ -5,4 +5,12 @@
     </a>
 </h1>
 
+<p align="center">
+    <a href="https://goreportcard.com/report/cogentcore.org/cogent"><img src="https://goreportcard.com/badge/cogentcore.org/cogent" alt="Go Report Card"></a>
+    <a href="https://pkg.go.dev/cogentcore.org/cogent"><img src="https://img.shields.io/badge/dev-reference-007d9c?logo=go&logoColor=white&style=flat" alt="pkg.go.dev docs"></a>
+    <a href="https://github.com/cogentcore/cogent/actions"><img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/cogentcore/cogent/go.yml"></a>
+    <a href="https://raw.githack.com/wiki/cogentcore/cogent/coverage.html"><img alt="Test Coverage" src="https://github.com/cogentcore/cogent/wiki/coverage.svg"></a>
+    <a href="https://github.com/cogentcore/cogent/tags"><img alt="Version" src="https://img.shields.io/github/v/tag/cogentcore/cogent?label=version"></a>
+</p>
+
 Cogent Core is a powerful, fast, and elegant software ecosystem for all platforms. This repository contains the Cogent apps built with Cogent Core, like Cogent Code, Cogent Vector, and Cogent Mail.
