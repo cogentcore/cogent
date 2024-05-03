@@ -295,6 +295,7 @@ func (fv *FindView) ReplaceAll() {
 		return
 	}
 	wasGoMod := fv.Code.ProjectSettings().GoMod
+	fv.Code.ProjectSettings().GoMod = false
 	SetGoMod(false) // much faster without
 	go func() {
 		for {
@@ -308,6 +309,7 @@ func (fv *FindView) ReplaceAll() {
 			}
 		}
 		if wasGoMod {
+			fv.Code.ProjectSettings().GoMod = true
 			SetGoMod(true)
 		}
 	}()

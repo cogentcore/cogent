@@ -146,7 +146,7 @@ func (se *SettingsData) Apply() { //types:add
 	se.ApplyEnvVars()
 }
 
-// ApplyGoMod applies the given gomod setting, setting the GO111MODULE env var
+// SetGoMod applies the given gomod setting, setting the GO111MODULE env var
 func SetGoMod(gomod bool) {
 	if gomod {
 		os.Setenv("GO111MODULE", "on")

@@ -83,6 +83,7 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 
 	core.NewSeparator(tb)
 
+	// todo: this does not work to apply project defaults!
 	ge.ConfigFindButton(views.NewFuncButton(tb, ge.Find).SetIcon(icons.FindReplace))
 
 	core.NewSeparator(tb)
