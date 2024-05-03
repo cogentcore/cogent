@@ -128,35 +128,6 @@ func main() {
 
 	send = core.NewButton(prompt).SetIcon(icons.Send)
 	send.OnClick(func(e events.Event) {
-		//todo prompt list and let ai support access local file service and access network
-		//seems model unknown what is NPU computer
-
-		//Which laptop has better battery life, LPU or NPU? Faster to reply to tokens? Also, whether they have VMX characteristics or not
-		//go1.22 Generic type constraints
-
-		//todo implement function with return d:/app app list and send to ai,let he tell us which app is we need choose
-		//please help me find some app in d:/app and they has feature seems like set env
-
-		//language translate
-		//code translate
-		//code comment translate
-		//network access for spider, alse we need a not headless browser and api
-
-		//Help me clean up the junk files on the C drive. The AI should let the user confirm whether to delete the junk files found or not
-		//Help me remove all code comments in the xxx directory and remove blank lines
-		//Help me find the download address of xxoo music or video
-		//Tell me the code snippets that I use a lot
-		//What is the lunar and new calendar today
-		//XX days to oo days apart by a few days
-		//Find out the cause of the memory leak and thread blocking caused by this code and suggest a solution to fix it
-		//How to make the buttons in this GUI library have a CSS 3D button-like animation effect, please improve the button source code in the xx position
-		//Help me translate all java files in the xxoo directory into Go language, and write the translated files in the corresponding directory, note that the suffix should be changed
-		//...
-
-		//todo gen png,also md can be show png canvas? and need test save png to local file
-
-		//maybe these should let model do not us
-
 		promptString := textField.Text()
 		if promptString == "" {
 			core.MessageSnackbar(b, "Please enter a prompt")
