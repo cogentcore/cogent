@@ -68,8 +68,8 @@ func (ed *TextEditor) HandleEvents() {
 	})
 }
 
-func (ed *TextEditor) WidgetTooltip() (string, image.Point) {
-	return ed.Tooltip, ed.Events().LastMouseWindowPos
+func (ed *TextEditor) WidgetTooltip(pos image.Point) (string, image.Point) {
+	return ed.Tooltip, pos
 }
 
 // CurDebug returns the current debugger, true if it is present
