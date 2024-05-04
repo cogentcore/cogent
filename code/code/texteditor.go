@@ -60,16 +60,15 @@ func (ed *TextEditor) HandleEvents() {
 			ed.HandleDebugDoubleClick(e, tpos)
 		}
 	})
-	ed.On(events.LongHoverStart, func(e events.Event) {
-		tt := ed.DebugVarValueAtPos(e.Pos())
-		// todo: look for documentation on symbols here -- we don't actually have this
-		// in parse so we need lsp to make this work
-		ed.Tooltip = tt
-	})
 }
 
 func (ed *TextEditor) WidgetTooltip(pos image.Point) (string, image.Point) {
-	return ed.Tooltip, pos
+	if pos == image.Pt(-1, -1) {
+		return "_", image.Point{}
+	}
+	// todo: look for documentation on symbols here; we don't actually have this
+	// in parse so we need lsp to make this work
+	return ed.DebugVarValueAtPos(pos), pos
 }
 
 // CurDebug returns the current debugger, true if it is present
