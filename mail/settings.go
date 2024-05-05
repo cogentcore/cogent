@@ -14,7 +14,7 @@ import (
 var Settings = &SettingsData{
 	SettingsBase: core.SettingsBase{
 		Name: "Mail",
-		File: filepath.Join(core.TheApp.DataDir(), "settings.toml"),
+		File: filepath.Join(core.TheApp.AppDataDir(), "settings.toml"),
 	},
 }
 

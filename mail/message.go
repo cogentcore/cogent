@@ -190,7 +190,7 @@ func (a *App) UpdateReadMessage() error {
 	bemail := FilenameBase32(a.CurEmail)
 	bmbox := FilenameBase32(a.CurMailbox)
 	// there can be flags at the end of the filename, so we have to glob it
-	glob := filepath.Join(core.TheApp.DataDir(), "mail", bemail, bmbox, "cur", a.ReadMessage.Filename+"*")
+	glob := filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, bmbox, "cur", a.ReadMessage.Filename+"*")
 	matches, err := filepath.Glob(glob)
 	if err != nil {
 		return err

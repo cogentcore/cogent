@@ -111,7 +111,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		a.UpdateMessageList()
 	})
 
-	dir := maildir.Dir(filepath.Join(core.TheApp.DataDir(), "mail", bemail, bmbox))
+	dir := maildir.Dir(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, bmbox))
 	err := os.MkdirAll(string(dir), 0700)
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		return fmt.Errorf("initializing maildir: %w", err)
 	}
 
-	cachedFile := filepath.Join(core.TheApp.DataDir(), "caching", bemail, bmbox, "cached-messages.json")
+	cachedFile := filepath.Join(core.TheApp.AppDataDir(), "caching", bemail, bmbox, "cached-messages.json")
 	err = os.MkdirAll(filepath.Dir(cachedFile), 0700)
 	if err != nil {
 		return err

@@ -47,7 +47,7 @@ func (a *App) SignIn() (string, error) {
 	auth.Buttons(d, &auth.ButtonsConfig{
 		SuccessFunc: fun,
 		TokenFile: func(provider, email string) string {
-			return filepath.Join(core.TheApp.DataDir(), "auth", FilenameBase32(email), provider+"-token.json")
+			return filepath.Join(core.TheApp.AppDataDir(), "auth", FilenameBase32(email), provider+"-token.json")
 		},
 		Accounts: Settings.Accounts,
 		Scopes: map[string][]string{
