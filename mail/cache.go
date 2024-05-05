@@ -42,16 +42,14 @@ func (a *App) CacheMessages() error {
 	}
 	mbox := a.FindPath("splits/mbox").(*views.TreeView)
 	mbox.AsyncLock()
-	defer mbox.AsyncUnlock()
 	mbox.DeleteChildren()
+	mbox.AsyncUnlock()
 	for _, account := range Settings.Accounts {
 		err := a.CacheMessagesForAccount(account)
 		if err != nil {
-			mbox.Update()
 			return fmt.Errorf("caching messages for account %q: %w", account, err)
 		}
 	}
-	mbox.Update()
 	return nil
 }
 
@@ -102,6 +100,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	bmbox := FilenameBase32(mailbox)
 
 	mbox := a.FindPath("splits/mbox").(*views.TreeView)
+	mbox.AsyncLock()
 	embox := mbox.ChildByName(bemail)
 	if embox == nil {
 		embox = views.NewTreeView(mbox, bemail).SetText(email)
@@ -110,6 +109,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		a.CurrentMailbox = mailbox
 		a.UpdateMessageList()
 	})
+	mbox.AsyncUnlock()
 
 	dir := maildir.Dir(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, bmbox))
 	err := os.MkdirAll(string(dir), 0700)
