@@ -32,7 +32,7 @@ type CacheData struct {
 
 // CacheMessages caches all of the messages from the server that
 // have not already been cached. It caches them using maildir in
-// the app's prefs directory.
+// the app's data directory.
 func (a *App) CacheMessages() error {
 	if a.Cache == nil {
 		a.Cache = map[string]map[string][]*CacheData{}
@@ -57,7 +57,7 @@ func (a *App) CacheMessages() error {
 
 // CacheMessages caches all of the messages from the server that
 // have not already been cached for the given email account. It
-// caches them using maildir in the app's prefs directory.
+// caches them using maildir in the app's data directory.
 func (a *App) CacheMessagesForAccount(email string) error {
 	if a.Cache[email] == nil {
 		a.Cache[email] = map[string][]*CacheData{}
@@ -92,10 +92,10 @@ func (a *App) CacheMessagesForAccount(email string) error {
 
 // CacheMessagesForMailbox caches all of the messages from the server
 // that have not already been cached for the given email account and mailbox.
-// It caches them using maildir in the app's prefs directory.
+// It caches them using maildir in the app's data directory.
 func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string) error {
-	if a.CurMailbox == "" {
-		a.CurMailbox = mailbox
+	if a.CurrentMailbox == "" {
+		a.CurrentMailbox = mailbox
 	}
 
 	bemail := FilenameBase32(email)
@@ -107,7 +107,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		embox = views.NewTreeView(mbox, bemail).SetText(email)
 	}
 	views.NewTreeView(embox, bmbox).SetText(mailbox).OnClick(func(e events.Event) {
-		a.CurMailbox = mailbox
+		a.CurrentMailbox = mailbox
 		a.UpdateMessageList()
 	})
 

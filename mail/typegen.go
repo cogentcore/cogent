@@ -5,13 +5,10 @@ package mail
 import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"github.com/emersion/go-imap/v2/imapclient"
-	"github.com/emersion/go-sasl"
-	"golang.org/x/oauth2"
 )
 
 // AppType is the [types.Type] for [App]
-var AppType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.App", IDName: "app", Doc: "App is an email client app.", Methods: []types.Method{{Name: "Compose", Doc: "Compose pulls up a dialog to send a new message", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SendMessage", Doc: "SendMessage sends the current message", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"error"}}, {Name: "MoveMessage", Doc: "MoveMessage moves the current message to the given mailbox.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"mailbox"}, Returns: []string{"error"}}}, Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "AuthToken", Doc: "AuthToken contains the [oauth2.Token] for each account."}, {Name: "AuthClient", Doc: "AuthClient contains the [sasl.Client] authentication for sending messages for each account."}, {Name: "IMAPClient", Doc: "IMAPCLient contains the imap clients for each account."}, {Name: "ComposeMessage", Doc: "ComposeMessage is the current message we are editing"}, {Name: "Cache", Doc: "Cache contains the cache data, keyed by account and then mailbox."}, {Name: "ReadMessage", Doc: "ReadMessage is the current message we are reading"}, {Name: "CurEmail", Doc: "The current email account"}, {Name: "CurMailbox", Doc: "The current mailbox"}}, Instance: &App{}})
+var AppType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.App", IDName: "app", Doc: "App is an email client app.", Methods: []types.Method{{Name: "Compose", Doc: "Compose pulls up a dialog to send a new message", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SendMessage", Doc: "SendMessage sends the current message", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"error"}}, {Name: "MoveMessage", Doc: "MoveMessage moves the current message to the given mailbox.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"mailbox"}, Returns: []string{"error"}}}, Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "AuthToken", Doc: "AuthToken contains the [oauth2.Token] for each account."}, {Name: "AuthClient", Doc: "AuthClient contains the [sasl.Client] authentication for sending messages for each account."}, {Name: "IMAPClient", Doc: "IMAPCLient contains the imap clients for each account."}, {Name: "ComposeMessage", Doc: "ComposeMessage is the current message we are editing"}, {Name: "Cache", Doc: "Cache contains the cache data, keyed by account and then mailbox."}, {Name: "ReadMessage", Doc: "ReadMessage is the current message we are reading"}, {Name: "CurrentEmail", Doc: "The current email account"}, {Name: "CurrentMailbox", Doc: "The current mailbox"}}, Instance: &App{}})
 
 // NewApp adds a new [App] with the given name to the given parent:
 // App is an email client app.
@@ -24,38 +21,6 @@ func (t *App) NodeType() *types.Type { return AppType }
 
 // New returns a new [*App] value
 func (t *App) New() tree.Node { return &App{} }
-
-// SetAuthToken sets the [App.AuthToken]:
-// AuthToken contains the [oauth2.Token] for each account.
-func (t *App) SetAuthToken(v map[string]*oauth2.Token) *App { t.AuthToken = v; return t }
-
-// SetAuthClient sets the [App.AuthClient]:
-// AuthClient contains the [sasl.Client] authentication for sending messages for each account.
-func (t *App) SetAuthClient(v map[string]sasl.Client) *App { t.AuthClient = v; return t }
-
-// SetIMAPClient sets the [App.IMAPClient]:
-// IMAPCLient contains the imap clients for each account.
-func (t *App) SetIMAPClient(v map[string]*imapclient.Client) *App { t.IMAPClient = v; return t }
-
-// SetComposeMessage sets the [App.ComposeMessage]:
-// ComposeMessage is the current message we are editing
-func (t *App) SetComposeMessage(v *Message) *App { t.ComposeMessage = v; return t }
-
-// SetCache sets the [App.Cache]:
-// Cache contains the cache data, keyed by account and then mailbox.
-func (t *App) SetCache(v map[string]map[string][]*CacheData) *App { t.Cache = v; return t }
-
-// SetReadMessage sets the [App.ReadMessage]:
-// ReadMessage is the current message we are reading
-func (t *App) SetReadMessage(v *CacheData) *App { t.ReadMessage = v; return t }
-
-// SetCurEmail sets the [App.CurEmail]:
-// The current email account
-func (t *App) SetCurEmail(v string) *App { t.CurEmail = v; return t }
-
-// SetCurMailbox sets the [App.CurMailbox]:
-// The current mailbox
-func (t *App) SetCurMailbox(v string) *App { t.CurMailbox = v; return t }
 
 // SetTooltip sets the [App.Tooltip]
 func (t *App) SetTooltip(v string) *App { t.Tooltip = v; return t }

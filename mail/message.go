@@ -122,7 +122,7 @@ func (a *App) SendMessage() error { //types:add
 
 // UpdateMessageList updates the message list from [App.Cache].
 func (a *App) UpdateMessageList() {
-	cached := a.Cache[a.CurEmail][a.CurMailbox]
+	cached := a.Cache[a.CurrentEmail][a.CurrentMailbox]
 
 	list := a.FindPath("splits/list").(*core.Frame)
 
@@ -187,8 +187,8 @@ func (a *App) UpdateReadMessage() error {
 	mb := a.FindPath("splits/mail/mb").(*core.Frame)
 	mb.DeleteChildren()
 
-	bemail := FilenameBase32(a.CurEmail)
-	bmbox := FilenameBase32(a.CurMailbox)
+	bemail := FilenameBase32(a.CurrentEmail)
+	bmbox := FilenameBase32(a.CurrentMailbox)
 	// there can be flags at the end of the filename, so we have to glob it
 	glob := filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, bmbox, "cur", a.ReadMessage.Filename+"*")
 	matches, err := filepath.Glob(glob)
@@ -255,7 +255,7 @@ func (a *App) UpdateReadMessage() error {
 
 // MoveMessage moves the current message to the given mailbox.
 func (a *App) MoveMessage(mailbox string) error { //types:add
-	c := a.IMAPClient[a.CurEmail]
+	c := a.IMAPClient[a.CurrentEmail]
 	uidset := imap.UIDSet{}
 	uidset.AddNum(a.ReadMessage.UID)
 	fmt.Println(uidset)

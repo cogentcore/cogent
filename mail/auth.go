@@ -39,7 +39,7 @@ func (a *App) SignIn() (string, error) {
 			Settings.Accounts = append(Settings.Accounts, userInfo.Email)
 			errors.Log(core.SaveSettings(Settings))
 		}
-		a.CurEmail = userInfo.Email
+		a.CurrentEmail = userInfo.Email
 		a.AuthToken[userInfo.Email] = token
 		d.Close()
 		email <- userInfo.Email

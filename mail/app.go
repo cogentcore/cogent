@@ -23,28 +23,28 @@ type App struct {
 	core.Frame
 
 	// AuthToken contains the [oauth2.Token] for each account.
-	AuthToken map[string]*oauth2.Token
+	AuthToken map[string]*oauth2.Token `set:"-"`
 
 	// AuthClient contains the [sasl.Client] authentication for sending messages for each account.
-	AuthClient map[string]sasl.Client
+	AuthClient map[string]sasl.Client `set:"-"`
 
 	// IMAPCLient contains the imap clients for each account.
-	IMAPClient map[string]*imapclient.Client
+	IMAPClient map[string]*imapclient.Client `set:"-"`
 
 	// ComposeMessage is the current message we are editing
-	ComposeMessage *Message
+	ComposeMessage *Message `set:"-"`
 
 	// Cache contains the cache data, keyed by account and then mailbox.
-	Cache map[string]map[string][]*CacheData
+	Cache map[string]map[string][]*CacheData `set:"-"`
 
 	// ReadMessage is the current message we are reading
-	ReadMessage *CacheData
+	ReadMessage *CacheData `set:"-"`
 
 	// The current email account
-	CurEmail string
+	CurrentEmail string `set:"-"`
 
 	// The current mailbox
-	CurMailbox string
+	CurrentMailbox string `set:"-"`
 }
 
 // needed for interface import
