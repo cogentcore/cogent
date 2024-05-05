@@ -33,7 +33,7 @@ func init() {
 var Settings = &SettingsData{
 	SettingsBase: core.SettingsBase{
 		Name: "Code",
-		File: filepath.Join(core.TheApp.DataDir(), "Cogent Code", "settings.toml"),
+		File: filepath.Join(core.TheApp.DataDir(), "CogentCode", "settings.toml"),
 	},
 }
 
