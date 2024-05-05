@@ -3,15 +3,24 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.1.3-0.20240503140816-16f96ad8925d
+	cogentcore.org/core v0.1.3
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
+	github.com/coreos/go-oidc/v3 v3.10.0
+	github.com/emersion/go-imap/v2 v2.0.0-beta.3
+	github.com/emersion/go-maildir v0.4.2
+	github.com/emersion/go-message v0.18.1
+	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43
+	github.com/emersion/go-smtp v0.21.1
 	github.com/go-delve/delve v1.22.1
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.9.0
+	github.com/traefik/yaegi v0.16.1
+	github.com/yuin/goldmark v1.7.0
+	golang.org/x/oauth2 v0.20.0
 )
 
 require (
@@ -31,6 +40,7 @@ require (
 	github.com/ericchiang/css v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240307211618-a69d953ea142 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/goki/freetype v1.0.5 // indirect
 	github.com/goki/vulkan v1.0.7 // indirect
@@ -60,7 +70,6 @@ require (
 	github.com/tam7t/hpkp v0.0.0-20160821193359-2b70b4024ed5 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
-	github.com/yuin/goldmark v1.7.0 // indirect
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.abhg.dev/goldmark/wikilink v0.5.0 // indirect
