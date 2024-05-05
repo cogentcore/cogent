@@ -6,15 +6,20 @@ package mail
 
 import (
 	"path/filepath"
+	"slices"
 
 	"cogentcore.org/core/core"
 )
+
+func init() {
+	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
+}
 
 // Settings is the currently active global Cogent Mail settings instance.
 var Settings = &SettingsData{
 	SettingsBase: core.SettingsBase{
 		Name: "Mail",
-		File: filepath.Join(core.TheApp.AppDataDir(), "settings.toml"),
+		File: filepath.Join(core.TheApp.DataDir(), "Cogent Mail", "settings.toml"),
 	},
 }
 
