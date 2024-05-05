@@ -131,11 +131,12 @@ func (a *App) Config() {
 // }
 
 func (a *App) GetMail() error {
-	err := a.Auth()
-	if err != nil {
-		return err
-	}
 	go func() {
+		err := a.Auth()
+		if err != nil {
+			core.ErrorDialog(a, err, "Error authorizing")
+			return
+		}
 		err = a.CacheMessages()
 		if err != nil {
 			core.ErrorDialog(a, err, "Error caching messages")
