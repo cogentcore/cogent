@@ -54,7 +54,7 @@ func (a *App) SignIn() (string, error) {
 			"google": {"https://mail.google.com/"},
 		},
 	})
-	d.NewDialog(a).Run()
+	d.RunDialog(a)
 	return <-email, nil
 }
 

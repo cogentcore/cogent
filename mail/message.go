@@ -51,7 +51,7 @@ func (a *App) Compose() { //types:add
 			a.SendMessage()
 		})
 	})
-	b.NewFullDialog(a).Run()
+	b.RunFullDialog(a)
 }
 
 // SendMessage sends the current message
