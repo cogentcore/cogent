@@ -29,7 +29,6 @@ import (
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
-	"github.com/mattn/go-shellwords"
 	"github.com/robert-nix/ansihtml"
 )
 
@@ -99,35 +98,21 @@ func (a *App) Config() {
 	})
 	dir := core.NewText(ef, "dir").SetText(a.Dir)
 
-	tb := texteditor.NewBuffer()
-	tb.NewBuffer(0)
-	tb.Hi.Lang = "Bash"
-	tb.Opts.LineNos = false
-	errors.Log(tb.Stat())
-	te := texteditor.NewEditor(ef, "editor").SetBuffer(tb)
+	te := texteditor.NewSoloEditor(ef)
+	te.Buffer.SetLang("Go").Opts.LineNos = false
 	te.Style(func(s *styles.Style) {
 		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 	})
 	te.OnKeyChord(func(e events.Event) {
-		txt := string(tb.Text())
-		txt = strings.TrimSuffix(txt, "\n")
-
 		kf := keymap.Of(e.KeyChord())
 		if kf == keymap.Enter && e.Modifiers() == 0 {
 			e.SetHandled()
-			tb.NewBuffer(0)
+			txt := string(te.Buffer.Text())
+			te.Buffer.SetTextString("")
 
 			errors.Log(a.RunCmd(txt, cmds, dir))
 			return
 		}
-
-		envs, words := errors.Log2(shellwords.ParseWithEnvs(txt))
-		if len(words) > 0 {
-			a.CurCmd = words[0]
-		} else {
-			a.CurCmd = ""
-		}
-		_ = envs
 	})
 }
 
@@ -204,7 +189,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	cmds.Update()
 
 	in := interpreter.NewInterpreter()
-	in.Eval(cmd)
+	go in.Eval(cmd)
 	return nil
 }
 
