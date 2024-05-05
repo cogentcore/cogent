@@ -256,10 +256,10 @@ func (a *App) UpdateReadMessage() error {
 // MoveMessage moves the current message to the given mailbox.
 func (a *App) MoveMessage(mailbox string) error { //types:add
 	c := a.IMAPClient[a.CurEmail]
-	seqset := imap.SeqSet{}
-	seqset.AddNum(a.ReadMessage.UID)
-	fmt.Println(seqset)
-	mc := c.UIDMove(seqset, mailbox)
+	uidset := imap.UIDSet{}
+	uidset.AddNum(a.ReadMessage.UID)
+	fmt.Println(uidset)
+	mc := c.Move(uidset, mailbox)
 	fmt.Println("mc", mc)
 	md, err := mc.Wait()
 	fmt.Println("md", md, err)

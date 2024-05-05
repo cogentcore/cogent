@@ -26,7 +26,7 @@ import (
 // mail list in the GUI.
 type CacheData struct {
 	imap.Envelope
-	UID      uint32
+	UID      imap.UID
 	Filename string
 }
 
@@ -142,13 +142,13 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	// we want messages with UIDs not in the list we already cached
 	criteria := &imap.SearchCriteria{}
 	if len(cached) > 0 {
-		seqset := imap.SeqSet{}
+		uidset := imap.UIDSet{}
 		for _, c := range cached {
-			seqset.AddNum(c.UID)
+			uidset.AddNum(c.UID)
 		}
 
 		nc := imap.SearchCriteria{}
-		nc.UID = []imap.SeqSet{seqset}
+		nc.UID = []imap.UIDSet{uidset}
 		criteria.Not = append(criteria.Not, nc)
 	}
 
@@ -158,15 +158,15 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		return fmt.Errorf("searching for uids: %w", err)
 	}
 
-	uids := uidsData.AllNums()
+	uids := uidsData.AllUIDs()
 	if len(uids) == 0 {
 		a.UpdateMessageList()
 		return nil
 	}
 
 	// we only fetch the new messages
-	fseqset := imap.SeqSet{}
-	fseqset.AddNum(uids...)
+	fuidset := imap.UIDSet{}
+	fuidset.AddNum(uids...)
 
 	fetchOptions := &imap.FetchOptions{
 		Envelope: true,
@@ -177,7 +177,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		},
 	}
 
-	mcmd := c.Fetch(fseqset, fetchOptions)
+	mcmd := c.Fetch(fuidset, fetchOptions)
 
 	for {
 		msg := mcmd.Next()
