@@ -99,7 +99,7 @@ func (a *App) Config() {
 	dir := core.NewText(ef, "dir").SetText(a.Dir)
 
 	te := texteditor.NewSoloEditor(ef)
-	te.Buffer.SetLang("Go").Opts.LineNos = false
+	te.Buffer.SetLang("go").Opts.LineNos = false
 	te.Style(func(s *styles.Style) {
 		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 	})
