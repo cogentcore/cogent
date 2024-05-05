@@ -7,12 +7,9 @@ package terminal
 //go:generate core generate -add-types
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
-	osexec "os/exec"
-	"path/filepath"
 	"reflect"
 	"slices"
 	"strconv"
@@ -26,6 +23,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/shell/interpreter"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
@@ -136,7 +134,7 @@ func (a *App) Config() {
 // RunCmd runs the given command in the context of the given commands frame
 // and current directory text.
 func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
-	ctx, cancel := context.WithCancel(context.Background())
+	// ctx, cancel := context.WithCancel(context.Background())
 
 	cfr := core.NewFrame(cmds).Style(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
@@ -153,7 +151,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 		s.Grow.Set(1, 0)
 	})
 	core.NewButton(tr, "kill").SetType(core.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {
-		cancel()
+		// cancel()
 		fmt.Println("canceled")
 	})
 
@@ -161,6 +159,8 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	or, ow := io.Pipe()
 	ir, iw := io.Pipe()
 	var ib []byte
+	_ = ow
+	_ = ir
 
 	buf := texteditor.NewBuffer()
 	buf.NewBuffer(0)
@@ -203,41 +203,8 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 
 	cmds.Update()
 
-	words, err := shellwords.Parse(cmd)
-	if err != nil {
-		return err
-	}
-	if len(words) > 0 && words[0] == "cd" {
-		d := ""
-		if len(words) > 1 {
-			d = filepath.Join(a.Dir, words[1])
-			_, err := os.Stat(d)
-			if err != nil {
-				return err
-			}
-		} else {
-			d, err = os.UserHomeDir()
-			if err != nil {
-				return err
-			}
-		}
-		a.Dir = d
-		dir.SetText(a.Dir).Update()
-		return nil
-	}
-
-	c := osexec.CommandContext(ctx, "bash", "-c", cmd)
-	c.Stdout = ow
-	c.Stderr = ow
-	c.Stdin = ir
-	c.Dir = a.Dir
-	c.Cancel = func() error {
-		fmt.Println("icf")
-		return errors.Log(exec.Run("bash", "-c", "kill -2 "+strconv.Itoa(c.Process.Pid)))
-	}
-	go func() {
-		errors.Log(c.Run())
-	}()
+	in := interpreter.NewInterpreter()
+	in.Eval(cmd)
 	return nil
 }
 
