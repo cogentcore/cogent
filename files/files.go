@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Command files provides a cross-platform file explorer
+// with powerful navigation and searching support.
 package main
 
 import (

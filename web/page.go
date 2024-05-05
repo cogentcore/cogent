@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package web provides a web browser.
+// Package web provides a cross-platform web browser.
 package web
 
 //go:generate core generate -add-types

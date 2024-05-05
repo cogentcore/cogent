@@ -1,3 +1,8 @@
+// Copyright (c) 2023, Cogent Core. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Command AI provides a GUI interface for running AI models locally.
 package main
 
 import (

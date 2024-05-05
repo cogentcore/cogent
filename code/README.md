@@ -1,6 +1,4 @@
-![alt tag](logo/code_icon.png)
-
-**Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [Cogent Core](https://cogentcore.org/core) GUI (for which it serves as a continuous testing platform) and the [parse](https://pkg.go.dev/cogentcore.org/core/parse) interactive parser for syntax highlighting and more advanced IDE code processing.
+**Cogent Code** is a flexible IDE (integrated development environment) framework in pure Go, using the [Cogent Core](https://cogentcore.org/core) GUI (for which it serves as a continuous testing platform) and the [parse](https://pkg.go.dev/cogentcore.org/core/parse) interactive parser for syntax highlighting and more advanced IDE code processing.
 
 There are many existing, excellent choices for text editors and IDEs, but *Code* is possibly the best pure *Go* option available.  The Go language represents a special combination of simplicity, elegance, and power, and is a joy to program in, and is currently the main language fully supported by Code.  Our ambition is to capture some of those Go attributes in an IDE.
 
