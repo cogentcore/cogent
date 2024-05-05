@@ -30,6 +30,7 @@ import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
 	"github.com/robert-nix/ansihtml"
+	"github.com/traefik/yaegi/interp"
 )
 
 // App is a GUI view of a terminal command.
@@ -145,8 +146,6 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	or, ow := io.Pipe()
 	ir, iw := io.Pipe()
 	var ib []byte
-	_ = ow
-	_ = ir
 
 	buf := texteditor.NewBuffer()
 	buf.NewBuffer(0)
@@ -189,7 +188,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 
 	cmds.Update()
 
-	in := interpreter.NewInterpreter()
+	in := interpreter.NewInterpreter(interp.Options{Stdin: ir, Stdout: ow, Stderr: ow})
 	go in.Eval(cmd)
 	return nil
 }
