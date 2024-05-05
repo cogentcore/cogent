@@ -62,7 +62,7 @@ func (cn *Console) Init(logFile string) {
 	os.Stderr = cn.StderrWrite
 	log.SetOutput(cn.StderrWrite)
 	cn.Buf = texteditor.NewBuffer()
-	cn.Buf.Opts.LineNos = false
+	cn.Buf.Options.LineNumbers = false
 	cn.Buf.Filename = core.Filename("console-buf")
 	if logFile != "" {
 		cn.LogWrite, _ = os.Create(logFile)

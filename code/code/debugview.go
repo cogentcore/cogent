@@ -827,7 +827,7 @@ func (dv *DebugView) ConfigTabs() {
 	}
 	ctv := texteditor.NewEditor(tb.NewTab("Console"), "dbg-console")
 	ConfigOutputTextEditor(ctv)
-	dv.OutputBuffer.Opts.LineNos = false
+	dv.OutputBuffer.Options.LineNumbers = false
 	ctv.SetBuffer(dv.OutputBuffer)
 	NewBreakView(tb.NewTab("Breaks")).ConfigBreakView(dv)
 	NewStackView(tb.NewTab("Stack")).ConfigStackView(dv, false)

@@ -99,7 +99,8 @@ func (a *App) Config() {
 	dir := core.NewText(ef, "dir").SetText(a.Dir)
 
 	te := texteditor.NewSoloEditor(ef)
-	te.Buffer.SetLang("go").Opts.LineNos = false
+	te.Buffer.SetLang("go")
+	te.Buffer.Options.LineNumbers = false
 	te.Style(func(s *styles.Style) {
 		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 	})
@@ -149,7 +150,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 
 	buf := texteditor.NewBuffer()
 	buf.NewBuffer(0)
-	buf.Opts.LineNos = false
+	buf.Options.LineNumbers = false
 
 	te := texteditor.NewEditor(cfr).SetBuffer(buf)
 	te.Style(func(s *styles.Style) {

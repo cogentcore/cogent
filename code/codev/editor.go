@@ -94,7 +94,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 
 	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
 	tb.Hi.Style = core.AppearanceSettings.HiStyle
-	tb.Opts.LineNos = ge.Settings.Editor.LineNos
+	tb.Options.LineNumbers = ge.Settings.Editor.LineNumbers
 
 	d := core.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
 	tv := texteditor.NewEditor(d).SetBuffer(tb)

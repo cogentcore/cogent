@@ -191,7 +191,7 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 		s.Min.Y.Em(20)
 		s.Grow.Set(1, 1)
 		if ed.Buffer != nil {
-			ed.Buffer.Opts.LineNos = false
+			ed.Buffer.Options.LineNumbers = false
 		}
 	})
 }

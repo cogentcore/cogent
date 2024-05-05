@@ -101,7 +101,7 @@ func (fv *FindView) Params() *FindParams {
 func (fv *FindView) ShowResults(res []FileSearchResults) {
 	ftv := fv.TextEditor()
 	fbuf := ftv.Buffer
-	fbuf.Opts.LineNos = false
+	fbuf.Options.LineNumbers = false
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100) // markups
 	for _, fs := range res {

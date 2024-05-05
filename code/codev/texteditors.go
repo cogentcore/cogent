@@ -24,7 +24,7 @@ import (
 // ConfigTextBuffer configures the text buffer according to the settings.
 func (ge *CodeView) ConfigTextBuffer(tb *texteditor.Buffer) {
 	tb.SetHiStyle(core.AppearanceSettings.HiStyle)
-	tb.Opts.EditorSettings = ge.Settings.Editor
+	tb.Options.EditorSettings = ge.Settings.Editor
 	tb.ConfigKnown()
 	if tb.Complete != nil {
 		tb.Complete.LookupFunc = ge.LookupFun
