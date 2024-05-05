@@ -23,7 +23,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/parse/complete"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
@@ -37,8 +36,12 @@ type CmdAndArgs struct {
 	// external program to execute -- must be on path or have full path specified -- use {RunExec} for the project RunExec executable.
 	Cmd string `width:"25"`
 
-	// args to pass to the program, one string per arg -- use {Filename} etc to refer to special variables -- just start typing { and you'll get a completion menu of options, and use backslash-quoted bracket to insert a literal curly bracket.  Use unix-standard path separators (/) -- they will be replaced with proper os-specific path separator (e.g., on Windows).
-	Args CmdArgs `complete:"arg" width:"25"`
+	// args to pass to the program, one string per arg.
+	// Use {Filename} etc to refer to special variables.
+	// Use backslash-quoted bracket to insert a literal curly bracket.
+	// Use unix-standard path separators (/); they will be replaced with
+	// proper os-specific path separator on Windows.
+	Args CmdArgs `width:"25"`
 
 	// default value for prompt string, for first use -- thereafter it uses last value provided for given command
 	Default string `width:"25"`
@@ -54,16 +57,6 @@ func (cm CmdAndArgs) Label() string {
 
 // CmdArgs is a slice of arguments for a command
 type CmdArgs []string
-
-// SetCompleter specifies the functions that do completion and post selection
-// editing when inserting the chosen completion
-func (cm *CmdArgs) SetCompleter(tf *core.TextField, id string) {
-	if id == "arg" {
-		tf.SetCompleter(cm, CompleteArg, CompleteArgEdit)
-		return
-	}
-	fmt.Printf("no match for SetCompleter id argument")
-}
 
 // HasPrompts returns true if any prompts are required before running command,
 // and the set of such args
@@ -267,8 +260,10 @@ type Command struct {
 	// sequence of commands to run for this overall command.
 	Cmds []CmdAndArgs `tableview-select:"-"`
 
-	// if specified, will change to this directory before executing the command -- e.g., use {FileDirPath} for current file's directory -- only use directory values here -- if not specified, directory will be project root directory.
-	Dir string `width:"20" complete:"arg"`
+	// if specified, will change to this directory before executing the command;
+	// e.g., use {FileDirPath} for current file's directory. Only use directory
+	// values here; if not specified, directory will be project root directory.
+	Dir string `width:"20"`
 
 	// if true, we wait for the command to run before displaying output -- mainly for post-save commands and those with subsequent steps: if multiple commands are present, then it uses Wait mode regardless.
 	Wait bool
@@ -798,34 +793,6 @@ func (cm *Commands) ViewStandard() { //types:add
 // CustomCommandsChanged is used to update views.CmdsView toolbars via following
 // menu, toolbar properties update methods.
 var CustomCommandsChanged = false
-
-// SetCompleter adds a completer to the textfield - each field
-// can have its own match and edit functions
-// For this to be called add a "complete" tag to the struct field
-func (cmd *Command) SetCompleter(tf *core.TextField, id string) {
-	if id == "arg" {
-		tf.SetCompleter(cmd, CompleteArg, CompleteArgEdit)
-		return
-	}
-	fmt.Printf("no match for SetCompleter id argument")
-}
-
-// CompleteArg supplies directory variables to the completer
-func CompleteArg(data any, text string, posLn, posCh int) (md complete.Matches) {
-	md.Seed = complete.SeedWhiteSpace(text)
-	possibles := complete.MatchSeedString(ArgVarKeys(), md.Seed)
-	for _, p := range possibles {
-		m := complete.Completion{Text: p, Icon: ""}
-		md.Matches = append(md.Matches, m)
-	}
-	return md
-}
-
-// CompleteArgEdit edits completer text field after the user chooses from the candidate completions
-func CompleteArgEdit(data any, text string, cursorPos int, c complete.Completion, seed string) (ed complete.Edit) {
-	ed = complete.EditWord(text, cursorPos, c.Text, seed)
-	return ed
-}
 
 // CommandMenu returns a menu function for commands for given language and vcs name
 func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
