@@ -295,7 +295,8 @@ func (ge *CodeView) UpdateStatusText() {
 	}
 
 	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", ge.Nm, ge.ActiveVCSInfo, fnm, ln, ch, msg)
-	text.SetText(str).Update()
+	text.SetText(str).Config()
+	text.NeedsRender()
 }
 
 // HelpWiki opens wiki page for code on github

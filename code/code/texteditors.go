@@ -236,9 +236,8 @@ func (ge *CodeView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	return fv.OpenFindURL(ur, ftv)
 }
 
-// UpdateTextButtons updates texteditor menu buttons
-// is called by SetStatus and is generally under cover of TopUpdateStart / End
-// doesn't do anything unless a change is required -- safe to call frequently.
+// UpdateTextButtons updates texteditor menu buttons is called by SetStatus.
+// Doesn't do anything unless a change is required, so safe to call frequently.
 func (ge *CodeView) UpdateTextButtons() {
 	ati := ge.ActiveTextEditorIndex
 	for i := 0; i < NTextEditors; i++ {
@@ -254,9 +253,11 @@ func (ge *CodeView) UpdateTextButtons() {
 			}
 		}
 		sel := ati == i
-		if mb.Text != txnm || sel != mb.StateIs(states.Selected) {
-			mb.SetText(txnm)
+		if sel != mb.StateIs(states.Selected) {
 			mb.SetSelected(sel)
+		}
+		if mb.Text != txnm {
+			mb.SetText(txnm)
 			mb.Update()
 		}
 	}
