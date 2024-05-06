@@ -7,8 +7,6 @@ package code
 import (
 	"image"
 
-	"cogentcore.org/core/base/errors"
-	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -91,8 +89,7 @@ func (ed *TextEditor) SetBreakpoint(ln int) {
 	if !has {
 		return
 	}
-	// tv.Buf.SetLineIcon(ln, "stop")
-	ed.Buffer.SetLineColor(ln, errors.Log1(gradient.FromString(DebugBreakColors[DebugBreakInactive])))
+	ed.Buffer.SetLineColor(ln, DebugBreakColors[DebugBreakInactive])
 	dbg.AddBreak(string(ed.Buffer.Filename), ln+1)
 }
 

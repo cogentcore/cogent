@@ -49,6 +49,49 @@ func (i *ArgVarTypes) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "ArgVarTypes")
 }
 
+var _DebugBreakStatusValues = []DebugBreakStatus{0, 1, 2, 3}
+
+// DebugBreakStatusN is the highest valid value for type DebugBreakStatus, plus one.
+const DebugBreakStatusN DebugBreakStatus = 4
+
+var _DebugBreakStatusValueMap = map[string]DebugBreakStatus{`BreakInactive`: 0, `BreakActive`: 1, `BreakCurrent`: 2, `PCCurrent`: 3}
+
+var _DebugBreakStatusDescMap = map[DebugBreakStatus]string{0: `DebugBreakInactive is an inactive break point`, 1: `DebugBreakActive is an active break point`, 2: `DebugBreakCurrent is the current break point`, 3: `DebugPCCurrent is the current program execution point, updated for every ShowFile action`}
+
+var _DebugBreakStatusMap = map[DebugBreakStatus]string{0: `BreakInactive`, 1: `BreakActive`, 2: `BreakCurrent`, 3: `PCCurrent`}
+
+// String returns the string representation of this DebugBreakStatus value.
+func (i DebugBreakStatus) String() string { return enums.String(i, _DebugBreakStatusMap) }
+
+// SetString sets the DebugBreakStatus value from its string representation,
+// and returns an error if the string is invalid.
+func (i *DebugBreakStatus) SetString(s string) error {
+	return enums.SetString(i, s, _DebugBreakStatusValueMap, "DebugBreakStatus")
+}
+
+// Int64 returns the DebugBreakStatus value as an int64.
+func (i DebugBreakStatus) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the DebugBreakStatus value from an int64.
+func (i *DebugBreakStatus) SetInt64(in int64) { *i = DebugBreakStatus(in) }
+
+// Desc returns the description of the DebugBreakStatus value.
+func (i DebugBreakStatus) Desc() string { return enums.Desc(i, _DebugBreakStatusDescMap) }
+
+// DebugBreakStatusValues returns all possible values for the type DebugBreakStatus.
+func DebugBreakStatusValues() []DebugBreakStatus { return _DebugBreakStatusValues }
+
+// Values returns all possible values for the type DebugBreakStatus.
+func (i DebugBreakStatus) Values() []enums.Enum { return enums.Values(_DebugBreakStatusValues) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i DebugBreakStatus) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *DebugBreakStatus) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "DebugBreakStatus")
+}
+
 var _FindLocValues = []FindLoc{0, 1, 2, 3, 4}
 
 // FindLocN is the highest valid value for type FindLoc, plus one.

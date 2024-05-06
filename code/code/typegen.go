@@ -7,16 +7,16 @@ import (
 	"regexp"
 	"time"
 
-	"cogentcore.org/core/core"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/parse/syms"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/views"
 )
 

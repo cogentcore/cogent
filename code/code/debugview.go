@@ -6,6 +6,7 @@ package code
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"log"
 	"strings"
@@ -13,11 +14,9 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/cogent/code/cdebug/cdelve"
-	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/colors/cam/hct"
-	"cogentcore.org/core/colors/gradient"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -27,8 +26,8 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// DebugBreakStatus is the status of a given breakpoint
-type DebugBreakStatus int32
+// DebugBreakStatus represents the status of a certain breakpoint.
+type DebugBreakStatus int32 //enums:enum -trim-prefix Debug
 
 const (
 	// DebugBreakInactive is an inactive break point
@@ -43,12 +42,15 @@ const (
 	// DebugPCCurrent is the current program execution point,
 	// updated for every ShowFile action
 	DebugPCCurrent
-
-	DebugBreakStatusN
 )
 
 // DebugBreakColors are the colors indicating different breakpoint statuses
-var DebugBreakColors = [DebugBreakStatusN]string{"pink", "red", "orange", "lightblue"}
+var DebugBreakColors = map[DebugBreakStatus]image.Image{
+	DebugBreakInactive: colors.C(colors.Scheme.Warn.Base),
+	DebugBreakActive:   colors.C(colors.Scheme.Error.Base),
+	DebugBreakCurrent:  colors.C(colors.Scheme.Success.Base),
+	DebugPCCurrent:     colors.C(colors.Scheme.Primary.Base),
+}
 
 // Debuggers is the list of supported debuggers
 var Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error){
@@ -396,7 +398,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
-		tb.SetLineColor(line-1, errors.Log1(gradient.FromString(DebugBreakColors[stat])))
+		tb.SetLineColor(line-1, DebugBreakColors[stat])
 		tb.Update()
 	}
 }
@@ -568,7 +570,7 @@ func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		if !tb.HasLineColor(line - 1) {
-			tb.SetLineColor(line-1, errors.Log1(gradient.FromString(DebugBreakColors[DebugPCCurrent])))
+			tb.SetLineColor(line-1, DebugBreakColors[DebugPCCurrent])
 			tb.Update()
 			dv.CurFileLoc.FPath = fpath
 			dv.CurFileLoc.Line = line
