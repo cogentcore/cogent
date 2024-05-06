@@ -899,7 +899,7 @@ func (pv *PiView) ConfigSplits() {
 		pv.TestBuf.Hi.Off = true // prevent auto-hi
 
 		pv.OutputBuffer.SetHiStyle(core.Settings.Colors.HiStyle)
-		pv.OutputBuffer.Opts.LineNos = false
+		pv.OutputBuffer.Opts.LineNumbers = false
 
 		fs.ParseState.Trace.Init()
 		fs.ParseState.Trace.PipeOut()
