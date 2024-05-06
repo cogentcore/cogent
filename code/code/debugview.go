@@ -44,7 +44,7 @@ const (
 	DebugPCCurrent
 )
 
-// DebugBreakColors are the colors indicating different breakpoint statuses
+// DebugBreakColors are the colors indicating different breakpoint statuses.
 var DebugBreakColors = map[DebugBreakStatus]image.Image{
 	DebugBreakInactive: colors.C(colors.Scheme.Warn.Base),
 	DebugBreakActive:   colors.C(colors.Scheme.Error.Base),
@@ -704,6 +704,7 @@ func (dv *DebugView) VarValue(varNm string) string {
 	return ""
 }
 
+// DebugStatusColors contains the status colors for different debugging states.
 var DebugStatusColors = map[cdebug.Status]color.RGBA{
 	cdebug.NotInit:    colors.Scheme.SurfaceContainerHighest,
 	cdebug.Error:      colors.Scheme.Error.Container,
@@ -862,14 +863,14 @@ func (dv *DebugView) ConfigToolbar() {
 	// rb := dv.ReplBar()
 	// rb.SetStretchMaxWidth()
 
-	core.NewText(tb, "status").SetText("Building..   ").Style(func(s *styles.Style) {
-		clr := DebugStatusColors[dv.State.Status]
-		s.Background = colors.C(clr)
-		s.Color = colors.C(hct.ContrastColor(clr, hct.ContrastAA))
+	core.NewText(tb, "status").SetText("Building").Style(func(s *styles.Style) {
+		color := DebugStatusColors[dv.State.Status]
+		s.Background = colors.C(color)
+		s.Color = colors.C(hct.ContrastColor(color, hct.ContrastAA))
 	})
 
 	core.NewButton(tb).SetIcon(icons.Refresh).
-		SetTooltip("(re)start the debugger on exe:" + dv.ExePath + " -- automatically rebuilds exe if any source files have changed").
+		SetTooltip("(re)start the debugger on exe:" + dv.ExePath + "; automatically rebuilds exe if any source files have changed").
 		OnClick(func(e events.Event) {
 			dv.Start()
 		})
@@ -922,7 +923,7 @@ func (dv *DebugView) ConfigToolbar() {
 			dv.Stop()
 		})
 
-	core.NewSeparator(tb, "sep-av")
+	core.NewSeparator(tb)
 
 	core.NewButton(tb).SetText("Global Vars").SetIcon(icons.Search).
 		SetTooltip("list variables at global scope, subject to filter (name contains)").
