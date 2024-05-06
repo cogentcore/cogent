@@ -294,6 +294,7 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 						}
 						fn.Open()
 						fn.ScrollToMe()
+						ac.CallItemsFuncs() // refresh avail files
 					},
 				})
 			case fn.IsExec():
