@@ -114,7 +114,7 @@ func (ge *CodeView) SelectTabByName(name string) core.Widget {
 // name, first by looking for an existing one, and if not found, making a new
 // one with a TextEditor in it.  if sel, then select it.
 // returns widget
-func (ge *CodeView) RecycleTabTextEditor(name string, sel bool) *texteditor.Editor {
+func (ge *CodeView) RecycleTabTextEditor(name string, sel bool, buf *texteditor.Buffer) *texteditor.Editor {
 	tv := ge.Tabs()
 	if tv == nil {
 		return nil
@@ -125,6 +125,9 @@ func (ge *CodeView) RecycleTabTextEditor(name string, sel bool) *texteditor.Edit
 		return fr.Child(0).(*texteditor.Editor)
 	}
 	txv := texteditor.NewEditor(fr, fr.Nm)
+	if buf != nil {
+		txv.SetBuffer(buf)
+	}
 	ConfigOutputTextEditor(txv)
 	tv.Update()
 	return txv

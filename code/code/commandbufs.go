@@ -47,7 +47,7 @@ func (ge *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer,
 // existing buffer is cleared.  Also returns index of tab.
 func (ge *CodeView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buffer, *texteditor.Editor, bool) {
 	buf, nw := ge.RecycleCmdBuf(cmdNm, clearBuf)
-	ctv := ge.RecycleTabTextEditor(cmdNm, sel)
+	ctv := ge.RecycleTabTextEditor(cmdNm, sel, buf)
 	if ctv == nil {
 		return nil, nil, false
 	}

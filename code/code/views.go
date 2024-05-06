@@ -229,7 +229,7 @@ func (ge *CodeView) VCSLog(since string) (vcs.Log, error) { //types:add
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (ge *CodeView) OpenConsoleTab() { //types:add
-	ctv := ge.RecycleTabTextEditor("Console", true)
+	ctv := ge.RecycleTabTextEditor("Console", true, nil)
 	if ctv == nil {
 		return
 	}
