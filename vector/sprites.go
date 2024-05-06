@@ -162,6 +162,7 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *c
 		}
 	}
 	sprites.ActivateSprite(sp.Name)
+	sprites.Modified = true // needed to trigger redraw of sprites
 	return sp
 }
 
@@ -232,6 +233,7 @@ func InactivateSprites(ctx core.Widget, typ Sprites) {
 			sprites.InactivateSprite(sp.Name)
 		}
 	}
+	sprites.Modified = true // needed to trigger redraw of sprites
 }
 
 ///////////////////////////////////////////////////////////////////

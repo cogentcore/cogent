@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/svg"
 )
 
 // ManipStart is called at the start of a manipulation, saving the state prior to the action
@@ -369,58 +370,57 @@ func ProportionalBBox(bb, orig math32.Box2) math32.Box2 {
 	return bb
 }
 
-/*
 // SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
-func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.DragEvent) {
+func (sv *SVGView) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	es := sv.EditState()
 
-	InactivateSprites(win, SpAlignMatch)
+	InactivateSprites(sv, SpAlignMatch)
 
 	if !es.InAction() {
 		sv.ManipStart("Reshape", es.SelectedNamesString())
 		sv.GatherAlignPoints()
 	}
-	stsz := es.DragSelStartBBox.Size()
-	stpos := es.DragSelStartBBox.Min
+	stsz := es.DragSelectStartBBox.Size()
+	stpos := es.DragSelectStartBBox.Min
 	bbX, bbY := ReshapeBBoxPoints(sp)
 
 	spt := math32.Vector2FromPoint(es.DragStartPos)
-	mpt := math32.Vector2FromPoint(me.Where)
+	mpt := math32.Vector2FromPoint(e.Pos())
 	diag := false
-	if me.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
+	if e.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
 		mpt, diag = sv.ConstrainPoint(spt, mpt)
 	}
 	dv := mpt.Sub(spt)
-	es.DragSelCurBBox = es.DragSelStartBBox
+	es.DragSelectCurrentBBox = es.DragSelectStartBBox
 	switch sp {
 	case SpBBoxUpL:
-		es.DragSelCurBBox.Min.SetAdd(dv)
-		es.DragSelEffBBox.Min = sv.SnapPoint(es.DragSelCurBBox.Min)
+		es.DragSelectCurrentBBox.Min.SetAdd(dv)
+		es.DragSelectEffectiveBBox.Min = sv.SnapPoint(es.DragSelectCurrentBBox.Min)
 	case SpBBoxUpC:
-		es.DragSelCurBBox.Min.Y += dv.Y
-		es.DragSelEffBBox.Min.Y = sv.SnapPoint(es.DragSelCurBBox.Min).Y
+		es.DragSelectCurrentBBox.Min.Y += dv.Y
+		es.DragSelectEffectiveBBox.Min.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Min).Y
 	case SpBBoxUpR:
-		es.DragSelCurBBox.Min.Y += dv.Y
-		es.DragSelEffBBox.Min.Y = sv.SnapPoint(es.DragSelCurBBox.Min).Y
-		es.DragSelCurBBox.Max.X += dv.X
-		es.DragSelEffBBox.Max.X = sv.SnapPoint(es.DragSelCurBBox.Max).X
+		es.DragSelectCurrentBBox.Min.Y += dv.Y
+		es.DragSelectEffectiveBBox.Min.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Min).Y
+		es.DragSelectCurrentBBox.Max.X += dv.X
+		es.DragSelectEffectiveBBox.Max.X = sv.SnapPoint(es.DragSelectCurrentBBox.Max).X
 	case SpBBoxDnL:
-		es.DragSelCurBBox.Min.X += dv.X
-		es.DragSelEffBBox.Min.X = sv.SnapPoint(es.DragSelCurBBox.Min).X
-		es.DragSelCurBBox.Max.Y += dv.Y
-		es.DragSelEffBBox.Max.Y = sv.SnapPoint(es.DragSelCurBBox.Max).Y
+		es.DragSelectCurrentBBox.Min.X += dv.X
+		es.DragSelectEffectiveBBox.Min.X = sv.SnapPoint(es.DragSelectCurrentBBox.Min).X
+		es.DragSelectCurrentBBox.Max.Y += dv.Y
+		es.DragSelectEffectiveBBox.Max.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Max).Y
 	case SpBBoxDnC:
-		es.DragSelCurBBox.Max.Y += dv.Y
-		es.DragSelEffBBox.Max.Y = sv.SnapPoint(es.DragSelCurBBox.Max).Y
+		es.DragSelectCurrentBBox.Max.Y += dv.Y
+		es.DragSelectEffectiveBBox.Max.Y = sv.SnapPoint(es.DragSelectCurrentBBox.Max).Y
 	case SpBBoxDnR:
-		es.DragSelCurBBox.Max.SetAdd(dv)
-		es.DragSelEffBBox.Max = sv.SnapPoint(es.DragSelCurBBox.Max)
+		es.DragSelectCurrentBBox.Max.SetAdd(dv)
+		es.DragSelectEffectiveBBox.Max = sv.SnapPoint(es.DragSelectCurrentBBox.Max)
 	case SpBBoxLfM:
-		es.DragSelCurBBox.Min.X += dv.X
-		es.DragSelEffBBox.Min.X = sv.SnapPoint(es.DragSelCurBBox.Min).X
+		es.DragSelectCurrentBBox.Min.X += dv.X
+		es.DragSelectEffectiveBBox.Min.X = sv.SnapPoint(es.DragSelectCurrentBBox.Min).X
 	case SpBBoxRtM:
-		es.DragSelCurBBox.Max.X += dv.X
-		es.DragSelEffBBox.Max.X = sv.SnapPoint(es.DragSelCurBBox.Max).X
+		es.DragSelectCurrentBBox.Max.X += dv.X
+		es.DragSelectEffectiveBBox.Max.X = sv.SnapPoint(es.DragSelectCurrentBBox.Max).X
 	}
 
 	if diag {
@@ -437,37 +437,36 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, win *core.Window, me *mouse.Dra
 			}
 		}
 		if sq {
-			es.DragSelEffBBox = SquareBBox(es.DragSelEffBBox)
+			es.DragSelectEffectiveBBox = SquareBBox(es.DragSelectEffectiveBBox)
 		} else {
-			es.DragSelEffBBox = ProportionalBBox(es.DragSelEffBBox, es.DragSelStartBBox)
+			es.DragSelectEffectiveBBox = ProportionalBBox(es.DragSelectEffectiveBBox, es.DragSelectStartBBox)
 		}
 	}
 
-	npos := es.DragSelEffBBox.Min
-	nsz := es.DragSelEffBBox.Size()
+	npos := es.DragSelectEffectiveBBox.Min
+	nsz := es.DragSelectEffectiveBBox.Size()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
-	pt := es.DragSelStartBBox.Min.Sub(svoff)
+	pt := es.DragSelectStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
 	// fmt.Printf("del: %v   sc:  %v\n", del, sc)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(ss.InitGeom)
-		itm.ApplyDeltaTransform(del, sc, 0, pt)
+		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
+		itm.ApplyDeltaTransform(sv.SSVG(), del, sc, 0, pt)
 		if strings.HasPrefix(es.Action, "New") {
-			svg.UpdateNodeGradientPoints(itm, "fill")
-			svg.UpdateNodeGradientPoints(itm, "stroke")
+			// svg.UpdateNodeGradientPoints(itm, "fill")
+			// svg.UpdateNodeGradientPoints(itm, "stroke")
 		}
 	}
 
-	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelEffBBox)
+	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
-	win.UpdateSig()
 }
-*/
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
 func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
+	fmt.Println("rotate", delta)
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("Rotate", es.SelectedNamesString())

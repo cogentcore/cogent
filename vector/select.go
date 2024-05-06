@@ -10,6 +10,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
@@ -157,11 +158,17 @@ func (sv *SVGView) UpdateSelSprites() {
 	}
 
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		// SpriteConnectEvent(win, SpReshapeBBox, spi, 0, image.ZP, sv.This(), func(recv, send tree.Node, sig int64, d any) {
-		// 	ssvg := recv.Embed(KiT_SVGView).(*SVGView)
-		// 	ssvg.SelSpriteEvent(spi, events.EventType(sig), d)
-		// })
-		Sprite(sv, SpReshapeBBox, i, 0, image.Point{})
+		sp := Sprite(sv, SpReshapeBBox, i, 0, image.Point{})
+		sp.OnSlideMove(func(e events.Event) {
+			if e.HasAnyModifier(key.Alt) {
+				sv.SpriteRotateDrag(SpReshapeBBox, e.PrevDelta())
+			} else {
+				sv.SpriteReshapeDrag(SpReshapeBBox, e)
+			}
+		})
+		sp.OnSlideStop(func(e events.Event) {
+			sv.ManipDone()
+		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
 	sv.SetSelSpritePos()
