@@ -21,6 +21,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
+	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/views"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-message/mail"
@@ -30,17 +31,11 @@ import (
 
 // Message contains the relevant information for an email message.
 type Message struct {
-	From    []*mail.Address `view:"inline"`
-	To      []*mail.Address `view:"inline"`
-	Subject string
-	// only for sending
-	Body string
-	// only for receiving
-	BodyReader imap.LiteralReader `view:"-"`
-}
-
-func (m *Message) ShouldShow(field string) bool {
-	return !(field == "Body" && m.BodyReader != nil)
+	From       []*mail.Address `view:"inline"`
+	To         []*mail.Address `view:"inline"`
+	Subject    string
+	Body       string             `view:"-"` // only for sending
+	BodyReader imap.LiteralReader `view:"-"` // only for receiving
 }
 
 // Compose pulls up a dialog to send a new message
@@ -49,9 +44,13 @@ func (a *App) Compose() { //types:add
 	a.ComposeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	b := core.NewBody().AddTitle("Send message")
 	views.NewStructView(b).SetStruct(a.ComposeMessage)
+	te := texteditor.NewSoloEditor(b)
+	te.Buffer.SetLang("md")
+	te.Buffer.Options.LineNumbers = false
 	b.AddBottomBar(func(pw core.Widget) {
 		b.AddCancel(pw)
 		b.AddOK(pw).SetText("Send").OnClick(func(e events.Event) {
+			a.ComposeMessage.Body = te.Buffer.String()
 			a.SendMessage()
 		})
 	})

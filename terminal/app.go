@@ -109,7 +109,7 @@ func (a *App) Config() {
 		kf := keymap.Of(e.KeyChord())
 		if kf == keymap.Enter && e.Modifiers() == 0 {
 			e.SetHandled()
-			txt := string(te.Buffer.Text())
+			txt := te.Buffer.String()
 			te.Buffer.SetTextString("")
 
 			errors.Log(a.RunCmd(txt, cmds, dir))
