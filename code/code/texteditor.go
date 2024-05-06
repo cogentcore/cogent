@@ -52,7 +52,7 @@ func (ed *TextEditor) HandleEvents() {
 		pt := ed.PointToRelPos(e.Pos())
 		tpos := ed.PixelToCursor(pt)
 		if ed.Buffer != nil && pt.X >= 0 && ed.Buffer.IsValidLine(tpos.Ln) {
-			if pt.X < int(ed.LineNumberOff) {
+			if pt.X < int(ed.LineNumberOffset) {
 				e.SetHandled()
 				ed.LineNumberDoubleClick(tpos)
 				return
