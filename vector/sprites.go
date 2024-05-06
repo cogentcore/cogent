@@ -133,6 +133,7 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *c
 	sp, ok := sprites.SpriteByName(spnm)
 	if !ok {
 		sp = core.NewSprite(spnm, image.Point{}, image.Point{})
+		sp.Properties = map[string]any{}
 		SetSpriteProperties(sp, typ, subtyp, idx)
 		sprites.Add(sp)
 	}
