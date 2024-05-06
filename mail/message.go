@@ -34,9 +34,13 @@ type Message struct {
 	To      []*mail.Address `view:"inline"`
 	Subject string
 	// only for sending
-	Body string `view:"text-editor" viewif:"BodyReader==nil"`
+	Body string
 	// only for receiving
 	BodyReader imap.LiteralReader `view:"-"`
+}
+
+func (m *Message) ShouldShow(field string) bool {
+	return !(field == "Body" && m.BodyReader != nil)
 }
 
 // Compose pulls up a dialog to send a new message
