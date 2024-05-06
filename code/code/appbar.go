@@ -28,6 +28,7 @@ func (ge *CodeView) AppBarConfig(parent core.Widget) {
 	ac.OnFirst(events.KeyChord, func(e events.Event) {
 		kf := keymap.Of(e.KeyChord())
 		if kf == keymap.Abort {
+			ac.ClearText()
 			ge.FocusActiveTextEditor()
 		}
 	})
