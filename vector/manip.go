@@ -28,15 +28,14 @@ func (sv *SVGView) ManipStart(act, data string) {
 
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVGView) ManipDone() {
-	// win := sv.VectorView.ParentWindow()
-	// InactivateSprites(win, SpAlignMatch)
+	InactivateSprites(sv, SpAlignMatch)
 	es := sv.EditState()
 	switch {
 	case es.Action == "BoxSelect":
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
-		bbox = bbox.Canon()
-		// InactivateSprites(win, SpRubberBand)
-		// win.UpdateSig()
+		bbox = bbox.Canon().Sub(sv.Geom.ContentBBox.Min)
+		InactivateSprites(sv, SpRubberBand)
+		fmt.Println(bbox)
 		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
 			es.ResetSelected() // todo: extend select -- need mouse mod
@@ -341,7 +340,6 @@ func (sv *SVGView) DragMove(e events.Event) {
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
 	go sv.ManipUpdate()
-	// win.UpdateSig()
 }
 
 func SquareBBox(bb math32.Box2) math32.Box2 {
@@ -449,7 +447,6 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	pt := es.DragSelectStartBBox.Min.Sub(svoff)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
-	// fmt.Printf("del: %v   sc:  %v\n", del, sc)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
 		itm.ApplyDeltaTransform(sv.SSVG(), del, sc, 0, pt)

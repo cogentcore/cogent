@@ -299,7 +299,7 @@ func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pn := es.PathNodes[idx]
 
-	InactivateSprites(win, SpAlignMatch)
+	InactivateSprites(sv, SpAlignMatch)
 
 	spt := math32.Vector2FromPoint(es.DragStartPos)
 	mpt := math32.Vector2FromPoint(me.Where)

@@ -142,14 +142,9 @@ func (sv *SVGView) RemoveSelSprites() {
 	InactivateSprites(sv, SpSelBBox)
 	es := sv.EditState()
 	es.NSelectSprites = 0
-	// win.UpdateSig()
 }
 
 func (sv *SVGView) UpdateSelSprites() {
-	// win := sv.VectorView.ParentWindow()
-	// updt := win.UpdateStart()
-	// defer win.UpdateEnd(updt)
-
 	es := sv.EditState()
 	es.UpdateSelectBBox()
 	if !es.HasSelected() {
@@ -159,15 +154,21 @@ func (sv *SVGView) UpdateSelSprites() {
 
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
 		sp := Sprite(sv, SpReshapeBBox, i, 0, image.Point{})
+		sp.OnSlideStart(func(e events.Event) {
+			es.DragStartPos = e.Pos()
+			e.SetHandled()
+		})
 		sp.OnSlideMove(func(e events.Event) {
 			if e.HasAnyModifier(key.Alt) {
-				sv.SpriteRotateDrag(SpReshapeBBox, e.PrevDelta())
+				sv.SpriteRotateDrag(i, e.PrevDelta())
 			} else {
-				sv.SpriteReshapeDrag(SpReshapeBBox, e)
+				sv.SpriteReshapeDrag(i, e)
 			}
+			e.SetHandled()
 		})
 		sp.OnSlideStop(func(e events.Event) {
 			sv.ManipDone()
+			e.SetHandled()
 		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
@@ -204,6 +205,7 @@ func (sv *SVGView) SetSelSpritePos() {
 			sprites.InactivateSprite(spnm)
 		}
 	}
+	sprites.Modified = true
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites
