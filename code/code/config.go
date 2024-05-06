@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package codev
+package code
 
 import (
 	"fmt"
 
-	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -72,8 +71,8 @@ func (ge *CodeView) TextEditorButtonByIndex(idx int) *core.Button {
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
-func (ge *CodeView) TextEditorByIndex(idx int) *code.TextEditor {
-	return ge.Splits().Child(TextEditor1Index + idx).Child(1).(*code.TextEditor)
+func (ge *CodeView) TextEditorByIndex(idx int) *TextEditor {
+	return ge.Splits().Child(TextEditor1Index + idx).Child(1).(*TextEditor)
 }
 
 // Tabs returns the main TabView
@@ -116,7 +115,7 @@ func (ge *CodeView) ConfigSplits() {
 	ft := filetree.NewTree(ftfr, "filetree")
 	ft.OpenDepth = 4
 	ge.Files = ft
-	ft.FileNodeType = code.FileNodeType
+	ft.FileNodeType = FileNodeType
 
 	ge.Files.OnSelect(func(e events.Event) {
 		e.SetHandled()
@@ -146,9 +145,9 @@ func (ge *CodeView) ConfigSplits() {
 			ge.SetActiveTextEditorIndex(i)
 		})
 
-		ted := code.NewTextEditor(txly, "texteditor-"+txnm)
+		ted := NewTextEditor(txly, "texteditor-"+txnm)
 		ted.Code = ge
-		code.ConfigEditorTextEditor(&ted.Editor)
+		ConfigEditorTextEditor(&ted.Editor)
 		ted.OnFocus(func(e events.Event) {
 			ge.ActiveTextEditorIndex = i
 		})

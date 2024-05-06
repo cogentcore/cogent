@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package codev
+package code
 
 import (
-	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
@@ -126,7 +125,7 @@ func (ge *CodeView) RecycleTabTextEditor(name string, sel bool) *texteditor.Edit
 		return fr.Child(0).(*texteditor.Editor)
 	}
 	txv := texteditor.NewEditor(fr, fr.Nm)
-	code.ConfigOutputTextEditor(txv)
+	ConfigOutputTextEditor(txv)
 	tv.Update()
 	return txv
 }

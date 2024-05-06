@@ -33,7 +33,7 @@ type SymbolsView struct {
 	core.Layout
 
 	// parent code project
-	Code Code `json:"-" xml:"-"`
+	Code *CodeView `json:"-" xml:"-"`
 
 	// params for structure display
 	SymParams SymbolsParams
@@ -47,14 +47,14 @@ type SymbolsView struct {
 
 // Params returns the symbols params
 func (sv *SymbolsView) Params() *SymbolsParams {
-	return &sv.Code.ProjectSettings().Symbols
+	return &sv.Code.Settings.Symbols
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
 // Config configures the view
-func (sv *SymbolsView) ConfigSymbolsView(ge Code, sp SymbolsParams) {
+func (sv *SymbolsView) ConfigSymbolsView(ge *CodeView, sp SymbolsParams) {
 	sv.Code = ge
 	sv.SymParams = sp
 	if sv.HasChildren() {
@@ -173,7 +173,7 @@ func (sv *SymbolsView) ConfigTree(scope SymScopes) {
 	sfr.NeedsLayout()
 }
 
-func SelectSymbol(ge Code, ssym syms.Symbol) {
+func SelectSymbol(ge *CodeView, ssym syms.Symbol) {
 	tv := ge.ActiveTextEditor()
 	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
 		var ok = false

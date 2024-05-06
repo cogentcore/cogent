@@ -141,12 +141,12 @@ func SetActiveKeyMapName(mapnm KeyMapName) {
 	if ok {
 		SetActiveKeyMap(km, mapnm)
 	} else {
-		log.Printf("code.SetActiveKeyMapName: key map named: %v not found, using default: %v\n", mapnm, DefaultKeyMap)
+		log.Printf("SetActiveKeyMapName: key map named: %v not found, using default: %v\n", mapnm, DefaultKeyMap)
 		km, _, ok = AvailableKeyMaps.MapByName(DefaultKeyMap)
 		if ok {
 			SetActiveKeyMap(km, DefaultKeyMap)
 		} else {
-			log.Printf("code.SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailableKeyMaps))
+			log.Printf("SetActiveKeyMapName: ok, this is bad: DefaultKeyMap not found either -- size of AvailKeyMaps: %v -- trying first one\n", len(AvailableKeyMaps))
 			if len(AvailableKeyMaps) > 0 {
 				skm := AvailableKeyMaps[0]
 				SetActiveKeyMap(&skm.Map, KeyMapName(skm.Name))
@@ -164,20 +164,20 @@ func KeyFunction(key1, key2 key.Chord) KeyFunctions {
 	if key1 != "" && key2 != "" {
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("code.KeyFun 2 key seq: %v = %v\n", ks, kfg)
+				fmt.Printf("KeyFun 2 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg
 		}
 	} else if key1 != "" {
 		if _, need2 := Needs2KeyMap[key1]; need2 {
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("code.KeyFun 1st key in 2key seq: %v\n", key1)
+				fmt.Printf("KeyFun 1st key in 2key seq: %v\n", key1)
 			}
 			return KeyNeeds2
 		}
 		if kfg, ok := (*ActiveKeyMap)[ks]; ok {
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("code.KeyFun 1 key seq: %v = %v\n", ks, kfg)
+				fmt.Printf("KeyFun 1 key seq: %v = %v\n", ks, kfg)
 			}
 			kf = kfg
 		}
@@ -230,7 +230,7 @@ func ChordForFunction(kf KeyFunctions) KeySeq {
 func (km *KeySeqMap) Update(kmName KeyMapName) {
 	for key, val := range *km {
 		if val == KeyNone {
-			log.Printf("code.KeySeqMap: key function is nil -- probably renamed, for key: %v\n", key)
+			log.Printf("KeySeqMap: key function is nil -- probably renamed, for key: %v\n", key)
 			delete(*km, key)
 		}
 	}
@@ -248,7 +248,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 			del := fun - lfun
 			if del > 1 {
 				for mi := lfun + 1; mi < fun; mi++ {
-					fmt.Printf("code.KeyMap: %v is missing a key for function: %v\n", kmName, mi)
+					fmt.Printf("KeyMap: %v is missing a key for function: %v\n", kmName, mi)
 					s := mi.String()
 					s = strings.TrimPrefix(s, "KeyFun")
 					s = "- Not Set - " + s
@@ -278,7 +278,7 @@ func (km *KeySeqMap) Update(kmName KeyMapName) {
 	for key, val := range *km {
 		if key.Key2 == "" {
 			if _, need2 := Needs2KeyMap[key.Key1]; need2 {
-				log.Printf("code.KeySeqMap: single-key case starts with key chord that is used in key sequence (2 keys in a row) in other mappings -- this is not valid and won't be used: Key: %v  Fun: %v\n",
+				log.Printf("KeySeqMap: single-key case starts with key chord that is used in key sequence (2 keys in a row) in other mappings -- this is not valid and won't be used: Key: %v  Fun: %v\n",
 					key, val)
 			}
 		}

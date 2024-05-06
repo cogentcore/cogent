@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/code/code"
-	"cogentcore.org/cogent/code/codev"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 )
@@ -50,12 +49,12 @@ func main() {
 
 	if proj != "" {
 		proj, _ = filepath.Abs(proj)
-		codev.OpenCodeProject(proj)
+		code.OpenCodeProject(proj)
 	} else {
 		if path != "" {
 			path, _ = filepath.Abs(path)
 		}
-		codev.NewCodeProjectPath(path)
+		code.NewCodeProjectPath(path)
 	}
 	core.Wait()
 }

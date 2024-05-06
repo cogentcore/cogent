@@ -7,9 +7,7 @@
 
 package main
 
-import "cogentcore.org/cogent/code/code"
-
 func init() {
-	code.DefaultKeyMap = code.KeyMapName("LinuxStandard")
-	code.SetActiveKeyMapName(code.DefaultKeyMap)
+	DefaultKeyMap = KeyMapName("LinuxStandard")
+	SetActiveKeyMapName(DefaultKeyMap)
 }

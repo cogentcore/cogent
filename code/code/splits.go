@@ -69,7 +69,7 @@ func (lt *Splits) SplitByName(name SplitName) (*Split, int, bool) {
 			return sp, i, true
 		}
 	}
-	fmt.Printf("code.SplitByName: split named: %v not found\n", name)
+	fmt.Printf("SplitByName: split named: %v not found\n", name)
 	return nil, -1, false
 }
 

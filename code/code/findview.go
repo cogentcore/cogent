@@ -80,7 +80,7 @@ type FindView struct {
 	core.Layout
 
 	// parent code project
-	Code Code `json:"-" xml:"-"`
+	Code *CodeView `json:"-" xml:"-"`
 
 	// langs value view
 	LangVV views.Value
@@ -94,7 +94,7 @@ type FindView struct {
 
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
-	return &fv.Code.ProjectSettings().Find
+	return &fv.Code.Settings.Find
 }
 
 // ShowResults shows the results in the buffer
@@ -294,8 +294,8 @@ func (fv *FindView) ReplaceAll() {
 	if !fv.CheckValidRegexp() {
 		return
 	}
-	wasGoMod := fv.Code.ProjectSettings().GoMod
-	fv.Code.ProjectSettings().GoMod = false
+	wasGoMod := fv.Code.Settings.GoMod
+	fv.Code.Settings.GoMod = false
 	SetGoMod(false) // much faster without
 	go func() {
 		for {
@@ -309,7 +309,7 @@ func (fv *FindView) ReplaceAll() {
 			}
 		}
 		if wasGoMod {
-			fv.Code.ProjectSettings().GoMod = true
+			fv.Code.Settings.GoMod = true
 			SetGoMod(true)
 		}
 	}()

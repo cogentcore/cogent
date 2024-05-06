@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package codev
+package code
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/strcase"
@@ -166,23 +165,23 @@ func (ge *CodeView) RegisterCopy(name string) bool { //types:add
 	if sel == nil {
 		return false
 	}
-	if code.AvailableRegisters == nil {
-		code.AvailableRegisters = make(code.Registers, 100)
+	if AvailableRegisters == nil {
+		AvailableRegisters = make(Registers, 100)
 	}
-	code.AvailableRegisters[name] = string(sel.ToBytes())
-	code.AvailableRegisters.SaveSettings()
-	ge.Settings.Register = code.RegisterName(name)
+	AvailableRegisters[name] = string(sel.ToBytes())
+	AvailableRegisters.SaveSettings()
+	ge.Settings.Register = RegisterName(name)
 	tv.SelectReset()
 	return true
 }
 
 // RegisterPaste pastes register of given name into active text view
 // returns true if pasted
-func (ge *CodeView) RegisterPaste(name code.RegisterName) bool { //types:add
+func (ge *CodeView) RegisterPaste(name RegisterName) bool { //types:add
 	if name == "" {
 		return false
 	}
-	str, ok := code.AvailableRegisters[string(name)]
+	str, ok := AvailableRegisters[string(name)]
 	if !ok {
 		return false
 	}

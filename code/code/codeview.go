@@ -2,12 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package codev
+package code
 
 //go:generate core generate
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"log/slog"
 	"os"
@@ -16,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/vcs"
@@ -24,11 +25,19 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
 )
+
+//go:embed icons/*.svg
+var Icons embed.FS
+
+func init() {
+	icons.AddFS(errors.Log1(fs.Sub(Icons, "icons")))
+}
 
 // CodeView is the core editor and tab viewer framework for the Code system.  The
 // default view has a tree browser of files on the left, editor panels in the
@@ -70,25 +79,25 @@ type CodeView struct {
 	ActiveTextEditorIndex int `set:"-" json:"-"`
 
 	// list of open nodes, most recent first
-	OpenNodes code.OpenNodes `json:"-"`
+	OpenNodes OpenNodes `json:"-"`
 
 	// the command buffers for commands run in this project
 	CmdBufs map[string]*texteditor.Buffer `set:"-" json:"-"`
 
 	// history of commands executed in this session
-	CmdHistory code.CmdNames `set:"-" json:"-"`
+	CmdHistory CmdNames `set:"-" json:"-"`
 
 	// currently running commands in this project
-	RunningCmds code.CmdRuns `set:"-" json:"-" xml:"-"`
+	RunningCmds CmdRuns `set:"-" json:"-" xml:"-"`
 
 	// current arg var vals
-	ArgVals code.ArgVarVals `set:"-" json:"-" xml:"-"`
+	ArgVals ArgVarVals `set:"-" json:"-" xml:"-"`
 
 	// settings for this project -- this is what is saved in a .code project file
-	Settings code.ProjectSettings `set:"-"`
+	Settings ProjectSettings `set:"-"`
 
 	// current debug view
-	CurDbg *code.DebugView `set:"-"`
+	CurDbg *DebugView `set:"-"`
 
 	// first key in sequence if needs2 key pressed
 	KeySeq1 key.Chord `set:"-"`
@@ -112,19 +121,17 @@ func (ge *CodeView) OnAdd() {
 	ge.AddCloseDialog()
 }
 
-////////////////////////////////////////////////////////
-// Code interface
-
-func (ge *CodeView) ProjectSettings() *code.ProjectSettings {
-	return &ge.Settings
-}
-
-func (ge *CodeView) FileTree() *filetree.Tree {
-	return ge.Files
-}
-
-func (ge *CodeView) LastSaveTime() time.Time {
-	return ge.LastSaveTStamp
+// ParentCode returns the Code parent of given node
+func ParentCode(tn tree.Node) (*CodeView, bool) {
+	var res *CodeView
+	tn.WalkUp(func(n tree.Node) bool {
+		if c, ok := n.This().(*CodeView); ok {
+			res = c
+			return false
+		}
+		return true
+	})
+	return res, res != nil
 }
 
 // VersionControl returns the version control system in effect, using the file tree detected
@@ -132,22 +139,6 @@ func (ge *CodeView) LastSaveTime() time.Time {
 func (ge *CodeView) VersionControl() filetree.VersionControlName {
 	vc := ge.Settings.VersionControl
 	return vc
-}
-
-func (ge *CodeView) CmdRuns() *code.CmdRuns {
-	return &ge.RunningCmds
-}
-
-func (ge *CodeView) CmdHist() *code.CmdNames {
-	return &ge.CmdHistory
-}
-
-func (ge *CodeView) ArgVarVals() *code.ArgVarVals {
-	return &ge.ArgVals
-}
-
-func (ge *CodeView) CurOpenNodes() *code.OpenNodes {
-	return &ge.OpenNodes
 }
 
 func (ge *CodeView) FocusOnTabs() bool {
@@ -183,7 +174,7 @@ func (ge *CodeView) OpenRecent(filename core.Filename) { //types:add
 func (ge *CodeView) EditRecentPaths() {
 	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
-	views.NewSliceView(d).SetSlice(&code.RecentPaths)
+	views.NewSliceView(d).SetSlice(&RecentPaths)
 	d.AddOKOnly().RunDialog(ge)
 }
 
@@ -228,8 +219,8 @@ func (ge *CodeView) OpenPath(path core.Filename) *CodeView { //types:add
 	root, pnm, fnm, ok := ProjectPathParse(string(path))
 	if ok {
 		os.Chdir(root)
-		code.RecentPaths.AddPath(root, core.SystemSettings.SavedPathsMax)
-		code.SavePaths()
+		RecentPaths.AddPath(root, core.SystemSettings.SavedPathsMax)
+		SavePaths()
 		ge.ProjectRoot = core.Filename(root)
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
@@ -240,7 +231,7 @@ func (ge *CodeView) OpenPath(path core.Filename) *CodeView { //types:add
 		ge.LangDefaults()
 		ge.SetWindowNameTitle()
 		ge.UpdateFiles()
-		ge.SplitsSetView(code.SplitName(code.AvailableSplitNames[0]))
+		ge.SplitsSetView(SplitName(AvailableSplitNames[0]))
 		if fnm != "" {
 			ge.NextViewFile(core.Filename(fnm))
 		}
@@ -265,11 +256,11 @@ func (ge *CodeView) OpenProject(filename core.Filename) *CodeView { //types:add
 	}
 	ge.Settings.ProjectFilename = filename // should already be set but..
 	if ok {
-		code.SetGoMod(ge.Settings.GoMod)
+		SetGoMod(ge.Settings.GoMod)
 		os.Chdir(string(ge.Settings.ProjectRoot))
 		ge.ProjectRoot = core.Filename(ge.Settings.ProjectRoot)
-		code.RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
-		code.SavePaths()
+		RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
+		SavePaths()
 		ge.SetName(pnm)
 		ge.Scene.SetName(pnm)
 		ge.ApplySettings()
@@ -349,8 +340,8 @@ func (ge *CodeView) SaveProjectIfExists(saveAllFiles bool) bool {
 // returns true if the user was prompted, false otherwise
 func (ge *CodeView) SaveProjectAs(filename core.Filename) bool { //types:add
 	spell.SaveIfLearn()
-	code.RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
-	code.SavePaths()
+	RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
+	SavePaths()
 	ge.Settings.ProjectFilename = filename
 	ge.ProjectFilename = ge.Settings.ProjectFilename
 	ge.GrabSettings()
@@ -407,7 +398,7 @@ func ProjectPathParse(path string) (root, projnm, fnm string, ok bool) {
 	effpath := errors.Log1(filepath.EvalSymlinks(path))
 	info, err := os.Lstat(effpath)
 	if err != nil {
-		emsg := fmt.Errorf("code.ProjectPathParse: Cannot open at given path: %q: Error: %v", effpath, err)
+		emsg := fmt.Errorf("ProjectPathParse: Cannot open at given path: %q: Error: %v", effpath, err)
 		log.Println(emsg)
 		return
 	}
@@ -486,7 +477,7 @@ func NewCodeProjectPath(path string) *CodeView {
 // OpenCodeProject creates a new CodeView window opened to given CodeView project,
 // returning the window and the path
 func OpenCodeProject(projfile string) *CodeView {
-	pp := &code.ProjectSettings{}
+	pp := &ProjectSettings{}
 	if err := pp.Open(core.Filename(projfile)); err != nil {
 		slog.Debug("Project Settings had a loading error", "error", err)
 	}

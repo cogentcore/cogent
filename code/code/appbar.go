@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package codev
+package code
 
 import (
 	"strings"
 
-	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -46,12 +45,12 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 	})
 	sm.OnChange(func(e events.Event) {
 		ge.Settings.GoMod = sm.StateIs(states.Checked)
-		code.SetGoMod(ge.Settings.GoMod)
+		SetGoMod(ge.Settings.GoMod)
 	})
 
 	core.NewSeparator(tb)
 	core.NewButton(tb).SetText("Open recent").SetMenu(func(m *core.Scene) {
-		for _, rp := range code.RecentPaths {
+		for _, rp := range RecentPaths {
 			rp := rp
 			core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
 				ge.OpenRecent(core.Filename(rp))
@@ -59,7 +58,7 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 		}
 		core.NewSeparator(m)
 		core.NewButton(m).SetText("Recent recent paths").OnClick(func(e events.Event) {
-			code.RecentPaths = nil
+			RecentPaths = nil
 		})
 		core.NewButton(m).SetText("Edit recent paths").OnClick(func(e events.Event) {
 			ge.EditRecentPaths()
@@ -95,10 +94,10 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 	core.NewSeparator(tb)
 
 	views.NewFuncButton(tb, ge.Build).SetIcon(icons.Build).
-		SetShortcut(key.Chord(code.ChordForFunction(code.KeyBuildProject).String()))
+		SetShortcut(key.Chord(ChordForFunction(KeyBuildProject).String()))
 
 	views.NewFuncButton(tb, ge.Run).SetIcon(icons.PlayArrow).
-		SetShortcut(key.Chord(code.ChordForFunction(code.KeyRunProject).String()))
+		SetShortcut(key.Chord(ChordForFunction(KeyRunProject).String()))
 
 	views.NewFuncButton(tb, ge.Debug).SetIcon(icons.Debug)
 
@@ -109,7 +108,7 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 	views.NewFuncButton(tb, ge.Commit).SetIcon(icons.Star)
 
 	core.NewButton(tb).SetText("Command").
-		SetShortcut(key.Chord(code.ChordForFunction(code.KeyExecCmd).String())).
+		SetShortcut(key.Chord(ChordForFunction(KeyExecCmd).String())).
 		SetMenu(func(m *core.Scene) {
 			ec := ExecCmds(ge)
 			for _, cc := range ec {
@@ -122,7 +121,7 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 						cm := cc[i]
 						core.NewButton(mm).SetText(cm).SetIcon(ic).OnClick(func(e events.Event) {
 							e.SetHandled()
-							ge.ExecCmdNameActive(code.CommandName(cat, cm))
+							ge.ExecCmdNameActive(CommandName(cat, cm))
 						})
 					}
 				})
@@ -134,8 +133,8 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 	core.NewButton(tb).SetText("Splits").SetMenu(func(m *core.Scene) {
 		core.NewButton(m).SetText("Set View").
 			SetMenu(func(mm *core.Scene) {
-				for _, sp := range code.AvailableSplitNames {
-					sn := code.SplitName(sp)
+				for _, sp := range AvailableSplitNames {
+					sn := SplitName(sp)
 					mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSetView(sn)
 					})
@@ -147,8 +146,8 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 		views.NewFuncButton(m, ge.SplitsSaveAs).SetText("Save As")
 		core.NewButton(m).SetText("Save").
 			SetMenu(func(mm *core.Scene) {
-				for _, sp := range code.AvailableSplitNames {
-					sn := code.SplitName(sp)
+				for _, sp := range AvailableSplitNames {
+					sn := SplitName(sp)
 					mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
 						ge.SplitsSave(sn)
 					})
@@ -192,21 +191,21 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 				SetKey(keymap.PasteHist)
 
 			views.NewFuncButton(mm, ge.RegisterPaste).SetIcon(icons.Paste).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRegCopy).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyRegCopy).String()))
 
 			views.NewFuncButton(mm, ge.RegisterCopy).SetIcon(icons.Copy).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRegPaste).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyRegPaste).String()))
 
 			core.NewSeparator(mm)
 
 			views.NewFuncButton(mm, ge.CopyRect).SetIcon(icons.Copy).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRectCopy).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyRectCopy).String()))
 
 			views.NewFuncButton(mm, ge.CutRect).SetIcon(icons.Cut).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRectCut).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyRectCut).String()))
 
 			views.NewFuncButton(mm, ge.PasteRect).SetIcon(icons.Paste).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyRectPaste).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyRectPaste).String()))
 
 			core.NewSeparator(mm)
 
@@ -228,10 +227,10 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 			core.NewSeparator(mm)
 
 			views.NewFuncButton(mm, ge.CommentOut).SetText("Comment region").
-				SetIcon(icons.Comment).SetShortcut(key.Chord(code.ChordForFunction(code.KeyCommentOut).String()))
+				SetIcon(icons.Comment).SetShortcut(key.Chord(ChordForFunction(KeyCommentOut).String()))
 
 			views.NewFuncButton(mm, ge.Indent).SetIcon(icons.FormatIndentIncrease).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyIndent).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyIndent).String()))
 
 			views.NewFuncButton(mm, ge.ReCase).SetIcon(icons.MatchCase)
 
@@ -244,14 +243,14 @@ func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
 
 		core.NewButton(m).SetText("View").SetMenu(func(mm *core.Scene) {
 			views.NewFuncButton(mm, ge.FocusPrevPanel).SetText("Focus prev").SetIcon(icons.KeyboardArrowLeft).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyPrevPanel).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyPrevPanel).String()))
 			views.NewFuncButton(mm, ge.FocusNextPanel).SetText("Focus next").SetIcon(icons.KeyboardArrowRight).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyNextPanel).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyNextPanel).String()))
 			views.NewFuncButton(mm, ge.CloneActiveView).SetText("Clone active").SetIcon(icons.Copy).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyBufClone).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyBufClone).String()))
 			core.NewSeparator(m)
 			views.NewFuncButton(mm, ge.CloseActiveView).SetText("Close file").SetIcon(icons.Close).
-				SetShortcut(key.Chord(code.ChordForFunction(code.KeyBufClose).String()))
+				SetShortcut(key.Chord(ChordForFunction(KeyBufClose).String()))
 			views.NewFuncButton(mm, ge.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
 		})
 
@@ -331,16 +330,16 @@ func (ge *CodeView) AddChooserSymbols(ac *core.Chooser) {
 			return
 		}
 		pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
-		syms := &code.SymNode{}
+		syms := &SymNode{}
 		syms.InitName(syms, "syms")
 		syms.OpenSyms(pkg, "", "")
 		syms.WalkDown(func(k tree.Node) bool {
-			sn := k.(*code.SymNode)
+			sn := k.(*SymNode)
 			ac.Items = append(ac.Items, core.ChooserItem{
 				Text: sn.Symbol.Label(),
 				Icon: sn.GetIcon(),
 				Func: func() {
-					code.SelectSymbol(ge, sn.Symbol)
+					SelectSymbol(ge, sn.Symbol)
 				},
 			})
 			return tree.Continue

@@ -23,7 +23,7 @@ type SpellView struct {
 	core.Layout
 
 	// parent code project
-	Code Code `json:"-" xml:"-" copier:"-"`
+	Code *CodeView `json:"-" xml:"-" copier:"-"`
 
 	// texteditor that we're spell-checking
 	Text *TextEditor `json:"-" xml:"-" copier:"-"`
@@ -65,7 +65,7 @@ func (sv *SpellView) SpellAction() {
 //    GUI config
 
 // Config configures the view
-func (sv *SpellView) ConfigSpellView(ge Code, atv *TextEditor) {
+func (sv *SpellView) ConfigSpellView(ge *CodeView, atv *TextEditor) {
 	sv.Code = ge
 	sv.Text = atv
 	sv.CurLn = 0

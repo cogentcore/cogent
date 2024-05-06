@@ -2,13 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package codev
+package code
 
 import (
 	"fmt"
 	"strings"
 
-	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -68,8 +67,8 @@ func (ge *CodeView) TabDeleted(tabnm string) {
 // ExecCmdName executes command of given name -- this is the final common
 // pathway for all command invokation except on a node.  if sel, select tab.
 // if clearBuf, clear the buffer prior to command
-func (ge *CodeView) ExecCmdName(cmdNm code.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := code.AvailableCommands.CmdByName(cmdNm, true)
+func (ge *CodeView) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
@@ -79,8 +78,8 @@ func (ge *CodeView) ExecCmdName(cmdNm code.CmdName, sel bool, clearBuf bool) {
 }
 
 // ExecCmdNameFileNode executes command of given name on given node
-func (ge *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm code.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := code.AvailableCommands.CmdByName(cmdNm, true)
+func (ge *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok || fn == nil || fn.This() == nil {
 		return
 	}
@@ -90,8 +89,8 @@ func (ge *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm code.CmdName, s
 }
 
 // ExecCmdNameFilename executes command of given name on given file name
-func (ge *CodeView) ExecCmdNameFilename(fn string, cmdNm code.CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := code.AvailableCommands.CmdByName(cmdNm, true)
+func (ge *CodeView) ExecCmdNameFilename(fn string, cmdNm CmdName, sel bool, clearBuf bool) {
+	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
@@ -110,9 +109,9 @@ func ExecCmds(ge *CodeView) [][]string {
 
 	vc := ge.VersionControl()
 	if ge.ActiveLang == fileinfo.Unknown {
-		cmds = code.AvailableCommands.FilterCmdNames(ge.Settings.MainLang, vc)
+		cmds = AvailableCommands.FilterCmdNames(ge.Settings.MainLang, vc)
 	} else {
-		cmds = code.AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)
+		cmds = AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)
 	}
 	return cmds
 }
@@ -124,7 +123,7 @@ func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //types:add
 		return
 	}
 	ge.SaveAllCheck(true, func() { // true = cancel option
-		ge.ExecCmdName(code.CmdName(cmdNm), true, true)
+		ge.ExecCmdName(CmdName(cmdNm), true, true)
 	})
 }
 
@@ -132,7 +131,7 @@ func (ge *CodeView) ExecCmdNameActive(cmdNm string) { //types:add
 // selected by default, and runs selected command.
 func (ge *CodeView) CommandFromMenu(fn *filetree.Node) {
 	tv := ge.ActiveTextEditor()
-	core.NewMenu(code.CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
+	core.NewMenu(CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
@@ -164,14 +163,14 @@ func (ge *CodeView) SetArgVarVals() {
 }
 
 // ExecCmds executes a sequence of commands, sel = select tab, clearBuf = clear buffer
-func (ge *CodeView) ExecCmds(cmdNms code.CmdNames, sel bool, clearBuf bool) {
+func (ge *CodeView) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdName(cmdNm, sel, clearBuf)
 	}
 }
 
 // ExecCmdsFileNode executes a sequence of commands on file node, sel = select tab, clearBuf = clear buffer
-func (ge *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms code.CmdNames, sel bool, clearBuf bool) {
+func (ge *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		ge.ExecCmdNameFileNode(fn, cmdNm, sel, clearBuf)
 	}
@@ -217,7 +216,7 @@ func (ge *CodeView) Commit() { //types:add
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
 func (ge *CodeView) CommitNoChecks() {
 	vc := ge.VersionControl()
-	cmds := code.AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)
+	cmds := AvailableCommands.FilterCmdNames(ge.ActiveLang, vc)
 	cmdnm := ""
 	for _, ct := range cmds {
 		if len(ct) < 2 {
@@ -228,7 +227,7 @@ func (ge *CodeView) CommitNoChecks() {
 		}
 		for _, cm := range ct {
 			if strings.Contains(cm, "Commit") {
-				cmdnm = code.CommandName(ct[0], cm)
+				cmdnm = CommandName(ct[0], cm)
 				break
 			}
 		}
@@ -242,7 +241,7 @@ func (ge *CodeView) CommitNoChecks() {
 	d := core.NewBody().AddTitle("Commit message").
 		AddText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
 	tf := core.NewTextField(d)
-	curval, _ := code.CmdPrompt1Vals["Commit"]
+	curval, _ := CmdPrompt1Vals["Commit"]
 	tf.SetText(curval)
 	tf.Style(func(s *styles.Style) {
 		s.Min.X.Ch(100)
@@ -252,10 +251,10 @@ func (ge *CodeView) CommitNoChecks() {
 		d.AddOK(parent).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()
 			ge.ArgVals["{PromptString1}"] = val
-			code.CmdPrompt1Vals["Commit"] = val
-			code.CmdNoUserPrompt = true                     // don't re-prompt!
-			ge.ExecCmdName(code.CmdName(cmdnm), true, true) // must be wait
-			ge.SaveProjectIfExists(true)                    // saveall
+			CmdPrompt1Vals["Commit"] = val
+			CmdNoUserPrompt = true                     // don't re-prompt!
+			ge.ExecCmdName(CmdName(cmdnm), true, true) // must be wait
+			ge.SaveProjectIfExists(true)               // saveall
 			ge.UpdateFiles()
 		})
 	})

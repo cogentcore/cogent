@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package codev
+package code
 
 import (
 	"errors"
@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
-	"cogentcore.org/cogent/code/code"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
@@ -42,7 +41,7 @@ func (ge *CodeView) CallFind(ctx core.Widget) {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc code.FindLoc, langs []fileinfo.Known) { //types:add
+func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc FindLoc, langs []fileinfo.Known) { //types:add
 	if find == "" {
 		return
 	}
@@ -57,7 +56,7 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	}
 
 	fbuf, _ := ge.RecycleCmdBuf("Find", true)
-	fv := tv.RecycleTabWidget("Find", true, code.FindViewType).(*code.FindView)
+	fv := tv.RecycleTabWidget("Find", true, FindViewType).(*FindView)
 	fv.Time = time.Now()
 	ftv := fv.TextEditor()
 	ftv.SetBuffer(fbuf)
@@ -75,8 +74,8 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 		adir, _ = filepath.Split(string(ond.FPath))
 	}
 
-	var res []code.FileSearchResults
-	if loc == code.FindLocFile {
+	var res []FileSearchResults
+	if loc == FindLocFile {
 		if got {
 			if regExp {
 				re, err := regexp.Compile(find)
@@ -84,15 +83,15 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 					log.Println(err)
 				} else {
 					cnt, matches := atv.Buffer.SearchRegexp(re)
-					res = append(res, code.FileSearchResults{ond, cnt, matches})
+					res = append(res, FileSearchResults{ond, cnt, matches})
 				}
 			} else {
 				cnt, matches := atv.Buffer.Search([]byte(find), ignoreCase, false)
-				res = append(res, code.FileSearchResults{ond, cnt, matches})
+				res = append(res, FileSearchResults{ond, cnt, matches})
 			}
 		}
 	} else {
-		res = code.FileTreeSearch(ge, root, find, ignoreCase, regExp, loc, adir, langs)
+		res = FileTreeSearch(ge, root, find, ignoreCase, regExp, loc, adir, langs)
 	}
 	fv.ShowResults(res)
 	ge.FocusOnPanel(TabsIndex)
@@ -110,7 +109,7 @@ func (ge *CodeView) Spell() { //types:add
 		return
 	}
 
-	sv := tv.RecycleTabWidget("Spell", true, code.SpellViewType).(*code.SpellView)
+	sv := tv.RecycleTabWidget("Spell", true, SpellViewType).(*SpellView)
 	sv.ConfigSpellView(ge, txv)
 	sv.Update()
 	ge.FocusOnPanel(TabsIndex)
@@ -127,8 +126,8 @@ func (ge *CodeView) Symbols() { //types:add
 		return
 	}
 
-	sv := tv.RecycleTabWidget("Symbols", true, code.SymbolsViewType).(*code.SymbolsView)
-	sv.ConfigSymbolsView(ge, ge.ProjectSettings().Symbols)
+	sv := tv.RecycleTabWidget("Symbols", true, SymbolsViewType).(*SymbolsView)
+	sv.ConfigSymbolsView(ge, ge.Settings.Symbols)
 	sv.Update()
 	ge.FocusOnPanel(TabsIndex)
 }
@@ -143,7 +142,7 @@ func (ge *CodeView) Debug() { //types:add
 	ge.Settings.Debug.Mode = cdebug.Exec
 	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
-	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
+	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
 	dv.ConfigDebugView(ge, fileinfo.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
@@ -164,7 +163,7 @@ func (ge *CodeView) DebugTest() { //types:add
 	ge.Settings.Debug.Mode = cdebug.Test
 	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
-	dv := tv.RecycleTabWidget("Debug "+dir, true, code.DebugViewType).(*code.DebugView)
+	dv := tv.RecycleTabWidget("Debug "+dir, true, DebugViewType).(*DebugView)
 	dv.ConfigDebugView(ge, fileinfo.Go, tstPath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
@@ -183,7 +182,7 @@ func (ge *CodeView) DebugAttach(pid uint64) { //types:add
 	ge.Settings.Debug.PID = pid
 	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
-	dv := tv.RecycleTabWidget("Debug "+exe, true, code.DebugViewType).(*code.DebugView)
+	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
 	dv.ConfigDebugView(ge, fileinfo.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
@@ -191,7 +190,7 @@ func (ge *CodeView) DebugAttach(pid uint64) { //types:add
 }
 
 // CurDebug returns the current debug view
-func (ge *CodeView) CurDebug() *code.DebugView {
+func (ge *CodeView) CurDebug() *DebugView {
 	return ge.CurDbg
 }
 
@@ -235,8 +234,8 @@ func (ge *CodeView) OpenConsoleTab() { //types:add
 		return
 	}
 	ctv.SetReadOnly(true)
-	if ctv.Buffer == nil || ctv.Buffer != code.TheConsole.Buf {
-		ctv.SetBuffer(code.TheConsole.Buf)
+	if ctv.Buffer == nil || ctv.Buffer != TheConsole.Buf {
+		ctv.SetBuffer(TheConsole.Buf)
 		ctv.OnChange(func(e events.Event) {
 			ge.SelectTabByName("Console")
 		})

@@ -25,7 +25,7 @@ import (
 type TextEditor struct {
 	texteditor.Editor
 
-	Code Code
+	Code *CodeView
 }
 
 func (ed *TextEditor) OnInit() {

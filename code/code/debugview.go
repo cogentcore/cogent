@@ -103,7 +103,7 @@ type DebugView struct {
 	OutputBuffer *texteditor.Buffer `set:"-" json:"-" xml:"-"`
 
 	// parent code project
-	Code Code `set:"-" json:"-" xml:"-"`
+	Code *CodeView `set:"-" json:"-" xml:"-"`
 }
 
 // DbgIsActive means debugger is started.
@@ -167,16 +167,16 @@ func (dv *DebugView) Start() {
 	console.Clear()
 	rebuild := false
 	if dv.Dbg != nil && dv.State.Mode != cdebug.Attach {
-		lmod := dv.Code.FileTree().LatestFileMod(fileinfo.Code)
-		rebuild = lmod.After(dv.DbgTime) || dv.Code.LastSaveTime().After(dv.DbgTime)
+		lmod := dv.Code.Files.LatestFileMod(fileinfo.Code)
+		rebuild = lmod.After(dv.DbgTime) || dv.Code.LastSaveTStamp.After(dv.DbgTime)
 	}
 	if dv.Dbg == nil || rebuild {
 		dv.SetStatus(cdebug.Building)
 		if dv.Dbg != nil {
 			dv.Detach()
 		}
-		rootPath := string(dv.Code.ProjectSettings().ProjectRoot)
-		pars := &dv.Code.ProjectSettings().Debug
+		rootPath := string(dv.Code.Settings.ProjectRoot)
+		pars := &dv.Code.Settings.Debug
 		dv.State.Mode = pars.Mode
 		pars.StatFunc = func(stat cdebug.Status) {
 			dv.AsyncLock()
@@ -741,7 +741,7 @@ func (dv *DebugView) Config() {
 
 // ConfigDebugView configures the view -- parameters for the job must have
 // already been set in [ProjectSettings.Debug].
-func (dv *DebugView) ConfigDebugView(ge Code, sup fileinfo.Known, exePath string) {
+func (dv *DebugView) ConfigDebugView(ge *CodeView, sup fileinfo.Known, exePath string) {
 	dv.Code = ge
 	dv.Sup = sup
 	dv.ExePath = exePath
@@ -936,7 +936,7 @@ func (dv *DebugView) ConfigToolbar() {
 		SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
 		StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 		OnClick(func(e events.Event) {
-			DebugSettingsView(&dv.Code.ProjectSettings().Debug)
+			DebugSettingsView(&dv.Code.Settings.Debug)
 		})
 
 }
