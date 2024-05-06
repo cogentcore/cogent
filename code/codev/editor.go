@@ -101,7 +101,6 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	tv.SetReadOnly(true)
 
 	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
-	tv.Styles.Font.Family = string(core.AppearanceSettings.MonoFont)
 	d.AddBottomBar(func(parent core.Widget) {
 		core.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
 			ge.ViewFile(core.Filename(ld.Filename))

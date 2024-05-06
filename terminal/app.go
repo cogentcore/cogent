@@ -102,9 +102,7 @@ func (a *App) Config() {
 	te := texteditor.NewSoloEditor(ef)
 	te.Buffer.SetLang("go")
 	te.Buffer.Options.LineNumbers = false
-	te.Style(func(s *styles.Style) {
-		s.Font.Family = string(core.AppearanceSettings.MonoFont)
-	})
+
 	te.OnKeyChord(func(e events.Event) {
 		kf := keymap.Of(e.KeyChord())
 		if kf == keymap.Enter && e.Modifiers() == 0 {
@@ -134,7 +132,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})
 	core.NewText(tr, "cmd").SetType(core.TextTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
-		s.Font.Family = string(core.AppearanceSettings.MonoFont)
+		s.SetMono(true)
 		s.Grow.Set(1, 0)
 	})
 	core.NewButton(tr, "kill").SetType(core.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {
@@ -153,7 +151,6 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 
 	te := texteditor.NewEditor(cfr).SetBuffer(buf)
 	te.Style(func(s *styles.Style) {
-		s.Font.Family = string(core.AppearanceSettings.MonoFont)
 		s.Min.Set(units.Em(30), units.Em(10))
 		s.Background = cfr.Styles.Background
 	})
