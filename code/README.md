@@ -40,8 +40,8 @@ In addition to Issues shown on github, some important features to be added longe
 
 * symbolsview icons not updating immediately -- fix from filenodedid not fix here
 
-* lineno too conservative in not rendering bottom
-* don't render top text, lineno if out of range
+* line number too conservative in not rendering bottom
+* don't render top text, line number if out of range
 * always display cursor when typing!
 * drag-n-drop tableview
 

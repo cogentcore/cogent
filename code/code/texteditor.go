@@ -52,9 +52,9 @@ func (ed *TextEditor) HandleEvents() {
 		pt := ed.PointToRelPos(e.Pos())
 		tpos := ed.PixelToCursor(pt)
 		if ed.Buffer != nil && pt.X >= 0 && ed.Buffer.IsValidLine(tpos.Ln) {
-			if pt.X < int(ed.LineNoOff) {
+			if pt.X < int(ed.LineNumberOff) {
 				e.SetHandled()
-				ed.LineNoDoubleClick(tpos)
+				ed.LineNumberDoubleClick(tpos)
 				return
 			}
 			ed.HandleDebugDoubleClick(e, tpos)
@@ -173,8 +173,8 @@ func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lexer.Pos) {
 	// todo: could do e.g., lookup here, but messes with normal select..
 }
 
-// LineNoDoubleClick processes double-clicks on the line-number section
-func (ed *TextEditor) LineNoDoubleClick(tpos lexer.Pos) {
+// LineNumberDoubleClick processes double-clicks on the line-number section
+func (ed *TextEditor) LineNumberDoubleClick(tpos lexer.Pos) {
 	ln := tpos.Ln
 	ed.ToggleBreakpoint(ln)
 	ed.NeedsRender()
