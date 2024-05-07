@@ -42,6 +42,7 @@ type Message struct {
 func (a *App) Compose() { //types:add
 	a.ComposeMessage = &Message{}
 	a.ComposeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
+	a.ComposeMessage.To = []*mail.Address{{}}
 	b := core.NewBody().AddTitle("Send message")
 	views.NewStructView(b).SetStruct(a.ComposeMessage)
 	te := texteditor.NewSoloEditor(b)
