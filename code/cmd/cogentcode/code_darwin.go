@@ -7,7 +7,7 @@
 
 package main
 
-import "cogentcore.org/cogent/code/code"
+import "cogentcore.org/cogent/code"
 
 func init() {
 	code.DefaultKeyMap = code.KeyMapName("MacStandard")

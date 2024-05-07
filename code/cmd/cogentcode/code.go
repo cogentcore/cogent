@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cogentcore.org/cogent/code/code"
+	"cogentcore.org/cogent/code"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 )
