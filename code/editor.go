@@ -41,7 +41,7 @@ func (ge *CodeView) CursorToHistNext() bool { //types:add
 
 // LookupFun is the completion system Lookup function that makes a custom
 // texteditor dialog that has option to edit resulting file.
-func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld complete.Lookup) {
+func (ge *CodeView) LookupFun(data any, text string, posLine, posChar int) (ld complete.Lookup) {
 	sfs := data.(*parse.FileStates)
 	if sfs == nil {
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
@@ -60,7 +60,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLn, posCh int) (ld compl
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
 	parser.GuiActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-	ld = lp.Lang.Lookup(sfs, text, lexer.Pos{posLn, posCh})
+	ld = lp.Lang.Lookup(sfs, text, lexer.Pos{posLine, posChar})
 	if len(ld.Text) > 0 {
 		texteditor.TextDialog(nil, "Lookup: "+text, string(ld.Text))
 		return ld
