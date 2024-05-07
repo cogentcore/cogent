@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/mail"
 	"os"
 	"path/filepath"
 
@@ -28,6 +29,27 @@ type CacheData struct {
 	imap.Envelope
 	UID      imap.UID
 	Filename string
+}
+
+// ToMessage converts the [CacheData] to a [Message].
+func (cd *CacheData) ToMessage() *Message {
+	return &Message{
+		From:    IMAPToMailAddresses(cd.From),
+		To:      IMAPToMailAddresses(cd.To),
+		Subject: cd.Subject,
+	}
+}
+
+// IMAPToMailAddresses converts the given [imap.Address]es to [mail.Address]es.
+func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
+	res := make([]*mail.Address, len(as))
+	for i, a := range as {
+		res[i] = &mail.Address{
+			Name:    a.Name,
+			Address: a.Addr(),
+		}
+	}
+	return res
 }
 
 // CacheMessages caches all of the messages from the server that
