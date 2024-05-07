@@ -10,6 +10,7 @@ import (
 
 	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/views"
 )
 
@@ -20,6 +21,12 @@ func init() {
 // AddressValue represents a [mail.Address] with a [core.TextField].
 type AddressValue struct {
 	views.ValueBase[*core.TextField]
+}
+
+func (v *AddressValue) Config() {
+	v.Widget.OnChange(func(e events.Event) {
+		reflectx.OnePointerValue(v.Value).Interface().(*mail.Address).Address = v.Widget.Text()
+	})
 }
 
 func (v *AddressValue) Update() {
