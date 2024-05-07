@@ -169,9 +169,9 @@ var AllDashesMap map[string][]float64
 // it is initialized from StdDashNames.
 var AllDashNames []string
 
-// AllDashIconNames contains all of the available dash names as
-// IconNames -- for chooser.
-var AllDashIconNames []icons.Icon
+// AllDashIcons contains all of the available dash names as
+// Icons -- for chooser.
+var AllDashIcons []icons.Icon
 
 // DashIconsInited records whether the dashes have been initialized into
 // Icons for use in selectors: see DashIconsInit()
@@ -185,9 +185,9 @@ func DashIconsInit() {
 		return
 	}
 
-	AllDashIconNames = make([]icons.Icon, len(AllDashNames))
+	AllDashIcons = make([]icons.Icon, len(AllDashNames))
 	for i, v := range AllDashNames {
-		AllDashIconNames[i] = icons.Icon(v)
+		AllDashIcons[i] = icons.Icon(v)
 	}
 
 	// for k, v := range AllDashesMap {

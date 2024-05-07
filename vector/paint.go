@@ -350,7 +350,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	dshcb := wr.ChildByName("dashes", 3).(*core.Chooser)
 	nwdsh, dnm := DashMatchArray(float64(pc.StrokeStyle.Width.Dots), pc.StrokeStyle.Dashes)
 	if nwdsh {
-		dshcb.ItemsFromIconList(AllDashIconNames, false, 0)
+		dshcb.ItemsFromIconList(AllDashIcons, false, 0)
 	}
 	dshcb.SetCurVal(icons.Icon(dnm))
 
@@ -549,7 +549,7 @@ func (pv *PaintView) Config() {
 	})
 
 	dshcb := core.NewChooser(wr, "dashes")
-	// dshcb.ItemsFromIconList(AllDashIconNames, true, 0)
+	// dshcb.ItemsFromIconList(AllDashIcons, true, 0)
 	// dshcb.SetProp("width", units.NewCh(15))
 	dshcb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
@@ -561,7 +561,7 @@ func (pv *PaintView) Config() {
 
 	mscb := core.NewChooser(mkr, "marker-start")
 	// mscb.SetProp("width", units.NewCh(20))
-	// mscb.ItemsFromIconList(AllMarkerIconNames, true, 0)
+	// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
 	mscb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
 			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
@@ -579,7 +579,7 @@ func (pv *PaintView) Config() {
 
 	mmcb := core.NewChooser(mkr, "marker-mid")
 	// mmcb.SetProp("width", units.NewCh(20))
-	// mmcb.ItemsFromIconList(AllMarkerIconNames, true, 0)
+	// mmcb.ItemsFromIconList(AllMarkerIcons, true, 0)
 	mmcb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
 			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
@@ -597,7 +597,7 @@ func (pv *PaintView) Config() {
 
 	mecb := core.NewChooser(mkr, "marker-end")
 	// mecb.SetProp("width", units.NewCh(20))
-	// mecb.ItemsFromIconList(AllMarkerIconNames, true, 0)
+	// mecb.ItemsFromIconList(AllMarkerIcons, true, 0)
 	mecb.OnChange(func(e events.Event) {
 		if pv.IsStrokeOn() {
 			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())

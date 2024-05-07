@@ -236,10 +236,10 @@ var AllMarkersSVGMap map[string]*svg.Marker
 // it is initialized from StdMarkerNames.
 var AllMarkerNames []string
 
-// AllMarkerIconNames contains all of the available marker names as
-// IconNames -- for chooser.  All names have marker- prefix in addition
+// AllMarkerIcons contains all of the available marker names as
+// Icons -- for chooser.  All names have marker- prefix in addition
 // to regular marker names.
-var AllMarkerIconNames []icons.Icon
+var AllMarkerIcons []icons.Icon
 
 func init() {
 	AllMarkersXMLMap = make(map[string]string, len(StandardMarkersMap))
@@ -272,9 +272,9 @@ func MarkerIconsInit() {
 		return
 	}
 
-	AllMarkerIconNames = make([]icons.Icon, len(AllMarkerNames))
+	AllMarkerIcons = make([]icons.Icon, len(AllMarkerNames))
 	for i, v := range AllMarkerNames {
-		AllMarkerIconNames[i] = icons.Icon("marker-" + v)
+		AllMarkerIcons[i] = icons.Icon("marker-" + v)
 	}
 
 	AllMarkersSVGMap = make(map[string]*svg.Marker, len(AllMarkersXMLMap))
