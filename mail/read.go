@@ -78,7 +78,11 @@ func (a *App) UpdateMessageList() {
 
 		ftxt := ""
 		for _, f := range cd.From {
-			ftxt += f.Name + " "
+			if f.Name != "" {
+				ftxt += f.Name + " "
+			} else {
+				ftxt += f.Addr() + " "
+			}
 		}
 
 		core.NewText(fr, "from").SetType(core.TextTitleMedium).SetText(ftxt).
