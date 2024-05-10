@@ -32,9 +32,9 @@ type CacheData struct {
 	Filename string
 }
 
-// ToMessage converts the [CacheData] to a [Message].
-func (cd *CacheData) ToMessage() *Message {
-	return &Message{
+// ToMessage converts the [CacheData] to a [SendMessage].
+func (cd *CacheData) ToMessage() *SendMessage {
+	return &SendMessage{
 		From:    IMAPToMailAddresses(cd.From),
 		To:      IMAPToMailAddresses(cd.To),
 		Subject: cd.Subject,

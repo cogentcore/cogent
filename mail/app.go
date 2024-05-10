@@ -32,7 +32,7 @@ type App struct {
 	IMAPClient map[string]*imapclient.Client `set:"-"`
 
 	// ComposeMessage is the current message we are editing
-	ComposeMessage *Message `set:"-"`
+	ComposeMessage *SendMessage `set:"-"`
 
 	// Cache contains the cache data, keyed by account and then mailbox.
 	Cache map[string]map[string][]*CacheData `set:"-"`
