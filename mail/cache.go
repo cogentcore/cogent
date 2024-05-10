@@ -32,12 +32,13 @@ type CacheData struct {
 	Filename string
 }
 
-// ToMessage converts the [CacheData] to a [SendMessage].
-func (cd *CacheData) ToMessage() *SendMessage {
-	return &SendMessage{
+// ToMessage converts the [CacheData] to a [ReadMessage].
+func (cd *CacheData) ToMessage() *ReadMessage {
+	return &ReadMessage{
 		From:    IMAPToMailAddresses(cd.From),
 		To:      IMAPToMailAddresses(cd.To),
 		Subject: cd.Subject,
+		Date:    cd.Date,
 	}
 }
 
