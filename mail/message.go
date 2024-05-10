@@ -197,18 +197,8 @@ func (a *App) UpdateReadMessage() error {
 	mb.DeleteChildren()
 
 	bemail := FilenameBase32(a.CurrentEmail)
-	bmbox := FilenameBase32(a.CurrentMailbox)
-	// there can be flags at the end of the filename, so we have to glob it
-	glob := filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, bmbox, "cur", a.ReadMessage.Filename+"*")
-	matches, err := filepath.Glob(glob)
-	if err != nil {
-		return err
-	}
-	if len(matches) != 1 {
-		return fmt.Errorf("expected 1 match for filepath glob but got %d: %s", len(matches), glob)
-	}
 
-	f, err := os.Open(matches[0])
+	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, a.ReadMessage.Filename))
 	if err != nil {
 		return err
 	}
