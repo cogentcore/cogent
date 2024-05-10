@@ -38,7 +38,7 @@ func (cd *CacheData) ToMessage() *ReadMessage {
 		From:    IMAPToMailAddresses(cd.From),
 		To:      IMAPToMailAddresses(cd.To),
 		Subject: cd.Subject,
-		Date:    cd.Date,
+		Date:    cd.Date.Local(),
 	}
 }
 
