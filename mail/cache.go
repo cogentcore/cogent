@@ -12,6 +12,8 @@ import (
 	"net/mail"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
@@ -216,7 +218,8 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				return err
 			}
 
-			filename := FilenameBase32(fmt.Sprintf("%d", mdata.UID))
+			filename := strconv.FormatUint(uint64(mdata.UID), 32)
+			filename = strings.Repeat("0", 7-len(filename)) + filename
 			f, err := os.Create(filepath.Join(dir, filename))
 			if err != nil {
 				return err
