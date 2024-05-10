@@ -6,11 +6,13 @@ package mail
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"cogentcore.org/core/base/errors"
@@ -131,16 +133,20 @@ func (a *App) SendMessage() error { //types:add
 func (a *App) UpdateMessageList() {
 	cached := a.Cache[a.CurrentEmail][a.CurrentMailbox]
 
+	a.AsyncLock()
+	defer a.AsyncUnlock()
+
 	list := a.FindPath("splits/list").(*core.Frame)
 
 	if list.NumChildren() > 100 {
 		return
 	}
 
-	list.AsyncLock()
-	defer list.AsyncUnlock()
-
 	list.DeleteChildren()
+
+	slices.SortFunc(cached, func(a, b *CacheData) int {
+		return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
+	})
 
 	for i, cd := range cached {
 		cd := cd
