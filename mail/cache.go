@@ -121,8 +121,8 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	bemail := FilenameBase32(email)
 	bmbox := FilenameBase32(mailbox)
 
+	a.AsyncLock()
 	mbox := a.FindPath("splits/mbox").(*views.TreeView)
-	mbox.AsyncLock()
 	embox := mbox.ChildByName(bemail)
 	if embox == nil {
 		embox = views.NewTreeView(mbox, bemail).SetText(email)
@@ -131,7 +131,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		a.CurrentMailbox = mailbox
 		a.UpdateMessageList()
 	})
-	mbox.AsyncUnlock()
+	a.AsyncUnlock()
 
 	dir := maildir.Dir(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, bmbox))
 	err := os.MkdirAll(string(dir), 0700)
@@ -185,80 +185,91 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		a.UpdateMessageList()
 		return nil
 	}
+	return a.CacheUIDs(uids, c, email, mailbox, dir, cached, cachedFile)
+}
 
-	// we only fetch the new messages
-	fuidset := imap.UIDSet{}
-	fuidset.AddNum(uids...)
+// CacheUIDs caches the messages with the given UIDs in the context of the
+// other given values, using an iterative batched approach that fetches the
+// five next most recent messages at a time, allowing for concurrent mail
+// modifiation operations and correct ordering.
+func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir maildir.Dir, cached []*CacheData, cachedFile string) error {
+	for len(uids) > 0 {
+		num := min(5, len(uids))
+		cuids := uids[len(uids)-num:] // the current batch of UIDs
+		uids = uids[:len(uids)-num]   // the remaining UIDs
 
-	fetchOptions := &imap.FetchOptions{
-		Envelope: true,
-		UID:      true,
-		BodySection: []*imap.FetchItemBodySection{
-			{Specifier: imap.PartSpecifierHeader},
-			{Specifier: imap.PartSpecifierText},
-		},
-	}
+		fuidset := imap.UIDSet{}
+		fuidset.AddNum(cuids...)
 
-	mcmd := c.Fetch(fuidset, fetchOptions)
-
-	for {
-		msg := mcmd.Next()
-		if msg == nil {
-			break
+		fetchOptions := &imap.FetchOptions{
+			Envelope: true,
+			UID:      true,
+			BodySection: []*imap.FetchItemBodySection{
+				{Specifier: imap.PartSpecifierHeader},
+				{Specifier: imap.PartSpecifierText},
+			},
 		}
 
-		mdata, err := msg.Collect()
-		if err != nil {
-			return err
-		}
+		mcmd := c.Fetch(fuidset, fetchOptions)
 
-		key, w, err := dir.Create([]maildir.Flag{})
-		if err != nil {
-			return fmt.Errorf("making maildir file: %w", err)
-		}
-
-		var header, text []byte
-
-		for k, v := range mdata.BodySection {
-			if k.Specifier == imap.PartSpecifierHeader {
-				header = v
-			} else if k.Specifier == imap.PartSpecifierText {
-				text = v
+		for {
+			msg := mcmd.Next()
+			if msg == nil {
+				break
 			}
+
+			mdata, err := msg.Collect()
+			if err != nil {
+				return err
+			}
+
+			key, w, err := dir.Create([]maildir.Flag{})
+			if err != nil {
+				return fmt.Errorf("making maildir file: %w", err)
+			}
+
+			var header, text []byte
+
+			for k, v := range mdata.BodySection {
+				if k.Specifier == imap.PartSpecifierHeader {
+					header = v
+				} else if k.Specifier == imap.PartSpecifierText {
+					text = v
+				}
+			}
+
+			_, err = w.Write(append(header, text...))
+			if err != nil {
+				return fmt.Errorf("writing message: %w", err)
+			}
+
+			err = w.Close()
+			if err != nil {
+				return fmt.Errorf("closing message: %w", err)
+			}
+
+			cd := &CacheData{
+				Envelope: *mdata.Envelope,
+				UID:      mdata.UID,
+				Filename: key,
+			}
+
+			// we need to save the list of cached messages every time in case
+			// we get interrupted or have an error
+			cached = append(cached, cd)
+			err = jsonx.Save(&cached, cachedFile)
+			if err != nil {
+				return fmt.Errorf("saving cache list: %w", err)
+			}
+
+			a.Cache[email][mailbox] = cached
+			a.UpdateMessageList()
 		}
 
-		_, err = w.Write(append(header, text...))
+		err := mcmd.Close()
 		if err != nil {
-			return fmt.Errorf("writing message: %w", err)
+			return fmt.Errorf("fetching messages: %w", err)
 		}
-
-		err = w.Close()
-		if err != nil {
-			return fmt.Errorf("closing message: %w", err)
-		}
-
-		cd := &CacheData{
-			Envelope: *mdata.Envelope,
-			UID:      mdata.UID,
-			Filename: key,
-		}
-
-		// we need to save the list of cached messages every time in case
-		// we get interrupted or have an error
-		cached = append(cached, cd)
-		err = jsonx.Save(&cached, cachedFile)
-		if err != nil {
-			return fmt.Errorf("saving cache list: %w", err)
-		}
-
-		a.Cache[email][mailbox] = cached
-		a.UpdateMessageList()
 	}
-
-	err = mcmd.Close()
-	if err != nil {
-		return fmt.Errorf("fetching messages: %w", err)
-	}
-
 	return nil
 }

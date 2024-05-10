@@ -138,10 +138,6 @@ func (a *App) UpdateMessageList() {
 
 	list := a.FindPath("splits/list").(*core.Frame)
 
-	if list.NumChildren() > 100 {
-		return
-	}
-
 	list.DeleteChildren()
 
 	slices.SortFunc(cached, func(a, b *CacheData) int {
