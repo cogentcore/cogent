@@ -19,7 +19,6 @@ import (
 	"cogentcore.org/core/views"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
-	"github.com/emersion/go-maildir"
 )
 
 // CacheData contains the data stored for a cached message in the cached messages file.
@@ -53,8 +52,7 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 }
 
 // CacheMessages caches all of the messages from the server that
-// have not already been cached. It caches them using maildir in
-// the app's data directory.
+// have not already been cached. It caches them in the app's data directory.
 func (a *App) CacheMessages() error {
 	if a.Cache == nil {
 		a.Cache = map[string]map[string][]*CacheData{}
@@ -77,7 +75,7 @@ func (a *App) CacheMessages() error {
 
 // CacheMessages caches all of the messages from the server that
 // have not already been cached for the given email account. It
-// caches them using maildir in the app's data directory.
+// caches them in the app's data directory.
 func (a *App) CacheMessagesForAccount(email string) error {
 	if a.Cache[email] == nil {
 		a.Cache[email] = map[string][]*CacheData{}
@@ -112,14 +110,13 @@ func (a *App) CacheMessagesForAccount(email string) error {
 
 // CacheMessagesForMailbox caches all of the messages from the server
 // that have not already been cached for the given email account and mailbox.
-// It caches them using maildir in the app's data directory.
+// It caches them in the app's data directory.
 func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string) error {
 	if a.CurrentMailbox == "" {
 		a.CurrentMailbox = mailbox
 	}
 
 	bemail := FilenameBase32(email)
-	bmbox := FilenameBase32(mailbox)
 
 	a.AsyncLock()
 	mbox := a.FindPath("splits/mbox").(*views.TreeView)
@@ -127,23 +124,19 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	if embox == nil {
 		embox = views.NewTreeView(mbox, bemail).SetText(email)
 	}
-	views.NewTreeView(embox, bmbox).SetText(mailbox).OnClick(func(e events.Event) {
+	views.NewTreeView(embox).SetText(mailbox).OnClick(func(e events.Event) {
 		a.CurrentMailbox = mailbox
 		a.UpdateMessageList()
 	})
 	a.AsyncUnlock()
 
-	dir := maildir.Dir(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, bmbox))
+	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", bemail)
 	err := os.MkdirAll(string(dir), 0700)
 	if err != nil {
 		return err
 	}
-	err = dir.Init()
-	if err != nil {
-		return fmt.Errorf("initializing maildir: %w", err)
-	}
 
-	cachedFile := filepath.Join(core.TheApp.AppDataDir(), "caching", bemail, bmbox, "cached-messages.json")
+	cachedFile := filepath.Join(core.TheApp.AppDataDir(), "caching", bemail, "cached-messages.json")
 	err = os.MkdirAll(filepath.Dir(cachedFile), 0700)
 	if err != nil {
 		return err
@@ -192,7 +185,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 // other given values, using an iterative batched approach that fetches the
 // five next most recent messages at a time, allowing for concurrent mail
 // modifiation operations and correct ordering.
-func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir maildir.Dir, cached []*CacheData, cachedFile string) error {
+func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached []*CacheData, cachedFile string) error {
 	for len(uids) > 0 {
 		num := min(5, len(uids))
 		cuids := uids[len(uids)-num:] // the current batch of UIDs
@@ -223,9 +216,10 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				return err
 			}
 
-			key, w, err := dir.Create([]maildir.Flag{})
+			filename := FilenameBase32(fmt.Sprintf("%d", mdata.UID))
+			f, err := os.Create(filepath.Join(dir, filename))
 			if err != nil {
-				return fmt.Errorf("making maildir file: %w", err)
+				return err
 			}
 
 			var header, text []byte
@@ -238,12 +232,12 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				}
 			}
 
-			_, err = w.Write(append(header, text...))
+			_, err = f.Write(append(header, text...))
 			if err != nil {
 				return fmt.Errorf("writing message: %w", err)
 			}
 
-			err = w.Close()
+			err = f.Close()
 			if err != nil {
 				return fmt.Errorf("closing message: %w", err)
 			}
@@ -251,7 +245,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			cd := &CacheData{
 				Envelope: *mdata.Envelope,
 				UID:      mdata.UID,
-				Filename: key,
+				Filename: filename,
 			}
 
 			// we need to save the list of cached messages every time in case
