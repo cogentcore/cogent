@@ -312,6 +312,7 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 					Icon: fn.Info.Ic,
 					Func: func() {
 						ge.NextViewFileNode(fn)
+						ac.CallItemsFuncs() // refresh avail files
 					},
 				})
 			}
