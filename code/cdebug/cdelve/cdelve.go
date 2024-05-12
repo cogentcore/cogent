@@ -442,7 +442,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*cdebug.Break) error {
 		return gd.LogErr(err)
 	}
 	for itr := 0; itr < 2; itr++ {
-		updt := false
+		update := false
 		for _, b := range *brk {
 			c, ci := cdebug.BreakByFile(cb, b.FPath, b.Line)
 			if c != nil && c.ID > 0 {
@@ -462,7 +462,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*cdebug.Break) error {
 				cb = append(cb[:ci], cb[ci+1:]...) // remove from cb
 			} else { // set but not found
 				if b.On {
-					updt = true // need another iter
+					update = true // need another iter
 					gd.SetBreak(b.FPath, b.Line)
 				}
 			}
@@ -473,7 +473,7 @@ func (gd *GiDelve) UpdateBreaks(brk *[]*cdebug.Break) error {
 			}
 			*brk = append(*brk, c)
 		}
-		if updt {
+		if update {
 			cb, err = gd.ListBreaks()
 		} else {
 			break
@@ -539,9 +539,9 @@ func (gd *GiDelve) InitAllState(all *cdebug.AllState) error {
 // For given thread (lowest-level supported by language,
 // e.g., Task if supported, else Thread), and frame number.
 func (gd *GiDelve) UpdateAllState(all *cdebug.AllState, threadID int, frame int) error {
-	updt := false
+	update := false
 	if threadID != all.CurTask {
-		updt = true
+		update = true
 		all.CurTask = threadID
 		sf, err := gd.Stack(all.CurTask, 100)
 		if err != nil {
@@ -549,7 +549,7 @@ func (gd *GiDelve) UpdateAllState(all *cdebug.AllState, threadID int, frame int)
 		}
 		all.Stack = sf
 	}
-	if updt || all.CurFrame != frame {
+	if update || all.CurFrame != frame {
 		all.CurFrame = frame
 		tsk, _ := cdebug.TaskByID(all.Tasks, all.CurTask)
 		if tsk != nil && tsk.Func != "" {

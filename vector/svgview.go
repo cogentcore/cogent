@@ -837,9 +837,9 @@ func (sv *SVGView) UpdateGradients(gl []*Gradient) {
 // }
 
 func (sv *SVGView) BgNeedsUpdate() bool {
-	updt := sv.EnsureBgSize() || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.VectorEff != sv.bgVectorEff)
-	// fmt.Printf("updt: %v\n", updt)
-	return updt
+	update := sv.EnsureBgSize() || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.VectorEff != sv.bgVectorEff)
+	// fmt.Printf("update: %v\n", update)
+	return update
 }
 
 func (sv *SVGView) FillViewportWithBg() {

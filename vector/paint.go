@@ -47,7 +47,7 @@ type PaintView struct {
 func (vv *VectorView) ManipAction(act, data string, manip bool, fun func(sii svg.Node)) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	// updt := false
+	// update := false
 	actStart := false
 	finalAct := false
 	if !manip && es.InAction() {
@@ -63,13 +63,13 @@ func (vv *VectorView) ManipAction(act, data string, manip bool, fun func(sii svg
 		if !finalAct {
 			sv.UndoSave(act, data)
 		}
-		// updt = sv.UpdateStart()
+		// update = sv.UpdateStart()
 	}
 	for itm := range es.Selected {
 		vv.ManipActionFun(itm, fun)
 	}
 	if !manip {
-		// sv.UpdateEnd(updt)
+		// sv.UpdateEnd(update)
 		if !actStart {
 			es.ActDone()
 			vv.ChangeMade()
@@ -120,11 +120,11 @@ func (vv *VectorView) SetStroke(prev, pt PaintTypes, sp string) {
 	es := &vv.EditState
 	sv := vv.SVG()
 	sv.UndoSave("SetStroke", sp)
-	// updt := sv.UpdateStart()
+	// update := sv.UpdateStart()
 	for itm := range es.Selected {
 		vv.SetColorNode(itm, "stroke", prev, pt, sp)
 	}
-	// sv.UpdateEnd(updt)
+	// sv.UpdateEnd(update)
 	vv.ChangeMade()
 }
 
@@ -147,17 +147,17 @@ func (vv *VectorView) SetStrokeWidthNode(sii svg.Node, wp string) {
 func (vv *VectorView) SetStrokeWidth(wp string, manip bool) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	// updt := false
+	// update := false
 	if !manip {
 		sv.UndoSave("SetStrokeWidth", wp)
-		// updt = sv.UpdateStart()
+		// update = sv.UpdateStart()
 		// sv.SetFullReRender()
 	}
 	for itm := range es.Selected {
 		vv.SetStrokeWidthNode(itm, wp)
 	}
 	if !manip {
-		// sv.UpdateEnd(updt)
+		// sv.UpdateEnd(update)
 		vv.ChangeMade()
 	} else {
 		sv.ManipUpdate()
@@ -196,12 +196,12 @@ func (vv *VectorView) SetMarkerProperties(start, mid, end string, sc, mc, ec Mar
 	es := &vv.EditState
 	sv := vv.SVG()
 	sv.UndoSave("SetMarkerProperties", start+" "+mid+" "+end)
-	// updt := sv.UpdateStart()
+	// update := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
 		vv.SetMarkerNode(itm, start, mid, end, sc, mc, ec)
 	}
-	// sv.UpdateEnd(updt)
+	// sv.UpdateEnd(update)
 	vv.ChangeMade()
 }
 
@@ -240,12 +240,12 @@ func (vv *VectorView) SetDashProperties(dary []float64) {
 	es := &vv.EditState
 	sv := vv.SVG()
 	sv.UndoSave("SetDashProperties", "")
-	// updt := sv.UpdateStart()
+	// update := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
 		vv.SetDashNode(itm, dary)
 	}
-	// sv.UpdateEnd(updt)
+	// sv.UpdateEnd(update)
 	vv.ChangeMade()
 }
 
@@ -255,12 +255,12 @@ func (vv *VectorView) SetFill(prev, pt PaintTypes, fp string) {
 	es := &vv.EditState
 	sv := vv.SVG()
 	sv.UndoSave("SetFill", fp)
-	// updt := sv.UpdateStart()
+	// update := sv.UpdateStart()
 	// sv.SetFullReRender()
 	for itm := range es.Selected {
 		vv.SetColorNode(itm, "fill", prev, pt, fp)
 	}
-	// sv.UpdateEnd(updt)
+	// sv.UpdateEnd(update)
 	vv.ChangeMade()
 }
 
@@ -292,9 +292,9 @@ func (vv *VectorView) DefaultGradient() string {
 func (vv *VectorView) UpdateGradients() {
 	es := &vv.EditState
 	sv := vv.SVG()
-	// updt := sv.UpdateStart()
+	// update := sv.UpdateStart()
 	sv.UpdateGradients(es.Gradients)
-	// sv.UpdateEnd(updt)
+	// sv.UpdateEnd(update)
 }
 
 ///////////////////////////////////////////////////////////////
@@ -304,8 +304,8 @@ func (vv *VectorView) UpdateGradients() {
 // properties from node (node can be nil)
 /*
 func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
-	updt := pv.UpdateStart()
-	defer pv.UpdateEnd(updt)
+	update := pv.UpdateStart()
+	defer pv.UpdateEnd(update)
 
 	pv.StrokeType, pv.StrokeStops = pv.DecodeType(kn, &pc.StrokeStyle.Color, "stroke")
 	pv.FillType, pv.FillStops = pv.DecodeType(kn, &pc.FillStyle.Color, "fill")
@@ -626,7 +626,7 @@ func (pv *PaintView) Config() {
 	// 	sss := pvv.StrokeStack()
 	// 	prev := pv.StrokeType
 	// 	pvv.StrokeType = PaintTypes(sig)
-	// 	updt := pvv.UpdateStart()
+	// 	update := pvv.UpdateStart()
 	// 	pvv.SetFullReRender()
 	// 	sp := pvv.StrokeProp()
 	// 	switch pvv.StrokeType {
@@ -642,7 +642,7 @@ func (pv *PaintView) Config() {
 	// 		sss.StackTop = 2
 	// 		pvv.SelectStrokeGrad()
 	// 	}
-	// 	pvv.UpdateEnd(updt)
+	// 	pvv.UpdateEnd(update)
 	// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
 	// })
 
@@ -696,7 +696,7 @@ func (pv *PaintView) Config() {
 	// 	fss := pvv.FillStack()
 	// 	prev := pvv.FillType
 	// 	pvv.FillType = PaintTypes(sig)
-	// 	updt := fss.UpdateStart()
+	// 	update := fss.UpdateStart()
 	// 	fss.SetFullReRender()
 	// 	fp := pvv.FillProp()
 	// 	switch pvv.FillType {
@@ -712,7 +712,7 @@ func (pv *PaintView) Config() {
 	// 		fss.StackTop = 2
 	// 		pvv.SelectFillGrad()
 	// 	}
-	// 	pvv.UpdateEnd(updt)
+	// 	pvv.UpdateEnd(update)
 	// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
 	// })
 

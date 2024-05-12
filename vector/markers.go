@@ -146,14 +146,14 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 		log.Printf("NewMarker: marker named %s not found in AllMarkersSVGMap; will likely crash!\n", name)
 		return nil
 	}
-	// updt := sg.UpdateStart()
+	// update := sg.UpdateStart()
 	nmk := &svg.Marker{}
 	fnm := svg.NameID(name, id)
 	nmk.InitName(nmk, fnm)
 	nmk.CopyFrom(mk)
 	mk.SetName(fnm) // double check
 	sg.Defs.AddChild(nmk)
-	// sg.UpdateEnd(updt)
+	// sg.UpdateEnd(update)
 	return nmk
 }
 

@@ -101,7 +101,7 @@ func (a *App) Config() {
 
 // 	msv.SetStruct(a.ReadMessage)
 
-// 	updt := mb.UpdateStart()
+// 	update := mb.UpdateStart()
 // 	if mb.HasChildren() {
 // 		mb.DeleteChildren(true)
 // 	}
@@ -127,7 +127,7 @@ func (a *App) Config() {
 // 		}
 // 	}
 // 	mb.Update()
-// 	mb.UpdateEndLayout(updt)
+// 	mb.UpdateEndLayout(update)
 // }
 
 func (a *App) GetMail() error {

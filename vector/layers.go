@@ -94,9 +94,9 @@ func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// sv := gv.SVG()
 	// lyv.ViewSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("tv viewsig: %v  data: %v  send: %v\n", sig, data, send.Path())
-	// 	updt := sv.UpdateStart()
+	// 	update := sv.UpdateStart()
 	// 	es.Layers.LayersUpdated(sv)
-	// 	sv.UpdateEnd(updt)
+	// 	sv.UpdateEnd(update)
 	// 	gv.UpdateLayerView()
 	// })
 

@@ -221,7 +221,7 @@ var PreferencesProperties = tree.Properties{
 			}},
 			{"Save", tree.Properties{
 				"shortcut": "Command+S",
-				"updtfunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
+				"updatefunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
 				}),
@@ -239,7 +239,7 @@ var PreferencesProperties = tree.Properties{
 		{"Save", tree.Properties{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updtfunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
+			"updatefunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdate(pf.Changed)
 			}),

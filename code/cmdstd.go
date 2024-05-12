@@ -160,7 +160,7 @@ var StandardCommands = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Go", Name: "Get Update",
-		Desc: "run go get -u (updt) on package(s) you enter at prompt.  use ./... for all.",
+		Desc: "run go get -u (update) on package(s) you enter at prompt.  use ./... for all.",
 		Lang: fileinfo.Go,
 		Cmds: []CmdAndArgs{{Cmd: "go",
 			Args:    []string{"get", "-u", "{PromptString1}"},

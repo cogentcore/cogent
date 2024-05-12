@@ -221,7 +221,7 @@ func (pv *PiView) SetStatus(msg string) {
 	// pv.UpdateMu.Lock()
 	// defer pv.UpdateMu.Unlock()
 
-	updt := sb.UpdateStart()
+	update := sb.UpdateStart()
 	lbl := pv.StatusLabel()
 	fnm := ""
 	ln := 0
@@ -239,7 +239,7 @@ func (pv *PiView) SetStatus(msg string) {
 
 	str := fmt.Sprintf("%v\t<b>%v:</b>\t(%v,%v)\t%v", pv.Nm, fnm, ln, ch, msg)
 	lbl.SetText(str)
-	sb.UpdateEnd(updt)
+	sb.UpdateEnd(update)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -432,9 +432,9 @@ func (pv *PiView) ParseStopped() {
 func (pv *PiView) ParseNext() *parser.Rule {
 	fs := &pv.FileState
 	at := pv.AstTree()
-	updt := at.UpdateStart()
+	update := at.UpdateStart()
 	mrule := pv.Parser.ParseNext(fs)
-	at.UpdateEnd(updt)
+	at.UpdateEnd(update)
 	at.OpenAll()
 	pv.AstTreeToEnd()
 	pv.UpdateLexBuf()
@@ -454,14 +454,14 @@ func (pv *PiView) ParseNext() *parser.Rule {
 func (pv *PiView) ParseAll() {
 	fs := &pv.FileState
 	at := pv.AstTree()
-	updt := at.UpdateStart()
+	update := at.UpdateStart()
 	for {
 		mrule := pv.Parser.ParseNext(fs)
 		if mrule == nil || fs.ParseState.AtEofNext() {
 			break
 		}
 	}
-	at.UpdateEnd(updt)
+	at.UpdateEnd(update)
 	// at.OpenAll()
 	// pv.AstTreeToEnd()
 	pv.UpdateLexBuf()
@@ -632,11 +632,11 @@ func (pv *PiView) ConfigTextEditor(ly *core.Layout, out bool) *texteditor.Editor
 	ly.SetMinPrefWidth(units.NewValue(20, units.Ch))
 	ly.SetMinPrefHeight(units.NewValue(10, units.Ch))
 	var tv *texteditor.Editor
-	updt := false
+	update := false
 	if ly.HasChildren() {
 		tv = ly.Child(0).Embed(views.KiT_TextEditor).(*texteditor.Editor)
 	} else {
-		updt = ly.UpdateStart()
+		update = ly.UpdateStart()
 		tv = ly.NewChild(views.KiT_TextEditor, ly.Nm).(*texteditor.Editor)
 	}
 
@@ -650,7 +650,7 @@ func (pv *PiView) ConfigTextEditor(ly *core.Layout, out bool) *texteditor.Editor
 	if out {
 		tv.SetInactive()
 	}
-	ly.UpdateEnd(updt)
+	ly.UpdateEnd(update)
 	return tv
 }
 
@@ -741,14 +741,14 @@ func (pv *PiView) Config() {
 	config.Add(core.ToolbarType, "toolbar")
 	config.Add(core.SplitsType, "splitview")
 	config.Add(core.FrameType, "statusbar")
-	mods, updt := pv.ConfigChildren(config)
+	mods, update := pv.ConfigChildren(config)
 	if !mods {
-		updt = pv.UpdateStart()
+		update = pv.UpdateStart()
 	}
 	pv.ConfigSplits()
 	pv.ConfigStatusBar()
 	pv.ConfigToolbar()
-	pv.UpdateEnd(updt)
+	pv.UpdateEnd(update)
 	go pv.MonitorOut()
 }
 
@@ -881,7 +881,7 @@ func (pv *PiView) ConfigSplits() {
 	split.SetProp("tab-size", 4)
 
 	config := pv.SplitsConfig()
-	mods, updt := split.ConfigChildren(config)
+	mods, update := split.ConfigChildren(config)
 	if mods {
 		lxfr := split.Child(LexRulesIndex).(*core.Frame)
 		lxt := lxfr.NewChild(views.KiT_TreeView, "lex-tree").(*views.TreeView)
@@ -909,7 +909,7 @@ func (pv *PiView) ConfigSplits() {
 		pv.ParseBuf.SetHiStyle(core.Settings.Colors.HiStyle)
 
 		split.SetSplits(.15, .15, .2, .15, .35)
-		split.UpdateEnd(updt)
+		split.UpdateEnd(update)
 
 		pv.OpenConsoleTab()
 		pv.OpenTestTextTab()
@@ -1132,7 +1132,7 @@ var PiViewProperties = tree.Properties{
 			"shortcut": keyfun.MenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
-			"updtfunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+			"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveState( pv.Changed && pv.Settings.ProjectFile != "")
 			}),
@@ -1152,7 +1152,7 @@ var PiViewProperties = tree.Properties{
 		{"SaveParser", tree.Properties{
 			"icon": "file-save",
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
-			"updtfunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+			"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveStateUpdate( pv.Changed && pv.Settings.ParserFile != "")
 			}),
@@ -1266,7 +1266,7 @@ var PiViewProperties = tree.Properties{
 				"shortcut": keyfun.MenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
-				"updtfunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+				"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( pv.Changed && pv.Settings.ProjectFile != "")
 				}),
@@ -1297,7 +1297,7 @@ var PiViewProperties = tree.Properties{
 			{"SaveParser", tree.Properties{
 				"shortcut": keyfun.MenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
-				"updtfunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+				"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( pv.Changed && pv.Settings.ParserFile != "")
 				}),
@@ -1388,7 +1388,7 @@ func NewPiView() (*core.Window, *PiView) {
 	win := core.NewMainWindow(winm, winm, width, height)
 
 	vp := win.WinViewport2D()
-	updt := vp.UpdateStart()
+	update := vp.UpdateStart()
 
 	mfr := win.SetMainFrame()
 
@@ -1450,7 +1450,7 @@ func NewPiView() (*core.Window, *PiView) {
 
 	pv.Config()
 
-	vp.UpdateEndNoSig(updt)
+	vp.UpdateEndNoSig(update)
 
 	win.GoStartEventLoop()
 	return win, pv

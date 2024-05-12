@@ -300,7 +300,7 @@ var TreeViewProperties = tree.Properties{
 		}},
 		{"Cut", tree.Properties{
 			"shortcut": keymap.Cut,
-			"updtfunc": views.ActionUpdateFunc(func(tvi any, act *core.Button) {
+			"updatefunc": views.ActionUpdateFunc(func(tvi any, act *core.Button) {
 				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
@@ -311,15 +311,15 @@ var TreeViewProperties = tree.Properties{
 		{"sep-layer", tree.BlankProp{}},
 		{"LayerSetCurrent", tree.Properties{
 			"label":    "Layer: Set Current",
-			"updtfunc": TreeViewIsLayerFunc,
+			"updatefunc": TreeViewIsLayerFunc,
 		}},
 		{"LayerToggleLock", tree.Properties{
 			"label":    "Layer: Toggle Lock",
-			"updtfunc": TreeViewIsLayerFunc,
+			"updatefunc": TreeViewIsLayerFunc,
 		}},
 		{"LayerToggleVis", tree.Properties{
 			"label":    "Layer: Toggle Visible",
-			"updtfunc": TreeViewIsLayerFunc,
+			"updatefunc": TreeViewIsLayerFunc,
 		}},
 		{"sep-open", tree.BlankProp{}},
 		{"OpenAll", tree.Properties{}},
