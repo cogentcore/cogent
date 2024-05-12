@@ -825,7 +825,7 @@ func (dv *DebugView) ConsoleText() *texteditor.Editor {
 // ConfigTabs configures the tabs
 func (dv *DebugView) ConfigTabs() {
 	tb := dv.Tabs()
-	if tb.NTabs() > 0 {
+	if tb.NumTabs() > 0 {
 		return
 	}
 	ctv := texteditor.NewEditor(tb.NewTab("Console"), "dbg-console")
