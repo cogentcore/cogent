@@ -503,7 +503,7 @@ func (pv *PaintView) SelectFillGrad() {
 	}
 }
 
-func (pv *PaintView) Config() {
+func (pv *PaintView) Config(c *core.Config) {
 	if pv.HasChildren() {
 		return
 	}

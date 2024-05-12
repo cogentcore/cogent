@@ -28,12 +28,7 @@ const (
 	TabsIndex
 )
 
-func (ge *CodeView) Config() {
-	ge.ConfigCodeView()
-}
-
-// Config configures the view
-func (ge *CodeView) ConfigCodeView() {
+func (ge *CodeView) Config(c *core.Config) {
 	if ge.HasChildren() {
 		return
 	}

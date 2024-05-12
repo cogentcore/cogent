@@ -727,11 +727,7 @@ func (pv *PiView) OpenParseTab() {
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   GUI configs
-
-// Config configures the view
-func (pv *PiView) Config() {
+func (pv *PiView) Config(c *core.Config) {
 	parser.GuiActive = true
 	fmt.Printf("PiView enabling GoPi parser output\n")
 	pv.Parser.Init()

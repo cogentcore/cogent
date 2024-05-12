@@ -341,8 +341,7 @@ func (vv *VectorView) StatusText() *core.Text {
 	return vv.StatusBar().Child(0).(*core.Text)
 }
 
-// Config configures entire view -- only runs if no children yet
-func (vv *VectorView) Config() {
+func (vv *VectorView) Config(c *core.Config) {
 	if vv.HasChildren() {
 		return
 	}

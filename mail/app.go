@@ -66,7 +66,7 @@ func (a *App) ConfigToolbar(tb *core.Toolbar) {
 	views.NewFuncButton(tb, a.Compose).SetIcon(icons.Send)
 }
 
-func (a *App) Config() {
+func (a *App) Config(c *core.Config) {
 	if a.HasChildren() {
 		return
 	}

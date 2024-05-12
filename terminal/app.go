@@ -75,7 +75,7 @@ func (a *App) AppBar(tb *core.Toolbar) {
 	}
 }
 
-func (a *App) Config() {
+func (a *App) Config(c *core.Config) {
 	if a.HasChildren() {
 		return
 	}
