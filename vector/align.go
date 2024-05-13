@@ -225,7 +225,7 @@ func (sv *SVGView) GatherAlignPoints() {
 		es.AlignPts[ap] = make([]math32.Vector2, 0)
 	}
 
-	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
+	svg.SVGWalkDownNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
 			return tree.Continue
 		}

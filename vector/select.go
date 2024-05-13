@@ -574,7 +574,7 @@ func (gv *VectorView) SelectSetHeight(ht float32) {
 func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
 	var curlay tree.Node
-	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
+	svg.SVGWalkDownNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
 			return tree.Continue
 		}
@@ -627,7 +627,7 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		curlay = NodeParentLayer(fn)
 	}
 	var rval svg.Node
-	svg.SVGWalkPreNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
+	svg.SVGWalkDownNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
 		if kni.This() == sv.Root().This() {
 			return tree.Continue
 		}

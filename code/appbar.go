@@ -277,7 +277,7 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 		if ge.Files == nil {
 			return
 		}
-		ge.Files.WidgetWalkPre(func(wi core.Widget, wb *core.WidgetBase) bool {
+		ge.Files.WidgetWalkDown(func(wi core.Widget, wb *core.WidgetBase) bool {
 			fn := filetree.AsNode(wi)
 			if fn == nil || fn.IsIrregular() {
 				return tree.Continue
