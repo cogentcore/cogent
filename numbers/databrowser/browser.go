@@ -7,10 +7,13 @@ package databrowser
 //go:generate core generate
 
 import (
-	"fmt"
+	"errors"
+	"io"
+	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -19,8 +22,10 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/interpreter"
 	"cogentcore.org/core/views"
+	"github.com/ergochat/readline"
 	"github.com/traefik/yaegi/interp"
 	"golang.org/x/exp/maps"
 )
@@ -36,7 +41,7 @@ type Browser struct {
 	ScriptsDir string
 
 	// Scripts
-	Scripts map[string]string
+	Scripts map[string]string `set:"-"`
 
 	// Interpreter for running scripts
 	Interp *interpreter.Interpreter
@@ -46,10 +51,29 @@ type Browser struct {
 func (br *Browser) OnInit() {
 	br.Layout.OnInit()
 	br.Interp = interpreter.NewInterpreter(interp.Options{})
+
+	br.Interp.Interp.Use(interp.Exports{
+		"cogentcore.org/cogent/numbers/databrowser/databrowser": map[string]reflect.Value{
+			"Update":      reflect.ValueOf(br.Update),
+			"SetDataRoot": reflect.ValueOf(br.SetDataRoot),
+			"OpenDataTab": reflect.ValueOf(br.OpenDataTab),
+			"DataRoot":    reflect.ValueOf(br.GetDataRoot),
+		},
+	})
+	br.Interp.Interp.ImportUsed()
+	br.Interp.RunConfig()
+}
+
+func (br *Browser) GetDataRoot() string {
+	return br.DataRoot
 }
 
 func (br *Browser) RunScript(snm string) {
-	sc := br.Scripts[snm]
+	sc, ok := br.Scripts[snm]
+	if !ok {
+		slog.Error("script not found:", "Script:", snm)
+		return
+	}
 	br.Interp.Eval(sc)
 }
 
@@ -98,9 +122,22 @@ func (br *Browser) Config(c *core.Config) {
 
 }
 
+func (br *Browser) Splits() *core.Splits {
+	return br.FindPath("splits").(*core.Splits)
+}
+
+func (br *Browser) FileTree() *filetree.Tree {
+	sp := br.Splits()
+	return sp.Child(0).(*filetree.Tree) // note: gets renamed by dir name
+}
+
+func (br *Browser) Tabs() *core.Tabs {
+	return br.FindPath("splits/tabs").(*core.Tabs)
+}
+
 // UpdateFiles Updates the file view with current files in DataRoot
 func (br *Browser) UpdateFiles() { //types:add
-	files := br.FindPath("splits/files").(*filetree.Tree)
+	files := br.FileTree()
 	files.OpenPath(br.DataRoot)
 	os.Chdir(br.DataRoot)
 }
@@ -110,11 +147,39 @@ func (br *Browser) ConfigAppBar(tb *core.Toolbar) {
 	scr := maps.Keys(br.Scripts)
 	slices.Sort(scr)
 	for _, s := range scr {
-		fmt.Println(scr)
 		core.NewButton(tb).SetText(s).SetIcon(icons.RunCircle).
 			SetTooltip("Run script").
 			OnClick(func(e events.Event) {
 				br.RunScript(s)
 			})
+	}
+}
+
+// Shell runs an interactive shell that allows the user to input cosh.
+func (br *Browser) Shell() error {
+	in := br.Interp
+	rl, err := readline.NewFromConfig(&readline.Config{
+		AutoComplete: &shell.ReadlineCompleter{Shell: in.Shell},
+		Undo:         true,
+	})
+	if err != nil {
+		return err
+	}
+	defer rl.Close()
+	log.SetOutput(rl.Stderr()) // redraw the prompt correctly after log output
+
+	for {
+		rl.SetPrompt(in.Prompt())
+		line, err := rl.ReadLine()
+		if errors.Is(err, readline.ErrInterrupt) {
+			continue
+		}
+		if errors.Is(err, io.EOF) {
+			os.Exit(0)
+		}
+		if err != nil {
+			return err
+		}
+		in.Eval(line)
 	}
 }

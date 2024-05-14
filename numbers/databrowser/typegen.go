@@ -29,10 +29,6 @@ func (t *Browser) SetDataRoot(v string) *Browser { t.DataRoot = v; return t }
 // ScriptsDir is the directory containing scripts for actions to run
 func (t *Browser) SetScriptsDir(v string) *Browser { t.ScriptsDir = v; return t }
 
-// SetScripts sets the [Browser.Scripts]:
-// Scripts
-func (t *Browser) SetScripts(v map[string]string) *Browser { t.Scripts = v; return t }
-
 // SetInterp sets the [Browser.Interp]:
 // Interpreter for running scripts
 func (t *Browser) SetInterp(v *interpreter.Interpreter) *Browser { t.Interp = v; return t }
