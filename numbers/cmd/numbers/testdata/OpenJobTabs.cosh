@@ -1,4 +1,4 @@
 fmt.Println("running OpenDataTab")
 
-databrowser.OpenDataTab("active")
+browser.OpenDataTab("active")
 

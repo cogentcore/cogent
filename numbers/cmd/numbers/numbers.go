@@ -16,7 +16,7 @@ func main() {
 	// opts := cli.DefaultOptions("cosh", "An interactive tool for running and compiling Cogent Shell (cosh).")
 	// cli.Run(opts, &Config{}, Run, Build)
 
-	b := core.NewBody("Cogent Data Browser")
+	b := core.NewBody("Cogent Numbers")
 	br := databrowser.NewBrowser(b)
 	br.SetDataRoot("/Users/oreilly/gruntdat/wc/hpc2/oreilly/deep_move/jobs") // todo: args
 	scdr, err := filepath.Abs("./testdata")

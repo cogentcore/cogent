@@ -53,7 +53,7 @@ func (br *Browser) OnInit() {
 	br.Interp = interpreter.NewInterpreter(interp.Options{})
 
 	br.Interp.Interp.Use(interp.Exports{
-		"cogentcore.org/cogent/numbers/databrowser/databrowser": map[string]reflect.Value{
+		"cogentcore.org/cogent/numbers/databrowser/browser": map[string]reflect.Value{
 			"Update":      reflect.ValueOf(br.Update),
 			"SetDataRoot": reflect.ValueOf(br.SetDataRoot),
 			"OpenDataTab": reflect.ValueOf(br.OpenDataTab),

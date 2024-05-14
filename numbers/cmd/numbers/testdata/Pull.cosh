@@ -1,4 +1,4 @@
-ddir := databrowser.DataRoot()
+ddir := browser.DataRoot()
 fmt.Println("Pulling in data dir:", ddir)
 cd {ddir}
 git pull
