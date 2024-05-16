@@ -45,8 +45,8 @@ func (ge *CodeView) FocusOnPanel(panel int) bool {
 		ge.SetActiveTextEditorIndex(1)
 	case TabsIndex:
 		tv := ge.Tabs()
-		ct, _, has := tv.CurTab()
-		if has {
+		ct, _ := tv.CurrentTab()
+		if ct != nil {
 			ge.Scene.Events.FocusNextFrom(ct)
 		} else {
 			return false
