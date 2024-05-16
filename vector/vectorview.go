@@ -345,7 +345,7 @@ func (vv *VectorView) Config(c *core.Config) {
 	if vv.HasChildren() {
 		return
 	}
-	core.NewLayout(vv, "modal-tb").Style(func(s *styles.Style) {
+	core.NewFrame(vv, "modal-tb").Style(func(s *styles.Style) {
 		s.Display = styles.Stacked
 	})
 	hb := core.NewFrame(vv, "hbox")
@@ -358,7 +358,7 @@ func (vv *VectorView) Config(c *core.Config) {
 	})
 	sp := core.NewSplits(hb, "splits").SetSplits(0.15, 0.60, 0.25)
 
-	tly := core.NewLayout(sp, "layer-tree").Style(func(s *styles.Style) {
+	tly := core.NewFrame(sp, "layer-tree").Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 

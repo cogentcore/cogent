@@ -659,7 +659,7 @@ func (pv *PiView) ConfigTextEditor(ly *core.Layout, out bool) *texteditor.Editor
 // one with a Layout and then a TextEditor in it.  if sel, then select it.
 // returns widget
 func (pv *PiView) RecycleMainTabTextEditor(label string, sel bool, out bool) *texteditor.Editor {
-	ly := pv.RecycleMainTab(label, core.LayoutType, sel).Embed(core.LayoutType).(*core.Layout)
+	ly := pv.RecycleMainTab(label, core.FrameType, sel).Embed(core.FrameType).(*core.Layout)
 	tv := pv.ConfigTextEditor(ly, out)
 	return tv
 }

@@ -519,13 +519,13 @@ func (pv *PaintView) Config(c *core.Config) {
 
 	sty := &Settings.ShapeStyle
 
-	spl := core.NewLayout(pv, "stroke-lab")
+	spl := core.NewFrame(pv, "stroke-lab")
 	core.NewText(spl).SetText("<b>Stroke Paint:  </b>")
 	spt := core.NewChooser(spl) // .SetStrings(PaintTypeNames)
 	spt.SelectItem(int(pv.StrokeType))
 	// spt.Mutex = true
 
-	wr := core.NewLayout(pv, "stroke-width")
+	wr := core.NewFrame(pv, "stroke-width")
 	core.NewText(wr).SetText("Width:  ").Style(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 	})
@@ -557,7 +557,7 @@ func (pv *PaintView) Config(c *core.Config) {
 		}
 	})
 
-	mkr := core.NewLayout(pv, "stroke-markers")
+	mkr := core.NewFrame(pv, "stroke-markers")
 
 	mscb := core.NewChooser(mkr, "marker-start")
 	// mscb.SetProp("width", units.NewCh(20))
@@ -677,7 +677,7 @@ func (pv *PaintView) Config(c *core.Config) {
 
 	core.NewSeparator(pv)
 
-	fpl := core.NewLayout(pv, "fill-lab")
+	fpl := core.NewFrame(pv, "fill-lab")
 	core.NewText(fpl).SetText("<b>Fill Paint:  </b>")
 
 	fpt := core.NewChooser(fpl, "fill-type").SetEnum(PaintTypesN)

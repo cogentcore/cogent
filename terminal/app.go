@@ -127,7 +127,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 		s.Border.Radius = styles.BorderRadiusLarge
 		s.Background = colors.C(colors.Scheme.SurfaceContainer)
 	})
-	tr := core.NewLayout(cfr, "tr").Style(func(s *styles.Style) {
+	tr := core.NewFrame(cfr, "tr").Style(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})

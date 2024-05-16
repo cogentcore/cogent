@@ -123,7 +123,7 @@ func (ge *CodeView) ConfigSplits() {
 	for i := 0; i < NTextEditors; i++ {
 		i := i
 		txnm := fmt.Sprintf("%d", i)
-		txly := core.NewLayout(split, "textlay-"+txnm)
+		txly := core.NewFrame(split, "textlay-"+txnm)
 		txly.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)

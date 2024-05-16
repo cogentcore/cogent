@@ -253,11 +253,11 @@ func (av *AlignView) Config(c *core.Config) {
 		s.Direction = styles.Column
 	})
 
-	all := core.NewLayout(av)
+	all := core.NewFrame(av)
 	core.NewText(all).SetText("<b>Align:  </b>")
 	core.NewChooser(all).SetEnum(AlignAnchorsN)
 
-	agrid := core.NewLayout(av).Style(func(s *styles.Style) {
+	agrid := core.NewFrame(av).Style(func(s *styles.Style) {
 		s.Display = styles.Grid
 		s.Columns = 6
 	})
