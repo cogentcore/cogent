@@ -88,12 +88,10 @@ func (a *App) UpdateMessageList() {
 		core.NewText(fr, "from").SetType(core.TextTitleMedium).SetText(ftxt).
 			Style(func(s *styles.Style) {
 				s.SetNonSelectable()
-				s.FillMargin = false
 			})
 		core.NewText(fr, "subject").SetType(core.TextBodyMedium).SetText(cd.Subject).
 			Style(func(s *styles.Style) {
 				s.SetNonSelectable()
-				s.FillMargin = false
 			})
 	}
 
