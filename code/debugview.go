@@ -76,7 +76,7 @@ func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.B
 
 // DebugView is the debugger
 type DebugView struct {
-	core.Layout
+	core.Frame
 
 	// supported file type to determine debugger
 	Sup fileinfo.Known
@@ -140,7 +140,7 @@ func (dv *DebugView) Destroy() {
 	dv.DeleteAllBreaks()
 	dv.DeleteCurPCInBuf()
 	dv.Code.ClearDebug()
-	dv.Layout.Destroy()
+	dv.Frame.Destroy()
 }
 
 // Detach from debugger
@@ -946,7 +946,7 @@ func (dv *DebugView) ConfigToolbar() {
 
 // StackView is a view of the stack trace
 type StackView struct {
-	core.Layout
+	core.Frame
 
 	// if true, this is a find frames, not a regular stack
 	FindFrames bool
@@ -1007,7 +1007,7 @@ func (sv *StackView) ShowStack() {
 
 // BreakView is a view of the breakpoints
 type BreakView struct {
-	core.Layout
+	core.Frame
 }
 
 func (sv *BreakView) DebugVw() *DebugView {
@@ -1058,7 +1058,7 @@ func (sv *BreakView) ShowBreaks() {
 
 // ThreadView is a view of the threads
 type ThreadView struct {
-	core.Layout
+	core.Frame
 }
 
 func (sv *ThreadView) DebugVw() *DebugView {
@@ -1105,7 +1105,7 @@ func (sv *ThreadView) ShowThreads() {
 
 // TaskView is a view of the threads
 type TaskView struct {
-	core.Layout
+	core.Frame
 }
 
 func (sv *TaskView) DebugVw() *DebugView {
@@ -1152,7 +1152,7 @@ func (sv *TaskView) ShowTasks() {
 
 // VarsView is a view of the variables
 type VarsView struct {
-	core.Layout
+	core.Frame
 
 	// if true, this is global vars, not local ones
 	GlobalVars bool

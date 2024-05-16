@@ -19,7 +19,7 @@ import (
 
 // AlignView provides a range of alignment actions on selected objects.
 type AlignView struct {
-	core.Layout
+	core.Frame
 
 	AlignAnchorView views.EnumValue
 

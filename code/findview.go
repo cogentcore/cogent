@@ -77,7 +77,7 @@ type FindParams struct {
 // FindView is a find / replace widget that displays results in a TextEditor
 // and has a toolbar for controlling find / replace process.
 type FindView struct {
-	core.Layout
+	core.Frame
 
 	// parent code project
 	Code *CodeView `json:"-" xml:"-"`

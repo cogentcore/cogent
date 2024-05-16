@@ -30,7 +30,7 @@ type SymbolsParams struct {
 
 // SymbolsView is a widget that displays results of a file or package parse
 type SymbolsView struct {
-	core.Layout
+	core.Frame
 
 	// parent code project
 	Code *CodeView `json:"-" xml:"-"`
@@ -81,8 +81,8 @@ func (sv *SymbolsView) Toolbar() *core.Toolbar {
 	return sv.ChildByName("sym-toolbar", 0).(*core.Toolbar)
 }
 
-// Toolbar returns the spell toolbar
-func (sv *SymbolsView) Frame() *core.Frame {
+// FrameWidget returns the frame widget.
+func (sv *SymbolsView) FrameWidget() *core.Frame {
 	return sv.ChildByName("sym-frame", 0).(*core.Frame)
 }
 

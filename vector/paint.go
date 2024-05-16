@@ -20,7 +20,7 @@ import (
 // PaintView provides editing of basic Stroke and Fill painting parameters
 // for selected items
 type PaintView struct {
-	core.Layout
+	core.Frame
 
 	// paint type for stroke
 	StrokeType PaintTypes

@@ -262,7 +262,7 @@ func (vv *VectorView) AddImage(fname core.Filename, width, height float32) error
 //////////////////////////////////////////////////////////////////////////
 //  GUI Config
 
-func (vv *VectorView) ModalToolbarStack() *core.Layout {
+func (vv *VectorView) ModalToolbarStack() *core.Frame {
 	return vv.ChildByName("modal-tb", 1).(*core.Layout)
 }
 
@@ -305,8 +305,8 @@ func (vv *VectorView) Splits() *core.Splits {
 	return vv.HBox().ChildByName("splits", 1).(*core.Splits)
 }
 
-func (vv *VectorView) LayerTree() *core.Layout {
-	return vv.Splits().ChildByName("layer-tree", 0).(*core.Layout)
+func (vv *VectorView) LayerTree() *core.Frame {
+	return vv.Splits().ChildByName("layer-tree", 0).(*core.Frame)
 }
 
 func (vv *VectorView) LayerView() *views.TableView {

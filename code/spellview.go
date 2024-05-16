@@ -20,7 +20,7 @@ import (
 
 // SpellView is a widget that displays results of spell check
 type SpellView struct {
-	core.Layout
+	core.Frame
 
 	// parent code project
 	Code *CodeView `json:"-" xml:"-" copier:"-"`

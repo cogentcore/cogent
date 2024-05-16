@@ -32,7 +32,7 @@ import (
 
 // Browser is a data browser
 type Browser struct {
-	core.Layout
+	core.Frame
 
 	// DataRoot is the path to the root of the data to browse
 	DataRoot string
@@ -49,7 +49,7 @@ type Browser struct {
 
 // OnInit initializes with the data and script directories
 func (br *Browser) OnInit() {
-	br.Layout.OnInit()
+	br.Frame.OnInit()
 	br.Interp = interpreter.NewInterpreter(interp.Options{})
 
 	br.Interp.Interp.Use(interp.Exports{
