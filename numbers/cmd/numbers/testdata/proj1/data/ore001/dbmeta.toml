@@ -1,0 +1,11 @@
+JobID = ore001
+Status = Done
+Server = hpc2
+ServerJob = 155921
+ServerStatus = RUNNING
+Submit = time
+Start = time
+End = time
+Args = "-epochs 500"
+Version = "1.15"
+Message = "500epc, trgavg sc lr.005, sm1"

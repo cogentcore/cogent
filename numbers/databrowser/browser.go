@@ -7,7 +7,6 @@ package databrowser
 //go:generate core generate
 
 import (
-	"errors"
 	"io"
 	"log"
 	"log/slog"
@@ -18,12 +17,14 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/dirs"
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/interpreter"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
 	"github.com/ergochat/readline"
 	"github.com/traefik/yaegi/interp"
@@ -50,6 +51,9 @@ type Browser struct {
 // OnInit initializes with the data and script directories
 func (br *Browser) OnInit() {
 	br.Frame.OnInit()
+	br.Style(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
+	})
 	br.Interp = interpreter.NewInterpreter(interp.Options{})
 
 	br.Interp.Interp.Use(interp.Exports{
@@ -99,27 +103,18 @@ func (br *Browser) GetScripts() {
 func (br *Browser) Config(c *core.Config) {
 	br.GetScripts()
 
-	core.AddConfig(c, "splits", func() *core.Splits {
-		w := core.NewSplits()
+	core.Configure(c, "splits", func(w *core.Splits) {
 		w.SetSplits(.2, .8)
-		return w
 	})
-	core.AddConfig(c, "splits/files", func() *filetree.Tree {
-		w := filetree.NewTree()
-		return w
+	core.Configure(c, "splits/files", func(w *filetree.Tree) {
 	}, func(w *filetree.Tree) {
 		if br.DataRoot != "" {
-			os.Chdir(br.DataRoot)
-			w.OpenPath(br.DataRoot)
+			errors.Log(os.Chdir(br.DataRoot))
+			wd := errors.Log1(os.Getwd())
+			w.OpenPath(wd)
 		}
 	})
-	core.AddConfig(c, "splits/tabs", func() *core.Tabs {
-		w := core.NewTabs()
-		return w
-	}, func(w *core.Tabs) {
-
-	})
-
+	core.Configure(c, "splits/tabs", func(w *core.Tabs) {})
 }
 
 func (br *Browser) Splits() *core.Splits {
@@ -142,16 +137,20 @@ func (br *Browser) UpdateFiles() { //types:add
 	os.Chdir(br.DataRoot)
 }
 
-func (br *Browser) ConfigAppBar(tb *core.Toolbar) {
-	views.NewFuncButton(tb, br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
+func (br *Browser) ConfigAppBar(c *core.Config) {
+	core.Configure(c, "", func(w *views.FuncButton) {
+		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
+	})
 	scr := maps.Keys(br.Scripts)
 	slices.Sort(scr)
 	for _, s := range scr {
-		core.NewButton(tb).SetText(s).SetIcon(icons.RunCircle).
-			SetTooltip("Run script").
-			OnClick(func(e events.Event) {
-				br.RunScript(s)
-			})
+		core.Configure(c, s, func(w *core.Button) {
+			w.SetText(s).SetIcon(icons.RunCircle).
+				SetTooltip("Run script").
+				OnClick(func(e events.Event) {
+					br.RunScript(s)
+				})
+		})
 	}
 }
 

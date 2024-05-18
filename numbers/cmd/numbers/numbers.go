@@ -5,10 +5,11 @@
 package main
 
 import (
-	"log/slog"
+	"fmt"
 	"path/filepath"
 
 	"cogentcore.org/cogent/numbers/databrowser"
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 )
 
@@ -18,11 +19,10 @@ func main() {
 
 	b := core.NewBody("Cogent Numbers")
 	br := databrowser.NewBrowser(b)
-	br.SetDataRoot("/Users/oreilly/gruntdat/wc/hpc2/oreilly/deep_move/jobs") // todo: args
-	scdr, err := filepath.Abs("./testdata")
-	if err != nil {
-		slog.Error(err.Error())
-	}
+	ddr := errors.Log1(filepath.Abs("testdata"))
+	br.SetDataRoot(ddr) // todo: args
+	scdr := errors.Log1(filepath.Abs("testdata/proj1/dbscripts"))
+	fmt.Println("script dir:", scdr)
 	br.SetScriptsDir(scdr)
 	br.GetScripts()
 	b.AddAppBar(br.ConfigAppBar)

@@ -1,4 +1,0 @@
-fmt.Println("running OpenDataTab")
-
-browser.OpenDataTab("active")
-
