@@ -263,7 +263,7 @@ func (vv *VectorView) AddImage(fname core.Filename, width, height float32) error
 //  GUI Config
 
 func (vv *VectorView) ModalToolbarStack() *core.Frame {
-	return vv.ChildByName("modal-tb", 1).(*core.Layout)
+	return vv.ChildByName("modal-tb", 1).(*core.Frame)
 }
 
 // SetModalSelect sets the modal toolbar to be the select one

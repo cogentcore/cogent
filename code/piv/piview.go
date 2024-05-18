@@ -625,7 +625,7 @@ func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) core.
 }
 
 // ConfigTextEditor configures text view
-func (pv *PiView) ConfigTextEditor(ly *core.Layout, out bool) *texteditor.Editor {
+func (pv *PiView) ConfigTextEditor(ly *core.Frame, out bool) *texteditor.Editor {
 	ly.Lay = core.LayoutVert
 	ly.SetStretchMaxWidth()
 	ly.SetStretchMaxHeight()
@@ -659,7 +659,7 @@ func (pv *PiView) ConfigTextEditor(ly *core.Layout, out bool) *texteditor.Editor
 // one with a Layout and then a TextEditor in it.  if sel, then select it.
 // returns widget
 func (pv *PiView) RecycleMainTabTextEditor(label string, sel bool, out bool) *texteditor.Editor {
-	ly := pv.RecycleMainTab(label, core.FrameType, sel).Embed(core.FrameType).(*core.Layout)
+	ly := pv.RecycleMainTab(label, core.FrameType, sel).Embed(core.FrameType).(*core.Frame)
 	tv := pv.ConfigTextEditor(ly, out)
 	return tv
 }
