@@ -5,12 +5,10 @@
 package main
 
 import (
-	"fmt"
-	"path/filepath"
-
 	"cogentcore.org/cogent/numbers/databrowser"
-	"cogentcore.org/core/base/errors"
+	"cogentcore.org/cogent/numbers/numshell"
 	"cogentcore.org/core/core"
+	"github.com/traefik/yaegi/interp"
 )
 
 func main() {
@@ -18,16 +16,12 @@ func main() {
 	// cli.Run(opts, &Config{}, Run, Build)
 
 	b := core.NewBody("Cogent Numbers")
-	br := databrowser.NewBrowser(b)
-	ddr := errors.Log1(filepath.Abs("testdata"))
-	br.SetDataRoot(ddr) // todo: args
-	scdr := errors.Log1(filepath.Abs("testdata/proj1/dbscripts"))
-	fmt.Println("script dir:", scdr)
-	br.SetScriptsDir(scdr)
-	br.GetScripts()
-	b.AddAppBar(br.ConfigAppBar)
+	core.NewText(b).SetText("Welcome to the Numbers App")
+	// b.AddAppBar(br.ConfigAppBar)
 
-	go br.Shell()
+	in := numshell.NewInterpreter(interp.Options{})
+	in.Interp.Use(databrowser.Symbols)
+	go in.Interactive()
 
 	b.RunMainWindow()
 }

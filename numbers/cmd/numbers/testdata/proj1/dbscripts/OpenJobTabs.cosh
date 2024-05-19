@@ -1,4 +1,4 @@
 fmt.Println("running OpenDataTab")
 
-databrowser.OpenDataTab("proj1/data")
+br.OpenDataTab("data")
 

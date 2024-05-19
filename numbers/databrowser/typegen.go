@@ -3,13 +3,12 @@
 package databrowser
 
 import (
-	"cogentcore.org/core/shell/interpreter"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
 
 // BrowserType is the [types.Type] for [Browser]
-var BrowserType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/databrowser.Browser", IDName: "browser", Doc: "Browser is a data browser", Methods: []types.Method{{Name: "UpdateFiles", Doc: "UpdateFiles Updates the file view with current files in DataRoot", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "DataRoot", Doc: "DataRoot is the path to the root of the data to browse"}, {Name: "ScriptsDir", Doc: "ScriptsDir is the directory containing scripts for actions to run"}, {Name: "Scripts", Doc: "Scripts"}, {Name: "Interp", Doc: "Interpreter for running scripts"}}, Instance: &Browser{}})
+var BrowserType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/databrowser.Browser", IDName: "browser", Doc: "Browser is a data browser", Methods: []types.Method{{Name: "UpdateFiles", Doc: "UpdateFiles Updates the file view with current files in DataRoot", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "DataRoot", Doc: "DataRoot is the path to the root of the data to browse"}, {Name: "ScriptsDir", Doc: "ScriptsDir is the directory containing scripts for toolbar actions.\nIt defaults to DataDir/dbscripts"}, {Name: "Scripts", Doc: "Scripts"}, {Name: "ScriptInterp", Doc: "ScriptInterp is the interpreter to use for running Browser scripts"}}, Instance: &Browser{}})
 
 // NewBrowser returns a new [Browser] with the given optional parent:
 // Browser is a data browser
@@ -26,12 +25,9 @@ func (t *Browser) New() tree.Node { return &Browser{} }
 func (t *Browser) SetDataRoot(v string) *Browser { t.DataRoot = v; return t }
 
 // SetScriptsDir sets the [Browser.ScriptsDir]:
-// ScriptsDir is the directory containing scripts for actions to run
+// ScriptsDir is the directory containing scripts for toolbar actions.
+// It defaults to DataDir/dbscripts
 func (t *Browser) SetScriptsDir(v string) *Browser { t.ScriptsDir = v; return t }
-
-// SetInterp sets the [Browser.Interp]:
-// Interpreter for running scripts
-func (t *Browser) SetInterp(v *interpreter.Interpreter) *Browser { t.Interp = v; return t }
 
 // SetTooltip sets the [Browser.Tooltip]
 func (t *Browser) SetTooltip(v string) *Browser { t.Tooltip = v; return t }

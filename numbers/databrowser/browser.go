@@ -5,10 +5,10 @@
 package databrowser
 
 //go:generate core generate
+//go:generate yaegi extract cogentcore.org/cogent/numbers/databrowser
 
 import (
-	"io"
-	"log"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -16,20 +16,30 @@ import (
 	"slices"
 	"strings"
 
+	"cogentcore.org/cogent/numbers/numshell"
 	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/shell"
-	"cogentcore.org/core/shell/interpreter"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/views"
-	"github.com/ergochat/readline"
 	"github.com/traefik/yaegi/interp"
 	"golang.org/x/exp/maps"
 )
+
+// TheBrowser is the current browser,
+// which is valid immediately after NewBrowserWindow
+// where it is used to get a local variable for subsequent use.
+var TheBrowser *Browser
+
+// Symbols variable stores the map of stdlib symbols per package.
+var Symbols = map[string]map[string]reflect.Value{}
+
+// MapTypes variable contains a map of functions which have an interface{} as parameter but
+// do something special if the parameter implements a given interface.
+var MapTypes = map[reflect.Value][]reflect.Type{}
 
 // Browser is a data browser
 type Browser struct {
@@ -38,14 +48,15 @@ type Browser struct {
 	// DataRoot is the path to the root of the data to browse
 	DataRoot string
 
-	// ScriptsDir is the directory containing scripts for actions to run
+	// ScriptsDir is the directory containing scripts for toolbar actions.
+	// It defaults to DataDir/dbscripts
 	ScriptsDir string
 
 	// Scripts
 	Scripts map[string]string `set:"-"`
 
-	// Interpreter for running scripts
-	Interp *interpreter.Interpreter
+	// ScriptInterp is the interpreter to use for running Browser scripts
+	ScriptInterp *numshell.Interpreter `set:"-"`
 }
 
 // OnInit initializes with the data and script directories
@@ -54,18 +65,36 @@ func (br *Browser) OnInit() {
 	br.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
-	br.Interp = interpreter.NewInterpreter(interp.Options{})
+	br.InitInterp()
+}
 
-	br.Interp.Interp.Use(interp.Exports{
-		"cogentcore.org/cogent/numbers/databrowser/browser": map[string]reflect.Value{
-			"Update":      reflect.ValueOf(br.Update),
-			"SetDataRoot": reflect.ValueOf(br.SetDataRoot),
-			"OpenDataTab": reflect.ValueOf(br.OpenDataTab),
-			"DataRoot":    reflect.ValueOf(br.GetDataRoot),
-		},
-	})
-	br.Interp.Interp.ImportUsed()
-	br.Interp.RunConfig()
+// NewBrowserWindow opens a new data Browser for given data directory.
+// By default the scripts for this data directory are located in
+// dbscripts relative to the data directory.
+func NewBrowserWindow(dataDir string) *Browser {
+	b := core.NewBody("Cogent Data Browser")
+	br := NewBrowser(b)
+	ddr := errors.Log1(filepath.Abs(dataDir))
+	fmt.Println(ddr)
+	br.SetDataRoot(ddr)
+	br.SetScriptsDir(filepath.Join(ddr, "dbscripts"))
+	br.GetScripts()
+	b.AddAppBar(br.ConfigAppBar)
+	b.RunWindow()
+	TheBrowser = br
+	br.ScriptInterp.Eval("br := databrowser.TheBrowser") // grab it
+	return br
+}
+
+func (br *Browser) InitInterp() {
+	br.ScriptInterp = numshell.NewInterpreter(interp.Options{})
+	br.ScriptInterp.Interp.Use(Symbols)
+	// br.ScriptInterp.Interp.Use(interp.Exports{
+	// 	"cogentcore.org/cogent/numbers/databrowser/databrowser": map[string]reflect.Value{
+	// 		"br": reflect.ValueOf(br).Elem(), // note this does not work
+	// 	},
+	// })
+	br.ScriptInterp.Config()
 }
 
 func (br *Browser) GetDataRoot() string {
@@ -78,7 +107,7 @@ func (br *Browser) RunScript(snm string) {
 		slog.Error("script not found:", "Script:", snm)
 		return
 	}
-	br.Interp.Eval(sc)
+	br.ScriptInterp.Eval(sc)
 }
 
 func (br *Browser) GetScripts() {
@@ -135,6 +164,7 @@ func (br *Browser) UpdateFiles() { //types:add
 	files := br.FileTree()
 	files.OpenPath(br.DataRoot)
 	os.Chdir(br.DataRoot)
+	br.GetScripts()
 }
 
 func (br *Browser) ConfigAppBar(c *core.Config) {
@@ -151,34 +181,5 @@ func (br *Browser) ConfigAppBar(c *core.Config) {
 					br.RunScript(s)
 				})
 		})
-	}
-}
-
-// Shell runs an interactive shell that allows the user to input cosh.
-func (br *Browser) Shell() error {
-	in := br.Interp
-	rl, err := readline.NewFromConfig(&readline.Config{
-		AutoComplete: &shell.ReadlineCompleter{Shell: in.Shell},
-		Undo:         true,
-	})
-	if err != nil {
-		return err
-	}
-	defer rl.Close()
-	log.SetOutput(rl.Stderr()) // redraw the prompt correctly after log output
-
-	for {
-		rl.SetPrompt(in.Prompt())
-		line, err := rl.ReadLine()
-		if errors.Is(err, readline.ErrInterrupt) {
-			continue
-		}
-		if errors.Is(err, io.EOF) {
-			os.Exit(0)
-		}
-		if err != nil {
-			return err
-		}
-		in.Eval(line)
 	}
 }
