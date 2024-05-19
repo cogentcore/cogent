@@ -107,6 +107,7 @@ func (br *Browser) RunScript(snm string) {
 		slog.Error("script not found:", "Script:", snm)
 		return
 	}
+	fmt.Println("\n################\nrunning script:\n", sc, "\n")
 	br.ScriptInterp.Eval(sc)
 }
 
@@ -143,7 +144,9 @@ func (br *Browser) Config(c *core.Config) {
 			w.OpenPath(wd)
 		}
 	})
-	core.Configure(c, "splits/tabs", func(w *core.Tabs) {})
+	core.Configure(c, "splits/tabs", func(w *core.Tabs) {
+		w.Type = core.FunctionalTabs
+	})
 }
 
 func (br *Browser) Splits() *core.Splits {
@@ -165,6 +168,7 @@ func (br *Browser) UpdateFiles() { //types:add
 	files.OpenPath(br.DataRoot)
 	os.Chdir(br.DataRoot)
 	br.GetScripts()
+	br.Update()
 }
 
 func (br *Browser) ConfigAppBar(c *core.Config) {

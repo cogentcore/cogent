@@ -14,33 +14,36 @@ import (
 	"cogentcore.org/core/tensor/tensorview"
 )
 
-// OpenDataTab opens a tab with a table displaying the
-func (br *Browser) OpenDataTab(path string) {
+// NewTabTable creates a tab with a table and a tableview
+// func (br *Browser) NewTabTable(path string) (*table.Table, *tensorview.TableView) {
+func (br *Browser) NewTabTable(path string) *table.Table {
 	tabs := br.Tabs()
-	dt := tabs.NewTab(path)
-	_ = dt
-	// todo: read table
-	dpath := errors.Log1(filepath.Abs(path))
+	tab := tabs.NewTab(path)
+	dt := table.NewTable()
+	tb := core.NewToolbar(tab)
+	tv := tensorview.NewTableView(tab)
+	tb.ConfigFuncs.Add(tv.ConfigToolbar)
+	tv.SetTable(dt)
+
+	dpath := filepath.Join(br.DataRoot, path)
 	fmt.Println("opening data at:", dpath)
-	tab := table.NewTable()
-	format := filepath.Join(dpath, "dbformat.csv")
-	br.FormatTableFromCSV(tab, format)
-	tab.SetNumRows(10)
-	tv := tensorview.NewTableView(dt)
-	tv.SetTable(tab)
+	br.FormatTableFromCSV(dt, filepath.Join(dpath, "dbformat.csv"))
+	dt.SetNumRows(10)
+	br.Update()
+	return dt
+	// return dt, tv
 }
 
 // FormatTableFromCSV
 func (br *Browser) FormatTableFromCSV(dt *table.Table, format string) error {
+	fmt.Println("Formatting data table from CSV file:", format)
 	ft := table.NewTable()
 	if err := errors.Log(ft.OpenCSV(core.Filename(format), table.Comma)); err != nil {
 		return err
 	}
-	fmt.Println("rows:", ft.Rows, ft.ColumnNames)
 	for i := range ft.Rows {
 		name := ft.StringValue("Name", i)
 		typ := ft.StringValue("Type", i)
-		fmt.Println(name, typ)
 		switch typ {
 		case "string":
 			dt.AddStringColumn(name)

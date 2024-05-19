@@ -1,4 +1,14 @@
 fmt.Println("running OpenDataTab")
 
-br.OpenDataTab("data")
+func OpenDataDir(path string) *table.Table {
+	dt := br.NewTabTable(path)
+	// dpath := filepath.Join(br.DataRoot, path)
+	// fmt.Println("opening data at:", dpath)
+	// br.FormatTableFromCSV(dt, filepath.Join(dpath, "dbformat.csv"))
+	// dt.SetNumRows(10)
+	// br.Update()
+	return dt
+}
+
+dt := OpenDataDir("data")
 
