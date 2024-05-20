@@ -1,11 +1,17 @@
 // note: br is browser
 
-func OpenDataDir(path string) *table.Table {
+var JobsTableView *tensorview.TableView
+
+func OpenJobs(path string) *table.Table {
 	tv := br.NewTabTable(path)
+	JobsTableView = tv
 	dt := tv.Table.Table
 	dpath := filepath.Join(br.DataRoot, path)
-	fmt.Println("opening data at:", dpath)
-	br.FormatTableFromCSV(dt, filepath.Join(dpath, "dbformat.csv"))
+	// fmt.Println("opening data at:", dpath)
+
+	if dt.NumCols() == 0
+		br.FormatTableFromCSV(dt, filepath.Join(dpath, "dbformat.csv"))
+	}
 	
 	ds := dirs.Dirs(dpath)
 	dt.SetNumRows(len(ds))
@@ -26,5 +32,5 @@ func OpenDataDir(path string) *table.Table {
 	return dt
 }
 
-dt := OpenDataDir("data")
+Jobs := OpenJobs("data")
 

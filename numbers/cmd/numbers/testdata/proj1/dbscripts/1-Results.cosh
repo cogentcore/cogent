@@ -1,0 +1,18 @@
+// Jobs is open jobs list
+
+func OpenResults() {
+	var jobs []string
+	tv := JobsTableView
+	jt := JobsTableView.Table.Table
+
+	// todo: get selected rows
+	// todo: prompt for filter of file names
+	
+	for i := 0; i < jt.Rows; i++ {
+		jid := jt.StringValue("JobID", i)
+		fmt.Println(i, jid)
+	}
+}
+
+OpenResults()
+

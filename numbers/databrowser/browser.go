@@ -41,7 +41,11 @@ var Symbols = map[string]map[string]reflect.Value{}
 // do something special if the parameter implements a given interface.
 var MapTypes = map[reflect.Value][]reflect.Type{}
 
-// Browser is a data browser
+// Browser is a data browser, for browsing data typically organized into
+// separate directories, with .cosh Scripts as toolbar actions to perform
+// regular tasks on the data.
+// Scripts are ordered alphabetically and any leading #- prefix is automatically
+// removed from the label, so you can use numbers to specify a custom order.
 type Browser struct {
 	core.Frame
 

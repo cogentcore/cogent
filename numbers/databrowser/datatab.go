@@ -39,6 +39,7 @@ func (br *Browser) FormatTableFromCSV(dt *table.Table, format string) error {
 	if err := errors.Log(ft.OpenCSV(core.Filename(format), table.Comma)); err != nil {
 		return err
 	}
+	// todo: need a config mode for this!
 	for i := range ft.Rows {
 		name := ft.StringValue("Name", i)
 		typ := ft.StringValue("Type", i)

@@ -4,9 +4,9 @@ Status, string
 Server, string
 ServerJob, string
 ServerStatus, string
-Submit, time
-Start, time
-End, time
+Submit, string
+Start, string
+End, string
 Args, string
 Version, string
 Message, string
