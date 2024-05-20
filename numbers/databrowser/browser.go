@@ -112,7 +112,7 @@ func (br *Browser) RunScript(snm string) {
 }
 
 func (br *Browser) GetScripts() {
-	scr := dirs.ExtFilenames(br.ScriptsDir, []string{".cosh"})
+	scr := dirs.ExtFilenames(br.ScriptsDir, ".cosh")
 	br.Scripts = make(map[string]string)
 	for _, s := range scr {
 		snm := strings.TrimSuffix(s, ".cosh")

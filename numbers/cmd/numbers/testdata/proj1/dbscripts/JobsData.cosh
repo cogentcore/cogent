@@ -1,0 +1,30 @@
+// note: br is browser
+
+func OpenDataDir(path string) *table.Table {
+	tv := br.NewTabTable(path)
+	dt := tv.Table.Table
+	dpath := filepath.Join(br.DataRoot, path)
+	fmt.Println("opening data at:", dpath)
+	br.FormatTableFromCSV(dt, filepath.Join(dpath, "dbformat.csv"))
+	
+	ds := dirs.Dirs(dpath)
+	dt.SetNumRows(len(ds))
+	for i, d := range ds {
+		println(d)
+		dt.SetString("JobID", i, d)
+		dp := filepath.Join(dpath, d)
+		meta := filepath.Join(dp, "dbmeta.toml")
+		if fileExists(meta) {
+			md := br.OpenTOML(meta)
+			for k, v := range md {
+				dt.SetString(k, i, v)
+			}
+		}
+	}
+	tv.Table.Sequential()
+	br.Update()
+	return dt
+}
+
+dt := OpenDataDir("data")
+
