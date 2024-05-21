@@ -13,7 +13,6 @@ func OpenJobs(path string) (*tensorview.TableView, *table.Table) {
 	ds := dirs.Dirs(dpath)
 	dt.SetNumRows(len(ds))
 	for i, d := range ds {
-		println(d)
 		dt.SetString("JobID", i, d)
 		dp := filepath.Join(dpath, d)
 		meta := filepath.Join(dp, "dbmeta.toml")

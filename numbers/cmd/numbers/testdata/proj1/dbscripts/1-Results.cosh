@@ -2,26 +2,40 @@ debug off
 
 // for some reason the above debug off statement is necessary to make this all compile.
 
-var Results []*databrowser.Result
+// Result has info for one loaded result, in form of an etable.Table
+type Result struct {
+
+	// job id for results
+	JobID string
+
+	// description of job
+	Message string
+
+	// path to data
+	Path string
+
+	// result data
+	Table *table.Table
+}
+
+var Results []*Result
 
 var ResultsVals = map[string]string{"0-File Contains": "", "1-Ext": ".tsv"}
 
 func OpenResultFiles(jobs []string, contains, ext string) {
-	Results = []*databrowser.Result{}
+	Results = []*Result{}
 	for i, jid := range jobs {
 		jpath := filepath.Join(br.DataRoot, DataDir, jid)
-		fmt.Println(jid, jpath)
 		fls := dirs.ExtFilenames(jpath, ext)
 		ifls := []string{}
 		for _, fn := range fls {
-			fmt.Println(fn)
 			if !strings.Contains(fn, contains) {
 				continue
 			}
 			dt := table.NewTable()
 			fpath := filepath.Join(jpath, fn)
 			dt.OpenCSV(core.Filename(fpath), table.Tab)
-			Results = append(Results, &databrowser.Result{JobID: jid, Path: fpath, Table: dt})
+			Results = append(Results, &Result{JobID: jid, Path: fpath, Table: dt})
 		}
 	}
 	if len(Results) == 0 {
