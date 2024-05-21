@@ -1,17 +1,23 @@
 // Jobs is open jobs list
 
+ResultsVals := map[string]string{"0-File Contains": "", "1-Ext": ".tsv"}
+
 func OpenResults() {
-	var jobs []string
 	tv := JobsTableView
 	jt := JobsTableView.Table.Table
-
-	// todo: get selected rows
-	// todo: prompt for filter of file names
-	
-	for i := 0; i < jt.Rows; i++ {
-		jid := jt.StringValue("JobID", i)
-		fmt.Println(i, jid)
+	jis := tv.SelectedIndexesList(false)
+	if len(jis) == 0 {
+		fmt.Println("No rows selected")
+		return
 	}
+	databrowser.Prompt(br, ResultsVals, "Open results data for files", func() {
+		var jobs []string
+		for _, i := range jis {
+			jid := jt.StringValue("JobID", i)
+			fmt.Println(i, jid)
+			jobs = append(jobs, jid)
+		}
+	})
 }
 
 OpenResults()

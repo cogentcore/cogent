@@ -1,15 +1,12 @@
 // note: br is browser
 
-var JobsTableView *tensorview.TableView
-
-func OpenJobs(path string) *table.Table {
+func OpenJobs(path string) (*tensorview.TableView, *table.Table) {
 	tv := br.NewTabTable(path)
-	JobsTableView = tv
 	dt := tv.Table.Table
 	dpath := filepath.Join(br.DataRoot, path)
 	// fmt.Println("opening data at:", dpath)
 
-	if dt.NumCols() == 0
+	if dt.NumColumns() == 0 {
 		br.FormatTableFromCSV(dt, filepath.Join(dpath, "dbformat.csv"))
 	}
 	
@@ -29,8 +26,8 @@ func OpenJobs(path string) *table.Table {
 	}
 	tv.Table.Sequential()
 	br.Update()
-	return dt
+	return tv, dt
 }
 
-Jobs := OpenJobs("data")
+JobsTableView, Jobs := OpenJobs("data")
 

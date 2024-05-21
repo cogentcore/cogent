@@ -13,8 +13,10 @@ func init() {
 		"MapTypes":         reflect.ValueOf(&MapTypes).Elem(),
 		"NewBrowser":       reflect.ValueOf(NewBrowser),
 		"NewBrowserWindow": reflect.ValueOf(NewBrowserWindow),
+		"Prompt":           reflect.ValueOf(Prompt),
 		"Symbols":          reflect.ValueOf(&Symbols).Elem(),
 		"TheBrowser":       reflect.ValueOf(&TheBrowser).Elem(),
+		"TrimOrderPrefix":  reflect.ValueOf(TrimOrderPrefix),
 
 		// type definitions
 		"Browser": reflect.ValueOf((*Browser)(nil)),

@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 
 	"cogentcore.org/cogent/numbers/numshell"
@@ -119,7 +120,7 @@ func (br *Browser) GetScripts() {
 	scr := dirs.ExtFilenames(br.ScriptsDir, ".cosh")
 	br.Scripts = make(map[string]string)
 	for _, s := range scr {
-		snm := strings.TrimSuffix(s, ".cosh")
+		snm := TrimOrderPrefix(strings.TrimSuffix(s, ".cosh"))
 		sc, err := os.ReadFile(filepath.Join(br.ScriptsDir, s))
 		if err == nil {
 			br.Scripts[snm] = string(sc)
@@ -190,4 +191,18 @@ func (br *Browser) MakeToolbar(c *core.Plan) {
 				})
 		})
 	}
+}
+
+// TrimOrderPrefix trims any optional #- prefix from given string,
+// used for ordering items by name.
+func TrimOrderPrefix(s string) string {
+	i := strings.Index(s, "-")
+	if i < 0 {
+		return s
+	}
+	ds := s[:i]
+	if _, err := strconv.Atoi(ds); err != nil {
+		return s
+	}
+	return s[i+1:]
 }
