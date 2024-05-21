@@ -3,8 +3,9 @@
 package imports
 
 import (
-	"cogentcore.org/core/tensor/tensorview"
 	"reflect"
+
+	"cogentcore.org/core/tensor/tensorview"
 )
 
 func init() {
@@ -20,13 +21,13 @@ func init() {
 
 		// type definitions
 		"SimMatGrid":      reflect.ValueOf((*tensorview.SimMatGrid)(nil)),
-		"SimMatValue":     reflect.ValueOf((*tensorview.SimMatValue)(nil)),
-		"TableValue":      reflect.ValueOf((*tensorview.TableValue)(nil)),
+		"SimMatButton":    reflect.ValueOf((*tensorview.SimMatButton)(nil)),
+		"TableButton":     reflect.ValueOf((*tensorview.TableButton)(nil)),
 		"TableView":       reflect.ValueOf((*tensorview.TableView)(nil)),
+		"TensorButton":    reflect.ValueOf((*tensorview.TensorButton)(nil)),
 		"TensorDisplay":   reflect.ValueOf((*tensorview.TensorDisplay)(nil)),
 		"TensorGrid":      reflect.ValueOf((*tensorview.TensorGrid)(nil)),
 		"TensorGridValue": reflect.ValueOf((*tensorview.TensorGridValue)(nil)),
 		"TensorLayout":    reflect.ValueOf((*tensorview.TensorLayout)(nil)),
-		"TensorValue":     reflect.ValueOf((*tensorview.TensorValue)(nil)),
 	}
 }

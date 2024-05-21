@@ -1,4 +1,4 @@
-debug off
+debug on
 
 // for some reason the above debug off statement is necessary to make this all compile.
 
@@ -20,16 +20,24 @@ type Result struct {
 
 var Results []*Result
 
-var ResultsVals = map[string]string{"0-File Contains": "", "1-Ext": ".tsv"}
+// FilterResults specifies which results files to open
+type FilterResults struct {
+	// File name contains this string
+	FileContains string `width:"60"`
 
-func OpenResultFiles(jobs []string, contains, ext string) {
-	Results = []*Result{}
+	//	extension of files, e.g., .tsv
+	Ext string
+}
+
+Filter := FilterResults{Ext: ".tsv"}
+
+func OpenResultFiles(jobs []string, filter FilterResults) {
 	for i, jid := range jobs {
 		jpath := filepath.Join(br.DataRoot, DataDir, jid)
-		fls := dirs.ExtFilenames(jpath, ext)
+		fls := dirs.ExtFilenames(jpath, filter.Ext)
 		ifls := []string{}
 		for _, fn := range fls {
-			if !strings.Contains(fn, contains) {
+			if filter.FileContains != "" && !strings.Contains(fn, filter.FileContains) {
 				continue
 			}
 			dt := table.NewTable()
@@ -39,7 +47,7 @@ func OpenResultFiles(jobs []string, contains, ext string) {
 		}
 	}
 	if len(Results) == 0 {
-		core.MessageSnackbar(br, "No files containing: " + contains + " with extension: " + ext)
+		core.MessageSnackbar(br, "No files containing: " + filter.FileContains + " with extension: " + filter.Ext)
 		return
 	}
 	br.NewTabTableView("Results", &Results)
@@ -53,8 +61,8 @@ func OpenResults() {
 		fmt.Println("No rows selected")
 		return
 	}
-	databrowser.Prompt(br, ResultsVals, "Open results data for files", func() {
-		OpenResultFiles(jobs, ResultsVals["0-File Contains"], ResultsVals["1-Ext"])
+	databrowser.Prompt(br, &Filter, "Open results data for files", func() {
+		OpenResultFiles(jobs, Filter)
 	})
 }
 

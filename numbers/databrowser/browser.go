@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/cogent/numbers/numshell"
 	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/logx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -112,7 +113,7 @@ func (br *Browser) RunScript(snm string) {
 		slog.Error("script not found:", "Script:", snm)
 		return
 	}
-	fmt.Println("\n################\nrunning script:\n", sc, "\n")
+	logx.PrintlnDebug("\n################\nrunning script:\n", sc, "\n")
 	br.ScriptInterp.Eval(sc)
 }
 
@@ -167,13 +168,16 @@ func (br *Browser) Tabs() *core.Tabs {
 	return br.FindPath("splits/tabs").(*core.Tabs)
 }
 
-// UpdateFiles Updates the file view with current files in DataRoot
+// UpdateFiles Updates the file view with current files in DataRoot,
+// and re-loads the Scripts and updates the toolbar.
 func (br *Browser) UpdateFiles() { //types:add
 	files := br.FileTree()
 	files.OpenPath(br.DataRoot)
 	os.Chdir(br.DataRoot)
 	br.GetScripts()
 	br.Update()
+	tb := br.Scene.GetTopAppBar()
+	tb.Update()
 }
 
 func (br *Browser) MakeToolbar(p *core.Plan) {
