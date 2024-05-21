@@ -511,7 +511,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 
 	ge := NewCodeView(b)
 	core.TheApp.AppBarConfig = ge.AppBarConfig
-	b.AddAppBar(ge.ConfigToolbar)
+	b.AddAppBar(ge.MakeToolbar)
 
 	b.RunWindow()
 

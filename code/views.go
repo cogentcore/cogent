@@ -295,7 +295,7 @@ func (ge *CodeView) UpdateStatusText() {
 	}
 
 	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", ge.Nm, ge.ActiveVCSInfo, fnm, ln, ch, msg)
-	text.SetText(str).ConfigWidget()
+	text.SetText(str).Build()
 	text.NeedsRender()
 }
 

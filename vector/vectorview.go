@@ -341,7 +341,7 @@ func (vv *VectorView) StatusText() *core.Text {
 	return vv.StatusBar().Child(0).(*core.Text)
 }
 
-func (vv *VectorView) Config(c *core.Plan) {
+func (vv *VectorView) Make(c *core.Plan) {
 	if vv.HasChildren() {
 		return
 	}
@@ -446,7 +446,7 @@ func (vv *VectorView) PasteAvailFunc(bt *core.Button) {
 	bt.SetEnabled(!vv.Clipboard().IsEmpty())
 }
 
-func (vv *VectorView) ConfigToolbar(tb *core.Toolbar) {
+func (vv *VectorView) MakeToolbar(tb *core.Toolbar) {
 	// TODO(kai): remove Update
 	views.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	core.NewButton(tb).SetText("New").SetIcon(icons.Add).
@@ -613,7 +613,7 @@ func NewVectorWindow(fnm string) *VectorView {
 	b := core.NewBody(winm).SetTitle(winm)
 
 	vv := NewVectorView(b)
-	b.AddAppBar(vv.ConfigToolbar)
+	b.AddAppBar(vv.MakeToolbar)
 
 	b.OnShow(func(e events.Event) {
 		if fnm != "" {

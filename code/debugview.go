@@ -735,7 +735,7 @@ func (dv *DebugView) SetStatus(stat cdebug.Status) {
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (dv *DebugView) Config(c *core.Plan) {
+func (dv *DebugView) Make(c *core.Plan) {
 	// dv.ConfigDebugView() // needs specific config args
 }
 
@@ -757,7 +757,7 @@ func (dv *DebugView) ConfigDebugView(ge *CodeView, sup fileinfo.Known, exePath s
 	dv.State.BlankState()
 	dv.OutputBuffer = texteditor.NewBuffer()
 	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
-	dv.ConfigToolbar()
+	dv.MakeToolbar()
 	dv.ConfigTabs()
 	dv.State.Breaks = nil // get rid of dummy
 	dv.Start()
@@ -854,7 +854,7 @@ func (dv *DebugView) UpdateToolbar() {
 	tb.ApplyStyleUpdate()
 }
 
-func (dv *DebugView) ConfigToolbar() {
+func (dv *DebugView) MakeToolbar() {
 	tb := dv.Toolbar()
 	if tb.HasChildren() {
 		return
@@ -1269,7 +1269,7 @@ func (vv *VarView) StructView() *views.StructView {
 	return vv.Splits().Child(1).(*views.StructView)
 }
 
-func (vv *VarView) ConfigToolbar(tb *core.Toolbar) {
+func (vv *VarView) MakeToolbar(tb *core.Toolbar) {
 	core.NewButton(tb).SetText("Follow pointer").SetIcon(icons.ArrowForward).
 		SetTooltip("FollowPtr loads additional debug state information for pointer variables, so you can continue clicking through the tree to see what it points to.").
 		OnClick(func(e events.Event) {
@@ -1331,7 +1331,7 @@ func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugView) *VarVie
 	vv := NewVarView(b, "view")
 	vv.DbgView = dbgVw
 	vv.SetVar(vr, frinfo)
-	b.AddAppBar(vv.ConfigToolbar)
+	b.AddAppBar(vv.MakeToolbar)
 	b.RunWindow()
 	return vv
 }

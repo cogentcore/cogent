@@ -727,7 +727,7 @@ func (pv *PiView) OpenParseTab() {
 	}
 }
 
-func (pv *PiView) Config(c *core.Config) {
+func (pv *PiView) Make(c *core.Config) {
 	parser.GuiActive = true
 	fmt.Printf("PiView enabling GoPi parser output\n")
 	pv.Parser.Init()
@@ -743,7 +743,7 @@ func (pv *PiView) Config(c *core.Config) {
 	}
 	pv.ConfigSplits()
 	pv.ConfigStatusBar()
-	pv.ConfigToolbar()
+	pv.MakeToolbar()
 	pv.UpdateEnd(update)
 	go pv.MonitorOut()
 }
@@ -825,8 +825,8 @@ func (pv *PiView) ConfigStatusBar() {
 	lbl.SetProp("tab-size", 4)
 }
 
-// ConfigToolbar adds a PiView toolbar.
-func (pv *PiView) ConfigToolbar() {
+// MakeToolbar adds a PiView toolbar.
+func (pv *PiView) MakeToolbar() {
 	tb := pv.Toolbar()
 	if tb.HasChildren() {
 		return

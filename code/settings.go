@@ -163,7 +163,7 @@ func (se *SettingsData) ApplyEnvVars() {
 	}
 }
 
-func (se *SettingsData) ConfigToolbar(tb *core.Toolbar) {
+func (se *SettingsData) MakeToolbar(tb *core.Toolbar) {
 	views.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
 	views.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
 	views.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)

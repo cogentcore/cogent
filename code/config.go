@@ -28,7 +28,7 @@ const (
 	TabsIndex
 )
 
-func (ge *CodeView) Config(c *core.Plan) {
+func (ge *CodeView) Make(c *core.Plan) {
 	if ge.HasChildren() {
 		return
 	}

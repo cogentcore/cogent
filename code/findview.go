@@ -390,7 +390,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (fv *FindView) Config(c *core.Plan) {
+func (fv *FindView) Make(c *core.Plan) {
 	if fv.HasChildren() {
 		return
 	}
@@ -408,7 +408,7 @@ func (fv *FindView) Config(c *core.Plan) {
 	tv.LinkHandler = func(tl *paint.TextLink) {
 		fv.OpenFindURL(tl.URL, tv)
 	}
-	fv.ConfigToolbars(fb, rb)
+	fv.MakeToolbars(fb, rb)
 	na := fv.FindNextAct()
 	na.SetFocusEvent()
 	fv.Update()
@@ -475,8 +475,8 @@ func (fv *FindView) UpdateFromParams() {
 	// langs auto-updates from param
 }
 
-// ConfigToolbars
-func (fv *FindView) ConfigToolbars(fb, rb *core.BasicBar) {
+// MakeToolbars
+func (fv *FindView) MakeToolbars(fb, rb *core.BasicBar) {
 	core.NewButton(fb).SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").OnClick(func(e events.Event) {
 		fv.FindAction()
 	})

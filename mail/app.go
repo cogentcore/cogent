@@ -62,11 +62,11 @@ func (a *App) SetStyles() {
 	})
 }
 
-func (a *App) ConfigToolbar(tb *core.Toolbar) {
+func (a *App) MakeToolbar(tb *core.Toolbar) {
 	views.NewFuncButton(tb, a.Compose).SetIcon(icons.Send)
 }
 
-func (a *App) Config(c *core.Plan) {
+func (a *App) Make(c *core.Plan) {
 	if a.HasChildren() {
 		return
 	}

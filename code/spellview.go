@@ -82,7 +82,7 @@ func (sv *SpellView) ConfigSpellView(ge *CodeView, atv *TextEditor) {
 	core.NewToolbar(sv, "unknownbar")
 	core.NewToolbar(sv, "changebar")
 	views.NewSliceView(sv, "suggest")
-	sv.ConfigToolbar()
+	sv.MakeToolbar()
 	texteditor.InitSpell()
 	sv.CheckNext()
 }
@@ -142,8 +142,8 @@ func (sv *SpellView) SuggestView() *views.SliceView {
 	return sv.ChildByName("suggest", 1).(*views.SliceView)
 }
 
-// ConfigToolbar adds toolbar.
-func (sv *SpellView) ConfigToolbar() {
+// MakeToolbar adds toolbar.
+func (sv *SpellView) MakeToolbar() {
 	spbar := sv.SpellBar()
 	unknbar := sv.UnknownBar()
 	chgbar := sv.ChangeBar()

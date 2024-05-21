@@ -83,7 +83,7 @@ func NewBrowserWindow(dataDir string) *Browser {
 	br.SetDataRoot(ddr)
 	br.SetScriptsDir(filepath.Join(ddr, "dbscripts"))
 	br.GetScripts()
-	b.AddAppBar(br.ConfigAppBar)
+	b.AddAppBar(br.MakeToolbar)
 	b.RunWindow()
 	TheBrowser = br
 	br.ScriptInterp.Eval("br := databrowser.TheBrowser") // grab it
@@ -134,7 +134,7 @@ func (br *Browser) GetScripts() {
 	// }
 }
 
-func (br *Browser) Config(c *core.Plan) {
+func (br *Browser) Make(c *core.Plan) {
 	br.GetScripts()
 
 	core.AddAt(c, "splits", func(w *core.Splits) {
@@ -175,8 +175,8 @@ func (br *Browser) UpdateFiles() { //types:add
 	br.Update()
 }
 
-func (br *Browser) ConfigAppBar(c *core.Plan) {
-	core.AddAt(c, "", func(w *views.FuncButton) {
+func (br *Browser) MakeToolbar(c *core.Plan) {
+	core.Add(c, func(w *views.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
 	scr := maps.Keys(br.Scripts)

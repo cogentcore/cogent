@@ -17,7 +17,7 @@ func main() {
 
 	b := core.NewBody("Cogent Numbers")
 	core.NewText(b).SetText("Welcome to the Numbers App")
-	// b.AddAppBar(br.ConfigAppBar)
+	// b.AddAppBar(br.MakeToolbar)
 
 	in := numshell.NewInterpreter(interp.Options{})
 	in.Interp.Use(databrowser.Symbols)

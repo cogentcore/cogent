@@ -66,7 +66,7 @@ func init() {
 		"ConcealDots":              reflect.ValueOf(core.ConcealDots),
 		"ConfigAppChooser":         reflect.ValueOf(core.ConfigAppChooser),
 		"ConfigCallerPath":         reflect.ValueOf(core.ConfigCallerPath),
-		"ConfigParts":              reflect.ValueOf(core.ConfigParts),
+		"ConfigParts":              reflect.ValueOf(core.InitParts),
 		"CurrentRenderWindow":      reflect.ValueOf(&core.CurrentRenderWindow).Elem(),
 		"CustomConfigStyles":       reflect.ValueOf(&core.CustomConfigStyles).Elem(),
 		"DebugSettings":            reflect.ValueOf(&core.DebugSettings).Elem(),
@@ -395,7 +395,7 @@ func init() {
 		"TextTypes":              reflect.ValueOf((*core.TextTypes)(nil)),
 		"Themes":                 reflect.ValueOf((*core.Themes)(nil)),
 		"Toolbar":                reflect.ValueOf((*core.Toolbar)(nil)),
-		"Toolbarer":              reflect.ValueOf((*core.Toolbarer)(nil)),
+		"Toolbarer":              reflect.ValueOf((*core.ToolbarMaker)(nil)),
 		"Updater":                reflect.ValueOf((*core.Updater)(nil)),
 		"User":                   reflect.ValueOf((*core.User)(nil)),
 		"Validator":              reflect.ValueOf((*core.Validator)(nil)),
@@ -606,7 +606,7 @@ func (W _cogentcore_org_core_core_Layouter) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Layouter) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Layouter) Config(c *core.Plan) {
+func (W _cogentcore_org_core_core_Layouter) Make(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_core_Layouter) ConfigChildren(config tree.Config) bool {
@@ -861,7 +861,7 @@ func (W _cogentcore_org_core_core_OnBinder) OnBind(value any) {
 type _cogentcore_org_core_core_Settings struct {
 	IValue         interface{}
 	WApply         func()
-	WConfigToolbar func(c *core.Plan)
+	WMakeToolbar func(c *core.Plan)
 	WDefaults      func()
 	WFilename      func() string
 	WLabel         func() string
@@ -870,8 +870,8 @@ type _cogentcore_org_core_core_Settings struct {
 func (W _cogentcore_org_core_core_Settings) Apply() {
 	W.WApply()
 }
-func (W _cogentcore_org_core_core_Settings) ConfigToolbar(c *core.Plan) {
-	W.WConfigToolbar(c)
+func (W _cogentcore_org_core_core_Settings) MakeToolbar(c *core.Plan) {
+	W.WMakeToolbar(c)
 }
 func (W _cogentcore_org_core_core_Settings) Defaults() {
 	W.WDefaults()
@@ -887,7 +887,7 @@ func (W _cogentcore_org_core_core_Settings) Label() string {
 type _cogentcore_org_core_core_SettingsOpener struct {
 	IValue         interface{}
 	WApply         func()
-	WConfigToolbar func(c *core.Plan)
+	WMakeToolbar func(c *core.Plan)
 	WDefaults      func()
 	WFilename      func() string
 	WLabel         func() string
@@ -897,8 +897,8 @@ type _cogentcore_org_core_core_SettingsOpener struct {
 func (W _cogentcore_org_core_core_SettingsOpener) Apply() {
 	W.WApply()
 }
-func (W _cogentcore_org_core_core_SettingsOpener) ConfigToolbar(c *core.Plan) {
-	W.WConfigToolbar(c)
+func (W _cogentcore_org_core_core_SettingsOpener) MakeToolbar(c *core.Plan) {
+	W.WMakeToolbar(c)
 }
 func (W _cogentcore_org_core_core_SettingsOpener) Defaults() {
 	W.WDefaults()
@@ -917,7 +917,7 @@ func (W _cogentcore_org_core_core_SettingsOpener) Open() error {
 type _cogentcore_org_core_core_SettingsSaver struct {
 	IValue         interface{}
 	WApply         func()
-	WConfigToolbar func(c *core.Plan)
+	WMakeToolbar func(c *core.Plan)
 	WDefaults      func()
 	WFilename      func() string
 	WLabel         func() string
@@ -927,8 +927,8 @@ type _cogentcore_org_core_core_SettingsSaver struct {
 func (W _cogentcore_org_core_core_SettingsSaver) Apply() {
 	W.WApply()
 }
-func (W _cogentcore_org_core_core_SettingsSaver) ConfigToolbar(c *core.Plan) {
-	W.WConfigToolbar(c)
+func (W _cogentcore_org_core_core_SettingsSaver) MakeToolbar(c *core.Plan) {
+	W.WMakeToolbar(c)
 }
 func (W _cogentcore_org_core_core_SettingsSaver) Defaults() {
 	W.WDefaults()
@@ -966,11 +966,11 @@ func (W _cogentcore_org_core_core_TextFieldEmbedder) AsTextField() *core.TextFie
 // _cogentcore_org_core_core_Toolbarer is an interface wrapper for Toolbarer type
 type _cogentcore_org_core_core_Toolbarer struct {
 	IValue         interface{}
-	WConfigToolbar func(c *core.Plan)
+	WMakeToolbar func(c *core.Plan)
 }
 
-func (W _cogentcore_org_core_core_Toolbarer) ConfigToolbar(c *core.Plan) {
-	W.WConfigToolbar(c)
+func (W _cogentcore_org_core_core_Toolbarer) MakeToolbar(c *core.Plan) {
+	W.WMakeToolbar(c)
 }
 
 // _cogentcore_org_core_core_Updater is an interface wrapper for Updater type
@@ -1127,7 +1127,7 @@ func (W _cogentcore_org_core_core_Value) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Value) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Value) Config(c *core.Plan) {
+func (W _cogentcore_org_core_core_Value) Make(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_core_Value) ConfigChildren(config tree.Config) bool {
@@ -1500,7 +1500,7 @@ func (W _cogentcore_org_core_core_Widget) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Widget) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Widget) Config(c *core.Plan) {
+func (W _cogentcore_org_core_core_Widget) Make(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_core_Widget) ConfigChildren(config tree.Config) bool {

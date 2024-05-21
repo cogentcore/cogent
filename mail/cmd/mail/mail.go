@@ -14,7 +14,7 @@ import (
 func main() {
 	b := core.NewBody("Cogent Mail")
 	a := mail.NewApp(b)
-	b.AddAppBar(a.ConfigToolbar)
+	b.AddAppBar(a.MakeToolbar)
 	b.OnShow(func(e events.Event) {
 		errors.Log(a.GetMail())
 	})

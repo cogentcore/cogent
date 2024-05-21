@@ -27,7 +27,7 @@ func (br *Browser) NewTabTable(path string) *tensorview.TableView {
 	dt := table.NewTable()
 	tb := core.NewToolbar(tab)
 	tv := tensorview.NewTableView(tab)
-	tb.ConfigFuncs.Add(tv.ConfigToolbar)
+	tb.Makers.Add(tv.MakeToolbar)
 	tv.SetTable(dt)
 	return tv
 }

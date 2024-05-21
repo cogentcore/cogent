@@ -38,7 +38,7 @@ func (ge *CodeView) AppBarConfig(parent core.Widget) {
 	// apps should add their own app-general functions here
 }
 
-func (ge *CodeView) ConfigToolbar(tb *core.Toolbar) { //types:add
+func (ge *CodeView) MakeToolbar(tb *core.Toolbar) { //types:add
 	views.NewFuncButton(tb, ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	sm := core.NewSwitch(tb, "go-mod").SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 	sm.Style(func(s *styles.Style) {

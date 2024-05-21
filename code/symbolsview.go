@@ -70,7 +70,7 @@ func (sv *SymbolsView) ConfigSymbolsView(ge *CodeView, sp SymbolsParams) {
 		s.Grow.Set(1, 1)
 		s.Overflow.Set(styles.OverflowAuto)
 	})
-	sv.ConfigToolbar()
+	sv.MakeToolbar()
 	sb := sv.ScopeChooser()
 	sb.SetCurrentIndex(int(sv.Params().Scope))
 	sv.ConfigTree(sp.Scope)
@@ -96,8 +96,8 @@ func (sv *SymbolsView) SearchText() *core.TextField {
 	return sv.Toolbar().ChildByName("search-str", 1).(*core.TextField)
 }
 
-// ConfigToolbar adds toolbar.
-func (sv *SymbolsView) ConfigToolbar() {
+// MakeToolbar adds toolbar.
+func (sv *SymbolsView) MakeToolbar() {
 	tb := sv.Toolbar()
 	if tb.HasChildren() {
 		return

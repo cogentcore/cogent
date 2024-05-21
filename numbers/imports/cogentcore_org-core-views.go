@@ -481,7 +481,7 @@ func (W _cogentcore_org_core_views_TreeViewer) Children() *tree.Slice {
 func (W _cogentcore_org_core_views_TreeViewer) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Config(c *core.Plan) {
+func (W _cogentcore_org_core_views_TreeViewer) Make(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_views_TreeViewer) ConfigChildren(config tree.Config) bool {
