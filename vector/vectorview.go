@@ -341,7 +341,7 @@ func (vv *VectorView) StatusText() *core.Text {
 	return vv.StatusBar().Child(0).(*core.Text)
 }
 
-func (vv *VectorView) Make(c *core.Plan) {
+func (vv *VectorView) Make(p *core.Plan) {
 	if vv.HasChildren() {
 		return
 	}

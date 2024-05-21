@@ -66,7 +66,7 @@ func (a *App) MakeToolbar(tb *core.Toolbar) {
 	views.NewFuncButton(tb, a.Compose).SetIcon(icons.Send)
 }
 
-func (a *App) Make(c *core.Plan) {
+func (a *App) Make(p *core.Plan) {
 	if a.HasChildren() {
 		return
 	}

@@ -503,7 +503,7 @@ func (pv *PaintView) SelectFillGrad() {
 	}
 }
 
-func (pv *PaintView) Make(c *core.Plan) {
+func (pv *PaintView) Make(p *core.Plan) {
 	if pv.HasChildren() {
 		return
 	}
