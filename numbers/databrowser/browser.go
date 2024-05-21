@@ -137,10 +137,10 @@ func (br *Browser) GetScripts() {
 func (br *Browser) Config(c *core.Plan) {
 	br.GetScripts()
 
-	core.Configure(c, "splits", func(w *core.Splits) {
+	core.AddAt(c, "splits", func(w *core.Splits) {
 		w.SetSplits(.2, .8)
 	})
-	core.Configure(c, "splits/files", func(w *filetree.Tree) {
+	core.AddAt(c, "splits/files", func(w *filetree.Tree) {
 	}, func(w *filetree.Tree) {
 		if br.DataRoot != "" {
 			errors.Log(os.Chdir(br.DataRoot))
@@ -148,7 +148,7 @@ func (br *Browser) Config(c *core.Plan) {
 			w.OpenPath(wd)
 		}
 	})
-	core.Configure(c, "splits/tabs", func(w *core.Tabs) {
+	core.AddAt(c, "splits/tabs", func(w *core.Tabs) {
 		w.Type = core.FunctionalTabs
 	})
 }
@@ -176,13 +176,13 @@ func (br *Browser) UpdateFiles() { //types:add
 }
 
 func (br *Browser) ConfigAppBar(c *core.Plan) {
-	core.Configure(c, "", func(w *views.FuncButton) {
+	core.AddAt(c, "", func(w *views.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
 	scr := maps.Keys(br.Scripts)
 	slices.Sort(scr)
 	for _, s := range scr {
-		core.Configure(c, s, func(w *core.Button) {
+		core.AddAt(c, s, func(w *core.Button) {
 			w.SetText(s).SetIcon(icons.RunCircle).
 				SetTooltip("Run script").
 				OnClick(func(e events.Event) {

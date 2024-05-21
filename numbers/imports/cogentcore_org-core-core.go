@@ -320,7 +320,6 @@ func init() {
 		"Config":                 reflect.ValueOf((*core.Plan)(nil)),
 		"ConfigChooserFuncs":     reflect.ValueOf((*core.ConfigChooserFuncs)(nil)),
 		"ConfigFuncs":            reflect.ValueOf((*core.ConfigFuncs)(nil)),
-		"ConfigItem":             reflect.ValueOf((*core.PlanItem)(nil)),
 		"DebugSettingsData":      reflect.ValueOf((*core.DebugSettingsData)(nil)),
 		"DeviceSettingsData":     reflect.ValueOf((*core.DeviceSettingsData)(nil)),
 		"EditorSettings":         reflect.ValueOf((*core.EditorSettings)(nil)),
