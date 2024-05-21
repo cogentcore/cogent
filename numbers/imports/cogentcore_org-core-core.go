@@ -317,10 +317,10 @@ func init() {
 		"ChooserTypes":           reflect.ValueOf((*core.ChooserTypes)(nil)),
 		"Complete":               reflect.ValueOf((*core.Complete)(nil)),
 		"CompleteSignals":        reflect.ValueOf((*core.CompleteSignals)(nil)),
-		"Config":                 reflect.ValueOf((*core.Config)(nil)),
+		"Config":                 reflect.ValueOf((*core.Plan)(nil)),
 		"ConfigChooserFuncs":     reflect.ValueOf((*core.ConfigChooserFuncs)(nil)),
 		"ConfigFuncs":            reflect.ValueOf((*core.ConfigFuncs)(nil)),
-		"ConfigItem":             reflect.ValueOf((*core.ConfigItem)(nil)),
+		"ConfigItem":             reflect.ValueOf((*core.PlanItem)(nil)),
 		"DebugSettingsData":      reflect.ValueOf((*core.DebugSettingsData)(nil)),
 		"DeviceSettingsData":     reflect.ValueOf((*core.DeviceSettingsData)(nil)),
 		"EditorSettings":         reflect.ValueOf((*core.EditorSettings)(nil)),
@@ -480,7 +480,7 @@ type _cogentcore_org_core_core_Layouter struct {
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Config)
+	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
 	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
@@ -607,7 +607,7 @@ func (W _cogentcore_org_core_core_Layouter) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Layouter) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Layouter) Config(c *core.Config) {
+func (W _cogentcore_org_core_core_Layouter) Config(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_core_Layouter) ConfigChildren(config tree.Config) bool {
@@ -862,7 +862,7 @@ func (W _cogentcore_org_core_core_OnBinder) OnBind(value any) {
 type _cogentcore_org_core_core_Settings struct {
 	IValue         interface{}
 	WApply         func()
-	WConfigToolbar func(c *core.Config)
+	WConfigToolbar func(c *core.Plan)
 	WDefaults      func()
 	WFilename      func() string
 	WLabel         func() string
@@ -871,7 +871,7 @@ type _cogentcore_org_core_core_Settings struct {
 func (W _cogentcore_org_core_core_Settings) Apply() {
 	W.WApply()
 }
-func (W _cogentcore_org_core_core_Settings) ConfigToolbar(c *core.Config) {
+func (W _cogentcore_org_core_core_Settings) ConfigToolbar(c *core.Plan) {
 	W.WConfigToolbar(c)
 }
 func (W _cogentcore_org_core_core_Settings) Defaults() {
@@ -888,7 +888,7 @@ func (W _cogentcore_org_core_core_Settings) Label() string {
 type _cogentcore_org_core_core_SettingsOpener struct {
 	IValue         interface{}
 	WApply         func()
-	WConfigToolbar func(c *core.Config)
+	WConfigToolbar func(c *core.Plan)
 	WDefaults      func()
 	WFilename      func() string
 	WLabel         func() string
@@ -898,7 +898,7 @@ type _cogentcore_org_core_core_SettingsOpener struct {
 func (W _cogentcore_org_core_core_SettingsOpener) Apply() {
 	W.WApply()
 }
-func (W _cogentcore_org_core_core_SettingsOpener) ConfigToolbar(c *core.Config) {
+func (W _cogentcore_org_core_core_SettingsOpener) ConfigToolbar(c *core.Plan) {
 	W.WConfigToolbar(c)
 }
 func (W _cogentcore_org_core_core_SettingsOpener) Defaults() {
@@ -918,7 +918,7 @@ func (W _cogentcore_org_core_core_SettingsOpener) Open() error {
 type _cogentcore_org_core_core_SettingsSaver struct {
 	IValue         interface{}
 	WApply         func()
-	WConfigToolbar func(c *core.Config)
+	WConfigToolbar func(c *core.Plan)
 	WDefaults      func()
 	WFilename      func() string
 	WLabel         func() string
@@ -928,7 +928,7 @@ type _cogentcore_org_core_core_SettingsSaver struct {
 func (W _cogentcore_org_core_core_SettingsSaver) Apply() {
 	W.WApply()
 }
-func (W _cogentcore_org_core_core_SettingsSaver) ConfigToolbar(c *core.Config) {
+func (W _cogentcore_org_core_core_SettingsSaver) ConfigToolbar(c *core.Plan) {
 	W.WConfigToolbar(c)
 }
 func (W _cogentcore_org_core_core_SettingsSaver) Defaults() {
@@ -967,10 +967,10 @@ func (W _cogentcore_org_core_core_TextFieldEmbedder) AsTextField() *core.TextFie
 // _cogentcore_org_core_core_Toolbarer is an interface wrapper for Toolbarer type
 type _cogentcore_org_core_core_Toolbarer struct {
 	IValue         interface{}
-	WConfigToolbar func(c *core.Config)
+	WConfigToolbar func(c *core.Plan)
 }
 
-func (W _cogentcore_org_core_core_Toolbarer) ConfigToolbar(c *core.Config) {
+func (W _cogentcore_org_core_core_Toolbarer) ConfigToolbar(c *core.Plan) {
 	W.WConfigToolbar(c)
 }
 
@@ -1011,7 +1011,7 @@ type _cogentcore_org_core_core_Value struct {
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Config)
+	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
 	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
@@ -1128,7 +1128,7 @@ func (W _cogentcore_org_core_core_Value) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Value) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Value) Config(c *core.Config) {
+func (W _cogentcore_org_core_core_Value) Config(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_core_Value) ConfigChildren(config tree.Config) bool {
@@ -1385,7 +1385,7 @@ type _cogentcore_org_core_core_Widget struct {
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Config)
+	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
 	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
@@ -1501,7 +1501,7 @@ func (W _cogentcore_org_core_core_Widget) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Widget) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Widget) Config(c *core.Config) {
+func (W _cogentcore_org_core_core_Widget) Config(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_core_Widget) ConfigChildren(config tree.Config) bool {

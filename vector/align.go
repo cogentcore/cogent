@@ -245,7 +245,7 @@ func (sv *SVGView) GatherAlignPoints() {
 ///////////////////////////////////////////////////////////////
 //  AlignView
 
-func (av *AlignView) Config(c *core.Config) {
+func (av *AlignView) Config(c *core.Plan) {
 	if av.HasChildren() {
 		return
 	}

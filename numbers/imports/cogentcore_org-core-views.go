@@ -229,7 +229,7 @@ func (W _cogentcore_org_core_views_OpenDialoger) OpenDialog(ctx core.Widget, fun
 type _cogentcore_org_core_views_SliceViewer struct {
 	IValue            interface{}
 	WAsSliceViewBase  func() *views.SliceViewBase
-	WConfigRow        func(c *core.Config, i int, si int)
+	WConfigRow        func(c *core.Plan, i int, si int)
 	WCopySelectToMime func() mimedata.Mimes
 	WDragDrop         func(e events.Event)
 	WDragStart        func(e events.Event)
@@ -255,7 +255,7 @@ type _cogentcore_org_core_views_SliceViewer struct {
 func (W _cogentcore_org_core_views_SliceViewer) AsSliceViewBase() *views.SliceViewBase {
 	return W.WAsSliceViewBase()
 }
-func (W _cogentcore_org_core_views_SliceViewer) ConfigRow(c *core.Config, i int, si int) {
+func (W _cogentcore_org_core_views_SliceViewer) ConfigRow(c *core.Plan, i int, si int) {
 	W.WConfigRow(c, i, si)
 }
 func (W _cogentcore_org_core_views_SliceViewer) CopySelectToMime() mimedata.Mimes {
@@ -339,7 +339,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Config)
+	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
 	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
@@ -481,7 +481,7 @@ func (W _cogentcore_org_core_views_TreeViewer) Children() *tree.Slice {
 func (W _cogentcore_org_core_views_TreeViewer) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Config(c *core.Config) {
+func (W _cogentcore_org_core_views_TreeViewer) Config(c *core.Plan) {
 	W.WConfig(c)
 }
 func (W _cogentcore_org_core_views_TreeViewer) ConfigChildren(config tree.Config) bool {

@@ -735,7 +735,7 @@ func (dv *DebugView) SetStatus(stat cdebug.Status) {
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (dv *DebugView) Config(c *core.Config) {
+func (dv *DebugView) Config(c *core.Plan) {
 	// dv.ConfigDebugView() // needs specific config args
 }
 

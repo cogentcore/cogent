@@ -390,7 +390,7 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-func (fv *FindView) Config(c *core.Config) {
+func (fv *FindView) Config(c *core.Plan) {
 	if fv.HasChildren() {
 		return
 	}

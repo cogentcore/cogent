@@ -341,7 +341,7 @@ func (vv *VectorView) StatusText() *core.Text {
 	return vv.StatusBar().Child(0).(*core.Text)
 }
 
-func (vv *VectorView) Config(c *core.Config) {
+func (vv *VectorView) Config(c *core.Plan) {
 	if vv.HasChildren() {
 		return
 	}

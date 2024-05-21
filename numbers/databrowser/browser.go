@@ -134,7 +134,7 @@ func (br *Browser) GetScripts() {
 	// }
 }
 
-func (br *Browser) Config(c *core.Config) {
+func (br *Browser) Config(c *core.Plan) {
 	br.GetScripts()
 
 	core.Configure(c, "splits", func(w *core.Splits) {
@@ -175,7 +175,7 @@ func (br *Browser) UpdateFiles() { //types:add
 	br.Update()
 }
 
-func (br *Browser) ConfigAppBar(c *core.Config) {
+func (br *Browser) ConfigAppBar(c *core.Plan) {
 	core.Configure(c, "", func(w *views.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
