@@ -65,8 +65,6 @@ func init() {
 		"CompleterStage":           reflect.ValueOf(core.CompleterStage),
 		"ConcealDots":              reflect.ValueOf(core.ConcealDots),
 		"ConfigAppChooser":         reflect.ValueOf(core.ConfigAppChooser),
-		"ConfigCallerPath":         reflect.ValueOf(core.ConfigCallerPath),
-		"ConfigParts":              reflect.ValueOf(core.InitParts),
 		"CurrentRenderWindow":      reflect.ValueOf(&core.CurrentRenderWindow).Elem(),
 		"CustomConfigStyles":       reflect.ValueOf(&core.CustomConfigStyles).Elem(),
 		"DebugSettings":            reflect.ValueOf(&core.DebugSettings).Elem(),
@@ -90,6 +88,7 @@ func init() {
 		"HandleType":               reflect.ValueOf(&core.HandleType).Elem(),
 		"IconType":                 reflect.ValueOf(&core.IconType).Elem(),
 		"ImageType":                reflect.ValueOf(&core.ImageType).Elem(),
+		"InitParts":                reflect.ValueOf(core.InitParts),
 		"InspectorWindow":          reflect.ValueOf(&core.InspectorWindow).Elem(),
 		"IsWordBreak":              reflect.ValueOf(core.IsWordBreak),
 		"JoinValueContext":         reflect.ValueOf(core.JoinValueContext),
@@ -302,7 +301,6 @@ func init() {
 
 		// type definitions
 		"App":                    reflect.ValueOf((*core.App)(nil)),
-		"AppChooserer":           reflect.ValueOf((*core.AppChooserer)(nil)),
 		"AppearanceSettingsData": reflect.ValueOf((*core.AppearanceSettingsData)(nil)),
 		"BarFuncs":               reflect.ValueOf((*core.BarFuncs)(nil)),
 		"BasicBar":               reflect.ValueOf((*core.BasicBar)(nil)),
@@ -317,9 +315,6 @@ func init() {
 		"ChooserTypes":           reflect.ValueOf((*core.ChooserTypes)(nil)),
 		"Complete":               reflect.ValueOf((*core.Complete)(nil)),
 		"CompleteSignals":        reflect.ValueOf((*core.CompleteSignals)(nil)),
-		"Config":                 reflect.ValueOf((*core.Plan)(nil)),
-		"ConfigChooserFuncs":     reflect.ValueOf((*core.ConfigChooserFuncs)(nil)),
-		"ConfigFuncs":            reflect.ValueOf((*core.ConfigFuncs)(nil)),
 		"DebugSettingsData":      reflect.ValueOf((*core.DebugSettingsData)(nil)),
 		"DeviceSettingsData":     reflect.ValueOf((*core.DeviceSettingsData)(nil)),
 		"EditorSettings":         reflect.ValueOf((*core.EditorSettings)(nil)),
@@ -348,6 +343,7 @@ func init() {
 		"MeterTypes":             reflect.ValueOf((*core.MeterTypes)(nil)),
 		"NewItemsData":           reflect.ValueOf((*core.NewItemsData)(nil)),
 		"OnBinder":               reflect.ValueOf((*core.OnBinder)(nil)),
+		"Plan":                   reflect.ValueOf((*core.Plan)(nil)),
 		"RenderContext":          reflect.ValueOf((*core.RenderContext)(nil)),
 		"RenderContextFlags":     reflect.ValueOf((*core.RenderContextFlags)(nil)),
 		"RenderParams":           reflect.ValueOf((*core.RenderParams)(nil)),
@@ -395,7 +391,7 @@ func init() {
 		"TextTypes":              reflect.ValueOf((*core.TextTypes)(nil)),
 		"Themes":                 reflect.ValueOf((*core.Themes)(nil)),
 		"Toolbar":                reflect.ValueOf((*core.Toolbar)(nil)),
-		"Toolbarer":              reflect.ValueOf((*core.ToolbarMaker)(nil)),
+		"ToolbarMaker":           reflect.ValueOf((*core.ToolbarMaker)(nil)),
 		"Updater":                reflect.ValueOf((*core.Updater)(nil)),
 		"User":                   reflect.ValueOf((*core.User)(nil)),
 		"Validator":              reflect.ValueOf((*core.Validator)(nil)),
@@ -411,7 +407,6 @@ func init() {
 		"WindowGeometrySaver":    reflect.ValueOf((*core.WindowGeometrySaver)(nil)),
 
 		// interface wrapper definitions
-		"_AppChooserer":      reflect.ValueOf((*_cogentcore_org_core_core_AppChooserer)(nil)),
 		"_ButtonEmbedder":    reflect.ValueOf((*_cogentcore_org_core_core_ButtonEmbedder)(nil)),
 		"_FieldValidator":    reflect.ValueOf((*_cogentcore_org_core_core_FieldValidator)(nil)),
 		"_Layouter":          reflect.ValueOf((*_cogentcore_org_core_core_Layouter)(nil)),
@@ -421,7 +416,7 @@ func init() {
 		"_SettingsSaver":     reflect.ValueOf((*_cogentcore_org_core_core_SettingsSaver)(nil)),
 		"_ShouldShower":      reflect.ValueOf((*_cogentcore_org_core_core_ShouldShower)(nil)),
 		"_TextFieldEmbedder": reflect.ValueOf((*_cogentcore_org_core_core_TextFieldEmbedder)(nil)),
-		"_Toolbarer":         reflect.ValueOf((*_cogentcore_org_core_core_Toolbarer)(nil)),
+		"_ToolbarMaker":      reflect.ValueOf((*_cogentcore_org_core_core_ToolbarMaker)(nil)),
 		"_Updater":           reflect.ValueOf((*_cogentcore_org_core_core_Updater)(nil)),
 		"_Validator":         reflect.ValueOf((*_cogentcore_org_core_core_Validator)(nil)),
 		"_Value":             reflect.ValueOf((*_cogentcore_org_core_core_Value)(nil)),
@@ -429,16 +424,6 @@ func init() {
 		"_Valuer":            reflect.ValueOf((*_cogentcore_org_core_core_Valuer)(nil)),
 		"_Widget":            reflect.ValueOf((*_cogentcore_org_core_core_Widget)(nil)),
 	}
-}
-
-// _cogentcore_org_core_core_AppChooserer is an interface wrapper for AppChooserer type
-type _cogentcore_org_core_core_AppChooserer struct {
-	IValue            interface{}
-	WConfigAppChooser func(ch *core.Chooser)
-}
-
-func (W _cogentcore_org_core_core_AppChooserer) ConfigAppChooser(ch *core.Chooser) {
-	W.WConfigAppChooser(ch)
 }
 
 // _cogentcore_org_core_core_ButtonEmbedder is an interface wrapper for ButtonEmbedder type
@@ -473,15 +458,14 @@ type _cogentcore_org_core_core_Layouter struct {
 	WAsTreeNode          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
+	WBuild               func()
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
 	WChildByName         func(name string, startIndex ...int) tree.Node
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
-	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
 	WCopyFieldsFrom      func(from tree.Node)
 	WCopyFrom            func(src tree.Node)
@@ -505,6 +489,7 @@ type _cogentcore_org_core_core_Layouter struct {
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
 	WLayoutSpace         func()
+	WMake                func(p *core.Plan)
 	WManageOverflow      func(iter int, updateSize bool) bool
 	WName                func() string
 	WNew                 func() tree.Node
@@ -588,6 +573,9 @@ func (W _cogentcore_org_core_core_Layouter) AsWidget() *core.WidgetBase {
 func (W _cogentcore_org_core_core_Layouter) BaseType() *types.Type {
 	return W.WBaseType()
 }
+func (W _cogentcore_org_core_core_Layouter) Build() {
+	W.WBuild()
+}
 func (W _cogentcore_org_core_core_Layouter) Child(i int) tree.Node {
 	return W.WChild(i)
 }
@@ -606,14 +594,8 @@ func (W _cogentcore_org_core_core_Layouter) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Layouter) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Layouter) Make(c *core.Plan) {
-	W.WConfig(c)
-}
 func (W _cogentcore_org_core_core_Layouter) ConfigChildren(config tree.Config) bool {
 	return W.WConfigChildren(config)
-}
-func (W _cogentcore_org_core_core_Layouter) ConfigWidget() {
-	W.WConfigWidget()
 }
 func (W _cogentcore_org_core_core_Layouter) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
@@ -683,6 +665,9 @@ func (W _cogentcore_org_core_core_Layouter) IsVisible() bool {
 }
 func (W _cogentcore_org_core_core_Layouter) LayoutSpace() {
 	W.WLayoutSpace()
+}
+func (W _cogentcore_org_core_core_Layouter) Make(p *core.Plan) {
+	W.WMake(p)
 }
 func (W _cogentcore_org_core_core_Layouter) ManageOverflow(iter int, updateSize bool) bool {
 	return W.WManageOverflow(iter, updateSize)
@@ -859,19 +844,16 @@ func (W _cogentcore_org_core_core_OnBinder) OnBind(value any) {
 
 // _cogentcore_org_core_core_Settings is an interface wrapper for Settings type
 type _cogentcore_org_core_core_Settings struct {
-	IValue         interface{}
-	WApply         func()
+	IValue       interface{}
+	WApply       func()
+	WDefaults    func()
+	WFilename    func() string
+	WLabel       func() string
 	WMakeToolbar func(c *core.Plan)
-	WDefaults      func()
-	WFilename      func() string
-	WLabel         func() string
 }
 
 func (W _cogentcore_org_core_core_Settings) Apply() {
 	W.WApply()
-}
-func (W _cogentcore_org_core_core_Settings) MakeToolbar(c *core.Plan) {
-	W.WMakeToolbar(c)
 }
 func (W _cogentcore_org_core_core_Settings) Defaults() {
 	W.WDefaults()
@@ -882,23 +864,23 @@ func (W _cogentcore_org_core_core_Settings) Filename() string {
 func (W _cogentcore_org_core_core_Settings) Label() string {
 	return W.WLabel()
 }
+func (W _cogentcore_org_core_core_Settings) MakeToolbar(c *core.Plan) {
+	W.WMakeToolbar(c)
+}
 
 // _cogentcore_org_core_core_SettingsOpener is an interface wrapper for SettingsOpener type
 type _cogentcore_org_core_core_SettingsOpener struct {
-	IValue         interface{}
-	WApply         func()
+	IValue       interface{}
+	WApply       func()
+	WDefaults    func()
+	WFilename    func() string
+	WLabel       func() string
 	WMakeToolbar func(c *core.Plan)
-	WDefaults      func()
-	WFilename      func() string
-	WLabel         func() string
-	WOpen          func() error
+	WOpen        func() error
 }
 
 func (W _cogentcore_org_core_core_SettingsOpener) Apply() {
 	W.WApply()
-}
-func (W _cogentcore_org_core_core_SettingsOpener) MakeToolbar(c *core.Plan) {
-	W.WMakeToolbar(c)
 }
 func (W _cogentcore_org_core_core_SettingsOpener) Defaults() {
 	W.WDefaults()
@@ -909,26 +891,26 @@ func (W _cogentcore_org_core_core_SettingsOpener) Filename() string {
 func (W _cogentcore_org_core_core_SettingsOpener) Label() string {
 	return W.WLabel()
 }
+func (W _cogentcore_org_core_core_SettingsOpener) MakeToolbar(c *core.Plan) {
+	W.WMakeToolbar(c)
+}
 func (W _cogentcore_org_core_core_SettingsOpener) Open() error {
 	return W.WOpen()
 }
 
 // _cogentcore_org_core_core_SettingsSaver is an interface wrapper for SettingsSaver type
 type _cogentcore_org_core_core_SettingsSaver struct {
-	IValue         interface{}
-	WApply         func()
+	IValue       interface{}
+	WApply       func()
+	WDefaults    func()
+	WFilename    func() string
+	WLabel       func() string
 	WMakeToolbar func(c *core.Plan)
-	WDefaults      func()
-	WFilename      func() string
-	WLabel         func() string
-	WSave          func() error
+	WSave        func() error
 }
 
 func (W _cogentcore_org_core_core_SettingsSaver) Apply() {
 	W.WApply()
-}
-func (W _cogentcore_org_core_core_SettingsSaver) MakeToolbar(c *core.Plan) {
-	W.WMakeToolbar(c)
 }
 func (W _cogentcore_org_core_core_SettingsSaver) Defaults() {
 	W.WDefaults()
@@ -938,6 +920,9 @@ func (W _cogentcore_org_core_core_SettingsSaver) Filename() string {
 }
 func (W _cogentcore_org_core_core_SettingsSaver) Label() string {
 	return W.WLabel()
+}
+func (W _cogentcore_org_core_core_SettingsSaver) MakeToolbar(c *core.Plan) {
+	W.WMakeToolbar(c)
 }
 func (W _cogentcore_org_core_core_SettingsSaver) Save() error {
 	return W.WSave()
@@ -963,14 +948,14 @@ func (W _cogentcore_org_core_core_TextFieldEmbedder) AsTextField() *core.TextFie
 	return W.WAsTextField()
 }
 
-// _cogentcore_org_core_core_Toolbarer is an interface wrapper for Toolbarer type
-type _cogentcore_org_core_core_Toolbarer struct {
-	IValue         interface{}
-	WMakeToolbar func(c *core.Plan)
+// _cogentcore_org_core_core_ToolbarMaker is an interface wrapper for ToolbarMaker type
+type _cogentcore_org_core_core_ToolbarMaker struct {
+	IValue       interface{}
+	WMakeToolbar func(p *core.Plan)
 }
 
-func (W _cogentcore_org_core_core_Toolbarer) MakeToolbar(c *core.Plan) {
-	W.WMakeToolbar(c)
+func (W _cogentcore_org_core_core_ToolbarMaker) MakeToolbar(p *core.Plan) {
+	W.WMakeToolbar(p)
 }
 
 // _cogentcore_org_core_core_Updater is an interface wrapper for Updater type
@@ -1004,15 +989,14 @@ type _cogentcore_org_core_core_Value struct {
 	WAsTreeNode          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
+	WBuild               func()
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
 	WChildByName         func(name string, startIndex ...int) tree.Node
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
-	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
 	WCopyFieldsFrom      func(from tree.Node)
 	WCopyFrom            func(src tree.Node)
@@ -1035,6 +1019,7 @@ type _cogentcore_org_core_core_Value struct {
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
+	WMake                func(p *core.Plan)
 	WName                func() string
 	WNew                 func() tree.Node
 	WNewChild            func(typ *types.Type) tree.Node
@@ -1109,6 +1094,9 @@ func (W _cogentcore_org_core_core_Value) AsWidget() *core.WidgetBase {
 func (W _cogentcore_org_core_core_Value) BaseType() *types.Type {
 	return W.WBaseType()
 }
+func (W _cogentcore_org_core_core_Value) Build() {
+	W.WBuild()
+}
 func (W _cogentcore_org_core_core_Value) Child(i int) tree.Node {
 	return W.WChild(i)
 }
@@ -1127,14 +1115,8 @@ func (W _cogentcore_org_core_core_Value) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Value) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Value) Make(c *core.Plan) {
-	W.WConfig(c)
-}
 func (W _cogentcore_org_core_core_Value) ConfigChildren(config tree.Config) bool {
 	return W.WConfigChildren(config)
-}
-func (W _cogentcore_org_core_core_Value) ConfigWidget() {
-	W.WConfigWidget()
 }
 func (W _cogentcore_org_core_core_Value) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
@@ -1201,6 +1183,9 @@ func (W _cogentcore_org_core_core_Value) Is(f enums.BitFlag) bool {
 }
 func (W _cogentcore_org_core_core_Value) IsVisible() bool {
 	return W.WIsVisible()
+}
+func (W _cogentcore_org_core_core_Value) Make(p *core.Plan) {
+	W.WMake(p)
 }
 func (W _cogentcore_org_core_core_Value) Name() string {
 	return W.WName()
@@ -1378,15 +1363,14 @@ type _cogentcore_org_core_core_Widget struct {
 	WAsTreeNode          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
+	WBuild               func()
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
 	WChildByName         func(name string, startIndex ...int) tree.Node
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
-	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
 	WCopyFieldsFrom      func(from tree.Node)
 	WCopyFrom            func(src tree.Node)
@@ -1409,6 +1393,7 @@ type _cogentcore_org_core_core_Widget struct {
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
+	WMake                func(p *core.Plan)
 	WName                func() string
 	WNew                 func() tree.Node
 	WNewChild            func(typ *types.Type) tree.Node
@@ -1482,6 +1467,9 @@ func (W _cogentcore_org_core_core_Widget) AsWidget() *core.WidgetBase {
 func (W _cogentcore_org_core_core_Widget) BaseType() *types.Type {
 	return W.WBaseType()
 }
+func (W _cogentcore_org_core_core_Widget) Build() {
+	W.WBuild()
+}
 func (W _cogentcore_org_core_core_Widget) Child(i int) tree.Node {
 	return W.WChild(i)
 }
@@ -1500,14 +1488,8 @@ func (W _cogentcore_org_core_core_Widget) Children() *tree.Slice {
 func (W _cogentcore_org_core_core_Widget) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_core_Widget) Make(c *core.Plan) {
-	W.WConfig(c)
-}
 func (W _cogentcore_org_core_core_Widget) ConfigChildren(config tree.Config) bool {
 	return W.WConfigChildren(config)
-}
-func (W _cogentcore_org_core_core_Widget) ConfigWidget() {
-	W.WConfigWidget()
 }
 func (W _cogentcore_org_core_core_Widget) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
@@ -1574,6 +1556,9 @@ func (W _cogentcore_org_core_core_Widget) Is(f enums.BitFlag) bool {
 }
 func (W _cogentcore_org_core_core_Widget) IsVisible() bool {
 	return W.WIsVisible()
+}
+func (W _cogentcore_org_core_core_Widget) Make(p *core.Plan) {
+	W.WMake(p)
 }
 func (W _cogentcore_org_core_core_Widget) Name() string {
 	return W.WName()

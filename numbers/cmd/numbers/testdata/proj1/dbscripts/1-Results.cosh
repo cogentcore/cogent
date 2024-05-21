@@ -1,22 +1,46 @@
-// Jobs is open jobs list
+debug off
 
-ResultsVals := map[string]string{"0-File Contains": "", "1-Ext": ".tsv"}
+// for some reason the above debug off statement is necessary to make this all compile.
+
+var Results []*databrowser.Result
+
+var ResultsVals = map[string]string{"0-File Contains": "", "1-Ext": ".tsv"}
+
+func OpenResultFiles(jobs []string, contains, ext string) {
+	Results = []*databrowser.Result{}
+	for i, jid := range jobs {
+		jpath := filepath.Join(br.DataRoot, DataDir, jid)
+		fmt.Println(jid, jpath)
+		fls := dirs.ExtFilenames(jpath, ext)
+		ifls := []string{}
+		for _, fn := range fls {
+			fmt.Println(fn)
+			if !strings.Contains(fn, contains) {
+				continue
+			}
+			dt := table.NewTable()
+			fpath := filepath.Join(jpath, fn)
+			dt.OpenCSV(core.Filename(fpath), table.Tab)
+			Results = append(Results, &databrowser.Result{JobID: jid, Path: fpath, Table: dt})
+		}
+	}
+	if len(Results) == 0 {
+		core.MessageSnackbar(br, "No files containing: " + contains + " with extension: " + ext)
+		return
+	}
+	br.NewTabTableView("Results", &Results)
+	br.Update()
+}
 
 func OpenResults() {
 	tv := JobsTableView
-	jt := JobsTableView.Table.Table
-	jis := tv.SelectedIndexesList(false)
-	if len(jis) == 0 {
+	jobs := tv.SelectedColumnStrings("JobID")
+	if len(jobs) == 0 {
 		fmt.Println("No rows selected")
 		return
 	}
 	databrowser.Prompt(br, ResultsVals, "Open results data for files", func() {
-		var jobs []string
-		for _, i := range jis {
-			jid := jt.StringValue("JobID", i)
-			fmt.Println(i, jid)
-			jobs = append(jobs, jid)
-		}
+		OpenResultFiles(jobs, ResultsVals["0-File Contains"], ResultsVals["1-Ext"])
 	})
 }
 

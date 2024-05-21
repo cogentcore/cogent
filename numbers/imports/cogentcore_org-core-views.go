@@ -84,7 +84,6 @@ func init() {
 		"SliceIndexByValue":            reflect.ValueOf(views.SliceIndexByValue),
 		"SliceViewBaseType":            reflect.ValueOf(&views.SliceViewBaseType).Elem(),
 		"SliceViewColProperty":         reflect.ValueOf(constant.MakeFromLiteral("\"sv-col\"", token.STRING, 0)),
-		"SliceViewConfigured":          reflect.ValueOf(views.SliceViewConfigured),
 		"SliceViewFlagsN":              reflect.ValueOf(views.SliceViewFlagsN),
 		"SliceViewFlagsValues":         reflect.ValueOf(views.SliceViewFlagsValues),
 		"SliceViewGridType":            reflect.ValueOf(&views.SliceViewGridType).Elem(),
@@ -229,7 +228,6 @@ func (W _cogentcore_org_core_views_OpenDialoger) OpenDialog(ctx core.Widget, fun
 type _cogentcore_org_core_views_SliceViewer struct {
 	IValue            interface{}
 	WAsSliceViewBase  func() *views.SliceViewBase
-	WConfigRow        func(c *core.Plan, i int, si int)
 	WCopySelectToMime func() mimedata.Mimes
 	WDragDrop         func(e events.Event)
 	WDragStart        func(e events.Event)
@@ -237,6 +235,7 @@ type _cogentcore_org_core_views_SliceViewer struct {
 	WDropFinalize     func(de *events.DragDrop)
 	WHasStyleFunc     func() bool
 	WMakePasteMenu    func(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func())
+	WMakeRow          func(p *core.Plan, i int, si int)
 	WMimeDataType     func() string
 	WPasteAssign      func(md mimedata.Mimes, idx int)
 	WPasteAtIndex     func(md mimedata.Mimes, idx int)
@@ -254,9 +253,6 @@ type _cogentcore_org_core_views_SliceViewer struct {
 
 func (W _cogentcore_org_core_views_SliceViewer) AsSliceViewBase() *views.SliceViewBase {
 	return W.WAsSliceViewBase()
-}
-func (W _cogentcore_org_core_views_SliceViewer) ConfigRow(c *core.Plan, i int, si int) {
-	W.WConfigRow(c, i, si)
 }
 func (W _cogentcore_org_core_views_SliceViewer) CopySelectToMime() mimedata.Mimes {
 	return W.WCopySelectToMime()
@@ -278,6 +274,9 @@ func (W _cogentcore_org_core_views_SliceViewer) HasStyleFunc() bool {
 }
 func (W _cogentcore_org_core_views_SliceViewer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func()) {
 	W.WMakePasteMenu(m, md, idx, mod, fun)
+}
+func (W _cogentcore_org_core_views_SliceViewer) MakeRow(p *core.Plan, i int, si int) {
+	W.WMakeRow(p, i, si)
 }
 func (W _cogentcore_org_core_views_SliceViewer) MimeDataType() string {
 	return W.WMimeDataType()
@@ -332,6 +331,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WAsTreeView          func() *views.TreeView
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
+	WBuild               func()
 	WCanOpen             func() bool
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
@@ -339,9 +339,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfig              func(c *core.Plan)
 	WConfigChildren      func(config tree.Config) bool
-	WConfigWidget        func()
 	WContextMenuPos      func(e events.Event) image.Point
 	WCopy                func(reset bool)
 	WCopyFieldsFrom      func(from tree.Node)
@@ -374,6 +372,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
+	WMake                func(p *core.Plan)
 	WMakePasteMenu       func(m *core.Scene, md mimedata.Mimes, fun func())
 	WMimeData            func(md *mimedata.Mimes)
 	WName                func() string
@@ -460,6 +459,9 @@ func (W _cogentcore_org_core_views_TreeViewer) AsWidget() *core.WidgetBase {
 func (W _cogentcore_org_core_views_TreeViewer) BaseType() *types.Type {
 	return W.WBaseType()
 }
+func (W _cogentcore_org_core_views_TreeViewer) Build() {
+	W.WBuild()
+}
 func (W _cogentcore_org_core_views_TreeViewer) CanOpen() bool {
 	return W.WCanOpen()
 }
@@ -481,14 +483,8 @@ func (W _cogentcore_org_core_views_TreeViewer) Children() *tree.Slice {
 func (W _cogentcore_org_core_views_TreeViewer) Clone() tree.Node {
 	return W.WClone()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Make(c *core.Plan) {
-	W.WConfig(c)
-}
 func (W _cogentcore_org_core_views_TreeViewer) ConfigChildren(config tree.Config) bool {
 	return W.WConfigChildren(config)
-}
-func (W _cogentcore_org_core_views_TreeViewer) ConfigWidget() {
-	W.WConfigWidget()
 }
 func (W _cogentcore_org_core_views_TreeViewer) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
@@ -585,6 +581,9 @@ func (W _cogentcore_org_core_views_TreeViewer) Is(f enums.BitFlag) bool {
 }
 func (W _cogentcore_org_core_views_TreeViewer) IsVisible() bool {
 	return W.WIsVisible()
+}
+func (W _cogentcore_org_core_views_TreeViewer) Make(p *core.Plan) {
+	W.WMake(p)
 }
 func (W _cogentcore_org_core_views_TreeViewer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, fun func()) {
 	W.WMakePasteMenu(m, md, fun)

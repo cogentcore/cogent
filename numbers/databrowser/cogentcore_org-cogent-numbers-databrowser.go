@@ -20,5 +20,6 @@ func init() {
 
 		// type definitions
 		"Browser": reflect.ValueOf((*Browser)(nil)),
+		"Result":  reflect.ValueOf((*Result)(nil)),
 	}
 }

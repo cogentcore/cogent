@@ -10,6 +10,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/tensor/tensorview"
+	"cogentcore.org/core/views"
 )
 
 // NewTabTable creates a tab with a table and a tableview.
@@ -17,9 +18,9 @@ import (
 // and tv.Table is the table.IndexView onto the table.
 // Use tv.Table.Sequential to update the IndexView to view
 // all of the rows when done updating the Table.
-func (br *Browser) NewTabTable(path string) *tensorview.TableView {
+func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	tabs := br.Tabs()
-	tab := tabs.RecycleTab(path, true)
+	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
 		tv := tab.Child(1).(*tensorview.TableView)
 		return tv
@@ -27,8 +28,21 @@ func (br *Browser) NewTabTable(path string) *tensorview.TableView {
 	dt := table.NewTable()
 	tb := core.NewToolbar(tab)
 	tv := tensorview.NewTableView(tab)
-	tb.Makers.Add(tv.MakeToolbar)
+	tb.Makers = append(tb.Makers, tv.MakeToolbar)
 	tv.SetTable(dt)
+	return tv
+}
+
+// NewTabTableView creates a tab with a slice TableView.
+func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
+	tabs := br.Tabs()
+	tab := tabs.RecycleTab(label, true)
+	if tab.HasChildren() {
+		tv := tab.Child(1).(*views.TableView)
+		return tv
+	}
+	tv := views.NewTableView(tab)
+	tv.SetSlice(slc)
 	return tv
 }
 

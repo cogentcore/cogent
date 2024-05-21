@@ -29,5 +29,6 @@ func OpenJobs(path string) (*tensorview.TableView, *table.Table) {
 	return tv, dt
 }
 
-JobsTableView, Jobs := OpenJobs("data")
+DataDir := "data"
+JobsTableView, Jobs := OpenJobs(DataDir)
 

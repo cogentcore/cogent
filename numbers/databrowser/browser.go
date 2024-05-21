@@ -120,7 +120,7 @@ func (br *Browser) GetScripts() {
 	scr := dirs.ExtFilenames(br.ScriptsDir, ".cosh")
 	br.Scripts = make(map[string]string)
 	for _, s := range scr {
-		snm := TrimOrderPrefix(strings.TrimSuffix(s, ".cosh"))
+		snm := strings.TrimSuffix(s, ".cosh")
 		sc, err := os.ReadFile(filepath.Join(br.ScriptsDir, s))
 		if err == nil {
 			br.Scripts[snm] = string(sc)
@@ -135,13 +135,13 @@ func (br *Browser) GetScripts() {
 	// }
 }
 
-func (br *Browser) Make(c *core.Plan) {
+func (br *Browser) Make(p *core.Plan) {
 	br.GetScripts()
 
-	core.AddAt(c, "splits", func(w *core.Splits) {
+	sp := core.AddAt(p, "splits", func(w *core.Splits) {
 		w.SetSplits(.2, .8)
 	})
-	core.AddAt(c, "splits/files", func(w *filetree.Tree) {
+	core.AddAt(sp, "files", func(w *filetree.Tree) {
 	}, func(w *filetree.Tree) {
 		if br.DataRoot != "" {
 			errors.Log(os.Chdir(br.DataRoot))
@@ -149,7 +149,7 @@ func (br *Browser) Make(c *core.Plan) {
 			w.OpenPath(wd)
 		}
 	})
-	core.AddAt(c, "splits/tabs", func(w *core.Tabs) {
+	core.AddAt(sp, "tabs", func(w *core.Tabs) {
 		w.Type = core.FunctionalTabs
 	})
 }
@@ -176,15 +176,16 @@ func (br *Browser) UpdateFiles() { //types:add
 	br.Update()
 }
 
-func (br *Browser) MakeToolbar(c *core.Plan) {
-	core.Add(c, func(w *views.FuncButton) {
+func (br *Browser) MakeToolbar(p *core.Plan) {
+	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
 	scr := maps.Keys(br.Scripts)
 	slices.Sort(scr)
 	for _, s := range scr {
-		core.AddAt(c, s, func(w *core.Button) {
-			w.SetText(s).SetIcon(icons.RunCircle).
+		lbl := TrimOrderPrefix(s)
+		core.AddAt(p, lbl, func(w *core.Button) {
+			w.SetText(lbl).SetIcon(icons.RunCircle).
 				SetTooltip("Run script").
 				OnClick(func(e events.Event) {
 					br.RunScript(s)
