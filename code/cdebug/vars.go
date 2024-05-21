@@ -32,7 +32,7 @@ type Variable struct {
 	Kind syms.Kinds `inactive:"-"`
 
 	// own elemental value of variable (blank for composite types)
-	ElValue string `inactive:"-" view:"-"`
+	ElementValue string `inactive:"-" view:"-"`
 
 	// length of variable (slices, maps, strings etc)
 	Len int64 `inactive:"-"`
@@ -91,8 +91,8 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 	if vr.Value != "" {
 		return vr.Value
 	}
-	if vr.ElValue != "" {
-		return vr.ElValue
+	if vr.ElementValue != "" {
+		return vr.ElementValue
 	}
 	nkids := len(vr.Kids)
 	if vr.Kind.IsPtr() && nkids == 1 {

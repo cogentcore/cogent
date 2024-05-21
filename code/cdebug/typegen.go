@@ -9,7 +9,7 @@ import (
 )
 
 // VariableType is the [types.Type] for [Variable]
-var VariableType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/cdebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a tree type so that full tree\ncan be visualized.", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
+var VariableType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/cdebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a tree type so that full tree\ncan be visualized.", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElementValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
 
 // NewVariable adds a new [Variable] with the given name to the given parent:
 // Variable describes a variable.  It is a tree type so that full tree
@@ -40,9 +40,9 @@ func (t *Variable) SetFullTypeStr(v string) *Variable { t.FullTypeStr = v; retur
 // kind of element
 func (t *Variable) SetKind(v syms.Kinds) *Variable { t.Kind = v; return t }
 
-// SetElValue sets the [Variable.ElValue]:
+// SetElementValue sets the [Variable.ElementValue]:
 // own elemental value of variable (blank for composite types)
-func (t *Variable) SetElValue(v string) *Variable { t.ElValue = v; return t }
+func (t *Variable) SetElementValue(v string) *Variable { t.ElementValue = v; return t }
 
 // SetLen sets the [Variable.Len]:
 // length of variable (slices, maps, strings etc)

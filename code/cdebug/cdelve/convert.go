@@ -198,7 +198,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 		vr.Heap = true
 	}
 	vr.Kind = syms.ReflectKindMap[ds.Kind]
-	vr.ElValue = ds.Value
+	vr.ElementValue = ds.Value
 	vr.Value = ds.Value // note: NOT calling vr.ValueString(false, 0)
 	vr.Len = ds.Len
 	vr.Cap = ds.Cap
@@ -263,7 +263,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 				}
 			}
 			vr.Value = vstr
-			vr.ElValue = vstr
+			vr.ElementValue = vstr
 			return vr
 		}
 	}
