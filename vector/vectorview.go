@@ -43,10 +43,6 @@ func (vv *VectorView) OnInit() {
 	vv.Frame.OnInit()
 	vv.SetStyles()
 	vv.EditState.ConfigDefaultGradient()
-}
-
-func (vv *VectorView) OnAdd() {
-	vv.Frame.OnAdd()
 	vv.AddCloseDialog()
 }
 

@@ -114,10 +114,6 @@ func init() {
 func (ge *CodeView) OnInit() {
 	ge.Frame.OnInit()
 	ge.HandleEvents()
-}
-
-func (ge *CodeView) OnAdd() {
-	ge.Frame.OnAdd()
 	ge.AddCloseDialog()
 }
 
