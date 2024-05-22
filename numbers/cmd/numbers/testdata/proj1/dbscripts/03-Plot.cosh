@@ -1,0 +1,39 @@
+
+// TableWithKeyColumn returns a copy of the Table with a new Key
+// column with given column name and value,
+// used for aggregating data across multiple results
+func TableWithKeyColumn(dt *table.Table, colNm, key string) *table.Table {
+	c := dt.Clone()
+	jc := c.AddStringColumn(colNm)
+	for i := range jc.Values {
+		jc.Values[i] = key
+	}
+	return c
+}
+
+func PlotResults() {
+	tv := ResultsTableView
+	jis := tv.SelectedIndexesList(false)
+	if len(jis) == 0 {
+		fmt.Println("No Results rows selected")
+		return
+	}
+	var AggTable *table.Table
+	for _, i := range jis {
+		res := Results[i]
+		key := res.JobID
+		dt := TableWithKeyColumn(res.Table, "JobID", key)
+		if AggTable == nil {
+			AggTable = dt
+		} else {
+			AggTable.AppendRows(dt)
+		}
+	}
+	pl := br.NewTabPlot("Plot")
+	pl.Params = PlotParams // defaults set in Init
+	pl.SetTable(AggTable)
+	br.Update()
+}
+
+PlotResults()
+

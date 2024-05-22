@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"cogentcore.org/cogent/numbers/numshell"
 	"cogentcore.org/core/base/dirs"
@@ -84,7 +85,7 @@ func NewBrowserWindow(dataDir string) *Browser {
 	fmt.Println(ddr)
 	br.SetDataRoot(ddr)
 	br.SetScriptsDir(filepath.Join(ddr, "dbscripts"))
-	br.GetScripts()
+	br.UpdateScripts()
 	b.AddAppBar(br.MakeToolbar)
 	b.RunWindow()
 	TheBrowser = br
@@ -101,6 +102,7 @@ func (br *Browser) InitInterp() {
 	// 	},
 	// })
 	br.ScriptInterp.Config()
+	// logx.UserLevel = slog.LevelDebug // for debugging of init loading
 }
 
 func (br *Browser) GetDataRoot() string {
@@ -117,28 +119,7 @@ func (br *Browser) RunScript(snm string) {
 	br.ScriptInterp.Eval(sc)
 }
 
-func (br *Browser) GetScripts() {
-	scr := dirs.ExtFilenames(br.ScriptsDir, ".cosh")
-	br.Scripts = make(map[string]string)
-	for _, s := range scr {
-		snm := strings.TrimSuffix(s, ".cosh")
-		sc, err := os.ReadFile(filepath.Join(br.ScriptsDir, s))
-		if err == nil {
-			br.Scripts[snm] = string(sc)
-		} else {
-			slog.Error(err.Error())
-		}
-	}
-	// todo: tb needs to use new config!
-	// tb := br.Scene.GetTopAppBar()
-	// if tb != nil {
-	// 	tb.Update()
-	// }
-}
-
 func (br *Browser) Make(p *core.Plan) {
-	br.GetScripts()
-
 	sp := core.AddAt(p, "splits", func(w *core.Splits) {
 		w.SetSplits(.2, .8)
 	})
@@ -174,15 +155,42 @@ func (br *Browser) UpdateFiles() { //types:add
 	files := br.FileTree()
 	files.OpenPath(br.DataRoot)
 	os.Chdir(br.DataRoot)
-	br.GetScripts()
 	br.Update()
+}
+
+// UpdateScripts updates the Scripts and updates the toolbar.
+func (br *Browser) UpdateScripts() { //types:add
+	redo := (br.Scripts != nil)
+	scr := dirs.ExtFilenames(br.ScriptsDir, ".cosh")
+	br.Scripts = make(map[string]string)
+	for _, s := range scr {
+		snm := strings.TrimSuffix(s, ".cosh")
+		sc, err := os.ReadFile(filepath.Join(br.ScriptsDir, s))
+		if err == nil {
+			if unicode.IsLower(rune(snm[0])) {
+				if !redo {
+					fmt.Println("run init script:", snm)
+					br.ScriptInterp.Eval(string(sc))
+				}
+			} else {
+				br.Scripts[snm] = string(sc)
+			}
+		} else {
+			slog.Error(err.Error())
+		}
+	}
 	tb := br.Scene.GetTopAppBar()
-	tb.Update()
+	if tb != nil {
+		tb.Update()
+	}
 }
 
 func (br *Browser) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
+	})
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(br.UpdateScripts).SetText("").SetIcon(icons.Code)
 	})
 	scr := maps.Keys(br.Scripts)
 	slices.Sort(scr)

@@ -1,39 +1,9 @@
-debug on
-
-// for some reason the above debug off statement is necessary to make this all compile.
-
-// Result has info for one loaded result, in form of an etable.Table
-type Result struct {
-
-	// job id for results
-	JobID string
-
-	// description of job
-	Message string
-
-	// path to data
-	Path string
-
-	// result data
-	Table *table.Table
-}
-
-var Results []*Result
-
-// FilterResults specifies which results files to open
-type FilterResults struct {
-	// File name contains this string
-	FileContains string `width:"60"`
-
-	//	extension of files, e.g., .tsv
-	Ext string
-}
-
-Filter := FilterResults{Ext: ".tsv"}
+// Loads data for specific jobs results
 
 func OpenResultFiles(jobs []string, filter FilterResults) {
 	for i, jid := range jobs {
 		jpath := filepath.Join(br.DataRoot, DataDir, jid)
+		// fmt.Println(jid, jpath)
 		fls := dirs.ExtFilenames(jpath, filter.Ext)
 		ifls := []string{}
 		for _, fn := range fls {
@@ -42,7 +12,10 @@ func OpenResultFiles(jobs []string, filter FilterResults) {
 			}
 			dt := table.NewTable()
 			fpath := filepath.Join(jpath, fn)
-			dt.OpenCSV(core.Filename(fpath), table.Tab)
+			err := dt.OpenCSV(core.Filename(fpath), table.Tab)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
 			Results = append(Results, &Result{JobID: jid, Path: fpath, Table: dt})
 		}
 	}
@@ -50,7 +23,7 @@ func OpenResultFiles(jobs []string, filter FilterResults) {
 		core.MessageSnackbar(br, "No files containing: " + filter.FileContains + " with extension: " + filter.Ext)
 		return
 	}
-	br.NewTabTableView("Results", &Results)
+	ResultsTableView = br.NewTabTableView("Results", &Results)
 	br.Update()
 }
 
@@ -58,8 +31,12 @@ func OpenResults() {
 	tv := JobsTableView
 	jobs := tv.SelectedColumnStrings("JobID")
 	if len(jobs) == 0 {
-		fmt.Println("No rows selected")
+		fmt.Println("No Jobs rows selected")
 		return
+	}
+	// fmt.Println(jobs)
+	if Filter.Ext == "" {
+		Filter.Ext = ".tsv"
 	}
 	databrowser.Prompt(br, &Filter, "Open results data for files", func() {
 		OpenResultFiles(jobs, Filter)

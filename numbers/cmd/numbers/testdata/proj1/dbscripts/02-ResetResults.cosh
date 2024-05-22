@@ -1,0 +1,9 @@
+
+func ResetResults() {
+	Results = []*Result{}
+	br.NewTabTableView("Results", &Results)
+	br.Update()
+}
+
+ResetResults()
+

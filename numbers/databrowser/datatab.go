@@ -8,6 +8,7 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/plot/plotview"
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/tensor/tensorview"
 	"cogentcore.org/core/views"
@@ -34,16 +35,30 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 }
 
 // NewTabTableView creates a tab with a slice TableView.
+// Sets the slice if tab already exists
 func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(1).(*views.TableView)
+		tv := tab.Child(0).(*views.TableView)
+		tv.SetSlice(slc)
 		return tv
 	}
 	tv := views.NewTableView(tab)
 	tv.SetSlice(slc)
 	return tv
+}
+
+// NewTabPlot creates a tab with a SubPlot PlotView
+func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
+	tabs := br.Tabs()
+	tab := tabs.RecycleTab(label, true)
+	if tab.HasChildren() {
+		pl := tab.Child(0).Child(1).(*plotview.PlotView)
+		return pl
+	}
+	pl := plotview.NewSubPlot(tab)
+	return pl
 }
 
 // FormatTableFromCSV formats the columns of the given table according to the

@@ -1,8 +1,16 @@
 // note: br is browser
 
-func OpenJobs(path string) (*tensorview.TableView, *table.Table) {
-	tv := br.NewTabTable(path)
+func OpenJobs(path string) {
+	// set the default plot parameters -- can't do in init.cosh for some unknown reason
+	PlotParams.Defaults()
+	PlotParams.Title = "Sim Run Data"
+	PlotParams.XAxisColumn = "Run"
+	PlotParams.LegendColumn = "JobID"
+	
+	tv := br.NewTabTable("Jobs")
 	dt := tv.Table.Table
+	JobsTableView = tv
+	JobsTable = dt
 	dpath := filepath.Join(br.DataRoot, path)
 	// fmt.Println("opening data at:", dpath)
 
@@ -25,9 +33,7 @@ func OpenJobs(path string) (*tensorview.TableView, *table.Table) {
 	}
 	tv.Table.Sequential()
 	br.Update()
-	return tv, dt
 }
 
-DataDir := "data"
-JobsTableView, Jobs := OpenJobs(DataDir)
+OpenJobs(DataDir)
 
