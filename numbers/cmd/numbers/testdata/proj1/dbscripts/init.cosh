@@ -46,4 +46,12 @@ var (
 	Filter     FilterResults
 )
 
-// note: cannot put main() here or any other function -- not sure why
+func defaults() {
+	PlotParams.Defaults()
+	PlotParams.Title = "Sim Run Data"
+	PlotParams.XAxisColumn = "Run"
+	PlotParams.LegendColumn = "JobID"
+}
+
+defaults()
+

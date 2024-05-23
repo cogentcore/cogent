@@ -116,7 +116,11 @@ func (br *Browser) RunScript(snm string) {
 		return
 	}
 	logx.PrintlnDebug("\n################\nrunning script:\n", sc, "\n")
-	br.ScriptInterp.Eval(sc)
+	_, _, err := br.ScriptInterp.Eval(sc)
+	if err == nil {
+		err = br.ScriptInterp.Shell.DepthError()
+	}
+	br.ScriptInterp.Shell.ResetDepth()
 }
 
 func (br *Browser) Make(p *core.Plan) {

@@ -1,3 +1,0 @@
-fmt.Println("Pulling in data dir:", br.DataRoot)
-// git pull
-
