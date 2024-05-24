@@ -19,6 +19,7 @@ func init() {
 		"Symbols":          reflect.ValueOf(&Symbols).Elem(),
 		"TheBrowser":       reflect.ValueOf(&TheBrowser).Elem(),
 		"TrimOrderPrefix":  reflect.ValueOf(TrimOrderPrefix),
+		"CleanCatTSV":      reflect.ValueOf(CleanCatTSV),
 
 		// type definitions
 		"Browser": reflect.ValueOf((*Browser)(nil)),
