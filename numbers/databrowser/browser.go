@@ -55,6 +55,10 @@ type Browser struct {
 	// DataRoot is the path to the root of the data to browse
 	DataRoot string
 
+	// StartDir is the starting directory, where the numbers app
+	// was originally started.
+	StartDir string
+
 	// ScriptsDir is the directory containing scripts for toolbar actions.
 	// It defaults to DataDir/dbscripts
 	ScriptsDir string
@@ -81,15 +85,18 @@ func (br *Browser) OnInit() {
 func NewBrowserWindow(dataDir string) *Browser {
 	b := core.NewBody("Cogent Data Browser")
 	br := NewBrowser(b)
+	br.StartDir, _ = os.Getwd()
+	br.StartDir = errors.Log1(filepath.Abs(br.StartDir))
 	ddr := errors.Log1(filepath.Abs(dataDir))
 	fmt.Println(ddr)
+	b.AddAppBar(br.MakeToolbar)
+
 	br.SetDataRoot(ddr)
 	br.SetScriptsDir(filepath.Join(ddr, "dbscripts"))
-	br.UpdateScripts()
-	b.AddAppBar(br.MakeToolbar)
-	b.RunWindow()
 	TheBrowser = br
 	br.ScriptInterp.Eval("br := databrowser.TheBrowser") // grab it
+	br.UpdateScripts()
+	b.RunWindow()
 	return br
 }
 
@@ -125,7 +132,7 @@ func (br *Browser) RunScript(snm string) {
 
 func (br *Browser) Make(p *core.Plan) {
 	sp := core.AddAt(p, "splits", func(w *core.Splits) {
-		w.SetSplits(.2, .8)
+		w.SetSplits(.15, .85)
 	})
 	core.AddAt(sp, "files", func(w *filetree.Tree) {
 	}, func(w *filetree.Tree) {

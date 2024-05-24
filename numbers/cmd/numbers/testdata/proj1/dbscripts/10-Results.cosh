@@ -38,7 +38,7 @@ func OpenResults() {
 	if Filter.Ext == "" {
 		Filter.Ext = ".tsv"
 	}
-	databrowser.Prompt(br, &Filter, "Open results data for files", func() {
+	databrowser.PromptStruct(br, &Filter, "Open results data for files", func() {
 		OpenResultFiles(jobs, Filter)
 	})
 }
