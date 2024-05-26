@@ -27,6 +27,7 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
 	"github.com/traefik/yaegi/interp"
 	"golang.org/x/exp/maps"
@@ -100,6 +101,19 @@ func NewBrowserWindow(dataDir string) *Browser {
 	return br
 }
 
+// ParentBrowser returns the Browser parent of given node
+func ParentBrowser(tn tree.Node) (*Browser, bool) {
+	var res *Browser
+	tn.WalkUp(func(n tree.Node) bool {
+		if c, ok := n.This().(*Browser); ok {
+			res = c
+			return false
+		}
+		return true
+	})
+	return res, res != nil
+}
+
 func (br *Browser) InitInterp() {
 	br.ScriptInterp = numshell.NewInterpreter(interp.Options{})
 	br.ScriptInterp.Interp.Use(Symbols)
@@ -161,7 +175,6 @@ func (br *Browser) Tabs() *core.Tabs {
 }
 
 // UpdateFiles Updates the file view with current files in DataRoot,
-// and re-loads the Scripts and updates the toolbar.
 func (br *Browser) UpdateFiles() { //types:add
 	files := br.FileTree()
 	files.OpenPath(br.DataRoot)

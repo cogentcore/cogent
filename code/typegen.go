@@ -23,13 +23,11 @@ import (
 // CodeViewType is the [types.Type] for [CodeView]
 var CodeViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.CodeView", IDName: "code-view", Doc: "CodeView is the core editor and tab viewer framework for the Code system.  The\ndefault view has a tree browser of files on the left, editor panels in the\nmiddle, and a tabbed viewer on the right.", Methods: []types.Method{{Name: "MakeToolbar", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"tb"}}, {Name: "UpdateFiles", Doc: "UpdateFiles updates the list of files saved in project", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "OpenRecent", Doc: "OpenRecent opens a recently used file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}}, {Name: "OpenFile", Doc: "OpenFile opens file in an open project if it has the same path as the file\nor in a new window.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"fnm"}}, {Name: "OpenPath", Doc: "OpenPath creates a new project by opening given path, which can either be a\nspecific file or a folder containing multiple files of interest -- opens in\ncurrent CodeView object if it is empty, or otherwise opens a new window.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"path"}, Returns: []string{"CodeView"}}, {Name: "OpenProject", Doc: "OpenProject opens .code project file and its settings from given filename, in a standard\ntoml-formatted file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"CodeView"}}, {Name: "NewProject", Doc: "NewProject creates a new project at given path, making a new folder in that\npath -- all CodeView projects are essentially defined by a path to a folder\ncontaining files.  If the folder already exists, then use OpenPath.\nCan also specify main language and version control type", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"path", "folder", "mainLang", "VersionControl"}, Returns: []string{"CodeView"}}, {Name: "NewFile", Doc: "NewFile creates a new file in the project", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename", "addToVcs"}}, {Name: "SaveProject", Doc: "SaveProject saves project file containing custom project settings, in a\nstandard toml-formatted file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SaveProjectAs", Doc: "SaveProjectAs saves project custom settings to given filename, in a standard\ntoml-formatted file\nsaveAllFiles indicates if user should be prompted for saving all files\nreturns true if the user was prompted, false otherwise", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"bool"}}, {Name: "ExecCmdNameActive", Doc: "ExecCmdNameActive calls given command on current active texteditor", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"cmdNm"}}, {Name: "ExecCmd", Doc: "ExecCmd pops up a menu to select a command appropriate for the current\nactive text view, and shows output in Tab with name of command", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "Build", Doc: "Build runs the BuildCmds set for this project", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "Run", Doc: "Run runs the RunCmds set for this project", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "Commit", Doc: "Commit commits the current changes using relevant VCS tool.\nChecks for VCS setting and for unsaved files.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "CursorToHistPrev", Doc: "CursorToHistPrev moves back to the previous history item.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"bool"}}, {Name: "CursorToHistNext", Doc: "CursorToHistNext moves forward to the next history item.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"bool"}}, {Name: "ReplaceInActive", Doc: "ReplaceInActive does query-replace in active file only", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "CutRect", Doc: "CutRect cuts rectangle in active text view", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "CopyRect", Doc: "CopyRect copies rectangle in active text view", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "PasteRect", Doc: "PasteRect cuts rectangle in active text view", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "RegisterCopy", Doc: "RegisterCopy saves current selection in active text view to register of given name\nreturns true if saved", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"name"}, Returns: []string{"bool"}}, {Name: "RegisterPaste", Doc: "RegisterPaste pastes register of given name into active text view\nreturns true if pasted", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"name"}, Returns: []string{"bool"}}, {Name: "CommentOut", Doc: "CommentOut comments-out selected lines in active text view\nand uncomments if already commented\nIf multiple lines are selected and any line is uncommented all will be commented", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"bool"}}, {Name: "Indent", Doc: "Indent indents selected lines in active view", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"bool"}}, {Name: "ReCase", Doc: "ReCase replaces currently selected text in current active view with given case", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"c"}, Returns: []string{"string"}}, {Name: "JoinParaLines", Doc: "JoinParaLines merges sequences of lines with hard returns forming paragraphs,\nseparated by blank lines, into a single line per paragraph,\nfor given selected region (full text if no selection)", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "TabsToSpaces", Doc: "TabsToSpaces converts tabs to spaces\nfor given selected region (full text if no selection)", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SpacesToTabs", Doc: "SpacesToTabs converts spaces to tabs\nfor given selected region (full text if no selection)", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "DiffFiles", Doc: "DiffFiles shows the differences between two given files\nin side-by-side DiffView and in the console as a context diff.\nIt opens the files as file nodes and uses existing contents if open already.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"fnmA", "fnmB"}}, {Name: "DiffFileNode", Doc: "DiffFileNode shows the differences between given file node as the A file,\nand another given file as the B file,\nin side-by-side DiffView and in the console as a context diff.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"fna", "fnmB"}}, {Name: "CountWords", Doc: "CountWords counts number of words (and lines) in active file\nreturns a string report thereof.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"string"}}, {Name: "CountWordsRegion", Doc: "CountWordsRegion counts number of words (and lines) in selected region in file\nif no selection, returns numbers for entire file.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"string"}}, {Name: "SaveActiveView", Doc: "SaveActiveView saves the contents of the currently active texteditor", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SaveActiveViewAs", Doc: "SaveActiveViewAs save with specified filename the contents of the\ncurrently active texteditor", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}}, {Name: "RevertActiveView", Doc: "RevertActiveView revert active view to saved version", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "CloseActiveView", Doc: "CloseActiveView closes the buffer associated with active view", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "NextViewFile", Doc: "NextViewFile sets the next text view to view given file name -- include as\nmuch of name as possible to disambiguate -- will use the first matching --\nif already being viewed, that is activated -- returns texteditor and its\nindex, false if not found", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"fnm"}, Returns: []string{"TextEditor", "int", "bool"}}, {Name: "ViewFile", Doc: "ViewFile views file in an existing TextEditor if it is already viewing that\nfile, otherwise opens ViewFileNode in active buffer", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"fnm"}, Returns: []string{"TextEditor", "int", "bool"}}, {Name: "CloneActiveView", Doc: "CloneActiveView sets the next text view to view the same file currently being vieweds\nin the active view. returns text view and index", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Returns: []string{"TextEditor", "int"}}, {Name: "SaveAll", Doc: "SaveAll saves all of the open filenodes to their current file names\nand saves the project state if it has been saved before (i.e., the .code file exists)", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "FocusNextPanel", Doc: "FocusNextPanel moves the keyboard focus to the next panel to the right", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "FocusPrevPanel", Doc: "FocusPrevPanel moves the keyboard focus to the previous panel to the left", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditProjectSettings", Doc: "EditProjectSettings allows editing of project settings (settings specific to this project)", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SplitsSetView", Doc: "SplitsSetView sets split view splitters to given named setting", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"split"}}, {Name: "SplitsSave", Doc: "SplitsSave saves current splitter settings to named splitter settings under\nexisting name, and saves to prefs file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"split"}}, {Name: "SplitsSaveAs", Doc: "SplitsSaveAs saves current splitter settings to new named splitter settings, and\nsaves to prefs file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"name", "desc"}}, {Name: "SplitsEdit", Doc: "SplitsEdit opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "Find", Doc: "Find does Find / Replace in files, using given options and filters -- opens up a\nmain tab with the results and further controls.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"find", "repl", "ignoreCase", "regExp", "loc", "langs"}}, {Name: "Spell", Doc: "Spell checks spelling in active text view", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "Symbols", Doc: "Symbols displays the Symbols of a file or package", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "Debug", Doc: "Debug starts the debugger on the RunExec executable.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "DebugTest", Doc: "DebugTest runs the debugger using testing mode in current active texteditor path", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "DebugAttach", Doc: "DebugAttach runs the debugger by attaching to an already-running process.\npid is the process id to attach to.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"pid"}}, {Name: "VCSUpdateAll", Doc: "VCSUpdateAll does an Update (e.g., Pull) on all VCS repositories within\nthe open tree nodes in FileTree.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "VCSLog", Doc: "VCSLog shows the VCS log of commits for this file, optionally with a\nsince date qualifier: If since is non-empty, it should be\na date-like expression that the VCS will understand, such as\n1/1/2020, yesterday, last year, etc.  SVN only understands a\nnumber as a maximum number of items to return.\nIf allFiles is true, then the log will show revisions for all files, not just\nthis one.\nReturns the Log and also shows it in a VCSLogView which supports further actions.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"since"}, Returns: []string{"Log", "error"}}, {Name: "OpenConsoleTab", Doc: "OpenConsoleTab opens a main tab displaying console output (stdout, stderr)", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "ChooseRunExec", Doc: "ChooseRunExec selects the executable to run for the project", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"exePath"}}, {Name: "HelpWiki", Doc: "HelpWiki opens wiki page for code on github", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "ProjectRoot", Doc: "root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjectFilename"}, {Name: "ProjectFilename", Doc: "current project filename for saving / loading specific Code configuration information in a .code file (optional)"}, {Name: "ActiveFilename", Doc: "filename of the currently active texteditor"}, {Name: "ActiveLang", Doc: "language for current active filename"}, {Name: "ActiveVCS", Doc: "VCS repo for current active filename"}, {Name: "ActiveVCSInfo", Doc: "VCS info for current active filename (typically branch or revision) -- for status"}, {Name: "Changed", Doc: "has the root changed?  we receive update signals from root for changes"}, {Name: "StatusMessage", Doc: "the last status update message"}, {Name: "LastSaveTStamp", Doc: "timestamp for when a file was last saved -- provides dirty state for various updates including rebuilding in debugger"}, {Name: "Files", Doc: "all the files in the project directory and subdirectories"}, {Name: "ActiveTextEditorIndex", Doc: "index of the currently active texteditor -- new files will be viewed in other views if available"}, {Name: "OpenNodes", Doc: "list of open nodes, most recent first"}, {Name: "CmdBufs", Doc: "the command buffers for commands run in this project"}, {Name: "CmdHistory", Doc: "history of commands executed in this session"}, {Name: "RunningCmds", Doc: "currently running commands in this project"}, {Name: "ArgVals", Doc: "current arg var vals"}, {Name: "Settings", Doc: "settings for this project -- this is what is saved in a .code project file"}, {Name: "CurDbg", Doc: "current debug view"}, {Name: "KeySeq1", Doc: "first key in sequence if needs2 key pressed"}, {Name: "UpdateMu", Doc: "mutex for protecting overall updates to CodeView"}}, Instance: &CodeView{}})
 
-// NewCodeView adds a new [CodeView] with the given name to the given parent:
+// NewCodeView returns a new [CodeView] with the given optional parent:
 // CodeView is the core editor and tab viewer framework for the Code system.  The
 // default view has a tree browser of files on the left, editor panels in the
 // middle, and a tabbed viewer on the right.
-func NewCodeView(parent tree.Node, name ...string) *CodeView {
-	return parent.NewChild(CodeViewType, name...).(*CodeView)
-}
+func NewCodeView(parent ...tree.Node) *CodeView { return tree.New[*CodeView](parent...) }
 
 // NodeType returns the [*types.Type] of [CodeView]
 func (t *CodeView) NodeType() *types.Type { return CodeViewType }
@@ -61,13 +59,11 @@ func (t *CodeView) SetOpenNodes(v OpenNodes) *CodeView { t.OpenNodes = v; return
 func (t *CodeView) SetTooltip(v string) *CodeView { t.Tooltip = v; return t }
 
 // DebugViewType is the [types.Type] for [DebugView]
-var DebugViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
+var DebugViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
 
-// NewDebugView adds a new [DebugView] with the given name to the given parent:
+// NewDebugView returns a new [DebugView] with the given optional parent:
 // DebugView is the debugger
-func NewDebugView(parent tree.Node, name ...string) *DebugView {
-	return parent.NewChild(DebugViewType, name...).(*DebugView)
-}
+func NewDebugView(parent ...tree.Node) *DebugView { return tree.New[*DebugView](parent...) }
 
 // NodeType returns the [*types.Type] of [DebugView]
 func (t *DebugView) NodeType() *types.Type { return DebugViewType }
@@ -91,13 +87,11 @@ func (t *DebugView) SetDbgTime(v time.Time) *DebugView { t.DbgTime = v; return t
 func (t *DebugView) SetTooltip(v string) *DebugView { t.Tooltip = v; return t }
 
 // StackViewType is the [types.Type] for [StackView]
-var StackViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
+var StackViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
 
-// NewStackView adds a new [StackView] with the given name to the given parent:
+// NewStackView returns a new [StackView] with the given optional parent:
 // StackView is a view of the stack trace
-func NewStackView(parent tree.Node, name ...string) *StackView {
-	return parent.NewChild(StackViewType, name...).(*StackView)
-}
+func NewStackView(parent ...tree.Node) *StackView { return tree.New[*StackView](parent...) }
 
 // NodeType returns the [*types.Type] of [StackView]
 func (t *StackView) NodeType() *types.Type { return StackViewType }
@@ -113,13 +107,11 @@ func (t *StackView) SetFindFrames(v bool) *StackView { t.FindFrames = v; return 
 func (t *StackView) SetTooltip(v string) *StackView { t.Tooltip = v; return t }
 
 // BreakViewType is the [types.Type] for [BreakView]
-var BreakViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []types.Field{{Name: "Layout"}}, Instance: &BreakView{}})
+var BreakViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []types.Field{{Name: "Frame"}}, Instance: &BreakView{}})
 
-// NewBreakView adds a new [BreakView] with the given name to the given parent:
+// NewBreakView returns a new [BreakView] with the given optional parent:
 // BreakView is a view of the breakpoints
-func NewBreakView(parent tree.Node, name ...string) *BreakView {
-	return parent.NewChild(BreakViewType, name...).(*BreakView)
-}
+func NewBreakView(parent ...tree.Node) *BreakView { return tree.New[*BreakView](parent...) }
 
 // NodeType returns the [*types.Type] of [BreakView]
 func (t *BreakView) NodeType() *types.Type { return BreakViewType }
@@ -131,13 +123,11 @@ func (t *BreakView) New() tree.Node { return &BreakView{} }
 func (t *BreakView) SetTooltip(v string) *BreakView { t.Tooltip = v; return t }
 
 // ThreadViewType is the [types.Type] for [ThreadView]
-var ThreadViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []types.Field{{Name: "Layout"}}, Instance: &ThreadView{}})
+var ThreadViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []types.Field{{Name: "Frame"}}, Instance: &ThreadView{}})
 
-// NewThreadView adds a new [ThreadView] with the given name to the given parent:
+// NewThreadView returns a new [ThreadView] with the given optional parent:
 // ThreadView is a view of the threads
-func NewThreadView(parent tree.Node, name ...string) *ThreadView {
-	return parent.NewChild(ThreadViewType, name...).(*ThreadView)
-}
+func NewThreadView(parent ...tree.Node) *ThreadView { return tree.New[*ThreadView](parent...) }
 
 // NodeType returns the [*types.Type] of [ThreadView]
 func (t *ThreadView) NodeType() *types.Type { return ThreadViewType }
@@ -149,13 +139,11 @@ func (t *ThreadView) New() tree.Node { return &ThreadView{} }
 func (t *ThreadView) SetTooltip(v string) *ThreadView { t.Tooltip = v; return t }
 
 // TaskViewType is the [types.Type] for [TaskView]
-var TaskViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []types.Field{{Name: "Layout"}}, Instance: &TaskView{}})
+var TaskViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []types.Field{{Name: "Frame"}}, Instance: &TaskView{}})
 
-// NewTaskView adds a new [TaskView] with the given name to the given parent:
+// NewTaskView returns a new [TaskView] with the given optional parent:
 // TaskView is a view of the threads
-func NewTaskView(parent tree.Node, name ...string) *TaskView {
-	return parent.NewChild(TaskViewType, name...).(*TaskView)
-}
+func NewTaskView(parent ...tree.Node) *TaskView { return tree.New[*TaskView](parent...) }
 
 // NodeType returns the [*types.Type] of [TaskView]
 func (t *TaskView) NodeType() *types.Type { return TaskViewType }
@@ -167,13 +155,11 @@ func (t *TaskView) New() tree.Node { return &TaskView{} }
 func (t *TaskView) SetTooltip(v string) *TaskView { t.Tooltip = v; return t }
 
 // VarsViewType is the [types.Type] for [VarsView]
-var VarsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
+var VarsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
 
-// NewVarsView adds a new [VarsView] with the given name to the given parent:
+// NewVarsView returns a new [VarsView] with the given optional parent:
 // VarsView is a view of the variables
-func NewVarsView(parent tree.Node, name ...string) *VarsView {
-	return parent.NewChild(VarsViewType, name...).(*VarsView)
-}
+func NewVarsView(parent ...tree.Node) *VarsView { return tree.New[*VarsView](parent...) }
 
 // NodeType returns the [*types.Type] of [VarsView]
 func (t *VarsView) NodeType() *types.Type { return VarsViewType }
@@ -191,12 +177,10 @@ func (t *VarsView) SetTooltip(v string) *VarsView { t.Tooltip = v; return t }
 // VarViewType is the [types.Type] for [VarView]
 var VarViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
 
-// NewVarView adds a new [VarView] with the given name to the given parent:
+// NewVarView returns a new [VarView] with the given optional parent:
 // VarView shows a debug variable in an inspector-like framework,
 // with sub-variables in a tree.
-func NewVarView(parent tree.Node, name ...string) *VarView {
-	return parent.NewChild(VarViewType, name...).(*VarView)
-}
+func NewVarView(parent ...tree.Node) *VarView { return tree.New[*VarView](parent...) }
 
 // NodeType returns the [*types.Type] of [VarView]
 func (t *VarView) NodeType() *types.Type { return VarViewType }
@@ -214,11 +198,9 @@ func (t *VarView) SetTooltip(v string) *VarView { t.Tooltip = v; return t }
 // FileNodeType is the [types.Type] for [FileNode]
 var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []types.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
-// NewFileNode adds a new [FileNode] with the given name to the given parent:
+// NewFileNode returns a new [FileNode] with the given optional parent:
 // FileNode is Code version of FileNode for FileTree view
-func NewFileNode(parent tree.Node, name ...string) *FileNode {
-	return parent.NewChild(FileNodeType, name...).(*FileNode)
-}
+func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[*FileNode](parent...) }
 
 // NodeType returns the [*types.Type] of [FileNode]
 func (t *FileNode) NodeType() *types.Type { return FileNodeType }
@@ -263,14 +245,12 @@ func (t *FileNode) SetRootView(v *views.TreeView) *FileNode { t.RootView = v; re
 func (t *FileNode) SetSelectedNodes(v ...views.TreeViewer) *FileNode { t.SelectedNodes = v; return t }
 
 // FindViewType is the [types.Type] for [FindView]
-var FindViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "LangVV", Doc: "langs value view"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
+var FindViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "LangVV", Doc: "langs value view"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
 
-// NewFindView adds a new [FindView] with the given name to the given parent:
+// NewFindView returns a new [FindView] with the given optional parent:
 // FindView is a find / replace widget that displays results in a TextEditor
 // and has a toolbar for controlling find / replace process.
-func NewFindView(parent tree.Node, name ...string) *FindView {
-	return parent.NewChild(FindViewType, name...).(*FindView)
-}
+func NewFindView(parent ...tree.Node) *FindView { return tree.New[*FindView](parent...) }
 
 // NodeType returns the [*types.Type] of [FindView]
 func (t *FindView) NodeType() *types.Type { return FindViewType }
@@ -304,13 +284,11 @@ var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileSettings
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.ProjectSettings", IDName: "project-settings", Doc: "ProjectSettings are the settings for saving for a project. This IS the project file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Open", Doc: "Open open from file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save save to file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}}, Fields: []types.Field{{Name: "Files", Doc: "file view settings"}, {Name: "Editor", Doc: "editor settings"}, {Name: "SplitName", Doc: "current named-split config in use for configuring the splitters"}, {Name: "MainLang", Doc: "the language associated with the most frequently encountered file\nextension in the file tree -- can be manually set here as well"}, {Name: "VersionControl", Doc: "the type of version control system used in this project (git, svn, etc).\nfilters commands available"}, {Name: "ProjectFilename", Doc: "current project filename for saving / loading specific Code\nconfiguration information in a .code file (optional)"}, {Name: "ProjectRoot", Doc: "root directory for the project. all projects must be organized within\na top-level root directory, with all the files therein constituting\nthe scope of the project. By default it is the path for ProjectFilename"}, {Name: "GoMod", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"}, {Name: "BuildCmds", Doc: "command(s) to run for main Build button"}, {Name: "BuildDir", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"}, {Name: "BuildTarg", Doc: "build target for main Build button, if relevant for your  BuildCmds"}, {Name: "RunExec", Doc: "executable to run for this project via main Run button -- called by standard Run Project command"}, {Name: "RunCmds", Doc: "command(s) to run for main Run button (typically Run Project)"}, {Name: "Debug", Doc: "custom debugger parameters for this project"}, {Name: "Find", Doc: "saved find params"}, {Name: "Symbols", Doc: "saved structure params"}, {Name: "Dirs", Doc: "directory properties"}, {Name: "Register", Doc: "last register used"}, {Name: "Splits", Doc: "current splitter splits"}}})
 
 // SpellViewType is the [types.Type] for [SpellView]
-var SpellViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIndex", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
+var SpellViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIndex", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
 
-// NewSpellView adds a new [SpellView] with the given name to the given parent:
+// NewSpellView returns a new [SpellView] with the given optional parent:
 // SpellView is a widget that displays results of spell check
-func NewSpellView(parent tree.Node, name ...string) *SpellView {
-	return parent.NewChild(SpellViewType, name...).(*SpellView)
-}
+func NewSpellView(parent ...tree.Node) *SpellView { return tree.New[*SpellView](parent...) }
 
 // NodeType returns the [*types.Type] of [SpellView]
 func (t *SpellView) NodeType() *types.Type { return SpellViewType }
@@ -358,13 +336,11 @@ func (t *SpellView) SetLastAction(v *core.Button) *SpellView { t.LastAction = v;
 func (t *SpellView) SetTooltip(v string) *SpellView { t.Tooltip = v; return t }
 
 // SymbolsViewType is the [types.Type] for [SymbolsView]
-var SymbolsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []types.Field{{Name: "Layout"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
+var SymbolsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
 
-// NewSymbolsView adds a new [SymbolsView] with the given name to the given parent:
+// NewSymbolsView returns a new [SymbolsView] with the given optional parent:
 // SymbolsView is a widget that displays results of a file or package parse
-func NewSymbolsView(parent tree.Node, name ...string) *SymbolsView {
-	return parent.NewChild(SymbolsViewType, name...).(*SymbolsView)
-}
+func NewSymbolsView(parent ...tree.Node) *SymbolsView { return tree.New[*SymbolsView](parent...) }
 
 // NodeType returns the [*types.Type] of [SymbolsView]
 func (t *SymbolsView) NodeType() *types.Type { return SymbolsViewType }
@@ -394,12 +370,10 @@ func (t *SymbolsView) SetTooltip(v string) *SymbolsView { t.Tooltip = v; return 
 // SymNodeType is the [types.Type] for [SymNode]
 var SymNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
 
-// NewSymNode adds a new [SymNode] with the given name to the given parent:
+// NewSymNode returns a new [SymNode] with the given optional parent:
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
-func NewSymNode(parent tree.Node, name ...string) *SymNode {
-	return parent.NewChild(SymNodeType, name...).(*SymNode)
-}
+func NewSymNode(parent ...tree.Node) *SymNode { return tree.New[*SymNode](parent...) }
 
 // NodeType returns the [*types.Type] of [SymNode]
 func (t *SymNode) NodeType() *types.Type { return SymNodeType }
@@ -414,11 +388,9 @@ func (t *SymNode) SetSymbol(v syms.Symbol) *SymNode { t.Symbol = v; return t }
 // SymTreeViewType is the [types.Type] for [SymTreeView]
 var SymTreeViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymTreeView", IDName: "sym-tree-view", Doc: "SymTreeView is a TreeView that knows how to operate on FileNode nodes", Embeds: []types.Field{{Name: "TreeView"}}, Instance: &SymTreeView{}})
 
-// NewSymTreeView adds a new [SymTreeView] with the given name to the given parent:
+// NewSymTreeView returns a new [SymTreeView] with the given optional parent:
 // SymTreeView is a TreeView that knows how to operate on FileNode nodes
-func NewSymTreeView(parent tree.Node, name ...string) *SymTreeView {
-	return parent.NewChild(SymTreeViewType, name...).(*SymTreeView)
-}
+func NewSymTreeView(parent ...tree.Node) *SymTreeView { return tree.New[*SymTreeView](parent...) }
 
 // NodeType returns the [*types.Type] of [SymTreeView]
 func (t *SymTreeView) NodeType() *types.Type { return SymTreeViewType }
@@ -468,12 +440,10 @@ func (t *SymTreeView) SetSelectedNodes(v ...views.TreeViewer) *SymTreeView {
 // TextEditorType is the [types.Type] for [TextEditor]
 var TextEditorType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.TextEditor", IDName: "text-editor", Doc: "TextEditor is the Code-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc", Embeds: []types.Field{{Name: "Editor"}}, Fields: []types.Field{{Name: "Code"}}, Instance: &TextEditor{}})
 
-// NewTextEditor adds a new [TextEditor] with the given name to the given parent:
+// NewTextEditor returns a new [TextEditor] with the given optional parent:
 // TextEditor is the Code-specific version of the TextEditor, with support for
 // setting / clearing breakpoints, etc
-func NewTextEditor(parent tree.Node, name ...string) *TextEditor {
-	return parent.NewChild(TextEditorType, name...).(*TextEditor)
-}
+func NewTextEditor(parent ...tree.Node) *TextEditor { return tree.New[*TextEditor](parent...) }
 
 // NodeType returns the [*types.Type] of [TextEditor]
 func (t *TextEditor) NodeType() *types.Type { return TextEditorType }

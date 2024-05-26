@@ -189,8 +189,8 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 	if ds == nil {
 		return nil
 	}
-	vr := &cdebug.Variable{}
-	vr.InitName(vr, ds.Name)
+	vr := cdebug.NewVariable()
+	vr.SetName(ds.Name)
 	vr.Addr = uintptr(ds.Addr)
 	vr.FullTypeStr = ds.RealType
 	vr.TypeStr = ShortType(ds.RealType)

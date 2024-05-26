@@ -163,12 +163,22 @@ func (se *SettingsData) ApplyEnvVars() {
 	}
 }
 
-func (se *SettingsData) MakeToolbar(tb *core.Toolbar) {
-	views.NewFuncButton(tb, se.EditKeyMaps).SetIcon(icons.Keyboard)
-	views.NewFuncButton(tb, se.EditLangOpts).SetIcon(icons.Subtitles)
-	views.NewFuncButton(tb, se.EditCmds).SetIcon(icons.KeyboardCommandKey)
-	views.NewFuncButton(tb, se.EditSplits).SetIcon(icons.VerticalSplit)
-	views.NewFuncButton(tb, se.EditRegisters).SetIcon(icons.Variables)
+func (se *SettingsData) MakeToolbar(p *core.Plan) {
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(se.EditKeyMaps).SetIcon(icons.Keyboard)
+	})
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(se.EditLangOpts).SetIcon(icons.Subtitles)
+	})
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(se.EditCmds).SetIcon(icons.KeyboardCommandKey)
+	})
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(se.EditSplits).SetIcon(icons.VerticalSplit)
+	})
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(se.EditRegisters).SetIcon(icons.Variables)
+	})
 }
 
 // EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /

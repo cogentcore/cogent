@@ -25,9 +25,9 @@ import (
 // ConfigFindButton configures the Find FuncButton with current params
 func (ge *CodeView) ConfigFindButton(fb *views.FuncButton) *views.FuncButton {
 	fb.Args[0].SetValue(ge.Settings.Find.Find)
-	fb.Args[0].SetTag("width", "80")
+	// fb.Args[0].SetTag("width", "80") // todo:
 	fb.Args[1].SetValue(ge.Settings.Find.Replace)
-	fb.Args[1].SetTag("width", "80")
+	// fb.Args[1].SetTag("width", "80")
 	fb.Args[2].SetValue(ge.Settings.Find.IgnoreCase)
 	fb.Args[3].SetValue(ge.Settings.Find.Regexp)
 	fb.Args[4].SetValue(ge.Settings.Find.Loc)
@@ -41,7 +41,7 @@ func (ge *CodeView) CallFind(ctx core.Widget) {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc FindLoc, langs []fileinfo.Known) { //types:add
+func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLoc, langs []fileinfo.Known) { //types:add
 	if find == "" {
 		return
 	}
@@ -74,8 +74,8 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 		adir, _ = filepath.Split(string(ond.FPath))
 	}
 
-	var res []FileSearchResults
-	if loc == FindLocFile {
+	var res []filetree.SearchResults
+	if loc == filetree.FindLocFile {
 		if got {
 			if regExp {
 				re, err := regexp.Compile(find)
@@ -83,15 +83,17 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 					log.Println(err)
 				} else {
 					cnt, matches := atv.Buffer.SearchRegexp(re)
-					res = append(res, FileSearchResults{ond, cnt, matches})
+					res = append(res, filetree.SearchResults{ond, cnt, matches})
 				}
 			} else {
 				cnt, matches := atv.Buffer.Search([]byte(find), ignoreCase, false)
-				res = append(res, FileSearchResults{ond, cnt, matches})
+				res = append(res, filetree.SearchResults{ond, cnt, matches})
 			}
 		}
 	} else {
-		res = FileTreeSearch(ge, root, find, ignoreCase, regExp, loc, adir, langs)
+		res = filetree.Search(root, find, ignoreCase, regExp, loc, adir, langs, func(path string) *filetree.Node {
+			return ge.OpenNodes.FindPath(path)
+		})
 	}
 	fv.ShowResults(res)
 	ge.FocusOnPanel(TabsIndex)
@@ -110,7 +112,7 @@ func (ge *CodeView) Spell() { //types:add
 	}
 
 	sv := tv.RecycleTabWidget("Spell", true, SpellViewType).(*SpellView)
-	sv.ConfigSpellView(ge, txv)
+	sv.Config(ge, txv)
 	sv.Update()
 	ge.FocusOnPanel(TabsIndex)
 }
@@ -127,7 +129,7 @@ func (ge *CodeView) Symbols() { //types:add
 	}
 
 	sv := tv.RecycleTabWidget("Symbols", true, SymbolsViewType).(*SymbolsView)
-	sv.ConfigSymbolsView(ge, ge.Settings.Symbols)
+	sv.Config(ge, ge.Settings.Symbols)
 	sv.Update()
 	ge.FocusOnPanel(TabsIndex)
 }
@@ -143,7 +145,7 @@ func (ge *CodeView) Debug() { //types:add
 	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
-	dv.ConfigDebugView(ge, fileinfo.Go, exePath)
+	dv.Config(ge, fileinfo.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
@@ -164,7 +166,7 @@ func (ge *CodeView) DebugTest() { //types:add
 	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, DebugViewType).(*DebugView)
-	dv.ConfigDebugView(ge, fileinfo.Go, tstPath)
+	dv.Config(ge, fileinfo.Go, tstPath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv
@@ -183,7 +185,7 @@ func (ge *CodeView) DebugAttach(pid uint64) { //types:add
 	exePath := string(ge.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
-	dv.ConfigDebugView(ge, fileinfo.Go, exePath)
+	dv.Config(ge, fileinfo.Go, exePath)
 	dv.Update()
 	ge.FocusOnPanel(TabsIndex)
 	ge.CurDbg = dv

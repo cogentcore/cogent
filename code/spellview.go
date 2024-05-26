@@ -64,25 +64,106 @@ func (sv *SpellView) SpellAction() {
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// Config configures the view
-func (sv *SpellView) ConfigSpellView(ge *CodeView, atv *TextEditor) {
+func (sv *SpellView) OnInit() {
+	sv.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
+	})
+}
+
+func (sv *SpellView) Config(ge *CodeView, atv *TextEditor) {
 	sv.Code = ge
 	sv.Text = atv
 	sv.CurLn = 0
 	sv.CurIndex = 0
 	sv.Errs = nil
-	if sv.HasChildren() {
-		return
-	}
-	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Grow.Set(1, 1)
+}
+
+func (sv *SpellView) Make(p *core.Plan) {
+	sb := core.AddAt(p, "spellbar", func(w *core.Toolbar) {
 	})
-	core.NewToolbar(sv, "spellbar")
-	core.NewToolbar(sv, "unknownbar")
-	core.NewToolbar(sv, "changebar")
-	views.NewSliceView(sv, "suggest")
-	sv.MakeToolbar()
+	ub := core.AddAt(p, "unknownbar", func(w *core.Toolbar) {
+	})
+	cb := core.AddAt(p, "changebar", func(w *core.Toolbar) {
+	})
+	core.AddAt(p, "suggest", func(w *views.SliceView) {
+		sv.Suggest = []string{"                                              "}
+		w.SetReadOnly(true)
+		w.SetProperty("index", false)
+		w.SetSlice(&sv.Suggest)
+		// w.SliceViewSig.Connect(suggest, func(recv, send tree.Node, sig int64, data any) {
+		// 	svv := recv.Embed(views.KiT_SliceView).(*views.SliceView)
+		// 	idx := svv.SelectedIndex
+		// 	if idx >= 0 && idx < len(sv.Suggest) {
+		// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIndex])
+		// 	}
+		// })
+	})
+
+	// spell toolbar
+	core.Add(sb, func(w *core.Button) {
+		w.SetText("Check Current File").
+			SetTooltip("spell check the current file").
+			OnClick(func(e events.Event) {
+				sv.SpellAction()
+			})
+	})
+	core.Add(sb, func(w *core.Button) {
+		w.SetText("Train").
+			SetTooltip("add additional text to the training corpus").
+			OnClick(func(e events.Event) {
+				sv.TrainAction()
+			})
+	})
+
+	// unknown toolbar
+	core.AddAt(ub, "unknown-str", func(w *core.TextField) {
+		w.SetTooltip("Unknown word")
+		w.SetReadOnly(true)
+	})
+
+	core.Add(sb, func(w *core.Button) {
+		w.SetText("Skip").
+			OnClick(func(e events.Event) {
+				sv.SkipAction()
+			})
+	})
+
+	core.Add(sb, func(w *core.Button) {
+		w.SetText("Ignore").
+			OnClick(func(e events.Event) {
+				sv.IgnoreAction()
+			})
+	})
+
+	core.Add(sb, func(w *core.Button) {
+		w.SetText("Learn").
+			OnClick(func(e events.Event) {
+				sv.LearnAction()
+			})
+	})
+
+	// change toolbar
+	core.AddAt(cb, "change-str", func(w *core.TextField) {
+		w.SetTooltip("This string will replace the unknown word in text")
+	})
+
+	core.Add(cb, func(w *core.Button) {
+		w.SetText("Change").
+			SetTooltip("change the unknown word to the selected suggestion").
+			OnClick(func(e events.Event) {
+				sv.ChangeAction()
+			})
+	})
+
+	core.Add(cb, func(w *core.Button) {
+		w.SetText("Change All").
+			SetTooltip("change all instances of the unknown word in this document").
+			OnClick(func(e events.Event) {
+				sv.ChangeAllAction()
+			})
+	})
+
 	texteditor.InitSpell()
 	sv.CheckNext()
 }
@@ -140,81 +221,6 @@ func (sv *SpellView) ChangeText() *core.TextField {
 // SuggestView returns the view for the list of suggestions
 func (sv *SpellView) SuggestView() *views.SliceView {
 	return sv.ChildByName("suggest", 1).(*views.SliceView)
-}
-
-// MakeToolbar adds toolbar.
-func (sv *SpellView) MakeToolbar() {
-	spbar := sv.SpellBar()
-	unknbar := sv.UnknownBar()
-	chgbar := sv.ChangeBar()
-
-	// spell toolbar
-	core.NewButton(spbar).SetText("Check Current File").
-		SetTooltip("spell check the current file").
-		OnClick(func(e events.Event) {
-			sv.SpellAction()
-		})
-
-	core.NewButton(spbar).SetText("Train").
-		SetTooltip("add additional text to the training corpus").
-		OnClick(func(e events.Event) {
-			sv.TrainAction()
-		})
-	// todo:
-	// train.SetProp("horizontal-align", styles.AlignRight)
-
-	// unknown toolbar
-
-	core.NewTextField(unknbar, "unknown-str").SetTooltip("Unknown word")
-	tf := sv.UnknownText()
-	if tf != nil {
-		tf.SetReadOnly(true)
-	}
-
-	core.NewButton(unknbar, "skip").SetText("Skip").
-		OnClick(func(e events.Event) {
-			sv.SkipAction()
-		})
-
-	core.NewButton(unknbar, "ignore").SetText("Ignore").
-		OnClick(func(e events.Event) {
-			sv.IgnoreAction()
-		})
-
-	core.NewButton(unknbar, "learn").SetText("Learn").
-		OnClick(func(e events.Event) {
-			sv.LearnAction()
-		})
-
-	// change toolbar
-	core.NewTextField(chgbar, "change-str").
-		SetTooltip("This string will replace the unknown word in text")
-
-	core.NewButton(chgbar, "change").SetText("Change").
-		SetTooltip("change the unknown word to the selected suggestion").
-		OnClick(func(e events.Event) {
-			sv.ChangeAction()
-		})
-
-	core.NewButton(chgbar, "change-all").SetText("Change All").
-		SetTooltip("change all instances of the unknown word in this document").
-		OnClick(func(e events.Event) {
-			sv.ChangeAllAction()
-		})
-
-	// suggest toolbar
-	suggest := sv.SuggestView()
-	sv.Suggest = []string{"                                              "}
-	suggest.SetReadOnly(true)
-	suggest.SetProperty("index", false)
-	suggest.SetSlice(&sv.Suggest)
-	// suggest.SliceViewSig.Connect(suggest, func(recv, send tree.Node, sig int64, data any) {
-	// 	svv := recv.Embed(views.KiT_SliceView).(*views.SliceView)
-	// 	idx := svv.SelectedIndex
-	// 	if idx >= 0 && idx < len(sv.Suggest) {
-	// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIndex])
-	// 	}
-	// })
 }
 
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it

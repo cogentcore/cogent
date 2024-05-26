@@ -1,8 +1,8 @@
-// Copyright (c) 2018, Cogent Core. All rights reserved.
+// Copyright (c) 2024, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package code
+package databrowser
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func (fn *FileNode) OnInit() {
 
 func (fn *FileNode) OnDoubleClick(e events.Event) {
 	e.SetHandled()
-	ge, ok := ParentCode(fn.This())
+	br, ok := ParentBrowser(fn.This())
 	if !ok {
 		return
 	}
@@ -46,7 +46,7 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 					sn.ToggleClose()
 				}
 			} else {
-				ge.FileNodeOpened(sn)
+				br.FileNodeOpened(sn)
 			}
 		}
 	}
@@ -58,9 +58,9 @@ func (fn *FileNode) EditFile() {
 		log.Printf("FileNode Edit -- cannot view (edit) directories!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This())
+	br, ok := ParentBrowser(fn.This())
 	if ok {
-		ge.NextViewFileNode(&fn.Node)
+		br.NextViewFileNode(&fn.Node)
 	}
 }
 
@@ -70,19 +70,19 @@ func (fn *FileNode) SetRunExec() {
 		log.Printf("FileNode SetRunExec -- only works for executable files!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This())
+	br, ok := ParentBrowser(fn.This())
 	if ok {
-		ge.Settings.RunExec = fn.FPath
-		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
+		br.Settings.RunExec = fn.FPath
+		br.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
 	}
 }
 
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() { //types:add
-	ge, ok := ParentCode(fn.This())
+	br, ok := ParentBrowser(fn.This())
 	if ok {
-		ge.ExecCmdFileNode(&fn.Node)
+		br.ExecCmdFileNode(&fn.Node)
 	} else {
 		fmt.Println("no code!")
 	}
@@ -91,9 +91,9 @@ func (fn *FileNode) ExecCmdFile() { //types:add
 
 // ExecCmdNameFile executes given command name on node
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	ge, ok := ParentCode(fn.This())
+	br, ok := ParentBrowser(fn.This())
 	if ok {
-		ge.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm), true, true)
+		br.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm), true, true)
 	}
 }
 
@@ -250,29 +250,20 @@ func (fn *FileNode) EditFiles() { //types:add
 	}
 }
 
-// SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons
-func (fn *FileNode) SetRunExecs() { //types:add
-	sels := fn.SelectedViews()
-	for i := len(sels) - 1; i >= 0; i-- {
-		sn := sels[i].This().(*FileNode)
-		sn.SetRunExec()
-	}
-}
-
 // RenameFiles calls RenameFile on any selected nodes
 func (fn *FileNode) RenameFiles() {
-	ge, ok := ParentCode(fn.This())
+	br, ok := ParentBrowser(fn.This())
 	if !ok {
 		return
 	}
-	ge.SaveAllCheck(true, func() {
+	br.SaveAllCheck(true, func() {
 		var nodes []*FileNode
 		sels := fn.SelectedViews()
 		for i := len(sels) - 1; i >= 0; i-- {
 			sn := sels[i].This().(*FileNode)
 			nodes = append(nodes, sn)
 		}
-		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
+		br.CloseOpenNodes(nodes) // close before rename because we are async after this
 		for _, sn := range nodes {
 			views.CallFunc(sn, sn.RenameFile)
 		}

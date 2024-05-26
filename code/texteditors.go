@@ -274,7 +274,7 @@ func (ge *CodeView) TextEditorButtonMenu(idx int, m *core.Scene) {
 	core.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
 		ge.CallViewFile(tv)
 	})
-	core.NewSeparator(m, "file-sep")
+	core.NewSeparator(m)
 	for i, n := range opn {
 		i := i
 		n := n

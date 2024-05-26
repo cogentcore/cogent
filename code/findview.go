@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/parse/lexer"
@@ -24,26 +25,6 @@ import (
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 	"cogentcore.org/core/views"
-)
-
-// FindLoc corresponds to the search scope
-type FindLoc int32 //enums:enum -trim-prefix FindLoc
-
-const (
-	// FindOpen finds in all open folders in the left file browser
-	FindLocOpen FindLoc = iota
-
-	// FindLocAll finds in all directories under the root path. can be slow for large file trees
-	FindLocAll
-
-	// FindLocFile only finds in the current active file
-	FindLocFile
-
-	// FindLocDir only finds in the directory of the current active file
-	FindLocDir
-
-	// FindLocNotTop finds in all open folders *except* the top-level folder
-	FindLocNotTop
 )
 
 // FindParams are parameters for find / replace
@@ -62,7 +43,7 @@ type FindParams struct {
 	Regexp bool
 
 	// locations to search in
-	Loc FindLoc
+	Loc filetree.FindLoc
 
 	// languages for files to search
 	Langs []fileinfo.Known
@@ -92,13 +73,20 @@ type FindView struct {
 	Re *regexp.Regexp
 }
 
+func (fv *FindView) OnInit() {
+	fv.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
+	})
+}
+
 // Params returns the find params
 func (fv *FindView) Params() *FindParams {
 	return &fv.Code.Settings.Find
 }
 
 // ShowResults shows the results in the buffer
-func (fv *FindView) ShowResults(res []FileSearchResults) {
+func (fv *FindView) ShowResults(res []filetree.SearchResults) {
 	ftv := fv.TextEditor()
 	fbuf := ftv.Buffer
 	fbuf.Options.LineNumbers = false
@@ -391,24 +379,22 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //    GUI config
 
 func (fv *FindView) Make(p *core.Plan) {
-	if fv.HasChildren() {
-		return
-	}
 	fv.Code, _ = ParentCode(fv)
 
-	fv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Grow.Set(1, 1)
+	fb := core.AddAt(p, "findbar", func(w *core.BasicBar) {
 	})
 
-	fb := core.NewBasicBar(fv, "findbar")
-	rb := core.NewBasicBar(fv, "replbar")
-	tv := texteditor.NewEditor(fv, "findtext")
-	ConfigOutputTextEditor(tv)
-	tv.LinkHandler = func(tl *paint.TextLink) {
-		fv.OpenFindURL(tl.URL, tv)
-	}
-	fv.MakeToolbars(fb, rb)
+	rb := core.AddAt(p, "replbar", func(w *core.BasicBar) {
+	})
+
+	core.AddAt(p, "findtext", func(w *texteditor.Editor) {
+		ConfigOutputTextEditor(w)
+		w.LinkHandler = func(tl *paint.TextLink) {
+			fv.OpenFindURL(tl.URL, w)
+		}
+	})
+	fv.MakeFindToolbar(fb)
+	fv.MakeReplToolbar(rb)
 	na := fv.FindNextAct()
 	na.SetFocusEvent()
 	fv.Update()
@@ -475,87 +461,114 @@ func (fv *FindView) UpdateFromParams() {
 	// langs auto-updates from param
 }
 
-// MakeToolbars
-func (fv *FindView) MakeToolbars(fb, rb *core.BasicBar) {
-	core.NewButton(fb).SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").OnClick(func(e events.Event) {
-		fv.FindAction()
+// MakeFindToolbar
+func (fv *FindView) MakeFindToolbar(p *core.Plan) {
+	core.Add(p, func(w *core.Button) {
+		w.SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").
+			OnClick(func(e events.Event) {
+				fv.FindAction()
+			})
 	})
-	finds := core.NewChooser(fb, "find-str").SetEditable(true).SetDefaultNew(true).
-		SetTooltip("String to find -- hit enter or tab to update search -- click for history")
-	finds.Style(func(s *styles.Style) {
-		s.Grow.Set(1, 0)
-		s.Max.X.Zero()
-	})
-	finds.OnChange(func(e events.Event) {
-		fv.Params().Find = finds.CurrentItem.Value.(string)
-		if fv.Params().Find == "" {
-			tv := fv.Code.ActiveTextEditor()
-			if tv != nil {
-				tv.ClearHighlights()
+	core.AddAt(p, "find-str", func(w *core.Chooser) {
+		w.SetEditable(true).SetDefaultNew(true).
+			SetTooltip("String to find -- hit enter or tab to update search -- click for history")
+		w.Style(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+			s.Max.X.Zero()
+		})
+		w.OnChange(func(e events.Event) {
+			fv.Params().Find = w.CurrentItem.Value.(string)
+			if fv.Params().Find == "" {
+				tv := fv.Code.ActiveTextEditor()
+				if tv != nil {
+					tv.ClearHighlights()
+				}
+				fvtv := fv.TextEditor()
+				if fvtv != nil {
+					fvtv.Buffer.NewBuffer(0)
+				}
+			} else {
+				fv.FindAction()
 			}
-			fvtv := fv.TextEditor()
-			if fvtv != nil {
-				fvtv.Buffer.NewBuffer(0)
+		})
+	})
+
+	core.AddAt(p, "ignore-case", func(w *core.Switch) {
+		w.SetText("Ignore Case")
+		w.OnChange(func(e events.Event) {
+			fv.Params().IgnoreCase = w.StateIs(states.Checked)
+		})
+	})
+	core.AddAt(p, "regexp", func(w *core.Switch) {
+		w.SetText("Regexp").
+			SetTooltip("use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax")
+		w.OnChange(func(e events.Event) {
+			fv.Params().Regexp = w.StateIs(states.Checked)
+		})
+	})
+
+	ttxt := "location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser"
+	core.Add(p, func(w *core.Text) {
+		w.SetText("Loc:").
+			SetTooltip(ttxt)
+	})
+
+	core.AddAt(p, "loc", func(w *core.Chooser) {
+		w.SetTooltip(ttxt)
+		w.SetEnum(fv.Params().Loc)
+		w.SetCurrentValue(fv.Params().Loc)
+		w.OnChange(func(e events.Event) {
+			if eval, ok := w.CurrentItem.Value.(filetree.FindLoc); ok {
+				fv.Params().Loc = eval
 			}
-		} else {
-			fv.FindAction()
-		}
-	})
-
-	ic := core.NewSwitch(fb, "ignore-case").SetText("Ignore Case")
-	ic.OnChange(func(e events.Event) {
-		fv.Params().IgnoreCase = ic.StateIs(states.Checked)
-	})
-	rx := core.NewSwitch(fb, "regexp").SetText("Regexp").
-		SetTooltip("use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax")
-	rx.OnChange(func(e events.Event) {
-		fv.Params().Regexp = rx.StateIs(states.Checked)
-	})
-
-	locl := core.NewText(fb).SetText("Loc:").
-		SetTooltip("location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser")
-
-	cf := core.NewChooser(fb, "loc").SetTooltip(locl.Tooltip)
-	cf.SetEnum(fv.Params().Loc)
-	cf.SetCurrentValue(fv.Params().Loc)
-	cf.OnChange(func(e events.Event) {
-		if eval, ok := cf.CurrentItem.Value.(FindLoc); ok {
-			fv.Params().Loc = eval
-		}
-	})
-
-	//////////////// ReplBar
-
-	core.NewButton(rb).SetIcon(icons.KeyboardArrowUp).SetTooltip("go to previous result").
-		OnClick(func(e events.Event) {
-			fv.PrevFind()
 		})
-	core.NewButton(rb, "next").SetIcon(icons.KeyboardArrowDown).SetTooltip("go to next result").
-		OnClick(func(e events.Event) {
-			fv.NextFind()
-		})
-	core.NewButton(rb).SetText("Replace:").SetTooltip("Replace find string with replace string for currently selected find result").
-		OnClick(func(e events.Event) {
-			fv.ReplaceAction()
-		})
-
-	repls := core.NewChooser(rb, "repl-str").SetEditable(true).SetDefaultNew(true).
-		SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
-	repls.Style(func(s *styles.Style) {
-		s.Grow.Set(1, 0)
-		s.Max.X.Zero()
 	})
-	repls.OnChange(func(e events.Event) {
-		fv.Params().Replace = repls.CurrentItem.Value.(string)
+}
+
+func (fv *FindView) MakeReplToolbar(p *core.Plan) {
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to previous result").
+			OnClick(func(e events.Event) {
+				fv.PrevFind()
+			})
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.KeyboardArrowDown).SetTooltip("go to next result").
+			OnClick(func(e events.Event) {
+				fv.NextFind()
+			})
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetText("Replace:").SetTooltip("Replace find string with replace string for currently selected find result").
+			OnClick(func(e events.Event) {
+				fv.ReplaceAction()
+			})
 	})
 
-	core.NewButton(rb).SetText("All").SetTooltip("replace all find strings with replace string").
-		OnClick(func(e events.Event) {
-			fv.ReplaceAllAction()
+	core.AddAt(p, "repl-str", func(w *core.Chooser) {
+		w.SetEditable(true).SetDefaultNew(true).
+			SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
+		w.Style(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+			s.Max.X.Zero()
 		})
+		w.OnChange(func(e events.Event) {
+			fv.Params().Replace = w.CurrentItem.Value.(string)
+		})
+	})
 
-	langl := core.NewText(rb).SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
+	core.Add(p, func(w *core.Button) {
+		w.SetText("All").SetTooltip("replace all find strings with replace string").
+			OnClick(func(e events.Event) {
+				fv.ReplaceAllAction()
+			})
+	})
 
-	fv.LangVV = views.NewValue(rb, &fv.Params().Langs)
-	fv.LangVV.AsWidgetBase().SetTooltip(langl.Tooltip)
+	core.Add(p, func(w *core.Text) {
+		w.SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
+	})
+
+	// todo:
+	// fv.LangVV = views.NewValue(rb, &fv.Params().Langs)
+	// fv.LangVV.AsWidgetBase().SetTooltip(langl.Tooltip)
 }

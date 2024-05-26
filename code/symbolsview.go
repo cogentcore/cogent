@@ -53,27 +53,62 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// Config configures the view
-func (sv *SymbolsView) ConfigSymbolsView(ge *CodeView, sp SymbolsParams) {
-	sv.Code = ge
-	sv.SymParams = sp
-	if sv.HasChildren() {
-		return
-	}
+func (sv *SymbolsView) OnInit() {
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	core.NewToolbar(sv, "sym-toolbar")
-	svfr := core.NewFrame(sv, "sym-frame")
-	svfr.Style(func(s *styles.Style) {
-		s.Grow.Set(1, 1)
-		s.Overflow.Set(styles.OverflowAuto)
+}
+
+func (sv *SymbolsView) Config(ge *CodeView, sp SymbolsParams) {
+	sv.Code = ge
+	sv.SymParams = sp
+}
+
+func (sv *SymbolsView) Make(p *core.Plan) {
+	tb := core.AddAt(p, "sym-toolbar", func(w *core.Toolbar) {
 	})
-	sv.MakeToolbar()
-	sb := sv.ScopeChooser()
-	sb.SetCurrentIndex(int(sv.Params().Scope))
-	sv.ConfigTree(sp.Scope)
+	svfr := core.AddAt(p, "sym-frame", func(w *core.Frame) {
+		w.Style(func(s *styles.Style) {
+			s.Grow.Set(1, 1)
+			s.Overflow.Set(styles.OverflowAuto)
+		})
+	})
+	sv.MakeToolbar(tb)
+
+	scope := sv.SymParams.Scope
+
+	core.AddAt(svfr, "syms", func(w *SymTreeView) {
+		sv.Syms = NewSymNode()
+		sv.Syms.SetName("syms")
+		if scope == SymScopePackage {
+			sv.OpenPackage()
+		} else {
+			sv.OpenFile()
+		}
+		w.SyncTree(sv.Syms)
+		w.OnSelect(func(e events.Event) {
+			if len(w.SelectedNodes) == 0 {
+				return
+			}
+			sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
+			if sn != nil {
+				SelectSymbol(sv.Code, sn.Symbol)
+			}
+		})
+	})
+}
+
+func (sv *SymbolsView) UpdateSymbols() {
+	scope := sv.SymParams.Scope
+	tv := sv.FindPath("sym-frame/syms").(*SymTreeView)
+	if scope == SymScopePackage {
+		sv.OpenPackage()
+	} else {
+		sv.OpenFile()
+	}
+	tv.ReSync()
+	tv.OpenAll()
 }
 
 // Toolbar returns the symbols toolbar
@@ -97,80 +132,50 @@ func (sv *SymbolsView) SearchText() *core.TextField {
 }
 
 // MakeToolbar adds toolbar.
-func (sv *SymbolsView) MakeToolbar() {
-	tb := sv.Toolbar()
-	if tb.HasChildren() {
-		return
-	}
-
-	core.NewButton(tb).SetText("Refresh").SetIcon(icons.Update).
-		SetTooltip("refresh symbols for current file and scope").
-		OnClick(func(e events.Event) {
-			sv.RefreshAction()
-		})
-
-	sl := core.NewText(tb).SetText("Scope:").SetTooltip("scope symbols to:")
-
-	ch := core.NewChooser(tb, "scope-chooser").SetEnum(sv.Params().Scope)
-	ch.SetTooltip(sl.Tooltip)
-	ch.OnChange(func(e events.Event) {
-		sv.Params().Scope = ch.CurrentItem.Value.(SymScopes)
-		sv.ConfigTree(sv.Params().Scope)
-		sv.SearchText().SetFocusEvent()
+func (sv *SymbolsView) MakeToolbar(p *core.Plan) {
+	core.Add(p, func(w *core.Button) {
+		w.SetText("Refresh").SetIcon(icons.Update).
+			SetTooltip("refresh symbols for current file and scope").
+			OnClick(func(e events.Event) {
+				sv.RefreshAction()
+			})
 	})
-	ch.SetCurrentValue(sv.Params().Scope)
 
-	core.NewText(tb).SetText("Search:").
-		SetTooltip("narrow symbols list to symbols containing text you enter here")
+	core.Add(p, func(w *core.Text) {
+		w.SetText("Scope:").SetTooltip("scope symbols to:")
+	})
 
-	tf := core.NewTextField(tb, "search-str")
-	tf.SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
-	tf.OnChange(func(e events.Event) {
-		sv.Match = tf.Text()
-		sv.ConfigTree(sv.Params().Scope)
-		tf.CursorEnd()
-		tf.SetFocusEvent()
+	core.AddAt(p, "scope-chooser", func(w *core.Chooser) {
+		w.SetEnum(sv.Params().Scope)
+		w.SetTooltip("scope symbols to:")
+		w.OnChange(func(e events.Event) {
+			sv.Params().Scope = w.CurrentItem.Value.(SymScopes)
+			sv.UpdateSymbols()
+			sv.SearchText().SetFocusEvent()
+		})
+		w.SetCurrentValue(sv.Params().Scope) // todo: also update?
+	})
+
+	core.Add(p, func(w *core.Text) {
+		w.SetText("Search:").
+			SetTooltip("narrow symbols list to symbols containing text you enter here")
+	})
+
+	core.AddAt(p, "search-str", func(w *core.TextField) {
+		w.SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
+		w.OnChange(func(e events.Event) {
+			sv.Match = w.Text()
+			sv.UpdateSymbols()
+			w.CursorEnd()
+			w.SetFocusEvent()
+		})
 	})
 }
 
 // RefreshAction loads symbols for current file and scope
 func (sv *SymbolsView) RefreshAction() {
-	sv.ConfigTree(SymScopes(sv.Params().Scope))
+	sv.UpdateSymbols()
 	sv.SearchText().SetFocusEvent()
-}
-
-// ConfigTree adds a treeview to the symbolsview.
-// This is called for refresh action.
-func (sv *SymbolsView) ConfigTree(scope SymScopes) {
-	sfr := sv.Frame()
-	var tv *SymTreeView
-	if sv.Syms == nil {
-		sv.Syms = &SymNode{}
-		sv.Syms.InitName(sv.Syms, "syms")
-		tv = NewSymTreeView(sfr)
-		tv.SyncTree(sv.Syms)
-		tv.OnSelect(func(e events.Event) {
-			if len(tv.SelectedNodes) == 0 {
-				return
-			}
-			sn := tv.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
-			if sn != nil {
-				SelectSymbol(sv.Code, sn.Symbol)
-			}
-		})
-	} else {
-		tv = sfr.Child(0).(*SymTreeView)
-	}
-
-	if scope == SymScopePackage {
-		sv.OpenPackage()
-	} else {
-		sv.OpenFile()
-	}
-	tv.ReSync()
-
-	tv.OpenAll()
-	sfr.NeedsLayout()
 }
 
 func SelectSymbol(ge *CodeView, ssym syms.Symbol) {
@@ -278,7 +283,8 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 				}
 			}
 			if symMatch(sy.Name, match, ignoreCase) || len(methods) > 0 || len(fields) > 0 {
-				kn := NewSymNode(sn, sy.Name).SetSymbol(*sy)
+				kn := NewSymNode(sn).SetSymbol(*sy)
+				kn.SetName(sy.Name)
 				sort.Slice(fields, func(i, j int) bool {
 					return fields[i].Name < fields[j].Name
 				})
@@ -286,19 +292,23 @@ func (sn *SymNode) OpenSyms(pkg *syms.Symbol, fname, match string) {
 					return methods[i].Name < methods[j].Name
 				})
 				for _, fld := range fields {
-					NewSymNode(kn, fld.Label()).SetSymbol(fld)
+					fn := NewSymNode(kn).SetSymbol(fld)
+					fn.SetName(fld.Label())
 				}
 				for _, mth := range methods {
-					NewSymNode(kn, mth.Label()).SetSymbol(mth)
+					mn := NewSymNode(kn).SetSymbol(mth)
+					mn.SetName(mth.Label())
 				}
 			}
 		}
 	}
 	for _, fn := range funcs {
-		NewSymNode(sn, fn.Label()).SetSymbol(fn)
+		n := NewSymNode(sn).SetSymbol(fn)
+		n.SetName(fn.Label())
 	}
 	for _, vr := range gvars {
-		NewSymNode(sn, vr.Label()).SetSymbol(vr)
+		n := NewSymNode(sn).SetSymbol(vr)
+		n.SetName(vr.Label())
 	}
 }
 

@@ -18,7 +18,9 @@ func PromptOKCancel(ctx core.Widget, prompt string, fun func()) {
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
-			fun()
+			if fun != nil {
+				fun()
+			}
 		})
 	})
 	d.RunDialog(ctx)
@@ -35,7 +37,9 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
-			fun(tf.Text())
+			if fun != nil {
+				fun(tf.Text())
+			}
 		})
 	})
 	d.RunDialog(ctx)
@@ -51,7 +55,9 @@ func PromptStruct(ctx core.Widget, stru any, prompt string, fun func()) {
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
-			fun()
+			if fun != nil {
+				fun()
+			}
 		})
 	})
 	d.RunDialog(ctx)

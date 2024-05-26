@@ -11,12 +11,10 @@ import (
 // VariableType is the [types.Type] for [Variable]
 var VariableType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/cdebug.Variable", IDName: "variable", Doc: "Variable describes a variable.  It is a tree type so that full tree\ncan be visualized.", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Value", Doc: "value of variable -- may be truncated if long"}, {Name: "TypeStr", Doc: "type of variable as a string expression (shortened for display)"}, {Name: "FullTypeStr", Doc: "type of variable as a string expression (full length)"}, {Name: "Kind", Doc: "kind of element"}, {Name: "ElementValue", Doc: "own elemental value of variable (blank for composite types)"}, {Name: "Len", Doc: "length of variable (slices, maps, strings etc)"}, {Name: "Cap", Doc: "capacity of vaiable"}, {Name: "Addr", Doc: "address where variable is located in memory"}, {Name: "Heap", Doc: "if true, the variable is stored in the main memory heap, not the stack"}, {Name: "Loc", Doc: "location where the variable was defined in source"}, {Name: "List", Doc: "if kind is a list type (array, slice), and elements are primitive types, this is the contents"}, {Name: "Map", Doc: "if kind is a map, and elements are primitive types, this is the contents"}, {Name: "MapVar", Doc: "if kind is a map, and elements are not primitive types, this is the contents"}, {Name: "Dbg", Doc: "our debugger -- for getting further variable data"}}, Instance: &Variable{}})
 
-// NewVariable adds a new [Variable] with the given name to the given parent:
+// NewVariable returns a new [Variable] with the given optional parent:
 // Variable describes a variable.  It is a tree type so that full tree
 // can be visualized.
-func NewVariable(parent tree.Node, name ...string) *Variable {
-	return parent.NewChild(VariableType, name...).(*Variable)
-}
+func NewVariable(parent ...tree.Node) *Variable { return tree.New[*Variable](parent...) }
 
 // NodeType returns the [*types.Type] of [Variable]
 func (t *Variable) NodeType() *types.Type { return VariableType }

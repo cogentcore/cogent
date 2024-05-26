@@ -448,10 +448,10 @@ func (ge *CodeView) AddCloseDialog() {
 		d.AddTitle("Unsaved files").
 			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, ge.Nm))
 		d.AddBottomBar(func(parent core.Widget) {
-			d.AddOK(parent, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
+			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
 				ge.Scene.Close()
 			})
-			core.NewButton(parent, "sa").SetText("Save and close").OnClick(func(e events.Event) {
+			core.NewButton(parent).SetText("Save and close").OnClick(func(e events.Event) {
 				ge.SaveAllOpenNodes()
 				ge.Scene.Close()
 			})

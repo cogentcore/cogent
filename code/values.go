@@ -28,24 +28,36 @@ func KeyMapsView(km *KeyMaps) {
 	tv.OnChange(func(e events.Event) {
 		AvailableKeyMapsChanged = true
 	})
-	d.AddAppBar(func(tb *core.Toolbar) {
-		views.NewFuncButton(tb, km.SaveSettings).
-			SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableKeyMapsChanged && km == &AvailableKeyMaps) })
-		oj := views.NewFuncButton(tb, km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-		sj.Args[0].SetTag("ext", ".toml")
-		core.NewSeparator(tb)
-		views.NewFuncButton(tb, km.ViewStandard).SetConfirm(true).
-			SetText("View standard").SetIcon(icons.Visibility).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
-		views.NewFuncButton(tb, km.RevertToStandard).SetConfirm(true).
-			SetText("Revert to standard").SetIcon(icons.DeviceReset).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
-		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+	d.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(km.SaveSettings).
+				SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
+				StyleFirst(func(s *styles.Style) {
+					s.SetEnabled(AvailableKeyMapsChanged && km == &AvailableKeyMaps)
+				})
 		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(km.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+			// w.Args[0].SetTag("ext", ".toml") // todo:
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		core.Add[*core.Separator](p)
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(km.ViewStandard).SetConfirm(true).
+				SetText("View standard").SetIcon(icons.Visibility).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(km.RevertToStandard).SetConfirm(true).
+				SetText("Revert to standard").SetIcon(icons.DeviceReset).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(km != &StandardKeyMaps) })
+		})
+		// tb.AddOverflowMenu(func(m *core.Scene) {
+		// 	views.NewFuncButton(m, km.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+		// })
 	})
 	d.RunWindow()
 }
@@ -129,24 +141,35 @@ func LangsView(pt *Langs) {
 		AvailableLangsChanged = true
 	})
 
-	d.AddAppBar(func(tb *core.Toolbar) {
-		views.NewFuncButton(tb, pt.SaveSettings).
-			SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-		sj.Args[0].SetTag("ext", ".toml")
-		core.NewSeparator(tb)
-		views.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
-			SetText("View standard").SetIcon(icons.Visibility).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
-		views.NewFuncButton(tb, pt.RevertToStandard).SetConfirm(true).
-			SetText("Revert to standard").SetIcon(icons.DeviceReset).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
-		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+	d.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.SaveSettings).
+				SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
 		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		core.Add[*core.Separator](p)
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.ViewStandard).SetConfirm(true).
+				SetText("View standard").SetIcon(icons.Visibility).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.RevertToStandard).SetConfirm(true).
+				SetText("Revert to standard").SetIcon(icons.DeviceReset).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
+		})
+		// todo:
+		// tb.AddOverflowMenu(func(m *core.Scene) {
+		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+		// })
 	})
 	d.RunWindow()
 }
@@ -162,21 +185,30 @@ func CmdsView(pt *Commands) {
 	tv.OnChange(func(e events.Event) {
 		CustomCommandsChanged = true
 	})
-	d.AddAppBar(func(tb *core.Toolbar) {
-		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
-			SetIcon(icons.Save).SetKey(keymap.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-		sj.Args[0].SetTag("ext", ".toml")
-		core.NewSeparator(tb)
-		views.NewFuncButton(tb, pt.ViewStandard).SetConfirm(true).
-			SetText("View standard").SetIcon(icons.Visibility).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
-		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+	d.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
+				SetIcon(icons.Save).SetKey(keymap.Save).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
 		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		core.Add[*core.Separator](p)
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.ViewStandard).SetConfirm(true).
+				SetText("View standard").SetIcon(icons.Visibility).
+				StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
+		})
+		// todo:
+		// tb.AddOverflowMenu(func(m *core.Scene) {
+		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+		// })
 	})
 	d.RunWindow()
 }
@@ -230,17 +262,26 @@ func SplitsView(pt *Splits) {
 		AvailableSplitsChanged = true
 	})
 
-	d.AddAppBar(func(tb *core.Toolbar) {
-		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
-			SetIcon(icons.Save).SetKey(keymap.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-		sj.Args[0].SetTag("ext", ".toml")
-		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+	d.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
+				SetIcon(icons.Save).SetKey(keymap.Save).
+				StyleFirst(func(s *styles.Style) {
+					s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits)
+				})
 		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		// todo:
+		// tb.AddOverflowMenu(func(m *core.Scene) {
+		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+		// })
 	})
 	d.RunWindow()
 }
@@ -300,17 +341,26 @@ func RegistersView(pt *Registers) {
 		AvailableRegistersChanged = true
 	})
 
-	d.AddAppBar(func(tb *core.Toolbar) {
-		views.NewFuncButton(tb, pt.SaveSettings).SetText("Save to settings").
-			SetIcon(icons.Save).SetKey(keymap.Save).
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters) })
-		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-		oj.Args[0].SetTag("ext", ".toml")
-		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-		sj.Args[0].SetTag("ext", ".toml")
-		tb.AddOverflowMenu(func(m *core.Scene) {
-			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+	d.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
+				SetIcon(icons.Save).SetKey(keymap.Save).
+				StyleFirst(func(s *styles.Style) {
+					s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters)
+				})
 		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			// w.Args[0].SetTag("ext", ".toml")
+		})
+		// todo:
+		// tb.AddOverflowMenu(func(m *core.Scene) {
+		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
+		// })
 	})
 
 	d.RunWindow()
