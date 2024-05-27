@@ -748,18 +748,6 @@ func (pv *PiView) Make(c *core.Config) {
 	go pv.MonitorOut()
 }
 
-// IsConfiged returns true if the view is fully configured
-func (pv *PiView) IsConfiged() bool {
-	if len(pv.Kids) == 0 {
-		return false
-	}
-	sv := pv.Splits()
-	if len(sv.Kids) == 0 {
-		return false
-	}
-	return true
-}
-
 // Splits returns the main Splits
 func (pv *PiView) Splits() *core.Splits {
 	return pv.ChildByName("splitview", 4).(*core.Splits)

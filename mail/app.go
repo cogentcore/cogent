@@ -85,7 +85,7 @@ func (a *App) OnInit() {
 	})
 }
 
-func (a *App) MakeToolbar(tb *core.Toolbar) {
+func (a *App) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 	views.NewFuncButton(tb, a.Compose).SetIcon(icons.Send)
 }
 

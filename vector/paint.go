@@ -38,6 +38,268 @@ type PaintView struct {
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
+func (pv *PaintView) OnInit() {
+	pv.Frame.OnInit()
+	pv.Maker(func(p *core.Plan) { // TODO(config)
+		if pv.HasChildren() {
+			return
+		}
+		pv.StrokeType = PaintSolid
+		pv.FillType = PaintSolid
+
+		DashIconsInit()
+		MarkerIconsInit()
+
+		pv.Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+		})
+
+		sty := &Settings.ShapeStyle
+
+		spl := core.NewFrame(pv, "stroke-lab")
+		core.NewText(spl).SetText("<b>Stroke Paint:  </b>")
+		spt := core.NewChooser(spl) // .SetStrings(PaintTypeNames)
+		spt.SelectItem(int(pv.StrokeType))
+		// spt.Mutex = true
+
+		wr := core.NewFrame(pv, "stroke-width")
+		core.NewText(wr).SetText("Width:  ").Style(func(s *styles.Style) {
+			s.Align.Items = styles.Center
+		})
+
+		core.NewSpinner(wr, "width").SetMin(0).SetStep(0.05).
+			SetValue(sty.StrokeStyle.Width.Value).OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)
+			}
+		})
+
+		// uncb.SetCurrentIndex(int(Settings.Size.Units))
+		core.NewChooser(wr, "width-units").SetEnum(units.UnitsN).OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)
+			}
+		})
+
+		core.NewSpace(wr, "sp1").Style(func(s *styles.Style) {
+			s.Min.X.Ch(5)
+		})
+
+		dshcb := core.NewChooser(wr, "dashes")
+		// dshcb.ItemsFromIconList(AllDashIcons, true, 0)
+		// dshcb.SetProp("width", units.NewCh(15))
+		dshcb.OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetDashProperties(pv.StrokeDashProp())
+			}
+		})
+
+		mkr := core.NewFrame(pv, "stroke-markers")
+
+		mscb := core.NewChooser(mkr, "marker-start")
+		// mscb.SetProp("width", units.NewCh(20))
+		// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+		mscb.OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
+			}
+		})
+		mscc := core.NewChooser(mkr, "marker-start-color").SetEnum(MarkerColorsN)
+		// mscc.SetProp("width", units.NewCh(5))
+		mscc.OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
+			}
+		})
+
+		core.NewSeparator(mkr)
+
+		mmcb := core.NewChooser(mkr, "marker-mid")
+		// mmcb.SetProp("width", units.NewCh(20))
+		// mmcb.ItemsFromIconList(AllMarkerIcons, true, 0)
+		mmcb.OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
+			}
+		})
+		mmcc := core.NewChooser(mkr, "marker-mid-color").SetEnum(MarkerColorsN)
+		// mmcc.SetProp("width", units.NewCh(5))
+		mmcc.OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
+			}
+		})
+
+		core.NewSeparator(mkr)
+
+		mecb := core.NewChooser(mkr, "marker-end")
+		// mecb.SetProp("width", units.NewCh(20))
+		// mecb.ItemsFromIconList(AllMarkerIcons, true, 0)
+		mecb.OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
+			}
+		})
+		mecc := core.NewChooser(mkr, "marker-end-color").SetEnum(MarkerColorsN)
+		// mecc.SetProp("width", units.NewCh(5))
+		mecc.OnChange(func(e events.Event) {
+			if pv.IsStrokeOn() {
+				pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
+			}
+		})
+
+		////////////////////////////////
+		// stroke stack
+
+		ss := core.NewFrame(pv, "stroke-stack")
+		ss.Styles.Display = styles.Stacked
+		ss.StackTop = 1
+		// ss.StackTopOnly = true
+
+		core.NewFrame(ss, "stroke-blank") // nothing
+
+		// spt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
+		// 	sss := pvv.StrokeStack()
+		// 	prev := pv.StrokeType
+		// 	pvv.StrokeType = PaintTypes(sig)
+		// 	update := pvv.UpdateStart()
+		// 	pvv.SetFullReRender()
+		// 	sp := pvv.StrokeProp()
+		// 	switch pvv.StrokeType {
+		// 	case PaintOff, PaintInherit:
+		// 		sss.StackTop = 0
+		// 	case PaintSolid:
+		// 		sss.StackTop = 1
+		// 	case PaintLinear, PaintRadial:
+		// 		if pvv.StrokeStops == "" {
+		// 			pvv.StrokeStops = pvv.VectorView.DefaultGradient()
+		// 		}
+		// 		sp = pvv.StrokeStops
+		// 		sss.StackTop = 2
+		// 		pvv.SelectStrokeGrad()
+		// 	}
+		// 	pvv.UpdateEnd(update)
+		// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
+		// })
+
+		views.NewColorView(ss, "stroke-clr")
+		// sc.SetProp("vertical-align", styles.AlignTop)
+		// sc.SetColor(sty.StrokeStyle.Color)
+		// sc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	if pv.StrokeType == PaintSolid {
+		// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), false) // not manip
+		// 	}
+		// })
+		// sc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	if pv.StrokeType == PaintSolid {
+		// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), true) // manip
+		// 	}
+		// })
+
+		sg := views.NewTableView(ss, "stroke-grad")
+		// sg.SetProp("index", true)
+		// sg.SetProp("toolbar", true)
+		// sg.SelectedIndex = -1
+		sg.SetSlice(&pv.VectorView.EditState.Gradients)
+		// sg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	if sig == int64(core.WidgetSelected) {
+		// 		svv, _ := send.(*views.TableView)
+		// 		if svv.SelectedIndex >= 0 {
+		// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
+		// 			pv.VectorView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
+		// 		}
+		// 	}
+		// })
+
+		core.NewSeparator(pv)
+
+		fpl := core.NewFrame(pv, "fill-lab")
+		core.NewText(fpl).SetText("<b>Fill Paint:  </b>")
+
+		fpt := core.NewChooser(fpl, "fill-type").SetEnum(PaintTypesN)
+		fpt.SelectItem(int(pv.FillType))
+		// fpt.Mutex = true
+
+		fs := core.NewFrame(pv, "fill-stack")
+		fs.Styles.Display = styles.Stacked
+		fs.StackTop = 1
+		// fs.StackTopOnly = true
+
+		core.NewFrame(fs, "fill-blank")
+
+		// fpt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
+		// 	fss := pvv.FillStack()
+		// 	prev := pvv.FillType
+		// 	pvv.FillType = PaintTypes(sig)
+		// 	update := fss.UpdateStart()
+		// 	fss.SetFullReRender()
+		// 	fp := pvv.FillProp()
+		// 	switch pvv.FillType {
+		// 	case PaintOff, PaintInherit:
+		// 		fss.StackTop = 0
+		// 	case PaintSolid:
+		// 		fss.StackTop = 1
+		// 	case PaintLinear, PaintRadial:
+		// 		if pvv.FillStops == "" {
+		// 			pvv.FillStops = pvv.VectorView.DefaultGradient()
+		// 		}
+		// 		fp = pvv.FillStops
+		// 		fss.StackTop = 2
+		// 		pvv.SelectFillGrad()
+		// 	}
+		// 	pvv.UpdateEnd(update)
+		// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
+		// })
+
+		views.NewColorView(fs, "fill-clr").SetColor(colors.Scheme.Primary.Base)
+		// fc.SetProp("vertical-align", styles.AlignTop)
+		// fc.Config()
+		// fc.SetColor(sty.FillStyle.Color.Color)
+		// fc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	if pv.FillType == PaintSolid {
+		// 		pv.VectorView.SetFillColor(pv.FillProp(), false)
+		// 	}
+		// })
+		// fc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	if pv.FillType == PaintSolid {
+		// 		pv.VectorView.SetFillColor(pv.FillProp(), true) // manip
+		// 	}
+		// })
+
+		fg := views.NewTableView(fs, "fill-grad")
+		// fg.SetProp("index", true)
+		// fg.SetProp("toolbar", true)
+		// fg.SelectedIndex = -1
+		fg.SetSlice(&pv.VectorView.EditState.Gradients)
+		// fg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	if sig == int64(core.WidgetSelected) {
+		// 		svv, _ := send.(*views.TableView)
+		// 		if svv.SelectedIndex >= 0 {
+		// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
+		// 			pv.VectorView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
+		// 		}
+		// 	}
+		// })
+		// fg.SliceViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	// fmt.Printf("svs: %v   %v\n", sig, data)
+		// 	// svv, _ := send.(*views.TableView)
+		// 	if sig == int64(views.SliceViewDeleted) { // not clear what we can do here
+		// 	} else {
+		// 		pv.VectorView.UpdateGradients()
+		// 	}
+		// })
+		// fg.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	// fmt.Printf("vs: %v   %v\n", sig, data)
+		// 	// svv, _ := send.(*views.TableView)
+		// 	pv.VectorView.UpdateGradients()
+		// })
+
+		core.NewStretch(pv)
+	})
+}
+
 /////////////////////////////////////////////////////////////////////////
 //  Actions
 
@@ -501,265 +763,6 @@ func (pv *PaintView) SelectFillGrad() {
 			break
 		}
 	}
-}
-
-func (pv *PaintView) Make(p *core.Plan) {
-	if pv.HasChildren() {
-		return
-	}
-	pv.StrokeType = PaintSolid
-	pv.FillType = PaintSolid
-
-	DashIconsInit()
-	MarkerIconsInit()
-
-	pv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-
-	sty := &Settings.ShapeStyle
-
-	spl := core.NewFrame(pv, "stroke-lab")
-	core.NewText(spl).SetText("<b>Stroke Paint:  </b>")
-	spt := core.NewChooser(spl) // .SetStrings(PaintTypeNames)
-	spt.SelectItem(int(pv.StrokeType))
-	// spt.Mutex = true
-
-	wr := core.NewFrame(pv, "stroke-width")
-	core.NewText(wr).SetText("Width:  ").Style(func(s *styles.Style) {
-		s.Align.Items = styles.Center
-	})
-
-	core.NewSpinner(wr, "width").SetMin(0).SetStep(0.05).
-		SetValue(sty.StrokeStyle.Width.Value).OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)
-		}
-	})
-
-	// uncb.SetCurrentIndex(int(Settings.Size.Units))
-	core.NewChooser(wr, "width-units").SetEnum(units.UnitsN).OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetStrokeWidth(pv.StrokeWidthProp(), false)
-		}
-	})
-
-	core.NewSpace(wr, "sp1").Style(func(s *styles.Style) {
-		s.Min.X.Ch(5)
-	})
-
-	dshcb := core.NewChooser(wr, "dashes")
-	// dshcb.ItemsFromIconList(AllDashIcons, true, 0)
-	// dshcb.SetProp("width", units.NewCh(15))
-	dshcb.OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetDashProperties(pv.StrokeDashProp())
-		}
-	})
-
-	mkr := core.NewFrame(pv, "stroke-markers")
-
-	mscb := core.NewChooser(mkr, "marker-start")
-	// mscb.SetProp("width", units.NewCh(20))
-	// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
-	mscb.OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
-		}
-	})
-	mscc := core.NewChooser(mkr, "marker-start-color").SetEnum(MarkerColorsN)
-	// mscc.SetProp("width", units.NewCh(5))
-	mscc.OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
-		}
-	})
-
-	core.NewSeparator(mkr)
-
-	mmcb := core.NewChooser(mkr, "marker-mid")
-	// mmcb.SetProp("width", units.NewCh(20))
-	// mmcb.ItemsFromIconList(AllMarkerIcons, true, 0)
-	mmcb.OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
-		}
-	})
-	mmcc := core.NewChooser(mkr, "marker-mid-color").SetEnum(MarkerColorsN)
-	// mmcc.SetProp("width", units.NewCh(5))
-	mmcc.OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
-		}
-	})
-
-	core.NewSeparator(mkr)
-
-	mecb := core.NewChooser(mkr, "marker-end")
-	// mecb.SetProp("width", units.NewCh(20))
-	// mecb.ItemsFromIconList(AllMarkerIcons, true, 0)
-	mecb.OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
-		}
-	})
-	mecc := core.NewChooser(mkr, "marker-end-color").SetEnum(MarkerColorsN)
-	// mecc.SetProp("width", units.NewCh(5))
-	mecc.OnChange(func(e events.Event) {
-		if pv.IsStrokeOn() {
-			pv.VectorView.SetMarkerProperties(pv.MarkerProperties())
-		}
-	})
-
-	////////////////////////////////
-	// stroke stack
-
-	ss := core.NewFrame(pv, "stroke-stack")
-	ss.Styles.Display = styles.Stacked
-	ss.StackTop = 1
-	// ss.StackTopOnly = true
-
-	core.NewFrame(ss, "stroke-blank") // nothing
-
-	// spt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
-	// 	sss := pvv.StrokeStack()
-	// 	prev := pv.StrokeType
-	// 	pvv.StrokeType = PaintTypes(sig)
-	// 	update := pvv.UpdateStart()
-	// 	pvv.SetFullReRender()
-	// 	sp := pvv.StrokeProp()
-	// 	switch pvv.StrokeType {
-	// 	case PaintOff, PaintInherit:
-	// 		sss.StackTop = 0
-	// 	case PaintSolid:
-	// 		sss.StackTop = 1
-	// 	case PaintLinear, PaintRadial:
-	// 		if pvv.StrokeStops == "" {
-	// 			pvv.StrokeStops = pvv.VectorView.DefaultGradient()
-	// 		}
-	// 		sp = pvv.StrokeStops
-	// 		sss.StackTop = 2
-	// 		pvv.SelectStrokeGrad()
-	// 	}
-	// 	pvv.UpdateEnd(update)
-	// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
-	// })
-
-	views.NewColorView(ss, "stroke-clr")
-	// sc.SetProp("vertical-align", styles.AlignTop)
-	// sc.SetColor(sty.StrokeStyle.Color)
-	// sc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if pv.StrokeType == PaintSolid {
-	// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), false) // not manip
-	// 	}
-	// })
-	// sc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if pv.StrokeType == PaintSolid {
-	// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), true) // manip
-	// 	}
-	// })
-
-	sg := views.NewTableView(ss, "stroke-grad")
-	// sg.SetProp("index", true)
-	// sg.SetProp("toolbar", true)
-	// sg.SelectedIndex = -1
-	sg.SetSlice(&pv.VectorView.EditState.Gradients)
-	// sg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if sig == int64(core.WidgetSelected) {
-	// 		svv, _ := send.(*views.TableView)
-	// 		if svv.SelectedIndex >= 0 {
-	// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
-	// 			pv.VectorView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
-	// 		}
-	// 	}
-	// })
-
-	core.NewSeparator(pv)
-
-	fpl := core.NewFrame(pv, "fill-lab")
-	core.NewText(fpl).SetText("<b>Fill Paint:  </b>")
-
-	fpt := core.NewChooser(fpl, "fill-type").SetEnum(PaintTypesN)
-	fpt.SelectItem(int(pv.FillType))
-	// fpt.Mutex = true
-
-	fs := core.NewFrame(pv, "fill-stack")
-	fs.Styles.Display = styles.Stacked
-	fs.StackTop = 1
-	// fs.StackTopOnly = true
-
-	core.NewFrame(fs, "fill-blank")
-
-	// fpt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
-	// 	fss := pvv.FillStack()
-	// 	prev := pvv.FillType
-	// 	pvv.FillType = PaintTypes(sig)
-	// 	update := fss.UpdateStart()
-	// 	fss.SetFullReRender()
-	// 	fp := pvv.FillProp()
-	// 	switch pvv.FillType {
-	// 	case PaintOff, PaintInherit:
-	// 		fss.StackTop = 0
-	// 	case PaintSolid:
-	// 		fss.StackTop = 1
-	// 	case PaintLinear, PaintRadial:
-	// 		if pvv.FillStops == "" {
-	// 			pvv.FillStops = pvv.VectorView.DefaultGradient()
-	// 		}
-	// 		fp = pvv.FillStops
-	// 		fss.StackTop = 2
-	// 		pvv.SelectFillGrad()
-	// 	}
-	// 	pvv.UpdateEnd(update)
-	// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
-	// })
-
-	views.NewColorView(fs, "fill-clr").SetColor(colors.Scheme.Primary.Base)
-	// fc.SetProp("vertical-align", styles.AlignTop)
-	// fc.Config()
-	// fc.SetColor(sty.FillStyle.Color.Color)
-	// fc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if pv.FillType == PaintSolid {
-	// 		pv.VectorView.SetFillColor(pv.FillProp(), false)
-	// 	}
-	// })
-	// fc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if pv.FillType == PaintSolid {
-	// 		pv.VectorView.SetFillColor(pv.FillProp(), true) // manip
-	// 	}
-	// })
-
-	fg := views.NewTableView(fs, "fill-grad")
-	// fg.SetProp("index", true)
-	// fg.SetProp("toolbar", true)
-	// fg.SelectedIndex = -1
-	fg.SetSlice(&pv.VectorView.EditState.Gradients)
-	// fg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	if sig == int64(core.WidgetSelected) {
-	// 		svv, _ := send.(*views.TableView)
-	// 		if svv.SelectedIndex >= 0 {
-	// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
-	// 			pv.VectorView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
-	// 		}
-	// 	}
-	// })
-	// fg.SliceViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-	// 	// svv, _ := send.(*views.TableView)
-	// 	if sig == int64(views.SliceViewDeleted) { // not clear what we can do here
-	// 	} else {
-	// 		pv.VectorView.UpdateGradients()
-	// 	}
-	// })
-	// fg.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-	// 	// svv, _ := send.(*views.TableView)
-	// 	pv.VectorView.UpdateGradients()
-	// })
-
-	core.NewStretch(pv)
 }
 
 // StrokeStack returns the stroke stack frame

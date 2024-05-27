@@ -41,20 +41,109 @@ type VectorView struct {
 
 func (vv *VectorView) OnInit() {
 	vv.Frame.OnInit()
-	vv.SetStyles()
 	vv.EditState.ConfigDefaultGradient()
-	vv.AddCloseDialog()
-}
-
-func (vv *VectorView) SetStyles() {
 	vv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 	vv.OnWidgetAdded(func(w core.Widget) {
 		switch w.PathFrom(vv) {
-		case "splits/tabs":
+		case "splits/tabs": // TODO(config)
 			w.(*core.Tabs).SetType(core.FunctionalTabs)
 		}
+	})
+
+	vv.AddCloseDialog()
+
+	vv.Maker(func(p *core.Plan) {
+		if vv.HasChildren() {
+			return
+		}
+		core.NewFrame(vv, "modal-tb").Style(func(s *styles.Style) {
+			s.Display = styles.Stacked
+		})
+		hb := core.NewFrame(vv, "hbox")
+		core.NewFrame(vv, "statusbar").Style(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+		})
+
+		core.NewToolbar(hb, "tools").Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+		})
+		sp := core.NewSplits(hb, "splits").SetSplits(0.15, 0.60, 0.25)
+
+		tly := core.NewFrame(sp, "layer-tree").Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+		})
+
+		views.NewFuncButton(tly, vv.AddLayer)
+
+		lyv := views.NewTableView(tly, "layers")
+
+		tvfr := core.NewFrame(tly, "tree-frame").Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+		})
+		tv := NewTreeView(tvfr, "treeview")
+		tv.VectorView = vv
+		tv.OpenDepth = 4
+
+		sv := NewSVGView(sp, "svg")
+		sv.VectorView = vv
+
+		core.NewTabs(sp, "tabs")
+
+		tv.SyncTree(sv.Root())
+
+		// tv.TreeViewSig.Connect(vv.This(), func(recv, send tree.Node, sig int64, data any) {
+		// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
+		// 	if data == nil {
+		// 		return
+		// 	}
+		// 	if sig == int64(views.TreeViewInserted) {
+		// 		sn, ok := data.(svg.Node)
+		// 		if ok {
+		// 			gvv.SVG().NodeEnsureUniqueId(sn)
+		// 			svg.CloneNodeGradientProp(sn, "fill")
+		// 			svg.CloneNodeGradientProp(sn, "stroke")
+		// 		}
+		// 		return
+		// 	}
+		// 	if sig == int64(views.TreeViewDeleted) {
+		// 		sn, ok := data.(svg.Node)
+		// 		if ok {
+		// 			svg.DeleteNodeGradientProp(sn, "fill")
+		// 			svg.DeleteNodeGradientProp(sn, "stroke")
+		// 		}
+		// 		return
+		// 	}
+		// 	if sig != int64(views.TreeViewOpened) {
+		// 		return
+		// 	}
+		// 	tvn, _ := data.(tree.Node).Embed(KiT_TreeView).(*TreeView)
+		// 	_, issvg := tvn.SrcNode.(svg.Node)
+		// 	if !issvg {
+		// 		return
+		// 	}
+		// 	if tvn.SrcNode.HasChildren() {
+		// 		return
+		// 	}
+		// 	views.StructViewDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
+		// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
+		// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_StructView, true).(*views.StructView)
+		// 	// 		stv.SetStruct(tvn.SrcNode)
+		// })
+
+		vv.ConfigStatusBar()
+		vv.ConfigModalToolbar()
+		vv.ConfigTools()
+		vv.ConfigTabs()
+
+		vv.SetPhysSize(&Settings.Size)
+
+		vv.SyncLayers()
+		lyv.SetSlice(&vv.EditState.Layers)
+		vv.LayerViewSigs(lyv)
+
+		sv.UpdateGradients(vv.EditState.Gradients)
 	})
 }
 
@@ -337,112 +426,12 @@ func (vv *VectorView) StatusText() *core.Text {
 	return vv.StatusBar().Child(0).(*core.Text)
 }
 
-func (vv *VectorView) Make(p *core.Plan) {
-	if vv.HasChildren() {
-		return
-	}
-	core.NewFrame(vv, "modal-tb").Style(func(s *styles.Style) {
-		s.Display = styles.Stacked
-	})
-	hb := core.NewFrame(vv, "hbox")
-	core.NewFrame(vv, "statusbar").Style(func(s *styles.Style) {
-		s.Grow.Set(1, 0)
-	})
-
-	core.NewToolbar(hb, "tools").Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-	sp := core.NewSplits(hb, "splits").SetSplits(0.15, 0.60, 0.25)
-
-	tly := core.NewFrame(sp, "layer-tree").Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-
-	views.NewFuncButton(tly, vv.AddLayer)
-
-	lyv := views.NewTableView(tly, "layers")
-
-	tvfr := core.NewFrame(tly, "tree-frame").Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-	tv := NewTreeView(tvfr, "treeview")
-	tv.VectorView = vv
-	tv.OpenDepth = 4
-
-	sv := NewSVGView(sp, "svg")
-	sv.VectorView = vv
-
-	core.NewTabs(sp, "tabs")
-
-	tv.SyncTree(sv.Root())
-
-	// tv.TreeViewSig.Connect(vv.This(), func(recv, send tree.Node, sig int64, data any) {
-	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
-	// 	if data == nil {
-	// 		return
-	// 	}
-	// 	if sig == int64(views.TreeViewInserted) {
-	// 		sn, ok := data.(svg.Node)
-	// 		if ok {
-	// 			gvv.SVG().NodeEnsureUniqueId(sn)
-	// 			svg.CloneNodeGradientProp(sn, "fill")
-	// 			svg.CloneNodeGradientProp(sn, "stroke")
-	// 		}
-	// 		return
-	// 	}
-	// 	if sig == int64(views.TreeViewDeleted) {
-	// 		sn, ok := data.(svg.Node)
-	// 		if ok {
-	// 			svg.DeleteNodeGradientProp(sn, "fill")
-	// 			svg.DeleteNodeGradientProp(sn, "stroke")
-	// 		}
-	// 		return
-	// 	}
-	// 	if sig != int64(views.TreeViewOpened) {
-	// 		return
-	// 	}
-	// 	tvn, _ := data.(tree.Node).Embed(KiT_TreeView).(*TreeView)
-	// 	_, issvg := tvn.SrcNode.(svg.Node)
-	// 	if !issvg {
-	// 		return
-	// 	}
-	// 	if tvn.SrcNode.HasChildren() {
-	// 		return
-	// 	}
-	// 	views.StructViewDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
-	// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
-	// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_StructView, true).(*views.StructView)
-	// 	// 		stv.SetStruct(tvn.SrcNode)
-	// })
-
-	vv.ConfigStatusBar()
-	vv.ConfigModalToolbar()
-	vv.ConfigTools()
-	vv.ConfigTabs()
-
-	vv.SetPhysSize(&Settings.Size)
-
-	vv.SyncLayers()
-	lyv.SetSlice(&vv.EditState.Layers)
-	vv.LayerViewSigs(lyv)
-
-	sv.UpdateGradients(vv.EditState.Gradients)
-}
-
-// IsConfiged returns true if the view is fully configured
-func (vv *VectorView) IsConfiged() bool {
-	if !vv.HasChildren() {
-		return false
-	}
-	return true
-}
-
 // PasteAvailFunc is an ActionUpdateFunc that inactivates action if no paste avail
 func (vv *VectorView) PasteAvailFunc(bt *core.Button) {
 	bt.SetEnabled(!vv.Clipboard().IsEmpty())
 }
 
-func (vv *VectorView) MakeToolbar(tb *core.Toolbar) {
+func (vv *VectorView) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 	// TODO(kai): remove Update
 	views.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	core.NewButton(tb).SetText("New").SetIcon(icons.Add).

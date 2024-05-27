@@ -52,68 +52,70 @@ var _ tree.Node = (*App)(nil)
 func (a *App) OnInit() {
 	a.Frame.OnInit()
 	a.Dir = errors.Log1(os.Getwd())
+
+	a.Maker(func(p *core.Plan) { // TODO(config)
+		if a.HasChildren() {
+			return
+		}
+
+		// st := StructForFlags(a.Cmd.Flags)
+		// views.NewStructView(a).SetStruct(st)
+
+		sp := core.NewSplits(a, "splits").SetSplits(0.8, 0.2)
+		sp.Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+		})
+
+		cmds := core.NewFrame(sp, "commands")
+		cmds.Style(func(s *styles.Style) {
+			s.Wrap = true
+			s.Align.Content = styles.End
+		})
+
+		ef := core.NewFrame(sp, "editor-frame").Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+		})
+		dir := core.NewText(ef, "dir").SetText(a.Dir)
+
+		te := texteditor.NewSoloEditor(ef)
+		te.Buffer.SetLang("go")
+		te.Buffer.Options.LineNumbers = false
+
+		te.OnKeyChord(func(e events.Event) {
+			kf := keymap.Of(e.KeyChord())
+			if kf == keymap.Enter && e.Modifiers() == 0 {
+				e.SetHandled()
+				txt := te.Buffer.String()
+				te.Buffer.SetTextString("")
+
+				errors.Log(a.RunCmd(txt, cmds, dir))
+				return
+			}
+		})
+	})
 }
 
-func (a *App) AppBar(tb *core.Toolbar) {
+func (a *App) MakeToolbar(p *core.Plan) {
 	for _, cmd := range a.Cmd.Cmds {
 		cmd := cmd
 		fields := strings.Fields(cmd.Cmd)
 		text := strcase.ToSentence(strings.Join(fields[1:], " "))
-		bt := core.NewButton(tb).SetText(text).SetTooltip(cmd.Doc)
-		bt.OnClick(func(e events.Event) {
-			d := core.NewBody().AddTitle(text).AddText(cmd.Doc)
-			st := StructForFlags(cmd.Flags)
-			views.NewStructView(d).SetStruct(st)
-			d.AddBottomBar(func(parent core.Widget) {
-				d.AddCancel(parent)
-				d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {
-					errors.Log(exec.Verbose().Run(fields[0], fields[1:]...))
+		core.AddAt(p, text, func(w *core.Button) {
+			w.SetText(text).SetTooltip(cmd.Doc)
+			w.OnClick(func(e events.Event) {
+				d := core.NewBody().AddTitle(text).AddText(cmd.Doc)
+				st := StructForFlags(cmd.Flags)
+				views.NewStructView(d).SetStruct(st)
+				d.AddBottomBar(func(parent core.Widget) {
+					d.AddCancel(parent)
+					d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {
+						errors.Log(exec.Verbose().Run(fields[0], fields[1:]...))
+					})
 				})
+				d.RunFullDialog(w)
 			})
-			d.RunFullDialog(bt)
 		})
 	}
-}
-
-func (a *App) Make(p *core.Plan) {
-	if a.HasChildren() {
-		return
-	}
-
-	// st := StructForFlags(a.Cmd.Flags)
-	// views.NewStructView(a).SetStruct(st)
-
-	sp := core.NewSplits(a, "splits").SetSplits(0.8, 0.2)
-	sp.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-
-	cmds := core.NewFrame(sp, "commands")
-	cmds.Style(func(s *styles.Style) {
-		s.Wrap = true
-		s.Align.Content = styles.End
-	})
-
-	ef := core.NewFrame(sp, "editor-frame").Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-	dir := core.NewText(ef, "dir").SetText(a.Dir)
-
-	te := texteditor.NewSoloEditor(ef)
-	te.Buffer.SetLang("go")
-	te.Buffer.Options.LineNumbers = false
-
-	te.OnKeyChord(func(e events.Event) {
-		kf := keymap.Of(e.KeyChord())
-		if kf == keymap.Enter && e.Modifiers() == 0 {
-			e.SetHandled()
-			txt := te.Buffer.String()
-			te.Buffer.SetTextString("")
-
-			errors.Log(a.RunCmd(txt, cmds, dir))
-			return
-		}
-	})
 }
 
 // RunCmd runs the given command in the context of the given commands frame

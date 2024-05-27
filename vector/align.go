@@ -27,6 +27,36 @@ type AlignView struct {
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
+func (av *AlignView) OnInit() {
+	av.Frame.OnInit()
+	av.Maker(func(p *core.Plan) { // TODO(config)
+		if av.HasChildren() {
+			return
+		}
+		av.Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+		})
+
+		all := core.NewFrame(av)
+		core.NewText(all).SetText("<b>Align:  </b>")
+		core.NewChooser(all).SetEnum(AlignAnchorsN)
+
+		agrid := core.NewFrame(av).Style(func(s *styles.Style) {
+			s.Display = styles.Grid
+			s.Columns = 6
+		})
+
+		for _, al := range AlignsValues() {
+			al := al
+			core.NewButton(agrid, al.String()).SetIcon(icons.Icon(al.String())).
+				SetTooltip(al.Desc()).SetType(core.ButtonTonal).
+				OnClick(func(e events.Event) {
+					av.VectorView.Align(av.AlignAnchor(), al)
+				})
+		}
+	})
+}
+
 /////////////////////////////////////////////////////////////////////////
 //  Actions
 
@@ -240,36 +270,6 @@ func (sv *SVGView) GatherAlignPoints() {
 		}
 		return tree.Continue
 	})
-}
-
-///////////////////////////////////////////////////////////////
-//  AlignView
-
-func (av *AlignView) Make(p *core.Plan) {
-	if av.HasChildren() {
-		return
-	}
-	av.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-
-	all := core.NewFrame(av)
-	core.NewText(all).SetText("<b>Align:  </b>")
-	core.NewChooser(all).SetEnum(AlignAnchorsN)
-
-	agrid := core.NewFrame(av).Style(func(s *styles.Style) {
-		s.Display = styles.Grid
-		s.Columns = 6
-	})
-
-	for _, al := range AlignsValues() {
-		al := al
-		core.NewButton(agrid, al.String()).SetIcon(icons.Icon(al.String())).
-			SetTooltip(al.Desc()).SetType(core.ButtonTonal).
-			OnClick(func(e events.Event) {
-				av.VectorView.Align(av.AlignAnchor(), al)
-			})
-	}
 }
 
 // AlignAnchor returns the align anchor currently selected
