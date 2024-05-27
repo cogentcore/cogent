@@ -735,7 +735,7 @@ func (pv *PiView) Make(c *core.Config) {
 	pv.SetProp("spacing", core.StdDialogVSpaceUnits)
 	config := tree.Config{}
 	config.Add(core.ToolbarType, "toolbar")
-	config.Add(core.SplitsType, "splitview")
+	config.Add(core.SplitsType, "splits")
 	config.Add(core.FrameType, "statusbar")
 	mods, update := pv.ConfigChildren(config)
 	if !mods {
@@ -750,7 +750,7 @@ func (pv *PiView) Make(c *core.Config) {
 
 // Splits returns the main Splits
 func (pv *PiView) Splits() *core.Splits {
-	return pv.ChildByName("splitview", 4).(*core.Splits)
+	return pv.ChildByName("splits", 4).(*core.Splits)
 }
 
 // LexTree returns the lex rules tree view

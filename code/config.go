@@ -25,7 +25,7 @@ const (
 
 // Splits returns the main Splits
 func (ge *CodeView) Splits() *core.Splits {
-	return ge.ChildByName("splitview", 2).(*core.Splits)
+	return ge.ChildByName("splits", 2).(*core.Splits)
 }
 
 // TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)

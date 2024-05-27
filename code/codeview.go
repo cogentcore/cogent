@@ -127,76 +127,69 @@ func (cv *CodeView) OnInit() {
 			cv.OpenFile(fn)
 		}
 	})
+	cv.OnShow(func(e events.Event) {
+	})
 
-	cv.Maker(func(p *core.Plan) {
-		core.AddAt(p, "splitview", func(w *core.Splits) {
-			w.SetSplits(cv.Settings.Splits...)
-			w.Maker(func(p *core.Plan) {
-				core.AddAt(p, "filetree", func(w *core.Frame) {
-					w.Style(func(s *styles.Style) {
-						s.Direction = styles.Column
-						s.Overflow.Set(styles.OverflowAuto)
-					})
-					w.Maker(func(p *core.Plan) {
-						core.AddAt(p, "filetree", func(w *filetree.Tree) {
-							w.OpenDepth = 4
-							cv.Files = w
-							w.FileNodeType = FileNodeType
+	core.AddChildAt(cv, "splits", func(w *core.Splits) {
+		w.SetSplits(cv.Settings.Splits...)
+		core.AddChildAt(w, "filetree", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Direction = styles.Column
+				s.Overflow.Set(styles.OverflowAuto)
+			})
+			core.AddChildAt(w, "filetree", func(w *filetree.Tree) {
+				w.OpenDepth = 4
+				cv.Files = w
+				w.FileNodeType = FileNodeType
 
-							w.OnSelect(func(e events.Event) {
-								e.SetHandled()
-								sn := cv.SelectedFileNode()
-								if sn != nil {
-									cv.FileNodeSelected(sn)
-								}
-							})
-						})
-					})
-				})
-				for i := 0; i < NTextEditors; i++ {
-					cv.makeTextEditor(p, i)
-				}
-				core.AddAt(p, "tabs", func(w *core.Tabs) {
-					w.SetType(core.FunctionalTabs)
-					w.Style(func(s *styles.Style) {
-						s.Grow.Set(1, 1)
-					})
-				})
-				core.AddAt(p, "statusbar", func(w *core.Frame) {
-					w.Style(func(s *styles.Style) {
-						s.Grow.Set(1, 0)
-						s.Min.Y.Em(1.0)
-						s.Margin.Zero()
-						s.Padding.Set(units.Dp(4))
-					})
-					w.Maker(func(p *core.Plan) {
-						core.AddAt(p, "sb-text", func(w *core.Text) {
-							w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
-							w.Style(func(s *styles.Style) {
-								s.Min.X.Ch(100)
-								s.Min.Y.Em(1.0)
-								s.Margin.Zero()
-								s.Padding.Zero()
-								s.Text.TabSize = 4
-							})
-						})
-					})
+				w.OnSelect(func(e events.Event) {
+					e.SetHandled()
+					sn := cv.SelectedFileNode()
+					if sn != nil {
+						cv.FileNodeSelected(sn)
+					}
 				})
 			})
-			// todo: builder function
-			// ge.OpenConsoleTab()
-			// ge.UpdateFiles()
-
-			// todo: need this still:
-			// mtab.OnChange(func(e events.Event) {
-			// todo: need to monitor deleted
-			// gee.TabDeleted(data.(string))
-			// if data == "Find" {
-			// 	ge.ActiveTextEditor().ClearHighlights()
-			// }
-			// })
+		})
+		w.Maker(func(p *core.Plan) {
+			for i := 0; i < NTextEditors; i++ {
+				cv.makeTextEditor(p, i)
+			}
+		})
+		core.AddChildAt(w, "tabs", func(w *core.Tabs) {
+			w.SetType(core.FunctionalTabs)
+			w.Style(func(s *styles.Style) {
+				s.Grow.Set(1, 1)
+			})
 		})
 	})
+	core.AddChildAt(cv, "statusbar", func(w *core.Frame) {
+		w.Style(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
+			s.Min.Y.Em(1.0)
+			s.Padding.Set(units.Dp(4))
+		})
+		core.AddChildAt(w, "sb-text", func(w *core.Text) {
+			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
+			w.Style(func(s *styles.Style) {
+				s.Min.X.Ch(100)
+				s.Min.Y.Em(1.0)
+				s.Text.TabSize = 4
+			})
+		})
+	})
+	// todo: builder function
+	// ge.OpenConsoleTab()
+	// ge.UpdateFiles()
+
+	// todo: need this still:
+	// mtab.OnChange(func(e events.Event) {
+	// todo: need to monitor deleted
+	// gee.TabDeleted(data.(string))
+	// if data == "Find" {
+	// 	ge.ActiveTextEditor().ClearHighlights()
+	// }
+	// })
 }
 
 func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
@@ -206,32 +199,30 @@ func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
 		})
-		w.Maker(func(p *core.Plan) {
-			core.AddAt(p, "textbut-"+txnm, func(w *core.Button) {
-				w.SetText("texteditor: " + txnm)
-				w.Type = core.ButtonAction
-				w.Style(func(s *styles.Style) {
-					s.Grow.Set(1, 0)
-				})
-				w.Menu = func(m *core.Scene) {
-					cv.TextEditorButtonMenu(i, m)
-				}
-				w.OnClick(func(e events.Event) {
-					cv.SetActiveTextEditorIndex(i)
-				})
-				// todo: update
-				// ge.UpdateTextButtons()
+		core.AddChildAt(w, "textbut-"+txnm, func(w *core.Button) {
+			w.SetText("texteditor: " + txnm)
+			w.Type = core.ButtonAction
+			w.Style(func(s *styles.Style) {
+				s.Grow.Set(1, 0)
 			})
-			core.AddAt(p, "texteditor-"+txnm, func(w *TextEditor) {
-				w.Code = cv
-				ConfigEditorTextEditor(&w.Editor)
-				w.OnFocus(func(e events.Event) {
-					cv.ActiveTextEditorIndex = i
-				})
-				// get updates on cursor movement and qreplace
-				w.OnInput(func(e events.Event) {
-					cv.UpdateStatusText()
-				})
+			w.Menu = func(m *core.Scene) {
+				cv.TextEditorButtonMenu(i, m)
+			}
+			w.OnClick(func(e events.Event) {
+				cv.SetActiveTextEditorIndex(i)
+			})
+			// todo: update
+			// ge.UpdateTextButtons()
+		})
+		core.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
+			w.Code = cv
+			ConfigEditorTextEditor(&w.Editor)
+			w.OnFocus(func(e events.Event) {
+				cv.ActiveTextEditorIndex = i
+			})
+			// get updates on cursor movement and qreplace
+			w.OnInput(func(e events.Event) {
+				cv.UpdateStatusText()
 			})
 		})
 	})
