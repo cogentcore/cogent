@@ -84,12 +84,13 @@ func (br *Browser) OnInit() {
 			w.SetSplits(.15, .85)
 		})
 		core.AddAt(sp, "files", func(w *filetree.Tree) {
-		}, func(w *filetree.Tree) {
-			if br.DataRoot != "" {
-				errors.Log(os.Chdir(br.DataRoot))
-				wd := errors.Log1(os.Getwd())
-				w.OpenPath(wd)
-			}
+			w.Builder(func() {
+				if br.DataRoot != "" {
+					errors.Log(os.Chdir(br.DataRoot))
+					wd := errors.Log1(os.Getwd())
+					w.OpenPath(wd)
+				}
+			})
 		})
 		core.AddAt(sp, "tabs", func(w *core.Tabs) {
 			w.Type = core.FunctionalTabs
