@@ -81,17 +81,18 @@ func (fv *FindView) OnInit() {
 	})
 
 	fv.Maker(func(p *core.Plan) {
-		fb := core.AddAt(p, "findbar", func(w *core.BasicBar) {})
-		rb := core.AddAt(p, "replbar", func(w *core.BasicBar) {})
-
+		core.AddAt(p, "findbar", func(w *core.BasicBar) {
+			w.Maker(fv.makeFindToolbar)
+		})
+		core.AddAt(p, "replbar", func(w *core.BasicBar) {
+			w.Maker(fv.makeReplToolbar)
+		})
 		core.AddAt(p, "findtext", func(w *texteditor.Editor) {
 			ConfigOutputTextEditor(w)
 			w.LinkHandler = func(tl *paint.TextLink) {
 				fv.OpenFindURL(tl.URL, w)
 			}
 		})
-		fv.MakeFindToolbar(fb)
-		fv.MakeReplToolbar(rb)
 	})
 	na := fv.FindNextAct()
 	na.SetFocusEvent()
@@ -461,8 +462,8 @@ func (fv *FindView) UpdateFromParams() {
 	// langs auto-updates from param
 }
 
-// MakeFindToolbar
-func (fv *FindView) MakeFindToolbar(p *core.Plan) {
+// makeFindToolbar
+func (fv *FindView) makeFindToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").
 			OnClick(func(e events.Event) {
@@ -525,7 +526,7 @@ func (fv *FindView) MakeFindToolbar(p *core.Plan) {
 	})
 }
 
-func (fv *FindView) MakeReplToolbar(p *core.Plan) {
+func (fv *FindView) makeReplToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to previous result").
 			OnClick(func(e events.Event) {

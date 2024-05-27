@@ -120,8 +120,9 @@ func (dv *DebugView) OnInit() {
 		s.Grow.Set(1, 1)
 	})
 	dv.Maker(func(p *core.Plan) {
-		tb := core.AddAt(p, "toolbar", func(w *core.Toolbar) {})
-		dv.MakeToolbar(tb)
+		core.AddAt(p, "toolbar", func(w *core.Toolbar) {
+			w.Maker(dv.MakeToolbar)
+		})
 		core.AddAt(p, "tabs", func(w *core.Tabs) {
 			// todo: some better way of making tabs?
 			ctv := texteditor.NewEditor(w.NewTab("Console"))

@@ -67,11 +67,75 @@ func (sv *SpellView) OnInit() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
+	texteditor.InitSpell()
+	sv.CheckNext() // todo: on start
 
 	sv.Maker(func(p *core.Plan) {
-		sb := core.AddAt(p, "spellbar", func(w *core.Toolbar) {})
-		ub := core.AddAt(p, "unknownbar", func(w *core.Toolbar) {})
-		cb := core.AddAt(p, "changebar", func(w *core.Toolbar) {})
+		core.AddAt(p, "spellbar", func(w *core.Toolbar) {
+			w.Maker(func(p *core.Plan) {
+				core.Add(p, func(w *core.Button) {
+					w.SetText("Check Current File").
+						SetTooltip("spell check the current file").
+						OnClick(func(e events.Event) {
+							sv.SpellAction()
+						})
+				})
+				core.Add(p, func(w *core.Button) {
+					w.SetText("Train").
+						SetTooltip("add additional text to the training corpus").
+						OnClick(func(e events.Event) {
+							sv.TrainAction()
+						})
+				})
+			})
+		})
+		core.AddAt(p, "unknownbar", func(w *core.Toolbar) {
+			w.Maker(func(p *core.Plan) {
+				core.AddAt(p, "unknown-str", func(w *core.TextField) {
+					w.SetTooltip("Unknown word")
+					w.SetReadOnly(true)
+				})
+				core.Add(p, func(w *core.Button) {
+					w.SetText("Skip").
+						OnClick(func(e events.Event) {
+							sv.SkipAction()
+						})
+				})
+				core.Add(p, func(w *core.Button) {
+					w.SetText("Ignore").
+						OnClick(func(e events.Event) {
+							sv.IgnoreAction()
+						})
+				})
+				core.Add(p, func(w *core.Button) {
+					w.SetText("Learn").
+						OnClick(func(e events.Event) {
+							sv.LearnAction()
+						})
+				})
+			})
+		})
+		core.AddAt(p, "changebar", func(w *core.Toolbar) {
+			w.Maker(func(p *core.Plan) {
+				core.AddAt(p, "change-str", func(w *core.TextField) {
+					w.SetTooltip("This string will replace the unknown word in text")
+				})
+				core.Add(p, func(w *core.Button) {
+					w.SetText("Change").
+						SetTooltip("change the unknown word to the selected suggestion").
+						OnClick(func(e events.Event) {
+							sv.ChangeAction()
+						})
+				})
+				core.Add(p, func(w *core.Button) {
+					w.SetText("Change All").
+						SetTooltip("change all instances of the unknown word in this document").
+						OnClick(func(e events.Event) {
+							sv.ChangeAllAction()
+						})
+				})
+			})
+		})
 		core.AddAt(p, "suggest", func(w *views.SliceView) {
 			sv.Suggest = []string{"                                              "}
 			w.SetReadOnly(true)
@@ -85,73 +149,6 @@ func (sv *SpellView) OnInit() {
 			// 	}
 			// })
 		})
-
-		// spell toolbar
-		core.Add(sb, func(w *core.Button) {
-			w.SetText("Check Current File").
-				SetTooltip("spell check the current file").
-				OnClick(func(e events.Event) {
-					sv.SpellAction()
-				})
-		})
-		core.Add(sb, func(w *core.Button) {
-			w.SetText("Train").
-				SetTooltip("add additional text to the training corpus").
-				OnClick(func(e events.Event) {
-					sv.TrainAction()
-				})
-		})
-
-		// unknown toolbar
-		core.AddAt(ub, "unknown-str", func(w *core.TextField) {
-			w.SetTooltip("Unknown word")
-			w.SetReadOnly(true)
-		})
-
-		core.Add(sb, func(w *core.Button) {
-			w.SetText("Skip").
-				OnClick(func(e events.Event) {
-					sv.SkipAction()
-				})
-		})
-
-		core.Add(sb, func(w *core.Button) {
-			w.SetText("Ignore").
-				OnClick(func(e events.Event) {
-					sv.IgnoreAction()
-				})
-		})
-
-		core.Add(sb, func(w *core.Button) {
-			w.SetText("Learn").
-				OnClick(func(e events.Event) {
-					sv.LearnAction()
-				})
-		})
-
-		// change toolbar
-		core.AddAt(cb, "change-str", func(w *core.TextField) {
-			w.SetTooltip("This string will replace the unknown word in text")
-		})
-
-		core.Add(cb, func(w *core.Button) {
-			w.SetText("Change").
-				SetTooltip("change the unknown word to the selected suggestion").
-				OnClick(func(e events.Event) {
-					sv.ChangeAction()
-				})
-		})
-
-		core.Add(cb, func(w *core.Button) {
-			w.SetText("Change All").
-				SetTooltip("change all instances of the unknown word in this document").
-				OnClick(func(e events.Event) {
-					sv.ChangeAllAction()
-				})
-		})
-
-		texteditor.InitSpell()
-		sv.CheckNext()
 	})
 }
 

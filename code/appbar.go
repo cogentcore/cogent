@@ -19,39 +19,40 @@ import (
 	"cogentcore.org/core/views"
 )
 
-func (ge *CodeView) AppBarConfig(parent core.Widget) {
-	/*
-		tb := core.RecycleToolbar(parent)
-		core.StandardAppBarBack(tb)
-		ac := core.StandardAppBarChooser(tb)
-		ge.AddChooserFiles(ac)
-		ge.AddChooserSymbols(ac)
-		ac.OnFirst(events.KeyChord, func(e events.Event) {
-			kf := keymap.Of(e.KeyChord())
-			if kf == keymap.Abort {
-				ac.ClearError()
-				ge.FocusActiveTextEditor()
-			}
+func (cv *CodeView) AppBarConfig(parent core.Widget) {
+	tb := core.RecycleToolbar(parent)
+	tb.Maker(func(p *core.Plan) {
+		core.StandardAppBarBack(p)
+		core.AddAt(p, "app-chooser", func(w *core.Chooser) {
+			core.ConfigAppChooser(w)
+			cv.AddChooserFiles(w)
+			cv.AddChooserSymbols(w)
+			w.OnFirst(events.KeyChord, func(e events.Event) {
+				kf := keymap.Of(e.KeyChord())
+				if kf == keymap.Abort {
+					w.ClearError()
+					cv.FocusActiveTextEditor()
+				}
+			})
 		})
-
-		core.StandardOverflowMenu(tb)
-		core.CurrentWindowAppBar(tb)
-		// apps should add their own app-general functions here
-	*/
+	})
+	core.StandardOverflowMenu(tb)
+	// core.CurrentWindowAppBar(tb)
+	// apps should add their own app-general functions here
 }
 
-func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
+func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
+		w.SetFunc(cv.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
 	core.Add(p, func(w *core.Switch) {
 		w.SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 		w.Style(func(s *styles.Style) {
-			w.SetChecked(ge.Settings.GoMod) // todo: update
+			w.SetChecked(cv.Settings.GoMod) // todo: update
 		})
 		w.OnChange(func(e events.Event) {
-			ge.Settings.GoMod = w.StateIs(states.Checked)
-			SetGoMod(ge.Settings.GoMod)
+			cv.Settings.GoMod = w.StateIs(states.Checked)
+			SetGoMod(cv.Settings.GoMod)
 		})
 	})
 
@@ -60,7 +61,7 @@ func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
 		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
 			for _, rp := range RecentPaths {
 				core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
-					ge.OpenRecent(core.Filename(rp))
+					cv.OpenRecent(core.Filename(rp))
 				})
 			}
 			core.NewSeparator(m)
@@ -68,34 +69,34 @@ func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
 				RecentPaths = nil
 			})
 			core.NewButton(m).SetText("Edit recent paths").OnClick(func(e events.Event) {
-				ge.EditRecentPaths()
+				cv.EditRecentPaths()
 			})
 		})
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.OpenPath).
+		w.SetFunc(cv.OpenPath).
 			SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-		ge.ConfigActiveFilename(w)
+		cv.ConfigActiveFilename(w)
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.SaveActiveView).SetText("Save").
+		w.SetFunc(cv.SaveActiveView).SetText("Save").
 			SetIcon(icons.Save).SetKey(keymap.Save)
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.SaveAll).SetIcon(icons.Save)
+		w.SetFunc(cv.SaveAll).SetIcon(icons.Save)
 	})
 
 	core.Add[*core.Separator](p)
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.CursorToHistPrev).SetText("").SetKey(keymap.HistPrev).
+		w.SetFunc(cv.CursorToHistPrev).SetText("").SetKey(keymap.HistPrev).
 			SetIcon(icons.KeyboardArrowLeft).SetShowReturn(false)
 	})
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.CursorToHistNext).SetText("").SetKey(keymap.HistNext).
+		w.SetFunc(cv.CursorToHistNext).SetText("").SetKey(keymap.HistNext).
 			SetIcon(icons.KeyboardArrowRight).SetShowReturn(false)
 	})
 
@@ -103,51 +104,51 @@ func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
 
 	// todo: this does not work to apply project defaults!
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.Find).SetIcon(icons.FindReplace)
-		ge.ConfigFindButton(w)
+		w.SetFunc(cv.Find).SetIcon(icons.FindReplace)
+		cv.ConfigFindButton(w)
 	})
 
 	core.Add[*core.Separator](p)
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.Symbols).SetIcon(icons.List)
+		w.SetFunc(cv.Symbols).SetIcon(icons.List)
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.Spell).SetIcon(icons.Spellcheck)
+		w.SetFunc(cv.Spell).SetIcon(icons.Spellcheck)
 	})
 
 	core.Add[*core.Separator](p)
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.RunBuild).SetText("Build").SetIcon(icons.Build).
+		w.SetFunc(cv.RunBuild).SetText("Build").SetIcon(icons.Build).
 			SetShortcut(key.Chord(ChordForFunction(KeyBuildProject).String()))
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.Run).SetIcon(icons.PlayArrow).
+		w.SetFunc(cv.Run).SetIcon(icons.PlayArrow).
 			SetShortcut(key.Chord(ChordForFunction(KeyRunProject).String()))
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.Debug).SetIcon(icons.Debug)
+		w.SetFunc(cv.Debug).SetIcon(icons.Debug)
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.DebugTest).SetIcon(icons.Debug)
+		w.SetFunc(cv.DebugTest).SetIcon(icons.Debug)
 	})
 
 	core.Add[*core.Separator](p)
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.Commit).SetIcon(icons.Star)
+		w.SetFunc(cv.Commit).SetIcon(icons.Star)
 	})
 
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Command").
 			SetShortcut(key.Chord(ChordForFunction(KeyExecCmd).String())).
 			SetMenu(func(m *core.Scene) {
-				ec := ExecCmds(ge)
+				ec := ExecCmds(cv)
 				for _, cc := range ec {
 					cc := cc
 					cat := cc[0]
@@ -158,7 +159,7 @@ func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
 							cm := cc[i]
 							core.NewButton(mm).SetText(cm).SetIcon(ic).OnClick(func(e events.Event) {
 								e.SetHandled()
-								ge.ExecCmdNameActive(CommandName(cat, cm))
+								cv.ExecCmdNameActive(CommandName(cat, cm))
 							})
 						}
 					})
@@ -175,27 +176,27 @@ func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
 					for _, sp := range AvailableSplitNames {
 						sn := SplitName(sp)
 						mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
-							ge.SplitsSetView(sn)
+							cv.SplitsSetView(sn)
 						})
-						if sn == ge.Settings.SplitName {
+						if sn == cv.Settings.SplitName {
 							mb.SetSelected(true)
 						}
 					}
 				})
-			views.NewFuncButton(m, ge.SplitsSaveAs).SetText("Save As")
+			views.NewFuncButton(m, cv.SplitsSaveAs).SetText("Save As")
 			core.NewButton(m).SetText("Save").
 				SetMenu(func(mm *core.Scene) {
 					for _, sp := range AvailableSplitNames {
 						sn := SplitName(sp)
 						mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
-							ge.SplitsSave(sn)
+							cv.SplitsSave(sn)
 						})
-						if sn == ge.Settings.SplitName {
+						if sn == cv.Settings.SplitName {
 							mb.SetSelected(true)
 						}
 					}
 				})
-			views.NewFuncButton(m, ge.SplitsEdit).SetText("Edit")
+			views.NewFuncButton(m, cv.SplitsEdit).SetText("Edit")
 		})
 	})
 
@@ -313,12 +314,12 @@ func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
 }
 
 // AddChooserFiles adds the files to the app chooser.
-func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
+func (cv *CodeView) AddChooserFiles(ac *core.Chooser) {
 	ac.AddItemsFunc(func() {
-		if ge.Files == nil {
+		if cv.Files == nil {
 			return
 		}
-		ge.Files.WidgetWalkDown(func(wi core.Widget, wb *core.WidgetBase) bool {
+		cv.Files.WidgetWalkDown(func(wi core.Widget, wb *core.WidgetBase) bool {
 			fn := filetree.AsNode(wi)
 			if fn == nil || fn.IsIrregular() {
 				return tree.Continue
@@ -344,7 +345,7 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 					Text: nmpath,
 					Icon: icons.FileExe,
 					Func: func() {
-						ge.FileNodeRunExe(fn)
+						cv.FileNodeRunExe(fn)
 					},
 				})
 			default:
@@ -352,7 +353,7 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 					Text: nmpath,
 					Icon: fn.Info.Ic,
 					Func: func() {
-						ge.NextViewFileNode(fn)
+						cv.NextViewFileNode(fn)
 						ac.CallItemsFuncs() // refresh avail files
 					},
 				})
@@ -363,9 +364,9 @@ func (ge *CodeView) AddChooserFiles(ac *core.Chooser) {
 }
 
 // AddChooserSymbols adds the symbols to the app chooser.
-func (ge *CodeView) AddChooserSymbols(ac *core.Chooser) {
+func (cv *CodeView) AddChooserSymbols(ac *core.Chooser) {
 	ac.AddItemsFunc(func() {
-		tv := ge.ActiveTextEditor()
+		tv := cv.ActiveTextEditor()
 		if tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 			return
 		}
@@ -383,7 +384,7 @@ func (ge *CodeView) AddChooserSymbols(ac *core.Chooser) {
 				Text: sn.Symbol.Label(),
 				Icon: sn.GetIcon(),
 				Func: func() {
-					SelectSymbol(ge, sn.Symbol)
+					SelectSymbol(cv, sn.Symbol)
 				},
 			})
 			return tree.Continue

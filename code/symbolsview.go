@@ -57,35 +57,37 @@ func (sv *SymbolsView) OnInit() {
 		s.Grow.Set(1, 1)
 	})
 
+	scope := sv.SymParams.Scope
+
 	sv.Maker(func(p *core.Plan) {
-		tb := core.AddAt(p, "sym-toolbar", func(w *core.Toolbar) {})
-		svfr := core.AddAt(p, "sym-frame", func(w *core.Frame) {
+		core.AddAt(p, "sym-toolbar", func(w *core.Toolbar) {
+			w.Maker(sv.makeToolbar)
+		})
+		core.AddAt(p, "sym-frame", func(w *core.Frame) {
 			w.Style(func(s *styles.Style) {
 				s.Grow.Set(1, 1)
 				s.Overflow.Set(styles.OverflowAuto)
 			})
-		})
-		sv.MakeToolbar(tb)
-
-		scope := sv.SymParams.Scope
-
-		core.AddAt(svfr, "syms", func(w *SymTreeView) {
-			sv.Syms = NewSymNode()
-			sv.Syms.SetName("syms")
-			if scope == SymScopePackage {
-				sv.OpenPackage()
-			} else {
-				sv.OpenFile()
-			}
-			w.SyncTree(sv.Syms)
-			w.OnSelect(func(e events.Event) {
-				if len(w.SelectedNodes) == 0 {
-					return
-				}
-				sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
-				if sn != nil {
-					SelectSymbol(sv.Code, sn.Symbol)
-				}
+			w.Maker(func(p *core.Plan) {
+				core.AddAt(p, "syms", func(w *SymTreeView) {
+					sv.Syms = NewSymNode()
+					sv.Syms.SetName("syms")
+					if scope == SymScopePackage {
+						sv.OpenPackage()
+					} else {
+						sv.OpenFile()
+					}
+					w.SyncTree(sv.Syms)
+					w.OnSelect(func(e events.Event) {
+						if len(w.SelectedNodes) == 0 {
+							return
+						}
+						sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
+						if sn != nil {
+							SelectSymbol(sv.Code, sn.Symbol)
+						}
+					})
+				})
 			})
 		})
 	})
@@ -128,8 +130,8 @@ func (sv *SymbolsView) SearchText() *core.TextField {
 	return sv.Toolbar().ChildByName("search-str", 1).(*core.TextField)
 }
 
-// MakeToolbar adds toolbar.
-func (sv *SymbolsView) MakeToolbar(p *core.Plan) {
+// makeToolbar adds toolbar.
+func (sv *SymbolsView) makeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Refresh").SetIcon(icons.Update).
 			SetTooltip("refresh symbols for current file and scope").

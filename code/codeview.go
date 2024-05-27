@@ -113,119 +113,127 @@ func init() {
 	// paint.TextLinkHandler = TextLinkHandler
 }
 
-func (ge *CodeView) OnInit() {
-	ge.Frame.OnInit()
-	ge.Style(func(s *styles.Style) {
+func (cv *CodeView) OnInit() {
+	cv.Frame.OnInit()
+	cv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 
-	ge.AddCloseDialog()
-	ge.OnFirst(events.KeyChord, ge.codeViewKeys)
-	ge.On(events.OSOpenFiles, func(e events.Event) {
+	cv.AddCloseDialog()
+	cv.OnFirst(events.KeyChord, cv.codeViewKeys)
+	cv.On(events.OSOpenFiles, func(e events.Event) {
 		ofe := e.(*events.OSFiles)
 		for _, fn := range ofe.Files {
-			ge.OpenFile(fn)
+			cv.OpenFile(fn)
 		}
 	})
 
-	ge.Maker(func(p *core.Plan) {
-		splits := core.AddAt(p, "splitview", func(w *core.Splits) {
-			w.SetSplits(ge.Settings.Splits...)
-		})
-		sb := core.AddAt(p, "statusbar", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
-				s.Grow.Set(1, 0)
-				s.Min.Y.Em(1.0)
-				s.Margin.Zero()
-				s.Padding.Set(units.Dp(4))
-			})
-		})
-		core.AddAt(sb, "sb-text", func(w *core.Text) {
-			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
-			w.Style(func(s *styles.Style) {
-				s.Min.X.Ch(100)
-				s.Min.Y.Em(1.0)
-				s.Margin.Zero()
-				s.Padding.Zero()
-				s.Text.TabSize = 4
-			})
-		})
+	cv.Maker(func(p *core.Plan) {
+		core.AddAt(p, "splitview", func(w *core.Splits) {
+			w.SetSplits(cv.Settings.Splits...)
+			w.Maker(func(p *core.Plan) {
+				core.AddAt(p, "filetree", func(w *core.Frame) {
+					w.Style(func(s *styles.Style) {
+						s.Direction = styles.Column
+						s.Overflow.Set(styles.OverflowAuto)
+					})
+					w.Maker(func(p *core.Plan) {
+						core.AddAt(p, "filetree", func(w *filetree.Tree) {
+							w.OpenDepth = 4
+							cv.Files = w
+							w.FileNodeType = FileNodeType
 
-		ftfr := core.AddAt(splits, "filetree", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
-				s.Direction = styles.Column
-				s.Overflow.Set(styles.OverflowAuto)
-			})
-		})
-		core.AddAt(ftfr, "filetree", func(w *filetree.Tree) {
-			w.OpenDepth = 4
-			ge.Files = w
-			w.FileNodeType = FileNodeType
-
-			w.OnSelect(func(e events.Event) {
-				e.SetHandled()
-				sn := ge.SelectedFileNode()
-				if sn != nil {
-					ge.FileNodeSelected(sn)
+							w.OnSelect(func(e events.Event) {
+								e.SetHandled()
+								sn := cv.SelectedFileNode()
+								if sn != nil {
+									cv.FileNodeSelected(sn)
+								}
+							})
+						})
+					})
+				})
+				for i := 0; i < NTextEditors; i++ {
+					cv.makeTextEditor(p, i)
 				}
-			})
-		})
-
-		for i := 0; i < NTextEditors; i++ {
-			txnm := fmt.Sprintf("%d", i)
-			txfr := core.AddAt(splits, "textframe-"+txnm, func(w *core.Frame) {
-				w.Style(func(s *styles.Style) {
-					s.Direction = styles.Column
-					s.Grow.Set(1, 1)
+				core.AddAt(p, "tabs", func(w *core.Tabs) {
+					w.SetType(core.FunctionalTabs)
+					w.Style(func(s *styles.Style) {
+						s.Grow.Set(1, 1)
+					})
+				})
+				core.AddAt(p, "statusbar", func(w *core.Frame) {
+					w.Style(func(s *styles.Style) {
+						s.Grow.Set(1, 0)
+						s.Min.Y.Em(1.0)
+						s.Margin.Zero()
+						s.Padding.Set(units.Dp(4))
+					})
+					w.Maker(func(p *core.Plan) {
+						core.AddAt(p, "sb-text", func(w *core.Text) {
+							w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
+							w.Style(func(s *styles.Style) {
+								s.Min.X.Ch(100)
+								s.Min.Y.Em(1.0)
+								s.Margin.Zero()
+								s.Padding.Zero()
+								s.Text.TabSize = 4
+							})
+						})
+					})
 				})
 			})
-			core.AddAt(txfr, "textbut-"+txnm, func(w *core.Button) {
+			// todo: builder function
+			// ge.OpenConsoleTab()
+			// ge.UpdateFiles()
+
+			// todo: need this still:
+			// mtab.OnChange(func(e events.Event) {
+			// todo: need to monitor deleted
+			// gee.TabDeleted(data.(string))
+			// if data == "Find" {
+			// 	ge.ActiveTextEditor().ClearHighlights()
+			// }
+			// })
+		})
+	})
+}
+
+func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
+	txnm := fmt.Sprintf("%d", i)
+	core.AddAt(p, "textframe-"+txnm, func(w *core.Frame) {
+		w.Style(func(s *styles.Style) {
+			s.Direction = styles.Column
+			s.Grow.Set(1, 1)
+		})
+		w.Maker(func(p *core.Plan) {
+			core.AddAt(p, "textbut-"+txnm, func(w *core.Button) {
 				w.SetText("texteditor: " + txnm)
 				w.Type = core.ButtonAction
 				w.Style(func(s *styles.Style) {
 					s.Grow.Set(1, 0)
 				})
 				w.Menu = func(m *core.Scene) {
-					ge.TextEditorButtonMenu(i, m)
+					cv.TextEditorButtonMenu(i, m)
 				}
 				w.OnClick(func(e events.Event) {
-					ge.SetActiveTextEditorIndex(i)
+					cv.SetActiveTextEditorIndex(i)
 				})
 				// todo: update
 				// ge.UpdateTextButtons()
 			})
-			core.AddAt(txfr, "texteditor-"+txnm, func(w *TextEditor) {
-				w.Code = ge
+			core.AddAt(p, "texteditor-"+txnm, func(w *TextEditor) {
+				w.Code = cv
 				ConfigEditorTextEditor(&w.Editor)
 				w.OnFocus(func(e events.Event) {
-					ge.ActiveTextEditorIndex = i
+					cv.ActiveTextEditorIndex = i
 				})
 				// get updates on cursor movement and qreplace
 				w.OnInput(func(e events.Event) {
-					ge.UpdateStatusText()
+					cv.UpdateStatusText()
 				})
 			})
-		}
-
-		core.AddAt(splits, "tabs", func(w *core.Tabs) {
-			w.SetType(core.FunctionalTabs)
-			w.Style(func(s *styles.Style) {
-				s.Grow.Set(1, 1)
-			})
 		})
-
-		// todo: builder function
-		// ge.OpenConsoleTab()
-		// ge.UpdateFiles()
-
-		// todo: need this still:
-		// mtab.OnChange(func(e events.Event) {
-		// todo: need to monitor deleted
-		// gee.TabDeleted(data.(string))
-		// if data == "Find" {
-		// 	ge.ActiveTextEditor().ClearHighlights()
-		// }
-		// })
 	})
 }
 
@@ -244,54 +252,54 @@ func ParentCode(tn tree.Node) (*CodeView, bool) {
 
 // VersionControl returns the version control system in effect, using the file tree detected
 // version or whatever is set in project settings
-func (ge *CodeView) VersionControl() filetree.VersionControlName {
-	vc := ge.Settings.VersionControl
+func (cv *CodeView) VersionControl() filetree.VersionControlName {
+	vc := cv.Settings.VersionControl
 	return vc
 }
 
-func (ge *CodeView) FocusOnTabs() bool {
-	return ge.FocusOnPanel(TabsIndex)
+func (cv *CodeView) FocusOnTabs() bool {
+	return cv.FocusOnPanel(TabsIndex)
 }
 
 ////////////////////////////////////////////////////////
 //  Main project API
 
 // UpdateFiles updates the list of files saved in project
-func (ge *CodeView) UpdateFiles() { //types:add
-	if ge.Files != nil && ge.ProjectRoot != "" {
-		ge.Files.OpenPath(string(ge.ProjectRoot))
-		ge.Files.Open()
+func (cv *CodeView) UpdateFiles() { //types:add
+	if cv.Files != nil && cv.ProjectRoot != "" {
+		cv.Files.OpenPath(string(cv.ProjectRoot))
+		cv.Files.Open()
 	}
 }
 
-func (ge *CodeView) IsEmpty() bool {
-	return ge.ProjectRoot == ""
+func (cv *CodeView) IsEmpty() bool {
+	return cv.ProjectRoot == ""
 }
 
 // OpenRecent opens a recently used file
-func (ge *CodeView) OpenRecent(filename core.Filename) { //types:add
+func (cv *CodeView) OpenRecent(filename core.Filename) { //types:add
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".code" {
-		ge.OpenProject(filename)
+		cv.OpenProject(filename)
 	} else {
-		ge.OpenPath(filename)
+		cv.OpenPath(filename)
 	}
 }
 
 // EditRecentPaths opens a dialog editor for editing the recent project paths list
-func (ge *CodeView) EditRecentPaths() {
+func (cv *CodeView) EditRecentPaths() {
 	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
 	views.NewSliceView(d).SetSlice(&RecentPaths)
-	d.AddOKOnly().RunDialog(ge)
+	d.AddOKOnly().RunDialog(cv)
 }
 
 // OpenFile opens file in an open project if it has the same path as the file
 // or in a new window.
-func (ge *CodeView) OpenFile(fnm string) { //types:add
+func (cv *CodeView) OpenFile(fnm string) { //types:add
 	abfn, _ := filepath.Abs(fnm)
-	if strings.HasPrefix(abfn, string(ge.ProjectRoot)) {
-		ge.ViewFile(core.Filename(abfn))
+	if strings.HasPrefix(abfn, string(cv.ProjectRoot)) {
+		cv.ViewFile(core.Filename(abfn))
 		return
 	}
 	for _, win := range core.MainRenderWindows {
@@ -303,93 +311,93 @@ func (ge *CodeView) OpenFile(fnm string) { //types:add
 		}
 	}
 	// fmt.Printf("open path: %s\n", ge.ProjectRoot)
-	ge.OpenPath(core.Filename(abfn))
+	cv.OpenPath(core.Filename(abfn))
 }
 
 // SetWindowNameTitle sets the window name and title based on current project name
-func (ge *CodeView) SetWindowNameTitle() {
-	pnm := ge.Name()
+func (cv *CodeView) SetWindowNameTitle() {
+	pnm := cv.Name()
 	title := "Cogent Code • " + pnm
-	ge.Scene.Body.SetTitle(title)
+	cv.Scene.Body.SetTitle(title)
 }
 
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
 // current CodeView object if it is empty, or otherwise opens a new window.
-func (ge *CodeView) OpenPath(path core.Filename) *CodeView { //types:add
+func (cv *CodeView) OpenPath(path core.Filename) *CodeView { //types:add
 	if gproj, has := CheckForProjectAtPath(string(path)); has {
-		return ge.OpenProject(core.Filename(gproj))
+		return cv.OpenProject(core.Filename(gproj))
 	}
-	if !ge.IsEmpty() {
+	if !cv.IsEmpty() {
 		return NewCodeProjectPath(string(path))
 	}
-	ge.Defaults()
+	cv.Defaults()
 	root, pnm, fnm, ok := ProjectPathParse(string(path))
 	if ok {
 		os.Chdir(root)
 		RecentPaths.AddPath(root, core.SystemSettings.SavedPathsMax)
 		SavePaths()
-		ge.ProjectRoot = core.Filename(root)
-		ge.SetName(pnm)
-		ge.Scene.SetName(pnm)
-		ge.Settings.ProjectFilename = core.Filename(filepath.Join(root, pnm+".code"))
-		ge.ProjectFilename = ge.Settings.ProjectFilename
-		ge.Settings.ProjectRoot = ge.ProjectRoot
-		ge.GuessMainLang()
-		ge.LangDefaults()
-		ge.SetWindowNameTitle()
-		ge.UpdateFiles()
-		ge.SplitsSetView(SplitName(AvailableSplitNames[0]))
+		cv.ProjectRoot = core.Filename(root)
+		cv.SetName(pnm)
+		cv.Scene.SetName(pnm)
+		cv.Settings.ProjectFilename = core.Filename(filepath.Join(root, pnm+".code"))
+		cv.ProjectFilename = cv.Settings.ProjectFilename
+		cv.Settings.ProjectRoot = cv.ProjectRoot
+		cv.GuessMainLang()
+		cv.LangDefaults()
+		cv.SetWindowNameTitle()
+		cv.UpdateFiles()
+		cv.SplitsSetView(SplitName(AvailableSplitNames[0]))
 		if fnm != "" {
-			ge.NextViewFile(core.Filename(fnm))
+			cv.NextViewFile(core.Filename(fnm))
 		}
 	}
-	return ge
+	return cv
 }
 
 // OpenProject opens .code project file and its settings from given filename, in a standard
 // toml-formatted file
-func (ge *CodeView) OpenProject(filename core.Filename) *CodeView { //types:add
-	if !ge.IsEmpty() {
+func (cv *CodeView) OpenProject(filename core.Filename) *CodeView { //types:add
+	if !cv.IsEmpty() {
 		return OpenCodeProject(string(filename))
 	}
-	ge.Defaults()
-	if err := ge.Settings.Open(filename); err != nil {
+	cv.Defaults()
+	if err := cv.Settings.Open(filename); err != nil {
 		slog.Error("Project Settings had a loading error", "error", err)
 	}
 	root, pnm, _, ok := ProjectPathParse(string(filename))
-	ge.Settings.ProjectRoot = core.Filename(root)
-	if ge.Settings.MainLang == fileinfo.Unknown {
-		ge.GuessMainLang()
+	cv.Settings.ProjectRoot = core.Filename(root)
+	if cv.Settings.MainLang == fileinfo.Unknown {
+		cv.GuessMainLang()
 	}
-	ge.Settings.ProjectFilename = filename // should already be set but..
+	cv.Settings.ProjectFilename = filename // should already be set but..
 	if ok {
-		SetGoMod(ge.Settings.GoMod)
-		os.Chdir(string(ge.Settings.ProjectRoot))
-		ge.ProjectRoot = core.Filename(ge.Settings.ProjectRoot)
+		SetGoMod(cv.Settings.GoMod)
+		os.Chdir(string(cv.Settings.ProjectRoot))
+		cv.ProjectRoot = core.Filename(cv.Settings.ProjectRoot)
 		RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
 		SavePaths()
-		ge.SetName(pnm)
-		ge.Scene.SetName(pnm)
-		ge.ApplySettings()
-		ge.UpdateFiles()
-		ge.SetWindowNameTitle()
+		cv.SetName(pnm)
+		cv.Scene.SetName(pnm)
+		cv.ApplySettings()
+		cv.UpdateFiles()
+		cv.SetWindowNameTitle()
 	}
-	return ge
+	return cv
 }
 
 // NewProject creates a new project at given path, making a new folder in that
 // path -- all CodeView projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (ge *CodeView) NewProject(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *CodeView { //types:add
+func (cv *CodeView) NewProject(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *CodeView { //types:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
-		core.MessageDialog(ge, fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err), "Could not Make Folder")
+		core.MessageDialog(cv, fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err), "Could not Make Folder")
 		return nil
 	}
-	nge := ge.OpenPath(core.Filename(np))
+	nge := cv.OpenPath(core.Filename(np))
 	nge.Settings.MainLang = mainLang
 	if VersionControl != "" {
 		nge.Settings.VersionControl = VersionControl
@@ -398,16 +406,16 @@ func (ge *CodeView) NewProject(path core.Filename, folder string, mainLang filei
 }
 
 // NewFile creates a new file in the project
-func (ge *CodeView) NewFile(filename string, addToVcs bool) { //types:add
-	np := filepath.Join(string(ge.ProjectRoot), filename)
+func (cv *CodeView) NewFile(filename string, addToVcs bool) { //types:add
+	np := filepath.Join(string(cv.ProjectRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
-		core.MessageDialog(ge, fmt.Sprintf("Could not make new file at: %v, err: %v", np, err), "Could not Make File")
+		core.MessageDialog(cv, fmt.Sprintf("Could not make new file at: %v, err: %v", np, err), "Could not Make File")
 		return
 	}
-	ge.Files.UpdatePath(np)
+	cv.Files.UpdatePath(np)
 	if addToVcs {
-		nfn, ok := ge.Files.FindFile(np)
+		nfn, ok := cv.Files.FindFile(np)
 		if ok {
 			nfn.AddToVCS()
 		}
@@ -416,28 +424,28 @@ func (ge *CodeView) NewFile(filename string, addToVcs bool) { //types:add
 
 // SaveProject saves project file containing custom project settings, in a
 // standard toml-formatted file
-func (ge *CodeView) SaveProject() { //types:add
-	if ge.Settings.ProjectFilename == "" {
+func (cv *CodeView) SaveProject() { //types:add
+	if cv.Settings.ProjectFilename == "" {
 		return
 	}
-	ge.SaveProjectAs(ge.Settings.ProjectFilename)
-	ge.SaveAllCheck(false, nil) // false = no cancel option
+	cv.SaveProjectAs(cv.Settings.ProjectFilename)
+	cv.SaveAllCheck(false, nil) // false = no cancel option
 }
 
 // SaveProjectIfExists saves project file containing custom project settings, in a
 // standard toml-formatted file, only if it already exists -- returns true if saved
 // saveAllFiles indicates if user should be prompted for saving all files
-func (ge *CodeView) SaveProjectIfExists(saveAllFiles bool) bool {
+func (cv *CodeView) SaveProjectIfExists(saveAllFiles bool) bool {
 	spell.SaveIfLearn()
-	if ge.Settings.ProjectFilename == "" {
+	if cv.Settings.ProjectFilename == "" {
 		return false
 	}
-	if _, err := os.Stat(string(ge.Settings.ProjectFilename)); os.IsNotExist(err) {
+	if _, err := os.Stat(string(cv.Settings.ProjectFilename)); os.IsNotExist(err) {
 		return false // does not exist
 	}
-	ge.SaveProjectAs(ge.Settings.ProjectFilename)
+	cv.SaveProjectAs(cv.Settings.ProjectFilename)
 	if saveAllFiles {
-		ge.SaveAllCheck(false, nil)
+		cv.SaveAllCheck(false, nil)
 	}
 	return true
 }
@@ -446,16 +454,16 @@ func (ge *CodeView) SaveProjectIfExists(saveAllFiles bool) bool {
 // toml-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (ge *CodeView) SaveProjectAs(filename core.Filename) bool { //types:add
+func (cv *CodeView) SaveProjectAs(filename core.Filename) bool { //types:add
 	spell.SaveIfLearn()
 	RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
 	SavePaths()
-	ge.Settings.ProjectFilename = filename
-	ge.ProjectFilename = ge.Settings.ProjectFilename
-	ge.GrabSettings()
-	ge.Settings.Save(filename)
-	ge.Files.UpdatePath(string(filename))
-	ge.Changed = false
+	cv.Settings.ProjectFilename = filename
+	cv.ProjectFilename = cv.Settings.ProjectFilename
+	cv.GrabSettings()
+	cv.Settings.Save(filename)
+	cv.Files.UpdatePath(string(filename))
+	cv.Changed = false
 	return false
 }
 
@@ -463,8 +471,8 @@ func (ge *CodeView) SaveProjectAs(filename core.Filename) bool { //types:add
 // returns true if there were unsaved files, false otherwise.
 // cancelOpt presents an option to cancel current command, in which case function is not called.
 // if function is passed, then it is called in all cases except if the user selects cancel.
-func (ge *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
-	nch := ge.NChangedFiles()
+func (cv *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
+	nch := cv.NChangedFiles()
 	if nch == 0 {
 		if fun != nil {
 			fun()
@@ -472,7 +480,7 @@ func (ge *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		return false
 	}
 	d := core.NewBody().AddTitle("There are Unsaved Files").
-		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", ge.Nm, nch))
+		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Nm, nch))
 	d.AddBottomBar(func(parent core.Widget) {
 		if cancelOpt {
 			d.AddCancel(parent).SetText("Cancel Command")
@@ -485,13 +493,13 @@ func (ge *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		})
 		core.NewButton(parent).SetText("Save All").OnClick(func(e events.Event) {
 			d.Close()
-			ge.SaveAllOpenNodes()
+			cv.SaveAllOpenNodes()
 			if fun != nil {
 				fun()
 			}
 		})
 	})
-	d.RunDialog(ge)
+	d.RunDialog(cv)
 	return true
 }
 
@@ -543,29 +551,29 @@ func CheckForProjectAtPath(path string) (string, bool) {
 //   Close / Quit Req
 
 // NChangedFiles returns number of opened files with unsaved changes
-func (ge *CodeView) NChangedFiles() int {
-	return ge.OpenNodes.NChanged()
+func (cv *CodeView) NChangedFiles() int {
+	return cv.OpenNodes.NChanged()
 }
 
 // AddCloseDialog adds the close dialog that automatically saves the project
 // and prompts the user to save open files when they try to close the scene
 // containing this code view.
-func (ge *CodeView) AddCloseDialog() {
-	ge.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
-		ge.SaveProjectIfExists(false) // don't prompt here, as we will do it now..
-		nch := ge.NChangedFiles()
+func (cv *CodeView) AddCloseDialog() {
+	cv.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
+		cv.SaveProjectIfExists(false) // don't prompt here, as we will do it now..
+		nch := cv.NChangedFiles()
 		if nch == 0 {
 			return false
 		}
 		d.AddTitle("Unsaved files").
-			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, ge.Nm))
+			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Nm))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
-				ge.Scene.Close()
+				cv.Scene.Close()
 			})
 			core.NewButton(parent).SetText("Save and close").OnClick(func(e events.Event) {
-				ge.SaveAllOpenNodes()
-				ge.Scene.Close()
+				cv.SaveAllOpenNodes()
+				cv.Scene.Close()
 			})
 		})
 		return true
@@ -608,26 +616,26 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 
 	if win, found := core.AllRenderWindows.FindName(winm); found {
 		sc := win.MainScene()
-		ge := CodeInScene(sc)
-		if ge != nil && string(ge.ProjectRoot) == root {
+		cv := CodeInScene(sc)
+		if cv != nil && string(cv.ProjectRoot) == root {
 			win.Raise()
-			return ge
+			return cv
 		}
 	}
 
 	b := core.NewBody(winm).SetTitle(winm)
 
-	ge := NewCodeView(b)
-	core.TheApp.AppBarConfig = ge.AppBarConfig
-	b.AddAppBar(ge.MakeToolbar)
+	cv := NewCodeView(b)
+	core.TheApp.AppBarConfig = cv.AppBarConfig
+	b.AddAppBar(cv.MakeToolbar)
 
 	b.RunWindow()
 
 	if doPath {
-		ge.OpenPath(core.Filename(path))
+		cv.OpenPath(core.Filename(path))
 	} else {
-		ge.OpenProject(core.Filename(path))
+		cv.OpenProject(core.Filename(path))
 	}
 
-	return ge
+	return cv
 }
