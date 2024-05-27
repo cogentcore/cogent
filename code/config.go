@@ -30,9 +30,6 @@ const (
 )
 
 func (ge *CodeView) Make(p *core.Plan) {
-	ge.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
 	splits := core.AddAt(p, "splitview", func(w *core.Splits) {
 		w.SetSplits(ge.Settings.Splits...)
 	})

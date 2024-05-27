@@ -27,6 +27,7 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/spell"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
@@ -113,6 +114,9 @@ func init() {
 
 func (ge *CodeView) OnInit() {
 	ge.Frame.OnInit()
+	ge.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
 	ge.HandleEvents()
 	ge.AddCloseDialog()
 }

@@ -74,10 +74,32 @@ type FindView struct {
 }
 
 func (fv *FindView) OnInit() {
+	fv.Frame.OnInit()
 	fv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
+
+	fv.AddMaker(func(p *core.Plan) {
+		fb := core.AddAt(p, "findbar", func(w *core.BasicBar) {})
+		rb := core.AddAt(p, "replbar", func(w *core.BasicBar) {})
+
+		core.AddAt(p, "findtext", func(w *texteditor.Editor) {
+			ConfigOutputTextEditor(w)
+			w.LinkHandler = func(tl *paint.TextLink) {
+				fv.OpenFindURL(tl.URL, w)
+			}
+		})
+		fv.MakeFindToolbar(fb)
+		fv.MakeReplToolbar(rb)
+	})
+	na := fv.FindNextAct()
+	na.SetFocusEvent()
+}
+
+func (fv *FindView) OnAdd() {
+	fv.Frame.OnAdd()
+	fv.Code, _ = ParentCode(fv)
 }
 
 // Params returns the find params
@@ -377,28 +399,6 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
-
-func (fv *FindView) Make(p *core.Plan) {
-	fv.Code, _ = ParentCode(fv)
-
-	fb := core.AddAt(p, "findbar", func(w *core.BasicBar) {
-	})
-
-	rb := core.AddAt(p, "replbar", func(w *core.BasicBar) {
-	})
-
-	core.AddAt(p, "findtext", func(w *texteditor.Editor) {
-		ConfigOutputTextEditor(w)
-		w.LinkHandler = func(tl *paint.TextLink) {
-			fv.OpenFindURL(tl.URL, w)
-		}
-	})
-	fv.MakeFindToolbar(fb)
-	fv.MakeReplToolbar(rb)
-	na := fv.FindNextAct()
-	na.SetFocusEvent()
-	fv.Update()
-}
 
 // FindBar returns the find toolbar
 func (fv *FindView) FindBar() *core.BasicBar {
