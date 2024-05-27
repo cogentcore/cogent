@@ -14,22 +14,10 @@ import (
 	"cogentcore.org/core/views"
 )
 
-func (ge *CodeView) HandleEvents() {
-	ge.OnFirst(events.KeyChord, func(e events.Event) {
-		ge.CodeViewKeys(e)
-	})
-	ge.On(events.OSOpenFiles, func(e events.Event) {
-		ofe := e.(*events.OSFiles)
-		for _, fn := range ofe.Files {
-			ge.OpenFile(fn)
-		}
-	})
-}
-
-func (ge *CodeView) CodeViewKeys(kt events.Event) {
+func (ge *CodeView) codeViewKeys(e events.Event) {
 	SetGoMod(ge.Settings.GoMod)
 	var kf KeyFunctions
-	kc := kt.KeyChord()
+	kc := e.KeyChord()
 	gkf := keymap.Of(kc)
 	if core.DebugSettings.KeyEventTrace {
 		slog.Info("CodeView KeyInput", "widget", ge, "keyfun", gkf)
@@ -42,7 +30,7 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 				fmt.Printf("KeyFun sequence: %v aborted\n", seqstr)
 			}
 			ge.SetStatus(seqstr + " -- aborted")
-			kt.SetHandled() // abort key sequence, don't send esc to anyone else
+			e.SetHandled() // abort key sequence, don't send esc to anyone else
 			ge.KeySeq1 = ""
 			return
 		}
@@ -52,12 +40,12 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 	} else {
 		kf = KeyFunction(kc, "")
 		if kf == KeyNeeds2 {
-			kt.SetHandled()
+			e.SetHandled()
 			tv := ge.ActiveTextEditor()
 			if tv != nil {
 				tv.CancelComplete()
 			}
-			ge.KeySeq1 = kt.KeyChord()
+			ge.KeySeq1 = e.KeyChord()
 			ge.SetStatus(string(ge.KeySeq1))
 			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
@@ -74,78 +62,78 @@ func (ge *CodeView) CodeViewKeys(kt events.Event) {
 	atv := ge.ActiveTextEditor()
 	switch gkf {
 	case keymap.Find:
-		kt.SetHandled()
+		e.SetHandled()
 		if atv != nil && atv.HasSelection() {
 			ge.Settings.Find.Find = string(atv.Selection().ToBytes())
 		}
 		ge.CallFind(atv)
 	}
-	if kt.IsHandled() {
+	if e.IsHandled() {
 		return
 	}
 	switch kf {
 	case KeyNextPanel:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.FocusNextPanel()
 	case KeyPrevPanel:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.FocusPrevPanel()
 	case KeyFileOpen:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CallViewFile(atv)
 	case KeyBufSelect:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.SelectOpenNode()
 	case KeyBufClone:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CloneActiveView()
 	case KeyBufSave:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.SaveActiveView()
 	case KeyBufSaveAs:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CallSaveActiveViewAs(atv)
 	case KeyBufClose:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CloseActiveView()
 	case KeyExecCmd:
-		kt.SetHandled()
+		e.SetHandled()
 		views.CallFunc(atv, ge.ExecCmd)
 	case KeyRectCut:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CutRect()
 	case KeyRectCopy:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CopyRect()
 	case KeyRectPaste:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.PasteRect()
 	case KeyRegCopy:
-		kt.SetHandled()
+		e.SetHandled()
 		views.CallFunc(atv, ge.RegisterCopy)
 	case KeyRegPaste:
-		kt.SetHandled()
+		e.SetHandled()
 		views.CallFunc(atv, ge.RegisterPaste)
 	case KeyCommentOut:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CommentOut()
 	case KeyIndent:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.Indent()
 	case KeyJump:
-		kt.SetHandled()
+		e.SetHandled()
 		tv := ge.ActiveTextEditor()
 		if tv != nil {
 			tv.JumpToLinePrompt()
 		}
 	case KeySetSplit:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.CallSplitsSetView(atv)
 	case KeyBuildProject:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.Build()
 	case KeyRunProject:
-		kt.SetHandled()
+		e.SetHandled()
 		ge.Run()
 	}
 }

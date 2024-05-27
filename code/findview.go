@@ -80,7 +80,7 @@ func (fv *FindView) OnInit() {
 		s.Grow.Set(1, 1)
 	})
 
-	fv.AddMaker(func(p *core.Plan) {
+	fv.Maker(func(p *core.Plan) {
 		fb := core.AddAt(p, "findbar", func(w *core.BasicBar) {})
 		rb := core.AddAt(p, "replbar", func(w *core.BasicBar) {})
 

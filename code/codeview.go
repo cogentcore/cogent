@@ -28,6 +28,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
@@ -117,8 +118,115 @@ func (ge *CodeView) OnInit() {
 	ge.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	ge.HandleEvents()
+
 	ge.AddCloseDialog()
+	ge.OnFirst(events.KeyChord, ge.codeViewKeys)
+	ge.On(events.OSOpenFiles, func(e events.Event) {
+		ofe := e.(*events.OSFiles)
+		for _, fn := range ofe.Files {
+			ge.OpenFile(fn)
+		}
+	})
+
+	ge.Maker(func(p *core.Plan) {
+		splits := core.AddAt(p, "splitview", func(w *core.Splits) {
+			w.SetSplits(ge.Settings.Splits...)
+		})
+		sb := core.AddAt(p, "statusbar", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Grow.Set(1, 0)
+				s.Min.Y.Em(1.0)
+				s.Margin.Zero()
+				s.Padding.Set(units.Dp(4))
+			})
+		})
+		core.AddAt(sb, "sb-text", func(w *core.Text) {
+			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
+			w.Style(func(s *styles.Style) {
+				s.Min.X.Ch(100)
+				s.Min.Y.Em(1.0)
+				s.Margin.Zero()
+				s.Padding.Zero()
+				s.Text.TabSize = 4
+			})
+		})
+
+		ftfr := core.AddAt(splits, "filetree", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Direction = styles.Column
+				s.Overflow.Set(styles.OverflowAuto)
+			})
+		})
+		core.AddAt(ftfr, "filetree", func(w *filetree.Tree) {
+			w.OpenDepth = 4
+			ge.Files = w
+			w.FileNodeType = FileNodeType
+
+			w.OnSelect(func(e events.Event) {
+				e.SetHandled()
+				sn := ge.SelectedFileNode()
+				if sn != nil {
+					ge.FileNodeSelected(sn)
+				}
+			})
+		})
+
+		for i := 0; i < NTextEditors; i++ {
+			txnm := fmt.Sprintf("%d", i)
+			txfr := core.AddAt(splits, "textframe-"+txnm, func(w *core.Frame) {
+				w.Style(func(s *styles.Style) {
+					s.Direction = styles.Column
+					s.Grow.Set(1, 1)
+				})
+			})
+			core.AddAt(txfr, "textbut-"+txnm, func(w *core.Button) {
+				w.SetText("texteditor: " + txnm)
+				w.Type = core.ButtonAction
+				w.Style(func(s *styles.Style) {
+					s.Grow.Set(1, 0)
+				})
+				w.Menu = func(m *core.Scene) {
+					ge.TextEditorButtonMenu(i, m)
+				}
+				w.OnClick(func(e events.Event) {
+					ge.SetActiveTextEditorIndex(i)
+				})
+				// todo: update
+				// ge.UpdateTextButtons()
+			})
+			core.AddAt(txfr, "texteditor-"+txnm, func(w *TextEditor) {
+				w.Code = ge
+				ConfigEditorTextEditor(&w.Editor)
+				w.OnFocus(func(e events.Event) {
+					ge.ActiveTextEditorIndex = i
+				})
+				// get updates on cursor movement and qreplace
+				w.OnInput(func(e events.Event) {
+					ge.UpdateStatusText()
+				})
+			})
+		}
+
+		core.AddAt(splits, "tabs", func(w *core.Tabs) {
+			w.SetType(core.FunctionalTabs)
+			w.Style(func(s *styles.Style) {
+				s.Grow.Set(1, 1)
+			})
+		})
+
+		// todo: builder function
+		// ge.OpenConsoleTab()
+		// ge.UpdateFiles()
+
+		// todo: need this still:
+		// mtab.OnChange(func(e events.Event) {
+		// todo: need to monitor deleted
+		// gee.TabDeleted(data.(string))
+		// if data == "Find" {
+		// 	ge.ActiveTextEditor().ClearHighlights()
+		// }
+		// })
+	})
 }
 
 // ParentCode returns the Code parent of given node
