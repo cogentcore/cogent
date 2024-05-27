@@ -33,7 +33,7 @@ func init() {
 		"AppIconImagesCache":       reflect.ValueOf(&core.AppIconImagesCache).Elem(),
 		"AppearanceSettings":       reflect.ValueOf(&core.AppearanceSettings).Elem(),
 		"AsButton":                 reflect.ValueOf(core.AsButton),
-		"AsLayout":                 reflect.ValueOf(core.AsLayout),
+		"AsFrame":                 reflect.ValueOf(core.AsFrame),
 		"AsTextField":              reflect.ValueOf(core.AsTextField),
 		"AsWidget":                 reflect.ValueOf(core.AsWidget),
 		"AsWidgetBase":             reflect.ValueOf(core.AsWidgetBase),
@@ -454,7 +454,7 @@ type _cogentcore_org_core_core_Layouter struct {
 	WAddContextMenu      func(menu func(m *core.Scene)) *core.WidgetBase
 	WApplyContextMenus   func(m *core.Scene)
 	WApplyStyle          func()
-	WAsLayout            func() *core.Frame
+	WAsFrame            func() *core.Frame
 	WAsTreeNode          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
@@ -561,8 +561,8 @@ func (W _cogentcore_org_core_core_Layouter) ApplyContextMenus(m *core.Scene) {
 func (W _cogentcore_org_core_core_Layouter) ApplyStyle() {
 	W.WApplyStyle()
 }
-func (W _cogentcore_org_core_core_Layouter) AsLayout() *core.Frame {
-	return W.WAsLayout()
+func (W _cogentcore_org_core_core_Layouter) AsFrame() *core.Frame {
+	return W.WAsFrame()
 }
 func (W _cogentcore_org_core_core_Layouter) AsTreeNode() *tree.NodeBase {
 	return W.WAsTreeNode()
