@@ -50,53 +50,50 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 	return &sv.Code.Settings.Symbols
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//    GUI config
-
 func (sv *SymbolsView) OnInit() {
+	sv.Frame.OnInit()
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
+
+	sv.Maker(func(p *core.Plan) {
+		tb := core.AddAt(p, "sym-toolbar", func(w *core.Toolbar) {})
+		svfr := core.AddAt(p, "sym-frame", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Grow.Set(1, 1)
+				s.Overflow.Set(styles.OverflowAuto)
+			})
+		})
+		sv.MakeToolbar(tb)
+
+		scope := sv.SymParams.Scope
+
+		core.AddAt(svfr, "syms", func(w *SymTreeView) {
+			sv.Syms = NewSymNode()
+			sv.Syms.SetName("syms")
+			if scope == SymScopePackage {
+				sv.OpenPackage()
+			} else {
+				sv.OpenFile()
+			}
+			w.SyncTree(sv.Syms)
+			w.OnSelect(func(e events.Event) {
+				if len(w.SelectedNodes) == 0 {
+					return
+				}
+				sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
+				if sn != nil {
+					SelectSymbol(sv.Code, sn.Symbol)
+				}
+			})
+		})
+	})
 }
 
-func (sv *SymbolsView) Config(ge *CodeView, sp SymbolsParams) {
+func (sv *SymbolsView) Config(ge *CodeView, sp SymbolsParams) { // TODO(config): better name?
 	sv.Code = ge
 	sv.SymParams = sp
-}
-
-func (sv *SymbolsView) Make(p *core.Plan) {
-	tb := core.AddAt(p, "sym-toolbar", func(w *core.Toolbar) {
-	})
-	svfr := core.AddAt(p, "sym-frame", func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
-			s.Grow.Set(1, 1)
-			s.Overflow.Set(styles.OverflowAuto)
-		})
-	})
-	sv.MakeToolbar(tb)
-
-	scope := sv.SymParams.Scope
-
-	core.AddAt(svfr, "syms", func(w *SymTreeView) {
-		sv.Syms = NewSymNode()
-		sv.Syms.SetName("syms")
-		if scope == SymScopePackage {
-			sv.OpenPackage()
-		} else {
-			sv.OpenFile()
-		}
-		w.SyncTree(sv.Syms)
-		w.OnSelect(func(e events.Event) {
-			if len(w.SelectedNodes) == 0 {
-				return
-			}
-			sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
-			if sn != nil {
-				SelectSymbol(sv.Code, sn.Symbol)
-			}
-		})
-	})
 }
 
 func (sv *SymbolsView) UpdateSymbols() {
