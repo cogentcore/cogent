@@ -35,6 +35,7 @@ func (cv *CodeView) AppBarConfig(parent core.Widget) {
 				}
 			})
 		})
+		cv.MakeToolbar(p)
 	})
 	core.StandardOverflowMenu(tb)
 	// core.CurrentWindowAppBar(tb)
