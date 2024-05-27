@@ -59,35 +59,31 @@ func (sv *SymbolsView) OnInit() {
 
 	scope := sv.SymParams.Scope
 
-	sv.Maker(func(p *core.Plan) {
-		core.AddAt(p, "sym-toolbar", func(w *core.Toolbar) {
-			w.Maker(sv.makeToolbar)
+	core.AddChildAt(sv, "sym-toolbar", func(w *core.Toolbar) {
+		w.Maker(sv.makeToolbar)
+	})
+	core.AddChildAt(sv, "sym-frame", func(w *core.Frame) {
+		w.Style(func(s *styles.Style) {
+			s.Grow.Set(1, 1)
+			s.Overflow.Set(styles.OverflowAuto)
 		})
-		core.AddAt(p, "sym-frame", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
-				s.Grow.Set(1, 1)
-				s.Overflow.Set(styles.OverflowAuto)
-			})
-			w.Maker(func(p *core.Plan) {
-				core.AddAt(p, "syms", func(w *SymTreeView) {
-					sv.Syms = NewSymNode()
-					sv.Syms.SetName("syms")
-					if scope == SymScopePackage {
-						sv.OpenPackage()
-					} else {
-						sv.OpenFile()
-					}
-					w.SyncTree(sv.Syms)
-					w.OnSelect(func(e events.Event) {
-						if len(w.SelectedNodes) == 0 {
-							return
-						}
-						sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
-						if sn != nil {
-							SelectSymbol(sv.Code, sn.Symbol)
-						}
-					})
-				})
+		core.AddChildAt(w, "syms", func(w *SymTreeView) {
+			sv.Syms = NewSymNode()
+			sv.Syms.SetName("syms")
+			if scope == SymScopePackage {
+				sv.OpenPackage()
+			} else {
+				sv.OpenFile()
+			}
+			w.SyncTree(sv.Syms)
+			w.OnSelect(func(e events.Event) {
+				if len(w.SelectedNodes) == 0 {
+					return
+				}
+				sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
+				if sn != nil {
+					SelectSymbol(sv.Code, sn.Symbol)
+				}
 			})
 		})
 	})
