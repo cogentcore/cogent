@@ -120,7 +120,7 @@ func (ge *CodeView) MakeToolbar(p *core.Plan) { //types:add
 	core.Add[*core.Separator](p)
 
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(ge.Build).SetIcon(icons.Build).
+		w.SetFunc(ge.RunBuild).SetText("Build").SetIcon(icons.Build).
 			SetShortcut(key.Chord(ChordForFunction(KeyBuildProject).String()))
 	})
 

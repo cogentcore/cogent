@@ -114,9 +114,37 @@ func (dv *DebugView) Config(ge *CodeView, sup fileinfo.Known, exePath string) {
 }
 
 func (dv *DebugView) OnInit() {
+	dv.Frame.OnInit()
 	dv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
+	})
+	dv.Maker(func(p *core.Plan) {
+		tb := core.AddAt(p, "toolbar", func(w *core.Toolbar) {})
+		dv.MakeToolbar(tb)
+		core.AddAt(p, "tabs", func(w *core.Tabs) {
+			// todo: some better way of making tabs?
+			ctv := texteditor.NewEditor(w.NewTab("Console"))
+			ctv.SetName("dbg-console")
+			ConfigOutputTextEditor(ctv)
+			dv.OutputBuffer.Options.LineNumbers = false
+			ctv.SetBuffer(dv.OutputBuffer)
+			NewBreakView(w.NewTab("Breaks")).ConfigBreakView(dv)
+			NewStackView(w.NewTab("Stack")).ConfigStackView(dv, false)
+			if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
+				NewTaskView(w.NewTab("Tasks")).ConfigTaskView(dv)
+			}
+			NewVarsView(w.NewTab("Vars")).ConfigVarsView(dv, false)
+			NewThreadView(w.NewTab("Threads")).ConfigThreadView(dv)
+			NewStackView(w.NewTab("Find Frames")).ConfigStackView(dv, true) // find frames
+			NewVarsView(w.NewTab("Global Vars")).ConfigVarsView(dv, true)   // all vars
+		})
+		// todo: where does this go?  on init?
+		dv.State.BlankState()
+		dv.OutputBuffer = texteditor.NewBuffer()
+		dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
+		dv.State.Breaks = nil // get rid of dummy
+		dv.Start()
 	})
 }
 
@@ -746,38 +774,6 @@ func (dv *DebugView) SetStatus(stat cdebug.Status) {
 	tb.Update() // state change
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//    GUI config
-
-func (dv *DebugView) Make(p *core.Plan) {
-	tb := core.AddAt(p, "toolbar", func(w *core.Toolbar) {
-	})
-	dv.MakeToolbar(tb)
-	core.AddAt(p, "tabs", func(w *core.Tabs) {
-		// todo: some better way of making tabs?
-		ctv := texteditor.NewEditor(w.NewTab("Console"))
-		ctv.SetName("dbg-console")
-		ConfigOutputTextEditor(ctv)
-		dv.OutputBuffer.Options.LineNumbers = false
-		ctv.SetBuffer(dv.OutputBuffer)
-		NewBreakView(w.NewTab("Breaks")).ConfigBreakView(dv)
-		NewStackView(w.NewTab("Stack")).ConfigStackView(dv, false)
-		if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
-			NewTaskView(w.NewTab("Tasks")).ConfigTaskView(dv)
-		}
-		NewVarsView(w.NewTab("Vars")).ConfigVarsView(dv, false)
-		NewThreadView(w.NewTab("Threads")).ConfigThreadView(dv)
-		NewStackView(w.NewTab("Find Frames")).ConfigStackView(dv, true) // find frames
-		NewVarsView(w.NewTab("Global Vars")).ConfigVarsView(dv, true)   // all vars
-	})
-	// todo: where does this go?  on init?
-	dv.State.BlankState()
-	dv.OutputBuffer = texteditor.NewBuffer()
-	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
-	dv.State.Breaks = nil // get rid of dummy
-	dv.Start()
-}
-
 // Toolbar returns the debug toolbar
 func (dv *DebugView) Toolbar() *core.Toolbar {
 	return dv.ChildByName("toolbar", 0).(*core.Toolbar)
@@ -1254,38 +1250,34 @@ func (vv *VarView) OnInit() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-}
-
-// Config configures the widget
-func (vv *VarView) Make(p *core.Plan) {
-	if vv.Var == nil {
-		return
-	}
-	core.AddAt(p, "frame-info", func(w *core.Text) {
-		w.SetText(vv.FrameInfo)
-	})
-	splits := core.AddAt(p, "splits", func(w *core.Splits) {
-		w.SetSplits(0.3, 0.7)
-	})
-	tvfr := core.AddAt(splits, "tvfr", func(w *core.Frame) {
-
-	})
-	core.AddAt(tvfr, "tv", func(w *views.TreeView) {
-		w.SyncTree(vv.Var)
-		w.OnSelect(func(e events.Event) {
-			if len(w.SelectedNodes) > 0 {
-				sn := w.SelectedNodes[0].AsTreeView().SyncNode
-				vr, ok := sn.(*cdebug.Variable)
-				if ok {
-					vv.SelectVar = vr
-				}
-				sv := vv.StructView()
-				sv.SetStruct(sn)
-			}
+	vv.Maker(func(p *core.Plan) {
+		if vv.Var == nil {
+			return
+		}
+		core.AddAt(p, "frame-info", func(w *core.Text) {
+			w.SetText(vv.FrameInfo)
 		})
-	})
-	core.AddAt(splits, "sv", func(w *views.StructView) {
-		w.SetStruct(vv.Var)
+		splits := core.AddAt(p, "splits", func(w *core.Splits) {
+			w.SetSplits(0.3, 0.7)
+		})
+		tvfr := core.AddAt(splits, "tvfr", func(w *core.Frame) {})
+		core.AddAt(tvfr, "tv", func(w *views.TreeView) {
+			w.SyncTree(vv.Var)
+			w.OnSelect(func(e events.Event) {
+				if len(w.SelectedNodes) > 0 {
+					sn := w.SelectedNodes[0].AsTreeView().SyncNode
+					vr, ok := sn.(*cdebug.Variable)
+					if ok {
+						vv.SelectVar = vr
+					}
+					sv := vv.StructView()
+					sv.SetStruct(sn)
+				}
+			})
+		})
+		core.AddAt(splits, "sv", func(w *views.StructView) {
+			w.SetStruct(vv.Var)
+		})
 	})
 }
 

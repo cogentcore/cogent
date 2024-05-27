@@ -131,7 +131,7 @@ func (ge *CodeView) codeViewKeys(e events.Event) {
 		ge.CallSplitsSetView(atv)
 	case KeyBuildProject:
 		e.SetHandled()
-		ge.Build()
+		ge.RunBuild()
 	case KeyRunProject:
 		e.SetHandled()
 		ge.Run()

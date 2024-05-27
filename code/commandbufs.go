@@ -176,8 +176,8 @@ func (ge *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms CmdNames, sel boo
 	}
 }
 
-// Build runs the BuildCmds set for this project
-func (ge *CodeView) Build() { //types:add
+// RunBuild runs the BuildCmds set for this project
+func (ge *CodeView) RunBuild() { //types:add
 	if len(ge.Settings.BuildCmds) == 0 {
 		core.MessageDialog(ge, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
 		return
