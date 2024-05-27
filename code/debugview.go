@@ -119,34 +119,34 @@ func (dv *DebugView) OnInit() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	dv.Maker(func(p *core.Plan) {
-		core.AddAt(p, "toolbar", func(w *core.Toolbar) {
-			w.Maker(dv.MakeToolbar)
-		})
-		core.AddAt(p, "tabs", func(w *core.Tabs) {
-			// todo: some better way of making tabs?
-			ctv := texteditor.NewEditor(w.NewTab("Console"))
-			ctv.SetName("dbg-console")
-			ConfigOutputTextEditor(ctv)
-			dv.OutputBuffer.Options.LineNumbers = false
-			ctv.SetBuffer(dv.OutputBuffer)
-			NewBreakView(w.NewTab("Breaks")).ConfigBreakView(dv)
-			NewStackView(w.NewTab("Stack")).ConfigStackView(dv, false)
-			if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
-				NewTaskView(w.NewTab("Tasks")).ConfigTaskView(dv)
-			}
-			NewVarsView(w.NewTab("Vars")).ConfigVarsView(dv, false)
-			NewThreadView(w.NewTab("Threads")).ConfigThreadView(dv)
-			NewStackView(w.NewTab("Find Frames")).ConfigStackView(dv, true) // find frames
-			NewVarsView(w.NewTab("Global Vars")).ConfigVarsView(dv, true)   // all vars
-		})
-		// todo: where does this go?  on init?
-		dv.State.BlankState()
-		dv.OutputBuffer = texteditor.NewBuffer()
-		dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
-		dv.State.Breaks = nil // get rid of dummy
-		dv.Start()
+
+	core.AddChildAt(dv, "toolbar", func(w *core.Toolbar) {
+		w.Maker(dv.MakeToolbar)
 	})
+	core.AddChildAt(dv, "tabs", func(w *core.Tabs) {
+		// todo: some better way of making tabs?
+		ctv := texteditor.NewEditor(w.NewTab("Console"))
+		ctv.SetName("dbg-console")
+		ConfigOutputTextEditor(ctv)
+		dv.OutputBuffer.Options.LineNumbers = false
+		ctv.SetBuffer(dv.OutputBuffer)
+		NewBreakView(w.NewTab("Breaks")).ConfigBreakView(dv)
+		NewStackView(w.NewTab("Stack")).ConfigStackView(dv, false)
+		if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
+			NewTaskView(w.NewTab("Tasks")).ConfigTaskView(dv)
+		}
+		NewVarsView(w.NewTab("Vars")).ConfigVarsView(dv, false)
+		NewThreadView(w.NewTab("Threads")).ConfigThreadView(dv)
+		NewStackView(w.NewTab("Find Frames")).ConfigStackView(dv, true) // find frames
+		NewVarsView(w.NewTab("Global Vars")).ConfigVarsView(dv, true)   // all vars
+	})
+
+	// TODO(config): where does this go?  on init?
+	dv.State.BlankState()
+	dv.OutputBuffer = texteditor.NewBuffer()
+	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
+	dv.State.Breaks = nil // get rid of dummy
+	dv.Start()
 }
 
 // DbgIsActive means debugger is started.

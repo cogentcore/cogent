@@ -80,20 +80,20 @@ func (fv *FindView) OnInit() {
 		s.Grow.Set(1, 1)
 	})
 
-	fv.Maker(func(p *core.Plan) {
-		core.AddAt(p, "findbar", func(w *core.BasicBar) {
-			w.Maker(fv.makeFindToolbar)
-		})
-		core.AddAt(p, "replbar", func(w *core.BasicBar) {
-			w.Maker(fv.makeReplToolbar)
-		})
-		core.AddAt(p, "findtext", func(w *texteditor.Editor) {
-			ConfigOutputTextEditor(w)
-			w.LinkHandler = func(tl *paint.TextLink) {
-				fv.OpenFindURL(tl.URL, w)
-			}
-		})
+	core.AddChildAt(fv, "findbar", func(w *core.BasicBar) {
+		w.Maker(fv.makeFindToolbar)
 	})
+	core.AddChildAt(fv, "replbar", func(w *core.BasicBar) {
+		w.Maker(fv.makeReplToolbar)
+	})
+	core.AddChildAt(fv, "findtext", func(w *texteditor.Editor) {
+		ConfigOutputTextEditor(w)
+		w.LinkHandler = func(tl *paint.TextLink) {
+			fv.OpenFindURL(tl.URL, w)
+		}
+	})
+
+	// TODO(config)
 	na := fv.FindNextAct()
 	na.SetFocusEvent()
 }

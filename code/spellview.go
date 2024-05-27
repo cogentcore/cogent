@@ -70,85 +70,72 @@ func (sv *SpellView) OnInit() {
 	texteditor.InitSpell()
 	sv.CheckNext() // todo: on start
 
-	sv.Maker(func(p *core.Plan) {
-		core.AddAt(p, "spellbar", func(w *core.Toolbar) {
-			w.Maker(func(p *core.Plan) {
-				core.Add(p, func(w *core.Button) {
-					w.SetText("Check Current File").
-						SetTooltip("spell check the current file").
-						OnClick(func(e events.Event) {
-							sv.SpellAction()
-						})
+	core.AddChildAt(sv, "spellbar", func(w *core.Toolbar) {
+		core.AddChild(w, func(w *core.Button) {
+			w.SetText("Check Current File").
+				SetTooltip("spell check the current file").
+				OnClick(func(e events.Event) {
+					sv.SpellAction()
 				})
-				core.Add(p, func(w *core.Button) {
-					w.SetText("Train").
-						SetTooltip("add additional text to the training corpus").
-						OnClick(func(e events.Event) {
-							sv.TrainAction()
-						})
-				})
-			})
 		})
-		core.AddAt(p, "unknownbar", func(w *core.Toolbar) {
-			w.Maker(func(p *core.Plan) {
-				core.AddAt(p, "unknown-str", func(w *core.TextField) {
-					w.SetTooltip("Unknown word")
-					w.SetReadOnly(true)
+		core.AddChild(w, func(w *core.Button) {
+			w.SetText("Train").
+				SetTooltip("add additional text to the training corpus").
+				OnClick(func(e events.Event) {
+					sv.TrainAction()
 				})
-				core.Add(p, func(w *core.Button) {
-					w.SetText("Skip").
-						OnClick(func(e events.Event) {
-							sv.SkipAction()
-						})
-				})
-				core.Add(p, func(w *core.Button) {
-					w.SetText("Ignore").
-						OnClick(func(e events.Event) {
-							sv.IgnoreAction()
-						})
-				})
-				core.Add(p, func(w *core.Button) {
-					w.SetText("Learn").
-						OnClick(func(e events.Event) {
-							sv.LearnAction()
-						})
-				})
-			})
 		})
-		core.AddAt(p, "changebar", func(w *core.Toolbar) {
-			w.Maker(func(p *core.Plan) {
-				core.AddAt(p, "change-str", func(w *core.TextField) {
-					w.SetTooltip("This string will replace the unknown word in text")
-				})
-				core.Add(p, func(w *core.Button) {
-					w.SetText("Change").
-						SetTooltip("change the unknown word to the selected suggestion").
-						OnClick(func(e events.Event) {
-							sv.ChangeAction()
-						})
-				})
-				core.Add(p, func(w *core.Button) {
-					w.SetText("Change All").
-						SetTooltip("change all instances of the unknown word in this document").
-						OnClick(func(e events.Event) {
-							sv.ChangeAllAction()
-						})
-				})
-			})
-		})
-		core.AddAt(p, "suggest", func(w *views.SliceView) {
-			sv.Suggest = []string{"                                              "}
+	})
+	core.AddChildAt(sv, "unknownbar", func(w *core.Toolbar) {
+		core.AddChildAt(w, "unknown-str", func(w *core.TextField) {
+			w.SetTooltip("Unknown word")
 			w.SetReadOnly(true)
-			w.SetProperty("index", false)
-			w.SetSlice(&sv.Suggest)
-			// w.SliceViewSig.Connect(suggest, func(recv, send tree.Node, sig int64, data any) {
-			// 	svv := recv.Embed(views.KiT_SliceView).(*views.SliceView)
-			// 	idx := svv.SelectedIndex
-			// 	if idx >= 0 && idx < len(sv.Suggest) {
-			// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIndex])
-			// 	}
-			// })
 		})
+		core.AddChild(w, func(w *core.Button) {
+			w.SetText("Skip").OnClick(func(e events.Event) {
+				sv.SkipAction()
+			})
+		})
+		core.AddChild(w, func(w *core.Button) {
+			w.SetText("Ignore").OnClick(func(e events.Event) {
+				sv.IgnoreAction()
+			})
+		})
+		core.AddChild(w, func(w *core.Button) {
+			w.SetText("Learn").OnClick(func(e events.Event) {
+				sv.LearnAction()
+			})
+		})
+	})
+	core.AddChildAt(sv, "changebar", func(w *core.Toolbar) {
+		core.AddChildAt(w, "change-str", func(w *core.TextField) {
+			w.SetTooltip("This string will replace the unknown word in text")
+		})
+		core.AddChild(w, func(w *core.Button) {
+			w.SetText("Change").SetTooltip("change the unknown word to the selected suggestion").
+				OnClick(func(e events.Event) {
+					sv.ChangeAction()
+				})
+		})
+		core.AddChild(w, func(w *core.Button) {
+			w.SetText("Change All").SetTooltip("change all instances of the unknown word in this document").
+				OnClick(func(e events.Event) {
+					sv.ChangeAllAction()
+				})
+		})
+	})
+	core.AddChildAt(sv, "suggest", func(w *views.SliceView) {
+		sv.Suggest = []string{"                                              "}
+		w.SetReadOnly(true)
+		w.SetProperty("index", false)
+		w.SetSlice(&sv.Suggest)
+		// w.SliceViewSig.Connect(suggest, func(recv, send tree.Node, sig int64, data any) {
+		// 	svv := recv.Embed(views.KiT_SliceView).(*views.SliceView)
+		// 	idx := svv.SelectedIndex
+		// 	if idx >= 0 && idx < len(sv.Suggest) {
+		// 		sv.AcceptSuggestion(sv.Suggest[svv.SelectedIndex])
+		// 	}
+		// })
 	})
 }
 
