@@ -44,7 +44,7 @@ func KeyMapsView(km *KeyMaps) {
 			w.SetFunc(km.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			// w.Args[0].SetTag("ext", ".toml")
 		})
-		core.Add[*core.Separator](p)
+		core.Add(p, func(w *core.Separator) {})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(km.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
@@ -155,7 +155,7 @@ func LangsView(pt *Langs) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			// w.Args[0].SetTag("ext", ".toml")
 		})
-		core.Add[*core.Separator](p)
+		core.Add(p, func(w *core.Separator) {})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
@@ -199,7 +199,7 @@ func CmdsView(pt *Commands) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			// w.Args[0].SetTag("ext", ".toml")
 		})
-		core.Add[*core.Separator](p)
+		core.Add(p, func(w *core.Separator) {})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).

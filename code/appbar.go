@@ -57,7 +57,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 		})
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
 			for _, rp := range RecentPaths {
@@ -90,7 +90,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 		w.SetFunc(cv.SaveAll).SetIcon(icons.Save)
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.CursorToHistPrev).SetText("").SetKey(keymap.HistPrev).
@@ -101,7 +101,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 			SetIcon(icons.KeyboardArrowRight).SetShowReturn(false)
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 
 	// todo: this does not work to apply project defaults!
 	core.Add(p, func(w *views.FuncButton) {
@@ -109,7 +109,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 		cv.ConfigFindButton(w)
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Symbols).SetIcon(icons.List)
@@ -119,7 +119,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 		w.SetFunc(cv.Spell).SetIcon(icons.Spellcheck)
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.RunBuild).SetText("Build").SetIcon(icons.Build).
@@ -139,7 +139,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 		w.SetFunc(cv.DebugTest).SetIcon(icons.Debug)
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Commit).SetIcon(icons.Star)
@@ -168,7 +168,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 			})
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Splits").SetMenu(func(m *core.Scene) {

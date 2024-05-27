@@ -924,7 +924,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add[*core.Separator](p)
+	core.Add(p, func(w *core.Separator) {})
 
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Global Vars").SetIcon(icons.Search).
