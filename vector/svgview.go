@@ -63,36 +63,10 @@ type SVGView struct {
 
 func (sv *SVGView) OnInit() {
 	sv.SVG.OnInit()
-	sv.HandleEvents()
 	sv.SetReadOnly(false)
 	sv.Grid = Settings.Size.Grid
 	sv.Scale = 1
-}
 
-// SSVG returns the underlying [svg.SVG].
-func (sv *SVGView) SSVG() *svg.SVG {
-	return sv.SVG.SVG
-}
-
-// Root returns the root [svg.SVGNode].
-func (sv *SVGView) Root() *svg.SVGNode {
-	return &sv.SVG.SVG.Root
-}
-
-// EditState returns the EditState for this view
-func (sv *SVGView) EditState() *EditState {
-	if sv.VectorView == nil {
-		return nil
-	}
-	return &sv.VectorView.EditState
-}
-
-// UpdateView updates the view, optionally with a full re-render
-func (sv *SVGView) UpdateView(full bool) {
-	sv.UpdateSelSprites()
-}
-
-func (sv *SVGView) HandleEvents() {
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
 		if core.DebugSettings.KeyEventTrace {
@@ -229,6 +203,29 @@ func (sv *SVGView) HandleEvents() {
 			sv.SetRubberBand(e.Pos())
 		}
 	})
+}
+
+// SSVG returns the underlying [svg.SVG].
+func (sv *SVGView) SSVG() *svg.SVG {
+	return sv.SVG.SVG
+}
+
+// Root returns the root [svg.SVGNode].
+func (sv *SVGView) Root() *svg.SVGNode {
+	return &sv.SVG.SVG.Root
+}
+
+// EditState returns the EditState for this view
+func (sv *SVGView) EditState() *EditState {
+	if sv.VectorView == nil {
+		return nil
+	}
+	return &sv.VectorView.EditState
+}
+
+// UpdateView updates the view, optionally with a full re-render
+func (sv *SVGView) UpdateView(full bool) { // TODO(config)
+	sv.UpdateSelSprites()
 }
 
 /*

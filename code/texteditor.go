@@ -30,19 +30,11 @@ type TextEditor struct {
 
 func (ed *TextEditor) OnInit() {
 	ed.Editor.OnInit()
-	ed.HandleEvents()
-	ed.SetStyles()
 	ed.AddContextMenu(ed.ContextMenu)
-}
-
-func (ed *TextEditor) SetStyles() {
 	ed.Style(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.LongHoverable)
 	})
-}
 
-// HandleEvents sets connections between mouse and key events and actions
-func (ed *TextEditor) HandleEvents() {
 	ed.On(events.Focus, func(e events.Event) {
 		ed.Code.SetActiveTextEditor(ed)
 	})
