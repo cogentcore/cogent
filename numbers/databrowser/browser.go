@@ -78,6 +78,23 @@ func (br *Browser) OnInit() {
 		s.Grow.Set(1, 1)
 	})
 	br.InitInterp()
+
+	br.Maker(func(p *core.Plan) {
+		sp := core.AddAt(p, "splits", func(w *core.Splits) {
+			w.SetSplits(.15, .85)
+		})
+		core.AddAt(sp, "files", func(w *filetree.Tree) {
+		}, func(w *filetree.Tree) {
+			if br.DataRoot != "" {
+				errors.Log(os.Chdir(br.DataRoot))
+				wd := errors.Log1(os.Getwd())
+				w.OpenPath(wd)
+			}
+		})
+		core.AddAt(sp, "tabs", func(w *core.Tabs) {
+			w.Type = core.FunctionalTabs
+		})
+	})
 }
 
 // NewBrowserWindow opens a new data Browser for given data directory.
@@ -142,23 +159,6 @@ func (br *Browser) RunScript(snm string) {
 		err = br.ScriptInterp.Shell.DepthError()
 	}
 	br.ScriptInterp.Shell.ResetDepth()
-}
-
-func (br *Browser) Make(p *core.Plan) {
-	sp := core.AddAt(p, "splits", func(w *core.Splits) {
-		w.SetSplits(.15, .85)
-	})
-	core.AddAt(sp, "files", func(w *filetree.Tree) {
-	}, func(w *filetree.Tree) {
-		if br.DataRoot != "" {
-			errors.Log(os.Chdir(br.DataRoot))
-			wd := errors.Log1(os.Getwd())
-			w.OpenPath(wd)
-		}
-	})
-	core.AddAt(sp, "tabs", func(w *core.Tabs) {
-		w.Type = core.FunctionalTabs
-	})
 }
 
 func (br *Browser) Splits() *core.Splits {
