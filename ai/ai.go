@@ -40,17 +40,18 @@ import (
 
 func main() {
 	b := core.NewBody("Cogent AI")
-	b.AddAppBar(func(tb *core.Toolbar) {
-		core.NewButton(tb).SetText("Install") // todo set icon and merge ollama doc md files into s dom tree view
-		core.NewButton(tb).SetText("Start server").OnClick(func(e events.Event) {
-			core.ErrorSnackbar(b, exec.Verbose().Run("ollama", "serve"))
+	b.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *core.Button) {
+			w.SetText("Install").SetIcon(icons.Download)
 		})
-		core.NewButton(tb).SetText("Stop server").OnClick(func(e events.Event) {
-			// todo kill thread ?
-			// netstat -aon|findstr 11434
+		core.Add(p, func(w *core.Button) {
+			w.SetText("Start server").SetIcon(icons.PlayArrow).OnClick(func(e events.Event) {
+				core.ErrorSnackbar(b, exec.Verbose().Run("ollama", "serve"))
+			})
 		})
-		core.NewButton(tb).SetText("Logs")                      // todo add a new windows show log and set ico
-		core.NewButton(tb).SetText("About").SetIcon(icons.Info) // todo add a new windows show some info
+		core.Add(p, func(w *core.Button) {
+			w.SetText("Stop server").SetIcon(icons.Stop)
+		})
 	})
 
 	splits := core.NewSplits(b).SetSplits(0.2, 0.8)
