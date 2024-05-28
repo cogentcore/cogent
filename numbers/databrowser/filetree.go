@@ -5,7 +5,6 @@
 package databrowser
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/views"
 )
 
@@ -52,6 +52,28 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 	}
 }
 
+func (br *Browser) FileNodeOpened(fn *filetree.Node) {
+
+}
+
+func (br *Browser) FileNodeSelected(fn *filetree.Node) {
+
+}
+
+// NewTabEditor opens an editor tab for given file
+func (br *Browser) NewTabEditor(label, filename string) *texteditor.Editor {
+	tabs := br.Tabs()
+	tab := tabs.RecycleTab(label, true)
+	if tab.HasChildren() {
+		ed := tab.Child(0).(*texteditor.Editor)
+		ed.Buffer.Open(core.Filename(filename))
+		return ed
+	}
+	ed := texteditor.NewSoloEditor(tab)
+	ed.Buffer.Open(core.Filename(filename))
+	return ed
+}
+
 // EditFile pulls up this file in Code
 func (fn *FileNode) EditFile() {
 	if fn.IsDir() {
@@ -60,55 +82,15 @@ func (fn *FileNode) EditFile() {
 	}
 	br, ok := ParentBrowser(fn.This())
 	if ok {
-		br.NextViewFileNode(&fn.Node)
-	}
-}
-
-// SetRunExec sets executable as the RunExec executable that will be run with Run / Debug buttons
-func (fn *FileNode) SetRunExec() {
-	if !fn.IsExec() {
-		log.Printf("FileNode SetRunExec -- only works for executable files!\n")
-		return
-	}
-	br, ok := ParentBrowser(fn.This())
-	if ok {
-		br.Settings.RunExec = fn.FPath
-		br.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
-	}
-}
-
-// ExecCmdFile pops up a menu to select a command appropriate for the given node,
-// and shows output in MainTab with name of command
-func (fn *FileNode) ExecCmdFile() { //types:add
-	br, ok := ParentBrowser(fn.This())
-	if ok {
-		br.ExecCmdFileNode(&fn.Node)
-	} else {
-		fmt.Println("no code!")
-	}
-
-}
-
-// ExecCmdNameFile executes given command name on node
-func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	br, ok := ParentBrowser(fn.This())
-	if ok {
-		br.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm), true, true)
+		_, fnm := filepath.Split(string(fn.FPath))
+		br.NewTabEditor(fnm, string(fn.FPath))
 	}
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
-	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
-		s.SetState(!fn.HasSelection(), states.Disabled)
-	})
 	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Style(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
-		})
-	views.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
-		Style(func(s *styles.Style) {
-			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
 }
 
@@ -248,24 +230,4 @@ func (fn *FileNode) EditFiles() { //types:add
 		sn := sels[i].This().(*FileNode)
 		sn.EditFile()
 	}
-}
-
-// RenameFiles calls RenameFile on any selected nodes
-func (fn *FileNode) RenameFiles() {
-	br, ok := ParentBrowser(fn.This())
-	if !ok {
-		return
-	}
-	br.SaveAllCheck(true, func() {
-		var nodes []*FileNode
-		sels := fn.SelectedViews()
-		for i := len(sels) - 1; i >= 0; i-- {
-			sn := sels[i].This().(*FileNode)
-			nodes = append(nodes, sn)
-		}
-		br.CloseOpenNodes(nodes) // close before rename because we are async after this
-		for _, sn := range nodes {
-			views.CallFunc(sn, sn.RenameFile)
-		}
-	})
 }

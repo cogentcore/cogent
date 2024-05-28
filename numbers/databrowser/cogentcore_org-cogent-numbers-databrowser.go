@@ -10,18 +10,23 @@ func init() {
 	Symbols["cogentcore.org/cogent/numbers/databrowser/databrowser"] = map[string]reflect.Value{
 		// function, constant and variable definitions
 		"BrowserType":      reflect.ValueOf(&BrowserType).Elem(),
+		"CleanCatTSV":      reflect.ValueOf(CleanCatTSV),
+		"FileNodeType":     reflect.ValueOf(&FileNodeType).Elem(),
 		"MapTypes":         reflect.ValueOf(&MapTypes).Elem(),
 		"NewBrowser":       reflect.ValueOf(NewBrowser),
 		"NewBrowserWindow": reflect.ValueOf(NewBrowserWindow),
+		"NewFileNode":      reflect.ValueOf(NewFileNode),
+		"ParentBrowser":    reflect.ValueOf(ParentBrowser),
 		"PromptOKCancel":   reflect.ValueOf(PromptOKCancel),
 		"PromptString":     reflect.ValueOf(PromptString),
 		"PromptStruct":     reflect.ValueOf(PromptStruct),
 		"Symbols":          reflect.ValueOf(&Symbols).Elem(),
 		"TheBrowser":       reflect.ValueOf(&TheBrowser).Elem(),
 		"TrimOrderPrefix":  reflect.ValueOf(TrimOrderPrefix),
-		"CleanCatTSV":      reflect.ValueOf(CleanCatTSV),
 
 		// type definitions
-		"Browser": reflect.ValueOf((*Browser)(nil)),
+		"Browser":   reflect.ValueOf((*Browser)(nil)),
+		"FileNode":  reflect.ValueOf((*FileNode)(nil)),
+		"OpenNodes": reflect.ValueOf((*OpenNodes)(nil)),
 	}
 }

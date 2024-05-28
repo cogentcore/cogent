@@ -24,7 +24,6 @@ func init() {
 	Symbols["cogentcore.org/core/views/views"] = map[string]reflect.Value{
 		// function, constant and variable definitions
 		"AddValue":                     reflect.ValueOf(views.AddValue),
-		"ArgViewType":                  reflect.ValueOf(&views.ArgViewType).Elem(),
 		"AsTreeView":                   reflect.ValueOf(views.AsTreeView),
 		"CallFunc":                     reflect.ValueOf(views.CallFunc),
 		"ColorButtonType":              reflect.ValueOf(&views.ColorButtonType).Elem(),
@@ -42,6 +41,7 @@ func init() {
 		"FileViewExtOnlyFilter":        reflect.ValueOf(views.FileViewExtOnlyFilter),
 		"FileViewKindColorMap":         reflect.ValueOf(&views.FileViewKindColorMap).Elem(),
 		"FileViewType":                 reflect.ValueOf(&views.FileViewType).Elem(),
+		"FuncArgsToStruct":             reflect.ValueOf(views.FuncArgsToStruct),
 		"FuncButtonType":               reflect.ValueOf(&views.FuncButtonType).Elem(),
 		"InspectorType":                reflect.ValueOf(&views.InspectorType).Elem(),
 		"InspectorView":                reflect.ValueOf(views.InspectorView),
@@ -49,7 +49,6 @@ func init() {
 		"JoinViewPath":                 reflect.ValueOf(views.JoinViewPath),
 		"MapButtonType":                reflect.ValueOf(&views.MapButtonType).Elem(),
 		"MapViewType":                  reflect.ValueOf(&views.MapViewType).Elem(),
-		"NewArgView":                   reflect.ValueOf(views.NewArgView),
 		"NewColorButton":               reflect.ValueOf(views.NewColorButton),
 		"NewColorView":                 reflect.ValueOf(views.NewColorView),
 		"NewDateView":                  reflect.ValueOf(views.NewDateView),
@@ -121,7 +120,6 @@ func init() {
 		"ValueReadOnly":                reflect.ValueOf(views.ValueReadOnly),
 
 		// type definitions
-		"ArgView":            reflect.ValueOf((*views.ArgView)(nil)),
 		"BitFlagValue":       reflect.ValueOf((*views.BitFlagValue)(nil)),
 		"BoolValue":          reflect.ValueOf((*views.BoolValue)(nil)),
 		"ByteSliceValue":     reflect.ValueOf((*views.ByteSliceValue)(nil)),
@@ -139,6 +137,7 @@ func init() {
 		"FileView":           reflect.ValueOf((*views.FileView)(nil)),
 		"FileViewFilterFunc": reflect.ValueOf((*views.FileViewFilterFunc)(nil)),
 		"FontValue":          reflect.ValueOf((*views.FontValue)(nil)),
+		"FuncArg":            reflect.ValueOf((*views.FuncArg)(nil)),
 		"FuncButton":         reflect.ValueOf((*views.FuncButton)(nil)),
 		"FuncValue":          reflect.ValueOf((*views.FuncValue)(nil)),
 		"IconValue":          reflect.ValueOf((*views.IconValue)(nil)),
@@ -339,7 +338,6 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
 	WChildren            func() *tree.Slice
 	WClone               func() tree.Node
-	WConfigChildren      func(config tree.Config) bool
 	WContextMenuPos      func(e events.Event) image.Point
 	WCopy                func(reset bool)
 	WCopyFieldsFrom      func(from tree.Node)
@@ -408,7 +406,6 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WSetAbilities        func(on bool, able ...abilities.Abilities) *core.WidgetBase
 	WSetChild            func(kid tree.Node, idx int) error
 	WSetFlag             func(on bool, f ...enums.BitFlag)
-	WSetNChildren        func(n int, typ *types.Type, nameStub ...string) bool
 	WSetName             func(name string)
 	WSetProperty         func(key string, value any)
 	WSetState            func(on bool, state ...states.States) *core.WidgetBase
@@ -482,9 +479,6 @@ func (W _cogentcore_org_core_views_TreeViewer) Children() *tree.Slice {
 }
 func (W _cogentcore_org_core_views_TreeViewer) Clone() tree.Node {
 	return W.WClone()
-}
-func (W _cogentcore_org_core_views_TreeViewer) ConfigChildren(config tree.Config) bool {
-	return W.WConfigChildren(config)
 }
 func (W _cogentcore_org_core_views_TreeViewer) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
@@ -689,9 +683,6 @@ func (W _cogentcore_org_core_views_TreeViewer) SetChild(kid tree.Node, idx int) 
 }
 func (W _cogentcore_org_core_views_TreeViewer) SetFlag(on bool, f ...enums.BitFlag) {
 	W.WSetFlag(on, f...)
-}
-func (W _cogentcore_org_core_views_TreeViewer) SetNChildren(n int, typ *types.Type, nameStub ...string) bool {
-	return W.WSetNChildren(n, typ, nameStub...)
 }
 func (W _cogentcore_org_core_views_TreeViewer) SetName(name string) {
 	W.WSetName(name)

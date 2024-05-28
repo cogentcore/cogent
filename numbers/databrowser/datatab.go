@@ -45,6 +45,7 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 		return tv
 	}
 	tv := views.NewTableView(tab)
+	tv.SetReadOnly(true)
 	tv.SetSlice(slc)
 	return tv
 }

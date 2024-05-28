@@ -79,20 +79,30 @@ func (br *Browser) OnInit() {
 	})
 	br.InitInterp()
 
-	br.Maker(func(p *core.Plan) {
-		sp := core.AddAt(p, "splits", func(w *core.Splits) {
-			w.SetSplits(.15, .85)
-		})
-		core.AddAt(sp, "files", func(w *filetree.Tree) {
-			w.Builder(func() {
-				if br.DataRoot != "" {
-					errors.Log(os.Chdir(br.DataRoot))
-					wd := errors.Log1(os.Getwd())
-					w.OpenPath(wd)
-				}
+	br.OnShow(func(e events.Event) {
+		br.UpdateFiles()
+	})
+
+	core.AddChildAt(br, "splits", func(w *core.Splits) {
+		w.SetSplits(.15, .85)
+		core.AddChildAt(w, "filetree", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Direction = styles.Column
+				s.Overflow.Set(styles.OverflowAuto)
+				s.Grow.Set(1, 1)
+			})
+			core.AddChildAt(w, "filetree", func(w *filetree.Tree) {
+				// w.FileNodeType = FileNodeType
+				// w.OnSelect(func(e events.Event) {
+				// 	e.SetHandled()
+				// 	sels := w.SelectedViews()
+				// 	if sels != nil {
+				// 		br.FileNodeSelected(sn)
+				// 	}
+				// })
 			})
 		})
-		core.AddAt(sp, "tabs", func(w *core.Tabs) {
+		core.AddChildAt(w, "tabs", func(w *core.Tabs) {
 			w.Type = core.FunctionalTabs
 		})
 	})
@@ -168,7 +178,7 @@ func (br *Browser) Splits() *core.Splits {
 
 func (br *Browser) FileTree() *filetree.Tree {
 	sp := br.Splits()
-	return sp.Child(0).(*filetree.Tree) // note: gets renamed by dir name
+	return sp.Child(0).Child(0).(*filetree.Tree) // note: gets renamed by dir name
 }
 
 func (br *Browser) Tabs() *core.Tabs {
@@ -177,8 +187,11 @@ func (br *Browser) Tabs() *core.Tabs {
 
 // UpdateFiles Updates the file view with current files in DataRoot,
 func (br *Browser) UpdateFiles() { //types:add
+	fmt.Println("update files")
 	files := br.FileTree()
+	fmt.Println(br.DataRoot)
 	files.OpenPath(br.DataRoot)
+	files.UpdateAll()
 	os.Chdir(br.DataRoot)
 	br.Update()
 }
