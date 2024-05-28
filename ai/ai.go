@@ -54,7 +54,7 @@ func main() {
 		})
 	})
 
-	splits := core.NewSplits(b).SetSplits(0.2, 0.8)
+	splits := core.NewSplits(b).SetSplits(0.2, 0.8) // TODO(config): use Plan in Cogent AI
 
 	leftFrame := core.NewFrame(splits)
 	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })

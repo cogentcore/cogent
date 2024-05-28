@@ -57,15 +57,12 @@ func (a *App) OnInit() {
 		s.Grow.Set(1, 1)
 	})
 
-	a.Maker(func(p *core.Plan) { // TODO(config)
-		if a.HasChildren() {
-			return
-		}
-
-		sp := core.NewSplits(a, "splits")
-
-		views.NewTreeView(sp, "mbox").SetText("Mailboxes")
-
+	core.AddChild(a, func(w *core.Splits) {
+		core.AddChild(w, func(w *views.TreeView) {
+			w.SetText("Mailboxes")
+		})
+	})
+	a.Maker(func(p *core.Plan) {
 		core.NewFrame(sp, "list").Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
