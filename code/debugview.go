@@ -1251,32 +1251,29 @@ func (vv *VarView) OnInit() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	vv.Maker(func(p *core.Plan) {
-		if vv.Var == nil {
-			return
-		}
-		core.AddAt(p, "frame-info", func(w *core.Text) {
-			w.SetText(vv.FrameInfo)
-		})
-		splits := core.AddAt(p, "splits", func(w *core.Splits) {
-			w.SetSplits(0.3, 0.7)
-		})
-		tvfr := core.AddAt(splits, "tvfr", func(w *core.Frame) {})
-		core.AddAt(tvfr, "tv", func(w *views.TreeView) {
-			w.SyncTree(vv.Var)
-			w.OnSelect(func(e events.Event) {
-				if len(w.SelectedNodes) > 0 {
-					sn := w.SelectedNodes[0].AsTreeView().SyncNode
-					vr, ok := sn.(*cdebug.Variable)
-					if ok {
-						vv.SelectVar = vr
+
+	core.AddChildAt(vv, "frame-info", func(w *core.Text) {
+		w.SetText(vv.FrameInfo)
+	})
+	core.AddChildAt(vv, "splits", func(w *core.Splits) {
+		w.SetSplits(0.3, 0.7)
+		core.AddChild(w, func(w *core.Frame) {
+			core.AddChild(w, func(w *views.TreeView) {
+				w.SyncTree(vv.Var)
+				w.OnSelect(func(e events.Event) {
+					if len(w.SelectedNodes) > 0 {
+						sn := w.SelectedNodes[0].AsTreeView().SyncNode
+						vr, ok := sn.(*cdebug.Variable)
+						if ok {
+							vv.SelectVar = vr
+						}
+						sv := vv.StructView()
+						sv.SetStruct(sn)
 					}
-					sv := vv.StructView()
-					sv.SetStruct(sn)
-				}
+				})
 			})
 		})
-		core.AddAt(splits, "sv", func(w *views.StructView) {
+		core.AddChild(w, func(w *views.StructView) {
 			w.SetStruct(vv.Var)
 		})
 	})
