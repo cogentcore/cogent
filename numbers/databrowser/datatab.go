@@ -9,6 +9,7 @@ import (
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/plot/plotview"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/tensor/tensorview"
 	"cogentcore.org/core/views"
@@ -45,7 +46,9 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 		return tv
 	}
 	tv := views.NewTableView(tab)
-	tv.SetReadOnly(true)
+	tv.Style(func(s *styles.Style) {
+		s.SetReadOnly(true) // todo: not taking effect
+	})
 	tv.SetSlice(slc)
 	return tv
 }
