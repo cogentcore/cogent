@@ -3,6 +3,11 @@
 package imports
 
 import (
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
+
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/events"
@@ -13,10 +18,6 @@ import (
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
 )
 
 func init() {
@@ -212,10 +213,7 @@ func init() {
 		"SpriteStart":              reflect.ValueOf(constant.MakeFromLiteral("32", token.INT, 0)),
 		"StageTypesN":              reflect.ValueOf(core.StageTypesN),
 		"StageTypesValues":         reflect.ValueOf(core.StageTypesValues),
-		"StandardAppBarBack":       reflect.ValueOf(core.StandardAppBarBack),
-		"StandardAppBarChooser":    reflect.ValueOf(core.StandardAppBarChooser),
 		"StandardAppBarConfig":     reflect.ValueOf(core.StandardAppBarConfig),
-		"StandardAppBarStart":      reflect.ValueOf(core.StandardAppBarStart),
 		"StandardOverflowMenu":     reflect.ValueOf(core.StandardOverflowMenu),
 		"StandardTabs":             reflect.ValueOf(core.StandardTabs),
 		"StartCPUMemoryProfile":    reflect.ValueOf(core.StartCPUMemoryProfile),

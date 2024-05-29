@@ -5,6 +5,7 @@
 package databrowser
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/views"
 )
@@ -53,7 +55,19 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 }
 
 func (br *Browser) FileNodeOpened(fn *filetree.Node) {
-
+	fmt.Println("opened:", fn.FPath)
+	_, f := filepath.Split(string(fn.FPath))
+	if strings.HasSuffix(f, ".tsv") {
+		f = strings.TrimSuffix(f, ".tsv")
+		tv := br.NewTabTable(f)
+		dt := tv.Table.Table
+		err := dt.OpenCSV(fn.FPath, table.Tab)
+		tv.Table.Sequential()
+		tv.Update()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
 }
 
 func (br *Browser) FileNodeSelected(fn *filetree.Node) {

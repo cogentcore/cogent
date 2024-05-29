@@ -85,14 +85,14 @@ func (br *Browser) OnInit() {
 
 	core.AddChildAt(br, "splits", func(w *core.Splits) {
 		w.SetSplits(.15, .85)
-		core.AddChildAt(w, "filetree", func(w *core.Frame) {
+		core.AddChildAt(w, "fileframe", func(w *core.Frame) {
 			w.Style(func(s *styles.Style) {
 				s.Direction = styles.Column
 				s.Overflow.Set(styles.OverflowAuto)
 				s.Grow.Set(1, 1)
 			})
 			core.AddChildAt(w, "filetree", func(w *filetree.Tree) {
-				// w.FileNodeType = FileNodeType
+				w.FileNodeType = FileNodeType
 				// w.OnSelect(func(e events.Event) {
 				// 	e.SetHandled()
 				// 	sels := w.SelectedViews()
