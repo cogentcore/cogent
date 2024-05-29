@@ -24,13 +24,13 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(0).(*tensorview.TableView)
+		tv := tab.Child(1).(*tensorview.TableView)
 		return tv
 	}
 	dt := table.NewTable()
-	// tb := core.NewToolbar(tab)
+	tb := core.NewToolbar(tab)
 	tv := tensorview.NewTableView(tab)
-	// tb.Makers = append(tb.Makers, tv.MakeToolbar)
+	tb.Makers = append(tb.Makers, tv.MakeToolbar)
 	tv.SetTable(dt)
 	return tv
 }

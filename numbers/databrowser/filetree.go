@@ -7,9 +7,9 @@ package databrowser
 import (
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
+	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -56,17 +56,20 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 
 func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 	fmt.Println("opened:", fn.FPath)
-	_, f := filepath.Split(string(fn.FPath))
-	if strings.HasSuffix(f, ".tsv") {
-		f = strings.TrimSuffix(f, ".tsv")
+	df := dirs.DirAndFile(string(fn.FPath))
+	switch {
+	case strings.HasSuffix(df, ".tsv"):
+		f := strings.TrimSuffix(df, ".tsv")
 		tv := br.NewTabTable(f)
 		dt := tv.Table.Table
 		err := dt.OpenCSV(fn.FPath, table.Tab)
 		tv.Table.Sequential()
-		tv.Update()
+		br.Update()
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+	default:
+		br.NewTabEditor(df, string(fn.FPath))
 	}
 }
 
@@ -85,6 +88,7 @@ func (br *Browser) NewTabEditor(label, filename string) *texteditor.Editor {
 	}
 	ed := texteditor.NewSoloEditor(tab)
 	ed.Buffer.Open(core.Filename(filename))
+	br.Update()
 	return ed
 }
 
@@ -96,8 +100,8 @@ func (fn *FileNode) EditFile() {
 	}
 	br, ok := ParentBrowser(fn.This())
 	if ok {
-		_, fnm := filepath.Split(string(fn.FPath))
-		br.NewTabEditor(fnm, string(fn.FPath))
+		df := dirs.DirAndFile(string(fn.FPath))
+		br.NewTabEditor(df, string(fn.FPath))
 	}
 }
 
