@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/texteditor/diffbrowser"
 	"cogentcore.org/core/views"
 )
 
@@ -140,6 +141,41 @@ func (fn *FileNode) PlotFile() {
 	}
 }
 
+// DiffDirs displays a browser with differences between two selected directories
+func (fn *FileNode) DiffDirs() { //types:add
+	var da, db *filetree.Node
+	fn.SelectedFunc(func(sn *filetree.Node) {
+		if sn.IsDir() {
+			if da == nil {
+				da = sn
+			} else if db == nil {
+				db = sn
+			}
+		}
+	})
+	if da == nil || db == nil {
+		core.MessageSnackbar(fn, "DiffDirs requires two selected directories")
+		return
+	}
+	NewDiffBrowserDirs(string(da.FPath), string(db.FPath))
+}
+
+// NewDiffBrowserDirs returns a new diff browser for files that differ
+// within the two given directories.  Excludes Job and .tsv data files.
+func NewDiffBrowserDirs(pathA, pathB string) {
+	brow, b := diffbrowser.NewBrowserWindow()
+	brow.DiffDirs(pathA, pathB, func(fname string) bool {
+		if IsTableFile(fname) {
+			return true
+		}
+		if strings.HasPrefix(fname, "job.") || fname == "dbmeta.toml" {
+			return true
+		}
+		return false
+	})
+	b.RunWindow()
+}
+
 func IsTableFile(fname string) bool {
 	return strings.HasSuffix(fname, ".tsv")
 }
@@ -152,5 +188,9 @@ func (fn *FileNode) ContextMenu(m *core.Scene) {
 	views.NewFuncButton(m, fn.PlotFiles).SetText("Plot").SetIcon(icons.Edit).
 		Style(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !IsTableFile(fn.Name()), states.Disabled)
+		})
+	views.NewFuncButton(m, fn.DiffDirs).SetText("Diff Dirs").SetIcon(icons.Edit).
+		Style(func(s *styles.Style) {
+			s.SetState(!fn.HasSelection() || !fn.IsDir(), states.Disabled)
 		})
 }
