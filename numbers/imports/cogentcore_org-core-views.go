@@ -3,6 +3,11 @@
 package imports
 
 import (
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
+
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
@@ -14,10 +19,6 @@ import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 	"cogentcore.org/core/views"
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
 )
 
 func init() {
@@ -30,7 +31,7 @@ func init() {
 		"ColorViewType":                reflect.ValueOf(&views.ColorViewType).Elem(),
 		"Config":                       reflect.ValueOf(views.Config),
 		"ConfigBase":                   reflect.ValueOf(views.ConfigBase),
-		"ConfigDialogValue":            reflect.ValueOf(views.ConfigDialogValue),
+		"InitValueButton":              reflect.ValueOf(views.InitValueButton),
 		"ConfigDialogWidget":           reflect.ValueOf(views.ConfigDialogWidget),
 		"ConfigImageToolbar":           reflect.ValueOf(views.ConfigImageToolbar),
 		"ConfigSVGToolbar":             reflect.ValueOf(views.ConfigSVGToolbar),

@@ -30,6 +30,10 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	dt := table.NewTable()
 	tb := core.NewToolbar(tab)
 	tv := tensorview.NewTableView(tab)
+	tv.SetFlag(true, views.SliceViewReadOnlyMultiSelect)
+	tv.Style(func(s *styles.Style) {
+		s.SetReadOnly(true) // todo: not taking effect
+	})
 	tb.Makers = append(tb.Makers, tv.MakeToolbar)
 	tv.SetTable(dt)
 	br.Update()
@@ -47,6 +51,7 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 		return tv
 	}
 	tv := views.NewTableView(tab)
+	tv.SetFlag(true, views.SliceViewReadOnlyMultiSelect)
 	tv.Style(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
 	})
@@ -55,7 +60,8 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 	return tv
 }
 
-// NewTabPlot creates a tab with a SubPlot PlotView
+// NewTabPlot creates a tab with a SubPlot PlotView.
+// Set the table and call br.Update after this.
 func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
@@ -64,7 +70,6 @@ func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
 		return pl
 	}
 	pl := plotview.NewSubPlot(tab)
-	br.Update()
 	return pl
 }
 
