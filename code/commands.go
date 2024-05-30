@@ -357,10 +357,10 @@ func RepoCurBranches(repo vcs.Repo) (string, []string, error) {
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(ge *CodeView, buf *texteditor.Buffer, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(cv *CodeView, buf *texteditor.Buffer, pvals map[string]struct{}) {
 	sz := len(pvals)
 	cnt := 0
-	tv := ge.ActiveTextEditor()
+	tv := cv.ActiveTextEditor()
 	var cmvals map[string]string
 	for pv := range pvals {
 		switch pv {
@@ -386,10 +386,10 @@ func (cm *Command) PromptUser(ge *CodeView, buf *texteditor.Buffer, pvals map[st
 				d.AddOK(parent).OnClick(func(e events.Event) {
 					val := tf.Text()
 					cmvals[cm.Label()] = val
-					ge.ArgVals[pv] = val
+					cv.ArgVals[pv] = val
 					cnt++
 					if cnt == sz {
-						cm.RunAfterPrompts(ge, buf)
+						cm.RunAfterPrompts(cv, buf)
 					}
 				})
 			})
@@ -397,17 +397,17 @@ func (cm *Command) PromptUser(ge *CodeView, buf *texteditor.Buffer, pvals map[st
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
-			fn := ge.ActiveFileNode()
+			fn := cv.ActiveFileNode()
 			if fn != nil {
 				repo, _ := fn.Repo()
 				if repo != nil {
 					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
 						m := core.NewMenuFromStrings(br, cur, func(idx int) {
-							ge.ArgVals[pv] = br[idx]
+							cv.ArgVals[pv] = br[idx]
 							cnt++
 							if cnt == sz {
-								cm.RunAfterPrompts(ge, buf)
+								cm.RunAfterPrompts(cv, buf)
 							}
 						})
 						m.Nm = "prompt-branch"
@@ -425,7 +425,7 @@ func (cm *Command) PromptUser(ge *CodeView, buf *texteditor.Buffer, pvals map[st
 // which can be displayed -- if !wait, then Buf is updated online as output
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(ge *CodeView, buf *texteditor.Buffer) {
+func (cm *Command) Run(cv *CodeView, buf *texteditor.Buffer) {
 	// if cm.Hilight != fileinfo.Unknown {
 	// 	buf.Info.Known = cm.Hilight
 	// 	buf.Info.Mime = fileinfo.MimeString(fileinfo.Bash)
@@ -439,44 +439,44 @@ func (cm *Command) Run(ge *CodeView, buf *texteditor.Buffer) {
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddCancel(parent)
 			d.AddOK(parent).SetText("Run").OnClick(func(e events.Event) {
-				cm.RunAfterPrompts(ge, buf)
+				cm.RunAfterPrompts(cv, buf)
 			})
 		})
-		d.RunDialog(ge.AsWidget().Scene)
+		d.RunDialog(cv.AsWidget().Scene)
 		return
 	}
 	pvals, hasp := cm.HasPrompts()
 	if !hasp || CmdNoUserPrompt {
-		cm.RunAfterPrompts(ge, buf)
+		cm.RunAfterPrompts(cv, buf)
 		return
 	}
-	cm.PromptUser(ge, buf, pvals)
+	cm.PromptUser(cv, buf, pvals)
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(ge *CodeView, buf *texteditor.Buffer) {
+func (cm *Command) RunAfterPrompts(cv *CodeView, buf *texteditor.Buffer) {
 	// ge.RunningCmds.KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjectPath}"
 	if cm.Dir != "" {
 		cdir = cm.Dir
 	}
-	cds := ge.ArgVals.Bind(cdir)
+	cds := cv.ArgVals.Bind(cdir)
 	err := os.Chdir(cds)
-	cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
+	cm.AppendCmdOut(cv, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
 	if err != nil {
-		cm.AppendCmdOut(ge, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
+		cm.AppendCmdOut(cv, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
 	}
 
 	if CmdWaitOverride || cm.Wait || len(cm.Cmds) > 1 {
 		for i := range cm.Cmds {
 			cma := &cm.Cmds[i]
 			if buf == nil {
-				if !cm.RunNoBuf(ge, cma) {
+				if !cm.RunNoBuf(cv, cma) {
 					break
 				}
 			} else {
-				if !cm.RunBufWait(ge, buf, cma) {
+				if !cm.RunBufWait(cv, buf, cma) {
 					break
 				}
 			}
@@ -484,9 +484,9 @@ func (cm *Command) RunAfterPrompts(ge *CodeView, buf *texteditor.Buffer) {
 	} else if len(cm.Cmds) > 0 {
 		cma := &cm.Cmds[0]
 		if buf == nil {
-			go cm.RunNoBuf(ge, cma)
+			go cm.RunNoBuf(cv, cma)
 		} else {
-			go cm.RunBuf(ge, buf, cma)
+			go cm.RunBuf(cv, buf, cma)
 		}
 	}
 }
@@ -494,19 +494,19 @@ func (cm *Command) RunAfterPrompts(ge *CodeView, buf *texteditor.Buffer) {
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
 // line of the command output to code statusbar
-func (cm *Command) RunBufWait(ge *CodeView, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
-	cmd, cmdstr := cma.PrepCmd(&ge.ArgVals)
-	ge.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
+func (cm *Command) RunBufWait(cv *CodeView, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
+	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
-	cm.AppendCmdOut(ge, buf, out)
-	return cm.RunStatus(ge, buf, cmdstr, err, out)
+	cm.AppendCmdOut(cv, buf, out)
+	return cm.RunStatus(cv, buf, cmdstr, err, out)
 }
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(ge *CodeView, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
-	cmd, cmdstr := cma.PrepCmd(&ge.ArgVals)
-	ge.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
+func (cm *Command) RunBuf(cv *CodeView, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
+	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
 	if err == nil {
 		cmd.Stderr = cmd.Stdout
@@ -518,21 +518,21 @@ func (cm *Command) RunBuf(ge *CodeView, buf *texteditor.Buffer, cma *CmdAndArgs)
 		}
 		err = cmd.Wait()
 	}
-	return cm.RunStatus(ge, buf, cmdstr, err, nil)
+	return cm.RunStatus(cv, buf, cmdstr, err, nil)
 }
 
 // RunNoBuf runs a command without any output to the buffer -- can call using
 // go as a goroutine for no-wait case -- returns overall command success, and
 // logs one line of the command output to code statusbar
-func (cm *Command) RunNoBuf(ge *CodeView, cma *CmdAndArgs) bool {
-	cmd, cmdstr := cma.PrepCmd(&ge.ArgVals)
-	ge.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
+func (cm *Command) RunNoBuf(cv *CodeView, cma *CmdAndArgs) bool {
+	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
+	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
-	return cm.RunStatus(ge, nil, cmdstr, err, out)
+	return cm.RunStatus(cv, nil, cmdstr, err, out)
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(ge *CodeView, buf *texteditor.Buffer, out []byte) {
+func (cm *Command) AppendCmdOut(cv *CodeView, buf *texteditor.Buffer, out []byte) {
 	if buf == nil {
 		return
 	}
@@ -559,8 +559,8 @@ var CmdOutStatusLen = 80
 // RunStatus reports the status of the command run (given in cmdstr) to
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
-func (cm *Command) RunStatus(ge *CodeView, buf *texteditor.Buffer, cmdstr string, err error, out []byte) bool {
-	ge.RunningCmds.DeleteByName(cm.Label())
+func (cm *Command) RunStatus(cv *CodeView, buf *texteditor.Buffer, cmdstr string, err error, out []byte) bool {
+	cv.RunningCmds.DeleteByName(cm.Label())
 	var rval bool
 	outstr := ""
 	if out != nil {
@@ -581,7 +581,7 @@ func (cm *Command) RunStatus(ge *CodeView, buf *texteditor.Buffer, cmdstr string
 	if buf != nil {
 		buf.SetReadOnly(true)
 		if err != nil {
-			ge.SelectTabByName(cm.Label()) // sometimes it isn't
+			cv.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)
@@ -591,10 +591,10 @@ func (cm *Command) RunStatus(ge *CodeView, buf *texteditor.Buffer, cmdstr string
 		// buf.AppendTextLine(cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
 		buf.AutoScrollViews()
 		if cm.Focus {
-			ge.FocusOnTabs()
+			cv.FocusOnTabs()
 		}
 	}
-	ge.SetStatus(cmdstr + " " + outstr)
+	cv.SetStatus(cmdstr + " " + outstr)
 	return rval
 }
 
@@ -795,20 +795,20 @@ var CustomCommandsChanged = false
 
 // CommandMenu returns a menu function for commands for given language and vcs name
 func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
-	ge, ok := ParentCode(fn.This())
+	cv, ok := ParentCode(fn.This())
 	if !ok {
 		return nil
 	}
 	lang := fn.Info.Known
-	vcnm := ge.VersionControl()
+	vcnm := cv.VersionControl()
 	if repo, _ := fn.Repo(); repo != nil {
 		vcnm = filetree.VersionControlName(repo.Vcs())
 	}
 	cmds := AvailableCommands.FilterCmdNames(lang, vcnm)
 	lastCmd := ""
-	hsz := len(ge.CmdHistory)
+	hsz := len(cv.CmdHistory)
 	if hsz > 0 {
-		lastCmd = string((ge.CmdHistory)[hsz-1])
+		lastCmd = string((cv.CmdHistory)[hsz-1])
 	}
 	return func(mm *core.Scene) {
 		for _, cc := range cmds {
@@ -832,9 +832,9 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 						OnClick(func(e events.Event) {
 							// e.SetHandled() // note: this allows menu to stay open :)
 							cmd := CmdName(cmdNm)
-							ge.CmdHistory.Add(cmd)         // only save commands executed via chooser
-							ge.SaveAllCheck(true, func() { // true = cancel option
-								ge.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+							cv.CmdHistory.Add(cmd)         // only save commands executed via chooser
+							cv.SaveAllCheck(true, func() { // true = cancel option
+								cv.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
 							})
 						})
 					if cmdNm == lastCmd {

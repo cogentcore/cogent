@@ -89,8 +89,8 @@ func (sv *SymbolsView) OnInit() {
 	})
 }
 
-func (sv *SymbolsView) Config(ge *CodeView, sp SymbolsParams) { // TODO(config): better name?
-	sv.Code = ge
+func (sv *SymbolsView) Config(cv *CodeView, sp SymbolsParams) { // TODO(config): better name?
+	sv.Code = cv
 	sv.SymParams = sp
 }
 
@@ -173,12 +173,12 @@ func (sv *SymbolsView) RefreshAction() {
 	sv.SearchText().SetFocusEvent()
 }
 
-func SelectSymbol(ge *CodeView, ssym syms.Symbol) {
-	tv := ge.ActiveTextEditor()
+func SelectSymbol(cv *CodeView, ssym syms.Symbol) {
+	tv := cv.ActiveTextEditor()
 	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
-		tv, ok = ge.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
+		tv, ok = cv.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
 		if !ok {
 			log.Printf("CodeView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
@@ -190,14 +190,14 @@ func SelectSymbol(ge *CodeView, ssym syms.Symbol) {
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocusEvent()
-	ge.FocusOnTabs()
+	cv.FocusOnTabs()
 	tv.NeedsLayout()
 }
 
 // OpenPackage opens package-level symbols for current active texteditor
 func (sv *SymbolsView) OpenPackage() {
-	ge := sv.Code
-	tv := ge.ActiveTextEditor()
+	cv := sv.Code
+	tv := cv.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 		return
 	}
@@ -212,8 +212,8 @@ func (sv *SymbolsView) OpenPackage() {
 
 // OpenFile opens file-level symbols for current active texteditor
 func (sv *SymbolsView) OpenFile() {
-	ge := sv.Code
-	tv := ge.ActiveTextEditor()
+	cv := sv.Code
+	tv := cv.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
 		return
 	}

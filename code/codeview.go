@@ -255,46 +255,46 @@ const (
 )
 
 // Splits returns the main Splits
-func (ge *CodeView) Splits() *core.Splits {
-	return ge.ChildByName("splits", 2).(*core.Splits)
+func (cv *CodeView) Splits() *core.Splits {
+	return cv.ChildByName("splits", 2).(*core.Splits)
 }
 
 // TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
-func (ge *CodeView) TextEditorButtonByIndex(idx int) *core.Button {
-	return ge.Splits().Child(TextEditor1Index + idx).Child(0).(*core.Button)
+func (cv *CodeView) TextEditorButtonByIndex(idx int) *core.Button {
+	return cv.Splits().Child(TextEditor1Index + idx).Child(0).(*core.Button)
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
-func (ge *CodeView) TextEditorByIndex(idx int) *TextEditor {
-	return ge.Splits().Child(TextEditor1Index + idx).Child(1).(*TextEditor)
+func (cv *CodeView) TextEditorByIndex(idx int) *TextEditor {
+	return cv.Splits().Child(TextEditor1Index + idx).Child(1).(*TextEditor)
 }
 
 // Tabs returns the main TabView
-func (ge *CodeView) Tabs() *core.Tabs {
-	return ge.Splits().Child(TabsIndex).(*core.Tabs)
+func (cv *CodeView) Tabs() *core.Tabs {
+	return cv.Splits().Child(TabsIndex).(*core.Tabs)
 }
 
 // StatusBar returns the statusbar widget
-func (ge *CodeView) StatusBar() *core.Frame {
-	if ge.This() == nil || !ge.HasChildren() {
+func (cv *CodeView) StatusBar() *core.Frame {
+	if cv.This() == nil || !cv.HasChildren() {
 		return nil
 	}
-	return ge.ChildByName("statusbar", 2).(*core.Frame)
+	return cv.ChildByName("statusbar", 2).(*core.Frame)
 }
 
 // StatusText returns the status bar text widget
-func (ge *CodeView) StatusText() *core.Text {
-	return ge.StatusBar().Child(0).(*core.Text)
+func (cv *CodeView) StatusText() *core.Text {
+	return cv.StatusBar().Child(0).(*core.Text)
 }
 
 // SelectedFileNode returns currently selected file tree node as a *filetree.Node
 // could be nil.
-func (ge *CodeView) SelectedFileNode() *filetree.Node {
-	n := len(ge.Files.SelectedNodes)
+func (cv *CodeView) SelectedFileNode() *filetree.Node {
+	n := len(cv.Files.SelectedNodes)
 	if n == 0 {
 		return nil
 	}
-	return filetree.AsNode(ge.Files.SelectedNodes[n-1].This())
+	return filetree.AsNode(cv.Files.SelectedNodes[n-1].This())
 }
 
 // VersionControl returns the version control system in effect, using the file tree detected

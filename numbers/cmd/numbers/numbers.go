@@ -95,7 +95,7 @@ func Interactive(c *Config) error {
 	// b.AddAppBar(br.MakeToolbar)
 
 	in := interpreter.NewInterpreter(interp.Options{})
-	in.HistFile = "~/.numbers-hist"
+	in.HistFile = "~/.numbers-history"
 	in.Interp.Use(databrowser.Symbols)
 	in.Config()
 

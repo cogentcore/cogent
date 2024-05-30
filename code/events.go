@@ -14,59 +14,59 @@ import (
 	"cogentcore.org/core/views"
 )
 
-func (ge *CodeView) codeViewKeys(e events.Event) {
-	SetGoMod(ge.Settings.GoMod)
+func (cv *CodeView) codeViewKeys(e events.Event) {
+	SetGoMod(cv.Settings.GoMod)
 	var kf KeyFunctions
 	kc := e.KeyChord()
 	gkf := keymap.Of(kc)
 	if core.DebugSettings.KeyEventTrace {
-		slog.Info("CodeView KeyInput", "widget", ge, "keyfun", gkf)
+		slog.Info("CodeView KeyInput", "widget", cv, "keyfun", gkf)
 	}
-	if ge.KeySeq1 != "" {
-		kf = KeyFunction(ge.KeySeq1, kc)
-		seqstr := string(ge.KeySeq1) + " " + string(kc)
+	if cv.KeySeq1 != "" {
+		kf = KeyFunction(cv.KeySeq1, kc)
+		seqstr := string(cv.KeySeq1) + " " + string(kc)
 		if kf == KeyNone || kc == "Escape" {
 			if core.DebugSettings.KeyEventTrace {
 				fmt.Printf("KeyFun sequence: %v aborted\n", seqstr)
 			}
-			ge.SetStatus(seqstr + " -- aborted")
+			cv.SetStatus(seqstr + " -- aborted")
 			e.SetHandled() // abort key sequence, don't send esc to anyone else
-			ge.KeySeq1 = ""
+			cv.KeySeq1 = ""
 			return
 		}
-		ge.SetStatus(seqstr)
-		ge.KeySeq1 = ""
+		cv.SetStatus(seqstr)
+		cv.KeySeq1 = ""
 		gkf = keymap.None // override!
 	} else {
 		kf = KeyFunction(kc, "")
 		if kf == KeyNeeds2 {
 			e.SetHandled()
-			tv := ge.ActiveTextEditor()
+			tv := cv.ActiveTextEditor()
 			if tv != nil {
 				tv.CancelComplete()
 			}
-			ge.KeySeq1 = e.KeyChord()
-			ge.SetStatus(string(ge.KeySeq1))
+			cv.KeySeq1 = e.KeyChord()
+			cv.SetStatus(string(cv.KeySeq1))
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("KeyFun sequence needs 2 after: %v\n", ge.KeySeq1)
+				fmt.Printf("KeyFun sequence needs 2 after: %v\n", cv.KeySeq1)
 			}
 			return
 		} else if kf != KeyNone {
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("KeyFun got in one: %v = %v\n", ge.KeySeq1, kf)
+				fmt.Printf("KeyFun got in one: %v = %v\n", cv.KeySeq1, kf)
 			}
 			gkf = keymap.None // override!
 		}
 	}
 
-	atv := ge.ActiveTextEditor()
+	atv := cv.ActiveTextEditor()
 	switch gkf {
 	case keymap.Find:
 		e.SetHandled()
 		if atv != nil && atv.HasSelection() {
-			ge.Settings.Find.Find = string(atv.Selection().ToBytes())
+			cv.Settings.Find.Find = string(atv.Selection().ToBytes())
 		}
-		ge.CallFind(atv)
+		cv.CallFind(atv)
 	}
 	if e.IsHandled() {
 		return
@@ -74,66 +74,66 @@ func (ge *CodeView) codeViewKeys(e events.Event) {
 	switch kf {
 	case KeyNextPanel:
 		e.SetHandled()
-		ge.FocusNextPanel()
+		cv.FocusNextPanel()
 	case KeyPrevPanel:
 		e.SetHandled()
-		ge.FocusPrevPanel()
+		cv.FocusPrevPanel()
 	case KeyFileOpen:
 		e.SetHandled()
-		ge.CallViewFile(atv)
+		cv.CallViewFile(atv)
 	case KeyBufSelect:
 		e.SetHandled()
-		ge.SelectOpenNode()
+		cv.SelectOpenNode()
 	case KeyBufClone:
 		e.SetHandled()
-		ge.CloneActiveView()
+		cv.CloneActiveView()
 	case KeyBufSave:
 		e.SetHandled()
-		ge.SaveActiveView()
+		cv.SaveActiveView()
 	case KeyBufSaveAs:
 		e.SetHandled()
-		ge.CallSaveActiveViewAs(atv)
+		cv.CallSaveActiveViewAs(atv)
 	case KeyBufClose:
 		e.SetHandled()
-		ge.CloseActiveView()
+		cv.CloseActiveView()
 	case KeyExecCmd:
 		e.SetHandled()
-		views.CallFunc(atv, ge.ExecCmd)
+		views.CallFunc(atv, cv.ExecCmd)
 	case KeyRectCut:
 		e.SetHandled()
-		ge.CutRect()
+		cv.CutRect()
 	case KeyRectCopy:
 		e.SetHandled()
-		ge.CopyRect()
+		cv.CopyRect()
 	case KeyRectPaste:
 		e.SetHandled()
-		ge.PasteRect()
+		cv.PasteRect()
 	case KeyRegCopy:
 		e.SetHandled()
-		views.CallFunc(atv, ge.RegisterCopy)
+		views.CallFunc(atv, cv.RegisterCopy)
 	case KeyRegPaste:
 		e.SetHandled()
-		views.CallFunc(atv, ge.RegisterPaste)
+		views.CallFunc(atv, cv.RegisterPaste)
 	case KeyCommentOut:
 		e.SetHandled()
-		ge.CommentOut()
+		cv.CommentOut()
 	case KeyIndent:
 		e.SetHandled()
-		ge.Indent()
+		cv.Indent()
 	case KeyJump:
 		e.SetHandled()
-		tv := ge.ActiveTextEditor()
+		tv := cv.ActiveTextEditor()
 		if tv != nil {
 			tv.JumpToLinePrompt()
 		}
 	case KeySetSplit:
 		e.SetHandled()
-		ge.CallSplitsSetView(atv)
+		cv.CallSplitsSetView(atv)
 	case KeyBuildProject:
 		e.SetHandled()
-		ge.RunBuild()
+		cv.RunBuild()
 	case KeyRunProject:
 		e.SetHandled()
-		ge.Run()
+		cv.Run()
 	}
 }

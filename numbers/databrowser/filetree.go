@@ -243,9 +243,7 @@ func (on *OpenNodes) FindPath(path string) *filetree.Node {
 
 // EditFiles calls EditFile on selected files
 func (fn *FileNode) EditFiles() { //types:add
-	sels := fn.SelectedViews()
-	for i := len(sels) - 1; i >= 0; i-- {
-		sn := sels[i].This().(*FileNode)
-		sn.EditFile()
-	}
+	fn.SelectedFunc(func(sn *filetree.Node) {
+		sn.This().(*FileNode).EditFile()
+	})
 }

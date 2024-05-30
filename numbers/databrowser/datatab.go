@@ -19,7 +19,7 @@ import (
 // Use tv.Table.Table to get the underlying *table.Table
 // and tv.Table is the table.IndexView onto the table.
 // Use tv.Table.Sequential to update the IndexView to view
-// all of the rows when done updating the Table.
+// all of the rows when done updating the Table, and then call br.Update()
 func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
@@ -32,6 +32,7 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	tv := tensorview.NewTableView(tab)
 	tb.Makers = append(tb.Makers, tv.MakeToolbar)
 	tv.SetTable(dt)
+	br.Update()
 	return tv
 }
 
@@ -50,6 +51,7 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 		s.SetReadOnly(true) // todo: not taking effect
 	})
 	tv.SetSlice(slc)
+	br.Update()
 	return tv
 }
 
@@ -62,6 +64,7 @@ func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
 		return pl
 	}
 	pl := plotview.NewSubPlot(tab)
+	br.Update()
 	return pl
 }
 

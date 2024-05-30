@@ -28,20 +28,20 @@ import (
 )
 
 // CursorToHistPrev moves back to the previous history item.
-func (ge *CodeView) CursorToHistPrev() bool { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) CursorToHistPrev() bool { //types:add
+	tv := cv.ActiveTextEditor()
 	return tv.CursorToHistPrev()
 }
 
 // CursorToHistNext moves forward to the next history item.
-func (ge *CodeView) CursorToHistNext() bool { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) CursorToHistNext() bool { //types:add
+	tv := cv.ActiveTextEditor()
 	return tv.CursorToHistNext()
 }
 
 // LookupFun is the completion system Lookup function that makes a custom
 // texteditor dialog that has option to edit resulting file.
-func (ge *CodeView) LookupFun(data any, text string, posLine, posChar int) (ld complete.Lookup) {
+func (cv *CodeView) LookupFun(data any, text string, posLine, posChar int) (ld complete.Lookup) {
 	sfs := data.(*parse.FileStates)
 	if sfs == nil {
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
@@ -93,7 +93,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLine, posChar int) (ld c
 
 	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
 	tb.Hi.Style = core.AppearanceSettings.HiStyle
-	tb.Options.LineNumbers = ge.Settings.Editor.LineNumbers
+	tb.Options.LineNumbers = cv.Settings.Editor.LineNumbers
 
 	d := core.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
 	tv := texteditor.NewEditor(d).SetBuffer(tb)
@@ -102,7 +102,7 @@ func (ge *CodeView) LookupFun(data any, text string, posLine, posChar int) (ld c
 	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
 	d.AddBottomBar(func(parent core.Widget) {
 		core.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
-			ge.ViewFile(core.Filename(ld.Filename))
+			cv.ViewFile(core.Filename(ld.Filename))
 			d.Close()
 		})
 		core.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
@@ -110,14 +110,14 @@ func (ge *CodeView) LookupFun(data any, text string, posLine, posChar int) (ld c
 				d.Clipboard().Write(mimedata.NewTextBytes(txt))
 			})
 	})
-	d.RunWindowDialog(ge.ActiveTextEditor())
+	d.RunWindowDialog(cv.ActiveTextEditor())
 	tb.StartDelayedReMarkup() // update markup
 	return
 }
 
 // ReplaceInActive does query-replace in active file only
-func (ge *CodeView) ReplaceInActive() { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) ReplaceInActive() { //types:add
+	tv := cv.ActiveTextEditor()
 	tv.QReplacePrompt()
 }
 
@@ -125,8 +125,8 @@ func (ge *CodeView) ReplaceInActive() { //types:add
 //    Rects, Registers
 
 // CutRect cuts rectangle in active text view
-func (ge *CodeView) CutRect() { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) CutRect() { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
 	}
@@ -134,8 +134,8 @@ func (ge *CodeView) CutRect() { //types:add
 }
 
 // CopyRect copies rectangle in active text view
-func (ge *CodeView) CopyRect() { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) CopyRect() { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
 	}
@@ -143,8 +143,8 @@ func (ge *CodeView) CopyRect() { //types:add
 }
 
 // PasteRect cuts rectangle in active text view
-func (ge *CodeView) PasteRect() { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) PasteRect() { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
 	}
@@ -153,11 +153,11 @@ func (ge *CodeView) PasteRect() { //types:add
 
 // RegisterCopy saves current selection in active text view to register of given name
 // returns true if saved
-func (ge *CodeView) RegisterCopy(name string) bool { //types:add
+func (cv *CodeView) RegisterCopy(name string) bool { //types:add
 	if name == "" {
 		return false
 	}
-	tv := ge.ActiveTextEditor()
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
 	}
@@ -170,14 +170,14 @@ func (ge *CodeView) RegisterCopy(name string) bool { //types:add
 	}
 	AvailableRegisters[name] = string(sel.ToBytes())
 	AvailableRegisters.SaveSettings()
-	ge.Settings.Register = RegisterName(name)
+	cv.Settings.Register = RegisterName(name)
 	tv.SelectReset()
 	return true
 }
 
 // RegisterPaste pastes register of given name into active text view
 // returns true if pasted
-func (ge *CodeView) RegisterPaste(name RegisterName) bool { //types:add
+func (cv *CodeView) RegisterPaste(name RegisterName) bool { //types:add
 	if name == "" {
 		return false
 	}
@@ -185,20 +185,20 @@ func (ge *CodeView) RegisterPaste(name RegisterName) bool { //types:add
 	if !ok {
 		return false
 	}
-	tv := ge.ActiveTextEditor()
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
 	}
 	tv.InsertAtCursor([]byte(str))
-	ge.Settings.Register = name
+	cv.Settings.Register = name
 	return true
 }
 
 // CommentOut comments-out selected lines in active text view
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
-func (ge *CodeView) CommentOut() bool { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) CommentOut() bool { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
 	}
@@ -217,8 +217,8 @@ func (ge *CodeView) CommentOut() bool { //types:add
 }
 
 // Indent indents selected lines in active view
-func (ge *CodeView) Indent() bool { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) Indent() bool { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return false
 	}
@@ -232,8 +232,8 @@ func (ge *CodeView) Indent() bool { //types:add
 }
 
 // ReCase replaces currently selected text in current active view with given case
-func (ge *CodeView) ReCase(c strcase.Cases) string { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) ReCase(c strcase.Cases) string { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return ""
 	}
@@ -243,8 +243,8 @@ func (ge *CodeView) ReCase(c strcase.Cases) string { //types:add
 // JoinParaLines merges sequences of lines with hard returns forming paragraphs,
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
-func (ge *CodeView) JoinParaLines() { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) JoinParaLines() { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
 	}
@@ -257,8 +257,8 @@ func (ge *CodeView) JoinParaLines() { //types:add
 
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
-func (ge *CodeView) TabsToSpaces() { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) TabsToSpaces() { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
 	}
@@ -271,8 +271,8 @@ func (ge *CodeView) TabsToSpaces() { //types:add
 
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
-func (ge *CodeView) SpacesToTabs() { //types:add
-	tv := ge.ActiveTextEditor()
+func (cv *CodeView) SpacesToTabs() { //types:add
+	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
 	}
@@ -286,36 +286,36 @@ func (ge *CodeView) SpacesToTabs() { //types:add
 // DiffFiles shows the differences between two given files
 // in side-by-side DiffView and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
-func (ge *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //types:add
-	fna := ge.FileNodeForFile(string(fnmA), true)
+func (cv *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //types:add
+	fna := cv.FileNodeForFile(string(fnmA), true)
 	if fna == nil {
 		return
 	}
 	if fna.Buffer == nil {
-		ge.OpenFileNode(fna)
+		cv.OpenFileNode(fna)
 	}
 	if fna.Buffer == nil {
 		return
 	}
-	ge.DiffFileNode(fna, fnmB)
+	cv.DiffFileNode(fna, fnmB)
 }
 
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffView and in the console as a context diff.
-func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:add
-	fnb := ge.FileNodeForFile(string(fnmB), true)
+func (cv *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:add
+	fnb := cv.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
 		return
 	}
 	if fnb.Buffer == nil {
-		ge.OpenFileNode(fnb)
+		cv.OpenFileNode(fnb)
 	}
 	if fnb.Buffer == nil {
 		return
 	}
 	dif := fna.Buffer.DiffBuffersUnified(fnb.Buffer, 3)
-	cbuf, _, _ := ge.RecycleCmdTab("Diffs", true, true)
+	cbuf, _, _ := cv.RecycleCmdTab("Diffs", true, true)
 	cbuf.SetText(dif)
 	cbuf.AutoScrollViews()
 
@@ -323,13 +323,13 @@ func (ge *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //typ
 	bstr := fnb.Buffer.Strings(false)
 	_, _ = astr, bstr
 
-	texteditor.DiffViewDialog(ge, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
+	texteditor.DiffViewDialog(cv, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
 }
 
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
-func (ge *CodeView) CountWords() string { //types:add
-	av := ge.ActiveTextEditor()
+func (cv *CodeView) CountWords() string { //types:add
+	av := cv.ActiveTextEditor()
 	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"
 	}
@@ -343,13 +343,13 @@ func (ge *CodeView) CountWords() string { //types:add
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
-func (ge *CodeView) CountWordsRegion() string { //types:add
-	av := ge.ActiveTextEditor()
+func (cv *CodeView) CountWordsRegion() string { //types:add
+	av := cv.ActiveTextEditor()
 	if av.Buffer == nil || av.Buffer.NLines <= 0 {
 		return "empty"
 	}
 	if !av.HasSelection() {
-		return ge.CountWords()
+		return cv.CountWords()
 	}
 	av.Buffer.LinesMu.RLock()
 	defer av.Buffer.LinesMu.RUnlock()
@@ -392,7 +392,7 @@ func TextLinkHandler(tl paint.TextLink) bool {
 // }
 
 // OpenFileURL opens given file:/// url
-func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
+func (cv *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("CodeView OpenFileURL parse err: %v\n", err)
@@ -414,12 +414,12 @@ func (ge *CodeView) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		}
 	}
 	pos := up.Fragment
-	tv, _, ok := ge.LinkViewFile(core.Filename(fpath))
+	tv, _, ok := cv.LinkViewFile(core.Filename(fpath))
 	if !ok {
 		_, fnm := filepath.Split(fpath)
-		tv, _, ok = ge.LinkViewFile(core.Filename(fnm))
+		tv, _, ok = cv.LinkViewFile(core.Filename(fnm))
 		if !ok {
-			core.MessageSnackbar(ge, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
+			core.MessageSnackbar(cv, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 			return false
 		}
 	}

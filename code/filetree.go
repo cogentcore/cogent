@@ -35,10 +35,9 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 	if !ok {
 		return
 	}
-	sels := fn.SelectedViews()
-	if len(sels) > 0 {
-		sn := filetree.AsNode(sels[len(sels)-1])
-		if sn != nil {
+	done := false
+	fn.SelectedFunc(func(sn *filetree.Node) {
+		if !done {
 			if sn.IsDir() {
 				if !sn.HasChildren() {
 					sn.OpenEmptyDir()
@@ -48,8 +47,9 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 			} else {
 				ge.FileNodeOpened(sn)
 			}
+			done = true
 		}
-	}
+	})
 }
 
 // EditFile pulls up this file in Code
@@ -243,20 +243,16 @@ func (on *OpenNodes) FindPath(path string) *filetree.Node {
 
 // EditFiles calls EditFile on selected files
 func (fn *FileNode) EditFiles() { //types:add
-	sels := fn.SelectedViews()
-	for i := len(sels) - 1; i >= 0; i-- {
-		sn := sels[i].This().(*FileNode)
-		sn.EditFile()
-	}
+	fn.SelectedFunc(func(sn *filetree.Node) {
+		sn.This().(*FileNode).EditFile()
+	})
 }
 
 // SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons
 func (fn *FileNode) SetRunExecs() { //types:add
-	sels := fn.SelectedViews()
-	for i := len(sels) - 1; i >= 0; i-- {
-		sn := sels[i].This().(*FileNode)
-		sn.SetRunExec()
-	}
+	fn.SelectedFunc(func(sn *filetree.Node) {
+		sn.This().(*FileNode).SetRunExec()
+	})
 }
 
 // RenameFiles calls RenameFile on any selected nodes
@@ -274,7 +270,9 @@ func (fn *FileNode) RenameFiles() {
 		}
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
 		for _, sn := range nodes {
-			views.CallFunc(sn, sn.RenameFile)
+			fb := views.NewSoloFuncButton(sn, sn.RenameFile)
+			fb.Args[0].SetValue(sn.Name())
+			fb.CallFunc()
 		}
 	})
 }

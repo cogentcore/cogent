@@ -12,8 +12,8 @@ import (
 
 // PanelIsOpen returns true if the given panel has not been collapsed and is avail
 // and visible for displaying something
-func (ge *CodeView) PanelIsOpen(panel int) bool {
-	sv := ge.Splits()
+func (cv *CodeView) PanelIsOpen(panel int) bool {
+	sv := cv.Splits()
 	if panel < 0 || panel >= len(sv.Kids) {
 		return false
 	}
@@ -24,8 +24,8 @@ func (ge *CodeView) PanelIsOpen(panel int) bool {
 }
 
 // CurPanel returns the splitter panel that currently has keyboard focus
-func (ge *CodeView) CurPanel() int {
-	sv := ge.Splits()
+func (cv *CodeView) CurPanel() int {
+	sv := cv.Splits()
 	for i, ski := range sv.Kids {
 		_, sk := core.AsWidget(ski)
 		if sk.HasStateWithin(states.Focused) {
@@ -36,33 +36,33 @@ func (ge *CodeView) CurPanel() int {
 }
 
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
-func (ge *CodeView) FocusOnPanel(panel int) bool {
-	sv := ge.Splits()
+func (cv *CodeView) FocusOnPanel(panel int) bool {
+	sv := cv.Splits()
 	switch panel {
 	case TextEditor1Index:
-		ge.SetActiveTextEditorIndex(0)
+		cv.SetActiveTextEditorIndex(0)
 	case TextEditor2Index:
-		ge.SetActiveTextEditorIndex(1)
+		cv.SetActiveTextEditorIndex(1)
 	case TabsIndex:
-		tv := ge.Tabs()
+		tv := cv.Tabs()
 		ct, _ := tv.CurrentTab()
 		if ct != nil {
-			ge.Scene.Events.FocusNextFrom(ct)
+			cv.Scene.Events.FocusNextFrom(ct)
 		} else {
 			return false
 		}
 	default:
 		ski, _ := core.AsWidget(sv.Kids[panel])
-		ge.Scene.Events.FocusNextFrom(ski)
+		cv.Scene.Events.FocusNextFrom(ski)
 	}
-	ge.NeedsRender()
+	cv.NeedsRender()
 	return true
 }
 
 // FocusNextPanel moves the keyboard focus to the next panel to the right
-func (ge *CodeView) FocusNextPanel() { //types:add
-	sv := ge.Splits()
-	cp := ge.CurPanel()
+func (cv *CodeView) FocusNextPanel() { //types:add
+	sv := cv.Splits()
+	cp := cv.CurPanel()
 	cp++
 	np := len(sv.Kids)
 	if cp >= np {
@@ -74,13 +74,13 @@ func (ge *CodeView) FocusNextPanel() { //types:add
 			cp = 0
 		}
 	}
-	ge.FocusOnPanel(cp)
+	cv.FocusOnPanel(cp)
 }
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
-func (ge *CodeView) FocusPrevPanel() { //types:add
-	sv := ge.Splits()
-	cp := ge.CurPanel()
+func (cv *CodeView) FocusPrevPanel() { //types:add
+	sv := cv.Splits()
+	cp := cv.CurPanel()
 	cp--
 	np := len(sv.Kids)
 	if cp < 0 {
@@ -92,18 +92,18 @@ func (ge *CodeView) FocusPrevPanel() { //types:add
 			cp = np - 1
 		}
 	}
-	ge.FocusOnPanel(cp)
+	cv.FocusOnPanel(cp)
 }
 
 // TabByName returns a tab with given name, nil if not found.
-func (ge *CodeView) TabByName(name string) core.Widget {
-	tv := ge.Tabs()
+func (cv *CodeView) TabByName(name string) core.Widget {
+	tv := cv.Tabs()
 	return tv.TabByName(name)
 }
 
 // SelectTabByName Selects given main tab, and returns all of its contents as well.
-func (ge *CodeView) SelectTabByName(name string) core.Widget {
-	tv := ge.Tabs()
+func (cv *CodeView) SelectTabByName(name string) core.Widget {
+	tv := cv.Tabs()
 	if tv == nil {
 		return nil
 	}
@@ -114,8 +114,8 @@ func (ge *CodeView) SelectTabByName(name string) core.Widget {
 // name, first by looking for an existing one, and if not found, making a new
 // one with a TextEditor in it.  if sel, then select it.
 // returns widget
-func (ge *CodeView) RecycleTabTextEditor(name string, sel bool, buf *texteditor.Buffer) *texteditor.Editor {
-	tv := ge.Tabs()
+func (cv *CodeView) RecycleTabTextEditor(name string, sel bool, buf *texteditor.Buffer) *texteditor.Editor {
+	tv := cv.Tabs()
 	if tv == nil {
 		return nil
 	}

@@ -23,39 +23,39 @@ import (
 )
 
 // ConfigFindButton configures the Find FuncButton with current params
-func (ge *CodeView) ConfigFindButton(fb *views.FuncButton) *views.FuncButton {
-	fb.Args[0].SetValue(ge.Settings.Find.Find)
+func (cv *CodeView) ConfigFindButton(fb *views.FuncButton) *views.FuncButton {
+	fb.Args[0].SetValue(cv.Settings.Find.Find)
 	// fb.Args[0].SetTag("width", "80") // todo:
-	fb.Args[1].SetValue(ge.Settings.Find.Replace)
+	fb.Args[1].SetValue(cv.Settings.Find.Replace)
 	// fb.Args[1].SetTag("width", "80")
-	fb.Args[2].SetValue(ge.Settings.Find.IgnoreCase)
-	fb.Args[3].SetValue(ge.Settings.Find.Regexp)
-	fb.Args[4].SetValue(ge.Settings.Find.Loc)
-	fb.Args[5].SetValue(ge.Settings.Find.Langs)
+	fb.Args[2].SetValue(cv.Settings.Find.IgnoreCase)
+	fb.Args[3].SetValue(cv.Settings.Find.Regexp)
+	fb.Args[4].SetValue(cv.Settings.Find.Loc)
+	fb.Args[5].SetValue(cv.Settings.Find.Langs)
 	return fb
 }
 
-func (ge *CodeView) CallFind(ctx core.Widget) {
-	ge.ConfigFindButton(views.NewSoloFuncButton(ctx, ge.Find)).CallFunc()
+func (cv *CodeView) CallFind(ctx core.Widget) {
+	cv.ConfigFindButton(views.NewSoloFuncButton(ctx, cv.Find)).CallFunc()
 }
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLoc, langs []fileinfo.Known) { //types:add
+func (cv *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLoc, langs []fileinfo.Known) { //types:add
 	if find == "" {
 		return
 	}
-	ge.Settings.Find.IgnoreCase = ignoreCase
-	ge.Settings.Find.Regexp = regExp
-	ge.Settings.Find.Langs = langs
-	ge.Settings.Find.Loc = loc
+	cv.Settings.Find.IgnoreCase = ignoreCase
+	cv.Settings.Find.Regexp = regExp
+	cv.Settings.Find.Langs = langs
+	cv.Settings.Find.Loc = loc
 
-	tv := ge.Tabs()
+	tv := cv.Tabs()
 	if tv == nil {
 		return
 	}
 
-	fbuf, _ := ge.RecycleCmdBuf("Find", true)
+	fbuf, _ := cv.RecycleCmdBuf("Find", true)
 	fv := tv.RecycleTabWidget("Find", true, FindViewType).(*FindView)
 	fv.Time = time.Now()
 	ftv := fv.TextEditor()
@@ -65,10 +65,10 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	fv.SaveReplString(repl)
 	fv.UpdateFromParams()
 	fv.Update()
-	root := filetree.AsNode(ge.Files)
+	root := filetree.AsNode(cv.Files)
 
-	atv := ge.ActiveTextEditor()
-	ond, _, got := ge.OpenNodeForTextEditor(atv)
+	atv := cv.ActiveTextEditor()
+	ond, _, got := cv.OpenNodeForTextEditor(atv)
 	adir := ""
 	if got {
 		adir, _ = filepath.Split(string(ond.FPath))
@@ -92,120 +92,120 @@ func (ge *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 		}
 	} else {
 		res = filetree.Search(root, find, ignoreCase, regExp, loc, adir, langs, func(path string) *filetree.Node {
-			return ge.OpenNodes.FindPath(path)
+			return cv.OpenNodes.FindPath(path)
 		})
 	}
 	fv.ShowResults(res)
-	ge.FocusOnPanel(TabsIndex)
+	cv.FocusOnPanel(TabsIndex)
 }
 
 // Spell checks spelling in active text view
-func (ge *CodeView) Spell() { //types:add
-	txv := ge.ActiveTextEditor()
+func (cv *CodeView) Spell() { //types:add
+	txv := cv.ActiveTextEditor()
 	if txv == nil || txv.Buffer == nil {
 		return
 	}
 	spell.OpenCheck() // make sure latest file opened
-	tv := ge.Tabs()
+	tv := cv.Tabs()
 	if tv == nil {
 		return
 	}
 
 	sv := tv.RecycleTabWidget("Spell", true, SpellViewType).(*SpellView)
-	sv.Config(ge, txv)
+	sv.Config(cv, txv)
 	sv.Update()
-	ge.FocusOnPanel(TabsIndex)
+	cv.FocusOnPanel(TabsIndex)
 }
 
 // Symbols displays the Symbols of a file or package
-func (ge *CodeView) Symbols() { //types:add
-	txv := ge.ActiveTextEditor()
+func (cv *CodeView) Symbols() { //types:add
+	txv := cv.ActiveTextEditor()
 	if txv == nil || txv.Buffer == nil {
 		return
 	}
-	tv := ge.Tabs()
+	tv := cv.Tabs()
 	if tv == nil {
 		return
 	}
 
 	sv := tv.RecycleTabWidget("Symbols", true, SymbolsViewType).(*SymbolsView)
-	sv.Config(ge, ge.Settings.Symbols)
+	sv.Config(cv, cv.Settings.Symbols)
 	sv.Update()
-	ge.FocusOnPanel(TabsIndex)
+	cv.FocusOnPanel(TabsIndex)
 }
 
 // Debug starts the debugger on the RunExec executable.
-func (ge *CodeView) Debug() { //types:add
-	tv := ge.Tabs()
+func (cv *CodeView) Debug() { //types:add
+	tv := cv.Tabs()
 	if tv == nil {
 		return
 	}
 
-	ge.Settings.Debug.Mode = cdebug.Exec
-	exePath := string(ge.Settings.RunExec)
+	cv.Settings.Debug.Mode = cdebug.Exec
+	exePath := string(cv.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
-	dv.Config(ge, fileinfo.Go, exePath)
+	dv.Config(cv, fileinfo.Go, exePath)
 	dv.Update()
-	ge.FocusOnPanel(TabsIndex)
-	ge.CurDbg = dv
+	cv.FocusOnPanel(TabsIndex)
+	cv.CurDbg = dv
 }
 
 // DebugTest runs the debugger using testing mode in current active texteditor path
-func (ge *CodeView) DebugTest() { //types:add
-	txv := ge.ActiveTextEditor()
+func (cv *CodeView) DebugTest() { //types:add
+	txv := cv.ActiveTextEditor()
 	if txv == nil || txv.Buffer == nil {
 		return
 	}
-	tv := ge.Tabs()
+	tv := cv.Tabs()
 	if tv == nil {
 		return
 	}
 
-	ge.Settings.Debug.Mode = cdebug.Test
+	cv.Settings.Debug.Mode = cdebug.Test
 	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := tv.RecycleTabWidget("Debug "+dir, true, DebugViewType).(*DebugView)
-	dv.Config(ge, fileinfo.Go, tstPath)
+	dv.Config(cv, fileinfo.Go, tstPath)
 	dv.Update()
-	ge.FocusOnPanel(TabsIndex)
-	ge.CurDbg = dv
+	cv.FocusOnPanel(TabsIndex)
+	cv.CurDbg = dv
 }
 
 // DebugAttach runs the debugger by attaching to an already-running process.
 // pid is the process id to attach to.
-func (ge *CodeView) DebugAttach(pid uint64) { //types:add
-	tv := ge.Tabs()
+func (cv *CodeView) DebugAttach(pid uint64) { //types:add
+	tv := cv.Tabs()
 	if tv == nil {
 		return
 	}
 
-	ge.Settings.Debug.Mode = cdebug.Attach
-	ge.Settings.Debug.PID = pid
-	exePath := string(ge.Settings.RunExec)
+	cv.Settings.Debug.Mode = cdebug.Attach
+	cv.Settings.Debug.PID = pid
+	exePath := string(cv.Settings.RunExec)
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
-	dv.Config(ge, fileinfo.Go, exePath)
+	dv.Config(cv, fileinfo.Go, exePath)
 	dv.Update()
-	ge.FocusOnPanel(TabsIndex)
-	ge.CurDbg = dv
+	cv.FocusOnPanel(TabsIndex)
+	cv.CurDbg = dv
 }
 
 // CurDebug returns the current debug view
-func (ge *CodeView) CurDebug() *DebugView {
-	return ge.CurDbg
+func (cv *CodeView) CurDebug() *DebugView {
+	return cv.CurDbg
 }
 
 // ClearDebug clears the current debugger setting -- no more debugger active.
-func (ge *CodeView) ClearDebug() {
-	ge.CurDbg = nil
+func (cv *CodeView) ClearDebug() {
+	cv.CurDbg = nil
 }
 
 // VCSUpdateAll does an Update (e.g., Pull) on all VCS repositories within
 // the open tree nodes in FileTree.
-func (ge *CodeView) VCSUpdateAll() { //types:add
-	ge.Files.UpdateAllVCS()
-	ge.Files.UpdateAll()
+func (cv *CodeView) VCSUpdateAll() { //types:add
+	cv.Files.UpdateAllVCS()
+	cv.Files.UpdateAll()
 }
 
 // VCSLog shows the VCS log of commits for this file, optionally with a
@@ -216,12 +216,12 @@ func (ge *CodeView) VCSUpdateAll() { //types:add
 // If allFiles is true, then the log will show revisions for all files, not just
 // this one.
 // Returns the Log and also shows it in a VCSLogView which supports further actions.
-func (ge *CodeView) VCSLog(since string) (vcs.Log, error) { //types:add
-	atv := ge.ActiveTextEditor()
-	ond, _, got := ge.OpenNodeForTextEditor(atv)
+func (cv *CodeView) VCSLog(since string) (vcs.Log, error) { //types:add
+	atv := cv.ActiveTextEditor()
+	ond, _, got := cv.OpenNodeForTextEditor(atv)
 	if !got {
-		if ge.Files.DirRepo != nil {
-			return ge.Files.LogVCS(true, since)
+		if cv.Files.DirRepo != nil {
+			return cv.Files.LogVCS(true, since)
 		}
 		core.MessageDialog(atv, "No VCS Repository found in current active file or Root path: Open a file in a repository and try again", "No Version Control Repository")
 		return nil, errors.New("No VCS Repository found in current active file or Root path")
@@ -230,8 +230,8 @@ func (ge *CodeView) VCSLog(since string) (vcs.Log, error) { //types:add
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
-func (ge *CodeView) OpenConsoleTab() { //types:add
-	ctv := ge.RecycleTabTextEditor("Console", true, nil)
+func (cv *CodeView) OpenConsoleTab() { //types:add
+	ctv := cv.RecycleTabTextEditor("Console", true, nil)
 	if ctv == nil {
 		return
 	}
@@ -239,18 +239,18 @@ func (ge *CodeView) OpenConsoleTab() { //types:add
 	if ctv.Buffer == nil || ctv.Buffer != TheConsole.Buf {
 		ctv.SetBuffer(TheConsole.Buf)
 		ctv.OnChange(func(e events.Event) {
-			ge.SelectTabByName("Console")
+			cv.SelectTabByName("Console")
 		})
 	}
 }
 
 // ChooseRunExec selects the executable to run for the project
-func (ge *CodeView) ChooseRunExec(exePath core.Filename) { //types:add
+func (cv *CodeView) ChooseRunExec(exePath core.Filename) { //types:add
 	if exePath != "" {
-		ge.Settings.RunExec = exePath
-		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(exePath)))
-		if !ge.Settings.RunExecIsExec() {
-			core.MessageDialog(ge, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
+		cv.Settings.RunExec = exePath
+		cv.Settings.BuildDir = core.Filename(filepath.Dir(string(exePath)))
+		if !cv.Settings.RunExecIsExec() {
+			core.MessageDialog(cv, fmt.Sprintf("RunExec file: %v is not exectable", exePath), "Not Executable")
 		}
 	}
 }
@@ -259,28 +259,28 @@ func (ge *CodeView) ChooseRunExec(exePath core.Filename) { //types:add
 //    StatusBar
 
 // SetStatus sets the current status update message for the StatusBar next time it renders
-func (ge *CodeView) SetStatus(msg string) {
-	ge.StatusMessage = msg
-	ge.UpdateTextButtons()
+func (cv *CodeView) SetStatus(msg string) {
+	cv.StatusMessage = msg
+	cv.UpdateTextButtons()
 }
 
 // UpdateStatusText updates the status bar text with current data.
-func (ge *CodeView) UpdateStatusText() {
-	sb := ge.StatusBar()
+func (cv *CodeView) UpdateStatusText() {
+	sb := cv.StatusBar()
 	if sb == nil {
 		return
 	}
-	text := ge.StatusText()
+	text := cv.StatusText()
 	fnm := ""
 	ln := 0
 	ch := 0
-	tv := ge.ActiveTextEditor()
+	tv := cv.ActiveTextEditor()
 	msg := ""
 	if tv != nil {
 		ln = tv.CursorPos.Ln + 1
 		ch = tv.CursorPos.Ch
 		if tv.Buffer != nil {
-			fnm = ge.Files.RelPath(tv.Buffer.Filename)
+			fnm = cv.Files.RelPath(tv.Buffer.Filename)
 			if tv.Buffer.IsNotSaved() {
 				fnm += "*"
 			}
@@ -296,12 +296,12 @@ func (ge *CodeView) UpdateStatusText() {
 		}
 	}
 
-	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", ge.Nm, ge.ActiveVCSInfo, fnm, ln, ch, msg)
+	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", cv.Nm, cv.ActiveVCSInfo, fnm, ln, ch, msg)
 	text.SetText(str).Build()
 	text.NeedsRender()
 }
 
 // HelpWiki opens wiki page for code on github
-func (ge *CodeView) HelpWiki() { //types:add
+func (cv *CodeView) HelpWiki() { //types:add
 	core.TheApp.OpenURL("https://cogentcore.org/code")
 }

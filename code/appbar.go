@@ -22,7 +22,7 @@ import (
 func (cv *CodeView) AppBarConfig(parent core.Widget) {
 	tb := core.RecycleToolbar(parent)
 	tb.Maker(func(p *core.Plan) {
-		core.StandardAppBarBack(p)
+		core.AppBarBackMaker(p)
 		core.AddAt(p, "app-chooser", func(w *core.Chooser) {
 			core.ConfigAppChooser(w)
 			cv.AddChooserFiles(w)

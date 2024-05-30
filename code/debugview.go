@@ -107,8 +107,8 @@ type DebugView struct {
 }
 
 // Config sets parameters that must be set for a new view
-func (dv *DebugView) Config(ge *CodeView, sup fileinfo.Known, exePath string) {
-	dv.Code = ge
+func (dv *DebugView) Config(cv *CodeView, sup fileinfo.Known, exePath string) {
+	dv.Code = cv
 	dv.Sup = sup
 	dv.ExePath = exePath
 }
