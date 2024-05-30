@@ -46,7 +46,7 @@ func (t *Browser) SetScriptsDir(v string) *Browser { t.ScriptsDir = v; return t 
 func (t *Browser) SetTooltip(v string) *Browser { t.Tooltip = v; return t }
 
 // FileNodeType is the [types.Type] for [FileNode]
-var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/databrowser.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []types.Method{{Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
+var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/databrowser.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []types.Method{{Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "PlotFiles", Doc: "PlotFiles calls PlotFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
 // NewFileNode returns a new [FileNode] with the given optional parent:
 // FileNode is Code version of FileNode for FileTree view

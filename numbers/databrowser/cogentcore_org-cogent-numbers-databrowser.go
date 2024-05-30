@@ -25,8 +25,7 @@ func init() {
 		"TrimOrderPrefix":  reflect.ValueOf(TrimOrderPrefix),
 
 		// type definitions
-		"Browser":   reflect.ValueOf((*Browser)(nil)),
-		"FileNode":  reflect.ValueOf((*FileNode)(nil)),
-		"OpenNodes": reflect.ValueOf((*OpenNodes)(nil)),
+		"Browser":  reflect.ValueOf((*Browser)(nil)),
+		"FileNode": reflect.ValueOf((*FileNode)(nil)),
 	}
 }
