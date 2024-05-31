@@ -3,11 +3,6 @@
 package imports
 
 import (
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
-
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/events"
@@ -18,6 +13,10 @@ import (
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
 )
 
 func init() {
@@ -28,6 +27,8 @@ func init() {
 		"AllRenderWindows":         reflect.ValueOf(&core.AllRenderWindows).Elem(),
 		"AllSettings":              reflect.ValueOf(&core.AllSettings).Elem(),
 		"AppAbout":                 reflect.ValueOf(&core.AppAbout).Elem(),
+		"AppBarBackMaker":          reflect.ValueOf(core.AppBarBackMaker),
+		"AppBarChooserMaker":       reflect.ValueOf(core.AppBarChooserMaker),
 		"AppColor":                 reflect.ValueOf(&core.AppColor).Elem(),
 		"AppIcon":                  reflect.ValueOf(&core.AppIcon).Elem(),
 		"AppIconImages":            reflect.ValueOf(core.AppIconImages),
@@ -214,6 +215,7 @@ func init() {
 		"StageTypesN":              reflect.ValueOf(core.StageTypesN),
 		"StageTypesValues":         reflect.ValueOf(core.StageTypesValues),
 		"StandardAppBarConfig":     reflect.ValueOf(core.StandardAppBarConfig),
+		"StandardAppBarMaker":      reflect.ValueOf(core.StandardAppBarMaker),
 		"StandardOverflowMenu":     reflect.ValueOf(core.StandardOverflowMenu),
 		"StandardTabs":             reflect.ValueOf(core.StandardTabs),
 		"StartCPUMemoryProfile":    reflect.ValueOf(core.StartCPUMemoryProfile),
@@ -455,7 +457,6 @@ type _cogentcore_org_core_core_Layouter struct {
 	WAsTreeNode          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
-	WBuild               func()
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
 	WChildByName         func(name string, startIndex ...int) tree.Node
@@ -485,7 +486,6 @@ type _cogentcore_org_core_core_Layouter struct {
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
 	WLayoutSpace         func()
-	WMake                func(p *core.Plan)
 	WManageOverflow      func(iter int, updateSize bool) bool
 	WName                func() string
 	WNew                 func() tree.Node
@@ -567,9 +567,6 @@ func (W _cogentcore_org_core_core_Layouter) AsWidget() *core.WidgetBase {
 }
 func (W _cogentcore_org_core_core_Layouter) BaseType() *types.Type {
 	return W.WBaseType()
-}
-func (W _cogentcore_org_core_core_Layouter) Build() {
-	W.WBuild()
 }
 func (W _cogentcore_org_core_core_Layouter) Child(i int) tree.Node {
 	return W.WChild(i)
@@ -657,9 +654,6 @@ func (W _cogentcore_org_core_core_Layouter) IsVisible() bool {
 }
 func (W _cogentcore_org_core_core_Layouter) LayoutSpace() {
 	W.WLayoutSpace()
-}
-func (W _cogentcore_org_core_core_Layouter) Make(p *core.Plan) {
-	W.WMake(p)
 }
 func (W _cogentcore_org_core_core_Layouter) ManageOverflow(iter int, updateSize bool) bool {
 	return W.WManageOverflow(iter, updateSize)
@@ -968,7 +962,6 @@ type _cogentcore_org_core_core_Value struct {
 	WAsTreeNode          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
-	WBuild               func()
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
 	WChildByName         func(name string, startIndex ...int) tree.Node
@@ -997,7 +990,6 @@ type _cogentcore_org_core_core_Value struct {
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
-	WMake                func(p *core.Plan)
 	WName                func() string
 	WNew                 func() tree.Node
 	WNewChild            func(typ *types.Type) tree.Node
@@ -1070,9 +1062,6 @@ func (W _cogentcore_org_core_core_Value) AsWidget() *core.WidgetBase {
 }
 func (W _cogentcore_org_core_core_Value) BaseType() *types.Type {
 	return W.WBaseType()
-}
-func (W _cogentcore_org_core_core_Value) Build() {
-	W.WBuild()
 }
 func (W _cogentcore_org_core_core_Value) Child(i int) tree.Node {
 	return W.WChild(i)
@@ -1157,9 +1146,6 @@ func (W _cogentcore_org_core_core_Value) Is(f enums.BitFlag) bool {
 }
 func (W _cogentcore_org_core_core_Value) IsVisible() bool {
 	return W.WIsVisible()
-}
-func (W _cogentcore_org_core_core_Value) Make(p *core.Plan) {
-	W.WMake(p)
 }
 func (W _cogentcore_org_core_core_Value) Name() string {
 	return W.WName()
@@ -1334,7 +1320,6 @@ type _cogentcore_org_core_core_Widget struct {
 	WAsTreeNode          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
-	WBuild               func()
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
 	WChildByName         func(name string, startIndex ...int) tree.Node
@@ -1363,7 +1348,6 @@ type _cogentcore_org_core_core_Widget struct {
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
-	WMake                func(p *core.Plan)
 	WName                func() string
 	WNew                 func() tree.Node
 	WNewChild            func(typ *types.Type) tree.Node
@@ -1435,9 +1419,6 @@ func (W _cogentcore_org_core_core_Widget) AsWidget() *core.WidgetBase {
 }
 func (W _cogentcore_org_core_core_Widget) BaseType() *types.Type {
 	return W.WBaseType()
-}
-func (W _cogentcore_org_core_core_Widget) Build() {
-	W.WBuild()
 }
 func (W _cogentcore_org_core_core_Widget) Child(i int) tree.Node {
 	return W.WChild(i)
@@ -1522,9 +1503,6 @@ func (W _cogentcore_org_core_core_Widget) Is(f enums.BitFlag) bool {
 }
 func (W _cogentcore_org_core_core_Widget) IsVisible() bool {
 	return W.WIsVisible()
-}
-func (W _cogentcore_org_core_core_Widget) Make(p *core.Plan) {
-	W.WMake(p)
 }
 func (W _cogentcore_org_core_core_Widget) Name() string {
 	return W.WName()

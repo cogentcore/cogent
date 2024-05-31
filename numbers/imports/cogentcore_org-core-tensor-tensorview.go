@@ -3,31 +3,35 @@
 package imports
 
 import (
-	"reflect"
-
 	"cogentcore.org/core/tensor/tensorview"
+	"reflect"
 )
 
 func init() {
 	Symbols["cogentcore.org/core/tensor/tensorview/tensorview"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"LabelSpace":     reflect.ValueOf(tensorview.LabelSpace),
-		"NewSimMatGrid":  reflect.ValueOf(tensorview.NewSimMatGrid),
-		"NewTableView":   reflect.ValueOf(tensorview.NewTableView),
-		"NewTensorGrid":  reflect.ValueOf(tensorview.NewTensorGrid),
-		"SimMatGridType": reflect.ValueOf(&tensorview.SimMatGridType).Elem(),
-		"TableViewType":  reflect.ValueOf(&tensorview.TableViewType).Elem(),
-		"TensorGridType": reflect.ValueOf(&tensorview.TensorGridType).Elem(),
+		"LabelSpace":       reflect.ValueOf(tensorview.LabelSpace),
+		"NewSimMatButton":  reflect.ValueOf(tensorview.NewSimMatButton),
+		"NewSimMatGrid":    reflect.ValueOf(tensorview.NewSimMatGrid),
+		"NewTableButton":   reflect.ValueOf(tensorview.NewTableButton),
+		"NewTableView":     reflect.ValueOf(tensorview.NewTableView),
+		"NewTensorButton":  reflect.ValueOf(tensorview.NewTensorButton),
+		"NewTensorGrid":    reflect.ValueOf(tensorview.NewTensorGrid),
+		"SimMatButtonType": reflect.ValueOf(&tensorview.SimMatButtonType).Elem(),
+		"SimMatGridType":   reflect.ValueOf(&tensorview.SimMatGridType).Elem(),
+		"TableButtonType":  reflect.ValueOf(&tensorview.TableButtonType).Elem(),
+		"TableViewType":    reflect.ValueOf(&tensorview.TableViewType).Elem(),
+		"TensorButtonType": reflect.ValueOf(&tensorview.TensorButtonType).Elem(),
+		"TensorGridType":   reflect.ValueOf(&tensorview.TensorGridType).Elem(),
 
 		// type definitions
-		"SimMatGrid":      reflect.ValueOf((*tensorview.SimMatGrid)(nil)),
-		"SimMatButton":    reflect.ValueOf((*tensorview.SimMatButton)(nil)),
-		"TableButton":     reflect.ValueOf((*tensorview.TableButton)(nil)),
-		"TableView":       reflect.ValueOf((*tensorview.TableView)(nil)),
-		"TensorButton":    reflect.ValueOf((*tensorview.TensorButton)(nil)),
-		"TensorDisplay":   reflect.ValueOf((*tensorview.TensorDisplay)(nil)),
-		"TensorGrid":      reflect.ValueOf((*tensorview.TensorGrid)(nil)),
-		"TensorGridValue": reflect.ValueOf((*tensorview.TensorGridValue)(nil)),
-		"TensorLayout":    reflect.ValueOf((*tensorview.TensorLayout)(nil)),
+		"SimMatButton":  reflect.ValueOf((*tensorview.SimMatButton)(nil)),
+		"SimMatGrid":    reflect.ValueOf((*tensorview.SimMatGrid)(nil)),
+		"TableButton":   reflect.ValueOf((*tensorview.TableButton)(nil)),
+		"TableView":     reflect.ValueOf((*tensorview.TableView)(nil)),
+		"TensorButton":  reflect.ValueOf((*tensorview.TensorButton)(nil)),
+		"TensorDisplay": reflect.ValueOf((*tensorview.TensorDisplay)(nil)),
+		"TensorGrid":    reflect.ValueOf((*tensorview.TensorGrid)(nil)),
+		"TensorLayout":  reflect.ValueOf((*tensorview.TensorLayout)(nil)),
 	}
 }

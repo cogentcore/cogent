@@ -16,6 +16,7 @@ import (
 	"cogentcore.org/core/parse/syms"
 	"cogentcore.org/core/parse/token"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor/textbuf"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
@@ -365,22 +366,19 @@ func (st *SymTreeView) SymNode() *SymNode {
 
 func (st *SymTreeView) OnInit() {
 	st.TreeView.OnInit()
-}
-
-func (st *SymTreeView) UpdateBranchIcons() {
-	st.SetSymIcon()
-}
-
-func (st *SymTreeView) SetSymIcon() {
-	ic := st.SymNode().GetIcon()
-	if _, ok := st.BranchPart(); !ok {
-		st.Update()
-	}
-	if bp, ok := st.BranchPart(); ok {
-		if bp.IconIndeterminate != ic {
-			bp.IconIndeterminate = ic
-			bp.Update()
-			st.NeedsRender()
-		}
-	}
+	core.AddChildInit(st, "parts", func(w *core.Frame) {
+		w.Style(func(s *styles.Style) {
+			s.Gap.X.Em(0.4)
+		})
+		core.AddChildInit(w, "branch", func(w *core.Switch) {
+			w.SetIcons(st.IconOpen, st.IconClosed, st.SymNode().GetIcon())
+			core.AddChildInit(w, "stack", func(w *core.Frame) {
+				core.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
+					w.Style(func(s *styles.Style) {
+						s.Min.Set(units.Em(1))
+					})
+				})
+			})
+		})
+	})
 }

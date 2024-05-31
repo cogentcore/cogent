@@ -58,13 +58,13 @@ func (cv *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	fbuf, _ := cv.RecycleCmdBuf("Find", true)
 	fv := tv.RecycleTabWidget("Find", true, FindViewType).(*FindView)
 	fv.Time = time.Now()
+	fv.UpdateTree()
 	ftv := fv.TextEditor()
 	ftv.SetBuffer(fbuf)
 
 	fv.SaveFindString(find)
 	fv.SaveReplString(repl)
 	fv.UpdateFromParams()
-	fv.Update()
 	root := filetree.AsNode(cv.Files)
 
 	atv := cv.ActiveTextEditor()

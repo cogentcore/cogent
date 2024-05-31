@@ -3,11 +3,6 @@
 package imports
 
 import (
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
-
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
@@ -19,6 +14,10 @@ import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 	"cogentcore.org/core/views"
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
 )
 
 func init() {
@@ -31,7 +30,6 @@ func init() {
 		"ColorViewType":                reflect.ValueOf(&views.ColorViewType).Elem(),
 		"Config":                       reflect.ValueOf(views.Config),
 		"ConfigBase":                   reflect.ValueOf(views.ConfigBase),
-		"InitValueButton":              reflect.ValueOf(views.InitValueButton),
 		"ConfigDialogWidget":           reflect.ValueOf(views.ConfigDialogWidget),
 		"ConfigImageToolbar":           reflect.ValueOf(views.ConfigImageToolbar),
 		"ConfigSVGToolbar":             reflect.ValueOf(views.ConfigSVGToolbar),
@@ -44,6 +42,7 @@ func init() {
 		"FileViewType":                 reflect.ValueOf(&views.FileViewType).Elem(),
 		"FuncArgsToStruct":             reflect.ValueOf(views.FuncArgsToStruct),
 		"FuncButtonType":               reflect.ValueOf(&views.FuncButtonType).Elem(),
+		"InitValueButton":              reflect.ValueOf(views.InitValueButton),
 		"InspectorType":                reflect.ValueOf(&views.InspectorType).Elem(),
 		"InspectorView":                reflect.ValueOf(views.InspectorView),
 		"InspectorWindow":              reflect.ValueOf(views.InspectorWindow),
@@ -73,10 +72,7 @@ func init() {
 		"NewValue":                     reflect.ValueOf(views.NewValue),
 		"NoSentenceCaseFor":            reflect.ValueOf(&views.NoSentenceCaseFor).Elem(),
 		"NoSentenceCaseForType":        reflect.ValueOf(views.NoSentenceCaseForType),
-		"OpenDialog":                   reflect.ValueOf(views.OpenDialog),
-		"OpenDialogBase":               reflect.ValueOf(views.OpenDialogBase),
-		"OpenDialogValue":              reflect.ValueOf(views.OpenDialogValue),
-		"OpenDialogValueBase":          reflect.ValueOf(views.OpenDialogValueBase),
+		"OpenValueDialog":              reflect.ValueOf(views.OpenValueDialog),
 		"SettingsView":                 reflect.ValueOf(views.SettingsView),
 		"SettingsViewToolbarBase":      reflect.ValueOf(views.SettingsViewToolbarBase),
 		"SettingsWindow":               reflect.ValueOf(views.SettingsWindow),
@@ -129,7 +125,6 @@ func init() {
 		"ColorMapValue":      reflect.ValueOf((*views.ColorMapValue)(nil)),
 		"ColorValue":         reflect.ValueOf((*views.ColorValue)(nil)),
 		"ColorView":          reflect.ValueOf((*views.ColorView)(nil)),
-		"ConfigDialoger":     reflect.ValueOf((*views.ConfigDialoger)(nil)),
 		"DateView":           reflect.ValueOf((*views.DateView)(nil)),
 		"DurationValue":      reflect.ValueOf((*views.DurationValue)(nil)),
 		"EnumValue":          reflect.ValueOf((*views.EnumValue)(nil)),
@@ -151,7 +146,6 @@ func init() {
 		"MapView":            reflect.ValueOf((*views.MapView)(nil)),
 		"NilValue":           reflect.ValueOf((*views.NilValue)(nil)),
 		"NumberValue":        reflect.ValueOf((*views.NumberValue)(nil)),
-		"OpenDialoger":       reflect.ValueOf((*views.OpenDialoger)(nil)),
 		"RuneSliceValue":     reflect.ValueOf((*views.RuneSliceValue)(nil)),
 		"SliceButton":        reflect.ValueOf((*views.SliceButton)(nil)),
 		"SliceInlineValue":   reflect.ValueOf((*views.SliceInlineValue)(nil)),
@@ -184,24 +178,12 @@ func init() {
 		"Valuer":             reflect.ValueOf((*views.Valuer)(nil)),
 
 		// interface wrapper definitions
-		"_ConfigDialoger": reflect.ValueOf((*_cogentcore_org_core_views_ConfigDialoger)(nil)),
-		"_FieldValuer":    reflect.ValueOf((*_cogentcore_org_core_views_FieldValuer)(nil)),
-		"_OpenDialoger":   reflect.ValueOf((*_cogentcore_org_core_views_OpenDialoger)(nil)),
-		"_SliceViewer":    reflect.ValueOf((*_cogentcore_org_core_views_SliceViewer)(nil)),
-		"_TreeViewer":     reflect.ValueOf((*_cogentcore_org_core_views_TreeViewer)(nil)),
-		"_Value":          reflect.ValueOf((*_cogentcore_org_core_views_Value)(nil)),
-		"_Valuer":         reflect.ValueOf((*_cogentcore_org_core_views_Valuer)(nil)),
+		"_FieldValuer": reflect.ValueOf((*_cogentcore_org_core_views_FieldValuer)(nil)),
+		"_SliceViewer": reflect.ValueOf((*_cogentcore_org_core_views_SliceViewer)(nil)),
+		"_TreeViewer":  reflect.ValueOf((*_cogentcore_org_core_views_TreeViewer)(nil)),
+		"_Value":       reflect.ValueOf((*_cogentcore_org_core_views_Value)(nil)),
+		"_Valuer":      reflect.ValueOf((*_cogentcore_org_core_views_Valuer)(nil)),
 	}
-}
-
-// _cogentcore_org_core_views_ConfigDialoger is an interface wrapper for ConfigDialoger type
-type _cogentcore_org_core_views_ConfigDialoger struct {
-	IValue        interface{}
-	WConfigDialog func(d *core.Body) (bool, func())
-}
-
-func (W _cogentcore_org_core_views_ConfigDialoger) ConfigDialog(d *core.Body) (bool, func()) {
-	return W.WConfigDialog(d)
 }
 
 // _cogentcore_org_core_views_FieldValuer is an interface wrapper for FieldValuer type
@@ -212,16 +194,6 @@ type _cogentcore_org_core_views_FieldValuer struct {
 
 func (W _cogentcore_org_core_views_FieldValuer) FieldValue(field string, fval any) views.Value {
 	return W.WFieldValue(field, fval)
-}
-
-// _cogentcore_org_core_views_OpenDialoger is an interface wrapper for OpenDialoger type
-type _cogentcore_org_core_views_OpenDialoger struct {
-	IValue      interface{}
-	WOpenDialog func(ctx core.Widget, fun func())
-}
-
-func (W _cogentcore_org_core_views_OpenDialoger) OpenDialog(ctx core.Widget, fun func()) {
-	W.WOpenDialog(ctx, fun)
 }
 
 // _cogentcore_org_core_views_SliceViewer is an interface wrapper for SliceViewer type
@@ -235,7 +207,7 @@ type _cogentcore_org_core_views_SliceViewer struct {
 	WDropFinalize     func(de *events.DragDrop)
 	WHasStyleFunc     func() bool
 	WMakePasteMenu    func(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func())
-	WMakeRow          func(p *core.Plan, i int, si int)
+	WMakeRow          func(p *core.Plan, i int)
 	WMimeDataType     func() string
 	WPasteAssign      func(md mimedata.Mimes, idx int)
 	WPasteAtIndex     func(md mimedata.Mimes, idx int)
@@ -244,6 +216,7 @@ type _cogentcore_org_core_views_SliceViewer struct {
 	WRowWidgetNs      func() (nWidgPerRow int, idxOff int)
 	WSliceDeleteAt    func(idx int)
 	WSliceGrid        func() *views.SliceViewGrid
+	WSliceIndex       func(i int) (si int, vi int, invis bool)
 	WSliceNewAt       func(idx int)
 	WStyleRow         func(w core.Widget, idx int, fidx int)
 	WStyleValue       func(w core.Widget, s *styles.Style, row int, col int)
@@ -275,8 +248,8 @@ func (W _cogentcore_org_core_views_SliceViewer) HasStyleFunc() bool {
 func (W _cogentcore_org_core_views_SliceViewer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func()) {
 	W.WMakePasteMenu(m, md, idx, mod, fun)
 }
-func (W _cogentcore_org_core_views_SliceViewer) MakeRow(p *core.Plan, i int, si int) {
-	W.WMakeRow(p, i, si)
+func (W _cogentcore_org_core_views_SliceViewer) MakeRow(p *core.Plan, i int) {
+	W.WMakeRow(p, i)
 }
 func (W _cogentcore_org_core_views_SliceViewer) MimeDataType() string {
 	return W.WMimeDataType()
@@ -301,6 +274,9 @@ func (W _cogentcore_org_core_views_SliceViewer) SliceDeleteAt(idx int) {
 }
 func (W _cogentcore_org_core_views_SliceViewer) SliceGrid() *views.SliceViewGrid {
 	return W.WSliceGrid()
+}
+func (W _cogentcore_org_core_views_SliceViewer) SliceIndex(i int) (si int, vi int, invis bool) {
+	return W.WSliceIndex(i)
 }
 func (W _cogentcore_org_core_views_SliceViewer) SliceNewAt(idx int) {
 	W.WSliceNewAt(idx)
@@ -331,7 +307,6 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WAsTreeView          func() *views.TreeView
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
-	WBuild               func()
 	WCanOpen             func() bool
 	WChild               func(i int) tree.Node
 	WChildBackground     func(child core.Widget) image.Image
@@ -371,7 +346,6 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
 	WIsVisible           func() bool
-	WMake                func(p *core.Plan)
 	WMakePasteMenu       func(m *core.Scene, md mimedata.Mimes, fun func())
 	WMimeData            func(md *mimedata.Mimes)
 	WName                func() string
@@ -456,9 +430,6 @@ func (W _cogentcore_org_core_views_TreeViewer) AsWidget() *core.WidgetBase {
 }
 func (W _cogentcore_org_core_views_TreeViewer) BaseType() *types.Type {
 	return W.WBaseType()
-}
-func (W _cogentcore_org_core_views_TreeViewer) Build() {
-	W.WBuild()
 }
 func (W _cogentcore_org_core_views_TreeViewer) CanOpen() bool {
 	return W.WCanOpen()
@@ -576,9 +547,6 @@ func (W _cogentcore_org_core_views_TreeViewer) Is(f enums.BitFlag) bool {
 }
 func (W _cogentcore_org_core_views_TreeViewer) IsVisible() bool {
 	return W.WIsVisible()
-}
-func (W _cogentcore_org_core_views_TreeViewer) Make(p *core.Plan) {
-	W.WMake(p)
 }
 func (W _cogentcore_org_core_views_TreeViewer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, fun func()) {
 	W.WMakePasteMenu(m, md, fun)

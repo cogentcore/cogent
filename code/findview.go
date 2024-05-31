@@ -92,10 +92,6 @@ func (fv *FindView) OnInit() {
 			fv.OpenFindURL(tl.URL, w)
 		}
 	})
-
-	// TODO(config)
-	na := fv.FindNextAct()
-	na.SetFocusEvent()
 }
 
 func (fv *FindView) OnAdd() {
@@ -538,6 +534,7 @@ func (fv *FindView) makeReplToolbar(p *core.Plan) {
 			OnClick(func(e events.Event) {
 				fv.NextFind()
 			})
+		w.StartFocus()
 	})
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Replace:").SetTooltip("Replace find string with replace string for currently selected find result").
