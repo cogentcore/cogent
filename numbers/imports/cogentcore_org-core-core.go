@@ -3,6 +3,11 @@
 package imports
 
 import (
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
+
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/events"
@@ -13,10 +18,6 @@ import (
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
 )
 
 func init() {
@@ -94,7 +95,7 @@ func init() {
 		"InitValueButton":          reflect.ValueOf(core.InitValueButton),
 		"InspectorWindow":          reflect.ValueOf(&core.InspectorWindow).Elem(),
 		"IsWordBreak":              reflect.ValueOf(core.IsWordBreak),
-		"JoinValueContext":         reflect.ValueOf(core.JoinValueContext),
+		"JoinValueTitle":           reflect.ValueOf(core.JoinValueTitle),
 		"LayoutLastAutoScroll":     reflect.ValueOf(&core.LayoutLastAutoScroll).Elem(),
 		"LayoutPassesN":            reflect.ValueOf(core.LayoutPassesN),
 		"LayoutPassesValues":       reflect.ValueOf(core.LayoutPassesValues),

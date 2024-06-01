@@ -26,7 +26,7 @@ type Split struct {
 	Desc string
 
 	// splitter panel proportions
-	Splits []float32 `min:"0" max:"1" step:".05" fixed-len:"4"`
+	Splits []float32 `min:"0" max:"1" step:".05"` // TODO: convert to [4]float32 !!
 }
 
 // Label satisfies the Labeler interface
