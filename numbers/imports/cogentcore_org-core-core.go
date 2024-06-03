@@ -3,6 +3,11 @@
 package imports
 
 import (
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
+
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/events"
@@ -13,10 +18,6 @@ import (
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
 )
 
 func init() {
@@ -485,6 +486,7 @@ type _cogentcore_org_core_core_Layouter struct {
 	WHandleEvent         func(e events.Event)
 	WHasChildren         func() bool
 	WIndexInParent       func() int
+	WInit                func()
 	WInsertChild         func(kid tree.Node, at int) error
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
@@ -502,7 +504,7 @@ type _cogentcore_org_core_core_Layouter struct {
 	WOnAdd               func()
 	WOnChildAdded        func(child tree.Node)
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WInit              func()
+	WInit                func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
 	WParentByName        func(name string) tree.Node
@@ -643,6 +645,9 @@ func (W _cogentcore_org_core_core_Layouter) HasChildren() bool {
 }
 func (W _cogentcore_org_core_core_Layouter) IndexInParent() int {
 	return W.WIndexInParent()
+}
+func (W _cogentcore_org_core_core_Layouter) Init() {
+	W.WInit()
 }
 func (W _cogentcore_org_core_core_Layouter) InsertChild(kid tree.Node, at int) error {
 	return W.WInsertChild(kid, at)
@@ -990,6 +995,7 @@ type _cogentcore_org_core_core_Value struct {
 	WHandleEvent         func(e events.Event)
 	WHasChildren         func() bool
 	WIndexInParent       func() int
+	WInit                func()
 	WInsertChild         func(kid tree.Node, at int) error
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
@@ -1005,7 +1011,7 @@ type _cogentcore_org_core_core_Value struct {
 	WOnAdd               func()
 	WOnChildAdded        func(child tree.Node)
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WInit              func()
+	WInit                func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
 	WParentByName        func(name string) tree.Node
@@ -1138,6 +1144,9 @@ func (W _cogentcore_org_core_core_Value) HasChildren() bool {
 }
 func (W _cogentcore_org_core_core_Value) IndexInParent() int {
 	return W.WIndexInParent()
+}
+func (W _cogentcore_org_core_core_Value) Init() {
+	W.WInit()
 }
 func (W _cogentcore_org_core_core_Value) InsertChild(kid tree.Node, at int) error {
 	return W.WInsertChild(kid, at)
@@ -1348,6 +1357,7 @@ type _cogentcore_org_core_core_Widget struct {
 	WHandleEvent         func(e events.Event)
 	WHasChildren         func() bool
 	WIndexInParent       func() int
+	WInit                func()
 	WInsertChild         func(kid tree.Node, at int) error
 	WInsertNewChild      func(typ *types.Type, at int) tree.Node
 	WIs                  func(f enums.BitFlag) bool
@@ -1363,7 +1373,7 @@ type _cogentcore_org_core_core_Widget struct {
 	WOnAdd               func()
 	WOnChildAdded        func(child tree.Node)
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WInit              func()
+	WInit                func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
 	WParentByName        func(name string) tree.Node
@@ -1495,6 +1505,9 @@ func (W _cogentcore_org_core_core_Widget) HasChildren() bool {
 }
 func (W _cogentcore_org_core_core_Widget) IndexInParent() int {
 	return W.WIndexInParent()
+}
+func (W _cogentcore_org_core_core_Widget) Init() {
+	W.WInit()
 }
 func (W _cogentcore_org_core_core_Widget) InsertChild(kid tree.Node, at int) error {
 	return W.WInsertChild(kid, at)

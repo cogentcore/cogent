@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/dirs"
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -58,23 +59,39 @@ func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 	// fmt.Println("opened:", fn.FPath)
 	df := dirs.DirAndFile(string(fn.FPath))
 	switch {
-	case IsTableFile(string(fn.Name())):
+	case fn.Info.Cat == fileinfo.Data:
 		df := dirs.DirAndFile(string(fn.FPath))
 		tv := br.NewTabTable(df)
 		dt := tv.Table.Table
-		err := dt.OpenCSV(fn.FPath, table.Tab)
+		err := dt.OpenCSV(fn.FPath, table.Tab) // todo: need more flexible data handling mode
 		tv.Table.Sequential()
 		br.Update()
 		if err != nil {
 			core.ErrorSnackbar(br, err)
 		}
+	case fn.IsExec(): // todo: use exec?
+		fn.This().(filetree.Filer).OpenFilesDefault()
+	case fn.Info.Cat == fileinfo.Video: // todo: use our video viewer
+		fn.This().(filetree.Filer).OpenFilesDefault()
+	case fn.Info.Cat == fileinfo.Audio: // todo: use our audio viewer
+		fn.This().(filetree.Filer).OpenFilesDefault()
+	case fn.Info.Cat == fileinfo.Image: // todo: use our image viewer
+		fn.This().(filetree.Filer).OpenFilesDefault()
+	case fn.Info.Cat == fileinfo.Model: // todo: use xyz
+		fn.This().(filetree.Filer).OpenFilesDefault()
+	case fn.Info.Cat == fileinfo.Sheet: // todo: use our spreadsheet :)
+		fn.This().(filetree.Filer).OpenFilesDefault()
+	case fn.Info.Cat == fileinfo.Bin: // don't edit
+		fn.This().(filetree.Filer).OpenFilesDefault()
+	case fn.Info.Cat == fileinfo.Archive || fn.Info.Cat == fileinfo.Backup: // don't edit
+		fn.This().(filetree.Filer).OpenFilesDefault()
 	default:
 		br.NewTabEditor(df, string(fn.FPath))
 	}
 }
 
 func (br *Browser) FileNodeSelected(fn *filetree.Node) {
-
+	// todo: anything?
 }
 
 // NewTabEditor opens an editor tab for given file
@@ -176,7 +193,7 @@ func NewDiffBrowserDirs(pathA, pathB string) {
 }
 
 func IsTableFile(fname string) bool {
-	return strings.HasSuffix(fname, ".tsv")
+	return strings.HasSuffix(fname, ".tsv") || strings.HasSuffix(fname, ".csv")
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
@@ -186,7 +203,7 @@ func (fn *FileNode) ContextMenu(m *core.Scene) {
 		})
 	views.NewFuncButton(m, fn.PlotFiles).SetText("Plot").SetIcon(icons.Edit).
 		Style(func(s *styles.Style) {
-			s.SetState(!fn.HasSelection() || !IsTableFile(fn.Name()), states.Disabled)
+			s.SetState(!fn.HasSelection() || fn.Info.Cat != fileinfo.Data, states.Disabled)
 		})
 	views.NewFuncButton(m, fn.DiffDirs).SetText("Diff Dirs").SetIcon(icons.Edit).
 		Style(func(s *styles.Style) {

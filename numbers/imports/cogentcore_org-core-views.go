@@ -3,6 +3,11 @@
 package imports
 
 import (
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
+
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
@@ -14,10 +19,6 @@ import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 	"cogentcore.org/core/views"
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
 )
 
 func init() {
@@ -32,7 +33,6 @@ func init() {
 		"ConfigSVGToolbar":             reflect.ValueOf(views.ConfigSVGToolbar),
 		"DateViewType":                 reflect.ValueOf(&views.DateViewType).Elem(),
 		"FileButtonType":               reflect.ValueOf(&views.FileButtonType).Elem(),
-		"FileTimeTextType":             reflect.ValueOf(&views.FileTimeTextType).Elem(),
 		"FileViewDialog":               reflect.ValueOf(views.FileViewDialog),
 		"FileViewDirOnlyFilter":        reflect.ValueOf(views.FileViewDirOnlyFilter),
 		"FileViewExtOnlyFilter":        reflect.ValueOf(views.FileViewExtOnlyFilter),
@@ -45,6 +45,8 @@ func init() {
 		"InspectorType":                reflect.ValueOf(&views.InspectorType).Elem(),
 		"InspectorView":                reflect.ValueOf(views.InspectorView),
 		"InspectorWindow":              reflect.ValueOf(views.InspectorWindow),
+		"KeyChordButtonType":           reflect.ValueOf(&views.KeyChordButtonType).Elem(),
+		"KeyMapButtonType":             reflect.ValueOf(&views.KeyMapButtonType).Elem(),
 		"MapButtonType":                reflect.ValueOf(&views.MapButtonType).Elem(),
 		"MapViewType":                  reflect.ValueOf(&views.MapViewType).Elem(),
 		"NewColorButton":               reflect.ValueOf(views.NewColorButton),
@@ -52,12 +54,13 @@ func init() {
 		"NewColorView":                 reflect.ValueOf(views.NewColorView),
 		"NewDateView":                  reflect.ValueOf(views.NewDateView),
 		"NewFileButton":                reflect.ValueOf(views.NewFileButton),
-		"NewFileTimeText":              reflect.ValueOf(views.NewFileTimeText),
 		"NewFileView":                  reflect.ValueOf(views.NewFileView),
 		"NewFontButton":                reflect.ValueOf(views.NewFontButton),
 		"NewFuncButton":                reflect.ValueOf(views.NewFuncButton),
 		"NewIconButton":                reflect.ValueOf(views.NewIconButton),
 		"NewInspector":                 reflect.ValueOf(views.NewInspector),
+		"NewKeyChordButton":            reflect.ValueOf(views.NewKeyChordButton),
+		"NewKeyMapButton":              reflect.ValueOf(views.NewKeyMapButton),
 		"NewMapButton":                 reflect.ValueOf(views.NewMapButton),
 		"NewMapView":                   reflect.ValueOf(views.NewMapView),
 		"NewSliceButton":               reflect.ValueOf(views.NewSliceButton),
@@ -69,6 +72,7 @@ func init() {
 		"NewStructButton":              reflect.ValueOf(views.NewStructButton),
 		"NewStructView":                reflect.ValueOf(views.NewStructView),
 		"NewTableView":                 reflect.ValueOf(views.NewTableView),
+		"NewTimeText":                  reflect.ValueOf(views.NewTimeText),
 		"NewTimeView":                  reflect.ValueOf(views.NewTimeView),
 		"NewTreeView":                  reflect.ValueOf(views.NewTreeView),
 		"NewTreeViewFrame":             reflect.ValueOf(views.NewTreeViewFrame),
@@ -98,6 +102,7 @@ func init() {
 		"StructSliceIndexByValue":      reflect.ValueOf(views.StructSliceIndexByValue),
 		"StructViewType":               reflect.ValueOf(&views.StructViewType).Elem(),
 		"TableViewType":                reflect.ValueOf(&views.TableViewType).Elem(),
+		"TimeTextType":                 reflect.ValueOf(&views.TimeTextType).Elem(),
 		"TimeViewType":                 reflect.ValueOf(&views.TimeViewType).Elem(),
 		"TreeViewFlagClosed":           reflect.ValueOf(views.TreeViewFlagClosed),
 		"TreeViewFlagSelectMode":       reflect.ValueOf(views.TreeViewFlagSelectMode),
@@ -123,6 +128,8 @@ func init() {
 		"FuncButton":         reflect.ValueOf((*views.FuncButton)(nil)),
 		"IconButton":         reflect.ValueOf((*views.IconButton)(nil)),
 		"Inspector":          reflect.ValueOf((*views.Inspector)(nil)),
+		"KeyChordButton":     reflect.ValueOf((*views.KeyChordButton)(nil)),
+		"KeyMapButton":       reflect.ValueOf((*views.KeyMapButton)(nil)),
 		"MapButton":          reflect.ValueOf((*views.MapButton)(nil)),
 		"MapView":            reflect.ValueOf((*views.MapView)(nil)),
 		"SliceButton":        reflect.ValueOf((*views.SliceButton)(nil)),
@@ -137,6 +144,7 @@ func init() {
 		"StructView":         reflect.ValueOf((*views.StructView)(nil)),
 		"TableView":          reflect.ValueOf((*views.TableView)(nil)),
 		"TableViewStyleFunc": reflect.ValueOf((*views.TableViewStyleFunc)(nil)),
+		"TimeText":           reflect.ValueOf((*views.TimeText)(nil)),
 		"TimeView":           reflect.ValueOf((*views.TimeView)(nil)),
 		"TreeView":           reflect.ValueOf((*views.TreeView)(nil)),
 		"TreeViewFlags":      reflect.ValueOf((*views.TreeViewFlags)(nil)),
@@ -292,6 +300,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WHandleEvent         func(e events.Event)
 	WHasChildren         func() bool
 	WIndexInParent       func() int
+	WInit                func()
 	WInsertAfter         func()
 	WInsertBefore        func()
 	WInsertChild         func(kid tree.Node, at int) error
@@ -313,7 +322,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
 	WOnClose             func()
 	WOnDoubleClick       func(e events.Event)
-	WInit              func()
+	WInit                func()
 	WOnOpen              func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
@@ -481,6 +490,9 @@ func (W _cogentcore_org_core_views_TreeViewer) HasChildren() bool {
 }
 func (W _cogentcore_org_core_views_TreeViewer) IndexInParent() int {
 	return W.WIndexInParent()
+}
+func (W _cogentcore_org_core_views_TreeViewer) Init() {
+	W.WInit()
 }
 func (W _cogentcore_org_core_views_TreeViewer) InsertAfter() {
 	W.WInsertAfter()
