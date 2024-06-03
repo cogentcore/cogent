@@ -5,7 +5,6 @@
 package databrowser
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -56,7 +55,7 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 }
 
 func (br *Browser) FileNodeOpened(fn *filetree.Node) {
-	fmt.Println("opened:", fn.FPath)
+	// fmt.Println("opened:", fn.FPath)
 	df := dirs.DirAndFile(string(fn.FPath))
 	switch {
 	case IsTableFile(string(fn.Name())):

@@ -23,38 +23,40 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/views/views"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"AddValue":                     reflect.ValueOf(views.AddValue),
 		"AsTreeView":                   reflect.ValueOf(views.AsTreeView),
 		"CallFunc":                     reflect.ValueOf(views.CallFunc),
 		"ColorButtonType":              reflect.ValueOf(&views.ColorButtonType).Elem(),
+		"ColorMapButtonType":           reflect.ValueOf(&views.ColorMapButtonType).Elem(),
 		"ColorViewType":                reflect.ValueOf(&views.ColorViewType).Elem(),
-		"Config":                       reflect.ValueOf(views.Config),
-		"ConfigBase":                   reflect.ValueOf(views.ConfigBase),
-		"ConfigDialogWidget":           reflect.ValueOf(views.ConfigDialogWidget),
 		"ConfigImageToolbar":           reflect.ValueOf(views.ConfigImageToolbar),
 		"ConfigSVGToolbar":             reflect.ValueOf(views.ConfigSVGToolbar),
 		"DateViewType":                 reflect.ValueOf(&views.DateViewType).Elem(),
-		"FieldToValue":                 reflect.ValueOf(views.FieldToValue),
 		"FileButtonType":               reflect.ValueOf(&views.FileButtonType).Elem(),
+		"FileTimeTextType":             reflect.ValueOf(&views.FileTimeTextType).Elem(),
 		"FileViewDialog":               reflect.ValueOf(views.FileViewDialog),
 		"FileViewDirOnlyFilter":        reflect.ValueOf(views.FileViewDirOnlyFilter),
 		"FileViewExtOnlyFilter":        reflect.ValueOf(views.FileViewExtOnlyFilter),
 		"FileViewKindColorMap":         reflect.ValueOf(&views.FileViewKindColorMap).Elem(),
 		"FileViewType":                 reflect.ValueOf(&views.FileViewType).Elem(),
+		"FontButtonType":               reflect.ValueOf(&views.FontButtonType).Elem(),
 		"FuncArgsToStruct":             reflect.ValueOf(views.FuncArgsToStruct),
 		"FuncButtonType":               reflect.ValueOf(&views.FuncButtonType).Elem(),
+		"IconButtonType":               reflect.ValueOf(&views.IconButtonType).Elem(),
 		"InspectorType":                reflect.ValueOf(&views.InspectorType).Elem(),
 		"InspectorView":                reflect.ValueOf(views.InspectorView),
 		"InspectorWindow":              reflect.ValueOf(views.InspectorWindow),
-		"JoinViewPath":                 reflect.ValueOf(views.JoinViewPath),
 		"MapButtonType":                reflect.ValueOf(&views.MapButtonType).Elem(),
 		"MapViewType":                  reflect.ValueOf(&views.MapViewType).Elem(),
 		"NewColorButton":               reflect.ValueOf(views.NewColorButton),
+		"NewColorMapButton":            reflect.ValueOf(views.NewColorMapButton),
 		"NewColorView":                 reflect.ValueOf(views.NewColorView),
 		"NewDateView":                  reflect.ValueOf(views.NewDateView),
 		"NewFileButton":                reflect.ValueOf(views.NewFileButton),
+		"NewFileTimeText":              reflect.ValueOf(views.NewFileTimeText),
 		"NewFileView":                  reflect.ValueOf(views.NewFileView),
+		"NewFontButton":                reflect.ValueOf(views.NewFontButton),
 		"NewFuncButton":                reflect.ValueOf(views.NewFuncButton),
+		"NewIconButton":                reflect.ValueOf(views.NewIconButton),
 		"NewInspector":                 reflect.ValueOf(views.NewInspector),
 		"NewMapButton":                 reflect.ValueOf(views.NewMapButton),
 		"NewMapView":                   reflect.ValueOf(views.NewMapView),
@@ -70,7 +72,6 @@ func init() {
 		"NewTimeView":                  reflect.ValueOf(views.NewTimeView),
 		"NewTreeView":                  reflect.ValueOf(views.NewTreeView),
 		"NewTreeViewFrame":             reflect.ValueOf(views.NewTreeViewFrame),
-		"NewValue":                     reflect.ValueOf(views.NewValue),
 		"NoSentenceCaseFor":            reflect.ValueOf(&views.NoSentenceCaseFor).Elem(),
 		"NoSentenceCaseForType":        reflect.ValueOf(views.NoSentenceCaseForType),
 		"SettingsView":                 reflect.ValueOf(views.SettingsView),
@@ -98,7 +99,6 @@ func init() {
 		"StructViewType":               reflect.ValueOf(&views.StructViewType).Elem(),
 		"TableViewType":                reflect.ValueOf(&views.TableViewType).Elem(),
 		"TimeViewType":                 reflect.ValueOf(&views.TimeViewType).Elem(),
-		"ToValue":                      reflect.ValueOf(views.ToValue),
 		"TreeViewFlagClosed":           reflect.ValueOf(views.TreeViewFlagClosed),
 		"TreeViewFlagSelectMode":       reflect.ValueOf(views.TreeViewFlagSelectMode),
 		"TreeViewFlagsN":               reflect.ValueOf(views.TreeViewFlagsN),
@@ -107,50 +107,25 @@ func init() {
 		"TreeViewPageSteps":            reflect.ValueOf(&views.TreeViewPageSteps).Elem(),
 		"TreeViewTempMovedTag":         reflect.ValueOf(constant.MakeFromLiteral("\"_\\\\&MOVED\\\\&\"", token.STRING, 0)),
 		"TreeViewType":                 reflect.ValueOf(&views.TreeViewType).Elem(),
-		"ValueDialogNewWindow":         reflect.ValueOf(views.ValueDialogNewWindow),
-		"ValueFlagsN":                  reflect.ValueOf(views.ValueFlagsN),
-		"ValueFlagsValues":             reflect.ValueOf(views.ValueFlagsValues),
-		"ValueHasSavedDoc":             reflect.ValueOf(views.ValueHasSavedDoc),
-		"ValueHasSavedLabel":           reflect.ValueOf(views.ValueHasSavedLabel),
-		"ValueMap":                     reflect.ValueOf(&views.ValueMap).Elem(),
-		"ValueMapKey":                  reflect.ValueOf(views.ValueMapKey),
-		"ValueReadOnly":                reflect.ValueOf(views.ValueReadOnly),
 
 		// type definitions
-		"BitFlagValue":       reflect.ValueOf((*views.BitFlagValue)(nil)),
-		"BoolValue":          reflect.ValueOf((*views.BoolValue)(nil)),
-		"ByteSliceValue":     reflect.ValueOf((*views.ByteSliceValue)(nil)),
 		"ColorButton":        reflect.ValueOf((*views.ColorButton)(nil)),
+		"ColorMapButton":     reflect.ValueOf((*views.ColorMapButton)(nil)),
 		"ColorMapName":       reflect.ValueOf((*views.ColorMapName)(nil)),
-		"ColorMapValue":      reflect.ValueOf((*views.ColorMapValue)(nil)),
-		"ColorValue":         reflect.ValueOf((*views.ColorValue)(nil)),
 		"ColorView":          reflect.ValueOf((*views.ColorView)(nil)),
 		"DateView":           reflect.ValueOf((*views.DateView)(nil)),
-		"DurationValue":      reflect.ValueOf((*views.DurationValue)(nil)),
-		"EnumValue":          reflect.ValueOf((*views.EnumValue)(nil)),
-		"FieldValuer":        reflect.ValueOf((*views.FieldValuer)(nil)),
 		"FileButton":         reflect.ValueOf((*views.FileButton)(nil)),
-		"FileValue":          reflect.ValueOf((*views.FileValue)(nil)),
+		"FileTimeText":       reflect.ValueOf((*views.FileTimeText)(nil)),
 		"FileView":           reflect.ValueOf((*views.FileView)(nil)),
 		"FileViewFilterFunc": reflect.ValueOf((*views.FileViewFilterFunc)(nil)),
-		"FontValue":          reflect.ValueOf((*views.FontValue)(nil)),
+		"FontButton":         reflect.ValueOf((*views.FontButton)(nil)),
 		"FuncArg":            reflect.ValueOf((*views.FuncArg)(nil)),
 		"FuncButton":         reflect.ValueOf((*views.FuncButton)(nil)),
-		"FuncValue":          reflect.ValueOf((*views.FuncValue)(nil)),
-		"IconValue":          reflect.ValueOf((*views.IconValue)(nil)),
+		"IconButton":         reflect.ValueOf((*views.IconButton)(nil)),
 		"Inspector":          reflect.ValueOf((*views.Inspector)(nil)),
-		"KeyChordValue":      reflect.ValueOf((*views.KeyChordValue)(nil)),
-		"KeyMapValue":        reflect.ValueOf((*views.KeyMapValue)(nil)),
 		"MapButton":          reflect.ValueOf((*views.MapButton)(nil)),
-		"MapInlineValue":     reflect.ValueOf((*views.MapInlineValue)(nil)),
-		"MapValue":           reflect.ValueOf((*views.MapValue)(nil)),
 		"MapView":            reflect.ValueOf((*views.MapView)(nil)),
-		"NilValue":           reflect.ValueOf((*views.NilValue)(nil)),
-		"NumberValue":        reflect.ValueOf((*views.NumberValue)(nil)),
-		"RuneSliceValue":     reflect.ValueOf((*views.RuneSliceValue)(nil)),
 		"SliceButton":        reflect.ValueOf((*views.SliceButton)(nil)),
-		"SliceInlineValue":   reflect.ValueOf((*views.SliceInlineValue)(nil)),
-		"SliceValue":         reflect.ValueOf((*views.SliceValue)(nil)),
 		"SliceView":          reflect.ValueOf((*views.SliceView)(nil)),
 		"SliceViewBase":      reflect.ValueOf((*views.SliceViewBase)(nil)),
 		"SliceViewFlags":     reflect.ValueOf((*views.SliceViewFlags)(nil)),
@@ -158,43 +133,19 @@ func init() {
 		"SliceViewInline":    reflect.ValueOf((*views.SliceViewInline)(nil)),
 		"SliceViewStyleFunc": reflect.ValueOf((*views.SliceViewStyleFunc)(nil)),
 		"SliceViewer":        reflect.ValueOf((*views.SliceViewer)(nil)),
-		"SliderValue":        reflect.ValueOf((*views.SliderValue)(nil)),
-		"StringValue":        reflect.ValueOf((*views.StringValue)(nil)),
 		"StructButton":       reflect.ValueOf((*views.StructButton)(nil)),
-		"StructInlineValue":  reflect.ValueOf((*views.StructInlineValue)(nil)),
-		"StructValue":        reflect.ValueOf((*views.StructValue)(nil)),
 		"StructView":         reflect.ValueOf((*views.StructView)(nil)),
 		"TableView":          reflect.ValueOf((*views.TableView)(nil)),
 		"TableViewStyleFunc": reflect.ValueOf((*views.TableViewStyleFunc)(nil)),
-		"TimeValue":          reflect.ValueOf((*views.TimeValue)(nil)),
 		"TimeView":           reflect.ValueOf((*views.TimeView)(nil)),
-		"TreeValue":          reflect.ValueOf((*views.TreeValue)(nil)),
 		"TreeView":           reflect.ValueOf((*views.TreeView)(nil)),
 		"TreeViewFlags":      reflect.ValueOf((*views.TreeViewFlags)(nil)),
 		"TreeViewer":         reflect.ValueOf((*views.TreeViewer)(nil)),
-		"TypeValue":          reflect.ValueOf((*views.TypeValue)(nil)),
-		"Value":              reflect.ValueOf((*views.Value)(nil)),
-		"ValueData":          reflect.ValueOf((*views.ValueData)(nil)),
-		"ValueFlags":         reflect.ValueOf((*views.ValueFlags)(nil)),
-		"Valuer":             reflect.ValueOf((*views.Valuer)(nil)),
 
 		// interface wrapper definitions
-		"_FieldValuer": reflect.ValueOf((*_cogentcore_org_core_views_FieldValuer)(nil)),
 		"_SliceViewer": reflect.ValueOf((*_cogentcore_org_core_views_SliceViewer)(nil)),
 		"_TreeViewer":  reflect.ValueOf((*_cogentcore_org_core_views_TreeViewer)(nil)),
-		"_Value":       reflect.ValueOf((*_cogentcore_org_core_views_Value)(nil)),
-		"_Valuer":      reflect.ValueOf((*_cogentcore_org_core_views_Valuer)(nil)),
 	}
-}
-
-// _cogentcore_org_core_views_FieldValuer is an interface wrapper for FieldValuer type
-type _cogentcore_org_core_views_FieldValuer struct {
-	IValue      interface{}
-	WFieldValue func(field string, fval any) views.Value
-}
-
-func (W _cogentcore_org_core_views_FieldValuer) FieldValue(field string, fval any) views.Value {
-	return W.WFieldValue(field, fval)
 }
 
 // _cogentcore_org_core_views_SliceViewer is an interface wrapper for SliceViewer type
@@ -707,151 +658,4 @@ func (W _cogentcore_org_core_views_TreeViewer) WalkUpParent(fun func(n tree.Node
 }
 func (W _cogentcore_org_core_views_TreeViewer) WidgetTooltip(pos image.Point) (string, image.Point) {
 	return W.WWidgetTooltip(pos)
-}
-
-// _cogentcore_org_core_views_Value is an interface wrapper for Value type
-type _cogentcore_org_core_views_Value struct {
-	IValue          interface{}
-	WAllTags        func() map[string]string
-	WAsValueData    func() *views.ValueData
-	WAsWidget       func() core.Widget
-	WAsWidgetBase   func() *core.WidgetBase
-	WConfig         func()
-	WDoc            func() string
-	WIs             func(f enums.BitFlag) bool
-	WIsReadOnly     func() bool
-	WLabel          func() string
-	WName           func() string
-	WOnChange       func(fun func(e events.Event))
-	WOwnerKind      func() reflect.Kind
-	WSendChange     func(orig ...events.Event)
-	WSetDoc         func(doc string) *views.ValueData
-	WSetFlag        func(on bool, f ...enums.BitFlag)
-	WSetLabel       func(label string) *views.ValueData
-	WSetMapKey      func(val reflect.Value, owner any)
-	WSetMapValue    func(val reflect.Value, owner any, key any, keyView views.Value, viewPath string)
-	WSetName        func(name string)
-	WSetReadOnly    func(ro bool)
-	WSetSliceValue  func(val reflect.Value, owner any, idx int, viewPath string)
-	WSetSoloValue   func(val reflect.Value)
-	WSetStructValue func(val reflect.Value, owner any, field *reflect.StructField, viewPath string)
-	WSetTag         func(tag string, value string)
-	WSetTags        func(tags map[string]string)
-	WSetValue       func(val any) bool
-	WSetWidget      func(w core.Widget)
-	WString         func() string
-	WTag            func(tag string) (string, bool)
-	WUpdate         func()
-	WVal            func() reflect.Value
-	WWidgetType     func() *types.Type
-}
-
-func (W _cogentcore_org_core_views_Value) AllTags() map[string]string {
-	return W.WAllTags()
-}
-func (W _cogentcore_org_core_views_Value) AsValueData() *views.ValueData {
-	return W.WAsValueData()
-}
-func (W _cogentcore_org_core_views_Value) AsWidget() core.Widget {
-	return W.WAsWidget()
-}
-func (W _cogentcore_org_core_views_Value) AsWidgetBase() *core.WidgetBase {
-	return W.WAsWidgetBase()
-}
-func (W _cogentcore_org_core_views_Value) Config() {
-	W.WConfig()
-}
-func (W _cogentcore_org_core_views_Value) Doc() string {
-	return W.WDoc()
-}
-func (W _cogentcore_org_core_views_Value) Is(f enums.BitFlag) bool {
-	return W.WIs(f)
-}
-func (W _cogentcore_org_core_views_Value) IsReadOnly() bool {
-	return W.WIsReadOnly()
-}
-func (W _cogentcore_org_core_views_Value) Label() string {
-	return W.WLabel()
-}
-func (W _cogentcore_org_core_views_Value) Name() string {
-	return W.WName()
-}
-func (W _cogentcore_org_core_views_Value) OnChange(fun func(e events.Event)) {
-	W.WOnChange(fun)
-}
-func (W _cogentcore_org_core_views_Value) OwnerKind() reflect.Kind {
-	return W.WOwnerKind()
-}
-func (W _cogentcore_org_core_views_Value) SendChange(orig ...events.Event) {
-	W.WSendChange(orig...)
-}
-func (W _cogentcore_org_core_views_Value) SetDoc(doc string) *views.ValueData {
-	return W.WSetDoc(doc)
-}
-func (W _cogentcore_org_core_views_Value) SetFlag(on bool, f ...enums.BitFlag) {
-	W.WSetFlag(on, f...)
-}
-func (W _cogentcore_org_core_views_Value) SetLabel(label string) *views.ValueData {
-	return W.WSetLabel(label)
-}
-func (W _cogentcore_org_core_views_Value) SetMapKey(val reflect.Value, owner any) {
-	W.WSetMapKey(val, owner)
-}
-func (W _cogentcore_org_core_views_Value) SetMapValue(val reflect.Value, owner any, key any, keyView views.Value, viewPath string) {
-	W.WSetMapValue(val, owner, key, keyView, viewPath)
-}
-func (W _cogentcore_org_core_views_Value) SetName(name string) {
-	W.WSetName(name)
-}
-func (W _cogentcore_org_core_views_Value) SetReadOnly(ro bool) {
-	W.WSetReadOnly(ro)
-}
-func (W _cogentcore_org_core_views_Value) SetSliceValue(val reflect.Value, owner any, idx int, viewPath string) {
-	W.WSetSliceValue(val, owner, idx, viewPath)
-}
-func (W _cogentcore_org_core_views_Value) SetSoloValue(val reflect.Value) {
-	W.WSetSoloValue(val)
-}
-func (W _cogentcore_org_core_views_Value) SetStructValue(val reflect.Value, owner any, field *reflect.StructField, viewPath string) {
-	W.WSetStructValue(val, owner, field, viewPath)
-}
-func (W _cogentcore_org_core_views_Value) SetTag(tag string, value string) {
-	W.WSetTag(tag, value)
-}
-func (W _cogentcore_org_core_views_Value) SetTags(tags map[string]string) {
-	W.WSetTags(tags)
-}
-func (W _cogentcore_org_core_views_Value) SetValue(val any) bool {
-	return W.WSetValue(val)
-}
-func (W _cogentcore_org_core_views_Value) SetWidget(w core.Widget) {
-	W.WSetWidget(w)
-}
-func (W _cogentcore_org_core_views_Value) String() string {
-	if W.WString == nil {
-		return ""
-	}
-	return W.WString()
-}
-func (W _cogentcore_org_core_views_Value) Tag(tag string) (string, bool) {
-	return W.WTag(tag)
-}
-func (W _cogentcore_org_core_views_Value) Update() {
-	W.WUpdate()
-}
-func (W _cogentcore_org_core_views_Value) Val() reflect.Value {
-	return W.WVal()
-}
-func (W _cogentcore_org_core_views_Value) WidgetType() *types.Type {
-	return W.WWidgetType()
-}
-
-// _cogentcore_org_core_views_Valuer is an interface wrapper for Valuer type
-type _cogentcore_org_core_views_Valuer struct {
-	IValue interface{}
-	WValue func() views.Value
-}
-
-func (W _cogentcore_org_core_views_Valuer) Value() views.Value {
-	return W.WValue()
 }

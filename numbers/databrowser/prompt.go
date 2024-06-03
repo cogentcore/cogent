@@ -49,9 +49,7 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 // calling the given function if the user clicks OK.
 func PromptStruct(ctx core.Widget, stru any, prompt string, fun func()) {
 	d := core.NewBody().AddTitle(prompt)
-	views.NewStructView(d).SetStruct(stru).Style(func(s *styles.Style) {
-		s.Min.X.Ch(60)
-	})
+	views.NewStructView(d).SetStruct(stru)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {

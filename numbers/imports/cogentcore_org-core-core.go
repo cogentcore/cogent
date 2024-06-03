@@ -3,11 +3,6 @@
 package imports
 
 import (
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
-
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/events"
@@ -18,6 +13,10 @@ import (
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
 )
 
 func init() {
@@ -225,6 +224,7 @@ func init() {
 		"StartTargetedProfile":     reflect.ValueOf(core.StartTargetedProfile),
 		"StretchType":              reflect.ValueOf(&core.StretchType).Elem(),
 		"StringsInsertFirstUnique": reflect.ValueOf(core.StringsInsertFirstUnique),
+		"StyleFromTags":            reflect.ValueOf(core.StyleFromTags),
 		"SwitchCheckbox":           reflect.ValueOf(core.SwitchCheckbox),
 		"SwitchChip":               reflect.ValueOf(core.SwitchChip),
 		"SwitchRadioButton":        reflect.ValueOf(core.SwitchRadioButton),
