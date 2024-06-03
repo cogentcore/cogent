@@ -27,8 +27,8 @@ type AlignView struct {
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
-func (av *AlignView) OnInit() {
-	av.Frame.OnInit()
+func (av *AlignView) Init() {
+	av.Frame.Init()
 	av.Maker(func(p *core.Plan) { // TODO(config)
 		if av.HasChildren() {
 			return

@@ -61,8 +61,8 @@ type SVGView struct {
 	bgVectorEff float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 }
 
-func (sv *SVGView) OnInit() {
-	sv.SVG.OnInit()
+func (sv *SVGView) Init() {
+	sv.SVG.Init()
 	sv.SetReadOnly(false)
 	sv.Grid = Settings.Size.Grid
 	sv.Scale = 1

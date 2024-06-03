@@ -38,8 +38,8 @@ type PaintView struct {
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
-func (pv *PaintView) OnInit() {
-	pv.Frame.OnInit()
+func (pv *PaintView) Init() {
+	pv.Frame.Init()
 	pv.Maker(func(p *core.Plan) { // TODO(config)
 		if pv.HasChildren() {
 			return

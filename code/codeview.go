@@ -113,8 +113,8 @@ func init() {
 	// paint.TextLinkHandler = TextLinkHandler
 }
 
-func (cv *CodeView) OnInit() {
-	cv.Frame.OnInit()
+func (cv *CodeView) Init() {
+	cv.Frame.Init()
 	cv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)

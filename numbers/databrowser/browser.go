@@ -71,9 +71,9 @@ type Browser struct {
 	ScriptInterp *numshell.Interpreter `set:"-"`
 }
 
-// OnInit initializes with the data and script directories
-func (br *Browser) OnInit() {
-	br.Frame.OnInit()
+// Init initializes with the data and script directories
+func (br *Browser) Init() {
+	br.Frame.Init()
 	br.Style(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})

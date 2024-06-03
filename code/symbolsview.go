@@ -51,8 +51,8 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 	return &sv.Code.Settings.Symbols
 }
 
-func (sv *SymbolsView) OnInit() {
-	sv.Frame.OnInit()
+func (sv *SymbolsView) Init() {
+	sv.Frame.Init()
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
@@ -364,8 +364,8 @@ func (st *SymTreeView) SymNode() *SymNode {
 	return st.SyncNode.(*SymNode)
 }
 
-func (st *SymTreeView) OnInit() {
-	st.TreeView.OnInit()
+func (st *SymTreeView) Init() {
+	st.TreeView.Init()
 	core.AddChildInit(st, "parts", func(w *core.Frame) {
 		w.Style(func(s *styles.Style) {
 			s.Gap.X.Em(0.4)

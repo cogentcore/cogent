@@ -28,8 +28,8 @@ type Page struct {
 
 var _ tree.Node = (*Page)(nil)
 
-func (pg *Page) OnInit() {
-	pg.Frame.OnInit()
+func (pg *Page) Init() {
+	pg.Frame.Init()
 	pg.Context = htmlview.NewContext()
 	pg.Context.OpenURL = pg.OpenURL
 	pg.Style(func(s *styles.Style) {

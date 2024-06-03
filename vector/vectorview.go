@@ -39,8 +39,8 @@ type VectorView struct {
 	EditState EditState `set:"-"`
 }
 
-func (vv *VectorView) OnInit() {
-	vv.Frame.OnInit()
+func (vv *VectorView) Init() {
+	vv.Frame.Init()
 	vv.EditState.ConfigDefaultGradient()
 	vv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column

@@ -73,8 +73,8 @@ type FindView struct {
 	Re *regexp.Regexp
 }
 
-func (fv *FindView) OnInit() {
-	fv.Frame.OnInit()
+func (fv *FindView) Init() {
+	fv.Frame.Init()
 	fv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)

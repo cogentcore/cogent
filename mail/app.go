@@ -50,7 +50,7 @@ type App struct {
 // needed for interface import
 var _ tree.Node = (*App)(nil)
 
-func (a *App) OnInit() {
+func (a *App) Init() {
 	a.AuthToken = map[string]*oauth2.Token{}
 	a.AuthClient = map[string]sasl.Client{}
 	a.Style(func(s *styles.Style) {

@@ -113,8 +113,8 @@ func (dv *DebugView) Config(cv *CodeView, sup fileinfo.Known, exePath string) {
 	dv.ExePath = exePath
 }
 
-func (dv *DebugView) OnInit() {
-	dv.Frame.OnInit()
+func (dv *DebugView) Init() {
+	dv.Frame.Init()
 	dv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
@@ -1246,7 +1246,7 @@ func (vv *VarView) SetVar(vr *cdebug.Variable, frinfo string) {
 	vv.Update()
 }
 
-func (vv *VarView) OnInit() {
+func (vv *VarView) Init() {
 	vv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)

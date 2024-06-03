@@ -49,8 +49,8 @@ type App struct {
 
 var _ tree.Node = (*App)(nil)
 
-func (a *App) OnInit() {
-	a.Frame.OnInit()
+func (a *App) Init() {
+	a.Frame.Init()
 	a.Dir = errors.Log1(os.Getwd())
 
 	a.Maker(func(p *core.Plan) { // TODO(config)

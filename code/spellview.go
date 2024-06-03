@@ -50,8 +50,8 @@ type SpellView struct {
 	LastAction *core.Button
 }
 
-func (sv *SpellView) OnInit() {
-	sv.Frame.OnInit()
+func (sv *SpellView) Init() {
+	sv.Frame.Init()
 	sv.Style(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)

@@ -26,8 +26,8 @@ type FileNode struct {
 	filetree.Node
 }
 
-func (fn *FileNode) OnInit() {
-	fn.Node.OnInit()
+func (fn *FileNode) Init() {
+	fn.Node.Init()
 	fn.AddContextMenu(fn.ContextMenu)
 }
 

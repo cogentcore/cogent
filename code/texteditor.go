@@ -28,8 +28,8 @@ type TextEditor struct {
 	Code *CodeView
 }
 
-func (ed *TextEditor) OnInit() {
-	ed.Editor.OnInit()
+func (ed *TextEditor) Init() {
+	ed.Editor.Init()
 	ed.AddContextMenu(ed.ContextMenu)
 	ed.Style(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.LongHoverable)
