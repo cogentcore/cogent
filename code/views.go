@@ -64,7 +64,6 @@ func (cv *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 
 	fv.SaveFindString(find)
 	fv.SaveReplString(repl)
-	fv.UpdateFromParams()
 	root := filetree.AsNode(cv.Files)
 
 	atv := cv.ActiveTextEditor()
@@ -148,6 +147,7 @@ func (cv *CodeView) Debug() { //types:add
 	dv.Config(cv, fileinfo.Go, exePath)
 	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
+	dv.Start()
 	cv.CurDbg = dv
 }
 

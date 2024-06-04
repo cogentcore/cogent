@@ -13,24 +13,11 @@ import (
 	"cogentcore.org/cogent/code"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/system"
 )
 
 func main() {
 	pdir := core.TheApp.AppDataDir()
 	lfnm := filepath.Join(pdir, "cogentcode.log")
-
-	switch core.TheApp.SystemPlatform() {
-	case system.Windows:
-		code.DefaultKeyMap = code.KeyMapName("WindowsStandard")
-		code.SetActiveKeyMapName(code.DefaultKeyMap)
-	case system.MacOS:
-		code.DefaultKeyMap = code.KeyMapName("MacStandard")
-		code.SetActiveKeyMapName(code.DefaultKeyMap)
-	default:
-		code.DefaultKeyMap = code.KeyMapName("LinuxStandard")
-		code.SetActiveKeyMapName(code.DefaultKeyMap)
-	}
 
 	// we must load the settings before initializing the console
 	errors.Log(core.LoadAllSettings())

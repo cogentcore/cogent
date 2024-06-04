@@ -3,21 +3,15 @@
 package code
 
 import (
-	"image"
 	"regexp"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/icons"
-	"cogentcore.org/core/math32"
-	"cogentcore.org/core/paint"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/parse/syms"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"cogentcore.org/core/views"
 )
 
 // CodeViewType is the [types.Type] for [CodeView]
@@ -55,9 +49,6 @@ func (t *CodeView) SetStatusMessage(v string) *CodeView { t.StatusMessage = v; r
 // list of open nodes, most recent first
 func (t *CodeView) SetOpenNodes(v OpenNodes) *CodeView { t.OpenNodes = v; return t }
 
-// SetTooltip sets the [CodeView.Tooltip]
-func (t *CodeView) SetTooltip(v string) *CodeView { t.Tooltip = v; return t }
-
 // DebugViewType is the [types.Type] for [DebugView]
 var DebugViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
 
@@ -83,9 +74,6 @@ func (t *DebugView) SetExePath(v string) *DebugView { t.ExePath = v; return t }
 // time when dbg was last restarted
 func (t *DebugView) SetDbgTime(v time.Time) *DebugView { t.DbgTime = v; return t }
 
-// SetTooltip sets the [DebugView.Tooltip]
-func (t *DebugView) SetTooltip(v string) *DebugView { t.Tooltip = v; return t }
-
 // StackViewType is the [types.Type] for [StackView]
 var StackViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
 
@@ -103,9 +91,6 @@ func (t *StackView) New() tree.Node { return &StackView{} }
 // if true, this is a find frames, not a regular stack
 func (t *StackView) SetFindFrames(v bool) *StackView { t.FindFrames = v; return t }
 
-// SetTooltip sets the [StackView.Tooltip]
-func (t *StackView) SetTooltip(v string) *StackView { t.Tooltip = v; return t }
-
 // BreakViewType is the [types.Type] for [BreakView]
 var BreakViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []types.Field{{Name: "Frame"}}, Instance: &BreakView{}})
 
@@ -118,9 +103,6 @@ func (t *BreakView) NodeType() *types.Type { return BreakViewType }
 
 // New returns a new [*BreakView] value
 func (t *BreakView) New() tree.Node { return &BreakView{} }
-
-// SetTooltip sets the [BreakView.Tooltip]
-func (t *BreakView) SetTooltip(v string) *BreakView { t.Tooltip = v; return t }
 
 // ThreadViewType is the [types.Type] for [ThreadView]
 var ThreadViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []types.Field{{Name: "Frame"}}, Instance: &ThreadView{}})
@@ -135,9 +117,6 @@ func (t *ThreadView) NodeType() *types.Type { return ThreadViewType }
 // New returns a new [*ThreadView] value
 func (t *ThreadView) New() tree.Node { return &ThreadView{} }
 
-// SetTooltip sets the [ThreadView.Tooltip]
-func (t *ThreadView) SetTooltip(v string) *ThreadView { t.Tooltip = v; return t }
-
 // TaskViewType is the [types.Type] for [TaskView]
 var TaskViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []types.Field{{Name: "Frame"}}, Instance: &TaskView{}})
 
@@ -150,9 +129,6 @@ func (t *TaskView) NodeType() *types.Type { return TaskViewType }
 
 // New returns a new [*TaskView] value
 func (t *TaskView) New() tree.Node { return &TaskView{} }
-
-// SetTooltip sets the [TaskView.Tooltip]
-func (t *TaskView) SetTooltip(v string) *TaskView { t.Tooltip = v; return t }
 
 // VarsViewType is the [types.Type] for [VarsView]
 var VarsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
@@ -170,9 +146,6 @@ func (t *VarsView) New() tree.Node { return &VarsView{} }
 // SetGlobalVars sets the [VarsView.GlobalVars]:
 // if true, this is global vars, not local ones
 func (t *VarsView) SetGlobalVars(v bool) *VarsView { t.GlobalVars = v; return t }
-
-// SetTooltip sets the [VarsView.Tooltip]
-func (t *VarsView) SetTooltip(v string) *VarsView { t.Tooltip = v; return t }
 
 // VarViewType is the [types.Type] for [VarView]
 var VarViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
@@ -192,9 +165,6 @@ func (t *VarView) New() tree.Node { return &VarView{} }
 // parent DebugView
 func (t *VarView) SetDbgView(v *DebugView) *VarView { t.DbgView = v; return t }
 
-// SetTooltip sets the [VarView.Tooltip]
-func (t *VarView) SetTooltip(v string) *VarView { t.Tooltip = v; return t }
-
 // FileNodeType is the [types.Type] for [FileNode]
 var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []types.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
@@ -208,44 +178,8 @@ func (t *FileNode) NodeType() *types.Type { return FileNodeType }
 // New returns a new [*FileNode] value
 func (t *FileNode) New() tree.Node { return &FileNode{} }
 
-// SetTooltip sets the [FileNode.Tooltip]
-func (t *FileNode) SetTooltip(v string) *FileNode { t.Tooltip = v; return t }
-
-// SetText sets the [FileNode.Text]
-func (t *FileNode) SetText(v string) *FileNode { t.Text = v; return t }
-
-// SetIcon sets the [FileNode.Icon]
-func (t *FileNode) SetIcon(v icons.Icon) *FileNode { t.Icon = v; return t }
-
-// SetIconOpen sets the [FileNode.IconOpen]
-func (t *FileNode) SetIconOpen(v icons.Icon) *FileNode { t.IconOpen = v; return t }
-
-// SetIconClosed sets the [FileNode.IconClosed]
-func (t *FileNode) SetIconClosed(v icons.Icon) *FileNode { t.IconClosed = v; return t }
-
-// SetIconLeaf sets the [FileNode.IconLeaf]
-func (t *FileNode) SetIconLeaf(v icons.Icon) *FileNode { t.IconLeaf = v; return t }
-
-// SetIndent sets the [FileNode.Indent]
-func (t *FileNode) SetIndent(v units.Value) *FileNode { t.Indent = v; return t }
-
-// SetOpenDepth sets the [FileNode.OpenDepth]
-func (t *FileNode) SetOpenDepth(v int) *FileNode { t.OpenDepth = v; return t }
-
-// SetViewIndex sets the [FileNode.ViewIndex]
-func (t *FileNode) SetViewIndex(v int) *FileNode { t.ViewIndex = v; return t }
-
-// SetWidgetSize sets the [FileNode.WidgetSize]
-func (t *FileNode) SetWidgetSize(v math32.Vector2) *FileNode { t.WidgetSize = v; return t }
-
-// SetRootView sets the [FileNode.RootView]
-func (t *FileNode) SetRootView(v *views.TreeView) *FileNode { t.RootView = v; return t }
-
-// SetSelectedNodes sets the [FileNode.SelectedNodes]
-func (t *FileNode) SetSelectedNodes(v ...views.TreeViewer) *FileNode { t.SelectedNodes = v; return t }
-
 // FindViewType is the [types.Type] for [FindView]
-var FindViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "LangVV", Doc: "langs value view"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
+var FindViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
 
 // NewFindView returns a new [FindView] with the given optional parent:
 // FindView is a find / replace widget that displays results in a TextEditor
@@ -262,10 +196,6 @@ func (t *FindView) New() tree.Node { return &FindView{} }
 // parent code project
 func (t *FindView) SetCode(v *CodeView) *FindView { t.Code = v; return t }
 
-// SetLangVV sets the [FindView.LangVV]:
-// langs value view
-func (t *FindView) SetLangVV(v views.Value) *FindView { t.LangVV = v; return t }
-
 // SetTime sets the [FindView.Time]:
 // time of last find
 func (t *FindView) SetTime(v time.Time) *FindView { t.Time = v; return t }
@@ -274,10 +204,7 @@ func (t *FindView) SetTime(v time.Time) *FindView { t.Time = v; return t }
 // compiled regexp
 func (t *FindView) SetRe(v *regexp.Regexp) *FindView { t.Re = v; return t }
 
-// SetTooltip sets the [FindView.Tooltip]
-func (t *FindView) SetTooltip(v string) *FindView { t.Tooltip = v; return t }
-
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith settings automatically.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "KeyMap", Doc: "key map for code-specific keyboard sequences"}, {Name: "SaveKeyMaps", Doc: "if set, the current available set of key maps is saved to your settings directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith settings automatically.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file view settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Fields: []types.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"}}})
 
@@ -332,9 +259,6 @@ func (t *SpellView) SetSuggest(v ...string) *SpellView { t.Suggest = v; return t
 // last user action (ignore, change, learn)
 func (t *SpellView) SetLastAction(v *core.Button) *SpellView { t.LastAction = v; return t }
 
-// SetTooltip sets the [SpellView.Tooltip]
-func (t *SpellView) SetTooltip(v string) *SpellView { t.Tooltip = v; return t }
-
 // SymbolsViewType is the [types.Type] for [SymbolsView]
 var SymbolsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
 
@@ -363,9 +287,6 @@ func (t *SymbolsView) SetSyms(v *SymNode) *SymbolsView { t.Syms = v; return t }
 // SetMatch sets the [SymbolsView.Match]:
 // only show symbols that match this string
 func (t *SymbolsView) SetMatch(v string) *SymbolsView { t.Match = v; return t }
-
-// SetTooltip sets the [SymbolsView.Tooltip]
-func (t *SymbolsView) SetTooltip(v string) *SymbolsView { t.Tooltip = v; return t }
 
 // SymNodeType is the [types.Type] for [SymNode]
 var SymNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
@@ -398,45 +319,6 @@ func (t *SymTreeView) NodeType() *types.Type { return SymTreeViewType }
 // New returns a new [*SymTreeView] value
 func (t *SymTreeView) New() tree.Node { return &SymTreeView{} }
 
-// SetTooltip sets the [SymTreeView.Tooltip]
-func (t *SymTreeView) SetTooltip(v string) *SymTreeView { t.Tooltip = v; return t }
-
-// SetText sets the [SymTreeView.Text]
-func (t *SymTreeView) SetText(v string) *SymTreeView { t.Text = v; return t }
-
-// SetIcon sets the [SymTreeView.Icon]
-func (t *SymTreeView) SetIcon(v icons.Icon) *SymTreeView { t.Icon = v; return t }
-
-// SetIconOpen sets the [SymTreeView.IconOpen]
-func (t *SymTreeView) SetIconOpen(v icons.Icon) *SymTreeView { t.IconOpen = v; return t }
-
-// SetIconClosed sets the [SymTreeView.IconClosed]
-func (t *SymTreeView) SetIconClosed(v icons.Icon) *SymTreeView { t.IconClosed = v; return t }
-
-// SetIconLeaf sets the [SymTreeView.IconLeaf]
-func (t *SymTreeView) SetIconLeaf(v icons.Icon) *SymTreeView { t.IconLeaf = v; return t }
-
-// SetIndent sets the [SymTreeView.Indent]
-func (t *SymTreeView) SetIndent(v units.Value) *SymTreeView { t.Indent = v; return t }
-
-// SetOpenDepth sets the [SymTreeView.OpenDepth]
-func (t *SymTreeView) SetOpenDepth(v int) *SymTreeView { t.OpenDepth = v; return t }
-
-// SetViewIndex sets the [SymTreeView.ViewIndex]
-func (t *SymTreeView) SetViewIndex(v int) *SymTreeView { t.ViewIndex = v; return t }
-
-// SetWidgetSize sets the [SymTreeView.WidgetSize]
-func (t *SymTreeView) SetWidgetSize(v math32.Vector2) *SymTreeView { t.WidgetSize = v; return t }
-
-// SetRootView sets the [SymTreeView.RootView]
-func (t *SymTreeView) SetRootView(v *views.TreeView) *SymTreeView { t.RootView = v; return t }
-
-// SetSelectedNodes sets the [SymTreeView.SelectedNodes]
-func (t *SymTreeView) SetSelectedNodes(v ...views.TreeViewer) *SymTreeView {
-	t.SelectedNodes = v
-	return t
-}
-
 // TextEditorType is the [types.Type] for [TextEditor]
 var TextEditorType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.TextEditor", IDName: "text-editor", Doc: "TextEditor is the Code-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc", Embeds: []types.Field{{Name: "Editor"}}, Fields: []types.Field{{Name: "Code"}}, Instance: &TextEditor{}})
 
@@ -453,27 +335,3 @@ func (t *TextEditor) New() tree.Node { return &TextEditor{} }
 
 // SetCode sets the [TextEditor.Code]
 func (t *TextEditor) SetCode(v *CodeView) *TextEditor { t.Code = v; return t }
-
-// SetTooltip sets the [TextEditor.Tooltip]
-func (t *TextEditor) SetTooltip(v string) *TextEditor { t.Tooltip = v; return t }
-
-// SetCursorWidth sets the [TextEditor.CursorWidth]
-func (t *TextEditor) SetCursorWidth(v units.Value) *TextEditor { t.CursorWidth = v; return t }
-
-// SetLineNumberColor sets the [TextEditor.LineNumberColor]
-func (t *TextEditor) SetLineNumberColor(v image.Image) *TextEditor { t.LineNumberColor = v; return t }
-
-// SetSelectColor sets the [TextEditor.SelectColor]
-func (t *TextEditor) SetSelectColor(v image.Image) *TextEditor { t.SelectColor = v; return t }
-
-// SetHighlightColor sets the [TextEditor.HighlightColor]
-func (t *TextEditor) SetHighlightColor(v image.Image) *TextEditor { t.HighlightColor = v; return t }
-
-// SetCursorColor sets the [TextEditor.CursorColor]
-func (t *TextEditor) SetCursorColor(v image.Image) *TextEditor { t.CursorColor = v; return t }
-
-// SetLinkHandler sets the [TextEditor.LinkHandler]
-func (t *TextEditor) SetLinkHandler(v func(tl *paint.TextLink)) *TextEditor {
-	t.LinkHandler = v
-	return t
-}

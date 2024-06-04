@@ -63,9 +63,6 @@ type FindView struct {
 	// parent code project
 	Code *CodeView `json:"-" xml:"-"`
 
-	// langs value view
-	LangVV views.Value
-
 	// time of last find
 	Time time.Time
 
@@ -442,22 +439,6 @@ func (fv *FindView) TextEditor() *texteditor.Editor {
 	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
 }
 
-// UpdateFromParams is called in Find function with new params
-func (fv *FindView) UpdateFromParams() {
-	fp := fv.Params()
-	ft := fv.FindText()
-	ft.SetCurrentValue(fp.Find)
-	rt := fv.ReplText()
-	rt.SetCurrentValue(fp.Replace)
-	ib := fv.IgnoreBox()
-	ib.SetChecked(fp.IgnoreCase)
-	rb := fv.RegexpBox()
-	rb.SetChecked(fp.Regexp)
-	cf := fv.LocCombo()
-	cf.SetCurrentValue(fp.Loc)
-	// langs auto-updates from param
-}
-
 // makeFindToolbar
 func (fv *FindView) makeFindToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
@@ -488,6 +469,9 @@ func (fv *FindView) makeFindToolbar(p *core.Plan) {
 				fv.FindAction()
 			}
 		})
+		w.Updater(func() {
+			w.SetCurrentValue(fv.Params().Find)
+		})
 	})
 
 	core.AddAt(p, "ignore-case", func(w *core.Switch) {
@@ -495,12 +479,18 @@ func (fv *FindView) makeFindToolbar(p *core.Plan) {
 		w.OnChange(func(e events.Event) {
 			fv.Params().IgnoreCase = w.StateIs(states.Checked)
 		})
+		w.Updater(func() {
+			w.SetChecked(fv.Params().IgnoreCase)
+		})
 	})
 	core.AddAt(p, "regexp", func(w *core.Switch) {
 		w.SetText("Regexp").
 			SetTooltip("use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax")
 		w.OnChange(func(e events.Event) {
 			fv.Params().Regexp = w.StateIs(states.Checked)
+		})
+		w.Updater(func() {
+			w.SetChecked(fv.Params().Regexp)
 		})
 	})
 
@@ -513,11 +503,13 @@ func (fv *FindView) makeFindToolbar(p *core.Plan) {
 	core.AddAt(p, "loc", func(w *core.Chooser) {
 		w.SetTooltip(ttxt)
 		w.SetEnum(fv.Params().Loc)
-		w.SetCurrentValue(fv.Params().Loc)
 		w.OnChange(func(e events.Event) {
 			if eval, ok := w.CurrentItem.Value.(filetree.FindLoc); ok {
 				fv.Params().Loc = eval
 			}
+		})
+		w.Updater(func() {
+			w.SetCurrentValue(fv.Params().Loc)
 		})
 	})
 }
@@ -553,6 +545,9 @@ func (fv *FindView) makeReplToolbar(p *core.Plan) {
 		w.OnChange(func(e events.Event) {
 			fv.Params().Replace = w.CurrentItem.Value.(string)
 		})
+		w.Updater(func() {
+			w.SetCurrentValue(fv.Params().Replace)
+		})
 	})
 
 	core.Add(p, func(w *core.Button) {
@@ -566,7 +561,8 @@ func (fv *FindView) makeReplToolbar(p *core.Plan) {
 		w.SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 	})
 
-	// todo:
-	// fv.LangVV = views.NewValue(rb, &fv.Params().Langs)
-	// fv.LangVV.AsWidgetBase().SetTooltip(langl.Tooltip)
+	core.AddAt(p, "langs", func(w *views.SliceViewInline) {
+		w.SetSlice(fv.Params().Langs)
+		w.SetTooltip("Language(s) to restrict search / replace to")
+	})
 }

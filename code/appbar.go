@@ -9,7 +9,6 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
@@ -94,11 +93,11 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.CursorToHistPrev).SetText("").SetKey(keymap.HistPrev).
-			SetIcon(icons.KeyboardArrowLeft).SetShowReturn(false)
+			SetIcon(icons.KeyboardArrowLeft)
 	})
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.CursorToHistNext).SetText("").SetKey(keymap.HistNext).
-			SetIcon(icons.KeyboardArrowRight).SetShowReturn(false)
+			SetIcon(icons.KeyboardArrowRight)
 	})
 
 	core.Add(p, func(w *core.Separator) {})
@@ -123,12 +122,12 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.RunBuild).SetText("Build").SetIcon(icons.Build).
-			SetShortcut(key.Chord(ChordForFunction(KeyBuildProject).String()))
+			SetShortcut(KeyBuildProject.Chord())
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Run).SetIcon(icons.PlayArrow).
-			SetShortcut(key.Chord(ChordForFunction(KeyRunProject).String()))
+			SetShortcut(KeyRunProject.Chord())
 	})
 
 	core.Add(p, func(w *views.FuncButton) {
@@ -147,7 +146,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Command").
-			SetShortcut(key.Chord(ChordForFunction(KeyExecCmd).String())).
+			SetShortcut(KeyExecCmd.Chord()).
 			SetMenu(func(m *core.Scene) {
 				ec := ExecCmds(cv)
 				for _, cc := range ec {

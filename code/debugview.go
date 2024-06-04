@@ -141,12 +141,10 @@ func (dv *DebugView) Init() {
 		NewVarsView(w.NewTab("Global Vars")).ConfigVarsView(dv, true)   // all vars
 	})
 
-	// TODO(config): where does this go?  on init?
 	dv.State.BlankState()
 	dv.OutputBuffer = texteditor.NewBuffer()
 	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
 	dv.State.Breaks = nil // get rid of dummy
-	dv.Start()
 }
 
 // DbgIsActive means debugger is started.
@@ -863,9 +861,8 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	})
 
 	core.Add(p, func(w *core.Button) {
-		w.SetText("Cont").SetIcon(icons.PlayArrow).
-			SetTooltip("continue execution from current point").
-			SetShortcut("Control+Alt+R").
+		w.SetText("Cont").SetIcon(icons.PlayArrow).SetShortcut("Control+Alt+R")
+		w.SetTooltip("continue execution from current point").
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				go dv.Continue()
@@ -877,9 +874,8 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	})
 
 	core.Add(p, func(w *core.Button) {
-		w.SetText("Over").SetIcon(icons.StepOver).
-			SetTooltip("continues to the next source line, not entering function calls").
-			SetShortcut("F6").
+		w.SetText("Over").SetIcon(icons.StepOver).SetShortcut("F6")
+		w.SetTooltip("continues to the next source line, not entering function calls").
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOver()
@@ -887,9 +883,8 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	})
 
 	core.Add(p, func(w *core.Button) {
-		w.SetText("Into").SetIcon(icons.StepInto).
-			SetTooltip("continues to the next source line, entering into function calls").
-			SetShortcut("F7").
+		w.SetText("Into").SetIcon(icons.StepInto).SetShortcut("F7")
+		w.SetTooltip("continues to the next source line, entering into function calls").
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepInto()
@@ -897,9 +892,8 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	})
 
 	core.Add(p, func(w *core.Button) {
-		w.SetText("Out").SetIcon(icons.StepOut).
-			SetTooltip("continues to the return point of the current function").
-			SetShortcut("F8").
+		w.SetText("Out").SetIcon(icons.StepOut).SetShortcut("F8")
+		w.SetTooltip("continues to the return point of the current function").
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOut()

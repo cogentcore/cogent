@@ -24,8 +24,6 @@ import (
 func init() {
 	core.TheApp.SetName("Cogent Code")
 	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
-	DefaultKeyMap = "MacEmacs" // todo
-	SetActiveKeyMapName(DefaultKeyMap)
 	OpenPaths()
 	// OpenIcons()
 }
@@ -47,12 +45,6 @@ type SettingsData struct { //types:add
 
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
 	EnvVars map[string]string
-
-	// key map for code-specific keyboard sequences
-	KeyMap KeyMapName
-
-	// if set, the current available set of key maps is saved to your settings directory, and automatically loaded at startup -- this should be set if you are using custom key maps, but it may be safer to keep it <i>OFF</i> if you are <i>not</i> using custom key maps, so that you'll always have the latest compiled-in standard key maps with all the current key functions bound to standard key chords
-	SaveKeyMaps bool
 
 	// if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveLangOpts bool
@@ -82,7 +74,6 @@ type FileSettings struct { //types:add
 // Defaults are the defaults for Settings
 func (se *SettingsData) Defaults() {
 	se.Files.Defaults()
-	se.KeyMap = DefaultKeyMap
 	home := core.SystemSettings.User.HomeDir
 	texPath := ".:" + home + "/texmf/tex/latex:/Library/TeX/Root/texmf-dist/tex/latex:"
 	se.EnvVars = map[string]string{
@@ -104,9 +95,6 @@ func (se *SettingsData) Save() error {
 	if err != nil {
 		return err
 	}
-	if se.SaveKeyMaps {
-		AvailableKeyMaps.SaveSettings()
-	}
 	if se.SaveLangOpts {
 		AvailableLangs.SaveSettings()
 	}
@@ -123,9 +111,6 @@ func (se *SettingsData) Open() error {
 	if err != nil {
 		return err
 	}
-	if se.SaveKeyMaps {
-		AvailableKeyMaps.OpenSettings()
-	}
 	if se.SaveLangOpts {
 		AvailableLangs.OpenSettings()
 	}
@@ -139,9 +124,6 @@ func (se *SettingsData) Open() error {
 
 // Apply settings updates things according with settings
 func (se *SettingsData) Apply() { //types:add
-	if se.KeyMap != "" {
-		SetActiveKeyMapName(se.KeyMap) // fills in missing pieces
-	}
 	MergeAvailableCmds()
 	AvailableLangs.Validate()
 	se.ApplyEnvVars()
@@ -165,9 +147,6 @@ func (se *SettingsData) ApplyEnvVars() {
 
 func (se *SettingsData) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *views.FuncButton) {
-		w.SetFunc(se.EditKeyMaps).SetIcon(icons.Keyboard)
-	})
-	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(se.EditLangOpts).SetIcon(icons.Subtitles)
 	})
 	core.Add(p, func(w *views.FuncButton) {
@@ -179,14 +158,6 @@ func (se *SettingsData) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(se.EditRegisters).SetIcon(icons.Variables)
 	})
-}
-
-// EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /
-// load from other files, etc.  Current avail keymaps are saved and loaded
-// with settings automatically.
-func (se *SettingsData) EditKeyMaps() { //types:add
-	se.SaveKeyMaps = true
-	KeyMapsView(&AvailableKeyMaps)
 }
 
 // EditLangOpts opens the LangsView editor to customize options for each type of

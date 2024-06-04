@@ -10,36 +10,35 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/views"
 )
 
 func (cv *CodeView) codeViewKeys(e events.Event) {
 	SetGoMod(cv.Settings.GoMod)
-	var kf KeyFunctions
 	kc := e.KeyChord()
-	gkf := keymap.Of(kc)
+	kf := keymap.Of(kc)
 	if core.DebugSettings.KeyEventTrace {
-		slog.Info("CodeView KeyInput", "widget", cv, "keyfun", gkf)
+		slog.Info("CodeView KeyInput", "widget", cv, "keymap", kf, kc)
 	}
 	if cv.KeySeq1 != "" {
-		kf = KeyFunction(cv.KeySeq1, kc)
-		seqstr := string(cv.KeySeq1) + " " + string(kc)
-		if kf == KeyNone || kc == "Escape" {
+		kc2 := string(cv.KeySeq1) + " " + string(kc)
+		kf2 := keymap.Of(key.Chord(kc2))
+		if kf2 == keymap.None || kf == keymap.CancelSelect || kc == "Escape" {
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("KeyFun sequence: %v aborted\n", seqstr)
+				fmt.Printf("KeyMap sequence: %v aborted\n", cv.KeySeq1)
 			}
-			cv.SetStatus(seqstr + " -- aborted")
+			cv.SetStatus(string(cv.KeySeq1) + " -- aborted")
 			e.SetHandled() // abort key sequence, don't send esc to anyone else
 			cv.KeySeq1 = ""
 			return
 		}
-		cv.SetStatus(seqstr)
+		cv.SetStatus(kc2)
 		cv.KeySeq1 = ""
-		gkf = keymap.None // override!
+		kf = kf2
 	} else {
-		kf = KeyFunction(kc, "")
-		if kf == KeyNeeds2 {
+		if kf == keymap.MultiA || kf == keymap.MultiB {
 			e.SetHandled()
 			tv := cv.ActiveTextEditor()
 			if tv != nil {
@@ -48,19 +47,18 @@ func (cv *CodeView) codeViewKeys(e events.Event) {
 			cv.KeySeq1 = e.KeyChord()
 			cv.SetStatus(string(cv.KeySeq1))
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("KeyFun sequence needs 2 after: %v\n", cv.KeySeq1)
+				fmt.Printf("KeyMap sequence needs 2 after: %v\n", cv.KeySeq1)
 			}
 			return
-		} else if kf != KeyNone {
+		} else if kf != keymap.None {
 			if core.DebugSettings.KeyEventTrace {
-				fmt.Printf("KeyFun got in one: %v = %v\n", cv.KeySeq1, kf)
+				fmt.Printf("KeyMap got in one: %v = %v\n", cv.KeySeq1, kf)
 			}
-			gkf = keymap.None // override!
 		}
 	}
 
 	atv := cv.ActiveTextEditor()
-	switch gkf {
+	switch kf {
 	case keymap.Find:
 		e.SetHandled()
 		if atv != nil && atv.HasSelection() {
