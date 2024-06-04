@@ -109,6 +109,7 @@ type CodeView struct {
 }
 
 func init() {
+	// TODO(URLHandler):
 	// core.URLHandler = URLHandler
 	// paint.TextLinkHandler = TextLinkHandler
 }
@@ -660,7 +661,6 @@ func CodeInScene(sc *core.Scene) *CodeView {
 // NewCodeWindow is common code for Open CodeWindow from Project or Path
 func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 	winm := "Cogent Code • " + projnm
-
 	if win, found := core.AllRenderWindows.FindName(winm); found {
 		sc := win.MainScene()
 		cv := CodeInScene(sc)
@@ -669,13 +669,9 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 			return cv
 		}
 	}
-
 	b := core.NewBody(winm).SetTitle(winm)
-
 	cv := NewCodeView(b)
-	core.TheApp.AppBarConfig = cv.AppBarConfig
 	b.AddAppBar(cv.MakeToolbar)
-
 	b.RunWindow()
 
 	if doPath {
