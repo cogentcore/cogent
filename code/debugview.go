@@ -123,8 +123,7 @@ func (dv *DebugView) Init() {
 		w.Maker(dv.MakeToolbar)
 	})
 	core.AddChildAt(dv, "tabs", func(w *core.Tabs) {
-		w.UpdateWidget()
-		dv.Updater(dv.InitTabs)
+		dv.Updater(dv.InitTabs) // note: this is necessary to allow config to happen first
 	})
 }
 
