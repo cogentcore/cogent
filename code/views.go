@@ -145,8 +145,8 @@ func (cv *CodeView) Debug() { //types:add
 	exe := filepath.Base(exePath)
 	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
 	dv.Config(cv, fileinfo.Go, exePath)
-	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
+	dv.Update()
 	dv.Start()
 	cv.CurDbg = dv
 }

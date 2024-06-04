@@ -74,79 +74,6 @@ func (t *DebugView) SetExePath(v string) *DebugView { t.ExePath = v; return t }
 // time when dbg was last restarted
 func (t *DebugView) SetDbgTime(v time.Time) *DebugView { t.DbgTime = v; return t }
 
-// StackViewType is the [types.Type] for [StackView]
-var StackViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.StackView", IDName: "stack-view", Doc: "StackView is a view of the stack trace", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "FindFrames", Doc: "if true, this is a find frames, not a regular stack"}}, Instance: &StackView{}})
-
-// NewStackView returns a new [StackView] with the given optional parent:
-// StackView is a view of the stack trace
-func NewStackView(parent ...tree.Node) *StackView { return tree.New[*StackView](parent...) }
-
-// NodeType returns the [*types.Type] of [StackView]
-func (t *StackView) NodeType() *types.Type { return StackViewType }
-
-// New returns a new [*StackView] value
-func (t *StackView) New() tree.Node { return &StackView{} }
-
-// SetFindFrames sets the [StackView.FindFrames]:
-// if true, this is a find frames, not a regular stack
-func (t *StackView) SetFindFrames(v bool) *StackView { t.FindFrames = v; return t }
-
-// BreakViewType is the [types.Type] for [BreakView]
-var BreakViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.BreakView", IDName: "break-view", Doc: "BreakView is a view of the breakpoints", Embeds: []types.Field{{Name: "Frame"}}, Instance: &BreakView{}})
-
-// NewBreakView returns a new [BreakView] with the given optional parent:
-// BreakView is a view of the breakpoints
-func NewBreakView(parent ...tree.Node) *BreakView { return tree.New[*BreakView](parent...) }
-
-// NodeType returns the [*types.Type] of [BreakView]
-func (t *BreakView) NodeType() *types.Type { return BreakViewType }
-
-// New returns a new [*BreakView] value
-func (t *BreakView) New() tree.Node { return &BreakView{} }
-
-// ThreadViewType is the [types.Type] for [ThreadView]
-var ThreadViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.ThreadView", IDName: "thread-view", Doc: "ThreadView is a view of the threads", Embeds: []types.Field{{Name: "Frame"}}, Instance: &ThreadView{}})
-
-// NewThreadView returns a new [ThreadView] with the given optional parent:
-// ThreadView is a view of the threads
-func NewThreadView(parent ...tree.Node) *ThreadView { return tree.New[*ThreadView](parent...) }
-
-// NodeType returns the [*types.Type] of [ThreadView]
-func (t *ThreadView) NodeType() *types.Type { return ThreadViewType }
-
-// New returns a new [*ThreadView] value
-func (t *ThreadView) New() tree.Node { return &ThreadView{} }
-
-// TaskViewType is the [types.Type] for [TaskView]
-var TaskViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.TaskView", IDName: "task-view", Doc: "TaskView is a view of the threads", Embeds: []types.Field{{Name: "Frame"}}, Instance: &TaskView{}})
-
-// NewTaskView returns a new [TaskView] with the given optional parent:
-// TaskView is a view of the threads
-func NewTaskView(parent ...tree.Node) *TaskView { return tree.New[*TaskView](parent...) }
-
-// NodeType returns the [*types.Type] of [TaskView]
-func (t *TaskView) NodeType() *types.Type { return TaskViewType }
-
-// New returns a new [*TaskView] value
-func (t *TaskView) New() tree.Node { return &TaskView{} }
-
-// VarsViewType is the [types.Type] for [VarsView]
-var VarsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarsView", IDName: "vars-view", Doc: "VarsView is a view of the variables", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "GlobalVars", Doc: "if true, this is global vars, not local ones"}}, Instance: &VarsView{}})
-
-// NewVarsView returns a new [VarsView] with the given optional parent:
-// VarsView is a view of the variables
-func NewVarsView(parent ...tree.Node) *VarsView { return tree.New[*VarsView](parent...) }
-
-// NodeType returns the [*types.Type] of [VarsView]
-func (t *VarsView) NodeType() *types.Type { return VarsViewType }
-
-// New returns a new [*VarsView] value
-func (t *VarsView) New() tree.Node { return &VarsView{} }
-
-// SetGlobalVars sets the [VarsView.GlobalVars]:
-// if true, this is global vars, not local ones
-func (t *VarsView) SetGlobalVars(v bool) *VarsView { t.GlobalVars = v; return t }
-
 // VarViewType is the [types.Type] for [VarView]
 var VarViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
 
@@ -204,7 +131,7 @@ func (t *FindView) SetTime(v time.Time) *FindView { t.Time = v; return t }
 // compiled regexp
 func (t *FindView) SetRe(v *regexp.Regexp) *FindView { t.Re = v; return t }
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditKeyMaps", Doc: "EditKeyMaps opens the KeyMapsView editor to create new keymaps / save /\nload from other files, etc.  Current avail keymaps are saved and loaded\nwith settings automatically.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Files", Doc: "file view settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file view settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Fields: []types.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"}}})
 

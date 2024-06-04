@@ -22,7 +22,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
 )
 
@@ -119,32 +118,117 @@ func (dv *DebugView) Init() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-
-	core.AddChildAt(dv, "toolbar", func(w *core.Toolbar) {
+	core.AddChildAt(dv, "toolbar", func(w *core.Frame) {
+		core.ToolbarStyles(w)
 		w.Maker(dv.MakeToolbar)
 	})
 	core.AddChildAt(dv, "tabs", func(w *core.Tabs) {
-		// todo: some better way of making tabs?
-		ctv := texteditor.NewEditor(w.NewTab("Console"))
-		ctv.SetName("dbg-console")
-		ConfigOutputTextEditor(ctv)
-		dv.OutputBuffer.Options.LineNumbers = false
-		ctv.SetBuffer(dv.OutputBuffer)
-		NewBreakView(w.NewTab("Breaks")).ConfigBreakView(dv)
-		NewStackView(w.NewTab("Stack")).ConfigStackView(dv, false)
-		if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
-			NewTaskView(w.NewTab("Tasks")).ConfigTaskView(dv)
-		}
-		NewVarsView(w.NewTab("Vars")).ConfigVarsView(dv, false)
-		NewThreadView(w.NewTab("Threads")).ConfigThreadView(dv)
-		NewStackView(w.NewTab("Find Frames")).ConfigStackView(dv, true) // find frames
-		NewVarsView(w.NewTab("Global Vars")).ConfigVarsView(dv, true)   // all vars
+		w.UpdateWidget()
+		dv.Updater(dv.InitTabs)
 	})
+}
 
+func (dv *DebugView) InitTabs() {
+	w := dv.Tabs()
+	if w.NumTabs() > 0 {
+		return
+	}
+	ctv := texteditor.NewEditor(w.NewTab("Console"))
+	ctv.SetName("dbg-console")
+	ConfigOutputTextEditor(ctv)
 	dv.State.BlankState()
 	dv.OutputBuffer = texteditor.NewBuffer()
 	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
 	dv.State.Breaks = nil // get rid of dummy
+	dv.OutputBuffer.Options.LineNumbers = false
+	ctv.SetBuffer(dv.OutputBuffer)
+
+	bv := w.NewTab("Breaks")
+	core.AddChild(bv, func(w *views.TableView) {
+		w.OnDoubleClick(func(e events.Event) {
+			idx := w.SelectedIndex
+			dv.ShowBreakFile(idx)
+		})
+		// todo:
+		// 	} else if sig == int64(views.SliceViewDeleted) {
+		// 		idx := data.(int)
+		// 		dv.DeleteBreakIndex(idx)
+		// 	}
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetSlice(&dv.State.Breaks)
+	})
+
+	sv := w.NewTab("Stack")
+	core.AddChild(sv, func(w *views.TableView) {
+		w.SetSlice(&dv.State.Stack)
+		w.OnDoubleClick(func(e events.Event) {
+			dv.SetFrame(w.SelectedIndex)
+		})
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
+	})
+
+	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
+		tv := w.NewTab("Tasks")
+		core.AddChild(tv, func(w *views.TableView) {
+			w.SetSlice(&dv.State.Tasks)
+			w.OnDoubleClick(func(e events.Event) {
+				if dv.Dbg != nil && dv.Dbg.HasTasks() {
+					dv.SetThreadIndex(w.SelectedIndex)
+				}
+			})
+			w.SetFlag(false, views.SliceViewShowIndex)
+			w.SetReadOnly(true)
+		})
+	}
+
+	tv := w.NewTab("Threads")
+	core.AddChild(tv, func(w *views.TableView) {
+		w.SetSlice(&dv.State.Threads)
+		w.OnDoubleClick(func(e events.Event) {
+			if dv.Dbg != nil && !dv.Dbg.HasTasks() {
+				dv.SetThreadIndex(w.SelectedIndex)
+			}
+		})
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
+	})
+
+	vv := w.NewTab("Vars")
+	core.AddChild(vv, func(w *views.TableView) {
+		w.SetSlice(&dv.State.Vars)
+		w.OnDoubleClick(func(e events.Event) {
+			vr := dv.State.Vars[w.SelectedIndex]
+			dv.ShowVar(vr.Nm)
+		})
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
+	})
+
+	ff := w.NewTab("Find Frames")
+	core.AddChild(ff, func(w *views.TableView) {
+		w.SetSlice(&dv.State.FindFrames)
+		w.OnDoubleClick(func(e events.Event) {
+			idx := w.SelectedIndex
+			if idx >= 0 && idx < len(dv.State.FindFrames) {
+				fr := dv.State.FindFrames[idx]
+				dv.SetThread(fr.ThreadID)
+			}
+		})
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
+	})
+
+	gv := w.NewTab("Global Vars")
+	core.AddChild(gv, func(w *views.TableView) {
+		w.SetSlice(&dv.State.GlobalVars)
+		w.OnDoubleClick(func(e events.Event) {
+			vr := dv.State.Vars[w.SelectedIndex]
+			dv.ShowVar(vr.Nm)
+		})
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
+	})
 }
 
 // DbgIsActive means debugger is started.
@@ -510,7 +594,6 @@ func (dv *DebugView) UpdateFromState() {
 	dv.UpdateAllBreaks()
 	dv.ShowBreaks(false)
 	dv.ShowStack(false)
-	dv.ShowVars(false)
 	dv.ShowThreads(false)
 	if dv.Dbg.HasTasks() {
 		dv.ShowTasks(false)
@@ -649,8 +732,14 @@ func (dv *DebugView) ShowBreaks(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Breaks")
 	}
-	sv := dv.BreakVw()
-	sv.ShowBreaks()
+	tv := dv.Tabs().TabByName("Breaks").Child(0).(*views.TableView)
+	if dv.State.CurBreak > 0 {
+		_, idx := cdebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
+		if idx >= 0 {
+			tv.SelectedIndex = idx
+		}
+	}
+	dv.BackupBreaks()
 }
 
 // ShowStack shows the current stack
@@ -658,8 +747,8 @@ func (dv *DebugView) ShowStack(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Stack")
 	}
-	sv := dv.StackVw()
-	sv.ShowStack()
+	tv := dv.Tabs().TabByName("Stack").Child(0).(*views.TableView)
+	tv.SelectedIndex = dv.State.CurFrame
 }
 
 // ShowVars shows the current vars
@@ -667,8 +756,6 @@ func (dv *DebugView) ShowVars(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Vars")
 	}
-	sv := dv.VarVw()
-	sv.ShowVars()
 }
 
 // ShowTasks shows the current tasks
@@ -676,8 +763,11 @@ func (dv *DebugView) ShowTasks(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Tasks")
 	}
-	sv := dv.TaskVw()
-	sv.ShowTasks()
+	tv := dv.Tabs().TabByName("Tasks").Child(0).(*views.TableView)
+	_, idx := cdebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
+	if idx >= 0 {
+		tv.SelectedIndex = idx
+	}
 }
 
 // ShowThreads shows the current threads
@@ -685,8 +775,11 @@ func (dv *DebugView) ShowThreads(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Threads")
 	}
-	sv := dv.ThreadVw()
-	sv.ShowThreads()
+	tv := dv.Tabs().TabByName("Threads").Child(0).(*views.TableView)
+	_, idx := cdebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
+	if idx >= 0 {
+		tv.SelectedIndex = idx
+	}
 }
 
 // ShowFindFrames shows the current find frames
@@ -694,8 +787,6 @@ func (dv *DebugView) ShowFindFrames(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Find Frames")
 	}
-	sv := dv.FindFramesVw()
-	sv.ShowStack()
 }
 
 // ShowGlobalVars shows the current allvars
@@ -703,8 +794,6 @@ func (dv *DebugView) ShowGlobalVars(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Global Vars")
 	}
-	sv := dv.AllVarVw()
-	sv.ShowVars()
 }
 
 // ShowVar shows info on a given variable within the current frame scope in a text view dialog
@@ -774,55 +863,13 @@ func (dv *DebugView) SetStatus(stat cdebug.Status) {
 }
 
 // Toolbar returns the debug toolbar
-func (dv *DebugView) Toolbar() *core.Toolbar {
-	return dv.ChildByName("toolbar", 0).(*core.Toolbar)
+func (dv *DebugView) Toolbar() *core.Frame {
+	return dv.ChildByName("toolbar", 0).(*core.Frame)
 }
 
 // Tabs returns the tabs
 func (dv *DebugView) Tabs() *core.Tabs {
 	return dv.ChildByName("tabs", 1).(*core.Tabs)
-}
-
-// BreakVw returns the break view from tabs
-func (dv *DebugView) BreakVw() *BreakView {
-	tv := dv.Tabs()
-	return tv.TabByName("Breaks").Child(0).(*BreakView)
-}
-
-// StackVw returns the stack view from tabs
-func (dv *DebugView) StackVw() *StackView {
-	tv := dv.Tabs()
-	return tv.TabByName("Stack").Child(0).(*StackView)
-}
-
-// VarVw returns the vars view from tabs
-func (dv *DebugView) VarVw() *VarsView {
-	tv := dv.Tabs()
-	return tv.TabByName("Vars").Child(0).(*VarsView)
-}
-
-// TaskVw returns the task view from tabs
-func (dv *DebugView) TaskVw() *TaskView {
-	tv := dv.Tabs()
-	return tv.TabByName("Tasks").Child(0).(*TaskView)
-}
-
-// ThreadVw returns the thread view from tabs
-func (dv *DebugView) ThreadVw() *ThreadView {
-	tv := dv.Tabs()
-	return tv.TabByName("Threads").Child(0).(*ThreadView)
-}
-
-// FindFramesVw returns the find frames view from tabs
-func (dv *DebugView) FindFramesVw() *StackView {
-	tv := dv.Tabs()
-	return tv.TabByName("Find Frames").Child(0).(*StackView)
-}
-
-// AllVarVw returns the all vars view from tabs
-func (dv *DebugView) AllVarVw() *VarsView {
-	tv := dv.Tabs()
-	return tv.TabByName("Global Vars").Child(0).(*VarsView)
 }
 
 // ConsoleText returns the console TextEditor
@@ -844,7 +891,7 @@ func (dv *DebugView) UpdateToolbar() {
 }
 
 func (dv *DebugView) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.Text) {
+	core.AddAt(p, "status", func(w *core.Text) {
 		w.SetText("Building").Style(func(s *styles.Style) {
 			color := DebugStatusColors[dv.State.Status]
 			s.Background = colors.C(color)
@@ -941,276 +988,6 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-//  StackView
-
-// StackView is a view of the stack trace
-type StackView struct {
-	core.Frame
-
-	// if true, this is a find frames, not a regular stack
-	FindFrames bool
-}
-
-func (sv *StackView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
-	return dv
-}
-
-func (sv *StackView) ConfigStackView(dv *DebugView, findFrames bool) {
-	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Grow.Set(1, 1)
-	})
-	sv.FindFrames = findFrames
-	tv := views.NewTableView(sv)
-	tv.SetName("stack")
-	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelectedIndex
-		if sv.FindFrames {
-			if idx >= 0 && idx < len(dv.State.FindFrames) {
-				fr := dv.State.FindFrames[idx]
-				dv.SetThread(fr.ThreadID)
-			}
-		} else {
-			dv.SetFrame(idx)
-		}
-	})
-	tv.SetFlag(false, views.SliceViewShowIndex)
-	tv.SetReadOnly(true)
-	if sv.FindFrames {
-		tv.SetSlice(&dv.State.FindFrames)
-	} else {
-		tv.SetSlice(&dv.State.Stack)
-	}
-}
-
-// TableView returns the tableview
-func (sv *StackView) TableView() *views.TableView {
-	return sv.ChildByName("stack", 0).(*views.TableView)
-}
-
-// ShowStack triggers update of view of State.Stack
-func (sv *StackView) ShowStack() {
-	tv := sv.TableView()
-	dv := sv.DebugVw()
-	tv.SetReadOnly(true)
-	if sv.FindFrames {
-		tv.SetSlice(&dv.State.FindFrames)
-	} else {
-		tv.SelectedIndex = dv.State.CurFrame
-		tv.SetSlice(&dv.State.Stack)
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  BreakView
-
-// BreakView is a view of the breakpoints
-type BreakView struct {
-	core.Frame
-}
-
-func (sv *BreakView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
-	return dv
-}
-
-func (sv *BreakView) ConfigBreakView(dv *DebugView) {
-	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Grow.Set(1, 1)
-	})
-	tv := views.NewTableView(sv)
-	tv.SetName("breaks")
-	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelectedIndex
-		dv.ShowBreakFile(idx)
-	})
-	// todo:
-	// 	} else if sig == int64(views.SliceViewDeleted) {
-	// 		idx := data.(int)
-	// 		dv.DeleteBreakIndex(idx)
-	// 	}
-	tv.SetFlag(false, views.SliceViewShowIndex)
-	tv.SetSlice(&dv.State.Breaks)
-}
-
-// TableView returns the tableview
-func (sv *BreakView) TableView() *views.TableView {
-	return sv.ChildByName("breaks", 0).(*views.TableView)
-}
-
-// ShowBreaks triggers update of view of State.Breaks
-func (sv *BreakView) ShowBreaks() {
-	tv := sv.TableView()
-	dv := sv.DebugVw()
-	if dv.State.CurBreak > 0 {
-		_, idx := cdebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
-		if idx >= 0 {
-			tv.SelectedIndex = idx
-		}
-	}
-	tv.SetSlice(&dv.State.Breaks)
-	dv.BackupBreaks()
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  ThreadView
-
-// ThreadView is a view of the threads
-type ThreadView struct {
-	core.Frame
-}
-
-func (sv *ThreadView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
-	return dv
-}
-
-func (sv *ThreadView) ConfigThreadView(dv *DebugView) {
-	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Grow.Set(1, 1)
-	})
-	tv := views.NewTableView(sv)
-	tv.SetName("threads")
-	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelectedIndex
-		if dv.Dbg != nil && !dv.Dbg.HasTasks() {
-			dv.SetThreadIndex(idx)
-		}
-	})
-	tv.SetReadOnly(true)
-	tv.SetFlag(false, views.SliceViewShowIndex)
-	tv.SetSlice(&dv.State.Threads)
-}
-
-// TableView returns the tableview
-func (sv *ThreadView) TableView() *views.TableView {
-	return sv.ChildByName("threads", 0).(*views.TableView)
-}
-
-// ShowThreads triggers update of view of State.Threads
-func (sv *ThreadView) ShowThreads() {
-	tv := sv.TableView()
-	dv := sv.DebugVw()
-	tv.SetReadOnly(true)
-	_, idx := cdebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
-	if idx >= 0 {
-		tv.SelectedIndex = idx
-	}
-	tv.SetSlice(&dv.State.Threads)
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  TaskView
-
-// TaskView is a view of the threads
-type TaskView struct {
-	core.Frame
-}
-
-func (sv *TaskView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
-	return dv
-}
-
-func (sv *TaskView) ConfigTaskView(dv *DebugView) {
-	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Grow.Set(1, 1)
-	})
-	tv := views.NewTableView(sv)
-	tv.SetName("tasks")
-	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelectedIndex
-		if dv.Dbg != nil && dv.Dbg.HasTasks() {
-			dv.SetThreadIndex(idx)
-		}
-	})
-	tv.SetFlag(false, views.SliceViewShowIndex)
-	tv.SetReadOnly(true)
-	tv.SetSlice(&dv.State.Tasks)
-}
-
-// TableView returns the tableview
-func (sv *TaskView) TableView() *views.TableView {
-	return sv.ChildByName("tasks", 0).(*views.TableView)
-}
-
-// ShowTasks triggers update of view of State.Tasks
-func (sv *TaskView) ShowTasks() {
-	tv := sv.TableView()
-	dv := sv.DebugVw()
-	tv.SetReadOnly(true)
-	_, idx := cdebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
-	if idx >= 0 {
-		tv.SelectedIndex = idx
-	}
-	tv.SetSlice(&dv.State.Tasks)
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-//  VarsView
-
-// VarsView is a view of the variables
-type VarsView struct {
-	core.Frame
-
-	// if true, this is global vars, not local ones
-	GlobalVars bool
-}
-
-func (sv *VarsView) DebugVw() *DebugView {
-	dv := sv.ParentByType(DebugViewType, tree.NoEmbeds).(*DebugView)
-	return dv
-}
-
-func (sv *VarsView) ConfigVarsView(dv *DebugView, globalVars bool) {
-	sv.Style(func(s *styles.Style) {
-		s.Direction = styles.Column
-		s.Grow.Set(1, 1)
-	})
-	sv.GlobalVars = globalVars
-	tv := views.NewTableView(sv)
-	tv.SetName("vars")
-	tv.OnDoubleClick(func(e events.Event) {
-		idx := tv.SelectedIndex
-		if sv.GlobalVars {
-			vr := dv.State.GlobalVars[idx]
-			dv.ShowVar(vr.Nm)
-		} else {
-			vr := dv.State.Vars[idx]
-			dv.ShowVar(vr.Nm)
-		}
-	})
-	tv.SetFlag(false, views.SliceViewShowIndex)
-	tv.SetReadOnly(true)
-	if sv.GlobalVars {
-		tv.SetSlice(&dv.State.GlobalVars)
-	} else {
-		tv.SetSlice(&dv.State.Vars)
-	}
-}
-
-// TableView returns the tableview
-func (sv *VarsView) TableView() *views.TableView {
-	return sv.ChildByName("vars", 0).(*views.TableView)
-}
-
-// ShowVars triggers update of view of State.Vars
-func (sv *VarsView) ShowVars() {
-	tv := sv.TableView()
-	dv := sv.DebugVw()
-	tv.SetReadOnly(true)
-	if sv.GlobalVars {
-		tv.SetSlice(&dv.State.GlobalVars)
-	} else {
-		tv.SetSlice(&dv.State.Vars)
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
 //  VarView
 
 // VarView shows a debug variable in an inspector-like framework,
@@ -1261,8 +1038,8 @@ func (vv *VarView) Init() {
 						if ok {
 							vv.SelectVar = vr
 						}
-						sv := vv.StructView()
-						sv.SetStruct(sn)
+						vv := vv.StructView()
+						vv.SetStruct(sn)
 					}
 				})
 			})
