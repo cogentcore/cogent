@@ -49,6 +49,8 @@ func (cv *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	cv.Settings.Find.Regexp = regExp
 	cv.Settings.Find.Langs = langs
 	cv.Settings.Find.Loc = loc
+	cv.Settings.Find.Find = find
+	cv.Settings.Find.Replace = repl
 
 	tv := cv.Tabs()
 	if tv == nil {
@@ -62,10 +64,7 @@ func (cv *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 	ftv := fv.TextEditor()
 	ftv.SetBuffer(fbuf)
 
-	fv.SaveFindString(find)
-	fv.SaveReplString(repl)
 	root := filetree.AsNode(cv.Files)
-
 	atv := cv.ActiveTextEditor()
 	ond, _, got := cv.OpenNodeForTextEditor(atv)
 	adir := ""

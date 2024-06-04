@@ -150,30 +150,9 @@ func (fv *FindView) ShowResults(res []filetree.SearchResults) {
 	}
 }
 
-// SaveFindString saves the given find string to the find params history and current str
-func (fv *FindView) SaveFindString(find string) {
-	fv.Params().Find = find
-	core.StringsInsertFirstUnique(&fv.Params().FindHist, find, core.SystemSettings.SavedPathsMax)
-	ftc := fv.FindText()
-	if ftc != nil {
-		ftc.SetStrings(fv.Params().FindHist...).SetCurrentIndex(0)
-	}
-}
-
-// SaveReplString saves the given replace string to the find params history and current str
-func (fv *FindView) SaveReplString(repl string) {
-	fv.Params().Replace = repl
-	core.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, core.SystemSettings.SavedPathsMax)
-	rtc := fv.ReplText()
-	if rtc != nil {
-		rtc.SetStrings(fv.Params().ReplHist...).SetCurrentIndex(0)
-	}
-}
-
 // FindAction runs a new find with current params
 func (fv *FindView) FindAction() {
 	fp := fv.Params()
-	fv.SaveFindString(fp.Find)
 	if !fv.CompileRegexp() {
 		return
 	}
@@ -197,11 +176,7 @@ func (fv *FindView) ReplaceAction() bool {
 	if !fv.CheckValidRegexp() {
 		return false
 	}
-
 	fp := fv.Params()
-	fv.SaveReplString(fp.Replace)
-	core.StringsInsertFirstUnique(&fp.ReplHist, fp.Replace, core.SystemSettings.SavedPathsMax)
-
 	ftv := fv.TextEditor()
 	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
 	if !ok {
@@ -394,46 +369,6 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //////////////////////////////////////////////////////////////////////////////////////
 //    GUI config
 
-// FindBar returns the find toolbar
-func (fv *FindView) FindBar() *core.BasicBar {
-	return fv.ChildByName("findbar", 0).(*core.BasicBar)
-}
-
-// ReplBar returns the replace toolbar
-func (fv *FindView) ReplBar() *core.BasicBar {
-	return fv.ChildByName("replbar", 1).(*core.BasicBar)
-}
-
-// FindText returns the find textfield in toolbar
-func (fv *FindView) FindText() *core.Chooser {
-	return fv.FindBar().ChildByName("find-str", 1).(*core.Chooser)
-}
-
-// ReplText returns the replace textfield in toolbar
-func (fv *FindView) ReplText() *core.Chooser {
-	return fv.ReplBar().ChildByName("repl-str", 1).(*core.Chooser)
-}
-
-// IgnoreBox returns the ignore case checkbox in toolbar
-func (fv *FindView) IgnoreBox() *core.Switch {
-	return fv.FindBar().ChildByName("ignore-case", 2).(*core.Switch)
-}
-
-// RegexpBox returns the regexp checkbox in toolbar
-func (fv *FindView) RegexpBox() *core.Switch {
-	return fv.FindBar().ChildByName("regexp", 3).(*core.Switch)
-}
-
-// LocCombo returns the loc combobox
-func (fv *FindView) LocCombo() *core.Chooser {
-	return fv.FindBar().ChildByName("loc", 5).(*core.Chooser)
-}
-
-// FindNextAct returns the find next action in toolbar -- selected first
-func (fv *FindView) FindNextAct() *core.Button {
-	return fv.ReplBar().ChildByName("next", 3).(*core.Button)
-}
-
 // TextEditorLay returns the find results TextEditor
 func (fv *FindView) TextEditor() *texteditor.Editor {
 	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
@@ -455,8 +390,9 @@ func (fv *FindView) makeFindToolbar(p *core.Plan) {
 			s.Max.X.Zero()
 		})
 		w.OnChange(func(e events.Event) {
-			fv.Params().Find = w.CurrentItem.Value.(string)
-			if fv.Params().Find == "" {
+			find := w.CurrentItem.Value.(string)
+			fv.Params().Find = find
+			if find == "" {
 				tv := fv.Code.ActiveTextEditor()
 				if tv != nil {
 					tv.ClearHighlights()
@@ -466,6 +402,7 @@ func (fv *FindView) makeFindToolbar(p *core.Plan) {
 					fvtv.Buffer.NewBuffer(0)
 				}
 			} else {
+				core.StringsInsertFirstUnique(&fv.Params().FindHist, find, core.SystemSettings.SavedPathsMax)
 				fv.FindAction()
 			}
 		})
@@ -543,7 +480,9 @@ func (fv *FindView) makeReplToolbar(p *core.Plan) {
 			s.Max.X.Zero()
 		})
 		w.OnChange(func(e events.Event) {
-			fv.Params().Replace = w.CurrentItem.Value.(string)
+			repl := w.CurrentItem.Value.(string)
+			fv.Params().Replace = repl
+			core.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, core.SystemSettings.SavedPathsMax)
 		})
 		w.Updater(func() {
 			w.SetCurrentValue(fv.Params().Replace)
