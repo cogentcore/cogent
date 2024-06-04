@@ -737,6 +737,7 @@ func (dv *DebugView) ShowBreaks(selTab bool) {
 		_, idx := cdebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
 		if idx >= 0 {
 			tv.SelectedIndex = idx
+			tv.Update()
 		}
 	}
 	dv.BackupBreaks()
@@ -749,12 +750,15 @@ func (dv *DebugView) ShowStack(selTab bool) {
 	}
 	tv := dv.Tabs().TabByName("Stack").Child(0).(*views.TableView)
 	tv.SelectedIndex = dv.State.CurFrame
+	tv.Update()
 }
 
 // ShowVars shows the current vars
 func (dv *DebugView) ShowVars(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Vars")
+	} else {
+		dv.Update()
 	}
 }
 
@@ -767,6 +771,7 @@ func (dv *DebugView) ShowTasks(selTab bool) {
 	_, idx := cdebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
 	if idx >= 0 {
 		tv.SelectedIndex = idx
+		tv.Update()
 	}
 }
 
@@ -779,6 +784,7 @@ func (dv *DebugView) ShowThreads(selTab bool) {
 	_, idx := cdebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
 	if idx >= 0 {
 		tv.SelectedIndex = idx
+		tv.Update()
 	}
 }
 
@@ -786,6 +792,8 @@ func (dv *DebugView) ShowThreads(selTab bool) {
 func (dv *DebugView) ShowFindFrames(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Find Frames")
+	} else {
+		dv.Update()
 	}
 }
 
@@ -793,6 +801,8 @@ func (dv *DebugView) ShowFindFrames(selTab bool) {
 func (dv *DebugView) ShowGlobalVars(selTab bool) {
 	if selTab {
 		dv.Tabs().SelectTabByName("Global Vars")
+	} else {
+		dv.Update()
 	}
 }
 
