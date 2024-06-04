@@ -3,11 +3,6 @@
 package imports
 
 import (
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
-
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/events"
@@ -18,6 +13,10 @@ import (
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
 )
 
 func init() {
@@ -504,7 +503,6 @@ type _cogentcore_org_core_core_Layouter struct {
 	WOnAdd               func()
 	WOnChildAdded        func(child tree.Node)
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WInit                func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
 	WParentByName        func(name string) tree.Node
@@ -699,9 +697,6 @@ func (W _cogentcore_org_core_core_Layouter) OnChildAdded(child tree.Node) {
 }
 func (W _cogentcore_org_core_core_Layouter) OnClick(fun func(e events.Event)) *core.WidgetBase {
 	return W.WOnClick(fun)
-}
-func (W _cogentcore_org_core_core_Layouter) Init() {
-	W.WInit()
 }
 func (W _cogentcore_org_core_core_Layouter) OnWidgetAdded(f func(w core.Widget)) *core.WidgetBase {
 	return W.WOnWidgetAdded(f)
@@ -1011,7 +1006,6 @@ type _cogentcore_org_core_core_Value struct {
 	WOnAdd               func()
 	WOnChildAdded        func(child tree.Node)
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WInit                func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
 	WParentByName        func(name string) tree.Node
@@ -1193,9 +1187,6 @@ func (W _cogentcore_org_core_core_Value) OnChildAdded(child tree.Node) {
 func (W _cogentcore_org_core_core_Value) OnClick(fun func(e events.Event)) *core.WidgetBase {
 	return W.WOnClick(fun)
 }
-func (W _cogentcore_org_core_core_Value) Init() {
-	W.WInit()
-}
 func (W _cogentcore_org_core_core_Value) OnWidgetAdded(f func(w core.Widget)) *core.WidgetBase {
 	return W.WOnWidgetAdded(f)
 }
@@ -1373,7 +1364,6 @@ type _cogentcore_org_core_core_Widget struct {
 	WOnAdd               func()
 	WOnChildAdded        func(child tree.Node)
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WInit                func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
 	WParentByName        func(name string) tree.Node
@@ -1553,9 +1543,6 @@ func (W _cogentcore_org_core_core_Widget) OnChildAdded(child tree.Node) {
 }
 func (W _cogentcore_org_core_core_Widget) OnClick(fun func(e events.Event)) *core.WidgetBase {
 	return W.WOnClick(fun)
-}
-func (W _cogentcore_org_core_core_Widget) Init() {
-	W.WInit()
 }
 func (W _cogentcore_org_core_core_Widget) OnWidgetAdded(f func(w core.Widget)) *core.WidgetBase {
 	return W.WOnWidgetAdded(f)

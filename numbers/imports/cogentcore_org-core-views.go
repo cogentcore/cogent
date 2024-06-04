@@ -3,11 +3,6 @@
 package imports
 
 import (
-	"go/constant"
-	"go/token"
-	"image"
-	"reflect"
-
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
@@ -19,6 +14,10 @@ import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 	"cogentcore.org/core/views"
+	"go/constant"
+	"go/token"
+	"image"
+	"reflect"
 )
 
 func init() {
@@ -120,7 +119,6 @@ func init() {
 		"ColorView":          reflect.ValueOf((*views.ColorView)(nil)),
 		"DateView":           reflect.ValueOf((*views.DateView)(nil)),
 		"FileButton":         reflect.ValueOf((*views.FileButton)(nil)),
-		"FileTimeText":       reflect.ValueOf((*views.TimeText)(nil)),
 		"FileView":           reflect.ValueOf((*views.FileView)(nil)),
 		"FileViewFilterFunc": reflect.ValueOf((*views.FileViewFilterFunc)(nil)),
 		"FontButton":         reflect.ValueOf((*views.FontButton)(nil)),
@@ -322,7 +320,6 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
 	WOnClose             func()
 	WOnDoubleClick       func(e events.Event)
-	WInit                func()
 	WOnOpen              func()
 	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
 	WParent              func() tree.Node
@@ -556,9 +553,6 @@ func (W _cogentcore_org_core_views_TreeViewer) OnClose() {
 }
 func (W _cogentcore_org_core_views_TreeViewer) OnDoubleClick(e events.Event) {
 	W.WOnDoubleClick(e)
-}
-func (W _cogentcore_org_core_views_TreeViewer) Init() {
-	W.WInit()
 }
 func (W _cogentcore_org_core_views_TreeViewer) OnOpen() {
 	W.WOnOpen()
