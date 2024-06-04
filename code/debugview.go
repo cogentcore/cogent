@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -43,20 +44,33 @@ const (
 	DebugPCCurrent
 )
 
-// DebugBreakColors are the colors indicating different breakpoint statuses.
-var DebugBreakColors = map[DebugBreakStatus]image.Image{
-	DebugBreakInactive: colors.C(colors.Scheme.Warn.Base),
-	DebugBreakActive:   colors.C(colors.Scheme.Error.Base),
-	DebugBreakCurrent:  colors.C(colors.Scheme.Success.Base),
-	DebugPCCurrent:     colors.C(colors.Scheme.Primary.Base),
-}
+const (
+	DebugTabConsole = "Console"
+	DebugTabBreaks  = "Breaks"
+	DebugTabStack   = "Stack"
+	DebugTabTasks   = "Tasks"
+	DebugTabThreads = "Threads"
+	DebugTabVars    = "Vars"
+	DebugTabFrames  = "Find Frames"
+	DebugTabGlobals = "Global Vars"
+)
 
-// Debuggers is the list of supported debuggers
-var Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error){
-	fileinfo.Go: func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
-		return cdelve.NewGiDelve(path, rootPath, outbuf, pars)
-	},
-}
+var (
+	// DebugBreakColors are the colors indicating different breakpoint statuses.
+	DebugBreakColors = map[DebugBreakStatus]image.Image{
+		DebugBreakInactive: colors.C(colors.Scheme.Warn.Base),
+		DebugBreakActive:   colors.C(colors.Scheme.Error.Base),
+		DebugBreakCurrent:  colors.C(colors.Scheme.Success.Base),
+		DebugPCCurrent:     colors.C(colors.Scheme.Primary.Base),
+	}
+
+	// Debuggers is the list of supported debuggers
+	Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error){
+		fileinfo.Go: func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
+			return cdelve.NewGiDelve(path, rootPath, outbuf, pars)
+		},
+	}
+)
 
 // NewDebugger returns a new debugger for given supported file type
 func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
@@ -132,7 +146,7 @@ func (dv *DebugView) InitTabs() {
 	if w.NumTabs() > 0 {
 		return
 	}
-	ctv := texteditor.NewEditor(w.NewTab("Console"))
+	ctv := texteditor.NewEditor(w.NewTab(DebugTabConsole))
 	ctv.SetName("dbg-console")
 	ConfigOutputTextEditor(ctv)
 	dv.State.BlankState()
@@ -142,70 +156,94 @@ func (dv *DebugView) InitTabs() {
 	dv.OutputBuffer.Options.LineNumbers = false
 	ctv.SetBuffer(dv.OutputBuffer)
 
-	bv := w.NewTab("Breaks")
+	bv := w.NewTab(DebugTabBreaks)
 	core.AddChild(bv, func(w *views.TableView) {
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetSlice(&dv.State.Breaks)
 		w.OnDoubleClick(func(e events.Event) {
 			idx := w.SelectedIndex
 			dv.ShowBreakFile(idx)
 		})
-		// todo:
-		// 	} else if sig == int64(views.SliceViewDeleted) {
-		// 		idx := data.(int)
-		// 		dv.DeleteBreakIndex(idx)
-		// 	}
-		w.SetFlag(false, views.SliceViewShowIndex)
-		w.SetSlice(&dv.State.Breaks)
+		w.OnChange(func(e events.Event) {
+			dv.SyncBreaks()
+		})
+		w.Updater(func() {
+			if dv.State.CurBreak > 0 {
+				_, idx := cdebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
+				if idx >= 0 {
+					w.SelectedIndex = idx
+				}
+			}
+			dv.BackupBreaks()
+		})
 	})
 
-	sv := w.NewTab("Stack")
+	sv := w.NewTab(DebugTabStack)
 	core.AddChild(sv, func(w *views.TableView) {
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Stack)
 		w.OnDoubleClick(func(e events.Event) {
 			dv.SetFrame(w.SelectedIndex)
 		})
-		w.SetFlag(false, views.SliceViewShowIndex)
-		w.SetReadOnly(true)
+		w.Updater(func() {
+			w.SelectedIndex = dv.State.CurFrame
+		})
 	})
 
 	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
-		tv := w.NewTab("Tasks")
+		tv := w.NewTab(DebugTabTasks)
 		core.AddChild(tv, func(w *views.TableView) {
+			w.SetFlag(false, views.SliceViewShowIndex)
+			w.SetReadOnly(true)
 			w.SetSlice(&dv.State.Tasks)
 			w.OnDoubleClick(func(e events.Event) {
 				if dv.Dbg != nil && dv.Dbg.HasTasks() {
 					dv.SetThreadIndex(w.SelectedIndex)
 				}
 			})
-			w.SetFlag(false, views.SliceViewShowIndex)
-			w.SetReadOnly(true)
+			w.Updater(func() {
+				_, idx := cdebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
+				if idx >= 0 {
+					w.SelectedIndex = idx
+				}
+			})
 		})
 	}
 
-	tv := w.NewTab("Threads")
+	tv := w.NewTab(DebugTabThreads)
 	core.AddChild(tv, func(w *views.TableView) {
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Threads)
 		w.OnDoubleClick(func(e events.Event) {
 			if dv.Dbg != nil && !dv.Dbg.HasTasks() {
 				dv.SetThreadIndex(w.SelectedIndex)
 			}
 		})
-		w.SetFlag(false, views.SliceViewShowIndex)
-		w.SetReadOnly(true)
+		w.Updater(func() {
+			_, idx := cdebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
+			if idx >= 0 {
+				w.SelectedIndex = idx
+			}
+		})
 	})
 
-	vv := w.NewTab("Vars")
+	vv := w.NewTab(DebugTabVars)
 	core.AddChild(vv, func(w *views.TableView) {
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Vars)
 		w.OnDoubleClick(func(e events.Event) {
 			vr := dv.State.Vars[w.SelectedIndex]
 			dv.ShowVar(vr.Nm)
 		})
-		w.SetFlag(false, views.SliceViewShowIndex)
-		w.SetReadOnly(true)
 	})
 
-	ff := w.NewTab("Find Frames")
+	ff := w.NewTab(DebugTabFrames)
 	core.AddChild(ff, func(w *views.TableView) {
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.FindFrames)
 		w.OnDoubleClick(func(e events.Event) {
 			idx := w.SelectedIndex
@@ -214,19 +252,17 @@ func (dv *DebugView) InitTabs() {
 				dv.SetThread(fr.ThreadID)
 			}
 		})
-		w.SetFlag(false, views.SliceViewShowIndex)
-		w.SetReadOnly(true)
 	})
 
-	gv := w.NewTab("Global Vars")
+	gv := w.NewTab(DebugTabGlobals)
 	core.AddChild(gv, func(w *views.TableView) {
+		w.SetFlag(false, views.SliceViewShowIndex)
+		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
 			vr := dv.State.Vars[w.SelectedIndex]
 			dv.ShowVar(vr.Nm)
 		})
-		w.SetFlag(false, views.SliceViewShowIndex)
-		w.SetReadOnly(true)
 	})
 }
 
@@ -440,7 +476,6 @@ func (dv *DebugView) SetBreaks() {
 	dv.State.CurBreak = 0 // reset
 	dv.Dbg.UpdateBreaks(&dv.State.Breaks)
 	dv.UpdateAllBreaks()
-	dv.ShowBreaks(false)
 }
 
 // AddBreak adds a breakpoint at given file path and line number.
@@ -448,7 +483,9 @@ func (dv *DebugView) SetBreaks() {
 // uploaded to the system right before starting running.
 func (dv *DebugView) AddBreak(fpath string, line int) {
 	dv.State.AddBreak(fpath, line)
-	dv.ShowBreaks(true)
+	dv.BackupBreaks()
+	dv.ShowTab(DebugTabBreaks)
+	dv.UpdateTab(DebugTabBreaks)
 }
 
 // DeleteBreak deletes given breakpoint.  If debugger is not yet
@@ -459,7 +496,9 @@ func (dv *DebugView) DeleteBreak(fpath string, line int) {
 		return
 	}
 	dv.DeleteBreakImpl(fpath, line)
-	dv.ShowBreaks(true)
+	dv.BackupBreaks()
+	dv.ShowTab(DebugTabBreaks)
+	dv.UpdateTab(DebugTabBreaks)
 }
 
 // DeleteBreakImpl deletes given breakpoint with no other updates
@@ -488,7 +527,22 @@ func (dv *DebugView) DeleteBreakIndex(bidx int) {
 	}
 	dv.Dbg.ClearBreak(bk.ID)
 	dv.State.DeleteBreakByID(bk.ID)
-	dv.BackupBreaks()
+	dv.BBreaks = slices.Delete(dv.BBreaks, bidx, bidx+1)
+}
+
+// SyncBreaks synchronizes backup breaks with current breaks, after Breaks Changed
+func (dv *DebugView) SyncBreaks() {
+	if len(dv.State.Breaks) == len(dv.BBreaks) {
+		return
+	}
+	for i, b := range dv.State.Breaks {
+		nb := len(dv.BBreaks)
+		if i >= nb && nb > 0 {
+			dv.DeleteBreakIndex(nb - 1)
+		} else if i < nb && dv.BBreaks[i] != b {
+			dv.DeleteBreakIndex(i)
+		}
+	}
 }
 
 // DeleteBreakInBuf delete breakpoint in its TextBuf
@@ -541,6 +595,7 @@ func (dv *DebugView) UpdateAllBreaks() {
 			dv.UpdateBreakInBuf(bk.FPath, bk.Line, DebugBreakInactive)
 		}
 	}
+	dv.UpdateTab(DebugTabBreaks)
 	dv.NeedsRender()
 }
 
@@ -591,13 +646,6 @@ func (dv *DebugView) UpdateFromState() {
 		}
 	}
 	dv.UpdateAllBreaks()
-	dv.ShowBreaks(false)
-	dv.ShowStack(false)
-	dv.ShowThreads(false)
-	if dv.Dbg.HasTasks() {
-		dv.ShowTasks(false)
-	}
-	dv.UpdateToolbar()
 	dv.Update()
 }
 
@@ -659,7 +707,7 @@ func (dv *DebugView) FindFrames(fpath string, line int) {
 		return
 	}
 	dv.State.FindFrames = fr
-	dv.ShowFindFrames(true)
+	dv.ShowTab(DebugTabFrames)
 }
 
 // ListGlobalVars lists global vars matching given optional filter in Global Vars tab
@@ -672,7 +720,7 @@ func (dv *DebugView) ListGlobalVars(filter string) {
 		return
 	}
 	dv.State.GlobalVars = vrs
-	dv.ShowGlobalVars(true)
+	dv.ShowTab(DebugTabGlobals)
 }
 
 // ShowFile shows the file name in code
@@ -724,85 +772,6 @@ func (dv *DebugView) ShowBreakFile(bidx int) {
 	}
 	bk := dv.State.Breaks[bidx]
 	dv.ShowFile(bk.FPath, bk.Line)
-}
-
-// ShowBreaks shows the current breaks
-func (dv *DebugView) ShowBreaks(selTab bool) {
-	if selTab {
-		dv.Tabs().SelectTabByName("Breaks")
-	}
-	tv := dv.Tabs().TabByName("Breaks").Child(0).(*views.TableView)
-	if dv.State.CurBreak > 0 {
-		_, idx := cdebug.BreakByID(dv.State.Breaks, dv.State.CurBreak)
-		if idx >= 0 {
-			tv.SelectedIndex = idx
-			tv.Update()
-		}
-	}
-	dv.BackupBreaks()
-}
-
-// ShowStack shows the current stack
-func (dv *DebugView) ShowStack(selTab bool) {
-	if selTab {
-		dv.Tabs().SelectTabByName("Stack")
-	}
-	tv := dv.Tabs().TabByName("Stack").Child(0).(*views.TableView)
-	tv.SelectedIndex = dv.State.CurFrame
-	tv.Update()
-}
-
-// ShowVars shows the current vars
-func (dv *DebugView) ShowVars(selTab bool) {
-	if selTab {
-		dv.Tabs().SelectTabByName("Vars")
-	} else {
-		dv.Update()
-	}
-}
-
-// ShowTasks shows the current tasks
-func (dv *DebugView) ShowTasks(selTab bool) {
-	if selTab {
-		dv.Tabs().SelectTabByName("Tasks")
-	}
-	tv := dv.Tabs().TabByName("Tasks").Child(0).(*views.TableView)
-	_, idx := cdebug.TaskByID(dv.State.Tasks, dv.State.CurTask)
-	if idx >= 0 {
-		tv.SelectedIndex = idx
-		tv.Update()
-	}
-}
-
-// ShowThreads shows the current threads
-func (dv *DebugView) ShowThreads(selTab bool) {
-	if selTab {
-		dv.Tabs().SelectTabByName("Threads")
-	}
-	tv := dv.Tabs().TabByName("Threads").Child(0).(*views.TableView)
-	_, idx := cdebug.ThreadByID(dv.State.Threads, dv.State.CurThread)
-	if idx >= 0 {
-		tv.SelectedIndex = idx
-		tv.Update()
-	}
-}
-
-// ShowFindFrames shows the current find frames
-func (dv *DebugView) ShowFindFrames(selTab bool) {
-	if selTab {
-		dv.Tabs().SelectTabByName("Find Frames")
-	} else {
-		dv.Update()
-	}
-}
-
-// ShowGlobalVars shows the current allvars
-func (dv *DebugView) ShowGlobalVars(selTab bool) {
-	if selTab {
-		dv.Tabs().SelectTabByName("Global Vars")
-	} else {
-		dv.Update()
-	}
 }
 
 // ShowVar shows info on a given variable within the current frame scope in a text view dialog
@@ -881,22 +850,22 @@ func (dv *DebugView) Tabs() *core.Tabs {
 	return dv.ChildByName("tabs", 1).(*core.Tabs)
 }
 
+// ShowTab shows given tab
+func (dv *DebugView) ShowTab(tab string) {
+	dv.Tabs().SelectTabByName(tab)
+}
+
+// UpdateTab updates given tab
+func (dv *DebugView) UpdateTab(tab string) {
+	tf := dv.Tabs().TabByName(tab)
+	tf.Update()
+}
+
 // ConsoleText returns the console TextEditor
 func (dv *DebugView) ConsoleText() *texteditor.Editor {
 	tv := dv.Tabs()
-	cv := tv.TabByName("Console").Child(0).(*texteditor.Editor)
+	cv := tv.TabByName(DebugTabConsole).Child(0).(*texteditor.Editor)
 	return cv
-}
-
-// ActionActivate is the update function for actions that depend on the debugger being avail
-// for input commands
-func (dv *DebugView) ActionActivate(act *core.Button) {
-	// act.SetActiveStateUpdate(dv.DbgIsAvail())
-}
-
-func (dv *DebugView) UpdateToolbar() {
-	tb := dv.Toolbar()
-	tb.ApplyStyleUpdate()
 }
 
 func (dv *DebugView) MakeToolbar(p *core.Plan) {
@@ -1086,12 +1055,6 @@ func (vv *VarView) MakeToolbar(p *core.Plan) {
 				}
 			})
 	})
-}
-
-// SetFrameInfo sets the frame info
-func (vv *VarView) SetFrameInfo(finfo string) {
-	lab := vv.ChildByName("frame-info", 0).(*core.Text)
-	lab.Text = finfo
 }
 
 // VarViewDialog opens an interactive editor of the given variable.
