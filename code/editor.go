@@ -156,7 +156,7 @@ func (cv *CodeView) PasteRect() { //types:add
 // to register of given name returns true if saved.
 func (cv *CodeView) RegisterCopy(regNm RegisterName) { //types:add
 	ic := strings.Index(string(regNm), ":")
-	if ic < 4 {
+	if ic > 0 && ic < 4 {
 		regNm = regNm[:ic]
 	}
 	tv := cv.ActiveTextEditor()
