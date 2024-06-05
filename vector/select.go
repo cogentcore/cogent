@@ -349,7 +349,7 @@ func (gv *VectorView) SelectUnGroup() { //types:add
 			continue
 		}
 		np := gp.Par
-		klist := make(tree.Slice, len(gp.Children)) // make a temp copy of list of kids
+		klist := make([]tree.Node, len(gp.Children)) // make a temp copy of list of kids
 		for i, k := range gp.Children {
 			klist[i] = k
 		}

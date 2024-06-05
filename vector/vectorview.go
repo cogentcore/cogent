@@ -355,8 +355,7 @@ func (vv *VectorView) ModalToolbarStack() *core.Frame {
 func (vv *VectorView) SetModalSelect() {
 	tbs := vv.ModalToolbarStack()
 	vv.UpdateSelectToolbar()
-	idx, _ := tbs.Children.IndexByName("select-tb", 0)
-	tbs.StackTop = idx
+	tbs.StackTop = 0
 	tbs.NeedsLayout()
 }
 
@@ -364,8 +363,7 @@ func (vv *VectorView) SetModalSelect() {
 func (vv *VectorView) SetModalNode() {
 	tbs := vv.ModalToolbarStack()
 	vv.UpdateNodeToolbar()
-	idx, _ := tbs.Children.IndexByName("node-tb", 1)
-	tbs.StackTop = idx
+	tbs.StackTop = 1
 	tbs.NeedsLayout()
 }
 
@@ -373,8 +371,7 @@ func (vv *VectorView) SetModalNode() {
 func (vv *VectorView) SetModalText() {
 	tbs := vv.ModalToolbarStack()
 	vv.UpdateTextToolbar()
-	idx, _ := tbs.Children.IndexByName("text-tb", 2)
-	tbs.StackTop = idx
+	tbs.StackTop = 2
 	tbs.NeedsLayout()
 }
 
