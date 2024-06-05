@@ -261,7 +261,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WAddContextMenu      func(menu func(m *core.Scene)) *core.WidgetBase
 	WApplyContextMenus   func(m *core.Scene)
 	WApplyStyle          func()
-	WAsTreeNode          func() *tree.NodeBase
+	WAsTree          func() *tree.NodeBase
 	WAsTreeView          func() *views.TreeView
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
@@ -377,8 +377,8 @@ func (W _cogentcore_org_core_views_TreeViewer) ApplyContextMenus(m *core.Scene) 
 func (W _cogentcore_org_core_views_TreeViewer) ApplyStyle() {
 	W.WApplyStyle()
 }
-func (W _cogentcore_org_core_views_TreeViewer) AsTreeNode() *tree.NodeBase {
-	return W.WAsTreeNode()
+func (W _cogentcore_org_core_views_TreeViewer) AsTree() *tree.NodeBase {
+	return W.WAsTree()
 }
 func (W _cogentcore_org_core_views_TreeViewer) AsTreeView() *views.TreeView {
 	return W.WAsTreeView()

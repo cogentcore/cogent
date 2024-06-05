@@ -458,7 +458,7 @@ type _cogentcore_org_core_core_Layouter struct {
 	WApplyContextMenus   func(m *core.Scene)
 	WApplyStyle          func()
 	WAsFrame             func() *core.Frame
-	WAsTreeNode          func() *tree.NodeBase
+	WAsTree          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
 	WChild               func(i int) tree.Node
@@ -563,8 +563,8 @@ func (W _cogentcore_org_core_core_Layouter) ApplyStyle() {
 func (W _cogentcore_org_core_core_Layouter) AsFrame() *core.Frame {
 	return W.WAsFrame()
 }
-func (W _cogentcore_org_core_core_Layouter) AsTreeNode() *tree.NodeBase {
-	return W.WAsTreeNode()
+func (W _cogentcore_org_core_core_Layouter) AsTree() *tree.NodeBase {
+	return W.WAsTree()
 }
 func (W _cogentcore_org_core_core_Layouter) AsWidget() *core.WidgetBase {
 	return W.WAsWidget()
@@ -963,7 +963,7 @@ type _cogentcore_org_core_core_Value struct {
 	WAddContextMenu      func(menu func(m *core.Scene)) *core.WidgetBase
 	WApplyContextMenus   func(m *core.Scene)
 	WApplyStyle          func()
-	WAsTreeNode          func() *tree.NodeBase
+	WAsTree          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
 	WChild               func(i int) tree.Node
@@ -1058,8 +1058,8 @@ func (W _cogentcore_org_core_core_Value) ApplyContextMenus(m *core.Scene) {
 func (W _cogentcore_org_core_core_Value) ApplyStyle() {
 	W.WApplyStyle()
 }
-func (W _cogentcore_org_core_core_Value) AsTreeNode() *tree.NodeBase {
-	return W.WAsTreeNode()
+func (W _cogentcore_org_core_core_Value) AsTree() *tree.NodeBase {
+	return W.WAsTree()
 }
 func (W _cogentcore_org_core_core_Value) AsWidget() *core.WidgetBase {
 	return W.WAsWidget()
@@ -1321,7 +1321,7 @@ type _cogentcore_org_core_core_Widget struct {
 	WAddContextMenu      func(menu func(m *core.Scene)) *core.WidgetBase
 	WApplyContextMenus   func(m *core.Scene)
 	WApplyStyle          func()
-	WAsTreeNode          func() *tree.NodeBase
+	WAsTree          func() *tree.NodeBase
 	WAsWidget            func() *core.WidgetBase
 	WBaseType            func() *types.Type
 	WChild               func(i int) tree.Node
@@ -1415,8 +1415,8 @@ func (W _cogentcore_org_core_core_Widget) ApplyContextMenus(m *core.Scene) {
 func (W _cogentcore_org_core_core_Widget) ApplyStyle() {
 	W.WApplyStyle()
 }
-func (W _cogentcore_org_core_core_Widget) AsTreeNode() *tree.NodeBase {
-	return W.WAsTreeNode()
+func (W _cogentcore_org_core_core_Widget) AsTree() *tree.NodeBase {
+	return W.WAsTree()
 }
 func (W _cogentcore_org_core_core_Widget) AsWidget() *core.WidgetBase {
 	return W.WAsWidget()

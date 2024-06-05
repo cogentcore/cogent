@@ -186,28 +186,28 @@ func (vv *VectorView) AddLayer() { //types:add
 
 // NodeIsLayer returns true if given node is a layer
 func NodeIsLayer(kn tree.Node) bool {
-	gm := reflectx.ToString(kn.Property("groupmode"))
+	gm := reflectx.ToString(kn.AsTree().Property("groupmode"))
 	return gm == "layer"
 }
 
 // LayerIsLocked returns true if layer is locked (insensitive = true)
 func LayerIsLocked(kn tree.Node) bool {
-	b, _ := reflectx.ToBool(kn.Property("insensitive"))
+	b, _ := reflectx.ToBool(kn.AsTree().Property("insensitive"))
 	return b
 }
 
 // LayerIsVisible returns true if layer is visible
 func LayerIsVisible(kn tree.Node) bool {
-	cp := reflectx.ToString(kn.Property("style"))
+	cp := reflectx.ToString(kn.AsTree().Property("style"))
 	return cp != "display:none"
 }
 
 // NodeParentLayer returns the parent group that is a layer -- nil if none
-func NodeParentLayer(kn tree.Node) tree.Node {
+func NodeParentLayer(n tree.Node) tree.Node {
 	var parLay tree.Node
-	kn.WalkUp(func(k tree.Node) bool {
-		if NodeIsLayer(k) {
-			parLay = k
+	n.WalkUp(func(pn tree.Node) bool {
+		if NodeIsLayer(pn) {
+			parLay = pn
 			return tree.Break
 		}
 		return tree.Continue
