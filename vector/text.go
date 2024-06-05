@@ -90,7 +90,7 @@ func (ts *TextStyle) SetFromFontStyle(fs *styles.Font) {
 func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 	ts.Defaults()                            // always start fresh
 	if txt.Text == "" && txt.HasChildren() { // todo: multi-line text..
-		tspan := txt.Kids[0].(*svg.Text)
+		tspan := txt.Children[0].(*svg.Text)
 		ts.Text = tspan.Text
 	}
 	// ts.SetFromFontStyle(&txt.Paint.FontStyle)
@@ -100,7 +100,7 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 // SetTextPropertiesNode sets the text properties of given Text node
 func (gv *VectorView) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
+		for _, kid := range gp.Children {
 			gv.SetTextPropertiesNode(kid.(svg.Node), tps)
 		}
 		return
@@ -169,7 +169,7 @@ func (ts *TextStyle) TextProperties() map[string]string {
 // SetTextNode sets the text of given Text node
 func (gv *VectorView) SetTextNode(sii svg.Node, txt string) bool {
 	if sii.HasChildren() {
-		for _, kid := range *sii.Children() {
+		for _, kid := range *sii.Children {
 			if gv.SetTextNode(kid.(svg.Node), txt) {
 				return true
 			}

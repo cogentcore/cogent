@@ -343,7 +343,7 @@ func (vv *VectorView) ManipAction(act, data string, manip bool, fun func(sii svg
 
 func (vv *VectorView) ManipActionFun(sii svg.Node, fun func(itm svg.Node)) {
 	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
+		for _, kid := range gp.Children {
 			vv.ManipActionFun(kid.(svg.Node), fun)
 		}
 		return
@@ -355,7 +355,7 @@ func (vv *VectorView) ManipActionFun(sii svg.Node, fun func(itm svg.Node)) {
 // based on previous and current PaintType
 func (vv *VectorView) SetColorNode(sii svg.Node, prop string, prev, pt PaintTypes, sp string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
+		for _, kid := range gp.Children {
 			vv.SetColorNode(kid.(svg.Node), prop, prev, pt, sp)
 		}
 		return
@@ -393,7 +393,7 @@ func (vv *VectorView) SetStroke(prev, pt PaintTypes, sp string) {
 // SetStrokeWidthNode sets the stroke width of Node
 func (vv *VectorView) SetStrokeWidthNode(sii svg.Node, wp string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
+		for _, kid := range gp.Children {
 			vv.SetStrokeWidthNode(kid.(svg.Node), wp)
 		}
 		return
@@ -442,7 +442,7 @@ func (vv *VectorView) SetStrokeColor(sp string, manip bool) {
 // SetMarkerNode sets the marker properties of Node.
 func (vv *VectorView) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc, ec MarkerColors) {
 	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
+		for _, kid := range gp.Children {
 			vv.SetMarkerNode(kid.(svg.Node), start, mid, end, sc, mc, ec)
 		}
 		return
@@ -482,7 +482,7 @@ func (vv *VectorView) UpdateMarkerColors(sii svg.Node) {
 // multiplies dash values by the line width in dots.
 func (vv *VectorView) SetDashNode(sii svg.Node, dary []float64) {
 	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
+		for _, kid := range gp.Children {
 			vv.SetDashNode(kid.(svg.Node), dary)
 		}
 		return

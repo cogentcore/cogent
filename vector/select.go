@@ -317,9 +317,9 @@ func (gv *VectorView) SelectGroup() { //types:add
 
 	fsel := sl[len(sl)-1] // first selected -- use parent of this for new group
 
-	fidx := fsel.IndexInParent()
+	fidx := fsel.AsTree().IndexInParent()
 
-	ng := fsel.Parent().InsertNewChild(svg.GroupType, fidx).(svg.Node)
+	ng := fsel.Parent().AsTree().InsertNewChild(svg.GroupType, fidx).(svg.Node)
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {
@@ -349,8 +349,8 @@ func (gv *VectorView) SelectUnGroup() { //types:add
 			continue
 		}
 		np := gp.Par
-		klist := make(tree.Slice, len(gp.Kids)) // make a temp copy of list of kids
-		for i, k := range gp.Kids {
+		klist := make(tree.Slice, len(gp.Children)) // make a temp copy of list of kids
+		for i, k := range gp.Children {
 			klist[i] = k
 		}
 		for _, k := range klist {
@@ -446,7 +446,7 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
-		parent.Children().Move(ci, parent.NumChildren()-1)
+		parent.Children.Move(ci, parent.NumChildren()-1)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -469,7 +469,7 @@ func (gv *VectorView) SelectRaise() { //types:add
 		}
 		ci := se.AsTree().IndexInParent()
 		if ci < parent.NumChildren()-1 {
-			parent.Children().Move(ci, ci+1)
+			parent.Children.Move(ci, ci+1)
 		}
 	}
 	gv.UpdateDisp()
@@ -492,7 +492,7 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
-		parent.Children().Move(ci, 0)
+		parent.Children.Move(ci, 0)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -515,7 +515,7 @@ func (gv *VectorView) SelectLower() { //types:add
 		}
 		ci := se.AsTree().IndexInParent()
 		if ci > 0 {
-			parent.Children().Move(ci, ci-1)
+			parent.Children.Move(ci, ci-1)
 		}
 	}
 	gv.UpdateDisp()

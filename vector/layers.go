@@ -47,7 +47,7 @@ type Layers []*Layer
 
 func (ly *Layers) SyncLayers(sv *SVGView) {
 	*ly = make(Layers, 0)
-	for _, kc := range sv.Root().Kids {
+	for _, kc := range sv.Root().Children {
 		if NodeIsLayer(kc) {
 			l := &Layer{Name: kc.Name()}
 			l.FromNode(kc)
@@ -81,12 +81,12 @@ func (ly *Layers) LayerIndexByName(nm string) int {
 // FirstLayerIndex returns index of first layer group in svg
 func (vv *VectorView) FirstLayerIndex() int {
 	sv := vv.SVG()
-	for i, kc := range sv.Root().Kids {
+	for i, kc := range sv.Root().Children {
 		if NodeIsLayer(kc) {
 			return i
 		}
 	}
-	return min(1, len(sv.Root().Kids))
+	return min(1, len(sv.Root().Children))
 }
 
 func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
@@ -164,10 +164,10 @@ func (vv *VectorView) AddLayer() { //types:add
 	si := 1 // starting index -- assuming namedview
 	if nl == 0 {
 		bg := svr.InsertNewChild(svg.GroupType, si, "LayerBG")
-		bg.SetProperty("groupmode", "layer")
+		bg.AsTree().SetProperty("groupmode", "layer")
 		l1 := svr.InsertNewChild(svg.GroupType, si+1, "Layer1")
-		l1.SetProperty("groupmode", "layer")
-		nk := len(svr.Kids)
+		l1.AsTree().SetProperty("groupmode", "layer")
+		nk := len(svr.Children)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
 			tree.MoveToParent(kc, l1)
@@ -175,7 +175,7 @@ func (vv *VectorView) AddLayer() { //types:add
 		vv.SetCurLayer(l1.Name())
 	} else {
 		l1 := svr.InsertNewChild(svg.GroupType, si+nl, fmt.Sprintf("Layer%d", nl))
-		l1.SetProperty("groupmode", "layer")
+		l1.AsTree().SetProperty("groupmode", "layer")
 		vv.SetCurLayer(l1.Name())
 	}
 	vv.UpdateLayerView()

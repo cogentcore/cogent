@@ -420,7 +420,7 @@ func (sv *SVGView) SetTransform() {
 // if mknew is true, it will create new ones if not found.
 func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	if sv.NumChildren() > 0 {
-		kd := sv.Root().Kids[0]
+		kd := sv.Root().Children[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
 			main = md
 		}
@@ -433,7 +433,7 @@ func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 		return
 	}
 	if main.NumChildren() > 0 {
-		kd := main.Kids[0]
+		kd := main.Children[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
 			grid = md
 		}
@@ -772,7 +772,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 // that are shared among obj-specific ones
 func (sv *SVGView) Gradients() []*Gradient {
 	gl := make([]*Gradient, 0)
-	for _, gii := range sv.SSVG().Defs.Kids {
+	for _, gii := range sv.SSVG().Defs.Children {
 		g, ok := gii.(*svg.Gradient)
 		if !ok {
 			continue

@@ -94,9 +94,9 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 	if vr.ElementValue != "" {
 		return vr.ElementValue
 	}
-	nkids := len(vr.Kids)
+	nkids := len(vr.Children)
 	if vr.Kind.IsPtr() && nkids == 1 {
-		return "*" + (vr.Kids[0].(*Variable)).ValueString(newlines, ident, maxdepth, maxlen, true)
+		return "*" + (vr.Children[0].(*Variable)).ValueString(newlines, ident, maxdepth, maxlen, true)
 	}
 	tabSz := 2
 	ichr := indent.Space
@@ -146,7 +146,7 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 			}
 		}
 	}
-	for _, vek := range vr.Kids {
+	for _, vek := range vr.Children {
 		ve := vek.(*Variable)
 		if newlines {
 			b.WriteString("\n")

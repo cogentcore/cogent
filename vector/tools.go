@@ -35,7 +35,7 @@ func (gv *VectorView) SetTool(tl Tools) {
 		return
 	}
 	tls := gv.Tools()
-	for i, t := range tls.Kids {
+	for i, t := range tls.Children {
 		t.(core.Widget).AsWidget().SetSelected(i == int(tl))
 	}
 	fs := es.FirstSelectedNode()

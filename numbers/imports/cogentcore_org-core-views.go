@@ -279,7 +279,7 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WCut                 func()
 	WDelete              func()
 	WDeleteChild         func(child tree.Node) bool
-	WDeleteChildAtIndex  func(idx int) bool
+	WDeleteChildAt  func(idx int) bool
 	WDeleteChildByName   func(name string) bool
 	WDeleteChildren      func()
 	WDeleteNode          func()
@@ -431,8 +431,8 @@ func (W _cogentcore_org_core_views_TreeViewer) Delete() {
 func (W _cogentcore_org_core_views_TreeViewer) DeleteChild(child tree.Node) bool {
 	return W.WDeleteChild(child)
 }
-func (W _cogentcore_org_core_views_TreeViewer) DeleteChildAtIndex(idx int) bool {
-	return W.WDeleteChildAtIndex(idx)
+func (W _cogentcore_org_core_views_TreeViewer) DeleteChildAt(idx int) bool {
+	return W.WDeleteChildAt(idx)
 }
 func (W _cogentcore_org_core_views_TreeViewer) DeleteChildByName(name string) bool {
 	return W.WDeleteChildByName(name)

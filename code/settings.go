@@ -347,7 +347,7 @@ func (cv *CodeView) ApplySettings() {
 		cv.Files.Dirs = cv.Settings.Dirs
 		cv.Files.DirsOnTop = cv.Settings.Files.DirsOnTop
 	}
-	if len(cv.Kids) > 0 {
+	if len(cv.Children) > 0 {
 		for i := 0; i < NTextEditors; i++ {
 			tv := cv.TextEditorByIndex(i)
 			if tv.Buffer != nil {

@@ -472,7 +472,7 @@ type _cogentcore_org_core_core_Layouter struct {
 	WCopyFrom            func(src tree.Node)
 	WDelete              func()
 	WDeleteChild         func(child tree.Node) bool
-	WDeleteChildAtIndex  func(idx int) bool
+	WDeleteChildAt  func(idx int) bool
 	WDeleteChildByName   func(name string) bool
 	WDeleteChildren      func()
 	WDeleteProperty      func(key string)
@@ -605,8 +605,8 @@ func (W _cogentcore_org_core_core_Layouter) Delete() {
 func (W _cogentcore_org_core_core_Layouter) DeleteChild(child tree.Node) bool {
 	return W.WDeleteChild(child)
 }
-func (W _cogentcore_org_core_core_Layouter) DeleteChildAtIndex(idx int) bool {
-	return W.WDeleteChildAtIndex(idx)
+func (W _cogentcore_org_core_core_Layouter) DeleteChildAt(idx int) bool {
+	return W.WDeleteChildAt(idx)
 }
 func (W _cogentcore_org_core_core_Layouter) DeleteChildByName(name string) bool {
 	return W.WDeleteChildByName(name)
@@ -977,7 +977,7 @@ type _cogentcore_org_core_core_Value struct {
 	WCopyFrom            func(src tree.Node)
 	WDelete              func()
 	WDeleteChild         func(child tree.Node) bool
-	WDeleteChildAtIndex  func(idx int) bool
+	WDeleteChildAt  func(idx int) bool
 	WDeleteChildByName   func(name string) bool
 	WDeleteChildren      func()
 	WDeleteProperty      func(key string)
@@ -1100,8 +1100,8 @@ func (W _cogentcore_org_core_core_Value) Delete() {
 func (W _cogentcore_org_core_core_Value) DeleteChild(child tree.Node) bool {
 	return W.WDeleteChild(child)
 }
-func (W _cogentcore_org_core_core_Value) DeleteChildAtIndex(idx int) bool {
-	return W.WDeleteChildAtIndex(idx)
+func (W _cogentcore_org_core_core_Value) DeleteChildAt(idx int) bool {
+	return W.WDeleteChildAt(idx)
 }
 func (W _cogentcore_org_core_core_Value) DeleteChildByName(name string) bool {
 	return W.WDeleteChildByName(name)
@@ -1335,7 +1335,7 @@ type _cogentcore_org_core_core_Widget struct {
 	WCopyFrom            func(src tree.Node)
 	WDelete              func()
 	WDeleteChild         func(child tree.Node) bool
-	WDeleteChildAtIndex  func(idx int) bool
+	WDeleteChildAt  func(idx int) bool
 	WDeleteChildByName   func(name string) bool
 	WDeleteChildren      func()
 	WDeleteProperty      func(key string)
@@ -1457,8 +1457,8 @@ func (W _cogentcore_org_core_core_Widget) Delete() {
 func (W _cogentcore_org_core_core_Widget) DeleteChild(child tree.Node) bool {
 	return W.WDeleteChild(child)
 }
-func (W _cogentcore_org_core_core_Widget) DeleteChildAtIndex(idx int) bool {
-	return W.WDeleteChildAtIndex(idx)
+func (W _cogentcore_org_core_core_Widget) DeleteChildAt(idx int) bool {
+	return W.WDeleteChildAt(idx)
 }
 func (W _cogentcore_org_core_core_Widget) DeleteChildByName(name string) bool {
 	return W.WDeleteChildByName(name)

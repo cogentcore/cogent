@@ -334,7 +334,7 @@ func (gd *GiDelve) fixVar(vr *cdebug.Variable, ec *api.EvalScope, lc *api.LoadCo
 				if vrkr.Nm == "" {
 					vrkr.SetName(vnm)
 				}
-				vr.DeleteChildAtIndex(0)
+				vr.DeleteChildAt(0)
 				vr.AddChild(vrkr)
 			}
 		}
