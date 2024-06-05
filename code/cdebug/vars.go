@@ -20,34 +20,34 @@ type Variable struct {
 	tree.NodeBase
 
 	// value of variable -- may be truncated if long
-	Value string `inactive:"-" width:"60"`
+	Value string `edit:"-" width:"60"`
 
 	// type of variable as a string expression (shortened for display)
-	TypeStr string `inactive:"-"`
+	TypeStr string `edit:"-"`
 
 	// type of variable as a string expression (full length)
-	FullTypeStr string `view:"-" inactive:"-"`
+	FullTypeStr string `view:"-" edit:"-"`
 
 	// kind of element
-	Kind syms.Kinds `inactive:"-"`
+	Kind syms.Kinds `edit:"-"`
 
 	// own elemental value of variable (blank for composite types)
-	ElementValue string `inactive:"-" view:"-"`
+	ElementValue string `edit:"-" view:"-"`
 
 	// length of variable (slices, maps, strings etc)
-	Len int64 `inactive:"-"`
+	Len int64 `edit:"-"`
 
 	// capacity of vaiable
-	Cap int64 `inactive:"-" tableview:"-"`
+	Cap int64 `edit:"-" tableview:"-"`
 
 	// address where variable is located in memory
-	Addr uintptr `inactive:"-"`
+	Addr uintptr `edit:"-"`
 
 	// if true, the variable is stored in the main memory heap, not the stack
-	Heap bool `inactive:"-"`
+	Heap bool `edit:"-"`
 
 	// location where the variable was defined in source
-	Loc Location `inactive:"-" tableview:"-"`
+	Loc Location `edit:"-" tableview:"-"`
 
 	// if kind is a list type (array, slice), and elements are primitive types, this is the contents
 	List []string `tableview:"-"`
