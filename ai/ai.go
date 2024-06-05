@@ -38,7 +38,7 @@ import (
 
 // const jsonName = "models.json"
 
-func main() {
+func main() { // TODO(config)
 	b := core.NewBody("Cogent AI")
 	b.AddAppBar(func(p *core.Plan) {
 		core.Add(p, func(w *core.Button) {

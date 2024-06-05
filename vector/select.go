@@ -445,7 +445,7 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
-		ci := se.IndexInParent()
+		ci := se.AsTree().IndexInParent()
 		parent.Children().Move(ci, parent.NumChildren()-1)
 	}
 	gv.UpdateDisp()
@@ -467,7 +467,7 @@ func (gv *VectorView) SelectRaise() { //types:add
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
-		ci := se.IndexInParent()
+		ci := se.AsTree().IndexInParent()
 		if ci < parent.NumChildren()-1 {
 			parent.Children().Move(ci, ci+1)
 		}
@@ -491,7 +491,7 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
-		ci := se.IndexInParent()
+		ci := se.AsTree().IndexInParent()
 		parent.Children().Move(ci, 0)
 	}
 	gv.UpdateDisp()
@@ -513,7 +513,7 @@ func (gv *VectorView) SelectLower() { //types:add
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
-		ci := se.IndexInParent()
+		ci := se.AsTree().IndexInParent()
 		if ci > 0 {
 			parent.Children().Move(ci, ci-1)
 		}
