@@ -151,47 +151,41 @@ func (cv *CodeView) PasteRect() { //types:add
 	tv.PasteRect()
 }
 
-// RegisterCopy saves current selection in active text view to register of given name
-// returns true if saved
-func (cv *CodeView) RegisterCopy(name string) bool { //types:add
-	if name == "" {
-		return false
-	}
+// RegisterCopy saves current selection in active text view
+// to register of given name returns true if saved.
+func (cv *CodeView) RegisterCopy(regNm RegisterName) { //types:add
 	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
-		return false
+		return
 	}
 	sel := tv.Selection()
 	if sel == nil {
-		return false
+		return
 	}
 	if AvailableRegisters == nil {
-		AvailableRegisters = make(Registers, 100)
+		AvailableRegisters = make(Registers)
 	}
-	AvailableRegisters[name] = string(sel.ToBytes())
+	AvailableRegisters[string(regNm)] = string(sel.ToBytes())
 	AvailableRegisters.SaveSettings()
-	cv.Settings.Register = RegisterName(name)
+	cv.Settings.Register = RegisterName(regNm)
 	tv.SelectReset()
-	return true
 }
 
-// RegisterPaste pastes register of given name into active text view
-// returns true if pasted
-func (cv *CodeView) RegisterPaste(name RegisterName) bool { //types:add
-	if name == "" {
-		return false
-	}
-	str, ok := AvailableRegisters[string(name)]
-	if !ok {
-		return false
-	}
-	tv := cv.ActiveTextEditor()
-	if tv.Buffer == nil {
-		return false
-	}
-	tv.InsertAtCursor([]byte(str))
-	cv.Settings.Register = name
-	return true
+// RegisterPaste prompts user for available registers,
+// and pastes selected one into active text view
+func (cv *CodeView) RegisterPaste(ctx core.Widget) { //types:add
+	RegistersMenu(ctx, string(cv.Settings.Register), func(regNm string) {
+		str, ok := AvailableRegisters[regNm]
+		if !ok {
+			return
+		}
+		tv := cv.ActiveTextEditor()
+		if tv.Buffer == nil {
+			return
+		}
+		tv.InsertAtCursor([]byte(str))
+		cv.Settings.Register = RegisterName(regNm)
+	})
 }
 
 // CommentOut comments-out selected lines in active text view

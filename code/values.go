@@ -5,6 +5,8 @@
 package code
 
 import (
+	"strings"
+
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -64,11 +66,11 @@ func LangsView(pt *Langs) {
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *core.Separator) {})
 		core.Add(p, func(w *views.FuncButton) {
@@ -108,11 +110,11 @@ func CmdsView(pt *Commands) {
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *core.Separator) {})
 		core.Add(p, func(w *views.FuncButton) {
@@ -129,7 +131,6 @@ func CmdsView(pt *Commands) {
 }
 
 /*
-
 // Value registers [CmdValue] as the [views.Value] for [CmdName].
 func (cn CmdName) Value() views.Value {
 	return &CmdValue{}
@@ -190,11 +191,11 @@ func SplitsView(pt *Splits) {
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		// todo:
 		// tb.AddOverflowMenu(func(m *core.Scene) {
@@ -204,43 +205,11 @@ func SplitsView(pt *Splits) {
 	d.RunWindow()
 }
 
-/*
-// Value registers [SplitValue] as the [views.Value] for [SplitName].
-func (sn SplitName) Value() views.Value {
-	return &SplitValue{}
+// Value registers [core.Chooser] as the [core.Value] widget
+// for [SplitName]
+func (sn SplitName) Value() core.Value {
+	return core.NewChooser().SetStrings(AvailableSplitNames...)
 }
-
-// SplitValue represents a [SplitName] value with a button.
-type SplitValue struct {
-	views.ValueBase[*core.Button]
-}
-
-func (v *SplitValue) Config() {
-	v.Widget.SetType(core.ButtonTonal)
-	views.ConfigDialogWidget(v, false)
-}
-
-func (v *SplitValue) Update() {
-	txt := reflectx.ToString(v.Value.Interface())
-	if txt == "" {
-		txt = "(none)"
-	}
-	v.Widget.SetText(txt).Update()
-}
-
-func (v *SplitValue) OpenDialog(ctx core.Widget, fun func()) {
-	cur := reflectx.ToString(v.Value.Interface())
-	m := core.NewMenuFromStrings(AvailableSplitNames, cur, func(idx int) {
-		nm := AvailableSplitNames[idx]
-		v.SetValue(nm)
-		v.Update()
-		if fun != nil {
-			fun()
-		}
-	})
-	core.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
-}
-*/
 
 // RegistersView opens a view of a commands table
 func RegistersView(pt *Registers) {
@@ -271,11 +240,11 @@ func RegistersView(pt *Registers) {
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			// w.Args[0].SetTag("ext", ".toml")
+			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		// todo:
 		// tb.AddOverflowMenu(func(m *core.Scene) {
@@ -286,47 +255,25 @@ func RegistersView(pt *Registers) {
 	d.RunWindow()
 }
 
-/*
-// Value registers [RegisterValue] as the [views.Value] for [RegisterName].
-func (rn RegisterName) Value() views.Value {
-	return &RegisterValue{}
+// Value registers [core.Chooser] as the [core.Value] widget
+// for [RegisterName]
+func (rn RegisterName) Value() core.Value {
+	ch := core.NewChooser().SetStrings(AvailableRegisterNames...)
+	ch.SetEditable(true).SetAllowNew(true)
+	return ch
 }
 
-// RegisterValue represents a [RegisterName] value with a button.
-type RegisterValue struct {
-	views.ValueBase[*core.Button]
-}
-
-func (v *RegisterValue) Config() {
-	v.Widget.SetType(core.ButtonTonal)
-	views.ConfigDialogWidget(v, false)
-}
-
-func (v *RegisterValue) Update() {
-	txt := reflectx.ToString(v.Value.Interface())
-	if txt == "" {
-		txt = "(none)"
-	}
-	v.Widget.SetText(txt).Update()
-}
-
-func (v *RegisterValue) OpenDialog(ctx core.Widget, fun func()) {
-	if len(AvailableRegisterNames) == 0 {
-		core.MessageSnackbar(ctx, "No registers available")
-		return
-	}
-	cur := reflectx.ToString(v.Value.Interface())
-	m := core.NewMenuFromStrings(AvailableRegisterNames, cur, func(idx int) {
+// RegistersMenu presents a menu of existing registers,
+// calling the given function with the selected register name
+func RegistersMenu(ctx core.Widget, curVal string, fun func(regNm string)) {
+	m := core.NewMenuFromStrings(AvailableRegisterNames, curVal, func(idx int) {
 		rnm := AvailableRegisterNames[idx]
 		if ci := strings.Index(rnm, ":"); ci > 0 {
 			rnm = rnm[:ci]
 		}
-		v.SetValue(rnm)
-		v.Update()
 		if fun != nil {
-			fun()
+			fun(rnm)
 		}
 	})
 	core.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }
-*/

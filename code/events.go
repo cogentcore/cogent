@@ -111,7 +111,7 @@ func (cv *CodeView) codeViewKeys(e events.Event) {
 		views.CallFunc(atv, cv.RegisterCopy)
 	case KeyRegPaste:
 		e.SetHandled()
-		views.CallFunc(atv, cv.RegisterPaste)
+		cv.RegisterPaste(atv)
 	case KeyCommentOut:
 		e.SetHandled()
 		cv.CommentOut()

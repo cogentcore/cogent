@@ -224,10 +224,10 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 			SetKey(keymap.PasteHist)
 
 		views.NewFuncButton(m, cv.RegisterPaste).SetIcon(icons.Paste).
-			SetShortcut(KeyRegCopy.Chord())
+			SetShortcut(KeyRegPaste.Chord())
 
 		views.NewFuncButton(m, cv.RegisterCopy).SetIcon(icons.Copy).
-			SetShortcut(KeyRegPaste.Chord())
+			SetShortcut(KeyRegCopy.Chord())
 
 		core.NewSeparator(m)
 

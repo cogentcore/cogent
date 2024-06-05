@@ -34,9 +34,9 @@ func SplitsView(pt *Splits) {
 			SetIcon(icons.Save).SetKey(keymap.Save).
 			StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits) })
 		oj := views.NewFuncButton(tb, pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-		oj.Args[0].SetTag("ext", ".toml")
+		oj.Args[0].SetTag(`ext:".toml"`)
 		sj := views.NewFuncButton(tb, pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-		sj.Args[0].SetTag("ext", ".toml")
+		sj.Args[0].SetTag(`ext:".toml"`)
 		tb.AddOverflowMenu(func(m *core.Scene) {
 			views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
 		})
