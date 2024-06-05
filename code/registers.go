@@ -6,6 +6,7 @@ package code
 
 import (
 	"path/filepath"
+	"slices"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/tomlx"
@@ -37,6 +38,7 @@ func (lt *Registers) Names() []string {
 		nms[i] = key + ": " + val
 		i++
 	}
+	slices.Sort(nms)
 	return nms
 }
 

@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/url"
 	"path/filepath"
+	"strings"
 
 	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/fileinfo/mimedata"
@@ -154,6 +155,10 @@ func (cv *CodeView) PasteRect() { //types:add
 // RegisterCopy saves current selection in active text view
 // to register of given name returns true if saved.
 func (cv *CodeView) RegisterCopy(regNm RegisterName) { //types:add
+	ic := strings.Index(string(regNm), ":")
+	if ic < 4 {
+		regNm = regNm[:ic]
+	}
 	tv := cv.ActiveTextEditor()
 	if tv.Buffer == nil {
 		return
