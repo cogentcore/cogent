@@ -5,11 +5,16 @@
 package databrowser
 
 import (
+	"fmt"
+	"strings"
+
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/plot/plotview"
+	"cogentcore.org/core/shell/cosh"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tensor"
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/tensor/tensorview"
 	"cogentcore.org/core/views"
@@ -101,4 +106,41 @@ func (br *Browser) OpenTOML(filename string) (map[string]string, error) {
 	err := tomlx.Open(&md, filename)
 	errors.Log(err)
 	return md, err
+}
+
+// TableWithNewKeyColumns returns a copy of the Table with new columns
+// having given values, inserted at the start, used as legend keys etc.
+// args are column name, value pairs.
+func (br *Browser) TableWithNewKeyColumns(dt *table.Table, args ...string) *table.Table {
+	n := len(args)
+	if n%2 != 0 {
+		fmt.Println("TableWithNewColumns requires even number of args as colnm, value pairs")
+		return dt
+	}
+	c := dt.Clone()
+	nc := n / 2
+	for j := 0; j < nc; j++ {
+		colNm := args[2*j]
+		val := args[2*j+1]
+		col := tensor.NewString([]int{c.Rows})
+		c.InsertColumn(col, colNm, 0)
+		for i := range col.Values {
+			col.Values[i] = val
+		}
+	}
+	return c
+}
+
+// FirstComment returns the first comment lines from given .cosh file,
+// which is used to set the tooltip for scripts.
+func FirstComment(sc string) string {
+	sl := cosh.SplitLines(sc)
+	cmt := ""
+	for _, l := range sl {
+		if !strings.HasPrefix(l, "// ") {
+			return cmt
+		}
+		cmt += strings.TrimSpace(l[3:]) + " "
+	}
+	return cmt
 }
