@@ -163,6 +163,7 @@ func init() {
 		"OpenRecentPaths":          reflect.ValueOf(core.OpenRecentPaths),
 		"OpenSettings":             reflect.ValueOf(core.OpenSettings),
 		"OpenValueDialog":          reflect.ValueOf(core.OpenValueDialog),
+		"ParentToolbar":            reflect.ValueOf(core.ParentToolbar),
 		"ProfileToggle":            reflect.ValueOf(core.ProfileToggle),
 		"RecentPaths":              reflect.ValueOf(&core.RecentPaths).Elem(),
 		"RecycleDialog":            reflect.ValueOf(core.RecycleDialog),

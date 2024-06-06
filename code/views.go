@@ -207,14 +207,13 @@ func (cv *CodeView) VCSUpdateAll() { //types:add
 	cv.Files.UpdateAll()
 }
 
-// VCSLog shows the VCS log of commits for this file, optionally with a
-// since date qualifier: If since is non-empty, it should be
-// a date-like expression that the VCS will understand, such as
-// 1/1/2020, yesterday, last year, etc.  SVN only understands a
-// number as a maximum number of items to return.
-// If allFiles is true, then the log will show revisions for all files, not just
-// this one.
-// Returns the Log and also shows it in a VCSLogView which supports further actions.
+// VCSLog shows the VCS log of commits in this project,
+// in an interactive browser from which any revisions can be
+// compared and diffs browsed.
+// If since is non-empty, it should be a date-like expression
+// that the VCS will understand, such as 1/1/2020, yesterday,
+// last year, etc.  SVN only understands a number as a maximum
+// number of items to return.
 func (cv *CodeView) VCSLog(since string) (vcs.Log, error) { //types:add
 	atv := cv.ActiveTextEditor()
 	ond, _, got := cv.OpenNodeForTextEditor(atv)
