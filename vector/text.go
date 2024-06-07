@@ -46,7 +46,7 @@ type TextStyle struct {
 	Align styles.Aligns `xml:"text-align" inherit:"true"`
 
 	// font value view for font toolbar
-	FontValue views.FontValue `view:"-"`
+	FontButton views.FontButton `view:"-"`
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
@@ -169,7 +169,7 @@ func (ts *TextStyle) TextProperties() map[string]string {
 // SetTextNode sets the text of given Text node
 func (gv *VectorView) SetTextNode(sii svg.Node, txt string) bool {
 	if sii.HasChildren() {
-		for _, kid := range *sii.Children {
+		for _, kid := range sii.AsTree().Children {
 			if gv.SetTextNode(kid.(svg.Node), txt) {
 				return true
 			}
@@ -221,7 +221,8 @@ func (gv *VectorView) ConfigTextToolbar() {
 	ts := &es.Text
 	ts.VectorView = gv
 
-	txt := core.NewTextField(tb, "text")
+	txt := core.NewTextField(tb)
+	txt.SetName("text")
 	txt.Tooltip = "current text string"
 	txt.SetText(ts.Text)
 	// txt.SetProp("width", units.NewCh(50))

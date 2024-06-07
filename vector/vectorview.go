@@ -54,97 +54,115 @@ func (vv *VectorView) Init() {
 
 	vv.AddCloseDialog()
 
-	vv.Maker(func(p *core.Plan) {
-		if vv.HasChildren() {
-			return
-		}
-		core.NewFrame(vv, "modal-tb").Style(func(s *styles.Style) {
+	core.AddChild(vv, func(w *core.Frame) {
+		w.SetName("modal-tb")
+		w.Style(func(s *styles.Style) {
 			s.Display = styles.Stacked
 		})
-		hb := core.NewFrame(vv, "hbox")
-		core.NewFrame(vv, "statusbar").Style(func(s *styles.Style) {
-			s.Grow.Set(1, 0)
-		})
-
-		core.NewToolbar(hb, "tools").Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-		sp := core.NewSplits(hb, "splits").SetSplits(0.15, 0.60, 0.25)
-
-		tly := core.NewFrame(sp, "layer-tree").Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-
-		views.NewFuncButton(tly, vv.AddLayer)
-
-		lyv := views.NewTableView(tly, "layers")
-
-		tvfr := core.NewFrame(tly, "tree-frame").Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-		tv := NewTreeView(tvfr, "treeview")
-		tv.VectorView = vv
-		tv.OpenDepth = 4
-
-		sv := NewSVGView(sp, "svg")
-		sv.VectorView = vv
-
-		core.NewTabs(sp, "tabs")
-
-		tv.SyncTree(sv.Root())
-
-		// tv.TreeViewSig.Connect(vv.This(), func(recv, send tree.Node, sig int64, data any) {
-		// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
-		// 	if data == nil {
-		// 		return
-		// 	}
-		// 	if sig == int64(views.TreeViewInserted) {
-		// 		sn, ok := data.(svg.Node)
-		// 		if ok {
-		// 			gvv.SVG().NodeEnsureUniqueId(sn)
-		// 			svg.CloneNodeGradientProp(sn, "fill")
-		// 			svg.CloneNodeGradientProp(sn, "stroke")
-		// 		}
-		// 		return
-		// 	}
-		// 	if sig == int64(views.TreeViewDeleted) {
-		// 		sn, ok := data.(svg.Node)
-		// 		if ok {
-		// 			svg.DeleteNodeGradientProp(sn, "fill")
-		// 			svg.DeleteNodeGradientProp(sn, "stroke")
-		// 		}
-		// 		return
-		// 	}
-		// 	if sig != int64(views.TreeViewOpened) {
-		// 		return
-		// 	}
-		// 	tvn, _ := data.(tree.Node).Embed(KiT_TreeView).(*TreeView)
-		// 	_, issvg := tvn.SrcNode.(svg.Node)
-		// 	if !issvg {
-		// 		return
-		// 	}
-		// 	if tvn.SrcNode.HasChildren() {
-		// 		return
-		// 	}
-		// 	views.StructViewDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
-		// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
-		// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_StructView, true).(*views.StructView)
-		// 	// 		stv.SetStruct(tvn.SrcNode)
-		// })
-
-		vv.ConfigStatusBar()
-		vv.ConfigModalToolbar()
-		vv.ConfigTools()
-		vv.ConfigTabs()
-
-		vv.SetPhysSize(&Settings.Size)
-
-		vv.SyncLayers()
-		lyv.SetSlice(&vv.EditState.Layers)
-		vv.LayerViewSigs(lyv)
-
-		sv.UpdateGradients(vv.EditState.Gradients)
 	})
+
+	core.AddChildAt(vv, "hbox", func(w *core.Frame) {
+
+		core.AddChildAt(w, "tools", func(w *core.Toolbar) {
+			w.Style(func(s *styles.Style) {
+				s.Direction = styles.Column
+			})
+		})
+
+		core.AddChildAt(w, "splits", func(w *core.Splits) {
+			w.SetSplits(0.15, 0.60, 0.25)
+
+			core.AddChildAt(w, "layer-tree", func(w *core.Frame) {
+				w.Style(func(s *styles.Style) {
+					s.Direction = styles.Column
+				})
+
+				core.AddChild(w, func(w *views.FuncButton) {
+					w.SetFunc(vv.AddLayer)
+				})
+
+				core.AddChildAt(w, "layers", func(w *views.TableView) {
+					w.SetSlice(&vv.EditState.Layers)
+				})
+
+				core.AddChildAt(w, "tree-frame", func(w *core.Frame) {
+					w.Style(func(s *styles.Style) {
+						s.Direction = styles.Column
+					})
+					core.AddChildAt(w, "treeview", func(w *views.TreeView) {
+						// w.VectorView = vv
+						w.OpenDepth = 4
+						w.Updater(func() {
+							// TODO: get SVG
+							// tv.SyncTree(sv.Root())
+						})
+					})
+				})
+			})
+
+			core.AddChildAt(w, "svg", func(w *SVGView) {
+				w.VectorView = vv
+				w.UpdateGradients(vv.EditState.Gradients)
+			})
+			core.AddChildAt(w, "tabs", func(w *core.Tabs) {
+			})
+		})
+
+		core.AddChildAt(w, "statusbar", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Grow.Set(1, 0)
+			})
+		})
+	})
+
+	// tv.TreeViewSig.Connect(vv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
+	// 	if data == nil {
+	// 		return
+	// 	}
+	// 	if sig == int64(views.TreeViewInserted) {
+	// 		sn, ok := data.(svg.Node)
+	// 		if ok {
+	// 			gvv.SVG().NodeEnsureUniqueId(sn)
+	// 			svg.CloneNodeGradientProp(sn, "fill")
+	// 			svg.CloneNodeGradientProp(sn, "stroke")
+	// 		}
+	// 		return
+	// 	}
+	// 	if sig == int64(views.TreeViewDeleted) {
+	// 		sn, ok := data.(svg.Node)
+	// 		if ok {
+	// 			svg.DeleteNodeGradientProp(sn, "fill")
+	// 			svg.DeleteNodeGradientProp(sn, "stroke")
+	// 		}
+	// 		return
+	// 	}
+	// 	if sig != int64(views.TreeViewOpened) {
+	// 		return
+	// 	}
+	// 	tvn, _ := data.(tree.Node).Embed(KiT_TreeView).(*TreeView)
+	// 	_, issvg := tvn.SrcNode.(svg.Node)
+	// 	if !issvg {
+	// 		return
+	// 	}
+	// 	if tvn.SrcNode.HasChildren() {
+	// 		return
+	// 	}
+	// 	views.StructViewDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
+	// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
+	// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_StructView, true).(*views.StructView)
+	// 	// 		stv.SetStruct(tvn.SrcNode)
+	// })
+
+	vv.ConfigStatusBar()
+	vv.ConfigModalToolbar()
+	vv.ConfigTools()
+	vv.ConfigTabs()
+
+	vv.SetPhysSize(&Settings.Size)
+
+	vv.SyncLayers()
+
 }
 
 // OpenDrawingFile opens a new .svg drawing file -- just the basic opening
@@ -494,9 +512,9 @@ func (vv *VectorView) ConfigModalToolbar() {
 	if tb == nil || tb.HasChildren() {
 		return
 	}
-	core.NewToolbar(tb, "select-tb")
-	core.NewToolbar(tb, "node-tb")
-	core.NewToolbar(tb, "text-tb")
+	core.NewToolbar(tb).SetName("select-tb")
+	core.NewToolbar(tb).SetName("node-tb")
+	core.NewToolbar(tb).SetName("text-tb")
 
 	vv.ConfigSelectToolbar()
 	vv.ConfigNodeToolbar()
@@ -509,7 +527,7 @@ func (vv *VectorView) ConfigStatusBar() {
 	if sb == nil || sb.HasChildren() {
 		return
 	}
-	core.NewText(sb, "sb-text")
+	core.NewText(sb).SetName("sb-text")
 }
 
 // SetStatus updates the status bar text with the given message, along with other status info
@@ -538,10 +556,10 @@ func (vv *VectorView) AddCloseDialog() {
 		d.AddTitle("Unsaved changes").
 			AddText(fmt.Sprintf("There are unsaved changes in %s", dirs.DirAndFile(string(vv.Filename))))
 		d.AddBottomBar(func(parent core.Widget) {
-			d.AddOK(parent, "cws").SetText("Close without saving").OnClick(func(e events.Event) {
+			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
 				vv.Scene.Close()
 			})
-			d.AddOK(parent, "sa").SetText("Save and close").OnClick(func(e events.Event) {
+			d.AddOK(parent).SetText("Save and close").OnClick(func(e events.Event) {
 				vv.SaveDrawing()
 				vv.Scene.Close()
 			})
@@ -595,7 +613,7 @@ func NewVectorWindow(fnm string) *VectorView {
 	b := core.NewBody(winm).SetTitle(winm)
 
 	vv := NewVectorView(b)
-	b.AddAppBar(vv.MakeToolbar)
+	// b.AddAppBar(vv.MakeToolbar) // TODO(config):
 
 	b.OnShow(func(e events.Event) {
 		if fnm != "" {

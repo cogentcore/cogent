@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
@@ -32,17 +33,17 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	}
 
 	grs := core.NewSwitch(tb).SetText("Snap grid").
-		SetTooltip("snap movement and sizing of selection to grid").
-		SetChecked(Settings.SnapVector)
+		SetTooltip("snap movement and sizing of selection to grid")
+		// SetChecked(Settings.SnapVector)
 	grs.OnChange(func(e events.Event) {
-		Settings.SnapVector = grs.IsChecked()
+		Settings.SnapVector = grs.Is(states.Checked)
 	})
 
 	gis := core.NewSwitch(tb).SetText("Snap guide").
-		SetTooltip("snap movement and sizing of selection to align with other elements in the scene").
-		SetChecked(Settings.SnapGuide)
+		SetTooltip("snap movement and sizing of selection to align with other elements in the scene")
+		// SetChecked(Settings.SnapGuide)
 	gis.OnChange(func(e events.Event) {
-		Settings.SnapGuide = gis.IsChecked()
+		Settings.SnapGuide = gis.Is(states.Checked)
 	})
 
 	core.NewSeparator(tb)
@@ -73,26 +74,26 @@ func (gv *VectorView) ConfigSelectToolbar() {
 	core.NewSeparator(tb)
 
 	core.NewText(tb).SetText("X: ")
-	views.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
-		gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
-	})
+	// views.NewValue(tb, &gv.EditState.DragSelectEffectiveBBox.Min.X).SetDoc("Horizontal coordinate of selection, in document units").OnChange(func(e events.Event) {
+	// 	gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
+	// })
 
 	core.NewText(tb).SetText("Y: ")
-	py := core.NewSpinner(tb, "posy").SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
+	py := core.NewSpinner(tb).SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")
 	py.OnChange(func(e events.Event) {
-		gv.SelectSetYPos(py.Value)
+		// gv.SelectSetYPos(py.Value)
 	})
 
 	core.NewText(tb).SetText("W: ")
-	wd := core.NewSpinner(tb, "width").SetStep(1).SetTooltip("Width of selection, in document units")
+	wd := core.NewSpinner(tb).SetStep(1).SetTooltip("Width of selection, in document units")
 	wd.OnChange(func(e events.Event) {
-		gv.SelectSetWidth(wd.Value)
+		// gv.SelectSetWidth(wd.Value)
 	})
 
 	core.NewText(tb).SetText("H: ")
-	ht := core.NewSpinner(tb, "height").SetStep(1).SetTooltip("Height of selection, in document units")
+	ht := core.NewSpinner(tb).SetStep(1).SetTooltip("Height of selection, in document units")
 	ht.OnChange(func(e events.Event) {
-		gv.SelectSetHeight(ht.Value)
+		// gv.SelectSetHeight(ht.Value)
 	})
 }
 
@@ -446,7 +447,8 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
-		parent.Children.Move(ci, parent.NumChildren()-1)
+		pt := parent.AsTree()
+		pt.Children = tree.Move(pt.Children, ci, len(pt.Children)-1)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -469,7 +471,8 @@ func (gv *VectorView) SelectRaise() { //types:add
 		}
 		ci := se.AsTree().IndexInParent()
 		if ci < parent.NumChildren()-1 {
-			parent.Children.Move(ci, ci+1)
+			pt := parent.AsTree()
+			pt.Children = tree.Move(pt.Children, ci, ci+1)
 		}
 	}
 	gv.UpdateDisp()
@@ -492,7 +495,8 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
-		parent.Children.Move(ci, 0)
+		pt := parent.AsTree()
+		pt.Children = tree.Move(pt.Children, ci, 0)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -515,7 +519,8 @@ func (gv *VectorView) SelectLower() { //types:add
 		}
 		ci := se.AsTree().IndexInParent()
 		if ci > 0 {
-			parent.Children.Move(ci, ci-1)
+			pt := parent.AsTree()
+			pt.Children = tree.Move(pt.Children, ci, ci-1)
 		}
 	}
 	gv.UpdateDisp()

@@ -237,7 +237,7 @@ func (tv *TreeView) LayerToggleLock() {
 		tv.LayerClearCurrent()
 		np = "true"
 	}
-	sn.SetProperty("insensitive", np)
+	sn.AsTree().Properties["insensitive"] = np
 	// tv.SetFullReRenderIconLabel()
 	// tv.UpdateSig()
 }
@@ -252,7 +252,7 @@ func (tv *TreeView) LayerToggleVis() {
 	} else {
 		np = "display:inline"
 	}
-	sn.SetProperty("style", np)
+	sn.AsTree().Properties["style"] = np
 	// tv.UpdateSig()
 }
 

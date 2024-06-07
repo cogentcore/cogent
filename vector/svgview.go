@@ -212,7 +212,7 @@ func (sv *SVGView) SSVG() *svg.SVG {
 
 // Root returns the root [svg.SVGNode].
 func (sv *SVGView) Root() *svg.SVGNode {
-	return &sv.SVG.SVG.Root
+	return sv.SVG.SVG.Root
 }
 
 // EditState returns the EditState for this view
@@ -427,7 +427,8 @@ func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	}
 	if main == nil && mknew {
 		id := sv.SSVG().NewUniqueID()
-		main = sv.InsertNewChild(svg.MetaDataType, 0, svg.NameID("namedview", id)).(*svg.MetaData)
+		main = sv.InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
+		main.SetName(svg.NameID("namedview", id))
 	}
 	if main == nil {
 		return
@@ -440,7 +441,8 @@ func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	}
 	if grid == nil && mknew {
 		id := sv.SSVG().NewUniqueID()
-		grid = main.InsertNewChild(svg.MetaDataType, 0, svg.NameID("grid", id)).(*svg.MetaData)
+		grid = main.InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
+		grid.SetName(svg.NameID("grid", id))
 	}
 	return
 }
@@ -521,7 +523,7 @@ func (sv *SVGView) ReadMetaData() {
 
 // EditNode opens a structview editor on node
 func (sv *SVGView) EditNode(kn tree.Node) {
-	views.StructViewDialog(sv, kn, "SVG Element View", true)
+	// views.StructViewDialog(sv, kn, "SVG Element View", true) // TODO:
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
@@ -666,11 +668,14 @@ func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 		}
 	}
 	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
-	nw := parent.NewChild(typ, nwnm).(svg.Node)
-	sv.SetSVGName(nw)
-	sv.VectorView.PaintView().SetProperties(nw)
+	_ = nwnm
+	_ = parent
+	// nw := parent.NewChild(typ, nwnm).(svg.Node) // TODO:
+	// sv.SetSVGName(nw)
+	// sv.VectorView.PaintView().SetProperties(nw)
 	sv.VectorView.UpdateTreeView()
-	return nw
+	// return nw // TODO:
+	return nil
 }
 
 // NewElDrag makes a new SVG element during the drag operation
@@ -707,7 +712,8 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	sv.ManipStart("NewText", "")
 	nr := sv.NewEl(svg.TextType)
 	tsnm := fmt.Sprintf("tspan%d", sv.SSVG().NewUniqueID())
-	tspan := svg.NewText(nr, tsnm)
+	tspan := svg.NewText(nr)
+	tspan.SetName(tsnm)
 	tspan.Text = "Text"
 	tspan.Width = 200
 	xfi := sv.Root().Paint.Transform.Inverse()

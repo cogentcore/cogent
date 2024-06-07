@@ -14,14 +14,14 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 )
 
 // AlignView provides a range of alignment actions on selected objects.
 type AlignView struct {
 	core.Frame
 
-	AlignAnchorView views.EnumValue
+	// Anchor is the alignment anchor
+	Anchor AlignAnchors
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
@@ -29,30 +29,46 @@ type AlignView struct {
 
 func (av *AlignView) Init() {
 	av.Frame.Init()
-	av.Maker(func(p *core.Plan) { // TODO(config)
-		if av.HasChildren() {
-			return
-		}
-		av.Style(func(s *styles.Style) {
-			s.Direction = styles.Column
+	av.Style(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
+
+	core.AddChild(av, func(w *core.Frame) {
+		w.Style(func(s *styles.Style) {
+			s.Direction = styles.Row
 		})
 
-		all := core.NewFrame(av)
-		core.NewText(all).SetText("<b>Align:  </b>")
-		core.NewChooser(all).SetEnum(AlignAnchorsN)
+		core.AddChild(w, func(w *core.Text) {
+			w.SetText("<b>Align:  </b>")
+		})
 
-		agrid := core.NewFrame(av).Style(func(s *styles.Style) {
+		core.AddChild(w, func(w *core.Chooser) {
+			w.SetEnum(av.Anchor)
+			w.OnChange(func(e events.Event) {
+				if aval, ok := w.CurrentItem.Value.(AlignAnchors); ok {
+					av.Anchor = aval
+				}
+			})
+			w.Updater(func() {
+				w.SetCurrentValue(av.Anchor)
+			})
+		})
+	})
+
+	core.AddChild(av, func(w *core.Frame) {
+		w.Style(func(s *styles.Style) {
 			s.Display = styles.Grid
 			s.Columns = 6
 		})
 
 		for _, al := range AlignsValues() {
-			al := al
-			core.NewButton(agrid, al.String()).SetIcon(icons.Icon(al.String())).
-				SetTooltip(al.Desc()).SetType(core.ButtonTonal).
-				OnClick(func(e events.Event) {
-					av.VectorView.Align(av.AlignAnchor(), al)
-				})
+			core.AddChildAt(w, al.String(), func(w *core.Button) {
+				w.SetIcon(icons.Icon(al.String())).SetType(core.ButtonTonal).
+					SetTooltip(al.Desc()).
+					OnClick(func(e events.Event) {
+						av.VectorView.Align(av.Anchor, al)
+					})
+			})
 		}
 	})
 }
@@ -270,11 +286,6 @@ func (sv *SVGView) GatherAlignPoints() {
 		}
 		return tree.Continue
 	})
-}
-
-// AlignAnchor returns the align anchor currently selected
-func (av *AlignView) AlignAnchor() AlignAnchors {
-	return av.AlignAnchorView.Value.Interface().(AlignAnchors)
 }
 
 // AlignAnchors are ways of anchoring alignment

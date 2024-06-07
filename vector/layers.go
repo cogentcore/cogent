@@ -31,15 +31,16 @@ func (l *Layer) FromNode(k tree.Node) {
 }
 
 // ToNode copies state / prop values to given node
-func (l *Layer) ToNode(k tree.Node) {
+func (l *Layer) ToNode(n tree.Node) {
+	nb := n.AsTree()
 	if l.Vis {
-		k.SetProperty("style", "")
-		k.SetProperty("display", "inline")
+		nb.Properties["style"] = ""
+		nb.Properties["display"] = "inline"
 	} else {
-		k.SetProperty("style", "display:none")
-		k.SetProperty("display", "none")
+		nb.Properties["style"] = "display:none"
+		nb.Properties["display"] = "none"
 	}
-	k.SetProperty("insensitive", l.Lck)
+	nb.Properties["insensitive"] = l.Lck
 }
 
 // Layers is the list of all layers
@@ -112,7 +113,7 @@ func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// 		l.Name = fmt.Sprintf("Layer%d", li)
 	// 		l.Vis = true
 	// 		sl := sv.InsertNewChild(svg.KiT_Group, li, l.Name)
-	// 		sl.SetProp("groupmode", "layer")
+	// 		sl.SetProp("groupmode"] = "layer"
 	// 		// todo: move selected into this new group
 	// 		gv.UpdateLayerView()
 	// 	case views.SliceViewDeleted:
@@ -163,10 +164,12 @@ func (vv *VectorView) AddLayer() { //types:add
 	nl := len(*lys)
 	si := 1 // starting index -- assuming namedview
 	if nl == 0 {
-		bg := svr.InsertNewChild(svg.GroupType, si, "LayerBG")
-		bg.AsTree().SetProperty("groupmode", "layer")
-		l1 := svr.InsertNewChild(svg.GroupType, si+1, "Layer1")
-		l1.AsTree().SetProperty("groupmode", "layer")
+		bg := svr.InsertNewChild(svg.GroupType, si)
+		bg.SetName("LayerBG")
+		bg.AsTree().Properties["groupmode"] = "layer"
+		l1 := svr.InsertNewChild(svg.GroupType, si+1)
+		l1.SetName("Layer1")
+		l1.AsTree().Properties["groupmode"] = "layer"
 		nk := len(svr.Children)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
@@ -174,8 +177,9 @@ func (vv *VectorView) AddLayer() { //types:add
 		}
 		vv.SetCurLayer(l1.Name())
 	} else {
-		l1 := svr.InsertNewChild(svg.GroupType, si+nl, fmt.Sprintf("Layer%d", nl))
-		l1.AsTree().SetProperty("groupmode", "layer")
+		l1 := svr.InsertNewChild(svg.GroupType, si+nl)
+		l1.SetName(fmt.Sprintf("Layer%d", nl))
+		l1.AsTree().Properties["groupmode"] = "layer"
 		vv.SetCurLayer(l1.Name())
 	}
 	vv.UpdateLayerView()

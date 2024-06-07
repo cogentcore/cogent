@@ -147,9 +147,9 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 		return nil
 	}
 	// update := sg.UpdateStart()
-	nmk := &svg.Marker{}
 	fnm := svg.NameID(name, id)
-	nmk.InitName(nmk, fnm)
+	nmk := svg.NewMarker()
+	nmk.SetName(fnm)
 	nmk.CopyFrom(mk)
 	mk.SetName(fnm) // double check
 	sg.Defs.AddChild(nmk)
