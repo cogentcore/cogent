@@ -125,7 +125,8 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	mbox := a.FindPath("splits/mbox").(*views.TreeView)
 	embox := mbox.ChildByName(bemail)
 	if embox == nil {
-		embox = views.NewTreeView(mbox, bemail).SetText(email)
+		embox = views.NewTreeView(mbox).SetText(email)
+		embox.SetName(bemail)
 	}
 	views.NewTreeView(embox).SetText(mailbox).OnClick(func(e events.Event) {
 		a.CurrentMailbox = mailbox

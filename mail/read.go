@@ -85,14 +85,16 @@ func (a *App) UpdateMessageList() {
 			}
 		}
 
-		core.NewText(fr, "from").SetType(core.TextTitleMedium).SetText(ftxt).
+		core.NewText(fr).SetType(core.TextTitleMedium).SetText(ftxt).
 			Style(func(s *styles.Style) {
 				s.SetNonSelectable()
-			})
-		core.NewText(fr, "subject").SetType(core.TextBodyMedium).SetText(cd.Subject).
+			}).
+			SetName("from")
+		core.NewText(fr).SetType(core.TextBodyMedium).SetText(cd.Subject).
 			Style(func(s *styles.Style) {
 				s.SetNonSelectable()
-			})
+			}).
+			SetName("subject")
 	}
 
 	list.Update()
