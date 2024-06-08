@@ -58,12 +58,13 @@ func (pg *Page) OpenURL(url string) {
 }
 
 // AppBar is the default app bar for a [Page]
-func (pg *Page) AppBar(tb *core.Toolbar) {
-	back := tb.ChildByName("back").(*core.Button)
-	back.OnClick(func(e events.Event) {
-		if len(pg.History) > 1 {
-			pg.OpenURL(pg.History[len(pg.History)-2])
-		}
+func (pg *Page) AppBar(p *core.Plan) {
+	core.AddInit(p, "back", func(w *core.Button) {
+		w.OnClick(func(e events.Event) {
+			if len(pg.History) > 1 {
+				pg.OpenURL(pg.History[len(pg.History)-2])
+			}
+		})
 	})
 
 	// TODO(kai/abc)

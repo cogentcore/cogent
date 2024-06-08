@@ -53,44 +53,48 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.Dir = errors.Log1(os.Getwd())
 
-	a.Maker(func(p *core.Plan) { // TODO(config)
-		if a.HasChildren() {
-			return
-		}
+	core.AddChild(a, func(w *views.StructView) {
+		st := StructForFlags(a.Cmd.Flags)
+		w.SetStruct(st)
+	})
 
-		// st := StructForFlags(a.Cmd.Flags)
-		// views.NewStructView(a).SetStruct(st)
-
-		sp := core.NewSplits(a, "splits").SetSplits(0.8, 0.2)
-		sp.Style(func(s *styles.Style) {
+	core.AddChildAt(a, "splits", func(w *core.Splits) {
+		w.SetSplits(0.8, 0.2)
+		w.Style(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
 
-		cmds := core.NewFrame(sp, "commands")
-		cmds.Style(func(s *styles.Style) {
-			s.Wrap = true
-			s.Align.Content = styles.End
+		core.AddChildAt(w, "commands", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Wrap = true
+				s.Align.Content = styles.End
+			})
 		})
 
-		ef := core.NewFrame(sp, "editor-frame").Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-		dir := core.NewText(ef, "dir").SetText(a.Dir)
+		core.AddChildAt(w, "editor-frame", func(w *core.Frame) {
+			w.Style(func(s *styles.Style) {
+				s.Direction = styles.Column
+			})
+			core.AddChildAt(w, "dir", func(w *core.Text) {
+				w.SetText(a.Dir)
+			})
+			core.AddChild(w, func(w *texteditor.Editor) {
+				w.Buffer.SetLang("go")
+				w.Buffer.Options.LineNumbers = false
 
-		te := texteditor.NewSoloEditor(ef)
-		te.Buffer.SetLang("go")
-		te.Buffer.Options.LineNumbers = false
-
-		te.OnKeyChord(func(e events.Event) {
-			kf := keymap.Of(e.KeyChord())
-			if kf == keymap.Enter && e.Modifiers() == 0 {
-				e.SetHandled()
-				txt := te.Buffer.String()
-				te.Buffer.SetTextString("")
-
-				errors.Log(a.RunCmd(txt, cmds, dir))
-				return
-			}
+				w.OnKeyChord(func(e events.Event) {
+					kf := keymap.Of(e.KeyChord())
+					if kf == keymap.Enter && e.Modifiers() == 0 {
+						e.SetHandled()
+						txt := w.Buffer.String()
+						w.Buffer.SetTextString("")
+						cmds := a.FindPath("splits/commands").(*core.Frame)
+						dir := a.FindPath("splits/editor-frame/dir").(*core.Text)
+						errors.Log(a.RunCmd(txt, cmds, dir))
+						return
+					}
+				})
+			})
 		})
 	})
 }
@@ -129,15 +133,15 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 		s.Border.Radius = styles.BorderRadiusLarge
 		s.Background = colors.C(colors.Scheme.SurfaceContainer)
 	})
-	tr := core.NewFrame(cfr, "tr").Style(func(s *styles.Style) {
+	tr := core.NewFrame(cfr).Style(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})
-	core.NewText(tr, "cmd").SetType(core.TextTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
+	core.NewText(tr).SetType(core.TextTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
 		s.SetMono(true)
 		s.Grow.Set(1, 0)
 	})
-	core.NewButton(tr, "kill").SetType(core.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {
+	core.NewButton(tr).SetType(core.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {
 		// cancel()
 		fmt.Println("canceled")
 	})

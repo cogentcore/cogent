@@ -10,17 +10,12 @@ import (
 // PageType is the [types.Type] for [Page]
 var PageType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.Page", IDName: "page", Doc: "Page represents one web browser page.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [htmlview.Context]."}}, Instance: &Page{}})
 
-// NewPage adds a new [Page] with the given name to the given parent:
+// NewPage returns a new [Page] with the given optional parent:
 // Page represents one web browser page.
-func NewPage(parent tree.Node, name ...string) *Page {
-	return parent.NewChild(PageType, name...).(*Page)
-}
+func NewPage(parent ...tree.Node) *Page { return tree.New[*Page](parent...) }
 
 // NodeType returns the [*types.Type] of [Page]
 func (t *Page) NodeType() *types.Type { return PageType }
 
 // New returns a new [*Page] value
 func (t *Page) New() tree.Node { return &Page{} }
-
-// SetTooltip sets the [Page.Tooltip]
-func (t *Page) SetTooltip(v string) *Page { t.Tooltip = v; return t }

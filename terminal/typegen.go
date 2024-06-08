@@ -10,11 +10,9 @@ import (
 // AppType is the [types.Type] for [App]
 var AppType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/terminal.App", IDName: "app", Doc: "App is a GUI view of a terminal command.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Cmd", Doc: "Cmd is the root command associated with this app."}, {Name: "CurCmd", Doc: "CurCmd is the current root command being typed in."}, {Name: "Dir", Doc: "Dir is the current directory of the app."}}, Instance: &App{}})
 
-// NewApp adds a new [App] with the given name to the given parent:
+// NewApp returns a new [App] with the given optional parent:
 // App is a GUI view of a terminal command.
-func NewApp(parent tree.Node, name ...string) *App {
-	return parent.NewChild(AppType, name...).(*App)
-}
+func NewApp(parent ...tree.Node) *App { return tree.New[*App](parent...) }
 
 // NodeType returns the [*types.Type] of [App]
 func (t *App) NodeType() *types.Type { return AppType }
@@ -33,9 +31,6 @@ func (t *App) SetCurCmd(v string) *App { t.CurCmd = v; return t }
 // SetDir sets the [App.Dir]:
 // Dir is the current directory of the app.
 func (t *App) SetDir(v string) *App { t.Dir = v; return t }
-
-// SetTooltip sets the [App.Tooltip]
-func (t *App) SetTooltip(v string) *App { t.Tooltip = v; return t }
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/terminal.Cmd", IDName: "cmd", Doc: "Cmd contains all of the data for a parsed command line command.", Fields: []types.Field{{Name: "Cmd", Doc: "Cmd is the actual name of the command (eg: \"git\", \"go build\")"}, {Name: "Name", Doc: "Name is the formatted name of the command (eg: \"Git\", \"Go build\")"}, {Name: "Doc", Doc: "Doc is the documentation for the command (eg: \"compile packages and dependencies\")"}, {Name: "Flags", Doc: "Flags contains the flags for the command"}, {Name: "Cmds", Doc: "Cmds contains the subcommands of the command"}}})
 
