@@ -68,7 +68,6 @@ func init() {
 		"ConcealDots":              reflect.ValueOf(core.ConcealDots),
 		"ConfigAppChooser":         reflect.ValueOf(core.ConfigAppChooser),
 		"CurrentRenderWindow":      reflect.ValueOf(&core.CurrentRenderWindow).Elem(),
-		"CustomConfigStyles":       reflect.ValueOf(&core.CustomConfigStyles).Elem(),
 		"DebugSettings":            reflect.ValueOf(&core.DebugSettings).Elem(),
 		"DefaultPaths":             reflect.ValueOf(&core.DefaultPaths).Elem(),
 		"DeviceSettings":           reflect.ValueOf(&core.DeviceSettings).Elem(),
