@@ -1,4 +1,8 @@
-// makefile commands for exporting symbols from core, numbers
+// Commands for exporting symbols from core, numbers
+
+command install {
+	go install github.com/traefik/yaegi/cmd/yaegi@latest
+}
 
 command core {
 	yaegi extract cogentcore.org/core/core cogentcore.org/core/views
