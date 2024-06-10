@@ -888,7 +888,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Cont").SetIcon(icons.PlayArrow).SetShortcut("Control+Alt+R")
 		w.SetTooltip("continue execution from current point").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				go dv.Continue()
 			})
@@ -901,7 +901,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Over").SetIcon(icons.StepOver).SetShortcut("F6")
 		w.SetTooltip("continues to the next source line, not entering function calls").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOver()
 			})
@@ -910,7 +910,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Into").SetIcon(icons.StepInto).SetShortcut("F7")
 		w.SetTooltip("continues to the next source line, entering into function calls").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepInto()
 			})
@@ -919,7 +919,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Out").SetIcon(icons.StepOut).SetShortcut("F8")
 		w.SetTooltip("continues to the return point of the current function").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOut()
 			})
@@ -928,7 +928,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Single").SetIcon(icons.Step).
 			SetTooltip("steps a single CPU instruction").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOut()
 			})
@@ -937,7 +937,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Stop").SetIcon(icons.Stop).
 			SetTooltip("stop execution").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(!dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(!dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.Stop()
 			})
@@ -948,7 +948,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Global Vars").SetIcon(icons.Search).
 			SetTooltip("list variables at global scope, subject to filter (name contains)").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				views.CallFunc(dv, dv.ListGlobalVars)
 			})
@@ -957,7 +957,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Params").SetIcon(icons.Edit).
 			SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				DebugSettingsView(&dv.Code.Settings.Debug)
 			})

@@ -62,7 +62,7 @@ func LangsView(pt *Langs) {
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.SaveSettings).
 				SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
-				StyleFirst(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
@@ -76,12 +76,12 @@ func LangsView(pt *Langs) {
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
-				StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.RevertToStandard).SetConfirm(true).
 				SetText("Revert to standard").SetIcon(icons.DeviceReset).
-				StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		})
 		// todo:
 		// tb.AddOverflowMenu(func(m *core.Scene) {
@@ -106,7 +106,7 @@ func CmdsView(pt *Commands) {
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
-				StyleFirst(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
 		})
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
@@ -120,7 +120,7 @@ func CmdsView(pt *Commands) {
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
-				StyleFirst(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
 		})
 		// todo:
 		// tb.AddOverflowMenu(func(m *core.Scene) {
@@ -185,7 +185,7 @@ func SplitsView(pt *Splits) {
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
-				StyleFirst(func(s *styles.Style) {
+				FirstStyler(func(s *styles.Style) {
 					s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits)
 				})
 		})
@@ -234,7 +234,7 @@ func RegistersView(pt *Registers) {
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
-				StyleFirst(func(s *styles.Style) {
+				FirstStyler(func(s *styles.Style) {
 					s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters)
 				})
 		})

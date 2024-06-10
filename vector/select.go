@@ -101,7 +101,7 @@ func (gv *VectorView) ConfigSelectToolbar() {
 // there is an item selected.
 func (gv *VectorView) NewSelectFuncButton(parent tree.Node, fun any) *views.FuncButton {
 	bt := views.NewFuncButton(parent, fun)
-	bt.StyleFirst(func(s *styles.Style) {
+	bt.FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
 	})
 	return bt
