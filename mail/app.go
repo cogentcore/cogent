@@ -87,8 +87,10 @@ func (a *App) Init() {
 	})
 }
 
-func (a *App) MakeToolbar(tb *core.Toolbar) { // TODO(config)
-	views.NewFuncButton(tb, a.Compose).SetIcon(icons.Send)
+func (a *App) MakeToolbar(p *core.Plan) {
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(a.Compose).SetIcon(icons.Send)
+	})
 }
 
 func (a *App) GetMail() error {
