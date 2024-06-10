@@ -53,7 +53,7 @@ func (sv *SymbolsView) Params() *SymbolsParams {
 
 func (sv *SymbolsView) Init() {
 	sv.Frame.Init()
-	sv.Style(func(s *styles.Style) {
+	sv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -64,7 +64,7 @@ func (sv *SymbolsView) Init() {
 		w.Maker(sv.makeToolbar)
 	})
 	core.AddChildAt(sv, "sym-frame", func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 1)
 			s.Overflow.Set(styles.OverflowAuto)
 		})
@@ -367,14 +367,14 @@ func (st *SymTreeView) SymNode() *SymNode {
 func (st *SymTreeView) Init() {
 	st.TreeView.Init()
 	core.AddChildInit(st, "parts", func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Gap.X.Em(0.4)
 		})
 		core.AddChildInit(w, "branch", func(w *core.Switch) {
 			w.SetIcons(st.IconOpen, st.IconClosed, st.SymNode().GetIcon())
 			core.AddChildInit(w, "stack", func(w *core.Frame) {
 				core.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
-					w.Style(func(s *styles.Style) {
+					w.Styler(func(s *styles.Style) {
 						s.Min.Set(units.Em(1))
 					})
 				})

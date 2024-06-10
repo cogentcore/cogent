@@ -32,7 +32,7 @@ func (pg *Page) Init() {
 	pg.Frame.Init()
 	pg.Context = htmlview.NewContext()
 	pg.Context.OpenURL = pg.OpenURL
-	pg.Style(func(s *styles.Style) {
+	pg.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 }

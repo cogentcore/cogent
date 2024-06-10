@@ -217,7 +217,7 @@ func RegistersView(pt *Registers) {
 		return
 	}
 	d := core.NewBody().SetTitle("Cogent Code Registers").SetData(pt)
-	d.Style(func(s *styles.Style) {
+	d.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 

@@ -128,7 +128,7 @@ func (dv *DebugView) Config(cv *CodeView, sup fileinfo.Known, exePath string) {
 
 func (dv *DebugView) Init() {
 	dv.Frame.Init()
-	dv.Style(func(s *styles.Style) {
+	dv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -870,7 +870,7 @@ func (dv *DebugView) ConsoleText() *texteditor.Editor {
 
 func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.AddAt(p, "status", func(w *core.Text) {
-		w.SetText("Building").Style(func(s *styles.Style) {
+		w.SetText("Building").Styler(func(s *styles.Style) {
 			color := DebugStatusColors[dv.State.Status]
 			s.Background = colors.C(color)
 			s.Color = colors.C(hct.ContrastColor(color, hct.ContrastAA))
@@ -996,7 +996,7 @@ func (vv *VarView) SetVar(vr *cdebug.Variable, frinfo string) {
 }
 
 func (vv *VarView) Init() {
-	vv.Style(func(s *styles.Style) {
+	vv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})

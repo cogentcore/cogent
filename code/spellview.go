@@ -52,7 +52,7 @@ type SpellView struct {
 
 func (sv *SpellView) Init() {
 	sv.Frame.Init()
-	sv.Style(func(s *styles.Style) {
+	sv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})

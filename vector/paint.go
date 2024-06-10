@@ -46,14 +46,14 @@ func (pv *PaintView) Init() {
 	DashIconsInit()
 	MarkerIconsInit()
 
-	pv.Style(func(s *styles.Style) {
+	pv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 
 	sty := &Settings.ShapeStyle
 
 	core.AddChildAt(pv, "stroke-lab", func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
 		})
 		core.AddChild(w, func(w *core.Text) {
@@ -65,11 +65,11 @@ func (pv *PaintView) Init() {
 	})
 
 	core.AddChildAt(pv, "stroke-width", func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
 		})
 		core.AddChild(w, func(w *core.Text) {
-			w.SetText("Width:  ").Style(func(s *styles.Style) {
+			w.SetText("Width:  ").Styler(func(s *styles.Style) {
 				s.Align.Items = styles.Center
 			})
 		})
@@ -107,7 +107,7 @@ func (pv *PaintView) Init() {
 		})
 
 		core.AddChildAt(w, "stroke-markers", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Row
 			})
 			core.AddChild(w, func(w *core.Chooser) { // start
@@ -242,7 +242,7 @@ func (pv *PaintView) Init() {
 		core.AddChild(w, func(w *core.Separator) {})
 
 		core.AddChildAt(pv, "fill-lab", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Row
 			})
 			core.AddChild(w, func(w *core.Text) {

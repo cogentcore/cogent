@@ -29,12 +29,12 @@ type AlignView struct {
 
 func (av *AlignView) Init() {
 	av.Frame.Init()
-	av.Style(func(s *styles.Style) {
+	av.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 
 	core.AddChild(av, func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
 		})
 
@@ -56,7 +56,7 @@ func (av *AlignView) Init() {
 	})
 
 	core.AddChild(av, func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Display = styles.Grid
 			s.Columns = 6
 		})

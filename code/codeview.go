@@ -116,7 +116,7 @@ func init() {
 
 func (cv *CodeView) Init() {
 	cv.Frame.Init()
-	cv.Style(func(s *styles.Style) {
+	cv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -137,7 +137,7 @@ func (cv *CodeView) Init() {
 	core.AddChildAt(cv, "splits", func(w *core.Splits) {
 		w.SetSplits(cv.Settings.Splits...)
 		core.AddChildAt(w, "filetree", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 				s.Overflow.Set(styles.OverflowAuto)
 			})
@@ -162,20 +162,20 @@ func (cv *CodeView) Init() {
 		})
 		core.AddChildAt(w, "tabs", func(w *core.Tabs) {
 			w.SetType(core.FunctionalTabs)
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 1)
 			})
 		})
 	})
 	core.AddChildAt(cv, "statusbar", func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 			s.Min.Y.Em(1.0)
 			s.Padding.Set(units.Dp(4))
 		})
 		core.AddChildAt(w, "sb-text", func(w *core.Text) {
 			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(100)
 				s.Min.Y.Em(1.0)
 				s.Text.TabSize = 4
@@ -195,14 +195,14 @@ func (cv *CodeView) Init() {
 func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
 	txnm := fmt.Sprintf("%d", i)
 	core.AddAt(p, "textframe-"+txnm, func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
 		})
 		core.AddChildAt(w, "textbut-"+txnm, func(w *core.Button) {
 			w.SetText("texteditor: " + txnm)
 			w.Type = core.ButtonAction
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 0)
 			})
 			w.Menu = func(m *core.Scene) {

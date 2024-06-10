@@ -99,15 +99,15 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
 	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
+		SetMenu(CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
 		s.SetState(!fn.HasSelection(), states.Disabled)
 	})
 	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
 	views.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
 }

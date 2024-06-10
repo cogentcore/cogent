@@ -243,7 +243,7 @@ func (cv *CodeView) CommitNoChecks() {
 	tf := core.NewTextField(d)
 	curval, _ := CmdPrompt1Vals["Commit"]
 	tf.SetText(curval)
-	tf.Style(func(s *styles.Style) {
+	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 	})
 	d.AddBottomBar(func(parent core.Widget) {

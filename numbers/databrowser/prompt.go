@@ -31,7 +31,7 @@ func PromptOKCancel(ctx core.Widget, prompt string, fun func()) {
 func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)) {
 	d := core.NewBody().AddTitle(prompt)
 	tf := core.NewTextField(d).SetText(str)
-	tf.Style(func(s *styles.Style) {
+	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(60)
 	})
 	d.AddBottomBar(func(parent core.Widget) {

@@ -38,7 +38,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 	})
 	core.Add(p, func(w *core.Switch) {
 		w.SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			w.SetChecked(cv.Settings.GoMod) // todo: update
 		})
 		w.OnChange(func(e events.Event) {

@@ -60,19 +60,19 @@ func (a *App) Init() {
 
 	core.AddChildAt(a, "splits", func(w *core.Splits) {
 		w.SetSplits(0.8, 0.2)
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
 
 		core.AddChildAt(w, "commands", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Wrap = true
 				s.Align.Content = styles.End
 			})
 		})
 
 		core.AddChildAt(w, "editor-frame", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 			core.AddChildAt(w, "dir", func(w *core.Text) {
@@ -127,17 +127,17 @@ func (a *App) MakeToolbar(p *core.Plan) {
 func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	// ctx, cancel := context.WithCancel(context.Background())
 
-	cfr := core.NewFrame(cmds).Style(func(s *styles.Style) {
+	cfr := core.NewFrame(cmds).Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
 		s.Direction = styles.Column
 		s.Border.Radius = styles.BorderRadiusLarge
 		s.Background = colors.C(colors.Scheme.SurfaceContainer)
 	})
-	tr := core.NewFrame(cfr).Style(func(s *styles.Style) {
+	tr := core.NewFrame(cfr).Styler(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})
-	core.NewText(tr).SetType(core.TextTitleLarge).SetText(cmd).Style(func(s *styles.Style) {
+	core.NewText(tr).SetType(core.TextTitleLarge).SetText(cmd).Styler(func(s *styles.Style) {
 		s.SetMono(true)
 		s.Grow.Set(1, 0)
 	})
@@ -156,7 +156,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	buf.Options.LineNumbers = false
 
 	te := texteditor.NewEditor(cfr).SetBuffer(buf)
-	te.Style(func(s *styles.Style) {
+	te.Styler(func(s *styles.Style) {
 		s.Min.Set(units.Em(30), units.Em(10))
 		s.Background = cfr.Styles.Background
 	})

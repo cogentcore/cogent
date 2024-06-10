@@ -38,7 +38,7 @@ func (a *App) Compose() { //types:add
 	te := texteditor.NewSoloEditor(b)
 	te.Buffer.SetLang("md")
 	te.Buffer.Options.LineNumbers = false
-	te.Style(func(s *styles.Style) {
+	te.Styler(func(s *styles.Style) {
 		s.SetMono(false)
 	})
 	b.AddBottomBar(func(pw core.Widget) {

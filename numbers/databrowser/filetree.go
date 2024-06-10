@@ -198,15 +198,15 @@ func IsTableFile(fname string) bool {
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
 	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
 	views.NewFuncButton(m, fn.PlotFiles).SetText("Plot").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || fn.Info.Cat != fileinfo.Data, states.Disabled)
 		})
 	views.NewFuncButton(m, fn.DiffDirs).SetText("Diff Dirs").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsDir(), states.Disabled)
 		})
 }

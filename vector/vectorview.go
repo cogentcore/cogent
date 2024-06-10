@@ -42,7 +42,7 @@ type VectorView struct {
 func (vv *VectorView) Init() {
 	vv.Frame.Init()
 	vv.EditState.ConfigDefaultGradient()
-	vv.Style(func(s *styles.Style) {
+	vv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 	vv.OnWidgetAdded(func(w core.Widget) {
@@ -56,7 +56,7 @@ func (vv *VectorView) Init() {
 
 	core.AddChild(vv, func(w *core.Frame) {
 		w.SetName("modal-tb")
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Display = styles.Stacked
 		})
 	})
@@ -64,7 +64,7 @@ func (vv *VectorView) Init() {
 	core.AddChildAt(vv, "hbox", func(w *core.Frame) {
 
 		core.AddChildAt(w, "tools", func(w *core.Toolbar) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 		})
@@ -73,7 +73,7 @@ func (vv *VectorView) Init() {
 			w.SetSplits(0.15, 0.60, 0.25)
 
 			core.AddChildAt(w, "layer-tree", func(w *core.Frame) {
-				w.Style(func(s *styles.Style) {
+				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
 
@@ -86,7 +86,7 @@ func (vv *VectorView) Init() {
 				})
 
 				core.AddChildAt(w, "tree-frame", func(w *core.Frame) {
-					w.Style(func(s *styles.Style) {
+					w.Styler(func(s *styles.Style) {
 						s.Direction = styles.Column
 					})
 					core.AddChildAt(w, "treeview", func(w *views.TreeView) {
@@ -109,7 +109,7 @@ func (vv *VectorView) Init() {
 		})
 
 		core.AddChildAt(w, "statusbar", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 0)
 			})
 		})

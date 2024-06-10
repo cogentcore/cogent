@@ -54,7 +54,7 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.AuthToken = map[string]*oauth2.Token{}
 	a.AuthClient = map[string]sasl.Client{}
-	a.Style(func(s *styles.Style) {
+	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
 
@@ -63,19 +63,19 @@ func (a *App) Init() {
 			w.SetText("Mailboxes")
 		})
 		core.AddChildAt(w, "list", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 		})
 		core.AddChildAt(w, "mail", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 			core.AddChildAt(w, "msv", func(w *views.StructView) {
 				w.SetReadOnly(true)
 			})
 			core.AddChildAt(w, "mb", func(w *core.Frame) {
-				w.Style(func(s *styles.Style) {
+				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
 			})
