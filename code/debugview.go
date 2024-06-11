@@ -1035,7 +1035,7 @@ func (vv *VarView) Splits() *core.Splits {
 
 // TreeView returns the main TreeView
 func (vv *VarView) TreeView() *views.TreeView {
-	return vv.Splits().Child(0).Child(0).(*views.TreeView)
+	return vv.Splits().Child(0).AsTree().Child(0).(*views.TreeView)
 }
 
 // StructView returns the main StructView

@@ -265,7 +265,7 @@ func (fn *FileNode) RenameFiles() {
 		var nodes []*FileNode
 		sels := fn.SelectedViews()
 		for i := len(sels) - 1; i >= 0; i-- {
-			sn := sels[i].This().(*FileNode)
+			sn := sels[i].(*FileNode)
 			nodes = append(nodes, sn)
 		}
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this

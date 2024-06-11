@@ -231,8 +231,8 @@ func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
 // ParentCode returns the Code parent of given node
 func ParentCode(tn tree.Node) (*CodeView, bool) {
 	var res *CodeView
-	tn.WalkUp(func(n tree.Node) bool {
-		if c, ok := n.This().(*CodeView); ok {
+	tn.AsTree().WalkUp(func(n tree.Node) bool {
+		if c, ok := n.(*CodeView); ok {
 			res = c
 			return false
 		}
@@ -262,12 +262,12 @@ func (cv *CodeView) Splits() *core.Splits {
 
 // TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
 func (cv *CodeView) TextEditorButtonByIndex(idx int) *core.Button {
-	return cv.Splits().Child(TextEditor1Index + idx).Child(0).(*core.Button)
+	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(0).(*core.Button)
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
 func (cv *CodeView) TextEditorByIndex(idx int) *TextEditor {
-	return cv.Splits().Child(TextEditor1Index + idx).Child(1).(*TextEditor)
+	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(1).(*TextEditor)
 }
 
 // Tabs returns the main TabView
@@ -295,7 +295,7 @@ func (cv *CodeView) SelectedFileNode() *filetree.Node {
 	if n == 0 {
 		return nil
 	}
-	return filetree.AsNode(cv.Files.SelectedNodes[n-1].This())
+	return filetree.AsNode(cv.Files.SelectedNodes[n-1])
 }
 
 // VersionControl returns the version control system in effect, using the file tree detected
