@@ -50,7 +50,7 @@ func (cv *CodeView) ActiveFileNode() *filetree.Node {
 func (cv *CodeView) TextEditorIndex(av *TextEditor) int {
 	for i := 0; i < NTextEditors; i++ {
 		tv := cv.TextEditorByIndex(i)
-		if tv.This() == av.This() {
+		if tv.This == av.This {
 			return i
 		}
 	}

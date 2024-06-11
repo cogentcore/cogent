@@ -443,7 +443,7 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This()) {
+		if !(NodeIsLayer(parent) || parent == sv.This) {
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
@@ -466,7 +466,7 @@ func (gv *VectorView) SelectRaise() { //types:add
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This()) {
+		if !(NodeIsLayer(parent) || parent == sv.This) {
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
@@ -491,7 +491,7 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This()) {
+		if !(NodeIsLayer(parent) || parent == sv.This) {
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
@@ -514,7 +514,7 @@ func (gv *VectorView) SelectLower() { //types:add
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
 		parent := se.AsTree().Parent
-		if !(NodeIsLayer(parent) || parent == sv.This()) {
+		if !(NodeIsLayer(parent) || parent == sv.This) {
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
@@ -580,7 +580,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 	var rval []svg.Node
 	var curlay tree.Node
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root().This() {
+		if n == sv.Root().This {
 			return tree.Continue
 		}
 		if leavesOnly && nb.HasChildren() {
@@ -633,7 +633,7 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 	}
 	var rval svg.Node
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
-		if n == sv.Root().This() {
+		if n == sv.Root().This {
 			return tree.Continue
 		}
 		if leavesOnly && nb.HasChildren() {

@@ -110,7 +110,7 @@ func (vv *VectorView) Init() {
 		})
 	})
 
-	// tv.TreeViewSig.Connect(vv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// tv.TreeViewSig.Connect(vv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
 	// 	if data == nil {
 	// 		return
@@ -689,7 +689,7 @@ func (vv *VectorView) UpdateTabs() {
 	// if fsel != nil {
 	// 	sel := fsel.AsNodeBase()
 	// 	pv := vv.PaintView()
-	// 	pv.Update(&sel.Paint, sel.This())
+	// 	pv.Update(&sel.Paint, sel.This)
 	// 	txt, istxt := fsel.(*svg.Text)
 	// 	if istxt {
 	// 		es.Text.SetFromNode(txt)

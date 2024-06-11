@@ -38,7 +38,7 @@ func (vv *VectorView) ConfigNodeToolbar() {
 	core.NewSeparator(tb)
 
 	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
-	// 	gv.This(), func(recv, send tree.Node, sig int64, data interface{}) {
+	// 	gv.This, func(recv, send tree.Node, sig int64, data interface{}) {
 	// 		grr := recv.Embed(KiT_VectorView).(*VectorView)
 	// 		grr.SelGroup()
 	// 	})
@@ -184,7 +184,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send tree.Node, sig int64, d any) {
+		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This, func(recv, send tree.Node, sig int64, d any) {
 		// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
 		// 	})

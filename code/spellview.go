@@ -304,7 +304,7 @@ func (sv *SpellView) AcceptSuggestion(s string) {
 
 func (sv *SpellView) Destroy() {
 	tv := sv.Text
-	if tv == nil || tv.Buffer == nil || tv.This() == nil {
+	if tv == nil || tv.Buffer == nil || tv.This == nil {
 		return
 	}
 	tv.ClearHighlights()

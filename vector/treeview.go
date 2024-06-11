@@ -40,7 +40,7 @@ func (gv *VectorView) SelectedAsTreeViews() []views.TreeViewer {
 	tv := gv.TreeView()
 	var tvl []views.TreeViewer
 	for _, si := range sl {
-		tvn := tv.FindSyncNode(si.AsTree().This())
+		tvn := tv.FindSyncNode(si.AsTree().This)
 		if tvn != nil {
 			tvl = append(tvl, tvn)
 		}

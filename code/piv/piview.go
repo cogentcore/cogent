@@ -331,13 +331,13 @@ func (pv *PiView) LexAll() {
 func (pv *PiView) SelectLexRule(rule *lexer.Rule) {
 	lt := pv.LexTree()
 	lt.UnselectAll()
-	lt.FuncDownMeFirst(0, lt.This(), func(k tree.Node, level int, d any) bool {
+	lt.FuncDownMeFirst(0, lt.This, func(k tree.Node, level int, d any) bool {
 		lnt := k.Embed(views.KiT_TreeView)
 		if lnt == nil {
 			return true
 		}
 		ln := lnt.(*views.TreeView)
-		if ln.SrcNode == rule.This() {
+		if ln.SrcNode == rule.This {
 			ln.Select()
 			return false
 		}
@@ -473,13 +473,13 @@ func (pv *PiView) ParseAll() {
 func (pv *PiView) SelectParseRule(rule *parser.Rule) {
 	lt := pv.ParseTree()
 	lt.UnselectAll()
-	lt.FuncDownMeFirst(0, lt.This(), func(k tree.Node, level int, d any) bool {
+	lt.FuncDownMeFirst(0, lt.This, func(k tree.Node, level int, d any) bool {
 		lnt := k.Embed(views.KiT_TreeView)
 		if lnt == nil {
 			return true
 		}
 		ln := lnt.(*views.TreeView)
-		if ln.SrcNode == rule.This() {
+		if ln.SrcNode == rule.This {
 			ln.Select()
 			return false
 		}
@@ -686,7 +686,7 @@ func (pv *PiView) OpenConsoleTab() {
 	ctv.SetProp("white-space", styles.WhiteSpacePre) // no word wrap
 	if ctv.Buf == nil || ctv.Buf != code.TheConsole.Buf {
 		ctv.SetBuf(code.TheConsole.Buf)
-		code.TheConsole.Buf.TextBufSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		code.TheConsole.Buf.TextBufSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 			pve, _ := recv.Embed(KiT_PiView).(*PiView)
 			pve.SelectMainTabByName("Console")
 		})
@@ -911,7 +911,7 @@ func (pv *PiView) ConfigSplits() {
 		pv.StructView().SetStruct(&pv.Parser.Lexer)
 	}
 
-	pv.LexTree().TreeViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+	pv.LexTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
@@ -925,7 +925,7 @@ func (pv *PiView) ConfigSplits() {
 		}
 	})
 
-	pv.ParseTree().TreeViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+	pv.ParseTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
@@ -939,7 +939,7 @@ func (pv *PiView) ConfigSplits() {
 		}
 	})
 
-	pv.AstTree().TreeViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+	pv.AstTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
@@ -1319,7 +1319,7 @@ func (pv *PiView) CloseWindowReq() bool {
 	core.ChoiceDialog(pv.Viewport, core.DlgOpts{Title: "Close Project: There are Unsaved Changes",
 		Prompt: fmt.Sprintf("In Project: %v There are <b>unsaved changes</b> -- do you want to save or cancel closing this project and review?", pv.Nm)},
 		[]string{"Cancel", "Save Proj", "Close Without Saving"},
-		pv.This(), func(recv, send tree.Node, sig int64, data any) {
+		pv.This, func(recv, send tree.Node, sig int64, data any) {
 			switch sig {
 			case 0:
 				// do nothing, will have returned false already
@@ -1390,7 +1390,7 @@ func NewPiView() (*core.Window, *PiView) {
 	// 			core.ChoiceDialog(vp, core.DlgOpts{Title: "Close Without Saving?",
 	// 				Prompt: "Do you want to save your changes?  If so, Cancel and then Save"},
 	// 				[]string{"Close Without Saving", "Cancel"},
-	// 				win.This(), func(recv, send tree.Node, sig int64, data any) {
+	// 				win.This, func(recv, send tree.Node, sig int64, data any) {
 	// 					switch sig {
 	// 					case 0:
 	// 						w.Close()
@@ -1410,7 +1410,7 @@ func NewPiView() (*core.Window, *PiView) {
 	// 		inQuitPrompt = true
 	// 		core.PromptDialog(vp, core.DlgOpts{Title: "Really Quit?",
 	// 			Prompt: "Are you <i>sure</i> you want to quit?"}, true, true,
-	// 			win.This(), func(recv, send tree.Node, sig int64, data any) {
+	// 			win.This, func(recv, send tree.Node, sig int64, data any) {
 	// 				if sig == int64(core.DialogAccepted) {
 	// 					system.TheApp.Quit()
 	// 				} else {

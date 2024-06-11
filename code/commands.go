@@ -795,7 +795,7 @@ var CustomCommandsChanged = false
 
 // CommandMenu returns a menu function for commands for given language and vcs name
 func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
-	cv, ok := ParentCode(fn.This())
+	cv, ok := ParentCode(fn.This)
 	if !ok {
 		return nil
 	}

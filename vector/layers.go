@@ -93,7 +93,7 @@ func (vv *VectorView) FirstLayerIndex() int {
 func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
-	// lyv.ViewSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// lyv.ViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	// fmt.Printf("tv viewsig: %v  data: %v  send: %v\n", sig, data, send.Path())
 	// 	update := sv.UpdateStart()
 	// 	es.Layers.LayersUpdated(sv)
@@ -101,7 +101,7 @@ func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// 	gv.UpdateLayerView()
 	// })
 
-	// lyv.SliceViewSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// lyv.SliceViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	svs := views.SliceViewSignals(sig)
 	// 	idx := data.(int)
 	// 	fmt.Printf("tv sliceviewsig: %v  data: %v\n", svs.String(), idx)
@@ -120,7 +120,7 @@ func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
 	// 	}
 	// })
 
-	// lyv.WidgetSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// lyv.WidgetSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	fmt.Printf("tv widgetsig: %v  data: %v\n", core.WidgetSignals(sig).String(), data)
 	// 	if sig == int64(core.WidgetSelected) {
 	// 		idx := data.(int)

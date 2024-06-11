@@ -141,7 +141,7 @@ func main() { // TODO(config)
 		}
 		textField.SetText("")
 
-		if header.This() != nil {
+		if header.This != nil {
 			rightFrame.DeleteChild(header)
 			rightFrame.Update()
 		}

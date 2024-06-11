@@ -277,7 +277,7 @@ func (cv *CodeView) Tabs() *core.Tabs {
 
 // StatusBar returns the statusbar widget
 func (cv *CodeView) StatusBar() *core.Frame {
-	if cv.This() == nil || !cv.HasChildren() {
+	if cv.This == nil || !cv.HasChildren() {
 		return nil
 	}
 	return cv.ChildByName("statusbar", 2).(*core.Frame)

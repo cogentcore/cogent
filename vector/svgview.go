@@ -249,7 +249,7 @@ func (sv *SVGView) ContentsBBox() math32.Box2 {
 	bbox := math32.Box2{}
 	bbox.SetEmpty()
 	sv.WalkDown(func(n tree.Node) bool {
-		if n == sv.This() {
+		if n == sv.This {
 			return tree.Continue
 		}
 		if n == sv.SSVG().Defs {
@@ -286,7 +286,7 @@ func (sv *SVGView) ContentsBBox() math32.Box2 {
 // uses ApplyDeltaTransform manipulation.
 func (sv *SVGView) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
 	sv.WalkDown(func(n tree.Node) bool {
-		if n == sv.This() {
+		if n == sv.This {
 			return tree.Continue
 		}
 		if n == sv.SSVG().Defs {
@@ -637,7 +637,7 @@ func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 func (sv *SVGView) DepthMap() map[tree.Node]int {
 	m := make(map[tree.Node]int)
 	depth := 0
-	n := tree.Next(sv.This())
+	n := tree.Next(sv.This)
 	for n != nil {
 		m[n] = depth
 		depth++

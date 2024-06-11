@@ -385,7 +385,7 @@ func (dv *DebugView) Continue() {
 	dsc := dv.Dbg.Continue(&dv.State)
 	var ds *cdebug.State
 	for ds = range dsc { // get everything
-		if dv.This() == nil {
+		if dv.This == nil {
 			return
 		}
 	}
@@ -492,7 +492,7 @@ func (dv *DebugView) AddBreak(fpath string, line int) {
 // activated then it just deletes from master list.
 // Note that breakpoints can be turned on and off directly using On flag.
 func (dv *DebugView) DeleteBreak(fpath string, line int) {
-	if dv.This() == nil {
+	if dv.This == nil {
 		return
 	}
 	dv.DeleteBreakImpl(fpath, line)
@@ -548,7 +548,7 @@ func (dv *DebugView) SyncBreaks() {
 // DeleteBreakInBuf delete breakpoint in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -560,7 +560,7 @@ func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
 
 // DeleteAllBreaks deletes all breakpoints
 func (dv *DebugView) DeleteAllBreaks() {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -571,7 +571,7 @@ func (dv *DebugView) DeleteAllBreaks() {
 // UpdateBreakInBuf updates break status in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -583,7 +583,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 
 // UpdateAllBreaks updates all breakpoints
 func (dv *DebugView) UpdateAllBreaks() {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -629,7 +629,7 @@ func (dv *DebugView) InitState(ds *cdebug.State) {
 
 // UpdateFromState updates the view from current debugger state
 func (dv *DebugView) UpdateFromState() {
-	if dv == nil || dv.This() == nil || dv.Dbg == nil {
+	if dv == nil || dv.This == nil || dv.Dbg == nil {
 		return
 	}
 
@@ -825,7 +825,7 @@ var DebugStatusColors = map[cdebug.Status]color.RGBA{
 }
 
 func (dv *DebugView) SetStatus(stat cdebug.Status) {
-	if dv == nil || dv.This() == nil {
+	if dv == nil || dv.This == nil {
 		return
 	}
 

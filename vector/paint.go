@@ -182,7 +182,7 @@ func (pv *PaintView) Init() {
 
 			core.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
-			// spt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+			// spt.ButtonSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 			// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
 			// 	sss := pvv.StrokeStack()
 			// 	prev := pv.StrokeType
@@ -210,12 +210,12 @@ func (pv *PaintView) Init() {
 			core.AddChild(w, func(w *views.ColorView) { // "stroke-clr")
 				// sc.SetProp("vertical-align", styles.AlignTop)
 				// sc.SetColor(sty.StrokeStyle.Color)
-				// sc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// sc.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if pv.StrokeType == PaintSolid {
 				// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), false) // not manip
 				// 	}
 				// })
-				// sc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// sc.ManipSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if pv.StrokeType == PaintSolid {
 				// 		pv.VectorView.SetStrokeColor(pv.StrokeProp(), true) // manip
 				// 	}
@@ -227,7 +227,7 @@ func (pv *PaintView) Init() {
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
 				w.SetSlice(&pv.VectorView.EditState.Gradients)
-				// sg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if sig == int64(core.WidgetSelected) {
 				// 		svv, _ := send.(*views.TableView)
 				// 		if svv.SelectedIndex >= 0 {
@@ -260,7 +260,7 @@ func (pv *PaintView) Init() {
 
 			core.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
 
-			// fpt.ButtonSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+			// fpt.ButtonSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 			// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
 			// 	fss := pvv.FillStack()
 			// 	prev := pvv.FillType
@@ -290,12 +290,12 @@ func (pv *PaintView) Init() {
 				// fc.SetProp("vertical-align", styles.AlignTop)
 				// fc.Config()
 				// fc.SetColor(sty.FillStyle.Color.Color)
-				// fc.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// fc.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if pv.FillType == PaintSolid {
 				// 		pv.VectorView.SetFillColor(pv.FillProp(), false)
 				// 	}
 				// })
-				// fc.ManipSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// fc.ManipSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if pv.FillType == PaintSolid {
 				// 		pv.VectorView.SetFillColor(pv.FillProp(), true) // manip
 				// 	}
@@ -307,7 +307,7 @@ func (pv *PaintView) Init() {
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
 				w.SetSlice(&pv.VectorView.EditState.Gradients)
-				// fg.WidgetSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// fg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if sig == int64(core.WidgetSelected) {
 				// 		svv, _ := send.(*views.TableView)
 				// 		if svv.SelectedIndex >= 0 {
@@ -316,7 +316,7 @@ func (pv *PaintView) Init() {
 				// 		}
 				// 	}
 				// })
-				// fg.SliceViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// fg.SliceViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	// fmt.Printf("svs: %v   %v\n", sig, data)
 				// 	// svv, _ := send.(*views.TableView)
 				// 	if sig == int64(views.SliceViewDeleted) { // not clear what we can do here
@@ -324,7 +324,7 @@ func (pv *PaintView) Init() {
 				// 		pv.VectorView.UpdateGradients()
 				// 	}
 				// })
-				// fg.ViewSig.Connect(pv.This(), func(recv, send tree.Node, sig int64, data any) {
+				// fg.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	// fmt.Printf("vs: %v   %v\n", sig, data)
 				// 	// svv, _ := send.(*views.TableView)
 				// 	pv.VectorView.UpdateGradients()
