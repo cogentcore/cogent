@@ -237,8 +237,8 @@ func (sv *SVGView) MouseHover() {
 		obj := ssvg.FirstContainingPoint(me.Where, true)
 		if obj != nil {
 			pos := me.Where
-			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name())
-			core.PopupTooltip(obj.Name(), pos.X, pos.Y, sv.ViewportSafe(), ttxt)
+			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name)
+			core.PopupTooltip(obj.Name, pos.X, pos.Y, sv.ViewportSafe(), ttxt)
 		}
 	})
 }

@@ -137,7 +137,7 @@ func (cv *CodeView) RunPostCmdsFileNode(fn *filetree.Node) bool {
 // -- returns true if autosave file does exist for a file that currently
 // unchanged (means just opened)
 func (cv *CodeView) AutoSaveCheck(tv *TextEditor, vidx int, fn *filetree.Node) bool {
-	if strings.HasPrefix(fn.Nm, "#") && strings.HasSuffix(fn.Nm, "#") {
+	if strings.HasPrefix(fn.Name, "#") && strings.HasSuffix(fn.Name, "#") {
 		fn.Buffer.Autosave = false
 		return false // we are the autosave file
 	}
@@ -147,7 +147,7 @@ func (cv *CodeView) AutoSaveCheck(tv *TextEditor, vidx int, fn *filetree.Node) b
 	}
 	cv.DiffFileNode(fn, core.Filename(fn.Buffer.AutoSaveFilename()))
 	d := core.NewBody().AddTitle("Autosave file Exists").
-		AddText(fmt.Sprintf("An auto-save file for file: %v exists; open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Nm))
+		AddText(fmt.Sprintf("An auto-save file for file: %v exists; open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Name))
 	d.AddBottomBar(func(parent core.Widget) {
 		core.NewButton(parent).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 			d.Close()
@@ -493,7 +493,7 @@ func (cv *CodeView) FileNodeOpened(fn *filetree.Node) {
 	// program, document, data
 	if int(fn.Info.Size) > core.SystemSettings.BigFileSize {
 		d := core.NewBody().AddTitle("File is relatively large").
-			AddText(fmt.Sprintf("The file: %v is relatively large at: %v; really open for editing?", fn.Nm, fn.Info.Size))
+			AddText(fmt.Sprintf("The file: %v is relatively large at: %v; really open for editing?", fn.Name, fn.Info.Size))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddCancel(parent)
 			core.NewButton(parent).SetText("Open").OnClick(func(e events.Event) {

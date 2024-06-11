@@ -236,7 +236,7 @@ func (dv *DebugView) InitTabs() {
 		w.SetSlice(&dv.State.Vars)
 		w.OnDoubleClick(func(e events.Event) {
 			vr := dv.State.Vars[w.SelectedIndex]
-			dv.ShowVar(vr.Nm)
+			dv.ShowVar(vr.Name)
 		})
 	})
 
@@ -261,7 +261,7 @@ func (dv *DebugView) InitTabs() {
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
 			vr := dv.State.Vars[w.SelectedIndex]
-			dv.ShowVar(vr.Nm)
+			dv.ShowVar(vr.Name)
 		})
 	})
 }
@@ -1065,8 +1065,8 @@ func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugView) *VarVie
 	wnm := "var-view"
 	wti := "Var View"
 	if vr != nil {
-		wnm += "-" + vr.Name()
-		wti += ": " + vr.Name()
+		wnm += "-" + vr.Name
+		wti += ": " + vr.Name
 	}
 	b := core.NewBody() // wnm)
 	b.Title = wti

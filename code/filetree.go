@@ -196,11 +196,11 @@ func (on *OpenNodes) Strings() []string {
 	sl := make([]string, len(*on))
 	for i, fn := range *on {
 		rp := fn.FRoot.RelPath(fn.FPath)
-		rp = strings.TrimSuffix(rp, fn.Nm)
+		rp = strings.TrimSuffix(rp, fn.Name)
 		if rp != "" {
-			sl[i] = fn.Nm + " - " + rp
+			sl[i] = fn.Name + " - " + rp
 		} else {
-			sl[i] = fn.Nm
+			sl[i] = fn.Name
 		}
 		if fn.IsNotSaved() {
 			sl[i] += " *"
@@ -271,7 +271,7 @@ func (fn *FileNode) RenameFiles() {
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
 		for _, sn := range nodes {
 			fb := views.NewSoloFuncButton(sn, sn.RenameFile)
-			fb.Args[0].SetValue(sn.Name())
+			fb.Args[0].SetValue(sn.Name)
 			fb.CallFunc()
 		}
 	})

@@ -295,7 +295,7 @@ func (cv *CodeView) UpdateStatusText() {
 		}
 	}
 
-	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", cv.Nm, cv.ActiveVCSInfo, fnm, ln, ch, msg)
+	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", cv.Name, cv.ActiveVCSInfo, fnm, ln, ch, msg)
 	text.SetText(str).UpdateWidget()
 	text.NeedsRender()
 }

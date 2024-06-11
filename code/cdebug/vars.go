@@ -65,7 +65,7 @@ type Variable struct {
 // SortVars sorts vars by name
 func SortVars(vrs []*Variable) {
 	sort.Slice(vrs, func(i, j int) bool {
-		return vrs[i].Nm < vrs[j].Nm
+		return vrs[i].Name < vrs[j].Name
 	})
 }
 
@@ -74,12 +74,12 @@ func (vr *Variable) Label() string {
 	val := vr.Value
 	sz := len(vr.Value)
 	if sz == 0 {
-		return vr.Nm
+		return vr.Name
 	}
 	if sz > 40 {
 		val = val[:40] + "..."
 	}
-	return vr.Nm + " = " + val
+	return vr.Name + " = " + val
 }
 
 // ValueString returns the value of the variable, integrating over sub-elements
@@ -152,8 +152,8 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 			b.WriteString("\n")
 			b.WriteString(indent.String(ichr, ident+1, tabSz))
 		}
-		if ve.Nm != "" {
-			b.WriteString(ve.Nm + ": ")
+		if ve.Name != "" {
+			b.WriteString(ve.Name + ": ")
 		}
 		b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen, true))
 		if b.Len() > maxlen {
@@ -178,7 +178,7 @@ func (vr *Variable) TypeInfo(newlines bool) string {
 	if newlines {
 		sep = "\n"
 	}
-	info := []string{"Name: " + vr.Nm, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
+	info := []string{"Name: " + vr.Name, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
 	return strings.Join(info, sep)
 }
 

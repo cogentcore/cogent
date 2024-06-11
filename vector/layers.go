@@ -50,7 +50,7 @@ func (ly *Layers) SyncLayers(sv *SVGView) {
 	*ly = make(Layers, 0)
 	for _, n := range sv.Root().Children {
 		if NodeIsLayer(n) {
-			l := &Layer{Name: n.AsTree().Name()}
+			l := &Layer{Name: n.AsTree().Name}
 			l.FromNode(n)
 			*ly = append(*ly, l)
 		}
@@ -175,12 +175,12 @@ func (vv *VectorView) AddLayer() { //types:add
 			kc := svr.Child(i)
 			tree.MoveToParent(kc, l1)
 		}
-		vv.SetCurLayer(l1.AsTree().Name())
+		vv.SetCurLayer(l1.AsTree().Name)
 	} else {
 		l1 := svr.InsertNewChild(svg.GroupType, si+nl)
 		l1.AsTree().SetName(fmt.Sprintf("Layer%d", nl))
 		l1.AsTree().Properties["groupmode"] = "layer"
-		vv.SetCurLayer(l1.AsTree().Name())
+		vv.SetCurLayer(l1.AsTree().Name)
 	}
 	vv.UpdateLayerView()
 }

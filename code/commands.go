@@ -410,7 +410,7 @@ func (cm *Command) PromptUser(cv *CodeView, buf *texteditor.Buffer, pvals map[st
 								cm.RunAfterPrompts(cv, buf)
 							}
 						})
-						m.Nm = "prompt-branch"
+						m.Name = "prompt-branch"
 						core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
 					} else {
 						fmt.Println(err)

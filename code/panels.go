@@ -125,7 +125,7 @@ func (cv *CodeView) RecycleTabTextEditor(name string, sel bool, buf *texteditor.
 		return fr.Child(0).(*texteditor.Editor)
 	}
 	txv := texteditor.NewEditor(fr)
-	txv.SetName(fr.Nm)
+	txv.SetName(fr.Name)
 	if buf != nil {
 		txv.SetBuffer(buf)
 	}

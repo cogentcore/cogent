@@ -313,7 +313,7 @@ func (cv *CodeView) AddChooserFiles(ac *core.Chooser) {
 				return tree.Continue
 			}
 			rpath := fn.MyRelPath()
-			nmpath := fn.Nm + ":" + rpath
+			nmpath := fn.Name + ":" + rpath
 			switch {
 			case fn.IsDir():
 				ac.Items = append(ac.Items, core.ChooserItem{

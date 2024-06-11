@@ -836,7 +836,7 @@ func (vv *VectorView) HelpWiki() {
 func (vv *VectorView) AutoSaveFilename() string {
 	path, fn := filepath.Split(string(vv.Filename))
 	if fn == "" {
-		fn = "new_file_" + vv.Nm + ".svg"
+		fn = "new_file_" + vv.Name + ".svg"
 	}
 	asfn := filepath.Join(path, "#"+fn+"#")
 	return asfn

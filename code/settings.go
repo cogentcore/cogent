@@ -429,7 +429,7 @@ func (cv *CodeView) LangDefaults() {
 	cv.Settings.RunCmds = CmdNames{"Build: Run Project"}
 	cv.Settings.BuildDir = cv.Settings.ProjectRoot
 	cv.Settings.BuildTarg = cv.Settings.ProjectRoot
-	cv.Settings.RunExec = core.Filename(filepath.Join(string(cv.Settings.ProjectRoot), cv.Nm))
+	cv.Settings.RunExec = core.Filename(filepath.Join(string(cv.Settings.ProjectRoot), cv.Name))
 	if len(cv.Settings.BuildCmds) == 0 {
 		switch cv.Settings.MainLang {
 		case fileinfo.Go:

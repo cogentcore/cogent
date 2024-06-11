@@ -294,7 +294,7 @@ func (es *EditState) SelectedNames() []string {
 	}
 	nm := make([]string, ns)
 	for i := range sl {
-		nm[i] = sl[i].AsTree().Name()
+		nm[i] = sl[i].AsTree().Name
 	}
 	return nm
 }

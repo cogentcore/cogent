@@ -364,8 +364,7 @@ func (cv *CodeView) OpenFile(fnm string) { //types:add
 
 // SetWindowNameTitle sets the window name and title based on current project name
 func (cv *CodeView) SetWindowNameTitle() {
-	pnm := cv.Name()
-	title := "Cogent Code • " + pnm
+	title := "Cogent Code • " + cv.Name
 	cv.Scene.Body.SetTitle(title)
 }
 
@@ -528,7 +527,7 @@ func (cv *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		return false
 	}
 	d := core.NewBody().AddTitle("There are Unsaved Files").
-		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Nm, nch))
+		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Name, nch))
 	d.AddBottomBar(func(parent core.Widget) {
 		if cancelOpt {
 			d.AddCancel(parent).SetText("Cancel Command")
@@ -614,7 +613,7 @@ func (cv *CodeView) AddCloseDialog() {
 			return false
 		}
 		d.AddTitle("Unsaved files").
-			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Nm))
+			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()
