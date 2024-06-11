@@ -92,7 +92,7 @@ func (pv *PaintView) Init() {
 				})
 		})
 
-		// core.NewSpace(wr, "sp1").Style(func(s *styles.Style) {
+		// core.NewSpace(wr, "sp1").Styler(func(s *styles.Style) {
 		// 	s.Min.X.Ch(5)
 		// })
 
