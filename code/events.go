@@ -20,7 +20,7 @@ func (cv *CodeView) codeViewKeys(e events.Event) {
 	kc := e.KeyChord()
 	kf := keymap.Of(kc)
 	if core.DebugSettings.KeyEventTrace {
-		slog.Info("CodeView KeyInput", "widget", cv, "keymap", kf, kc)
+		slog.Info("CodeView KeyInput", "widget", cv, "keyFunction", kf, "keyChord", kc)
 	}
 	if cv.KeySeq1 != "" {
 		kc2 := string(cv.KeySeq1) + " " + string(kc)
