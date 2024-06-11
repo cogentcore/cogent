@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 
+	"cogentcore.org/core/base/slicesx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -448,7 +449,7 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 		}
 		ci := se.AsTree().IndexInParent()
 		pt := parent.AsTree()
-		pt.Children = tree.Move(pt.Children, ci, len(pt.Children)-1)
+		pt.Children = slicesx.Move(pt.Children, ci, len(pt.Children)-1)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -472,7 +473,7 @@ func (gv *VectorView) SelectRaise() { //types:add
 		ci := se.AsTree().IndexInParent()
 		if ci < parent.AsTree().NumChildren()-1 {
 			pt := parent.AsTree()
-			pt.Children = tree.Move(pt.Children, ci, ci+1)
+			pt.Children = slicesx.Move(pt.Children, ci, ci+1)
 		}
 	}
 	gv.UpdateDisp()
@@ -496,7 +497,7 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 		}
 		ci := se.AsTree().IndexInParent()
 		pt := parent.AsTree()
-		pt.Children = tree.Move(pt.Children, ci, 0)
+		pt.Children = slicesx.Move(pt.Children, ci, 0)
 	}
 	gv.UpdateDisp()
 	gv.ChangeMade()
@@ -520,7 +521,7 @@ func (gv *VectorView) SelectLower() { //types:add
 		ci := se.AsTree().IndexInParent()
 		if ci > 0 {
 			pt := parent.AsTree()
-			pt.Children = tree.Move(pt.Children, ci, ci-1)
+			pt.Children = slicesx.Move(pt.Children, ci, ci-1)
 		}
 	}
 	gv.UpdateDisp()
