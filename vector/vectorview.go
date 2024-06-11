@@ -45,12 +45,6 @@ func (vv *VectorView) Init() {
 	vv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
-	vv.OnWidgetAdded(func(w core.Widget) {
-		switch w.PathFrom(vv) {
-		case "splits/tabs": // TODO(config)
-			w.(*core.Tabs).SetType(core.FunctionalTabs)
-		}
-	})
 
 	vv.AddCloseDialog()
 
@@ -105,6 +99,7 @@ func (vv *VectorView) Init() {
 				w.UpdateGradients(vv.EditState.Gradients)
 			})
 			core.AddChildAt(w, "tabs", func(w *core.Tabs) {
+				w.SetType(core.FunctionalTabs)
 			})
 		})
 
@@ -414,7 +409,7 @@ func (vv *VectorView) LayerView() *views.TableView {
 }
 
 func (vv *VectorView) TreeView() *TreeView {
-	return vv.LayerTree().ChildByName("tree-frame", 1).Child(0).(*TreeView)
+	return vv.LayerTree().ChildByName("tree-frame", 1).AsTree().Child(0).(*TreeView)
 }
 
 // SVG returns the [SVGView].

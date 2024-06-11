@@ -248,18 +248,18 @@ func (sv *SVGView) MouseHover() {
 func (sv *SVGView) ContentsBBox() math32.Box2 {
 	bbox := math32.Box2{}
 	bbox.SetEmpty()
-	sv.WalkDown(func(k tree.Node) bool {
-		if k.This() == sv.This() {
+	sv.WalkDown(func(n tree.Node) bool {
+		if n == sv.This() {
 			return tree.Continue
 		}
-		if k.This() == sv.SSVG().Defs.This() {
+		if n == sv.SSVG().Defs {
 			return tree.Break
 		}
-		sni, issv := k.(svg.Node)
+		sni, issv := n.(svg.Node)
 		if !issv {
 			return tree.Break
 		}
-		if NodeIsLayer(k) {
+		if NodeIsLayer(n) {
 			return tree.Continue
 		}
 		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
@@ -285,18 +285,18 @@ func (sv *SVGView) ContentsBBox() math32.Box2 {
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
 func (sv *SVGView) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
-	sv.WalkDown(func(k tree.Node) bool {
-		if k.This() == sv.This() {
+	sv.WalkDown(func(n tree.Node) bool {
+		if n == sv.This() {
 			return tree.Continue
 		}
-		if k.This() == sv.SSVG().Defs.This() {
+		if n == sv.SSVG().Defs {
 			return tree.Break
 		}
-		sni, issv := k.(svg.Node)
+		sni, issv := n.(svg.Node)
 		if !issv {
 			return tree.Break
 		}
-		if NodeIsLayer(k) {
+		if NodeIsLayer(n) {
 			return tree.Continue
 		}
 		if _, isgp := sni.(*svg.Group); isgp {
@@ -653,7 +653,7 @@ func (sv *SVGView) DepthMap() map[tree.Node]int {
 func (sv *SVGView) SetSVGName(el svg.Node) {
 	nwid := sv.SSVG().NewUniqueID()
 	nwnm := fmt.Sprintf("%s%d", el.SVGName(), nwid)
-	el.SetName(nwnm)
+	el.AsTree().SetName(nwnm)
 }
 
 // NewEl makes a new SVG element, giving it a new unique name.

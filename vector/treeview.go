@@ -40,7 +40,7 @@ func (gv *VectorView) SelectedAsTreeViews() []views.TreeViewer {
 	tv := gv.TreeView()
 	var tvl []views.TreeViewer
 	for _, si := range sl {
-		tvn := tv.FindSyncNode(si.This())
+		tvn := tv.FindSyncNode(si.AsTree().This())
 		if tvn != nil {
 			tvl = append(tvl, tvn)
 		}
@@ -181,7 +181,7 @@ func (tv *TreeView) SelectSVG() {
 func (tv *TreeView) LayerIsCurrent() bool {
 	gv := tv.VectorView
 	if gv != nil {
-		return gv.IsCurLayer(tv.SyncNode.Name())
+		return gv.IsCurLayer(tv.SyncNode.AsTree().Name())
 	}
 	return false
 }
@@ -193,7 +193,7 @@ func (tv *TreeView) LayerSetCurrent() {
 	if gv != nil {
 		cur := gv.EditState.CurLayer
 		if cur != "" {
-			cli := tv.Par.ChildByName("tv_"+cur, 0)
+			cli := tv.Par.AsTree().ChildByName("tv_"+cur, 0)
 			if cli != nil {
 				cl := cli.(*TreeView)
 				cl.LayerClearCurrent()
@@ -205,7 +205,7 @@ func (tv *TreeView) LayerSetCurrent() {
 		if !LayerIsVisible(sn) {
 			tv.LayerToggleVis()
 		}
-		gv.SetCurLayer(sn.Name())
+		gv.SetCurLayer(sn.AsTree().Name())
 		// tv.SetFullReRender() // needed for icon updating
 		// tv.UpdateSig()
 	}
@@ -215,7 +215,7 @@ func (tv *TreeView) LayerSetCurrent() {
 func (tv *TreeView) LayerClearCurrent() {
 	gv := tv.VectorView
 	if gv != nil {
-		gv.ClearCurLayer(tv.SyncNode.Name())
+		gv.ClearCurLayer(tv.SyncNode.AsTree().Name())
 		// tv.SetFullReRender() // needed for icon updating
 		// tv.UpdateSig()
 	}

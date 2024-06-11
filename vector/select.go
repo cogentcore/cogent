@@ -320,7 +320,7 @@ func (gv *VectorView) SelectGroup() { //types:add
 
 	fidx := fsel.AsTree().IndexInParent()
 
-	ng := fsel.Parent().AsTree().InsertNewChild(svg.GroupType, fidx).(svg.Node)
+	ng := fsel.AsTree().Parent().AsTree().InsertNewChild(svg.GroupType, fidx).(svg.Node)
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {
@@ -442,7 +442,7 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.Parent()
+		parent := se.AsTree().Parent()
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
@@ -465,12 +465,12 @@ func (gv *VectorView) SelectRaise() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.Parent()
+		parent := se.AsTree().Parent()
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
 		ci := se.AsTree().IndexInParent()
-		if ci < parent.NumChildren()-1 {
+		if ci < parent.AsTree().NumChildren()-1 {
 			pt := parent.AsTree()
 			pt.Children = tree.Move(pt.Children, ci, ci+1)
 		}
@@ -490,7 +490,7 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.Parent()
+		parent := se.AsTree().Parent()
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
@@ -513,7 +513,7 @@ func (gv *VectorView) SelectLower() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.Parent()
+		parent := se.AsTree().Parent()
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
@@ -579,34 +579,34 @@ func (gv *VectorView) SelectSetHeight(ht float32) {
 func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
 	var curlay tree.Node
-	svg.SVGWalkDownNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
-		if kni.This() == sv.Root().This() {
+	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+		if n == sv.Root().This() {
 			return tree.Continue
 		}
-		if leavesOnly && kni.HasChildren() {
+		if leavesOnly && nb.HasChildren() {
 			return tree.Continue
 		}
-		if NodeIsLayer(kni) {
+		if NodeIsLayer(n) {
 			return tree.Continue
 		}
-		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
+		if txt, istxt := n.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
 				if _, istxt := txt.Par.(*svg.Text); istxt {
 					return tree.Break
 				}
 			}
 		}
-		if knb.Paint.Off {
+		if nb.Paint.Off {
 			return tree.Break
 		}
-		nl := NodeParentLayer(kni)
+		nl := NodeParentLayer(n)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return tree.Break
 			}
 		}
-		if knb.BBox.In(bbox) {
-			rval = append(rval, kni)
+		if nb.BBox.In(bbox) {
+			rval = append(rval, n)
 			if curlay == nil && nl != nil {
 				curlay = nl
 			}
@@ -632,17 +632,17 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		curlay = NodeParentLayer(fn)
 	}
 	var rval svg.Node
-	svg.SVGWalkDownNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
-		if kni.This() == sv.Root().This() {
+	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+		if n == sv.Root().This() {
 			return tree.Continue
 		}
-		if leavesOnly && kni.HasChildren() {
+		if leavesOnly && nb.HasChildren() {
 			return tree.Continue
 		}
-		if NodeIsLayer(kni) {
+		if NodeIsLayer(n) {
 			return tree.Continue
 		}
-		if txt, istxt := kni.(*svg.Text); istxt { // no tspans
+		if txt, istxt := n.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
 				if _, istxt := txt.Par.(*svg.Text); istxt {
 					return tree.Break
@@ -650,24 +650,24 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 			}
 		}
 		if excludeSel {
-			if _, issel := es.Selected[kni]; issel {
+			if _, issel := es.Selected[n]; issel {
 				return tree.Continue
 			}
-			if _, issel := es.RecentlySelected[kni]; issel {
+			if _, issel := es.RecentlySelected[n]; issel {
 				return tree.Continue
 			}
 		}
-		if knb.Paint.Off {
+		if nb.Paint.Off {
 			return tree.Break
 		}
-		nl := NodeParentLayer(kni)
+		nl := NodeParentLayer(n)
 		if nl != nil {
 			if (curlay != nil && nl != curlay) || LayerIsLocked(nl) || !LayerIsVisible(nl) {
 				return tree.Break
 			}
 		}
-		if pt.In(knb.BBox) {
-			rval = kni
+		if pt.In(nb.BBox) {
+			rval = n
 			return tree.Break
 		}
 		return tree.Continue

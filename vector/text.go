@@ -168,7 +168,7 @@ func (ts *TextStyle) TextProperties() map[string]string {
 
 // SetTextNode sets the text of given Text node
 func (gv *VectorView) SetTextNode(sii svg.Node, txt string) bool {
-	if sii.HasChildren() {
+	if sii.AsTree().HasChildren() {
 		for _, kid := range sii.AsTree().Children {
 			if gv.SetTextNode(kid.(svg.Node), txt) {
 				return true
