@@ -320,7 +320,7 @@ func (gv *VectorView) SelectGroup() { //types:add
 
 	fidx := fsel.AsTree().IndexInParent()
 
-	ng := fsel.AsTree().Parent().AsTree().InsertNewChild(svg.GroupType, fidx).(svg.Node)
+	ng := fsel.AsTree().Parent.AsTree().InsertNewChild(svg.GroupType, fidx).(svg.Node)
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {
@@ -349,7 +349,7 @@ func (gv *VectorView) SelectUnGroup() { //types:add
 		if !isgp {
 			continue
 		}
-		np := gp.Par
+		np := gp.Parent
 		klist := make([]tree.Node, len(gp.Children)) // make a temp copy of list of kids
 		for i, k := range gp.Children {
 			klist[i] = k
@@ -442,7 +442,7 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.AsTree().Parent()
+		parent := se.AsTree().Parent
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
@@ -465,7 +465,7 @@ func (gv *VectorView) SelectRaise() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.AsTree().Parent()
+		parent := se.AsTree().Parent
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
@@ -490,7 +490,7 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.AsTree().Parent()
+		parent := se.AsTree().Parent
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
@@ -513,7 +513,7 @@ func (gv *VectorView) SelectLower() { //types:add
 
 	sl := es.SelectedList(true) // true = descending = reverse order
 	for _, se := range sl {
-		parent := se.AsTree().Parent()
+		parent := se.AsTree().Parent
 		if !(NodeIsLayer(parent) || parent == sv.This()) {
 			continue
 		}
@@ -591,7 +591,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 		}
 		if txt, istxt := n.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				if _, istxt := txt.Par.(*svg.Text); istxt {
+				if _, istxt := txt.Parent.(*svg.Text); istxt {
 					return tree.Break
 				}
 			}
@@ -644,7 +644,7 @@ func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bo
 		}
 		if txt, istxt := n.(*svg.Text); istxt { // no tspans
 			if txt.Text != "" {
-				if _, istxt := txt.Par.(*svg.Text); istxt {
+				if _, istxt := txt.Parent.(*svg.Text); istxt {
 					return tree.Break
 				}
 			}

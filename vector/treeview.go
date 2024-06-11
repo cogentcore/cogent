@@ -193,7 +193,7 @@ func (tv *TreeView) LayerSetCurrent() {
 	if gv != nil {
 		cur := gv.EditState.CurLayer
 		if cur != "" {
-			cli := tv.Par.AsTree().ChildByName("tv_"+cur, 0)
+			cli := tv.Parent.AsTree().ChildByName("tv_"+cur, 0)
 			if cli != nil {
 				cl := cli.(*TreeView)
 				cl.LayerClearCurrent()
