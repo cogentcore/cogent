@@ -123,7 +123,7 @@ func (vv *VectorView) Init() {
 	// 	if sig == int64(views.TreeViewInserted) {
 	// 		sn, ok := data.(svg.Node)
 	// 		if ok {
-	// 			gvv.SVG().NodeEnsureUniqueId(sn)
+	// 			gvv.SVG().NodeEnsureUniqueID(sn)
 	// 			svg.CloneNodeGradientProp(sn, "fill")
 	// 			svg.CloneNodeGradientProp(sn, "stroke")
 	// 		}
