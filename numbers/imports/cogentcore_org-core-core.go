@@ -38,7 +38,6 @@ func init() {
 		"AsFrame":                  reflect.ValueOf(core.AsFrame),
 		"AsTextField":              reflect.ValueOf(core.AsTextField),
 		"AsWidget":                 reflect.ValueOf(core.AsWidget),
-		"AsWidgetBase":             reflect.ValueOf(core.AsWidgetBase),
 		"AutoScrollRate":           reflect.ValueOf(&core.AutoScrollRate).Elem(),
 		"BasicBarType":             reflect.ValueOf(&core.BasicBarType).Elem(),
 		"BodyType":                 reflect.ValueOf(&core.BodyType).Elem(),

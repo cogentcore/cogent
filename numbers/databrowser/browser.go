@@ -132,8 +132,8 @@ func NewBrowserWindow(dataDir string) *Browser {
 // ParentBrowser returns the Browser parent of given node
 func ParentBrowser(tn tree.Node) (*Browser, bool) {
 	var res *Browser
-	tn.WalkUp(func(n tree.Node) bool {
-		if c, ok := n.This().(*Browser); ok {
+	tn.AsTree().WalkUp(func(n tree.Node) bool {
+		if c, ok := n.(*Browser); ok {
 			res = c
 			return false
 		}
@@ -178,7 +178,7 @@ func (br *Browser) Splits() *core.Splits {
 
 func (br *Browser) FileTree() *filetree.Tree {
 	sp := br.Splits()
-	return sp.Child(0).Child(0).(*filetree.Tree)
+	return sp.Child(0).AsTree().Child(0).(*filetree.Tree)
 }
 
 func (br *Browser) Tabs() *core.Tabs {

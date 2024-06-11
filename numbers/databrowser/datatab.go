@@ -66,7 +66,7 @@ func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		pl := tab.Child(0).Child(1).(*plotview.PlotView)
+		pl := tab.Child(0).AsTree().Child(1).(*plotview.PlotView)
 		return pl
 	}
 	pl := plotview.NewSubPlot(tab)
