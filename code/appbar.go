@@ -48,6 +48,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 	})
 
 	core.Add(p, func(w *core.Separator) {})
+
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
 			for _, rp := range RecentPaths {
@@ -64,18 +65,15 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 			})
 		})
 	})
-
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.OpenPath).
 			SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		cv.ConfigActiveFilename(w)
 	})
-
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.SaveActiveView).SetText("Save").
 			SetIcon(icons.Save).SetKey(keymap.Save)
 	})
-
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.SaveAll).SetIcon(icons.Save)
 	})
@@ -104,7 +102,6 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Symbols).SetIcon(icons.List)
 	})
-
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Spell).SetIcon(icons.Spellcheck)
 	})
@@ -115,16 +112,13 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 		w.SetFunc(cv.RunBuild).SetText("Build").SetIcon(icons.Build).
 			SetShortcut(KeyBuildProject.Chord())
 	})
-
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Run).SetIcon(icons.PlayArrow).
 			SetShortcut(KeyRunProject.Chord())
 	})
-
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Debug).SetIcon(icons.Debug)
 	})
-
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.DebugTest).SetIcon(icons.Debug)
 	})
@@ -133,6 +127,12 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 
 	core.Add(p, func(w *views.FuncButton) {
 		w.SetFunc(cv.Commit).SetIcon(icons.Star)
+	})
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(cv.VCSLog).SetText("VCS Log").SetIcon(icons.List)
+	})
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(cv.EditProjectSettings).SetText("Settings").SetIcon(icons.Edit)
 	})
 
 	core.Add(p, func(w *core.Button) {
@@ -203,8 +203,6 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 
 		core.NewSeparator(m)
 
-		views.NewFuncButton(m, cv.EditProjectSettings).SetText("Project Settings").SetIcon(icons.Edit)
-
 		views.NewFuncButton(m, cv.SaveProject).SetIcon(icons.Save)
 
 		cv.ConfigActiveFilename(views.NewFuncButton(m, cv.SaveProjectAs)).SetIcon(icons.SaveAs)
@@ -225,7 +223,6 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 
 		views.NewFuncButton(m, cv.RegisterPaste).SetIcon(icons.Paste).
 			SetShortcut(KeyRegPaste.Chord())
-
 		views.NewFuncButton(m, cv.RegisterCopy).SetIcon(icons.Copy).
 			SetShortcut(KeyRegCopy.Chord())
 
@@ -233,17 +230,14 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 
 		views.NewFuncButton(m, cv.CopyRect).SetIcon(icons.Copy).
 			SetShortcut(KeyRectCopy.Chord())
-
 		views.NewFuncButton(m, cv.CutRect).SetIcon(icons.Cut).
 			SetShortcut(KeyRectCut.Chord())
-
 		views.NewFuncButton(m, cv.PasteRect).SetIcon(icons.Paste).
 			SetShortcut(KeyRectPaste.Chord())
 
 		core.NewSeparator(m)
 
 		core.NewButton(m).SetText("Undo").SetIcon(icons.Undo).SetKey(keymap.Undo)
-
 		core.NewButton(m).SetText("Redo").SetIcon(icons.Redo).SetKey(keymap.Redo)
 
 		core.NewSeparator(m)
@@ -252,25 +246,18 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 			SetIcon(icons.FindReplace)
 
 		core.NewButton(m).SetText("Show completions").SetIcon(icons.CheckCircle).SetKey(keymap.Complete)
-
 		core.NewButton(m).SetText("Lookup symbol").SetIcon(icons.Search).SetKey(keymap.Lookup)
-
 		core.NewButton(m).SetText("Jump to line").SetIcon(icons.GoToLine).SetKey(keymap.Jump)
 
 		core.NewSeparator(m)
 
 		views.NewFuncButton(m, cv.CommentOut).SetText("Comment region").
 			SetIcon(icons.Comment).SetShortcut(KeyCommentOut.Chord())
-
 		views.NewFuncButton(m, cv.Indent).SetIcon(icons.FormatIndentIncrease).
 			SetShortcut(KeyIndent.Chord())
-
 		views.NewFuncButton(m, cv.ReCase).SetIcon(icons.MatchCase)
-
 		views.NewFuncButton(m, cv.JoinParaLines).SetIcon(icons.Join)
-
 		views.NewFuncButton(m, cv.TabsToSpaces).SetIcon(icons.TabMove)
-
 		views.NewFuncButton(m, cv.SpacesToTabs).SetIcon(icons.TabMove)
 	})
 
@@ -281,7 +268,9 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 			SetShortcut(KeyNextPanel.Chord())
 		views.NewFuncButton(m, cv.CloneActiveView).SetText("Clone active").SetIcon(icons.Copy).
 			SetShortcut(KeyBufClone.Chord())
+
 		core.NewSeparator(m)
+
 		views.NewFuncButton(m, cv.CloseActiveView).SetText("Close file").SetIcon(icons.Close).
 			SetShortcut(KeyBufClose.Chord())
 		views.NewFuncButton(m, cv.OpenConsoleTab).SetText("Open console").SetIcon(icons.Terminal)
@@ -289,12 +278,15 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 
 	core.NewButton(m).SetText("Command").SetMenu(func(m *core.Scene) {
 		views.NewFuncButton(m, cv.DebugAttach).SetText("Debug attach").SetIcon(icons.Debug)
-		views.NewFuncButton(m, cv.VCSLog).SetText("VCS Log").SetIcon(icons.List)
 		views.NewFuncButton(m, cv.VCSUpdateAll).SetText("VCS update all").SetIcon(icons.Update)
+
 		core.NewSeparator(m)
+
 		views.NewFuncButton(m, cv.CountWords).SetText("Count words all").SetIcon(icons.Counter5)
 		views.NewFuncButton(m, cv.CountWordsRegion).SetText("Count words region").SetIcon(icons.Counter3)
+
 		core.NewSeparator(m)
+
 		views.NewFuncButton(m, cv.HelpWiki).SetText("Help").SetIcon(icons.Help)
 	})
 

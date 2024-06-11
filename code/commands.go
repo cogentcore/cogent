@@ -637,7 +637,7 @@ func MarkupCmdOutput(out []byte) []byte {
 //  Commands
 
 // Commands is a list of different commands
-type Commands []*Command
+type Commands []*Command //types:add
 
 // CmdName has an associated ValueView for selecting from the list of
 // available command names, for use in settings etc.

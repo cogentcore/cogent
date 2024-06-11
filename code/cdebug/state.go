@@ -24,10 +24,10 @@ import (
 type Thread struct {
 
 	// thread identifier
-	ID int `format:"%#X"`
+	ID int `format:"%#x"`
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X"`
+	PC uint64 `format:"%#x"`
 
 	// file name (trimmed up to point of project base path)
 	File string
@@ -69,7 +69,7 @@ type Task struct {
 	ID int
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X"`
+	PC uint64 `format:"%#x"`
 
 	// file name (trimmed up to point of project base path)
 	File string
@@ -84,7 +84,7 @@ type Task struct {
 	Func string `width:"80"`
 
 	// id of the current Thread this task is running on
-	Thread int `format:"%#X"`
+	Thread int `format:"%#x"`
 
 	// where did this task first start running?
 	StartLoc Location `tableview:"-"`
@@ -112,7 +112,7 @@ func (th *Task) String() string {
 type Location struct {
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X"`
+	PC uint64 `format:"%#x"`
 
 	// file name (trimmed up to point of project base path)
 	File string
@@ -137,7 +137,7 @@ type Frame struct {
 	ThreadID int
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `format:"%#X"`
+	PC uint64 `format:"%#x"`
 
 	// file name (trimmed up to point of project base path)
 	File string
@@ -168,7 +168,7 @@ type Break struct {
 	On bool `width:"4"`
 
 	// program counter (address) -- may be subset of multiple
-	PC uint64 `edit:"-" format:"%#X"`
+	PC uint64 `edit:"-" format:"%#x"`
 
 	// file name (trimmed up to point of project base path)
 	File string `edit:"-"`

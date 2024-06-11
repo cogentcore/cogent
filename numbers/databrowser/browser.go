@@ -210,7 +210,8 @@ func (br *Browser) UpdateScripts() { //types:add
 					br.ScriptInterp.Eval(string(sc))
 				}
 			} else {
-				br.Scripts[snm] = string(sc)
+				ssc := string(sc)
+				br.Scripts[snm] = ssc
 			}
 		} else {
 			slog.Error(err.Error())
@@ -235,10 +236,15 @@ func (br *Browser) MakeToolbar(p *core.Plan) {
 		lbl := TrimOrderPrefix(s)
 		core.AddAt(p, lbl, func(w *core.Button) {
 			w.SetText(lbl).SetIcon(icons.RunCircle).
-				SetTooltip("Run script").
 				OnClick(func(e events.Event) {
 					br.RunScript(s)
 				})
+			sc := br.Scripts[s]
+			tt := FirstComment(sc)
+			if tt == "" {
+				tt = "Run Script (add a comment to top of script to provide more useful info here)"
+			}
+			w.SetTooltip(tt)
 		})
 	}
 }

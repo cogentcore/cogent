@@ -5,8 +5,6 @@
 package code
 
 import (
-	"strings"
-
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -83,10 +81,6 @@ func LangsView(pt *Langs) {
 				SetText("Revert to standard").SetIcon(icons.DeviceReset).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		})
-		// todo:
-		// tb.AddOverflowMenu(func(m *core.Scene) {
-		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
-		// })
 	})
 	d.RunWindow()
 }
@@ -122,158 +116,33 @@ func CmdsView(pt *Commands) {
 				SetText("View standard").SetIcon(icons.Visibility).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
 		})
-		// todo:
-		// tb.AddOverflowMenu(func(m *core.Scene) {
-		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
-		// })
 	})
 	d.RunWindow()
 }
 
-/*
-// Value registers [CmdValue] as the [views.Value] for [CmdName].
-func (cn CmdName) Value() views.Value {
-	return &CmdValue{}
+func (cn CmdName) Value() core.Value {
+	return NewCmdButton()
 }
 
-// CmdValue represents a [CmdName] value with a button.
-type CmdValue struct {
-	views.ValueBase[*core.Button]
+// CmdButton represents a [CmdName] value with a button that opens a [CmdView].
+type CmdButton struct {
+	core.Button
 }
 
-func (v *CmdValue) Config() {
-	v.Widget.SetType(core.ButtonTonal)
-	views.ConfigDialogWidget(v, false)
-}
+func (cb *CmdButton) WidgetValue() any { return &cb.Text }
 
-func (v *CmdValue) Update() {
-	txt := reflectx.ToString(v.Value.Interface())
-	if txt == "" {
-		txt = "(none)"
-	}
-	v.Widget.SetText(txt).Update()
-}
-
-func (vv *CmdValue) ConfigDialog(d *core.Body) (bool, func()) {
-	si := 0
-	cur := reflectx.ToString(vv.Value.Interface())
-	_, curRow, _ := AvailableCommands.CmdByName(CmdName(cur), false)
-	views.NewTableView(d).SetSlice(&AvailableCommands).SetSelectedIndex(curRow).BindSelect(&si)
-	return true, func() {
-		if si >= 0 {
-			pt := AvailableCommands[si]
-			vv.SetValue(CommandName(pt.Cat, pt.Name))
-			vv.Update()
-		}
-	}
-}
-*/
-
-// SplitsView opens a view of a splits table
-func SplitsView(pt *Splits) {
-	if core.RecycleMainWindow(pt) {
-		return
-	}
-	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
-	tv := views.NewTableView(d).SetSlice(pt)
-	AvailableSplitsChanged = false
-	tv.OnChange(func(e events.Event) {
-		AvailableSplitsChanged = true
-	})
-
-	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *views.FuncButton) {
-			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
-				SetIcon(icons.Save).SetKey(keymap.Save).
-				FirstStyler(func(s *styles.Style) {
-					s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits)
-				})
+func (cb *CmdButton) Init() {
+	cb.Button.Init()
+	cb.SetType(core.ButtonTonal).SetIcon(icons.PlayArrow)
+	core.InitValueButton(cb, false, func(d *core.Body) {
+		d.SetTitle("Select a command")
+		si := 0
+		cl := AvailableCommands
+		tv := views.NewTableView(d)
+		// todo: not a single entry: SetSelectedField("Name").SetSelectedValue(cb.Text)
+		tv.SetSlice(&cl).BindSelect(&si)
+		tv.OnChange(func(e events.Event) {
+			cb.Text = CommandName(cl[si].Cat, cl[si].Name)
 		})
-		core.Add(p, func(w *views.FuncButton) {
-			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			w.Args[0].SetTag(`ext:".toml"`)
-		})
-		core.Add(p, func(w *views.FuncButton) {
-			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			w.Args[0].SetTag(`ext:".toml"`)
-		})
-		// todo:
-		// tb.AddOverflowMenu(func(m *core.Scene) {
-		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
-		// })
 	})
-	d.RunWindow()
-}
-
-// Value registers [core.Chooser] as the [core.Value] widget
-// for [SplitName]
-func (sn SplitName) Value() core.Value {
-	return core.NewChooser().SetStrings(AvailableSplitNames...)
-}
-
-// RegistersView opens a view of a commands table
-func RegistersView(pt *Registers) {
-	if core.RecycleMainWindow(pt) {
-		return
-	}
-	d := core.NewBody().SetTitle("Cogent Code Registers").SetData(pt)
-	d.Styler(func(s *styles.Style) {
-		s.Direction = styles.Column
-	})
-
-	core.NewText(d).SetText("Available Registers: can duplicate an existing (using context menu) as starting point for new one").SetType(core.TextHeadlineSmall)
-
-	tv := views.NewTableView(d).SetSlice(pt)
-
-	AvailableRegistersChanged = false
-	tv.OnChange(func(e events.Event) {
-		AvailableRegistersChanged = true
-	})
-
-	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *views.FuncButton) {
-			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
-				SetIcon(icons.Save).SetKey(keymap.Save).
-				FirstStyler(func(s *styles.Style) {
-					s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters)
-				})
-		})
-		core.Add(p, func(w *views.FuncButton) {
-			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			w.Args[0].SetTag(`ext:".toml"`)
-		})
-		core.Add(p, func(w *views.FuncButton) {
-			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			w.Args[0].SetTag(`ext:".toml"`)
-		})
-		// todo:
-		// tb.AddOverflowMenu(func(m *core.Scene) {
-		// 	views.NewFuncButton(m, pt.OpenSettings).SetIcon(icons.Open).SetKey(keymap.OpenAlt1)
-		// })
-	})
-
-	d.RunWindow()
-}
-
-// Value registers [core.Chooser] as the [core.Value] widget
-// for [RegisterName]
-func (rn RegisterName) Value() core.Value {
-	ch := core.NewChooser().SetStrings(AvailableRegisterNames...)
-	ch.SetEditable(true).SetAllowNew(true)
-	return ch
-}
-
-// RegistersMenu presents a menu of existing registers,
-// calling the given function with the selected register name
-func RegistersMenu(ctx core.Widget, curVal string, fun func(regNm string)) {
-	m := core.NewMenuFromStrings(AvailableRegisterNames, curVal, func(idx int) {
-		rnm := AvailableRegisterNames[idx]
-		if ci := strings.Index(rnm, ":"); ci > 0 {
-			rnm = rnm[:ci]
-		}
-		if fun != nil {
-			fun(rnm)
-		}
-	})
-	core.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
 }

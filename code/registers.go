@@ -7,14 +7,20 @@ package code
 import (
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/views"
 )
 
 // Registers is a list of named strings
-type Registers map[string]string
+type Registers map[string]string //types:add
 
 // RegisterName has an associated ValueView for selecting from the list of
 // available named registers
@@ -84,3 +90,66 @@ func (lt *Registers) SaveSettings() error { //types:add
 // properties update methods -- not accurate if editing any other map but works for
 // now..
 var AvailableRegistersChanged = false
+
+// RegistersView opens a view of a commands table
+func RegistersView(pt *Registers) {
+	if core.RecycleMainWindow(pt) {
+		return
+	}
+	d := core.NewBody().SetTitle("Cogent Code Registers").SetData(pt)
+	d.Styler(func(s *styles.Style) {
+		s.Direction = styles.Column
+	})
+
+	core.NewText(d).SetText("Available Registers: can duplicate an existing (using context menu) as starting point for new one").SetType(core.TextHeadlineSmall)
+
+	tv := views.NewMapView(d).SetMap(pt)
+
+	AvailableRegistersChanged = false
+	tv.OnChange(func(e events.Event) {
+		AvailableRegistersChanged = true
+	})
+
+	d.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
+				SetIcon(icons.Save).SetKey(keymap.Save).
+				FirstStyler(func(s *styles.Style) {
+					s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters)
+				})
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+			w.Args[0].SetTag(`ext:".toml"`)
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			w.Args[0].SetTag(`ext:".toml"`)
+		})
+	})
+
+	d.RunWindow()
+}
+
+// Value registers [core.Chooser] as the [core.Value] widget
+// for [RegisterName]
+func (rn RegisterName) Value() core.Value {
+	ch := core.NewChooser().SetStrings(AvailableRegisterNames...)
+	ch.SetEditable(true).SetAllowNew(true)
+	return ch
+}
+
+// RegistersMenu presents a menu of existing registers,
+// calling the given function with the selected register name
+func RegistersMenu(ctx core.Widget, curVal string, fun func(regNm string)) {
+	m := core.NewMenuFromStrings(AvailableRegisterNames, curVal, func(idx int) {
+		rnm := AvailableRegisterNames[idx]
+		if ci := strings.Index(rnm, ":"); ci > 0 {
+			rnm = rnm[:ci]
+		}
+		if fun != nil {
+			fun(rnm)
+		}
+	})
+	core.NewMenuStage(m, ctx, ctx.ContextMenuPos(nil)).Run()
+}

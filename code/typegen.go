@@ -262,3 +262,16 @@ func (t *TextEditor) New() tree.Node { return &TextEditor{} }
 
 // SetCode sets the [TextEditor.Code]
 func (t *TextEditor) SetCode(v *CodeView) *TextEditor { t.Code = v; return t }
+
+// CmdButtonType is the [types.Type] for [CmdButton]
+var CmdButtonType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.CmdButton", IDName: "cmd-button", Doc: "CmdButton represents a [CmdName] value with a button that opens a [CmdView].", Embeds: []types.Field{{Name: "Button"}}, Instance: &CmdButton{}})
+
+// NewCmdButton returns a new [CmdButton] with the given optional parent:
+// CmdButton represents a [CmdName] value with a button that opens a [CmdView].
+func NewCmdButton(parent ...tree.Node) *CmdButton { return tree.New[*CmdButton](parent...) }
+
+// NodeType returns the [*types.Type] of [CmdButton]
+func (t *CmdButton) NodeType() *types.Type { return CmdButtonType }
+
+// New returns a new [*CmdButton] value
+func (t *CmdButton) New() tree.Node { return &CmdButton{} }
