@@ -194,7 +194,6 @@ func init() {
 		"SceneType":                reflect.ValueOf(&core.SceneType).Elem(),
 		"ScrimType":                reflect.ValueOf(&core.ScrimType).Elem(),
 		"SeparatorType":            reflect.ValueOf(&core.SeparatorType).Elem(),
-		"SetUnitContext":           reflect.ValueOf(core.SetUnitContext),
 		"SettingsWindow":           reflect.ValueOf(&core.SettingsWindow).Elem(),
 		"SizeClassesN":             reflect.ValueOf(core.SizeClassesN),
 		"SizeClassesValues":        reflect.ValueOf(core.SizeClassesValues),
