@@ -80,7 +80,7 @@ func (cv *CodeView) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
 // ExecCmdNameFileNode executes command of given name on given node
 func (cv *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, clearBuf bool) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
-	if !ok || fn == nil || fn.This() == nil {
+	if !ok || fn == nil || fn.This == nil {
 		return
 	}
 	cv.ArgVals.Set(string(fn.FPath), &cv.Settings, nil)
@@ -243,7 +243,7 @@ func (cv *CodeView) CommitNoChecks() {
 	tf := core.NewTextField(d)
 	curval, _ := CmdPrompt1Vals["Commit"]
 	tf.SetText(curval)
-	tf.Style(func(s *styles.Style) {
+	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 	})
 	d.AddBottomBar(func(parent core.Widget) {

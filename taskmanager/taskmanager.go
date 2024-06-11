@@ -51,8 +51,6 @@ func main() {
 	tv := views.NewTableView(b)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&ts)
-	tv.SortSliceAction(1)
-	tv.SortSliceAction(1)
 
 	tv.OnDoubleClick(func(e events.Event) {
 		t := ts[tv.SelectedIndex]
@@ -65,6 +63,8 @@ func main() {
 	paused := false
 
 	b.OnShow(func(e events.Event) {
+		tv.SortSliceAction(1)
+		tv.SortSliceAction(1)
 		go func() {
 			for range tick.C {
 				if paused {
@@ -79,25 +79,29 @@ func main() {
 		}()
 	})
 
-	b.AddAppBar(func(tb *core.Toolbar) {
-		core.NewButton(tb).SetText("End task").SetIcon(icons.Cancel).
-			SetTooltip("Stop the currently selected task").
-			OnClick(func(e events.Event) {
-				t := ts[tv.SelectedIndex]
-				core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
-			})
-		pause := core.NewButton(tb).SetText("Pause").SetIcon(icons.Pause).
-			SetTooltip("Stop updating the list of tasks")
-		pause.OnClick(func(e events.Event) {
-			paused = !paused
-			if paused {
-				pause.SetText("Resume").SetIcon(icons.Resume).
-					SetTooltip("Resume updating the list of tasks")
-			} else {
-				pause.SetText("Pause").SetIcon(icons.Pause).
-					SetTooltip("Stop updating the list of tasks")
-			}
-			pause.Update()
+	b.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *core.Button) {
+			w.SetText("End task").SetIcon(icons.Cancel).
+				SetTooltip("Stop the currently selected task").
+				OnClick(func(e events.Event) {
+					t := ts[tv.SelectedIndex]
+					core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
+				})
+		})
+		core.Add(p, func(w *core.Button) {
+			w.SetText("Pause").SetIcon(icons.Pause).
+				SetTooltip("Stop updating the list of tasks").
+				OnClick(func(e events.Event) {
+					paused = !paused
+					if paused {
+						w.SetText("Resume").SetIcon(icons.Resume).
+							SetTooltip("Resume updating the list of tasks")
+					} else {
+						w.SetText("Pause").SetIcon(icons.Pause).
+							SetTooltip("Stop updating the list of tasks")
+					}
+					w.Update()
+				})
 		})
 	})
 

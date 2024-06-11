@@ -14,6 +14,11 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/views"
 )
 
 // Split is a named splitter configuration
@@ -69,7 +74,7 @@ func (lt *Splits) SplitByName(name SplitName) (*Split, int, bool) {
 			return sp, i, true
 		}
 	}
-	fmt.Printf("code.SplitByName: split named: %v not found\n", name)
+	fmt.Printf("SplitByName: split named: %v not found\n", name)
 	return nil, -1, false
 }
 
@@ -164,5 +169,43 @@ var StandardSplits = Splits{
 	{"Code", "2 text views, tabs", []float32{.1, .325, .325, .25}},
 	{"Small", "1 text view, tabs", []float32{.1, .5, 0, .4}},
 	{"BigTabs", "1 text view, big tabs", []float32{.1, .3, 0, .6}},
-	{"Debug", "big command panel for debugging", []float32{0.1, 0.29539588, 0.2949658, 0.30963832}},
+	{"Debug", "big command panel for debugging", []float32{0.1, 0.3, 0.3, 0.3}},
+}
+
+// SplitsView opens a view of a splits table
+func SplitsView(pt *Splits) {
+	if core.RecycleMainWindow(pt) {
+		return
+	}
+	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
+	tv := views.NewTableView(d).SetSlice(pt)
+	AvailableSplitsChanged = false
+	tv.OnChange(func(e events.Event) {
+		AvailableSplitsChanged = true
+	})
+
+	d.AddAppBar(func(p *core.Plan) {
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
+				SetIcon(icons.Save).SetKey(keymap.Save).
+				FirstStyler(func(s *styles.Style) {
+					s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits)
+				})
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+			w.Args[0].SetTag(`ext:".toml"`)
+		})
+		core.Add(p, func(w *views.FuncButton) {
+			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			w.Args[0].SetTag(`ext:".toml"`)
+		})
+	})
+	d.RunWindow()
+}
+
+// Value registers [core.Chooser] as the [core.Value] widget
+// for [SplitName]
+func (sn SplitName) Value() core.Value {
+	return core.NewChooser().SetStrings(AvailableSplitNames...)
 }

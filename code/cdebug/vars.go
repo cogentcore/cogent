@@ -65,7 +65,7 @@ type Variable struct {
 // SortVars sorts vars by name
 func SortVars(vrs []*Variable) {
 	sort.Slice(vrs, func(i, j int) bool {
-		return vrs[i].Nm < vrs[j].Nm
+		return vrs[i].Name < vrs[j].Name
 	})
 }
 
@@ -74,12 +74,12 @@ func (vr *Variable) Label() string {
 	val := vr.Value
 	sz := len(vr.Value)
 	if sz == 0 {
-		return vr.Nm
+		return vr.Name
 	}
 	if sz > 40 {
 		val = val[:40] + "..."
 	}
-	return vr.Nm + " = " + val
+	return vr.Name + " = " + val
 }
 
 // ValueString returns the value of the variable, integrating over sub-elements
@@ -94,9 +94,9 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 	if vr.ElementValue != "" {
 		return vr.ElementValue
 	}
-	nkids := len(vr.Kids)
+	nkids := len(vr.Children)
 	if vr.Kind.IsPtr() && nkids == 1 {
-		return "*" + (vr.Kids[0].(*Variable)).ValueString(newlines, ident, maxdepth, maxlen, true)
+		return "*" + (vr.Children[0].(*Variable)).ValueString(newlines, ident, maxdepth, maxlen, true)
 	}
 	tabSz := 2
 	ichr := indent.Space
@@ -146,14 +146,14 @@ func (vr *Variable) ValueString(newlines bool, ident int, maxdepth, maxlen int, 
 			}
 		}
 	}
-	for _, vek := range vr.Kids {
+	for _, vek := range vr.Children {
 		ve := vek.(*Variable)
 		if newlines {
 			b.WriteString("\n")
 			b.WriteString(indent.String(ichr, ident+1, tabSz))
 		}
-		if ve.Nm != "" {
-			b.WriteString(ve.Nm + ": ")
+		if ve.Name != "" {
+			b.WriteString(ve.Name + ": ")
 		}
 		b.WriteString(ve.ValueString(newlines, ident+1, maxdepth, maxlen, true))
 		if b.Len() > maxlen {
@@ -178,7 +178,7 @@ func (vr *Variable) TypeInfo(newlines bool) string {
 	if newlines {
 		sep = "\n"
 	}
-	info := []string{"Name: " + vr.Nm, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
+	info := []string{"Name: " + vr.Name, "Type: " + vr.TypeStr, fmt.Sprintf("Len:  %d", vr.Len), fmt.Sprintf("Cap:  %d", vr.Cap), fmt.Sprintf("Addr: %x", vr.Addr), fmt.Sprintf("Heap: %v", vr.Heap)}
 	return strings.Join(info, sep)
 }
 

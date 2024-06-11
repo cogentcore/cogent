@@ -116,7 +116,7 @@ func init() {
 
 func (cv *CodeView) Init() {
 	cv.Frame.Init()
-	cv.Style(func(s *styles.Style) {
+	cv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -137,7 +137,7 @@ func (cv *CodeView) Init() {
 	core.AddChildAt(cv, "splits", func(w *core.Splits) {
 		w.SetSplits(cv.Settings.Splits...)
 		core.AddChildAt(w, "filetree", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 				s.Overflow.Set(styles.OverflowAuto)
 			})
@@ -162,20 +162,20 @@ func (cv *CodeView) Init() {
 		})
 		core.AddChildAt(w, "tabs", func(w *core.Tabs) {
 			w.SetType(core.FunctionalTabs)
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 1)
 			})
 		})
 	})
 	core.AddChildAt(cv, "statusbar", func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 			s.Min.Y.Em(1.0)
 			s.Padding.Set(units.Dp(4))
 		})
 		core.AddChildAt(w, "sb-text", func(w *core.Text) {
 			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(100)
 				s.Min.Y.Em(1.0)
 				s.Text.TabSize = 4
@@ -195,14 +195,14 @@ func (cv *CodeView) Init() {
 func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
 	txnm := fmt.Sprintf("%d", i)
 	core.AddAt(p, "textframe-"+txnm, func(w *core.Frame) {
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
 		})
 		core.AddChildAt(w, "textbut-"+txnm, func(w *core.Button) {
 			w.SetText("texteditor: " + txnm)
 			w.Type = core.ButtonAction
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 0)
 			})
 			w.Menu = func(m *core.Scene) {
@@ -231,8 +231,8 @@ func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
 // ParentCode returns the Code parent of given node
 func ParentCode(tn tree.Node) (*CodeView, bool) {
 	var res *CodeView
-	tn.WalkUp(func(n tree.Node) bool {
-		if c, ok := n.This().(*CodeView); ok {
+	tn.AsTree().WalkUp(func(n tree.Node) bool {
+		if c, ok := n.(*CodeView); ok {
 			res = c
 			return false
 		}
@@ -262,12 +262,12 @@ func (cv *CodeView) Splits() *core.Splits {
 
 // TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
 func (cv *CodeView) TextEditorButtonByIndex(idx int) *core.Button {
-	return cv.Splits().Child(TextEditor1Index + idx).Child(0).(*core.Button)
+	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(0).(*core.Button)
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
 func (cv *CodeView) TextEditorByIndex(idx int) *TextEditor {
-	return cv.Splits().Child(TextEditor1Index + idx).Child(1).(*TextEditor)
+	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(1).(*TextEditor)
 }
 
 // Tabs returns the main TabView
@@ -277,7 +277,7 @@ func (cv *CodeView) Tabs() *core.Tabs {
 
 // StatusBar returns the statusbar widget
 func (cv *CodeView) StatusBar() *core.Frame {
-	if cv.This() == nil || !cv.HasChildren() {
+	if cv.This == nil || !cv.HasChildren() {
 		return nil
 	}
 	return cv.ChildByName("statusbar", 2).(*core.Frame)
@@ -295,7 +295,7 @@ func (cv *CodeView) SelectedFileNode() *filetree.Node {
 	if n == 0 {
 		return nil
 	}
-	return filetree.AsNode(cv.Files.SelectedNodes[n-1].This())
+	return filetree.AsNode(cv.Files.SelectedNodes[n-1])
 }
 
 // VersionControl returns the version control system in effect, using the file tree detected
@@ -364,8 +364,7 @@ func (cv *CodeView) OpenFile(fnm string) { //types:add
 
 // SetWindowNameTitle sets the window name and title based on current project name
 func (cv *CodeView) SetWindowNameTitle() {
-	pnm := cv.Name()
-	title := "Cogent Code • " + pnm
+	title := "Cogent Code • " + cv.Name
 	cv.Scene.Body.SetTitle(title)
 }
 
@@ -528,7 +527,7 @@ func (cv *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		return false
 	}
 	d := core.NewBody().AddTitle("There are Unsaved Files").
-		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Nm, nch))
+		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Name, nch))
 	d.AddBottomBar(func(parent core.Widget) {
 		if cancelOpt {
 			d.AddCancel(parent).SetText("Cancel Command")
@@ -614,7 +613,7 @@ func (cv *CodeView) AddCloseDialog() {
 			return false
 		}
 		d.AddTitle("Unsaved files").
-			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Nm))
+			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()

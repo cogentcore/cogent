@@ -38,7 +38,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 	})
 	core.Add(p, func(w *core.Switch) {
 		w.SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			w.SetChecked(cv.Settings.GoMod) // todo: update
 		})
 		w.OnChange(func(e events.Event) {
@@ -305,7 +305,7 @@ func (cv *CodeView) AddChooserFiles(ac *core.Chooser) {
 				return tree.Continue
 			}
 			rpath := fn.MyRelPath()
-			nmpath := fn.Nm + ":" + rpath
+			nmpath := fn.Name + ":" + rpath
 			switch {
 			case fn.IsDir():
 				ac.Items = append(ac.Items, core.ChooserItem{

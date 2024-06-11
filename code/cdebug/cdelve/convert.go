@@ -270,7 +270,7 @@ func (gd *GiDelve) cvtVar(ds *api.Variable) *cdebug.Variable {
 	for i := range ds.Children {
 		el := &ds.Children[i]
 		nkv := gd.cvtVar(el)
-		if nkv.Nm == "" {
+		if nkv.Name == "" {
 			nkv.SetName(fmt.Sprintf("[%d]", i))
 		}
 		vr.AddChild(nkv)
@@ -324,17 +324,17 @@ func quotePkgPaths(vnm string) string {
 }
 
 func (gd *GiDelve) fixVar(vr *cdebug.Variable, ec *api.EvalScope, lc *api.LoadConfig) {
-	if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Nm != "" {
+	if vr.Kind.IsPtr() && vr.NumChildren() == 1 && vr.Name != "" {
 		vrk := vr.Child(0).(*cdebug.Variable)
 		if vrk.NumChildren() == 0 && !vrk.Kind.IsPrimitiveNonPtr() {
-			vnm := "*" + vr.Nm
+			vnm := "*" + vr.Name
 			dss, err := gd.dlv.EvalVariable(*ec, vnm, *lc)
 			if err == nil {
 				vrkr := gd.cvtVar(dss)
-				if vrkr.Nm == "" {
+				if vrkr.Name == "" {
 					vrkr.SetName(vnm)
 				}
-				vr.DeleteChildAtIndex(0)
+				vr.DeleteChildAt(0)
 				vr.AddChild(vrkr)
 			}
 		}

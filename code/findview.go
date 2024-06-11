@@ -72,7 +72,7 @@ type FindView struct {
 
 func (fv *FindView) Init() {
 	fv.Frame.Init()
-	fv.Style(func(s *styles.Style) {
+	fv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -385,7 +385,7 @@ func (fv *FindView) makeFindToolbar(p *core.Plan) {
 	core.AddAt(p, "find-str", func(w *core.Chooser) {
 		w.SetEditable(true).SetDefaultNew(true).
 			SetTooltip("String to find -- hit enter or tab to update search -- click for history")
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 			s.Max.X.Zero()
 		})
@@ -475,7 +475,7 @@ func (fv *FindView) makeReplToolbar(p *core.Plan) {
 	core.AddAt(p, "repl-str", func(w *core.Chooser) {
 		w.SetEditable(true).SetDefaultNew(true).
 			SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
-		w.Style(func(s *styles.Style) {
+		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 			s.Max.X.Zero()
 		})

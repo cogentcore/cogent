@@ -212,7 +212,7 @@ func (sv *SVGView) SSVG() *svg.SVG {
 
 // Root returns the root [svg.SVGNode].
 func (sv *SVGView) Root() *svg.SVGNode {
-	return &sv.SVG.SVG.Root
+	return sv.SVG.SVG.Root
 }
 
 // EditState returns the EditState for this view
@@ -237,8 +237,8 @@ func (sv *SVGView) MouseHover() {
 		obj := ssvg.FirstContainingPoint(me.Where, true)
 		if obj != nil {
 			pos := me.Where
-			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name())
-			core.PopupTooltip(obj.Name(), pos.X, pos.Y, sv.ViewportSafe(), ttxt)
+			ttxt := fmt.Sprintf("element name: %v -- use right mouse click to edit", obj.Name)
+			core.PopupTooltip(obj.Name, pos.X, pos.Y, sv.ViewportSafe(), ttxt)
 		}
 	})
 }
@@ -248,18 +248,18 @@ func (sv *SVGView) MouseHover() {
 func (sv *SVGView) ContentsBBox() math32.Box2 {
 	bbox := math32.Box2{}
 	bbox.SetEmpty()
-	sv.WalkDown(func(k tree.Node) bool {
-		if k.This() == sv.This() {
+	sv.WalkDown(func(n tree.Node) bool {
+		if n == sv.This {
 			return tree.Continue
 		}
-		if k.This() == sv.SSVG().Defs.This() {
+		if n == sv.SSVG().Defs {
 			return tree.Break
 		}
-		sni, issv := k.(svg.Node)
+		sni, issv := n.(svg.Node)
 		if !issv {
 			return tree.Break
 		}
-		if NodeIsLayer(k) {
+		if NodeIsLayer(n) {
 			return tree.Continue
 		}
 		if txt, istxt := sni.(*svg.Text); istxt { // no tspans
@@ -285,18 +285,18 @@ func (sv *SVGView) ContentsBBox() math32.Box2 {
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
 func (sv *SVGView) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
-	sv.WalkDown(func(k tree.Node) bool {
-		if k.This() == sv.This() {
+	sv.WalkDown(func(n tree.Node) bool {
+		if n == sv.This {
 			return tree.Continue
 		}
-		if k.This() == sv.SSVG().Defs.This() {
+		if n == sv.SSVG().Defs {
 			return tree.Break
 		}
-		sni, issv := k.(svg.Node)
+		sni, issv := n.(svg.Node)
 		if !issv {
 			return tree.Break
 		}
-		if NodeIsLayer(k) {
+		if NodeIsLayer(n) {
 			return tree.Continue
 		}
 		if _, isgp := sni.(*svg.Group); isgp {
@@ -420,27 +420,29 @@ func (sv *SVGView) SetTransform() {
 // if mknew is true, it will create new ones if not found.
 func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	if sv.NumChildren() > 0 {
-		kd := sv.Root().Kids[0]
+		kd := sv.Root().Children[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
 			main = md
 		}
 	}
 	if main == nil && mknew {
 		id := sv.SSVG().NewUniqueID()
-		main = sv.InsertNewChild(svg.MetaDataType, 0, svg.NameID("namedview", id)).(*svg.MetaData)
+		main = sv.InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
+		main.SetName(svg.NameID("namedview", id))
 	}
 	if main == nil {
 		return
 	}
 	if main.NumChildren() > 0 {
-		kd := main.Kids[0]
+		kd := main.Children[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
 			grid = md
 		}
 	}
 	if grid == nil && mknew {
 		id := sv.SSVG().NewUniqueID()
-		grid = main.InsertNewChild(svg.MetaDataType, 0, svg.NameID("grid", id)).(*svg.MetaData)
+		grid = main.InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
+		grid.SetName(svg.NameID("grid", id))
 	}
 	return
 }
@@ -521,7 +523,7 @@ func (sv *SVGView) ReadMetaData() {
 
 // EditNode opens a structview editor on node
 func (sv *SVGView) EditNode(kn tree.Node) {
-	views.StructViewDialog(sv, kn, "SVG Element View", true)
+	// views.StructViewDialog(sv, kn, "SVG Element View", true) // TODO:
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
@@ -635,7 +637,7 @@ func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 func (sv *SVGView) DepthMap() map[tree.Node]int {
 	m := make(map[tree.Node]int)
 	depth := 0
-	n := tree.Next(sv.This())
+	n := tree.Next(sv.This)
 	for n != nil {
 		m[n] = depth
 		depth++
@@ -651,7 +653,7 @@ func (sv *SVGView) DepthMap() map[tree.Node]int {
 func (sv *SVGView) SetSVGName(el svg.Node) {
 	nwid := sv.SSVG().NewUniqueID()
 	nwnm := fmt.Sprintf("%s%d", el.SVGName(), nwid)
-	el.SetName(nwnm)
+	el.AsTree().SetName(nwnm)
 }
 
 // NewEl makes a new SVG element, giving it a new unique name.
@@ -666,11 +668,14 @@ func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 		}
 	}
 	nwnm := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
-	nw := parent.NewChild(typ, nwnm).(svg.Node)
-	sv.SetSVGName(nw)
-	sv.VectorView.PaintView().SetProperties(nw)
+	_ = nwnm
+	_ = parent
+	// nw := parent.NewChild(typ, nwnm).(svg.Node) // TODO:
+	// sv.SetSVGName(nw)
+	// sv.VectorView.PaintView().SetProperties(nw)
 	sv.VectorView.UpdateTreeView()
-	return nw
+	// return nw // TODO:
+	return nil
 }
 
 // NewElDrag makes a new SVG element during the drag operation
@@ -707,7 +712,8 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 	sv.ManipStart("NewText", "")
 	nr := sv.NewEl(svg.TextType)
 	tsnm := fmt.Sprintf("tspan%d", sv.SSVG().NewUniqueID())
-	tspan := svg.NewText(nr, tsnm)
+	tspan := svg.NewText(nr)
+	tspan.SetName(tsnm)
 	tspan.Text = "Text"
 	tspan.Width = 200
 	xfi := sv.Root().Paint.Transform.Inverse()
@@ -772,7 +778,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 // that are shared among obj-specific ones
 func (sv *SVGView) Gradients() []*Gradient {
 	gl := make([]*Gradient, 0)
-	for _, gii := range sv.SSVG().Defs.Kids {
+	for _, gii := range sv.SSVG().Defs.Children {
 		g, ok := gii.(*svg.Gradient)
 		if !ok {
 			continue

@@ -341,16 +341,16 @@ func (i Tools) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *Tools) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Tools") }
 
-var _VectorViewFlagsValues = []VectorViewFlags{2}
+var _VectorViewFlagsValues = []VectorViewFlags{3}
 
 // VectorViewFlagsN is the highest valid value for type VectorViewFlags, plus one.
-const VectorViewFlagsN VectorViewFlags = 3
+const VectorViewFlagsN VectorViewFlags = 4
 
-var _VectorViewFlagsValueMap = map[string]VectorViewFlags{`VectorViewAutoSaving`: 2}
+var _VectorViewFlagsValueMap = map[string]VectorViewFlags{`VectorViewAutoSaving`: 3}
 
-var _VectorViewFlagsDescMap = map[VectorViewFlags]string{2: `VectorViewAutoSaving means`}
+var _VectorViewFlagsDescMap = map[VectorViewFlags]string{3: `VectorViewAutoSaving means`}
 
-var _VectorViewFlagsMap = map[VectorViewFlags]string{2: `VectorViewAutoSaving`}
+var _VectorViewFlagsMap = map[VectorViewFlags]string{3: `VectorViewAutoSaving`}
 
 // String returns the string representation of this VectorViewFlags value.
 func (i VectorViewFlags) String() string {

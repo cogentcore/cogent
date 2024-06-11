@@ -3,12 +3,8 @@
 package databrowser
 
 import (
-	"cogentcore.org/core/icons"
-	"cogentcore.org/core/math32"
-	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"cogentcore.org/core/views"
 )
 
 // BrowserType is the [types.Type] for [Browser]
@@ -42,9 +38,6 @@ func (t *Browser) SetStartDir(v string) *Browser { t.StartDir = v; return t }
 // It defaults to DataDir/dbscripts
 func (t *Browser) SetScriptsDir(v string) *Browser { t.ScriptsDir = v; return t }
 
-// SetTooltip sets the [Browser.Tooltip]
-func (t *Browser) SetTooltip(v string) *Browser { t.Tooltip = v; return t }
-
 // FileNodeType is the [types.Type] for [FileNode]
 var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/databrowser.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []types.Method{{Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "PlotFiles", Doc: "PlotFiles calls PlotFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "DiffDirs", Doc: "DiffDirs displays a browser with differences between two selected directories", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
@@ -57,39 +50,3 @@ func (t *FileNode) NodeType() *types.Type { return FileNodeType }
 
 // New returns a new [*FileNode] value
 func (t *FileNode) New() tree.Node { return &FileNode{} }
-
-// SetTooltip sets the [FileNode.Tooltip]
-func (t *FileNode) SetTooltip(v string) *FileNode { t.Tooltip = v; return t }
-
-// SetText sets the [FileNode.Text]
-func (t *FileNode) SetText(v string) *FileNode { t.Text = v; return t }
-
-// SetIcon sets the [FileNode.Icon]
-func (t *FileNode) SetIcon(v icons.Icon) *FileNode { t.Icon = v; return t }
-
-// SetIconOpen sets the [FileNode.IconOpen]
-func (t *FileNode) SetIconOpen(v icons.Icon) *FileNode { t.IconOpen = v; return t }
-
-// SetIconClosed sets the [FileNode.IconClosed]
-func (t *FileNode) SetIconClosed(v icons.Icon) *FileNode { t.IconClosed = v; return t }
-
-// SetIconLeaf sets the [FileNode.IconLeaf]
-func (t *FileNode) SetIconLeaf(v icons.Icon) *FileNode { t.IconLeaf = v; return t }
-
-// SetIndent sets the [FileNode.Indent]
-func (t *FileNode) SetIndent(v units.Value) *FileNode { t.Indent = v; return t }
-
-// SetOpenDepth sets the [FileNode.OpenDepth]
-func (t *FileNode) SetOpenDepth(v int) *FileNode { t.OpenDepth = v; return t }
-
-// SetViewIndex sets the [FileNode.ViewIndex]
-func (t *FileNode) SetViewIndex(v int) *FileNode { t.ViewIndex = v; return t }
-
-// SetWidgetSize sets the [FileNode.WidgetSize]
-func (t *FileNode) SetWidgetSize(v math32.Vector2) *FileNode { t.WidgetSize = v; return t }
-
-// SetRootView sets the [FileNode.RootView]
-func (t *FileNode) SetRootView(v *views.TreeView) *FileNode { t.RootView = v; return t }
-
-// SetSelectedNodes sets the [FileNode.SelectedNodes]
-func (t *FileNode) SetSelectedNodes(v ...views.TreeViewer) *FileNode { t.SelectedNodes = v; return t }

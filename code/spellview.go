@@ -52,7 +52,7 @@ type SpellView struct {
 
 func (sv *SpellView) Init() {
 	sv.Frame.Init()
-	sv.Style(func(s *styles.Style) {
+	sv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -304,7 +304,7 @@ func (sv *SpellView) AcceptSuggestion(s string) {
 
 func (sv *SpellView) Destroy() {
 	tv := sv.Text
-	if tv == nil || tv.Buffer == nil || tv.This() == nil {
+	if tv == nil || tv.Buffer == nil || tv.This == nil {
 		return
 	}
 	tv.ClearHighlights()

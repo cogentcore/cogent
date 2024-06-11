@@ -14,7 +14,7 @@ import (
 // and visible for displaying something
 func (cv *CodeView) PanelIsOpen(panel int) bool {
 	sv := cv.Splits()
-	if panel < 0 || panel >= len(sv.Kids) {
+	if panel < 0 || panel >= len(sv.Children) {
 		return false
 	}
 	if sv.Splits[panel] <= 0.01 {
@@ -26,7 +26,7 @@ func (cv *CodeView) PanelIsOpen(panel int) bool {
 // CurPanel returns the splitter panel that currently has keyboard focus
 func (cv *CodeView) CurPanel() int {
 	sv := cv.Splits()
-	for i, ski := range sv.Kids {
+	for i, ski := range sv.Children {
 		_, sk := core.AsWidget(ski)
 		if sk.HasStateWithin(states.Focused) {
 			return i
@@ -52,7 +52,7 @@ func (cv *CodeView) FocusOnPanel(panel int) bool {
 			return false
 		}
 	default:
-		ski, _ := core.AsWidget(sv.Kids[panel])
+		ski, _ := core.AsWidget(sv.Children[panel])
 		cv.Scene.Events.FocusNextFrom(ski)
 	}
 	cv.NeedsRender()
@@ -64,7 +64,7 @@ func (cv *CodeView) FocusNextPanel() { //types:add
 	sv := cv.Splits()
 	cp := cv.CurPanel()
 	cp++
-	np := len(sv.Kids)
+	np := len(sv.Children)
 	if cp >= np {
 		cp = 0
 	}
@@ -82,7 +82,7 @@ func (cv *CodeView) FocusPrevPanel() { //types:add
 	sv := cv.Splits()
 	cp := cv.CurPanel()
 	cp--
-	np := len(sv.Kids)
+	np := len(sv.Children)
 	if cp < 0 {
 		cp = np - 1
 	}
@@ -125,7 +125,7 @@ func (cv *CodeView) RecycleTabTextEditor(name string, sel bool, buf *texteditor.
 		return fr.Child(0).(*texteditor.Editor)
 	}
 	txv := texteditor.NewEditor(fr)
-	txv.SetName(fr.Nm)
+	txv.SetName(fr.Name)
 	if buf != nil {
 		txv.SetBuffer(buf)
 	}

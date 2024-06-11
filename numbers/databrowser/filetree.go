@@ -34,7 +34,7 @@ func (fn *FileNode) Init() {
 
 func (fn *FileNode) OnDoubleClick(e events.Event) {
 	e.SetHandled()
-	br, ok := ParentBrowser(fn.This())
+	br, ok := ParentBrowser(fn.This)
 	if !ok {
 		return
 	}
@@ -70,21 +70,21 @@ func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 			core.ErrorSnackbar(br, err)
 		}
 	case fn.IsExec(): // todo: use exec?
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Video: // todo: use our video viewer
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Audio: // todo: use our audio viewer
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Image: // todo: use our image viewer
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Model: // todo: use xyz
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Sheet: // todo: use our spreadsheet :)
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Bin: // don't edit
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Archive || fn.Info.Cat == fileinfo.Backup: // don't edit
-		fn.This().(filetree.Filer).OpenFilesDefault()
+		fn.This.(filetree.Filer).OpenFilesDefault()
 	default:
 		br.NewTabEditor(df, string(fn.FPath))
 	}
@@ -112,7 +112,7 @@ func (br *Browser) NewTabEditor(label, filename string) *texteditor.Editor {
 // EditFiles calls EditFile on selected files
 func (fn *FileNode) EditFiles() { //types:add
 	fn.SelectedFunc(func(sn *filetree.Node) {
-		sn.This().(*FileNode).EditFile()
+		sn.This.(*FileNode).EditFile()
 	})
 }
 
@@ -122,7 +122,7 @@ func (fn *FileNode) EditFile() {
 		log.Printf("FileNode Edit -- cannot view (edit) directories!\n")
 		return
 	}
-	br, ok := ParentBrowser(fn.This())
+	br, ok := ParentBrowser(fn.This)
 	if ok {
 		df := dirs.DirAndFile(string(fn.FPath))
 		br.NewTabEditor(df, string(fn.FPath))
@@ -132,7 +132,7 @@ func (fn *FileNode) EditFile() {
 // PlotFiles calls PlotFile on selected files
 func (fn *FileNode) PlotFiles() { //types:add
 	fn.SelectedFunc(func(sn *filetree.Node) {
-		sn.This().(*FileNode).PlotFile()
+		sn.This.(*FileNode).PlotFile()
 	})
 }
 
@@ -141,7 +141,7 @@ func (fn *FileNode) PlotFile() {
 	if fn.IsDir() {
 		return
 	}
-	br, ok := ParentBrowser(fn.This())
+	br, ok := ParentBrowser(fn.This)
 	if ok {
 		df := dirs.DirAndFile(string(fn.FPath))
 		pl := br.NewTabPlot(df)
@@ -198,15 +198,15 @@ func IsTableFile(fname string) bool {
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
 	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
 	views.NewFuncButton(m, fn.PlotFiles).SetText("Plot").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || fn.Info.Cat != fileinfo.Data, states.Disabled)
 		})
 	views.NewFuncButton(m, fn.DiffDirs).SetText("Diff Dirs").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsDir(), states.Disabled)
 		})
 }

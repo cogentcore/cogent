@@ -347,7 +347,7 @@ func (cv *CodeView) ApplySettings() {
 		cv.Files.Dirs = cv.Settings.Dirs
 		cv.Files.DirsOnTop = cv.Settings.Files.DirsOnTop
 	}
-	if len(cv.Kids) > 0 {
+	if len(cv.Children) > 0 {
 		for i := 0; i < NTextEditors; i++ {
 			tv := cv.TextEditorByIndex(i)
 			if tv.Buffer != nil {
@@ -429,7 +429,7 @@ func (cv *CodeView) LangDefaults() {
 	cv.Settings.RunCmds = CmdNames{"Build: Run Project"}
 	cv.Settings.BuildDir = cv.Settings.ProjectRoot
 	cv.Settings.BuildTarg = cv.Settings.ProjectRoot
-	cv.Settings.RunExec = core.Filename(filepath.Join(string(cv.Settings.ProjectRoot), cv.Nm))
+	cv.Settings.RunExec = core.Filename(filepath.Join(string(cv.Settings.ProjectRoot), cv.Name))
 	if len(cv.Settings.BuildCmds) == 0 {
 		switch cv.Settings.MainLang {
 		case fileinfo.Go:

@@ -59,11 +59,11 @@ func (a *App) UpdateMessageList() {
 			break
 		}
 
-		fr := core.NewFrame(list).Style(func(s *styles.Style) {
+		fr := core.NewFrame(list).Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
 
-		fr.Style(func(s *styles.Style) {
+		fr.Styler(func(s *styles.Style) {
 			s.SetAbilities(true, abilities.Activatable, abilities.Hoverable)
 			s.Cursor = cursors.Pointer
 		})
@@ -85,14 +85,16 @@ func (a *App) UpdateMessageList() {
 			}
 		}
 
-		core.NewText(fr, "from").SetType(core.TextTitleMedium).SetText(ftxt).
-			Style(func(s *styles.Style) {
+		core.NewText(fr).SetType(core.TextTitleMedium).SetText(ftxt).
+			Styler(func(s *styles.Style) {
 				s.SetNonSelectable()
-			})
-		core.NewText(fr, "subject").SetType(core.TextBodyMedium).SetText(cd.Subject).
-			Style(func(s *styles.Style) {
+			}).
+			SetName("from")
+		core.NewText(fr).SetType(core.TextBodyMedium).SetText(cd.Subject).
+			Styler(func(s *styles.Style) {
 				s.SetNonSelectable()
-			})
+			}).
+			SetName("subject")
 	}
 
 	list.Update()

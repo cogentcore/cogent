@@ -5,35 +5,36 @@
 package mail
 
 import (
-	"fmt"
-	"net/mail"
-
-	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
-	"cogentcore.org/core/views"
 )
 
 func init() {
-	views.AddValue(mail.Address{}, func() views.Value { return &AddressValue{} })
+	// TODO: unclear if we need a distinct type here?
+	// views.AddValue(mail.Address{}, func() views.Value { return &AddressValue{} })
 }
 
-// AddressValue represents a [mail.Address] with a [core.TextField].
-type AddressValue struct {
-	views.ValueBase[*core.TextField]
+// AddressTextField represents a [mail.Address] with a [core.TextField].
+type AddressTextField struct {
+	core.TextField
 }
 
-func (v *AddressValue) Config() {
-	v.Widget.OnChange(func(e events.Event) {
-		reflectx.OnePointerValue(v.Value).Interface().(*mail.Address).Address = v.Widget.Text()
-	})
+// AddressTextField registers [core.Chooser] as the [core.Value] widget
+// for [SplitName]
+func (av AddressTextField) Value() core.Value {
+	return core.NewTextField()
 }
 
-func (v *AddressValue) Update() {
-	address := reflectx.NonPointerValue(v.Value).Interface().(mail.Address)
-	if v.IsReadOnly() && address.Name != "" && address.Name != address.Address {
-		v.Widget.SetText(fmt.Sprintf("%s (%s)", address.Name, address.Address)).Update()
-		return
-	}
-	v.Widget.SetText(address.Address).Update()
-}
+// func (v *AddressValue) Config() {
+// 	v.Widget.OnChange(func(e events.Event) {
+// 		reflectx.OnePointerValue(v.Value).Interface().(*mail.Address).Address = v.Widget.Text()
+// 	})
+// }
+//
+// func (v *AddressValue) Update() {
+// 	address := reflectx.NonPointerValue(v.Value).Interface().(mail.Address)
+// 	if v.IsReadOnly() && address.Name != "" && address.Name != address.Address {
+// 		v.Widget.SetText(fmt.Sprintf("%s (%s)", address.Name, address.Address)).Update()
+// 		return
+// 	}
+// 	v.Widget.SetText(address.Address).Update()
+// }

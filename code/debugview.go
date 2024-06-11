@@ -128,7 +128,7 @@ func (dv *DebugView) Config(cv *CodeView, sup fileinfo.Known, exePath string) {
 
 func (dv *DebugView) Init() {
 	dv.Frame.Init()
-	dv.Style(func(s *styles.Style) {
+	dv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -236,7 +236,7 @@ func (dv *DebugView) InitTabs() {
 		w.SetSlice(&dv.State.Vars)
 		w.OnDoubleClick(func(e events.Event) {
 			vr := dv.State.Vars[w.SelectedIndex]
-			dv.ShowVar(vr.Nm)
+			dv.ShowVar(vr.Name)
 		})
 	})
 
@@ -261,7 +261,7 @@ func (dv *DebugView) InitTabs() {
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
 			vr := dv.State.Vars[w.SelectedIndex]
-			dv.ShowVar(vr.Nm)
+			dv.ShowVar(vr.Name)
 		})
 	})
 }
@@ -385,7 +385,7 @@ func (dv *DebugView) Continue() {
 	dsc := dv.Dbg.Continue(&dv.State)
 	var ds *cdebug.State
 	for ds = range dsc { // get everything
-		if dv.This() == nil {
+		if dv.This == nil {
 			return
 		}
 	}
@@ -492,7 +492,7 @@ func (dv *DebugView) AddBreak(fpath string, line int) {
 // activated then it just deletes from master list.
 // Note that breakpoints can be turned on and off directly using On flag.
 func (dv *DebugView) DeleteBreak(fpath string, line int) {
-	if dv.This() == nil {
+	if dv.This == nil {
 		return
 	}
 	dv.DeleteBreakImpl(fpath, line)
@@ -548,7 +548,7 @@ func (dv *DebugView) SyncBreaks() {
 // DeleteBreakInBuf delete breakpoint in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -560,7 +560,7 @@ func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
 
 // DeleteAllBreaks deletes all breakpoints
 func (dv *DebugView) DeleteAllBreaks() {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -571,7 +571,7 @@ func (dv *DebugView) DeleteAllBreaks() {
 // UpdateBreakInBuf updates break status in its TextBuf
 // line is 1-based line number
 func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -583,7 +583,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 
 // UpdateAllBreaks updates all breakpoints
 func (dv *DebugView) UpdateAllBreaks() {
-	if dv.Code == nil || dv.Code.This() == nil {
+	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -629,7 +629,7 @@ func (dv *DebugView) InitState(ds *cdebug.State) {
 
 // UpdateFromState updates the view from current debugger state
 func (dv *DebugView) UpdateFromState() {
-	if dv == nil || dv.This() == nil || dv.Dbg == nil {
+	if dv == nil || dv.This == nil || dv.Dbg == nil {
 		return
 	}
 
@@ -825,7 +825,7 @@ var DebugStatusColors = map[cdebug.Status]color.RGBA{
 }
 
 func (dv *DebugView) SetStatus(stat cdebug.Status) {
-	if dv == nil || dv.This() == nil {
+	if dv == nil || dv.This == nil {
 		return
 	}
 
@@ -870,7 +870,7 @@ func (dv *DebugView) ConsoleText() *texteditor.Editor {
 
 func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.AddAt(p, "status", func(w *core.Text) {
-		w.SetText("Building").Style(func(s *styles.Style) {
+		w.SetText("Building").Styler(func(s *styles.Style) {
 			color := DebugStatusColors[dv.State.Status]
 			s.Background = colors.C(color)
 			s.Color = colors.C(hct.ContrastColor(color, hct.ContrastAA))
@@ -888,7 +888,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Cont").SetIcon(icons.PlayArrow).SetShortcut("Control+Alt+R")
 		w.SetTooltip("continue execution from current point").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				go dv.Continue()
 			})
@@ -901,7 +901,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Over").SetIcon(icons.StepOver).SetShortcut("F6")
 		w.SetTooltip("continues to the next source line, not entering function calls").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOver()
 			})
@@ -910,7 +910,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Into").SetIcon(icons.StepInto).SetShortcut("F7")
 		w.SetTooltip("continues to the next source line, entering into function calls").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepInto()
 			})
@@ -919,7 +919,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Out").SetIcon(icons.StepOut).SetShortcut("F8")
 		w.SetTooltip("continues to the return point of the current function").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOut()
 			})
@@ -928,7 +928,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Single").SetIcon(icons.Step).
 			SetTooltip("steps a single CPU instruction").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.StepOut()
 			})
@@ -937,7 +937,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Stop").SetIcon(icons.Stop).
 			SetTooltip("stop execution").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(!dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(!dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				dv.Stop()
 			})
@@ -948,7 +948,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Global Vars").SetIcon(icons.Search).
 			SetTooltip("list variables at global scope, subject to filter (name contains)").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				views.CallFunc(dv, dv.ListGlobalVars)
 			})
@@ -957,7 +957,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Params").SetIcon(icons.Edit).
 			SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
-			StyleFirst(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
+			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
 				DebugSettingsView(&dv.Code.Settings.Debug)
 			})
@@ -996,7 +996,7 @@ func (vv *VarView) SetVar(vr *cdebug.Variable, frinfo string) {
 }
 
 func (vv *VarView) Init() {
-	vv.Style(func(s *styles.Style) {
+	vv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
@@ -1035,7 +1035,7 @@ func (vv *VarView) Splits() *core.Splits {
 
 // TreeView returns the main TreeView
 func (vv *VarView) TreeView() *views.TreeView {
-	return vv.Splits().Child(0).Child(0).(*views.TreeView)
+	return vv.Splits().Child(0).AsTree().Child(0).(*views.TreeView)
 }
 
 // StructView returns the main StructView
@@ -1065,8 +1065,8 @@ func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugView) *VarVie
 	wnm := "var-view"
 	wti := "Var View"
 	if vr != nil {
-		wnm += "-" + vr.Name()
-		wti += ": " + vr.Name()
+		wnm += "-" + vr.Name
+		wti += ": " + vr.Name
 	}
 	b := core.NewBody() // wnm)
 	b.Title = wti

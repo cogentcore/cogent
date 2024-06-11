@@ -38,7 +38,6 @@ func init() {
 		"AsFrame":                  reflect.ValueOf(core.AsFrame),
 		"AsTextField":              reflect.ValueOf(core.AsTextField),
 		"AsWidget":                 reflect.ValueOf(core.AsWidget),
-		"AsWidgetBase":             reflect.ValueOf(core.AsWidgetBase),
 		"AutoScrollRate":           reflect.ValueOf(&core.AutoScrollRate).Elem(),
 		"BasicBarType":             reflect.ValueOf(&core.BasicBarType).Elem(),
 		"BodyType":                 reflect.ValueOf(&core.BodyType).Elem(),
@@ -68,7 +67,6 @@ func init() {
 		"ConcealDots":              reflect.ValueOf(core.ConcealDots),
 		"ConfigAppChooser":         reflect.ValueOf(core.ConfigAppChooser),
 		"CurrentRenderWindow":      reflect.ValueOf(&core.CurrentRenderWindow).Elem(),
-		"CustomConfigStyles":       reflect.ValueOf(&core.CustomConfigStyles).Elem(),
 		"DebugSettings":            reflect.ValueOf(&core.DebugSettings).Elem(),
 		"DefaultPaths":             reflect.ValueOf(&core.DefaultPaths).Elem(),
 		"DeviceSettings":           reflect.ValueOf(&core.DeviceSettings).Elem(),
@@ -195,7 +193,6 @@ func init() {
 		"SceneType":                reflect.ValueOf(&core.SceneType).Elem(),
 		"ScrimType":                reflect.ValueOf(&core.ScrimType).Elem(),
 		"SeparatorType":            reflect.ValueOf(&core.SeparatorType).Elem(),
-		"SetUnitContext":           reflect.ValueOf(core.SetUnitContext),
 		"SettingsWindow":           reflect.ValueOf(&core.SettingsWindow).Elem(),
 		"SizeClassesN":             reflect.ValueOf(core.SizeClassesN),
 		"SizeClassesValues":        reflect.ValueOf(core.SizeClassesValues),
@@ -452,105 +449,81 @@ func (W _cogentcore_org_core_core_FieldValidator) ValidateField(field string) er
 
 // _cogentcore_org_core_core_Layouter is an interface wrapper for Layouter type
 type _cogentcore_org_core_core_Layouter struct {
-	IValue               interface{}
-	WAbilityIs           func(flag abilities.Abilities) bool
-	WAddChild            func(kid tree.Node) error
-	WAddContextMenu      func(menu func(m *core.Scene)) *core.WidgetBase
-	WApplyContextMenus   func(m *core.Scene)
-	WApplyStyle          func()
-	WAsFrame             func() *core.Frame
-	WAsTreeNode          func() *tree.NodeBase
-	WAsWidget            func() *core.WidgetBase
-	WBaseType            func() *types.Type
-	WChild               func(i int) tree.Node
-	WChildBackground     func(child core.Widget) image.Image
-	WChildByName         func(name string, startIndex ...int) tree.Node
-	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
-	WChildren            func() *tree.Slice
-	WClone               func() tree.Node
-	WContextMenuPos      func(e events.Event) image.Point
-	WCopyFieldsFrom      func(from tree.Node)
-	WCopyFrom            func(src tree.Node)
-	WDelete              func()
-	WDeleteChild         func(child tree.Node) bool
-	WDeleteChildAtIndex  func(idx int) bool
-	WDeleteChildByName   func(name string) bool
-	WDeleteChildren      func()
-	WDeleteProperty      func(key string)
-	WDestroy             func()
-	WDirectRenderDraw    func(drw system.Drawer, idx int, flipY bool)
-	WDirectRenderImage   func(drw system.Drawer, idx int)
-	WFieldByName         func(field string) (tree.Node, error)
-	WFindPath            func(path string) tree.Node
-	WFlagType            func() enums.BitFlagSetter
-	WHandleEvent         func(e events.Event)
-	WHasChildren         func() bool
-	WIndexInParent       func() int
-	WInit                func()
-	WInsertChild         func(kid tree.Node, at int) error
-	WInsertNewChild      func(typ *types.Type, at int) tree.Node
-	WIs                  func(f enums.BitFlag) bool
-	WIsVisible           func() bool
-	WLayoutSpace         func()
-	WManageOverflow      func(iter int, updateSize bool) bool
-	WName                func() string
-	WNew                 func() tree.Node
-	WNewChild            func(typ *types.Type) tree.Node
-	WNodeType            func() *types.Type
-	WNodeWalkDown        func(fun func(n tree.Node) bool)
-	WNumChildren         func() int
-	WNumLifetimeChildren func() uint64
-	WOn                  func(etype events.Types, fun func(e events.Event)) *core.WidgetBase
-	WOnAdd               func()
-	WOnChildAdded        func(child tree.Node)
-	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
-	WParent              func() tree.Node
-	WParentByName        func(name string) tree.Node
-	WParentByType        func(t *types.Type, embeds bool) tree.Node
-	WParentLevel         func(parent tree.Node) int
-	WPath                func() string
-	WPathFrom            func(parent tree.Node) string
-	WPosition            func()
-	WProperties          func() map[string]any
-	WProperty            func(key string) any
-	WRender              func()
-	WRenderWidget        func()
-	WScenePos            func()
-	WScrollChanged       func(d math32.Dims, sb *core.Slider)
-	WScrollGeom          func(d math32.Dims) (pos math32.Vector2, sz math32.Vector2)
-	WScrollValues        func(d math32.Dims) (maxSize float32, visSize float32, visPct float32)
-	WSend                func(e events.Types, orig ...events.Event)
-	WSetAbilities        func(on bool, able ...abilities.Abilities) *core.WidgetBase
-	WSetChild            func(kid tree.Node, idx int) error
-	WSetFlag             func(on bool, f ...enums.BitFlag)
-	WSetName             func(name string)
-	WSetProperty         func(key string, value any)
-	WSetScrollParams     func(d math32.Dims, sb *core.Slider)
-	WSetState            func(on bool, state ...states.States) *core.WidgetBase
-	WShowContextMenu     func(e events.Event)
-	WSizeDown            func(iter int) bool
-	WSizeDownSetAllocs   func(iter int)
-	WSizeFinal           func()
-	WSizeFromChildren    func(iter int, pass core.LayoutPasses) math32.Vector2
-	WSizeUp              func()
-	WStateIs             func(flag states.States) bool
-	WStyle               func(s func(s *styles.Style)) *core.WidgetBase
-	WThis                func() tree.Node
-	WUpdate              func()
-	WWalkDown            func(fun func(n tree.Node) bool)
-	WWalkDownBreadth     func(fun func(n tree.Node) bool)
-	WWalkDownPost        func(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool)
-	WWalkUp              func(fun func(n tree.Node) bool) bool
-	WWalkUpParent        func(fun func(n tree.Node) bool) bool
-	WWidgetTooltip       func(pos image.Point) (string, image.Point)
+	IValue             interface{}
+	WAbilityIs         func(flag abilities.Abilities) bool
+	WAddContextMenu    func(menu func(m *core.Scene)) *core.WidgetBase
+	WApplyContextMenus func(m *core.Scene)
+	WApplyStyle        func()
+	WAsFrame           func() *core.Frame
+	WAsTree            func() *tree.NodeBase
+	WAsWidget          func() *core.WidgetBase
+	WBaseType          func() *types.Type
+	WChild             func(i int) tree.Node
+	WChildBackground   func(child core.Widget) image.Image
+	WChildByName       func(name string, startIndex ...int) tree.Node
+	WClone             func() tree.Node
+	WContextMenuPos    func(e events.Event) image.Point
+	WCopyFieldsFrom    func(from tree.Node)
+	WCopyFrom          func(src tree.Node)
+	WDestroy           func()
+	WDirectRenderDraw  func(drw system.Drawer, idx int, flipY bool)
+	WDirectRenderImage func(drw system.Drawer, idx int)
+	WFieldByName       func(field string) (tree.Node, error)
+	WFindPath          func(path string) tree.Node
+	WFlagType          func() enums.BitFlagSetter
+	WHandleEvent       func(e events.Event)
+	WHasChildren       func() bool
+	WInit              func()
+	WIs                func(f enums.BitFlag) bool
+	WIsVisible         func() bool
+	WLayoutSpace       func()
+	WManageOverflow    func(iter int, updateSize bool) bool
+	WName              func() string
+	WNew               func() tree.Node
+	WNodeType          func() *types.Type
+	WNodeWalkDown      func(fun func(n tree.Node) bool)
+	WNumChildren       func() int
+	WOn                func(etype events.Types, fun func(e events.Event)) *core.WidgetBase
+	WOnAdd             func()
+	WOnChildAdded      func(child tree.Node)
+	WOnClick           func(fun func(e events.Event)) *core.WidgetBase
+	WOnWidgetAdded     func(f func(w core.Widget)) *core.WidgetBase
+	WParent            func() tree.Node
+	WPath              func() string
+	WPathFrom          func(parent tree.Node) string
+	WPosition          func()
+	WRender            func()
+	WRenderWidget      func()
+	WScenePos          func()
+	WScrollChanged     func(d math32.Dims, sb *core.Slider)
+	WScrollGeom        func(d math32.Dims) (pos math32.Vector2, sz math32.Vector2)
+	WScrollValues      func(d math32.Dims) (maxSize float32, visSize float32, visPct float32)
+	WSend              func(e events.Types, orig ...events.Event)
+	WSetAbilities      func(on bool, able ...abilities.Abilities) *core.WidgetBase
+	WSetFlag           func(on bool, f ...enums.BitFlag)
+	WSetName           func(name string)
+	WSetScrollParams   func(d math32.Dims, sb *core.Slider)
+	WSetState          func(on bool, state ...states.States) *core.WidgetBase
+	WShowContextMenu   func(e events.Event)
+	WSizeDown          func(iter int) bool
+	WSizeDownSetAllocs func(iter int)
+	WSizeFinal         func()
+	WSizeFromChildren  func(iter int, pass core.LayoutPasses) math32.Vector2
+	WSizeUp            func()
+	WStateIs           func(flag states.States) bool
+	WStyle             func(s func(s *styles.Style)) *core.WidgetBase
+	WThis              func() tree.Node
+	WUpdate            func()
+	WWalkDown          func(fun func(n tree.Node) bool)
+	WWalkDownBreadth   func(fun func(n tree.Node) bool)
+	WWalkDownPost      func(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool)
+	WWalkUp            func(fun func(n tree.Node) bool) bool
+	WWalkUpParent      func(fun func(n tree.Node) bool) bool
+	WWidgetTooltip     func(pos image.Point) (string, image.Point)
 }
 
 func (W _cogentcore_org_core_core_Layouter) AbilityIs(flag abilities.Abilities) bool {
 	return W.WAbilityIs(flag)
-}
-func (W _cogentcore_org_core_core_Layouter) AddChild(kid tree.Node) error {
-	return W.WAddChild(kid)
 }
 func (W _cogentcore_org_core_core_Layouter) AddContextMenu(menu func(m *core.Scene)) *core.WidgetBase {
 	return W.WAddContextMenu(menu)
@@ -564,8 +537,8 @@ func (W _cogentcore_org_core_core_Layouter) ApplyStyle() {
 func (W _cogentcore_org_core_core_Layouter) AsFrame() *core.Frame {
 	return W.WAsFrame()
 }
-func (W _cogentcore_org_core_core_Layouter) AsTreeNode() *tree.NodeBase {
-	return W.WAsTreeNode()
+func (W _cogentcore_org_core_core_Layouter) AsTree() *tree.NodeBase {
+	return W.WAsTree()
 }
 func (W _cogentcore_org_core_core_Layouter) AsWidget() *core.WidgetBase {
 	return W.WAsWidget()
@@ -582,12 +555,6 @@ func (W _cogentcore_org_core_core_Layouter) ChildBackground(child core.Widget) i
 func (W _cogentcore_org_core_core_Layouter) ChildByName(name string, startIndex ...int) tree.Node {
 	return W.WChildByName(name, startIndex...)
 }
-func (W _cogentcore_org_core_core_Layouter) ChildByType(t *types.Type, embeds bool, startIndex ...int) tree.Node {
-	return W.WChildByType(t, embeds, startIndex...)
-}
-func (W _cogentcore_org_core_core_Layouter) Children() *tree.Slice {
-	return W.WChildren()
-}
 func (W _cogentcore_org_core_core_Layouter) Clone() tree.Node {
 	return W.WClone()
 }
@@ -599,24 +566,6 @@ func (W _cogentcore_org_core_core_Layouter) CopyFieldsFrom(from tree.Node) {
 }
 func (W _cogentcore_org_core_core_Layouter) CopyFrom(src tree.Node) {
 	W.WCopyFrom(src)
-}
-func (W _cogentcore_org_core_core_Layouter) Delete() {
-	W.WDelete()
-}
-func (W _cogentcore_org_core_core_Layouter) DeleteChild(child tree.Node) bool {
-	return W.WDeleteChild(child)
-}
-func (W _cogentcore_org_core_core_Layouter) DeleteChildAtIndex(idx int) bool {
-	return W.WDeleteChildAtIndex(idx)
-}
-func (W _cogentcore_org_core_core_Layouter) DeleteChildByName(name string) bool {
-	return W.WDeleteChildByName(name)
-}
-func (W _cogentcore_org_core_core_Layouter) DeleteChildren() {
-	W.WDeleteChildren()
-}
-func (W _cogentcore_org_core_core_Layouter) DeleteProperty(key string) {
-	W.WDeleteProperty(key)
 }
 func (W _cogentcore_org_core_core_Layouter) Destroy() {
 	W.WDestroy()
@@ -642,17 +591,8 @@ func (W _cogentcore_org_core_core_Layouter) HandleEvent(e events.Event) {
 func (W _cogentcore_org_core_core_Layouter) HasChildren() bool {
 	return W.WHasChildren()
 }
-func (W _cogentcore_org_core_core_Layouter) IndexInParent() int {
-	return W.WIndexInParent()
-}
 func (W _cogentcore_org_core_core_Layouter) Init() {
 	W.WInit()
-}
-func (W _cogentcore_org_core_core_Layouter) InsertChild(kid tree.Node, at int) error {
-	return W.WInsertChild(kid, at)
-}
-func (W _cogentcore_org_core_core_Layouter) InsertNewChild(typ *types.Type, at int) tree.Node {
-	return W.WInsertNewChild(typ, at)
 }
 func (W _cogentcore_org_core_core_Layouter) Is(f enums.BitFlag) bool {
 	return W.WIs(f)
@@ -672,9 +612,6 @@ func (W _cogentcore_org_core_core_Layouter) Name() string {
 func (W _cogentcore_org_core_core_Layouter) New() tree.Node {
 	return W.WNew()
 }
-func (W _cogentcore_org_core_core_Layouter) NewChild(typ *types.Type) tree.Node {
-	return W.WNewChild(typ)
-}
 func (W _cogentcore_org_core_core_Layouter) NodeType() *types.Type {
 	return W.WNodeType()
 }
@@ -683,9 +620,6 @@ func (W _cogentcore_org_core_core_Layouter) NodeWalkDown(fun func(n tree.Node) b
 }
 func (W _cogentcore_org_core_core_Layouter) NumChildren() int {
 	return W.WNumChildren()
-}
-func (W _cogentcore_org_core_core_Layouter) NumLifetimeChildren() uint64 {
-	return W.WNumLifetimeChildren()
 }
 func (W _cogentcore_org_core_core_Layouter) On(etype events.Types, fun func(e events.Event)) *core.WidgetBase {
 	return W.WOn(etype, fun)
@@ -705,15 +639,6 @@ func (W _cogentcore_org_core_core_Layouter) OnWidgetAdded(f func(w core.Widget))
 func (W _cogentcore_org_core_core_Layouter) Parent() tree.Node {
 	return W.WParent()
 }
-func (W _cogentcore_org_core_core_Layouter) ParentByName(name string) tree.Node {
-	return W.WParentByName(name)
-}
-func (W _cogentcore_org_core_core_Layouter) ParentByType(t *types.Type, embeds bool) tree.Node {
-	return W.WParentByType(t, embeds)
-}
-func (W _cogentcore_org_core_core_Layouter) ParentLevel(parent tree.Node) int {
-	return W.WParentLevel(parent)
-}
 func (W _cogentcore_org_core_core_Layouter) Path() string {
 	return W.WPath()
 }
@@ -722,12 +647,6 @@ func (W _cogentcore_org_core_core_Layouter) PathFrom(parent tree.Node) string {
 }
 func (W _cogentcore_org_core_core_Layouter) Position() {
 	W.WPosition()
-}
-func (W _cogentcore_org_core_core_Layouter) Properties() map[string]any {
-	return W.WProperties()
-}
-func (W _cogentcore_org_core_core_Layouter) Property(key string) any {
-	return W.WProperty(key)
 }
 func (W _cogentcore_org_core_core_Layouter) Render() {
 	W.WRender()
@@ -753,17 +672,11 @@ func (W _cogentcore_org_core_core_Layouter) Send(e events.Types, orig ...events.
 func (W _cogentcore_org_core_core_Layouter) SetAbilities(on bool, able ...abilities.Abilities) *core.WidgetBase {
 	return W.WSetAbilities(on, able...)
 }
-func (W _cogentcore_org_core_core_Layouter) SetChild(kid tree.Node, idx int) error {
-	return W.WSetChild(kid, idx)
-}
 func (W _cogentcore_org_core_core_Layouter) SetFlag(on bool, f ...enums.BitFlag) {
 	W.WSetFlag(on, f...)
 }
 func (W _cogentcore_org_core_core_Layouter) SetName(name string) {
 	W.WSetName(name)
-}
-func (W _cogentcore_org_core_core_Layouter) SetProperty(key string, value any) {
-	W.WSetProperty(key, value)
 }
 func (W _cogentcore_org_core_core_Layouter) SetScrollParams(d math32.Dims, sb *core.Slider) {
 	W.WSetScrollParams(d, sb)
@@ -958,97 +871,73 @@ func (W _cogentcore_org_core_core_Validator) Validate() error {
 
 // _cogentcore_org_core_core_Value is an interface wrapper for Value type
 type _cogentcore_org_core_core_Value struct {
-	IValue               interface{}
-	WAbilityIs           func(flag abilities.Abilities) bool
-	WAddChild            func(kid tree.Node) error
-	WAddContextMenu      func(menu func(m *core.Scene)) *core.WidgetBase
-	WApplyContextMenus   func(m *core.Scene)
-	WApplyStyle          func()
-	WAsTreeNode          func() *tree.NodeBase
-	WAsWidget            func() *core.WidgetBase
-	WBaseType            func() *types.Type
-	WChild               func(i int) tree.Node
-	WChildBackground     func(child core.Widget) image.Image
-	WChildByName         func(name string, startIndex ...int) tree.Node
-	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
-	WChildren            func() *tree.Slice
-	WClone               func() tree.Node
-	WContextMenuPos      func(e events.Event) image.Point
-	WCopyFieldsFrom      func(from tree.Node)
-	WCopyFrom            func(src tree.Node)
-	WDelete              func()
-	WDeleteChild         func(child tree.Node) bool
-	WDeleteChildAtIndex  func(idx int) bool
-	WDeleteChildByName   func(name string) bool
-	WDeleteChildren      func()
-	WDeleteProperty      func(key string)
-	WDestroy             func()
-	WDirectRenderDraw    func(drw system.Drawer, idx int, flipY bool)
-	WDirectRenderImage   func(drw system.Drawer, idx int)
-	WFieldByName         func(field string) (tree.Node, error)
-	WFindPath            func(path string) tree.Node
-	WFlagType            func() enums.BitFlagSetter
-	WHandleEvent         func(e events.Event)
-	WHasChildren         func() bool
-	WIndexInParent       func() int
-	WInit                func()
-	WInsertChild         func(kid tree.Node, at int) error
-	WInsertNewChild      func(typ *types.Type, at int) tree.Node
-	WIs                  func(f enums.BitFlag) bool
-	WIsVisible           func() bool
-	WName                func() string
-	WNew                 func() tree.Node
-	WNewChild            func(typ *types.Type) tree.Node
-	WNodeType            func() *types.Type
-	WNodeWalkDown        func(fun func(n tree.Node) bool)
-	WNumChildren         func() int
-	WNumLifetimeChildren func() uint64
-	WOn                  func(etype events.Types, fun func(e events.Event)) *core.WidgetBase
-	WOnAdd               func()
-	WOnChildAdded        func(child tree.Node)
-	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
-	WParent              func() tree.Node
-	WParentByName        func(name string) tree.Node
-	WParentByType        func(t *types.Type, embeds bool) tree.Node
-	WParentLevel         func(parent tree.Node) int
-	WPath                func() string
-	WPathFrom            func(parent tree.Node) string
-	WPosition            func()
-	WProperties          func() map[string]any
-	WProperty            func(key string) any
-	WRender              func()
-	WRenderWidget        func()
-	WScenePos            func()
-	WSend                func(e events.Types, orig ...events.Event)
-	WSetAbilities        func(on bool, able ...abilities.Abilities) *core.WidgetBase
-	WSetChild            func(kid tree.Node, idx int) error
-	WSetFlag             func(on bool, f ...enums.BitFlag)
-	WSetName             func(name string)
-	WSetProperty         func(key string, value any)
-	WSetState            func(on bool, state ...states.States) *core.WidgetBase
-	WShowContextMenu     func(e events.Event)
-	WSizeDown            func(iter int) bool
-	WSizeFinal           func()
-	WSizeUp              func()
-	WStateIs             func(flag states.States) bool
-	WStyle               func(s func(s *styles.Style)) *core.WidgetBase
-	WThis                func() tree.Node
-	WUpdate              func()
-	WWalkDown            func(fun func(n tree.Node) bool)
-	WWalkDownBreadth     func(fun func(n tree.Node) bool)
-	WWalkDownPost        func(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool)
-	WWalkUp              func(fun func(n tree.Node) bool) bool
-	WWalkUpParent        func(fun func(n tree.Node) bool) bool
-	WWidgetTooltip       func(pos image.Point) (string, image.Point)
-	WWidgetValue         func() any
+	IValue             interface{}
+	WAbilityIs         func(flag abilities.Abilities) bool
+	WAddContextMenu    func(menu func(m *core.Scene)) *core.WidgetBase
+	WApplyContextMenus func(m *core.Scene)
+	WApplyStyle        func()
+	WAsTree            func() *tree.NodeBase
+	WAsWidget          func() *core.WidgetBase
+	WBaseType          func() *types.Type
+	WChild             func(i int) tree.Node
+	WChildBackground   func(child core.Widget) image.Image
+	WChildByName       func(name string, startIndex ...int) tree.Node
+	WClone             func() tree.Node
+	WContextMenuPos    func(e events.Event) image.Point
+	WCopyFieldsFrom    func(from tree.Node)
+	WCopyFrom          func(src tree.Node)
+	WDestroy           func()
+	WDirectRenderDraw  func(drw system.Drawer, idx int, flipY bool)
+	WDirectRenderImage func(drw system.Drawer, idx int)
+	WFieldByName       func(field string) (tree.Node, error)
+	WFindPath          func(path string) tree.Node
+	WFlagType          func() enums.BitFlagSetter
+	WHandleEvent       func(e events.Event)
+	WHasChildren       func() bool
+	WInit              func()
+	WIs                func(f enums.BitFlag) bool
+	WIsVisible         func() bool
+	WName              func() string
+	WNew               func() tree.Node
+	WNodeType          func() *types.Type
+	WNodeWalkDown      func(fun func(n tree.Node) bool)
+	WNumChildren       func() int
+	WOn                func(etype events.Types, fun func(e events.Event)) *core.WidgetBase
+	WOnAdd             func()
+	WOnChildAdded      func(child tree.Node)
+	WOnClick           func(fun func(e events.Event)) *core.WidgetBase
+	WOnWidgetAdded     func(f func(w core.Widget)) *core.WidgetBase
+	WParent            func() tree.Node
+	WPath              func() string
+	WPathFrom          func(parent tree.Node) string
+	WPosition          func()
+	WRender            func()
+	WRenderWidget      func()
+	WScenePos          func()
+	WSend              func(e events.Types, orig ...events.Event)
+	WSetAbilities      func(on bool, able ...abilities.Abilities) *core.WidgetBase
+	WSetFlag           func(on bool, f ...enums.BitFlag)
+	WSetName           func(name string)
+	WSetState          func(on bool, state ...states.States) *core.WidgetBase
+	WShowContextMenu   func(e events.Event)
+	WSizeDown          func(iter int) bool
+	WSizeFinal         func()
+	WSizeUp            func()
+	WStateIs           func(flag states.States) bool
+	WStyle             func(s func(s *styles.Style)) *core.WidgetBase
+	WThis              func() tree.Node
+	WUpdate            func()
+	WWalkDown          func(fun func(n tree.Node) bool)
+	WWalkDownBreadth   func(fun func(n tree.Node) bool)
+	WWalkDownPost      func(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool)
+	WWalkUp            func(fun func(n tree.Node) bool) bool
+	WWalkUpParent      func(fun func(n tree.Node) bool) bool
+	WWidgetTooltip     func(pos image.Point) (string, image.Point)
+	WWidgetValue       func() any
 }
 
 func (W _cogentcore_org_core_core_Value) AbilityIs(flag abilities.Abilities) bool {
 	return W.WAbilityIs(flag)
-}
-func (W _cogentcore_org_core_core_Value) AddChild(kid tree.Node) error {
-	return W.WAddChild(kid)
 }
 func (W _cogentcore_org_core_core_Value) AddContextMenu(menu func(m *core.Scene)) *core.WidgetBase {
 	return W.WAddContextMenu(menu)
@@ -1059,8 +948,8 @@ func (W _cogentcore_org_core_core_Value) ApplyContextMenus(m *core.Scene) {
 func (W _cogentcore_org_core_core_Value) ApplyStyle() {
 	W.WApplyStyle()
 }
-func (W _cogentcore_org_core_core_Value) AsTreeNode() *tree.NodeBase {
-	return W.WAsTreeNode()
+func (W _cogentcore_org_core_core_Value) AsTree() *tree.NodeBase {
+	return W.WAsTree()
 }
 func (W _cogentcore_org_core_core_Value) AsWidget() *core.WidgetBase {
 	return W.WAsWidget()
@@ -1077,12 +966,6 @@ func (W _cogentcore_org_core_core_Value) ChildBackground(child core.Widget) imag
 func (W _cogentcore_org_core_core_Value) ChildByName(name string, startIndex ...int) tree.Node {
 	return W.WChildByName(name, startIndex...)
 }
-func (W _cogentcore_org_core_core_Value) ChildByType(t *types.Type, embeds bool, startIndex ...int) tree.Node {
-	return W.WChildByType(t, embeds, startIndex...)
-}
-func (W _cogentcore_org_core_core_Value) Children() *tree.Slice {
-	return W.WChildren()
-}
 func (W _cogentcore_org_core_core_Value) Clone() tree.Node {
 	return W.WClone()
 }
@@ -1094,24 +977,6 @@ func (W _cogentcore_org_core_core_Value) CopyFieldsFrom(from tree.Node) {
 }
 func (W _cogentcore_org_core_core_Value) CopyFrom(src tree.Node) {
 	W.WCopyFrom(src)
-}
-func (W _cogentcore_org_core_core_Value) Delete() {
-	W.WDelete()
-}
-func (W _cogentcore_org_core_core_Value) DeleteChild(child tree.Node) bool {
-	return W.WDeleteChild(child)
-}
-func (W _cogentcore_org_core_core_Value) DeleteChildAtIndex(idx int) bool {
-	return W.WDeleteChildAtIndex(idx)
-}
-func (W _cogentcore_org_core_core_Value) DeleteChildByName(name string) bool {
-	return W.WDeleteChildByName(name)
-}
-func (W _cogentcore_org_core_core_Value) DeleteChildren() {
-	W.WDeleteChildren()
-}
-func (W _cogentcore_org_core_core_Value) DeleteProperty(key string) {
-	W.WDeleteProperty(key)
 }
 func (W _cogentcore_org_core_core_Value) Destroy() {
 	W.WDestroy()
@@ -1137,17 +1002,8 @@ func (W _cogentcore_org_core_core_Value) HandleEvent(e events.Event) {
 func (W _cogentcore_org_core_core_Value) HasChildren() bool {
 	return W.WHasChildren()
 }
-func (W _cogentcore_org_core_core_Value) IndexInParent() int {
-	return W.WIndexInParent()
-}
 func (W _cogentcore_org_core_core_Value) Init() {
 	W.WInit()
-}
-func (W _cogentcore_org_core_core_Value) InsertChild(kid tree.Node, at int) error {
-	return W.WInsertChild(kid, at)
-}
-func (W _cogentcore_org_core_core_Value) InsertNewChild(typ *types.Type, at int) tree.Node {
-	return W.WInsertNewChild(typ, at)
 }
 func (W _cogentcore_org_core_core_Value) Is(f enums.BitFlag) bool {
 	return W.WIs(f)
@@ -1161,9 +1017,6 @@ func (W _cogentcore_org_core_core_Value) Name() string {
 func (W _cogentcore_org_core_core_Value) New() tree.Node {
 	return W.WNew()
 }
-func (W _cogentcore_org_core_core_Value) NewChild(typ *types.Type) tree.Node {
-	return W.WNewChild(typ)
-}
 func (W _cogentcore_org_core_core_Value) NodeType() *types.Type {
 	return W.WNodeType()
 }
@@ -1172,9 +1025,6 @@ func (W _cogentcore_org_core_core_Value) NodeWalkDown(fun func(n tree.Node) bool
 }
 func (W _cogentcore_org_core_core_Value) NumChildren() int {
 	return W.WNumChildren()
-}
-func (W _cogentcore_org_core_core_Value) NumLifetimeChildren() uint64 {
-	return W.WNumLifetimeChildren()
 }
 func (W _cogentcore_org_core_core_Value) On(etype events.Types, fun func(e events.Event)) *core.WidgetBase {
 	return W.WOn(etype, fun)
@@ -1194,15 +1044,6 @@ func (W _cogentcore_org_core_core_Value) OnWidgetAdded(f func(w core.Widget)) *c
 func (W _cogentcore_org_core_core_Value) Parent() tree.Node {
 	return W.WParent()
 }
-func (W _cogentcore_org_core_core_Value) ParentByName(name string) tree.Node {
-	return W.WParentByName(name)
-}
-func (W _cogentcore_org_core_core_Value) ParentByType(t *types.Type, embeds bool) tree.Node {
-	return W.WParentByType(t, embeds)
-}
-func (W _cogentcore_org_core_core_Value) ParentLevel(parent tree.Node) int {
-	return W.WParentLevel(parent)
-}
 func (W _cogentcore_org_core_core_Value) Path() string {
 	return W.WPath()
 }
@@ -1211,12 +1052,6 @@ func (W _cogentcore_org_core_core_Value) PathFrom(parent tree.Node) string {
 }
 func (W _cogentcore_org_core_core_Value) Position() {
 	W.WPosition()
-}
-func (W _cogentcore_org_core_core_Value) Properties() map[string]any {
-	return W.WProperties()
-}
-func (W _cogentcore_org_core_core_Value) Property(key string) any {
-	return W.WProperty(key)
 }
 func (W _cogentcore_org_core_core_Value) Render() {
 	W.WRender()
@@ -1233,17 +1068,11 @@ func (W _cogentcore_org_core_core_Value) Send(e events.Types, orig ...events.Eve
 func (W _cogentcore_org_core_core_Value) SetAbilities(on bool, able ...abilities.Abilities) *core.WidgetBase {
 	return W.WSetAbilities(on, able...)
 }
-func (W _cogentcore_org_core_core_Value) SetChild(kid tree.Node, idx int) error {
-	return W.WSetChild(kid, idx)
-}
 func (W _cogentcore_org_core_core_Value) SetFlag(on bool, f ...enums.BitFlag) {
 	W.WSetFlag(on, f...)
 }
 func (W _cogentcore_org_core_core_Value) SetName(name string) {
 	W.WSetName(name)
-}
-func (W _cogentcore_org_core_core_Value) SetProperty(key string, value any) {
-	W.WSetProperty(key, value)
 }
 func (W _cogentcore_org_core_core_Value) SetState(on bool, state ...states.States) *core.WidgetBase {
 	return W.WSetState(on, state...)
@@ -1316,96 +1145,72 @@ func (W _cogentcore_org_core_core_Valuer) Value() core.Value {
 
 // _cogentcore_org_core_core_Widget is an interface wrapper for Widget type
 type _cogentcore_org_core_core_Widget struct {
-	IValue               interface{}
-	WAbilityIs           func(flag abilities.Abilities) bool
-	WAddChild            func(kid tree.Node) error
-	WAddContextMenu      func(menu func(m *core.Scene)) *core.WidgetBase
-	WApplyContextMenus   func(m *core.Scene)
-	WApplyStyle          func()
-	WAsTreeNode          func() *tree.NodeBase
-	WAsWidget            func() *core.WidgetBase
-	WBaseType            func() *types.Type
-	WChild               func(i int) tree.Node
-	WChildBackground     func(child core.Widget) image.Image
-	WChildByName         func(name string, startIndex ...int) tree.Node
-	WChildByType         func(t *types.Type, embeds bool, startIndex ...int) tree.Node
-	WChildren            func() *tree.Slice
-	WClone               func() tree.Node
-	WContextMenuPos      func(e events.Event) image.Point
-	WCopyFieldsFrom      func(from tree.Node)
-	WCopyFrom            func(src tree.Node)
-	WDelete              func()
-	WDeleteChild         func(child tree.Node) bool
-	WDeleteChildAtIndex  func(idx int) bool
-	WDeleteChildByName   func(name string) bool
-	WDeleteChildren      func()
-	WDeleteProperty      func(key string)
-	WDestroy             func()
-	WDirectRenderDraw    func(drw system.Drawer, idx int, flipY bool)
-	WDirectRenderImage   func(drw system.Drawer, idx int)
-	WFieldByName         func(field string) (tree.Node, error)
-	WFindPath            func(path string) tree.Node
-	WFlagType            func() enums.BitFlagSetter
-	WHandleEvent         func(e events.Event)
-	WHasChildren         func() bool
-	WIndexInParent       func() int
-	WInit                func()
-	WInsertChild         func(kid tree.Node, at int) error
-	WInsertNewChild      func(typ *types.Type, at int) tree.Node
-	WIs                  func(f enums.BitFlag) bool
-	WIsVisible           func() bool
-	WName                func() string
-	WNew                 func() tree.Node
-	WNewChild            func(typ *types.Type) tree.Node
-	WNodeType            func() *types.Type
-	WNodeWalkDown        func(fun func(n tree.Node) bool)
-	WNumChildren         func() int
-	WNumLifetimeChildren func() uint64
-	WOn                  func(etype events.Types, fun func(e events.Event)) *core.WidgetBase
-	WOnAdd               func()
-	WOnChildAdded        func(child tree.Node)
-	WOnClick             func(fun func(e events.Event)) *core.WidgetBase
-	WOnWidgetAdded       func(f func(w core.Widget)) *core.WidgetBase
-	WParent              func() tree.Node
-	WParentByName        func(name string) tree.Node
-	WParentByType        func(t *types.Type, embeds bool) tree.Node
-	WParentLevel         func(parent tree.Node) int
-	WPath                func() string
-	WPathFrom            func(parent tree.Node) string
-	WPosition            func()
-	WProperties          func() map[string]any
-	WProperty            func(key string) any
-	WRender              func()
-	WRenderWidget        func()
-	WScenePos            func()
-	WSend                func(e events.Types, orig ...events.Event)
-	WSetAbilities        func(on bool, able ...abilities.Abilities) *core.WidgetBase
-	WSetChild            func(kid tree.Node, idx int) error
-	WSetFlag             func(on bool, f ...enums.BitFlag)
-	WSetName             func(name string)
-	WSetProperty         func(key string, value any)
-	WSetState            func(on bool, state ...states.States) *core.WidgetBase
-	WShowContextMenu     func(e events.Event)
-	WSizeDown            func(iter int) bool
-	WSizeFinal           func()
-	WSizeUp              func()
-	WStateIs             func(flag states.States) bool
-	WStyle               func(s func(s *styles.Style)) *core.WidgetBase
-	WThis                func() tree.Node
-	WUpdate              func()
-	WWalkDown            func(fun func(n tree.Node) bool)
-	WWalkDownBreadth     func(fun func(n tree.Node) bool)
-	WWalkDownPost        func(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool)
-	WWalkUp              func(fun func(n tree.Node) bool) bool
-	WWalkUpParent        func(fun func(n tree.Node) bool) bool
-	WWidgetTooltip       func(pos image.Point) (string, image.Point)
+	IValue             interface{}
+	WAbilityIs         func(flag abilities.Abilities) bool
+	WAddContextMenu    func(menu func(m *core.Scene)) *core.WidgetBase
+	WApplyContextMenus func(m *core.Scene)
+	WApplyStyle        func()
+	WAsTree            func() *tree.NodeBase
+	WAsWidget          func() *core.WidgetBase
+	WBaseType          func() *types.Type
+	WChild             func(i int) tree.Node
+	WChildBackground   func(child core.Widget) image.Image
+	WChildByName       func(name string, startIndex ...int) tree.Node
+	WClone             func() tree.Node
+	WContextMenuPos    func(e events.Event) image.Point
+	WCopyFieldsFrom    func(from tree.Node)
+	WCopyFrom          func(src tree.Node)
+	WDestroy           func()
+	WDirectRenderDraw  func(drw system.Drawer, idx int, flipY bool)
+	WDirectRenderImage func(drw system.Drawer, idx int)
+	WFieldByName       func(field string) (tree.Node, error)
+	WFindPath          func(path string) tree.Node
+	WFlagType          func() enums.BitFlagSetter
+	WHandleEvent       func(e events.Event)
+	WHasChildren       func() bool
+	WInit              func()
+	WIs                func(f enums.BitFlag) bool
+	WIsVisible         func() bool
+	WName              func() string
+	WNew               func() tree.Node
+	WNodeType          func() *types.Type
+	WNodeWalkDown      func(fun func(n tree.Node) bool)
+	WNumChildren       func() int
+	WOn                func(etype events.Types, fun func(e events.Event)) *core.WidgetBase
+	WOnAdd             func()
+	WOnChildAdded      func(child tree.Node)
+	WOnClick           func(fun func(e events.Event)) *core.WidgetBase
+	WOnWidgetAdded     func(f func(w core.Widget)) *core.WidgetBase
+	WParent            func() tree.Node
+	WPath              func() string
+	WPathFrom          func(parent tree.Node) string
+	WPosition          func()
+	WRender            func()
+	WRenderWidget      func()
+	WScenePos          func()
+	WSend              func(e events.Types, orig ...events.Event)
+	WSetAbilities      func(on bool, able ...abilities.Abilities) *core.WidgetBase
+	WSetFlag           func(on bool, f ...enums.BitFlag)
+	WSetName           func(name string)
+	WSetState          func(on bool, state ...states.States) *core.WidgetBase
+	WShowContextMenu   func(e events.Event)
+	WSizeDown          func(iter int) bool
+	WSizeFinal         func()
+	WSizeUp            func()
+	WStateIs           func(flag states.States) bool
+	WStyle             func(s func(s *styles.Style)) *core.WidgetBase
+	WThis              func() tree.Node
+	WUpdate            func()
+	WWalkDown          func(fun func(n tree.Node) bool)
+	WWalkDownBreadth   func(fun func(n tree.Node) bool)
+	WWalkDownPost      func(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool)
+	WWalkUp            func(fun func(n tree.Node) bool) bool
+	WWalkUpParent      func(fun func(n tree.Node) bool) bool
+	WWidgetTooltip     func(pos image.Point) (string, image.Point)
 }
 
 func (W _cogentcore_org_core_core_Widget) AbilityIs(flag abilities.Abilities) bool {
 	return W.WAbilityIs(flag)
-}
-func (W _cogentcore_org_core_core_Widget) AddChild(kid tree.Node) error {
-	return W.WAddChild(kid)
 }
 func (W _cogentcore_org_core_core_Widget) AddContextMenu(menu func(m *core.Scene)) *core.WidgetBase {
 	return W.WAddContextMenu(menu)
@@ -1416,8 +1221,8 @@ func (W _cogentcore_org_core_core_Widget) ApplyContextMenus(m *core.Scene) {
 func (W _cogentcore_org_core_core_Widget) ApplyStyle() {
 	W.WApplyStyle()
 }
-func (W _cogentcore_org_core_core_Widget) AsTreeNode() *tree.NodeBase {
-	return W.WAsTreeNode()
+func (W _cogentcore_org_core_core_Widget) AsTree() *tree.NodeBase {
+	return W.WAsTree()
 }
 func (W _cogentcore_org_core_core_Widget) AsWidget() *core.WidgetBase {
 	return W.WAsWidget()
@@ -1434,12 +1239,6 @@ func (W _cogentcore_org_core_core_Widget) ChildBackground(child core.Widget) ima
 func (W _cogentcore_org_core_core_Widget) ChildByName(name string, startIndex ...int) tree.Node {
 	return W.WChildByName(name, startIndex...)
 }
-func (W _cogentcore_org_core_core_Widget) ChildByType(t *types.Type, embeds bool, startIndex ...int) tree.Node {
-	return W.WChildByType(t, embeds, startIndex...)
-}
-func (W _cogentcore_org_core_core_Widget) Children() *tree.Slice {
-	return W.WChildren()
-}
 func (W _cogentcore_org_core_core_Widget) Clone() tree.Node {
 	return W.WClone()
 }
@@ -1451,24 +1250,6 @@ func (W _cogentcore_org_core_core_Widget) CopyFieldsFrom(from tree.Node) {
 }
 func (W _cogentcore_org_core_core_Widget) CopyFrom(src tree.Node) {
 	W.WCopyFrom(src)
-}
-func (W _cogentcore_org_core_core_Widget) Delete() {
-	W.WDelete()
-}
-func (W _cogentcore_org_core_core_Widget) DeleteChild(child tree.Node) bool {
-	return W.WDeleteChild(child)
-}
-func (W _cogentcore_org_core_core_Widget) DeleteChildAtIndex(idx int) bool {
-	return W.WDeleteChildAtIndex(idx)
-}
-func (W _cogentcore_org_core_core_Widget) DeleteChildByName(name string) bool {
-	return W.WDeleteChildByName(name)
-}
-func (W _cogentcore_org_core_core_Widget) DeleteChildren() {
-	W.WDeleteChildren()
-}
-func (W _cogentcore_org_core_core_Widget) DeleteProperty(key string) {
-	W.WDeleteProperty(key)
 }
 func (W _cogentcore_org_core_core_Widget) Destroy() {
 	W.WDestroy()
@@ -1494,17 +1275,8 @@ func (W _cogentcore_org_core_core_Widget) HandleEvent(e events.Event) {
 func (W _cogentcore_org_core_core_Widget) HasChildren() bool {
 	return W.WHasChildren()
 }
-func (W _cogentcore_org_core_core_Widget) IndexInParent() int {
-	return W.WIndexInParent()
-}
 func (W _cogentcore_org_core_core_Widget) Init() {
 	W.WInit()
-}
-func (W _cogentcore_org_core_core_Widget) InsertChild(kid tree.Node, at int) error {
-	return W.WInsertChild(kid, at)
-}
-func (W _cogentcore_org_core_core_Widget) InsertNewChild(typ *types.Type, at int) tree.Node {
-	return W.WInsertNewChild(typ, at)
 }
 func (W _cogentcore_org_core_core_Widget) Is(f enums.BitFlag) bool {
 	return W.WIs(f)
@@ -1518,9 +1290,6 @@ func (W _cogentcore_org_core_core_Widget) Name() string {
 func (W _cogentcore_org_core_core_Widget) New() tree.Node {
 	return W.WNew()
 }
-func (W _cogentcore_org_core_core_Widget) NewChild(typ *types.Type) tree.Node {
-	return W.WNewChild(typ)
-}
 func (W _cogentcore_org_core_core_Widget) NodeType() *types.Type {
 	return W.WNodeType()
 }
@@ -1529,9 +1298,6 @@ func (W _cogentcore_org_core_core_Widget) NodeWalkDown(fun func(n tree.Node) boo
 }
 func (W _cogentcore_org_core_core_Widget) NumChildren() int {
 	return W.WNumChildren()
-}
-func (W _cogentcore_org_core_core_Widget) NumLifetimeChildren() uint64 {
-	return W.WNumLifetimeChildren()
 }
 func (W _cogentcore_org_core_core_Widget) On(etype events.Types, fun func(e events.Event)) *core.WidgetBase {
 	return W.WOn(etype, fun)
@@ -1551,15 +1317,6 @@ func (W _cogentcore_org_core_core_Widget) OnWidgetAdded(f func(w core.Widget)) *
 func (W _cogentcore_org_core_core_Widget) Parent() tree.Node {
 	return W.WParent()
 }
-func (W _cogentcore_org_core_core_Widget) ParentByName(name string) tree.Node {
-	return W.WParentByName(name)
-}
-func (W _cogentcore_org_core_core_Widget) ParentByType(t *types.Type, embeds bool) tree.Node {
-	return W.WParentByType(t, embeds)
-}
-func (W _cogentcore_org_core_core_Widget) ParentLevel(parent tree.Node) int {
-	return W.WParentLevel(parent)
-}
 func (W _cogentcore_org_core_core_Widget) Path() string {
 	return W.WPath()
 }
@@ -1568,12 +1325,6 @@ func (W _cogentcore_org_core_core_Widget) PathFrom(parent tree.Node) string {
 }
 func (W _cogentcore_org_core_core_Widget) Position() {
 	W.WPosition()
-}
-func (W _cogentcore_org_core_core_Widget) Properties() map[string]any {
-	return W.WProperties()
-}
-func (W _cogentcore_org_core_core_Widget) Property(key string) any {
-	return W.WProperty(key)
 }
 func (W _cogentcore_org_core_core_Widget) Render() {
 	W.WRender()
@@ -1590,17 +1341,11 @@ func (W _cogentcore_org_core_core_Widget) Send(e events.Types, orig ...events.Ev
 func (W _cogentcore_org_core_core_Widget) SetAbilities(on bool, able ...abilities.Abilities) *core.WidgetBase {
 	return W.WSetAbilities(on, able...)
 }
-func (W _cogentcore_org_core_core_Widget) SetChild(kid tree.Node, idx int) error {
-	return W.WSetChild(kid, idx)
-}
 func (W _cogentcore_org_core_core_Widget) SetFlag(on bool, f ...enums.BitFlag) {
 	W.WSetFlag(on, f...)
 }
 func (W _cogentcore_org_core_core_Widget) SetName(name string) {
 	W.WSetName(name)
-}
-func (W _cogentcore_org_core_core_Widget) SetProperty(key string, value any) {
-	W.WSetProperty(key, value)
 }
 func (W _cogentcore_org_core_core_Widget) SetState(on bool, state ...states.States) *core.WidgetBase {
 	return W.WSetState(on, state...)

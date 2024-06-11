@@ -188,7 +188,7 @@ func SplitsView(pt *Splits) {
 		core.Add(p, func(w *views.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
-				StyleFirst(func(s *styles.Style) {
+				FirstStyler(func(s *styles.Style) {
 					s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits)
 				})
 		})

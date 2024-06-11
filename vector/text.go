@@ -46,7 +46,7 @@ type TextStyle struct {
 	Align styles.Aligns `xml:"text-align" inherit:"true"`
 
 	// font value view for font toolbar
-	FontValue views.FontValue `view:"-"`
+	FontButton views.FontButton `view:"-"`
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
@@ -90,7 +90,7 @@ func (ts *TextStyle) SetFromFontStyle(fs *styles.Font) {
 func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 	ts.Defaults()                            // always start fresh
 	if txt.Text == "" && txt.HasChildren() { // todo: multi-line text..
-		tspan := txt.Kids[0].(*svg.Text)
+		tspan := txt.Children[0].(*svg.Text)
 		ts.Text = tspan.Text
 	}
 	// ts.SetFromFontStyle(&txt.Paint.FontStyle)
@@ -100,7 +100,7 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 // SetTextPropertiesNode sets the text properties of given Text node
 func (gv *VectorView) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
-		for _, kid := range gp.Kids {
+		for _, kid := range gp.Children {
 			gv.SetTextPropertiesNode(kid.(svg.Node), tps)
 		}
 		return
@@ -168,8 +168,8 @@ func (ts *TextStyle) TextProperties() map[string]string {
 
 // SetTextNode sets the text of given Text node
 func (gv *VectorView) SetTextNode(sii svg.Node, txt string) bool {
-	if sii.HasChildren() {
-		for _, kid := range *sii.Children() {
+	if sii.AsTree().HasChildren() {
+		for _, kid := range sii.AsTree().Children {
 			if gv.SetTextNode(kid.(svg.Node), txt) {
 				return true
 			}
@@ -221,11 +221,12 @@ func (gv *VectorView) ConfigTextToolbar() {
 	ts := &es.Text
 	ts.VectorView = gv
 
-	txt := core.NewTextField(tb, "text")
+	txt := core.NewTextField(tb)
+	txt.SetName("text")
 	txt.Tooltip = "current text string"
 	txt.SetText(ts.Text)
 	// txt.SetProp("width", units.NewCh(50))
-	// txt.TextFieldSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// txt.TextFieldSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	if sig == int64(core.TextFieldDone) {
 	// 		ts.Text = txt.Text()
 	// 		ts.Update()
@@ -239,7 +240,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 
 	// fsz := core.NewSpinner(tb, "size")
 	// fsz.SetValue(ts.Size.Val)
-	// fsz.SpinnerSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// fsz.SpinnerSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	ts.Size.Val = fsz.Value
 	// 	ts.Update()
 	// })
@@ -247,7 +248,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 	// fzu := core.NewChooser(tb, "size-units")
 	// fzu.ItemsFromEnum(units.KiT_Units, true, 0)
 	// fzu.SetCurIndex(int(ts.Size.Un))
-	// fzu.ComboSig.Connect(gv.This(), func(recv, send tree.Node, sig int64, data any) {
+	// fzu.ComboSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	ts.Size.Un = units.Units(fzu.CurIndex)
 	// 	ts.Update()
 	// })

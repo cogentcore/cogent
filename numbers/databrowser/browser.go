@@ -74,7 +74,7 @@ type Browser struct {
 // Init initializes with the data and script directories
 func (br *Browser) Init() {
 	br.Frame.Init()
-	br.Style(func(s *styles.Style) {
+	br.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
 	br.InitInterp()
@@ -86,7 +86,7 @@ func (br *Browser) Init() {
 	core.AddChildAt(br, "splits", func(w *core.Splits) {
 		w.SetSplits(.15, .85)
 		core.AddChildAt(w, "fileframe", func(w *core.Frame) {
-			w.Style(func(s *styles.Style) {
+			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 				s.Overflow.Set(styles.OverflowAuto)
 				s.Grow.Set(1, 1)
@@ -132,8 +132,8 @@ func NewBrowserWindow(dataDir string) *Browser {
 // ParentBrowser returns the Browser parent of given node
 func ParentBrowser(tn tree.Node) (*Browser, bool) {
 	var res *Browser
-	tn.WalkUp(func(n tree.Node) bool {
-		if c, ok := n.This().(*Browser); ok {
+	tn.AsTree().WalkUp(func(n tree.Node) bool {
+		if c, ok := n.(*Browser); ok {
 			res = c
 			return false
 		}
@@ -178,7 +178,7 @@ func (br *Browser) Splits() *core.Splits {
 
 func (br *Browser) FileTree() *filetree.Tree {
 	sp := br.Splits()
-	return sp.Child(0).Child(0).(*filetree.Tree)
+	return sp.Child(0).AsTree().Child(0).(*filetree.Tree)
 }
 
 func (br *Browser) Tabs() *core.Tabs {

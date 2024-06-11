@@ -51,39 +51,46 @@ type App struct {
 var _ tree.Node = (*App)(nil)
 
 func (a *App) Init() {
+	a.Frame.Init()
 	a.AuthToken = map[string]*oauth2.Token{}
 	a.AuthClient = map[string]sasl.Client{}
-	a.Style(func(s *styles.Style) {
+	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
 
-	core.AddChild(a, func(w *core.Splits) {
-		core.AddChild(w, func(w *views.TreeView) {
+	core.AddChildAt(a, "splits", func(w *core.Splits) {
+		core.AddChildAt(w, "mbox", func(w *views.TreeView) {
 			w.SetText("Mailboxes")
 		})
+		core.AddChildAt(w, "list", func(w *core.Frame) {
+			w.Styler(func(s *styles.Style) {
+				s.Direction = styles.Column
+			})
+		})
+		core.AddChildAt(w, "mail", func(w *core.Frame) {
+			w.Styler(func(s *styles.Style) {
+				s.Direction = styles.Column
+			})
+			core.AddChildAt(w, "msv", func(w *views.StructView) {
+				w.SetReadOnly(true)
+			})
+			core.AddChildAt(w, "mb", func(w *core.Frame) {
+				w.Styler(func(s *styles.Style) {
+					s.Direction = styles.Column
+				})
+			})
+		})
+		w.SetSplits(0.1, 0.2, 0.7)
 	})
-	a.Maker(func(p *core.Plan) {
-		core.NewFrame(sp, "list").Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-
-		ml := core.NewFrame(sp, "mail")
-		ml.Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-		views.NewStructView(ml, "msv").SetReadOnly(true)
-		core.NewFrame(ml, "mb").Style(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-
+	a.Updater(func() {
 		// a.UpdateReadMessage(ml, msv, mb)
-
-		sp.SetSplits(0.1, 0.2, 0.7)
 	})
 }
 
-func (a *App) MakeToolbar(tb *core.Toolbar) { // TODO(config)
-	views.NewFuncButton(tb, a.Compose).SetIcon(icons.Send)
+func (a *App) MakeToolbar(p *core.Plan) {
+	core.Add(p, func(w *views.FuncButton) {
+		w.SetFunc(a.Compose).SetIcon(icons.Send)
+	})
 }
 
 func (a *App) GetMail() error {

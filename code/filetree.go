@@ -31,7 +31,7 @@ func (fn *FileNode) Init() {
 
 func (fn *FileNode) OnDoubleClick(e events.Event) {
 	e.SetHandled()
-	ge, ok := ParentCode(fn.This())
+	ge, ok := ParentCode(fn.This)
 	if !ok {
 		return
 	}
@@ -58,7 +58,7 @@ func (fn *FileNode) EditFile() {
 		log.Printf("FileNode Edit -- cannot view (edit) directories!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This())
+	ge, ok := ParentCode(fn.This)
 	if ok {
 		ge.NextViewFileNode(&fn.Node)
 	}
@@ -70,7 +70,7 @@ func (fn *FileNode) SetRunExec() {
 		log.Printf("FileNode SetRunExec -- only works for executable files!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This())
+	ge, ok := ParentCode(fn.This)
 	if ok {
 		ge.Settings.RunExec = fn.FPath
 		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
@@ -80,7 +80,7 @@ func (fn *FileNode) SetRunExec() {
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() { //types:add
-	ge, ok := ParentCode(fn.This())
+	ge, ok := ParentCode(fn.This)
 	if ok {
 		ge.ExecCmdFileNode(&fn.Node)
 	} else {
@@ -91,7 +91,7 @@ func (fn *FileNode) ExecCmdFile() { //types:add
 
 // ExecCmdNameFile executes given command name on node
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	ge, ok := ParentCode(fn.This())
+	ge, ok := ParentCode(fn.This)
 	if ok {
 		ge.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm), true, true)
 	}
@@ -99,15 +99,15 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
 	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-		SetMenu(CommandMenu(&fn.Node)).Style(func(s *styles.Style) {
+		SetMenu(CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
 		s.SetState(!fn.HasSelection(), states.Disabled)
 	})
 	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
 	views.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
-		Style(func(s *styles.Style) {
+		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
 }
@@ -129,7 +129,7 @@ func (on *OpenNodes) Add(fn *filetree.Node) bool {
 		return added
 	}
 	if fn.Buffer != nil {
-		// fn.Buf.TextBufSig.Connect(fn.This(), func(recv, send tree.Node, sig int64, data any) {
+		// fn.Buf.TextBufSig.Connect(fn.This, func(recv, send tree.Node, sig int64, data any) {
 		// 	if sig == int64(texteditor.BufClosed) {
 		// 		fno, _ := recv.Embed(views.KiT_FileNode).(*filetree.Node)
 		// 		on.Delete(fno)
@@ -184,7 +184,7 @@ func (on *OpenNodes) DeleteDeleted() {
 	sz := len(*on)
 	for i := sz - 1; i >= 0; i-- {
 		fn := (*on)[i]
-		if fn.This() == nil || fn.FRoot == nil {
+		if fn.This == nil || fn.FRoot == nil {
 			on.DeleteIndex(i)
 		}
 	}
@@ -196,11 +196,11 @@ func (on *OpenNodes) Strings() []string {
 	sl := make([]string, len(*on))
 	for i, fn := range *on {
 		rp := fn.FRoot.RelPath(fn.FPath)
-		rp = strings.TrimSuffix(rp, fn.Nm)
+		rp = strings.TrimSuffix(rp, fn.Name)
 		if rp != "" {
-			sl[i] = fn.Nm + " - " + rp
+			sl[i] = fn.Name + " - " + rp
 		} else {
-			sl[i] = fn.Nm
+			sl[i] = fn.Name
 		}
 		if fn.IsNotSaved() {
 			sl[i] += " *"
@@ -244,20 +244,20 @@ func (on *OpenNodes) FindPath(path string) *filetree.Node {
 // EditFiles calls EditFile on selected files
 func (fn *FileNode) EditFiles() { //types:add
 	fn.SelectedFunc(func(sn *filetree.Node) {
-		sn.This().(*FileNode).EditFile()
+		sn.This.(*FileNode).EditFile()
 	})
 }
 
 // SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons
 func (fn *FileNode) SetRunExecs() { //types:add
 	fn.SelectedFunc(func(sn *filetree.Node) {
-		sn.This().(*FileNode).SetRunExec()
+		sn.This.(*FileNode).SetRunExec()
 	})
 }
 
 // RenameFiles calls RenameFile on any selected nodes
 func (fn *FileNode) RenameFiles() {
-	ge, ok := ParentCode(fn.This())
+	ge, ok := ParentCode(fn.This)
 	if !ok {
 		return
 	}
@@ -265,13 +265,13 @@ func (fn *FileNode) RenameFiles() {
 		var nodes []*FileNode
 		sels := fn.SelectedViews()
 		for i := len(sels) - 1; i >= 0; i-- {
-			sn := sels[i].This().(*FileNode)
+			sn := sels[i].(*FileNode)
 			nodes = append(nodes, sn)
 		}
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
 		for _, sn := range nodes {
 			fb := views.NewSoloFuncButton(sn, sn.RenameFile)
-			fb.Args[0].SetValue(sn.Name())
+			fb.Args[0].SetValue(sn.Name)
 			fb.CallFunc()
 		}
 	})

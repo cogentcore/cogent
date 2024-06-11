@@ -19,11 +19,11 @@ import (
 
 // MarkerFromNodeProp returns the marker name (canonicalized -- no id)
 // and id and color type
-func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
-	if kn == nil {
+func MarkerFromNodeProp(n tree.Node, prop string) (string, int, MarkerColors) {
+	if n == nil {
 		return "", 0, MarkerDef
 	}
-	p := kn.Property(prop)
+	p := n.AsTree().Property(prop)
 	if p == nil {
 		return "", 0, MarkerDef
 	}
@@ -34,7 +34,7 @@ func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
 	mc := MarkerDef
 	nm, id := svg.SplitNameIDDig(svg.NameFromURL(ms))
 	if id > 0 {
-		_, sid := svg.SplitNameIDDig(kn.Name())
+		_, sid := svg.SplitNameIDDig(n.AsTree().Name)
 		if id == sid { // if match, then copy
 			mc = MarkerCopy
 		} else { // then custom
@@ -50,8 +50,8 @@ func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
 func RecycleMarker(sg *svg.SVG, sii svg.Node, name string, id int, mc MarkerColors) *svg.Marker {
 	nmeff := svg.NameID(name, id)
 	mk := sg.FindDefByName(nmeff)
-	fc := reflectx.ToString(sii.Property("fill"))
-	sc := reflectx.ToString(sii.Property("stroke"))
+	fc := reflectx.ToString(sii.AsTree().Property("fill"))
+	sc := reflectx.ToString(sii.AsTree().Property("stroke"))
 	var mmk *svg.Marker
 	newmk := false
 	if mk != nil {
@@ -78,20 +78,20 @@ func RecycleMarker(sg *svg.SVG, sii svg.Node, name string, id int, mc MarkerColo
 // MarkerSetColors sets color properties in each element
 func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
 	mk.WalkDown(func(k tree.Node) bool {
-		fp := k.Property("fill")
+		fp := k.AsTree().Property("fill")
 		if fp != nil {
-			if strings.HasPrefix(mk.Nm, "Empty") {
-				k.SetProperty("fill", fill)
+			if strings.HasPrefix(mk.Name, "Empty") {
+				k.AsTree().SetProperty("fill", fill)
 			} else {
-				k.SetProperty("fill", stroke)
+				k.AsTree().SetProperty("fill", stroke)
 			}
 		}
-		sp := k.Property("stroke")
+		sp := k.AsTree().Property("stroke")
 		if sp != nil {
-			if strings.HasPrefix(mk.Nm, "Distance") {
-				k.SetProperty("stroke", fill)
+			if strings.HasPrefix(mk.Name, "Distance") {
+				k.AsTree().SetProperty("stroke", fill)
 			} else {
-				k.SetProperty("stroke", stroke)
+				k.AsTree().SetProperty("stroke", stroke)
 			}
 		}
 		return tree.Continue
@@ -101,18 +101,18 @@ func MarkerSetColors(mk *svg.Marker, fill, stroke string) {
 // MarkerDeleteCtxtColors deletes context-* color names from standard code
 func MarkerDeleteCtxtColors(mk *svg.Marker) {
 	mk.WalkDown(func(k tree.Node) bool {
-		fp := k.Property("fill")
+		fp := k.AsTree().Property("fill")
 		if fp != nil {
 			fps := reflectx.ToString(fp)
 			if strings.HasPrefix(fps, "context-") {
-				k.DeleteProperty("fill")
+				k.AsTree().DeleteProperty("fill")
 			}
 		}
-		sp := k.Property("stroke")
+		sp := k.AsTree().Property("stroke")
 		if sp != nil {
 			sps := reflectx.ToString(sp)
 			if strings.HasPrefix(sps, "context-") {
-				k.DeleteProperty("stroke")
+				k.AsTree().DeleteProperty("stroke")
 			}
 		}
 		return tree.Continue
@@ -147,9 +147,9 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 		return nil
 	}
 	// update := sg.UpdateStart()
-	nmk := &svg.Marker{}
 	fnm := svg.NameID(name, id)
-	nmk.InitName(nmk, fnm)
+	nmk := svg.NewMarker()
+	nmk.SetName(fnm)
 	nmk.CopyFrom(mk)
 	mk.SetName(fnm) // double check
 	sg.Defs.AddChild(nmk)
@@ -160,7 +160,7 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 // MarkerSetProp sets marker property for given node to given marker name (canonical)
 func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors) {
 	onm, oid, omc := MarkerFromNodeProp(sii, prop)
-	_, nid := svg.SplitNameIDDig(sii.Name())
+	_, nid := svg.SplitNameIDDig(sii.AsTree().Name)
 	if onm == name && oid == nid && omc == mc {
 		return
 	}
@@ -168,7 +168,7 @@ func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors
 		if onm != "" && omc == MarkerCopy {
 			sg.Defs.DeleteChildByName(svg.NameID(onm, oid))
 		}
-		sii.DeleteProperty(prop)
+		sii.AsTree().DeleteProperty(prop)
 		return
 	}
 	if omc == MarkerCopy && omc != mc { // implies onm != ""
@@ -194,7 +194,7 @@ func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors
 		}
 		nmk = RecycleMarker(sg, sii, name, id, mc)
 	}
-	sii.SetProperty(prop, svg.NameToURL(nmk.Nm))
+	sii.AsTree().SetProperty(prop, svg.NameToURL(nmk.Name))
 }
 
 // MarkerUpdateColorProp updates marker color for given marker property

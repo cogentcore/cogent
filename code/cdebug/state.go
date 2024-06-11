@@ -399,14 +399,14 @@ func (as *AllState) MergeBreaks() {
 // VarByName returns variable with the given name, or nil if not found
 func (as *AllState) VarByName(varNm string) *Variable {
 	for _, vr := range as.Vars {
-		if vr.Nm == varNm {
+		if vr.Name == varNm {
 			return vr
 		}
 	}
 	nmspl := strings.Split(varNm, ".")
 	for _, vr := range as.GlobalVars {
-		spl := strings.Split(vr.Nm, ".")
-		if len(spl) == len(nmspl) && vr.Nm == varNm {
+		spl := strings.Split(vr.Name, ".")
+		if len(spl) == len(nmspl) && vr.Name == varNm {
 			return vr
 		}
 		if len(nmspl) == 1 && len(spl) == 2 && spl[1] == varNm {

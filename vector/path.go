@@ -11,6 +11,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -28,16 +29,16 @@ func (vv *VectorView) ConfigNodeToolbar() {
 		return
 	}
 
-	grs := core.NewSwitch(tb, "snap-node").SetText("Snap Node").SetChecked(Settings.SnapNodes).
+	grs := core.NewSwitch(tb).SetText("Snap Node").SetChecked(Settings.SnapNodes).
 		SetTooltip("snap movement and sizing of nodes, using overall snap settings")
 	grs.OnChange(func(e events.Event) {
-		Settings.SnapNodes = grs.IsChecked()
+		Settings.SnapNodes = grs.Is(states.Checked)
 	})
 
 	core.NewSeparator(tb)
 
 	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
-	// 	gv.This(), func(recv, send tree.Node, sig int64, data interface{}) {
+	// 	gv.This, func(recv, send tree.Node, sig int64, data interface{}) {
 	// 		grr := recv.Embed(KiT_VectorView).(*VectorView)
 	// 		grr.SelGroup()
 	// 	})
@@ -46,18 +47,18 @@ func (vv *VectorView) ConfigNodeToolbar() {
 
 	core.NewText(tb).SetText("X: ")
 
-	px := core.NewSpinner(tb, "posx").SetStep(1).SetValue(0).
+	px := core.NewSpinner(tb).SetStep(1).SetValue(0).
 		SetTooltip("horizontal coordinate of node, in document units")
 	px.OnChange(func(e events.Event) {
-		vv.NodeSetXPos(px.Value)
+		// vv.NodeSetXPos(px.Value)
 	})
 
 	core.NewText(tb).SetText("Y: ")
 
-	py := core.NewSpinner(tb, "posy").SetStep(1).SetValue(0).
+	py := core.NewSpinner(tb).SetStep(1).SetValue(0).
 		SetTooltip("vertical coordinate of node, in document units")
 	py.OnChange(func(e events.Event) {
-		vv.NodeSetYPos(py.Value)
+		// vv.NodeSetYPos(py.Value)
 	})
 
 }
@@ -183,7 +184,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This(), func(recv, send tree.Node, sig int64, d any) {
+		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This, func(recv, send tree.Node, sig int64, d any) {
 		// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
 		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
 		// 	})

@@ -378,7 +378,7 @@ func (cm *Command) PromptUser(cv *CodeView, buf *texteditor.Buffer, pvals map[st
 			d := core.NewBody().AddTitle("Code Command Prompt").
 				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := core.NewTextField(d).SetText(curval)
-			tf.Style(func(s *styles.Style) {
+			tf.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(100)
 			})
 			d.AddBottomBar(func(parent core.Widget) {
@@ -410,7 +410,7 @@ func (cm *Command) PromptUser(cv *CodeView, buf *texteditor.Buffer, pvals map[st
 								cm.RunAfterPrompts(cv, buf)
 							}
 						})
-						m.Nm = "prompt-branch"
+						m.Name = "prompt-branch"
 						core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
 					} else {
 						fmt.Println(err)
@@ -795,7 +795,7 @@ var CustomCommandsChanged = false
 
 // CommandMenu returns a menu function for commands for given language and vcs name
 func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
-	cv, ok := ParentCode(fn.This())
+	cv, ok := ParentCode(fn.This)
 	if !ok {
 		return nil
 	}

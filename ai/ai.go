@@ -38,7 +38,7 @@ import (
 
 // const jsonName = "models.json"
 
-func main() {
+func main() { // TODO(config)
 	b := core.NewBody("Cogent AI")
 	b.AddAppBar(func(p *core.Plan) {
 		core.Add(p, func(w *core.Button) {
@@ -57,13 +57,13 @@ func main() {
 	splits := core.NewSplits(b).SetSplits(0.2, 0.8) // TODO(config): use Plan in Cogent AI
 
 	leftFrame := core.NewFrame(splits)
-	leftFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
+	leftFrame.Styler(func(s *styles.Style) { s.Direction = styles.Column })
 
 	// errors.Log(jsonx.OpenFS(root, rootJson, jsonName))
 	// views.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := core.NewFrame(leftFrame)
-	newFrame.Style(func(s *styles.Style) {
+	newFrame.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 	core.NewButton(newFrame).SetText("Update module list").OnClick(func(e events.Event) {
@@ -80,10 +80,10 @@ func main() {
 	})
 
 	rightFrame := core.NewFrame(splits)
-	rightFrame.Style(func(s *styles.Style) { s.Direction = styles.Column })
+	rightFrame.Styler(func(s *styles.Style) { s.Direction = styles.Column })
 
 	header := core.NewFrame(rightFrame)
-	header.Style(func(s *styles.Style) {
+	header.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.CenterAll()
 	})
@@ -95,7 +95,7 @@ func main() {
 	var textField *core.TextField
 
 	suggestionsFrame := core.NewFrame(header)
-	suggestionsFrame.Style(func(s *styles.Style) {
+	suggestionsFrame.Styler(func(s *styles.Style) {
 		s.Justify.Content = styles.Center
 		s.Grow.Set(0, 0)
 	})
@@ -110,13 +110,13 @@ func main() {
 	}
 
 	history := core.NewFrame(rightFrame)
-	history.Style(func(s *styles.Style) {
+	history.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Overflow.Set(styles.OverflowAuto)
 	})
 
 	prompt := core.NewFrame(rightFrame)
-	prompt.Style(func(s *styles.Style) {
+	prompt.Styler(func(s *styles.Style) {
 		s.Direction = styles.Row
 		s.Grow.Set(1, 0)
 		s.Align.Items = styles.Center
@@ -125,7 +125,7 @@ func main() {
 	//todo we need change back "new topic" button
 
 	textField = core.NewTextField(prompt).SetType(core.TextFieldOutlined).SetPlaceholder("Ask me anything")
-	textField.Style(func(s *styles.Style) { s.Max.X.Zero() })
+	textField.Styler(func(s *styles.Style) { s.Max.X.Zero() })
 	textField.OnKeyChord(func(e events.Event) {
 		if keymap.Of(e.KeyChord()) == keymap.Enter {
 			send.Send(events.Click, e)
@@ -141,13 +141,13 @@ func main() {
 		}
 		textField.SetText("")
 
-		if header.This() != nil {
+		if header.This != nil {
 			rightFrame.DeleteChild(header)
 			rightFrame.Update()
 		}
 
 		yourPrompt := core.NewFrame(history)
-		yourPrompt.Style(func(s *styles.Style) {
+		yourPrompt.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
 			s.Border.Radius = styles.BorderRadiusLarge
@@ -156,7 +156,7 @@ func main() {
 		errors.Log(htmlview.ReadMDString(htmlview.NewContext(), yourPrompt, "**You:** "+promptString))
 
 		answer := core.NewFrame(history)
-		answer.Style(func(s *styles.Style) {
+		answer.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
 			s.Border.Radius = styles.BorderRadiusLarge

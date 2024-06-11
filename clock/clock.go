@@ -11,7 +11,6 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/views"
 )
 
 func main() {
@@ -27,7 +26,7 @@ func main() {
 }
 
 func clock(ts *core.Tabs) {
-	cl := ts.NewTab("Clock").Style(func(s *styles.Style) {
+	cl := ts.NewTab("Clock").Styler(func(s *styles.Style) {
 		s.CenterAll()
 	})
 	core.NewText(cl).SetType(core.TextHeadlineMedium).
@@ -43,7 +42,8 @@ type timer struct {
 func timers(ts *core.Tabs) {
 	tr := ts.NewTab("Timers")
 	trd := 15 * time.Minute
-	views.NewValue(tr, &trd)
+	trv := core.NewValue(&trd, "")
+	tr.AddChild(trv)
 	core.NewButton(tr).SetText("Start")
 }
 

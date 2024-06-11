@@ -36,7 +36,7 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	tb := core.NewToolbar(tab)
 	tv := tensorview.NewTableView(tab)
 	tv.SetFlag(true, views.SliceViewReadOnlyMultiSelect)
-	tv.Style(func(s *styles.Style) {
+	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
 	})
 	tb.Makers = append(tb.Makers, tv.MakeToolbar)
@@ -57,7 +57,7 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 	}
 	tv := views.NewTableView(tab)
 	tv.SetFlag(true, views.SliceViewReadOnlyMultiSelect)
-	tv.Style(func(s *styles.Style) {
+	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
 	})
 	tv.SetSlice(slc)
@@ -71,7 +71,7 @@ func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		pl := tab.Child(0).Child(1).(*plotview.PlotView)
+		pl := tab.Child(0).AsTree().Child(1).(*plotview.PlotView)
 		return pl
 	}
 	pl := plotview.NewSubPlot(tab)

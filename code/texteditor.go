@@ -31,7 +31,7 @@ type TextEditor struct {
 func (ed *TextEditor) Init() {
 	ed.Editor.Init()
 	ed.AddContextMenu(ed.ContextMenu)
-	ed.Style(func(s *styles.Style) {
+	ed.Styler(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.LongHoverable)
 	})
 
@@ -172,7 +172,7 @@ func (ed *TextEditor) LineNumberDoubleClick(tpos lexer.Pos) {
 // ConfigOutputTextEditor configures a command-output texteditor within given parent layout
 func ConfigOutputTextEditor(ed *texteditor.Editor) {
 	ed.SetReadOnly(true)
-	ed.Style(func(s *styles.Style) {
+	ed.Styler(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
 		s.Min.X.Ch(20)
@@ -186,7 +186,7 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 
 // ConfigEditorTextEditor configures an editor texteditor
 func ConfigEditorTextEditor(ed *texteditor.Editor) {
-	ed.Style(func(s *styles.Style) {
+	ed.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(80)
 		s.Min.Y.Em(40)
 	})
