@@ -19,11 +19,11 @@ import (
 
 // MarkerFromNodeProp returns the marker name (canonicalized -- no id)
 // and id and color type
-func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
-	if kn == nil {
+func MarkerFromNodeProp(n tree.Node, prop string) (string, int, MarkerColors) {
+	if n == nil {
 		return "", 0, MarkerDef
 	}
-	p := kn.AsTree().Property(prop)
+	p := n.AsTree().Property(prop)
 	if p == nil {
 		return "", 0, MarkerDef
 	}
@@ -34,7 +34,7 @@ func MarkerFromNodeProp(kn tree.Node, prop string) (string, int, MarkerColors) {
 	mc := MarkerDef
 	nm, id := svg.SplitNameIDDig(svg.NameFromURL(ms))
 	if id > 0 {
-		_, sid := svg.SplitNameIDDig(kn.Name())
+		_, sid := svg.SplitNameIDDig(n.AsTree().Name())
 		if id == sid { // if match, then copy
 			mc = MarkerCopy
 		} else { // then custom
@@ -160,7 +160,7 @@ func NewMarker(sg *svg.SVG, name string, id int) *svg.Marker {
 // MarkerSetProp sets marker property for given node to given marker name (canonical)
 func MarkerSetProp(sg *svg.SVG, sii svg.Node, prop, name string, mc MarkerColors) {
 	onm, oid, omc := MarkerFromNodeProp(sii, prop)
-	_, nid := svg.SplitNameIDDig(sii.Name())
+	_, nid := svg.SplitNameIDDig(sii.AsTree().Name())
 	if onm == name && oid == nid && omc == mc {
 		return
 	}

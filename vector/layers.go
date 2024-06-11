@@ -48,10 +48,10 @@ type Layers []*Layer
 
 func (ly *Layers) SyncLayers(sv *SVGView) {
 	*ly = make(Layers, 0)
-	for _, kc := range sv.Root().Children {
-		if NodeIsLayer(kc) {
-			l := &Layer{Name: kc.Name()}
-			l.FromNode(kc)
+	for _, n := range sv.Root().Children {
+		if NodeIsLayer(n) {
+			l := &Layer{Name: n.AsTree().Name()}
+			l.FromNode(n)
 			*ly = append(*ly, l)
 		}
 	}
@@ -165,22 +165,22 @@ func (vv *VectorView) AddLayer() { //types:add
 	si := 1 // starting index -- assuming namedview
 	if nl == 0 {
 		bg := svr.InsertNewChild(svg.GroupType, si)
-		bg.SetName("LayerBG")
+		bg.AsTree().SetName("LayerBG")
 		bg.AsTree().Properties["groupmode"] = "layer"
 		l1 := svr.InsertNewChild(svg.GroupType, si+1)
-		l1.SetName("Layer1")
+		l1.AsTree().SetName("Layer1")
 		l1.AsTree().Properties["groupmode"] = "layer"
 		nk := len(svr.Children)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
 			tree.MoveToParent(kc, l1)
 		}
-		vv.SetCurLayer(l1.Name())
+		vv.SetCurLayer(l1.AsTree().Name())
 	} else {
 		l1 := svr.InsertNewChild(svg.GroupType, si+nl)
-		l1.SetName(fmt.Sprintf("Layer%d", nl))
+		l1.AsTree().SetName(fmt.Sprintf("Layer%d", nl))
 		l1.AsTree().Properties["groupmode"] = "layer"
-		vv.SetCurLayer(l1.Name())
+		vv.SetCurLayer(l1.AsTree().Name())
 	}
 	vv.UpdateLayerView()
 }
@@ -209,7 +209,7 @@ func LayerIsVisible(kn tree.Node) bool {
 // NodeParentLayer returns the parent group that is a layer -- nil if none
 func NodeParentLayer(n tree.Node) tree.Node {
 	var parLay tree.Node
-	n.WalkUp(func(pn tree.Node) bool {
+	n.AsTree().WalkUp(func(pn tree.Node) bool {
 		if NodeIsLayer(pn) {
 			parLay = pn
 			return tree.Break

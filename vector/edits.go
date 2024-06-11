@@ -176,7 +176,7 @@ func (es *EditState) NewSelected() {
 func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
 	sls := make([]svg.Node, 0, len(es.Selected))
 	for it := range es.Selected {
-		if it == nil || it.This() == nil {
+		if it == nil || it.AsTree().This() == nil {
 			delete(es.Selected, it)
 			continue
 		}
@@ -201,19 +201,19 @@ func (es *EditState) SelectedListDepth(sv *SVGView, descendingSort bool) []svg.N
 	dm := sv.DepthMap()
 	sls := make([]svg.Node, 0, len(es.Selected))
 	for it := range es.Selected {
-		if it == nil || it.This() == nil {
+		if it == nil || it.AsTree().This() == nil {
 			delete(es.Selected, it)
 			continue
 		}
 		sls = append(sls, it)
 	}
 	if descendingSort {
-		sort.Slice(sls, func(i, j int) bool {
-			return dm[sls[i].This()] > dm[sls[j].This()]
+		sort.Slice(sls, func(i, j int) bool { // TODO: use slices.SortFunc
+			return dm[sls[i]] > dm[sls[j]]
 		})
 	} else {
 		sort.Slice(sls, func(i, j int) bool {
-			return dm[sls[i].This()] < dm[sls[j].This()]
+			return dm[sls[i]] < dm[sls[j]]
 		})
 	}
 	return sls
@@ -227,7 +227,7 @@ func (es *EditState) FirstSelectedNode() svg.Node {
 	}
 	sls := es.SelectedList(true)
 	for _, sl := range sls {
-		fsl := svg.FirstNonGroupNode(sl.This().(svg.Node))
+		fsl := svg.FirstNonGroupNode(sl.(svg.Node))
 		if fsl != nil {
 			return fsl.(svg.Node)
 		}
@@ -275,8 +275,8 @@ func (es *EditState) Unselect(itm svg.Node) {
 // sense.  E.g., it prevents having a group and a child both in
 // the selected list (removes the parent group).
 func (es *EditState) SanitizeSelected() {
-	for k := range es.Selected {
-		if pg, has := k.Parent().(*svg.Group); has {
+	for n := range es.Selected {
+		if pg, has := n.AsTree().Parent().(*svg.Group); has {
 			pgi := pg.This().(svg.Node)
 			if _, issel := es.Selected[pgi]; issel {
 				delete(es.Selected, pgi)
@@ -294,7 +294,7 @@ func (es *EditState) SelectedNames() []string {
 	}
 	nm := make([]string, ns)
 	for i := range sl {
-		nm[i] = sl[i].Name()
+		nm[i] = sl[i].AsTree().Name()
 	}
 	return nm
 }

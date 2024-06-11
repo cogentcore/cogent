@@ -271,18 +271,18 @@ func (sv *SVGView) GatherAlignPoints() {
 		es.AlignPts[ap] = make([]math32.Vector2, 0)
 	}
 
-	svg.SVGWalkDownNoDefs(sv.Root(), func(kni svg.Node, knb *svg.NodeBase) bool {
-		if kni.This() == sv.Root().This() {
+	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
+		if n == sv.Root() {
 			return tree.Continue
 		}
-		if NodeIsLayer(kni) {
+		if NodeIsLayer(n) {
 			return tree.Continue
 		}
-		if _, issel := es.Selected[kni]; issel {
+		if _, issel := es.Selected[n]; issel {
 			return tree.Break // go no further into kids
 		}
 		for ap := BBLeft; ap < BBoxPointsN; ap++ {
-			es.AlignPts[ap] = append(es.AlignPts[ap], ap.PointRect(knb.BBox))
+			es.AlignPts[ap] = append(es.AlignPts[ap], ap.PointRect(nb.BBox))
 		}
 		return tree.Continue
 	})

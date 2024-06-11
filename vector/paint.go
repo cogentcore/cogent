@@ -861,8 +861,8 @@ func (pv *PaintView) IsStrokeOn() bool {
 // StrokeWidthProp returns stroke-width property
 func (pv *PaintView) StrokeWidthProp() string {
 	wr := pv.ChildByName("stroke-width", 2)
-	wsb := wr.ChildByName("width", 1).(*core.Spinner)
-	uncb := wr.ChildByName("width-units", 2).(*core.Chooser)
+	wsb := wr.AsTree().ChildByName("width", 1).(*core.Spinner)
+	uncb := wr.AsTree().ChildByName("width-units", 2).(*core.Chooser)
 	unnm := "px"
 	if uncb.CurrentIndex > 0 {
 		unvl := units.Units(uncb.CurrentIndex)
@@ -875,7 +875,7 @@ func (pv *PaintView) StrokeWidthProp() string {
 // these values need to be multiplied by line widths for each item.
 func (pv *PaintView) StrokeDashProp() []float64 {
 	wr := pv.ChildByName("stroke-width", 2)
-	dshcb := wr.ChildByName("dashes", 3).(*core.Chooser)
+	dshcb := wr.AsTree().ChildByName("dashes", 3).(*core.Chooser)
 	if dshcb.CurrentIndex == 0 {
 		return nil
 	}
