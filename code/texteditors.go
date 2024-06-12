@@ -246,7 +246,7 @@ func (cv *CodeView) UpdateTextButtons() {
 		txnm := "<no file>"
 		if tv.Buffer != nil {
 			txnm = dirs.DirAndFile(string(tv.Buffer.Filename))
-			if tv.Buffer.IsNotSaved() {
+			if tv.Buffer.NotSaved {
 				txnm += " <b>*</b>"
 			} else {
 				txnm += "   "

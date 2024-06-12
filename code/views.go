@@ -279,7 +279,7 @@ func (cv *CodeView) UpdateStatusText() {
 		ch = tv.CursorPos.Ch
 		if tv.Buffer != nil {
 			fnm = cv.Files.RelPath(tv.Buffer.Filename)
-			if tv.Buffer.IsNotSaved() {
+			if tv.Buffer.NotSaved {
 				fnm += "*"
 			}
 			if tv.Buffer.Info.Known != fileinfo.Unknown {
