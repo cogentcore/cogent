@@ -11,7 +11,7 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/plot/plotview"
+	"cogentcore.org/core/plot/plotcore"
 	"cogentcore.org/core/shell/cosh"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tensor"
@@ -64,16 +64,16 @@ func (br *Browser) NewTabTable(label string, slc any) *core.Table {
 	return tv
 }
 
-// NewTabPlot creates a tab with a SubPlot PlotView.
+// NewTabPlot creates a tab with a SubPlot PlotEditor.
 // Set the table and call br.Update after this.
-func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
+func (br *Browser) NewTabPlot(label string) *plotcore.PlotEditor {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		pl := tab.Child(0).AsTree().Child(1).(*plotview.PlotView)
+		pl := tab.Child(0).AsTree().Child(1).(*plotcore.PlotEditor)
 		return pl
 	}
-	pl := plotview.NewSubPlot(tab)
+	pl := plotcore.NewSubPlot(tab)
 	return pl
 }
 
