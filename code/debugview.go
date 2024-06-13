@@ -952,7 +952,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 			SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
-				DebugSettingsView(&dv.Code.Settings.Debug)
+				DebugSettingsEditor(&dv.Code.Settings.Debug)
 			})
 	})
 

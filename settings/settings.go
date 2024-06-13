@@ -11,6 +11,6 @@ import (
 
 func main() {
 	b := core.NewBody("Cogent Settings")
-	views.SettingsView(b)
+	views.SettingsEditor(b)
 	b.RunMainWindow()
 }

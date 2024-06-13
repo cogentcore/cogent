@@ -211,7 +211,7 @@ func (pf *Preferences) UpdateAll() {
 }
 
 /*
-// PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., views.SettingsView
+// PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., views.SettingsEditor
 var PreferencesProperties = tree.Properties{
 	"MainMenu": tree.Propertieslice{
 		{"AppMenu", tree.BlankProp{}},

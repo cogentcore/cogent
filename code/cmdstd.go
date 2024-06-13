@@ -195,7 +195,7 @@ var StandardCommands = Commands{
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
 	{Cat: "Git", Name: "Restore",
-		Desc: "git restore: file, directory -- undoes any current changes and restores from last commit; -s option specifies source -- also available as revert in file view",
+		Desc: "git restore: file, directory -- undoes any current changes and restores from last commit; -s option specifies source -- also available as revert in file picker",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "git",
 			Args: []string{"restore", "{PromptString1}"}}},

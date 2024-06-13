@@ -14,9 +14,9 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// ProjectSettingsView opens a view of project settings,
+// ProjectSettingsEditor opens a view of project settings,
 // returns structview if not already open
-func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
+func ProjectSettingsEditor(pf *ProjectSettings) *views.StructView {
 	if core.RecycleMainWindow(pf) {
 		return nil
 	}
@@ -31,9 +31,9 @@ func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
 	return tv
 }
 
-// DebugSettingsView opens a view of project Debug settings,
+// DebugSettingsEditor opens a view of project Debug settings,
 // returns structview if not already open
-func DebugSettingsView(pf *cdebug.Params) *views.StructView {
+func DebugSettingsEditor(pf *cdebug.Params) *views.StructView {
 	if core.RecycleMainWindow(pf) {
 		return nil
 	}
@@ -50,7 +50,7 @@ func LangsView(pt *Langs) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
-	tv := views.NewMapView(d).SetMap(pt)
+	tv := views.NewKeyValueTable(d).SetMap(pt)
 	AvailableLangsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableLangsChanged = true

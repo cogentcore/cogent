@@ -185,7 +185,7 @@ func (br *Browser) Tabs() *core.Tabs {
 	return br.FindPath("splits/tabs").(*core.Tabs)
 }
 
-// UpdateFiles Updates the file view with current files in DataRoot,
+// UpdateFiles Updates the file picker with current files in DataRoot,
 func (br *Browser) UpdateFiles() { //types:add
 	files := br.FileTree()
 	fmt.Println(br.DataRoot)
