@@ -77,7 +77,7 @@ func (sv *SpellView) Init() {
 				OnClick(func(e events.Event) {
 					cur := ""
 					d := core.NewBody().AddTitle("Select a Text File to Add to Corpus")
-					fv := views.NewFileView(d).SetFilename(cur, ".txt")
+					fv := views.NewFilePicker(d).SetFilename(cur, ".txt")
 					fv.OnSelect(func(e events.Event) {
 						cur = fv.SelectedFile()
 					}).OnDoubleClick(func(e events.Event) {

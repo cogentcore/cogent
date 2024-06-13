@@ -16,7 +16,7 @@ import (
 func main() {
 	b := core.NewBody("Cogent Files")
 
-	fv := views.NewFileView(b)
+	fv := views.NewFilePicker(b)
 	fv.Scene.OnKeyChord(func(e events.Event) {
 		if keymap.Of(e.KeyChord()) == keymap.Accept {
 			core.TheApp.OpenURL(fv.SelectedFile())

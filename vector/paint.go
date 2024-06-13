@@ -207,7 +207,7 @@ func (pv *PaintView) Init() {
 			// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
 			// })
 
-			core.AddChild(w, func(w *views.ColorView) { // "stroke-clr")
+			core.AddChild(w, func(w *views.ColorPicker) { // "stroke-clr")
 				// sc.SetProp("vertical-align", styles.AlignTop)
 				// sc.SetColor(sty.StrokeStyle.Color)
 				// sc.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -285,7 +285,7 @@ func (pv *PaintView) Init() {
 			// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
 			// })
 
-			core.AddChild(w, func(w *views.ColorView) { // "fill-clr")
+			core.AddChild(w, func(w *views.ColorPicker) { // "fill-clr")
 				w.SetColor(colors.Scheme.Primary.Base)
 				// fc.SetProp("vertical-align", styles.AlignTop)
 				// fc.Config()
@@ -622,7 +622,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 1
-		sc := ss.ChildByName("stroke-clr", 1).(*views.ColorView)
+		sc := ss.ChildByName("stroke-clr", 1).(*views.ColorPicker)
 		sc.SetColor(pc.StrokeStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if ss.StackTop != 2 {
@@ -696,7 +696,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 1
-		fc := fs.ChildByName("fill-clr", 1).(*views.ColorView)
+		fc := fs.ChildByName("fill-clr", 1).(*views.ColorPicker)
 		fc.SetColor(pc.FillStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if fs.StackTop != 2 {
@@ -818,7 +818,7 @@ func (pv *PaintView) StrokeProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		// sc := ss.ChildByName("stroke-clr", 1).(*views.ColorView)
+		// sc := ss.ChildByName("stroke-clr", 1).(*views.ColorPicker)
 		// return sc.Color.HexString()
 	case PaintLinear:
 		return pv.StrokeStops
@@ -902,7 +902,7 @@ func (pv *PaintView) FillProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		sc := fs.ChildByName("fill-clr", 1).(*views.ColorView)
+		sc := fs.ChildByName("fill-clr", 1).(*views.ColorPicker)
 		return colors.AsHex(sc.Color)
 	case PaintLinear:
 		return pv.FillStops
