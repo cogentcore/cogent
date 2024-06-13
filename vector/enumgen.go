@@ -3,7 +3,6 @@
 package vector
 
 import (
-	"cogentcore.org/core/core"
 	"cogentcore.org/core/enums"
 )
 
@@ -340,72 +339,3 @@ func (i Tools) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
 
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface.
 func (i *Tools) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Tools") }
-
-var _VectorViewFlagsValues = []VectorViewFlags{3}
-
-// VectorViewFlagsN is the highest valid value for type VectorViewFlags, plus one.
-const VectorViewFlagsN VectorViewFlags = 4
-
-var _VectorViewFlagsValueMap = map[string]VectorViewFlags{`VectorViewAutoSaving`: 3}
-
-var _VectorViewFlagsDescMap = map[VectorViewFlags]string{3: `VectorViewAutoSaving means`}
-
-var _VectorViewFlagsMap = map[VectorViewFlags]string{3: `VectorViewAutoSaving`}
-
-// String returns the string representation of this VectorViewFlags value.
-func (i VectorViewFlags) String() string {
-	return enums.BitFlagStringExtended(i, _VectorViewFlagsValues, core.WidgetFlagsValues())
-}
-
-// BitIndexString returns the string representation of this VectorViewFlags value
-// if it is a bit index value (typically an enum constant), and
-// not an actual bit flag value.
-func (i VectorViewFlags) BitIndexString() string {
-	return enums.BitIndexStringExtended[VectorViewFlags, core.WidgetFlags](i, _VectorViewFlagsMap)
-}
-
-// SetString sets the VectorViewFlags value from its string representation,
-// and returns an error if the string is invalid.
-func (i *VectorViewFlags) SetString(s string) error { *i = 0; return i.SetStringOr(s) }
-
-// SetStringOr sets the VectorViewFlags value from its string representation
-// while preserving any bit flags already set, and returns an
-// error if the string is invalid.
-func (i *VectorViewFlags) SetStringOr(s string) error {
-	return enums.SetStringOrExtended(i, (*core.WidgetFlags)(i), s, _VectorViewFlagsValueMap)
-}
-
-// Int64 returns the VectorViewFlags value as an int64.
-func (i VectorViewFlags) Int64() int64 { return int64(i) }
-
-// SetInt64 sets the VectorViewFlags value from an int64.
-func (i *VectorViewFlags) SetInt64(in int64) { *i = VectorViewFlags(in) }
-
-// Desc returns the description of the VectorViewFlags value.
-func (i VectorViewFlags) Desc() string {
-	return enums.DescExtended[VectorViewFlags, core.WidgetFlags](i, _VectorViewFlagsDescMap)
-}
-
-// VectorViewFlagsValues returns all possible values for the type VectorViewFlags.
-func VectorViewFlagsValues() []VectorViewFlags {
-	return enums.ValuesGlobalExtended(_VectorViewFlagsValues, core.WidgetFlagsValues())
-}
-
-// Values returns all possible values for the type VectorViewFlags.
-func (i VectorViewFlags) Values() []enums.Enum {
-	return enums.ValuesExtended(_VectorViewFlagsValues, core.WidgetFlagsValues())
-}
-
-// HasFlag returns whether these bit flags have the given bit flag set.
-func (i VectorViewFlags) HasFlag(f enums.BitFlag) bool { return enums.HasFlag((*int64)(&i), f) }
-
-// SetFlag sets the value of the given flags in these flags to the given value.
-func (i *VectorViewFlags) SetFlag(on bool, f ...enums.BitFlag) { enums.SetFlag((*int64)(i), on, f...) }
-
-// MarshalText implements the [encoding.TextMarshaler] interface.
-func (i VectorViewFlags) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
-
-// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
-func (i *VectorViewFlags) UnmarshalText(text []byte) error {
-	return enums.UnmarshalText(i, text, "VectorViewFlags")
-}

@@ -5,11 +5,8 @@ package imports
 import (
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/enums"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/abilities"
-	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
@@ -23,100 +20,86 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/views/views"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"AsTreeView":                   reflect.ValueOf(views.AsTreeView),
-		"CallFunc":                     reflect.ValueOf(views.CallFunc),
-		"ColorButtonType":              reflect.ValueOf(&views.ColorButtonType).Elem(),
-		"ColorMapButtonType":           reflect.ValueOf(&views.ColorMapButtonType).Elem(),
-		"ColorViewType":                reflect.ValueOf(&views.ColorViewType).Elem(),
-		"ConfigImageToolbar":           reflect.ValueOf(views.ConfigImageToolbar),
-		"ConfigSVGToolbar":             reflect.ValueOf(views.ConfigSVGToolbar),
-		"DatePickerType":               reflect.ValueOf(&views.DatePickerType).Elem(),
-		"DurationInputType":            reflect.ValueOf(&views.DurationInputType).Elem(),
-		"FileButtonType":               reflect.ValueOf(&views.FileButtonType).Elem(),
-		"FileViewDialog":               reflect.ValueOf(views.FileViewDialog),
-		"FileViewDirOnlyFilter":        reflect.ValueOf(views.FileViewDirOnlyFilter),
-		"FileViewExtOnlyFilter":        reflect.ValueOf(views.FileViewExtOnlyFilter),
-		"FileViewKindColorMap":         reflect.ValueOf(&views.FileViewKindColorMap).Elem(),
-		"FileViewType":                 reflect.ValueOf(&views.FileViewType).Elem(),
-		"FontButtonType":               reflect.ValueOf(&views.FontButtonType).Elem(),
-		"FuncArgsToStruct":             reflect.ValueOf(views.FuncArgsToStruct),
-		"FuncButtonType":               reflect.ValueOf(&views.FuncButtonType).Elem(),
-		"IconButtonType":               reflect.ValueOf(&views.IconButtonType).Elem(),
-		"InspectorType":                reflect.ValueOf(&views.InspectorType).Elem(),
-		"InspectorView":                reflect.ValueOf(views.InspectorView),
-		"InspectorWindow":              reflect.ValueOf(views.InspectorWindow),
-		"KeyChordButtonType":           reflect.ValueOf(&views.KeyChordButtonType).Elem(),
-		"KeyMapButtonType":             reflect.ValueOf(&views.KeyMapButtonType).Elem(),
-		"MapButtonType":                reflect.ValueOf(&views.MapButtonType).Elem(),
-		"MapViewType":                  reflect.ValueOf(&views.MapViewType).Elem(),
-		"NewColorButton":               reflect.ValueOf(views.NewColorButton),
-		"NewColorMapButton":            reflect.ValueOf(views.NewColorMapButton),
-		"NewColorView":                 reflect.ValueOf(views.NewColorView),
-		"NewDatePicker":                reflect.ValueOf(views.NewDatePicker),
-		"NewDurationInput":             reflect.ValueOf(views.NewDurationInput),
-		"NewFileButton":                reflect.ValueOf(views.NewFileButton),
-		"NewFileView":                  reflect.ValueOf(views.NewFileView),
-		"NewFontButton":                reflect.ValueOf(views.NewFontButton),
-		"NewFuncButton":                reflect.ValueOf(views.NewFuncButton),
-		"NewIconButton":                reflect.ValueOf(views.NewIconButton),
-		"NewInspector":                 reflect.ValueOf(views.NewInspector),
-		"NewKeyChordButton":            reflect.ValueOf(views.NewKeyChordButton),
-		"NewKeyMapButton":              reflect.ValueOf(views.NewKeyMapButton),
-		"NewMapButton":                 reflect.ValueOf(views.NewMapButton),
-		"NewMapView":                   reflect.ValueOf(views.NewMapView),
-		"NewSliceButton":               reflect.ValueOf(views.NewSliceButton),
-		"NewSliceView":                 reflect.ValueOf(views.NewSliceView),
-		"NewSliceViewBase":             reflect.ValueOf(views.NewSliceViewBase),
-		"NewSliceViewGrid":             reflect.ValueOf(views.NewSliceViewGrid),
-		"NewSliceViewInline":           reflect.ValueOf(views.NewSliceViewInline),
-		"NewSoloFuncButton":            reflect.ValueOf(views.NewSoloFuncButton),
-		"NewStructButton":              reflect.ValueOf(views.NewStructButton),
-		"NewStructView":                reflect.ValueOf(views.NewStructView),
-		"NewTableView":                 reflect.ValueOf(views.NewTableView),
-		"NewTimeInput":                 reflect.ValueOf(views.NewTimeInput),
-		"NewTimePicker":                reflect.ValueOf(views.NewTimePicker),
-		"NewTreeButton":                reflect.ValueOf(views.NewTreeButton),
-		"NewTreeView":                  reflect.ValueOf(views.NewTreeView),
-		"NewTreeViewFrame":             reflect.ValueOf(views.NewTreeViewFrame),
-		"NewTypeChooser":               reflect.ValueOf(views.NewTypeChooser),
-		"NoSentenceCaseFor":            reflect.ValueOf(&views.NoSentenceCaseFor).Elem(),
-		"NoSentenceCaseForType":        reflect.ValueOf(views.NoSentenceCaseForType),
-		"SettingsView":                 reflect.ValueOf(views.SettingsView),
-		"SettingsViewToolbarBase":      reflect.ValueOf(views.SettingsViewToolbarBase),
-		"SettingsWindow":               reflect.ValueOf(views.SettingsWindow),
-		"SliceButtonType":              reflect.ValueOf(&views.SliceButtonType).Elem(),
-		"SliceIndexByValue":            reflect.ValueOf(views.SliceIndexByValue),
-		"SliceViewBaseType":            reflect.ValueOf(&views.SliceViewBaseType).Elem(),
-		"SliceViewColProperty":         reflect.ValueOf(constant.MakeFromLiteral("\"sv-col\"", token.STRING, 0)),
-		"SliceViewFlagsN":              reflect.ValueOf(views.SliceViewFlagsN),
-		"SliceViewFlagsValues":         reflect.ValueOf(views.SliceViewFlagsValues),
-		"SliceViewGridType":            reflect.ValueOf(&views.SliceViewGridType).Elem(),
-		"SliceViewInFocusGrab":         reflect.ValueOf(views.SliceViewInFocusGrab),
-		"SliceViewInFullRebuild":       reflect.ValueOf(views.SliceViewInFullRebuild),
-		"SliceViewInlineType":          reflect.ValueOf(&views.SliceViewInlineType).Elem(),
-		"SliceViewIsArray":             reflect.ValueOf(views.SliceViewIsArray),
-		"SliceViewReadOnlyKeyNav":      reflect.ValueOf(views.SliceViewReadOnlyKeyNav),
-		"SliceViewReadOnlyMultiSelect": reflect.ValueOf(views.SliceViewReadOnlyMultiSelect),
-		"SliceViewRowProperty":         reflect.ValueOf(constant.MakeFromLiteral("\"sv-row\"", token.STRING, 0)),
-		"SliceViewSelectMode":          reflect.ValueOf(views.SliceViewSelectMode),
-		"SliceViewShowIndex":           reflect.ValueOf(views.SliceViewShowIndex),
-		"SliceViewType":                reflect.ValueOf(&views.SliceViewType).Elem(),
-		"StructButtonType":             reflect.ValueOf(&views.StructButtonType).Elem(),
-		"StructSliceIndexByValue":      reflect.ValueOf(views.StructSliceIndexByValue),
-		"StructViewType":               reflect.ValueOf(&views.StructViewType).Elem(),
-		"TableViewType":                reflect.ValueOf(&views.TableViewType).Elem(),
-		"TimeInputType":                reflect.ValueOf(&views.TimeInputType).Elem(),
-		"TimePickerType":               reflect.ValueOf(&views.TimePickerType).Elem(),
-		"TreeButtonType":               reflect.ValueOf(&views.TreeButtonType).Elem(),
-		"TreeViewFlagClosed":           reflect.ValueOf(views.TreeViewFlagClosed),
-		"TreeViewFlagSelectMode":       reflect.ValueOf(views.TreeViewFlagSelectMode),
-		"TreeViewFlagsN":               reflect.ValueOf(views.TreeViewFlagsN),
-		"TreeViewFlagsValues":          reflect.ValueOf(views.TreeViewFlagsValues),
-		"TreeViewInOpen":               reflect.ValueOf(views.TreeViewInOpen),
-		"TreeViewPageSteps":            reflect.ValueOf(&views.TreeViewPageSteps).Elem(),
-		"TreeViewTempMovedTag":         reflect.ValueOf(constant.MakeFromLiteral("\"_\\\\&MOVED\\\\&\"", token.STRING, 0)),
-		"TreeViewType":                 reflect.ValueOf(&views.TreeViewType).Elem(),
-		"TypeChooserType":              reflect.ValueOf(&views.TypeChooserType).Elem(),
+		"AsTreeView":              reflect.ValueOf(views.AsTreeView),
+		"CallFunc":                reflect.ValueOf(views.CallFunc),
+		"ColorButtonType":         reflect.ValueOf(&views.ColorButtonType).Elem(),
+		"ColorMapButtonType":      reflect.ValueOf(&views.ColorMapButtonType).Elem(),
+		"ColorViewType":           reflect.ValueOf(&views.ColorViewType).Elem(),
+		"ConfigImageToolbar":      reflect.ValueOf(views.ConfigImageToolbar),
+		"ConfigSVGToolbar":        reflect.ValueOf(views.ConfigSVGToolbar),
+		"DatePickerType":          reflect.ValueOf(&views.DatePickerType).Elem(),
+		"DurationInputType":       reflect.ValueOf(&views.DurationInputType).Elem(),
+		"FileButtonType":          reflect.ValueOf(&views.FileButtonType).Elem(),
+		"FileViewDialog":          reflect.ValueOf(views.FileViewDialog),
+		"FileViewDirOnlyFilter":   reflect.ValueOf(views.FileViewDirOnlyFilter),
+		"FileViewExtOnlyFilter":   reflect.ValueOf(views.FileViewExtOnlyFilter),
+		"FileViewKindColorMap":    reflect.ValueOf(&views.FileViewKindColorMap).Elem(),
+		"FileViewType":            reflect.ValueOf(&views.FileViewType).Elem(),
+		"FontButtonType":          reflect.ValueOf(&views.FontButtonType).Elem(),
+		"FuncArgsToStruct":        reflect.ValueOf(views.FuncArgsToStruct),
+		"FuncButtonType":          reflect.ValueOf(&views.FuncButtonType).Elem(),
+		"IconButtonType":          reflect.ValueOf(&views.IconButtonType).Elem(),
+		"InspectorType":           reflect.ValueOf(&views.InspectorType).Elem(),
+		"InspectorView":           reflect.ValueOf(views.InspectorView),
+		"InspectorWindow":         reflect.ValueOf(views.InspectorWindow),
+		"KeyChordButtonType":      reflect.ValueOf(&views.KeyChordButtonType).Elem(),
+		"KeyMapButtonType":        reflect.ValueOf(&views.KeyMapButtonType).Elem(),
+		"MapButtonType":           reflect.ValueOf(&views.MapButtonType).Elem(),
+		"MapViewType":             reflect.ValueOf(&views.MapViewType).Elem(),
+		"NewColorButton":          reflect.ValueOf(views.NewColorButton),
+		"NewColorMapButton":       reflect.ValueOf(views.NewColorMapButton),
+		"NewColorView":            reflect.ValueOf(views.NewColorView),
+		"NewDatePicker":           reflect.ValueOf(views.NewDatePicker),
+		"NewDurationInput":        reflect.ValueOf(views.NewDurationInput),
+		"NewFileButton":           reflect.ValueOf(views.NewFileButton),
+		"NewFileView":             reflect.ValueOf(views.NewFileView),
+		"NewFontButton":           reflect.ValueOf(views.NewFontButton),
+		"NewFuncButton":           reflect.ValueOf(views.NewFuncButton),
+		"NewIconButton":           reflect.ValueOf(views.NewIconButton),
+		"NewInspector":            reflect.ValueOf(views.NewInspector),
+		"NewKeyChordButton":       reflect.ValueOf(views.NewKeyChordButton),
+		"NewKeyMapButton":         reflect.ValueOf(views.NewKeyMapButton),
+		"NewMapButton":            reflect.ValueOf(views.NewMapButton),
+		"NewMapView":              reflect.ValueOf(views.NewMapView),
+		"NewSliceButton":          reflect.ValueOf(views.NewSliceButton),
+		"NewSliceView":            reflect.ValueOf(views.NewSliceView),
+		"NewSliceViewBase":        reflect.ValueOf(views.NewSliceViewBase),
+		"NewSliceViewGrid":        reflect.ValueOf(views.NewSliceViewGrid),
+		"NewSliceViewInline":      reflect.ValueOf(views.NewSliceViewInline),
+		"NewSoloFuncButton":       reflect.ValueOf(views.NewSoloFuncButton),
+		"NewStructButton":         reflect.ValueOf(views.NewStructButton),
+		"NewStructView":           reflect.ValueOf(views.NewStructView),
+		"NewTableView":            reflect.ValueOf(views.NewTableView),
+		"NewTimeInput":            reflect.ValueOf(views.NewTimeInput),
+		"NewTimePicker":           reflect.ValueOf(views.NewTimePicker),
+		"NewTreeButton":           reflect.ValueOf(views.NewTreeButton),
+		"NewTreeView":             reflect.ValueOf(views.NewTreeView),
+		"NewTreeViewFrame":        reflect.ValueOf(views.NewTreeViewFrame),
+		"NewTypeChooser":          reflect.ValueOf(views.NewTypeChooser),
+		"NoSentenceCaseFor":       reflect.ValueOf(&views.NoSentenceCaseFor).Elem(),
+		"NoSentenceCaseForType":   reflect.ValueOf(views.NoSentenceCaseForType),
+		"SettingsView":            reflect.ValueOf(views.SettingsView),
+		"SettingsViewToolbarBase": reflect.ValueOf(views.SettingsViewToolbarBase),
+		"SettingsWindow":          reflect.ValueOf(views.SettingsWindow),
+		"SliceButtonType":         reflect.ValueOf(&views.SliceButtonType).Elem(),
+		"SliceIndexByValue":       reflect.ValueOf(views.SliceIndexByValue),
+		"SliceViewBaseType":       reflect.ValueOf(&views.SliceViewBaseType).Elem(),
+		"SliceViewColProperty":    reflect.ValueOf(constant.MakeFromLiteral("\"sv-col\"", token.STRING, 0)),
+		"SliceViewGridType":       reflect.ValueOf(&views.SliceViewGridType).Elem(),
+		"SliceViewInlineType":     reflect.ValueOf(&views.SliceViewInlineType).Elem(),
+		"SliceViewRowProperty":    reflect.ValueOf(constant.MakeFromLiteral("\"sv-row\"", token.STRING, 0)),
+		"SliceViewType":           reflect.ValueOf(&views.SliceViewType).Elem(),
+		"StructButtonType":        reflect.ValueOf(&views.StructButtonType).Elem(),
+		"StructSliceIndexByValue": reflect.ValueOf(views.StructSliceIndexByValue),
+		"StructViewType":          reflect.ValueOf(&views.StructViewType).Elem(),
+		"TableViewType":           reflect.ValueOf(&views.TableViewType).Elem(),
+		"TimeInputType":           reflect.ValueOf(&views.TimeInputType).Elem(),
+		"TimePickerType":          reflect.ValueOf(&views.TimePickerType).Elem(),
+		"TreeButtonType":          reflect.ValueOf(&views.TreeButtonType).Elem(),
+		"TreeViewPageSteps":       reflect.ValueOf(&views.TreeViewPageSteps).Elem(),
+		"TreeViewTempMovedTag":    reflect.ValueOf(constant.MakeFromLiteral("\"_\\\\&MOVED\\\\&\"", token.STRING, 0)),
+		"TreeViewType":            reflect.ValueOf(&views.TreeViewType).Elem(),
+		"TypeChooserType":         reflect.ValueOf(&views.TypeChooserType).Elem(),
 
 		// type definitions
 		"ColorButton":        reflect.ValueOf((*views.ColorButton)(nil)),
@@ -140,7 +123,6 @@ func init() {
 		"SliceButton":        reflect.ValueOf((*views.SliceButton)(nil)),
 		"SliceView":          reflect.ValueOf((*views.SliceView)(nil)),
 		"SliceViewBase":      reflect.ValueOf((*views.SliceViewBase)(nil)),
-		"SliceViewFlags":     reflect.ValueOf((*views.SliceViewFlags)(nil)),
 		"SliceViewGrid":      reflect.ValueOf((*views.SliceViewGrid)(nil)),
 		"SliceViewInline":    reflect.ValueOf((*views.SliceViewInline)(nil)),
 		"SliceViewStyleFunc": reflect.ValueOf((*views.SliceViewStyleFunc)(nil)),
@@ -153,7 +135,6 @@ func init() {
 		"TimePicker":         reflect.ValueOf((*views.TimePicker)(nil)),
 		"TreeButton":         reflect.ValueOf((*views.TreeButton)(nil)),
 		"TreeView":           reflect.ValueOf((*views.TreeView)(nil)),
-		"TreeViewFlags":      reflect.ValueOf((*views.TreeViewFlags)(nil)),
 		"TreeViewer":         reflect.ValueOf((*views.TreeViewer)(nil)),
 		"TypeChooser":        reflect.ValueOf((*views.TypeChooser)(nil)),
 
@@ -264,24 +245,16 @@ func (W _cogentcore_org_core_views_SliceViewer) UpdateSliceSize() int {
 // _cogentcore_org_core_views_TreeViewer is an interface wrapper for TreeViewer type
 type _cogentcore_org_core_views_TreeViewer struct {
 	IValue             interface{}
-	WAbilityIs         func(flag abilities.Abilities) bool
 	WAddChildNode      func()
-	WAddContextMenu    func(menu func(m *core.Scene)) *core.WidgetBase
-	WApplyContextMenus func(m *core.Scene)
-	WApplyStyle        func()
 	WAsTree            func() *tree.NodeBase
 	WAsTreeView        func() *views.TreeView
 	WAsWidget          func() *core.WidgetBase
 	WBaseType          func() *types.Type
 	WCanOpen           func() bool
-	WChild             func(i int) tree.Node
 	WChildBackground   func(child core.Widget) image.Image
-	WChildByName       func(name string, startIndex ...int) tree.Node
-	WClone             func() tree.Node
 	WContextMenuPos    func(e events.Event) image.Point
 	WCopy              func(reset bool)
 	WCopyFieldsFrom    func(from tree.Node)
-	WCopyFrom          func(src tree.Node)
 	WCut               func()
 	WDeleteNode        func()
 	WDestroy           func()
@@ -292,75 +265,37 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WDropDeleteSource  func(e events.Event)
 	WDropFinalize      func(de *events.DragDrop)
 	WDuplicate         func()
-	WFieldByName       func(field string) (tree.Node, error)
-	WFindPath          func(path string) tree.Node
-	WFlagType          func() enums.BitFlagSetter
-	WHandleEvent       func(e events.Event)
-	WHasChildren       func() bool
 	WInit              func()
 	WInsertAfter       func()
 	WInsertBefore      func()
-	WIs                func(f enums.BitFlag) bool
 	WIsVisible         func() bool
 	WMakePasteMenu     func(m *core.Scene, md mimedata.Mimes, fun func())
 	WMimeData          func(md *mimedata.Mimes)
-	WName              func() string
 	WNew               func() tree.Node
 	WNodeType          func() *types.Type
 	WNodeWalkDown      func(fun func(n tree.Node) bool)
-	WNumChildren       func() int
-	WOn                func(etype events.Types, fun func(e events.Event)) *core.WidgetBase
 	WOnAdd             func()
 	WOnChildAdded      func(child tree.Node)
-	WOnClick           func(fun func(e events.Event)) *core.WidgetBase
 	WOnClose           func()
 	WOnDoubleClick     func(e events.Event)
 	WOnOpen            func()
-	WOnWidgetAdded     func(f func(w core.Widget)) *core.WidgetBase
-	WParent            func() tree.Node
 	WPaste             func()
-	WPath              func() string
-	WPathFrom          func(parent tree.Node) string
+	WPlanName          func() string
 	WPosition          func()
 	WRender            func()
 	WRenderWidget      func()
 	WScenePos          func()
-	WSend              func(e events.Types, orig ...events.Event)
-	WSetAbilities      func(on bool, able ...abilities.Abilities) *core.WidgetBase
-	WSetFlag           func(on bool, f ...enums.BitFlag)
-	WSetName           func(name string)
-	WSetState          func(on bool, state ...states.States) *core.WidgetBase
 	WShowContextMenu   func(e events.Event)
 	WSizeDown          func(iter int) bool
 	WSizeFinal         func()
 	WSizeUp            func()
-	WStateIs           func(flag states.States) bool
-	WStyle             func(s func(s *styles.Style)) *core.WidgetBase
-	WThis              func() tree.Node
-	WUpdate            func()
+	WStyle             func()
 	WUpdateBranchIcons func()
-	WWalkDown          func(fun func(n tree.Node) bool)
-	WWalkDownBreadth   func(fun func(n tree.Node) bool)
-	WWalkDownPost      func(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool)
-	WWalkUp            func(fun func(n tree.Node) bool) bool
-	WWalkUpParent      func(fun func(n tree.Node) bool) bool
 	WWidgetTooltip     func(pos image.Point) (string, image.Point)
 }
 
-func (W _cogentcore_org_core_views_TreeViewer) AbilityIs(flag abilities.Abilities) bool {
-	return W.WAbilityIs(flag)
-}
 func (W _cogentcore_org_core_views_TreeViewer) AddChildNode() {
 	W.WAddChildNode()
-}
-func (W _cogentcore_org_core_views_TreeViewer) AddContextMenu(menu func(m *core.Scene)) *core.WidgetBase {
-	return W.WAddContextMenu(menu)
-}
-func (W _cogentcore_org_core_views_TreeViewer) ApplyContextMenus(m *core.Scene) {
-	W.WApplyContextMenus(m)
-}
-func (W _cogentcore_org_core_views_TreeViewer) ApplyStyle() {
-	W.WApplyStyle()
 }
 func (W _cogentcore_org_core_views_TreeViewer) AsTree() *tree.NodeBase {
 	return W.WAsTree()
@@ -377,17 +312,8 @@ func (W _cogentcore_org_core_views_TreeViewer) BaseType() *types.Type {
 func (W _cogentcore_org_core_views_TreeViewer) CanOpen() bool {
 	return W.WCanOpen()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Child(i int) tree.Node {
-	return W.WChild(i)
-}
 func (W _cogentcore_org_core_views_TreeViewer) ChildBackground(child core.Widget) image.Image {
 	return W.WChildBackground(child)
-}
-func (W _cogentcore_org_core_views_TreeViewer) ChildByName(name string, startIndex ...int) tree.Node {
-	return W.WChildByName(name, startIndex...)
-}
-func (W _cogentcore_org_core_views_TreeViewer) Clone() tree.Node {
-	return W.WClone()
 }
 func (W _cogentcore_org_core_views_TreeViewer) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
@@ -397,9 +323,6 @@ func (W _cogentcore_org_core_views_TreeViewer) Copy(reset bool) {
 }
 func (W _cogentcore_org_core_views_TreeViewer) CopyFieldsFrom(from tree.Node) {
 	W.WCopyFieldsFrom(from)
-}
-func (W _cogentcore_org_core_views_TreeViewer) CopyFrom(src tree.Node) {
-	W.WCopyFrom(src)
 }
 func (W _cogentcore_org_core_views_TreeViewer) Cut() {
 	W.WCut()
@@ -431,21 +354,6 @@ func (W _cogentcore_org_core_views_TreeViewer) DropFinalize(de *events.DragDrop)
 func (W _cogentcore_org_core_views_TreeViewer) Duplicate() {
 	W.WDuplicate()
 }
-func (W _cogentcore_org_core_views_TreeViewer) FieldByName(field string) (tree.Node, error) {
-	return W.WFieldByName(field)
-}
-func (W _cogentcore_org_core_views_TreeViewer) FindPath(path string) tree.Node {
-	return W.WFindPath(path)
-}
-func (W _cogentcore_org_core_views_TreeViewer) FlagType() enums.BitFlagSetter {
-	return W.WFlagType()
-}
-func (W _cogentcore_org_core_views_TreeViewer) HandleEvent(e events.Event) {
-	W.WHandleEvent(e)
-}
-func (W _cogentcore_org_core_views_TreeViewer) HasChildren() bool {
-	return W.WHasChildren()
-}
 func (W _cogentcore_org_core_views_TreeViewer) Init() {
 	W.WInit()
 }
@@ -454,9 +362,6 @@ func (W _cogentcore_org_core_views_TreeViewer) InsertAfter() {
 }
 func (W _cogentcore_org_core_views_TreeViewer) InsertBefore() {
 	W.WInsertBefore()
-}
-func (W _cogentcore_org_core_views_TreeViewer) Is(f enums.BitFlag) bool {
-	return W.WIs(f)
 }
 func (W _cogentcore_org_core_views_TreeViewer) IsVisible() bool {
 	return W.WIsVisible()
@@ -467,9 +372,6 @@ func (W _cogentcore_org_core_views_TreeViewer) MakePasteMenu(m *core.Scene, md m
 func (W _cogentcore_org_core_views_TreeViewer) MimeData(md *mimedata.Mimes) {
 	W.WMimeData(md)
 }
-func (W _cogentcore_org_core_views_TreeViewer) Name() string {
-	return W.WName()
-}
 func (W _cogentcore_org_core_views_TreeViewer) New() tree.Node {
 	return W.WNew()
 }
@@ -479,20 +381,11 @@ func (W _cogentcore_org_core_views_TreeViewer) NodeType() *types.Type {
 func (W _cogentcore_org_core_views_TreeViewer) NodeWalkDown(fun func(n tree.Node) bool) {
 	W.WNodeWalkDown(fun)
 }
-func (W _cogentcore_org_core_views_TreeViewer) NumChildren() int {
-	return W.WNumChildren()
-}
-func (W _cogentcore_org_core_views_TreeViewer) On(etype events.Types, fun func(e events.Event)) *core.WidgetBase {
-	return W.WOn(etype, fun)
-}
 func (W _cogentcore_org_core_views_TreeViewer) OnAdd() {
 	W.WOnAdd()
 }
 func (W _cogentcore_org_core_views_TreeViewer) OnChildAdded(child tree.Node) {
 	W.WOnChildAdded(child)
-}
-func (W _cogentcore_org_core_views_TreeViewer) OnClick(fun func(e events.Event)) *core.WidgetBase {
-	return W.WOnClick(fun)
 }
 func (W _cogentcore_org_core_views_TreeViewer) OnClose() {
 	W.WOnClose()
@@ -503,20 +396,11 @@ func (W _cogentcore_org_core_views_TreeViewer) OnDoubleClick(e events.Event) {
 func (W _cogentcore_org_core_views_TreeViewer) OnOpen() {
 	W.WOnOpen()
 }
-func (W _cogentcore_org_core_views_TreeViewer) OnWidgetAdded(f func(w core.Widget)) *core.WidgetBase {
-	return W.WOnWidgetAdded(f)
-}
-func (W _cogentcore_org_core_views_TreeViewer) Parent() tree.Node {
-	return W.WParent()
-}
 func (W _cogentcore_org_core_views_TreeViewer) Paste() {
 	W.WPaste()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Path() string {
-	return W.WPath()
-}
-func (W _cogentcore_org_core_views_TreeViewer) PathFrom(parent tree.Node) string {
-	return W.WPathFrom(parent)
+func (W _cogentcore_org_core_views_TreeViewer) PlanName() string {
+	return W.WPlanName()
 }
 func (W _cogentcore_org_core_views_TreeViewer) Position() {
 	W.WPosition()
@@ -530,21 +414,6 @@ func (W _cogentcore_org_core_views_TreeViewer) RenderWidget() {
 func (W _cogentcore_org_core_views_TreeViewer) ScenePos() {
 	W.WScenePos()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Send(e events.Types, orig ...events.Event) {
-	W.WSend(e, orig...)
-}
-func (W _cogentcore_org_core_views_TreeViewer) SetAbilities(on bool, able ...abilities.Abilities) *core.WidgetBase {
-	return W.WSetAbilities(on, able...)
-}
-func (W _cogentcore_org_core_views_TreeViewer) SetFlag(on bool, f ...enums.BitFlag) {
-	W.WSetFlag(on, f...)
-}
-func (W _cogentcore_org_core_views_TreeViewer) SetName(name string) {
-	W.WSetName(name)
-}
-func (W _cogentcore_org_core_views_TreeViewer) SetState(on bool, state ...states.States) *core.WidgetBase {
-	return W.WSetState(on, state...)
-}
 func (W _cogentcore_org_core_views_TreeViewer) ShowContextMenu(e events.Event) {
 	W.WShowContextMenu(e)
 }
@@ -557,35 +426,11 @@ func (W _cogentcore_org_core_views_TreeViewer) SizeFinal() {
 func (W _cogentcore_org_core_views_TreeViewer) SizeUp() {
 	W.WSizeUp()
 }
-func (W _cogentcore_org_core_views_TreeViewer) StateIs(flag states.States) bool {
-	return W.WStateIs(flag)
-}
-func (W _cogentcore_org_core_views_TreeViewer) Style(s func(s *styles.Style)) *core.WidgetBase {
-	return W.WStyle(s)
-}
-func (W _cogentcore_org_core_views_TreeViewer) This() tree.Node {
-	return W.WThis()
-}
-func (W _cogentcore_org_core_views_TreeViewer) Update() {
-	W.WUpdate()
+func (W _cogentcore_org_core_views_TreeViewer) Style() {
+	W.WStyle()
 }
 func (W _cogentcore_org_core_views_TreeViewer) UpdateBranchIcons() {
 	W.WUpdateBranchIcons()
-}
-func (W _cogentcore_org_core_views_TreeViewer) WalkDown(fun func(n tree.Node) bool) {
-	W.WWalkDown(fun)
-}
-func (W _cogentcore_org_core_views_TreeViewer) WalkDownBreadth(fun func(n tree.Node) bool) {
-	W.WWalkDownBreadth(fun)
-}
-func (W _cogentcore_org_core_views_TreeViewer) WalkDownPost(doChildTest func(n tree.Node) bool, fun func(n tree.Node) bool) {
-	W.WWalkDownPost(doChildTest, fun)
-}
-func (W _cogentcore_org_core_views_TreeViewer) WalkUp(fun func(n tree.Node) bool) bool {
-	return W.WWalkUp(fun)
-}
-func (W _cogentcore_org_core_views_TreeViewer) WalkUpParent(fun func(n tree.Node) bool) bool {
-	return W.WWalkUpParent(fun)
 }
 func (W _cogentcore_org_core_views_TreeViewer) WidgetTooltip(pos image.Point) (string, image.Point) {
 	return W.WWidgetTooltip(pos)

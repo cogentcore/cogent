@@ -874,11 +874,3 @@ func (vv *VectorView) AutoSaveCheck() bool {
 	}
 	return true
 }
-
-// VectorViewFlags extend WidgetFlags to hold VectorView state
-type VectorViewFlags core.WidgetFlags //enums:bitflag -trim-prefix VectorViewFlag
-
-const (
-	// VectorViewAutoSaving means
-	VectorViewAutoSaving VectorViewFlags = VectorViewFlags(core.WidgetFlagsN) + iota
-)

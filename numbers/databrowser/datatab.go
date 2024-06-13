@@ -35,7 +35,7 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	dt := table.NewTable()
 	tb := core.NewToolbar(tab)
 	tv := tensorview.NewTableView(tab)
-	tv.SetFlag(true, views.SliceViewReadOnlyMultiSelect)
+	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
 	})
@@ -56,7 +56,7 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 		return tv
 	}
 	tv := views.NewTableView(tab)
-	tv.SetFlag(true, views.SliceViewReadOnlyMultiSelect)
+	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
 	})

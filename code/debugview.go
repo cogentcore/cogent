@@ -158,7 +158,6 @@ func (dv *DebugView) InitTabs() {
 
 	bv := w.NewTab(DebugTabBreaks)
 	core.AddChild(bv, func(w *views.TableView) {
-		w.SetFlag(false, views.SliceViewShowIndex)
 		w.SetSlice(&dv.State.Breaks)
 		w.OnDoubleClick(func(e events.Event) {
 			idx := w.SelectedIndex
@@ -180,7 +179,6 @@ func (dv *DebugView) InitTabs() {
 
 	sv := w.NewTab(DebugTabStack)
 	core.AddChild(sv, func(w *views.TableView) {
-		w.SetFlag(false, views.SliceViewShowIndex)
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Stack)
 		w.OnDoubleClick(func(e events.Event) {
@@ -194,7 +192,6 @@ func (dv *DebugView) InitTabs() {
 	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		tv := w.NewTab(DebugTabTasks)
 		core.AddChild(tv, func(w *views.TableView) {
-			w.SetFlag(false, views.SliceViewShowIndex)
 			w.SetReadOnly(true)
 			w.SetSlice(&dv.State.Tasks)
 			w.OnDoubleClick(func(e events.Event) {
@@ -213,7 +210,6 @@ func (dv *DebugView) InitTabs() {
 
 	tv := w.NewTab(DebugTabThreads)
 	core.AddChild(tv, func(w *views.TableView) {
-		w.SetFlag(false, views.SliceViewShowIndex)
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Threads)
 		w.OnDoubleClick(func(e events.Event) {
@@ -231,7 +227,6 @@ func (dv *DebugView) InitTabs() {
 
 	vv := w.NewTab(DebugTabVars)
 	core.AddChild(vv, func(w *views.TableView) {
-		w.SetFlag(false, views.SliceViewShowIndex)
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Vars)
 		w.OnDoubleClick(func(e events.Event) {
@@ -242,7 +237,6 @@ func (dv *DebugView) InitTabs() {
 
 	ff := w.NewTab(DebugTabFrames)
 	core.AddChild(ff, func(w *views.TableView) {
-		w.SetFlag(false, views.SliceViewShowIndex)
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.FindFrames)
 		w.OnDoubleClick(func(e events.Event) {
@@ -256,7 +250,6 @@ func (dv *DebugView) InitTabs() {
 
 	gv := w.NewTab(DebugTabGlobals)
 	core.AddChild(gv, func(w *views.TableView) {
-		w.SetFlag(false, views.SliceViewShowIndex)
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
