@@ -10,7 +10,7 @@ package web
 import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/htmlview"
+	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 )
@@ -22,15 +22,15 @@ type Page struct {
 	// The history of URLs that have been visited. The oldest page is first.
 	History []string `set:"-"`
 
-	// Context is the page's [htmlview.Context].
-	Context *htmlview.Context `set:"-"`
+	// Context is the page's [htmlcore.Context].
+	Context *htmlcore.Context `set:"-"`
 }
 
 var _ tree.Node = (*Page)(nil)
 
 func (pg *Page) Init() {
 	pg.Frame.Init()
-	pg.Context = htmlview.NewContext()
+	pg.Context = htmlcore.NewContext()
 	pg.Context.OpenURL = pg.OpenURL
 	pg.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -39,7 +39,7 @@ func (pg *Page) Init() {
 
 // OpenURL sets the content of the page from the given url.
 func (pg *Page) OpenURL(url string) {
-	resp, err := htmlview.Get(pg.Context, url)
+	resp, err := htmlcore.Get(pg.Context, url)
 	if err != nil {
 		core.ErrorSnackbar(pg, err, "Error opening page")
 		return
@@ -49,7 +49,7 @@ func (pg *Page) OpenURL(url string) {
 	pg.Context.PageURL = url
 	pg.History = append(pg.History, url)
 	pg.DeleteChildren()
-	err = htmlview.ReadHTML(pg.Context, pg, resp.Body)
+	err = htmlcore.ReadHTML(pg.Context, pg, resp.Body)
 	if err != nil {
 		core.ErrorSnackbar(pg, err, "Error opening page")
 		return
@@ -78,7 +78,7 @@ func (pg *Page) AppBar(p *core.Plan) {
 	// 	}
 	// }
 	// ch.OnChange(func(e events.Event) {
-	// 	u, is := htmlview.ParseURL(ch.CurLabel)
+	// 	u, is := htmlcore.ParseURL(ch.CurLabel)
 	// 	if is {
 	// 		pg.OpenURL(u.String())
 	// 	} else {

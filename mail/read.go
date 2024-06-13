@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/htmlview"
+	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
@@ -142,7 +142,7 @@ func (a *App) UpdateReadMessage() error {
 			case "text/plain":
 				plain = p
 			case "text/html":
-				err := htmlview.ReadHTML(htmlview.NewContext(), mb, p.Body)
+				err := htmlcore.ReadHTML(htmlcore.NewContext(), mb, p.Body)
 				if err != nil {
 					return err
 				}
@@ -153,7 +153,7 @@ func (a *App) UpdateReadMessage() error {
 
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML && plain != nil {
-		err := htmlview.ReadMD(htmlview.NewContext(), mb, errors.Log1(io.ReadAll(plain.Body)))
+		err := htmlcore.ReadMD(htmlcore.NewContext(), mb, errors.Log1(io.ReadAll(plain.Body)))
 		if err != nil {
 			return err
 		}

@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/htmlview"
+	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
@@ -153,7 +153,7 @@ func main() { // TODO(config)
 			s.Border.Radius = styles.BorderRadiusLarge
 			s.Grow.Set(1, 0)
 		})
-		errors.Log(htmlview.ReadMDString(htmlview.NewContext(), yourPrompt, "**You:** "+promptString))
+		errors.Log(htmlcore.ReadMDString(htmlcore.NewContext(), yourPrompt, "**You:** "+promptString))
 
 		answer := core.NewFrame(history)
 		answer.Styler(func(s *styles.Style) {
@@ -204,7 +204,7 @@ func main() { // TODO(config)
 
 				answer.AsyncLock()
 				answer.DeleteChildren()
-				errors.Log(htmlview.ReadMDString(htmlview.NewContext(), answer, allTokens))
+				errors.Log(htmlcore.ReadMDString(htmlcore.NewContext(), answer, allTokens))
 				answer.Update()
 				history.ScrollDimToContentEnd(math32.Y)
 				answer.AsyncUnlock()
