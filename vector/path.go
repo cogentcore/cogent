@@ -11,7 +11,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -29,10 +28,10 @@ func (vv *VectorView) ConfigNodeToolbar() {
 		return
 	}
 
-	grs := core.NewSwitch(tb).SetText("Snap Node").SetChecked(Settings.SnapNodes).
-		SetTooltip("snap movement and sizing of nodes, using overall snap settings")
+	grs := core.NewSwitch(tb).SetText("Snap Node").SetChecked(Settings.SnapNodes)
+	grs.SetTooltip("snap movement and sizing of nodes, using overall snap settings")
 	grs.OnChange(func(e events.Event) {
-		Settings.SnapNodes = grs.Is(states.Checked)
+		Settings.SnapNodes = grs.IsChecked()
 	})
 
 	core.NewSeparator(tb)

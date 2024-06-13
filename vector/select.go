@@ -14,7 +14,6 @@ import (
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/views"
@@ -33,18 +32,18 @@ func (gv *VectorView) ConfigSelectToolbar() {
 		return
 	}
 
-	grs := core.NewSwitch(tb).SetText("Snap grid").
-		SetTooltip("snap movement and sizing of selection to grid")
-		// SetChecked(Settings.SnapVector)
+	grs := core.NewSwitch(tb).SetText("Snap grid")
+	grs.SetTooltip("snap movement and sizing of selection to grid")
+	// SetChecked(Settings.SnapVector)
 	grs.OnChange(func(e events.Event) {
-		Settings.SnapVector = grs.Is(states.Checked)
+		Settings.SnapVector = grs.IsChecked()
 	})
 
-	gis := core.NewSwitch(tb).SetText("Snap guide").
-		SetTooltip("snap movement and sizing of selection to align with other elements in the scene")
-		// SetChecked(Settings.SnapGuide)
+	gis := core.NewSwitch(tb).SetText("Snap guide")
+	gis.SetTooltip("snap movement and sizing of selection to align with other elements in the scene")
+	// SetChecked(Settings.SnapGuide)
 	gis.OnChange(func(e events.Event) {
-		Settings.SnapGuide = gis.Is(states.Checked)
+		Settings.SnapGuide = gis.IsChecked()
 	})
 
 	core.NewSeparator(tb)
