@@ -16,7 +16,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/views"
 )
 
 // FileNode is Code version of FileNode for FileTree
@@ -102,11 +101,11 @@ func (fn *FileNode) ContextMenu(m *core.Scene) {
 		SetMenu(CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
 		s.SetState(!fn.HasSelection(), states.Disabled)
 	})
-	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
+	core.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
-	views.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
+	core.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
@@ -131,7 +130,7 @@ func (on *OpenNodes) Add(fn *filetree.Node) bool {
 	if fn.Buffer != nil {
 		// fn.Buf.TextBufSig.Connect(fn.This, func(recv, send tree.Node, sig int64, data any) {
 		// 	if sig == int64(texteditor.BufClosed) {
-		// 		fno, _ := recv.Embed(views.KiT_FileNode).(*filetree.Node)
+		// 		fno, _ := recv.Embed(core.KiT_FileNode).(*filetree.Node)
 		// 		on.Delete(fno)
 		// 	}
 		// })
@@ -270,7 +269,7 @@ func (fn *FileNode) RenameFiles() {
 		}
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
 		for _, sn := range nodes {
-			fb := views.NewSoloFuncButton(sn, sn.RenameFile)
+			fb := core.NewSoloFuncButton(sn, sn.RenameFile)
 			fb.Args[0].SetValue(sn.Name)
 			fb.CallFunc()
 		}

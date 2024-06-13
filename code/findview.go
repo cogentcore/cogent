@@ -24,7 +24,6 @@ import (
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
-	"cogentcore.org/core/views"
 )
 
 // FindParams are parameters for find / replace
@@ -500,7 +499,7 @@ func (fv *FindView) makeReplToolbar(p *core.Plan) {
 		w.SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 	})
 
-	core.AddAt(p, "langs", func(w *views.InlineList) {
+	core.AddAt(p, "langs", func(w *core.InlineList) {
 		w.SetSlice(fv.Params().Langs)
 		w.SetTooltip("Language(s) to restrict search / replace to")
 	})

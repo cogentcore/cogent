@@ -211,7 +211,7 @@ func (pf *Preferences) UpdateAll() {
 }
 
 /*
-// PreferencesProperties define the Toolbar and MenuBar for Form, e.g., views.SettingsEditor
+// PreferencesProperties define the Toolbar and MenuBar for Form, e.g., core.SettingsEditor
 var PreferencesProperties = tree.Properties{
 	"MainMenu": tree.Propertieslice{
 		{"AppMenu", tree.BlankProp{}},
@@ -221,7 +221,7 @@ var PreferencesProperties = tree.Properties{
 			}},
 			{"Save", tree.Properties{
 				"shortcut": "Command+S",
-				"updatefunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
+				"updatefunc": core.ActionUpdateFunc(func(pfi any, act *core.Button) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
 				}),
@@ -239,7 +239,7 @@ var PreferencesProperties = tree.Properties{
 		{"Save", tree.Properties{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updatefunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
+			"updatefunc": core.ActionUpdateFunc(func(pfi any, act *core.Button) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdate(pf.Changed)
 			}),

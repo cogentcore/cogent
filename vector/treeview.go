@@ -6,15 +6,15 @@ package vector
 
 import (
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 )
 
 // Tree is a Tree that knows how to operate on FileNode nodes
 type Tree struct {
-	views.Tree
+	core.Tree
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
@@ -31,14 +31,14 @@ func (gv *VectorView) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 }
 
 // SelectedAsTrees returns the currently selected items from SVG as Tree nodes
-func (gv *VectorView) SelectedAsTrees() []views.Treer {
+func (gv *VectorView) SelectedAsTrees() []core.Treer {
 	es := &gv.EditState
 	sl := es.SelectedList(false)
 	if len(sl) == 0 {
 		return nil
 	}
 	tv := gv.Tree()
-	var tvl []views.Treer
+	var tvl []core.Treer
 	for _, si := range sl {
 		tvn := tv.FindSyncNode(si.AsTree().This)
 		if tvn != nil {
@@ -154,7 +154,7 @@ func (gv *VectorView) DeleteSelected() {
 
 /*
 // TreeIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
-var TreeIsLayerFunc = views.ActionUpdateFunc(func(fni any, act *core.Button) {
+var TreeIsLayerFunc = core.ActionUpdateFunc(func(fni any, act *core.Button) {
 	tv := fni.(tree.Node).Embed(KiT_Tree).(*Tree)
 	sn := tv.SrcNode
 	if sn != nil {
@@ -271,11 +271,11 @@ var TreeProperties = tree.Properties{
 	".locked": tree.Properties{
 		"color": "#ff4252",
 	},
-	views.TreeSelectors[views.TreeActive]: tree.Properties{},
-	views.TreeSelectors[views.TreeSel]: tree.Properties{
+	core.TreeSelectors[core.TreeActive]: tree.Properties{},
+	core.TreeSelectors[core.TreeSel]: tree.Properties{
 		"background-color": &core.Settings.Colors.Select,
 	},
-	views.TreeSelectors[views.TreeFocus]: tree.Properties{
+	core.TreeSelectors[core.TreeFocus]: tree.Properties{
 		"background-color": &core.Settings.Colors.Control,
 	},
 	"CtxtMenuActive": tree.Propertieslice{
@@ -300,7 +300,7 @@ var TreeProperties = tree.Properties{
 		}},
 		{"Cut", tree.Properties{
 			"shortcut": keymap.Cut,
-			"updatefunc": views.ActionUpdateFunc(func(tvi any, act *core.Button) {
+			"updatefunc": core.ActionUpdateFunc(func(tvi any, act *core.Button) {
 				tv := tvi.(tree.Node).Embed(KiT_Tree).(*Tree)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),

@@ -18,7 +18,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/views"
 )
 
 func init() {
@@ -146,16 +145,16 @@ func (se *SettingsData) ApplyEnvVars() {
 }
 
 func (se *SettingsData) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditLangOpts).SetIcon(icons.Subtitles)
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditCmds).SetIcon(icons.KeyboardCommandKey)
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditSplits).SetIcon(icons.VerticalSplit)
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditRegisters).SetIcon(icons.Variables)
 	})
 }
@@ -382,7 +381,7 @@ func (cv *CodeView) EditProjectSettings() { //types:add
 }
 
 func (cv *CodeView) CallSplitsSetView(ctx core.Widget) {
-	fb := views.NewSoloFuncButton(ctx, cv.SplitsSetView)
+	fb := core.NewSoloFuncButton(ctx, cv.SplitsSetView)
 	fb.Args[0].SetValue(cv.Settings.SplitName)
 	fb.CallFunc()
 }

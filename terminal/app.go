@@ -28,7 +28,6 @@ import (
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 	"github.com/robert-nix/ansihtml"
 	"github.com/traefik/yaegi/interp"
 )
@@ -53,7 +52,7 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.Dir = errors.Log1(os.Getwd())
 
-	core.AddChild(a, func(w *views.Form) {
+	core.AddChild(a, func(w *core.Form) {
 		st := StructForFlags(a.Cmd.Flags)
 		w.SetStruct(st)
 	})
@@ -109,7 +108,7 @@ func (a *App) MakeToolbar(p *core.Plan) {
 			w.OnClick(func(e events.Event) {
 				d := core.NewBody().AddTitle(text).AddText(cmd.Doc)
 				st := StructForFlags(cmd.Flags)
-				views.NewForm(d).SetStruct(st)
+				core.NewForm(d).SetStruct(st)
 				d.AddBottomBar(func(parent core.Widget) {
 					d.AddCancel(parent)
 					d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {

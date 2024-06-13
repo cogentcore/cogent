@@ -23,7 +23,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/views"
 )
 
 // DebugBreakStatus represents the status of a certain breakpoint.
@@ -157,7 +156,7 @@ func (dv *DebugView) InitTabs() {
 	ctv.SetBuffer(dv.OutputBuffer)
 
 	bv := w.NewTab(DebugTabBreaks)
-	core.AddChild(bv, func(w *views.Table) {
+	core.AddChild(bv, func(w *core.Table) {
 		w.SetSlice(&dv.State.Breaks)
 		w.OnDoubleClick(func(e events.Event) {
 			idx := w.SelectedIndex
@@ -178,7 +177,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	sv := w.NewTab(DebugTabStack)
-	core.AddChild(sv, func(w *views.Table) {
+	core.AddChild(sv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Stack)
 		w.OnDoubleClick(func(e events.Event) {
@@ -191,7 +190,7 @@ func (dv *DebugView) InitTabs() {
 
 	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		tv := w.NewTab(DebugTabTasks)
-		core.AddChild(tv, func(w *views.Table) {
+		core.AddChild(tv, func(w *core.Table) {
 			w.SetReadOnly(true)
 			w.SetSlice(&dv.State.Tasks)
 			w.OnDoubleClick(func(e events.Event) {
@@ -209,7 +208,7 @@ func (dv *DebugView) InitTabs() {
 	}
 
 	tv := w.NewTab(DebugTabThreads)
-	core.AddChild(tv, func(w *views.Table) {
+	core.AddChild(tv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Threads)
 		w.OnDoubleClick(func(e events.Event) {
@@ -226,7 +225,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	vv := w.NewTab(DebugTabVars)
-	core.AddChild(vv, func(w *views.Table) {
+	core.AddChild(vv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Vars)
 		w.OnDoubleClick(func(e events.Event) {
@@ -236,7 +235,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	ff := w.NewTab(DebugTabFrames)
-	core.AddChild(ff, func(w *views.Table) {
+	core.AddChild(ff, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.FindFrames)
 		w.OnDoubleClick(func(e events.Event) {
@@ -249,7 +248,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	gv := w.NewTab(DebugTabGlobals)
-	core.AddChild(gv, func(w *views.Table) {
+	core.AddChild(gv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
@@ -943,7 +942,7 @@ func (dv *DebugView) MakeToolbar(p *core.Plan) {
 			SetTooltip("list variables at global scope, subject to filter (name contains)").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
 			OnClick(func(e events.Event) {
-				views.CallFunc(dv, dv.ListGlobalVars)
+				core.CallFunc(dv, dv.ListGlobalVars)
 			})
 	})
 
@@ -1000,7 +999,7 @@ func (vv *VarView) Init() {
 	core.AddChildAt(vv, "splits", func(w *core.Splits) {
 		w.SetSplits(0.3, 0.7)
 		core.AddChild(w, func(w *core.Frame) {
-			core.AddChild(w, func(w *views.Tree) {
+			core.AddChild(w, func(w *core.Tree) {
 				w.SyncTree(vv.Var)
 				w.OnSelect(func(e events.Event) {
 					if len(w.SelectedNodes) > 0 {
@@ -1015,7 +1014,7 @@ func (vv *VarView) Init() {
 				})
 			})
 		})
-		core.AddChild(w, func(w *views.Form) {
+		core.AddChild(w, func(w *core.Form) {
 			w.SetStruct(vv.Var)
 		})
 	})
@@ -1027,13 +1026,13 @@ func (vv *VarView) Splits() *core.Splits {
 }
 
 // Tree returns the main Tree
-func (vv *VarView) Tree() *views.Tree {
-	return vv.Splits().Child(0).AsTree().Child(0).(*views.Tree)
+func (vv *VarView) Tree() *core.Tree {
+	return vv.Splits().Child(0).AsTree().Child(0).(*core.Tree)
 }
 
 // Form returns the main Form
-func (vv *VarView) Form() *views.Form {
-	return vv.Splits().Child(1).(*views.Form)
+func (vv *VarView) Form() *core.Form {
+	return vv.Splits().Child(1).(*core.Form)
 }
 
 func (vv *VarView) MakeToolbar(p *core.Plan) {

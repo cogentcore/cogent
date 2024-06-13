@@ -25,7 +25,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 )
 
 // VectorView is the Vector SVG vector drawing program
@@ -71,11 +70,11 @@ func (vv *VectorView) Init() {
 					s.Direction = styles.Column
 				})
 
-				core.AddChild(w, func(w *views.FuncButton) {
+				core.AddChild(w, func(w *core.FuncButton) {
 					w.SetFunc(vv.AddLayer)
 				})
 
-				core.AddChildAt(w, "layers", func(w *views.Table) {
+				core.AddChildAt(w, "layers", func(w *core.Table) {
 					w.SetSlice(&vv.EditState.Layers)
 				})
 
@@ -83,7 +82,7 @@ func (vv *VectorView) Init() {
 					w.Styler(func(s *styles.Style) {
 						s.Direction = styles.Column
 					})
-					core.AddChildAt(w, "tree", func(w *views.Tree) {
+					core.AddChildAt(w, "tree", func(w *core.Tree) {
 						// w.VectorView = vv
 						w.OpenDepth = 4
 						w.Updater(func() {
@@ -115,7 +114,7 @@ func (vv *VectorView) Init() {
 	// 	if data == nil {
 	// 		return
 	// 	}
-	// 	if sig == int64(views.TreeInserted) {
+	// 	if sig == int64(core.TreeInserted) {
 	// 		sn, ok := data.(svg.Node)
 	// 		if ok {
 	// 			gvv.SVG().NodeEnsureUniqueID(sn)
@@ -124,7 +123,7 @@ func (vv *VectorView) Init() {
 	// 		}
 	// 		return
 	// 	}
-	// 	if sig == int64(views.TreeDeleted) {
+	// 	if sig == int64(core.TreeDeleted) {
 	// 		sn, ok := data.(svg.Node)
 	// 		if ok {
 	// 			svg.DeleteNodeGradientProp(sn, "fill")
@@ -132,7 +131,7 @@ func (vv *VectorView) Init() {
 	// 		}
 	// 		return
 	// 	}
-	// 	if sig != int64(views.TreeOpened) {
+	// 	if sig != int64(core.TreeOpened) {
 	// 		return
 	// 	}
 	// 	tvn, _ := data.(tree.Node).Embed(KiT_Tree).(*Tree)
@@ -143,9 +142,9 @@ func (vv *VectorView) Init() {
 	// 	if tvn.SrcNode.HasChildren() {
 	// 		return
 	// 	}
-	// 	views.FormDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
+	// 	core.FormDialog(gvv.Viewport, tvn.SrcNode, core.DlgOpts{Title: "SVG Element View"}, nil, nil)
 	// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
-	// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_Form, true).(*views.Form)
+	// 	// 		stv := ggv.RecycleTab("Obj", core.KiT_Form, true).(*core.Form)
 	// 	// 		stv.SetStruct(tvn.SrcNode)
 	// })
 
@@ -210,7 +209,7 @@ func (vv *VectorView) PromptPhysSize() { //types:add
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
 	d := core.NewBody().AddTitle("SVG physical size")
-	views.NewForm(d).SetStruct(sz)
+	core.NewForm(d).SetStruct(sz)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
@@ -241,7 +240,7 @@ func (vv *VectorView) SaveDrawing() error { //types:add
 	if vv.Filename != "" {
 		return vv.SaveDrawingAs(vv.Filename)
 	}
-	views.CallFunc(vv, vv.SaveDrawingAs)
+	core.CallFunc(vv, vv.SaveDrawingAs)
 	return nil
 }
 
@@ -404,8 +403,8 @@ func (vv *VectorView) LayerTree() *core.Frame {
 	return vv.Splits().ChildByName("layer-tree", 0).(*core.Frame)
 }
 
-func (vv *VectorView) LayerView() *views.Table {
-	return vv.LayerTree().ChildByName("layers", 0).(*views.Table)
+func (vv *VectorView) LayerView() *core.Table {
+	return vv.LayerTree().ChildByName("layers", 0).(*core.Table)
 }
 
 func (vv *VectorView) Tree() *Tree {
@@ -443,7 +442,7 @@ func (vv *VectorView) PasteAvailFunc(bt *core.Button) {
 
 func (vv *VectorView) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 	// TODO(kai): remove Update
-	views.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
+	core.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	core.NewButton(tb).SetText("New").SetIcon(icons.Add).
 		OnClick(func(e events.Event) {
 			ndr := vv.NewDrawing(Settings.Size)
@@ -451,38 +450,38 @@ func (vv *VectorView) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 		})
 
 	core.NewButton(tb).SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
-		views.NewFuncButton(m, vv.PromptPhysSize).SetText("Set size").
+		core.NewFuncButton(m, vv.PromptPhysSize).SetText("Set size").
 			SetIcon(icons.FormatSize)
-		views.NewFuncButton(m, vv.ResizeToContents).SetIcon(icons.Resize)
+		core.NewFuncButton(m, vv.ResizeToContents).SetIcon(icons.Resize)
 	})
 
-	views.NewFuncButton(tb, vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
-	views.NewFuncButton(tb, vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
-	views.NewFuncButton(tb, vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
+	core.NewFuncButton(tb, vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
+	core.NewFuncButton(tb, vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
+	core.NewFuncButton(tb, vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
 
 	core.NewButton(tb).SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene) {
-		views.NewFuncButton(m, vv.ExportPNG).SetIcon(icons.Image)
-		views.NewFuncButton(m, vv.ExportPDF).SetIcon(icons.PictureAsPdf)
+		core.NewFuncButton(m, vv.ExportPNG).SetIcon(icons.Image)
+		core.NewFuncButton(m, vv.ExportPDF).SetIcon(icons.PictureAsPdf)
 	})
 
 	core.NewSeparator(tb)
 
-	views.NewFuncButton(tb, vv.Undo).FirstStyler(func(s *styles.Style) {
+	core.NewFuncButton(tb, vv.Undo).FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(vv.EditState.Undos.HasUndoAvail())
 	})
-	views.NewFuncButton(tb, vv.Redo).FirstStyler(func(s *styles.Style) {
+	core.NewFuncButton(tb, vv.Redo).FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(vv.EditState.Undos.HasRedoAvail())
 	})
 
 	core.NewSeparator(tb)
 
-	views.NewFuncButton(tb, vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	views.NewFuncButton(tb, vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	views.NewFuncButton(tb, vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	views.NewFuncButton(tb, vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	core.NewFuncButton(tb, vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	core.NewFuncButton(tb, vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	core.NewFuncButton(tb, vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	core.NewFuncButton(tb, vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 
 	core.NewSeparator(tb)
-	views.NewFuncButton(tb, vv.AddImage).SetIcon(icons.Image)
+	core.NewFuncButton(tb, vv.AddImage).SetIcon(icons.Image)
 	core.NewSeparator(tb)
 
 	core.NewButton(tb).SetText("Zoom page").SetIcon(icons.ZoomOut).
@@ -646,7 +645,7 @@ func (vv *VectorView) ConfigTabs() {
 	NewAlignView(at).SetVectorView(vv)
 	vv.EditState.Text.Defaults()
 	tt := vv.RecycleTab("Text", false)
-	views.NewForm(tt).SetStruct(&vv.EditState.Text)
+	core.NewForm(tt).SetStruct(&vv.EditState.Text)
 }
 
 func (vv *VectorView) PaintView() *PaintView {
@@ -693,7 +692,7 @@ func (vv *VectorView) UpdateTabs() {
 	// 	txt, istxt := fsel.(*svg.Text)
 	// 	if istxt {
 	// 		es.Text.SetFromNode(txt)
-	// 		txv := vv.Tab("Text").(*views.Form)
+	// 		txv := vv.Tab("Text").(*core.Form)
 	// 		txv.UpdateFields()
 	// 		// todo: only show text toolbar on double-click
 	// 		// gv.SetModalText()
@@ -779,8 +778,8 @@ func (vv *VectorView) EditRecents() {
 	// tmp := make([]string, len(SavedPaths))
 	// copy(tmp, SavedPaths)
 	// core.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
-	// opts := views.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
-	// views.ListDialog(vv.Viewport, &tmp, opts,
+	// opts := core.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
+	// core.ListDialog(vv.Viewport, &tmp, opts,
 	// 	nil, vv, func(recv, send tree.Node, sig int64, data any) {
 	// 		if sig == int64(core.DialogAccepted) {
 	// 			SavedPaths = nil

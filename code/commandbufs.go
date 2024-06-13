@@ -15,7 +15,6 @@ import (
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/views"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
@@ -194,7 +193,7 @@ func (cv *CodeView) Run() { //types:add
 		return
 	}
 	if cv.Settings.RunCmds[0] == "Run Project" && !cv.Settings.RunExecIsExec() {
-		views.CallFunc(cv, cv.ChooseRunExec)
+		core.CallFunc(cv, cv.ChooseRunExec)
 		return
 	}
 	cv.ExecCmds(cv.Settings.RunCmds, true, true)

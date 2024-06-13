@@ -14,7 +14,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
-	"cogentcore.org/core/views"
 )
 
 // PaintView provides editing of basic Stroke and Fill painting parameters
@@ -207,7 +206,7 @@ func (pv *PaintView) Init() {
 			// 	pvv.VectorView.SetStroke(prev, pvv.StrokeType, sp)
 			// })
 
-			core.AddChild(w, func(w *views.ColorPicker) { // "stroke-clr")
+			core.AddChild(w, func(w *core.ColorPicker) { // "stroke-clr")
 				// sc.SetProp("vertical-align", styles.AlignTop)
 				// sc.SetColor(sty.StrokeStyle.Color)
 				// sc.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -222,14 +221,14 @@ func (pv *PaintView) Init() {
 				// })
 			})
 
-			core.AddChild(w, func(w *views.Table) { // "stroke-grad"
+			core.AddChild(w, func(w *core.Table) { // "stroke-grad"
 				// sg.SetProp("index", true)
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
 				w.SetSlice(&pv.VectorView.EditState.Gradients)
 				// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if sig == int64(core.WidgetSelected) {
-				// 		svv, _ := send.(*views.Table)
+				// 		svv, _ := send.(*core.Table)
 				// 		if svv.SelectedIndex >= 0 {
 				// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 				// 			pv.VectorView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
@@ -285,7 +284,7 @@ func (pv *PaintView) Init() {
 			// 	pvv.VectorView.SetFill(prev, pvv.FillType, fp)
 			// })
 
-			core.AddChild(w, func(w *views.ColorPicker) { // "fill-clr")
+			core.AddChild(w, func(w *core.ColorPicker) { // "fill-clr")
 				w.SetColor(colors.Scheme.Primary.Base)
 				// fc.SetProp("vertical-align", styles.AlignTop)
 				// fc.Config()
@@ -302,14 +301,14 @@ func (pv *PaintView) Init() {
 				// })
 			})
 
-			core.AddChild(w, func(w *views.Table) { // "fill-grad"
+			core.AddChild(w, func(w *core.Table) { // "fill-grad"
 				// sg.SetProp("index", true)
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
 				w.SetSlice(&pv.VectorView.EditState.Gradients)
 				// fg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if sig == int64(core.WidgetSelected) {
-				// 		svv, _ := send.(*views.Table)
+				// 		svv, _ := send.(*core.Table)
 				// 		if svv.SelectedIndex >= 0 {
 				// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 				// 			pv.VectorView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
@@ -318,15 +317,15 @@ func (pv *PaintView) Init() {
 				// })
 				// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-				// 	// svv, _ := send.(*views.Table)
-				// 	if sig == int64(views.ListDeleted) { // not clear what we can do here
+				// 	// svv, _ := send.(*core.Table)
+				// 	if sig == int64(core.ListDeleted) { // not clear what we can do here
 				// 	} else {
 				// 		pv.VectorView.UpdateGradients()
 				// 	}
 				// })
 				// fg.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-				// 	// svv, _ := send.(*views.Table)
+				// 	// svv, _ := send.(*core.Table)
 				// 	pv.VectorView.UpdateGradients()
 				// })
 			})
@@ -622,14 +621,14 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 1
-		sc := ss.ChildByName("stroke-clr", 1).(*views.ColorPicker)
+		sc := ss.ChildByName("stroke-clr", 1).(*core.ColorPicker)
 		sc.SetColor(pc.StrokeStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if ss.StackTop != 2 {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 2
-		sg := ss.ChildByName("stroke-grad", 1).(*views.Table)
+		sg := ss.ChildByName("stroke-grad", 1).(*core.Table)
 		sg.SetSlice(grl)
 		pv.SelectStrokeGrad()
 	default:
@@ -696,14 +695,14 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 1
-		fc := fs.ChildByName("fill-clr", 1).(*views.ColorPicker)
+		fc := fs.ChildByName("fill-clr", 1).(*core.ColorPicker)
 		fc.SetColor(pc.FillStyle.Color.Color)
 	case PaintLinear, PaintRadial:
 		if fs.StackTop != 2 {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 2
-		fg := fs.ChildByName("fill-grad", 1).(*views.Table)
+		fg := fs.ChildByName("fill-grad", 1).(*core.Table)
 		if fg.Slice != grl {
 			pv.SetFullReRender()
 		}
@@ -777,7 +776,7 @@ func (pv *PaintView) SelectStrokeGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	ss := pv.StrokeStack()
-	sg := ss.ChildByName("stroke-grad", 1).(*views.Table)
+	sg := ss.ChildByName("stroke-grad", 1).(*core.Table)
 	sg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.StrokeStops {
@@ -791,7 +790,7 @@ func (pv *PaintView) SelectFillGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	fs := pv.FillStack()
-	fg := fs.ChildByName("fill-grad", 1).(*views.Table)
+	fg := fs.ChildByName("fill-grad", 1).(*core.Table)
 	fg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.FillStops {
@@ -818,7 +817,7 @@ func (pv *PaintView) StrokeProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		// sc := ss.ChildByName("stroke-clr", 1).(*views.ColorPicker)
+		// sc := ss.ChildByName("stroke-clr", 1).(*core.ColorPicker)
 		// return sc.Color.HexString()
 	case PaintLinear:
 		return pv.StrokeStops
@@ -902,7 +901,7 @@ func (pv *PaintView) FillProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		sc := fs.ChildByName("fill-clr", 1).(*views.ColorPicker)
+		sc := fs.ChildByName("fill-clr", 1).(*core.ColorPicker)
 		return colors.AsHex(sc.Color)
 	case PaintLinear:
 		return pv.FillStops

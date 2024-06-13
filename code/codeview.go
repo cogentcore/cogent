@@ -31,7 +31,6 @@ import (
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 )
 
 //go:embed icons/*.svg
@@ -338,7 +337,7 @@ func (cv *CodeView) OpenRecent(filename core.Filename) { //types:add
 func (cv *CodeView) EditRecentPaths() {
 	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
-	views.NewList(d).SetSlice(&RecentPaths)
+	core.NewList(d).SetSlice(&RecentPaths)
 	d.AddOKOnly().RunDialog(cv)
 }
 

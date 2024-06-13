@@ -28,7 +28,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 	"github.com/traefik/yaegi/interp"
 	"golang.org/x/exp/maps"
 )
@@ -224,10 +223,10 @@ func (br *Browser) UpdateScripts() { //types:add
 }
 
 func (br *Browser) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(br.UpdateScripts).SetText("").SetIcon(icons.Code)
 	})
 	scr := maps.Keys(br.Scripts)

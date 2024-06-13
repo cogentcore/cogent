@@ -19,7 +19,6 @@ import (
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor/textbuf"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 )
 
 // SymbolsParams are parameters for structure view of file or package
@@ -356,7 +355,7 @@ func (sy *SymNode) GetIcon() icons.Icon {
 
 // SymTree is a Tree that knows how to operate on FileNode nodes
 type SymTree struct {
-	views.Tree
+	core.Tree
 }
 
 // SymNode returns the SrcNode as a *code* SymNode

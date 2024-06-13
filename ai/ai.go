@@ -60,7 +60,7 @@ func main() { // TODO(config)
 	leftFrame.Styler(func(s *styles.Style) { s.Direction = styles.Column })
 
 	// errors.Log(jsonx.OpenFS(root, rootJson, jsonName))
-	// views.NewTable(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
+	// core.NewTable(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := core.NewFrame(leftFrame)
 	newFrame.Styler(func(s *styles.Style) {

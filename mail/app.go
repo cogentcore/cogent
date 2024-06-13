@@ -12,7 +12,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-sasl"
 	"golang.org/x/oauth2"
@@ -59,7 +58,7 @@ func (a *App) Init() {
 	})
 
 	core.AddChildAt(a, "splits", func(w *core.Splits) {
-		core.AddChildAt(w, "mbox", func(w *views.Tree) {
+		core.AddChildAt(w, "mbox", func(w *core.Tree) {
 			w.SetText("Mailboxes")
 		})
 		core.AddChildAt(w, "list", func(w *core.Frame) {
@@ -71,7 +70,7 @@ func (a *App) Init() {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
-			core.AddChildAt(w, "msv", func(w *views.Form) {
+			core.AddChildAt(w, "msv", func(w *core.Form) {
 				w.SetReadOnly(true)
 			})
 			core.AddChildAt(w, "mb", func(w *core.Frame) {
@@ -88,7 +87,7 @@ func (a *App) Init() {
 }
 
 func (a *App) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.Compose).SetIcon(icons.Send)
 	})
 }

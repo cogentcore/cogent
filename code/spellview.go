@@ -15,7 +15,6 @@ import (
 	"cogentcore.org/core/texteditor/textbuf"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/views"
 )
 
 // SpellView is a widget that displays results of spell check
@@ -77,7 +76,7 @@ func (sv *SpellView) Init() {
 				OnClick(func(e events.Event) {
 					cur := ""
 					d := core.NewBody().AddTitle("Select a Text File to Add to Corpus")
-					fv := views.NewFilePicker(d).SetFilename(cur, ".txt")
+					fv := core.NewFilePicker(d).SetFilename(cur, ".txt")
 					fv.OnSelect(func(e events.Event) {
 						cur = fv.SelectedFile()
 					}).OnDoubleClick(func(e events.Event) {
@@ -147,7 +146,7 @@ func (sv *SpellView) Init() {
 				})
 		})
 	})
-	core.AddChildAt(sv, "suggest", func(w *views.List) {
+	core.AddChildAt(sv, "suggest", func(w *core.List) {
 		sv.Suggest = []string{"                                              "}
 		w.SetReadOnly(true)
 		w.SetProperty("index", false)
@@ -192,8 +191,8 @@ func (sv *SpellView) ChangeText() *core.TextField {
 }
 
 // SuggestView returns the view for the list of suggestions
-func (sv *SpellView) SuggestView() *views.List {
-	return sv.ChildByName("suggest", 1).(*views.List)
+func (sv *SpellView) SuggestView() *core.List {
+	return sv.ChildByName("suggest", 1).(*core.List)
 }
 
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it

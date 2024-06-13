@@ -17,7 +17,6 @@ import (
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/views"
 )
 
 // TextEditor is the Code-specific version of the TextEditor, with support for
@@ -219,7 +218,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene) {
 		})
 
 	core.NewSeparator(m)
-	views.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
+	core.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
 
 	fn := ed.Code.FileNodeForFile(string(ed.Buffer.Filename), false)
 	if fn != nil {

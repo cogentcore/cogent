@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"cogentcore.org/core/base/reflectx"
+	"cogentcore.org/core/core"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 )
 
 // Layer represents one layer group
@@ -90,7 +90,7 @@ func (vv *VectorView) FirstLayerIndex() int {
 	return min(1, len(sv.Root().Children))
 }
 
-func (vv *VectorView) LayerViewSigs(lyv *views.Table) {
+func (vv *VectorView) LayerViewSigs(lyv *core.Table) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
 	// lyv.ViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -102,11 +102,11 @@ func (vv *VectorView) LayerViewSigs(lyv *views.Table) {
 	// })
 
 	// lyv.ListSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
-	// 	svs := views.ListSignals(sig)
+	// 	svs := core.ListSignals(sig)
 	// 	idx := data.(int)
 	// 	fmt.Printf("tv listsig: %v  data: %v\n", svs.String(), idx)
 	// 	switch svs {
-	// 	case views.ListInserted:
+	// 	case core.ListInserted:
 	// 		si := gv.FirstLayerIndex()
 	// 		li := si + idx
 	// 		l := es.Layers[idx]
@@ -116,7 +116,7 @@ func (vv *VectorView) LayerViewSigs(lyv *views.Table) {
 	// 		sl.SetProp("groupmode"] = "layer"
 	// 		// todo: move selected into this new group
 	// 		gv.UpdateLayerView()
-	// 	case views.ListDeleted:
+	// 	case core.ListDeleted:
 	// 	}
 	// })
 

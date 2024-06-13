@@ -14,7 +14,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/views"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -48,14 +47,14 @@ func main() {
 	b := core.NewBody("Cogent Task Manager")
 
 	ts := getTasks(b)
-	tv := views.NewTable(b)
+	tv := core.NewTable(b)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&ts)
 
 	tv.OnDoubleClick(func(e events.Event) {
 		t := ts[tv.SelectedIndex]
 		d := core.NewBody().AddTitle("Task info")
-		views.NewForm(d).SetStruct(&t).SetReadOnly(true)
+		core.NewForm(d).SetStruct(&t).SetReadOnly(true)
 		d.AddOKOnly().RunDialog(b)
 	})
 

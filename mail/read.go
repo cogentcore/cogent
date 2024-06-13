@@ -20,7 +20,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
-	"cogentcore.org/core/views"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -73,7 +72,7 @@ func (a *App) UpdateMessageList() {
 		})
 		fr.AddContextMenu(func(m *core.Scene) {
 			a.ReadMessage = cd
-			views.NewFuncButton(m, a.MoveMessage).SetIcon(icons.Move).SetText("Move")
+			core.NewFuncButton(m, a.MoveMessage).SetIcon(icons.Move).SetText("Move")
 		})
 
 		ftxt := ""
@@ -102,7 +101,7 @@ func (a *App) UpdateMessageList() {
 
 // UpdateReadMessage updates the view of the message currently being read.
 func (a *App) UpdateReadMessage() error {
-	msv := a.FindPath("splits/mail/msv").(*views.Form)
+	msv := a.FindPath("splits/mail/msv").(*core.Form)
 	msv.SetStruct(a.ReadMessage.ToMessage())
 
 	mb := a.FindPath("splits/mail/mb").(*core.Frame)

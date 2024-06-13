@@ -17,7 +17,6 @@ import (
 	"cogentcore.org/core/tensor"
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/tensor/tensorview"
-	"cogentcore.org/core/views"
 )
 
 // NewTabTensorTable creates a tab with a tensor table and a tensorcore table.
@@ -47,15 +46,15 @@ func (br *Browser) NewTabTensorTable(label string) *tensorview.Table {
 
 // NewTabTable creates a tab with a slice Table.
 // Sets the slice if tab already exists
-func (br *Browser) NewTabTable(label string, slc any) *views.Table {
+func (br *Browser) NewTabTable(label string, slc any) *core.Table {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(0).(*views.Table)
+		tv := tab.Child(0).(*core.Table)
 		tv.SetSlice(slc)
 		return tv
 	}
-	tv := views.NewTable(tab)
+	tv := core.NewTable(tab)
 	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect

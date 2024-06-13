@@ -8,7 +8,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/views"
 )
 
 // PromptOKCancel prompts the user for whether to do something,
@@ -49,7 +48,7 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 // calling the given function if the user clicks OK.
 func PromptStruct(ctx core.Widget, stru any, prompt string, fun func()) {
 	d := core.NewBody().AddTitle(prompt)
-	views.NewForm(d).SetStruct(stru)
+	core.NewForm(d).SetStruct(stru)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {

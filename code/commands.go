@@ -789,7 +789,7 @@ func (cm *Commands) ViewStandard() { //types:add
 	CmdsView(&StandardCommands)
 }
 
-// CustomCommandsChanged is used to update views.CmdsView toolbars via following
+// CustomCommandsChanged is used to update core.CmdsView toolbars via following
 // menu, toolbar properties update methods.
 var CustomCommandsChanged = false
 

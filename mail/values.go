@@ -10,7 +10,7 @@ import (
 
 func init() {
 	// TODO: unclear if we need a distinct type here?
-	// views.AddValue(mail.Address{}, func() views.Value { return &AddressValue{} })
+	// core.AddValue(mail.Address{}, func() core.Value { return &AddressValue{} })
 }
 
 // AddressTextField represents a [mail.Address] with a [core.TextField].
