@@ -5,7 +5,7 @@ command install {
 }
 
 command core {
-	yaegi extract cogentcore.org/core/core cogentcore.org/core/views
+	yaegi extract cogentcore.org/core/core
 }
 
 command tensor {
