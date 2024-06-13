@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tensor"
 	"cogentcore.org/core/tensor/table"
-	"cogentcore.org/core/tensor/tensorview"
+	"cogentcore.org/core/tensor/tensorcore"
 )
 
 // NewTabTensorTable creates a tab with a tensor table and a tensorcore table.
@@ -24,16 +24,16 @@ import (
 // and tv.Table is the table.IndexView onto the table.
 // Use tv.Table.Sequential to update the IndexView to view
 // all of the rows when done updating the Table, and then call br.Update()
-func (br *Browser) NewTabTensorTable(label string) *tensorview.Table {
+func (br *Browser) NewTabTensorTable(label string) *tensorcore.Table {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(1).(*tensorview.Table)
+		tv := tab.Child(1).(*tensorcore.Table)
 		return tv
 	}
 	dt := table.NewTable()
 	tb := core.NewToolbar(tab)
-	tv := tensorview.NewTable(tab)
+	tv := tensorcore.NewTable(tab)
 	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
