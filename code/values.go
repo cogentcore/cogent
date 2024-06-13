@@ -50,7 +50,7 @@ func LangsView(pt *Langs) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
-	tv := views.NewKeyValueTable(d).SetMap(pt)
+	tv := views.NewKeyedList(d).SetMap(pt)
 	AvailableLangsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableLangsChanged = true

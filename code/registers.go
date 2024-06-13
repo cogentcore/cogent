@@ -103,7 +103,7 @@ func RegistersView(pt *Registers) {
 
 	core.NewText(d).SetText("Available Registers: can duplicate an existing (using context menu) as starting point for new one").SetType(core.TextHeadlineSmall)
 
-	tv := views.NewKeyValueTable(d).SetMap(pt)
+	tv := views.NewKeyedList(d).SetMap(pt)
 
 	AvailableRegistersChanged = false
 	tv.OnChange(func(e events.Event) {
