@@ -178,7 +178,7 @@ func SplitsView(pt *Splits) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Splitter Settings: can duplicate an existing (using context menu) as starting point for new one").SetData(pt)
-	tv := views.NewTableView(d).SetSlice(pt)
+	tv := views.NewTable(d).SetSlice(pt)
 	AvailableSplitsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableSplitsChanged = true

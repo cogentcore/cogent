@@ -56,7 +56,7 @@ type SettingsData struct { //types:add
 // FileSettings contains file picker settings
 type FileSettings struct { //types:add
 
-	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
+	// if true, then all directories are placed at the top of the tree -- otherwise everything is alpha sorted
 	DirsOnTop bool
 }
 

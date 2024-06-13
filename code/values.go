@@ -91,7 +91,7 @@ func CmdsView(pt *Commands) {
 		return
 	}
 	d := core.NewBody().SetTitle("Code Commands").SetData(pt)
-	tv := views.NewTableView(d).SetSlice(pt)
+	tv := views.NewTable(d).SetSlice(pt)
 	CustomCommandsChanged = false
 	tv.OnChange(func(e events.Event) {
 		CustomCommandsChanged = true
@@ -138,7 +138,7 @@ func (cb *CmdButton) Init() {
 		d.SetTitle("Select a command")
 		si := 0
 		cl := AvailableCommands
-		tv := views.NewTableView(d)
+		tv := views.NewTable(d)
 		// todo: not a single entry: SetSelectedField("Name").SetSelectedValue(cb.Text)
 		tv.SetSlice(&cl).BindSelect(&si)
 		tv.OnChange(func(e events.Event) {

@@ -38,7 +38,7 @@ type Variable struct {
 	Len int64 `edit:"-"`
 
 	// capacity of vaiable
-	Cap int64 `edit:"-" tableview:"-"`
+	Cap int64 `edit:"-" table:"-"`
 
 	// address where variable is located in memory
 	Addr uintptr `edit:"-"`
@@ -47,16 +47,16 @@ type Variable struct {
 	Heap bool `edit:"-"`
 
 	// location where the variable was defined in source
-	Loc Location `edit:"-" tableview:"-"`
+	Loc Location `edit:"-" table:"-"`
 
 	// if kind is a list type (array, slice), and elements are primitive types, this is the contents
-	List []string `tableview:"-"`
+	List []string `table:"-"`
 
 	// if kind is a map, and elements are primitive types, this is the contents
-	Map map[string]string `tableview:"-"`
+	Map map[string]string `table:"-"`
 
 	// if kind is a map, and elements are not primitive types, this is the contents
-	MapVar map[string]*Variable `tableview:"-"`
+	MapVar map[string]*Variable `table:"-"`
 
 	// our debugger -- for getting further variable data
 	Dbg GiDebug `view:"-"`

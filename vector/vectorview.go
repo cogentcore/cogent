@@ -75,7 +75,7 @@ func (vv *VectorView) Init() {
 					w.SetFunc(vv.AddLayer)
 				})
 
-				core.AddChildAt(w, "layers", func(w *views.TableView) {
+				core.AddChildAt(w, "layers", func(w *views.Table) {
 					w.SetSlice(&vv.EditState.Layers)
 				})
 
@@ -83,7 +83,7 @@ func (vv *VectorView) Init() {
 					w.Styler(func(s *styles.Style) {
 						s.Direction = styles.Column
 					})
-					core.AddChildAt(w, "treeview", func(w *views.TreeView) {
+					core.AddChildAt(w, "tree", func(w *views.Tree) {
 						// w.VectorView = vv
 						w.OpenDepth = 4
 						w.Updater(func() {
@@ -110,12 +110,12 @@ func (vv *VectorView) Init() {
 		})
 	})
 
-	// tv.TreeViewSig.Connect(vv.This, func(recv, send tree.Node, sig int64, data any) {
+	// tv.TreeSig.Connect(vv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
 	// 	if data == nil {
 	// 		return
 	// 	}
-	// 	if sig == int64(views.TreeViewInserted) {
+	// 	if sig == int64(views.TreeInserted) {
 	// 		sn, ok := data.(svg.Node)
 	// 		if ok {
 	// 			gvv.SVG().NodeEnsureUniqueID(sn)
@@ -124,7 +124,7 @@ func (vv *VectorView) Init() {
 	// 		}
 	// 		return
 	// 	}
-	// 	if sig == int64(views.TreeViewDeleted) {
+	// 	if sig == int64(views.TreeDeleted) {
 	// 		sn, ok := data.(svg.Node)
 	// 		if ok {
 	// 			svg.DeleteNodeGradientProp(sn, "fill")
@@ -132,10 +132,10 @@ func (vv *VectorView) Init() {
 	// 		}
 	// 		return
 	// 	}
-	// 	if sig != int64(views.TreeViewOpened) {
+	// 	if sig != int64(views.TreeOpened) {
 	// 		return
 	// 	}
-	// 	tvn, _ := data.(tree.Node).Embed(KiT_TreeView).(*TreeView)
+	// 	tvn, _ := data.(tree.Node).Embed(KiT_Tree).(*Tree)
 	// 	_, issvg := tvn.SrcNode.(svg.Node)
 	// 	if !issvg {
 	// 		return
@@ -187,7 +187,7 @@ func (vv *VectorView) OpenDrawing(fnm core.Filename) error { //types:add
 
 	sv := vv.SVG()
 	vv.SetTitle()
-	tv := vv.TreeView()
+	tv := vv.Tree()
 	tv.CloseAll()
 	tv.ReSync()
 	vv.SetStatus("Opened: " + string(vv.Filename))
@@ -404,12 +404,12 @@ func (vv *VectorView) LayerTree() *core.Frame {
 	return vv.Splits().ChildByName("layer-tree", 0).(*core.Frame)
 }
 
-func (vv *VectorView) LayerView() *views.TableView {
-	return vv.LayerTree().ChildByName("layers", 0).(*views.TableView)
+func (vv *VectorView) LayerView() *views.Table {
+	return vv.LayerTree().ChildByName("layers", 0).(*views.Table)
 }
 
-func (vv *VectorView) TreeView() *TreeView {
-	return vv.LayerTree().ChildByName("tree-frame", 1).AsTree().Child(0).(*TreeView)
+func (vv *VectorView) Tree() *Tree {
+	return vv.LayerTree().ChildByName("tree-frame", 1).AsTree().Child(0).(*Tree)
 }
 
 // SVG returns the [SVGView].
@@ -656,7 +656,7 @@ func (vv *VectorView) PaintView() *PaintView {
 // UpdateAll updates the display
 func (vv *VectorView) UpdateAll() { //types:add
 	vv.UpdateTabs()
-	vv.UpdateTreeView()
+	vv.UpdateTree()
 	vv.UpdateDisp()
 }
 
@@ -665,8 +665,8 @@ func (vv *VectorView) UpdateDisp() {
 	sv.UpdateView(true)
 }
 
-func (vv *VectorView) UpdateTreeView() {
-	tv := vv.TreeView()
+func (vv *VectorView) UpdateTree() {
+	tv := vv.Tree()
 	tv.ReSync()
 }
 

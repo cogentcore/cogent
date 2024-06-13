@@ -12,17 +12,17 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// TreeView is a TreeView that knows how to operate on FileNode nodes
-type TreeView struct {
-	views.TreeView
+// Tree is a Tree that knows how to operate on FileNode nodes
+type Tree struct {
+	views.Tree
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
-// SelectNodeInTree selects given node in TreeView
+// SelectNodeInTree selects given node in Tree
 func (gv *VectorView) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
-	tv := gv.TreeView()
+	tv := gv.Tree()
 	tvn := tv.FindSyncNode(kn)
 	if tvn != nil {
 		tvn.OpenParents()
@@ -30,15 +30,15 @@ func (gv *VectorView) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 	}
 }
 
-// SelectedAsTreeViews returns the currently selected items from SVG as TreeView nodes
-func (gv *VectorView) SelectedAsTreeViews() []views.TreeViewer {
+// SelectedAsTrees returns the currently selected items from SVG as Tree nodes
+func (gv *VectorView) SelectedAsTrees() []views.Treer {
 	es := &gv.EditState
 	sl := es.SelectedList(false)
 	if len(sl) == 0 {
 		return nil
 	}
-	tv := gv.TreeView()
-	var tvl []views.TreeViewer
+	tv := gv.Tree()
+	var tvl []views.Treer
 	for _, si := range sl {
 		tvn := tv.FindSyncNode(si.AsTree().This)
 		if tvn != nil {
@@ -48,9 +48,9 @@ func (gv *VectorView) SelectedAsTreeViews() []views.TreeViewer {
 	return tvl
 }
 
-// DuplicateSelected duplicates selected items in SVG view, using TreeView methods
+// DuplicateSelected duplicates selected items in SVG view, using Tree methods
 func (gv *VectorView) DuplicateSelected() { //types:add
-	tvl := gv.SelectedAsTreeViews()
+	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Duplicate: no tree items found")
 		return
@@ -58,32 +58,32 @@ func (gv *VectorView) DuplicateSelected() { //types:add
 	sv := gv.SVG()
 	sv.UndoSave("DuplicateSelected", "")
 	// sv.SetFullReRender()
-	tv := gv.TreeView()
+	tv := gv.Tree()
 	// tv.SetFullReRender()
 	for _, tvi := range tvl {
-		tvi.AsTreeView().DuplicateSync()
+		tvi.AsCoreTree().DuplicateSync()
 	}
 	gv.SetStatus("Duplicated selected items")
 	tv.ReSync() // todo: should not be needed
 	gv.ChangeMade()
 }
 
-// CopySelected copies selected items in SVG view, using TreeView methods
+// CopySelected copies selected items in SVG view, using Tree methods
 func (gv *VectorView) CopySelected() { //types:add
-	tvl := gv.SelectedAsTreeViews()
+	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Copy: no tree items found")
 		return
 	}
-	tv := gv.TreeView()
+	tv := gv.Tree()
 	tv.SetSelectedViews(tvl)
 	tvl[0].Copy(true) // operates on first element in selection
 	gv.SetStatus("Copied selected items")
 }
 
-// CutSelected cuts selected items in SVG view, using TreeView methods
+// CutSelected cuts selected items in SVG view, using Tree methods
 func (gv *VectorView) CutSelected() { //types:add
-	tvl := gv.SelectedAsTreeViews()
+	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Cut: no tree items found")
 		return
@@ -92,7 +92,7 @@ func (gv *VectorView) CutSelected() { //types:add
 	sv.UndoSave("CutSelected", "")
 	// sv.SetFullReRender()
 	sv.EditState().ResetSelected()
-	tv := gv.TreeView()
+	tv := gv.Tree()
 	// tv.SetFullReRender()
 	tv.SetSelectedViews(tvl)
 	tvl[0].Cut() // operates on first element in selection
@@ -112,13 +112,13 @@ func (gv *VectorView) PasteClip() { //types:add
 	sv := gv.SVG()
 	sv.UndoSave("Paste", "")
 	// sv.SetFullReRender()
-	tv := gv.TreeView()
+	tv := gv.Tree()
 	// tv.SetFullReRender()
 	// parent := tv
 	// if es.CurLayer != "" {
 	// 	ly := tv.ChildByName("tv_"+es.CurLayer, 1)
 	// 	if ly != nil {
-	// 		parent = ly.Embed(KiT_TreeView).(*TreeView)
+	// 		parent = ly.Embed(KiT_Tree).(*Tree)
 	// 	}
 	// }
 	// par.PasteChildren(md, dnd.DropCopy)
@@ -127,9 +127,9 @@ func (gv *VectorView) PasteClip() { //types:add
 	gv.ChangeMade()
 }
 
-// DeleteSelected deletes selected items in SVG view, using TreeView methods
+// DeleteSelected deletes selected items in SVG view, using Tree methods
 func (gv *VectorView) DeleteSelected() {
-	tvl := gv.SelectedAsTreeViews()
+	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Delete: no tree items found")
 		return
@@ -138,7 +138,7 @@ func (gv *VectorView) DeleteSelected() {
 	sv.UndoSave("DeleteSelected", "")
 	sv.EditState().ResetSelected()
 	// sv.SetFullReRender()
-	tv := gv.TreeView()
+	tv := gv.Tree()
 	// tv.SetFullReRender()
 	// for _, tvi := range tvl {
 	// 	tvi.SrcDelete()
@@ -150,12 +150,12 @@ func (gv *VectorView) DeleteSelected() {
 }
 
 ///////////////////////////////////////////////
-//  TreeView
+//  Tree
 
 /*
-// TreeViewIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
-var TreeViewIsLayerFunc = views.ActionUpdateFunc(func(fni any, act *core.Button) {
-	tv := fni.(tree.Node).Embed(KiT_TreeView).(*TreeView)
+// TreeIsLayerFunc is an ActionUpdateFunc that activates if node is a Layer
+var TreeIsLayerFunc = views.ActionUpdateFunc(func(fni any, act *core.Button) {
+	tv := fni.(tree.Node).Embed(KiT_Tree).(*Tree)
 	sn := tv.SrcNode
 	if sn != nil {
 		act.SetInactiveState(!NodeIsLayer(sn))
@@ -163,14 +163,14 @@ var TreeViewIsLayerFunc = views.ActionUpdateFunc(func(fni any, act *core.Button)
 })
 
 // ParVectorView returns the parent VectorView
-func (tv *TreeView) ParVectorView() *VectorView {
-	rtv := tv.RootView.Embed(KiT_TreeView).(*TreeView)
+func (tv *Tree) ParVectorView() *VectorView {
+	rtv := tv.RootView.Embed(KiT_Tree).(*Tree)
 	return rtv.VectorView
 }
 */
 
 // SelectSVG
-func (tv *TreeView) SelectSVG() {
+func (tv *Tree) SelectSVG() {
 	gv := tv.VectorView
 	if gv != nil {
 		gv.SelectNodeInSVG(tv.SyncNode, events.SelectOne)
@@ -178,7 +178,7 @@ func (tv *TreeView) SelectSVG() {
 }
 
 // LayerIsCurrent returns true if layer is the current active one for creating
-func (tv *TreeView) LayerIsCurrent() bool {
+func (tv *Tree) LayerIsCurrent() bool {
 	gv := tv.VectorView
 	if gv != nil {
 		return gv.IsCurLayer(tv.SyncNode.AsTree().Name)
@@ -187,7 +187,7 @@ func (tv *TreeView) LayerIsCurrent() bool {
 }
 
 // LayerSetCurrent sets this layer as the current layer name
-func (tv *TreeView) LayerSetCurrent() {
+func (tv *Tree) LayerSetCurrent() {
 	sn := tv.SyncNode
 	gv := tv.VectorView
 	if gv != nil {
@@ -195,7 +195,7 @@ func (tv *TreeView) LayerSetCurrent() {
 		if cur != "" {
 			cli := tv.Parent.AsTree().ChildByName("tv_"+cur, 0)
 			if cli != nil {
-				cl := cli.(*TreeView)
+				cl := cli.(*Tree)
 				cl.LayerClearCurrent()
 			}
 		}
@@ -212,7 +212,7 @@ func (tv *TreeView) LayerSetCurrent() {
 }
 
 // LayerClearCurrent clears this layer as the current layer if it was set as such.
-func (tv *TreeView) LayerClearCurrent() {
+func (tv *Tree) LayerClearCurrent() {
 	gv := tv.VectorView
 	if gv != nil {
 		gv.ClearCurLayer(tv.SyncNode.AsTree().Name)
@@ -228,7 +228,7 @@ func NodeIsMetaData(kn tree.Node) bool {
 }
 
 // LayerToggleLock toggles whether layer is locked or not
-func (tv *TreeView) LayerToggleLock() {
+func (tv *Tree) LayerToggleLock() {
 	sn := tv.SyncNode
 	np := ""
 	if LayerIsLocked(sn) {
@@ -243,7 +243,7 @@ func (tv *TreeView) LayerToggleLock() {
 }
 
 // LayerToggleVis toggles visibility of the layer
-func (tv *TreeView) LayerToggleVis() {
+func (tv *Tree) LayerToggleVis() {
 	sn := tv.SyncNode
 	np := ""
 	if LayerIsVisible(sn) {
@@ -257,7 +257,7 @@ func (tv *TreeView) LayerToggleVis() {
 }
 
 /*
-var TreeViewProperties = tree.Properties{
+var TreeProperties = tree.Properties{
 	".svgnode": tree.Properties{
 		"font-weight": gist.WeightNormal,
 		"font-style":  gist.FontNormal,
@@ -271,11 +271,11 @@ var TreeViewProperties = tree.Properties{
 	".locked": tree.Properties{
 		"color": "#ff4252",
 	},
-	views.TreeViewSelectors[views.TreeViewActive]: tree.Properties{},
-	views.TreeViewSelectors[views.TreeViewSel]: tree.Properties{
+	views.TreeSelectors[views.TreeActive]: tree.Properties{},
+	views.TreeSelectors[views.TreeSel]: tree.Properties{
 		"background-color": &core.Settings.Colors.Select,
 	},
-	views.TreeViewSelectors[views.TreeViewFocus]: tree.Properties{
+	views.TreeSelectors[views.TreeFocus]: tree.Properties{
 		"background-color": &core.Settings.Colors.Control,
 	},
 	"CtxtMenuActive": tree.Propertieslice{
@@ -301,7 +301,7 @@ var TreeViewProperties = tree.Properties{
 		{"Cut", tree.Properties{
 			"shortcut": keymap.Cut,
 			"updatefunc": views.ActionUpdateFunc(func(tvi any, act *core.Button) {
-				tv := tvi.(tree.Node).Embed(KiT_TreeView).(*TreeView)
+				tv := tvi.(tree.Node).Embed(KiT_Tree).(*Tree)
 				act.SetInactiveState(tv.IsRootOrField(""))
 			}),
 		}},
@@ -311,15 +311,15 @@ var TreeViewProperties = tree.Properties{
 		{"sep-layer", tree.BlankProp{}},
 		{"LayerSetCurrent", tree.Properties{
 			"label":    "Layer: Set Current",
-			"updatefunc": TreeViewIsLayerFunc,
+			"updatefunc": TreeIsLayerFunc,
 		}},
 		{"LayerToggleLock", tree.Properties{
 			"label":    "Layer: Toggle Lock",
-			"updatefunc": TreeViewIsLayerFunc,
+			"updatefunc": TreeIsLayerFunc,
 		}},
 		{"LayerToggleVis", tree.Properties{
 			"label":    "Layer: Toggle Visible",
-			"updatefunc": TreeViewIsLayerFunc,
+			"updatefunc": TreeIsLayerFunc,
 		}},
 		{"sep-open", tree.BlankProp{}},
 		{"OpenAll", tree.Properties{}},
@@ -327,7 +327,7 @@ var TreeViewProperties = tree.Properties{
 	},
 }
 
-func (tv *TreeView) Style2D() {
+func (tv *Tree) Style2D() {
 	sn := tv.SrcNode
 	tv.Class = ""
 	if sn != nil {
@@ -363,7 +363,7 @@ func (tv *TreeView) Style2D() {
 				tv.Icon = icons.Icon("file-doc") // todo: A = text
 			}
 		}
-		tv.StyleTreeView()
+		tv.StyleTree()
 		tv.LayState.SetFromStyle(&tv.Sty.Layout) // also does reset
 	}
 }

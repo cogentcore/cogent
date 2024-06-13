@@ -157,7 +157,7 @@ func (dv *DebugView) InitTabs() {
 	ctv.SetBuffer(dv.OutputBuffer)
 
 	bv := w.NewTab(DebugTabBreaks)
-	core.AddChild(bv, func(w *views.TableView) {
+	core.AddChild(bv, func(w *views.Table) {
 		w.SetSlice(&dv.State.Breaks)
 		w.OnDoubleClick(func(e events.Event) {
 			idx := w.SelectedIndex
@@ -178,7 +178,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	sv := w.NewTab(DebugTabStack)
-	core.AddChild(sv, func(w *views.TableView) {
+	core.AddChild(sv, func(w *views.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Stack)
 		w.OnDoubleClick(func(e events.Event) {
@@ -191,7 +191,7 @@ func (dv *DebugView) InitTabs() {
 
 	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		tv := w.NewTab(DebugTabTasks)
-		core.AddChild(tv, func(w *views.TableView) {
+		core.AddChild(tv, func(w *views.Table) {
 			w.SetReadOnly(true)
 			w.SetSlice(&dv.State.Tasks)
 			w.OnDoubleClick(func(e events.Event) {
@@ -209,7 +209,7 @@ func (dv *DebugView) InitTabs() {
 	}
 
 	tv := w.NewTab(DebugTabThreads)
-	core.AddChild(tv, func(w *views.TableView) {
+	core.AddChild(tv, func(w *views.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Threads)
 		w.OnDoubleClick(func(e events.Event) {
@@ -226,7 +226,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	vv := w.NewTab(DebugTabVars)
-	core.AddChild(vv, func(w *views.TableView) {
+	core.AddChild(vv, func(w *views.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Vars)
 		w.OnDoubleClick(func(e events.Event) {
@@ -236,7 +236,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	ff := w.NewTab(DebugTabFrames)
-	core.AddChild(ff, func(w *views.TableView) {
+	core.AddChild(ff, func(w *views.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.FindFrames)
 		w.OnDoubleClick(func(e events.Event) {
@@ -249,7 +249,7 @@ func (dv *DebugView) InitTabs() {
 	})
 
 	gv := w.NewTab(DebugTabGlobals)
-	core.AddChild(gv, func(w *views.TableView) {
+	core.AddChild(gv, func(w *views.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
@@ -1000,11 +1000,11 @@ func (vv *VarView) Init() {
 	core.AddChildAt(vv, "splits", func(w *core.Splits) {
 		w.SetSplits(0.3, 0.7)
 		core.AddChild(w, func(w *core.Frame) {
-			core.AddChild(w, func(w *views.TreeView) {
+			core.AddChild(w, func(w *views.Tree) {
 				w.SyncTree(vv.Var)
 				w.OnSelect(func(e events.Event) {
 					if len(w.SelectedNodes) > 0 {
-						sn := w.SelectedNodes[0].AsTreeView().SyncNode
+						sn := w.SelectedNodes[0].AsCoreTree().SyncNode
 						vr, ok := sn.(*cdebug.Variable)
 						if ok {
 							vv.SelectVar = vr
@@ -1026,9 +1026,9 @@ func (vv *VarView) Splits() *core.Splits {
 	return vv.ChildByName("splits", 1).(*core.Splits)
 }
 
-// TreeView returns the main TreeView
-func (vv *VarView) TreeView() *views.TreeView {
-	return vv.Splits().Child(0).AsTree().Child(0).(*views.TreeView)
+// Tree returns the main Tree
+func (vv *VarView) Tree() *views.Tree {
+	return vv.Splits().Child(0).AsTree().Child(0).(*views.Tree)
 }
 
 // Form returns the main Form
@@ -1043,7 +1043,7 @@ func (vv *VarView) MakeToolbar(p *core.Plan) {
 			OnClick(func(e events.Event) {
 				if vv.SelectVar != nil {
 					vv.SelectVar.FollowPtr()
-					tv := vv.TreeView()
+					tv := vv.Tree()
 					tv.SyncTree(vv.Var)
 				}
 			})

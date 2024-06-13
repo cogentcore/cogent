@@ -68,7 +68,7 @@ func (sv *SymbolsView) Init() {
 			s.Grow.Set(1, 1)
 			s.Overflow.Set(styles.OverflowAuto)
 		})
-		core.AddChildAt(w, "syms", func(w *SymTreeView) {
+		core.AddChildAt(w, "syms", func(w *SymTree) {
 			sv.Syms = NewSymNode()
 			sv.Syms.SetName("syms")
 			if scope == SymScopePackage {
@@ -81,7 +81,7 @@ func (sv *SymbolsView) Init() {
 				if len(w.SelectedNodes) == 0 {
 					return
 				}
-				sn := w.SelectedNodes[0].AsTreeView().SyncNode.(*SymNode)
+				sn := w.SelectedNodes[0].AsCoreTree().SyncNode.(*SymNode)
 				if sn != nil {
 					SelectSymbol(sv.Code, sn.Symbol)
 				}
@@ -97,7 +97,7 @@ func (sv *SymbolsView) Config(cv *CodeView, sp SymbolsParams) { // TODO(config):
 
 func (sv *SymbolsView) UpdateSymbols() {
 	scope := sv.SymParams.Scope
-	tv := sv.FindPath("sym-frame/syms").(*SymTreeView)
+	tv := sv.FindPath("sym-frame/syms").(*SymTree)
 	if scope == SymScopePackage {
 		sv.OpenPackage()
 	} else {
@@ -352,20 +352,20 @@ func (sy *SymNode) GetIcon() icons.Icon {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// SymTreeView
+// SymTree
 
-// SymTreeView is a TreeView that knows how to operate on FileNode nodes
-type SymTreeView struct {
-	views.TreeView
+// SymTree is a Tree that knows how to operate on FileNode nodes
+type SymTree struct {
+	views.Tree
 }
 
 // SymNode returns the SrcNode as a *code* SymNode
-func (st *SymTreeView) SymNode() *SymNode {
+func (st *SymTree) SymNode() *SymNode {
 	return st.SyncNode.(*SymNode)
 }
 
-func (st *SymTreeView) Init() {
-	st.TreeView.Init()
+func (st *SymTree) Init() {
+	st.Tree.Init()
 	core.AddChildInit(st, "parts", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Gap.X.Em(0.4)

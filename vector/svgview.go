@@ -673,7 +673,7 @@ func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 	// nw := parent.NewChild(typ, nwnm).(svg.Node) // TODO:
 	// sv.SetSVGName(nw)
 	// sv.VectorView.PaintView().SetProperties(nw)
-	sv.VectorView.UpdateTreeView()
+	sv.VectorView.UpdateTree()
 	// return nw // TODO:
 	return nil
 }

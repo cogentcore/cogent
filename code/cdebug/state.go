@@ -36,7 +36,7 @@ type Thread struct {
 	Line int
 
 	// full path to file
-	FPath string `tableview:"-"`
+	FPath string `table:"-"`
 
 	// the name of the function
 	Func string `width:"80"`
@@ -78,7 +78,7 @@ type Task struct {
 	Line int
 
 	// full path to file
-	FPath string `tableview:"-" tableview:"-"`
+	FPath string `table:"-" table:"-"`
 
 	// the name of the function
 	Func string `width:"80"`
@@ -87,10 +87,10 @@ type Task struct {
 	Thread int `format:"%#x"`
 
 	// where did this task first start running?
-	StartLoc Location `tableview:"-"`
+	StartLoc Location `table:"-"`
 
 	// at what point was this task launched from another task?
-	LaunchLoc Location `tableview:"-"`
+	LaunchLoc Location `table:"-"`
 }
 
 // TaskByID returns the given thread by ID from full list, and index.
@@ -121,7 +121,7 @@ type Location struct {
 	Line int
 
 	// full path to file
-	FPath string `view:"-" tableview:"-"`
+	FPath string `view:"-" table:"-"`
 
 	// the name of the function
 	Func string `width:"80"`
@@ -146,16 +146,16 @@ type Frame struct {
 	Line int
 
 	// full path to file
-	FPath string `tableview:"-" tableview:"-"`
+	FPath string `table:"-" table:"-"`
 
 	// the name of the function
 	Func string `width:"80"`
 
 	// values of the local variables at this frame
-	Vars []*Variable `tableview:"-"`
+	Vars []*Variable `table:"-"`
 
 	// values of the local function args at this frame
-	Args []*Variable `tableview:"-"`
+	Args []*Variable `table:"-"`
 }
 
 // Break describes one breakpoint
@@ -177,7 +177,7 @@ type Break struct {
 	Line int `edit:"-"`
 
 	// full path to file
-	FPath string `edit:"-" view:"-" tableview:"-"`
+	FPath string `edit:"-" view:"-" table:"-"`
 
 	// the name of the function
 	Func string `edit:"-" width:"80"`

@@ -48,7 +48,7 @@ func main() {
 	b := core.NewBody("Cogent Task Manager")
 
 	ts := getTasks(b)
-	tv := views.NewTableView(b)
+	tv := views.NewTable(b)
 	tv.SetReadOnly(true)
 	tv.SetSlice(&ts)
 

@@ -20,21 +20,21 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// NewTabTable creates a tab with a table and a tableview.
+// NewTabTensorTable creates a tab with a tensor table and a tensorcore table.
 // Use tv.Table.Table to get the underlying *table.Table
 // and tv.Table is the table.IndexView onto the table.
 // Use tv.Table.Sequential to update the IndexView to view
 // all of the rows when done updating the Table, and then call br.Update()
-func (br *Browser) NewTabTable(label string) *tensorview.TableView {
+func (br *Browser) NewTabTensorTable(label string) *tensorview.Table {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(1).(*tensorview.TableView)
+		tv := tab.Child(1).(*tensorview.Table)
 		return tv
 	}
 	dt := table.NewTable()
 	tb := core.NewToolbar(tab)
-	tv := tensorview.NewTableView(tab)
+	tv := tensorview.NewTable(tab)
 	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
@@ -45,17 +45,17 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	return tv
 }
 
-// NewTabTableView creates a tab with a slice TableView.
+// NewTabTable creates a tab with a slice Table.
 // Sets the slice if tab already exists
-func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
+func (br *Browser) NewTabTable(label string, slc any) *views.Table {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(0).(*views.TableView)
+		tv := tab.Child(0).(*views.Table)
 		tv.SetSlice(slc)
 		return tv
 	}
-	tv := views.NewTableView(tab)
+	tv := views.NewTable(tab)
 	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect

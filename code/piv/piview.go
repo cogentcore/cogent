@@ -332,11 +332,11 @@ func (pv *PiView) SelectLexRule(rule *lexer.Rule) {
 	lt := pv.LexTree()
 	lt.UnselectAll()
 	lt.FuncDownMeFirst(0, lt.This, func(k tree.Node, level int, d any) bool {
-		lnt := k.Embed(views.KiT_TreeView)
+		lnt := k.Embed(views.KiT_Tree)
 		if lnt == nil {
 			return true
 		}
-		ln := lnt.(*views.TreeView)
+		ln := lnt.(*views.Tree)
 		if ln.SrcNode == rule.This {
 			ln.Select()
 			return false
@@ -474,11 +474,11 @@ func (pv *PiView) SelectParseRule(rule *parser.Rule) {
 	lt := pv.ParseTree()
 	lt.UnselectAll()
 	lt.FuncDownMeFirst(0, lt.This, func(k tree.Node, level int, d any) bool {
-		lnt := k.Embed(views.KiT_TreeView)
+		lnt := k.Embed(views.KiT_Tree)
 		if lnt == nil {
 			return true
 		}
-		ln := lnt.(*views.TreeView)
+		ln := lnt.(*views.Tree)
 		if ln.SrcNode == rule.This {
 			ln.Select()
 			return false
@@ -753,19 +753,19 @@ func (pv *PiView) Splits() *core.Splits {
 	return pv.ChildByName("splits", 4).(*core.Splits)
 }
 
-// LexTree returns the lex rules tree view
-func (pv *PiView) LexTree() *views.TreeView {
-	return pv.Splits().Child(LexRulesIndex).Child(0).(*views.TreeView)
+// LexTree returns the lex rules tree
+func (pv *PiView) LexTree() *views.Tree {
+	return pv.Splits().Child(LexRulesIndex).Child(0).(*views.Tree)
 }
 
-// ParseTree returns the parse rules tree view
-func (pv *PiView) ParseTree() *views.TreeView {
-	return pv.Splits().Child(ParseRulesIndex).Child(0).(*views.TreeView)
+// ParseTree returns the parse rules tree
+func (pv *PiView) ParseTree() *views.Tree {
+	return pv.Splits().Child(ParseRulesIndex).Child(0).(*views.Tree)
 }
 
-// AstTree returns the Ast output tree view
-func (pv *PiView) AstTree() *views.TreeView {
-	return pv.Splits().Child(AstOutIndex).Child(0).(*views.TreeView)
+// AstTree returns the Ast output tree
+func (pv *PiView) AstTree() *views.Tree {
+	return pv.Splits().Child(AstOutIndex).Child(0).(*views.Tree)
 }
 
 // Form returns the Form for editing rules
@@ -868,15 +868,15 @@ func (pv *PiView) ConfigSplits() {
 	mods, update := split.ConfigChildren(config)
 	if mods {
 		lxfr := split.Child(LexRulesIndex).(*core.Frame)
-		lxt := lxfr.NewChild(views.KiT_TreeView, "lex-tree").(*views.TreeView)
+		lxt := lxfr.NewChild(views.KiT_Tree, "lex-tree").(*views.Tree)
 		lxt.SetRootNode(&pv.Parser.Lexer)
 
 		prfr := split.Child(ParseRulesIndex).(*core.Frame)
-		prt := prfr.NewChild(views.KiT_TreeView, "parse-tree").(*views.TreeView)
+		prt := prfr.NewChild(views.KiT_Tree, "parse-tree").(*views.Tree)
 		prt.SetRootNode(&pv.Parser.Parser)
 
 		astfr := split.Child(AstOutIndex).(*core.Frame)
-		astt := astfr.NewChild(views.KiT_TreeView, "ast-tree").(*views.TreeView)
+		astt := astfr.NewChild(views.KiT_Tree, "ast-tree").(*views.Tree)
 		astt.SetRootNode(&fs.Ast)
 
 		pv.TestBuf.SetHiStyle(core.Settings.Colors.HiStyle)
@@ -911,52 +911,52 @@ func (pv *PiView) ConfigSplits() {
 		pv.Form().SetStruct(&pv.Parser.Lexer)
 	}
 
-	pv.LexTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+	pv.LexTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(tree.Node).Embed(views.KiT_TreeView).(*views.TreeView)
+		tvn, _ := data.(tree.Node).Embed(views.KiT_Tree).(*views.Tree)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
-		case int64(views.TreeViewSelected):
+		case int64(views.TreeSelected):
 			pvb.ViewNode(tvn)
-		case int64(views.TreeViewChanged):
+		case int64(views.TreeChanged):
 			pvb.SetChanged()
 		}
 	})
 
-	pv.ParseTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+	pv.ParseTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(tree.Node).Embed(views.KiT_TreeView).(*views.TreeView)
+		tvn, _ := data.(tree.Node).Embed(views.KiT_Tree).(*views.Tree)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
-		case int64(views.TreeViewSelected):
+		case int64(views.TreeSelected):
 			pvb.ViewNode(tvn)
-		case int64(views.TreeViewChanged):
+		case int64(views.TreeChanged):
 			pvb.SetChanged()
 		}
 	})
 
-	pv.AstTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+	pv.AstTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(tree.Node).Embed(views.KiT_TreeView).(*views.TreeView)
+		tvn, _ := data.(tree.Node).Embed(views.KiT_Tree).(*views.Tree)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
-		case int64(views.TreeViewSelected):
+		case int64(views.TreeSelected):
 			pvb.ViewNode(tvn)
-		case int64(views.TreeViewChanged):
+		case int64(views.TreeChanged):
 			pvb.SetChanged()
 		}
 	})
 
 }
 
-// ViewNode sets the Form view to src node for given treeview
-func (pv *PiView) ViewNode(tv *views.TreeView) {
+// ViewNode sets the Form view to src node for given tree
+func (pv *PiView) ViewNode(tv *views.Tree) {
 	sv := pv.Form()
 	if sv != nil {
 		sv.SetStruct(tv.SrcNode)

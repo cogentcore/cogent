@@ -59,7 +59,7 @@ func (a *App) Init() {
 	})
 
 	core.AddChildAt(a, "splits", func(w *core.Splits) {
-		core.AddChildAt(w, "mbox", func(w *views.TreeView) {
+		core.AddChildAt(w, "mbox", func(w *views.Tree) {
 			w.SetText("Mailboxes")
 		})
 		core.AddChildAt(w, "list", func(w *core.Frame) {

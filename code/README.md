@@ -43,7 +43,7 @@ In addition to Issues shown on github, some important features to be added longe
 * line number too conservative in not rendering bottom
 * don't render top text, line number if out of range
 * always display cursor when typing!
-* drag-n-drop tableview
+* drag-n-drop table
 
 * color highlighting for diff output in commandshell!
 * outbuf use textview markup in addition to link formatting and other formatting.  tried but failed
@@ -58,7 +58,7 @@ In addition to Issues shown on github, some important features to be added longe
 * filepicker global priority key shortcuts
 * editor rendering overflow
 * filetree --get rid of empty upper level or not?
-* list / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
+* list / table should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
 
 
 # DONE:

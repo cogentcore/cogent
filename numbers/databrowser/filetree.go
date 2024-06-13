@@ -22,7 +22,7 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// FileNode is Code version of FileNode for FileTree view
+// FileNode is Code version of FileNode for FileTree
 type FileNode struct {
 	filetree.Node
 }
@@ -61,7 +61,7 @@ func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 	switch {
 	case fn.Info.Cat == fileinfo.Data:
 		df := dirs.DirAndFile(string(fn.FPath))
-		tv := br.NewTabTable(df)
+		tv := br.NewTabTensorTable(df)
 		dt := tv.Table.Table
 		err := dt.OpenCSV(fn.FPath, table.Tab) // todo: need more flexible data handling mode
 		tv.Table.Sequential()

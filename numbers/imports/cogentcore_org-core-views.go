@@ -20,7 +20,7 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/views/views"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"AsTreeView":              reflect.ValueOf(views.AsTreeView),
+		"AsTree":              reflect.ValueOf(views.AsTree),
 		"CallFunc":                reflect.ValueOf(views.CallFunc),
 		"ColorButtonType":         reflect.ValueOf(&views.ColorButtonType).Elem(),
 		"ColorMapButtonType":      reflect.ValueOf(&views.ColorMapButtonType).Elem(),
@@ -69,12 +69,12 @@ func init() {
 		"NewSoloFuncButton":       reflect.ValueOf(views.NewSoloFuncButton),
 		"NewStructButton":         reflect.ValueOf(views.NewStructButton),
 		"NewForm":           reflect.ValueOf(views.NewForm),
-		"NewTableView":            reflect.ValueOf(views.NewTableView),
+		"NewTable":            reflect.ValueOf(views.NewTable),
 		"NewTimeInput":            reflect.ValueOf(views.NewTimeInput),
 		"NewTimePicker":           reflect.ValueOf(views.NewTimePicker),
 		"NewTreeButton":           reflect.ValueOf(views.NewTreeButton),
-		"NewTreeView":             reflect.ValueOf(views.NewTreeView),
-		"NewTreeViewFrame":        reflect.ValueOf(views.NewTreeViewFrame),
+		"NewTree":             reflect.ValueOf(views.NewTree),
+		"NewTreeFrame":        reflect.ValueOf(views.NewTreeFrame),
 		"NewTypeChooser":          reflect.ValueOf(views.NewTypeChooser),
 		"NoSentenceCaseFor":       reflect.ValueOf(&views.NoSentenceCaseFor).Elem(),
 		"NoSentenceCaseForType":   reflect.ValueOf(views.NoSentenceCaseForType),
@@ -92,13 +92,13 @@ func init() {
 		"StructButtonType":        reflect.ValueOf(&views.StructButtonType).Elem(),
 		"StructSliceIndexByValue": reflect.ValueOf(views.StructSliceIndexByValue),
 		"FormType":          reflect.ValueOf(&views.FormType).Elem(),
-		"TableViewType":           reflect.ValueOf(&views.TableViewType).Elem(),
+		"TableType":           reflect.ValueOf(&views.TableType).Elem(),
 		"TimeInputType":           reflect.ValueOf(&views.TimeInputType).Elem(),
 		"TimePickerType":          reflect.ValueOf(&views.TimePickerType).Elem(),
 		"TreeButtonType":          reflect.ValueOf(&views.TreeButtonType).Elem(),
-		"TreeViewPageSteps":       reflect.ValueOf(&views.TreeViewPageSteps).Elem(),
-		"TreeViewTempMovedTag":    reflect.ValueOf(constant.MakeFromLiteral("\"_\\\\&MOVED\\\\&\"", token.STRING, 0)),
-		"TreeViewType":            reflect.ValueOf(&views.TreeViewType).Elem(),
+		"TreePageSteps":       reflect.ValueOf(&views.TreePageSteps).Elem(),
+		"TreeTempMovedTag":    reflect.ValueOf(constant.MakeFromLiteral("\"_\\\\&MOVED\\\\&\"", token.STRING, 0)),
+		"TreeType":            reflect.ValueOf(&views.TreeType).Elem(),
 		"TypeChooserType":         reflect.ValueOf(&views.TypeChooserType).Elem(),
 
 		// type definitions
@@ -129,18 +129,18 @@ func init() {
 		"Lister":        reflect.ValueOf((*views.Lister)(nil)),
 		"StructButton":       reflect.ValueOf((*views.StructButton)(nil)),
 		"Form":         reflect.ValueOf((*views.Form)(nil)),
-		"TableView":          reflect.ValueOf((*views.TableView)(nil)),
-		"TableViewStyleFunc": reflect.ValueOf((*views.TableViewStyleFunc)(nil)),
+		"Table":          reflect.ValueOf((*views.Table)(nil)),
+		"TableStyleFunc": reflect.ValueOf((*views.TableStyleFunc)(nil)),
 		"TimeInput":          reflect.ValueOf((*views.TimeInput)(nil)),
 		"TimePicker":         reflect.ValueOf((*views.TimePicker)(nil)),
 		"TreeButton":         reflect.ValueOf((*views.TreeButton)(nil)),
-		"TreeView":           reflect.ValueOf((*views.TreeView)(nil)),
-		"TreeViewer":         reflect.ValueOf((*views.TreeViewer)(nil)),
+		"Tree":           reflect.ValueOf((*views.Tree)(nil)),
+		"Treer":         reflect.ValueOf((*views.Treer)(nil)),
 		"TypeChooser":        reflect.ValueOf((*views.TypeChooser)(nil)),
 
 		// interface wrapper definitions
 		"_Lister": reflect.ValueOf((*_cogentcore_org_core_views_Lister)(nil)),
-		"_TreeViewer":  reflect.ValueOf((*_cogentcore_org_core_views_TreeViewer)(nil)),
+		"_Treer":  reflect.ValueOf((*_cogentcore_org_core_views_Treer)(nil)),
 	}
 }
 
@@ -242,12 +242,10 @@ func (W _cogentcore_org_core_views_Lister) UpdateSliceSize() int {
 	return W.WUpdateSliceSize()
 }
 
-// _cogentcore_org_core_views_TreeViewer is an interface wrapper for TreeViewer type
-type _cogentcore_org_core_views_TreeViewer struct {
+// _cogentcore_org_core_views_Treer is an interface wrapper for Treer type
+type _cogentcore_org_core_views_Treer struct {
 	IValue             interface{}
 	WAddChildNode      func()
-	WAsTree            func() *tree.NodeBase
-	WAsTreeView        func() *views.TreeView
 	WAsWidget          func() *core.WidgetBase
 	WBaseType          func() *types.Type
 	WCanOpen           func() bool
@@ -294,144 +292,139 @@ type _cogentcore_org_core_views_TreeViewer struct {
 	WWidgetTooltip     func(pos image.Point) (string, image.Point)
 }
 
-func (W _cogentcore_org_core_views_TreeViewer) AddChildNode() {
+func (W _cogentcore_org_core_views_Treer) AddChildNode() {
 	W.WAddChildNode()
 }
-func (W _cogentcore_org_core_views_TreeViewer) AsTree() *tree.NodeBase {
-	return W.WAsTree()
-}
-func (W _cogentcore_org_core_views_TreeViewer) AsTreeView() *views.TreeView {
-	return W.WAsTreeView()
-}
-func (W _cogentcore_org_core_views_TreeViewer) AsWidget() *core.WidgetBase {
+
+func (W _cogentcore_org_core_views_Treer) AsWidget() *core.WidgetBase {
 	return W.WAsWidget()
 }
-func (W _cogentcore_org_core_views_TreeViewer) BaseType() *types.Type {
+func (W _cogentcore_org_core_views_Treer) BaseType() *types.Type {
 	return W.WBaseType()
 }
-func (W _cogentcore_org_core_views_TreeViewer) CanOpen() bool {
+func (W _cogentcore_org_core_views_Treer) CanOpen() bool {
 	return W.WCanOpen()
 }
-func (W _cogentcore_org_core_views_TreeViewer) ChildBackground(child core.Widget) image.Image {
+func (W _cogentcore_org_core_views_Treer) ChildBackground(child core.Widget) image.Image {
 	return W.WChildBackground(child)
 }
-func (W _cogentcore_org_core_views_TreeViewer) ContextMenuPos(e events.Event) image.Point {
+func (W _cogentcore_org_core_views_Treer) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
 }
-func (W _cogentcore_org_core_views_TreeViewer) Copy(reset bool) {
+func (W _cogentcore_org_core_views_Treer) Copy(reset bool) {
 	W.WCopy(reset)
 }
-func (W _cogentcore_org_core_views_TreeViewer) CopyFieldsFrom(from tree.Node) {
+func (W _cogentcore_org_core_views_Treer) CopyFieldsFrom(from tree.Node) {
 	W.WCopyFieldsFrom(from)
 }
-func (W _cogentcore_org_core_views_TreeViewer) Cut() {
+func (W _cogentcore_org_core_views_Treer) Cut() {
 	W.WCut()
 }
-func (W _cogentcore_org_core_views_TreeViewer) DeleteNode() {
+func (W _cogentcore_org_core_views_Treer) DeleteNode() {
 	W.WDeleteNode()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Destroy() {
+func (W _cogentcore_org_core_views_Treer) Destroy() {
 	W.WDestroy()
 }
-func (W _cogentcore_org_core_views_TreeViewer) DirectRenderDraw(drw system.Drawer, idx int, flipY bool) {
+func (W _cogentcore_org_core_views_Treer) DirectRenderDraw(drw system.Drawer, idx int, flipY bool) {
 	W.WDirectRenderDraw(drw, idx, flipY)
 }
-func (W _cogentcore_org_core_views_TreeViewer) DirectRenderImage(drw system.Drawer, idx int) {
+func (W _cogentcore_org_core_views_Treer) DirectRenderImage(drw system.Drawer, idx int) {
 	W.WDirectRenderImage(drw, idx)
 }
-func (W _cogentcore_org_core_views_TreeViewer) DragDrop(e events.Event) {
+func (W _cogentcore_org_core_views_Treer) DragDrop(e events.Event) {
 	W.WDragDrop(e)
 }
-func (W _cogentcore_org_core_views_TreeViewer) DragStart(e events.Event) {
+func (W _cogentcore_org_core_views_Treer) DragStart(e events.Event) {
 	W.WDragStart(e)
 }
-func (W _cogentcore_org_core_views_TreeViewer) DropDeleteSource(e events.Event) {
+func (W _cogentcore_org_core_views_Treer) DropDeleteSource(e events.Event) {
 	W.WDropDeleteSource(e)
 }
-func (W _cogentcore_org_core_views_TreeViewer) DropFinalize(de *events.DragDrop) {
+func (W _cogentcore_org_core_views_Treer) DropFinalize(de *events.DragDrop) {
 	W.WDropFinalize(de)
 }
-func (W _cogentcore_org_core_views_TreeViewer) Duplicate() {
+func (W _cogentcore_org_core_views_Treer) Duplicate() {
 	W.WDuplicate()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Init() {
+func (W _cogentcore_org_core_views_Treer) Init() {
 	W.WInit()
 }
-func (W _cogentcore_org_core_views_TreeViewer) InsertAfter() {
+func (W _cogentcore_org_core_views_Treer) InsertAfter() {
 	W.WInsertAfter()
 }
-func (W _cogentcore_org_core_views_TreeViewer) InsertBefore() {
+func (W _cogentcore_org_core_views_Treer) InsertBefore() {
 	W.WInsertBefore()
 }
-func (W _cogentcore_org_core_views_TreeViewer) IsVisible() bool {
+func (W _cogentcore_org_core_views_Treer) IsVisible() bool {
 	return W.WIsVisible()
 }
-func (W _cogentcore_org_core_views_TreeViewer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, fun func()) {
+func (W _cogentcore_org_core_views_Treer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, fun func()) {
 	W.WMakePasteMenu(m, md, fun)
 }
-func (W _cogentcore_org_core_views_TreeViewer) MimeData(md *mimedata.Mimes) {
+func (W _cogentcore_org_core_views_Treer) MimeData(md *mimedata.Mimes) {
 	W.WMimeData(md)
 }
-func (W _cogentcore_org_core_views_TreeViewer) New() tree.Node {
+func (W _cogentcore_org_core_views_Treer) New() tree.Node {
 	return W.WNew()
 }
-func (W _cogentcore_org_core_views_TreeViewer) NodeType() *types.Type {
+func (W _cogentcore_org_core_views_Treer) NodeType() *types.Type {
 	return W.WNodeType()
 }
-func (W _cogentcore_org_core_views_TreeViewer) NodeWalkDown(fun func(n tree.Node) bool) {
+func (W _cogentcore_org_core_views_Treer) NodeWalkDown(fun func(n tree.Node) bool) {
 	W.WNodeWalkDown(fun)
 }
-func (W _cogentcore_org_core_views_TreeViewer) OnAdd() {
+func (W _cogentcore_org_core_views_Treer) OnAdd() {
 	W.WOnAdd()
 }
-func (W _cogentcore_org_core_views_TreeViewer) OnChildAdded(child tree.Node) {
+func (W _cogentcore_org_core_views_Treer) OnChildAdded(child tree.Node) {
 	W.WOnChildAdded(child)
 }
-func (W _cogentcore_org_core_views_TreeViewer) OnClose() {
+func (W _cogentcore_org_core_views_Treer) OnClose() {
 	W.WOnClose()
 }
-func (W _cogentcore_org_core_views_TreeViewer) OnDoubleClick(e events.Event) {
+func (W _cogentcore_org_core_views_Treer) OnDoubleClick(e events.Event) {
 	W.WOnDoubleClick(e)
 }
-func (W _cogentcore_org_core_views_TreeViewer) OnOpen() {
+func (W _cogentcore_org_core_views_Treer) OnOpen() {
 	W.WOnOpen()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Paste() {
+func (W _cogentcore_org_core_views_Treer) Paste() {
 	W.WPaste()
 }
-func (W _cogentcore_org_core_views_TreeViewer) PlanName() string {
+func (W _cogentcore_org_core_views_Treer) PlanName() string {
 	return W.WPlanName()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Position() {
+func (W _cogentcore_org_core_views_Treer) Position() {
 	W.WPosition()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Render() {
+func (W _cogentcore_org_core_views_Treer) Render() {
 	W.WRender()
 }
-func (W _cogentcore_org_core_views_TreeViewer) RenderWidget() {
+func (W _cogentcore_org_core_views_Treer) RenderWidget() {
 	W.WRenderWidget()
 }
-func (W _cogentcore_org_core_views_TreeViewer) ScenePos() {
+func (W _cogentcore_org_core_views_Treer) ScenePos() {
 	W.WScenePos()
 }
-func (W _cogentcore_org_core_views_TreeViewer) ShowContextMenu(e events.Event) {
+func (W _cogentcore_org_core_views_Treer) ShowContextMenu(e events.Event) {
 	W.WShowContextMenu(e)
 }
-func (W _cogentcore_org_core_views_TreeViewer) SizeDown(iter int) bool {
+func (W _cogentcore_org_core_views_Treer) SizeDown(iter int) bool {
 	return W.WSizeDown(iter)
 }
-func (W _cogentcore_org_core_views_TreeViewer) SizeFinal() {
+func (W _cogentcore_org_core_views_Treer) SizeFinal() {
 	W.WSizeFinal()
 }
-func (W _cogentcore_org_core_views_TreeViewer) SizeUp() {
+func (W _cogentcore_org_core_views_Treer) SizeUp() {
 	W.WSizeUp()
 }
-func (W _cogentcore_org_core_views_TreeViewer) Style() {
+func (W _cogentcore_org_core_views_Treer) Style() {
 	W.WStyle()
 }
-func (W _cogentcore_org_core_views_TreeViewer) UpdateBranchIcons() {
+func (W _cogentcore_org_core_views_Treer) UpdateBranchIcons() {
 	W.WUpdateBranchIcons()
 }
-func (W _cogentcore_org_core_views_TreeViewer) WidgetTooltip(pos image.Point) (string, image.Point) {
+func (W _cogentcore_org_core_views_Treer) WidgetTooltip(pos image.Point) (string, image.Point) {
 	return W.WWidgetTooltip(pos)
 }

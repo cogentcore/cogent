@@ -93,10 +93,10 @@ func (t *VarView) New() tree.Node { return &VarView{} }
 func (t *VarView) SetDbgView(v *DebugView) *VarView { t.DbgView = v; return t }
 
 // FileNodeType is the [types.Type] for [FileNode]
-var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree view", Methods: []types.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
+var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree", Methods: []types.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})
 
 // NewFileNode returns a new [FileNode] with the given optional parent:
-// FileNode is Code version of FileNode for FileTree view
+// FileNode is Code version of FileNode for FileTree
 func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[*FileNode](parent...) }
 
 // NodeType returns the [*types.Type] of [FileNode]
@@ -133,7 +133,7 @@ func (t *FindView) SetRe(v *regexp.Regexp) *FindView { t.Re = v; return t }
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Files", Doc: "file picker settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file picker settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Fields: []types.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileSettings", IDName: "file-settings", Doc: "FileSettings contains file picker settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Fields: []types.Field{{Name: "DirsOnTop", Doc: "if true, then all directories are placed at the top of the tree -- otherwise everything is alpha sorted"}}})
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.ProjectSettings", IDName: "project-settings", Doc: "ProjectSettings are the settings for saving for a project. This IS the project file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Open", Doc: "Open open from file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save save to file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}}, Fields: []types.Field{{Name: "Files", Doc: "file picker settings"}, {Name: "Editor", Doc: "editor settings"}, {Name: "SplitName", Doc: "current named-split config in use for configuring the splitters"}, {Name: "MainLang", Doc: "the language associated with the most frequently encountered file\nextension in the file tree -- can be manually set here as well"}, {Name: "VersionControl", Doc: "the type of version control system used in this project (git, svn, etc).\nfilters commands available"}, {Name: "ProjectFilename", Doc: "current project filename for saving / loading specific Code\nconfiguration information in a .code file (optional)"}, {Name: "ProjectRoot", Doc: "root directory for the project. all projects must be organized within\na top-level root directory, with all the files therein constituting\nthe scope of the project. By default it is the path for ProjectFilename"}, {Name: "GoMod", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"}, {Name: "BuildCmds", Doc: "command(s) to run for main Build button"}, {Name: "BuildDir", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"}, {Name: "BuildTarg", Doc: "build target for main Build button, if relevant for your  BuildCmds"}, {Name: "RunExec", Doc: "executable to run for this project via main Run button -- called by standard Run Project command"}, {Name: "RunCmds", Doc: "command(s) to run for main Run button (typically Run Project)"}, {Name: "Debug", Doc: "custom debugger parameters for this project"}, {Name: "Find", Doc: "saved find params"}, {Name: "Symbols", Doc: "saved structure params"}, {Name: "Dirs", Doc: "directory properties"}, {Name: "Register", Doc: "last register used"}, {Name: "Splits", Doc: "current splitter splits"}}})
 
@@ -233,18 +233,18 @@ func (t *SymNode) New() tree.Node { return &SymNode{} }
 // the symbol
 func (t *SymNode) SetSymbol(v syms.Symbol) *SymNode { t.Symbol = v; return t }
 
-// SymTreeViewType is the [types.Type] for [SymTreeView]
-var SymTreeViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymTreeView", IDName: "sym-tree-view", Doc: "SymTreeView is a TreeView that knows how to operate on FileNode nodes", Embeds: []types.Field{{Name: "TreeView"}}, Instance: &SymTreeView{}})
+// SymTreeType is the [types.Type] for [SymTree]
+var SymTreeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymTree", IDName: "sym-tree", Doc: "SymTree is a Tree that knows how to operate on FileNode nodes", Embeds: []types.Field{{Name: "Tree"}}, Instance: &SymTree{}})
 
-// NewSymTreeView returns a new [SymTreeView] with the given optional parent:
-// SymTreeView is a TreeView that knows how to operate on FileNode nodes
-func NewSymTreeView(parent ...tree.Node) *SymTreeView { return tree.New[*SymTreeView](parent...) }
+// NewSymTree returns a new [SymTree] with the given optional parent:
+// SymTree is a Tree that knows how to operate on FileNode nodes
+func NewSymTree(parent ...tree.Node) *SymTree { return tree.New[*SymTree](parent...) }
 
-// NodeType returns the [*types.Type] of [SymTreeView]
-func (t *SymTreeView) NodeType() *types.Type { return SymTreeViewType }
+// NodeType returns the [*types.Type] of [SymTree]
+func (t *SymTree) NodeType() *types.Type { return SymTreeType }
 
-// New returns a new [*SymTreeView] value
-func (t *SymTreeView) New() tree.Node { return &SymTreeView{} }
+// New returns a new [*SymTree] value
+func (t *SymTree) New() tree.Node { return &SymTree{} }
 
 // TextEditorType is the [types.Type] for [TextEditor]
 var TextEditorType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.TextEditor", IDName: "text-editor", Doc: "TextEditor is the Code-specific version of the TextEditor, with support for\nsetting / clearing breakpoints, etc", Embeds: []types.Field{{Name: "Editor"}}, Fields: []types.Field{{Name: "Code"}}, Instance: &TextEditor{}})

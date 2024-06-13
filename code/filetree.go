@@ -19,7 +19,7 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// FileNode is Code version of FileNode for FileTree view
+// FileNode is Code version of FileNode for FileTree
 type FileNode struct {
 	filetree.Node
 }

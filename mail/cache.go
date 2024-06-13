@@ -63,7 +63,7 @@ func (a *App) CacheMessages() error {
 	if a.IMAPClient == nil {
 		a.IMAPClient = map[string]*imapclient.Client{}
 	}
-	mbox := a.FindPath("splits/mbox").(*views.TreeView)
+	mbox := a.FindPath("splits/mbox").(*views.Tree)
 	mbox.AsyncLock()
 	mbox.DeleteChildren()
 	mbox.AsyncUnlock()
@@ -122,13 +122,13 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	bemail := FilenameBase32(email)
 
 	a.AsyncLock()
-	mbox := a.FindPath("splits/mbox").(*views.TreeView)
+	mbox := a.FindPath("splits/mbox").(*views.Tree)
 	embox := mbox.ChildByName(bemail)
 	if embox == nil {
-		embox = views.NewTreeView(mbox).SetText(email) // TODO(config)
+		embox = views.NewTree(mbox).SetText(email) // TODO(config)
 		embox.AsTree().SetName(bemail)
 	}
-	views.NewTreeView(embox).SetText(mailbox).OnClick(func(e events.Event) {
+	views.NewTree(embox).SetText(mailbox).OnClick(func(e events.Event) {
 		a.CurrentMailbox = mailbox
 		a.UpdateMessageList()
 	})

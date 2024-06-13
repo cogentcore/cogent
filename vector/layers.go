@@ -90,7 +90,7 @@ func (vv *VectorView) FirstLayerIndex() int {
 	return min(1, len(sv.Root().Children))
 }
 
-func (vv *VectorView) LayerViewSigs(lyv *views.TableView) {
+func (vv *VectorView) LayerViewSigs(lyv *views.Table) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
 	// lyv.ViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {

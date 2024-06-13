@@ -222,14 +222,14 @@ func (pv *PaintView) Init() {
 				// })
 			})
 
-			core.AddChild(w, func(w *views.TableView) { // "stroke-grad"
+			core.AddChild(w, func(w *views.Table) { // "stroke-grad"
 				// sg.SetProp("index", true)
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
 				w.SetSlice(&pv.VectorView.EditState.Gradients)
 				// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if sig == int64(core.WidgetSelected) {
-				// 		svv, _ := send.(*views.TableView)
+				// 		svv, _ := send.(*views.Table)
 				// 		if svv.SelectedIndex >= 0 {
 				// 			pv.StrokeStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 				// 			pv.VectorView.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
@@ -302,14 +302,14 @@ func (pv *PaintView) Init() {
 				// })
 			})
 
-			core.AddChild(w, func(w *views.TableView) { // "fill-grad"
+			core.AddChild(w, func(w *views.Table) { // "fill-grad"
 				// sg.SetProp("index", true)
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
 				w.SetSlice(&pv.VectorView.EditState.Gradients)
 				// fg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	if sig == int64(core.WidgetSelected) {
-				// 		svv, _ := send.(*views.TableView)
+				// 		svv, _ := send.(*views.Table)
 				// 		if svv.SelectedIndex >= 0 {
 				// 			pv.FillStops = pv.VectorView.EditState.Gradients[svv.SelectedIndex].Name
 				// 			pv.VectorView.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
@@ -318,7 +318,7 @@ func (pv *PaintView) Init() {
 				// })
 				// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-				// 	// svv, _ := send.(*views.TableView)
+				// 	// svv, _ := send.(*views.Table)
 				// 	if sig == int64(views.ListDeleted) { // not clear what we can do here
 				// 	} else {
 				// 		pv.VectorView.UpdateGradients()
@@ -326,7 +326,7 @@ func (pv *PaintView) Init() {
 				// })
 				// fg.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-				// 	// svv, _ := send.(*views.TableView)
+				// 	// svv, _ := send.(*views.Table)
 				// 	pv.VectorView.UpdateGradients()
 				// })
 			})
@@ -629,7 +629,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			ss.SetFullReRender()
 		}
 		ss.StackTop = 2
-		sg := ss.ChildByName("stroke-grad", 1).(*views.TableView)
+		sg := ss.ChildByName("stroke-grad", 1).(*views.Table)
 		sg.SetSlice(grl)
 		pv.SelectStrokeGrad()
 	default:
@@ -703,7 +703,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 			fs.SetFullReRender()
 		}
 		fs.StackTop = 2
-		fg := fs.ChildByName("fill-grad", 1).(*views.TableView)
+		fg := fs.ChildByName("fill-grad", 1).(*views.Table)
 		if fg.Slice != grl {
 			pv.SetFullReRender()
 		}
@@ -777,7 +777,7 @@ func (pv *PaintView) SelectStrokeGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	ss := pv.StrokeStack()
-	sg := ss.ChildByName("stroke-grad", 1).(*views.TableView)
+	sg := ss.ChildByName("stroke-grad", 1).(*views.Table)
 	sg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.StrokeStops {
@@ -791,7 +791,7 @@ func (pv *PaintView) SelectFillGrad() {
 	es := &pv.VectorView.EditState
 	grl := &es.Gradients
 	fs := pv.FillStack()
-	fg := fs.ChildByName("fill-grad", 1).(*views.TableView)
+	fg := fs.ChildByName("fill-grad", 1).(*views.Table)
 	fg.UnselectAllIndexes()
 	for i, g := range *grl {
 		if g.Name == pv.FillStops {

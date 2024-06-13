@@ -60,7 +60,7 @@ func main() { // TODO(config)
 	leftFrame.Styler(func(s *styles.Style) { s.Direction = styles.Column })
 
 	// errors.Log(jsonx.OpenFS(root, rootJson, jsonName))
-	// views.NewTableView(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
+	// views.NewTable(leftFrame).SetSlice(&root.Children).SetReadOnly(true)
 
 	newFrame := core.NewFrame(leftFrame)
 	newFrame.Styler(func(s *styles.Style) {
@@ -71,11 +71,11 @@ func main() { // TODO(config)
 	})
 
 	core.NewButton(newFrame).SetText("Run selected module").OnClick(func(e events.Event) {
-		// model := Models[tableView.SelectedIndex]
+		// model := Models[table.SelectedIndex]
 		// cmd.RunArgs("ollama", "run", model.Name)//not need
 	})
 	core.NewButton(newFrame).SetText("Stop selected module").OnClick(func(e events.Event) {
-		// model := Models[tableView.SelectedIndex]
+		// model := Models[table.SelectedIndex]
 		// cmd.RunArgs("ollama", "stop",model.Name)//not need
 	})
 
@@ -167,7 +167,7 @@ func main() { // TODO(config)
 		history.Update()
 
 		go func() {
-			// model := Models[tableView.SelectedIndex]
+			// model := Models[table.SelectedIndex]
 			resp, err := NewRequest(promptString, structs.Params{
 				// ApiModel: model.Name,
 				ApiModel:    "gemma:2b",
