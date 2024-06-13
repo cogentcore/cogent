@@ -143,9 +143,9 @@ func (vv *VectorView) Init() {
 	// 	if tvn.SrcNode.HasChildren() {
 	// 		return
 	// 	}
-	// 	views.StructViewDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
+	// 	views.FormDialog(gvv.Viewport, tvn.SrcNode, views.DlgOpts{Title: "SVG Element View"}, nil, nil)
 	// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
-	// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_StructView, true).(*views.StructView)
+	// 	// 		stv := ggv.RecycleTab("Obj", views.KiT_Form, true).(*views.Form)
 	// 	// 		stv.SetStruct(tvn.SrcNode)
 	// })
 
@@ -210,7 +210,7 @@ func (vv *VectorView) PromptPhysSize() { //types:add
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
 	d := core.NewBody().AddTitle("SVG physical size")
-	views.NewStructView(d).SetStruct(sz)
+	views.NewForm(d).SetStruct(sz)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
@@ -646,7 +646,7 @@ func (vv *VectorView) ConfigTabs() {
 	NewAlignView(at).SetVectorView(vv)
 	vv.EditState.Text.Defaults()
 	tt := vv.RecycleTab("Text", false)
-	views.NewStructView(tt).SetStruct(&vv.EditState.Text)
+	views.NewForm(tt).SetStruct(&vv.EditState.Text)
 }
 
 func (vv *VectorView) PaintView() *PaintView {
@@ -693,7 +693,7 @@ func (vv *VectorView) UpdateTabs() {
 	// 	txt, istxt := fsel.(*svg.Text)
 	// 	if istxt {
 	// 		es.Text.SetFromNode(txt)
-	// 		txv := vv.Tab("Text").(*views.StructView)
+	// 		txv := vv.Tab("Text").(*views.Form)
 	// 		txv.UpdateFields()
 	// 		// todo: only show text toolbar on double-click
 	// 		// gv.SetModalText()

@@ -71,7 +71,7 @@ func (a *App) Init() {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
-			core.AddChildAt(w, "msv", func(w *views.StructView) {
+			core.AddChildAt(w, "msv", func(w *views.Form) {
 				w.SetReadOnly(true)
 			})
 			core.AddChildAt(w, "mb", func(w *core.Frame) {

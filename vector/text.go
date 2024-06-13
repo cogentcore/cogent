@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/views"
 )
 
-// TextStyle is text styling info -- using StructView to do text editor
+// TextStyle is text styling info -- using Form to do text editor
 type TextStyle struct {
 
 	// current text to edit

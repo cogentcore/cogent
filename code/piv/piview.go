@@ -38,7 +38,7 @@ import (
 const (
 	LexRulesIndex = iota
 	ParseRulesIndex
-	StructViewIndex
+	FormIndex
 	AstOutIndex
 	MainTabsIndex
 )
@@ -360,7 +360,7 @@ func (pv *PiView) UpdateLexBuf() {
 
 // EditPassTwo shows the PassTwo settings to edit -- does nest depth and finds the EOS end-of-statements
 func (pv *PiView) EditPassTwo() {
-	sv := pv.StructView()
+	sv := pv.Form()
 	if sv != nil {
 		sv.SetStruct(&pv.Parser.PassTwo)
 	}
@@ -384,7 +384,7 @@ func (pv *PiView) PassTwo() {
 
 // EditTrace shows the parser.Trace options for detailed tracing output
 func (pv *PiView) EditTrace() {
-	sv := pv.StructView()
+	sv := pv.Form()
 	if sv != nil {
 		fs := &pv.FileState
 		sv.SetStruct(&fs.ParseState.Trace)
@@ -502,7 +502,7 @@ func (pv *PiView) UpdateParseBuf() {
 
 // ViewParseState
 func (pv *PiView) ViewParseState() {
-	sv := pv.StructView()
+	sv := pv.Form()
 	if sv != nil {
 		sv.SetStruct(&pv.FileState.ParseState)
 	}
@@ -768,9 +768,9 @@ func (pv *PiView) AstTree() *views.TreeView {
 	return pv.Splits().Child(AstOutIndex).Child(0).(*views.TreeView)
 }
 
-// StructView returns the StructView for editing rules
-func (pv *PiView) StructView() *views.StructView {
-	return pv.Splits().Child(StructViewIndex).(*views.StructView)
+// Form returns the Form for editing rules
+func (pv *PiView) Form() *views.Form {
+	return pv.Splits().Child(FormIndex).(*views.Form)
 }
 
 // MainTabs returns the main TabView
@@ -828,7 +828,7 @@ func (pv *PiView) SplitsConfig() tree.Config {
 	config := tree.Config{}
 	config.Add(core.FrameType, "lex-tree-fr")
 	config.Add(core.FrameType, "parse-tree-fr")
-	config.Add(views.KiT_StructView, "struct-view")
+	config.Add(views.KiT_Form, "form")
 	config.Add(core.FrameType, "ast-tree-fr")
 	config.Add(core.KiT_TabView, "main-tabs")
 	return config
@@ -908,7 +908,7 @@ func (pv *PiView) ConfigSplits() {
 		pv.ParseTree().Open()
 		pv.AstTree().SetRootNode(&fs.Ast)
 		pv.AstTree().Open()
-		pv.StructView().SetStruct(&pv.Parser.Lexer)
+		pv.Form().SetStruct(&pv.Parser.Lexer)
 	}
 
 	pv.LexTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -955,9 +955,9 @@ func (pv *PiView) ConfigSplits() {
 
 }
 
-// ViewNode sets the StructView view to src node for given treeview
+// ViewNode sets the Form view to src node for given treeview
 func (pv *PiView) ViewNode(tv *views.TreeView) {
-	sv := pv.StructView()
+	sv := pv.Form()
 	if sv != nil {
 		sv.SetStruct(tv.SrcNode)
 	}

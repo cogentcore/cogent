@@ -15,14 +15,14 @@ import (
 )
 
 // ProjectSettingsEditor opens a view of project settings,
-// returns structview if not already open
-func ProjectSettingsEditor(pf *ProjectSettings) *views.StructView {
+// returns form if not already open
+func ProjectSettingsEditor(pf *ProjectSettings) *views.Form {
 	if core.RecycleMainWindow(pf) {
 		return nil
 	}
 	d := core.NewBody().SetTitle("Code project settings").SetData(pf)
 	core.NewText(d).SetText("Settings are saved in the project .code file, along with other current state (open directories, splitter settings, etc). Do Save All or Save Project to save.")
-	tv := views.NewStructView(d).SetStruct(pf)
+	tv := views.NewForm(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
 		pf.Update()
 		core.ErrorSnackbar(d, pf.Save(pf.ProjectFilename), "Error saving "+string(pf.ProjectFilename)+" settings")
@@ -32,14 +32,14 @@ func ProjectSettingsEditor(pf *ProjectSettings) *views.StructView {
 }
 
 // DebugSettingsEditor opens a view of project Debug settings,
-// returns structview if not already open
-func DebugSettingsEditor(pf *cdebug.Params) *views.StructView {
+// returns form if not already open
+func DebugSettingsEditor(pf *cdebug.Params) *views.Form {
 	if core.RecycleMainWindow(pf) {
 		return nil
 	}
 	d := core.NewBody().SetTitle("Project debug settings").SetData(pf)
 	core.NewText(d).SetText("For args: Use -- double-dash and then add args to pass args to the executable (double-dash is by itself as a separate arg first).  For Debug test, must use -test.run instead of plain -run to specify tests to run")
-	tv := views.NewStructView(d).SetStruct(pf)
+	tv := views.NewForm(d).SetStruct(pf)
 	d.RunWindow()
 	return tv
 }

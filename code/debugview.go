@@ -1009,13 +1009,13 @@ func (vv *VarView) Init() {
 						if ok {
 							vv.SelectVar = vr
 						}
-						vv := vv.StructView()
+						vv := vv.Form()
 						vv.SetStruct(sn)
 					}
 				})
 			})
 		})
-		core.AddChild(w, func(w *views.StructView) {
+		core.AddChild(w, func(w *views.Form) {
 			w.SetStruct(vv.Var)
 		})
 	})
@@ -1031,9 +1031,9 @@ func (vv *VarView) TreeView() *views.TreeView {
 	return vv.Splits().Child(0).AsTree().Child(0).(*views.TreeView)
 }
 
-// StructView returns the main StructView
-func (vv *VarView) StructView() *views.StructView {
-	return vv.Splits().Child(1).(*views.StructView)
+// Form returns the main Form
+func (vv *VarView) Form() *views.Form {
+	return vv.Splits().Child(1).(*views.Form)
 }
 
 func (vv *VarView) MakeToolbar(p *core.Plan) {

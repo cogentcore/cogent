@@ -521,9 +521,9 @@ func (sv *SVGView) ReadMetaData() {
 ///////////////////////////////////////////////////////////////////////////
 //  ContextMenu / Actions
 
-// EditNode opens a structview editor on node
+// EditNode opens a form editor on node
 func (sv *SVGView) EditNode(kn tree.Node) {
-	// views.StructViewDialog(sv, kn, "SVG Element View", true) // TODO:
+	// views.FormDialog(sv, kn, "SVG Element View", true) // TODO:
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click

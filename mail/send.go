@@ -34,7 +34,7 @@ func (a *App) Compose() { //types:add
 	a.ComposeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.ComposeMessage.To = []*mail.Address{{}}
 	b := core.NewBody().AddTitle("Send message")
-	views.NewStructView(b).SetStruct(a.ComposeMessage)
+	views.NewForm(b).SetStruct(a.ComposeMessage)
 	te := texteditor.NewSoloEditor(b)
 	te.Buffer.SetLang("md")
 	te.Buffer.Options.LineNumbers = false

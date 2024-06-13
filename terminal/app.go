@@ -53,7 +53,7 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.Dir = errors.Log1(os.Getwd())
 
-	core.AddChild(a, func(w *views.StructView) {
+	core.AddChild(a, func(w *views.Form) {
 		st := StructForFlags(a.Cmd.Flags)
 		w.SetStruct(st)
 	})
@@ -109,7 +109,7 @@ func (a *App) MakeToolbar(p *core.Plan) {
 			w.OnClick(func(e events.Event) {
 				d := core.NewBody().AddTitle(text).AddText(cmd.Doc)
 				st := StructForFlags(cmd.Flags)
-				views.NewStructView(d).SetStruct(st)
+				views.NewForm(d).SetStruct(st)
 				d.AddBottomBar(func(parent core.Widget) {
 					d.AddCancel(parent)
 					d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {

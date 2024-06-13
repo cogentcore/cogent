@@ -102,7 +102,7 @@ func (a *App) UpdateMessageList() {
 
 // UpdateReadMessage updates the view of the message currently being read.
 func (a *App) UpdateReadMessage() error {
-	msv := a.FindPath("splits/mail/msv").(*views.StructView)
+	msv := a.FindPath("splits/mail/msv").(*views.Form)
 	msv.SetStruct(a.ReadMessage.ToMessage())
 
 	mb := a.FindPath("splits/mail/mb").(*core.Frame)

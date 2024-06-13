@@ -55,7 +55,7 @@ func main() {
 	tv.OnDoubleClick(func(e events.Event) {
 		t := ts[tv.SelectedIndex]
 		d := core.NewBody().AddTitle("Task info")
-		views.NewStructView(d).SetStruct(&t).SetReadOnly(true)
+		views.NewForm(d).SetStruct(&t).SetReadOnly(true)
 		d.AddOKOnly().RunDialog(b)
 	})
 
