@@ -338,7 +338,7 @@ func (cv *CodeView) OpenRecent(filename core.Filename) { //types:add
 func (cv *CodeView) EditRecentPaths() {
 	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
-	views.NewSliceView(d).SetSlice(&RecentPaths)
+	views.NewList(d).SetSlice(&RecentPaths)
 	d.AddOKOnly().RunDialog(cv)
 }
 

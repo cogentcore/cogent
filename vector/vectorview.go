@@ -780,7 +780,7 @@ func (vv *VectorView) EditRecents() {
 	// copy(tmp, SavedPaths)
 	// core.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
 	// opts := views.DlgOpts{Title: "Recent Project Paths", Prompt: "Delete paths you no longer use", Ok: true, Cancel: true, NoAdd: true}
-	// views.SliceViewDialog(vv.Viewport, &tmp, opts,
+	// views.ListDialog(vv.Viewport, &tmp, opts,
 	// 	nil, vv, func(recv, send tree.Node, sig int64, data any) {
 	// 		if sig == int64(core.DialogAccepted) {
 	// 			SavedPaths = nil

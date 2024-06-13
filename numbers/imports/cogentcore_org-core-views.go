@@ -62,10 +62,10 @@ func init() {
 		"NewMapButton":            reflect.ValueOf(views.NewMapButton),
 		"NewKeyValueTable":              reflect.ValueOf(views.NewKeyValueTable),
 		"NewSliceButton":          reflect.ValueOf(views.NewSliceButton),
-		"NewSliceView":            reflect.ValueOf(views.NewSliceView),
-		"NewSliceViewBase":        reflect.ValueOf(views.NewSliceViewBase),
-		"NewSliceViewGrid":        reflect.ValueOf(views.NewSliceViewGrid),
-		"NewSliceViewInline":      reflect.ValueOf(views.NewSliceViewInline),
+		"NewList":            reflect.ValueOf(views.NewList),
+		"NewListBase":        reflect.ValueOf(views.NewListBase),
+		"NewListGrid":        reflect.ValueOf(views.NewListGrid),
+		"NewInlineList":      reflect.ValueOf(views.NewInlineList),
 		"NewSoloFuncButton":       reflect.ValueOf(views.NewSoloFuncButton),
 		"NewStructButton":         reflect.ValueOf(views.NewStructButton),
 		"NewStructView":           reflect.ValueOf(views.NewStructView),
@@ -83,12 +83,12 @@ func init() {
 		"SettingsWindow":          reflect.ValueOf(views.SettingsWindow),
 		"SliceButtonType":         reflect.ValueOf(&views.SliceButtonType).Elem(),
 		"SliceIndexByValue":       reflect.ValueOf(views.SliceIndexByValue),
-		"SliceViewBaseType":       reflect.ValueOf(&views.SliceViewBaseType).Elem(),
-		"SliceViewColProperty":    reflect.ValueOf(constant.MakeFromLiteral("\"sv-col\"", token.STRING, 0)),
-		"SliceViewGridType":       reflect.ValueOf(&views.SliceViewGridType).Elem(),
-		"SliceViewInlineType":     reflect.ValueOf(&views.SliceViewInlineType).Elem(),
-		"SliceViewRowProperty":    reflect.ValueOf(constant.MakeFromLiteral("\"sv-row\"", token.STRING, 0)),
-		"SliceViewType":           reflect.ValueOf(&views.SliceViewType).Elem(),
+		"ListBaseType":       reflect.ValueOf(&views.ListBaseType).Elem(),
+		"ListColProperty":    reflect.ValueOf(constant.MakeFromLiteral("\"sv-col\"", token.STRING, 0)),
+		"ListGridType":       reflect.ValueOf(&views.ListGridType).Elem(),
+		"InlineListType":     reflect.ValueOf(&views.InlineListType).Elem(),
+		"ListRowProperty":    reflect.ValueOf(constant.MakeFromLiteral("\"sv-row\"", token.STRING, 0)),
+		"ListType":           reflect.ValueOf(&views.ListType).Elem(),
 		"StructButtonType":        reflect.ValueOf(&views.StructButtonType).Elem(),
 		"StructSliceIndexByValue": reflect.ValueOf(views.StructSliceIndexByValue),
 		"StructViewType":          reflect.ValueOf(&views.StructViewType).Elem(),
@@ -121,12 +121,12 @@ func init() {
 		"MapButton":          reflect.ValueOf((*views.MapButton)(nil)),
 		"KeyValueTable":            reflect.ValueOf((*views.KeyValueTable)(nil)),
 		"SliceButton":        reflect.ValueOf((*views.SliceButton)(nil)),
-		"SliceView":          reflect.ValueOf((*views.SliceView)(nil)),
-		"SliceViewBase":      reflect.ValueOf((*views.SliceViewBase)(nil)),
-		"SliceViewGrid":      reflect.ValueOf((*views.SliceViewGrid)(nil)),
-		"SliceViewInline":    reflect.ValueOf((*views.SliceViewInline)(nil)),
-		"SliceViewStyleFunc": reflect.ValueOf((*views.SliceViewStyleFunc)(nil)),
-		"SliceViewer":        reflect.ValueOf((*views.SliceViewer)(nil)),
+		"List":          reflect.ValueOf((*views.List)(nil)),
+		"ListBase":      reflect.ValueOf((*views.ListBase)(nil)),
+		"ListGrid":      reflect.ValueOf((*views.ListGrid)(nil)),
+		"InlineList":    reflect.ValueOf((*views.InlineList)(nil)),
+		"ListStyleFunc": reflect.ValueOf((*views.ListStyleFunc)(nil)),
+		"Lister":        reflect.ValueOf((*views.Lister)(nil)),
 		"StructButton":       reflect.ValueOf((*views.StructButton)(nil)),
 		"StructView":         reflect.ValueOf((*views.StructView)(nil)),
 		"TableView":          reflect.ValueOf((*views.TableView)(nil)),
@@ -139,15 +139,15 @@ func init() {
 		"TypeChooser":        reflect.ValueOf((*views.TypeChooser)(nil)),
 
 		// interface wrapper definitions
-		"_SliceViewer": reflect.ValueOf((*_cogentcore_org_core_views_SliceViewer)(nil)),
+		"_Lister": reflect.ValueOf((*_cogentcore_org_core_views_Lister)(nil)),
 		"_TreeViewer":  reflect.ValueOf((*_cogentcore_org_core_views_TreeViewer)(nil)),
 	}
 }
 
-// _cogentcore_org_core_views_SliceViewer is an interface wrapper for SliceViewer type
-type _cogentcore_org_core_views_SliceViewer struct {
+// _cogentcore_org_core_views_Lister is an interface wrapper for Lister type
+type _cogentcore_org_core_views_Lister struct {
 	IValue            interface{}
-	WAsSliceViewBase  func() *views.SliceViewBase
+	WAsListBase  func() *views.ListBase
 	WCopySelectToMime func() mimedata.Mimes
 	WDragDrop         func(e events.Event)
 	WDragStart        func(e events.Event)
@@ -163,7 +163,7 @@ type _cogentcore_org_core_views_SliceViewer struct {
 	WRowGrabFocus     func(row int) *core.WidgetBase
 	WRowWidgetNs      func() (nWidgPerRow int, idxOff int)
 	WSliceDeleteAt    func(idx int)
-	WSliceGrid        func() *views.SliceViewGrid
+	WSliceGrid        func() *views.ListGrid
 	WSliceIndex       func(i int) (si int, vi int, invis bool)
 	WSliceNewAt       func(idx int)
 	WStyleRow         func(w core.Widget, idx int, fidx int)
@@ -172,73 +172,73 @@ type _cogentcore_org_core_views_SliceViewer struct {
 	WUpdateSliceSize  func() int
 }
 
-func (W _cogentcore_org_core_views_SliceViewer) AsSliceViewBase() *views.SliceViewBase {
-	return W.WAsSliceViewBase()
+func (W _cogentcore_org_core_views_Lister) AsListBase() *views.ListBase {
+	return W.WAsListBase()
 }
-func (W _cogentcore_org_core_views_SliceViewer) CopySelectToMime() mimedata.Mimes {
+func (W _cogentcore_org_core_views_Lister) CopySelectToMime() mimedata.Mimes {
 	return W.WCopySelectToMime()
 }
-func (W _cogentcore_org_core_views_SliceViewer) DragDrop(e events.Event) {
+func (W _cogentcore_org_core_views_Lister) DragDrop(e events.Event) {
 	W.WDragDrop(e)
 }
-func (W _cogentcore_org_core_views_SliceViewer) DragStart(e events.Event) {
+func (W _cogentcore_org_core_views_Lister) DragStart(e events.Event) {
 	W.WDragStart(e)
 }
-func (W _cogentcore_org_core_views_SliceViewer) DropDeleteSource(e events.Event) {
+func (W _cogentcore_org_core_views_Lister) DropDeleteSource(e events.Event) {
 	W.WDropDeleteSource(e)
 }
-func (W _cogentcore_org_core_views_SliceViewer) DropFinalize(de *events.DragDrop) {
+func (W _cogentcore_org_core_views_Lister) DropFinalize(de *events.DragDrop) {
 	W.WDropFinalize(de)
 }
-func (W _cogentcore_org_core_views_SliceViewer) HasStyleFunc() bool {
+func (W _cogentcore_org_core_views_Lister) HasStyleFunc() bool {
 	return W.WHasStyleFunc()
 }
-func (W _cogentcore_org_core_views_SliceViewer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func()) {
+func (W _cogentcore_org_core_views_Lister) MakePasteMenu(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func()) {
 	W.WMakePasteMenu(m, md, idx, mod, fun)
 }
-func (W _cogentcore_org_core_views_SliceViewer) MakeRow(p *core.Plan, i int) {
+func (W _cogentcore_org_core_views_Lister) MakeRow(p *core.Plan, i int) {
 	W.WMakeRow(p, i)
 }
-func (W _cogentcore_org_core_views_SliceViewer) MimeDataType() string {
+func (W _cogentcore_org_core_views_Lister) MimeDataType() string {
 	return W.WMimeDataType()
 }
-func (W _cogentcore_org_core_views_SliceViewer) PasteAssign(md mimedata.Mimes, idx int) {
+func (W _cogentcore_org_core_views_Lister) PasteAssign(md mimedata.Mimes, idx int) {
 	W.WPasteAssign(md, idx)
 }
-func (W _cogentcore_org_core_views_SliceViewer) PasteAtIndex(md mimedata.Mimes, idx int) {
+func (W _cogentcore_org_core_views_Lister) PasteAtIndex(md mimedata.Mimes, idx int) {
 	W.WPasteAtIndex(md, idx)
 }
-func (W _cogentcore_org_core_views_SliceViewer) RowFirstWidget(row int) (*core.WidgetBase, bool) {
+func (W _cogentcore_org_core_views_Lister) RowFirstWidget(row int) (*core.WidgetBase, bool) {
 	return W.WRowFirstWidget(row)
 }
-func (W _cogentcore_org_core_views_SliceViewer) RowGrabFocus(row int) *core.WidgetBase {
+func (W _cogentcore_org_core_views_Lister) RowGrabFocus(row int) *core.WidgetBase {
 	return W.WRowGrabFocus(row)
 }
-func (W _cogentcore_org_core_views_SliceViewer) RowWidgetNs() (nWidgPerRow int, idxOff int) {
+func (W _cogentcore_org_core_views_Lister) RowWidgetNs() (nWidgPerRow int, idxOff int) {
 	return W.WRowWidgetNs()
 }
-func (W _cogentcore_org_core_views_SliceViewer) SliceDeleteAt(idx int) {
+func (W _cogentcore_org_core_views_Lister) SliceDeleteAt(idx int) {
 	W.WSliceDeleteAt(idx)
 }
-func (W _cogentcore_org_core_views_SliceViewer) SliceGrid() *views.SliceViewGrid {
+func (W _cogentcore_org_core_views_Lister) SliceGrid() *views.ListGrid {
 	return W.WSliceGrid()
 }
-func (W _cogentcore_org_core_views_SliceViewer) SliceIndex(i int) (si int, vi int, invis bool) {
+func (W _cogentcore_org_core_views_Lister) SliceIndex(i int) (si int, vi int, invis bool) {
 	return W.WSliceIndex(i)
 }
-func (W _cogentcore_org_core_views_SliceViewer) SliceNewAt(idx int) {
+func (W _cogentcore_org_core_views_Lister) SliceNewAt(idx int) {
 	W.WSliceNewAt(idx)
 }
-func (W _cogentcore_org_core_views_SliceViewer) StyleRow(w core.Widget, idx int, fidx int) {
+func (W _cogentcore_org_core_views_Lister) StyleRow(w core.Widget, idx int, fidx int) {
 	W.WStyleRow(w, idx, fidx)
 }
-func (W _cogentcore_org_core_views_SliceViewer) StyleValue(w core.Widget, s *styles.Style, row int, col int) {
+func (W _cogentcore_org_core_views_Lister) StyleValue(w core.Widget, s *styles.Style, row int, col int) {
 	W.WStyleValue(w, s, row, col)
 }
-func (W _cogentcore_org_core_views_SliceViewer) UpdateMaxWidths() {
+func (W _cogentcore_org_core_views_Lister) UpdateMaxWidths() {
 	W.WUpdateMaxWidths()
 }
-func (W _cogentcore_org_core_views_SliceViewer) UpdateSliceSize() int {
+func (W _cogentcore_org_core_views_Lister) UpdateSliceSize() int {
 	return W.WUpdateSliceSize()
 }
 

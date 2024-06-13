@@ -58,7 +58,7 @@ In addition to Issues shown on github, some important features to be added longe
 * filepicker global priority key shortcuts
 * editor rendering overflow
 * filetree --get rid of empty upper level or not?
-* sliceview / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
+* list / tableview should activate select and focus on selectidx item in readonly chooser mode -- select is working, but focus is not -- cannot move selection via keyboard
 
 
 # DONE:

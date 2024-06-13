@@ -147,7 +147,7 @@ func (sv *SpellView) Init() {
 				})
 		})
 	})
-	core.AddChildAt(sv, "suggest", func(w *views.SliceView) {
+	core.AddChildAt(sv, "suggest", func(w *views.List) {
 		sv.Suggest = []string{"                                              "}
 		w.SetReadOnly(true)
 		w.SetProperty("index", false)
@@ -192,8 +192,8 @@ func (sv *SpellView) ChangeText() *core.TextField {
 }
 
 // SuggestView returns the view for the list of suggestions
-func (sv *SpellView) SuggestView() *views.SliceView {
-	return sv.ChildByName("suggest", 1).(*views.SliceView)
+func (sv *SpellView) SuggestView() *views.List {
+	return sv.ChildByName("suggest", 1).(*views.List)
 }
 
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it

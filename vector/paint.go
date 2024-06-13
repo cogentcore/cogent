@@ -316,10 +316,10 @@ func (pv *PaintView) Init() {
 				// 		}
 				// 	}
 				// })
-				// fg.SliceViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+				// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 				// 	// fmt.Printf("svs: %v   %v\n", sig, data)
 				// 	// svv, _ := send.(*views.TableView)
-				// 	if sig == int64(views.SliceViewDeleted) { // not clear what we can do here
+				// 	if sig == int64(views.ListDeleted) { // not clear what we can do here
 				// 	} else {
 				// 		pv.VectorView.UpdateGradients()
 				// 	}

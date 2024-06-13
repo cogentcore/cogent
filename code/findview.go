@@ -500,7 +500,7 @@ func (fv *FindView) makeReplToolbar(p *core.Plan) {
 		w.SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 	})
 
-	core.AddAt(p, "langs", func(w *views.SliceViewInline) {
+	core.AddAt(p, "langs", func(w *views.InlineList) {
 		w.SetSlice(fv.Params().Langs)
 		w.SetTooltip("Language(s) to restrict search / replace to")
 	})
