@@ -21,7 +21,7 @@ import (
 )
 
 // ConfigTextBuffer configures the text buffer according to the settings.
-func (cv *CodeView) ConfigTextBuffer(tb *texteditor.Buffer) {
+func (cv *Code) ConfigTextBuffer(tb *texteditor.Buffer) {
 	tb.SetHiStyle(core.AppearanceSettings.HiStyle)
 	tb.Options.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
@@ -31,23 +31,23 @@ func (cv *CodeView) ConfigTextBuffer(tb *texteditor.Buffer) {
 }
 
 // ActiveTextEditor returns the currently active TextEditor
-func (cv *CodeView) ActiveTextEditor() *TextEditor {
+func (cv *Code) ActiveTextEditor() *TextEditor {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIndex)
 	return cv.TextEditorByIndex(cv.ActiveTextEditorIndex)
 }
 
 // FocusActiveTextEditor sets focus to active text editor
-func (cv *CodeView) FocusActiveTextEditor() *TextEditor {
+func (cv *Code) FocusActiveTextEditor() *TextEditor {
 	return cv.SetActiveTextEditorIndex(cv.ActiveTextEditorIndex)
 }
 
 // ActiveFileNode returns the file node for the active file -- nil if none
-func (cv *CodeView) ActiveFileNode() *filetree.Node {
+func (cv *Code) ActiveFileNode() *filetree.Node {
 	return cv.FileNodeForFile(string(cv.ActiveFilename), false)
 }
 
 // TextEditorIndex finds index of given texteditor (0 or 1)
-func (cv *CodeView) TextEditorIndex(av *TextEditor) int {
+func (cv *Code) TextEditorIndex(av *TextEditor) int {
 	for i := 0; i < NTextEditors; i++ {
 		tv := cv.TextEditorByIndex(i)
 		if tv.This == av.This {
@@ -59,7 +59,7 @@ func (cv *CodeView) TextEditorIndex(av *TextEditor) int {
 
 // TextEditorForFileNode finds a TextEditor that is viewing given FileNode,
 // and its index, or false if none is
-func (cv *CodeView) TextEditorForFileNode(fn *filetree.Node) (*TextEditor, int, bool) {
+func (cv *Code) TextEditorForFileNode(fn *filetree.Node) (*TextEditor, int, bool) {
 	if fn.Buffer == nil {
 		return nil, -1, false
 	}
@@ -75,7 +75,7 @@ func (cv *CodeView) TextEditorForFileNode(fn *filetree.Node) (*TextEditor, int, 
 
 // OpenNodeForTextEditor finds the FileNode that a given TextEditor is
 // viewing, returning its index within OpenNodes list, or false if not found
-func (cv *CodeView) OpenNodeForTextEditor(tv *TextEditor) (*filetree.Node, int, bool) {
+func (cv *Code) OpenNodeForTextEditor(tv *TextEditor) (*filetree.Node, int, bool) {
 	if tv.Buffer == nil {
 		return nil, -1, false
 	}
@@ -89,7 +89,7 @@ func (cv *CodeView) OpenNodeForTextEditor(tv *TextEditor) (*filetree.Node, int, 
 
 // TextEditorForFile finds FileNode for file, and returns TextEditor and index
 // that is viewing that FileNode, or false if none is
-func (cv *CodeView) TextEditorForFile(fnm core.Filename) (*TextEditor, int, bool) {
+func (cv *Code) TextEditorForFile(fnm core.Filename) (*TextEditor, int, bool) {
 	fn, ok := cv.Files.FindFile(string(fnm))
 	if !ok {
 		return nil, -1, false
@@ -98,7 +98,7 @@ func (cv *CodeView) TextEditorForFile(fnm core.Filename) (*TextEditor, int, bool
 }
 
 // SetActiveFileInfo sets the active file info from textbuf
-func (cv *CodeView) SetActiveFileInfo(buf *texteditor.Buffer) {
+func (cv *Code) SetActiveFileInfo(buf *texteditor.Buffer) {
 	cv.ActiveFilename = buf.Filename
 	cv.ActiveLang = buf.Info.Known
 	cv.ActiveVCSInfo = ""
@@ -118,7 +118,7 @@ func (cv *CodeView) SetActiveFileInfo(buf *texteditor.Buffer) {
 }
 
 // SetActiveTextEditor sets the given texteditor as the active one, and returns its index
-func (cv *CodeView) SetActiveTextEditor(av *TextEditor) int {
+func (cv *Code) SetActiveTextEditor(av *TextEditor) int {
 	idx := cv.TextEditorIndex(av)
 	if idx < 0 {
 		fmt.Println("te not found")
@@ -135,9 +135,9 @@ func (cv *CodeView) SetActiveTextEditor(av *TextEditor) int {
 // SetActiveTextEditorIndex sets the given view index as the currently active
 // TextEditor -- returns that texteditor.  This is the main method for
 // activating a text editor.
-func (cv *CodeView) SetActiveTextEditorIndex(idx int) *TextEditor {
+func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
 	if idx < 0 || idx >= NTextEditors {
-		log.Printf("CodeView SetActiveTextEditorIndex: text view index out of range: %v\n", idx)
+		log.Printf("Code SetActiveTextEditorIndex: text view index out of range: %v\n", idx)
 		return nil
 	}
 	cv.ActiveTextEditorIndex = idx
@@ -154,7 +154,7 @@ func (cv *CodeView) SetActiveTextEditorIndex(idx int) *TextEditor {
 // NextTextEditor returns the next text view available for viewing a file and
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
-func (cv *CodeView) NextTextEditor() (*TextEditor, int) {
+func (cv *Code) NextTextEditor() (*TextEditor, int) {
 	av := cv.TextEditorByIndex(cv.ActiveTextEditorIndex)
 	if av.Buffer == nil {
 		return av, cv.ActiveTextEditorIndex
@@ -168,7 +168,7 @@ func (cv *CodeView) NextTextEditor() (*TextEditor, int) {
 
 // SwapTextEditors switches the buffers for the two open texteditors
 // only operates if both panels are open
-func (cv *CodeView) SwapTextEditors() bool {
+func (cv *Code) SwapTextEditors() bool {
 	if !cv.PanelIsOpen(TextEditor1Index) || !cv.PanelIsOpen(TextEditor1Index+1) {
 		return false
 	}
@@ -183,7 +183,7 @@ func (cv *CodeView) SwapTextEditors() bool {
 	return true
 }
 
-func (cv *CodeView) OpenFileAtRegion(filename core.Filename, tr textbuf.Region) (tv *TextEditor, ok bool) {
+func (cv *Code) OpenFileAtRegion(filename core.Filename, tr textbuf.Region) (tv *TextEditor, ok bool) {
 	tv, _, ok = cv.LinkViewFile(filename)
 	if tv == nil {
 		return nil, false
@@ -200,7 +200,7 @@ func (cv *CodeView) OpenFileAtRegion(filename core.Filename, tr textbuf.Region) 
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (cv *CodeView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
+func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindView OpenFindURL parse err: %v\n", err)
@@ -227,7 +227,7 @@ func (cv *CodeView) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *Tex
 }
 
 // OpenFindURL opens given find:/// url from Find -- delegates to FindView
-func (cv *CodeView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
+func (cv *Code) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	fvk := ftv.ParentByType(FindViewType, tree.NoEmbeds)
 	if fvk == nil {
 		return false
@@ -238,7 +238,7 @@ func (cv *CodeView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 
 // UpdateTextButtons updates texteditor menu buttons is called by SetStatus.
 // Doesn't do anything unless a change is required, so safe to call frequently.
-func (cv *CodeView) UpdateTextButtons() {
+func (cv *Code) UpdateTextButtons() {
 	ati := cv.ActiveTextEditorIndex
 	for i := 0; i < NTextEditors; i++ {
 		tv := cv.TextEditorByIndex(i)
@@ -264,11 +264,11 @@ func (cv *CodeView) UpdateTextButtons() {
 }
 
 // FileNodeSelected is called whenever tree browser has file node selected
-func (cv *CodeView) FileNodeSelected(fn *filetree.Node) {
+func (cv *Code) FileNodeSelected(fn *filetree.Node) {
 	// not doing anything with this actually
 }
 
-func (cv *CodeView) TextEditorButtonMenu(idx int, m *core.Scene) {
+func (cv *Code) TextEditorButtonMenu(idx int, m *core.Scene) {
 	tv := cv.TextEditorByIndex(idx)
 	opn := cv.OpenNodes.Strings()
 	core.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {

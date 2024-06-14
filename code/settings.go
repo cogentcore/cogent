@@ -319,10 +319,10 @@ func OpenPaths() {
 }
 
 ////////////////////////////////////////////////
-// CodeView
+// Code
 
 // Defaults sets new project defaults based on overall settings
-func (cv *CodeView) Defaults() {
+func (cv *Code) Defaults() {
 	cv.Settings.Files = Settings.Files
 	cv.Settings.Editor = core.SystemSettings.Editor
 	cv.Settings.Splits = []float32{.1, .325, .325, .25}
@@ -331,7 +331,7 @@ func (cv *CodeView) Defaults() {
 
 // GrabSettings grabs the current project preference settings from various
 // places, e.g., prior to saving or editing.
-func (cv *CodeView) GrabSettings() {
+func (cv *Code) GrabSettings() {
 	sv := cv.Splits()
 	cv.Settings.Splits = sv.Splits
 	cv.Settings.Dirs = cv.Files.Dirs
@@ -339,7 +339,7 @@ func (cv *CodeView) GrabSettings() {
 
 // ApplySettings applies current project preference settings into places where
 // they are used -- only for those done prior to loading
-func (cv *CodeView) ApplySettings() {
+func (cv *Code) ApplySettings() {
 	cv.ProjectFilename = cv.Settings.ProjectFilename
 	cv.ProjectRoot = cv.Settings.ProjectRoot
 	if cv.Files != nil {
@@ -364,14 +364,14 @@ func (cv *CodeView) ApplySettings() {
 }
 
 // ApplySettingsAction applies current settings to the project, and updates the project
-func (cv *CodeView) ApplySettingsAction() {
+func (cv *Code) ApplySettingsAction() {
 	cv.ApplySettings()
 	cv.SplitsSetView(cv.Settings.SplitName)
 	cv.SetStatus("Applied prefs")
 }
 
 // EditProjectSettings allows editing of project settings (settings specific to this project)
-func (cv *CodeView) EditProjectSettings() { //types:add
+func (cv *Code) EditProjectSettings() { //types:add
 	sv := ProjectSettingsEditor(&cv.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
@@ -380,14 +380,14 @@ func (cv *CodeView) EditProjectSettings() { //types:add
 	}
 }
 
-func (cv *CodeView) CallSplitsSetView(ctx core.Widget) {
+func (cv *Code) CallSplitsSetView(ctx core.Widget) {
 	fb := core.NewSoloFuncButton(ctx, cv.SplitsSetView)
 	fb.Args[0].SetValue(cv.Settings.SplitName)
 	fb.CallFunc()
 }
 
 // SplitsSetView sets split view splitters to given named setting
-func (cv *CodeView) SplitsSetView(split SplitName) { //types:add
+func (cv *Code) SplitsSetView(split SplitName) { //types:add
 	sv := cv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
@@ -401,7 +401,7 @@ func (cv *CodeView) SplitsSetView(split SplitName) { //types:add
 
 // SplitsSave saves current splitter settings to named splitter settings under
 // existing name, and saves to prefs file
-func (cv *CodeView) SplitsSave(split SplitName) { //types:add
+func (cv *Code) SplitsSave(split SplitName) { //types:add
 	sv := cv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
@@ -412,19 +412,19 @@ func (cv *CodeView) SplitsSave(split SplitName) { //types:add
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (cv *CodeView) SplitsSaveAs(name, desc string) { //types:add
+func (cv *Code) SplitsSaveAs(name, desc string) { //types:add
 	sv := cv.Splits()
 	AvailableSplits.Add(name, desc, sv.Splits)
 	AvailableSplits.SaveSettings()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (cv *CodeView) SplitsEdit() { //types:add
+func (cv *Code) SplitsEdit() { //types:add
 	SplitsView(&AvailableSplits)
 }
 
 // LangDefaults applies default language settings based on MainLang
-func (cv *CodeView) LangDefaults() {
+func (cv *Code) LangDefaults() {
 	cv.Settings.RunCmds = CmdNames{"Build: Run Project"}
 	cv.Settings.BuildDir = cv.Settings.ProjectRoot
 	cv.Settings.BuildTarg = cv.Settings.ProjectRoot
@@ -449,7 +449,7 @@ func (cv *CodeView) LangDefaults() {
 }
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
-func (cv *CodeView) GuessMainLang() bool {
+func (cv *Code) GuessMainLang() bool {
 	ecsc := cv.Files.FileExtCounts(fileinfo.Code)
 	ecsd := cv.Files.FileExtCounts(fileinfo.Doc)
 	ecs := append(ecsc, ecsd...)

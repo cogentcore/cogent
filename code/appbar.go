@@ -17,7 +17,7 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
+func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
 	core.AddInit(p, "app-chooser", func(w *core.Chooser) {
 		cv.AddChooserFiles(w)
 		cv.AddChooserSymbols(w)
@@ -191,7 +191,7 @@ func (cv *CodeView) MakeToolbar(p *core.Plan) { //types:add
 	})
 }
 
-func (cv *CodeView) OverflowMenu(m *core.Scene) {
+func (cv *Code) OverflowMenu(m *core.Scene) {
 	core.NewButton(m).SetText("File").SetMenu(func(m *core.Scene) {
 		core.NewFuncButton(m, cv.NewProject).SetIcon(icons.NewWindow).SetKey(keymap.New)
 		core.NewFuncButton(m, cv.NewFile).SetText("New File").SetIcon(icons.NewWindow)
@@ -293,7 +293,7 @@ func (cv *CodeView) OverflowMenu(m *core.Scene) {
 }
 
 // AddChooserFiles adds the files to the app chooser.
-func (cv *CodeView) AddChooserFiles(ac *core.Chooser) {
+func (cv *Code) AddChooserFiles(ac *core.Chooser) {
 	ac.AddItemsFunc(func() {
 		if cv.Files == nil {
 			return
@@ -343,7 +343,7 @@ func (cv *CodeView) AddChooserFiles(ac *core.Chooser) {
 }
 
 // AddChooserSymbols adds the symbols to the app chooser.
-func (cv *CodeView) AddChooserSymbols(ac *core.Chooser) {
+func (cv *Code) AddChooserSymbols(ac *core.Chooser) {
 	ac.AddItemsFunc(func() {
 		tv := cv.ActiveTextEditor()
 		if tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {

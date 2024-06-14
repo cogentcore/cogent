@@ -12,7 +12,7 @@ import (
 
 // PanelIsOpen returns true if the given panel has not been collapsed and is avail
 // and visible for displaying something
-func (cv *CodeView) PanelIsOpen(panel int) bool {
+func (cv *Code) PanelIsOpen(panel int) bool {
 	sv := cv.Splits()
 	if panel < 0 || panel >= len(sv.Children) {
 		return false
@@ -24,7 +24,7 @@ func (cv *CodeView) PanelIsOpen(panel int) bool {
 }
 
 // CurPanel returns the splitter panel that currently has keyboard focus
-func (cv *CodeView) CurPanel() int {
+func (cv *Code) CurPanel() int {
 	sv := cv.Splits()
 	for i, ski := range sv.Children {
 		_, sk := core.AsWidget(ski)
@@ -36,7 +36,7 @@ func (cv *CodeView) CurPanel() int {
 }
 
 // FocusOnPanel moves keyboard focus to given panel -- returns false if nothing at that tab
-func (cv *CodeView) FocusOnPanel(panel int) bool {
+func (cv *Code) FocusOnPanel(panel int) bool {
 	sv := cv.Splits()
 	switch panel {
 	case TextEditor1Index:
@@ -60,7 +60,7 @@ func (cv *CodeView) FocusOnPanel(panel int) bool {
 }
 
 // FocusNextPanel moves the keyboard focus to the next panel to the right
-func (cv *CodeView) FocusNextPanel() { //types:add
+func (cv *Code) FocusNextPanel() { //types:add
 	sv := cv.Splits()
 	cp := cv.CurPanel()
 	cp++
@@ -78,7 +78,7 @@ func (cv *CodeView) FocusNextPanel() { //types:add
 }
 
 // FocusPrevPanel moves the keyboard focus to the previous panel to the left
-func (cv *CodeView) FocusPrevPanel() { //types:add
+func (cv *Code) FocusPrevPanel() { //types:add
 	sv := cv.Splits()
 	cp := cv.CurPanel()
 	cp--
@@ -96,13 +96,13 @@ func (cv *CodeView) FocusPrevPanel() { //types:add
 }
 
 // TabByName returns a tab with given name, nil if not found.
-func (cv *CodeView) TabByName(name string) core.Widget {
+func (cv *Code) TabByName(name string) core.Widget {
 	tv := cv.Tabs()
 	return tv.TabByName(name)
 }
 
 // SelectTabByName Selects given main tab, and returns all of its contents as well.
-func (cv *CodeView) SelectTabByName(name string) core.Widget {
+func (cv *Code) SelectTabByName(name string) core.Widget {
 	tv := cv.Tabs()
 	if tv == nil {
 		return nil
@@ -114,7 +114,7 @@ func (cv *CodeView) SelectTabByName(name string) core.Widget {
 // name, first by looking for an existing one, and if not found, making a new
 // one with a TextEditor in it.  if sel, then select it.
 // returns widget
-func (cv *CodeView) RecycleTabTextEditor(name string, sel bool, buf *texteditor.Buffer) *texteditor.Editor {
+func (cv *Code) RecycleTabTextEditor(name string, sel bool, buf *texteditor.Buffer) *texteditor.Editor {
 	tv := cv.Tabs()
 	if tv == nil {
 		return nil

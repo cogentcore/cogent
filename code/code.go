@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package code provides the main Cogent Code GUI.
 package code
 
 //go:generate core generate
@@ -40,10 +41,10 @@ func init() {
 	icons.AddFS(errors.Log1(fs.Sub(Icons, "icons")))
 }
 
-// CodeView is the core editor and tab viewer framework for the Code system.  The
+// Code is the core editor and tab viewer widget for the Code system. The
 // default view has a tree browser of files on the left, editor panels in the
 // middle, and a tabbed viewer on the right.
-type CodeView struct {
+type Code struct {
 	core.Frame
 
 	// root directory for the project -- all projects must be organized within a top-level root directory, with all the files therein constituting the scope of the project -- by default it is the path for ProjectFilename
@@ -103,7 +104,7 @@ type CodeView struct {
 	// first key in sequence if needs2 key pressed
 	KeySeq1 key.Chord `set:"-"`
 
-	// mutex for protecting overall updates to CodeView
+	// mutex for protecting overall updates to Code
 	UpdateMu sync.Mutex `set:"-"`
 }
 
@@ -113,7 +114,7 @@ func init() {
 	// paint.TextLinkHandler = TextLinkHandler
 }
 
-func (cv *CodeView) Init() {
+func (cv *Code) Init() {
 	cv.Frame.Init()
 	cv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -121,7 +122,7 @@ func (cv *CodeView) Init() {
 	})
 
 	cv.AddCloseDialog()
-	cv.OnFirst(events.KeyChord, cv.codeViewKeys)
+	cv.OnFirst(events.KeyChord, cv.codeKeys)
 	cv.On(events.OSOpenFiles, func(e events.Event) {
 		ofe := e.(*events.OSFiles)
 		for _, fn := range ofe.Files {
@@ -191,7 +192,7 @@ func (cv *CodeView) Init() {
 	// })
 }
 
-func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
+func (cv *Code) makeTextEditor(p *core.Plan, i int) {
 	txnm := fmt.Sprintf("%d", i)
 	core.AddAt(p, "textframe-"+txnm, func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
@@ -228,10 +229,10 @@ func (cv *CodeView) makeTextEditor(p *core.Plan, i int) {
 }
 
 // ParentCode returns the Code parent of given node
-func ParentCode(tn tree.Node) (*CodeView, bool) {
-	var res *CodeView
+func ParentCode(tn tree.Node) (*Code, bool) {
+	var res *Code
 	tn.AsTree().WalkUp(func(n tree.Node) bool {
-		if c, ok := n.(*CodeView); ok {
+		if c, ok := n.(*Code); ok {
 			res = c
 			return false
 		}
@@ -255,27 +256,27 @@ const (
 )
 
 // Splits returns the main Splits
-func (cv *CodeView) Splits() *core.Splits {
+func (cv *Code) Splits() *core.Splits {
 	return cv.ChildByName("splits", 2).(*core.Splits)
 }
 
 // TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
-func (cv *CodeView) TextEditorButtonByIndex(idx int) *core.Button {
+func (cv *Code) TextEditorButtonByIndex(idx int) *core.Button {
 	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(0).(*core.Button)
 }
 
 // TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
-func (cv *CodeView) TextEditorByIndex(idx int) *TextEditor {
+func (cv *Code) TextEditorByIndex(idx int) *TextEditor {
 	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(1).(*TextEditor)
 }
 
 // Tabs returns the main TabView
-func (cv *CodeView) Tabs() *core.Tabs {
+func (cv *Code) Tabs() *core.Tabs {
 	return cv.Splits().Child(TabsIndex).(*core.Tabs)
 }
 
 // StatusBar returns the statusbar widget
-func (cv *CodeView) StatusBar() *core.Frame {
+func (cv *Code) StatusBar() *core.Frame {
 	if cv.This == nil || !cv.HasChildren() {
 		return nil
 	}
@@ -283,13 +284,13 @@ func (cv *CodeView) StatusBar() *core.Frame {
 }
 
 // StatusText returns the status bar text widget
-func (cv *CodeView) StatusText() *core.Text {
+func (cv *Code) StatusText() *core.Text {
 	return cv.StatusBar().Child(0).(*core.Text)
 }
 
 // SelectedFileNode returns currently selected file tree node as a *filetree.Node
 // could be nil.
-func (cv *CodeView) SelectedFileNode() *filetree.Node {
+func (cv *Code) SelectedFileNode() *filetree.Node {
 	n := len(cv.Files.SelectedNodes)
 	if n == 0 {
 		return nil
@@ -299,12 +300,12 @@ func (cv *CodeView) SelectedFileNode() *filetree.Node {
 
 // VersionControl returns the version control system in effect, using the file tree detected
 // version or whatever is set in project settings
-func (cv *CodeView) VersionControl() filetree.VersionControlName {
+func (cv *Code) VersionControl() filetree.VersionControlName {
 	vc := cv.Settings.VersionControl
 	return vc
 }
 
-func (cv *CodeView) FocusOnTabs() bool {
+func (cv *Code) FocusOnTabs() bool {
 	return cv.FocusOnPanel(TabsIndex)
 }
 
@@ -312,19 +313,19 @@ func (cv *CodeView) FocusOnTabs() bool {
 //  Main project API
 
 // UpdateFiles updates the list of files saved in project
-func (cv *CodeView) UpdateFiles() { //types:add
+func (cv *Code) UpdateFiles() { //types:add
 	if cv.Files != nil && cv.ProjectRoot != "" {
 		cv.Files.OpenPath(string(cv.ProjectRoot))
 		cv.Files.Open()
 	}
 }
 
-func (cv *CodeView) IsEmpty() bool {
+func (cv *Code) IsEmpty() bool {
 	return cv.ProjectRoot == ""
 }
 
 // OpenRecent opens a recently used file
-func (cv *CodeView) OpenRecent(filename core.Filename) { //types:add
+func (cv *Code) OpenRecent(filename core.Filename) { //types:add
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".code" {
 		cv.OpenProject(filename)
@@ -334,7 +335,7 @@ func (cv *CodeView) OpenRecent(filename core.Filename) { //types:add
 }
 
 // EditRecentPaths opens a dialog editor for editing the recent project paths list
-func (cv *CodeView) EditRecentPaths() {
+func (cv *Code) EditRecentPaths() {
 	d := core.NewBody().AddTitle("Recent project paths").
 		AddText("You can delete paths you no longer use")
 	core.NewList(d).SetSlice(&RecentPaths)
@@ -343,7 +344,7 @@ func (cv *CodeView) EditRecentPaths() {
 
 // OpenFile opens file in an open project if it has the same path as the file
 // or in a new window.
-func (cv *CodeView) OpenFile(fnm string) { //types:add
+func (cv *Code) OpenFile(fnm string) { //types:add
 	abfn, _ := filepath.Abs(fnm)
 	if strings.HasPrefix(abfn, string(cv.ProjectRoot)) {
 		cv.ViewFile(core.Filename(abfn))
@@ -362,15 +363,15 @@ func (cv *CodeView) OpenFile(fnm string) { //types:add
 }
 
 // SetWindowNameTitle sets the window name and title based on current project name
-func (cv *CodeView) SetWindowNameTitle() {
+func (cv *Code) SetWindowNameTitle() {
 	title := "Cogent Code • " + cv.Name
 	cv.Scene.Body.SetTitle(title)
 }
 
 // OpenPath creates a new project by opening given path, which can either be a
 // specific file or a folder containing multiple files of interest -- opens in
-// current CodeView object if it is empty, or otherwise opens a new window.
-func (cv *CodeView) OpenPath(path core.Filename) *CodeView { //types:add
+// current Code object if it is empty, or otherwise opens a new window.
+func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 	if gproj, has := CheckForProjectAtPath(string(path)); has {
 		return cv.OpenProject(core.Filename(gproj))
 	}
@@ -403,7 +404,7 @@ func (cv *CodeView) OpenPath(path core.Filename) *CodeView { //types:add
 
 // OpenProject opens .code project file and its settings from given filename, in a standard
 // toml-formatted file
-func (cv *CodeView) OpenProject(filename core.Filename) *CodeView { //types:add
+func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 	if !cv.IsEmpty() {
 		return OpenCodeProject(string(filename))
 	}
@@ -433,10 +434,10 @@ func (cv *CodeView) OpenProject(filename core.Filename) *CodeView { //types:add
 }
 
 // NewProject creates a new project at given path, making a new folder in that
-// path -- all CodeView projects are essentially defined by a path to a folder
+// path -- all Code projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
 // Can also specify main language and version control type
-func (cv *CodeView) NewProject(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *CodeView { //types:add
+func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *Code { //types:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
@@ -452,7 +453,7 @@ func (cv *CodeView) NewProject(path core.Filename, folder string, mainLang filei
 }
 
 // NewFile creates a new file in the project
-func (cv *CodeView) NewFile(filename string, addToVcs bool) { //types:add
+func (cv *Code) NewFile(filename string, addToVcs bool) { //types:add
 	np := filepath.Join(string(cv.ProjectRoot), filename)
 	_, err := os.Create(np)
 	if err != nil {
@@ -470,7 +471,7 @@ func (cv *CodeView) NewFile(filename string, addToVcs bool) { //types:add
 
 // SaveProject saves project file containing custom project settings, in a
 // standard toml-formatted file
-func (cv *CodeView) SaveProject() { //types:add
+func (cv *Code) SaveProject() { //types:add
 	if cv.Settings.ProjectFilename == "" {
 		return
 	}
@@ -481,7 +482,7 @@ func (cv *CodeView) SaveProject() { //types:add
 // SaveProjectIfExists saves project file containing custom project settings, in a
 // standard toml-formatted file, only if it already exists -- returns true if saved
 // saveAllFiles indicates if user should be prompted for saving all files
-func (cv *CodeView) SaveProjectIfExists(saveAllFiles bool) bool {
+func (cv *Code) SaveProjectIfExists(saveAllFiles bool) bool {
 	spell.SaveIfLearn()
 	if cv.Settings.ProjectFilename == "" {
 		return false
@@ -500,7 +501,7 @@ func (cv *CodeView) SaveProjectIfExists(saveAllFiles bool) bool {
 // toml-formatted file
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
-func (cv *CodeView) SaveProjectAs(filename core.Filename) bool { //types:add
+func (cv *Code) SaveProjectAs(filename core.Filename) bool { //types:add
 	spell.SaveIfLearn()
 	RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
 	SavePaths()
@@ -517,7 +518,7 @@ func (cv *CodeView) SaveProjectAs(filename core.Filename) bool { //types:add
 // returns true if there were unsaved files, false otherwise.
 // cancelOpt presents an option to cancel current command, in which case function is not called.
 // if function is passed, then it is called in all cases except if the user selects cancel.
-func (cv *CodeView) SaveAllCheck(cancelOpt bool, fun func()) bool {
+func (cv *Code) SaveAllCheck(cancelOpt bool, fun func()) bool {
 	nch := cv.NChangedFiles()
 	if nch == 0 {
 		if fun != nil {
@@ -597,14 +598,14 @@ func CheckForProjectAtPath(path string) (string, bool) {
 //   Close / Quit Req
 
 // NChangedFiles returns number of opened files with unsaved changes
-func (cv *CodeView) NChangedFiles() int {
+func (cv *Code) NChangedFiles() int {
 	return cv.OpenNodes.NChanged()
 }
 
 // AddCloseDialog adds the close dialog that automatically saves the project
 // and prompts the user to save open files when they try to close the scene
 // containing this code view.
-func (cv *CodeView) AddCloseDialog() {
+func (cv *Code) AddCloseDialog() {
 	cv.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
 		cv.SaveProjectIfExists(false) // don't prompt here, as we will do it now..
 		nch := cv.NChangedFiles()
@@ -629,16 +630,16 @@ func (cv *CodeView) AddCloseDialog() {
 //////////////////////////////////////////////////////////////////////////////////////
 //   Project window
 
-// NewCodeProjectPath creates a new CodeView window with a new CodeView project for given
+// NewCodeProjectPath creates a new Code window with a new Code project for given
 // path, returning the window and the path
-func NewCodeProjectPath(path string) *CodeView {
+func NewCodeProjectPath(path string) *Code {
 	root, projnm, _, _ := ProjectPathParse(path)
 	return NewCodeWindow(path, projnm, root, true)
 }
 
-// OpenCodeProject creates a new CodeView window opened to given CodeView project,
+// OpenCodeProject creates a new Code window opened to given Code project,
 // returning the window and the path
-func OpenCodeProject(projfile string) *CodeView {
+func OpenCodeProject(projfile string) *Code {
 	pp := &ProjectSettings{}
 	if err := pp.Open(core.Filename(projfile)); err != nil {
 		slog.Debug("Project Settings had a loading error", "error", err)
@@ -648,16 +649,16 @@ func OpenCodeProject(projfile string) *CodeView {
 	return NewCodeWindow(projfile, projnm, root, false)
 }
 
-func CodeInScene(sc *core.Scene) *CodeView {
-	gv := sc.Body.ChildByType(CodeViewType, tree.NoEmbeds)
+func CodeInScene(sc *core.Scene) *Code {
+	gv := sc.Body.ChildByType(CodeType, tree.NoEmbeds)
 	if gv != nil {
-		return gv.(*CodeView)
+		return gv.(*Code)
 	}
 	return nil
 }
 
 // NewCodeWindow is common code for Open CodeWindow from Project or Path
-func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
+func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	winm := "Cogent Code • " + projnm
 	if win, found := core.AllRenderWindows.FindName(winm); found {
 		sc := win.MainScene()
@@ -668,7 +669,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *CodeView {
 		}
 	}
 	b := core.NewBody(winm).SetTitle(winm)
-	cv := NewCodeView(b)
+	cv := NewCode(b)
 	b.AddAppBar(cv.MakeToolbar)
 	b.RunWindow()
 

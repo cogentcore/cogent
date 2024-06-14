@@ -20,7 +20,7 @@ import (
 // RecycleCmdBuf creates the buffer for command output, or returns
 // existing. If clear is true, then any existing buffer is cleared.
 // Returns true if new buffer created.
-func (cv *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer, bool) {
+func (cv *Code) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer, bool) {
 	if cv.CmdBufs == nil {
 		cv.CmdBufs = make(map[string]*texteditor.Buffer, 20)
 	}
@@ -44,7 +44,7 @@ func (cv *CodeView) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer,
 // buffer object to save output from the command. returns true if a new buffer
 // was created, false if one already existed. if sel, select tab.  if clearBuf, then any
 // existing buffer is cleared.  Also returns index of tab.
-func (cv *CodeView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buffer, *texteditor.Editor, bool) {
+func (cv *Code) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buffer, *texteditor.Editor, bool) {
 	buf, nw := cv.RecycleCmdBuf(cmdNm, clearBuf)
 	ctv := cv.RecycleTabTextEditor(cmdNm, sel, buf)
 	if ctv == nil {
@@ -59,14 +59,14 @@ func (cv *CodeView) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texte
 }
 
 // TabDeleted is called when a main tab is deleted -- we cancel any running commmands
-func (cv *CodeView) TabDeleted(tabnm string) {
+func (cv *Code) TabDeleted(tabnm string) {
 	cv.RunningCmds.KillByName(tabnm)
 }
 
 // ExecCmdName executes command of given name -- this is the final common
 // pathway for all command invokation except on a node.  if sel, select tab.
 // if clearBuf, clear the buffer prior to command
-func (cv *CodeView) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
+func (cv *Code) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
@@ -77,7 +77,7 @@ func (cv *CodeView) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
 }
 
 // ExecCmdNameFileNode executes command of given name on given node
-func (cv *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, clearBuf bool) {
+func (cv *Code) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, clearBuf bool) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok || fn == nil || fn.This == nil {
 		return
@@ -88,7 +88,7 @@ func (cv *CodeView) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bo
 }
 
 // ExecCmdNameFilename executes command of given name on given file name
-func (cv *CodeView) ExecCmdNameFilename(fn string, cmdNm CmdName, sel bool, clearBuf bool) {
+func (cv *Code) ExecCmdNameFilename(fn string, cmdNm CmdName, sel bool, clearBuf bool) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
@@ -99,7 +99,7 @@ func (cv *CodeView) ExecCmdNameFilename(fn string, cmdNm CmdName, sel bool, clea
 }
 
 // ExecCmds gets list of available commands for current active file
-func ExecCmds(cv *CodeView) [][]string {
+func ExecCmds(cv *Code) [][]string {
 	tv := cv.ActiveTextEditor()
 	if tv == nil {
 		return nil
@@ -116,7 +116,7 @@ func ExecCmds(cv *CodeView) [][]string {
 }
 
 // ExecCmdNameActive calls given command on current active texteditor
-func (cv *CodeView) ExecCmdNameActive(cmdNm string) { //types:add
+func (cv *Code) ExecCmdNameActive(cmdNm string) { //types:add
 	tv := cv.ActiveTextEditor()
 	if tv == nil {
 		return
@@ -128,14 +128,14 @@ func (cv *CodeView) ExecCmdNameActive(cmdNm string) { //types:add
 
 // CommandFromMenu pops up a menu of commands for given language, with given last command
 // selected by default, and runs selected command.
-func (cv *CodeView) CommandFromMenu(fn *filetree.Node) {
+func (cv *Code) CommandFromMenu(fn *filetree.Node) {
 	tv := cv.ActiveTextEditor()
 	core.NewMenu(CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
-func (cv *CodeView) ExecCmd() { //types:add
+func (cv *Code) ExecCmd() { //types:add
 	fn := cv.ActiveFileNode()
 	if fn == nil {
 		fmt.Printf("no Active File for ExecCmd\n")
@@ -146,12 +146,12 @@ func (cv *CodeView) ExecCmd() { //types:add
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in Tab with name of command
-func (cv *CodeView) ExecCmdFileNode(fn *filetree.Node) {
+func (cv *Code) ExecCmdFileNode(fn *filetree.Node) {
 	cv.CommandFromMenu(fn)
 }
 
-// SetArgVarVals sets the ArgVar values for commands, from CodeView values
-func (cv *CodeView) SetArgVarVals() {
+// SetArgVarVals sets the ArgVar values for commands, from Code values
+func (cv *Code) SetArgVarVals() {
 	tv := cv.ActiveTextEditor()
 	tve := texteditor.AsEditor(tv)
 	if tv == nil || tv.Buffer == nil {
@@ -162,21 +162,21 @@ func (cv *CodeView) SetArgVarVals() {
 }
 
 // ExecCmds executes a sequence of commands, sel = select tab, clearBuf = clear buffer
-func (cv *CodeView) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
+func (cv *Code) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		cv.ExecCmdName(cmdNm, sel, clearBuf)
 	}
 }
 
 // ExecCmdsFileNode executes a sequence of commands on file node, sel = select tab, clearBuf = clear buffer
-func (cv *CodeView) ExecCmdsFileNode(fn *filetree.Node, cmdNms CmdNames, sel bool, clearBuf bool) {
+func (cv *Code) ExecCmdsFileNode(fn *filetree.Node, cmdNms CmdNames, sel bool, clearBuf bool) {
 	for _, cmdNm := range cmdNms {
 		cv.ExecCmdNameFileNode(fn, cmdNm, sel, clearBuf)
 	}
 }
 
 // RunBuild runs the BuildCmds set for this project
-func (cv *CodeView) RunBuild() { //types:add
+func (cv *Code) RunBuild() { //types:add
 	if len(cv.Settings.BuildCmds) == 0 {
 		core.MessageDialog(cv, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
 		return
@@ -187,7 +187,7 @@ func (cv *CodeView) RunBuild() { //types:add
 }
 
 // Run runs the RunCmds set for this project
-func (cv *CodeView) Run() { //types:add
+func (cv *Code) Run() { //types:add
 	if len(cv.Settings.RunCmds) == 0 {
 		core.MessageDialog(cv, "You need to set the RunCmds in the Project Settings", "No RunCmds Set")
 		return
@@ -201,7 +201,7 @@ func (cv *CodeView) Run() { //types:add
 
 // Commit commits the current changes using relevant VCS tool.
 // Checks for VCS setting and for unsaved files.
-func (cv *CodeView) Commit() { //types:add
+func (cv *Code) Commit() { //types:add
 	vc := cv.VersionControl()
 	if vc == "" {
 		core.MessageDialog(cv, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
@@ -213,7 +213,7 @@ func (cv *CodeView) Commit() { //types:add
 }
 
 // CommitNoChecks does the commit without any further checks for VCS, and unsaved files
-func (cv *CodeView) CommitNoChecks() {
+func (cv *Code) CommitNoChecks() {
 	vc := cv.VersionControl()
 	cmds := AvailableCommands.FilterCmdNames(cv.ActiveLang, vc)
 	cmdnm := ""

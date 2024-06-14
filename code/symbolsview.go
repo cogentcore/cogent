@@ -33,7 +33,7 @@ type SymbolsView struct {
 	core.Frame
 
 	// parent code project
-	Code *CodeView `json:"-" xml:"-"`
+	Code *Code `json:"-" xml:"-"`
 
 	// params for structure display
 	SymParams SymbolsParams
@@ -89,7 +89,7 @@ func (sv *SymbolsView) Init() {
 	})
 }
 
-func (sv *SymbolsView) Config(cv *CodeView, sp SymbolsParams) { // TODO(config): better name?
+func (sv *SymbolsView) Config(cv *Code, sp SymbolsParams) { // TODO(config): better name?
 	sv.Code = cv
 	sv.SymParams = sp
 }
@@ -173,14 +173,14 @@ func (sv *SymbolsView) RefreshAction() {
 	sv.SearchText().SetFocusEvent()
 }
 
-func SelectSymbol(cv *CodeView, ssym syms.Symbol) {
+func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	tv := cv.ActiveTextEditor()
 	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
 		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 		tv, ok = cv.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
 		if !ok {
-			log.Printf("CodeView SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
+			log.Printf("Code SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
 		return
 	}

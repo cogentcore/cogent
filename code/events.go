@@ -14,12 +14,12 @@ import (
 	"cogentcore.org/core/keymap"
 )
 
-func (cv *CodeView) codeViewKeys(e events.Event) {
+func (cv *Code) codeKeys(e events.Event) {
 	SetGoMod(cv.Settings.GoMod)
 	kc := e.KeyChord()
 	kf := keymap.Of(kc)
 	if core.DebugSettings.KeyEventTrace {
-		slog.Info("CodeView KeyInput", "widget", cv, "keyFunction", kf, "keyChord", kc)
+		slog.Info("Code KeyInput", "widget", cv, "keyFunction", kf, "keyChord", kc)
 	}
 	if cv.KeySeq1 != "" {
 		kc2 := string(cv.KeySeq1) + " " + string(kc)

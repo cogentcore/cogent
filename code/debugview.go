@@ -115,11 +115,11 @@ type DebugView struct {
 	OutputBuffer *texteditor.Buffer `set:"-" json:"-" xml:"-"`
 
 	// parent code project
-	Code *CodeView `set:"-" json:"-" xml:"-"`
+	Code *Code `set:"-" json:"-" xml:"-"`
 }
 
 // Config sets parameters that must be set for a new view
-func (dv *DebugView) Config(cv *CodeView, sup fileinfo.Known, exePath string) {
+func (dv *DebugView) Config(cv *Code, sup fileinfo.Known, exePath string) {
 	dv.Code = cv
 	dv.Sup = sup
 	dv.ExePath = exePath

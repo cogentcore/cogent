@@ -60,7 +60,7 @@ type FindView struct {
 	core.Frame
 
 	// parent code project
-	Code *CodeView `json:"-" xml:"-"`
+	Code *Code `json:"-" xml:"-"`
 
 	// time of last find
 	Time time.Time

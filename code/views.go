@@ -22,7 +22,7 @@ import (
 )
 
 // ConfigFindButton configures the Find FuncButton with current params
-func (cv *CodeView) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
+func (cv *Code) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 	fb.Args[0].SetValue(cv.Settings.Find.Find)
 	fb.Args[0].SetTag(`width:"80"`)
 	fb.Args[1].SetValue(cv.Settings.Find.Replace)
@@ -34,13 +34,13 @@ func (cv *CodeView) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 	return fb
 }
 
-func (cv *CodeView) CallFind(ctx core.Widget) {
+func (cv *Code) CallFind(ctx core.Widget) {
 	cv.ConfigFindButton(core.NewSoloFuncButton(ctx, cv.Find)).CallFunc()
 }
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (cv *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLoc, langs []fileinfo.Known) { //types:add
+func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLoc, langs []fileinfo.Known) { //types:add
 	if find == "" {
 		return
 	}
@@ -97,7 +97,7 @@ func (cv *CodeView) Find(find string, repl string, ignoreCase bool, regExp bool,
 }
 
 // Spell checks spelling in active text view
-func (cv *CodeView) Spell() { //types:add
+func (cv *Code) Spell() { //types:add
 	txv := cv.ActiveTextEditor()
 	if txv == nil || txv.Buffer == nil {
 		return
@@ -115,7 +115,7 @@ func (cv *CodeView) Spell() { //types:add
 }
 
 // Symbols displays the Symbols of a file or package
-func (cv *CodeView) Symbols() { //types:add
+func (cv *Code) Symbols() { //types:add
 	txv := cv.ActiveTextEditor()
 	if txv == nil || txv.Buffer == nil {
 		return
@@ -132,7 +132,7 @@ func (cv *CodeView) Symbols() { //types:add
 }
 
 // Debug starts the debugger on the RunExec executable.
-func (cv *CodeView) Debug() { //types:add
+func (cv *Code) Debug() { //types:add
 	tv := cv.Tabs()
 	if tv == nil {
 		return
@@ -150,7 +150,7 @@ func (cv *CodeView) Debug() { //types:add
 }
 
 // DebugTest runs the debugger using testing mode in current active texteditor path
-func (cv *CodeView) DebugTest() { //types:add
+func (cv *Code) DebugTest() { //types:add
 	txv := cv.ActiveTextEditor()
 	if txv == nil || txv.Buffer == nil {
 		return
@@ -172,7 +172,7 @@ func (cv *CodeView) DebugTest() { //types:add
 
 // DebugAttach runs the debugger by attaching to an already-running process.
 // pid is the process id to attach to.
-func (cv *CodeView) DebugAttach(pid uint64) { //types:add
+func (cv *Code) DebugAttach(pid uint64) { //types:add
 	tv := cv.Tabs()
 	if tv == nil {
 		return
@@ -190,18 +190,18 @@ func (cv *CodeView) DebugAttach(pid uint64) { //types:add
 }
 
 // CurDebug returns the current debug view
-func (cv *CodeView) CurDebug() *DebugView {
+func (cv *Code) CurDebug() *DebugView {
 	return cv.CurDbg
 }
 
 // ClearDebug clears the current debugger setting -- no more debugger active.
-func (cv *CodeView) ClearDebug() {
+func (cv *Code) ClearDebug() {
 	cv.CurDbg = nil
 }
 
 // VCSUpdateAll does an Update (e.g., Pull) on all VCS repositories within
 // the open tree nodes in FileTree.
-func (cv *CodeView) VCSUpdateAll() { //types:add
+func (cv *Code) VCSUpdateAll() { //types:add
 	cv.Files.UpdateAllVCS()
 	cv.Files.UpdateAll()
 }
@@ -213,7 +213,7 @@ func (cv *CodeView) VCSUpdateAll() { //types:add
 // that the VCS will understand, such as 1/1/2020, yesterday,
 // last year, etc.  SVN only understands a number as a maximum
 // number of items to return.
-func (cv *CodeView) VCSLog(since string) (vcs.Log, error) { //types:add
+func (cv *Code) VCSLog(since string) (vcs.Log, error) { //types:add
 	atv := cv.ActiveTextEditor()
 	ond, _, got := cv.OpenNodeForTextEditor(atv)
 	if !got {
@@ -227,7 +227,7 @@ func (cv *CodeView) VCSLog(since string) (vcs.Log, error) { //types:add
 }
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
-func (cv *CodeView) OpenConsoleTab() { //types:add
+func (cv *Code) OpenConsoleTab() { //types:add
 	ctv := cv.RecycleTabTextEditor("Console", true, nil)
 	if ctv == nil {
 		return
@@ -242,7 +242,7 @@ func (cv *CodeView) OpenConsoleTab() { //types:add
 }
 
 // ChooseRunExec selects the executable to run for the project
-func (cv *CodeView) ChooseRunExec(exePath core.Filename) { //types:add
+func (cv *Code) ChooseRunExec(exePath core.Filename) { //types:add
 	if exePath != "" {
 		cv.Settings.RunExec = exePath
 		cv.Settings.BuildDir = core.Filename(filepath.Dir(string(exePath)))
@@ -256,13 +256,13 @@ func (cv *CodeView) ChooseRunExec(exePath core.Filename) { //types:add
 //    StatusBar
 
 // SetStatus sets the current status update message for the StatusBar next time it renders
-func (cv *CodeView) SetStatus(msg string) {
+func (cv *Code) SetStatus(msg string) {
 	cv.StatusMessage = msg
 	cv.UpdateTextButtons()
 }
 
 // UpdateStatusText updates the status bar text with current data.
-func (cv *CodeView) UpdateStatusText() {
+func (cv *Code) UpdateStatusText() {
 	sb := cv.StatusBar()
 	if sb == nil {
 		return
@@ -299,6 +299,6 @@ func (cv *CodeView) UpdateStatusText() {
 }
 
 // HelpWiki opens wiki page for code on github
-func (cv *CodeView) HelpWiki() { //types:add
+func (cv *Code) HelpWiki() { //types:add
 	core.TheApp.OpenURL("https://cogentcore.org/code")
 }
