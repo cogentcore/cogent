@@ -105,31 +105,31 @@ func (t *FileNode) NodeType() *types.Type { return FileNodeType }
 // New returns a new [*FileNode] value
 func (t *FileNode) New() tree.Node { return &FileNode{} }
 
-// FindViewType is the [types.Type] for [FindView]
-var FindViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FindView", IDName: "find-view", Doc: "FindView is a find / replace widget that displays results in a TextEditor\nand has a toolbar for controlling find / replace process.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindView{}})
+// FindPanelType is the [types.Type] for [FindPanel]
+var FindPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FindPanel", IDName: "find-panel", Doc: "FindPanel is a find / replace widget that displays results in a [TextEditor]\nand has a toolbar for controlling find / replace process.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Time", Doc: "time of last find"}, {Name: "Re", Doc: "compiled regexp"}}, Instance: &FindPanel{}})
 
-// NewFindView returns a new [FindView] with the given optional parent:
-// FindView is a find / replace widget that displays results in a TextEditor
+// NewFindPanel returns a new [FindPanel] with the given optional parent:
+// FindPanel is a find / replace widget that displays results in a [TextEditor]
 // and has a toolbar for controlling find / replace process.
-func NewFindView(parent ...tree.Node) *FindView { return tree.New[*FindView](parent...) }
+func NewFindPanel(parent ...tree.Node) *FindPanel { return tree.New[*FindPanel](parent...) }
 
-// NodeType returns the [*types.Type] of [FindView]
-func (t *FindView) NodeType() *types.Type { return FindViewType }
+// NodeType returns the [*types.Type] of [FindPanel]
+func (t *FindPanel) NodeType() *types.Type { return FindPanelType }
 
-// New returns a new [*FindView] value
-func (t *FindView) New() tree.Node { return &FindView{} }
+// New returns a new [*FindPanel] value
+func (t *FindPanel) New() tree.Node { return &FindPanel{} }
 
-// SetCode sets the [FindView.Code]:
+// SetCode sets the [FindPanel.Code]:
 // parent code project
-func (t *FindView) SetCode(v *Code) *FindView { t.Code = v; return t }
+func (t *FindPanel) SetCode(v *Code) *FindPanel { t.Code = v; return t }
 
-// SetTime sets the [FindView.Time]:
+// SetTime sets the [FindPanel.Time]:
 // time of last find
-func (t *FindView) SetTime(v time.Time) *FindView { t.Time = v; return t }
+func (t *FindPanel) SetTime(v time.Time) *FindPanel { t.Time = v; return t }
 
-// SetRe sets the [FindView.Re]:
+// SetRe sets the [FindPanel.Re]:
 // compiled regexp
-func (t *FindView) SetRe(v *regexp.Regexp) *FindView { t.Re = v; return t }
+func (t *FindPanel) SetRe(v *regexp.Regexp) *FindPanel { t.Re = v; return t }
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the overall user settings for Code.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Apply", Doc: "Apply settings updates things according with settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditLangOpts", Doc: "EditLangOpts opens the LangsView editor to customize options for each type of\nlanguage / data / file type.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditCmds", Doc: "EditCmds opens the CmdsView editor to customize commands you can run.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditSplits", Doc: "EditSplits opens the SplitsView editor to customize saved splitter settings", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditRegisters", Doc: "EditRegisters opens the RegistersView editor to customize saved registers", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Files", Doc: "file picker settings"}, {Name: "EnvVars", Doc: "environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app"}, {Name: "SaveLangOpts", Doc: "if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}, {Name: "SaveCmds", Doc: "if set, the current customized set of command parameters (see Edit Cmds) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)"}}})
 

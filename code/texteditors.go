@@ -203,7 +203,7 @@ func (cv *Code) OpenFileAtRegion(filename core.Filename, tr textbuf.Region) (tv 
 func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
-		log.Printf("FindView OpenFindURL parse err: %v\n", err)
+		log.Printf("FindPanel OpenFindURL parse err: %v\n", err)
 		return
 	}
 	fpath := up.Path[1:] // has double //
@@ -226,13 +226,13 @@ func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEdi
 	return
 }
 
-// OpenFindURL opens given find:/// url from Find -- delegates to FindView
+// OpenFindURL opens given find:/// url from Find -- delegates to FindPanel
 func (cv *Code) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
-	fvk := ftv.ParentByType(FindViewType, tree.NoEmbeds)
+	fvk := ftv.ParentByType(FindPanelType, tree.NoEmbeds)
 	if fvk == nil {
 		return false
 	}
-	fv := fvk.(*FindView)
+	fv := fvk.(*FindPanel)
 	return fv.OpenFindURL(ur, ftv)
 }
 

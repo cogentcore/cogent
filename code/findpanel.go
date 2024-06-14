@@ -54,9 +54,9 @@ type FindParams struct {
 	ReplHist []string
 }
 
-// FindView is a find / replace widget that displays results in a TextEditor
+// FindPanel is a find / replace widget that displays results in a [TextEditor]
 // and has a toolbar for controlling find / replace process.
-type FindView struct {
+type FindPanel struct {
 	core.Frame
 
 	// parent code project
@@ -69,7 +69,7 @@ type FindView struct {
 	Re *regexp.Regexp
 }
 
-func (fv *FindView) Init() {
+func (fv *FindPanel) Init() {
 	fv.Frame.Init()
 	fv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -90,18 +90,18 @@ func (fv *FindView) Init() {
 	})
 }
 
-func (fv *FindView) OnAdd() {
+func (fv *FindPanel) OnAdd() {
 	fv.Frame.OnAdd()
 	fv.Code, _ = ParentCode(fv)
 }
 
 // Params returns the find params
-func (fv *FindView) Params() *FindParams {
+func (fv *FindPanel) Params() *FindParams {
 	return &fv.Code.Settings.Find
 }
 
 // ShowResults shows the results in the buffer
-func (fv *FindView) ShowResults(res []filetree.SearchResults) {
+func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	ftv := fv.TextEditor()
 	fbuf := ftv.Buffer
 	fbuf.Options.LineNumbers = false
@@ -150,7 +150,7 @@ func (fv *FindView) ShowResults(res []filetree.SearchResults) {
 }
 
 // FindAction runs a new find with current params
-func (fv *FindView) FindAction() {
+func (fv *FindPanel) FindAction() {
 	fp := fv.Params()
 	if !fv.CompileRegexp() {
 		return
@@ -159,7 +159,7 @@ func (fv *FindView) FindAction() {
 }
 
 // CheckValidRegexp returns false if using regexp and it is not valid
-func (fv *FindView) CheckValidRegexp() bool {
+func (fv *FindPanel) CheckValidRegexp() bool {
 	fp := fv.Params()
 	if !fp.Regexp {
 		return true
@@ -171,7 +171,7 @@ func (fv *FindView) CheckValidRegexp() bool {
 }
 
 // ReplaceAction performs the replace -- if using regexp mode, regexp must be compiled in advance
-func (fv *FindView) ReplaceAction() bool {
+func (fv *FindPanel) ReplaceAction() bool {
 	if !fv.CheckValidRegexp() {
 		return false
 	}
@@ -239,7 +239,7 @@ func (fv *FindView) ReplaceAction() bool {
 }
 
 // ReplaceAllAction performs replace all, prompting before proceeding
-func (fv *FindView) ReplaceAllAction() {
+func (fv *FindPanel) ReplaceAllAction() {
 	d := core.NewBody().AddTitle("Confirm replace all").
 		AddText("Are you sure you want to replace all?")
 	d.AddBottomBar(func(parent core.Widget) {
@@ -252,7 +252,7 @@ func (fv *FindView) ReplaceAllAction() {
 }
 
 // CompileRegexp compiles the regexp if necessary -- returns false if it is invalid
-func (fv *FindView) CompileRegexp() bool {
+func (fv *FindPanel) CompileRegexp() bool {
 	fp := fv.Params()
 	if !fp.Regexp {
 		fv.Re = nil
@@ -268,7 +268,7 @@ func (fv *FindView) CompileRegexp() bool {
 }
 
 // ReplaceAll performs replace all
-func (fv *FindView) ReplaceAll() {
+func (fv *FindPanel) ReplaceAll() {
 	if !fv.CheckValidRegexp() {
 		return
 	}
@@ -294,7 +294,7 @@ func (fv *FindView) ReplaceAll() {
 }
 
 // NextFind shows next find result
-func (fv *FindView) NextFind() {
+func (fv *FindPanel) NextFind() {
 	ftv := fv.TextEditor()
 	ok := ftv.CursorNextLink(true) // wrap
 	if ok {
@@ -303,7 +303,7 @@ func (fv *FindView) NextFind() {
 }
 
 // PrevFind shows previous find result
-func (fv *FindView) PrevFind() {
+func (fv *FindPanel) PrevFind() {
 	ftv := fv.TextEditor()
 	ok := ftv.CursorPrevLink(true) // wrap
 	if ok {
@@ -312,7 +312,7 @@ func (fv *FindView) PrevFind() {
 }
 
 // OpenFindURL opens given find:/// url from Find
-func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
+func (fv *FindPanel) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 	ge := fv.Code
 	tv, reg, fbBufStLn, fCount, ok := ge.ParseOpenFindURL(ur, ftv)
 	if !ok {
@@ -330,7 +330,7 @@ func (fv *FindView) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 }
 
 // HighlightFinds highlights all the find results in ftv buffer
-func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount int, find string) {
+func (fv *FindPanel) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount int, find string) {
 	lnka := []byte(`<a href="`)
 	lnkasz := len(lnka)
 
@@ -369,12 +369,12 @@ func (fv *FindView) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount in
 //    GUI config
 
 // TextEditorLay returns the find results TextEditor
-func (fv *FindView) TextEditor() *texteditor.Editor {
+func (fv *FindPanel) TextEditor() *texteditor.Editor {
 	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
 }
 
 // makeFindToolbar
-func (fv *FindView) makeFindToolbar(p *core.Plan) {
+func (fv *FindPanel) makeFindToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").
 			OnClick(func(e events.Event) {
@@ -450,7 +450,7 @@ func (fv *FindView) makeFindToolbar(p *core.Plan) {
 	})
 }
 
-func (fv *FindView) makeReplToolbar(p *core.Plan) {
+func (fv *FindPanel) makeReplToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to previous result").
 			OnClick(func(e events.Event) {
