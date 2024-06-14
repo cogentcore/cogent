@@ -16,7 +16,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/views"
 )
 
 // Registers is a list of named strings
@@ -103,7 +102,7 @@ func RegistersView(pt *Registers) {
 
 	core.NewText(d).SetText("Available Registers: can duplicate an existing (using context menu) as starting point for new one").SetType(core.TextHeadlineSmall)
 
-	tv := views.NewMapView(d).SetMap(pt)
+	tv := core.NewKeyedList(d).SetMap(pt)
 
 	AvailableRegistersChanged = false
 	tv.OnChange(func(e events.Event) {
@@ -111,18 +110,18 @@ func RegistersView(pt *Registers) {
 	})
 
 	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
 				FirstStyler(func(s *styles.Style) {
 					s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters)
 				})
 		})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})

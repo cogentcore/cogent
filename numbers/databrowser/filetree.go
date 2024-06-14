@@ -19,10 +19,9 @@ import (
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/diffbrowser"
-	"cogentcore.org/core/views"
 )
 
-// FileNode is Code version of FileNode for FileTree view
+// FileNode is Code version of FileNode for FileTree
 type FileNode struct {
 	filetree.Node
 }
@@ -61,7 +60,7 @@ func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 	switch {
 	case fn.Info.Cat == fileinfo.Data:
 		df := dirs.DirAndFile(string(fn.FPath))
-		tv := br.NewTabTable(df)
+		tv := br.NewTabTensorTable(df)
 		dt := tv.Table.Table
 		err := dt.OpenCSV(fn.FPath, table.Tab) // todo: need more flexible data handling mode
 		tv.Table.Sequential()
@@ -197,15 +196,15 @@ func IsTableFile(fname string) bool {
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
-	views.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
+	core.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
-	views.NewFuncButton(m, fn.PlotFiles).SetText("Plot").SetIcon(icons.Edit).
+	core.NewFuncButton(m, fn.PlotFiles).SetText("Plot").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || fn.Info.Cat != fileinfo.Data, states.Disabled)
 		})
-	views.NewFuncButton(m, fn.DiffDirs).SetText("Diff Dirs").SetIcon(icons.Edit).
+	core.NewFuncButton(m, fn.DiffDirs).SetText("Diff Dirs").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsDir(), states.Disabled)
 		})

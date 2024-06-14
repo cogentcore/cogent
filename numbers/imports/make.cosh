@@ -5,17 +5,17 @@ command install {
 }
 
 command core {
-	yaegi extract cogentcore.org/core/core cogentcore.org/core/views
+	yaegi extract cogentcore.org/core/core
 }
 
 command tensor {
 	yaegi extract cogentcore.org/core/tensor/bitslice cogentcore.org/core/tensor
-	yaegi extract cogentcore.org/core/tensor/table cogentcore.org/core/tensor/tensorview
+	yaegi extract cogentcore.org/core/tensor/table cogentcore.org/core/tensor/tensorcore
 	yaegi extract cogentcore.org/core/tensor/stats/clust cogentcore.org/core/tensor/stats/convolve cogentcore.org/core/tensor/stats/histogram cogentcore.org/core/tensor/stats/metric cogentcore.org/core/tensor/stats/norm cogentcore.org/core/tensor/stats/pca cogentcore.org/core/tensor/stats/simat cogentcore.org/core/tensor/stats/split cogentcore.org/core/tensor/stats/stats
 }
 
-command plotview {
-	yaegi extract cogentcore.org/core/plot/plotview
+command plotcore {
+	yaegi extract cogentcore.org/core/plot/plotcore
 }
 
 command all {

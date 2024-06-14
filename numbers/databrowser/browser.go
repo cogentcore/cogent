@@ -28,7 +28,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 	"github.com/traefik/yaegi/interp"
 	"golang.org/x/exp/maps"
 )
@@ -185,7 +184,7 @@ func (br *Browser) Tabs() *core.Tabs {
 	return br.FindPath("splits/tabs").(*core.Tabs)
 }
 
-// UpdateFiles Updates the file view with current files in DataRoot,
+// UpdateFiles Updates the file picker with current files in DataRoot,
 func (br *Browser) UpdateFiles() { //types:add
 	files := br.FileTree()
 	fmt.Println(br.DataRoot)
@@ -224,10 +223,10 @@ func (br *Browser) UpdateScripts() { //types:add
 }
 
 func (br *Browser) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(br.UpdateScripts).SetText("").SetIcon(icons.Code)
 	})
 	scr := maps.Keys(br.Scripts)

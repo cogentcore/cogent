@@ -38,7 +38,7 @@ import (
 const (
 	LexRulesIndex = iota
 	ParseRulesIndex
-	StructViewIndex
+	FormIndex
 	AstOutIndex
 	MainTabsIndex
 )
@@ -332,11 +332,11 @@ func (pv *PiView) SelectLexRule(rule *lexer.Rule) {
 	lt := pv.LexTree()
 	lt.UnselectAll()
 	lt.FuncDownMeFirst(0, lt.This, func(k tree.Node, level int, d any) bool {
-		lnt := k.Embed(views.KiT_TreeView)
+		lnt := k.Embed(core.KiT_Tree)
 		if lnt == nil {
 			return true
 		}
-		ln := lnt.(*views.TreeView)
+		ln := lnt.(*core.Tree)
 		if ln.SrcNode == rule.This {
 			ln.Select()
 			return false
@@ -360,7 +360,7 @@ func (pv *PiView) UpdateLexBuf() {
 
 // EditPassTwo shows the PassTwo settings to edit -- does nest depth and finds the EOS end-of-statements
 func (pv *PiView) EditPassTwo() {
-	sv := pv.StructView()
+	sv := pv.Form()
 	if sv != nil {
 		sv.SetStruct(&pv.Parser.PassTwo)
 	}
@@ -384,7 +384,7 @@ func (pv *PiView) PassTwo() {
 
 // EditTrace shows the parser.Trace options for detailed tracing output
 func (pv *PiView) EditTrace() {
-	sv := pv.StructView()
+	sv := pv.Form()
 	if sv != nil {
 		fs := &pv.FileState
 		sv.SetStruct(&fs.ParseState.Trace)
@@ -474,11 +474,11 @@ func (pv *PiView) SelectParseRule(rule *parser.Rule) {
 	lt := pv.ParseTree()
 	lt.UnselectAll()
 	lt.FuncDownMeFirst(0, lt.This, func(k tree.Node, level int, d any) bool {
-		lnt := k.Embed(views.KiT_TreeView)
+		lnt := k.Embed(core.KiT_Tree)
 		if lnt == nil {
 			return true
 		}
-		ln := lnt.(*views.TreeView)
+		ln := lnt.(*core.Tree)
 		if ln.SrcNode == rule.This {
 			ln.Select()
 			return false
@@ -502,7 +502,7 @@ func (pv *PiView) UpdateParseBuf() {
 
 // ViewParseState
 func (pv *PiView) ViewParseState() {
-	sv := pv.StructView()
+	sv := pv.Form()
 	if sv != nil {
 		sv.SetStruct(&pv.FileState.ParseState)
 	}
@@ -634,10 +634,10 @@ func (pv *PiView) ConfigTextEditor(ly *core.Frame, out bool) *texteditor.Editor 
 	var tv *texteditor.Editor
 	update := false
 	if ly.HasChildren() {
-		tv = ly.Child(0).Embed(views.KiT_TextEditor).(*texteditor.Editor)
+		tv = ly.Child(0).Embed(core.KiT_TextEditor).(*texteditor.Editor)
 	} else {
 		update = ly.UpdateStart()
-		tv = ly.NewChild(views.KiT_TextEditor, ly.Nm).(*texteditor.Editor)
+		tv = ly.NewChild(core.KiT_TextEditor, ly.Nm).(*texteditor.Editor)
 	}
 
 	if core.Settings.Editor.WordWrap {
@@ -670,7 +670,7 @@ func (pv *PiView) MainTabTextEditorByName(tabnm string) (*texteditor.Editor, boo
 	if err != nil {
 		return nil, false
 	}
-	ctv := lyk.Child(0).Embed(views.KiT_TextEditor).(*texteditor.Editor)
+	ctv := lyk.Child(0).Embed(core.KiT_TextEditor).(*texteditor.Editor)
 	return ctv, true
 }
 
@@ -753,24 +753,24 @@ func (pv *PiView) Splits() *core.Splits {
 	return pv.ChildByName("splits", 4).(*core.Splits)
 }
 
-// LexTree returns the lex rules tree view
-func (pv *PiView) LexTree() *views.TreeView {
-	return pv.Splits().Child(LexRulesIndex).Child(0).(*views.TreeView)
+// LexTree returns the lex rules tree
+func (pv *PiView) LexTree() *core.Tree {
+	return pv.Splits().Child(LexRulesIndex).Child(0).(*core.Tree)
 }
 
-// ParseTree returns the parse rules tree view
-func (pv *PiView) ParseTree() *views.TreeView {
-	return pv.Splits().Child(ParseRulesIndex).Child(0).(*views.TreeView)
+// ParseTree returns the parse rules tree
+func (pv *PiView) ParseTree() *core.Tree {
+	return pv.Splits().Child(ParseRulesIndex).Child(0).(*core.Tree)
 }
 
-// AstTree returns the Ast output tree view
-func (pv *PiView) AstTree() *views.TreeView {
-	return pv.Splits().Child(AstOutIndex).Child(0).(*views.TreeView)
+// AstTree returns the Ast output tree
+func (pv *PiView) AstTree() *core.Tree {
+	return pv.Splits().Child(AstOutIndex).Child(0).(*core.Tree)
 }
 
-// StructView returns the StructView for editing rules
-func (pv *PiView) StructView() *views.StructView {
-	return pv.Splits().Child(StructViewIndex).(*views.StructView)
+// Form returns the Form for editing rules
+func (pv *PiView) Form() *core.Form {
+	return pv.Splits().Child(FormIndex).(*core.Form)
 }
 
 // MainTabs returns the main TabView
@@ -820,7 +820,7 @@ func (pv *PiView) MakeToolbar() {
 		return
 	}
 	tb.SetStretchMaxWidth()
-	views.ToolbarView(pv, pv.Viewport, tb)
+	core.ToolbarView(pv, pv.Viewport, tb)
 }
 
 // SplitsConfig returns a TypeAndNameList for configuring the Splits
@@ -828,7 +828,7 @@ func (pv *PiView) SplitsConfig() tree.Config {
 	config := tree.Config{}
 	config.Add(core.FrameType, "lex-tree-fr")
 	config.Add(core.FrameType, "parse-tree-fr")
-	config.Add(views.KiT_StructView, "struct-view")
+	config.Add(core.KiT_Form, "form")
 	config.Add(core.FrameType, "ast-tree-fr")
 	config.Add(core.KiT_TabView, "main-tabs")
 	return config
@@ -868,15 +868,15 @@ func (pv *PiView) ConfigSplits() {
 	mods, update := split.ConfigChildren(config)
 	if mods {
 		lxfr := split.Child(LexRulesIndex).(*core.Frame)
-		lxt := lxfr.NewChild(views.KiT_TreeView, "lex-tree").(*views.TreeView)
+		lxt := lxfr.NewChild(core.KiT_Tree, "lex-tree").(*core.Tree)
 		lxt.SetRootNode(&pv.Parser.Lexer)
 
 		prfr := split.Child(ParseRulesIndex).(*core.Frame)
-		prt := prfr.NewChild(views.KiT_TreeView, "parse-tree").(*views.TreeView)
+		prt := prfr.NewChild(core.KiT_Tree, "parse-tree").(*core.Tree)
 		prt.SetRootNode(&pv.Parser.Parser)
 
 		astfr := split.Child(AstOutIndex).(*core.Frame)
-		astt := astfr.NewChild(views.KiT_TreeView, "ast-tree").(*views.TreeView)
+		astt := astfr.NewChild(core.KiT_Tree, "ast-tree").(*core.Tree)
 		astt.SetRootNode(&fs.Ast)
 
 		pv.TestBuf.SetHiStyle(core.Settings.Colors.HiStyle)
@@ -908,56 +908,56 @@ func (pv *PiView) ConfigSplits() {
 		pv.ParseTree().Open()
 		pv.AstTree().SetRootNode(&fs.Ast)
 		pv.AstTree().Open()
-		pv.StructView().SetStruct(&pv.Parser.Lexer)
+		pv.Form().SetStruct(&pv.Parser.Lexer)
 	}
 
-	pv.LexTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+	pv.LexTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(tree.Node).Embed(views.KiT_TreeView).(*views.TreeView)
+		tvn, _ := data.(tree.Node).Embed(core.KiT_Tree).(*core.Tree)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
-		case int64(views.TreeViewSelected):
+		case int64(core.TreeSelected):
 			pvb.ViewNode(tvn)
-		case int64(views.TreeViewChanged):
+		case int64(core.TreeChanged):
 			pvb.SetChanged()
 		}
 	})
 
-	pv.ParseTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+	pv.ParseTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(tree.Node).Embed(views.KiT_TreeView).(*views.TreeView)
+		tvn, _ := data.(tree.Node).Embed(core.KiT_Tree).(*core.Tree)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
-		case int64(views.TreeViewSelected):
+		case int64(core.TreeSelected):
 			pvb.ViewNode(tvn)
-		case int64(views.TreeViewChanged):
+		case int64(core.TreeChanged):
 			pvb.SetChanged()
 		}
 	})
 
-	pv.AstTree().TreeViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+	pv.AstTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
-		tvn, _ := data.(tree.Node).Embed(views.KiT_TreeView).(*views.TreeView)
+		tvn, _ := data.(tree.Node).Embed(core.KiT_Tree).(*core.Tree)
 		pvb, _ := recv.Embed(KiT_PiView).(*PiView)
 		switch sig {
-		case int64(views.TreeViewSelected):
+		case int64(core.TreeSelected):
 			pvb.ViewNode(tvn)
-		case int64(views.TreeViewChanged):
+		case int64(core.TreeChanged):
 			pvb.SetChanged()
 		}
 	})
 
 }
 
-// ViewNode sets the StructView view to src node for given treeview
-func (pv *PiView) ViewNode(tv *views.TreeView) {
-	sv := pv.StructView()
+// ViewNode sets the Form view to src node for given tree
+func (pv *PiView) ViewNode(tv *core.Tree) {
+	sv := pv.Form()
 	if sv != nil {
 		sv.SetStruct(tv.SrcNode)
 	}
@@ -1021,7 +1021,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	// 	if tv.HasSelection() {
 	// 		ge.Settings.Find.Find = string(tv.Selection().ToBytes())
 	// 	}
-	// 	views.CallMethod(ge, "Find", ge.Viewport)
+	// 	core.CallMethod(ge, "Find", ge.Viewport)
 	// }
 	// if kt.IsProcessed() {
 	// 	return
@@ -1035,7 +1035,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 		ge.FocusPrevPanel()
 	case code.KeyFunFileOpen:
 		kt.SetProcessed()
-		views.CallMethod(ge, "OpenTest", ge.Viewport)
+		core.CallMethod(ge, "OpenTest", ge.Viewport)
 	// case code.KeyFunBufSelect:
 	// 	kt.SetProcessed()
 	// 	ge.SelectOpenNode()
@@ -1044,16 +1044,16 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 	// 	ge.CloneActiveView()
 	case code.KeyFunBufSave:
 		kt.SetProcessed()
-		views.CallMethod(ge, "SaveTestAs", ge.Viewport)
+		core.CallMethod(ge, "SaveTestAs", ge.Viewport)
 	case code.KeyFunBufSaveAs:
 		kt.SetProcessed()
-		views.CallMethod(ge, "SaveActiveViewAs", ge.Viewport)
+		core.CallMethod(ge, "SaveActiveViewAs", ge.Viewport)
 		// case code.KeyFunBufClose:
 		// 	kt.SetProcessed()
 		// 	ge.CloseActiveView()
 		// case code.KeyFunExecCmd:
 		// 	kt.SetProcessed()
-		// 	views.CallMethod(ge, "ExecCmd", ge.Viewport)
+		// 	core.CallMethod(ge, "ExecCmd", ge.Viewport)
 		// case code.KeyFunCommentOut:
 		// 	kt.SetProcessed()
 		// 	ge.CommentOut()
@@ -1062,7 +1062,7 @@ func (ge *PiView) PiViewKeys(kt *key.ChordEvent) {
 		// 	ge.Indent()
 		// case code.KeyFunSetSplit:
 		// 	kt.SetProcessed()
-		// 	views.CallMethod(ge, "SplitsSetView", ge.Viewport)
+		// 	core.CallMethod(ge, "SplitsSetView", ge.Viewport)
 		// case code.KeyFunBuildProj:
 		// 	kt.SetProcessed()
 		// 	ge.Build()
@@ -1116,7 +1116,7 @@ var PiViewProperties = tree.Properties{
 			"shortcut": keyfun.MenuSave,
 			"label":    "Save Project",
 			"desc":     "Save GoPi project file to standard JSON-formatted file",
-			"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+			"updatefunc": core.ActionUpdateFunc(func(pvi any, act *core.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveState( pv.Changed && pv.Settings.ProjectFile != "")
 			}),
@@ -1136,7 +1136,7 @@ var PiViewProperties = tree.Properties{
 		{"SaveParser", tree.Properties{
 			"icon": "file-save",
 			"desc": "Save lexer and parser rules from file standard JSON-formatted file",
-			"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+			"updatefunc": core.ActionUpdateFunc(func(pvi any, act *core.Button) {
 				pv := pvi.(*PiView)
 				act.SetActiveStateUpdate( pv.Changed && pv.Settings.ParserFile != "")
 			}),
@@ -1250,7 +1250,7 @@ var PiViewProperties = tree.Properties{
 				"shortcut": keyfun.MenuSave,
 				"label":    "Save Project",
 				"desc":     "Save GoPi project file to standard JSON-formatted file",
-				"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+				"updatefunc": core.ActionUpdateFunc(func(pvi any, act *core.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( pv.Changed && pv.Settings.ProjectFile != "")
 				}),
@@ -1281,7 +1281,7 @@ var PiViewProperties = tree.Properties{
 			{"SaveParser", tree.Properties{
 				"shortcut": keyfun.MenuSaveAlt,
 				"desc":     "Save lexer and parser rules to file standard JSON-formatted file",
-				"updatefunc": views.ActionUpdateFunc(func(pvi any, act *core.Button) {
+				"updatefunc": core.ActionUpdateFunc(func(pvi any, act *core.Button) {
 					pv := pvi.(*PiView)
 					act.SetActiveState( pv.Changed && pv.Settings.ParserFile != "")
 				}),
@@ -1380,7 +1380,7 @@ func NewPiView() (*core.Window, *PiView) {
 	pv.Viewport = vp
 
 	// mmen := win.MainMenu
-	// views.MainMenuView(pv, win, mmen)
+	// core.MainMenuView(pv, win, mmen)
 	//
 	// inClosePrompt := false
 	// win.OSWin.SetCloseReqFunc(func(w oswin.Window) {

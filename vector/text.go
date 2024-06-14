@@ -9,10 +9,9 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
-	"cogentcore.org/core/views"
 )
 
-// TextStyle is text styling info -- using StructView to do text editor
+// TextStyle is text styling info -- using Form to do text editor
 type TextStyle struct {
 
 	// current text to edit
@@ -46,7 +45,7 @@ type TextStyle struct {
 	Align styles.Aligns `xml:"text-align" inherit:"true"`
 
 	// font value view for font toolbar
-	FontButton views.FontButton `view:"-"`
+	FontButton core.FontButton `view:"-"`
 
 	// the parent vectorview
 	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`

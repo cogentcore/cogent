@@ -19,11 +19,10 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/spell"
-	"cogentcore.org/core/views"
 )
 
 // ConfigFindButton configures the Find FuncButton with current params
-func (cv *CodeView) ConfigFindButton(fb *views.FuncButton) *views.FuncButton {
+func (cv *CodeView) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 	fb.Args[0].SetValue(cv.Settings.Find.Find)
 	fb.Args[0].SetTag(`width:"80"`)
 	fb.Args[1].SetValue(cv.Settings.Find.Replace)
@@ -36,7 +35,7 @@ func (cv *CodeView) ConfigFindButton(fb *views.FuncButton) *views.FuncButton {
 }
 
 func (cv *CodeView) CallFind(ctx core.Widget) {
-	cv.ConfigFindButton(views.NewSoloFuncButton(ctx, cv.Find)).CallFunc()
+	cv.ConfigFindButton(core.NewSoloFuncButton(ctx, cv.Find)).CallFunc()
 }
 
 // Find does Find / Replace in files, using given options and filters -- opens up a

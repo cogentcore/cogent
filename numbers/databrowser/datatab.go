@@ -11,30 +11,29 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/tomlx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/plot/plotview"
+	"cogentcore.org/core/plot/plotcore"
 	"cogentcore.org/core/shell/cosh"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tensor"
 	"cogentcore.org/core/tensor/table"
-	"cogentcore.org/core/tensor/tensorview"
-	"cogentcore.org/core/views"
+	"cogentcore.org/core/tensor/tensorcore"
 )
 
-// NewTabTable creates a tab with a table and a tableview.
+// NewTabTensorTable creates a tab with a tensor table and a tensorcore table.
 // Use tv.Table.Table to get the underlying *table.Table
 // and tv.Table is the table.IndexView onto the table.
 // Use tv.Table.Sequential to update the IndexView to view
 // all of the rows when done updating the Table, and then call br.Update()
-func (br *Browser) NewTabTable(label string) *tensorview.TableView {
+func (br *Browser) NewTabTensorTable(label string) *tensorcore.Table {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(1).(*tensorview.TableView)
+		tv := tab.Child(1).(*tensorcore.Table)
 		return tv
 	}
 	dt := table.NewTable()
 	tb := core.NewToolbar(tab)
-	tv := tensorview.NewTableView(tab)
+	tv := tensorcore.NewTable(tab)
 	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
@@ -45,17 +44,17 @@ func (br *Browser) NewTabTable(label string) *tensorview.TableView {
 	return tv
 }
 
-// NewTabTableView creates a tab with a slice TableView.
+// NewTabTable creates a tab with a slice Table.
 // Sets the slice if tab already exists
-func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
+func (br *Browser) NewTabTable(label string, slc any) *core.Table {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		tv := tab.Child(0).(*views.TableView)
+		tv := tab.Child(0).(*core.Table)
 		tv.SetSlice(slc)
 		return tv
 	}
-	tv := views.NewTableView(tab)
+	tv := core.NewTable(tab)
 	tv.SetReadOnlyMultiSelect(true)
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
@@ -65,16 +64,16 @@ func (br *Browser) NewTabTableView(label string, slc any) *views.TableView {
 	return tv
 }
 
-// NewTabPlot creates a tab with a SubPlot PlotView.
+// NewTabPlot creates a tab with a SubPlot PlotEditor.
 // Set the table and call br.Update after this.
-func (br *Browser) NewTabPlot(label string) *plotview.PlotView {
+func (br *Browser) NewTabPlot(label string) *plotcore.PlotEditor {
 	tabs := br.Tabs()
 	tab := tabs.RecycleTab(label, true)
 	if tab.HasChildren() {
-		pl := tab.Child(0).AsTree().Child(1).(*plotview.PlotView)
+		pl := tab.Child(0).AsTree().Child(1).(*plotcore.PlotEditor)
 		return pl
 	}
-	pl := plotview.NewSubPlot(tab)
+	pl := plotcore.NewSubPlot(tab)
 	return pl
 }
 

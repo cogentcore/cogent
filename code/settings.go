@@ -18,7 +18,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/views"
 )
 
 func init() {
@@ -40,7 +39,7 @@ var Settings = &SettingsData{
 type SettingsData struct { //types:add
 	core.SettingsBase
 
-	// file view settings
+	// file picker settings
 	Files FileSettings
 
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
@@ -53,10 +52,10 @@ type SettingsData struct { //types:add
 	SaveCmds bool
 }
 
-// FileSettings contains file view settings
+// FileSettings contains file picker settings
 type FileSettings struct { //types:add
 
-	// if true, then all directories are placed at the top of the tree view -- otherwise everything is alpha sorted
+	// if true, then all directories are placed at the top of the tree -- otherwise everything is alpha sorted
 	DirsOnTop bool
 }
 
@@ -146,16 +145,16 @@ func (se *SettingsData) ApplyEnvVars() {
 }
 
 func (se *SettingsData) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditLangOpts).SetIcon(icons.Subtitles)
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditCmds).SetIcon(icons.KeyboardCommandKey)
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditSplits).SetIcon(icons.VerticalSplit)
 	})
-	core.Add(p, func(w *views.FuncButton) {
+	core.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditRegisters).SetIcon(icons.Variables)
 	})
 }
@@ -199,7 +198,7 @@ func (se *SettingsData) EditRegisters() { //types:add
 // ProjectSettings are the settings for saving for a project. This IS the project file
 type ProjectSettings struct { //types:add
 
-	// file view settings
+	// file picker settings
 	Files FileSettings
 
 	// editor settings
@@ -373,7 +372,7 @@ func (cv *CodeView) ApplySettingsAction() {
 
 // EditProjectSettings allows editing of project settings (settings specific to this project)
 func (cv *CodeView) EditProjectSettings() { //types:add
-	sv := ProjectSettingsView(&cv.Settings)
+	sv := ProjectSettingsEditor(&cv.Settings)
 	if sv != nil {
 		sv.OnChange(func(e events.Event) {
 			cv.ApplySettingsAction()
@@ -382,7 +381,7 @@ func (cv *CodeView) EditProjectSettings() { //types:add
 }
 
 func (cv *CodeView) CallSplitsSetView(ctx core.Widget) {
-	fb := views.NewSoloFuncButton(ctx, cv.SplitsSetView)
+	fb := core.NewSoloFuncButton(ctx, cv.SplitsSetView)
 	fb.Args[0].SetValue(cv.Settings.SplitName)
 	fb.CallFunc()
 }

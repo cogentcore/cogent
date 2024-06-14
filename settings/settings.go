@@ -6,11 +6,10 @@ package main
 
 import (
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/views"
 )
 
 func main() {
 	b := core.NewBody("Cogent Settings")
-	views.SettingsView(b)
+	core.SettingsEditor(b)
 	b.RunMainWindow()
 }

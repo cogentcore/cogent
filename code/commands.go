@@ -258,7 +258,7 @@ type Command struct {
 	Lang fileinfo.Known
 
 	// sequence of commands to run for this overall command.
-	Cmds []CmdAndArgs `tableview-select:"-"`
+	Cmds []CmdAndArgs `table-select:"-"`
 
 	// if specified, will change to this directory before executing the command;
 	// e.g., use {FileDirPath} for current file's directory. Only use directory
@@ -789,7 +789,7 @@ func (cm *Commands) ViewStandard() { //types:add
 	CmdsView(&StandardCommands)
 }
 
-// CustomCommandsChanged is used to update views.CmdsView toolbars via following
+// CustomCommandsChanged is used to update core.CmdsView toolbars via following
 // menu, toolbar properties update methods.
 var CustomCommandsChanged = false
 

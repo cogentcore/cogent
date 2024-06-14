@@ -63,7 +63,7 @@ type Preferences struct { //types:add
 	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
 	EnvVars map[string]string
 
-	// flag that is set by StructView by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
+	// flag that is set by Form by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
 	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
@@ -211,7 +211,7 @@ func (pf *Preferences) UpdateAll() {
 }
 
 /*
-// PreferencesProperties define the Toolbar and MenuBar for StructView, e.g., views.SettingsView
+// PreferencesProperties define the Toolbar and MenuBar for Form, e.g., core.SettingsEditor
 var PreferencesProperties = tree.Properties{
 	"MainMenu": tree.Propertieslice{
 		{"AppMenu", tree.BlankProp{}},
@@ -221,7 +221,7 @@ var PreferencesProperties = tree.Properties{
 			}},
 			{"Save", tree.Properties{
 				"shortcut": "Command+S",
-				"updatefunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
+				"updatefunc": core.ActionUpdateFunc(func(pfi any, act *core.Button) {
 					pf := pfi.(*Preferences)
 					act.SetActiveState(pf.Changed)
 				}),
@@ -239,7 +239,7 @@ var PreferencesProperties = tree.Properties{
 		{"Save", tree.Properties{
 			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
-			"updatefunc": views.ActionUpdateFunc(func(pfi any, act *core.Button) {
+			"updatefunc": core.ActionUpdateFunc(func(pfi any, act *core.Button) {
 				pf := pfi.(*Preferences)
 				act.SetActiveStateUpdate(pf.Changed)
 			}),

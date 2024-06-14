@@ -14,7 +14,6 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/views"
 	"github.com/emersion/go-message/mail"
 	"github.com/emersion/go-smtp"
 	"github.com/yuin/goldmark"
@@ -34,7 +33,7 @@ func (a *App) Compose() { //types:add
 	a.ComposeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.ComposeMessage.To = []*mail.Address{{}}
 	b := core.NewBody().AddTitle("Send message")
-	views.NewStructView(b).SetStruct(a.ComposeMessage)
+	core.NewForm(b).SetStruct(a.ComposeMessage)
 	te := texteditor.NewSoloEditor(b)
 	te.Buffer.SetLang("md")
 	te.Buffer.Options.LineNumbers = false

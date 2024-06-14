@@ -447,7 +447,7 @@ type GradStop struct {
 type Gradient struct {
 
 	// icon of gradient -- generated to display each gradient
-	Ic core.SVG `edit:"-" tableview:"no-header" width:"5"`
+	Ic core.SVG `edit:"-" table:"no-header" width:"5"`
 
 	// name of gradient (id)
 	Id string `edit:"-" width:"6"`

@@ -11,18 +11,17 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/views"
 )
 
-// ProjectSettingsView opens a view of project settings,
-// returns structview if not already open
-func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
+// ProjectSettingsEditor opens a view of project settings,
+// returns form if not already open
+func ProjectSettingsEditor(pf *ProjectSettings) *core.Form {
 	if core.RecycleMainWindow(pf) {
 		return nil
 	}
 	d := core.NewBody().SetTitle("Code project settings").SetData(pf)
 	core.NewText(d).SetText("Settings are saved in the project .code file, along with other current state (open directories, splitter settings, etc). Do Save All or Save Project to save.")
-	tv := views.NewStructView(d).SetStruct(pf)
+	tv := core.NewForm(d).SetStruct(pf)
 	tv.OnChange(func(e events.Event) {
 		pf.Update()
 		core.ErrorSnackbar(d, pf.Save(pf.ProjectFilename), "Error saving "+string(pf.ProjectFilename)+" settings")
@@ -31,15 +30,15 @@ func ProjectSettingsView(pf *ProjectSettings) *views.StructView {
 	return tv
 }
 
-// DebugSettingsView opens a view of project Debug settings,
-// returns structview if not already open
-func DebugSettingsView(pf *cdebug.Params) *views.StructView {
+// DebugSettingsEditor opens a view of project Debug settings,
+// returns form if not already open
+func DebugSettingsEditor(pf *cdebug.Params) *core.Form {
 	if core.RecycleMainWindow(pf) {
 		return nil
 	}
 	d := core.NewBody().SetTitle("Project debug settings").SetData(pf)
 	core.NewText(d).SetText("For args: Use -- double-dash and then add args to pass args to the executable (double-dash is by itself as a separate arg first).  For Debug test, must use -test.run instead of plain -run to specify tests to run")
-	tv := views.NewStructView(d).SetStruct(pf)
+	tv := core.NewForm(d).SetStruct(pf)
 	d.RunWindow()
 	return tv
 }
@@ -50,33 +49,33 @@ func LangsView(pt *Langs) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
-	tv := views.NewMapView(d).SetMap(pt)
+	tv := core.NewKeyedList(d).SetMap(pt)
 	AvailableLangsChanged = false
 	tv.OnChange(func(e events.Event) {
 		AvailableLangsChanged = true
 	})
 
 	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.SaveSettings).
 				SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
 		})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *core.Separator) {})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.RevertToStandard).SetConfirm(true).
 				SetText("Revert to standard").SetIcon(icons.DeviceReset).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
@@ -91,27 +90,27 @@ func CmdsView(pt *Commands) {
 		return
 	}
 	d := core.NewBody().SetTitle("Code Commands").SetData(pt)
-	tv := views.NewTableView(d).SetSlice(pt)
+	tv := core.NewTable(d).SetSlice(pt)
 	CustomCommandsChanged = false
 	tv.OnChange(func(e events.Event) {
 		CustomCommandsChanged = true
 	})
 	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
 		})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		core.Add(p, func(w *core.Separator) {})
-		core.Add(p, func(w *views.FuncButton) {
+		core.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
@@ -138,7 +137,7 @@ func (cb *CmdButton) Init() {
 		d.SetTitle("Select a command")
 		si := 0
 		cl := AvailableCommands
-		tv := views.NewTableView(d)
+		tv := core.NewTable(d)
 		// todo: not a single entry: SetSelectedField("Name").SetSelectedValue(cb.Text)
 		tv.SetSlice(&cl).BindSelect(&si)
 		tv.OnChange(func(e events.Event) {

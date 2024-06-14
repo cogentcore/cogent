@@ -18,7 +18,6 @@ import (
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/views"
 )
 
 // SaveActiveView saves the contents of the currently active texteditor
@@ -34,7 +33,7 @@ func (cv *CodeView) SaveActiveView() { //types:add
 			cv.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 			cv.RunPostCmdsActiveView()
 		} else {
-			views.CallFunc(cv, cv.SaveActiveViewAs)
+			core.CallFunc(cv, cv.SaveActiveViewAs)
 		}
 	}
 	cv.SaveProjectIfExists(false) // no saveall
@@ -42,13 +41,13 @@ func (cv *CodeView) SaveActiveView() { //types:add
 
 // ConfigActiveFilename configures the first arg of given FuncButton to
 // use the ActiveFilename
-func (cv *CodeView) ConfigActiveFilename(fb *views.FuncButton) *views.FuncButton {
+func (cv *CodeView) ConfigActiveFilename(fb *core.FuncButton) *core.FuncButton {
 	fb.Args[0].SetValue(cv.ActiveFilename)
 	return fb
 }
 
 func (cv *CodeView) CallSaveActiveViewAs(ctx core.Widget) {
-	cv.ConfigActiveFilename(views.NewSoloFuncButton(ctx, cv.SaveActiveViewAs)).CallFunc()
+	cv.ConfigActiveFilename(core.NewSoloFuncButton(ctx, cv.SaveActiveViewAs)).CallFunc()
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
@@ -270,7 +269,7 @@ func (cv *CodeView) NextViewFile(fnm core.Filename) (*TextEditor, int, bool) { /
 
 // CallViewFile calls ViewFile with ActiveFilename set as arg
 func (cv *CodeView) CallViewFile(ctx core.Widget) {
-	cv.ConfigActiveFilename(views.NewSoloFuncButton(ctx, cv.ViewFile)).CallFunc()
+	cv.ConfigActiveFilename(core.NewSoloFuncButton(ctx, cv.ViewFile)).CallFunc()
 }
 
 // ViewFile views file in an existing TextEditor if it is already viewing that

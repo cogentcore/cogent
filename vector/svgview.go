@@ -23,7 +23,6 @@ import (
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"cogentcore.org/core/views"
 )
 
 // SVGView is the element for viewing, interacting with the SVG
@@ -521,9 +520,9 @@ func (sv *SVGView) ReadMetaData() {
 ///////////////////////////////////////////////////////////////////////////
 //  ContextMenu / Actions
 
-// EditNode opens a structview editor on node
+// EditNode opens a form editor on node
 func (sv *SVGView) EditNode(kn tree.Node) {
-	// views.StructViewDialog(sv, kn, "SVG Element View", true) // TODO:
+	// core.FormDialog(sv, kn, "SVG Element View", true) // TODO:
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
@@ -537,10 +536,10 @@ func (sv *SVGView) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 
 	core.NewSeparator(m)
 
-	views.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	views.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	views.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	views.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	core.NewFuncButton(m, sv.VectorView.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	core.NewFuncButton(m, sv.VectorView.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	core.NewFuncButton(m, sv.VectorView.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	core.NewFuncButton(m, sv.VectorView.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position
@@ -673,7 +672,7 @@ func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 	// nw := parent.NewChild(typ, nwnm).(svg.Node) // TODO:
 	// sv.SetSVGName(nw)
 	// sv.VectorView.PaintView().SetProperties(nw)
-	sv.VectorView.UpdateTreeView()
+	sv.VectorView.UpdateTree()
 	// return nw // TODO:
 	return nil
 }

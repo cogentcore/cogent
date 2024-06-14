@@ -16,11 +16,10 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/htmlview"
+	"cogentcore.org/core/htmlcore"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
-	"cogentcore.org/core/views"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -73,7 +72,7 @@ func (a *App) UpdateMessageList() {
 		})
 		fr.AddContextMenu(func(m *core.Scene) {
 			a.ReadMessage = cd
-			views.NewFuncButton(m, a.MoveMessage).SetIcon(icons.Move).SetText("Move")
+			core.NewFuncButton(m, a.MoveMessage).SetIcon(icons.Move).SetText("Move")
 		})
 
 		ftxt := ""
@@ -102,7 +101,7 @@ func (a *App) UpdateMessageList() {
 
 // UpdateReadMessage updates the view of the message currently being read.
 func (a *App) UpdateReadMessage() error {
-	msv := a.FindPath("splits/mail/msv").(*views.StructView)
+	msv := a.FindPath("splits/mail/msv").(*core.Form)
 	msv.SetStruct(a.ReadMessage.ToMessage())
 
 	mb := a.FindPath("splits/mail/mb").(*core.Frame)
@@ -143,7 +142,7 @@ func (a *App) UpdateReadMessage() error {
 			case "text/plain":
 				plain = p
 			case "text/html":
-				err := htmlview.ReadHTML(htmlview.NewContext(), mb, p.Body)
+				err := htmlcore.ReadHTML(htmlcore.NewContext(), mb, p.Body)
 				if err != nil {
 					return err
 				}
@@ -154,7 +153,7 @@ func (a *App) UpdateReadMessage() error {
 
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML && plain != nil {
-		err := htmlview.ReadMD(htmlview.NewContext(), mb, errors.Log1(io.ReadAll(plain.Body)))
+		err := htmlcore.ReadMD(htmlcore.NewContext(), mb, errors.Log1(io.ReadAll(plain.Body)))
 		if err != nil {
 			return err
 		}

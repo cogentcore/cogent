@@ -3,9 +3,11 @@
 package imports
 
 import (
+	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/system"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
@@ -18,254 +20,330 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/core/core"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"AddButtonItems":           reflect.ValueOf(core.AddButtonItems),
-		"AddValueConverter":        reflect.ValueOf(core.AddValueConverter),
-		"AllRenderWindows":         reflect.ValueOf(&core.AllRenderWindows).Elem(),
-		"AllSettings":              reflect.ValueOf(&core.AllSettings).Elem(),
-		"AppAbout":                 reflect.ValueOf(&core.AppAbout).Elem(),
-		"AppBarBackMaker":          reflect.ValueOf(core.AppBarBackMaker),
-		"AppBarChooserMaker":       reflect.ValueOf(core.AppBarChooserMaker),
-		"AppColor":                 reflect.ValueOf(&core.AppColor).Elem(),
-		"AppIcon":                  reflect.ValueOf(&core.AppIcon).Elem(),
-		"AppIconImages":            reflect.ValueOf(core.AppIconImages),
-		"AppIconImagesCache":       reflect.ValueOf(&core.AppIconImagesCache).Elem(),
-		"AppearanceSettings":       reflect.ValueOf(&core.AppearanceSettings).Elem(),
-		"AsButton":                 reflect.ValueOf(core.AsButton),
-		"AsFrame":                  reflect.ValueOf(core.AsFrame),
-		"AsTextField":              reflect.ValueOf(core.AsTextField),
-		"AsWidget":                 reflect.ValueOf(core.AsWidget),
-		"AutoScrollRate":           reflect.ValueOf(&core.AutoScrollRate).Elem(),
-		"BasicBarType":             reflect.ValueOf(&core.BasicBarType).Elem(),
-		"BodyType":                 reflect.ValueOf(&core.BodyType).Elem(),
-		"ButtonAction":             reflect.ValueOf(core.ButtonAction),
-		"ButtonElevated":           reflect.ValueOf(core.ButtonElevated),
-		"ButtonFilled":             reflect.ValueOf(core.ButtonFilled),
-		"ButtonMenu":               reflect.ValueOf(core.ButtonMenu),
-		"ButtonOutlined":           reflect.ValueOf(core.ButtonOutlined),
-		"ButtonText":               reflect.ValueOf(core.ButtonText),
-		"ButtonTonal":              reflect.ValueOf(core.ButtonTonal),
-		"ButtonType":               reflect.ValueOf(&core.ButtonType).Elem(),
-		"ButtonTypesN":             reflect.ValueOf(core.ButtonTypesN),
-		"ButtonTypesValues":        reflect.ValueOf(core.ButtonTypesValues),
-		"CanvasType":               reflect.ValueOf(&core.CanvasType).Elem(),
-		"ChildByLabelCanFocus":     reflect.ValueOf(core.ChildByLabelCanFocus),
-		"ChooserFilled":            reflect.ValueOf(core.ChooserFilled),
-		"ChooserOutlined":          reflect.ValueOf(core.ChooserOutlined),
-		"ChooserType":              reflect.ValueOf(&core.ChooserType).Elem(),
-		"ChooserTypesN":            reflect.ValueOf(core.ChooserTypesN),
-		"ChooserTypesValues":       reflect.ValueOf(core.ChooserTypesValues),
-		"CompleteEditText":         reflect.ValueOf(core.CompleteEditText),
-		"CompleteExtend":           reflect.ValueOf(core.CompleteExtend),
-		"CompleteSelect":           reflect.ValueOf(core.CompleteSelect),
-		"CompleteSignalsN":         reflect.ValueOf(core.CompleteSignalsN),
-		"CompleteSignalsValues":    reflect.ValueOf(core.CompleteSignalsValues),
-		"CompleterStage":           reflect.ValueOf(core.CompleterStage),
-		"ConcealDots":              reflect.ValueOf(core.ConcealDots),
-		"ConfigAppChooser":         reflect.ValueOf(core.ConfigAppChooser),
-		"CurrentRenderWindow":      reflect.ValueOf(&core.CurrentRenderWindow).Elem(),
-		"DebugSettings":            reflect.ValueOf(&core.DebugSettings).Elem(),
-		"DefaultPaths":             reflect.ValueOf(&core.DefaultPaths).Elem(),
-		"DeviceSettings":           reflect.ValueOf(&core.DeviceSettings).Elem(),
-		"DialogRenderWindows":      reflect.ValueOf(&core.DialogRenderWindows).Elem(),
-		"DialogStage":              reflect.ValueOf(core.DialogStage),
-		"DragSpriteName":           reflect.ValueOf(constant.MakeFromLiteral("\"__DragSprite__\"", token.STRING, 0)),
-		"EndCPUMemoryProfile":      reflect.ValueOf(core.EndCPUMemoryProfile),
-		"EndTargetedProfile":       reflect.ValueOf(core.EndTargetedProfile),
-		"ErrorDialog":              reflect.ValueOf(core.ErrorDialog),
-		"ErrorSnackbar":            reflect.ValueOf(core.ErrorSnackbar),
-		"ForceAppColor":            reflect.ValueOf(&core.ForceAppColor).Elem(),
-		"FrameType":                reflect.ValueOf(&core.FrameType).Elem(),
-		"FunctionalTabs":           reflect.ValueOf(core.FunctionalTabs),
-		"GrabRenderFrom":           reflect.ValueOf(core.GrabRenderFrom),
-		"HandleRecover":            reflect.ValueOf(core.HandleRecover),
-		"HandleType":               reflect.ValueOf(&core.HandleType).Elem(),
-		"IconType":                 reflect.ValueOf(&core.IconType).Elem(),
-		"ImageType":                reflect.ValueOf(&core.ImageType).Elem(),
-		"InitParts":                reflect.ValueOf(core.InitParts),
-		"InitValueButton":          reflect.ValueOf(core.InitValueButton),
-		"InspectorWindow":          reflect.ValueOf(&core.InspectorWindow).Elem(),
-		"IsWordBreak":              reflect.ValueOf(core.IsWordBreak),
-		"JoinValueTitle":           reflect.ValueOf(core.JoinValueTitle),
-		"LayoutLastAutoScroll":     reflect.ValueOf(&core.LayoutLastAutoScroll).Elem(),
-		"LayoutPassesN":            reflect.ValueOf(core.LayoutPassesN),
-		"LayoutPassesValues":       reflect.ValueOf(core.LayoutPassesValues),
-		"LoadAllSettings":          reflect.ValueOf(core.LoadAllSettings),
-		"LoadSettings":             reflect.ValueOf(core.LoadSettings),
-		"MainRenderWindows":        reflect.ValueOf(&core.MainRenderWindows).Elem(),
-		"MaxSpriteTextures":        reflect.ValueOf(constant.MakeFromLiteral("16", token.INT, 0)),
-		"MaxSpritesPerTexture":     reflect.ValueOf(constant.MakeFromLiteral("128", token.INT, 0)),
-		"MenuSceneConfigStyles":    reflect.ValueOf(core.MenuSceneConfigStyles),
-		"MenuStage":                reflect.ValueOf(core.MenuStage),
-		"MessageDialog":            reflect.ValueOf(core.MessageDialog),
-		"MessageSnackbar":          reflect.ValueOf(core.MessageSnackbar),
-		"MeterCircle":              reflect.ValueOf(core.MeterCircle),
-		"MeterLinear":              reflect.ValueOf(core.MeterLinear),
-		"MeterSemicircle":          reflect.ValueOf(core.MeterSemicircle),
-		"MeterType":                reflect.ValueOf(&core.MeterType).Elem(),
-		"MeterTypesN":              reflect.ValueOf(core.MeterTypesN),
-		"MeterTypesValues":         reflect.ValueOf(core.MeterTypesValues),
-		"NavigationAuto":           reflect.ValueOf(core.NavigationAuto),
-		"NavigationBar":            reflect.ValueOf(core.NavigationBar),
-		"NavigationDrawer":         reflect.ValueOf(core.NavigationDrawer),
-		"NavigationRail":           reflect.ValueOf(core.NavigationRail),
-		"NewBasicBar":              reflect.ValueOf(core.NewBasicBar),
-		"NewBody":                  reflect.ValueOf(core.NewBody),
-		"NewBodyScene":             reflect.ValueOf(core.NewBodyScene),
-		"NewButton":                reflect.ValueOf(core.NewButton),
-		"NewCanvas":                reflect.ValueOf(core.NewCanvas),
-		"NewChooser":               reflect.ValueOf(core.NewChooser),
-		"NewComplete":              reflect.ValueOf(core.NewComplete),
-		"NewFrame":                 reflect.ValueOf(core.NewFrame),
-		"NewHandle":                reflect.ValueOf(core.NewHandle),
-		"NewIcon":                  reflect.ValueOf(core.NewIcon),
-		"NewImage":                 reflect.ValueOf(core.NewImage),
-		"NewMainStage":             reflect.ValueOf(core.NewMainStage),
-		"NewMenu":                  reflect.ValueOf(core.NewMenu),
-		"NewMenuFromStrings":       reflect.ValueOf(core.NewMenuFromStrings),
-		"NewMenuScene":             reflect.ValueOf(core.NewMenuScene),
-		"NewMenuStage":             reflect.ValueOf(core.NewMenuStage),
-		"NewMeter":                 reflect.ValueOf(core.NewMeter),
-		"NewPopupStage":            reflect.ValueOf(core.NewPopupStage),
-		"NewRenderContext":         reflect.ValueOf(core.NewRenderContext),
-		"NewRenderWindow":          reflect.ValueOf(core.NewRenderWindow),
-		"NewSVG":                   reflect.ValueOf(core.NewSVG),
-		"NewScene":                 reflect.ValueOf(core.NewScene),
-		"NewScrim":                 reflect.ValueOf(core.NewScrim),
-		"NewSeparator":             reflect.ValueOf(core.NewSeparator),
-		"NewSlider":                reflect.ValueOf(core.NewSlider),
-		"NewSpace":                 reflect.ValueOf(core.NewSpace),
-		"NewSpinner":               reflect.ValueOf(core.NewSpinner),
-		"NewSplits":                reflect.ValueOf(core.NewSplits),
-		"NewSprite":                reflect.ValueOf(core.NewSprite),
-		"NewStretch":               reflect.ValueOf(core.NewStretch),
-		"NewSwitch":                reflect.ValueOf(core.NewSwitch),
-		"NewSwitches":              reflect.ValueOf(core.NewSwitches),
-		"NewTabs":                  reflect.ValueOf(core.NewTabs),
-		"NewText":                  reflect.ValueOf(core.NewText),
-		"NewTextField":             reflect.ValueOf(core.NewTextField),
-		"NewToolbar":               reflect.ValueOf(core.NewToolbar),
-		"NewTooltip":               reflect.ValueOf(core.NewTooltip),
-		"NewTooltipFromScene":      reflect.ValueOf(core.NewTooltipFromScene),
-		"NewTooltipScene":          reflect.ValueOf(core.NewTooltipScene),
-		"NewTooltipTextSize":       reflect.ValueOf(core.NewTooltipTextSize),
-		"NewValue":                 reflect.ValueOf(core.NewValue),
-		"NewWidgetBase":            reflect.ValueOf(core.NewWidgetBase),
-		"OpenRecentPaths":          reflect.ValueOf(core.OpenRecentPaths),
-		"OpenSettings":             reflect.ValueOf(core.OpenSettings),
-		"OpenValueDialog":          reflect.ValueOf(core.OpenValueDialog),
-		"ParentToolbar":            reflect.ValueOf(core.ParentToolbar),
-		"ProfileToggle":            reflect.ValueOf(core.ProfileToggle),
-		"RecentPaths":              reflect.ValueOf(&core.RecentPaths).Elem(),
-		"RecycleDialog":            reflect.ValueOf(core.RecycleDialog),
-		"RecycleMainWindow":        reflect.ValueOf(core.RecycleMainWindow),
-		"RecycleToolbar":           reflect.ValueOf(core.RecycleToolbar),
-		"RenderWindowGlobalMu":     reflect.ValueOf(&core.RenderWindowGlobalMu).Elem(),
-		"ResetAllSettings":         reflect.ValueOf(core.ResetAllSettings),
-		"ResetSettings":            reflect.ValueOf(core.ResetSettings),
-		"SVGType":                  reflect.ValueOf(&core.SVGType).Elem(),
-		"SaveAllSettings":          reflect.ValueOf(core.SaveAllSettings),
-		"SaveRecentPaths":          reflect.ValueOf(core.SaveRecentPaths),
-		"SaveSettings":             reflect.ValueOf(core.SaveSettings),
-		"SavedPathsFilename":       reflect.ValueOf(&core.SavedPathsFilename).Elem(),
-		"SceneShowIters":           reflect.ValueOf(&core.SceneShowIters).Elem(),
-		"SceneType":                reflect.ValueOf(&core.SceneType).Elem(),
-		"ScrimType":                reflect.ValueOf(&core.ScrimType).Elem(),
-		"SeparatorType":            reflect.ValueOf(&core.SeparatorType).Elem(),
-		"SettingsWindow":           reflect.ValueOf(&core.SettingsWindow).Elem(),
-		"SizeClassesN":             reflect.ValueOf(core.SizeClassesN),
-		"SizeClassesValues":        reflect.ValueOf(core.SizeClassesValues),
-		"SizeCompact":              reflect.ValueOf(core.SizeCompact),
-		"SizeDownPass":             reflect.ValueOf(core.SizeDownPass),
-		"SizeExpanded":             reflect.ValueOf(core.SizeExpanded),
-		"SizeFinalPass":            reflect.ValueOf(core.SizeFinalPass),
-		"SizeMedium":               reflect.ValueOf(core.SizeMedium),
-		"SizeUpPass":               reflect.ValueOf(core.SizeUpPass),
-		"SliderScrollbar":          reflect.ValueOf(core.SliderScrollbar),
-		"SliderSlider":             reflect.ValueOf(core.SliderSlider),
-		"SliderType":               reflect.ValueOf(&core.SliderType).Elem(),
-		"SliderTypesN":             reflect.ValueOf(core.SliderTypesN),
-		"SliderTypesValues":        reflect.ValueOf(core.SliderTypesValues),
-		"SnackbarStage":            reflect.ValueOf(core.SnackbarStage),
-		"SpaceType":                reflect.ValueOf(&core.SpaceType).Elem(),
-		"SpinnerType":              reflect.ValueOf(&core.SpinnerType).Elem(),
-		"SplitsType":               reflect.ValueOf(&core.SplitsType).Elem(),
-		"SpriteStart":              reflect.ValueOf(constant.MakeFromLiteral("32", token.INT, 0)),
-		"StageTypesN":              reflect.ValueOf(core.StageTypesN),
-		"StageTypesValues":         reflect.ValueOf(core.StageTypesValues),
-		"StandardAppBarConfig":     reflect.ValueOf(core.StandardAppBarConfig),
-		"StandardAppBarMaker":      reflect.ValueOf(core.StandardAppBarMaker),
-		"StandardOverflowMenu":     reflect.ValueOf(core.StandardOverflowMenu),
-		"StandardTabs":             reflect.ValueOf(core.StandardTabs),
-		"StartCPUMemoryProfile":    reflect.ValueOf(core.StartCPUMemoryProfile),
-		"StartTargetedProfile":     reflect.ValueOf(core.StartTargetedProfile),
-		"StretchType":              reflect.ValueOf(&core.StretchType).Elem(),
-		"StringsInsertFirstUnique": reflect.ValueOf(core.StringsInsertFirstUnique),
-		"StyleFromTags":            reflect.ValueOf(core.StyleFromTags),
-		"SwitchCheckbox":           reflect.ValueOf(core.SwitchCheckbox),
-		"SwitchChip":               reflect.ValueOf(core.SwitchChip),
-		"SwitchRadioButton":        reflect.ValueOf(core.SwitchRadioButton),
-		"SwitchSegmentedButton":    reflect.ValueOf(core.SwitchSegmentedButton),
-		"SwitchSwitch":             reflect.ValueOf(core.SwitchSwitch),
-		"SwitchType":               reflect.ValueOf(&core.SwitchType).Elem(),
-		"SwitchTypesN":             reflect.ValueOf(core.SwitchTypesN),
-		"SwitchTypesValues":        reflect.ValueOf(core.SwitchTypesValues),
-		"SwitchesType":             reflect.ValueOf(&core.SwitchesType).Elem(),
-		"SystemSettings":           reflect.ValueOf(&core.SystemSettings).Elem(),
-		"TabType":                  reflect.ValueOf(&core.TabType).Elem(),
-		"TabTypesN":                reflect.ValueOf(core.TabTypesN),
-		"TabTypesValues":           reflect.ValueOf(core.TabTypesValues),
-		"TabsType":                 reflect.ValueOf(&core.TabsType).Elem(),
-		"TextBodyLarge":            reflect.ValueOf(core.TextBodyLarge),
-		"TextBodyMedium":           reflect.ValueOf(core.TextBodyMedium),
-		"TextBodySmall":            reflect.ValueOf(core.TextBodySmall),
-		"TextDisplayLarge":         reflect.ValueOf(core.TextDisplayLarge),
-		"TextDisplayMedium":        reflect.ValueOf(core.TextDisplayMedium),
-		"TextDisplaySmall":         reflect.ValueOf(core.TextDisplaySmall),
-		"TextFieldBlinker":         reflect.ValueOf(&core.TextFieldBlinker).Elem(),
-		"TextFieldFilled":          reflect.ValueOf(core.TextFieldFilled),
-		"TextFieldOutlined":        reflect.ValueOf(core.TextFieldOutlined),
-		"TextFieldSpriteName":      reflect.ValueOf(&core.TextFieldSpriteName).Elem(),
-		"TextFieldType":            reflect.ValueOf(&core.TextFieldType).Elem(),
-		"TextFieldTypesN":          reflect.ValueOf(core.TextFieldTypesN),
-		"TextFieldTypesValues":     reflect.ValueOf(core.TextFieldTypesValues),
-		"TextHeadlineLarge":        reflect.ValueOf(core.TextHeadlineLarge),
-		"TextHeadlineMedium":       reflect.ValueOf(core.TextHeadlineMedium),
-		"TextHeadlineSmall":        reflect.ValueOf(core.TextHeadlineSmall),
-		"TextLabelLarge":           reflect.ValueOf(core.TextLabelLarge),
-		"TextLabelMedium":          reflect.ValueOf(core.TextLabelMedium),
-		"TextLabelSmall":           reflect.ValueOf(core.TextLabelSmall),
-		"TextTitleLarge":           reflect.ValueOf(core.TextTitleLarge),
-		"TextTitleMedium":          reflect.ValueOf(core.TextTitleMedium),
-		"TextTitleSmall":           reflect.ValueOf(core.TextTitleSmall),
-		"TextType":                 reflect.ValueOf(&core.TextType).Elem(),
-		"TextTypesN":               reflect.ValueOf(core.TextTypesN),
-		"TextTypesValues":          reflect.ValueOf(core.TextTypesValues),
-		"TheApp":                   reflect.ValueOf(&core.TheApp).Elem(),
-		"TheWindowGeometrySaver":   reflect.ValueOf(&core.TheWindowGeometrySaver).Elem(),
-		"ThemeAuto":                reflect.ValueOf(core.ThemeAuto),
-		"ThemeDark":                reflect.ValueOf(core.ThemeDark),
-		"ThemeLight":               reflect.ValueOf(core.ThemeLight),
-		"ThemesN":                  reflect.ValueOf(core.ThemesN),
-		"ThemesValues":             reflect.ValueOf(core.ThemesValues),
-		"ToValue":                  reflect.ValueOf(core.ToValue),
-		"ToolbarStyles":            reflect.ValueOf(core.ToolbarStyles),
-		"ToolbarType":              reflect.ValueOf(&core.ToolbarType).Elem(),
-		"TooltipStage":             reflect.ValueOf(core.TooltipStage),
-		"UpdateAll":                reflect.ValueOf(core.UpdateAll),
-		"UpdateSettings":           reflect.ValueOf(core.UpdateSettings),
-		"ValueConverters":          reflect.ValueOf(&core.ValueConverters).Elem(),
-		"ValueTypes":               reflect.ValueOf(&core.ValueTypes).Elem(),
-		"Wait":                     reflect.ValueOf(core.Wait),
-		"WidgetBaseType":           reflect.ValueOf(&core.WidgetBaseType).Elem(),
-		"WidgetLastChild":          reflect.ValueOf(core.WidgetLastChild),
-		"WidgetLastChildParts":     reflect.ValueOf(core.WidgetLastChildParts),
-		"WidgetNext":               reflect.ValueOf(core.WidgetNext),
-		"WidgetNextFunc":           reflect.ValueOf(core.WidgetNextFunc),
-		"WidgetNextSibling":        reflect.ValueOf(core.WidgetNextSibling),
-		"WidgetPrev":               reflect.ValueOf(core.WidgetPrev),
-		"WidgetPrevFunc":           reflect.ValueOf(core.WidgetPrevFunc),
-		"WindowStage":              reflect.ValueOf(core.WindowStage),
-		"WindowWait":               reflect.ValueOf(&core.WindowWait).Elem(),
+		"AddButtonItems":            reflect.ValueOf(core.AddButtonItems),
+		"AddValueConverter":         reflect.ValueOf(core.AddValueConverter),
+		"AllRenderWindows":          reflect.ValueOf(&core.AllRenderWindows).Elem(),
+		"AllSettings":               reflect.ValueOf(&core.AllSettings).Elem(),
+		"AppAbout":                  reflect.ValueOf(&core.AppAbout).Elem(),
+		"AppBarBackMaker":           reflect.ValueOf(core.AppBarBackMaker),
+		"AppBarChooserMaker":        reflect.ValueOf(core.AppBarChooserMaker),
+		"AppColor":                  reflect.ValueOf(&core.AppColor).Elem(),
+		"AppIcon":                   reflect.ValueOf(&core.AppIcon).Elem(),
+		"AppIconImages":             reflect.ValueOf(core.AppIconImages),
+		"AppIconImagesCache":        reflect.ValueOf(&core.AppIconImagesCache).Elem(),
+		"AppearanceSettings":        reflect.ValueOf(&core.AppearanceSettings).Elem(),
+		"AsButton":                  reflect.ValueOf(core.AsButton),
+		"AsFrame":                   reflect.ValueOf(core.AsFrame),
+		"AsTextField":               reflect.ValueOf(core.AsTextField),
+		"AsTree":                    reflect.ValueOf(core.AsTree),
+		"AsWidget":                  reflect.ValueOf(core.AsWidget),
+		"AutoScrollRate":            reflect.ValueOf(&core.AutoScrollRate).Elem(),
+		"BasicBarType":              reflect.ValueOf(&core.BasicBarType).Elem(),
+		"BodyType":                  reflect.ValueOf(&core.BodyType).Elem(),
+		"ButtonAction":              reflect.ValueOf(core.ButtonAction),
+		"ButtonElevated":            reflect.ValueOf(core.ButtonElevated),
+		"ButtonFilled":              reflect.ValueOf(core.ButtonFilled),
+		"ButtonMenu":                reflect.ValueOf(core.ButtonMenu),
+		"ButtonOutlined":            reflect.ValueOf(core.ButtonOutlined),
+		"ButtonText":                reflect.ValueOf(core.ButtonText),
+		"ButtonTonal":               reflect.ValueOf(core.ButtonTonal),
+		"ButtonType":                reflect.ValueOf(&core.ButtonType).Elem(),
+		"ButtonTypesN":              reflect.ValueOf(core.ButtonTypesN),
+		"ButtonTypesValues":         reflect.ValueOf(core.ButtonTypesValues),
+		"CallFunc":                  reflect.ValueOf(core.CallFunc),
+		"CanvasType":                reflect.ValueOf(&core.CanvasType).Elem(),
+		"ChildByLabelCanFocus":      reflect.ValueOf(core.ChildByLabelCanFocus),
+		"ChooserFilled":             reflect.ValueOf(core.ChooserFilled),
+		"ChooserOutlined":           reflect.ValueOf(core.ChooserOutlined),
+		"ChooserType":               reflect.ValueOf(&core.ChooserType).Elem(),
+		"ChooserTypesN":             reflect.ValueOf(core.ChooserTypesN),
+		"ChooserTypesValues":        reflect.ValueOf(core.ChooserTypesValues),
+		"ColorButtonType":           reflect.ValueOf(&core.ColorButtonType).Elem(),
+		"ColorMapButtonType":        reflect.ValueOf(&core.ColorMapButtonType).Elem(),
+		"ColorPickerType":           reflect.ValueOf(&core.ColorPickerType).Elem(),
+		"CompleteEditText":          reflect.ValueOf(core.CompleteEditText),
+		"CompleteExtend":            reflect.ValueOf(core.CompleteExtend),
+		"CompleteSelect":            reflect.ValueOf(core.CompleteSelect),
+		"CompleteSignalsN":          reflect.ValueOf(core.CompleteSignalsN),
+		"CompleteSignalsValues":     reflect.ValueOf(core.CompleteSignalsValues),
+		"CompleterStage":            reflect.ValueOf(core.CompleterStage),
+		"ConcealDots":               reflect.ValueOf(core.ConcealDots),
+		"ConfigAppChooser":          reflect.ValueOf(core.ConfigAppChooser),
+		"CurrentRenderWindow":       reflect.ValueOf(&core.CurrentRenderWindow).Elem(),
+		"DatePickerType":            reflect.ValueOf(&core.DatePickerType).Elem(),
+		"DebugSettings":             reflect.ValueOf(&core.DebugSettings).Elem(),
+		"DefaultPaths":              reflect.ValueOf(&core.DefaultPaths).Elem(),
+		"DeviceSettings":            reflect.ValueOf(&core.DeviceSettings).Elem(),
+		"DialogRenderWindows":       reflect.ValueOf(&core.DialogRenderWindows).Elem(),
+		"DialogStage":               reflect.ValueOf(core.DialogStage),
+		"DragSpriteName":            reflect.ValueOf(constant.MakeFromLiteral("\"__DragSprite__\"", token.STRING, 0)),
+		"DurationInputType":         reflect.ValueOf(&core.DurationInputType).Elem(),
+		"EndCPUMemoryProfile":       reflect.ValueOf(core.EndCPUMemoryProfile),
+		"EndTargetedProfile":        reflect.ValueOf(core.EndTargetedProfile),
+		"ErrorDialog":               reflect.ValueOf(core.ErrorDialog),
+		"ErrorSnackbar":             reflect.ValueOf(core.ErrorSnackbar),
+		"FileButtonType":            reflect.ValueOf(&core.FileButtonType).Elem(),
+		"FilePickerDialog":          reflect.ValueOf(core.FilePickerDialog),
+		"FilePickerDirOnlyFilter":   reflect.ValueOf(core.FilePickerDirOnlyFilter),
+		"FilePickerExtOnlyFilter":   reflect.ValueOf(core.FilePickerExtOnlyFilter),
+		"FilePickerKindColorMap":    reflect.ValueOf(&core.FilePickerKindColorMap).Elem(),
+		"FilePickerType":            reflect.ValueOf(&core.FilePickerType).Elem(),
+		"FontButtonType":            reflect.ValueOf(&core.FontButtonType).Elem(),
+		"ForceAppColor":             reflect.ValueOf(&core.ForceAppColor).Elem(),
+		"FormButtonType":            reflect.ValueOf(&core.FormButtonType).Elem(),
+		"FormType":                  reflect.ValueOf(&core.FormType).Elem(),
+		"FrameType":                 reflect.ValueOf(&core.FrameType).Elem(),
+		"FuncArgsToStruct":          reflect.ValueOf(core.FuncArgsToStruct),
+		"FuncButtonType":            reflect.ValueOf(&core.FuncButtonType).Elem(),
+		"FunctionalTabs":            reflect.ValueOf(core.FunctionalTabs),
+		"GrabRenderFrom":            reflect.ValueOf(core.GrabRenderFrom),
+		"HandleRecover":             reflect.ValueOf(core.HandleRecover),
+		"HandleType":                reflect.ValueOf(&core.HandleType).Elem(),
+		"IconButtonType":            reflect.ValueOf(&core.IconButtonType).Elem(),
+		"IconType":                  reflect.ValueOf(&core.IconType).Elem(),
+		"ImageType":                 reflect.ValueOf(&core.ImageType).Elem(),
+		"InitParts":                 reflect.ValueOf(core.InitParts),
+		"InitValueButton":           reflect.ValueOf(core.InitValueButton),
+		"InlineListType":            reflect.ValueOf(&core.InlineListType).Elem(),
+		"InspectorType":             reflect.ValueOf(&core.InspectorType).Elem(),
+		"InspectorView":             reflect.ValueOf(core.InspectorView),
+		"InspectorWindow":           reflect.ValueOf(core.InspectorWindow),
+		"IsWordBreak":               reflect.ValueOf(core.IsWordBreak),
+		"JoinValueTitle":            reflect.ValueOf(core.JoinValueTitle),
+		"KeyChordButtonType":        reflect.ValueOf(&core.KeyChordButtonType).Elem(),
+		"KeyMapButtonType":          reflect.ValueOf(&core.KeyMapButtonType).Elem(),
+		"KeyedListButtonType":       reflect.ValueOf(&core.KeyedListButtonType).Elem(),
+		"KeyedListType":             reflect.ValueOf(&core.KeyedListType).Elem(),
+		"LayoutLastAutoScroll":      reflect.ValueOf(&core.LayoutLastAutoScroll).Elem(),
+		"LayoutPassesN":             reflect.ValueOf(core.LayoutPassesN),
+		"LayoutPassesValues":        reflect.ValueOf(core.LayoutPassesValues),
+		"ListBaseType":              reflect.ValueOf(&core.ListBaseType).Elem(),
+		"ListButtonType":            reflect.ValueOf(&core.ListButtonType).Elem(),
+		"ListColProperty":           reflect.ValueOf(constant.MakeFromLiteral("\"sv-col\"", token.STRING, 0)),
+		"ListGridType":              reflect.ValueOf(&core.ListGridType).Elem(),
+		"ListRowProperty":           reflect.ValueOf(constant.MakeFromLiteral("\"sv-row\"", token.STRING, 0)),
+		"ListType":                  reflect.ValueOf(&core.ListType).Elem(),
+		"LoadAllSettings":           reflect.ValueOf(core.LoadAllSettings),
+		"LoadSettings":              reflect.ValueOf(core.LoadSettings),
+		"MainRenderWindows":         reflect.ValueOf(&core.MainRenderWindows).Elem(),
+		"MaxSpriteTextures":         reflect.ValueOf(constant.MakeFromLiteral("16", token.INT, 0)),
+		"MaxSpritesPerTexture":      reflect.ValueOf(constant.MakeFromLiteral("128", token.INT, 0)),
+		"MenuSceneConfigStyles":     reflect.ValueOf(core.MenuSceneConfigStyles),
+		"MenuStage":                 reflect.ValueOf(core.MenuStage),
+		"MessageDialog":             reflect.ValueOf(core.MessageDialog),
+		"MessageSnackbar":           reflect.ValueOf(core.MessageSnackbar),
+		"MeterCircle":               reflect.ValueOf(core.MeterCircle),
+		"MeterLinear":               reflect.ValueOf(core.MeterLinear),
+		"MeterSemicircle":           reflect.ValueOf(core.MeterSemicircle),
+		"MeterType":                 reflect.ValueOf(&core.MeterType).Elem(),
+		"MeterTypesN":               reflect.ValueOf(core.MeterTypesN),
+		"MeterTypesValues":          reflect.ValueOf(core.MeterTypesValues),
+		"NavigationAuto":            reflect.ValueOf(core.NavigationAuto),
+		"NavigationBar":             reflect.ValueOf(core.NavigationBar),
+		"NavigationDrawer":          reflect.ValueOf(core.NavigationDrawer),
+		"NavigationRail":            reflect.ValueOf(core.NavigationRail),
+		"NewBasicBar":               reflect.ValueOf(core.NewBasicBar),
+		"NewBody":                   reflect.ValueOf(core.NewBody),
+		"NewBodyScene":              reflect.ValueOf(core.NewBodyScene),
+		"NewButton":                 reflect.ValueOf(core.NewButton),
+		"NewCanvas":                 reflect.ValueOf(core.NewCanvas),
+		"NewChooser":                reflect.ValueOf(core.NewChooser),
+		"NewColorButton":            reflect.ValueOf(core.NewColorButton),
+		"NewColorMapButton":         reflect.ValueOf(core.NewColorMapButton),
+		"NewColorPicker":            reflect.ValueOf(core.NewColorPicker),
+		"NewComplete":               reflect.ValueOf(core.NewComplete),
+		"NewDatePicker":             reflect.ValueOf(core.NewDatePicker),
+		"NewDurationInput":          reflect.ValueOf(core.NewDurationInput),
+		"NewFileButton":             reflect.ValueOf(core.NewFileButton),
+		"NewFilePicker":             reflect.ValueOf(core.NewFilePicker),
+		"NewFontButton":             reflect.ValueOf(core.NewFontButton),
+		"NewForm":                   reflect.ValueOf(core.NewForm),
+		"NewFormButton":             reflect.ValueOf(core.NewFormButton),
+		"NewFrame":                  reflect.ValueOf(core.NewFrame),
+		"NewFuncButton":             reflect.ValueOf(core.NewFuncButton),
+		"NewHandle":                 reflect.ValueOf(core.NewHandle),
+		"NewIcon":                   reflect.ValueOf(core.NewIcon),
+		"NewIconButton":             reflect.ValueOf(core.NewIconButton),
+		"NewImage":                  reflect.ValueOf(core.NewImage),
+		"NewInlineList":             reflect.ValueOf(core.NewInlineList),
+		"NewInspector":              reflect.ValueOf(core.NewInspector),
+		"NewKeyChordButton":         reflect.ValueOf(core.NewKeyChordButton),
+		"NewKeyMapButton":           reflect.ValueOf(core.NewKeyMapButton),
+		"NewKeyedList":              reflect.ValueOf(core.NewKeyedList),
+		"NewKeyedListButton":        reflect.ValueOf(core.NewKeyedListButton),
+		"NewList":                   reflect.ValueOf(core.NewList),
+		"NewListBase":               reflect.ValueOf(core.NewListBase),
+		"NewListButton":             reflect.ValueOf(core.NewListButton),
+		"NewListGrid":               reflect.ValueOf(core.NewListGrid),
+		"NewMainStage":              reflect.ValueOf(core.NewMainStage),
+		"NewMenu":                   reflect.ValueOf(core.NewMenu),
+		"NewMenuFromStrings":        reflect.ValueOf(core.NewMenuFromStrings),
+		"NewMenuScene":              reflect.ValueOf(core.NewMenuScene),
+		"NewMenuStage":              reflect.ValueOf(core.NewMenuStage),
+		"NewMeter":                  reflect.ValueOf(core.NewMeter),
+		"NewPopupStage":             reflect.ValueOf(core.NewPopupStage),
+		"NewRenderContext":          reflect.ValueOf(core.NewRenderContext),
+		"NewRenderWindow":           reflect.ValueOf(core.NewRenderWindow),
+		"NewSVG":                    reflect.ValueOf(core.NewSVG),
+		"NewScene":                  reflect.ValueOf(core.NewScene),
+		"NewScrim":                  reflect.ValueOf(core.NewScrim),
+		"NewSeparator":              reflect.ValueOf(core.NewSeparator),
+		"NewSlider":                 reflect.ValueOf(core.NewSlider),
+		"NewSoloFuncButton":         reflect.ValueOf(core.NewSoloFuncButton),
+		"NewSpace":                  reflect.ValueOf(core.NewSpace),
+		"NewSpinner":                reflect.ValueOf(core.NewSpinner),
+		"NewSplits":                 reflect.ValueOf(core.NewSplits),
+		"NewSprite":                 reflect.ValueOf(core.NewSprite),
+		"NewStretch":                reflect.ValueOf(core.NewStretch),
+		"NewSwitch":                 reflect.ValueOf(core.NewSwitch),
+		"NewSwitches":               reflect.ValueOf(core.NewSwitches),
+		"NewTable":                  reflect.ValueOf(core.NewTable),
+		"NewTabs":                   reflect.ValueOf(core.NewTabs),
+		"NewText":                   reflect.ValueOf(core.NewText),
+		"NewTextField":              reflect.ValueOf(core.NewTextField),
+		"NewTimeInput":              reflect.ValueOf(core.NewTimeInput),
+		"NewTimePicker":             reflect.ValueOf(core.NewTimePicker),
+		"NewToolbar":                reflect.ValueOf(core.NewToolbar),
+		"NewTooltip":                reflect.ValueOf(core.NewTooltip),
+		"NewTooltipFromScene":       reflect.ValueOf(core.NewTooltipFromScene),
+		"NewTooltipScene":           reflect.ValueOf(core.NewTooltipScene),
+		"NewTooltipTextSize":        reflect.ValueOf(core.NewTooltipTextSize),
+		"NewTree":                   reflect.ValueOf(core.NewTree),
+		"NewTreeButton":             reflect.ValueOf(core.NewTreeButton),
+		"NewTreeFrame":              reflect.ValueOf(core.NewTreeFrame),
+		"NewTypeChooser":            reflect.ValueOf(core.NewTypeChooser),
+		"NewValue":                  reflect.ValueOf(core.NewValue),
+		"NewWidgetBase":             reflect.ValueOf(core.NewWidgetBase),
+		"NoSentenceCaseFor":         reflect.ValueOf(&core.NoSentenceCaseFor).Elem(),
+		"NoSentenceCaseForType":     reflect.ValueOf(core.NoSentenceCaseForType),
+		"OpenRecentPaths":           reflect.ValueOf(core.OpenRecentPaths),
+		"OpenSettings":              reflect.ValueOf(core.OpenSettings),
+		"OpenValueDialog":           reflect.ValueOf(core.OpenValueDialog),
+		"ParentToolbar":             reflect.ValueOf(core.ParentToolbar),
+		"ProfileToggle":             reflect.ValueOf(core.ProfileToggle),
+		"RecentPaths":               reflect.ValueOf(&core.RecentPaths).Elem(),
+		"RecycleDialog":             reflect.ValueOf(core.RecycleDialog),
+		"RecycleMainWindow":         reflect.ValueOf(core.RecycleMainWindow),
+		"RecycleToolbar":            reflect.ValueOf(core.RecycleToolbar),
+		"RenderWindowGlobalMu":      reflect.ValueOf(&core.RenderWindowGlobalMu).Elem(),
+		"ResetAllSettings":          reflect.ValueOf(core.ResetAllSettings),
+		"ResetSettings":             reflect.ValueOf(core.ResetSettings),
+		"SVGType":                   reflect.ValueOf(&core.SVGType).Elem(),
+		"SaveAllSettings":           reflect.ValueOf(core.SaveAllSettings),
+		"SaveRecentPaths":           reflect.ValueOf(core.SaveRecentPaths),
+		"SaveSettings":              reflect.ValueOf(core.SaveSettings),
+		"SavedPathsFilename":        reflect.ValueOf(&core.SavedPathsFilename).Elem(),
+		"SceneShowIters":            reflect.ValueOf(&core.SceneShowIters).Elem(),
+		"SceneType":                 reflect.ValueOf(&core.SceneType).Elem(),
+		"ScrimType":                 reflect.ValueOf(&core.ScrimType).Elem(),
+		"SeparatorType":             reflect.ValueOf(&core.SeparatorType).Elem(),
+		"SettingsEditor":            reflect.ValueOf(core.SettingsEditor),
+		"SettingsEditorToolbarBase": reflect.ValueOf(core.SettingsEditorToolbarBase),
+		"SettingsWindow":            reflect.ValueOf(core.SettingsWindow),
+		"SizeClassesN":              reflect.ValueOf(core.SizeClassesN),
+		"SizeClassesValues":         reflect.ValueOf(core.SizeClassesValues),
+		"SizeCompact":               reflect.ValueOf(core.SizeCompact),
+		"SizeDownPass":              reflect.ValueOf(core.SizeDownPass),
+		"SizeExpanded":              reflect.ValueOf(core.SizeExpanded),
+		"SizeFinalPass":             reflect.ValueOf(core.SizeFinalPass),
+		"SizeMedium":                reflect.ValueOf(core.SizeMedium),
+		"SizeUpPass":                reflect.ValueOf(core.SizeUpPass),
+		"SliceIndexByValue":         reflect.ValueOf(core.SliceIndexByValue),
+		"SliderScrollbar":           reflect.ValueOf(core.SliderScrollbar),
+		"SliderSlider":              reflect.ValueOf(core.SliderSlider),
+		"SliderType":                reflect.ValueOf(&core.SliderType).Elem(),
+		"SliderTypesN":              reflect.ValueOf(core.SliderTypesN),
+		"SliderTypesValues":         reflect.ValueOf(core.SliderTypesValues),
+		"SnackbarStage":             reflect.ValueOf(core.SnackbarStage),
+		"SpaceType":                 reflect.ValueOf(&core.SpaceType).Elem(),
+		"SpinnerType":               reflect.ValueOf(&core.SpinnerType).Elem(),
+		"SplitsType":                reflect.ValueOf(&core.SplitsType).Elem(),
+		"SpriteStart":               reflect.ValueOf(constant.MakeFromLiteral("32", token.INT, 0)),
+		"StageTypesN":               reflect.ValueOf(core.StageTypesN),
+		"StageTypesValues":          reflect.ValueOf(core.StageTypesValues),
+		"StandardAppBarConfig":      reflect.ValueOf(core.StandardAppBarConfig),
+		"StandardAppBarMaker":       reflect.ValueOf(core.StandardAppBarMaker),
+		"StandardOverflowMenu":      reflect.ValueOf(core.StandardOverflowMenu),
+		"StandardTabs":              reflect.ValueOf(core.StandardTabs),
+		"StartCPUMemoryProfile":     reflect.ValueOf(core.StartCPUMemoryProfile),
+		"StartTargetedProfile":      reflect.ValueOf(core.StartTargetedProfile),
+		"StretchType":               reflect.ValueOf(&core.StretchType).Elem(),
+		"StringsInsertFirstUnique":  reflect.ValueOf(core.StringsInsertFirstUnique),
+		"StructSliceIndexByValue":   reflect.ValueOf(core.StructSliceIndexByValue),
+		"StyleFromTags":             reflect.ValueOf(core.StyleFromTags),
+		"SwitchCheckbox":            reflect.ValueOf(core.SwitchCheckbox),
+		"SwitchChip":                reflect.ValueOf(core.SwitchChip),
+		"SwitchRadioButton":         reflect.ValueOf(core.SwitchRadioButton),
+		"SwitchSegmentedButton":     reflect.ValueOf(core.SwitchSegmentedButton),
+		"SwitchSwitch":              reflect.ValueOf(core.SwitchSwitch),
+		"SwitchType":                reflect.ValueOf(&core.SwitchType).Elem(),
+		"SwitchTypesN":              reflect.ValueOf(core.SwitchTypesN),
+		"SwitchTypesValues":         reflect.ValueOf(core.SwitchTypesValues),
+		"SwitchesType":              reflect.ValueOf(&core.SwitchesType).Elem(),
+		"SystemSettings":            reflect.ValueOf(&core.SystemSettings).Elem(),
+		"TabType":                   reflect.ValueOf(&core.TabType).Elem(),
+		"TabTypesN":                 reflect.ValueOf(core.TabTypesN),
+		"TabTypesValues":            reflect.ValueOf(core.TabTypesValues),
+		"TableType":                 reflect.ValueOf(&core.TableType).Elem(),
+		"TabsType":                  reflect.ValueOf(&core.TabsType).Elem(),
+		"TextBodyLarge":             reflect.ValueOf(core.TextBodyLarge),
+		"TextBodyMedium":            reflect.ValueOf(core.TextBodyMedium),
+		"TextBodySmall":             reflect.ValueOf(core.TextBodySmall),
+		"TextDisplayLarge":          reflect.ValueOf(core.TextDisplayLarge),
+		"TextDisplayMedium":         reflect.ValueOf(core.TextDisplayMedium),
+		"TextDisplaySmall":          reflect.ValueOf(core.TextDisplaySmall),
+		"TextFieldBlinker":          reflect.ValueOf(&core.TextFieldBlinker).Elem(),
+		"TextFieldFilled":           reflect.ValueOf(core.TextFieldFilled),
+		"TextFieldOutlined":         reflect.ValueOf(core.TextFieldOutlined),
+		"TextFieldSpriteName":       reflect.ValueOf(&core.TextFieldSpriteName).Elem(),
+		"TextFieldType":             reflect.ValueOf(&core.TextFieldType).Elem(),
+		"TextFieldTypesN":           reflect.ValueOf(core.TextFieldTypesN),
+		"TextFieldTypesValues":      reflect.ValueOf(core.TextFieldTypesValues),
+		"TextHeadlineLarge":         reflect.ValueOf(core.TextHeadlineLarge),
+		"TextHeadlineMedium":        reflect.ValueOf(core.TextHeadlineMedium),
+		"TextHeadlineSmall":         reflect.ValueOf(core.TextHeadlineSmall),
+		"TextLabelLarge":            reflect.ValueOf(core.TextLabelLarge),
+		"TextLabelMedium":           reflect.ValueOf(core.TextLabelMedium),
+		"TextLabelSmall":            reflect.ValueOf(core.TextLabelSmall),
+		"TextTitleLarge":            reflect.ValueOf(core.TextTitleLarge),
+		"TextTitleMedium":           reflect.ValueOf(core.TextTitleMedium),
+		"TextTitleSmall":            reflect.ValueOf(core.TextTitleSmall),
+		"TextType":                  reflect.ValueOf(&core.TextType).Elem(),
+		"TextTypesN":                reflect.ValueOf(core.TextTypesN),
+		"TextTypesValues":           reflect.ValueOf(core.TextTypesValues),
+		"TheApp":                    reflect.ValueOf(&core.TheApp).Elem(),
+		"TheWindowGeometrySaver":    reflect.ValueOf(&core.TheWindowGeometrySaver).Elem(),
+		"ThemeAuto":                 reflect.ValueOf(core.ThemeAuto),
+		"ThemeDark":                 reflect.ValueOf(core.ThemeDark),
+		"ThemeLight":                reflect.ValueOf(core.ThemeLight),
+		"ThemesN":                   reflect.ValueOf(core.ThemesN),
+		"ThemesValues":              reflect.ValueOf(core.ThemesValues),
+		"TimeInputType":             reflect.ValueOf(&core.TimeInputType).Elem(),
+		"TimePickerType":            reflect.ValueOf(&core.TimePickerType).Elem(),
+		"ToValue":                   reflect.ValueOf(core.ToValue),
+		"ToolbarStyles":             reflect.ValueOf(core.ToolbarStyles),
+		"ToolbarType":               reflect.ValueOf(&core.ToolbarType).Elem(),
+		"TooltipStage":              reflect.ValueOf(core.TooltipStage),
+		"TreeButtonType":            reflect.ValueOf(&core.TreeButtonType).Elem(),
+		"TreePageSteps":             reflect.ValueOf(&core.TreePageSteps).Elem(),
+		"TreeTempMovedTag":          reflect.ValueOf(constant.MakeFromLiteral("\"_\\\\&MOVED\\\\&\"", token.STRING, 0)),
+		"TreeType":                  reflect.ValueOf(&core.TreeType).Elem(),
+		"TypeChooserType":           reflect.ValueOf(&core.TypeChooserType).Elem(),
+		"UpdateAll":                 reflect.ValueOf(core.UpdateAll),
+		"UpdateSettings":            reflect.ValueOf(core.UpdateSettings),
+		"ValueConverters":           reflect.ValueOf(&core.ValueConverters).Elem(),
+		"ValueTypes":                reflect.ValueOf(&core.ValueTypes).Elem(),
+		"Wait":                      reflect.ValueOf(core.Wait),
+		"WidgetBaseType":            reflect.ValueOf(&core.WidgetBaseType).Elem(),
+		"WidgetLastChild":           reflect.ValueOf(core.WidgetLastChild),
+		"WidgetLastChildParts":      reflect.ValueOf(core.WidgetLastChildParts),
+		"WidgetNext":                reflect.ValueOf(core.WidgetNext),
+		"WidgetNextFunc":            reflect.ValueOf(core.WidgetNextFunc),
+		"WidgetNextSibling":         reflect.ValueOf(core.WidgetNextSibling),
+		"WidgetPrev":                reflect.ValueOf(core.WidgetPrev),
+		"WidgetPrevFunc":            reflect.ValueOf(core.WidgetPrevFunc),
+		"WindowStage":               reflect.ValueOf(core.WindowStage),
+		"WindowWait":                reflect.ValueOf(&core.WindowWait).Elem(),
 
 		// type definitions
 		"App":                    reflect.ValueOf((*core.App)(nil)),
@@ -281,31 +359,58 @@ func init() {
 		"Chooser":                reflect.ValueOf((*core.Chooser)(nil)),
 		"ChooserItem":            reflect.ValueOf((*core.ChooserItem)(nil)),
 		"ChooserTypes":           reflect.ValueOf((*core.ChooserTypes)(nil)),
+		"ColorButton":            reflect.ValueOf((*core.ColorButton)(nil)),
+		"ColorMapButton":         reflect.ValueOf((*core.ColorMapButton)(nil)),
+		"ColorMapName":           reflect.ValueOf((*core.ColorMapName)(nil)),
+		"ColorPicker":            reflect.ValueOf((*core.ColorPicker)(nil)),
 		"Complete":               reflect.ValueOf((*core.Complete)(nil)),
 		"CompleteSignals":        reflect.ValueOf((*core.CompleteSignals)(nil)),
+		"DatePicker":             reflect.ValueOf((*core.DatePicker)(nil)),
 		"DebugSettingsData":      reflect.ValueOf((*core.DebugSettingsData)(nil)),
 		"DeviceSettingsData":     reflect.ValueOf((*core.DeviceSettingsData)(nil)),
+		"DurationInput":          reflect.ValueOf((*core.DurationInput)(nil)),
 		"EditorSettings":         reflect.ValueOf((*core.EditorSettings)(nil)),
 		"Events":                 reflect.ValueOf((*core.Events)(nil)),
 		"FavPathItem":            reflect.ValueOf((*core.FavPathItem)(nil)),
 		"FavPaths":               reflect.ValueOf((*core.FavPaths)(nil)),
 		"FieldValidator":         reflect.ValueOf((*core.FieldValidator)(nil)),
+		"FileButton":             reflect.ValueOf((*core.FileButton)(nil)),
 		"FilePaths":              reflect.ValueOf((*core.FilePaths)(nil)),
+		"FilePicker":             reflect.ValueOf((*core.FilePicker)(nil)),
+		"FilePickerFilterFunc":   reflect.ValueOf((*core.FilePickerFilterFunc)(nil)),
 		"Filename":               reflect.ValueOf((*core.Filename)(nil)),
+		"FontButton":             reflect.ValueOf((*core.FontButton)(nil)),
 		"FontName":               reflect.ValueOf((*core.FontName)(nil)),
+		"Form":                   reflect.ValueOf((*core.Form)(nil)),
+		"FormButton":             reflect.ValueOf((*core.FormButton)(nil)),
 		"Frame":                  reflect.ValueOf((*core.Frame)(nil)),
+		"FuncArg":                reflect.ValueOf((*core.FuncArg)(nil)),
+		"FuncButton":             reflect.ValueOf((*core.FuncButton)(nil)),
 		"GeomCT":                 reflect.ValueOf((*core.GeomCT)(nil)),
 		"GeomSize":               reflect.ValueOf((*core.GeomSize)(nil)),
 		"GeomState":              reflect.ValueOf((*core.GeomState)(nil)),
 		"Handle":                 reflect.ValueOf((*core.Handle)(nil)),
 		"HiStyleName":            reflect.ValueOf((*core.HiStyleName)(nil)),
 		"Icon":                   reflect.ValueOf((*core.Icon)(nil)),
+		"IconButton":             reflect.ValueOf((*core.IconButton)(nil)),
 		"Image":                  reflect.ValueOf((*core.Image)(nil)),
+		"InlineList":             reflect.ValueOf((*core.InlineList)(nil)),
+		"Inspector":              reflect.ValueOf((*core.Inspector)(nil)),
+		"KeyChordButton":         reflect.ValueOf((*core.KeyChordButton)(nil)),
+		"KeyMapButton":           reflect.ValueOf((*core.KeyMapButton)(nil)),
+		"KeyedList":              reflect.ValueOf((*core.KeyedList)(nil)),
+		"KeyedListButton":        reflect.ValueOf((*core.KeyedListButton)(nil)),
 		"LayCell":                reflect.ValueOf((*core.LayCell)(nil)),
 		"LayCells":               reflect.ValueOf((*core.LayCells)(nil)),
 		"LayImplState":           reflect.ValueOf((*core.LayImplState)(nil)),
 		"LayoutPasses":           reflect.ValueOf((*core.LayoutPasses)(nil)),
 		"Layouter":               reflect.ValueOf((*core.Layouter)(nil)),
+		"List":                   reflect.ValueOf((*core.List)(nil)),
+		"ListBase":               reflect.ValueOf((*core.ListBase)(nil)),
+		"ListButton":             reflect.ValueOf((*core.ListButton)(nil)),
+		"ListGrid":               reflect.ValueOf((*core.ListGrid)(nil)),
+		"ListStyleFunc":          reflect.ValueOf((*core.ListStyleFunc)(nil)),
+		"Lister":                 reflect.ValueOf((*core.Lister)(nil)),
 		"Meter":                  reflect.ValueOf((*core.Meter)(nil)),
 		"MeterTypes":             reflect.ValueOf((*core.MeterTypes)(nil)),
 		"NewItemsData":           reflect.ValueOf((*core.NewItemsData)(nil)),
@@ -347,6 +452,8 @@ func init() {
 		"SystemSettingsData":     reflect.ValueOf((*core.SystemSettingsData)(nil)),
 		"Tab":                    reflect.ValueOf((*core.Tab)(nil)),
 		"TabTypes":               reflect.ValueOf((*core.TabTypes)(nil)),
+		"Table":                  reflect.ValueOf((*core.Table)(nil)),
+		"TableStyleFunc":         reflect.ValueOf((*core.TableStyleFunc)(nil)),
 		"Tabs":                   reflect.ValueOf((*core.Tabs)(nil)),
 		"Text":                   reflect.ValueOf((*core.Text)(nil)),
 		"TextField":              reflect.ValueOf((*core.TextField)(nil)),
@@ -356,8 +463,14 @@ func init() {
 		"TextFieldUndos":         reflect.ValueOf((*core.TextFieldUndos)(nil)),
 		"TextTypes":              reflect.ValueOf((*core.TextTypes)(nil)),
 		"Themes":                 reflect.ValueOf((*core.Themes)(nil)),
+		"TimeInput":              reflect.ValueOf((*core.TimeInput)(nil)),
+		"TimePicker":             reflect.ValueOf((*core.TimePicker)(nil)),
 		"Toolbar":                reflect.ValueOf((*core.Toolbar)(nil)),
 		"ToolbarMaker":           reflect.ValueOf((*core.ToolbarMaker)(nil)),
+		"Tree":                   reflect.ValueOf((*core.Tree)(nil)),
+		"TreeButton":             reflect.ValueOf((*core.TreeButton)(nil)),
+		"Treer":                  reflect.ValueOf((*core.Treer)(nil)),
+		"TypeChooser":            reflect.ValueOf((*core.TypeChooser)(nil)),
 		"User":                   reflect.ValueOf((*core.User)(nil)),
 		"Validator":              reflect.ValueOf((*core.Validator)(nil)),
 		"Value":                  reflect.ValueOf((*core.Value)(nil)),
@@ -373,6 +486,7 @@ func init() {
 		"_ButtonEmbedder":    reflect.ValueOf((*_cogentcore_org_core_core_ButtonEmbedder)(nil)),
 		"_FieldValidator":    reflect.ValueOf((*_cogentcore_org_core_core_FieldValidator)(nil)),
 		"_Layouter":          reflect.ValueOf((*_cogentcore_org_core_core_Layouter)(nil)),
+		"_Lister":            reflect.ValueOf((*_cogentcore_org_core_core_Lister)(nil)),
 		"_OnBinder":          reflect.ValueOf((*_cogentcore_org_core_core_OnBinder)(nil)),
 		"_Settings":          reflect.ValueOf((*_cogentcore_org_core_core_Settings)(nil)),
 		"_SettingsOpener":    reflect.ValueOf((*_cogentcore_org_core_core_SettingsOpener)(nil)),
@@ -380,6 +494,7 @@ func init() {
 		"_ShouldShower":      reflect.ValueOf((*_cogentcore_org_core_core_ShouldShower)(nil)),
 		"_TextFieldEmbedder": reflect.ValueOf((*_cogentcore_org_core_core_TextFieldEmbedder)(nil)),
 		"_ToolbarMaker":      reflect.ValueOf((*_cogentcore_org_core_core_ToolbarMaker)(nil)),
+		"_Treer":             reflect.ValueOf((*_cogentcore_org_core_core_Treer)(nil)),
 		"_Validator":         reflect.ValueOf((*_cogentcore_org_core_core_Validator)(nil)),
 		"_Value":             reflect.ValueOf((*_cogentcore_org_core_core_Value)(nil)),
 		"_ValueSetter":       reflect.ValueOf((*_cogentcore_org_core_core_ValueSetter)(nil)),
@@ -558,6 +673,104 @@ func (W _cogentcore_org_core_core_Layouter) WidgetTooltip(pos image.Point) (stri
 	return W.WWidgetTooltip(pos)
 }
 
+// _cogentcore_org_core_core_Lister is an interface wrapper for Lister type
+type _cogentcore_org_core_core_Lister struct {
+	IValue            interface{}
+	WAsListBase       func() *core.ListBase
+	WCopySelectToMime func() mimedata.Mimes
+	WDragDrop         func(e events.Event)
+	WDragStart        func(e events.Event)
+	WDropDeleteSource func(e events.Event)
+	WDropFinalize     func(de *events.DragDrop)
+	WHasStyleFunc     func() bool
+	WMakePasteMenu    func(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func())
+	WMakeRow          func(p *core.Plan, i int)
+	WMimeDataType     func() string
+	WPasteAssign      func(md mimedata.Mimes, idx int)
+	WPasteAtIndex     func(md mimedata.Mimes, idx int)
+	WRowFirstWidget   func(row int) (*core.WidgetBase, bool)
+	WRowGrabFocus     func(row int) *core.WidgetBase
+	WRowWidgetNs      func() (nWidgPerRow int, idxOff int)
+	WSliceDeleteAt    func(idx int)
+	WSliceGrid        func() *core.ListGrid
+	WSliceIndex       func(i int) (si int, vi int, invis bool)
+	WSliceNewAt       func(idx int)
+	WStyleRow         func(w core.Widget, idx int, fidx int)
+	WStyleValue       func(w core.Widget, s *styles.Style, row int, col int)
+	WUpdateMaxWidths  func()
+	WUpdateSliceSize  func() int
+}
+
+func (W _cogentcore_org_core_core_Lister) AsListBase() *core.ListBase {
+	return W.WAsListBase()
+}
+func (W _cogentcore_org_core_core_Lister) CopySelectToMime() mimedata.Mimes {
+	return W.WCopySelectToMime()
+}
+func (W _cogentcore_org_core_core_Lister) DragDrop(e events.Event) {
+	W.WDragDrop(e)
+}
+func (W _cogentcore_org_core_core_Lister) DragStart(e events.Event) {
+	W.WDragStart(e)
+}
+func (W _cogentcore_org_core_core_Lister) DropDeleteSource(e events.Event) {
+	W.WDropDeleteSource(e)
+}
+func (W _cogentcore_org_core_core_Lister) DropFinalize(de *events.DragDrop) {
+	W.WDropFinalize(de)
+}
+func (W _cogentcore_org_core_core_Lister) HasStyleFunc() bool {
+	return W.WHasStyleFunc()
+}
+func (W _cogentcore_org_core_core_Lister) MakePasteMenu(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func()) {
+	W.WMakePasteMenu(m, md, idx, mod, fun)
+}
+func (W _cogentcore_org_core_core_Lister) MakeRow(p *core.Plan, i int) {
+	W.WMakeRow(p, i)
+}
+func (W _cogentcore_org_core_core_Lister) MimeDataType() string {
+	return W.WMimeDataType()
+}
+func (W _cogentcore_org_core_core_Lister) PasteAssign(md mimedata.Mimes, idx int) {
+	W.WPasteAssign(md, idx)
+}
+func (W _cogentcore_org_core_core_Lister) PasteAtIndex(md mimedata.Mimes, idx int) {
+	W.WPasteAtIndex(md, idx)
+}
+func (W _cogentcore_org_core_core_Lister) RowFirstWidget(row int) (*core.WidgetBase, bool) {
+	return W.WRowFirstWidget(row)
+}
+func (W _cogentcore_org_core_core_Lister) RowGrabFocus(row int) *core.WidgetBase {
+	return W.WRowGrabFocus(row)
+}
+func (W _cogentcore_org_core_core_Lister) RowWidgetNs() (nWidgPerRow int, idxOff int) {
+	return W.WRowWidgetNs()
+}
+func (W _cogentcore_org_core_core_Lister) SliceDeleteAt(idx int) {
+	W.WSliceDeleteAt(idx)
+}
+func (W _cogentcore_org_core_core_Lister) SliceGrid() *core.ListGrid {
+	return W.WSliceGrid()
+}
+func (W _cogentcore_org_core_core_Lister) SliceIndex(i int) (si int, vi int, invis bool) {
+	return W.WSliceIndex(i)
+}
+func (W _cogentcore_org_core_core_Lister) SliceNewAt(idx int) {
+	W.WSliceNewAt(idx)
+}
+func (W _cogentcore_org_core_core_Lister) StyleRow(w core.Widget, idx int, fidx int) {
+	W.WStyleRow(w, idx, fidx)
+}
+func (W _cogentcore_org_core_core_Lister) StyleValue(w core.Widget, s *styles.Style, row int, col int) {
+	W.WStyleValue(w, s, row, col)
+}
+func (W _cogentcore_org_core_core_Lister) UpdateMaxWidths() {
+	W.WUpdateMaxWidths()
+}
+func (W _cogentcore_org_core_core_Lister) UpdateSliceSize() int {
+	return W.WUpdateSliceSize()
+}
+
 // _cogentcore_org_core_core_OnBinder is an interface wrapper for OnBinder type
 type _cogentcore_org_core_core_OnBinder struct {
 	IValue  interface{}
@@ -682,6 +895,200 @@ type _cogentcore_org_core_core_ToolbarMaker struct {
 
 func (W _cogentcore_org_core_core_ToolbarMaker) MakeToolbar(p *core.Plan) {
 	W.WMakeToolbar(p)
+}
+
+// _cogentcore_org_core_core_Treer is an interface wrapper for Treer type
+type _cogentcore_org_core_core_Treer struct {
+	IValue             interface{}
+	WAddChildNode      func()
+	WAsCoreTree        func() *core.Tree
+	WAsTree            func() *tree.NodeBase
+	WAsWidget          func() *core.WidgetBase
+	WBaseType          func() *types.Type
+	WCanOpen           func() bool
+	WChildBackground   func(child core.Widget) image.Image
+	WContextMenuPos    func(e events.Event) image.Point
+	WCopy              func(reset bool)
+	WCopyFieldsFrom    func(from tree.Node)
+	WCut               func()
+	WDeleteNode        func()
+	WDestroy           func()
+	WDirectRenderDraw  func(drw system.Drawer, idx int, flipY bool)
+	WDirectRenderImage func(drw system.Drawer, idx int)
+	WDragDrop          func(e events.Event)
+	WDragStart         func(e events.Event)
+	WDropDeleteSource  func(e events.Event)
+	WDropFinalize      func(de *events.DragDrop)
+	WDuplicate         func()
+	WInit              func()
+	WInsertAfter       func()
+	WInsertBefore      func()
+	WIsVisible         func() bool
+	WMakePasteMenu     func(m *core.Scene, md mimedata.Mimes, fun func())
+	WMimeData          func(md *mimedata.Mimes)
+	WNew               func() tree.Node
+	WNodeType          func() *types.Type
+	WNodeWalkDown      func(fun func(n tree.Node) bool)
+	WOnAdd             func()
+	WOnChildAdded      func(child tree.Node)
+	WOnClose           func()
+	WOnDoubleClick     func(e events.Event)
+	WOnOpen            func()
+	WPaste             func()
+	WPlanName          func() string
+	WPosition          func()
+	WRender            func()
+	WRenderWidget      func()
+	WScenePos          func()
+	WShowContextMenu   func(e events.Event)
+	WSizeDown          func(iter int) bool
+	WSizeFinal         func()
+	WSizeUp            func()
+	WStyle             func()
+	WUpdateBranchIcons func()
+	WWidgetTooltip     func(pos image.Point) (string, image.Point)
+}
+
+func (W _cogentcore_org_core_core_Treer) AddChildNode() {
+	W.WAddChildNode()
+}
+func (W _cogentcore_org_core_core_Treer) AsCoreTree() *core.Tree {
+	return W.WAsCoreTree()
+}
+func (W _cogentcore_org_core_core_Treer) AsTree() *tree.NodeBase {
+	return W.WAsTree()
+}
+func (W _cogentcore_org_core_core_Treer) AsWidget() *core.WidgetBase {
+	return W.WAsWidget()
+}
+func (W _cogentcore_org_core_core_Treer) BaseType() *types.Type {
+	return W.WBaseType()
+}
+func (W _cogentcore_org_core_core_Treer) CanOpen() bool {
+	return W.WCanOpen()
+}
+func (W _cogentcore_org_core_core_Treer) ChildBackground(child core.Widget) image.Image {
+	return W.WChildBackground(child)
+}
+func (W _cogentcore_org_core_core_Treer) ContextMenuPos(e events.Event) image.Point {
+	return W.WContextMenuPos(e)
+}
+func (W _cogentcore_org_core_core_Treer) Copy(reset bool) {
+	W.WCopy(reset)
+}
+func (W _cogentcore_org_core_core_Treer) CopyFieldsFrom(from tree.Node) {
+	W.WCopyFieldsFrom(from)
+}
+func (W _cogentcore_org_core_core_Treer) Cut() {
+	W.WCut()
+}
+func (W _cogentcore_org_core_core_Treer) DeleteNode() {
+	W.WDeleteNode()
+}
+func (W _cogentcore_org_core_core_Treer) Destroy() {
+	W.WDestroy()
+}
+func (W _cogentcore_org_core_core_Treer) DirectRenderDraw(drw system.Drawer, idx int, flipY bool) {
+	W.WDirectRenderDraw(drw, idx, flipY)
+}
+func (W _cogentcore_org_core_core_Treer) DirectRenderImage(drw system.Drawer, idx int) {
+	W.WDirectRenderImage(drw, idx)
+}
+func (W _cogentcore_org_core_core_Treer) DragDrop(e events.Event) {
+	W.WDragDrop(e)
+}
+func (W _cogentcore_org_core_core_Treer) DragStart(e events.Event) {
+	W.WDragStart(e)
+}
+func (W _cogentcore_org_core_core_Treer) DropDeleteSource(e events.Event) {
+	W.WDropDeleteSource(e)
+}
+func (W _cogentcore_org_core_core_Treer) DropFinalize(de *events.DragDrop) {
+	W.WDropFinalize(de)
+}
+func (W _cogentcore_org_core_core_Treer) Duplicate() {
+	W.WDuplicate()
+}
+func (W _cogentcore_org_core_core_Treer) Init() {
+	W.WInit()
+}
+func (W _cogentcore_org_core_core_Treer) InsertAfter() {
+	W.WInsertAfter()
+}
+func (W _cogentcore_org_core_core_Treer) InsertBefore() {
+	W.WInsertBefore()
+}
+func (W _cogentcore_org_core_core_Treer) IsVisible() bool {
+	return W.WIsVisible()
+}
+func (W _cogentcore_org_core_core_Treer) MakePasteMenu(m *core.Scene, md mimedata.Mimes, fun func()) {
+	W.WMakePasteMenu(m, md, fun)
+}
+func (W _cogentcore_org_core_core_Treer) MimeData(md *mimedata.Mimes) {
+	W.WMimeData(md)
+}
+func (W _cogentcore_org_core_core_Treer) New() tree.Node {
+	return W.WNew()
+}
+func (W _cogentcore_org_core_core_Treer) NodeType() *types.Type {
+	return W.WNodeType()
+}
+func (W _cogentcore_org_core_core_Treer) NodeWalkDown(fun func(n tree.Node) bool) {
+	W.WNodeWalkDown(fun)
+}
+func (W _cogentcore_org_core_core_Treer) OnAdd() {
+	W.WOnAdd()
+}
+func (W _cogentcore_org_core_core_Treer) OnChildAdded(child tree.Node) {
+	W.WOnChildAdded(child)
+}
+func (W _cogentcore_org_core_core_Treer) OnClose() {
+	W.WOnClose()
+}
+func (W _cogentcore_org_core_core_Treer) OnDoubleClick(e events.Event) {
+	W.WOnDoubleClick(e)
+}
+func (W _cogentcore_org_core_core_Treer) OnOpen() {
+	W.WOnOpen()
+}
+func (W _cogentcore_org_core_core_Treer) Paste() {
+	W.WPaste()
+}
+func (W _cogentcore_org_core_core_Treer) PlanName() string {
+	return W.WPlanName()
+}
+func (W _cogentcore_org_core_core_Treer) Position() {
+	W.WPosition()
+}
+func (W _cogentcore_org_core_core_Treer) Render() {
+	W.WRender()
+}
+func (W _cogentcore_org_core_core_Treer) RenderWidget() {
+	W.WRenderWidget()
+}
+func (W _cogentcore_org_core_core_Treer) ScenePos() {
+	W.WScenePos()
+}
+func (W _cogentcore_org_core_core_Treer) ShowContextMenu(e events.Event) {
+	W.WShowContextMenu(e)
+}
+func (W _cogentcore_org_core_core_Treer) SizeDown(iter int) bool {
+	return W.WSizeDown(iter)
+}
+func (W _cogentcore_org_core_core_Treer) SizeFinal() {
+	W.WSizeFinal()
+}
+func (W _cogentcore_org_core_core_Treer) SizeUp() {
+	W.WSizeUp()
+}
+func (W _cogentcore_org_core_core_Treer) Style() {
+	W.WStyle()
+}
+func (W _cogentcore_org_core_core_Treer) UpdateBranchIcons() {
+	W.WUpdateBranchIcons()
+}
+func (W _cogentcore_org_core_core_Treer) WidgetTooltip(pos image.Point) (string, image.Point) {
+	return W.WWidgetTooltip(pos)
 }
 
 // _cogentcore_org_core_core_Validator is an interface wrapper for Validator type

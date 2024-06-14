@@ -18,7 +18,6 @@ import (
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/views"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 )
@@ -63,7 +62,7 @@ func (a *App) CacheMessages() error {
 	if a.IMAPClient == nil {
 		a.IMAPClient = map[string]*imapclient.Client{}
 	}
-	mbox := a.FindPath("splits/mbox").(*views.TreeView)
+	mbox := a.FindPath("splits/mbox").(*core.Tree)
 	mbox.AsyncLock()
 	mbox.DeleteChildren()
 	mbox.AsyncUnlock()
@@ -122,13 +121,13 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	bemail := FilenameBase32(email)
 
 	a.AsyncLock()
-	mbox := a.FindPath("splits/mbox").(*views.TreeView)
+	mbox := a.FindPath("splits/mbox").(*core.Tree)
 	embox := mbox.ChildByName(bemail)
 	if embox == nil {
-		embox = views.NewTreeView(mbox).SetText(email) // TODO(config)
+		embox = core.NewTree(mbox).SetText(email) // TODO(config)
 		embox.AsTree().SetName(bemail)
 	}
-	views.NewTreeView(embox).SetText(mailbox).OnClick(func(e events.Event) {
+	core.NewTree(embox).SetText(mailbox).OnClick(func(e events.Event) {
 		a.CurrentMailbox = mailbox
 		a.UpdateMessageList()
 	})
