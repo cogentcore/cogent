@@ -283,7 +283,7 @@ func (cv *CodeView) SpacesToTabs() { //types:add
 }
 
 // DiffFiles shows the differences between two given files
-// in side-by-side DiffView and in the console as a context diff.
+// in side-by-side DiffEditor and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
 func (cv *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //types:add
 	fna := cv.FileNodeForFile(string(fnmA), true)
@@ -301,7 +301,7 @@ func (cv *CodeView) DiffFiles(fnmA, fnmB core.Filename) { //types:add
 
 // DiffFileNode shows the differences between given file node as the A file,
 // and another given file as the B file,
-// in side-by-side DiffView and in the console as a context diff.
+// in side-by-side DiffEditor and in the console as a context diff.
 func (cv *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:add
 	fnb := cv.FileNodeForFile(string(fnmB), true)
 	if fnb == nil {
@@ -322,7 +322,7 @@ func (cv *CodeView) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //typ
 	bstr := fnb.Buffer.Strings(false)
 	_, _ = astr, bstr
 
-	texteditor.DiffViewDialog(cv, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
+	texteditor.DiffEditorDialog(cv, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
 }
 
 // CountWords counts number of words (and lines) in active file
