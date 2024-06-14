@@ -21,7 +21,7 @@ func (sv *SVG) ManipStart(act, data string) {
 	es := sv.EditState()
 	es.ActStart(act, data)
 	help := ActionHelpMap[act]
-	sv.VectorView.SetStatus(fmt.Sprintf("<b>%s</b>: %s", act, help))
+	sv.Vector.SetStatus(fmt.Sprintf("<b>%s</b>: %s", act, help))
 	sv.UndoSave(act, data)
 	es.ActUnlock()
 }
@@ -49,7 +49,7 @@ func (sv *SVG) ManipDone() {
 	es.ActDone()
 	sv.UpdateView(true)
 	sv.UpdateSelect()
-	sv.VectorView.ChangeMade()
+	sv.Vector.ChangeMade()
 }
 
 // ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the

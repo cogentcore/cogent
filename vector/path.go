@@ -15,14 +15,14 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (vv *VectorView) NodeToolbar() *core.Toolbar {
+func (vv *Vector) NodeToolbar() *core.Toolbar {
 	tbs := vv.ModalToolbarStack()
 	tb := tbs.ChildByName("node-tb", 0).(*core.Toolbar)
 	return tb
 }
 
 // ConfigNodeToolbar configures the node modal toolbar (default tooblar)
-func (vv *VectorView) ConfigNodeToolbar() {
+func (vv *Vector) ConfigNodeToolbar() {
 	tb := vv.NodeToolbar()
 	if tb.HasChildren() {
 		return
@@ -38,7 +38,7 @@ func (vv *VectorView) ConfigNodeToolbar() {
 
 	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
 	// 	gv.This, func(recv, send tree.Node, sig int64, data interface{}) {
-	// 		grr := recv.Embed(KiT_VectorView).(*VectorView)
+	// 		grr := recv.Embed(KiT_Vector).(*Vector)
 	// 		grr.SelGroup()
 	// 	})
 	//
@@ -63,13 +63,13 @@ func (vv *VectorView) ConfigNodeToolbar() {
 }
 
 // NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
-func (vv *VectorView) NodeEnableFunc(act *core.Button) {
+func (vv *Vector) NodeEnableFunc(act *core.Button) {
 	// es := &gv.EditState
 	// act.SetInactiveState(!es.HasNodeed())
 }
 
 // UpdateNodeToolbar updates the node toolbar based on current nodeion
-func (vv *VectorView) UpdateNodeToolbar() {
+func (vv *Vector) UpdateNodeToolbar() {
 	tb := vv.NodeToolbar()
 	es := &vv.EditState
 	if es.Tool != NodeTool {
@@ -84,7 +84,7 @@ func (vv *VectorView) UpdateNodeToolbar() {
 ///////////////////////////////////////////////////////////////////////
 //   Actions
 
-func (vv *VectorView) NodeSetXPos(xp float32) {
+func (vv *Vector) NodeSetXPos(xp float32) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -95,7 +95,7 @@ func (vv *VectorView) NodeSetXPos(xp float32) {
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) NodeSetYPos(yp float32) {
+func (vv *Vector) NodeSetYPos(yp float32) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -198,7 +198,7 @@ func (sv *SVG) UpdateNodeSprites() {
 		sprites.InactivateSprite(spnm)
 	}
 
-	sv.VectorView.UpdateNodeToolbar()
+	sv.Vector.UpdateNodeToolbar()
 }
 
 func (sv *SVG) RemoveNodeSprites() {
@@ -216,7 +216,7 @@ func (sv *SVG) RemoveNodeSprites() {
 
 /*
 func (sv *SVG) NodeSpriteEvent(idx int, et events.Type, d any) {
-	// win := sv.VectorView.ParentWindow()
+	// win := sv.Vector.ParentWindow()
 	// es := sv.EditState()
 	// es.SelNoDrag = false
 	// switch et {

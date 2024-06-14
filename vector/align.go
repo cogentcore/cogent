@@ -23,8 +23,8 @@ type AlignView struct {
 	// Anchor is the alignment anchor
 	Anchor AlignAnchors
 
-	// the parent vectorview
-	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
+	// the parent vector
+	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
 func (av *AlignView) Init() {
@@ -66,7 +66,7 @@ func (av *AlignView) Init() {
 				w.SetIcon(icons.Icon(al.String())).SetType(core.ButtonTonal).
 					SetTooltip(al.Desc()).
 					OnClick(func(e events.Event) {
-						av.VectorView.Align(av.Anchor, al)
+						av.Vector.Align(av.Anchor, al)
 					})
 			})
 		}
@@ -76,7 +76,7 @@ func (av *AlignView) Init() {
 /////////////////////////////////////////////////////////////////////////
 //  Actions
 
-func (vv *VectorView) Align(aa AlignAnchors, al Aligns) {
+func (vv *Vector) Align(aa AlignAnchors, al Aligns) {
 	astr := al.String()
 	switch al {
 	case AlignRightAnchor:
@@ -109,7 +109,7 @@ func (vv *VectorView) Align(aa AlignAnchors, al Aligns) {
 
 // AlignAnchorBBox returns the bounding box for given type of align anchor
 // and the anchor node if non-nil
-func (vv *VectorView) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
+func (vv *Vector) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
 	es := &vv.EditState
 	sv := vv.SVG()
 	svoff := sv.Root().BBox.Min
@@ -132,7 +132,7 @@ func (vv *VectorView) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Nod
 }
 
 // AlignMin aligns to min coordinate (Left, Top) in bbox
-func (vv *VectorView) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Vector) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -157,7 +157,7 @@ func (vv *VectorView) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Vector) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -182,7 +182,7 @@ func (vv *VectorView) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act strin
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Vector) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -207,7 +207,7 @@ func (vv *VectorView) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Vector) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -232,7 +232,7 @@ func (vv *VectorView) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act strin
 	vv.ChangeMade()
 }
 
-func (vv *VectorView) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Vector) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return

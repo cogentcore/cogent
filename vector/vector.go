@@ -27,8 +27,8 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// VectorView is the Vector SVG vector drawing program
-type VectorView struct {
+// Vector is the main widget of the Cogent Vector SVG vector graphics program.
+type Vector struct {
 	core.Frame
 
 	// full path to current drawing filename
@@ -38,7 +38,7 @@ type VectorView struct {
 	EditState EditState `set:"-"`
 }
 
-func (vv *VectorView) Init() {
+func (vv *Vector) Init() {
 	vv.Frame.Init()
 	vv.EditState.ConfigDefaultGradient()
 	vv.Styler(func(s *styles.Style) {
@@ -83,7 +83,7 @@ func (vv *VectorView) Init() {
 						s.Direction = styles.Column
 					})
 					core.AddChildAt(w, "tree", func(w *core.Tree) {
-						// w.VectorView = vv
+						// w.Vector = vv
 						w.OpenDepth = 4
 						w.Updater(func() {
 							// TODO: get SVG
@@ -94,7 +94,7 @@ func (vv *VectorView) Init() {
 			})
 
 			core.AddChildAt(w, "svg", func(w *SVG) {
-				w.VectorView = vv
+				w.Vector = vv
 				w.UpdateGradients(vv.EditState.Gradients)
 			})
 			core.AddChildAt(w, "tabs", func(w *core.Tabs) {
@@ -110,7 +110,7 @@ func (vv *VectorView) Init() {
 	})
 
 	// tv.TreeSig.Connect(vv.This, func(recv, send tree.Node, sig int64, data any) {
-	// 	gvv := recv.Embed(KiT_VectorView).(*VectorView)
+	// 	gvv := recv.Embed(KiT_Vector).(*Vector)
 	// 	if data == nil {
 	// 		return
 	// 	}
@@ -143,7 +143,7 @@ func (vv *VectorView) Init() {
 	// 		return
 	// 	}
 	// 	core.FormDialog(gvv.Viewport, tvn.SrcNode, core.DlgOpts{Title: "SVG Element View"}, nil, nil)
-	// 	// ggv, _ := recv.Embed(KiT_VectorView).(*VectorView)
+	// 	// ggv, _ := recv.Embed(KiT_Vector).(*Vector)
 	// 	// 		stv := ggv.RecycleTab("Obj", core.KiT_Form, true).(*core.Form)
 	// 	// 		stv.SetStruct(tvn.SrcNode)
 	// })
@@ -160,7 +160,7 @@ func (vv *VectorView) Init() {
 }
 
 // OpenDrawingFile opens a new .svg drawing file -- just the basic opening
-func (vv *VectorView) OpenDrawingFile(fnm core.Filename) error {
+func (vv *Vector) OpenDrawingFile(fnm core.Filename) error {
 	path, _ := filepath.Abs(string(fnm))
 	vv.Filename = core.Filename(path)
 	sv := vv.SVG()
@@ -181,7 +181,7 @@ func (vv *VectorView) OpenDrawingFile(fnm core.Filename) error {
 }
 
 // OpenDrawing opens a new .svg drawing
-func (vv *VectorView) OpenDrawing(fnm core.Filename) error { //types:add
+func (vv *Vector) OpenDrawing(fnm core.Filename) error { //types:add
 	err := vv.OpenDrawingFile(fnm)
 
 	sv := vv.SVG()
@@ -198,13 +198,13 @@ func (vv *VectorView) OpenDrawing(fnm core.Filename) error { //types:add
 }
 
 // NewDrawing creates a new drawing of the given size
-func (vv *VectorView) NewDrawing(sz PhysSize) *VectorView {
+func (vv *Vector) NewDrawing(sz PhysSize) *Vector {
 	ngr := NewDrawing(sz)
 	return ngr
 }
 
 // PromptPhysSize prompts for the physical size of the drawing and sets it
-func (vv *VectorView) PromptPhysSize() { //types:add
+func (vv *Vector) PromptPhysSize() { //types:add
 	sv := vv.SVG()
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
@@ -222,7 +222,7 @@ func (vv *VectorView) PromptPhysSize() { //types:add
 }
 
 // SetPhysSize sets physical size of drawing
-func (vv *VectorView) SetPhysSize(sz *PhysSize) {
+func (vv *Vector) SetPhysSize(sz *PhysSize) {
 	if sz == nil {
 		return
 	}
@@ -236,7 +236,7 @@ func (vv *VectorView) SetPhysSize(sz *PhysSize) {
 }
 
 // SaveDrawing saves .svg drawing to current filename
-func (vv *VectorView) SaveDrawing() error { //types:add
+func (vv *Vector) SaveDrawing() error { //types:add
 	if vv.Filename != "" {
 		return vv.SaveDrawingAs(vv.Filename)
 	}
@@ -245,7 +245,7 @@ func (vv *VectorView) SaveDrawing() error { //types:add
 }
 
 // SaveDrawingAs saves .svg drawing to given filename
-func (vv *VectorView) SaveDrawingAs(fname core.Filename) error { //types:add
+func (vv *Vector) SaveDrawingAs(fname core.Filename) error { //types:add
 	if fname == "" {
 		return errors.New("SaveDrawingAs: filename is empty")
 	}
@@ -273,7 +273,7 @@ func (vv *VectorView) SaveDrawingAs(fname core.Filename) error { //types:add
 // specify either width or height of resulting image, or nothing for
 // physical size as set.  Renders full current page -- do ResizeToContents
 // to render just current contents.
-func (vv *VectorView) ExportPNG(width, height float32) error { //types:add
+func (vv *Vector) ExportPNG(width, height float32) error { //types:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_png.svg")
 	sv := vv.SVG()
@@ -307,7 +307,7 @@ func (vv *VectorView) ExportPNG(width, height float32) error { //types:add
 // specify DPI of resulting image for effects rendering.
 // Renders full current page -- do ResizeToContents
 // to render just current contents.
-func (vv *VectorView) ExportPDF(dpi float32) error { //types:add
+func (vv *Vector) ExportPDF(dpi float32) error { //types:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_pdf.svg")
 	sv := vv.SVG()
@@ -337,14 +337,14 @@ func (vv *VectorView) ExportPDF(dpi float32) error { //types:add
 // including moving everything to start at upper-left corner,
 // preserving the current grid offset, so grid snapping
 // is preserved.
-func (vv *VectorView) ResizeToContents() { //types:add
+func (vv *Vector) ResizeToContents() { //types:add
 	sv := vv.SVG()
 	sv.ResizeToContents(true)
 	sv.UpdateView(true)
 }
 
 // AddImage adds a new image node set to the given image
-func (vv *VectorView) AddImage(fname core.Filename, width, height float32) error { //types:add
+func (vv *Vector) AddImage(fname core.Filename, width, height float32) error { //types:add
 	sv := vv.SVG()
 	sv.UndoSave("AddImage", string(fname))
 	ind := sv.NewEl(svg.ImageType).(*svg.Image)
@@ -359,12 +359,12 @@ func (vv *VectorView) AddImage(fname core.Filename, width, height float32) error
 //////////////////////////////////////////////////////////////////////////
 //  GUI Config
 
-func (vv *VectorView) ModalToolbarStack() *core.Frame {
+func (vv *Vector) ModalToolbarStack() *core.Frame {
 	return vv.ChildByName("modal-tb", 1).(*core.Frame)
 }
 
 // SetModalSelect sets the modal toolbar to be the select one
-func (vv *VectorView) SetModalSelect() {
+func (vv *Vector) SetModalSelect() {
 	tbs := vv.ModalToolbarStack()
 	vv.UpdateSelectToolbar()
 	tbs.StackTop = 0
@@ -372,7 +372,7 @@ func (vv *VectorView) SetModalSelect() {
 }
 
 // SetModalNode sets the modal toolbar to be the node editing one
-func (vv *VectorView) SetModalNode() {
+func (vv *Vector) SetModalNode() {
 	tbs := vv.ModalToolbarStack()
 	vv.UpdateNodeToolbar()
 	tbs.StackTop = 1
@@ -380,67 +380,67 @@ func (vv *VectorView) SetModalNode() {
 }
 
 // SetModalText sets the modal toolbar to be the text editing one
-func (vv *VectorView) SetModalText() {
+func (vv *Vector) SetModalText() {
 	tbs := vv.ModalToolbarStack()
 	vv.UpdateTextToolbar()
 	tbs.StackTop = 2
 	tbs.NeedsLayout()
 }
 
-func (vv *VectorView) HBox() *core.Frame {
+func (vv *Vector) HBox() *core.Frame {
 	return vv.ChildByName("hbox", 2).(*core.Frame)
 }
 
-func (vv *VectorView) Tools() *core.Toolbar {
+func (vv *Vector) Tools() *core.Toolbar {
 	return vv.HBox().ChildByName("tools", 0).(*core.Toolbar)
 }
 
-func (vv *VectorView) Splits() *core.Splits {
+func (vv *Vector) Splits() *core.Splits {
 	return vv.HBox().ChildByName("splits", 1).(*core.Splits)
 }
 
-func (vv *VectorView) LayerTree() *core.Frame {
+func (vv *Vector) LayerTree() *core.Frame {
 	return vv.Splits().ChildByName("layer-tree", 0).(*core.Frame)
 }
 
-func (vv *VectorView) LayerView() *core.Table {
+func (vv *Vector) LayerView() *core.Table {
 	return vv.LayerTree().ChildByName("layers", 0).(*core.Table)
 }
 
-func (vv *VectorView) Tree() *Tree {
+func (vv *Vector) Tree() *Tree {
 	return vv.LayerTree().ChildByName("tree-frame", 1).AsTree().Child(0).(*Tree)
 }
 
 // SVG returns the [SVG].
-func (vv *VectorView) SVG() *SVG {
+func (vv *Vector) SVG() *SVG {
 	return vv.Splits().Child(1).(*SVG)
 }
 
 // SSVG returns the underlying [svg.SVG].
-func (vv *VectorView) SSVG() *svg.SVG {
+func (vv *Vector) SSVG() *svg.SVG {
 	return vv.SVG().SSVG()
 }
 
-func (vv *VectorView) Tabs() *core.Tabs {
+func (vv *Vector) Tabs() *core.Tabs {
 	return vv.Splits().ChildByName("tabs", 2).(*core.Tabs)
 }
 
 // StatusBar returns the statusbar widget
-func (vv *VectorView) StatusBar() *core.Frame {
+func (vv *Vector) StatusBar() *core.Frame {
 	return vv.ChildByName("statusbar", 4).(*core.Frame)
 }
 
 // StatusText returns the status bar text widget
-func (vv *VectorView) StatusText() *core.Text {
+func (vv *Vector) StatusText() *core.Text {
 	return vv.StatusBar().Child(0).(*core.Text)
 }
 
 // PasteAvailFunc is an ActionUpdateFunc that inactivates action if no paste avail
-func (vv *VectorView) PasteAvailFunc(bt *core.Button) {
+func (vv *Vector) PasteAvailFunc(bt *core.Button) {
 	bt.SetEnabled(!vv.Clipboard().IsEmpty())
 }
 
-func (vv *VectorView) MakeToolbar(tb *core.Toolbar) { // TODO(config)
+func (vv *Vector) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 	// TODO(kai): remove Update
 	core.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	core.NewButton(tb).SetText("New").SetIcon(icons.Add).
@@ -501,7 +501,7 @@ func (vv *VectorView) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 		})
 }
 
-func (vv *VectorView) ConfigModalToolbar() {
+func (vv *Vector) ConfigModalToolbar() {
 	tb := vv.ModalToolbarStack()
 	if tb == nil || tb.HasChildren() {
 		return
@@ -516,7 +516,7 @@ func (vv *VectorView) ConfigModalToolbar() {
 }
 
 // ConfigStatusBar configures statusbar with text
-func (vv *VectorView) ConfigStatusBar() {
+func (vv *Vector) ConfigStatusBar() {
 	sb := vv.StatusBar()
 	if sb == nil || sb.HasChildren() {
 		return
@@ -525,7 +525,7 @@ func (vv *VectorView) ConfigStatusBar() {
 }
 
 // SetStatus updates the status bar text with the given message, along with other status info
-func (vv *VectorView) SetStatus(msg string) {
+func (vv *Vector) SetStatus(msg string) {
 	sb := vv.StatusBar()
 	if sb == nil {
 		return
@@ -542,7 +542,7 @@ func (vv *VectorView) SetStatus(msg string) {
 
 // AddCloseDialog adds the close dialog that prompts the user to save the
 // file when they try to close the scene containing this vector view.
-func (vv *VectorView) AddCloseDialog() {
+func (vv *Vector) AddCloseDialog() {
 	vv.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
 		if !vv.EditState.Changed {
 			return false
@@ -562,7 +562,7 @@ func (vv *VectorView) AddCloseDialog() {
 	})
 }
 
-func (vv *VectorView) SetTitle() {
+func (vv *Vector) SetTitle() {
 	if vv.Filename == "" {
 		return
 	}
@@ -578,14 +578,14 @@ func (vv *VectorView) SetTitle() {
 }
 
 // NewDrawing opens a new drawing window
-func NewDrawing(sz PhysSize) *VectorView {
+func NewDrawing(sz PhysSize) *Vector {
 	ngr := NewVectorWindow("")
 	ngr.SetPhysSize(&sz)
 	return ngr
 }
 
 // NewVectorWindow returns a new VectorWindow loading given file if non-empty
-func NewVectorWindow(fnm string) *VectorView {
+func NewVectorWindow(fnm string) *Vector {
 	path := ""
 	dfnm := "blank"
 	if fnm != "" {
@@ -596,7 +596,7 @@ func NewVectorWindow(fnm string) *VectorView {
 
 	if win, found := core.AllRenderWindows.FindName(winm); found {
 		sc := win.MainScene()
-		if vv, ok := sc.Body.ChildByType(VectorViewType, tree.NoEmbeds).(*VectorView); ok {
+		if vv, ok := sc.Body.ChildByType(VectorType, tree.NoEmbeds).(*Vector); ok {
 			if string(vv.Filename) == path {
 				win.Raise()
 				return vv
@@ -606,7 +606,7 @@ func NewVectorWindow(fnm string) *VectorView {
 
 	b := core.NewBody(winm).SetTitle(winm)
 
-	vv := NewVectorView(b)
+	vv := NewVector(b)
 	// b.AddAppBar(vv.MakeToolbar) // TODO(config):
 
 	b.OnShow(func(e events.Event) {
@@ -628,48 +628,48 @@ func NewVectorWindow(fnm string) *VectorView {
 // RecycleTab returns the tab with given the name, first by looking for
 // an existing one, and if not found, making a new one.
 // If sel, then select it.
-func (gv *VectorView) RecycleTab(name string, sel bool) *core.Frame {
+func (gv *Vector) RecycleTab(name string, sel bool) *core.Frame {
 	tv := gv.Tabs()
 	return tv.RecycleTab(name, sel)
 }
 
 // Tab returns the tab with the given name
-func (gv *VectorView) Tab(name string) *core.Frame {
+func (gv *Vector) Tab(name string) *core.Frame {
 	return gv.Tabs().TabByName(name)
 }
 
-func (vv *VectorView) ConfigTabs() {
+func (vv *Vector) ConfigTabs() {
 	pt := vv.RecycleTab("Paint", false)
-	NewPaintView(pt).SetVectorView(vv)
+	NewPaintView(pt).SetVector(vv)
 	at := vv.RecycleTab("Align", false)
-	NewAlignView(at).SetVectorView(vv)
+	NewAlignView(at).SetVector(vv)
 	vv.EditState.Text.Defaults()
 	tt := vv.RecycleTab("Text", false)
 	core.NewForm(tt).SetStruct(&vv.EditState.Text)
 }
 
-func (vv *VectorView) PaintView() *PaintView {
+func (vv *Vector) PaintView() *PaintView {
 	return vv.Tab("Paint").Child(0).(*PaintView)
 }
 
 // UpdateAll updates the display
-func (vv *VectorView) UpdateAll() { //types:add
+func (vv *Vector) UpdateAll() { //types:add
 	vv.UpdateTabs()
 	vv.UpdateTree()
 	vv.UpdateDisp()
 }
 
-func (vv *VectorView) UpdateDisp() {
+func (vv *Vector) UpdateDisp() {
 	sv := vv.SVG()
 	sv.UpdateView(true)
 }
 
-func (vv *VectorView) UpdateTree() {
+func (vv *Vector) UpdateTree() {
 	tv := vv.Tree()
 	tv.ReSync()
 }
 
-func (vv *VectorView) SetDefaultStyle() {
+func (vv *Vector) SetDefaultStyle() {
 	// pv := vv.PaintView()
 	// es := &vv.EditState
 	// switch es.Tool {
@@ -682,7 +682,7 @@ func (vv *VectorView) SetDefaultStyle() {
 	// }
 }
 
-func (vv *VectorView) UpdateTabs() {
+func (vv *Vector) UpdateTabs() {
 	// es := &vv.EditState
 	// fsel := es.FirstSelectedNode()
 	// if fsel != nil {
@@ -704,7 +704,7 @@ func (vv *VectorView) UpdateTabs() {
 }
 
 // SelectNodeInSVG selects given svg node in SVG drawing
-func (vv *VectorView) SelectNodeInSVG(kn tree.Node, mode events.SelectModes) {
+func (vv *Vector) SelectNodeInSVG(kn tree.Node, mode events.SelectModes) {
 	sii, ok := kn.(svg.Node)
 	if !ok {
 		return
@@ -716,7 +716,7 @@ func (vv *VectorView) SelectNodeInSVG(kn tree.Node, mode events.SelectModes) {
 }
 
 // Undo undoes the last action
-func (vv *VectorView) Undo() string { //types:add
+func (vv *Vector) Undo() string { //types:add
 	sv := vv.SVG()
 	act := sv.Undo()
 	if act != "" {
@@ -729,7 +729,7 @@ func (vv *VectorView) Undo() string { //types:add
 }
 
 // Redo redoes the previously undone action
-func (vv *VectorView) Redo() string { //types:add
+func (vv *Vector) Redo() string { //types:add
 	sv := vv.SVG()
 	act := sv.Redo()
 	if act != "" {
@@ -743,7 +743,7 @@ func (vv *VectorView) Redo() string { //types:add
 
 // ChangeMade should be called after any change is completed on the drawing.
 // Calls autosave.
-func (vv *VectorView) ChangeMade() {
+func (vv *Vector) ChangeMade() {
 	go vv.AutoSave()
 }
 
@@ -751,7 +751,7 @@ func (vv *VectorView) ChangeMade() {
 //   Basic infrastructure
 
 /*
-func (gv *VectorView) OSFileEvent() {
+func (gv *Vector) OSFileEvent() {
 	gv.ConnectEvent(oswin.OSOpenFilesEvent, core.RegPri, func(recv, send tree.Node, sig int64, d any) {
 		ofe := d.(*osevent.OpenFilesEvent)
 		for _, fn := range ofe.Files {
@@ -762,11 +762,11 @@ func (gv *VectorView) OSFileEvent() {
 */
 
 // OpenRecent opens a recently used file
-func (vv *VectorView) OpenRecent(filename core.Filename) {
-	// if string(filename) == VectorViewResetRecents {
+func (vv *Vector) OpenRecent(filename core.Filename) {
+	// if string(filename) == VectorResetRecents {
 	// 	SavedPaths = nil
 	// 	core.StringsAddExtras((*[]string)(&SavedPaths), SavedPathsExtras)
-	// } else if string(filename) == VectorViewEditRecents {
+	// } else if string(filename) == VectorEditRecents {
 	// 	vv.EditRecents()
 	// } else {
 	// 	vv.OpenDrawing(filename)
@@ -774,7 +774,7 @@ func (vv *VectorView) OpenRecent(filename core.Filename) {
 }
 
 // RecentsEdit opens a dialog editor for deleting from the recents project list
-func (vv *VectorView) EditRecents() {
+func (vv *Vector) EditRecents() {
 	// tmp := make([]string, len(SavedPaths))
 	// copy(tmp, SavedPaths)
 	// core.StringsRemoveExtras((*[]string)(&tmp), SavedPathsExtras)
@@ -790,7 +790,7 @@ func (vv *VectorView) EditRecents() {
 }
 
 // SplitsSetView sets split view splitters to given named setting
-func (vv *VectorView) SplitsSetView(split SplitName) {
+func (vv *Vector) SplitsSetView(split SplitName) {
 	sv := vv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
@@ -801,7 +801,7 @@ func (vv *VectorView) SplitsSetView(split SplitName) {
 
 // SplitsSave saves current splitter settings to named splitter settings under
 // existing name, and saves to prefs file
-func (vv *VectorView) SplitsSave(split SplitName) {
+func (vv *Vector) SplitsSave(split SplitName) {
 	sv := vv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
@@ -812,19 +812,19 @@ func (vv *VectorView) SplitsSave(split SplitName) {
 
 // SplitsSaveAs saves current splitter settings to new named splitter settings, and
 // saves to prefs file
-func (vv *VectorView) SplitsSaveAs(name, desc string) {
+func (vv *Vector) SplitsSaveAs(name, desc string) {
 	spv := vv.Splits()
 	AvailableSplits.Add(name, desc, spv.Splits)
 	AvailableSplits.SaveSettings()
 }
 
 // SplitsEdit opens the SplitsView editor to customize saved splitter settings
-func (vv *VectorView) SplitsEdit() {
+func (vv *Vector) SplitsEdit() {
 	SplitsView(&AvailableSplits)
 }
 
 // HelpWiki opens wiki page for grid on github
-func (vv *VectorView) HelpWiki() {
+func (vv *Vector) HelpWiki() {
 	core.TheApp.OpenURL("https://vector.cogentcore.org")
 }
 
@@ -832,7 +832,7 @@ func (vv *VectorView) HelpWiki() {
 //		AutoSave
 
 // AutoSaveFilename returns the autosave filename
-func (vv *VectorView) AutoSaveFilename() string {
+func (vv *Vector) AutoSaveFilename() string {
 	path, fn := filepath.Split(string(vv.Filename))
 	if fn == "" {
 		fn = "new_file_" + vv.Name + ".svg"
@@ -842,31 +842,31 @@ func (vv *VectorView) AutoSaveFilename() string {
 }
 
 // AutoSave does the autosave -- safe to call in a separate goroutine
-func (vv *VectorView) AutoSave() error {
-	// if vv.HasFlag(int(VectorViewAutoSaving)) {
+func (vv *Vector) AutoSave() error {
+	// if vv.HasFlag(int(VectorAutoSaving)) {
 	// 	return nil
 	// }
-	// vv.SetFlag(int(VectorViewAutoSaving))
+	// vv.SetFlag(int(VectorAutoSaving))
 	// asfn := vv.AutoSaveFilename()
 	// sv := vv.SVG()
 	// err := sv.SaveXML(core.Filename(asfn))
 	// if err != nil && err != io.EOF {
 	// 	log.Println(err)
 	// }
-	// vv.ClearFlag(int(VectorViewAutoSaving))
+	// vv.ClearFlag(int(VectorAutoSaving))
 	// return err
 	return nil
 }
 
 // AutoSaveDelete deletes any existing autosave file
-func (vv *VectorView) AutoSaveDelete() {
+func (vv *Vector) AutoSaveDelete() {
 	asfn := vv.AutoSaveFilename()
 	os.Remove(asfn)
 }
 
 // AutoSaveCheck checks if an autosave file exists -- logic for dealing with
 // it is left to larger app -- call this before opening a file
-func (vv *VectorView) AutoSaveCheck() bool {
+func (vv *Vector) AutoSaveCheck() bool {
 	asfn := vv.AutoSaveFilename()
 	if _, err := os.Stat(asfn); os.IsNotExist(err) {
 		return false // does not exist

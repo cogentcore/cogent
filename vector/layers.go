@@ -77,10 +77,10 @@ func (ly *Layers) LayerIndexByName(nm string) int {
 }
 
 /////////////////////////////////////////////////////////////////
-//  VectorView
+//  Vector
 
 // FirstLayerIndex returns index of first layer group in svg
-func (vv *VectorView) FirstLayerIndex() int {
+func (vv *Vector) FirstLayerIndex() int {
 	sv := vv.SVG()
 	for i, kc := range sv.Root().Children {
 		if NodeIsLayer(kc) {
@@ -90,7 +90,7 @@ func (vv *VectorView) FirstLayerIndex() int {
 	return min(1, len(sv.Root().Children))
 }
 
-func (vv *VectorView) LayerViewSigs(lyv *core.Table) {
+func (vv *Vector) LayerViewSigs(lyv *core.Table) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
 	// lyv.ViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -130,12 +130,12 @@ func (vv *VectorView) LayerViewSigs(lyv *core.Table) {
 	// })
 }
 
-func (vv *VectorView) SyncLayers() {
+func (vv *Vector) SyncLayers() {
 	sv := vv.SVG()
 	vv.EditState.Layers.SyncLayers(sv)
 }
 
-func (vv *VectorView) UpdateLayerView() {
+func (vv *Vector) UpdateLayerView() {
 	vv.SyncLayers()
 	es := &vv.EditState
 	lys := &es.Layers
@@ -155,7 +155,7 @@ func (vv *VectorView) UpdateLayerView() {
 }
 
 // AddLayer adds a new layer
-func (vv *VectorView) AddLayer() { //types:add
+func (vv *Vector) AddLayer() { //types:add
 	sv := vv.SVG()
 	svr := sv.Root()
 
@@ -221,19 +221,19 @@ func NodeParentLayer(n tree.Node) tree.Node {
 
 // IsCurLayer returns true if given layer is the current layer
 // for creating items
-func (vv *VectorView) IsCurLayer(lay string) bool {
+func (vv *Vector) IsCurLayer(lay string) bool {
 	return vv.EditState.CurLayer == lay
 }
 
 // SetCurLayer sets the current layer for creating items to given one
-func (vv *VectorView) SetCurLayer(lay string) {
+func (vv *Vector) SetCurLayer(lay string) {
 	vv.EditState.CurLayer = lay
 	vv.SetStatus("set current layer to: " + lay)
 }
 
 // ClearCurLayer clears the current layer for creating items if it
 // was set to the given layer name
-func (vv *VectorView) ClearCurLayer(lay string) {
+func (vv *Vector) ClearCurLayer(lay string) {
 	if vv.EditState.CurLayer == lay {
 		vv.EditState.CurLayer = ""
 		vv.SetStatus("clear current layer from: " + lay)

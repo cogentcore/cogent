@@ -29,7 +29,7 @@ func ToolDoesBasicSelect(tl Tools) bool {
 }
 
 // SetTool sets the current active tool
-func (gv *VectorView) SetTool(tl Tools) {
+func (gv *Vector) SetTool(tl Tools) {
 	es := &gv.EditState
 	if es.Tool == tl {
 		return
@@ -62,7 +62,7 @@ func (gv *VectorView) SetTool(tl Tools) {
 }
 
 // SetModalToolbar sets the current modal toolbar based on tool
-func (gv *VectorView) SetModalToolbar() {
+func (gv *Vector) SetModalToolbar() {
 	tl := gv.EditState.Tool
 	switch tl {
 	case NodeTool:
@@ -74,7 +74,7 @@ func (gv *VectorView) SetModalToolbar() {
 	}
 }
 
-func (gv *VectorView) ConfigTools() {
+func (gv *Vector) ConfigTools() {
 	tb := gv.Tools()
 
 	if tb.HasChildren() {

@@ -47,15 +47,15 @@ type TextStyle struct {
 	// font value view for font toolbar
 	FontButton core.FontButton `view:"-"`
 
-	// the parent vectorview
-	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
+	// the parent vector
+	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
 func (ts *TextStyle) Update() {
 	// this is called augtomatically when edited
-	if ts.VectorView != nil {
-		ts.VectorView.SetTextProperties(ts.TextProperties())
-		ts.VectorView.SetText(ts.Text)
+	if ts.Vector != nil {
+		ts.Vector.SetTextProperties(ts.TextProperties())
+		ts.Vector.SetText(ts.Text)
 	}
 }
 
@@ -97,7 +97,7 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 }
 
 // SetTextPropertiesNode sets the text properties of given Text node
-func (gv *VectorView) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
+func (gv *Vector) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
 		for _, kid := range gp.Children {
 			gv.SetTextPropertiesNode(kid.(svg.Node), tps)
@@ -119,7 +119,7 @@ func (gv *VectorView) SetTextPropertiesNode(sii svg.Node, tps map[string]string)
 }
 
 // SetTextProperties sets the text properties of selected Text nodes
-func (gv *VectorView) SetTextProperties(tps map[string]string) {
+func (gv *Vector) SetTextProperties(tps map[string]string) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("SetTextProperties", "")
@@ -166,7 +166,7 @@ func (ts *TextStyle) TextProperties() map[string]string {
 }
 
 // SetTextNode sets the text of given Text node
-func (gv *VectorView) SetTextNode(sii svg.Node, txt string) bool {
+func (gv *Vector) SetTextNode(sii svg.Node, txt string) bool {
 	if sii.AsTree().HasChildren() {
 		for _, kid := range sii.AsTree().Children {
 			if gv.SetTextNode(kid.(svg.Node), txt) {
@@ -184,7 +184,7 @@ func (gv *VectorView) SetTextNode(sii svg.Node, txt string) bool {
 }
 
 // SetText sets the text of selected Text node
-func (gv *VectorView) SetText(txt string) {
+func (gv *Vector) SetText(txt string) {
 	es := &gv.EditState
 	if len(es.Selected) != 1 { // only if exactly one selected
 		return
@@ -204,21 +204,21 @@ func (gv *VectorView) SetText(txt string) {
 ///////////////////////////////////////////////////////////////////////
 // Toolbar
 
-func (gv *VectorView) TextToolbar() *core.Toolbar {
+func (gv *Vector) TextToolbar() *core.Toolbar {
 	tbs := gv.ModalToolbarStack()
 	tb := tbs.ChildByName("text-tb", 2).(*core.Toolbar)
 	return tb
 }
 
 // ConfigTextToolbar configures the text modal toolbar
-func (gv *VectorView) ConfigTextToolbar() {
+func (gv *Vector) ConfigTextToolbar() {
 	tb := gv.TextToolbar()
 	if tb.HasChildren() {
 		return
 	}
 	es := &gv.EditState
 	ts := &es.Text
-	ts.VectorView = gv
+	ts.Vector = gv
 
 	txt := core.NewTextField(tb)
 	txt.SetName("text")
@@ -255,7 +255,7 @@ func (gv *VectorView) ConfigTextToolbar() {
 }
 
 // UpdateTextToolbar updates the select toolbar based on current selection
-func (gv *VectorView) UpdateTextToolbar() {
+func (gv *Vector) UpdateTextToolbar() {
 	tb := gv.TextToolbar()
 	es := &gv.EditState
 	ts := &es.Text

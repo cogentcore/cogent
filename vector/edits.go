@@ -105,19 +105,19 @@ type EditState struct {
 	// current path command indexes within PathNodes -- where the commands start
 	PathCommands []int
 
-	// the parent vectorview
-	VectorView *VectorView `copier:"-" json:"-" xml:"-" view:"-"`
+	// the parent vector
+	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
-func (es *EditState) Init(vv *VectorView) {
+func (es *EditState) Init(vv *Vector) {
 	es.Action = ""
 	es.ActData = ""
 	es.CurLayer = ""
 	es.Gradients = nil
 	es.Undos.Reset()
 	es.Changed = false
-	es.VectorView = vv
+	es.Vector = vv
 }
 
 // InAction reports whether we currently doing an action
@@ -254,7 +254,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
 	ss := &SelectedState{Order: idx}
-	itm.WriteGeom(es.VectorView.SSVG(), &ss.InitGeom)
+	itm.WriteGeom(es.Vector.SSVG(), &ss.InitGeom)
 	if es.Selected == nil {
 		es.NewSelected()
 	}
@@ -407,7 +407,7 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	es.DragSelectCurrentBBox = es.SelectBBox
 	es.DragSelectEffectiveBBox = es.SelectBBox
 	for itm, ss := range es.Selected {
-		itm.WriteGeom(es.VectorView.SSVG(), &ss.InitGeom)
+		itm.WriteGeom(es.Vector.SSVG(), &ss.InitGeom)
 	}
 }
 

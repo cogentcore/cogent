@@ -18,14 +18,14 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (gv *VectorView) SelectToolbar() *core.Toolbar {
+func (gv *Vector) SelectToolbar() *core.Toolbar {
 	tbs := gv.ModalToolbarStack()
 	tb := tbs.ChildByName("select-tb", 0).(*core.Toolbar)
 	return tb
 }
 
 // ConfigSelectToolbar configures the selection modal toolbar (default toolbar)
-func (gv *VectorView) ConfigSelectToolbar() {
+func (gv *Vector) ConfigSelectToolbar() {
 	tb := gv.SelectToolbar()
 	if tb.HasChildren() {
 		return
@@ -98,7 +98,7 @@ func (gv *VectorView) ConfigSelectToolbar() {
 
 // NewSelectFuncButton returns a new func button that is only enabled when
 // there is an item selected.
-func (gv *VectorView) NewSelectFuncButton(parent tree.Node, fun any) *core.FuncButton {
+func (gv *Vector) NewSelectFuncButton(parent tree.Node, fun any) *core.FuncButton {
 	bt := core.NewFuncButton(parent, fun)
 	bt.FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
@@ -107,7 +107,7 @@ func (gv *VectorView) NewSelectFuncButton(parent tree.Node, fun any) *core.FuncB
 }
 
 // UpdateSelectToolbar updates the select toolbar based on current selection
-func (gv *VectorView) UpdateSelectToolbar() {
+func (gv *Vector) UpdateSelectToolbar() {
 	tb := gv.SelectToolbar()
 	tb.NeedsRender()
 	// tb.Update()
@@ -125,8 +125,8 @@ func (gv *VectorView) UpdateSelectToolbar() {
 // UpdateSelect should be called whenever selection changes
 func (sv *SVG) UpdateSelect() {
 	es := sv.EditState()
-	sv.VectorView.UpdateTabs()
-	sv.VectorView.UpdateSelectToolbar()
+	sv.Vector.UpdateTabs()
+	sv.Vector.UpdateSelectToolbar()
 	if es.Tool == NodeTool {
 		sv.UpdateNodeSprites()
 		sv.RemoveSelSprites()
@@ -241,7 +241,7 @@ func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
 
 /*
 func (sv *SVG) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
-	win := sv.VectorView.ParentWindow()
+	win := sv.Vector.ParentWindow()
 	es := sv.EditState()
 	es.SelNoDrag = false
 	switch et {
@@ -305,7 +305,7 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 //   Actions
 
 // SelectGroup groups items together
-func (gv *VectorView) SelectGroup() { //types:add
+func (gv *Vector) SelectGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -334,7 +334,7 @@ func (gv *VectorView) SelectGroup() { //types:add
 }
 
 // SelectUnGroup ungroups items from each other
-func (gv *VectorView) SelectUnGroup() { //types:add
+func (gv *Vector) SelectUnGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -365,7 +365,7 @@ func (gv *VectorView) SelectUnGroup() { //types:add
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelectRotate(deg float32) {
+func (gv *Vector) SelectRotate(deg float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -388,7 +388,7 @@ func (gv *VectorView) SelectRotate(deg float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelectScale(scx, scy float32) {
+func (gv *Vector) SelectScale(scx, scy float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -411,27 +411,27 @@ func (gv *VectorView) SelectScale(scx, scy float32) {
 }
 
 // SelectRotateLeft rotates the selection 90 degrees counter-clockwise
-func (gv *VectorView) SelectRotateLeft() { //types:add
+func (gv *Vector) SelectRotateLeft() { //types:add
 	gv.SelectRotate(-90)
 }
 
 // SelectRotateRight rotates the selection 90 degrees clockwise
-func (gv *VectorView) SelectRotateRight() { //types:add
+func (gv *Vector) SelectRotateRight() { //types:add
 	gv.SelectRotate(90)
 }
 
 // SelectFlipHorizontal flips the selection horizontally
-func (gv *VectorView) SelectFlipHorizontal() { //types:add
+func (gv *Vector) SelectFlipHorizontal() { //types:add
 	gv.SelectScale(-1, 1)
 }
 
 // SelectFlipVertical flips the selection vertically
-func (gv *VectorView) SelectFlipVertical() { //types:add
+func (gv *Vector) SelectFlipVertical() { //types:add
 	gv.SelectScale(1, -1)
 }
 
 // SelectRaiseTop raises the selection to the top of the layer
-func (gv *VectorView) SelectRaiseTop() { //types:add
+func (gv *Vector) SelectRaiseTop() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -454,7 +454,7 @@ func (gv *VectorView) SelectRaiseTop() { //types:add
 }
 
 // SelectRaise raises the selection by one level in the layer
-func (gv *VectorView) SelectRaise() { //types:add
+func (gv *Vector) SelectRaise() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -479,7 +479,7 @@ func (gv *VectorView) SelectRaise() { //types:add
 }
 
 // SelectLowerBottom lowers the selection to the bottom of the layer
-func (gv *VectorView) SelectLowerBottom() { //types:add
+func (gv *Vector) SelectLowerBottom() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -502,7 +502,7 @@ func (gv *VectorView) SelectLowerBottom() { //types:add
 }
 
 // SelectLower lowers the selection by one level in the layer
-func (gv *VectorView) SelectLower() { //types:add
+func (gv *Vector) SelectLower() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -526,7 +526,7 @@ func (gv *VectorView) SelectLower() { //types:add
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelectSetXPos(xp float32) {
+func (gv *Vector) SelectSetXPos(xp float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -537,7 +537,7 @@ func (gv *VectorView) SelectSetXPos(xp float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelectSetYPos(yp float32) {
+func (gv *Vector) SelectSetYPos(yp float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -548,7 +548,7 @@ func (gv *VectorView) SelectSetYPos(yp float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelectSetWidth(wd float32) {
+func (gv *Vector) SelectSetWidth(wd float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -559,7 +559,7 @@ func (gv *VectorView) SelectSetWidth(wd float32) {
 	gv.ChangeMade()
 }
 
-func (gv *VectorView) SelectSetHeight(ht float32) {
+func (gv *Vector) SelectSetHeight(ht float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
