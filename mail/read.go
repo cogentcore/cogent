@@ -26,8 +26,8 @@ import (
 // ReadMessage represents the data necessary to display a message
 // for the user to read.
 type ReadMessage struct {
-	From    []*mail.Address `view:"inline"`
-	To      []*mail.Address `view:"inline"`
+	From    []*mail.Address `display:"inline"`
+	To      []*mail.Address `display:"inline"`
 	Subject string
 	Date    time.Time
 }

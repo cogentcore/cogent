@@ -34,7 +34,7 @@ type PaintView struct {
 	FillStops string
 
 	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
+	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 func (pv *PaintView) Init() {

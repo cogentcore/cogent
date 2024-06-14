@@ -24,7 +24,7 @@ type AlignView struct {
 	Anchor AlignAnchors
 
 	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
+	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 func (av *AlignView) Init() {

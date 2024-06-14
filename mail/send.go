@@ -21,10 +21,10 @@ import (
 
 // SendMessage represents the data necessary for the user to send a message.
 type SendMessage struct {
-	From    []*mail.Address `view:"inline"`
-	To      []*mail.Address `view:"inline"`
+	From    []*mail.Address `display:"inline"`
+	To      []*mail.Address `display:"inline"`
 	Subject string
-	Body    string `view:"-"`
+	Body    string `display:"-"`
 }
 
 // Compose pulls up a dialog to send a new message

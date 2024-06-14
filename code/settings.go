@@ -202,7 +202,7 @@ type ProjectSettings struct { //types:add
 	Files FileSettings
 
 	// editor settings
-	Editor core.EditorSettings `view:"inline"`
+	Editor core.EditorSettings `display:"inline"`
 
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
@@ -246,19 +246,19 @@ type ProjectSettings struct { //types:add
 	Debug cdebug.Params
 
 	// saved find params
-	Find FindParams `view:"-"`
+	Find FindParams `display:"-"`
 
 	// saved structure params
-	Symbols SymbolsParams `view:"-"`
+	Symbols SymbolsParams `display:"-"`
 
 	// directory properties
-	Dirs filetree.DirFlagMap `view:"-"`
+	Dirs filetree.DirFlagMap `display:"-"`
 
 	// last register used
-	Register RegisterName `view:"-"`
+	Register RegisterName `display:"-"`
 
 	// current splitter splits
-	Splits []float32 `view:"-"`
+	Splits []float32 `display:"-"`
 }
 
 func (se *ProjectSettings) Update() {

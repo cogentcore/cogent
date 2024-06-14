@@ -121,7 +121,7 @@ type Location struct {
 	Line int
 
 	// full path to file
-	FPath string `view:"-" table:"-"`
+	FPath string `display:"-" table:"-"`
 
 	// the name of the function
 	Func string `width:"80"`
@@ -177,7 +177,7 @@ type Break struct {
 	Line int `edit:"-"`
 
 	// full path to file
-	FPath string `edit:"-" view:"-" table:"-"`
+	FPath string `edit:"-" display:"-" table:"-"`
 
 	// the name of the function
 	Func string `edit:"-" width:"80"`

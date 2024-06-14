@@ -64,7 +64,7 @@ type Preferences struct { //types:add
 	EnvVars map[string]string
 
 	// flag that is set by Form by virtue of changeflag tag, whenever an edit is made.  Used to drive save menus etc.
-	Changed bool `view:"-" changeflag:"+" json:"-" xml:"-"`
+	Changed bool `display:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
 func (pf *Preferences) Defaults() {

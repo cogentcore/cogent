@@ -30,7 +30,7 @@ type SVG struct {
 	core.SVG
 
 	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
 	// view translation offset (from dragging)
 	Trans math32.Vector2 `set:"-"`
@@ -45,19 +45,19 @@ type SVG struct {
 	VectorEff float32 `edit:"-" set:"-"`
 
 	// background pixels, includes page outline and grid
-	BgPixels *image.RGBA `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	BgPixels *image.RGBA `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
 	// render state for background rendering
-	// BgRender girl.State `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	// BgRender girl.State `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
 	// bg rendered translation
-	bgTrans math32.Vector2 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	bgTrans math32.Vector2 `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
 	// bg rendered scale
-	bgScale float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	bgScale float32 `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
 	// bg rendered grid
-	bgVectorEff float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
+	bgVectorEff float32 `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 }
 
 func (sv *SVG) Init() {

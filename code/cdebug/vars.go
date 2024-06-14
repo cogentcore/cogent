@@ -26,13 +26,13 @@ type Variable struct {
 	TypeStr string `edit:"-"`
 
 	// type of variable as a string expression (full length)
-	FullTypeStr string `view:"-" edit:"-"`
+	FullTypeStr string `display:"-" edit:"-"`
 
 	// kind of element
 	Kind syms.Kinds `edit:"-"`
 
 	// own elemental value of variable (blank for composite types)
-	ElementValue string `edit:"-" view:"-"`
+	ElementValue string `edit:"-" display:"-"`
 
 	// length of variable (slices, maps, strings etc)
 	Len int64 `edit:"-"`
@@ -59,7 +59,7 @@ type Variable struct {
 	MapVar map[string]*Variable `table:"-"`
 
 	// our debugger -- for getting further variable data
-	Dbg GiDebug `view:"-"`
+	Dbg GiDebug `display:"-"`
 }
 
 // SortVars sorts vars by name
@@ -214,10 +214,10 @@ type VarParams struct {
 type Params struct { //types:add
 
 	// mode for running the debugger
-	Mode Modes `xml:"-" toml:"-" json:"-" view:"-"`
+	Mode Modes `xml:"-" toml:"-" json:"-" display:"-"`
 
 	// process id number to attach to, for Attach mode
-	PID uint64 `xml:"-" toml:"-" json:"-" view:"-"`
+	PID uint64 `xml:"-" toml:"-" json:"-" display:"-"`
 
 	// optional extra args to pass to the debugger.
 	// Use -- double-dash and then add args to pass args to the executable
@@ -226,7 +226,7 @@ type Params struct { //types:add
 	Args []string
 
 	// status function for debugger updating status
-	StatFunc func(stat Status) `xml:"-" toml:"-" json:"-" view:"-"`
+	StatFunc func(stat Status) `xml:"-" toml:"-" json:"-" display:"-"`
 
 	// parameters for level of detail on overall list of variables
 	VarList VarParams

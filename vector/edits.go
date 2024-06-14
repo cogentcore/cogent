@@ -46,13 +46,13 @@ type EditState struct {
 	Undos undo.Stack
 
 	// contents have changed
-	Changed bool `view:"inactive"`
+	Changed bool `display:"inactive"`
 
 	// action mutex, protecting start / end of actions
-	ActMu sync.Mutex `copier:"-" json:"-" xml:"-" view:"-"`
+	ActMu sync.Mutex `copier:"-" json:"-" xml:"-" display:"-"`
 
 	// selected item(s)
-	Selected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" view:"-"`
+	Selected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" display:"-"`
 
 	// selection just happened on press, and no drag happened in between
 	SelectNoDrag bool
@@ -76,7 +76,7 @@ type EditState struct {
 	LastSelectPos image.Point
 
 	// recently selected item(s) -- within the same selection position
-	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" view:"-"`
+	RecentlySelected map[svg.Node]*SelectedState `copier:"-" json:"-" xml:"-" display:"-"`
 
 	// bbox at start of dragging
 	DragSelectStartBBox math32.Box2
@@ -106,7 +106,7 @@ type EditState struct {
 	PathCommands []int
 
 	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
+	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
@@ -453,7 +453,7 @@ type Gradient struct {
 	Id string `edit:"-" width:"6"`
 
 	// full name of gradient as SVG element
-	Name string `view:"-"`
+	Name string `display:"-"`
 
 	// gradient stops
 	Stops []*GradStop

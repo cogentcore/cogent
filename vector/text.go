@@ -45,10 +45,10 @@ type TextStyle struct {
 	Align styles.Aligns `xml:"text-align" inherit:"true"`
 
 	// font value view for font toolbar
-	FontButton core.FontButton `view:"-"`
+	FontButton core.FontButton `display:"-"`
 
 	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
+	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 func (ts *TextStyle) Update() {

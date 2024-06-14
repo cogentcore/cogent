@@ -19,7 +19,7 @@ import (
 )
 
 type Task struct { //types:add
-	*process.Process `view:"-"`
+	*process.Process `display:"-"`
 
 	// The name of this task
 	Name string `grow:"1"`

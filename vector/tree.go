@@ -17,7 +17,7 @@ type Tree struct {
 	core.Tree
 
 	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" view:"-"`
+	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 // SelectNodeInTree selects given node in Tree
