@@ -101,12 +101,13 @@ func (vv *Vector) Init() {
 				w.SetType(core.FunctionalTabs)
 			})
 		})
+	})
 
-		core.AddChildAt(w, "statusbar", func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Grow.Set(1, 0)
-			})
+	core.AddChildAt(vv, "status-bar", func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Grow.Set(1, 0)
 		})
+		core.AddChildAt(w, "status-text", func(w *core.Text) {})
 	})
 
 	// tv.TreeSig.Connect(vv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -148,7 +149,6 @@ func (vv *Vector) Init() {
 	// 	// 		stv.SetStruct(tvn.SrcNode)
 	// })
 
-	vv.ConfigStatusBar()
 	vv.ConfigModalToolbar()
 	vv.ConfigTools()
 	vv.ConfigTabs()
@@ -425,9 +425,9 @@ func (vv *Vector) Tabs() *core.Tabs {
 	return vv.Splits().ChildByName("tabs", 2).(*core.Tabs)
 }
 
-// StatusBar returns the statusbar widget
+// StatusBar returns the status bar widget
 func (vv *Vector) StatusBar() *core.Frame {
-	return vv.ChildByName("statusbar", 4).(*core.Frame)
+	return vv.ChildByName("status-bar", 4).(*core.Frame)
 }
 
 // StatusText returns the status bar text widget
@@ -513,15 +513,6 @@ func (vv *Vector) ConfigModalToolbar() {
 	vv.ConfigSelectToolbar()
 	vv.ConfigNodeToolbar()
 	vv.ConfigTextToolbar()
-}
-
-// ConfigStatusBar configures statusbar with text
-func (vv *Vector) ConfigStatusBar() {
-	sb := vv.StatusBar()
-	if sb == nil || sb.HasChildren() {
-		return
-	}
-	core.NewText(sb).SetName("sb-text")
 }
 
 // SetStatus updates the status bar text with the given message, along with other status info
