@@ -621,7 +621,7 @@ func (dv *DebugPanel) InitState(ds *cdebug.State) {
 
 // UpdateFromState updates the view from current debugger state
 func (dv *DebugPanel) UpdateFromState() {
-	if dv == nil || dv.This == nil || dv.Dbg == nil {
+	if dv == nil || dv.This == nil || dv.Dbg == nil || !dv.HasChildren() {
 		return
 	}
 
