@@ -108,7 +108,7 @@ func (cv *Code) Spell() { //types:add
 		return
 	}
 
-	sv := tv.RecycleTabWidget("Spell", true, SpellViewType).(*SpellView)
+	sv := tv.RecycleTabWidget("Spell", true, SpellPanelType).(*SpellPanel)
 	sv.Config(cv, txv)
 	sv.Update()
 	cv.FocusOnPanel(TabsIndex)

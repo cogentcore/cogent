@@ -137,54 +137,54 @@ var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileSettings
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.ProjectSettings", IDName: "project-settings", Doc: "ProjectSettings are the settings for saving for a project. This IS the project file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Methods: []types.Method{{Name: "Open", Doc: "Open open from file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}, {Name: "Save", Doc: "Save save to file", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Args: []string{"filename"}, Returns: []string{"error"}}}, Fields: []types.Field{{Name: "Files", Doc: "file picker settings"}, {Name: "Editor", Doc: "editor settings"}, {Name: "SplitName", Doc: "current named-split config in use for configuring the splitters"}, {Name: "MainLang", Doc: "the language associated with the most frequently encountered file\nextension in the file tree -- can be manually set here as well"}, {Name: "VersionControl", Doc: "the type of version control system used in this project (git, svn, etc).\nfilters commands available"}, {Name: "ProjectFilename", Doc: "current project filename for saving / loading specific Code\nconfiguration information in a .code file (optional)"}, {Name: "ProjectRoot", Doc: "root directory for the project. all projects must be organized within\na top-level root directory, with all the files therein constituting\nthe scope of the project. By default it is the path for ProjectFilename"}, {Name: "GoMod", Doc: "if true, use Go modules, otherwise use GOPATH -- this sets your effective GO111MODULE environment variable accordingly, dynamically -- updated by toolbar checkbox, dynamically"}, {Name: "BuildCmds", Doc: "command(s) to run for main Build button"}, {Name: "BuildDir", Doc: "build directory for main Build button -- set this to the directory where you want to build the main target for this project -- avail as {BuildDir} in commands"}, {Name: "BuildTarg", Doc: "build target for main Build button, if relevant for your  BuildCmds"}, {Name: "RunExec", Doc: "executable to run for this project via main Run button -- called by standard Run Project command"}, {Name: "RunCmds", Doc: "command(s) to run for main Run button (typically Run Project)"}, {Name: "Debug", Doc: "custom debugger parameters for this project"}, {Name: "Find", Doc: "saved find params"}, {Name: "Symbols", Doc: "saved structure params"}, {Name: "Dirs", Doc: "directory properties"}, {Name: "Register", Doc: "last register used"}, {Name: "Splits", Doc: "current splitter splits"}}})
 
-// SpellViewType is the [types.Type] for [SpellView]
-var SpellViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SpellView", IDName: "spell-view", Doc: "SpellView is a widget that displays results of spell check", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIndex", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellView{}})
+// SpellPanelType is the [types.Type] for [SpellPanel]
+var SpellPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SpellPanel", IDName: "spell-panel", Doc: "SpellPanel is a widget that displays results of a spell check.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "Text", Doc: "texteditor that we're spell-checking"}, {Name: "Errs", Doc: "current spelling errors"}, {Name: "CurLn", Doc: "current line in text we're on"}, {Name: "CurIndex", Doc: "current index in Errs we're on"}, {Name: "UnkLex", Doc: "current unknown lex token"}, {Name: "UnkWord", Doc: "current unknown word"}, {Name: "Suggest", Doc: "a list of suggestions from spell checker"}, {Name: "LastAction", Doc: "last user action (ignore, change, learn)"}}, Instance: &SpellPanel{}})
 
-// NewSpellView returns a new [SpellView] with the given optional parent:
-// SpellView is a widget that displays results of spell check
-func NewSpellView(parent ...tree.Node) *SpellView { return tree.New[*SpellView](parent...) }
+// NewSpellPanel returns a new [SpellPanel] with the given optional parent:
+// SpellPanel is a widget that displays results of a spell check.
+func NewSpellPanel(parent ...tree.Node) *SpellPanel { return tree.New[*SpellPanel](parent...) }
 
-// NodeType returns the [*types.Type] of [SpellView]
-func (t *SpellView) NodeType() *types.Type { return SpellViewType }
+// NodeType returns the [*types.Type] of [SpellPanel]
+func (t *SpellPanel) NodeType() *types.Type { return SpellPanelType }
 
-// New returns a new [*SpellView] value
-func (t *SpellView) New() tree.Node { return &SpellView{} }
+// New returns a new [*SpellPanel] value
+func (t *SpellPanel) New() tree.Node { return &SpellPanel{} }
 
-// SetCode sets the [SpellView.Code]:
+// SetCode sets the [SpellPanel.Code]:
 // parent code project
-func (t *SpellView) SetCode(v *Code) *SpellView { t.Code = v; return t }
+func (t *SpellPanel) SetCode(v *Code) *SpellPanel { t.Code = v; return t }
 
-// SetText sets the [SpellView.Text]:
+// SetText sets the [SpellPanel.Text]:
 // texteditor that we're spell-checking
-func (t *SpellView) SetText(v *TextEditor) *SpellView { t.Text = v; return t }
+func (t *SpellPanel) SetText(v *TextEditor) *SpellPanel { t.Text = v; return t }
 
-// SetErrs sets the [SpellView.Errs]:
+// SetErrs sets the [SpellPanel.Errs]:
 // current spelling errors
-func (t *SpellView) SetErrs(v lexer.Line) *SpellView { t.Errs = v; return t }
+func (t *SpellPanel) SetErrs(v lexer.Line) *SpellPanel { t.Errs = v; return t }
 
-// SetCurLn sets the [SpellView.CurLn]:
+// SetCurLn sets the [SpellPanel.CurLn]:
 // current line in text we're on
-func (t *SpellView) SetCurLn(v int) *SpellView { t.CurLn = v; return t }
+func (t *SpellPanel) SetCurLn(v int) *SpellPanel { t.CurLn = v; return t }
 
-// SetCurIndex sets the [SpellView.CurIndex]:
+// SetCurIndex sets the [SpellPanel.CurIndex]:
 // current index in Errs we're on
-func (t *SpellView) SetCurIndex(v int) *SpellView { t.CurIndex = v; return t }
+func (t *SpellPanel) SetCurIndex(v int) *SpellPanel { t.CurIndex = v; return t }
 
-// SetUnkLex sets the [SpellView.UnkLex]:
+// SetUnkLex sets the [SpellPanel.UnkLex]:
 // current unknown lex token
-func (t *SpellView) SetUnkLex(v lexer.Lex) *SpellView { t.UnkLex = v; return t }
+func (t *SpellPanel) SetUnkLex(v lexer.Lex) *SpellPanel { t.UnkLex = v; return t }
 
-// SetUnkWord sets the [SpellView.UnkWord]:
+// SetUnkWord sets the [SpellPanel.UnkWord]:
 // current unknown word
-func (t *SpellView) SetUnkWord(v string) *SpellView { t.UnkWord = v; return t }
+func (t *SpellPanel) SetUnkWord(v string) *SpellPanel { t.UnkWord = v; return t }
 
-// SetSuggest sets the [SpellView.Suggest]:
+// SetSuggest sets the [SpellPanel.Suggest]:
 // a list of suggestions from spell checker
-func (t *SpellView) SetSuggest(v ...string) *SpellView { t.Suggest = v; return t }
+func (t *SpellPanel) SetSuggest(v ...string) *SpellPanel { t.Suggest = v; return t }
 
-// SetLastAction sets the [SpellView.LastAction]:
+// SetLastAction sets the [SpellPanel.LastAction]:
 // last user action (ignore, change, learn)
-func (t *SpellView) SetLastAction(v *core.Button) *SpellView { t.LastAction = v; return t }
+func (t *SpellPanel) SetLastAction(v *core.Button) *SpellPanel { t.LastAction = v; return t }
 
 // SymbolsViewType is the [types.Type] for [SymbolsView]
 var SymbolsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})

@@ -17,8 +17,8 @@ import (
 	"cogentcore.org/core/core"
 )
 
-// SpellView is a widget that displays results of spell check
-type SpellView struct {
+// SpellPanel is a widget that displays results of a spell check.
+type SpellPanel struct {
 	core.Frame
 
 	// parent code project
@@ -49,7 +49,7 @@ type SpellView struct {
 	LastAction *core.Button
 }
 
-func (sv *SpellView) Init() {
+func (sv *SpellPanel) Init() {
 	sv.Frame.Init()
 	sv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -157,7 +157,7 @@ func (sv *SpellView) Init() {
 	})
 }
 
-func (sv *SpellView) Config(cv *Code, atv *TextEditor) { // TODO(config): better name?
+func (sv *SpellPanel) Config(cv *Code, atv *TextEditor) { // TODO(config): better name?
 	sv.Code = cv
 	sv.Text = atv
 	sv.CurLn = 0
@@ -166,37 +166,37 @@ func (sv *SpellView) Config(cv *Code, atv *TextEditor) { // TODO(config): better
 }
 
 // SpellBar returns the spell toolbar
-func (sv *SpellView) SpellBar() *core.Toolbar {
+func (sv *SpellPanel) SpellBar() *core.Toolbar {
 	return sv.ChildByName("spellbar", 0).(*core.Toolbar)
 }
 
 // UnknownBar returns the toolbar that displays the unknown word
-func (sv *SpellView) UnknownBar() *core.Toolbar {
+func (sv *SpellPanel) UnknownBar() *core.Toolbar {
 	return sv.ChildByName("unknownbar", 0).(*core.Toolbar)
 }
 
 // ChangeBar returns the suggest toolbar
-func (sv *SpellView) ChangeBar() *core.Toolbar {
+func (sv *SpellPanel) ChangeBar() *core.Toolbar {
 	return sv.ChildByName("changebar", 0).(*core.Toolbar)
 }
 
 // UnknownText returns the unknown word textfield from toolbar
-func (sv *SpellView) UnknownText() *core.TextField {
+func (sv *SpellPanel) UnknownText() *core.TextField {
 	return sv.UnknownBar().ChildByName("unknown-str", 1).(*core.TextField)
 }
 
 // ChangeText returns the unknown word textfield from toolbar
-func (sv *SpellView) ChangeText() *core.TextField {
+func (sv *SpellPanel) ChangeText() *core.TextField {
 	return sv.ChangeBar().ChildByName("change-str", 1).(*core.TextField)
 }
 
 // SuggestView returns the view for the list of suggestions
-func (sv *SpellView) SuggestView() *core.List {
+func (sv *SpellPanel) SuggestView() *core.List {
 	return sv.ChildByName("suggest", 1).(*core.List)
 }
 
 // CheckNext will find the next misspelled/unknown word and get suggestions for replacing it
-func (sv *SpellView) CheckNext() {
+func (sv *SpellPanel) CheckNext() {
 	tv := sv.Text
 	if tv == nil || tv.Buffer == nil {
 		return
@@ -266,18 +266,18 @@ func (sv *SpellView) CheckNext() {
 }
 
 // UnkStartPos returns the start position of the current unknown word
-func (sv *SpellView) UnkStartPos() lexer.Pos {
+func (sv *SpellPanel) UnkStartPos() lexer.Pos {
 	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
 	return pos
 }
 
 // UnkEndPos returns the end position of the current unknown word
-func (sv *SpellView) UnkEndPos() lexer.Pos {
+func (sv *SpellPanel) UnkEndPos() lexer.Pos {
 	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
 	return pos
 }
 
-func (sv *SpellView) Change() {
+func (sv *SpellPanel) Change() {
 	tv := sv.Text
 	if tv == nil || tv.Buffer == nil {
 		return
@@ -295,13 +295,13 @@ func (sv *SpellView) Change() {
 }
 
 // AcceptSuggestion replaces the misspelled word with the word in the ChangeText field
-func (sv *SpellView) AcceptSuggestion(s string) {
+func (sv *SpellPanel) AcceptSuggestion(s string) {
 	ct := sv.ChangeText()
 	ct.SetText(s)
 	sv.Change()
 }
 
-func (sv *SpellView) Destroy() {
+func (sv *SpellPanel) Destroy() {
 	tv := sv.Text
 	if tv == nil || tv.Buffer == nil || tv.This == nil {
 		return
