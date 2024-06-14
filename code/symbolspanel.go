@@ -28,8 +28,8 @@ type SymbolsParams struct {
 	Scope SymScopes
 }
 
-// SymbolsView is a widget that displays results of a file or package parse
-type SymbolsView struct {
+// SymbolsPanel is a widget that displays results of a file or package parse of symbols.
+type SymbolsPanel struct {
 	core.Frame
 
 	// parent code project
@@ -46,11 +46,11 @@ type SymbolsView struct {
 }
 
 // Params returns the symbols params
-func (sv *SymbolsView) Params() *SymbolsParams {
+func (sv *SymbolsPanel) Params() *SymbolsParams {
 	return &sv.Code.Settings.Symbols
 }
 
-func (sv *SymbolsView) Init() {
+func (sv *SymbolsPanel) Init() {
 	sv.Frame.Init()
 	sv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -89,12 +89,12 @@ func (sv *SymbolsView) Init() {
 	})
 }
 
-func (sv *SymbolsView) Config(cv *Code, sp SymbolsParams) { // TODO(config): better name?
+func (sv *SymbolsPanel) Config(cv *Code, sp SymbolsParams) { // TODO(config): better name?
 	sv.Code = cv
 	sv.SymParams = sp
 }
 
-func (sv *SymbolsView) UpdateSymbols() {
+func (sv *SymbolsPanel) UpdateSymbols() {
 	scope := sv.SymParams.Scope
 	tv := sv.FindPath("sym-frame/syms").(*SymTree)
 	if scope == SymScopePackage {
@@ -107,27 +107,27 @@ func (sv *SymbolsView) UpdateSymbols() {
 }
 
 // Toolbar returns the symbols toolbar
-func (sv *SymbolsView) Toolbar() *core.Toolbar {
+func (sv *SymbolsPanel) Toolbar() *core.Toolbar {
 	return sv.ChildByName("sym-toolbar", 0).(*core.Toolbar)
 }
 
 // FrameWidget returns the frame widget.
-func (sv *SymbolsView) FrameWidget() *core.Frame {
+func (sv *SymbolsPanel) FrameWidget() *core.Frame {
 	return sv.ChildByName("sym-frame", 0).(*core.Frame)
 }
 
 // ScopeChooser returns the scope Chooser
-func (sv *SymbolsView) ScopeChooser() *core.Chooser {
+func (sv *SymbolsPanel) ScopeChooser() *core.Chooser {
 	return sv.Toolbar().ChildByName("scope-chooser", 5).(*core.Chooser)
 }
 
 // SearchText returns the unknown word textfield from toolbar
-func (sv *SymbolsView) SearchText() *core.TextField {
+func (sv *SymbolsPanel) SearchText() *core.TextField {
 	return sv.Toolbar().ChildByName("search-str", 1).(*core.TextField)
 }
 
 // makeToolbar adds toolbar.
-func (sv *SymbolsView) makeToolbar(p *core.Plan) {
+func (sv *SymbolsPanel) makeToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Button) {
 		w.SetText("Refresh").SetIcon(icons.Update).
 			SetTooltip("refresh symbols for current file and scope").
@@ -168,7 +168,7 @@ func (sv *SymbolsView) makeToolbar(p *core.Plan) {
 }
 
 // RefreshAction loads symbols for current file and scope
-func (sv *SymbolsView) RefreshAction() {
+func (sv *SymbolsPanel) RefreshAction() {
 	sv.UpdateSymbols()
 	sv.SearchText().SetFocusEvent()
 }
@@ -195,7 +195,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 }
 
 // OpenPackage opens package-level symbols for current active texteditor
-func (sv *SymbolsView) OpenPackage() {
+func (sv *SymbolsPanel) OpenPackage() {
 	cv := sv.Code
 	tv := cv.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {
@@ -211,7 +211,7 @@ func (sv *SymbolsView) OpenPackage() {
 }
 
 // OpenFile opens file-level symbols for current active texteditor
-func (sv *SymbolsView) OpenFile() {
+func (sv *SymbolsPanel) OpenFile() {
 	cv := sv.Code
 	tv := cv.ActiveTextEditor()
 	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Hi.UsingParse() {

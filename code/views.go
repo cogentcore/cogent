@@ -125,7 +125,7 @@ func (cv *Code) Symbols() { //types:add
 		return
 	}
 
-	sv := tv.RecycleTabWidget("Symbols", true, SymbolsViewType).(*SymbolsView)
+	sv := tv.RecycleTabWidget("Symbols", true, SymbolsPanelType).(*SymbolsPanel)
 	sv.Config(cv, cv.Settings.Symbols)
 	sv.Update()
 	cv.FocusOnPanel(TabsIndex)

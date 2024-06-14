@@ -186,34 +186,34 @@ func (t *SpellPanel) SetSuggest(v ...string) *SpellPanel { t.Suggest = v; return
 // last user action (ignore, change, learn)
 func (t *SpellPanel) SetLastAction(v *core.Button) *SpellPanel { t.LastAction = v; return t }
 
-// SymbolsViewType is the [types.Type] for [SymbolsView]
-var SymbolsViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymbolsView", IDName: "symbols-view", Doc: "SymbolsView is a widget that displays results of a file or package parse", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsView{}})
+// SymbolsPanelType is the [types.Type] for [SymbolsPanel]
+var SymbolsPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymbolsPanel", IDName: "symbols-panel", Doc: "SymbolsPanel is a widget that displays results of a file or package parse of symbols.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Code", Doc: "parent code project"}, {Name: "SymParams", Doc: "params for structure display"}, {Name: "Syms", Doc: "all the symbols for the file or package in a tree"}, {Name: "Match", Doc: "only show symbols that match this string"}}, Instance: &SymbolsPanel{}})
 
-// NewSymbolsView returns a new [SymbolsView] with the given optional parent:
-// SymbolsView is a widget that displays results of a file or package parse
-func NewSymbolsView(parent ...tree.Node) *SymbolsView { return tree.New[*SymbolsView](parent...) }
+// NewSymbolsPanel returns a new [SymbolsPanel] with the given optional parent:
+// SymbolsPanel is a widget that displays results of a file or package parse of symbols.
+func NewSymbolsPanel(parent ...tree.Node) *SymbolsPanel { return tree.New[*SymbolsPanel](parent...) }
 
-// NodeType returns the [*types.Type] of [SymbolsView]
-func (t *SymbolsView) NodeType() *types.Type { return SymbolsViewType }
+// NodeType returns the [*types.Type] of [SymbolsPanel]
+func (t *SymbolsPanel) NodeType() *types.Type { return SymbolsPanelType }
 
-// New returns a new [*SymbolsView] value
-func (t *SymbolsView) New() tree.Node { return &SymbolsView{} }
+// New returns a new [*SymbolsPanel] value
+func (t *SymbolsPanel) New() tree.Node { return &SymbolsPanel{} }
 
-// SetCode sets the [SymbolsView.Code]:
+// SetCode sets the [SymbolsPanel.Code]:
 // parent code project
-func (t *SymbolsView) SetCode(v *Code) *SymbolsView { t.Code = v; return t }
+func (t *SymbolsPanel) SetCode(v *Code) *SymbolsPanel { t.Code = v; return t }
 
-// SetSymParams sets the [SymbolsView.SymParams]:
+// SetSymParams sets the [SymbolsPanel.SymParams]:
 // params for structure display
-func (t *SymbolsView) SetSymParams(v SymbolsParams) *SymbolsView { t.SymParams = v; return t }
+func (t *SymbolsPanel) SetSymParams(v SymbolsParams) *SymbolsPanel { t.SymParams = v; return t }
 
-// SetSyms sets the [SymbolsView.Syms]:
+// SetSyms sets the [SymbolsPanel.Syms]:
 // all the symbols for the file or package in a tree
-func (t *SymbolsView) SetSyms(v *SymNode) *SymbolsView { t.Syms = v; return t }
+func (t *SymbolsPanel) SetSyms(v *SymNode) *SymbolsPanel { t.Syms = v; return t }
 
-// SetMatch sets the [SymbolsView.Match]:
+// SetMatch sets the [SymbolsPanel.Match]:
 // only show symbols that match this string
-func (t *SymbolsView) SetMatch(v string) *SymbolsView { t.Match = v; return t }
+func (t *SymbolsPanel) SetMatch(v string) *SymbolsPanel { t.Match = v; return t }
 
 // SymNodeType is the [types.Type] for [SymNode]
 var SymNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.SymNode", IDName: "sym-node", Doc: "SymNode represents a language symbol -- the name of the node is\nthe name of the symbol. Some symbols, e.g. type have children", Embeds: []types.Field{{Name: "NodeBase"}}, Fields: []types.Field{{Name: "Symbol", Doc: "the symbol"}}, Instance: &SymNode{}})
