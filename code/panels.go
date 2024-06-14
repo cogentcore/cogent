@@ -28,7 +28,7 @@ func (cv *Code) CurPanel() int {
 	sv := cv.Splits()
 	for i, ski := range sv.Children {
 		_, sk := core.AsWidget(ski)
-		if sk.StateIs(states.Focused) {
+		if sk.HasStateWithin(states.Focused) {
 			return i
 		}
 	}
