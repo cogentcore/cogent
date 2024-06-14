@@ -61,7 +61,7 @@ func (ed *TextEditor) WidgetTooltip(pos image.Point) (string, image.Point) {
 }
 
 // CurDebug returns the current debugger, true if it is present
-func (ed *TextEditor) CurDebug() (*DebugView, bool) {
+func (ed *TextEditor) CurDebug() (*DebugPanel, bool) {
 	if ed.Buffer == nil {
 		return nil, false
 	}

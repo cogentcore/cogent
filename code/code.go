@@ -99,7 +99,7 @@ type Code struct {
 	Settings ProjectSettings `set:"-"`
 
 	// current debug view
-	CurDbg *DebugView `set:"-"`
+	CurDbg *DebugPanel `set:"-"`
 
 	// first key in sequence if needs2 key pressed
 	KeySeq1 key.Chord `set:"-"`

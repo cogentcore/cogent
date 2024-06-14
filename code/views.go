@@ -141,7 +141,7 @@ func (cv *Code) Debug() { //types:add
 	cv.Settings.Debug.Mode = cdebug.Exec
 	exePath := string(cv.Settings.RunExec)
 	exe := filepath.Base(exePath)
-	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
+	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugPanelType).(*DebugPanel)
 	dv.Config(cv, fileinfo.Go, exePath)
 	cv.FocusOnPanel(TabsIndex)
 	dv.Update()
@@ -163,7 +163,7 @@ func (cv *Code) DebugTest() { //types:add
 	cv.Settings.Debug.Mode = cdebug.Test
 	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
-	dv := tv.RecycleTabWidget("Debug "+dir, true, DebugViewType).(*DebugView)
+	dv := tv.RecycleTabWidget("Debug "+dir, true, DebugPanelType).(*DebugPanel)
 	dv.Config(cv, fileinfo.Go, tstPath)
 	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
@@ -182,7 +182,7 @@ func (cv *Code) DebugAttach(pid uint64) { //types:add
 	cv.Settings.Debug.PID = pid
 	exePath := string(cv.Settings.RunExec)
 	exe := filepath.Base(exePath)
-	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugViewType).(*DebugView)
+	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugPanelType).(*DebugPanel)
 	dv.Config(cv, fileinfo.Go, exePath)
 	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
@@ -190,7 +190,7 @@ func (cv *Code) DebugAttach(pid uint64) { //types:add
 }
 
 // CurDebug returns the current debug view
-func (cv *Code) CurDebug() *DebugView {
+func (cv *Code) CurDebug() *DebugPanel {
 	return cv.CurDbg
 }
 

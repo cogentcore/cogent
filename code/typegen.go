@@ -49,33 +49,33 @@ func (t *Code) SetStatusMessage(v string) *Code { t.StatusMessage = v; return t 
 // list of open nodes, most recent first
 func (t *Code) SetOpenNodes(v OpenNodes) *Code { t.OpenNodes = v; return t }
 
-// DebugViewType is the [types.Type] for [DebugView]
-var DebugViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.DebugView", IDName: "debug-view", Doc: "DebugView is the debugger", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugView{}})
+// DebugPanelType is the [types.Type] for [DebugPanel]
+var DebugPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.DebugPanel", IDName: "debug-panel", Doc: "DebugPanel is the debugger panel.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Sup", Doc: "supported file type to determine debugger"}, {Name: "ExePath", Doc: "path to executable / dir to debug"}, {Name: "DbgTime", Doc: "time when dbg was last restarted"}, {Name: "Dbg", Doc: "the debugger"}, {Name: "State", Doc: "all relevant debug state info"}, {Name: "CurFileLoc", Doc: "current ShowFile location -- cleared before next one or run"}, {Name: "BBreaks", Doc: "backup breakpoints list -- to track deletes"}, {Name: "OutputBuffer", Doc: "output from the debugger"}, {Name: "Code", Doc: "parent code project"}}, Instance: &DebugPanel{}})
 
-// NewDebugView returns a new [DebugView] with the given optional parent:
-// DebugView is the debugger
-func NewDebugView(parent ...tree.Node) *DebugView { return tree.New[*DebugView](parent...) }
+// NewDebugPanel returns a new [DebugPanel] with the given optional parent:
+// DebugPanel is the debugger panel.
+func NewDebugPanel(parent ...tree.Node) *DebugPanel { return tree.New[*DebugPanel](parent...) }
 
-// NodeType returns the [*types.Type] of [DebugView]
-func (t *DebugView) NodeType() *types.Type { return DebugViewType }
+// NodeType returns the [*types.Type] of [DebugPanel]
+func (t *DebugPanel) NodeType() *types.Type { return DebugPanelType }
 
-// New returns a new [*DebugView] value
-func (t *DebugView) New() tree.Node { return &DebugView{} }
+// New returns a new [*DebugPanel] value
+func (t *DebugPanel) New() tree.Node { return &DebugPanel{} }
 
-// SetSup sets the [DebugView.Sup]:
+// SetSup sets the [DebugPanel.Sup]:
 // supported file type to determine debugger
-func (t *DebugView) SetSup(v fileinfo.Known) *DebugView { t.Sup = v; return t }
+func (t *DebugPanel) SetSup(v fileinfo.Known) *DebugPanel { t.Sup = v; return t }
 
-// SetExePath sets the [DebugView.ExePath]:
+// SetExePath sets the [DebugPanel.ExePath]:
 // path to executable / dir to debug
-func (t *DebugView) SetExePath(v string) *DebugView { t.ExePath = v; return t }
+func (t *DebugPanel) SetExePath(v string) *DebugPanel { t.ExePath = v; return t }
 
-// SetDbgTime sets the [DebugView.DbgTime]:
+// SetDbgTime sets the [DebugPanel.DbgTime]:
 // time when dbg was last restarted
-func (t *DebugView) SetDbgTime(v time.Time) *DebugView { t.DbgTime = v; return t }
+func (t *DebugPanel) SetDbgTime(v time.Time) *DebugPanel { t.DbgTime = v; return t }
 
 // VarViewType is the [types.Type] for [VarView]
-var VarViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugView"}}, Instance: &VarView{}})
+var VarViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.VarView", IDName: "var-view", Doc: "VarView shows a debug variable in an inspector-like framework,\nwith sub-variables in a tree.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Var", Doc: "variable being edited"}, {Name: "SelectVar"}, {Name: "FrameInfo", Doc: "frame info"}, {Name: "DbgView", Doc: "parent DebugPanel"}}, Instance: &VarView{}})
 
 // NewVarView returns a new [VarView] with the given optional parent:
 // VarView shows a debug variable in an inspector-like framework,
@@ -89,8 +89,8 @@ func (t *VarView) NodeType() *types.Type { return VarViewType }
 func (t *VarView) New() tree.Node { return &VarView{} }
 
 // SetDbgView sets the [VarView.DbgView]:
-// parent DebugView
-func (t *VarView) SetDbgView(v *DebugView) *VarView { t.DbgView = v; return t }
+// parent DebugPanel
+func (t *VarView) SetDbgView(v *DebugPanel) *VarView { t.DbgView = v; return t }
 
 // FileNodeType is the [types.Type] for [FileNode]
 var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.FileNode", IDName: "file-node", Doc: "FileNode is Code version of FileNode for FileTree", Methods: []types.Method{{Name: "ExecCmdFile", Doc: "ExecCmdFile pops up a menu to select a command appropriate for the given node,\nand shows output in MainTab with name of command", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "EditFiles", Doc: "EditFiles calls EditFile on selected files", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}, {Name: "SetRunExecs", Doc: "SetRunExecs sets executable as the RunExec executable that will be run with Run / Debug buttons", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Node"}}, Instance: &FileNode{}})

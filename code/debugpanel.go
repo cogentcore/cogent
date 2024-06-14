@@ -86,8 +86,8 @@ func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.B
 	return dbg, err
 }
 
-// DebugView is the debugger
-type DebugView struct {
+// DebugPanel is the debugger panel.
+type DebugPanel struct {
 	core.Frame
 
 	// supported file type to determine debugger
@@ -119,13 +119,13 @@ type DebugView struct {
 }
 
 // Config sets parameters that must be set for a new view
-func (dv *DebugView) Config(cv *Code, sup fileinfo.Known, exePath string) {
+func (dv *DebugPanel) Config(cv *Code, sup fileinfo.Known, exePath string) {
 	dv.Code = cv
 	dv.Sup = sup
 	dv.ExePath = exePath
 }
 
-func (dv *DebugView) Init() {
+func (dv *DebugPanel) Init() {
 	dv.Frame.Init()
 	dv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
@@ -140,7 +140,7 @@ func (dv *DebugView) Init() {
 	})
 }
 
-func (dv *DebugView) InitTabs() {
+func (dv *DebugPanel) InitTabs() {
 	w := dv.Tabs()
 	if w.NumTabs() > 0 {
 		return
@@ -259,13 +259,13 @@ func (dv *DebugView) InitTabs() {
 }
 
 // DbgIsActive means debugger is started.
-func (dv *DebugView) DbgIsActive() bool {
+func (dv *DebugPanel) DbgIsActive() bool {
 	return dv.Dbg != nil && dv.Dbg.IsActive()
 }
 
 // DbgIsAvail means the debugger is started AND process is not currently running --
 // it is available for command input.
-func (dv *DebugView) DbgIsAvail() bool {
+func (dv *DebugPanel) DbgIsAvail() bool {
 	if !dv.DbgIsActive() {
 		return false
 	}
@@ -277,7 +277,7 @@ func (dv *DebugView) DbgIsAvail() bool {
 
 // DbgCanStep means the debugger is started AND process is not currently running,
 // AND it is not already waiting for a next step
-func (dv *DebugView) DbgCanStep() bool {
+func (dv *DebugPanel) DbgCanStep() bool {
 	if !dv.DbgIsAvail() {
 		return false
 	}
@@ -287,7 +287,7 @@ func (dv *DebugView) DbgCanStep() bool {
 	return true
 }
 
-func (dv *DebugView) Destroy() {
+func (dv *DebugPanel) Destroy() {
 	dv.Detach()
 	dv.DeleteAllBreaks()
 	dv.DeleteCurPCInBuf()
@@ -296,7 +296,7 @@ func (dv *DebugView) Destroy() {
 }
 
 // Detach from debugger
-func (dv *DebugView) Detach() {
+func (dv *DebugPanel) Detach() {
 	killProc := true
 	if dv.State.Mode == cdebug.Attach {
 		killProc = false
@@ -311,7 +311,7 @@ func (dv *DebugView) Detach() {
 }
 
 // Start starts the debuger
-func (dv *DebugView) Start() {
+func (dv *DebugPanel) Start() {
 	if dv.Code == nil {
 		return
 	}
@@ -357,7 +357,7 @@ func (dv *DebugView) Start() {
 }
 
 // UpdateView updates current view of state
-func (dv *DebugView) UpdateView() {
+func (dv *DebugPanel) UpdateView() {
 	ds, err := dv.Dbg.GetState()
 	if err != nil {
 		return
@@ -367,7 +367,7 @@ func (dv *DebugView) UpdateView() {
 
 // Continue continues running from current point -- this MUST be called
 // in a separate goroutine!
-func (dv *DebugView) Continue() {
+func (dv *DebugPanel) Continue() {
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -396,7 +396,7 @@ func (dv *DebugView) Continue() {
 }
 
 // StepOver continues to the next source line, not entering function calls.
-func (dv *DebugView) StepOver() {
+func (dv *DebugPanel) StepOver() {
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -409,7 +409,7 @@ func (dv *DebugView) StepOver() {
 }
 
 // StepInto continues to the next source line, entering function calls.
-func (dv *DebugView) StepInto() {
+func (dv *DebugPanel) StepInto() {
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -422,7 +422,7 @@ func (dv *DebugView) StepInto() {
 }
 
 // StepOut continues to the return point of the current function
-func (dv *DebugView) StepOut() {
+func (dv *DebugPanel) StepOut() {
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -435,7 +435,7 @@ func (dv *DebugView) StepOut() {
 }
 
 // StepSingle steps a single cpu instruction.
-func (dv *DebugView) SingleStep() {
+func (dv *DebugPanel) SingleStep() {
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -448,7 +448,7 @@ func (dv *DebugView) SingleStep() {
 }
 
 // Stop stops a running process
-func (dv *DebugView) Stop() {
+func (dv *DebugPanel) Stop() {
 	// if !dv.DbgIsActive() || dv.DbgIsAvail() {
 	// 	return
 	// }
@@ -460,7 +460,7 @@ func (dv *DebugView) Stop() {
 }
 
 // SetBreaks sets the current breakpoints from State, call this prior to running
-func (dv *DebugView) SetBreaks() {
+func (dv *DebugPanel) SetBreaks() {
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -473,7 +473,7 @@ func (dv *DebugView) SetBreaks() {
 // AddBreak adds a breakpoint at given file path and line number.
 // note: all breakpoints are just set in our master list and
 // uploaded to the system right before starting running.
-func (dv *DebugView) AddBreak(fpath string, line int) {
+func (dv *DebugPanel) AddBreak(fpath string, line int) {
 	dv.State.AddBreak(fpath, line)
 	dv.BackupBreaks()
 	dv.ShowTab(DebugTabBreaks)
@@ -483,7 +483,7 @@ func (dv *DebugView) AddBreak(fpath string, line int) {
 // DeleteBreak deletes given breakpoint.  If debugger is not yet
 // activated then it just deletes from master list.
 // Note that breakpoints can be turned on and off directly using On flag.
-func (dv *DebugView) DeleteBreak(fpath string, line int) {
+func (dv *DebugPanel) DeleteBreak(fpath string, line int) {
 	if dv.This == nil {
 		return
 	}
@@ -494,7 +494,7 @@ func (dv *DebugView) DeleteBreak(fpath string, line int) {
 }
 
 // DeleteBreakImpl deletes given breakpoint with no other updates
-func (dv *DebugView) DeleteBreakImpl(fpath string, line int) {
+func (dv *DebugPanel) DeleteBreakImpl(fpath string, line int) {
 	if !dv.DbgIsAvail() {
 		dv.State.DeleteBreakByFile(fpath, line) // already doing this!
 		return
@@ -507,7 +507,7 @@ func (dv *DebugView) DeleteBreakImpl(fpath string, line int) {
 }
 
 // DeleteBreakIndex deletes break at given index in list of breaks
-func (dv *DebugView) DeleteBreakIndex(bidx int) {
+func (dv *DebugPanel) DeleteBreakIndex(bidx int) {
 	if bidx < 0 || bidx >= len(dv.BBreaks) {
 		return
 	}
@@ -523,7 +523,7 @@ func (dv *DebugView) DeleteBreakIndex(bidx int) {
 }
 
 // SyncBreaks synchronizes backup breaks with current breaks, after Breaks Changed
-func (dv *DebugView) SyncBreaks() {
+func (dv *DebugPanel) SyncBreaks() {
 	if len(dv.State.Breaks) == len(dv.BBreaks) {
 		return
 	}
@@ -539,7 +539,7 @@ func (dv *DebugView) SyncBreaks() {
 
 // DeleteBreakInBuf delete breakpoint in its TextBuf
 // line is 1-based line number
-func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
+func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
 	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
@@ -551,7 +551,7 @@ func (dv *DebugView) DeleteBreakInBuf(fpath string, line int) {
 }
 
 // DeleteAllBreaks deletes all breakpoints
-func (dv *DebugView) DeleteAllBreaks() {
+func (dv *DebugPanel) DeleteAllBreaks() {
 	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
@@ -562,7 +562,7 @@ func (dv *DebugView) DeleteAllBreaks() {
 
 // UpdateBreakInBuf updates break status in its TextBuf
 // line is 1-based line number
-func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
+func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
 	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
@@ -574,7 +574,7 @@ func (dv *DebugView) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSta
 }
 
 // UpdateAllBreaks updates all breakpoints
-func (dv *DebugView) UpdateAllBreaks() {
+func (dv *DebugPanel) UpdateAllBreaks() {
 	if dv.Code == nil || dv.Code.This == nil {
 		return
 	}
@@ -592,7 +592,7 @@ func (dv *DebugView) UpdateAllBreaks() {
 }
 
 // BackupBreaks makes a backup copy of current breaks
-func (dv *DebugView) BackupBreaks() {
+func (dv *DebugPanel) BackupBreaks() {
 	dv.BBreaks = make([]*cdebug.Break, len(dv.State.Breaks))
 	for i, b := range dv.State.Breaks {
 		dv.BBreaks[i] = b
@@ -601,7 +601,7 @@ func (dv *DebugView) BackupBreaks() {
 
 // InitState updates the State and View from given debug state
 // Call this when debugger returns from any action update
-func (dv *DebugView) InitState(ds *cdebug.State) {
+func (dv *DebugPanel) InitState(ds *cdebug.State) {
 	dv.State.State = *ds
 	if ds.Running {
 		return
@@ -620,7 +620,7 @@ func (dv *DebugView) InitState(ds *cdebug.State) {
 }
 
 // UpdateFromState updates the view from current debugger state
-func (dv *DebugView) UpdateFromState() {
+func (dv *DebugPanel) UpdateFromState() {
 	if dv == nil || dv.This == nil || dv.Dbg == nil {
 		return
 	}
@@ -642,7 +642,7 @@ func (dv *DebugView) UpdateFromState() {
 }
 
 // SetFrame sets the given frame depth level as active
-func (dv *DebugView) SetFrame(depth int) {
+func (dv *DebugPanel) SetFrame(depth int) {
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -655,7 +655,7 @@ func (dv *DebugView) SetFrame(depth int) {
 
 // SetThread sets the given thread as active -- this must be TaskID if HasTasks
 // and ThreadID if not.
-func (dv *DebugView) SetThread(threadID int) {
+func (dv *DebugPanel) SetThread(threadID int) {
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -665,7 +665,7 @@ func (dv *DebugView) SetThread(threadID int) {
 
 // SetThreadIndex sets the given thread by index in threads list as active
 // this must be TaskID if HasTasks and ThreadID if not.
-func (dv *DebugView) SetThreadIndex(thridx int) {
+func (dv *DebugPanel) SetThreadIndex(thridx int) {
 	if !dv.DbgIsAvail() || thridx < 0 {
 		return
 	}
@@ -689,7 +689,7 @@ func (dv *DebugView) SetThreadIndex(thridx int) {
 
 // FindFrames finds the frames where given file and line are active
 // Selects the one that is closest and shows the others in Find Tab
-func (dv *DebugView) FindFrames(fpath string, line int) {
+func (dv *DebugPanel) FindFrames(fpath string, line int) {
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -703,7 +703,7 @@ func (dv *DebugView) FindFrames(fpath string, line int) {
 }
 
 // ListGlobalVars lists global vars matching given optional filter in Global Vars tab
-func (dv *DebugView) ListGlobalVars(filter string) {
+func (dv *DebugPanel) ListGlobalVars(filter string) {
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -716,7 +716,7 @@ func (dv *DebugView) ListGlobalVars(filter string) {
 }
 
 // ShowFile shows the file name in code
-func (dv *DebugView) ShowFile(fpath string, line int) {
+func (dv *DebugPanel) ShowFile(fpath string, line int) {
 	if fpath == "" || fpath == "?" {
 		return
 	}
@@ -729,7 +729,7 @@ func (dv *DebugView) ShowFile(fpath string, line int) {
 
 // SetCurPCInBuf sets the current PC location in given file
 // line is 1-based line number
-func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
+func (dv *DebugPanel) SetCurPCInBuf(fpath string, line int) {
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		if !tb.HasLineColor(line - 1) {
@@ -743,7 +743,7 @@ func (dv *DebugView) SetCurPCInBuf(fpath string, line int) {
 
 // DeleteCurPCInBuf deletes the current PC location in given file
 // line is 1-based line number
-func (dv *DebugView) DeleteCurPCInBuf() {
+func (dv *DebugPanel) DeleteCurPCInBuf() {
 	fpath := dv.CurFileLoc.FPath
 	line := dv.CurFileLoc.Line
 	if fpath != "" && line > 0 {
@@ -758,7 +758,7 @@ func (dv *DebugView) DeleteCurPCInBuf() {
 }
 
 // ShowBreakFile shows the file for given break index
-func (dv *DebugView) ShowBreakFile(bidx int) {
+func (dv *DebugPanel) ShowBreakFile(bidx int) {
 	if bidx < 0 || bidx >= len(dv.State.Breaks) {
 		return
 	}
@@ -767,7 +767,7 @@ func (dv *DebugView) ShowBreakFile(bidx int) {
 }
 
 // ShowVar shows info on a given variable within the current frame scope in a text view dialog
-func (dv *DebugView) ShowVar(name string) error {
+func (dv *DebugPanel) ShowVar(name string) error {
 	if !dv.DbgIsAvail() {
 		return nil
 	}
@@ -786,7 +786,7 @@ func (dv *DebugView) ShowVar(name string) error {
 
 // VarValue returns the value of given variable, first looking in local stack vars
 // and then in global vars
-func (dv *DebugView) VarValue(varNm string) string {
+func (dv *DebugPanel) VarValue(varNm string) string {
 	if !dv.DbgIsAvail() {
 		return ""
 	}
@@ -816,7 +816,7 @@ var DebugStatusColors = map[cdebug.Status]color.RGBA{
 	cdebug.Finished:   colors.Scheme.SurfaceContainerHighest,
 }
 
-func (dv *DebugView) SetStatus(stat cdebug.Status) {
+func (dv *DebugPanel) SetStatus(stat cdebug.Status) {
 	if dv == nil || dv.This == nil {
 		return
 	}
@@ -833,34 +833,34 @@ func (dv *DebugView) SetStatus(stat cdebug.Status) {
 }
 
 // Toolbar returns the debug toolbar
-func (dv *DebugView) Toolbar() *core.Frame {
+func (dv *DebugPanel) Toolbar() *core.Frame {
 	return dv.ChildByName("toolbar", 0).(*core.Frame)
 }
 
 // Tabs returns the tabs
-func (dv *DebugView) Tabs() *core.Tabs {
+func (dv *DebugPanel) Tabs() *core.Tabs {
 	return dv.ChildByName("tabs", 1).(*core.Tabs)
 }
 
 // ShowTab shows given tab
-func (dv *DebugView) ShowTab(tab string) {
+func (dv *DebugPanel) ShowTab(tab string) {
 	dv.Tabs().SelectTabByName(tab)
 }
 
 // UpdateTab updates given tab
-func (dv *DebugView) UpdateTab(tab string) {
+func (dv *DebugPanel) UpdateTab(tab string) {
 	tf := dv.Tabs().TabByName(tab)
 	tf.Update()
 }
 
 // ConsoleText returns the console TextEditor
-func (dv *DebugView) ConsoleText() *texteditor.Editor {
+func (dv *DebugPanel) ConsoleText() *texteditor.Editor {
 	tv := dv.Tabs()
 	cv := tv.TabByName(DebugTabConsole).Child(0).(*texteditor.Editor)
 	return cv
 }
 
-func (dv *DebugView) MakeToolbar(p *core.Plan) {
+func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 	core.AddAt(p, "status", func(w *core.Text) {
 		w.SetText("Building").Styler(func(s *styles.Style) {
 			color := DebugStatusColors[dv.State.Status]
@@ -973,8 +973,8 @@ type VarView struct {
 	// frame info
 	FrameInfo string `set:"-"`
 
-	// parent DebugView
-	DbgView *DebugView `json:"-" xml:"-"`
+	// parent DebugPanel
+	DbgView *DebugPanel `json:"-" xml:"-"`
 }
 
 // SetVar sets the source variable and ensures configuration
@@ -1050,7 +1050,7 @@ func (vv *VarView) MakeToolbar(p *core.Plan) {
 }
 
 // VarViewDialog opens an interactive editor of the given variable.
-func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugView) *VarView {
+func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugPanel) *VarView {
 	if core.RecycleDialog(vr) {
 		return nil
 	}
