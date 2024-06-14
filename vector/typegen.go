@@ -82,10 +82,10 @@ func (t *SVG) NodeType() *types.Type { return SVGType }
 func (t *SVG) New() tree.Node { return &SVG{} }
 
 // TreeType is the [types.Type] for [Tree]
-var TreeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.Tree", IDName: "tree", Doc: "Tree is a Tree that knows how to operate on FileNode nodes", Embeds: []types.Field{{Name: "Tree"}}, Fields: []types.Field{{Name: "VectorView", Doc: "the parent vectorview"}}, Instance: &Tree{}})
+var TreeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.Tree", IDName: "tree", Doc: "Tree is a [core.Tree] that interacts properly with [Vector].", Embeds: []types.Field{{Name: "Tree"}}, Fields: []types.Field{{Name: "VectorView", Doc: "the parent vectorview"}}, Instance: &Tree{}})
 
 // NewTree returns a new [Tree] with the given optional parent:
-// Tree is a Tree that knows how to operate on FileNode nodes
+// Tree is a [core.Tree] that interacts properly with [Vector].
 func NewTree(parent ...tree.Node) *Tree { return tree.New[*Tree](parent...) }
 
 // NodeType returns the [*types.Type] of [Tree]

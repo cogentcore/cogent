@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// Tree is a Tree that knows how to operate on FileNode nodes
+// Tree is a [core.Tree] that interacts properly with [Vector].
 type Tree struct {
 	core.Tree
 
