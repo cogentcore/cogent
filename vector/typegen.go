@@ -68,18 +68,18 @@ var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.Preference
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.ColorSettings", IDName: "color-settings", Doc: "ColorSettings for", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Fields: []types.Field{{Name: "Background", Doc: "drawing background color"}, {Name: "Border", Doc: "border color of the drawing"}, {Name: "Vector", Doc: "grid line color"}}})
 
-// SVGViewType is the [types.Type] for [SVGView]
-var SVGViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.SVGView", IDName: "svg-view", Doc: "SVGView is the element for viewing, interacting with the SVG", Embeds: []types.Field{{Name: "SVG"}}, Fields: []types.Field{{Name: "VectorView", Doc: "the parent vectorview"}, {Name: "Trans", Doc: "view translation offset (from dragging)"}, {Name: "Scale", Doc: "view scaling (from zooming)"}, {Name: "Grid", Doc: "grid spacing, in native ViewBox units"}, {Name: "VectorEff", Doc: "effective grid spacing given Scale level"}, {Name: "BgPixels", Doc: "background pixels, includes page outline and grid"}, {Name: "bgTrans", Doc: "bg rendered translation"}, {Name: "bgScale", Doc: "bg rendered scale"}, {Name: "bgVectorEff", Doc: "bg rendered grid"}}, Instance: &SVGView{}})
+// SVGType is the [types.Type] for [SVG]
+var SVGType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.SVG", IDName: "svg", Doc: "SVG is the element for viewing and interacting with the SVG.", Embeds: []types.Field{{Name: "SVG"}}, Fields: []types.Field{{Name: "VectorView", Doc: "the parent vectorview"}, {Name: "Trans", Doc: "view translation offset (from dragging)"}, {Name: "Scale", Doc: "view scaling (from zooming)"}, {Name: "Grid", Doc: "grid spacing, in native ViewBox units"}, {Name: "VectorEff", Doc: "effective grid spacing given Scale level"}, {Name: "BgPixels", Doc: "background pixels, includes page outline and grid"}, {Name: "bgTrans", Doc: "bg rendered translation"}, {Name: "bgScale", Doc: "bg rendered scale"}, {Name: "bgVectorEff", Doc: "bg rendered grid"}}, Instance: &SVG{}})
 
-// NewSVGView returns a new [SVGView] with the given optional parent:
-// SVGView is the element for viewing, interacting with the SVG
-func NewSVGView(parent ...tree.Node) *SVGView { return tree.New[*SVGView](parent...) }
+// NewSVG returns a new [SVG] with the given optional parent:
+// SVG is the element for viewing and interacting with the SVG.
+func NewSVG(parent ...tree.Node) *SVG { return tree.New[*SVG](parent...) }
 
-// NodeType returns the [*types.Type] of [SVGView]
-func (t *SVGView) NodeType() *types.Type { return SVGViewType }
+// NodeType returns the [*types.Type] of [SVG]
+func (t *SVG) NodeType() *types.Type { return SVGType }
 
-// New returns a new [*SVGView] value
-func (t *SVGView) New() tree.Node { return &SVGView{} }
+// New returns a new [*SVG] value
+func (t *SVG) New() tree.Node { return &SVG{} }
 
 // TreeType is the [types.Type] for [Tree]
 var TreeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.Tree", IDName: "tree", Doc: "Tree is a Tree that knows how to operate on FileNode nodes", Embeds: []types.Field{{Name: "Tree"}}, Fields: []types.Field{{Name: "VectorView", Doc: "the parent vectorview"}}, Instance: &Tree{}})

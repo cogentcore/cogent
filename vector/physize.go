@@ -62,7 +62,7 @@ func (ps *PhysSize) SetToStandardSize() error {
 }
 
 // SetFromSVG sets from svg
-func (ps *PhysSize) SetFromSVG(sv *SVGView) {
+func (ps *PhysSize) SetFromSVG(sv *SVG) {
 	ps.Size.X = sv.SSVG().PhysicalWidth.Value
 	ps.Units = sv.SSVG().PhysicalWidth.Unit
 	ps.Size.Y = sv.SSVG().PhysicalHeight.Value
@@ -71,7 +71,7 @@ func (ps *PhysSize) SetFromSVG(sv *SVGView) {
 }
 
 // SetToSVG sets svg from us
-func (ps *PhysSize) SetToSVG(sv *SVGView) {
+func (ps *PhysSize) SetToSVG(sv *SVG) {
 	sv.SSVG().PhysicalWidth.Set(ps.Size.X, ps.Units)
 	sv.SSVG().PhysicalHeight.Set(ps.Size.Y, ps.Units)
 	sv.Root().ViewBox.Size = ps.Size

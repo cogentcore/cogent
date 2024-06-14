@@ -141,7 +141,7 @@ type PathNode struct {
 }
 
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
-func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
+func (sv *SVG) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pxf := path.ParTransform(true) // include self
 
@@ -166,7 +166,7 @@ func (sv *SVGView) PathNodes(path *svg.Path) ([]*PathNode, []int) {
 	return nc, cidxs
 }
 
-func (sv *SVGView) UpdateNodeSprites() {
+func (sv *SVG) UpdateNodeSprites() {
 	es := sv.EditState()
 	prvn := es.NNodeSprites
 
@@ -184,7 +184,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 
 	for i, pn := range es.PathNodes {
 		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This, func(recv, send tree.Node, sig int64, d any) {
-		// 		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		// 		ssvg := recv.Embed(KiT_SVG).(*SVG)
 		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
 		// 	})
 		sp := Sprite(sv, SpNodePoint, SpUnk, i, image.Point{})
@@ -201,7 +201,7 @@ func (sv *SVGView) UpdateNodeSprites() {
 	sv.VectorView.UpdateNodeToolbar()
 }
 
-func (sv *SVGView) RemoveNodeSprites() {
+func (sv *SVG) RemoveNodeSprites() {
 	es := sv.EditState()
 	sprites := &sv.Scene.Stage.Sprites
 	for i := 0; i < es.NNodeSprites; i++ {
@@ -215,7 +215,7 @@ func (sv *SVGView) RemoveNodeSprites() {
 }
 
 /*
-func (sv *SVGView) NodeSpriteEvent(idx int, et events.Type, d any) {
+func (sv *SVG) NodeSpriteEvent(idx int, et events.Type, d any) {
 	// win := sv.VectorView.ParentWindow()
 	// es := sv.EditState()
 	// es.SelNoDrag = false
@@ -242,7 +242,7 @@ func (sv *SVGView) NodeSpriteEvent(idx int, et events.Type, d any) {
 // and all following points up to cmd = z or m are moved in the opposite
 // direction to compensate, so only the one point is moved in effect.
 // svoff is the window starting vector coordinate for view.
-func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv math32.Vector2, svoff math32.Vector2) {
+func (sv *SVG) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv math32.Vector2, svoff math32.Vector2) {
 	for i := pidx; i < len(pts); i++ {
 		pn := pts[i]
 		wbmin := math32.Vector2FromPoint(path.BBox.Min)
@@ -263,7 +263,7 @@ func (sv *SVGView) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int
 // PathNodeSetPoint sets data point for path node to given new point value
 // which is in *absolute* (but local) coordinates -- translates into
 // relative coordinates as needed.
-func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt math32.Vector2) {
+func (sv *SVG) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt math32.Vector2) {
 	if pn.Index == 1 || !svg.PathCmdIsRel(pn.Cmd) { // abs
 		switch pn.Cmd {
 		case svg.PcH:
@@ -289,7 +289,7 @@ func (sv *SVGView) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt math32.Vec
 
 /*
 // SpriteNodeDrag processes a mouse node drag event on a path node sprite
-func (sv *SVGView) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent) {
+func (sv *SVG) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent) {
 	es := sv.EditState()
 	if !es.InAction() {
 		sv.ManipStart("NodeAdj", es.ActivePath.Nm)

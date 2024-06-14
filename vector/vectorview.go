@@ -93,7 +93,7 @@ func (vv *VectorView) Init() {
 				})
 			})
 
-			core.AddChildAt(w, "svg", func(w *SVGView) {
+			core.AddChildAt(w, "svg", func(w *SVG) {
 				w.VectorView = vv
 				w.UpdateGradients(vv.EditState.Gradients)
 			})
@@ -411,9 +411,9 @@ func (vv *VectorView) Tree() *Tree {
 	return vv.LayerTree().ChildByName("tree-frame", 1).AsTree().Child(0).(*Tree)
 }
 
-// SVG returns the [SVGView].
-func (vv *VectorView) SVG() *SVGView {
-	return vv.Splits().Child(1).(*SVGView)
+// SVG returns the [SVG].
+func (vv *VectorView) SVG() *SVG {
+	return vv.Splits().Child(1).(*SVG)
 }
 
 // SSVG returns the underlying [svg.SVG].

@@ -261,7 +261,7 @@ func (vv *VectorView) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) 
 
 // GatherAlignPoints gets all the potential points of alignment for objects not
 // in selection group
-func (sv *SVGView) GatherAlignPoints() {
+func (sv *SVG) GatherAlignPoints() {
 	es := sv.EditState()
 	if !es.HasSelected() {
 		return

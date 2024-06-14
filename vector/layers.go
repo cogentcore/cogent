@@ -46,7 +46,7 @@ func (l *Layer) ToNode(n tree.Node) {
 // Layers is the list of all layers
 type Layers []*Layer
 
-func (ly *Layers) SyncLayers(sv *SVGView) {
+func (ly *Layers) SyncLayers(sv *SVG) {
 	*ly = make(Layers, 0)
 	for _, n := range sv.Root().Children {
 		if NodeIsLayer(n) {
@@ -57,7 +57,7 @@ func (ly *Layers) SyncLayers(sv *SVGView) {
 	}
 }
 
-func (ly *Layers) LayersUpdated(sv *SVGView) {
+func (ly *Layers) LayersUpdated(sv *SVG) {
 	si := 1 // starting index -- assuming namedview
 	for i, l := range *ly {
 		kc := sv.Root().ChildByName(l.Name, si+i)

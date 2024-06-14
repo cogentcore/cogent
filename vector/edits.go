@@ -197,7 +197,7 @@ func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
 // SelectedListDepth returns list of selected items, sorted either
 // ascending or descending according to depth:
 // ascending = deepest first, descending = highest first
-func (es *EditState) SelectedListDepth(sv *SVGView, descendingSort bool) []svg.Node {
+func (es *EditState) SelectedListDepth(sv *SVG, descendingSort bool) []svg.Node {
 	dm := sv.DepthMap()
 	sls := make([]svg.Node, 0, len(es.Selected))
 	for it := range es.Selected {

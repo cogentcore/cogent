@@ -17,7 +17,7 @@ import (
 )
 
 // ManipStart is called at the start of a manipulation, saving the state prior to the action
-func (sv *SVGView) ManipStart(act, data string) {
+func (sv *SVG) ManipStart(act, data string) {
 	es := sv.EditState()
 	es.ActStart(act, data)
 	help := ActionHelpMap[act]
@@ -27,7 +27,7 @@ func (sv *SVGView) ManipStart(act, data string) {
 }
 
 // ManipDone happens when a manipulation has finished: resets action, does render
-func (sv *SVGView) ManipDone() {
+func (sv *SVG) ManipDone() {
 	InactivateSprites(sv, SpAlignMatch)
 	es := sv.EditState()
 	switch {
@@ -55,7 +55,7 @@ func (sv *SVGView) ManipDone() {
 // ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the
 // current display while manipulating.  It checks if already rendering and if so,
 // just returns immediately, so that updates are not stacked up and laggy.
-func (sv *SVGView) ManipUpdate() {
+func (sv *SVG) ManipUpdate() {
 	if sv.SSVG().IsRendering {
 		return
 	}
@@ -63,7 +63,7 @@ func (sv *SVGView) ManipUpdate() {
 }
 
 // VectorDots is the current grid spacing and offsets in dots
-func (sv *SVGView) VectorDots() (float32, math32.Vector2) {
+func (sv *SVG) VectorDots() (float32, math32.Vector2) {
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.VectorEff
 	if grid <= 0 {
@@ -109,7 +109,7 @@ func SnapToIncr(val, off, incr float32) (float32, bool) {
 	return val, false
 }
 
-func (sv *SVGView) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
+func (sv *SVG) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
 	if !Settings.SnapVector {
 		return rawpt
 	}
@@ -122,7 +122,7 @@ func (sv *SVGView) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
 
 // SnapPoint does snapping on one raw point, given that point,
 // in window coordinates. returns the snapped point.
-func (sv *SVGView) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
+func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	es := sv.EditState()
 	snpt := sv.SnapPointToVector(rawpt)
 	if !Settings.SnapGuide {
@@ -181,7 +181,7 @@ func (sv *SVGView) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 // SnapBBox does snapping on given raw bbox according to preferences,
 // aligning movement of bbox edges / centers relative to other bboxes..
 // returns snapped bbox.
-func (sv *SVGView) SnapBBox(rawbb math32.Box2) math32.Box2 {
+func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {
 	if !Settings.SnapGuide {
 		return rawbb
 	}
@@ -245,7 +245,7 @@ func (sv *SVGView) SnapBBox(rawbb math32.Box2) math32.Box2 {
 // constraint is along the diagonal, which can then trigger reshaping the
 // object to be along the diagonal as well.
 // also adds constraint to AlignMatches.
-func (sv *SVGView) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
+func (sv *SVG) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 	del := rawpt.Sub(st)
 
 	var alpts []image.Rectangle
@@ -303,7 +303,7 @@ func (sv *SVGView) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, boo
 }
 
 // DragMove is when dragging a selection for moving
-func (sv *SVGView) DragMove(e events.Event) {
+func (sv *SVG) DragMove(e events.Event) {
 	es := sv.EditState()
 
 	InactivateSprites(sv, SpAlignMatch)
@@ -369,7 +369,7 @@ func ProportionalBBox(bb, orig math32.Box2) math32.Box2 {
 }
 
 // SpriteReshapeDrag processes a mouse reshape drag event on a selection sprite
-func (sv *SVGView) SpriteReshapeDrag(sp Sprites, e events.Event) {
+func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	es := sv.EditState()
 
 	InactivateSprites(sv, SpAlignMatch)
@@ -462,7 +462,7 @@ func (sv *SVGView) SpriteReshapeDrag(sp Sprites, e events.Event) {
 }
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
-func (sv *SVGView) SpriteRotateDrag(sp Sprites, delta image.Point) {
+func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	fmt.Println("rotate", delta)
 	es := sv.EditState()
 	if !es.InAction() {

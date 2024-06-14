@@ -123,7 +123,7 @@ func (gv *VectorView) UpdateSelectToolbar() {
 }
 
 // UpdateSelect should be called whenever selection changes
-func (sv *SVGView) UpdateSelect() {
+func (sv *SVG) UpdateSelect() {
 	es := sv.EditState()
 	sv.VectorView.UpdateTabs()
 	sv.VectorView.UpdateSelectToolbar()
@@ -137,14 +137,14 @@ func (sv *SVGView) UpdateSelect() {
 	sv.NeedsRender()
 }
 
-func (sv *SVGView) RemoveSelSprites() {
+func (sv *SVG) RemoveSelSprites() {
 	InactivateSprites(sv, SpReshapeBBox)
 	InactivateSprites(sv, SpSelBBox)
 	es := sv.EditState()
 	es.NSelectSprites = 0
 }
 
-func (sv *SVGView) UpdateSelSprites() {
+func (sv *SVG) UpdateSelSprites() {
 	es := sv.EditState()
 	es.UpdateSelectBBox()
 	if !es.HasSelected() {
@@ -177,7 +177,7 @@ func (sv *SVGView) UpdateSelSprites() {
 	// win.UpdateSig()
 }
 
-func (sv *SVGView) SetSelSpritePos() {
+func (sv *SVG) SetSelSpritePos() {
 	es := sv.EditState()
 	nsel := es.NSelectSprites
 
@@ -209,7 +209,7 @@ func (sv *SVGView) SetSelSpritePos() {
 }
 
 // SetBBoxSpritePos sets positions of given type of sprites
-func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
+func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
 	bbox.Min.SetAdd(math32.Vector2FromPoint(sv.Geom.ContentBBox.Min))
 	bbox.Max.SetAdd(math32.Vector2FromPoint(sv.Geom.ContentBBox.Min))
 
@@ -240,7 +240,7 @@ func (sv *SVGView) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
 }
 
 /*
-func (sv *SVGView) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
+func (sv *SVG) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
 	win := sv.VectorView.ParentWindow()
 	es := sv.EditState()
 	es.SelNoDrag = false
@@ -270,7 +270,7 @@ func (sv *SVGView) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
 */
 
 // SetRubberBand updates the rubber band position.
-func (sv *SVGView) SetRubberBand(cur image.Point) {
+func (sv *SVG) SetRubberBand(cur image.Point) {
 	es := sv.EditState()
 
 	if !es.InAction() {
@@ -575,7 +575,7 @@ func (gv *VectorView) SelectSetHeight(ht float32) {
 
 // SelectWithinBBox returns a list of all nodes whose BBox is fully contained
 // within the given BBox. SVG version excludes layer groups.
-func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
+func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Node {
 	var rval []svg.Node
 	var curlay tree.Node
 	svg.SVGWalkDownNoDefs(sv.Root(), func(n svg.Node, nb *svg.NodeBase) bool {
@@ -622,7 +622,7 @@ func (sv *SVGView) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg
 // if leavesOnly, only terminal leaves (no children) are included
 // if excludeSel, any leaf nodes that are within the current edit selection are
 // excluded,
-func (sv *SVGView) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
+func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
 	pt = pt.Sub(sv.Geom.ContentBBox.Min)
 	es := sv.EditState()
 	var curlay tree.Node

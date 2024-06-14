@@ -25,8 +25,8 @@ import (
 	"cogentcore.org/core/types"
 )
 
-// SVGView is the element for viewing, interacting with the SVG
-type SVGView struct {
+// SVG is the element for viewing and interacting with the SVG.
+type SVG struct {
 	core.SVG
 
 	// the parent vectorview
@@ -60,7 +60,7 @@ type SVGView struct {
 	bgVectorEff float32 `copier:"-" json:"-" xml:"-" view:"-" set:"-"`
 }
 
-func (sv *SVGView) Init() {
+func (sv *SVG) Init() {
 	sv.SVG.Init()
 	sv.SetReadOnly(false)
 	sv.Grid = Settings.Size.Grid
@@ -69,7 +69,7 @@ func (sv *SVGView) Init() {
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
 		if core.DebugSettings.KeyEventTrace {
-			fmt.Printf("SVGView KeyInput: %v\n", sv.Path())
+			fmt.Printf("SVG KeyInput: %v\n", sv.Path())
 		}
 		kf := keymap.Of(kc)
 		switch kf {
@@ -205,17 +205,17 @@ func (sv *SVGView) Init() {
 }
 
 // SSVG returns the underlying [svg.SVG].
-func (sv *SVGView) SSVG() *svg.SVG {
+func (sv *SVG) SSVG() *svg.SVG {
 	return sv.SVG.SVG
 }
 
 // Root returns the root [svg.SVGNode].
-func (sv *SVGView) Root() *svg.SVGNode {
+func (sv *SVG) Root() *svg.SVGNode {
 	return sv.SVG.SVG.Root
 }
 
 // EditState returns the EditState for this view
-func (sv *SVGView) EditState() *EditState {
+func (sv *SVG) EditState() *EditState {
 	if sv.VectorView == nil {
 		return nil
 	}
@@ -223,16 +223,16 @@ func (sv *SVGView) EditState() *EditState {
 }
 
 // UpdateView updates the view, optionally with a full re-render
-func (sv *SVGView) UpdateView(full bool) { // TODO(config)
+func (sv *SVG) UpdateView(full bool) { // TODO(config)
 	sv.UpdateSelSprites()
 }
 
 /*
-func (sv *SVGView) MouseHover() {
+func (sv *SVG) MouseHover() {
 	sv.ConnectEvent(oswin.MouseHoverEvent, core.RegPri, func(recv, send tree.Node, sig int64, d any) {
 		me := d.(*mouse.HoverEvent)
 		me.SetHandled()
-		ssvg := recv.Embed(KiT_SVGView).(*SVGView)
+		ssvg := recv.Embed(KiT_SVG).(*SVG)
 		obj := ssvg.FirstContainingPoint(me.Where, true)
 		if obj != nil {
 			pos := me.Where
@@ -244,7 +244,7 @@ func (sv *SVGView) MouseHover() {
 */
 
 // ContentsBBox returns the object-level box of the entire contents
-func (sv *SVGView) ContentsBBox() math32.Box2 {
+func (sv *SVG) ContentsBBox() math32.Box2 {
 	bbox := math32.Box2{}
 	bbox.SetEmpty()
 	sv.WalkDown(func(n tree.Node) bool {
@@ -283,7 +283,7 @@ func (sv *SVGView) ContentsBBox() math32.Box2 {
 
 // TransformAllLeaves transforms all the leaf items in the drawing (not groups)
 // uses ApplyDeltaTransform manipulation.
-func (sv *SVGView) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
+func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, rot float32, pt math32.Vector2) {
 	sv.WalkDown(func(n tree.Node) bool {
 		if n == sv.This {
 			return tree.Continue
@@ -312,7 +312,7 @@ func (sv *SVGView) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2
 }
 
 // ZoomToPage sets the scale to fit the current viewbox
-func (sv *SVGView) ZoomToPage(width bool) {
+func (sv *SVG) ZoomToPage(width bool) {
 	vb := math32.Vector2FromPoint(sv.Root().BBox.Size())
 	if vb == (math32.Vector2{}) {
 		return
@@ -332,7 +332,7 @@ func (sv *SVGView) ZoomToPage(width bool) {
 }
 
 // ZoomToContents sets the scale to fit the current contents into view
-func (sv *SVGView) ZoomToContents(width bool) {
+func (sv *SVG) ZoomToContents(width bool) {
 	vb := math32.Vector2FromPoint(sv.Root().BBox.Size())
 	if vb == (math32.Vector2{}) {
 		return
@@ -358,7 +358,7 @@ func (sv *SVGView) ZoomToContents(width bool) {
 // including moving everything to start at upper-left corner,
 // optionally preserving the current grid offset, so grid snapping
 // is preserved -- recommended.
-func (sv *SVGView) ResizeToContents(grid_off bool) {
+func (sv *SVG) ResizeToContents(grid_off bool) {
 	sv.UndoSave("ResizeToContents", "")
 	sv.ZoomToPage(false)
 	sv.UpdateView(true)
@@ -390,7 +390,7 @@ func (sv *SVGView) ResizeToContents(grid_off bool) {
 // ZoomAt updates the scale and translate parameters at given point
 // by given delta: + means zoom in, - means zoom out,
 // delta should always be < 1)
-func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
+func (sv *SVG) ZoomAt(pt image.Point, delta float32) {
 	sc := float32(1)
 	if delta > 1 {
 		sc += delta
@@ -411,13 +411,13 @@ func (sv *SVGView) ZoomAt(pt image.Point, delta float32) {
 }
 
 // SetTransform sets the transform based on Trans and Scale values
-func (sv *SVGView) SetTransform() {
+func (sv *SVG) SetTransform() {
 	sv.SetProperty("transform", fmt.Sprintf("scale(%v,%v) translate(%v,%v)", sv.Scale, sv.Scale, sv.Trans.X, sv.Trans.Y))
 }
 
 // MetaData returns the overall metadata and grid if present.
 // if mknew is true, it will create new ones if not found.
-func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
+func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	if sv.NumChildren() > 0 {
 		kd := sv.Root().Children[0]
 		if md, ismd := kd.(*svg.MetaData); ismd {
@@ -447,7 +447,7 @@ func (sv *SVGView) MetaData(mknew bool) (main, grid *svg.MetaData) {
 }
 
 // SetMetaData sets meta data of drawing
-func (sv *SVGView) SetMetaData() {
+func (sv *SVG) SetMetaData() {
 	es := sv.EditState()
 	nv, gr := sv.MetaData(true)
 
@@ -484,7 +484,7 @@ func (sv *SVGView) SetMetaData() {
 }
 
 // ReadMetaData reads meta data of drawing
-func (sv *SVGView) ReadMetaData() {
+func (sv *SVG) ReadMetaData() {
 	es := sv.EditState()
 	nv, gr := sv.MetaData(false)
 	if nv == nil {
@@ -521,12 +521,12 @@ func (sv *SVGView) ReadMetaData() {
 //  ContextMenu / Actions
 
 // EditNode opens a form editor on node
-func (sv *SVGView) EditNode(kn tree.Node) {
+func (sv *SVG) EditNode(kn tree.Node) {
 	// core.FormDialog(sv, kn, "SVG Element View", true) // TODO:
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
-func (sv *SVGView) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
+func (sv *SVG) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 	core.NewButton(m).SetText("Edit").SetIcon(icons.Edit).OnClick(func(e events.Event) {
 		sv.EditNode(kn)
 	})
@@ -543,7 +543,7 @@ func (sv *SVGView) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position
-func (sv *SVGView) NodeContextMenuPos(pos image.Point) image.Point {
+func (sv *SVG) NodeContextMenuPos(pos image.Point) image.Point {
 	if pos != image.ZP {
 		return pos
 	}
@@ -557,7 +557,7 @@ func (sv *SVGView) NodeContextMenuPos(pos image.Point) image.Point {
 // Undo
 
 // UndoSave save current state for potential undo
-func (sv *SVGView) UndoSave(action, data string) {
+func (sv *SVG) UndoSave(action, data string) {
 	es := sv.EditState()
 	if es == nil {
 		return
@@ -570,7 +570,7 @@ func (sv *SVGView) UndoSave(action, data string) {
 }
 
 // UndoSaveReplace save current state to replace current
-func (sv *SVGView) UndoSaveReplace(action, data string) {
+func (sv *SVG) UndoSaveReplace(action, data string) {
 	es := sv.EditState()
 	b := &bytes.Buffer{}
 	errors.Log(jsonx.Write(sv.Root(), b))
@@ -579,7 +579,7 @@ func (sv *SVGView) UndoSaveReplace(action, data string) {
 }
 
 // Undo undoes one step, returning the action that was undone
-func (sv *SVGView) Undo() string {
+func (sv *SVG) Undo() string {
 	es := sv.EditState()
 	es.ResetSelected()
 	if es.Undos.MustSaveUndoStart() { // need to save current state!
@@ -600,7 +600,7 @@ func (sv *SVGView) Undo() string {
 }
 
 // Redo redoes one step, returning the action that was redone
-func (sv *SVGView) Redo() string {
+func (sv *SVG) Redo() string {
 	es := sv.EditState()
 	es.ResetSelected()
 	act, _, state := es.Undos.Redo()
@@ -619,7 +619,7 @@ func (sv *SVGView) Redo() string {
 
 // ShowAlignMatches draws the align matches as given
 // between BBox Min - Max.  typs are corresponding bounding box sources.
-func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
+func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	// win := sv.VectorView.ParentWindow()
 
 	// sz := min(len(pts), 8)
@@ -633,7 +633,7 @@ func (sv *SVGView) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 
 // DepthMap returns a map of all nodes and their associated depth count
 // counting up from 0 as the deepest, first drawn node.
-func (sv *SVGView) DepthMap() map[tree.Node]int {
+func (sv *SVG) DepthMap() map[tree.Node]int {
 	m := make(map[tree.Node]int)
 	depth := 0
 	n := tree.Next(sv.This)
@@ -649,7 +649,7 @@ func (sv *SVGView) DepthMap() map[tree.Node]int {
 // New objects
 
 // SetSVGName sets the name of the element to standard type + id name
-func (sv *SVGView) SetSVGName(el svg.Node) {
+func (sv *SVG) SetSVGName(el svg.Node) {
 	nwid := sv.SSVG().NewUniqueID()
 	nwnm := fmt.Sprintf("%s%d", el.SVGName(), nwid)
 	el.AsTree().SetName(nwnm)
@@ -657,7 +657,7 @@ func (sv *SVGView) SetSVGName(el svg.Node) {
 
 // NewEl makes a new SVG element, giving it a new unique name.
 // Uses currently active layer if set.
-func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
+func (sv *SVG) NewEl(typ *types.Type) svg.Node {
 	es := sv.EditState()
 	parent := tree.Node(sv.Root())
 	if es.CurLayer != "" {
@@ -678,7 +678,7 @@ func (sv *SVGView) NewEl(typ *types.Type) svg.Node {
 }
 
 // NewElDrag makes a new SVG element during the drag operation
-func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
+func (sv *SVG) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 	minsz := float32(10)
 	es := sv.EditState()
 	dv := math32.Vector2FromPoint(end.Sub(start))
@@ -706,7 +706,7 @@ func (sv *SVGView) NewElDrag(typ *types.Type, start, end image.Point) svg.Node {
 }
 
 // NewText makes a new Text element with embedded tspan
-func (sv *SVGView) NewText(start, end image.Point) svg.Node {
+func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	es := sv.EditState()
 	sv.ManipStart("NewText", "")
 	nr := sv.NewEl(svg.TextType)
@@ -735,7 +735,7 @@ func (sv *SVGView) NewText(start, end image.Point) svg.Node {
 }
 
 // NewPath makes a new SVG Path element during the drag operation
-func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
+func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	minsz := float32(10)
 	es := sv.EditState()
 	dv := math32.Vector2FromPoint(end.Sub(start))
@@ -775,7 +775,7 @@ func (sv *SVGView) NewPath(start, end image.Point) *svg.Path {
 
 // Gradients returns the currently defined gradients with stops
 // that are shared among obj-specific ones
-func (sv *SVGView) Gradients() []*Gradient {
+func (sv *SVG) Gradients() []*Gradient {
 	gl := make([]*Gradient, 0)
 	for _, gii := range sv.SSVG().Defs.Children {
 		g, ok := gii.(*svg.Gradient)
@@ -793,7 +793,7 @@ func (sv *SVGView) Gradients() []*Gradient {
 }
 
 // UpdateGradients update SVG gradients from given gradient list
-func (sv *SVGView) UpdateGradients(gl []*Gradient) {
+func (sv *SVG) UpdateGradients(gl []*Gradient) {
 	nms := make(map[string]bool)
 	for _, gr := range gl {
 		if _, has := nms[gr.Name]; has {
@@ -824,7 +824,7 @@ func (sv *SVGView) UpdateGradients(gl []*Gradient) {
 ///////////////////////////////////////////////////////////////////////
 //  Bg render
 
-// func (sv *SVGView) Render() {
+// func (sv *SVG) Render() {
 // 	if sv.PushBounds() {
 // 		sv.SSVG().IsRendering = true
 // 		sv.FillViewportWithBg()
@@ -838,13 +838,13 @@ func (sv *SVGView) UpdateGradients(gl []*Gradient) {
 // 	}
 // }
 
-func (sv *SVGView) BgNeedsUpdate() bool {
+func (sv *SVG) BgNeedsUpdate() bool {
 	update := sv.EnsureBgSize() || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.VectorEff != sv.bgVectorEff)
 	// fmt.Printf("update: %v\n", update)
 	return update
 }
 
-func (sv *SVGView) FillViewportWithBg() {
+func (sv *SVG) FillViewportWithBg() {
 	if sv.BgNeedsUpdate() {
 		sv.RenderBg()
 	}
@@ -852,7 +852,7 @@ func (sv *SVGView) FillViewportWithBg() {
 }
 
 // EnsureBgSize ensures Bg is set to the right size -- returns true if resized
-func (sv *SVGView) EnsureBgSize() bool {
+func (sv *SVG) EnsureBgSize() bool {
 	sz := sv.Geom.ContentBBox.Size()
 	if sv.BgPixels != nil {
 		ib := sv.BgPixels.Bounds().Size()
@@ -869,7 +869,7 @@ func (sv *SVGView) EnsureBgSize() bool {
 }
 
 // UpdateVectorEff updates the GirdEff value based on current scale
-func (sv *SVGView) UpdateVectorEff() {
+func (sv *SVG) UpdateVectorEff() {
 	sv.VectorEff = sv.Grid
 	sp := sv.VectorEff * sv.Scale
 	for sp <= 2*(float32(Settings.SnapTol)+1) {
@@ -879,7 +879,7 @@ func (sv *SVGView) UpdateVectorEff() {
 }
 
 // RenderBg renders our background image
-func (sv *SVGView) RenderBg() {
+func (sv *SVG) RenderBg() {
 	/*
 		rs := &sv.BgRender
 		pc := &rs.Paint
