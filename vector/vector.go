@@ -442,7 +442,7 @@ func (vv *Vector) PasteAvailFunc(bt *core.Button) {
 
 func (vv *Vector) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 	// TODO(kai): remove Update
-	core.NewFuncButton(tb, vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
+	core.NewFuncButton(tb).SetFunc(vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	core.NewButton(tb).SetText("New").SetIcon(icons.Add).
 		OnClick(func(e events.Event) {
 			ndr := vv.NewDrawing(Settings.Size)
@@ -450,38 +450,38 @@ func (vv *Vector) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 		})
 
 	core.NewButton(tb).SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
-		core.NewFuncButton(m, vv.PromptPhysSize).SetText("Set size").
+		core.NewFuncButton(m).SetFunc(vv.PromptPhysSize).SetText("Set size").
 			SetIcon(icons.FormatSize)
-		core.NewFuncButton(m, vv.ResizeToContents).SetIcon(icons.Resize)
+		core.NewFuncButton(m).SetFunc(vv.ResizeToContents).SetIcon(icons.Resize)
 	})
 
-	core.NewFuncButton(tb, vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
-	core.NewFuncButton(tb, vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
-	core.NewFuncButton(tb, vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
+	core.NewFuncButton(tb).SetFunc(vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
+	core.NewFuncButton(tb).SetFunc(vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
+	core.NewFuncButton(tb).SetFunc(vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
 
 	core.NewButton(tb).SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene) {
-		core.NewFuncButton(m, vv.ExportPNG).SetIcon(icons.Image)
-		core.NewFuncButton(m, vv.ExportPDF).SetIcon(icons.PictureAsPdf)
+		core.NewFuncButton(m).SetFunc(vv.ExportPNG).SetIcon(icons.Image)
+		core.NewFuncButton(m).SetFunc(vv.ExportPDF).SetIcon(icons.PictureAsPdf)
 	})
 
 	core.NewSeparator(tb)
 
-	core.NewFuncButton(tb, vv.Undo).FirstStyler(func(s *styles.Style) {
+	core.NewFuncButton(tb).SetFunc(vv.Undo).FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(vv.EditState.Undos.HasUndoAvail())
 	})
-	core.NewFuncButton(tb, vv.Redo).FirstStyler(func(s *styles.Style) {
+	core.NewFuncButton(tb).SetFunc(vv.Redo).FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(vv.EditState.Undos.HasRedoAvail())
 	})
 
 	core.NewSeparator(tb)
 
-	core.NewFuncButton(tb, vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	core.NewFuncButton(tb, vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	core.NewFuncButton(tb, vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	core.NewFuncButton(tb, vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	core.NewFuncButton(tb).SetFunc(vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	core.NewFuncButton(tb).SetFunc(vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	core.NewFuncButton(tb).SetFunc(vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	core.NewFuncButton(tb).SetFunc(vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 
 	core.NewSeparator(tb)
-	core.NewFuncButton(tb, vv.AddImage).SetIcon(icons.Image)
+	core.NewFuncButton(tb).SetFunc(vv.AddImage).SetIcon(icons.Image)
 	core.NewSeparator(tb)
 
 	core.NewButton(tb).SetText("Zoom page").SetIcon(icons.ZoomOut).

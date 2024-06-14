@@ -72,7 +72,7 @@ func (a *App) UpdateMessageList() {
 		})
 		fr.AddContextMenu(func(m *core.Scene) {
 			a.ReadMessage = cd
-			core.NewFuncButton(m, a.MoveMessage).SetIcon(icons.Move).SetText("Move")
+			core.NewFuncButton(m).SetFunc(a.MoveMessage).SetIcon(icons.Move).SetText("Move")
 		})
 
 		ftxt := ""

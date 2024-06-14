@@ -218,7 +218,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene) {
 		})
 
 	core.NewSeparator(m)
-	core.NewFuncButton(m, ed.Lookup).SetIcon(icons.Search)
+	core.NewFuncButton(m).SetFunc(ed.Lookup).SetIcon(icons.Search)
 
 	fn := ed.Code.FileNodeForFile(string(ed.Buffer.Filename), false)
 	if fn != nil {

@@ -536,10 +536,10 @@ func (sv *SVG) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 
 	core.NewSeparator(m)
 
-	core.NewFuncButton(m, sv.Vector.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	core.NewFuncButton(m, sv.Vector.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	core.NewFuncButton(m, sv.Vector.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	core.NewFuncButton(m, sv.Vector.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	core.NewFuncButton(m).SetFunc(sv.Vector.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	core.NewFuncButton(m).SetFunc(sv.Vector.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	core.NewFuncButton(m).SetFunc(sv.Vector.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	core.NewFuncButton(m).SetFunc(sv.Vector.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position

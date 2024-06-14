@@ -101,11 +101,11 @@ func (fn *FileNode) ContextMenu(m *core.Scene) {
 		SetMenu(CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
 		s.SetState(!fn.HasSelection(), states.Disabled)
 	})
-	core.NewFuncButton(m, fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
+	core.NewFuncButton(m).SetFunc(fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
-	core.NewFuncButton(m, fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
+	core.NewFuncButton(m).SetFunc(fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})

@@ -99,7 +99,7 @@ func (gv *Vector) ConfigSelectToolbar() {
 // NewSelectFuncButton returns a new func button that is only enabled when
 // there is an item selected.
 func (gv *Vector) NewSelectFuncButton(parent tree.Node, fun any) *core.FuncButton {
-	bt := core.NewFuncButton(parent, fun)
+	bt := core.NewFuncButton(parent).SetFunc(fun)
 	bt.FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(gv.EditState.HasSelected())
 	})
