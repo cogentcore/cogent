@@ -35,7 +35,7 @@ func (cv *Code) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 }
 
 func (cv *Code) CallFind(ctx core.Widget) {
-	cv.ConfigFindButton(core.NewSoloFuncButton(ctx, cv.Find)).CallFunc()
+	cv.ConfigFindButton(core.NewSoloFuncButton(ctx).SetFunc(cv.Find)).CallFunc()
 }
 
 // Find does Find / Replace in files, using given options and filters -- opens up a

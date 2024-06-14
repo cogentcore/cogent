@@ -47,7 +47,7 @@ func (cv *Code) ConfigActiveFilename(fb *core.FuncButton) *core.FuncButton {
 }
 
 func (cv *Code) CallSaveActiveViewAs(ctx core.Widget) {
-	cv.ConfigActiveFilename(core.NewSoloFuncButton(ctx, cv.SaveActiveViewAs)).CallFunc()
+	cv.ConfigActiveFilename(core.NewSoloFuncButton(ctx).SetFunc(cv.SaveActiveViewAs)).CallFunc()
 }
 
 // SaveActiveViewAs save with specified filename the contents of the
@@ -269,7 +269,7 @@ func (cv *Code) NextViewFile(fnm core.Filename) (*TextEditor, int, bool) { //typ
 
 // CallViewFile calls ViewFile with ActiveFilename set as arg
 func (cv *Code) CallViewFile(ctx core.Widget) {
-	cv.ConfigActiveFilename(core.NewSoloFuncButton(ctx, cv.ViewFile)).CallFunc()
+	cv.ConfigActiveFilename(core.NewSoloFuncButton(ctx).SetFunc(cv.ViewFile)).CallFunc()
 }
 
 // ViewFile views file in an existing TextEditor if it is already viewing that

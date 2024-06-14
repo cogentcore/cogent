@@ -381,7 +381,7 @@ func (cv *Code) EditProjectSettings() { //types:add
 }
 
 func (cv *Code) CallSplitsSetView(ctx core.Widget) {
-	fb := core.NewSoloFuncButton(ctx, cv.SplitsSetView)
+	fb := core.NewSoloFuncButton(ctx).SetFunc(cv.SplitsSetView)
 	fb.Args[0].SetValue(cv.Settings.SplitName)
 	fb.CallFunc()
 }

@@ -269,7 +269,7 @@ func (fn *FileNode) RenameFiles() {
 		}
 		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
 		for _, sn := range nodes {
-			fb := core.NewSoloFuncButton(sn, sn.RenameFile)
+			fb := core.NewSoloFuncButton(sn).SetFunc(sn.RenameFile)
 			fb.Args[0].SetValue(sn.Name)
 			fb.CallFunc()
 		}
