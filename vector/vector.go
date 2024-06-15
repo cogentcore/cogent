@@ -362,7 +362,7 @@ func (vv *Vector) ResizeToContents() { //types:add
 func (vv *Vector) AddImage(fname core.Filename, width, height float32) error { //types:add
 	sv := vv.SVG()
 	sv.UndoSave("AddImage", string(fname))
-	ind := sv.NewEl(svg.ImageType).(*svg.Image)
+	ind := sv.NewElement(svg.ImageType).(*svg.Image)
 	ind.Pos.X = 100 // todo: default pos
 	ind.Pos.Y = 100 // todo: default pos
 	err := ind.OpenImage(string(fname), width, height)
