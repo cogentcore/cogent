@@ -44,6 +44,7 @@ type Vector struct {
 func (vc *Vector) Init() {
 	vc.Frame.Init()
 	vc.EditState.ConfigDefaultGradient()
+	vc.toolbar = "select"
 	vc.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
@@ -67,7 +68,7 @@ func (vc *Vector) Init() {
 		return true
 	})
 
-	core.AddChildAt(vc, "modal-tb", func(w *core.Frame) {
+	core.AddChildAt(vc, "modal-tb", func(w *core.Toolbar) {
 		w.Maker(func(p *core.Plan) {
 			switch vc.toolbar {
 			case "select":
@@ -463,65 +464,94 @@ func (vv *Vector) PasteAvailFunc(bt *core.Button) {
 	bt.SetEnabled(!vv.Clipboard().IsEmpty())
 }
 
-func (vv *Vector) MakeToolbar(tb *core.Toolbar) { // TODO(config)
-	// TODO(kai): remove Update
-	core.NewFuncButton(tb).SetFunc(vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
-	core.NewButton(tb).SetText("New").SetIcon(icons.Add).
-		OnClick(func(e events.Event) {
-			ndr := vv.NewDrawing(Settings.Size)
-			ndr.PromptPhysSize()
+func (vv *Vector) MakeToolbar(p *core.Plan) {
+	core.Add(p, func(w *core.FuncButton) {
+		// TODO(kai): remove Update
+		w.SetFunc(vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetText("New").SetIcon(icons.Add).
+			OnClick(func(e events.Event) {
+				ndr := vv.NewDrawing(Settings.Size)
+				ndr.PromptPhysSize()
+			})
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
+			core.NewFuncButton(m).SetFunc(vv.PromptPhysSize).SetText("Set size").SetIcon(icons.FormatSize)
+			core.NewFuncButton(m).SetFunc(vv.ResizeToContents).SetIcon(icons.Resize)
 		})
-
-	core.NewButton(tb).SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
-		core.NewFuncButton(m).SetFunc(vv.PromptPhysSize).SetText("Set size").
-			SetIcon(icons.FormatSize)
-		core.NewFuncButton(m).SetFunc(vv.ResizeToContents).SetIcon(icons.Resize)
 	})
 
-	core.NewFuncButton(tb).SetFunc(vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
-	core.NewFuncButton(tb).SetFunc(vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
-	core.NewFuncButton(tb).SetFunc(vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
-
-	core.NewButton(tb).SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene) {
-		core.NewFuncButton(m).SetFunc(vv.ExportPNG).SetIcon(icons.Image)
-		core.NewFuncButton(m).SetFunc(vv.ExportPDF).SetIcon(icons.PictureAsPdf)
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
+	})
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
+	})
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
 	})
 
-	core.NewSeparator(tb)
-
-	core.NewFuncButton(tb).SetFunc(vv.Undo).FirstStyler(func(s *styles.Style) {
-		s.SetEnabled(vv.EditState.Undos.HasUndoAvail())
-	})
-	core.NewFuncButton(tb).SetFunc(vv.Redo).FirstStyler(func(s *styles.Style) {
-		s.SetEnabled(vv.EditState.Undos.HasRedoAvail())
+	core.Add(p, func(w *core.Button) {
+		w.SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene) {
+			core.NewFuncButton(m).SetFunc(vv.ExportPNG).SetIcon(icons.Image)
+			core.NewFuncButton(m).SetFunc(vv.ExportPDF).SetIcon(icons.PictureAsPdf)
+		})
 	})
 
-	core.NewSeparator(tb)
+	core.Add(p, func(w *core.Separator) {})
 
-	core.NewFuncButton(tb).SetFunc(vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	core.NewFuncButton(tb).SetFunc(vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	core.NewFuncButton(tb).SetFunc(vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	core.NewFuncButton(tb).SetFunc(vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.Undo).FirstStyler(func(s *styles.Style) {
+			s.SetEnabled(vv.EditState.Undos.HasUndoAvail())
+		})
+	})
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.Redo).FirstStyler(func(s *styles.Style) {
+			s.SetEnabled(vv.EditState.Undos.HasRedoAvail())
+		})
+	})
 
-	core.NewSeparator(tb)
-	core.NewFuncButton(tb).SetFunc(vv.AddImage).SetIcon(icons.Image)
-	core.NewSeparator(tb)
+	core.Add(p, func(w *core.Separator) {})
 
-	core.NewButton(tb).SetText("Zoom page").SetIcon(icons.ZoomOut).
-		SetTooltip("Zoom to see the entire page size for drawing").
-		OnClick(func(e events.Event) {
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	})
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	})
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	})
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	})
+
+	core.Add(p, func(w *core.Separator) {})
+	core.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(vv.AddImage).SetIcon(icons.Image)
+	})
+	core.Add(p, func(w *core.Separator) {})
+
+	core.Add(p, func(w *core.Button) {
+		w.SetText("Zoom page").SetIcon(icons.ZoomOut)
+		w.SetTooltip("Zoom to see the entire page size for drawing")
+		w.OnClick(func(e events.Event) {
 			sv := vv.SVG()
 			sv.ZoomToPage(false)
 			sv.UpdateView(true)
 		})
-
-	core.NewButton(tb).SetText("Zoom all").SetIcon(icons.ZoomOut).
-		SetTooltip("Zoom to see all elements").
-		OnClick(func(e events.Event) {
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetText("Zoom all").SetIcon(icons.ZoomOut)
+		w.SetTooltip("Zoom to see all elements")
+		w.OnClick(func(e events.Event) {
 			sv := vv.SVG()
 			sv.ZoomToContents(false)
 			sv.UpdateView(true)
 		})
+	})
 }
 
 // SetStatus updates the status bar text with the given message, along with other status info
@@ -584,20 +614,20 @@ func NewVectorWindow(fnm string) *Vector {
 
 	b := core.NewBody(winm).SetTitle(winm)
 
-	vv := NewVector(b)
-	// b.AddAppBar(vv.MakeToolbar) // TODO(config):
+	vc := NewVector(b)
+	b.AddAppBar(vc.MakeToolbar)
 
 	b.OnShow(func(e events.Event) {
 		if fnm != "" {
-			vv.OpenDrawingFile(core.Filename(path))
+			vc.OpenDrawingFile(core.Filename(path))
 		} else {
-			vv.EditState.Init(vv)
+			vc.EditState.Init(vc)
 		}
 	})
 
 	b.RunWindow()
 
-	return vv
+	return vc
 }
 
 /////////////////////////////////////////////////////////////////////////
