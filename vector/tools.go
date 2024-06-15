@@ -55,23 +55,10 @@ func (gv *Vector) SetTool(tl Tools) {
 	es.ResetSelected()
 	gv.EditState.Tool = tl
 	gv.SetDefaultStyle()
-	gv.SetModalToolbar()
+	gv.ModalToolbar().Update()
 	gv.SetStatus("Tool")
 	sv := gv.SVG()
 	sv.UpdateSelect()
-}
-
-// SetModalToolbar sets the current modal toolbar based on tool
-func (gv *Vector) SetModalToolbar() {
-	tl := gv.EditState.Tool
-	switch tl {
-	case NodeTool:
-		gv.SetModalNode()
-	case TextTool:
-		gv.SetModalText()
-	default:
-		gv.SetModalSelect()
-	}
 }
 
 func (gv *Vector) MakeTools(p *core.Plan) {

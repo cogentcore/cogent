@@ -36,15 +36,11 @@ type Vector struct {
 
 	// current edit state
 	EditState EditState `set:"-"`
-
-	// toolbar is the currently active toolbar name.
-	toolbar string
 }
 
 func (vc *Vector) Init() {
 	vc.Frame.Init()
 	vc.EditState.ConfigDefaultGradient()
-	vc.toolbar = "select"
 	vc.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
@@ -70,13 +66,13 @@ func (vc *Vector) Init() {
 
 	core.AddChildAt(vc, "modal-tb", func(w *core.Toolbar) {
 		w.Maker(func(p *core.Plan) {
-			switch vc.toolbar {
-			case "select":
-				vc.MakeSelectToolbar(p)
-			case "node":
+			switch vc.EditState.Tool {
+			case NodeTool:
 				vc.MakeNodeToolbar(p)
-			case "text":
+			case TextTool:
 				vc.MakeTextToolbar(p)
+			default:
+				vc.MakeSelectToolbar(p)
 			}
 		})
 	})
@@ -375,35 +371,8 @@ func (vv *Vector) AddImage(fname core.Filename, width, height float32) error { /
 	return err
 }
 
-//////////////////////////////////////////////////////////////////////////
-//  GUI Config
-
-func (vv *Vector) ModalToolbarStack() *core.Frame {
-	return vv.ChildByName("modal-tb", 1).(*core.Frame)
-}
-
-// SetModalSelect sets the modal toolbar to be the select one
-func (vv *Vector) SetModalSelect() {
-	tbs := vv.ModalToolbarStack()
-	vv.UpdateSelectToolbar()
-	tbs.StackTop = 0
-	tbs.NeedsLayout()
-}
-
-// SetModalNode sets the modal toolbar to be the node editing one
-func (vv *Vector) SetModalNode() {
-	tbs := vv.ModalToolbarStack()
-	vv.UpdateNodeToolbar()
-	tbs.StackTop = 1
-	tbs.NeedsLayout()
-}
-
-// SetModalText sets the modal toolbar to be the text editing one
-func (vv *Vector) SetModalText() {
-	tbs := vv.ModalToolbarStack()
-	vv.UpdateTextToolbar()
-	tbs.StackTop = 2
-	tbs.NeedsLayout()
+func (vv *Vector) ModalToolbar() *core.Toolbar {
+	return vv.ChildByName("modal-tb", 1).(*core.Toolbar)
 }
 
 func (vv *Vector) HBox() *core.Frame {
