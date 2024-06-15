@@ -46,6 +46,7 @@ func (vc *Vector) Init() {
 	vc.EditState.ConfigDefaultGradient()
 	vc.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
+		s.Grow.Set(1, 1)
 	})
 
 	vc.AddCloseDialog(func(d *core.Body) bool {
@@ -83,29 +84,26 @@ func (vc *Vector) Init() {
 	})
 
 	core.AddChildAt(vc, "hbox", func(w *core.Frame) {
-
+		w.Styler(func(s *styles.Style) {
+			s.Grow.Set(1, 1)
+		})
 		core.AddChildAt(w, "tools", func(w *core.Toolbar) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 		})
-
 		core.AddChildAt(w, "splits", func(w *core.Splits) {
 			w.SetSplits(0.15, 0.60, 0.25)
-
 			core.AddChildAt(w, "layer-tree", func(w *core.Frame) {
 				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
-
 				core.AddChild(w, func(w *core.FuncButton) {
 					w.SetFunc(vc.AddLayer)
 				})
-
 				core.AddChildAt(w, "layers", func(w *core.Table) {
 					w.SetSlice(&vc.EditState.Layers)
 				})
-
 				core.AddChildAt(w, "tree-frame", func(w *core.Frame) {
 					w.Styler(func(s *styles.Style) {
 						s.Direction = styles.Column
@@ -120,7 +118,6 @@ func (vc *Vector) Init() {
 					})
 				})
 			})
-
 			core.AddChildAt(w, "svg", func(w *SVG) {
 				w.Vector = vc
 				w.UpdateGradients(vc.EditState.Gradients)
@@ -130,7 +127,6 @@ func (vc *Vector) Init() {
 			})
 		})
 	})
-
 	core.AddChildAt(vc, "status-bar", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
