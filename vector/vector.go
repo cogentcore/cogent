@@ -36,25 +36,53 @@ type Vector struct {
 
 	// current edit state
 	EditState EditState `set:"-"`
+
+	// toolbar is the currently active toolbar name.
+	toolbar string
 }
 
-func (vv *Vector) Init() {
-	vv.Frame.Init()
-	vv.EditState.ConfigDefaultGradient()
-	vv.Styler(func(s *styles.Style) {
+func (vc *Vector) Init() {
+	vc.Frame.Init()
+	vc.EditState.ConfigDefaultGradient()
+	vc.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 	})
 
-	vv.AddCloseDialog()
-
-	core.AddChild(vv, func(w *core.Frame) {
-		w.SetName("modal-tb")
-		w.Styler(func(s *styles.Style) {
-			s.Display = styles.Stacked
+	vc.AddCloseDialog(func(d *core.Body) bool {
+		if !vc.EditState.Changed {
+			return false
+		}
+		d.AddTitle("Unsaved changes").
+			AddText(fmt.Sprintf("There are unsaved changes in %s", dirs.DirAndFile(string(vc.Filename))))
+		d.AddBottomBar(func(parent core.Widget) {
+			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
+				vc.Scene.Close()
+			})
+			d.AddOK(parent).SetText("Save and close").OnClick(func(e events.Event) {
+				vc.SaveDrawing()
+				vc.Scene.Close()
+			})
 		})
+		return true
 	})
 
-	core.AddChildAt(vv, "hbox", func(w *core.Frame) {
+	core.AddChildAt(vc, "modal-tb", func(w *core.Frame) {
+		w.Maker(func(p *core.Plan) {
+			switch vc.toolbar {
+			case "select":
+				vc.SelectToolbar(p)
+			case "node":
+			case "text":
+			}
+		})
+		// core.NewToolbar(tb).SetName("node-tb")
+		// core.NewToolbar(tb).SetName("text-tb")
+
+		// vc.ConfigNodeToolbar()
+		// vc.ConfigTextToolbar()
+	})
+
+	core.AddChildAt(vc, "hbox", func(w *core.Frame) {
 
 		core.AddChildAt(w, "tools", func(w *core.Toolbar) {
 			w.Styler(func(s *styles.Style) {
@@ -71,11 +99,11 @@ func (vv *Vector) Init() {
 				})
 
 				core.AddChild(w, func(w *core.FuncButton) {
-					w.SetFunc(vv.AddLayer)
+					w.SetFunc(vc.AddLayer)
 				})
 
 				core.AddChildAt(w, "layers", func(w *core.Table) {
-					w.SetSlice(&vv.EditState.Layers)
+					w.SetSlice(&vc.EditState.Layers)
 				})
 
 				core.AddChildAt(w, "tree-frame", func(w *core.Frame) {
@@ -94,8 +122,8 @@ func (vv *Vector) Init() {
 			})
 
 			core.AddChildAt(w, "svg", func(w *SVG) {
-				w.Vector = vv
-				w.UpdateGradients(vv.EditState.Gradients)
+				w.Vector = vc
+				w.UpdateGradients(vc.EditState.Gradients)
 			})
 			core.AddChildAt(w, "tabs", func(w *core.Tabs) {
 				w.SetType(core.FunctionalTabs)
@@ -103,7 +131,7 @@ func (vv *Vector) Init() {
 		})
 	})
 
-	core.AddChildAt(vv, "status-bar", func(w *core.Frame) {
+	core.AddChildAt(vc, "status-bar", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 		})
@@ -149,13 +177,12 @@ func (vv *Vector) Init() {
 	// 	// 		stv.SetStruct(tvn.SrcNode)
 	// })
 
-	vv.ConfigModalToolbar()
-	vv.ConfigTools()
-	vv.ConfigTabs()
+	// vc.ConfigTools()
+	// vc.ConfigTabs()
 
-	vv.SetPhysSize(&Settings.Size)
+	// vc.SetPhysSize(&Settings.Size)
 
-	vv.SyncLayers()
+	// vc.SyncLayers()
 
 }
 
@@ -501,20 +528,6 @@ func (vv *Vector) MakeToolbar(tb *core.Toolbar) { // TODO(config)
 		})
 }
 
-func (vv *Vector) ConfigModalToolbar() {
-	tb := vv.ModalToolbarStack()
-	if tb == nil || tb.HasChildren() {
-		return
-	}
-	core.NewToolbar(tb).SetName("select-tb")
-	core.NewToolbar(tb).SetName("node-tb")
-	core.NewToolbar(tb).SetName("text-tb")
-
-	vv.ConfigSelectToolbar()
-	vv.ConfigNodeToolbar()
-	vv.ConfigTextToolbar()
-}
-
 // SetStatus updates the status bar text with the given message, along with other status info
 func (vv *Vector) SetStatus(msg string) {
 	sb := vv.StatusBar()
@@ -529,28 +542,6 @@ func (vv *Vector) SetStatus(msg string) {
 	}
 	str += msg
 	text.SetText(str)
-}
-
-// AddCloseDialog adds the close dialog that prompts the user to save the
-// file when they try to close the scene containing this vector view.
-func (vv *Vector) AddCloseDialog() {
-	vv.WidgetBase.AddCloseDialog(func(d *core.Body) bool {
-		if !vv.EditState.Changed {
-			return false
-		}
-		d.AddTitle("Unsaved changes").
-			AddText(fmt.Sprintf("There are unsaved changes in %s", dirs.DirAndFile(string(vv.Filename))))
-		d.AddBottomBar(func(parent core.Widget) {
-			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
-				vv.Scene.Close()
-			})
-			d.AddOK(parent).SetText("Save and close").OnClick(func(e events.Event) {
-				vv.SaveDrawing()
-				vv.Scene.Close()
-			})
-		})
-		return true
-	})
 }
 
 func (vv *Vector) SetTitle() {

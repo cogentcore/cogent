@@ -46,7 +46,7 @@ type Preferences struct { //types:add
 	VectorDisp bool
 
 	// snap positions and sizes to underlying grid
-	SnapVector bool
+	SnapGrid bool
 
 	// snap positions and sizes to line up with other elements
 	SnapGuide bool
@@ -94,7 +94,7 @@ func (pf *Preferences) Defaults() {
 	// pf.LineStyle.FillStyle.On = false
 	pf.VectorDisp = true
 	pf.SnapTol = 3
-	pf.SnapVector = true
+	pf.SnapGrid = true
 	pf.SnapGuide = true
 	pf.SnapNodes = true
 	home := core.SystemSettings.User.HomeDir

@@ -110,7 +110,7 @@ func SnapToIncr(val, off, incr float32) (float32, bool) {
 }
 
 func (sv *SVG) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
-	if !Settings.SnapVector {
+	if !Settings.SnapGrid {
 		return rawpt
 	}
 	grinc, groff := sv.VectorDots()
