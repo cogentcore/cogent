@@ -116,6 +116,13 @@ func (vc *Vector) Init() {
 			})
 			core.AddChildAt(w, "tabs", func(w *core.Tabs) {
 				w.SetType(core.FunctionalTabs)
+				pt := w.NewTab("Paint")
+				NewPaintView(pt).SetVector(vc)
+				at := w.NewTab("Align")
+				NewAlignView(at).SetVector(vc)
+				vc.EditState.Text.Defaults()
+				tt := w.NewTab("Text")
+				core.NewForm(tt).SetStruct(&vc.EditState.Text)
 			})
 		})
 	})
@@ -597,27 +604,9 @@ func NewVectorWindow(fnm string) *Vector {
 /////////////////////////////////////////////////////////////////////////
 //   Controls
 
-// RecycleTab returns the tab with given the name, first by looking for
-// an existing one, and if not found, making a new one.
-// If sel, then select it.
-func (gv *Vector) RecycleTab(name string, sel bool) *core.Frame {
-	tv := gv.Tabs()
-	return tv.RecycleTab(name, sel)
-}
-
 // Tab returns the tab with the given name
 func (gv *Vector) Tab(name string) *core.Frame {
 	return gv.Tabs().TabByName(name)
-}
-
-func (vv *Vector) ConfigTabs() {
-	pt := vv.RecycleTab("Paint", false)
-	NewPaintView(pt).SetVector(vv)
-	at := vv.RecycleTab("Align", false)
-	NewAlignView(at).SetVector(vv)
-	vv.EditState.Text.Defaults()
-	tt := vv.RecycleTab("Text", false)
-	core.NewForm(tt).SetStruct(&vv.EditState.Text)
 }
 
 func (vv *Vector) PaintView() *PaintView {
