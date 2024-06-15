@@ -110,9 +110,7 @@ func (vc *Vector) Init() {
 					core.AddChildAt(w, "tree", func(w *Tree) {
 						w.Vector = vc
 						w.OpenDepth = 4
-						w.Updater(func() {
-							// w.SyncTree(vc.SVG().Root())
-						})
+						w.SyncTree(vc.SVG().Root())
 					})
 				})
 			})
