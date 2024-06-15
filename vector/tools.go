@@ -74,43 +74,48 @@ func (gv *Vector) SetModalToolbar() {
 	}
 }
 
-func (gv *Vector) ConfigTools() {
-	tb := gv.Tools()
-
-	if tb.HasChildren() {
-		return
-	}
-
-	core.NewButton(tb).SetIcon(icons.ArrowSelectorTool).SetShortcut("S").
-		SetTooltip("Select, move, and resize objects").
-		OnClick(func(e events.Event) {
+func (gv *Vector) MakeTools(p *core.Plan) {
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.ArrowSelectorTool).SetShortcut("S")
+		w.SetTooltip("Select, move, and resize objects")
+		w.OnClick(func(e events.Event) {
 			gv.SetTool(SelectTool)
 		})
-	core.NewButton(tb).SetIcon("tool-node").SetShortcut("N").
-		SetTooltip("Select and move node points within paths").
-		OnClick(func(e events.Event) {
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon("tool-node").SetShortcut("N")
+		w.SetTooltip("Select and move node points within paths")
+		w.OnClick(func(e events.Event) {
 			gv.SetTool(NodeTool)
 		})
-	core.NewButton(tb).SetIcon(icons.Rectangle).SetShortcut("R").
-		SetTooltip("Create rectangles and squares").
-		OnClick(func(e events.Event) {
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.Rectangle).SetShortcut("R")
+		w.SetTooltip("Create rectangles and squares")
+		w.OnClick(func(e events.Event) {
 			gv.SetTool(RectTool)
 		})
-	core.NewButton(tb).SetIcon(icons.Circle).SetShortcut("E").
-		SetTooltip("Create circles, ellipses, and arcs").
-		OnClick(func(e events.Event) {
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.Circle).SetShortcut("E")
+		w.SetTooltip("Create circles, ellipses, and arcs")
+		w.OnClick(func(e events.Event) {
 			gv.SetTool(EllipseTool)
 		})
-	core.NewButton(tb).SetIcon(icons.LineCurve).SetShortcut("B").
-		SetTooltip("Create bezier curves (straight lines and curves with control points)").
-		OnClick(func(e events.Event) {
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon(icons.LineCurve).SetShortcut("B")
+		w.SetTooltip("Create bezier curves (straight lines and curves with control points)")
+		w.OnClick(func(e events.Event) {
 			gv.SetTool(BezierTool)
 		})
-	core.NewButton(tb).SetIcon("tool-text").SetShortcut("T").
-		SetTooltip("Add and edit text").
-		OnClick(func(e events.Event) {
+	})
+	core.Add(p, func(w *core.Button) {
+		w.SetIcon("tool-text").SetShortcut("T")
+		w.SetTooltip("Add and edit text")
+		w.OnClick(func(e events.Event) {
 			gv.SetTool(TextTool)
 		})
-
+	})
 	gv.SetTool(SelectTool)
 }

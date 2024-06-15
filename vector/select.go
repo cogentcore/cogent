@@ -26,8 +26,8 @@ func (vc *Vector) InitSelectButton(w core.Widget) {
 	})
 }
 
-// SelectToolbar adds the select toolbar to the given plan.
-func (vc *Vector) SelectToolbar(p *core.Plan) {
+// MakeSelectToolbar adds the select toolbar to the given plan.
+func (vc *Vector) MakeSelectToolbar(p *core.Plan) {
 	core.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapGrid, w)
 		w.SetText("Snap grid")

@@ -72,7 +72,7 @@ func (vc *Vector) Init() {
 		w.Maker(func(p *core.Plan) {
 			switch vc.toolbar {
 			case "select":
-				vc.SelectToolbar(p)
+				vc.MakeSelectToolbar(p)
 			case "node":
 			case "text":
 			}
@@ -92,6 +92,7 @@ func (vc *Vector) Init() {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
+			w.Maker(vc.MakeTools)
 		})
 		core.AddChildAt(w, "splits", func(w *core.Splits) {
 			w.SetSplits(0.15, 0.60, 0.25)
