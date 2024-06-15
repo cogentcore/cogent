@@ -74,12 +74,11 @@ func (vc *Vector) Init() {
 			case "select":
 				vc.MakeSelectToolbar(p)
 			case "node":
+				vc.MakeNodeToolbar(p)
 			case "text":
 				vc.MakeTextToolbar(p)
 			}
 		})
-		// core.NewToolbar(tb).SetName("node-tb")
-		// vc.ConfigNodeToolbar()
 	})
 
 	core.AddChildAt(vc, "hbox", func(w *core.Frame) {

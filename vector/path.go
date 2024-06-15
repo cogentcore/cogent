@@ -9,32 +9,17 @@ import (
 	"image"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
 
-func (vv *Vector) NodeToolbar() *core.Toolbar {
-	tbs := vv.ModalToolbarStack()
-	tb := tbs.ChildByName("node-tb", 0).(*core.Toolbar)
-	return tb
-}
-
-// ConfigNodeToolbar configures the node modal toolbar (default tooblar)
-func (vv *Vector) ConfigNodeToolbar() {
-	tb := vv.NodeToolbar()
-	if tb.HasChildren() {
-		return
-	}
-
-	grs := core.NewSwitch(tb).SetText("Snap Node").SetChecked(Settings.SnapNodes)
-	grs.SetTooltip("snap movement and sizing of nodes, using overall snap settings")
-	grs.OnChange(func(e events.Event) {
-		Settings.SnapNodes = grs.IsChecked()
+func (vv *Vector) MakeNodeToolbar(p *core.Plan) {
+	core.Add(p, func(w *core.Switch) {
+		core.Bind(&Settings.SnapNodes, w)
+		w.SetText("Snap nodes").SetTooltip("Snap movement and sizing of nodes, using overall snap settings")
 	})
-
-	core.NewSeparator(tb)
+	core.Add(p, func(w *core.Separator) {})
 
 	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
 	// 	gv.This, func(recv, send tree.Node, sig int64, data interface{}) {
@@ -44,22 +29,23 @@ func (vv *Vector) ConfigNodeToolbar() {
 	//
 	// core.NewSeparator(tb, "sep-group")
 
-	core.NewText(tb).SetText("X: ")
-
-	px := core.NewSpinner(tb).SetStep(1).SetValue(0).
-		SetTooltip("horizontal coordinate of node, in document units")
-	px.OnChange(func(e events.Event) {
-		// vv.NodeSetXPos(px.Value)
+	core.Add(p, func(w *core.Text) {
+		w.SetText("X: ")
 	})
+	// px := core.NewSpinner(tb).SetStep(1).SetValue(0).
+	// 	SetTooltip("horizontal coordinate of node, in document units")
+	// px.OnChange(func(e events.Event) {
+	// 	// vv.NodeSetXPos(px.Value)
+	// })
 
-	core.NewText(tb).SetText("Y: ")
-
-	py := core.NewSpinner(tb).SetStep(1).SetValue(0).
-		SetTooltip("vertical coordinate of node, in document units")
-	py.OnChange(func(e events.Event) {
-		// vv.NodeSetYPos(py.Value)
+	core.Add(p, func(w *core.Text) {
+		w.SetText("Y: ")
 	})
-
+	// py := core.NewSpinner(tb).SetStep(1).SetValue(0).
+	// 	SetTooltip("vertical coordinate of node, in document units")
+	// py.OnChange(func(e events.Event) {
+	// 	// vv.NodeSetYPos(py.Value)
+	// })
 }
 
 // NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
@@ -70,15 +56,15 @@ func (vv *Vector) NodeEnableFunc(act *core.Button) {
 
 // UpdateNodeToolbar updates the node toolbar based on current nodeion
 func (vv *Vector) UpdateNodeToolbar() {
-	tb := vv.NodeToolbar()
-	es := &vv.EditState
-	if es.Tool != NodeTool {
-		return
-	}
-	px := tb.ChildByName("posx", 8).(*core.Spinner)
-	px.SetValue(es.DragSelectCurrentBBox.Min.X)
-	py := tb.ChildByName("posy", 9).(*core.Spinner)
-	py.SetValue(es.DragSelectCurrentBBox.Min.Y)
+	// tb := vv.NodeToolbar()
+	// es := &vv.EditState
+	// if es.Tool != NodeTool {
+	// 	return
+	// }
+	// px := tb.ChildByName("posx", 8).(*core.Spinner)
+	// px.SetValue(es.DragSelectCurrentBBox.Min.X)
+	// py := tb.ChildByName("posy", 9).(*core.Spinner)
+	// py.SetValue(es.DragSelectCurrentBBox.Min.Y)
 }
 
 ///////////////////////////////////////////////////////////////////////
