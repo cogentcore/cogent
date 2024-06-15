@@ -75,13 +75,11 @@ func (vc *Vector) Init() {
 				vc.MakeSelectToolbar(p)
 			case "node":
 			case "text":
+				vc.MakeTextToolbar(p)
 			}
 		})
 		// core.NewToolbar(tb).SetName("node-tb")
-		// core.NewToolbar(tb).SetName("text-tb")
-
 		// vc.ConfigNodeToolbar()
-		// vc.ConfigTextToolbar()
 	})
 
 	core.AddChildAt(vc, "hbox", func(w *core.Frame) {
@@ -110,12 +108,11 @@ func (vc *Vector) Init() {
 					w.Styler(func(s *styles.Style) {
 						s.Direction = styles.Column
 					})
-					core.AddChildAt(w, "tree", func(w *core.Tree) {
-						// w.Vector = vv
+					core.AddChildAt(w, "tree", func(w *Tree) {
+						w.Vector = vc
 						w.OpenDepth = 4
 						w.Updater(func() {
-							// TODO: get SVG
-							// tv.SyncTree(sv.Root())
+							// w.SyncTree(vc.SVG().Root())
 						})
 					})
 				})

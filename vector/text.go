@@ -52,7 +52,7 @@ type TextStyle struct {
 }
 
 func (ts *TextStyle) Update() {
-	// this is called augtomatically when edited
+	// this is called automatically when edited (TODO: not anymore)
 	if ts.Vector != nil {
 		ts.Vector.SetTextProperties(ts.TextProperties())
 		ts.Vector.SetText(ts.Text)
@@ -204,26 +204,16 @@ func (gv *Vector) SetText(txt string) {
 ///////////////////////////////////////////////////////////////////////
 // Toolbar
 
-func (gv *Vector) TextToolbar() *core.Toolbar {
-	tbs := gv.ModalToolbarStack()
-	tb := tbs.ChildByName("text-tb", 2).(*core.Toolbar)
-	return tb
-}
-
-// ConfigTextToolbar configures the text modal toolbar
-func (gv *Vector) ConfigTextToolbar() {
-	tb := gv.TextToolbar()
-	if tb.HasChildren() {
-		return
-	}
-	es := &gv.EditState
+func (vc *Vector) MakeTextToolbar(p *core.Plan) {
+	es := &vc.EditState
 	ts := &es.Text
-	ts.Vector = gv
+	ts.Vector = vc
 
-	txt := core.NewTextField(tb)
-	txt.SetName("text")
-	txt.Tooltip = "current text string"
-	txt.SetText(ts.Text)
+	core.Add(p, func(w *core.TextField) {
+		core.Bind(&ts.Text, w)
+		w.SetTooltip("Current text")
+	})
+
 	// txt.SetProp("width", units.NewCh(50))
 	// txt.TextFieldSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
 	// 	if sig == int64(core.TextFieldDone) {
@@ -256,13 +246,6 @@ func (gv *Vector) ConfigTextToolbar() {
 
 // UpdateTextToolbar updates the select toolbar based on current selection
 func (gv *Vector) UpdateTextToolbar() {
-	tb := gv.TextToolbar()
-	es := &gv.EditState
-	ts := &es.Text
-
-	txt := tb.ChildByName("text", 0).(*core.TextField)
-	txt.SetText(ts.Text)
-
 	// fw := tb.ChildByName("font", 0).(core.Node2D)
 	// ts.FontVal.UpdateWidget()
 
