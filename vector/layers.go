@@ -166,10 +166,10 @@ func (vv *Vector) AddLayer() { //types:add
 	if nl == 0 {
 		bg := svr.InsertNewChild(svg.GroupType, si)
 		bg.AsTree().SetName("LayerBG")
-		bg.AsTree().Properties["groupmode"] = "layer"
+		bg.AsTree().SetProperty("groupmode", "layer")
 		l1 := svr.InsertNewChild(svg.GroupType, si+1)
 		l1.AsTree().SetName("Layer1")
-		l1.AsTree().Properties["groupmode"] = "layer"
+		l1.AsTree().SetProperty("groupmode", "layer")
 		nk := len(svr.Children)
 		for i := nk - 1; i >= 3; i-- {
 			kc := svr.Child(i)
@@ -179,7 +179,7 @@ func (vv *Vector) AddLayer() { //types:add
 	} else {
 		l1 := svr.InsertNewChild(svg.GroupType, si+nl)
 		l1.AsTree().SetName(fmt.Sprintf("Layer%d", nl))
-		l1.AsTree().Properties["groupmode"] = "layer"
+		l1.AsTree().SetProperty("groupmode", "layer")
 		vv.SetCurLayer(l1.AsTree().Name)
 	}
 	vv.UpdateLayerView()

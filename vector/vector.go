@@ -113,6 +113,9 @@ func (vc *Vector) Init() {
 			core.AddChildAt(w, "svg", func(w *SVG) {
 				w.Vector = vc
 				w.UpdateGradients(vc.EditState.Gradients)
+				// not added to children yet so does not work:
+				// vc.SetPhysSize(&Settings.Size)
+				// vc.SyncLayers()
 			})
 			core.AddChildAt(w, "tabs", func(w *core.Tabs) {
 				w.SetType(core.FunctionalTabs)
@@ -174,11 +177,6 @@ func (vc *Vector) Init() {
 
 	// vc.ConfigTools()
 	// vc.ConfigTabs()
-
-	// vc.SetPhysSize(&Settings.Size)
-
-	// vc.SyncLayers()
-
 }
 
 // OpenDrawingFile opens a new .svg drawing file -- just the basic opening
