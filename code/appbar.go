@@ -5,6 +5,7 @@
 package code
 
 import (
+	"fmt"
 	"strings"
 
 	"cogentcore.org/core/core"
@@ -18,6 +19,7 @@ import (
 )
 
 func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
+	fmt.Printf("cv make toolbar: %p\n", cv)
 	core.AddInit(p, "app-chooser", func(w *core.Chooser) {
 		cv.AddChooserFiles(w)
 		cv.AddChooserSymbols(w)
@@ -128,6 +130,7 @@ func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
 		w.SetFunc(cv.Commit).SetIcon(icons.Star)
 	})
 	core.Add(p, func(w *core.FuncButton) {
+		fmt.Printf("add vcs log: %p\n", cv)
 		w.SetFunc(cv.VCSLog).SetText("VCS Log").SetIcon(icons.List)
 	})
 	core.Add(p, func(w *core.FuncButton) {
