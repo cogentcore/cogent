@@ -209,8 +209,8 @@ func (sv *SVG) SSVG() *svg.SVG {
 	return sv.SVG.SVG
 }
 
-// Root returns the root [svg.SVGNode].
-func (sv *SVG) Root() *svg.SVGNode {
+// Root returns the root [svg.Root].
+func (sv *SVG) Root() *svg.Root {
 	return sv.SVG.SVG.Root
 }
 
