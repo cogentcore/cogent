@@ -76,7 +76,7 @@ func (sv *SpellPanel) Init() {
 				OnClick(func(e events.Event) {
 					cur := ""
 					d := core.NewBody().AddTitle("Select a Text File to Add to Corpus")
-					fv := core.NewFilePicker(d).SetFilename(cur).SetExt(".txt")
+					fv := core.NewFilePicker(d).SetFilename(cur).SetExtensions(".txt")
 					fv.OnSelect(func(e events.Event) {
 						cur = fv.SelectedFile()
 					}).OnDoubleClick(func(e events.Event) {
