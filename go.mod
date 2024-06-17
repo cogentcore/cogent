@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.1.5-0.20240615000410-51cc7abe2d2c
+	cogentcore.org/core v0.1.5-0.20240617234330-91ffe7918e94
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2

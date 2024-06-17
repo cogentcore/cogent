@@ -1,5 +1,5 @@
-cogentcore.org/core v0.1.5-0.20240615000410-51cc7abe2d2c h1:F4RUdOehu30gK51C/eoWHsAhB5akJ1GZ+0HyjcrEElI=
-cogentcore.org/core v0.1.5-0.20240615000410-51cc7abe2d2c/go.mod h1:o477M2AoxLk2ayvQgNiN1eCkXPn0cZuY7JJgX+cxoa0=
+cogentcore.org/core v0.1.5-0.20240617234330-91ffe7918e94 h1:0+iZRIYmzqH98p5ptMPeZKJOxxjJLf81TAC0BxHg1pA=
+cogentcore.org/core v0.1.5-0.20240617234330-91ffe7918e94/go.mod h1:o477M2AoxLk2ayvQgNiN1eCkXPn0cZuY7JJgX+cxoa0=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4 h1:6lx9xzJAhdjq0LvVfbITeC3IH9Fzvo1aBahyPu2FuG8=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4/go.mod h1:FChzXi1izqzdPb6BiNZmcZLGyTYiT61iGx9Rxx9GNeI=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
