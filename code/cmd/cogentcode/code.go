@@ -18,6 +18,7 @@ import (
 func main() {
 	pdir := core.TheApp.AppDataDir()
 	lfnm := filepath.Join(pdir, "cogentcode.log")
+	_ = lfnm
 
 	// we must load the settings before initializing the console
 	errors.Log(core.LoadAllSettings())

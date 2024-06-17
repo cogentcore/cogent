@@ -5,7 +5,6 @@
 package code
 
 import (
-	"fmt"
 	"strings"
 
 	"cogentcore.org/core/core"
@@ -19,13 +18,10 @@ import (
 )
 
 func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
-	fmt.Printf("cv make toolbar: %p\n", cv)
 	core.AddInit(p, "app-chooser", func(w *core.Chooser) {
 		cv.AddChooserFiles(w)
 		cv.AddChooserSymbols(w)
-		if tb := core.ParentToolbar(w); tb != nil {
-			tb.AddOverflowMenu(cv.OverflowMenu)
-		}
+		p.Widget.(*core.Toolbar).AddOverflowMenu(cv.OverflowMenu)
 		w.OnFirst(events.KeyChord, func(e events.Event) {
 			kf := keymap.Of(e.KeyChord())
 			if kf == keymap.Abort {
@@ -130,7 +126,6 @@ func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
 		w.SetFunc(cv.Commit).SetIcon(icons.Star)
 	})
 	core.Add(p, func(w *core.FuncButton) {
-		fmt.Printf("add vcs log: %p\n", cv)
 		w.SetFunc(cv.VCSLog).SetText("VCS Log").SetIcon(icons.List)
 	})
 	core.Add(p, func(w *core.FuncButton) {
