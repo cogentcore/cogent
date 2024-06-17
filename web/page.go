@@ -57,8 +57,7 @@ func (pg *Page) OpenURL(url string) {
 	pg.Update()
 }
 
-// AppBar is the default app bar for a [Page]
-func (pg *Page) AppBar(p *core.Plan) {
+func (pg *Page) MakeToolbar(p *core.Plan) {
 	core.AddInit(p, "back", func(w *core.Button) {
 		w.OnClick(func(e events.Event) {
 			if len(pg.History) > 1 {

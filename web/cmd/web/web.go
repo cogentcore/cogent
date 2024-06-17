@@ -13,6 +13,6 @@ func main() {
 	b := core.NewBody("Cogent Web")
 	pg := web.NewPage(b)
 	pg.OpenURL("https://google.com")
-	b.AddAppBar(pg.AppBar)
+	b.AddAppBar(pg.MakeToolbar)
 	b.RunMainWindow()
 }
