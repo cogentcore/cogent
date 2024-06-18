@@ -62,6 +62,7 @@ func (pg *Page) MakeToolbar(p *core.Plan) {
 		w.OnClick(func(e events.Event) {
 			if len(pg.History) > 1 {
 				pg.OpenURL(pg.History[len(pg.History)-2])
+				e.SetHandled()
 			}
 		})
 	})
