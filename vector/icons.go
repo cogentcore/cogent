@@ -6,9 +6,8 @@ package vector
 
 import (
 	"embed"
-	"io/fs"
 
-	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/icons"
 )
 
@@ -18,5 +17,5 @@ import (
 var Icons embed.FS
 
 func init() {
-	icons.AddFS(errors.Log1(fs.Sub(Icons, "icons")))
+	icons.AddFS(fsx.Sub(Icons, "icons"))
 }

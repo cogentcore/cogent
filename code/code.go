@@ -10,7 +10,6 @@ package code
 import (
 	"embed"
 	"fmt"
-	"io/fs"
 	"log"
 	"log/slog"
 	"os"
@@ -21,6 +20,7 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -38,7 +38,7 @@ import (
 var Icons embed.FS
 
 func init() {
-	icons.AddFS(errors.Log1(fs.Sub(Icons, "icons")))
+	icons.AddFS(fsx.Sub(Icons, "icons"))
 }
 
 // Code is the core editor and tab viewer widget for the Code system. The
