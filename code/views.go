@@ -68,7 +68,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	ond, _, got := cv.OpenNodeForTextEditor(atv)
 	adir := ""
 	if got {
-		adir, _ = filepath.Split(string(ond.FPath))
+		adir, _ = filepath.Split(string(ond.Filepath))
 	}
 
 	var res []filetree.SearchResults

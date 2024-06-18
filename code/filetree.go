@@ -71,8 +71,8 @@ func (fn *FileNode) SetRunExec() {
 	}
 	ge, ok := ParentCode(fn.This)
 	if ok {
-		ge.Settings.RunExec = fn.FPath
-		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.FPath)))
+		ge.Settings.RunExec = fn.Filepath
+		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.Filepath)))
 	}
 }
 
@@ -183,7 +183,7 @@ func (on *OpenNodes) DeleteDeleted() {
 	sz := len(*on)
 	for i := sz - 1; i >= 0; i-- {
 		fn := (*on)[i]
-		if fn.This == nil || fn.FRoot == nil {
+		if fn.This == nil || fn.FileRoot == nil {
 			on.DeleteIndex(i)
 		}
 	}
@@ -194,7 +194,7 @@ func (on *OpenNodes) Strings() []string {
 	on.DeleteDeleted()
 	sl := make([]string, len(*on))
 	for i, fn := range *on {
-		rp := fn.FRoot.RelPath(fn.FPath)
+		rp := fn.FileRoot.RelPath(fn.Filepath)
 		rp = strings.TrimSuffix(rp, fn.Name)
 		if rp != "" {
 			sl[i] = fn.Name + " - " + rp
@@ -233,7 +233,7 @@ func (on *OpenNodes) NChanged() int {
 // FindPath finds node for given path, nil if not found
 func (on *OpenNodes) FindPath(path string) *filetree.Node {
 	for _, f := range *on {
-		if f.FPath == core.Filename(path) {
+		if f.Filepath == core.Filename(path) {
 			return f
 		}
 	}

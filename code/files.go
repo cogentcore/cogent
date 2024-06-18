@@ -96,10 +96,10 @@ func (cv *Code) CloseActiveView() { //types:add
 	if got {
 		ond.Buffer.Close(func(canceled bool) {
 			if canceled {
-				cv.SetStatus(fmt.Sprintf("File %v NOT closed", ond.FPath))
+				cv.SetStatus(fmt.Sprintf("File %v NOT closed", ond.Filepath))
 				return
 			}
-			cv.SetStatus(fmt.Sprintf("File %v closed", ond.FPath))
+			cv.SetStatus(fmt.Sprintf("File %v closed", ond.Filepath))
 			cv.OpenNodes.Delete(ond)
 		})
 	}
@@ -165,7 +165,7 @@ func (cv *Code) AutoSaveCheck(tv *TextEditor, vidx int, fn *filetree.Node) bool 
 // OpenFileNode opens file for file node -- returns new bool and error
 func (cv *Code) OpenFileNode(fn *filetree.Node) (bool, error) {
 	if fn.IsDir() {
-		return false, fmt.Errorf("cannot open directory: %v", fn.FPath)
+		return false, fmt.Errorf("cannot open directory: %v", fn.Filepath)
 	}
 	filetree.NodeHiStyle = core.AppearanceSettings.HiStyle // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
@@ -226,7 +226,7 @@ func (cv *Code) FileNodeForFile(fpath string, add bool) *filetree.Node {
 			log.Printf("Code: attempt to add dir to external files: %v\n", fpath)
 			return nil
 		}
-		efn, err := cv.Files.AddExtFile(fpath)
+		efn, err := cv.Files.AddExternalFile(fpath)
 		if err != nil {
 			log.Printf("Code: cannot add external file: %v\n", err)
 			return nil
@@ -432,13 +432,13 @@ func (cv *Code) CloseOpenNodes(nodes []*FileNode) {
 		}
 		path := string(ond.Buffer.Filename)
 		for _, cnd := range nodes {
-			if strings.HasPrefix(path, string(cnd.FPath)) {
+			if strings.HasPrefix(path, string(cnd.Filepath)) {
 				ond.Buffer.Close(func(canceled bool) {
 					if canceled {
-						cv.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.FPath))
+						cv.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.Filepath))
 						return
 					}
-					cv.SetStatus(fmt.Sprintf("File %v closed due to file name change", ond.FPath))
+					cv.SetStatus(fmt.Sprintf("File %v closed due to file name change", ond.Filepath))
 				})
 				break // out of inner node loop
 			}
@@ -449,11 +449,11 @@ func (cv *Code) CloseOpenNodes(nodes []*FileNode) {
 // FileNodeRunExe runs the given executable file node
 func (cv *Code) FileNodeRunExe(fn *filetree.Node) {
 	cv.SetArgVarVals()
-	cv.ArgVals["{PromptString1}"] = string(fn.FPath)
+	cv.ArgVals["{PromptString1}"] = string(fn.Filepath)
 	CmdNoUserPrompt = true // don't re-prompt!
 	cmd, _, ok := AvailableCommands.CmdByName(CmdName("Build: Run Prompt"), true)
 	if ok {
-		cv.ArgVals.Set(string(fn.FPath), &cv.Settings, nil)
+		cv.ArgVals.Set(string(fn.Filepath), &cv.Settings, nil)
 		cbuf, _, _ := cv.RecycleCmdTab(cmd.Name, true, true)
 		cmd.Run(cv, cbuf)
 	}

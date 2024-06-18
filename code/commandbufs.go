@@ -82,7 +82,7 @@ func (cv *Code) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, 
 	if !ok || fn == nil || fn.This == nil {
 		return
 	}
-	cv.ArgVals.Set(string(fn.FPath), &cv.Settings, nil)
+	cv.ArgVals.Set(string(fn.Filepath), &cv.Settings, nil)
 	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name, sel, clearBuf)
 	cmd.Run(cv, cbuf)
 }

@@ -56,13 +56,13 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 
 func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 	// fmt.Println("opened:", fn.FPath)
-	df := dirs.DirAndFile(string(fn.FPath))
+	df := dirs.DirAndFile(string(fn.Filepath))
 	switch {
 	case fn.Info.Cat == fileinfo.Data:
-		df := dirs.DirAndFile(string(fn.FPath))
+		df := dirs.DirAndFile(string(fn.Filepath))
 		tv := br.NewTabTensorTable(df)
 		dt := tv.Table.Table
-		err := dt.OpenCSV(fn.FPath, table.Tab) // todo: need more flexible data handling mode
+		err := dt.OpenCSV(fn.Filepath, table.Tab) // todo: need more flexible data handling mode
 		tv.Table.Sequential()
 		br.Update()
 		if err != nil {
@@ -85,7 +85,7 @@ func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 	case fn.Info.Cat == fileinfo.Archive || fn.Info.Cat == fileinfo.Backup: // don't edit
 		fn.This.(filetree.Filer).OpenFilesDefault()
 	default:
-		br.NewTabEditor(df, string(fn.FPath))
+		br.NewTabEditor(df, string(fn.Filepath))
 	}
 }
 
@@ -123,8 +123,8 @@ func (fn *FileNode) EditFile() {
 	}
 	br, ok := ParentBrowser(fn.This)
 	if ok {
-		df := dirs.DirAndFile(string(fn.FPath))
-		br.NewTabEditor(df, string(fn.FPath))
+		df := dirs.DirAndFile(string(fn.Filepath))
+		br.NewTabEditor(df, string(fn.Filepath))
 	}
 }
 
@@ -142,11 +142,11 @@ func (fn *FileNode) PlotFile() {
 	}
 	br, ok := ParentBrowser(fn.This)
 	if ok {
-		df := dirs.DirAndFile(string(fn.FPath))
+		df := dirs.DirAndFile(string(fn.Filepath))
 		pl := br.NewTabPlot(df)
 
 		dt := table.NewTable()
-		err := dt.OpenCSV(fn.FPath, table.Tab)
+		err := dt.OpenCSV(fn.Filepath, table.Tab)
 		if err != nil {
 			core.ErrorSnackbar(br, err)
 		}
@@ -172,7 +172,7 @@ func (fn *FileNode) DiffDirs() { //types:add
 		core.MessageSnackbar(fn, "DiffDirs requires two selected directories")
 		return
 	}
-	NewDiffBrowserDirs(string(da.FPath), string(db.FPath))
+	NewDiffBrowserDirs(string(da.Filepath), string(db.Filepath))
 }
 
 // NewDiffBrowserDirs returns a new diff browser for files that differ
