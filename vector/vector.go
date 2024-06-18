@@ -113,9 +113,8 @@ func (vc *Vector) Init() {
 			tree.AddChildAt(w, "svg", func(w *SVG) {
 				w.Vector = vc
 				w.UpdateGradients(vc.EditState.Gradients)
-				// not added to children yet so does not work:
-				// vc.SetPhysSize(&Settings.Size)
-				// vc.SyncLayers()
+				vc.SetPhysSize(&Settings.Size)
+				vc.SyncLayers()
 			})
 			tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
 				w.SetType(core.FunctionalTabs)

@@ -426,7 +426,7 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	}
 	if main == nil && mknew {
 		id := sv.SSVG().NewUniqueID()
-		main = sv.InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
+		main = sv.Root().InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
 		main.SetName(svg.NameID("namedview", id))
 	}
 	if main == nil {
