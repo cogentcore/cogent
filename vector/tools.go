@@ -9,6 +9,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // Tools are the drawing tools
@@ -61,43 +62,43 @@ func (gv *Vector) SetTool(tl Tools) {
 	sv.UpdateSelect()
 }
 
-func (gv *Vector) MakeTools(p *core.Plan) {
-	core.Add(p, func(w *core.Button) {
+func (gv *Vector) MakeTools(p *tree.Plan) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.ArrowSelectorTool).SetShortcut("S")
 		w.SetTooltip("Select, move, and resize objects")
 		w.OnClick(func(e events.Event) {
 			gv.SetTool(SelectTool)
 		})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon("tool-node").SetShortcut("N")
 		w.SetTooltip("Select and move node points within paths")
 		w.OnClick(func(e events.Event) {
 			gv.SetTool(NodeTool)
 		})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.Rectangle).SetShortcut("R")
 		w.SetTooltip("Create rectangles and squares")
 		w.OnClick(func(e events.Event) {
 			gv.SetTool(RectTool)
 		})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.Circle).SetShortcut("E")
 		w.SetTooltip("Create circles, ellipses, and arcs")
 		w.OnClick(func(e events.Event) {
 			gv.SetTool(EllipseTool)
 		})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.LineCurve).SetShortcut("B")
 		w.SetTooltip("Create bezier curves (straight lines and curves with control points)")
 		w.OnClick(func(e events.Event) {
 			gv.SetTool(BezierTool)
 		})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon("tool-text").SetShortcut("T")
 		w.SetTooltip("Add and edit text")
 		w.OnClick(func(e events.Event) {

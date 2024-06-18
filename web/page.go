@@ -57,8 +57,8 @@ func (pg *Page) OpenURL(url string) {
 	pg.Update()
 }
 
-func (pg *Page) MakeToolbar(p *core.Plan) {
-	core.AddInit(p, "back", func(w *core.Button) {
+func (pg *Page) MakeToolbar(p *tree.Plan) {
+	tree.AddInit(p, "back", func(w *core.Button) {
 		w.OnClick(func(e events.Event) {
 			if len(pg.History) > 1 {
 				pg.OpenURL(pg.History[len(pg.History)-2])

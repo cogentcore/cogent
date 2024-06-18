@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // PaintView provides editing of basic Stroke and Fill painting parameters
@@ -51,28 +52,28 @@ func (pv *PaintView) Init() {
 
 	sty := &Settings.ShapeStyle
 
-	core.AddChildAt(pv, "stroke-lab", func(w *core.Frame) {
+	tree.AddChildAt(pv, "stroke-lab", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
 		})
-		core.AddChild(w, func(w *core.Text) {
+		tree.AddChild(w, func(w *core.Text) {
 			w.SetText("<b>Stroke Paint:  </b>")
 		})
-		core.AddChild(w, func(w *core.Switches) {
+		tree.AddChild(w, func(w *core.Switches) {
 			w.SetEnum(pv.StrokeType)
 		})
 	})
 
-	core.AddChildAt(pv, "stroke-width", func(w *core.Frame) {
+	tree.AddChildAt(pv, "stroke-width", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
 		})
-		core.AddChild(w, func(w *core.Text) {
+		tree.AddChild(w, func(w *core.Text) {
 			w.SetText("Width:  ").Styler(func(s *styles.Style) {
 				s.Align.Items = styles.Center
 			})
 		})
-		core.AddChild(w, func(w *core.Spinner) {
+		tree.AddChild(w, func(w *core.Spinner) {
 			w.SetMin(0).SetStep(0.05).
 				SetValue(sty.StrokeStyle.Width.Value).OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -82,7 +83,7 @@ func (pv *PaintView) Init() {
 		})
 
 		// uncb.SetCurrentIndex(int(Settings.Size.Units))
-		core.AddChild(w, func(w *core.Chooser) {
+		tree.AddChild(w, func(w *core.Chooser) {
 			w.SetEnum(sty.StrokeStyle.Width.Unit).
 				OnChange(func(e events.Event) {
 					if pv.IsStrokeOn() {
@@ -95,7 +96,7 @@ func (pv *PaintView) Init() {
 		// 	s.Min.X.Ch(5)
 		// })
 
-		core.AddChild(w, func(w *core.Chooser) {
+		tree.AddChild(w, func(w *core.Chooser) {
 			// dshcb.ItemsFromIconList(AllDashIcons, true, 0)
 			// dshcb.SetProp("width", units.NewCh(15))
 			w.OnChange(func(e events.Event) {
@@ -105,11 +106,11 @@ func (pv *PaintView) Init() {
 			})
 		})
 
-		core.AddChildAt(w, "stroke-markers", func(w *core.Frame) {
+		tree.AddChildAt(w, "stroke-markers", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Row
 			})
-			core.AddChild(w, func(w *core.Chooser) { // start
+			tree.AddChild(w, func(w *core.Chooser) { // start
 				// mscb.SetProp("width", units.NewCh(20))
 				// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
 				w.OnChange(func(e events.Event) {
@@ -118,7 +119,7 @@ func (pv *PaintView) Init() {
 					}
 				})
 			})
-			core.AddChild(w, func(w *core.Chooser) { // start-color
+			tree.AddChild(w, func(w *core.Chooser) { // start-color
 				w.SetEnum(MarkerColorsN)
 				// mscc.SetProp("width", units.NewCh(5))
 				w.OnChange(func(e events.Event) {
@@ -128,9 +129,9 @@ func (pv *PaintView) Init() {
 				})
 			})
 
-			core.AddChild(w, func(w *core.Separator) {})
+			tree.AddChild(w, func(w *core.Separator) {})
 
-			core.AddChild(w, func(w *core.Chooser) { // mid
+			tree.AddChild(w, func(w *core.Chooser) { // mid
 				// mscb.SetProp("width", units.NewCh(20))
 				// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
 				w.OnChange(func(e events.Event) {
@@ -139,7 +140,7 @@ func (pv *PaintView) Init() {
 					}
 				})
 			})
-			core.AddChild(w, func(w *core.Chooser) { // mid-color
+			tree.AddChild(w, func(w *core.Chooser) { // mid-color
 				w.SetEnum(MarkerColorsN)
 				// mmcc.SetProp("width", units.NewCh(5))
 				w.OnChange(func(e events.Event) {
@@ -149,9 +150,9 @@ func (pv *PaintView) Init() {
 				})
 			})
 
-			core.AddChild(w, func(w *core.Separator) {})
+			tree.AddChild(w, func(w *core.Separator) {})
 
-			core.AddChild(w, func(w *core.Chooser) { // end
+			tree.AddChild(w, func(w *core.Chooser) { // end
 				// mscb.SetProp("width", units.NewCh(20))
 				// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
 				w.OnChange(func(e events.Event) {
@@ -160,7 +161,7 @@ func (pv *PaintView) Init() {
 					}
 				})
 			})
-			core.AddChild(w, func(w *core.Chooser) { // end-color
+			tree.AddChild(w, func(w *core.Chooser) { // end-color
 				w.SetEnum(MarkerColorsN)
 				// mscc.SetProp("width", units.NewCh(5))
 				w.OnChange(func(e events.Event) {
@@ -174,12 +175,12 @@ func (pv *PaintView) Init() {
 		////////////////////////////////
 		// stroke stack
 
-		core.AddChildAt(w, "stroke-stack", func(w *core.Frame) {
+		tree.AddChildAt(w, "stroke-stack", func(w *core.Frame) {
 			w.Styles.Display = styles.Stacked
 			w.StackTop = 1
 			// ss.StackTopOnly = true
 
-			core.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
+			tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
 			// spt.ButtonSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 			// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
@@ -206,7 +207,7 @@ func (pv *PaintView) Init() {
 			// 	pvv.Vector.SetStroke(prev, pvv.StrokeType, sp)
 			// })
 
-			core.AddChild(w, func(w *core.ColorPicker) { // "stroke-clr")
+			tree.AddChild(w, func(w *core.ColorPicker) { // "stroke-clr")
 				// sc.SetProp("vertical-align", styles.AlignTop)
 				// sc.SetColor(sty.StrokeStyle.Color)
 				// sc.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -221,7 +222,7 @@ func (pv *PaintView) Init() {
 				// })
 			})
 
-			core.AddChild(w, func(w *core.Table) { // "stroke-grad"
+			tree.AddChild(w, func(w *core.Table) { // "stroke-grad"
 				// sg.SetProp("index", true)
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
@@ -238,26 +239,26 @@ func (pv *PaintView) Init() {
 			})
 		})
 
-		core.AddChild(w, func(w *core.Separator) {})
+		tree.AddChild(w, func(w *core.Separator) {})
 
-		core.AddChildAt(pv, "fill-lab", func(w *core.Frame) {
+		tree.AddChildAt(pv, "fill-lab", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Row
 			})
-			core.AddChild(w, func(w *core.Text) {
+			tree.AddChild(w, func(w *core.Text) {
 				w.SetText("<b>Fill Paint:  </b>")
 			})
-			core.AddChild(w, func(w *core.Switches) {
+			tree.AddChild(w, func(w *core.Switches) {
 				w.SetEnum(pv.FillType)
 			})
 		})
 
-		core.AddChildAt(w, "fill-stack", func(w *core.Frame) {
+		tree.AddChildAt(w, "fill-stack", func(w *core.Frame) {
 			w.Styles.Display = styles.Stacked
 			w.StackTop = 1
 			// fs.StackTopOnly = true
 
-			core.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
+			tree.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
 
 			// fpt.ButtonSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 			// 	pvv := recv.Embed(KiT_PaintView).(*PaintView)
@@ -284,7 +285,7 @@ func (pv *PaintView) Init() {
 			// 	pvv.Vector.SetFill(prev, pvv.FillType, fp)
 			// })
 
-			core.AddChild(w, func(w *core.ColorPicker) { // "fill-clr")
+			tree.AddChild(w, func(w *core.ColorPicker) { // "fill-clr")
 				w.SetColor(colors.Scheme.Primary.Base)
 				// fc.SetProp("vertical-align", styles.AlignTop)
 				// fc.Config()
@@ -301,7 +302,7 @@ func (pv *PaintView) Init() {
 				// })
 			})
 
-			core.AddChild(w, func(w *core.Table) { // "fill-grad"
+			tree.AddChild(w, func(w *core.Table) { // "fill-grad"
 				// sg.SetProp("index", true)
 				// sg.SetProp("toolbar", true)
 				// sg.SelectedIndex = -1
@@ -330,7 +331,7 @@ func (pv *PaintView) Init() {
 				// })
 			})
 
-			core.AddChild(w, func(w *core.Stretch) {})
+			tree.AddChild(w, func(w *core.Stretch) {})
 		})
 	})
 }

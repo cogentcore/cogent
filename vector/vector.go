@@ -64,8 +64,8 @@ func (vc *Vector) Init() {
 		return true
 	})
 
-	core.AddChildAt(vc, "modal-tb", func(w *core.Toolbar) {
-		w.Maker(func(p *core.Plan) {
+	tree.AddChildAt(vc, "modal-tb", func(w *core.Toolbar) {
+		w.Maker(func(p *tree.Plan) {
 			switch vc.EditState.Tool {
 			case NodeTool:
 				vc.MakeNodeToolbar(p)
@@ -77,47 +77,47 @@ func (vc *Vector) Init() {
 		})
 	})
 
-	core.AddChildAt(vc, "hbox", func(w *core.Frame) {
+	tree.AddChildAt(vc, "hbox", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 1)
 		})
-		core.AddChildAt(w, "tools", func(w *core.Toolbar) {
+		tree.AddChildAt(w, "tools", func(w *core.Toolbar) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 			w.Maker(vc.MakeTools)
 		})
-		core.AddChildAt(w, "splits", func(w *core.Splits) {
+		tree.AddChildAt(w, "splits", func(w *core.Splits) {
 			w.SetSplits(0.15, 0.60, 0.25)
-			core.AddChildAt(w, "layer-tree", func(w *core.Frame) {
+			tree.AddChildAt(w, "layer-tree", func(w *core.Frame) {
 				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
-				core.AddChild(w, func(w *core.FuncButton) {
+				tree.AddChild(w, func(w *core.FuncButton) {
 					w.SetFunc(vc.AddLayer)
 				})
-				core.AddChildAt(w, "layers", func(w *core.Table) {
+				tree.AddChildAt(w, "layers", func(w *core.Table) {
 					w.SetSlice(&vc.EditState.Layers)
 				})
-				core.AddChildAt(w, "tree-frame", func(w *core.Frame) {
+				tree.AddChildAt(w, "tree-frame", func(w *core.Frame) {
 					w.Styler(func(s *styles.Style) {
 						s.Direction = styles.Column
 					})
-					core.AddChildAt(w, "tree", func(w *Tree) {
+					tree.AddChildAt(w, "tree", func(w *Tree) {
 						w.Vector = vc
 						w.OpenDepth = 4
 						w.SyncTree(vc.SVG().Root())
 					})
 				})
 			})
-			core.AddChildAt(w, "svg", func(w *SVG) {
+			tree.AddChildAt(w, "svg", func(w *SVG) {
 				w.Vector = vc
 				w.UpdateGradients(vc.EditState.Gradients)
 				// not added to children yet so does not work:
 				// vc.SetPhysSize(&Settings.Size)
 				// vc.SyncLayers()
 			})
-			core.AddChildAt(w, "tabs", func(w *core.Tabs) {
+			tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
 				w.SetType(core.FunctionalTabs)
 				pt := w.NewTab("Paint")
 				NewPaintView(pt).SetVector(vc)
@@ -129,11 +129,11 @@ func (vc *Vector) Init() {
 			})
 		})
 	})
-	core.AddChildAt(vc, "status-bar", func(w *core.Frame) {
+	tree.AddChildAt(vc, "status-bar", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 		})
-		core.AddChildAt(w, "status-text", func(w *core.Text) {})
+		tree.AddChildAt(w, "status-text", func(w *core.Text) {})
 	})
 
 	// tv.TreeSig.Connect(vv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -433,77 +433,77 @@ func (vv *Vector) PasteAvailFunc(bt *core.Button) {
 	bt.SetEnabled(!vv.Clipboard().IsEmpty())
 }
 
-func (vv *Vector) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.FuncButton) {
+func (vv *Vector) MakeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.FuncButton) {
 		// TODO(kai): remove Update
 		w.SetFunc(vv.UpdateAll).SetText("Update").SetIcon(icons.Update)
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("New").SetIcon(icons.Add).
 			OnClick(func(e events.Event) {
 				ndr := vv.NewDrawing(Settings.Size)
 				ndr.PromptPhysSize()
 			})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Size").SetIcon(icons.FormatSize).SetMenu(func(m *core.Scene) {
 			core.NewFuncButton(m).SetFunc(vv.PromptPhysSize).SetText("Set size").SetIcon(icons.FormatSize)
 			core.NewFuncButton(m).SetFunc(vv.ResizeToContents).SetIcon(icons.Resize)
 		})
 	})
 
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.OpenDrawing).SetText("Open").SetIcon(icons.Open)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.SaveDrawing).SetText("Save").SetIcon(icons.Save)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.SaveDrawingAs).SetText("Save as").SetIcon(icons.SaveAs)
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Export").SetIcon(icons.ExportNotes).SetMenu(func(m *core.Scene) {
 			core.NewFuncButton(m).SetFunc(vv.ExportPNG).SetIcon(icons.Image)
 			core.NewFuncButton(m).SetFunc(vv.ExportPDF).SetIcon(icons.PictureAsPdf)
 		})
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.Undo).FirstStyler(func(s *styles.Style) {
 			s.SetEnabled(vv.EditState.Undos.HasUndoAvail())
 		})
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.Redo).FirstStyler(func(s *styles.Style) {
 			s.SetEnabled(vv.EditState.Undos.HasRedoAvail())
 		})
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 	})
 
-	core.Add(p, func(w *core.Separator) {})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(vv.AddImage).SetIcon(icons.Image)
 	})
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Zoom page").SetIcon(icons.ZoomOut)
 		w.SetTooltip("Zoom to see the entire page size for drawing")
 		w.OnClick(func(e events.Event) {
@@ -512,7 +512,7 @@ func (vv *Vector) MakeToolbar(p *core.Plan) {
 			sv.UpdateView(true)
 		})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Zoom all").SetIcon(icons.ZoomOut)
 		w.SetTooltip("Zoom to see all elements")
 		w.OnClick(func(e events.Event) {

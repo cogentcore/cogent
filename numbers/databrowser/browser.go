@@ -82,15 +82,15 @@ func (br *Browser) Init() {
 		br.UpdateFiles()
 	})
 
-	core.AddChildAt(br, "splits", func(w *core.Splits) {
+	tree.AddChildAt(br, "splits", func(w *core.Splits) {
 		w.SetSplits(.15, .85)
-		core.AddChildAt(w, "fileframe", func(w *core.Frame) {
+		tree.AddChildAt(w, "fileframe", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 				s.Overflow.Set(styles.OverflowAuto)
 				s.Grow.Set(1, 1)
 			})
-			core.AddChildAt(w, "filetree", func(w *filetree.Tree) {
+			tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
 				w.FileNodeType = FileNodeType
 				// w.OnSelect(func(e events.Event) {
 				// 	e.SetHandled()
@@ -101,7 +101,7 @@ func (br *Browser) Init() {
 				// })
 			})
 		})
-		core.AddChildAt(w, "tabs", func(w *core.Tabs) {
+		tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
 			w.Type = core.FunctionalTabs
 		})
 	})
@@ -197,7 +197,7 @@ func (br *Browser) UpdateFiles() { //types:add
 // UpdateScripts updates the Scripts and updates the toolbar.
 func (br *Browser) UpdateScripts() { //types:add
 	redo := (br.Scripts != nil)
-	scr := fsx.ExtensionFilenames(br.ScriptsDir, ".cosh")
+	scr := fsx.Filenames(br.ScriptsDir, ".cosh")
 	br.Scripts = make(map[string]string)
 	for _, s := range scr {
 		snm := strings.TrimSuffix(s, ".cosh")
@@ -222,18 +222,18 @@ func (br *Browser) UpdateScripts() { //types:add
 	}
 }
 
-func (br *Browser) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.FuncButton) {
+func (br *Browser) MakeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(br.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(br.UpdateScripts).SetText("").SetIcon(icons.Code)
 	})
 	scr := maps.Keys(br.Scripts)
 	slices.Sort(scr)
 	for _, s := range scr {
 		lbl := TrimOrderPrefix(s)
-		core.AddAt(p, lbl, func(w *core.Button) {
+		tree.AddAt(p, lbl, func(w *core.Button) {
 			w.SetText(lbl).SetIcon(icons.RunCircle).
 				OnClick(func(e events.Event) {
 					br.RunScript(s)

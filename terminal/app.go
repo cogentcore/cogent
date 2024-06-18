@@ -52,32 +52,32 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.Dir = errors.Log1(os.Getwd())
 
-	core.AddChild(a, func(w *core.Form) {
+	tree.AddChild(a, func(w *core.Form) {
 		st := StructForFlags(a.Cmd.Flags)
 		w.SetStruct(st)
 	})
 
-	core.AddChildAt(a, "splits", func(w *core.Splits) {
+	tree.AddChildAt(a, "splits", func(w *core.Splits) {
 		w.SetSplits(0.8, 0.2)
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
 
-		core.AddChildAt(w, "commands", func(w *core.Frame) {
+		tree.AddChildAt(w, "commands", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Wrap = true
 				s.Align.Content = styles.End
 			})
 		})
 
-		core.AddChildAt(w, "editor-frame", func(w *core.Frame) {
+		tree.AddChildAt(w, "editor-frame", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
-			core.AddChildAt(w, "dir", func(w *core.Text) {
+			tree.AddChildAt(w, "dir", func(w *core.Text) {
 				w.SetText(a.Dir)
 			})
-			core.AddChild(w, func(w *texteditor.Editor) {
+			tree.AddChild(w, func(w *texteditor.Editor) {
 				w.Buffer.SetLang("go")
 				w.Buffer.Options.LineNumbers = false
 
@@ -98,12 +98,12 @@ func (a *App) Init() {
 	})
 }
 
-func (a *App) MakeToolbar(p *core.Plan) {
+func (a *App) MakeToolbar(p *tree.Plan) {
 	for _, cmd := range a.Cmd.Cmds {
 		cmd := cmd
 		fields := strings.Fields(cmd.Cmd)
 		text := strcase.ToSentence(strings.Join(fields[1:], " "))
-		core.AddAt(p, text, func(w *core.Button) {
+		tree.AddAt(p, text, func(w *core.Button) {
 			w.SetText(text).SetTooltip(cmd.Doc)
 			w.OnClick(func(e events.Event) {
 				d := core.NewBody().AddTitle(text).AddText(cmd.Doc)

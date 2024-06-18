@@ -14,12 +14,12 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (vv *Vector) MakeNodeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.Switch) {
+func (vv *Vector) MakeNodeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapNodes, w)
 		w.SetText("Snap nodes").SetTooltip("Snap movement and sizing of nodes, using overall snap settings")
 	})
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
 	// tb.AddAction(core.ActOpts{Icon: "sel-group", Tooltip: "Ctrl+G: Group items together", UpdateFunc: gv.NodeEnableFunc},
 	// 	gv.This, func(recv, send tree.Node, sig int64, data interface{}) {
@@ -29,7 +29,7 @@ func (vv *Vector) MakeNodeToolbar(p *core.Plan) {
 	//
 	// core.NewSeparator(tb, "sep-group")
 
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("X: ")
 	})
 	// px := core.NewSpinner(tb).SetStep(1).SetValue(0).
@@ -38,7 +38,7 @@ func (vv *Vector) MakeNodeToolbar(p *core.Plan) {
 	// 	// vv.NodeSetXPos(px.Value)
 	// })
 
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("Y: ")
 	})
 	// py := core.NewSpinner(tb).SetStep(1).SetValue(0).

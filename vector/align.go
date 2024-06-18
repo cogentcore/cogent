@@ -33,16 +33,16 @@ func (av *AlignView) Init() {
 		s.Direction = styles.Column
 	})
 
-	core.AddChild(av, func(w *core.Frame) {
+	tree.AddChild(av, func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
 		})
 
-		core.AddChild(w, func(w *core.Text) {
+		tree.AddChild(w, func(w *core.Text) {
 			w.SetText("<b>Align:  </b>")
 		})
 
-		core.AddChild(w, func(w *core.Chooser) {
+		tree.AddChild(w, func(w *core.Chooser) {
 			w.SetEnum(av.Anchor)
 			w.OnChange(func(e events.Event) {
 				if aval, ok := w.CurrentItem.Value.(AlignAnchors); ok {
@@ -55,14 +55,14 @@ func (av *AlignView) Init() {
 		})
 	})
 
-	core.AddChild(av, func(w *core.Frame) {
+	tree.AddChild(av, func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Display = styles.Grid
 			s.Columns = 6
 		})
 
 		for _, al := range AlignsValues() {
-			core.AddChildAt(w, al.String(), func(w *core.Button) {
+			tree.AddChildAt(w, al.String(), func(w *core.Button) {
 				w.SetIcon(icons.Icon(al.String())).SetType(core.ButtonTonal).
 					SetTooltip(al.Desc()).
 					OnClick(func(e events.Event) {

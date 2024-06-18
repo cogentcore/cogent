@@ -99,7 +99,6 @@ func init() {
 		"IconButtonType":            reflect.ValueOf(&core.IconButtonType).Elem(),
 		"IconType":                  reflect.ValueOf(&core.IconType).Elem(),
 		"ImageType":                 reflect.ValueOf(&core.ImageType).Elem(),
-		"InitParts":                 reflect.ValueOf(core.InitParts),
 		"InitValueButton":           reflect.ValueOf(core.InitValueButton),
 		"InlineListType":            reflect.ValueOf(&core.InlineListType).Elem(),
 		"InspectorType":             reflect.ValueOf(&core.InspectorType).Elem(),
@@ -411,8 +410,8 @@ func init() {
 		"MeterTypes":             reflect.ValueOf((*core.MeterTypes)(nil)),
 		"NewItemsData":           reflect.ValueOf((*core.NewItemsData)(nil)),
 		"OnBinder":               reflect.ValueOf((*core.OnBinder)(nil)),
-		"Plan":                   reflect.ValueOf((*core.Plan)(nil)),
-		"PlanItem":               reflect.ValueOf((*core.PlanItem)(nil)),
+		"Plan":                   reflect.ValueOf((*tree.Plan)(nil)),
+		"PlanItem":               reflect.ValueOf((*tree.PlanItem)(nil)),
 		"RenderContext":          reflect.ValueOf((*core.RenderContext)(nil)),
 		"RenderParams":           reflect.ValueOf((*core.RenderParams)(nil)),
 		"RenderScenes":           reflect.ValueOf((*core.RenderScenes)(nil)),
@@ -680,7 +679,7 @@ type _cogentcore_org_core_core_Lister struct {
 	WDropFinalize     func(de *events.DragDrop)
 	WHasStyleFunc     func() bool
 	WMakePasteMenu    func(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func())
-	WMakeRow          func(p *core.Plan, i int)
+	WMakeRow          func(p *tree.Plan, i int)
 	WMimeDataType     func() string
 	WPasteAssign      func(md mimedata.Mimes, idx int)
 	WPasteAtIndex     func(md mimedata.Mimes, idx int)
@@ -721,7 +720,7 @@ func (W _cogentcore_org_core_core_Lister) HasStyleFunc() bool {
 func (W _cogentcore_org_core_core_Lister) MakePasteMenu(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func()) {
 	W.WMakePasteMenu(m, md, idx, mod, fun)
 }
-func (W _cogentcore_org_core_core_Lister) MakeRow(p *core.Plan, i int) {
+func (W _cogentcore_org_core_core_Lister) MakeRow(p *tree.Plan, i int) {
 	W.WMakeRow(p, i)
 }
 func (W _cogentcore_org_core_core_Lister) MimeDataType() string {
@@ -784,7 +783,7 @@ type _cogentcore_org_core_core_Settings struct {
 	WDefaults    func()
 	WFilename    func() string
 	WLabel       func() string
-	WMakeToolbar func(p *core.Plan)
+	WMakeToolbar func(p *tree.Plan)
 }
 
 func (W _cogentcore_org_core_core_Settings) Apply() {
@@ -799,7 +798,7 @@ func (W _cogentcore_org_core_core_Settings) Filename() string {
 func (W _cogentcore_org_core_core_Settings) Label() string {
 	return W.WLabel()
 }
-func (W _cogentcore_org_core_core_Settings) MakeToolbar(p *core.Plan) {
+func (W _cogentcore_org_core_core_Settings) MakeToolbar(p *tree.Plan) {
 	W.WMakeToolbar(p)
 }
 
@@ -810,7 +809,7 @@ type _cogentcore_org_core_core_SettingsOpener struct {
 	WDefaults    func()
 	WFilename    func() string
 	WLabel       func() string
-	WMakeToolbar func(p *core.Plan)
+	WMakeToolbar func(p *tree.Plan)
 	WOpen        func() error
 }
 
@@ -826,7 +825,7 @@ func (W _cogentcore_org_core_core_SettingsOpener) Filename() string {
 func (W _cogentcore_org_core_core_SettingsOpener) Label() string {
 	return W.WLabel()
 }
-func (W _cogentcore_org_core_core_SettingsOpener) MakeToolbar(p *core.Plan) {
+func (W _cogentcore_org_core_core_SettingsOpener) MakeToolbar(p *tree.Plan) {
 	W.WMakeToolbar(p)
 }
 func (W _cogentcore_org_core_core_SettingsOpener) Open() error {
@@ -840,7 +839,7 @@ type _cogentcore_org_core_core_SettingsSaver struct {
 	WDefaults    func()
 	WFilename    func() string
 	WLabel       func() string
-	WMakeToolbar func(p *core.Plan)
+	WMakeToolbar func(p *tree.Plan)
 	WSave        func() error
 }
 
@@ -856,7 +855,7 @@ func (W _cogentcore_org_core_core_SettingsSaver) Filename() string {
 func (W _cogentcore_org_core_core_SettingsSaver) Label() string {
 	return W.WLabel()
 }
-func (W _cogentcore_org_core_core_SettingsSaver) MakeToolbar(p *core.Plan) {
+func (W _cogentcore_org_core_core_SettingsSaver) MakeToolbar(p *tree.Plan) {
 	W.WMakeToolbar(p)
 }
 func (W _cogentcore_org_core_core_SettingsSaver) Save() error {
@@ -886,10 +885,10 @@ func (W _cogentcore_org_core_core_TextFieldEmbedder) AsTextField() *core.TextFie
 // _cogentcore_org_core_core_ToolbarMaker is an interface wrapper for ToolbarMaker type
 type _cogentcore_org_core_core_ToolbarMaker struct {
 	IValue       interface{}
-	WMakeToolbar func(p *core.Plan)
+	WMakeToolbar func(p *tree.Plan)
 }
 
-func (W _cogentcore_org_core_core_ToolbarMaker) MakeToolbar(p *core.Plan) {
+func (W _cogentcore_org_core_core_ToolbarMaker) MakeToolbar(p *tree.Plan) {
 	W.WMakeToolbar(p)
 }
 

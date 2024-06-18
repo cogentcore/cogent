@@ -9,6 +9,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 )
 
 // TextStyle is text styling info -- using Form to do text editor
@@ -204,12 +205,12 @@ func (gv *Vector) SetText(txt string) {
 ///////////////////////////////////////////////////////////////////////
 // Toolbar
 
-func (vc *Vector) MakeTextToolbar(p *core.Plan) {
+func (vc *Vector) MakeTextToolbar(p *tree.Plan) {
 	es := &vc.EditState
 	ts := &es.Text
 	ts.Vector = vc
 
-	core.Add(p, func(w *core.TextField) {
+	tree.Add(p, func(w *core.TextField) {
 		core.Bind(&ts.Text, w)
 		w.SetTooltip("Current text")
 	})

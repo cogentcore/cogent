@@ -259,7 +259,7 @@ func (pv *PiView) LexInit() {
 		errs := fs.LexErrReport()
 		fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
 		core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Lex Error",
-			Prompt: "The Lexer validation has errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
+			Prompt: "The Lexer validation has errors<br>\n" + errs}, tree.AddOK, core.NoCancel, nil, nil)
 	}
 	pv.UpdateLexBuf()
 }
@@ -275,11 +275,11 @@ func (pv *PiView) LexStopped() {
 			fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
 			pv.SetStatus("Lexer Errors!")
 			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Lex Error",
-				Prompt: "The Lexer has stopped due to errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
+				Prompt: "The Lexer has stopped due to errors<br>\n" + errs}, tree.AddOK, core.NoCancel, nil, nil)
 		} else {
 			pv.SetStatus("Lexer Missing Rules!")
 			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Lex Error",
-				Prompt: "The Lexer has stopped because it cannot process the source at this point:<br>\n" + fs.LexNextSrcLine()}, core.AddOK, core.NoCancel, nil, nil)
+				Prompt: "The Lexer has stopped because it cannot process the source at this point:<br>\n" + fs.LexNextSrcLine()}, tree.AddOK, core.NoCancel, nil, nil)
 		}
 	}
 }
@@ -375,7 +375,7 @@ func (pv *PiView) PassTwo() {
 		errs := fs.PassTwoErrReport()
 		fs.ParseState.Trace.OutWrite.Write([]byte(errs)) // goes to outbuf
 		core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "PassTwo Error",
-			Prompt: "The PassTwo had the following errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
+			Prompt: "The PassTwo had the following errors<br>\n" + errs}, tree.AddOK, core.NoCancel, nil, nil)
 	}
 }
 
@@ -405,7 +405,7 @@ func (pv *PiView) ParseInit() {
 	if fs.ParseHasErrs() {
 		errs := fs.ParseErrReportDetailed()
 		core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Parse Error",
-			Prompt: "The Parser validation has errors<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
+			Prompt: "The Parser validation has errors<br>\n" + errs}, tree.AddOK, core.NoCancel, nil, nil)
 	}
 }
 
@@ -419,11 +419,11 @@ func (pv *PiView) ParseStopped() {
 		if errs != "" {
 			pv.SetStatus("Parse Error!")
 			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Parse Error",
-				Prompt: "The Parser has the following errors (see Output tab for full list)<br>\n" + errs}, core.AddOK, core.NoCancel, nil, nil)
+				Prompt: "The Parser has the following errors (see Output tab for full list)<br>\n" + errs}, tree.AddOK, core.NoCancel, nil, nil)
 		} else {
 			pv.SetStatus("Parse Missing Rules!")
 			core.PromptDialog(pv.Viewport, core.DlgOpts{Title: "Parse Error",
-				Prompt: "The Parser has stopped because it cannot process the source at this point:<br>\n" + fs.ParseNextSrcLine()}, core.AddOK, core.NoCancel, nil, nil)
+				Prompt: "The Parser has stopped because it cannot process the source at this point:<br>\n" + fs.ParseNextSrcLine()}, tree.AddOK, core.NoCancel, nil, nil)
 		}
 	}
 }

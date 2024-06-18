@@ -24,6 +24,7 @@ import (
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
 )
 
 // FindParams are parameters for find / replace
@@ -76,13 +77,13 @@ func (fv *FindPanel) Init() {
 		s.Grow.Set(1, 1)
 	})
 
-	core.AddChildAt(fv, "findbar", func(w *core.BasicBar) {
+	tree.AddChildAt(fv, "findbar", func(w *core.BasicBar) {
 		w.Maker(fv.makeFindToolbar)
 	})
-	core.AddChildAt(fv, "replbar", func(w *core.BasicBar) {
+	tree.AddChildAt(fv, "replbar", func(w *core.BasicBar) {
 		w.Maker(fv.makeReplToolbar)
 	})
-	core.AddChildAt(fv, "findtext", func(w *texteditor.Editor) {
+	tree.AddChildAt(fv, "findtext", func(w *texteditor.Editor) {
 		ConfigOutputTextEditor(w)
 		w.LinkHandler = func(tl *paint.TextLink) {
 			fv.OpenFindURL(tl.URL, w)
@@ -374,14 +375,14 @@ func (fv *FindPanel) TextEditor() *texteditor.Editor {
 }
 
 // makeFindToolbar
-func (fv *FindPanel) makeFindToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.Button) {
+func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Find:").SetTooltip("Find given string in project files. Only open folders in file browser will be searched -- adjust those to scope the search").
 			OnClick(func(e events.Event) {
 				fv.FindAction()
 			})
 	})
-	core.AddAt(p, "find-str", func(w *core.Chooser) {
+	tree.AddAt(p, "find-str", func(w *core.Chooser) {
 		w.SetEditable(true).SetDefaultNew(true).
 			SetTooltip("String to find -- hit enter or tab to update search -- click for history")
 		w.Styler(func(s *styles.Style) {
@@ -410,7 +411,7 @@ func (fv *FindPanel) makeFindToolbar(p *core.Plan) {
 		})
 	})
 
-	core.AddAt(p, "ignore-case", func(w *core.Switch) {
+	tree.AddAt(p, "ignore-case", func(w *core.Switch) {
 		w.SetText("Ignore Case")
 		w.OnChange(func(e events.Event) {
 			fv.Params().IgnoreCase = w.StateIs(states.Checked)
@@ -419,7 +420,7 @@ func (fv *FindPanel) makeFindToolbar(p *core.Plan) {
 			w.SetChecked(fv.Params().IgnoreCase)
 		})
 	})
-	core.AddAt(p, "regexp", func(w *core.Switch) {
+	tree.AddAt(p, "regexp", func(w *core.Switch) {
 		w.SetText("Regexp").
 			SetTooltip("use regular expression for search and replace -- see https://github.com/google/re2/wiki/Syntax")
 		w.OnChange(func(e events.Event) {
@@ -431,12 +432,12 @@ func (fv *FindPanel) makeFindToolbar(p *core.Plan) {
 	})
 
 	ttxt := "location to find in: all = all open folders in browser; file = current active file; dir = directory of current active file; nottop = all except the top-level in browser"
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("Loc:").
 			SetTooltip(ttxt)
 	})
 
-	core.AddAt(p, "loc", func(w *core.Chooser) {
+	tree.AddAt(p, "loc", func(w *core.Chooser) {
 		w.SetTooltip(ttxt)
 		w.SetEnum(fv.Params().Loc)
 		w.OnChange(func(e events.Event) {
@@ -450,28 +451,28 @@ func (fv *FindPanel) makeFindToolbar(p *core.Plan) {
 	})
 }
 
-func (fv *FindPanel) makeReplToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.Button) {
+func (fv *FindPanel) makeReplToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.KeyboardArrowUp).SetTooltip("go to previous result").
 			OnClick(func(e events.Event) {
 				fv.PrevFind()
 			})
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.KeyboardArrowDown).SetTooltip("go to next result").
 			OnClick(func(e events.Event) {
 				fv.NextFind()
 			})
 		w.StartFocus()
 	})
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Replace:").SetTooltip("Replace find string with replace string for currently selected find result").
 			OnClick(func(e events.Event) {
 				fv.ReplaceAction()
 			})
 	})
 
-	core.AddAt(p, "repl-str", func(w *core.Chooser) {
+	tree.AddAt(p, "repl-str", func(w *core.Chooser) {
 		w.SetEditable(true).SetDefaultNew(true).
 			SetTooltip("String to replace find string -- click for history -- use ${n} for regexp submatch where n = 1 for first submatch, etc")
 		w.Styler(func(s *styles.Style) {
@@ -488,18 +489,18 @@ func (fv *FindPanel) makeReplToolbar(p *core.Plan) {
 		})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("All").SetTooltip("replace all find strings with replace string").
 			OnClick(func(e events.Event) {
 				fv.ReplaceAllAction()
 			})
 	})
 
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 	})
 
-	core.AddAt(p, "langs", func(w *core.InlineList) {
+	tree.AddAt(p, "langs", func(w *core.InlineList) {
 		w.SetSlice(fv.Params().Langs)
 		w.SetTooltip("Language(s) to restrict search / replace to")
 	})

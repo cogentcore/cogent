@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/tree"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -78,8 +79,8 @@ func main() {
 		}()
 	})
 
-	b.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *core.Button) {
+	b.AddAppBar(func(p *tree.Plan) {
+		tree.Add(p, func(w *core.Button) {
 			w.SetText("End task").SetIcon(icons.Cancel).
 				SetTooltip("Stop the currently selected task").
 				OnClick(func(e events.Event) {
@@ -87,7 +88,7 @@ func main() {
 					core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
 				})
 		})
-		core.Add(p, func(w *core.Button) {
+		tree.Add(p, func(w *core.Button) {
 			w.SetText("Pause").SetIcon(icons.Pause).
 				SetTooltip("Stop updating the list of tasks").
 				OnClick(func(e events.Event) {

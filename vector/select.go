@@ -27,62 +27,62 @@ func (vc *Vector) InitSelectButton(w core.Widget) {
 }
 
 // MakeSelectToolbar adds the select toolbar to the given plan.
-func (vc *Vector) MakeSelectToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.Switch) {
+func (vc *Vector) MakeSelectToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapGrid, w)
 		w.SetText("Snap grid")
 		w.SetTooltip("Whether to snap movement and sizing of selection to the grid")
 	})
-	core.Add(p, func(w *core.Switch) {
+	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapGuide, w)
 		w.SetText("Snap guide")
 		w.SetTooltip("snap movement and sizing of selection to align with other elements in the scene")
 	})
-	core.Add(p, func(w *core.Separator) {})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectGroup).SetText("Group").SetIcon("sel-group").SetShortcut("Command+G")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectUnGroup).SetText("Ungroup").SetIcon("sel-ungroup").SetShortcut("Command+Shift+G")
 	})
-	core.Add(p, func(w *core.Separator) {})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectRotateLeft).SetText("").SetIcon("sel-rotate-left").SetShortcut("Command+[")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectRotateRight).SetText("").SetIcon("sel-rotate-right").SetShortcut("Command+]")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectFlipHorizontal).SetText("").SetIcon("sel-flip-horiz")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectFlipVertical).SetText("").SetIcon("sel-flip-vert")
 	})
-	core.Add(p, func(w *core.Separator) {})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectRaiseTop).SetText("").SetIcon("sel-raise-top")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectRaise).SetText("").SetIcon("sel-raise")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectLowerBottom).SetText("").SetIcon("sel-lower-bottom")
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
 		w.SetFunc(vc.SelectLower).SetText("").SetIcon("sel-lower")
 	})
-	core.Add(p, func(w *core.Separator) {})
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("X: ")
 	})
 	// TODO(config):
@@ -90,7 +90,7 @@ func (vc *Vector) MakeSelectToolbar(p *core.Plan) {
 	// 	gv.SelectSetXPos(gv.EditState.DragSelectEffectiveBBox.Min.X)
 	// })
 
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("Y: ")
 	})
 	// py := core.NewSpinner(tb).SetStep(1).SetTooltip("Vertical coordinate of selection, in document units")

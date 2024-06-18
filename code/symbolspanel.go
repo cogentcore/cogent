@@ -59,15 +59,15 @@ func (sv *SymbolsPanel) Init() {
 
 	scope := sv.SymParams.Scope
 
-	core.AddChildAt(sv, "sym-toolbar", func(w *core.Toolbar) {
+	tree.AddChildAt(sv, "sym-toolbar", func(w *core.Toolbar) {
 		w.Maker(sv.makeToolbar)
 	})
-	core.AddChildAt(sv, "sym-frame", func(w *core.Frame) {
+	tree.AddChildAt(sv, "sym-frame", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 1)
 			s.Overflow.Set(styles.OverflowAuto)
 		})
-		core.AddChildAt(w, "syms", func(w *SymTree) {
+		tree.AddChildAt(w, "syms", func(w *SymTree) {
 			sv.Syms = NewSymNode()
 			sv.Syms.SetName("syms")
 			if scope == SymScopePackage {
@@ -127,8 +127,8 @@ func (sv *SymbolsPanel) SearchText() *core.TextField {
 }
 
 // makeToolbar adds toolbar.
-func (sv *SymbolsPanel) makeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.Button) {
+func (sv *SymbolsPanel) makeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Refresh").SetIcon(icons.Update).
 			SetTooltip("refresh symbols for current file and scope").
 			OnClick(func(e events.Event) {
@@ -136,11 +136,11 @@ func (sv *SymbolsPanel) makeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("Scope:").SetTooltip("scope symbols to:")
 	})
 
-	core.AddAt(p, "scope-chooser", func(w *core.Chooser) {
+	tree.AddAt(p, "scope-chooser", func(w *core.Chooser) {
 		w.SetEnum(sv.Params().Scope)
 		w.SetTooltip("scope symbols to:")
 		w.OnChange(func(e events.Event) {
@@ -151,12 +151,12 @@ func (sv *SymbolsPanel) makeToolbar(p *core.Plan) {
 		w.SetCurrentValue(sv.Params().Scope) // todo: also update?
 	})
 
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("Search:").
 			SetTooltip("narrow symbols list to symbols containing text you enter here")
 	})
 
-	core.AddAt(p, "search-str", func(w *core.TextField) {
+	tree.AddAt(p, "search-str", func(w *core.TextField) {
 		w.SetTooltip("narrow symbols list by entering a search string -- case is ignored if string is all lowercase -- otherwise case is matched")
 		w.OnChange(func(e events.Event) {
 			sv.Match = w.Text()
@@ -369,10 +369,10 @@ func (st *SymTree) Init() {
 	st.Parts.Styler(func(s *styles.Style) {
 		s.Gap.X.Em(0.4)
 	})
-	core.AddChildInit(st.Parts, "branch", func(w *core.Switch) {
+	tree.AddChildInit(st.Parts, "branch", func(w *core.Switch) {
 		w.SetIcons(st.IconOpen, st.IconClosed, st.SymNode().GetIcon())
-		core.AddChildInit(w, "stack", func(w *core.Frame) {
-			core.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
+		tree.AddChildInit(w, "stack", func(w *core.Frame) {
+			tree.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
 				w.Styler(func(s *styles.Style) {
 					s.Min.Set(units.Em(1))
 				})

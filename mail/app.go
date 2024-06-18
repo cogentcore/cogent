@@ -57,23 +57,23 @@ func (a *App) Init() {
 		s.Grow.Set(1, 1)
 	})
 
-	core.AddChildAt(a, "splits", func(w *core.Splits) {
-		core.AddChildAt(w, "mbox", func(w *core.Tree) {
+	tree.AddChildAt(a, "splits", func(w *core.Splits) {
+		tree.AddChildAt(w, "mbox", func(w *core.Tree) {
 			w.SetText("Mailboxes")
 		})
-		core.AddChildAt(w, "list", func(w *core.Frame) {
+		tree.AddChildAt(w, "list", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
 		})
-		core.AddChildAt(w, "mail", func(w *core.Frame) {
+		tree.AddChildAt(w, "mail", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
-			core.AddChildAt(w, "msv", func(w *core.Form) {
+			tree.AddChildAt(w, "msv", func(w *core.Form) {
 				w.SetReadOnly(true)
 			})
-			core.AddChildAt(w, "mb", func(w *core.Frame) {
+			tree.AddChildAt(w, "mb", func(w *core.Frame) {
 				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
@@ -86,8 +86,8 @@ func (a *App) Init() {
 	})
 }
 
-func (a *App) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.FuncButton) {
+func (a *App) MakeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.Compose).SetIcon(icons.Send)
 	})
 }

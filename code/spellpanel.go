@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/tree"
 
 	"cogentcore.org/core/core"
 )
@@ -58,8 +59,8 @@ func (sv *SpellPanel) Init() {
 	texteditor.InitSpell()
 	sv.CheckNext() // todo: on start
 
-	core.AddChildAt(sv, "spellbar", func(w *core.Toolbar) {
-		core.AddChild(w, func(w *core.Button) {
+	tree.AddChildAt(sv, "spellbar", func(w *core.Toolbar) {
+		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Check Current File").
 				SetTooltip("spell check the current file").
 				OnClick(func(e events.Event) {
@@ -70,7 +71,7 @@ func (sv *SpellPanel) Init() {
 					sv.Code.Spell()
 				})
 		})
-		core.AddChild(w, func(w *core.Button) {
+		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Train").
 				SetTooltip("add additional text to the training corpus").
 				OnClick(func(e events.Event) {
@@ -93,25 +94,25 @@ func (sv *SpellPanel) Init() {
 				})
 		})
 	})
-	core.AddChildAt(sv, "unknownbar", func(w *core.Toolbar) {
-		core.AddChildAt(w, "unknown-str", func(w *core.TextField) {
+	tree.AddChildAt(sv, "unknownbar", func(w *core.Toolbar) {
+		tree.AddChildAt(w, "unknown-str", func(w *core.TextField) {
 			w.SetTooltip("Unknown word")
 			w.SetReadOnly(true)
 		})
-		core.AddChild(w, func(w *core.Button) {
+		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Skip").OnClick(func(e events.Event) {
 				sv.LastAction = w
 				sv.CheckNext()
 			})
 		})
-		core.AddChild(w, func(w *core.Button) {
+		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Ignore").OnClick(func(e events.Event) {
 				spell.IgnoreWord(sv.UnkWord)
 				sv.LastAction = w
 				sv.CheckNext()
 			})
 		})
-		core.AddChild(w, func(w *core.Button) {
+		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Learn").OnClick(func(e events.Event) {
 				nw := strings.ToLower(sv.UnkWord)
 				spell.LearnWord(nw)
@@ -120,18 +121,18 @@ func (sv *SpellPanel) Init() {
 			})
 		})
 	})
-	core.AddChildAt(sv, "changebar", func(w *core.Toolbar) {
-		core.AddChildAt(w, "change-str", func(w *core.TextField) {
+	tree.AddChildAt(sv, "changebar", func(w *core.Toolbar) {
+		tree.AddChildAt(w, "change-str", func(w *core.TextField) {
 			w.SetTooltip("This string will replace the unknown word in text")
 		})
-		core.AddChild(w, func(w *core.Button) {
+		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Change").SetTooltip("change the unknown word to the selected suggestion").
 				OnClick(func(e events.Event) {
 					sv.LastAction = w
 					sv.Change()
 				})
 		})
-		core.AddChild(w, func(w *core.Button) {
+		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Change All").SetTooltip("change all instances of the unknown word in this document").
 				OnClick(func(e events.Event) {
 					tv := sv.Text
@@ -146,7 +147,7 @@ func (sv *SpellPanel) Init() {
 				})
 		})
 	})
-	core.AddChildAt(sv, "suggest", func(w *core.List) {
+	tree.AddChildAt(sv, "suggest", func(w *core.List) {
 		sv.Suggest = []string{"                                              "}
 		w.SetReadOnly(true)
 		w.SetProperty("index", false)

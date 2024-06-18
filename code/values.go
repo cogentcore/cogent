@@ -11,6 +11,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 )
 
 // ProjectSettingsEditor opens a view of project settings,
@@ -55,27 +56,27 @@ func LangsView(pt *Langs) {
 		AvailableLangsChanged = true
 	})
 
-	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *core.FuncButton) {
+	d.AddAppBar(func(p *tree.Plan) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.SaveSettings).
 				SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
 		})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *core.Separator) {})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.Separator) {})
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
 		})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.RevertToStandard).SetConfirm(true).
 				SetText("Revert to standard").SetIcon(icons.DeviceReset).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
@@ -95,22 +96,22 @@ func CmdsView(pt *Commands) {
 	tv.OnChange(func(e events.Event) {
 		CustomCommandsChanged = true
 	})
-	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *core.FuncButton) {
+	d.AddAppBar(func(p *tree.Plan) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
 		})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *core.Separator) {})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.Separator) {})
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
 				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })

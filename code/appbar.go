@@ -17,11 +17,11 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
-	core.AddInit(p, "app-chooser", func(w *core.Chooser) {
+func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
+	tree.AddInit(p, "app-chooser", func(w *core.Chooser) {
 		cv.AddChooserFiles(w)
 		cv.AddChooserSymbols(w)
-		p.Widget.(*core.Toolbar).AddOverflowMenu(cv.OverflowMenu)
+		p.Parent.(*core.Toolbar).AddOverflowMenu(cv.OverflowMenu)
 		w.OnFirst(events.KeyChord, func(e events.Event) {
 			kf := keymap.Of(e.KeyChord())
 			if kf == keymap.Abort {
@@ -30,10 +30,10 @@ func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
 			}
 		})
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
-	core.Add(p, func(w *core.Switch) {
+	tree.Add(p, func(w *core.Switch) {
 		w.SetText("Go mod").SetTooltip("Toggles the use of go modules -- saved with project -- if off, uses old school GOPATH mode")
 		w.Styler(func(s *styles.Style) {
 			w.SetChecked(cv.Settings.GoMod) // todo: update
@@ -44,9 +44,9 @@ func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
 		})
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Open recent").SetMenu(func(m *core.Scene) {
 			for _, rp := range RecentPaths {
 				core.NewButton(m).SetText(rp).OnClick(func(e events.Event) {
@@ -62,77 +62,77 @@ func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
 			})
 		})
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.OpenPath).
 			SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 		cv.ConfigActiveFilename(w)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.SaveActiveView).SetText("Save").
 			SetIcon(icons.Save).SetKey(keymap.Save)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.SaveAll).SetIcon(icons.Save)
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.CursorToHistPrev).SetText("").SetKey(keymap.HistPrev).
 			SetIcon(icons.KeyboardArrowLeft)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.CursorToHistNext).SetText("").SetKey(keymap.HistNext).
 			SetIcon(icons.KeyboardArrowRight)
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
 	// todo: this does not work to apply project defaults!
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Find).SetIcon(icons.FindReplace)
 		cv.ConfigFindButton(w)
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Symbols).SetIcon(icons.List)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Spell).SetIcon(icons.Spellcheck)
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.RunBuild).SetText("Build").SetIcon(icons.Build).
 			SetShortcut(KeyBuildProject.Chord())
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Run).SetIcon(icons.PlayArrow).
 			SetShortcut(KeyRunProject.Chord())
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Debug).SetIcon(icons.Debug)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.DebugTest).SetIcon(icons.Debug)
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.Commit).SetIcon(icons.Star)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.VCSLog).SetText("VCS Log").SetIcon(icons.List)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.EditProjectSettings).SetText("Settings").SetIcon(icons.Edit)
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Command").
 			SetShortcut(KeyExecCmd.Chord()).
 			SetMenu(func(m *core.Scene) {
@@ -155,9 +155,9 @@ func (cv *Code) MakeToolbar(p *core.Plan) { //types:add
 			})
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Splits").SetMenu(func(m *core.Scene) {
 			core.NewButton(m).SetText("Set View").
 				SetMenu(func(mm *core.Scene) {

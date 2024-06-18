@@ -12,6 +12,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/xyz"
 	_ "cogentcore.org/core/xyz/io/obj"
 	"cogentcore.org/core/xyz/xyzcore"
@@ -49,8 +50,8 @@ func main() {
 
 	errors.Log1(sc.OpenNewObj(curFn, objgp))
 
-	b.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *core.Button) {
+	b.AddAppBar(func(p *tree.Plan) {
+		tree.Add(p, func(w *core.Button) {
 			w.SetText("Open").SetIcon(icons.Open).
 				SetTooltip("Open a 3D object file for viewing").
 				OnClick(func(e events.Event) {

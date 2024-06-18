@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/tree"
 )
 
 func init() {
@@ -144,17 +145,17 @@ func (se *SettingsData) ApplyEnvVars() {
 	}
 }
 
-func (se *SettingsData) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.FuncButton) {
+func (se *SettingsData) MakeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditLangOpts).SetIcon(icons.Subtitles)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditCmds).SetIcon(icons.KeyboardCommandKey)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditSplits).SetIcon(icons.VerticalSplit)
 	})
-	core.Add(p, func(w *core.FuncButton) {
+	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(se.EditRegisters).SetIcon(icons.Variables)
 	})
 }

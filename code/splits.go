@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 )
 
 // Split is a named splitter configuration
@@ -183,19 +184,19 @@ func SplitsView(pt *Splits) {
 		AvailableSplitsChanged = true
 	})
 
-	d.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *core.FuncButton) {
+	d.AddAppBar(func(p *tree.Plan) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
 				SetIcon(icons.Save).SetKey(keymap.Save).
 				FirstStyler(func(s *styles.Style) {
 					s.SetEnabled(AvailableSplitsChanged && pt == &StandardSplits)
 				})
 		})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
-		core.Add(p, func(w *core.FuncButton) {
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})

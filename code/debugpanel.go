@@ -23,6 +23,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/tree"
 )
 
 // DebugBreakStatus represents the status of a certain breakpoint.
@@ -131,11 +132,11 @@ func (dv *DebugPanel) Init() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	core.AddChildAt(dv, "toolbar", func(w *core.Frame) {
+	tree.AddChildAt(dv, "toolbar", func(w *core.Frame) {
 		core.ToolbarStyles(w)
 		w.Maker(dv.MakeToolbar)
 	})
-	core.AddChildAt(dv, "tabs", func(w *core.Tabs) {
+	tree.AddChildAt(dv, "tabs", func(w *core.Tabs) {
 		dv.Updater(dv.InitTabs) // note: this is necessary to allow config to happen first
 	})
 }
@@ -156,7 +157,7 @@ func (dv *DebugPanel) InitTabs() {
 	ctv.SetBuffer(dv.OutputBuffer)
 
 	bv := w.NewTab(DebugTabBreaks)
-	core.AddChild(bv, func(w *core.Table) {
+	tree.AddChild(bv, func(w *core.Table) {
 		w.SetSlice(&dv.State.Breaks)
 		w.OnDoubleClick(func(e events.Event) {
 			idx := w.SelectedIndex
@@ -177,7 +178,7 @@ func (dv *DebugPanel) InitTabs() {
 	})
 
 	sv := w.NewTab(DebugTabStack)
-	core.AddChild(sv, func(w *core.Table) {
+	tree.AddChild(sv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Stack)
 		w.OnDoubleClick(func(e events.Event) {
@@ -190,7 +191,7 @@ func (dv *DebugPanel) InitTabs() {
 
 	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		tv := w.NewTab(DebugTabTasks)
-		core.AddChild(tv, func(w *core.Table) {
+		tree.AddChild(tv, func(w *core.Table) {
 			w.SetReadOnly(true)
 			w.SetSlice(&dv.State.Tasks)
 			w.OnDoubleClick(func(e events.Event) {
@@ -208,7 +209,7 @@ func (dv *DebugPanel) InitTabs() {
 	}
 
 	tv := w.NewTab(DebugTabThreads)
-	core.AddChild(tv, func(w *core.Table) {
+	tree.AddChild(tv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Threads)
 		w.OnDoubleClick(func(e events.Event) {
@@ -225,7 +226,7 @@ func (dv *DebugPanel) InitTabs() {
 	})
 
 	vv := w.NewTab(DebugTabVars)
-	core.AddChild(vv, func(w *core.Table) {
+	tree.AddChild(vv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Vars)
 		w.OnDoubleClick(func(e events.Event) {
@@ -235,7 +236,7 @@ func (dv *DebugPanel) InitTabs() {
 	})
 
 	ff := w.NewTab(DebugTabFrames)
-	core.AddChild(ff, func(w *core.Table) {
+	tree.AddChild(ff, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.FindFrames)
 		w.OnDoubleClick(func(e events.Event) {
@@ -248,7 +249,7 @@ func (dv *DebugPanel) InitTabs() {
 	})
 
 	gv := w.NewTab(DebugTabGlobals)
-	core.AddChild(gv, func(w *core.Table) {
+	tree.AddChild(gv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.GlobalVars)
 		w.OnDoubleClick(func(e events.Event) {
@@ -860,8 +861,8 @@ func (dv *DebugPanel) ConsoleText() *texteditor.Editor {
 	return cv
 }
 
-func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
-	core.AddAt(p, "status", func(w *core.Text) {
+func (dv *DebugPanel) MakeToolbar(p *tree.Plan) {
+	tree.AddAt(p, "status", func(w *core.Text) {
 		w.SetText("Building").Styler(func(s *styles.Style) {
 			color := DebugStatusColors[dv.State.Status]
 			s.Background = colors.C(color)
@@ -869,7 +870,7 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 		})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.Refresh).
 			SetTooltip("(re)start the debugger on exe:" + dv.ExePath + "; automatically rebuilds exe if any source files have changed").
 			OnClick(func(e events.Event) {
@@ -877,7 +878,7 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Cont").SetIcon(icons.PlayArrow).SetShortcut("Control+Alt+R")
 		w.SetTooltip("continue execution from current point").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
@@ -886,11 +887,11 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Text) {
+	tree.Add(p, func(w *core.Text) {
 		w.SetText("Step: ")
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Over").SetIcon(icons.StepOver).SetShortcut("F6")
 		w.SetTooltip("continues to the next source line, not entering function calls").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
@@ -899,7 +900,7 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Into").SetIcon(icons.StepInto).SetShortcut("F7")
 		w.SetTooltip("continues to the next source line, entering into function calls").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
@@ -908,7 +909,7 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Out").SetIcon(icons.StepOut).SetShortcut("F8")
 		w.SetTooltip("continues to the return point of the current function").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
@@ -917,7 +918,7 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Single").SetIcon(icons.Step).
 			SetTooltip("steps a single CPU instruction").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
@@ -926,7 +927,7 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Stop").SetIcon(icons.Stop).
 			SetTooltip("stop execution").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(!dv.DbgIsAvail()) }).
@@ -935,9 +936,9 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.Separator) {})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Global Vars").SetIcon(icons.Search).
 			SetTooltip("list variables at global scope, subject to filter (name contains)").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
@@ -946,7 +947,7 @@ func (dv *DebugPanel) MakeToolbar(p *core.Plan) {
 			})
 	})
 
-	core.Add(p, func(w *core.Button) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Params").SetIcon(icons.Edit).
 			SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
 			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
@@ -993,13 +994,13 @@ func (vv *VarView) Init() {
 		s.Grow.Set(1, 1)
 	})
 
-	core.AddChildAt(vv, "frame-info", func(w *core.Text) {
+	tree.AddChildAt(vv, "frame-info", func(w *core.Text) {
 		w.SetText(vv.FrameInfo)
 	})
-	core.AddChildAt(vv, "splits", func(w *core.Splits) {
+	tree.AddChildAt(vv, "splits", func(w *core.Splits) {
 		w.SetSplits(0.3, 0.7)
-		core.AddChild(w, func(w *core.Frame) {
-			core.AddChild(w, func(w *core.Tree) {
+		tree.AddChild(w, func(w *core.Frame) {
+			tree.AddChild(w, func(w *core.Tree) {
 				w.SyncTree(vv.Var)
 				w.OnSelect(func(e events.Event) {
 					if len(w.SelectedNodes) > 0 {
@@ -1014,7 +1015,7 @@ func (vv *VarView) Init() {
 				})
 			})
 		})
-		core.AddChild(w, func(w *core.Form) {
+		tree.AddChild(w, func(w *core.Form) {
 			w.SetStruct(vv.Var)
 		})
 	})
@@ -1035,8 +1036,8 @@ func (vv *VarView) Form() *core.Form {
 	return vv.Splits().Child(1).(*core.Form)
 }
 
-func (vv *VarView) MakeToolbar(p *core.Plan) {
-	core.Add(p, func(w *core.Button) {
+func (vv *VarView) MakeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.Button) {
 		w.SetText("Follow pointer").SetIcon(icons.ArrowForward).
 			SetTooltip("FollowPtr loads additional debug state information for pointer variables, so you can continue clicking through the tree to see what it points to.").
 			OnClick(func(e events.Event) {

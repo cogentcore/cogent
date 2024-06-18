@@ -21,6 +21,7 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 
 	"github.com/aandrew-me/tgpt/v2/structs"
 )
@@ -40,16 +41,16 @@ import (
 
 func main() { // TODO(config)
 	b := core.NewBody("Cogent AI")
-	b.AddAppBar(func(p *core.Plan) {
-		core.Add(p, func(w *core.Button) {
+	b.AddAppBar(func(p *tree.Plan) {
+		tree.Add(p, func(w *core.Button) {
 			w.SetText("Install").SetIcon(icons.Download)
 		})
-		core.Add(p, func(w *core.Button) {
+		tree.Add(p, func(w *core.Button) {
 			w.SetText("Start server").SetIcon(icons.PlayArrow).OnClick(func(e events.Event) {
 				core.ErrorSnackbar(b, exec.Verbose().Run("ollama", "serve"))
 			})
 		})
-		core.Add(p, func(w *core.Button) {
+		tree.Add(p, func(w *core.Button) {
 			w.SetText("Stop server").SetIcon(icons.Stop)
 		})
 	})

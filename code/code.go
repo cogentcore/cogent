@@ -134,14 +134,14 @@ func (cv *Code) Init() {
 		cv.UpdateFiles()
 	})
 
-	core.AddChildAt(cv, "splits", func(w *core.Splits) {
+	tree.AddChildAt(cv, "splits", func(w *core.Splits) {
 		w.SetSplits(cv.Settings.Splits...)
-		core.AddChildAt(w, "filetree", func(w *core.Frame) {
+		tree.AddChildAt(w, "filetree", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 				s.Overflow.Set(styles.OverflowAuto)
 			})
-			core.AddChildAt(w, "filetree", func(w *filetree.Tree) {
+			tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
 				w.OpenDepth = 4
 				cv.Files = w
 				w.FileNodeType = FileNodeType
@@ -155,25 +155,25 @@ func (cv *Code) Init() {
 				})
 			})
 		})
-		w.Maker(func(p *core.Plan) {
+		w.Maker(func(p *tree.Plan) {
 			for i := 0; i < NTextEditors; i++ {
 				cv.makeTextEditor(p, i)
 			}
 		})
-		core.AddChildAt(w, "tabs", func(w *core.Tabs) {
+		tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
 			w.SetType(core.FunctionalTabs)
 			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 1)
 			})
 		})
 	})
-	core.AddChildAt(cv, "statusbar", func(w *core.Frame) {
+	tree.AddChildAt(cv, "statusbar", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Grow.Set(1, 0)
 			s.Min.Y.Em(1.0)
 			s.Padding.Set(units.Dp(4))
 		})
-		core.AddChildAt(w, "sb-text", func(w *core.Text) {
+		tree.AddChildAt(w, "sb-text", func(w *core.Text) {
 			w.SetText("Welcome to Cogent Code!" + strings.Repeat(" ", 80))
 			w.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(100)
@@ -192,14 +192,14 @@ func (cv *Code) Init() {
 	// })
 }
 
-func (cv *Code) makeTextEditor(p *core.Plan, i int) {
+func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 	txnm := fmt.Sprintf("%d", i)
-	core.AddAt(p, "textframe-"+txnm, func(w *core.Frame) {
+	tree.AddAt(p, "textframe-"+txnm, func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
 		})
-		core.AddChildAt(w, "textbut-"+txnm, func(w *core.Button) {
+		tree.AddChildAt(w, "textbut-"+txnm, func(w *core.Button) {
 			w.SetText("texteditor: " + txnm)
 			w.Type = core.ButtonAction
 			w.Styler(func(s *styles.Style) {
@@ -214,7 +214,7 @@ func (cv *Code) makeTextEditor(p *core.Plan, i int) {
 			// todo: update
 			// ge.UpdateTextButtons()
 		})
-		core.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
+		tree.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
 			w.Code = cv
 			ConfigEditorTextEditor(&w.Editor)
 			w.OnFocus(func(e events.Event) {
