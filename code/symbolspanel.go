@@ -365,17 +365,16 @@ func (st *SymTree) SymNode() *SymNode {
 
 func (st *SymTree) Init() {
 	st.Tree.Init()
-	core.AddChildInit(st, "parts", func(w *core.Frame) {
-		w.Styler(func(s *styles.Style) {
-			s.Gap.X.Em(0.4)
-		})
-		core.AddChildInit(w, "branch", func(w *core.Switch) {
-			w.SetIcons(st.IconOpen, st.IconClosed, st.SymNode().GetIcon())
-			core.AddChildInit(w, "stack", func(w *core.Frame) {
-				core.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
-					w.Styler(func(s *styles.Style) {
-						s.Min.Set(units.Em(1))
-					})
+
+	st.Parts.Styler(func(s *styles.Style) {
+		s.Gap.X.Em(0.4)
+	})
+	core.AddChildInit(st.Parts, "branch", func(w *core.Switch) {
+		w.SetIcons(st.IconOpen, st.IconClosed, st.SymNode().GetIcon())
+		core.AddChildInit(w, "stack", func(w *core.Frame) {
+			core.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
+				w.Styler(func(s *styles.Style) {
+					s.Min.Set(units.Em(1))
 				})
 			})
 		})
