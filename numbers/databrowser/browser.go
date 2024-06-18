@@ -19,8 +19,8 @@ import (
 	"unicode"
 
 	"cogentcore.org/cogent/numbers/numshell"
-	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/logx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -197,7 +197,7 @@ func (br *Browser) UpdateFiles() { //types:add
 // UpdateScripts updates the Scripts and updates the toolbar.
 func (br *Browser) UpdateScripts() { //types:add
 	redo := (br.Scripts != nil)
-	scr := dirs.ExtFilenames(br.ScriptsDir, ".cosh")
+	scr := fsx.ExtensionFilenames(br.ScriptsDir, ".cosh")
 	br.Scripts = make(map[string]string)
 	for _, s := range scr {
 		snm := strings.TrimSuffix(s, ".cosh")

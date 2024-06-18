@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/numbers/databrowser"
-	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/cli"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/shell"
@@ -63,7 +63,7 @@ func Run(c *Config) error { //cli:cmd -root
 		return Interactive(c)
 	}
 	code := ""
-	if errors.Log1(dirs.FileExists(c.Input)) {
+	if errors.Log1(fsx.FileExists(c.Input)) {
 		b, err := os.ReadFile(c.Input)
 		if err != nil && c.Expr == "" {
 			return err

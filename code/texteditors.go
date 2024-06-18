@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"cogentcore.org/core/base/dirs"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -245,7 +245,7 @@ func (cv *Code) UpdateTextButtons() {
 		mb := cv.TextEditorButtonByIndex(i)
 		txnm := "<no file>"
 		if tv.Buffer != nil {
-			txnm = dirs.DirAndFile(string(tv.Buffer.Filename))
+			txnm = fsx.DirAndFile(string(tv.Buffer.Filename))
 			if tv.Buffer.NotSaved {
 				txnm += " <b>*</b>"
 			} else {

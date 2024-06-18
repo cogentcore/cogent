@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/fileinfo/mimedata"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/strcase"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -337,7 +337,7 @@ func (cv *Code) CountWords() string { //types:add
 	ll := av.Buffer.NLines - 1
 	reg := textbuf.NewRegion(0, 0, ll, len(av.Buffer.Lines[ll]))
 	words, lines := textbuf.CountWordsLinesRegion(av.Buffer.Lines, reg)
-	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", dirs.DirAndFile(string(av.Buffer.Filename)), words, lines)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
 }
 
 // CountWordsRegion counts number of words (and lines) in selected region in file
@@ -354,7 +354,7 @@ func (cv *Code) CountWordsRegion() string { //types:add
 	defer av.Buffer.LinesMu.RUnlock()
 	sel := av.Selection()
 	words, lines := textbuf.CountWordsLinesRegion(av.Buffer.Lines, sel.Reg)
-	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", dirs.DirAndFile(string(av.Buffer.Filename)), words, lines)
+	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

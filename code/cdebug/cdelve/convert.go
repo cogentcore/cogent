@@ -11,7 +11,7 @@ import (
 	"unicode"
 
 	"cogentcore.org/cogent/code/cdebug"
-	"cogentcore.org/core/base/dirs"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/parse/syms"
 	"github.com/go-delve/delve/service/api"
@@ -45,7 +45,7 @@ func (gd *GiDelve) cvtThread(ds *api.Thread) *cdebug.Thread {
 	th := &cdebug.Thread{}
 	th.ID = ds.ID
 	th.PC = ds.PC
-	th.File = dirs.RelFilePath(ds.File, gd.rootPath)
+	th.File = fsx.RelativeFilePath(ds.File, gd.rootPath)
 	th.Line = ds.Line
 	th.FPath = ds.File
 	if ds.Function != nil {
@@ -74,7 +74,7 @@ func (gd *GiDelve) cvtTask(ds *api.Goroutine) *cdebug.Task {
 	gr := &cdebug.Task{}
 	gr.ID = int(ds.ID)
 	gr.PC = ds.UserCurrentLoc.PC
-	gr.File = dirs.RelFilePath(ds.UserCurrentLoc.File, gd.rootPath)
+	gr.File = fsx.RelativeFilePath(ds.UserCurrentLoc.File, gd.rootPath)
 	gr.Line = ds.UserCurrentLoc.Line
 	gr.FPath = ds.UserCurrentLoc.File
 	if ds.UserCurrentLoc.Function != nil {
@@ -104,7 +104,7 @@ func (gd *GiDelve) cvtLocation(ds *api.Location) *cdebug.Location {
 	}
 	lc := &cdebug.Location{}
 	lc.PC = ds.PC
-	lc.File = dirs.RelFilePath(ds.File, gd.rootPath)
+	lc.File = fsx.RelativeFilePath(ds.File, gd.rootPath)
 	lc.Line = ds.Line
 	lc.FPath = ds.File
 	if ds.Function != nil {
@@ -121,7 +121,7 @@ func (gd *GiDelve) cvtBreak(ds *api.Breakpoint) *cdebug.Break {
 	bp.On = true // if we're converting, it is on..
 	bp.ID = ds.ID
 	bp.PC = ds.Addr
-	bp.File = dirs.RelFilePath(ds.File, gd.rootPath)
+	bp.File = fsx.RelativeFilePath(ds.File, gd.rootPath)
 	bp.FPath = ds.File
 	bp.Line = ds.Line
 	bp.Func = ds.FunctionName
@@ -149,7 +149,7 @@ func (gd *GiDelve) cvtFrame(ds *api.Stackframe, taskID int) *cdebug.Frame {
 	fr := &cdebug.Frame{}
 	fr.ThreadID = taskID
 	fr.PC = ds.Location.PC
-	fr.File = dirs.RelFilePath(ds.Location.File, gd.rootPath)
+	fr.File = fsx.RelativeFilePath(ds.Location.File, gd.rootPath)
 	fr.Line = ds.Location.Line
 	fr.FPath = ds.Location.File
 	if ds.Location.Function != nil {

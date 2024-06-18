@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -51,7 +51,7 @@ func (vc *Vector) Init() {
 			return false
 		}
 		d.AddTitle("Unsaved changes").
-			AddText(fmt.Sprintf("There are unsaved changes in %s", dirs.DirAndFile(string(vc.Filename))))
+			AddText(fmt.Sprintf("There are unsaved changes in %s", fsx.DirAndFile(string(vc.Filename))))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
 				vc.Scene.Close()
@@ -547,7 +547,7 @@ func (vv *Vector) SetTitle() {
 	if win == nil {
 		return
 	}
-	dfnm := dirs.DirAndFile(string(vv.Filename))
+	dfnm := fsx.DirAndFile(string(vv.Filename))
 	winm := "Cogent Vector • " + dfnm
 	win.SetName(winm)
 	win.SetTitle(winm)
@@ -567,7 +567,7 @@ func NewVectorWindow(fnm string) *Vector {
 	dfnm := "blank"
 	if fnm != "" {
 		path, _ = filepath.Abs(fnm)
-		dfnm = dirs.DirAndFile(path)
+		dfnm = fsx.DirAndFile(path)
 	}
 	winm := "Cogent Vector • " + dfnm
 

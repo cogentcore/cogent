@@ -8,8 +8,8 @@ import (
 	"log"
 	"strings"
 
-	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -56,10 +56,10 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 
 func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 	// fmt.Println("opened:", fn.FPath)
-	df := dirs.DirAndFile(string(fn.Filepath))
+	df := fsx.DirAndFile(string(fn.Filepath))
 	switch {
 	case fn.Info.Cat == fileinfo.Data:
-		df := dirs.DirAndFile(string(fn.Filepath))
+		df := fsx.DirAndFile(string(fn.Filepath))
 		tv := br.NewTabTensorTable(df)
 		dt := tv.Table.Table
 		err := dt.OpenCSV(fn.Filepath, table.Tab) // todo: need more flexible data handling mode
@@ -123,7 +123,7 @@ func (fn *FileNode) EditFile() {
 	}
 	br, ok := ParentBrowser(fn.This)
 	if ok {
-		df := dirs.DirAndFile(string(fn.Filepath))
+		df := fsx.DirAndFile(string(fn.Filepath))
 		br.NewTabEditor(df, string(fn.Filepath))
 	}
 }
@@ -142,7 +142,7 @@ func (fn *FileNode) PlotFile() {
 	}
 	br, ok := ParentBrowser(fn.This)
 	if ok {
-		df := dirs.DirAndFile(string(fn.Filepath))
+		df := fsx.DirAndFile(string(fn.Filepath))
 		pl := br.NewTabPlot(df)
 
 		dt := table.NewTable()

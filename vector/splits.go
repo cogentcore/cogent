@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"slices"
 
-	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -111,7 +111,7 @@ func (lt *Splits) FixLen() {
 
 // Open opens named splits from a json-formatted file.
 func (lt *Splits) Open(filename core.Filename) error { //types:add
-	if errors.Ignore1(dirs.FileExists(string(filename))) {
+	if errors.Ignore1(fsx.FileExists(string(filename))) {
 		*lt = make(Splits, 0, 10) // reset
 		err := errors.Log(jsonx.Open(lt, string(filename)))
 		lt.FixLen()

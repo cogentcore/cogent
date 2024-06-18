@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"cogentcore.org/core/base/dirs"
+	"cogentcore.org/core/base/fsx"
 )
 
 // This file contains all the state structs used in communciating with the
@@ -344,7 +344,7 @@ func (as *AllState) AddBreak(fpath string, line int) *Break {
 	br = &Break{}
 	br.On = true
 	br.FPath = fpath
-	br.File = dirs.DirAndFile(fpath)
+	br.File = fsx.DirAndFile(fpath)
 	br.Line = line
 	as.Breaks = append(as.Breaks, br)
 	return br

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"cogentcore.org/core/base/dirs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/fsx"
 	"github.com/aandrew-me/tgpt/v2/structs"
 	http "github.com/bogdanfinn/fhttp"
 	tls_client "github.com/bogdanfinn/tls-client"
@@ -127,7 +127,7 @@ func NewClient() (tls_client.HttpClient, error) {
 			options = append(options, proxyOption)
 		}
 	} else {
-		if ok := errors.Log1(dirs.FileExists("proxy.txt")); ok {
+		if ok := errors.Log1(fsx.FileExists("proxy.txt")); ok {
 			proxyConfig, err := os.ReadFile("proxy.txt")
 			if err != nil {
 				return nil, err
