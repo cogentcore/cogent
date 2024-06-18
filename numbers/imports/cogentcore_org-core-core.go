@@ -20,7 +20,6 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/core/core"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"AddButtonItems":            reflect.ValueOf(core.AddButtonItems),
 		"AddValueConverter":         reflect.ValueOf(core.AddValueConverter),
 		"AllRenderWindows":          reflect.ValueOf(&core.AllRenderWindows).Elem(),
 		"AllSettings":               reflect.ValueOf(&core.AllSettings).Elem(),
@@ -257,8 +256,6 @@ func init() {
 		"StageTypesN":               reflect.ValueOf(core.StageTypesN),
 		"StageTypesValues":          reflect.ValueOf(core.StageTypesValues),
 		"StandardAppBarConfig":      reflect.ValueOf(core.StandardAppBarConfig),
-		"StandardAppBarMaker":       reflect.ValueOf(core.StandardAppBarMaker),
-		"StandardOverflowMenu":      reflect.ValueOf(core.StandardOverflowMenu),
 		"StandardTabs":              reflect.ValueOf(core.StandardTabs),
 		"StartCPUMemoryProfile":     reflect.ValueOf(core.StartCPUMemoryProfile),
 		"StartTargetedProfile":      reflect.ValueOf(core.StartTargetedProfile),
