@@ -23,7 +23,7 @@ func main() {
 	// we must load the settings before initializing the console
 	errors.Log(core.LoadAllSettings())
 
-	code.TheConsole.Init(lfnm)
+	InitConsole(lfnm)
 
 	var path string
 	var proj string

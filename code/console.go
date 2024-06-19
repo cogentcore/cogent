@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/texteditor"
 )
@@ -54,8 +55,8 @@ var TheConsole Console
 // starts the routine that monitors output.
 // if logFile is non-empty, writes output to that file as well.
 func (cn *Console) Init(logFile string) {
-	cn.StdoutRead, cn.StdoutWrite, _ = os.Pipe() // seriously, does this ever fail?
-	cn.StderrRead, cn.StderrWrite, _ = os.Pipe() // seriously, does this ever fail?
+	cn.StdoutRead, cn.StdoutWrite = errors.Log2(os.Pipe())
+	cn.StderrRead, cn.StderrWrite = errors.Log2(os.Pipe())
 	cn.OrgoutWrite = os.Stdout
 	cn.OrgerrWrite = os.Stderr
 	os.Stdout = cn.StdoutWrite
@@ -65,7 +66,7 @@ func (cn *Console) Init(logFile string) {
 	cn.Buf.Options.LineNumbers = false
 	cn.Buf.Filename = core.Filename("console-buf")
 	if logFile != "" {
-		cn.LogWrite, _ = os.Create(logFile)
+		cn.LogWrite = errors.Log1(os.Create(logFile))
 	}
 	go cn.MonitorOut()
 	go cn.MonitorErr()
