@@ -38,7 +38,7 @@ func (br *Browser) NewTabTensorTable(label string) *tensorcore.Table {
 	tv.Styler(func(s *styles.Style) {
 		s.SetReadOnly(true) // todo: not taking effect
 	})
-	tb.Makers = append(tb.Makers, tv.MakeToolbar)
+	tb.Maker(tv.MakeToolbar)
 	tv.SetTable(dt)
 	br.Update()
 	return tv
