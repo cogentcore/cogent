@@ -17,6 +17,7 @@ import (
 	"cogentcore.org/core/tensor"
 	"cogentcore.org/core/tensor/table"
 	"cogentcore.org/core/tensor/tensorcore"
+	"cogentcore.org/core/texteditor"
 )
 
 // NewTabTensorTable creates a tab with a tensor table and a tensorcore table.
@@ -75,6 +76,21 @@ func (br *Browser) NewTabPlot(label string) *plotcore.PlotEditor {
 	}
 	pl := plotcore.NewSubPlot(tab)
 	return pl
+}
+
+// NewTabEditorString opens an editor tab to display given string
+func (br *Browser) NewTabEditorString(label, content string) *texteditor.Editor {
+	tabs := br.Tabs()
+	tab := tabs.RecycleTab(label, true)
+	if tab.HasChildren() {
+		ed := tab.Child(0).(*texteditor.Editor)
+		ed.Buffer.SetText([]byte(content))
+		return ed
+	}
+	ed := texteditor.NewSoloEditor(tab)
+	ed.Buffer.SetText([]byte(content))
+	br.Update()
+	return ed
 }
 
 // FormatTableFromCSV formats the columns of the given table according to the

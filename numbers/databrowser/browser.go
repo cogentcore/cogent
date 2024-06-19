@@ -111,10 +111,11 @@ func (br *Browser) Init() {
 // By default the scripts for this data directory are located in
 // dbscripts relative to the data directory.
 func NewBrowserWindow(dataDir string) *Browser {
-	b := core.NewBody("Cogent Data Browser")
+	startDir, _ := os.Getwd()
+	startDir = errors.Log1(filepath.Abs(startDir))
+	b := core.NewBody("Cogent Data Browser: " + fsx.DirAndFile(startDir))
 	br := NewBrowser(b)
-	br.StartDir, _ = os.Getwd()
-	br.StartDir = errors.Log1(filepath.Abs(br.StartDir))
+	br.StartDir = startDir
 	ddr := errors.Log1(filepath.Abs(dataDir))
 	fmt.Println(ddr)
 	b.AddAppBar(br.MakeToolbar)
