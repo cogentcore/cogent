@@ -99,13 +99,14 @@ func Interactive(c *Config) error {
 	in.Interp.Use(databrowser.Symbols)
 	in.Config()
 
+	w := b.RunWindow()
 	go func() {
 		if c.Expr != "" {
 			in.Eval(c.Expr)
 		}
 		in.Interactive()
 	}()
-	b.RunMainWindow()
+	w.Wait()
 	return nil
 }
 
