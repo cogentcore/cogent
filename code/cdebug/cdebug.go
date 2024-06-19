@@ -10,6 +10,7 @@ import (
 	"errors"
 	"time"
 
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -17,6 +18,9 @@ var (
 	NotStartedErr = errors.New("debugger not started")
 
 	IsRunningErr = errors.New("debugger is currently running and cannot return info")
+
+	// Debuggers is the list of supported debuggers
+	Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *Params) (GiDebug, error){}
 )
 
 // GiDebug is the interface for all supported debuggers.

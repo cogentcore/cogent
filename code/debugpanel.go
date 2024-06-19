@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
-	"cogentcore.org/cogent/code/cdebug/cdelve"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/colors/cam/hct"
@@ -63,18 +62,11 @@ var (
 		DebugBreakCurrent:  colors.C(colors.Scheme.Success.Base),
 		DebugPCCurrent:     colors.C(colors.Scheme.Primary.Base),
 	}
-
-	// Debuggers is the list of supported debuggers
-	Debuggers = map[fileinfo.Known]func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error){
-		fileinfo.Go: func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
-			return cdelve.NewGiDelve(path, rootPath, outbuf, pars)
-		},
-	}
 )
 
 // NewDebugger returns a new debugger for given supported file type
 func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
-	df, ok := Debuggers[sup]
+	df, ok := cdebug.Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Code Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
 		log.Println(err)

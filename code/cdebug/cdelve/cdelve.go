@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build !js
+
 package cdelve
 
 import (
@@ -15,12 +17,19 @@ import (
 	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/num"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
 )
+
+func init() {
+	cdebug.Debuggers[fileinfo.Go] = func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
+		return NewGiDelve(path, rootPath, outbuf, pars)
+	}
+}
 
 // GiDelve is the Delve implementation of the GiDebug interface
 type GiDelve struct {
