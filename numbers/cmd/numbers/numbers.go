@@ -90,9 +90,7 @@ func Run(c *Config) error { //cli:cmd -root
 
 // Interactive runs an interactive shell that allows the user to input numbers.
 func Interactive(c *Config) error {
-	b := core.NewBody("Cogent Numbers")
-	core.NewText(b).SetText("Welcome to the Numbers App")
-	// b.AddAppBar(br.MakeToolbar)
+	b := core.NewBody("Cogent Numbers").AddTitle("Cogent Numbers")
 
 	in := interpreter.NewInterpreter(interp.Options{})
 	in.HistFile = "~/.numbers-history"
