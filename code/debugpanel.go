@@ -389,7 +389,7 @@ func (dv *DebugPanel) Continue() {
 }
 
 // StepOver continues to the next source line, not entering function calls.
-func (dv *DebugPanel) StepOver() {
+func (dv *DebugPanel) StepOver() { //types:add
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -402,7 +402,7 @@ func (dv *DebugPanel) StepOver() {
 }
 
 // StepInto continues to the next source line, entering function calls.
-func (dv *DebugPanel) StepInto() {
+func (dv *DebugPanel) StepInto() { //types:add
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -414,8 +414,8 @@ func (dv *DebugPanel) StepInto() {
 	dv.InitState(ds)
 }
 
-// StepOut continues to the return point of the current function
-func (dv *DebugPanel) StepOut() {
+// StepOut continues to the return point of the current function.
+func (dv *DebugPanel) StepOut() { //types:add
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -427,8 +427,8 @@ func (dv *DebugPanel) StepOut() {
 	dv.InitState(ds)
 }
 
-// StepSingle steps a single cpu instruction.
-func (dv *DebugPanel) SingleStep() {
+// StepSingle steps a single CPU instruction.
+func (dv *DebugPanel) SingleStep() { //types:add
 	if !dv.DbgCanStep() {
 		return
 	}
@@ -440,8 +440,8 @@ func (dv *DebugPanel) SingleStep() {
 	dv.InitState(ds)
 }
 
-// Stop stops a running process
-func (dv *DebugPanel) Stop() {
+// Stop stops a running process.
+func (dv *DebugPanel) Stop() { //types:add
 	// if !dv.DbgIsActive() || dv.DbgIsAvail() {
 	// 	return
 	// }
@@ -695,8 +695,8 @@ func (dv *DebugPanel) FindFrames(fpath string, line int) {
 	dv.ShowTab(DebugTabFrames)
 }
 
-// ListGlobalVars lists global vars matching given optional filter in Global Vars tab
-func (dv *DebugPanel) ListGlobalVars(filter string) {
+// ListGlobalVars lists global vars matching the given optional filter.
+func (dv *DebugPanel) ListGlobalVars(filter string) { //types:add
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -871,81 +871,56 @@ func (dv *DebugPanel) MakeToolbar(p *tree.Plan) {
 	})
 
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Cont").SetIcon(icons.PlayArrow).SetShortcut("Control+Alt+R")
-		w.SetTooltip("continue execution from current point").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				go dv.Continue()
-			})
+		w.SetText("Continue").SetIcon(icons.PlayArrow).SetShortcut("Control+Alt+R")
+		w.SetTooltip("continue execution from current point")
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
+		w.OnClick(func(e events.Event) {
+			go dv.Continue()
+		})
 	})
 
 	tree.Add(p, func(w *core.Text) {
 		w.SetText("Step: ")
 	})
 
-	tree.Add(p, func(w *core.Button) {
-		w.SetText("Over").SetIcon(icons.StepOver).SetShortcut("F6")
-		w.SetTooltip("continues to the next source line, not entering function calls").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				dv.StepOver()
-			})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.StepOver).SetText("Over").SetShortcut("F6")
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 	})
 
-	tree.Add(p, func(w *core.Button) {
-		w.SetText("Into").SetIcon(icons.StepInto).SetShortcut("F7")
-		w.SetTooltip("continues to the next source line, entering into function calls").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				dv.StepInto()
-			})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.StepInto).SetText("Into").SetShortcut("F7")
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 	})
 
-	tree.Add(p, func(w *core.Button) {
-		w.SetText("Out").SetIcon(icons.StepOut).SetShortcut("F8")
-		w.SetTooltip("continues to the return point of the current function").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				dv.StepOut()
-			})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.StepOut).SetText("Out").SetShortcut("F8")
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 	})
 
-	tree.Add(p, func(w *core.Button) {
-		w.SetText("Single").SetIcon(icons.Step).
-			SetTooltip("steps a single CPU instruction").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				dv.StepOut()
-			})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.SingleStep).SetText("Single").SetIcon(icons.Step)
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 	})
 
-	tree.Add(p, func(w *core.Button) {
-		w.SetText("Stop").SetIcon(icons.Stop).
-			SetTooltip("stop execution").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(!dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				dv.Stop()
-			})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.Stop)
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(!dv.DbgIsAvail()) })
 	})
 
 	tree.Add(p, func(w *core.Separator) {})
 
-	tree.Add(p, func(w *core.Button) {
-		w.SetText("Global Vars").SetIcon(icons.Search).
-			SetTooltip("list variables at global scope, subject to filter (name contains)").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				core.CallFunc(dv, dv.ListGlobalVars)
-			})
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.ListGlobalVars).SetText("Global vars").SetIcon(icons.Search)
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 	})
 
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Params").SetIcon(icons.Edit).
-			SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)").
-			FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) }).
-			OnClick(func(e events.Event) {
-				DebugSettingsEditor(&dv.Code.Settings.Debug)
-			})
+		w.SetText("Params").SetIcon(icons.Edit).SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)")
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
+		w.OnClick(func(e events.Event) {
+			DebugSettingsEditor(&dv.Code.Settings.Debug)
+		})
 	})
 
 }
