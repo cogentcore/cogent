@@ -126,13 +126,15 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	// ctx, cancel := context.WithCancel(context.Background())
 
-	cfr := core.NewFrame(cmds).Styler(func(s *styles.Style) {
+	cfr := core.NewFrame(cmds)
+	cfr.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 0)
 		s.Direction = styles.Column
 		s.Border.Radius = styles.BorderRadiusLarge
 		s.Background = colors.C(colors.Scheme.SurfaceContainer)
 	})
-	tr := core.NewFrame(cfr).Styler(func(s *styles.Style) {
+	tr := core.NewFrame(cfr)
+	tr.Styler(func(s *styles.Style) {
 		s.Align.Items = styles.Center
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})

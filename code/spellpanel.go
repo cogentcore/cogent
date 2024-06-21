@@ -80,7 +80,8 @@ func (sv *SpellPanel) Init() {
 					fv := core.NewFilePicker(d).SetFilename(cur).SetExtensions(".txt")
 					fv.OnSelect(func(e events.Event) {
 						cur = fv.SelectedFile()
-					}).OnDoubleClick(func(e events.Event) {
+					})
+					fv.OnDoubleClick(func(e events.Event) {
 						cur = fv.SelectedFile()
 						d.Close()
 					})

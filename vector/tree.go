@@ -77,7 +77,7 @@ func (gv *Vector) CopySelected() { //types:add
 	}
 	tv := gv.Tree()
 	tv.SetSelectedViews(tvl)
-	tvl[0].Copy(true) // operates on first element in selection
+	tvl[0].Copy() // operates on first element in selection
 	gv.SetStatus("Copied selected items")
 }
 

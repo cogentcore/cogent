@@ -26,7 +26,8 @@ func main() {
 }
 
 func clock(ts *core.Tabs) {
-	cl := ts.NewTab("Clock").Styler(func(s *styles.Style) {
+	cl := ts.NewTab("Clock")
+	cl.Styler(func(s *styles.Style) {
 		s.CenterAll()
 	})
 	core.NewText(cl).SetType(core.TextHeadlineMedium).

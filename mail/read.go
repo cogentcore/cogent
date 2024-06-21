@@ -45,7 +45,7 @@ func (a *App) UpdateMessageList() {
 		return
 	}
 
-	list.DeleteChildren()
+	list.DeleteChildren() // TODO(config)
 
 	slices.SortFunc(cached, func(a, b *CacheData) int {
 		return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
@@ -58,7 +58,8 @@ func (a *App) UpdateMessageList() {
 			break
 		}
 
-		fr := core.NewFrame(list).Styler(func(s *styles.Style) {
+		fr := core.NewFrame(list)
+		fr.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 		})
 
@@ -84,16 +85,14 @@ func (a *App) UpdateMessageList() {
 			}
 		}
 
-		core.NewText(fr).SetType(core.TextTitleMedium).SetText(ftxt).
-			Styler(func(s *styles.Style) {
-				s.SetNonSelectable()
-			}).
-			SetName("from")
-		core.NewText(fr).SetType(core.TextBodyMedium).SetText(cd.Subject).
-			Styler(func(s *styles.Style) {
-				s.SetNonSelectable()
-			}).
-			SetName("subject")
+		from := core.NewText(fr).SetType(core.TextTitleMedium).SetText(ftxt)
+		from.Styler(func(s *styles.Style) {
+			s.SetNonSelectable()
+		})
+		subject := core.NewText(fr).SetType(core.TextBodyMedium).SetText(cd.Subject)
+		subject.Styler(func(s *styles.Style) {
+			s.SetNonSelectable()
+		})
 	}
 
 	list.Update()

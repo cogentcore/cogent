@@ -828,17 +828,17 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 					ii := ii
 					it := cc[ii]
 					cmdNm := CommandName(cmdCat, it)
-					b := core.NewButton(m).SetText(it).SetIcon(ic).
-						OnClick(func(e events.Event) {
-							// e.SetHandled() // note: this allows menu to stay open :)
-							cmd := CmdName(cmdNm)
-							cv.CmdHistory.Add(cmd)         // only save commands executed via chooser
-							cv.SaveAllCheck(true, func() { // true = cancel option
-								cv.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
-							})
+					bt := core.NewButton(m).SetText(it).SetIcon(ic)
+					bt.OnClick(func(e events.Event) {
+						// e.SetHandled() // note: this allows menu to stay open :)
+						cmd := CmdName(cmdNm)
+						cv.CmdHistory.Add(cmd)         // only save commands executed via chooser
+						cv.SaveAllCheck(true, func() { // true = cancel option
+							cv.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
 						})
+					})
 					if cmdNm == lastCmd {
-						b.SetSelected(true)
+						bt.SetSelected(true)
 					}
 				}
 			})

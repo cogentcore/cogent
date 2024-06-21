@@ -163,7 +163,8 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 				SetMenu(func(mm *core.Scene) {
 					for _, sp := range AvailableSplitNames {
 						sn := SplitName(sp)
-						mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
+						mb := core.NewButton(mm).SetText(sp)
+						mb.OnClick(func(e events.Event) {
 							cv.SplitsSetView(sn)
 						})
 						if sn == cv.Settings.SplitName {
@@ -176,7 +177,8 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 				SetMenu(func(mm *core.Scene) {
 					for _, sp := range AvailableSplitNames {
 						sn := SplitName(sp)
-						mb := core.NewButton(mm).SetText(sp).OnClick(func(e events.Event) {
+						mb := core.NewButton(mm).SetText(sp)
+						mb.OnClick(func(e events.Event) {
 							cv.SplitsSave(sn)
 						})
 						if sn == cv.Settings.SplitName {
