@@ -13,7 +13,6 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/tree"
 )
 
@@ -39,7 +38,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 			w.SetChecked(cv.Settings.GoMod) // todo: update
 		})
 		w.OnChange(func(e events.Event) {
-			cv.Settings.GoMod = w.StateIs(states.Checked)
+			cv.Settings.GoMod = w.IsChecked()
 			SetGoMod(cv.Settings.GoMod)
 		})
 	})
@@ -126,7 +125,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 		w.SetFunc(cv.Commit).SetIcon(icons.Star)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(cv.VCSLog).SetText("VCS Log").SetIcon(icons.List)
+		w.SetFunc(cv.VCSLog).SetText("VCS log").SetIcon(icons.List)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.EditProjectSettings).SetText("Settings").SetIcon(icons.Edit)
@@ -159,7 +158,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("Splits").SetMenu(func(m *core.Scene) {
-			core.NewButton(m).SetText("Set View").
+			core.NewButton(m).SetText("Set view").
 				SetMenu(func(mm *core.Scene) {
 					for _, sp := range AvailableSplitNames {
 						sn := SplitName(sp)
@@ -172,7 +171,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 						}
 					}
 				})
-			core.NewFuncButton(m).SetFunc(cv.SplitsSaveAs).SetText("Save As")
+			core.NewFuncButton(m).SetFunc(cv.SplitsSaveAs).SetText("Save as")
 			core.NewButton(m).SetText("Save").
 				SetMenu(func(mm *core.Scene) {
 					for _, sp := range AvailableSplitNames {
@@ -194,7 +193,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 func (cv *Code) OverflowMenu(m *core.Scene) {
 	core.NewButton(m).SetText("File").SetMenu(func(m *core.Scene) {
 		core.NewFuncButton(m).SetFunc(cv.NewProject).SetIcon(icons.NewWindow).SetKey(keymap.New)
-		core.NewFuncButton(m).SetFunc(cv.NewFile).SetText("New File").SetIcon(icons.NewWindow)
+		core.NewFuncButton(m).SetFunc(cv.NewFile).SetText("New file").SetIcon(icons.NewWindow)
 
 		core.NewSeparator(m)
 
@@ -208,7 +207,7 @@ func (cv *Code) OverflowMenu(m *core.Scene) {
 
 		core.NewSeparator(m)
 
-		core.NewFuncButton(m).SetFunc(cv.RevertActiveView).SetText("Revert File").
+		core.NewFuncButton(m).SetFunc(cv.RevertActiveView).SetText("Revert file").
 			SetIcon(icons.Undo)
 
 		cv.ConfigActiveFilename(core.NewFuncButton(m).SetFunc(cv.SaveActiveViewAs)).
@@ -241,7 +240,7 @@ func (cv *Code) OverflowMenu(m *core.Scene) {
 
 		core.NewSeparator(m)
 
-		core.NewFuncButton(m).SetFunc(cv.ReplaceInActive).SetText("Replace in File").
+		core.NewFuncButton(m).SetFunc(cv.ReplaceInActive).SetText("Replace in file").
 			SetIcon(icons.FindReplace)
 
 		core.NewButton(m).SetText("Show completions").SetIcon(icons.CheckCircle).SetKey(keymap.Complete)
