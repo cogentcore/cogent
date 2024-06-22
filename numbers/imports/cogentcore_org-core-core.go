@@ -217,7 +217,6 @@ func init() {
 		"RecentPaths":               reflect.ValueOf(&core.RecentPaths).Elem(),
 		"RecycleDialog":             reflect.ValueOf(core.RecycleDialog),
 		"RecycleMainWindow":         reflect.ValueOf(core.RecycleMainWindow),
-		"RecycleToolbar":            reflect.ValueOf(core.RecycleToolbar),
 		"RenderWindowGlobalMu":      reflect.ValueOf(&core.RenderWindowGlobalMu).Elem(),
 		"ResetAllSettings":          reflect.ValueOf(core.ResetAllSettings),
 		"ResetSettings":             reflect.ValueOf(core.ResetSettings),
