@@ -314,7 +314,7 @@ func (cv *Code) AddChooserFiles(ac *core.Chooser) {
 							fn.OpenEmptyDir()
 						}
 						fn.Open()
-						fn.ScrollToMe()
+						fn.ScrollToThis()
 						ac.CallItemsFuncs() // refresh avail files
 					},
 				})

@@ -113,7 +113,7 @@ func (cv *Code) SetActiveFileInfo(buf *texteditor.Buffer) {
 				cv.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", repo.Vcs(), cur)
 			}
 		}
-		fn.ScrollToMe()
+		fn.ScrollToThis()
 	}
 }
 
