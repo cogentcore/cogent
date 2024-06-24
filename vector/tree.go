@@ -6,8 +6,11 @@ package vector
 
 import (
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -161,13 +164,53 @@ var TreeIsLayerFunc = core.ActionUpdateFunc(func(fni any, act *core.Button) {
 		act.SetInactiveState(!NodeIsLayer(sn))
 	}
 })
-
-// ParVector returns the parent Vector
-func (tv *Tree) ParVector() *Vector {
-	rtv := tv.RootView.Embed(KiT_Tree).(*Tree)
-	return rtv.Vector
-}
 */
+
+func (tv *Tree) Init() {
+	tv.Tree.Init()
+	tree.AddChildInit(tv.Parts, "text", func(w *core.Text) {
+		w.Styler(func(s *styles.Style) {
+			sn := tv.SyncNode
+			switch {
+			case NodeIsLayer(sn):
+				s.Font.Weight = styles.WeightBold
+			case LayerIsLocked(sn):
+				s.Color = colors.C(colors.Scheme.Error.Base)
+			case !LayerIsVisible(sn):
+				s.Font.Style = styles.Italic
+			}
+		})
+	})
+	tv.Updater(func() {
+		sn := tv.SyncNode
+		tv.Icon = icons.Blank
+		if NodeIsLayer(sn) {
+			switch {
+			case tv.LayerIsCurrent():
+				tv.Icon = icons.Check
+			case LayerIsLocked(sn):
+				tv.Icon = icons.Lock
+			case !LayerIsVisible(sn):
+				tv.Icon = icons.Close
+			}
+		} else {
+			switch sn.(type) {
+			case *svg.Circle:
+				tv.Icon = icons.Circle
+			case *svg.Ellipse:
+				tv.Icon = icons.Circle
+			case *svg.Rect:
+				tv.Icon = icons.Rectangle
+			case *svg.Path:
+				tv.Icon = icons.LineCurve
+			case *svg.Image:
+				tv.Icon = icons.Image
+			case *svg.Text:
+				tv.Icon = "tool-text"
+			}
+		}
+	})
+}
 
 // SelectSVG
 func (tv *Tree) SelectSVG() {
@@ -258,55 +301,9 @@ func (tv *Tree) LayerToggleVis() {
 
 /*
 var TreeProperties = tree.Properties{
-	".svgnode": tree.Properties{
-		"font-weight": gist.WeightNormal,
-		"font-style":  gist.FontNormal,
-	},
-	".layer": tree.Properties{
-		"font-weight": gist.WeightBold,
-	},
-	".invisible": tree.Properties{
-		"font-style": gist.FontItalic,
-	},
-	".locked": tree.Properties{
-		"color": "#ff4252",
-	},
-	core.TreeSelectors[core.TreeActive]: tree.Properties{},
-	core.TreeSelectors[core.TreeSel]: tree.Properties{
-		"background-color": &core.Settings.Colors.Select,
-	},
-	core.TreeSelectors[core.TreeFocus]: tree.Properties{
-		"background-color": &core.Settings.Colors.Control,
-	},
 	"CtxtMenuActive": tree.Propertieslice{
-		{"SrcEdit", tree.Properties{
-			"label": "Edit",
-		}},
 		{"SelectSVG", tree.Properties{
 			"label": "Select",
-		}},
-		{"sep-edit", tree.BlankProp{}},
-		{"SrcDuplicate", tree.Properties{
-			"label":    "Duplicate",
-			"shortcut": keymap.Duplicate,
-		}},
-		{"Copy", tree.Properties{
-			"shortcut": keymap.Copy,
-			"Args": tree.Propertieslice{
-				{"reset", tree.Properties{
-					"value": true,
-				}},
-			},
-		}},
-		{"Cut", tree.Properties{
-			"shortcut": keymap.Cut,
-			"updatefunc": core.ActionUpdateFunc(func(tvi any, act *core.Button) {
-				tv := tvi.(tree.Node).Embed(KiT_Tree).(*Tree)
-				act.SetInactiveState(tv.IsRootOrField(""))
-			}),
-		}},
-		{"Paste", tree.Properties{
-			"shortcut": keymap.Paste,
 		}},
 		{"sep-layer", tree.BlankProp{}},
 		{"LayerSetCurrent", tree.Properties{
@@ -321,50 +318,7 @@ var TreeProperties = tree.Properties{
 			"label":    "Layer: Toggle Visible",
 			"updatefunc": TreeIsLayerFunc,
 		}},
-		{"sep-open", tree.BlankProp{}},
-		{"OpenAll", tree.Properties{}},
-		{"CloseAll", tree.Properties{}},
 	},
 }
 
-func (tv *Tree) Style2D() {
-	sn := tv.SrcNode
-	tv.Class = ""
-	if sn != nil {
-		if NodeIsLayer(sn) {
-			tv.Icon = icons.Icon("blank")
-			tv.AddClass("layer")
-			if tv.LayerIsCurrent() {
-				tv.Icon = icons.Icon("checkmark")
-			}
-			if LayerIsLocked(sn) {
-				tv.AddClass("locked")
-				tv.Icon = icons.Icon("close")
-			}
-			if !LayerIsVisible(sn) {
-				tv.AddClass("invisible")
-				tv.Icon = icons.Icon("close")
-			}
-			// todo: visibility and locked flags
-		} else {
-			tv.AddClass("svgnode")
-			switch sn.(type) {
-			case *svg.Circle:
-				tv.Icon = icons.Icon("circlebutton-off")
-			case *svg.Ellipse:
-				tv.Icon = icons.Icon("circlebutton-off")
-			case *svg.Rect:
-				tv.Icon = icons.Icon("stop")
-			case *svg.Path:
-				tv.Icon = icons.Icon("color")
-			case *svg.Image:
-				tv.Icon = icons.Icon("file-image") // todo: image
-			case *svg.Text:
-				tv.Icon = icons.Icon("file-doc") // todo: A = text
-			}
-		}
-		tv.StyleTree()
-		tv.LayState.SetFromStyle(&tv.Sty.Layout) // also does reset
-	}
-}
 */

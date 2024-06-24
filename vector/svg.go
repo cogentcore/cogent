@@ -521,8 +521,8 @@ func (sv *SVG) ReadMetaData() {
 //  ContextMenu / Actions
 
 // EditNode opens a form editor on node
-func (sv *SVG) EditNode(kn tree.Node) {
-	// core.FormDialog(sv, kn, "SVG Element View", true) // TODO:
+func (sv *SVG) EditNode(kn tree.Node) { //types:add
+	core.FormDialog(sv, kn, "SVG Element View", true)
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
@@ -680,18 +680,23 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 	minsz := float32(10)
 	es := sv.EditState()
 	dv := math32.Vector2FromPoint(end.Sub(start))
+	fmt.Println("start, end, dv", start, end, dv)
 	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
 		fmt.Println("dv under min:", dv, minsz)
-		return nil
+		// return nil
 	}
 	tn := typ.Name
 	sv.ManipStart("New"+tn, "")
 	nr := sv.NewElement(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
+	fmt.Println(xfi)
+	xfi = math32.Identity2()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.Vector2FromPoint(start).Sub(svoff)
+	fmt.Println(pos, svoff)
 	nr.SetNodePos(xfi.MulVector2AsPoint(pos))
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
+	fmt.Println(sz, minsz)
 	nr.SetNodeSize(xfi.MulVector2AsVector(sz))
 	es.SelectAction(nr, events.SelectOne, end)
 	sv.ManipDone()

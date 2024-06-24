@@ -58,8 +58,6 @@ func (pv *PaintView) Init() {
 		s.Direction = styles.Column
 	})
 
-	// sty := &Settings.ShapeStyle
-
 	tree.AddChildAt(pv, "stroke-lab", func(w *core.Frame) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Row
@@ -78,7 +76,7 @@ func (pv *PaintView) Init() {
 				}
 				pv.Vector.SetStroke(pv.curStrokeType, pv.StrokeType, pv.StrokeStops)
 				pv.curStrokeType = pv.StrokeType
-				pv.NeedsLayout()
+				pv.Update()
 			})
 		})
 	})
@@ -125,187 +123,192 @@ func (pv *PaintView) Init() {
 				}
 			})
 		})
+	})
 
-		tree.AddChildAt(w, "stroke-markers", func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Direction = styles.Row
-			})
-			tree.AddChild(w, func(w *core.Chooser) { // start
-				// mscb.SetProp("width", units.NewCh(20))
-				// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
-				w.OnChange(func(e events.Event) {
-					if pv.IsStrokeOn() {
-						pv.Vector.SetMarkerProperties(pv.MarkerProperties())
-					}
-				})
-			})
-			tree.AddChild(w, func(w *core.Chooser) { // start-color
-				w.SetEnum(MarkerColorsN)
-				// mscc.SetProp("width", units.NewCh(5))
-				w.OnChange(func(e events.Event) {
-					if pv.IsStrokeOn() {
-						pv.Vector.SetMarkerProperties(pv.MarkerProperties())
-					}
-				})
-			})
-
-			tree.AddChild(w, func(w *core.Separator) {})
-
-			tree.AddChild(w, func(w *core.Chooser) { // mid
-				// mscb.SetProp("width", units.NewCh(20))
-				// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
-				w.OnChange(func(e events.Event) {
-					if pv.IsStrokeOn() {
-						pv.Vector.SetMarkerProperties(pv.MarkerProperties())
-					}
-				})
-			})
-			tree.AddChild(w, func(w *core.Chooser) { // mid-color
-				w.SetEnum(MarkerColorsN)
-				// mmcc.SetProp("width", units.NewCh(5))
-				w.OnChange(func(e events.Event) {
-					if pv.IsStrokeOn() {
-						pv.Vector.SetMarkerProperties(pv.MarkerProperties())
-					}
-				})
-			})
-
-			tree.AddChild(w, func(w *core.Separator) {})
-
-			tree.AddChild(w, func(w *core.Chooser) { // end
-				// mscb.SetProp("width", units.NewCh(20))
-				// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
-				w.OnChange(func(e events.Event) {
-					if pv.IsStrokeOn() {
-						pv.Vector.SetMarkerProperties(pv.MarkerProperties())
-					}
-				})
-			})
-			tree.AddChild(w, func(w *core.Chooser) { // end-color
-				w.SetEnum(MarkerColorsN)
-				// mscc.SetProp("width", units.NewCh(5))
-				w.OnChange(func(e events.Event) {
-					if pv.IsStrokeOn() {
-						pv.Vector.SetMarkerProperties(pv.MarkerProperties())
-					}
-				})
+	tree.AddChildAt(pv, "stroke-markers", func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Direction = styles.Row
+		})
+		tree.AddChild(w, func(w *core.Chooser) { // start
+			// mscb.SetProp("width", units.NewCh(20))
+			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Vector.SetMarkerProperties(pv.MarkerProperties())
+				}
 			})
 		})
-
-		////////////////////////////////
-		// stroke stack
-
-		tree.AddChildAt(w, "stroke-stack", func(w *core.Frame) {
-			w.Styles.Display = styles.Stacked
-			w.StackTop = 1
-			// ss.StackTopOnly = true
-			w.Updater(func() {
-				w.StackTop = int(pv.StrokeType)
-			})
-			tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
-
-			tree.AddChild(w, func(w *core.ColorPicker) { // "stroke-clr")
-				core.Bind(&pv.PaintStyle.StrokeStyle.Color, w)
-				w.OnChange(func(e events.Event) {
-					if pv.StrokeType == PaintSolid {
-						pv.Vector.SetStrokeColor(pv.StrokeProp(), false) // not manip
-					}
-				})
-			})
-
-			tree.AddChild(w, func(w *core.Table) { // "stroke-grad"
-				// sg.SetProp("index", true)
-				// sg.SetProp("toolbar", true)
-				// sg.SelectedIndex = -1
-				w.SetSlice(&pv.Vector.EditState.Gradients)
-				// todo: bindselect
-				// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-				// 	if sig == int64(core.WidgetSelected) {
-				// 		svv, _ := send.(*core.Table)
-				// 		if svv.SelectedIndex >= 0 {
-				// 			pv.StrokeStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
-				// 			pv.Vector.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
-				// 		}
-				// 	}
-				// })
+		tree.AddChild(w, func(w *core.Chooser) { // start-color
+			w.SetEnum(MarkerColorsN)
+			// mscc.SetProp("width", units.NewCh(5))
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Vector.SetMarkerProperties(pv.MarkerProperties())
+				}
 			})
 		})
 
 		tree.AddChild(w, func(w *core.Separator) {})
 
-		tree.AddChildAt(pv, "fill-lab", func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Direction = styles.Row
+		tree.AddChild(w, func(w *core.Chooser) { // mid
+			// mscb.SetProp("width", units.NewCh(20))
+			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Vector.SetMarkerProperties(pv.MarkerProperties())
+				}
 			})
-			tree.AddChild(w, func(w *core.Text) {
-				w.SetText("<b>Fill Paint:  </b>")
-			})
-			tree.AddChild(w, func(w *core.Switches) {
-				core.Bind(&pv.FillType, w)
-				w.OnChange(func(e events.Event) {
-					if pv.FillType == PaintLinear || pv.FillType == PaintRadial {
-						if pv.FillStops == "" {
-							pv.FillStops = pv.Vector.DefaultGradient()
-						}
-						pv.SelectFillGrad()
-					}
-					pv.Vector.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
-					pv.curFillType = pv.FillType
-					pv.NeedsLayout()
-				})
+		})
+		tree.AddChild(w, func(w *core.Chooser) { // mid-color
+			w.SetEnum(MarkerColorsN)
+			// mmcc.SetProp("width", units.NewCh(5))
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Vector.SetMarkerProperties(pv.MarkerProperties())
+				}
 			})
 		})
 
-		tree.AddChildAt(w, "fill-stack", func(w *core.Frame) {
-			w.Styles.Display = styles.Stacked
-			w.StackTop = 1
-			// fs.StackTopOnly = true
-			w.Updater(func() {
-				w.StackTop = int(pv.FillType)
+		tree.AddChild(w, func(w *core.Separator) {})
+
+		tree.AddChild(w, func(w *core.Chooser) { // end
+			// mscb.SetProp("width", units.NewCh(20))
+			// mscb.ItemsFromIconList(AllMarkerIcons, true, 0)
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Vector.SetMarkerProperties(pv.MarkerProperties())
+				}
 			})
-
-			tree.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
-
-			tree.AddChild(w, func(w *core.ColorPicker) { // "fill-clr")
-				core.Bind(&pv.PaintStyle.FillStyle.Color, w)
-				w.OnChange(func(e events.Event) {
-					if pv.FillType == PaintSolid {
-						pv.Vector.SetFillColor(pv.FillProp(), false) // not manip
-					}
-				})
-			})
-
-			tree.AddChild(w, func(w *core.Table) { // "fill-grad"
-				// sg.SetProp("index", true)
-				// sg.SetProp("toolbar", true)
-				// sg.SelectedIndex = -1
-				w.SetSlice(&pv.Vector.EditState.Gradients)
-				// fg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-				// 	if sig == int64(core.WidgetSelected) {
-				// 		svv, _ := send.(*core.Table)
-				// 		if svv.SelectedIndex >= 0 {
-				// 			pv.FillStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
-				// 			pv.Vector.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
-				// 		}
-				// 	}
-				// })
-				// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-				// 	// fmt.Printf("svs: %v   %v\n", sig, data)
-				// 	// svv, _ := send.(*core.Table)
-				// 	if sig == int64(core.ListDeleted) { // not clear what we can do here
-				// 	} else {
-				// 		pv.Vector.UpdateGradients()
-				// 	}
-				// })
-				// fg.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
-				// 	// fmt.Printf("vs: %v   %v\n", sig, data)
-				// 	// svv, _ := send.(*core.Table)
-				// 	pv.Vector.UpdateGradients()
-				// })
-			})
-
-			tree.AddChild(w, func(w *core.Stretch) {})
 		})
+		tree.AddChild(w, func(w *core.Chooser) { // end-color
+			w.SetEnum(MarkerColorsN)
+			// mscc.SetProp("width", units.NewCh(5))
+			w.OnChange(func(e events.Event) {
+				if pv.IsStrokeOn() {
+					pv.Vector.SetMarkerProperties(pv.MarkerProperties())
+				}
+			})
+		})
+	})
+
+	////////////////////////////////
+	// stroke stack
+
+	tree.AddChildAt(pv, "stroke-stack", func(w *core.Frame) {
+		w.StackTop = 1
+		// ss.StackTopOnly = true
+		w.Styler(func(s *styles.Style) {
+			s.Display = styles.Stacked
+		})
+		// ss.StackTopOnly = true
+		w.Updater(func() {
+			w.StackTop = int(pv.StrokeType)
+		})
+		tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
+
+		tree.AddChild(w, func(w *core.ColorPicker) { // "stroke-clr")
+			// core.Bind(&pv.PaintStyle.StrokeStyle.Color, w)
+			w.OnChange(func(e events.Event) {
+				if pv.StrokeType == PaintSolid {
+					pv.Vector.SetStrokeColor(pv.StrokeProp(), false) // not manip
+				}
+			})
+		})
+
+		tree.AddChild(w, func(w *core.Table) { // "stroke-grad"
+			// sg.SetProp("index", true)
+			// sg.SetProp("toolbar", true)
+			// sg.SelectedIndex = -1
+			w.SetSlice(&pv.Vector.EditState.Gradients)
+			// todo: bindselect
+			// sg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+			// 	if sig == int64(core.WidgetSelected) {
+			// 		svv, _ := send.(*core.Table)
+			// 		if svv.SelectedIndex >= 0 {
+			// 			pv.StrokeStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
+			// 			pv.Vector.SetStroke(pv.StrokeType, pv.StrokeType, pv.StrokeStops) // handles full updating
+			// 		}
+			// 	}
+			// })
+		})
+	})
+
+	tree.AddChild(pv, func(w *core.Separator) {})
+
+	tree.AddChildAt(pv, "fill-lab", func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Direction = styles.Row
+		})
+		tree.AddChild(w, func(w *core.Text) {
+			w.SetText("<b>Fill Paint:  </b>")
+		})
+		tree.AddChild(w, func(w *core.Switches) {
+			core.Bind(&pv.FillType, w)
+			w.OnChange(func(e events.Event) {
+				if pv.FillType == PaintLinear || pv.FillType == PaintRadial {
+					if pv.FillStops == "" {
+						pv.FillStops = pv.Vector.DefaultGradient()
+					}
+					pv.SelectFillGrad()
+				}
+				pv.Vector.SetFill(pv.curFillType, pv.FillType, pv.FillStops)
+				pv.curFillType = pv.FillType
+				pv.Update()
+			})
+		})
+	})
+
+	tree.AddChildAt(pv, "fill-stack", func(w *core.Frame) {
+		w.StackTop = 1
+		// fs.StackTopOnly = true
+		w.Styler(func(s *styles.Style) {
+			s.Display = styles.Stacked
+		})
+		w.Updater(func() {
+			w.StackTop = int(pv.FillType)
+		})
+
+		tree.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
+
+		tree.AddChild(w, func(w *core.ColorPicker) { // "fill-clr")
+			// core.Bind(&pv.PaintStyle.FillStyle.Color, w)
+			w.OnChange(func(e events.Event) {
+				if pv.FillType == PaintSolid {
+					pv.Vector.SetFillColor(pv.FillProp(), false) // not manip
+				}
+			})
+		})
+
+		tree.AddChild(w, func(w *core.Table) { // "fill-grad"
+			// sg.SetProp("index", true)
+			// sg.SetProp("toolbar", true)
+			// sg.SelectedIndex = -1
+			w.SetSlice(&pv.Vector.EditState.Gradients)
+			// fg.WidgetSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+			// 	if sig == int64(core.WidgetSelected) {
+			// 		svv, _ := send.(*core.Table)
+			// 		if svv.SelectedIndex >= 0 {
+			// 			pv.FillStops = pv.Vector.EditState.Gradients[svv.SelectedIndex].Name
+			// 			pv.Vector.SetFill(pv.FillType, pv.FillType, pv.FillStops) // this handles updating gradients etc to use stops
+			// 		}
+			// 	}
+			// })
+			// fg.ListSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+			// 	// fmt.Printf("svs: %v   %v\n", sig, data)
+			// 	// svv, _ := send.(*core.Table)
+			// 	if sig == int64(core.ListDeleted) { // not clear what we can do here
+			// 	} else {
+			// 		pv.Vector.UpdateGradients()
+			// 	}
+			// })
+			// fg.ViewSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+			// 	// fmt.Printf("vs: %v   %v\n", sig, data)
+			// 	// svv, _ := send.(*core.Table)
+			// 	pv.Vector.UpdateGradients()
+			// })
+		})
+
+		tree.AddChild(w, func(w *core.Stretch) {})
 	})
 }
 

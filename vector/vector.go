@@ -97,11 +97,15 @@ func (vc *Vector) Init() {
 					w.SetFunc(vc.AddLayer)
 				})
 				tree.AddChildAt(w, "layers", func(w *core.Table) {
+					w.Styler(func(s *styles.Style) {
+						s.Max.Y.Em(10)
+					})
 					w.SetSlice(&vc.EditState.Layers)
 				})
 				tree.AddChildAt(w, "tree-frame", func(w *core.Frame) {
 					w.Styler(func(s *styles.Style) {
 						s.Direction = styles.Column
+						s.Grow.Set(0, 1)
 					})
 					tree.AddChildAt(w, "tree", func(w *Tree) {
 						w.Vector = vc

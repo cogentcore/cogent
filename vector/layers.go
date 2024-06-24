@@ -152,6 +152,7 @@ func (vv *Vector) UpdateLayerView() {
 	}
 	// lyv.ClearSelected() // todo
 	lyv.SelectIndex(ci)
+	lyv.Update()
 }
 
 // AddLayer adds a new layer
