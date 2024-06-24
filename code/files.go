@@ -173,7 +173,7 @@ func (cv *Code) OpenFileNode(fn *filetree.Node) (bool, error) {
 		cv.ConfigTextBuffer(fn.Buffer)
 		cv.OpenNodes.Add(fn)
 		fn.Open()
-		fn.UpdateNode()
+		fn.Update()
 	}
 	return nw, err
 }

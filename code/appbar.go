@@ -310,9 +310,6 @@ func (cv *Code) AddChooserFiles(ac *core.Chooser) {
 					Text: nmpath,
 					Icon: icons.Folder,
 					Func: func() {
-						if !fn.HasChildren() {
-							fn.OpenEmptyDir()
-						}
 						fn.Open()
 						fn.ScrollToThis()
 						ac.CallItemsFuncs() // refresh avail files

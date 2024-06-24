@@ -203,7 +203,7 @@ func (cv *Code) ClearDebug() {
 // the open tree nodes in FileTree.
 func (cv *Code) VCSUpdateAll() { //types:add
 	cv.Files.UpdateAllVCS()
-	cv.Files.UpdateAll()
+	cv.Files.Update()
 }
 
 // VCSLog shows the VCS log of commits in this project,

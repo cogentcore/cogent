@@ -131,7 +131,7 @@ func (cv *Code) Init() {
 	})
 	cv.OnShow(func(e events.Event) {
 		cv.OpenConsoleTab()
-		cv.UpdateFiles()
+		// cv.UpdateFiles()
 	})
 
 	tree.AddChildAt(cv, "splits", func(w *core.Splits) {
@@ -671,7 +671,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	b := core.NewBody(winm).SetTitle(winm)
 	cv := NewCode(b)
 	b.AddAppBar(cv.MakeToolbar)
-	b.RunWindow()
+	cv.Update() // get first pass so settings stick
 
 	if doPath {
 		cv.OpenPath(core.Filename(path))
@@ -679,5 +679,6 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 		cv.OpenProject(core.Filename(path))
 	}
 
+	b.RunWindow()
 	return cv
 }

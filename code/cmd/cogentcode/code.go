@@ -35,7 +35,7 @@ func main() {
 		flag.StringVar(&path, "path", "", "path to open -- can be to a directory or a filename within the directory ")
 		flag.StringVar(&proj, "proj", "", "project file to open -- typically has .code extension")
 		// todo: other args?
-		// flag.Parse() // note: this is causing delve to crash all the sudden!
+		flag.Parse() // note: this is causing delve to crash all the sudden!
 		if path == "" && proj == "" {
 			if flag.NArg() > 0 {
 				ext := strings.ToLower(filepath.Ext(flag.Arg(0)))

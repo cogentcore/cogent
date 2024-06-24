@@ -26,28 +26,27 @@ type FileNode struct {
 func (fn *FileNode) Init() {
 	fn.Node.Init()
 	fn.AddContextMenu(fn.ContextMenu)
-}
-
-func (fn *FileNode) OnDoubleClick(e events.Event) {
-	e.SetHandled()
-	ge, ok := ParentCode(fn.This)
-	if !ok {
-		return
-	}
-	done := false
-	fn.SelectedFunc(func(sn *filetree.Node) {
-		if !done {
-			if sn.IsDir() {
-				if !sn.HasChildren() {
-					sn.OpenEmptyDir()
-				} else {
-					sn.ToggleClose()
-				}
-			} else {
-				ge.FileNodeOpened(sn)
-			}
-			done = true
+	fn.Parts.OnDoubleClick(func(e events.Event) {
+		e.SetHandled()
+		ge, ok := ParentCode(fn.This)
+		if !ok {
+			return
 		}
+		done := false
+		fn.SelectedFunc(func(sn *filetree.Node) {
+			if !done {
+				if sn.IsDir() {
+					if !sn.HasChildren() {
+						sn.Open()
+					} else {
+						sn.ToggleClose()
+					}
+				} else {
+					ge.FileNodeOpened(sn)
+				}
+				done = true
+			}
+		})
 	})
 }
 

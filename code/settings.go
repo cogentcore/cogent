@@ -5,6 +5,7 @@
 package code
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -442,6 +443,7 @@ func (cv *Code) LangDefaults() {
 		}
 	}
 	if cv.Settings.VersionControl == "" {
+		fmt.Printf("firstvcs")
 		repo, _ := cv.Files.FirstVCS()
 		if repo != nil {
 			cv.Settings.VersionControl = filetree.VersionControlName(repo.Vcs())

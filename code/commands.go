@@ -136,16 +136,16 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 		}
 		cmd := exec.Command(cstr, args...)
 		return cmd, cmdstr
-	case "open":
-		cstr = filetree.OSOpenCommand()
-		cmdstr := cstr
-		args := cm.BindArgs(avp)
-		if args != nil {
-			astr := strings.Join(args, " ")
-			cmdstr += " " + astr
-		}
-		cmd := exec.Command(cstr, args...)
-		return cmd, cmdstr
+	// case "open": // TODO: kai pointlessly broke this, and says it is unimportant
+	// 	cstr = filetree.OSOpenCommand()
+	// 	cmdstr := cstr
+	// 	args := cm.BindArgs(avp)
+	// 	if args != nil {
+	// 		astr := strings.Join(args, " ")
+	// 		cmdstr += " " + astr
+	// 	}
+	// 	cmd := exec.Command(cstr, args...)
+	// 	return cmd, cmdstr
 	default:
 		cmdstr := cstr
 		args := cm.BindArgs(avp)
