@@ -18,13 +18,13 @@ import (
 	"cogentcore.org/core/system"
 )
 
-// Preferences is the overall Vector preferences
-type Preferences struct { //types:add
+// SettingsData is the overall Vector settings
+type SettingsData struct { //types:add
 
 	// default physical size, when app is started without opening a file
 	Size PhysSize
 
-	// active color preferences
+	// active color settings
 	Colors ColorSettings
 
 	// named color schemes -- has Light and Dark schemes by default
@@ -67,7 +67,7 @@ type Preferences struct { //types:add
 	Changed bool `display:"-" changeflag:"+" json:"-" xml:"-"`
 }
 
-func (pf *Preferences) Defaults() {
+func (pf *SettingsData) Defaults() {
 	pf.Size.Defaults()
 	pf.Colors.Defaults()
 	pf.ColorSchemes = DefaultColorSchemes()
@@ -103,12 +103,12 @@ func (pf *Preferences) Defaults() {
 	}
 }
 
-func (pf *Preferences) Update() {
+func (pf *SettingsData) Update() {
 	pf.Size.Update()
 }
 
-// Settings are the overall Vector preferences
-var Settings = Preferences{}
+// Settings are the overall Vector settings
+var Settings = SettingsData{}
 
 // InitSettings must be called at startup in mainrun()
 func InitSettings() {
@@ -118,11 +118,11 @@ func InitSettings() {
 	// OpenPaths() // todo
 }
 
-// SettingsFileName is the name of the preferences file in app settings directory
+// SettingsFileName is the name of the settings file in app settings directory
 var SettingsFileName = "grid_prefs.json"
 
-// Open preferences from app standard prefs directory, and applies them
-func (pf *Preferences) Open() error {
+// Open settings from app standard prefs directory, and applies them
+func (pf *SettingsData) Open() error {
 	pdir := system.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := ioutil.ReadFile(pnm)
@@ -136,8 +136,8 @@ func (pf *Preferences) Open() error {
 	return err
 }
 
-// Save Preferences to app standard prefs directory
-func (pf *Preferences) Save() error {
+// Save Settings to app standard prefs directory
+func (pf *SettingsData) Save() error {
 	pdir := system.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SettingsFileName)
 	b, err := json.MarshalIndent(pf, "", "  ")
@@ -155,14 +155,14 @@ func (pf *Preferences) Save() error {
 }
 
 // ApplyEnvVars applies environment variables set in EnvVars
-func (pf *Preferences) ApplyEnvVars() {
+func (pf *SettingsData) ApplyEnvVars() {
 	for k, v := range pf.EnvVars {
 		os.Setenv(k, v)
 	}
 }
 
 // LightMode sets colors to light mode
-func (pf *Preferences) LightMode() {
+func (pf *SettingsData) LightMode() {
 	lc, ok := pf.ColorSchemes["Light"]
 	if !ok {
 		log.Printf("Light ColorScheme not found\n")
@@ -174,7 +174,7 @@ func (pf *Preferences) LightMode() {
 }
 
 // DarkMode sets colors to dark mode
-func (pf *Preferences) DarkMode() {
+func (pf *SettingsData) DarkMode() {
 	lc, ok := pf.ColorSchemes["Dark"]
 	if !ok {
 		log.Printf("Dark ColorScheme not found\n")
@@ -186,13 +186,13 @@ func (pf *Preferences) DarkMode() {
 }
 
 // EditSplits opens the SplitsView editor to customize saved splitter settings
-func (pf *Preferences) EditSplits() {
+func (pf *SettingsData) EditSplits() {
 	SplitsView(&AvailableSplits)
 }
 
-// UpdateAll updates all open windows with current preferences -- triggers
+// UpdateAll updates all open windows with current settings -- triggers
 // rebuild of default styles.
-func (pf *Preferences) UpdateAll() {
+func (pf *SettingsData) UpdateAll() {
 	// gist.RebuildDefaultStyles = true
 	// color.ColorSpecCache = nil
 	// gist.StyleTemplates = nil
@@ -211,8 +211,8 @@ func (pf *Preferences) UpdateAll() {
 }
 
 /*
-// PreferencesProperties define the Toolbar and MenuBar for Form, e.g., core.SettingsEditor
-var PreferencesProperties = tree.Properties{
+// SettingsProperties define the Toolbar and MenuBar for Form, e.g., core.SettingsEditor
+var SettingsProperties = tree.Properties{
 	"MainMenu": tree.Propertieslice{
 		{"AppMenu", tree.BlankProp{}},
 		{"File", tree.Propertieslice{
@@ -222,7 +222,7 @@ var PreferencesProperties = tree.Properties{
 			{"Save", tree.Properties{
 				"shortcut": "Command+S",
 				"updatefunc": core.ActionUpdateFunc(func(pfi any, act *core.Button) {
-					pf := pfi.(*Preferences)
+					pf := pfi.(*Settings)
 					act.SetActiveState(pf.Changed)
 				}),
 			}},
@@ -237,10 +237,10 @@ var PreferencesProperties = tree.Properties{
 	},
 	"Toolbar": tree.Propertieslice{
 		{"Save", tree.Properties{
-			"desc": "Saves current preferences to standard prefs.json file, which is auto-loaded at startup.",
+			"desc": "Saves current settings to standard prefs.json file, which is auto-loaded at startup.",
 			"icon": "file-save",
 			"updatefunc": core.ActionUpdateFunc(func(pfi any, act *core.Button) {
-				pf := pfi.(*Preferences)
+				pf := pfi.(*Settings)
 				act.SetActiveStateUpdate(pf.Changed)
 			}),
 		}},
@@ -262,7 +262,7 @@ var PreferencesProperties = tree.Properties{
 		{"sep-key", tree.BlankProp{}},
 		{"EditSplits", tree.Properties{
 			"icon": "file-binary",
-			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with preferences automatically.",
+			"desc": "opens the SplitsView editor of saved named splitter settings.  Current customized settings are saved and loaded with settings automatically.",
 		}},
 	},
 }

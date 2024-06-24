@@ -536,6 +536,8 @@ func (vv *Vector) SetStatus(msg string) {
 	}
 	str += msg
 	text.SetText(str)
+	text.UpdateWidget()
+	text.NeedsRender()
 }
 
 func (vv *Vector) SetTitle() {

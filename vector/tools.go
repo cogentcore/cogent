@@ -8,6 +8,8 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -30,14 +32,10 @@ func ToolDoesBasicSelect(tl Tools) bool {
 }
 
 // SetTool sets the current active tool
-func (gv *Vector) SetTool(tl Tools) {
-	es := &gv.EditState
+func (vc *Vector) SetTool(tl Tools) {
+	es := &vc.EditState
 	if es.Tool == tl {
 		return
-	}
-	tls := gv.Tools()
-	for i, t := range tls.Children {
-		t.(core.Widget).AsWidget().SetSelected(i == int(tl))
 	}
 	fs := es.FirstSelectedNode()
 	if fs != nil {
@@ -54,56 +52,74 @@ func (gv *Vector) SetTool(tl Tools) {
 		}
 	}
 	es.ResetSelected()
-	gv.EditState.Tool = tl
-	gv.SetDefaultStyle()
-	gv.ModalToolbar().Update()
-	gv.SetStatus("Tool")
-	sv := gv.SVG()
+	vc.EditState.Tool = tl
+	vc.SetDefaultStyle()
+	vc.ModalToolbar().Update()
+	vc.SetStatus("Tool")
+	vc.Restyle()
+	sv := vc.SVG()
 	sv.UpdateSelect()
 }
 
-func (gv *Vector) MakeTools(p *tree.Plan) {
+func (vc *Vector) MakeTools(p *tree.Plan) {
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.ArrowSelectorTool).SetShortcut("S")
 		w.SetTooltip("Select, move, and resize objects")
 		w.OnClick(func(e events.Event) {
-			gv.SetTool(SelectTool)
+			vc.SetTool(SelectTool)
+		})
+		w.Styler(func(s *styles.Style) {
+			s.SetState(vc.EditState.Tool == SelectTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon("tool-node").SetShortcut("N")
 		w.SetTooltip("Select and move node points within paths")
 		w.OnClick(func(e events.Event) {
-			gv.SetTool(NodeTool)
+			vc.SetTool(NodeTool)
+		})
+		w.Styler(func(s *styles.Style) {
+			s.SetState(vc.EditState.Tool == NodeTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.Rectangle).SetShortcut("R")
 		w.SetTooltip("Create rectangles and squares")
 		w.OnClick(func(e events.Event) {
-			gv.SetTool(RectTool)
+			vc.SetTool(RectTool)
+		})
+		w.Styler(func(s *styles.Style) {
+			s.SetState(vc.EditState.Tool == RectTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.Circle).SetShortcut("E")
 		w.SetTooltip("Create circles, ellipses, and arcs")
 		w.OnClick(func(e events.Event) {
-			gv.SetTool(EllipseTool)
+			vc.SetTool(EllipseTool)
+		})
+		w.Styler(func(s *styles.Style) {
+			s.SetState(vc.EditState.Tool == EllipseTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.LineCurve).SetShortcut("B")
 		w.SetTooltip("Create bezier curves (straight lines and curves with control points)")
 		w.OnClick(func(e events.Event) {
-			gv.SetTool(BezierTool)
+			vc.SetTool(BezierTool)
+		})
+		w.Styler(func(s *styles.Style) {
+			s.SetState(vc.EditState.Tool == BezierTool, states.Selected)
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon("tool-text").SetShortcut("T")
 		w.SetTooltip("Add and edit text")
 		w.OnClick(func(e events.Event) {
-			gv.SetTool(TextTool)
+			vc.SetTool(TextTool)
+		})
+		w.Styler(func(s *styles.Style) {
+			s.SetState(vc.EditState.Tool == TextTool, states.Selected)
 		})
 	})
-	gv.SetTool(SelectTool)
 }

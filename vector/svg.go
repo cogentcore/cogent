@@ -681,12 +681,11 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 	es := sv.EditState()
 	dv := math32.Vector2FromPoint(end.Sub(start))
 	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
+		fmt.Println("dv under min:", dv, minsz)
 		return nil
 	}
-	// win := sv.Vector.ParentWindow()
 	tn := typ.Name
 	sv.ManipStart("New"+tn, "")
-	// sv.SetFullReRender()
 	nr := sv.NewElement(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
@@ -699,7 +698,6 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 	sv.NeedsRender()
 	sv.UpdateSelSprites()
 	es.DragSelStart(start)
-	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
 	return nr
 }
 

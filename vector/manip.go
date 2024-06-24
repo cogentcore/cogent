@@ -88,7 +88,7 @@ func (sv *SVG) VectorDots() (float32, math32.Vector2) {
 }
 
 // SnapToPt snaps value to given potential snap point, in screen pixel units.
-// Tolerance is determined by preferences.  Returns true if snapped.
+// Tolerance is determined by settings.  Returns true if snapped.
 func SnapToPt(val, snap float32) (float32, bool) {
 	d := math32.Abs(val - snap)
 	if d <= float32(Settings.SnapTol) {
@@ -98,7 +98,7 @@ func SnapToPt(val, snap float32) (float32, bool) {
 }
 
 // SnapToIncr snaps value to given increment, first subtracting given offset.
-// Tolerance is determined by preferences, which is in screen pixels.
+// Tolerance is determined by settings, which is in screen pixels.
 // Returns true if snapped.
 func SnapToIncr(val, off, incr float32) (float32, bool) {
 	nint := math32.Round((val-off)/incr)*incr + off
@@ -178,7 +178,7 @@ func (sv *SVG) SnapPoint(rawpt math32.Vector2) math32.Vector2 {
 	return snpt
 }
 
-// SnapBBox does snapping on given raw bbox according to preferences,
+// SnapBBox does snapping on given raw bbox according to settings,
 // aligning movement of bbox edges / centers relative to other bboxes..
 // returns snapped bbox.
 func (sv *SVG) SnapBBox(rawbb math32.Box2) math32.Box2 {

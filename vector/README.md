@@ -52,7 +52,7 @@ Basic functionality now in place:
 
 * full undo / redo for everything.
 
-* Preferences 
+* Settings 
 
 # TODO:
 
