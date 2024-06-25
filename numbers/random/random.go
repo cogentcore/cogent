@@ -69,6 +69,7 @@ func (rd *Random) Init() {
 	rd.Table = &table.Table{}
 	rd.Histogram = &table.Table{}
 	rd.ConfigTable(rd.Table)
+	rd.Plot()
 
 	rd.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
@@ -83,7 +84,6 @@ func (rd *Random) Init() {
 		})
 		tree.AddChild(w, func(w *plotcore.PlotEditor) {
 			rd.plot = rd.ConfigPlot(w, rd.Histogram)
-			rd.Plot()
 		})
 	})
 }
@@ -118,7 +118,6 @@ func (rd *Random) ConfigPlot(plt *plotcore.PlotEditor, dt *table.Table) *plotcor
 	plt.Params.Type = plotcore.Bar
 	plt.Params.XAxisRotation = 45
 	plt.SetTable(dt)
-	// order of params: on, fixMin, min, fixMax, max
 	plt.SetColParams("Value", plotcore.Off, plotcore.FloatMin, 0, plotcore.FloatMax, 0)
 	plt.SetColParams("Count", plotcore.On, plotcore.FixMin, 0, plotcore.FloatMax, 0)
 	return plt
