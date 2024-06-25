@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"cogentcore.org/cogent/numbers/databrowser"
+	"cogentcore.org/cogent/numbers/random"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/cli"
@@ -52,7 +53,7 @@ type Config struct {
 }
 
 func main() { //types:skip
-	opts := cli.DefaultOptions("numbers", "An interactive tool for data management, analysis and math.")
+	opts := cli.DefaultOptions("numbers", "Cogent Numbers, an interactive tool for data management, analysis and math.")
 	cli.Run(opts, &Config{}, Run, Build)
 }
 
@@ -91,6 +92,11 @@ func Run(c *Config) error { //cli:cmd -root
 // Interactive runs an interactive shell that allows the user to input numbers.
 func Interactive(c *Config) error {
 	b := core.NewBody("Cogent Numbers").AddTitle("Cogent Numbers")
+
+	ts := core.NewTabs(b)
+
+	rt := ts.NewTab("Random")
+	random.NewRandom(rt)
 
 	in := interpreter.NewInterpreter(interp.Options{})
 	in.HistFile = "~/.numbers-history"
