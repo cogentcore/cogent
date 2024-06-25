@@ -857,7 +857,7 @@ func (dv *DebugPanel) MakeToolbar(p *tree.Plan) {
 		w.SetText("Building").Styler(func(s *styles.Style) {
 			color := DebugStatusColors[dv.State.Status]
 			s.Background = color
-			s.Color = colors.C(hct.ContrastColor(colors.ToUniform(color), hct.ContrastAA))
+			s.Color = colors.Uniform(hct.ContrastColor(colors.ToUniform(color), hct.ContrastAA))
 		})
 	})
 
