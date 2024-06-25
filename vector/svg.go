@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
@@ -65,6 +66,11 @@ func (sv *SVG) Init() {
 	sv.SetReadOnly(false)
 	sv.Grid = Settings.Size.Grid
 	sv.Scale = 1
+	sv.Styler(func(s *styles.Style) {
+		root := sv.Root()
+		root.ViewBox.PreserveAspectRatio.Align.Set(svg.AlignMin)
+		sv.SVG.SVG.SetRootTransform()
+	})
 
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()

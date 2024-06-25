@@ -445,6 +445,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	nsz := es.DragSelectEffectiveBBox.Size()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pt := es.DragSelectStartBBox.Min.Sub(svoff)
+	fmt.Println("st:", es.DragSelectStartBBox.Min, "off:", svoff, "pt:", pt)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
 	for itm, ss := range es.Selected {
