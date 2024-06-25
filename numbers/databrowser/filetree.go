@@ -43,7 +43,7 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 		if sn != nil {
 			if sn.IsDir() {
 				if !sn.HasChildren() {
-					sn.OpenEmptyDir()
+					// sn.OpenEmptyDir() TODO(filetree)
 				} else {
 					sn.ToggleClose()
 				}

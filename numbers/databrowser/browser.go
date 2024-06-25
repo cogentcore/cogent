@@ -190,7 +190,7 @@ func (br *Browser) UpdateFiles() { //types:add
 	files := br.FileTree()
 	fmt.Println(br.DataRoot)
 	files.OpenPath(br.DataRoot)
-	files.UpdateAll()
+	// files.UpdateAll() TODO(filetree)
 	os.Chdir(br.DataRoot)
 	br.Update()
 }
