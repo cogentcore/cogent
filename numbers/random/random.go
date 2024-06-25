@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/base/randx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32/minmax"
 	"cogentcore.org/core/plot/plotcore"
 	"cogentcore.org/core/styles"
@@ -121,4 +122,14 @@ func (rd *Random) ConfigPlot(plt *plotcore.PlotEditor, dt *table.Table) *plotcor
 	plt.SetColParams("Value", plotcore.Off, plotcore.FloatMin, 0, plotcore.FloatMax, 0)
 	plt.SetColParams("Count", plotcore.On, plotcore.FixMin, 0, plotcore.FloatMax, 0)
 	return plt
+}
+
+func (rd *Random) MakeToolbar(p *tree.Plan) {
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(rd.Plot).SetIcon(icons.ScatterPlot)
+	})
+	tree.Add(p, func(w *core.Separator) {})
+	if rd.plot != nil {
+		rd.plot.MakeToolbar(p)
+	}
 }

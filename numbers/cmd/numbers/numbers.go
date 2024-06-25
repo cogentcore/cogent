@@ -96,7 +96,9 @@ func Interactive(c *Config) error {
 	ts := core.NewTabs(b)
 
 	rt := ts.NewTab("Random")
-	random.NewRandom(rt)
+	tb := core.NewToolbar(rt)
+	rd := random.NewRandom(rt)
+	tb.Maker(rd.MakeToolbar)
 
 	in := interpreter.NewInterpreter(interp.Options{})
 	in.HistFile = "~/.numbers-history"
