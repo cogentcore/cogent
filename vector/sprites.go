@@ -267,7 +267,7 @@ func DrawSpriteReshape(sp *core.Sprite, bbtyp Sprites) {
 	bbd.Min.Y += bsz
 	bbd.Max.X -= bsz
 	bbd.Max.Y -= bsz
-	draw.Draw(sp.Pixels, bbd, colors.C(colors.Scheme.Primary.Base), image.Point{}, draw.Src)
+	draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.Point{}, draw.Src)
 }
 
 // DrawSpriteSelect renders a Select sprite handle -- smaller
@@ -346,7 +346,7 @@ func DrawRubberBandHoriz(sp *core.Sprite, trgsz image.Point) {
 	for x := 0; x < ssz.X; x += sz * 2 {
 		bbd.Min.X = x
 		bbd.Max.X = x + sz
-		draw.Draw(sp.Pixels, bbd, colors.C(colors.Scheme.Primary.Base), image.ZP, draw.Src)
+		draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
 	}
 }
 
@@ -364,7 +364,7 @@ func DrawRubberBandVert(sp *core.Sprite, trgsz image.Point) {
 	for y := sz; y < ssz.Y; y += sz * 2 {
 		bbd.Min.Y = y
 		bbd.Max.Y = y + sz
-		draw.Draw(sp.Pixels, bbd, colors.C(colors.Scheme.Primary.Base), image.ZP, draw.Src)
+		draw.Draw(sp.Pixels, bbd, colors.Scheme.Primary.Base, image.ZP, draw.Src)
 	}
 }
 

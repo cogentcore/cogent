@@ -7,7 +7,6 @@ package code
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"log"
 	"slices"
 	"strings"
@@ -57,10 +56,10 @@ const (
 var (
 	// DebugBreakColors are the colors indicating different breakpoint statuses.
 	DebugBreakColors = map[DebugBreakStatus]image.Image{
-		DebugBreakInactive: colors.C(colors.Scheme.Warn.Base),
-		DebugBreakActive:   colors.C(colors.Scheme.Error.Base),
-		DebugBreakCurrent:  colors.C(colors.Scheme.Success.Base),
-		DebugPCCurrent:     colors.C(colors.Scheme.Primary.Base),
+		DebugBreakInactive: colors.Scheme.Warn.Base,
+		DebugBreakActive:   colors.Scheme.Error.Base,
+		DebugBreakCurrent:  colors.Scheme.Success.Base,
+		DebugPCCurrent:     colors.Scheme.Primary.Base,
 	}
 )
 
@@ -798,7 +797,7 @@ func (dv *DebugPanel) VarValue(varNm string) string {
 }
 
 // DebugStatusColors contains the status colors for different debugging states.
-var DebugStatusColors = map[cdebug.Status]color.RGBA{
+var DebugStatusColors = map[cdebug.Status]image.Image{
 	cdebug.NotInit:    colors.Scheme.SurfaceContainerHighest,
 	cdebug.Error:      colors.Scheme.Error.Container,
 	cdebug.Building:   colors.Scheme.Warn.Container,
@@ -857,8 +856,8 @@ func (dv *DebugPanel) MakeToolbar(p *tree.Plan) {
 	tree.AddAt(p, "status", func(w *core.Text) {
 		w.SetText("Building").Styler(func(s *styles.Style) {
 			color := DebugStatusColors[dv.State.Status]
-			s.Background = colors.C(color)
-			s.Color = colors.C(hct.ContrastColor(color, hct.ContrastAA))
+			s.Background = color
+			s.Color = colors.C(hct.ContrastColor(colors.ToUniform(color), hct.ContrastAA))
 		})
 	})
 

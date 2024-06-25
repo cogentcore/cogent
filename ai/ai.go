@@ -150,7 +150,7 @@ func main() { // TODO(config)
 		yourPrompt := core.NewFrame(history)
 		yourPrompt.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
-			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
+			s.Background = colors.Scheme.SurfaceContainerLow
 			s.Border.Radius = styles.BorderRadiusLarge
 			s.Grow.Set(1, 0)
 		})
@@ -159,7 +159,7 @@ func main() { // TODO(config)
 		answer := core.NewFrame(history)
 		answer.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
-			s.Background = colors.C(colors.Scheme.SurfaceContainerLow)
+			s.Background = colors.Scheme.SurfaceContainerLow
 			s.Border.Radius = styles.BorderRadiusLarge
 			s.Grow.Set(1, 0)
 		})

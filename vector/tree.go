@@ -175,7 +175,7 @@ func (tv *Tree) Init() {
 			case NodeIsLayer(sn):
 				s.Font.Weight = styles.WeightBold
 			case LayerIsLocked(sn):
-				s.Color = colors.C(colors.Scheme.Error.Base)
+				s.Color = colors.Scheme.Error.Base
 			case !LayerIsVisible(sn):
 				s.Font.Style = styles.Italic
 			}

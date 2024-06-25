@@ -131,7 +131,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 		s.Grow.Set(1, 0)
 		s.Direction = styles.Column
 		s.Border.Radius = styles.BorderRadiusLarge
-		s.Background = colors.C(colors.Scheme.SurfaceContainer)
+		s.Background = colors.Scheme.SurfaceContainer
 	})
 	tr := core.NewFrame(cfr)
 	tr.Styler(func(s *styles.Style) {
