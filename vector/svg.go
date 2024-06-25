@@ -10,17 +10,22 @@ import (
 	"image"
 	"image/draw"
 	"strings"
+	"sync"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/base/reflectx"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
@@ -28,7 +33,10 @@ import (
 
 // SVG is the element for viewing and interacting with the SVG.
 type SVG struct {
-	core.SVG
+	core.WidgetBase
+
+	// SVG is the SVG drawing to display in this widget
+	SVG *svg.SVG `set:"-"`
 
 	// the parent vector
 	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
@@ -43,40 +51,49 @@ type SVG struct {
 	Grid float32 ` set:"-"`
 
 	// effective grid spacing given Scale level
-	VectorEff float32 `edit:"-" set:"-"`
+	GridEff float32 `edit:"-" set:"-"`
+
+	// pixelMu is a mutex protecting the updating of curPixels
+	// from svg render
+	pixelMu sync.Mutex
+
+	// curPixels are the current rendered pixels, with the SVG
+	// on top of the background pixel grid.  updated in separate
+	// goroutine, protected by pixelMu, to ensure fluid interaction
+	curPixels *image.RGBA
 
 	// background pixels, includes page outline and grid
-	BgPixels *image.RGBA `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
+	bgPixels *image.RGBA
 
-	// render state for background rendering
-	// BgRender girl.State `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
+	// background paint rendering context
+	bgPaint paint.Context
 
 	// bg rendered translation
-	bgTrans math32.Vector2 `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
+	bgTrans math32.Vector2
 
 	// bg rendered scale
-	bgScale float32 `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
+	bgScale float32
 
 	// bg rendered grid
-	bgVectorEff float32 `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
+	bgGridEff float32
 }
 
 func (sv *SVG) Init() {
-	sv.SVG.Init()
-	sv.SetReadOnly(false)
+	sv.WidgetBase.Init()
+	sv.SVG = svg.NewSVG(10, 10)
 	sv.Grid = Settings.Size.Grid
 	sv.Scale = 1
 	sv.Styler(func(s *styles.Style) {
-		root := sv.Root()
-		root.ViewBox.PreserveAspectRatio.Align.Set(svg.AlignMin)
-		sv.SVG.SVG.SetRootTransform()
+		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable)
+		s.ObjectFit = styles.FitNone
+		sv.SVG.Root.ViewBox.PreserveAspectRatio.SetFromStyle(s)
+		s.Cursor = cursors.Arrow // todo: modulate based on tool etc
 	})
-
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
-		if core.DebugSettings.KeyEventTrace {
-			fmt.Printf("SVG KeyInput: %v\n", sv.Path())
-		}
+		// if core.DebugSettings.KeyEventTrace {
+		fmt.Printf("SVG KeyInput: %v\n", sv.Path())
+		// }
 		kf := keymap.Of(kc)
 		switch kf {
 		case keymap.Abort:
@@ -176,7 +193,10 @@ func (sv *SVG) Init() {
 		e.SetHandled()
 		es.DragStartPos = e.StartPos()
 		if e.HasAnyModifier(key.Shift) {
-			e.ClearHandled() // base core.SVG handles it
+			del := e.PrevDelta()
+			sv.SVG.Translate.X += float32(del.X)
+			sv.SVG.Translate.Y += float32(del.Y)
+			go sv.RenderSVG()
 			return
 		}
 		if es.HasSelected() {
@@ -208,16 +228,67 @@ func (sv *SVG) Init() {
 			sv.SetRubberBand(e.Pos())
 		}
 	})
+	sv.On(events.Scroll, func(e events.Event) {
+		e.SetHandled()
+		se := e.(*events.MouseScroll)
+		sv.SVG.Scale += float32(se.Delta.Y) / 100
+		if sv.SVG.Scale <= 0.0000001 {
+			sv.SVG.Scale = 0.01
+		}
+		go sv.RenderSVG()
+	})
 }
 
-// SSVG returns the underlying [svg.SVG].
-func (sv *SVG) SSVG() *svg.SVG {
-	return sv.SVG.SVG
+func (sv *SVG) SizeFinal() {
+	sv.WidgetBase.SizeFinal()
+	sv.SVG.Resize(sv.Geom.Size.Actual.Content.ToPoint())
+	sv.ResizeBg(sv.Geom.Size.Actual.Content.ToPoint())
+}
+
+// RenderSVG renders the SVG, typically called in a goroutine
+func (sv *SVG) RenderSVG() {
+	if sv.SVG == nil || sv.SVG.IsRendering {
+		return
+	}
+	if sv.BgNeedsUpdate() {
+		sv.RenderBg()
+	}
+	// need to make the image again to prevent it from
+	// rendering over itself
+	sv.SVG.Pixels = image.NewRGBA(sv.SVG.Pixels.Rect)
+	sv.SVG.RenderState.Init(sv.SVG.Pixels.Rect.Dx(), sv.SVG.Pixels.Rect.Dy(), sv.SVG.Pixels)
+	sv.SVG.Render()
+	sv.pixelMu.Lock()
+
+	bgsz := sv.bgPixels.Bounds()
+	sv.curPixels = image.NewRGBA(bgsz)
+	draw.Draw(sv.curPixels, bgsz, sv.bgPixels, image.ZP, draw.Src)
+	draw.Draw(sv.curPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
+	sv.NeedsRender()
+	sv.pixelMu.Unlock()
+}
+
+func (sv *SVG) Render() {
+	sv.WidgetBase.Render()
+	if sv.SVG == nil {
+		return
+	}
+	sv.pixelMu.Lock()
+	if sv.curPixels == nil { // first time
+		sv.pixelMu.Unlock()
+		sv.RenderBg()
+		sv.RenderSVG()
+		sv.pixelMu.Lock()
+	}
+	r := sv.Geom.ContentBBox
+	sp := sv.Geom.ScrollOffset()
+	draw.Draw(sv.Scene.Pixels, r, sv.curPixels, sp, draw.Over)
+	sv.pixelMu.Unlock()
 }
 
 // Root returns the root [svg.Root].
 func (sv *SVG) Root() *svg.Root {
-	return sv.SVG.SVG.Root
+	return sv.SVG.Root
 }
 
 // EditState returns the EditState for this view
@@ -231,6 +302,7 @@ func (sv *SVG) EditState() *EditState {
 // UpdateView updates the view, optionally with a full re-render
 func (sv *SVG) UpdateView(full bool) { // TODO(config)
 	sv.UpdateSelSprites()
+	go sv.RenderSVG()
 }
 
 /*
@@ -257,7 +329,7 @@ func (sv *SVG) ContentsBBox() math32.Box2 {
 		if n == sv.This {
 			return tree.Continue
 		}
-		if n == sv.SSVG().Defs {
+		if n == sv.SVG.Defs {
 			return tree.Break
 		}
 		sni, issv := n.(svg.Node)
@@ -294,7 +366,7 @@ func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, ro
 		if n == sv.This {
 			return tree.Continue
 		}
-		if n == sv.SSVG().Defs {
+		if n == sv.SVG.Defs {
 			return tree.Break
 		}
 		sni, issv := n.(svg.Node)
@@ -312,7 +384,7 @@ func (sv *SVG) TransformAllLeaves(trans math32.Vector2, scale math32.Vector2, ro
 				return tree.Break
 			}
 		}
-		sni.ApplyDeltaTransform(sv.SSVG(), trans, scale, rot, pt)
+		sni.ApplyDeltaTransform(sv.SVG, trans, scale, rot, pt)
 		return tree.Continue
 	})
 }
@@ -387,8 +459,8 @@ func (sv *SVG) ResizeToContents(grid_off bool) {
 
 	sv.TransformAllLeaves(treff, math32.Vec2(1, 1), 0, math32.Vec2(0, 0))
 	sv.Root().ViewBox.Size = bsz
-	sv.SSVG().PhysicalWidth.Value = bsz.X
-	sv.SSVG().PhysicalHeight.Value = bsz.Y
+	sv.SVG.PhysicalWidth.Value = bsz.X
+	sv.SVG.PhysicalHeight.Value = bsz.Y
 	sv.ZoomToPage(false)
 	sv.Vector.ChangeMade()
 }
@@ -431,7 +503,7 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 		}
 	}
 	if main == nil && mknew {
-		id := sv.SSVG().NewUniqueID()
+		id := sv.SVG.NewUniqueID()
 		main = sv.Root().InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
 		main.SetName(svg.NameID("namedview", id))
 	}
@@ -445,7 +517,7 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 		}
 	}
 	if grid == nil && mknew {
-		id := sv.SSVG().NewUniqueID()
+		id := sv.SVG.NewUniqueID()
 		grid = main.InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
 		grid.SetName(svg.NameID("grid", id))
 	}
@@ -457,7 +529,7 @@ func (sv *SVG) SetMetaData() {
 	es := sv.EditState()
 	nv, gr := sv.MetaData(true)
 
-	uts := strings.ToLower(sv.SSVG().PhysicalWidth.Unit.String())
+	uts := strings.ToLower(sv.SVG.PhysicalWidth.Unit.String())
 
 	nv.SetProperty("inkscape:current-layer", es.CurLayer)
 	nv.SetProperty("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
@@ -656,7 +728,7 @@ func (sv *SVG) DepthMap() map[tree.Node]int {
 
 // SetSVGName sets the name of the element to standard type + id name
 func (sv *SVG) SetSVGName(el svg.Node) {
-	nwid := sv.SSVG().NewUniqueID()
+	nwid := sv.SVG.NewUniqueID()
 	nwnm := fmt.Sprintf("%s%d", el.SVGName(), nwid)
 	el.AsTree().SetName(nwnm)
 }
@@ -686,20 +758,22 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 	minsz := float32(10)
 	es := sv.EditState()
 	dv := math32.Vector2FromPoint(end.Sub(start))
-	fmt.Println("start, end, dv", start, end, dv)
 	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
 		fmt.Println("dv under min:", dv, minsz)
-		// return nil
+		return nil
 	}
+	// if math32.Abs(dv.X) < minsz {
+	// 	dv.X = minsz * math32.Sign(dv.X)
+	// }
+	// if math32.Abs(dv.Y) < minsz {
+	// 	dv.Y = minsz * math32.Sign(dv.Y)
+	// }
 	tn := typ.Name
 	sv.ManipStart("New"+tn, "")
 	nr := sv.NewElement(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
-	fmt.Println(xfi)
-	xfi = math32.Identity2()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.Vector2FromPoint(start).Sub(svoff)
-	fmt.Println(pos, svoff)
 	nr.SetNodePos(xfi.MulVector2AsPoint(pos))
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
 	fmt.Println(sz, minsz)
@@ -717,7 +791,7 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	es := sv.EditState()
 	sv.ManipStart("NewText", "")
 	nr := sv.NewElement(svg.TextType)
-	tsnm := fmt.Sprintf("tspan%d", sv.SSVG().NewUniqueID())
+	tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
 	tspan := svg.NewText(nr)
 	tspan.SetName(tsnm)
 	tspan.Text = "Text"
@@ -754,8 +828,8 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	// sv.SetFullReRender()
 	nr := sv.NewElement(svg.PathType).(*svg.Path)
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
-	pos := math32.Vector2FromPoint(start).Sub(svoff)
+	// svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	pos := math32.Vector2FromPoint(start)
 	pos = xfi.MulVector2AsPoint(pos)
 	sz := dv
 	// sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
@@ -784,7 +858,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 // that are shared among obj-specific ones
 func (sv *SVG) Gradients() []*Gradient {
 	gl := make([]*Gradient, 0)
-	for _, gii := range sv.SSVG().Defs.Children {
+	for _, gii := range sv.SVG.Defs.Children {
 		g, ok := gii.(*svg.Gradient)
 		if !ok {
 			continue
@@ -804,7 +878,7 @@ func (sv *SVG) UpdateGradients(gl []*Gradient) {
 	nms := make(map[string]bool)
 	for _, gr := range gl {
 		if _, has := nms[gr.Name]; has {
-			id := sv.SSVG().NewUniqueID()
+			id := sv.SVG.NewUniqueID()
 			gr.Name = fmt.Sprintf("%d", id)
 		}
 		nms[gr.Name] = true
@@ -816,7 +890,7 @@ func (sv *SVG) UpdateGradients(gl []*Gradient) {
 	// 		radial = true
 	// 	}
 	// 	var g *svg.Gradient
-	// 	gg := sv.SSVG().FindDefByName(gr.Name)
+	// 	gg := sv.SVG.FindDefByName(gr.Name)
 	// 	if gg == nil {
 	// 		g, _ = svg.NewGradient(radial)
 	// 	} else {
@@ -831,106 +905,77 @@ func (sv *SVG) UpdateGradients(gl []*Gradient) {
 ///////////////////////////////////////////////////////////////////////
 //  Bg render
 
-// func (sv *SVG) Render() {
-// 	if sv.PushBounds() {
-// 		sv.SSVG().IsRendering = true
-// 		sv.FillViewportWithBg()
-// 		rs := &sv.Render
-// 		rs.PushTransform(sv.Pnt.Transform)
-// 		sv.Render2DChildren() // we must do children first, then us!
-// 		sv.PopBounds()
-// 		rs.PopTransform()
-// 		sv.RenderViewport2D() // update our parent image
-// 		sv.ClearFlag(int(svg.Rendering))
-// 	}
-// }
-
 func (sv *SVG) BgNeedsUpdate() bool {
-	update := sv.EnsureBgSize() || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.VectorEff != sv.bgVectorEff)
-	// fmt.Printf("update: %v\n", update)
+	update := (sv.bgPixels == nil) || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.GridEff != sv.bgGridEff)
 	return update
 }
 
-func (sv *SVG) FillViewportWithBg() {
-	if sv.BgNeedsUpdate() {
-		sv.RenderBg()
+func (sv *SVG) ResizeBg(sz image.Point) {
+	if sv.bgPaint.State == nil {
+		sv.bgPaint.State = &paint.State{}
 	}
-	draw.Draw(sv.Scene.Pixels, sv.Geom.ContentBBox, sv.BgPixels, sv.Geom.ScrollOffset(), draw.Over) // draw the bg first
+	if sv.bgPaint.Paint == nil {
+		sv.bgPaint.Paint = &styles.Paint{}
+	}
+	if sv.bgPixels == nil || sv.bgPixels.Bounds().Size() != sz {
+		sv.bgPixels = image.NewRGBA(image.Rectangle{Max: sz})
+		sv.bgPaint.Init(sz.X, sz.Y, sv.bgPixels)
+	}
 }
 
-// EnsureBgSize ensures Bg is set to the right size -- returns true if resized
-func (sv *SVG) EnsureBgSize() bool {
-	sz := sv.Geom.ContentBBox.Size()
-	if sv.BgPixels != nil {
-		ib := sv.BgPixels.Bounds().Size()
-		if ib == sz {
-			return false
-		}
-	}
-	if sv.BgPixels != nil {
-		sv.BgPixels = nil
-	}
-	sv.BgPixels = image.NewRGBA(image.Rectangle{Max: sz})
-	// sv.BgRender.Init(sz.X, sz.Y, sv.BgPixels)
-	return true
-}
-
-// UpdateVectorEff updates the GirdEff value based on current scale
-func (sv *SVG) UpdateVectorEff() {
-	sv.VectorEff = sv.Grid
-	sp := sv.VectorEff * sv.Scale
+// UpdateGridEff updates the GirdEff value based on current scale
+func (sv *SVG) UpdateGridEff() {
+	sv.GridEff = sv.Grid
+	sp := sv.GridEff * sv.Scale
 	for sp <= 2*(float32(Settings.SnapTol)+1) {
-		sv.VectorEff *= 2
-		sp = sv.VectorEff * sv.Scale
+		sv.GridEff *= 2
+		sp = sv.GridEff * sv.Scale
 	}
 }
 
-// RenderBg renders our background image
+// RenderBg renders our background grid image
 func (sv *SVG) RenderBg() {
-	/*
-		rs := &sv.BgRender
-		pc := &rs.Paint
-		sv.EnsureBgSize()
+	if sv.Root() == nil {
+		return
+	}
+	root := sv.Root()
+	sv.UpdateGridEff()
+	bb := sv.bgPixels.Bounds()
+	draw.Draw(sv.bgPixels, bb, &image.Uniform{Settings.Colors.Background}, image.ZP, draw.Src)
 
-		sv.UpdateVectorEff()
+	pc := &sv.bgPaint
+	pc.PushBounds(bb)
+	pc.PushTransform(root.Paint.Transform)
 
-		bb := sv.BgPixels.Bounds()
+	pc.StrokeStyle.Color = colors.C(Settings.Colors.Border)
 
-		draw.Draw(sv.BgPixels, bb, &image.Uniform{Settings.Colors.Background}, image.ZP, draw.Src)
+	sc := sv.Scale
 
-		rs.PushBounds(bb)
-		rs.PushTransform(sv.Pnt.Transform)
+	wd := 1 / sc
+	pc.StrokeStyle.Width.Dots = wd
+	pos := math32.Vec2(0, 0)
+	sz := root.ViewBox.Size
+	pc.FillStyle.Color = nil
 
-		pc.StrokeStyle.SetColor(&Settings.Colors.Border)
+	pc.DrawRectangle(pos.X, pos.Y, sz.X, sz.Y)
+	pc.FillStrokeClear()
 
-		sc := sv.Scale
-
-		wd := 1 / sc
-		pc.StrokeStyle.Width.Dots = wd
-		pos := sv.ViewBox.Min
-		sz := sv.ViewBox.Size
-		pc.FillStyle.SetColor(nil)
-
-		pc.DrawRectangle(rs, pos.X, pos.Y, sz.X, sz.Y)
-		pc.FillStrokeClear(rs)
-
-		if Settings.VectorDisp {
-			gsz := float32(sv.VectorEff)
-			pc.StrokeStyle.SetColor(&Settings.Colors.Vector)
-			for x := gsz; x < sz.X; x += gsz {
-				pc.DrawLine(rs, x, 0, x, sz.Y)
-			}
-			for y := gsz; y < sz.Y; y += gsz {
-				pc.DrawLine(rs, 0, y, sz.X, y)
-			}
-			pc.FillStrokeClear(rs)
+	if Settings.GridDisp {
+		gsz := float32(sv.GridEff)
+		pc.StrokeStyle.Color = colors.C(Settings.Colors.Vector)
+		for x := gsz; x < sz.X; x += gsz {
+			pc.DrawLine(x, 0, x, sz.Y)
 		}
+		for y := gsz; y < sz.Y; y += gsz {
+			pc.DrawLine(0, y, sz.X, y)
+		}
+		pc.FillStrokeClear()
+	}
 
-		sv.bgTrans = sv.Trans
-		sv.bgScale = sv.Scale
-		sv.bgVectorEff = sv.VectorEff
+	sv.bgTrans = sv.Trans
+	sv.bgScale = sv.Scale
+	sv.bgGridEff = sv.GridEff
 
-		rs.PopTransform()
-		rs.PopBounds()
-	*/
+	pc.PopTransform()
+	pc.PopBounds()
 }

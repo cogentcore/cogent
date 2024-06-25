@@ -307,7 +307,7 @@ func (sv *SVG) SpriteNodeDrag(idx int, win *core.Window, me *mouse.DragEvent) {
 	spnm := SpriteName(SpNodePoint, SpUnk, idx)
 	sp, _ := win.SpriteByName(spnm)
 	SetSpritePos(sp, image.Point{int(nwc.X), int(nwc.Y)})
-	go sv.ManipUpdate()
+	go sv.RenderSVG()
 	win.UpdateSig()
 }
 */

@@ -362,7 +362,7 @@ func (gv *Vector) SelectUnGroup() { //types:add
 			tree.MoveToParent(k, np)
 			se := k.(svg.Node)
 			if !gp.Paint.Transform.IsIdentity() {
-				se.ApplyTransform(sv.SSVG(), gp.Paint.Transform) // group no longer there!
+				se.ApplyTransform(sv.SVG, gp.Paint.Transform) // group no longer there!
 			}
 		}
 	}
@@ -387,7 +387,7 @@ func (gv *Vector) SelectRotate(deg float32) {
 		sz := math32.Vector2FromPoint(sng.BBox.Size())
 		mn := math32.Vector2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, rot, ctr)
+		sn.ApplyDeltaTransform(sv.SVG, del, sc, rot, ctr)
 	}
 	sv.UpdateView(true)
 	gv.ChangeMade()
@@ -409,7 +409,7 @@ func (gv *Vector) SelectScale(scx, scy float32) {
 		sz := math32.Vector2FromPoint(sng.BBox.Size())
 		mn := math32.Vector2FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
-		sn.ApplyDeltaTransform(sv.SSVG(), del, sc, 0, ctr)
+		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, ctr)
 	}
 	sv.UpdateView(true)
 	gv.ChangeMade()

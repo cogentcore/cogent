@@ -349,7 +349,7 @@ func (vv *Vector) ManipAction(act, data string, manip bool, fun func(sii svg.Nod
 			vv.ChangeMade()
 		}
 	} else {
-		sv.ManipUpdate()
+		go sv.RenderSVG()
 	}
 }
 
@@ -419,20 +419,16 @@ func (vv *Vector) SetStrokeWidthNode(sii svg.Node, wp string) {
 func (vv *Vector) SetStrokeWidth(wp string, manip bool) {
 	es := &vv.EditState
 	sv := vv.SVG()
-	// update := false
 	if !manip {
 		sv.UndoSave("SetStrokeWidth", wp)
-		// update = sv.UpdateStart()
-		// sv.SetFullReRender()
 	}
 	for itm := range es.Selected {
 		vv.SetStrokeWidthNode(itm, wp)
 	}
 	if !manip {
-		// sv.UpdateEnd(update)
 		vv.ChangeMade()
 	} else {
-		sv.ManipUpdate()
+		go sv.RenderSVG()
 	}
 }
 
@@ -458,9 +454,9 @@ func (vv *Vector) SetMarkerNode(sii svg.Node, start, mid, end string, sc, mc, ec
 		return
 	}
 	sv := vv.SVG()
-	MarkerSetProp(sv.SSVG(), sii, "marker-start", start, sc)
-	MarkerSetProp(sv.SSVG(), sii, "marker-mid", mid, mc)
-	MarkerSetProp(sv.SSVG(), sii, "marker-end", end, ec)
+	MarkerSetProp(sv.SVG, sii, "marker-start", start, sc)
+	MarkerSetProp(sv.SVG, sii, "marker-mid", mid, mc)
+	MarkerSetProp(sv.SVG, sii, "marker-end", end, ec)
 }
 
 // SetMarkerProperties sets the marker properties
@@ -480,9 +476,9 @@ func (vv *Vector) UpdateMarkerColors(sii svg.Node) {
 		return
 	}
 	sv := vv.SVG()
-	MarkerUpdateColorProp(sv.SSVG(), sii, "marker-start")
-	MarkerUpdateColorProp(sv.SSVG(), sii, "marker-mid")
-	MarkerUpdateColorProp(sv.SSVG(), sii, "marker-end")
+	MarkerUpdateColorProp(sv.SVG, sii, "marker-start")
+	MarkerUpdateColorProp(sv.SVG, sii, "marker-mid")
+	MarkerUpdateColorProp(sv.SVG, sii, "marker-end")
 }
 
 // SetDashNode sets the stroke-dasharray property of Node.

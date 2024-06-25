@@ -187,7 +187,7 @@ func (vv *Vector) OpenDrawingFile(fnm core.Filename) error {
 	path, _ := filepath.Abs(string(fnm))
 	vv.Filename = core.Filename(path)
 	sv := vv.SVG()
-	err := errors.Log(sv.SSVG().OpenXML(path))
+	err := errors.Log(sv.SVG.OpenXML(path))
 	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	fdir, _ := filepath.Split(path)
@@ -196,7 +196,7 @@ func (vv *Vector) OpenDrawingFile(fnm core.Filename) error {
 	vv.UpdateLayerView()
 
 	vv.EditState.Gradients = sv.Gradients()
-	sv.SSVG().GatherIDs() // also ensures uniqueness, key for json saving
+	sv.SVG.GatherIDs() // also ensures uniqueness, key for json saving
 	sv.ZoomToContents(false)
 	sv.ReadMetaData()
 	sv.SetTransform()
@@ -214,7 +214,7 @@ func (vv *Vector) OpenDrawing(fnm core.Filename) error { //types:add
 	tv.ReSync()
 	vv.SetStatus("Opened: " + string(vv.Filename))
 	tv.CloseAll()
-	sv.bgVectorEff = 0
+	sv.bgGridEff = 0
 	sv.UpdateView(true)
 	vv.NeedsRender()
 	return err
@@ -237,7 +237,7 @@ func (vv *Vector) PromptPhysSize() { //types:add
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
 			vv.SetPhysSize(sz)
-			sv.bgVectorEff = -1
+			sv.bgGridEff = -1
 			sv.UpdateView(true)
 		})
 	})
@@ -277,9 +277,9 @@ func (vv *Vector) SaveDrawingAs(fname core.Filename) error { //types:add
 	// SavedPaths.AddPath(path, core.Settings.Params.SavedPathsMax)
 	// SavePaths()
 	sv := vv.SVG()
-	sv.SSVG().RemoveOrphanedDefs()
+	sv.SVG.RemoveOrphanedDefs()
 	sv.SetMetaData()
-	err := sv.SSVG().SaveXML(path)
+	err := sv.SVG.SaveXML(path)
 	if errors.Log(err) == nil {
 		vv.AutoSaveDelete()
 	}
@@ -300,7 +300,7 @@ func (vv *Vector) ExportPNG(width, height float32) error { //types:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_png.svg")
 	sv := vv.SVG()
-	err := sv.SSVG().SaveXML(fnm)
+	err := sv.SVG.SaveXML(fnm)
 	if errors.Log(err) != nil {
 		return err
 	}
@@ -334,7 +334,7 @@ func (vv *Vector) ExportPDF(dpi float32) error { //types:add
 	path, _ := filepath.Split(string(vv.Filename))
 	fnm := filepath.Join(path, "export_pdf.svg")
 	sv := vv.SVG()
-	err := sv.SSVG().SaveXML(fnm)
+	err := sv.SVG.SaveXML(fnm)
 	if errors.Log(err) != nil {
 		return err
 	}
@@ -414,7 +414,7 @@ func (vv *Vector) SVG() *SVG {
 
 // SSVG returns the underlying [svg.SVG].
 func (vv *Vector) SSVG() *svg.SVG {
-	return vv.SVG().SSVG()
+	return vv.SVG().SVG
 }
 
 func (vv *Vector) Tabs() *core.Tabs {

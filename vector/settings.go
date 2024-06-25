@@ -43,7 +43,7 @@ type SettingsData struct { //types:add
 	LineStyle styles.Paint
 
 	// turns on the grid display
-	VectorDisp bool
+	GridDisp bool
 
 	// snap positions and sizes to underlying grid
 	SnapGrid bool
@@ -92,7 +92,7 @@ func (pf *SettingsData) Defaults() {
 	pf.LineStyle.FontStyle.Size.Px(12)
 	// pf.LineStyle.StrokeStyle.On = true
 	// pf.LineStyle.FillStyle.On = false
-	pf.VectorDisp = true
+	pf.GridDisp = true
 	pf.SnapTol = 3
 	pf.SnapGrid = true
 	pf.SnapGuide = true

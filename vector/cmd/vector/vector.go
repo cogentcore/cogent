@@ -4,6 +4,8 @@
 
 package main
 
+// npos: (630, 695) stpos: (662, 796) pt: (662, 796)
+
 import (
 	"os"
 

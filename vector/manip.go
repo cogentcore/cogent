@@ -52,20 +52,10 @@ func (sv *SVG) ManipDone() {
 	sv.Vector.ChangeMade()
 }
 
-// ManipUpdate is called from goroutine: 'go sv.ManipUpdate()' to update the
-// current display while manipulating.  It checks if already rendering and if so,
-// just returns immediately, so that updates are not stacked up and laggy.
-func (sv *SVG) ManipUpdate() {
-	if sv.SSVG().IsRendering {
-		return
-	}
-	sv.RenderWidget()
-}
-
 // VectorDots is the current grid spacing and offsets in dots
 func (sv *SVG) VectorDots() (float32, math32.Vector2) {
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
-	grid := sv.VectorEff
+	grid := sv.GridEff
 	if grid <= 0 {
 		grid = 12
 	}
@@ -334,12 +324,12 @@ func (sv *SVG) DragMove(e events.Event) {
 	pt := es.DragSelectStartBBox.Min.Sub(svoff)
 	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SSVG(), tdel, math32.Vec2(1, 1), 0, pt)
+		itm.ReadGeom(sv.SVG, ss.InitGeom)
+		itm.ApplyDeltaTransform(sv.SVG, tdel, math32.Vec2(1, 1), 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
-	go sv.ManipUpdate()
+	go sv.RenderSVG()
 }
 
 func SquareBBox(bb math32.Box2) math32.Box2 {
@@ -443,14 +433,14 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 
 	npos := es.DragSelectEffectiveBBox.Min
 	nsz := es.DragSelectEffectiveBBox.Size()
-	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
-	pt := es.DragSelectStartBBox.Min.Sub(svoff)
-	fmt.Println("st:", es.DragSelectStartBBox.Min, "off:", svoff, "pt:", pt)
+	// svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	pt := es.DragSelectStartBBox.Min
+	fmt.Println("npos:", npos, "stpos:", stpos, "pt:", pt)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SSVG(), del, sc, 0, pt)
+		itm.ReadGeom(sv.SVG, ss.InitGeom)
+		itm.ApplyDeltaTransform(sv.SVG, del, sc, 0, pt)
 		if strings.HasPrefix(es.Action, "New") {
 			// svg.UpdateNodeGradientPoints(itm, "fill")
 			// svg.UpdateNodeGradientPoints(itm, "stroke")
@@ -459,7 +449,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
-	go sv.ManipUpdate()
+	go sv.RenderSVG()
 }
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
@@ -523,13 +513,13 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ang := math32.Atan2(dy, dx)
 	ang, _ = SnapToIncr(math32.RadToDeg(ang), 0, 15)
 	ang = math32.DegToRad(ang)
-	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
-	pt = pt.Sub(svoff)
+	// svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	// pt = pt.Sub(svoff)
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)
 	for itm, ss := range es.Selected {
-		itm.ReadGeom(sv.SSVG(), ss.InitGeom)
-		itm.ApplyDeltaTransform(sv.SSVG(), del, sc, ang, pt)
+		itm.ReadGeom(sv.SVG, ss.InitGeom)
+		itm.ApplyDeltaTransform(sv.SVG, del, sc, ang, pt)
 		if strings.HasPrefix(es.Action, "New") {
 			// sv.UpdateNodeGradientPoints(itm, "fill")
 			// sv.UpdateNodeGradientPoints(itm, "stroke")
@@ -538,5 +528,5 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
 	sv.SetSelSpritePos()
-	go sv.ManipUpdate()
+	go sv.RenderSVG()
 }
