@@ -169,11 +169,9 @@ func (sv *SVG) UpdateNodeSprites() {
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		// 	sp := SpriteConnectEvent(win, SpNodePoint, SpUnk, i, image.ZP, sv.This, func(recv, send tree.Node, sig int64, d any) {
-		// 		ssvg := recv.Embed(KiT_SVG).(*SVG)
-		// 		ssvg.NodeSpriteEvent(idx, events.EventType(sig), d)
-		// 	})
-		sp := Sprite(sv, SpNodePoint, SpUnk, i, image.Point{})
+		sp := Sprite(sv, SpNodePoint, SpUnk, i, image.Point{}, func(sp *core.Sprite) {
+			// todo: events here
+		})
 		SetSpritePos(sp, pn.WinPt.ToPoint())
 	}
 

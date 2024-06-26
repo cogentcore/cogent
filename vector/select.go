@@ -158,28 +158,27 @@ func (sv *SVG) UpdateSelSprites() {
 	}
 
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		sp := Sprite(sv, SpReshapeBBox, i, 0, image.Point{})
-		sp.OnSlideStart(func(e events.Event) {
-			es.DragStartPos = e.Pos()
-			e.SetHandled()
-		})
-		sp.OnSlideMove(func(e events.Event) {
-			if e.HasAnyModifier(key.Alt) {
-				sv.SpriteRotateDrag(i, e.PrevDelta())
-			} else {
-				sv.SpriteReshapeDrag(i, e)
-			}
-			e.SetHandled()
-		})
-		sp.OnSlideStop(func(e events.Event) {
-			sv.ManipDone()
-			e.SetHandled()
+		Sprite(sv, SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
+			sp.OnSlideStart(func(e events.Event) {
+				es.DragSelStart(e.Pos())
+				e.SetHandled()
+			})
+			sp.OnSlideMove(func(e events.Event) {
+				if e.HasAnyModifier(key.Alt) {
+					sv.SpriteRotateDrag(i, e.PrevDelta())
+				} else {
+					sv.SpriteReshapeDrag(i, e)
+				}
+				e.SetHandled()
+			})
+			sp.OnSlideStop(func(e events.Event) {
+				sv.ManipDone()
+				e.SetHandled()
+			})
 		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
 	sv.SetSelSpritePos()
-
-	// win.UpdateSig()
 }
 
 func (sv *SVG) SetSelSpritePos() {
@@ -222,7 +221,7 @@ func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		sp := Sprite(sv, typ, i, idx, image.ZP)
+		sp := Sprite(sv, typ, i, idx, image.ZP, nil)
 		switch i {
 		case SpBBoxUpL:
 			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
@@ -294,10 +293,10 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	if sz.Y < 4 {
 		sz.Y = 4
 	}
-	rt := Sprite(sv, SpRubberBand, SpBBoxUpC, 0, sz)
-	rb := Sprite(sv, SpRubberBand, SpBBoxDnC, 0, sz)
-	rr := Sprite(sv, SpRubberBand, SpBBoxRtM, 0, sz)
-	rl := Sprite(sv, SpRubberBand, SpBBoxLfM, 0, sz)
+	rt := Sprite(sv, SpRubberBand, SpBBoxUpC, 0, sz, nil)
+	rb := Sprite(sv, SpRubberBand, SpBBoxDnC, 0, sz, nil)
+	rr := Sprite(sv, SpRubberBand, SpBBoxRtM, 0, sz, nil)
+	rl := Sprite(sv, SpRubberBand, SpBBoxLfM, 0, sz, nil)
 	SetSpritePos(rt, bbox.Min)
 	SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
 	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})

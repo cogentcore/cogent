@@ -126,8 +126,8 @@ func SpriteProperties(sp *core.Sprite) (typ, subtyp Sprites, idx int) {
 
 // Sprite returns the given sprite in the context of the given widget,
 // making it if not yet made. trgsz is the target size (e.g., for rubber
-// band boxes)
-func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *core.Sprite {
+// band boxes).  Init function is called on new sprites.
+func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point, init func(sp *core.Sprite)) *core.Sprite {
 	sprites := &ctx.AsWidget().Scene.Stage.Sprites
 	spnm := SpriteName(typ, subtyp, idx)
 	sp, ok := sprites.SpriteByName(spnm)
@@ -136,17 +136,23 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *c
 		sp.Properties = map[string]any{}
 		SetSpriteProperties(sp, typ, subtyp, idx)
 		sprites.Add(sp)
+		switch typ {
+		case SpReshapeBBox:
+			DrawSpriteReshape(sp, subtyp)
+		case SpSelBBox:
+			DrawSpriteSelect(sp, subtyp)
+		case SpNodePoint:
+			DrawSpriteNodePoint(sp, subtyp)
+		case SpNodeCtrl:
+			DrawSpriteNodeCtrl(sp, subtyp)
+		}
+		if init != nil {
+			init(sp)
+		}
 	}
 	switch typ {
-	case SpReshapeBBox:
-		DrawSpriteReshape(sp, subtyp)
-	case SpSelBBox:
-		DrawSpriteSelect(sp, subtyp)
-	case SpNodePoint:
-		DrawSpriteNodePoint(sp, subtyp)
-	case SpNodeCtrl:
-		DrawSpriteNodeCtrl(sp, subtyp)
 	case SpRubberBand:
+		sprites.Modified = true
 		switch subtyp {
 		case SpBBoxUpC, SpBBoxDnC:
 			DrawRubberBandHoriz(sp, trgsz)
@@ -154,6 +160,7 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *c
 			DrawRubberBandVert(sp, trgsz)
 		}
 	case SpAlignMatch:
+		sprites.Modified = true
 		switch {
 		case trgsz.X > trgsz.Y:
 			DrawAlignMatchHoriz(sp, trgsz)
@@ -162,21 +169,8 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point) *c
 		}
 	}
 	sprites.ActivateSprite(sp.Name)
-	sprites.Modified = true // needed to trigger redraw of sprites
 	return sp
 }
-
-/*
-// SpriteConnectEvent activates and sets mouse event functions to given function
-func SpriteConnectEvent(win *core.Window, typ, subtyp Sprites, idx int, trgsz image.Point, recv tree.Node, fun tree.RecvFunc) *core.Sprite {
-	sp := Sprite(win, typ, subtyp, idx, trgsz)
-	if recv != nil {
-		sp.ConnectEvent(recv, oswin.MouseEvent, fun)
-		sp.ConnectEvent(recv, oswin.MouseDragEvent, fun)
-	}
-	return sp
-}
-*/
 
 // SetSpritePos sets sprite position, taking into account relative offsets
 func SetSpritePos(sp *core.Sprite, pos image.Point) {

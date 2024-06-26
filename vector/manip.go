@@ -47,8 +47,9 @@ func (sv *SVG) ManipDone() {
 	}
 	es.DragReset()
 	es.ActDone()
-	sv.UpdateView(true)
 	sv.UpdateSelect()
+	es.DragSelStart(es.DragStartPos) // capture final state as new start
+	sv.UpdateView(true)
 	sv.Vector.ChangeMade()
 }
 
@@ -433,9 +434,8 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 
 	npos := es.DragSelectEffectiveBBox.Min
 	nsz := es.DragSelectEffectiveBBox.Size()
-	// svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pt := es.DragSelectStartBBox.Min
-	fmt.Println("npos:", npos, "stpos:", stpos, "pt:", pt)
+	// fmt.Println("npos:", npos, "stpos:", stpos, "pt:", pt)
 	del := npos.Sub(stpos)
 	sc := nsz.Div(stsz)
 	for itm, ss := range es.Selected {
@@ -513,8 +513,6 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	ang := math32.Atan2(dy, dx)
 	ang, _ = SnapToIncr(math32.RadToDeg(ang), 0, 15)
 	ang = math32.DegToRad(ang)
-	// svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
-	// pt = pt.Sub(svoff)
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)
 	for itm, ss := range es.Selected {

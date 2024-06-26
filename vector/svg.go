@@ -68,11 +68,14 @@ type SVG struct {
 	// background paint rendering context
 	bgPaint paint.Context
 
-	// bg rendered translation
-	bgTrans math32.Vector2
+	// in svg Rendering
+	inRender bool
 
-	// bg rendered scale
-	bgScale float32
+	// size of bg image rendered
+	bgSize image.Point
+
+	// bg rendered transform
+	bgTransform math32.Matrix2
 
 	// bg rendered grid
 	bgGridEff float32
@@ -81,6 +84,7 @@ type SVG struct {
 func (sv *SVG) Init() {
 	sv.WidgetBase.Init()
 	sv.SVG = svg.NewSVG(10, 10)
+	sv.SVG.Background = nil
 	sv.Grid = Settings.Size.Grid
 	sv.Scale = 1
 	sv.Styler(func(s *styles.Style) {
@@ -127,6 +131,7 @@ func (sv *SVG) Init() {
 		if e.MouseButton() != events.Left {
 			return
 		}
+		sv.SetFocus()
 		e.SetHandled()
 		es := sv.EditState()
 		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
@@ -147,45 +152,29 @@ func (sv *SVG) Init() {
 			sv.EditState().DragSelStart(e.Pos())
 			sv.UpdateNodeSprites()
 		case sob == nil:
+			es.DragStartPos = e.Pos()
 			es.ResetSelected()
 			sv.UpdateSelect()
 		}
 	})
 	sv.On(events.MouseUp, func(e events.Event) {
-		es := sv.EditState()
-		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
-
-		if es.InAction() {
-			es.SelectNoDrag = false
-			es.NewTextMade = false
-			sv.ManipDone()
+		if e.MouseButton() != events.Left {
 			return
 		}
-		if e.MouseButton() == events.Left {
-			// release on select -- do extended selection processing
-			if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
-				es.SelectNoDrag = false
-				e.SetHandled()
-				if sob == nil {
-					sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
-				}
-				if sob != nil {
-					es.SelectAction(sob, e.SelectMode(), e.Pos())
-					sv.UpdateSelect()
-				}
+		es := sv.EditState()
+		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
+		// release on select -- do extended selection processing
+		if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
+			es.SelectNoDrag = false
+			e.SetHandled()
+			if sob == nil {
+				sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
+			}
+			if sob != nil {
+				es.SelectAction(sob, e.SelectMode(), e.Pos())
+				sv.UpdateSelect()
 			}
 		}
-		// if e.MouseButton() == events.Right {
-		// 	e.SetHandled()
-		// 	if es.HasSelected() {
-		// 		fobj := es.FirstSelectedNode()
-		// 		if fobj != nil {
-		// 			sv.NodeContextMenu(fobj, me.Where)
-		// 		}
-		// 	} else if sob != nil {
-		// 		ssvg.NodeContextMenu(sob, me.Where)
-		// 	}
-		// }
 	})
 	sv.On(events.SlideMove, func(e events.Event) {
 		es := sv.EditState()
@@ -211,11 +200,6 @@ func (sv *SVG) Init() {
 				sv.SetRubberBand(e.Pos())
 			case RectTool:
 				sv.NewElementDrag(svg.RectType, es.DragStartPos, e.Pos())
-				es.SelectBBox.Min.X += 1
-				es.SelectBBox.Min.Y += 1
-				es.DragSelectStartBBox = es.SelectBBox
-				es.DragSelectCurrentBBox = es.SelectBBox
-				es.DragSelectEffectiveBBox = es.SelectBBox
 			case EllipseTool:
 				sv.NewElementDrag(svg.EllipseType, es.DragStartPos, e.Pos())
 			case TextTool:
@@ -226,6 +210,31 @@ func (sv *SVG) Init() {
 			}
 		} else if es.Action == "BoxSelect" {
 			sv.SetRubberBand(e.Pos())
+		}
+	})
+	sv.On(events.SlideStop, func(e events.Event) {
+		es := sv.EditState()
+		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels
+
+		if es.InAction() {
+			es.SelectNoDrag = false
+			es.NewTextMade = false
+			sv.ManipDone()
+			return
+		}
+		if e.MouseButton() == events.Left {
+			// release on select -- do extended selection processing
+			if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
+				es.SelectNoDrag = false
+				e.SetHandled()
+				if sob == nil {
+					sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
+				}
+				if sob != nil {
+					es.SelectAction(sob, e.SelectMode(), e.Pos())
+					sv.UpdateSelect()
+				}
+			}
 		}
 	})
 	sv.On(events.Scroll, func(e events.Event) {
@@ -247,14 +256,18 @@ func (sv *SVG) SizeFinal() {
 
 // RenderSVG renders the SVG, typically called in a goroutine
 func (sv *SVG) RenderSVG() {
-	if sv.SVG == nil || sv.SVG.IsRendering {
+	if sv.SVG == nil || sv.inRender {
 		return
 	}
+	sv.inRender = true
+	defer func() { sv.inRender = false }()
+
 	if sv.BgNeedsUpdate() {
 		sv.RenderBg()
 	}
 	// need to make the image again to prevent it from
 	// rendering over itself
+	sv.SVG.Background = nil
 	sv.SVG.Pixels = image.NewRGBA(sv.SVG.Pixels.Rect)
 	sv.SVG.RenderState.Init(sv.SVG.Pixels.Rect.Dx(), sv.SVG.Pixels.Rect.Dy(), sv.SVG.Pixels)
 	sv.SVG.Render()
@@ -274,9 +287,8 @@ func (sv *SVG) Render() {
 		return
 	}
 	sv.pixelMu.Lock()
-	if sv.curPixels == nil { // first time
+	if sv.curPixels == nil || sv.BgNeedsUpdate() {
 		sv.pixelMu.Unlock()
-		sv.RenderBg()
 		sv.RenderSVG()
 		sv.pixelMu.Lock()
 	}
@@ -416,7 +428,6 @@ func (sv *SVG) ZoomToContents(width bool) {
 		return
 	}
 	sv.ZoomToPage(width)
-	sv.UpdateView(true)
 	bb := sv.ContentsBBox()
 	bsz := bb.Size()
 	if bsz.X <= 0 || bsz.Y <= 0 {
@@ -430,6 +441,7 @@ func (sv *SVG) ZoomToContents(width bool) {
 		sv.Scale *= math32.Min(sc.X, sc.Y)
 	}
 	sv.SetTransform()
+	sv.UpdateView(true)
 }
 
 // ResizeToContents resizes the drawing to just fit the current contents,
@@ -439,7 +451,6 @@ func (sv *SVG) ZoomToContents(width bool) {
 func (sv *SVG) ResizeToContents(grid_off bool) {
 	sv.UndoSave("ResizeToContents", "")
 	sv.ZoomToPage(false)
-	sv.UpdateView(true)
 	bb := sv.ContentsBBox()
 	bsz := bb.Size()
 	if bsz.X <= 0 || bsz.Y <= 0 {
@@ -762,24 +773,20 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 		fmt.Println("dv under min:", dv, minsz)
 		return nil
 	}
-	// if math32.Abs(dv.X) < minsz {
-	// 	dv.X = minsz * math32.Sign(dv.X)
-	// }
-	// if math32.Abs(dv.Y) < minsz {
-	// 	dv.Y = minsz * math32.Sign(dv.Y)
-	// }
 	tn := typ.Name
 	sv.ManipStart("New"+tn, "")
 	nr := sv.NewElement(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.Vector2FromPoint(start).Sub(svoff)
-	nr.SetNodePos(xfi.MulVector2AsPoint(pos))
+	pos = xfi.MulVector2AsPoint(pos)
+	nr.SetNodePos(pos)
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
-	fmt.Println(sz, minsz)
-	nr.SetNodeSize(xfi.MulVector2AsVector(sz))
+	sz = xfi.MulVector2AsVector(sz)
+	nr.SetNodeSize(sz)
+	sv.RenderSVG() // needed to get bb
 	es.SelectAction(nr, events.SelectOne, end)
-	sv.ManipDone()
+	// sv.ManipDone()
 	sv.NeedsRender()
 	sv.UpdateSelSprites()
 	es.DragSelStart(start)
@@ -906,8 +913,11 @@ func (sv *SVG) UpdateGradients(gl []*Gradient) {
 //  Bg render
 
 func (sv *SVG) BgNeedsUpdate() bool {
-	update := (sv.bgPixels == nil) || (sv.Trans != sv.bgTrans) || (sv.Scale != sv.bgScale) || (sv.GridEff != sv.bgGridEff)
-	return update
+	root := sv.Root()
+	if root == nil {
+		return false
+	}
+	return (sv.bgPixels == nil) || (sv.bgPixels.Bounds().Size() != sv.bgSize) || (sv.bgTransform != root.Paint.Transform) || (sv.GridEff != sv.bgGridEff)
 }
 
 func (sv *SVG) ResizeBg(sz image.Point) {
@@ -916,6 +926,7 @@ func (sv *SVG) ResizeBg(sz image.Point) {
 	}
 	if sv.bgPaint.Paint == nil {
 		sv.bgPaint.Paint = &styles.Paint{}
+		sv.bgPaint.Paint.Defaults()
 	}
 	if sv.bgPixels == nil || sv.bgPixels.Bounds().Size() != sz {
 		sv.bgPixels = image.NewRGBA(image.Rectangle{Max: sz})
@@ -935,10 +946,10 @@ func (sv *SVG) UpdateGridEff() {
 
 // RenderBg renders our background grid image
 func (sv *SVG) RenderBg() {
-	if sv.Root() == nil {
+	root := sv.Root()
+	if root == nil {
 		return
 	}
-	root := sv.Root()
 	sv.UpdateGridEff()
 	bb := sv.bgPixels.Bounds()
 	draw.Draw(sv.bgPixels, bb, &image.Uniform{Settings.Colors.Background}, image.ZP, draw.Src)
@@ -972,9 +983,9 @@ func (sv *SVG) RenderBg() {
 		pc.FillStrokeClear()
 	}
 
-	sv.bgTrans = sv.Trans
-	sv.bgScale = sv.Scale
+	sv.bgTransform = root.Paint.Transform
 	sv.bgGridEff = sv.GridEff
+	sv.bgSize = bb.Size()
 
 	pc.PopTransform()
 	pc.PopBounds()

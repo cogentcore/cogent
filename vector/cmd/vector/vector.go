@@ -14,8 +14,6 @@ import (
 )
 
 func main() {
-	vector.InitSettings()
-
 	ofs := core.TheApp.OpenFiles()
 
 	var fnms []string

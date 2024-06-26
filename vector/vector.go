@@ -521,7 +521,6 @@ func (vv *Vector) MakeToolbar(p *tree.Plan) {
 		w.OnClick(func(e events.Event) {
 			sv := vv.SVG()
 			sv.ZoomToContents(false)
-			sv.UpdateView(true)
 		})
 	})
 }
