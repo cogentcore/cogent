@@ -110,17 +110,16 @@ func (cv *Code) SelectTabByName(name string) core.Widget {
 	return tv.SelectTabByName(name)
 }
 
-// RecycleTabTextEditor returns a tab with given
-// name, first by looking for an existing one, and if not found, making a new
-// one with a TextEditor in it.  if sel, then select it.
-// returns widget
-func (cv *Code) RecycleTabTextEditor(name string, sel bool, buf *texteditor.Buffer) *texteditor.Editor {
+// RecycleTabTextEditor returns a text editor in a tab with the given name,
+// first by looking for an existing one, and if not found, making a new
+// one with a text editor in it.
+func (cv *Code) RecycleTabTextEditor(name string, buf *texteditor.Buffer) *texteditor.Editor {
 	tv := cv.Tabs()
 	if tv == nil {
 		return nil
 	}
 
-	fr := tv.RecycleTab(name, sel)
+	fr := tv.RecycleTab(name)
 	if fr.HasChildren() {
 		return fr.Child(0).(*texteditor.Editor)
 	}

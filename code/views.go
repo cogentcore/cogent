@@ -56,8 +56,8 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 		return
 	}
 
-	fbuf, _ := cv.RecycleCmdBuf("Find", true)
-	fv := tv.RecycleTabWidget("Find", true, FindPanelType).(*FindPanel)
+	fbuf, _ := cv.RecycleCmdBuf("Find")
+	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
 	fv.Time = time.Now()
 	fv.UpdateTree()
 	ftv := fv.TextEditor()
@@ -108,7 +108,7 @@ func (cv *Code) Spell() { //types:add
 		return
 	}
 
-	sv := tv.RecycleTabWidget("Spell", true, SpellPanelType).(*SpellPanel)
+	sv := core.RecycleTabWidget[SpellPanel](tv, "Spell")
 	sv.Config(cv, txv)
 	sv.Update()
 	cv.FocusOnPanel(TabsIndex)
@@ -125,7 +125,7 @@ func (cv *Code) Symbols() { //types:add
 		return
 	}
 
-	sv := tv.RecycleTabWidget("Symbols", true, SymbolsPanelType).(*SymbolsPanel)
+	sv := core.RecycleTabWidget[SymbolsPanel](tv, "Symbols")
 	sv.Config(cv, cv.Settings.Symbols)
 	sv.Update()
 	cv.FocusOnPanel(TabsIndex)
@@ -141,7 +141,7 @@ func (cv *Code) Debug() { //types:add
 	cv.Settings.Debug.Mode = cdebug.Exec
 	exePath := string(cv.Settings.RunExec)
 	exe := filepath.Base(exePath)
-	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugPanelType).(*DebugPanel)
+	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+exe)
 	dv.Config(cv, fileinfo.Go, exePath)
 	cv.FocusOnPanel(TabsIndex)
 	dv.Update()
@@ -163,7 +163,7 @@ func (cv *Code) DebugTest() { //types:add
 	cv.Settings.Debug.Mode = cdebug.Test
 	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
-	dv := tv.RecycleTabWidget("Debug "+dir, true, DebugPanelType).(*DebugPanel)
+	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+dir)
 	dv.Config(cv, fileinfo.Go, tstPath)
 	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
@@ -182,7 +182,7 @@ func (cv *Code) DebugAttach(pid uint64) { //types:add
 	cv.Settings.Debug.PID = pid
 	exePath := string(cv.Settings.RunExec)
 	exe := filepath.Base(exePath)
-	dv := tv.RecycleTabWidget("Debug "+exe, true, DebugPanelType).(*DebugPanel)
+	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+exe)
 	dv.Config(cv, fileinfo.Go, exePath)
 	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
@@ -228,7 +228,7 @@ func (cv *Code) VCSLog(since string) (vcs.Log, error) { //types:add
 
 // OpenConsoleTab opens a main tab displaying console output (stdout, stderr)
 func (cv *Code) OpenConsoleTab() { //types:add
-	ctv := cv.RecycleTabTextEditor("Console", true, nil)
+	ctv := cv.RecycleTabTextEditor("Console", nil)
 	if ctv == nil {
 		return
 	}

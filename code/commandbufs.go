@@ -18,21 +18,18 @@ import (
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
-// existing. If clear is true, then any existing buffer is cleared.
-// Returns true if new buffer created.
-func (cv *Code) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer, bool) {
+// existing. Returns true if new buffer created.
+func (cv *Code) RecycleCmdBuf(cmdName string) (*texteditor.Buffer, bool) {
 	if cv.CmdBufs == nil {
 		cv.CmdBufs = make(map[string]*texteditor.Buffer, 20)
 	}
-	if buf, has := cv.CmdBufs[cmdNm]; has {
-		if clear {
-			buf.NewBuffer(0)
-		}
+	if buf, has := cv.CmdBufs[cmdName]; has {
+		buf.NewBuffer(0)
 		return buf, false
 	}
 	buf := texteditor.NewBuffer()
 	buf.NewBuffer(0)
-	cv.CmdBufs[cmdNm] = buf
+	cv.CmdBufs[cmdName] = buf
 	buf.Autosave = false
 	// buf.Info.Known = fileinfo.Bash
 	// buf.Info.Mime = fileinfo.MimeString(fileinfo.Bash)
@@ -41,12 +38,11 @@ func (cv *Code) RecycleCmdBuf(cmdNm string, clear bool) (*texteditor.Buffer, boo
 }
 
 // RecycleCmdTab creates the tab to show command output, including making a
-// buffer object to save output from the command. returns true if a new buffer
-// was created, false if one already existed. if sel, select tab.  if clearBuf, then any
-// existing buffer is cleared.  Also returns index of tab.
-func (cv *Code) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*texteditor.Buffer, *texteditor.Editor, bool) {
-	buf, nw := cv.RecycleCmdBuf(cmdNm, clearBuf)
-	ctv := cv.RecycleTabTextEditor(cmdNm, sel, buf)
+// buffer object to save output from the command. Returns true if a new buffer
+// was created, false if one already existed.
+func (cv *Code) RecycleCmdTab(cmdName string) (*texteditor.Buffer, *texteditor.Editor, bool) {
+	buf, nw := cv.RecycleCmdBuf(cmdName)
+	ctv := cv.RecycleTabTextEditor(cmdName, buf)
 	if ctv == nil {
 		return nil, nil, false
 	}
@@ -58,43 +54,42 @@ func (cv *Code) RecycleCmdTab(cmdNm string, sel bool, clearBuf bool) (*textedito
 	return buf, ctv, nw
 }
 
-// TabDeleted is called when a main tab is deleted -- we cancel any running commmands
+// TabDeleted is called when a main tab is deleted -- we cancel any running commands
 func (cv *Code) TabDeleted(tabnm string) {
 	cv.RunningCmds.KillByName(tabnm)
 }
 
-// ExecCmdName executes command of given name -- this is the final common
-// pathway for all command invokation except on a node.  if sel, select tab.
-// if clearBuf, clear the buffer prior to command
-func (cv *Code) ExecCmdName(cmdNm CmdName, sel bool, clearBuf bool) {
-	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
+// ExecCmdName executes command of given name; this is the final common
+// pathway for all command invocation except on a node.
+func (cv *Code) ExecCmdName(cmdName CmdName) {
+	cmd, _, ok := AvailableCommands.CmdByName(cmdName, true)
 	if !ok {
 		return
 	}
 	cv.SetArgVarVals()
-	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
 	cmd.Run(cv, cbuf)
 }
 
 // ExecCmdNameFileNode executes command of given name on given node
-func (cv *Code) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName, sel bool, clearBuf bool) {
+func (cv *Code) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok || fn == nil || fn.This == nil {
 		return
 	}
 	cv.ArgVals.Set(string(fn.Filepath), &cv.Settings, nil)
-	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
 	cmd.Run(cv, cbuf)
 }
 
 // ExecCmdNameFilename executes command of given name on given file name
-func (cv *Code) ExecCmdNameFilename(fn string, cmdNm CmdName, sel bool, clearBuf bool) {
+func (cv *Code) ExecCmdNameFilename(fn string, cmdNm CmdName) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
 	cv.ArgVals.Set(fn, &cv.Settings, nil)
-	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name, sel, clearBuf)
+	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
 	cmd.Run(cv, cbuf)
 }
 
@@ -116,13 +111,13 @@ func ExecCmds(cv *Code) [][]string {
 }
 
 // ExecCmdNameActive calls given command on current active texteditor
-func (cv *Code) ExecCmdNameActive(cmdNm string) { //types:add
+func (cv *Code) ExecCmdNameActive(cmdName string) { //types:add
 	tv := cv.ActiveTextEditor()
 	if tv == nil {
 		return
 	}
 	cv.SaveAllCheck(true, func() { // true = cancel option
-		cv.ExecCmdName(CmdName(cmdNm), true, true)
+		cv.ExecCmdName(CmdName(cmdName))
 	})
 }
 
@@ -161,17 +156,17 @@ func (cv *Code) SetArgVarVals() {
 	}
 }
 
-// ExecCmds executes a sequence of commands, sel = select tab, clearBuf = clear buffer
-func (cv *Code) ExecCmds(cmdNms CmdNames, sel bool, clearBuf bool) {
+// ExecCmds executes a sequence of commands.
+func (cv *Code) ExecCmds(cmdNms CmdNames) {
 	for _, cmdNm := range cmdNms {
-		cv.ExecCmdName(cmdNm, sel, clearBuf)
+		cv.ExecCmdName(cmdNm)
 	}
 }
 
-// ExecCmdsFileNode executes a sequence of commands on file node, sel = select tab, clearBuf = clear buffer
-func (cv *Code) ExecCmdsFileNode(fn *filetree.Node, cmdNms CmdNames, sel bool, clearBuf bool) {
-	for _, cmdNm := range cmdNms {
-		cv.ExecCmdNameFileNode(fn, cmdNm, sel, clearBuf)
+// ExecCmdsFileNode executes a sequence of commands on file node
+func (cv *Code) ExecCmdsFileNode(fn *filetree.Node, cmdNames CmdNames) {
+	for _, cmdNm := range cmdNames {
+		cv.ExecCmdNameFileNode(fn, cmdNm)
 	}
 }
 
@@ -181,8 +176,8 @@ func (cv *Code) RunBuild() { //types:add
 		core.MessageDialog(cv, "You need to set the BuildCmds in the Project Settings", "No BuildCmds Set")
 		return
 	}
-	cv.SaveAllCheck(true, func() { // true = cancel option
-		cv.ExecCmds(cv.Settings.BuildCmds, true, true)
+	cv.SaveAllCheck(true, func() {
+		cv.ExecCmds(cv.Settings.BuildCmds)
 	})
 }
 
@@ -196,7 +191,7 @@ func (cv *Code) Run() { //types:add
 		core.CallFunc(cv, cv.ChooseRunExec)
 		return
 	}
-	cv.ExecCmds(cv.Settings.RunCmds, true, true)
+	cv.ExecCmds(cv.Settings.RunCmds)
 }
 
 // Commit commits the current changes using relevant VCS tool.
@@ -251,9 +246,9 @@ func (cv *Code) CommitNoChecks() {
 			val := tf.Text()
 			cv.ArgVals["{PromptString1}"] = val
 			CmdPrompt1Vals["Commit"] = val
-			CmdNoUserPrompt = true                     // don't re-prompt!
-			cv.ExecCmdName(CmdName(cmdnm), true, true) // must be wait
-			cv.SaveProjectIfExists(true)               // saveall
+			CmdNoUserPrompt = true         // don't re-prompt!
+			cv.ExecCmdName(CmdName(cmdnm)) // must be wait
+			cv.SaveProjectIfExists(true)   // saveall
 			cv.UpdateFiles()
 		})
 	})

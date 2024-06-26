@@ -124,7 +124,7 @@ func (cv *Code) RunPostCmdsFileNode(fn *filetree.Node) bool {
 	lang := fn.Info.Known
 	if lopt, has := AvailableLangs[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
-			cv.ExecCmdsFileNode(fn, lopt.PostSaveCmds, false, true) // no select, yes clear
+			cv.ExecCmdsFileNode(fn, lopt.PostSaveCmds)
 			fn.Buffer.Revert()
 			return true
 		}
@@ -454,7 +454,7 @@ func (cv *Code) FileNodeRunExe(fn *filetree.Node) {
 	cmd, _, ok := AvailableCommands.CmdByName(CmdName("Build: Run Prompt"), true)
 	if ok {
 		cv.ArgVals.Set(string(fn.Filepath), &cv.Settings, nil)
-		cbuf, _, _ := cv.RecycleCmdTab(cmd.Name, true, true)
+		cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
 		cmd.Run(cv, cbuf)
 	}
 }
@@ -470,7 +470,7 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 		return
 	case fileinfo.Font, fileinfo.Video, fileinfo.Model, fileinfo.Audio, fileinfo.Sheet, fileinfo.Bin,
 		fileinfo.Archive, fileinfo.Image:
-		cv.ExecCmdNameFileNode(fn, CmdName("File: Open"), true, true) // sel, clear
+		cv.ExecCmdNameFileNode(fn, CmdName("File: Open"))
 		return
 	}
 
@@ -486,7 +486,7 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 		}
 	}
 	if !edit {
-		cv.ExecCmdNameFileNode(fn, CmdName("File: Open"), true, true) // sel, clear
+		cv.ExecCmdNameFileNode(fn, CmdName("File: Open"))
 		return
 	}
 	// program, document, data

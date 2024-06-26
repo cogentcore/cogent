@@ -832,9 +832,9 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 					bt.OnClick(func(e events.Event) {
 						// e.SetHandled() // note: this allows menu to stay open :)
 						cmd := CmdName(cmdNm)
-						cv.CmdHistory.Add(cmd)         // only save commands executed via chooser
-						cv.SaveAllCheck(true, func() { // true = cancel option
-							cv.ExecCmdNameFileNode(fn, cmd, true, true) // sel, clear
+						cv.CmdHistory.Add(cmd) // only save commands executed via chooser
+						cv.SaveAllCheck(true, func() {
+							cv.ExecCmdNameFileNode(fn, cmd)
 						})
 					})
 					if cmdNm == lastCmd {
