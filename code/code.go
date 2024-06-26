@@ -650,11 +650,7 @@ func OpenCodeProject(projfile string) *Code {
 }
 
 func CodeInScene(sc *core.Scene) *Code {
-	gv := sc.Body.ChildByType(CodeType, tree.NoEmbeds)
-	if gv != nil {
-		return gv.(*Code)
-	}
-	return nil
+	return tree.ChildByType[*Code](sc.Body)
 }
 
 // NewCodeWindow is common code for Open CodeWindow from Project or Path

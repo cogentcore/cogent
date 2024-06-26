@@ -577,7 +577,7 @@ func NewVectorWindow(fnm string) *Vector {
 
 	if win, found := core.AllRenderWindows.FindName(winm); found {
 		sc := win.MainScene()
-		if vv, ok := sc.Body.ChildByType(VectorType, tree.NoEmbeds).(*Vector); ok {
+		if vv := tree.ChildByType[*Vector](sc.Body); vv != nil {
 			if string(vv.Filename) == path {
 				win.Raise()
 				return vv

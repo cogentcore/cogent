@@ -226,13 +226,12 @@ func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEdi
 	return
 }
 
-// OpenFindURL opens given find:/// url from Find -- delegates to FindPanel
+// OpenFindURL opens given find:/// url from Find; delegates to FindPanel
 func (cv *Code) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
-	fvk := ftv.ParentByType(FindPanelType, tree.NoEmbeds)
-	if fvk == nil {
+	fv := tree.ParentByType[*FindPanel](ftv)
+	if fv == nil {
 		return false
 	}
-	fv := fvk.(*FindPanel)
 	return fv.OpenFindURL(ur, ftv)
 }
 
