@@ -278,7 +278,7 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	es := sv.EditState()
 
 	if !es.InAction() {
-		es.ActStart("BoxSelect", fmt.Sprintf("%v", es.DragStartPos))
+		es.ActStart(BoxSelect, fmt.Sprintf("%v", es.DragStartPos))
 		es.ActUnlock()
 	}
 	es.DragCurPos = cur

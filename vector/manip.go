@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"image"
 	"math"
-	"strings"
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
@@ -17,12 +16,12 @@ import (
 )
 
 // ManipStart is called at the start of a manipulation, saving the state prior to the action
-func (sv *SVG) ManipStart(act, data string) {
+func (sv *SVG) ManipStart(act Actions, data string) {
 	es := sv.EditState()
 	es.ActStart(act, data)
 	help := ActionHelpMap[act]
 	sv.Vector.SetStatus(fmt.Sprintf("<b>%s</b>: %s", act, help))
-	sv.UndoSave(act, data)
+	sv.UndoSave(act.String(), data)
 	es.ActUnlock()
 }
 
@@ -31,7 +30,7 @@ func (sv *SVG) ManipDone() {
 	InactivateSprites(sv, SpAlignMatch)
 	es := sv.EditState()
 	switch {
-	case es.Action == "BoxSelect":
+	case es.Action == BoxSelect:
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
 		bbox = bbox.Canon().Sub(sv.Geom.ContentBBox.Min)
 		InactivateSprites(sv, SpRubberBand)
@@ -300,7 +299,7 @@ func (sv *SVG) DragMove(e events.Event) {
 	InactivateSprites(sv, SpAlignMatch)
 
 	if !es.InAction() {
-		sv.ManipStart("Move", es.SelectedNamesString())
+		sv.ManipStart(Move, es.SelectedNamesString())
 		sv.GatherAlignPoints()
 	}
 
@@ -366,7 +365,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	InactivateSprites(sv, SpAlignMatch)
 
 	if !es.InAction() {
-		sv.ManipStart("Reshape", es.SelectedNamesString())
+		sv.ManipStart(Reshape, es.SelectedNamesString())
 		sv.GatherAlignPoints()
 	}
 	stsz := es.DragSelectStartBBox.Size()
@@ -441,10 +440,10 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SVG, ss.InitGeom)
 		itm.ApplyDeltaTransform(sv.SVG, del, sc, 0, pt)
-		if strings.HasPrefix(es.Action, "New") {
-			// svg.UpdateNodeGradientPoints(itm, "fill")
-			// svg.UpdateNodeGradientPoints(itm, "stroke")
-		}
+		// if strings.HasPrefix(es.Action, "New") {
+		// 	svg.UpdateNodeGradientPoints(itm, "fill")
+		// 	svg.UpdateNodeGradientPoints(itm, "stroke")
+		// }
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
@@ -457,7 +456,7 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	fmt.Println("rotate", delta)
 	es := sv.EditState()
 	if !es.InAction() {
-		sv.ManipStart("Rotate", es.SelectedNamesString())
+		sv.ManipStart(Rotate, es.SelectedNamesString())
 	}
 	dv := math32.Vector2FromPoint(delta)
 	pt := es.DragSelectStartBBox.Min
@@ -518,10 +517,10 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SVG, ss.InitGeom)
 		itm.ApplyDeltaTransform(sv.SVG, del, sc, ang, pt)
-		if strings.HasPrefix(es.Action, "New") {
-			// sv.UpdateNodeGradientPoints(itm, "fill")
-			// sv.UpdateNodeGradientPoints(itm, "stroke")
-		}
+		// if strings.HasPrefix(es.Action, "New") {
+		// 	sv.UpdateNodeGradientPoints(itm, "fill")
+		// 	sv.UpdateNodeGradientPoints(itm, "stroke")
+		// }
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)

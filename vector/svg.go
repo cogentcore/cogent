@@ -189,7 +189,10 @@ func (sv *SVG) Init() {
 			return
 		}
 		if es.HasSelected() {
-			if !es.NewTextMade {
+			switch es.Action {
+			case NewElement:
+				sv.SpriteReshapeDrag(SpBBoxDnR, e)
+			default:
 				sv.DragMove(e)
 			}
 			return
@@ -208,7 +211,7 @@ func (sv *SVG) Init() {
 			case BezierTool:
 				sv.NewPath(es.DragStartPos, e.Pos())
 			}
-		} else if es.Action == "BoxSelect" {
+		} else if es.Action == BoxSelect {
 			sv.SetRubberBand(e.Pos())
 		}
 	})
@@ -709,15 +712,13 @@ func (sv *SVG) Redo() string {
 // ShowAlignMatches draws the align matches as given
 // between BBox Min - Max.  typs are corresponding bounding box sources.
 func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
-	// win := sv.Vector.ParentWindow()
-
-	// sz := min(len(pts), 8)
-	// for i := 0; i < sz; i++ {
-	// 	pt := pts[i].Canon()
-	// 	lsz := pt.Max.Sub(pt.Min)
-	// 	sp := Sprite(win, SpAlignMatch, Sprites(typs[i]), i, lsz)
-	// 	SetSpritePos(sp, pt.Min)
-	// }
+	sz := min(len(pts), 8)
+	for i := 0; i < sz; i++ {
+		pt := pts[i].Canon()
+		lsz := pt.Max.Sub(pt.Min)
+		sp := Sprite(sv, SpAlignMatch, Sprites(typs[i]), i, lsz, nil)
+		SetSpritePos(sp, pt.Min)
+	}
 }
 
 // DepthMap returns a map of all nodes and their associated depth count
@@ -773,8 +774,7 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 		fmt.Println("dv under min:", dv, minsz)
 		return nil
 	}
-	tn := typ.Name
-	sv.ManipStart("New"+tn, "")
+	sv.ManipStart(NewElement, typ.Name)
 	nr := sv.NewElement(typ)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
@@ -786,7 +786,6 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 	nr.SetNodeSize(sz)
 	sv.RenderSVG() // needed to get bb
 	es.SelectAction(nr, events.SelectOne, end)
-	// sv.ManipDone()
 	sv.NeedsRender()
 	sv.UpdateSelSprites()
 	es.DragSelStart(start)
@@ -796,7 +795,7 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 // NewText makes a new Text element with embedded tspan
 func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	es := sv.EditState()
-	sv.ManipStart("NewText", "")
+	sv.ManipStart(NewText, "")
 	nr := sv.NewElement(svg.TextType)
 	tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
 	tspan := svg.NewText(nr)
@@ -831,7 +830,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 		return nil
 	}
 	// win := sv.Vector.ParentWindow()
-	sv.ManipStart("NewPath", "")
+	sv.ManipStart(NewPath, "")
 	// sv.SetFullReRender()
 	nr := sv.NewElement(svg.PathType).(*svg.Path)
 	xfi := sv.Root().Paint.Transform.Inverse()

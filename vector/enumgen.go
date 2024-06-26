@@ -6,6 +6,47 @@ import (
 	"cogentcore.org/core/enums"
 )
 
+var _ActionsValues = []Actions{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+// ActionsN is the highest valid value for type Actions, plus one.
+const ActionsN Actions = 10
+
+var _ActionsValueMap = map[string]Actions{`NoAction`: 0, `Move`: 1, `Reshape`: 2, `Rotate`: 3, `BoxSelect`: 4, `SetStrokeColor`: 5, `SetFillColor`: 6, `NewElement`: 7, `NewText`: 8, `NewPath`: 9}
+
+var _ActionsDescMap = map[Actions]string{0: ``, 1: ``, 2: ``, 3: ``, 4: ``, 5: ``, 6: ``, 7: ``, 8: ``, 9: ``}
+
+var _ActionsMap = map[Actions]string{0: `NoAction`, 1: `Move`, 2: `Reshape`, 3: `Rotate`, 4: `BoxSelect`, 5: `SetStrokeColor`, 6: `SetFillColor`, 7: `NewElement`, 8: `NewText`, 9: `NewPath`}
+
+// String returns the string representation of this Actions value.
+func (i Actions) String() string { return enums.String(i, _ActionsMap) }
+
+// SetString sets the Actions value from its string representation,
+// and returns an error if the string is invalid.
+func (i *Actions) SetString(s string) error {
+	return enums.SetString(i, s, _ActionsValueMap, "Actions")
+}
+
+// Int64 returns the Actions value as an int64.
+func (i Actions) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the Actions value from an int64.
+func (i *Actions) SetInt64(in int64) { *i = Actions(in) }
+
+// Desc returns the description of the Actions value.
+func (i Actions) Desc() string { return enums.Desc(i, _ActionsDescMap) }
+
+// ActionsValues returns all possible values for the type Actions.
+func ActionsValues() []Actions { return _ActionsValues }
+
+// Values returns all possible values for the type Actions.
+func (i Actions) Values() []enums.Enum { return enums.Values(_ActionsValues) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i Actions) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *Actions) UnmarshalText(text []byte) error { return enums.UnmarshalText(i, text, "Actions") }
+
 var _AlignAnchorsValues = []AlignAnchors{0, 1, 2, 3}
 
 // AlignAnchorsN is the highest valid value for type AlignAnchors, plus one.

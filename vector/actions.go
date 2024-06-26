@@ -4,9 +4,24 @@
 
 package vector
 
+type Actions int32 //enums:enum
+
+const (
+	NoAction Actions = iota
+	Move
+	Reshape
+	Rotate
+	BoxSelect
+	SetStrokeColor
+	SetFillColor
+	NewElement
+	NewText
+	NewPath
+)
+
 // ActionHelpMap contains a set of help strings for different actions
 // which are the names given e.g., in the ActStart, SaveUndo etc.
-var ActionHelpMap = map[string]string{
-	"Move":    "<b>Alt</b> = move without snapping, <b>Ctrl</b> = constrain to axis with smallest delta",
-	"Reshape": "<b>Alt</b> = rotate, <b>Ctrl</b> = constraint to axis with smallest delta",
+var ActionHelpMap = map[Actions]string{
+	Move:    "<b>Alt</b> = move without snapping, <b>Ctrl</b> = constrain to axis with smallest delta",
+	Reshape: "<b>Alt</b> = rotate, <b>Ctrl</b> = constraint to axis with smallest delta",
 }

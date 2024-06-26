@@ -124,6 +124,14 @@ func SpriteProperties(sp *core.Sprite) (typ, subtyp Sprites, idx int) {
 	return
 }
 
+// SpriteByName returns the given sprite in the context of the given widget,
+// returning nil, false if not yet made.
+func SpriteByName(ctx core.Widget, typ, subtyp Sprites, idx int) (*core.Sprite, bool) {
+	sprites := &ctx.AsWidget().Scene.Stage.Sprites
+	spnm := SpriteName(typ, subtyp, idx)
+	return sprites.SpriteByName(spnm)
+}
+
 // Sprite returns the given sprite in the context of the given widget,
 // making it if not yet made. trgsz is the target size (e.g., for rubber
 // band boxes).  Init function is called on new sprites.

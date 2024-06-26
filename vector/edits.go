@@ -24,8 +24,8 @@ type EditState struct {
 	// current tool in use
 	Tool Tools
 
-	// current action being performed -- used for undo labeling
-	Action string
+	// current action being performed, for undo labeling
+	Action Actions
 
 	// action data set at start of action
 	ActData string
@@ -111,7 +111,7 @@ type EditState struct {
 
 // Init initializes the edit state -- e.g. after opening a new file
 func (es *EditState) Init(vv *Vector) {
-	es.Action = ""
+	es.Action = NoAction
 	es.ActData = ""
 	es.CurLayer = ""
 	es.Gradients = nil
@@ -124,11 +124,11 @@ func (es *EditState) Init(vv *Vector) {
 func (es *EditState) InAction() bool {
 	es.ActMu.Lock()
 	defer es.ActMu.Unlock()
-	return es.Action != ""
+	return es.Action != NoAction
 }
 
 // ActStart starts an action, locking the mutex so only one can start
-func (es *EditState) ActStart(act, data string) {
+func (es *EditState) ActStart(act Actions, data string) {
 	es.ActMu.Lock()
 	es.Action = act
 	es.ActData = data
@@ -139,10 +139,10 @@ func (es *EditState) ActUnlock() {
 	es.ActMu.Unlock()
 }
 
-// ActDone finishes an action, resetting action to ""
+// ActDone finishes an action, resetting action
 func (es *EditState) ActDone() {
 	es.ActMu.Lock()
-	es.Action = ""
+	es.Action = NoAction
 	es.ActData = ""
 	es.ActMu.Unlock()
 }

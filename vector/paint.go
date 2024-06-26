@@ -318,7 +318,7 @@ func (pv *PaintView) Init() {
 // ManipAction manages all the updating etc associated with performing an action
 // that includes an ongoing manipulation with a final non-manip update.
 // runs given function to actually do the update.
-func (vv *Vector) ManipAction(act, data string, manip bool, fun func(sii svg.Node)) {
+func (vv *Vector) ManipAction(act Actions, data string, manip bool, fun func(sii svg.Node)) {
 	es := &vv.EditState
 	sv := vv.SVG()
 	// update := false
@@ -335,7 +335,7 @@ func (vv *Vector) ManipAction(act, data string, manip bool, fun func(sii svg.Nod
 	}
 	if !manip {
 		if !finalAct {
-			sv.UndoSave(act, data)
+			sv.UndoSave(act.String(), data)
 		}
 		// update = sv.UpdateStart()
 	}
@@ -435,7 +435,7 @@ func (vv *Vector) SetStrokeWidth(wp string, manip bool) {
 // SetStrokeColor sets the stroke color for selected items.
 // manip means currently being manipulated -- don't save undo.
 func (vv *Vector) SetStrokeColor(sp string, manip bool) {
-	vv.ManipAction("SetStrokeColor", sp, manip,
+	vv.ManipAction(SetStrokeColor, sp, manip,
 		func(itm svg.Node) {
 			p := itm.AsTree().Properties["stroke"]
 			if p != nil {
@@ -532,7 +532,7 @@ func (vv *Vector) SetFill(prev, pt PaintTypes, fp string) {
 // SetFillColor sets the fill color for selected items
 // manip means currently being manipulated -- don't save undo.
 func (vv *Vector) SetFillColor(fp string, manip bool) {
-	vv.ManipAction("SetFillColor", fp, manip,
+	vv.ManipAction(SetFillColor, fp, manip,
 		func(itm svg.Node) {
 			p := itm.AsTree().Properties["fill"]
 			if p != nil {
