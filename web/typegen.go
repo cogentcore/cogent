@@ -7,8 +7,7 @@ import (
 	"cogentcore.org/core/types"
 )
 
-// PageType is the [types.Type] for [Page]
-var PageType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.Page", IDName: "page", Doc: "Page represents one web browser page.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [htmlcore.Context]."}}, Instance: &Page{}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.Page", IDName: "page", Doc: "Page represents one web browser page.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "History", Doc: "The history of URLs that have been visited. The oldest page is first."}, {Name: "Context", Doc: "Context is the page's [htmlcore.Context]."}}, Instance: &Page{}})
 
 // NewPage returns a new [Page] with the given optional parent:
 // Page represents one web browser page.

@@ -32,6 +32,7 @@ import (
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
 )
 
 //go:embed icons/*.svg
@@ -144,7 +145,7 @@ func (cv *Code) Init() {
 			tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
 				w.OpenDepth = 4
 				cv.Files = w
-				w.FileNodeType = FileNodeType
+				w.FileNodeType = types.For[FileNode]()
 
 				w.OnSelect(func(e events.Event) {
 					e.SetHandled()

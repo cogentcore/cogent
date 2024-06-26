@@ -7,8 +7,7 @@ import (
 	"cogentcore.org/core/types"
 )
 
-// RandomType is the [types.Type] for [Random]
-var RandomType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/random.Random", IDName: "random", Doc: "Random is the random distribution plotter widget.", Methods: []types.Method{{Name: "Plot", Doc: "Plot generates the data and plots a histogram of results.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Frame"}, {Name: "Data"}}, Instance: &Random{}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/random.Random", IDName: "random", Doc: "Random is the random distribution plotter widget.", Methods: []types.Method{{Name: "Plot", Doc: "Plot generates the data and plots a histogram of results.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Frame"}, {Name: "Data"}}, Instance: &Random{}})
 
 // NewRandom returns a new [Random] with the given optional parent:
 // Random is the random distribution plotter widget.
