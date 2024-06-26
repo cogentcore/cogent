@@ -8,17 +8,10 @@ import (
 )
 
 // RandomType is the [types.Type] for [Random]
-var RandomType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/random.Random", IDName: "random", Doc: "Random is the widget containing all of the components\nof the random distribution plotter.", Methods: []types.Method{{Name: "Plot", Doc: "Plot generates the data and plots a histogram of results.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Frame"}, {Name: "Data"}}, Instance: &Random{}})
+var RandomType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/random.Random", IDName: "random", Doc: "Random is the random distribution plotter widget.", Methods: []types.Method{{Name: "Plot", Doc: "Plot generates the data and plots a histogram of results.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}}}, Embeds: []types.Field{{Name: "Frame"}, {Name: "Data"}}, Instance: &Random{}})
 
 // NewRandom returns a new [Random] with the given optional parent:
-// Random is the widget containing all of the components
-// of the random distribution plotter.
+// Random is the random distribution plotter widget.
 func NewRandom(parent ...tree.Node) *Random { return tree.New[Random](parent...) }
 
-// NodeType returns the [*types.Type] of [Random]
-func (t *Random) NodeType() *types.Type { return RandomType }
-
-// New returns a new [*Random] value
-func (t *Random) New() tree.Node { return &Random{} }
-
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/random.Data", IDName: "data", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Fields: []types.Field{{Name: "Dist", Doc: "random params"}, {Name: "NumSamples", Doc: "number of samples"}, {Name: "NumBins", Doc: "number of bins in the histogram"}, {Name: "Range", Doc: "range for histogram"}, {Name: "Table", Doc: "table for raw data"}, {Name: "Histogram", Doc: "histogram of data"}, {Name: "plot", Doc: "the plot"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/random.Data", IDName: "data", Doc: "Data contains the random distribution plotter data and options.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Fields: []types.Field{{Name: "Dist", Doc: "random params"}, {Name: "NumSamples", Doc: "number of samples"}, {Name: "NumBins", Doc: "number of bins in the histogram"}, {Name: "Range", Doc: "range for histogram"}, {Name: "Table", Doc: "table for raw data"}, {Name: "Histogram", Doc: "histogram of data"}, {Name: "plot", Doc: "the plot"}}})

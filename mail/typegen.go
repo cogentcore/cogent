@@ -14,12 +14,6 @@ var AppType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.App", 
 // App is an email client app.
 func NewApp(parent ...tree.Node) *App { return tree.New[App](parent...) }
 
-// NodeType returns the [*types.Type] of [App]
-func (t *App) NodeType() *types.Type { return AppType }
-
-// New returns a new [*App] value
-func (t *App) New() tree.Node { return &App{} }
-
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the global Cogent Mail settings.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Accounts", Doc: "Accounts are the email accounts the user is signed into."}}})
 
 // AddressTextFieldType is the [types.Type] for [AddressTextField]
@@ -30,9 +24,3 @@ var AddressTextFieldType = types.AddType(&types.Type{Name: "cogentcore.org/cogen
 func NewAddressTextField(parent ...tree.Node) *AddressTextField {
 	return tree.New[AddressTextField](parent...)
 }
-
-// NodeType returns the [*types.Type] of [AddressTextField]
-func (t *AddressTextField) NodeType() *types.Type { return AddressTextFieldType }
-
-// New returns a new [*AddressTextField] value
-func (t *AddressTextField) New() tree.Node { return &AddressTextField{} }

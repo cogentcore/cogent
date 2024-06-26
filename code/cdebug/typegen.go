@@ -16,12 +16,6 @@ var VariableType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code/c
 // can be visualized.
 func NewVariable(parent ...tree.Node) *Variable { return tree.New[Variable](parent...) }
 
-// NodeType returns the [*types.Type] of [Variable]
-func (t *Variable) NodeType() *types.Type { return VariableType }
-
-// New returns a new [*Variable] value
-func (t *Variable) New() tree.Node { return &Variable{} }
-
 // SetValue sets the [Variable.Value]:
 // value of variable -- may be truncated if long
 func (t *Variable) SetValue(v string) *Variable { t.Value = v; return t }

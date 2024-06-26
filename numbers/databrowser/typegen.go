@@ -18,12 +18,6 @@ var BrowserType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers
 // removed from the label, so you can use numbers to specify a custom order.
 func NewBrowser(parent ...tree.Node) *Browser { return tree.New[Browser](parent...) }
 
-// NodeType returns the [*types.Type] of [Browser]
-func (t *Browser) NodeType() *types.Type { return BrowserType }
-
-// New returns a new [*Browser] value
-func (t *Browser) New() tree.Node { return &Browser{} }
-
 // SetDataRoot sets the [Browser.DataRoot]:
 // DataRoot is the path to the root of the data to browse
 func (t *Browser) SetDataRoot(v string) *Browser { t.DataRoot = v; return t }
@@ -44,9 +38,3 @@ var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/number
 // NewFileNode returns a new [FileNode] with the given optional parent:
 // FileNode is Code version of FileNode for FileTree
 func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[FileNode](parent...) }
-
-// NodeType returns the [*types.Type] of [FileNode]
-func (t *FileNode) NodeType() *types.Type { return FileNodeType }
-
-// New returns a new [*FileNode] value
-func (t *FileNode) New() tree.Node { return &FileNode{} }

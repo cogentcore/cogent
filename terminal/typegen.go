@@ -14,12 +14,6 @@ var AppType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/terminal.Ap
 // App is a GUI view of a terminal command.
 func NewApp(parent ...tree.Node) *App { return tree.New[App](parent...) }
 
-// NodeType returns the [*types.Type] of [App]
-func (t *App) NodeType() *types.Type { return AppType }
-
-// New returns a new [*App] value
-func (t *App) New() tree.Node { return &App{} }
-
 // SetCmd sets the [App.Cmd]:
 // Cmd is the root command associated with this app.
 func (t *App) SetCmd(v *Cmd) *App { t.Cmd = v; return t }

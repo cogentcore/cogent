@@ -13,9 +13,3 @@ var PageType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/web.Page",
 // NewPage returns a new [Page] with the given optional parent:
 // Page represents one web browser page.
 func NewPage(parent ...tree.Node) *Page { return tree.New[Page](parent...) }
-
-// NodeType returns the [*types.Type] of [Page]
-func (t *Page) NodeType() *types.Type { return PageType }
-
-// New returns a new [*Page] value
-func (t *Page) New() tree.Node { return &Page{} }
