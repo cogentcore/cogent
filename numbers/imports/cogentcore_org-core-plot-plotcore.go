@@ -26,10 +26,8 @@ func init() {
 		"Off":                reflect.ValueOf(plotcore.Off),
 		"On":                 reflect.ValueOf(plotcore.On),
 		"PlotColumnsHeaderN": reflect.ValueOf(constant.MakeFromLiteral("2", token.INT, 0)),
-		"PlotType":           reflect.ValueOf(&plotcore.PlotType).Elem(),
 		"PlotTypesN":         reflect.ValueOf(plotcore.PlotTypesN),
 		"PlotTypesValues":    reflect.ValueOf(plotcore.PlotTypesValues),
-		"PlotEditorType":       reflect.ValueOf(&plotcore.PlotEditorType).Elem(),
 		"XY":                 reflect.ValueOf(plotcore.XY),
 
 		// type definitions

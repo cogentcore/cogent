@@ -17,12 +17,6 @@ func init() {
 		"NewTableButton":   reflect.ValueOf(tensorcore.NewTableButton),
 		"NewTensorButton":  reflect.ValueOf(tensorcore.NewTensorButton),
 		"NewTensorGrid":    reflect.ValueOf(tensorcore.NewTensorGrid),
-		"SimMatButtonType": reflect.ValueOf(&tensorcore.SimMatButtonType).Elem(),
-		"SimMatGridType":   reflect.ValueOf(&tensorcore.SimMatGridType).Elem(),
-		"TableButtonType":  reflect.ValueOf(&tensorcore.TableButtonType).Elem(),
-		"TableType":        reflect.ValueOf(&tensorcore.TableType).Elem(),
-		"TensorButtonType": reflect.ValueOf(&tensorcore.TensorButtonType).Elem(),
-		"TensorGridType":   reflect.ValueOf(&tensorcore.TensorGridType).Elem(),
 
 		// type definitions
 		"SimMatButton":  reflect.ValueOf((*tensorcore.SimMatButton)(nil)),

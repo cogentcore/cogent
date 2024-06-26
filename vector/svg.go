@@ -202,9 +202,9 @@ func (sv *SVG) Init() {
 			case SelectTool:
 				sv.SetRubberBand(e.Pos())
 			case RectTool:
-				sv.NewElementDrag(svg.RectType, es.DragStartPos, e.Pos())
+				sv.NewElementDrag(types.For[svg.Rect](), es.DragStartPos, e.Pos())
 			case EllipseTool:
-				sv.NewElementDrag(svg.EllipseType, es.DragStartPos, e.Pos())
+				sv.NewElementDrag(types.For[svg.Ellipse](), es.DragStartPos, e.Pos())
 			case TextTool:
 				sv.NewText(es.DragStartPos, e.Pos())
 				es.NewTextMade = true
@@ -749,7 +749,7 @@ func (sv *SVG) SetSVGName(el svg.Node) {
 
 // NewElement makes a new SVG element, giving it a new unique name.
 // Uses currently active layer if set.
-func (sv *SVG) NewElement(typ *types.Type) svg.Node {
+func (sv *SVG) NewElement(typ *types.Type) svg.Node { // TODO(config): use generics?
 	es := sv.EditState()
 	parent := tree.Node(sv.Root())
 	if es.CurLayer != "" {
@@ -798,7 +798,7 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	es := sv.EditState()
 	sv.ManipStart(NewText, "")
-	nr := sv.NewElement(svg.TextType)
+	nr := sv.NewElement(types.For[svg.Text]())
 	tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
 	tspan := svg.NewText(nr)
 	tspan.SetName(tsnm)
@@ -834,7 +834,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	// win := sv.Vector.ParentWindow()
 	sv.ManipStart(NewPath, "")
 	// sv.SetFullReRender()
-	nr := sv.NewElement(svg.PathType).(*svg.Path)
+	nr := sv.NewElement(types.For[svg.Path]()).(*svg.Path)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	// svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.Vector2FromPoint(start)

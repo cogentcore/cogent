@@ -34,8 +34,6 @@ func init() {
 		"AsTree":                    reflect.ValueOf(core.AsTree),
 		"AsWidget":                  reflect.ValueOf(core.AsWidget),
 		"AutoScrollRate":            reflect.ValueOf(&core.AutoScrollRate).Elem(),
-		"BasicBarType":              reflect.ValueOf(&core.BasicBarType).Elem(),
-		"BodyType":                  reflect.ValueOf(&core.BodyType).Elem(),
 		"ButtonAction":              reflect.ValueOf(core.ButtonAction),
 		"ButtonElevated":            reflect.ValueOf(core.ButtonElevated),
 		"ButtonFilled":              reflect.ValueOf(core.ButtonFilled),
@@ -43,20 +41,14 @@ func init() {
 		"ButtonOutlined":            reflect.ValueOf(core.ButtonOutlined),
 		"ButtonText":                reflect.ValueOf(core.ButtonText),
 		"ButtonTonal":               reflect.ValueOf(core.ButtonTonal),
-		"ButtonType":                reflect.ValueOf(&core.ButtonType).Elem(),
 		"ButtonTypesN":              reflect.ValueOf(core.ButtonTypesN),
 		"ButtonTypesValues":         reflect.ValueOf(core.ButtonTypesValues),
 		"CallFunc":                  reflect.ValueOf(core.CallFunc),
-		"CanvasType":                reflect.ValueOf(&core.CanvasType).Elem(),
 		"ChildByLabelCanFocus":      reflect.ValueOf(core.ChildByLabelCanFocus),
 		"ChooserFilled":             reflect.ValueOf(core.ChooserFilled),
 		"ChooserOutlined":           reflect.ValueOf(core.ChooserOutlined),
-		"ChooserType":               reflect.ValueOf(&core.ChooserType).Elem(),
 		"ChooserTypesN":             reflect.ValueOf(core.ChooserTypesN),
 		"ChooserTypesValues":        reflect.ValueOf(core.ChooserTypesValues),
-		"ColorButtonType":           reflect.ValueOf(&core.ColorButtonType).Elem(),
-		"ColorMapButtonType":        reflect.ValueOf(&core.ColorMapButtonType).Elem(),
-		"ColorPickerType":           reflect.ValueOf(&core.ColorPickerType).Elem(),
 		"CompleteEditText":          reflect.ValueOf(core.CompleteEditText),
 		"CompleteExtend":            reflect.ValueOf(core.CompleteExtend),
 		"CompleteSelect":            reflect.ValueOf(core.CompleteSelect),
@@ -65,61 +57,40 @@ func init() {
 		"CompleterStage":            reflect.ValueOf(core.CompleterStage),
 		"ConcealDots":               reflect.ValueOf(core.ConcealDots),
 		"CurrentRenderWindow":       reflect.ValueOf(&core.CurrentRenderWindow).Elem(),
-		"DatePickerType":            reflect.ValueOf(&core.DatePickerType).Elem(),
 		"DebugSettings":             reflect.ValueOf(&core.DebugSettings).Elem(),
 		"DefaultPaths":              reflect.ValueOf(&core.DefaultPaths).Elem(),
 		"DeviceSettings":            reflect.ValueOf(&core.DeviceSettings).Elem(),
 		"DialogRenderWindows":       reflect.ValueOf(&core.DialogRenderWindows).Elem(),
 		"DialogStage":               reflect.ValueOf(core.DialogStage),
 		"DragSpriteName":            reflect.ValueOf(constant.MakeFromLiteral("\"__DragSprite__\"", token.STRING, 0)),
-		"DurationInputType":         reflect.ValueOf(&core.DurationInputType).Elem(),
 		"EndCPUMemoryProfile":       reflect.ValueOf(core.EndCPUMemoryProfile),
 		"EndTargetedProfile":        reflect.ValueOf(core.EndTargetedProfile),
 		"ErrorDialog":               reflect.ValueOf(core.ErrorDialog),
 		"ErrorSnackbar":             reflect.ValueOf(core.ErrorSnackbar),
-		"FileButtonType":            reflect.ValueOf(&core.FileButtonType).Elem(),
 		"FilePickerDialog":          reflect.ValueOf(core.FilePickerDialog),
 		"FilePickerDirOnlyFilter":   reflect.ValueOf(core.FilePickerDirOnlyFilter),
 		"FilePickerExtOnlyFilter":   reflect.ValueOf(core.FilePickerExtOnlyFilter),
 		"FilePickerKindColorMap":    reflect.ValueOf(&core.FilePickerKindColorMap).Elem(),
-		"FilePickerType":            reflect.ValueOf(&core.FilePickerType).Elem(),
-		"FontButtonType":            reflect.ValueOf(&core.FontButtonType).Elem(),
 		"ForceAppColor":             reflect.ValueOf(&core.ForceAppColor).Elem(),
-		"FormButtonType":            reflect.ValueOf(&core.FormButtonType).Elem(),
-		"FormType":                  reflect.ValueOf(&core.FormType).Elem(),
-		"FrameType":                 reflect.ValueOf(&core.FrameType).Elem(),
+		"FormDialog":                reflect.ValueOf(core.FormDialog),
 		"FuncArgsToStruct":          reflect.ValueOf(core.FuncArgsToStruct),
-		"FuncButtonType":            reflect.ValueOf(&core.FuncButtonType).Elem(),
 		"FunctionalTabs":            reflect.ValueOf(core.FunctionalTabs),
 		"GrabRenderFrom":            reflect.ValueOf(core.GrabRenderFrom),
 		"HandleRecover":             reflect.ValueOf(core.HandleRecover),
-		"HandleType":                reflect.ValueOf(&core.HandleType).Elem(),
-		"IconButtonType":            reflect.ValueOf(&core.IconButtonType).Elem(),
-		"IconType":                  reflect.ValueOf(&core.IconType).Elem(),
-		"ImageType":                 reflect.ValueOf(&core.ImageType).Elem(),
 		"InitValueButton":           reflect.ValueOf(core.InitValueButton),
-		"InlineListType":            reflect.ValueOf(&core.InlineListType).Elem(),
-		"InspectorType":             reflect.ValueOf(&core.InspectorType).Elem(),
 		"InspectorView":             reflect.ValueOf(core.InspectorView),
 		"InspectorWindow":           reflect.ValueOf(core.InspectorWindow),
 		"IsWordBreak":               reflect.ValueOf(core.IsWordBreak),
 		"JoinValueTitle":            reflect.ValueOf(core.JoinValueTitle),
-		"KeyChordButtonType":        reflect.ValueOf(&core.KeyChordButtonType).Elem(),
-		"KeyMapButtonType":          reflect.ValueOf(&core.KeyMapButtonType).Elem(),
-		"KeyedListButtonType":       reflect.ValueOf(&core.KeyedListButtonType).Elem(),
-		"KeyedListType":             reflect.ValueOf(&core.KeyedListType).Elem(),
 		"LayoutLastAutoScroll":      reflect.ValueOf(&core.LayoutLastAutoScroll).Elem(),
 		"LayoutPassesN":             reflect.ValueOf(core.LayoutPassesN),
 		"LayoutPassesValues":        reflect.ValueOf(core.LayoutPassesValues),
-		"ListBaseType":              reflect.ValueOf(&core.ListBaseType).Elem(),
-		"ListButtonType":            reflect.ValueOf(&core.ListButtonType).Elem(),
 		"ListColProperty":           reflect.ValueOf(constant.MakeFromLiteral("\"sv-col\"", token.STRING, 0)),
-		"ListGridType":              reflect.ValueOf(&core.ListGridType).Elem(),
 		"ListRowProperty":           reflect.ValueOf(constant.MakeFromLiteral("\"sv-row\"", token.STRING, 0)),
-		"ListType":                  reflect.ValueOf(&core.ListType).Elem(),
 		"LoadAllSettings":           reflect.ValueOf(core.LoadAllSettings),
 		"LoadSettings":              reflect.ValueOf(core.LoadSettings),
 		"MainRenderWindows":         reflect.ValueOf(&core.MainRenderWindows).Elem(),
+		"MakeAppBar":                reflect.ValueOf(core.MakeAppBar),
 		"MaxSpriteTextures":         reflect.ValueOf(constant.MakeFromLiteral("16", token.INT, 0)),
 		"MaxSpritesPerTexture":      reflect.ValueOf(constant.MakeFromLiteral("128", token.INT, 0)),
 		"MenuSceneConfigStyles":     reflect.ValueOf(core.MenuSceneConfigStyles),
@@ -129,7 +100,6 @@ func init() {
 		"MeterCircle":               reflect.ValueOf(core.MeterCircle),
 		"MeterLinear":               reflect.ValueOf(core.MeterLinear),
 		"MeterSemicircle":           reflect.ValueOf(core.MeterSemicircle),
-		"MeterType":                 reflect.ValueOf(&core.MeterType).Elem(),
 		"MeterTypesN":               reflect.ValueOf(core.MeterTypesN),
 		"MeterTypesValues":          reflect.ValueOf(core.MeterTypesValues),
 		"NavigationAuto":            reflect.ValueOf(core.NavigationAuto),
@@ -220,15 +190,11 @@ func init() {
 		"RenderWindowGlobalMu":      reflect.ValueOf(&core.RenderWindowGlobalMu).Elem(),
 		"ResetAllSettings":          reflect.ValueOf(core.ResetAllSettings),
 		"ResetSettings":             reflect.ValueOf(core.ResetSettings),
-		"SVGType":                   reflect.ValueOf(&core.SVGType).Elem(),
 		"SaveAllSettings":           reflect.ValueOf(core.SaveAllSettings),
 		"SaveRecentPaths":           reflect.ValueOf(core.SaveRecentPaths),
 		"SaveSettings":              reflect.ValueOf(core.SaveSettings),
 		"SavedPathsFilename":        reflect.ValueOf(&core.SavedPathsFilename).Elem(),
 		"SceneShowIters":            reflect.ValueOf(&core.SceneShowIters).Elem(),
-		"SceneType":                 reflect.ValueOf(&core.SceneType).Elem(),
-		"ScrimType":                 reflect.ValueOf(&core.ScrimType).Elem(),
-		"SeparatorType":             reflect.ValueOf(&core.SeparatorType).Elem(),
 		"SettingsEditor":            reflect.ValueOf(core.SettingsEditor),
 		"SettingsEditorToolbarBase": reflect.ValueOf(core.SettingsEditorToolbarBase),
 		"SettingsWindow":            reflect.ValueOf(core.SettingsWindow),
@@ -243,20 +209,15 @@ func init() {
 		"SliceIndexByValue":         reflect.ValueOf(core.SliceIndexByValue),
 		"SliderScrollbar":           reflect.ValueOf(core.SliderScrollbar),
 		"SliderSlider":              reflect.ValueOf(core.SliderSlider),
-		"SliderType":                reflect.ValueOf(&core.SliderType).Elem(),
 		"SliderTypesN":              reflect.ValueOf(core.SliderTypesN),
 		"SliderTypesValues":         reflect.ValueOf(core.SliderTypesValues),
 		"SnackbarStage":             reflect.ValueOf(core.SnackbarStage),
-		"SpaceType":                 reflect.ValueOf(&core.SpaceType).Elem(),
-		"SpinnerType":               reflect.ValueOf(&core.SpinnerType).Elem(),
-		"SplitsType":                reflect.ValueOf(&core.SplitsType).Elem(),
 		"SpriteStart":               reflect.ValueOf(constant.MakeFromLiteral("32", token.INT, 0)),
 		"StageTypesN":               reflect.ValueOf(core.StageTypesN),
 		"StageTypesValues":          reflect.ValueOf(core.StageTypesValues),
 		"StandardTabs":              reflect.ValueOf(core.StandardTabs),
 		"StartCPUMemoryProfile":     reflect.ValueOf(core.StartCPUMemoryProfile),
 		"StartTargetedProfile":      reflect.ValueOf(core.StartTargetedProfile),
-		"StretchType":               reflect.ValueOf(&core.StretchType).Elem(),
 		"StringsInsertFirstUnique":  reflect.ValueOf(core.StringsInsertFirstUnique),
 		"StructSliceIndexByValue":   reflect.ValueOf(core.StructSliceIndexByValue),
 		"StyleFromTags":             reflect.ValueOf(core.StyleFromTags),
@@ -265,16 +226,11 @@ func init() {
 		"SwitchRadioButton":         reflect.ValueOf(core.SwitchRadioButton),
 		"SwitchSegmentedButton":     reflect.ValueOf(core.SwitchSegmentedButton),
 		"SwitchSwitch":              reflect.ValueOf(core.SwitchSwitch),
-		"SwitchType":                reflect.ValueOf(&core.SwitchType).Elem(),
 		"SwitchTypesN":              reflect.ValueOf(core.SwitchTypesN),
 		"SwitchTypesValues":         reflect.ValueOf(core.SwitchTypesValues),
-		"SwitchesType":              reflect.ValueOf(&core.SwitchesType).Elem(),
 		"SystemSettings":            reflect.ValueOf(&core.SystemSettings).Elem(),
-		"TabType":                   reflect.ValueOf(&core.TabType).Elem(),
 		"TabTypesN":                 reflect.ValueOf(core.TabTypesN),
 		"TabTypesValues":            reflect.ValueOf(core.TabTypesValues),
-		"TableType":                 reflect.ValueOf(&core.TableType).Elem(),
-		"TabsType":                  reflect.ValueOf(&core.TabsType).Elem(),
 		"TextBodyLarge":             reflect.ValueOf(core.TextBodyLarge),
 		"TextBodyMedium":            reflect.ValueOf(core.TextBodyMedium),
 		"TextBodySmall":             reflect.ValueOf(core.TextBodySmall),
@@ -285,7 +241,6 @@ func init() {
 		"TextFieldFilled":           reflect.ValueOf(core.TextFieldFilled),
 		"TextFieldOutlined":         reflect.ValueOf(core.TextFieldOutlined),
 		"TextFieldSpriteName":       reflect.ValueOf(&core.TextFieldSpriteName).Elem(),
-		"TextFieldType":             reflect.ValueOf(&core.TextFieldType).Elem(),
 		"TextFieldTypesN":           reflect.ValueOf(core.TextFieldTypesN),
 		"TextFieldTypesValues":      reflect.ValueOf(core.TextFieldTypesValues),
 		"TextHeadlineLarge":         reflect.ValueOf(core.TextHeadlineLarge),
@@ -297,7 +252,6 @@ func init() {
 		"TextTitleLarge":            reflect.ValueOf(core.TextTitleLarge),
 		"TextTitleMedium":           reflect.ValueOf(core.TextTitleMedium),
 		"TextTitleSmall":            reflect.ValueOf(core.TextTitleSmall),
-		"TextType":                  reflect.ValueOf(&core.TextType).Elem(),
 		"TextTypesN":                reflect.ValueOf(core.TextTypesN),
 		"TextTypesValues":           reflect.ValueOf(core.TextTypesValues),
 		"TheApp":                    reflect.ValueOf(&core.TheApp).Elem(),
@@ -307,23 +261,16 @@ func init() {
 		"ThemeLight":                reflect.ValueOf(core.ThemeLight),
 		"ThemesN":                   reflect.ValueOf(core.ThemesN),
 		"ThemesValues":              reflect.ValueOf(core.ThemesValues),
-		"TimeInputType":             reflect.ValueOf(&core.TimeInputType).Elem(),
-		"TimePickerType":            reflect.ValueOf(&core.TimePickerType).Elem(),
 		"ToValue":                   reflect.ValueOf(core.ToValue),
 		"ToolbarStyles":             reflect.ValueOf(core.ToolbarStyles),
-		"ToolbarType":               reflect.ValueOf(&core.ToolbarType).Elem(),
 		"TooltipStage":              reflect.ValueOf(core.TooltipStage),
-		"TreeButtonType":            reflect.ValueOf(&core.TreeButtonType).Elem(),
 		"TreePageSteps":             reflect.ValueOf(&core.TreePageSteps).Elem(),
 		"TreeTempMovedTag":          reflect.ValueOf(constant.MakeFromLiteral("\"_\\\\&MOVED\\\\&\"", token.STRING, 0)),
-		"TreeType":                  reflect.ValueOf(&core.TreeType).Elem(),
-		"TypeChooserType":           reflect.ValueOf(&core.TypeChooserType).Elem(),
 		"UpdateAll":                 reflect.ValueOf(core.UpdateAll),
 		"UpdateSettings":            reflect.ValueOf(core.UpdateSettings),
 		"ValueConverters":           reflect.ValueOf(&core.ValueConverters).Elem(),
 		"ValueTypes":                reflect.ValueOf(&core.ValueTypes).Elem(),
 		"Wait":                      reflect.ValueOf(core.Wait),
-		"WidgetBaseType":            reflect.ValueOf(&core.WidgetBaseType).Elem(),
 		"WidgetLastChild":           reflect.ValueOf(core.WidgetLastChild),
 		"WidgetLastChildParts":      reflect.ValueOf(core.WidgetLastChildParts),
 		"WidgetNext":                reflect.ValueOf(core.WidgetNext),
@@ -389,10 +336,10 @@ func init() {
 		"KeyMapButton":           reflect.ValueOf((*core.KeyMapButton)(nil)),
 		"KeyedList":              reflect.ValueOf((*core.KeyedList)(nil)),
 		"KeyedListButton":        reflect.ValueOf((*core.KeyedListButton)(nil)),
-		"LayoutCell":                reflect.ValueOf((*core.LayoutCell)(nil)),
-		"LayoutCells":               reflect.ValueOf((*core.LayoutCells)(nil)),
-		"LayoutState":           reflect.ValueOf((*core.LayoutState)(nil)),
+		"LayoutCell":             reflect.ValueOf((*core.LayoutCell)(nil)),
+		"LayoutCells":            reflect.ValueOf((*core.LayoutCells)(nil)),
 		"LayoutPasses":           reflect.ValueOf((*core.LayoutPasses)(nil)),
+		"LayoutState":            reflect.ValueOf((*core.LayoutState)(nil)),
 		"Layouter":               reflect.ValueOf((*core.Layouter)(nil)),
 		"List":                   reflect.ValueOf((*core.List)(nil)),
 		"ListBase":               reflect.ValueOf((*core.ListBase)(nil)),
@@ -404,8 +351,6 @@ func init() {
 		"MeterTypes":             reflect.ValueOf((*core.MeterTypes)(nil)),
 		"NewItemsData":           reflect.ValueOf((*core.NewItemsData)(nil)),
 		"OnBinder":               reflect.ValueOf((*core.OnBinder)(nil)),
-		"Plan":                   reflect.ValueOf((*tree.Plan)(nil)),
-		"PlanItem":               reflect.ValueOf((*tree.PlanItem)(nil)),
 		"RenderContext":          reflect.ValueOf((*core.RenderContext)(nil)),
 		"RenderParams":           reflect.ValueOf((*core.RenderParams)(nil)),
 		"RenderScenes":           reflect.ValueOf((*core.RenderScenes)(nil)),
@@ -529,8 +474,6 @@ type _cogentcore_org_core_core_Layouter struct {
 	WIsVisible         func() bool
 	WLayoutSpace       func()
 	WManageOverflow    func(iter int, updateSize bool) bool
-	WNew               func() tree.Node
-	WNodeType          func() *types.Type
 	WNodeWalkDown      func(fun func(n tree.Node) bool)
 	WOnAdd             func()
 	WOnChildAdded      func(child tree.Node)
@@ -594,12 +537,6 @@ func (W _cogentcore_org_core_core_Layouter) LayoutSpace() {
 }
 func (W _cogentcore_org_core_core_Layouter) ManageOverflow(iter int, updateSize bool) bool {
 	return W.WManageOverflow(iter, updateSize)
-}
-func (W _cogentcore_org_core_core_Layouter) New() tree.Node {
-	return W.WNew()
-}
-func (W _cogentcore_org_core_core_Layouter) NodeType() *types.Type {
-	return W.WNodeType()
 }
 func (W _cogentcore_org_core_core_Layouter) NodeWalkDown(fun func(n tree.Node) bool) {
 	W.WNodeWalkDown(fun)
@@ -666,17 +603,26 @@ func (W _cogentcore_org_core_core_Layouter) WidgetTooltip(pos image.Point) (stri
 type _cogentcore_org_core_core_Lister struct {
 	IValue            interface{}
 	WAsListBase       func() *core.ListBase
+	WAsTree           func() *tree.NodeBase
+	WBaseType         func() *types.Type
+	WCopyFieldsFrom   func(from tree.Node)
 	WCopySelectToMime func() mimedata.Mimes
+	WDestroy          func()
 	WDragDrop         func(e events.Event)
 	WDragStart        func(e events.Event)
 	WDropDeleteSource func(e events.Event)
 	WDropFinalize     func(de *events.DragDrop)
 	WHasStyleFunc     func() bool
+	WInit             func()
 	WMakePasteMenu    func(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func())
 	WMakeRow          func(p *tree.Plan, i int)
 	WMimeDataType     func() string
+	WNodeWalkDown     func(fun func(n tree.Node) bool)
+	WOnAdd            func()
+	WOnChildAdded     func(child tree.Node)
 	WPasteAssign      func(md mimedata.Mimes, idx int)
 	WPasteAtIndex     func(md mimedata.Mimes, idx int)
+	WPlanName         func() string
 	WRowFirstWidget   func(row int) (*core.WidgetBase, bool)
 	WRowGrabFocus     func(row int) *core.WidgetBase
 	WRowWidgetNs      func() (nWidgPerRow int, idxOff int)
@@ -693,8 +639,20 @@ type _cogentcore_org_core_core_Lister struct {
 func (W _cogentcore_org_core_core_Lister) AsListBase() *core.ListBase {
 	return W.WAsListBase()
 }
+func (W _cogentcore_org_core_core_Lister) AsTree() *tree.NodeBase {
+	return W.WAsTree()
+}
+func (W _cogentcore_org_core_core_Lister) BaseType() *types.Type {
+	return W.WBaseType()
+}
+func (W _cogentcore_org_core_core_Lister) CopyFieldsFrom(from tree.Node) {
+	W.WCopyFieldsFrom(from)
+}
 func (W _cogentcore_org_core_core_Lister) CopySelectToMime() mimedata.Mimes {
 	return W.WCopySelectToMime()
+}
+func (W _cogentcore_org_core_core_Lister) Destroy() {
+	W.WDestroy()
 }
 func (W _cogentcore_org_core_core_Lister) DragDrop(e events.Event) {
 	W.WDragDrop(e)
@@ -711,6 +669,9 @@ func (W _cogentcore_org_core_core_Lister) DropFinalize(de *events.DragDrop) {
 func (W _cogentcore_org_core_core_Lister) HasStyleFunc() bool {
 	return W.WHasStyleFunc()
 }
+func (W _cogentcore_org_core_core_Lister) Init() {
+	W.WInit()
+}
 func (W _cogentcore_org_core_core_Lister) MakePasteMenu(m *core.Scene, md mimedata.Mimes, idx int, mod events.DropMods, fun func()) {
 	W.WMakePasteMenu(m, md, idx, mod, fun)
 }
@@ -720,11 +681,23 @@ func (W _cogentcore_org_core_core_Lister) MakeRow(p *tree.Plan, i int) {
 func (W _cogentcore_org_core_core_Lister) MimeDataType() string {
 	return W.WMimeDataType()
 }
+func (W _cogentcore_org_core_core_Lister) NodeWalkDown(fun func(n tree.Node) bool) {
+	W.WNodeWalkDown(fun)
+}
+func (W _cogentcore_org_core_core_Lister) OnAdd() {
+	W.WOnAdd()
+}
+func (W _cogentcore_org_core_core_Lister) OnChildAdded(child tree.Node) {
+	W.WOnChildAdded(child)
+}
 func (W _cogentcore_org_core_core_Lister) PasteAssign(md mimedata.Mimes, idx int) {
 	W.WPasteAssign(md, idx)
 }
 func (W _cogentcore_org_core_core_Lister) PasteAtIndex(md mimedata.Mimes, idx int) {
 	W.WPasteAtIndex(md, idx)
+}
+func (W _cogentcore_org_core_core_Lister) PlanName() string {
+	return W.WPlanName()
 }
 func (W _cogentcore_org_core_core_Lister) RowFirstWidget(row int) (*core.WidgetBase, bool) {
 	return W.WRowFirstWidget(row)
@@ -897,7 +870,7 @@ type _cogentcore_org_core_core_Treer struct {
 	WCanOpen           func() bool
 	WChildBackground   func(child core.Widget) image.Image
 	WContextMenuPos    func(e events.Event) image.Point
-	WCopy              func(reset bool)
+	WCopy              func()
 	WCopyFieldsFrom    func(from tree.Node)
 	WCut               func()
 	WDeleteNode        func()
@@ -915,13 +888,10 @@ type _cogentcore_org_core_core_Treer struct {
 	WIsVisible         func() bool
 	WMakePasteMenu     func(m *core.Scene, md mimedata.Mimes, fun func())
 	WMimeData          func(md *mimedata.Mimes)
-	WNew               func() tree.Node
-	WNodeType          func() *types.Type
 	WNodeWalkDown      func(fun func(n tree.Node) bool)
 	WOnAdd             func()
 	WOnChildAdded      func(child tree.Node)
 	WOnClose           func()
-	WOnDoubleClick     func(e events.Event)
 	WOnOpen            func()
 	WPaste             func()
 	WPlanName          func() string
@@ -934,7 +904,6 @@ type _cogentcore_org_core_core_Treer struct {
 	WSizeFinal         func()
 	WSizeUp            func()
 	WStyle             func()
-	WUpdateBranchIcons func()
 	WWidgetTooltip     func(pos image.Point) (string, image.Point)
 }
 
@@ -962,8 +931,8 @@ func (W _cogentcore_org_core_core_Treer) ChildBackground(child core.Widget) imag
 func (W _cogentcore_org_core_core_Treer) ContextMenuPos(e events.Event) image.Point {
 	return W.WContextMenuPos(e)
 }
-func (W _cogentcore_org_core_core_Treer) Copy(reset bool) {
-	W.WCopy(reset)
+func (W _cogentcore_org_core_core_Treer) Copy() {
+	W.WCopy()
 }
 func (W _cogentcore_org_core_core_Treer) CopyFieldsFrom(from tree.Node) {
 	W.WCopyFieldsFrom(from)
@@ -1016,12 +985,6 @@ func (W _cogentcore_org_core_core_Treer) MakePasteMenu(m *core.Scene, md mimedat
 func (W _cogentcore_org_core_core_Treer) MimeData(md *mimedata.Mimes) {
 	W.WMimeData(md)
 }
-func (W _cogentcore_org_core_core_Treer) New() tree.Node {
-	return W.WNew()
-}
-func (W _cogentcore_org_core_core_Treer) NodeType() *types.Type {
-	return W.WNodeType()
-}
 func (W _cogentcore_org_core_core_Treer) NodeWalkDown(fun func(n tree.Node) bool) {
 	W.WNodeWalkDown(fun)
 }
@@ -1033,9 +996,6 @@ func (W _cogentcore_org_core_core_Treer) OnChildAdded(child tree.Node) {
 }
 func (W _cogentcore_org_core_core_Treer) OnClose() {
 	W.WOnClose()
-}
-func (W _cogentcore_org_core_core_Treer) OnDoubleClick(e events.Event) {
-	W.WOnDoubleClick(e)
 }
 func (W _cogentcore_org_core_core_Treer) OnOpen() {
 	W.WOnOpen()
@@ -1073,9 +1033,6 @@ func (W _cogentcore_org_core_core_Treer) SizeUp() {
 func (W _cogentcore_org_core_core_Treer) Style() {
 	W.WStyle()
 }
-func (W _cogentcore_org_core_core_Treer) UpdateBranchIcons() {
-	W.WUpdateBranchIcons()
-}
 func (W _cogentcore_org_core_core_Treer) WidgetTooltip(pos image.Point) (string, image.Point) {
 	return W.WWidgetTooltip(pos)
 }
@@ -1104,8 +1061,6 @@ type _cogentcore_org_core_core_Value struct {
 	WDirectRenderImage func(drw system.Drawer, idx int)
 	WInit              func()
 	WIsVisible         func() bool
-	WNew               func() tree.Node
-	WNodeType          func() *types.Type
 	WNodeWalkDown      func(fun func(n tree.Node) bool)
 	WOnAdd             func()
 	WOnChildAdded      func(child tree.Node)
@@ -1155,12 +1110,6 @@ func (W _cogentcore_org_core_core_Value) Init() {
 }
 func (W _cogentcore_org_core_core_Value) IsVisible() bool {
 	return W.WIsVisible()
-}
-func (W _cogentcore_org_core_core_Value) New() tree.Node {
-	return W.WNew()
-}
-func (W _cogentcore_org_core_core_Value) NodeType() *types.Type {
-	return W.WNodeType()
 }
 func (W _cogentcore_org_core_core_Value) NodeWalkDown(fun func(n tree.Node) bool) {
 	W.WNodeWalkDown(fun)
@@ -1242,8 +1191,6 @@ type _cogentcore_org_core_core_Widget struct {
 	WDirectRenderImage func(drw system.Drawer, idx int)
 	WInit              func()
 	WIsVisible         func() bool
-	WNew               func() tree.Node
-	WNodeType          func() *types.Type
 	WNodeWalkDown      func(fun func(n tree.Node) bool)
 	WOnAdd             func()
 	WOnChildAdded      func(child tree.Node)
@@ -1292,12 +1239,6 @@ func (W _cogentcore_org_core_core_Widget) Init() {
 }
 func (W _cogentcore_org_core_core_Widget) IsVisible() bool {
 	return W.WIsVisible()
-}
-func (W _cogentcore_org_core_core_Widget) New() tree.Node {
-	return W.WNew()
-}
-func (W _cogentcore_org_core_core_Widget) NodeType() *types.Type {
-	return W.WNodeType()
 }
 func (W _cogentcore_org_core_core_Widget) NodeWalkDown(fun func(n tree.Node) bool) {
 	W.WNodeWalkDown(fun)

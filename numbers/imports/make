@@ -1,3 +1,5 @@
+#!/usr/bin/env cosh
+
 // Commands for exporting symbols from core, numbers
 
 command install {
@@ -22,3 +24,5 @@ command all {
 	core
 	tensor
 }
+
+shell.RunCommands(args...)

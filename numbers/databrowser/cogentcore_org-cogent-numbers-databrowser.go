@@ -3,33 +3,32 @@
 package databrowser
 
 import (
-	"cogentcore.org/cogent/numbers/databrowser"
 	"reflect"
 )
 
 func init() {
 	Symbols["cogentcore.org/cogent/numbers/databrowser/databrowser"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"BrowserType":        reflect.ValueOf(&databrowser.BrowserType).Elem(),
-		"CleanCatTSV":        reflect.ValueOf(databrowser.CleanCatTSV),
-		"FileNodeType":       reflect.ValueOf(&databrowser.FileNodeType).Elem(),
-		"FirstComment":       reflect.ValueOf(databrowser.FirstComment),
-		"IsTableFile":        reflect.ValueOf(databrowser.IsTableFile),
-		"MapTypes":           reflect.ValueOf(&databrowser.MapTypes).Elem(),
-		"NewBrowser":         reflect.ValueOf(databrowser.NewBrowser),
-		"NewBrowserWindow":   reflect.ValueOf(databrowser.NewBrowserWindow),
-		"NewDiffBrowserDirs": reflect.ValueOf(databrowser.NewDiffBrowserDirs),
-		"NewFileNode":        reflect.ValueOf(databrowser.NewFileNode),
-		"ParentBrowser":      reflect.ValueOf(databrowser.ParentBrowser),
-		"PromptOKCancel":     reflect.ValueOf(databrowser.PromptOKCancel),
-		"PromptString":       reflect.ValueOf(databrowser.PromptString),
-		"PromptStruct":       reflect.ValueOf(databrowser.PromptStruct),
-		"Symbols":            reflect.ValueOf(&databrowser.Symbols).Elem(),
-		"TheBrowser":         reflect.ValueOf(&databrowser.TheBrowser).Elem(),
-		"TrimOrderPrefix":    reflect.ValueOf(databrowser.TrimOrderPrefix),
+		"BrowserType":        reflect.ValueOf(&BrowserType).Elem(),
+		"CleanCatTSV":        reflect.ValueOf(CleanCatTSV),
+		"FileNodeType":       reflect.ValueOf(&FileNodeType).Elem(),
+		"FirstComment":       reflect.ValueOf(FirstComment),
+		"IsTableFile":        reflect.ValueOf(IsTableFile),
+		"MapTypes":           reflect.ValueOf(&MapTypes).Elem(),
+		"NewBrowser":         reflect.ValueOf(NewBrowser),
+		"NewBrowserWindow":   reflect.ValueOf(NewBrowserWindow),
+		"NewDiffBrowserDirs": reflect.ValueOf(NewDiffBrowserDirs),
+		"NewFileNode":        reflect.ValueOf(NewFileNode),
+		"ParentBrowser":      reflect.ValueOf(ParentBrowser),
+		"PromptOKCancel":     reflect.ValueOf(PromptOKCancel),
+		"PromptString":       reflect.ValueOf(PromptString),
+		"PromptStruct":       reflect.ValueOf(PromptStruct),
+		"Symbols":            reflect.ValueOf(&Symbols).Elem(),
+		"TheBrowser":         reflect.ValueOf(&TheBrowser).Elem(),
+		"TrimOrderPrefix":    reflect.ValueOf(TrimOrderPrefix),
 
 		// type definitions
-		"Browser":  reflect.ValueOf((*databrowser.Browser)(nil)),
-		"FileNode": reflect.ValueOf((*databrowser.FileNode)(nil)),
+		"Browser":  reflect.ValueOf((*Browser)(nil)),
+		"FileNode": reflect.ValueOf((*FileNode)(nil)),
 	}
 }

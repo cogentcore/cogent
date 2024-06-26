@@ -25,6 +25,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
 )
 
 // Vector is the main widget of the Cogent Vector SVG vector graphics program.
@@ -370,7 +371,7 @@ func (vv *Vector) ResizeToContents() { //types:add
 func (vv *Vector) AddImage(fname core.Filename, width, height float32) error { //types:add
 	sv := vv.SVG()
 	sv.UndoSave("AddImage", string(fname))
-	ind := sv.NewElement(svg.ImageType).(*svg.Image)
+	ind := sv.NewElement(types.For[svg.Image]()).(*svg.Image)
 	ind.Pos.X = 100 // todo: default pos
 	ind.Pos.Y = 100 // todo: default pos
 	err := ind.OpenImage(string(fname), width, height)
