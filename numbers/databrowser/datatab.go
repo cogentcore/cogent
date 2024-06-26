@@ -27,7 +27,7 @@ import (
 // all of the rows when done updating the Table, and then call br.Update()
 func (br *Browser) NewTabTensorTable(label string) *tensorcore.Table {
 	tabs := br.Tabs()
-	tab := tabs.RecycleTab(label, true)
+	tab := tabs.RecycleTab(label)
 	if tab.HasChildren() {
 		tv := tab.Child(1).(*tensorcore.Table)
 		return tv
@@ -49,7 +49,7 @@ func (br *Browser) NewTabTensorTable(label string) *tensorcore.Table {
 // Sets the slice if tab already exists
 func (br *Browser) NewTabTable(label string, slc any) *core.Table {
 	tabs := br.Tabs()
-	tab := tabs.RecycleTab(label, true)
+	tab := tabs.RecycleTab(label)
 	if tab.HasChildren() {
 		tv := tab.Child(0).(*core.Table)
 		tv.SetSlice(slc)
@@ -69,7 +69,7 @@ func (br *Browser) NewTabTable(label string, slc any) *core.Table {
 // Set the table and call br.Update after this.
 func (br *Browser) NewTabPlot(label string) *plotcore.PlotEditor {
 	tabs := br.Tabs()
-	tab := tabs.RecycleTab(label, true)
+	tab := tabs.RecycleTab(label)
 	if tab.HasChildren() {
 		pl := tab.Child(0).AsTree().Child(1).(*plotcore.PlotEditor)
 		return pl
@@ -81,7 +81,7 @@ func (br *Browser) NewTabPlot(label string) *plotcore.PlotEditor {
 // NewTabEditorString opens an editor tab to display given string
 func (br *Browser) NewTabEditorString(label, content string) *texteditor.Editor {
 	tabs := br.Tabs()
-	tab := tabs.RecycleTab(label, true)
+	tab := tabs.RecycleTab(label)
 	if tab.HasChildren() {
 		ed := tab.Child(0).(*texteditor.Editor)
 		ed.Buffer.SetText([]byte(content))

@@ -28,6 +28,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/core/types"
 	"github.com/traefik/yaegi/interp"
 	"golang.org/x/exp/maps"
 )
@@ -91,7 +92,7 @@ func (br *Browser) Init() {
 				s.Grow.Set(1, 1)
 			})
 			tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
-				w.FileNodeType = FileNodeType
+				w.FileNodeType = types.For[FileNode]()
 				// w.OnSelect(func(e events.Event) {
 				// 	e.SetHandled()
 				// 	sels := w.SelectedViews()

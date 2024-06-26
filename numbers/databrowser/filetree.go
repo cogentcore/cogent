@@ -96,7 +96,7 @@ func (br *Browser) FileNodeSelected(fn *filetree.Node) {
 // NewTabEditor opens an editor tab for given file
 func (br *Browser) NewTabEditor(label, filename string) *texteditor.Editor {
 	tabs := br.Tabs()
-	tab := tabs.RecycleTab(label, true)
+	tab := tabs.RecycleTab(label)
 	if tab.HasChildren() {
 		ed := tab.Child(0).(*texteditor.Editor)
 		ed.Buffer.Open(core.Filename(filename))
