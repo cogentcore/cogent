@@ -958,7 +958,7 @@ func (sv *SVG) RenderBg() {
 	pc.PushBounds(bb)
 	pc.PushTransform(root.Paint.Transform)
 
-	pc.StrokeStyle.Color = colors.C(Settings.Colors.Border)
+	pc.StrokeStyle.Color = colors.Uniform(Settings.Colors.Border)
 
 	sc := sv.Scale
 
@@ -973,7 +973,7 @@ func (sv *SVG) RenderBg() {
 
 	if Settings.GridDisp {
 		gsz := float32(sv.GridEff)
-		pc.StrokeStyle.Color = colors.C(Settings.Colors.Vector)
+		pc.StrokeStyle.Color = colors.Uniform(Settings.Colors.Vector)
 		for x := gsz; x < sz.X; x += gsz {
 			pc.DrawLine(x, 0, x, sz.Y)
 		}
