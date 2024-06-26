@@ -13,7 +13,7 @@ var RandomType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers/
 // NewRandom returns a new [Random] with the given optional parent:
 // Random is the widget containing all of the components
 // of the random distribution plotter.
-func NewRandom(parent ...tree.Node) *Random { return tree.New[*Random](parent...) }
+func NewRandom(parent ...tree.Node) *Random { return tree.New[Random](parent...) }
 
 // NodeType returns the [*types.Type] of [Random]
 func (t *Random) NodeType() *types.Type { return RandomType }

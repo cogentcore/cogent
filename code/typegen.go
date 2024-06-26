@@ -21,7 +21,7 @@ var CodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.Code"
 // Code is the core editor and tab viewer widget for the Code system. The
 // default view has a tree browser of files on the left, editor panels in the
 // middle, and a tabbed viewer on the right.
-func NewCode(parent ...tree.Node) *Code { return tree.New[*Code](parent...) }
+func NewCode(parent ...tree.Node) *Code { return tree.New[Code](parent...) }
 
 // NodeType returns the [*types.Type] of [Code]
 func (t *Code) NodeType() *types.Type { return CodeType }
@@ -54,7 +54,7 @@ var DebugPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code
 
 // NewDebugPanel returns a new [DebugPanel] with the given optional parent:
 // DebugPanel is the debugger panel.
-func NewDebugPanel(parent ...tree.Node) *DebugPanel { return tree.New[*DebugPanel](parent...) }
+func NewDebugPanel(parent ...tree.Node) *DebugPanel { return tree.New[DebugPanel](parent...) }
 
 // NodeType returns the [*types.Type] of [DebugPanel]
 func (t *DebugPanel) NodeType() *types.Type { return DebugPanelType }
@@ -80,7 +80,7 @@ var VarViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.Va
 // NewVarView returns a new [VarView] with the given optional parent:
 // VarView shows a debug variable in an inspector-like framework,
 // with sub-variables in a tree.
-func NewVarView(parent ...tree.Node) *VarView { return tree.New[*VarView](parent...) }
+func NewVarView(parent ...tree.Node) *VarView { return tree.New[VarView](parent...) }
 
 // NodeType returns the [*types.Type] of [VarView]
 func (t *VarView) NodeType() *types.Type { return VarViewType }
@@ -97,7 +97,7 @@ var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.F
 
 // NewFileNode returns a new [FileNode] with the given optional parent:
 // FileNode is Code version of FileNode for FileTree
-func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[*FileNode](parent...) }
+func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[FileNode](parent...) }
 
 // NodeType returns the [*types.Type] of [FileNode]
 func (t *FileNode) NodeType() *types.Type { return FileNodeType }
@@ -111,7 +111,7 @@ var FindPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.
 // NewFindPanel returns a new [FindPanel] with the given optional parent:
 // FindPanel is a find / replace widget that displays results in a [TextEditor]
 // and has a toolbar for controlling find / replace process.
-func NewFindPanel(parent ...tree.Node) *FindPanel { return tree.New[*FindPanel](parent...) }
+func NewFindPanel(parent ...tree.Node) *FindPanel { return tree.New[FindPanel](parent...) }
 
 // NodeType returns the [*types.Type] of [FindPanel]
 func (t *FindPanel) NodeType() *types.Type { return FindPanelType }
@@ -142,7 +142,7 @@ var SpellPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code
 
 // NewSpellPanel returns a new [SpellPanel] with the given optional parent:
 // SpellPanel is a widget that displays results of a spell check.
-func NewSpellPanel(parent ...tree.Node) *SpellPanel { return tree.New[*SpellPanel](parent...) }
+func NewSpellPanel(parent ...tree.Node) *SpellPanel { return tree.New[SpellPanel](parent...) }
 
 // NodeType returns the [*types.Type] of [SpellPanel]
 func (t *SpellPanel) NodeType() *types.Type { return SpellPanelType }
@@ -191,7 +191,7 @@ var SymbolsPanelType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/co
 
 // NewSymbolsPanel returns a new [SymbolsPanel] with the given optional parent:
 // SymbolsPanel is a widget that displays results of a file or package parse of symbols.
-func NewSymbolsPanel(parent ...tree.Node) *SymbolsPanel { return tree.New[*SymbolsPanel](parent...) }
+func NewSymbolsPanel(parent ...tree.Node) *SymbolsPanel { return tree.New[SymbolsPanel](parent...) }
 
 // NodeType returns the [*types.Type] of [SymbolsPanel]
 func (t *SymbolsPanel) NodeType() *types.Type { return SymbolsPanelType }
@@ -221,7 +221,7 @@ var SymNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.Sy
 // NewSymNode returns a new [SymNode] with the given optional parent:
 // SymNode represents a language symbol -- the name of the node is
 // the name of the symbol. Some symbols, e.g. type have children
-func NewSymNode(parent ...tree.Node) *SymNode { return tree.New[*SymNode](parent...) }
+func NewSymNode(parent ...tree.Node) *SymNode { return tree.New[SymNode](parent...) }
 
 // NodeType returns the [*types.Type] of [SymNode]
 func (t *SymNode) NodeType() *types.Type { return SymNodeType }
@@ -238,7 +238,7 @@ var SymTreeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.Sy
 
 // NewSymTree returns a new [SymTree] with the given optional parent:
 // SymTree is a Tree that knows how to operate on FileNode nodes
-func NewSymTree(parent ...tree.Node) *SymTree { return tree.New[*SymTree](parent...) }
+func NewSymTree(parent ...tree.Node) *SymTree { return tree.New[SymTree](parent...) }
 
 // NodeType returns the [*types.Type] of [SymTree]
 func (t *SymTree) NodeType() *types.Type { return SymTreeType }
@@ -252,7 +252,7 @@ var TextEditorType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code
 // NewTextEditor returns a new [TextEditor] with the given optional parent:
 // TextEditor is the Code-specific version of the TextEditor, with support for
 // setting / clearing breakpoints, etc
-func NewTextEditor(parent ...tree.Node) *TextEditor { return tree.New[*TextEditor](parent...) }
+func NewTextEditor(parent ...tree.Node) *TextEditor { return tree.New[TextEditor](parent...) }
 
 // NodeType returns the [*types.Type] of [TextEditor]
 func (t *TextEditor) NodeType() *types.Type { return TextEditorType }
@@ -268,7 +268,7 @@ var CmdButtonType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.
 
 // NewCmdButton returns a new [CmdButton] with the given optional parent:
 // CmdButton represents a [CmdName] value with a button that opens a [CmdView].
-func NewCmdButton(parent ...tree.Node) *CmdButton { return tree.New[*CmdButton](parent...) }
+func NewCmdButton(parent ...tree.Node) *CmdButton { return tree.New[CmdButton](parent...) }
 
 // NodeType returns the [*types.Type] of [CmdButton]
 func (t *CmdButton) NodeType() *types.Type { return CmdButtonType }

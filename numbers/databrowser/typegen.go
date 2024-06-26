@@ -16,7 +16,7 @@ var BrowserType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/numbers
 // regular tasks on the data.
 // Scripts are ordered alphabetically and any leading #- prefix is automatically
 // removed from the label, so you can use numbers to specify a custom order.
-func NewBrowser(parent ...tree.Node) *Browser { return tree.New[*Browser](parent...) }
+func NewBrowser(parent ...tree.Node) *Browser { return tree.New[Browser](parent...) }
 
 // NodeType returns the [*types.Type] of [Browser]
 func (t *Browser) NodeType() *types.Type { return BrowserType }
@@ -43,7 +43,7 @@ var FileNodeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/number
 
 // NewFileNode returns a new [FileNode] with the given optional parent:
 // FileNode is Code version of FileNode for FileTree
-func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[*FileNode](parent...) }
+func NewFileNode(parent ...tree.Node) *FileNode { return tree.New[FileNode](parent...) }
 
 // NodeType returns the [*types.Type] of [FileNode]
 func (t *FileNode) NodeType() *types.Type { return FileNodeType }

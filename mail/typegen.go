@@ -12,7 +12,7 @@ var AppType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.App", 
 
 // NewApp returns a new [App] with the given optional parent:
 // App is an email client app.
-func NewApp(parent ...tree.Node) *App { return tree.New[*App](parent...) }
+func NewApp(parent ...tree.Node) *App { return tree.New[App](parent...) }
 
 // NodeType returns the [*types.Type] of [App]
 func (t *App) NodeType() *types.Type { return AppType }
@@ -28,7 +28,7 @@ var AddressTextFieldType = types.AddType(&types.Type{Name: "cogentcore.org/cogen
 // NewAddressTextField returns a new [AddressTextField] with the given optional parent:
 // AddressTextField represents a [mail.Address] with a [core.TextField].
 func NewAddressTextField(parent ...tree.Node) *AddressTextField {
-	return tree.New[*AddressTextField](parent...)
+	return tree.New[AddressTextField](parent...)
 }
 
 // NodeType returns the [*types.Type] of [AddressTextField]

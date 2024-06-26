@@ -323,7 +323,8 @@ func (gv *Vector) SelectGroup() { //types:add
 
 	fidx := fsel.AsTree().IndexInParent()
 
-	ng := fsel.AsTree().Parent.AsTree().InsertNewChild(svg.GroupType, fidx).(svg.Node)
+	ng := svg.NewGroup()
+	fsel.AsTree().Parent.AsTree().InsertChild(ng, fidx)
 	sv.SetSVGName(ng)
 
 	for _, se := range sl {

@@ -518,7 +518,8 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	}
 	if main == nil && mknew {
 		id := sv.SVG.NewUniqueID()
-		main = sv.Root().InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
+		main = svg.NewMetaData()
+		sv.Root().InsertChild(main, 0)
 		main.SetName(svg.NameID("namedview", id))
 	}
 	if main == nil {
@@ -532,7 +533,8 @@ func (sv *SVG) MetaData(mknew bool) (main, grid *svg.MetaData) {
 	}
 	if grid == nil && mknew {
 		id := sv.SVG.NewUniqueID()
-		grid = main.InsertNewChild(svg.MetaDataType, 0).(*svg.MetaData)
+		grid = svg.NewMetaData()
+		main.InsertChild(grid, 0)
 		grid.SetName(svg.NameID("grid", id))
 	}
 	return

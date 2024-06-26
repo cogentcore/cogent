@@ -165,10 +165,12 @@ func (vv *Vector) AddLayer() { //types:add
 	nl := len(*lys)
 	si := 1 // starting index -- assuming namedview
 	if nl == 0 {
-		bg := svr.InsertNewChild(svg.GroupType, si)
+		bg := svg.NewGroup()
+		svr.InsertChild(bg, si)
 		bg.AsTree().SetName("LayerBG")
 		bg.AsTree().SetProperty("groupmode", "layer")
-		l1 := svr.InsertNewChild(svg.GroupType, si+1)
+		l1 := svg.NewGroup()
+		svr.InsertChild(l1, si+1)
 		l1.AsTree().SetName("Layer1")
 		l1.AsTree().SetProperty("groupmode", "layer")
 		nk := len(svr.Children)
@@ -178,7 +180,8 @@ func (vv *Vector) AddLayer() { //types:add
 		}
 		vv.SetCurLayer(l1.AsTree().Name)
 	} else {
-		l1 := svr.InsertNewChild(svg.GroupType, si+nl)
+		l1 := svg.NewGroup()
+		svr.InsertChild(l1, si+nl)
 		l1.AsTree().SetName(fmt.Sprintf("Layer%d", nl))
 		l1.AsTree().SetProperty("groupmode", "layer")
 		vv.SetCurLayer(l1.AsTree().Name)

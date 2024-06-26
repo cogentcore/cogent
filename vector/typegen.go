@@ -13,7 +13,7 @@ var AlignViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vecto
 
 // NewAlignView returns a new [AlignView] with the given optional parent:
 // AlignView provides a range of alignment actions on selected objects.
-func NewAlignView(parent ...tree.Node) *AlignView { return tree.New[*AlignView](parent...) }
+func NewAlignView(parent ...tree.Node) *AlignView { return tree.New[AlignView](parent...) }
 
 // NodeType returns the [*types.Type] of [AlignView]
 func (t *AlignView) NodeType() *types.Type { return AlignViewType }
@@ -35,7 +35,7 @@ var PaintViewType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vecto
 // NewPaintView returns a new [PaintView] with the given optional parent:
 // PaintView provides editing of basic Stroke and Fill painting parameters
 // for selected items
-func NewPaintView(parent ...tree.Node) *PaintView { return tree.New[*PaintView](parent...) }
+func NewPaintView(parent ...tree.Node) *PaintView { return tree.New[PaintView](parent...) }
 
 // NodeType returns the [*types.Type] of [PaintView]
 func (t *PaintView) NodeType() *types.Type { return PaintViewType }
@@ -78,7 +78,7 @@ var SVGType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.SVG"
 
 // NewSVG returns a new [SVG] with the given optional parent:
 // SVG is the element for viewing and interacting with the SVG.
-func NewSVG(parent ...tree.Node) *SVG { return tree.New[*SVG](parent...) }
+func NewSVG(parent ...tree.Node) *SVG { return tree.New[SVG](parent...) }
 
 // NodeType returns the [*types.Type] of [SVG]
 func (t *SVG) NodeType() *types.Type { return SVGType }
@@ -91,7 +91,7 @@ var TreeType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.Tre
 
 // NewTree returns a new [Tree] with the given optional parent:
 // Tree is a [core.Tree] that interacts properly with [Vector].
-func NewTree(parent ...tree.Node) *Tree { return tree.New[*Tree](parent...) }
+func NewTree(parent ...tree.Node) *Tree { return tree.New[Tree](parent...) }
 
 // NodeType returns the [*types.Type] of [Tree]
 func (t *Tree) NodeType() *types.Type { return TreeType }
@@ -108,7 +108,7 @@ var VectorType = types.AddType(&types.Type{Name: "cogentcore.org/cogent/vector.V
 
 // NewVector returns a new [Vector] with the given optional parent:
 // Vector is the main widget of the Cogent Vector SVG vector graphics program.
-func NewVector(parent ...tree.Node) *Vector { return tree.New[*Vector](parent...) }
+func NewVector(parent ...tree.Node) *Vector { return tree.New[Vector](parent...) }
 
 // NodeType returns the [*types.Type] of [Vector]
 func (t *Vector) NodeType() *types.Type { return VectorType }
