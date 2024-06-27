@@ -7,7 +7,7 @@ import (
 	"cogentcore.org/core/types"
 )
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/terminal.App", IDName: "app", Doc: "App is a GUI view of a terminal command.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Cmd", Doc: "Cmd is the root command associated with this app."}, {Name: "CurCmd", Doc: "CurCmd is the current root command being typed in."}, {Name: "Dir", Doc: "Dir is the current directory of the app."}}, Instance: &App{}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/terminal.App", IDName: "app", Doc: "App is a GUI view of a terminal command.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Cmd", Doc: "Cmd is the root command associated with this app."}, {Name: "CurCmd", Doc: "CurCmd is the current root command being typed in."}, {Name: "Dir", Doc: "Dir is the current directory of the app."}}})
 
 // NewApp returns a new [App] with the given optional parent:
 // App is a GUI view of a terminal command.
