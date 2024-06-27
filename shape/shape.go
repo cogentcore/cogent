@@ -12,6 +12,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/xyz"
 	_ "cogentcore.org/core/xyz/io/obj"
@@ -27,8 +28,9 @@ func main() {
 	sw.SelectionMode = xyzcore.Manipulable
 	sc := se.SceneXYZ()
 
-	// first, add lights, set camera
-	sc.BackgroundColor = colors.ToUniform(colors.Scheme.Select.Container)
+	se.Styler(func(s *styles.Style) {
+		sc.Background = colors.Scheme.Select.Container
+	})
 	xyz.NewAmbientLight(sc, "ambient", 0.3, xyz.DirectSun)
 
 	dir := xyz.NewDirLight(sc, "dir", 1, xyz.DirectSun)
