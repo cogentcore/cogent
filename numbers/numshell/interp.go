@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/cogent/numbers/imports"
 	"cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/interpreter"
+	"cogentcore.org/core/yaegicore/symbols"
 	"github.com/ergochat/readline"
 	"github.com/traefik/yaegi/interp"
 )
@@ -31,6 +32,7 @@ func NewInterpreter(options interp.Options) *Interpreter {
 
 // InitInterp initializes the interpreter with symbols
 func (in *Interpreter) InitInterp() {
+	in.Interp.Use(symbols.Symbols)
 	in.Interp.Use(imports.Symbols)
 }
 

@@ -6,10 +6,6 @@ command install {
 	go install github.com/traefik/yaegi/cmd/yaegi@latest
 }
 
-command core {
-	yaegi extract cogentcore.org/core/core
-}
-
 command tensor {
 	yaegi extract cogentcore.org/core/tensor/bitslice cogentcore.org/core/tensor
 	yaegi extract cogentcore.org/core/tensor/table cogentcore.org/core/tensor/tensorcore
@@ -21,7 +17,7 @@ command plotcore {
 }
 
 command all {
-	core
+	plotcore
 	tensor
 }
 
