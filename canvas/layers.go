@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"fmt"
@@ -76,11 +76,8 @@ func (ly *Layers) LayerIndexByName(nm string) int {
 	return -1
 }
 
-/////////////////////////////////////////////////////////////////
-//  Vector
-
 // FirstLayerIndex returns index of first layer group in svg
-func (vv *Vector) FirstLayerIndex() int {
+func (vv *Canvas) FirstLayerIndex() int {
 	sv := vv.SVG()
 	for i, kc := range sv.Root().Children {
 		if NodeIsLayer(kc) {
@@ -90,7 +87,7 @@ func (vv *Vector) FirstLayerIndex() int {
 	return min(1, len(sv.Root().Children))
 }
 
-func (vv *Vector) LayerViewSigs(lyv *core.Table) {
+func (vv *Canvas) LayerViewSigs(lyv *core.Table) {
 	// es := &gv.EditState
 	// sv := gv.SVG()
 	// lyv.ViewSig.Connect(gv.This, func(recv, send tree.Node, sig int64, data any) {
@@ -130,12 +127,12 @@ func (vv *Vector) LayerViewSigs(lyv *core.Table) {
 	// })
 }
 
-func (vv *Vector) SyncLayers() {
+func (vv *Canvas) SyncLayers() {
 	sv := vv.SVG()
 	vv.EditState.Layers.SyncLayers(sv)
 }
 
-func (vv *Vector) UpdateLayerView() {
+func (vv *Canvas) UpdateLayerView() {
 	vv.SyncLayers()
 	es := &vv.EditState
 	lys := &es.Layers
@@ -156,7 +153,7 @@ func (vv *Vector) UpdateLayerView() {
 }
 
 // AddLayer adds a new layer
-func (vv *Vector) AddLayer() { //types:add
+func (vv *Canvas) AddLayer() { //types:add
 	sv := vv.SVG()
 	svr := sv.Root()
 
@@ -225,19 +222,19 @@ func NodeParentLayer(n tree.Node) tree.Node {
 
 // IsCurLayer returns true if given layer is the current layer
 // for creating items
-func (vv *Vector) IsCurLayer(lay string) bool {
+func (vv *Canvas) IsCurLayer(lay string) bool {
 	return vv.EditState.CurLayer == lay
 }
 
 // SetCurLayer sets the current layer for creating items to given one
-func (vv *Vector) SetCurLayer(lay string) {
+func (vv *Canvas) SetCurLayer(lay string) {
 	vv.EditState.CurLayer = lay
 	vv.SetStatus("set current layer to: " + lay)
 }
 
 // ClearCurLayer clears the current layer for creating items if it
 // was set to the given layer name
-func (vv *Vector) ClearCurLayer(lay string) {
+func (vv *Canvas) ClearCurLayer(lay string) {
 	if vv.EditState.CurLayer == lay {
 		vv.EditState.CurLayer = ""
 		vv.SetStatus("clear current layer from: " + lay)

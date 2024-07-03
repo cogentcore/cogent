@@ -1,6 +1,6 @@
 ![alt tag](logo/grid-icon.png)
 
-Cogent Vector is a Cogent Core based SVG vector drawing program, with design based on Inkscape.
+Cogent Canvas is a Cogent Core based SVG vector drawing program, with design based on Inkscape.
 
 # Behavior
 
@@ -10,10 +10,10 @@ Cogent Vector is a Cogent Core based SVG vector drawing program, with design bas
 
 # Install
 
-The simple Go install command should work, for modules mode: 
+The simple Go install command should work:
 
 ```bash
-$ go install cogentcore.org/cogent/vector/cmd/vector@main
+$ go install cogentcore.org/cogent/canvas/cmd/canvas@main
 ```
 
 Exporting PNG and PDF depends on https://inkscape.org -- on the Mac you need to make a link to `/usr/local/bin` and likewise for Linux:

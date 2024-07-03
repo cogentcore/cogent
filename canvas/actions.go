@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 type Actions int32 //enums:enum
 

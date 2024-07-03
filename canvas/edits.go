@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"image"
@@ -105,19 +105,19 @@ type EditState struct {
 	// current path command indexes within PathNodes -- where the commands start
 	PathCommands []int
 
-	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
+	// the parent [Canvas]
+	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 // Init initializes the edit state -- e.g. after opening a new file
-func (es *EditState) Init(vv *Vector) {
+func (es *EditState) Init(vv *Canvas) {
 	es.Action = NoAction
 	es.ActData = ""
 	es.CurLayer = ""
 	es.Gradients = nil
 	es.Undos.Reset()
 	es.Changed = false
-	es.Vector = vv
+	es.Canvas = vv
 }
 
 // InAction reports whether we currently doing an action
@@ -254,7 +254,7 @@ func (es *EditState) FirstSelectedPath() *svg.Path {
 func (es *EditState) Select(itm svg.Node) {
 	idx := len(es.Selected)
 	ss := &SelectedState{Order: idx}
-	itm.WriteGeom(es.Vector.SSVG(), &ss.InitGeom)
+	itm.WriteGeom(es.Canvas.SSVG(), &ss.InitGeom)
 	if es.Selected == nil {
 		es.NewSelected()
 	}
@@ -407,7 +407,7 @@ func (es *EditState) DragSelStart(pos image.Point) {
 	es.DragSelectCurrentBBox = es.SelectBBox
 	es.DragSelectEffectiveBBox = es.SelectBBox
 	for itm, ss := range es.Selected {
-		itm.WriteGeom(es.Vector.SSVG(), &ss.InitGeom)
+		itm.WriteGeom(es.Canvas.SSVG(), &ss.InitGeom)
 	}
 }
 

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"embed"
@@ -11,7 +11,7 @@ import (
 	"cogentcore.org/core/icons"
 )
 
-// Icons contains all of the Vector icons.
+// Icons contains all of the Cogent Canvas icons.
 //
 //go:embed icons/*.svg
 var Icons embed.FS

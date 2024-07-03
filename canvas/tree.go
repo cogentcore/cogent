@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"cogentcore.org/core/base/fileinfo"
@@ -15,16 +15,16 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// Tree is a [core.Tree] that interacts properly with [Vector].
+// Tree is a [core.Tree] that interacts properly with [Canvas].
 type Tree struct {
 	core.Tree
 
-	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
+	// the parent [Canvas]
+	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 // SelectNodeInTree selects given node in Tree
-func (gv *Vector) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
+func (gv *Canvas) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 	tv := gv.Tree()
 	tvn := tv.FindSyncNode(kn)
 	if tvn != nil {
@@ -34,7 +34,7 @@ func (gv *Vector) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 }
 
 // SelectedAsTrees returns the currently selected items from SVG as Tree nodes
-func (gv *Vector) SelectedAsTrees() []core.Treer {
+func (gv *Canvas) SelectedAsTrees() []core.Treer {
 	es := &gv.EditState
 	sl := es.SelectedList(false)
 	if len(sl) == 0 {
@@ -52,7 +52,7 @@ func (gv *Vector) SelectedAsTrees() []core.Treer {
 }
 
 // DuplicateSelected duplicates selected items in SVG view, using Tree methods
-func (gv *Vector) DuplicateSelected() { //types:add
+func (gv *Canvas) DuplicateSelected() { //types:add
 	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Duplicate: no tree items found")
@@ -72,7 +72,7 @@ func (gv *Vector) DuplicateSelected() { //types:add
 }
 
 // CopySelected copies selected items in SVG view, using Tree methods
-func (gv *Vector) CopySelected() { //types:add
+func (gv *Canvas) CopySelected() { //types:add
 	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Copy: no tree items found")
@@ -85,7 +85,7 @@ func (gv *Vector) CopySelected() { //types:add
 }
 
 // CutSelected cuts selected items in SVG view, using Tree methods
-func (gv *Vector) CutSelected() { //types:add
+func (gv *Canvas) CutSelected() { //types:add
 	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Cut: no tree items found")
@@ -106,7 +106,7 @@ func (gv *Vector) CutSelected() { //types:add
 }
 
 // PasteClip pastes clipboard, using cur layer etc
-func (gv *Vector) PasteClip() { //types:add
+func (gv *Canvas) PasteClip() { //types:add
 	md := gv.Clipboard().Read([]string{fileinfo.DataJson})
 	if md == nil {
 		return
@@ -131,7 +131,7 @@ func (gv *Vector) PasteClip() { //types:add
 }
 
 // DeleteSelected deletes selected items in SVG view, using Tree methods
-func (gv *Vector) DeleteSelected() {
+func (gv *Canvas) DeleteSelected() {
 	tvl := gv.SelectedAsTrees()
 	if len(tvl) == 0 {
 		gv.SetStatus("Delete: no tree items found")
@@ -214,7 +214,7 @@ func (tv *Tree) Init() {
 
 // SelectSVG
 func (tv *Tree) SelectSVG() {
-	gv := tv.Vector
+	gv := tv.Canvas
 	if gv != nil {
 		gv.SelectNodeInSVG(tv.SyncNode, events.SelectOne)
 	}
@@ -222,7 +222,7 @@ func (tv *Tree) SelectSVG() {
 
 // LayerIsCurrent returns true if layer is the current active one for creating
 func (tv *Tree) LayerIsCurrent() bool {
-	gv := tv.Vector
+	gv := tv.Canvas
 	if gv != nil {
 		return gv.IsCurLayer(tv.SyncNode.AsTree().Name)
 	}
@@ -232,7 +232,7 @@ func (tv *Tree) LayerIsCurrent() bool {
 // LayerSetCurrent sets this layer as the current layer name
 func (tv *Tree) LayerSetCurrent() {
 	sn := tv.SyncNode
-	gv := tv.Vector
+	gv := tv.Canvas
 	if gv != nil {
 		cur := gv.EditState.CurLayer
 		if cur != "" {
@@ -256,7 +256,7 @@ func (tv *Tree) LayerSetCurrent() {
 
 // LayerClearCurrent clears this layer as the current layer if it was set as such.
 func (tv *Tree) LayerClearCurrent() {
-	gv := tv.Vector
+	gv := tv.Canvas
 	if gv != nil {
 		gv.ClearCurLayer(tv.SyncNode.AsTree().Name)
 		// tv.SetFullReRender() // needed for icon updating

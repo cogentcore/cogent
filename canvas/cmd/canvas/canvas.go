@@ -7,7 +7,7 @@ package main
 import (
 	"os"
 
-	"cogentcore.org/cogent/vector"
+	"cogentcore.org/cogent/canvas"
 	"cogentcore.org/core/core"
 )
 
@@ -22,10 +22,10 @@ func main() {
 	}
 
 	if len(fnms) == 0 {
-		vector.NewVectorWindow("")
+		canvas.NewWindow("")
 	} else {
 		for _, fnm := range fnms {
-			vector.NewVectorWindow(fnm)
+			canvas.NewWindow(fnm)
 		}
 	}
 	core.Wait()

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"bytes"
@@ -38,8 +38,8 @@ type SVG struct {
 	// SVG is the SVG drawing to display in this widget
 	SVG *svg.SVG `set:"-"`
 
-	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
+	// the parent [Canvas]
+	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
 	// view translation offset (from dragging)
 	Trans math32.Vector2 `set:"-"`
@@ -103,28 +103,28 @@ func (sv *SVG) Init() {
 		case keymap.Abort:
 			// todo: maybe something else
 			e.SetHandled()
-			sv.Vector.SetTool(SelectTool)
+			sv.Canvas.SetTool(SelectTool)
 		case keymap.Undo:
 			e.SetHandled()
-			sv.Vector.Undo()
+			sv.Canvas.Undo()
 		case keymap.Redo:
 			e.SetHandled()
-			sv.Vector.Redo()
+			sv.Canvas.Redo()
 		case keymap.Duplicate:
 			e.SetHandled()
-			sv.Vector.DuplicateSelected()
+			sv.Canvas.DuplicateSelected()
 		case keymap.Copy:
 			e.SetHandled()
-			sv.Vector.CopySelected()
+			sv.Canvas.CopySelected()
 		case keymap.Cut:
 			e.SetHandled()
-			sv.Vector.CutSelected()
+			sv.Canvas.CutSelected()
 		case keymap.Paste:
 			e.SetHandled()
-			sv.Vector.PasteClip()
+			sv.Canvas.PasteClip()
 		case keymap.Delete, keymap.Backspace:
 			e.SetHandled()
-			sv.Vector.DeleteSelected()
+			sv.Canvas.DeleteSelected()
 		}
 	})
 	sv.On(events.MouseDown, func(e events.Event) {
@@ -308,10 +308,10 @@ func (sv *SVG) Root() *svg.Root {
 
 // EditState returns the EditState for this view
 func (sv *SVG) EditState() *EditState {
-	if sv.Vector == nil {
+	if sv.Canvas == nil {
 		return nil
 	}
-	return &sv.Vector.EditState
+	return &sv.Canvas.EditState
 }
 
 // UpdateView updates the view, optionally with a full re-render
@@ -476,7 +476,7 @@ func (sv *SVG) ResizeToContents(grid_off bool) {
 	sv.SVG.PhysicalWidth.Value = bsz.X
 	sv.SVG.PhysicalHeight.Value = bsz.Y
 	sv.ZoomToPage(false)
-	sv.Vector.ChangeMade()
+	sv.Canvas.ChangeMade()
 }
 
 // ZoomAt updates the scale and translate parameters at given point
@@ -625,15 +625,15 @@ func (sv *SVG) MakeNodeContextMenu(m *core.Scene, kn tree.Node) {
 		sv.EditNode(kn)
 	})
 	core.NewButton(m).SetText("Select in tree").SetIcon(icons.Select).OnClick(func(e events.Event) {
-		sv.Vector.SelectNodeInTree(kn, events.SelectOne)
+		sv.Canvas.SelectNodeInTree(kn, events.SelectOne)
 	})
 
 	core.NewSeparator(m)
 
-	core.NewFuncButton(m).SetFunc(sv.Vector.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
-	core.NewFuncButton(m).SetFunc(sv.Vector.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
-	core.NewFuncButton(m).SetFunc(sv.Vector.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
-	core.NewFuncButton(m).SetFunc(sv.Vector.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.DuplicateSelected).SetText("Duplicate").SetIcon(icons.Copy).SetKey(keymap.Duplicate)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.CopySelected).SetText("Copy").SetIcon(icons.Copy).SetKey(keymap.Copy)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.CutSelected).SetText("Cut").SetIcon(icons.Cut).SetKey(keymap.Cut)
+	core.NewFuncButton(m).SetFunc(sv.Canvas.PasteClip).SetText("Paste").SetIcon(icons.Paste).SetKey(keymap.Paste)
 }
 
 // ContextMenuPos returns position to use for context menu, based on input position
@@ -762,8 +762,8 @@ func (sv *SVG) NewElement(typ *types.Type) svg.Node { // TODO(config): use gener
 	nw := parent.AsTree().NewChild(typ).(svg.Node)
 	nw.AsTree().SetName(newName)
 	sv.SetSVGName(nw)
-	sv.Vector.PaintView().SetProperties(nw)
-	sv.Vector.UpdateTree()
+	sv.Canvas.PaintView().SetProperties(nw)
+	sv.Canvas.UpdateTree()
 	return nw
 }
 
@@ -810,7 +810,7 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVector2AsPoint(pos)
-	sv.Vector.SetTextPropertiesNode(nr, es.Text.TextProperties())
+	sv.Canvas.SetTextPropertiesNode(nr, es.Text.TextProperties())
 	// nr.Pos = pos
 	// tspan.Pos = pos
 	// // dv := math32.Vector2FromPoint(end.Sub(start))
@@ -974,7 +974,7 @@ func (sv *SVG) RenderBg() {
 
 	if Settings.GridDisp {
 		gsz := float32(sv.GridEff)
-		pc.StrokeStyle.Color = colors.Uniform(Settings.Colors.Vector)
+		pc.StrokeStyle.Color = colors.Uniform(Settings.Colors.Grid)
 		for x := gsz; x < sz.X; x += gsz {
 			pc.DrawLine(x, 0, x, sz.Y)
 		}

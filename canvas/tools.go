@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"cogentcore.org/core/core"
@@ -32,7 +32,7 @@ func ToolDoesBasicSelect(tl Tools) bool {
 }
 
 // SetTool sets the current active tool
-func (vc *Vector) SetTool(tl Tools) {
+func (vc *Canvas) SetTool(tl Tools) {
 	es := &vc.EditState
 	if es.Tool == tl {
 		return
@@ -61,7 +61,7 @@ func (vc *Vector) SetTool(tl Tools) {
 	sv.UpdateSelect()
 }
 
-func (vc *Vector) MakeTools(p *tree.Plan) {
+func (vc *Canvas) MakeTools(p *tree.Plan) {
 	tree.Add(p, func(w *core.Button) {
 		w.SetIcon(icons.ArrowSelectorTool).SetShortcut("S")
 		w.SetTooltip("Select, move, and resize objects")

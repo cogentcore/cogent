@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ func (sv *SVG) ManipStart(act Actions, data string) {
 	es := sv.EditState()
 	es.ActStart(act, data)
 	help := ActionHelpMap[act]
-	sv.Vector.SetStatus(fmt.Sprintf("<b>%s</b>: %s", act, help))
+	sv.Canvas.SetStatus(fmt.Sprintf("<b>%s</b>: %s", act, help))
 	sv.UndoSave(act.String(), data)
 	es.ActUnlock()
 }
@@ -49,11 +49,11 @@ func (sv *SVG) ManipDone() {
 	sv.UpdateSelect()
 	es.DragSelStart(es.DragStartPos) // capture final state as new start
 	sv.UpdateView(true)
-	sv.Vector.ChangeMade()
+	sv.Canvas.ChangeMade()
 }
 
-// VectorDots is the current grid spacing and offsets in dots
-func (sv *SVG) VectorDots() (float32, math32.Vector2) {
+// GridDots returns the current grid spacing and offsets in dots.
+func (sv *SVG) GridDots() (float32, math32.Vector2) {
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.GridEff
 	if grid <= 0 {
@@ -103,7 +103,7 @@ func (sv *SVG) SnapPointToVector(rawpt math32.Vector2) math32.Vector2 {
 	if !Settings.SnapGrid {
 		return rawpt
 	}
-	grinc, groff := sv.VectorDots()
+	grinc, groff := sv.GridDots()
 	var snpt math32.Vector2
 	snpt.X, _ = SnapToIncr(rawpt.X, groff.X, grinc)
 	snpt.Y, _ = SnapToIncr(rawpt.Y, groff.Y, grinc)

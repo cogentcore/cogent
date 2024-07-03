@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (vv *Vector) MakeNodeToolbar(p *tree.Plan) {
+func (vv *Canvas) MakeNodeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapNodes, w)
 		w.SetText("Snap nodes").SetTooltip("Snap movement and sizing of nodes, using overall snap settings")
@@ -49,13 +49,13 @@ func (vv *Vector) MakeNodeToolbar(p *tree.Plan) {
 }
 
 // NodeEnableFunc is an ActionUpdateFunc that inactivates action if no node selected
-func (vv *Vector) NodeEnableFunc(act *core.Button) {
+func (vv *Canvas) NodeEnableFunc(act *core.Button) {
 	// es := &gv.EditState
 	// act.SetInactiveState(!es.HasNodeed())
 }
 
 // UpdateNodeToolbar updates the node toolbar based on current nodeion
-func (vv *Vector) UpdateNodeToolbar() {
+func (vv *Canvas) UpdateNodeToolbar() {
 	// tb := vv.NodeToolbar()
 	// es := &vv.EditState
 	// if es.Tool != NodeTool {
@@ -70,7 +70,7 @@ func (vv *Vector) UpdateNodeToolbar() {
 ///////////////////////////////////////////////////////////////////////
 //   Actions
 
-func (vv *Vector) NodeSetXPos(xp float32) {
+func (vv *Canvas) NodeSetXPos(xp float32) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -81,7 +81,7 @@ func (vv *Vector) NodeSetXPos(xp float32) {
 	vv.ChangeMade()
 }
 
-func (vv *Vector) NodeSetYPos(yp float32) {
+func (vv *Canvas) NodeSetYPos(yp float32) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -182,7 +182,7 @@ func (sv *SVG) UpdateNodeSprites() {
 		sprites.InactivateSprite(spnm)
 	}
 
-	sv.Vector.UpdateNodeToolbar()
+	sv.Canvas.UpdateNodeToolbar()
 }
 
 func (sv *SVG) RemoveNodeSprites() {

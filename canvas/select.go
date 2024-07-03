@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"fmt"
@@ -20,14 +20,14 @@ import (
 
 // InitSelectButton sets the given widget to only be enabled when
 // there is an item selected.
-func (vc *Vector) InitSelectButton(w core.Widget) {
+func (vc *Canvas) InitSelectButton(w core.Widget) {
 	w.AsWidget().FirstStyler(func(s *styles.Style) {
 		s.SetEnabled(vc.EditState.HasSelected())
 	})
 }
 
 // MakeSelectToolbar adds the select toolbar to the given plan.
-func (vc *Vector) MakeSelectToolbar(p *tree.Plan) {
+func (vc *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Switch) {
 		core.Bind(&Settings.SnapGrid, w)
 		w.SetText("Snap grid")
@@ -112,7 +112,7 @@ func (vc *Vector) MakeSelectToolbar(p *tree.Plan) {
 }
 
 // UpdateSelectToolbar updates the select toolbar based on current selection
-func (vc *Vector) UpdateSelectToolbar() {
+func (vc *Canvas) UpdateSelectToolbar() {
 	// tb := vc.SelectToolbar()
 	// tb.NeedsRender()
 	// tb.Update()
@@ -130,8 +130,8 @@ func (vc *Vector) UpdateSelectToolbar() {
 // UpdateSelect should be called whenever selection changes
 func (sv *SVG) UpdateSelect() {
 	es := sv.EditState()
-	sv.Vector.UpdateTabs()
-	sv.Vector.UpdateSelectToolbar()
+	sv.Canvas.UpdateTabs()
+	sv.Canvas.UpdateSelectToolbar()
 	if es.Tool == NodeTool {
 		sv.UpdateNodeSprites()
 		sv.RemoveSelSprites()
@@ -309,7 +309,7 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 //   Actions
 
 // SelectGroup groups items together
-func (gv *Vector) SelectGroup() { //types:add
+func (gv *Canvas) SelectGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -339,7 +339,7 @@ func (gv *Vector) SelectGroup() { //types:add
 }
 
 // SelectUnGroup ungroups items from each other
-func (gv *Vector) SelectUnGroup() { //types:add
+func (gv *Canvas) SelectUnGroup() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -370,7 +370,7 @@ func (gv *Vector) SelectUnGroup() { //types:add
 	gv.ChangeMade()
 }
 
-func (gv *Vector) SelectRotate(deg float32) {
+func (gv *Canvas) SelectRotate(deg float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -393,7 +393,7 @@ func (gv *Vector) SelectRotate(deg float32) {
 	gv.ChangeMade()
 }
 
-func (gv *Vector) SelectScale(scx, scy float32) {
+func (gv *Canvas) SelectScale(scx, scy float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -416,27 +416,27 @@ func (gv *Vector) SelectScale(scx, scy float32) {
 }
 
 // SelectRotateLeft rotates the selection 90 degrees counter-clockwise
-func (gv *Vector) SelectRotateLeft() { //types:add
+func (gv *Canvas) SelectRotateLeft() { //types:add
 	gv.SelectRotate(-90)
 }
 
 // SelectRotateRight rotates the selection 90 degrees clockwise
-func (gv *Vector) SelectRotateRight() { //types:add
+func (gv *Canvas) SelectRotateRight() { //types:add
 	gv.SelectRotate(90)
 }
 
 // SelectFlipHorizontal flips the selection horizontally
-func (gv *Vector) SelectFlipHorizontal() { //types:add
+func (gv *Canvas) SelectFlipHorizontal() { //types:add
 	gv.SelectScale(-1, 1)
 }
 
 // SelectFlipVertical flips the selection vertically
-func (gv *Vector) SelectFlipVertical() { //types:add
+func (gv *Canvas) SelectFlipVertical() { //types:add
 	gv.SelectScale(1, -1)
 }
 
 // SelectRaiseTop raises the selection to the top of the layer
-func (gv *Vector) SelectRaiseTop() { //types:add
+func (gv *Canvas) SelectRaiseTop() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -459,7 +459,7 @@ func (gv *Vector) SelectRaiseTop() { //types:add
 }
 
 // SelectRaise raises the selection by one level in the layer
-func (gv *Vector) SelectRaise() { //types:add
+func (gv *Canvas) SelectRaise() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -484,7 +484,7 @@ func (gv *Vector) SelectRaise() { //types:add
 }
 
 // SelectLowerBottom lowers the selection to the bottom of the layer
-func (gv *Vector) SelectLowerBottom() { //types:add
+func (gv *Canvas) SelectLowerBottom() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -507,7 +507,7 @@ func (gv *Vector) SelectLowerBottom() { //types:add
 }
 
 // SelectLower lowers the selection by one level in the layer
-func (gv *Vector) SelectLower() { //types:add
+func (gv *Canvas) SelectLower() { //types:add
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -531,7 +531,7 @@ func (gv *Vector) SelectLower() { //types:add
 	gv.ChangeMade()
 }
 
-func (gv *Vector) SelectSetXPos(xp float32) {
+func (gv *Canvas) SelectSetXPos(xp float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -542,7 +542,7 @@ func (gv *Vector) SelectSetXPos(xp float32) {
 	gv.ChangeMade()
 }
 
-func (gv *Vector) SelectSetYPos(yp float32) {
+func (gv *Canvas) SelectSetYPos(yp float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -553,7 +553,7 @@ func (gv *Vector) SelectSetYPos(yp float32) {
 	gv.ChangeMade()
 }
 
-func (gv *Vector) SelectSetWidth(wd float32) {
+func (gv *Canvas) SelectSetWidth(wd float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return
@@ -564,7 +564,7 @@ func (gv *Vector) SelectSetWidth(wd float32) {
 	gv.ChangeMade()
 }
 
-func (gv *Vector) SelectSetHeight(ht float32) {
+func (gv *Canvas) SelectSetHeight(ht float32) {
 	es := &gv.EditState
 	if !es.HasSelected() {
 		return

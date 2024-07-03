@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"image"
@@ -23,8 +23,8 @@ type AlignView struct {
 	// Anchor is the alignment anchor
 	Anchor AlignAnchors
 
-	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
+	// the parent [Canvas]
+	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 func (av *AlignView) Init() {
@@ -66,7 +66,7 @@ func (av *AlignView) Init() {
 				w.SetIcon(icons.Icon(al.String())).SetType(core.ButtonTonal).
 					SetTooltip(al.Desc()).
 					OnClick(func(e events.Event) {
-						av.Vector.Align(av.Anchor, al)
+						av.Canvas.Align(av.Anchor, al)
 					})
 			})
 		}
@@ -76,7 +76,7 @@ func (av *AlignView) Init() {
 /////////////////////////////////////////////////////////////////////////
 //  Actions
 
-func (vv *Vector) Align(aa AlignAnchors, al Aligns) {
+func (vv *Canvas) Align(aa AlignAnchors, al Aligns) {
 	astr := al.String()
 	switch al {
 	case AlignRightAnchor:
@@ -109,7 +109,7 @@ func (vv *Vector) Align(aa AlignAnchors, al Aligns) {
 
 // AlignAnchorBBox returns the bounding box for given type of align anchor
 // and the anchor node if non-nil
-func (vv *Vector) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
+func (vv *Canvas) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
 	es := &vv.EditState
 	sv := vv.SVG()
 	svoff := sv.Root().BBox.Min
@@ -132,7 +132,7 @@ func (vv *Vector) AlignAnchorBBox(aa AlignAnchors) (image.Rectangle, svg.Node) {
 }
 
 // AlignMin aligns to min coordinate (Left, Top) in bbox
-func (vv *Vector) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Canvas) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -157,7 +157,7 @@ func (vv *Vector) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 	vv.ChangeMade()
 }
 
-func (vv *Vector) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Canvas) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -182,7 +182,7 @@ func (vv *Vector) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	vv.ChangeMade()
 }
 
-func (vv *Vector) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Canvas) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -207,7 +207,7 @@ func (vv *Vector) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 	vv.ChangeMade()
 }
 
-func (vv *Vector) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Canvas) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return
@@ -232,7 +232,7 @@ func (vv *Vector) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 	vv.ChangeMade()
 }
 
-func (vv *Vector) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
+func (vv *Canvas) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 	es := &vv.EditState
 	if !es.HasSelected() {
 		return

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"image/color"
@@ -17,7 +17,7 @@ import (
 )
 
 func init() {
-	core.TheApp.SetName("Cogent Vector")
+	core.TheApp.SetName("Cogent Canvas")
 	core.AllSettings = slices.Insert(core.AllSettings, 1, core.Settings(Settings))
 	// OpenIcons()
 }
@@ -25,8 +25,8 @@ func init() {
 // Settings are the overall Code settings
 var Settings = &SettingsData{
 	SettingsBase: core.SettingsBase{
-		Name: "Vector",
-		File: filepath.Join(core.TheApp.DataDir(), "Cogent Vector", "settings.toml"),
+		Name: "Canvas",
+		File: filepath.Join(core.TheApp.DataDir(), "Cogent Canvas", "settings.toml"),
 	},
 }
 
@@ -146,7 +146,7 @@ type ColorSettings struct { //types:add
 	Border color.Color
 
 	// grid line color
-	Vector color.Color
+	Grid color.Color
 }
 
 // todo: replace with color tone defaults
@@ -154,11 +154,11 @@ type ColorSettings struct { //types:add
 func (se *ColorSettings) Defaults() {
 	se.Background = colors.White
 	se.Border = colors.Black
-	se.Vector = color.RGBA{220, 220, 220, 255}
+	se.Grid = color.RGBA{220, 220, 220, 255}
 }
 
 func (se *ColorSettings) DarkDefaults() {
 	se.Background = colors.Black
 	se.Border = color.RGBA{102, 102, 102, 255}
-	se.Vector = color.RGBA{40, 40, 40, 255}
+	se.Grid = color.RGBA{40, 40, 40, 255}
 }

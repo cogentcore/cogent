@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package vector
+package canvas
 
 import (
 	"cogentcore.org/core/core"
@@ -48,15 +48,15 @@ type TextStyle struct {
 	// font value view for font toolbar
 	FontButton core.FontButton `display:"-"`
 
-	// the parent vector
-	Vector *Vector `copier:"-" json:"-" xml:"-" display:"-"`
+	// the parent [Canvas]
+	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-"`
 }
 
 func (ts *TextStyle) Update() {
 	// this is called automatically when edited (TODO: not anymore)
-	if ts.Vector != nil {
-		ts.Vector.SetTextProperties(ts.TextProperties())
-		ts.Vector.SetText(ts.Text)
+	if ts.Canvas != nil {
+		ts.Canvas.SetTextProperties(ts.TextProperties())
+		ts.Canvas.SetText(ts.Text)
 	}
 }
 
@@ -98,7 +98,7 @@ func (ts *TextStyle) SetFromNode(txt *svg.Text) {
 }
 
 // SetTextPropertiesNode sets the text properties of given Text node
-func (gv *Vector) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
+func (gv *Canvas) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 	if gp, isgp := sii.(*svg.Group); isgp {
 		for _, kid := range gp.Children {
 			gv.SetTextPropertiesNode(kid.(svg.Node), tps)
@@ -120,7 +120,7 @@ func (gv *Vector) SetTextPropertiesNode(sii svg.Node, tps map[string]string) {
 }
 
 // SetTextProperties sets the text properties of selected Text nodes
-func (gv *Vector) SetTextProperties(tps map[string]string) {
+func (gv *Canvas) SetTextProperties(tps map[string]string) {
 	es := &gv.EditState
 	sv := gv.SVG()
 	sv.UndoSave("SetTextProperties", "")
@@ -167,7 +167,7 @@ func (ts *TextStyle) TextProperties() map[string]string {
 }
 
 // SetTextNode sets the text of given Text node
-func (gv *Vector) SetTextNode(sii svg.Node, txt string) bool {
+func (gv *Canvas) SetTextNode(sii svg.Node, txt string) bool {
 	if sii.AsTree().HasChildren() {
 		for _, kid := range sii.AsTree().Children {
 			if gv.SetTextNode(kid.(svg.Node), txt) {
@@ -185,7 +185,7 @@ func (gv *Vector) SetTextNode(sii svg.Node, txt string) bool {
 }
 
 // SetText sets the text of selected Text node
-func (gv *Vector) SetText(txt string) {
+func (gv *Canvas) SetText(txt string) {
 	es := &gv.EditState
 	if len(es.Selected) != 1 { // only if exactly one selected
 		return
@@ -205,10 +205,10 @@ func (gv *Vector) SetText(txt string) {
 ///////////////////////////////////////////////////////////////////////
 // Toolbar
 
-func (vc *Vector) MakeTextToolbar(p *tree.Plan) {
+func (vc *Canvas) MakeTextToolbar(p *tree.Plan) {
 	es := &vc.EditState
 	ts := &es.Text
-	ts.Vector = vc
+	ts.Canvas = vc
 
 	tree.Add(p, func(w *core.TextField) {
 		core.Bind(&ts.Text, w)
@@ -246,7 +246,7 @@ func (vc *Vector) MakeTextToolbar(p *tree.Plan) {
 }
 
 // UpdateTextToolbar updates the select toolbar based on current selection
-func (gv *Vector) UpdateTextToolbar() {
+func (gv *Canvas) UpdateTextToolbar() {
 	// fw := tb.ChildByName("font", 0).(core.Node2D)
 	// ts.FontVal.UpdateWidget()
 
