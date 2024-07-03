@@ -77,10 +77,12 @@ func (fv *FindPanel) Init() {
 		s.Grow.Set(1, 1)
 	})
 
-	tree.AddChildAt(fv, "findbar", func(w *core.BasicBar) {
+	tree.AddChildAt(fv, "findbar", func(w *core.Frame) {
+		core.ToolbarStyles(w)
 		w.Maker(fv.makeFindToolbar)
 	})
-	tree.AddChildAt(fv, "replbar", func(w *core.BasicBar) {
+	tree.AddChildAt(fv, "replbar", func(w *core.Frame) {
+		core.ToolbarStyles(w)
 		w.Maker(fv.makeReplToolbar)
 	})
 	tree.AddChildAt(fv, "findtext", func(w *texteditor.Editor) {
