@@ -1,4 +1,4 @@
-# Cogent Shape: 3D Editor
+# Cogent Craft: 3D Editor
 
 This editor allows you to open, view, and edit 3D objects, using the supported object file formats.
 

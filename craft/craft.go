@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	b := core.NewBody("Cogent Shape")
+	b := core.NewBody("Cogent Craft")
 
 	se := xyzcore.NewSceneEditor(b)
 	se.UpdateWidget()
