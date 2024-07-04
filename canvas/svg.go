@@ -41,12 +41,6 @@ type SVG struct {
 	// the parent [Canvas]
 	Canvas *Canvas `copier:"-" json:"-" xml:"-" display:"-" set:"-"`
 
-	// view translation offset (from dragging)
-	Trans math32.Vector2 `set:"-"`
-
-	// view scaling (from zooming)
-	Scale float32 `set:"-"`
-
 	// grid spacing, in native ViewBox units
 	Grid float32 ` set:"-"`
 
@@ -86,7 +80,6 @@ func (sv *SVG) Init() {
 	sv.SVG = svg.NewSVG(10, 10)
 	sv.SVG.Background = nil
 	sv.Grid = Settings.Size.Grid
-	sv.Scale = 1
 	sv.Styler(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.Slideable, abilities.Activatable, abilities.Scrollable, abilities.Focusable)
 		s.ObjectFit = styles.FitNone
@@ -243,10 +236,12 @@ func (sv *SVG) Init() {
 	sv.On(events.Scroll, func(e events.Event) {
 		e.SetHandled()
 		se := e.(*events.MouseScroll)
-		sv.SVG.Scale += float32(se.Delta.Y) / 100
-		if sv.SVG.Scale <= 0.0000001 {
-			sv.SVG.Scale = 0.01
-		}
+		svoff := sv.Geom.ContentBBox.Min
+		sv.ZoomAt(se.Pos().Sub(svoff), se.Delta.Y/100)
+		// sv.SVG.Scale += float32(se.Delta.Y) / 100
+		// if sv.SVG.Scale <= 0.0000001 {
+		// 	sv.SVG.Scale = 0.01
+		// }
 		go sv.RenderSVG()
 	})
 }
@@ -415,13 +410,12 @@ func (sv *SVG) ZoomToPage(width bool) {
 		return
 	}
 	sc := vb.Div(bsz)
-	sv.Trans.Set(0, 0)
+	sv.SVG.Translate.Set(0, 0)
 	if width {
-		sv.Scale = sc.X
+		sv.SVG.Scale = sc.X
 	} else {
-		sv.Scale = math32.Min(sc.X, sc.Y)
+		sv.SVG.Scale = math32.Min(sc.X, sc.Y)
 	}
-	sv.SetTransform()
 }
 
 // ZoomToContents sets the scale to fit the current contents into view
@@ -437,13 +431,12 @@ func (sv *SVG) ZoomToContents(width bool) {
 		return
 	}
 	sc := vb.Div(bsz)
-	sv.Trans = bb.Min.DivScalar(sv.Scale).Negate()
+	sv.SVG.Translate = bb.Min.DivScalar(sv.SVG.Scale).Negate()
 	if width {
-		sv.Scale *= sc.X
+		sv.SVG.Scale *= sc.X
 	} else {
-		sv.Scale *= math32.Min(sc.X, sc.Y)
+		sv.SVG.Scale *= math32.Min(sc.X, sc.Y)
 	}
-	sv.SetTransform()
 	sv.UpdateView(true)
 }
 
@@ -460,7 +453,7 @@ func (sv *SVG) ResizeToContents(grid_off bool) {
 		return
 	}
 	trans := bb.Min
-	incr := sv.Grid * sv.Scale // our zoom factor
+	incr := sv.Grid * sv.SVG.Scale // our zoom factor
 	treff := trans
 	if grid_off {
 		treff.X = math32.Floor(trans.X/incr) * incr
@@ -469,7 +462,7 @@ func (sv *SVG) ResizeToContents(grid_off bool) {
 	bsz.SetAdd(trans.Sub(treff))
 	treff = treff.Negate()
 
-	bsz = bsz.DivScalar(sv.Scale)
+	bsz = bsz.DivScalar(sv.SVG.Scale)
 
 	sv.TransformAllLeaves(treff, math32.Vec2(1, 1), 0, math32.Vec2(0, 0))
 	sv.Root().ViewBox.Size = bsz
@@ -490,21 +483,15 @@ func (sv *SVG) ZoomAt(pt image.Point, delta float32) {
 		sc *= (1 - math32.Min(-delta, .5))
 	}
 
-	nsc := sv.Scale * sc
+	nsc := sv.SVG.Scale * sc
 
-	mpt := math32.Vector2FromPoint(pt.Sub(sv.Root().BBox.Min))
-	lpt := mpt.DivScalar(sv.Scale).Sub(sv.Trans) // point in drawing coords
+	mpt := math32.Vector2FromPoint(pt)
+	lpt := mpt.DivScalar(sv.SVG.Scale).Sub(sv.SVG.Translate) // point in drawing coords
 
-	dt := lpt.Add(sv.Trans).MulScalar((nsc - sv.Scale) / nsc) // delta from zooming
-	sv.Trans.SetSub(dt)
+	dt := lpt.Add(sv.SVG.Translate).MulScalar((nsc - sv.SVG.Scale) / nsc) // delta from zooming
+	sv.SVG.Translate.SetSub(dt)
 
-	sv.Scale = nsc
-	sv.SetTransform()
-}
-
-// SetTransform sets the transform based on Trans and Scale values
-func (sv *SVG) SetTransform() {
-	sv.SetProperty("transform", fmt.Sprintf("scale(%v,%v) translate(%v,%v)", sv.Scale, sv.Scale, sv.Trans.X, sv.Trans.Y))
+	sv.SVG.Scale = nsc
 }
 
 // MetaData returns the overall metadata and grid if present.
@@ -548,9 +535,9 @@ func (sv *SVG) SetMetaData() {
 	uts := strings.ToLower(sv.SVG.PhysicalWidth.Unit.String())
 
 	nv.SetProperty("inkscape:current-layer", es.CurLayer)
-	nv.SetProperty("inkscape:cx", fmt.Sprintf("%g", sv.Trans.X))
-	nv.SetProperty("inkscape:cy", fmt.Sprintf("%g", sv.Trans.Y))
-	nv.SetProperty("inkscape:zoom", fmt.Sprintf("%g", sv.Scale))
+	nv.SetProperty("inkscape:cx", fmt.Sprintf("%g", sv.SVG.Translate.X))
+	nv.SetProperty("inkscape:cy", fmt.Sprintf("%g", sv.SVG.Translate.Y))
+	nv.SetProperty("inkscape:zoom", fmt.Sprintf("%g", sv.SVG.Scale))
 	nv.SetProperty("inkscape:document-units", uts)
 
 	//	get rid of inkscape properties we don't set
@@ -585,15 +572,15 @@ func (sv *SVG) ReadMetaData() {
 		return
 	}
 	if cx := nv.Property("cx"); cx != nil {
-		sv.Trans.X, _ = reflectx.ToFloat32(cx)
+		sv.SVG.Translate.X, _ = reflectx.ToFloat32(cx)
 	}
 	if cy := nv.Property("cy"); cy != nil {
-		sv.Trans.Y, _ = reflectx.ToFloat32(cy)
+		sv.SVG.Translate.Y, _ = reflectx.ToFloat32(cy)
 	}
 	if zm := nv.Property("zoom"); zm != nil {
 		sc, _ := reflectx.ToFloat32(zm)
 		if sc > 0 {
-			sv.Scale = sc
+			sv.SVG.Scale = sc
 		}
 	}
 	if cl := nv.Property("current-layer"); cl != nil {
@@ -939,10 +926,10 @@ func (sv *SVG) ResizeBg(sz image.Point) {
 // UpdateGridEff updates the GirdEff value based on current scale
 func (sv *SVG) UpdateGridEff() {
 	sv.GridEff = sv.Grid
-	sp := sv.GridEff * sv.Scale
+	sp := sv.GridEff * sv.SVG.Scale
 	for sp <= 2*(float32(Settings.SnapTol)+1) {
 		sv.GridEff *= 2
-		sp = sv.GridEff * sv.Scale
+		sp = sv.GridEff * sv.SVG.Scale
 	}
 }
 
@@ -962,7 +949,7 @@ func (sv *SVG) RenderBg() {
 
 	pc.StrokeStyle.Color = colors.Uniform(Settings.Colors.Border)
 
-	sc := sv.Scale
+	sc := sv.SVG.Scale
 
 	wd := 1 / sc
 	pc.StrokeStyle.Width.Dots = wd

@@ -59,7 +59,7 @@ func (sv *SVG) GridDots() (float32, math32.Vector2) {
 	if grid <= 0 {
 		grid = 12
 	}
-	incr := grid * sv.Scale // our zoom factor
+	incr := grid * sv.SVG.Scale // our zoom factor
 
 	org := math32.Vector2{}
 	org = sv.Root().Paint.Transform.MulVector2AsPoint(org)
