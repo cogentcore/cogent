@@ -715,11 +715,12 @@ func (sv *SVG) Redo() string {
 // between BBox Min - Max.  typs are corresponding bounding box sources.
 func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	sz := min(len(pts), 8)
+	svoff := sv.Geom.ContentBBox.Min
 	for i := 0; i < sz; i++ {
 		pt := pts[i].Canon()
 		lsz := pt.Max.Sub(pt.Min)
 		sp := Sprite(sv, SpAlignMatch, Sprites(typs[i]), i, lsz, nil)
-		SetSpritePos(sp, pt.Min)
+		SetSpritePos(sp, pt.Min.Add(svoff))
 	}
 }
 
