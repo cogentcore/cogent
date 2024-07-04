@@ -760,7 +760,7 @@ func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 	es := sv.EditState()
 	dv := math32.Vector2FromPoint(end.Sub(start))
 	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
-		fmt.Println("dv under min:", dv, minsz)
+		// fmt.Println("dv under min:", dv, minsz)
 		return nil
 	}
 	sv.ManipStart(NewElement, types.For[T]().IDName)
