@@ -25,7 +25,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/types"
 )
 
 // Canvas is the main widget of the Cogent Canvas SVG vector graphics program.
@@ -371,7 +370,7 @@ func (cv *Canvas) ResizeToContents() { //types:add
 func (cv *Canvas) AddImage(fname core.Filename, width, height float32) error { //types:add
 	sv := cv.SVG()
 	sv.UndoSave("AddImage", string(fname))
-	ind := sv.NewElement(types.For[svg.Image]()).(*svg.Image)
+	ind := NewSVGElement[svg.Image](sv)
 	ind.Pos.X = 100 // todo: default pos
 	ind.Pos.Y = 100 // todo: default pos
 	err := ind.OpenImage(string(fname), width, height)

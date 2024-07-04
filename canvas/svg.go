@@ -202,9 +202,9 @@ func (sv *SVG) Init() {
 			case SelectTool:
 				sv.SetRubberBand(e.Pos())
 			case RectTool:
-				sv.NewElementDrag(types.For[svg.Rect](), es.DragStartPos, e.Pos())
+				NewSVGElementDrag[svg.Rect](sv, es.DragStartPos, e.Pos())
 			case EllipseTool:
-				sv.NewElementDrag(types.For[svg.Ellipse](), es.DragStartPos, e.Pos())
+				NewSVGElementDrag[svg.Ellipse](sv, es.DragStartPos, e.Pos())
 			case TextTool:
 				sv.NewText(es.DragStartPos, e.Pos())
 				es.NewTextMade = true
@@ -747,9 +747,9 @@ func (sv *SVG) SetSVGName(el svg.Node) {
 	el.AsTree().SetName(nwnm)
 }
 
-// NewElement makes a new SVG element, giving it a new unique name.
-// Uses currently active layer if set.
-func (sv *SVG) NewElement(typ *types.Type) svg.Node { // TODO(config): use generics?
+// NewSVGElement makes a new SVG element of the given type.
+// It uses the current active layer if it is set.
+func NewSVGElement[T tree.NodeValue](sv *SVG) *T {
 	es := sv.EditState()
 	parent := tree.Node(sv.Root())
 	if es.CurLayer != "" {
@@ -758,17 +758,16 @@ func (sv *SVG) NewElement(typ *types.Type) svg.Node { // TODO(config): use gener
 			parent = ly
 		}
 	}
-	newName := fmt.Sprintf("%s_tmp_new_item_", typ.Name)
-	nw := parent.AsTree().NewChild(typ).(svg.Node)
-	nw.AsTree().SetName(newName)
-	sv.SetSVGName(nw)
-	sv.Canvas.PaintView().SetProperties(nw)
+	n := tree.New[T](parent)
+	sn := any(n).(svg.Node)
+	sv.SetSVGName(sn)
+	sv.Canvas.PaintView().SetProperties(sn)
 	sv.Canvas.UpdateTree()
-	return nw
+	return n
 }
 
-// NewElementDrag makes a new SVG element during the drag operation
-func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node {
+// NewSVGElementDrag makes a new SVG element of the given type during the drag operation.
+func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 	minsz := float32(10)
 	es := sv.EditState()
 	dv := math32.Vector2FromPoint(end.Sub(start))
@@ -776,31 +775,32 @@ func (sv *SVG) NewElementDrag(typ *types.Type, start, end image.Point) svg.Node 
 		fmt.Println("dv under min:", dv, minsz)
 		return nil
 	}
-	sv.ManipStart(NewElement, typ.Name)
-	nr := sv.NewElement(typ)
+	sv.ManipStart(NewElement, types.For[T]().IDName)
+	n := NewSVGElement[T](sv)
+	sn := any(n).(svg.Node)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.Vector2FromPoint(start).Sub(svoff)
 	pos = xfi.MulVector2AsPoint(pos)
-	nr.SetNodePos(pos)
+	sn.SetNodePos(pos)
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
 	sz = xfi.MulVector2AsVector(sz)
-	nr.SetNodeSize(sz)
+	sn.SetNodeSize(sz)
 	sv.RenderSVG() // needed to get bb
-	es.SelectAction(nr, events.SelectOne, end)
+	es.SelectAction(sn, events.SelectOne, end)
 	sv.NeedsRender()
 	sv.UpdateSelSprites()
 	es.DragSelStart(start)
-	return nr
+	return n
 }
 
 // NewText makes a new Text element with embedded tspan
 func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	es := sv.EditState()
 	sv.ManipStart(NewText, "")
-	nr := sv.NewElement(types.For[svg.Text]())
+	n := NewSVGElement[svg.Text](sv)
 	tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
-	tspan := svg.NewText(nr)
+	tspan := svg.NewText(n)
 	tspan.SetName(tsnm)
 	tspan.Text = "Text"
 	tspan.Width = 200
@@ -810,17 +810,17 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVector2AsPoint(pos)
-	sv.Canvas.SetTextPropertiesNode(nr, es.Text.TextProperties())
+	sv.Canvas.SetTextPropertiesNode(n, es.Text.TextProperties())
 	// nr.Pos = pos
 	// tspan.Pos = pos
 	// // dv := math32.Vector2FromPoint(end.Sub(start))
 	// // sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
 	// nr.Width = 100
 	// tspan.Width = 100
-	es.SelectAction(nr, events.SelectOne, end)
+	es.SelectAction(n, events.SelectOne, end)
 	// sv.UpdateView(true)
 	// sv.UpdateSelect()
-	return nr
+	return n
 }
 
 // NewPath makes a new SVG Path element during the drag operation
@@ -834,7 +834,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	// win := sv.Vector.ParentWindow()
 	sv.ManipStart(NewPath, "")
 	// sv.SetFullReRender()
-	nr := sv.NewElement(types.For[svg.Path]()).(*svg.Path)
+	n := NewSVGElement[svg.Path](sv)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	// svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.Vector2FromPoint(start)
@@ -843,9 +843,9 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	// sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
 	sz = xfi.MulVector2AsVector(sz)
 
-	nr.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
+	n.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
 
-	es.SelectAction(nr, events.SelectOne, end)
+	es.SelectAction(n, events.SelectOne, end)
 	sv.UpdateSelSprites()
 	sv.EditState().DragSelStart(start)
 
@@ -856,7 +856,7 @@ func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
 	es.DragSelectEffectiveBBox = es.SelectBBox
 
 	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
-	return nr
+	return n
 }
 
 ///////////////////////////////////////////////////////////////////////
