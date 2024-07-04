@@ -294,8 +294,7 @@ func (cv *Code) UpdateStatusText() {
 	}
 
 	str := fmt.Sprintf("%s\t%s\t<b>%s:</b>\t(%d,%d)\t%s", cv.Name, cv.ActiveVCSInfo, fnm, ln, ch, msg)
-	text.SetText(str).UpdateWidget()
-	text.NeedsRender()
+	text.SetText(str).UpdateRender()
 }
 
 // HelpWiki opens wiki page for code on github

@@ -539,9 +539,7 @@ func (cv *Canvas) SetStatus(msg string) {
 		str += "Layer: " + es.CurLayer + "\t\t"
 	}
 	str += msg
-	text.SetText(str)
-	text.UpdateWidget()
-	text.NeedsRender()
+	text.SetText(str).UpdateRender()
 }
 
 func (vv *Canvas) SetTitle() {
