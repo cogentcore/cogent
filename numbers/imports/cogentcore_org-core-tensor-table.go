@@ -42,7 +42,7 @@ func init() {
 
 		// type definitions
 		"Delims":         reflect.ValueOf((*table.Delims)(nil)),
-		"FilterFunc":     reflect.ValueOf((*table.FilterFunc)(nil)),
+		"Filterer":       reflect.ValueOf((*table.Filterer)(nil)),
 		"IndexView":      reflect.ValueOf((*table.IndexView)(nil)),
 		"LessFunc":       reflect.ValueOf((*table.LessFunc)(nil)),
 		"SplitAgg":       reflect.ValueOf((*table.SplitAgg)(nil)),
