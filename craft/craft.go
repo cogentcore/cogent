@@ -9,7 +9,6 @@ import (
 	_ "cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/styles"
@@ -46,28 +45,23 @@ func main() {
 
 	objgp := xyz.NewGroup(sc)
 
-	curFn := "objs/airplane_prop_001.obj"
-	// curFn := "objs/piano_005.obj"
-	exts := ".obj,.dae,.gltf"
-
-	errors.Log1(sc.OpenNewObj(curFn, objgp))
+	currentFile := "objs/airplane_prop_001.obj"
+	errors.Log1(sc.OpenNewObj(currentFile, objgp))
 
 	b.AddAppBar(func(p *tree.Plan) {
-		tree.Add(p, func(w *core.Button) {
-			w.SetText("Open").SetIcon(icons.Open).
-				SetTooltip("Open a 3D object file for viewing").
-				OnClick(func(e events.Event) {
-					core.FilePickerDialog(b, curFn, exts, "Open 3D Object", func(selFile string) {
-						curFn = selFile
-						objgp.DeleteChildren()
-						sc.DeleteMeshes()
-						sc.DeleteTextures()
-						errors.Log1(sc.OpenNewObj(selFile, objgp))
-						sc.SetCamera("default")
-						sc.SetNeedsUpdate()
-						se.NeedsRender()
-					})
-				})
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(func(file core.Filename) {
+				currentFile = string(file)
+				objgp.DeleteChildren()
+				sc.DeleteMeshes()
+				sc.DeleteTextures()
+				errors.Log1(sc.OpenNewObj(string(file), objgp))
+				sc.SetCamera("default")
+				sc.SetNeedsUpdate()
+				se.NeedsRender()
+			})
+			w.Args[0].SetTag(`ext:".obj,.dae,.gltf"`)
+			w.SetText("Open").SetIcon(icons.Open).SetTooltip("Open a 3D object file for viewing")
 		})
 	})
 
