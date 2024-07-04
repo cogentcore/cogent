@@ -88,7 +88,7 @@ func (sv *SpellPanel) Init() {
 					d.AddBottomBar(func(parent core.Widget) {
 						d.AddCancel(parent)
 						d.AddOK(parent).OnClick(func(e events.Event) {
-							texteditor.AddToSpellModel(cur)
+							spell.Spell.AddWord(cur)
 						})
 					})
 					d.RunFullDialog(sv)
@@ -108,7 +108,7 @@ func (sv *SpellPanel) Init() {
 		})
 		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Ignore").OnClick(func(e events.Event) {
-				spell.IgnoreWord(sv.UnkWord)
+				spell.Spell.IgnoreWord(sv.UnkWord)
 				sv.LastAction = w
 				sv.CheckNext()
 			})
@@ -116,7 +116,7 @@ func (sv *SpellPanel) Init() {
 		tree.AddChild(w, func(w *core.Button) {
 			w.SetText("Learn").OnClick(func(e events.Event) {
 				nw := strings.ToLower(sv.UnkWord)
-				spell.LearnWord(nw)
+				spell.Spell.AddWord(nw)
 				sv.LastAction = w
 				sv.CheckNext()
 			})
@@ -211,7 +211,7 @@ func (sv *SpellPanel) CheckNext() {
 		if sv.CurIndex < len(sv.Errs) {
 			lx := sv.Errs[sv.CurIndex]
 			word := string(lx.Src(tv.Buffer.Lines[sv.CurLn]))
-			_, known := spell.CheckWord(word) // could have been fixed by now..
+			_, known := spell.Spell.CheckWord(word) // could have been fixed by now..
 			if known {
 				sv.CurIndex++
 				continue
@@ -235,7 +235,7 @@ func (sv *SpellPanel) CheckNext() {
 	sv.UnkLex = sv.Errs[sv.CurIndex]
 	sv.CurIndex++
 	sv.UnkWord = string(sv.UnkLex.Src(tv.Buffer.Lines[sv.CurLn]))
-	sv.Suggest, _ = spell.CheckWord(sv.UnkWord)
+	sv.Suggest, _ = spell.Spell.CheckWord(sv.UnkWord)
 
 	uf := sv.UnknownText()
 	uf.SetText(sv.UnkWord)

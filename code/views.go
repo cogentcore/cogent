@@ -102,7 +102,7 @@ func (cv *Code) Spell() { //types:add
 	if txv == nil || txv.Buffer == nil {
 		return
 	}
-	spell.OpenCheck() // make sure latest file opened
+	spell.Spell.OpenUserCheck() // make sure latest file opened
 	tv := cv.Tabs()
 	if tv == nil {
 		return

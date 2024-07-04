@@ -484,7 +484,7 @@ func (cv *Code) SaveProject() { //types:add
 // standard toml-formatted file, only if it already exists -- returns true if saved
 // saveAllFiles indicates if user should be prompted for saving all files
 func (cv *Code) SaveProjectIfExists(saveAllFiles bool) bool {
-	spell.SaveIfLearn()
+	spell.Spell.SaveUserIfLearn()
 	if cv.Settings.ProjectFilename == "" {
 		return false
 	}
@@ -503,7 +503,7 @@ func (cv *Code) SaveProjectIfExists(saveAllFiles bool) bool {
 // saveAllFiles indicates if user should be prompted for saving all files
 // returns true if the user was prompted, false otherwise
 func (cv *Code) SaveProjectAs(filename core.Filename) bool { //types:add
-	spell.SaveIfLearn()
+	spell.Spell.SaveUserIfLearn()
 	RecentPaths.AddPath(string(filename), core.SystemSettings.SavedPathsMax)
 	SavePaths()
 	cv.Settings.ProjectFilename = filename
