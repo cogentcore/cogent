@@ -209,11 +209,8 @@ func (cv *Code) VCSUpdateAll() { //types:add
 // VCSLog shows the VCS log of commits in this project,
 // in an interactive browser from which any revisions can be
 // compared and diffs browsed.
-// If since is non-empty, it should be a date-like expression
-// that the VCS will understand, such as 1/1/2020, yesterday,
-// last year, etc.  SVN only understands a number as a maximum
-// number of items to return.
-func (cv *Code) VCSLog(since string) (vcs.Log, error) { //types:add
+func (cv *Code) VCSLog() (vcs.Log, error) { //types:add
+	since := ""
 	atv := cv.ActiveTextEditor()
 	ond, _, got := cv.OpenNodeForTextEditor(atv)
 	if !got {
