@@ -151,7 +151,7 @@ func (fn *FileNode) PlotFile() {
 			core.ErrorSnackbar(br, err)
 		}
 		pl.SetTable(dt)
-		pl.Params.Title = df
+		pl.Options.Title = df
 		br.Update()
 	}
 }

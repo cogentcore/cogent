@@ -113,13 +113,13 @@ func (rd *Random) ConfigTable(dt *table.Table) {
 }
 
 func (rd *Random) ConfigPlot(plt *plotcore.PlotEditor, dt *table.Table) *plotcore.PlotEditor {
-	plt.Params.Title = "Random distribution histogram"
-	plt.Params.XAxisColumn = "Value"
-	plt.Params.Type = plotcore.Bar
-	plt.Params.XAxisRotation = 45
+	plt.Options.Title = "Random distribution histogram"
+	plt.Options.XAxisColumn = "Value"
+	plt.Options.Type = plotcore.Bar
+	plt.Options.XAxisRotation = 45
 	plt.SetTable(dt)
-	plt.SetColParams("Value", plotcore.Off, plotcore.FloatMin, 0, plotcore.FloatMax, 0)
-	plt.SetColParams("Count", plotcore.On, plotcore.FixMin, 0, plotcore.FloatMax, 0)
+	plt.SetColumnOptions("Value", plotcore.Off, plotcore.FloatMin, 0, plotcore.FloatMax, 0)
+	plt.SetColumnOptions("Count", plotcore.On, plotcore.FixMin, 0, plotcore.FloatMax, 0)
 	return plt
 }
 

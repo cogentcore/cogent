@@ -31,9 +31,9 @@ func init() {
 		"XY":                 reflect.ValueOf(plotcore.XY),
 
 		// type definitions
-		"ColumnParams": reflect.ValueOf((*plotcore.ColumnParams)(nil)),
+		"ColumnParams": reflect.ValueOf((*plotcore.ColumnOptions)(nil)),
 		"Plot":         reflect.ValueOf((*plotcore.Plot)(nil)),
-		"PlotParams":   reflect.ValueOf((*plotcore.PlotParams)(nil)),
+		"PlotParams":   reflect.ValueOf((*plotcore.PlotOptions)(nil)),
 		"PlotTypes":    reflect.ValueOf((*plotcore.PlotTypes)(nil)),
 		"PlotEditor":     reflect.ValueOf((*plotcore.PlotEditor)(nil)),
 		"TableXY":      reflect.ValueOf((*plotcore.TableXY)(nil)),
