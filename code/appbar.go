@@ -171,21 +171,20 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 						}
 					}
 				})
-			core.NewFuncButton(m).SetFunc(cv.SplitsSaveAs).SetText("Save as")
-			core.NewButton(m).SetText("Save").
-				SetMenu(func(mm *core.Scene) {
-					for _, sp := range AvailableSplitNames {
-						sn := SplitName(sp)
-						mb := core.NewButton(mm).SetText(sp)
-						mb.OnClick(func(e events.Event) {
-							cv.SplitsSave(sn)
-						})
-						if sn == cv.Settings.SplitName {
-							mb.SetSelected(true)
-						}
+			core.NewFuncButton(m).SetFunc(cv.SplitsSaveAs).SetText("Save as").SetIcon(icons.SaveAs)
+			core.NewButton(m).SetText("Save").SetIcon(icons.Save).SetMenu(func(mm *core.Scene) {
+				for _, sp := range AvailableSplitNames {
+					sn := SplitName(sp)
+					mb := core.NewButton(mm).SetText(sp)
+					mb.OnClick(func(e events.Event) {
+						cv.SplitsSave(sn)
+					})
+					if sn == cv.Settings.SplitName {
+						mb.SetSelected(true)
 					}
-				})
-			core.NewFuncButton(m).SetFunc(cv.SplitsEdit).SetText("Edit")
+				}
+			})
+			core.NewFuncButton(m).SetFunc(cv.SplitsEdit).SetText("Edit").SetIcon(icons.Edit)
 		})
 	})
 }

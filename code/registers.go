@@ -123,7 +123,7 @@ func RegistersView(pt *Registers) {
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
 		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.Save).SetText("Save As").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+			w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
 			w.Args[0].SetTag(`ext:".toml"`)
 		})
 	})
