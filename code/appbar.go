@@ -5,8 +5,6 @@
 package code
 
 import (
-	"strings"
-
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -132,26 +130,25 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 	})
 
 	tree.Add(p, func(w *core.Button) {
-		w.SetText("Command").
-			SetShortcut(KeyExecCmd.Chord()).
-			SetMenu(func(m *core.Scene) {
-				ec := ExecCmds(cv)
-				for _, cc := range ec {
-					cc := cc
-					cat := cc[0]
-					ic := icons.Icon(strings.ToLower(cat))
-					core.NewButton(m).SetText(cat).SetIcon(ic).SetMenu(func(mm *core.Scene) {
-						nc := len(cc)
-						for i := 1; i < nc; i++ {
-							cm := cc[i]
-							core.NewButton(mm).SetText(cm).SetIcon(ic).OnClick(func(e events.Event) {
-								e.SetHandled()
-								cv.ExecCmdNameActive(CommandName(cat, cm))
-							})
-						}
-					})
-				}
-			})
+		w.SetText("Command").SetShortcut(KeyExecCmd.Chord())
+		w.SetMenu(func(m *core.Scene) {
+			ec := ExecCmds(cv)
+			for _, cc := range ec {
+				cc := cc
+				cat := cc[0]
+				icon := CommandIcons[cat]
+				core.NewButton(m).SetText(cat).SetIcon(icon).SetMenu(func(mm *core.Scene) {
+					nc := len(cc)
+					for i := 1; i < nc; i++ {
+						cm := cc[i]
+						core.NewButton(mm).SetText(cm).SetIcon(icon).OnClick(func(e events.Event) {
+							e.SetHandled()
+							cv.ExecCmdNameActive(CommandName(cat, cm))
+						})
+					}
+				})
+			}
+		})
 	})
 
 	tree.Add(p, func(w *core.Separator) {})
