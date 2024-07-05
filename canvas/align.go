@@ -7,6 +7,7 @@ package canvas
 import (
 	"image"
 
+	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -63,11 +64,10 @@ func (av *AlignView) Init() {
 
 		for _, al := range AlignsValues() {
 			tree.AddChildAt(w, al.String(), func(w *core.Button) {
-				w.SetIcon(icons.Icon(al.String())).SetType(core.ButtonTonal).
-					SetTooltip(al.Desc()).
-					OnClick(func(e events.Event) {
-						av.Canvas.Align(av.Anchor, al)
-					})
+				w.SetIcon(AlignIcons[al]).SetType(core.ButtonTonal).SetTooltip(al.Desc())
+				w.OnClick(func(e events.Event) {
+					av.Canvas.Align(av.Anchor, al)
+				})
 			})
 		}
 	})
@@ -338,3 +338,5 @@ const (
 	// align baseline points vertically
 	AlignBaselineVert
 )
+
+var AlignIcons = map[Aligns]icons.Icon{AlignRightAnchor: cicons.AlignRightAnchor, AlignLeft: cicons.AlignLeft, AlignCenter: cicons.AlignCenter, AlignRight: cicons.AlignRight, AlignLeftAnchor: cicons.AlignLeftAnchor, AlignBaselineHoriz: cicons.AlignBaselineHoriz, AlignBottomAnchor: cicons.AlignBottomAnchor, AlignTop: cicons.AlignTop, AlignMiddle: cicons.AlignMiddle, AlignBottom: cicons.AlignBottom, AlignTopAnchor: cicons.AlignTopAnchor, AlignBaselineVert: cicons.AlignBaselineVert}
