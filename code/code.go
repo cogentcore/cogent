@@ -8,7 +8,6 @@ package code
 //go:generate core generate
 
 import (
-	"embed"
 	"fmt"
 	"log"
 	"log/slog"
@@ -20,13 +19,11 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
-	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/icons"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
@@ -34,13 +31,6 @@ import (
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
-
-//go:embed icons/*.svg
-var Icons embed.FS
-
-func init() {
-	icons.AddFS(fsx.Sub(Icons, "icons"))
-}
 
 // Code is the core editor and tab viewer widget for the Code system. The
 // default view has a tree browser of files on the left, editor panels in the
