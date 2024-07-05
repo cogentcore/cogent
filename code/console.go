@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/texteditor"
 )
@@ -107,7 +108,8 @@ func MarkupStdout(out []byte) []byte {
 }
 
 func MarkupStderr(out []byte) []byte {
-	sst := []byte(`<span style="color:red">`)
+	ec := colors.AsHex(colors.ToUniform(colors.Scheme.Error.Base))
+	sst := []byte(`<span style="color:` + ec + `">`)
 	est := []byte(`</span>`)
 	esz := len(sst) + len(est)
 

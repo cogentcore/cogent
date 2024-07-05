@@ -818,17 +818,14 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 				continue
 			}
 			cmdCat := cc[0]
-			ic := icons.Icon(strings.ToLower(cmdCat))
-			if !ic.IsValid() {
-				fmt.Println("icon not found", cmdCat)
-			}
-			cb := core.NewButton(mm).SetText(cmdCat).SetType(core.ButtonMenu).SetIcon(ic)
+			icon := CommandIcons[cmdCat]
+			cb := core.NewButton(mm).SetText(cmdCat).SetType(core.ButtonMenu).SetIcon(icon)
 			cb.SetMenu(func(m *core.Scene) {
 				for ii := 1; ii < n; ii++ {
 					ii := ii
 					it := cc[ii]
 					cmdNm := CommandName(cmdCat, it)
-					bt := core.NewButton(m).SetText(it).SetIcon(ic)
+					bt := core.NewButton(m).SetText(it).SetIcon(icon)
 					bt.OnClick(func(e events.Event) {
 						// e.SetHandled() // note: this allows menu to stay open :)
 						cmd := CmdName(cmdNm)
@@ -845,3 +842,5 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 		}
 	}
 }
+
+var CommandIcons = map[string]icons.Icon{"File": icons.File, "Git": icons.Git, "Build": icons.Build, "Core": icons.CogentCore, "Go": icons.Go}
