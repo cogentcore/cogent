@@ -5,6 +5,7 @@
 package canvas
 
 import (
+	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -73,7 +74,7 @@ func (vc *Canvas) MakeTools(p *tree.Plan) {
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
-		w.SetIcon("tool-node").SetShortcut("N")
+		w.SetIcon(cicons.ToolNode).SetShortcut("N")
 		w.SetTooltip("Select and move node points within paths")
 		w.OnClick(func(e events.Event) {
 			vc.SetTool(NodeTool)
@@ -113,7 +114,7 @@ func (vc *Canvas) MakeTools(p *tree.Plan) {
 		})
 	})
 	tree.Add(p, func(w *core.Button) {
-		w.SetIcon("tool-text").SetShortcut("T")
+		w.SetIcon(cicons.ToolText).SetShortcut("T")
 		w.SetTooltip("Add and edit text")
 		w.OnClick(func(e events.Event) {
 			vc.SetTool(TextTool)

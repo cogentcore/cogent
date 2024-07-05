@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 
+	"cogentcore.org/cogent/canvas/cicons"
 	"cogentcore.org/core/base/slicesx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -41,45 +42,45 @@ func (vc *Canvas) MakeSelectToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectGroup).SetText("Group").SetIcon("sel-group").SetShortcut("Command+G")
+		w.SetFunc(vc.SelectGroup).SetText("Group").SetIcon(cicons.SelGroup).SetShortcut("Command+G")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectUnGroup).SetText("Ungroup").SetIcon("sel-ungroup").SetShortcut("Command+Shift+G")
-	})
-	tree.Add(p, func(w *core.Separator) {})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRotateLeft).SetText("").SetIcon("sel-rotate-left").SetShortcut("Command+[")
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRotateRight).SetText("").SetIcon("sel-rotate-right").SetShortcut("Command+]")
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectFlipHorizontal).SetText("").SetIcon("sel-flip-horiz")
-	})
-	tree.Add(p, func(w *core.FuncButton) {
-		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectFlipVertical).SetText("").SetIcon("sel-flip-vert")
+		w.SetFunc(vc.SelectUnGroup).SetText("Ungroup").SetIcon(cicons.SelUngroup).SetShortcut("Command+Shift+G")
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRaiseTop).SetText("").SetIcon("sel-raise-top")
+		w.SetFunc(vc.SelectRotateLeft).SetText("").SetIcon(cicons.SelRotateLeft).SetShortcut("Command+[")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectRaise).SetText("").SetIcon("sel-raise")
+		w.SetFunc(vc.SelectRotateRight).SetText("").SetIcon(cicons.SelRotateRight).SetShortcut("Command+]")
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectLowerBottom).SetText("").SetIcon("sel-lower-bottom")
+		w.SetFunc(vc.SelectFlipHorizontal).SetText("").SetIcon(cicons.SelFlipHoriz)
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		vc.InitSelectButton(w)
-		w.SetFunc(vc.SelectLower).SetText("").SetIcon("sel-lower")
+		w.SetFunc(vc.SelectFlipVertical).SetText("").SetIcon(cicons.SelFlipVert)
+	})
+	tree.Add(p, func(w *core.Separator) {})
+	tree.Add(p, func(w *core.FuncButton) {
+		vc.InitSelectButton(w)
+		w.SetFunc(vc.SelectRaiseTop).SetText("").SetIcon(cicons.SelRaiseTop)
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		vc.InitSelectButton(w)
+		w.SetFunc(vc.SelectRaise).SetText("").SetIcon(cicons.SelRaise)
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		vc.InitSelectButton(w)
+		w.SetFunc(vc.SelectLowerBottom).SetText("").SetIcon(cicons.SelLowerBottom)
+	})
+	tree.Add(p, func(w *core.FuncButton) {
+		vc.InitSelectButton(w)
+		w.SetFunc(vc.SelectLower).SetText("").SetIcon(cicons.SelLower)
 	})
 	tree.Add(p, func(w *core.Separator) {})
 	tree.Add(p, func(w *core.Text) {
