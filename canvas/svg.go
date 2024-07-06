@@ -51,28 +51,28 @@ type SVG struct {
 	// from svg render
 	pixelMu sync.Mutex
 
-	// curPixels are the current rendered pixels, with the SVG
+	// currentPixels are the current rendered pixels, with the SVG
 	// on top of the background pixel grid.  updated in separate
 	// goroutine, protected by pixelMu, to ensure fluid interaction
-	curPixels *image.RGBA
+	currentPixels *image.RGBA
 
 	// background pixels, includes page outline and grid
-	bgPixels *image.RGBA
+	backgroundPixels *image.RGBA
 
 	// background paint rendering context
-	bgPaint paint.Context
+	backgroundPaint paint.Context
 
 	// in svg Rendering
 	inRender bool
 
 	// size of bg image rendered
-	bgSize image.Point
+	backgroundSize image.Point
 
 	// bg rendered transform
-	bgTransform math32.Matrix2
+	backgroundTransform math32.Matrix2
 
 	// bg rendered grid
-	bgGridEff float32
+	backgroundGridEff float32
 }
 
 func (sv *SVG) Init() {
@@ -260,8 +260,8 @@ func (sv *SVG) RenderSVG() {
 	sv.inRender = true
 	defer func() { sv.inRender = false }()
 
-	if sv.BgNeedsUpdate() {
-		sv.RenderBg()
+	if sv.BackgroundNeedsUpdate() {
+		sv.RenderBackground()
 	}
 	// need to make the image again to prevent it from
 	// rendering over itself
@@ -271,10 +271,10 @@ func (sv *SVG) RenderSVG() {
 	sv.SVG.Render()
 	sv.pixelMu.Lock()
 
-	bgsz := sv.bgPixels.Bounds()
-	sv.curPixels = image.NewRGBA(bgsz)
-	draw.Draw(sv.curPixels, bgsz, sv.bgPixels, image.ZP, draw.Src)
-	draw.Draw(sv.curPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
+	bgsz := sv.backgroundPixels.Bounds()
+	sv.currentPixels = image.NewRGBA(bgsz)
+	draw.Draw(sv.currentPixels, bgsz, sv.backgroundPixels, image.ZP, draw.Src)
+	draw.Draw(sv.currentPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
 	sv.NeedsRender()
 	sv.pixelMu.Unlock()
 }
@@ -285,14 +285,14 @@ func (sv *SVG) Render() {
 		return
 	}
 	sv.pixelMu.Lock()
-	if sv.curPixels == nil || sv.BgNeedsUpdate() {
+	if sv.currentPixels == nil || sv.BackgroundNeedsUpdate() {
 		sv.pixelMu.Unlock()
 		sv.RenderSVG()
 		sv.pixelMu.Lock()
 	}
 	r := sv.Geom.ContentBBox
 	sp := sv.Geom.ScrollOffset()
-	draw.Draw(sv.Scene.Pixels, r, sv.curPixels, sp, draw.Over)
+	draw.Draw(sv.Scene.Pixels, r, sv.currentPixels, sp, draw.Over)
 	sv.pixelMu.Unlock()
 }
 
@@ -901,25 +901,25 @@ func (sv *SVG) UpdateGradients(gl []*Gradient) {
 ///////////////////////////////////////////////////////////////////////
 //  Bg render
 
-func (sv *SVG) BgNeedsUpdate() bool {
+func (sv *SVG) BackgroundNeedsUpdate() bool {
 	root := sv.Root()
 	if root == nil {
 		return false
 	}
-	return (sv.bgPixels == nil) || (sv.bgPixels.Bounds().Size() != sv.bgSize) || (sv.bgTransform != root.Paint.Transform) || (sv.GridEff != sv.bgGridEff)
+	return sv.backgroundPixels == nil || sv.backgroundPixels.Bounds().Size() != sv.backgroundSize || sv.backgroundTransform != root.Paint.Transform || sv.GridEff != sv.backgroundGridEff || sv.NeedsRebuild()
 }
 
 func (sv *SVG) ResizeBg(sz image.Point) {
-	if sv.bgPaint.State == nil {
-		sv.bgPaint.State = &paint.State{}
+	if sv.backgroundPaint.State == nil {
+		sv.backgroundPaint.State = &paint.State{}
 	}
-	if sv.bgPaint.Paint == nil {
-		sv.bgPaint.Paint = &styles.Paint{}
-		sv.bgPaint.Paint.Defaults()
+	if sv.backgroundPaint.Paint == nil {
+		sv.backgroundPaint.Paint = &styles.Paint{}
+		sv.backgroundPaint.Paint.Defaults()
 	}
-	if sv.bgPixels == nil || sv.bgPixels.Bounds().Size() != sz {
-		sv.bgPixels = image.NewRGBA(image.Rectangle{Max: sz})
-		sv.bgPaint.Init(sz.X, sz.Y, sv.bgPixels)
+	if sv.backgroundPixels == nil || sv.backgroundPixels.Bounds().Size() != sz {
+		sv.backgroundPixels = image.NewRGBA(image.Rectangle{Max: sz})
+		sv.backgroundPaint.Init(sz.X, sz.Y, sv.backgroundPixels)
 	}
 }
 
@@ -933,17 +933,17 @@ func (sv *SVG) UpdateGridEff() {
 	}
 }
 
-// RenderBg renders our background grid image
-func (sv *SVG) RenderBg() {
+// RenderBackground renders our background grid image
+func (sv *SVG) RenderBackground() {
 	root := sv.Root()
 	if root == nil {
 		return
 	}
 	sv.UpdateGridEff()
-	bb := sv.bgPixels.Bounds()
-	draw.Draw(sv.bgPixels, bb, colors.Scheme.Surface, image.ZP, draw.Src)
+	bb := sv.backgroundPixels.Bounds()
+	draw.Draw(sv.backgroundPixels, bb, colors.Scheme.Surface, image.ZP, draw.Src)
 
-	pc := &sv.bgPaint
+	pc := &sv.backgroundPaint
 	pc.PushBounds(bb)
 	pc.PushTransform(root.Paint.Transform)
 
@@ -972,9 +972,9 @@ func (sv *SVG) RenderBg() {
 		pc.FillStrokeClear()
 	}
 
-	sv.bgTransform = root.Paint.Transform
-	sv.bgGridEff = sv.GridEff
-	sv.bgSize = bb.Size()
+	sv.backgroundTransform = root.Paint.Transform
+	sv.backgroundGridEff = sv.GridEff
+	sv.backgroundSize = bb.Size()
 
 	pc.PopTransform()
 	pc.PopBounds()

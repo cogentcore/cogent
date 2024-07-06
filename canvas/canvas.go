@@ -213,7 +213,7 @@ func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
 	tv.ReSync()
 	cv.SetStatus("Opened: " + string(cv.Filename))
 	tv.CloseAll()
-	sv.bgGridEff = 0
+	sv.backgroundGridEff = 0
 	sv.UpdateView(true)
 	cv.NeedsRender()
 	return err
@@ -236,7 +236,7 @@ func (cv *Canvas) PromptPhysSize() { //types:add
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
 			cv.SetPhysSize(sz)
-			sv.bgGridEff = -1
+			sv.backgroundGridEff = -1
 			sv.UpdateView(true)
 		})
 	})
