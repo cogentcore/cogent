@@ -63,7 +63,7 @@ func (pv *PaintView) Init() {
 			s.Direction = styles.Row
 		})
 		tree.AddChild(w, func(w *core.Text) {
-			w.SetText("<b>Stroke Paint:  </b>")
+			w.SetText("<b>Stroke paint:</b>")
 		})
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.StrokeType, w)
@@ -206,8 +206,8 @@ func (pv *PaintView) Init() {
 		})
 		tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
-		tree.AddChild(w, func(w *core.ColorPicker) { // "stroke-clr")
-			// core.Bind(&pv.PaintStyle.StrokeStyle.Color, w)
+		tree.AddChild(w, func(w *core.ColorPicker) {
+			core.Bind(&pv.PaintStyle.StrokeStyle.Color, w)
 			w.OnChange(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
 					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not manip
@@ -240,7 +240,7 @@ func (pv *PaintView) Init() {
 			s.Direction = styles.Row
 		})
 		tree.AddChild(w, func(w *core.Text) {
-			w.SetText("<b>Fill Paint:  </b>")
+			w.SetText("<b>Fill paint:</b>")
 		})
 		tree.AddChild(w, func(w *core.Switches) {
 			core.Bind(&pv.FillType, w)
@@ -270,8 +270,8 @@ func (pv *PaintView) Init() {
 
 		tree.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
 
-		tree.AddChild(w, func(w *core.ColorPicker) { // "fill-clr")
-			// core.Bind(&pv.PaintStyle.FillStyle.Color, w)
+		tree.AddChild(w, func(w *core.ColorPicker) {
+			core.Bind(&pv.PaintStyle.FillStyle.Color, w)
 			w.OnChange(func(e events.Event) {
 				if pv.FillType == PaintSolid {
 					pv.Canvas.SetFillColor(pv.FillProp(), false) // not manip
