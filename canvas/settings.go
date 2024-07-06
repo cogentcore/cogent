@@ -5,13 +5,11 @@
 package canvas
 
 import (
-	"image/color"
 	"os"
 	"path/filepath"
 	"slices"
 
 	"cogentcore.org/core/base/iox/tomlx"
-	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 )
@@ -36,9 +34,6 @@ type SettingsData struct { //types:add
 
 	// default physical size, when app is started without opening a file
 	Size PhysSize
-
-	// active color settings
-	Colors ColorSettings
 
 	// default shape styles
 	ShapeStyle styles.Paint
@@ -76,7 +71,6 @@ type SettingsData struct { //types:add
 
 func (se *SettingsData) Defaults() {
 	se.Size.Defaults()
-	se.Colors.Defaults()
 	se.ShapeStyle.Defaults()
 	se.ShapeStyle.FontStyle.Family = "Arial"
 	se.ShapeStyle.FontStyle.Size.Px(12)
@@ -131,34 +125,4 @@ func (se *SettingsData) Apply() { //types:add
 // EditSplits opens the SplitsView editor to customize saved splitter settings
 func (se *SettingsData) EditSplits() {
 	SplitsView(&AvailableSplits)
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-//   ColorSettings
-
-// ColorSettings for
-type ColorSettings struct { //types:add
-
-	// drawing background color
-	Background color.Color
-
-	// border color of the drawing
-	Border color.Color
-
-	// grid line color
-	Grid color.Color
-}
-
-// todo: replace with color tone defaults
-
-func (se *ColorSettings) Defaults() {
-	se.Background = colors.White
-	se.Border = colors.Black
-	se.Grid = color.RGBA{220, 220, 220, 255}
-}
-
-func (se *ColorSettings) DarkDefaults() {
-	se.Background = colors.Black
-	se.Border = color.RGBA{102, 102, 102, 255}
-	se.Grid = color.RGBA{40, 40, 40, 255}
 }

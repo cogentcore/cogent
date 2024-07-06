@@ -941,13 +941,13 @@ func (sv *SVG) RenderBg() {
 	}
 	sv.UpdateGridEff()
 	bb := sv.bgPixels.Bounds()
-	draw.Draw(sv.bgPixels, bb, &image.Uniform{Settings.Colors.Background}, image.ZP, draw.Src)
+	draw.Draw(sv.bgPixels, bb, colors.Scheme.Surface, image.ZP, draw.Src)
 
 	pc := &sv.bgPaint
 	pc.PushBounds(bb)
 	pc.PushTransform(root.Paint.Transform)
 
-	pc.StrokeStyle.Color = colors.Uniform(Settings.Colors.Border)
+	pc.StrokeStyle.Color = colors.Scheme.OnSurface
 
 	sc := sv.SVG.Scale
 
@@ -962,7 +962,7 @@ func (sv *SVG) RenderBg() {
 
 	if Settings.GridDisp {
 		gsz := float32(sv.GridEff)
-		pc.StrokeStyle.Color = colors.Uniform(Settings.Colors.Grid)
+		pc.StrokeStyle.Color = colors.Scheme.OutlineVariant
 		for x := gsz; x < sz.X; x += gsz {
 			pc.DrawLine(x, 0, x, sz.Y)
 		}
