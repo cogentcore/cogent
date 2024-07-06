@@ -124,7 +124,11 @@ func (cv *Code) RunPostCmdsFileNode(fn *filetree.Node) bool {
 	lang := fn.Info.Known
 	if lopt, has := AvailableLangs[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
+			_, ptab := cv.Tabs().CurrentTab()
 			cv.ExecCmdsFileNode(fn, lopt.PostSaveCmds)
+			if ptab >= 0 {
+				cv.Tabs().SelectTabIndex(ptab) // we stay at the previous tab
+			}
 			fn.Buffer.Revert()
 			return true
 		}
