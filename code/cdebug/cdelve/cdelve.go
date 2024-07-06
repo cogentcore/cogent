@@ -107,6 +107,9 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buffer, pars 
 		gd.cmd = exec.Command("dlv", targs...)
 	case cdebug.Test:
 		targs := []string{"test", "--headless", "--api-version=2"}
+		if pars.TestName != "" {
+			targs = append(targs, "--", "-test.run", pars.TestName)
+		}
 		targs = append(targs, gd.params.Args...)
 		gd.cmd = exec.Command("dlv", targs...)
 	case cdebug.Attach:

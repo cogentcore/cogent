@@ -149,8 +149,10 @@ func (cv *Code) Debug() { //types:add
 	cv.CurDbg = dv
 }
 
-// DebugTest runs the debugger using testing mode in current active texteditor path
-func (cv *Code) DebugTest() { //types:add
+// DebugTest runs the debugger using testing mode in current active texteditor path.
+// testName specifies which test(s) to run according to the standard go test -run
+// specification.
+func (cv *Code) DebugTest(testName string) { //types:add
 	txv := cv.ActiveTextEditor()
 	if txv == nil || txv.Buffer == nil {
 		return
@@ -161,6 +163,7 @@ func (cv *Code) DebugTest() { //types:add
 	}
 
 	cv.Settings.Debug.Mode = cdebug.Test
+	cv.Settings.Debug.TestName = testName
 	tstPath := string(txv.Buffer.Filename)
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+dir)

@@ -115,6 +115,7 @@ func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
 	})
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.DebugTest).SetIcon(icons.Debug)
+		w.Args[0].SetValue(cv.Settings.Debug.TestName)
 	})
 
 	tree.Add(p, func(w *core.Separator) {})

@@ -219,10 +219,14 @@ type Params struct { //types:add
 	// process id number to attach to, for Attach mode
 	PID uint64 `xml:"-" toml:"-" json:"-" display:"-"`
 
+	// name of test to run for DebugTest function.
+	// if non-empty, only tests matching this name will be run.
+	TestName string
+
 	// optional extra args to pass to the debugger.
 	// Use -- double-dash and then add args to pass args to the executable
 	// (double-dash is by itself as a separate arg first).
-	// For Debug test, must use -test.run instead of plain -run to specify tests to run.
+	// Test args are passed automatically if TestName is set.
 	Args []string
 
 	// status function for debugger updating status
