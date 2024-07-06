@@ -165,8 +165,9 @@ func (cv *Code) DebugTest() { //types:add
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+dir)
 	dv.Config(cv, fileinfo.Go, tstPath)
-	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
+	dv.Update()
+	dv.Start()
 	cv.CurDbg = dv
 }
 
@@ -184,8 +185,8 @@ func (cv *Code) DebugAttach(pid uint64) { //types:add
 	exe := filepath.Base(exePath)
 	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+exe)
 	dv.Config(cv, fileinfo.Go, exePath)
-	dv.Update()
 	cv.FocusOnPanel(TabsIndex)
+	dv.Update()
 	cv.CurDbg = dv
 }
 

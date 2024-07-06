@@ -503,7 +503,7 @@ func (fv *FindPanel) makeReplToolbar(p *tree.Plan) {
 	})
 
 	tree.AddAt(p, "langs", func(w *core.InlineList) {
-		w.SetSlice(fv.Params().Langs)
+		w.SetSlice(&fv.Params().Langs)
 		w.SetTooltip("Language(s) to restrict search / replace to")
 	})
 }

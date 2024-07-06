@@ -916,7 +916,6 @@ func (dv *DebugPanel) MakeToolbar(p *tree.Plan) {
 
 	tree.Add(p, func(w *core.Button) {
 		w.SetText("Params").SetIcon(icons.Edit).SetTooltip("edit the debugger parameters (e.g., for passing args: use -- (double dash) to separate args passed to program vs. those passed to the debugger itself)")
-		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 		w.OnClick(func(e events.Event) {
 			DebugSettingsEditor(&dv.Code.Settings.Debug)
 		})
