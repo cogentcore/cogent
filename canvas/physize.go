@@ -34,7 +34,7 @@ func (ps *PhysSize) Defaults() {
 	ps.StandardSize = Img1280x720
 	ps.Units = units.UnitPx
 	ps.Size.Set(1280, 720)
-	ps.Grid = 12
+	ps.Grid = 48
 }
 
 func (ps *PhysSize) Update() {
