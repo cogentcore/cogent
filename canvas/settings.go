@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"cogentcore.org/core/base/iox/tomlx"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 )
@@ -72,26 +73,21 @@ type SettingsData struct { //types:add
 func (se *SettingsData) Defaults() {
 	se.Size.Defaults()
 	se.ShapeStyle.Defaults()
-	se.ShapeStyle.FontStyle.Family = "Arial"
-	se.ShapeStyle.FontStyle.Size.Px(12)
-	// pf.ShapeStyle.FillStyle.Color.SetName("blue")
-	// pf.ShapeStyle.StrokeStyle.On = true // todo: image
-	// pf.ShapeStyle.FillStyle.On = true
+	se.ShapeStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
+	se.ShapeStyle.FontStyle.Size.Dp(16)
+	se.ShapeStyle.FillStyle.Color = colors.Scheme.OnSurface
 	se.TextStyle.Defaults()
-	se.TextStyle.FontStyle.Family = "Arial"
-	se.TextStyle.FontStyle.Size.Px(12)
-	// pf.TextStyle.StrokeStyle.On = false
-	// pf.TextStyle.FillStyle.On = true
+	se.TextStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
+	se.TextStyle.FontStyle.Size.Dp(16)
+	se.TextStyle.FillStyle.Color = colors.Scheme.OnSurface
 	se.PathStyle.Defaults()
-	se.PathStyle.FontStyle.Family = "Arial"
-	se.PathStyle.FontStyle.Size.Px(12)
-	// pf.PathStyle.StrokeStyle.On = true
-	// pf.PathStyle.FillStyle.On = false
+	se.PathStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
+	se.PathStyle.FontStyle.Size.Dp(16)
+	se.PathStyle.StrokeStyle.Color = colors.Scheme.OnSurface
 	se.LineStyle.Defaults()
-	se.LineStyle.FontStyle.Family = "Arial"
-	se.LineStyle.FontStyle.Size.Px(12)
-	// pf.LineStyle.StrokeStyle.On = true
-	// pf.LineStyle.FillStyle.On = false
+	se.LineStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
+	se.LineStyle.FontStyle.Size.Dp(16)
+	se.LineStyle.StrokeStyle.Color = colors.Scheme.OnSurface
 	se.GridDisp = true
 	se.SnapTol = 3
 	se.SnapGrid = true
