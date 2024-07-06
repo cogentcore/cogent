@@ -950,24 +950,30 @@ func (vv *VarView) SetVar(vr *cdebug.Variable, frinfo string) {
 	if vv.Var != vr {
 		vv.Var = vr
 		vv.SelectVar = vr
+		tr := vv.Tree()
+		tr.SyncTree(vv.Var)
+		fr := vv.Form()
+		fr.SetStruct(vv.Var)
 	}
 	vv.Update()
 }
 
 func (vv *VarView) Init() {
+	vv.Frame.Init()
 	vv.Styler(func(s *styles.Style) {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
 
 	tree.AddChildAt(vv, "frame-info", func(w *core.Text) {
-		w.SetText(vv.FrameInfo)
+		w.Updater(func() {
+			w.SetText(vv.FrameInfo)
+		})
 	})
 	tree.AddChildAt(vv, "splits", func(w *core.Splits) {
 		w.SetSplits(0.3, 0.7)
 		tree.AddChild(w, func(w *core.Frame) {
 			tree.AddChild(w, func(w *core.Tree) {
-				w.SyncTree(vv.Var)
 				w.OnSelect(func(e events.Event) {
 					if len(w.SelectedNodes) > 0 {
 						sn := w.SelectedNodes[0].AsCoreTree().SyncNode
@@ -975,15 +981,14 @@ func (vv *VarView) Init() {
 						if ok {
 							vv.SelectVar = vr
 						}
-						vv := vv.Form()
-						vv.SetStruct(sn)
+						fr := vv.Form()
+						fr.SetStruct(vv.SelectVar)
+						fr.Update()
 					}
 				})
 			})
 		})
-		tree.AddChild(w, func(w *core.Form) {
-			w.SetStruct(vv.Var)
-		})
+		tree.AddChild(w, func(w *core.Form) {})
 	})
 }
 
@@ -1031,6 +1036,7 @@ func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugPanel) *VarVi
 	b.Title = wti
 	vv := NewVarView(b)
 	vv.DbgView = dbgVw
+	vv.Update()
 	vv.SetVar(vr, frinfo)
 	b.AddAppBar(vv.MakeToolbar)
 	b.RunWindow()
