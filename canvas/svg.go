@@ -947,7 +947,7 @@ func (sv *SVG) RenderBackground() {
 	pc.PushBounds(bb)
 	pc.PushTransform(root.Paint.Transform)
 
-	pc.StrokeStyle.Color = colors.Scheme.OnSurface
+	pc.StrokeStyle.Color = colors.Scheme.Outline
 
 	sc := sv.SVG.Scale
 
