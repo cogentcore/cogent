@@ -474,12 +474,14 @@ func (vv *Canvas) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.Separator) {})
 
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(vv.Undo).FirstStyler(func(s *styles.Style) {
+		w.SetFunc(vv.Undo).SetIcon(icons.Undo)
+		w.FirstStyler(func(s *styles.Style) {
 			s.SetEnabled(vv.EditState.Undos.HasUndoAvail())
 		})
 	})
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(vv.Redo).FirstStyler(func(s *styles.Style) {
+		w.SetFunc(vv.Redo).SetIcon(icons.Redo)
+		w.FirstStyler(func(s *styles.Style) {
 			s.SetEnabled(vv.EditState.Undos.HasRedoAvail())
 		})
 	})
