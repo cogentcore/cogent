@@ -598,12 +598,11 @@ func (sv *SVG) ReadMetaData() {
 	}
 }
 
-///////////////////////////////////////////////////////////////////////////
-//  ContextMenu / Actions
-
-// EditNode opens a form editor on node
-func (sv *SVG) EditNode(kn tree.Node) { //types:add
-	core.FormDialog(sv, kn, "SVG Element View", true)
+// EditNode opens a [core.Form] dialog on the given node.
+func (sv *SVG) EditNode(n tree.Node) { //types:add
+	d := core.NewBody().AddTitle("Edit node")
+	core.NewForm(d).SetStruct(n)
+	d.RunWindowDialog(sv)
 }
 
 // MakeNodeContextMenu makes the menu of options for context right click
