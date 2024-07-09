@@ -275,8 +275,6 @@ func (cv *Code) TextEditorButtonMenu(idx int, m *core.Scene) {
 	})
 	core.NewSeparator(m)
 	for i, n := range opn {
-		i := i
-		n := n
 		core.NewButton(m).SetText(n).OnClick(func(e events.Event) {
 			cv.ViewFileNode(tv, idx, cv.OpenNodes[i])
 		})

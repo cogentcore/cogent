@@ -822,7 +822,6 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 			cb := core.NewButton(mm).SetText(cmdCat).SetType(core.ButtonMenu).SetIcon(icon)
 			cb.SetMenu(func(m *core.Scene) {
 				for ii := 1; ii < n; ii++ {
-					ii := ii
 					it := cc[ii]
 					cmdNm := CommandName(cmdCat, it)
 					bt := core.NewButton(m).SetText(it).SetIcon(icon)
