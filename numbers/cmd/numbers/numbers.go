@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/cli"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/interpreter"
 	"github.com/traefik/yaegi/interp"
@@ -105,14 +106,15 @@ func Interactive(c *Config) error {
 	in.Interp.Use(databrowser.Symbols)
 	in.Config()
 
-	w := b.RunWindow()
-	go func() {
-		if c.Expr != "" {
-			in.Eval(c.Expr)
-		}
-		in.Interactive()
-	}()
-	w.Wait()
+	b.OnShow(func(e events.Event) {
+		go func() {
+			if c.Expr != "" {
+				in.Eval(c.Expr)
+			}
+			in.Interactive()
+		}()
+	})
+	b.RunMainWindow()
 	return nil
 }
 

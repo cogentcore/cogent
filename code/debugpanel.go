@@ -374,10 +374,7 @@ func (dv *DebugPanel) Continue() {
 		}
 	}
 	if dv.Code != nil {
-		sc := dv.Code.AsWidget().Scene
-		if sc != nil && sc.Stage.Mains != nil {
-			sc.Stage.Mains.RenderWindow.Raise()
-		}
+		dv.Code.Events().RenderWindow().Raise()
 	}
 	if ds != nil {
 		dv.InitState(ds)

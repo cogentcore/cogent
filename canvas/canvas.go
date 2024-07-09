@@ -546,15 +546,8 @@ func (vv *Canvas) SetTitle() {
 	if vv.Filename == "" {
 		return
 	}
-	win := vv.Scene.RenderWindow()
-	if win == nil {
-		return
-	}
 	dfnm := fsx.DirAndFile(string(vv.Filename))
-	winm := "Cogent Canvas • " + dfnm
-	win.SetName(winm)
-	win.SetTitle(winm)
-	vv.Scene.Body.Title = winm
+	vv.Scene.Body.SetTitle("Cogent Canvas • " + dfnm)
 }
 
 // NewDrawing opens a new drawing window
