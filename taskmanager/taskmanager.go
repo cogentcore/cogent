@@ -63,8 +63,8 @@ func main() {
 	paused := false
 
 	b.OnShow(func(e events.Event) {
-		tv.SortSliceAction(1)
-		tv.SortSliceAction(1)
+		tv.SortColumn(1)
+		tv.SortColumn(1)
 		go func() {
 			for range tick.C {
 				if paused {

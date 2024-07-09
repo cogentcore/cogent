@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/stringsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -404,7 +405,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 					fvtv.Buffer.NewBuffer(0)
 				}
 			} else {
-				core.StringsInsertFirstUnique(&fv.Params().FindHist, find, core.SystemSettings.SavedPathsMax)
+				stringsx.InsertFirstUnique(&fv.Params().FindHist, find, core.SystemSettings.SavedPathsMax)
 				fv.FindAction()
 			}
 		})
@@ -484,7 +485,7 @@ func (fv *FindPanel) makeReplToolbar(p *tree.Plan) {
 		w.OnChange(func(e events.Event) {
 			repl := w.CurrentItem.Value.(string)
 			fv.Params().Replace = repl
-			core.StringsInsertFirstUnique(&fv.Params().ReplHist, repl, core.SystemSettings.SavedPathsMax)
+			stringsx.InsertFirstUnique(&fv.Params().ReplHist, repl, core.SystemSettings.SavedPathsMax)
 		})
 		w.Updater(func() {
 			w.SetCurrentValue(fv.Params().Replace)

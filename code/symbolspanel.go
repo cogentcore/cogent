@@ -370,7 +370,7 @@ func (st *SymTree) Init() {
 		s.Gap.X.Em(0.4)
 	})
 	tree.AddChildInit(st.Parts, "branch", func(w *core.Switch) {
-		w.SetIcons(st.IconOpen, st.IconClosed, st.SymNode().GetIcon())
+		w.SetIconOn(st.IconOpen).SetIconOff(st.IconClosed).SetIconIndeterminate(st.SymNode().GetIcon())
 		tree.AddChildInit(w, "stack", func(w *core.Frame) {
 			tree.AddChildInit(w, "icon-indeterminate", func(w *core.Icon) {
 				w.Styler(func(s *styles.Style) {
