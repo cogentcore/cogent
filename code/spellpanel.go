@@ -140,7 +140,7 @@ func (sv *SpellPanel) Init() {
 					if tv == nil || tv.Buffer == nil {
 						return
 					}
-					tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Txt, false)
+					tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Text(), false)
 					tv.QReplaceReplaceAll(0)
 					sv.LastAction = w
 					sv.Errs = tv.Buffer.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags

@@ -161,8 +161,9 @@ func (sv *SymbolsPanel) makeToolbar(p *tree.Plan) {
 		w.OnChange(func(e events.Event) {
 			sv.Match = w.Text()
 			sv.UpdateSymbols()
-			w.CursorEnd()
-			w.SetFocusEvent()
+			// TODO: why do this?
+			// w.CursorEnd()
+			// w.SetFocusEvent()
 		})
 	})
 }
@@ -176,9 +177,8 @@ func (sv *SymbolsPanel) RefreshAction() {
 func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	tv := cv.ActiveTextEditor()
 	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
-		var ok = false
 		tr := textbuf.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
-		tv, ok = cv.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
+		_, ok := cv.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
 		if !ok {
 			log.Printf("Code SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
