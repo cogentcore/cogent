@@ -102,7 +102,7 @@ func (sv *SymbolsPanel) UpdateSymbols() {
 	} else {
 		sv.OpenFile()
 	}
-	tv.ReSync()
+	tv.Resync()
 	tv.OpenAll()
 }
 

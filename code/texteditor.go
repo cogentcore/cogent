@@ -222,7 +222,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene) {
 
 	fn := ed.Code.FileNodeForFile(string(ed.Buffer.Filename), false)
 	if fn != nil {
-		fn.SelectAction(events.SelectOne)
+		fn.SelectEvent(events.SelectOne)
 		fn.VCSContextMenu(m)
 	}
 

@@ -210,7 +210,7 @@ func (cv *Canvas) OpenDrawing(fnm core.Filename) error { //types:add
 	cv.SetTitle()
 	tv := cv.Tree()
 	tv.CloseAll()
-	tv.ReSync()
+	tv.Resync()
 	cv.SetStatus("Opened: " + string(cv.Filename))
 	tv.CloseAll()
 	sv.backgroundGridEff = 0
@@ -621,7 +621,7 @@ func (vv *Canvas) UpdateDisp() {
 
 func (vv *Canvas) UpdateTree() {
 	tv := vv.Tree()
-	tv.ReSync()
+	tv.Resync()
 }
 
 func (vv *Canvas) SetDefaultStyle() {

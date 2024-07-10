@@ -29,7 +29,7 @@ func (gv *Canvas) SelectNodeInTree(kn tree.Node, mode events.SelectModes) {
 	tvn := tv.FindSyncNode(kn)
 	if tvn != nil {
 		tvn.OpenParents()
-		tvn.SelectAction(mode)
+		tvn.SelectEvent(mode)
 	}
 }
 
@@ -64,10 +64,10 @@ func (gv *Canvas) DuplicateSelected() { //types:add
 	tv := gv.Tree()
 	// tv.SetFullReRender()
 	for _, tvi := range tvl {
-		tvi.AsCoreTree().DuplicateSync()
+		tvi.Duplicate()
 	}
 	gv.SetStatus("Duplicated selected items")
-	tv.ReSync() // todo: should not be needed
+	tv.Resync() // todo: should not be needed
 	gv.ChangeMade()
 }
 
@@ -100,7 +100,7 @@ func (gv *Canvas) CutSelected() { //types:add
 	tv.SetSelectedViews(tvl)
 	tvl[0].Cut() // operates on first element in selection
 	gv.SetStatus("Cut selected items")
-	tv.ReSync() // todo: should not be needed
+	tv.Resync() // todo: should not be needed
 	sv.UpdateSelSprites()
 	gv.ChangeMade()
 }
@@ -126,7 +126,7 @@ func (gv *Canvas) PasteClip() { //types:add
 	// }
 	// par.PasteChildren(md, dnd.DropCopy)
 	gv.SetStatus("Pasted items from clipboard")
-	tv.ReSync() // todo: should not be needed
+	tv.Resync() // todo: should not be needed
 	gv.ChangeMade()
 }
 
@@ -147,7 +147,7 @@ func (gv *Canvas) DeleteSelected() {
 	// 	tvi.SrcDelete()
 	// }
 	gv.SetStatus("Deleted selected items")
-	tv.ReSync() // todo: should not be needed
+	tv.Resync() // todo: should not be needed
 	sv.UpdateSelSprites()
 	gv.ChangeMade()
 }
