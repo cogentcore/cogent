@@ -316,7 +316,7 @@ func (cv *Code) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:a
 	dif := fna.Buffer.DiffBuffersUnified(fnb.Buffer, 3)
 	cbuf, _, _ := cv.RecycleCmdTab("Diffs")
 	cbuf.SetText(dif)
-	cbuf.AutoScrollViews()
+	cbuf.AutoScrollEditors()
 
 	astr := fna.Buffer.Strings(false)
 	bstr := fnb.Buffer.Strings(false)

@@ -550,7 +550,7 @@ func (cm *Command) AppendCmdOut(cv *Code, buf *texteditor.Buffer, out []byte) {
 	mlns = append(mlns, lfb...)
 
 	buf.AppendTextMarkup(out, mlns, texteditor.EditSignal)
-	buf.AutoScrollViews()
+	buf.AutoScrollEditors()
 }
 
 // CmdOutStatusLen is amount of command output to include in the status update
@@ -589,7 +589,7 @@ func (cm *Command) RunStatus(cv *Code, buf *texteditor.Buffer, cmdstr string, er
 		// todo: attempt to support syntax highlighting using builtin texteditor formatting
 		// buf.AppendTextLine([]byte(""), texteditor.EditSignal)
 		// buf.AppendTextLine(cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
-		buf.AutoScrollViews()
+		buf.AutoScrollEditors()
 		if cm.Focus {
 			cv.FocusOnTabs()
 		}

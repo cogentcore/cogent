@@ -56,7 +56,6 @@ func (sv *SpellPanel) Init() {
 		s.Direction = styles.Column
 		s.Grow.Set(1, 1)
 	})
-	texteditor.InitSpell()
 	sv.CheckNext() // todo: on start
 
 	tree.AddChildAt(sv, "spellbar", func(w *core.Toolbar) {
@@ -224,7 +223,7 @@ func (sv *SpellPanel) CheckNext() {
 				break
 			}
 			sv.CurIndex = 0
-			sv.Errs = tv.Buffer.SpellCheckLineErrs(sv.CurLn)
+			sv.Errs = tv.Buffer.SpellCheckLineErrors(sv.CurLn)
 		}
 	}
 	if done {

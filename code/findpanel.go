@@ -212,7 +212,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 		}
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buffer.AdjustReg(reg)
+	reg = tv.Buffer.AdjustRegion(reg)
 	if !reg.IsNil() {
 		if fp.Regexp {
 			rg := tv.Buffer.Region(reg.Start, reg.End)
@@ -323,7 +323,7 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 		return false
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buffer.AdjustReg(reg)
+	reg = tv.Buffer.AdjustRegion(reg)
 	find := fv.Params().Find
 	texteditor.PrevISearchString = find
 	tve := texteditor.AsEditor(tv)
