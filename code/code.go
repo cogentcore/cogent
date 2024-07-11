@@ -341,11 +341,14 @@ func (cv *Code) OpenFile(fnm string) { //types:add
 		cv.ViewFile(core.Filename(abfn))
 		return
 	}
-	for _, win := range core.MainRenderWindows {
+	for _, win := range core.AllRenderWindows {
 		msc := win.MainScene()
-		geo := CodeInScene(msc)
-		if strings.HasPrefix(abfn, string(geo.ProjectRoot)) {
-			geo.ViewFile(core.Filename(abfn))
+		cis := CodeInScene(msc)
+		if cis == nil {
+			continue
+		}
+		if strings.HasPrefix(abfn, string(cis.ProjectRoot)) {
+			cis.ViewFile(core.Filename(abfn))
 			return
 		}
 	}
@@ -647,11 +650,11 @@ func CodeInScene(sc *core.Scene) *Code {
 // NewCodeWindow is common code for Open CodeWindow from Project or Path
 func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	winm := "Cogent Code • " + projnm
-	if win, found := core.AllRenderWindows.FindName(winm); found {
-		sc := win.MainScene()
+	if w := core.AllRenderWindows.FindName(winm); w != nil {
+		sc := w.MainScene()
 		cv := CodeInScene(sc)
 		if cv != nil && string(cv.ProjectRoot) == root {
-			win.Raise()
+			w.Raise()
 			return cv
 		}
 	}

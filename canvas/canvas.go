@@ -567,11 +567,11 @@ func NewWindow(fnm string) *Canvas {
 	}
 	winm := "Cogent Canvas • " + dfnm
 
-	if win, found := core.AllRenderWindows.FindName(winm); found {
-		sc := win.MainScene()
+	if w := core.AllRenderWindows.FindName(winm); w != nil {
+		sc := w.MainScene()
 		if vv := tree.ChildByType[*Canvas](sc.Body); vv != nil {
 			if string(vv.Filename) == path {
-				win.Raise()
+				w.Raise()
 				return vv
 			}
 		}
