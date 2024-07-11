@@ -377,6 +377,9 @@ func (cv *Code) SelectOpenNode() {
 		return
 	}
 	nl := cv.OpenNodes.Strings()
+	if len(nl) == 0 {
+		return
+	}
 	tv := cv.ActiveTextEditor() // nl[0] is always currently viewed
 	def := nl[0]
 	if len(nl) > 1 {
