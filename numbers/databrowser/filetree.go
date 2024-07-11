@@ -37,7 +37,7 @@ func (fn *FileNode) OnDoubleClick(e events.Event) {
 	if !ok {
 		return
 	}
-	sels := fn.SelectedViews()
+	sels := fn.GetSelectedNodes()
 	if len(sels) > 0 {
 		sn := filetree.AsNode(sels[len(sels)-1])
 		if sn != nil {

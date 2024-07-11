@@ -79,7 +79,7 @@ func (gv *Canvas) CopySelected() { //types:add
 		return
 	}
 	tv := gv.Tree()
-	tv.SetSelectedViews(tvl)
+	tv.SetSelectedNodes(tvl)
 	tvl[0].Copy() // operates on first element in selection
 	gv.SetStatus("Copied selected items")
 }
@@ -97,7 +97,7 @@ func (gv *Canvas) CutSelected() { //types:add
 	sv.EditState().ResetSelected()
 	tv := gv.Tree()
 	// tv.SetFullReRender()
-	tv.SetSelectedViews(tvl)
+	tv.SetSelectedNodes(tvl)
 	tvl[0].Cut() // operates on first element in selection
 	gv.SetStatus("Cut selected items")
 	tv.Resync() // todo: should not be needed

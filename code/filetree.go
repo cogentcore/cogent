@@ -261,7 +261,7 @@ func (fn *FileNode) RenameFiles() {
 	}
 	ge.SaveAllCheck(true, func() {
 		var nodes []*FileNode
-		sels := fn.SelectedViews()
+		sels := fn.GetSelectedNodes()
 		for i := len(sels) - 1; i >= 0; i-- {
 			sn := sels[i].(*FileNode)
 			nodes = append(nodes, sn)
