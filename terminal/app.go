@@ -156,12 +156,12 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	buf.NewBuffer(0)
 	buf.Options.LineNumbers = false
 
-	te := texteditor.NewEditor(cfr).SetBuffer(buf)
-	te.Styler(func(s *styles.Style) {
+	ed := texteditor.NewEditor(cfr).SetBuffer(buf)
+	ed.Styler(func(s *styles.Style) {
 		s.Min.Set(units.Em(30), units.Em(10))
 		s.Background = cfr.Styles.Background
 	})
-	te.OnKeyChord(func(e events.Event) {
+	ed.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
 		kf := keymap.Of(kc)
 

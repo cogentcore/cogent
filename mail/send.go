@@ -34,16 +34,16 @@ func (a *App) Compose() { //types:add
 	a.ComposeMessage.To = []*mail.Address{{}}
 	b := core.NewBody().AddTitle("Send message")
 	core.NewForm(b).SetStruct(a.ComposeMessage)
-	te := texteditor.NewSoloEditor(b)
-	te.Buffer.SetLang("md")
-	te.Buffer.Options.LineNumbers = false
-	te.Styler(func(s *styles.Style) {
+	ed := texteditor.NewSoloEditor(b)
+	ed.Buffer.SetLang("md")
+	ed.Buffer.Options.LineNumbers = false
+	ed.Styler(func(s *styles.Style) {
 		s.SetMono(false)
 	})
 	b.AddBottomBar(func(pw core.Widget) {
 		b.AddCancel(pw)
 		b.AddOK(pw).SetText("Send").OnClick(func(e events.Event) {
-			a.ComposeMessage.Body = te.Buffer.String()
+			a.ComposeMessage.Body = ed.Buffer.String()
 			a.SendMessage()
 		})
 	})
