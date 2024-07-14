@@ -44,23 +44,23 @@ func DebugSettingsEditor(pf *cdebug.Params) *core.Form {
 	return tv
 }
 
-// LangsView opens a view of a languages options map
-func LangsView(pt *Langs) {
+// LanguagesView opens a view of a languages options map
+func LanguagesView(pt *Languages) {
 	if core.RecycleMainWindow(pt) {
 		return
 	}
 	d := core.NewBody().SetTitle("Available Language Opts: add or modify entries to customize options for language / file types").SetData(pt)
 	tv := core.NewKeyedList(d).SetMap(pt)
-	AvailableLangsChanged = false
+	AvailableLanguagesChanged = false
 	tv.OnChange(func(e events.Event) {
-		AvailableLangsChanged = true
+		AvailableLanguagesChanged = true
 	})
 
 	d.AddAppBar(func(p *tree.Plan) {
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.SaveSettings).
 				SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(AvailableLangsChanged && pt == &AvailableLangs) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(AvailableLanguagesChanged && pt == &AvailableLanguages) })
 		})
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
@@ -74,12 +74,12 @@ func LangsView(pt *Langs) {
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.ViewStandard).SetConfirm(true).
 				SetText("View standard").SetIcon(icons.Visibility).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLanguages) })
 		})
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.RevertToStandard).SetConfirm(true).
 				SetText("Revert to standard").SetIcon(icons.DeviceReset).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLangs) })
+				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLanguages) })
 		})
 	})
 	d.RunWindow()

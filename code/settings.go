@@ -97,7 +97,7 @@ func (se *SettingsData) Save() error {
 		return err
 	}
 	if se.SaveLangOpts {
-		AvailableLangs.SaveSettings()
+		AvailableLanguages.SaveSettings()
 	}
 	if se.SaveCmds {
 		CustomCommands.SaveSettings()
@@ -113,7 +113,7 @@ func (se *SettingsData) Open() error {
 		return err
 	}
 	if se.SaveLangOpts {
-		AvailableLangs.OpenSettings()
+		AvailableLanguages.OpenSettings()
 	}
 	if se.SaveCmds {
 		CustomCommands.OpenSettings()
@@ -126,7 +126,7 @@ func (se *SettingsData) Open() error {
 // Apply settings updates things according with settings
 func (se *SettingsData) Apply() { //types:add
 	MergeAvailableCmds()
-	AvailableLangs.Validate()
+	AvailableLanguages.Validate()
 	se.ApplyEnvVars()
 }
 
@@ -165,7 +165,7 @@ func (se *SettingsData) MakeToolbar(p *tree.Plan) {
 // language / data / file type.
 func (se *SettingsData) EditLangOpts() { //types:add
 	se.SaveLangOpts = true
-	LangsView(&AvailableLangs)
+	LanguagesView(&AvailableLanguages)
 }
 
 // EditCmds opens the CmdsView editor to customize commands you can run.

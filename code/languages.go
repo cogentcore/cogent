@@ -21,21 +21,21 @@ type LangOpts struct {
 	PostSaveCmds CmdNames
 }
 
-// Langs is a map of language options
-type Langs map[fileinfo.Known]*LangOpts
+// Languages is a map of language options
+type Languages map[fileinfo.Known]*LangOpts
 
-// AvailableLangs is the current set of language options -- can be
-// loaded / saved / edited with settings.  This is set to StandardLangs at
+// AvailableLanguages is the current set of language options -- can be
+// loaded / saved / edited with settings.  This is set to [StandardLanguages] at
 // startup.
-var AvailableLangs Langs
+var AvailableLanguages Languages
 
 func init() {
-	AvailableLangs.CopyFrom(StandardLangs)
+	AvailableLanguages.CopyFrom(StandardLanguages)
 }
 
 // Validate checks to make sure post save command names exist, issuing
 // warnings to log for those that don't
-func (lt Langs) Validate() bool {
+func (lt Languages) Validate() bool {
 	ok := true
 	for _, lr := range lt {
 		for _, cmdnm := range lr.PostSaveCmds {
@@ -48,42 +48,42 @@ func (lt Langs) Validate() bool {
 	return ok
 }
 
-// LangSettingsFilename is the name of the settings file in the app settings
-// directory for saving / loading the default AvailableLangs languages list
-var LangSettingsFilename = "lang-settings.toml"
+// LanguageSettingsFilename is the name of the settings file in the app settings
+// directory for saving / loading the default [AvailableLanguages] languages list
+var LanguageSettingsFilename = "language-settings.toml"
 
 // Open opens languages from a toml-formatted file.
-func (lt *Langs) Open(filename core.Filename) error {
-	*lt = make(Langs) // reset
+func (lt *Languages) Open(filename core.Filename) error {
+	*lt = make(Languages) // reset
 	return tomlx.Open(lt, string(filename))
 }
 
 // Save saves languages to a toml-formatted file.
-func (lt *Langs) Save(filename core.Filename) error { //types:add
+func (lt *Languages) Save(filename core.Filename) error { //types:add
 	return tomlx.Save(lt, string(filename))
 }
 
 // OpenSettings opens the Langs from the app settings directory,
-// using LangSettingsFilename.
-func (lt *Langs) OpenSettings() error { //types:add
+// using [LanguageSettingsFilename].
+func (lt *Languages) OpenSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, LangSettingsFilename)
-	AvailableLangsChanged = false
+	pnm := filepath.Join(pdir, LanguageSettingsFilename)
+	AvailableLanguagesChanged = false
 	return lt.Open(core.Filename(pnm))
 }
 
 // SaveSettings saves the Langs to the app settings directory,
-// using LangSettingsFilename.
-func (lt *Langs) SaveSettings() error { //types:add
+// using [LanguageSettingsFilename].
+func (lt *Languages) SaveSettings() error { //types:add
 	pdir := core.TheApp.AppDataDir()
-	pnm := filepath.Join(pdir, LangSettingsFilename)
-	AvailableLangsChanged = false
+	pnm := filepath.Join(pdir, LanguageSettingsFilename)
+	AvailableLanguagesChanged = false
 	return lt.Save(core.Filename(pnm))
 }
 
 // CopyFrom copies languages from given other map
-func (lt *Langs) CopyFrom(cp Langs) {
-	*lt = make(Langs, len(cp)) // reset
+func (lt *Languages) CopyFrom(cp Languages) {
+	*lt = make(Languages, len(cp)) // reset
 	for ky, val := range cp {
 		(*lt)[ky] = val
 	}
@@ -91,23 +91,23 @@ func (lt *Langs) CopyFrom(cp Langs) {
 
 // RevertToStandard reverts this map to using the StdLangs that are compiled into
 // the program and have all the lastest standards.
-func (lt *Langs) RevertToStandard() { //types:add
-	lt.CopyFrom(StandardLangs)
-	AvailableLangsChanged = true
+func (lt *Languages) RevertToStandard() { //types:add
+	lt.CopyFrom(StandardLanguages)
+	AvailableLanguagesChanged = true
 }
 
-// ViewStandard shows the standard langs that are compiled into the program and have
+// ViewStandard shows the standard languages that are compiled into the program and have
 // all the lastest standards.  Useful for comparing against custom lists.
-func (lt *Langs) ViewStandard() { //types:add
-	LangsView(&StandardLangs)
+func (lt *Languages) ViewStandard() { //types:add
+	LanguagesView(&StandardLanguages)
 }
 
-// AvailableLangsChanged is used to update core.LangsView toolbars via
+// AvailableLanguagesChanged is used to update core.LangsView toolbars via
 // following menu, toolbar properties update methods -- not accurate if editing any
 // other map but works for now..
-var AvailableLangsChanged = false
+var AvailableLanguagesChanged = false
 
-// StandardLangs is the original compiled-in set of standard language options.
-var StandardLangs = Langs{
+// StandardLanguages is the original compiled-in set of standard language options.
+var StandardLanguages = Languages{
 	fileinfo.Go: {CmdNames{"Go: Imports File"}},
 }

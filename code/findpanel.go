@@ -47,7 +47,7 @@ type FindParams struct {
 	Loc filetree.FindLoc
 
 	// languages for files to search
-	Langs []fileinfo.Known
+	Languages []fileinfo.Known
 
 	// history of finds
 	FindHist []string
@@ -159,7 +159,7 @@ func (fv *FindPanel) FindAction() {
 	if !fv.CompileRegexp() {
 		return
 	}
-	fv.Code.Find(fp.Find, fp.Replace, fp.IgnoreCase, fp.Regexp, fp.Loc, fp.Langs)
+	fv.Code.Find(fp.Find, fp.Replace, fp.IgnoreCase, fp.Regexp, fp.Loc, fp.Languages)
 }
 
 // CheckValidRegexp returns false if using regexp and it is not valid
@@ -503,8 +503,8 @@ func (fv *FindPanel) makeReplToolbar(p *tree.Plan) {
 		w.SetText("Lang:").SetTooltip("Language(s) to restrict search / replace to")
 	})
 
-	tree.AddAt(p, "langs", func(w *core.InlineList) {
-		w.SetSlice(&fv.Params().Langs)
+	tree.AddAt(p, "languages", func(w *core.InlineList) {
+		w.SetSlice(&fv.Params().Languages)
 		w.SetTooltip("Language(s) to restrict search / replace to")
 	})
 }

@@ -30,7 +30,7 @@ func (cv *Code) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 	fb.Args[2].SetValue(cv.Settings.Find.IgnoreCase)
 	fb.Args[3].SetValue(cv.Settings.Find.Regexp)
 	fb.Args[4].SetValue(cv.Settings.Find.Loc)
-	fb.Args[5].SetValue(cv.Settings.Find.Langs)
+	fb.Args[5].SetValue(cv.Settings.Find.Languages)
 	return fb
 }
 
@@ -46,7 +46,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	}
 	cv.Settings.Find.IgnoreCase = ignoreCase
 	cv.Settings.Find.Regexp = regExp
-	cv.Settings.Find.Langs = langs
+	cv.Settings.Find.Languages = langs
 	cv.Settings.Find.Loc = loc
 	cv.Settings.Find.Find = find
 	cv.Settings.Find.Replace = repl

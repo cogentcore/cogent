@@ -122,7 +122,7 @@ func (cv *Code) RunPostCmdsActiveView() bool {
 // uses MainLang to disambiguate if multiple languages associated with extension.
 func (cv *Code) RunPostCmdsFileNode(fn *filetree.Node) bool {
 	lang := fn.Info.Known
-	if lopt, has := AvailableLangs[lang]; has {
+	if lopt, has := AvailableLanguages[lang]; has {
 		if len(lopt.PostSaveCmds) > 0 {
 			_, ptab := cv.Tabs().CurrentTab()
 			cv.ExecCmdsFileNode(fn, lopt.PostSaveCmds)
