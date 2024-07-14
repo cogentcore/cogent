@@ -86,7 +86,7 @@ func (a *App) Init() {
 					if kf == keymap.Enter && e.Modifiers() == 0 {
 						e.SetHandled()
 						txt := w.Buffer.String()
-						w.Buffer.SetTextString("")
+						w.Buffer.SetString("")
 						cmds := a.FindPath("splits/commands").(*core.Frame)
 						dir := a.FindPath("splits/editor-frame/dir").(*core.Text)
 						errors.Log(a.RunCmd(txt, cmds, dir))
