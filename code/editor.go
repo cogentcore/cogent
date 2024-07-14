@@ -250,7 +250,7 @@ func (cv *Code) JoinParaLines() { //types:add
 	if tv.HasSelection() {
 		tv.Buffer.JoinParaLines(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
-		tv.Buffer.JoinParaLines(0, tv.NLines-1)
+		tv.Buffer.JoinParaLines(0, tv.NumLines-1)
 	}
 }
 
@@ -264,7 +264,7 @@ func (cv *Code) TabsToSpaces() { //types:add
 	if tv.HasSelection() {
 		tv.Buffer.TabsToSpacesRegion(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
-		tv.Buffer.TabsToSpacesRegion(0, tv.NLines-1)
+		tv.Buffer.TabsToSpacesRegion(0, tv.NumLines-1)
 	}
 }
 
@@ -278,7 +278,7 @@ func (cv *Code) SpacesToTabs() { //types:add
 	if tv.HasSelection() {
 		tv.Buffer.SpacesToTabsRegion(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
-		tv.Buffer.SpacesToTabsRegion(0, tv.NLines-1)
+		tv.Buffer.SpacesToTabsRegion(0, tv.NumLines-1)
 	}
 }
 

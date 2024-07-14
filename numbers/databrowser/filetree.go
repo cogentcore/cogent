@@ -102,7 +102,7 @@ func (br *Browser) NewTabEditor(label, filename string) *texteditor.Editor {
 		ed.Buffer.Open(core.Filename(filename))
 		return ed
 	}
-	ed := texteditor.NewSoloEditor(tab)
+	ed := texteditor.NewEditor(tab)
 	ed.Buffer.Open(core.Filename(filename))
 	br.Update()
 	return ed

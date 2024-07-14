@@ -218,7 +218,7 @@ func (sv *SpellPanel) CheckNext() {
 			break
 		} else {
 			sv.CurLn++
-			if sv.CurLn >= tv.NLines {
+			if sv.CurLn >= tv.NumLines {
 				done = true
 				break
 			}

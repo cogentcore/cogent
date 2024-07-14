@@ -87,7 +87,7 @@ func (br *Browser) NewTabEditorString(label, content string) *texteditor.Editor 
 		ed.Buffer.SetText([]byte(content))
 		return ed
 	}
-	ed := texteditor.NewSoloEditor(tab)
+	ed := texteditor.NewEditor(tab)
 	ed.Buffer.SetText([]byte(content))
 	br.Update()
 	return ed
