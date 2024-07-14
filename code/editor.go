@@ -31,13 +31,13 @@ import (
 // CursorToHistPrev moves back to the previous history item.
 func (cv *Code) CursorToHistPrev() bool { //types:add
 	tv := cv.ActiveTextEditor()
-	return tv.CursorToHistPrev()
+	return tv.CursorToHistoryPrev()
 }
 
 // CursorToHistNext moves forward to the next history item.
 func (cv *Code) CursorToHistNext() bool { //types:add
 	tv := cv.ActiveTextEditor()
-	return tv.CursorToHistNext()
+	return tv.CursorToHistoryNext()
 }
 
 // LookupFun is the completion system Lookup function that makes a custom
