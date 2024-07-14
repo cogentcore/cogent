@@ -513,7 +513,7 @@ func (cm *Command) RunBuf(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) boo
 		err = cmd.Start()
 		if err == nil {
 			obuf := texteditor.OutputBuffer{}
-			obuf.Init(stdout, buf, 0, cm.MarkupCmdOutput)
+			obuf.SetOutput(stdout).SetBuffer(buf).SetMarkupFunc(cm.MarkupCmdOutput)
 			obuf.MonitorOutput()
 		}
 		err = cmd.Wait()

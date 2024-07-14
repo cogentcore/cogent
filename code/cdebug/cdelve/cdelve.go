@@ -125,7 +125,7 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buffer, pars 
 		err = gd.cmd.Start()
 		if err == nil {
 			gd.obuf = &texteditor.OutputBuffer{}
-			gd.obuf.Init(stdout, outbuf, 0, gd.monitorOutput)
+			gd.obuf.SetOutput(stdout).SetBuffer(outbuf).SetMarkupFunc(gd.monitorOutput)
 			go gd.obuf.MonitorOutput()
 		}
 	}

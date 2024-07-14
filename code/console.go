@@ -32,7 +32,7 @@ type Console struct {
 	StderrRead *os.File `json:"-" xml:"-"`
 
 	// text buffer holding all output
-	Buf *texteditor.Buffer `json:"-" xml:"-"`
+	Buffer *texteditor.Buffer `json:"-" xml:"-"`
 
 	// set to true to cancel monitoring
 	Cancel bool `json:"-" xml:"-"`
@@ -63,9 +63,9 @@ func (cn *Console) Init(logFile string) {
 	os.Stdout = cn.StdoutWrite
 	os.Stderr = cn.StderrWrite
 	log.SetOutput(cn.StderrWrite)
-	cn.Buf = texteditor.NewBuffer()
-	cn.Buf.Options.LineNumbers = false
-	cn.Buf.Filename = core.Filename("console-buf")
+	cn.Buffer = texteditor.NewBuffer()
+	cn.Buffer.Options.LineNumbers = false
+	cn.Buffer.Filename = core.Filename("console-buf")
 	if logFile != "" {
 		cn.LogWrite = errors.Log1(os.Create(logFile))
 	}
@@ -87,7 +87,7 @@ func (cn *Console) Close() {
 // should be in a separate routine
 func (cn *Console) MonitorOut() {
 	obuf := texteditor.OutputBuffer{}
-	obuf.Init(cn.StdoutRead, cn.Buf, 0, MarkupStdout)
+	obuf.SetOutput(cn.StdoutRead).SetBuffer(cn.Buffer).SetMarkupFunc(MarkupStdout)
 	obuf.MonitorOutput()
 }
 
@@ -95,7 +95,7 @@ func (cn *Console) MonitorOut() {
 // should be in a separate routine
 func (cn *Console) MonitorErr() {
 	obuf := texteditor.OutputBuffer{}
-	obuf.Init(cn.StderrRead, cn.Buf, 0, MarkupStderr)
+	obuf.SetOutput(cn.StderrRead).SetBuffer(cn.Buffer).SetMarkupFunc(MarkupStderr)
 	obuf.MonitorOutput()
 }
 

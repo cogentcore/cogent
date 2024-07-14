@@ -183,7 +183,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	})
 
 	ob := &texteditor.OutputBuffer{}
-	ob.Init(or, buf, 0, func(line []byte) []byte {
+	ob.SetOutput(or).SetBuffer(buf).SetMarkupFunc(func(line []byte) []byte {
 		return ansihtml.ConvertToHTML(line)
 	})
 	go func() {

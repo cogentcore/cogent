@@ -234,8 +234,8 @@ func (cv *Code) OpenConsoleTab() { //types:add
 		return
 	}
 	ctv.SetReadOnly(true)
-	if ctv.Buffer == nil || ctv.Buffer != TheConsole.Buf {
-		ctv.SetBuffer(TheConsole.Buf)
+	if ctv.Buffer == nil || ctv.Buffer != TheConsole.Buffer {
+		ctv.SetBuffer(TheConsole.Buffer)
 		ctv.OnChange(func(e events.Event) {
 			cv.SelectTabByName("Console")
 		})
