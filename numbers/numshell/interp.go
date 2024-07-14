@@ -14,8 +14,8 @@ import (
 	"cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/interpreter"
 	"cogentcore.org/core/yaegicore/symbols"
+	"github.com/cogentcore/yaegi/interp"
 	"github.com/ergochat/readline"
-	"github.com/traefik/yaegi/interp"
 )
 
 // NumbersInterpreter is the interpreter for Numbers app

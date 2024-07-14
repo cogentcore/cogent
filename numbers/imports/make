@@ -3,7 +3,7 @@
 // Commands for exporting symbols from core, numbers
 
 command install {
-	go install github.com/traefik/yaegi/cmd/yaegi@latest
+	go install github.com/cogentcore/yaegi/cmd/yaegi@latest
 }
 
 command tensor {

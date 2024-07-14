@@ -29,7 +29,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
-	"github.com/traefik/yaegi/interp"
+	"github.com/cogentcore/yaegi/interp"
 	"golang.org/x/exp/maps"
 )
 

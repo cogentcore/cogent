@@ -21,7 +21,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/interpreter"
-	"github.com/traefik/yaegi/interp"
+	"github.com/cogentcore/yaegi/interp"
 )
 
 //go:generate core generate -add-types -add-funcs

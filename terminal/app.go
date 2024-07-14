@@ -28,8 +28,8 @@ import (
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
+	"github.com/cogentcore/yaegi/interp"
 	"github.com/robert-nix/ansihtml"
-	"github.com/traefik/yaegi/interp"
 )
 
 // App is a GUI view of a terminal command.

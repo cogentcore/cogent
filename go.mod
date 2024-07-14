@@ -3,10 +3,11 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.2.1
+	cogentcore.org/core v0.2.2
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
+	github.com/cogentcore/yaegi v0.0.0-20240714043945-dadb98936955
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/emersion/go-imap/v2 v2.0.0-beta.3
 	github.com/emersion/go-message v0.18.1
@@ -18,7 +19,6 @@ require (
 	github.com/robert-nix/ansihtml v1.0.1
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.9.0
-	github.com/traefik/yaegi v0.16.1
 	github.com/yuin/goldmark v1.7.3
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/oauth2 v0.20.0
