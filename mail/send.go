@@ -35,7 +35,7 @@ func (a *App) Compose() { //types:add
 	b := core.NewBody().AddTitle("Send message")
 	core.NewForm(b).SetStruct(a.ComposeMessage)
 	ed := texteditor.NewEditor(b)
-	ed.Buffer.SetLang("md")
+	ed.Buffer.SetLanguage("md")
 	ed.Buffer.Options.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
 		s.SetMono(false)

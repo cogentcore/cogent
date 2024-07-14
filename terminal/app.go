@@ -78,7 +78,7 @@ func (a *App) Init() {
 				w.SetText(a.Dir)
 			})
 			tree.AddChild(w, func(w *texteditor.Editor) {
-				w.Buffer.SetLang("go")
+				w.Buffer.SetLanguage("go")
 				w.Buffer.Options.LineNumbers = false
 
 				w.OnKeyChord(func(e events.Event) {
