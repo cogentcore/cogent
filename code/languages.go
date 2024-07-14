@@ -13,16 +13,16 @@ import (
 	"cogentcore.org/core/core"
 )
 
-// LangOpts defines options associated with a given language / file format
+// LanguageOptions defines options associated with a given language / file format
 // only languages in fileinfo.Known list are supported..
-type LangOpts struct {
+type LanguageOptions struct {
 
 	// command(s) to run after a file of this type is saved
 	PostSaveCmds CmdNames
 }
 
 // Languages is a map of language options
-type Languages map[fileinfo.Known]*LangOpts
+type Languages map[fileinfo.Known]*LanguageOptions
 
 // AvailableLanguages is the current set of language options -- can be
 // loaded / saved / edited with settings.  This is set to [StandardLanguages] at
