@@ -1,24 +1,5 @@
 #!/usr/bin/env cosh
 
-// Commands for exporting symbols from core, numbers
-
-command install {
-	go install github.com/cogentcore/yaegi/cmd/yaegi@latest
-}
-
-command tensor {
-	yaegi extract cogentcore.org/core/tensor/bitslice cogentcore.org/core/tensor
-	yaegi extract cogentcore.org/core/tensor/table cogentcore.org/core/tensor/tensorcore
-	yaegi extract cogentcore.org/core/tensor/stats/clust cogentcore.org/core/tensor/stats/convolve cogentcore.org/core/tensor/stats/histogram cogentcore.org/core/tensor/stats/metric cogentcore.org/core/tensor/stats/norm cogentcore.org/core/tensor/stats/pca cogentcore.org/core/tensor/stats/simat cogentcore.org/core/tensor/stats/split cogentcore.org/core/tensor/stats/stats
-}
-
-command plotcore {
-	yaegi extract cogentcore.org/core/plot/plotcore
-}
-
-command all {
-	plotcore
-	tensor
-}
-
-shell.RunCommands(args)
+yaegi extract cogentcore.org/core/tensor/bitslice cogentcore.org/core/tensor
+yaegi extract cogentcore.org/core/tensor/table cogentcore.org/core/tensor/tensorcore
+yaegi extract cogentcore.org/core/tensor/stats/clust cogentcore.org/core/tensor/stats/convolve cogentcore.org/core/tensor/stats/histogram cogentcore.org/core/tensor/stats/metric cogentcore.org/core/tensor/stats/norm cogentcore.org/core/tensor/stats/pca cogentcore.org/core/tensor/stats/simat cogentcore.org/core/tensor/stats/split cogentcore.org/core/tensor/stats/stats
