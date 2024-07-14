@@ -186,6 +186,7 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 // ConfigEditorTextEditor configures an editor texteditor
 func ConfigEditorTextEditor(ed *texteditor.Editor) {
 	ed.Styler(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
 		s.Min.X.Ch(80)
 		s.Min.Y.Em(40)
 	})
