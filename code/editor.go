@@ -93,7 +93,7 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 	title := "Lookup: " + text
 
 	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
-	tb.Hi.Style = core.AppearanceSettings.HiStyle
+	tb.Highlighting.Style = core.AppearanceSettings.Highlighting
 	tb.Options.LineNumbers = cv.Settings.Editor.LineNumbers
 
 	d := core.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
@@ -262,9 +262,9 @@ func (cv *Code) TabsToSpaces() { //types:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.TabsToSpacesRegion(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Buffer.TabsToSpaces(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
-		tv.Buffer.TabsToSpacesRegion(0, tv.NumLines-1)
+		tv.Buffer.TabsToSpaces(0, tv.NumLines-1)
 	}
 }
 
@@ -276,9 +276,9 @@ func (cv *Code) SpacesToTabs() { //types:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.SpacesToTabsRegion(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Buffer.SpacesToTabs(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
 	} else {
-		tv.Buffer.SpacesToTabsRegion(0, tv.NumLines-1)
+		tv.Buffer.SpacesToTabs(0, tv.NumLines-1)
 	}
 }
 
@@ -329,12 +329,12 @@ func (cv *Code) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:a
 // returns a string report thereof.
 func (cv *Code) CountWords() string { //types:add
 	av := cv.ActiveTextEditor()
-	if av.Buffer == nil || av.Buffer.NLines <= 0 {
+	if av.Buffer == nil || av.Buffer.NumLines <= 0 {
 		return "empty"
 	}
 	av.Buffer.LinesMu.RLock()
 	defer av.Buffer.LinesMu.RUnlock()
-	ll := av.Buffer.NLines - 1
+	ll := av.Buffer.NumLines - 1
 	reg := textbuf.NewRegion(0, 0, ll, len(av.Buffer.Lines[ll]))
 	words, lines := textbuf.CountWordsLinesRegion(av.Buffer.Lines, reg)
 	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
@@ -344,7 +344,7 @@ func (cv *Code) CountWords() string { //types:add
 // if no selection, returns numbers for entire file.
 func (cv *Code) CountWordsRegion() string { //types:add
 	av := cv.ActiveTextEditor()
-	if av.Buffer == nil || av.Buffer.NLines <= 0 {
+	if av.Buffer == nil || av.Buffer.NumLines <= 0 {
 		return "empty"
 	}
 	if !av.HasSelection() {

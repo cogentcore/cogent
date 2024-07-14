@@ -22,7 +22,7 @@ import (
 
 // ConfigTextBuffer configures the text buffer according to the settings.
 func (cv *Code) ConfigTextBuffer(tb *texteditor.Buffer) {
-	tb.SetHiStyle(core.AppearanceSettings.HiStyle)
+	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Options.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
 	if tb.Complete != nil {
