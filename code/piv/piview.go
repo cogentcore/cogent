@@ -39,7 +39,7 @@ const (
 	LexRulesIndex = iota
 	ParseRulesIndex
 	FormIndex
-	AstOutIndex
+	ASTOutIndex
 	MainTabsIndex
 )
 
@@ -431,12 +431,12 @@ func (pv *PiView) ParseStopped() {
 // ParseNext does next step of lexing
 func (pv *PiView) ParseNext() *parser.Rule {
 	fs := &pv.FileState
-	at := pv.AstTree()
+	at := pv.ASTTree()
 	update := at.UpdateStart()
 	mrule := pv.Parser.ParseNext(fs)
 	at.UpdateEnd(update)
 	at.OpenAll()
-	pv.AstTreeToEnd()
+	pv.ASTTreeToEnd()
 	pv.UpdateLexBuf()
 	pv.UpdateParseBuf()
 	if mrule == nil {
@@ -453,7 +453,7 @@ func (pv *PiView) ParseNext() *parser.Rule {
 // ParseAll does all remaining lexing until end or error
 func (pv *PiView) ParseAll() {
 	fs := &pv.FileState
-	at := pv.AstTree()
+	at := pv.ASTTree()
 	update := at.UpdateStart()
 	for {
 		mrule := pv.Parser.ParseNext(fs)
@@ -463,7 +463,7 @@ func (pv *PiView) ParseAll() {
 	}
 	at.UpdateEnd(update)
 	// at.OpenAll()
-	// pv.AstTreeToEnd()
+	// pv.ASTTreeToEnd()
 	pv.UpdateLexBuf()
 	pv.UpdateParseBuf()
 	pv.ParseStopped()
@@ -487,9 +487,9 @@ func (pv *PiView) SelectParseRule(rule *parser.Rule) {
 	})
 }
 
-// AstTreeToEnd
-func (pv *PiView) AstTreeToEnd() {
-	lt := pv.AstTree()
+// ASTTreeToEnd
+func (pv *PiView) ASTTreeToEnd() {
+	lt := pv.ASTTree()
 	lt.MoveEndAction(events.SelectOne)
 }
 
@@ -763,9 +763,9 @@ func (pv *PiView) ParseTree() *core.Tree {
 	return pv.Splits().Child(ParseRulesIndex).Child(0).(*core.Tree)
 }
 
-// AstTree returns the Ast output tree
-func (pv *PiView) AstTree() *core.Tree {
-	return pv.Splits().Child(AstOutIndex).Child(0).(*core.Tree)
+// ASTTree returns the AST output tree
+func (pv *PiView) ASTTree() *core.Tree {
+	return pv.Splits().Child(ASTOutIndex).Child(0).(*core.Tree)
 }
 
 // Form returns the Form for editing rules
@@ -875,9 +875,9 @@ func (pv *PiView) ConfigSplits() {
 		prt := prfr.NewChild(core.KiT_Tree, "parse-tree").(*core.Tree)
 		prt.SetRootNode(&pv.Parser.Parser)
 
-		astfr := split.Child(AstOutIndex).(*core.Frame)
+		astfr := split.Child(ASTOutIndex).(*core.Frame)
 		astt := astfr.NewChild(core.KiT_Tree, "ast-tree").(*core.Tree)
-		astt.SetRootNode(&fs.Ast)
+		astt.SetRootNode(&fs.AST)
 
 		pv.TestBuf.SetHiStyle(core.Settings.Colors.HiStyle)
 		pv.TestBuf.Hi.Off = true // prevent auto-hi
@@ -906,8 +906,8 @@ func (pv *PiView) ConfigSplits() {
 		pv.LexTree().Open()
 		pv.ParseTree().SetRootNode(&pv.Parser.Parser)
 		pv.ParseTree().Open()
-		pv.AstTree().SetRootNode(&fs.Ast)
-		pv.AstTree().Open()
+		pv.ASTTree().SetRootNode(&fs.AST)
+		pv.ASTTree().Open()
 		pv.Form().SetStruct(&pv.Parser.Lexer)
 	}
 
@@ -939,7 +939,7 @@ func (pv *PiView) ConfigSplits() {
 		}
 	})
 
-	pv.AstTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
+	pv.ASTTree().TreeSig.Connect(pv.This, func(recv, send tree.Node, sig int64, data any) {
 		if data == nil {
 			return
 		}
