@@ -299,7 +299,7 @@ func (cv *Code) AddChooserFiles(ac *core.Chooser) {
 			if fn == nil || fn.IsIrregular() {
 				return tree.Continue
 			}
-			rpath := fn.MyRelPath()
+			rpath := fn.RelativePath()
 			nmpath := fn.Name + ":" + rpath
 			switch {
 			case fn.IsDir():

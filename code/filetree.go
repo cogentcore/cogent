@@ -193,7 +193,7 @@ func (on *OpenNodes) Strings() []string {
 	on.DeleteDeleted()
 	sl := make([]string, len(*on))
 	for i, fn := range *on {
-		rp := fn.FileRoot.RelPath(fn.Filepath)
+		rp := fn.FileRoot.RelativePathFrom(fn.Filepath)
 		rp = strings.TrimSuffix(rp, fn.Name)
 		if rp != "" {
 			sl[i] = fn.Name + " - " + rp

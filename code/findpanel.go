@@ -44,7 +44,7 @@ type FindParams struct {
 	Regexp bool
 
 	// locations to search in
-	Loc filetree.FindLoc
+	Loc filetree.FindLocation
 
 	// languages for files to search
 	Languages []fileinfo.Known
@@ -113,7 +113,7 @@ func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	outmus := make([][]byte, 0, 100) // markups
 	for _, fs := range res {
 		fp := fs.Node.Info.Path
-		fn := fs.Node.MyRelPath()
+		fn := fs.Node.RelativePath()
 		fbStLn := len(outlns) // find buf start ln
 		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
 		outlns = append(outlns, []byte(lstr))
@@ -444,7 +444,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 		w.SetTooltip(ttxt)
 		w.SetEnum(fv.Params().Loc)
 		w.OnChange(func(e events.Event) {
-			if eval, ok := w.CurrentItem.Value.(filetree.FindLoc); ok {
+			if eval, ok := w.CurrentItem.Value.(filetree.FindLocation); ok {
 				fv.Params().Loc = eval
 			}
 		})

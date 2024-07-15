@@ -171,7 +171,7 @@ func (cv *Code) OpenFileNode(fn *filetree.Node) (bool, error) {
 	if fn.IsDir() {
 		return false, fmt.Errorf("cannot open directory: %v", fn.Filepath)
 	}
-	filetree.NodeHiStyle = core.AppearanceSettings.Highlighting // must be set prior to OpenBuf
+	filetree.NodeHighlighting = core.AppearanceSettings.Highlighting // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
 		cv.ConfigTextBuffer(fn.Buffer)

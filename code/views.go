@@ -40,7 +40,7 @@ func (cv *Code) CallFind(ctx core.Widget) {
 
 // Find does Find / Replace in files, using given options and filters -- opens up a
 // main tab with the results and further controls.
-func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLoc, langs []fileinfo.Known) { //types:add
+func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLocation, langs []fileinfo.Known) { //types:add
 	if find == "" {
 		return
 	}
@@ -72,7 +72,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	}
 
 	var res []filetree.SearchResults
-	if loc == filetree.FindLocFile {
+	if loc == filetree.FindLocationFile {
 		if got {
 			if regExp {
 				re, err := regexp.Compile(find)
@@ -278,7 +278,7 @@ func (cv *Code) UpdateStatusText() {
 		ln = tv.CursorPos.Ln + 1
 		ch = tv.CursorPos.Ch
 		if tv.Buffer != nil {
-			fnm = cv.Files.RelPath(tv.Buffer.Filename)
+			fnm = cv.Files.RelativePathFrom(tv.Buffer.Filename)
 			if tv.Buffer.NotSaved {
 				fnm += "*"
 			}
