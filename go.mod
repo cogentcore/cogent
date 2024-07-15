@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.2.3-0.20240715011023-5c12faa3971f
+	cogentcore.org/core v0.2.3-0.20240715194410-a2313f0daa09
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
@@ -47,6 +47,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/goki/freetype v1.0.5 // indirect
 	github.com/goki/vulkan v1.0.7 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20240626202925-2eda941fd024 // indirect
 	github.com/google/pprof v0.0.0-20240227163752-401108e1b7e7 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
@@ -74,7 +75,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	go.abhg.dev/goldmark/wikilink v0.5.0 // indirect
 	golang.org/x/arch v0.7.0 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/image v0.18.0 // indirect
