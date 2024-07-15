@@ -63,8 +63,8 @@ func (gv *Canvas) DuplicateSelected() { //types:add
 	// sv.SetFullReRender()
 	tv := gv.Tree()
 	// tv.SetFullReRender()
-	for _, tvi := range tvl {
-		tvi.Duplicate()
+	for _, tr := range tvl {
+		tr.AsCoreTree().Duplicate()
 	}
 	gv.SetStatus("Duplicated selected items")
 	tv.Resync() // todo: should not be needed

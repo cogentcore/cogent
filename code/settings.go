@@ -453,8 +453,8 @@ func (cv *Code) LangDefaults() {
 
 // GuessMainLang guesses the main language in the project -- returns true if successful
 func (cv *Code) GuessMainLang() bool {
-	ecsc := cv.Files.FileExtCounts(fileinfo.Code)
-	ecsd := cv.Files.FileExtCounts(fileinfo.Doc)
+	ecsc := cv.Files.FileExtensionCounts(fileinfo.Code)
+	ecsd := cv.Files.FileExtensionCounts(fileinfo.Doc)
 	ecs := append(ecsc, ecsd...)
 	filetree.NodeNameCountSort(ecs)
 	for _, ec := range ecs {

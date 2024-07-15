@@ -69,21 +69,21 @@ func (br *Browser) FileNodeOpened(fn *filetree.Node) {
 			core.ErrorSnackbar(br, err)
 		}
 	case fn.IsExec(): // todo: use exec?
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Video: // todo: use our video viewer
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Audio: // todo: use our audio viewer
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Image: // todo: use our image viewer
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Model: // todo: use xyz
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Sheet: // todo: use our spreadsheet :)
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Bin: // don't edit
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	case fn.Info.Cat == fileinfo.Archive || fn.Info.Cat == fileinfo.Backup: // don't edit
-		fn.This.(filetree.Filer).OpenFilesDefault()
+		fn.OpenFilesDefault()
 	default:
 		br.NewTabEditor(df, string(fn.Filepath))
 	}
