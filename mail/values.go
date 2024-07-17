@@ -4,33 +4,32 @@
 
 package mail
 
+import (
+	"fmt"
+	"net/mail"
+
+	"cogentcore.org/core/core"
+)
+
 func init() {
-	// TODO: unclear if we need a distinct type here?
-	// core.AddValue(mail.Address{}, func() core.Value { return &AddressValue{} })
+	core.AddValueType[mail.Address, AddressTextField]()
 }
 
-// // AddressTextField represents a [mail.Address] with a [core.TextField].
-// type AddressTextField struct {
-// 	core.TextField
-// }
+// AddressTextField represents a [mail.Address] with a [core.TextField].
+type AddressTextField struct {
+	core.TextField
+	Address mail.Address
+}
 
-// // AddressTextField registers [core.Chooser] as the [core.Value] widget
-// // for [SplitName]
-// func (av AddressTextField) Value() core.Value {
-// 	return core.NewTextField()
-// }
+func (at *AddressTextField) WidgetValue() any { return &at.Address }
 
-// func (v *AddressValue) Config() {
-// 	v.Widget.OnChange(func(e events.Event) {
-// 		reflectx.OnePointerValue(v.Value).Interface().(*mail.Address).Address = v.Widget.Text()
-// 	})
-// }
-//
-// func (v *AddressValue) Update() {
-// 	address := reflectx.NonPointerValue(v.Value).Interface().(mail.Address)
-// 	if v.IsReadOnly() && address.Name != "" && address.Name != address.Address {
-// 		v.Widget.SetText(fmt.Sprintf("%s (%s)", address.Name, address.Address)).Update()
-// 		return
-// 	}
-// 	v.Widget.SetText(address.Address).Update()
-// }
+func (at *AddressTextField) Init() {
+	at.TextField.Init()
+	at.Updater(func() {
+		if at.IsReadOnly() && at.Address.Name != "" && at.Address.Name != at.Address.Address {
+			at.SetText(fmt.Sprintf("%s (%s)", at.Address.Name, at.Address.Address))
+			return
+		}
+		at.SetText(at.Address.Address)
+	})
+}
