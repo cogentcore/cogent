@@ -60,7 +60,7 @@ func main() {
 				sc.SetNeedsUpdate()
 				se.NeedsRender()
 			})
-			w.Args[0].SetTag(`ext:".obj,.dae,.gltf"`)
+			w.Args[0].SetTag(`extension:".obj,.dae,.gltf"`)
 			w.SetText("Open").SetIcon(icons.Open).SetTooltip("Open a 3D object file for viewing")
 		})
 	})

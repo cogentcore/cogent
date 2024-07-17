@@ -42,7 +42,7 @@ type Code struct {
 	ProjectRoot core.Filename
 
 	// current project filename for saving / loading specific Code configuration information in a .code file (optional)
-	ProjectFilename core.Filename `ext:".code"`
+	ProjectFilename core.Filename `extension:".code"`
 
 	// filename of the currently active texteditor
 	ActiveFilename core.Filename `set:"-"`

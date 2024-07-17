@@ -32,7 +32,7 @@ type Canvas struct {
 	core.Frame
 
 	// full path to current drawing filename
-	Filename core.Filename `ext:".svg" set:"-"`
+	Filename core.Filename `extension:".svg" set:"-"`
 
 	// current edit state
 	EditState EditState `set:"-"`

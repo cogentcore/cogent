@@ -64,11 +64,11 @@ func LanguagesView(pt *Languages) {
 		})
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			w.Args[0].SetTag(`ext:".toml"`)
+			w.Args[0].SetTag(`extension:".toml"`)
 		})
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			w.Args[0].SetTag(`ext:".toml"`)
+			w.Args[0].SetTag(`extension:".toml"`)
 		})
 		tree.Add(p, func(w *core.Separator) {})
 		tree.Add(p, func(w *core.FuncButton) {
@@ -104,11 +104,11 @@ func CmdsView(pt *Commands) {
 		})
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			w.Args[0].SetTag(`ext:".toml"`)
+			w.Args[0].SetTag(`extension:".toml"`)
 		})
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			w.Args[0].SetTag(`ext:".toml"`)
+			w.Args[0].SetTag(`extension:".toml"`)
 		})
 		tree.Add(p, func(w *core.Separator) {})
 		tree.Add(p, func(w *core.FuncButton) {
