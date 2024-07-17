@@ -24,6 +24,7 @@ import (
 	"cogentcore.org/core/parse/complete"
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/parse/parser"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/textbuf"
 )
@@ -98,6 +99,9 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 
 	d := core.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
 	tv := texteditor.NewEditor(d).SetBuffer(tb)
+	tv.Styler(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
+	})
 	tv.SetReadOnly(true)
 
 	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
