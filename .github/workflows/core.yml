@@ -48,6 +48,9 @@ jobs:
       - name: Build Code
         run: cd code/cmd/cogentcode && core build web && cp -a bin/web ../../../static/code && cd ../../..
 
+      - name: Build Canvas
+        run: cd canvas/cmd/canvas && core build web && cp -a bin/web ../../../static/canvas && cd ../../..
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
