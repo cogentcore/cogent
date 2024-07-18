@@ -114,7 +114,7 @@ func (rd *Random) ConfigTable(dt *table.Table) {
 
 func (rd *Random) ConfigPlot(plt *plotcore.PlotEditor, dt *table.Table) *plotcore.PlotEditor {
 	plt.Options.Title = "Random distribution histogram"
-	plt.Options.XAxisColumn = "Value"
+	plt.Options.XAxis = "Value"
 	plt.Options.Type = plotcore.Bar
 	plt.Options.XAxisRotation = 45
 	plt.SetTable(dt)

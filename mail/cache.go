@@ -63,7 +63,9 @@ func (a *App) CacheMessages() error {
 		a.IMAPClient = map[string]*imapclient.Client{}
 	}
 	mbox := a.FindPath("splits/mbox").(*core.Tree)
-	mbox.Async(mbox.DeleteChildren)
+	mbox.AsyncLock()
+	mbox.DeleteChildren()
+	mbox.AsyncUnlock()
 	for _, account := range Settings.Accounts {
 		err := a.CacheMessagesForAccount(account)
 		if err != nil {
