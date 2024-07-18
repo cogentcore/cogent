@@ -6,9 +6,17 @@
 // hosted at https://cogentcore.org/cogent.
 package main
 
-import "cogentcore.org/core/core"
+import (
+	"cogentcore.org/core/core"
+	"cogentcore.org/core/htmlcore"
+)
 
 func main() {
-	b := core.NewBody("Cogent Apps").AddTitle("Cogent Apps")
+	b := core.NewBody("Cogent Apps")
+	htmlcore.ReadMDString(htmlcore.NewContext(), b, `# Cogent Apps
+* [Cogent Code](https://cogentcore.org/cogent/code)
+* [Cogent Canvas](https://cogentcore.org/cogent/canvas)
+
+See other Cogent Apps at https://github.com/cogentcore/cogent`)
 	b.RunMainWindow()
 }
