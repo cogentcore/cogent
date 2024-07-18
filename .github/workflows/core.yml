@@ -46,7 +46,7 @@ jobs:
         run: cd docs && core build web -vanity-url cogentcore.org/cogent -github-vanity-repository cogentcore/cogent && cp -a bin/web ../static && cd ..
 
       - name: Build Code
-        run: cd code/cmd/cogentcode && core build web && cp -a bin/web ../../../static && cd ../../..
+        run: cd code/cmd/cogentcode && core build web && cp -a bin/web ../../../static/code && cd ../../..
 
       - name: Setup Pages
         id: pages
