@@ -96,6 +96,9 @@ func Interactive(c *Config) error {
 
 	ts := core.NewTabs(b)
 
+	db := ts.NewTab("Data browser")
+	core.NewText(db).SetType(core.TextTitleLarge).SetText("Use your terminal to enter data browser commands.")
+
 	rt := ts.NewTab("Random")
 	tb := core.NewToolbar(rt)
 	rd := random.NewRandom(rt)
