@@ -26,9 +26,9 @@ func (cv *Code) PanelIsOpen(panel int) bool {
 // CurPanel returns the splitter panel that currently has keyboard focus
 func (cv *Code) CurPanel() int {
 	sv := cv.Splits()
-	for i, ski := range sv.Children {
-		_, sk := core.AsWidget(ski)
-		if sk.HasStateWithin(states.Focused) {
+	for i, cn := range sv.Children {
+		cw := core.AsWidget(cn)
+		if cw.HasStateWithin(states.Focused) {
 			return i
 		}
 	}
@@ -52,8 +52,8 @@ func (cv *Code) FocusOnPanel(panel int) bool {
 			return false
 		}
 	default:
-		ski, _ := core.AsWidget(sv.Children[panel])
-		cv.Scene.Events.FocusNextFrom(ski)
+		cw := core.AsWidget(sv.Children[panel])
+		cv.Scene.Events.FocusNextFrom(cw)
 	}
 	cv.NeedsRender()
 	return true
