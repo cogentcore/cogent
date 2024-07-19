@@ -294,8 +294,8 @@ func (cv *Code) AddChooserFiles(ac *core.Chooser) {
 		if cv.Files == nil {
 			return
 		}
-		cv.Files.WidgetWalkDown(func(wi core.Widget, wb *core.WidgetBase) bool {
-			fn := filetree.AsNode(wi)
+		cv.Files.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+			fn := filetree.AsNode(cw)
 			if fn == nil || fn.IsIrregular() {
 				return tree.Continue
 			}
