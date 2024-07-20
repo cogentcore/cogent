@@ -260,7 +260,10 @@ type ProjectSettings struct { //types:add
 	Register RegisterName `display:"-"`
 
 	// current splitter splits
-	Splits []float32 `display:"-"`
+	Splits [4]float32 `display:"-"`
+
+	// current tabUnder setting for splits
+	TabsUnder bool `display:"-"`
 }
 
 func (se *ProjectSettings) Update() {
@@ -327,7 +330,8 @@ func OpenPaths() {
 func (cv *Code) Defaults() {
 	cv.Settings.Files = Settings.Files
 	cv.Settings.Editor = core.SystemSettings.Editor
-	cv.Settings.Splits = []float32{.1, .325, .325, .25}
+	cv.Settings.Splits = [4]float32{.1, .325, .325, .25}
+	cv.Settings.TabsUnder = true
 	cv.Settings.Debug = cdebug.DefaultParams
 }
 
@@ -335,7 +339,8 @@ func (cv *Code) Defaults() {
 // places, e.g., prior to saving or editing.
 func (cv *Code) GrabSettings() {
 	sv := cv.Splits()
-	cv.Settings.Splits = sv.Splits()
+	copy(cv.Settings.Splits[:], sv.Splits())
+	cv.Settings.TabsUnder = len(sv.Tiles) == 2
 	cv.Settings.Dirs = cv.Files.Dirs
 }
 
@@ -360,9 +365,19 @@ func (cv *Code) ApplySettings() {
 				cv.ConfigTextBuffer(ond.Buffer)
 			}
 		}
-		cv.Splits().SetSplits(cv.Settings.Splits...)
+		cv.ApplySplitsSettings(cv.Splits())
 	}
 	core.UpdateAll() // drives full rebuild
+}
+
+func (cv *Code) ApplySplitsSettings(sv *core.Splits) {
+	if cv.Settings.TabsUnder {
+		sv.SetTiles(core.TileSpan, core.TileSecondLong)
+	} else {
+		sv.SetTiles(core.TileSpan, core.TileSpan, core.TileSpan, core.TileSpan)
+	}
+	sv.SetSplits(cv.Settings.Splits[:]...)
+	sv.Update()
 }
 
 // ApplySettingsAction applies current settings to the project, and updates the project
@@ -393,8 +408,10 @@ func (cv *Code) SplitsSetView(split SplitName) { //types:add
 	sv := cv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
-		sv.SetSplits(sp.Splits...).NeedsLayout()
+		cv.Settings.Splits = sp.Splits
+		cv.Settings.TabsUnder = sp.TabsUnder
 		cv.Settings.SplitName = split
+		cv.ApplySplitsSettings(sv)
 		if !cv.PanelIsOpen(cv.ActiveTextEditorIndex + TextEditor1Index) {
 			cv.SetActiveTextEditorIndex((cv.ActiveTextEditorIndex + 1) % 2)
 		}
@@ -416,7 +433,8 @@ func (cv *Code) SplitsSave(split SplitName) { //types:add
 // saves to prefs file
 func (cv *Code) SplitsSaveAs(name, desc string) { //types:add
 	sv := cv.Splits()
-	AvailableSplits.Add(name, desc, sv.Splits())
+	tabUnder := len(sv.Tiles) == 2
+	AvailableSplits.Add(name, desc, sv.Splits(), tabUnder)
 	AvailableSplits.SaveSettings()
 }
 

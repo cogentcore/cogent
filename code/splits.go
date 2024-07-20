@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"slices"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fsx"
@@ -31,7 +30,11 @@ type Split struct {
 	Desc string
 
 	// splitter panel proportions
-	Splits []float32 `min:"0" max:"1" step:".05"` // TODO: convert to [4]float32 !!
+	Splits [4]float32 `min:"0" max:"1" step:".05"`
+
+	// TabsUnder sets the tabs under the editors, making a more compact layout,
+	// suitable for laptop and smaller displays.
+	TabsUnder bool
 }
 
 // Label satisfies the Labeler interface
@@ -41,11 +44,11 @@ func (sp Split) Label() string {
 
 // SaveSplits saves given splits to this setting -- must use copy!
 func (lt *Split) SaveSplits(sp []float32) {
-	copy(lt.Splits, sp)
+	copy(lt.Splits[:], sp)
 }
 
 // Splits is a list of named splitter configurations
-type Splits []*Split
+type Splits []*Split //types:add
 
 // SplitName has an associated ValueView for selecting from the list of
 // available named splits
@@ -79,8 +82,9 @@ func (lt *Splits) SplitByName(name SplitName) (*Split, int, bool) {
 }
 
 // Add adds a new splitter setting, returns split and index
-func (lt *Splits) Add(name, desc string, splits []float32) (*Split, int) {
-	sp := &Split{Name: name, Desc: desc, Splits: slices.Clone(splits)}
+func (lt *Splits) Add(name, desc string, splits []float32, tabsUnder bool) (*Split, int) {
+	sp := &Split{Name: name, Desc: desc, TabsUnder: tabsUnder}
+	copy(sp.Splits[:], splits)
 	*lt = append(*lt, sp)
 	return sp, len(*lt) - 1
 }
@@ -98,24 +102,11 @@ func (lt *Splits) Names() []string {
 // directory for saving / loading the default AvailSplits
 var SplitsSettingsFilename = "splits-settings.json"
 
-// FixLen ensures that there are exactly 4 splits in each
-func (lt *Splits) FixLen() {
-	for _, sp := range *lt {
-		ln := len(sp.Splits)
-		if ln > 4 {
-			sp.Splits = sp.Splits[:4]
-		} else if ln < 4 {
-			sp.Splits = append(sp.Splits, make([]float32, 4-ln)...)
-		}
-	}
-}
-
 // Open opens named splits from a json-formatted file.
 func (lt *Splits) Open(filename core.Filename) error { //types:add
 	if errors.Ignore1(fsx.FileExists(string(filename))) {
 		*lt = make(Splits, 0, 10) // reset
 		err := errors.Log(jsonx.Open(lt, string(filename)))
-		lt.FixLen()
 		return err
 	}
 	return nil
@@ -140,7 +131,6 @@ func (lt *Splits) OpenSettings() error { //types:add
 
 // SaveSettings saves Splits to App standard prefs directory, using PrefSplitsFilename
 func (lt *Splits) SaveSettings() error { //types:add
-	lt.FixLen()
 	pdir := core.TheApp.AppDataDir()
 	pnm := filepath.Join(pdir, SplitsSettingsFilename)
 	AvailableSplitsChanged = false
@@ -156,7 +146,6 @@ func (lt *Splits) CopyFrom(cp Splits) {
 		fmt.Printf("json err: %v\n", err.Error())
 	}
 	json.Unmarshal(b, lt)
-	lt.FixLen()
 }
 
 // AvailableSplitsChanged is used to update toolbars via following menu, toolbar
@@ -166,10 +155,11 @@ var AvailableSplitsChanged = false
 
 // StandardSplits is the original compiled-in set of standard named splits.
 var StandardSplits = Splits{
-	{"Code", "2 text views, tabs", []float32{.1, .325, .325, .25}},
-	{"Small", "1 text view, tabs", []float32{.1, .5, 0, .4}},
-	{"BigTabs", "1 text view, big tabs", []float32{.1, .3, 0, .6}},
-	{"Debug", "big command panel for debugging", []float32{0.1, 0.3, 0.3, 0.3}},
+	{"Compact", "2 text views, tabs under", [4]float32{.2, .5, .5, .3}, true},
+	{"Wide", "2 text views, tabs, in a row", [4]float32{.1, .325, .325, .25}, false},
+	{"Small", "1 text view, tabs", [4]float32{.2, 1, 0, .3}, true},
+	{"BigTabs", "1 text view, big tabs", [4]float32{.1, .3, 0, .6}, false},
+	{"Debug", "bigger command panel for debugging", [4]float32{0.1, 0.3, 0.3, 0.3}, false},
 }
 
 // SplitsView opens a view of a splits table

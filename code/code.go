@@ -126,7 +126,7 @@ func (cv *Code) Init() {
 	})
 
 	tree.AddChildAt(cv, "splits", func(w *core.Splits) {
-		w.SetSplits(cv.Settings.Splits...)
+		cv.ApplySplitsSettings(w)
 		tree.AddChildAt(w, "filetree", func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
