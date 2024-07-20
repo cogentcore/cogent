@@ -15,12 +15,13 @@ import (
 func main() {
 	b := core.NewBody("Cogent Files")
 
-	fv := core.NewFilePicker(b)
-	fv.Scene.OnKeyChord(func(e events.Event) {
+	fp := core.NewFilePicker(b)
+	fp.Scene.OnKeyChord(func(e events.Event) {
 		if keymap.Of(e.KeyChord()) == keymap.Accept {
-			core.TheApp.OpenURL("file://" + fv.SelectedFile())
+			core.TheApp.OpenURL("file://" + fp.SelectedFile())
 		}
 	})
+	b.AddAppBar(fp.MakeToolbar)
 
 	b.RunMainWindow()
 }
