@@ -88,6 +88,9 @@ func (br *Browser) NewTabEditorString(label, content string) *texteditor.Editor 
 		return ed
 	}
 	ed := texteditor.NewEditor(tab)
+	ed.Styler(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
+	})
 	ed.Buffer.SetText([]byte(content))
 	br.Update()
 	return ed

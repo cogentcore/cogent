@@ -103,6 +103,9 @@ func (br *Browser) NewTabEditor(label, filename string) *texteditor.Editor {
 		return ed
 	}
 	ed := texteditor.NewEditor(tab)
+	ed.Styler(func(s *styles.Style) {
+		s.Grow.Set(1, 1)
+	})
 	ed.Buffer.Open(core.Filename(filename))
 	br.Update()
 	return ed
