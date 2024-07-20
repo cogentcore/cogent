@@ -17,7 +17,7 @@ func (cv *Code) PanelIsOpen(panel int) bool {
 	if panel < 0 || panel >= len(sv.Children) {
 		return false
 	}
-	if sv.Splits[panel] <= 0.01 {
+	if sv.ChildIsCollapsed(panel) {
 		return false
 	}
 	return true
@@ -68,7 +68,7 @@ func (cv *Code) FocusNextPanel() { //types:add
 	if cp >= np {
 		cp = 0
 	}
-	for sv.Splits[cp] <= 0.01 {
+	for sv.ChildIsCollapsed(cp) {
 		cp++
 		if cp >= np {
 			cp = 0
@@ -86,7 +86,7 @@ func (cv *Code) FocusPrevPanel() { //types:add
 	if cp < 0 {
 		cp = np - 1
 	}
-	for sv.Splits[cp] <= 0.01 {
+	for sv.ChildIsCollapsed(cp) {
 		cp--
 		if cp < 0 {
 			cp = np - 1

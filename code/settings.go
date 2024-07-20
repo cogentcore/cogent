@@ -335,7 +335,7 @@ func (cv *Code) Defaults() {
 // places, e.g., prior to saving or editing.
 func (cv *Code) GrabSettings() {
 	sv := cv.Splits()
-	cv.Settings.Splits = sv.Splits
+	cv.Settings.Splits = sv.Splits()
 	cv.Settings.Dirs = cv.Files.Dirs
 }
 
@@ -407,7 +407,7 @@ func (cv *Code) SplitsSave(split SplitName) { //types:add
 	sv := cv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
-		sp.SaveSplits(sv.Splits)
+		sp.SaveSplits(sv.Splits())
 		AvailableSplits.SaveSettings()
 	}
 }
@@ -416,7 +416,7 @@ func (cv *Code) SplitsSave(split SplitName) { //types:add
 // saves to prefs file
 func (cv *Code) SplitsSaveAs(name, desc string) { //types:add
 	sv := cv.Splits()
-	AvailableSplits.Add(name, desc, sv.Splits)
+	AvailableSplits.Add(name, desc, sv.Splits())
 	AvailableSplits.SaveSettings()
 }
 
