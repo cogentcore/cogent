@@ -1,5 +1,5 @@
 <h1 align="center">
-    <a href="https://cogentcore.org/core">
+    <a href="https://cogentcore.org/cogent">
         <img alt="Cogent Core Logo" src="https://raw.githubusercontent.com/cogentcore/core/main/icon.svg"><br>
         <img alt="Cogent Core Name Banner" width="612" src="https://raw.githubusercontent.com/cogentcore/core/main/docs/name.png">
     </a>
