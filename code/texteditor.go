@@ -175,7 +175,7 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap
 		s.Text.TabSize = 8
 		s.Min.X.Ch(20)
-		s.Min.Y.Em(20)
+		s.Min.Y.Em(5)
 		s.Grow.Set(1, 1)
 		if ed.Buffer != nil {
 			ed.Buffer.Options.LineNumbers = false
@@ -187,8 +187,8 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 func ConfigEditorTextEditor(ed *texteditor.Editor) {
 	ed.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
-		s.Min.X.Ch(60)
-		s.Min.Y.Em(20)
+		s.Min.X.Ch(40)
+		s.Min.Y.Em(10)
 	})
 }
 
