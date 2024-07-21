@@ -760,7 +760,7 @@ func (vv *Canvas) SplitsSave(split SplitName) {
 	sv := vv.Splits()
 	sp, _, ok := AvailableSplits.SplitByName(split)
 	if ok {
-		sp.SaveSplits(sv.Splits)
+		sp.SaveSplits(sv.Splits())
 		AvailableSplits.SaveSettings()
 	}
 }
@@ -769,7 +769,7 @@ func (vv *Canvas) SplitsSave(split SplitName) {
 // saves to prefs file
 func (vv *Canvas) SplitsSaveAs(name, desc string) {
 	spv := vv.Splits()
-	AvailableSplits.Add(name, desc, spv.Splits)
+	AvailableSplits.Add(name, desc, spv.Splits())
 	AvailableSplits.SaveSettings()
 }
 
