@@ -154,6 +154,7 @@ func (cv *Code) Init() {
 		tree.AddChildAt(w, "tabs", func(w *core.Tabs) {
 			w.SetType(core.FunctionalTabs)
 			w.Styler(func(s *styles.Style) {
+				s.Overflow.Set(styles.OverflowHidden)
 				s.Grow.Set(1, 1)
 			})
 		})
@@ -189,6 +190,8 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 		w.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Grow.Set(1, 1)
+			// critical to not add additional scrollbars: texteditor does it
+			s.Overflow.Set(styles.OverflowHidden)
 		})
 		tree.AddChildAt(w, "textbut-"+txnm, func(w *core.Button) {
 			w.SetText("texteditor: " + txnm)

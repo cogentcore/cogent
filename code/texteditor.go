@@ -187,8 +187,8 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 func ConfigEditorTextEditor(ed *texteditor.Editor) {
 	ed.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
-		s.Min.X.Ch(40)
-		s.Min.Y.Em(10)
+		s.Min.X.Ch(20)
+		s.Min.Y.Em(5)
 	})
 }
 

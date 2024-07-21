@@ -6,6 +6,7 @@ package code
 
 import (
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
 )
@@ -125,6 +126,10 @@ func (cv *Code) RecycleTabTextEditor(name string, buf *texteditor.Buffer) *texte
 	}
 	txv := texteditor.NewEditor(fr)
 	txv.SetName(fr.Name)
+	fr.Styler(func(s *styles.Style) {
+		// critical to not add additional scrollbars: texteditor does it
+		s.Overflow.Set(styles.OverflowHidden)
+	})
 	if buf != nil {
 		txv.SetBuffer(buf)
 	}
