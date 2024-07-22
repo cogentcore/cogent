@@ -5,6 +5,7 @@ go 1.22
 require (
 	cogentcore.org/core v0.2.4-0.20240722113400-da3ded05fc74
 	github.com/aandrew-me/tgpt/v2 v2.7.2
+	github.com/alecthomas/chroma/v2 v2.13.0
 	github.com/bogdanfinn/fhttp v0.5.27
 	github.com/bogdanfinn/tls-client v1.7.2
 	github.com/cogentcore/yaegi v0.0.0-20240714043945-dadb98936955
@@ -28,7 +29,6 @@ require (
 require (
 	github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4 // indirect
 	github.com/Masterminds/vcs v1.13.3 // indirect
-	github.com/alecthomas/chroma/v2 v2.13.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

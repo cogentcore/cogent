@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"log"
 	"os"
 	"os/exec"
@@ -26,6 +27,8 @@ import (
 	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/texteditor/highlighting"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/mattn/go-shellwords"
 )
 
@@ -136,16 +139,6 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 		}
 		cmd := exec.Command(cstr, args...)
 		return cmd, cmdstr
-	// case "open": // TODO: this doesn't really make sense or seem necessary
-	// 	cstr = filetree.OSOpenCommand()
-	// 	cmdstr := cstr
-	// 	args := cm.BindArgs(avp)
-	// 	if args != nil {
-	// 		astr := strings.Join(args, " ")
-	// 		cmdstr += " " + astr
-	// 	}
-	// 	cmd := exec.Command(cstr, args...)
-	// 	return cmd, cmdstr
 	default:
 		cmdstr := cstr
 		args := cm.BindArgs(avp)
@@ -426,13 +419,6 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
 func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
-	// if cm.Hilight != fileinfo.Unknown {
-	// 	buf.Info.Known = cm.Hilight
-	// 	buf.Info.Mime = fileinfo.MimeString(fileinfo.Bash)
-	// 	buf.Hi.Lang = cm.Hilight.String()
-	// }
-	// todo: trying to use native highlighting
-	// buf.Hi.Init(&buf.Info, nil)
 	if cm.Confirm {
 		d := core.NewBody().AddTitle("Confirm command").
 			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
@@ -586,9 +572,6 @@ func (cm *Command) RunStatus(cv *Code, buf *texteditor.Buffer, cmdstr string, er
 		fsb := []byte(finstat)
 		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)
 		buf.AppendTextLineMarkup(fsb, cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
-		// todo: attempt to support syntax highlighting using builtin texteditor formatting
-		// buf.AppendTextLine([]byte(""), texteditor.EditSignal)
-		// buf.AppendTextLine(cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
 		buf.AutoScrollEditors()
 		if cm.Focus {
 			cv.FocusOnTabs()
@@ -603,24 +586,44 @@ func (cm *Command) LangMatch(lang fileinfo.Known) bool {
 	return fileinfo.IsMatch(cm.Lang, lang)
 }
 
-// MarkupCmdOutput applies links to the first element in command output line
-// if it looks like a file name / position
 func (cm *Command) MarkupCmdOutput(out []byte) []byte {
-	flds := strings.Fields(string(out))
-	if len(flds) == 0 {
-		return out
+	lexName := ""
+	cmdnm := strings.ToLower(cm.Name)
+	switch {
+	case strings.Contains(cmdnm, "diff"):
+		lexName = cmdnm
 	}
-	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	nt := out
-	if len(link) > 0 {
-		nt = bytes.Replace(out, orig, link, -1)
-	}
-	return nt
+	return MarkupCmdOutput(out, lexName)
 }
 
 // MarkupCmdOutput applies links to the first element in command output line
+// if it looks like a file name / position, and runs markup using given lexer
+// name if provided (default is "bash")
+func MarkupCmdOutput(out []byte, lexName string) []byte {
+	if len(out) == 0 {
+		return out
+	}
+	clex := lexers.Get("bash")
+	if lexName != "" {
+		nl := lexers.Get(lexName)
+		if nl != nil {
+			clex = nl
+		}
+	}
+	uout := html.UnescapeString(string(out))
+	flds := strings.Fields(uout)
+	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	ctags, _ := highlighting.ChromaTagsLine(clex, uout)
+	mu := highlighting.MarkupLine([]rune(uout), ctags, nil, highlighting.NoEscapeHTML)
+	if len(link) > 0 {
+		mu = bytes.Replace(mu, orig, link, -1)
+	}
+	return mu
+}
+
+// MarkupStdOutput applies links to the first element in command output line
 // if it looks like a file name / position
-func MarkupCmdOutput(out []byte) []byte {
+func MarkupStdOutput(out []byte) []byte {
 	flds := strings.Fields(string(out))
 	if len(flds) == 0 {
 		return out
@@ -628,7 +631,7 @@ func MarkupCmdOutput(out []byte) []byte {
 	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
 	nt := out
 	if len(link) > 0 {
-		nt = bytes.Replace(out, orig, link, -1)
+		nt = bytes.Replace(nt, orig, link, -1)
 	}
 	return nt
 }

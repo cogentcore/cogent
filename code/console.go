@@ -104,7 +104,7 @@ func MarkupStdout(out []byte) []byte {
 	if TheConsole.LogWrite != nil {
 		fmt.Fprintln(TheConsole.LogWrite, string(out))
 	}
-	return MarkupCmdOutput(out)
+	return MarkupCmdOutput(out, "")
 }
 
 func MarkupStderr(out []byte) []byte {
@@ -117,7 +117,7 @@ func MarkupStderr(out []byte) []byte {
 	if TheConsole.LogWrite != nil {
 		fmt.Fprintln(TheConsole.LogWrite, string(out))
 	}
-	mb := MarkupCmdOutput(out)
+	mb := MarkupCmdOutput(out, "")
 	mbb := make([]byte, 0, len(mb)+esz)
 	mbb = append(mbb, sst...)
 	mbb = append(mbb, mb...)
