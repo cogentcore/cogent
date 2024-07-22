@@ -94,7 +94,7 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 	title := "Lookup: " + text
 
 	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
-	tb.Highlighting.Style = core.AppearanceSettings.Highlighting
+	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Options.LineNumbers = cv.Settings.Editor.LineNumbers
 
 	d := core.NewBody().AddTitle(title).AddText(prmpt).SetData(&ld)
@@ -333,14 +333,12 @@ func (cv *Code) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:a
 // returns a string report thereof.
 func (cv *Code) CountWords() string { //types:add
 	av := cv.ActiveTextEditor()
-	if av.Buffer == nil || av.Buffer.NumLines <= 0 {
+	if av.Buffer == nil || av.Buffer.NumLines() <= 0 {
 		return "empty"
 	}
-	av.Buffer.LinesMu.RLock()
-	defer av.Buffer.LinesMu.RUnlock()
-	ll := av.Buffer.NumLines - 1
-	reg := textbuf.NewRegion(0, 0, ll, len(av.Buffer.Lines[ll]))
-	words, lines := textbuf.CountWordsLinesRegion(av.Buffer.Lines, reg)
+	ll := av.Buffer.NumLines() - 1
+	reg := textbuf.NewRegion(0, 0, ll, av.Buffer.NumLines())
+	words, lines := av.Buffer.CountWordsLinesRegion(reg)
 	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
 }
 
@@ -348,16 +346,14 @@ func (cv *Code) CountWords() string { //types:add
 // if no selection, returns numbers for entire file.
 func (cv *Code) CountWordsRegion() string { //types:add
 	av := cv.ActiveTextEditor()
-	if av.Buffer == nil || av.Buffer.NumLines <= 0 {
+	if av.Buffer == nil || av.Buffer.NumLines() <= 0 {
 		return "empty"
 	}
 	if !av.HasSelection() {
 		return cv.CountWords()
 	}
-	av.Buffer.LinesMu.RLock()
-	defer av.Buffer.LinesMu.RUnlock()
 	sel := av.Selection()
-	words, lines := textbuf.CountWordsLinesRegion(av.Buffer.Lines, sel.Reg)
+	words, lines := av.Buffer.CountWordsLinesRegion(sel.Reg)
 	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
 }
 
@@ -404,7 +400,7 @@ func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 	fpath := up.Path[1:] // has double //
 	cdpath := ""
 	if ftv != nil && ftv.Buffer != nil { // get cd path for non-pathed fnames
-		cdln := ftv.Buffer.BytesLine(0)
+		cdln := ftv.Buffer.LineBytes(0)
 		if bytes.HasPrefix(cdln, []byte("cd ")) {
 			fmidx := bytes.Index(cdln, []byte(" (from: "))
 			if fmidx > 0 {

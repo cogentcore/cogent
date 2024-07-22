@@ -339,7 +339,7 @@ func (cv *Code) AddChooserFiles(ac *core.Chooser) {
 func (cv *Code) AddChooserSymbols(ac *core.Chooser) {
 	ac.AddItemsFunc(func() {
 		tv := cv.ActiveTextEditor()
-		if tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighting.UsingParse() {
+		if tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
 			return
 		}
 		pfs := tv.Buffer.ParseState.Done()

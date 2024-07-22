@@ -198,7 +198,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 func (sv *SymbolsPanel) OpenPackage() {
 	cv := sv.Code
 	tv := cv.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighting.UsingParse() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
 		return
 	}
 	pfs := tv.Buffer.ParseState.Done()
@@ -214,7 +214,7 @@ func (sv *SymbolsPanel) OpenPackage() {
 func (sv *SymbolsPanel) OpenFile() {
 	cv := sv.Code
 	tv := cv.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighting.UsingParse() {
+	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
 		return
 	}
 	pfs := tv.Buffer.ParseState.Done()

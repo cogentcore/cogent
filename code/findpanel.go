@@ -227,7 +227,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Ln
 		st := lexer.Pos{Ln: ftvln, Ch: 0}
-		len := len(ftv.Buffer.Lines[ftvln])
+		len := ftv.Buffer.LineLen(ftvln)
 		en := lexer.Pos{Ln: ftvln, Ch: len}
 		ftv.Buffer.DeleteText(st, en, texteditor.EditSignal)
 	}
@@ -402,7 +402,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 				}
 				fvtv := fv.TextEditor()
 				if fvtv != nil {
-					fvtv.Buffer.NewBuffer(0)
+					fvtv.Buffer.SetText(nil)
 				}
 			} else {
 				stringsx.InsertFirstUnique(&fv.Params().FindHist, find, core.SystemSettings.SavedPathsMax)

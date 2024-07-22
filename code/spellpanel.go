@@ -142,7 +142,7 @@ func (sv *SpellPanel) Init() {
 					tv.QReplaceStart(sv.UnkWord, sv.ChangeText().Text(), false)
 					tv.QReplaceReplaceAll(0)
 					sv.LastAction = w
-					sv.Errs = tv.Buffer.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
+					sv.Errs = tv.Buffer.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags
 					sv.CheckNext()
 				})
 		})
@@ -209,7 +209,7 @@ func (sv *SpellPanel) CheckNext() {
 	for {
 		if sv.CurIndex < len(sv.Errs) {
 			lx := sv.Errs[sv.CurIndex]
-			word := string(lx.Src(tv.Buffer.Lines[sv.CurLn]))
+			word := string(lx.Src(tv.Buffer.Line(sv.CurLn)))
 			_, known := spell.Spell.CheckWord(word) // could have been fixed by now..
 			if known {
 				sv.CurIndex++
@@ -233,7 +233,7 @@ func (sv *SpellPanel) CheckNext() {
 	}
 	sv.UnkLex = sv.Errs[sv.CurIndex]
 	sv.CurIndex++
-	sv.UnkWord = string(sv.UnkLex.Src(tv.Buffer.Lines[sv.CurLn]))
+	sv.UnkWord = string(sv.UnkLex.Src(tv.Buffer.Line(sv.CurLn)))
 	sv.Suggest, _ = spell.Spell.CheckWord(sv.UnkWord)
 
 	uf := sv.UnknownText()
@@ -287,7 +287,7 @@ func (sv *SpellPanel) Change() {
 	en := sv.UnkEndPos()
 	ct := sv.ChangeText()
 	tv.Buffer.ReplaceText(st, en, st, ct.Text(), texteditor.EditSignal, texteditor.ReplaceNoMatchCase)
-	nwrs := tv.Buffer.AdjustedTagsImpl(sv.Errs, sv.CurLn) // update tags
+	nwrs := tv.Buffer.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags
 	if len(nwrs) == len(sv.Errs)-1 && sv.CurIndex > 0 {   // Adjust got rid of changed one..
 		sv.CurIndex--
 	}

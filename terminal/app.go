@@ -17,6 +17,7 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/exec"
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/strcase"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -78,7 +79,7 @@ func (a *App) Init() {
 				w.SetText(a.Dir)
 			})
 			tree.AddChild(w, func(w *texteditor.Editor) {
-				w.Buffer.SetLanguage("go")
+				w.Buffer.SetLanguage(fileinfo.Go)
 				w.Buffer.Options.LineNumbers = false
 
 				w.OnKeyChord(func(e events.Event) {
@@ -153,8 +154,8 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 	var ib []byte
 
 	buf := texteditor.NewBuffer()
-	buf.NewBuffer(0)
 	buf.Options.LineNumbers = false
+	buf.SetText(nil)
 
 	ed := texteditor.NewEditor(cfr).SetBuffer(buf)
 	ed.Styler(func(s *styles.Style) {

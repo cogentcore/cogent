@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"time"
 
+	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
@@ -35,7 +36,7 @@ func (a *App) Compose() { //types:add
 	b := core.NewBody().AddTitle("Send message")
 	core.NewForm(b).SetStruct(a.ComposeMessage)
 	ed := texteditor.NewEditor(b)
-	ed.Buffer.SetLanguage("md")
+	ed.Buffer.SetLanguage(fileinfo.Markdown)
 	ed.Buffer.Options.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
 		s.SetMono(false)

@@ -24,16 +24,14 @@ func (cv *Code) RecycleCmdBuf(cmdName string) (*texteditor.Buffer, bool) {
 		cv.CmdBufs = make(map[string]*texteditor.Buffer, 20)
 	}
 	if buf, has := cv.CmdBufs[cmdName]; has {
-		buf.NewBuffer(0)
+		buf.SetText(nil)
 		return buf, false
 	}
 	buf := texteditor.NewBuffer()
-	buf.NewBuffer(0)
+	buf.SetText(nil)
 	cv.CmdBufs[cmdName] = buf
 	buf.Autosave = false
-	// buf.Info.Known = fileinfo.Bash
-	// buf.Info.Mime = fileinfo.MimeString(fileinfo.Bash)
-	// buf.Hi.Lang = "Bash"
+	buf.SetLanguage(fileinfo.Bash)
 	return buf, true
 }
 
