@@ -48,9 +48,9 @@ var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.DebugPanel",
 // DebugPanel is the debugger panel.
 func NewDebugPanel(parent ...tree.Node) *DebugPanel { return tree.New[DebugPanel](parent...) }
 
-// SetSup sets the [DebugPanel.Sup]:
+// SetSup sets the [DebugPanel.Known]:
 // supported file type to determine debugger
-func (t *DebugPanel) SetSup(v fileinfo.Known) *DebugPanel { t.Sup = v; return t }
+func (t *DebugPanel) SetSup(v fileinfo.Known) *DebugPanel { t.Known = v; return t }
 
 // SetExePath sets the [DebugPanel.ExePath]:
 // path to executable / dir to debug

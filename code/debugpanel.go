@@ -82,8 +82,8 @@ func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.B
 type DebugPanel struct {
 	core.Frame
 
-	// supported file type to determine debugger
-	Sup fileinfo.Known
+	// known file type to determine debugger
+	Known fileinfo.Known
 
 	// path to executable / dir to debug
 	ExePath string
@@ -111,9 +111,9 @@ type DebugPanel struct {
 }
 
 // Config sets parameters that must be set for a new view
-func (dv *DebugPanel) Config(cv *Code, sup fileinfo.Known, exePath string) {
+func (dv *DebugPanel) Config(cv *Code, known fileinfo.Known, exePath string) {
 	dv.Code = cv
-	dv.Sup = sup
+	dv.Known = known
 	dv.ExePath = exePath
 }
 
@@ -180,7 +180,7 @@ func (dv *DebugPanel) InitTabs() {
 		})
 	})
 
-	if dv.Sup == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
+	if dv.Known == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
 		tv := w.NewTab(DebugTabTasks)
 		tree.AddChild(tv, func(w *core.Table) {
 			w.SetReadOnly(true)
@@ -335,7 +335,7 @@ func (dv *DebugPanel) Start() {
 			dv.NeedsLayout()
 			dv.AsyncUnlock()
 		}
-		dbg, err := NewDebugger(dv.Sup, dv.ExePath, rootPath, dv.OutputBuffer, pars)
+		dbg, err := NewDebugger(dv.Known, dv.ExePath, rootPath, dv.OutputBuffer, pars)
 		if err == nil {
 			dv.Dbg = dbg
 			dv.DbgTime = time.Now()

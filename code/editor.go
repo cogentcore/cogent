@@ -49,7 +49,7 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
 		return ld
 	}
-	lp, err := parse.LanguageSupport.Properties(sfs.Sup)
+	lp, err := parse.LanguageSupport.Properties(sfs.Known)
 	if err != nil {
 		log.Printf("LookupFun: %v\n", err)
 		return ld
