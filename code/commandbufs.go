@@ -31,7 +31,8 @@ func (cv *Code) RecycleCmdBuf(cmdName string) (*texteditor.Buffer, bool) {
 	buf.SetText(nil)
 	cv.CmdBufs[cmdName] = buf
 	buf.Autosave = false
-	buf.SetLanguage(fileinfo.Bash)
+	// note: critical to NOT set this, otherwise overwrites our native markup
+	// buf.SetLanguage(fileinfo.Bash)
 	return buf, true
 }
 
