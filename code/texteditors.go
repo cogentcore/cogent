@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 )
 
@@ -97,7 +97,7 @@ func (cv *Code) TextEditorForFile(fnm core.Filename) (*TextEditor, int, bool) {
 	return cv.TextEditorForFileNode(fn)
 }
 
-// SetActiveFileInfo sets the active file info from textbuf
+// SetActiveFileInfo sets the active file info from text
 func (cv *Code) SetActiveFileInfo(buf *texteditor.Buffer) {
 	cv.ActiveFilename = buf.Filename
 	cv.ActiveLang = buf.Info.Known
@@ -183,7 +183,7 @@ func (cv *Code) SwapTextEditors() bool {
 	return true
 }
 
-func (cv *Code) OpenFileAtRegion(filename core.Filename, tr textbuf.Region) (tv *TextEditor, ok bool) {
+func (cv *Code) OpenFileAtRegion(filename core.Filename, tr text.Region) (tv *TextEditor, ok bool) {
 	tv, _, ok = cv.LinkViewFile(filename)
 	if tv == nil {
 		return nil, false
@@ -200,7 +200,7 @@ func (cv *Code) OpenFileAtRegion(filename core.Filename, tr textbuf.Region) (tv 
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg textbuf.Region, findBufStLn, findCount int, ok bool) {
+func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg text.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindPanel OpenFindURL parse err: %v\n", err)

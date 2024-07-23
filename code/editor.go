@@ -26,7 +26,7 @@ import (
 	"cogentcore.org/core/parse/parser"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/texteditor/text"
 )
 
 // CursorToHistPrev moves back to the previous history item.
@@ -43,7 +43,7 @@ func (cv *Code) CursorToHistNext() bool { //types:add
 
 // LookupFun is the completion system Lookup function that makes a custom
 // texteditor dialog that has option to edit resulting file.
-func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld complete.Lookup) {
+func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld complete.Lookup) {
 	sfs := data.(*parse.FileStates)
 	if sfs == nil {
 		log.Printf("LookupFun: data is nil not FileStates or is nil - can't lookup\n")
@@ -62,9 +62,9 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
 	parser.GUIActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-	ld = lp.Lang.Lookup(sfs, text, lexer.Pos{posLine, posChar})
+	ld = lp.Lang.Lookup(sfs, txt, lexer.Pos{posLine, posChar})
 	if len(ld.Text) > 0 {
-		texteditor.TextDialog(nil, "Lookup: "+text, string(ld.Text))
+		texteditor.TextDialog(nil, "Lookup: "+txt, string(ld.Text))
 		return ld
 	}
 	if ld.Filename == "" {
@@ -75,14 +75,14 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 		return
 	}
 
-	txt, err := textbuf.FileBytes(ld.Filename)
+	tx, err := text.FileBytes(ld.Filename)
 	if err != nil {
 		return ld
 	}
 	if ld.StLine > 0 {
-		lns := bytes.Split(txt, []byte("\n"))
-		comLn, comSt, comEd := textbuf.KnownComments(ld.Filename)
-		ld.StLine = textbuf.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
+		lns := bytes.Split(tx, []byte("\n"))
+		comLn, comSt, comEd := text.KnownComments(ld.Filename)
+		ld.StLine = text.PreCommentStart(lns, ld.StLine, comLn, comSt, comEd, 10) // just go back 10 max
 	}
 
 	prmpt := ""
@@ -91,9 +91,9 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 	} else {
 		prmpt = fmt.Sprintf("%v:%d", ld.Filename, ld.StLine)
 	}
-	title := "Lookup: " + text
+	title := "Lookup: " + txt
 
-	tb := texteditor.NewBuffer().SetText(txt).SetFilename(ld.Filename)
+	tb := texteditor.NewBuffer().SetText(tx).SetFilename(ld.Filename)
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Options.LineNumbers = cv.Settings.Editor.LineNumbers
 
@@ -112,7 +112,7 @@ func (cv *Code) LookupFun(data any, text string, posLine, posChar int) (ld compl
 		})
 		core.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
 			OnClick(func(e events.Event) {
-				d.Clipboard().Write(mimedata.NewTextBytes(txt))
+				d.Clipboard().Write(mimedata.NewTextBytes(tx))
 			})
 	})
 	d.RunWindowDialog(cv.ActiveTextEditor())
@@ -337,7 +337,7 @@ func (cv *Code) CountWords() string { //types:add
 		return "empty"
 	}
 	ll := av.Buffer.NumLines() - 1
-	reg := textbuf.NewRegion(0, 0, ll, av.Buffer.NumLines())
+	reg := text.NewRegion(0, 0, ll, av.Buffer.NumLines())
 	words, lines := av.Buffer.CountWordsLinesRegion(reg)
 	return fmt.Sprintf("File: %s  Words: %d   Lines: %d\n", fsx.DirAndFile(string(av.Buffer.Filename)), words, lines)
 }
@@ -428,7 +428,7 @@ func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 	// fmt.Printf("pos: %v\n", pos)
 	txpos := lexer.Pos{}
 	if txpos.FromString(pos) {
-		reg := textbuf.Region{Start: txpos, End: lexer.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		reg := text.Region{Start: txpos, End: lexer.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start

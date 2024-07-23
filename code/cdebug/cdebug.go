@@ -34,7 +34,7 @@ type GiDebug interface {
 
 	// Start starts the debugger for a given exe path, and overall project
 	// root path (for trimming file names), and sets output of debugger
-	// session to given textbuf which is used to monitor output.
+	// session to given text which is used to monitor output.
 	// params must have relevant settings in place (StatFunc, Mode, etc).
 	Start(path, rootPath string, outbuf *texteditor.Buffer, pars *Params) error
 

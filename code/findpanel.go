@@ -24,7 +24,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 )
 
@@ -341,7 +341,7 @@ func (fv *FindPanel) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount i
 	fb := ftv.Buffer
 
 	if len(tv.Highlights) != fCount { // highlight
-		hi := make([]textbuf.Region, fCount)
+		hi := make([]text.Region, fCount)
 		for i := 0; i < fCount; i++ {
 			fln := fbStLn + 1 + i
 			if fln >= len(fb.Markup) {
@@ -359,7 +359,7 @@ func (fv *FindPanel) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount i
 			if err != nil {
 				continue
 			}
-			ireg := textbuf.Region{}
+			ireg := text.Region{}
 			lidx := strings.Index(iup.Fragment, "L")
 			ireg.FromString(iup.Fragment[lidx:])
 			ireg.Time.SetTime(fv.Time)

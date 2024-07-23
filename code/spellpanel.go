@@ -12,7 +12,7 @@ import (
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/textbuf"
+	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 
 	"cogentcore.org/core/core"
@@ -255,7 +255,7 @@ func (sv *SpellPanel) CheckNext() {
 
 	tv.Highlights = tv.Highlights[:0]
 	tv.SetCursorTarget(st)
-	hr := textbuf.Region{Start: st, End: en}
+	hr := text.Region{Start: st, End: en}
 	hr.TimeNow()
 	tv.Highlights = append(tv.Highlights, hr)
 	if sv.LastAction == nil {
