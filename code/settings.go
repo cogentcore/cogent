@@ -328,9 +328,10 @@ func OpenPaths() {
 
 // Defaults sets new project defaults based on overall settings
 func (cv *Code) Defaults() {
+	cv.Settings.VersionControl = "git"
 	cv.Settings.Files = Settings.Files
 	cv.Settings.Editor = core.SystemSettings.Editor
-	cv.Settings.Splits = [4]float32{.1, .325, .325, .25}
+	cv.Settings.Splits = [4]float32{.1, .5, .5, .3}
 	cv.Settings.TabsUnder = true
 	cv.Settings.Debug = cdebug.DefaultParams
 }

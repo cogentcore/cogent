@@ -663,6 +663,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	}
 	b := core.NewBody(winm).SetTitle(winm)
 	cv := NewCode(b)
+	cv.Defaults()
 	b.AddAppBar(cv.MakeToolbar)
 	cv.Update() // get first pass so settings stick
 
