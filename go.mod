@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.2.4-0.20240722113400-da3ded05fc74
+	cogentcore.org/core v0.2.4-0.20240723073701-241b76042b65
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.13.0
 	github.com/bogdanfinn/fhttp v0.5.27
@@ -14,7 +14,7 @@ require (
 	github.com/emersion/go-message v0.18.1
 	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43
 	github.com/emersion/go-smtp v0.21.1
-	github.com/ergochat/readline v0.1.0
+	github.com/ergochat/readline v0.1.2
 	github.com/go-delve/delve v1.22.1
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/robert-nix/ansihtml v1.0.1

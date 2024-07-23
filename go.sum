@@ -1,5 +1,5 @@
-cogentcore.org/core v0.2.4-0.20240722113400-da3ded05fc74 h1:49OgLDOaYGaqdmrUeTGUaQ6XxBn7uAHHNw74uZNYlIw=
-cogentcore.org/core v0.2.4-0.20240722113400-da3ded05fc74/go.mod h1:dC+ZLXiwF83q3biWDBwzvF4YVSxTHaRzup80DgoIlHo=
+cogentcore.org/core v0.2.4-0.20240723073701-241b76042b65 h1:QpfXd7dePWAxCYaZpXMty3uQ/qc/gj1kAk0KgYkShr8=
+cogentcore.org/core v0.2.4-0.20240723073701-241b76042b65/go.mod h1:Rs73REPCpU/Deh9HOrAwq5cbSSwLvtNEAZJZixSKpcs=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4 h1:6lx9xzJAhdjq0LvVfbITeC3IH9Fzvo1aBahyPu2FuG8=
 github.com/Bios-Marcel/wastebasket v0.0.4-0.20240213135800-f26f1ae0a7c4/go.mod h1:FChzXi1izqzdPb6BiNZmcZLGyTYiT61iGx9Rxx9GNeI=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -61,8 +61,8 @@ github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43 h1:hH4PQfOndHDlpz
 github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43/go.mod h1:iL2twTeMvZnrg54ZoPDNfJaJaqy0xIQFuBdrLsmspwQ=
 github.com/emersion/go-smtp v0.21.1 h1:VQeZSZAKk8ueYii1yR5Zalmy7jI287eWDUqSaJ68vRM=
 github.com/emersion/go-smtp v0.21.1/go.mod h1:qm27SGYgoIPRot6ubfQ/GpiPy/g3PaZAVRxiO/sDUgQ=
-github.com/ergochat/readline v0.1.0 h1:KEIiAnyH9qGZB4K8oq5mgDcExlEKwmZDcyyocgJiABc=
-github.com/ergochat/readline v0.1.0/go.mod h1:o3ux9QLHLm77bq7hDB21UTm6HlV2++IPDMfIfKDuOgY=
+github.com/ergochat/readline v0.1.2 h1:zxiwQB8DyTLD0HSWthJlnvs5E2X1qnyXZ44RFf1jRlg=
+github.com/ergochat/readline v0.1.2/go.mod h1:o3ux9QLHLm77bq7hDB21UTm6HlV2++IPDMfIfKDuOgY=
 github.com/ericchiang/css v1.3.0 h1:e0vS+vpujMjtT3/SYu7qTHn1LVzXWcLCCDjlfq3YlLY=
 github.com/ericchiang/css v1.3.0/go.mod h1:sVSdL+MFR9Q4cKJMQzpIkHIDOLiK+7Wmjjhq7D+MubA=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
