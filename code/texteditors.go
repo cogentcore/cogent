@@ -245,7 +245,7 @@ func (cv *Code) UpdateTextButtons() {
 		txnm := "<no file>"
 		if tv.Buffer != nil {
 			txnm = fsx.DirAndFile(string(tv.Buffer.Filename))
-			if tv.Buffer.NotSaved {
+			if tv.Buffer.IsNotSaved() {
 				txnm += " <b>*</b>"
 			} else {
 				txnm += "   "

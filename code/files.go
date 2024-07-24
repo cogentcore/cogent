@@ -414,7 +414,7 @@ func (cv *Code) SaveAllOpenNodes() {
 		if ond.Buffer == nil {
 			continue
 		}
-		if ond.Buffer.NotSaved {
+		if ond.Buffer.IsNotSaved() {
 			ond.Buffer.Save()
 			cv.RunPostCmdsFileNode(ond)
 		}
