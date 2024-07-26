@@ -250,9 +250,9 @@ func (dv *DebugPanel) InitTabs() {
 	})
 }
 
-// PanelIsValid checks if panel is valid for use.
+// panelIsValid checks if panel is valid for use.
 // for outside functions calling in, e.g., textbuf.
-func (dv *DebugPanel) PanelIsValid() bool {
+func (dv *DebugPanel) panelIsValid() bool {
 	return !(dv.This == nil || dv.Code == nil || dv.Code.This == nil || dv.Tabs() == nil)
 }
 
@@ -535,7 +535,7 @@ func (dv *DebugPanel) SyncBreaks() {
 // DeleteBreakInBuf delete breakpoint in its TextBuf
 // line is 1-based line number
 func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
-	if !dv.PanelIsValid() {
+	if !dv.panelIsValid() {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -547,7 +547,7 @@ func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
 
 // DeleteAllBreaks deletes all breakpoints
 func (dv *DebugPanel) DeleteAllBreaks() {
-	if !dv.PanelIsValid() {
+	if !dv.panelIsValid() {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -558,7 +558,7 @@ func (dv *DebugPanel) DeleteAllBreaks() {
 // UpdateBreakInBuf updates break status in its TextBuf
 // line is 1-based line number
 func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
-	if !dv.PanelIsValid() {
+	if !dv.panelIsValid() {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -570,7 +570,7 @@ func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSt
 
 // UpdateAllBreaks updates all breakpoints
 func (dv *DebugPanel) UpdateAllBreaks() {
-	if !dv.PanelIsValid() {
+	if !dv.panelIsValid() {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
