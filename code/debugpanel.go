@@ -250,6 +250,12 @@ func (dv *DebugPanel) InitTabs() {
 	})
 }
 
+// PanelIsValid checks if panel is valid for use.
+// for outside functions calling in, e.g., textbuf.
+func (dv *DebugPanel) PanelIsValid() bool {
+	return !(dv.This == nil || dv.Code == nil || dv.Code.This == nil || dv.Tabs() == nil)
+}
+
 // DbgIsActive means debugger is started.
 func (dv *DebugPanel) DbgIsActive() bool {
 	return dv.Dbg != nil && dv.Dbg.IsActive()
@@ -529,7 +535,7 @@ func (dv *DebugPanel) SyncBreaks() {
 // DeleteBreakInBuf delete breakpoint in its TextBuf
 // line is 1-based line number
 func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
-	if dv.Code == nil || dv.Code.This == nil {
+	if !dv.PanelIsValid() {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -541,7 +547,7 @@ func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
 
 // DeleteAllBreaks deletes all breakpoints
 func (dv *DebugPanel) DeleteAllBreaks() {
-	if dv.Code == nil || dv.Code.This == nil {
+	if !dv.PanelIsValid() {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -552,7 +558,7 @@ func (dv *DebugPanel) DeleteAllBreaks() {
 // UpdateBreakInBuf updates break status in its TextBuf
 // line is 1-based line number
 func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakStatus) {
-	if dv.Code == nil || dv.Code.This == nil {
+	if !dv.PanelIsValid() {
 		return
 	}
 	tb := dv.Code.TextBufForFile(fpath, false)
@@ -564,7 +570,7 @@ func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSt
 
 // UpdateAllBreaks updates all breakpoints
 func (dv *DebugPanel) UpdateAllBreaks() {
-	if dv.Code == nil || dv.Code.This == nil {
+	if !dv.PanelIsValid() {
 		return
 	}
 	for _, bk := range dv.State.Breaks {
@@ -828,7 +834,11 @@ func (dv *DebugPanel) Toolbar() *core.Frame {
 
 // Tabs returns the tabs
 func (dv *DebugPanel) Tabs() *core.Tabs {
-	return dv.ChildByName("tabs", 1).(*core.Tabs)
+	tb := dv.ChildByName("tabs", 1)
+	if tb == nil {
+		return nil
+	}
+	return tb.(*core.Tabs)
 }
 
 // ShowTab shows given tab
