@@ -3,6 +3,8 @@
 package mail
 
 import (
+	"net/mail"
+
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
@@ -15,10 +17,13 @@ func NewApp(parent ...tree.Node) *App { return tree.New[App](parent...) }
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the global Cogent Mail settings.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Accounts", Doc: "Accounts are the email accounts the user is signed into."}}})
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.AddressTextField", IDName: "address-text-field", Doc: "AddressTextField represents a [mail.Address] with a [core.TextField].", Embeds: []types.Field{{Name: "TextField"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.AddressTextField", IDName: "address-text-field", Doc: "AddressTextField represents a [mail.Address] with a [core.TextField].", Embeds: []types.Field{{Name: "TextField"}}, Fields: []types.Field{{Name: "Address"}}})
 
 // NewAddressTextField returns a new [AddressTextField] with the given optional parent:
 // AddressTextField represents a [mail.Address] with a [core.TextField].
 func NewAddressTextField(parent ...tree.Node) *AddressTextField {
 	return tree.New[AddressTextField](parent...)
 }
+
+// SetAddress sets the [AddressTextField.Address]
+func (t *AddressTextField) SetAddress(v mail.Address) *AddressTextField { t.Address = v; return t }
