@@ -5,16 +5,15 @@
 package code
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/iox/tomlx"
+	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -215,7 +214,7 @@ type ProjectSettings struct { //types:add
 
 	// the type of version control system used in this project (git, svn, etc).
 	// filters commands available
-	VersionControl filetree.VersionControlName
+	VersionControl vcs.Types
 
 	// current project filename for saving / loading specific Code
 	// configuration information in a .code file (optional)
@@ -280,7 +279,6 @@ func (se *ProjectSettings) Update() {
 // Open open from file
 func (se *ProjectSettings) Open(filename core.Filename) error { //types:add
 	err := errors.Log(tomlx.Open(se, string(filename)))
-	se.VersionControl = filetree.VersionControlName(strings.ToLower(string(se.VersionControl))) // official names are lowercase now
 	return err
 }
 
@@ -328,7 +326,7 @@ func OpenPaths() {
 
 // Defaults sets new project defaults based on overall settings
 func (cv *Code) Defaults() {
-	cv.Settings.VersionControl = "git"
+	cv.Settings.VersionControl = vcs.NoVCS
 	cv.Settings.Files = Settings.Files
 	cv.Settings.Editor = core.SystemSettings.Editor
 	cv.Settings.Splits = [4]float32{.1, .5, .5, .3}
@@ -453,7 +451,8 @@ func (cv *Code) LangDefaults() {
 	if len(cv.Settings.BuildCmds) == 0 {
 		switch cv.Settings.MainLang {
 		case fileinfo.Go:
-			cv.Settings.BuildCmds = CmdNames{"Go: Build Project"}
+			cv.Settings.BuildCmds = CmdNames{"Go: Build Dir"}
+			cv.Settings.RunCmds = CmdNames{"Core: Run"}
 		case fileinfo.TeX:
 			cv.Settings.BuildCmds = CmdNames{"LaTeX: LaTeX PDF"}
 			cv.Settings.RunCmds = CmdNames{"File: Open Target"}
@@ -461,11 +460,10 @@ func (cv *Code) LangDefaults() {
 			cv.Settings.BuildCmds = CmdNames{"Build: Make"}
 		}
 	}
-	if cv.Settings.VersionControl == "" {
-		fmt.Printf("firstvcs")
+	if cv.Settings.VersionControl == vcs.NoVCS {
 		repo, _ := cv.Files.FirstVCS()
 		if repo != nil {
-			cv.Settings.VersionControl = filetree.VersionControlName(repo.Vcs())
+			cv.Settings.VersionControl = repo.Type()
 		}
 	}
 }
