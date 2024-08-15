@@ -74,15 +74,6 @@ type FileSettings struct { //types:add
 // Defaults are the defaults for Settings
 func (se *SettingsData) Defaults() {
 	se.Files.Defaults()
-	home := core.SystemSettings.User.HomeDir
-	texPath := ".:" + home + "/texmf/tex/latex:/Library/TeX/Root/texmf-dist/tex/latex:"
-	se.EnvVars = map[string]string{
-		"TEXINPUTS":       texPath,
-		"BIBINPUTS":       texPath,
-		"BSTINPUTS":       texPath,
-		"PATH":            home + "/bin:" + home + "/go/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/shbin:/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
-		"PKG_CONFIG_PATH": "/usr/local/lib/pkgconfig:/opt/homebrew/lib",
-	}
 }
 
 // Defaults are the defaults for FileSettings
