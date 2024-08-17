@@ -347,8 +347,8 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	// SVN
-	{Cat: "SVN", Name: "Add",
+	// Svn
+	{Cat: "Svn", Name: "Add",
 		Desc: "svn add file",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -356,7 +356,7 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "SVN", Name: "Status",
+	{Cat: "Svn", Name: "Status",
 		Desc: "svn status",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -364,7 +364,7 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "SVN", Name: "Info",
+	{Cat: "Svn", Name: "Info",
 		Desc: "svn info",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -372,7 +372,7 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "SVN", Name: "Log",
+	{Cat: "Svn", Name: "Log",
 		Desc: "svn log",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -380,7 +380,7 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdNoWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm},
 
-	{Cat: "SVN", Name: "Commit Project",
+	{Cat: "Svn", Name: "Commit Project",
 		Desc: "svn commit for entire project directory",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -388,7 +388,7 @@ var StandardCommands = Commands{
 		Dir:  "{ProjectPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}, // promptstring1 provided during normal commit process
 
-	{Cat: "SVN", Name: "Commit Dir",
+	{Cat: "Svn", Name: "Commit Dir",
 		Desc: "svn commit in directory of current file",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",
@@ -396,7 +396,7 @@ var StandardCommands = Commands{
 		Dir:  "{FileDirPath}",
 		Wait: CmdWait, Focus: CmdNoFocus, Confirm: CmdNoConfirm}, // promptstring1 provided during normal commit process
 
-	{Cat: "SVN", Name: "Update",
+	{Cat: "Svn", Name: "Update",
 		Desc: "svn update",
 		Lang: fileinfo.Any,
 		Cmds: []CmdAndArgs{{Cmd: "svn",

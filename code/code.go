@@ -292,11 +292,10 @@ func (cv *Code) SelectedFileNode() *filetree.Node {
 	return filetree.AsNode(cv.Files.SelectedNodes[n-1])
 }
 
-// VersionControl returns the version control system in effect, using the file tree detected
-// version or whatever is set in project settings
-func (cv *Code) VersionControl() filetree.VersionControlName {
-	vc := cv.Settings.VersionControl
-	return vc
+// VersionControl returns the version control system in effect,
+// using the file tree detected version or whatever is set in project settings.
+func (cv *Code) VersionControl() vcs.Types {
+	return cv.Settings.VersionControl
 }
 
 func (cv *Code) FocusOnTabs() bool {
@@ -387,10 +386,10 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 		cv.Settings.ProjectFilename = core.Filename(filepath.Join(root, pnm+".code"))
 		cv.ProjectFilename = cv.Settings.ProjectFilename
 		cv.Settings.ProjectRoot = cv.ProjectRoot
-		cv.GuessMainLang()
-		cv.LangDefaults()
 		cv.SetWindowNameTitle()
 		cv.UpdateFiles()
+		cv.GuessMainLang()
+		cv.LangDefaults()
 		cv.SplitsSetView(SplitName(AvailableSplitNames[0]))
 		if fnm != "" {
 			cv.NextViewFile(core.Filename(fnm))
@@ -399,8 +398,8 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 	return cv
 }
 
-// OpenProject opens .code project file and its settings from given filename, in a standard
-// toml-formatted file
+// OpenProject opens .code project file and its settings from given filename,
+// in a standard toml-formatted file.
 func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 	if !cv.IsEmpty() {
 		return OpenCodeProject(string(filename))
@@ -411,9 +410,6 @@ func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 	}
 	root, pnm, _, ok := ProjectPathParse(string(filename))
 	cv.Settings.ProjectRoot = core.Filename(root)
-	if cv.Settings.MainLang == fileinfo.Unknown {
-		cv.GuessMainLang()
-	}
 	cv.Settings.ProjectFilename = filename // should already be set but..
 	if ok {
 		SetGoMod(cv.Settings.GoMod)
@@ -425,6 +421,10 @@ func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 		cv.Scene.SetName(pnm)
 		cv.ApplySettings()
 		cv.UpdateFiles()
+		if cv.Settings.MainLang == fileinfo.Unknown {
+			cv.GuessMainLang()
+			cv.LangDefaults()
+		}
 		cv.SetWindowNameTitle()
 	}
 	return cv
@@ -433,8 +433,8 @@ func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 // NewProject creates a new project at given path, making a new folder in that
 // path -- all Code projects are essentially defined by a path to a folder
 // containing files.  If the folder already exists, then use OpenPath.
-// Can also specify main language and version control type
-func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.Known, VersionControl filetree.VersionControlName) *Code { //types:add
+// Can also specify main language and version control type.
+func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.Known, versionControl vcs.Types) *Code { //types:add
 	np := filepath.Join(string(path), folder)
 	err := os.MkdirAll(np, 0775)
 	if err != nil {
@@ -443,9 +443,7 @@ func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.
 	}
 	nge := cv.OpenPath(core.Filename(np))
 	nge.Settings.MainLang = mainLang
-	if VersionControl != "" {
-		nge.Settings.VersionControl = VersionControl
-	}
+	nge.Settings.VersionControl = versionControl
 	return nge
 }
 
