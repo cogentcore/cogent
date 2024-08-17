@@ -53,8 +53,8 @@ func main() {
 			w.SetFunc(func(file core.Filename) {
 				currentFile = string(file)
 				objgp.DeleteChildren()
-				sc.DeleteMeshes()
-				sc.DeleteTextures()
+				sc.ResetMeshes()
+				// sc.ResetTextures() // TODO: ResetTextures missing
 				errors.Log1(sc.OpenNewObj(string(file), objgp))
 				sc.SetCamera("default")
 				sc.SetNeedsUpdate()
@@ -64,7 +64,5 @@ func main() {
 			w.SetText("Open").SetIcon(icons.Open).SetTooltip("Open a 3D object file for viewing")
 		})
 	})
-
-	sc.SetNeedsConfig()
 	b.RunMainWindow()
 }
