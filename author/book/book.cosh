@@ -36,6 +36,7 @@ func Book(c *author.Config) error { //types:add
 		name = "book"
 	}
 	book := NewBookData(name)
+	book.savePandocInputs()
 	mdfn := book.Markdown()
 	var errs []error
 	for _, fmt := range c.Formats {
@@ -73,14 +74,16 @@ func NewBookData(name string) *BookData {
 }
 
 func (bk *BookData) pandocMarkdownOpts() string {
-	return "markdown+smart+line_blocks+escaped_line_breaks+fenced_code_blocks+fenced_code_attributes+backtick_code_blocks+yaml_metadata_block"
+	pdi := bk.pandocInputs()
+	opts := "markdown+smart+line_blocks+escaped_line_breaks+fenced_code_blocks+fenced_code_attributes+backtick_code_blocks+yaml_metadata_block"
+	opts += "-F " + filepath.Join(pdi, "pandoc-filter.py") + " --lua-filter " + filepath.Join(pdi, "glossary-filter.lua") 
+	return opts
 }
 
 // PDF generates PDF file from given markdown filename
 func (bk *BookData) PDF(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
-	// todo: generate these filter files from embeds
-	pandoc -f {mdopts} -F ../author/pandoc-filter.py --lua-filter ../author/glossary-filter.lua 
+	pandoc -f {mdopts} 
 	return nil
 }
 
@@ -88,14 +91,13 @@ func (bk *BookData) PDF(mdfn string) error {
 func (bk *BookData) HTML(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".html"
-	// todo: generate these filter files from embeds
-	pandoc -f {mdopts} -F ../author/pandoc-filter.py --lua-filter ../author/glossary-filter.lua -t html --standalone --embed-resources --number-sections --css=../author/html.css -H ../author/head_include.html -o {trg} {mdfn}
+	pandoc -f {mdopts} -t html --standalone --embed-resources --number-sections --css=../author/html.css -H ../author/head_include.html -o {trg} {mdfn}
 	return nil
 }
 
 // Markdown generates the combined markdown file that everything else works on.
 func (bk *BookData) Markdown() string {
-	[mkdir author]
+	os.MkdirAll("author", 0750)
 	fn := "author/book.md"
 	bk.GetFiles()
 	bk.Metadata(fn)
@@ -135,4 +137,19 @@ func (bk *BookData) Metadata(fn string) {
 	[cat references.yaml >> {fn}]
 }
 
+func (bk *BookData) pandocInputs() string {
+	return filepath.Join("author", "pandoc-inputs")
+}
 
+// savePandocInputs saves the embedded pandoc inputs in author dir
+func (bk *BookData) savePandocInputs() {
+	pdi := bk.pandocInputs()
+	os.MkdirAll(pdi, 0750)
+	fns, _ := fs.Glob(PandocInputs, "*")
+	for _, fn := range fns {
+		fc, _ := fs.ReadFile(PandocInputs, fn)
+		_, fb := path.Split(fn)
+		tf := filepath.Join(pdi, fb)
+		cosh.WriteFile(tf, string(fc))
+	}
+}

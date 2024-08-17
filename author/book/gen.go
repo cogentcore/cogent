@@ -4,5 +4,10 @@
 
 package book
 
+import "embed"
+
 //go:generate cosh transpile
 //go:generate core generate
+
+//go:embed pandoc-inputs/*
+var PandocInputs embed.FS
