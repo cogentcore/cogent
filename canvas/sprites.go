@@ -228,7 +228,7 @@ func SetSpritePos(sp *core.Sprite, pos image.Point) {
 // InactivateSprites inactivates sprites of given type
 func InactivateSprites(ctx core.Widget, typ Sprites) {
 	sprites := &ctx.AsWidget().Scene.Stage.Sprites
-	for _, spkv := range sprites.Names.Order {
+	for _, spkv := range sprites.Order {
 		sp := spkv.Value
 		st, _, _ := SpriteProperties(sp)
 		if st == typ {

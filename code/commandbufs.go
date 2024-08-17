@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -197,7 +198,7 @@ func (cv *Code) Run() { //types:add
 // Checks for VCS setting and for unsaved files.
 func (cv *Code) Commit() { //types:add
 	vc := cv.VersionControl()
-	if vc == "" {
+	if vc == vcs.NoVCS {
 		core.MessageDialog(cv, "No version control system detected in file system, or defined in project prefs -- define in project prefs if viewing a sub-directory within a larger repository", "No Version Control System Found")
 		return
 	}
@@ -215,7 +216,8 @@ func (cv *Code) CommitNoChecks() {
 		if len(ct) < 2 {
 			continue
 		}
-		if !filetree.IsVersionControlSystem(ct[0]) {
+		var vcstype vcs.Types
+		if vcstype.SetString(ct[0]) != nil {
 			continue
 		}
 		for _, cm := range ct {

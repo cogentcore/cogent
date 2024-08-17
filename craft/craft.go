@@ -30,9 +30,9 @@ func main() {
 	se.Styler(func(s *styles.Style) {
 		sc.Background = colors.Scheme.Select.Container
 	})
-	xyz.NewAmbientLight(sc, "ambient", 0.3, xyz.DirectSun)
+	xyz.NewAmbient(sc, "ambient", 0.3, xyz.DirectSun)
 
-	dir := xyz.NewDirLight(sc, "dir", 1, xyz.DirectSun)
+	dir := xyz.NewDirectional(sc, "dir", 1, xyz.DirectSun)
 	dir.Pos.Set(0, 2, 1) // default: 0,1,1 = above and behind us (we are at 0,0,X)
 
 	// point := xyz.NewPointLight(sc, "point", 1, xyz.DirectSun)
@@ -53,8 +53,8 @@ func main() {
 			w.SetFunc(func(file core.Filename) {
 				currentFile = string(file)
 				objgp.DeleteChildren()
-				sc.DeleteMeshes()
-				sc.DeleteTextures()
+				sc.ResetMeshes()
+				// sc.ResetTextures() // TODO: ResetTextures missing
 				errors.Log1(sc.OpenNewObj(string(file), objgp))
 				sc.SetCamera("default")
 				sc.SetNeedsUpdate()
@@ -64,7 +64,5 @@ func main() {
 			w.SetText("Open").SetIcon(icons.Open).SetTooltip("Open a 3D object file for viewing")
 		})
 	})
-
-	sc.SetNeedsConfig()
 	b.RunMainWindow()
 }
