@@ -1,0 +1,138 @@
+// Copyright (c) 2024, Cogent Core. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package book is the book-specific version of Cogent Author for
+// rendering markdown source into various book documents,
+// including .pdf via latex, .html, .docx and epub.
+//
+// These files should be located in the current directory where the command
+// is run.  Author generates the output files based on Book.Name there,
+// with all of the temporary files used in the generation process in the 
+// 'author' directory.
+package book
+
+import (
+	"fmt"
+	
+	coshell "cogentcore.org/core/shell"
+)
+
+var shell = coshell.NewShell()
+
+// Book generates a book based on a set of markdown files, with the
+// following required file names (with [] indicating optional files):
+//
+//	- metadata.yaml: pandoc metadata with various important options
+//	- frontmatter.md: with copyright, dedication, foreward, preface, prologue sections.
+//	- chapter-*.md chapters, using 01 etc numbering to put in order.
+//	- endmatter.md: includes epilogue, acknowledgements, author
+//	- [appendix-*.md] appendicies, using a, b, c, etc labeling.
+//	- [glossary.md] optional glossary that generates links in text.
+//	- references are auto-generated from citations in text.
+func Book(c *author.Config) error { //types:add
+	name := c.Output
+	if name == "" {
+		name = "book"
+	}
+	book := NewBookData(name)
+	mdfn := book.Markdown()
+	var errs []error
+	for _, fmt := range c.Formats {
+		switch fmt {
+		case author.PDF:
+			err := book.PDF(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		case author.HTML:
+			err := book.HTML(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// BookData has all of the info about the book.
+type BookData struct {
+	// Name is the overall name of the book.
+	// Output files will be Name.pdf etc.
+	Name string 
+	
+	// names of the chapters, in sorted order.
+	Chapters []string
+	
+	// names of the appendicies.
+	Appendicies []string
+}
+
+func NewBookData(name string) *BookData {
+	return &BookData{Name: name}
+}
+
+func (bk *BookData) pandocMarkdownOpts() string {
+	return "markdown+smart+line_blocks+escaped_line_breaks+fenced_code_blocks+fenced_code_attributes+backtick_code_blocks+yaml_metadata_block"
+}
+
+// PDF generates PDF file from given markdown filename
+func (bk *BookData) PDF(mdfn string) error {
+	mdopts := bk.pandocMarkdownOpts()
+	// todo: generate these filter files from embeds
+	pandoc -f {mdopts} -F ../author/pandoc-filter.py --lua-filter ../author/glossary-filter.lua 
+	return nil
+}
+
+// HTML generates HTML file from given markdown filename
+func (bk *BookData) HTML(mdfn string) error {
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".html"
+	// todo: generate these filter files from embeds
+	pandoc -f {mdopts} -F ../author/pandoc-filter.py --lua-filter ../author/glossary-filter.lua -t html --standalone --embed-resources --number-sections --css=../author/html.css -H ../author/head_include.html -o {trg} {mdfn}
+	return nil
+}
+
+// Markdown generates the combined markdown file that everything else works on.
+func (bk *BookData) Markdown() string {
+	[mkdir author]
+	fn := "author/book.md"
+	bk.GetFiles()
+	bk.Metadata(fn)
+	cat "frontmatter.md" >> {fn}
+	for ci, ch := range bk.Chapters {
+		chdiv := fmt.Sprintf("<div class=\"book_section\" id=\"chapter%02d\">", ci)
+		echo {chdiv} >> {fn}
+		cat {ch} >> {fn}
+		echo "</div>" >> {fn}
+	}
+	cat "endmatter.md" >> {fn}
+	// todo: appendix
+	if cosh.FileExists("glossary.md") {
+		echo "<div class=\"book_section\" =id=\"glossary\">" >> {fn}
+		cat "glossary.md" >> {fn}
+		echo "</div>" >> {fn}
+	}
+	echo "<div class=\"book_section\" =id=\"references\">" >> {fn}
+	echo "# References" >> {fn}
+	echo "</div>" >> {fn}
+	return fn
+}
+
+func (bk *BookData) GetFiles() {
+	bk.Chapters = cosh.SplitLines(`ls chapter-*.md`)
+	sort.Strings(bk.Chapters)
+	if cosh.FileExists("appendix-a.md") {
+		bk.Appendicies = cosh.SplitLines(`ls appendix-*.md`)
+		sort.Strings(bk.Appendicies)
+	}
+}
+
+// Metadata outputs the medadata to book.md file
+func (bk *BookData) Metadata(fn string) {
+	echo "---" > {fn}
+	cat metadata.yaml >> {fn}
+	[cat references.yaml >> {fn}]
+}
+
+

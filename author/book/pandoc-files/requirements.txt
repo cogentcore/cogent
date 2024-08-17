@@ -1,0 +1,2 @@
+panflute==2.3.1
+PyYAML==6.0.2
