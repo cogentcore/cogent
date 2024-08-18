@@ -1,4 +1,3 @@
-
 % Options for packages loaded elsewhere
 \PassOptionsToPackage{unicode$for(hyperrefoptions)$,$hyperrefoptions$$endfor$}{hyperref}
 \PassOptionsToPackage{hyphens}{url}
@@ -452,15 +451,6 @@ $if(selnolig-langs)$
 \fi
 $endif$
 $endif$
-\oddsidemargin 0pt
-\evensidemargin 0pt
-\textwidth 6.5in
-\headheight 12pt
-\headsep .5in
-\topmargin -.75in
-\footskip .75in
-\textheight 9in
-\usepackage[font=small]{caption}
 $for(header-includes)$
 $header-includes$
 $endfor$

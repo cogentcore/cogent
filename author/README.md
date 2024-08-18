@@ -29,3 +29,10 @@ You must use specific file names to indicate the functionality and ordering of t
 * `[glossary.md]` optional glossary that generates links in text.
 * references are auto-generated from citations in text.
 
+# Troubleshooting
+
+* The custom `latex.template` can be a problem when pandoc is updated beyond its compatibility.  The `latex.template.diff` shows the diff relative to the `default.latex` template used, from https://github.com/jgm/pandoc-templates for version 3.3.  It is a good idea to just update to the latest default template and re-apply the diff (using patch or manually).
+
+
+
+

@@ -95,9 +95,7 @@ func (bk *BookData) PDF(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".pdf"
 	// todo: -B {bk.pdi("cover-page.latex")} -- requires metadata replacement
-	// --template {bk.pdi("latex.template")}
-	// todo: template needs to be de-templated
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "-t", "latex", "-H", bk.pdi("header.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
 	return nil
 }
 
@@ -129,6 +127,7 @@ func (bk *BookData) Markdown() string {
 		shell.Run("cat", "glossary.md", ">>", fn)
 		shell.Run("echo", "\n</div>", ">>", fn)
 	}
+	shell.Run("echo", "# References", ">>", fn)
 	shell.Run("echo", "\n::: {#refs}", ">>", fn)
 	shell.Run("echo", ":::", ">>", fn)
 	// echo "<div class=\"book_section\" id=\"refs\">\n" >> {fn}
