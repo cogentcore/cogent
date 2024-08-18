@@ -18,7 +18,10 @@ import (
 	coshell "cogentcore.org/core/shell"
 )
 
-var shell = coshell.NewShell()
+var (
+	shell = coshell.NewShell()
+	pdInputs = filepath.Join("author", "pandoc-inputs")
+)
 
 // Book generates a book based on a set of markdown files, with the
 // following required file names (with [] indicating optional files):
@@ -74,16 +77,17 @@ func NewBookData(name string) *BookData {
 }
 
 func (bk *BookData) pandocMarkdownOpts() string {
-	pdi := bk.pandocInputs()
-	opts := "markdown+smart+line_blocks+escaped_line_breaks+fenced_code_blocks+fenced_code_attributes+backtick_code_blocks+yaml_metadata_block"
-	opts += "-F " + filepath.Join(pdi, "pandoc-filter.py") + " --lua-filter " + filepath.Join(pdi, "glossary-filter.lua") 
-	return opts
+	return "markdown+smart+line_blocks+escaped_line_breaks+fenced_code_blocks+fenced_code_attributes+backtick_code_blocks+yaml_metadata_block"
 }
 
 // PDF generates PDF file from given markdown filename
 func (bk *BookData) PDF(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
-	pandoc -f {mdopts} 
+	trg := bk.Name + ".pdf"
+	// todo: -B {bk.pdi("cover-page.latex")} -- requires metadata replacement
+	// --template {bk.pdi("latex.template")}
+	// todo: template needs to be de-templated
+	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc -t latex -H {bk.pdi("header.latex")} --number-sections --toc -o {trg} {mdfn}
 	return nil
 }
 
@@ -91,7 +95,7 @@ func (bk *BookData) PDF(mdfn string) error {
 func (bk *BookData) HTML(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".html"
-	pandoc -f {mdopts} -t html --standalone --embed-resources --number-sections --css=../author/html.css -H ../author/head_include.html -o {trg} {mdfn}
+	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc -t html --standalone --embed-resources --number-sections --css {bk.pdi("html.css")} -H {bk.pdi("head_include.html")} -o {trg} {mdfn}
 	return nil
 }
 
@@ -103,21 +107,23 @@ func (bk *BookData) Markdown() string {
 	bk.Metadata(fn)
 	cat "frontmatter.md" >> {fn}
 	for ci, ch := range bk.Chapters {
-		chdiv := fmt.Sprintf("<div class=\"book_section\" id=\"chapter%02d\">", ci)
+		chdiv := fmt.Sprintf("\n<div class=\"book_section\" id=\"chapter%02d\">\n", ci)
 		echo {chdiv} >> {fn}
 		cat {ch} >> {fn}
-		echo "</div>" >> {fn}
+		echo "\n</div>" >> {fn}
 	}
 	cat "endmatter.md" >> {fn}
 	// todo: appendix
 	if cosh.FileExists("glossary.md") {
-		echo "<div class=\"book_section\" =id=\"glossary\">" >> {fn}
+		echo "\n<div class=\"book_section\" id=\"glossary\">\n" >> {fn}
 		cat "glossary.md" >> {fn}
-		echo "</div>" >> {fn}
+		echo "\n</div>" >> {fn}
 	}
-	echo "<div class=\"book_section\" =id=\"references\">" >> {fn}
-	echo "# References" >> {fn}
-	echo "</div>" >> {fn}
+	echo "\n::: {#refs}" >> {fn}
+	echo ":::" >> {fn}
+	// echo "<div class=\"book_section\" id=\"refs\">\n" >> {fn}
+	// echo "# References" >> {fn}
+	// echo "\n</div>" >> {fn}
 	return fn
 }
 
@@ -137,19 +143,19 @@ func (bk *BookData) Metadata(fn string) {
 	[cat references.yaml >> {fn}]
 }
 
-func (bk *BookData) pandocInputs() string {
-	return filepath.Join("author", "pandoc-inputs")
+func (bk *BookData) pdi(fn string) string {
+	return filepath.Join(pdInputs, fn)
 }
 
 // savePandocInputs saves the embedded pandoc inputs in author dir
 func (bk *BookData) savePandocInputs() {
-	pdi := bk.pandocInputs()
-	os.MkdirAll(pdi, 0750)
-	fns, _ := fs.Glob(PandocInputs, "*")
+	os.MkdirAll(pdInputs, 0750)
+	fns, _ := fs.Glob(PandocInputs, "pandoc-inputs/*")
 	for _, fn := range fns {
 		fc, _ := fs.ReadFile(PandocInputs, fn)
 		_, fb := path.Split(fn)
-		tf := filepath.Join(pdi, fb)
+		tf := bk.pdi(fb)
 		cosh.WriteFile(tf, string(fc))
 	}
+	`chmod +x {bk.pdi("pandoc-filter.py3")}`
 }

@@ -4,6 +4,12 @@
 
 package author
 
+import (
+	"runtime"
+
+	"cogentcore.org/core/base/exec"
+)
+
 //go:generate core generate -add-types -add-funcs
 
 type Formats int32 //enums:enum -transform lower
@@ -31,4 +37,19 @@ type Config struct {
 
 	// Formats are the list of formats for the generated output.
 	Formats []Formats `default:"['pdf','html','docx','epub']" flag:"f,format"`
+}
+
+// Setup runs commands to install the necessary pandoc files using
+// platform specific install commands.
+func Setup(c *Config) error {
+	switch runtime.GOOS {
+	case "darwin":
+		_, err := exec.Output("brew", "install", "pandoc", "pandoc-crossref")
+		return err
+	case "linux":
+		_, err := exec.Output("sudo", "apt-get", "install", "-f", "-y", "pandoc", "pandoc-crossref")
+		return err
+	case "windows":
+	}
+	return nil
 }

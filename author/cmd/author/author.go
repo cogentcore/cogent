@@ -16,5 +16,5 @@ import (
 func main() {
 	opts := cli.DefaultOptions("Cogent Author", "Generates standard output formats from markdown input files, automatically handling references, figures and other advanced features.")
 	opts.DefaultFiles = []string{"author.toml"}
-	clicore.Run(opts, &author.Config{}, book.Book)
+	clicore.Run(opts, &author.Config{}, book.Book, author.Setup)
 }
