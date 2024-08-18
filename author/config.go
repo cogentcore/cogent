@@ -15,11 +15,11 @@ import (
 type Formats int32 //enums:enum -transform lower
 
 const (
-	// PDF, via LaTeX, with full math support.
-	PDF Formats = iota
-
 	// HTML is a single standalone .html file.
-	HTML
+	HTML Formats = iota
+
+	// PDF, via LaTeX, with full math support.
+	PDF
 
 	// DOCX is a Microsoft Word compatible .docx file.
 	DOCX
@@ -27,7 +27,7 @@ const (
 	// EPUB is a standard eBook .epub file.
 	EPUB
 
-	// LaTeX is a latex file.
+	// LaTeX is a latex file, which can be further customized.
 	LaTeX
 )
 
@@ -39,7 +39,7 @@ type Config struct {
 	Output string `flag:"o,output"`
 
 	// Formats are the list of formats for the generated output.
-	Formats []Formats `default:"['pdf','html','docx','epub']" flag:"f,format"`
+	Formats []Formats `default:"['html','pdf','docx','epub']" flag:"f,format"`
 }
 
 // Setup runs commands to install the necessary pandoc files using

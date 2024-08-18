@@ -6,7 +6,7 @@ package book
 
 import "embed"
 
-//go:generate cosh transpile
+//go:generate cosh build
 //go:generate core generate
 
 //go:embed pandoc-inputs/*

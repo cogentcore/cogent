@@ -11,11 +11,11 @@ var _FormatsValues = []Formats{0, 1, 2, 3, 4}
 // FormatsN is the highest valid value for type Formats, plus one.
 const FormatsN Formats = 5
 
-var _FormatsValueMap = map[string]Formats{`pdf`: 0, `html`: 1, `docx`: 2, `epub`: 3, `latex`: 4}
+var _FormatsValueMap = map[string]Formats{`html`: 0, `pdf`: 1, `docx`: 2, `epub`: 3, `latex`: 4}
 
-var _FormatsDescMap = map[Formats]string{0: `PDF, via LaTeX, with full math support.`, 1: `HTML is a single standalone .html file.`, 2: `DOCX is a Microsoft Word compatible .docx file.`, 3: `EPUB is a standard eBook .epub file.`, 4: `LaTeX is a latex file.`}
+var _FormatsDescMap = map[Formats]string{0: `HTML is a single standalone .html file.`, 1: `PDF, via LaTeX, with full math support.`, 2: `DOCX is a Microsoft Word compatible .docx file.`, 3: `EPUB is a standard eBook .epub file.`, 4: `LaTeX is a latex file, which can be further customized.`}
 
-var _FormatsMap = map[Formats]string{0: `pdf`, 1: `html`, 2: `docx`, 3: `epub`, 4: `latex`}
+var _FormatsMap = map[Formats]string{0: `html`, 1: `pdf`, 2: `docx`, 3: `epub`, 4: `latex`}
 
 // String returns the string representation of this Formats value.
 func (i Formats) String() string { return enums.String(i, _FormatsMap) }
