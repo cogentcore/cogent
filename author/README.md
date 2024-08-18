@@ -17,6 +17,8 @@ References to other literature are specified using the following syntax:
 ```
 
 
+https://github.com/citation-style-language/styles
+
 # Book
 
 You must use specific file names to indicate the functionality and ordering of the content within the book, as follows, with [] indicating optional files:
@@ -27,7 +29,7 @@ You must use specific file names to indicate the functionality and ordering of t
 * `endmatter.md`: includes epilogue, acknowledgements, author
 * `[appendix-*.md]` appendicies, using a, b, c, etc labeling.
 * `[glossary.md]` optional glossary that generates links in text.
-* references are auto-generated from citations in text.
+* `allrefs.bib`  source of all references in BibTex format, to use in resolving citations.
 
 # Troubleshooting
 

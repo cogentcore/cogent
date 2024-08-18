@@ -13,7 +13,6 @@
 package book
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -22,6 +21,9 @@ import (
 	"sort"
 
 	"cogentcore.org/cogent/author"
+	"cogentcore.org/cogent/author/refs"
+	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/cli"
 	coshell "cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/cosh"
 )
@@ -38,11 +40,11 @@ var (
 //
 //   - metadata.yaml: pandoc metadata with various important options
 //   - frontmatter.md: with copyright, dedication, foreward, preface, prologue sections.
-//   - chapter-*.md chapters, using 01 etc numbering to put in order.
+//   - chapter-*.md: chapters, using 01 etc numbering to put in order.
 //   - endmatter.md: includes epilogue, acknowledgements, author
 //   - [appendix-*.md] appendicies, using a, b, c, etc labeling.
 //   - [glossary.md] optional glossary that generates links in text.
-//   - references are auto-generated from citations in text.
+//   - allrefs.bib: source of all references in BibTex format, to use in resolving citations.
 func Book(c *author.Config) error { //types:add
 	name := c.Output
 	if name == "" {
@@ -50,17 +52,33 @@ func Book(c *author.Config) error { //types:add
 	}
 	book := NewBookData(name)
 	book.savePandocInputs()
+	book.Refs() // note: we allow this to fail, in case using compiled refs
 	mdfn := book.Markdown()
 	var errs []error
 	for _, fmt := range c.Formats {
 		switch fmt {
+		case author.HTML:
+			err := book.HTML(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		case author.LaTeX:
+			err := book.LaTeX(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
 		case author.PDF:
 			err := book.PDF(mdfn)
 			if err != nil {
 				errs = append(errs, err)
 			}
-		case author.HTML:
-			err := book.HTML(mdfn)
+		case author.EPUB:
+			err := book.EPUB(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		case author.DOCX:
+			err := book.DOCX(mdfn)
 			if err != nil {
 				errs = append(errs, err)
 			}
@@ -95,7 +113,16 @@ func (bk *BookData) PDF(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".pdf"
 	// todo: -B {bk.pdi("cover-page.latex")} -- requires metadata replacement
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
+	return nil
+}
+
+// LaTeX generates LaTeX file from given markdown filename
+func (bk *BookData) LaTeX(mdfn string) error {
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".tex"
+	// todo: -B {bk.pdi("cover-page.latex")} -- requires metadata replacement
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
 	return nil
 }
 
@@ -103,8 +130,38 @@ func (bk *BookData) PDF(mdfn string) error {
 func (bk *BookData) HTML(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".html"
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "-t", "html", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("html.css"), "-H", bk.pdi("head_include.html"), "-o", trg, mdfn)
+	if cli.TheMetaConfig.Verbose {
+		shell.Config.Echo = os.Stdout
+	}
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "html", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("html.css"), "-H", bk.pdi("head_include.html"), "-o", trg, mdfn)
 	return nil
+}
+
+// EPUB generates EPUB file from given markdown filename
+func (bk *BookData) EPUB(mdfn string) error {
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".epub"
+	if cli.TheMetaConfig.Verbose {
+		shell.Config.Echo = os.Stdout
+	}
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "-o", trg, mdfn)
+	return nil
+}
+
+// DOCX generates DOCX file from given markdown filename
+func (bk *BookData) DOCX(mdfn string) error {
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".docx"
+	if cli.TheMetaConfig.Verbose {
+		shell.Config.Echo = os.Stdout
+	}
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "docx", "--number-sections", "--reference-doc", bk.pdi("custom-reference.docx"), "-o", trg, mdfn)
+	return nil
+}
+
+// Refs processes the references
+func (bk *BookData) Refs() error {
+	return errors.Log(refs.BibTexCited("./", "allrefs.bib", "references.bib", cli.TheMetaConfig.Verbose))
 }
 
 // Markdown generates the combined markdown file that everything else works on.
@@ -149,7 +206,8 @@ func (bk *BookData) GetFiles() {
 func (bk *BookData) Metadata(fn string) {
 	shell.Run("echo", "---", ">", fn)
 	shell.Run("cat", "metadata.yaml", ">>", fn)
-	shell.RunErrOK("cat", "references.yaml", ">>", fn)
+	// [cat references.yaml >> {fn}]
+	shell.Run("echo", "---", ">>", fn)
 }
 
 func (bk *BookData) pdi(fn string) string {

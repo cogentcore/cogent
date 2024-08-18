@@ -26,6 +26,9 @@ const (
 
 	// EPUB is a standard eBook .epub file.
 	EPUB
+
+	// LaTeX is a latex file.
+	LaTeX
 )
 
 // Config is the configuration information for the author cli.
