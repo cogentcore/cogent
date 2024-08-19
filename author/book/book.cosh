@@ -1,0 +1,256 @@
+// Copyright (c) 2024, Cogent Core. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package book is the book-specific version of Cogent Author for
+// rendering markdown source into various book documents,
+// including .pdf via latex, .html, .docx and epub.
+//
+// These files should be located in the current directory where the command
+// is run.  Author generates the output files based on Book.Name there,
+// with all of the temporary files used in the generation process in the 
+// 'author' directory.
+package book
+
+import (
+	"fmt"
+	
+	"cogentcore.org/core/base/logx"
+	"cogentcore.org/core/base/iox/imagex"
+	"cogentcore.org/core/base/iox/yamlx"
+	coshell "cogentcore.org/core/shell"
+)
+
+var (
+	shell = coshell.NewShell()
+	pdInputs = filepath.Join("author", "pandoc-inputs")
+)
+
+// Book generates a book based on a set of markdown files, with the
+// following required file names (with [] indicating optional files):
+//
+//	- metadata.yaml: pandoc metadata with various important options
+// - cover.jpg: cover image
+//	- frontmatter.md: with copyright, dedication, foreward, preface, prologue sections.
+//	- chapter-*.md: chapters, using 01 etc numbering to put in order.
+//	- endmatter.md: includes epilogue, acknowledgements, author
+//	- [appendix-*.md] appendicies, using a, b, c, etc labeling.
+//	- [glossary.md] optional glossary that generates links in text.
+//	- allrefs.bib: source of all references in BibTex format, to use in resolving citations.
+func Book(c *author.Config) error { //types:add
+	name := c.Output
+	if name == "" {
+		name = "book"
+	}
+	book := NewBookData(name)
+	err := book.getMetadata()
+	if err != nil {
+		return err
+	}
+	book.savePandocInputs()
+	book.Refs() // note: we allow this to fail, in case using compiled refs
+	mdfn := book.Markdown()
+	if logx.UserLevel <= slog.LevelInfo {
+		shell.Config.Echo = os.Stdout
+	}
+	var errs []error
+	for _, fmt := range c.Formats {
+		switch fmt {
+		case author.HTML:
+			err := book.HTML(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		case author.LaTeX:
+			err := book.LaTeX(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		case author.PDF:
+			err := book.PDF(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		case author.EPUB:
+			err := book.EPUB(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		case author.DOCX:
+			err := book.DOCX(mdfn)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// BookData has all of the info about the book.
+type BookData struct {
+	// Name is the overall name of the book.
+	// Output files will be Name.pdf etc.
+	Name string 
+	
+	// names of the chapters, in sorted order.
+	Chapters []string
+	
+	// names of the appendicies.
+	Appendicies []string
+	
+	Metadata  map[string]any
+}
+
+func NewBookData(name string) *BookData {
+	return &BookData{Name: name}
+}
+
+func (bk *BookData) pandocMarkdownOpts() string {
+	return "markdown+smart+line_blocks+escaped_line_breaks+fenced_code_blocks+fenced_code_attributes+backtick_code_blocks+yaml_metadata_block"
+}
+
+// HTML generates HTML file from given markdown filename
+func (bk *BookData) HTML(mdfn string) error {
+	logx.PrintlnWarn("\n####################################\nGenerating HTML...\n")
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".html"
+	
+	cover := bk.pdi("cover_page.html")
+	img, _, err := imagex.Open("cover.jpg")
+	if err != nil {
+		return errors.Log(err)
+	}
+	imgb64, _ := imagex.ToBase64JPG(img)
+	f, err := os.Create(cover)
+	if errors.Log(err); err != nil {
+		return err
+	}
+	f.Write([]byte("<div id=\"cover-image\">\n<img src=\"data:image/jpg;base64,"))
+	f.Write(imgb64)
+	f.Write([]byte("\"/>\n</div>\n"))
+	f.Close()
+	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t html -B {cover} --standalone --embed-resources --number-sections --css {bk.pdi("html.css")} -H {bk.pdi("head_include.html")} -o {trg} {mdfn}
+	return nil
+}
+
+// PDF generates PDF file from given markdown filename
+func (bk *BookData) PDF(mdfn string) error {
+	logx.PrintlnWarn("\n####################################\nGenerating PDF...\n")
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".pdf"
+	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t latex --template {bk.pdi("latex.template")} -H {bk.pdi("header.latex")} -B {bk.pdi("cover-page.latex")} --number-sections --toc -o {trg} {mdfn}
+	return nil
+}
+
+// LaTeX generates LaTeX file from given markdown filename
+func (bk *BookData) LaTeX(mdfn string) error {
+	logx.PrintlnWarn("\n####################################\nGenerating LaTeX...\n")
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".tex"
+	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t latex --template {bk.pdi("latex.template")} -H {bk.pdi("header.latex")} -B {bk.pdi("cover-page.latex")} --number-sections --toc -o {trg} {mdfn}
+	return nil
+}
+
+// EPUB generates EPUB file from given markdown filename
+func (bk *BookData) EPUB(mdfn string) error {
+	logx.PrintlnWarn("\n####################################\nGenerating ePUB...\n")
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".epub"
+
+	emd := bk.pdi("epub-metadata.xml")
+	f, err := os.Create(emd)
+	if errors.Log(err); err != nil {
+		return err
+	}
+	md := bk.Metadata
+	cr := md["copyright"].(map[string]any)
+	fmt.Fprintf(f, "<dc:rights>Copyright &#xa9; %s %s</dc:rights>\n", cr["year"], cr["owner"])
+	fmt.Fprintf(f, "<dc:language>%s</dc:language>\n", md["language"])
+	fmt.Fprintf(f, "<dc:publisher>%s</dc:publisher>\n", md["publisher"])
+	fmt.Fprintf(f, "<dc:subject>%s</dc:subject>\n", md["genre"])
+	fmt.Fprintf(f, "<dc:identifier id=\"BookId\" opf:scheme=%q>%s</dc:identifier>\n", md["identifier_scheme"], md["identifier"])
+	f.Close()
+	
+	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t epub --standalone --embed-resources --number-sections --css {bk.pdi("epub.css")} --epub-metadata {emd} --epub-cover-image "cover.jpg" -o {trg} {mdfn}
+	return nil
+}
+
+// DOCX generates DOCX file from given markdown filename
+func (bk *BookData) DOCX(mdfn string) error {
+	logx.PrintlnWarn("\n####################################\nGenerating DOCX...\n")
+	mdopts := bk.pandocMarkdownOpts()
+	trg := bk.Name + ".docx"
+	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t docx --number-sections --reference-doc {bk.pdi("custom-reference.docx")} -o {trg} {mdfn}
+	return nil
+}
+
+// Refs processes the references 
+func (bk *BookData) Refs() error {
+	return errors.Log(refs.BibTexCited("./", "allrefs.bib", "references.bib", logx.UserLevel <= slog.LevelInfo))
+}
+
+// Markdown generates the combined markdown file that everything else works on.
+func (bk *BookData) Markdown() string {
+	os.MkdirAll("author", 0750)
+	fn := "author/book.md"
+	bk.GetFiles()
+	bk.metadataToMD(fn)
+	cat "frontmatter.md" >> {fn}
+	for ci, ch := range bk.Chapters {
+		chdiv := fmt.Sprintf("\n<div class=\"book_section\" id=\"chapter%02d\">\n", ci)
+		echo {chdiv} >> {fn}
+		cat {ch} >> {fn}
+		echo "\n</div>" >> {fn}
+	}
+	cat "endmatter.md" >> {fn}
+	// todo: appendix
+	if cosh.FileExists("glossary.md") {
+		echo "\n<div class=\"book_section\" id=\"glossary\">\n" >> {fn}
+		cat "glossary.md" >> {fn}
+		echo "\n</div>" >> {fn}
+	}
+	echo "# References" >> {fn}
+	echo "\n::: {#refs}" >> {fn}
+	echo ":::" >> {fn}
+	return fn
+}
+
+func (bk *BookData) GetFiles() {
+	bk.Chapters = cosh.SplitLines(`ls chapter-*.md`)
+	sort.Strings(bk.Chapters)
+	if cosh.FileExists("appendix-a.md") {
+		bk.Appendicies = cosh.SplitLines(`ls appendix-*.md`)
+		sort.Strings(bk.Appendicies)
+	}
+}
+
+// metadataToMD outputs the medadata to book.md file
+func (bk *BookData) metadataToMD(fn string) {
+	echo "---" > {fn}
+	cat metadata.yaml >> {fn}
+	echo "---" >> {fn}
+}
+
+func (bk *BookData) pdi(fn string) string {
+	return filepath.Join(pdInputs, fn)
+}
+
+// savePandocInputs saves the embedded pandoc inputs in author dir
+func (bk *BookData) savePandocInputs() {
+	os.MkdirAll(pdInputs, 0750)
+	fns, _ := fs.Glob(PandocInputs, "pandoc-inputs/*")
+	for _, fn := range fns {
+		fc, _ := fs.ReadFile(PandocInputs, fn)
+		_, fb := path.Split(fn)
+		tf := bk.pdi(fb)
+		cosh.WriteFile(tf, string(fc))
+	}
+}
+
+func (bk *BookData) getMetadata() error {
+	md := make(map[string]any)
+	err := yamlx.Open(&md, "metadata.yaml")
+	bk.Metadata = md
+	return errors.Log(err)
+}
+
