@@ -42,9 +42,9 @@ var (
 // following required file names (with [] indicating optional files):
 //
 //   - metadata.yaml: pandoc metadata with various important options
-//   - frontmatter.md: with copyright, dedication, foreward, preface, prologue sections.
 //
-// -
+// - cover.jpg: cover image
+//   - frontmatter.md: with copyright, dedication, foreward, preface, prologue sections.
 //   - chapter-*.md: chapters, using 01 etc numbering to put in order.
 //   - endmatter.md: includes epilogue, acknowledgements, author
 //   - [appendix-*.md] appendicies, using a, b, c, etc labeling.
@@ -258,7 +258,6 @@ func (bk *BookData) savePandocInputs() {
 		tf := bk.pdi(fb)
 		cosh.WriteFile(tf, string(fc))
 	}
-	shell.Run("chmod", "+x", bk.pdi("pandoc-filter.py3"))
 }
 
 func (bk *BookData) getMetadata() error {

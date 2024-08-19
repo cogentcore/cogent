@@ -245,7 +245,6 @@ func (bk *BookData) savePandocInputs() {
 		tf := bk.pdi(fb)
 		cosh.WriteFile(tf, string(fc))
 	}
-	`chmod +x {bk.pdi("pandoc-filter.py3")}`
 }
 
 func (bk *BookData) getMetadata() error {
