@@ -111,7 +111,7 @@ func (bk *BookData) pandocMarkdownOpts() string {
 
 // HTML generates HTML file from given markdown filename
 func (bk *BookData) HTML(mdfn string) error {
-	fmt.Println("\n####################################\nGenerating HTML...\n")
+	logx.PrintlnWarn("\n####################################\nGenerating HTML...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".html"
 	
@@ -135,7 +135,7 @@ func (bk *BookData) HTML(mdfn string) error {
 
 // PDF generates PDF file from given markdown filename
 func (bk *BookData) PDF(mdfn string) error {
-	fmt.Println("\n####################################\nGenerating PDF...\n")
+	logx.PrintlnWarn("\n####################################\nGenerating PDF...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".pdf"
 	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t latex --template {bk.pdi("latex.template")} -H {bk.pdi("header.latex")} -B {bk.pdi("cover-page.latex")} --number-sections --toc -o {trg} {mdfn}
@@ -144,7 +144,7 @@ func (bk *BookData) PDF(mdfn string) error {
 
 // LaTeX generates LaTeX file from given markdown filename
 func (bk *BookData) LaTeX(mdfn string) error {
-	fmt.Println("\n####################################\nGenerating LaTeX...\n")
+	logx.PrintlnWarn("\n####################################\nGenerating LaTeX...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".tex"
 	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t latex --template {bk.pdi("latex.template")} -H {bk.pdi("header.latex")} -B {bk.pdi("cover-page.latex")} --number-sections --toc -o {trg} {mdfn}
@@ -153,7 +153,7 @@ func (bk *BookData) LaTeX(mdfn string) error {
 
 // EPUB generates EPUB file from given markdown filename
 func (bk *BookData) EPUB(mdfn string) error {
-	fmt.Println("\n####################################\nGenerating ePUB...\n")
+	logx.PrintlnWarn("\n####################################\nGenerating ePUB...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".epub"
 
@@ -177,7 +177,7 @@ func (bk *BookData) EPUB(mdfn string) error {
 
 // DOCX generates DOCX file from given markdown filename
 func (bk *BookData) DOCX(mdfn string) error {
-	fmt.Println("\n####################################\nGenerating DOCX...\n")
+	logx.PrintlnWarn("\n####################################\nGenerating DOCX...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".docx"
 	pandoc -f {mdopts} --lua-filter {bk.pdi("glossary-filter.lua")} -F pandoc-crossref --citeproc --bibliography references.bib -t docx --number-sections --reference-doc {bk.pdi("custom-reference.docx")} -o {trg} {mdfn}

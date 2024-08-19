@@ -8,6 +8,12 @@ It supports the following output formats:
 
 In addition to the markdown content, `pandoc` recognizes `yaml` metadata at the start of the file, and this is a critical element of the processing to specify various options etc.  For `article`, it can be specified at the start of the file  surrounded by `---` block delimiters, and for `book` it is a separate file.  Pandoc requires that all references be included in this metadata header, so a big part of what `author` does is assemble all of that for you.
 
+To get started, do:
+```go
+author setup
+```
+which installs `pandoc` on different platforms.  You should also have `latex` installed to generate PDF files (e.g., `brew install latex` on mac), but setup does not do this because you may have your own setup.
+
 # References
 
 References to other literature are specified using the following syntax:
@@ -38,7 +44,4 @@ You must use specific file names to indicate the functionality and ordering of t
 # Troubleshooting
 
 * The custom `latex.template` can be a problem when pandoc is updated beyond its compatibility.  The `latex.template.diff` shows the diff relative to the `default.latex` template used, from https://github.com/jgm/pandoc-templates for version 3.3.  It is a good idea to just update to the latest default template and re-apply the diff (using patch or manually).
-
-
-
 
