@@ -16,8 +16,11 @@ References to other literature are specified using the following syntax:
 [@Keil81; @SlomanFernbach18]
 ```
 
+These are citation keys to a BibTeX `references.bib` file that is automatically generated from a potentially much larger collection of references that must be in a file named `allrefs.bib` (which can e.g., be a link to a shared file somewhere).
 
-https://github.com/citation-style-language/styles
+It is in general a good idea to commit the references.bib file along with the rest of the source text into your github repository, so it can be built without requiring the `allrefs.bib` source file.
+
+The style of the references is determined by the `csl` property in the `metadata.yaml` file, and defaults to the pandoc default if not otherwise specified.  You can find all manner of styles here: https://github.com/citation-style-language/styles
 
 # Book
 

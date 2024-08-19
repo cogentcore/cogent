@@ -24,6 +24,7 @@ import (
 	"cogentcore.org/cogent/author"
 	"cogentcore.org/cogent/author/refs"
 	"cogentcore.org/core/base/errors"
+	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/base/logx"
 	coshell "cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/cosh"
@@ -41,6 +42,8 @@ var (
 //
 //   - metadata.yaml: pandoc metadata with various important options
 //   - frontmatter.md: with copyright, dedication, foreward, preface, prologue sections.
+//
+// -
 //   - chapter-*.md: chapters, using 01 etc numbering to put in order.
 //   - endmatter.md: includes epilogue, acknowledgements, author
 //   - [appendix-*.md] appendicies, using a, b, c, etc labeling.
@@ -117,7 +120,24 @@ func (bk *BookData) HTML(mdfn string) error {
 	fmt.Println("\n####################################\nGenerating HTML...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".html"
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "html", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("html.css"), "-H", bk.pdi("head_include.html"), "-o", trg, mdfn)
+
+	img, _, err := imagex.Open("cover.jpg")
+	cover := bk.pdi("cover_page.html")
+	if err == nil {
+		imgb64, _ := imagex.ToBase64JPG(img)
+		f, err := os.Create(cover)
+		if errors.Log(err); err != nil {
+			return err
+		}
+		f.Write([]byte("<div id=\"cover-image\">\n<img src=\"data:image/jpg;base64,"))
+		f.Write(imgb64)
+		f.Write([]byte("\"/>\n</div>\n"))
+		f.Close()
+	} else {
+		err := fmt.Errorf("author HTML: cover.jpg not found: must have a cover image")
+		return err
+	}
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "html", "-B", cover, "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("html.css"), "-H", bk.pdi("head_include.html"), "-o", trg, mdfn)
 	return nil
 }
 
@@ -127,7 +147,7 @@ func (bk *BookData) PDF(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".pdf"
 	// todo: -B {bk.pdi("cover-page.latex")} -- requires metadata replacement
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "-B", bk.pdi("cover-page.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
 	return nil
 }
 
@@ -146,7 +166,7 @@ func (bk *BookData) EPUB(mdfn string) error {
 	fmt.Println("\n####################################\nGenerating ePUB...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".epub"
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "-o", trg, mdfn)
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "--epub-cover-image", "cover.jpg", "-o", trg, mdfn)
 	return nil
 }
 
