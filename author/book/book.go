@@ -128,22 +128,20 @@ func (bk *BookData) HTML(mdfn string) error {
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".html"
 
-	img, _, err := imagex.Open("cover.jpg")
 	cover := bk.pdi("cover_page.html")
-	if err == nil {
-		imgb64, _ := imagex.ToBase64JPG(img)
-		f, err := os.Create(cover)
-		if errors.Log(err); err != nil {
-			return err
-		}
-		f.Write([]byte("<div id=\"cover-image\">\n<img src=\"data:image/jpg;base64,"))
-		f.Write(imgb64)
-		f.Write([]byte("\"/>\n</div>\n"))
-		f.Close()
-	} else {
-		err := fmt.Errorf("author HTML: cover.jpg not found: must have a cover image")
+	img, _, err := imagex.Open("cover.jpg")
+	if err != nil {
+		return errors.Log(err)
+	}
+	imgb64, _ := imagex.ToBase64JPG(img)
+	f, err := os.Create(cover)
+	if errors.Log(err); err != nil {
 		return err
 	}
+	f.Write([]byte("<div id=\"cover-image\">\n<img src=\"data:image/jpg;base64,"))
+	f.Write(imgb64)
+	f.Write([]byte("\"/>\n</div>\n"))
+	f.Close()
 	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "html", "-B", cover, "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("html.css"), "-H", bk.pdi("head_include.html"), "-o", trg, mdfn)
 	return nil
 }
@@ -171,7 +169,22 @@ func (bk *BookData) EPUB(mdfn string) error {
 	fmt.Println("\n####################################\nGenerating ePUB...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".epub"
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "--epub-cover-image", "cover.jpg", "-o", trg, mdfn)
+
+	emd := bk.pdi("epub-metadata.xml")
+	f, err := os.Create(emd)
+	if errors.Log(err); err != nil {
+		return err
+	}
+	md := bk.Metadata
+	cr := md["copyright"].(map[string]any)
+	fmt.Fprintf(f, "<dc:rights>Copyright &#xa9; %s %s</dc:rights>\n", cr["year"], cr["owner"])
+	fmt.Fprintf(f, "<dc:language>%s</dc:language>\n", md["language"])
+	fmt.Fprintf(f, "<dc:publisher>%s</dc:publisher>\n", md["publisher"])
+	fmt.Fprintf(f, "<dc:subject>%s</dc:subject>\n", md["genre"])
+	fmt.Fprintf(f, "<dc:identifier id=\"BookId\" opf:scheme=%q>%s</dc:identifier>\n", md["identifier_scheme"], md["identifier"])
+	f.Close()
+
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "--epub-metadata", emd, "--epub-cover-image", "cover.jpg", "-o", trg, mdfn)
 	return nil
 }
 
@@ -212,9 +225,6 @@ func (bk *BookData) Markdown() string {
 	shell.Run("echo", "# References", ">>", fn)
 	shell.Run("echo", "\n::: {#refs}", ">>", fn)
 	shell.Run("echo", ":::", ">>", fn)
-	// echo "<div class=\"book_section\" id=\"refs\">\n" >> {fn}
-	// echo "# References" >> {fn}
-	// echo "\n</div>" >> {fn}
 	return fn
 }
 
@@ -231,7 +241,6 @@ func (bk *BookData) GetFiles() {
 func (bk *BookData) metadataToMD(fn string) {
 	shell.Run("echo", "---", ">", fn)
 	shell.Run("cat", "metadata.yaml", ">>", fn)
-	// [cat references.yaml >> {fn}]
 	shell.Run("echo", "---", ">>", fn)
 }
 
@@ -256,6 +265,5 @@ func (bk *BookData) getMetadata() error {
 	md := make(map[string]any)
 	err := yamlx.Open(&md, "metadata.yaml")
 	bk.Metadata = md
-	fmt.Println(md)
 	return errors.Log(err)
 }
