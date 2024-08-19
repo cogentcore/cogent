@@ -25,6 +25,7 @@ import (
 	"cogentcore.org/cogent/author/refs"
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/imagex"
+	"cogentcore.org/core/base/iox/yamlx"
 	"cogentcore.org/core/base/logx"
 	coshell "cogentcore.org/core/shell"
 	"cogentcore.org/core/shell/cosh"
@@ -55,6 +56,10 @@ func Book(c *author.Config) error { //types:add
 		name = "book"
 	}
 	book := NewBookData(name)
+	err := book.getMetadata()
+	if err != nil {
+		return err
+	}
 	book.savePandocInputs()
 	book.Refs() // note: we allow this to fail, in case using compiled refs
 	mdfn := book.Markdown()
@@ -105,6 +110,8 @@ type BookData struct {
 
 	// names of the appendicies.
 	Appendicies []string
+
+	Metadata map[string]any
 }
 
 func NewBookData(name string) *BookData {
@@ -146,7 +153,6 @@ func (bk *BookData) PDF(mdfn string) error {
 	fmt.Println("\n####################################\nGenerating PDF...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".pdf"
-	// todo: -B {bk.pdi("cover-page.latex")} -- requires metadata replacement
 	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "-B", bk.pdi("cover-page.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
 	return nil
 }
@@ -156,8 +162,7 @@ func (bk *BookData) LaTeX(mdfn string) error {
 	fmt.Println("\n####################################\nGenerating LaTeX...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".tex"
-	// todo: -B {bk.pdi("cover-page.latex")} -- requires metadata replacement
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "-B", bk.pdi("cover-page.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
 	return nil
 }
 
@@ -189,7 +194,7 @@ func (bk *BookData) Markdown() string {
 	os.MkdirAll("author", 0750)
 	fn := "author/book.md"
 	bk.GetFiles()
-	bk.Metadata(fn)
+	bk.metadataToMD(fn)
 	shell.Run("cat", "frontmatter.md", ">>", fn)
 	for ci, ch := range bk.Chapters {
 		chdiv := fmt.Sprintf("\n<div class=\"book_section\" id=\"chapter%02d\">\n", ci)
@@ -222,8 +227,8 @@ func (bk *BookData) GetFiles() {
 	}
 }
 
-// Metadata outputs the medadata to book.md file
-func (bk *BookData) Metadata(fn string) {
+// metadataToMD outputs the medadata to book.md file
+func (bk *BookData) metadataToMD(fn string) {
 	shell.Run("echo", "---", ">", fn)
 	shell.Run("cat", "metadata.yaml", ">>", fn)
 	// [cat references.yaml >> {fn}]
@@ -245,4 +250,12 @@ func (bk *BookData) savePandocInputs() {
 		cosh.WriteFile(tf, string(fc))
 	}
 	shell.Run("chmod", "+x", bk.pdi("pandoc-filter.py3"))
+}
+
+func (bk *BookData) getMetadata() error {
+	md := make(map[string]any)
+	err := yamlx.Open(&md, "metadata.yaml")
+	bk.Metadata = md
+	fmt.Println(md)
+	return errors.Log(err)
 }

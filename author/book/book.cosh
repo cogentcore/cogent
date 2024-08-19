@@ -16,6 +16,8 @@ import (
 	"fmt"
 	
 	"cogentcore.org/core/base/logx"
+	"cogentcore.org/core/base/iox/imagex"
+	"cogentcore.org/core/base/iox/yamlx"
 	coshell "cogentcore.org/core/shell"
 )
 
@@ -41,6 +43,10 @@ func Book(c *author.Config) error { //types:add
 		name = "book"
 	}
 	book := NewBookData(name)
+	err := book.getMetadata()
+	if err != nil {
+		return err
+	}
 	book.savePandocInputs()
 	book.Refs() // note: we allow this to fail, in case using compiled refs
 	mdfn := book.Markdown()
@@ -91,6 +97,8 @@ type BookData struct {
 	
 	// names of the appendicies.
 	Appendicies []string
+	
+	Metadata  map[string]any
 }
 
 func NewBookData(name string) *BookData {
@@ -173,7 +181,7 @@ func (bk *BookData) Markdown() string {
 	os.MkdirAll("author", 0750)
 	fn := "author/book.md"
 	bk.GetFiles()
-	bk.Metadata(fn)
+	bk.metadataToMD(fn)
 	cat "frontmatter.md" >> {fn}
 	for ci, ch := range bk.Chapters {
 		chdiv := fmt.Sprintf("\n<div class=\"book_section\" id=\"chapter%02d\">\n", ci)
@@ -206,8 +214,8 @@ func (bk *BookData) GetFiles() {
 	}
 }
 
-// Metadata outputs the medadata to book.md file
-func (bk *BookData) Metadata(fn string) {
+// metadataToMD outputs the medadata to book.md file
+func (bk *BookData) metadataToMD(fn string) {
 	echo "---" > {fn}
 	cat metadata.yaml >> {fn}
 	// [cat references.yaml >> {fn}]
@@ -230,3 +238,12 @@ func (bk *BookData) savePandocInputs() {
 	}
 	`chmod +x {bk.pdi("pandoc-filter.py3")}`
 }
+
+func (bk *BookData) getMetadata() error {
+	md := make(map[string]any)
+	err := yamlx.Open(&md, "metadata.yaml")
+	bk.Metadata = md
+	fmt.Println(md)
+	return errors.Log(err)
+}
+
