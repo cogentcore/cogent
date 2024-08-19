@@ -54,7 +54,7 @@ func (sv *SVG) ManipDone() {
 
 // GridDots returns the current grid spacing and offsets in dots.
 func (sv *SVG) GridDots() (float32, math32.Vector2) {
-	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.GridEff
 	if grid <= 0 {
 		grid = 12
@@ -303,9 +303,9 @@ func (sv *SVG) DragMove(e events.Event) {
 		sv.GatherAlignPoints()
 	}
 
-	svoff := math32.Vector2FromPoint(sv.Geom.ContentBBox.Min)
-	spt := math32.Vector2FromPoint(es.DragStartPos)
-	mpt := math32.Vector2FromPoint(e.Pos())
+	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
+	spt := math32.FromPoint(es.DragStartPos)
+	mpt := math32.FromPoint(e.Pos())
 	if e.HasAnyModifier(key.Control) {
 		mpt, _ = sv.ConstrainPoint(spt, mpt)
 	}
@@ -372,8 +372,8 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	stpos := es.DragSelectStartBBox.Min
 	bbX, bbY := ReshapeBBoxPoints(sp)
 
-	spt := math32.Vector2FromPoint(es.DragStartPos)
-	mpt := math32.Vector2FromPoint(e.Pos())
+	spt := math32.FromPoint(es.DragStartPos)
+	mpt := math32.FromPoint(e.Pos())
 	diag := false
 	if e.HasAnyModifier(key.Control) && (bbX != BBCenter && bbY != BBMiddle) {
 		mpt, diag = sv.ConstrainPoint(spt, mpt)
@@ -458,7 +458,7 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	if !es.InAction() {
 		sv.ManipStart(Rotate, es.SelectedNamesString())
 	}
-	dv := math32.Vector2FromPoint(delta)
+	dv := math32.FromPoint(delta)
 	pt := es.DragSelectStartBBox.Min
 	ctr := es.DragSelectStartBBox.Min.Add(es.DragSelectStartBBox.Max).MulScalar(.5)
 	var dx, dy float32

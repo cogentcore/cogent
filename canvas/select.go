@@ -215,8 +215,8 @@ func (sv *SVG) SetSelSpritePos() {
 
 // SetBBoxSpritePos sets positions of given type of sprites
 func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
-	bbox.Min.SetAdd(math32.Vector2FromPoint(sv.Geom.ContentBBox.Min))
-	bbox.Max.SetAdd(math32.Vector2FromPoint(sv.Geom.ContentBBox.Min))
+	bbox.Min.SetAdd(math32.FromPoint(sv.Geom.ContentBBox.Min))
+	bbox.Max.SetAdd(math32.FromPoint(sv.Geom.ContentBBox.Min))
 
 	_, spsz := HandleSpriteSize(1)
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
@@ -385,8 +385,8 @@ func (gv *Canvas) SelectRotate(deg float32) {
 	rot := math32.DegToRad(deg)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := math32.Vector2FromPoint(sng.BBox.Size())
-		mn := math32.Vector2FromPoint(sng.BBox.Min.Sub(svoff))
+		sz := math32.FromPoint(sng.BBox.Size())
+		mn := math32.FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, rot, ctr)
 	}
@@ -407,8 +407,8 @@ func (gv *Canvas) SelectScale(scx, scy float32) {
 	sc := math32.Vec2(scx, scy)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
-		sz := math32.Vector2FromPoint(sng.BBox.Size())
-		mn := math32.Vector2FromPoint(sng.BBox.Min.Sub(svoff))
+		sz := math32.FromPoint(sng.BBox.Size())
+		mn := math32.FromPoint(sng.BBox.Min.Sub(svoff))
 		ctr := mn.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, 0, ctr)
 	}
