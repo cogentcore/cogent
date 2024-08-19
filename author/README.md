@@ -27,6 +27,7 @@ The style of the references is determined by the `csl` property in the `metadata
 You must use specific file names to indicate the functionality and ordering of the content within the book, as follows, with [] indicating optional files:
 
 * `metadata.yaml`: pandoc metadata with various important options.
+* `cover.jpg`: cover image
 * `frontmatter.md`: with copyright, dedication, foreward, preface, prologue sections.
 * `chapter-*.md` chapters, using 01 etc numbering to put in order.
 * `endmatter.md`: includes epilogue, acknowledgements, author
