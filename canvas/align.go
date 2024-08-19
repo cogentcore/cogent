@@ -149,9 +149,9 @@ func (vv *Canvas) AlignMin(aa AlignAnchors, dim math32.Dims, act string) {
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.Vector2FromPoint(abb.Min.Sub(bb.Min))
+		del := math32.FromPoint(abb.Min.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vector2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -174,9 +174,9 @@ func (vv *Canvas) AlignMinAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.Vector2FromPoint(abb.Max.Sub(bb.Min))
+		del := math32.FromPoint(abb.Max.Sub(bb.Min))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vector2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -199,9 +199,9 @@ func (vv *Canvas) AlignMax(aa AlignAnchors, dim math32.Dims, act string) {
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.Vector2FromPoint(abb.Max.Sub(bb.Max))
+		del := math32.FromPoint(abb.Max.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vector2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -224,9 +224,9 @@ func (vv *Canvas) AlignMaxAnchor(aa AlignAnchors, dim math32.Dims, act string) {
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		del := math32.Vector2FromPoint(abb.Min.Sub(bb.Max))
+		del := math32.FromPoint(abb.Min.Sub(bb.Max))
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vector2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
@@ -241,7 +241,7 @@ func (vv *Canvas) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 	svoff := sv.Root().BBox.Min
 	sv.UndoSave(act, es.SelectedNamesString())
 	abb, an := vv.AlignAnchorBBox(aa)
-	ctr := math32.Vector2FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
+	ctr := math32.FromPoint(abb.Min.Add(abb.Max)).MulScalar(0.5)
 	sc := math32.Vec2(1, 1)
 	odim := math32.OtherDim(dim)
 	for sn := range es.Selected {
@@ -250,10 +250,10 @@ func (vv *Canvas) AlignCenter(aa AlignAnchors, dim math32.Dims, act string) {
 		}
 		sng := sn.AsNodeBase()
 		bb := sng.BBox.Sub(svoff)
-		nctr := math32.Vector2FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
+		nctr := math32.FromPoint(bb.Min.Add(bb.Max)).MulScalar(0.5)
 		del := ctr.Sub(nctr)
 		del.SetDim(odim, 0)
-		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.Vector2FromPoint(bb.Min))
+		sn.ApplyDeltaTransform(vv.SSVG(), del, sc, 0, math32.FromPoint(bb.Min))
 	}
 	sv.UpdateView(true)
 	vv.ChangeMade()
