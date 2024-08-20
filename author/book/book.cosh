@@ -209,7 +209,7 @@ func (bk *BookData) Markdown() string {
 		cat "glossary.md" >> {fn}
 		echo "\n</div>" >> {fn}
 	}
-	echo "# References" >> {fn}
+	echo "# References {-}" >> {fn}
 	echo "\n::: {#refs}" >> {fn}
 	echo ":::" >> {fn}
 	return fn
