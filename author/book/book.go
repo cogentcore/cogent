@@ -222,7 +222,7 @@ func (bk *BookData) Markdown() string {
 		shell.Run("cat", "glossary.md", ">>", fn)
 		shell.Run("echo", "\n</div>", ">>", fn)
 	}
-	shell.Run("echo", "# References", ">>", fn)
+	shell.Run("echo", "# References {-}", ">>", fn)
 	shell.Run("echo", "\n::: {#refs}", ">>", fn)
 	shell.Run("echo", ":::", ">>", fn)
 	return fn
