@@ -169,7 +169,7 @@ func (fv *FindPanel) CheckValidRegexp() bool {
 		return true
 	}
 	if fv.Re == nil {
-		return false
+		return fv.CompileRegexp()
 	}
 	return true
 }
@@ -265,7 +265,7 @@ func (fv *FindPanel) CompileRegexp() bool {
 	var err error
 	fv.Re, err = regexp.Compile(fp.Find)
 	if err != nil {
-		core.MessageSnackbar(fv, fmt.Sprintf("The regular expression was invalid: %v", err))
+		core.ErrorSnackbar(fv, err, "The regular expression was invalid")
 		return false
 	}
 	return true
