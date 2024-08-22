@@ -89,6 +89,8 @@ func BibTexCited(srcDir, srcBib, outBib string, verbose bool) error {
 			fmt.Printf("Error: Reference key: %v not found in %s\n", r, srcBib)
 		}
 	}
+
+	ob.SortEntries()
 	out := ob.PrettyString()
 
 	of, err := os.Create(outBib)
