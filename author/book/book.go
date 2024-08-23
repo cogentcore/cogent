@@ -42,8 +42,7 @@ var (
 // following required file names (with [] indicating optional files):
 //
 //   - metadata.yaml: pandoc metadata with various important options
-//
-// - cover.jpg: cover image
+//   - cover.png: cover image
 //   - frontmatter.md: with copyright, dedication, foreward, preface, prologue sections.
 //   - chapter-*.md: chapters, using 01 etc numbering to put in order.
 //   - endmatter.md: includes epilogue, acknowledgements, author
@@ -129,16 +128,16 @@ func (bk *BookData) HTML(mdfn string) error {
 	trg := bk.Name + ".html"
 
 	cover := bk.pdi("cover_page.html")
-	img, _, err := imagex.Open("cover.jpg")
+	img, _, err := imagex.Open("cover.png")
 	if err != nil {
 		return errors.Log(err)
 	}
-	imgb64, _ := imagex.ToBase64JPG(img)
+	imgb64, _ := imagex.ToBase64PNG(img)
 	f, err := os.Create(cover)
 	if errors.Log(err); err != nil {
 		return err
 	}
-	f.Write([]byte("<div id=\"cover-image\">\n<img src=\"data:image/jpg;base64,"))
+	f.Write([]byte("<div id=\"cover-image\">\n<img src=\"data:image/png;base64,"))
 	f.Write(imgb64)
 	f.Write([]byte("\"/>\n</div>\n"))
 	f.Close()
@@ -184,7 +183,7 @@ func (bk *BookData) EPUB(mdfn string) error {
 	fmt.Fprintf(f, "<dc:identifier id=\"BookId\" opf:scheme=%q>%s</dc:identifier>\n", md["identifier_scheme"], md["identifier"])
 	f.Close()
 
-	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "--epub-metadata", emd, "--epub-cover-image", "cover.jpg", "-o", trg, mdfn)
+	shell.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "--epub-metadata", emd, "--epub-cover-image", "cover.png", "-o", trg, mdfn)
 	return nil
 }
 
