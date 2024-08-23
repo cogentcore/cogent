@@ -1,27 +1,44 @@
-*** latex.template	Sat Aug 17 19:13:39 2024
---- default.latex	Sat Aug 17 19:20:57 2024
+*** default.latex	Tue Aug 20 12:29:56 2024
+--- latex.template	Fri Aug 23 15:08:13 2024
 ***************
-*** 1,4 ****
-- 
+*** 1,3 ****
+--- 1,4 ----
++ 
   % Options for packages loaded elsewhere
   \PassOptionsToPackage{unicode$for(hyperrefoptions)$,$hyperrefoptions$$endfor$}{hyperref}
   \PassOptionsToPackage{hyphens}{url}
---- 1,3 ----
 ***************
-*** 452,466 ****
+*** 451,456 ****
+--- 452,466 ----
   \fi
   $endif$
   $endif$
-- \oddsidemargin 0pt
-- \evensidemargin 0pt
-- \textwidth 6.5in
-- \headheight 12pt
-- \headsep .5in
-- \topmargin -.75in
-- \footskip .75in
-- \textheight 9in
-- \usepackage[font=small]{caption}
++ \oddsidemargin 0pt
++ \evensidemargin 0pt
++ \textwidth 6.5in
++ \headheight 12pt
++ \headsep .5in
++ \topmargin -.75in
++ \footskip .75in
++ \textheight 9in
++ \usepackage[font=small]{caption}
   $for(header-includes)$
   $header-includes$
   $endfor$
---- 451,456 ----
+***************
+*** 556,562 ****
+  $if(beamer)$
+  \frame{\titlepage}
+  $else$
+! \maketitle
+  $endif$
+  $if(abstract)$
+  \begin{abstract}
+--- 566,572 ----
+  $if(beamer)$
+  \frame{\titlepage}
+  $else$
+! %% \maketitle
+  $endif$
+  $if(abstract)$
+  \begin{abstract}

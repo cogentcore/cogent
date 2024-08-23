@@ -566,7 +566,7 @@ $if(title)$
 $if(beamer)$
 \frame{\titlepage}
 $else$
-\maketitle
+%% \maketitle
 $endif$
 $if(abstract)$
 \begin{abstract}
