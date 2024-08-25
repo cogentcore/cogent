@@ -11,6 +11,7 @@ func init() {
 	Symbols["cogentcore.org/core/tensor/stats/simat/simat"] = map[string]reflect.Value{
 		// function, constant and variable definitions
 		"BlankRepeat": reflect.ValueOf(simat.BlankRepeat),
+		"NewSimMat":   reflect.ValueOf(simat.NewSimMat),
 		"Tensor":      reflect.ValueOf(simat.Tensor),
 		"TensorStd":   reflect.ValueOf(simat.TensorStd),
 		"Tensors":     reflect.ValueOf(simat.Tensors),

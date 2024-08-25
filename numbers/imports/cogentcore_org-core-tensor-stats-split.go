@@ -12,11 +12,9 @@ func init() {
 		// function, constant and variable definitions
 		"AggAllNumericCols": reflect.ValueOf(split.AggAllNumericCols),
 		"AggColumn":         reflect.ValueOf(split.AggColumn),
-		"AggColumnTry":      reflect.ValueOf(split.AggColumnTry),
 		"AggIndex":          reflect.ValueOf(split.AggIndex),
 		"All":               reflect.ValueOf(split.All),
 		"DescColumn":        reflect.ValueOf(split.DescColumn),
-		"DescColumnTry":     reflect.ValueOf(split.DescColumnTry),
 		"DescIndex":         reflect.ValueOf(split.DescIndex),
 		"GroupBy":           reflect.ValueOf(split.GroupBy),
 		"GroupByFunc":       reflect.ValueOf(split.GroupByFunc),

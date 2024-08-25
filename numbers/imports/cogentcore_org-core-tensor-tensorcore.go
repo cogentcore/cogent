@@ -10,13 +10,13 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/tensor/tensorcore/tensorcore"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"LabelSpace":       reflect.ValueOf(tensorcore.LabelSpace),
-		"NewSimMatButton":  reflect.ValueOf(tensorcore.NewSimMatButton),
-		"NewSimMatGrid":    reflect.ValueOf(tensorcore.NewSimMatGrid),
-		"NewTable":         reflect.ValueOf(tensorcore.NewTable),
-		"NewTableButton":   reflect.ValueOf(tensorcore.NewTableButton),
-		"NewTensorButton":  reflect.ValueOf(tensorcore.NewTensorButton),
-		"NewTensorGrid":    reflect.ValueOf(tensorcore.NewTensorGrid),
+		"LabelSpace":      reflect.ValueOf(tensorcore.LabelSpace),
+		"NewSimMatButton": reflect.ValueOf(tensorcore.NewSimMatButton),
+		"NewSimMatGrid":   reflect.ValueOf(tensorcore.NewSimMatGrid),
+		"NewTable":        reflect.ValueOf(tensorcore.NewTable),
+		"NewTableButton":  reflect.ValueOf(tensorcore.NewTableButton),
+		"NewTensorButton": reflect.ValueOf(tensorcore.NewTensorButton),
+		"NewTensorGrid":   reflect.ValueOf(tensorcore.NewTensorGrid),
 
 		// type definitions
 		"SimMatButton":  reflect.ValueOf((*tensorcore.SimMatButton)(nil)),

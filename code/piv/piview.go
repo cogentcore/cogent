@@ -617,7 +617,7 @@ func (pv *PiView) RecycleMainTab(label string, typ reflect.Type, sel bool) core.
 		}
 		return widg
 	}
-	widg = tv.NewTab(typ, label)
+	widg, _ = tv.NewTab(typ, label)
 	if sel {
 		tv.SelectTabByName(label)
 	}

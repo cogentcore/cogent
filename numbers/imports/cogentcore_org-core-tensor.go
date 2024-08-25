@@ -95,120 +95,68 @@ type _cogentcore_org_core_tensor_Tensor struct {
 	WT                func() mat.Matrix
 }
 
-func (W _cogentcore_org_core_tensor_Tensor) At(i int, j int) float64 {
-	return W.WAt(i, j)
-}
-func (W _cogentcore_org_core_tensor_Tensor) Clone() tensor.Tensor {
-	return W.WClone()
-}
+func (W _cogentcore_org_core_tensor_Tensor) At(i int, j int) float64 { return W.WAt(i, j) }
+func (W _cogentcore_org_core_tensor_Tensor) Clone() tensor.Tensor    { return W.WClone() }
 func (W _cogentcore_org_core_tensor_Tensor) CopyCellsFrom(from tensor.Tensor, to int, start int, n int) {
 	W.WCopyCellsFrom(from, to, start, n)
 }
-func (W _cogentcore_org_core_tensor_Tensor) CopyFrom(from tensor.Tensor) {
-	W.WCopyFrom(from)
-}
-func (W _cogentcore_org_core_tensor_Tensor) CopyMetaData(from tensor.Tensor) {
-	W.WCopyMetaData(from)
-}
-func (W _cogentcore_org_core_tensor_Tensor) CopyShapeFrom(from tensor.Tensor) {
-	W.WCopyShapeFrom(from)
-}
-func (W _cogentcore_org_core_tensor_Tensor) DataType() reflect.Kind {
-	return W.WDataType()
-}
-func (W _cogentcore_org_core_tensor_Tensor) DimSize(dim int) int {
-	return W.WDimSize(dim)
-}
-func (W _cogentcore_org_core_tensor_Tensor) Dims() (r int, c int) {
-	return W.WDims()
-}
-func (W _cogentcore_org_core_tensor_Tensor) Float(i []int) float64 {
-	return W.WFloat(i)
-}
-func (W _cogentcore_org_core_tensor_Tensor) Float1D(i int) float64 {
-	return W.WFloat1D(i)
-}
+func (W _cogentcore_org_core_tensor_Tensor) CopyFrom(from tensor.Tensor)      { W.WCopyFrom(from) }
+func (W _cogentcore_org_core_tensor_Tensor) CopyMetaData(from tensor.Tensor)  { W.WCopyMetaData(from) }
+func (W _cogentcore_org_core_tensor_Tensor) CopyShapeFrom(from tensor.Tensor) { W.WCopyShapeFrom(from) }
+func (W _cogentcore_org_core_tensor_Tensor) DataType() reflect.Kind           { return W.WDataType() }
+func (W _cogentcore_org_core_tensor_Tensor) DimSize(dim int) int              { return W.WDimSize(dim) }
+func (W _cogentcore_org_core_tensor_Tensor) Dims() (r int, c int)             { return W.WDims() }
+func (W _cogentcore_org_core_tensor_Tensor) Float(i []int) float64            { return W.WFloat(i) }
+func (W _cogentcore_org_core_tensor_Tensor) Float1D(i int) float64            { return W.WFloat1D(i) }
 func (W _cogentcore_org_core_tensor_Tensor) FloatRowCell(row int, cell int) float64 {
 	return W.WFloatRowCell(row, cell)
 }
-func (W _cogentcore_org_core_tensor_Tensor) Floats(flt *[]float64) {
-	W.WFloats(flt)
-}
-func (W _cogentcore_org_core_tensor_Tensor) IsString() bool {
-	return W.WIsString()
-}
-func (W _cogentcore_org_core_tensor_Tensor) Len() int {
-	return W.WLen()
-}
+func (W _cogentcore_org_core_tensor_Tensor) Floats(flt *[]float64) { W.WFloats(flt) }
+func (W _cogentcore_org_core_tensor_Tensor) IsString() bool        { return W.WIsString() }
+func (W _cogentcore_org_core_tensor_Tensor) Len() int              { return W.WLen() }
 func (W _cogentcore_org_core_tensor_Tensor) MetaData(key string) (string, bool) {
 	return W.WMetaData(key)
 }
-func (W _cogentcore_org_core_tensor_Tensor) MetaDataMap() map[string]string {
-	return W.WMetaDataMap()
-}
-func (W _cogentcore_org_core_tensor_Tensor) NumDims() int {
-	return W.WNumDims()
-}
+func (W _cogentcore_org_core_tensor_Tensor) MetaDataMap() map[string]string { return W.WMetaDataMap() }
+func (W _cogentcore_org_core_tensor_Tensor) NumDims() int                   { return W.WNumDims() }
 func (W _cogentcore_org_core_tensor_Tensor) Range() (min float64, max float64, minIndex int, maxIndex int) {
 	return W.WRange()
 }
 func (W _cogentcore_org_core_tensor_Tensor) RowCellSize() (rows int, cells int) {
 	return W.WRowCellSize()
 }
-func (W _cogentcore_org_core_tensor_Tensor) SetFloat(i []int, val float64) {
-	W.WSetFloat(i, val)
-}
-func (W _cogentcore_org_core_tensor_Tensor) SetFloat1D(i int, val float64) {
-	W.WSetFloat1D(i, val)
-}
+func (W _cogentcore_org_core_tensor_Tensor) SetFloat(i []int, val float64) { W.WSetFloat(i, val) }
+func (W _cogentcore_org_core_tensor_Tensor) SetFloat1D(i int, val float64) { W.WSetFloat1D(i, val) }
 func (W _cogentcore_org_core_tensor_Tensor) SetFloatRowCell(row int, cell int, val float64) {
 	W.WSetFloatRowCell(row, cell, val)
 }
-func (W _cogentcore_org_core_tensor_Tensor) SetFloats(vals []float64) {
-	W.WSetFloats(vals)
-}
+func (W _cogentcore_org_core_tensor_Tensor) SetFloats(vals []float64) { W.WSetFloats(vals) }
 func (W _cogentcore_org_core_tensor_Tensor) SetMetaData(key string, val string) {
 	W.WSetMetaData(key, val)
 }
-func (W _cogentcore_org_core_tensor_Tensor) SetNumRows(rows int) {
-	W.WSetNumRows(rows)
-}
+func (W _cogentcore_org_core_tensor_Tensor) SetNumRows(rows int) { W.WSetNumRows(rows) }
 func (W _cogentcore_org_core_tensor_Tensor) SetShape(sizes []int, names ...string) {
 	W.WSetShape(sizes, names...)
 }
-func (W _cogentcore_org_core_tensor_Tensor) SetString(i []int, val string) {
-	W.WSetString(i, val)
-}
-func (W _cogentcore_org_core_tensor_Tensor) SetString1D(i int, val string) {
-	W.WSetString1D(i, val)
-}
+func (W _cogentcore_org_core_tensor_Tensor) SetString(i []int, val string) { W.WSetString(i, val) }
+func (W _cogentcore_org_core_tensor_Tensor) SetString1D(i int, val string) { W.WSetString1D(i, val) }
 func (W _cogentcore_org_core_tensor_Tensor) SetStringRowCell(row int, cell int, val string) {
 	W.WSetStringRowCell(row, cell, val)
 }
-func (W _cogentcore_org_core_tensor_Tensor) SetZeros() {
-	W.WSetZeros()
-}
-func (W _cogentcore_org_core_tensor_Tensor) Shape() *tensor.Shape {
-	return W.WShape()
-}
+func (W _cogentcore_org_core_tensor_Tensor) SetZeros()            { W.WSetZeros() }
+func (W _cogentcore_org_core_tensor_Tensor) Shape() *tensor.Shape { return W.WShape() }
 func (W _cogentcore_org_core_tensor_Tensor) String() string {
 	if W.WString == nil {
 		return ""
 	}
 	return W.WString()
 }
-func (W _cogentcore_org_core_tensor_Tensor) String1D(i int) string {
-	return W.WString1D(i)
-}
+func (W _cogentcore_org_core_tensor_Tensor) String1D(i int) string { return W.WString1D(i) }
 func (W _cogentcore_org_core_tensor_Tensor) StringRowCell(row int, cell int) string {
 	return W.WStringRowCell(row, cell)
 }
-func (W _cogentcore_org_core_tensor_Tensor) StringValue(i []int) string {
-	return W.WStringValue(i)
-}
+func (W _cogentcore_org_core_tensor_Tensor) StringValue(i []int) string { return W.WStringValue(i) }
 func (W _cogentcore_org_core_tensor_Tensor) SubSpace(offs []int) tensor.Tensor {
 	return W.WSubSpace(offs)
 }
-func (W _cogentcore_org_core_tensor_Tensor) T() mat.Matrix {
-	return W.WT()
-}
+func (W _cogentcore_org_core_tensor_Tensor) T() mat.Matrix { return W.WT() }
