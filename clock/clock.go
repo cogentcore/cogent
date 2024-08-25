@@ -26,7 +26,7 @@ func main() {
 }
 
 func clock(ts *core.Tabs) {
-	cl := ts.NewTab("Clock")
+	cl, _ := ts.NewTab("Clock")
 	cl.Styler(func(s *styles.Style) {
 		s.CenterAll()
 	})
@@ -41,7 +41,7 @@ type timer struct {
 }
 
 func timers(ts *core.Tabs) {
-	tr := ts.NewTab("Timers")
+	tr, _ := ts.NewTab("Timers")
 	trd := 15 * time.Minute
 	trv := core.NewValue(&trd, "")
 	tr.AddChild(trv)
@@ -49,11 +49,11 @@ func timers(ts *core.Tabs) {
 }
 
 func stopwatches(ts *core.Tabs) {
-	sw := ts.NewTab("Stopwatches")
+	sw, _ := ts.NewTab("Stopwatches")
 	core.NewButton(sw).SetText("Start")
 }
 
 func alarms(ts *core.Tabs) {
-	al := ts.NewTab("Alarms")
+	al, _ := ts.NewTab("Alarms")
 	core.NewButton(al).SetText("Create")
 }

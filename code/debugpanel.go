@@ -137,7 +137,8 @@ func (dv *DebugPanel) InitTabs() {
 	if w.NumTabs() > 0 {
 		return
 	}
-	ctv := texteditor.NewEditor(w.NewTab(DebugTabConsole))
+	dtab, _ := w.NewTab(DebugTabConsole)
+	ctv := texteditor.NewEditor(dtab)
 	ctv.SetName("dbg-console")
 	ConfigOutputTextEditor(ctv)
 	dv.State.BlankState()
@@ -147,7 +148,7 @@ func (dv *DebugPanel) InitTabs() {
 	dv.OutputBuffer.Options.LineNumbers = false
 	ctv.SetBuffer(dv.OutputBuffer)
 
-	bv := w.NewTab(DebugTabBreaks)
+	bv, _ := w.NewTab(DebugTabBreaks)
 	tree.AddChild(bv, func(w *core.Table) {
 		w.SetSlice(&dv.State.Breaks)
 		w.OnDoubleClick(func(e events.Event) {
@@ -168,7 +169,7 @@ func (dv *DebugPanel) InitTabs() {
 		})
 	})
 
-	sv := w.NewTab(DebugTabStack)
+	sv, _ := w.NewTab(DebugTabStack)
 	tree.AddChild(sv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Stack)
@@ -181,7 +182,7 @@ func (dv *DebugPanel) InitTabs() {
 	})
 
 	if dv.Known == fileinfo.Go { // dv.Dbg.HasTasks() { // todo: not avail here yet
-		tv := w.NewTab(DebugTabTasks)
+		tv, _ := w.NewTab(DebugTabTasks)
 		tree.AddChild(tv, func(w *core.Table) {
 			w.SetReadOnly(true)
 			w.SetSlice(&dv.State.Tasks)
@@ -199,7 +200,7 @@ func (dv *DebugPanel) InitTabs() {
 		})
 	}
 
-	tv := w.NewTab(DebugTabThreads)
+	tv, _ := w.NewTab(DebugTabThreads)
 	tree.AddChild(tv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Threads)
@@ -216,7 +217,7 @@ func (dv *DebugPanel) InitTabs() {
 		})
 	})
 
-	vv := w.NewTab(DebugTabVars)
+	vv, _ := w.NewTab(DebugTabVars)
 	tree.AddChild(vv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.Vars)
@@ -226,7 +227,7 @@ func (dv *DebugPanel) InitTabs() {
 		})
 	})
 
-	ff := w.NewTab(DebugTabFrames)
+	ff, _ := w.NewTab(DebugTabFrames)
 	tree.AddChild(ff, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.FindFrames)
@@ -239,7 +240,7 @@ func (dv *DebugPanel) InitTabs() {
 		})
 	})
 
-	gv := w.NewTab(DebugTabGlobals)
+	gv, _ := w.NewTab(DebugTabGlobals)
 	tree.AddChild(gv, func(w *core.Table) {
 		w.SetReadOnly(true)
 		w.SetSlice(&dv.State.GlobalVars)
