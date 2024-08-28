@@ -190,6 +190,7 @@ func (cv *Code) DebugAttach(pid uint64) { //types:add
 	dv.Config(cv, fileinfo.Go, exePath)
 	cv.FocusOnPanel(TabsIndex)
 	dv.Update()
+	dv.Start()
 	cv.CurDbg = dv
 }
 

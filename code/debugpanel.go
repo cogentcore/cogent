@@ -448,6 +448,9 @@ func (dv *DebugPanel) Stop() { //types:add
 	// if !dv.DbgIsActive() || dv.DbgIsAvail() {
 	// 	return
 	// }
+	if dv.Dbg == nil {
+		return
+	}
 	_, err := dv.Dbg.Stop()
 	if err != nil {
 		return
