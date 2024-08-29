@@ -9,6 +9,7 @@ package code
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"log/slog"
 	"os"
@@ -135,6 +136,12 @@ func (cv *Code) Init() {
 			tree.AddChildAt(w, "filetree", func(w *filetree.Tree) {
 				w.OpenDepth = 4
 				cv.Files = w
+				w.FilterFunc = func(path string, info fs.FileInfo) bool {
+					if info.Name() == ".DS_Store" {
+						return false
+					}
+					return true
+				}
 				w.FileNodeType = types.For[FileNode]()
 
 				w.OnSelect(func(e events.Event) {
