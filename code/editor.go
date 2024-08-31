@@ -97,7 +97,8 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Options.LineNumbers = cv.Settings.Editor.LineNumbers
 
-	d := core.NewBody(title).AddText(prmpt).SetData(&ld)
+	d := core.NewBody(title).SetData(&ld)
+	core.NewText(d).SetType(core.TextSupporting).SetText(prmpt)
 	tv := texteditor.NewEditor(d).SetBuffer(tb)
 	tv.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
