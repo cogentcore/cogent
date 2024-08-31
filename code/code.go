@@ -614,8 +614,8 @@ func (cv *Code) AddCloseDialog() {
 		if nch == 0 {
 			return false
 		}
-		d.AddTitle("Unsaved files").
-			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
+		d.SetTitle("Unsaved files")
+		d.AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()

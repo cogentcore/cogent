@@ -50,8 +50,8 @@ func (cv *Canvas) Init() {
 		if !cv.EditState.Changed {
 			return false
 		}
-		d.AddTitle("Unsaved changes").
-			AddText(fmt.Sprintf("There are unsaved changes in %s", fsx.DirAndFile(string(cv.Filename))))
+		d.SetTitle("Unsaved changes")
+		d.AddText(fmt.Sprintf("There are unsaved changes in %s", fsx.DirAndFile(string(cv.Filename))))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()
