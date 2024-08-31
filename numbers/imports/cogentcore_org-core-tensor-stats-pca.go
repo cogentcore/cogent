@@ -10,12 +10,12 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/tensor/stats/pca/pca"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"CovarTableCol":    reflect.ValueOf(pca.CovarTableCol),
-		"CovarTableColStd": reflect.ValueOf(pca.CovarTableColStd),
-		"CovarTensor":      reflect.ValueOf(pca.CovarTensor),
-		"CovarTensorStd":   reflect.ValueOf(pca.CovarTensorStd),
-		"TableColRowsVec":  reflect.ValueOf(pca.TableColRowsVec),
-		"TensorRowsVec":    reflect.ValueOf(pca.TensorRowsVec),
+		"CovarTableColumn":    reflect.ValueOf(pca.CovarTableColumn),
+		"CovarTableColumnStd": reflect.ValueOf(pca.CovarTableColumnStd),
+		"CovarTensor":         reflect.ValueOf(pca.CovarTensor),
+		"CovarTensorStd":      reflect.ValueOf(pca.CovarTensorStd),
+		"TableColumnRowsVec":  reflect.ValueOf(pca.TableColumnRowsVec),
+		"TensorRowsVec":       reflect.ValueOf(pca.TensorRowsVec),
 
 		// type definitions
 		"PCA": reflect.ValueOf((*pca.PCA)(nil)),
