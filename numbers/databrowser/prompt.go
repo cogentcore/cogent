@@ -13,7 +13,7 @@ import (
 // PromptOKCancel prompts the user for whether to do something,
 // calling the given function if the user clicks OK.
 func PromptOKCancel(ctx core.Widget, prompt string, fun func()) {
-	d := core.NewBody().AddTitle(prompt)
+	d := core.NewBody(prompt)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)
 		d.AddOK(parent).OnClick(func(e events.Event) {
@@ -28,7 +28,7 @@ func PromptOKCancel(ctx core.Widget, prompt string, fun func()) {
 // PromptString prompts the user for a string value (initial value given),
 // calling the given function if the user clicks OK.
 func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)) {
-	d := core.NewBody().AddTitle(prompt)
+	d := core.NewBody(prompt)
 	tf := core.NewTextField(d).SetText(str)
 	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(60)
@@ -47,7 +47,7 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 // PromptStruct prompts the user for the values in given struct (pass a pointer),
 // calling the given function if the user clicks OK.
 func PromptStruct(ctx core.Widget, stru any, prompt string, fun func()) {
-	d := core.NewBody().AddTitle(prompt)
+	d := core.NewBody(prompt)
 	core.NewForm(d).SetStruct(stru)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)

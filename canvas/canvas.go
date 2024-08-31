@@ -230,7 +230,7 @@ func (cv *Canvas) PromptPhysSize() { //types:add
 	sv := cv.SVG()
 	sz := &PhysSize{}
 	sz.SetFromSVG(sv)
-	d := core.NewBody().AddTitle("SVG physical size")
+	d := core.NewBody("SVG physical size")
 	core.NewForm(d).SetStruct(sz)
 	d.AddBottomBar(func(parent core.Widget) {
 		d.AddCancel(parent)

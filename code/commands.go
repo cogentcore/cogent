@@ -368,7 +368,7 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			d := core.NewBody().AddTitle("Code Command Prompt").
+			d := core.NewBody("Code Command Prompt").
 				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := core.NewTextField(d).SetText(curval)
 			tf.Styler(func(s *styles.Style) {
@@ -420,7 +420,7 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 // for any values that might be needed for command.
 func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
 	if cm.Confirm {
-		d := core.NewBody().AddTitle("Confirm command").
+		d := core.NewBody("Confirm command").
 			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
 		d.AddBottomBar(func(parent core.Widget) {
 			d.AddCancel(parent)

@@ -233,7 +233,7 @@ func (cv *Code) CommitNoChecks() {
 	}
 	cv.SetArgVarVals() // need to set before setting prompt string below..
 
-	d := core.NewBody().AddTitle("Commit message").
+	d := core.NewBody("Commit message").
 		AddText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
 	tf := core.NewTextField(d)
 	curval, _ := CmdPrompt1Vals["Commit"]

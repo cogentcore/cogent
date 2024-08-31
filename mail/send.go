@@ -33,7 +33,7 @@ func (a *App) Compose() { //types:add
 	a.ComposeMessage = &SendMessage{}
 	a.ComposeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.ComposeMessage.To = []*mail.Address{{}}
-	b := core.NewBody().AddTitle("Send message")
+	b := core.NewBody("Send message")
 	core.NewForm(b).SetStruct(a.ComposeMessage)
 	ed := texteditor.NewEditor(b)
 	ed.Buffer.SetLanguage(fileinfo.Markdown)

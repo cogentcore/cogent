@@ -336,7 +336,7 @@ func (cv *Code) OpenRecent(filename core.Filename) { //types:add
 
 // EditRecentPaths opens a dialog editor for editing the recent project paths list
 func (cv *Code) EditRecentPaths() {
-	d := core.NewBody().AddTitle("Recent project paths").
+	d := core.NewBody("Recent project paths").
 		AddText("You can delete paths you no longer use")
 	core.NewList(d).SetSlice(&RecentPaths)
 	d.AddOKOnly().RunDialog(cv)
@@ -528,7 +528,7 @@ func (cv *Code) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		}
 		return false
 	}
-	d := core.NewBody().AddTitle("There are Unsaved Files").
+	d := core.NewBody("There are Unsaved Files").
 		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Name, nch))
 	d.AddBottomBar(func(parent core.Widget) {
 		if cancelOpt {

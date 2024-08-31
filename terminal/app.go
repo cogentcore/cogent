@@ -107,7 +107,7 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 		tree.AddAt(p, text, func(w *core.Button) {
 			w.SetText(text).SetTooltip(cmd.Doc)
 			w.OnClick(func(e events.Event) {
-				d := core.NewBody().AddTitle(text).AddText(cmd.Doc)
+				d := core.NewBody(text).AddText(cmd.Doc)
 				st := StructForFlags(cmd.Flags)
 				core.NewForm(d).SetStruct(st)
 				d.AddBottomBar(func(parent core.Widget) {
