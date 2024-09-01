@@ -14,7 +14,7 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
+func (cv *Code) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
