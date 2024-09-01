@@ -106,7 +106,7 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	tv.SetReadOnly(true)
 
 	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		core.NewButton(bar).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
 			cv.ViewFile(core.Filename(ld.Filename))
 			d.Close()

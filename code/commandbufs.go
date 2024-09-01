@@ -241,7 +241,7 @@ func (cv *Code) CommitNoChecks() {
 	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 	})
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()

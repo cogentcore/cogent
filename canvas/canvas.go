@@ -52,7 +52,7 @@ func (cv *Canvas) Init() {
 		}
 		d.SetTitle("Unsaved changes")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("There are unsaved changes in %s", fsx.DirAndFile(string(cv.Filename))))
-		d.AddBottomBar(func(bar core.Widget) {
+		d.AddBottomBar(func(bar *core.Frame) {
 			d.AddOK(bar).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()
 			})
@@ -232,7 +232,7 @@ func (cv *Canvas) PromptPhysSize() { //types:add
 	sz.SetFromSVG(sv)
 	d := core.NewBody("SVG physical size")
 	core.NewForm(d).SetStruct(sz)
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).OnClick(func(e events.Event) {
 			cv.SetPhysSize(sz)

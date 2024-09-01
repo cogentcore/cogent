@@ -246,7 +246,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 func (fv *FindPanel) ReplaceAllAction() {
 	d := core.NewBody("Confirm replace all")
 	core.NewText(d).SetType(core.TextSupporting).SetText("Are you sure you want to replace all?")
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Replace all").OnClick(func(e events.Event) {
 			fv.ReplaceAll()

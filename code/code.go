@@ -530,7 +530,7 @@ func (cv *Code) SaveAllCheck(cancelOpt bool, fun func()) bool {
 	}
 	d := core.NewBody("There are Unsaved Files")
 	core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Name, nch))
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		if cancelOpt {
 			d.AddCancel(bar).SetText("Cancel Command")
 		}
@@ -616,7 +616,7 @@ func (cv *Code) AddCloseDialog() {
 		}
 		d.SetTitle("Unsaved files")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
-		d.AddBottomBar(func(bar core.Widget) {
+		d.AddBottomBar(func(bar *core.Frame) {
 			d.AddOK(bar).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()
 			})
@@ -669,7 +669,7 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	b := core.NewBody(winm).SetTitle(winm)
 	cv := NewCode(b)
 	cv.Defaults()
-	b.AddTopBar(func(bar core.Widget) {
+	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
 		tb.Maker(cv.MakeToolbar)
 		tb.AddOverflowMenu(cv.OverflowMenu)

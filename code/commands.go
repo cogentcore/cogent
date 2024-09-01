@@ -374,7 +374,7 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 			tf.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(100)
 			})
-			d.AddBottomBar(func(bar core.Widget) {
+			d.AddBottomBar(func(bar *core.Frame) {
 				d.AddCancel(bar)
 				d.AddOK(bar).OnClick(func(e events.Event) {
 					val := tf.Text()
@@ -422,7 +422,7 @@ func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
 	if cm.Confirm {
 		d := core.NewBody("Confirm command")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
-		d.AddBottomBar(func(bar core.Widget) {
+		d.AddBottomBar(func(bar *core.Frame) {
 			d.AddCancel(bar)
 			d.AddOK(bar).SetText("Run").OnClick(func(e events.Event) {
 				cm.RunAfterPrompts(cv, buf)

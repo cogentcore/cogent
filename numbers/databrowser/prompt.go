@@ -14,7 +14,7 @@ import (
 // calling the given function if the user clicks OK.
 func PromptOKCancel(ctx core.Widget, prompt string, fun func()) {
 	d := core.NewBody(prompt)
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).OnClick(func(e events.Event) {
 			if fun != nil {
@@ -33,7 +33,7 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(60)
 	})
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).OnClick(func(e events.Event) {
 			if fun != nil {
@@ -49,7 +49,7 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 func PromptStruct(ctx core.Widget, str any, prompt string, fun func()) {
 	d := core.NewBody(prompt)
 	core.NewForm(d).SetStruct(str)
-	d.AddBottomBar(func(bar core.Widget) {
+	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).OnClick(func(e events.Event) {
 			if fun != nil {
