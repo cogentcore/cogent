@@ -15,18 +15,7 @@ import (
 )
 
 func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
-	tree.AddInit(p, "app-chooser", func(w *core.Chooser) {
-		cv.AddChooserFiles(w)
-		cv.AddChooserSymbols(w)
-		p.Parent.(*core.Toolbar).AddOverflowMenu(cv.OverflowMenu)
-		w.OnFirst(events.KeyChord, func(e events.Event) {
-			kf := keymap.Of(e.KeyChord())
-			if kf == keymap.Abort {
-				w.ClearError()
-				cv.FocusActiveTextEditor()
-			}
-		})
-	})
+	// p.Parent.(*core.Toolbar).AddOverflowMenu(cv.OverflowMenu) // TODO(appbar)
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
@@ -288,78 +277,75 @@ func (cv *Code) OverflowMenu(m *core.Scene) {
 	core.NewSeparator(m)
 }
 
-// AddChooserFiles adds the files to the app chooser.
-func (cv *Code) AddChooserFiles(ac *core.Chooser) {
-	ac.AddItemsFunc(func() {
-		if cv.Files == nil {
-			return
-		}
-		cv.Files.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
-			fn := filetree.AsNode(cw)
-			if fn == nil || fn.IsIrregular() {
-				return tree.Continue
-			}
-			rpath := fn.RelativePath()
-			nmpath := fn.Name + ":" + rpath
-			switch {
-			case fn.IsDir():
-				ac.Items = append(ac.Items, core.ChooserItem{
-					Text: nmpath,
-					Icon: icons.Folder,
-					Func: func() {
-						fn.Open()
-						fn.ScrollToThis()
-						ac.CallItemsFuncs() // refresh avail files
-					},
-				})
-			case fn.IsExec():
-				ac.Items = append(ac.Items, core.ChooserItem{
-					Text: nmpath,
-					Icon: icons.FileExe,
-					Func: func() {
-						cv.FileNodeRunExe(fn)
-					},
-				})
-			default:
-				ac.Items = append(ac.Items, core.ChooserItem{
-					Text: nmpath,
-					Icon: fn.Info.Ic,
-					Func: func() {
-						cv.NextViewFileNode(fn)
-						ac.CallItemsFuncs() // refresh avail files
-					},
-				})
-			}
+func (cv *Code) MenuSearch(items *[]core.ChooserItem) {
+	cv.addSearchFiles(items)
+	cv.addSearchSymbols(items)
+}
+
+func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
+	if cv.Files == nil {
+		return
+	}
+	cv.Files.WidgetWalkDown(func(cw core.Widget, cwb *core.WidgetBase) bool {
+		fn := filetree.AsNode(cw)
+		if fn == nil || fn.IsIrregular() {
 			return tree.Continue
-		})
+		}
+		rpath := fn.RelativePath()
+		nmpath := fn.Name + ":" + rpath
+		switch {
+		case fn.IsDir():
+			*items = append(*items, core.ChooserItem{
+				Text: nmpath,
+				Icon: icons.Folder,
+				Func: func() {
+					fn.Open()
+					fn.ScrollToThis()
+				},
+			})
+		case fn.IsExec():
+			*items = append(*items, core.ChooserItem{
+				Text: nmpath,
+				Icon: icons.FileExe,
+				Func: func() {
+					cv.FileNodeRunExe(fn)
+				},
+			})
+		default:
+			*items = append(*items, core.ChooserItem{
+				Text: nmpath,
+				Icon: fn.Info.Ic,
+				Func: func() {
+					cv.NextViewFileNode(fn)
+				},
+			})
+		}
+		return tree.Continue
 	})
 }
 
-// AddChooserSymbols adds the symbols to the app chooser.
-func (cv *Code) AddChooserSymbols(ac *core.Chooser) {
-	ac.AddItemsFunc(func() {
-		tv := cv.ActiveTextEditor()
-		if tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
-			return
-		}
-		pfs := tv.Buffer.ParseState.Done()
-		if len(pfs.ParseState.Scopes) == 0 {
-			return
-		}
-		pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
-		syms := NewSymNode()
-		syms.SetName("syms")
-		syms.OpenSyms(pkg, "", "")
-		syms.WalkDown(func(k tree.Node) bool {
-			sn := k.(*SymNode)
-			ac.Items = append(ac.Items, core.ChooserItem{
-				Text: sn.Symbol.Label(),
-				Icon: sn.GetIcon(),
-				Func: func() {
-					SelectSymbol(cv, sn.Symbol)
-				},
-			})
-			return tree.Continue
+func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
+	tv := cv.ActiveTextEditor()
+	if tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
+		return
+	}
+	pfs := tv.Buffer.ParseState.Done()
+	if len(pfs.ParseState.Scopes) == 0 {
+		return
+	}
+	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
+	syms := NewSymNode()
+	syms.SetName("syms")
+	syms.OpenSyms(pkg, "", "")
+	syms.WalkDown(func(k tree.Node) bool {
+		sn := k.(*SymNode)
+		*items = append(*items, core.ChooserItem{
+			Text: sn.Symbol.Label(),
+			Icon: sn.GetIcon(),
+			Func: func() {
+				SelectSymbol(cv, sn.Symbol)
+			},
 		})
+		return tree.Continue
 	})
 }
