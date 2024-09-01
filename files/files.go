@@ -21,7 +21,9 @@ func main() {
 			core.TheApp.OpenURL("file://" + fp.SelectedFile())
 		}
 	})
-	b.AddAppBar(fp.MakeToolbar)
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(fp.MakeToolbar)
+	})
 
 	b.RunMainWindow()
 }

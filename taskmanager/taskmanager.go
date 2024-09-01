@@ -79,29 +79,31 @@ func main() {
 		}()
 	})
 
-	b.AddAppBar(func(p *tree.Plan) {
-		tree.Add(p, func(w *core.Button) {
-			w.SetText("End task").SetIcon(icons.Cancel).
-				SetTooltip("Stop the currently selected task").
-				OnClick(func(e events.Event) {
-					t := ts[tv.SelectedIndex]
-					core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
-				})
-		})
-		tree.Add(p, func(w *core.Button) {
-			w.SetText("Pause").SetIcon(icons.Pause).
-				SetTooltip("Stop updating the list of tasks").
-				OnClick(func(e events.Event) {
-					paused = !paused
-					if paused {
-						w.SetText("Resume").SetIcon(icons.Resume).
-							SetTooltip("Resume updating the list of tasks")
-					} else {
-						w.SetText("Pause").SetIcon(icons.Pause).
-							SetTooltip("Stop updating the list of tasks")
-					}
-					w.Update()
-				})
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(func(p *tree.Plan) {
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("End task").SetIcon(icons.Cancel).
+					SetTooltip("Stop the currently selected task").
+					OnClick(func(e events.Event) {
+						t := ts[tv.SelectedIndex]
+						core.ErrorSnackbar(tv, t.Kill(), "Error ending task")
+					})
+			})
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("Pause").SetIcon(icons.Pause).
+					SetTooltip("Stop updating the list of tasks").
+					OnClick(func(e events.Event) {
+						paused = !paused
+						if paused {
+							w.SetText("Resume").SetIcon(icons.Resume).
+								SetTooltip("Resume updating the list of tasks")
+						} else {
+							w.SetText("Pause").SetIcon(icons.Pause).
+								SetTooltip("Stop updating the list of tasks")
+						}
+						w.Update()
+					})
+			})
 		})
 	})
 

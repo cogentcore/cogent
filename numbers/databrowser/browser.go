@@ -119,7 +119,9 @@ func NewBrowserWindow(dataDir string) *Browser {
 	br.StartDir = startDir
 	ddr := errors.Log1(filepath.Abs(dataDir))
 	fmt.Println(ddr)
-	b.AddAppBar(br.MakeToolbar)
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(br.MakeToolbar)
+	})
 
 	br.SetDataRoot(ddr)
 	br.SetScriptsDir(filepath.Join(ddr, "dbscripts"))

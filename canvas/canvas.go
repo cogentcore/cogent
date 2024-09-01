@@ -580,7 +580,9 @@ func NewWindow(fnm string) *Canvas {
 	b := core.NewBody(winm).SetTitle(winm)
 
 	cv := NewCanvas(b)
-	b.AddAppBar(cv.MakeToolbar)
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(cv.MakeToolbar)
+	})
 
 	b.OnShow(func(e events.Event) {
 		if fnm != "" {

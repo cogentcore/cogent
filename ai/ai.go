@@ -41,17 +41,19 @@ import (
 
 func main() { // TODO(config)
 	b := core.NewBody("Cogent AI")
-	b.AddAppBar(func(p *tree.Plan) {
-		tree.Add(p, func(w *core.Button) {
-			w.SetText("Install").SetIcon(icons.Download)
-		})
-		tree.Add(p, func(w *core.Button) {
-			w.SetText("Start server").SetIcon(icons.PlayArrow).OnClick(func(e events.Event) {
-				core.ErrorSnackbar(b, exec.Verbose().Run("ollama", "serve"))
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(func(p *tree.Plan) {
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("Install").SetIcon(icons.Download)
 			})
-		})
-		tree.Add(p, func(w *core.Button) {
-			w.SetText("Stop server").SetIcon(icons.Stop)
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("Start server").SetIcon(icons.PlayArrow).OnClick(func(e events.Event) {
+					core.ErrorSnackbar(b, exec.Verbose().Run("ollama", "serve"))
+				})
+			})
+			tree.Add(p, func(w *core.Button) {
+				w.SetText("Stop server").SetIcon(icons.Stop)
+			})
 		})
 	})
 

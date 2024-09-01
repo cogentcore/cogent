@@ -110,21 +110,23 @@ func RegistersView(pt *Registers) {
 		AvailableRegistersChanged = true
 	})
 
-	d.AddAppBar(func(p *tree.Plan) {
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
-				SetIcon(icons.Save).SetKey(keymap.Save).
-				FirstStyler(func(s *styles.Style) {
-					s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters)
-				})
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			w.Args[0].SetTag(`extension:".toml"`)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			w.Args[0].SetTag(`extension:".toml"`)
+	d.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(func(p *tree.Plan) {
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.SaveSettings).SetText("Save to settings").
+					SetIcon(icons.Save).SetKey(keymap.Save).
+					FirstStyler(func(s *styles.Style) {
+						s.SetEnabled(AvailableRegistersChanged && pt == &AvailableRegisters)
+					})
+			})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+				w.Args[0].SetTag(`extension:".toml"`)
+			})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+				w.Args[0].SetTag(`extension:".toml"`)
+			})
 		})
 	})
 
