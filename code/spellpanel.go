@@ -84,9 +84,9 @@ func (sv *SpellPanel) Init() {
 						cur = fv.SelectedFile()
 						d.Close()
 					})
-					d.AddBottomBar(func(parent core.Widget) {
-						d.AddCancel(parent)
-						d.AddOK(parent).OnClick(func(e events.Event) {
+					d.AddBottomBar(func(bar core.Widget) {
+						d.AddCancel(bar)
+						d.AddOK(bar).OnClick(func(e events.Event) {
 							spell.Spell.AddWord(cur)
 						})
 					})

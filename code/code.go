@@ -530,17 +530,17 @@ func (cv *Code) SaveAllCheck(cancelOpt bool, fun func()) bool {
 	}
 	d := core.NewBody("There are Unsaved Files")
 	core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Name, nch))
-	d.AddBottomBar(func(parent core.Widget) {
+	d.AddBottomBar(func(bar core.Widget) {
 		if cancelOpt {
-			d.AddCancel(parent).SetText("Cancel Command")
+			d.AddCancel(bar).SetText("Cancel Command")
 		}
-		core.NewButton(parent).SetText("Don't Save").OnClick(func(e events.Event) {
+		core.NewButton(bar).SetText("Don't Save").OnClick(func(e events.Event) {
 			d.Close()
 			if fun != nil {
 				fun()
 			}
 		})
-		core.NewButton(parent).SetText("Save All").OnClick(func(e events.Event) {
+		core.NewButton(bar).SetText("Save All").OnClick(func(e events.Event) {
 			d.Close()
 			cv.SaveAllOpenNodes()
 			if fun != nil {
@@ -616,11 +616,11 @@ func (cv *Code) AddCloseDialog() {
 		}
 		d.SetTitle("Unsaved files")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
-		d.AddBottomBar(func(parent core.Widget) {
-			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
+		d.AddBottomBar(func(bar core.Widget) {
+			d.AddOK(bar).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()
 			})
-			core.NewButton(parent).SetText("Save and close").OnClick(func(e events.Event) {
+			core.NewButton(bar).SetText("Save and close").OnClick(func(e events.Event) {
 				cv.SaveAllOpenNodes()
 				cv.Scene.Close()
 			})
@@ -669,8 +669,8 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	b := core.NewBody(winm).SetTitle(winm)
 	cv := NewCode(b)
 	cv.Defaults()
-	b.AddTopBar(func(parent core.Widget) {
-		tb := core.NewToolbar(parent)
+	b.AddTopBar(func(bar core.Widget) {
+		tb := core.NewToolbar(bar)
 		tb.Maker(cv.MakeToolbar)
 		tb.AddOverflowMenu(cv.OverflowMenu)
 	})

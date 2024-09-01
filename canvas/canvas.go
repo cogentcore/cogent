@@ -52,11 +52,11 @@ func (cv *Canvas) Init() {
 		}
 		d.SetTitle("Unsaved changes")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("There are unsaved changes in %s", fsx.DirAndFile(string(cv.Filename))))
-		d.AddBottomBar(func(parent core.Widget) {
-			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
+		d.AddBottomBar(func(bar core.Widget) {
+			d.AddOK(bar).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()
 			})
-			d.AddOK(parent).SetText("Save and close").OnClick(func(e events.Event) {
+			d.AddOK(bar).SetText("Save and close").OnClick(func(e events.Event) {
 				cv.SaveDrawing()
 				cv.Scene.Close()
 			})
@@ -232,9 +232,9 @@ func (cv *Canvas) PromptPhysSize() { //types:add
 	sz.SetFromSVG(sv)
 	d := core.NewBody("SVG physical size")
 	core.NewForm(d).SetStruct(sz)
-	d.AddBottomBar(func(parent core.Widget) {
-		d.AddCancel(parent)
-		d.AddOK(parent).OnClick(func(e events.Event) {
+	d.AddBottomBar(func(bar core.Widget) {
+		d.AddCancel(bar)
+		d.AddOK(bar).OnClick(func(e events.Event) {
 			cv.SetPhysSize(sz)
 			sv.backgroundGridEff = -1
 			sv.UpdateView(true)

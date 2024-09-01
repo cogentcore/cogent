@@ -241,9 +241,9 @@ func (cv *Code) CommitNoChecks() {
 	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 	})
-	d.AddBottomBar(func(parent core.Widget) {
-		d.AddCancel(parent)
-		d.AddOK(parent).SetText("Commit").OnClick(func(e events.Event) {
+	d.AddBottomBar(func(bar core.Widget) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()
 			cv.ArgVals["{PromptString1}"] = val
 			CmdPrompt1Vals["Commit"] = val

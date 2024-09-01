@@ -151,13 +151,13 @@ func (cv *Code) AutoSaveCheck(tv *TextEditor, vidx int, fn *filetree.Node) bool 
 	cv.DiffFileNode(fn, core.Filename(fn.Buffer.AutoSaveFilename()))
 	d := core.NewBody("Autosave file exists")
 	core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("An auto-save file for file: %v exists; open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Name))
-	d.AddBottomBar(func(parent core.Widget) {
-		core.NewButton(parent).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
+	d.AddBottomBar(func(bar core.Widget) {
+		core.NewButton(bar).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 			d.Close()
 			fn.Buffer.AutoSaveDelete()
 			cv.Files.UpdatePath(fn.Buffer.AutoSaveFilename()) // will update dir
 		})
-		core.NewButton(parent).SetText("Open autosave file").OnClick(func(e events.Event) {
+		core.NewButton(bar).SetText("Open autosave file").OnClick(func(e events.Event) {
 			d.Close()
 			cv.NextViewFile(core.Filename(fn.Buffer.AutoSaveFilename()))
 		})
@@ -500,9 +500,9 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 	if int(fn.Info.Size) > core.SystemSettings.BigFileSize {
 		d := core.NewBody("File is relatively large")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("The file: %v is relatively large at: %v; really open for editing?", fn.Name, fn.Info.Size))
-		d.AddBottomBar(func(parent core.Widget) {
-			d.AddCancel(parent)
-			core.NewButton(parent).SetText("Open").OnClick(func(e events.Event) {
+		d.AddBottomBar(func(bar core.Widget) {
+			d.AddCancel(bar)
+			core.NewButton(bar).SetText("Open").OnClick(func(e events.Event) {
 				d.Close()
 				cv.NextViewFileNode(fn)
 			})

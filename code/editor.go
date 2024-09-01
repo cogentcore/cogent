@@ -106,12 +106,12 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	tv.SetReadOnly(true)
 
 	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
-	d.AddBottomBar(func(parent core.Widget) {
-		core.NewButton(parent).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
+	d.AddBottomBar(func(bar core.Widget) {
+		core.NewButton(bar).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
 			cv.ViewFile(core.Filename(ld.Filename))
 			d.Close()
 		})
-		core.NewButton(parent).SetText("Copy to clipboard").SetIcon(icons.Copy).
+		core.NewButton(bar).SetText("Copy to clipboard").SetIcon(icons.Copy).
 			OnClick(func(e events.Event) {
 				d.Clipboard().Write(mimedata.NewTextBytes(tx))
 			})

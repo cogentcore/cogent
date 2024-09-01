@@ -14,9 +14,9 @@ import (
 // calling the given function if the user clicks OK.
 func PromptOKCancel(ctx core.Widget, prompt string, fun func()) {
 	d := core.NewBody(prompt)
-	d.AddBottomBar(func(parent core.Widget) {
-		d.AddCancel(parent)
-		d.AddOK(parent).OnClick(func(e events.Event) {
+	d.AddBottomBar(func(bar core.Widget) {
+		d.AddCancel(bar)
+		d.AddOK(bar).OnClick(func(e events.Event) {
 			if fun != nil {
 				fun()
 			}
@@ -33,9 +33,9 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(60)
 	})
-	d.AddBottomBar(func(parent core.Widget) {
-		d.AddCancel(parent)
-		d.AddOK(parent).OnClick(func(e events.Event) {
+	d.AddBottomBar(func(bar core.Widget) {
+		d.AddCancel(bar)
+		d.AddOK(bar).OnClick(func(e events.Event) {
 			if fun != nil {
 				fun(tf.Text())
 			}
@@ -46,12 +46,12 @@ func PromptString(ctx core.Widget, str string, prompt string, fun func(s string)
 
 // PromptStruct prompts the user for the values in given struct (pass a pointer),
 // calling the given function if the user clicks OK.
-func PromptStruct(ctx core.Widget, stru any, prompt string, fun func()) {
+func PromptStruct(ctx core.Widget, str any, prompt string, fun func()) {
 	d := core.NewBody(prompt)
-	core.NewForm(d).SetStruct(stru)
-	d.AddBottomBar(func(parent core.Widget) {
-		d.AddCancel(parent)
-		d.AddOK(parent).OnClick(func(e events.Event) {
+	core.NewForm(d).SetStruct(str)
+	d.AddBottomBar(func(bar core.Widget) {
+		d.AddCancel(bar)
+		d.AddOK(bar).OnClick(func(e events.Event) {
 			if fun != nil {
 				fun()
 			}

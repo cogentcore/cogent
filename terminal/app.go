@@ -111,9 +111,9 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 				core.NewText(d).SetType(core.TextSupporting).SetText(cmd.Doc)
 				st := StructForFlags(cmd.Flags)
 				core.NewForm(d).SetStruct(st)
-				d.AddBottomBar(func(parent core.Widget) {
-					d.AddCancel(parent)
-					d.AddOK(parent).SetText(text).OnClick(func(e events.Event) {
+				d.AddBottomBar(func(bar core.Widget) {
+					d.AddCancel(bar)
+					d.AddOK(bar).SetText(text).OnClick(func(e events.Event) {
 						errors.Log(exec.Verbose().Run(fields[0], fields[1:]...))
 					})
 				})
