@@ -15,7 +15,6 @@ import (
 )
 
 func (cv *Code) MakeToolbar(p *tree.Plan) { //types:add
-	// p.Parent.(*core.Toolbar).AddOverflowMenu(cv.OverflowMenu) // TODO(appbar)
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(cv.UpdateFiles).SetText("").SetIcon(icons.Refresh).SetShortcut("Command+U")
 	})
@@ -273,8 +272,6 @@ func (cv *Code) OverflowMenu(m *core.Scene) {
 
 		core.NewFuncButton(m).SetFunc(cv.HelpWiki).SetText("Help").SetIcon(icons.Help)
 	})
-
-	core.NewSeparator(m)
 }
 
 func (cv *Code) MenuSearch(items *[]core.ChooserItem) {

@@ -669,7 +669,11 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	b := core.NewBody(winm).SetTitle(winm)
 	cv := NewCode(b)
 	cv.Defaults()
-	b.AddAppBar(cv.MakeToolbar)
+	b.AddTopBar(func(parent core.Widget) {
+		tb := core.NewToolbar(parent)
+		tb.Maker(cv.MakeToolbar)
+		tb.AddOverflowMenu(cv.OverflowMenu)
+	})
 	cv.Update() // get first pass so settings stick
 
 	if doPath {
