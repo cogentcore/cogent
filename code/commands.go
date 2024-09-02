@@ -126,9 +126,9 @@ func (cm *CmdAndArgs) PrepCmd(avp *ArgVarVals) (*exec.Cmd, string) {
 	switch cm.Cmd {
 	case "{PromptString1}": // special case -- expand args
 		cmdstr := cstr
-		args, err := shellwords.Parse(cmdstr)
-		if err != nil {
-			fmt.Println(err)
+		args := errors.Log1(shellwords.Parse(cmdstr))
+		if len(args) == 0 {
+			return nil, ""
 		}
 		if len(args) > 1 {
 			cstr = args[0]
@@ -482,6 +482,9 @@ func (cm *Command) RunAfterPrompts(cv *Code, buf *texteditor.Buffer) {
 // line of the command output to code statusbar
 func (cm *Command) RunBufWait(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
+	if cmd == nil {
+		return false
+	}
 	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
 	cm.AppendCmdOut(cv, buf, out)
@@ -492,6 +495,9 @@ func (cm *Command) RunBufWait(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs)
 // buffer with new results line-by-line as they come in
 func (cm *Command) RunBuf(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
+	if cmd == nil {
+		return false
+	}
 	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	stdout, err := cmd.StdoutPipe()
 	if err == nil {
