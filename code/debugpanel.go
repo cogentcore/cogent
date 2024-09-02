@@ -1048,7 +1048,9 @@ func VarViewDialog(vr *cdebug.Variable, frinfo string, dbgVw *DebugPanel) *VarVi
 	vv.DbgView = dbgVw
 	vv.Update()
 	vv.SetVar(vr, frinfo)
-	b.AddAppBar(vv.MakeToolbar)
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(vv.MakeToolbar)
+	})
 	b.RunWindow()
 	return vv
 }

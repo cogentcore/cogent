@@ -368,15 +368,15 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 			if curval == "" && cm.Cmds[0].Default != "" {
 				curval = cm.Cmds[0].Default
 			}
-			d := core.NewBody().AddTitle("Code Command Prompt").
-				AddText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
+			d := core.NewBody("Code Command Prompt")
+			core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("Command: %v: %v", cm.Name, cm.Desc))
 			tf := core.NewTextField(d).SetText(curval)
 			tf.Styler(func(s *styles.Style) {
 				s.Min.X.Ch(100)
 			})
-			d.AddBottomBar(func(parent core.Widget) {
-				d.AddCancel(parent)
-				d.AddOK(parent).OnClick(func(e events.Event) {
+			d.AddBottomBar(func(bar *core.Frame) {
+				d.AddCancel(bar)
+				d.AddOK(bar).OnClick(func(e events.Event) {
 					val := tf.Text()
 					cmvals[cm.Label()] = val
 					cv.ArgVals[pv] = val
@@ -420,11 +420,11 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 // for any values that might be needed for command.
 func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
 	if cm.Confirm {
-		d := core.NewBody().AddTitle("Confirm command").
-			AddText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
-		d.AddBottomBar(func(parent core.Widget) {
-			d.AddCancel(parent)
-			d.AddOK(parent).SetText("Run").OnClick(func(e events.Event) {
+		d := core.NewBody("Confirm command")
+		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
+		d.AddBottomBar(func(bar *core.Frame) {
+			d.AddCancel(bar)
+			d.AddOK(bar).SetText("Run").OnClick(func(e events.Event) {
 				cm.RunAfterPrompts(cv, buf)
 			})
 		})

@@ -56,30 +56,32 @@ func LanguagesView(pt *Languages) {
 		AvailableLanguagesChanged = true
 	})
 
-	d.AddAppBar(func(p *tree.Plan) {
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.SaveSettings).
-				SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(AvailableLanguagesChanged && pt == &AvailableLanguages) })
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			w.Args[0].SetTag(`extension:".toml"`)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			w.Args[0].SetTag(`extension:".toml"`)
-		})
-		tree.Add(p, func(w *core.Separator) {})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.ViewStandard).SetConfirm(true).
-				SetText("View standard").SetIcon(icons.Visibility).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLanguages) })
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.RevertToStandard).SetConfirm(true).
-				SetText("Revert to standard").SetIcon(icons.DeviceReset).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLanguages) })
+	d.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(func(p *tree.Plan) {
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.SaveSettings).
+					SetText("Save to settings").SetIcon(icons.Save).SetKey(keymap.Save).
+					FirstStyler(func(s *styles.Style) { s.SetEnabled(AvailableLanguagesChanged && pt == &AvailableLanguages) })
+			})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+				w.Args[0].SetTag(`extension:".toml"`)
+			})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+				w.Args[0].SetTag(`extension:".toml"`)
+			})
+			tree.Add(p, func(w *core.Separator) {})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.ViewStandard).SetConfirm(true).
+					SetText("View standard").SetIcon(icons.Visibility).
+					FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLanguages) })
+			})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.RevertToStandard).SetConfirm(true).
+					SetText("Revert to standard").SetIcon(icons.DeviceReset).
+					FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardLanguages) })
+			})
 		})
 	})
 	d.RunWindow()
@@ -96,25 +98,27 @@ func CmdsView(pt *Commands) {
 	tv.OnChange(func(e events.Event) {
 		CustomCommandsChanged = true
 	})
-	d.AddAppBar(func(p *tree.Plan) {
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.SaveSettings).SetText("Save to settings").
-				SetIcon(icons.Save).SetKey(keymap.Save).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
-			w.Args[0].SetTag(`extension:".toml"`)
-		})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
-			w.Args[0].SetTag(`extension:".toml"`)
-		})
-		tree.Add(p, func(w *core.Separator) {})
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(pt.ViewStandard).SetConfirm(true).
-				SetText("View standard").SetIcon(icons.Visibility).
-				FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
+	d.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(func(p *tree.Plan) {
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.SaveSettings).SetText("Save to settings").
+					SetIcon(icons.Save).SetKey(keymap.Save).
+					FirstStyler(func(s *styles.Style) { s.SetEnabled(CustomCommandsChanged && pt == &CustomCommands) })
+			})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.Open).SetText("Open").SetIcon(icons.Open).SetKey(keymap.Open)
+				w.Args[0].SetTag(`extension:".toml"`)
+			})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.Save).SetText("Save as").SetIcon(icons.SaveAs).SetKey(keymap.SaveAs)
+				w.Args[0].SetTag(`extension:".toml"`)
+			})
+			tree.Add(p, func(w *core.Separator) {})
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(pt.ViewStandard).SetConfirm(true).
+					SetText("View standard").SetIcon(icons.Visibility).
+					FirstStyler(func(s *styles.Style) { s.SetEnabled(pt != &StandardCommands) })
+			})
 		})
 	})
 	d.RunWindow()

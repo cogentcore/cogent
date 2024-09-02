@@ -10,15 +10,15 @@ import (
 func init() {
 	Symbols["cogentcore.org/core/tensor/stats/split/split"] = map[string]reflect.Value{
 		// function, constant and variable definitions
-		"AggAllNumericCols": reflect.ValueOf(split.AggAllNumericCols),
-		"AggColumn":         reflect.ValueOf(split.AggColumn),
-		"AggIndex":          reflect.ValueOf(split.AggIndex),
-		"All":               reflect.ValueOf(split.All),
-		"DescColumn":        reflect.ValueOf(split.DescColumn),
-		"DescIndex":         reflect.ValueOf(split.DescIndex),
-		"GroupBy":           reflect.ValueOf(split.GroupBy),
-		"GroupByFunc":       reflect.ValueOf(split.GroupByFunc),
-		"GroupByIndex":      reflect.ValueOf(split.GroupByIndex),
-		"Permuted":          reflect.ValueOf(split.Permuted),
+		"AggAllNumericColumns": reflect.ValueOf(split.AggAllNumericColumns),
+		"AggColumn":            reflect.ValueOf(split.AggColumn),
+		"AggIndex":             reflect.ValueOf(split.AggIndex),
+		"All":                  reflect.ValueOf(split.All),
+		"DescColumn":           reflect.ValueOf(split.DescColumn),
+		"DescIndex":            reflect.ValueOf(split.DescIndex),
+		"GroupBy":              reflect.ValueOf(split.GroupBy),
+		"GroupByFunc":          reflect.ValueOf(split.GroupByFunc),
+		"GroupByIndex":         reflect.ValueOf(split.GroupByIndex),
+		"Permuted":             reflect.ValueOf(split.Permuted),
 	}
 }

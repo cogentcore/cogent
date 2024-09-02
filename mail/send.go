@@ -33,7 +33,7 @@ func (a *App) Compose() { //types:add
 	a.ComposeMessage = &SendMessage{}
 	a.ComposeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.ComposeMessage.To = []*mail.Address{{}}
-	b := core.NewBody().AddTitle("Send message")
+	b := core.NewBody("Send message")
 	core.NewForm(b).SetStruct(a.ComposeMessage)
 	ed := texteditor.NewEditor(b)
 	ed.Buffer.SetLanguage(fileinfo.Markdown)
@@ -41,9 +41,9 @@ func (a *App) Compose() { //types:add
 	ed.Styler(func(s *styles.Style) {
 		s.SetMono(false)
 	})
-	b.AddBottomBar(func(pw core.Widget) {
-		b.AddCancel(pw)
-		b.AddOK(pw).SetText("Send").OnClick(func(e events.Event) {
+	b.AddBottomBar(func(bar *core.Frame) {
+		b.AddCancel(bar)
+		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
 			a.ComposeMessage.Body = ed.Buffer.String()
 			a.SendMessage()
 		})

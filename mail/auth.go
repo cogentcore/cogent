@@ -32,7 +32,7 @@ func (a *App) Auth() error {
 // SignIn displays a dialog for the user to sign in with the platform of their choice.
 // It returns the user's email address.
 func (a *App) SignIn() (string, error) {
-	d := core.NewBody().AddTitle("Sign in")
+	d := core.NewBody("Sign in")
 	email := make(chan string)
 	fun := func(token *oauth2.Token, userInfo *oidc.UserInfo) {
 		if !slices.Contains(Settings.Accounts, userInfo.Email) {

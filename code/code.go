@@ -336,8 +336,8 @@ func (cv *Code) OpenRecent(filename core.Filename) { //types:add
 
 // EditRecentPaths opens a dialog editor for editing the recent project paths list
 func (cv *Code) EditRecentPaths() {
-	d := core.NewBody().AddTitle("Recent project paths").
-		AddText("You can delete paths you no longer use")
+	d := core.NewBody("Recent project paths")
+	core.NewText(d).SetType(core.TextSupporting).SetText("You can delete paths you no longer use")
 	core.NewList(d).SetSlice(&RecentPaths)
 	d.AddOKOnly().RunDialog(cv)
 }
@@ -528,19 +528,19 @@ func (cv *Code) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		}
 		return false
 	}
-	d := core.NewBody().AddTitle("There are Unsaved Files").
-		AddText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Name, nch))
-	d.AddBottomBar(func(parent core.Widget) {
+	d := core.NewBody("There are Unsaved Files")
+	core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("In Project: %v There are <b>%v</b> opened files with <b>unsaved changes</b> -- do you want to save all?", cv.Name, nch))
+	d.AddBottomBar(func(bar *core.Frame) {
 		if cancelOpt {
-			d.AddCancel(parent).SetText("Cancel Command")
+			d.AddCancel(bar).SetText("Cancel Command")
 		}
-		core.NewButton(parent).SetText("Don't Save").OnClick(func(e events.Event) {
+		core.NewButton(bar).SetText("Don't Save").OnClick(func(e events.Event) {
 			d.Close()
 			if fun != nil {
 				fun()
 			}
 		})
-		core.NewButton(parent).SetText("Save All").OnClick(func(e events.Event) {
+		core.NewButton(bar).SetText("Save All").OnClick(func(e events.Event) {
 			d.Close()
 			cv.SaveAllOpenNodes()
 			if fun != nil {
@@ -614,13 +614,13 @@ func (cv *Code) AddCloseDialog() {
 		if nch == 0 {
 			return false
 		}
-		d.AddTitle("Unsaved files").
-			AddText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
-		d.AddBottomBar(func(parent core.Widget) {
-			d.AddOK(parent).SetText("Close without saving").OnClick(func(e events.Event) {
+		d.SetTitle("Unsaved files")
+		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("There are %d open files in %s with unsaved changes", nch, cv.Name))
+		d.AddBottomBar(func(bar *core.Frame) {
+			d.AddOK(bar).SetText("Close without saving").OnClick(func(e events.Event) {
 				cv.Scene.Close()
 			})
-			core.NewButton(parent).SetText("Save and close").OnClick(func(e events.Event) {
+			core.NewButton(bar).SetText("Save and close").OnClick(func(e events.Event) {
 				cv.SaveAllOpenNodes()
 				cv.Scene.Close()
 			})
@@ -669,7 +669,11 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	b := core.NewBody(winm).SetTitle(winm)
 	cv := NewCode(b)
 	cv.Defaults()
-	b.AddAppBar(cv.MakeToolbar)
+	b.AddTopBar(func(bar *core.Frame) {
+		tb := core.NewToolbar(bar)
+		tb.Maker(cv.MakeToolbar)
+		tb.AddOverflowMenu(cv.OverflowMenu)
+	})
 	cv.Update() // get first pass so settings stick
 
 	if doPath {

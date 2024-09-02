@@ -48,20 +48,22 @@ func main() {
 	currentFile := "objs/airplane_prop_001.obj"
 	errors.Log1(sc.OpenNewObj(currentFile, objgp))
 
-	b.AddAppBar(func(p *tree.Plan) {
-		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(func(file core.Filename) {
-				currentFile = string(file)
-				objgp.DeleteChildren()
-				sc.ResetMeshes()
-				// sc.ResetTextures() // TODO: ResetTextures missing
-				errors.Log1(sc.OpenNewObj(string(file), objgp))
-				sc.SetCamera("default")
-				sc.SetNeedsUpdate()
-				se.NeedsRender()
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(func(p *tree.Plan) {
+			tree.Add(p, func(w *core.FuncButton) {
+				w.SetFunc(func(file core.Filename) {
+					currentFile = string(file)
+					objgp.DeleteChildren()
+					sc.ResetMeshes()
+					// sc.ResetTextures() // TODO: ResetTextures missing
+					errors.Log1(sc.OpenNewObj(string(file), objgp))
+					sc.SetCamera("default")
+					sc.SetNeedsUpdate()
+					se.NeedsRender()
+				})
+				w.Args[0].SetTag(`extension:".obj,.dae,.gltf"`)
+				w.SetText("Open").SetIcon(icons.Open).SetTooltip("Open a 3D object file for viewing")
 			})
-			w.Args[0].SetTag(`extension:".obj,.dae,.gltf"`)
-			w.SetText("Open").SetIcon(icons.Open).SetTooltip("Open a 3D object file for viewing")
 		})
 	})
 	b.RunMainWindow()

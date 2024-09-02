@@ -33,7 +33,9 @@ func run(c *config) error {
 		return err
 	}
 	app := terminal.NewApp(b).SetCmd(cmd)
-	b.AddAppBar(app.MakeToolbar)
+	b.AddTopBar(func(bar *core.Frame) {
+		core.NewToolbar(bar).Maker(app.MakeToolbar)
+	})
 	b.RunMainWindow()
 	return nil
 }

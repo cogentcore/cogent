@@ -600,7 +600,7 @@ func (sv *SVG) ReadMetaData() {
 
 // EditNode opens a [core.Form] dialog on the given node.
 func (sv *SVG) EditNode(n tree.Node) { //types:add
-	d := core.NewBody().AddTitle("Edit node")
+	d := core.NewBody("Edit node")
 	core.NewForm(d).SetStruct(n)
 	d.RunWindowDialog(sv)
 }

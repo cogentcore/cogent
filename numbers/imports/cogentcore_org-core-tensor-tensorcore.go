@@ -16,6 +16,7 @@ func init() {
 		"NewTable":        reflect.ValueOf(tensorcore.NewTable),
 		"NewTableButton":  reflect.ValueOf(tensorcore.NewTableButton),
 		"NewTensorButton": reflect.ValueOf(tensorcore.NewTensorButton),
+		"NewTensorEditor": reflect.ValueOf(tensorcore.NewTensorEditor),
 		"NewTensorGrid":   reflect.ValueOf(tensorcore.NewTensorGrid),
 
 		// type definitions
@@ -25,6 +26,7 @@ func init() {
 		"TableButton":   reflect.ValueOf((*tensorcore.TableButton)(nil)),
 		"TensorButton":  reflect.ValueOf((*tensorcore.TensorButton)(nil)),
 		"TensorDisplay": reflect.ValueOf((*tensorcore.TensorDisplay)(nil)),
+		"TensorEditor":  reflect.ValueOf((*tensorcore.TensorEditor)(nil)),
 		"TensorGrid":    reflect.ValueOf((*tensorcore.TensorGrid)(nil)),
 		"TensorLayout":  reflect.ValueOf((*tensorcore.TensorLayout)(nil)),
 	}

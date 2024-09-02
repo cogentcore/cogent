@@ -92,7 +92,8 @@ func Run(c *Config) error { //cli:cmd -root
 
 // Interactive runs an interactive shell that allows the user to input numbers.
 func Interactive(c *Config) error {
-	b := core.NewBody("Cogent Numbers").AddTitle("Cogent Numbers")
+	b := core.NewBody("Cogent Numbers")
+	core.NewText(b).SetText("Cogent Numbers").SetType(core.TextHeadlineSmall)
 
 	ts := core.NewTabs(b)
 

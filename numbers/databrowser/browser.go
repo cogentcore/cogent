@@ -69,6 +69,8 @@ type Browser struct {
 
 	// ScriptInterp is the interpreter to use for running Browser scripts
 	ScriptInterp *numshell.Interpreter `set:"-"`
+
+	toolbar *core.Toolbar
 }
 
 // Init initializes with the data and script directories
@@ -119,7 +121,11 @@ func NewBrowserWindow(dataDir string) *Browser {
 	br.StartDir = startDir
 	ddr := errors.Log1(filepath.Abs(dataDir))
 	fmt.Println(ddr)
-	b.AddAppBar(br.MakeToolbar)
+	b.AddTopBar(func(bar *core.Frame) {
+		tb := core.NewToolbar(bar)
+		br.toolbar = tb
+		tb.Maker(br.MakeToolbar)
+	})
 
 	br.SetDataRoot(ddr)
 	br.SetScriptsDir(filepath.Join(ddr, "dbscripts"))
@@ -218,9 +224,8 @@ func (br *Browser) UpdateScripts() { //types:add
 			slog.Error(err.Error())
 		}
 	}
-	tb := br.Scene.GetTopAppBar()
-	if tb != nil {
-		tb.Update()
+	if br.toolbar != nil {
+		br.toolbar.Update()
 	}
 }
 

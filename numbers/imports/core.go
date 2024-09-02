@@ -4,6 +4,8 @@
 
 package imports
 
+//go:generate ./make
+
 import "reflect"
 
 var Symbols = map[string]map[string]reflect.Value{}

@@ -233,17 +233,17 @@ func (cv *Code) CommitNoChecks() {
 	}
 	cv.SetArgVarVals() // need to set before setting prompt string below..
 
-	d := core.NewBody().AddTitle("Commit message").
-		AddText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
+	d := core.NewBody("Commit message")
+	core.NewText(d).SetType(core.TextSupporting).SetText("Please enter your commit message here. Remember that this is essential documentation. Author information comes from the Cogent Core User Settings.")
 	tf := core.NewTextField(d)
 	curval, _ := CmdPrompt1Vals["Commit"]
 	tf.SetText(curval)
 	tf.Styler(func(s *styles.Style) {
 		s.Min.X.Ch(100)
 	})
-	d.AddBottomBar(func(parent core.Widget) {
-		d.AddCancel(parent)
-		d.AddOK(parent).SetText("Commit").OnClick(func(e events.Event) {
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Commit").OnClick(func(e events.Event) {
 			val := tf.Text()
 			cv.ArgVals["{PromptString1}"] = val
 			CmdPrompt1Vals["Commit"] = val

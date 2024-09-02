@@ -244,11 +244,11 @@ func (fv *FindPanel) ReplaceAction() bool {
 
 // ReplaceAllAction performs replace all, prompting before proceeding
 func (fv *FindPanel) ReplaceAllAction() {
-	d := core.NewBody().AddTitle("Confirm replace all").
-		AddText("Are you sure you want to replace all?")
-	d.AddBottomBar(func(parent core.Widget) {
-		d.AddCancel(parent)
-		d.AddOK(parent).SetText("Replace all").OnClick(func(e events.Event) {
+	d := core.NewBody("Confirm replace all")
+	core.NewText(d).SetType(core.TextSupporting).SetText("Are you sure you want to replace all?")
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Replace all").OnClick(func(e events.Event) {
 			fv.ReplaceAll()
 		})
 	})
