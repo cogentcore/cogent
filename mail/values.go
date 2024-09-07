@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
+	"cogentcore.org/core/tree"
 )
 
 func init() {
@@ -33,7 +34,7 @@ func (mi *MessageListItem) Init() {
 	mi.Styler(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.Activatable, abilities.Hoverable)
 		s.Cursor = cursors.Pointer
-		// s.Direction = styles.Column
+		s.Direction = styles.Column
 		s.Grow.Set(1, 0)
 	})
 	mi.OnClick(func(e events.Event) {
@@ -45,27 +46,31 @@ func (mi *MessageListItem) Init() {
 		// core.NewFuncButton(m).SetFunc(a.MoveMessage).SetIcon(icons.Move).SetText("Move")
 	})
 
-	from := core.NewText(mi).SetType(core.TextTitleMedium)
-	from.Styler(func(s *styles.Style) {
-		s.SetNonSelectable()
-	})
-	from.Updater(func() {
-		ftxt := ""
-		for _, f := range mi.Data.From {
-			if f.Name != "" {
-				ftxt += f.Name + " "
-			} else {
-				ftxt += f.Addr() + " "
+	tree.AddChild(mi, func(w *core.Text) {
+		w.SetType(core.TextTitleMedium)
+		w.Styler(func(s *styles.Style) {
+			s.SetNonSelectable()
+		})
+		w.Updater(func() {
+			text := ""
+			for _, f := range mi.Data.From {
+				if f.Name != "" {
+					text += f.Name + " "
+				} else {
+					text += f.Addr() + " "
+				}
 			}
-		}
-		from.SetText(ftxt)
+			w.SetText(text)
+		})
 	})
-	subject := core.NewText(mi).SetType(core.TextBodyMedium)
-	subject.Styler(func(s *styles.Style) {
-		s.SetNonSelectable()
-	})
-	subject.Updater(func() {
-		subject.SetText(mi.Data.Subject)
+	tree.AddChild(mi, func(w *core.Text) {
+		w.SetType(core.TextBodyMedium)
+		w.Styler(func(s *styles.Style) {
+			s.SetNonSelectable()
+		})
+		w.Updater(func() {
+			w.SetText(mi.Data.Subject)
+		})
 	})
 }
 
