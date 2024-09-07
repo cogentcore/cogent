@@ -8,6 +8,9 @@ package mail
 //go:generate core generate
 
 import (
+	"cmp"
+	"slices"
+
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
@@ -63,8 +66,12 @@ func (a *App) Init() {
 			w.SetText("Mailboxes")
 		})
 		tree.AddChildAt(w, "list", func(w *core.List) {
+			w.SetReadOnly(true)
 			w.Updater(func() {
 				sl := a.Cache[a.CurrentEmail][a.CurrentMailbox]
+				slices.SortFunc(sl, func(a, b *CacheData) int {
+					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
+				})
 				w.SetSlice(&sl)
 			})
 		})

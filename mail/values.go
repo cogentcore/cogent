@@ -33,7 +33,7 @@ func (mi *MessageListItem) Init() {
 	mi.Styler(func(s *styles.Style) {
 		s.SetAbilities(true, abilities.Activatable, abilities.Hoverable)
 		s.Cursor = cursors.Pointer
-		s.Direction = styles.Column
+		// s.Direction = styles.Column
 		s.Grow.Set(1, 0)
 	})
 	mi.OnClick(func(e events.Event) {

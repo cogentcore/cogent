@@ -5,11 +5,9 @@
 package mail
 
 import (
-	"cmp"
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"time"
 
 	"cogentcore.org/core/base/errors"
@@ -29,25 +27,7 @@ type ReadMessage struct {
 
 // UpdateMessageList updates the message list from [App.Cache].
 func (a *App) UpdateMessageList() {
-	return
-	cached := a.Cache[a.CurrentEmail][a.CurrentMailbox]
-
-	a.AsyncLock()
-	defer a.AsyncUnlock()
-
-	list := a.FindPath("splits/list").(*core.Frame)
-
-	if list.NumChildren() > 100 {
-		return
-	}
-
-	list.DeleteChildren() // TODO(config)
-
-	slices.SortFunc(cached, func(a, b *CacheData) int {
-		return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
-	})
-
-	list.Update()
+	a.Update()
 }
 
 // UpdateReadMessage updates the view of the message currently being read.
