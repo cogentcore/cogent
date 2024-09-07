@@ -103,6 +103,10 @@ func (a *App) Init() {
 				})
 				w.SetSlice(&a.currentCache)
 			})
+			// TODO: duplicate; remove once element-specific context menu works
+			w.AddContextMenu(func(m *core.Scene) {
+				core.NewFuncButton(m).SetFunc(a.MoveMessage).SetIcon(icons.Move).SetText("Move")
+			})
 		})
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
