@@ -11,7 +11,10 @@ import (
 	"cmp"
 	"slices"
 
+	"golang.org/x/exp/maps"
+
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
@@ -72,6 +75,24 @@ func (a *App) Init() {
 		w.SetSplits(0.1, 0.2, 0.7)
 		tree.AddChildAt(w, "mbox", func(w *core.Tree) {
 			w.SetText("Mailboxes")
+			w.Maker(func(p *tree.Plan) {
+				for _, email := range Settings.Accounts {
+					tree.AddAt(p, email, func(w *core.Tree) {
+						w.Maker(func(p *tree.Plan) {
+							mailboxes := maps.Keys(a.cache[email])
+							slices.Sort(mailboxes)
+							for _, mailbox := range mailboxes {
+								tree.AddAt(p, mailbox, func(w *core.Tree) {
+									w.OnSelect(func(e events.Event) {
+										a.currentMailbox = mailbox
+										a.Update()
+									})
+								})
+							}
+						})
+					})
+				}
+			})
 		})
 		tree.AddChildAt(w, "list", func(w *core.List) {
 			w.SetReadOnly(true)

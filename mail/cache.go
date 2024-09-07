@@ -17,7 +17,6 @@ import (
 
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 )
@@ -62,10 +61,6 @@ func (a *App) CacheMessages() error {
 	if a.imapClient == nil {
 		a.imapClient = map[string]*imapclient.Client{}
 	}
-	mbox := a.FindPath("splits/mbox").(*core.Tree)
-	mbox.AsyncLock()
-	mbox.DeleteChildren()
-	mbox.AsyncUnlock()
 	for _, account := range Settings.Accounts {
 		err := a.CacheMessagesForAccount(account)
 		if err != nil {
@@ -119,19 +114,6 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	}
 
 	bemail := FilenameBase32(email)
-
-	a.AsyncLock()
-	mbox := a.FindPath("splits/mbox").(*core.Tree)
-	embox := mbox.ChildByName(bemail)
-	if embox == nil {
-		embox = core.NewTree(mbox).SetText(email) // TODO(config)
-		embox.AsTree().SetName(bemail)
-	}
-	core.NewTree(embox).SetText(mailbox).OnClick(func(e events.Event) {
-		a.currentMailbox = mailbox
-		a.Update()
-	})
-	a.AsyncUnlock()
 
 	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", bemail)
 	err := os.MkdirAll(string(dir), 0700)
