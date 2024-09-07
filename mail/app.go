@@ -71,9 +71,9 @@ func (a *App) Init() {
 		s.Grow.Set(1, 1)
 	})
 
-	tree.AddChildAt(a, "splits", func(w *core.Splits) {
+	tree.AddChild(a, func(w *core.Splits) {
 		w.SetSplits(0.1, 0.2, 0.7)
-		tree.AddChildAt(w, "mbox", func(w *core.Tree) {
+		tree.AddChild(w, func(w *core.Tree) {
 			w.SetText("Mailboxes")
 			w.Maker(func(p *tree.Plan) {
 				for _, email := range Settings.Accounts {
@@ -94,7 +94,7 @@ func (a *App) Init() {
 				}
 			})
 		})
-		tree.AddChildAt(w, "list", func(w *core.List) {
+		tree.AddChild(w, func(w *core.List) {
 			w.SetReadOnly(true)
 			w.Updater(func() {
 				a.currentCache = a.cache[a.currentEmail][a.currentMailbox]
@@ -104,17 +104,17 @@ func (a *App) Init() {
 				w.SetSlice(&a.currentCache)
 			})
 		})
-		tree.AddChildAt(w, "mail", func(w *core.Frame) {
+		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
 				s.Direction = styles.Column
 			})
-			tree.AddChildAt(w, "msv", func(w *core.Form) {
+			tree.AddChild(w, func(w *core.Form) {
 				w.SetReadOnly(true)
 				w.Updater(func() {
 					w.SetStruct(a.readMessage.ToMessage())
 				})
 			})
-			tree.AddChildAt(w, "mb", func(w *core.Frame) {
+			tree.AddChild(w, func(w *core.Frame) {
 				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
