@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"net/mail"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
@@ -38,12 +40,12 @@ func (mi *MessageListItem) Init() {
 		s.Grow.Set(1, 0)
 	})
 	mi.OnClick(func(e events.Event) {
-		// a.ReadMessage = mi.Data
-		// errors.Log(a.UpdateReadMessage())
+		theApp.ReadMessage = mi.Data
+		errors.Log(theApp.UpdateReadMessage())
 	})
 	mi.AddContextMenu(func(m *core.Scene) {
-		// a.ReadMessage = mi.Data
-		// core.NewFuncButton(m).SetFunc(a.MoveMessage).SetIcon(icons.Move).SetText("Move")
+		theApp.ReadMessage = mi.Data
+		core.NewFuncButton(m).SetFunc(theApp.MoveMessage).SetIcon(icons.Move).SetText("Move")
 	})
 
 	tree.AddChild(mi, func(w *core.Text) {

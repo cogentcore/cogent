@@ -52,7 +52,12 @@ type App struct {
 // needed for interface import
 var _ tree.Node = (*App)(nil)
 
+// theApp is the current app instance.
+// TODO: ideally we could remove this.
+var theApp *App
+
 func (a *App) Init() {
+	theApp = a
 	a.Frame.Init()
 	a.AuthToken = map[string]*oauth2.Token{}
 	a.AuthClient = map[string]sasl.Client{}
