@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
@@ -64,6 +65,9 @@ func (a *App) CacheMessages() error {
 	if a.imapClient == nil {
 		a.imapClient = map[string]*imapclient.Client{}
 	}
+	if a.imapMu == nil {
+		a.imapMu = map[string]*sync.Mutex{}
+	}
 	for _, account := range Settings.Accounts {
 		err := a.CacheMessagesForAccount(account)
 		if err != nil {
@@ -88,6 +92,7 @@ func (a *App) CacheMessagesForAccount(email string) error {
 	defer c.Logout()
 
 	a.imapClient[email] = c
+	a.imapMu[email] = &sync.Mutex{}
 
 	err = c.Authenticate(a.authClient[email])
 	if err != nil {
@@ -193,7 +198,9 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			},
 		}
 
+		a.imapMu[email].Lock()
 		mcmd := c.Fetch(fuidset, fetchOptions)
+		a.imapMu[email].Unlock()
 
 		for {
 			msg := mcmd.Next()

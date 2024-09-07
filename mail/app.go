@@ -10,6 +10,7 @@ package mail
 import (
 	"cmp"
 	"slices"
+	"sync"
 
 	"golang.org/x/exp/maps"
 
@@ -33,8 +34,11 @@ type App struct {
 	// authClient contains the [sasl.Client] authentication for sending messages for each account.
 	authClient map[string]sasl.Client
 
-	// IMAPCLient contains the imap clients for each account.
+	// imapClient contains the imap clients for each account.
 	imapClient map[string]*imapclient.Client
+
+	// imapMu contains the imap client mutexes for each account.
+	imapMu map[string]*sync.Mutex
 
 	// composeMessage is the current message we are editing
 	composeMessage *SendMessage

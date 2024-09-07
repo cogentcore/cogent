@@ -12,13 +12,14 @@ import (
 
 // MoveMessage moves the current message to the given mailbox.
 func (a *App) MoveMessage(mailbox string) error { //types:add
+	mu := a.imapMu[a.currentEmail]
+	mu.Lock()
+	defer mu.Unlock()
 	c := a.imapClient[a.currentEmail]
 	uidset := imap.UIDSet{}
 	uidset.AddNum(a.readMessage.UID)
 	fmt.Println(uidset)
 	mc := c.Move(uidset, mailbox)
-	fmt.Println("mc", mc)
-	md, err := mc.Wait()
-	fmt.Println("md", md, err)
+	_, err := mc.Wait()
 	return err
 }
