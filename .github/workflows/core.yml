@@ -51,6 +51,9 @@ jobs:
       - name: Build Canvas
         run: core build web -dir canvas/cmd/canvas -o static/canvas
 
+      - name: Build Marbles
+        run: core build web -dir marbles -o static/marbles
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3

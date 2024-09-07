@@ -4,7 +4,7 @@ Graph equations and run marbles on them. Inspired by [desmos.com](https://desmos
 
 ## Install
 
-To run marbles, you can run:
+You can run Cogent Marbles on the web at https://cogentcore.org/cogent/marbles. You can also run it locally:
 
 ```sh
 go run cogentcore.org/cogent/marbles@main
