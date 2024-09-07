@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 
 	"cogentcore.org/core/base/iox/jsonx"
@@ -31,6 +33,9 @@ func (gr *Graph) OpenJSON(filename core.Filename) error { //types:add
 // OpenAutoSave opens the last graphed graph, stays between sessions of the app
 func (gr *Graph) OpenAutoSave() error {
 	err := jsonx.Open(gr, filepath.Join(core.TheApp.AppDataDir(), "autosave.json"))
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
 	if HandleError(err) {
 		return err
 	}
