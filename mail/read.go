@@ -25,10 +25,14 @@ type ReadMessage struct {
 	Date    time.Time
 }
 
-// updateReadMessage updates the given frame to display the contents of the current message.
+// updateReadMessage updates the given frame to display the contents of
+// the current message, if it does not already.
 func (a *App) updateReadMessage(w *core.Frame) error {
+	if a.readMessage == w.Property("readMessage") {
+		return nil
+	}
+	w.SetProperty("readMessage", a.readMessage)
 	w.DeleteChildren()
-
 	if a.readMessage == nil {
 		return nil
 	}
