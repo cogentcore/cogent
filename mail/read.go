@@ -14,12 +14,7 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/cursors"
-	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlcore"
-	"cogentcore.org/core/icons"
-	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/abilities"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -51,50 +46,6 @@ func (a *App) UpdateMessageList() {
 	slices.SortFunc(cached, func(a, b *CacheData) int {
 		return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 	})
-
-	for i, cd := range cached {
-		cd := cd
-
-		if i > 100 {
-			break
-		}
-
-		fr := core.NewFrame(list)
-		fr.Styler(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-
-		fr.Styler(func(s *styles.Style) {
-			s.SetAbilities(true, abilities.Activatable, abilities.Hoverable)
-			s.Cursor = cursors.Pointer
-		})
-		fr.OnClick(func(e events.Event) {
-			a.ReadMessage = cd
-			errors.Log(a.UpdateReadMessage())
-		})
-		fr.AddContextMenu(func(m *core.Scene) {
-			a.ReadMessage = cd
-			core.NewFuncButton(m).SetFunc(a.MoveMessage).SetIcon(icons.Move).SetText("Move")
-		})
-
-		ftxt := ""
-		for _, f := range cd.From {
-			if f.Name != "" {
-				ftxt += f.Name + " "
-			} else {
-				ftxt += f.Addr() + " "
-			}
-		}
-
-		from := core.NewText(fr).SetType(core.TextTitleMedium).SetText(ftxt)
-		from.Styler(func(s *styles.Style) {
-			s.SetNonSelectable()
-		})
-		subject := core.NewText(fr).SetType(core.TextBodyMedium).SetText(cd.Subject)
-		subject.Styler(func(s *styles.Style) {
-			s.SetNonSelectable()
-		})
-	}
 
 	list.Update()
 }
