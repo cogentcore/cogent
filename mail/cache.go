@@ -129,7 +129,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	}
 	core.NewTree(embox).SetText(mailbox).OnClick(func(e events.Event) {
 		a.CurrentMailbox = mailbox
-		a.UpdateMessageList()
+		a.Update()
 	})
 	a.AsyncUnlock()
 
@@ -178,7 +178,9 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 
 	uids := uidsData.AllUIDs()
 	if len(uids) == 0 {
-		a.UpdateMessageList()
+		a.AsyncLock()
+		a.Update()
+		a.AsyncUnlock()
 		return nil
 	}
 	return a.CacheUIDs(uids, c, email, mailbox, dir, cached, cachedFile)
@@ -261,7 +263,9 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			}
 
 			a.Cache[email][mailbox] = cached
-			a.UpdateMessageList()
+			a.AsyncLock()
+			a.Update()
+			a.AsyncUnlock()
 		}
 
 		err := mcmd.Close()

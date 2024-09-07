@@ -25,11 +25,6 @@ type ReadMessage struct {
 	Date    time.Time
 }
 
-// UpdateMessageList updates the message list from [App.Cache].
-func (a *App) UpdateMessageList() {
-	a.Update()
-}
-
 // UpdateReadMessage updates the view of the message currently being read.
 func (a *App) UpdateReadMessage() error {
 	msv := a.FindPath("splits/mail/msv").(*core.Form)
