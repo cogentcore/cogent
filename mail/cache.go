@@ -32,6 +32,9 @@ type CacheData struct {
 
 // ToMessage converts the [CacheData] to a [ReadMessage].
 func (cd *CacheData) ToMessage() *ReadMessage {
+	if cd == nil {
+		return nil
+	}
 	return &ReadMessage{
 		From:    IMAPToMailAddresses(cd.From),
 		To:      IMAPToMailAddresses(cd.To),

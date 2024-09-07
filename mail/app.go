@@ -110,16 +110,19 @@ func (a *App) Init() {
 			})
 			tree.AddChildAt(w, "msv", func(w *core.Form) {
 				w.SetReadOnly(true)
+				w.Updater(func() {
+					w.SetStruct(a.readMessage.ToMessage())
+				})
 			})
 			tree.AddChildAt(w, "mb", func(w *core.Frame) {
 				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
 				})
+				w.Updater(func() {
+					core.ErrorSnackbar(w, a.updateReadMessage(w), "Error reading message")
+				})
 			})
 		})
-	})
-	a.Updater(func() {
-		// a.UpdateReadMessage(ml, msv, mb)
 	})
 }
 

@@ -25,13 +25,13 @@ type ReadMessage struct {
 	Date    time.Time
 }
 
-// UpdateReadMessage updates the view of the message currently being read.
-func (a *App) UpdateReadMessage() error {
-	msv := a.FindPath("splits/mail/msv").(*core.Form)
-	msv.SetStruct(a.readMessage.ToMessage())
+// updateReadMessage updates the given frame to display the contents of the current message.
+func (a *App) updateReadMessage(w *core.Frame) error {
+	w.DeleteChildren()
 
-	mb := a.FindPath("splits/mail/mb").(*core.Frame)
-	mb.DeleteChildren()
+	if a.readMessage == nil {
+		return nil
+	}
 
 	bemail := FilenameBase32(a.currentEmail)
 
@@ -68,7 +68,7 @@ func (a *App) UpdateReadMessage() error {
 			case "text/plain":
 				plain = p
 			case "text/html":
-				err := htmlcore.ReadHTML(htmlcore.NewContext(), mb, p.Body)
+				err := htmlcore.ReadHTML(htmlcore.NewContext(), w, p.Body)
 				if err != nil {
 					return err
 				}
@@ -79,12 +79,10 @@ func (a *App) UpdateReadMessage() error {
 
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML && plain != nil {
-		err := htmlcore.ReadMD(htmlcore.NewContext(), mb, errors.Log1(io.ReadAll(plain.Body)))
+		err := htmlcore.ReadMD(htmlcore.NewContext(), w, errors.Log1(io.ReadAll(plain.Body)))
 		if err != nil {
 			return err
 		}
 	}
-
-	mb.Update()
 	return nil
 }

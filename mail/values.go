@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/mail"
 
-	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
@@ -41,7 +40,7 @@ func (mi *MessageListItem) Init() {
 	})
 	mi.OnClick(func(e events.Event) {
 		theApp.readMessage = mi.Data
-		errors.Log(theApp.UpdateReadMessage())
+		theApp.Update()
 	})
 	mi.AddContextMenu(func(m *core.Scene) {
 		theApp.readMessage = mi.Data
