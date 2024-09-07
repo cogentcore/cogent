@@ -200,7 +200,6 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 		a.imapMu[email].Lock()
 		mcmd := c.Fetch(fuidset, fetchOptions)
-		a.imapMu[email].Unlock()
 
 		for {
 			msg := mcmd.Next()
@@ -210,6 +209,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 			mdata, err := msg.Collect()
 			if err != nil {
+				a.imapMu[email].Unlock()
 				return err
 			}
 
@@ -217,6 +217,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			filename = strings.Repeat("0", 7-len(filename)) + filename
 			f, err := os.Create(filepath.Join(dir, filename))
 			if err != nil {
+				a.imapMu[email].Unlock()
 				return err
 			}
 
@@ -232,11 +233,13 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 			_, err = f.Write(append(header, text...))
 			if err != nil {
+				a.imapMu[email].Unlock()
 				return fmt.Errorf("writing message: %w", err)
 			}
 
 			err = f.Close()
 			if err != nil {
+				a.imapMu[email].Unlock()
 				return fmt.Errorf("closing message: %w", err)
 			}
 
@@ -251,6 +254,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			cached = append(cached, cd)
 			err = jsonx.Save(&cached, cachedFile)
 			if err != nil {
+				a.imapMu[email].Unlock()
 				return fmt.Errorf("saving cache list: %w", err)
 			}
 
@@ -261,6 +265,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 		}
 
 		err := mcmd.Close()
+		a.imapMu[email].Unlock()
 		if err != nil {
 			return fmt.Errorf("fetching messages: %w", err)
 		}
