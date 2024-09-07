@@ -25,7 +25,7 @@ func (a *App) Auth() error {
 		return err
 	}
 
-	a.AuthClient[email] = xoauth2.NewXoauth2Client(email, a.AuthToken[email].AccessToken)
+	a.authClient[email] = xoauth2.NewXoauth2Client(email, a.authToken[email].AccessToken)
 	return nil
 }
 
@@ -39,8 +39,8 @@ func (a *App) SignIn() (string, error) {
 			Settings.Accounts = append(Settings.Accounts, userInfo.Email)
 			errors.Log(core.SaveSettings(Settings))
 		}
-		a.CurrentEmail = userInfo.Email
-		a.AuthToken[userInfo.Email] = token
+		a.currentEmail = userInfo.Email
+		a.authToken[userInfo.Email] = token
 		d.Close()
 		email <- userInfo.Email
 	}

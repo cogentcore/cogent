@@ -28,14 +28,14 @@ type ReadMessage struct {
 // UpdateReadMessage updates the view of the message currently being read.
 func (a *App) UpdateReadMessage() error {
 	msv := a.FindPath("splits/mail/msv").(*core.Form)
-	msv.SetStruct(a.ReadMessage.ToMessage())
+	msv.SetStruct(a.readMessage.ToMessage())
 
 	mb := a.FindPath("splits/mail/mb").(*core.Frame)
 	mb.DeleteChildren()
 
-	bemail := FilenameBase32(a.CurrentEmail)
+	bemail := FilenameBase32(a.currentEmail)
 
-	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, a.ReadMessage.Filename))
+	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, a.readMessage.Filename))
 	if err != nil {
 		return err
 	}

@@ -56,11 +56,11 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 // CacheMessages caches all of the messages from the server that
 // have not already been cached. It caches them in the app's data directory.
 func (a *App) CacheMessages() error {
-	if a.Cache == nil {
-		a.Cache = map[string]map[string][]*CacheData{}
+	if a.cache == nil {
+		a.cache = map[string]map[string][]*CacheData{}
 	}
-	if a.IMAPClient == nil {
-		a.IMAPClient = map[string]*imapclient.Client{}
+	if a.imapClient == nil {
+		a.imapClient = map[string]*imapclient.Client{}
 	}
 	mbox := a.FindPath("splits/mbox").(*core.Tree)
 	mbox.AsyncLock()
@@ -79,8 +79,8 @@ func (a *App) CacheMessages() error {
 // have not already been cached for the given email account. It
 // caches them in the app's data directory.
 func (a *App) CacheMessagesForAccount(email string) error {
-	if a.Cache[email] == nil {
-		a.Cache[email] = map[string][]*CacheData{}
+	if a.cache[email] == nil {
+		a.cache[email] = map[string][]*CacheData{}
 	}
 
 	c, err := imapclient.DialTLS("imap.gmail.com:993", nil)
@@ -89,9 +89,9 @@ func (a *App) CacheMessagesForAccount(email string) error {
 	}
 	defer c.Logout()
 
-	a.IMAPClient[email] = c
+	a.imapClient[email] = c
 
-	err = c.Authenticate(a.AuthClient[email])
+	err = c.Authenticate(a.authClient[email])
 	if err != nil {
 		return fmt.Errorf("authenticating: %w", err)
 	}
@@ -114,8 +114,8 @@ func (a *App) CacheMessagesForAccount(email string) error {
 // that have not already been cached for the given email account and mailbox.
 // It caches them in the app's data directory.
 func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string) error {
-	if a.CurrentMailbox == "" {
-		a.CurrentMailbox = mailbox
+	if a.currentMailbox == "" {
+		a.currentMailbox = mailbox
 	}
 
 	bemail := FilenameBase32(email)
@@ -128,7 +128,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		embox.AsTree().SetName(bemail)
 	}
 	core.NewTree(embox).SetText(mailbox).OnClick(func(e events.Event) {
-		a.CurrentMailbox = mailbox
+		a.currentMailbox = mailbox
 		a.Update()
 	})
 	a.AsyncUnlock()
@@ -150,7 +150,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("opening cache list: %w", err)
 	}
-	a.Cache[email][mailbox] = cached
+	a.cache[email][mailbox] = cached
 
 	_, err = c.Select(mailbox, nil).Wait()
 	if err != nil {
@@ -262,7 +262,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				return fmt.Errorf("saving cache list: %w", err)
 			}
 
-			a.Cache[email][mailbox] = cached
+			a.cache[email][mailbox] = cached
 			a.AsyncLock()
 			a.Update()
 			a.AsyncUnlock()

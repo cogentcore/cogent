@@ -40,11 +40,11 @@ func (mi *MessageListItem) Init() {
 		s.Grow.Set(1, 0)
 	})
 	mi.OnClick(func(e events.Event) {
-		theApp.ReadMessage = mi.Data
+		theApp.readMessage = mi.Data
 		errors.Log(theApp.UpdateReadMessage())
 	})
 	mi.AddContextMenu(func(m *core.Scene) {
-		theApp.ReadMessage = mi.Data
+		theApp.readMessage = mi.Data
 		core.NewFuncButton(m).SetFunc(theApp.MoveMessage).SetIcon(icons.Move).SetText("Move")
 	})
 

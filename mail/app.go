@@ -24,29 +24,32 @@ import (
 type App struct {
 	core.Frame
 
-	// AuthToken contains the [oauth2.Token] for each account.
-	AuthToken map[string]*oauth2.Token `set:"-"`
+	// authToken contains the [oauth2.Token] for each account.
+	authToken map[string]*oauth2.Token
 
-	// AuthClient contains the [sasl.Client] authentication for sending messages for each account.
-	AuthClient map[string]sasl.Client `set:"-"`
+	// authClient contains the [sasl.Client] authentication for sending messages for each account.
+	authClient map[string]sasl.Client
 
 	// IMAPCLient contains the imap clients for each account.
-	IMAPClient map[string]*imapclient.Client `set:"-"`
+	imapClient map[string]*imapclient.Client
 
-	// ComposeMessage is the current message we are editing
-	ComposeMessage *SendMessage `set:"-"`
+	// composeMessage is the current message we are editing
+	composeMessage *SendMessage
 
-	// Cache contains the cache data, keyed by account and then mailbox.
-	Cache map[string]map[string][]*CacheData `set:"-"`
+	// cache contains the cache data, keyed by account and then mailbox.
+	cache map[string]map[string][]*CacheData
 
-	// ReadMessage is the current message we are reading
-	ReadMessage *CacheData `set:"-"`
+	// currentCache is [App.cache] for the current email account and mailbox.
+	currentCache []*CacheData
+
+	// readMessage is the current message we are reading
+	readMessage *CacheData
 
 	// The current email account
-	CurrentEmail string `set:"-"`
+	currentEmail string
 
 	// The current mailbox
-	CurrentMailbox string `set:"-"`
+	currentMailbox string
 }
 
 // needed for interface import
@@ -59,8 +62,8 @@ var theApp *App
 func (a *App) Init() {
 	theApp = a
 	a.Frame.Init()
-	a.AuthToken = map[string]*oauth2.Token{}
-	a.AuthClient = map[string]sasl.Client{}
+	a.authToken = map[string]*oauth2.Token{}
+	a.authClient = map[string]sasl.Client{}
 	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
@@ -73,11 +76,11 @@ func (a *App) Init() {
 		tree.AddChildAt(w, "list", func(w *core.List) {
 			w.SetReadOnly(true)
 			w.Updater(func() {
-				sl := a.Cache[a.CurrentEmail][a.CurrentMailbox]
-				slices.SortFunc(sl, func(a, b *CacheData) int {
+				a.currentCache = a.cache[a.currentEmail][a.currentMailbox]
+				slices.SortFunc(a.currentCache, func(a, b *CacheData) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 				})
-				w.SetSlice(&sl)
+				w.SetSlice(&a.currentCache)
 			})
 		})
 		tree.AddChildAt(w, "mail", func(w *core.Frame) {
