@@ -58,12 +58,14 @@ func (a *App) Init() {
 	})
 
 	tree.AddChildAt(a, "splits", func(w *core.Splits) {
+		w.SetSplits(0.1, 0.2, 0.7)
 		tree.AddChildAt(w, "mbox", func(w *core.Tree) {
 			w.SetText("Mailboxes")
 		})
-		tree.AddChildAt(w, "list", func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Direction = styles.Column
+		tree.AddChildAt(w, "list", func(w *core.List) {
+			w.Updater(func() {
+				sl := a.Cache[a.CurrentEmail][a.CurrentMailbox]
+				w.SetSlice(&sl)
 			})
 		})
 		tree.AddChildAt(w, "mail", func(w *core.Frame) {
@@ -79,7 +81,6 @@ func (a *App) Init() {
 				})
 			})
 		})
-		w.SetSplits(0.1, 0.2, 0.7)
 	})
 	a.Updater(func() {
 		// a.UpdateReadMessage(ml, msv, mb)

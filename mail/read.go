@@ -34,6 +34,7 @@ type ReadMessage struct {
 
 // UpdateMessageList updates the message list from [App.Cache].
 func (a *App) UpdateMessageList() {
+	return
 	cached := a.Cache[a.CurrentEmail][a.CurrentMailbox]
 
 	a.AsyncLock()
