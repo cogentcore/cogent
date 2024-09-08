@@ -121,6 +121,7 @@ func (a *App) Init() {
 			tree.AddChild(w, func(w *core.Frame) {
 				w.Styler(func(s *styles.Style) {
 					s.Direction = styles.Column
+					s.Grow.Set(1, 0)
 				})
 				w.Updater(func() {
 					core.ErrorSnackbar(w, a.updateReadMessage(w), "Error reading message")
@@ -138,7 +139,7 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	if a.readMessage != nil {
 		tree.Add(p, func(w *core.Separator) {})
 		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.MoveMessage).SetText("Move").SetIcon(icons.Move)
+			w.SetFunc(a.MoveMessage).SetText("Move").SetIcon(icons.DriveFileMove)
 		})
 	}
 }
