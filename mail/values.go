@@ -7,6 +7,7 @@ package mail
 import (
 	"fmt"
 	"net/mail"
+	"strings"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
@@ -88,5 +89,13 @@ func (at *AddressTextField) Init() {
 			return
 		}
 		at.SetText(at.Address.Address)
+	})
+	at.SetValidator(func() error {
+		text := at.Text()
+		if !strings.Contains(text, "@") && !strings.Contains(text, ".") {
+			return fmt.Errorf("invalid email address")
+		}
+		at.Address.Address = text
+		return nil
 	})
 }
