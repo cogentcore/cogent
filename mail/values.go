@@ -51,6 +51,7 @@ func (mi *MessageListItem) Init() {
 		w.SetType(core.TextTitleMedium)
 		w.Styler(func(s *styles.Style) {
 			s.SetNonSelectable()
+			s.SetTextWrap(false)
 		})
 		w.Updater(func() {
 			text := ""
@@ -68,6 +69,7 @@ func (mi *MessageListItem) Init() {
 		w.SetType(core.TextBodyMedium)
 		w.Styler(func(s *styles.Style) {
 			s.SetNonSelectable()
+			s.SetTextWrap(false)
 		})
 		w.Updater(func() {
 			w.SetText(mi.Data.Subject)
