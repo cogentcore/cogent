@@ -107,10 +107,6 @@ func (a *App) Init() {
 				})
 				w.SetSlice(&a.currentCache)
 			})
-			// TODO: duplicate; remove once element-specific context menu works
-			w.AddContextMenu(func(m *core.Scene) {
-				core.NewFuncButton(m).SetFunc(a.MoveMessage).SetIcon(icons.Move).SetText("Move")
-			})
 		})
 		tree.AddChild(w, func(w *core.Frame) {
 			w.Styler(func(s *styles.Style) {
@@ -138,6 +134,13 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(a.Compose).SetIcon(icons.Send)
 	})
+
+	if a.readMessage != nil {
+		tree.Add(p, func(w *core.Separator) {})
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.MoveMessage).SetText("Move").SetIcon(icons.Move)
+		})
+	}
 }
 
 func (a *App) GetMail() error {

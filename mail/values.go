@@ -11,7 +11,6 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
@@ -41,10 +40,6 @@ func (mi *MessageListItem) Init() {
 	mi.OnClick(func(e events.Event) {
 		theApp.readMessage = mi.Data
 		theApp.Update()
-	})
-	mi.AddContextMenu(func(m *core.Scene) {
-		theApp.readMessage = mi.Data
-		core.NewFuncButton(m).SetFunc(theApp.MoveMessage).SetIcon(icons.Move).SetText("Move")
 	})
 
 	tree.AddChild(mi, func(w *core.Text) {
