@@ -33,13 +33,20 @@ func (a *App) Compose() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.composeMessage.To = []*mail.Address{{}}
-	b := core.NewBody("Send message")
+	a.compose("Compose")
+}
+
+// compose is the implementation of the email comoposition dialog,
+// which is called by other higher-level functions.
+func (a *App) compose(title string) {
+	b := core.NewBody(title)
 	core.NewForm(b).SetStruct(a.composeMessage)
 	ed := texteditor.NewEditor(b)
 	ed.Buffer.SetLanguage(fileinfo.Markdown)
 	ed.Buffer.Options.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
 		s.SetMono(false)
+		s.Grow.Set(1, 1)
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
 		b.AddCancel(bar)
@@ -48,7 +55,7 @@ func (a *App) Compose() { //types:add
 			a.SendMessage()
 		})
 	})
-	b.RunFullDialog(a)
+	b.RunWindowDialog(a)
 }
 
 // SendMessage sends the current message
