@@ -31,6 +31,6 @@ func (a *App) Move(mailbox string) { //types:add
 func (a *App) Reply() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
-	a.composeMessage.To = []*mail.Address{{}}
+	a.composeMessage.To = IMAPToMailAddresses(a.readMessage.From)
 	a.compose("Reply")
 }
