@@ -32,5 +32,6 @@ func (a *App) Reply() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.composeMessage.To = IMAPToMailAddresses(a.readMessage.From)
+	a.composeMessage.inReplyTo = a.readMessage.MessageID
 	a.compose("Reply")
 }

@@ -25,7 +25,9 @@ type SendMessage struct {
 	From    []*mail.Address `display:"inline"`
 	To      []*mail.Address `display:"inline"`
 	Subject string
-	Body    string `display:"-"`
+
+	body      string
+	inReplyTo string
 }
 
 // Compose opens a dialog to send a new message.
@@ -51,7 +53,7 @@ func (a *App) compose(title string) {
 	b.AddBottomBar(func(bar *core.Frame) {
 		b.AddCancel(bar)
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
-			a.composeMessage.Body = ed.Buffer.String()
+			a.composeMessage.body = ed.Buffer.String()
 			a.SendMessage()
 		})
 	})
@@ -72,6 +74,7 @@ func (a *App) SendMessage() error { //types:add
 	h.SetAddressList("From", a.composeMessage.From)
 	h.SetAddressList("To", a.composeMessage.To)
 	h.SetSubject(a.composeMessage.Subject)
+	h.SetText("In-Reply-To", "<"+a.composeMessage.inReplyTo+">")
 
 	mw, err := mail.CreateWriter(&b, h)
 	if err != nil {
@@ -90,7 +93,7 @@ func (a *App) SendMessage() error { //types:add
 	if err != nil {
 		return err
 	}
-	pw.Write([]byte(a.composeMessage.Body))
+	pw.Write([]byte(a.composeMessage.body))
 	pw.Close()
 
 	var hh mail.InlineHeader
@@ -99,7 +102,7 @@ func (a *App) SendMessage() error { //types:add
 	if err != nil {
 		return err
 	}
-	err = goldmark.Convert([]byte(a.composeMessage.Body), hw)
+	err = goldmark.Convert([]byte(a.composeMessage.body), hw)
 	if err != nil {
 		return err
 	}
