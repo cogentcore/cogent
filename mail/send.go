@@ -28,7 +28,7 @@ type SendMessage struct {
 	Body    string `display:"-"`
 }
 
-// Compose pulls up a dialog to send a new message
+// Compose opens a dialog to send a new message.
 func (a *App) Compose() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
