@@ -99,13 +99,13 @@ func (a *App) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.List) {
+			w.SetSlice(&a.currentCache)
 			w.SetReadOnly(true)
 			w.Updater(func() {
 				a.currentCache = a.cache[a.currentEmail][a.currentMailbox]
 				slices.SortFunc(a.currentCache, func(a, b *CacheData) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 				})
-				w.SetSlice(&a.currentCache)
 			})
 		})
 		tree.AddChild(w, func(w *core.Frame) {
