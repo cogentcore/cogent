@@ -26,8 +26,9 @@ type SendMessage struct {
 	To      []*mail.Address `display:"inline"`
 	Subject string
 
-	body      string
-	inReplyTo string
+	body       string
+	inReplyTo  string
+	references []string
 }
 
 // Compose opens a dialog to send a new message.
@@ -74,7 +75,8 @@ func (a *App) SendMessage() error { //types:add
 	h.SetAddressList("From", a.composeMessage.From)
 	h.SetAddressList("To", a.composeMessage.To)
 	h.SetSubject(a.composeMessage.Subject)
-	h.SetText("In-Reply-To", "<"+a.composeMessage.inReplyTo+">")
+	h.SetMsgIDList("In-Reply-To", []string{a.composeMessage.inReplyTo})
+	h.SetMsgIDList("References", a.composeMessage.references)
 
 	mw, err := mail.CreateWriter(&b, h)
 	if err != nil {
