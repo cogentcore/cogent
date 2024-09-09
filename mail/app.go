@@ -17,6 +17,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
 	"github.com/emersion/go-imap/v2/imapclient"
@@ -133,13 +134,13 @@ func (a *App) Init() {
 
 func (a *App) MakeToolbar(p *tree.Plan) {
 	tree.Add(p, func(w *core.FuncButton) {
-		w.SetFunc(a.Compose).SetIcon(icons.Send)
+		w.SetFunc(a.Compose).SetIcon(icons.Send).SetKey(keymap.New)
 	})
 
 	if a.readMessage != nil {
 		tree.Add(p, func(w *core.Separator) {})
 		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.MoveMessage).SetText("Move").SetIcon(icons.DriveFileMove)
+			w.SetFunc(a.MoveMessage).SetText("Move").SetIcon(icons.DriveFileMove).SetKey(keymap.Save)
 		})
 	}
 }
