@@ -9,7 +9,6 @@ import (
 
 	"cogentcore.org/core/core"
 	"github.com/emersion/go-imap/v2"
-	"github.com/emersion/go-message/mail"
 )
 
 // Move moves the current message to the given mailbox.
@@ -32,13 +31,18 @@ func (a *App) Move(mailbox string) { //types:add
 // Reply opens a dialog to reply to the current message.
 func (a *App) Reply() { //types:add
 	a.composeMessage = &SendMessage{}
-	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.composeMessage.To = IMAPToMailAddresses(a.readMessage.From)
+	a.reply("Reply")
+}
+
+// reply is the implementation of the email reply dialog,
+// used by other higher-level functions.
+func (a *App) reply(title string) {
 	a.composeMessage.Subject = a.readMessage.Subject
 	if !strings.HasPrefix(a.composeMessage.Subject, "Re: ") {
 		a.composeMessage.Subject = "Re: " + a.composeMessage.Subject
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
 	a.composeMessage.references = []string{a.readMessage.MessageID} // TODO: append to any existing references in the readMessage
-	a.compose("Reply")
+	a.compose(title)
 }

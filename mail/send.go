@@ -34,7 +34,6 @@ type SendMessage struct {
 // Compose opens a dialog to send a new message.
 func (a *App) Compose() { //types:add
 	a.composeMessage = &SendMessage{}
-	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.composeMessage.To = []*mail.Address{{}}
 	a.compose("Compose")
 }
@@ -42,6 +41,7 @@ func (a *App) Compose() { //types:add
 // compose is the implementation of the email comoposition dialog,
 // which is called by other higher-level functions.
 func (a *App) compose(title string) {
+	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	b := core.NewBody(title)
 	core.NewForm(b).SetStruct(a.composeMessage)
 	ed := texteditor.NewEditor(b)
