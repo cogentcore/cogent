@@ -50,6 +50,6 @@ func (a *App) reply(title string) {
 		a.composeMessage.Subject = "Re: " + a.composeMessage.Subject
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
-	a.composeMessage.references = []string{a.readMessage.MessageID} // TODO: append to any existing references in the readMessage
+	a.composeMessage.references = append(a.readMessageReferences, a.readMessage.MessageID)
 	a.compose(title)
 }

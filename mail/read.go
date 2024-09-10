@@ -50,6 +50,12 @@ func (a *App) updateReadMessage(w *core.Frame) error {
 		return err
 	}
 
+	refs, err := mr.Header.MsgIDList("References")
+	if err != nil {
+		return err
+	}
+	a.readMessageReferences = refs
+
 	var plain *mail.Part
 	var gotHTML bool
 

@@ -53,6 +53,9 @@ type App struct {
 	// readMessage is the current message we are reading
 	readMessage *CacheData
 
+	// readMessageReferences is the References header of the current readMessage.
+	readMessageReferences []string
+
 	// The current email account
 	currentEmail string
 
