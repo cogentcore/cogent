@@ -5,6 +5,8 @@
 package mail
 
 import (
+	"strings"
+
 	"cogentcore.org/core/core"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-message/mail"
@@ -32,6 +34,10 @@ func (a *App) Reply() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	a.composeMessage.To = IMAPToMailAddresses(a.readMessage.From)
+	a.composeMessage.Subject = a.readMessage.Subject
+	if !strings.HasPrefix(a.composeMessage.Subject, "Re: ") {
+		a.composeMessage.Subject = "Re: " + a.composeMessage.Subject
+	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
 	a.composeMessage.references = []string{a.readMessage.MessageID} // TODO: append to any existing references in the readMessage
 	a.compose("Reply")

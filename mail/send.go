@@ -25,8 +25,8 @@ type SendMessage struct {
 	From    []*mail.Address `display:"inline"`
 	To      []*mail.Address `display:"inline"`
 	Subject string
+	body    string
 
-	body       string
 	inReplyTo  string
 	references []string
 }
@@ -55,14 +55,14 @@ func (a *App) compose(title string) {
 		b.AddCancel(bar)
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
 			a.composeMessage.body = ed.Buffer.String()
-			a.SendMessage()
+			a.Send()
 		})
 	})
 	b.RunWindowDialog(a)
 }
 
-// SendMessage sends the current message
-func (a *App) SendMessage() error { //types:add
+// Send sends the current message
+func (a *App) Send() error { //types:add
 	if len(a.composeMessage.From) != 1 {
 		return fmt.Errorf("expected 1 sender, but got %d", len(a.composeMessage.From))
 	}
