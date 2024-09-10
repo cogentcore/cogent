@@ -35,6 +35,13 @@ func (a *App) Reply() { //types:add
 	a.reply("Reply")
 }
 
+// ReplyAll opens a dialog to reply to all people involved in the current message.
+func (a *App) ReplyAll() { //types:add
+	a.composeMessage = &SendMessage{}
+	a.composeMessage.To = append(IMAPToMailAddresses(a.readMessage.From), IMAPToMailAddresses(a.readMessage.To)...)
+	a.reply("Reply all")
+}
+
 // reply is the implementation of the email reply dialog,
 // used by other higher-level functions.
 func (a *App) reply(title string) {

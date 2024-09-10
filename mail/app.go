@@ -145,6 +145,9 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(a.Reply).SetIcon(icons.Reply).SetKey(keymap.Replace)
 		})
+		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.ReplyAll).SetIcon(icons.ReplyAll)
+		})
 	}
 }
 
