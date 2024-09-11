@@ -56,6 +56,9 @@ type App struct {
 	// readMessageReferences is the References header of the current readMessage.
 	readMessageReferences []string
 
+	// readMessagePlain is the plain text body of the current readMessage.
+	readMessagePlain string
+
 	// The current email account
 	currentEmail string
 

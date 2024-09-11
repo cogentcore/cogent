@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/htmlcore"
 	"github.com/emersion/go-message/mail"
@@ -87,9 +86,15 @@ func (a *App) updateReadMessage(w *core.Frame) error {
 		}
 	}
 
+	b, err := io.ReadAll(plain.Body)
+	if err != nil {
+		return err
+	}
+	a.readMessagePlain = string(b)
+
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML && plain != nil {
-		err := htmlcore.ReadMD(htmlcore.NewContext(), w, errors.Log1(io.ReadAll(plain.Body)))
+		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, a.readMessagePlain)
 		if err != nil {
 			return err
 		}
