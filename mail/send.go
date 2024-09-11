@@ -45,6 +45,7 @@ func (a *App) compose(title string) {
 	b := core.NewBody(title)
 	core.NewForm(b).SetStruct(a.composeMessage)
 	ed := texteditor.NewEditor(b)
+	core.Bind(&a.composeMessage.body, ed)
 	ed.Buffer.SetLanguage(fileinfo.Markdown)
 	ed.Buffer.Options.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {

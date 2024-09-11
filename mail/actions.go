@@ -51,5 +51,6 @@ func (a *App) reply(title string) {
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
 	a.composeMessage.references = append(a.readMessageReferences, a.readMessage.MessageID)
+	a.composeMessage.body = "\n\nOn " + a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM") + ", " + a.composeMessage.To[0].String() + " wrote:\n"
 	a.compose(title)
 }
