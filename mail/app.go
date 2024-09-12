@@ -155,6 +155,9 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 			w.SetFunc(a.ReplyAll).SetIcon(icons.ReplyAll)
 		})
 		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.Forward).SetIcon(icons.Forward)
+		})
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(a.MarkAsUnread).SetIcon(icons.MarkAsUnread)
 		})
 	}

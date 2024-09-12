@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"net/mail"
 	"slices"
 	"strings"
 
@@ -41,6 +42,13 @@ func (a *App) ReplyAll() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.To = append(IMAPToMailAddresses(a.readMessage.From), IMAPToMailAddresses(a.readMessage.To)...)
 	a.reply("Reply all")
+}
+
+// Forward opens a dialog to forward the current message to others.
+func (a *App) Forward() { //types:add
+	a.composeMessage = &SendMessage{}
+	a.composeMessage.To = []*mail.Address{}
+	a.reply("Forward")
 }
 
 // reply is the implementation of the email reply dialog,
