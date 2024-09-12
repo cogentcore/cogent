@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"slices"
 	"strings"
 
 	"cogentcore.org/core/core"
@@ -54,4 +55,40 @@ func (a *App) reply(title string) {
 	a.composeMessage.body = "\n\n> On " + a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM") + ", " + a.composeMessage.To[0].String() + " wrote:\n>\n> "
 	a.composeMessage.body += strings.ReplaceAll(a.readMessagePlain, "\n", "\n> ")
 	a.compose(title)
+}
+
+// MarkAsRead marks the current message as read.
+func (a *App) MarkAsRead() { //types:add
+	a.markSeen(true)
+}
+
+// MarkAsUnread marks the current message as unread.
+func (a *App) MarkAsUnread() { //types:add
+	a.markSeen(false)
+}
+
+// markSeen sets the [imap.FlagSeen] flag of the current message.
+func (a *App) markSeen(seen bool) {
+	if slices.Contains(a.readMessage.Flags, imap.FlagSeen) == seen {
+		// Already set correctly.
+		return
+	}
+	go func() {
+		mu := a.imapMu[a.currentEmail]
+		mu.Lock()
+		defer mu.Unlock()
+		c := a.imapClient[a.currentEmail]
+		uidset := imap.UIDSet{}
+		uidset.AddNum(a.readMessage.UID)
+		op := imap.StoreFlagsDel
+		if seen {
+			op = imap.StoreFlagsAdd
+		}
+		cmd := c.Store(uidset, &imap.StoreFlags{
+			Op:    op,
+			Flags: []imap.Flag{imap.FlagSeen},
+		}, nil)
+		err := cmd.Wait()
+		core.ErrorSnackbar(a, err, "Error marking message as read")
+	}()
 }

@@ -43,6 +43,7 @@ func (mi *MessageListItem) Init() {
 	})
 	mi.OnClick(func(e events.Event) {
 		theApp.readMessage = mi.Data
+		theApp.MarkAsRead()
 		theApp.Update()
 	})
 
