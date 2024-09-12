@@ -198,8 +198,8 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			Flags:    true,
 			UID:      true,
 			BodySection: []*imap.FetchItemBodySection{
-				{Specifier: imap.PartSpecifierHeader},
-				{Specifier: imap.PartSpecifierText},
+				{Specifier: imap.PartSpecifierHeader, Peek: true},
+				{Specifier: imap.PartSpecifierText, Peek: true},
 			},
 		}
 
