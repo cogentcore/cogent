@@ -7,14 +7,17 @@ package mail
 import (
 	"fmt"
 	"net/mail"
+	"slices"
 	"strings"
 
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
+	"github.com/emersion/go-imap/v2"
 )
 
 func init() {
@@ -51,6 +54,9 @@ func (mi *MessageListItem) Init() {
 		})
 		w.Updater(func() {
 			text := ""
+			if !slices.Contains(mi.Data.Flags, imap.FlagSeen) {
+				text = fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
+			}
 			for _, f := range mi.Data.From {
 				if f.Name != "" {
 					text += f.Name + " "
