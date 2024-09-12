@@ -29,6 +29,7 @@ type CacheData struct {
 	imap.Envelope
 	UID      imap.UID
 	Filename string
+	Flags    []imap.Flag
 }
 
 // ToMessage converts the [CacheData] to a [ReadMessage].
@@ -194,6 +195,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 		fetchOptions := &imap.FetchOptions{
 			Envelope: true,
+			Flags:    true,
 			UID:      true,
 			BodySection: []*imap.FetchItemBodySection{
 				{Specifier: imap.PartSpecifierHeader},
@@ -250,6 +252,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				Envelope: *mdata.Envelope,
 				UID:      mdata.UID,
 				Filename: filename,
+				Flags:    mdata.Flags,
 			}
 
 			// we need to save the list of cached messages every time in case
