@@ -55,7 +55,6 @@ func (a *App) updateReadMessage(w *core.Frame) error {
 	}
 	a.readMessageReferences = refs
 
-	var plain *mail.Part
 	var gotHTML bool
 
 	for {
@@ -75,7 +74,11 @@ func (a *App) updateReadMessage(w *core.Frame) error {
 
 			switch ct {
 			case "text/plain":
-				plain = p
+				b, err := io.ReadAll(p.Body)
+				if err != nil {
+					return err
+				}
+				a.readMessagePlain = string(b)
 			case "text/html":
 				err := htmlcore.ReadHTML(htmlcore.NewContext(), w, p.Body)
 				if err != nil {
@@ -86,14 +89,8 @@ func (a *App) updateReadMessage(w *core.Frame) error {
 		}
 	}
 
-	b, err := io.ReadAll(plain.Body)
-	if err != nil {
-		return err
-	}
-	a.readMessagePlain = string(b)
-
 	// we only handle the plain version if there is no HTML version
-	if !gotHTML && plain != nil {
+	if !gotHTML {
 		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, a.readMessagePlain)
 		if err != nil {
 			return err
