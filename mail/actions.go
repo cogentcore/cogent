@@ -51,7 +51,7 @@ func (a *App) ReplyAll() { //types:add
 // Forward opens a dialog to forward the current message to others.
 func (a *App) Forward() { //types:add
 	a.composeMessage = &SendMessage{}
-	a.composeMessage.To = []*mail.Address{}
+	a.composeMessage.To = []*mail.Address{{}}
 	a.reply("Forward")
 }
 
@@ -74,7 +74,7 @@ func (a *App) reply(title string) {
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
 	a.composeMessage.references = append(a.readMessageReferences, a.readMessage.MessageID)
-	a.composeMessage.body = "\n\n> On " + a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM") + ", " + a.composeMessage.To[0].String() + " wrote:\n>\n> "
+	a.composeMessage.body = "\n\n> On " + a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM") + ", " + IMAPToMailAddresses(a.readMessage.From)[0].String() + " wrote:\n>\n> "
 	a.composeMessage.body += strings.ReplaceAll(a.readMessagePlain, "\n", "\n> ")
 	a.compose(title)
 }
