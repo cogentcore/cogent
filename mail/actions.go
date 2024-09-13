@@ -79,7 +79,22 @@ func (a *App) reply(title string, forward bool) {
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
 	a.composeMessage.references = append(a.readMessageReferences, a.readMessage.MessageID)
-	a.composeMessage.body = "\n\n> On " + a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM") + ", " + IMAPToMailAddresses(a.readMessage.From)[0].String() + " wrote:\n>\n> "
+	from := IMAPToMailAddresses(a.readMessage.From)[0].String()
+	date := a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM")
+	if forward {
+		a.composeMessage.body = "\n\n> Begin forwarded message:\n>"
+		a.composeMessage.body += "\n> From: " + from
+		a.composeMessage.body += "\n> Subject: " + a.readMessage.Subject
+		a.composeMessage.body += "\n> Date: " + date
+		to := make([]string, len(a.readMessage.To))
+		for i, addr := range IMAPToMailAddresses(a.readMessage.To) {
+			to[i] = addr.String()
+		}
+		a.composeMessage.body += "\n> To: " + strings.Join(to, ", ")
+	} else {
+		a.composeMessage.body = "\n\n> On " + date + ", " + from + " wrote:"
+	}
+	a.composeMessage.body += "\n>\n> "
 	a.composeMessage.body += strings.ReplaceAll(a.readMessagePlain, "\n", "\n> ")
 	a.compose(title)
 }
