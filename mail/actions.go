@@ -63,6 +63,10 @@ func (a *App) reply(title string) {
 		a.composeMessage.To = slices.DeleteFunc(a.composeMessage.To, func(ma *mail.Address) bool {
 			return ma.Address == a.currentEmail
 		})
+		// If all of the receivers were us, then we should reply to ourself.
+		if len(a.composeMessage.To) == 0 {
+			a.composeMessage.To = []*mail.Address{{Address: a.currentEmail}}
+		}
 	}
 	a.composeMessage.Subject = a.readMessage.Subject
 	if !strings.HasPrefix(a.composeMessage.Subject, "Re: ") {
