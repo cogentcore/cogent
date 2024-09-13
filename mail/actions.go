@@ -38,26 +38,27 @@ func (a *App) Reply() { //types:add
 	if a.composeMessage.To[0].Address == a.currentEmail {
 		a.composeMessage.To = IMAPToMailAddresses(a.readMessage.To)
 	}
-	a.reply("Reply")
+	a.reply("Reply", false)
 }
 
 // ReplyAll opens a dialog to reply to all people involved in the current message.
 func (a *App) ReplyAll() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.To = append(IMAPToMailAddresses(a.readMessage.From), IMAPToMailAddresses(a.readMessage.To)...)
-	a.reply("Reply all")
+	a.reply("Reply all", false)
 }
 
 // Forward opens a dialog to forward the current message to others.
 func (a *App) Forward() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.To = []*mail.Address{{}}
-	a.reply("Forward")
+	a.reply("Forward", true)
 }
 
 // reply is the implementation of the email reply dialog,
-// used by other higher-level functions.
-func (a *App) reply(title string) {
+// used by other higher-level functions. forward is whether
+// this is actually a forward instead of a reply.
+func (a *App) reply(title string, forward bool) {
 	// If we have more than one receiver, then we should not be one of them.
 	if len(a.composeMessage.To) > 1 {
 		a.composeMessage.To = slices.DeleteFunc(a.composeMessage.To, func(ma *mail.Address) bool {
@@ -69,8 +70,12 @@ func (a *App) reply(title string) {
 		}
 	}
 	a.composeMessage.Subject = a.readMessage.Subject
-	if !strings.HasPrefix(a.composeMessage.Subject, "Re: ") {
-		a.composeMessage.Subject = "Re: " + a.composeMessage.Subject
+	prefix := "Re: "
+	if forward {
+		prefix = "Fwd: "
+	}
+	if !strings.HasPrefix(a.composeMessage.Subject, prefix) {
+		a.composeMessage.Subject = prefix + a.composeMessage.Subject
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
 	a.composeMessage.references = append(a.readMessageReferences, a.readMessage.MessageID)
