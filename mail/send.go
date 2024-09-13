@@ -88,7 +88,6 @@ func (a *App) Send() error { //types:add
 	if err != nil {
 		return err
 	}
-	defer tw.Close()
 
 	var ph mail.InlineHeader
 	ph.Set("Content-Type", "text/plain")
@@ -110,6 +109,8 @@ func (a *App) Send() error { //types:add
 		return err
 	}
 	hw.Close()
+	tw.Close()
+	mw.Close()
 
 	to := make([]string, len(a.composeMessage.To))
 	for i, t := range a.composeMessage.To {
