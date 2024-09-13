@@ -5,12 +5,12 @@
 package mail
 
 import (
-	"net/mail"
 	"slices"
 	"strings"
 
 	"cogentcore.org/core/core"
 	"github.com/emersion/go-imap/v2"
+	"github.com/emersion/go-message/mail"
 )
 
 // Move moves the current message to the given mailbox.
@@ -34,6 +34,7 @@ func (a *App) Move(mailbox string) { //types:add
 func (a *App) Reply() { //types:add
 	a.composeMessage = &SendMessage{}
 	a.composeMessage.To = IMAPToMailAddresses(a.readMessage.From)
+	// If we sent the original message, reply to the original receiver instead of ourself.
 	if a.composeMessage.To[0].Address == a.currentEmail {
 		a.composeMessage.To = IMAPToMailAddresses(a.readMessage.To)
 	}
@@ -57,6 +58,12 @@ func (a *App) Forward() { //types:add
 // reply is the implementation of the email reply dialog,
 // used by other higher-level functions.
 func (a *App) reply(title string) {
+	// If we have more than one receiver, then we should not be one of them.
+	if len(a.composeMessage.To) > 1 {
+		a.composeMessage.To = slices.DeleteFunc(a.composeMessage.To, func(ma *mail.Address) bool {
+			return ma.Address == a.currentEmail
+		})
+	}
 	a.composeMessage.Subject = a.readMessage.Subject
 	if !strings.HasPrefix(a.composeMessage.Subject, "Re: ") {
 		a.composeMessage.Subject = "Re: " + a.composeMessage.Subject
