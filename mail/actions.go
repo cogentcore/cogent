@@ -84,13 +84,14 @@ func (a *App) reply(title string, forward bool) {
 	if forward {
 		a.composeMessage.body = "\n\n> Begin forwarded message:\n>"
 		a.composeMessage.body += "\n> From: " + from
-		a.composeMessage.body += "\n> Subject: " + a.readMessage.Subject
-		a.composeMessage.body += "\n> Date: " + date
+		// Need 2 spaces to create a newline in markdown.
+		a.composeMessage.body += "  \n> Subject: " + a.readMessage.Subject
+		a.composeMessage.body += "  \n> Date: " + date
 		to := make([]string, len(a.readMessage.To))
 		for i, addr := range IMAPToMailAddresses(a.readMessage.To) {
 			to[i] = addr.String()
 		}
-		a.composeMessage.body += "\n> To: " + strings.Join(to, ", ")
+		a.composeMessage.body += "  \n> To: " + strings.Join(to, ", ")
 	} else {
 		a.composeMessage.body = "\n\n> On " + date + ", " + from + " wrote:"
 	}
