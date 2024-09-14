@@ -44,10 +44,11 @@ type App struct {
 	// composeMessage is the current message we are editing
 	composeMessage *SendMessage
 
-	// cache contains the cache data, keyed by account and then mailbox.
-	cache map[string]map[string][]*CacheData
+	// cache contains the cached message data, keyed by account and then MessageID.
+	cache map[string]map[string]*CacheData
 
-	// currentCache is [App.cache] for the current email account and mailbox.
+	// currentCache is a sorted view of [App.cache] for the current email account
+	// and labels, used for displaying a [core.List] of messages.
 	currentCache []*CacheData
 
 	// readMessage is the current message we are reading
@@ -109,7 +110,12 @@ func (a *App) Init() {
 			w.SetSlice(&a.currentCache)
 			w.SetReadOnly(true)
 			w.Updater(func() {
-				a.currentCache = a.cache[a.currentEmail][a.currentMailbox]
+				a.currentCache = nil
+				mp := a.cache[a.currentEmail]
+				for _, cd := range mp {
+					// TODO: check if it matches current labels
+					a.currentCache = append(a.currentCache, cd)
+				}
 				slices.SortFunc(a.currentCache, func(a, b *CacheData) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 				})

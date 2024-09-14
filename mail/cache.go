@@ -61,7 +61,7 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 // have not already been cached. It caches them in the app's data directory.
 func (a *App) CacheMessages() error {
 	if a.cache == nil {
-		a.cache = map[string]map[string][]*CacheData{}
+		a.cache = map[string]map[string]*CacheData{}
 	}
 	if a.imapClient == nil {
 		a.imapClient = map[string]*imapclient.Client{}
@@ -83,7 +83,7 @@ func (a *App) CacheMessages() error {
 // caches them in the app's data directory.
 func (a *App) CacheMessagesForAccount(email string) error {
 	if a.cache[email] == nil {
-		a.cache[email] = map[string][]*CacheData{}
+		a.cache[email] = map[string]*CacheData{}
 	}
 
 	c, err := imapclient.DialTLS("imap.gmail.com:993", nil)
@@ -139,12 +139,12 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		return err
 	}
 
-	var cached []*CacheData
+	var cached map[string]*CacheData
 	err = jsonx.Open(&cached, cachedFile)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("opening cache list: %w", err)
 	}
-	a.cache[email][mailbox] = cached
+	a.cache[email] = cached
 
 	_, err = c.Select(mailbox, nil).Wait()
 	if err != nil {
@@ -184,7 +184,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 // other given values, using an iterative batched approach that fetches the
 // five next most recent messages at a time, allowing for concurrent mail
 // modifiation operations and correct ordering.
-func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached []*CacheData, cachedFile string) error {
+func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheData, cachedFile string) error {
 	for len(uids) > 0 {
 		num := min(5, len(uids))
 		cuids := uids[len(uids)-num:] // the current batch of UIDs
@@ -255,16 +255,16 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				Flags:    mdata.Flags,
 			}
 
-			// we need to save the list of cached messages every time in case
-			// we get interrupted or have an error
-			cached = append(cached, cd)
+			// We need to save the list of cached messages every time in case
+			// we get interrupted or have an error.
+			cached[mdata.Envelope.MessageID] = cd // TODO: check if it already exists
 			err = jsonx.Save(&cached, cachedFile)
 			if err != nil {
 				a.imapMu[email].Unlock()
 				return fmt.Errorf("saving cache list: %w", err)
 			}
 
-			a.cache[email][mailbox] = cached
+			a.cache[email] = cached
 			a.AsyncLock()
 			a.Update()
 			a.AsyncUnlock()
