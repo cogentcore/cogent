@@ -143,7 +143,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		return err
 	}
 
-	var cached map[string]*CacheData
+	cached := map[string]*CacheData{}
 	err = jsonx.Open(&cached, cachedFile)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("opening cache list: %w", err)
