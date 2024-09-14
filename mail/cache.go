@@ -160,6 +160,10 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	if len(cached) > 0 {
 		uidset := imap.UIDSet{}
 		for _, c := range cached {
+			if !slices.Contains(c.Labels, mailbox) {
+				continue
+			}
+			// TODO: if we are in multiple mailboxes this UID could be the wrong one.
 			uidset.AddNum(c.UID)
 		}
 

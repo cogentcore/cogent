@@ -23,6 +23,8 @@ func (a *App) Move(mailbox string) { //types:add
 		defer mu.Unlock()
 		c := a.imapClient[a.currentEmail]
 		uidset := imap.UIDSet{}
+		// TODO: we are not guaranteed to be in the right mailbox at this point.
+		// The same is true for other similar actions.
 		uidset.AddNum(a.readMessage.UID)
 		mc := c.Move(uidset, mailbox)
 		_, err := mc.Wait()
