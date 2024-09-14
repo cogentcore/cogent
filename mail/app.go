@@ -113,7 +113,9 @@ func (a *App) Init() {
 				a.currentCache = nil
 				mp := a.cache[a.currentEmail]
 				for _, cd := range mp {
-					// TODO: check if it matches current labels
+					if !slices.Contains(cd.Labels, a.currentMailbox) {
+						continue
+					}
 					a.currentCache = append(a.currentCache, cd)
 				}
 				slices.SortFunc(a.currentCache, func(a, b *CacheData) int {

@@ -12,6 +12,7 @@ import (
 	"net/mail"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -28,6 +29,11 @@ type CacheData struct {
 	imap.Envelope
 	UID   imap.UID
 	Flags []imap.Flag
+
+	// Labels are the labels associated with the message.
+	// Labels are many-to-many, similar to gmail. The first
+	// label is used for the IMAP mailbox.
+	Labels []string
 }
 
 // ToMessage converts the [CacheData] to a [ReadMessage].
@@ -248,11 +254,22 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				Envelope: *mdata.Envelope,
 				UID:      mdata.UID,
 				Flags:    mdata.Flags,
+				Labels:   []string{mailbox},
 			}
 
+			// If the message is already cached (likely in another mailbox),
+			// we update its labels to include this mailbox if it doesn't already.
+			// Otherwise, we add it as a new entry to the cache.
+			if _, already := cached[mdata.Envelope.MessageID]; already {
+				prev := cached[mdata.Envelope.MessageID]
+				if !slices.Contains(prev.Labels, mailbox) {
+					prev.Labels = append(prev.Labels, mailbox)
+				}
+			} else {
+				cached[mdata.Envelope.MessageID] = cd
+			}
 			// We need to save the list of cached messages every time in case
 			// we get interrupted or have an error.
-			cached[mdata.Envelope.MessageID] = cd // TODO: check if it already exists
 			err = jsonx.Save(&cached, cachedFile)
 			if err != nil {
 				a.imapMu[email].Unlock()
