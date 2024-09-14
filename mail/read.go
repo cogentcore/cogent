@@ -38,7 +38,7 @@ func (a *App) updateReadMessage(w *core.Frame) error {
 
 	bemail := FilenameBase32(a.currentEmail)
 
-	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, a.readMessage.Filename))
+	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, messageFilename(&a.readMessage.Envelope)))
 	if err != nil {
 		return err
 	}

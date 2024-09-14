@@ -12,7 +12,6 @@ import (
 	"net/mail"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -27,9 +26,8 @@ import (
 // mail list in the GUI.
 type CacheData struct {
 	imap.Envelope
-	UID      imap.UID
-	Filename string
-	Flags    []imap.Flag
+	UID   imap.UID
+	Flags []imap.Flag
 }
 
 // ToMessage converts the [CacheData] to a [ReadMessage].
@@ -218,9 +216,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				return err
 			}
 
-			filename := strconv.FormatUint(uint64(mdata.UID), 32)
-			filename = strings.Repeat("0", 7-len(filename)) + filename
-			f, err := os.Create(filepath.Join(dir, filename))
+			f, err := os.Create(filepath.Join(dir, messageFilename(mdata.Envelope)))
 			if err != nil {
 				a.imapMu[email].Unlock()
 				return err
@@ -251,7 +247,6 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			cd := &CacheData{
 				Envelope: *mdata.Envelope,
 				UID:      mdata.UID,
-				Filename: filename,
 				Flags:    mdata.Flags,
 			}
 
@@ -277,4 +272,9 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 		}
 	}
 	return nil
+}
+
+// messageFilename returns the filename for storing the message with the given envelope.
+func messageFilename(env *imap.Envelope) string {
+	return FilenameBase32(env.MessageID) + ".eml"
 }
