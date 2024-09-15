@@ -92,7 +92,7 @@ func (a *App) Init() {
 	tree.AddChild(a, func(w *core.Splits) {
 		w.SetSplits(0.1, 0.2, 0.7)
 		tree.AddChild(w, func(w *core.Tree) {
-			w.SetText("Labels")
+			w.SetText("Accounts")
 			w.Maker(func(p *tree.Plan) {
 				for _, email := range Settings.Accounts {
 					tree.AddAt(p, email, func(w *core.Tree) {
@@ -101,6 +101,7 @@ func (a *App) Init() {
 							slices.Sort(labels)
 							for _, label := range labels {
 								tree.AddAt(p, label, func(w *core.Tree) {
+									w.SetText(friendlyLabelName(label))
 									w.OnSelect(func(e events.Event) {
 										a.showLabel = label
 										a.Update()
