@@ -32,15 +32,15 @@ func (a *App) action(f func(c *imapclient.Client)) {
 
 // actionLabels executes the given function for each label of the current message,
 // selecting the mailbox for each one first.
-func (a *App) actionLabels(f func(c *imapclient.Client, lbl label)) {
+func (a *App) actionLabels(f func(c *imapclient.Client, label Label)) {
 	a.action(func(c *imapclient.Client) {
-		for _, lbl := range a.readMessage.Labels {
-			_, err := c.Select(lbl.Name, nil).Wait()
+		for _, label := range a.readMessage.Labels {
+			_, err := c.Select(label.Name, nil).Wait()
 			if err != nil {
 				core.ErrorSnackbar(a, err, "Error selecting mailbox")
 				return
 			}
-			f(c, lbl)
+			f(c, label)
 		}
 	})
 }
@@ -48,9 +48,9 @@ func (a *App) actionLabels(f func(c *imapclient.Client, lbl label)) {
 // Move moves the current message to the given mailbox.
 func (a *App) Move(mailbox string) { //types:add
 	// TODO: Move needs to be redesigned with the new many-to-many labeling paradigm.
-	a.actionLabels(func(c *imapclient.Client, lbl label) {
+	a.actionLabels(func(c *imapclient.Client, label Label) {
 		uidset := imap.UIDSet{}
-		uidset.AddNum(lbl.UID)
+		uidset.AddNum(label.UID)
 		mc := c.Move(uidset, mailbox)
 		_, err := mc.Wait()
 		core.ErrorSnackbar(a, err, "Error moving message")
@@ -143,9 +143,9 @@ func (a *App) markSeen(seen bool) {
 		// Already set correctly.
 		return
 	}
-	a.actionLabels(func(c *imapclient.Client, lbl label) {
+	a.actionLabels(func(c *imapclient.Client, label Label) {
 		uidset := imap.UIDSet{}
-		uidset.AddNum(lbl.UID)
+		uidset.AddNum(label.UID)
 		op := imap.StoreFlagsDel
 		if seen {
 			op = imap.StoreFlagsAdd

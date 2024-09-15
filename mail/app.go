@@ -61,11 +61,14 @@ type App struct {
 	// readMessagePlain is the plain text body of the current readMessage.
 	readMessagePlain string
 
-	// The current email account
+	// currentEmail is the current email account.
 	currentEmail string
 
-	// The current mailbox
-	currentMailbox string
+	// labels are all of the possible labels that messages have.
+	labels map[string]bool
+
+	// showLabel is the current label to show messages for.
+	showLabel string
 }
 
 // needed for interface import
@@ -78,6 +81,7 @@ var theApp *App
 func (a *App) Init() {
 	theApp = a
 	a.Frame.Init()
+	a.showLabel = "INBOX"
 	a.authToken = map[string]*oauth2.Token{}
 	a.authClient = map[string]sasl.Client{}
 	a.Styler(func(s *styles.Style) {
@@ -92,12 +96,12 @@ func (a *App) Init() {
 				for _, email := range Settings.Accounts {
 					tree.AddAt(p, email, func(w *core.Tree) {
 						w.Maker(func(p *tree.Plan) {
-							mailboxes := maps.Keys(a.cache[email])
-							slices.Sort(mailboxes)
-							for _, mailbox := range mailboxes {
-								tree.AddAt(p, mailbox, func(w *core.Tree) {
+							labels := maps.Keys(a.labels)
+							slices.Sort(labels)
+							for _, label := range labels {
+								tree.AddAt(p, label, func(w *core.Tree) {
 									w.OnSelect(func(e events.Event) {
-										a.currentMailbox = mailbox
+										a.showLabel = label
 										a.Update()
 									})
 								})
@@ -114,8 +118,8 @@ func (a *App) Init() {
 				a.listCache = nil
 				mp := a.cache[a.currentEmail]
 				for _, cd := range mp {
-					if !slices.ContainsFunc(cd.Labels, func(lbl label) bool {
-						return lbl.Name == a.currentMailbox
+					if !slices.ContainsFunc(cd.Labels, func(label Label) bool {
+						return label.Name == a.showLabel
 					}) {
 						continue
 					}
