@@ -27,13 +27,20 @@ import (
 // mail list in the GUI.
 type CacheData struct {
 	imap.Envelope
-	UID   imap.UID
 	Flags []imap.Flag
 
 	// Labels are the labels associated with the message.
-	// Labels are many-to-many, similar to gmail. The first
-	// label is used for the IMAP mailbox.
-	Labels []string
+	// Labels are many-to-many, similar to gmail. All labels
+	// also correspond to IMAP mailboxes.
+	Labels []label
+}
+
+// label represents a label associated with a message.
+// It contains the name of the label and the UID of the message
+// in the IMAP mailbox corresponding to the label.
+type label struct {
+	Name string
+	UID  imap.UID
 }
 
 // ToMessage converts the [CacheData] to a [ReadMessage].
@@ -155,16 +162,16 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		return fmt.Errorf("opening mailbox: %w", err)
 	}
 
-	// we want messages with UIDs not in the list we already cached
+	// We want messages in this mailbox with UIDs we haven't already cached.
 	criteria := &imap.SearchCriteria{}
 	if len(cached) > 0 {
 		uidset := imap.UIDSet{}
-		for _, c := range cached {
-			if !slices.Contains(c.Labels, mailbox) {
-				continue
+		for _, cd := range cached {
+			for _, lbl := range cd.Labels {
+				if lbl.Name == mailbox {
+					uidset.AddNum(lbl.UID)
+				}
 			}
-			// TODO: if we are in multiple mailboxes this UID could be the wrong one.
-			uidset.AddNum(c.UID)
 		}
 
 		nc := imap.SearchCriteria{}
@@ -226,24 +233,23 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				return err
 			}
 
-			cd := &CacheData{
-				Envelope: *mdata.Envelope,
-				UID:      mdata.UID,
-				Flags:    mdata.Flags,
-				Labels:   []string{mailbox},
-			}
-
 			// If the message is already cached (likely in another mailbox),
 			// we update its labels to include this mailbox if it doesn't already.
 			if _, already := cached[mdata.Envelope.MessageID]; already {
-				prev := cached[mdata.Envelope.MessageID]
-				if !slices.Contains(prev.Labels, mailbox) {
-					prev.Labels = append(prev.Labels, mailbox)
+				cd := cached[mdata.Envelope.MessageID]
+				if !slices.ContainsFunc(cd.Labels, func(lbl label) bool {
+					return lbl.Name == mailbox
+				}) {
+					cd.Labels = append(cd.Labels, label{mailbox, mdata.UID})
 				}
 			} else {
 				// Otherwise, we add it as a new entry to the cache
 				// and save the content to a file.
-				cached[mdata.Envelope.MessageID] = cd
+				cached[mdata.Envelope.MessageID] = &CacheData{
+					Envelope: *mdata.Envelope,
+					Flags:    mdata.Flags,
+					Labels:   []label{{mailbox, mdata.UID}},
+				}
 
 				f, err := os.Create(filepath.Join(dir, messageFilename(mdata.Envelope)))
 				if err != nil {

@@ -114,7 +114,9 @@ func (a *App) Init() {
 				a.listCache = nil
 				mp := a.cache[a.currentEmail]
 				for _, cd := range mp {
-					if !slices.Contains(cd.Labels, a.currentMailbox) {
+					if !slices.ContainsFunc(cd.Labels, func(lbl label) bool {
+						return lbl.Name == a.currentMailbox
+					}) {
 						continue
 					}
 					a.listCache = append(a.listCache, cd)
