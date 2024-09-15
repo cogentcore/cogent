@@ -13,14 +13,25 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-// Move moves the current message to the given mailbox.
-func (a *App) Move(mailbox string) { //types:add
+// action executes the given function in a goroutine with proper locking.
+// This should be used for any user action that interacts with a message in IMAP.
+func (a *App) action(f func()) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
 	go func() {
 		mu := a.imapMu[a.currentEmail]
 		mu.Lock()
-		defer mu.Unlock()
+		f()
+		mu.Unlock()
+		a.AsyncLock()
+		a.Update()
+		a.AsyncUnlock()
+	}()
+}
+
+// Move moves the current message to the given mailbox.
+func (a *App) Move(mailbox string) { //types:add
+	a.action(func() {
 		c := a.imapClient[a.currentEmail]
 		uidset := imap.UIDSet{}
 		// TODO: we are not guaranteed to be in the right mailbox at this point.
@@ -29,7 +40,7 @@ func (a *App) Move(mailbox string) { //types:add
 		mc := c.Move(uidset, mailbox)
 		_, err := mc.Wait()
 		core.ErrorSnackbar(a, err, "Error moving message")
-	}()
+	})
 }
 
 // Reply opens a dialog to reply to the current message.
@@ -118,10 +129,7 @@ func (a *App) markSeen(seen bool) {
 		// Already set correctly.
 		return
 	}
-	go func() {
-		mu := a.imapMu[a.currentEmail]
-		mu.Lock()
-		defer mu.Unlock()
+	a.action(func() {
 		c := a.imapClient[a.currentEmail]
 		uidset := imap.UIDSet{}
 		uidset.AddNum(a.readMessage.UID)
@@ -135,5 +143,5 @@ func (a *App) markSeen(seen bool) {
 		}, nil)
 		err := cmd.Wait()
 		core.ErrorSnackbar(a, err, "Error marking message as read")
-	}()
+	})
 }
