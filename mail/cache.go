@@ -226,34 +226,6 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 				return err
 			}
 
-			f, err := os.Create(filepath.Join(dir, messageFilename(mdata.Envelope)))
-			if err != nil {
-				a.imapMu[email].Unlock()
-				return err
-			}
-
-			var header, text []byte
-
-			for k, v := range mdata.BodySection {
-				if k.Specifier == imap.PartSpecifierHeader {
-					header = v
-				} else if k.Specifier == imap.PartSpecifierText {
-					text = v
-				}
-			}
-
-			_, err = f.Write(append(header, text...))
-			if err != nil {
-				a.imapMu[email].Unlock()
-				return fmt.Errorf("writing message: %w", err)
-			}
-
-			err = f.Close()
-			if err != nil {
-				a.imapMu[email].Unlock()
-				return fmt.Errorf("closing message: %w", err)
-			}
-
 			cd := &CacheData{
 				Envelope: *mdata.Envelope,
 				UID:      mdata.UID,
@@ -263,15 +235,45 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 			// If the message is already cached (likely in another mailbox),
 			// we update its labels to include this mailbox if it doesn't already.
-			// Otherwise, we add it as a new entry to the cache.
 			if _, already := cached[mdata.Envelope.MessageID]; already {
 				prev := cached[mdata.Envelope.MessageID]
 				if !slices.Contains(prev.Labels, mailbox) {
 					prev.Labels = append(prev.Labels, mailbox)
 				}
 			} else {
+				// Otherwise, we add it as a new entry to the cache
+				// and save the content to a file.
 				cached[mdata.Envelope.MessageID] = cd
+
+				f, err := os.Create(filepath.Join(dir, messageFilename(mdata.Envelope)))
+				if err != nil {
+					a.imapMu[email].Unlock()
+					return err
+				}
+
+				var header, text []byte
+
+				for k, v := range mdata.BodySection {
+					if k.Specifier == imap.PartSpecifierHeader {
+						header = v
+					} else if k.Specifier == imap.PartSpecifierText {
+						text = v
+					}
+				}
+
+				_, err = f.Write(append(header, text...))
+				if err != nil {
+					a.imapMu[email].Unlock()
+					return fmt.Errorf("writing message: %w", err)
+				}
+
+				err = f.Close()
+				if err != nil {
+					a.imapMu[email].Unlock()
+					return fmt.Errorf("closing message: %w", err)
+				}
 			}
+
 			// We need to save the list of cached messages every time in case
 			// we get interrupted or have an error.
 			err = jsonx.Save(&cached, cachedFile)
