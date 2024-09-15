@@ -47,9 +47,10 @@ type App struct {
 	// cache contains the cached message data, keyed by account and then MessageID.
 	cache map[string]map[string]*CacheData
 
-	// currentCache is a sorted view of [App.cache] for the current email account
-	// and labels, used for displaying a [core.List] of messages.
-	currentCache []*CacheData
+	// listCache is a sorted view of [App.cache] for the current email account
+	// and labels, used for displaying a [core.List] of messages. It should not
+	// be used for any other purpose.
+	listCache []*CacheData
 
 	// readMessage is the current message we are reading
 	readMessage *CacheData
@@ -107,18 +108,18 @@ func (a *App) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.List) {
-			w.SetSlice(&a.currentCache)
+			w.SetSlice(&a.listCache)
 			w.SetReadOnly(true)
 			w.Updater(func() {
-				a.currentCache = nil
+				a.listCache = nil
 				mp := a.cache[a.currentEmail]
 				for _, cd := range mp {
 					if !slices.Contains(cd.Labels, a.currentMailbox) {
 						continue
 					}
-					a.currentCache = append(a.currentCache, cd)
+					a.listCache = append(a.listCache, cd)
 				}
-				slices.SortFunc(a.currentCache, func(a, b *CacheData) int {
+				slices.SortFunc(a.listCache, func(a, b *CacheData) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 				})
 			})
