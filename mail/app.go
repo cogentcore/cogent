@@ -81,9 +81,10 @@ var theApp *App
 func (a *App) Init() {
 	theApp = a
 	a.Frame.Init()
-	a.showLabel = "INBOX"
 	a.authToken = map[string]*oauth2.Token{}
 	a.authClient = map[string]sasl.Client{}
+	a.labels = map[string]bool{}
+	a.showLabel = "INBOX"
 	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
@@ -91,7 +92,7 @@ func (a *App) Init() {
 	tree.AddChild(a, func(w *core.Splits) {
 		w.SetSplits(0.1, 0.2, 0.7)
 		tree.AddChild(w, func(w *core.Tree) {
-			w.SetText("Mailboxes")
+			w.SetText("Labels")
 			w.Maker(func(p *tree.Plan) {
 				for _, email := range Settings.Accounts {
 					tree.AddAt(p, email, func(w *core.Tree) {
@@ -118,12 +119,13 @@ func (a *App) Init() {
 				a.listCache = nil
 				mp := a.cache[a.currentEmail]
 				for _, cd := range mp {
-					if !slices.ContainsFunc(cd.Labels, func(label Label) bool {
-						return label.Name == a.showLabel
-					}) {
-						continue
+					for _, label := range cd.Labels {
+						a.labels[label.Name] = true
+						if label.Name == a.showLabel {
+							a.listCache = append(a.listCache, cd)
+							break
+						}
 					}
-					a.listCache = append(a.listCache, cd)
 				}
 				slices.SortFunc(a.listCache, func(a, b *CacheData) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
