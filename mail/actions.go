@@ -10,18 +10,19 @@ import (
 
 	"cogentcore.org/core/core"
 	"github.com/emersion/go-imap/v2"
+	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-message/mail"
 )
 
 // action executes the given function in a goroutine with proper locking.
 // This should be used for any user action that interacts with a message in IMAP.
-func (a *App) action(f func()) {
+func (a *App) action(f func(c *imapclient.Client)) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
 	go func() {
 		mu := a.imapMu[a.currentEmail]
 		mu.Lock()
-		f()
+		f(a.imapClient[a.currentEmail])
 		mu.Unlock()
 		a.AsyncLock()
 		a.Update()
@@ -29,14 +30,27 @@ func (a *App) action(f func()) {
 	}()
 }
 
+// actionLabels executes the given function for each label of the current message,
+// selecting the mailbox for each one first.
+func (a *App) actionLabels(f func(c *imapclient.Client, lbl label)) {
+	a.action(func(c *imapclient.Client) {
+		for _, lbl := range a.readMessage.Labels {
+			_, err := c.Select(lbl.Name, nil).Wait()
+			if err != nil {
+				core.ErrorSnackbar(a, err, "Error selecting mailbox")
+				return
+			}
+			f(c, lbl)
+		}
+	})
+}
+
 // Move moves the current message to the given mailbox.
 func (a *App) Move(mailbox string) { //types:add
-	a.action(func() {
-		c := a.imapClient[a.currentEmail]
+	// TODO: Move needs to be redesigned with the new many-to-many labeling paradigm.
+	a.actionLabels(func(c *imapclient.Client, lbl label) {
 		uidset := imap.UIDSet{}
-		// TODO: we are not guaranteed to be in the right mailbox at this point.
-		// The same is true for other similar actions.
-		uidset.AddNum(a.readMessage.UID)
+		uidset.AddNum(lbl.UID)
 		mc := c.Move(uidset, mailbox)
 		_, err := mc.Wait()
 		core.ErrorSnackbar(a, err, "Error moving message")
@@ -129,10 +143,9 @@ func (a *App) markSeen(seen bool) {
 		// Already set correctly.
 		return
 	}
-	a.action(func() {
-		c := a.imapClient[a.currentEmail]
+	a.actionLabels(func(c *imapclient.Client, lbl label) {
 		uidset := imap.UIDSet{}
-		uidset.AddNum(a.readMessage.UID)
+		uidset.AddNum(lbl.UID)
 		op := imap.StoreFlagsDel
 		if seen {
 			op = imap.StoreFlagsAdd
