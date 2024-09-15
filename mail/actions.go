@@ -155,6 +155,18 @@ func (a *App) markSeen(seen bool) {
 			Flags: []imap.Flag{imap.FlagSeen},
 		}, nil)
 		err := cmd.Wait()
-		core.ErrorSnackbar(a, err, "Error marking message as read")
+		if err != nil {
+			core.ErrorSnackbar(a, err, "Error marking message as read")
+			return
+		}
+		// Update the cache in addition to IMAP.
+		flags := &a.cache[a.currentEmail][a.readMessage.MessageID].Flags
+		if seen && !slices.Contains(*flags, imap.FlagSeen) {
+			*flags = append(*flags, imap.FlagSeen)
+		} else if !seen {
+			*flags = slices.DeleteFunc(*flags, func(flag imap.Flag) bool {
+				return flag == imap.FlagSeen
+			})
+		}
 	})
 }
