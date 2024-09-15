@@ -159,7 +159,7 @@ func (a *App) markSeen(seen bool) {
 			core.ErrorSnackbar(a, err, "Error marking message as read")
 			return
 		}
-		// Update the cache in addition to IMAP.
+		// Also directly update the cache:
 		flags := &a.cache[a.currentEmail][a.readMessage.MessageID].Flags
 		if seen && !slices.Contains(*flags, imap.FlagSeen) {
 			*flags = append(*flags, imap.FlagSeen)
