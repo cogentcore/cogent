@@ -65,7 +65,9 @@ type App struct {
 	currentEmail string
 
 	// labels are all of the possible labels that messages have.
-	labels map[string]bool
+	// The first key is the account for which the labels are stored,
+	// and the second key is for each label name.
+	labels map[string]map[string]bool
 
 	// showLabel is the current label to show messages for.
 	showLabel string
@@ -83,7 +85,7 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.authToken = map[string]*oauth2.Token{}
 	a.authClient = map[string]sasl.Client{}
-	a.labels = map[string]bool{}
+	a.labels = map[string]map[string]bool{}
 	a.showLabel = "INBOX"
 	a.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
@@ -96,8 +98,9 @@ func (a *App) Init() {
 			w.Maker(func(p *tree.Plan) {
 				for _, email := range Settings.Accounts {
 					tree.AddAt(p, email, func(w *core.Tree) {
+						a.labels[email] = map[string]bool{}
 						w.Maker(func(p *tree.Plan) {
-							labels := maps.Keys(a.labels)
+							labels := maps.Keys(a.labels[email])
 							slices.Sort(labels)
 							for _, label := range labels {
 								tree.AddAt(p, label, func(w *core.Tree) {
@@ -121,7 +124,7 @@ func (a *App) Init() {
 				mp := a.cache[a.currentEmail]
 				for _, cd := range mp {
 					for _, label := range cd.Labels {
-						a.labels[label.Name] = true
+						a.labels[a.currentEmail][label.Name] = true
 						if label.Name == a.showLabel {
 							a.listCache = append(a.listCache, cd)
 							break
