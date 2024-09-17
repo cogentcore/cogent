@@ -132,22 +132,20 @@ func (a *App) CacheMessagesForAccount(email string) error {
 // that have not already been cached for the given email account and mailbox.
 // It caches them in the app's data directory.
 func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string) error {
-	bemail := FilenameBase32(email)
-
-	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", bemail)
+	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", FilenameBase32(email))
 	err := os.MkdirAll(string(dir), 0700)
 	if err != nil {
 		return err
 	}
 
-	cachedFile := filepath.Join(core.TheApp.AppDataDir(), "caching", bemail, "cached-messages.json")
-	err = os.MkdirAll(filepath.Dir(cachedFile), 0700)
+	cacheFile := a.cacheFilename(email)
+	err = os.MkdirAll(filepath.Dir(cacheFile), 0700)
 	if err != nil {
 		return err
 	}
 
 	cached := map[string]*CacheData{}
-	err = jsonx.Open(&cached, cachedFile)
+	err = jsonx.Open(&cached, cacheFile)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("opening cache list: %w", err)
 	}
@@ -188,14 +186,14 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		a.AsyncUnlock()
 		return nil
 	}
-	return a.CacheUIDs(uids, c, email, mailbox, dir, cached, cachedFile)
+	return a.CacheUIDs(uids, c, email, mailbox, dir, cached, cacheFile)
 }
 
 // CacheUIDs caches the messages with the given UIDs in the context of the
 // other given values, using an iterative batched approach that fetches the
 // five next most recent messages at a time, allowing for concurrent mail
 // modifiation operations and correct ordering.
-func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheData, cachedFile string) error {
+func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheData, cacheFile string) error {
 	for len(uids) > 0 {
 		num := min(5, len(uids))
 		cuids := uids[len(uids)-num:] // the current batch of UIDs
@@ -285,7 +283,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 			// We need to save the list of cached messages every time in case
 			// we get interrupted or have an error.
-			err = jsonx.Save(&cached, cachedFile)
+			err = jsonx.Save(&cached, cacheFile)
 			if err != nil {
 				a.imapMu[email].Unlock()
 				return fmt.Errorf("saving cache list: %w", err)

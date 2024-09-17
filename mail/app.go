@@ -10,6 +10,7 @@ package mail
 import (
 	"cmp"
 	"fmt"
+	"path/filepath"
 	"slices"
 	"sync"
 
@@ -216,4 +217,10 @@ func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) 
 	}
 	a.selectedMailbox[email] = mailbox
 	return nil
+}
+
+// cacheFilename returns the filename for the cached messages JSON file
+// for the given email address.
+func (a *App) cacheFilename(email string) string {
+	return filepath.Join(core.TheApp.AppDataDir(), "caching", FilenameBase32(email), "cached-messages.json")
 }
