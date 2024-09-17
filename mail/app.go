@@ -9,6 +9,7 @@ package mail
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 	"sync"
 
@@ -63,6 +64,9 @@ type App struct {
 
 	// currentEmail is the current email account.
 	currentEmail string
+
+	// selectedMailbox is the currently selected mailbox for each email account in IMAP.
+	selectedMailbox map[string]string
 
 	// labels are all of the possible labels that messages have.
 	// The first key is the account for which the labels are stored,
@@ -196,5 +200,19 @@ func (a *App) GetMail() error {
 			core.ErrorDialog(a, err, "Error caching messages")
 		}
 	}()
+	return nil
+}
+
+// selectMailbox selects the given mailbox for the given email for the given client.
+// It does nothing if the given mailbox is already selected.
+func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) error {
+	if a.selectedMailbox[email] == mailbox {
+		return nil // already selected
+	}
+	_, err := c.Select(mailbox, nil).Wait()
+	if err != nil {
+		return fmt.Errorf("selecting mailbox: %w", err)
+	}
+	a.selectedMailbox[email] = mailbox
 	return nil
 }

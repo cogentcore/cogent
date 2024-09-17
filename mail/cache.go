@@ -153,9 +153,9 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	}
 	a.cache[email] = cached
 
-	_, err = c.Select(mailbox, nil).Wait()
+	err = a.selectMailbox(c, email, mailbox)
 	if err != nil {
-		return fmt.Errorf("opening mailbox: %w", err)
+		return err
 	}
 
 	// We want messages in this mailbox with UIDs we haven't already cached.

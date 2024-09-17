@@ -35,9 +35,9 @@ func (a *App) action(f func(c *imapclient.Client)) {
 func (a *App) actionLabels(f func(c *imapclient.Client, label Label)) {
 	a.action(func(c *imapclient.Client) {
 		for _, label := range a.readMessage.Labels {
-			_, err := c.Select(label.Name, nil).Wait()
+			err := a.selectMailbox(c, a.currentEmail, label.Name)
 			if err != nil {
-				core.ErrorSnackbar(a, err, "Error selecting mailbox")
+				core.ErrorSnackbar(a, err)
 				return
 			}
 			f(c, label)
