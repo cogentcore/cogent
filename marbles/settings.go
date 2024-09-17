@@ -10,11 +10,11 @@ import (
 
 // Settings are the settings the app has
 type Settings struct {
-	LineDefaults LineDefaults `view:"no-inline" label:"Line Defaults"`
+	LineDefaults LineDefaults `display:"no-inline" label:"Line Defaults"`
 
-	GraphDefaults Params `view:"no-inline" label:"Graph Param Defaults"`
+	GraphDefaults Params `display:"no-inline" label:"Graph Param Defaults"`
 
-	MarbleSettings MarbleSettings `view:"inline" label:"Marble Settings"`
+	MarbleSettings MarbleSettings `display:"inline" label:"Marble Settings"`
 
 	GraphSize int `label:"Graph Size" min:"100" max:"800"`
 
