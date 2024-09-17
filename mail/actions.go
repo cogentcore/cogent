@@ -49,16 +49,18 @@ func (a *App) actionLabels(f func(c *imapclient.Client, label Label)) {
 	})
 }
 
-// Move moves the current message to the given mailbox.
-func (a *App) Move(mailbox string) { //types:add
+// Label opens a dialog for changing the labels (mailboxes) of the current message.
+func (a *App) Label() { //types:add
+	d := core.NewBody("Label")
+	d.RunDialog(a)
 	// TODO: Move needs to be redesigned with the new many-to-many labeling paradigm.
-	a.actionLabels(func(c *imapclient.Client, label Label) {
-		uidset := imap.UIDSet{}
-		uidset.AddNum(label.UID)
-		mc := c.Move(uidset, mailbox)
-		_, err := mc.Wait()
-		core.ErrorSnackbar(a, err, "Error moving message")
-	})
+	// a.actionLabels(func(c *imapclient.Client, label Label) {
+	// 	uidset := imap.UIDSet{}
+	// 	uidset.AddNum(label.UID)
+	// 	mc := c.Move(uidset, mailbox)
+	// 	_, err := mc.Wait()
+	// 	core.ErrorSnackbar(a, err, "Error moving message")
+	// })
 }
 
 // Reply opens a dialog to reply to the current message.

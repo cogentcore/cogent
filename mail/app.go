@@ -173,7 +173,7 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	if a.readMessage != nil {
 		tree.Add(p, func(w *core.Separator) {})
 		tree.Add(p, func(w *core.FuncButton) {
-			w.SetFunc(a.Move).SetIcon(icons.DriveFileMove).SetKey(keymap.Save)
+			w.SetFunc(a.Label).SetIcon(icons.DriveFileMove).SetKey(keymap.Save)
 		})
 		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(a.Reply).SetIcon(icons.Reply).SetKey(keymap.Replace)
