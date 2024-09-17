@@ -215,6 +215,13 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 		}
 
 		a.imapMu[email].Lock()
+		// We must reselect the mailbox in case the user has changed it
+		// by doing actions in another mailbox. This is a no-op if it is
+		// already selected.
+		err := a.selectMailbox(c, email, mailbox)
+		if err != nil {
+			return err
+		}
 		mcmd := c.Fetch(fuidset, fetchOptions)
 
 		for {
@@ -290,7 +297,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			a.AsyncUnlock()
 		}
 
-		err := mcmd.Close()
+		err = mcmd.Close()
 		a.imapMu[email].Unlock()
 		if err != nil {
 			return fmt.Errorf("fetching messages: %w", err)
