@@ -52,6 +52,11 @@ func (a *App) actionLabels(f func(c *imapclient.Client, label Label)) {
 // Label opens a dialog for changing the labels (mailboxes) of the current message.
 func (a *App) Label() { //types:add
 	d := core.NewBody("Label")
+	core.NewList(d).SetSlice(a.readMessage.Labels)
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Save")
+	})
 	d.RunDialog(a)
 	// TODO: Move needs to be redesigned with the new many-to-many labeling paradigm.
 	// a.actionLabels(func(c *imapclient.Client, label Label) {
