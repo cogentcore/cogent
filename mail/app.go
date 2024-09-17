@@ -89,6 +89,7 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.authToken = map[string]*oauth2.Token{}
 	a.authClient = map[string]sasl.Client{}
+	a.selectedMailbox = map[string]string{}
 	a.labels = map[string]map[string]bool{}
 	a.showLabel = "INBOX"
 	a.Styler(func(s *styles.Style) {
