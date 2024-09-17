@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
@@ -16,6 +17,7 @@ import (
 
 // action executes the given function in a goroutine with proper locking.
 // This should be used for any user action that interacts with a message in IMAP.
+// It also automatically saves the cache after the action is completed.
 func (a *App) action(f func(c *imapclient.Client)) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
@@ -23,6 +25,8 @@ func (a *App) action(f func(c *imapclient.Client)) {
 		mu := a.imapMu[a.currentEmail]
 		mu.Lock()
 		f(a.imapClient[a.currentEmail])
+		err := jsonx.Save(a.cache[a.currentEmail], a.cacheFilename(a.currentEmail))
+		core.ErrorSnackbar(a, err, "Error saving cache")
 		mu.Unlock()
 		a.AsyncLock()
 		a.Update()
