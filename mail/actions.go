@@ -10,6 +10,7 @@ import (
 
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/events"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-message/mail"
@@ -52,7 +53,15 @@ func (a *App) actionLabels(f func(c *imapclient.Client, label Label)) {
 // Label opens a dialog for changing the labels (mailboxes) of the current message.
 func (a *App) Label() { //types:add
 	d := core.NewBody("Label")
-	core.NewList(d).SetSlice(a.readMessage.Labels)
+	labels := make([]string, len(a.readMessage.Labels))
+	for i, label := range a.readMessage.Labels {
+		labels[i] = label.Name
+	}
+	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true)
+	ch.OnChange(func(e events.Event) {
+		labels = append(labels, ch.CurrentItem.Value.(string))
+	})
+	core.NewList(d).SetSlice(&labels)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Save")
