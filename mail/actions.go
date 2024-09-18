@@ -72,9 +72,11 @@ func (a *App) Label() { //types:add
 	}
 	ch.OnChange(func(e events.Event) {
 		labels = append(labels, tableLabel{name: ch.CurrentItem.Value.(string), On: true, Label: ch.CurrentItem.Text})
-		ch.SetCurrentValue("")
-		ch.Update()
 		tb.Update()
+	})
+	ch.OnFinal(events.Change, func(e events.Event) {
+		ch.CurrentItem = core.ChooserItem{}
+		ch.SetCurrentValue("")
 	})
 	tb = core.NewTable(d).SetSlice(&labels)
 	d.AddBottomBar(func(bar *core.Frame) {
