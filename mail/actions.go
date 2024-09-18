@@ -89,7 +89,20 @@ func (a *App) Label() { //types:add
 					newLabels = append(newLabels, label.name)
 				}
 			}
-			fmt.Println("current", a.readMessage.Labels, "new", newLabels)
+			a.actionLabels(func(c *imapclient.Client, label Label) {
+				if slices.Contains(newLabels, label.Name) {
+					return
+				}
+				fmt.Println("remove", label.Name)
+			})
+			for _, newLabel := range newLabels {
+				if slices.ContainsFunc(a.readMessage.Labels, func(label Label) bool {
+					return label.Name == newLabel
+				}) {
+					continue
+				}
+				fmt.Println("add", newLabel)
+			}
 		})
 	})
 	d.RunDialog(a)
