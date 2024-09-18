@@ -64,11 +64,15 @@ func (a *App) Label() { //types:add
 	for i, label := range a.readMessage.Labels {
 		labels[i] = tableLabel{true, label.Name}
 	}
+	var tb *core.Table
 	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true).SetStrings(a.labels[a.currentEmail]...)
 	ch.OnChange(func(e events.Event) {
 		labels = append(labels, tableLabel{true, ch.CurrentItem.Value.(string)})
+		ch.SetCurrentValue("")
+		ch.Update()
+		tb.Update()
 	})
-	core.NewTable(d).SetSlice(&labels)
+	tb = core.NewTable(d).SetSlice(&labels)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Save")
