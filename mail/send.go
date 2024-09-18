@@ -25,46 +25,59 @@ type SendMessage struct {
 	From    []*mail.Address `display:"inline"`
 	To      []*mail.Address `display:"inline"`
 	Subject string
-	Body    string `display:"-"`
+	body    string
+
+	inReplyTo  string
+	references []string
 }
 
-// Compose pulls up a dialog to send a new message
+// Compose opens a dialog to send a new message.
 func (a *App) Compose() { //types:add
-	a.ComposeMessage = &SendMessage{}
-	a.ComposeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
-	a.ComposeMessage.To = []*mail.Address{{}}
-	b := core.NewBody("Send message")
-	core.NewForm(b).SetStruct(a.ComposeMessage)
+	a.composeMessage = &SendMessage{}
+	a.composeMessage.To = []*mail.Address{{}}
+	a.compose("Compose")
+}
+
+// compose is the implementation of the email comoposition dialog,
+// which is called by other higher-level functions.
+func (a *App) compose(title string) {
+	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
+	b := core.NewBody(title)
+	core.NewForm(b).SetStruct(a.composeMessage)
 	ed := texteditor.NewEditor(b)
+	core.Bind(&a.composeMessage.body, ed)
 	ed.Buffer.SetLanguage(fileinfo.Markdown)
 	ed.Buffer.Options.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
 		s.SetMono(false)
+		s.Grow.Set(1, 1)
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
 		b.AddCancel(bar)
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
-			a.ComposeMessage.Body = ed.Buffer.String()
-			a.SendMessage()
+			a.composeMessage.body = ed.Buffer.String()
+			a.Send()
 		})
 	})
-	b.RunFullDialog(a)
+	b.RunWindowDialog(a)
 }
 
-// SendMessage sends the current message
-func (a *App) SendMessage() error { //types:add
-	if len(a.ComposeMessage.From) != 1 {
-		return fmt.Errorf("expected 1 sender, but got %d", len(a.ComposeMessage.From))
+// Send sends the current message
+func (a *App) Send() error { //types:add
+	if len(a.composeMessage.From) != 1 {
+		return fmt.Errorf("expected 1 sender, but got %d", len(a.composeMessage.From))
 	}
-	email := a.ComposeMessage.From[0].Address
+	email := a.composeMessage.From[0].Address
 
 	var b bytes.Buffer
 
 	var h mail.Header
 	h.SetDate(time.Now())
-	h.SetAddressList("From", a.ComposeMessage.From)
-	h.SetAddressList("To", a.ComposeMessage.To)
-	h.SetSubject(a.ComposeMessage.Subject)
+	h.SetAddressList("From", a.composeMessage.From)
+	h.SetAddressList("To", a.composeMessage.To)
+	h.SetSubject(a.composeMessage.Subject)
+	h.SetMsgIDList("In-Reply-To", []string{a.composeMessage.inReplyTo})
+	h.SetMsgIDList("References", a.composeMessage.references)
 
 	mw, err := mail.CreateWriter(&b, h)
 	if err != nil {
@@ -75,7 +88,6 @@ func (a *App) SendMessage() error { //types:add
 	if err != nil {
 		return err
 	}
-	defer tw.Close()
 
 	var ph mail.InlineHeader
 	ph.Set("Content-Type", "text/plain")
@@ -83,7 +95,7 @@ func (a *App) SendMessage() error { //types:add
 	if err != nil {
 		return err
 	}
-	pw.Write([]byte(a.ComposeMessage.Body))
+	pw.Write([]byte(a.composeMessage.body))
 	pw.Close()
 
 	var hh mail.InlineHeader
@@ -92,20 +104,22 @@ func (a *App) SendMessage() error { //types:add
 	if err != nil {
 		return err
 	}
-	err = goldmark.Convert([]byte(a.ComposeMessage.Body), hw)
+	err = goldmark.Convert([]byte(a.composeMessage.body), hw)
 	if err != nil {
 		return err
 	}
 	hw.Close()
+	tw.Close()
+	mw.Close()
 
-	to := make([]string, len(a.ComposeMessage.To))
-	for i, t := range a.ComposeMessage.To {
+	to := make([]string, len(a.composeMessage.To))
+	for i, t := range a.composeMessage.To {
 		to[i] = t.Address
 	}
 
 	err = smtp.SendMail(
 		"smtp.gmail.com:587",
-		a.AuthClient[email],
+		a.authClient[email],
 		email,
 		to,
 		&b,

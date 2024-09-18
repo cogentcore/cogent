@@ -5,21 +5,13 @@
 package mail
 
 import (
-	"cmp"
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"time"
 
-	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/cursors"
-	"cogentcore.org/core/events"
 	"cogentcore.org/core/htmlcore"
-	"cogentcore.org/core/icons"
-	"cogentcore.org/core/styles"
-	"cogentcore.org/core/styles/abilities"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -32,83 +24,21 @@ type ReadMessage struct {
 	Date    time.Time
 }
 
-// UpdateMessageList updates the message list from [App.Cache].
-func (a *App) UpdateMessageList() {
-	cached := a.Cache[a.CurrentEmail][a.CurrentMailbox]
-
-	a.AsyncLock()
-	defer a.AsyncUnlock()
-
-	list := a.FindPath("splits/list").(*core.Frame)
-
-	if list.NumChildren() > 100 {
-		return
+// updateReadMessage updates the given frame to display the contents of
+// the current message, if it does not already.
+func (a *App) updateReadMessage(w *core.Frame) error {
+	if a.readMessage == w.Property("readMessage") {
+		return nil
+	}
+	w.SetProperty("readMessage", a.readMessage)
+	w.DeleteChildren()
+	if a.readMessage == nil {
+		return nil
 	}
 
-	list.DeleteChildren() // TODO(config)
+	bemail := FilenameBase32(a.currentEmail)
 
-	slices.SortFunc(cached, func(a, b *CacheData) int {
-		return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
-	})
-
-	for i, cd := range cached {
-		cd := cd
-
-		if i > 100 {
-			break
-		}
-
-		fr := core.NewFrame(list)
-		fr.Styler(func(s *styles.Style) {
-			s.Direction = styles.Column
-		})
-
-		fr.Styler(func(s *styles.Style) {
-			s.SetAbilities(true, abilities.Activatable, abilities.Hoverable)
-			s.Cursor = cursors.Pointer
-		})
-		fr.OnClick(func(e events.Event) {
-			a.ReadMessage = cd
-			errors.Log(a.UpdateReadMessage())
-		})
-		fr.AddContextMenu(func(m *core.Scene) {
-			a.ReadMessage = cd
-			core.NewFuncButton(m).SetFunc(a.MoveMessage).SetIcon(icons.Move).SetText("Move")
-		})
-
-		ftxt := ""
-		for _, f := range cd.From {
-			if f.Name != "" {
-				ftxt += f.Name + " "
-			} else {
-				ftxt += f.Addr() + " "
-			}
-		}
-
-		from := core.NewText(fr).SetType(core.TextTitleMedium).SetText(ftxt)
-		from.Styler(func(s *styles.Style) {
-			s.SetNonSelectable()
-		})
-		subject := core.NewText(fr).SetType(core.TextBodyMedium).SetText(cd.Subject)
-		subject.Styler(func(s *styles.Style) {
-			s.SetNonSelectable()
-		})
-	}
-
-	list.Update()
-}
-
-// UpdateReadMessage updates the view of the message currently being read.
-func (a *App) UpdateReadMessage() error {
-	msv := a.FindPath("splits/mail/msv").(*core.Form)
-	msv.SetStruct(a.ReadMessage.ToMessage())
-
-	mb := a.FindPath("splits/mail/mb").(*core.Frame)
-	mb.DeleteChildren()
-
-	bemail := FilenameBase32(a.CurrentEmail)
-
-	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, a.ReadMessage.Filename))
+	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, messageFilename(&a.readMessage.Envelope)))
 	if err != nil {
 		return err
 	}
@@ -119,7 +49,12 @@ func (a *App) UpdateReadMessage() error {
 		return err
 	}
 
-	var plain *mail.Part
+	refs, err := mr.Header.MsgIDList("References")
+	if err != nil {
+		return err
+	}
+	a.readMessageReferences = refs
+
 	var gotHTML bool
 
 	for {
@@ -139,9 +74,13 @@ func (a *App) UpdateReadMessage() error {
 
 			switch ct {
 			case "text/plain":
-				plain = p
+				b, err := io.ReadAll(p.Body)
+				if err != nil {
+					return err
+				}
+				a.readMessagePlain = string(b)
 			case "text/html":
-				err := htmlcore.ReadHTML(htmlcore.NewContext(), mb, p.Body)
+				err := htmlcore.ReadHTML(htmlcore.NewContext(), w, p.Body)
 				if err != nil {
 					return err
 				}
@@ -151,13 +90,11 @@ func (a *App) UpdateReadMessage() error {
 	}
 
 	// we only handle the plain version if there is no HTML version
-	if !gotHTML && plain != nil {
-		err := htmlcore.ReadMD(htmlcore.NewContext(), mb, errors.Log1(io.ReadAll(plain.Body)))
+	if !gotHTML {
+		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, a.readMessagePlain)
 		if err != nil {
 			return err
 		}
 	}
-
-	mb.Update()
 	return nil
 }

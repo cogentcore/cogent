@@ -12,12 +12,12 @@ import (
 	"net/mail"
 	"os"
 	"path/filepath"
-	"strconv"
+	"slices"
 	"strings"
+	"sync"
 
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/events"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 )
@@ -27,12 +27,27 @@ import (
 // mail list in the GUI.
 type CacheData struct {
 	imap.Envelope
-	UID      imap.UID
-	Filename string
+	Flags []imap.Flag
+
+	// Labels are the labels associated with the message.
+	// Labels are many-to-many, similar to gmail. All labels
+	// also correspond to IMAP mailboxes.
+	Labels []Label
+}
+
+// Label represents a Label associated with a message.
+// It contains the name of the Label and the UID of the message
+// in the IMAP mailbox corresponding to the Label.
+type Label struct {
+	Name string
+	UID  imap.UID
 }
 
 // ToMessage converts the [CacheData] to a [ReadMessage].
 func (cd *CacheData) ToMessage() *ReadMessage {
+	if cd == nil {
+		return nil
+	}
 	return &ReadMessage{
 		From:    IMAPToMailAddresses(cd.From),
 		To:      IMAPToMailAddresses(cd.To),
@@ -56,16 +71,15 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 // CacheMessages caches all of the messages from the server that
 // have not already been cached. It caches them in the app's data directory.
 func (a *App) CacheMessages() error {
-	if a.Cache == nil {
-		a.Cache = map[string]map[string][]*CacheData{}
+	if a.cache == nil {
+		a.cache = map[string]map[string]*CacheData{}
 	}
-	if a.IMAPClient == nil {
-		a.IMAPClient = map[string]*imapclient.Client{}
+	if a.imapClient == nil {
+		a.imapClient = map[string]*imapclient.Client{}
 	}
-	mbox := a.FindPath("splits/mbox").(*core.Tree)
-	mbox.AsyncLock()
-	mbox.DeleteChildren()
-	mbox.AsyncUnlock()
+	if a.imapMu == nil {
+		a.imapMu = map[string]*sync.Mutex{}
+	}
 	for _, account := range Settings.Accounts {
 		err := a.CacheMessagesForAccount(account)
 		if err != nil {
@@ -79,8 +93,8 @@ func (a *App) CacheMessages() error {
 // have not already been cached for the given email account. It
 // caches them in the app's data directory.
 func (a *App) CacheMessagesForAccount(email string) error {
-	if a.Cache[email] == nil {
-		a.Cache[email] = map[string][]*CacheData{}
+	if a.cache[email] == nil {
+		a.cache[email] = map[string]*CacheData{}
 	}
 
 	c, err := imapclient.DialTLS("imap.gmail.com:993", nil)
@@ -89,9 +103,10 @@ func (a *App) CacheMessagesForAccount(email string) error {
 	}
 	defer c.Logout()
 
-	a.IMAPClient[email] = c
+	a.imapClient[email] = c
+	a.imapMu[email] = &sync.Mutex{}
 
-	err = c.Authenticate(a.AuthClient[email])
+	err = c.Authenticate(a.authClient[email])
 	if err != nil {
 		return fmt.Errorf("authenticating: %w", err)
 	}
@@ -102,6 +117,9 @@ func (a *App) CacheMessagesForAccount(email string) error {
 	}
 
 	for _, mailbox := range mailboxes {
+		if strings.HasPrefix(mailbox.Mailbox, "[Gmail]") {
+			continue // TODO: skipping for now until we figure out a good way to handle
+		}
 		err := a.CacheMessagesForMailbox(c, email, mailbox.Mailbox)
 		if err != nil {
 			return fmt.Errorf("caching messages for mailbox %q: %w", mailbox.Mailbox, err)
@@ -114,55 +132,40 @@ func (a *App) CacheMessagesForAccount(email string) error {
 // that have not already been cached for the given email account and mailbox.
 // It caches them in the app's data directory.
 func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string) error {
-	if a.CurrentMailbox == "" {
-		a.CurrentMailbox = mailbox
-	}
-
-	bemail := FilenameBase32(email)
-
-	a.AsyncLock()
-	mbox := a.FindPath("splits/mbox").(*core.Tree)
-	embox := mbox.ChildByName(bemail)
-	if embox == nil {
-		embox = core.NewTree(mbox).SetText(email) // TODO(config)
-		embox.AsTree().SetName(bemail)
-	}
-	core.NewTree(embox).SetText(mailbox).OnClick(func(e events.Event) {
-		a.CurrentMailbox = mailbox
-		a.UpdateMessageList()
-	})
-	a.AsyncUnlock()
-
-	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", bemail)
+	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", FilenameBase32(email))
 	err := os.MkdirAll(string(dir), 0700)
 	if err != nil {
 		return err
 	}
 
-	cachedFile := filepath.Join(core.TheApp.AppDataDir(), "caching", bemail, "cached-messages.json")
-	err = os.MkdirAll(filepath.Dir(cachedFile), 0700)
+	cacheFile := a.cacheFilename(email)
+	err = os.MkdirAll(filepath.Dir(cacheFile), 0700)
 	if err != nil {
 		return err
 	}
 
-	var cached []*CacheData
-	err = jsonx.Open(&cached, cachedFile)
+	cached := map[string]*CacheData{}
+	err = jsonx.Open(&cached, cacheFile)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("opening cache list: %w", err)
 	}
-	a.Cache[email][mailbox] = cached
+	a.cache[email] = cached
 
-	_, err = c.Select(mailbox, nil).Wait()
+	err = a.selectMailbox(c, email, mailbox)
 	if err != nil {
-		return fmt.Errorf("opening mailbox: %w", err)
+		return err
 	}
 
-	// we want messages with UIDs not in the list we already cached
+	// We want messages in this mailbox with UIDs we haven't already cached.
 	criteria := &imap.SearchCriteria{}
 	if len(cached) > 0 {
 		uidset := imap.UIDSet{}
-		for _, c := range cached {
-			uidset.AddNum(c.UID)
+		for _, cd := range cached {
+			for _, label := range cd.Labels {
+				if label.Name == mailbox {
+					uidset.AddNum(label.UID)
+				}
+			}
 		}
 
 		nc := imap.SearchCriteria{}
@@ -178,17 +181,19 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 
 	uids := uidsData.AllUIDs()
 	if len(uids) == 0 {
-		a.UpdateMessageList()
+		a.AsyncLock()
+		a.Update()
+		a.AsyncUnlock()
 		return nil
 	}
-	return a.CacheUIDs(uids, c, email, mailbox, dir, cached, cachedFile)
+	return a.CacheUIDs(uids, c, email, mailbox, dir, cached, cacheFile)
 }
 
 // CacheUIDs caches the messages with the given UIDs in the context of the
 // other given values, using an iterative batched approach that fetches the
 // five next most recent messages at a time, allowing for concurrent mail
 // modifiation operations and correct ordering.
-func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached []*CacheData, cachedFile string) error {
+func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheData, cacheFile string) error {
 	for len(uids) > 0 {
 		num := min(5, len(uids))
 		cuids := uids[len(uids)-num:] // the current batch of UIDs
@@ -199,13 +204,22 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 		fetchOptions := &imap.FetchOptions{
 			Envelope: true,
+			Flags:    true,
 			UID:      true,
 			BodySection: []*imap.FetchItemBodySection{
-				{Specifier: imap.PartSpecifierHeader},
-				{Specifier: imap.PartSpecifierText},
+				{Specifier: imap.PartSpecifierHeader, Peek: true},
+				{Specifier: imap.PartSpecifierText, Peek: true},
 			},
 		}
 
+		a.imapMu[email].Lock()
+		// We must reselect the mailbox in case the user has changed it
+		// by doing actions in another mailbox. This is a no-op if it is
+		// already selected.
+		err := a.selectMailbox(c, email, mailbox)
+		if err != nil {
+			return err
+		}
 		mcmd := c.Fetch(fuidset, fetchOptions)
 
 		for {
@@ -216,58 +230,81 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 
 			mdata, err := msg.Collect()
 			if err != nil {
+				a.imapMu[email].Unlock()
 				return err
 			}
 
-			filename := strconv.FormatUint(uint64(mdata.UID), 32)
-			filename = strings.Repeat("0", 7-len(filename)) + filename
-			f, err := os.Create(filepath.Join(dir, filename))
-			if err != nil {
-				return err
-			}
+			// If the message is already cached (likely in another mailbox),
+			// we update its labels to include this mailbox if it doesn't already.
+			if _, already := cached[mdata.Envelope.MessageID]; already {
+				cd := cached[mdata.Envelope.MessageID]
+				if !slices.ContainsFunc(cd.Labels, func(label Label) bool {
+					return label.Name == mailbox
+				}) {
+					cd.Labels = append(cd.Labels, Label{mailbox, mdata.UID})
+				}
+			} else {
+				// Otherwise, we add it as a new entry to the cache
+				// and save the content to a file.
+				cached[mdata.Envelope.MessageID] = &CacheData{
+					Envelope: *mdata.Envelope,
+					Flags:    mdata.Flags,
+					Labels:   []Label{{mailbox, mdata.UID}},
+				}
 
-			var header, text []byte
+				f, err := os.Create(filepath.Join(dir, messageFilename(mdata.Envelope)))
+				if err != nil {
+					a.imapMu[email].Unlock()
+					return err
+				}
 
-			for k, v := range mdata.BodySection {
-				if k.Specifier == imap.PartSpecifierHeader {
-					header = v
-				} else if k.Specifier == imap.PartSpecifierText {
-					text = v
+				var header, text []byte
+
+				for k, v := range mdata.BodySection {
+					if k.Specifier == imap.PartSpecifierHeader {
+						header = v
+					} else if k.Specifier == imap.PartSpecifierText {
+						text = v
+					}
+				}
+
+				_, err = f.Write(append(header, text...))
+				if err != nil {
+					a.imapMu[email].Unlock()
+					return fmt.Errorf("writing message: %w", err)
+				}
+
+				err = f.Close()
+				if err != nil {
+					a.imapMu[email].Unlock()
+					return fmt.Errorf("closing message: %w", err)
 				}
 			}
 
-			_, err = f.Write(append(header, text...))
+			// We need to save the list of cached messages every time in case
+			// we get interrupted or have an error.
+			err = jsonx.Save(&cached, cacheFile)
 			if err != nil {
-				return fmt.Errorf("writing message: %w", err)
-			}
-
-			err = f.Close()
-			if err != nil {
-				return fmt.Errorf("closing message: %w", err)
-			}
-
-			cd := &CacheData{
-				Envelope: *mdata.Envelope,
-				UID:      mdata.UID,
-				Filename: filename,
-			}
-
-			// we need to save the list of cached messages every time in case
-			// we get interrupted or have an error
-			cached = append(cached, cd)
-			err = jsonx.Save(&cached, cachedFile)
-			if err != nil {
+				a.imapMu[email].Unlock()
 				return fmt.Errorf("saving cache list: %w", err)
 			}
 
-			a.Cache[email][mailbox] = cached
-			a.UpdateMessageList()
+			a.cache[email] = cached
+			a.AsyncLock()
+			a.Update()
+			a.AsyncUnlock()
 		}
 
-		err := mcmd.Close()
+		err = mcmd.Close()
+		a.imapMu[email].Unlock()
 		if err != nil {
 			return fmt.Errorf("fetching messages: %w", err)
 		}
 	}
 	return nil
+}
+
+// messageFilename returns the filename for storing the message with the given envelope.
+func messageFilename(env *imap.Envelope) string {
+	return FilenameBase32(env.MessageID) + ".eml"
 }

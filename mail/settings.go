@@ -30,3 +30,15 @@ type SettingsData struct { //types:add
 	// Accounts are the email accounts the user is signed into.
 	Accounts []string
 }
+
+// friendlyLabelName converts the given label name to a user-friendly version.
+func friendlyLabelName(name string) string {
+	if f, ok := friendlyLabelNames[name]; ok {
+		return f
+	}
+	return name
+}
+
+var friendlyLabelNames = map[string]string{
+	"INBOX": "Inbox",
+}
