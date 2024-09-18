@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -63,7 +64,7 @@ func (a *App) Label() { //types:add
 	d := core.NewBody("Label")
 	labels := make([]tableLabel, len(a.readMessage.Labels))
 	for i, label := range a.readMessage.Labels {
-		labels[i] = tableLabel{name: label.Name, On: true, Label: friendlyLabelName(label.Name)}
+		labels[i] = tableLabel{name: label.Name, On: label.Name != "INBOX", Label: friendlyLabelName(label.Name)}
 	}
 	var tb *core.Table
 	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true)
@@ -81,7 +82,9 @@ func (a *App) Label() { //types:add
 	tb = core.NewTable(d).SetSlice(&labels)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
-		d.AddOK(bar).SetText("Save")
+		d.AddOK(bar).SetText("Save").OnClick(func(e events.Event) {
+			fmt.Println("current", a.readMessage.Labels, "new", labels)
+		})
 	})
 	d.RunDialog(a)
 	// TODO: Move needs to be redesigned with the new many-to-many labeling paradigm.
