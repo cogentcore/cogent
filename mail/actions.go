@@ -50,18 +50,25 @@ func (a *App) actionLabels(f func(c *imapclient.Client, label Label)) {
 	})
 }
 
+// tableLabel is used for displaying labels in a table
+// for user selection.
+type tableLabel struct {
+	On    bool `display:"checkbox"`
+	Label string
+}
+
 // Label opens a dialog for changing the labels (mailboxes) of the current message.
 func (a *App) Label() { //types:add
 	d := core.NewBody("Label")
-	labels := make([]string, len(a.readMessage.Labels))
+	labels := make([]tableLabel, len(a.readMessage.Labels))
 	for i, label := range a.readMessage.Labels {
-		labels[i] = label.Name
+		labels[i] = tableLabel{true, label.Name}
 	}
 	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true)
 	ch.OnChange(func(e events.Event) {
-		labels = append(labels, ch.CurrentItem.Value.(string))
+		labels = append(labels, tableLabel{true, ch.CurrentItem.Value.(string)})
 	})
-	core.NewList(d).SetSlice(&labels)
+	core.NewTable(d).SetSlice(&labels)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Save")
