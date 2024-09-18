@@ -83,7 +83,13 @@ func (a *App) Label() { //types:add
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Save").OnClick(func(e events.Event) {
-			fmt.Println("current", a.readMessage.Labels, "new", labels)
+			newLabels := []string{}
+			for _, label := range labels {
+				if label.On {
+					newLabels = append(newLabels, label.name)
+				}
+			}
+			fmt.Println("current", a.readMessage.Labels, "new", newLabels)
 		})
 	})
 	d.RunDialog(a)
