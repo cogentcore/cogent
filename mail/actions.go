@@ -63,12 +63,15 @@ func (a *App) Label() { //types:add
 	d := core.NewBody("Label")
 	labels := make([]tableLabel, len(a.readMessage.Labels))
 	for i, label := range a.readMessage.Labels {
-		labels[i] = tableLabel{label.Name, true, friendlyLabelName(label.Name)}
+		labels[i] = tableLabel{name: label.Name, On: true, Label: friendlyLabelName(label.Name)}
 	}
 	var tb *core.Table
-	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true).SetStrings(a.labels[a.currentEmail]...)
+	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true)
+	for _, label := range a.labels[a.currentEmail] {
+		ch.Items = append(ch.Items, core.ChooserItem{Value: label, Text: friendlyLabelName(label)})
+	}
 	ch.OnChange(func(e events.Event) {
-		labels = append(labels, tableLabel{ch.CurrentItem.Value.(string), true, ch.CurrentItem.GetText()})
+		labels = append(labels, tableLabel{name: ch.CurrentItem.Value.(string), On: true, Label: ch.CurrentItem.Text})
 		ch.SetCurrentValue("")
 		ch.Update()
 		tb.Update()
