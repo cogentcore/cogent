@@ -111,33 +111,8 @@ func (a *App) CacheMessagesForAccount(email string) error {
 		return fmt.Errorf("authenticating: %w", err)
 	}
 
-	mailboxes, err := c.List("", "*", nil).Collect()
-	if err != nil {
-		return fmt.Errorf("getting mailboxes: %w", err)
-	}
-
-	for _, mailbox := range mailboxes {
-		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
-	}
-
-	for _, mailbox := range mailboxes {
-		if strings.HasPrefix(mailbox.Mailbox, "[Gmail]") {
-			continue // TODO: skipping for now until we figure out a good way to handle
-		}
-		err := a.CacheMessagesForMailbox(c, email, mailbox.Mailbox)
-		if err != nil {
-			return fmt.Errorf("caching messages for mailbox %q: %w", mailbox.Mailbox, err)
-		}
-	}
-	return nil
-}
-
-// CacheMessagesForMailbox caches all of the messages from the server
-// that have not already been cached for the given email account and mailbox.
-// It caches them in the app's data directory.
-func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string) error {
 	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", FilenameBase32(email))
-	err := os.MkdirAll(string(dir), 0700)
+	err = os.MkdirAll(string(dir), 0700)
 	if err != nil {
 		return err
 	}
@@ -155,7 +130,32 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	}
 	a.cache[email] = cached
 
-	err = a.selectMailbox(c, email, mailbox)
+	mailboxes, err := c.List("", "*", nil).Collect()
+	if err != nil {
+		return fmt.Errorf("getting mailboxes: %w", err)
+	}
+
+	for _, mailbox := range mailboxes {
+		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
+	}
+
+	for _, mailbox := range mailboxes {
+		if strings.HasPrefix(mailbox.Mailbox, "[Gmail]") {
+			continue // TODO: skipping for now until we figure out a good way to handle
+		}
+		err := a.CacheMessagesForMailbox(c, email, mailbox.Mailbox, dir, cached, cacheFile)
+		if err != nil {
+			return fmt.Errorf("caching messages for mailbox %q: %w", mailbox.Mailbox, err)
+		}
+	}
+	return nil
+}
+
+// CacheMessagesForMailbox caches all of the messages from the server
+// that have not already been cached for the given email account and mailbox.
+// It caches them in the app's data directory.
+func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheData, cacheFile string) error {
+	err := a.selectMailbox(c, email, mailbox)
 	if err != nil {
 		return err
 	}
