@@ -76,6 +76,9 @@ func (a *App) Label() { //types:add
 		tb.Update()
 	})
 	ch.OnFinal(events.Change, func(e events.Event) {
+		if ch.CurrentItem.Text == "" {
+			return
+		}
 		ch.CurrentItem = core.ChooserItem{}
 		ch.SetCurrentValue("")
 	})
