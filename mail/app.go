@@ -116,9 +116,10 @@ func (a *App) Init() {
 				}
 			})
 		})
-		tree.AddChild(w, func(w *core.List) {
-			w.SetSlice(&a.listCache)
-			w.SetReadOnly(true)
+		tree.AddChild(w, func(w *core.Frame) {
+			w.Styler(func(s *styles.Style) {
+				s.Direction = styles.Column
+			})
 			w.Updater(func() {
 				a.listCache = nil
 				mp := a.cache[a.currentEmail]
@@ -133,6 +134,22 @@ func (a *App) Init() {
 				slices.SortFunc(a.listCache, func(a, b *CacheMessage) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 				})
+			})
+			tree.AddChild(w, func(w *core.Text) {
+				w.SetType(core.TextTitleMedium)
+				w.Updater(func() {
+					w.SetText(friendlyLabelName(a.showLabel))
+				})
+			})
+			tree.AddChild(w, func(w *core.Text) {
+				w.Updater(func() {
+					w.SetText(fmt.Sprintf("%d messages", len(a.listCache)))
+				})
+			})
+			tree.AddChild(w, func(w *core.Separator) {})
+			tree.AddChild(w, func(w *core.List) {
+				w.SetSlice(&a.listCache)
+				w.SetReadOnly(true)
 			})
 		})
 		tree.AddChild(w, func(w *core.Frame) {
