@@ -89,12 +89,19 @@ func (a *App) Label() { //types:add
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Save").OnClick(func(e events.Event) {
+			// newLabels are the labels we want to end up with, in contrast
+			// to the old labels we started with, which are a.readMessage.Labels.
 			newLabels := []string{}
 			for _, label := range labels {
 				if label.On {
 					newLabels = append(newLabels, label.name)
 				}
 			}
+			// resultantLabels are the labels we apply to a.readMessage.Labels after
+			// the process is over. This needs to be a copy of a.readMessage.Labels
+			// since we can't modify it while looping over it and checking it.
+			resultantLabels := make([]Label, len(a.readMessage.Labels))
+			copy(resultantLabels, a.readMessage.Labels)
 			first := true
 			a.actionLabels(func(c *imapclient.Client, label Label) error {
 				// We copy the existing message to all of the new labels.
@@ -111,7 +118,7 @@ func (a *App) Label() { //types:add
 							return err
 						}
 						// Add this new label to the cache.
-						a.readMessage.Labels = append(a.readMessage.Labels, Label{newLabel, cd.DestUIDs[0].Start})
+						resultantLabels = append(resultantLabels, Label{newLabel, cd.DestUIDs[0].Start})
 					}
 				}
 				// We remove the existing message from each old label.
@@ -130,13 +137,14 @@ func (a *App) Label() { //types:add
 				if err != nil {
 					return err
 				}
-				// Also remove this label from the cache.
-				a.readMessage.Labels = slices.DeleteFunc(a.readMessage.Labels, func(l Label) bool {
+				// Remove this old label from the cache.
+				resultantLabels = slices.DeleteFunc(resultantLabels, func(l Label) bool {
 					return l == label
 				})
 				return nil
 			})
-
+			// Now that we are done, we can save resultantLabels to the cache.
+			a.readMessage.Labels = resultantLabels
 		})
 	})
 	d.RunDialog(a)
