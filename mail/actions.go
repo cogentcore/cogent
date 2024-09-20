@@ -37,8 +37,10 @@ func (a *App) action(f func(c *imapclient.Client) error) {
 }
 
 // actionLabels executes the given function for each label of the current message,
-// selecting the mailbox for each one first.
-func (a *App) actionLabels(f func(c *imapclient.Client, label Label) error) {
+// selecting the mailbox for each one first. It does so in a goroutine with proper
+// locking. It takes an optional function to call while still in the protected
+// goroutine after all of the labels have been processed.
+func (a *App) actionLabels(f func(c *imapclient.Client, label Label) error, after ...func()) {
 	a.action(func(c *imapclient.Client) error {
 		for _, label := range a.readMessage.Labels {
 			err := a.selectMailbox(c, a.currentEmail, label.Name)
@@ -49,6 +51,9 @@ func (a *App) actionLabels(f func(c *imapclient.Client, label Label) error) {
 			if err != nil {
 				return err
 			}
+		}
+		if len(after) > 0 {
+			after[0]()
 		}
 		return nil
 	})
@@ -142,9 +147,10 @@ func (a *App) Label() { //types:add
 					return l == label
 				})
 				return nil
+			}, func() {
+				// Now that we are done, we can save resultantLabels to the cache.
+				a.readMessage.Labels = resultantLabels
 			})
-			// Now that we are done, we can save resultantLabels to the cache.
-			a.readMessage.Labels = resultantLabels
 		})
 	})
 	d.RunDialog(a)
