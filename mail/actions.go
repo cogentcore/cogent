@@ -106,10 +106,12 @@ func (a *App) Label() { //types:add
 						}) {
 							continue // Already have this label.
 						}
-						_, err := c.Copy(label.UIDSet(), newLabel).Wait()
+						cd, err := c.Copy(label.UIDSet(), newLabel).Wait()
 						if err != nil {
 							return err
 						}
+						// Add this new label to the cache.
+						a.readMessage.Labels = append(a.readMessage.Labels, Label{newLabel, cd.DestUIDs[0].Start})
 					}
 				}
 				// We remove the existing message from each old label.
@@ -124,7 +126,15 @@ func (a *App) Label() { //types:add
 				if err != nil {
 					return err
 				}
-				return c.UIDExpunge(label.UIDSet()).Wait()
+				err = c.UIDExpunge(label.UIDSet()).Wait()
+				if err != nil {
+					return err
+				}
+				// Also remove this label from the cache.
+				a.readMessage.Labels = slices.DeleteFunc(a.readMessage.Labels, func(l Label) bool {
+					return l == label
+				})
+				return nil
 			})
 
 		})
@@ -240,7 +250,7 @@ func (a *App) markSeen(seen bool) {
 			return err
 		}
 		// Also directly update the cache:
-		flags := &a.cache[a.currentEmail][a.readMessage.MessageID].Flags
+		flags := &a.readMessage.Flags
 		if seen && !slices.Contains(*flags, imap.FlagSeen) {
 			*flags = append(*flags, imap.FlagSeen)
 		} else if !seen {
