@@ -105,7 +105,7 @@ func (a *App) Init() {
 							for _, label := range a.labels[email] {
 								tree.AddAt(p, label, func(w *core.Tree) {
 									w.SetText(friendlyLabelName(label))
-									w.OnSelect(func(e events.Event) {
+									w.OnClick(func(e events.Event) {
 										a.showLabel = label
 										a.Update()
 									})
