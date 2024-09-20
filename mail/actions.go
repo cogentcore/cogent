@@ -5,7 +5,6 @@
 package mail
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 
@@ -98,8 +97,7 @@ func (a *App) Label() { //types:add
 			}
 			first := true
 			a.actionLabels(func(c *imapclient.Client, label Label) error {
-				// We copy the existing message to all of the new labels
-				// and remove it from all of the old labels.
+				// We copy the existing message to all of the new labels.
 				if first {
 					first = false
 					for _, newLabel := range newLabels {
@@ -108,19 +106,25 @@ func (a *App) Label() { //types:add
 						}) {
 							continue // Already have this label.
 						}
-						uidset := imap.UIDSet{}
-						uidset.AddNum(label.UID)
-						_, err := c.Copy(uidset, newLabel).Wait()
+						_, err := c.Copy(label.UIDSet(), newLabel).Wait()
 						if err != nil {
 							return err
 						}
 					}
 				}
+				// We remove the existing message from each old label.
 				if slices.Contains(newLabels, label.Name) {
 					return nil // Still have this label.
 				}
-				fmt.Println("remove", label.Name)
-				return nil
+				err := c.Store(label.UIDSet(), &imap.StoreFlags{
+					Op:     imap.StoreFlagsAdd,
+					Silent: true,
+					Flags:  []imap.Flag{imap.FlagDeleted},
+				}, nil).Wait()
+				if err != nil {
+					return err
+				}
+				return c.UIDExpunge(label.UIDSet()).Wait()
 			})
 
 		})
@@ -223,15 +227,14 @@ func (a *App) markSeen(seen bool) {
 		return
 	}
 	a.actionLabels(func(c *imapclient.Client, label Label) error {
-		uidset := imap.UIDSet{}
-		uidset.AddNum(label.UID)
 		op := imap.StoreFlagsDel
 		if seen {
 			op = imap.StoreFlagsAdd
 		}
-		err := c.Store(uidset, &imap.StoreFlags{
-			Op:    op,
-			Flags: []imap.Flag{imap.FlagSeen},
+		err := c.Store(label.UIDSet(), &imap.StoreFlags{
+			Op:     op,
+			Silent: true,
+			Flags:  []imap.Flag{imap.FlagSeen},
 		}, nil).Wait()
 		if err != nil {
 			return err

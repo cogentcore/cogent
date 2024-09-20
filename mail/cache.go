@@ -43,6 +43,13 @@ type Label struct {
 	UID  imap.UID
 }
 
+// UIDSet returns an [imap.UIDSet] that contains just this label's UID.
+func (lb *Label) UIDSet() imap.UIDSet {
+	uidset := imap.UIDSet{}
+	uidset.AddNum(lb.UID)
+	return uidset
+}
+
 // ToMessage converts the [CacheData] to a [ReadMessage].
 func (cd *CacheData) ToMessage() *ReadMessage {
 	if cd == nil {
