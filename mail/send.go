@@ -10,6 +10,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
@@ -125,7 +126,7 @@ func (a *App) Send() error { //types:add
 
 	for _, at := range a.composeMessage.Attachments {
 		ah := mail.AttachmentHeader{}
-		ah.SetFilename(string(at))
+		ah.SetFilename(filepath.Base(string(at)))
 		aw, err := mw.CreateAttachment(ah)
 		if err != nil {
 			return err
