@@ -123,10 +123,10 @@ func (a *App) Init() {
 			w.Updater(func() {
 				a.listCache = nil
 				mp := a.cache[a.currentEmail]
-				for _, cd := range mp {
-					for _, label := range cd.Labels {
+				for _, cm := range mp {
+					for _, label := range cm.Labels {
 						if label.Name == a.showLabel {
-							a.listCache = append(a.listCache, cd)
+							a.listCache = append(a.listCache, cm)
 							break
 						}
 					}

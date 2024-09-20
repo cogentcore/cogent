@@ -52,15 +52,15 @@ func (lb *Label) UIDSet() imap.UIDSet {
 }
 
 // ToMessage converts the [CacheMessage] to a [ReadMessage].
-func (cd *CacheMessage) ToMessage() *ReadMessage {
-	if cd == nil {
+func (cm *CacheMessage) ToMessage() *ReadMessage {
+	if cm == nil {
 		return nil
 	}
 	return &ReadMessage{
-		From:    IMAPToMailAddresses(cd.From),
-		To:      IMAPToMailAddresses(cd.To),
-		Subject: cd.Subject,
-		Date:    cd.Date.Local(),
+		From:    IMAPToMailAddresses(cm.From),
+		To:      IMAPToMailAddresses(cm.To),
+		Subject: cm.Subject,
+		Date:    cm.Date.Local(),
 	}
 }
 
@@ -172,8 +172,8 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	criteria := &imap.SearchCriteria{}
 	if len(cached) > 0 {
 		uidset := imap.UIDSet{}
-		for _, cd := range cached {
-			for _, label := range cd.Labels {
+		for _, cm := range cached {
+			for _, label := range cm.Labels {
 				if label.Name == mailbox {
 					uidset.AddNum(label.UID)
 				}
@@ -249,11 +249,11 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			// If the message is already cached (likely in another mailbox),
 			// we update its labels to include this mailbox if it doesn't already.
 			if _, already := cached[mdata.Envelope.MessageID]; already {
-				cd := cached[mdata.Envelope.MessageID]
-				if !slices.ContainsFunc(cd.Labels, func(label Label) bool {
+				cm := cached[mdata.Envelope.MessageID]
+				if !slices.ContainsFunc(cm.Labels, func(label Label) bool {
 					return label.Name == mailbox
 				}) {
-					cd.Labels = append(cd.Labels, Label{mailbox, mdata.UID})
+					cm.Labels = append(cm.Labels, Label{mailbox, mdata.UID})
 				}
 			} else {
 				// Otherwise, we add it as a new entry to the cache
