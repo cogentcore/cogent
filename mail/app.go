@@ -45,15 +45,15 @@ type App struct {
 	composeMessage *SendMessage
 
 	// cache contains the cached message data, keyed by account and then MessageID.
-	cache map[string]map[string]*CacheData
+	cache map[string]map[string]*CacheMessage
 
 	// listCache is a sorted view of [App.cache] for the current email account
 	// and labels, used for displaying a [core.List] of messages. It should not
 	// be used for any other purpose.
-	listCache []*CacheData
+	listCache []*CacheMessage
 
 	// readMessage is the current message we are reading
-	readMessage *CacheData
+	readMessage *CacheMessage
 
 	// readMessageReferences is the References header of the current readMessage.
 	readMessageReferences []string
@@ -130,7 +130,7 @@ func (a *App) Init() {
 						}
 					}
 				}
-				slices.SortFunc(a.listCache, func(a, b *CacheData) int {
+				slices.SortFunc(a.listCache, func(a, b *CacheMessage) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 				})
 			})

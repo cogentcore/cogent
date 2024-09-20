@@ -16,16 +16,16 @@ func NewApp(parent ...tree.Node) *App { return tree.New[App](parent...) }
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.SettingsData", IDName: "settings-data", Doc: "SettingsData is the data type for the global Cogent Mail settings.", Directives: []types.Directive{{Tool: "types", Directive: "add"}}, Embeds: []types.Field{{Name: "SettingsBase"}}, Fields: []types.Field{{Name: "Accounts", Doc: "Accounts are the email accounts the user is signed into."}}})
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.MessageListItem", IDName: "message-list-item", Doc: "MessageListItem represents a [CacheData] with a [core.Frame] for the message list.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Data"}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.MessageListItem", IDName: "message-list-item", Doc: "MessageListItem represents a [CacheMessage] with a [core.Frame] for the message list.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "Data"}}})
 
 // NewMessageListItem returns a new [MessageListItem] with the given optional parent:
-// MessageListItem represents a [CacheData] with a [core.Frame] for the message list.
+// MessageListItem represents a [CacheMessage] with a [core.Frame] for the message list.
 func NewMessageListItem(parent ...tree.Node) *MessageListItem {
 	return tree.New[MessageListItem](parent...)
 }
 
 // SetData sets the [MessageListItem.Data]
-func (t *MessageListItem) SetData(v *CacheData) *MessageListItem { t.Data = v; return t }
+func (t *MessageListItem) SetData(v *CacheMessage) *MessageListItem { t.Data = v; return t }
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.AddressTextField", IDName: "address-text-field", Doc: "AddressTextField represents a [mail.Address] with a [core.TextField].", Embeds: []types.Field{{Name: "TextField"}}, Fields: []types.Field{{Name: "Address"}}})
 

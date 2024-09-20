@@ -22,10 +22,10 @@ import (
 	"github.com/emersion/go-imap/v2/imapclient"
 )
 
-// CacheData contains the data stored for a cached message in the cached messages file.
+// CacheMessage contains the data stored for a cached message in the cached messages file.
 // It contains basic information about the message so that it can be displayed in the
 // mail list in the GUI.
-type CacheData struct {
+type CacheMessage struct {
 	imap.Envelope
 	Flags []imap.Flag
 
@@ -43,15 +43,16 @@ type Label struct {
 	UID  imap.UID
 }
 
-// UIDSet returns an [imap.UIDSet] that contains just this label's UID.
+// UIDSet returns an [imap.UIDSet] that contains just the UID
+// of the message in the IMAP mailbox corresponding to the [Label].
 func (lb *Label) UIDSet() imap.UIDSet {
 	uidset := imap.UIDSet{}
 	uidset.AddNum(lb.UID)
 	return uidset
 }
 
-// ToMessage converts the [CacheData] to a [ReadMessage].
-func (cd *CacheData) ToMessage() *ReadMessage {
+// ToMessage converts the [CacheMessage] to a [ReadMessage].
+func (cd *CacheMessage) ToMessage() *ReadMessage {
 	if cd == nil {
 		return nil
 	}
@@ -79,7 +80,7 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 // have not already been cached. It caches them in the app's data directory.
 func (a *App) CacheMessages() error {
 	if a.cache == nil {
-		a.cache = map[string]map[string]*CacheData{}
+		a.cache = map[string]map[string]*CacheMessage{}
 	}
 	if a.imapClient == nil {
 		a.imapClient = map[string]*imapclient.Client{}
@@ -101,7 +102,7 @@ func (a *App) CacheMessages() error {
 // caches them in the app's data directory.
 func (a *App) CacheMessagesForAccount(email string) error {
 	if a.cache[email] == nil {
-		a.cache[email] = map[string]*CacheData{}
+		a.cache[email] = map[string]*CacheMessage{}
 	}
 
 	c, err := imapclient.DialTLS("imap.gmail.com:993", nil)
@@ -130,7 +131,7 @@ func (a *App) CacheMessagesForAccount(email string) error {
 		return err
 	}
 
-	cached := map[string]*CacheData{}
+	cached := map[string]*CacheMessage{}
 	err = jsonx.Open(&cached, cacheFile)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("opening cache list: %w", err)
@@ -161,7 +162,7 @@ func (a *App) CacheMessagesForAccount(email string) error {
 // CacheMessagesForMailbox caches all of the messages from the server
 // that have not already been cached for the given email account and mailbox.
 // It caches them in the app's data directory.
-func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheData, cacheFile string) error {
+func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage, cacheFile string) error {
 	err := a.selectMailbox(c, email, mailbox)
 	if err != nil {
 		return err
@@ -204,7 +205,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 // other given values, using an iterative batched approach that fetches the
 // five next most recent messages at a time, allowing for concurrent mail
 // modifiation operations and correct ordering.
-func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheData, cacheFile string) error {
+func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage, cacheFile string) error {
 	for len(uids) > 0 {
 		num := min(5, len(uids))
 		cuids := uids[len(uids)-num:] // the current batch of UIDs
@@ -257,7 +258,7 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			} else {
 				// Otherwise, we add it as a new entry to the cache
 				// and save the content to a file.
-				cached[mdata.Envelope.MessageID] = &CacheData{
+				cached[mdata.Envelope.MessageID] = &CacheMessage{
 					Envelope: *mdata.Envelope,
 					Flags:    mdata.Flags,
 					Labels:   []Label{{mailbox, mdata.UID}},

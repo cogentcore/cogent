@@ -21,14 +21,14 @@ import (
 )
 
 func init() {
-	core.AddValueType[CacheData, MessageListItem]()
+	core.AddValueType[CacheMessage, MessageListItem]()
 	core.AddValueType[mail.Address, AddressTextField]()
 }
 
-// MessageListItem represents a [CacheData] with a [core.Frame] for the message list.
+// MessageListItem represents a [CacheMessage] with a [core.Frame] for the message list.
 type MessageListItem struct {
 	core.Frame
-	Data *CacheData
+	Data *CacheMessage
 }
 
 func (mi *MessageListItem) WidgetValue() any { return &mi.Data }
