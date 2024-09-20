@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -101,6 +102,10 @@ func (a *App) Label() { //types:add
 				if label.On {
 					newLabels = append(newLabels, label.name)
 				}
+			}
+			if len(newLabels) == 0 {
+				core.ErrorSnackbar(a, fmt.Errorf("specify at least one label"))
+				return
 			}
 			// resultantLabels are the labels we apply to a.readMessage.Labels after
 			// the process is over. This needs to be a copy of a.readMessage.Labels
