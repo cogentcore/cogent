@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/tree"
+	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-sasl"
 	"golang.org/x/oauth2"
@@ -51,6 +52,10 @@ type App struct {
 	// and labels, used for displaying a [core.List] of messages. It should not
 	// be used for any other purpose.
 	listCache []*CacheMessage
+
+	// unreadMessages is the number of unread messages for the current email account
+	// and labels, used for displaying a count.
+	unreadMessages int
 
 	// readMessage is the current message we are reading
 	readMessage *CacheMessage
@@ -122,11 +127,15 @@ func (a *App) Init() {
 			})
 			w.Updater(func() {
 				a.listCache = nil
+				a.unreadMessages = 0
 				mp := a.cache[a.currentEmail]
 				for _, cm := range mp {
 					for _, label := range cm.Labels {
 						if label.Name == a.showLabel {
 							a.listCache = append(a.listCache, cm)
+							if !slices.Contains(cm.Flags, imap.FlagSeen) {
+								a.unreadMessages++
+							}
 							break
 						}
 					}
@@ -144,6 +153,9 @@ func (a *App) Init() {
 			tree.AddChild(w, func(w *core.Text) {
 				w.Updater(func() {
 					w.SetText(fmt.Sprintf("%d messages", len(a.listCache)))
+					if a.unreadMessages > 0 {
+						w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
+					}
 				})
 			})
 			tree.AddChild(w, func(w *core.Separator) {})
