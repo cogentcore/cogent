@@ -38,6 +38,12 @@ type readMessageParsed struct {
 	attachments []*Attachment
 }
 
+// Attachment represents an email attachment when reading a message.
+type Attachment struct {
+	Filename string
+	Data     io.Reader
+}
+
 // displayMessageContents updates the given frame to display the contents of
 // the current message, if it does not already.
 func (a *App) displayMessageContents(w *core.Frame) error {
@@ -105,7 +111,8 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 			if err != nil {
 				return err
 			}
-			a.readMessageParsed.attachments = append(a.readMessageParsed.attachments, &Attachment{fname})
+			at := &Attachment{Filename: fname, Data: p.Body}
+			a.readMessageParsed.attachments = append(a.readMessageParsed.attachments, at)
 		}
 	}
 

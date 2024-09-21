@@ -6,6 +6,7 @@ package mail
 
 import (
 	"fmt"
+	"io"
 	"net/mail"
 	"slices"
 	"strings"
@@ -109,11 +110,6 @@ func (at *AddressTextField) Init() {
 	})
 }
 
-// Attachment represents an email attachment.
-type Attachment struct {
-	Filename string
-}
-
 // AttachmentButton represents an [Attachment] with a [core.Button].
 type AttachmentButton struct {
 	core.Button
@@ -130,5 +126,6 @@ func (ab *AttachmentButton) Init() {
 	})
 	ab.OnClick(func(e events.Event) {
 		fmt.Println("download", ab.Attachment.Filename)
+		fmt.Println(io.ReadAll(ab.Attachment.Data))
 	})
 }
