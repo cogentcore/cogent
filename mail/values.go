@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"net/mail"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
@@ -20,6 +22,7 @@ import (
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
 	"github.com/emersion/go-imap/v2"
+	"github.com/mitchellh/go-homedir"
 )
 
 func init() {
@@ -128,7 +131,7 @@ func (ab *AttachmentButton) Init() {
 		fb := core.NewSoloFuncButton(ab).SetFunc(func(filename core.Filename) error {
 			return os.WriteFile(string(filename), ab.Attachment.Data, 0666)
 		})
-		fb.Args[0].Value = core.Filename(ab.Attachment.Filename)
+		fb.Args[0].Value = core.Filename(filepath.Join(errors.Log1(homedir.Dir()), "Downloads", ab.Attachment.Filename))
 		fb.CallFunc()
 	})
 }
