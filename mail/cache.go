@@ -15,6 +15,8 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
@@ -326,7 +328,11 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 	return nil
 }
 
-// messageFilename returns the filename for storing the message with the given envelope.
-func messageFilename(env *imap.Envelope) string {
-	return FilenameBase32(env.MessageID) + ".eml"
+var messageFilenameCounter uint64
+
+// messageFilename returns a unique filename for storing a message
+// based on the current time, the current process ID, and an atomic counter,
+// which ensures uniqueness.
+func messageFilename() string {
+	return fmt.Sprintf("%d%d%d", time.Now().UnixMilli(), os.Getpid(), atomic.AddUint64(&messageFilenameCounter, 1))
 }
