@@ -51,12 +51,12 @@ func (lb *Label) UIDSet() imap.UIDSet {
 	return uidset
 }
 
-// ToMessage converts the [CacheMessage] to a [ReadMessage].
-func (cm *CacheMessage) ToMessage() *ReadMessage {
+// ToDisplay converts the [CacheMessage] to a [displayMessage].
+func (cm *CacheMessage) ToDisplay() *displayMessage {
 	if cm == nil {
 		return nil
 	}
-	return &ReadMessage{
+	return &displayMessage{
 		From:    IMAPToMailAddresses(cm.From),
 		To:      IMAPToMailAddresses(cm.To),
 		Subject: cm.Subject,

@@ -16,18 +16,18 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-// ReadMessage represents the data necessary to display a message
-// for the user to read.
-type ReadMessage struct {
+// displayMessage represents the metadata necessary to display a message
+// for the user to read. It does not contain the actual message contents.
+type displayMessage struct {
 	From    []*mail.Address `display:"inline"`
 	To      []*mail.Address `display:"inline"`
 	Subject string
 	Date    time.Time
 }
 
-// updateReadMessage updates the given frame to display the contents of
+// displayMessageContents updates the given frame to display the contents of
 // the current message, if it does not already.
-func (a *App) updateReadMessage(w *core.Frame) error {
+func (a *App) displayMessageContents(w *core.Frame) error {
 	if a.readMessage == w.Property("readMessage") {
 		return nil
 	}

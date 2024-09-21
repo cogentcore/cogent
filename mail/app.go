@@ -171,7 +171,7 @@ func (a *App) Init() {
 			tree.AddChild(w, func(w *core.Form) {
 				w.SetReadOnly(true)
 				w.Updater(func() {
-					w.SetStruct(a.readMessage.ToMessage())
+					w.SetStruct(a.readMessage.ToDisplay())
 				})
 			})
 			tree.AddChild(w, func(w *core.Frame) {
@@ -180,7 +180,7 @@ func (a *App) Init() {
 					s.Grow.Set(1, 0)
 				})
 				w.Updater(func() {
-					core.ErrorSnackbar(w, a.updateReadMessage(w), "Error reading message")
+					core.ErrorSnackbar(w, a.displayMessageContents(w), "Error reading message")
 				})
 			})
 		})
