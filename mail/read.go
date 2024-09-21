@@ -25,6 +25,14 @@ type displayMessage struct {
 	Attachments []*Attachment `display:"inline"`
 }
 
+func (dm *displayMessage) ShouldDisplay(field string) bool {
+	switch field {
+	case "Attachments":
+		return len(dm.Attachments) > 0
+	}
+	return true
+}
+
 // readMessageParsed contains data parsed from the current message we are reading.
 type readMessageParsed struct {
 
