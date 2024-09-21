@@ -299,14 +299,8 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			// we get interrupted or have an error. We save it through a temporary
 			// file to avoid truncating it without writing it if we quit during the process.
 			// We also start the AsyncLock here so that we cannot quit from the GUI while
-			// saving the file. We also first make a backup of the old cache file for extra
-			// safety.
+			// saving the file.
 			a.AsyncLock()
-			err = os.Rename(cacheFile, cacheFile+".backup")
-			if err != nil && !errors.Is(err, fs.ErrNotExist) {
-				a.imapMu[email].Unlock()
-				return err
-			}
 			err = jsonx.Save(&cached, cacheFile+".tmp")
 			if err != nil {
 				a.imapMu[email].Unlock()
