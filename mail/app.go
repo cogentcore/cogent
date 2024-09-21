@@ -57,14 +57,11 @@ type App struct {
 	// and labels, used for displaying a count.
 	unreadMessages int
 
-	// readMessage is the current message we are reading
+	// readMessage is the current message we are reading.
 	readMessage *CacheMessage
 
-	// readMessageReferences is the References header of the current readMessage.
-	readMessageReferences []string
-
-	// readMessagePlain is the plain text body of the current readMessage.
-	readMessagePlain string
+	// readMessageParsed contains data parsed from the current message we are reading.
+	readMessageParsed readMessageParsed
 
 	// currentEmail is the current email account.
 	currentEmail string

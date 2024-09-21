@@ -209,7 +209,7 @@ func (a *App) reply(title string, forward bool) {
 		a.composeMessage.Subject = prefix + a.composeMessage.Subject
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
-	a.composeMessage.references = append(a.readMessageReferences, a.readMessage.MessageID)
+	a.composeMessage.references = append(a.readMessageParsed.references, a.readMessage.MessageID)
 	from := IMAPToMailAddresses(a.readMessage.From)[0].String()
 	date := a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM")
 	if forward {
@@ -227,7 +227,7 @@ func (a *App) reply(title string, forward bool) {
 		a.composeMessage.body = "\n\n> On " + date + ", " + from + " wrote:"
 	}
 	a.composeMessage.body += "\n>\n> "
-	a.composeMessage.body += strings.ReplaceAll(a.readMessagePlain, "\n", "\n> ")
+	a.composeMessage.body += strings.ReplaceAll(a.readMessageParsed.plain, "\n", "\n> ")
 	a.compose(title)
 }
 

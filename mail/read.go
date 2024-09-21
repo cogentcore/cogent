@@ -25,6 +25,16 @@ type displayMessage struct {
 	Date    time.Time
 }
 
+// readMessageParsed contains data parsed from the current message we are reading.
+type readMessageParsed struct {
+
+	// references is the References header.
+	references []string
+
+	// plain is the plain text body.
+	plain string
+}
+
 // displayMessageContents updates the given frame to display the contents of
 // the current message, if it does not already.
 func (a *App) displayMessageContents(w *core.Frame) error {
@@ -54,7 +64,7 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 	if err != nil {
 		return err
 	}
-	a.readMessageReferences = refs
+	a.readMessageParsed.references = refs
 
 	var gotHTML bool
 
@@ -79,7 +89,7 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 				if err != nil {
 					return err
 				}
-				a.readMessagePlain = string(b)
+				a.readMessageParsed.plain = string(b)
 			case "text/html":
 				err := htmlcore.ReadHTML(htmlcore.NewContext(), w, p.Body)
 				if err != nil {
@@ -94,7 +104,7 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML {
-		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, a.readMessagePlain)
+		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, a.readMessageParsed.plain)
 		if err != nil {
 			return err
 		}
