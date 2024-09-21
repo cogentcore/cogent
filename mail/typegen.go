@@ -25,7 +25,7 @@ func NewMessageListItem(parent ...tree.Node) *MessageListItem {
 }
 
 // SetData sets the [MessageListItem.Data]
-func (t *MessageListItem) SetData(v *CacheMessage) *MessageListItem { t.Data = v; return t }
+func (t *MessageListItem) SetData(v *CacheMessage) *MessageListItem { t.Message = v; return t }
 
 var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/mail.AddressTextField", IDName: "address-text-field", Doc: "AddressTextField represents a [mail.Address] with a [core.TextField].", Embeds: []types.Field{{Name: "TextField"}}, Fields: []types.Field{{Name: "Address"}}})
 

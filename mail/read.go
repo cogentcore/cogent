@@ -22,7 +22,7 @@ type displayMessage struct {
 	To          []*mail.Address `display:"inline"`
 	Subject     string
 	Date        time.Time
-	Attachments []string `display:"inline"`
+	Attachments []*Attachment `display:"inline"`
 }
 
 // readMessageParsed contains data parsed from the current message we are reading.
@@ -35,7 +35,7 @@ type readMessageParsed struct {
 	plain string
 
 	// attachments are the attachments.
-	attachments []string
+	attachments []*Attachment
 }
 
 // displayMessageContents updates the given frame to display the contents of
@@ -105,7 +105,7 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 			if err != nil {
 				return err
 			}
-			a.readMessageParsed.attachments = append(a.readMessageParsed.attachments, fname)
+			a.readMessageParsed.attachments = append(a.readMessageParsed.attachments, &Attachment{fname})
 		}
 	}
 
