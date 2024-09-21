@@ -296,15 +296,23 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			}
 
 			// We need to save the list of cached messages every time in case
-			// we get interrupted or have an error.
-			err = jsonx.Save(&cached, cacheFile)
+			// we get interrupted or have an error. We save it through a temporary
+			// file to avoid truncating it without writing it if we quit during the process.
+			// We also start the AsyncLock here so that we cannot quit from the GUI while
+			// saving the file.
+			a.AsyncLock()
+			err = jsonx.Save(&cached, cacheFile+".tmp")
 			if err != nil {
 				a.imapMu[email].Unlock()
 				return fmt.Errorf("saving cache list: %w", err)
 			}
+			err = os.Rename(cacheFile+".tmp", cacheFile)
+			if err != nil {
+				a.imapMu[email].Unlock()
+				return err
+			}
 
 			a.cache[email] = cached
-			a.AsyncLock()
 			a.Update()
 			a.AsyncUnlock()
 		}
