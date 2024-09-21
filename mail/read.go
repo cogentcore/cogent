@@ -18,10 +18,11 @@ import (
 // displayMessage represents the metadata necessary to display a message
 // for the user to read. It does not contain the actual message contents.
 type displayMessage struct {
-	From    []*mail.Address `display:"inline"`
-	To      []*mail.Address `display:"inline"`
-	Subject string
-	Date    time.Time
+	From        []*mail.Address `display:"inline"`
+	To          []*mail.Address `display:"inline"`
+	Subject     string
+	Date        time.Time
+	Attachments []string `display:"inline"`
 }
 
 // readMessageParsed contains data parsed from the current message we are reading.

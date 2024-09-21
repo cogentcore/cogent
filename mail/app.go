@@ -168,7 +168,7 @@ func (a *App) Init() {
 			tree.AddChild(w, func(w *core.Form) {
 				w.SetReadOnly(true)
 				w.Updater(func() {
-					w.SetStruct(a.readMessage.ToDisplay())
+					w.SetStruct(a.readMessage.ToDisplay(&a.readMessageParsed))
 				})
 			})
 			tree.AddChild(w, func(w *core.Frame) {
