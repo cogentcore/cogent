@@ -5,6 +5,7 @@
 package mail
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -86,6 +87,8 @@ func (a *App) updateReadMessage(w *core.Frame) error {
 				}
 				gotHTML = true
 			}
+		case *mail.AttachmentHeader:
+			fmt.Println(p.Header)
 		}
 	}
 
