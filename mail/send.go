@@ -94,7 +94,7 @@ func (a *App) Send() error { //types:add
 	}
 
 	var ph mail.InlineHeader
-	ph.Set("Content-Type", "text/plain")
+	ph.SetContentType("text/plain", nil)
 	pw, err := iw.CreatePart(ph)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (a *App) Send() error { //types:add
 	}
 
 	var hh mail.InlineHeader
-	hh.Set("Content-Type", "text/html")
+	hh.SetContentType("text/html", nil)
 	hw, err := iw.CreatePart(hh)
 	if err != nil {
 		return err
@@ -125,13 +125,19 @@ func (a *App) Send() error { //types:add
 	}
 
 	for _, at := range a.composeMessage.Attachments {
+		fname := string(at)
 		ah := mail.AttachmentHeader{}
-		ah.SetFilename(filepath.Base(string(at)))
+		ah.SetFilename(filepath.Base(fname))
+		fi, err := fileinfo.NewFileInfo(fname)
+		if err != nil {
+			return err
+		}
+		ah.SetContentType(fi.Mime, nil)
 		aw, err := mw.CreateAttachment(ah)
 		if err != nil {
 			return err
 		}
-		f, err := os.Open(string(at))
+		f, err := os.Open(fname)
 		if err != nil {
 			return err
 		}
