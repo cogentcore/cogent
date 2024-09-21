@@ -189,9 +189,13 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 			}
 		}
 
-		nc := imap.SearchCriteria{}
-		nc.UID = []imap.UIDSet{uidset}
-		criteria.Not = append(criteria.Not, nc)
+		// Only add the criteria if there are UIDs; otherwise, it will
+		// generate an unclear "unexpected EOF" error.
+		if len(uidset) > 0 {
+			nc := imap.SearchCriteria{}
+			nc.UID = []imap.UIDSet{uidset}
+			criteria.Not = append(criteria.Not, nc)
+		}
 	}
 
 	// these are the UIDs of the new messages
