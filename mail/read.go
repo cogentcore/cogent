@@ -5,7 +5,6 @@
 package mail
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -33,6 +32,9 @@ type readMessageParsed struct {
 
 	// plain is the plain text body.
 	plain string
+
+	// attachments are the attachments.
+	attachments []string
 }
 
 // displayMessageContents updates the given frame to display the contents of
@@ -66,8 +68,8 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 	}
 	a.readMessageParsed.references = refs
 
-	var gotHTML bool
-
+	a.readMessageParsed.attachments = nil
+	gotHTML := false
 	for {
 		p, err := mr.NextPart()
 		if err == io.EOF {
@@ -98,7 +100,11 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 				gotHTML = true
 			}
 		case *mail.AttachmentHeader:
-			fmt.Println(p.Header)
+			fname, err := h.Filename()
+			if err != nil {
+				return err
+			}
+			a.readMessageParsed.attachments = append(a.readMessageParsed.attachments, fname)
 		}
 	}
 
