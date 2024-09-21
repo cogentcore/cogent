@@ -29,6 +29,11 @@ import (
 // mail list in the GUI.
 type CacheMessage struct {
 	imap.Envelope
+
+	// Filename is the unique filename of the cached message contents.
+	Filename string
+
+	// Flags are the IMAP flags associated with the message.
 	Flags []imap.Flag
 
 	// Labels are the labels associated with the message.
@@ -262,13 +267,15 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			} else {
 				// Otherwise, we add it as a new entry to the cache
 				// and save the content to a file.
+				filename := messageFilename()
 				cached[mdata.Envelope.MessageID] = &CacheMessage{
 					Envelope: *mdata.Envelope,
+					Filename: filename,
 					Flags:    mdata.Flags,
 					Labels:   []Label{{mailbox, mdata.UID}},
 				}
 
-				f, err := os.Create(filepath.Join(dir, messageFilename(mdata.Envelope)))
+				f, err := os.Create(filepath.Join(dir, filename))
 				if err != nil {
 					a.imapMu[email].Unlock()
 					return err

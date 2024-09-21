@@ -58,7 +58,7 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 
 	bemail := FilenameBase32(a.currentEmail)
 
-	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, messageFilename(&a.readMessage.Envelope)))
+	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, a.readMessage.Filename))
 	if err != nil {
 		return err
 	}
