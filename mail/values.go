@@ -125,7 +125,10 @@ func (ab *AttachmentButton) Init() {
 		ab.SetText(ab.Attachment.Filename)
 	})
 	ab.OnClick(func(e events.Event) {
-		err := os.WriteFile(ab.Attachment.Filename, ab.Attachment.Data, 0666)
-		core.ErrorSnackbar(ab, err, "Error downloading attachment")
+		fb := core.NewSoloFuncButton(ab).SetFunc(func(filename core.Filename) error {
+			return os.WriteFile(string(filename), ab.Attachment.Data, 0666)
+		})
+		fb.Args[0].Value = core.Filename(ab.Attachment.Filename)
+		fb.CallFunc()
 	})
 }
