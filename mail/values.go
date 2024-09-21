@@ -6,8 +6,8 @@ package mail
 
 import (
 	"fmt"
-	"io"
 	"net/mail"
+	"os"
 	"slices"
 	"strings"
 
@@ -125,7 +125,7 @@ func (ab *AttachmentButton) Init() {
 		ab.SetText(ab.Attachment.Filename)
 	})
 	ab.OnClick(func(e events.Event) {
-		fmt.Println("download", ab.Attachment.Filename)
-		fmt.Println(io.ReadAll(ab.Attachment.Data))
+		err := os.WriteFile(ab.Attachment.Filename, ab.Attachment.Data, 0666)
+		core.ErrorSnackbar(ab, err, "Error downloading attachment")
 	})
 }
