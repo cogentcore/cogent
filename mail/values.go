@@ -14,6 +14,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
@@ -123,8 +124,11 @@ func (ab *AttachmentButton) WidgetValue() any { return &ab.Attachment }
 
 func (ab *AttachmentButton) Init() {
 	ab.Button.Init()
-	ab.SetType(core.ButtonTonal)
+	ab.SetIcon(icons.Download).SetType(core.ButtonTonal)
 	ab.Updater(func() {
 		ab.SetText(ab.Attachment.Filename)
+	})
+	ab.OnClick(func(e events.Event) {
+		fmt.Println("download", ab.Attachment.Filename)
 	})
 }
