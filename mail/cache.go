@@ -118,7 +118,7 @@ func (a *App) CacheMessagesForAccount(email string) error {
 	if err != nil {
 		return fmt.Errorf("TLS dialing: %w", err)
 	}
-	defer c.Logout()
+	// defer c.Logout() // TODO: Logout in QuitClean or something similar
 
 	a.imapClient[email] = c
 	a.imapMu[email] = &sync.Mutex{}
