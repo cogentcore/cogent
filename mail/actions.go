@@ -95,8 +95,6 @@ func (a *App) Label() { //types:add
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
 		d.AddOK(bar).SetText("Save").OnClick(func(e events.Event) {
-			// newLabels are the labels we want to end up with, in contrast
-			// to the old labels we started with, which are a.readMessage.Labels.
 			newLabels := []string{}
 			for _, label := range labels {
 				if label.On {
@@ -107,58 +105,65 @@ func (a *App) Label() { //types:add
 				core.ErrorSnackbar(a, fmt.Errorf("specify at least one label"))
 				return
 			}
-			// resultantLabels are the labels we apply to a.readMessage.Labels after
-			// the process is over. This needs to be a copy of a.readMessage.Labels
-			// since we can't modify it while looping over it and checking it.
-			resultantLabels := make([]Label, len(a.readMessage.Labels))
-			copy(resultantLabels, a.readMessage.Labels)
-			first := true
-			a.actionLabels(func(c *imapclient.Client, label Label) error {
-				// We copy the existing message to all of the new labels.
-				if first {
-					first = false
-					for _, newLabel := range newLabels {
-						if slices.ContainsFunc(a.readMessage.Labels, func(label Label) bool {
-							return label.Name == newLabel
-						}) {
-							continue // Already have this label.
-						}
-						cd, err := c.Copy(label.UIDSet(), newLabel).Wait()
-						if err != nil {
-							return err
-						}
-						// Add this new label to the cache.
-						resultantLabels = append(resultantLabels, Label{newLabel, cd.DestUIDs[0].Start})
-					}
-				}
-				// We remove the existing message from each old label.
-				if slices.Contains(newLabels, label.Name) {
-					return nil // Still have this label.
-				}
-				err := c.Store(label.UIDSet(), &imap.StoreFlags{
-					Op:     imap.StoreFlagsAdd,
-					Silent: true,
-					Flags:  []imap.Flag{imap.FlagDeleted},
-				}, nil).Wait()
-				if err != nil {
-					return err
-				}
-				err = c.UIDExpunge(label.UIDSet()).Wait()
-				if err != nil {
-					return err
-				}
-				// Remove this old label from the cache.
-				resultantLabels = slices.DeleteFunc(resultantLabels, func(l Label) bool {
-					return l == label
-				})
-				return nil
-			}, func() {
-				// Now that we are done, we can save resultantLabels to the cache.
-				a.readMessage.Labels = resultantLabels
-			})
+			a.label(newLabels)
 		})
 	})
 	d.RunDialog(a)
+}
+
+// label changes the labels of the current message to the given labels.
+// newLabels are the labels we want to end up with, in contrast
+// to the old labels we started with, which are a.readMessage.Labels.
+func (a *App) label(newLabels []string) {
+	// resultantLabels are the labels we apply to a.readMessage.Labels after
+	// the process is over. This needs to be a copy of a.readMessage.Labels
+	// since we can't modify it while looping over it and checking it.
+	resultantLabels := make([]Label, len(a.readMessage.Labels))
+	copy(resultantLabels, a.readMessage.Labels)
+	first := true
+	a.actionLabels(func(c *imapclient.Client, label Label) error {
+		// We copy the existing message to all of the new labels.
+		if first {
+			first = false
+			for _, newLabel := range newLabels {
+				if slices.ContainsFunc(a.readMessage.Labels, func(label Label) bool {
+					return label.Name == newLabel
+				}) {
+					continue // Already have this label.
+				}
+				cd, err := c.Copy(label.UIDSet(), newLabel).Wait()
+				if err != nil {
+					return err
+				}
+				// Add this new label to the cache.
+				resultantLabels = append(resultantLabels, Label{newLabel, cd.DestUIDs[0].Start})
+			}
+		}
+		// We remove the existing message from each old label.
+		if slices.Contains(newLabels, label.Name) {
+			return nil // Still have this label.
+		}
+		err := c.Store(label.UIDSet(), &imap.StoreFlags{
+			Op:     imap.StoreFlagsAdd,
+			Silent: true,
+			Flags:  []imap.Flag{imap.FlagDeleted},
+		}, nil).Wait()
+		if err != nil {
+			return err
+		}
+		err = c.UIDExpunge(label.UIDSet()).Wait()
+		if err != nil {
+			return err
+		}
+		// Remove this old label from the cache.
+		resultantLabels = slices.DeleteFunc(resultantLabels, func(l Label) bool {
+			return l == label
+		})
+		return nil
+	}, func() {
+		// Now that we are done, we can save resultantLabels to the cache.
+		a.readMessage.Labels = resultantLabels
+	})
 }
 
 // Reply opens a dialog to reply to the current message.
