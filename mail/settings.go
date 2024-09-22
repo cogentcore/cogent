@@ -7,6 +7,7 @@ package mail
 import (
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"cogentcore.org/core/core"
 )
@@ -36,6 +37,7 @@ func friendlyLabelName(name string) string {
 	if f, ok := friendlyLabelNames[name]; ok {
 		return f
 	}
+	name = strings.TrimPrefix(name, "[Gmail]/")
 	return name
 }
 
