@@ -112,9 +112,9 @@ func (a *App) Init() {
 									w.Updater(func() {
 										w.SetText(friendlyLabelName(label))
 										if ic, ok := labelIcons[w.Text]; ok {
-											w.SetIcon(ic)
+											w.SetIconLeaf(ic)
 										} else {
-											w.SetIcon(icons.Label)
+											w.SetIconLeaf(icons.Label)
 										}
 									})
 									w.OnSelect(func(e events.Event) {
