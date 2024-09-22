@@ -195,6 +195,9 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 			w.SetFunc(a.Label).SetIcon(icons.DriveFileMove).SetKey(keymap.Save)
 		})
 		tree.Add(p, func(w *core.FuncButton) {
+			w.SetFunc(a.Delete).SetIcon(icons.Delete).SetKey(keymap.Delete)
+		})
+		tree.Add(p, func(w *core.FuncButton) {
 			w.SetFunc(a.Reply).SetIcon(icons.Reply).SetKey(keymap.Replace)
 		})
 		tree.Add(p, func(w *core.FuncButton) {

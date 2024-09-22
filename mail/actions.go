@@ -166,6 +166,11 @@ func (a *App) label(newLabels []string) {
 	})
 }
 
+// Delete moves the current message to the trash.
+func (a *App) Delete() { //types:add
+	a.label([]string{"[Gmail]/Trash"}) // TODO: support other trash mailboxes
+}
+
 // Reply opens a dialog to reply to the current message.
 func (a *App) Reply() { //types:add
 	a.composeMessage = &SendMessage{}
