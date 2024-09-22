@@ -42,7 +42,8 @@ func friendlyLabelName(name string) string {
 }
 
 var friendlyLabelNames = map[string]string{
-	"INBOX": "Inbox",
+	"INBOX":             "Inbox",
+	"[Gmail]/Sent Mail": "Sent",
 }
 
 // skipLabels are a temporary set of labels that should not be cached or displayed.
