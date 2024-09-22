@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -157,8 +156,8 @@ func (a *App) CacheMessagesForAccount(email string) error {
 	}
 
 	for _, mailbox := range mailboxes {
-		if strings.HasPrefix(mailbox.Mailbox, "[Gmail]") {
-			continue // TODO: skipping for now until we figure out a good way to handle
+		if skipLabels[mailbox.Mailbox] {
+			continue
 		}
 		err := a.CacheMessagesForMailbox(c, email, mailbox.Mailbox, dir, cached, cacheFile)
 		if err != nil {

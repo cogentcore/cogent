@@ -44,3 +44,12 @@ func friendlyLabelName(name string) string {
 var friendlyLabelNames = map[string]string{
 	"INBOX": "Inbox",
 }
+
+// skipLabels are a temporary set of labels that should not be cached or displayed.
+// TODO: figure out a better approach to this.
+var skipLabels = map[string]bool{
+	"[Gmail]":           true,
+	"[Gmail]/All Mail":  true,
+	"[Gmail]/Important": true,
+	"[Gmail]/Starred":   true,
+}

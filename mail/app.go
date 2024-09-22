@@ -105,6 +105,9 @@ func (a *App) Init() {
 					tree.AddAt(p, email, func(w *core.Tree) {
 						w.Maker(func(p *tree.Plan) {
 							for _, label := range a.labels[email] {
+								if skipLabels[label] {
+									continue
+								}
 								tree.AddAt(p, label, func(w *core.Tree) {
 									w.SetText(friendlyLabelName(label))
 									w.OnSelect(func(e events.Event) {
