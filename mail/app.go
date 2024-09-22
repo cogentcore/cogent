@@ -109,7 +109,14 @@ func (a *App) Init() {
 									continue
 								}
 								tree.AddAt(p, label, func(w *core.Tree) {
-									w.SetText(friendlyLabelName(label))
+									w.Updater(func() {
+										w.SetText(friendlyLabelName(label))
+										if ic, ok := labelIcons[w.Text]; ok {
+											w.SetIcon(ic)
+										} else {
+											w.SetIcon(icons.Label)
+										}
+									})
 									w.OnSelect(func(e events.Event) {
 										a.showLabel = label
 										a.Update()

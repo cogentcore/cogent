@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/icons"
 )
 
 func init() {
@@ -34,16 +35,16 @@ type SettingsData struct { //types:add
 
 // friendlyLabelName converts the given label name to a user-friendly version.
 func friendlyLabelName(name string) string {
+	name = strings.TrimPrefix(name, "[Gmail]/")
 	if f, ok := friendlyLabelNames[name]; ok {
 		return f
 	}
-	name = strings.TrimPrefix(name, "[Gmail]/")
 	return name
 }
 
 var friendlyLabelNames = map[string]string{
-	"INBOX":             "Inbox",
-	"[Gmail]/Sent Mail": "Sent",
+	"INBOX":     "Inbox",
+	"Sent Mail": "Sent",
 }
 
 // skipLabels are a temporary set of labels that should not be cached or displayed.
@@ -53,4 +54,13 @@ var skipLabels = map[string]bool{
 	"[Gmail]/All Mail":  true,
 	"[Gmail]/Important": true,
 	"[Gmail]/Starred":   true,
+}
+
+// labelIcons are the icons for each friendly label name.
+var labelIcons = map[string]icons.Icon{
+	"Inbox":  icons.Inbox,
+	"Drafts": icons.Draft,
+	"Sent":   icons.Send,
+	"Spam":   icons.Report,
+	"Trash":  icons.Delete,
 }
