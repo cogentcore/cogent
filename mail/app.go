@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 
 	"cogentcore.org/core/core"
@@ -103,27 +104,7 @@ func (a *App) Init() {
 			w.Maker(func(p *tree.Plan) {
 				for _, email := range Settings.Accounts {
 					tree.AddAt(p, email, func(w *core.Tree) {
-						w.Maker(func(p *tree.Plan) {
-							for _, label := range a.labels[email] {
-								if skipLabels[label] {
-									continue
-								}
-								tree.AddAt(p, label, func(w *core.Tree) {
-									w.Updater(func() {
-										w.SetText(friendlyLabelName(label))
-										if ic, ok := labelIcons[w.Text]; ok {
-											w.SetIconLeaf(ic)
-										} else {
-											w.SetIconLeaf(icons.Label)
-										}
-									})
-									w.OnSelect(func(e events.Event) {
-										a.showLabel = label
-										a.Update()
-									})
-								})
-							}
-						})
+						a.initLabelTree(w, email, "")
 					})
 				}
 			})
@@ -191,6 +172,36 @@ func (a *App) Init() {
 				})
 			})
 		})
+	})
+}
+
+func (a *App) initLabelTree(w *core.Tree, email, parentLabel string) {
+	friendlyParentLabel := friendlyLabelName(parentLabel)
+	w.Maker(func(p *tree.Plan) {
+		for _, label := range a.labels[email] {
+			if skipLabels[label] {
+				continue
+			}
+			friendlyLabel := friendlyLabelName(label)
+			if (parentLabel == "" && strings.Contains(friendlyLabel, "/")) || (parentLabel != "" && !strings.HasPrefix(friendlyLabel, friendlyParentLabel+"/")) {
+				continue
+			}
+			tree.AddAt(p, label, func(w *core.Tree) {
+				a.initLabelTree(w, email, label)
+				w.Updater(func() {
+					w.SetText(strings.TrimPrefix(friendlyLabelName(label), friendlyParentLabel+"/"))
+					if ic, ok := labelIcons[w.Text]; ok {
+						w.SetIconLeaf(ic)
+					} else {
+						w.SetIconLeaf(icons.Label)
+					}
+				})
+				w.OnSelect(func(e events.Event) {
+					a.showLabel = label
+					a.Update()
+				})
+			})
+		}
 	})
 }
 
