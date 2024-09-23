@@ -104,7 +104,7 @@ func (a *App) Init() {
 			w.Maker(func(p *tree.Plan) {
 				for _, email := range Settings.Accounts {
 					tree.AddAt(p, email, func(w *core.Tree) {
-						a.initLabelTree(w, email, "")
+						a.makeLabelTree(w, email, "")
 					})
 				}
 			})
@@ -175,7 +175,8 @@ func (a *App) Init() {
 	})
 }
 
-func (a *App) initLabelTree(w *core.Tree, email, parentLabel string) {
+// makeLabelTree recursively adds a Maker to the given tree to form a nested tree of labels.
+func (a *App) makeLabelTree(w *core.Tree, email, parentLabel string) {
 	friendlyParentLabel := friendlyLabelName(parentLabel)
 	w.Maker(func(p *tree.Plan) {
 		for _, label := range a.labels[email] {
@@ -183,11 +184,17 @@ func (a *App) initLabelTree(w *core.Tree, email, parentLabel string) {
 				continue
 			}
 			friendlyLabel := friendlyLabelName(label)
-			if (parentLabel == "" && strings.Contains(friendlyLabel, "/")) || (parentLabel != "" && !strings.HasPrefix(friendlyLabel, friendlyParentLabel+"/")) {
+			// Skip labels that are not directly nested under the parent label.
+			if parentLabel == "" && strings.Contains(friendlyLabel, "/") {
 				continue
+			} else if parentLabel != "" {
+				if !strings.HasPrefix(friendlyLabel, friendlyParentLabel+"/") ||
+					strings.Count(friendlyLabel, "/") > strings.Count(friendlyParentLabel, "/")+1 {
+					continue
+				}
 			}
 			tree.AddAt(p, label, func(w *core.Tree) {
-				a.initLabelTree(w, email, label)
+				a.makeLabelTree(w, email, label)
 				w.Updater(func() {
 					w.SetText(strings.TrimPrefix(friendlyLabelName(label), friendlyParentLabel+"/"))
 					if ic, ok := labelIcons[w.Text]; ok {
