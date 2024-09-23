@@ -177,8 +177,8 @@ func (a *App) Init() {
 
 // makeLabelTree recursively adds a Maker to the given tree to form a nested tree of labels.
 func (a *App) makeLabelTree(w *core.Tree, email, parentLabel string) {
-	friendlyParentLabel := friendlyLabelName(parentLabel)
 	w.Maker(func(p *tree.Plan) {
+		friendlyParentLabel := friendlyLabelName(parentLabel)
 		for _, label := range a.labels[email] {
 			if skipLabels[label] {
 				continue
@@ -196,7 +196,8 @@ func (a *App) makeLabelTree(w *core.Tree, email, parentLabel string) {
 			tree.AddAt(p, label, func(w *core.Tree) {
 				a.makeLabelTree(w, email, label)
 				w.Updater(func() {
-					w.SetText(strings.TrimPrefix(friendlyLabelName(label), friendlyParentLabel+"/"))
+					// Recompute the friendly labels in case they have changed.
+					w.SetText(strings.TrimPrefix(friendlyLabelName(label), friendlyLabelName(parentLabel)+"/"))
 					if ic, ok := labelIcons[w.Text]; ok {
 						w.SetIconLeaf(ic)
 					} else {
