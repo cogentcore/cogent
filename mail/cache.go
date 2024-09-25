@@ -97,7 +97,7 @@ func (a *App) CacheMessages() error {
 		a.imapMu = map[string]*sync.Mutex{}
 	}
 	for _, account := range Settings.Accounts {
-		err := a.CacheMessagesForAccount(account)
+		err := a.cacheMessagesForAccount(account)
 		if err != nil {
 			return fmt.Errorf("caching messages for account %q: %w", account, err)
 		}
@@ -108,7 +108,7 @@ func (a *App) CacheMessages() error {
 // CacheMessages caches all of the messages from the server that
 // have not already been cached for the given email account. It
 // caches them in the app's data directory.
-func (a *App) CacheMessagesForAccount(email string) error {
+func (a *App) cacheMessagesForAccount(email string) error {
 	if a.cache[email] == nil {
 		a.cache[email] = map[string]*CacheMessage{}
 	}
@@ -159,7 +159,7 @@ func (a *App) CacheMessagesForAccount(email string) error {
 		if skipLabels[mailbox.Mailbox] {
 			continue
 		}
-		err := a.CacheMessagesForMailbox(c, email, mailbox.Mailbox, dir, cached)
+		err := a.cacheMessagesForMailbox(c, email, mailbox.Mailbox, dir, cached)
 		if err != nil {
 			return fmt.Errorf("caching messages for mailbox %q: %w", mailbox.Mailbox, err)
 		}
@@ -167,10 +167,10 @@ func (a *App) CacheMessagesForAccount(email string) error {
 	return nil
 }
 
-// CacheMessagesForMailbox caches all of the messages from the server
+// cacheMessagesForMailbox caches all of the messages from the server
 // that have not already been cached for the given email account and mailbox.
 // It caches them in the app's data directory.
-func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage) error {
+func (a *App) cacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage) error {
 	err := a.selectMailbox(c, email, mailbox)
 	if err != nil {
 		return err
@@ -208,7 +208,7 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		return alreadyHave[uid]
 	})
 
-	return a.CacheUIDs(uids, c, email, mailbox, dir, cached)
+	return a.cacheUIDs(uids, c, email, mailbox, dir, cached)
 }
 
 // cleanCache removes cached messages from the given mailbox if
@@ -226,11 +226,11 @@ func (a *App) cleanCache(cached map[string]*CacheMessage, email string, mailbox 
 	return a.saveCacheFile(cached, email)
 }
 
-// CacheUIDs caches the messages with the given UIDs in the context of the
+// cacheUIDs caches the messages with the given UIDs in the context of the
 // other given values, using an iterative batched approach that fetches the
 // five next most recent messages at a time, allowing for concurrent mail
 // modifiation operations and correct ordering.
-func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage) error {
+func (a *App) cacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage) error {
 	for len(uids) > 0 {
 		num := min(5, len(uids))
 		cuids := uids[len(uids)-num:] // the current batch of UIDs
