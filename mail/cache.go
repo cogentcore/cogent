@@ -159,7 +159,7 @@ func (a *App) CacheMessagesForAccount(email string) error {
 		if skipLabels[mailbox.Mailbox] {
 			continue
 		}
-		err := a.CacheMessagesForMailbox(c, email, mailbox.Mailbox, dir, cached, cacheFile)
+		err := a.CacheMessagesForMailbox(c, email, mailbox.Mailbox, dir, cached)
 		if err != nil {
 			return fmt.Errorf("caching messages for mailbox %q: %w", mailbox.Mailbox, err)
 		}
@@ -170,39 +170,18 @@ func (a *App) CacheMessagesForAccount(email string) error {
 // CacheMessagesForMailbox caches all of the messages from the server
 // that have not already been cached for the given email account and mailbox.
 // It caches them in the app's data directory.
-func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage, cacheFile string) error {
+func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage) error {
 	err := a.selectMailbox(c, email, mailbox)
 	if err != nil {
 		return err
 	}
 
-	// We want messages in this mailbox with UIDs we haven't already cached.
-	criteria := &imap.SearchCriteria{}
-	if len(cached) > 0 {
-		uidset := imap.UIDSet{}
-		for _, cm := range cached {
-			for _, label := range cm.Labels {
-				if label.Name == mailbox {
-					uidset.AddNum(label.UID)
-				}
-			}
-		}
-
-		// Only add the criteria if there are UIDs; otherwise, it will
-		// generate an unclear "unexpected EOF" error.
-		if len(uidset) > 0 {
-			nc := imap.SearchCriteria{}
-			nc.UID = []imap.UIDSet{uidset}
-			criteria.Not = append(criteria.Not, nc)
-		}
-	}
-
-	// these are the UIDs of the new messages
-	uidsData, err := c.UIDSearch(criteria, nil).Wait()
+	uidsData, err := c.UIDSearch(&imap.SearchCriteria{}, nil).Wait()
 	if err != nil {
 		return fmt.Errorf("searching for uids: %w", err)
 	}
 
+	// These are all of the UIDs, including those we have already cached.
 	uids := uidsData.AllUIDs()
 	if len(uids) == 0 {
 		a.AsyncLock()
@@ -210,14 +189,48 @@ func (a *App) CacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		a.AsyncUnlock()
 		return nil
 	}
-	return a.CacheUIDs(uids, c, email, mailbox, dir, cached, cacheFile)
+
+	err = a.cleanCache(cached, email, mailbox, uids)
+	if err != nil {
+		return err
+	}
+
+	// We filter out the UIDs that are already cached.
+	alreadyHave := map[imap.UID]bool{}
+	for _, cm := range cached {
+		for _, label := range cm.Labels {
+			if label.Name == mailbox {
+				alreadyHave[label.UID] = true
+			}
+		}
+	}
+	uids = slices.DeleteFunc(uids, func(uid imap.UID) bool {
+		return alreadyHave[uid]
+	})
+
+	return a.CacheUIDs(uids, c, email, mailbox, dir, cached)
+}
+
+// cleanCache removes cached messages from the given mailbox if
+// they are not part of the given list of UIDs.
+func (a *App) cleanCache(cached map[string]*CacheMessage, email string, mailbox string, uids []imap.UID) error {
+	for id, cm := range cached {
+		cm.Labels = slices.DeleteFunc(cm.Labels, func(label Label) bool {
+			return label.Name == mailbox && !slices.Contains(uids, label.UID)
+		})
+		// We can remove the message since it is removed from all mailboxes.
+		if len(cm.Labels) == 0 {
+			delete(cached, id)
+		}
+	}
+	return a.saveCacheFile(cached, email)
 }
 
 // CacheUIDs caches the messages with the given UIDs in the context of the
 // other given values, using an iterative batched approach that fetches the
 // five next most recent messages at a time, allowing for concurrent mail
 // modifiation operations and correct ordering.
-func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage, cacheFile string) error {
+func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage) error {
 	for len(uids) > 0 {
 		num := min(5, len(uids))
 		cuids := uids[len(uids)-num:] // the current batch of UIDs
@@ -308,17 +321,10 @@ func (a *App) CacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 			}
 
 			// We need to save the list of cached messages every time in case
-			// we get interrupted or have an error. We save it through a temporary
-			// file to avoid truncating it without writing it if we quit during the process.
-			// We also start the AsyncLock here so that we cannot quit from the GUI while
-			// saving the file.
+			// we get interrupted or have an error. We also start the AsyncLock
+			// here so that we cannot quit from the GUI while saving the file.
 			a.AsyncLock()
-			err = jsonx.Save(&cached, cacheFile+".tmp")
-			if err != nil {
-				a.imapMu[email].Unlock()
-				return fmt.Errorf("saving cache list: %w", err)
-			}
-			err = os.Rename(cacheFile+".tmp", cacheFile)
+			err = a.saveCacheFile(cached, email)
 			if err != nil {
 				a.imapMu[email].Unlock()
 				return err

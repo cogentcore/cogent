@@ -10,11 +10,13 @@ package mail
 import (
 	"cmp"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 
+	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -241,7 +243,7 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 	}
 }
 
-func (a *App) GetMail() error {
+func (a *App) GetMail() {
 	go func() {
 		err := a.Auth()
 		if err != nil {
@@ -253,7 +255,6 @@ func (a *App) GetMail() error {
 			core.ErrorDialog(a, err, "Error caching messages")
 		}
 	}()
-	return nil
 }
 
 // selectMailbox selects the given mailbox for the given email for the given client.
@@ -274,4 +275,20 @@ func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) 
 // for the given email address.
 func (a *App) cacheFilename(email string) string {
 	return filepath.Join(core.TheApp.AppDataDir(), "caching", FilenameBase32(email), "cached-messages.json")
+}
+
+// saveCacheFile safely saves the given cache data for the
+// given email account by going through a temporary file to
+// avoid truncating it without writing it if we quit during the process.
+func (a *App) saveCacheFile(cached map[string]*CacheMessage, email string) error {
+	fname := a.cacheFilename(email)
+	err := jsonx.Save(&cached, fname+".tmp")
+	if err != nil {
+		return fmt.Errorf("saving cache list: %w", err)
+	}
+	err = os.Rename(fname+".tmp", fname)
+	if err != nil {
+		return err
+	}
+	return nil
 }

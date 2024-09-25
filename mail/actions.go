@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 
-	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"github.com/emersion/go-imap/v2"
@@ -28,7 +27,7 @@ func (a *App) action(f func(c *imapclient.Client) error) {
 		mu.Lock()
 		err := f(a.imapClient[a.currentEmail])
 		core.ErrorSnackbar(a, err, "Error performing action")
-		err = jsonx.Save(a.cache[a.currentEmail], a.cacheFilename(a.currentEmail))
+		err = a.saveCacheFile(a.cache[a.currentEmail], a.currentEmail)
 		core.ErrorSnackbar(a, err, "Error saving cache")
 		mu.Unlock()
 		a.AsyncLock()
