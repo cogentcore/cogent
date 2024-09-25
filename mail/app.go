@@ -201,9 +201,9 @@ func (a *App) makeLabelTree(w *core.Tree, email, parentLabel string) {
 					// Recompute the friendly labels in case they have changed.
 					w.SetText(strings.TrimPrefix(friendlyLabelName(label), friendlyLabelName(parentLabel)+"/"))
 					if ic, ok := labelIcons[w.Text]; ok {
-						w.SetIconLeaf(ic)
+						w.SetIcon(ic)
 					} else {
-						w.SetIconLeaf(icons.Label)
+						w.SetIcon(icons.Label)
 					}
 				})
 				w.OnSelect(func(e events.Event) {
