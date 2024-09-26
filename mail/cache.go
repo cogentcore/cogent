@@ -84,9 +84,9 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 	return res
 }
 
-// CacheMessages caches all of the messages from the server that
+// cacheMessages caches all of the messages from the server that
 // have not already been cached. It caches them in the app's data directory.
-func (a *App) CacheMessages() error {
+func (a *App) cacheMessages() error {
 	if a.cache == nil {
 		a.cache = map[string]map[string]*CacheMessage{}
 	}
@@ -113,7 +113,7 @@ func (a *App) cacheMessagesForAccount(email string) error {
 		a.cache[email] = map[string]*CacheMessage{}
 	}
 
-	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", FilenameBase32(email))
+	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", filenameBase32(email))
 	cached := a.cache[email]
 
 	var err error

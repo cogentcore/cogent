@@ -245,14 +245,14 @@ func (a *App) MakeToolbar(p *tree.Plan) {
 
 func (a *App) GetMail() {
 	go func() {
-		err := a.Auth()
+		err := a.auth()
 		if err != nil {
 			core.ErrorDialog(a, err, "Error authorizing")
 			return
 		}
 		// We keep caching messages forever to stay in sync.
 		for {
-			err = a.CacheMessages()
+			err = a.cacheMessages()
 			if err != nil {
 				core.ErrorDialog(a, err, "Error caching messages")
 			}
@@ -277,7 +277,7 @@ func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) 
 // cacheFilename returns the filename for the cached messages JSON file
 // for the given email address.
 func (a *App) cacheFilename(email string) string {
-	return filepath.Join(core.TheApp.AppDataDir(), "caching", FilenameBase32(email), "cached-messages.json")
+	return filepath.Join(core.TheApp.AppDataDir(), "caching", filenameBase32(email), "cached-messages.json")
 }
 
 // saveCacheFile safely saves the given cache data for the
