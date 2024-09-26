@@ -113,44 +113,51 @@ func (a *App) cacheMessagesForAccount(email string) error {
 		a.cache[email] = map[string]*CacheMessage{}
 	}
 
-	c, err := imapclient.DialTLS("imap.gmail.com:993", nil)
-	if err != nil {
-		return fmt.Errorf("TLS dialing: %w", err)
-	}
-	// defer c.Logout() // TODO: Logout in QuitClean or something similar
-
-	a.imapClient[email] = c
-	a.imapMu[email] = &sync.Mutex{}
-
-	err = c.Authenticate(a.authClient[email])
-	if err != nil {
-		return fmt.Errorf("authenticating: %w", err)
-	}
-
 	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", FilenameBase32(email))
-	err = os.MkdirAll(string(dir), 0700)
-	if err != nil {
-		return err
-	}
+	cached := a.cache[email]
 
-	cacheFile := a.cacheFilename(email)
-	err = os.MkdirAll(filepath.Dir(cacheFile), 0700)
-	if err != nil {
-		return err
-	}
+	var err error
+	c := a.imapClient[email]
+	if c == nil {
+		c, err = imapclient.DialTLS("imap.gmail.com:993", nil)
+		if err != nil {
+			return fmt.Errorf("TLS dialing: %w", err)
+		}
+		// defer c.Logout() // TODO: Logout in QuitClean or something similar
 
-	cached := map[string]*CacheMessage{}
-	err = jsonx.Open(&cached, cacheFile)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
-		return fmt.Errorf("opening cache list: %w", err)
+		a.imapClient[email] = c
+		a.imapMu[email] = &sync.Mutex{}
+
+		err = c.Authenticate(a.authClient[email])
+		if err != nil {
+			return fmt.Errorf("authenticating: %w", err)
+		}
+
+		err = os.MkdirAll(string(dir), 0700)
+		if err != nil {
+			return err
+		}
+
+		cacheFile := a.cacheFilename(email)
+		err = os.MkdirAll(filepath.Dir(cacheFile), 0700)
+		if err != nil {
+			return err
+		}
+
+		cached = map[string]*CacheMessage{}
+		err = jsonx.Open(&cached, cacheFile)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, io.EOF) {
+			return fmt.Errorf("opening cache list: %w", err)
+		}
+		a.cache[email] = cached
 	}
-	a.cache[email] = cached
 
 	mailboxes, err := c.List("", "*", nil).Collect()
 	if err != nil {
 		return fmt.Errorf("getting mailboxes: %w", err)
 	}
 
+	a.labels[email] = []string{}
 	for _, mailbox := range mailboxes {
 		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
 	}

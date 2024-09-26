@@ -250,9 +250,12 @@ func (a *App) GetMail() {
 			core.ErrorDialog(a, err, "Error authorizing")
 			return
 		}
-		err = a.CacheMessages()
-		if err != nil {
-			core.ErrorDialog(a, err, "Error caching messages")
+		// We keep caching messages forever to stay in sync.
+		for {
+			err = a.CacheMessages()
+			if err != nil {
+				core.ErrorDialog(a, err, "Error caching messages")
+			}
 		}
 	}()
 }
