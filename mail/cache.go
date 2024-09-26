@@ -209,17 +209,26 @@ func (a *App) cacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 		return err
 	}
 
-	// We filter out the UIDs that are already cached.
-	alreadyHave := map[imap.UID]bool{}
+	alreadyHaveSlice := []imap.UID{}
+	alreadyHaveMap := map[imap.UID]bool{}
 	for _, cm := range cached {
 		for _, label := range cm.Labels {
 			if label.Name == mailbox {
-				alreadyHave[label.UID] = true
+				alreadyHaveSlice = append(alreadyHaveSlice, label.UID)
+				alreadyHaveMap[label.UID] = true
 			}
 		}
 	}
+
+	// We sync the flags of all UIDs we have already cached.
+	err = a.syncFlags(alreadyHaveSlice, c, email, mailbox)
+	if err != nil {
+		return err
+	}
+
+	// We filter out the UIDs that are already cached.
 	uids = slices.DeleteFunc(uids, func(uid imap.UID) bool {
-		return alreadyHave[uid]
+		return alreadyHaveMap[uid]
 	})
 	// We only cache in baches of 100 UIDs per mailbox to allow us to
 	// get to multiple mailboxes quickly. We want the last UIDs since
@@ -278,6 +287,7 @@ func (a *App) cacheUIDs(uids []imap.UID, c *imapclient.Client, email string, mai
 		// already selected.
 		err := a.selectMailbox(c, email, mailbox)
 		if err != nil {
+			a.imapMu[email].Unlock()
 			return err
 		}
 		mcmd := c.Fetch(fuidset, fetchOptions)
@@ -374,4 +384,31 @@ var messageFilenameCounter uint64
 // which ensures uniqueness.
 func messageFilename() string {
 	return fmt.Sprintf("%d%d%d", time.Now().UnixMilli(), os.Getpid(), atomic.AddUint64(&messageFilenameCounter, 1))
+}
+
+// syncFlags updates the IMAP flags of cached messages to match those on the server.
+func (a *App) syncFlags(uids []imap.UID, c *imapclient.Client, email string, mailbox string) error {
+	if len(uids) == 0 {
+		return nil
+	}
+	uidset := imap.UIDSet{}
+	uidset.AddNum(uids...)
+
+	fetchOptions := &imap.FetchOptions{Flags: true}
+	a.imapMu[email].Lock()
+	// We must reselect the mailbox in case the user has changed it
+	// by doing actions in another mailbox. This is a no-op if it is
+	// already selected.
+	err := a.selectMailbox(c, email, mailbox)
+	if err != nil {
+		a.imapMu[email].Unlock()
+		return err
+	}
+	data, err := c.Fetch(uidset, fetchOptions).Collect()
+	a.imapMu[email].Unlock()
+	if err != nil {
+		return err
+	}
+	fmt.Println(data)
+	return nil
 }
