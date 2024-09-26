@@ -207,6 +207,12 @@ func (a *App) cacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	uids = slices.DeleteFunc(uids, func(uid imap.UID) bool {
 		return alreadyHave[uid]
 	})
+	// We only cache in baches of 100 UIDs per mailbox to allow us to
+	// get to multiple mailboxes quickly. We want the last UIDs since
+	// those are typically the most recent messages.
+	if len(uids) > 100 {
+		uids = uids[len(uids)-100:]
+	}
 
 	return a.cacheUIDs(uids, c, email, mailbox, dir, cached)
 }
