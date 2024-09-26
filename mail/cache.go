@@ -152,15 +152,19 @@ func (a *App) cacheMessagesForAccount(email string) error {
 		a.cache[email] = cached
 	}
 
+	a.imapMu[email].Lock()
 	mailboxes, err := c.List("", "*", nil).Collect()
+	a.imapMu[email].Unlock()
 	if err != nil {
 		return fmt.Errorf("getting mailboxes: %w", err)
 	}
 
+	a.AsyncLock()
 	a.labels[email] = []string{}
 	for _, mailbox := range mailboxes {
 		a.labels[email] = append(a.labels[email], mailbox.Mailbox)
 	}
+	a.AsyncUnlock()
 
 	for _, mailbox := range mailboxes {
 		if skipLabels[mailbox.Mailbox] {
@@ -178,12 +182,15 @@ func (a *App) cacheMessagesForAccount(email string) error {
 // that have not already been cached for the given email account and mailbox.
 // It caches them in the app's data directory.
 func (a *App) cacheMessagesForMailbox(c *imapclient.Client, email string, mailbox string, dir string, cached map[string]*CacheMessage) error {
+	a.imapMu[email].Lock()
 	err := a.selectMailbox(c, email, mailbox)
 	if err != nil {
+		a.imapMu[email].Unlock()
 		return err
 	}
 
 	uidsData, err := c.UIDSearch(&imap.SearchCriteria{}, nil).Wait()
+	a.imapMu[email].Unlock()
 	if err != nil {
 		return fmt.Errorf("searching for uids: %w", err)
 	}
@@ -236,7 +243,10 @@ func (a *App) cleanCache(cached map[string]*CacheMessage, email string, mailbox 
 			delete(cached, id)
 		}
 	}
-	return a.saveCacheFile(cached, email)
+	a.imapMu[email].Lock()
+	err := a.saveCacheFile(cached, email)
+	a.imapMu[email].Unlock()
+	return err
 }
 
 // cacheUIDs caches the messages with the given UIDs in the context of the
