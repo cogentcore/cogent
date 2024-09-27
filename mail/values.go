@@ -62,7 +62,10 @@ func (mi *MessageListItem) Init() {
 		w.Updater(func() {
 			text := ""
 			if !slices.Contains(mi.Message.Flags, imap.FlagSeen) {
-				text = fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
+				text += fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
+			}
+			if len(mi.Message.replies) > 0 {
+				text += fmt.Sprintf(`<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies))
 			}
 			for _, f := range mi.Message.From {
 				if f.Name != "" {

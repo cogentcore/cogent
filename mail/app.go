@@ -127,6 +127,13 @@ func (a *App) Init() {
 				a.unreadMessages = 0
 				mp := a.cache[a.currentEmail]
 				for _, cm := range mp {
+					if len(cm.InReplyTo) > 0 {
+						irt := cm.InReplyTo[0]
+						if irtcm, ok := mp[irt]; ok {
+							irtcm.replies = append(irtcm.replies, cm)
+							continue
+						}
+					}
 					for _, label := range cm.Labels {
 						if label.Name != a.showLabel {
 							continue

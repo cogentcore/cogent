@@ -39,6 +39,11 @@ type CacheMessage struct {
 	// Labels are many-to-many, similar to gmail. All labels
 	// also correspond to IMAP mailboxes.
 	Labels []Label
+
+	// replies are other messages that are replies to this message.
+	// They are not stored in the cache file or computed ahead of time;
+	// rather, they are used for conversation combination in the list GUI.
+	replies []*CacheMessage
 }
 
 // Label represents a Label associated with a message.
