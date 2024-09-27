@@ -128,13 +128,14 @@ func (a *App) Init() {
 				mp := a.cache[a.currentEmail]
 				for _, cm := range mp {
 					for _, label := range cm.Labels {
-						if label.Name == a.showLabel {
-							a.listCache = append(a.listCache, cm)
-							if !slices.Contains(cm.Flags, imap.FlagSeen) {
-								a.unreadMessages++
-							}
-							break
+						if label.Name != a.showLabel {
+							continue
 						}
+						a.listCache = append(a.listCache, cm)
+						if !slices.Contains(cm.Flags, imap.FlagSeen) {
+							a.unreadMessages++
+						}
+						break
 					}
 				}
 				slices.SortFunc(a.listCache, func(a, b *CacheMessage) int {
