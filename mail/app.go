@@ -150,7 +150,11 @@ func (a *App) Init() {
 			})
 			tree.AddChild(w, func(w *core.Text) {
 				w.Updater(func() {
-					w.SetText(fmt.Sprintf("%d messages, %d downloaded", a.totalMessages[a.currentEmail][a.showLabel], len(a.listCache)))
+					total := a.totalMessages[a.currentEmail][a.showLabel]
+					w.SetText(fmt.Sprintf("%d messages", total))
+					if len(a.listCache) < total {
+						w.Text += fmt.Sprintf(", %d downloaded", len(a.listCache))
+					}
 					if a.unreadMessages > 0 {
 						w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
 					}
