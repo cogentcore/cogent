@@ -221,7 +221,7 @@ func (a *App) cacheMessagesForMailbox(c *imapclient.Client, email string, mailbo
 	}
 
 	// We sync the flags of all UIDs we have already cached.
-	err = a.syncFlags(alreadyHaveSlice, c, email, mailbox)
+	err = a.syncFlags(alreadyHaveSlice, c, email, mailbox, cached)
 	if err != nil {
 		return err
 	}
@@ -387,14 +387,24 @@ func messageFilename() string {
 }
 
 // syncFlags updates the IMAP flags of cached messages to match those on the server.
-func (a *App) syncFlags(uids []imap.UID, c *imapclient.Client, email string, mailbox string) error {
+func (a *App) syncFlags(uids []imap.UID, c *imapclient.Client, email string, mailbox string, cached map[string]*CacheMessage) error {
 	if len(uids) == 0 {
 		return nil
 	}
+
+	uidToMessage := map[imap.UID]*CacheMessage{}
+	for _, cm := range cached {
+		for _, label := range cm.Labels {
+			if label.Name == mailbox {
+				uidToMessage[label.UID] = cm
+			}
+		}
+	}
+
 	uidset := imap.UIDSet{}
 	uidset.AddNum(uids...)
 
-	fetchOptions := &imap.FetchOptions{Flags: true}
+	fetchOptions := &imap.FetchOptions{Flags: true, UID: true}
 	a.imapMu[email].Lock()
 	// We must reselect the mailbox in case the user has changed it
 	// by doing actions in another mailbox. This is a no-op if it is
@@ -404,11 +414,21 @@ func (a *App) syncFlags(uids []imap.UID, c *imapclient.Client, email string, mai
 		a.imapMu[email].Unlock()
 		return err
 	}
-	data, err := c.Fetch(uidset, fetchOptions).Collect()
-	a.imapMu[email].Unlock()
-	if err != nil {
-		return err
+	cmd := c.Fetch(uidset, fetchOptions)
+	for {
+		msg := cmd.Next()
+		if msg == nil {
+			break
+		}
+
+		mdata, err := msg.Collect()
+		if err != nil {
+			a.imapMu[email].Unlock()
+			return err
+		}
+		uidToMessage[mdata.UID].Flags = mdata.Flags
 	}
-	fmt.Println(data)
-	return nil
+	err = a.saveCacheFile(cached, email)
+	a.imapMu[email].Unlock()
+	return err
 }
