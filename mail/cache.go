@@ -87,15 +87,6 @@ func IMAPToMailAddresses(as []imap.Address) []*mail.Address {
 // cacheMessages caches all of the messages from the server that
 // have not already been cached. It caches them in the app's data directory.
 func (a *App) cacheMessages() error {
-	if a.cache == nil {
-		a.cache = map[string]map[string]*CacheMessage{}
-	}
-	if a.imapClient == nil {
-		a.imapClient = map[string]*imapclient.Client{}
-	}
-	if a.imapMu == nil {
-		a.imapMu = map[string]*sync.Mutex{}
-	}
 	for _, account := range Settings.Accounts {
 		err := a.cacheMessagesForAccount(account)
 		if err != nil {
@@ -111,6 +102,9 @@ func (a *App) cacheMessages() error {
 func (a *App) cacheMessagesForAccount(email string) error {
 	if a.cache[email] == nil {
 		a.cache[email] = map[string]*CacheMessage{}
+	}
+	if a.totalMessages[email] == nil {
+		a.totalMessages[email] = map[string]int{}
 	}
 
 	dir := filepath.Join(core.TheApp.AppDataDir(), "mail", filenameBase32(email))

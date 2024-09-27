@@ -56,6 +56,9 @@ type App struct {
 	// be used for any other purpose.
 	listCache []*CacheMessage
 
+	// totalMessages is the total number of messages for each email account and label.
+	totalMessages map[string]map[string]int
+
 	// unreadMessages is the number of unread messages for the current email account
 	// and labels, used for displaying a count.
 	unreadMessages int
@@ -92,6 +95,10 @@ func (a *App) Init() {
 	a.Frame.Init()
 	a.authToken = map[string]*oauth2.Token{}
 	a.authClient = map[string]sasl.Client{}
+	a.imapClient = map[string]*imapclient.Client{}
+	a.imapMu = map[string]*sync.Mutex{}
+	a.cache = map[string]map[string]*CacheMessage{}
+	a.totalMessages = map[string]map[string]int{}
 	a.selectedMailbox = map[string]string{}
 	a.labels = map[string][]string{}
 	a.showLabel = "INBOX"
@@ -142,7 +149,7 @@ func (a *App) Init() {
 			})
 			tree.AddChild(w, func(w *core.Text) {
 				w.Updater(func() {
-					w.SetText(fmt.Sprintf("%d messages", len(a.listCache)))
+					w.SetText(fmt.Sprintf("%d messages, %d downloaded", a.totalMessages[a.currentEmail][a.showLabel], len(a.listCache)))
 					if a.unreadMessages > 0 {
 						w.Text += fmt.Sprintf(", %d unread", a.unreadMessages)
 					}
@@ -266,11 +273,12 @@ func (a *App) selectMailbox(c *imapclient.Client, email string, mailbox string) 
 	if a.selectedMailbox[email] == mailbox {
 		return nil // already selected
 	}
-	_, err := c.Select(mailbox, nil).Wait()
+	sd, err := c.Select(mailbox, nil).Wait()
 	if err != nil {
 		return fmt.Errorf("selecting mailbox: %w", err)
 	}
 	a.selectedMailbox[email] = mailbox
+	a.totalMessages[email][mailbox] = int(sd.NumMessages)
 	return nil
 }
 
