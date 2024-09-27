@@ -65,7 +65,7 @@ func (mi *MessageListItem) Init() {
 				text += fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
 			}
 			if len(mi.Message.replies) > 0 {
-				text += fmt.Sprintf(`<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies))
+				text += fmt.Sprintf(`<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies)+1)
 			}
 			for _, f := range mi.Message.From {
 				if f.Name != "" {
