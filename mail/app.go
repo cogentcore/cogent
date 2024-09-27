@@ -130,7 +130,9 @@ func (a *App) Init() {
 					if len(cm.InReplyTo) > 0 {
 						irt := cm.InReplyTo[0]
 						if irtcm, ok := mp[irt]; ok {
-							irtcm.replies = append(irtcm.replies, cm)
+							if !slices.Contains(irtcm.replies, cm) {
+								irtcm.replies = append(irtcm.replies, cm)
+							}
 							continue
 						}
 					}
