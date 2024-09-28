@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -194,8 +195,9 @@ func (a *App) Init() {
 				slices.SortFunc(a.readMessage.replies, func(a, b *CacheMessage) int {
 					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
 				})
-				for _, reply := range a.readMessage.replies {
+				for i, reply := range a.readMessage.replies {
 					add(reply)
+					tree.AddAt(p, "separator"+strconv.Itoa(i), func(w *core.Separator) {})
 				}
 				add(a.readMessage)
 			})
