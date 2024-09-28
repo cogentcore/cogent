@@ -176,24 +176,9 @@ func (a *App) Init() {
 				w.SetReadOnly(true)
 			})
 		})
-		tree.AddChild(w, func(w *core.Frame) {
-			w.Styler(func(s *styles.Style) {
-				s.Direction = styles.Column
-			})
-			tree.AddChild(w, func(w *core.Form) {
-				w.SetReadOnly(true)
-				w.Updater(func() {
-					w.SetStruct(a.readMessage.ToDisplay(&a.readMessageParsed))
-				})
-			})
-			tree.AddChild(w, func(w *core.Frame) {
-				w.Styler(func(s *styles.Style) {
-					s.Direction = styles.Column
-					s.Grow.Set(1, 0)
-				})
-				w.Updater(func() {
-					core.ErrorSnackbar(w, a.displayMessageContents(w), "Error reading message")
-				})
+		tree.AddChild(w, func(w *DisplayMessageFrame) {
+			w.Updater(func() {
+				w.SetMessage(a.readMessage)
 			})
 		})
 	})

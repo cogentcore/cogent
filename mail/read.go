@@ -12,6 +12,8 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/htmlcore"
+	"cogentcore.org/core/styles"
+	"cogentcore.org/core/tree"
 	"github.com/emersion/go-message/mail"
 )
 
@@ -50,6 +52,37 @@ type readMessageParsed struct {
 type Attachment struct {
 	Filename string
 	Data     []byte
+}
+
+// DisplayMessageFrame is a frame that displays the metadata and contents of a message.
+type DisplayMessageFrame struct {
+	core.Frame
+	Message *CacheMessage
+}
+
+func (dmf *DisplayMessageFrame) WidgetValue() any { return &dmf.Message }
+
+func (dmf *DisplayMessageFrame) Init() {
+	dmf.Frame.Init()
+	dmf.Styler(func(s *styles.Style) {
+		s.Grow.Set(1, 0)
+		s.Direction = styles.Column
+	})
+	tree.AddChild(dmf, func(w *core.Form) {
+		w.SetReadOnly(true)
+		w.Updater(func() {
+			w.SetStruct(dmf.Message.ToDisplay(&theApp.readMessageParsed))
+		})
+	})
+	tree.AddChild(dmf, func(w *core.Frame) {
+		w.Styler(func(s *styles.Style) {
+			s.Direction = styles.Column
+			s.Grow.Set(1, 0)
+		})
+		w.Updater(func() {
+			core.ErrorSnackbar(w, theApp.displayMessageContents(w), "Error reading message")
+		})
+	})
 }
 
 // displayMessageContents updates the given frame to display the contents of
