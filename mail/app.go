@@ -176,9 +176,28 @@ func (a *App) Init() {
 				w.SetReadOnly(true)
 			})
 		})
-		tree.AddChild(w, func(w *DisplayMessageFrame) {
-			w.Updater(func() {
-				w.SetMessage(a.readMessage)
+		tree.AddChild(w, func(w *core.Frame) {
+			w.Styler(func(s *styles.Style) {
+				s.Direction = styles.Column
+			})
+			w.Maker(func(p *tree.Plan) {
+				if a.readMessage == nil {
+					return
+				}
+				add := func(cm *CacheMessage) {
+					tree.AddAt(p, cm.Filename, func(w *DisplayMessageFrame) {
+						w.Updater(func() {
+							w.SetMessage(cm)
+						})
+					})
+				}
+				slices.SortFunc(a.readMessage.replies, func(a, b *CacheMessage) int {
+					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
+				})
+				for _, reply := range a.readMessage.replies {
+					add(reply)
+				}
+				add(a.readMessage)
 			})
 		})
 	})
