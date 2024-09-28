@@ -128,14 +128,11 @@ func (a *App) Init() {
 				a.unreadMessages = 0
 				mp := a.cache[a.currentEmail]
 				for _, cm := range mp {
-					if len(cm.InReplyTo) > 0 {
-						irt := cm.InReplyTo[0]
-						if irtcm, ok := mp[irt]; ok {
-							if !slices.Contains(irtcm.replies, cm) {
-								irtcm.replies = append(irtcm.replies, cm)
-							}
-							continue
+					if start := a.conversationStart(mp, cm); start != cm {
+						if !slices.Contains(start.replies, cm) {
+							start.replies = append(start.replies, cm)
 						}
+						continue
 					}
 					for _, label := range cm.Labels {
 						if label.Name != a.showLabel {
@@ -323,4 +320,20 @@ func (a *App) saveCacheFile(cached map[string]*CacheMessage, email string) error
 		return err
 	}
 	return nil
+}
+
+// conversationStart returns the first message in the conversation
+// of the given message using [CacheMessage.InReplyTo] and the given
+// cache map.
+func (a *App) conversationStart(mp map[string]*CacheMessage, cm *CacheMessage) *CacheMessage {
+	for {
+		if len(cm.InReplyTo) == 0 {
+			return cm
+		}
+		new, ok := mp[cm.InReplyTo[0]]
+		if !ok {
+			return cm
+		}
+		cm = new
+	}
 }
