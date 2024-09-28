@@ -80,26 +80,23 @@ func (dmf *DisplayMessageFrame) Init() {
 			s.Grow.Set(1, 0)
 		})
 		w.Updater(func() {
-			core.ErrorSnackbar(w, theApp.displayMessageContents(w), "Error reading message")
+			core.ErrorSnackbar(w, dmf.displayMessageContents(w), "Error reading message")
 		})
 	})
 }
 
 // displayMessageContents updates the given frame to display the contents of
 // the current message, if it does not already.
-func (a *App) displayMessageContents(w *core.Frame) error {
-	if a.readMessage == w.Property("readMessage") {
+func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
+	if dmf.Message == w.Property("readMessage") {
 		return nil
 	}
-	w.SetProperty("readMessage", a.readMessage)
+	w.SetProperty("readMessage", dmf.Message)
 	w.DeleteChildren()
-	if a.readMessage == nil {
-		return nil
-	}
 
-	bemail := filenameBase32(a.currentEmail)
+	bemail := filenameBase32(theApp.currentEmail)
 
-	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, a.readMessage.Filename))
+	f, err := os.Open(filepath.Join(core.TheApp.AppDataDir(), "mail", bemail, dmf.Message.Filename))
 	if err != nil {
 		return err
 	}
@@ -114,9 +111,9 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 	if err != nil {
 		return err
 	}
-	a.readMessageParsed.references = refs
+	theApp.readMessageParsed.references = refs
 
-	a.readMessageParsed.attachments = nil
+	theApp.readMessageParsed.attachments = nil
 	gotHTML := false
 	for {
 		p, err := mr.NextPart()
@@ -139,7 +136,7 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 				if err != nil {
 					return err
 				}
-				a.readMessageParsed.plain = string(b)
+				theApp.readMessageParsed.plain = string(b)
 			case "text/html":
 				err := htmlcore.ReadHTML(htmlcore.NewContext(), w, p.Body)
 				if err != nil {
@@ -157,13 +154,13 @@ func (a *App) displayMessageContents(w *core.Frame) error {
 			if err != nil {
 				return err
 			}
-			a.readMessageParsed.attachments = append(a.readMessageParsed.attachments, at)
+			theApp.readMessageParsed.attachments = append(theApp.readMessageParsed.attachments, at)
 		}
 	}
 
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML {
-		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, a.readMessageParsed.plain)
+		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, theApp.readMessageParsed.plain)
 		if err != nil {
 			return err
 		}
