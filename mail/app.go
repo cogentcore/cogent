@@ -68,9 +68,6 @@ type App struct {
 	// readMessage is the current message we are reading.
 	readMessage *CacheMessage
 
-	// readMessageParsed contains data parsed from the current message we are reading.
-	readMessageParsed readMessageParsed // TODO: move into CacheMessage
-
 	// currentEmail is the current email account.
 	currentEmail string
 

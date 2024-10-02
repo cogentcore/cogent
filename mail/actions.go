@@ -19,6 +19,7 @@ import (
 // action executes the given function in a goroutine with proper locking.
 // This should be used for any user action that interacts with a message in IMAP.
 // It also automatically saves the cache after the action is completed.
+// It calls the function for the current a.readMessage and all of its replies.
 func (a *App) action(f func(c *imapclient.Client) error) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
@@ -218,7 +219,7 @@ func (a *App) reply(title string, forward bool) {
 		a.composeMessage.Subject = prefix + a.composeMessage.Subject
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
-	a.composeMessage.references = append(a.readMessageParsed.references, a.readMessage.MessageID)
+	a.composeMessage.references = append(a.readMessage.parsed.references, a.readMessage.MessageID)
 	from := IMAPToMailAddresses(a.readMessage.From)[0].String()
 	date := a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM")
 	if forward {
@@ -236,7 +237,7 @@ func (a *App) reply(title string, forward bool) {
 		a.composeMessage.body = "\n\n> On " + date + ", " + from + " wrote:"
 	}
 	a.composeMessage.body += "\n>\n> "
-	a.composeMessage.body += strings.ReplaceAll(a.readMessageParsed.plain, "\n", "\n> ")
+	a.composeMessage.body += strings.ReplaceAll(a.readMessage.parsed.plain, "\n", "\n> ")
 	a.compose(title)
 }
 

@@ -44,6 +44,10 @@ type CacheMessage struct {
 	// They are not stored in the cache file or computed ahead of time;
 	// rather, they are used for conversation combination in the list GUI.
 	replies []*CacheMessage
+
+	// parsed contains data parsed from this message. This is populated live
+	// and not stored in the cache file.
+	parsed readMessageParsed
 }
 
 // Label represents a Label associated with a message.
