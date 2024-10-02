@@ -349,3 +349,16 @@ func (cm *CacheMessage) latestDate() time.Time {
 	}
 	return res
 }
+
+// isRead returns whether the message and all of its replies are marked as read.
+func (cm *CacheMessage) isRead() bool {
+	if !slices.Contains(cm.Flags, imap.FlagSeen) {
+		return false
+	}
+	for _, reply := range cm.replies {
+		if !slices.Contains(reply.Flags, imap.FlagSeen) {
+			return false
+		}
+	}
+	return true
+}

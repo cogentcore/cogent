@@ -252,7 +252,7 @@ func (a *App) MarkAsUnread() { //types:add
 
 // markSeen sets the [imap.FlagSeen] flag of the current message.
 func (a *App) markSeen(seen bool) {
-	if slices.Contains(a.readMessage.Flags, imap.FlagSeen) == seen {
+	if a.readMessage.isRead() == seen {
 		// Already set correctly.
 		return
 	}

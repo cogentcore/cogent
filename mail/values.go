@@ -9,7 +9,6 @@ import (
 	"net/mail"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"cogentcore.org/core/base/errors"
@@ -21,7 +20,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -61,7 +59,7 @@ func (mi *MessageListItem) Init() {
 		})
 		w.Updater(func() {
 			text := ""
-			if !slices.Contains(mi.Message.Flags, imap.FlagSeen) {
+			if !mi.Message.isRead() {
 				text += fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
 			}
 			if len(mi.Message.replies) > 0 {
