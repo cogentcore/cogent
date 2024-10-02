@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
@@ -146,7 +147,7 @@ func (a *App) Init() {
 					}
 				}
 				slices.SortFunc(a.listCache, func(a, b *CacheMessage) int {
-					return cmp.Compare(b.Date.UnixNano(), a.Date.UnixNano())
+					return cmp.Compare(b.latestDate().UnixNano(), a.latestDate().UnixNano())
 				})
 			})
 			tree.AddChild(w, func(w *core.Text) {
@@ -336,4 +337,15 @@ func (a *App) conversationStart(mp map[string]*CacheMessage, cm *CacheMessage) *
 		}
 		cm = new
 	}
+}
+
+// latestDate returns the latest date/time of the message and all of its replies.
+func (cm *CacheMessage) latestDate() time.Time {
+	res := cm.Date
+	for _, reply := range cm.replies {
+		if reply.Date.After(res) {
+			res = reply.Date
+		}
+	}
+	return res
 }
