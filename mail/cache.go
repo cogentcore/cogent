@@ -68,7 +68,7 @@ func (lb *Label) UIDSet() imap.UIDSet {
 
 // ToDisplay converts the [CacheMessage] to a [displayMessage]
 // with the given additional [readMessageParsed] data.
-func (cm *CacheMessage) ToDisplay(rmp *readMessageParsed) *displayMessage {
+func (cm *CacheMessage) ToDisplay() *displayMessage {
 	if cm == nil {
 		return nil
 	}
@@ -77,7 +77,7 @@ func (cm *CacheMessage) ToDisplay(rmp *readMessageParsed) *displayMessage {
 		To:          IMAPToMailAddresses(cm.To),
 		Subject:     cm.Subject,
 		Date:        cm.Date.Local(),
-		Attachments: rmp.attachments,
+		Attachments: cm.parsed.attachments,
 	}
 }
 

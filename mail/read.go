@@ -71,7 +71,7 @@ func (dmf *DisplayMessageFrame) Init() {
 	tree.AddChild(dmf, func(w *core.Form) {
 		w.SetReadOnly(true)
 		w.Updater(func() {
-			w.SetStruct(dmf.Message.ToDisplay(&theApp.readMessage.parsed))
+			w.SetStruct(dmf.Message.ToDisplay())
 		})
 	})
 	tree.AddChild(dmf, func(w *core.Frame) {
@@ -111,9 +111,9 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 	if err != nil {
 		return err
 	}
-	theApp.readMessage.parsed.references = refs
+	dmf.Message.parsed.references = refs
 
-	theApp.readMessage.parsed.attachments = nil
+	dmf.Message.parsed.attachments = nil
 	gotHTML := false
 	for {
 		p, err := mr.NextPart()
@@ -136,7 +136,7 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 				if err != nil {
 					return err
 				}
-				theApp.readMessage.parsed.plain = string(b)
+				dmf.Message.parsed.plain = string(b)
 			case "text/html":
 				err := htmlcore.ReadHTML(htmlcore.NewContext(), w, p.Body)
 				if err != nil {
@@ -154,13 +154,13 @@ func (dmf *DisplayMessageFrame) displayMessageContents(w *core.Frame) error {
 			if err != nil {
 				return err
 			}
-			theApp.readMessage.parsed.attachments = append(theApp.readMessage.parsed.attachments, at)
+			dmf.Message.parsed.attachments = append(dmf.Message.parsed.attachments, at)
 		}
 	}
 
 	// we only handle the plain version if there is no HTML version
 	if !gotHTML {
-		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, theApp.readMessage.parsed.plain)
+		err := htmlcore.ReadMDString(htmlcore.NewContext(), w, dmf.Message.parsed.plain)
 		if err != nil {
 			return err
 		}
