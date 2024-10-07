@@ -8,8 +8,6 @@ package random
 //go:generate core generate
 
 import (
-	"strconv"
-
 	"cogentcore.org/core/base/randx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -66,8 +64,8 @@ func (rd *Random) Init() {
 	rd.NumSamples = 1000000
 	rd.NumBins = 100
 	rd.Range.Set(0, 1)
-	rd.Table = &table.Table{}
-	rd.Histogram = &table.Table{}
+	rd.Table = table.New()
+	rd.Histogram = table.New()
 	rd.ConfigTable(rd.Table)
 	rd.Plot()
 
@@ -95,19 +93,19 @@ func (rd *Random) Plot() { //types:add
 	dt.SetNumRows(rd.NumSamples)
 	for vi := 0; vi < rd.NumSamples; vi++ {
 		vl := rd.Dist.Gen()
-		dt.SetFloat("Value", vi, float64(vl))
+		dt.Column("Value").SetFloat(float64(vl), vi)
 	}
 
-	histogram.F64Table(rd.Histogram, dt.Columns[0].(*tensor.Float64).Values, rd.NumBins, rd.Range.Min, rd.Range.Max)
+	histogram.F64Table(rd.Histogram, dt.Columns.Values[0].(*tensor.Float64).Values, rd.NumBins, rd.Range.Min, rd.Range.Max)
 	if rd.plot != nil {
 		rd.plot.UpdatePlot()
 	}
 }
 
 func (rd *Random) ConfigTable(dt *table.Table) {
-	dt.SetMetaData("name", "Data")
-	dt.SetMetaData("read-only", "true")
-	dt.SetMetaData("precision", strconv.Itoa(logPrec))
+	dt.Meta.SetName("Data")
+	dt.Meta.Set("read-only", true)
+	tensor.SetPrecision(dt.Meta, logPrec)
 
 	dt.AddFloat64Column("Value")
 }

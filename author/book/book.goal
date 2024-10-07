@@ -18,11 +18,11 @@ import (
 	"cogentcore.org/core/base/logx"
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/base/iox/yamlx"
-	coshell "cogentcore.org/core/shell"
+	goalp "cogentcore.org/core/goal"
 )
 
 var (
-	shell = coshell.NewShell()
+	goal = goalp.NewGoal()
 	pdInputs = filepath.Join("author", "pandoc-inputs")
 )
 
@@ -51,7 +51,7 @@ func Book(c *author.Config) error { //types:add
 	book.Refs() // note: we allow this to fail, in case using compiled refs
 	mdfn := book.Markdown()
 	if logx.UserLevel <= slog.LevelInfo {
-		shell.Config.Echo = os.Stdout
+		goal.Config.Echo = os.Stdout
 	}
 	var errs []error
 	for _, fmt := range c.Formats {
@@ -204,7 +204,7 @@ func (bk *BookData) Markdown() string {
 	}
 	cat "endmatter.md" >> {fn}
 	// todo: appendix
-	if cosh.FileExists("glossary.md") {
+	if goalib.FileExists("glossary.md") {
 		echo "\n<div class=\"book_section\" id=\"glossary\">\n" >> {fn}
 		cat "glossary.md" >> {fn}
 		echo "\n</div>" >> {fn}
@@ -216,10 +216,10 @@ func (bk *BookData) Markdown() string {
 }
 
 func (bk *BookData) GetFiles() {
-	bk.Chapters = cosh.SplitLines(`ls chapter-*.md`)
+	bk.Chapters = goalib.SplitLines(`ls chapter-*.md`)
 	sort.Strings(bk.Chapters)
-	if cosh.FileExists("appendix-a.md") {
-		bk.Appendicies = cosh.SplitLines(`ls appendix-*.md`)
+	if goalib.FileExists("appendix-a.md") {
+		bk.Appendicies = goalib.SplitLines(`ls appendix-*.md`)
 		sort.Strings(bk.Appendicies)
 	}
 }
@@ -243,7 +243,7 @@ func (bk *BookData) savePandocInputs() {
 		fc, _ := fs.ReadFile(PandocInputs, fn)
 		_, fb := path.Split(fn)
 		tf := bk.pdi(fb)
-		cosh.WriteFile(tf, string(fc))
+		goalib.WriteFile(tf, string(fc))
 	}
 }
 
