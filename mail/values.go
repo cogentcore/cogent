@@ -7,31 +7,35 @@ package mail
 import (
 	"fmt"
 	"net/mail"
-	"slices"
+	"os"
+	"path/filepath"
 	"strings"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/tree"
-	"github.com/emersion/go-imap/v2"
+	"github.com/mitchellh/go-homedir"
 )
 
 func init() {
-	core.AddValueType[CacheData, MessageListItem]()
+	core.AddValueType[CacheMessage, MessageListItem]()
 	core.AddValueType[mail.Address, AddressTextField]()
+	core.AddValueType[Attachment, AttachmentButton]()
 }
 
-// MessageListItem represents a [CacheData] with a [core.Frame] for the message list.
+// MessageListItem represents a [CacheMessage] with a [core.Frame] for the message list.
 type MessageListItem struct {
 	core.Frame
-	Data *CacheData
+	Message *CacheMessage
 }
 
-func (mi *MessageListItem) WidgetValue() any { return &mi.Data }
+func (mi *MessageListItem) WidgetValue() any { return &mi.Message }
 
 func (mi *MessageListItem) Init() {
 	mi.Frame.Init()
@@ -42,7 +46,7 @@ func (mi *MessageListItem) Init() {
 		s.Grow.Set(1, 0)
 	})
 	mi.OnClick(func(e events.Event) {
-		theApp.readMessage = mi.Data
+		theApp.readMessage = mi.Message
 		theApp.MarkAsRead()
 		theApp.Update()
 	})
@@ -55,10 +59,13 @@ func (mi *MessageListItem) Init() {
 		})
 		w.Updater(func() {
 			text := ""
-			if !slices.Contains(mi.Data.Flags, imap.FlagSeen) {
-				text = fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
+			if !mi.Message.isRead() {
+				text += fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
 			}
-			for _, f := range mi.Data.From {
+			if len(mi.Message.replies) > 0 {
+				text += fmt.Sprintf(`<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies)+1)
+			}
+			for _, f := range mi.Message.From {
 				if f.Name != "" {
 					text += f.Name + " "
 				} else {
@@ -75,7 +82,7 @@ func (mi *MessageListItem) Init() {
 			s.SetTextWrap(false)
 		})
 		w.Updater(func() {
-			w.SetText(mi.Data.Subject)
+			w.SetText(mi.Message.Subject)
 		})
 	})
 }
@@ -104,5 +111,28 @@ func (at *AddressTextField) Init() {
 		}
 		at.Address.Address = text
 		return nil
+	})
+}
+
+// AttachmentButton represents an [Attachment] with a [core.Button].
+type AttachmentButton struct {
+	core.Button
+	Attachment *Attachment
+}
+
+func (ab *AttachmentButton) WidgetValue() any { return &ab.Attachment }
+
+func (ab *AttachmentButton) Init() {
+	ab.Button.Init()
+	ab.SetIcon(icons.Download).SetType(core.ButtonTonal)
+	ab.Updater(func() {
+		ab.SetText(ab.Attachment.Filename)
+	})
+	ab.OnClick(func(e events.Event) {
+		fb := core.NewSoloFuncButton(ab).SetFunc(func(filename core.Filename) error {
+			return os.WriteFile(string(filename), ab.Attachment.Data, 0666)
+		})
+		fb.Args[0].Value = core.Filename(filepath.Join(errors.Log1(homedir.Dir()), "Downloads", ab.Attachment.Filename))
+		fb.CallFunc()
 	})
 }

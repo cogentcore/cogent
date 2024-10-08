@@ -17,10 +17,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Auth authorizes access to the user's mail and sets [App.AuthClient].
+// auth authorizes access to the user's mail and sets [App.AuthClient].
 // If the user does not already have a saved auth token, it calls [SignIn].
-func (a *App) Auth() error {
-	email, err := a.SignIn()
+func (a *App) auth() error {
+	email, err := a.signIn()
 	if err != nil {
 		return err
 	}
@@ -29,9 +29,9 @@ func (a *App) Auth() error {
 	return nil
 }
 
-// SignIn displays a dialog for the user to sign in with the platform of their choice.
+// signIn displays a dialog for the user to sign in with the platform of their choice.
 // It returns the user's email address.
-func (a *App) SignIn() (string, error) {
+func (a *App) signIn() (string, error) {
 	d := core.NewBody("Sign in")
 	email := make(chan string)
 	fun := func(token *oauth2.Token, userInfo *oidc.UserInfo) {
@@ -47,7 +47,7 @@ func (a *App) SignIn() (string, error) {
 	auth.Buttons(d, &auth.ButtonsConfig{
 		SuccessFunc: fun,
 		TokenFile: func(provider, email string) string {
-			return filepath.Join(core.TheApp.AppDataDir(), "auth", FilenameBase32(email), provider+"-token.json")
+			return filepath.Join(core.TheApp.AppDataDir(), "auth", filenameBase32(email), provider+"-token.json")
 		},
 		Accounts: Settings.Accounts,
 		Scopes: map[string][]string{
@@ -58,7 +58,7 @@ func (a *App) SignIn() (string, error) {
 	return <-email, nil
 }
 
-// FilenameBase32 converts the given string to a filename-safe base32 version.
-func FilenameBase32(s string) string {
+// filenameBase32 converts the given string to a filename-safe base32 version.
+func filenameBase32(s string) string {
 	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(s))
 }

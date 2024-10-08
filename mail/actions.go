@@ -5,10 +5,10 @@
 package mail
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
-	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"github.com/emersion/go-imap/v2"
@@ -19,14 +19,16 @@ import (
 // action executes the given function in a goroutine with proper locking.
 // This should be used for any user action that interacts with a message in IMAP.
 // It also automatically saves the cache after the action is completed.
-func (a *App) action(f func(c *imapclient.Client)) {
+// It calls the function for the current a.readMessage and all of its replies.
+func (a *App) action(f func(c *imapclient.Client) error) {
 	// Use a goroutine to prevent GUI freezing and a double mutex deadlock
 	// with a combination of the renderContext mutex and the imapMu.
 	go func() {
 		mu := a.imapMu[a.currentEmail]
 		mu.Lock()
-		f(a.imapClient[a.currentEmail])
-		err := jsonx.Save(a.cache[a.currentEmail], a.cacheFilename(a.currentEmail))
+		err := f(a.imapClient[a.currentEmail])
+		core.ErrorSnackbar(a, err, "Error performing action")
+		err = a.saveCacheFile(a.cache[a.currentEmail], a.currentEmail)
 		core.ErrorSnackbar(a, err, "Error saving cache")
 		mu.Unlock()
 		a.AsyncLock()
@@ -36,45 +38,137 @@ func (a *App) action(f func(c *imapclient.Client)) {
 }
 
 // actionLabels executes the given function for each label of the current message,
-// selecting the mailbox for each one first.
-func (a *App) actionLabels(f func(c *imapclient.Client, label Label)) {
-	a.action(func(c *imapclient.Client) {
+// selecting the mailbox for each one first. It does so in a goroutine with proper
+// locking. It takes an optional function to call while still in the protected
+// goroutine after all of the labels have been processed.
+func (a *App) actionLabels(f func(c *imapclient.Client, label Label) error, after ...func()) {
+	a.action(func(c *imapclient.Client) error {
 		for _, label := range a.readMessage.Labels {
 			err := a.selectMailbox(c, a.currentEmail, label.Name)
 			if err != nil {
-				core.ErrorSnackbar(a, err)
-				return
+				return err
 			}
-			f(c, label)
+			err = f(c, label)
+			if err != nil {
+				return err
+			}
 		}
+		if len(after) > 0 {
+			after[0]()
+		}
+		return nil
 	})
+}
+
+// tableLabel is used for displaying labels in a table
+// for user selection.
+type tableLabel struct {
+	name  string // the true underlying name
+	On    bool   `display:"checkbox"`
+	Label string `edit:"-"` // the friendly label name
 }
 
 // Label opens a dialog for changing the labels (mailboxes) of the current message.
 func (a *App) Label() { //types:add
 	d := core.NewBody("Label")
-	labels := make([]string, len(a.readMessage.Labels))
+	labels := make([]tableLabel, len(a.readMessage.Labels))
 	for i, label := range a.readMessage.Labels {
-		labels[i] = label.Name
+		labels[i] = tableLabel{name: label.Name, On: label.Name != "INBOX", Label: friendlyLabelName(label.Name)}
 	}
+	var tb *core.Table
 	ch := core.NewChooser(d).SetEditable(true).SetAllowNew(true)
+	for _, label := range a.labels[a.currentEmail] {
+		ch.Items = append(ch.Items, core.ChooserItem{Value: label, Text: friendlyLabelName(label)})
+	}
 	ch.OnChange(func(e events.Event) {
-		labels = append(labels, ch.CurrentItem.Value.(string))
+		labels = append(labels, tableLabel{name: ch.CurrentItem.Value.(string), On: true, Label: ch.CurrentItem.Text})
+		tb.Update()
 	})
-	core.NewList(d).SetSlice(&labels)
+	ch.OnFinal(events.Change, func(e events.Event) {
+		if ch.CurrentItem.Text == "" {
+			return
+		}
+		ch.CurrentItem = core.ChooserItem{}
+		ch.SetCurrentValue("")
+	})
+	tb = core.NewTable(d).SetSlice(&labels)
 	d.AddBottomBar(func(bar *core.Frame) {
 		d.AddCancel(bar)
-		d.AddOK(bar).SetText("Save")
+		d.AddOK(bar).SetText("Save").OnClick(func(e events.Event) {
+			newLabels := []string{}
+			for _, label := range labels {
+				if label.On {
+					newLabels = append(newLabels, label.name)
+				}
+			}
+			if len(newLabels) == 0 {
+				core.ErrorSnackbar(a, fmt.Errorf("specify at least one label"))
+				return
+			}
+			a.label(newLabels)
+		})
 	})
 	d.RunDialog(a)
-	// TODO: Move needs to be redesigned with the new many-to-many labeling paradigm.
-	// a.actionLabels(func(c *imapclient.Client, label Label) {
-	// 	uidset := imap.UIDSet{}
-	// 	uidset.AddNum(label.UID)
-	// 	mc := c.Move(uidset, mailbox)
-	// 	_, err := mc.Wait()
-	// 	core.ErrorSnackbar(a, err, "Error moving message")
-	// })
+}
+
+// label changes the labels of the current message to the given labels.
+// newLabels are the labels we want to end up with, in contrast
+// to the old labels we started with, which are a.readMessage.Labels.
+func (a *App) label(newLabels []string) {
+	// resultantLabels are the labels we apply to a.readMessage.Labels after
+	// the process is over. This needs to be a copy of a.readMessage.Labels
+	// since we can't modify it while looping over it and checking it.
+	resultantLabels := make([]Label, len(a.readMessage.Labels))
+	copy(resultantLabels, a.readMessage.Labels)
+	first := true
+	a.actionLabels(func(c *imapclient.Client, label Label) error {
+		// We copy the existing message to all of the new labels.
+		if first {
+			first = false
+			for _, newLabel := range newLabels {
+				if slices.ContainsFunc(a.readMessage.Labels, func(label Label) bool {
+					return label.Name == newLabel
+				}) {
+					continue // Already have this label.
+				}
+				cd, err := c.Copy(label.UIDSet(), newLabel).Wait()
+				if err != nil {
+					return err
+				}
+				// Add this new label to the cache.
+				resultantLabels = append(resultantLabels, Label{newLabel, cd.DestUIDs[0].Start})
+			}
+		}
+		// We remove the existing message from each old label.
+		if slices.Contains(newLabels, label.Name) {
+			return nil // Still have this label.
+		}
+		err := c.Store(label.UIDSet(), &imap.StoreFlags{
+			Op:     imap.StoreFlagsAdd,
+			Silent: true,
+			Flags:  []imap.Flag{imap.FlagDeleted},
+		}, nil).Wait()
+		if err != nil {
+			return err
+		}
+		err = c.UIDExpunge(label.UIDSet()).Wait()
+		if err != nil {
+			return err
+		}
+		// Remove this old label from the cache.
+		resultantLabels = slices.DeleteFunc(resultantLabels, func(l Label) bool {
+			return l == label
+		})
+		return nil
+	}, func() {
+		// Now that we are done, we can save resultantLabels to the cache.
+		a.readMessage.Labels = resultantLabels
+	})
+}
+
+// Delete moves the current message to the trash.
+func (a *App) Delete() { //types:add
+	a.label([]string{"[Gmail]/Trash"}) // TODO: support other trash mailboxes
 }
 
 // Reply opens a dialog to reply to the current message.
@@ -125,7 +219,7 @@ func (a *App) reply(title string, forward bool) {
 		a.composeMessage.Subject = prefix + a.composeMessage.Subject
 	}
 	a.composeMessage.inReplyTo = a.readMessage.MessageID
-	a.composeMessage.references = append(a.readMessageReferences, a.readMessage.MessageID)
+	a.composeMessage.references = append(a.readMessage.parsed.references, a.readMessage.MessageID)
 	from := IMAPToMailAddresses(a.readMessage.From)[0].String()
 	date := a.readMessage.Date.Format("Mon, Jan 2, 2006 at 3:04 PM")
 	if forward {
@@ -143,7 +237,7 @@ func (a *App) reply(title string, forward bool) {
 		a.composeMessage.body = "\n\n> On " + date + ", " + from + " wrote:"
 	}
 	a.composeMessage.body += "\n>\n> "
-	a.composeMessage.body += strings.ReplaceAll(a.readMessagePlain, "\n", "\n> ")
+	a.composeMessage.body += strings.ReplaceAll(a.readMessage.parsed.plain, "\n", "\n> ")
 	a.compose(title)
 }
 
@@ -159,28 +253,25 @@ func (a *App) MarkAsUnread() { //types:add
 
 // markSeen sets the [imap.FlagSeen] flag of the current message.
 func (a *App) markSeen(seen bool) {
-	if slices.Contains(a.readMessage.Flags, imap.FlagSeen) == seen {
+	if a.readMessage.isRead() == seen {
 		// Already set correctly.
 		return
 	}
-	a.actionLabels(func(c *imapclient.Client, label Label) {
-		uidset := imap.UIDSet{}
-		uidset.AddNum(label.UID)
+	a.actionLabels(func(c *imapclient.Client, label Label) error {
 		op := imap.StoreFlagsDel
 		if seen {
 			op = imap.StoreFlagsAdd
 		}
-		cmd := c.Store(uidset, &imap.StoreFlags{
-			Op:    op,
-			Flags: []imap.Flag{imap.FlagSeen},
-		}, nil)
-		err := cmd.Wait()
+		err := c.Store(label.UIDSet(), &imap.StoreFlags{
+			Op:     op,
+			Silent: true,
+			Flags:  []imap.Flag{imap.FlagSeen},
+		}, nil).Wait()
 		if err != nil {
-			core.ErrorSnackbar(a, err, "Error marking message as read")
-			return
+			return err
 		}
 		// Also directly update the cache:
-		flags := &a.cache[a.currentEmail][a.readMessage.MessageID].Flags
+		flags := &a.readMessage.Flags
 		if seen && !slices.Contains(*flags, imap.FlagSeen) {
 			*flags = append(*flags, imap.FlagSeen)
 		} else if !seen {
@@ -188,5 +279,6 @@ func (a *App) markSeen(seen bool) {
 				return flag == imap.FlagSeen
 			})
 		}
+		return nil
 	})
 }

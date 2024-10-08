@@ -7,7 +7,10 @@ package mail
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
@@ -22,11 +25,12 @@ import (
 
 // SendMessage represents the data necessary for the user to send a message.
 type SendMessage struct {
-	From    []*mail.Address `display:"inline"`
-	To      []*mail.Address `display:"inline"`
-	Subject string
-	body    string
+	From        []*mail.Address `display:"inline"`
+	To          []*mail.Address `display:"inline"`
+	Subject     string
+	Attachments []core.Filename `display:"inline"`
 
+	body       string
 	inReplyTo  string
 	references []string
 }
@@ -84,23 +88,26 @@ func (a *App) Send() error { //types:add
 		return err
 	}
 
-	tw, err := mw.CreateInline()
+	iw, err := mw.CreateInline()
 	if err != nil {
 		return err
 	}
 
 	var ph mail.InlineHeader
-	ph.Set("Content-Type", "text/plain")
-	pw, err := tw.CreatePart(ph)
+	ph.SetContentType("text/plain", nil)
+	pw, err := iw.CreatePart(ph)
 	if err != nil {
 		return err
 	}
 	pw.Write([]byte(a.composeMessage.body))
-	pw.Close()
+	err = pw.Close()
+	if err != nil {
+		return err
+	}
 
 	var hh mail.InlineHeader
-	hh.Set("Content-Type", "text/html")
-	hw, err := tw.CreatePart(hh)
+	hh.SetContentType("text/html", nil)
+	hw, err := iw.CreatePart(hh)
 	if err != nil {
 		return err
 	}
@@ -108,9 +115,45 @@ func (a *App) Send() error { //types:add
 	if err != nil {
 		return err
 	}
-	hw.Close()
-	tw.Close()
-	mw.Close()
+	err = hw.Close()
+	if err != nil {
+		return err
+	}
+	err = iw.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, at := range a.composeMessage.Attachments {
+		fname := string(at)
+		ah := mail.AttachmentHeader{}
+		ah.SetFilename(filepath.Base(fname))
+		fi, err := fileinfo.NewFileInfo(fname)
+		if err != nil {
+			return err
+		}
+		ah.SetContentType(fi.Mime, nil)
+		aw, err := mw.CreateAttachment(ah)
+		if err != nil {
+			return err
+		}
+		f, err := os.Open(fname)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(aw, f)
+		if err != nil {
+			return err
+		}
+		err = aw.Close()
+		if err != nil {
+			return err
+		}
+	}
+	err = mw.Close()
+	if err != nil {
+		return err
+	}
 
 	to := make([]string, len(a.composeMessage.To))
 	for i, t := range a.composeMessage.To {
