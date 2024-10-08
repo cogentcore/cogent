@@ -14,11 +14,21 @@ package book
 
 import (
 	"fmt"
-	
-	"cogentcore.org/core/base/logx"
+	"io/fs"
+	"log/slog"
+	"os"
+	"path"
+	"path/filepath"
+	"sort"
+
+	"cogentcore.org/cogent/author"
+	"cogentcore.org/cogent/author/refs"
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/base/iox/yamlx"
+	"cogentcore.org/core/base/logx"
 	goalp "cogentcore.org/core/goal"
+	"cogentcore.org/core/goal/goalib"
 )
 
 var (
