@@ -6,7 +6,6 @@ package main
 
 import (
 	"cogentcore.org/cogent/mail"
-	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 )
@@ -18,7 +17,7 @@ func main() {
 		core.NewToolbar(bar).Maker(a.MakeToolbar)
 	})
 	b.OnShow(func(e events.Event) {
-		errors.Log(a.GetMail())
+		a.GetMail()
 	})
 	b.RunMainWindow()
 }
