@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.3.3-0.20240902213628-48df10901467
+	cogentcore.org/core v0.3.6-0.20241105213322-d6528a66fa54
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.13.0
@@ -18,6 +18,7 @@ require (
 	github.com/ergochat/readline v0.1.2
 	github.com/go-delve/delve v1.22.1
 	github.com/mattn/go-shellwords v1.0.12
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/robert-nix/ansihtml v1.0.1
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.9.0
@@ -39,7 +40,7 @@ require (
 	github.com/chewxy/math32 v1.10.1 // indirect
 	github.com/cilium/ebpf v0.13.2 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
-	github.com/cogentcore/webgpu v0.0.0-20240812054109-ca2e8adebe15 // indirect
+	github.com/cogentcore/webgpu v0.0.0-20240906154609-e35089e9a725 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
@@ -48,7 +49,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/goki/freetype v1.0.5 // indirect
-	github.com/gomarkdown/markdown v0.0.0-20240626202925-2eda941fd024 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20240930133441-72d49d9543d8 // indirect
 	github.com/google/pprof v0.0.0-20240227163752-401108e1b7e7 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
@@ -62,7 +63,6 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20240226150601-1dcf7310316a // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.2-0.20240227203013-2b69615b5d55 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
