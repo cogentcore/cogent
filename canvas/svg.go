@@ -124,7 +124,7 @@ func (sv *SVG) Init() {
 		if e.MouseButton() != events.Left {
 			return
 		}
-		sv.SetFocus()
+		sv.SetFocusQuiet()
 		e.SetHandled()
 		es := sv.EditState()
 		sob := sv.SelectContainsPoint(e.Pos(), false, true) // not leavesonly, yes exclude existing sels

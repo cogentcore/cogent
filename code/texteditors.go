@@ -147,7 +147,7 @@ func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
 		av.Buffer.FileModCheck()
 	}
 	cv.SetStatus("")
-	av.SetFocusEvent()
+	av.SetFocus()
 	return av
 }
 
@@ -192,7 +192,7 @@ func (cv *Code) OpenFileAtRegion(filename core.Filename, tr text.Region) (tv *Te
 	tv.Highlights = tv.Highlights[:0]
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
-	tv.SetFocusEvent()
+	tv.SetFocus()
 	tv.NeedsLayout()
 	return tv, true
 }
