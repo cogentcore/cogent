@@ -146,7 +146,7 @@ func (sv *SymbolsPanel) makeToolbar(p *tree.Plan) {
 		w.OnChange(func(e events.Event) {
 			sv.Params().Scope = w.CurrentItem.Value.(SymScopes)
 			sv.UpdateSymbols()
-			sv.SearchText().SetFocusEvent()
+			sv.SearchText().SetFocus()
 		})
 		w.SetCurrentValue(sv.Params().Scope) // todo: also update?
 	})
@@ -171,7 +171,7 @@ func (sv *SymbolsPanel) makeToolbar(p *tree.Plan) {
 // RefreshAction loads symbols for current file and scope
 func (sv *SymbolsPanel) RefreshAction() {
 	sv.UpdateSymbols()
-	sv.SearchText().SetFocusEvent()
+	sv.SearchText().SetFocus()
 }
 
 func SelectSymbol(cv *Code, ssym syms.Symbol) {
@@ -189,7 +189,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	tr := text.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
-	tv.SetFocusEvent()
+	tv.SetFocus()
 	cv.FocusOnTabs()
 	tv.NeedsLayout()
 }
