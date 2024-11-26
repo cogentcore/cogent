@@ -8,6 +8,7 @@ package random
 //go:generate core generate
 
 import (
+	"cogentcore.org/core/base/metadata"
 	"cogentcore.org/core/base/randx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -103,9 +104,9 @@ func (rd *Random) Plot() { //types:add
 }
 
 func (rd *Random) ConfigTable(dt *table.Table) {
-	dt.Meta.SetName("Data")
-	dt.Meta.Set("read-only", true)
-	tensor.SetPrecision(dt.Meta, logPrec)
+	metadata.SetName(dt, "Data")
+	metadata.SetTo(dt, "read-only", true)
+	tensor.SetPrecision(dt, logPrec)
 
 	dt.AddFloat64Column("Value")
 }

@@ -13,7 +13,7 @@ import (
 	"cogentcore.org/core/goal/interpreter"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/tensor/databrowser"
-	"cogentcore.org/core/tensor/datafs"
+	"cogentcore.org/core/tensor/tensorfs"
 	"cogentcore.org/core/tree"
 )
 
@@ -27,7 +27,7 @@ func main() { //types:skip
 // Interactive runs an interactive shell that allows the user to input numbers.
 func Interactive(c *interpreter.Config, in *interpreter.Interpreter) error {
 	in.HistFile = "~/.numbers-history"
-	br := databrowser.NewBrowserWindow(datafs.CurRoot, "Cogent Numbers")
+	br := databrowser.NewBrowserWindow(tensorfs.CurRoot, "Cogent Numbers")
 	b := br.Parent.(*core.Body)
 	b.AddTopBar(func(bar *core.Frame) {
 		tb := core.NewToolbar(bar)
@@ -52,4 +52,3 @@ func Interactive(c *interpreter.Config, in *interpreter.Interpreter) error {
 	core.Wait()
 	return nil
 }
-
