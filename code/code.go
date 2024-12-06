@@ -217,7 +217,14 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 		})
 		tree.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
 			w.Code = cv
-			ConfigEditorTextEditor(&w.Editor)
+			w.Styler(func(s *styles.Style) {
+				s.Grow.Set(1, 1)
+				s.Min.X.Ch(20)
+				s.Min.Y.Em(5)
+				if w.Buffer != nil {
+					w.SetReadOnly(w.Buffer.Info.Generated)
+				}
+			})
 			w.OnFocus(func(e events.Event) {
 				cv.ActiveTextEditorIndex = i
 			})

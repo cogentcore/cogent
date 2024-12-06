@@ -781,6 +781,16 @@ func (cm *Commands) CopyFrom(cp Commands) {
 // MergeAvailableCmds updates the AvailCmds list from CustomCmds and StdCmds
 func MergeAvailableCmds() {
 	AvailableCommands.CopyFrom(StandardCommands)
+	hasGoal := false
+	if _, err := exec.LookPath("goal"); err == nil {
+		hasGoal = true
+	}
+	if hasGoal { // replace go build commands with goal build
+		gob, _, _ := AvailableCommands.CmdByName(CmdName(CommandName("Go", "Build Dir")), false)
+		gob.Cmds[0].Cmd = "goal"
+		gob, _, _ = AvailableCommands.CmdByName(CmdName(CommandName("Go", "Build Proj")), false)
+		gob.Cmds[0].Cmd = "goal"
+	}
 	for _, cmd := range CustomCommands {
 		_, idx, has := AvailableCommands.CmdByName(CmdName(cmd.Label()), false)
 		if has {
