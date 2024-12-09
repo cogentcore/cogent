@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.3.6-0.20241206010557-0a49e9e9bd1b
+	cogentcore.org/core v0.3.7-0.20241209071130-fd5749020b08
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.13.0
@@ -38,7 +38,7 @@ require (
 	github.com/chewxy/math32 v1.10.1 // indirect
 	github.com/cilium/ebpf v0.13.2 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
-	github.com/cogentcore/webgpu v0.0.0-20240906154609-e35089e9a725 // indirect
+	github.com/cogentcore/webgpu v0.0.0-20241209022019-c49c394fb750 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/ergochat/readline v0.1.2 // indirect
