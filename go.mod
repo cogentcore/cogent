@@ -3,7 +3,7 @@ module cogentcore.org/cogent
 go 1.22
 
 require (
-	cogentcore.org/core v0.3.6-0.20241105213322-d6528a66fa54
+	cogentcore.org/core v0.3.7-0.20241209071130-fd5749020b08
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/aandrew-me/tgpt/v2 v2.7.2
 	github.com/alecthomas/chroma/v2 v2.13.0
@@ -15,7 +15,6 @@ require (
 	github.com/emersion/go-message v0.18.1
 	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43
 	github.com/emersion/go-smtp v0.21.1
-	github.com/ergochat/readline v0.1.2
 	github.com/go-delve/delve v1.22.1
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/go-homedir v1.1.0
@@ -23,7 +22,6 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/stretchr/testify v1.9.0
 	github.com/yuin/goldmark v1.7.3
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/oauth2 v0.20.0
 	gonum.org/v1/gonum v0.15.0
 )
@@ -40,9 +38,10 @@ require (
 	github.com/chewxy/math32 v1.10.1 // indirect
 	github.com/cilium/ebpf v0.13.2 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
-	github.com/cogentcore/webgpu v0.0.0-20240906154609-e35089e9a725 // indirect
+	github.com/cogentcore/webgpu v0.0.0-20241209022019-c49c394fb750 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
+	github.com/ergochat/readline v0.1.2 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect
@@ -78,6 +77,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.7.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
