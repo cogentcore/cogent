@@ -259,9 +259,9 @@ func (sv *SpellPanel) CheckNext() {
 	hr.TimeNow()
 	tv.Highlights = append(tv.Highlights, hr)
 	if sv.LastAction == nil {
-		sv.SetFocusEvent()
+		sv.SetFocus()
 	} else {
-		sv.LastAction.SetFocusEvent()
+		sv.LastAction.SetFocus()
 	}
 	tv.NeedsRender()
 }
