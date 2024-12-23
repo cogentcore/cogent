@@ -27,8 +27,8 @@ import (
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/base/iox/yamlx"
 	"cogentcore.org/core/base/logx"
-	goalp "cogentcore.org/core/goal"
-	"cogentcore.org/core/goal/goalib"
+	goalp "cogentcore.org/lab/goal"
+	"cogentcore.org/lab/goal/goalib"
 )
 
 var (
