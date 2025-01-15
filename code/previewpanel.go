@@ -50,8 +50,6 @@ func (pp *PreviewPanel) Init() {
 		switch ed.Buffer.Info.Known {
 		case fileinfo.Markdown:
 			htmlcore.ReadMD(htmlcore.NewContext(), pp, current)
-		default:
-			core.NewText(pp).SetText("The current file cannot be previewed")
 		}
 	})
 }
