@@ -5,6 +5,8 @@
 package code
 
 import (
+	"bytes"
+
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/htmlcore"
@@ -18,6 +20,9 @@ type PreviewPanel struct {
 
 	// code is the parent [Code].
 	code *Code
+
+	// lastRendered is the content that was last rendered in the preview.
+	lastRendered []byte
 }
 
 func (pp *PreviewPanel) Init() {
@@ -31,16 +36,20 @@ func (pp *PreviewPanel) Init() {
 		if pp.code == nil {
 			return
 		}
-		pp.DeleteChildren()
 		ed := pp.code.ActiveTextEditor()
 		if ed == nil {
-			core.NewText(pp).SetText("No open file")
 			return
 		}
+		current := ed.Buffer.Bytes()
+		if bytes.Equal(current, pp.lastRendered) {
+			return
+		}
+		pp.lastRendered = current
+		pp.DeleteChildren()
 
 		switch ed.Buffer.Info.Known {
 		case fileinfo.Markdown:
-			htmlcore.ReadMD(htmlcore.NewContext(), pp, ed.Buffer.Bytes())
+			htmlcore.ReadMD(htmlcore.NewContext(), pp, current)
 		default:
 			core.NewText(pp).SetText("The current file cannot be previewed")
 		}
