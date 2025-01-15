@@ -123,6 +123,7 @@ func (cv *Code) Init() {
 	})
 	cv.OnShow(func(e events.Event) {
 		cv.OpenConsoleTab()
+		cv.OpenPreviewPanel()
 		// cv.UpdateFiles()
 	})
 

@@ -243,6 +243,13 @@ func (cv *Code) OpenConsoleTab() { //types:add
 	}
 }
 
+// OpenPreviewPanel opens a tab with the [PreviewPanel].
+func (cv *Code) OpenPreviewPanel() {
+	pp := core.RecycleTabWidget[PreviewPanel](cv.Tabs(), "Preview")
+	pp.code = cv
+	pp.Update()
+}
+
 // ChooseRunExec selects the executable to run for the project
 func (cv *Code) ChooseRunExec(exePath core.Filename) { //types:add
 	if exePath != "" {
