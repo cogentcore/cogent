@@ -233,6 +233,9 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			w.OnInput(func(e events.Event) {
 				cv.UpdateStatusText()
 			})
+			w.OnChange(func(e events.Event) {
+				cv.updatePreviewPanel()
+			})
 		})
 	})
 }
