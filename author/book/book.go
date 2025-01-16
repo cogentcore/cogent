@@ -29,12 +29,12 @@ import (
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/base/iox/yamlx"
 	"cogentcore.org/core/base/logx"
-	goalp "cogentcore.org/lab/goal"
+	"cogentcore.org/lab/goal"
 	"cogentcore.org/lab/goal/goalib"
 )
 
 var (
-	goal     = goalp.NewGoal()
+	goalrun  = goal.NewGoal()
 	pdInputs = filepath.Join("author", "pandoc-inputs")
 )
 
@@ -63,7 +63,7 @@ func Book(c *author.Config) error { //types:add
 	book.Refs() // note: we allow this to fail, in case using compiled refs
 	mdfn := book.Markdown()
 	if logx.UserLevel <= slog.LevelInfo {
-		goal.Config.Echo = os.Stdout
+		goalrun.Config.Echo = os.Stdout
 	}
 	var errs []error
 	for _, fmt := range c.Formats {
@@ -141,7 +141,7 @@ func (bk *BookData) HTML(mdfn string) error {
 	f.Write(imgb64)
 	f.Write([]byte("\"/>\n</div>\n"))
 	f.Close()
-	goal.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "html", "-B", cover, "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("html.css"), "-H", bk.pdi("head_include.html"), "-o", trg, mdfn)
+	goalrun.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "html", "-B", cover, "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("html.css"), "-H", bk.pdi("head_include.html"), "-o", trg, mdfn)
 	return nil
 }
 
@@ -150,7 +150,7 @@ func (bk *BookData) PDF(mdfn string) error {
 	logx.PrintlnWarn("\n####################################\nGenerating PDF...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".pdf"
-	goal.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "-B", bk.pdi("cover-page.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
+	goalrun.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "-B", bk.pdi("cover-page.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
 	return nil
 }
 
@@ -159,7 +159,7 @@ func (bk *BookData) LaTeX(mdfn string) error {
 	logx.PrintlnWarn("\n####################################\nGenerating LaTeX...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".tex"
-	goal.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "-B", bk.pdi("cover-page.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
+	goalrun.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "latex", "--template", bk.pdi("latex.template"), "-H", bk.pdi("header.latex"), "-B", bk.pdi("cover-page.latex"), "--number-sections", "--toc", "-o", trg, mdfn)
 	return nil
 }
 
@@ -183,7 +183,7 @@ func (bk *BookData) EPUB(mdfn string) error {
 	fmt.Fprintf(f, "<dc:identifier id=\"BookId\" opf:scheme=%q>%s</dc:identifier>\n", md["identifier_scheme"], md["identifier"])
 	f.Close()
 
-	goal.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "--epub-metadata", emd, "--epub-cover-image", "cover.png", "-o", trg, mdfn)
+	goalrun.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "epub", "--standalone", "--embed-resources", "--number-sections", "--css", bk.pdi("epub.css"), "--epub-metadata", emd, "--epub-cover-image", "cover.png", "-o", trg, mdfn)
 	return nil
 }
 
@@ -192,7 +192,7 @@ func (bk *BookData) DOCX(mdfn string) error {
 	logx.PrintlnWarn("\n####################################\nGenerating DOCX...\n")
 	mdopts := bk.pandocMarkdownOpts()
 	trg := bk.Name + ".docx"
-	goal.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "docx", "--number-sections", "--reference-doc", bk.pdi("custom-reference.docx"), "-o", trg, mdfn)
+	goalrun.Run("pandoc", "-f", mdopts, "--lua-filter", bk.pdi("glossary-filter.lua"), "-F", "pandoc-crossref", "--citeproc", "--bibliography", "references.bib", "-t", "docx", "--number-sections", "--reference-doc", bk.pdi("custom-reference.docx"), "-o", trg, mdfn)
 	return nil
 }
 
@@ -207,23 +207,23 @@ func (bk *BookData) Markdown() string {
 	fn := "author/book.md"
 	bk.GetFiles()
 	bk.metadataToMD(fn)
-	goal.Run("cat", "frontmatter.md", ">>", fn)
+	goalrun.Run("cat", "frontmatter.md", ">>", fn)
 	for ci, ch := range bk.Chapters {
 		chdiv := fmt.Sprintf("\n<div class=\"book_section\" id=\"chapter%02d\">\n", ci)
-		goal.Run("echo", chdiv, ">>", fn)
-		goal.Run("cat", ch, ">>", fn)
-		goal.Run("echo", "\n</div>", ">>", fn)
+		goalrun.Run("echo", chdiv, ">>", fn)
+		goalrun.Run("cat", ch, ">>", fn)
+		goalrun.Run("echo", "\n</div>", ">>", fn)
 	}
-	goal.Run("cat", "endmatter.md", ">>", fn)
+	goalrun.Run("cat", "endmatter.md", ">>", fn)
 	// todo: appendix
 	if goalib.FileExists("glossary.md") {
-		goal.Run("echo", "\n<div class=\"book_section\" id=\"glossary\">\n", ">>", fn)
-		goal.Run("cat", "glossary.md", ">>", fn)
-		goal.Run("echo", "\n</div>", ">>", fn)
+		goalrun.Run("echo", "\n<div class=\"book_section\" id=\"glossary\">\n", ">>", fn)
+		goalrun.Run("cat", "glossary.md", ">>", fn)
+		goalrun.Run("echo", "\n</div>", ">>", fn)
 	}
-	goal.Run("echo", "# References {-}", ">>", fn)
-	goal.Run("echo", "\n::: {#refs}", ">>", fn)
-	goal.Run("echo", ":::", ">>", fn)
+	goalrun.Run("echo", "# References {-}", ">>", fn)
+	goalrun.Run("echo", "\n::: {#refs}", ">>", fn)
+	goalrun.Run("echo", ":::", ">>", fn)
 	return fn
 }
 
@@ -238,9 +238,9 @@ func (bk *BookData) GetFiles() {
 
 // metadataToMD outputs the medadata to book.md file
 func (bk *BookData) metadataToMD(fn string) {
-	goal.Run("echo", "---", ">", fn)
-	goal.Run("cat", "metadata.yaml", ">>", fn)
-	goal.Run("echo", "---", ">>", fn)
+	goalrun.Run("echo", "---", ">", fn)
+	goalrun.Run("cat", "metadata.yaml", ">>", fn)
+	goalrun.Run("echo", "---", ">>", fn)
 }
 
 func (bk *BookData) pdi(fn string) string {

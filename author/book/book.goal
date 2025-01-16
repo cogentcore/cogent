@@ -27,12 +27,12 @@ import (
 	"cogentcore.org/core/base/iox/imagex"
 	"cogentcore.org/core/base/iox/yamlx"
 	"cogentcore.org/core/base/logx"
-	goalp "cogentcore.org/lab/goal"
+	"cogentcore.org/lab/goal"
 	"cogentcore.org/lab/goal/goalib"
 )
 
 var (
-	goal = goalp.NewGoal()
+	goalrun = goal.NewGoal()
 	pdInputs = filepath.Join("author", "pandoc-inputs")
 )
 
@@ -61,7 +61,7 @@ func Book(c *author.Config) error { //types:add
 	book.Refs() // note: we allow this to fail, in case using compiled refs
 	mdfn := book.Markdown()
 	if logx.UserLevel <= slog.LevelInfo {
-		goal.Config.Echo = os.Stdout
+		goalrun.Config.Echo = os.Stdout
 	}
 	var errs []error
 	for _, fmt := range c.Formats {
