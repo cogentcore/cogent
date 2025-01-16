@@ -123,7 +123,6 @@ func (cv *Code) Init() {
 	})
 	cv.OnShow(func(e events.Event) {
 		cv.OpenConsoleTab()
-		cv.OpenPreviewPanel()
 		// cv.UpdateFiles()
 	})
 
@@ -228,6 +227,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			})
 			w.OnFocus(func(e events.Event) {
 				cv.ActiveTextEditorIndex = i
+				cv.updatePreviewPanel()
 			})
 			// get updates on cursor movement and qreplace
 			w.OnInput(func(e events.Event) {

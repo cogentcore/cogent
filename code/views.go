@@ -243,8 +243,8 @@ func (cv *Code) OpenConsoleTab() { //types:add
 	}
 }
 
-// OpenPreviewPanel opens a tab with the [PreviewPanel].
-func (cv *Code) OpenPreviewPanel() {
+// updatePreviewPanel updates the [PreviewPanel], making it if it doesn't exist yet.
+func (cv *Code) updatePreviewPanel() {
 	pp := core.RecycleTabWidget[PreviewPanel](cv.Tabs(), "Preview")
 	pp.code = cv
 	pp.Update()
