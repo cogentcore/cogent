@@ -33,6 +33,7 @@ func (cv *Code) SaveActiveView() { //types:add
 			fpath, _ := filepath.Split(fnm)
 			cv.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 			cv.RunPostCmdsActiveView()
+			cv.updatePreviewPanel()
 		} else {
 			core.CallFunc(cv, cv.SaveActiveViewAs)
 		}
