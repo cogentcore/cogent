@@ -7,6 +7,7 @@ package code
 import (
 	"bytes"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/htmlcore"
@@ -51,6 +52,10 @@ func (pp *PreviewPanel) Init() {
 		switch ed.Buffer.Info.Known {
 		case fileinfo.Markdown:
 			htmlcore.ReadMD(htmlcore.NewContext(), pp, current)
+		case fileinfo.Html:
+			htmlcore.ReadHTML(htmlcore.NewContext(), pp, bytes.NewReader(current))
+		case fileinfo.Svg:
+			errors.Log(core.NewSVG(pp).Read(bytes.NewReader(current)))
 		}
 	})
 }
