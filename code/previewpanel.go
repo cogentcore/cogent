@@ -39,7 +39,7 @@ func (pp *PreviewPanel) Init() {
 			return
 		}
 		ed := pp.code.ActiveTextEditor()
-		if ed == nil {
+		if ed == nil || ed.Buffer == nil {
 			return
 		}
 		current := ed.Buffer.Bytes()
