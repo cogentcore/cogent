@@ -222,7 +222,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				s.Grow.Set(1, 1)
 				s.Min.X.Ch(20)
 				s.Min.Y.Em(5)
-				s.SetAbilities(true, abilities.RemoteScrollable)
+				s.SetAbilities(true, abilities.ScrollableUnfocused)
 				if w.Buffer != nil {
 					w.SetReadOnly(w.Buffer.Info.Generated)
 				}
