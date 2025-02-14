@@ -11,11 +11,11 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/parse/token"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/textpos"
+	"cogentcore.org/core/text/token"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -40,7 +40,7 @@ func (ed *TextEditor) Init() {
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.Pos())
 		tpos := ed.PixelToCursor(pt)
-		if ed.Buffer != nil && pt.X >= 0 && ed.Buffer.IsValidLine(tpos.Ln) {
+		if ed.Buffer != nil && pt.X >= 0 && ed.Buffer.IsValidLine(tpos.Line) {
 			if pt.X < int(ed.LineNumberOffset) {
 				e.SetHandled()
 				ed.LineNumberDoubleClick(tpos)
@@ -74,7 +74,7 @@ func (ed *TextEditor) CurDebug() (*DebugPanel, bool) {
 	return nil, false
 }
 
-// SetBreakpoint sets breakpoint at given line (e.g., tv.CursorPos.Ln)
+// SetBreakpoint sets breakpoint at given line (e.g., tv.CursorPos.Line)
 func (ed *TextEditor) SetBreakpoint(ln int) {
 	dbg, has := ed.CurDebug()
 	if !has {
@@ -129,7 +129,7 @@ func (ed *TextEditor) DebugVarValueAtPos(pos image.Point) string {
 	if !lx.Token.Token.InCat(token.Name) {
 		return ""
 	}
-	varNm := ed.Buffer.LexObjPathString(tpos.Ln, lx) // get full path
+	varNm := ed.Buffer.LexObjPathString(tpos.Line, lx) // get full path
 	val := dbg.VarValue(varNm)
 	if val != "" {
 		return varNm + " = " + val
@@ -147,11 +147,11 @@ func (ed *TextEditor) FindFrames(ln int) {
 }
 
 // DoubleClickEvent processes double-clicks NOT on the line-number section
-func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lexer.Pos) {
+func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos textpos.Pos) {
 	dbg, has := ed.CurDebug()
 	lx, _ := ed.Buffer.HiTagAtPos(tpos)
 	if has && lx != nil && lx.Token.Token.InCat(token.Name) {
-		varNm := ed.Buffer.LexObjPathString(tpos.Ln, lx)
+		varNm := ed.Buffer.LexObjPathString(tpos.Line, lx)
 		err := dbg.ShowVar(varNm)
 		if err == nil {
 			e.SetHandled()
@@ -162,8 +162,8 @@ func (ed *TextEditor) HandleDebugDoubleClick(e events.Event, tpos lexer.Pos) {
 }
 
 // LineNumberDoubleClick processes double-clicks on the line-number section
-func (ed *TextEditor) LineNumberDoubleClick(tpos lexer.Pos) {
-	ln := tpos.Ln
+func (ed *TextEditor) LineNumberDoubleClick(tpos textpos.Pos) {
+	ln := tpos.Line
 	ed.ToggleBreakpoint(ln)
 	ed.NeedsRender()
 }
@@ -223,18 +223,18 @@ func (ed *TextEditor) ContextMenu(m *core.Scene) {
 
 		core.NewButton(m).SetText("Set breakpoint").SetIcon(icons.StopCircle).
 			SetTooltip("debugger will stop here").OnClick(func(e events.Event) {
-			ed.SetBreakpoint(ed.CursorPos.Ln)
+			ed.SetBreakpoint(ed.CursorPos.Line)
 		})
-		if ed.HasBreakpoint(ed.CursorPos.Ln) {
+		if ed.HasBreakpoint(ed.CursorPos.Line) {
 			core.NewButton(m).SetText("Clear breakpoint").SetIcon(icons.Cancel).
 				OnClick(func(e events.Event) {
-					ed.ClearBreakpoint(ed.CursorPos.Ln)
+					ed.ClearBreakpoint(ed.CursorPos.Line)
 				})
 		}
 		core.NewButton(m).SetText("Debug: Find frames").SetIcon(icons.Cancel).
 			SetTooltip("Finds stack frames in the debugger containing this file and line").
 			OnClick(func(e events.Event) {
-				ed.FindFrames(ed.CursorPos.Ln)
+				ed.FindFrames(ed.CursorPos.Line)
 			})
 	}
 }

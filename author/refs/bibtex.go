@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/fsx"
-	"cogentcore.org/core/parse/languages/bibtex"
+	"cogentcore.org/core/text/parse/languages/bibtex"
 )
 
 // BibTexCited extracts markdown citations in the format [@Ref] from .md files and

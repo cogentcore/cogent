@@ -18,7 +18,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/spell"
+	"cogentcore.org/core/text/spell"
 )
 
 // ConfigFindButton configures the Find FuncButton with current params
@@ -288,7 +288,7 @@ func (cv *Code) UpdateStatusText() {
 	tv := cv.ActiveTextEditor()
 	msg := ""
 	if tv != nil {
-		ln = tv.CursorPos.Ln + 1
+		ln = tv.CursorPos.Line + 1
 		ch = tv.CursorPos.Ch
 		if tv.Buffer != nil {
 			fnm = cv.Files.RelativePathFrom(tv.Buffer.Filename)

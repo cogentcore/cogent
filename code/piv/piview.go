@@ -29,9 +29,9 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/ki"
-	"cogentcore.org/core/parse/lex"
-	"cogentcore.org/core/parse/parse"
-	"cogentcore.org/core/parse"
+	"cogentcore.org/core/text/parse/lex"
+	"cogentcore.org/core/text/parse/parse"
+	"cogentcore.org/core/text/parse"
 )
 
 // These are then the fixed indices of the different elements in the splitview
@@ -227,7 +227,7 @@ func (pv *PiView) SetStatus(msg string) {
 	ln := 0
 	ch := 0
 	if tv, ok := pv.TestTextEditor(); ok {
-		ln = tv.CursorPos.Ln + 1
+		ln = tv.CursorPos.Line + 1
 		ch = tv.CursorPos.Ch
 		if tv.ISearch.On {
 			msg = fmt.Sprintf("\tISearch: %v (n=%v)\t%v", tv.ISearch.Find, len(tv.ISearch.Matches), msg)

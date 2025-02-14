@@ -20,9 +20,9 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
-	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
@@ -122,9 +122,9 @@ func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 		for _, mt := range fs.Matches {
 			txt := bytes.TrimSpace(mt.Text)
 			txt = append([]byte{'\t'}, txt...)
-			ln := mt.Reg.Start.Ln + 1
-			ch := mt.Reg.Start.Ch + 1
-			ech := mt.Reg.End.Ch + 1
+			ln := mt.Reg.Start.Line + 1
+			ch := mt.Reg.Start.Char + 1
+			ech := mt.Reg.End.Char + 1
 			fnstr := fmt.Sprintf("%v:%d:%d", fn, ln, ch)
 			nomu := bytes.Replace(txt, []byte("<mark>"), nil, -1)
 			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
@@ -145,7 +145,7 @@ func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	ftv.CursorStartDoc()
 
 	fv.Update()
-	ftv.SetCursorShow(lexer.Pos{Ln: 0})
+	ftv.SetCursorShow(textpos.Pos{Ln: 0})
 	ftv.NeedsLayout()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -225,10 +225,10 @@ func (fv *FindPanel) ReplaceAction() bool {
 		}
 
 		// delete the link for the just done replace
-		ftvln := ftv.CursorPos.Ln
-		st := lexer.Pos{Ln: ftvln, Ch: 0}
+		ftvln := ftv.CursorPos.Line
+		st := textpos.Pos{Ln: ftvln, Ch: 0}
 		len := ftv.Buffer.LineLen(ftvln)
-		en := lexer.Pos{Ln: ftvln, Ch: len}
+		en := textpos.Pos{Ln: ftvln, Ch: len}
 		ftv.Buffer.DeleteText(st, en, texteditor.EditSignal)
 	}
 

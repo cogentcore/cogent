@@ -16,7 +16,7 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/parse/lexer"
+	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 )
@@ -367,7 +367,7 @@ func (cv *Code) LinkViewFile(fnm core.Filename) (*TextEditor, int, bool) {
 func (cv *Code) ShowFile(fname string, ln int) (*TextEditor, error) {
 	tv, _, ok := cv.LinkViewFile(core.Filename(fname))
 	if ok {
-		tv.SetCursorTarget(lexer.Pos{Ln: ln - 1})
+		tv.SetCursorTarget(textpos.Pos{Ln: ln - 1})
 		return tv, nil
 	}
 	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fname)

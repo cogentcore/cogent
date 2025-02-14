@@ -42,7 +42,6 @@ require (
 	github.com/cogentcore/webgpu v0.0.0-20241212004832-ad7475f3b4dd // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
-	github.com/ergochat/readline v0.1.2 // indirect
 	github.com/ericchiang/css v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect

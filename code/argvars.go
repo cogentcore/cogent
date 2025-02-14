@@ -152,15 +152,15 @@ func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *texteditor.
 	av["{RunExecDirPathRel}"] = exerel
 
 	if tv != nil {
-		av["{CurLine}"] = fmt.Sprintf("%v", tv.CursorPos.Ln)
-		av["{CurCol}"] = fmt.Sprintf("%v", tv.CursorPos.Ch)                // not quite col
-		av["{SelStartLine}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ln) // check for no sel
+		av["{CurLine}"] = fmt.Sprintf("%v", tv.CursorPos.Line)
+		av["{CurCol}"] = fmt.Sprintf("%v", tv.CursorPos.Ch)                  // not quite col
+		av["{SelStartLine}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Line) // check for no sel
 		av["{SelStartCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ch)
-		av["{SelEndLine}"] = fmt.Sprintf("%v", tv.SelectRegion.End.Ln)  // check for no sel
-		av["{SelEndCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ch) // check for no sel
-		av["{CurSel}"] = ""                                             // todo get sel
-		av["{CurLineText}"] = ""                                        // todo get cur line
-		av["{CurWord}"] = ""                                            // todo get word
+		av["{SelEndLine}"] = fmt.Sprintf("%v", tv.SelectRegion.End.Line) // check for no sel
+		av["{SelEndCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ch)  // check for no sel
+		av["{CurSel}"] = ""                                              // todo get sel
+		av["{CurLineText}"] = ""                                         // todo get cur line
+		av["{CurWord}"] = ""                                             // todo get word
 	} else {
 		av["{CurLine}"] = ""
 		av["{CurCol}"] = ""

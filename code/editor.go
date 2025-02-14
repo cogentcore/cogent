@@ -20,11 +20,11 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/paint"
-	"cogentcore.org/core/parse"
-	"cogentcore.org/core/parse/complete"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/parse/parser"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/parse"
+	"cogentcore.org/core/text/parse/complete"
+	"cogentcore.org/core/text/parse/parser"
+	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/text"
 )
@@ -62,7 +62,7 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	// must set it in pi/parse directly -- so it is changed in the fileparse too
 	parser.GUIActive = true // note: this is key for debugging -- runs slower but makes the tree unique
 
-	ld = lp.Lang.Lookup(sfs, txt, lexer.Pos{posLine, posChar})
+	ld = lp.Lang.Lookup(sfs, txt, textpos.Pos{posLine, posChar})
 	if len(ld.Text) > 0 {
 		texteditor.TextDialog(nil, "Lookup: "+txt, string(ld.Text))
 		return ld
@@ -105,7 +105,7 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	})
 	tv.SetReadOnly(true)
 
-	tv.SetCursorTarget(lexer.Pos{Ln: ld.StLine})
+	tv.SetCursorTarget(textpos.Pos{Ln: ld.StLine})
 	d.AddBottomBar(func(bar *core.Frame) {
 		core.NewButton(bar).SetText("Open file").SetIcon(icons.Open).OnClick(func(e events.Event) {
 			cv.ViewFile(core.Filename(ld.Filename))
@@ -209,11 +209,11 @@ func (cv *Code) CommentOut() bool { //types:add
 	sel := tv.Selection()
 	var stl, etl int
 	if sel == nil {
-		stl = tv.CursorPos.Ln
+		stl = tv.CursorPos.Line
 		etl = stl + 1
 	} else {
-		stl = sel.Reg.Start.Ln
-		etl = sel.Reg.End.Ln
+		stl = sel.Reg.Start.Line
+		etl = sel.Reg.End.Line
 	}
 	tv.Buffer.CommentRegion(stl, etl)
 	tv.SelectReset()
@@ -230,7 +230,7 @@ func (cv *Code) Indent() bool { //types:add
 	if sel == nil {
 		return false
 	}
-	tv.Buffer.AutoIndentRegion(sel.Reg.Start.Ln, sel.Reg.End.Ln)
+	tv.Buffer.AutoIndentRegion(sel.Reg.Start.Line, sel.Reg.End.Line)
 	tv.SelectReset()
 	return true
 }
@@ -253,7 +253,7 @@ func (cv *Code) JoinParaLines() { //types:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.JoinParaLines(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Buffer.JoinParaLines(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
 	} else {
 		tv.Buffer.JoinParaLines(0, tv.NumLines-1)
 	}
@@ -267,7 +267,7 @@ func (cv *Code) TabsToSpaces() { //types:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.TabsToSpaces(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Buffer.TabsToSpaces(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
 	} else {
 		tv.Buffer.TabsToSpaces(0, tv.NumLines-1)
 	}
@@ -281,7 +281,7 @@ func (cv *Code) SpacesToTabs() { //types:add
 		return
 	}
 	if tv.HasSelection() {
-		tv.Buffer.SpacesToTabs(tv.SelectRegion.Start.Ln, tv.SelectRegion.End.Ln)
+		tv.Buffer.SpacesToTabs(tv.SelectRegion.Start.Line, tv.SelectRegion.End.Line)
 	} else {
 		tv.Buffer.SpacesToTabs(0, tv.NumLines-1)
 	}
@@ -428,9 +428,9 @@ func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		return true
 	}
 	// fmt.Printf("pos: %v\n", pos)
-	txpos := lexer.Pos{}
+	txpos := textpos.Pos{}
 	if txpos.FromString(pos) {
-		reg := text.Region{Start: txpos, End: lexer.Pos{Ln: txpos.Ln, Ch: txpos.Ch + 4}}
+		reg := text.Region{Start: txpos, End: textpos.Pos{Ln: txpos.Line, Ch: txpos.Char + 4}}
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start

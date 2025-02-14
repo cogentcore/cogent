@@ -19,7 +19,7 @@ import (
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/num"
-	"cogentcore.org/core/parse/lexer"
+	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"

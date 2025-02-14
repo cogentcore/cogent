@@ -15,7 +15,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/parse/complete"
+	"cogentcore.org/core/text/parse/complete"
 )
 
 // Graph contains the lines and parameters of a graph

@@ -24,8 +24,8 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/highlighting"
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -267,7 +267,7 @@ type Command struct {
 	// if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands
 	Confirm bool
 
-	//	what type of file to use for syntax highlighting.  Bash is the default.
+	// what type of file to use for syntax highlighting.  Bash is the default.
 	Hilight fileinfo.Known
 }
 

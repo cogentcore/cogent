@@ -12,11 +12,11 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/parse/syms"
-	"cogentcore.org/core/parse/token"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/parse/syms"
+	"cogentcore.org/core/text/token"
 	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 )
@@ -177,7 +177,7 @@ func (sv *SymbolsPanel) RefreshAction() {
 func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	tv := cv.ActiveTextEditor()
 	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
-		tr := text.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+		tr := text.NewRegion(ssym.SelectReg.St.Line, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Line, ssym.SelectReg.Ed.Ch)
 		_, ok := cv.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
 		if !ok {
 			log.Printf("Code SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
@@ -186,7 +186,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	}
 
 	tv.Highlights = tv.Highlights[:0]
-	tr := text.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+	tr := text.NewRegion(ssym.SelectReg.St.Line, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Line, ssym.SelectReg.Ed.Ch)
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocus()

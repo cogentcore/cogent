@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/spell"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
@@ -267,14 +267,14 @@ func (sv *SpellPanel) CheckNext() {
 }
 
 // UnkStartPos returns the start position of the current unknown word
-func (sv *SpellPanel) UnkStartPos() lexer.Pos {
-	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
+func (sv *SpellPanel) UnkStartPos() textpos.Pos {
+	pos := textpos.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.St}
 	return pos
 }
 
 // UnkEndPos returns the end position of the current unknown word
-func (sv *SpellPanel) UnkEndPos() lexer.Pos {
-	pos := lexer.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
+func (sv *SpellPanel) UnkEndPos() textpos.Pos {
+	pos := textpos.Pos{Ln: sv.CurLn, Ch: sv.UnkLex.Ed}
 	return pos
 }
 
