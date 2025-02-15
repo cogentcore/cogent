@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
@@ -32,6 +33,7 @@ func (cv *Code) SaveActiveView() { //types:add
 			fpath, _ := filepath.Split(fnm)
 			cv.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 			cv.RunPostCmdsActiveView()
+			cv.updatePreviewPanel()
 		} else {
 			core.CallFunc(cv, cv.SaveActiveViewAs)
 		}
@@ -319,12 +321,33 @@ func (cv *Code) LinkViewFileNode(fn *filetree.Node) (*TextEditor, int) {
 	return tv, idx
 }
 
+// GeneratedFileExts are file extensions for the source file that generates
+// another file. If a file is opened that is marked as generated, this list is
+// used to look for another file with the same name and the source extention,
+// and it is opened instead.
+var GeneratedFileExts = map[string]string{
+	".goal": ".go",
+}
+
 // LinkViewFile opens the file in the 2nd texteditor, which is next to
 // the tabs where links are clicked, if it is not collapsed -- else 1st
 func (cv *Code) LinkViewFile(fnm core.Filename) (*TextEditor, int, bool) {
-	fn := cv.FileNodeForFile(string(fnm), true)
+	fn := cv.FileNodeForFile(string(fnm), true) // add if not found
 	if fn == nil {
 		return nil, -1, false
+	}
+	if fn.Info.Generated {
+		bfnm, ext := fsx.ExtSplit(string(fnm))
+		for ex, fex := range GeneratedFileExts {
+			if fex == ext {
+				nfnm := bfnm + ex
+				nfn := cv.FileNodeForFile(nfnm, false)
+				if nfn != nil {
+					fn = nfn
+					break
+				}
+			}
+		}
 	}
 	tv, idx, ok := cv.TextEditorForFileNode(fn)
 	if ok {

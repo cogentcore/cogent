@@ -182,7 +182,7 @@ func (on *OpenNodes) DeleteDeleted() {
 	sz := len(*on)
 	for i := sz - 1; i >= 0; i-- {
 		fn := (*on)[i]
-		if fn.This == nil || fn.FileRoot == nil {
+		if fn.This == nil || fn.FileRoot() == nil {
 			on.DeleteIndex(i)
 		}
 	}
@@ -193,7 +193,7 @@ func (on *OpenNodes) Strings() []string {
 	on.DeleteDeleted()
 	sl := make([]string, len(*on))
 	for i, fn := range *on {
-		rp := fn.FileRoot.RelativePathFrom(fn.Filepath)
+		rp := fn.FileRoot().RelativePathFrom(fn.Filepath)
 		rp = strings.TrimSuffix(rp, fn.Name)
 		if rp != "" {
 			sl[i] = fn.Name + " - " + rp

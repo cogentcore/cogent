@@ -24,11 +24,11 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/keymap"
-	"cogentcore.org/core/shell/interpreter"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
+	"cogentcore.org/lab/goal/interpreter"
 	"github.com/cogentcore/yaegi/interp"
 	"github.com/robert-nix/ansihtml"
 )
