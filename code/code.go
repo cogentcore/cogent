@@ -27,6 +27,7 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
@@ -217,13 +218,25 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 		})
 		tree.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
 			w.Code = cv
-			ConfigEditorTextEditor(&w.Editor)
+			w.Styler(func(s *styles.Style) {
+				s.Grow.Set(1, 1)
+				s.Min.X.Ch(20)
+				s.Min.Y.Em(5)
+				s.SetAbilities(true, abilities.ScrollableUnfocused)
+				if w.Buffer != nil {
+					w.SetReadOnly(w.Buffer.Info.Generated)
+				}
+			})
 			w.OnFocus(func(e events.Event) {
 				cv.ActiveTextEditorIndex = i
+				cv.updatePreviewPanel()
 			})
 			// get updates on cursor movement and qreplace
 			w.OnInput(func(e events.Event) {
 				cv.UpdateStatusText()
+			})
+			w.OnChange(func(e events.Event) {
+				cv.updatePreviewPanel()
 			})
 		})
 	})

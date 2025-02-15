@@ -414,6 +414,7 @@ func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
 		}
 	}
 	pos := up.Fragment
+
 	tv, _, ok := cv.LinkViewFile(core.Filename(fpath))
 	if !ok {
 		_, fnm := filepath.Split(fpath)

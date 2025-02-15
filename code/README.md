@@ -20,6 +20,20 @@ go install cogentcore.org/cogent/code/cmd/cogentcode@latest
 
 * See Releases on this github page for pre-built OS-specific app packages that install the compiled binaries.
 
+## MacOS environment variables
+
+When `Code` is run from an installed mac app bundle, it does not inherit the normal shell environment. To set environment variables in a way that extends to GUI apps, you must use:
+```sh
+launchctl setenv VAR VALUE
+```
+The `goal` shell automatically does this for you when setting any environment variables.
+
+This does not extend to the `PATH` variable, which requires this command:
+```sh
+sudo launchctl config user path $PATH
+```
+This only takes effect after a reboot.  Also, once done, then the default shell path will have that path, already, so commands to set the path in the shell will end up with duplicates.
+
 # Future Plans
 
 We plan to incorporate [gopls](https://github.com/golang/tools/tree/master/gopls) to provide more comprehensive Go language IDE-level support, similar to what is found in VS Code.  At present, the completion can be a bit spotty for some kinds of expressions, and the lookup "go to definition" functionality is also not perfect. However, the basic code editing dynamics are pretty solid, so adding gopls would bring it much closer to feature-parity with VS Code.

@@ -183,15 +183,6 @@ func ConfigOutputTextEditor(ed *texteditor.Editor) {
 	})
 }
 
-// ConfigEditorTextEditor configures an editor texteditor
-func ConfigEditorTextEditor(ed *texteditor.Editor) {
-	ed.Styler(func(s *styles.Style) {
-		s.Grow.Set(1, 1)
-		s.Min.X.Ch(20)
-		s.Min.Y.Em(5)
-	})
-}
-
 // ContextMenu builds the text editor context menu
 func (ed *TextEditor) ContextMenu(m *core.Scene) {
 	core.NewButton(m).SetText("Copy").SetIcon(icons.ContentCopy).

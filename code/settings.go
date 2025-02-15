@@ -43,9 +43,6 @@ type SettingsData struct { //types:add
 	// file picker settings
 	Files FileSettings
 
-	// environment variables to set for this app -- if run from the command line, standard shell environment variables are inherited, but on some OS's (Mac), they are not set when run as a gui app
-	EnvVars map[string]string
-
 	// if set, the current customized set of language options (see Edit Lang Opts) is saved / loaded along with other settings -- if not set, then you always are using the default compiled-in standard set (which will be updated)
 	SaveLangOpts bool
 
@@ -117,7 +114,6 @@ func (se *SettingsData) Open() error {
 func (se *SettingsData) Apply() { //types:add
 	MergeAvailableCmds()
 	AvailableLanguages.Validate()
-	se.ApplyEnvVars()
 }
 
 // SetGoMod applies the given gomod setting, setting the GO111MODULE env var
@@ -126,13 +122,6 @@ func SetGoMod(gomod bool) {
 		os.Setenv("GO111MODULE", "on")
 	} else {
 		os.Setenv("GO111MODULE", "off")
-	}
-}
-
-// ApplyEnvVars applies environment variables set in EnvVars
-func (se *SettingsData) ApplyEnvVars() {
-	for k, v := range se.EnvVars {
-		os.Setenv(k, v)
 	}
 }
 
