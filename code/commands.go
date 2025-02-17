@@ -25,6 +25,7 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/highlighting"
@@ -350,7 +351,7 @@ func RepoCurBranches(repo vcs.Repo) (string, []string, error) {
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(cv *Code, buf *lines.Lines, pvals map[string]struct{}) {
 	sz := len(pvals)
 	cnt := 0
 	tv := cv.ActiveTextEditor()
@@ -418,7 +419,7 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 // which can be displayed -- if !wait, then Buf is updated online as output
 // occurs.  Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
+func (cm *Command) Run(cv *Code, buf *lines.Lines) {
 	if cm.Confirm {
 		d := core.NewBody("Confirm command")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
@@ -440,7 +441,7 @@ func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(cv *Code, buf *texteditor.Buffer) {
+func (cm *Command) RunAfterPrompts(cv *Code, buf *lines.Lines) {
 	// ge.RunningCmds.KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjectPath}"
@@ -480,7 +481,7 @@ func (cm *Command) RunAfterPrompts(cv *Code, buf *texteditor.Buffer) {
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
 // line of the command output to code statusbar
-func (cm *Command) RunBufWait(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
+func (cm *Command) RunBufWait(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
 	if cmd == nil {
 		return false
@@ -493,7 +494,7 @@ func (cm *Command) RunBufWait(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs)
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
+func (cm *Command) RunBuf(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
 	if cmd == nil {
 		return false
@@ -524,7 +525,7 @@ func (cm *Command) RunNoBuf(cv *Code, cma *CmdAndArgs) bool {
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(cv *Code, buf *texteditor.Buffer, out []byte) {
+func (cm *Command) AppendCmdOut(cv *Code, buf *lines.Lines, out []byte) {
 	if buf == nil {
 		return
 	}
@@ -551,7 +552,7 @@ var CmdOutStatusLen = 80
 // RunStatus reports the status of the command run (given in cmdstr) to
 // ge.StatusBar -- returns true if there are no errors, and false if there
 // were errors
-func (cm *Command) RunStatus(cv *Code, buf *texteditor.Buffer, cmdstr string, err error, out []byte) bool {
+func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err error, out []byte) bool {
 	cv.RunningCmds.DeleteByName(cm.Label())
 	var rval bool
 	outstr := ""

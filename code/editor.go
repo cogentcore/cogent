@@ -24,6 +24,7 @@ import (
 	"cogentcore.org/core/text/parse"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/parse/parser"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/text"
@@ -366,7 +367,7 @@ func (cv *Code) CountWordsRegion() string { //types:add
 func TextLinkHandler(tl paint.TextLink) bool {
 	// todo:
 	// tve := texteditor.AsEditor(tl.Widget)
-	// ftv, _ := tl.Widget.Embed(core.KiT_TextEditor).(*texteditor.Editor)
+	// ftv, _ := tl.Widget.Embed(core.KiT_TextEditor).(*textcore.Editor)
 	// gek := tl.Widget.ParentByType(KiT_Code, true)
 	// if gek != nil {
 	// 	ge := gek.Embed(KiT_Code).(*Code)
@@ -392,7 +393,7 @@ func TextLinkHandler(tl paint.TextLink) bool {
 // }
 
 // OpenFileURL opens given file:/// url
-func (cv *Code) OpenFileURL(ur string, ftv *texteditor.Editor) bool {
+func (cv *Code) OpenFileURL(ur string, ftv *textcore.Editor) bool {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("Code OpenFileURL parse err: %v\n", err)

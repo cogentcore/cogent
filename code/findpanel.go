@@ -22,6 +22,7 @@ import (
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/texteditor/text"
@@ -86,7 +87,7 @@ func (fv *FindPanel) Init() {
 		core.ToolbarStyles(w)
 		w.Maker(fv.makeReplToolbar)
 	})
-	tree.AddChildAt(fv, "findtext", func(w *texteditor.Editor) {
+	tree.AddChildAt(fv, "findtext", func(w *textcore.Editor) {
 		ConfigOutputTextEditor(w)
 		w.LinkHandler = func(tl *paint.TextLink) {
 			fv.OpenFindURL(tl.URL, w)
@@ -316,7 +317,7 @@ func (fv *FindPanel) PrevFind() {
 }
 
 // OpenFindURL opens given find:/// url from Find
-func (fv *FindPanel) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
+func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 	ge := fv.Code
 	tv, reg, fbBufStLn, fCount, ok := ge.ParseOpenFindURL(ur, ftv)
 	if !ok {
@@ -334,7 +335,7 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
 }
 
 // HighlightFinds highlights all the find results in ftv buffer
-func (fv *FindPanel) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount int, find string) {
+func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, fbStLn, fCount int, find string) {
 	lnka := []byte(`<a href="`)
 	lnkasz := len(lnka)
 
@@ -373,7 +374,7 @@ func (fv *FindPanel) HighlightFinds(tv, ftv *texteditor.Editor, fbStLn, fCount i
 //    GUI config
 
 // TextEditorLay returns the find results TextEditor
-func (fv *FindPanel) TextEditor() *texteditor.Editor {
+func (fv *FindPanel) TextEditor() *textcore.Editor {
 	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
 }
 

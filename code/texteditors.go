@@ -15,13 +15,14 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 )
 
 // ConfigTextBuffer configures the text buffer according to the settings.
-func (cv *Code) ConfigTextBuffer(tb *texteditor.Buffer) {
+func (cv *Code) ConfigTextBuffer(tb *lines.Lines) {
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Options.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
@@ -98,7 +99,7 @@ func (cv *Code) TextEditorForFile(fnm core.Filename) (*TextEditor, int, bool) {
 }
 
 // SetActiveFileInfo sets the active file info from text
-func (cv *Code) SetActiveFileInfo(buf *texteditor.Buffer) {
+func (cv *Code) SetActiveFileInfo(buf *lines.Lines) {
 	cv.ActiveFilename = buf.Filename
 	cv.ActiveLang = buf.Info.Known
 	cv.ActiveVCSInfo = ""
@@ -200,7 +201,7 @@ func (cv *Code) OpenFileAtRegion(filename core.Filename, tr text.Region) (tv *Te
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEditor, reg text.Region, findBufStLn, findCount int, ok bool) {
+func (cv *Code) ParseOpenFindURL(ur string, ftv *textcore.Editor) (tv *TextEditor, reg text.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindPanel OpenFindURL parse err: %v\n", err)
@@ -227,7 +228,7 @@ func (cv *Code) ParseOpenFindURL(ur string, ftv *texteditor.Editor) (tv *TextEdi
 }
 
 // OpenFindURL opens given find:/// url from Find; delegates to FindPanel
-func (cv *Code) OpenFindURL(ur string, ftv *texteditor.Editor) bool {
+func (cv *Code) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 	fv := tree.ParentByType[*FindPanel](ftv)
 	if fv == nil {
 		return false

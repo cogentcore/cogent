@@ -15,14 +15,16 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/texteditor"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
 // existing. Returns true if new buffer created.
-func (cv *Code) RecycleCmdBuf(cmdName string) (*texteditor.Buffer, bool) {
+func (cv *Code) RecycleCmdBuf(cmdName string) (*lines.Lines, bool) {
 	if cv.CmdBufs == nil {
-		cv.CmdBufs = make(map[string]*texteditor.Buffer, 20)
+		cv.CmdBufs = make(map[string]*lines.Lines, 20)
 	}
 	if buf, has := cv.CmdBufs[cmdName]; has {
 		buf.SetText(nil)
@@ -40,7 +42,7 @@ func (cv *Code) RecycleCmdBuf(cmdName string) (*texteditor.Buffer, bool) {
 // RecycleCmdTab creates the tab to show command output, including making a
 // buffer object to save output from the command. Returns true if a new buffer
 // was created, false if one already existed.
-func (cv *Code) RecycleCmdTab(cmdName string) (*texteditor.Buffer, *texteditor.Editor, bool) {
+func (cv *Code) RecycleCmdTab(cmdName string) (*lines.Lines, *textcore.Editor, bool) {
 	buf, nw := cv.RecycleCmdBuf(cmdName)
 	ctv := cv.RecycleTabTextEditor(cmdName, buf)
 	if ctv == nil {

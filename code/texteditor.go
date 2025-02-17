@@ -14,15 +14,15 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/text/token"
-	"cogentcore.org/core/texteditor"
 )
 
 // TextEditor is the Code-specific version of the TextEditor, with support for
 // setting / clearing breakpoints, etc
 type TextEditor struct {
-	texteditor.Editor
+	textcore.Editor
 
 	Code *Code
 }
@@ -169,7 +169,7 @@ func (ed *TextEditor) LineNumberDoubleClick(tpos textpos.Pos) {
 }
 
 // ConfigOutputTextEditor configures a command-output texteditor within given parent layout
-func ConfigOutputTextEditor(ed *texteditor.Editor) {
+func ConfigOutputTextEditor(ed *textcore.Editor) {
 	ed.SetReadOnly(true)
 	ed.Styler(func(s *styles.Style) {
 		s.Text.WhiteSpace = styles.WhiteSpacePreWrap

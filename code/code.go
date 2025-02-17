@@ -28,8 +28,8 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/spell"
-	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
@@ -77,7 +77,7 @@ type Code struct {
 	OpenNodes OpenNodes `json:"-"`
 
 	// the command buffers for commands run in this project
-	CmdBufs map[string]*texteditor.Buffer `set:"-" json:"-"`
+	CmdBufs map[string]*lines.Lines `set:"-" json:"-"`
 
 	// history of commands executed in this session
 	CmdHistory CmdNames `set:"-" json:"-"`

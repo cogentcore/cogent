@@ -8,6 +8,8 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -114,7 +116,7 @@ func (cv *Code) SelectTabByName(name string) core.Widget {
 // RecycleTabTextEditor returns a text editor in a tab with the given name,
 // first by looking for an existing one, and if not found, making a new
 // one with a text editor in it.
-func (cv *Code) RecycleTabTextEditor(name string, buf *texteditor.Buffer) *texteditor.Editor {
+func (cv *Code) RecycleTabTextEditor(name string, buf *lines.Lines) *textcore.Editor {
 	tv := cv.Tabs()
 	if tv == nil {
 		return nil
@@ -122,7 +124,7 @@ func (cv *Code) RecycleTabTextEditor(name string, buf *texteditor.Buffer) *texte
 
 	fr := tv.RecycleTab(name)
 	if fr.HasChildren() {
-		return fr.Child(0).(*texteditor.Editor)
+		return fr.Child(0).(*textcore.Editor)
 	}
 	txv := texteditor.NewEditor(fr)
 	txv.SetName(fr.Name)

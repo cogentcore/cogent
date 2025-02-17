@@ -20,6 +20,8 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 )
@@ -64,7 +66,7 @@ var (
 )
 
 // NewDebugger returns a new debugger for given supported file type
-func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
+func NewDebugger(sup fileinfo.Known, path, rootPath string, outbuf *lines.Lines, pars *cdebug.Params) (cdebug.GiDebug, error) {
 	df, ok := cdebug.Debuggers[sup]
 	if !ok {
 		err := fmt.Errorf("Code Debug: File type %v not supported -- change the MainLang in File/Project Settings.. to a supported language (Go only option so far)", sup)
@@ -104,7 +106,7 @@ type DebugPanel struct {
 	BBreaks []*cdebug.Break `set:"-" json:"-" xml:"-"`
 
 	// output from the debugger
-	OutputBuffer *texteditor.Buffer `set:"-" json:"-" xml:"-"`
+	OutputBuffer *lines.Lines `set:"-" json:"-" xml:"-"`
 
 	// parent code project
 	Code *Code `set:"-" json:"-" xml:"-"`
@@ -857,9 +859,9 @@ func (dv *DebugPanel) UpdateTab(tab string) {
 }
 
 // ConsoleText returns the console TextEditor
-func (dv *DebugPanel) ConsoleText() *texteditor.Editor {
+func (dv *DebugPanel) ConsoleText() *textcore.Editor {
 	tv := dv.Tabs()
-	cv := tv.TabByName(DebugTabConsole).Child(0).(*texteditor.Editor)
+	cv := tv.TabByName(DebugTabConsole).Child(0).(*textcore.Editor)
 	return cv
 }
 

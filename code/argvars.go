@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/textcore"
 )
 
 // ArgVarInfo has info about argument variables that fill in relevant values
@@ -84,7 +84,7 @@ var ArgVars = map[string]ArgVarInfo{
 type ArgVarVals map[string]string
 
 // Set sets the current values for arg variables -- prompts must be already set!
-func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *texteditor.Editor) {
+func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *textcore.Editor) {
 	if *avp == nil {
 		*avp = make(ArgVarVals, len(ArgVars))
 	}

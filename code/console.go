@@ -13,6 +13,7 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
+	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/texteditor"
 )
 
@@ -32,7 +33,7 @@ type Console struct {
 	StderrRead *os.File `json:"-" xml:"-"`
 
 	// text buffer holding all output
-	Buffer *texteditor.Buffer `json:"-" xml:"-"`
+	Buffer *lines.Lines `json:"-" xml:"-"`
 
 	// set to true to cancel monitoring
 	Cancel bool `json:"-" xml:"-"`

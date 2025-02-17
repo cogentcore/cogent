@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/text/parse/lexer"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/text/textpos"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBind(t *testing.T) {
-	tv := texteditor.Editor{}
+	tv := textcore.Editor{}
 	tv.CursorPos = textpos.Pos{22, 44}
 	tv.SelectRegion.Start = textpos.Pos{11, 14}
 	tv.SelectRegion.End = textpos.Pos{55, 0}

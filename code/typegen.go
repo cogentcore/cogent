@@ -8,8 +8,8 @@ import (
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/parse/syms"
+	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/parse/syms"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
@@ -96,7 +96,7 @@ func (t *FindPanel) SetTime(v time.Time) *FindPanel { t.Time = v; return t }
 // compiled regexp
 func (t *FindPanel) SetRe(v *regexp.Regexp) *FindPanel { t.Re = v; return t }
 
-var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.PreviewPanel", IDName: "preview-panel", Doc: "PreviewPanel is a widget that displays an interactive live preview of a\nMD, HTML, or SVG file currently open.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "code", Doc: "code is the parent [Code]."}, {Name: "text", Doc: "text is the text editor whose content we are previewing."}}})
+var _ = types.AddType(&types.Type{Name: "cogentcore.org/cogent/code.PreviewPanel", IDName: "preview-panel", Doc: "PreviewPanel is a widget that displays an interactive live preview of a\nMD, HTML, or SVG file currently open.", Embeds: []types.Field{{Name: "Frame"}}, Fields: []types.Field{{Name: "code", Doc: "code is the parent [Code]."}, {Name: "lastRendered", Doc: "lastRendered is the content that was last rendered in the preview."}}})
 
 // NewPreviewPanel returns a new [PreviewPanel] with the given optional parent:
 // PreviewPanel is a widget that displays an interactive live preview of a

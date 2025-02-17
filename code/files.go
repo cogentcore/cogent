@@ -16,8 +16,8 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/text/parse/lexer"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/tree"
 )
 
@@ -248,7 +248,7 @@ func (cv *Code) FileNodeForFile(fpath string, add bool) *filetree.Node {
 // TextBufForFile returns TextBuf for given file path.
 // add: if not found in existing tree and external files, then if add is true,
 // it is added to the ExtFiles list.
-func (cv *Code) TextBufForFile(fpath string, add bool) *texteditor.Buffer {
+func (cv *Code) TextBufForFile(fpath string, add bool) *lines.Lines {
 	fn := cv.FileNodeForFile(fpath, add)
 	if fn == nil {
 		return nil

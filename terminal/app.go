@@ -26,6 +26,7 @@ import (
 	"cogentcore.org/core/keymap"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/lab/goal/interpreter"
@@ -78,7 +79,7 @@ func (a *App) Init() {
 			tree.AddChildAt(w, "dir", func(w *core.Text) {
 				w.SetText(a.Dir)
 			})
-			tree.AddChild(w, func(w *texteditor.Editor) {
+			tree.AddChild(w, func(w *textcore.Editor) {
 				w.Buffer.SetLanguage(fileinfo.Go)
 				w.Buffer.Options.LineNumbers = false
 
