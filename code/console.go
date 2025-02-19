@@ -14,7 +14,7 @@ import (
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/text/lines"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/textcore"
 )
 
 // Console redirects our os.Stdout and os.Stderr to a buffer for display within app
@@ -64,7 +64,7 @@ func (cn *Console) Init(logFile string) {
 	os.Stdout = cn.StdoutWrite
 	os.Stderr = cn.StderrWrite
 	log.SetOutput(cn.StderrWrite)
-	cn.Buffer = texteditor.NewBuffer()
+	cn.Buffer = textcore.NewLines()
 	cn.Buffer.Options.LineNumbers = false
 	cn.Buffer.Filename = core.Filename("console-buf")
 	if logFile != "" {
@@ -87,7 +87,7 @@ func (cn *Console) Close() {
 // MonitorOut monitors std output and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorOut() {
-	obuf := texteditor.OutputBuffer{}
+	obuf := textcore.OutputBuffer{}
 	obuf.SetOutput(cn.StdoutRead).SetBuffer(cn.Buffer).SetMarkupFunc(MarkupStdout)
 	obuf.MonitorOutput()
 }
@@ -95,7 +95,7 @@ func (cn *Console) MonitorOut() {
 // MonitorErr monitors std error and appends it to the buffer
 // should be in a separate routine
 func (cn *Console) MonitorErr() {
-	obuf := texteditor.OutputBuffer{}
+	obuf := textcore.OutputBuffer{}
 	obuf.SetOutput(cn.StderrRead).SetBuffer(cn.Buffer).SetMarkupFunc(MarkupStderr)
 	obuf.MonitorOutput()
 }

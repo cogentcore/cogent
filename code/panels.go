@@ -10,7 +10,6 @@ import (
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/textcore"
-	"cogentcore.org/core/texteditor"
 )
 
 // PanelIsOpen returns true if the given panel has not been collapsed and is avail
@@ -126,7 +125,7 @@ func (cv *Code) RecycleTabTextEditor(name string, buf *lines.Lines) *textcore.Ed
 	if fr.HasChildren() {
 		return fr.Child(0).(*textcore.Editor)
 	}
-	txv := texteditor.NewEditor(fr)
+	txv := textcore.NewEditor(fr)
 	txv.SetName(fr.Name)
 	fr.Styler(func(s *styles.Style) {
 		// critical to not add additional scrollbars: texteditor does it

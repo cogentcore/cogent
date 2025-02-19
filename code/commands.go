@@ -25,10 +25,10 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/lexer"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/highlighting"
+	"cogentcore.org/core/text/textcore"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/mattn/go-shellwords"
 )
@@ -505,7 +505,7 @@ func (cm *Command) RunBuf(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool {
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Start()
 		if err == nil {
-			obuf := texteditor.OutputBuffer{}
+			obuf := textcore.OutputBuffer{}
 			obuf.SetOutput(stdout).SetBuffer(buf).SetMarkupFunc(cm.MarkupCmdOutput)
 			obuf.MonitorOutput()
 		}
@@ -542,7 +542,7 @@ func (cm *Command) AppendCmdOut(cv *Code, buf *lines.Lines, out []byte) {
 	mlns := bytes.Join(outmus, lfb)
 	mlns = append(mlns, lfb...)
 
-	buf.AppendTextMarkup(out, mlns, texteditor.EditSignal)
+	buf.AppendTextMarkup(out, mlns)
 	buf.AutoScrollEditors()
 }
 
@@ -577,8 +577,8 @@ func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err erro
 			cv.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
 		fsb := []byte(finstat)
-		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)
-		buf.AppendTextLineMarkup(fsb, cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
+		buf.AppendTextLineMarkup([]byte(""), []byte(""))
+		buf.AppendTextLineMarkup(fsb, cm.MarkupCmdOutput(fsb))
 		buf.AutoScrollEditors()
 		if cm.Focus {
 			cv.FocusOnTabs()

@@ -16,8 +16,8 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/text/textcore"
-	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 )
 

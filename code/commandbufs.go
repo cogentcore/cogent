@@ -17,7 +17,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/textcore"
-	"cogentcore.org/core/texteditor"
 )
 
 // RecycleCmdBuf creates the buffer for command output, or returns
@@ -30,7 +29,7 @@ func (cv *Code) RecycleCmdBuf(cmdName string) (*lines.Lines, bool) {
 		buf.SetText(nil)
 		return buf, false
 	}
-	buf := texteditor.NewBuffer()
+	buf := textcore.NewLines()
 	buf.SetText(nil)
 	cv.CmdBufs[cmdName] = buf
 	buf.Autosave = false
@@ -150,7 +149,7 @@ func (cv *Code) ExecCmdFileNode(fn *filetree.Node) {
 // SetArgVarVals sets the ArgVar values for commands, from Code values
 func (cv *Code) SetArgVarVals() {
 	tv := cv.ActiveTextEditor()
-	tve := texteditor.AsEditor(tv)
+	tve := textcore.AsEditor(tv)
 	if tv == nil || tv.Buffer == nil {
 		cv.ArgVals.Set("", &cv.Settings, tve)
 	} else {

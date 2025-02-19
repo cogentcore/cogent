@@ -19,15 +19,14 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/parse"
 	"cogentcore.org/core/text/parse/complete"
 	"cogentcore.org/core/text/parse/parser"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/text"
 )
 
 // CursorToHistPrev moves back to the previous history item.
@@ -65,7 +64,7 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 
 	ld = lp.Lang.Lookup(sfs, txt, textpos.Pos{posLine, posChar})
 	if len(ld.Text) > 0 {
-		texteditor.TextDialog(nil, "Lookup: "+txt, string(ld.Text))
+		textcore.TextDialog(nil, "Lookup: "+txt, string(ld.Text))
 		return ld
 	}
 	if ld.Filename == "" {
@@ -94,13 +93,13 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 	}
 	title := "Lookup: " + txt
 
-	tb := texteditor.NewBuffer().SetText(tx).SetFilename(ld.Filename)
+	tb := textcore.NewBuffer().SetText(tx).SetFilename(ld.Filename)
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Options.LineNumbers = cv.Settings.Editor.LineNumbers
 
 	d := core.NewBody(title).SetData(&ld)
 	core.NewText(d).SetType(core.TextSupporting).SetText(prmpt)
-	tv := texteditor.NewEditor(d).SetBuffer(tb)
+	tv := textcore.NewEditor(d).SetBuffer(tb)
 	tv.Styler(func(s *styles.Style) {
 		s.Grow.Set(1, 1)
 	})
@@ -328,7 +327,7 @@ func (cv *Code) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:a
 	bstr := fnb.Buffer.Strings(false)
 	_, _ = astr, bstr
 
-	texteditor.DiffEditorDialog(cv, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
+	textcore.DiffEditorDialog(cv, "Diff File View:", astr, bstr, string(fna.Buffer.Filename), string(fnb.Buffer.Filename), "", "")
 }
 
 // CountWords counts number of words (and lines) in active file
@@ -364,9 +363,9 @@ func (cv *Code) CountWordsRegion() string { //types:add
 
 // TextLinkHandler is the Code handler for text links -- preferred one b/c
 // directly connects to correct Code project
-func TextLinkHandler(tl paint.TextLink) bool {
+func TextLinkHandler(tl rich.Hyperlink) bool {
 	// todo:
-	// tve := texteditor.AsEditor(tl.Widget)
+	// tve := textcore.AsEditor(tl.Widget)
 	// ftv, _ := tl.Widget.Embed(core.KiT_TextEditor).(*textcore.Editor)
 	// gek := tl.Widget.ParentByType(KiT_Code, true)
 	// if gek != nil {

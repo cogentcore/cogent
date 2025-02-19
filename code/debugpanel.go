@@ -22,7 +22,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/textcore"
-	"cogentcore.org/core/texteditor"
 	"cogentcore.org/core/tree"
 )
 
@@ -140,11 +139,11 @@ func (dv *DebugPanel) InitTabs() {
 		return
 	}
 	dtab, _ := w.NewTab(DebugTabConsole)
-	ctv := texteditor.NewEditor(dtab)
+	ctv := textcore.NewEditor(dtab)
 	ctv.SetName("dbg-console")
 	ConfigOutputTextEditor(ctv)
 	dv.State.BlankState()
-	dv.OutputBuffer = texteditor.NewBuffer()
+	dv.OutputBuffer = textcore.NewLines()
 	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
 	dv.State.Breaks = nil // get rid of dummy
 	dv.OutputBuffer.Options.LineNumbers = false

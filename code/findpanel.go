@@ -22,10 +22,9 @@ import (
 	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 )
 
@@ -108,7 +107,7 @@ func (fv *FindPanel) Params() *FindParams {
 // ShowResults shows the results in the buffer
 func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	ftv := fv.TextEditor()
-	fbuf := ftv.Buffer
+	fbuf := ftv.Lines
 	fbuf.Options.LineNumbers = false
 	outlns := make([][]byte, 0, 100)
 	outmus := make([][]byte, 0, 100) // markups
@@ -142,7 +141,7 @@ func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	ltxt := bytes.Join(outlns, []byte("\n"))
 	mtxt := bytes.Join(outmus, []byte("\n"))
 	fbuf.SetReadOnly(true)
-	fbuf.AppendTextMarkup(ltxt, mtxt, texteditor.EditSignal)
+	fbuf.AppendTextMarkup(ltxt, mtxt)
 	ftv.CursorStartDoc()
 
 	fv.Update()
@@ -213,24 +212,24 @@ func (fv *FindPanel) ReplaceAction() bool {
 		}
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buffer.AdjustRegion(reg)
+	reg = tv.Lines.AdjustRegion(reg)
 	if !reg.IsNil() {
 		if fp.Regexp {
-			rg := tv.Buffer.Region(reg.Start, reg.End)
+			rg := tv.Lines.Region(reg.Start, reg.End)
 			b := rg.ToBytes()
 			rb := fv.Re.ReplaceAll(b, []byte(fp.Replace))
-			tv.Buffer.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), texteditor.EditSignal, false)
+			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, string(rb), false)
 		} else {
 			// MatchCase only if doing IgnoreCase
-			tv.Buffer.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, texteditor.EditSignal, fp.IgnoreCase)
+			tv.Lines.ReplaceText(reg.Start, reg.End, reg.Start, fp.Replace, fp.IgnoreCase)
 		}
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Line
 		st := textpos.Pos{Ln: ftvln, Ch: 0}
-		len := ftv.Buffer.LineLen(ftvln)
+		len := ftv.Lines.LineLen(ftvln)
 		en := textpos.Pos{Ln: ftvln, Ch: len}
-		ftv.Buffer.DeleteText(st, en, texteditor.EditSignal)
+		ftv.Lines.DeleteText(st, en)
 	}
 
 	tv.ClearHighlights()
@@ -324,10 +323,10 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 		return false
 	}
 	reg.Time.SetTime(fv.Time)
-	reg = tv.Buffer.AdjustRegion(reg)
+	reg = tv.Lines.AdjustRegion(reg)
 	find := fv.Params().Find
-	texteditor.PrevISearchString = find
-	tve := texteditor.AsEditor(tv)
+	textcore.PrevISearchString = find
+	tve := textcore.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
 	tv.SetCursorTarget(reg.Start)
 	tv.NeedsLayout()
@@ -339,7 +338,7 @@ func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, fbStLn, fCount int
 	lnka := []byte(`<a href="`)
 	lnkasz := len(lnka)
 
-	fb := ftv.Buffer
+	fb := ftv.Lines
 
 	if len(tv.Highlights) != fCount { // highlight
 		hi := make([]text.Region, fCount)
@@ -375,7 +374,7 @@ func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, fbStLn, fCount int
 
 // TextEditorLay returns the find results TextEditor
 func (fv *FindPanel) TextEditor() *textcore.Editor {
-	return texteditor.AsEditor(fv.ChildByName("findtext", 1))
+	return textcore.AsEditor(fv.ChildByName("findtext", 1))
 }
 
 // makeFindToolbar
@@ -403,7 +402,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 				}
 				fvtv := fv.TextEditor()
 				if fvtv != nil {
-					fvtv.Buffer.SetText(nil)
+					fvtv.Lines.SetText(nil)
 				}
 			} else {
 				stringsx.InsertFirstUnique(&fv.Params().FindHist, find, core.SystemSettings.SavedPathsMax)

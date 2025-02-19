@@ -9,10 +9,11 @@ import (
 
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
+	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/text/spell"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/text"
+	"cogentcore.org/core/text/text"
+	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/tree"
 
 	"cogentcore.org/core/core"
@@ -286,7 +287,7 @@ func (sv *SpellPanel) Change() {
 	st := sv.UnkStartPos()
 	en := sv.UnkEndPos()
 	ct := sv.ChangeText()
-	tv.Buffer.ReplaceText(st, en, st, ct.Text(), texteditor.EditSignal, texteditor.ReplaceNoMatchCase)
+	tv.Lines.ReplaceText(st, en, st, ct.Text(), lines.ReplaceNoMatchCase)
 	nwrs := tv.Buffer.AdjustedTagsLine(sv.Errs, sv.CurLn) // update tags
 	if len(nwrs) == len(sv.Errs)-1 && sv.CurIndex > 0 {   // Adjust got rid of changed one..
 		sv.CurIndex--

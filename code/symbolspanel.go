@@ -16,8 +16,8 @@ import (
 	"cogentcore.org/core/styles/units"
 	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/text/parse/syms"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/text/token"
-	"cogentcore.org/core/texteditor/text"
 	"cogentcore.org/core/tree"
 )
 
