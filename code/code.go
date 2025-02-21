@@ -223,8 +223,8 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				s.Min.X.Ch(20)
 				s.Min.Y.Em(5)
 				s.SetAbilities(true, abilities.ScrollableUnfocused)
-				if w.Buffer != nil {
-					w.SetReadOnly(w.Buffer.Info.Generated)
+				if w.Lines != nil {
+					w.SetReadOnly(w.Lines.FileInfo().Generated)
 				}
 			})
 			w.OnFocus(func(e events.Event) {

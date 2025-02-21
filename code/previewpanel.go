@@ -39,17 +39,17 @@ func (pp *PreviewPanel) Init() {
 			return
 		}
 		ed := pp.code.ActiveTextEditor()
-		if ed == nil || ed.Buffer == nil {
+		if ed == nil || ed.Lines == nil {
 			return
 		}
-		current := ed.Buffer.Bytes()
+		current := ed.Lines.Text()
 		if bytes.Equal(current, pp.lastRendered) {
 			return
 		}
 		pp.lastRendered = current
 		pp.DeleteChildren()
 
-		switch ed.Buffer.Info.Known {
+		switch ed.Lines.FileInfo().Known {
 		case fileinfo.Markdown:
 			htmlcore.ReadMD(htmlcore.NewContext(), pp, current)
 		case fileinfo.Html:

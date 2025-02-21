@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html"
 	"log"
 	"os"
 	"os/exec"
@@ -28,6 +27,8 @@ import (
 	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/runes"
 	"cogentcore.org/core/text/textcore"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/mattn/go-shellwords"
@@ -450,9 +451,9 @@ func (cm *Command) RunAfterPrompts(cv *Code, buf *lines.Lines) {
 	}
 	cds := cv.ArgVals.Bind(cdir)
 	err := os.Chdir(cds)
-	cm.AppendCmdOut(cv, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
+	cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
 	if err != nil {
-		cm.AppendCmdOut(cv, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
+		cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
 	}
 
 	if CmdWaitOverride || cm.Wait || len(cm.Cmds) > 1 {
@@ -488,7 +489,7 @@ func (cm *Command) RunBufWait(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool 
 	}
 	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
-	cm.AppendCmdOut(cv, buf, out)
+	cm.AppendCmdOut(cv, buf, []rune(string(out)))
 	return cm.RunStatus(cv, buf, cmdstr, err, out)
 }
 
@@ -506,7 +507,7 @@ func (cm *Command) RunBuf(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool {
 		err = cmd.Start()
 		if err == nil {
 			obuf := textcore.OutputBuffer{}
-			obuf.SetOutput(stdout).SetBuffer(buf).SetMarkupFunc(cm.MarkupCmdOutput)
+			obuf.SetOutput(stdout).SetLines(buf).SetMarkupFunc(cm.MarkupCmdOutput)
 			obuf.MonitorOutput()
 		}
 		err = cmd.Wait()
@@ -525,25 +526,20 @@ func (cm *Command) RunNoBuf(cv *Code, cma *CmdAndArgs) bool {
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(cv *Code, buf *lines.Lines, out []byte) {
+func (cm *Command) AppendCmdOut(cv *Code, buf *lines.Lines, out []rune) {
 	if buf == nil {
 		return
 	}
 
 	buf.SetReadOnly(true)
 
-	lns := bytes.Split(out, []byte("\n"))
+	lns := runes.Split(out, []rune("\n"))
 	sz := len(lns)
-	outmus := make([][]byte, sz)
+	outmus := make([]rich.Text, sz)
 	for i, txt := range lns {
-		outmus[i] = cm.MarkupCmdOutput(txt)
+		outmus[i] = cm.MarkupCmdOutput(buf, txt)
 	}
-	lfb := []byte("\n")
-	mlns := bytes.Join(outmus, lfb)
-	mlns = append(mlns, lfb...)
-
-	buf.AppendTextMarkup(out, mlns)
-	buf.AutoScrollEditors()
+	buf.AppendTextMarkup(lns, outmus)
 }
 
 // CmdOutStatusLen is amount of command output to include in the status update
@@ -576,10 +572,10 @@ func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err erro
 		if err != nil {
 			cv.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
-		fsb := []byte(finstat)
-		buf.AppendTextLineMarkup([]byte(""), []byte(""))
-		buf.AppendTextLineMarkup(fsb, cm.MarkupCmdOutput(fsb))
-		buf.AutoScrollEditors()
+		fsb := []rune(finstat)
+		lns := [][]rune{[]rune(""), fsb}
+		mu := []rich.Text{rich.NewPlainText(nil), cm.MarkupCmdOutput(buf, fsb)}
+		buf.AppendTextMarkup(lns, mu)
 		if cm.Focus {
 			cv.FocusOnTabs()
 		}
@@ -593,22 +589,22 @@ func (cm *Command) LangMatch(lang fileinfo.Known) bool {
 	return fileinfo.IsMatch(cm.Lang, lang)
 }
 
-func (cm *Command) MarkupCmdOutput(out []byte) []byte {
+func (cm *Command) MarkupCmdOutput(buf *lines.Lines, out []rune) rich.Text {
 	lexName := ""
 	cmdnm := strings.ToLower(cm.Name)
 	switch {
 	case strings.Contains(cmdnm, "diff"):
 		lexName = cmdnm
 	}
-	return MarkupCmdOutput(out, lexName)
+	return MarkupCmdOutput(buf, out, lexName)
 }
 
 // MarkupCmdOutput applies links to the first element in command output line
 // if it looks like a file name / position, and runs markup using given lexer
 // name if provided (default is "bash")
-func MarkupCmdOutput(out []byte, lexName string) []byte {
+func MarkupCmdOutput(buf *lines.Lines, out []rune, lexName string) rich.Text {
 	if len(out) == 0 {
-		return out
+		return rich.NewPlainText(nil)
 	}
 	clex := lexers.Get("bash")
 	if lexName != "" {
@@ -617,14 +613,16 @@ func MarkupCmdOutput(out []byte, lexName string) []byte {
 			clex = nl
 		}
 	}
-	uout := html.UnescapeString(string(out))
-	flds := strings.Fields(uout)
-	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	ctags, _ := highlighting.ChromaTagsLine(clex, uout)
-	mu := highlighting.MarkupLine([]rune(uout), ctags, nil, highlighting.NoEscapeHTML)
-	if len(link) > 0 {
-		mu = bytes.Replace(mu, orig, link, -1)
-	}
+	sout := string(out)
+	flds := strings.Fields(sout)
+	_ = flds
+	// todo:
+	// orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	ctags, _ := highlighting.ChromaTagsLine(clex, sout)
+	mu := highlighting.MarkupLineRich(buf.Highlighter.Style, buf.FontStyle(), out, ctags, nil)
+	// if len(link) > 0 {
+	// 	mu = bytes.Replace(mu, orig, link, -1)
+	// }
 	return mu
 }
 

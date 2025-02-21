@@ -119,20 +119,17 @@ func (fn *FileNode) ContextMenu(m *core.Scene) {
 type OpenNodes []*filetree.Node
 
 // Add adds given node to list of open nodes -- if already on the list it is
-// moved to the top -- returns true if actually added.
+// moved to the top.  returns true if actually added.
 // Connects to fn.TextBuf signal and auto-closes when buffer closes.
 func (on *OpenNodes) Add(fn *filetree.Node) bool {
 	added := on.AddImpl(fn)
 	if !added {
 		return added
 	}
-	if fn.Buffer != nil {
-		// fn.Buf.TextBufSig.Connect(fn.This, func(recv, send tree.Node, sig int64, data any) {
-		// 	if sig == int64(texteditor.BufClosed) {
-		// 		fno, _ := recv.Embed(core.KiT_FileNode).(*filetree.Node)
-		// 		on.Delete(fno)
-		// 	}
-		// })
+	if fn.Lines != nil {
+		fn.Lines.OnClose(fn.LinesViewId, func(e events.Event) {
+			on.Delete(fn)
+		})
 	}
 	return added
 }

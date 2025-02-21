@@ -143,11 +143,12 @@ func (dv *DebugPanel) InitTabs() {
 	ctv.SetName("dbg-console")
 	ConfigOutputTextEditor(ctv)
 	dv.State.BlankState()
-	dv.OutputBuffer = textcore.NewLines()
-	dv.OutputBuffer.Filename = core.Filename("debug-outbuf")
+	dv.OutputBuffer = lines.NewLines()
+	dv.OutputBuffer.SetFilename("debug-outbuf")
+	dv.OutputBuffer.SetReadOnly(true)
 	dv.State.Breaks = nil // get rid of dummy
-	dv.OutputBuffer.Options.LineNumbers = false
-	ctv.SetBuffer(dv.OutputBuffer)
+	dv.OutputBuffer.Settings.LineNumbers = false
+	ctv.SetLines(dv.OutputBuffer)
 
 	bv, _ := w.NewTab(DebugTabBreaks)
 	tree.AddChild(bv, func(w *core.Table) {
@@ -546,7 +547,7 @@ func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		tb.DeleteLineColor(line - 1)
-		tb.Update()
+		tb.SendInput()
 	}
 }
 
@@ -569,7 +570,7 @@ func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSt
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
 		tb.SetLineColor(line-1, DebugBreakColors[stat])
-		tb.Update()
+		tb.SendInput()
 	}
 }
 
@@ -732,9 +733,9 @@ func (dv *DebugPanel) ShowFile(fpath string, line int) {
 func (dv *DebugPanel) SetCurPCInBuf(fpath string, line int) {
 	tb := dv.Code.TextBufForFile(fpath, false)
 	if tb != nil {
-		if !tb.HasLineColor(line - 1) {
+		if _, has := tb.LineColor(line - 1); !has {
 			tb.SetLineColor(line-1, DebugBreakColors[DebugPCCurrent])
-			tb.Update()
+			tb.SendInput()
 			dv.CurFileLoc.FPath = fpath
 			dv.CurFileLoc.Line = line
 		}
@@ -750,7 +751,7 @@ func (dv *DebugPanel) DeleteCurPCInBuf() {
 		tb := dv.Code.TextBufForFile(fpath, false)
 		if tb != nil {
 			tb.DeleteLineColor(line - 1)
-			tb.Update()
+			tb.SendInput()
 		}
 	}
 	dv.CurFileLoc.FPath = ""

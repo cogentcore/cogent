@@ -16,15 +16,15 @@ import (
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/lines"
-	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/text/textcore"
+	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/tree"
 )
 
 // ConfigTextBuffer configures the text buffer according to the settings.
 func (cv *Code) ConfigTextBuffer(tb *lines.Lines) {
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
-	tb.Options.EditorSettings = cv.Settings.Editor
+	tb.Settings.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
 	if tb.Complete != nil {
 		tb.Complete.LookupFunc = cv.LookupFun
@@ -61,13 +61,13 @@ func (cv *Code) TextEditorIndex(av *TextEditor) int {
 // TextEditorForFileNode finds a TextEditor that is viewing given FileNode,
 // and its index, or false if none is
 func (cv *Code) TextEditorForFileNode(fn *filetree.Node) (*TextEditor, int, bool) {
-	if fn.Buffer == nil {
+	if fn.Lines == nil {
 		return nil, -1, false
 	}
-	cv.ConfigTextBuffer(fn.Buffer)
+	cv.ConfigTextBuffer(fn.Lines)
 	for i := 0; i < NTextEditors; i++ {
 		tv := cv.TextEditorByIndex(i)
-		if tv != nil && tv.Buffer != nil && tv.Buffer == fn.Buffer && cv.PanelIsOpen(i+TextEditor1Index) {
+		if tv != nil && tv.Lines != nil && tv.Lines == fn.Lines && cv.PanelIsOpen(i+TextEditor1Index) {
 			return tv, i, true
 		}
 	}
@@ -77,11 +77,11 @@ func (cv *Code) TextEditorForFileNode(fn *filetree.Node) (*TextEditor, int, bool
 // OpenNodeForTextEditor finds the FileNode that a given TextEditor is
 // viewing, returning its index within OpenNodes list, or false if not found
 func (cv *Code) OpenNodeForTextEditor(tv *TextEditor) (*filetree.Node, int, bool) {
-	if tv.Buffer == nil {
+	if tv.Lines == nil {
 		return nil, -1, false
 	}
 	for i, ond := range cv.OpenNodes {
-		if ond.Buffer == tv.Buffer {
+		if ond.Lines == tv.Lines {
 			return ond, i, true
 		}
 	}
@@ -100,8 +100,8 @@ func (cv *Code) TextEditorForFile(fnm core.Filename) (*TextEditor, int, bool) {
 
 // SetActiveFileInfo sets the active file info from text
 func (cv *Code) SetActiveFileInfo(buf *lines.Lines) {
-	cv.ActiveFilename = buf.Filename
-	cv.ActiveLang = buf.Info.Known
+	cv.ActiveFilename = fsx.Filename(buf.Filename())
+	cv.ActiveLang = buf.FileInfo().Known
 	cv.ActiveVCSInfo = ""
 	cv.ActiveVCS = nil
 	fn := cv.FileNodeForFile(string(cv.ActiveFilename), false)
@@ -126,8 +126,8 @@ func (cv *Code) SetActiveTextEditor(av *TextEditor) int {
 		return -1
 	}
 	cv.ActiveTextEditorIndex = idx
-	if av.Buffer != nil {
-		cv.SetActiveFileInfo(av.Buffer)
+	if av.Lines != nil {
+		cv.SetActiveFileInfo(av.Lines)
 	}
 	cv.SetStatus("")
 	return idx
@@ -143,9 +143,9 @@ func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
 	}
 	cv.ActiveTextEditorIndex = idx
 	av := cv.ActiveTextEditor()
-	if av.Buffer != nil {
-		cv.SetActiveFileInfo(av.Buffer)
-		av.Buffer.FileModCheck()
+	if av.Lines != nil {
+		cv.SetActiveFileInfo(av.Lines)
+		av.Lines.FileModCheck()
 	}
 	cv.SetStatus("")
 	av.SetFocus()
@@ -157,7 +157,7 @@ func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
 // it is the next one (if visible)
 func (cv *Code) NextTextEditor() (*TextEditor, int) {
 	av := cv.TextEditorByIndex(cv.ActiveTextEditorIndex)
-	if av.Buffer == nil {
+	if av.Lines == nil {
 		return av, cv.ActiveTextEditorIndex
 	}
 	nxt := (cv.ActiveTextEditorIndex + 1) % NTextEditors
@@ -176,15 +176,15 @@ func (cv *Code) SwapTextEditors() bool {
 
 	tva := cv.TextEditorByIndex(0)
 	tvb := cv.TextEditorByIndex(1)
-	bufa := tva.Buffer
-	bufb := tvb.Buffer
-	tva.SetBuffer(bufb)
-	tvb.SetBuffer(bufa)
+	bufa := tva.Lines
+	bufb := tvb.Lines
+	tva.SetLines(bufb)
+	tvb.SetLines(bufa)
 	cv.SetStatus("swapped buffers")
 	return true
 }
 
-func (cv *Code) OpenFileAtRegion(filename core.Filename, tr text.Region) (tv *TextEditor, ok bool) {
+func (cv *Code) OpenFileAtRegion(filename core.Filename, tr textpos.Region) (tv *TextEditor, ok bool) {
 	tv, _, ok = cv.LinkViewFile(filename)
 	if tv == nil {
 		return nil, false
@@ -201,7 +201,7 @@ func (cv *Code) OpenFileAtRegion(filename core.Filename, tr text.Region) (tv *Te
 // ParseOpenFindURL parses and opens given find:/// url from Find, return text
 // region encoded in url, and starting line of results in find buffer, and
 // number of results returned -- for parsing all the find results
-func (cv *Code) ParseOpenFindURL(ur string, ftv *textcore.Editor) (tv *TextEditor, reg text.Region, findBufStLn, findCount int, ok bool) {
+func (cv *Code) ParseOpenFindURL(ur string, ftv *textcore.Editor) (tv *TextEditor, reg textpos.Region, findBufStLn, findCount int, ok bool) {
 	up, err := url.Parse(ur)
 	if err != nil {
 		log.Printf("FindPanel OpenFindURL parse err: %v\n", err)
@@ -244,9 +244,9 @@ func (cv *Code) UpdateTextButtons() {
 		tv := cv.TextEditorByIndex(i)
 		mb := cv.TextEditorButtonByIndex(i)
 		txnm := "<no file>"
-		if tv.Buffer != nil {
-			txnm = fsx.DirAndFile(string(tv.Buffer.Filename))
-			if tv.Buffer.IsNotSaved() {
+		if tv.Lines != nil {
+			txnm = fsx.DirAndFile(tv.Lines.Filename())
+			if tv.Lines.IsNotSaved() {
 				txnm += " <b>*</b>"
 			} else {
 				txnm += "   "

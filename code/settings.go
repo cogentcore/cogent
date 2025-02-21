@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/text/text"
 	"cogentcore.org/core/tree"
 )
 
@@ -183,7 +184,7 @@ type ProjectSettings struct { //types:add
 	Files FileSettings
 
 	// editor settings
-	Editor core.EditorSettings `display:"inline"`
+	Editor text.EditorSettings `display:"inline"`
 
 	// current named-split config in use for configuring the splitters
 	SplitName SplitName
@@ -335,13 +336,13 @@ func (cv *Code) ApplySettings() {
 	if len(cv.Children) > 0 {
 		for i := 0; i < NTextEditors; i++ {
 			tv := cv.TextEditorByIndex(i)
-			if tv.Buffer != nil {
-				cv.ConfigTextBuffer(tv.Buffer)
+			if tv.Lines != nil {
+				cv.ConfigTextBuffer(tv.Lines)
 			}
 		}
 		for _, ond := range cv.OpenNodes {
-			if ond.Buffer != nil {
-				cv.ConfigTextBuffer(ond.Buffer)
+			if ond.Lines != nil {
+				cv.ConfigTextBuffer(ond.Lines)
 			}
 		}
 		cv.ApplySplitsSettings(cv.Splits())

@@ -24,12 +24,12 @@ import (
 // SaveActiveView saves the contents of the currently active texteditor
 func (cv *Code) SaveActiveView() { //types:add
 	tv := cv.ActiveTextEditor()
-	if tv.Buffer != nil {
+	if tv.Lines != nil {
 		cv.LastSaveTStamp = time.Now()
-		if tv.Buffer.Filename != "" {
-			tv.Buffer.Save()
+		if tv.Lines.Filename() != "" {
+			tv.Save()
 			cv.SetStatus("File Saved")
-			fnm := string(tv.Buffer.Filename)
+			fnm := tv.Lines.Filename()
 			fpath, _ := filepath.Split(fnm)
 			cv.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 			cv.RunPostCmdsActiveView()
@@ -56,10 +56,10 @@ func (cv *Code) CallSaveActiveViewAs(ctx core.Widget) {
 // currently active texteditor
 func (cv *Code) SaveActiveViewAs(filename core.Filename) { //types:add
 	tv := cv.ActiveTextEditor()
-	if tv.Buffer != nil {
+	if tv.Lines != nil {
 		cv.LastSaveTStamp = time.Now()
-		ofn := tv.Buffer.Filename
-		tv.Buffer.SaveAsFunc(filename, func(canceled bool) {
+		ofn := tv.Lines.Filename()
+		tv.SaveAsFunc(string(filename), func(canceled bool) {
 			if canceled {
 				cv.SetStatus(fmt.Sprintf("File %v NOT Saved As: %v", ofn, filename))
 				return
@@ -69,8 +69,8 @@ func (cv *Code) SaveActiveViewAs(filename core.Filename) { //types:add
 			cv.Files.UpdatePath(string(filename)) // update everything in dir -- will have removed autosave
 			fn, ok := cv.Files.FindFile(string(filename))
 			if ok {
-				if fn.Buffer != nil {
-					fn.Buffer.Revert()
+				if fn.Lines != nil {
+					fn.Lines.Revert()
 				}
 				cv.ViewFileNode(tv, cv.ActiveTextEditorIndex, fn)
 			}
@@ -82,11 +82,11 @@ func (cv *Code) SaveActiveViewAs(filename core.Filename) { //types:add
 // RevertActiveView revert active view to saved version
 func (cv *Code) RevertActiveView() { //types:add
 	tv := cv.ActiveTextEditor()
-	if tv.Buffer != nil {
-		cv.ConfigTextBuffer(tv.Buffer)
-		tv.Buffer.Revert()
-		tv.Buffer.Undos.Reset() // key implication of revert
-		fpath, _ := filepath.Split(string(tv.Buffer.Filename))
+	if tv.Lines != nil {
+		cv.ConfigTextBuffer(tv.Lines)
+		tv.Lines.Revert()
+		tv.Lines.UndoReset() // key implication of revert
+		fpath, _ := filepath.Split(tv.Lines.Filename())
 		cv.Files.UpdatePath(fpath) // update everything in dir -- will have removed autosave
 	}
 }
@@ -96,7 +96,7 @@ func (cv *Code) CloseActiveView() { //types:add
 	tv := cv.ActiveTextEditor()
 	ond, _, got := cv.OpenNodeForTextEditor(tv)
 	if got {
-		ond.Buffer.Close(func(canceled bool) {
+		tv.Close(func(canceled bool) {
 			if canceled {
 				cv.SetStatus(fmt.Sprintf("File %v NOT closed", ond.Filepath))
 				return
@@ -131,37 +131,37 @@ func (cv *Code) RunPostCmdsFileNode(fn *filetree.Node) bool {
 			if ptab >= 0 {
 				cv.Tabs().SelectTabIndex(ptab) // we stay at the previous tab
 			}
-			fn.Buffer.Revert()
+			fn.Lines.Revert()
 			return true
 		}
 	}
 	return false
 }
 
-// AutoSaveCheck checks for an autosave file and prompts user about opening it
+// AutosaveCheck checks for an autosave file and prompts user about opening it
 // -- returns true if autosave file does exist for a file that currently
 // unchanged (means just opened)
-func (cv *Code) AutoSaveCheck(tv *TextEditor, vidx int, fn *filetree.Node) bool {
+func (cv *Code) AutosaveCheck(tv *TextEditor, vidx int, fn *filetree.Node) bool {
 	if strings.HasPrefix(fn.Name, "#") && strings.HasSuffix(fn.Name, "#") {
-		fn.Buffer.Autosave = false
+		fn.Lines.Autosave = false
 		return false // we are the autosave file
 	}
-	fn.Buffer.Autosave = true
-	if tv.IsNotSaved() || !fn.Buffer.AutoSaveCheck() {
+	fn.Lines.Autosave = true
+	if tv.IsNotSaved() || !fn.Lines.AutosaveCheck() {
 		return false
 	}
-	cv.DiffFileNode(fn, core.Filename(fn.Buffer.AutoSaveFilename()))
+	cv.DiffFileNode(fn, core.Filename(fn.Lines.AutosaveFilename()))
 	d := core.NewBody("Autosave file exists")
 	core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("An auto-save file for file: %v exists; open it in the other text view (you can then do Save As to replace current file)?  If you don't open it, the next change made will overwrite it with a new one, erasing any changes.", fn.Name))
 	d.AddBottomBar(func(bar *core.Frame) {
 		core.NewButton(bar).SetText("Ignore and overwrite autosave file").OnClick(func(e events.Event) {
 			d.Close()
-			fn.Buffer.AutoSaveDelete()
-			cv.Files.UpdatePath(fn.Buffer.AutoSaveFilename()) // will update dir
+			fn.Lines.AutosaveDelete()
+			cv.Files.UpdatePath(fn.Lines.AutosaveFilename()) // will update dir
 		})
 		core.NewButton(bar).SetText("Open autosave file").OnClick(func(e events.Event) {
 			d.Close()
-			cv.NextViewFile(core.Filename(fn.Buffer.AutoSaveFilename()))
+			cv.NextViewFile(core.Filename(fn.Lines.AutosaveFilename()))
 		})
 	})
 	d.RunDialog(cv)
@@ -176,7 +176,7 @@ func (cv *Code) OpenFileNode(fn *filetree.Node) (bool, error) {
 	filetree.NodeHighlighting = core.AppearanceSettings.Highlighting // must be set prior to OpenBuf
 	nw, err := fn.OpenBuf()
 	if err == nil {
-		cv.ConfigTextBuffer(fn.Buffer)
+		cv.ConfigTextBuffer(fn.Lines)
 		cv.OpenNodes.Add(fn)
 		fn.Open()
 		fn.Update()
@@ -192,13 +192,13 @@ func (cv *Code) ViewFileNode(tv *TextEditor, vidx int, fn *filetree.Node) {
 	}
 
 	if tv.IsNotSaved() {
-		cv.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Buffer.Filename))
+		cv.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Lines.Filename()))
 	}
 	nw, err := cv.OpenFileNode(fn)
 	if err == nil {
-		tv.SetBuffer(fn.Buffer)
+		tv.SetLines(fn.Lines)
 		if nw {
-			cv.AutoSaveCheck(tv, vidx, fn)
+			cv.AutosaveCheck(tv, vidx, fn)
 		}
 		cv.SetActiveTextEditorIndex(vidx) // this calls FileModCheck
 	}
@@ -255,7 +255,7 @@ func (cv *Code) TextBufForFile(fpath string, add bool) *lines.Lines {
 	}
 	_, err := cv.OpenFileNode(fn)
 	if err == nil {
-		return fn.Buffer
+		return fn.Lines
 	}
 	return nil
 }
@@ -367,7 +367,7 @@ func (cv *Code) LinkViewFile(fnm core.Filename) (*TextEditor, int, bool) {
 func (cv *Code) ShowFile(fname string, ln int) (*TextEditor, error) {
 	tv, _, ok := cv.LinkViewFile(core.Filename(fname))
 	if ok {
-		tv.SetCursorTarget(textpos.Pos{Ln: ln - 1})
+		tv.SetCursorTarget(textpos.Pos{Line: ln - 1})
 		return tv, nil
 	}
 	return nil, fmt.Errorf("ShowFile: file named: %v not found\n", fname)
@@ -434,11 +434,11 @@ func (cv *Code) CloneActiveView() (*TextEditor, int) { //types:add
 // SaveAllOpenNodes saves all of the open filenodes to their current file names
 func (cv *Code) SaveAllOpenNodes() {
 	for _, ond := range cv.OpenNodes {
-		if ond.Buffer == nil {
+		if ond.Lines == nil {
 			continue
 		}
-		if ond.Buffer.IsNotSaved() {
-			ond.Buffer.Save()
+		if ond.Lines.IsNotSaved() {
+			ond.Lines.Save()
 			cv.RunPostCmdsFileNode(ond)
 		}
 	}
@@ -457,13 +457,13 @@ func (cv *Code) CloseOpenNodes(nodes []*FileNode) {
 	nn := len(cv.OpenNodes)
 	for ni := nn - 1; ni >= 0; ni-- {
 		ond := cv.OpenNodes[ni]
-		if ond.Buffer == nil {
+		if ond.Lines == nil {
 			continue
 		}
-		path := string(ond.Buffer.Filename)
+		path := ond.Lines.Filename()
 		for _, cnd := range nodes {
 			if strings.HasPrefix(path, string(cnd.Filepath)) {
-				ond.Buffer.Close(func(canceled bool) {
+				ond.Lines.Close(func(canceled bool) {
 					if canceled {
 						cv.SetStatus(fmt.Sprintf("File %v NOT closed -- recommended as file name changed!", ond.Filepath))
 						return

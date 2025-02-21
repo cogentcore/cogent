@@ -13,9 +13,9 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
 )
 
@@ -29,10 +29,10 @@ func (cv *Code) RecycleCmdBuf(cmdName string) (*lines.Lines, bool) {
 		buf.SetText(nil)
 		return buf, false
 	}
-	buf := textcore.NewLines()
-	buf.SetText(nil)
+	buf := lines.NewLines()
 	cv.CmdBufs[cmdName] = buf
 	buf.Autosave = false
+	buf.SetReadOnly(true)
 	// note: critical to NOT set this, otherwise overwrites our native markup
 	// buf.SetLanguage(fileinfo.Bash)
 	return buf, true
@@ -48,8 +48,8 @@ func (cv *Code) RecycleCmdTab(cmdName string) (*lines.Lines, *textcore.Editor, b
 		return nil, nil, false
 	}
 	ctv.SetReadOnly(true)
-	ctv.SetBuffer(buf)
-	ctv.LinkHandler = func(tl *paint.TextLink) {
+	ctv.SetLines(buf)
+	ctv.LinkHandler = func(tl *rich.Hyperlink) {
 		cv.OpenFileURL(tl.URL, ctv)
 	}
 	return buf, ctv, nw
@@ -150,10 +150,10 @@ func (cv *Code) ExecCmdFileNode(fn *filetree.Node) {
 func (cv *Code) SetArgVarVals() {
 	tv := cv.ActiveTextEditor()
 	tve := textcore.AsEditor(tv)
-	if tv == nil || tv.Buffer == nil {
+	if tv == nil || tv.Lines == nil {
 		cv.ArgVals.Set("", &cv.Settings, tve)
 	} else {
-		cv.ArgVals.Set(string(tv.Buffer.Filename), &cv.Settings, tve)
+		cv.ArgVals.Set(tv.Lines.Filename(), &cv.Settings, tve)
 	}
 }
 

@@ -153,14 +153,14 @@ func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *textcore.Ed
 
 	if tv != nil {
 		av["{CurLine}"] = fmt.Sprintf("%v", tv.CursorPos.Line)
-		av["{CurCol}"] = fmt.Sprintf("%v", tv.CursorPos.Ch)                  // not quite col
+		av["{CurCol}"] = fmt.Sprintf("%v", tv.CursorPos.Char)                // not quite col
 		av["{SelStartLine}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Line) // check for no sel
-		av["{SelStartCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ch)
-		av["{SelEndLine}"] = fmt.Sprintf("%v", tv.SelectRegion.End.Line) // check for no sel
-		av["{SelEndCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ch)  // check for no sel
-		av["{CurSel}"] = ""                                              // todo get sel
-		av["{CurLineText}"] = ""                                         // todo get cur line
-		av["{CurWord}"] = ""                                             // todo get word
+		av["{SelStartCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Char)
+		av["{SelEndLine}"] = fmt.Sprintf("%v", tv.SelectRegion.End.Line)  // check for no sel
+		av["{SelEndCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Char) // check for no sel
+		av["{CurSel}"] = ""                                               // todo get sel
+		av["{CurLineText}"] = ""                                          // todo get cur line
+		av["{CurWord}"] = ""                                              // todo get word
 	} else {
 		av["{CurLine}"] = ""
 		av["{CurCol}"] = ""

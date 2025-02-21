@@ -132,7 +132,7 @@ func (cv *Code) RecycleTabTextEditor(name string, buf *lines.Lines) *textcore.Ed
 		s.Overflow.Set(styles.OverflowHidden)
 	})
 	if buf != nil {
-		txv.SetBuffer(buf)
+		txv.SetLines(buf)
 	}
 	ConfigOutputTextEditor(txv)
 	tv.Update()

@@ -14,6 +14,7 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -61,7 +62,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	fv.Time = time.Now()
 	fv.UpdateTree()
 	ftv := fv.TextEditor()
-	ftv.SetBuffer(fbuf)
+	ftv.SetLines(fbuf)
 
 	root := filetree.AsNode(cv.Files)
 	atv := cv.ActiveTextEditor()
@@ -79,11 +80,11 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 				if err != nil {
 					log.Println(err)
 				} else {
-					cnt, matches := atv.Buffer.SearchRegexp(re)
+					cnt, matches := atv.Lines.SearchRegexp(re)
 					res = append(res, filetree.SearchResults{ond, cnt, matches})
 				}
 			} else {
-				cnt, matches := atv.Buffer.Search([]byte(find), ignoreCase, false)
+				cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
 				res = append(res, filetree.SearchResults{ond, cnt, matches})
 			}
 		}
@@ -99,7 +100,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 // Spell checks spelling in active text view
 func (cv *Code) Spell() { //types:add
 	txv := cv.ActiveTextEditor()
-	if txv == nil || txv.Buffer == nil {
+	if txv == nil || txv.Lines == nil {
 		return
 	}
 	spell.Spell.OpenUserCheck() // make sure latest file opened
@@ -117,7 +118,7 @@ func (cv *Code) Spell() { //types:add
 // Symbols displays the Symbols of a file or package
 func (cv *Code) Symbols() { //types:add
 	txv := cv.ActiveTextEditor()
-	if txv == nil || txv.Buffer == nil {
+	if txv == nil || txv.Lines == nil {
 		return
 	}
 	tv := cv.Tabs()
@@ -154,7 +155,7 @@ func (cv *Code) Debug() { //types:add
 // specification.
 func (cv *Code) DebugTest(testName string) { //types:add
 	txv := cv.ActiveTextEditor()
-	if txv == nil || txv.Buffer == nil {
+	if txv == nil || txv.Lines == nil {
 		return
 	}
 	tv := cv.Tabs()
@@ -164,7 +165,7 @@ func (cv *Code) DebugTest(testName string) { //types:add
 
 	cv.Settings.Debug.Mode = cdebug.Test
 	cv.Settings.Debug.TestName = testName
-	tstPath := string(txv.Buffer.Filename)
+	tstPath := txv.Lines.Filename()
 	dir := filepath.Base(filepath.Dir(tstPath))
 	dv := core.RecycleTabWidget[DebugPanel](tv, "Debug "+dir)
 	dv.Config(cv, fileinfo.Go, tstPath)
@@ -235,8 +236,8 @@ func (cv *Code) OpenConsoleTab() { //types:add
 		return
 	}
 	ctv.SetReadOnly(true)
-	if ctv.Buffer == nil || ctv.Buffer != TheConsole.Buffer {
-		ctv.SetBuffer(TheConsole.Buffer)
+	if ctv.Lines == nil || ctv.Lines != TheConsole.Lines {
+		ctv.SetLines(TheConsole.Lines)
 		ctv.OnChange(func(e events.Event) {
 			cv.SelectTabByName("Console")
 		})
@@ -289,14 +290,14 @@ func (cv *Code) UpdateStatusText() {
 	msg := ""
 	if tv != nil {
 		ln = tv.CursorPos.Line + 1
-		ch = tv.CursorPos.Ch
-		if tv.Buffer != nil {
-			fnm = cv.Files.RelativePathFrom(tv.Buffer.Filename)
-			if tv.Buffer.IsNotSaved() {
+		ch = tv.CursorPos.Char
+		if tv.Lines != nil {
+			fnm = cv.Files.RelativePathFrom(fsx.Filename(tv.Lines.Filename()))
+			if tv.Lines.IsNotSaved() {
 				fnm += "*"
 			}
-			if tv.Buffer.Info.Known != fileinfo.Unknown {
-				fnm += " (" + tv.Buffer.Info.Known.String() + ")"
+			if tv.Lines.FileInfo().Known != fileinfo.Unknown {
+				fnm += " (" + tv.Lines.FileInfo().Known.String() + ")"
 			}
 		}
 		if tv.ISearch.On {

@@ -5,12 +5,8 @@
 package code
 
 import (
-	"bytes"
 	"fmt"
-	"html"
-	"net/url"
 	"regexp"
-	"strings"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
@@ -19,10 +15,10 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/paint"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
-	"cogentcore.org/core/text/text"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/runes"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/tree"
@@ -88,7 +84,7 @@ func (fv *FindPanel) Init() {
 	})
 	tree.AddChildAt(fv, "findtext", func(w *textcore.Editor) {
 		ConfigOutputTextEditor(w)
-		w.LinkHandler = func(tl *paint.TextLink) {
+		w.LinkHandler = func(tl *rich.Hyperlink) {
 			fv.OpenFindURL(tl.URL, w)
 		}
 	})
@@ -108,44 +104,42 @@ func (fv *FindPanel) Params() *FindParams {
 func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	ftv := fv.TextEditor()
 	fbuf := ftv.Lines
-	fbuf.Options.LineNumbers = false
-	outlns := make([][]byte, 0, 100)
-	outmus := make([][]byte, 0, 100) // markups
+	sty := fbuf.FontStyle()
+	bold := *sty
+	bold.SetWeight(rich.Bold)
+	link := *sty
+	link.SetLink()
+	fbuf.Settings.LineNumbers = false
+	outlns := make([][]rune, 0, 100)
+	outmus := make([]rich.Text, 0, 100) // markups
 	for _, fs := range res {
 		fp := fs.Node.Info.Path
 		fn := fs.Node.RelativePath()
 		fbStLn := len(outlns) // find buf start ln
-		lstr := fmt.Sprintf(`%v: %v`, fn, fs.Count)
-		outlns = append(outlns, []byte(lstr))
-		mstr := fmt.Sprintf(`<b>%v</b>`, lstr)
-		outmus = append(outmus, []byte(mstr))
+		lstr := []rune(fmt.Sprintf(`%v: %v`, fn, fs.Count))
+		outlns = append(outlns, lstr)
+		outmus = append(outmus, rich.NewText(&bold, lstr))
 		for _, mt := range fs.Matches {
-			txt := bytes.TrimSpace(mt.Text)
-			txt = append([]byte{'\t'}, txt...)
-			ln := mt.Reg.Start.Line + 1
-			ch := mt.Reg.Start.Char + 1
-			ech := mt.Reg.End.Char + 1
-			fnstr := fmt.Sprintf("%v:%d:%d", fn, ln, ch)
-			nomu := bytes.Replace(txt, []byte("<mark>"), nil, -1)
-			nomu = bytes.Replace(nomu, []byte("</mark>"), nil, -1)
-			nomus := html.EscapeString(string(nomu))
-			lstr = fmt.Sprintf(`%v: %s`, fnstr, nomus) // note: has tab embedded at start of lstr
-
-			outlns = append(outlns, []byte(lstr))
-			mstr = fmt.Sprintf(`	<a href="find:///%v#R%vN%vL%vC%v-L%vC%v">%v</a>: %s`, fp, fbStLn, fs.Count, ln, ch, ln, ech, fnstr, txt)
-			outmus = append(outmus, []byte(mstr))
+			txt := runes.TrimSpace(mt.Text)
+			txt = append([]rune{'\t'}, txt...)
+			ln := mt.Region.Start.Line + 1
+			ch := mt.Region.Start.Char + 1
+			ech := mt.Region.End.Char + 1
+			fnstr := []rune(fmt.Sprintf("%v:%d:%d: ", fn, ln, ch))
+			outlns = append(outlns, append(fnstr, txt...))
+			url := fmt.Sprintf("find:///%v#R%vN%vL%vC%v-L%vC%v", fp, fbStLn, fs.Count, ln, ch, ln, ech)
+			mu := rich.Text{}
+			mu.AddLink(&link, url, string(fnstr))
+			mu.AddSpan(sty, txt)
+			outmus = append(outmus, mu)
 		}
-		outlns = append(outlns, []byte(""))
-		outmus = append(outmus, []byte(""))
 	}
-	ltxt := bytes.Join(outlns, []byte("\n"))
-	mtxt := bytes.Join(outmus, []byte("\n"))
 	fbuf.SetReadOnly(true)
-	fbuf.AppendTextMarkup(ltxt, mtxt)
+	fbuf.AppendTextMarkup(outlns, outmus)
 	ftv.CursorStartDoc()
 
 	fv.Update()
-	ftv.SetCursorShow(textpos.Pos{Ln: 0})
+	ftv.SetCursorShow(textpos.Pos{Line: 0})
 	ftv.NeedsLayout()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -181,14 +175,14 @@ func (fv *FindPanel) ReplaceAction() bool {
 	}
 	fp := fv.Params()
 	ftv := fv.TextEditor()
-	tl, ok := ftv.OpenLinkAt(ftv.CursorPos)
-	if !ok {
-		ok = ftv.CursorNextLink(false) // no wrap
+	tl, _ := ftv.OpenLinkAt(ftv.CursorPos)
+	if tl == nil {
+		ok := ftv.CursorNextLink(false) // no wrap
 		if !ok {
 			return false
 		}
-		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
-		if !ok {
+		tl, _ = ftv.OpenLinkAt(ftv.CursorPos)
+		if tl == nil {
 			return false
 		}
 	}
@@ -198,12 +192,12 @@ func (fv *FindPanel) ReplaceAction() bool {
 		return false
 	}
 	if reg.IsNil() {
-		ok = ftv.CursorNextLink(false) // no wrap
+		ok := ftv.CursorNextLink(false) // no wrap
 		if !ok {
 			return false
 		}
-		tl, ok = ftv.OpenLinkAt(ftv.CursorPos)
-		if !ok {
+		tl, _ = ftv.OpenLinkAt(ftv.CursorPos)
+		if tl == nil {
 			return false
 		}
 		tv, reg, _, _, ok = ge.ParseOpenFindURL(tl.URL, ftv)
@@ -226,9 +220,9 @@ func (fv *FindPanel) ReplaceAction() bool {
 
 		// delete the link for the just done replace
 		ftvln := ftv.CursorPos.Line
-		st := textpos.Pos{Ln: ftvln, Ch: 0}
+		st := textpos.Pos{Line: ftvln, Char: 0}
 		len := ftv.Lines.LineLen(ftvln)
-		en := textpos.Pos{Ln: ftvln, Ch: len}
+		en := textpos.Pos{Line: ftvln, Char: len}
 		ftv.Lines.DeleteText(st, en)
 	}
 
@@ -335,42 +329,13 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 
 // HighlightFinds highlights all the find results in ftv buffer
 func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, fbStLn, fCount int, find string) {
-	lnka := []byte(`<a href="`)
-	lnkasz := len(lnka)
-
-	fb := ftv.Lines
-
-	if len(tv.Highlights) != fCount { // highlight
-		hi := make([]text.Region, fCount)
-		for i := 0; i < fCount; i++ {
-			fln := fbStLn + 1 + i
-			if fln >= len(fb.Markup) {
-				continue
-			}
-			ltxt := fb.Markup[fln]
-			fpi := bytes.Index(ltxt, lnka)
-			if fpi < 0 {
-				continue
-			}
-			fpi += lnkasz
-			epi := fpi + bytes.Index(ltxt[fpi:], []byte(`"`))
-			lnk := string(ltxt[fpi:epi])
-			iup, err := url.Parse(lnk)
-			if err != nil {
-				continue
-			}
-			ireg := text.Region{}
-			lidx := strings.Index(iup.Fragment, "L")
-			ireg.FromString(iup.Fragment[lidx:])
-			ireg.Time.SetTime(fv.Time)
-			hi[i] = ireg
-		}
-		tv.Highlights = hi
+	if len(ftv.Highlights) == fCount {
+		return
 	}
+	ftv.HighlightAllLinks()
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//    GUI config
+////////    GUI config
 
 // TextEditorLay returns the find results TextEditor
 func (fv *FindPanel) TextEditor() *textcore.Editor {

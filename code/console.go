@@ -12,8 +12,8 @@ import (
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
-	"cogentcore.org/core/core"
 	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
 )
 
@@ -32,8 +32,8 @@ type Console struct {
 	// std err reader -- used to read os.Stderr
 	StderrRead *os.File `json:"-" xml:"-"`
 
-	// text buffer holding all output
-	Buffer *lines.Lines `json:"-" xml:"-"`
+	// text lines holding all output
+	Lines *lines.Lines `json:"-" xml:"-"`
 
 	// set to true to cancel monitoring
 	Cancel bool `json:"-" xml:"-"`
@@ -64,9 +64,10 @@ func (cn *Console) Init(logFile string) {
 	os.Stdout = cn.StdoutWrite
 	os.Stderr = cn.StderrWrite
 	log.SetOutput(cn.StderrWrite)
-	cn.Buffer = textcore.NewLines()
-	cn.Buffer.Options.LineNumbers = false
-	cn.Buffer.Filename = core.Filename("console-buf")
+	cn.Lines = lines.NewLines()
+	cn.Lines.Settings.LineNumbers = false
+	cn.Lines.SetFilename("console-buf")
+	cn.Lines.SetReadOnly(true)
 	if logFile != "" {
 		cn.LogWrite = errors.Log1(os.Create(logFile))
 	}
@@ -88,7 +89,7 @@ func (cn *Console) Close() {
 // should be in a separate routine
 func (cn *Console) MonitorOut() {
 	obuf := textcore.OutputBuffer{}
-	obuf.SetOutput(cn.StdoutRead).SetBuffer(cn.Buffer).SetMarkupFunc(MarkupStdout)
+	obuf.SetOutput(cn.StdoutRead).SetLines(cn.Lines).SetMarkupFunc(MarkupStdout)
 	obuf.MonitorOutput()
 }
 
@@ -96,32 +97,26 @@ func (cn *Console) MonitorOut() {
 // should be in a separate routine
 func (cn *Console) MonitorErr() {
 	obuf := textcore.OutputBuffer{}
-	obuf.SetOutput(cn.StderrRead).SetBuffer(cn.Buffer).SetMarkupFunc(MarkupStderr)
+	fs := obuf.Lines.FontStyle()
+	fs.SetFillColor(colors.ToUniform(colors.Scheme.Error.Base))
+	obuf.SetOutput(cn.StderrRead).SetLines(cn.Lines).SetMarkupFunc(MarkupStderr)
 	obuf.MonitorOutput()
 }
 
-func MarkupStdout(out []byte) []byte {
-	fmt.Fprintln(TheConsole.OrgoutWrite, string(out))
+func MarkupStdout(buf *lines.Lines, out []rune) rich.Text {
+	sout := string(out)
+	fmt.Fprintln(TheConsole.OrgoutWrite, sout)
 	if TheConsole.LogWrite != nil {
-		fmt.Fprintln(TheConsole.LogWrite, string(out))
+		fmt.Fprintln(TheConsole.LogWrite, sout)
 	}
-	return MarkupCmdOutput(out, "")
+	return MarkupCmdOutput(buf, out, "")
 }
 
-func MarkupStderr(out []byte) []byte {
-	ec := colors.AsHex(colors.ToUniform(colors.Scheme.Error.Base))
-	sst := []byte(`<span style="color:` + ec + `">`)
-	est := []byte(`</span>`)
-	esz := len(sst) + len(est)
-
-	fmt.Fprintln(TheConsole.OrgerrWrite, string(out))
+func MarkupStderr(buf *lines.Lines, out []rune) rich.Text {
+	sout := string(out)
+	fmt.Fprintln(TheConsole.OrgerrWrite, sout)
 	if TheConsole.LogWrite != nil {
-		fmt.Fprintln(TheConsole.LogWrite, string(out))
+		fmt.Fprintln(TheConsole.LogWrite, sout)
 	}
-	mb := MarkupCmdOutput(out, "")
-	mbb := make([]byte, 0, len(mb)+esz)
-	mbb = append(mbb, sst...)
-	mbb = append(mbb, mb...)
-	mbb = append(mbb, est...)
-	return mbb
+	return MarkupCmdOutput(buf, out, "")
 }
