@@ -322,7 +322,7 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 }
 
 func (cv *Code) addSearchSymbols(items *[]core.ChooserItem) {
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
 		return
 	}

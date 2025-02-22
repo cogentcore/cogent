@@ -31,13 +31,13 @@ import (
 
 // CursorToHistPrev moves back to the previous history item.
 func (cv *Code) CursorToHistPrev() bool { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	return tv.CursorToHistoryPrev()
 }
 
 // CursorToHistNext moves forward to the next history item.
 func (cv *Code) CursorToHistNext() bool { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	return tv.CursorToHistoryNext()
 }
 
@@ -116,14 +116,14 @@ func (cv *Code) LookupFun(data any, txt string, posLine, posChar int) (ld comple
 				d.Clipboard().Write(mimedata.NewTextBytes(tx))
 			})
 	})
-	d.RunWindowDialog(cv.ActiveTextEditor())
+	d.RunWindowDialog(cv.ActiveEditor())
 	tb.StartDelayedReMarkup() // update markup
 	return
 }
 
 // ReplaceInActive does query-replace in active file only
 func (cv *Code) ReplaceInActive() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	tv.QReplacePrompt()
 }
 
@@ -132,7 +132,7 @@ func (cv *Code) ReplaceInActive() { //types:add
 
 // CutRect cuts rectangle in active text view
 func (cv *Code) CutRect() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return
 	}
@@ -141,7 +141,7 @@ func (cv *Code) CutRect() { //types:add
 
 // CopyRect copies rectangle in active text view
 func (cv *Code) CopyRect() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return
 	}
@@ -150,7 +150,7 @@ func (cv *Code) CopyRect() { //types:add
 
 // PasteRect cuts rectangle in active text view
 func (cv *Code) PasteRect() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return
 	}
@@ -164,7 +164,7 @@ func (cv *Code) RegisterCopy(regNm RegisterName) { //types:add
 	if ic > 0 && ic < 4 {
 		regNm = regNm[:ic]
 	}
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return
 	}
@@ -189,7 +189,7 @@ func (cv *Code) RegisterPaste(ctx core.Widget) { //types:add
 		if !ok {
 			return
 		}
-		tv := cv.ActiveTextEditor()
+		tv := cv.ActiveEditor()
 		if tv.Lines == nil {
 			return
 		}
@@ -202,7 +202,7 @@ func (cv *Code) RegisterPaste(ctx core.Widget) { //types:add
 // and uncomments if already commented
 // If multiple lines are selected and any line is uncommented all will be commented
 func (cv *Code) CommentOut() bool { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return false
 	}
@@ -222,7 +222,7 @@ func (cv *Code) CommentOut() bool { //types:add
 
 // Indent indents selected lines in active view
 func (cv *Code) Indent() bool { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return false
 	}
@@ -237,7 +237,7 @@ func (cv *Code) Indent() bool { //types:add
 
 // ReCase replaces currently selected text in current active view with given case
 func (cv *Code) ReCase(c strcase.Cases) string { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return ""
 	}
@@ -248,7 +248,7 @@ func (cv *Code) ReCase(c strcase.Cases) string { //types:add
 // separated by blank lines, into a single line per paragraph,
 // for given selected region (full text if no selection)
 func (cv *Code) JoinParaLines() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return
 	}
@@ -262,7 +262,7 @@ func (cv *Code) JoinParaLines() { //types:add
 // TabsToSpaces converts tabs to spaces
 // for given selected region (full text if no selection)
 func (cv *Code) TabsToSpaces() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return
 	}
@@ -276,7 +276,7 @@ func (cv *Code) TabsToSpaces() { //types:add
 // SpacesToTabs converts spaces to tabs
 // for given selected region (full text if no selection)
 func (cv *Code) SpacesToTabs() { //types:add
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv.Lines == nil {
 		return
 	}
@@ -319,7 +319,7 @@ func (cv *Code) DiffFileLines(lna *lines.Lines, fnmB string) { //types:add
 // CountWords counts number of words (and lines) in active file
 // returns a string report thereof.
 func (cv *Code) CountWords() string { //types:add
-	av := cv.ActiveTextEditor()
+	av := cv.ActiveEditor()
 	if av.Lines == nil || av.Lines.NumLines() <= 0 {
 		return "empty"
 	}
@@ -332,7 +332,7 @@ func (cv *Code) CountWords() string { //types:add
 // CountWordsRegion counts number of words (and lines) in selected region in file
 // if no selection, returns numbers for entire file.
 func (cv *Code) CountWordsRegion() string { //types:add
-	av := cv.ActiveTextEditor()
+	av := cv.ActiveEditor()
 	if av.Lines == nil || av.Lines.NumLines() <= 0 {
 		return "empty"
 	}

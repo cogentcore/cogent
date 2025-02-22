@@ -36,7 +36,7 @@ func (ed *TextEditor) Init() {
 	})
 
 	ed.On(events.Focus, func(e events.Event) {
-		ed.Code.SetActiveTextEditor(ed)
+		ed.Code.SetActiveEditor(ed)
 	})
 	ed.OnDoubleClick(func(e events.Event) {
 		pt := ed.PointToRelPos(e.Pos())

@@ -337,11 +337,11 @@ func (cv *Code) ApplySettings() {
 		for i := 0; i < NTextEditors; i++ {
 			tv := cv.EditorByIndex(i)
 			if tv.Lines != nil {
-				cv.ConfigTextBuffer(tv.Lines)
+				cv.ConfigLines(tv.Lines)
 			}
 		}
 		for _, ln := range cv.OpenFiles.Values {
-			cv.ConfigTextBuffer(ln)
+			cv.ConfigLines(ln)
 		}
 		cv.ApplySplitsSettings(cv.Splits())
 	}
@@ -390,8 +390,8 @@ func (cv *Code) SplitsSetView(split SplitName) { //types:add
 		cv.Settings.TabsUnder = sp.TabsUnder
 		cv.Settings.SplitName = split
 		cv.ApplySplitsSettings(sv)
-		if !cv.PanelIsOpen(cv.ActiveTextEditorIndex + TextEditor1Index) {
-			cv.SetActiveTextEditorIndex((cv.ActiveTextEditorIndex + 1) % 2)
+		if !cv.PanelIsOpen(cv.ActiveEditorIndex + TextEditor1Index) {
+			cv.SetActiveEditorIndex((cv.ActiveEditorIndex + 1) % 2)
 		}
 	}
 }

@@ -21,26 +21,26 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// ConfigTextBuffer configures the text buffer according to the settings.
-func (cv *Code) ConfigTextBuffer(tb *lines.Lines) {
+// ConfigLines configures the text buffer according to the settings.
+func (cv *Code) ConfigLines(tb *lines.Lines) {
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Settings.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
 }
 
-// ActiveTextEditor returns the currently active TextEditor
-func (cv *Code) ActiveTextEditor() *TextEditor {
-	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIndex)
-	return cv.EditorByIndex(cv.ActiveTextEditorIndex)
+// ActiveEditor returns the currently active TextEditor
+func (cv *Code) ActiveEditor() *TextEditor {
+	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveEditorIndex)
+	return cv.EditorByIndex(cv.ActiveEditorIndex)
 }
 
-// FocusActiveTextEditor sets focus to active text editor
-func (cv *Code) FocusActiveTextEditor() *TextEditor {
-	return cv.SetActiveTextEditorIndex(cv.ActiveTextEditorIndex)
+// FocusActiveEditor sets focus to active text editor
+func (cv *Code) FocusActiveEditor() *TextEditor {
+	return cv.SetActiveEditorIndex(cv.ActiveEditorIndex)
 }
 
-// ActiveFileLines returns the Lines for the active file; nil if none
-func (cv *Code) ActiveFileLines() *lines.Lines {
+// ActiveLines returns the Lines for the active file; nil if none
+func (cv *Code) ActiveLines() *lines.Lines {
 	return cv.GetOpenFile(string(cv.ActiveFilename))
 }
 
@@ -67,56 +67,52 @@ func (cv *Code) EditorForLines(ln *lines.Lines) (*TextEditor, int, bool) {
 	return nil, -1, false
 }
 
-// SetActiveFileInfo sets the active file info from text
-func (cv *Code) SetActiveFileInfo(buf *lines.Lines) {
-	cv.ActiveFilename = fsx.Filename(buf.Filename())
-	cv.ActiveLang = buf.FileInfo().Known
+// SetActiveFileInfo sets the active file info from Lines.
+func (cv *Code) SetActiveFileInfo(ln *lines.Lines) {
+	cv.ActiveFilename = fsx.Filename(ln.Filename())
+	cv.ActiveLang = ln.FileInfo().Known
 	cv.ActiveVCSInfo = ""
 	cv.ActiveVCS = nil
-	fn := cv.FileNodeForFile(string(cv.ActiveFilename))
-	if fn != nil {
-		repo, _ := fn.Repo()
-		if repo != nil {
-			cv.ActiveVCS = repo
-			cur, err := repo.Current()
-			if err == nil {
-				cv.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", repo.Vcs(), cur)
-			}
+	repo := GetVCSRepo(ln)
+	if repo != nil {
+		cv.ActiveVCS = repo
+		cur, err := repo.Current()
+		if err == nil {
+			cv.ActiveVCSInfo = fmt.Sprintf("%s: <i>%s</i>", repo.Vcs(), cur)
 		}
+	}
+	fn := cv.FileNodeForFile(ln.Filename())
+	if fn != nil {
 		fn.ScrollToThis()
 	}
 }
 
-// SetActiveTextEditor sets the given texteditor as the active one, and returns its index
-func (cv *Code) SetActiveTextEditor(av *TextEditor) int {
-	idx := cv.EditorIndex(av)
-	if idx < 0 {
-		fmt.Println("te not found")
-		return -1
-	}
-	cv.ActiveTextEditorIndex = idx
+// SetActiveEditor sets the given texteditor as the active one,
+// configures it, and returns its index.
+func (cv *Code) SetActiveEditor(av *TextEditor) int {
+	cv.ActiveEditorIndex = cv.EditorIndex(av)
 	if av.Lines != nil {
-		cv.SetActiveFileInfo(av.Lines)
-	}
-	cv.SetStatus("")
-	return idx
-}
-
-// SetActiveTextEditorIndex sets the given view index as the currently active
-// Editor -- returns that texteditor.  This is the main method for
-// activating a text editor.
-func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
-	if idx < 0 || idx >= NTextEditors {
-		log.Printf("Code SetActiveTextEditorIndex: text view index out of range: %v\n", idx)
-		return nil
-	}
-	cv.ActiveTextEditorIndex = idx
-	av := cv.ActiveTextEditor()
-	if av.Lines != nil {
+		if av.Complete != nil {
+			av.Complete.LookupFunc = cv.LookupFun
+		}
 		cv.SetActiveFileInfo(av.Lines)
 		av.Lines.FileModCheck()
 	}
 	cv.SetStatus("")
+	return cv.ActiveEditorIndex
+}
+
+// SetActiveEditorIndex sets the given view index as the currently active
+// Editor -- returns that texteditor.  This is the main method for
+// activating a text editor.
+func (cv *Code) SetActiveEditorIndex(idx int) *TextEditor {
+	if idx < 0 || idx >= NTextEditors {
+		log.Printf("Code SetActiveEditorIndex: text view index out of range: %v\n", idx)
+		return nil
+	}
+	cv.ActiveEditorIndex = idx
+	av := cv.ActiveEditor()
+	cv.SetActiveEditor(av)
 	av.SetFocus()
 	return av
 }
@@ -125,24 +121,23 @@ func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
 func (cv *Code) NextTextEditor() (*TextEditor, int) {
-	av := cv.EditorByIndex(cv.ActiveTextEditorIndex)
+	av := cv.EditorByIndex(cv.ActiveEditorIndex)
 	if av.Lines == nil {
-		return av, cv.ActiveTextEditorIndex
+		return av, cv.ActiveEditorIndex
 	}
-	nxt := (cv.ActiveTextEditorIndex + 1) % NTextEditors
+	nxt := (cv.ActiveEditorIndex + 1) % NTextEditors
 	if !cv.PanelIsOpen(nxt + TextEditor1Index) {
-		return av, cv.ActiveTextEditorIndex
+		return av, cv.ActiveEditorIndex
 	}
 	return cv.EditorByIndex(nxt), nxt
 }
 
 // SwapTextEditors switches the buffers for the two open texteditors
-// only operates if both panels are open
+// only operates if both panels are open.
 func (cv *Code) SwapTextEditors() bool {
 	if !cv.PanelIsOpen(TextEditor1Index) || !cv.PanelIsOpen(TextEditor1Index+1) {
 		return false
 	}
-
 	tva := cv.EditorByIndex(0)
 	tvb := cv.EditorByIndex(1)
 	bufa := tva.Lines
@@ -158,7 +153,6 @@ func (cv *Code) OpenFileAtRegion(filename string, tr textpos.Region) (tv *TextEd
 	if tv == nil {
 		return nil, false
 	}
-
 	tv.Highlights = tv.Highlights[:0]
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
@@ -208,7 +202,7 @@ func (cv *Code) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 // UpdateTextButtons updates texteditor menu buttons is called by SetStatus.
 // Doesn't do anything unless a change is required, so safe to call frequently.
 func (cv *Code) UpdateTextButtons() {
-	ati := cv.ActiveTextEditorIndex
+	ati := cv.ActiveEditorIndex
 	for i := 0; i < NTextEditors; i++ {
 		tv := cv.EditorByIndex(i)
 		mb := cv.EditorButtonByIndex(i)

@@ -361,7 +361,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 			find := w.CurrentItem.Value.(string)
 			fv.Params().Find = find
 			if find == "" {
-				tv := fv.Code.ActiveTextEditor()
+				tv := fv.Code.ActiveEditor()
 				if tv != nil {
 					tv.ClearHighlights()
 				}

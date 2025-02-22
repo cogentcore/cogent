@@ -354,7 +354,7 @@ func RepoCurBranches(repo vcs.Repo) (string, []string, error) {
 func (cm *Command) PromptUser(cv *Code, buf *lines.Lines, pvals map[string]struct{}) {
 	sz := len(pvals)
 	cnt := 0
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	var cmvals map[string]string
 	for pv := range pvals {
 		switch pv {
@@ -391,33 +391,33 @@ func (cm *Command) PromptUser(cv *Code, buf *lines.Lines, pvals map[string]struc
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
-			// ln := cv.ActiveFileLines()
-			// if ln != nil {
-			// 	repo, _ := ln.Repo()
-			// 	if repo != nil {
-			// 		cur, br, err := RepoCurBranches(repo)
-			// 		if err == nil {
-			// 			m := core.NewMenuFromStrings(br, cur, func(idx int) {
-			// 				cv.ArgVals[pv] = br[idx]
-			// 				cnt++
-			// 				if cnt == sz {
-			// 					cm.RunAfterPrompts(cv, buf)
-			// 				}
-			// 			})
-			// 			m.Name = "prompt-branch"
-			// 			core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
-			// 		} else {
-			// 			fmt.Println(err)
-			// 		}
-			// 	}
-			// }
+			ln := cv.ActiveLines()
+			if ln != nil {
+				repo := GetVCSRepo(ln)
+				if repo != nil {
+					cur, br, err := RepoCurBranches(repo)
+					if err == nil {
+						m := core.NewMenuFromStrings(br, cur, func(idx int) {
+							cv.ArgVals[pv] = br[idx]
+							cnt++
+							if cnt == sz {
+								cm.RunAfterPrompts(cv, buf)
+							}
+						})
+						m.Name = "prompt-branch"
+						core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
+					} else {
+						fmt.Println(err)
+					}
+				}
+			}
 		}
 	}
 }
 
 // Run runs the command and saves the output in the Buf if it is non-nil,
-// which can be displayed -- if !wait, then Buf is updated online as output
-// occurs.  Status is updated with status of command exec.  User is prompted
+// which can be displayed. If !wait, then Buf is updated online as output
+// occurs. Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
 func (cm *Command) Run(cv *Code, buf *lines.Lines) {
 	if cm.Confirm {
@@ -813,9 +813,9 @@ var CustomCommandsChanged = false
 func (cv *Code) CommandMenu(ln *lines.Lines) func(mm *core.Scene) {
 	lang := ln.FileInfo().Known
 	vcstype := cv.VersionControl()
-	// if repo, _ := ln.Repo(); repo != nil {
-	// 	vcstype = repo.Type()
-	// }
+	if repo := GetVCSRepo(ln); repo != nil {
+		vcstype = repo.Type()
+	}
 	cmds := AvailableCommands.FilterCmdNames(lang, vcstype)
 	lastCmd := ""
 	hsz := len(cv.CmdHistory)

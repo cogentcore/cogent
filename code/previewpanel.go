@@ -38,7 +38,7 @@ func (pp *PreviewPanel) Init() {
 		if pp.code == nil {
 			return
 		}
-		ed := pp.code.ActiveTextEditor()
+		ed := pp.code.ActiveEditor()
 		if ed == nil || ed.Lines == nil {
 			return
 		}

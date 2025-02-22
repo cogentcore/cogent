@@ -71,7 +71,7 @@ type Code struct {
 	Files *filetree.Tree `set:"-" json:"-"`
 
 	// index of the currently active texteditor -- new files will be viewed in other views if available
-	ActiveTextEditorIndex int `set:"-" json:"-"`
+	ActiveEditorIndex int `set:"-" json:"-"`
 
 	// list of open files, most recent first
 	OpenFiles OpenFiles `json:"-"`
@@ -187,7 +187,7 @@ func (cv *Code) Init() {
 	// todo: need to monitor deleted
 	// gee.TabDeleted(data.(string))
 	// if data == "Find" {
-	// 	ge.ActiveTextEditor().ClearHighlights()
+	// 	ge.ActiveEditor().ClearHighlights()
 	// }
 	// })
 }
@@ -211,15 +211,13 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				cv.EditorButtonMenu(i, m)
 			}
 			w.OnClick(func(e events.Event) {
-				cv.SetActiveTextEditorIndex(i)
+				cv.SetActiveEditorIndex(i)
 			})
 			// todo: update
 			// ge.UpdateTextButtons()
 		})
 		tree.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
 			w.Code = cv
-			// todo:
-			// w.Complete.LookupFunc = cv.LookupFun
 			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 1)
 				s.Min.X.Ch(20)
@@ -230,7 +228,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				}
 			})
 			w.OnFocus(func(e events.Event) {
-				cv.ActiveTextEditorIndex = i
+				cv.ActiveEditorIndex = i
 				cv.updatePreviewPanel()
 			})
 			// get updates on cursor movement and qreplace

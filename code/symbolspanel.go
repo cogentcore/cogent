@@ -175,7 +175,7 @@ func (sv *SymbolsPanel) RefreshAction() {
 }
 
 func SelectSymbol(cv *Code, ssym syms.Symbol) {
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if tv == nil || tv.Lines == nil || tv.Lines.Filename() != ssym.Filename {
 		tr := textpos.NewRegion(ssym.SelectReg.Start.Line, ssym.SelectReg.Start.Char, ssym.SelectReg.End.Line, ssym.SelectReg.End.Char)
 		_, ok := cv.OpenFileAtRegion(ssym.Filename, tr)
@@ -197,7 +197,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 // OpenPackage opens package-level symbols for current active texteditor
 func (sv *SymbolsPanel) OpenPackage() {
 	cv := sv.Code
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
@@ -216,7 +216,7 @@ func (sv *SymbolsPanel) OpenPackage() {
 // OpenFile opens file-level symbols for current active texteditor
 func (sv *SymbolsPanel) OpenFile() {
 	cv := sv.Code
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
 		return
 	}

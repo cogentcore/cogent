@@ -42,9 +42,9 @@ func (cv *Code) FocusOnPanel(panel int) bool {
 	sv := cv.Splits()
 	switch panel {
 	case TextEditor1Index:
-		cv.SetActiveTextEditorIndex(0)
+		cv.SetActiveEditorIndex(0)
 	case TextEditor2Index:
-		cv.SetActiveTextEditorIndex(1)
+		cv.SetActiveEditorIndex(1)
 	case TabsIndex:
 		tv := cv.Tabs()
 		ct, _ := tv.CurrentTab()

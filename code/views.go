@@ -65,7 +65,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	ftv.SetLines(fbuf)
 
 	root := filetree.AsNode(cv.Files)
-	atv := cv.ActiveTextEditor()
+	atv := cv.ActiveEditor()
 	ond := cv.FileNodeForFile(atv.Lines.Filename())
 	adir := ""
 	if ond != nil {
@@ -100,7 +100,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 
 // Spell checks spelling in active text view
 func (cv *Code) Spell() { //types:add
-	txv := cv.ActiveTextEditor()
+	txv := cv.ActiveEditor()
 	if txv == nil || txv.Lines == nil {
 		return
 	}
@@ -118,7 +118,7 @@ func (cv *Code) Spell() { //types:add
 
 // Symbols displays the Symbols of a file or package
 func (cv *Code) Symbols() { //types:add
-	txv := cv.ActiveTextEditor()
+	txv := cv.ActiveEditor()
 	if txv == nil || txv.Lines == nil {
 		return
 	}
@@ -155,7 +155,7 @@ func (cv *Code) Debug() { //types:add
 // testName specifies which test(s) to run according to the standard go test -run
 // specification.
 func (cv *Code) DebugTest(testName string) { //types:add
-	txv := cv.ActiveTextEditor()
+	txv := cv.ActiveEditor()
 	if txv == nil || txv.Lines == nil {
 		return
 	}
@@ -218,7 +218,7 @@ func (cv *Code) VCSUpdateAll() { //types:add
 // compared and diffs browsed.
 func (cv *Code) VCSLog() (vcs.Log, error) { //types:add
 	since := ""
-	atv := cv.ActiveTextEditor()
+	atv := cv.ActiveEditor()
 	ond := cv.FileNodeForFile(atv.Lines.Filename())
 	if ond == nil {
 		if cv.Files.DirRepo != nil {
@@ -287,7 +287,7 @@ func (cv *Code) UpdateStatusText() {
 	fnm := ""
 	ln := 0
 	ch := 0
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	msg := ""
 	if tv != nil {
 		ln = tv.CursorPos.Line + 1
