@@ -313,7 +313,7 @@ func (cv *Code) addSearchFiles(items *[]core.ChooserItem) {
 				Text: nmpath,
 				Icon: fn.Info.Ic,
 				Func: func() {
-					cv.NextViewFileNode(fn)
+					cv.NextViewFile(string(fn.Filepath))
 				},
 			})
 		}

@@ -66,32 +66,33 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 
 	root := filetree.AsNode(cv.Files)
 	atv := cv.ActiveTextEditor()
-	ond, _, got := cv.OpenNodeForTextEditor(atv)
+	ond := cv.FileNodeForFile(atv.Lines.Filename())
 	adir := ""
-	if got {
+	if ond != nil {
 		adir, _ = filepath.Split(string(ond.Filepath))
 	}
+	_ = root
+	_ = adir
 
 	var res []filetree.SearchResults
-	if loc == filetree.FindLocationFile {
-		if got {
-			if regExp {
-				re, err := regexp.Compile(find)
-				if err != nil {
-					log.Println(err)
-				} else {
-					cnt, matches := atv.Lines.SearchRegexp(re)
-					res = append(res, filetree.SearchResults{ond, cnt, matches})
-				}
+	if loc == filetree.FindLocationFile && ond != nil {
+		if regExp {
+			re, err := regexp.Compile(find)
+			if err != nil {
+				log.Println(err)
 			} else {
-				cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
+				cnt, matches := atv.Lines.SearchRegexp(re)
 				res = append(res, filetree.SearchResults{ond, cnt, matches})
 			}
+		} else {
+			cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
+			res = append(res, filetree.SearchResults{ond, cnt, matches})
 		}
 	} else {
-		res = filetree.Search(root, find, ignoreCase, regExp, loc, adir, langs, func(path string) *filetree.Node {
-			return cv.OpenFiles.FindPath(path)
-		})
+		// todo:
+		// res = filetree.Search(root, find, ignoreCase, regExp, loc, adir, langs, func(path string) *filetree.Node {
+		// 	return cv.OpenFiles.FindPath(path)
+		// })
 	}
 	fv.ShowResults(res)
 	cv.FocusOnPanel(TabsIndex)
@@ -218,8 +219,8 @@ func (cv *Code) VCSUpdateAll() { //types:add
 func (cv *Code) VCSLog() (vcs.Log, error) { //types:add
 	since := ""
 	atv := cv.ActiveTextEditor()
-	ond, _, got := cv.OpenNodeForTextEditor(atv)
-	if !got {
+	ond := cv.FileNodeForFile(atv.Lines.Filename())
+	if ond == nil {
 		if cv.Files.DirRepo != nil {
 			return cv.Files.LogVCS(true, since)
 		}

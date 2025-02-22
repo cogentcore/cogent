@@ -97,9 +97,9 @@ func (cn *Console) MonitorOut() {
 // should be in a separate routine
 func (cn *Console) MonitorErr() {
 	obuf := textcore.OutputBuffer{}
+	obuf.SetOutput(cn.StderrRead).SetLines(cn.Lines).SetMarkupFunc(MarkupStderr)
 	fs := obuf.Lines.FontStyle()
 	fs.SetFillColor(colors.ToUniform(colors.Scheme.Error.Base))
-	obuf.SetOutput(cn.StderrRead).SetLines(cn.Lines).SetMarkupFunc(MarkupStderr)
 	obuf.MonitorOutput()
 }
 

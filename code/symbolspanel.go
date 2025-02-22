@@ -178,7 +178,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	tv := cv.ActiveTextEditor()
 	if tv == nil || tv.Lines == nil || tv.Lines.Filename() != ssym.Filename {
 		tr := textpos.NewRegion(ssym.SelectReg.Start.Line, ssym.SelectReg.Start.Char, ssym.SelectReg.End.Line, ssym.SelectReg.End.Char)
-		_, ok := cv.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
+		_, ok := cv.OpenFileAtRegion(ssym.Filename, tr)
 		if !ok {
 			log.Printf("Code SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}

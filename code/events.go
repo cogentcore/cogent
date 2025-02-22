@@ -80,7 +80,7 @@ func (cv *Code) codeKeys(e events.Event) {
 		cv.CallViewFile(atv)
 	case KeyBufSelect:
 		e.SetHandled()
-		cv.SelectOpenNode()
+		cv.SelectOpenFile()
 	case KeyBufClone:
 		e.SetHandled()
 		cv.CloneActiveView()

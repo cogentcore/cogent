@@ -218,6 +218,8 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 		})
 		tree.AddChildAt(w, "texteditor-"+txnm, func(w *TextEditor) {
 			w.Code = cv
+			// todo:
+			// w.Complete.LookupFunc = cv.LookupFun
 			w.Styler(func(s *styles.Style) {
 				s.Grow.Set(1, 1)
 				s.Min.X.Ch(20)

@@ -7,7 +7,6 @@
 package cdelve
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os/exec"
@@ -20,8 +19,8 @@ import (
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/num"
 	"cogentcore.org/core/text/lines"
-	"cogentcore.org/core/text/parse/lexer"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/textcore"
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
 )
@@ -39,7 +38,7 @@ type GiDelve struct {
 	conn          string                   // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
 	dlv           *rpc2.RPCClient          // the delve rpc2 client interface
 	cmd           *exec.Cmd                // command running delve
-	obuf          *texteditor.OutputBuffer // output buffer
+	obuf          *textcore.OutputBuffer   // output buffer
 	lastEvalScope *api.EvalScope           // last used EvalScope
 	statFunc      func(stat cdebug.Status) // status function
 	params        cdebug.Params            // local copy of initial params
@@ -64,9 +63,9 @@ func (gd *GiDelve) WriteToConsole(msg string) {
 		log.Println(msg)
 		return
 	}
-	tlns := []byte(msg)
-	mlns := tlns
-	gd.obuf.Buffer.AppendTextMarkup(tlns, mlns, texteditor.EditSignal)
+	tlns := []rune(msg)
+	mlns := rich.NewPlainText(tlns)
+	gd.obuf.Lines.AppendTextMarkup([][]rune{tlns}, []rich.Text{mlns})
 }
 
 func (gd *GiDelve) LogErr(err error) error {
@@ -125,8 +124,8 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *lines.Lines, pars *cdebu
 		gd.cmd.Stderr = gd.cmd.Stdout
 		err = gd.cmd.Start()
 		if err == nil {
-			gd.obuf = &texteditor.OutputBuffer{}
-			gd.obuf.SetOutput(stdout).SetBuffer(outbuf).SetMarkupFunc(gd.monitorOutput)
+			gd.obuf = &textcore.OutputBuffer{}
+			gd.obuf.SetOutput(stdout).SetLines(outbuf).SetMarkupFunc(gd.monitorOutput)
 			go gd.obuf.MonitorOutput()
 		}
 	}
@@ -137,13 +136,15 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *lines.Lines, pars *cdebu
 	return nil
 }
 
-func (gd *GiDelve) monitorOutput(out []byte) []byte {
+func (gd *GiDelve) monitorOutput(buf *lines.Lines, out []rune) rich.Text {
+	mu := rich.NewPlainText(out)
 	if gd.conn != "" {
-		return out
+		return mu
 	}
-	flds := strings.Fields(string(out))
+	sout := string(out)
+	flds := strings.Fields(sout)
 	if len(flds) == 0 {
-		return out
+		return mu
 	}
 	if flds[0] == "API" && flds[1] == "server" && flds[2] == "listening" && flds[3] == "at:" {
 		gd.conn = flds[4]
@@ -152,20 +153,21 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		if gd.statFunc != nil {
 			gd.statFunc(cdebug.Ready)
 		}
-		return out
+		return mu
 	}
 	if flds[0] == "exit" && flds[1] == "status" {
 		if gd.statFunc != nil {
 			gd.statFunc(cdebug.Error)
 		}
-		return out
+		return mu
 	}
-	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	if len(link) > 0 {
-		nt := bytes.Replace(out, orig, link, -1)
-		return nt
-	}
-	return out
+	// todo:
+	// orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
+	// if len(link) > 0 {
+	// 	nt := bytes.Replace(out, orig, link, -1)
+	// 	return nt
+	// }
+	return mu
 }
 
 // IsActive returns whether debugger is active and ready for commands

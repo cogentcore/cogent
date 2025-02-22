@@ -21,7 +21,6 @@ import (
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/highlighting"
@@ -392,26 +391,26 @@ func (cm *Command) PromptUser(cv *Code, buf *lines.Lines, pvals map[string]struc
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
-			fn := cv.ActiveFileNode()
-			if fn != nil {
-				repo, _ := fn.Repo()
-				if repo != nil {
-					cur, br, err := RepoCurBranches(repo)
-					if err == nil {
-						m := core.NewMenuFromStrings(br, cur, func(idx int) {
-							cv.ArgVals[pv] = br[idx]
-							cnt++
-							if cnt == sz {
-								cm.RunAfterPrompts(cv, buf)
-							}
-						})
-						m.Name = "prompt-branch"
-						core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
-					} else {
-						fmt.Println(err)
-					}
-				}
-			}
+			// ln := cv.ActiveFileLines()
+			// if ln != nil {
+			// 	repo, _ := ln.Repo()
+			// 	if repo != nil {
+			// 		cur, br, err := RepoCurBranches(repo)
+			// 		if err == nil {
+			// 			m := core.NewMenuFromStrings(br, cur, func(idx int) {
+			// 				cv.ArgVals[pv] = br[idx]
+			// 				cnt++
+			// 				if cnt == sz {
+			// 					cm.RunAfterPrompts(cv, buf)
+			// 				}
+			// 			})
+			// 			m.Name = "prompt-branch"
+			// 			core.NewMenuStage(m, tv, tv.ContextMenuPos(nil)).Run()
+			// 		} else {
+			// 			fmt.Println(err)
+			// 		}
+			// 	}
+			// }
 		}
 	}
 }
@@ -811,16 +810,12 @@ func (cm *Commands) ViewStandard() { //types:add
 var CustomCommandsChanged = false
 
 // CommandMenu returns a menu function for commands for given language and vcs name
-func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
-	cv, ok := ParentCode(fn.This)
-	if !ok {
-		return nil
-	}
-	lang := fn.Info.Known
+func (cv *Code) CommandMenu(ln *lines.Lines) func(mm *core.Scene) {
+	lang := ln.FileInfo().Known
 	vcstype := cv.VersionControl()
-	if repo, _ := fn.Repo(); repo != nil {
-		vcstype = repo.Type()
-	}
+	// if repo, _ := ln.Repo(); repo != nil {
+	// 	vcstype = repo.Type()
+	// }
 	cmds := AvailableCommands.FilterCmdNames(lang, vcstype)
 	lastCmd := ""
 	hsz := len(cv.CmdHistory)
@@ -847,7 +842,7 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 						cmd := CmdName(cmdNm)
 						cv.CmdHistory.Add(cmd) // only save commands executed via chooser
 						cv.SaveAllCheck(true, func() {
-							cv.ExecCmdNameFileNode(fn, cmd)
+							cv.ExecCmdNameFile(ln.Filename(), cmd)
 						})
 					})
 					if cmdNm == lastCmd {

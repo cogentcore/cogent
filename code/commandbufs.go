@@ -5,14 +5,12 @@
 package code
 
 import (
-	"fmt"
 	"strings"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
@@ -72,24 +70,13 @@ func (cv *Code) ExecCmdName(cmdName CmdName) {
 	cmd.Run(cv, cbuf)
 }
 
-// ExecCmdNameFileNode executes command of given name on given node
-func (cv *Code) ExecCmdNameFileNode(fn *filetree.Node, cmdNm CmdName) {
-	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
-	if !ok || fn == nil || fn.This == nil {
-		return
-	}
-	cv.ArgVals.Set(string(fn.Filepath), &cv.Settings, nil)
-	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
-	cmd.Run(cv, cbuf)
-}
-
-// ExecCmdNameFilename executes command of given name on given file name
-func (cv *Code) ExecCmdNameFilename(fn string, cmdNm CmdName) {
+// ExecCmdNameFile executes command of given name on given file name
+func (cv *Code) ExecCmdNameFile(fname string, cmdNm CmdName) {
 	cmd, _, ok := AvailableCommands.CmdByName(cmdNm, true)
 	if !ok {
 		return
 	}
-	cv.ArgVals.Set(fn, &cv.Settings, nil)
+	cv.ArgVals.Set(fname, &cv.Settings, nil)
 	cbuf, _, _ := cv.RecycleCmdTab(cmd.Name)
 	cmd.Run(cv, cbuf)
 }
@@ -124,26 +111,26 @@ func (cv *Code) ExecCmdNameActive(cmdName string) { //types:add
 
 // CommandFromMenu pops up a menu of commands for given language, with given last command
 // selected by default, and runs selected command.
-func (cv *Code) CommandFromMenu(fn *filetree.Node) {
+func (cv *Code) CommandFromMenu(ln *lines.Lines) {
 	tv := cv.ActiveTextEditor()
-	core.NewMenu(CommandMenu(fn), tv, tv.ContextMenuPos(nil)).Run()
+	core.NewMenu(cv.CommandMenu(ln), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
 func (cv *Code) ExecCmd() { //types:add
-	fn := cv.ActiveFileNode()
-	if fn == nil {
-		fmt.Printf("no Active File for ExecCmd\n")
+	ln := cv.ActiveFileLines()
+	if ln == nil {
+		cv.SetStatus("ExecCmd: No Active File")
 		return
 	}
-	cv.CommandFromMenu(fn)
+	cv.CommandFromMenu(ln)
 }
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in Tab with name of command
-func (cv *Code) ExecCmdFileNode(fn *filetree.Node) {
-	cv.CommandFromMenu(fn)
+func (cv *Code) ExecCmdFileNode(ln *lines.Lines) {
+	cv.CommandFromMenu(ln)
 }
 
 // SetArgVarVals sets the ArgVar values for commands, from Code values
@@ -164,10 +151,10 @@ func (cv *Code) ExecCmds(cmdNms CmdNames) {
 	}
 }
 
-// ExecCmdsFileNode executes a sequence of commands on file node
-func (cv *Code) ExecCmdsFileNode(fn *filetree.Node, cmdNames CmdNames) {
+// ExecCmdsFile executes a sequence of commands on file node
+func (cv *Code) ExecCmdsFile(fname string, cmdNames CmdNames) {
 	for _, cmdNm := range cmdNames {
-		cv.ExecCmdNameFileNode(fn, cmdNm)
+		cv.ExecCmdNameFile(fname, cmdNm)
 	}
 }
 

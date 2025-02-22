@@ -26,9 +26,6 @@ func (cv *Code) ConfigTextBuffer(tb *lines.Lines) {
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Settings.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
-	if tb.Complete != nil { // todo: on editor
-		tb.Complete.LookupFunc = cv.LookupFun
-	}
 }
 
 // ActiveTextEditor returns the currently active TextEditor
@@ -44,7 +41,7 @@ func (cv *Code) FocusActiveTextEditor() *TextEditor {
 
 // ActiveFileLines returns the Lines for the active file; nil if none
 func (cv *Code) ActiveFileLines() *lines.Lines {
-	return cv.GetOpenFile(cv.ActiveFilename)
+	return cv.GetOpenFile(string(cv.ActiveFilename))
 }
 
 // EditorIndex finds index of given texteditor (0 or 1)
@@ -76,7 +73,7 @@ func (cv *Code) SetActiveFileInfo(buf *lines.Lines) {
 	cv.ActiveLang = buf.FileInfo().Known
 	cv.ActiveVCSInfo = ""
 	cv.ActiveVCS = nil
-	fn := cv.FileNodeForFile(string(cv.ActiveFilename), false)
+	fn := cv.FileNodeForFile(string(cv.ActiveFilename))
 	if fn != nil {
 		repo, _ := fn.Repo()
 		if repo != nil {
@@ -156,7 +153,7 @@ func (cv *Code) SwapTextEditors() bool {
 	return true
 }
 
-func (cv *Code) OpenFileAtRegion(filename core.Filename, tr textpos.Region) (tv *TextEditor, ok bool) {
+func (cv *Code) OpenFileAtRegion(filename string, tr textpos.Region) (tv *TextEditor, ok bool) {
 	tv, _, ok = cv.LinkViewFile(filename)
 	if tv == nil {
 		return nil, false
@@ -181,7 +178,7 @@ func (cv *Code) ParseOpenFindURL(ur string, ftv *textcore.Editor) (tv *TextEdito
 	}
 	fpath := up.Path[1:] // has double //
 	pos := up.Fragment
-	tv, _, ok = cv.LinkViewFile(core.Filename(fpath))
+	tv, _, ok = cv.LinkViewFile(fpath)
 	if !ok {
 		core.MessageSnackbar(cv, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 		return
@@ -242,14 +239,14 @@ func (cv *Code) FileNodeSelected(fn *filetree.Node) {
 
 func (cv *Code) EditorButtonMenu(idx int, m *core.Scene) {
 	tv := cv.EditorByIndex(idx)
-	opn := cv.OpenFiles.Strings()
+	opn := cv.OpenFiles.Strings(string(cv.Files.Filepath))
 	core.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
 		cv.CallViewFile(tv)
 	})
 	core.NewSeparator(m)
 	for i, n := range opn {
 		core.NewButton(m).SetText(n).OnClick(func(e events.Event) {
-			cv.ViewFileNode(tv, idx, cv.OpenFiles[i])
+			cv.ViewLines(tv, idx, cv.OpenFiles.Values[i])
 		})
 	}
 }

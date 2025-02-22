@@ -213,7 +213,7 @@ func (ed *TextEditor) ContextMenu(m *core.Scene) {
 	core.NewSeparator(m)
 	core.NewFuncButton(m).SetFunc(ed.Lookup).SetIcon(icons.Search)
 
-	fn := ed.Code.FileNodeForFile(ed.Lines.Filename(), false)
+	fn := ed.Code.FileNodeForFile(ed.Lines.Filename())
 	if fn != nil {
 		fn.SelectEvent(events.SelectOne)
 		fn.VCSContextMenu(m)

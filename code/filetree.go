@@ -5,7 +5,6 @@
 package code
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 
@@ -77,28 +76,31 @@ func (fn *FileNode) SetRunExec() {
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() { //types:add
-	ge, ok := ParentCode(fn.This)
-	if ok {
-		ge.ExecCmdFileNode(&fn.Node)
-	} else {
-		fmt.Println("no code!")
-	}
-
+	// cv, ok := ParentCode(fn.This)
+	// if ok {
+	// 	cv.ExecCmdFile(&fn.Node)
+	// } else {
+	// 	fmt.Println("no code!")
+	// }
 }
 
 // ExecCmdNameFile executes given command name on node
 func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if ok {
-		ge.ExecCmdNameFileNode(&fn.Node, CmdName(cmdNm))
+		cv.ExecCmdNameFile(string(fn.Node.Filepath), CmdName(cmdNm))
 	}
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
-	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-		SetMenu(CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
-		s.SetState(!fn.HasSelection(), states.Disabled)
-	})
+	// todo:
+	// cv, ok := ParentCode(fn.This)
+	// if ok {
+	// 	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
+	// 		SetMenu(cv.CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
+	// 		s.SetState(!fn.HasSelection(), states.Disabled)
+	// 	})
+	// }
 	core.NewFuncButton(m).SetFunc(fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
@@ -125,18 +127,18 @@ func (fn *FileNode) SetRunExecs() { //types:add
 
 // RenameFiles calls RenameFile on any selected nodes
 func (fn *FileNode) RenameFiles() {
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if !ok {
 		return
 	}
-	ge.SaveAllCheck(true, func() {
+	cv.SaveAllCheck(true, func() {
 		var paths []string
 		sels := fn.GetSelectedNodes()
 		for i := len(sels) - 1; i >= 0; i-- {
 			sn := sels[i].(*FileNode)
 			paths = append(paths, string(sn.Filepath))
 		}
-		ge.CloseOpenFiles(paths) // close before rename because we are async after this
+		cv.CloseOpenFiles(paths) // close before rename because we are async after this
 		for i := len(sels) - 1; i >= 0; i-- {
 			sn := sels[i].(*FileNode)
 			fb := core.NewSoloFuncButton(sn).SetFunc(sn.RenameFile)

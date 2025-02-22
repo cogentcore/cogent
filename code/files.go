@@ -225,7 +225,7 @@ func (cv *Code) RunPostCmds(ln *lines.Lines) bool {
 		return false
 	}
 	_, ptab := cv.Tabs().CurrentTab()
-	cv.ExecCmdsFile(ln, lopt.PostSaveCmds)
+	cv.ExecCmdsFile(ln.Filename(), lopt.PostSaveCmds)
 	if ptab >= 0 {
 		cv.Tabs().SelectTabIndex(ptab) // we stay at the previous tab
 	}
@@ -492,6 +492,21 @@ func (cv *Code) CloseOpenFiles(fnames []string) {
 	}
 }
 
+////////  FileNode stuff
+
+// FileNodeForFile returns file node for given file path.
+// nil if not found
+func (cv *Code) FileNodeForFile(fpath string) *filetree.Node {
+	fn, ok := cv.Files.FindFile(fpath)
+	if !ok {
+		return nil
+	}
+	if fn.IsDir() {
+		return nil
+	}
+	return fn
+}
+
 // FileNodeRunExe runs the given executable file node
 func (cv *Code) FileNodeRunExe(fn *filetree.Node) {
 	cv.SetArgVarVals()
@@ -516,7 +531,7 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 		return
 	case fileinfo.Font, fileinfo.Video, fileinfo.Model, fileinfo.Audio, fileinfo.Sheet, fileinfo.Bin,
 		fileinfo.Archive, fileinfo.Image:
-		cv.ExecCmdNameFileNode(fn, CmdName("File: Open"))
+		cv.ExecCmdNameFile(string(fn.Filepath), CmdName("File: Open"))
 		return
 	}
 
@@ -532,7 +547,7 @@ func (cv *Code) FileNodeOpened(fn *filetree.Node) {
 		}
 	}
 	if !edit {
-		cv.ExecCmdNameFileNode(fn, CmdName("File: Open"))
+		cv.ExecCmdNameFile(string(fn.Filepath), CmdName("File: Open"))
 		return
 	}
 	// program, document, data
