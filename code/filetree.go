@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"strings"
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -58,7 +57,7 @@ func (fn *FileNode) EditFile() {
 	}
 	ge, ok := ParentCode(fn.This)
 	if ok {
-		ge.NextViewFileNode(&fn.Node)
+		ge.NextViewFile(string(fn.Filepath))
 	}
 }
 
@@ -110,132 +109,6 @@ func (fn *FileNode) ContextMenu(m *core.Scene) {
 		})
 }
 
-/////////////////////////////////////////////////////////////////////
-//   OpenNodes
-
-// OpenNodes is a list of file nodes that have been opened for editing -- it
-// is maintained in recency order -- most recent on top -- call Add every time
-// a node is opened / visited for editing
-type OpenNodes []*filetree.Node
-
-// Add adds given node to list of open nodes -- if already on the list it is
-// moved to the top.  returns true if actually added.
-// Connects to fn.TextBuf signal and auto-closes when buffer closes.
-func (on *OpenNodes) Add(fn *filetree.Node) bool {
-	added := on.AddImpl(fn)
-	if !added {
-		return added
-	}
-	if fn.Lines != nil {
-		fn.Lines.OnClose(fn.LinesViewId, func(e events.Event) {
-			on.Delete(fn)
-		})
-	}
-	return added
-}
-
-// AddImpl adds given node to list of open nodes -- if already on the list it is
-// moved to the top -- returns true if actually added.
-func (on *OpenNodes) AddImpl(fn *filetree.Node) bool {
-	sz := len(*on)
-
-	for i, f := range *on {
-		if f == fn {
-			if i == 0 {
-				return false
-			}
-			copy((*on)[1:i+1], (*on)[0:i])
-			(*on)[0] = fn
-			return false
-		}
-	}
-
-	*on = append(*on, nil)
-	if sz > 0 {
-		copy((*on)[1:], (*on)[0:sz])
-	}
-	(*on)[0] = fn
-	return true
-}
-
-// Delete deletes given node in list of open nodes, returning true if found and deleted
-func (on *OpenNodes) Delete(fn *filetree.Node) bool {
-	for i, f := range *on {
-		if f == fn {
-			on.DeleteIndex(i)
-			return true
-		}
-	}
-	return false
-}
-
-// DeleteIndex deletes at given index
-func (on *OpenNodes) DeleteIndex(idx int) {
-	*on = append((*on)[:idx], (*on)[idx+1:]...)
-}
-
-// DeleteDeleted deletes deleted nodes on list
-func (on *OpenNodes) DeleteDeleted() {
-	sz := len(*on)
-	for i := sz - 1; i >= 0; i-- {
-		fn := (*on)[i]
-		if fn.This == nil || fn.FileRoot() == nil {
-			on.DeleteIndex(i)
-		}
-	}
-}
-
-// Strings returns a string list of nodes, with paths relative to proj root
-func (on *OpenNodes) Strings() []string {
-	on.DeleteDeleted()
-	sl := make([]string, len(*on))
-	for i, fn := range *on {
-		rp := fn.FileRoot().RelativePathFrom(fn.Filepath)
-		rp = strings.TrimSuffix(rp, fn.Name)
-		if rp != "" {
-			sl[i] = fn.Name + " - " + rp
-		} else {
-			sl[i] = fn.Name
-		}
-		if fn.IsNotSaved() {
-			sl[i] += " *"
-		}
-	}
-	return sl
-}
-
-// ByStringName returns the open node with given strings name
-func (on *OpenNodes) ByStringName(name string) *filetree.Node {
-	sl := on.Strings()
-	for i, ns := range sl {
-		if ns == name {
-			return (*on)[i]
-		}
-	}
-	return nil
-}
-
-// NChanged returns number of changed open files
-func (on *OpenNodes) NChanged() int {
-	cnt := 0
-	for _, fn := range *on {
-		if fn.IsNotSaved() {
-			cnt++
-		}
-	}
-	return cnt
-}
-
-// FindPath finds node for given path, nil if not found
-func (on *OpenNodes) FindPath(path string) *filetree.Node {
-	for _, f := range *on {
-		if f.Filepath == core.Filename(path) {
-			return f
-		}
-	}
-	return nil
-}
-
 // EditFiles calls EditFile on selected files
 func (fn *FileNode) EditFiles() { //types:add
 	fn.SelectedFunc(func(sn *filetree.Node) {
@@ -257,14 +130,15 @@ func (fn *FileNode) RenameFiles() {
 		return
 	}
 	ge.SaveAllCheck(true, func() {
-		var nodes []*FileNode
+		var paths []string
 		sels := fn.GetSelectedNodes()
 		for i := len(sels) - 1; i >= 0; i-- {
 			sn := sels[i].(*FileNode)
-			nodes = append(nodes, sn)
+			paths = append(paths, string(sn.Filepath))
 		}
-		ge.CloseOpenNodes(nodes) // close before rename because we are async after this
-		for _, sn := range nodes {
+		ge.CloseOpenFiles(paths) // close before rename because we are async after this
+		for i := len(sels) - 1; i >= 0; i-- {
+			sn := sels[i].(*FileNode)
 			fb := core.NewSoloFuncButton(sn).SetFunc(sn.RenameFile)
 			fb.Args[0].SetValue(sn.Name)
 			fb.CallFunc()

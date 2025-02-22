@@ -90,7 +90,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 		}
 	} else {
 		res = filetree.Search(root, find, ignoreCase, regExp, loc, adir, langs, func(path string) *filetree.Node {
-			return cv.OpenNodes.FindPath(path)
+			return cv.OpenFiles.FindPath(path)
 		})
 	}
 	fv.ShowResults(res)

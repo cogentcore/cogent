@@ -26,7 +26,7 @@ func (cv *Code) ConfigTextBuffer(tb *lines.Lines) {
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Settings.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
-	if tb.Complete != nil {
+	if tb.Complete != nil { // todo: on editor
 		tb.Complete.LookupFunc = cv.LookupFun
 	}
 }
@@ -34,7 +34,7 @@ func (cv *Code) ConfigTextBuffer(tb *lines.Lines) {
 // ActiveTextEditor returns the currently active TextEditor
 func (cv *Code) ActiveTextEditor() *TextEditor {
 	//	fmt.Printf("stdout: active text view idx: %v\n", ge.ActiveTextEditorIndex)
-	return cv.TextEditorByIndex(cv.ActiveTextEditorIndex)
+	return cv.EditorByIndex(cv.ActiveTextEditorIndex)
 }
 
 // FocusActiveTextEditor sets focus to active text editor
@@ -42,15 +42,15 @@ func (cv *Code) FocusActiveTextEditor() *TextEditor {
 	return cv.SetActiveTextEditorIndex(cv.ActiveTextEditorIndex)
 }
 
-// ActiveFileNode returns the file node for the active file -- nil if none
-func (cv *Code) ActiveFileNode() *filetree.Node {
-	return cv.FileNodeForFile(string(cv.ActiveFilename), false)
+// ActiveFileLines returns the Lines for the active file; nil if none
+func (cv *Code) ActiveFileLines() *lines.Lines {
+	return cv.GetOpenFile(cv.ActiveFilename)
 }
 
-// TextEditorIndex finds index of given texteditor (0 or 1)
-func (cv *Code) TextEditorIndex(av *TextEditor) int {
+// EditorIndex finds index of given texteditor (0 or 1)
+func (cv *Code) EditorIndex(av *TextEditor) int {
 	for i := 0; i < NTextEditors; i++ {
-		tv := cv.TextEditorByIndex(i)
+		tv := cv.EditorByIndex(i)
 		if tv.This == av.This {
 			return i
 		}
@@ -58,44 +58,16 @@ func (cv *Code) TextEditorIndex(av *TextEditor) int {
 	return -1 // shouldn't happen
 }
 
-// TextEditorForFileNode finds a TextEditor that is viewing given FileNode,
+// EditorForLines finds a Editor that is viewing given Lines,
 // and its index, or false if none is
-func (cv *Code) TextEditorForFileNode(fn *filetree.Node) (*TextEditor, int, bool) {
-	if fn.Lines == nil {
-		return nil, -1, false
-	}
-	cv.ConfigTextBuffer(fn.Lines)
+func (cv *Code) EditorForLines(ln *lines.Lines) (*TextEditor, int, bool) {
 	for i := 0; i < NTextEditors; i++ {
-		tv := cv.TextEditorByIndex(i)
-		if tv != nil && tv.Lines != nil && tv.Lines == fn.Lines && cv.PanelIsOpen(i+TextEditor1Index) {
+		tv := cv.EditorByIndex(i)
+		if tv != nil && tv.Lines == ln && cv.PanelIsOpen(i+TextEditor1Index) {
 			return tv, i, true
 		}
 	}
 	return nil, -1, false
-}
-
-// OpenNodeForTextEditor finds the FileNode that a given TextEditor is
-// viewing, returning its index within OpenNodes list, or false if not found
-func (cv *Code) OpenNodeForTextEditor(tv *TextEditor) (*filetree.Node, int, bool) {
-	if tv.Lines == nil {
-		return nil, -1, false
-	}
-	for i, ond := range cv.OpenNodes {
-		if ond.Lines == tv.Lines {
-			return ond, i, true
-		}
-	}
-	return nil, -1, false
-}
-
-// TextEditorForFile finds FileNode for file, and returns TextEditor and index
-// that is viewing that FileNode, or false if none is
-func (cv *Code) TextEditorForFile(fnm core.Filename) (*TextEditor, int, bool) {
-	fn, ok := cv.Files.FindFile(string(fnm))
-	if !ok {
-		return nil, -1, false
-	}
-	return cv.TextEditorForFileNode(fn)
 }
 
 // SetActiveFileInfo sets the active file info from text
@@ -120,7 +92,7 @@ func (cv *Code) SetActiveFileInfo(buf *lines.Lines) {
 
 // SetActiveTextEditor sets the given texteditor as the active one, and returns its index
 func (cv *Code) SetActiveTextEditor(av *TextEditor) int {
-	idx := cv.TextEditorIndex(av)
+	idx := cv.EditorIndex(av)
 	if idx < 0 {
 		fmt.Println("te not found")
 		return -1
@@ -134,7 +106,7 @@ func (cv *Code) SetActiveTextEditor(av *TextEditor) int {
 }
 
 // SetActiveTextEditorIndex sets the given view index as the currently active
-// TextEditor -- returns that texteditor.  This is the main method for
+// Editor -- returns that texteditor.  This is the main method for
 // activating a text editor.
 func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
 	if idx < 0 || idx >= NTextEditors {
@@ -156,7 +128,7 @@ func (cv *Code) SetActiveTextEditorIndex(idx int) *TextEditor {
 // its index -- if the active text view is empty, then it is used, otherwise
 // it is the next one (if visible)
 func (cv *Code) NextTextEditor() (*TextEditor, int) {
-	av := cv.TextEditorByIndex(cv.ActiveTextEditorIndex)
+	av := cv.EditorByIndex(cv.ActiveTextEditorIndex)
 	if av.Lines == nil {
 		return av, cv.ActiveTextEditorIndex
 	}
@@ -164,7 +136,7 @@ func (cv *Code) NextTextEditor() (*TextEditor, int) {
 	if !cv.PanelIsOpen(nxt + TextEditor1Index) {
 		return av, cv.ActiveTextEditorIndex
 	}
-	return cv.TextEditorByIndex(nxt), nxt
+	return cv.EditorByIndex(nxt), nxt
 }
 
 // SwapTextEditors switches the buffers for the two open texteditors
@@ -174,8 +146,8 @@ func (cv *Code) SwapTextEditors() bool {
 		return false
 	}
 
-	tva := cv.TextEditorByIndex(0)
-	tvb := cv.TextEditorByIndex(1)
+	tva := cv.EditorByIndex(0)
+	tvb := cv.EditorByIndex(1)
 	bufa := tva.Lines
 	bufb := tvb.Lines
 	tva.SetLines(bufb)
@@ -241,8 +213,8 @@ func (cv *Code) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 func (cv *Code) UpdateTextButtons() {
 	ati := cv.ActiveTextEditorIndex
 	for i := 0; i < NTextEditors; i++ {
-		tv := cv.TextEditorByIndex(i)
-		mb := cv.TextEditorButtonByIndex(i)
+		tv := cv.EditorByIndex(i)
+		mb := cv.EditorButtonByIndex(i)
 		txnm := "<no file>"
 		if tv.Lines != nil {
 			txnm = fsx.DirAndFile(tv.Lines.Filename())
@@ -268,16 +240,16 @@ func (cv *Code) FileNodeSelected(fn *filetree.Node) {
 	// not doing anything with this actually
 }
 
-func (cv *Code) TextEditorButtonMenu(idx int, m *core.Scene) {
-	tv := cv.TextEditorByIndex(idx)
-	opn := cv.OpenNodes.Strings()
+func (cv *Code) EditorButtonMenu(idx int, m *core.Scene) {
+	tv := cv.EditorByIndex(idx)
+	opn := cv.OpenFiles.Strings()
 	core.NewButton(m).SetText("Open File...").OnClick(func(e events.Event) {
 		cv.CallViewFile(tv)
 	})
 	core.NewSeparator(m)
 	for i, n := range opn {
 		core.NewButton(m).SetText(n).OnClick(func(e events.Event) {
-			cv.ViewFileNode(tv, idx, cv.OpenNodes[i])
+			cv.ViewFileNode(tv, idx, cv.OpenFiles[i])
 		})
 	}
 }

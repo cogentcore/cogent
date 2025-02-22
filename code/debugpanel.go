@@ -544,7 +544,7 @@ func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
 	if !dv.panelIsValid() {
 		return
 	}
-	tb := dv.Code.TextBufForFile(fpath, false)
+	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
 		tb.DeleteLineColor(line - 1)
 		tb.SendInput()
@@ -567,7 +567,7 @@ func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSt
 	if !dv.panelIsValid() {
 		return
 	}
-	tb := dv.Code.TextBufForFile(fpath, false)
+	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
 		tb.SetLineColor(line-1, DebugBreakColors[stat])
 		tb.SendInput()
@@ -731,7 +731,7 @@ func (dv *DebugPanel) ShowFile(fpath string, line int) {
 // SetCurPCInBuf sets the current PC location in given file
 // line is 1-based line number
 func (dv *DebugPanel) SetCurPCInBuf(fpath string, line int) {
-	tb := dv.Code.TextBufForFile(fpath, false)
+	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
 		if _, has := tb.LineColor(line - 1); !has {
 			tb.SetLineColor(line-1, DebugBreakColors[DebugPCCurrent])
@@ -748,7 +748,7 @@ func (dv *DebugPanel) DeleteCurPCInBuf() {
 	fpath := dv.CurFileLoc.FPath
 	line := dv.CurFileLoc.Line
 	if fpath != "" && line > 0 {
-		tb := dv.Code.TextBufForFile(fpath, false)
+		tb := dv.Code.GetOpenFile(fpath)
 		if tb != nil {
 			tb.DeleteLineColor(line - 1)
 			tb.SendInput()

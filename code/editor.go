@@ -12,12 +12,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/fileinfo/mimedata"
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/strcase"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
@@ -291,42 +291,29 @@ func (cv *Code) SpacesToTabs() { //types:add
 // in side-by-side DiffEditor and in the console as a context diff.
 // It opens the files as file nodes and uses existing contents if open already.
 func (cv *Code) DiffFiles(fnmA, fnmB core.Filename) { //types:add
-	fna := cv.FileNodeForFile(string(fnmA), true)
-	if fna == nil {
+	lna, _ := cv.RecycleFile(string(fnmA))
+	if lna == nil {
 		return
 	}
-	if fna.Lines == nil {
-		cv.OpenFileNode(fna)
-	}
-	if fna.Lines == nil {
-		return
-	}
-	cv.DiffFileNode(fna, fnmB)
+	cv.DiffFileLines(lna, string(fnmB))
 }
 
-// DiffFileNode shows the differences between given file node as the A file,
+// DiffFileLines shows the differences between given file node as the A file,
 // and another given file as the B file,
 // in side-by-side DiffEditor and in the console as a context diff.
-func (cv *Code) DiffFileNode(fna *filetree.Node, fnmB core.Filename) { //types:add
-	fnb := cv.FileNodeForFile(string(fnmB), true)
-	if fnb == nil {
+func (cv *Code) DiffFileLines(lna *lines.Lines, fnmB string) { //types:add
+	lnb := lines.NewLines()
+	err := lnb.Open(fnmB)
+	if errors.Log(err) != nil {
 		return
 	}
-	if fnb.Lines == nil {
-		cv.OpenFileNode(fnb)
-	}
-	if fnb.Lines == nil {
-		return
-	}
-	dif := fna.Lines.DiffsUnified(fnb.Lines, 3)
+	dif := lna.DiffsUnified(lnb, 3)
 	cbuf, _, _ := cv.RecycleCmdTab("Diffs")
 	cbuf.SetText(dif)
 
-	astr := fna.Lines.Strings(false)
-	bstr := fnb.Lines.Strings(false)
-	_, _ = astr, bstr
-
-	textcore.DiffEditorDialog(cv, "Diff File View:", astr, bstr, fna.Lines.Filename(), fnb.Lines.Filename(), "", "")
+	astr := lna.Strings(false)
+	bstr := lnb.Strings(false)
+	textcore.DiffEditorDialog(cv, "Diff File View:", astr, bstr, lna.Filename(), lnb.Filename(), "", "")
 }
 
 // CountWords counts number of words (and lines) in active file
@@ -413,10 +400,10 @@ func (cv *Code) OpenFileURL(ur string, ftv *textcore.Editor) bool {
 	}
 	pos := up.Fragment
 
-	tv, _, ok := cv.LinkViewFile(core.Filename(fpath))
+	tv, _, ok := cv.LinkViewFile(fpath)
 	if !ok {
 		_, fnm := filepath.Split(fpath)
-		tv, _, ok = cv.LinkViewFile(core.Filename(fnm))
+		tv, _, ok = cv.LinkViewFile(fnm)
 		if !ok {
 			core.MessageSnackbar(cv, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
 			return false

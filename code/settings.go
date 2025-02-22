@@ -335,15 +335,13 @@ func (cv *Code) ApplySettings() {
 	}
 	if len(cv.Children) > 0 {
 		for i := 0; i < NTextEditors; i++ {
-			tv := cv.TextEditorByIndex(i)
+			tv := cv.EditorByIndex(i)
 			if tv.Lines != nil {
 				cv.ConfigTextBuffer(tv.Lines)
 			}
 		}
-		for _, ond := range cv.OpenNodes {
-			if ond.Lines != nil {
-				cv.ConfigTextBuffer(ond.Lines)
-			}
+		for _, ln := range cv.OpenFiles.Values {
+			cv.ConfigTextBuffer(ln)
 		}
 		cv.ApplySplitsSettings(cv.Splits())
 	}

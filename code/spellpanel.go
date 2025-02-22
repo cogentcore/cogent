@@ -80,10 +80,6 @@ func (sv *SpellPanel) Init() {
 					fv.OnSelect(func(e events.Event) {
 						cur = fv.SelectedFile()
 					})
-					fv.OnDoubleClick(func(e events.Event) {
-						cur = fv.SelectedFile()
-						d.Close()
-					})
 					d.AddBottomBar(func(bar *core.Frame) {
 						d.AddCancel(bar)
 						d.AddOK(bar).OnClick(func(e events.Event) {
