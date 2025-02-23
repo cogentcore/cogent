@@ -18,6 +18,7 @@ import (
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/num"
+	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/textcore"
@@ -137,7 +138,8 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *lines.Lines, pars *cdebu
 }
 
 func (gd *GiDelve) monitorOutput(buf *lines.Lines, out []rune) rich.Text {
-	mu := rich.NewPlainText(out)
+	sty := buf.FontStyle()
+	mu := rich.NewText(sty, out)
 	if gd.conn != "" {
 		return mu
 	}
@@ -161,13 +163,7 @@ func (gd *GiDelve) monitorOutput(buf *lines.Lines, out []rune) rich.Text {
 		}
 		return mu
 	}
-	// todo:
-	// orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	// if len(link) > 0 {
-	// 	nt := bytes.Replace(out, orig, link, -1)
-	// 	return nt
-	// }
-	return mu
+	return highlighting.MarkupPathsAsLinks(out, mu, 2) // only first 2 fields
 }
 
 // IsActive returns whether debugger is active and ready for commands

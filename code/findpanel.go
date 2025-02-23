@@ -108,7 +108,7 @@ func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	bold := *sty
 	bold.SetWeight(rich.Bold)
 	link := *sty
-	link.SetLink()
+	link.SetLinkStyle()
 	fbuf.Settings.LineNumbers = false
 	outlns := make([][]rune, 0, 100)
 	outmus := make([]rich.Text, 0, 100) // markups

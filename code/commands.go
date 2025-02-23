@@ -5,7 +5,6 @@
 package code
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -25,7 +24,6 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
-	"cogentcore.org/core/text/parse/lexer"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/runes"
 	"cogentcore.org/core/text/textcore"
@@ -450,9 +448,10 @@ func (cm *Command) RunAfterPrompts(cv *Code, buf *lines.Lines) {
 	}
 	cds := cv.ArgVals.Bind(cdir)
 	err := os.Chdir(cds)
-	cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
+	_ = err
+	cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("cd %v (from: %v)", cds, cdir)))
 	if err != nil {
-		cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
+		cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("Could not change to directory %v -- error: %v", cds, err)))
 	}
 
 	if CmdWaitOverride || cm.Wait || len(cm.Cmds) > 1 {
@@ -545,25 +544,37 @@ func (cm *Command) AppendCmdOut(cv *Code, buf *lines.Lines, out []rune) {
 var CmdOutStatusLen = 80
 
 // RunStatus reports the status of the command run (given in cmdstr) to
-// ge.StatusBar -- returns true if there are no errors, and false if there
-// were errors
+// ge.StatusBar, and appends to the buffer.
+// Returns true if there are no errors, and false if there were errors.
 func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err error, out []byte) bool {
 	cv.RunningCmds.DeleteByName(cm.Label())
 	var rval bool
+	var sty *rich.Style
+	if buf != nil {
+		sty = buf.FontStyle()
+	} else {
+		sty = rich.NewStyle().SetFamily(rich.Monospace)
+	}
+	bold := *sty
+	bold.SetWeight(rich.Bold)
 	outstr := ""
 	if out != nil {
 		outstr = string(out[:CmdOutStatusLen])
+		outlns := strings.Split(outstr, "\n")
+		outstr = outlns[0]
 	}
-	finstat := ""
+	finstat := rich.NewText(sty, []rune(cmdstr))
 	tstr := time.Now().Format("Mon Jan  2 15:04:05 MST 2006")
 	if err == nil {
-		finstat = fmt.Sprintf("%v <b>successful</b> at: %v", cmdstr, tstr)
+		finstat.AddSpan(&bold, []rune(" successful")).AddSpan(sty, []rune(" at: "+tstr))
 		rval = true
 	} else if ee, ok := err.(*exec.ExitError); ok {
-		finstat = fmt.Sprintf("%v <b>failed</b> at: %v with error: %v", cmdstr, tstr, ee.Error())
+		finstat.AddSpan(&bold, []rune("failed")).AddSpan(sty, []rune(" at: "+tstr)).
+			AddSpan(sty, []rune(" with error: "+ee.Error()))
 		rval = false
 	} else {
-		finstat = fmt.Sprintf("%v <b>exec error</b> at: %v error: %v", cmdstr, tstr, err.Error())
+		finstat.AddSpan(&bold, []rune("exec error")).AddSpan(sty, []rune(" at: "+tstr)).
+			AddSpan(sty, []rune(" error: "+err.Error()))
 		rval = false
 	}
 	if buf != nil {
@@ -571,9 +582,13 @@ func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err erro
 		if err != nil {
 			cv.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
-		fsb := []rune(finstat)
-		lns := [][]rune{[]rune(""), fsb}
-		mu := []rich.Text{rich.NewPlainText(nil), cm.MarkupCmdOutput(buf, fsb)}
+		lns := [][]rune{[]rune{}, finstat.Join()}
+		mu := []rich.Text{rich.NewText(sty, nil), finstat}
+		if len(outstr) > 0 {
+			rout := []rune(outstr)
+			lns = append(lns, rout)
+			mu = append(mu, cm.MarkupCmdOutput(buf, rout))
+		}
 		buf.AppendTextMarkup(lns, mu)
 		if cm.Focus {
 			cv.FocusOnTabs()
@@ -613,35 +628,13 @@ func MarkupCmdOutput(buf *lines.Lines, out []rune, lexName string) rich.Text {
 		}
 	}
 	sout := string(out)
-	flds := strings.Fields(sout)
-	_ = flds
-	// todo:
-	// orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
 	ctags, _ := highlighting.ChromaTagsLine(clex, sout)
 	mu := highlighting.MarkupLineRich(buf.Highlighter.Style, buf.FontStyle(), out, ctags, nil)
-	// if len(link) > 0 {
-	// 	mu = bytes.Replace(mu, orig, link, -1)
-	// }
+	mu = highlighting.MarkupPathsAsLinks(out, mu, 2) // first 2 fields
 	return mu
 }
 
-// MarkupStdOutput applies links to the first element in command output line
-// if it looks like a file name / position
-func MarkupStdOutput(out []byte) []byte {
-	flds := strings.Fields(string(out))
-	if len(flds) == 0 {
-		return out
-	}
-	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	nt := out
-	if len(link) > 0 {
-		nt = bytes.Replace(nt, orig, link, -1)
-	}
-	return nt
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//  Commands
+////////  Commands
 
 // Commands is a list of different commands
 type Commands []*Command //types:add
