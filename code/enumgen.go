@@ -92,6 +92,49 @@ func (i *DebugBreakStatus) UnmarshalText(text []byte) error {
 	return enums.UnmarshalText(i, text, "DebugBreakStatus")
 }
 
+var _LocationsValues = []Locations{0, 1, 2, 3}
+
+// LocationsN is the highest valid value for type Locations, plus one.
+const LocationsN Locations = 4
+
+var _LocationsValueMap = map[string]Locations{`Open`: 0, `All`: 1, `Dir`: 2, `File`: 3}
+
+var _LocationsDescMap = map[Locations]string{0: `Open searches in all open directories in a filetree.`, 1: `All searches in all directories under the root path.`, 2: `Dir searches in the current active directory.`, 3: `File searches in the current active file.`}
+
+var _LocationsMap = map[Locations]string{0: `Open`, 1: `All`, 2: `Dir`, 3: `File`}
+
+// String returns the string representation of this Locations value.
+func (i Locations) String() string { return enums.String(i, _LocationsMap) }
+
+// SetString sets the Locations value from its string representation,
+// and returns an error if the string is invalid.
+func (i *Locations) SetString(s string) error {
+	return enums.SetString(i, s, _LocationsValueMap, "Locations")
+}
+
+// Int64 returns the Locations value as an int64.
+func (i Locations) Int64() int64 { return int64(i) }
+
+// SetInt64 sets the Locations value from an int64.
+func (i *Locations) SetInt64(in int64) { *i = Locations(in) }
+
+// Desc returns the description of the Locations value.
+func (i Locations) Desc() string { return enums.Desc(i, _LocationsDescMap) }
+
+// LocationsValues returns all possible values for the type Locations.
+func LocationsValues() []Locations { return _LocationsValues }
+
+// Values returns all possible values for the type Locations.
+func (i Locations) Values() []enums.Enum { return enums.Values(_LocationsValues) }
+
+// MarshalText implements the [encoding.TextMarshaler] interface.
+func (i Locations) MarshalText() ([]byte, error) { return []byte(i.String()), nil }
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface.
+func (i *Locations) UnmarshalText(text []byte) error {
+	return enums.UnmarshalText(i, text, "Locations")
+}
+
 var _SymScopesValues = []SymScopes{0, 1}
 
 // SymScopesN is the highest valid value for type SymScopes, plus one.

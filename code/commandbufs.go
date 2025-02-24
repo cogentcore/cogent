@@ -11,6 +11,7 @@ import (
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/rich"
@@ -111,28 +112,23 @@ func (cv *Code) ExecCmdNameActive(cmdName string) { //types:add
 	})
 }
 
-// CommandFromMenu pops up a menu of commands for given language, with given last command
-// selected by default, and runs selected command.
-func (cv *Code) CommandFromMenu(ln *lines.Lines) {
-	tv := cv.ActiveEditor()
-	core.NewMenu(cv.CommandMenu(ln), tv, tv.ContextMenuPos(nil)).Run()
-}
-
 // ExecCmd pops up a menu to select a command appropriate for the current
 // active text view, and shows output in Tab with name of command
 func (cv *Code) ExecCmd() { //types:add
-	ln := cv.ActiveLines()
+	tv := cv.ActiveEditor()
+	ln := tv.Lines
 	if ln == nil {
 		cv.SetStatus("ExecCmd: No Active File")
 		return
 	}
-	cv.CommandFromMenu(ln)
+	core.NewMenu(cv.CommandMenuLines(ln), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // ExecCmdFileNode pops up a menu to select a command appropriate for the given node,
 // and shows output in Tab with name of command
-func (cv *Code) ExecCmdFileNode(ln *lines.Lines) {
-	cv.CommandFromMenu(ln)
+func (cv *Code) ExecCmdFileNode(fn *filetree.Node) {
+	tv := cv.ActiveEditor()
+	core.NewMenu(cv.CommandMenuFileNode(fn), tv, tv.ContextMenuPos(nil)).Run()
 }
 
 // SetArgVarVals sets the ArgVar values for commands, from Code values

@@ -6,6 +6,7 @@ package code
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -493,25 +494,34 @@ func (cv *Code) SaveAll() { //types:add
 	cv.SaveProjectIfExists(false)
 }
 
-// CloseFilesList closes any open files on the given list of filenames.
+// CloseOpenFiles closes any open files on the given list of filenames.
 func (cv *Code) CloseOpenFiles(fnames []string) {
-	nn := cv.OpenFiles.Len()
-	for ni := nn - 1; ni >= 0; ni-- {
-		ln := cv.OpenFiles.Values[ni]
-		path := ln.Filename()
-		for _, fnm := range fnames {
-			if strings.HasPrefix(path, fnm) {
-				textcore.Close(cv.Scene, ln, func(canceled bool) {
-					if canceled {
-						cv.SetStatus(fmt.Sprintf("File %q NOT closed: recommended as file name changed!", path))
-						return
-					}
-					cv.SetStatus(fmt.Sprintf("File %q closed due to file name change", path))
-				})
-				break // out of inner node loop
-			}
+	for _, fnm := range fnames {
+		fi, err := os.Stat(fnm)
+		if errors.Log(err) != nil {
+			continue
 		}
+		if !fi.IsDir() {
+			cv.CloseOpenFile(fnm)
+			continue
+		}
+		// todo: all files in dir
 	}
+}
+
+// CloseOpenFile closes given file if it is open.
+func (cv *Code) CloseOpenFile(fname string) {
+	ln := cv.OpenFiles.At(fname)
+	if ln == nil {
+		return
+	}
+	textcore.Close(cv.Scene, ln, func(canceled bool) {
+		if canceled {
+			cv.SetStatus(fmt.Sprintf("File %q NOT closed: recommended as file name changed!", fname))
+			return
+		}
+		cv.SetStatus(fmt.Sprintf("File %q closed due to file name change", fname))
+	})
 }
 
 ////////  FileNode stuff

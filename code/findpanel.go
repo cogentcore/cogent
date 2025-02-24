@@ -6,6 +6,7 @@ package code
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -13,15 +14,32 @@ import (
 	"cogentcore.org/core/base/stringsx"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/states"
 	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/text/runes"
+	"cogentcore.org/core/text/search"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 	"cogentcore.org/core/tree"
+)
+
+// Locations are different locations to search in.
+type Locations int32 //enums:enum
+
+const (
+	// Open searches in all open directories in a filetree.
+	Open Locations = iota
+
+	// All searches in all directories under the root path.
+	All
+
+	// Dir searches in the current active directory.
+	Dir
+
+	// File searches in the current active file.
+	File
 )
 
 // FindParams are parameters for find / replace
@@ -40,7 +58,7 @@ type FindParams struct {
 	Regexp bool
 
 	// locations to search in
-	Loc filetree.FindLocation
+	Loc Locations
 
 	// languages for files to search
 	Languages []fileinfo.Known
@@ -101,7 +119,7 @@ func (fv *FindPanel) Params() *FindParams {
 }
 
 // ShowResults shows the results in the buffer
-func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
+func (fv *FindPanel) ShowResults(res []search.Results) {
 	ftv := fv.TextEditor()
 	fbuf := ftv.Lines
 	sty := fbuf.FontStyle()
@@ -113,8 +131,8 @@ func (fv *FindPanel) ShowResults(res []filetree.SearchResults) {
 	outlns := make([][]rune, 0, 100)
 	outmus := make([]rich.Text, 0, 100) // markups
 	for _, fs := range res {
-		fp := fs.Node.Info.Path
-		fn := fs.Node.RelativePath()
+		fp := fs.Filepath
+		_, fn := filepath.Split(fp)
 		fbStLn := len(outlns) // find buf start ln
 		lstr := []rune(fmt.Sprintf(`%v: %v`, fn, fs.Count))
 		outlns = append(outlns, lstr)
@@ -409,7 +427,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 		w.SetTooltip(ttxt)
 		w.SetEnum(fv.Params().Loc)
 		w.OnChange(func(e events.Event) {
-			if eval, ok := w.CurrentItem.Value.(filetree.FindLocation); ok {
+			if eval, ok := w.CurrentItem.Value.(Locations); ok {
 				fv.Params().Loc = eval
 			}
 		})
@@ -472,4 +490,76 @@ func (fv *FindPanel) makeReplToolbar(p *tree.Plan) {
 		w.SetSlice(&fv.Params().Languages)
 		w.SetTooltip("Language(s) to restrict search / replace to")
 	})
+}
+
+////////  Code api
+
+func (cv *Code) CallFind(ctx core.Widget) {
+	cv.ConfigFindButton(core.NewSoloFuncButton(ctx).SetFunc(cv.Find)).CallFunc()
+}
+
+// Find does Find / Replace in files, using given options and filters -- opens up a
+// main tab with the results and further controls.
+func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc Locations, langs []fileinfo.Known) { //types:add
+	if find == "" {
+		return
+	}
+	cv.Settings.Find.IgnoreCase = ignoreCase
+	cv.Settings.Find.Regexp = regExp
+	cv.Settings.Find.Languages = langs
+	cv.Settings.Find.Loc = loc
+	cv.Settings.Find.Find = find
+	cv.Settings.Find.Replace = repl
+
+	tv := cv.Tabs()
+	if tv == nil {
+		return
+	}
+
+	fbuf, _ := cv.RecycleCmdBuf("Find")
+	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
+	fv.Time = time.Now()
+	fv.UpdateTree()
+	ftv := fv.TextEditor()
+	ftv.SetLines(fbuf)
+
+	root := string(cv.Files.Filepath)
+	atv := cv.ActiveEditor()
+	adir := ""
+	if atv.Lines != nil {
+		adir, _ = filepath.Split(atv.Lines.Filename())
+	}
+
+	var res []search.Results
+	var err error
+	switch loc {
+	case Open:
+		res, err = search.Paths(cv.Files.Dirs.OpenPaths(), find, ignoreCase, regExp, langs)
+	case All:
+		res, err = search.All(root, find, ignoreCase, regExp, langs)
+	case Dir:
+		res, err = search.Paths([]string{adir}, find, ignoreCase, regExp, langs)
+	case File:
+		if atv.Lines == nil {
+			core.MessageSnackbar(cv, "No buffer for active editor")
+			return
+		}
+		if regExp {
+			re, err := regexp.Compile(find)
+			if err != nil {
+				core.ErrorSnackbar(cv, err)
+			} else {
+				cnt, matches := atv.Lines.SearchRegexp(re)
+				res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
+			}
+		} else {
+			cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
+			res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
+		}
+	}
+	if err != nil {
+		core.ErrorSnackbar(cv, err)
+	}
+	fv.ShowResults(res)
+	cv.FocusOnPanel(TabsIndex)
 }

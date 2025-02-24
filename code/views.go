@@ -7,10 +7,7 @@ package code
 import (
 	"errors"
 	"fmt"
-	"log"
 	"path/filepath"
-	"regexp"
-	"time"
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fileinfo"
@@ -18,7 +15,6 @@ import (
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
-	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/text/spell"
 )
 
@@ -33,69 +29,6 @@ func (cv *Code) ConfigFindButton(fb *core.FuncButton) *core.FuncButton {
 	fb.Args[4].SetValue(cv.Settings.Find.Loc)
 	fb.Args[5].SetValue(cv.Settings.Find.Languages)
 	return fb
-}
-
-func (cv *Code) CallFind(ctx core.Widget) {
-	cv.ConfigFindButton(core.NewSoloFuncButton(ctx).SetFunc(cv.Find)).CallFunc()
-}
-
-// Find does Find / Replace in files, using given options and filters -- opens up a
-// main tab with the results and further controls.
-func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc filetree.FindLocation, langs []fileinfo.Known) { //types:add
-	if find == "" {
-		return
-	}
-	cv.Settings.Find.IgnoreCase = ignoreCase
-	cv.Settings.Find.Regexp = regExp
-	cv.Settings.Find.Languages = langs
-	cv.Settings.Find.Loc = loc
-	cv.Settings.Find.Find = find
-	cv.Settings.Find.Replace = repl
-
-	tv := cv.Tabs()
-	if tv == nil {
-		return
-	}
-
-	fbuf, _ := cv.RecycleCmdBuf("Find")
-	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
-	fv.Time = time.Now()
-	fv.UpdateTree()
-	ftv := fv.TextEditor()
-	ftv.SetLines(fbuf)
-
-	root := filetree.AsNode(cv.Files)
-	atv := cv.ActiveEditor()
-	ond := cv.FileNodeForFile(atv.Lines.Filename())
-	adir := ""
-	if ond != nil {
-		adir, _ = filepath.Split(string(ond.Filepath))
-	}
-	_ = root
-	_ = adir
-
-	var res []filetree.SearchResults
-	if loc == filetree.FindLocationFile && ond != nil {
-		if regExp {
-			re, err := regexp.Compile(find)
-			if err != nil {
-				log.Println(err)
-			} else {
-				cnt, matches := atv.Lines.SearchRegexp(re)
-				res = append(res, filetree.SearchResults{ond, cnt, matches})
-			}
-		} else {
-			cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
-			res = append(res, filetree.SearchResults{ond, cnt, matches})
-		}
-	} else {
-		// todo:
-		// res = filetree.Search(root, find, ignoreCase, regExp, loc, adir, langs, func(path string) *filetree.Node {
-		// 	return cv.OpenFiles.FindPath(path)
-		// })
-	}
-	fv.ShowResults(res)
-	cv.FocusOnPanel(TabsIndex)
 }
 
 // Spell checks spelling in active text view

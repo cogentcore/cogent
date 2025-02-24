@@ -20,6 +20,7 @@ import (
 	"cogentcore.org/core/base/vcs"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
+	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/text/highlighting"
@@ -802,11 +803,21 @@ func (cm *Commands) ViewStandard() { //types:add
 // menu, toolbar properties update methods.
 var CustomCommandsChanged = false
 
+// CommandMenuLines returns a menu function for commands for Lines.
+func (cv *Code) CommandMenuLines(ln *lines.Lines) func(mm *core.Scene) {
+	return cv.CommandMenu(ln.FileInfo().Known, GetVCSRepo(ln), ln.Filename())
+}
+
+// CommandMenuFileNode returns a menu function for commands for FileNode.
+func (cv *Code) CommandMenuFileNode(fn *filetree.Node) func(mm *core.Scene) {
+	repo, _ := fn.Repo()
+	return cv.CommandMenu(fn.Info.Known, repo, string(fn.Filepath))
+}
+
 // CommandMenu returns a menu function for commands for given language and vcs name
-func (cv *Code) CommandMenu(ln *lines.Lines) func(mm *core.Scene) {
-	lang := ln.FileInfo().Known
+func (cv *Code) CommandMenu(lang fileinfo.Known, repo vcs.Repo, fname string) func(mm *core.Scene) {
 	vcstype := cv.VersionControl()
-	if repo := GetVCSRepo(ln); repo != nil {
+	if repo != nil {
 		vcstype = repo.Type()
 	}
 	cmds := AvailableCommands.FilterCmdNames(lang, vcstype)
@@ -835,7 +846,7 @@ func (cv *Code) CommandMenu(ln *lines.Lines) func(mm *core.Scene) {
 						cmd := CmdName(cmdNm)
 						cv.CmdHistory.Add(cmd) // only save commands executed via chooser
 						cv.SaveAllCheck(true, func() {
-							cv.ExecCmdNameFile(ln.Filename(), cmd)
+							cv.ExecCmdNameFile(fname, cmd)
 						})
 					})
 					if cmdNm == lastCmd {

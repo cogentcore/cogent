@@ -76,12 +76,10 @@ func (fn *FileNode) SetRunExec() {
 // ExecCmdFile pops up a menu to select a command appropriate for the given node,
 // and shows output in MainTab with name of command
 func (fn *FileNode) ExecCmdFile() { //types:add
-	// cv, ok := ParentCode(fn.This)
-	// if ok {
-	// 	cv.ExecCmdFile(&fn.Node)
-	// } else {
-	// 	fmt.Println("no code!")
-	// }
+	cv, ok := ParentCode(fn.This)
+	if ok {
+		cv.ExecCmdFileNode(&fn.Node)
+	}
 }
 
 // ExecCmdNameFile executes given command name on node
@@ -93,19 +91,19 @@ func (fn *FileNode) ExecCmdNameFile(cmdNm string) {
 }
 
 func (fn *FileNode) ContextMenu(m *core.Scene) {
-	// todo:
-	// cv, ok := ParentCode(fn.This)
-	// if ok {
-	// 	core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
-	// 		SetMenu(cv.CommandMenu(&fn.Node)).Styler(func(s *styles.Style) {
-	// 		s.SetState(!fn.HasSelection(), states.Disabled)
-	// 	})
-	// }
+	cv, ok := ParentCode(fn.This)
+	if ok {
+		core.NewButton(m).SetText("Exec Cmd").SetIcon(icons.Terminal).
+			SetMenu(cv.CommandMenuFileNode(&fn.Node)).Styler(func(s *styles.Style) {
+			s.SetState(!fn.HasSelection(), states.Disabled)
+		})
+	}
 	core.NewFuncButton(m).SetFunc(fn.EditFiles).SetText("Edit").SetIcon(icons.Edit).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection(), states.Disabled)
 		})
-	core.NewFuncButton(m).SetFunc(fn.SetRunExecs).SetText("Set Run Exec").SetIcon(icons.PlayArrow).
+	core.NewFuncButton(m).SetFunc(fn.SetRunExecs).SetText("Set Run Exec").
+		SetIcon(icons.PlayArrow).
 		Styler(func(s *styles.Style) {
 			s.SetState(!fn.HasSelection() || !fn.IsExec(), states.Disabled)
 		})
@@ -132,18 +130,27 @@ func (fn *FileNode) RenameFiles() {
 		return
 	}
 	cv.SaveAllCheck(true, func() {
-		var paths []string
-		sels := fn.GetSelectedNodes()
-		for i := len(sels) - 1; i >= 0; i-- {
-			sn := sels[i].(*FileNode)
-			paths = append(paths, string(sn.Filepath))
-		}
+		paths := fn.SelectedPaths()
 		cv.CloseOpenFiles(paths) // close before rename because we are async after this
-		for i := len(sels) - 1; i >= 0; i-- {
-			sn := sels[i].(*FileNode)
-			fb := core.NewSoloFuncButton(sn).SetFunc(sn.RenameFile)
-			fb.Args[0].SetValue(sn.Name)
-			fb.CallFunc()
-		}
+		fn.Node.RenameFiles()
 	})
+}
+
+// DeleteFiles calls DeleteFile on any selected nodes, after prompting.
+func (fn *FileNode) DeleteFiles() {
+	cv, ok := ParentCode(fn.This)
+	if !ok {
+		return
+	}
+	d := core.NewBody("Delete Files?")
+	core.NewText(d).SetType(core.TextSupporting).SetText("OK to delete file(s)?  This is not undoable and files are not moving to trash / recycle bin. If any selections are directories all files and subdirectories will also be deleted.")
+	d.AddBottomBar(func(bar *core.Frame) {
+		d.AddCancel(bar)
+		d.AddOK(bar).SetText("Delete Files").OnClick(func(e events.Event) {
+			paths := fn.SelectedPaths()
+			cv.CloseOpenFiles(paths) // close before rename because we are async after this
+			fn.DeleteFilesNoPrompts()
+		})
+	})
+	d.RunDialog(fn)
 }
