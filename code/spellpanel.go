@@ -223,7 +223,7 @@ func (sv *SpellPanel) CheckNext() {
 		}
 	}
 	if done {
-		tv.ClearHighlights()
+		tv.HighlightsReset()
 		core.MessageSnackbar(sv, "End of file, spelling check complete")
 		return
 	}
@@ -303,5 +303,5 @@ func (sv *SpellPanel) Destroy() {
 	if tv == nil || tv.Lines == nil || tv.This == nil {
 		return
 	}
-	tv.ClearHighlights()
+	tv.HighlightsReset()
 }

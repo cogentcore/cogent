@@ -419,6 +419,7 @@ func (cv *Code) OpenFileURL(ur string, ftv *textcore.Editor) bool {
 		// todo: need some way of tagging the time stamp for adjusting!
 		// reg = tv.Buf.AdjustReg(reg)
 		txpos = reg.Start
+		tv.HighlightsReset()
 		tv.HighlightRegion(reg)
 		tv.SetCursorTarget(txpos)
 		tv.NeedsLayout()

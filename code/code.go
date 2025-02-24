@@ -187,7 +187,7 @@ func (cv *Code) Init() {
 	// todo: need to monitor deleted
 	// gee.TabDeleted(data.(string))
 	// if data == "Find" {
-	// 	ge.ActiveEditor().ClearHighlights()
+	// 	ge.ActiveEditor().HighlightsReset()
 	// }
 	// })
 }

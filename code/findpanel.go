@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
+	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/base/stringsx"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -122,6 +123,7 @@ func (fv *FindPanel) Params() *FindParams {
 
 // ShowResults shows the results in the buffer
 func (fv *FindPanel) ShowResults(res []search.Results) {
+	cv := fv.Code
 	ftv := fv.TextEditor()
 	fbuf := ftv.Lines
 	sty := fbuf.FontStyle()
@@ -137,7 +139,7 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 	outmus := make([]rich.Text, 0, 100) // markups
 	for _, fs := range res {
 		fp := fs.Filepath
-		_, fn := filepath.Split(fp)
+		fn := cv.Files.RelativePathFrom(fsx.Filename(fp))
 		fbStLn := len(outlns) // find buf start ln
 		lstr := []rune(fmt.Sprintf(`%v: %v`, fn, fs.Count))
 		outlns = append(outlns, []rune{})
@@ -194,7 +196,8 @@ func (fv *FindPanel) CheckValidRegexp() bool {
 	return true
 }
 
-// ReplaceAction performs the replace -- if using regexp mode, regexp must be compiled in advance
+// ReplaceAction performs the replace. if using regexp mode,
+// regexp must be compiled in advance.
 func (fv *FindPanel) ReplaceAction() bool {
 	if !fv.CheckValidRegexp() {
 		return false
@@ -212,8 +215,8 @@ func (fv *FindPanel) ReplaceAction() bool {
 			return false
 		}
 	}
-	ge := fv.Code
-	tv, reg, _, _, ok := ge.ParseOpenFindURL(tl.URL, ftv)
+	cv := fv.Code
+	tv, reg, _, _, ok := cv.ParseOpenFindURL(tl.URL, ftv)
 	if !ok {
 		return false
 	}
@@ -226,7 +229,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 		if tl == nil {
 			return false
 		}
-		tv, reg, _, _, ok = ge.ParseOpenFindURL(tl.URL, ftv)
+		tv, reg, _, _, ok = cv.ParseOpenFindURL(tl.URL, ftv)
 		if !ok || reg.IsNil() {
 			return false
 		}
@@ -252,7 +255,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 		ftv.Lines.DeleteText(st, en)
 	}
 
-	tv.ClearHighlights()
+	tv.HighlightsReset()
 
 	ok = ftv.CursorNextLink(false) // no wrap
 	if ok {
@@ -336,8 +339,8 @@ func (fv *FindPanel) PrevFind() {
 
 // OpenFindURL opens given find:/// url from Find
 func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
-	ge := fv.Code
-	tv, reg, fbBufStLn, fCount, ok := ge.ParseOpenFindURL(ur, ftv)
+	cv := fv.Code
+	tv, reg, fbBufStLn, fCount, ok := cv.ParseOpenFindURL(ur, ftv)
 	if !ok {
 		return false
 	}
@@ -348,6 +351,7 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 	tve := textcore.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
 	tv.SetCursorTarget(reg.Start)
+	fv.NeedsRender()
 	return true
 }
 
@@ -356,7 +360,7 @@ func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, fbStLn, fCount int
 	if len(ftv.Highlights) == fCount {
 		return
 	}
-	ftv.HighlightAllLinks()
+	// ftv.HighlightAllLinks()
 }
 
 ////////    GUI config
@@ -387,7 +391,7 @@ func (fv *FindPanel) makeFindToolbar(p *tree.Plan) {
 			if find == "" {
 				tv := fv.Code.ActiveEditor()
 				if tv != nil {
-					tv.ClearHighlights()
+					tv.HighlightsReset()
 				}
 				fvtv := fv.TextEditor()
 				if fvtv != nil {
