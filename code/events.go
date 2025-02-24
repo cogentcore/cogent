@@ -39,7 +39,7 @@ func (cv *Code) codeKeys(e events.Event) {
 	} else {
 		if kf == keymap.MultiA || kf == keymap.MultiB {
 			e.SetHandled()
-			tv := cv.ActiveTextEditor()
+			tv := cv.ActiveEditor()
 			if tv != nil {
 				tv.CancelComplete()
 			}
@@ -56,7 +56,7 @@ func (cv *Code) codeKeys(e events.Event) {
 		}
 	}
 
-	atv := cv.ActiveTextEditor()
+	atv := cv.ActiveEditor()
 	switch kf {
 	case keymap.Find:
 		e.SetHandled()
@@ -80,7 +80,7 @@ func (cv *Code) codeKeys(e events.Event) {
 		cv.CallViewFile(atv)
 	case KeyBufSelect:
 		e.SetHandled()
-		cv.SelectOpenNode()
+		cv.SelectOpenFile()
 	case KeyBufClone:
 		e.SetHandled()
 		cv.CloneActiveView()
@@ -119,7 +119,7 @@ func (cv *Code) codeKeys(e events.Event) {
 		cv.Indent()
 	case KeyJump:
 		e.SetHandled()
-		tv := cv.ActiveTextEditor()
+		tv := cv.ActiveEditor()
 		if tv != nil {
 			tv.JumpToLinePrompt()
 		}
@@ -134,3 +134,4 @@ func (cv *Code) codeKeys(e events.Event) {
 		cv.Run()
 	}
 }
+

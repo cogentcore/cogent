@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/textcore"
 )
 
 // ArgVarInfo has info about argument variables that fill in relevant values
@@ -84,7 +84,7 @@ var ArgVars = map[string]ArgVarInfo{
 type ArgVarVals map[string]string
 
 // Set sets the current values for arg variables -- prompts must be already set!
-func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *texteditor.Editor) {
+func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *textcore.Editor) {
 	if *avp == nil {
 		*avp = make(ArgVarVals, len(ArgVars))
 	}
@@ -152,15 +152,15 @@ func (avp *ArgVarVals) Set(fpath string, ppref *ProjectSettings, tv *texteditor.
 	av["{RunExecDirPathRel}"] = exerel
 
 	if tv != nil {
-		av["{CurLine}"] = fmt.Sprintf("%v", tv.CursorPos.Ln)
-		av["{CurCol}"] = fmt.Sprintf("%v", tv.CursorPos.Ch)                // not quite col
-		av["{SelStartLine}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ln) // check for no sel
-		av["{SelStartCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ch)
-		av["{SelEndLine}"] = fmt.Sprintf("%v", tv.SelectRegion.End.Ln)  // check for no sel
-		av["{SelEndCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Ch) // check for no sel
-		av["{CurSel}"] = ""                                             // todo get sel
-		av["{CurLineText}"] = ""                                        // todo get cur line
-		av["{CurWord}"] = ""                                            // todo get word
+		av["{CurLine}"] = fmt.Sprintf("%v", tv.CursorPos.Line)
+		av["{CurCol}"] = fmt.Sprintf("%v", tv.CursorPos.Char)                // not quite col
+		av["{SelStartLine}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Line) // check for no sel
+		av["{SelStartCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Char)
+		av["{SelEndLine}"] = fmt.Sprintf("%v", tv.SelectRegion.End.Line)  // check for no sel
+		av["{SelEndCol}"] = fmt.Sprintf("%v", tv.SelectRegion.Start.Char) // check for no sel
+		av["{CurSel}"] = ""                                               // todo get sel
+		av["{CurLineText}"] = ""                                          // todo get cur line
+		av["{CurWord}"] = ""                                              // todo get word
 	} else {
 		av["{CurLine}"] = ""
 		av["{CurCol}"] = ""

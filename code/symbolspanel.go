@@ -12,12 +12,12 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/parse/syms"
-	"cogentcore.org/core/parse/token"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/units"
-	"cogentcore.org/core/texteditor/text"
+	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/parse/syms"
+	"cogentcore.org/core/text/textpos"
+	"cogentcore.org/core/text/token"
 	"cogentcore.org/core/tree"
 )
 
@@ -175,10 +175,10 @@ func (sv *SymbolsPanel) RefreshAction() {
 }
 
 func SelectSymbol(cv *Code, ssym syms.Symbol) {
-	tv := cv.ActiveTextEditor()
-	if tv == nil || tv.Buffer == nil || string(tv.Buffer.Filename) != ssym.Filename {
-		tr := text.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
-		_, ok := cv.OpenFileAtRegion(core.Filename(ssym.Filename), tr)
+	tv := cv.ActiveEditor()
+	if tv == nil || tv.Lines == nil || tv.Lines.Filename() != ssym.Filename {
+		tr := textpos.NewRegion(ssym.SelectReg.Start.Line, ssym.SelectReg.Start.Char, ssym.SelectReg.End.Line, ssym.SelectReg.End.Char)
+		_, ok := cv.OpenFileAtRegion(ssym.Filename, tr)
 		if !ok {
 			log.Printf("Code SelectSymbol: OpenFileAtRegion returned false: %v\n", ssym.Filename)
 		}
@@ -186,7 +186,7 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 	}
 
 	tv.Highlights = tv.Highlights[:0]
-	tr := text.NewRegion(ssym.SelectReg.St.Ln, ssym.SelectReg.St.Ch, ssym.SelectReg.Ed.Ln, ssym.SelectReg.Ed.Ch)
+	tr := textpos.NewRegion(ssym.SelectReg.Start.Line, ssym.SelectReg.Start.Char, ssym.SelectReg.End.Line, ssym.SelectReg.End.Char)
 	tv.Highlights = append(tv.Highlights, tr)
 	tv.SetCursorTarget(tr.Start)
 	tv.SetFocus()
@@ -197,11 +197,14 @@ func SelectSymbol(cv *Code, ssym syms.Symbol) {
 // OpenPackage opens package-level symbols for current active texteditor
 func (sv *SymbolsPanel) OpenPackage() {
 	cv := sv.Code
-	tv := cv.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
+	tv := cv.ActiveEditor()
+	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
-	pfs := tv.Buffer.ParseState.Done()
+	pfs := tv.Lines.ParseFileState()
+	if pfs == nil {
+		return
+	}
 	if len(pfs.ParseState.Scopes) == 0 {
 		core.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
@@ -213,17 +216,20 @@ func (sv *SymbolsPanel) OpenPackage() {
 // OpenFile opens file-level symbols for current active texteditor
 func (sv *SymbolsPanel) OpenFile() {
 	cv := sv.Code
-	tv := cv.ActiveTextEditor()
-	if sv.Syms == nil || tv == nil || tv.Buffer == nil || !tv.Buffer.Highlighter.UsingParse() {
+	tv := cv.ActiveEditor()
+	if sv.Syms == nil || tv == nil || tv.Lines == nil || !tv.Lines.Highlighter.UsingParse() {
 		return
 	}
-	pfs := tv.Buffer.ParseState.Done()
+	pfs := tv.Lines.ParseFileState()
+	if pfs == nil {
+		return
+	}
 	if len(pfs.ParseState.Scopes) == 0 {
 		core.MessageSnackbar(sv, "Symbols not yet parsed -- try again in a few moments")
 		return
 	}
 	pkg := pfs.ParseState.Scopes[0] // first scope of parse state is the full set of package symbols
-	sv.Syms.OpenSyms(pkg, string(tv.Buffer.Filename), sv.Match)
+	sv.Syms.OpenSyms(pkg, tv.Lines.Filename(), sv.Match)
 }
 
 func symMatch(str, match string, ignoreCase bool) bool {

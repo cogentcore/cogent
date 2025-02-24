@@ -25,11 +25,11 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/events/key"
 	"cogentcore.org/core/filetree"
-	"cogentcore.org/core/spell"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/spell"
 	"cogentcore.org/core/tree"
 	"cogentcore.org/core/types"
 )
@@ -71,13 +71,13 @@ type Code struct {
 	Files *filetree.Tree `set:"-" json:"-"`
 
 	// index of the currently active texteditor -- new files will be viewed in other views if available
-	ActiveTextEditorIndex int `set:"-" json:"-"`
+	ActiveEditorIndex int `set:"-" json:"-"`
 
-	// list of open nodes, most recent first
-	OpenNodes OpenNodes `json:"-"`
+	// list of open files, most recent first
+	OpenFiles OpenFiles `json:"-"`
 
 	// the command buffers for commands run in this project
-	CmdBufs map[string]*texteditor.Buffer `set:"-" json:"-"`
+	CmdBufs map[string]*lines.Lines `set:"-" json:"-"`
 
 	// history of commands executed in this session
 	CmdHistory CmdNames `set:"-" json:"-"`
@@ -187,7 +187,7 @@ func (cv *Code) Init() {
 	// todo: need to monitor deleted
 	// gee.TabDeleted(data.(string))
 	// if data == "Find" {
-	// 	ge.ActiveTextEditor().ClearHighlights()
+	// 	ge.ActiveEditor().ClearHighlights()
 	// }
 	// })
 }
@@ -208,10 +208,10 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				s.Grow.Set(1, 0)
 			})
 			w.Menu = func(m *core.Scene) {
-				cv.TextEditorButtonMenu(i, m)
+				cv.EditorButtonMenu(i, m)
 			}
 			w.OnClick(func(e events.Event) {
-				cv.SetActiveTextEditorIndex(i)
+				cv.SetActiveEditorIndex(i)
 			})
 			// todo: update
 			// ge.UpdateTextButtons()
@@ -223,12 +223,12 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				s.Min.X.Ch(20)
 				s.Min.Y.Em(5)
 				s.SetAbilities(true, abilities.ScrollableUnfocused)
-				if w.Buffer != nil {
-					w.SetReadOnly(w.Buffer.Info.Generated)
+				if w.Lines != nil {
+					w.SetReadOnly(w.Lines.FileInfo().Generated)
 				}
 			})
 			w.OnFocus(func(e events.Event) {
-				cv.ActiveTextEditorIndex = i
+				cv.ActiveEditorIndex = i
 				cv.updatePreviewPanel()
 			})
 			// get updates on cursor movement and qreplace
@@ -274,13 +274,13 @@ func (cv *Code) Splits() *core.Splits {
 	return cv.ChildByName("splits", 2).(*core.Splits)
 }
 
-// TextEditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
-func (cv *Code) TextEditorButtonByIndex(idx int) *core.Button {
+// EditorButtonByIndex returns the top texteditor menu button by index (0 or 1)
+func (cv *Code) EditorButtonByIndex(idx int) *core.Button {
 	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(0).(*core.Button)
 }
 
-// TextEditorByIndex returns the TextEditor by index (0 or 1), nil if not found
-func (cv *Code) TextEditorByIndex(idx int) *TextEditor {
+// EditorByIndex returns the TextEditor by index (0 or 1), nil if not found
+func (cv *Code) EditorByIndex(idx int) *TextEditor {
 	return cv.Splits().Child(TextEditor1Index + idx).AsTree().Child(1).(*TextEditor)
 }
 
@@ -412,7 +412,7 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 		cv.LangDefaults()
 		cv.SplitsSetView(SplitName(AvailableSplitNames[0]))
 		if fnm != "" {
-			cv.NextViewFile(core.Filename(fnm))
+			cv.NextViewFile(fnm)
 		}
 	}
 	return cv
@@ -555,7 +555,7 @@ func (cv *Code) SaveAllCheck(cancelOpt bool, fun func()) bool {
 		})
 		core.NewButton(bar).SetText("Save All").OnClick(func(e events.Event) {
 			d.Close()
-			cv.SaveAllOpenNodes()
+			cv.SaveAllOpenFiles()
 			if fun != nil {
 				fun()
 			}
@@ -614,7 +614,7 @@ func CheckForProjectAtPath(path string) (string, bool) {
 
 // NChangedFiles returns number of opened files with unsaved changes
 func (cv *Code) NChangedFiles() int {
-	return cv.OpenNodes.NChanged()
+	return cv.OpenFiles.NChanged()
 }
 
 // AddCloseDialog adds the close dialog that automatically saves the project
@@ -634,7 +634,7 @@ func (cv *Code) AddCloseDialog() {
 				cv.Scene.Close()
 			})
 			core.NewButton(bar).SetText("Save and close").OnClick(func(e events.Event) {
-				cv.SaveAllOpenNodes()
+				cv.SaveAllOpenFiles()
 				cv.Scene.Close()
 			})
 		})

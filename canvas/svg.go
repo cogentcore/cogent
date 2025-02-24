@@ -540,7 +540,7 @@ func (sv *SVG) SetMetaData() {
 	nv.SetProperty("inkscape:zoom", fmt.Sprintf("%g", sv.SVG.Scale))
 	nv.SetProperty("inkscape:document-units", uts)
 
-	//	get rid of inkscape properties we don't set
+	// get rid of inkscape properties we don't set
 	nv.DeleteProperty("cx")
 	nv.DeleteProperty("cy")
 	nv.DeleteProperty("zoom")

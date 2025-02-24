@@ -5,10 +5,8 @@
 package code
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"html"
 	"log"
 	"os"
 	"os/exec"
@@ -24,10 +22,12 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/icons"
-	"cogentcore.org/core/parse/lexer"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/texteditor"
-	"cogentcore.org/core/texteditor/highlighting"
+	"cogentcore.org/core/text/highlighting"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/runes"
+	"cogentcore.org/core/text/textcore"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/mattn/go-shellwords"
 )
@@ -267,7 +267,7 @@ type Command struct {
 	// if true, command requires Ok / Cancel confirmation dialog -- only needed for non-prompt commands
 	Confirm bool
 
-	//	what type of file to use for syntax highlighting.  Bash is the default.
+	// what type of file to use for syntax highlighting.  Bash is the default.
 	Hilight fileinfo.Known
 }
 
@@ -350,10 +350,10 @@ func RepoCurBranches(repo vcs.Repo) (string, []string, error) {
 
 // PromptUser prompts for values that need prompting for, and then runs
 // RunAfterPrompts if not otherwise cancelled by user
-func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string]struct{}) {
+func (cm *Command) PromptUser(cv *Code, buf *lines.Lines, pvals map[string]struct{}) {
 	sz := len(pvals)
 	cnt := 0
-	tv := cv.ActiveTextEditor()
+	tv := cv.ActiveEditor()
 	var cmvals map[string]string
 	for pv := range pvals {
 		switch pv {
@@ -390,9 +390,9 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 
 		// todo: looks like all the file prompts are not supported?
 		case "{PromptBranch}":
-			fn := cv.ActiveFileNode()
-			if fn != nil {
-				repo, _ := fn.Repo()
+			ln := cv.ActiveLines()
+			if ln != nil {
+				repo := GetVCSRepo(ln)
 				if repo != nil {
 					cur, br, err := RepoCurBranches(repo)
 					if err == nil {
@@ -415,10 +415,10 @@ func (cm *Command) PromptUser(cv *Code, buf *texteditor.Buffer, pvals map[string
 }
 
 // Run runs the command and saves the output in the Buf if it is non-nil,
-// which can be displayed -- if !wait, then Buf is updated online as output
-// occurs.  Status is updated with status of command exec.  User is prompted
+// which can be displayed. If !wait, then Buf is updated online as output
+// occurs. Status is updated with status of command exec.  User is prompted
 // for any values that might be needed for command.
-func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
+func (cm *Command) Run(cv *Code, buf *lines.Lines) {
 	if cm.Confirm {
 		d := core.NewBody("Confirm command")
 		core.NewText(d).SetType(core.TextSupporting).SetText(fmt.Sprintf("Command: %v: %v", cm.Label(), cm.Desc))
@@ -440,7 +440,7 @@ func (cm *Command) Run(cv *Code, buf *texteditor.Buffer) {
 }
 
 // RunAfterPrompts runs after any prompts have been set, if needed
-func (cm *Command) RunAfterPrompts(cv *Code, buf *texteditor.Buffer) {
+func (cm *Command) RunAfterPrompts(cv *Code, buf *lines.Lines) {
 	// ge.RunningCmds.KillByName(cm.Label()) // make sure nothing still running for us..
 	CmdNoUserPrompt = false
 	cdir := "{ProjectPath}"
@@ -449,9 +449,10 @@ func (cm *Command) RunAfterPrompts(cv *Code, buf *texteditor.Buffer) {
 	}
 	cds := cv.ArgVals.Bind(cdir)
 	err := os.Chdir(cds)
-	cm.AppendCmdOut(cv, buf, []byte(fmt.Sprintf("cd %v (from: %v)\n", cds, cdir)))
+	_ = err
+	cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("cd %v (from: %v)", cds, cdir)))
 	if err != nil {
-		cm.AppendCmdOut(cv, buf, []byte(fmt.Sprintf("Could not change to directory %v -- error: %v\n", cds, err)))
+		cm.AppendCmdOut(cv, buf, []rune(fmt.Sprintf("Could not change to directory %v -- error: %v", cds, err)))
 	}
 
 	if CmdWaitOverride || cm.Wait || len(cm.Cmds) > 1 {
@@ -480,20 +481,20 @@ func (cm *Command) RunAfterPrompts(cv *Code, buf *texteditor.Buffer) {
 // RunBufWait runs a command with output to the buffer, using CombinedOutput
 // so it waits for completion -- returns overall command success, and logs one
 // line of the command output to code statusbar
-func (cm *Command) RunBufWait(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
+func (cm *Command) RunBufWait(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
 	if cmd == nil {
 		return false
 	}
 	cv.RunningCmds.AddCmd(cm.Label(), cmdstr, cma, cmd)
 	out, err := cmd.CombinedOutput()
-	cm.AppendCmdOut(cv, buf, out)
+	cm.AppendCmdOut(cv, buf, []rune(string(out)))
 	return cm.RunStatus(cv, buf, cmdstr, err, out)
 }
 
 // RunBuf runs a command with output to the buffer, incrementally updating the
 // buffer with new results line-by-line as they come in
-func (cm *Command) RunBuf(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) bool {
+func (cm *Command) RunBuf(cv *Code, buf *lines.Lines, cma *CmdAndArgs) bool {
 	cmd, cmdstr := cma.PrepCmd(&cv.ArgVals)
 	if cmd == nil {
 		return false
@@ -504,8 +505,8 @@ func (cm *Command) RunBuf(cv *Code, buf *texteditor.Buffer, cma *CmdAndArgs) boo
 		cmd.Stderr = cmd.Stdout
 		err = cmd.Start()
 		if err == nil {
-			obuf := texteditor.OutputBuffer{}
-			obuf.SetOutput(stdout).SetBuffer(buf).SetMarkupFunc(cm.MarkupCmdOutput)
+			obuf := textcore.OutputBuffer{}
+			obuf.SetOutput(stdout).SetLines(buf).SetMarkupFunc(cm.MarkupCmdOutput)
 			obuf.MonitorOutput()
 		}
 		err = cmd.Wait()
@@ -524,50 +525,57 @@ func (cm *Command) RunNoBuf(cv *Code, cma *CmdAndArgs) bool {
 }
 
 // AppendCmdOut appends command output to buffer, applying markup for links
-func (cm *Command) AppendCmdOut(cv *Code, buf *texteditor.Buffer, out []byte) {
+func (cm *Command) AppendCmdOut(cv *Code, buf *lines.Lines, out []rune) {
 	if buf == nil {
 		return
 	}
 
 	buf.SetReadOnly(true)
 
-	lns := bytes.Split(out, []byte("\n"))
+	lns := runes.Split(out, []rune("\n"))
 	sz := len(lns)
-	outmus := make([][]byte, sz)
+	outmus := make([]rich.Text, sz)
 	for i, txt := range lns {
-		outmus[i] = cm.MarkupCmdOutput(txt)
+		outmus[i] = cm.MarkupCmdOutput(buf, txt)
 	}
-	lfb := []byte("\n")
-	mlns := bytes.Join(outmus, lfb)
-	mlns = append(mlns, lfb...)
-
-	buf.AppendTextMarkup(out, mlns, texteditor.EditSignal)
-	buf.AutoScrollEditors()
+	buf.AppendTextMarkup(lns, outmus)
 }
 
 // CmdOutStatusLen is amount of command output to include in the status update
 var CmdOutStatusLen = 80
 
 // RunStatus reports the status of the command run (given in cmdstr) to
-// ge.StatusBar -- returns true if there are no errors, and false if there
-// were errors
-func (cm *Command) RunStatus(cv *Code, buf *texteditor.Buffer, cmdstr string, err error, out []byte) bool {
+// ge.StatusBar, and appends to the buffer.
+// Returns true if there are no errors, and false if there were errors.
+func (cm *Command) RunStatus(cv *Code, buf *lines.Lines, cmdstr string, err error, out []byte) bool {
 	cv.RunningCmds.DeleteByName(cm.Label())
 	var rval bool
+	var sty *rich.Style
+	if buf != nil {
+		sty = buf.FontStyle()
+	} else {
+		sty = rich.NewStyle().SetFamily(rich.Monospace)
+	}
+	bold := *sty
+	bold.SetWeight(rich.Bold)
 	outstr := ""
 	if out != nil {
 		outstr = string(out[:CmdOutStatusLen])
+		outlns := strings.Split(outstr, "\n")
+		outstr = outlns[0]
 	}
-	finstat := ""
+	finstat := rich.NewText(sty, []rune(cmdstr))
 	tstr := time.Now().Format("Mon Jan  2 15:04:05 MST 2006")
 	if err == nil {
-		finstat = fmt.Sprintf("%v <b>successful</b> at: %v", cmdstr, tstr)
+		finstat.AddSpan(&bold, []rune(" successful")).AddSpan(sty, []rune(" at: "+tstr))
 		rval = true
 	} else if ee, ok := err.(*exec.ExitError); ok {
-		finstat = fmt.Sprintf("%v <b>failed</b> at: %v with error: %v", cmdstr, tstr, ee.Error())
+		finstat.AddSpan(&bold, []rune("failed")).AddSpan(sty, []rune(" at: "+tstr)).
+			AddSpan(sty, []rune(" with error: "+ee.Error()))
 		rval = false
 	} else {
-		finstat = fmt.Sprintf("%v <b>exec error</b> at: %v error: %v", cmdstr, tstr, err.Error())
+		finstat.AddSpan(&bold, []rune("exec error")).AddSpan(sty, []rune(" at: "+tstr)).
+			AddSpan(sty, []rune(" error: "+err.Error()))
 		rval = false
 	}
 	if buf != nil {
@@ -575,10 +583,14 @@ func (cm *Command) RunStatus(cv *Code, buf *texteditor.Buffer, cmdstr string, er
 		if err != nil {
 			cv.SelectTabByName(cm.Label()) // sometimes it isn't
 		}
-		fsb := []byte(finstat)
-		buf.AppendTextLineMarkup([]byte(""), []byte(""), texteditor.EditSignal)
-		buf.AppendTextLineMarkup(fsb, cm.MarkupCmdOutput(fsb), texteditor.EditSignal)
-		buf.AutoScrollEditors()
+		lns := [][]rune{[]rune{}, finstat.Join()}
+		mu := []rich.Text{rich.NewText(sty, nil), finstat}
+		if len(outstr) > 0 {
+			rout := []rune(outstr)
+			lns = append(lns, rout)
+			mu = append(mu, cm.MarkupCmdOutput(buf, rout))
+		}
+		buf.AppendTextMarkup(lns, mu)
 		if cm.Focus {
 			cv.FocusOnTabs()
 		}
@@ -592,22 +604,22 @@ func (cm *Command) LangMatch(lang fileinfo.Known) bool {
 	return fileinfo.IsMatch(cm.Lang, lang)
 }
 
-func (cm *Command) MarkupCmdOutput(out []byte) []byte {
+func (cm *Command) MarkupCmdOutput(buf *lines.Lines, out []rune) rich.Text {
 	lexName := ""
 	cmdnm := strings.ToLower(cm.Name)
 	switch {
 	case strings.Contains(cmdnm, "diff"):
 		lexName = cmdnm
 	}
-	return MarkupCmdOutput(out, lexName)
+	return MarkupCmdOutput(buf, out, lexName)
 }
 
 // MarkupCmdOutput applies links to the first element in command output line
 // if it looks like a file name / position, and runs markup using given lexer
 // name if provided (default is "bash")
-func MarkupCmdOutput(out []byte, lexName string) []byte {
+func MarkupCmdOutput(buf *lines.Lines, out []rune, lexName string) rich.Text {
 	if len(out) == 0 {
-		return out
+		return rich.NewPlainText(nil)
 	}
 	clex := lexers.Get("bash")
 	if lexName != "" {
@@ -616,34 +628,14 @@ func MarkupCmdOutput(out []byte, lexName string) []byte {
 			clex = nl
 		}
 	}
-	uout := html.UnescapeString(string(out))
-	flds := strings.Fields(uout)
-	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	ctags, _ := highlighting.ChromaTagsLine(clex, uout)
-	mu := highlighting.MarkupLine([]rune(uout), ctags, nil, highlighting.NoEscapeHTML)
-	if len(link) > 0 {
-		mu = bytes.Replace(mu, orig, link, -1)
-	}
+	sout := string(out)
+	ctags, _ := highlighting.ChromaTagsLine(clex, sout)
+	mu := highlighting.MarkupLineRich(buf.Highlighter.Style, buf.FontStyle(), out, ctags, nil)
+	mu = highlighting.MarkupPathsAsLinks(out, mu, 2) // first 2 fields
 	return mu
 }
 
-// MarkupStdOutput applies links to the first element in command output line
-// if it looks like a file name / position
-func MarkupStdOutput(out []byte) []byte {
-	flds := strings.Fields(string(out))
-	if len(flds) == 0 {
-		return out
-	}
-	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	nt := out
-	if len(link) > 0 {
-		nt = bytes.Replace(nt, orig, link, -1)
-	}
-	return nt
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//  Commands
+////////  Commands
 
 // Commands is a list of different commands
 type Commands []*Command //types:add
@@ -811,15 +803,21 @@ func (cm *Commands) ViewStandard() { //types:add
 // menu, toolbar properties update methods.
 var CustomCommandsChanged = false
 
+// CommandMenuLines returns a menu function for commands for Lines.
+func (cv *Code) CommandMenuLines(ln *lines.Lines) func(mm *core.Scene) {
+	return cv.CommandMenu(ln.FileInfo().Known, GetVCSRepo(ln), ln.Filename())
+}
+
+// CommandMenuFileNode returns a menu function for commands for FileNode.
+func (cv *Code) CommandMenuFileNode(fn *filetree.Node) func(mm *core.Scene) {
+	repo, _ := fn.Repo()
+	return cv.CommandMenu(fn.Info.Known, repo, string(fn.Filepath))
+}
+
 // CommandMenu returns a menu function for commands for given language and vcs name
-func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
-	cv, ok := ParentCode(fn.This)
-	if !ok {
-		return nil
-	}
-	lang := fn.Info.Known
+func (cv *Code) CommandMenu(lang fileinfo.Known, repo vcs.Repo, fname string) func(mm *core.Scene) {
 	vcstype := cv.VersionControl()
-	if repo, _ := fn.Repo(); repo != nil {
+	if repo != nil {
 		vcstype = repo.Type()
 	}
 	cmds := AvailableCommands.FilterCmdNames(lang, vcstype)
@@ -848,7 +846,7 @@ func CommandMenu(fn *filetree.Node) func(mm *core.Scene) {
 						cmd := CmdName(cmdNm)
 						cv.CmdHistory.Add(cmd) // only save commands executed via chooser
 						cv.SaveAllCheck(true, func() {
-							cv.ExecCmdNameFileNode(fn, cmd)
+							cv.ExecCmdNameFile(fname, cmd)
 						})
 					})
 					if cmdNm == lastCmd {

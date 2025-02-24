@@ -14,8 +14,8 @@ import (
 
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fsx"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/parse/syms"
+	"cogentcore.org/core/text/parse/lexer"
+	"cogentcore.org/core/text/parse/syms"
 	"github.com/go-delve/delve/service/api"
 )
 

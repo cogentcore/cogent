@@ -7,7 +7,6 @@
 package cdelve
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os/exec"
@@ -19,14 +18,16 @@ import (
 	"cogentcore.org/cogent/code/cdebug"
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/num"
-	"cogentcore.org/core/parse/lexer"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/highlighting"
+	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/textcore"
 	"github.com/go-delve/delve/service/api"
 	"github.com/go-delve/delve/service/rpc2"
 )
 
 func init() {
-	cdebug.Debuggers[fileinfo.Go] = func(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (cdebug.GiDebug, error) {
+	cdebug.Debuggers[fileinfo.Go] = func(path, rootPath string, outbuf *lines.Lines, pars *cdebug.Params) (cdebug.GiDebug, error) {
 		return NewGiDelve(path, rootPath, outbuf, pars)
 	}
 }
@@ -38,7 +39,7 @@ type GiDelve struct {
 	conn          string                   // connection ip addr and port (127.0.0.1:<port>) -- what we pass to RPCClient
 	dlv           *rpc2.RPCClient          // the delve rpc2 client interface
 	cmd           *exec.Cmd                // command running delve
-	obuf          *texteditor.OutputBuffer // output buffer
+	obuf          *textcore.OutputBuffer   // output buffer
 	lastEvalScope *api.EvalScope           // last used EvalScope
 	statFunc      func(stat cdebug.Status) // status function
 	params        cdebug.Params            // local copy of initial params
@@ -48,7 +49,7 @@ type GiDelve struct {
 // for given path, and project root path
 // test = run in test mode, and args are optional additional args to pass
 // to the debugger.
-func NewGiDelve(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) (*GiDelve, error) {
+func NewGiDelve(path, rootPath string, outbuf *lines.Lines, pars *cdebug.Params) (*GiDelve, error) {
 	gd := &GiDelve{}
 	err := gd.Start(path, rootPath, outbuf, pars)
 	return gd, err
@@ -63,9 +64,9 @@ func (gd *GiDelve) WriteToConsole(msg string) {
 		log.Println(msg)
 		return
 	}
-	tlns := []byte(msg)
-	mlns := tlns
-	gd.obuf.Buffer.AppendTextMarkup(tlns, mlns, texteditor.EditSignal)
+	tlns := []rune(msg)
+	mlns := rich.NewPlainText(tlns)
+	gd.obuf.Lines.AppendTextMarkup([][]rune{tlns}, []rich.Text{mlns})
 }
 
 func (gd *GiDelve) LogErr(err error) error {
@@ -95,7 +96,7 @@ func (gd *GiDelve) StartedCheck() error {
 }
 
 // Start starts the debugger for a given exe path
-func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buffer, pars *cdebug.Params) error {
+func (gd *GiDelve) Start(path, rootPath string, outbuf *lines.Lines, pars *cdebug.Params) error {
 	gd.path = path
 	gd.rootPath = rootPath
 	gd.params = *pars
@@ -124,8 +125,8 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buffer, pars 
 		gd.cmd.Stderr = gd.cmd.Stdout
 		err = gd.cmd.Start()
 		if err == nil {
-			gd.obuf = &texteditor.OutputBuffer{}
-			gd.obuf.SetOutput(stdout).SetBuffer(outbuf).SetMarkupFunc(gd.monitorOutput)
+			gd.obuf = &textcore.OutputBuffer{}
+			gd.obuf.SetOutput(stdout).SetLines(outbuf).SetMarkupFunc(gd.monitorOutput)
 			go gd.obuf.MonitorOutput()
 		}
 	}
@@ -136,13 +137,16 @@ func (gd *GiDelve) Start(path, rootPath string, outbuf *texteditor.Buffer, pars 
 	return nil
 }
 
-func (gd *GiDelve) monitorOutput(out []byte) []byte {
+func (gd *GiDelve) monitorOutput(buf *lines.Lines, out []rune) rich.Text {
+	sty := buf.FontStyle()
+	mu := rich.NewText(sty, out)
 	if gd.conn != "" {
-		return out
+		return mu
 	}
-	flds := strings.Fields(string(out))
+	sout := string(out)
+	flds := strings.Fields(sout)
 	if len(flds) == 0 {
-		return out
+		return mu
 	}
 	if flds[0] == "API" && flds[1] == "server" && flds[2] == "listening" && flds[3] == "at:" {
 		gd.conn = flds[4]
@@ -151,20 +155,15 @@ func (gd *GiDelve) monitorOutput(out []byte) []byte {
 		if gd.statFunc != nil {
 			gd.statFunc(cdebug.Ready)
 		}
-		return out
+		return mu
 	}
 	if flds[0] == "exit" && flds[1] == "status" {
 		if gd.statFunc != nil {
 			gd.statFunc(cdebug.Error)
 		}
-		return out
+		return mu
 	}
-	orig, link := lexer.MarkupPathsAsLinks(flds, 2) // only first 2 fields
-	if len(link) > 0 {
-		nt := bytes.Replace(out, orig, link, -1)
-		return nt
-	}
-	return out
+	return highlighting.MarkupPathsAsLinks(out, mu, 2) // only first 2 fields
 }
 
 // IsActive returns whether debugger is active and ready for commands
