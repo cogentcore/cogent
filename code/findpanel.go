@@ -12,6 +12,7 @@ import (
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/stringsx"
+	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/icons"
@@ -102,6 +103,7 @@ func (fv *FindPanel) Init() {
 	})
 	tree.AddChildAt(fv, "findtext", func(w *textcore.Editor) {
 		ConfigOutputTextEditor(w)
+		w.AutoscrollOnInput = false
 		w.LinkHandler = func(tl *rich.Hyperlink) {
 			fv.OpenFindURL(tl.URL, w)
 		}
@@ -125,8 +127,11 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 	sty := fbuf.FontStyle()
 	bold := *sty
 	bold.SetWeight(rich.Bold)
+	matchBg := *sty
+	matchBg.SetBackground(colors.ToUniform(colors.Scheme.Warn.Container))
 	link := *sty
 	link.SetLinkStyle()
+	nsp := 4
 	fbuf.Settings.LineNumbers = false
 	outlns := make([][]rune, 0, 100)
 	outmus := make([]rich.Text, 0, 100) // markups
@@ -135,11 +140,13 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 		_, fn := filepath.Split(fp)
 		fbStLn := len(outlns) // find buf start ln
 		lstr := []rune(fmt.Sprintf(`%v: %v`, fn, fs.Count))
+		outlns = append(outlns, []rune{})
+		outmus = append(outmus, rich.NewText(sty, []rune{}))
 		outlns = append(outlns, lstr)
 		outmus = append(outmus, rich.NewText(&bold, lstr))
 		for _, mt := range fs.Matches {
 			txt := runes.TrimSpace(mt.Text)
-			txt = append([]rune{'\t'}, txt...)
+			txt = append([]rune("    "), txt...) // nsp
 			ln := mt.Region.Start.Line + 1
 			ch := mt.Region.Start.Char + 1
 			ech := mt.Region.End.Char + 1
@@ -147,18 +154,19 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 			outlns = append(outlns, append(fnstr, txt...))
 			url := fmt.Sprintf("find:///%v#R%vN%vL%vC%v-L%vC%v", fp, fbStLn, fs.Count, ln, ch, ln, ech)
 			mu := rich.Text{}
-			mu.AddLink(&link, url, string(fnstr))
-			mu.AddSpan(sty, txt)
+			mu.AddLink(&link, url, string(fnstr)).
+				AddSpan(sty, txt[:mt.TextMatch.Start+nsp]).
+				AddSpan(&matchBg, txt[mt.TextMatch.Start+nsp:mt.TextMatch.End+nsp])
+			if mt.TextMatch.End+nsp < len(txt) {
+				mu.AddSpan(sty, txt[mt.TextMatch.End+nsp:])
+			}
 			outmus = append(outmus, mu)
 		}
 	}
 	fbuf.SetReadOnly(true)
 	fbuf.AppendTextMarkup(outlns, outmus)
 	ftv.CursorStartDoc()
-
 	fv.Update()
-	ftv.SetCursorShow(textpos.Pos{Line: 0})
-	ftv.NeedsLayout()
 	ok := ftv.CursorNextLink(false) // no wrap
 	if ok {
 		ftv.OpenLinkAt(ftv.CursorPos)
@@ -296,7 +304,6 @@ func (fv *FindPanel) ReplaceAll() {
 			sc := fv.Code.AsWidget().Scene
 			sc.AsyncLock()
 			ok := fv.ReplaceAction()
-			sc.NeedsLayout()
 			sc.AsyncUnlock()
 			if !ok {
 				break
@@ -341,7 +348,6 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 	tve := textcore.AsEditor(tv)
 	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
 	tv.SetCursorTarget(reg.Start)
-	tv.NeedsLayout()
 	return true
 }
 
