@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -21,6 +23,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/filetree"
 	"cogentcore.org/core/text/lines"
+	"cogentcore.org/core/text/search"
 	"cogentcore.org/core/text/textcore"
 	"cogentcore.org/core/text/textpos"
 )
@@ -52,6 +55,15 @@ func (of *OpenFiles) Move(to, from int) {
 	of.Insert(to, ln.Filename(), ln)
 }
 
+// Paths returns the list of full paths of open files.
+func (of *OpenFiles) Paths() []string {
+	sl := make([]string, of.Len())
+	for i, ln := range of.Values {
+		sl[i] = ln.Filename()
+	}
+	return sl
+}
+
 // Strings returns a string list of nodes, with paths relative to proj root.
 func (of *OpenFiles) Strings(root string) []string {
 	sl := make([]string, of.Len())
@@ -81,6 +93,44 @@ func (of *OpenFiles) NChanged() int {
 		}
 	}
 	return cnt
+}
+
+// SearchInPaths returns search results for given string literal with ignoreCase
+// setting, in all open files contained directly in given paths. If paths is nil
+// then all open files are searched.
+func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool, langs []fileinfo.Known) []search.Results {
+	var res []search.Results
+	for _, ln := range of.Values {
+		path, _ := filepath.Split(ln.Filename())
+		if !(paths == nil || slices.Contains(paths, path)) {
+			continue
+		}
+		if !search.LangCheck(ln.FileInfo(), langs) {
+			continue
+		}
+		cnt, matches := ln.Search([]byte(find), ignoreCase, false)
+		res = append(res, search.Results{ln.Filename(), cnt, matches})
+	}
+	return res
+}
+
+// SearchRegexpInPaths returns search results for given string literal with ignoreCase
+// setting, in all open files contained directly in given paths. If paths is nil
+// then all open files are searched.
+func (of *OpenFiles) SearchRegexpInPaths(paths []string, re *regexp.Regexp, langs []fileinfo.Known) []search.Results {
+	var res []search.Results
+	for _, ln := range of.Values {
+		path, _ := filepath.Split(ln.Filename())
+		if !(paths == nil || slices.Contains(paths, path)) {
+			continue
+		}
+		if !search.LangCheck(ln.FileInfo(), langs) {
+			continue
+		}
+		cnt, matches := ln.SearchRegexp(re)
+		res = append(res, search.Results{ln.Filename(), cnt, matches})
+	}
+	return res
 }
 
 // SetVCSRepo sets a pointer to the [vcs.Repo] into given object's [metadata],

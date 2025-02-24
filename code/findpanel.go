@@ -515,6 +515,16 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	if tv == nil {
 		return
 	}
+	var err error
+
+	var re *regexp.Regexp
+	if regExp {
+		re, err = regexp.Compile(find)
+		if err != nil {
+			core.ErrorSnackbar(cv, err)
+			return
+		}
+	}
 
 	fbuf, _ := cv.RecycleCmdBuf("Find")
 	fv := core.RecycleTabWidget[FindPanel](tv, "Find")
@@ -530,31 +540,39 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 		adir, _ = filepath.Split(atv.Lines.Filename())
 	}
 
+	excludeOpen := cv.OpenFiles.Paths()
+
 	var res []search.Results
-	var err error
+	var openFilesPaths []string
 	switch loc {
 	case Open:
-		res, err = search.Paths(cv.Files.Dirs.OpenPaths(), find, ignoreCase, regExp, langs)
+		openFilesPaths = cv.Files.Dirs.OpenPaths()
+		res, err = search.Paths(openFilesPaths, find, ignoreCase, regExp, langs, excludeOpen...)
 	case All:
-		res, err = search.All(root, find, ignoreCase, regExp, langs)
+		res, err = search.All(root, find, ignoreCase, regExp, langs, excludeOpen...)
 	case Dir:
-		res, err = search.Paths([]string{adir}, find, ignoreCase, regExp, langs)
+		openFilesPaths = []string{adir}
+		res, err = search.Paths(openFilesPaths, find, ignoreCase, regExp, langs, excludeOpen...)
 	case File:
 		if atv.Lines == nil {
 			core.MessageSnackbar(cv, "No buffer for active editor")
 			return
 		}
 		if regExp {
-			re, err := regexp.Compile(find)
-			if err != nil {
-				core.ErrorSnackbar(cv, err)
-			} else {
-				cnt, matches := atv.Lines.SearchRegexp(re)
-				res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
-			}
+			cnt, matches := atv.Lines.SearchRegexp(re)
+			res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
 		} else {
 			cnt, matches := atv.Lines.Search([]byte(find), ignoreCase, false)
 			res = append(res, search.Results{atv.Lines.Filename(), cnt, matches})
+		}
+	}
+	if loc != File {
+		if regExp {
+			ores := cv.OpenFiles.SearchRegexpInPaths(openFilesPaths, re, langs)
+			res = append(ores, res...)
+		} else {
+			ores := cv.OpenFiles.SearchInPaths(openFilesPaths, find, ignoreCase, langs)
+			res = append(ores, res...)
 		}
 	}
 	if err != nil {
