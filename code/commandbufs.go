@@ -50,6 +50,7 @@ func (cv *Code) RecycleCmdTab(cmdName string) (*lines.Lines, *textcore.Editor, b
 	ctv.AutoscrollOnInput = true
 	ctv.SetReadOnly(true)
 	ctv.SetLines(buf)
+	ctv.HighlightsReset()
 	ctv.LinkHandler = func(tl *rich.Hyperlink) {
 		cv.OpenFileURL(tl.URL, ctv)
 	}

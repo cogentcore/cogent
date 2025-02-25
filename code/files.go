@@ -70,7 +70,7 @@ func (of *OpenFiles) Strings(root string) []string {
 	for i, ln := range of.Values {
 		fpath := ln.Filename()
 		_, fn := filepath.Split(fpath)
-		rp := fsx.RelativeFilePath(root, fpath)
+		rp := fsx.RelativeFilePath(fpath, root)
 		rp = strings.TrimSuffix(rp, fn)
 		if rp != "" {
 			sl[i] = fn + " - " + rp
