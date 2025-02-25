@@ -108,7 +108,9 @@ func (fv *FindPanel) Init() {
 	})
 	tree.AddChildAt(fv, "findtext", func(w *textcore.Editor) {
 		ConfigOutputTextEditor(w)
-		w.AutoscrollOnInput = false
+		w.Styler(func(s *styles.Style) {
+			w.AutoscrollOnInput = false
+		})
 		w.LinkHandler = func(tl *rich.Hyperlink) {
 			fv.OpenFindURL(tl.URL, w)
 		}

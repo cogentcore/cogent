@@ -372,6 +372,7 @@ func (cv *Code) ViewLines(tv *TextEditor, vidx int, ln *lines.Lines) {
 		cv.SetStatus(fmt.Sprintf("Note: Changes not yet saved in file: %v", tv.Lines.Filename()))
 	}
 	tv.SetLines(ln)
+	cv.OpenFiles.Add(ln)
 	cv.SetActiveEditorIndex(vidx) // this calls FileModCheck
 }
 
