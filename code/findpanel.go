@@ -211,9 +211,10 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 			fnstr := []rune(fmt.Sprintf("%v:%d:%d: ", fn, ln, ch))
 			outlns = append(outlns, append(fnstr, txt...))
 			mu := rich.Text{}
+			ep := min(mt.TextMatch.End+nsp, len(txt))
 			mu.AddLink(&link, url, string(fnstr)).
 				AddSpan(sty, txt[:mt.TextMatch.Start+nsp]).
-				AddSpan(&matchBg, txt[mt.TextMatch.Start+nsp:mt.TextMatch.End+nsp])
+				AddSpan(&matchBg, txt[mt.TextMatch.Start+nsp:ep])
 			if mt.TextMatch.End+nsp < len(txt) {
 				mu.AddSpan(sty, txt[mt.TextMatch.End+nsp:])
 			}
