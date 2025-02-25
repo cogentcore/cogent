@@ -5,13 +5,17 @@
 package code
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"cogentcore.org/core/base/fileinfo"
 	"cogentcore.org/core/base/fsx"
+	"cogentcore.org/core/base/metadata"
 	"cogentcore.org/core/base/stringsx"
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
@@ -121,11 +125,61 @@ func (fv *FindPanel) Params() *FindParams {
 	return &fv.Code.Settings.Find
 }
 
+func findURL(path string, resultIndex, matchIndex, line, startChar, endChar int) string {
+	return fmt.Sprintf("find:///%s#R%d-%dL%dC%d-L%dC%d", path, resultIndex, matchIndex, line, startChar, line, endChar)
+}
+
+// parseFindURL parses and opens given find:/// url from Find, return text
+// region encoded in url, and starting line of results in find buffer, and
+// number of results returned -- for parsing all the find results
+func parseFindURL(ur string) (fpath string, reg textpos.Region, resultIndex, matchIndex int, err error) {
+	up, err := url.Parse(ur)
+	if err != nil {
+		return
+	}
+	fpath = up.Path[1:] // has double //
+	pos := up.Fragment
+	if pos == "" {
+		err = errors.New("No position fragment")
+		return
+	}
+	lidx := strings.Index(pos, "L")
+	if lidx > 0 {
+		reg.FromStringURL(pos[lidx:])
+		pos = pos[:lidx]
+	} else {
+		err = errors.New("No Line element")
+		return
+	}
+	fmt.Sscanf(pos, "R%d-%d", &resultIndex, &matchIndex)
+	return
+}
+
+// parseFindURL parses and opens given find:/// url from Find, return text
+// region encoded in url, and starting line of results in find buffer, and
+// number of results returned -- for parsing all the find results
+func (fv *FindPanel) parseFindURL(ur string, ftv *textcore.Editor) (tv *TextEditor, reg textpos.Region, resultIndex, matchIndex int, ok bool) {
+	cv := fv.Code
+	var fpath string
+	fpath, reg, resultIndex, matchIndex, err := parseFindURL(ur)
+	if err != nil {
+		core.ErrorSnackbar(fv, err)
+		return
+	}
+	tv, _, ok = cv.LinkViewFile(fpath)
+	if !ok {
+		core.MessageSnackbar(fv, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
+		return
+	}
+	return
+}
+
 // ShowResults shows the results in the buffer
 func (fv *FindPanel) ShowResults(res []search.Results) {
 	cv := fv.Code
 	ftv := fv.TextEditor()
 	fbuf := ftv.Lines
+	metadata.Set(fbuf, "SearchResults", res) // avail for direct access
 	sty := fbuf.FontStyle()
 	bold := *sty
 	bold.SetWeight(rich.Bold)
@@ -137,24 +191,23 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 	fbuf.Settings.LineNumbers = false
 	outlns := make([][]rune, 0, 100)
 	outmus := make([]rich.Text, 0, 100) // markups
-	for _, fs := range res {
-		fp := fs.Filepath
+	for ri, rs := range res {
+		fp := rs.Filepath
 		fn := cv.Files.RelativePathFrom(fsx.Filename(fp))
-		fbStLn := len(outlns) // find buf start ln
-		lstr := []rune(fmt.Sprintf(`%v: %v`, fn, fs.Count))
+		lstr := []rune(fmt.Sprintf(`%v: %v`, fn, rs.Count))
 		outlns = append(outlns, []rune{})
 		outmus = append(outmus, rich.NewText(sty, []rune{}))
 		outlns = append(outlns, lstr)
 		outmus = append(outmus, rich.NewText(&bold, lstr))
-		for _, mt := range fs.Matches {
+		for mi, mt := range rs.Matches {
 			txt := runes.TrimSpace(mt.Text)
 			txt = append([]rune("    "), txt...) // nsp
-			ln := mt.Region.Start.Line + 1
-			ch := mt.Region.Start.Char + 1
-			ech := mt.Region.End.Char + 1
+			ln := mt.Region.Start.Line
+			ch := mt.Region.Start.Char
+			ech := mt.Region.End.Char
+			url := findURL(fp, ri, mi, ln, ch, ech)
 			fnstr := []rune(fmt.Sprintf("%v:%d:%d: ", fn, ln, ch))
 			outlns = append(outlns, append(fnstr, txt...))
-			url := fmt.Sprintf("find:///%v#R%vN%vL%vC%v-L%vC%v", fp, fbStLn, fs.Count, ln, ch, ln, ech)
 			mu := rich.Text{}
 			mu.AddLink(&link, url, string(fnstr)).
 				AddSpan(sty, txt[:mt.TextMatch.Start+nsp]).
@@ -215,8 +268,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 			return false
 		}
 	}
-	cv := fv.Code
-	tv, reg, _, _, ok := cv.ParseOpenFindURL(tl.URL, ftv)
+	tv, reg, _, _, ok := fv.parseFindURL(tl.URL, ftv)
 	if !ok {
 		return false
 	}
@@ -229,7 +281,7 @@ func (fv *FindPanel) ReplaceAction() bool {
 		if tl == nil {
 			return false
 		}
-		tv, reg, _, _, ok = cv.ParseOpenFindURL(tl.URL, ftv)
+		tv, reg, _, _, ok = fv.parseFindURL(tl.URL, ftv)
 		if !ok || reg.IsNil() {
 			return false
 		}
@@ -339,8 +391,7 @@ func (fv *FindPanel) PrevFind() {
 
 // OpenFindURL opens given find:/// url from Find
 func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
-	cv := fv.Code
-	tv, reg, fbBufStLn, fCount, ok := cv.ParseOpenFindURL(ur, ftv)
+	tv, reg, resultIndex, _, ok := fv.parseFindURL(ur, ftv)
 	if !ok {
 		return false
 	}
@@ -349,18 +400,26 @@ func (fv *FindPanel) OpenFindURL(ur string, ftv *textcore.Editor) bool {
 	find := fv.Params().Find
 	textcore.PrevISearchString = find
 	tve := textcore.AsEditor(tv)
-	fv.HighlightFinds(tve, ftv, fbBufStLn, fCount, find)
+	res, _ := metadata.Get[[]search.Results](ftv.Lines, "SearchResults")
+	tres := &res[resultIndex]
+	fv.HighlightFinds(tve, ftv, tres, find)
 	tv.SetCursorTarget(reg.Start)
 	fv.NeedsRender()
 	return true
 }
 
 // HighlightFinds highlights all the find results in ftv buffer
-func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, fbStLn, fCount int, find string) {
-	if len(ftv.Highlights) == fCount {
+func (fv *FindPanel) HighlightFinds(tv, ftv *textcore.Editor, res *search.Results, find string) {
+	if len(tv.Highlights) == len(res.Matches) {
 		return
 	}
-	// ftv.HighlightAllLinks()
+	tv.HighlightsReset()
+	for _, mt := range res.Matches {
+		reg := mt.Region
+		reg.Time.SetTime(fv.Time)
+		reg = tv.Lines.AdjustRegion(reg)
+		tv.HighlightRegion(reg)
+	}
 }
 
 ////////    GUI config

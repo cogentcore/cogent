@@ -7,8 +7,6 @@ package code
 import (
 	"fmt"
 	"log"
-	"net/url"
-	"strings"
 
 	"cogentcore.org/core/base/fsx"
 	"cogentcore.org/core/core"
@@ -159,35 +157,6 @@ func (cv *Code) OpenFileAtRegion(filename string, tr textpos.Region) (tv *TextEd
 	tv.SetFocus()
 	tv.NeedsLayout()
 	return tv, true
-}
-
-// ParseOpenFindURL parses and opens given find:/// url from Find, return text
-// region encoded in url, and starting line of results in find buffer, and
-// number of results returned -- for parsing all the find results
-func (cv *Code) ParseOpenFindURL(ur string, ftv *textcore.Editor) (tv *TextEditor, reg textpos.Region, findBufStLn, findCount int, ok bool) {
-	up, err := url.Parse(ur)
-	if err != nil {
-		log.Printf("FindPanel OpenFindURL parse err: %v\n", err)
-		return
-	}
-	fpath := up.Path[1:] // has double //
-	pos := up.Fragment
-	tv, _, ok = cv.LinkViewFile(fpath)
-	if !ok {
-		core.MessageSnackbar(cv, fmt.Sprintf("Could not find or open file path in project: %v", fpath))
-		return
-	}
-	if pos == "" {
-		return
-	}
-
-	lidx := strings.Index(pos, "L")
-	if lidx > 0 {
-		reg.FromString(pos[lidx:])
-		pos = pos[:lidx]
-	}
-	fmt.Sscanf(pos, "R%dN%d", &findBufStLn, &findCount)
-	return
 }
 
 // OpenFindURL opens given find:/// url from Find; delegates to FindPanel

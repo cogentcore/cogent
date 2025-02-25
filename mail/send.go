@@ -17,7 +17,8 @@ import (
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/styles"
-	"cogentcore.org/core/texteditor"
+	"cogentcore.org/core/text/rich"
+	"cogentcore.org/core/text/textcore"
 	"github.com/emersion/go-message/mail"
 	"github.com/emersion/go-smtp"
 	"github.com/yuin/goldmark"
@@ -48,18 +49,18 @@ func (a *App) compose(title string) {
 	a.composeMessage.From = []*mail.Address{{Address: Settings.Accounts[0]}}
 	b := core.NewBody(title)
 	core.NewForm(b).SetStruct(a.composeMessage)
-	ed := texteditor.NewEditor(b)
+	ed := textcore.NewEditor(b)
 	core.Bind(&a.composeMessage.body, ed)
-	ed.Buffer.SetLanguage(fileinfo.Markdown)
-	ed.Buffer.Options.LineNumbers = false
+	ed.Lines.SetLanguage(fileinfo.Markdown)
+	ed.Lines.Settings.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
-		s.SetMono(false)
+		s.Font.SetFamily(rich.Monospace)
 		s.Grow.Set(1, 1)
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
 		b.AddCancel(bar)
 		b.AddOK(bar).SetText("Send").OnClick(func(e events.Event) {
-			a.composeMessage.body = ed.Buffer.String()
+			a.composeMessage.body = ed.Lines.String()
 			a.Send()
 		})
 	})
@@ -74,7 +75,6 @@ func (a *App) Send() error { //types:add
 	email := a.composeMessage.From[0].Address
 
 	var b bytes.Buffer
-
 	var h mail.Header
 	h.SetDate(time.Now())
 	h.SetAddressList("From", a.composeMessage.From)

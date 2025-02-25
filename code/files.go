@@ -109,7 +109,9 @@ func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool,
 			continue
 		}
 		cnt, matches := ln.Search([]byte(find), ignoreCase, false)
-		res = append(res, search.Results{ln.Filename(), cnt, matches})
+		if cnt > 0 {
+			res = append(res, search.Results{ln.Filename(), cnt, matches})
+		}
 	}
 	return res
 }
@@ -128,7 +130,9 @@ func (of *OpenFiles) SearchRegexpInPaths(paths []string, re *regexp.Regexp, lang
 			continue
 		}
 		cnt, matches := ln.SearchRegexp(re)
-		res = append(res, search.Results{ln.Filename(), cnt, matches})
+		if cnt > 0 {
+			res = append(res, search.Results{ln.Filename(), cnt, matches})
+		}
 	}
 	return res
 }
