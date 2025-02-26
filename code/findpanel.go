@@ -618,7 +618,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	var openFilesPaths []string
 	switch loc {
 	case Open:
-		openFilesPaths = cv.Files.Dirs.OpenPaths()
+		openFilesPaths = cv.Files.OpenPaths()
 		res, err = search.Paths(openFilesPaths, find, ignoreCase, regExp, langs, excludeOpen...)
 	case All:
 		res, err = search.All(root, find, ignoreCase, regExp, langs, excludeOpen...)
