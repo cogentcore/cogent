@@ -31,7 +31,7 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// Locations are different locations to search in.
+// Locations are different locations to search in
 type Locations int32 //enums:enum
 
 const (
@@ -189,7 +189,7 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 	matchBg.SetBackground(colors.ToUniform(colors.Scheme.Warn.Container))
 	link := *sty
 	link.SetLinkStyle()
-	nsp := 4
+	nsp := 1
 	fbuf.Settings.LineNumbers = false
 	outlns := make([][]rune, 0, 100)
 	outmus := make([]rich.Text, 0, 100) // markups
@@ -202,8 +202,8 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 		outlns = append(outlns, lstr)
 		outmus = append(outmus, rich.NewText(&bold, lstr))
 		for mi, mt := range rs.Matches {
-			txt := runes.TrimSpace(mt.Text)
-			txt = append([]rune("    "), txt...) // nsp
+			txt := runes.ReplaceAll(mt.Text, []rune("\t"), []rune(" "))
+			txt = append([]rune("\t"), txt...)
 			ln := mt.Region.Start.Line
 			ch := mt.Region.Start.Char
 			ech := mt.Region.End.Char

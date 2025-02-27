@@ -26,7 +26,7 @@ func (fn *FileNode) Init() {
 	fn.AddContextMenu(fn.ContextMenu)
 	fn.Parts.OnDoubleClick(func(e events.Event) {
 		e.SetHandled()
-		ge, ok := ParentCode(fn.This)
+		cv, ok := ParentCode(fn.This)
 		if !ok {
 			return
 		}
@@ -40,7 +40,7 @@ func (fn *FileNode) Init() {
 						sn.ToggleClose()
 					}
 				} else {
-					ge.FileNodeOpened(sn)
+					cv.FileNodeOpened(sn)
 				}
 				done = true
 			}
@@ -54,9 +54,9 @@ func (fn *FileNode) EditFile() {
 		log.Printf("FileNode Edit -- cannot view (edit) directories!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if ok {
-		ge.NextViewFile(string(fn.Filepath))
+		cv.NextViewFile(string(fn.Filepath))
 	}
 }
 
@@ -66,10 +66,10 @@ func (fn *FileNode) SetRunExec() {
 		log.Printf("FileNode SetRunExec -- only works for executable files!\n")
 		return
 	}
-	ge, ok := ParentCode(fn.This)
+	cv, ok := ParentCode(fn.This)
 	if ok {
-		ge.Settings.RunExec = fn.Filepath
-		ge.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.Filepath)))
+		cv.Settings.RunExec = fn.Filepath
+		cv.Settings.BuildDir = core.Filename(filepath.Dir(string(fn.Filepath)))
 	}
 }
 

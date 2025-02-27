@@ -380,18 +380,21 @@ func (cv *Code) ViewLines(tv *TextEditor, vidx int, ln *lines.Lines) {
 // Will use a more robust search of file tree if file path is not
 // directly openable. Returns texteditor and its index, false if not found.
 func (cv *Code) NextViewFile(fnm string) (*TextEditor, int, bool) { //types:add
-	ln, _ := cv.RecycleFile(fnm)
+	ln, nw := cv.RecycleFile(fnm)
 	if ln == nil {
 		fn, ok := cv.Files.FindFile(fnm)
 		if ok {
 			fnm = string(fn.Filepath)
-			ln, _ = cv.RecycleFile(fnm)
+			ln, nw = cv.RecycleFile(fnm)
 			if ln == nil {
 				return nil, -1, false
 			}
 		}
 	}
 	nv, nidx := cv.NextViewLines(ln)
+	if nw {
+		cv.AutosaveCheck(nv, nidx, ln)
+	}
 	return nv, nidx, true
 }
 

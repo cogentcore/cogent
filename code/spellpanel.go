@@ -86,7 +86,7 @@ func (sv *SpellPanel) Init() {
 							spell.Spell.AddWord(cur)
 						})
 					})
-					d.RunFullDialog(sv)
+					d.RunWindowDialog(sv)
 				})
 		})
 	})

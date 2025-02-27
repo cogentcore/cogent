@@ -547,7 +547,9 @@ func (dv *DebugPanel) DeleteBreakInBuf(fpath string, line int) {
 	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
 		tb.DeleteLineColor(line - 1)
-		tb.SendInput()
+		if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+			ed.NeedsRender()
+		}
 	}
 }
 
@@ -570,7 +572,9 @@ func (dv *DebugPanel) UpdateBreakInBuf(fpath string, line int, stat DebugBreakSt
 	tb := dv.Code.GetOpenFile(fpath)
 	if tb != nil {
 		tb.SetLineColor(line-1, DebugBreakColors[stat])
-		tb.SendInput()
+		if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+			ed.NeedsRender()
+		}
 	}
 }
 
@@ -735,7 +739,9 @@ func (dv *DebugPanel) SetCurPCInBuf(fpath string, line int) {
 	if tb != nil {
 		if _, has := tb.LineColor(line - 1); !has {
 			tb.SetLineColor(line-1, DebugBreakColors[DebugPCCurrent])
-			tb.SendInput()
+			if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+				ed.NeedsRender()
+			}
 			dv.CurFileLoc.FPath = fpath
 			dv.CurFileLoc.Line = line
 		}
@@ -751,7 +757,9 @@ func (dv *DebugPanel) DeleteCurPCInBuf() {
 		tb := dv.Code.GetOpenFile(fpath)
 		if tb != nil {
 			tb.DeleteLineColor(line - 1)
-			tb.SendInput()
+			if ed, _, ok := dv.Code.EditorForLines(tb); ok {
+				ed.NeedsRender()
+			}
 		}
 	}
 	dv.CurFileLoc.FPath = ""

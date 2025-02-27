@@ -19,8 +19,10 @@ import (
 	"cogentcore.org/core/tree"
 )
 
-// ConfigLines configures the text buffer according to the settings.
+// ConfigLines configures the text buffer according to the settings,
+// for files that are being edited (not for output buffers).
 func (cv *Code) ConfigLines(tb *lines.Lines) {
+	tb.Autosave = true
 	tb.SetHighlighting(core.AppearanceSettings.Highlighting)
 	tb.Settings.EditorSettings = cv.Settings.Editor
 	tb.ConfigKnown()
