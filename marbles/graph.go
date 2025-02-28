@@ -207,10 +207,14 @@ func (gr *Graph) graphAndUpdate() {
 	gr.Objects.Body.Scene.Update()
 }
 
-// Run runs the marbles for NSteps
+// Run runs the marbles.
 func (gr *Graph) Run() { //types:add
 	gr.AutoSave()
-	go gr.RunMarbles()
+	if gr.State.Running {
+		return
+	}
+	gr.State.Running = true
+	gr.State.Step = 0
 }
 
 // Stop stops the marbles

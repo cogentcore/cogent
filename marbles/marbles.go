@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"math"
 	"slices"
-	"time"
 
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/colors"
@@ -218,46 +217,38 @@ func (gr *Graph) InBounds(pos math32.Vector2) bool {
 	return false
 }
 
-// RunMarbles runs the marbles for NSteps
-func (gr *Graph) RunMarbles() {
-	if gr.State.Running {
+// RunTick does one tick of the marbles running.
+func (gr *Graph) RunTick() {
+	// startFrames := 0
+	// start := time.Now()
+	// ticker := time.NewTicker(time.Second / 60)
+	// for range ticker.C {
+	if !gr.State.Running {
 		return
 	}
-	gr.State.Running = true
-	gr.State.Step = 0
-	startFrames := 0
-	start := time.Now()
-	ticker := time.NewTicker(time.Second / 60)
-	for range ticker.C {
-		if !gr.State.Running {
-			ticker.Stop()
-			return
-		}
-		gr.State.Step++
-		if gr.State.Error != nil {
-			gr.State.Running = false
-		}
-		for j := 0; j < TheSettings.NFramesPer-1; j++ {
-			gr.UpdateMarblesData()
-			gr.State.PrevTime = gr.State.Time
-			gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
-		}
-		gr.Objects.Graph.AsyncLock()
-		ok := gr.UpdateMarbles()
-		gr.Objects.Graph.AsyncUnlock()
-		if ok {
-			gr.State.Step--
-			continue
-		}
-		if time.Since(start).Milliseconds() >= 3000 {
-			_ = startFrames
-			// fpsText.SetText(fmt.Sprintf("FPS: %v", (gr.State.Step-startFrames)/3))
-			start = time.Now()
-			startFrames = gr.State.Step
-		}
+	gr.State.Step++
+	if gr.State.Error != nil {
+		gr.State.Running = false
+	}
+	for j := 0; j < TheSettings.NFramesPer-1; j++ {
+		gr.UpdateMarblesData()
 		gr.State.PrevTime = gr.State.Time
 		gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
 	}
+	ok := gr.UpdateMarbles()
+	if ok {
+		gr.State.Step--
+		return
+	}
+	// if time.Since(start).Milliseconds() >= 3000 {
+	// 	_ = startFrames
+	// 	// fpsText.SetText(fmt.Sprintf("FPS: %v", (gr.State.Step-startFrames)/3))
+	// 	start = time.Now()
+	// 	startFrames = gr.State.Step
+	// }
+	gr.State.PrevTime = gr.State.Time
+	gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
+	// }
 }
 
 // ToggleTrack toogles tracking setting for a certain marble
