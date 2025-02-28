@@ -102,6 +102,7 @@ func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool,
 	var res []search.Results
 	for _, ln := range of.Values {
 		path, _ := filepath.Split(ln.Filename())
+		path = strings.TrimSuffix(path, string(filepath.Separator))
 		if !(paths == nil || slices.Contains(paths, path)) {
 			continue
 		}
