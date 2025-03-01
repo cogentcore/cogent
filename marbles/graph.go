@@ -75,7 +75,7 @@ type Line struct {
 type Params struct { //types:add
 
 	// Number of marbles
-	NMarbles int `min:"1" max:"10000" step:"10" label:"Number of marbles"`
+	NMarbles int `min:"1" max:"100000" step:"10" label:"Number of marbles"`
 
 	// Marble horizontal start position
 	MarbleStartX Expr
