@@ -101,8 +101,7 @@ func (of *OpenFiles) NChanged() int {
 func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool, langs []fileinfo.Known) []search.Results {
 	var res []search.Results
 	for _, ln := range of.Values {
-		path, _ := filepath.Split(ln.Filename())
-		path = strings.TrimSuffix(path, string(filepath.Separator))
+		path := filepath.Dir(ln.Filename())
 		if !(paths == nil || slices.Contains(paths, path)) {
 			continue
 		}

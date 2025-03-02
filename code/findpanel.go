@@ -609,7 +609,7 @@ func (cv *Code) Find(find string, repl string, ignoreCase bool, regExp bool, loc
 	atv := cv.ActiveEditor()
 	adir := ""
 	if atv.Lines != nil {
-		adir, _ = filepath.Split(atv.Lines.Filename())
+		adir = filepath.Dir(atv.Lines.Filename())
 	}
 
 	excludeOpen := cv.OpenFiles.Paths()
