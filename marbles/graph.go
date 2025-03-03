@@ -307,6 +307,8 @@ func (gr *Graph) CompileExprs() {
 
 // CompileParams compiles all of the graph parameter expressions
 func (gr *Graph) CompileParams() {
+	gr.Params.MarbleStartX.Compile()
+	gr.Params.MarbleStartY.Compile()
 	gr.Params.StartVelocityY.Compile()
 	gr.Params.StartVelocityX.Compile()
 	gr.Params.UpdateRate.Compile()

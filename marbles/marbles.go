@@ -44,15 +44,9 @@ func (gr *Graph) GraphMarblesInit() {
 
 // Init makes a marble
 func (m *Marble) Init(n int) {
-	if TheGraph.Params.MarbleStartX.Compile() != nil {
-		return
-	}
 	TheGraph.Params.MarbleStartX.Params["n"] = n
 	xPos := TheGraph.Params.MarbleStartX.Eval(0, 0, 0)
 
-	if TheGraph.Params.MarbleStartY.Compile() != nil {
-		return
-	}
 	TheGraph.Params.MarbleStartY.Params["n"] = n
 	yPos := TheGraph.Params.MarbleStartY.Eval(xPos, 0, 0)
 
