@@ -28,6 +28,7 @@ import (
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/styles/units"
+	"cogentcore.org/core/text/highlighting"
 	"cogentcore.org/core/text/lines"
 	"cogentcore.org/core/text/spell"
 	"cogentcore.org/core/tree"
@@ -124,7 +125,14 @@ func (cv *Code) Init() {
 	})
 	cv.OnShow(func(e events.Event) {
 		cv.OpenConsoleTab()
-		// cv.UpdateFiles()
+		cv.UpdateFiles()
+	})
+	cv.Updater(func() {
+		if cv.NeedsRebuild() {
+			highlighting.UpdateFromTheme()
+			cv.OpenFiles.ReMarkup()
+			cv.CmdBuffsReMarkup()
+		}
 	})
 
 	tree.AddChildAt(cv, "splits", func(w *core.Splits) {
@@ -339,11 +347,15 @@ func (cv *Code) IsEmpty() bool {
 
 // OpenRecent opens a recently used file
 func (cv *Code) OpenRecent(filename core.Filename) { //types:add
+	empty := cv.IsEmpty()
 	ext := strings.ToLower(filepath.Ext(string(filename)))
 	if ext == ".code" {
-		cv.OpenProject(filename)
+		cv.openProject(filename)
 	} else {
-		cv.OpenPath(filename)
+		cv.openPath(filename)
+	}
+	if empty {
+		cv.UpdateFiles()
 	}
 }
 
@@ -375,7 +387,7 @@ func (cv *Code) OpenFile(fnm string) { //types:add
 		}
 	}
 	// fmt.Printf("open path: %s\n", ge.ProjectRoot)
-	cv.OpenPath(core.Filename(abfn))
+	cv.openPath(core.Filename(abfn))
 }
 
 // SetWindowNameTitle sets the window name and title based on current project name
@@ -388,8 +400,20 @@ func (cv *Code) SetWindowNameTitle() {
 // specific file or a folder containing multiple files of interest -- opens in
 // current Code object if it is empty, or otherwise opens a new window.
 func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
+	empty := cv.IsEmpty()
+	ncv := cv.openPath(path)
+	if empty {
+		cv.UpdateFiles()
+	}
+	return ncv
+}
+
+// openPath creates a new project by opening given path, which can either be a
+// specific file or a folder containing multiple files of interest -- opens in
+// current Code object if it is empty, or otherwise opens a new window.
+func (cv *Code) openPath(path core.Filename) *Code { //types:add
 	if gproj, has := CheckForProjectAtPath(string(path)); has {
-		return cv.OpenProject(core.Filename(gproj))
+		return cv.openProject(core.Filename(gproj))
 	}
 	if !cv.IsEmpty() {
 		return NewCodeProjectPath(string(path))
@@ -407,7 +431,7 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 		cv.ProjectFilename = cv.Settings.ProjectFilename
 		cv.Settings.ProjectRoot = cv.ProjectRoot
 		cv.SetWindowNameTitle()
-		cv.UpdateFiles()
+		// cv.UpdateFiles()
 		cv.GuessMainLang()
 		cv.LangDefaults()
 		cv.SplitsSetView(SplitName(AvailableSplitNames[0]))
@@ -421,6 +445,17 @@ func (cv *Code) OpenPath(path core.Filename) *Code { //types:add
 // OpenProject opens .code project file and its settings from given filename,
 // in a standard toml-formatted file.
 func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
+	empty := cv.IsEmpty()
+	ncv := cv.openProject(filename)
+	if empty {
+		cv.UpdateFiles()
+	}
+	return ncv
+}
+
+// openProject opens .code project file and its settings from given filename,
+// in a standard toml-formatted file.
+func (cv *Code) openProject(filename core.Filename) *Code { //types:add
 	if !cv.IsEmpty() {
 		return OpenCodeProject(string(filename))
 	}
@@ -440,7 +475,7 @@ func (cv *Code) OpenProject(filename core.Filename) *Code { //types:add
 		cv.SetName(pnm)
 		cv.Scene.SetName(pnm)
 		cv.ApplySettings()
-		cv.UpdateFiles()
+		// cv.UpdateFiles()
 		if cv.Settings.MainLang == fileinfo.Unknown {
 			cv.GuessMainLang()
 			cv.LangDefaults()
@@ -461,7 +496,7 @@ func (cv *Code) NewProject(path core.Filename, folder string, mainLang fileinfo.
 		core.MessageDialog(cv, fmt.Sprintf("Could not make folder for project at: %v, err: %v", np, err), "Could not Make Folder")
 		return nil
 	}
-	nge := cv.OpenPath(core.Filename(np))
+	nge := cv.openPath(core.Filename(np))
 	nge.Settings.MainLang = mainLang
 	nge.Settings.VersionControl = versionControl
 	return nge
@@ -690,9 +725,9 @@ func NewCodeWindow(path, projnm, root string, doPath bool) *Code {
 	cv.Update() // get first pass so settings stick
 
 	if doPath {
-		cv.OpenPath(core.Filename(path))
+		cv.openPath(core.Filename(path))
 	} else {
-		cv.OpenProject(core.Filename(path))
+		cv.openProject(core.Filename(path))
 	}
 
 	b.RunWindow()

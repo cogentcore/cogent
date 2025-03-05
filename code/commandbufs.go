@@ -38,6 +38,16 @@ func (cv *Code) RecycleCmdBuf(cmdName string) (*lines.Lines, bool) {
 	return buf, true
 }
 
+// todo: Markup colors are baked in when output is generated -- no remarkup possible!
+
+// CmdBuffsReMarkup runs ReMarkup on all command bufs.
+func (cv *Code) CmdBuffsReMarkup() {
+	for _, ln := range cv.CmdBufs {
+		ln.SetHighlighting(core.AppearanceSettings.Highlighting)
+		ln.ReMarkup()
+	}
+}
+
 // RecycleCmdTab creates the tab to show command output, including making a
 // buffer object to save output from the command. Returns true if a new buffer
 // was created, false if one already existed.

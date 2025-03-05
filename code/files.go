@@ -137,6 +137,14 @@ func (of *OpenFiles) SearchRegexpInPaths(paths []string, re *regexp.Regexp, lang
 	return res
 }
 
+// ReMarkup all open files: when mode color changes etc, during rebuild
+func (of *OpenFiles) ReMarkup() {
+	for _, ln := range of.Values {
+		ln.SetHighlighting(core.AppearanceSettings.Highlighting)
+		ln.ReMarkup()
+	}
+}
+
 // SetVCSRepo sets a pointer to the [vcs.Repo] into given object's [metadata],
 // used on Lines.
 func SetVCSRepo(obj any, repo vcs.Repo) {
