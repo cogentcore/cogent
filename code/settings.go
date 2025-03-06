@@ -174,8 +174,7 @@ func (se *SettingsData) EditRegisters() { //types:add
 	RegistersView(&AvailableRegisters)
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Project Settings
+////////   Project Settings
 
 // ProjectSettings are the settings for saving for a project. This IS the project file
 type ProjectSettings struct { //types:add
@@ -277,8 +276,7 @@ func (se *ProjectSettings) RunExecIsExec() bool {
 	return fi.IsExec()
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//   Saved Projects / Paths
+////////   Saved Projects / Paths
 
 var (
 	// RecentPaths is a slice of recent file paths
@@ -302,8 +300,7 @@ func OpenPaths() {
 	RecentPaths.Open(pnm)
 }
 
-////////////////////////////////////////////////
-// Code
+//////// Code
 
 // Defaults sets new project defaults based on overall settings
 func (cv *Code) Defaults() {
