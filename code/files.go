@@ -565,6 +565,7 @@ func (cv *Code) CloseOpenFiles(fnames []string) {
 	for _, fnm := range fnames {
 		fi, err := os.Stat(fnm)
 		if errors.Log(err) != nil {
+			cv.CloseOpenFile(fnm) // try anyway
 			continue
 		}
 		if !fi.IsDir() {
@@ -583,10 +584,11 @@ func (cv *Code) CloseOpenFile(fname string) {
 	}
 	textcore.Close(cv.Scene, ln, func(canceled bool) {
 		if canceled {
-			cv.SetStatus(fmt.Sprintf("File %q NOT closed: recommended as file name changed!", fname))
+			cv.SetStatus(fmt.Sprintf("File %q NOT closed", fname))
 			return
 		}
-		cv.SetStatus(fmt.Sprintf("File %q closed due to file name change", fname))
+		cv.SetStatus(fmt.Sprintf("File %q closed", fname))
+		cv.OpenFiles.DeleteByKey(fname)
 	})
 }
 
