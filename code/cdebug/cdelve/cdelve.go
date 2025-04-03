@@ -577,6 +577,7 @@ func (gd *GiDelve) UpdateAllState(all *cdebug.AllState, threadID int, frame int)
 
 // FindFrames looks through the Stacks of all Tasks / Threads
 // for the closest Stack Frame to given file and line number.
+// File name search uses Contains to allow for paths to be searched.
 // Results are sorted by line number proximity to given line.
 func (gd *GiDelve) FindFrames(all *cdebug.AllState, fname string, line int) ([]*cdebug.Frame, error) {
 	var err error
@@ -587,7 +588,7 @@ func (gd *GiDelve) FindFrames(all *cdebug.AllState, fname string, line int) ([]*
 			break
 		}
 		for _, f := range sf {
-			if f.FPath != fname {
+			if !strings.Contains(f.FPath, fname) {
 				continue
 			}
 			fr = append(fr, f)

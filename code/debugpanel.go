@@ -693,8 +693,10 @@ func (dv *DebugPanel) SetThreadIndex(thridx int) {
 }
 
 // FindFrames finds the frames where given file and line are active
-// Selects the one that is closest and shows the others in Find Tab
-func (dv *DebugPanel) FindFrames(fpath string, line int) {
+// Selects the one that is closest and shows the others in Find Tab.
+// The fpath can be just the path or any string fragment contained
+// within the target filename.
+func (dv *DebugPanel) FindFrames(fpath string, line int) { //types:add
 	if !dv.DbgIsAvail() {
 		return
 	}
@@ -932,6 +934,11 @@ func (dv *DebugPanel) MakeToolbar(p *tree.Plan) {
 
 	tree.Add(p, func(w *core.FuncButton) {
 		w.SetFunc(dv.ListGlobalVars).SetText("Global vars").SetIcon(icons.Search)
+		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
+	})
+
+	tree.Add(p, func(w *core.FuncButton) {
+		w.SetFunc(dv.FindFrames).SetText("Find frames").SetIcon(icons.Search)
 		w.FirstStyler(func(s *styles.Style) { s.SetEnabled(dv.DbgIsAvail()) })
 	})
 

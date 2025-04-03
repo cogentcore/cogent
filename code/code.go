@@ -230,7 +230,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 				s.Grow.Set(1, 1)
 				s.Min.X.Ch(20)
 				s.Min.Y.Em(5)
-				s.SetAbilities(true, abilities.ScrollableUnfocused)
+				s.SetAbilities(true, abilities.ScrollableUnattended)
 				if w.Lines != nil {
 					w.SetReadOnly(w.Lines.FileInfo().Generated)
 				}
@@ -238,6 +238,9 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			w.OnFocus(func(e events.Event) {
 				cv.ActiveEditorIndex = i
 				cv.updatePreviewPanel()
+				if w.Complete != nil {
+					w.Complete.LookupFunc = cv.LookupFun
+				}
 			})
 			// get updates on cursor movement and qreplace
 			w.OnInput(func(e events.Event) {

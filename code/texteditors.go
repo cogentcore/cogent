@@ -92,6 +92,7 @@ func (cv *Code) SetActiveFileInfo(ln *lines.Lines) {
 func (cv *Code) SetActiveEditor(av *TextEditor) int {
 	cv.ActiveEditorIndex = cv.EditorIndex(av)
 	if av.Lines != nil {
+		av.UpdateNewFile()
 		if av.Complete != nil {
 			av.Complete.LookupFunc = cv.LookupFun
 		}

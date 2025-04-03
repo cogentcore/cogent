@@ -174,7 +174,7 @@ func ConfigOutputTextEditor(ed *textcore.Editor) {
 	ed.SetReadOnly(true)
 	ed.Styler(func(s *styles.Style) {
 		ed.SetReadOnly(true)
-		s.SetAbilities(true, abilities.ScrollableUnfocused)
+		s.SetAbilities(true, abilities.ScrollableUnattended)
 		ed.AutoscrollOnInput = true
 		s.Text.WhiteSpace = text.WrapNever
 		s.Text.TabSize = 8

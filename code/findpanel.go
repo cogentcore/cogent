@@ -183,12 +183,9 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 	fbuf := ftv.Lines
 	metadata.Set(fbuf, "SearchResults", res) // avail for direct access
 	sty := fbuf.FontStyle()
-	bold := *sty
-	bold.SetWeight(rich.Bold)
-	matchBg := *sty
-	matchBg.SetBackground(colors.ToUniform(colors.Scheme.Warn.Container))
-	link := *sty
-	link.SetLinkStyle()
+	bold := sty.Clone().SetWeight(rich.Bold)
+	matchBg := sty.Clone().SetBackground(colors.ToUniform(colors.Scheme.Warn.Container))
+	link := sty.Clone().SetLinkStyle()
 	nsp := 1
 	fbuf.Settings.LineNumbers = false
 	outlns := make([][]rune, 0, 100)
@@ -200,7 +197,7 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 		outlns = append(outlns, []rune{})
 		outmus = append(outmus, rich.NewText(sty, []rune{}))
 		outlns = append(outlns, lstr)
-		outmus = append(outmus, rich.NewText(&bold, lstr))
+		outmus = append(outmus, rich.NewText(bold, lstr))
 		for mi, mt := range rs.Matches {
 			txt := runes.ReplaceAll(mt.Text, []rune("\t"), []rune(" "))
 			txt = append([]rune("\t"), txt...)
@@ -212,9 +209,9 @@ func (fv *FindPanel) ShowResults(res []search.Results) {
 			outlns = append(outlns, append(fnstr, txt...))
 			mu := rich.Text{}
 			ep := min(mt.TextMatch.End+nsp, len(txt))
-			mu.AddLink(&link, url, string(fnstr)).
+			mu.AddLink(link, url, string(fnstr)).
 				AddSpan(sty, txt[:mt.TextMatch.Start+nsp]).
-				AddSpan(&matchBg, txt[mt.TextMatch.Start+nsp:ep])
+				AddSpan(matchBg, txt[mt.TextMatch.Start+nsp:ep])
 			if mt.TextMatch.End+nsp < len(txt) {
 				mu.AddSpan(sty, txt[mt.TextMatch.End+nsp:])
 			}
