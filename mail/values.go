@@ -60,7 +60,7 @@ func (mi *MessageListItem) Init() {
 		w.Updater(func() {
 			text := ""
 			if !mi.Message.isRead() {
-				text += fmt.Sprintf(`<span color="%s">•</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
+				text += fmt.Sprintf(`<span color="%s">●</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)))
 			}
 			if len(mi.Message.replies) > 0 {
 				text += fmt.Sprintf(`<span color="%s">%d</span> `, colors.AsHex(colors.ToUniform(colors.Scheme.Primary.Base)), len(mi.Message.replies)+1)
