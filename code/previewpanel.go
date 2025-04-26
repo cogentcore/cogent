@@ -35,7 +35,7 @@ func (pp *PreviewPanel) Init() {
 	})
 
 	pp.Updater(func() {
-		if pp.code == nil {
+		if pp.code == nil || !pp.IsVisible() {
 			return
 		}
 		ed := pp.code.ActiveEditor()

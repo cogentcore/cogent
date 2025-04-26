@@ -183,10 +183,18 @@ func (cv *Code) updatePreviewPanel() {
 	ts := cv.Tabs()
 	_, ptab := ts.CurrentTab()
 	pp := core.RecycleTabWidget[PreviewPanel](ts, "Preview")
+	curIsPreview := false
 	if ptab >= 0 {
+		_, ctab := ts.CurrentTab()
+		curIsPreview = ctab == ptab
 		ts.SelectTabIndex(ptab) // we stay at the previous tab
+	} else {
+		curIsPreview = true
 	}
 	pp.code = cv
+	if !curIsPreview { // not visible don't update
+		return
+	}
 	pp.Update()
 }
 
@@ -207,6 +215,7 @@ func (cv *Code) ChooseRunExec(exePath core.Filename) { //types:add
 // SetStatus sets the current status update message for the StatusBar next time it renders
 func (cv *Code) SetStatus(msg string) {
 	cv.StatusMessage = msg
+	cv.UpdateStatusText()
 	cv.UpdateTextButtons()
 }
 

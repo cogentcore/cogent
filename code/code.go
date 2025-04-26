@@ -244,6 +244,7 @@ func (cv *Code) makeTextEditor(p *tree.Plan, i int) {
 			})
 			// get updates on cursor movement and qreplace
 			w.OnInput(func(e events.Event) {
+				cv.UpdateTextButtons()
 				cv.UpdateStatusText()
 			})
 			w.OnChange(func(e events.Event) {
