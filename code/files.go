@@ -122,7 +122,7 @@ func (of *OpenFiles) SearchInPaths(paths []string, find string, ignoreCase bool,
 func (of *OpenFiles) SearchRegexpInPaths(paths []string, re *regexp.Regexp, langs []fileinfo.Known) []search.Results {
 	var res []search.Results
 	for _, ln := range of.Values {
-		path, _ := filepath.Split(ln.Filename())
+		path := filepath.Dir(ln.Filename())
 		if !(paths == nil || slices.Contains(paths, path)) {
 			continue
 		}
