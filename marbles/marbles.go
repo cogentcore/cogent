@@ -212,7 +212,7 @@ func (gr *Graph) InBounds(pos math32.Vector2) bool {
 }
 
 // RunTick does one tick of the marbles running.
-func (gr *Graph) RunTick() {
+func (gr *Graph) RunTick(dt float32) {
 	// startFrames := 0
 	// start := time.Now()
 	// ticker := time.NewTicker(time.Second / 60)
@@ -236,7 +236,7 @@ func (gr *Graph) RunTick() {
 	// 	startFrames = gr.State.Step
 	// }
 	gr.State.PrevTime = gr.State.Time
-	gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
+	gr.State.Time += float64(dt) * gr.Params.TimeStep.Eval(0, 0)
 	// }
 }
 

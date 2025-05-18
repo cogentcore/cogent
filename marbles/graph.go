@@ -92,7 +92,7 @@ type Params struct { //types:add
 	// how fast to move along velocity vector -- lower = smoother, more slow-mo
 	UpdateRate Param `display:"inline"`
 
-	// how fast time increases
+	// how much "t" increases per millisecond
 	TimeStep Param `display:"inline"`
 
 	// how fast it accelerates down
@@ -427,7 +427,7 @@ func (pr *Params) BasicDefaults() {
 	pr.StartVelocityY.Expr.Expr = "0"
 	pr.StartVelocityX.Expr.Expr = "0"
 	pr.UpdateRate.Expr.Expr = ".02"
-	pr.TimeStep.Expr.Expr = "0.01"
+	pr.TimeStep.Expr.Expr = "0.001"
 	pr.YForce.Expr.Expr = "-0.1"
 	pr.XForce.Expr.Expr = "0"
 	pr.CenterX.Expr.Expr = "0"
