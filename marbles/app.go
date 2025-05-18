@@ -81,7 +81,7 @@ func (gr *Graph) MakeBasicElements(b *core.Body) {
 	})
 
 	gr.Objects.Graph = core.NewCanvas(sp).SetDraw(gr.draw)
-	gr.Objects.Graph.Scene.On(events.WindowPaint, func(e events.Event) {
+	gr.Objects.Graph.Animate(func(a *core.Animation) {
 		gr.RunTick()
 	})
 
