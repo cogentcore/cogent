@@ -224,11 +224,6 @@ func (gr *Graph) RunTick() {
 	if gr.State.Error != nil {
 		gr.State.Running = false
 	}
-	for j := 0; j < TheSettings.NFramesPer-1; j++ {
-		gr.UpdateMarblesData()
-		gr.State.PrevTime = gr.State.Time
-		gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
-	}
 	ok := gr.UpdateMarbles()
 	if ok {
 		gr.State.Step--
