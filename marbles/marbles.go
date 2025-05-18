@@ -78,9 +78,9 @@ func (gr *Graph) ResetMarbles() {
 }
 
 // UpdateMarbles updates the marbles graph and marbles data
-func (gr *Graph) UpdateMarbles() bool {
+func (gr *Graph) UpdateMarbles(dt float32) bool {
 	gr.Objects.Graph.NeedsRender()
-	gr.UpdateMarblesData()
+	gr.UpdateMarblesData(dt)
 	return false
 }
 
@@ -103,7 +103,7 @@ func (m *Marble) UpdateTracking() {
 }
 
 // UpdateMarblesData updates marbles data
-func (gr *Graph) UpdateMarblesData() {
+func (gr *Graph) UpdateMarblesData(dt float32) {
 	gr.EvalMu.Lock()
 	defer gr.EvalMu.Unlock()
 
@@ -111,7 +111,7 @@ func (gr *Graph) UpdateMarblesData() {
 
 		m.Velocity.Y += float32(gr.Params.YForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * ((gr.Vectors.Size.Y * gr.Vectors.Size.X) / 400)
 		m.Velocity.X += float32(gr.Params.XForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * ((gr.Vectors.Size.Y * gr.Vectors.Size.X) / 400)
-		updtrate := float32(gr.Params.UpdateRate.Eval(float64(m.Pos.X), float64(m.Pos.Y)))
+		updtrate := dt * float32(gr.Params.UpdateRate.Eval(float64(m.Pos.X), float64(m.Pos.Y)))
 		npos := m.Pos.Add(m.Velocity.MulScalar(updtrate))
 		ppos := m.Pos
 		setColor := colors.White
@@ -224,7 +224,7 @@ func (gr *Graph) RunTick(dt float32) {
 	if gr.State.Error != nil {
 		gr.State.Running = false
 	}
-	ok := gr.UpdateMarbles()
+	ok := gr.UpdateMarbles(dt)
 	if ok {
 		gr.State.Step--
 		return

@@ -227,8 +227,9 @@ func (gr *Graph) Step() { //types:add
 	if gr.State.Running {
 		return
 	}
-	gr.UpdateMarbles()
-	gr.State.Time += gr.Params.TimeStep.Eval(0, 0)
+	dt := 16.66666667 // equal to one frame in 60 FPS
+	gr.UpdateMarbles(float32(dt))
+	gr.State.Time += dt * gr.Params.TimeStep.Eval(0, 0)
 }
 
 // StopSelecting stops selecting current marble
