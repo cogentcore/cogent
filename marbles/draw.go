@@ -42,13 +42,13 @@ func (gr *Graph) drawAxes(pc *paint.Painter) {
 	end := gr.canvasCoord(math32.Vec2(gr.Vectors.Max.X, 0))
 	pc.MoveTo(start.X, start.Y)
 	pc.LineTo(end.X, end.Y)
-	pc.PathDone()
+	pc.Draw()
 
 	start = gr.canvasCoord(math32.Vec2(0, gr.Vectors.Min.Y))
 	end = gr.canvasCoord(math32.Vec2(0, gr.Vectors.Max.Y))
 	pc.MoveTo(start.X, start.Y)
 	pc.LineTo(end.X, end.Y)
-	pc.PathDone()
+	pc.Draw()
 }
 
 func (gr *Graph) drawTrackingLines(pc *paint.Painter) {
@@ -65,7 +65,7 @@ func (gr *Graph) drawTrackingLines(pc *paint.Painter) {
 			}
 		}
 		pc.Stroke.Color = colors.Uniform(m.Color)
-		pc.PathDone()
+		pc.Draw()
 	}
 }
 
@@ -106,7 +106,7 @@ func (ln *Line) draw(gr *Graph, pc *paint.Painter) {
 	pc.Stroke.Color = colors.Uniform(ln.Colors.Color)
 	pc.Stroke.Width.Dp(1)
 	pc.ToDots()
-	pc.PathDone()
+	pc.Draw()
 }
 
 func (gr *Graph) drawMarbles(pc *paint.Painter) {
@@ -116,10 +116,10 @@ func (gr *Graph) drawMarbles(pc *paint.Painter) {
 		if i == gr.State.SelectedMarble {
 			pc.Fill.Color = colors.Scheme.Warn.Container
 			pc.Circle(pos.X, pos.Y, 0.02)
-			pc.PathDone()
+			pc.Draw()
 		}
 		pc.Fill.Color = colors.Uniform(m.Color)
 		pc.Circle(pos.X, pos.Y, 0.005)
-		pc.PathDone()
+		pc.Draw()
 	}
 }
