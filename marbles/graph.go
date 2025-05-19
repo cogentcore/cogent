@@ -89,11 +89,8 @@ type Params struct { //types:add
 	// Starting vertical velocity of the marbles
 	StartVelocityX Param `display:"inline" label:"Starting velocity x"`
 
-	// how fast to move along velocity vector -- lower = smoother, more slow-mo
+	// how fast to update the marbles, with 1 being normal speed
 	UpdateRate Param `display:"inline"`
-
-	// how much "t" increases per millisecond
-	TimeStep Param `display:"inline"`
 
 	// how fast it accelerates down
 	YForce Param `display:"inline" label:"Y force (Gravity)"`
@@ -227,9 +224,15 @@ func (gr *Graph) Step() { //types:add
 	if gr.State.Running {
 		return
 	}
-	dt := 16.66666667 // equal to one frame in 60 FPS
-	gr.UpdateMarbles(float32(dt))
-	gr.State.Time += dt * gr.Params.TimeStep.Eval(0, 0)
+	dt := float32(16.66666667) // equal to one frame in 60 FPS
+	gr.UpdateMarbles(dt)
+	gr.State.Time += float64(gr.updateRate(dt))
+}
+
+// updateRate returns the effective update rate of the graph,
+// dt * Params.UpdateRate / 1000.
+func (gr *Graph) updateRate(dt float32) float32 {
+	return dt * float32(gr.Params.UpdateRate.Eval(0, 0)) / 1000
 }
 
 // StopSelecting stops selecting current marble
@@ -315,7 +318,6 @@ func (gr *Graph) CompileParams() {
 	gr.Params.UpdateRate.Compile()
 	gr.Params.YForce.Compile()
 	gr.Params.XForce.Compile()
-	gr.Params.TimeStep.Compile()
 	gr.Params.CenterX.Compile()
 	gr.Params.CenterY.Compile()
 }
@@ -414,7 +416,6 @@ func (pr *Params) Defaults() {
 	pr.UpdateRate = TheSettings.GraphDefaults.UpdateRate
 	pr.YForce = TheSettings.GraphDefaults.YForce
 	pr.XForce = TheSettings.GraphDefaults.XForce
-	pr.TimeStep = TheSettings.GraphDefaults.TimeStep
 	pr.CenterX = TheSettings.GraphDefaults.CenterX
 	pr.CenterY = TheSettings.GraphDefaults.CenterY
 	pr.TrackingSettings = TheSettings.GraphDefaults.TrackingSettings
@@ -427,9 +428,8 @@ func (pr *Params) BasicDefaults() {
 	pr.MarbleStartY.Expr = "10-2n/nmarbles"
 	pr.StartVelocityY.Expr.Expr = "0"
 	pr.StartVelocityX.Expr.Expr = "0"
-	pr.UpdateRate.Expr.Expr = ".02"
-	pr.TimeStep.Expr.Expr = "0.001"
-	pr.YForce.Expr.Expr = "-0.1"
+	pr.UpdateRate.Expr.Expr = "1"
+	pr.YForce.Expr.Expr = "-9.8"
 	pr.XForce.Expr.Expr = "0"
 	pr.CenterX.Expr.Expr = "0"
 	pr.CenterY.Expr.Expr = "0"
