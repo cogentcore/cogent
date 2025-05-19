@@ -144,23 +144,28 @@ func (sv *SVG) UpdateSelect() {
 }
 
 func (sv *SVG) RemoveSelSprites() {
-	InactivateSprites(sv, SpReshapeBBox)
-	InactivateSprites(sv, SpSelBBox)
+	sv.NeedsRender()
+	sprites := sv.SpritesLock()
+	InactivateSprites(sprites, SpReshapeBBox)
+	InactivateSprites(sprites, SpSelBBox)
 	es := sv.EditState()
 	es.NSelectSprites = 0
+	sprites.Unlock()
 }
 
 func (sv *SVG) UpdateSelSprites() {
+	sv.NeedsRender()
 	es := sv.EditState()
 	es.UpdateSelectBBox()
 	if !es.HasSelected() {
 		sv.RemoveSelSprites()
 		return
 	}
-
+	sprites := sv.SpritesLock()
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		Sprite(sv, SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
+		Sprite(sprites, SpReshapeBBox, i, 0, image.Point{}, func(sp *core.Sprite) {
 			sp.OnSlideStart(func(e events.Event) {
+				fmt.Println("node sel start")
 				es.DragSelStart(e.Pos())
 				e.SetHandled()
 			})
@@ -179,10 +184,12 @@ func (sv *SVG) UpdateSelSprites() {
 		})
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.SelectBBox)
-	sv.SetSelSpritePos()
+	sprites.Unlock()
 }
 
-func (sv *SVG) SetSelSpritePos() {
+// setSelSpritePos sets the selection sprites positions.
+// only called by SetBBoxSpritePos.
+func (sv *SVG) setSelSpritePos() {
 	es := sv.EditState()
 	nsel := es.NSelectSprites
 
@@ -201,24 +208,26 @@ func (sv *SVG) SetSelSpritePos() {
 			nbox++
 		}
 		es.NSelectSprites = nbox
+		return
 	}
 
-	sprites := &sv.Scene.Stage.Sprites
+	sprites := sv.SpritesNolock()
 	for si := es.NSelectSprites; si < nsel; si++ {
 		for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
 			spnm := SpriteName(SpSelBBox, i, si)
-			sprites.InactivateSprite(spnm)
+			sprites.InactivateSpriteLocked(spnm)
 		}
 	}
 }
 
-// SetBBoxSpritePos sets positions of given type of sprites
+// SetBBoxSpritePos sets positions of given type of sprites.
 func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
+	sprites := sv.SpritesNolock()
 	_, spsz := HandleSpriteSize(1)
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
 	for i := SpBBoxUpL; i <= SpBBoxRtM; i++ {
-		sp := Sprite(sv, typ, i, idx, image.ZP, nil)
+		sp := Sprite(sprites, typ, i, idx, image.ZP, nil)
 		switch i {
 		case SpBBoxUpL:
 			SetSpritePos(sp, image.Point{int(bbox.Min.X), int(bbox.Min.Y)})
@@ -273,6 +282,7 @@ func (sv *SVG) SelSpriteEvent(sp Sprites, et events.EventType, d any) {
 // SetRubberBand updates the rubber band position.
 func (sv *SVG) SetRubberBand(cur image.Point) {
 	es := sv.EditState()
+	sprites := sv.SpritesLock()
 
 	if !es.InAction() {
 		es.ActStart(BoxSelect, fmt.Sprintf("%v", es.DragStartPos))
@@ -290,15 +300,16 @@ func (sv *SVG) SetRubberBand(cur image.Point) {
 	if sz.Y < 4 {
 		sz.Y = 4
 	}
-	rt := Sprite(sv, SpRubberBand, SpBBoxUpC, 0, sz, nil)
-	rb := Sprite(sv, SpRubberBand, SpBBoxDnC, 0, sz, nil)
-	rr := Sprite(sv, SpRubberBand, SpBBoxRtM, 0, sz, nil)
-	rl := Sprite(sv, SpRubberBand, SpBBoxLfM, 0, sz, nil)
+	rt := Sprite(sprites, SpRubberBand, SpBBoxUpC, 0, sz, nil)
+	rb := Sprite(sprites, SpRubberBand, SpBBoxDnC, 0, sz, nil)
+	rr := Sprite(sprites, SpRubberBand, SpBBoxRtM, 0, sz, nil)
+	rl := Sprite(sprites, SpRubberBand, SpBBoxLfM, 0, sz, nil)
 	SetSpritePos(rt, bbox.Min)
 	SetSpritePos(rb, image.Point{bbox.Min.X, bbox.Max.Y})
 	SetSpritePos(rr, image.Point{bbox.Max.X, bbox.Min.Y})
 	SetSpritePos(rl, bbox.Min)
 
+	sprites.Unlock()
 	sv.NeedsRender()
 }
 
@@ -571,8 +582,7 @@ func (gv *Canvas) SelectSetHeight(ht float32) {
 	gv.ChangeMade()
 }
 
-///////////////////////////////////////////////////////////////////////
-//   Select tree traversal
+////////   Select tree traversal
 
 // SelectWithinBBox returns a list of all nodes whose BBox is fully contained
 // within the given BBox. SVG version excludes layer groups.

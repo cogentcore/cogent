@@ -27,13 +27,14 @@ func (sv *SVG) ManipStart(act Actions, data string) {
 
 // ManipDone happens when a manipulation has finished: resets action, does render
 func (sv *SVG) ManipDone() {
-	InactivateSprites(sv, SpAlignMatch)
+	sprites := sv.SpritesLock()
+	InactivateSprites(sprites, SpAlignMatch)
 	es := sv.EditState()
 	switch {
 	case es.Action == BoxSelect:
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
 		bbox = bbox.Canon()
-		InactivateSprites(sv, SpRubberBand)
+		InactivateSprites(sprites, SpRubberBand)
 		fmt.Println(bbox)
 		sel := sv.SelectWithinBBox(bbox, false)
 		if len(sel) > 0 {
@@ -45,6 +46,7 @@ func (sv *SVG) ManipDone() {
 	default:
 	}
 	es.DragReset()
+	sprites.Unlock()
 	es.ActDone()
 	sv.UpdateSelect()
 	es.DragSelStart(es.DragStartPos) // capture final state as new start
@@ -292,11 +294,26 @@ func (sv *SVG) ConstrainPoint(st, rawpt math32.Vector2) (math32.Vector2, bool) {
 	return cp, diag
 }
 
+// ShowAlignMatches draws the align matches as given
+// between BBox Min - Max.  typs are corresponding bounding box sources.
+// sprites must already be locked.
+func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
+	sprites := sv.SpritesNolock()
+	sz := min(len(pts), 8)
+	for i := 0; i < sz; i++ {
+		pt := pts[i].Canon()
+		lsz := pt.Max.Sub(pt.Min)
+		sp := Sprite(sprites, SpAlignMatch, Sprites(typs[i]), i, lsz, nil)
+		SetSpritePos(sp, pt.Min)
+	}
+}
+
 // DragMove is when dragging a selection for moving
 func (sv *SVG) DragMove(e events.Event) {
 	es := sv.EditState()
+	sprites := sv.SpritesLock()
 
-	InactivateSprites(sv, SpAlignMatch)
+	InactivateSprites(sprites, SpAlignMatch)
 
 	if !es.InAction() {
 		sv.ManipStart(Move, es.SelectedNamesString())
@@ -327,7 +344,7 @@ func (sv *SVG) DragMove(e events.Event) {
 		itm.ApplyDeltaTransform(sv.SVG, tdel, math32.Vec2(1, 1), 0, pt)
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
-	sv.SetSelSpritePos()
+	sprites.Unlock()
 	sv.NeedsRender()
 }
 
@@ -361,7 +378,8 @@ func ProportionalBBox(bb, orig math32.Box2) math32.Box2 {
 func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	es := sv.EditState()
 
-	InactivateSprites(sv, SpAlignMatch)
+	sprites := sv.SpritesLock()
+	InactivateSprites(sprites, SpAlignMatch)
 
 	if !es.InAction() {
 		sv.ManipStart(Reshape, es.SelectedNamesString())
@@ -446,7 +464,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
-	sv.SetSelSpritePos()
+	sprites.Unlock()
 	sv.NeedsRender()
 }
 
@@ -523,6 +541,5 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 	}
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
-	sv.SetSelSpritePos()
 	sv.NeedsRender()
 }

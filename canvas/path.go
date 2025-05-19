@@ -166,38 +166,41 @@ func (sv *SVG) UpdateNodeSprites() {
 		return
 	}
 
+	sprites := sv.SpritesLock()
+
 	es.PathNodes, es.PathCommands = sv.PathNodes(path)
 	es.NNodeSprites = len(es.PathNodes)
 	es.ActivePath = path
 
 	for i, pn := range es.PathNodes {
-		sp := Sprite(sv, SpNodePoint, SpUnk, i, image.Point{}, func(sp *core.Sprite) {
+		sp := Sprite(sprites, SpNodePoint, SpUnk, i, image.Point{}, func(sp *core.Sprite) {
 			// todo: events here
 		})
 		SetSpritePos(sp, pn.WinPt.ToPoint())
 	}
 
 	// remove extra
-	sprites := &sv.Scene.Stage.Sprites
 	for i := es.NNodeSprites; i < prvn; i++ {
 		spnm := SpriteName(SpNodePoint, SpUnk, i)
-		sprites.InactivateSprite(spnm)
+		sprites.InactivateSpriteLocked(spnm)
 	}
+	sprites.Unlock()
 
 	sv.Canvas.UpdateNodeToolbar()
 }
 
 func (sv *SVG) RemoveNodeSprites() {
 	es := sv.EditState()
-	sprites := &sv.Scene.Stage.Sprites
+	sprites := sv.SpritesLock()
 	for i := 0; i < es.NNodeSprites; i++ {
 		spnm := SpriteName(SpNodePoint, SpUnk, i)
-		sprites.InactivateSprite(spnm)
+		sprites.InactivateSpriteLocked(spnm)
 	}
 	es.NNodeSprites = 0
 	es.PathNodes = nil
 	es.PathCommands = nil
 	es.ActivePath = nil
+	sprites.Unlock()
 }
 
 /*

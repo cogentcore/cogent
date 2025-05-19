@@ -47,6 +47,7 @@ func (cv *Canvas) Init() {
 	})
 
 	cv.AddCloseDialog(func(d *core.Body) bool {
+		return false // todo: temporary disable -- need to fix bug
 		if !cv.EditState.Changed {
 			return false
 		}

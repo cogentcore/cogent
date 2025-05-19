@@ -15,6 +15,9 @@ import (
 	"cogentcore.org/core/math32"
 )
 
+// note: all sprite functions assume overall sprites are locked.
+// which keeps everything consistent under async rendering.
+
 // Sprites are the type of sprite
 type Sprites int32 //enums:enum
 
@@ -135,15 +138,14 @@ func SpriteByName(ctx core.Widget, typ, subtyp Sprites, idx int) (*core.Sprite, 
 // Sprite returns the given sprite in the context of the given widget,
 // making it if not yet made. trgsz is the target size (e.g., for rubber
 // band boxes).  Init function is called on new sprites.
-func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point, init func(sp *core.Sprite)) *core.Sprite {
-	sprites := &ctx.AsWidget().Scene.Stage.Sprites
+func Sprite(sprites *core.Sprites, typ, subtyp Sprites, idx int, trgsz image.Point, init func(sp *core.Sprite)) *core.Sprite {
 	spnm := SpriteName(typ, subtyp, idx)
-	sp, ok := sprites.SpriteByName(spnm)
+	sp, ok := sprites.SpriteByNameLocked(spnm)
 	if !ok {
 		sp = core.NewSprite(spnm, image.Point{}, image.Point{})
 		sp.Properties = map[string]any{}
 		SetSpriteProperties(sp, typ, subtyp, idx)
-		sprites.Add(sp)
+		sprites.AddLocked(sp)
 		switch typ {
 		case SpReshapeBBox:
 			DrawSpriteReshape(sp, subtyp)
@@ -174,7 +176,7 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point, in
 			DrawAlignMatchVert(sp, trgsz)
 		}
 	}
-	sprites.ActivateSprite(sp.Name)
+	sprites.ActivateSpriteLocked(sp.Name)
 	return sp
 }
 
@@ -223,20 +225,20 @@ func SetSpritePos(sp *core.Sprite, pos image.Point) {
 	sp.Geom.Pos = pos
 }
 
-// InactivateSprites inactivates sprites of given type
-func InactivateSprites(ctx core.Widget, typ Sprites) {
-	sprites := &ctx.AsWidget().Scene.Stage.Sprites
+// InactivateSprites inactivates sprites of given type; must be locked.
+func InactivateSprites(sprites *core.Sprites, typ Sprites) {
+	nms := []string{}
 	for _, spkv := range sprites.Order {
 		sp := spkv.Value
 		st, _, _ := SpriteProperties(sp)
 		if st == typ {
-			sprites.InactivateSprite(sp.Name)
+			nms = append(nms, sp.Name)
 		}
 	}
+	sprites.InactivateSpriteLocked(nms...)
 }
 
-///////////////////////////////////////////////////////////////////
-//  Sprite rendering
+////////  Sprite rendering
 
 var (
 	HandleSpriteScale = float32(12)

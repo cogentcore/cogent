@@ -25,7 +25,6 @@ import (
 	"cogentcore.org/core/styles/abilities"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
-	"cogentcore.org/core/types"
 )
 
 // SVG is the element for viewing and interacting with the SVG.
@@ -58,6 +57,7 @@ func (sv *SVG) Init() {
 		s.ObjectFit = styles.FitNone
 		sv.SVG.Root.ViewBox.PreserveAspectRatio.SetFromStyle(s)
 		s.Cursor = cursors.Arrow // todo: modulate based on tool etc
+		sv.SVG.TextShaper = sv.Scene.TextShaper()
 	})
 	sv.OnKeyChord(func(e events.Event) {
 		kc := e.KeyChord()
@@ -119,6 +119,7 @@ func (sv *SVG) Init() {
 			sv.UpdateNodeSprites()
 		case sob == nil:
 			es.DragStartPos = e.Pos()
+			// fmt.Println("Drag start:", es.DragStartPos) // todo: not nec
 			es.ResetSelected()
 			sv.UpdateSelect()
 		}
@@ -146,7 +147,8 @@ func (sv *SVG) Init() {
 		es := sv.EditState()
 		es.SelectNoDrag = false
 		e.SetHandled()
-		es.DragStartPos = e.StartPos()
+		es.DragStartPos = e.StartPos() // this is the operative start
+		// fmt.Println("sm drag start:", es.DragStartPos)
 		if e.HasAnyModifier(key.Shift) {
 			del := e.PrevDelta()
 			sv.SVG.Translate.X += float32(del.X)
@@ -246,6 +248,18 @@ func (sv *SVG) EditState() *EditState {
 func (sv *SVG) UpdateView(full bool) { // TODO(config)
 	sv.UpdateSelSprites()
 	sv.NeedsRender()
+}
+
+// SpritesNolock returns the [core.Sprites] without locking.
+func (sv *SVG) SpritesNolock() *core.Sprites {
+	return &sv.Scene.Stage.Sprites
+}
+
+// SpritesLock returns the [core.Sprites] under mutex lock.
+func (sv *SVG) SpritesLock() *core.Sprites {
+	sprites := sv.SpritesNolock()
+	sprites.Lock()
+	return sprites
 }
 
 /*
@@ -628,154 +642,6 @@ func (sv *SVG) Redo() string {
 	errors.Log(jsonx.Read(sv.Root(), b))
 	sv.UpdateSelect()
 	return act
-}
-
-//////// selection processing
-
-// ShowAlignMatches draws the align matches as given
-// between BBox Min - Max.  typs are corresponding bounding box sources.
-func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
-	sz := min(len(pts), 8)
-	for i := 0; i < sz; i++ {
-		pt := pts[i].Canon()
-		lsz := pt.Max.Sub(pt.Min)
-		sp := Sprite(sv, SpAlignMatch, Sprites(typs[i]), i, lsz, nil)
-		SetSpritePos(sp, pt.Min)
-	}
-}
-
-// DepthMap returns a map of all nodes and their associated depth count
-// counting up from 0 as the deepest, first drawn node.
-func (sv *SVG) DepthMap() map[tree.Node]int {
-	m := make(map[tree.Node]int)
-	depth := 0
-	n := tree.Next(sv.This)
-	for n != nil {
-		m[n] = depth
-		depth++
-		n = tree.Next(n)
-	}
-	return m
-}
-
-//////// New objects
-
-// SetSVGName sets the name of the element to standard type + id name
-func (sv *SVG) SetSVGName(el svg.Node) {
-	nwid := sv.SVG.NewUniqueID()
-	nwnm := fmt.Sprintf("%s%d", el.SVGName(), nwid)
-	el.AsTree().SetName(nwnm)
-}
-
-// NewSVGElement makes a new SVG element of the given type.
-// It uses the current active layer if it is set.
-func NewSVGElement[T tree.NodeValue](sv *SVG) *T {
-	es := sv.EditState()
-	parent := tree.Node(sv.Root())
-	if es.CurLayer != "" {
-		ly := sv.ChildByName(es.CurLayer, 1)
-		if ly != nil {
-			parent = ly
-		}
-	}
-	n := tree.New[T](parent)
-	sn := any(n).(svg.Node)
-	sv.SetSVGName(sn)
-	sv.Canvas.PaintView().SetProperties(sn)
-	sv.Canvas.UpdateTree()
-	return n
-}
-
-// NewSVGElementDrag makes a new SVG element of the given type during the drag operation.
-func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
-	minsz := float32(10)
-	es := sv.EditState()
-	dv := math32.FromPoint(end.Sub(start))
-	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
-		// fmt.Println("dv under min:", dv, minsz)
-		return nil
-	}
-	sv.ManipStart(NewElement, types.For[T]().IDName)
-	n := NewSVGElement[T](sv)
-	sn := any(n).(svg.Node)
-	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
-	pos := math32.FromPoint(start).Add(svoff)
-	pos = xfi.MulVector2AsPoint(pos)
-	sn.SetNodePos(pos)
-	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
-	sz = xfi.MulVector2AsVector(sz)
-	sn.SetNodeSize(sz)
-	es.SelectAction(sn, events.SelectOne, end)
-	sv.NeedsRender()
-	sv.UpdateSelSprites()
-	es.DragSelStart(start)
-	return n
-}
-
-// NewText makes a new Text element with embedded tspan
-func (sv *SVG) NewText(start, end image.Point) svg.Node {
-	es := sv.EditState()
-	sv.ManipStart(NewText, "")
-	n := NewSVGElement[svg.Text](sv)
-	tsnm := fmt.Sprintf("tspan%d", sv.SVG.NewUniqueID())
-	tspan := svg.NewText(n)
-	tspan.SetName(tsnm)
-	tspan.Text = "Text"
-	tspan.Width = 200
-	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := math32.Vector2{} // math32.FromPoint(sv.Geom.ContentBBox.Min)
-	pos := math32.FromPoint(start).Sub(svoff)
-	// minsz := float32(20)
-	pos.Y += 20 // todo: need the font size..
-	pos = xfi.MulVector2AsPoint(pos)
-	// sv.Canvas.SetTextPropertiesNode(n, es.Text.TextProperties())
-	// nr.Pos = pos
-	// tspan.Pos = pos
-	// // dv := math32.FromPoint(end.Sub(start))
-	// // sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
-	// nr.Width = 100
-	// tspan.Width = 100
-	es.SelectAction(n, events.SelectOne, end)
-	// sv.UpdateView(true)
-	// sv.UpdateSelect()
-	return n
-}
-
-// NewPath makes a new SVG Path element during the drag operation
-func (sv *SVG) NewPath(start, end image.Point) *svg.Path {
-	minsz := float32(10)
-	es := sv.EditState()
-	dv := math32.FromPoint(end.Sub(start))
-	if !es.InAction() && math32.Abs(dv.X) < minsz && math32.Abs(dv.Y) < minsz {
-		return nil
-	}
-	// win := sv.Vector.ParentWindow()
-	sv.ManipStart(NewPath, "")
-	// sv.SetFullReRender()
-	n := NewSVGElement[svg.Path](sv)
-	xfi := sv.Root().Paint.Transform.Inverse()
-	// svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
-	pos := math32.FromPoint(start)
-	pos = xfi.MulVector2AsPoint(pos)
-	sz := dv
-	// sz := dv.Abs().Max(math32.NewVector2Scalar(minsz / 2))
-	sz = xfi.MulVector2AsVector(sz)
-
-	n.SetData(fmt.Sprintf("m %g,%g %g,%g", pos.X, pos.Y, sz.X, sz.Y))
-
-	es.SelectAction(n, events.SelectOne, end)
-	sv.UpdateSelSprites()
-	sv.EditState().DragSelStart(start)
-
-	es.SelectBBox.Min.X += 1
-	es.SelectBBox.Min.Y += 1
-	es.DragSelectStartBBox = es.SelectBBox
-	es.DragSelectCurrentBBox = es.SelectBBox
-	es.DragSelectEffectiveBBox = es.SelectBBox
-
-	// win.SpriteDragging = SpriteName(SpReshapeBBox, SpBBoxDnR, 0)
-	return n
 }
 
 /////// Gradients

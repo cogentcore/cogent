@@ -5,6 +5,7 @@
 package canvas
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"sort"
@@ -15,6 +16,7 @@ import (
 	"cogentcore.org/core/events"
 	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/tree"
 	"cogentcore.org/core/undo"
 )
 
@@ -192,6 +194,20 @@ func (es *EditState) SelectedList(descendingSort bool) []svg.Node {
 		})
 	}
 	return sls
+}
+
+// DepthMap returns a map of all nodes and their associated depth count
+// counting up from 0 as the deepest, first drawn node.
+func (sv *SVG) DepthMap() map[tree.Node]int {
+	m := make(map[tree.Node]int)
+	depth := 0
+	n := tree.Next(sv.This)
+	for n != nil {
+		m[n] = depth
+		depth++
+		n = tree.Next(n)
+	}
+	return m
 }
 
 // SelectedListDepth returns list of selected items, sorted either
@@ -415,6 +431,7 @@ func (es *EditState) DragSelStart(pos image.Point) {
 // position is starting position.
 func (es *EditState) DragNodeStart(pos image.Point) {
 	es.DragStartPos = pos
+	fmt.Println("dragNodestart:", pos)
 }
 
 //////////////////////////////////////////////////////
