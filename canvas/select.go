@@ -214,9 +214,6 @@ func (sv *SVG) SetSelSpritePos() {
 
 // SetBBoxSpritePos sets positions of given type of sprites
 func (sv *SVG) SetBBoxSpritePos(typ Sprites, idx int, bbox math32.Box2) {
-	bbox.Min.SetAdd(math32.FromPoint(sv.Geom.ContentBBox.Min))
-	bbox.Max.SetAdd(math32.FromPoint(sv.Geom.ContentBBox.Min))
-
 	_, spsz := HandleSpriteSize(1)
 	midX := int(0.5 * (bbox.Min.X + bbox.Max.X - float32(spsz.X)))
 	midY := int(0.5 * (bbox.Min.Y + bbox.Max.Y - float32(spsz.Y)))
@@ -378,14 +375,13 @@ func (gv *Canvas) SelectRotate(deg float32) {
 	sv := gv.SVG()
 	sv.UndoSave("Rotate", fmt.Sprintf("%g", deg))
 
-	svoff := sv.Geom.ContentBBox.Min
 	del := math32.Vector2{}
 	sc := math32.Vec2(1, 1)
 	rot := math32.DegToRad(deg)
 	for sn := range es.Selected {
 		sng := sn.AsNodeBase()
 		sz := math32.FromPoint(sng.BBox.Size())
-		mn := math32.FromPoint(sng.BBox.Min.Sub(svoff))
+		mn := math32.FromPoint(sng.BBox.Min)
 		ctr := mn.Add(sz.MulScalar(.5))
 		sn.ApplyDeltaTransform(sv.SVG, del, sc, rot, ctr)
 	}
@@ -401,7 +397,7 @@ func (gv *Canvas) SelectScale(scx, scy float32) {
 	sv := gv.SVG()
 	sv.UndoSave("Scale", fmt.Sprintf("%g,%g", scx, scy))
 
-	svoff := sv.Geom.ContentBBox.Min
+	svoff := image.Point{} // sv.Geom.ContentBBox.Min
 	del := math32.Vector2{}
 	sc := math32.Vec2(scx, scy)
 	for sn := range es.Selected {
@@ -628,7 +624,6 @@ func (sv *SVG) SelectWithinBBox(bbox image.Rectangle, leavesOnly bool) []svg.Nod
 // if excludeSel, any leaf nodes that are within the current edit selection are
 // excluded,
 func (sv *SVG) SelectContainsPoint(pt image.Point, leavesOnly, excludeSel bool) svg.Node {
-	pt = pt.Sub(sv.Geom.ContentBBox.Min)
 	es := sv.EditState()
 	var curlay tree.Node
 	fn := es.FirstSelectedNode()

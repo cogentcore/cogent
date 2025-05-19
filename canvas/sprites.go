@@ -239,7 +239,7 @@ func InactivateSprites(ctx core.Widget, typ Sprites) {
 //  Sprite rendering
 
 var (
-	HandleSpriteScale = float32(18)
+	HandleSpriteScale = float32(12)
 	HandleSizeMin     = 4
 	HandleBorderMin   = 2
 )
@@ -318,7 +318,7 @@ func DrawSpriteNodeCtrl(sp *core.Sprite, subtyp Sprites) {
 }
 
 var (
-	LineSpriteScale = float32(8)
+	LineSpriteScale = float32(4)
 	LineSizeMin     = 3
 	LineBorderMin   = 1
 )

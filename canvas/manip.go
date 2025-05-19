@@ -32,7 +32,7 @@ func (sv *SVG) ManipDone() {
 	switch {
 	case es.Action == BoxSelect:
 		bbox := image.Rectangle{Min: es.DragStartPos, Max: es.DragCurPos}
-		bbox = bbox.Canon().Sub(sv.Geom.ContentBBox.Min)
+		bbox = bbox.Canon()
 		InactivateSprites(sv, SpRubberBand)
 		fmt.Println(bbox)
 		sel := sv.SelectWithinBBox(bbox, false)
@@ -54,7 +54,7 @@ func (sv *SVG) ManipDone() {
 
 // GridDots returns the current grid spacing and offsets in dots.
 func (sv *SVG) GridDots() (float32, math32.Vector2) {
-	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vector2{} // math32.FromPoint(sv.Geom.ContentBBox.Min)
 	grid := sv.GridEff
 	if grid <= 0 {
 		grid = 12
@@ -303,7 +303,6 @@ func (sv *SVG) DragMove(e events.Event) {
 		sv.GatherAlignPoints()
 	}
 
-	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
 	spt := math32.FromPoint(es.DragStartPos)
 	mpt := math32.FromPoint(e.Pos())
 	if e.HasAnyModifier(key.Control) {
@@ -321,7 +320,7 @@ func (sv *SVG) DragMove(e events.Event) {
 
 	es.DragSelectEffectiveBBox = sv.SnapBBox(es.DragSelectEffectiveBBox)
 
-	pt := es.DragSelectStartBBox.Min.Sub(svoff)
+	pt := es.DragSelectStartBBox.Min
 	tdel := es.DragSelectEffectiveBBox.Min.Sub(es.DragSelectStartBBox.Min)
 	for itm, ss := range es.Selected {
 		itm.ReadGeom(sv.SVG, ss.InitGeom)
@@ -329,7 +328,7 @@ func (sv *SVG) DragMove(e events.Event) {
 	}
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
-	go sv.RenderSVG()
+	sv.NeedsRender()
 }
 
 func SquareBBox(bb math32.Box2) math32.Box2 {
@@ -448,7 +447,7 @@ func (sv *SVG) SpriteReshapeDrag(sp Sprites, e events.Event) {
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectEffectiveBBox)
 	sv.SetSelSpritePos()
-	go sv.RenderSVG()
+	sv.NeedsRender()
 }
 
 // SpriteRotateDrag processes a mouse rotate drag event on a selection sprite
@@ -525,5 +524,5 @@ func (sv *SVG) SpriteRotateDrag(sp Sprites, delta image.Point) {
 
 	sv.SetBBoxSpritePos(SpReshapeBBox, 0, es.DragSelectCurrentBBox)
 	sv.SetSelSpritePos()
-	go sv.RenderSVG()
+	sv.NeedsRender()
 }

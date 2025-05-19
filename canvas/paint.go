@@ -349,7 +349,7 @@ func (vv *Canvas) ManipAction(act Actions, data string, manip bool, fun func(sii
 			vv.ChangeMade()
 		}
 	} else {
-		go sv.RenderSVG()
+		sv.NeedsRender()
 	}
 }
 
@@ -428,7 +428,7 @@ func (vv *Canvas) SetStrokeWidth(wp string, manip bool) {
 	if !manip {
 		vv.ChangeMade()
 	} else {
-		go sv.RenderSVG()
+		sv.NeedsRender()
 	}
 }
 

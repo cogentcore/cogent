@@ -176,7 +176,7 @@ func (sv *SVG) Init() {
 			del := e.PrevDelta()
 			sv.SVG.Translate.X += float32(del.X)
 			sv.SVG.Translate.Y += float32(del.Y)
-			go sv.RenderSVG()
+			sv.NeedsRender()
 			return
 		}
 		if es.HasSelected() {
@@ -216,18 +216,16 @@ func (sv *SVG) Init() {
 			sv.ManipDone()
 			return
 		}
-		if e.MouseButton() == events.Left {
-			// release on select -- do extended selection processing
-			if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
-				es.SelectNoDrag = false
-				e.SetHandled()
-				if sob == nil {
-					sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
-				}
-				if sob != nil {
-					es.SelectAction(sob, e.SelectMode(), e.Pos())
-					sv.UpdateSelect()
-				}
+		// release on select -- do extended selection processing
+		if (es.SelectNoDrag && es.Tool == SelectTool) || (es.Tool != SelectTool && ToolDoesBasicSelect(es.Tool)) {
+			es.SelectNoDrag = false
+			e.SetHandled()
+			if sob == nil {
+				sob = sv.SelectContainsPoint(e.Pos(), false, false) // don't exclude existing sel
+			}
+			if sob != nil {
+				es.SelectAction(sob, e.SelectMode(), e.Pos())
+				sv.UpdateSelect()
 			}
 		}
 	})
@@ -236,11 +234,7 @@ func (sv *SVG) Init() {
 		se := e.(*events.MouseScroll)
 		svoff := sv.Geom.ContentBBox.Min
 		sv.ZoomAt(se.Pos().Sub(svoff), se.Delta.Y/100)
-		// sv.SVG.Scale += float32(se.Delta.Y) / 100
-		// if sv.SVG.Scale <= 0.0000001 {
-		// 	sv.SVG.Scale = 0.01
-		// }
-		go sv.RenderSVG()
+		sv.NeedsRender()
 	})
 }
 
@@ -250,32 +244,6 @@ func (sv *SVG) SizeFinal() {
 	sv.ResizeBg(sv.Geom.Size.Actual.Content.ToPoint())
 }
 
-// RenderSVG renders the SVG, typically called in a goroutine
-func (sv *SVG) RenderSVG() {
-	if sv.SVG == nil || sv.inRender {
-		return
-	}
-	sv.inRender = true
-	defer func() { sv.inRender = false }()
-
-	// if sv.BackgroundNeedsUpdate() {
-	// 	sv.RenderBackground()
-	// }
-	// need to make the image again to prevent it from
-	// rendering over itself
-	// sv.SVG.Background = nil
-	// sv.SVG.Pixels = image.NewRGBA(sv.SVG.Pixels.Rect)
-	// sv.SVG.RenderState.Init(sv.SVG.Pixels.Rect.Dx(), sv.SVG.Pixels.Rect.Dy(), sv.SVG.Pixels)
-	// sv.SVG.Render()
-	// sv.pixelMu.Lock()
-	// bgsz := sv.backgroundPixels.Bounds()
-	// sv.currentPixels = image.NewRGBA(bgsz)
-	// draw.Draw(sv.currentPixels, bgsz, sv.backgroundPixels, image.ZP, draw.Src)
-	// // draw.Draw(sv.currentPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
-	// sv.NeedsRender()
-	// sv.pixelMu.Unlock()
-}
-
 func (sv *SVG) Render() {
 	sv.WidgetBase.Render()
 	if sv.SVG == nil {
@@ -283,7 +251,6 @@ func (sv *SVG) Render() {
 	}
 	sv.SVG.SetSize(sv.Geom.Size.Actual.Content)
 	sv.SVG.Geom.Pos = sv.Geom.Pos.Content.ToPointCeil()
-	fmt.Println(sv.SVG.Geom.Pos)
 	sv.SVG.Render(&sv.Scene.Painter)
 	// sv.pixelMu.Lock()
 	// if sv.currentPixels == nil || sv.BackgroundNeedsUpdate() {
@@ -314,7 +281,6 @@ func (sv *SVG) EditState() *EditState {
 func (sv *SVG) UpdateView(full bool) { // TODO(config)
 	sv.UpdateSelSprites()
 	sv.NeedsRender()
-	// go sv.RenderSVG()
 }
 
 /*
@@ -703,12 +669,11 @@ func (sv *SVG) Redo() string {
 // between BBox Min - Max.  typs are corresponding bounding box sources.
 func (sv *SVG) ShowAlignMatches(pts []image.Rectangle, typs []BBoxPoints) {
 	sz := min(len(pts), 8)
-	svoff := sv.Geom.ContentBBox.Min
 	for i := 0; i < sz; i++ {
 		pt := pts[i].Canon()
 		lsz := pt.Max.Sub(pt.Min)
 		sp := Sprite(sv, SpAlignMatch, Sprites(typs[i]), i, lsz, nil)
-		SetSpritePos(sp, pt.Min.Add(svoff))
+		SetSpritePos(sp, pt.Min)
 	}
 }
 
@@ -769,13 +734,12 @@ func NewSVGElementDrag[T tree.NodeValue](sv *SVG, start, end image.Point) *T {
 	sn := any(n).(svg.Node)
 	xfi := sv.Root().Paint.Transform.Inverse()
 	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
-	pos := math32.FromPoint(start).Sub(svoff)
+	pos := math32.FromPoint(start).Add(svoff)
 	pos = xfi.MulVector2AsPoint(pos)
 	sn.SetNodePos(pos)
 	sz := dv.Abs().Max(math32.Vector2Scalar(minsz / 2))
 	sz = xfi.MulVector2AsVector(sz)
 	sn.SetNodeSize(sz)
-	sv.RenderSVG() // needed to get bb
 	es.SelectAction(sn, events.SelectOne, end)
 	sv.NeedsRender()
 	sv.UpdateSelSprites()
@@ -794,7 +758,7 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	tspan.Text = "Text"
 	tspan.Width = 200
 	xfi := sv.Root().Paint.Transform.Inverse()
-	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
+	svoff := math32.Vector2{} // math32.FromPoint(sv.Geom.ContentBBox.Min)
 	pos := math32.FromPoint(start).Sub(svoff)
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..

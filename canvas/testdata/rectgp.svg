@@ -8,20 +8,6 @@
   xmlns="http://www.w3.org/2000/svg">
   <defs
     id="Defs" />
-  <sodipodi:namedview
-    id="namedview81"
-    inkscape:document-units="px"
-    inkscape:current-layer=""
-    inkscape:cx="0"
-    inkscape:cy="0"
-    inkscape:zoom="1.1203125">
-    <inkscape:grid
-      id="grid887"
-      type="xygrid"
-      units="px"
-      spacingx="12"
-      spacingy="12" />
-  </sodipodi:namedview>
   <g
     id="g540">
     <rect
@@ -47,3 +33,4 @@
       height="116.12903" />
   </g>
 </svg>
+
