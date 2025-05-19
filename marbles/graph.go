@@ -429,7 +429,7 @@ func (pr *Params) BasicDefaults() {
 	pr.StartVelocityY.Expr.Expr = "0"
 	pr.StartVelocityX.Expr.Expr = "0"
 	pr.UpdateRate.Expr.Expr = "1"
-	pr.YForce.Expr.Expr = "-0.1"
+	pr.YForce.Expr.Expr = "-9.8"
 	pr.XForce.Expr.Expr = "0"
 	pr.CenterX.Expr.Expr = "0"
 	pr.CenterY.Expr.Expr = "0"
