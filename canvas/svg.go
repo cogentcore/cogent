@@ -15,7 +15,6 @@ import (
 	"cogentcore.org/core/base/errors"
 	"cogentcore.org/core/base/iox/jsonx"
 	"cogentcore.org/core/base/reflectx"
-	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/cursors"
 	"cogentcore.org/core/events"
@@ -60,7 +59,7 @@ type SVG struct {
 	backgroundPixels *image.RGBA
 
 	// background paint rendering context
-	backgroundPaint paint.Context
+	backgroundPaint paint.Painter
 
 	// in svg Rendering
 	inRender bool
@@ -77,7 +76,7 @@ type SVG struct {
 
 func (sv *SVG) Init() {
 	sv.WidgetBase.Init()
-	sv.SVG = svg.NewSVG(10, 10)
+	sv.SVG = svg.NewSVG(math32.Vec2(10, 10))
 	sv.SVG.Background = nil
 	sv.Grid = Settings.Size.Grid
 	sv.Styler(func(s *styles.Style) {
@@ -248,7 +247,7 @@ func (sv *SVG) Init() {
 
 func (sv *SVG) SizeFinal() {
 	sv.WidgetBase.SizeFinal()
-	sv.SVG.Resize(sv.Geom.Size.Actual.Content.ToPoint())
+	sv.SVG.SetSize(sv.Geom.Size.Actual.Content)
 	sv.ResizeBg(sv.Geom.Size.Actual.Content.ToPoint())
 }
 
@@ -266,15 +265,15 @@ func (sv *SVG) RenderSVG() {
 	// need to make the image again to prevent it from
 	// rendering over itself
 	sv.SVG.Background = nil
-	sv.SVG.Pixels = image.NewRGBA(sv.SVG.Pixels.Rect)
-	sv.SVG.RenderState.Init(sv.SVG.Pixels.Rect.Dx(), sv.SVG.Pixels.Rect.Dy(), sv.SVG.Pixels)
-	sv.SVG.Render()
+	// sv.SVG.Pixels = image.NewRGBA(sv.SVG.Pixels.Rect)
+	// sv.SVG.RenderState.Init(sv.SVG.Pixels.Rect.Dx(), sv.SVG.Pixels.Rect.Dy(), sv.SVG.Pixels)
+	// sv.SVG.Render()
 	sv.pixelMu.Lock()
 
 	bgsz := sv.backgroundPixels.Bounds()
 	sv.currentPixels = image.NewRGBA(bgsz)
 	draw.Draw(sv.currentPixels, bgsz, sv.backgroundPixels, image.ZP, draw.Src)
-	draw.Draw(sv.currentPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
+	// draw.Draw(sv.currentPixels, bgsz, sv.SVG.Pixels, image.ZP, draw.Over)
 	sv.NeedsRender()
 	sv.pixelMu.Unlock()
 }
@@ -290,9 +289,9 @@ func (sv *SVG) Render() {
 		sv.RenderSVG()
 		sv.pixelMu.Lock()
 	}
-	r := sv.Geom.ContentBBox
-	sp := sv.Geom.ScrollOffset()
-	draw.Draw(sv.Scene.Pixels, r, sv.currentPixels, sp, draw.Over)
+	// r := sv.Geom.ContentBBox
+	// sp := sv.Geom.ScrollOffset()
+	// draw.Draw(sv.Scene.Pixels, r, sv.currentPixels, sp, draw.Over)
 	sv.pixelMu.Unlock()
 }
 
@@ -797,7 +796,7 @@ func (sv *SVG) NewText(start, end image.Point) svg.Node {
 	// minsz := float32(20)
 	pos.Y += 20 // todo: need the font size..
 	pos = xfi.MulVector2AsPoint(pos)
-	sv.Canvas.SetTextPropertiesNode(n, es.Text.TextProperties())
+	// sv.Canvas.SetTextPropertiesNode(n, es.Text.TextProperties())
 	// nr.Pos = pos
 	// tspan.Pos = pos
 	// // dv := math32.FromPoint(end.Sub(start))
@@ -910,15 +909,7 @@ func (sv *SVG) BackgroundNeedsUpdate() bool {
 
 func (sv *SVG) ResizeBg(sz image.Point) {
 	if sv.backgroundPaint.State == nil {
-		sv.backgroundPaint.State = &paint.State{}
-	}
-	if sv.backgroundPaint.Paint == nil {
-		sv.backgroundPaint.Paint = &styles.Paint{}
-		sv.backgroundPaint.Paint.Defaults()
-	}
-	if sv.backgroundPixels == nil || sv.backgroundPixels.Bounds().Size() != sz {
-		sv.backgroundPixels = image.NewRGBA(image.Rectangle{Max: sz})
-		sv.backgroundPaint.Init(sz.X, sz.Y, sv.backgroundPixels)
+		sv.backgroundPaint = *paint.NewPainter(math32.FromPoint(sz))
 	}
 }
 
@@ -938,43 +929,43 @@ func (sv *SVG) RenderBackground() {
 	if root == nil {
 		return
 	}
-	sv.UpdateGridEff()
-	bb := sv.backgroundPixels.Bounds()
-	draw.Draw(sv.backgroundPixels, bb, colors.Scheme.Surface, image.ZP, draw.Src)
-
-	pc := &sv.backgroundPaint
-	pc.PushBounds(bb)
-	pc.PushTransform(root.Paint.Transform)
-
-	pc.StrokeStyle.Color = colors.Scheme.Outline
-
-	sc := sv.SVG.Scale
-
-	wd := 1 / sc
-	pc.StrokeStyle.Width.Dots = wd
-	pos := math32.Vec2(0, 0)
-	sz := root.ViewBox.Size
-	pc.FillStyle.Color = nil
-
-	pc.DrawRectangle(pos.X, pos.Y, sz.X, sz.Y)
-	pc.FillStrokeClear()
-
-	if Settings.GridDisp {
-		gsz := float32(sv.GridEff)
-		pc.StrokeStyle.Color = colors.Scheme.OutlineVariant
-		for x := gsz; x < sz.X; x += gsz {
-			pc.DrawLine(x, 0, x, sz.Y)
-		}
-		for y := gsz; y < sz.Y; y += gsz {
-			pc.DrawLine(0, y, sz.X, y)
-		}
-		pc.FillStrokeClear()
-	}
-
-	sv.backgroundTransform = root.Paint.Transform
-	sv.backgroundGridEff = sv.GridEff
-	sv.backgroundSize = bb.Size()
-
-	pc.PopTransform()
-	pc.PopBounds()
+	// sv.UpdateGridEff()
+	// bb := sv.backgroundPixels.Bounds()
+	// draw.Draw(sv.backgroundPixels, bb, colors.Scheme.Surface, image.ZP, draw.Src)
+	//
+	// pc := &sv.backgroundPaint
+	// pc.PushBounds(bb)
+	// pc.PushTransform(root.Paint.Transform)
+	//
+	// pc.StrokeStyle.Color = colors.Scheme.Outline
+	//
+	// sc := sv.SVG.Scale
+	//
+	// wd := 1 / sc
+	// pc.StrokeStyle.Width.Dots = wd
+	// pos := math32.Vec2(0, 0)
+	// sz := root.ViewBox.Size
+	// pc.FillStyle.Color = nil
+	//
+	// pc.DrawRectangle(pos.X, pos.Y, sz.X, sz.Y)
+	// pc.FillStrokeClear()
+	//
+	// if Settings.GridDisp {
+	// 	gsz := float32(sv.GridEff)
+	// 	pc.StrokeStyle.Color = colors.Scheme.OutlineVariant
+	// 	for x := gsz; x < sz.X; x += gsz {
+	// 		pc.DrawLine(x, 0, x, sz.Y)
+	// 	}
+	// 	for y := gsz; y < sz.Y; y += gsz {
+	// 		pc.DrawLine(0, y, sz.X, y)
+	// 	}
+	// 	pc.FillStrokeClear()
+	// }
+	//
+	// sv.backgroundTransform = root.Paint.Transform
+	// sv.backgroundGridEff = sv.GridEff
+	// sv.backgroundSize = bb.Size()
+	//
+	// pc.PopTransform()
+	// pc.PopBounds()
 }

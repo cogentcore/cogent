@@ -91,7 +91,7 @@ func (pv *PaintView) Init() {
 			})
 		})
 		tree.AddChild(w, func(w *core.Spinner) {
-			core.Bind(&pv.PaintStyle.StrokeStyle.Width.Value, w)
+			core.Bind(&pv.PaintStyle.Stroke.Width.Value, w)
 			w.SetMin(0).SetStep(0.05)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
@@ -102,7 +102,7 @@ func (pv *PaintView) Init() {
 
 		// uncb.SetCurrentIndex(int(Settings.Size.Units))
 		tree.AddChild(w, func(w *core.Chooser) {
-			core.Bind(&pv.PaintStyle.StrokeStyle.Width.Unit, w)
+			core.Bind(&pv.PaintStyle.Stroke.Width.Unit, w)
 			w.OnChange(func(e events.Event) {
 				if pv.IsStrokeOn() {
 					pv.Canvas.SetStrokeWidth(pv.StrokeWidthProp(), false)
@@ -207,7 +207,7 @@ func (pv *PaintView) Init() {
 		tree.AddChild(w, func(w *core.Frame) {}) // "stroke-blank"
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
-			core.Bind(&pv.PaintStyle.StrokeStyle.Color, w)
+			core.Bind(&pv.PaintStyle.Stroke.Color, w)
 			w.OnChange(func(e events.Event) {
 				if pv.StrokeType == PaintSolid {
 					pv.Canvas.SetStrokeColor(pv.StrokeProp(), false) // not manip
@@ -271,7 +271,7 @@ func (pv *PaintView) Init() {
 		tree.AddChild(w, func(w *core.Frame) {}) // "fill-blank"
 
 		tree.AddChild(w, func(w *core.ColorPicker) {
-			core.Bind(&pv.PaintStyle.FillStyle.Color, w)
+			core.Bind(&pv.PaintStyle.Fill.Color, w)
 			w.OnChange(func(e events.Event) {
 				if pv.FillType == PaintSolid {
 					pv.Canvas.SetFillColor(pv.FillProp(), false) // not manip
@@ -409,7 +409,7 @@ func (vv *Canvas) SetStrokeWidthNode(sii svg.Node, wp string) {
 		return
 	}
 	g := sii.AsNodeBase()
-	if g.Paint.StrokeStyle.Color != nil {
+	if g.Paint.Stroke.Color != nil {
 		g.SetProperty("stroke-width", wp)
 	}
 }
@@ -495,7 +495,7 @@ func (vv *Canvas) SetDashNode(sii svg.Node, dary []float64) {
 		return
 	}
 	g := sii.AsNodeBase()
-	mary := DashMulWidth(float64(g.Paint.StrokeStyle.Width.Dots), dary)
+	mary := DashMulWidth(float64(g.Paint.Stroke.Width.Dots), dary)
 	ds := DashString(mary)
 	sii.AsTree().Properties["stroke-dasharray"] = ds
 }
@@ -572,8 +572,8 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 	update := pv.UpdateStart()
 	defer pv.UpdateEnd(update)
 
-	pv.StrokeType, pv.StrokeStops = pv.DecodeType(kn, &pc.StrokeStyle.Color, "stroke")
-	pv.FillType, pv.FillStops = pv.DecodeType(kn, &pc.FillStyle.Color, "fill")
+	pv.StrokeType, pv.StrokeStops = pv.DecodeType(kn, &pc.Stroke.Color, "stroke")
+	pv.FillType, pv.FillStops = pv.DecodeType(kn, &pc.Fill.Color, "fill")
 
 	es := &pv.Vector.EditState
 	grl := &es.Gradients
@@ -590,7 +590,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 		}
 		ss.StackTop = 1
 		sc := ss.ChildByName("stroke-clr", 1).(*core.ColorPicker)
-		sc.SetColor(pc.StrokeStyle.Color.Color)
+		sc.SetColor(pc.Stroke.Color.Color)
 	case PaintLinear, PaintRadial:
 		if ss.StackTop != 2 {
 			ss.SetFullReRender()
@@ -608,12 +608,12 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 
 	wr := pv.ChildByName("stroke-width", 2)
 	wsb := wr.ChildByName("width", 1).(*core.Spinner)
-	wsb.SetValue(pc.StrokeStyle.Width.Val)
+	wsb.SetValue(pc.Stroke.Width.Val)
 	uncb := wr.ChildByName("width-units", 2).(*core.Chooser)
-	uncb.SetCurrentIndex(int(pc.StrokeStyle.Width.Un))
+	uncb.SetCurrentIndex(int(pc.Stroke.Width.Un))
 
 	dshcb := wr.ChildByName("dashes", 3).(*core.Chooser)
-	nwdsh, dnm := DashMatchArray(float64(pc.StrokeStyle.Width.Dots), pc.StrokeStyle.Dashes)
+	nwdsh, dnm := DashMatchArray(float64(pc.Stroke.Width.Dots), pc.Stroke.Dashes)
 	if nwdsh {
 		dshcb.ItemsFromIconList(AllDashIcons, false, 0)
 	}
@@ -664,7 +664,7 @@ func (pv *PaintView) Update(pc *paint.Paint, kn tree.Node) {
 		}
 		fs.StackTop = 1
 		fc := fs.ChildByName("fill-clr", 1).(*core.ColorPicker)
-		fc.SetColor(pc.FillStyle.Color.Color)
+		fc.SetColor(pc.Fill.Color.Color)
 	case PaintLinear, PaintRadial:
 		if fs.StackTop != 2 {
 			fs.SetFullReRender()
@@ -777,7 +777,7 @@ func (pv *PaintView) StrokeProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		return colors.AsHex(colors.ToUniform(pv.PaintStyle.StrokeStyle.Color))
+		return colors.AsHex(colors.ToUniform(pv.PaintStyle.Stroke.Color))
 	case PaintLinear:
 		return pv.StrokeStops
 	case PaintRadial:
@@ -818,8 +818,8 @@ func (pv *PaintView) IsStrokeOn() bool {
 
 // StrokeWidthProp returns stroke-width property
 func (pv *PaintView) StrokeWidthProp() string {
-	unnm := pv.PaintStyle.StrokeStyle.Width.Unit.String()
-	return fmt.Sprintf("%g%s", pv.PaintStyle.StrokeStyle.Width.Value, unnm)
+	unnm := pv.PaintStyle.Stroke.Width.Unit.String()
+	return fmt.Sprintf("%g%s", pv.PaintStyle.Stroke.Width.Value, unnm)
 }
 
 // StrokeDashProp returns stroke-dasharray property as an array (nil = none)
@@ -854,7 +854,7 @@ func (pv *PaintView) FillProp() string {
 	case PaintOff:
 		return "none"
 	case PaintSolid:
-		return colors.AsHex(colors.ToUniform(pv.PaintStyle.FillStyle.Color))
+		return colors.AsHex(colors.ToUniform(pv.PaintStyle.Fill.Color))
 	case PaintLinear:
 		return pv.FillStops
 	case PaintRadial:

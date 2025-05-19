@@ -12,6 +12,7 @@ import (
 	"cogentcore.org/core/icons"
 	"cogentcore.org/core/styles"
 	"cogentcore.org/core/svg"
+	"cogentcore.org/core/text/rich"
 	"cogentcore.org/core/tree"
 )
 
@@ -173,11 +174,11 @@ func (tv *Tree) Init() {
 			sn := tv.SyncNode
 			switch {
 			case NodeIsLayer(sn):
-				s.Font.Weight = styles.WeightBold
+				s.Font.Weight = rich.Bold
 			case LayerIsLocked(sn):
 				s.Color = colors.Scheme.Error.Base
 			case !LayerIsVisible(sn):
-				s.Font.Style = styles.Italic
+				s.Font.Slant = rich.Italic
 			}
 		})
 	})

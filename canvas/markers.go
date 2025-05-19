@@ -13,6 +13,7 @@ import (
 
 	"cogentcore.org/core/base/reflectx"
 	"cogentcore.org/core/icons"
+	"cogentcore.org/core/math32"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -121,7 +122,7 @@ func MarkerDeleteCtxtColors(mk *svg.Marker) {
 
 // NewMarkerFromXML makes a new marker from given XML source.
 func NewMarkerFromXML(name, xml string) *svg.Marker {
-	tmpsvg := svg.NewSVG(0, 0)
+	tmpsvg := svg.NewSVG(math32.Vec2(0, 0))
 	b := bytes.NewBufferString(xml)
 	err := tmpsvg.ReadXML(b)
 	if err != nil && err != io.EOF {

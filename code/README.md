@@ -260,4 +260,8 @@ Find Frames, which you access via the context menu on a file you're viewing, wil
 
 See the `Project Prefs` for `Debug` params that control how much detail is returned about variables, and optional args you can pass to the debugger as needed.
 
+## Misc
+
+* When you change the Dark / Light settings, any existing output text in the command output panels will not update. This is because the markup colors are generated when output is generated, whereas the main text editors use standard syntax-based markup and can regenerate this when the theme changes.
+
 

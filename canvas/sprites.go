@@ -160,7 +160,6 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point, in
 	}
 	switch typ {
 	case SpRubberBand:
-		sprites.Modified = true
 		switch subtyp {
 		case SpBBoxUpC, SpBBoxDnC:
 			DrawRubberBandHoriz(sp, trgsz)
@@ -168,7 +167,6 @@ func Sprite(ctx core.Widget, typ, subtyp Sprites, idx int, trgsz image.Point, in
 			DrawRubberBandVert(sp, trgsz)
 		}
 	case SpAlignMatch:
-		sprites.Modified = true
 		switch {
 		case trgsz.X > trgsz.Y:
 			DrawAlignMatchHoriz(sp, trgsz)
@@ -235,7 +233,6 @@ func InactivateSprites(ctx core.Widget, typ Sprites) {
 			sprites.InactivateSprite(sp.Name)
 		}
 	}
-	sprites.Modified = true // needed to trigger redraw of sprites
 }
 
 ///////////////////////////////////////////////////////////////////

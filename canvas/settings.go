@@ -73,21 +73,21 @@ type SettingsData struct { //types:add
 func (se *SettingsData) Defaults() {
 	se.Size.Defaults()
 	se.ShapeStyle.Defaults()
-	se.ShapeStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
-	se.ShapeStyle.FontStyle.Size.Dp(16)
-	se.ShapeStyle.FillStyle.Color = colors.Scheme.OnSurface
+	// se.ShapeStyle.Font.Family = string(core.AppearanceSettings.Font)
+	// se.ShapeStyle.Font.Size = 1
+	se.ShapeStyle.Fill.Color = colors.Scheme.OnSurface
 	se.TextStyle.Defaults()
-	se.TextStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
-	se.TextStyle.FontStyle.Size.Dp(16)
-	se.TextStyle.FillStyle.Color = colors.Scheme.OnSurface
+	// se.TextStyle.Font.Family = string(core.AppearanceSettings.Font)
+	// se.TextStyle.Font.Size.Dp(16)
+	se.TextStyle.Fill.Color = colors.Scheme.OnSurface
 	se.PathStyle.Defaults()
-	se.PathStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
-	se.PathStyle.FontStyle.Size.Dp(16)
-	se.PathStyle.StrokeStyle.Color = colors.Scheme.OnSurface
+	// se.PathStyle.Font.Family = string(core.AppearanceSettings.Font)
+	// se.PathStyle.Font.Size.Dp(16)
+	se.PathStyle.Stroke.Color = colors.Scheme.OnSurface
 	se.LineStyle.Defaults()
-	se.LineStyle.FontStyle.Family = string(core.AppearanceSettings.Font)
-	se.LineStyle.FontStyle.Size.Dp(16)
-	se.LineStyle.StrokeStyle.Color = colors.Scheme.OnSurface
+	// se.LineStyle.Font.Family = string(core.AppearanceSettings.Font)
+	// se.LineStyle.Font.Size.Dp(16)
+	se.LineStyle.Stroke.Color = colors.Scheme.OnSurface
 	se.GridDisp = true
 	se.SnapTol = 3
 	se.SnapGrid = true

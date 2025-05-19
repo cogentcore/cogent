@@ -10,6 +10,7 @@ import (
 
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/math32"
+	"cogentcore.org/core/paint/ppath"
 	"cogentcore.org/core/svg"
 	"cogentcore.org/core/tree"
 )
@@ -99,10 +100,10 @@ func (vv *Canvas) NodeSetYPos(yp float32) {
 type PathNode struct {
 
 	// path command
-	Cmd svg.PathCmds
+	Cmd ppath.Path
 
 	// previous path command
-	PrevCmd svg.PathCmds
+	PrevCmd ppath.Path
 
 	// starting index of command
 	CmdIndex int
@@ -128,28 +129,29 @@ type PathNode struct {
 
 // PathNodes returns the PathNode data for given path data, and a list of indexes where commands start
 func (sv *SVG) PathNodes(path *svg.Path) ([]*PathNode, []int) {
-	svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
-	pxf := path.ParTransform(true) // include self
-
-	lstCmdIndex := 0
-	lstCmd := svg.PcErr
-	nc := make([]*PathNode, 0)
-	cidxs := make([]int, 0)
-	var pcp math32.Vector2
-	svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIndex int, cp math32.Vector2, ctrl []math32.Vector2) bool {
-		cw := pxf.MulVector2AsPoint(cp).Add(svoff)
-
-		if ptIndex == 0 {
-			lstCmdIndex = idx - 1
-			cidxs = append(cidxs, lstCmdIndex)
-		}
-		pn := &PathNode{Cmd: cmd, PrevCmd: lstCmd, CmdIndex: lstCmdIndex, Index: idx, PtIndex: ptIndex, PCp: pcp, Cp: cp, WinPt: cw, WinCtrls: ctrl}
-		nc = append(nc, pn)
-		pcp = cp
-		lstCmd = cmd
-		return tree.Continue
-	})
-	return nc, cidxs
+	return nil, nil
+	// svoff := math32.FromPoint(sv.Geom.ContentBBox.Min)
+	// pxf := path.ParentTransform(true) // include self
+	//
+	// lstCmdIndex := 0
+	// lstCmd := svg.PcErr
+	// nc := make([]*PathNode, 0)
+	// cidxs := make([]int, 0)
+	// var pcp math32.Vector2
+	// svg.PathDataIterFunc(path.Data, func(idx int, cmd svg.PathCmds, ptIndex int, cp math32.Vector2, ctrl []math32.Vector2) bool {
+	// 	cw := pxf.MulVector2AsPoint(cp).Add(svoff)
+	//
+	// 	if ptIndex == 0 {
+	// 		lstCmdIndex = idx - 1
+	// 		cidxs = append(cidxs, lstCmdIndex)
+	// 	}
+	// 	pn := &PathNode{Cmd: cmd, PrevCmd: lstCmd, CmdIndex: lstCmdIndex, Index: idx, PtIndex: ptIndex, PCp: pcp, Cp: cp, WinPt: cw, WinCtrls: ctrl}
+	// 	nc = append(nc, pn)
+	// 	pcp = cp
+	// 	lstCmd = cmd
+	// 	return tree.Continue
+	// })
+	// return nc, cidxs
 }
 
 func (sv *SVG) UpdateNodeSprites() {
@@ -227,48 +229,49 @@ func (sv *SVG) NodeSpriteEvent(idx int, et events.Type, d any) {
 // direction to compensate, so only the one point is moved in effect.
 // svoff is the window starting vector coordinate for view.
 func (sv *SVG) PathNodeSetOnePoint(path *svg.Path, pts []*PathNode, pidx int, dv math32.Vector2, svoff math32.Vector2) {
-	for i := pidx; i < len(pts); i++ {
-		pn := pts[i]
-		wbmin := math32.FromPoint(path.BBox.Min)
-		pt := wbmin.Sub(svoff)
-		xf, lpt := path.DeltaTransform(dv, math32.Vec2(1, 1), 0, pt, true) // include self
-		npt := xf.MulVector2AsPointCenter(pn.Cp, lpt)                      // transform point to new abs coords
-		sv.PathNodeSetPoint(path, pn, npt)
-		if i == pidx {
-			dv = dv.MulScalar(-1)
-		} else {
-			if !svg.PathCmdIsRel(pn.Cmd) || pn.Cmd == svg.PcZ || pn.Cmd == svg.Pcz || pn.Cmd == svg.Pcm || pn.Cmd == svg.PcM {
-				break
-			}
-		}
-	}
+	return
+	// for i := pidx; i < len(pts); i++ {
+	// 	pn := pts[i]
+	// 	wbmin := math32.FromPoint(path.BBox.Min)
+	// 	pt := wbmin.Sub(svoff)
+	// 	xf, lpt := path.DeltaTransform(dv, math32.Vec2(1, 1), 0, pt, true) // include self
+	// 	npt := xf.MulVector2AsPointCenter(pn.Cp, lpt)                      // transform point to new abs coords
+	// 	sv.PathNodeSetPoint(path, pn, npt)
+	// 	if i == pidx {
+	// 		dv = dv.MulScalar(-1)
+	// 	} else {
+	// 		if !svg.PathCmdIsRel(pn.Cmd) || pn.Cmd == svg.PcZ || pn.Cmd == svg.Pcz || pn.Cmd == svg.Pcm || pn.Cmd == svg.PcM {
+	// 			break
+	// 		}
+	// 	}
+	// }
 }
 
 // PathNodeSetPoint sets data point for path node to given new point value
 // which is in *absolute* (but local) coordinates -- translates into
 // relative coordinates as needed.
 func (sv *SVG) PathNodeSetPoint(path *svg.Path, pn *PathNode, npt math32.Vector2) {
-	if pn.Index == 1 || !svg.PathCmdIsRel(pn.Cmd) { // abs
-		switch pn.Cmd {
-		case svg.PcH:
-			path.Data[pn.Index] = svg.PathData(npt.X)
-		case svg.PcV:
-			path.Data[pn.Index] = svg.PathData(npt.Y)
-		default:
-			path.Data[pn.Index] = svg.PathData(npt.X)
-			path.Data[pn.Index+1] = svg.PathData(npt.Y)
-		}
-	} else {
-		switch pn.Cmd {
-		case svg.Pch:
-			path.Data[pn.Index] = svg.PathData(npt.X - pn.PCp.X)
-		case svg.Pcv:
-			path.Data[pn.Index] = svg.PathData(npt.Y - pn.PCp.Y)
-		default:
-			path.Data[pn.Index] = svg.PathData(npt.X - pn.PCp.X)
-			path.Data[pn.Index+1] = svg.PathData(npt.Y - pn.PCp.Y)
-		}
-	}
+	// if pn.Index == 1 || !svg.PathCmdIsRel(pn.Cmd) { // abs
+	// 	switch pn.Cmd {
+	// 	case svg.PcH:
+	// 		path.Data[pn.Index] = svg.PathData(npt.X)
+	// 	case svg.PcV:
+	// 		path.Data[pn.Index] = svg.PathData(npt.Y)
+	// 	default:
+	// 		path.Data[pn.Index] = svg.PathData(npt.X)
+	// 		path.Data[pn.Index+1] = svg.PathData(npt.Y)
+	// 	}
+	// } else {
+	// 	switch pn.Cmd {
+	// 	case svg.Pch:
+	// 		path.Data[pn.Index] = svg.PathData(npt.X - pn.PCp.X)
+	// 	case svg.Pcv:
+	// 		path.Data[pn.Index] = svg.PathData(npt.Y - pn.PCp.Y)
+	// 	default:
+	// 		path.Data[pn.Index] = svg.PathData(npt.X - pn.PCp.X)
+	// 		path.Data[pn.Index+1] = svg.PathData(npt.Y - pn.PCp.Y)
+	// 	}
+	// }
 }
 
 /*
