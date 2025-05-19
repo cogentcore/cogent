@@ -37,6 +37,7 @@ func (gr *Graph) canvasCoord(v math32.Vector2) math32.Vector2 {
 
 func (gr *Graph) drawAxes(pc *paint.Painter) {
 	pc.Stroke.Color = colors.Scheme.OutlineVariant
+	pc.Stroke.Width.Dp(1)
 
 	start := gr.canvasCoord(math32.Vec2(gr.Vectors.Min.X, 0))
 	end := gr.canvasCoord(math32.Vec2(gr.Vectors.Max.X, 0))
@@ -65,6 +66,7 @@ func (gr *Graph) drawTrackingLines(pc *paint.Painter) {
 			}
 		}
 		pc.Stroke.Color = colors.Uniform(m.Color)
+		pc.Stroke.Width.Dp(1)
 		pc.Draw()
 	}
 }
@@ -104,7 +106,7 @@ func (ln *Line) draw(gr *Graph, pc *paint.Painter) {
 	}
 	pc.Fill.Color = nil
 	pc.Stroke.Color = colors.Uniform(ln.Colors.Color)
-	pc.Stroke.Width.Dp(1)
+	pc.Stroke.Width.Dp(2)
 	pc.ToDots()
 	pc.Draw()
 }
