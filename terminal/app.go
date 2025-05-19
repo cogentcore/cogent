@@ -142,7 +142,7 @@ func (a *App) RunCmd(cmd string, cmds *core.Frame, dir *core.Text) error {
 		s.Padding.Set(units.Dp(8)).SetBottom(units.Zero())
 	})
 	core.NewText(tr).SetType(core.TextTitleLarge).SetText(cmd).Styler(func(s *styles.Style) {
-		s.Font.SetFamily(rich.Monospace)
+		s.Font.Family = rich.Monospace
 		s.Grow.Set(1, 0)
 	})
 	core.NewButton(tr).SetType(core.ButtonAction).SetIcon(icons.Close).OnClick(func(e events.Event) {

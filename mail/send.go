@@ -54,7 +54,7 @@ func (a *App) compose(title string) {
 	ed.Lines.SetLanguage(fileinfo.Markdown)
 	ed.Lines.Settings.LineNumbers = false
 	ed.Styler(func(s *styles.Style) {
-		s.Font.SetFamily(rich.Monospace)
+		s.Font.Family = rich.Monospace
 		s.Grow.Set(1, 1)
 	})
 	b.AddBottomBar(func(bar *core.Frame) {
