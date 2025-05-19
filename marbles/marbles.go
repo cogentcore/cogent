@@ -107,12 +107,13 @@ func (gr *Graph) UpdateMarblesData(dt float32) {
 	gr.EvalMu.Lock()
 	defer gr.EvalMu.Unlock()
 
+	updateRate := gr.updateRate(dt)
+
 	for _, m := range gr.Marbles {
 
-		m.Velocity.Y += float32(gr.Params.YForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * ((gr.Vectors.Size.Y * gr.Vectors.Size.X) / 400)
-		m.Velocity.X += float32(gr.Params.XForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * ((gr.Vectors.Size.Y * gr.Vectors.Size.X) / 400)
-		updtrate := dt * float32(gr.Params.UpdateRate.Eval(float64(m.Pos.X), float64(m.Pos.Y)))
-		npos := m.Pos.Add(m.Velocity.MulScalar(updtrate))
+		m.Velocity.Y += float32(gr.Params.YForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * updateRate
+		m.Velocity.X += float32(gr.Params.XForce.Eval(float64(m.Pos.X), float64(m.Pos.Y))) * updateRate
+		npos := m.Pos.Add(m.Velocity.MulScalar(updateRate))
 		ppos := m.Pos
 		setColor := colors.White
 		for _, ln := range gr.Lines {
@@ -136,7 +137,7 @@ func (gr *Graph) UpdateMarblesData(dt float32) {
 		}
 
 		m.PrevPos = ppos
-		m.Pos = m.Pos.Add(m.Velocity.MulScalar(float32(gr.Params.UpdateRate.Eval(float64(m.Pos.X), float64(m.Pos.Y)))))
+		m.Pos = m.Pos.Add(m.Velocity.MulScalar(updateRate))
 		if setColor != colors.White {
 			m.Color = setColor
 		}
@@ -236,7 +237,7 @@ func (gr *Graph) RunTick(dt float32) {
 	// 	startFrames = gr.State.Step
 	// }
 	gr.State.PrevTime = gr.State.Time
-	gr.State.Time += float64(dt) * gr.Params.UpdateRate.Eval(0, 0) / 1000
+	gr.State.Time += float64(gr.updateRate(dt))
 	// }
 }
 
